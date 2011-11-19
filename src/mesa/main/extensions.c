@@ -81,7 +81,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_blend_func_extended",                 o(ARB_blend_func_extended),                 GL,             2009 },
    { "GL_ARB_color_buffer_float",                  o(ARB_color_buffer_float),                  GL,             2004 },
    { "GL_ARB_copy_buffer",                         o(ARB_copy_buffer),                         GL,             2008 },
-   { "GL_ARB_conservative_depth",                  o(AMD_conservative_depth),                  GL,             2011 },
+   { "GL_ARB_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2011 },
    { "GL_ARB_depth_buffer_float",                  o(ARB_depth_buffer_float),                  GL,             2008 },
    { "GL_ARB_depth_clamp",                         o(ARB_depth_clamp),                         GL,             2003 },
    { "GL_ARB_depth_texture",                       o(ARB_depth_texture),                       GL,             2001 },
@@ -257,7 +257,7 @@ static const struct extension extension_table[] = {
 
    /* Vendor extensions */
    { "GL_3DFX_texture_compression_FXT1",           o(TDFX_texture_compression_FXT1),           GL,             1999 },
-   { "GL_AMD_conservative_depth",                  o(AMD_conservative_depth),                  GL,             2009 },
+   { "GL_AMD_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2009 },
    { "GL_AMD_draw_buffers_blend",                  o(ARB_draw_buffers_blend),                  GL,             2009 },
    { "GL_AMD_seamless_cubemap_per_texture",        o(AMD_seamless_cubemap_per_texture),        GL,             2009 },
    { "GL_AMD_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },

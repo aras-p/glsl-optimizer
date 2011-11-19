@@ -2844,6 +2844,7 @@ struct gl_extensions
    GLboolean ARB_ES2_compatibility;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_color_buffer_float;
+   GLboolean ARB_conservative_depth;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
@@ -2942,7 +2943,6 @@ struct gl_extensions
    GLboolean EXT_vertex_array_bgra;
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
-   GLboolean AMD_conservative_depth;
    GLboolean AMD_seamless_cubemap_per_texture;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
