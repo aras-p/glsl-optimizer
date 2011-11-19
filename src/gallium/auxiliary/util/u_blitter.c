@@ -109,6 +109,7 @@ struct blitter_context_priv
 
    boolean has_geometry_shader;
    boolean vertex_has_integers;
+   boolean has_stream_out;
 };
 
 static void blitter_draw_rectangle(struct blitter_context *blitter,
@@ -148,6 +149,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->base.saved_num_sampler_views = ~0;
    ctx->base.saved_num_sampler_states = ~0;
    ctx->base.saved_num_vertex_buffers = ~0;
+   ctx->base.saved_num_so_targets = ~0;
 
    ctx->has_geometry_shader =
       pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_GEOMETRY,
@@ -155,6 +157,9 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->vertex_has_integers =
       pipe->screen->get_shader_param(pipe->screen, PIPE_SHADER_VERTEX,
                                      PIPE_SHADER_CAP_INTEGERS);
+   ctx->has_stream_out =
+      pipe->screen->get_param(pipe->screen,
+                              PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) != 0;
 
    /* blend state objects */
    memset(&blend, 0, sizeof(blend));
@@ -319,6 +324,7 @@ static void blitter_check_saved_vertex_states(struct blitter_context_priv *ctx)
           ctx->base.saved_velem_state != INVALID_PTR &&
           ctx->base.saved_vs != INVALID_PTR &&
           (!ctx->has_geometry_shader || ctx->base.saved_gs != INVALID_PTR) &&
+          (!ctx->has_stream_out || ctx->base.saved_num_so_targets != ~0) &&
           ctx->base.saved_rs_state != INVALID_PTR);
 }
 
@@ -352,6 +358,18 @@ static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
    if (ctx->has_geometry_shader) {
       pipe->bind_gs_state(pipe, ctx->base.saved_gs);
       ctx->base.saved_gs = INVALID_PTR;
+   }
+
+   /* Stream outputs. */
+   if (ctx->has_stream_out) {
+      pipe->set_stream_output_targets(pipe,
+                                      ctx->base.saved_num_so_targets,
+                                      ctx->base.saved_so_targets, ~0);
+
+      for (i = 0; i < ctx->base.saved_num_so_targets; i++)
+         pipe_so_target_reference(&ctx->base.saved_so_targets[i], NULL);
+
+      ctx->base.saved_num_so_targets = ~0;
    }
 
    /* Rasterizer. */

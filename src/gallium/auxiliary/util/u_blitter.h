@@ -104,6 +104,9 @@ struct blitter_context
 
    int saved_num_vertex_buffers;
    struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
+
+   int saved_num_so_targets;
+   struct pipe_stream_output_target *saved_so_targets[PIPE_MAX_SO_BUFFERS];
 };
 
 /**
@@ -131,6 +134,7 @@ struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
  * - vertex elements
  * - vertex shader
  * - geometry shader (if supported)
+ * - stream output targets (if supported)
  * - rasterizer state
  */
 
@@ -377,6 +381,20 @@ util_blitter_save_vertex_buffers(struct blitter_context *blitter,
                             (unsigned*)&blitter->saved_num_vertex_buffers,
                             vertex_buffers,
                             num_vertex_buffers);
+}
+
+static INLINE void
+util_blitter_save_so_targets(struct blitter_context *blitter,
+                             int num_targets,
+                             struct pipe_stream_output_target **targets)
+{
+   unsigned i;
+   assert(num_targets <= Elements(blitter->saved_so_targets));
+
+   blitter->saved_num_so_targets = num_targets;
+   for (i = 0; i < num_targets; i++)
+      pipe_so_target_reference(&blitter->saved_so_targets[i],
+                               targets[i]);
 }
 
 #ifdef __cplusplus
