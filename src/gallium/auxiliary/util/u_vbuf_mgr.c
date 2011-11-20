@@ -174,9 +174,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    memset(&key, 0, sizeof(key));
    memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
 
-   /* Initialize the translate key, i.e. the recipe how vertices should be
-    * translated. */
-   memset(&key, 0, sizeof key);
+   /* Initialize the description of how vertices should be translated. */
    for (i = 0; i < mgr->ve->count; i++) {
       enum pipe_format output_format = mgr->ve->native_format[i];
       unsigned output_format_size = mgr->ve->native_format_size[i];
