@@ -657,6 +657,135 @@ static void u_vbuf_compute_max_index(struct u_vbuf_priv *mgr)
    }
 }
 
+static boolean u_vbuf_need_minmax_index(struct u_vbuf_priv *mgr)
+{
+   unsigned i, nr = mgr->ve->count;
+
+   for (i = 0; i < nr; i++) {
+      struct pipe_vertex_buffer *vb;
+      unsigned index;
+
+      /* Per-instance attribs don't need min/max_index. */
+      if (mgr->ve->ve[i].instance_divisor) {
+         continue;
+      }
+
+      index = mgr->ve->ve[i].vertex_buffer_index;
+      vb = &mgr->b.vertex_buffer[index];
+
+      /* Constant attribs don't need min/max_index. */
+      if (!vb->stride) {
+         continue;
+      }
+
+      /* Per-vertex attribs need min/max_index. */
+      if (u_vbuf_resource(vb->buffer)->user_ptr ||
+          mgr->ve->incompatible_layout_elem[i] ||
+          mgr->incompatible_vb[index]) {
+         return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
+static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
+                                    struct pipe_index_buffer *ib,
+                                    const struct pipe_draw_info *info,
+                                    int *out_min_index,
+                                    int *out_max_index)
+{
+   struct pipe_transfer *transfer = NULL;
+   const void *indices;
+   unsigned i;
+   unsigned restart_index = info->restart_index;
+
+   if (u_vbuf_resource(ib->buffer)->user_ptr) {
+      indices = u_vbuf_resource(ib->buffer)->user_ptr +
+                ib->offset + info->start * ib->index_size;
+   } else {
+      indices = pipe_buffer_map_range(pipe, ib->buffer,
+                                      ib->offset + info->start * ib->index_size,
+                                      info->count * ib->index_size,
+                                      PIPE_TRANSFER_READ, &transfer);
+   }
+
+   switch (ib->index_size) {
+   case 4: {
+      const unsigned *ui_indices = (const unsigned*)indices;
+      unsigned max_ui = 0;
+      unsigned min_ui = ~0U;
+      if (info->primitive_restart) {
+         for (i = 0; i < info->count; i++) {
+            if (ui_indices[i] != restart_index) {
+               if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+               if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < info->count; i++) {
+            if (ui_indices[i] > max_ui) max_ui = ui_indices[i];
+            if (ui_indices[i] < min_ui) min_ui = ui_indices[i];
+         }
+      }
+      *out_min_index = min_ui;
+      *out_max_index = max_ui;
+      break;
+   }
+   case 2: {
+      const unsigned short *us_indices = (const unsigned short*)indices;
+      unsigned max_us = 0;
+      unsigned min_us = ~0U;
+      if (info->primitive_restart) {
+         for (i = 0; i < info->count; i++) {
+            if (us_indices[i] != restart_index) {
+               if (us_indices[i] > max_us) max_us = us_indices[i];
+               if (us_indices[i] < min_us) min_us = us_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < info->count; i++) {
+            if (us_indices[i] > max_us) max_us = us_indices[i];
+            if (us_indices[i] < min_us) min_us = us_indices[i];
+         }
+      }
+      *out_min_index = min_us;
+      *out_max_index = max_us;
+      break;
+   }
+   case 1: {
+      const unsigned char *ub_indices = (const unsigned char*)indices;
+      unsigned max_ub = 0;
+      unsigned min_ub = ~0U;
+      if (info->primitive_restart) {
+         for (i = 0; i < info->count; i++) {
+            if (ub_indices[i] != restart_index) {
+               if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+               if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+            }
+         }
+      }
+      else {
+         for (i = 0; i < info->count; i++) {
+            if (ub_indices[i] > max_ub) max_ub = ub_indices[i];
+            if (ub_indices[i] < min_ub) min_ub = ub_indices[i];
+         }
+      }
+      *out_min_index = min_ub;
+      *out_max_index = max_ub;
+      break;
+   }
+   default:
+      assert(0);
+   }
+
+   if (transfer) {
+      pipe_buffer_unmap(pipe, transfer);
+   }
+}
+
 enum u_vbuf_return_flags
 u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
                   const struct pipe_draw_info *info)
@@ -666,15 +795,25 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
 
    u_vbuf_compute_max_index(mgr);
 
+   if (!mgr->incompatible_vb_layout &&
+       !mgr->ve->incompatible_layout &&
+       !mgr->any_user_vbs) {
+      return 0;
+   }
+
    if (info->indexed) {
-      min_index = info->min_index;
-      if (info->max_index == ~0) {
-         max_index = mgr->b.max_index;
+      if (info->max_index != ~0) {
+         min_index = info->min_index + info->index_bias;
+         max_index = info->max_index + info->index_bias;
+      } else if (u_vbuf_need_minmax_index(mgr)) {
+         u_vbuf_get_minmax_index(mgr->pipe, &mgr->b.index_buffer, info,
+                                 &min_index, &max_index);
+         min_index += info->index_bias;
+         max_index += info->index_bias;
       } else {
-         max_index = MIN2(info->max_index, mgr->b.max_index);
+         min_index = 0;
+         max_index = 0;
       }
-      min_index += info->index_bias;
-      max_index += info->index_bias;
    } else {
       min_index = info->start;
       max_index = info->start + info->count - 1;
@@ -689,7 +828,7 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
    if (mgr->any_user_vbs) {
       u_vbuf_upload_buffers(mgr, min_index, max_index, info->instance_count);
    }
-   return mgr->any_user_vbs || mgr->fallback_ve ? U_VBUF_BUFFERS_UPDATED : 0;
+   return U_VBUF_BUFFERS_UPDATED;
 }
 
 void u_vbuf_draw_end(struct u_vbuf_mgr *mgrb)
