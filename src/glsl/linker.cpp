@@ -1319,9 +1319,11 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	     * attribute overlaps any previously allocated bits.
 	     */
 	    if ((~(use_mask << attr) & used_locations) != used_locations) {
+	       const char *const string = (target_index == MESA_SHADER_VERTEX)
+		  ? "vertex shader input" : "fragment shader output";
 	       linker_error(prog,
-			    "insufficient contiguous attribute locations "
-			    "available for vertex shader input `%s'",
+			    "insufficient contiguous locations "
+			    "available for %s `%s'", string,
 			    var->name);
 	       return false;
 	    }
@@ -1370,7 +1372,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	    ? "vertex shader input" : "fragment shader output";
 
 	 linker_error(prog,
-		      "insufficient contiguous attribute locations "
+		      "insufficient contiguous locations "
 		      "available for %s `%s'",
 		      string, to_assign[i].var->name);
 	 return false;
