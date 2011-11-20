@@ -192,7 +192,6 @@ struct r600_pipe_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
-	struct pipe_index_buffer	index_buffer;
 	unsigned			cb_target_mask;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
