@@ -67,8 +67,6 @@ struct u_vbuf_mgr {
    struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
    int nr_real_vertex_buffers;
 
-   /* Precomputed max_index for hardware vertex buffers. */
-   unsigned max_index;
    /* The index buffer. */
    struct pipe_index_buffer index_buffer;
 
@@ -133,6 +131,8 @@ void u_vbuf_set_index_buffer(struct u_vbuf_mgr *mgr,
 
 enum u_vbuf_return_flags u_vbuf_draw_begin(struct u_vbuf_mgr *mgr,
                                            const struct pipe_draw_info *info);
+
+unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf_mgr *mgr);
 
 void u_vbuf_draw_end(struct u_vbuf_mgr *mgr);
 

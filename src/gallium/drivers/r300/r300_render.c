@@ -760,8 +760,14 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 
     /* Draw. */
     if (info.indexed) {
+        unsigned max_count = u_vbuf_draw_max_vertex_count(r300->vbuf_mgr);
+        if (!max_count) {
+           fprintf(stderr, "r300: Skipping a draw command. There is a buffer "
+                   " which is too small to be used for rendering.\n");
+           goto done;
+        }
         info.start += r300->vbuf_mgr->index_buffer.offset / r300->vbuf_mgr->index_buffer.index_size;
-        info.max_index = MIN2(r300->vbuf_mgr->max_index, info.max_index);
+        info.max_index = max_count - 1;
 
         if (info.instance_count <= 1) {
             if (info.count <= 8 &&
@@ -785,6 +791,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         }
     }
 
+done:
     u_vbuf_draw_end(r300->vbuf_mgr);
 }
 

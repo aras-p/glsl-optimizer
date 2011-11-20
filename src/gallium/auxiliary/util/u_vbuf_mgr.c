@@ -617,44 +617,54 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    }
 }
 
-static void u_vbuf_compute_max_index(struct u_vbuf_priv *mgr)
+unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf_mgr *mgrb)
 {
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    unsigned i, nr = mgr->ve->count;
-
-   mgr->b.max_index = ~0;
+   struct pipe_vertex_element *velems =
+         mgr->fallback_ve ? mgr->fallback_velems : mgr->ve->ve;
+   unsigned result = ~0;
 
    for (i = 0; i < nr; i++) {
       struct pipe_vertex_buffer *vb =
-            &mgr->b.vertex_buffer[mgr->ve->ve[i].vertex_buffer_index];
-      unsigned max_index, src_size, unused;
+            &mgr->b.real_vertex_buffer[velems[i].vertex_buffer_index];
+      unsigned size, max_count, value;
 
+      /* We're not interested in constant and per-instance attribs. */
       if (!vb->buffer ||
           !vb->stride ||
-          u_vbuf_resource(vb->buffer)->user_ptr ||
-          mgr->ve->ve[i].instance_divisor) {
+          velems[i].instance_divisor) {
          continue;
       }
 
-      src_size = mgr->ve->ve[i].src_offset + mgr->ve->src_format_size[i];
+      size = vb->buffer->width0;
 
-      /* If src_offset is greater than stride (which means it's a buffer
-       * offset rather than a vertex offset)... */
-      if (src_size >= vb->stride) {
-         unused = 0;
-      } else {
-         /* How many bytes is unused after the last vertex.
-          * width0 may be "count*stride - unused" and we have to compensate
-          * for that when dividing by stride. */
-         unused = vb->stride - src_size;
+      /* Subtract buffer_offset. */
+      value = vb->buffer_offset;
+      if (value >= size) {
+         return 0;
       }
+      size -= value;
 
-      /* Compute the maximum index for this vertex element. */
-      max_index =
-         (vb->buffer->width0 - vb->buffer_offset + (unsigned)unused) /
-         vb->stride - 1;
+      /* Subtract src_offset. */
+      value = velems[i].src_offset;
+      if (value >= size) {
+         return 0;
+      }
+      size -= value;
 
-      mgr->b.max_index = MIN2(mgr->b.max_index, max_index);
+      /* Subtract format_size. */
+      value = mgr->ve->native_format_size[i];
+      if (value >= size) {
+         return 0;
+      }
+      size -= value;
+
+      /* Compute the max count. */
+      max_count = 1 + size / vb->stride;
+      result = MIN2(result, max_count);
    }
+   return result;
 }
 
 static boolean u_vbuf_need_minmax_index(struct u_vbuf_priv *mgr)
@@ -792,8 +802,6 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    int min_index, max_index;
-
-   u_vbuf_compute_max_index(mgr);
 
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
