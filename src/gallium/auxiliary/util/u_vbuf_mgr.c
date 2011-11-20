@@ -50,6 +50,8 @@ struct u_vbuf_elements {
     * - src_format != native_format, as discussed above.
     * - src_offset % 4 != 0 (if the caps don't allow such an offset). */
    boolean incompatible_layout;
+   /* Per-element flags. */
+   boolean incompatible_layout_elem[PIPE_MAX_ATTRIBS];
 };
 
 struct u_vbuf_priv {
@@ -61,10 +63,16 @@ struct u_vbuf_priv {
 
    struct u_vbuf_elements *ve;
    void *saved_ve, *fallback_ve;
+
+   /* Vertex elements used for the translate fallback. */
+   struct pipe_vertex_element fallback_velems[PIPE_MAX_ATTRIBS];
    boolean ve_binding_lock;
 
    boolean any_user_vbs;
+
    boolean incompatible_vb_layout;
+   /* Per-buffer flags. */
+   boolean incompatible_vb[PIPE_MAX_ATTRIBS];
 };
 
 static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
@@ -107,6 +115,7 @@ u_vbuf_create(struct pipe_context *pipe,
 
    mgr->pipe = pipe;
    mgr->translate_cache = translate_cache_create();
+   mgr->translate_vb_slot = ~0;
 
    mgr->b.uploader = u_upload_create(pipe, upload_buffer_size,
                                      upload_buffer_alignment,
@@ -151,27 +160,21 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
    struct pipe_resource *out_buffer = NULL;
    unsigned i, num_verts, out_offset;
-   struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
    boolean upload_flushed = FALSE;
 
    memset(&key, 0, sizeof(key));
    memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
 
    /* Initialize the translate key, i.e. the recipe how vertices should be
-     * translated. */
+    * translated. */
    memset(&key, 0, sizeof key);
    for (i = 0; i < mgr->ve->count; i++) {
-      struct pipe_vertex_buffer *vb =
-            &mgr->b.vertex_buffer[mgr->ve->ve[i].vertex_buffer_index];
       enum pipe_format output_format = mgr->ve->native_format[i];
       unsigned output_format_size = mgr->ve->native_format_size[i];
 
       /* Check for support. */
-      if (mgr->ve->ve[i].src_format == mgr->ve->native_format[i] &&
-          (mgr->b.caps.fetch_dword_unaligned ||
-           (vb->buffer_offset % 4 == 0 &&
-            vb->stride % 4 == 0 &&
-            mgr->ve->ve[i].src_offset % 4 == 0))) {
+      if (!mgr->ve->incompatible_layout_elem[i] &&
+          !mgr->incompatible_vb[mgr->ve->ve[i].vertex_buffer_index]) {
          continue;
       }
 
@@ -274,19 +277,19 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       for (i = 0; i < mgr->ve->count; i++) {
          if (tr_elem_index[i] < key.nr_elements) {
             te = &key.element[tr_elem_index[i]];
-            new_velems[i].instance_divisor = mgr->ve->ve[i].instance_divisor;
-            new_velems[i].src_format = te->output_format;
-            new_velems[i].src_offset = te->output_offset;
-            new_velems[i].vertex_buffer_index = mgr->translate_vb_slot;
+            mgr->fallback_velems[i].instance_divisor = mgr->ve->ve[i].instance_divisor;
+            mgr->fallback_velems[i].src_format = te->output_format;
+            mgr->fallback_velems[i].src_offset = te->output_offset;
+            mgr->fallback_velems[i].vertex_buffer_index = mgr->translate_vb_slot;
          } else {
-            memcpy(&new_velems[i], &mgr->ve->ve[i],
+            memcpy(&mgr->fallback_velems[i], &mgr->ve->ve[i],
                    sizeof(struct pipe_vertex_element));
          }
       }
 
       mgr->fallback_ve =
             mgr->pipe->create_vertex_elements_state(mgr->pipe, mgr->ve->count,
-                                                    new_velems);
+                                                    mgr->fallback_velems);
 
       /* Preserve saved_ve. */
       mgr->ve_binding_lock = TRUE;
@@ -312,6 +315,7 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
    /* Delete the now-unused VBO. */
    pipe_resource_reference(&mgr->b.real_vertex_buffer[mgr->translate_vb_slot].buffer,
                            NULL);
+   mgr->translate_vb_slot = ~0;
    mgr->b.nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
 }
 
@@ -406,10 +410,12 @@ u_vbuf_create_vertex_elements(struct u_vbuf_mgr *mgrb,
       ve->native_format_size[i] =
             util_format_get_blocksize(ve->native_format[i]);
 
-      ve->incompatible_layout =
-            ve->incompatible_layout ||
+      ve->incompatible_layout_elem[i] =
             ve->ve[i].src_format != ve->native_format[i] ||
             (!mgr->b.caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
+      ve->incompatible_layout =
+            ve->incompatible_layout ||
+            ve->incompatible_layout_elem[i];
    }
 
    /* Align the formats to the size of DWORD if needed. */
@@ -453,6 +459,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
 
    mgr->any_user_vbs = FALSE;
    mgr->incompatible_vb_layout = FALSE;
+   memset(mgr->incompatible_vb, 0, sizeof(mgr->incompatible_vb));
 
    if (!mgr->b.caps.fetch_dword_unaligned) {
       /* Check if the strides and offsets are aligned to the size of DWORD. */
@@ -461,7 +468,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
             if (bufs[i].stride % 4 != 0 ||
                 bufs[i].buffer_offset % 4 != 0) {
                mgr->incompatible_vb_layout = TRUE;
-               break;
+               mgr->incompatible_vb[i] = TRUE;
             }
          }
       }
@@ -512,15 +519,22 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    unsigned count = max_index + 1 - min_index;
    unsigned nr_velems = mgr->ve->count;
    unsigned nr_vbufs = mgr->b.nr_vertex_buffers;
+   struct pipe_vertex_element *velems =
+         mgr->fallback_ve ? mgr->fallback_velems : mgr->ve->ve;
    unsigned start_offset[PIPE_MAX_ATTRIBS];
    unsigned end_offset[PIPE_MAX_ATTRIBS] = {0};
 
    /* Determine how much data needs to be uploaded. */
    for (i = 0; i < nr_velems; i++) {
-      struct pipe_vertex_element *velem = &mgr->ve->ve[i];
+      struct pipe_vertex_element *velem = &velems[i];
       unsigned index = velem->vertex_buffer_index;
       struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[index];
       unsigned instance_div, first, size;
+
+      /* Skip the buffer generated by translate. */
+      if (index == mgr->translate_vb_slot) {
+         continue;
+      }
 
       assert(vb->buffer);
 
