@@ -1604,17 +1604,7 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (ib && ib->buffer) {
-        assert(ib->offset % ib->index_size == 0);
-
-        pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
-        memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
-        r300->index_buffer.offset /= r300->index_buffer.index_size;
-    }
-    else {
-        pipe_resource_reference(&r300->index_buffer.buffer, NULL);
-        memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
-    }
+    u_vbuf_set_index_buffer(r300->vbuf_mgr, ib);
 
     if (!r300->screen->caps.has_tcl) {
         draw_set_index_buffer(r300->draw, ib);

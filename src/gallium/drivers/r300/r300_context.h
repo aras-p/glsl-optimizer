@@ -546,8 +546,6 @@ struct r300_context {
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
 
-    struct pipe_index_buffer index_buffer;
-
     /* Vertex info for Draw. */
     struct vertex_info vertex_info;
 
