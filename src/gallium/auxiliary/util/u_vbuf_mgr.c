@@ -494,7 +494,8 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       mgr->b.real_vertex_buffer[i].stride =
       mgr->b.vertex_buffer[i].stride = vb->stride;
 
-      if (!vb->buffer) {
+      if (!vb->buffer ||
+          mgr->incompatible_vb[i]) {
          pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
          continue;
       }
