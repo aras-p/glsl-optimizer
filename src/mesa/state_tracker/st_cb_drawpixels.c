@@ -1441,6 +1441,13 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    st_validate_state(st);
 
+   if (type == GL_DEPTH_STENCIL) {
+      /* XXX make this more efficient */
+      st_CopyPixels(ctx, srcx, srcy, width, height, dstx, dsty, GL_STENCIL);
+      st_CopyPixels(ctx, srcx, srcy, width, height, dstx, dsty, GL_DEPTH);
+      return;
+   }
+
    if (type == GL_STENCIL) {
       /* can't use texturing to do stencil */
       copy_stencil_pixels(ctx, srcx, srcy, width, height, dstx, dsty);
