@@ -520,6 +520,19 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    mgr->b.nr_real_vertex_buffers = count;
 }
 
+void u_vbuf_set_index_buffer(struct u_vbuf_mgr *mgr,
+                             const struct pipe_index_buffer *ib)
+{
+   if (ib && ib->buffer) {
+      assert(ib->offset % ib->index_size == 0);
+      pipe_resource_reference(&mgr->index_buffer.buffer, ib->buffer);
+      mgr->index_buffer.offset = ib->offset;
+      mgr->index_buffer.index_size = ib->index_size;
+   } else {
+      pipe_resource_reference(&mgr->index_buffer.buffer, NULL);
+   }
+}
+
 static void
 u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
                       int min_index, int max_index,

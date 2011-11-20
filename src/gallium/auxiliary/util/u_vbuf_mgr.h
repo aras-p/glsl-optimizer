@@ -69,6 +69,8 @@ struct u_vbuf_mgr {
 
    /* Precomputed max_index for hardware vertex buffers. */
    unsigned max_index;
+   /* The index buffer. */
+   struct pipe_index_buffer index_buffer;
 
    /* This uploader can optionally be used by the driver.
     *
@@ -125,6 +127,9 @@ void u_vbuf_destroy_vertex_elements(struct u_vbuf_mgr *mgr,
 void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgr,
                                unsigned count,
                                const struct pipe_vertex_buffer *bufs);
+
+void u_vbuf_set_index_buffer(struct u_vbuf_mgr *mgr,
+                             const struct pipe_index_buffer *ib);
 
 enum u_vbuf_return_flags u_vbuf_draw_begin(struct u_vbuf_mgr *mgr,
                                            const struct pipe_draw_info *info);
