@@ -156,6 +156,32 @@ void u_vbuf_destroy(struct u_vbuf_mgr *mgrb)
 }
 
 
+static unsigned u_vbuf_get_free_real_vb_slot(struct u_vbuf_priv *mgr)
+{
+   unsigned i, nr = mgr->ve->count;
+   boolean used_vb[PIPE_MAX_ATTRIBS] = {0};
+
+   for (i = 0; i < nr; i++) {
+      if (!mgr->ve->incompatible_layout_elem[i]) {
+         unsigned index = mgr->ve->ve[i].vertex_buffer_index;
+
+         if (!mgr->incompatible_vb[index]) {
+            used_vb[index] = TRUE;
+         }
+      }
+   }
+
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
+      if (!used_vb[i]) {
+         if (i >= mgr->b.nr_real_vertex_buffers) {
+            mgr->b.nr_real_vertex_buffers = i+1;
+         }
+         return i;
+      }
+   }
+   return ~0;
+}
+
 static void
 u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
                        int min_index, int max_index)
@@ -173,6 +199,13 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
 
    memset(&key, 0, sizeof(key));
    memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
+
+   /* Get a new vertex buffer slot. */
+   mgr->fallback_vb_slot = u_vbuf_get_free_real_vb_slot(mgr);
+
+   if (mgr->fallback_vb_slot == ~0) {
+      return; /* XXX error, not enough attribs */
+   }
 
    /* Initialize the description of how vertices should be translated. */
    for (i = 0; i < mgr->ve->count; i++) {
@@ -208,8 +241,8 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
 
       /* Add this vertex element. */
       te = &key.element[key.nr_elements];
-      /*te->type;
-        te->instance_divisor;*/
+      te->type = TRANSLATE_ELEMENT_NORMAL;
+      te->instance_divisor = 0;
       te->input_buffer = mgr->ve->ve[i].vertex_buffer_index;
       te->input_format = mgr->ve->ve[i].src_format;
       te->input_offset = mgr->ve->ve[i].src_offset;
@@ -260,51 +293,39 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       }
    }
 
-   /* Setup the new vertex buffer in the first free slot. */
-   mgr->fallback_vb_slot = ~0;
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (!mgr->b.vertex_buffer[i].buffer) {
-         mgr->fallback_vb_slot = i;
+   /* Setup the new vertex buffer. */
+   mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].buffer_offset = out_offset;
+   mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].stride = key.output_stride;
 
-         if (i >= mgr->b.nr_vertex_buffers) {
-            mgr->b.nr_real_vertex_buffers = i+1;
-         }
-         break;
+   /* Move the buffer reference. */
+   pipe_resource_reference(
+      &mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].buffer, NULL);
+   mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].buffer = out_buffer;
+   out_buffer = NULL;
+
+   /* Setup new vertex elements. */
+   for (i = 0; i < mgr->ve->count; i++) {
+      if (tr_elem_index[i] < key.nr_elements) {
+         te = &key.element[tr_elem_index[i]];
+         mgr->fallback_velems[i].instance_divisor = mgr->ve->ve[i].instance_divisor;
+         mgr->fallback_velems[i].src_format = te->output_format;
+         mgr->fallback_velems[i].src_offset = te->output_offset;
+         mgr->fallback_velems[i].vertex_buffer_index = mgr->fallback_vb_slot;
+      } else {
+         memcpy(&mgr->fallback_velems[i], &mgr->ve->ve[i],
+                sizeof(struct pipe_vertex_element));
       }
    }
 
-   if (mgr->fallback_vb_slot != ~0) {
-      /* Setup the new vertex buffer. */
-      pipe_resource_reference(
-            &mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].buffer, out_buffer);
-      mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].buffer_offset = out_offset;
-      mgr->b.real_vertex_buffer[mgr->fallback_vb_slot].stride = key.output_stride;
 
-      /* Setup new vertex elements. */
-      for (i = 0; i < mgr->ve->count; i++) {
-         if (tr_elem_index[i] < key.nr_elements) {
-            te = &key.element[tr_elem_index[i]];
-            mgr->fallback_velems[i].instance_divisor = mgr->ve->ve[i].instance_divisor;
-            mgr->fallback_velems[i].src_format = te->output_format;
-            mgr->fallback_velems[i].src_offset = te->output_offset;
-            mgr->fallback_velems[i].vertex_buffer_index = mgr->fallback_vb_slot;
-         } else {
-            memcpy(&mgr->fallback_velems[i], &mgr->ve->ve[i],
-                   sizeof(struct pipe_vertex_element));
-         }
-      }
+   mgr->fallback_ve =
+      mgr->pipe->create_vertex_elements_state(mgr->pipe, mgr->ve->count,
+                                              mgr->fallback_velems);
 
-      mgr->fallback_ve =
-            mgr->pipe->create_vertex_elements_state(mgr->pipe, mgr->ve->count,
-                                                    mgr->fallback_velems);
-
-      /* Preserve saved_ve. */
-      mgr->ve_binding_lock = TRUE;
-      mgr->pipe->bind_vertex_elements_state(mgr->pipe, mgr->fallback_ve);
-      mgr->ve_binding_lock = FALSE;
-   }
-
-   pipe_resource_reference(&out_buffer, NULL);
+   /* Preserve saved_ve. */
+   mgr->ve_binding_lock = TRUE;
+   mgr->pipe->bind_vertex_elements_state(mgr->pipe, mgr->fallback_ve);
+   mgr->ve_binding_lock = FALSE;
 }
 
 static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
