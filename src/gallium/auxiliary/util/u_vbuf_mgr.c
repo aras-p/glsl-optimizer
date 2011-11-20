@@ -57,19 +57,29 @@ struct u_vbuf_elements {
 struct u_vbuf_priv {
    struct u_vbuf_mgr b;
    struct pipe_context *pipe;
-
    struct translate_cache *translate_cache;
-   unsigned translate_vb_slot;
 
+   /* Whether there is any user buffer. */
+   boolean any_user_vbs;
+
+   /* Vertex element state bound by the state tracker. */
+   void *saved_ve;
+   /* and its associated helper structure for this module. */
    struct u_vbuf_elements *ve;
-   void *saved_ve, *fallback_ve;
 
    /* Vertex elements used for the translate fallback. */
    struct pipe_vertex_element fallback_velems[PIPE_MAX_ATTRIBS];
+   /* If non-NULL, this is a vertex element state used for the translate
+    * fallback and therefore used for rendering too. */
+   void *fallback_ve;
+   /* The vertex buffer slot index where translated vertices have been
+    * stored in. */
+   unsigned translate_vb_slot;
+   /* When binding the fallback vertex element state, we don't want to
+    * change saved_ve and ve. This is set to TRUE in such cases. */
    boolean ve_binding_lock;
 
-   boolean any_user_vbs;
-
+   /* Whether there is a buffer with a non-native layout. */
    boolean incompatible_vb_layout;
    /* Per-buffer flags. */
    boolean incompatible_vb[PIPE_MAX_ATTRIBS];
