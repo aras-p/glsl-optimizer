@@ -128,6 +128,8 @@ static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
 {
     CS_LOCALS(r300);
 
+    assert(max_index < (1 << 24));
+
     BEGIN_CS(5);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
@@ -444,7 +446,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     boolean alt_num_verts = count > 65535;
     CS_LOCALS(r300);
 
-    if (count >= (1 << 24) || max_index >= (1 << 24)) {
+    if (count >= (1 << 24)) {
         fprintf(stderr, "r300: Got a huge number of vertices: %i, "
                 "refusing to render (max_index: %i).\n", count, max_index);
         return;
@@ -761,13 +763,20 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     /* Draw. */
     if (info.indexed) {
         unsigned max_count = u_vbuf_draw_max_vertex_count(r300->vbuf_mgr);
+
         if (!max_count) {
            fprintf(stderr, "r300: Skipping a draw command. There is a buffer "
                    " which is too small to be used for rendering.\n");
            goto done;
         }
-        info.start += r300->vbuf_mgr->index_buffer.offset / r300->vbuf_mgr->index_buffer.index_size;
+
+        if (max_count == ~0) {
+           /* There are no per-vertex vertex elements. Use the hardware maximum. */
+           max_count = 0xffffff;
+        }
+
         info.max_index = max_count - 1;
+        info.start += r300->vbuf_mgr->index_buffer.offset / r300->vbuf_mgr->index_buffer.index_size;
 
         if (info.instance_count <= 1) {
             if (info.count <= 8 &&
