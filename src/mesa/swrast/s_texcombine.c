@@ -545,6 +545,10 @@ texture_combine( struct gl_context *ctx, GLuint unit,
       UNCLAMPED_FLOAT_TO_CHAN(rgbaChan[i][BCOMP], rgba[i][BCOMP]);
       UNCLAMPED_FLOAT_TO_CHAN(rgbaChan[i][ACOMP], rgba[i][ACOMP]);
    }
+   /* The span->array->rgba values are of CHAN type so set
+    * span->array->ChanType field accordingly.
+    */
+   span->array->ChanType = CHAN_TYPE;
 
 end:
    for (i = 0; i < numArgsRGB || i < numArgsA; i++) {
