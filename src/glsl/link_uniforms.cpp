@@ -114,7 +114,7 @@ class count_uniform_size : public uniform_field_visitor {
 public:
    count_uniform_size(struct string_to_uint_map *map)
       : num_active_uniforms(0), num_values(0), num_shader_samplers(0),
-	num_shader_uniforms(0), map(map)
+	num_shader_uniform_components(0), map(map)
    {
       /* empty */
    }
@@ -122,7 +122,7 @@ public:
    void start_shader()
    {
       this->num_shader_samplers = 0;
-      this->num_shader_uniforms = 0;
+      this->num_shader_uniform_components = 0;
    }
 
    /**
@@ -143,7 +143,7 @@ public:
    /**
     * Number of uniforms used in the current shader
     */
-   unsigned num_shader_uniforms;
+   unsigned num_shader_uniform_components;
 
 private:
    virtual void visit_field(const glsl_type *type, const char *name)
@@ -165,7 +165,7 @@ private:
 	  * Note that samplers do not count against this limit because they
 	  * don't use any storage on current hardware.
 	  */
-	 this->num_shader_uniforms += values;
+	 this->num_shader_uniform_components += values;
       }
 
       /* If the uniform is already in the map, there's nothing more to do.
@@ -321,7 +321,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
       prog->_LinkedShaders[i]->num_samplers = uniform_size.num_shader_samplers;
       prog->_LinkedShaders[i]->num_uniform_components =
-	 uniform_size.num_shader_uniforms * 4;
+	 uniform_size.num_shader_uniform_components;
    }
 
    const unsigned num_user_uniforms = uniform_size.num_active_uniforms;
