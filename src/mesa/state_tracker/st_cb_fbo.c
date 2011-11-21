@@ -75,8 +75,18 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    enum pipe_format format;
    struct pipe_surface surf_tmpl;
 
-   format = st_choose_renderbuffer_format(screen, internalFormat,
-                                          rb->NumSamples);
+   if (internalFormat == GL_RGBA16_SNORM && strb->software) {
+      /* Special case for software accum buffers.  Otherwise, if the
+       * call to st_choose_renderbuffer_format() fails (because the
+       * driver doesn't support signed 16-bit/channel colors) we'd
+       * just return without allocating the software accum buffer.
+       */
+      format = PIPE_FORMAT_R16G16B16A16_SNORM;
+   }
+   else {
+      format = st_choose_renderbuffer_format(screen, internalFormat,
+                                             rb->NumSamples);
+   }
 
    if (format == PIPE_FORMAT_NONE) {
       return FALSE;
