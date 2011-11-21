@@ -105,8 +105,12 @@ translate_dst_register( struct svga_shader_emitter *emit,
       break;
 
    default:
-      dest = dst_register( translate_file( reg->Register.File ),
-                           reg->Register.Index );
+      {
+         unsigned index = reg->Register.Index;
+         assert(index < SVGA3D_TEMPREG_MAX);
+         index = MIN2(index, SVGA3D_TEMPREG_MAX - 1);
+         dest = dst_register(translate_file(reg->Register.File), index);
+      }                 
       break;
    }
 
@@ -258,13 +262,16 @@ translate_src_register( const struct svga_shader_emitter *emit,
 
 
 /*
- * Get a temporary register, return -1 if none available
+ * Get a temporary register.
+ * Note: if we exceed the temporary register limit we just use
+ * register SVGA3D_TEMPREG_MAX - 1.
  */
 static INLINE SVGA3dShaderDestToken 
 get_temp( struct svga_shader_emitter *emit )
 {
    int i = emit->nr_hw_temp + emit->internal_temp_count++;
-
+   assert(i < SVGA3D_TEMPREG_MAX);
+   i = MIN2(i, SVGA3D_TEMPREG_MAX - 1);
    return dst_register( SVGA3DREG_TEMP, i );
 }
 
