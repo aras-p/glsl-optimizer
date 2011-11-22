@@ -1751,6 +1751,12 @@ unpack_float_z_Z32(GLuint n, const void *src, GLfloat *dst)
 }
 
 static void
+unpack_float_z_Z32F(GLuint n, const void *src, GLfloat *dst)
+{
+   memcpy(dst, src, n * sizeof(float));
+}
+
+static void
 unpack_float_z_Z32X24S8(GLuint n, const void *src, GLfloat *dst)
 {
    const GLfloat *s = ((const GLfloat *) src);
@@ -1782,6 +1788,9 @@ _mesa_unpack_float_z_row(gl_format format, GLuint n,
       break;
    case MESA_FORMAT_Z32:
       unpack = unpack_float_z_Z32;
+      break;
+   case MESA_FORMAT_Z32_FLOAT:
+      unpack = unpack_float_z_Z32F;
       break;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       unpack = unpack_float_z_Z32X24S8;
