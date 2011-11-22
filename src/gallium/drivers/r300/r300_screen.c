@@ -187,10 +187,11 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
             return 1;
         case PIPE_SHADER_CAP_MAX_TEMPS:
             return is_r500 ? 128 : is_r400 ? 64 : 32;
-        case PIPE_SHADER_CAP_MAX_ADDRS:
-            return 0;
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 1 : 0;
+        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+           return r300screen->caps.num_tex_units;
+        case PIPE_SHADER_CAP_MAX_ADDRS:
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
@@ -200,8 +201,6 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_INTEGERS:
         case PIPE_SHADER_CAP_OUTPUT_READ:
             return 0;
-        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
-           return r300screen->caps.num_tex_units;
         }
         break;
     case PIPE_SHADER_VERTEX:
@@ -221,9 +220,6 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
         case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
             return is_r500 ? 1024 : 256;
-        case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
-        case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
-            return 0;
         case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
             return is_r500 ? 4 : 0; /* For loops; not sure about conditionals. */
         case PIPE_SHADER_CAP_MAX_INPUTS:
@@ -240,12 +236,15 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
             return is_r500 ? 4 : 0; /* XXX guessed. */
         case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
             return 1;
+        case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
+        case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
+        case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
         case PIPE_SHADER_CAP_OUTPUT_READ:
             return 0;
         }
