@@ -37,6 +37,7 @@
 
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
+#include "intel_mipmap_tree.h"
 #include "intel_fbo.h"
 #include "intel_buffers.h"
 
@@ -848,7 +849,7 @@ i830Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
          if (ctx->DrawBuffer) {
             struct intel_renderbuffer *irbStencil
                = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
-            hw_stencil = (irbStencil && irbStencil->region);
+            hw_stencil = (irbStencil && irbStencil->mt->region);
          }
          if (hw_stencil) {
             I830_STATECHANGE(i830, I830_UPLOAD_CTX);

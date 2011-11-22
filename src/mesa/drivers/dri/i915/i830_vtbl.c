@@ -28,6 +28,7 @@
 #include "i830_context.h"
 #include "i830_reg.h"
 #include "intel_batchbuffer.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tris.h"
 #include "intel_fbo.h"
@@ -760,7 +761,7 @@ i830_update_draw_buffer(struct intel_context *intel)
 
        for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
            irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
-           colorRegions[i] = irb ? irb->region : NULL;
+           colorRegions[i] = (irb && irb->mt) ? irb->mt->region : NULL;
        }
    }
    else {
@@ -778,7 +779,7 @@ i830_update_draw_buffer(struct intel_context *intel)
 	 /* drawing to user-created FBO */
 	 struct intel_renderbuffer *irb;
 	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
-	 colorRegions[0] = (irb && irb->region) ? irb->region : NULL;
+	 colorRegions[0] = (irb && irb->mt->region) ? irb->mt->region : NULL;
       }
    }
 
@@ -790,10 +791,10 @@ i830_update_draw_buffer(struct intel_context *intel)
    }
 
    /* Check for depth fallback. */
-   if (irbDepth && irbDepth->region) {
+   if (irbDepth && irbDepth->mt) {
       FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, false);
-      depthRegion = irbDepth->region;
-   } else if (irbDepth && !irbDepth->region) {
+      depthRegion = irbDepth->mt->region;
+   } else if (irbDepth && !irbDepth->mt) {
       FALLBACK(intel, INTEL_FALLBACK_DEPTH_BUFFER, true);
       depthRegion = NULL;
    } else { /* !irbDepth */
@@ -803,10 +804,10 @@ i830_update_draw_buffer(struct intel_context *intel)
    }
 
    /* Check for stencil fallback. */
-   if (irbStencil && irbStencil->region) {
+   if (irbStencil && irbStencil->mt) {
       assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, false);
-   } else if (irbStencil && !irbStencil->region) {
+   } else if (irbStencil && !irbStencil->mt) {
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, true);
    } else { /* !irbStencil */
       /* No fallback is needed because there is no stencil buffer. */
@@ -816,9 +817,9 @@ i830_update_draw_buffer(struct intel_context *intel)
    /* If we have a (packed) stencil buffer attached but no depth buffer,
     * we still need to set up the shared depth/stencil state so we can use it.
     */
-   if (depthRegion == NULL && irbStencil && irbStencil->region
+   if (depthRegion == NULL && irbStencil && irbStencil->mt
        && irbStencil->Base.Format == MESA_FORMAT_S8_Z24) {
-      depthRegion = irbStencil->region;
+      depthRegion = irbStencil->mt->region;
    }
 
    /*

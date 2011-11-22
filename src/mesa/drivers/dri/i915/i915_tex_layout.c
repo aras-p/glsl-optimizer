@@ -126,7 +126,7 @@ i915_miptree_layout_cube(struct intel_mipmap_tree * mt)
    mt->total_height = dim * 4;
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
-      intel_miptree_set_level_info(mt, level, 6,
+      intel_miptree_set_level_info(mt, level,
 				   0, 0,
 				   lvlWidth, lvlHeight,
 				   1);
@@ -167,7 +167,7 @@ i915_miptree_layout_3d(struct intel_mipmap_tree * mt)
 
    /* XXX: hardware expects/requires 9 levels at minimum. */
    for (level = mt->first_level; level <= MAX2(8, mt->last_level); level++) {
-      intel_miptree_set_level_info(mt, level, depth, 0, mt->total_height,
+      intel_miptree_set_level_info(mt, level, 0, mt->total_height,
 				   width, height, depth);
 
       stack_height += MAX2(2, height);
@@ -208,7 +208,7 @@ i915_miptree_layout_2d(struct intel_mipmap_tree * mt)
    mt->total_height = 0;
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
-      intel_miptree_set_level_info(mt, level, 1,
+      intel_miptree_set_level_info(mt, level,
 				   0, mt->total_height,
 				   width, height, 1);
 
@@ -335,7 +335,7 @@ i945_miptree_layout_cube(struct intel_mipmap_tree * mt)
 
    /* Set all the levels to effectively occupy the whole rectangular region. */
    for (level = mt->first_level; level <= mt->last_level; level++) {
-      intel_miptree_set_level_info(mt, level, 6,
+      intel_miptree_set_level_info(mt, level,
 				   0, 0,
 				   lvlWidth, lvlHeight, 1);
       lvlWidth /= 2;
@@ -421,7 +421,7 @@ i945_miptree_layout_3d(struct intel_mipmap_tree * mt)
       GLint y = 0;
       GLint q, j;
 
-      intel_miptree_set_level_info(mt, level, depth,
+      intel_miptree_set_level_info(mt, level,
 				   0, mt->total_height,
 				   width, height, depth);
 
@@ -469,7 +469,7 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE_ARB:
-      i945_miptree_layout_2d(mt, 1);
+      i945_miptree_layout_2d(mt);
       break;
    default:
       _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");
