@@ -33,7 +33,7 @@
 #include "pipe/p_context.h"
 #include "util/u_math.h"
 #include "util/u_slab.h"
-#include "util/u_vbuf_mgr.h"
+#include "util/u_vbuf.h"
 #include "r600.h"
 #include "r600_public.h"
 #include "r600_shader.h"
@@ -224,7 +224,7 @@ struct r600_pipe_context {
 
 	struct r600_pipe_fences		fences;
 
-	struct u_vbuf_mgr		*vbuf_mgr;
+	struct u_vbuf			*vbuf_mgr;
 	struct util_slab_mempool	pool_transfers;
 	boolean				have_depth_texture, have_depth_fb;
 

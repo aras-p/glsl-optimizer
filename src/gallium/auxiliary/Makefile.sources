@@ -139,7 +139,7 @@ C_SOURCES := \
 	util/u_transfer.c \
 	util/u_resource.c \
 	util/u_upload_mgr.c \
-	util/u_vbuf_mgr.c \
+	util/u_vbuf.c \
 	vl/vl_csc.c \
 	vl/vl_compositor.c \
 	vl/vl_decoder.c \

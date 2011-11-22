@@ -25,7 +25,7 @@
  *
  **************************************************************************/
 
-#include "util/u_vbuf_mgr.h"
+#include "util/u_vbuf.h"
 
 #include "util/u_format.h"
 #include "util/u_inlines.h"
@@ -55,7 +55,7 @@ struct u_vbuf_elements {
 };
 
 struct u_vbuf_priv {
-   struct u_vbuf_mgr b;
+   struct u_vbuf b;
    struct pipe_context *pipe;
    struct translate_cache *translate_cache;
 
@@ -113,7 +113,7 @@ static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
                                   0, PIPE_BIND_VERTEX_BUFFER);
 }
 
-struct u_vbuf_mgr *
+struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
               unsigned upload_buffer_size,
               unsigned upload_buffer_alignment,
@@ -138,7 +138,7 @@ u_vbuf_create(struct pipe_context *pipe,
    return &mgr->b;
 }
 
-void u_vbuf_destroy(struct u_vbuf_mgr *mgrb)
+void u_vbuf_destroy(struct u_vbuf *mgrb)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    unsigned i;
@@ -351,7 +351,7 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
     case PIPE_FORMAT_##what: format = PIPE_FORMAT_##withwhat; break
 
 struct u_vbuf_elements *
-u_vbuf_create_vertex_elements(struct u_vbuf_mgr *mgrb,
+u_vbuf_create_vertex_elements(struct u_vbuf *mgrb,
                               unsigned count,
                               const struct pipe_vertex_element *attribs,
                               struct pipe_vertex_element *native_attribs)
@@ -456,7 +456,7 @@ u_vbuf_create_vertex_elements(struct u_vbuf_mgr *mgrb,
    return ve;
 }
 
-void u_vbuf_bind_vertex_elements(struct u_vbuf_mgr *mgrb,
+void u_vbuf_bind_vertex_elements(struct u_vbuf *mgrb,
                                  void *cso,
                                  struct u_vbuf_elements *ve)
 {
@@ -472,13 +472,13 @@ void u_vbuf_bind_vertex_elements(struct u_vbuf_mgr *mgrb,
    }
 }
 
-void u_vbuf_destroy_vertex_elements(struct u_vbuf_mgr *mgr,
+void u_vbuf_destroy_vertex_elements(struct u_vbuf *mgr,
                                     struct u_vbuf_elements *ve)
 {
    FREE(ve);
 }
 
-void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
+void u_vbuf_set_vertex_buffers(struct u_vbuf *mgrb,
                                unsigned count,
                                const struct pipe_vertex_buffer *bufs)
 {
@@ -539,7 +539,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
    mgr->b.nr_real_vertex_buffers = count;
 }
 
-void u_vbuf_set_index_buffer(struct u_vbuf_mgr *mgr,
+void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
                              const struct pipe_index_buffer *ib)
 {
    if (ib && ib->buffer) {
@@ -636,7 +636,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    }
 }
 
-unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf_mgr *mgrb)
+unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgrb)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    unsigned i, nr = mgr->ve->count;
@@ -816,7 +816,7 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
 }
 
 enum u_vbuf_return_flags
-u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
+u_vbuf_draw_begin(struct u_vbuf *mgrb,
                   const struct pipe_draw_info *info)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
@@ -858,7 +858,7 @@ u_vbuf_draw_begin(struct u_vbuf_mgr *mgrb,
    return U_VBUF_BUFFERS_UPDATED;
 }
 
-void u_vbuf_draw_end(struct u_vbuf_mgr *mgrb)
+void u_vbuf_draw_end(struct u_vbuf *mgrb)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
 
