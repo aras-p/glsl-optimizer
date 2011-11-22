@@ -646,6 +646,54 @@ static void store_texel_argb8888_rev(struct swrast_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_RGBX8888 ******************************************************/
+
+/* Fetch texel from 1D, 2D or 3D rgbx8888 texture, return 4 GLfloats */
+static void FETCH(f_rgbx8888)( const struct swrast_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[ACOMP] = 1.0f;
+}
+
+#if DIM == 3
+static void store_texel_rgbx8888(struct swrast_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 0xff);
+}
+#endif
+
+
+/* MESA_FORMAT_RGBX888_REV ***************************************************/
+
+/* Fetch texel from 1D, 2D or 3D rgbx8888_rev texture, return 4 GLchans */
+static void FETCH(f_rgbx8888_rev)( const struct swrast_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[ACOMP] = 1.0f;
+}
+
+#if DIM == 3
+static void store_texel_rgbx8888_rev(struct swrast_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 0xff);
+}
+#endif
+
+
 /* MESA_FORMAT_XRGB8888 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D xrgb8888 texture, return 4 GLchans */

@@ -123,6 +123,24 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_RGBX8888,        /* Name */
+      "MESA_FORMAT_RGBX8888",      /* StrName */
+      GL_RGB,                      /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_RGBX8888_REV,    /* Name */
+      "MESA_FORMAT_RGBX8888_REV",  /* StrName */
+      GL_RGB,                      /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      8, 8, 8, 0,                  /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 4                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_XRGB8888,        /* Name */
       "MESA_FORMAT_XRGB8888",      /* StrName */
       GL_RGB,                      /* BaseFormat */
@@ -1987,6 +2005,8 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_RGBA8888_REV:
    case MESA_FORMAT_ARGB8888:
    case MESA_FORMAT_ARGB8888_REV:
+   case MESA_FORMAT_RGBX8888:
+   case MESA_FORMAT_RGBX8888_REV:
    case MESA_FORMAT_XRGB8888:
    case MESA_FORMAT_XRGB8888_REV:
       *datatype = GL_UNSIGNED_BYTE;
@@ -2491,6 +2511,10 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_ARGB8888_REV:
       return ((format == GL_BGRA && (type == GL_UNSIGNED_INT_8_8_8_8 ||
 				     (type == GL_UNSIGNED_BYTE && !littleEndian))));
+
+   case MESA_FORMAT_RGBX8888:
+   case MESA_FORMAT_RGBX8888_REV:
+      return GL_FALSE;
 
    case MESA_FORMAT_XRGB8888:
    case MESA_FORMAT_XRGB8888_REV:

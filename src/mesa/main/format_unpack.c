@@ -113,6 +113,32 @@ unpack_ARGB8888_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
+unpack_RGBX8888(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = UBYTE_TO_FLOAT( (s[i] >> 24)        );
+      dst[i][GCOMP] = UBYTE_TO_FLOAT( (s[i] >> 16) & 0xff );
+      dst[i][BCOMP] = UBYTE_TO_FLOAT( (s[i] >>  8) & 0xff );
+      dst[i][ACOMP] = 1.0f;
+   }
+}
+
+static void
+unpack_RGBX8888_REV(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = UBYTE_TO_FLOAT( (s[i]      ) & 0xff );
+      dst[i][GCOMP] = UBYTE_TO_FLOAT( (s[i] >>  8) & 0xff );
+      dst[i][BCOMP] = UBYTE_TO_FLOAT( (s[i] >> 16) & 0xff );
+      dst[i][ACOMP] = 1.0f;
+   }
+}
+
+static void
 unpack_XRGB8888(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
@@ -1405,6 +1431,8 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_RGBA8888_REV] = unpack_RGBA8888_REV;
       table[MESA_FORMAT_ARGB8888] = unpack_ARGB8888;
       table[MESA_FORMAT_ARGB8888_REV] = unpack_ARGB8888_REV;
+      table[MESA_FORMAT_RGBX8888] = unpack_RGBX8888;
+      table[MESA_FORMAT_RGBX8888_REV] = unpack_RGBX8888_REV;
       table[MESA_FORMAT_XRGB8888] = unpack_XRGB8888;
       table[MESA_FORMAT_XRGB8888_REV] = unpack_XRGB8888_REV;
       table[MESA_FORMAT_RGB888] = unpack_RGB888;
