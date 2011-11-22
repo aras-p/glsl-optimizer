@@ -39,13 +39,14 @@ static unsigned translate_format(enum pipe_format format)
 {
    switch (format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
       return COLOR_BUF_ARGB8888;
    case PIPE_FORMAT_B5G6R5_UNORM:
       return COLOR_BUF_RGB565;
    case PIPE_FORMAT_B5G5R5A1_UNORM:
       return COLOR_BUF_ARGB1555;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      return COLOR_BUF_ARGB8888;
    case PIPE_FORMAT_B4G4R4A4_UNORM:
       return COLOR_BUF_ARGB4444;
    case PIPE_FORMAT_B10G10R10A2_UNORM:
@@ -168,6 +169,8 @@ static const struct
    uint hw_swizzle;
 } fixup_formats[] = {
    { PIPE_FORMAT_R8G8B8A8_UNORM, 0x21030000 /* BGRA */},
+   { PIPE_FORMAT_B8G8R8X8_UNORM, 0x01250000 /* RGBX */},
+   { PIPE_FORMAT_R8G8B8X8_UNORM, 0x21050000 /* BGRX */},
    { PIPE_FORMAT_L8_UNORM,       0x00030000 /* RRRA */},
    { PIPE_FORMAT_I8_UNORM,       0x00030000 /* RRRA */},
    { PIPE_FORMAT_A8_UNORM,       0x33330000 /* AAAA */},
