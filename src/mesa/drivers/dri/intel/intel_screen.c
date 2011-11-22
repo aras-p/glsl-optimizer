@@ -86,6 +86,7 @@ const GLuint __driNConfigOptions = 11;
 #include "intel_bufmgr.h"
 #include "intel_chipset.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_screen.h"
 #include "intel_tex.h"
 #include "intel_regions.h"
@@ -201,7 +202,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    image->format = rb->Format;
    image->data_type = rb->DataType;
    image->data = loaderPrivate;
-   intel_region_reference(&image->region, irb->region);
+   intel_region_reference(&image->region, irb->mt->region);
 
    return image;
 }
@@ -679,13 +680,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->gen = 2;
    }
 
-   /*
-    * FIXME: The hiz and separate stencil fields need updating once the
-    * FIXME: features are completely implemented for a given chipset.
-    */
-   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 7;
+   intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-   intelScreen->hw_has_hiz = false;
+   intelScreen->hw_has_hiz = intelScreen->gen == 6; /* Not yet for gen7. */
    intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
 
    intel_override_hiz(intelScreen);

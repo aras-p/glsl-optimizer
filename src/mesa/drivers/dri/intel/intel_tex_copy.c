@@ -71,6 +71,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
+   struct intel_region *region;
    const GLenum internalFormat = intelImage->base.Base.InternalFormat;
    bool copy_supported = false;
    bool copy_supported_with_alpha_override = false;
@@ -78,11 +79,14 @@ intel_copy_texsubimage(struct intel_context *intel,
    intel_prepare_render(intel);
 
    irb = get_teximage_readbuffer(intel, internalFormat);
-   if (!intelImage->mt || !irb || !irb->region) {
+   if (!intelImage->mt || !irb || !irb->mt) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, irb, internalFormat);
       return false;
+   } else {
+      region = irb->mt->region;
+      assert(region);
    }
 
    copy_supported = intelImage->base.Base.TexFormat == irb->Base.Format;
@@ -127,19 +131,19 @@ intel_copy_texsubimage(struct intel_context *intel,
       if (ctx->ReadBuffer->Name == 0) {
 	 /* Flip vertical orientation for system framebuffers */
 	 y = ctx->ReadBuffer->Height - (y + height);
-	 src_pitch = -irb->region->pitch;
+	 src_pitch = -region->pitch;
       } else {
 	 /* reading from a FBO, y is already oriented the way we like */
-	 src_pitch = irb->region->pitch;
+	 src_pitch = region->pitch;
       }
 
       /* blit from src buffer to texture */
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
-			     irb->region->bo,
+			     region->bo,
 			     0,
-			     irb->region->tiling,
+			     region->tiling,
 			     intelImage->mt->region->pitch,
 			     intelImage->mt->region->bo,
 			     0,

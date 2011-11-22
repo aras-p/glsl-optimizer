@@ -28,7 +28,10 @@
 #ifndef INTEL_MIPMAP_TREE_H
 #define INTEL_MIPMAP_TREE_H
 
+#include <assert.h>
+
 #include "intel_regions.h"
+#include "intel_resolve_map.h"
 
 /* A layer on top of the intel_regions code which adds:
  *
@@ -56,6 +59,7 @@
  * temporary system buffers.
  */
 
+struct intel_resolve_map;
 struct intel_texture_image;
 
 /**
@@ -69,22 +73,44 @@ struct intel_mipmap_level
    GLuint level_y;
    GLuint width;
    GLuint height;
-   /** Depth of the mipmap at this level: 1 for 1D/2D/CUBE, n for 3D. */
-   GLuint depth;
-   /** Number of images at this level: 1 for 1D/2D, 6 for CUBE, depth for 3D */
-   GLuint nr_images;
 
-   /** @{
-    * offsets from level_[xy] to the image for each cube face or depth
-    * level.
+   /**
+    * \brief Number of 2D slices in this miplevel.
     *
-    * Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table.
+    * The exact semantics of depth varies according to the texture target:
+    *    - For GL_TEXTURE_CUBE_MAP, depth is 6.
+    *    - For GL_TEXTURE_2D_ARRAY, depth is the number of array slices. It is
+    *      identical for all miplevels in the texture.
+    *    - For GL_TEXTURE_3D, it is the texture's depth at this miplevel. Its
+    *      value, like width and height, varies with miplevel.
+    *    - For other texture types, depth is 1.
     */
-   GLuint *x_offset, *y_offset;
-   /** @} */
+   GLuint depth;
+
+   /**
+    * \brief List of 2D images in this mipmap level.
+    *
+    * This may be a list of cube faces, array slices in 2D array texture, or
+    * layers in a 3D texture. The list's length is \c depth.
+    */
+   struct intel_mipmap_slice {
+      /**
+       * \name Offset to slice
+       * \{
+       *
+       * Hardware formats are so diverse that that there is no unified way to
+       * compute the slice offsets, so we store them in this table.
+       *
+       * The (x, y) offset to slice \c s at level \c l relative the miptrees
+       * base address is
+       * \code
+       *     x = mt->level[l].slice[s].x_offset
+       *     y = mt->level[l].slice[s].y_offset
+       */
+      GLuint x_offset;
+      GLuint y_offset;
+      /** \} */
+   } *slice;
 };
 
 struct intel_mipmap_tree
@@ -93,6 +119,13 @@ struct intel_mipmap_tree
     */
    GLenum target;
    gl_format format;
+
+   /**
+    * The X offset of each image in the miptree must be aligned to this. See
+    * the "Alignment Unit Size" section of the BSpec.
+    */
+   unsigned int align_w;
+   unsigned int align_h; /**< \see align_w */
 
    GLuint first_level;
    GLuint last_level;
@@ -115,18 +148,37 @@ struct intel_mipmap_tree
    struct intel_region *region;
 
    /**
-    * This points to an auxillary hiz region if all of the following hold:
-    *     1. The texture has been attached to an FBO as a depthbuffer.
-    *     2. The texture format is hiz compatible.
-    *     3. The intel context supports hiz.
+    * \brief HiZ miptree
     *
-    * When a texture is attached to multiple FBO's, a separate renderbuffer
-    * wrapper is created for each attachment. This necessitates storing the
-    * hiz region in the texture itself instead of the renderbuffer wrapper.
+    * This is non-null only if HiZ is enabled for this miptree.
     *
-    * \see intel_fbo.c:intel_wrap_texture()
+    * \see intel_miptree_alloc_hiz()
     */
-   struct intel_region *hiz_region;
+   struct intel_mipmap_tree *hiz_mt;
+
+   /**
+    * \brief Map of miptree slices to needed resolves.
+    *
+    * This is used only when the miptree has a child HiZ miptree.
+    *
+    * Let \c mt be a depth miptree with HiZ enabled. Then the resolve map is
+    * \c mt->hiz_map. The resolve map of the child HiZ miptree, \c
+    * mt->hiz_mt->hiz_map, is unused.
+    */
+   struct intel_resolve_map hiz_map;
+
+   /**
+    * \brief Stencil miptree for depthstencil textures.
+    *
+    * This miptree is used for depthstencil textures that require separate
+    * stencil. The stencil miptree's data is the golden copy of the
+    * parent miptree's stencil bits. When necessary, we scatter/gather the
+    * stencil bits between the parent miptree and the stencil miptree.
+    *
+    * \see intel_miptree_s8z24_scatter()
+    * \see intel_miptree_s8z24_gather()
+    */
+   struct intel_mipmap_tree *stencil_mt;
 
    /* These are also refcounted:
     */
@@ -150,6 +202,32 @@ intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
 				gl_format format,
 				struct intel_region *region);
+
+/**
+ * Create a miptree appropriate as the storage for a non-texture renderbuffer.
+ * The miptree has the following properties:
+ *     - The target is GL_TEXTURE_2D.
+ *     - There are no levels other than the base level 0.
+ *     - Depth is 1.
+ */
+struct intel_mipmap_tree*
+intel_miptree_create_for_renderbuffer(struct intel_context *intel,
+                                      gl_format format,
+                                      uint32_t tiling,
+                                      uint32_t cpp,
+                                      uint32_t width,
+                                      uint32_t height);
+
+/** \brief Assert that the level and layer are valid for the miptree. */
+static inline void
+intel_miptree_check_level_layer(struct intel_mipmap_tree *mt,
+                                uint32_t level,
+                                uint32_t layer)
+{
+   assert(level >= mt->first_level);
+   assert(level <= mt->last_level);
+   assert(layer < mt->level[level].depth);
+}
 
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
@@ -177,7 +255,6 @@ intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
 
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,
-                                  GLuint nr_images,
                                   GLuint x, GLuint y,
                                   GLuint w, GLuint h, GLuint d);
 
@@ -189,6 +266,96 @@ void
 intel_miptree_copy_teximage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
                             struct intel_mipmap_tree *dst_mt);
+
+/**
+ * Copy the stencil data from \c mt->stencil_mt->region to \c mt->region for
+ * the given miptree slice.
+ *
+ * \see intel_mipmap_tree::stencil_mt
+ */
+void
+intel_miptree_s8z24_scatter(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt,
+                            uint32_t level,
+                            uint32_t slice);
+
+/**
+ * Copy the stencil data in \c mt->stencil_mt->region to \c mt->region for the
+ * given miptree slice.
+ *
+ * \see intel_mipmap_tree::stencil_mt
+ */
+void
+intel_miptree_s8z24_gather(struct intel_context *intel,
+                           struct intel_mipmap_tree *mt,
+                           uint32_t level,
+                           uint32_t layer);
+
+/**
+ * \name Miptree HiZ functions
+ * \{
+ *
+ * It is safe to call the "slice_set_need_resolve" and "slice_resolve"
+ * functions on a miptree without HiZ. In that case, each function is a no-op.
+ */
+
+/**
+ * \brief Allocate the miptree's embedded HiZ miptree.
+ * \see intel_mipmap_tree:hiz_mt
+ * \return false if allocation failed
+ */
+
+bool
+intel_miptree_alloc_hiz(struct intel_context *intel,
+			struct intel_mipmap_tree *mt);
+
+void
+intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
+                                          uint32_t level,
+					  uint32_t depth);
+void
+intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
+                                            uint32_t level,
+					    uint32_t depth);
+void
+intel_miptree_all_slices_set_need_hiz_resolve(struct intel_mipmap_tree *mt);
+
+void
+intel_miptree_all_slices_set_need_depth_resolve(struct intel_mipmap_tree *mt);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_slice_resolve_hiz(struct intel_context *intel,
+				struct intel_mipmap_tree *mt,
+				unsigned int level,
+				unsigned int depth);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_slice_resolve_depth(struct intel_context *intel,
+				  struct intel_mipmap_tree *mt,
+				  unsigned int level,
+				  unsigned int depth);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
+				     struct intel_mipmap_tree *mt);
+
+/**
+ * \return false if no resolve was needed
+ */
+bool
+intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
+				       struct intel_mipmap_tree *mt);
+
+/**\}*/
 
 /* i915_mipmap_tree.c:
  */

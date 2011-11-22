@@ -166,10 +166,15 @@ struct intel_context
        *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
        * \{
        */
-      void (*hiz_resolve_depthbuffer)(struct intel_context *intel,
-				      struct intel_region *depth_region);
-      void (*hiz_resolve_hizbuffer)(struct intel_context *intel,
-				    struct intel_region *depth_region);
+      void (*resolve_hiz_slice)(struct intel_context *intel,
+				struct intel_mipmap_tree *mt,
+				uint32_t level,
+				uint32_t layer);
+
+      void (*resolve_depth_slice)(struct intel_context *intel,
+				  struct intel_mipmap_tree *mt,
+				  uint32_t level,
+				  uint32_t layer);
       /** \} */
 
       /**

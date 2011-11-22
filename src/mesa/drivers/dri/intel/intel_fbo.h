@@ -35,6 +35,7 @@
 #include "intel_screen.h"
 
 struct intel_context;
+struct intel_mipmap_tree;
 struct intel_texture_image;
 
 /**
@@ -43,14 +44,29 @@ struct intel_texture_image;
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct intel_region *region;
+   struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
    drm_intel_bo *map_bo;
+
    void *map_buffer;
    GLuint map_x, map_y, map_w, map_h;
    GLbitfield map_mode;
 
-   /** Only used by depth renderbuffers for which HiZ is enabled. */
-   struct intel_region *hiz_region;
+   /**
+    * \name Miptree view
+    * \{
+    *
+    * Multiple renderbuffers may simultaneously wrap a single texture and each
+    * provide a different view into that texture. The fields below indicate
+    * which miptree slice is wrapped by this renderbuffer.  The fields' values
+    * are consistent with the 'level' and 'layer' parameters of
+    * glFramebufferTextureLayer().
+    *
+    * For renderbuffers not created with glFramebufferTexture*(), mt_level and
+    * mt_layer are 0.
+    */
+   unsigned int mt_level;
+   unsigned int mt_layer;
+   /** \} */
 
    /**
     * \name Packed depth/stencil unwrappers
@@ -134,28 +150,8 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    return irb;
 }
 
-/**
- * If the framebuffer has a depth buffer attached, then return its HiZ region.
- * The HiZ region may be null.
- */
-static INLINE struct intel_region*
-intel_framebuffer_get_hiz_region(struct gl_framebuffer *fb)
-{
-   struct intel_renderbuffer *rb = NULL;
-   if (fb)
-      rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-
-   if (rb)
-      return rb->hiz_region;
-   else
-      return NULL;
-}
-
-static INLINE bool
-intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
-{
-   return intel_framebuffer_get_hiz_region(fb) != NULL;
-}
+bool
+intel_framebuffer_has_hiz(struct gl_framebuffer *fb);
 
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format);
@@ -179,23 +175,45 @@ extern void
 intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
 void
-intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb,
-				   struct intel_texture_image *intel_image,
-				   int zoffset);
+intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
 uint32_t
 intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_x,
 				uint32_t *tile_y);
 
-static INLINE struct intel_region *
-intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
-{
-   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-   if (irb)
-      return irb->region;
-   else
-      return NULL;
-}
+struct intel_region*
+intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
+
+void
+intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb);
+
+void
+intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb);
+
+
+/**
+ * \brief Perform a HiZ resolve on the renderbuffer.
+ *
+ * It is safe to call this function on a renderbuffer without HiZ. In that
+ * case, the function is a no-op.
+ *
+ * \return false if no resolve was needed
+ */
+bool
+intel_renderbuffer_resolve_hiz(struct intel_context *intel,
+			       struct intel_renderbuffer *irb);
+
+/**
+ * \brief Perform a depth resolve on the renderbuffer.
+ *
+ * It is safe to call this function on a renderbuffer without HiZ. In that
+ * case, the function is a no-op.
+ *
+ * \return false if no resolve was needed
+ */
+bool
+intel_renderbuffer_resolve_depth(struct intel_context *intel,
+				 struct intel_renderbuffer *irb);
 
 #endif /* INTEL_FBO_H */

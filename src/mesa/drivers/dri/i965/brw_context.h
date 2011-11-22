@@ -144,6 +144,7 @@ enum brw_state_id {
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
+   BRW_STATE_HIZ,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -172,6 +173,7 @@ enum brw_state_id {
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
+#define BRW_NEW_HIZ			(1 << BRW_STATE_HIZ)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -899,6 +901,41 @@ struct brw_context
       enum state_struct_type type;
    } *state_batch_list;
    int state_batch_count;
+
+   /**
+    * \brief State needed to execute HiZ meta-ops
+    *
+    * All fields except \c op are initialized by gen6_hiz_init().
+    */
+   struct brw_hiz_state {
+      /**
+       * \brief Indicates which HiZ operation is in progress.
+       *
+       * See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
+       *   - 7.5.3.1 Depth Buffer Clear
+       *   - 7.5.3.2 Depth Buffer Resolve
+       *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
+       */
+      enum brw_hiz_op {
+	 BRW_HIZ_OP_NONE = 0,
+	 BRW_HIZ_OP_DEPTH_CLEAR,
+	 BRW_HIZ_OP_DEPTH_RESOLVE,
+	 BRW_HIZ_OP_HIZ_RESOLVE,
+      } op;
+
+      /** \brief Shader state */
+      struct {
+	 GLuint program;
+	 GLuint position_vbo;
+	 GLint position_location;
+      } shader;
+
+      /** \brief VAO for the rectangle primitive's vertices. */
+      GLuint vao;
+
+      GLuint fbo;
+      struct gl_renderbuffer *depth_rb;
+   } hiz;
 };
 
 

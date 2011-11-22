@@ -39,6 +39,7 @@
 
 #include "intel_buffers.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_screen.h"
 #include "intel_span.h"
 #include "intel_regions.h"
@@ -58,7 +59,7 @@ intel_set_span_functions(struct intel_context *intel,
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int pitch = rb->RowStride * irb->region->cpp;			\
+   int pitch = rb->RowStride * irb->mt->region->cpp;			\
    void *buf = rb->Data;						\
    GLuint p;								\
    (void) p;
@@ -113,40 +114,6 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG(x) intel_##x##_A8
 #define TAG2(x,y) intel_##x##y##_A8
 #include "spantmp2.h"
-
-/* ------------------------------------------------------------------------- */
-/* s8 stencil span and pixel functions                                       */
-/* ------------------------------------------------------------------------- */
-
-/*
- * HAVE_HW_STENCIL_SPANS determines if stencil buffer read/writes are done with
- * memcpy or for loops. Since the stencil buffer is interleaved, memcpy won't
- * work.
- */
-#define HAVE_HW_STENCIL_SPANS 0
-
-#define LOCAL_STENCIL_VARS						\
-   (void) ctx;								\
-   int minx = 0;							\
-   int miny = 0;							\
-   int maxx = rb->Width;						\
-   int maxy = rb->Height;						\
-									\
-   /*									\
-    * Here we ignore rb->Data and rb->RowStride as set by		\
-    * intelSpanRenderStart. Since intel_offset_S8 decodes the W tile	\
-    * manually, the region's *real* base address and stride is		\
-    * required.								\
-    */									\
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   uint8_t *buf = irb->region->bo->virtual;				\
-   unsigned stride = irb->region->pitch;				\
-   bool flip = rb->Name == 0;						\
-   int y_scale = flip ? -1 : 1;						\
-   int y_bias = flip ? (rb->Height - 1) : 0;				\
-
-#undef Y_FLIP
-#define Y_FLIP(y) (y_scale * (y) + y_bias)
 
 /**
  * \brief Get pointer offset into stencil buffer.
@@ -210,13 +177,6 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
    return u;
 }
 
-#define WRITE_STENCIL(x, y, src)  buf[intel_offset_S8(stride, x, y)] = src;
-#define READ_STENCIL(dest, x, y) dest = buf[intel_offset_S8(stride, x, y)]
-#define TAG(x) intel_##x##_S8
-#include "stenciltmp.h"
-
-/* ------------------------------------------------------------------------- */
-
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
@@ -228,10 +188,13 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (!irb)
       return;
 
-   if (irb->wrapped_depth)
-      intel_renderbuffer_map(intel, irb->wrapped_depth);
-   if (irb->wrapped_stencil)
-      intel_renderbuffer_map(intel, irb->wrapped_stencil);
+   if (rb->Data) {
+      /* Renderbuffer is already mapped. This usually happens when a single
+       * buffer is attached to the framebuffer's depth and stencil attachment
+       * points.
+       */
+      return;
+   }
 
    ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
 			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
@@ -252,10 +215,13 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (!irb)
       return;
 
-   if (irb->wrapped_depth)
-      intel_renderbuffer_unmap(intel, irb->wrapped_depth);
-   if (irb->wrapped_stencil)
-      intel_renderbuffer_unmap(intel, irb->wrapped_stencil);
+   if (!rb->Data) {
+      /* Renderbuffer is already unmapped. This usually happens when a single
+       * buffer is attached to the framebuffer's depth and stencil attachment
+       * points.
+       */
+      return;
+   }
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
@@ -288,6 +254,66 @@ intel_framebuffer_unmap(struct intel_context *intel, struct gl_framebuffer *fb)
 }
 
 /**
+ * Resolve all buffers that will be mapped by intelSpanRenderStart().
+ *
+ * Resolve the depth buffer of each enabled texture and of the read and draw
+ * buffers.
+ *
+ * (Note: In the future this will also perform MSAA resolves.)
+ */
+static void
+intel_span_resolve_buffers(struct intel_context *intel)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct intel_renderbuffer *draw_irb;
+   struct intel_renderbuffer *read_irb;
+   struct intel_texture_object *tex_obj;
+
+   /* Resolve depth buffer of each enabled texture. */
+   for (int i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
+      intel_finalize_mipmap_tree(intel, i);
+      if (!tex_obj || !tex_obj->mt)
+	 continue;
+      intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
+   }
+
+   /* Resolve each attached depth buffer. */
+   draw_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
+   read_irb = intel_get_renderbuffer(ctx->ReadBuffer, BUFFER_DEPTH);
+   if (draw_irb)
+      intel_renderbuffer_resolve_depth(intel, draw_irb);
+   if (read_irb != draw_irb && read_irb)
+      intel_renderbuffer_resolve_depth(intel, read_irb);
+}
+
+/**
+ * Map the regions needed by intelSpanRenderStart().
+ */
+static void
+intel_span_map_buffers(struct intel_context *intel)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct intel_texture_object *tex_obj;
+
+   for (int i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
+      intel_finalize_mipmap_tree(intel, i);
+      intel_tex_map_images(intel, tex_obj,
+			   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+   }
+
+   intel_framebuffer_map(intel, ctx->DrawBuffer);
+   if (ctx->ReadBuffer != ctx->DrawBuffer) {
+      intel_framebuffer_map(intel, ctx->ReadBuffer);
+   }
+}
+
+/**
  * Prepare for software rendering.  Map current read/draw framebuffers'
  * renderbuffes and all currently bound texture objects.
  *
@@ -297,25 +323,12 @@ void
 intelSpanRenderStart(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLuint i;
 
-   intel_flush(&intel->ctx);
+   intel_flush(ctx);
    intel_prepare_render(intel);
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-
-         intel_finalize_mipmap_tree(intel, i);
-         intel_tex_map_images(intel, intel_texture_object(texObj),
-                              GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-      }
-   }
-
-   intel_framebuffer_map(intel, ctx->DrawBuffer);
-   if (ctx->ReadBuffer != ctx->DrawBuffer) {
-      intel_framebuffer_map(intel, ctx->ReadBuffer);
-   }
+   intel_span_resolve_buffers(intel);
+   intel_flush(ctx);
+   intel_span_map_buffers(intel);
 }
 
 /**
@@ -405,7 +418,7 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8] = intel_InitStencilPointers_S8,
+   [MESA_FORMAT_S8] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R8] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_RG88] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,

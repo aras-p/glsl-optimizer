@@ -53,6 +53,7 @@
 #include "intel_fbo.h"
 #include "intel_bufmgr.h"
 #include "intel_screen.h"
+#include "intel_mipmap_tree.h"
 
 #include "utils.h"
 #include "../glsl/ralloc.h"
@@ -1153,7 +1154,9 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
    if (!rb)
       return;
 
-   if (rb->region && rb->region->name == buffer->name)
+   if (rb->mt &&
+       rb->mt->region &&
+       rb->mt->region->name == buffer->name)
       return;
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
@@ -1167,23 +1170,34 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
    if (buffer->attachment == __DRI_BUFFER_STENCIL) {
       struct intel_renderbuffer *depth_rb =
 	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
-      identify_depth_and_stencil = depth_rb && depth_rb->region;
+      identify_depth_and_stencil = depth_rb && depth_rb->mt;
    }
 
    if (identify_depth_and_stencil) {
       if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
 	 fprintf(stderr, "(reusing depth buffer as stencil)\n");
       }
-      intel_region_reference(&rb->region, depth_rb->region);
+      intel_miptree_reference(&rb->mt, depth_rb->mt);
    } else {
-      intel_region_release(&rb->region);
-      rb->region = intel_region_alloc_for_handle(intel->intelScreen,
+      intel_miptree_release(&rb->mt);
+      struct intel_region *region =
+                   intel_region_alloc_for_handle(intel->intelScreen,
 						 buffer->cpp,
 						 drawable->w,
 						 drawable->h,
 						 buffer->pitch / buffer->cpp,
 						 buffer->name,
 						 buffer_name);
+      if (!region)
+	 return;
+
+      rb->mt = intel_miptree_create_for_region(intel,
+                                               GL_TEXTURE_2D,
+                                               rb->Base.Format,
+                                               region);
+      intel_region_release(&region);
+      if (!rb->mt)
+	 return;
    }
 
    if (buffer->attachment == __DRI_BUFFER_DEPTH_STENCIL) {
@@ -1196,7 +1210,7 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
       /* The rb passed in is the BUFFER_DEPTH attachment, and we need
        * to associate this region to BUFFER_STENCIL as well.
        */
-      intel_region_reference(&stencil_rb->region, rb->region);
+      intel_miptree_reference(&stencil_rb->mt, rb->mt);
    }
 }
 
@@ -1338,11 +1352,13 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 
    /* If the renderbuffer's and DRIbuffer's regions match, then continue. */
    if ((buffer->attachment != __DRI_BUFFER_HIZ &&
-	rb->region &&
-	rb->region->name == buffer->name) ||
+	rb->mt &&
+	rb->mt->region &&
+	rb->mt->region->name == buffer->name) ||
        (buffer->attachment == __DRI_BUFFER_HIZ &&
-	rb->hiz_region &&
-	rb->hiz_region->name == buffer->name)) {
+	rb->mt &&
+	rb->mt->hiz_mt &&
+	rb->mt->hiz_mt->region->name == buffer->name)) {
       return;
    }
 
@@ -1371,6 +1387,15 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
        buffer_height = drawable->h;
    }
 
+   /* Release the buffer storage now in case we have to return early
+    * due to failure to allocate new storage.
+    */
+   if (buffer->attachment == __DRI_BUFFER_HIZ) {
+      intel_miptree_release(&rb->mt->hiz_mt);
+   } else {
+      intel_miptree_release(&rb->mt);
+   }
+
    struct intel_region *region =
       intel_region_alloc_for_handle(intel->intelScreen,
 				    buffer->cpp,
@@ -1379,14 +1404,22 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 				    buffer->pitch / buffer->cpp,
 				    buffer->name,
 				    buffer_name);
+   if (!region)
+      return;
 
-   if (buffer->attachment == __DRI_BUFFER_HIZ) {
-      intel_region_reference(&rb->hiz_region, region);
-   } else {
-      intel_region_reference(&rb->region, region);
-   }
-
+   struct intel_mipmap_tree *mt =
+      intel_miptree_create_for_region(intel,
+				      GL_TEXTURE_2D,
+				      rb->Base.Format,
+				      region);
    intel_region_release(&region);
+
+   /* Associate buffer with new storage. */
+   if (buffer->attachment == __DRI_BUFFER_HIZ) {
+      rb->mt->hiz_mt = mt;
+   } else {
+      rb->mt = mt;
+   }
 }
 
 /**
@@ -1463,7 +1496,7 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
       assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
       assert(depth_rb && depth_rb->Base.Format == MESA_FORMAT_X8_Z24);
 
-      if (stencil_rb->region->tiling == I915_TILING_NONE) {
+      if (stencil_rb->mt->region->tiling == I915_TILING_NONE) {
 	 /*
 	  * The stencil buffer is actually W tiled. The region's tiling is
 	  * I915_TILING_NONE, however, because the GTT is incapable of W
@@ -1544,11 +1577,21 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
 					     / depth_stencil_buffer->cpp,
 					  depth_stencil_buffer->name,
 					  "dri2 depth / stencil buffer");
-	 intel_region_reference(&intel_get_renderbuffer(fb, BUFFER_DEPTH)->region,
-				region);
-	 intel_region_reference(&intel_get_renderbuffer(fb, BUFFER_STENCIL)->region,
-				region);
+	 if (!region)
+	    return;
+
+	 struct intel_mipmap_tree *mt =
+	       intel_miptree_create_for_region(intel,
+	                                       GL_TEXTURE_2D,
+	                                       depth_stencil_rb->Base.Format,
+	                                       region);
 	 intel_region_release(&region);
+	 if (!mt)
+	    return;
+
+	 intel_miptree_reference(&intel_get_renderbuffer(fb, BUFFER_DEPTH)->mt, mt);
+	 intel_miptree_reference(&intel_get_renderbuffer(fb, BUFFER_STENCIL)->mt, mt);
+	 intel_miptree_release(&mt);
       }
    }
 

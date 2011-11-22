@@ -267,13 +267,18 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       int x1, y1, x2, y2;
       uint32_t clear_val;
       uint32_t BR13, CMD;
+      struct intel_region *region;
       int pitch, cpp;
       drm_intel_bo *aper_array[2];
 
       mask &= ~(1 << buf);
 
       irb = intel_get_renderbuffer(fb, buf);
-      if (irb == NULL || irb->region == NULL || irb->region->bo == NULL) {
+      if (irb && irb->mt) {
+	 region = irb->mt->region;
+	 assert(region);
+	 assert(region->bo);
+      } else {
          fail_mask |= 1 << buf;
          continue;
       }
@@ -284,12 +289,12 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       x2 = cx + cw + irb->draw_x;
       y2 = cy + ch + irb->draw_y;
 
-      pitch = irb->region->pitch;
-      cpp = irb->region->cpp;
+      pitch = region->pitch;
+      cpp = region->cpp;
 
       DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
 	  __FUNCTION__,
-	  irb->region->bo, (pitch * cpp),
+	  region->bo, (pitch * cpp),
 	  x1, y1, x2 - x1, y2 - y1);
 
       BR13 = 0xf0 << 16;
@@ -305,10 +310,10 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	 }
       }
 
-      assert(irb->region->tiling != I915_TILING_Y);
+      assert(region->tiling != I915_TILING_Y);
 
 #ifndef I915
-      if (irb->region->tiling != I915_TILING_NONE) {
+      if (region->tiling != I915_TILING_NONE) {
 	 CMD |= XY_DST_TILED;
 	 pitch /= 4;
       }
@@ -357,7 +362,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
       /* do space check before going any further */
       aper_array[0] = intel->batch.bo;
-      aper_array[1] = irb->region->bo;
+      aper_array[1] = region->bo;
 
       if (drm_intel_bufmgr_check_aperture_space(aper_array,
 						ARRAY_SIZE(aper_array)) != 0) {
@@ -369,7 +374,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       OUT_BATCH(BR13);
       OUT_BATCH((y1 << 16) | x1);
       OUT_BATCH((y2 << 16) | x2);
-      OUT_RELOC_FENCED(irb->region->bo,
+      OUT_RELOC_FENCED(region->bo,
 		       I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		       0);
       OUT_BATCH(clear_val);

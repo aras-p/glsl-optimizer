@@ -34,6 +34,7 @@
 
 #include "intel_context.h"
 #include "intel_buffers.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_fbo.h"
@@ -188,8 +189,8 @@ do_blit_copypixels(struct gl_context * ctx,
    dsty += draw_irb->draw_y;
 
    if (!intel_region_copy(intel,
-			  draw_irb->region, 0, dstx, dsty,
-			  read_irb->region, 0, srcx, srcy,
+			  draw_irb->mt->region, 0, dstx, dsty,
+			  read_irb->mt->region, 0, srcx, srcy,
 			  width, height, flip,
 			  ctx->Color.ColorLogicOpEnabled ?
 			  ctx->Color.LogicOp : GL_COPY)) {

@@ -69,11 +69,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
     */
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   if (intel->must_use_separate_stencil
-       && image->TexFormat == MESA_FORMAT_S8_Z24) {
-      intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
-   }
-
    /* Allocate the swrast_texture_image::ImageOffsets array now */
    switch (texobj->Target) {
    case GL_TEXTURE_3D:
@@ -107,11 +102,6 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
        */
       intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
 
-      if (intel->must_use_separate_stencil
-          && image->TexFormat == MESA_FORMAT_S8_Z24) {
-         intel_tex_image_s8z24_create_renderbuffers(intel, intel_image);
-      }
-
       DBG("%s: alloc obj %p level %d %dx%dx%d using new miptree %p\n",
           __FUNCTION__, texobj, image->Level,
           width, height, depth, intel_image->mt);
@@ -139,9 +129,6 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
       free(intelImage->base.ImageOffsets);
       intelImage->base.ImageOffsets = NULL;
    }
-
-   _mesa_reference_renderbuffer(&intelImage->depth_rb, NULL);
-   _mesa_reference_renderbuffer(&intelImage->stencil_rb, NULL);
 }
 
 /**
@@ -174,13 +161,19 @@ intel_map_texture_image(struct gl_context *ctx,
    assert(tex_image->TexObject->Target != GL_TEXTURE_1D_ARRAY ||
 	  h == 1);
 
-   if (intel_image->stencil_rb) {
-      /*
-       * The texture has packed depth/stencil format, but uses separate
-       * stencil. The texture's embedded stencil buffer contains the real
-       * stencil data, so copy that into the miptree.
+   if (mt->stencil_mt) {
+      /* The miptree has depthstencil format, but uses separate stencil. The
+       * embedded stencil miptree contains the real stencil data, so gather
+       * that into the depthstencil miptree.
+       *
+       * FIXME: Avoid the gather if the texture is mapped as write-only.
        */
-      intel_tex_image_s8z24_gather(intel, intel_image);
+      intel_miptree_s8z24_gather(intel, mt, tex_image->Level, slice);
+   }
+
+   intel_miptree_slice_resolve_depth(intel, mt, tex_image->Level, slice);
+   if (mode & GL_MAP_WRITE_BIT) {
+      intel_miptree_slice_set_needs_hiz_resolve(mt, tex_image->Level, slice);
    }
 
    /* For compressed formats, the stride is the number of bytes per
@@ -211,16 +204,19 @@ intel_unmap_texture_image(struct gl_context *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(tex_image);
+   struct intel_mipmap_tree *mt = intel_image->mt;
 
    intel_region_unmap(intel, intel_image->mt->region);
 
-   if (intel_image->stencil_rb) {
-      /*
-       * The texture has packed depth/stencil format, but uses separate
-       * stencil. The texture's embedded stencil buffer contains the real
-       * stencil data, so copy that into the miptree.
+   if (mt->stencil_mt) {
+      /* The miptree has depthstencil format, but uses separate stencil. The
+       * embedded stencil miptree must contain the real stencil data after
+       * unmapping, so copy it from the depthstencil miptree into the stencil
+       * miptree.
+       *
+       * FIXME: Avoid the scatter if the texture was mapped as read-only.
        */
-      intel_tex_image_s8z24_scatter(intel, intel_image);
+      intel_miptree_s8z24_scatter(intel, mt, tex_image->Level, slice);
    }
 }
 

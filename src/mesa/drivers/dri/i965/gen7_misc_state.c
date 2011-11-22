@@ -22,6 +22,7 @@
  */
 
 #include "intel_batchbuffer.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_fbo.h"
 #include "brw_context.h"
@@ -38,7 +39,7 @@ gen7_depth_format(struct brw_context *brw)
    struct intel_region *region = NULL;
 
    if (drb)
-      region = drb->region;
+      region = drb->mt->region;
    else
       return BRW_DEPTHFORMAT_D32_FLOAT;
 
@@ -78,7 +79,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       if (srb == NULL) {
 	 dw1 |= (BRW_SURFACE_NULL << 29);
       } else {
-	 struct intel_region *region = srb->region;
+	 struct intel_region *region = srb->mt->region;
 
 	 /* _NEW_STENCIL: enable stencil buffer writes */
 	 dw1 |= ((ctx->Stencil.WriteMask != 0) << 27);
@@ -98,7 +99,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
-      struct intel_region *region = drb->region;
+      struct intel_region *region = drb->mt->region;
       uint32_t tile_x, tile_y, offset;
 
       offset = intel_renderbuffer_tile_offsets(drb, &tile_x, &tile_y);
@@ -140,8 +141,8 @@ static void emit_depthbuffer(struct brw_context *brw)
    } else {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
-      OUT_BATCH(srb->region->pitch * srb->region->cpp - 1);
-      OUT_RELOC(srb->region->bo,
+      OUT_BATCH(srb->mt->region->pitch * srb->mt->region->cpp - 1);
+      OUT_RELOC(srb->mt->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		0);
       ADVANCE_BATCH();

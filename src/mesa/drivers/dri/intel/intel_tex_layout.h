@@ -38,7 +38,9 @@ static INLINE GLuint minify( GLuint d )
    return MAX2(1, d>>1);
 }
 
-extern void i945_miptree_layout_2d(struct intel_mipmap_tree *mt,
-				   int nr_images);
-void intel_get_texture_alignment_unit(gl_format format,
-				      unsigned int *w, unsigned int *h);
+extern void i945_miptree_layout_2d(struct intel_mipmap_tree *mt);
+
+void
+intel_get_texture_alignment_unit(struct intel_context *intel,
+				 gl_format format,
+				 unsigned int *w, unsigned int *h);

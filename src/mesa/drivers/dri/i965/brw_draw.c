@@ -44,6 +44,9 @@
 #include "brw_state.h"
 
 #include "intel_batchbuffer.h"
+#include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
+#include "intel_regions.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PRIMS
 
@@ -117,9 +120,16 @@ static void brw_set_prim(struct brw_context *brw,
 static void gen6_set_prim(struct brw_context *brw,
                           const struct _mesa_prim *prim)
 {
-   uint32_t hw_prim = prim_to_hw_prim[prim->mode];
+   uint32_t hw_prim;
 
    DBG("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
+
+   if (brw->hiz.op) {
+      assert(prim->mode == GL_TRIANGLES);
+      hw_prim = _3DPRIM_RECTLIST;
+   } else {
+      hw_prim = prim_to_hw_prim[prim->mode];
+   }
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
@@ -280,6 +290,93 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
 }
 
+/*
+ * \brief Resolve buffers before drawing.
+ *
+ * Resolve the depth buffer's HiZ buffer and resolve the depth buffer of each
+ * enabled depth texture.
+ *
+ * (In the future, this will also perform MSAA resolves).
+ */
+static void
+brw_predraw_resolve_buffers(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct intel_renderbuffer *depth_irb;
+   struct intel_texture_object *tex_obj;
+   bool did_resolve = false;
+
+   /* Avoid recursive HiZ op. */
+   if (brw->hiz.op) {
+      return;
+   }
+
+   /* Resolve the depth buffer's HiZ buffer. */
+   depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
+   if (depth_irb && depth_irb->mt) {
+      did_resolve |= intel_renderbuffer_resolve_hiz(intel, depth_irb);
+   }
+
+   /* Resolve depth buffer of each enabled depth texture. */
+   for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
+      if (!tex_obj || !tex_obj->mt)
+	 continue;
+      did_resolve |= intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
+   }
+
+   if (did_resolve) {
+      /* Call vbo_bind_array() to synchronize the vbo module's vertex
+       * attributes to the gl_context's.
+       *
+       * Details
+       * -------
+       * The vbo module tracks vertex attributes separately from the
+       * gl_context.  Specifically, the vbo module maintins vertex attributes
+       * in vbo_exec_context::array::inputs, which is synchronized with
+       * gl_context::Array::ArrayObj::VertexAttrib by vbo_bind_array().
+       * vbo_draw_arrays() calls vbo_bind_array() to perform the
+       * synchronization before calling the real draw call,
+       * vbo_context::draw_arrays.
+       *
+       * At this point (after performing a resolve meta-op but before calling
+       * vbo_bind_array), the gl_context's vertex attributes have been
+       * restored to their original state (that is, their state before the
+       * meta-op began), but the vbo module's vertex attribute are those used
+       * in the last meta-op. Therefore we must manually synchronize the two with
+       * vbo_bind_array() before continuing with the original draw command.
+       */
+      _mesa_update_state(ctx);
+      vbo_bind_arrays(ctx);
+      _mesa_update_state(ctx);
+   }
+}
+
+/**
+ * \brief Call this after drawing to mark which buffers need resolving
+ *
+ * If the depth buffer was written to and if it has an accompanying HiZ
+ * buffer, then mark that it needs a depth resolve.
+ *
+ * (In the future, this will also mark needed MSAA resolves).
+ */
+static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *depth_irb =
+	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
+
+   if (depth_irb &&
+       ctx->Depth.Mask &&
+       !brw->hiz.op) {
+      intel_renderbuffer_set_needs_depth_resolve(depth_irb);
+   }
+}
+
 /* May fail if out of video memory for texture or vbo upload, or on
  * fallback conditions.
  */
@@ -308,6 +405,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     * texture level other than level 0.
     */
    brw_validate_textures( brw );
+
+   /* Resolves must occur after updating state and finalizing textures but
+    * before setting up any hardware state for this draw call.
+    */
+   brw_predraw_resolve_buffers(brw);
 
    /* Bind all inputs, derive varying and size information:
     */
@@ -403,6 +505,7 @@ retry:
  out:
 
    brw_state_cache_check_size(brw);
+   brw_postdraw_set_buffers_need_resolve(brw);
 
    return retval;
 }
