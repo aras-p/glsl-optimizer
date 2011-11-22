@@ -210,12 +210,10 @@ void st_init_limits(struct st_context *st)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
    }
 
-   /* PIPE_CAP_MAX_FS_INPUTS specifies the number of COLORn + GENERICn inputs
-    * and is set in MaxNativeAttribs. It's always 2 colors + N generic
-    * attributes. The GLSL compiler never uses COLORn for varyings, so we
-    * subtract the 2 colors to get the maximum number of varyings (generic
-    * attributes) supported by a driver. */
-   c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_MAX_INPUTS) - 2;
+   /* PIPE_SHADER_CAP_MAX_INPUTS for the FS specifies the maximum number
+    * of inputs. It's always 2 colors + N generic inputs. */
+   c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
+                                            PIPE_SHADER_CAP_MAX_INPUTS);
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
 
    c->MinProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXEL_OFFSET);
