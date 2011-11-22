@@ -853,7 +853,6 @@ _mesa_is_stencil_format(GLenum format)
 {
    switch (format) {
       case GL_STENCIL_INDEX:
-      case GL_DEPTH_STENCIL:
          return GL_TRUE;
       default:
          return GL_FALSE;
