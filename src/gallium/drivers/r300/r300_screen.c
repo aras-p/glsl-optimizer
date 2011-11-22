@@ -148,12 +148,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         /* Render targets. */
         case PIPE_CAP_MAX_RENDER_TARGETS:
             return 4;
-
-        default:
-            debug_printf("r300: Warning: Unknown CAP %d in get_param.\n",
-                         param);
-            return 0;
     }
+    return 0;
 }
 
 static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, enum pipe_shader_cap param)
@@ -162,8 +158,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
    boolean is_r400 = r300screen->caps.is_r400;
    boolean is_r500 = r300screen->caps.is_r500;
 
-   switch (shader)
-    {
+   switch (shader) {
     case PIPE_SHADER_FRAGMENT:
         switch (param)
         {
@@ -251,7 +246,6 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
             return 0;
-        default:;
         }
         break;
     }
