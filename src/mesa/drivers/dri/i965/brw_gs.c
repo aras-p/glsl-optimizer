@@ -122,20 +122,6 @@ static void compile_gs_prog( struct brw_context *brw,
    ralloc_free(mem_ctx);
 }
 
-static const GLenum gs_prim[] = {
-   [_3DPRIM_POINTLIST]  = _3DPRIM_POINTLIST,
-   [_3DPRIM_LINELIST]   = _3DPRIM_LINELIST,
-   [_3DPRIM_LINELOOP]   = _3DPRIM_LINELOOP,
-   [_3DPRIM_LINESTRIP]  = _3DPRIM_LINELIST,
-   [_3DPRIM_TRILIST]    = _3DPRIM_TRILIST,
-   [_3DPRIM_TRISTRIP]   = _3DPRIM_TRILIST,
-   [_3DPRIM_TRIFAN]     = _3DPRIM_TRILIST,
-   [_3DPRIM_QUADLIST]   = _3DPRIM_QUADLIST,
-   [_3DPRIM_QUADSTRIP]  = _3DPRIM_QUADSTRIP,
-   [_3DPRIM_POLYGON]    = _3DPRIM_TRILIST,
-   [_3DPRIM_RECTLIST]   = _3DPRIM_RECTLIST,
-};
-
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
@@ -148,7 +134,7 @@ static void populate_key( struct brw_context *brw,
    key->attrs = brw->vs.prog_data->outputs_written;
 
    /* BRW_NEW_PRIMITIVE */
-   key->primitive = gs_prim[brw->primitive];
+   key->primitive = brw->primitive;
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
