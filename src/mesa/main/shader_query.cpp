@@ -107,8 +107,7 @@ _mesa_GetActiveAttribARB(GLhandleARB program, GLuint desired_index,
 
       if (var == NULL
 	  || var->mode != ir_var_in
-	  || var->location == -1
-	  || var->location < VERT_ATTRIB_GENERIC0)
+	  || var->location == -1)
 	 continue;
 
       if (current_index == desired_index) {
@@ -199,8 +198,7 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
 
       if (var == NULL
 	  || var->mode != ir_var_in
-	  || var->location == -1
-	  || var->location < VERT_ATTRIB_GENERIC0)
+	  || var->location == -1)
 	 continue;
 
       i++;
@@ -226,8 +224,7 @@ _mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
 
       if (var == NULL
 	  || var->mode != ir_var_in
-	  || var->location == -1
-	  || var->location < VERT_ATTRIB_GENERIC0)
+	  || var->location == -1)
 	 continue;
 
       const size_t len = strlen(var->name);
