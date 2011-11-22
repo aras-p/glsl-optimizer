@@ -665,6 +665,17 @@ static void precalc_tex( struct brw_wm_compile *c,
    struct prog_src_register coord;
    struct prog_dst_register tmpcoord = { 0 };
    const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+   struct prog_dst_register unswizzled_tmp;
+
+   /* If we are doing EXT_texture_swizzle, we need to write our result into a
+    * temporary, otherwise writemasking of the real dst could lose some of our
+    * channels.
+    */
+   if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
+      unswizzled_tmp = get_temp(c);
+   } else {
+      unswizzled_tmp = inst->DstReg;
+   }
 
    assert(unit < BRW_MAX_TEX_UNIT);
 
@@ -776,7 +787,6 @@ static void precalc_tex( struct brw_wm_compile *c,
 	    RGB.xyz = MAD UYV.xxz, C1,   UYV.y 
 	 RGB.y   = MAD UYV.z,   C1.w, RGB.y
       */
-      struct prog_dst_register dst = inst->DstReg;
       struct prog_dst_register tmp = get_temp(c);
       struct prog_src_register tmpsrc = src_reg_from_dst(tmp);
       struct prog_src_register C0 = search_or_add_const4f( c,  -.5, -.0625, -.5, 1.164 );
@@ -825,7 +835,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
       emit_op(c,
 	      OPCODE_MAD,
-	      dst_mask(dst, WRITEMASK_XYZ),
+	      dst_mask(unswizzled_tmp, WRITEMASK_XYZ),
 	      0,
 	      swap_uv?src_swizzle(tmpsrc, Z,Z,X,X):src_swizzle(tmpsrc, X,X,Z,Z),
 	      C1,
@@ -835,11 +845,11 @@ static void precalc_tex( struct brw_wm_compile *c,
        */
       emit_op(c,
 	      OPCODE_MAD,
-	      dst_mask(dst, WRITEMASK_Y),
+	      dst_mask(unswizzled_tmp, WRITEMASK_Y),
 	      0,
 	      src_swizzle1(tmpsrc, Z),
 	      src_swizzle1(C1, W),
-	      src_swizzle1(src_reg_from_dst(dst), Y));
+	      src_swizzle1(src_reg_from_dst(unswizzled_tmp), Y));
 
       release_temp(c, tmp);
    }
@@ -847,7 +857,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       /* ordinary RGBA tex instruction */
       emit_tex_op(c, 
                   OPCODE_TEX,
-                  inst->DstReg,
+                  unswizzled_tmp,
                   inst->SaturateMode,
                   unit,
                   inst->TexSrcTarget,
@@ -860,7 +870,7 @@ static void precalc_tex( struct brw_wm_compile *c,
    /* For GL_EXT_texture_swizzle: */
    if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
       /* swizzle the result of the TEX instruction */
-      struct prog_src_register tmpsrc = src_reg_from_dst(inst->DstReg);
+      struct prog_src_register tmpsrc = src_reg_from_dst(unswizzled_tmp);
       emit_op(c, OPCODE_SWZ,
               inst->DstReg,
               SATURATE_OFF, /* saturate already done above */
