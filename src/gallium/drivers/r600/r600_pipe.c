@@ -395,6 +395,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+	case PIPE_CAP_SCALED_RESOLVE:
 		return 0;
 
 	/* Texturing. */
@@ -448,6 +449,11 @@ static float r600_get_paramf(struct pipe_screen* pscreen,
 		return 16.0f;
 	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
+	case PIPE_CAPF_GUARD_BAND_LEFT:
+	case PIPE_CAPF_GUARD_BAND_TOP:
+	case PIPE_CAPF_GUARD_BAND_RIGHT:
+	case PIPE_CAPF_GUARD_BAND_BOTTOM:
+		return 0.0f;
 	}
 	return 0.0f;
 }
