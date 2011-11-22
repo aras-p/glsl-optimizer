@@ -425,11 +425,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
-
-	default:
-		R600_ERR("r600: unknown param %d\n", param);
-		return 0;
 	}
+	return 0;
 }
 
 static float r600_get_paramf(struct pipe_screen* pscreen,
@@ -451,10 +448,8 @@ static float r600_get_paramf(struct pipe_screen* pscreen,
 		return 16.0f;
 	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
-	default:
-		R600_ERR("r600: unsupported paramf %d\n", param);
-		return 0.0f;
 	}
+	return 0.0f;
 }
 
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
@@ -515,9 +510,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 16;
 	case PIPE_SHADER_CAP_OUTPUT_READ:
 		return 1;
-	default:
-		return 0;
 	}
+	return 0;
 }
 
 static int r600_get_video_param(struct pipe_screen *screen,
