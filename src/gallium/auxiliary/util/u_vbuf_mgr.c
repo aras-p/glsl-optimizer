@@ -165,7 +165,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    unsigned tr_elem_index[PIPE_MAX_ATTRIBS];
    struct translate *tr;
    boolean vb_translated[PIPE_MAX_ATTRIBS] = {0};
-   uint8_t *vb_map[PIPE_MAX_ATTRIBS] = {0}, *out_map;
+   uint8_t *out_map;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
    struct pipe_resource *out_buffer = NULL;
    unsigned i, num_verts, out_offset;
@@ -230,11 +230,11 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       if (vb_translated[i]) {
          struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[i];
 
-         vb_map[i] = pipe_buffer_map(mgr->pipe, vb->buffer,
-                                     PIPE_TRANSFER_READ, &vb_transfer[i]);
+         uint8_t *map = pipe_buffer_map(mgr->pipe, vb->buffer,
+                                        PIPE_TRANSFER_READ, &vb_transfer[i]);
 
          tr->set_buffer(tr, i,
-                        vb_map[i] + vb->buffer_offset + vb->stride * min_index,
+                        map + vb->buffer_offset + vb->stride * min_index,
                         vb->stride, ~0);
       }
    }
