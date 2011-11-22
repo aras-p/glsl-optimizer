@@ -376,6 +376,7 @@ _mesa_BeginTransformFeedback(GLenum mode)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    obj->Active = GL_TRUE;
    ctx->TransformFeedback.Mode = mode;
 
@@ -398,6 +399,7 @@ _mesa_EndTransformFeedback(void)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    ctx->TransformFeedback.CurrentObject->Active = GL_FALSE;
 
    assert(ctx->Driver.EndTransformFeedback);
@@ -415,6 +417,7 @@ bind_buffer_range(struct gl_context *ctx, GLuint index,
 {
    struct gl_transform_feedback_object *obj =
       ctx->TransformFeedback.CurrentObject;
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
 
    /* The general binding point */
    _mesa_reference_buffer_object(ctx,
@@ -650,7 +653,9 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
 
    shProg->TransformFeedback.BufferMode = bufferMode;
 
-   /* The varyings won't be used until shader link time */
+   /* No need to set _NEW_TRANSFORM_FEEDBACK (or invoke FLUSH_VERTICES) since
+    * the varyings won't be used until shader link time.
+    */
 }
 
 
@@ -874,6 +879,7 @@ _mesa_PauseTransformFeedback(void)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    obj->Paused = GL_TRUE;
 
    assert(ctx->Driver.PauseTransformFeedback);
@@ -899,6 +905,7 @@ _mesa_ResumeTransformFeedback(void)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    obj->Paused = GL_FALSE;
 
    assert(ctx->Driver.ResumeTransformFeedback);
