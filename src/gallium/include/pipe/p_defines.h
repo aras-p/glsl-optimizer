@@ -480,10 +480,10 @@ enum pipe_capf
    PIPE_CAPF_MAX_POINT_WIDTH_AA = 18,
    PIPE_CAPF_MAX_TEXTURE_ANISOTROPY = 19,
    PIPE_CAPF_MAX_TEXTURE_LOD_BIAS = 20,
-   PIPE_CAPF_GUARD_BAND_LEFT = 21,  /*< float */
-   PIPE_CAPF_GUARD_BAND_TOP = 22,  /*< float */
-   PIPE_CAPF_GUARD_BAND_RIGHT = 23,  /*< float */
-   PIPE_CAPF_GUARD_BAND_BOTTOM = 24,  /*< float */
+   PIPE_CAPF_GUARD_BAND_LEFT = 21,
+   PIPE_CAPF_GUARD_BAND_TOP = 22,
+   PIPE_CAPF_GUARD_BAND_RIGHT = 23,
+   PIPE_CAPF_GUARD_BAND_BOTTOM = 24
 };
 
 /* Shader caps not specific to any single stage */
