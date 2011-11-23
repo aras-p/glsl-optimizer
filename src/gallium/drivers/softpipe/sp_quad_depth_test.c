@@ -678,7 +678,6 @@ alpha_test_quads(struct quad_stage *qs,
       return alpha_test_quads_LESS( qs, quads, nr );
    case PIPE_FUNC_EQUAL:
       return alpha_test_quads_EQUAL( qs, quads, nr );
-      break;
    case PIPE_FUNC_LEQUAL:
       return alpha_test_quads_LEQUAL( qs, quads, nr );
    case PIPE_FUNC_GREATER:
