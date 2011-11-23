@@ -25,6 +25,7 @@
  *
  */
 
+#include "intel_fbo.h"
 #include "brw_context.h"
 #include "brw_state.h"
 
@@ -33,6 +34,10 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct gen6_depth_stencil_state *ds;
+   struct intel_renderbuffer *depth_irb;
+
+   /* _NEW_BUFFERS */
+   depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
 
    ds = brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
 			sizeof(*ds), 64,
@@ -77,7 +82,7 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
    }
 
    /* _NEW_DEPTH */
-   if (ctx->Depth.Test || brw->hiz.op) {
+   if ((ctx->Depth.Test || brw->hiz.op) && depth_irb) {
       assert(brw->hiz.op != BRW_HIZ_OP_DEPTH_RESOLVE || ctx->Depth.Test);
       assert(brw->hiz.op != BRW_HIZ_OP_HIZ_RESOLVE   || !ctx->Depth.Test);
       assert(brw->hiz.op != BRW_HIZ_OP_DEPTH_CLEAR   || !ctx->Depth.Test);
