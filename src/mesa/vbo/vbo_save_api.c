@@ -1119,9 +1119,9 @@ _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    _ae_map_vbos(ctx);
 
-   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj))
+   if (_mesa_is_bufferobj(ctx->Array.ArrayObj->ElementArrayBufferObj))
       indices =
-         ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Pointer, indices);
+         ADD_POINTERS(ctx->Array.ArrayObj->ElementArrayBufferObj->Pointer, indices);
 
    vbo_save_NotifyBegin(ctx, (mode | VBO_SAVE_PRIM_WEAK |
                               VBO_SAVE_PRIM_NO_CURRENT_UPDATE));

@@ -133,6 +133,7 @@ _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 {
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
+   _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj, NULL);
    _glthread_DESTROY_MUTEX(obj->Mutex);
    free(obj);
 }
@@ -252,6 +253,9 @@ _mesa_initialize_array_object( struct gl_context *ctx,
 #if FEATURE_point_size_array
    init_array(ctx, &obj->PointSize, 1, GL_FLOAT);
 #endif
+
+   _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj,
+                                 ctx->Shared->NullBufferObj);
 }
 
 

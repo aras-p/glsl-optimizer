@@ -270,11 +270,11 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
    const void *elemMap;
    GLint i, k;
 
-   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(ctx->Array.ArrayObj->ElementArrayBufferObj)) {
       elemMap = ctx->Driver.MapBufferRange(ctx, 0,
-					   ctx->Array.ElementArrayBufferObj->Size,
+					   ctx->Array.ArrayObj->ElementArrayBufferObj->Size,
 					   GL_MAP_READ_BIT,
-					   ctx->Array.ElementArrayBufferObj);
+					   ctx->Array.ArrayObj->ElementArrayBufferObj);
       elements = ADD_POINTERS(elements, elemMap);
    }
 
@@ -310,8 +310,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       }
    }
 
-   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
+   if (_mesa_is_bufferobj(arrayObj->ElementArrayBufferObj)) {
+      ctx->Driver.UnmapBuffer(ctx, ctx->Array.ArrayObj->ElementArrayBufferObj);
    }
 
    unmap_array_buffer(ctx, &arrayObj->Vertex);
@@ -727,15 +727,15 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
    const GLvoid *map =
       ctx->Driver.MapBufferRange(ctx, 0,
-				 ctx->Array.ElementArrayBufferObj->Size,
+				 ctx->Array.ArrayObj->ElementArrayBufferObj->Size,
 				 GL_MAP_READ_BIT,
-				 ctx->Array.ElementArrayBufferObj);
+				 ctx->Array.ArrayObj->ElementArrayBufferObj);
    switch (type) {
    case GL_UNSIGNED_BYTE:
       {
          const GLubyte *us = (const GLubyte *) map;
          GLint i;
-         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
+         for (i = 0; i < ctx->Array.ArrayObj->ElementArrayBufferObj->Size; i++) {
             printf("%02x ", us[i]);
             if (i % 32 == 31)
                printf("\n");
@@ -747,7 +747,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       {
          const GLushort *us = (const GLushort *) map;
          GLint i;
-         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
+         for (i = 0; i < ctx->Array.ArrayObj->ElementArrayBufferObj->Size / 2; i++) {
             printf("%04x ", us[i]);
             if (i % 16 == 15)
                printf("\n");
@@ -759,7 +759,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       {
          const GLuint *us = (const GLuint *) map;
          GLint i;
-         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
+         for (i = 0; i < ctx->Array.ArrayObj->ElementArrayBufferObj->Size / 4; i++) {
             printf("%08x ", us[i]);
             if (i % 8 == 7)
                printf("\n");
@@ -771,7 +771,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       ;
    }
 
-   ctx->Driver.UnmapBuffer(ctx, ctx->Array.ElementArrayBufferObj);
+   ctx->Driver.UnmapBuffer(ctx, ctx->Array.ArrayObj->ElementArrayBufferObj);
 }
 
 
@@ -807,7 +807,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 
    ib.count = count;
    ib.type = type;
-   ib.obj = ctx->Array.ElementArrayBufferObj;
+   ib.obj = ctx->Array.ArrayObj->ElementArrayBufferObj;
    ib.ptr = indices;
 
    prim[0].begin = 1;
@@ -909,8 +909,8 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                        "\tThis should probably be fixed in the application.",
                        start, end, count, type, indices,
                        ctx->Array.ArrayObj->_MaxElement - 1,
-                       ctx->Array.ElementArrayBufferObj->Name,
-                       (int) ctx->Array.ElementArrayBufferObj->Size);
+                       ctx->Array.ArrayObj->ElementArrayBufferObj->Name,
+                       (int) ctx->Array.ArrayObj->ElementArrayBufferObj->Size);
       }
 
       if (0)
@@ -924,7 +924,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
        */
       if (0) {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
-                                             ctx->Array.ElementArrayBufferObj);
+                                             ctx->Array.ArrayObj->ElementArrayBufferObj);
          if (max >= ctx->Array.ArrayObj->_MaxElement) {
             if (warnCount < 10) {
                _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, "
@@ -934,8 +934,8 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              "\tSkipping the glDrawRangeElements() call",
                              start, end, count, type, indices, max,
                              ctx->Array.ArrayObj->_MaxElement - 1,
-                             ctx->Array.ElementArrayBufferObj->Name,
-                             (int) ctx->Array.ElementArrayBufferObj->Size);
+                             ctx->Array.ArrayObj->ElementArrayBufferObj->Name,
+                             (int) ctx->Array.ArrayObj->ElementArrayBufferObj->Size);
             }
          }
          /* XXX we could also find the min index and compare to 'start'
@@ -958,7 +958,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
 	     "base %d\n",
 	     start, end, type, count,
-	     ctx->Array.ElementArrayBufferObj->Name,
+	     ctx->Array.ArrayObj->ElementArrayBufferObj->Name,
 	     basevertex);
    }
 
@@ -1171,13 +1171,13 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
     * subranges of the index buffer as one large index buffer may lead to
     * us reading unmapped memory.
     */
-   if (!_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj))
+   if (!_mesa_is_bufferobj(ctx->Array.ArrayObj->ElementArrayBufferObj))
       fallback = GL_TRUE;
 
    if (!fallback) {
       ib.count = (max_index_ptr - min_index_ptr) / index_type_size;
       ib.type = type;
-      ib.obj = ctx->Array.ElementArrayBufferObj;
+      ib.obj = ctx->Array.ArrayObj->ElementArrayBufferObj;
       ib.ptr = (void *)min_index_ptr;
 
       for (i = 0; i < primcount; i++) {
@@ -1204,7 +1204,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
       for (i = 0; i < primcount; i++) {
 	 ib.count = count[i];
 	 ib.type = type;
-	 ib.obj = ctx->Array.ElementArrayBufferObj;
+	 ib.obj = ctx->Array.ArrayObj->ElementArrayBufferObj;
 	 ib.ptr = indices[i];
 
 	 prim[0].begin = 1;

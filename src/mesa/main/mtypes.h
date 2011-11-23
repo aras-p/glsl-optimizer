@@ -1611,6 +1611,8 @@ struct gl_array_object
     * we can determine the max legal (in bounds) glDrawElements array index.
     */
    GLuint _MaxElement;
+
+   struct gl_buffer_object *ElementArrayBufferObj;
 };
 
 
@@ -1641,7 +1643,6 @@ struct gl_array_attrib
 
    /* GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *ArrayBufferObj;
-   struct gl_buffer_object *ElementArrayBufferObj;
 };
 
 

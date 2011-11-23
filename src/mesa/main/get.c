@@ -1630,7 +1630,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
 	 ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name;
       break;
    case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-      v->value_int = ctx->Array.ElementArrayBufferObj->Name;
+      v->value_int = ctx->Array.ArrayObj->ElementArrayBufferObj->Name;
       break;
 
    /* ARB_copy_buffer */

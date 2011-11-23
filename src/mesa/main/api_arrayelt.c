@@ -1580,7 +1580,7 @@ static void _ae_update_state( struct gl_context *ctx )
       aa++;
    }
 
-   check_vbo(actx, ctx->Array.ElementArrayBufferObj);
+   check_vbo(actx, arrayObj->ElementArrayBufferObj);
 
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);

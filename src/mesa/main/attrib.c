@@ -1385,8 +1385,8 @@ save_array_attrib(struct gl_context *ctx,
    /* Just reference them here */
    _mesa_reference_buffer_object(ctx, &dest->ArrayBufferObj,
                                  src->ArrayBufferObj);
-   _mesa_reference_buffer_object(ctx, &dest->ElementArrayBufferObj,
-                                 src->ElementArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &dest->ArrayObj->ElementArrayBufferObj,
+                                 src->ArrayObj->ElementArrayBufferObj);
 }
 
 /**
@@ -1407,7 +1407,7 @@ restore_array_attrib(struct gl_context *ctx,
    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
                        src->ArrayBufferObj->Name);
    _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
-                       src->ElementArrayBufferObj->Name);
+                       src->ArrayObj->ElementArrayBufferObj->Name);
 
    /* Better safe than sorry?! */
    dest->RebindArrays = GL_TRUE;
@@ -1447,7 +1447,6 @@ free_array_attrib_data(struct gl_context *ctx,
    _mesa_delete_array_object(ctx, attrib->ArrayObj);
    attrib->ArrayObj = 0;
    _mesa_reference_buffer_object(ctx, &attrib->ArrayBufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &attrib->ElementArrayBufferObj, NULL);
 }
 
 

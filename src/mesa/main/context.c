@@ -1135,7 +1135,6 @@ _mesa_free_context_data( struct gl_context *ctx )
 
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
 #endif
 
    /* free dispatch tables */

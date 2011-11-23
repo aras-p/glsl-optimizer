@@ -77,7 +77,7 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
    case GL_ARRAY_BUFFER_ARB:
       return &ctx->Array.ArrayBufferObj;
    case GL_ELEMENT_ARRAY_BUFFER_ARB:
-      return &ctx->Array.ElementArrayBufferObj;
+      return &ctx->Array.ArrayObj->ElementArrayBufferObj;
    case GL_PIXEL_PACK_BUFFER_EXT:
       return &ctx->Pack.BufferObj;
    case GL_PIXEL_UNPACK_BUFFER_EXT:
@@ -270,7 +270,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
 #if 0
          /* unfortunately, these tests are invalid during context tear-down */
 	 ASSERT(ctx->Array.ArrayBufferObj != bufObj);
-	 ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
+	 ASSERT(ctx->Array.ArrayObj->ElementArrayBufferObj != bufObj);
 	 ASSERT(ctx->Array.ArrayObj->Vertex.BufferObj != bufObj);
 #endif
 
@@ -531,8 +531,6 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
 
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
                                  ctx->Shared->NullBufferObj);
-   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj,
-                                 ctx->Shared->NullBufferObj);
 
    _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer,
                                  ctx->Shared->NullBufferObj);
@@ -545,7 +543,6 @@ void
 _mesa_free_buffer_objects( struct gl_context *ctx )
 {
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
-   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
 
    _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer, NULL);
    _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer, NULL);
@@ -759,7 +756,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          if (ctx->Array.ArrayBufferObj == bufObj) {
             _mesa_BindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
          }
-         if (ctx->Array.ElementArrayBufferObj == bufObj) {
+         if (arrayObj->ElementArrayBufferObj == bufObj) {
             _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
          }
 
