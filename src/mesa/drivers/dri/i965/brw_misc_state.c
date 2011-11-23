@@ -278,6 +278,10 @@ static void emit_depthbuffer(struct brw_context *brw)
        *
        *     [DevGT]: This field must be set to the same value (enabled or
        *     disabled) as Hierarchical Depth Buffer Enable
+       *
+       * The tiled bit must be set. From the Sandybridge PRM, Volume 2, Part 1,
+       * Section 7.5.5.1.1 3DSTATE_DEPTH_BUFFER, Bit 1.27 Tiled Surface:
+       *     [DevGT+]: This field must be set to TRUE.
        */
       struct intel_region *region = stencil_irb->mt->region;
 
@@ -290,6 +294,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	        (1 << 21) | /* separate stencil enable */
 	        (1 << 22) | /* hiz enable */
 	        (BRW_TILEWALK_YMAJOR << 26) |
+	        (1 << 27) | /* tiled surface */
 	        (BRW_SURFACE_2D << 29));
       OUT_BATCH(0);
       OUT_BATCH(((region->width - 1) << 6) |
