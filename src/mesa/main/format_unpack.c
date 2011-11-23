@@ -1968,7 +1968,8 @@ _mesa_unpack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
       unpack_uint_24_8_depth_stencil_S8_Z24(src, dst, n);
       break;
    default:
-      _mesa_problem(NULL, "bad format %s in _mesa_unpack_ubyte_s_row",
+      _mesa_problem(NULL,
+                    "bad format %s in _mesa_unpack_uint_24_8_depth_stencil_row",
                     _mesa_get_format_name(format));
       return;
    }
