@@ -59,6 +59,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
+   struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
@@ -70,6 +71,9 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  sizeof(*surf), 32, &brw->bind.surf_offset[surf_index]);
    memset(surf, 0, sizeof(*surf));
+
+   if (mt->align_h == 4)
+      surf->ss0.vertical_alignment = 1;
 
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
@@ -199,6 +203,9 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  sizeof(*surf), 32, &brw->bind.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
+
+   if (irb->mt->align_h == 4)
+      surf->ss0.vertical_alignment = 1;
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_SARGB8:
