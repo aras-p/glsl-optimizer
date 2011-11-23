@@ -884,12 +884,14 @@ _mesa_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params)
 }
 
 
-static GLboolean
-base_format_has_channel(GLenum base_format, GLenum pname)
+GLboolean
+_mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 {
    switch (pname) {
    case GL_TEXTURE_RED_SIZE:
    case GL_TEXTURE_RED_TYPE:
+   case GL_RENDERBUFFER_RED_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
       if (base_format == GL_RED ||
 	  base_format == GL_RG ||
 	  base_format == GL_RGB ||
@@ -899,6 +901,8 @@ base_format_has_channel(GLenum base_format, GLenum pname)
       return GL_FALSE;
    case GL_TEXTURE_GREEN_SIZE:
    case GL_TEXTURE_GREEN_TYPE:
+   case GL_RENDERBUFFER_GREEN_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
       if (base_format == GL_RG ||
 	  base_format == GL_RGB ||
 	  base_format == GL_RGBA) {
@@ -907,6 +911,8 @@ base_format_has_channel(GLenum base_format, GLenum pname)
       return GL_FALSE;
    case GL_TEXTURE_BLUE_SIZE:
    case GL_TEXTURE_BLUE_TYPE:
+   case GL_RENDERBUFFER_BLUE_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
       if (base_format == GL_RGB ||
 	  base_format == GL_RGBA) {
 	 return GL_TRUE;
@@ -914,6 +920,8 @@ base_format_has_channel(GLenum base_format, GLenum pname)
       return GL_FALSE;
    case GL_TEXTURE_ALPHA_SIZE:
    case GL_TEXTURE_ALPHA_TYPE:
+   case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
       if (base_format == GL_RGBA ||
 	  base_format == GL_ALPHA ||
 	  base_format == GL_LUMINANCE_ALPHA) {
@@ -935,8 +943,17 @@ base_format_has_channel(GLenum base_format, GLenum pname)
       return GL_FALSE;
    case GL_TEXTURE_DEPTH_SIZE:
    case GL_TEXTURE_DEPTH_TYPE:
+   case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
       if (base_format == GL_DEPTH_STENCIL ||
 	  base_format == GL_DEPTH_COMPONENT) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
+      if (base_format == GL_DEPTH_STENCIL ||
+	  base_format == GL_STENCIL_INDEX) {
 	 return GL_TRUE;
       }
       return GL_FALSE;
@@ -1048,7 +1065,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_GREEN_SIZE:
       case GL_TEXTURE_BLUE_SIZE:
       case GL_TEXTURE_ALPHA_SIZE:
-         if (base_format_has_channel(img->_BaseFormat, pname))
+         if (_mesa_base_format_has_channel(img->_BaseFormat, pname))
             *params = _mesa_get_format_bits(texFormat, pname);
          else
             *params = 0;
@@ -1122,7 +1139,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_DEPTH_TYPE_ARB:
          if (!ctx->Extensions.ARB_texture_float)
             goto invalid_pname;
-	 if (base_format_has_channel(img->_BaseFormat, pname))
+	 if (_mesa_base_format_has_channel(img->_BaseFormat, pname))
 	    *params = _mesa_get_format_datatype(texFormat);
 	 else
 	    *params = GL_NONE;
