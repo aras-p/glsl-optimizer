@@ -1021,15 +1021,8 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
 
 
 /**
- * Reset the fields of a gl_texture_image struct to zero.
- * 
- * \param img texture image structure.
- *
- * This is called when a proxy texture test fails, we set all the
- * image members (except DriverData) to zero.
- * It's also used in glTexImage[123]D as a safeguard to be sure all
- * required fields get initialized properly by the Driver.TexImage[123]D
- * functions.
+ * Set the size and format-related fields of a gl_texture_image struct
+ * to zero.  This is used when a proxy texture test fails.
  */
 static void
 clear_teximage_fields(struct gl_texture_image *img)
