@@ -30,9 +30,6 @@
 #include "main/glheader.h"
 
 
-extern GLboolean
-_mesa_base_format_has_channel(GLenum base_format, GLenum pname);
-
 extern void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params );

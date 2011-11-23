@@ -1071,6 +1071,93 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
 
 
 /**
+ * Does the given base texture/renderbuffer format have the channel
+ * named by 'pname'?
+ */
+GLboolean
+_mesa_base_format_has_channel(GLenum base_format, GLenum pname)
+{
+   switch (pname) {
+   case GL_TEXTURE_RED_SIZE:
+   case GL_TEXTURE_RED_TYPE:
+   case GL_RENDERBUFFER_RED_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+      if (base_format == GL_RED ||
+	  base_format == GL_RG ||
+	  base_format == GL_RGB ||
+	  base_format == GL_RGBA) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_GREEN_SIZE:
+   case GL_TEXTURE_GREEN_TYPE:
+   case GL_RENDERBUFFER_GREEN_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+      if (base_format == GL_RG ||
+	  base_format == GL_RGB ||
+	  base_format == GL_RGBA) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_BLUE_SIZE:
+   case GL_TEXTURE_BLUE_TYPE:
+   case GL_RENDERBUFFER_BLUE_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
+      if (base_format == GL_RGB ||
+	  base_format == GL_RGBA) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_ALPHA_SIZE:
+   case GL_TEXTURE_ALPHA_TYPE:
+   case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
+      if (base_format == GL_RGBA ||
+	  base_format == GL_ALPHA ||
+	  base_format == GL_LUMINANCE_ALPHA) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_LUMINANCE_SIZE:
+   case GL_TEXTURE_LUMINANCE_TYPE:
+      if (base_format == GL_LUMINANCE ||
+	  base_format == GL_LUMINANCE_ALPHA) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_INTENSITY_SIZE:
+   case GL_TEXTURE_INTENSITY_TYPE:
+      if (base_format == GL_INTENSITY) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_TEXTURE_DEPTH_SIZE:
+   case GL_TEXTURE_DEPTH_TYPE:
+   case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
+      if (base_format == GL_DEPTH_STENCIL ||
+	  base_format == GL_DEPTH_COMPONENT) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
+   case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
+      if (base_format == GL_DEPTH_STENCIL ||
+	  base_format == GL_STENCIL_INDEX) {
+	 return GL_TRUE;
+      }
+      return GL_FALSE;
+   default:
+      _mesa_warning(NULL, "%s: Unexpected channel token 0x%x\n",
+		    __FUNCTION__, pname);
+      return GL_FALSE;
+   }
+
+   return GL_FALSE;
+}
+
+
+/**
  * Return the address of a specific pixel in an image (1D, 2D or 3D).
  *
  * Pixel unpacking/packing parameters are observed according to \p packing.

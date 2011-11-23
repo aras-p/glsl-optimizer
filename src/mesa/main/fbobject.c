@@ -39,6 +39,7 @@
 #include "formats.h"
 #include "framebuffer.h"
 #include "hash.h"
+#include "image.h"
 #include "macros.h"
 #include "mfeatures.h"
 #include "mtypes.h"
@@ -46,7 +47,6 @@
 #include "state.h"
 #include "teximage.h"
 #include "texobj.h"
-#include "texparam.h"
 
 
 /** Set this to 1 to help debug FBO incompleteness problems */
