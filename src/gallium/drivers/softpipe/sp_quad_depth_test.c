@@ -629,7 +629,7 @@ depth_stencil_test_quad(struct quad_stage *qs,
 
 
 #define ALPHATEST( FUNC, COMP )                                         \
-   static int                                                           \
+   static unsigned                                                      \
    alpha_test_quads_##FUNC( struct quad_stage *qs,                      \
                            struct quad_header *quads[],                 \
                            unsigned nr )                                \
@@ -668,7 +668,7 @@ ALPHATEST( GEQUAL,   >= )
 
 /* XXX: Incorporate into shader using KILP.
  */
-static int
+static unsigned
 alpha_test_quads(struct quad_stage *qs, 
                  struct quad_header *quads[], 
                  unsigned nr)
