@@ -604,6 +604,7 @@ struct brw_context
    bool has_aa_line_parameters;
    bool has_pln;
    bool new_vs_backend;
+   bool precompile;
 
    struct {
       struct brw_state_flags dirty;

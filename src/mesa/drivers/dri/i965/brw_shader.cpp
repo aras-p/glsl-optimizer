@@ -65,7 +65,9 @@ brw_new_shader_program(struct gl_context *ctx, GLuint name)
 bool
 brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
-   if (!brw_fs_precompile(ctx, prog))
+   struct brw_context *brw = brw_context(ctx);
+
+   if (brw->precompile && !brw_fs_precompile(ctx, prog))
       return false;
 
    if (!brw_vs_precompile(ctx, prog))
