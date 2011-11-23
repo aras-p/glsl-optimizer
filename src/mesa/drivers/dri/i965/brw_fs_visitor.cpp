@@ -74,7 +74,7 @@ fs_visitor::visit(ir_variable *ir)
 
       if (ir->location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
-	 for (int i = 0; i < c->key.nr_color_regions; i++) {
+	 for (int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
 	 }
       } else if (ir->location == FRAG_RESULT_DEPTH) {
