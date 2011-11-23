@@ -1286,14 +1286,14 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    src = get_buffer(ctx, readTarget);
-   if (!src || !_mesa_is_bufferobj(src)) {
+   if (!_mesa_is_bufferobj(src)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glCopyBuffserSubData(readTarget = 0x%x)", readTarget);
       return;
    }
 
    dst = get_buffer(ctx, writeTarget);
-   if (!dst || !_mesa_is_bufferobj(dst)) {
+   if (!_mesa_is_bufferobj(dst)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glCopyBuffserSubData(writeTarget = 0x%x)", writeTarget);
       return;
@@ -1421,7 +1421,7 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    }
 
    bufObj = get_buffer(ctx, target);
-   if (!bufObj || !_mesa_is_bufferobj(bufObj)) {
+   if (!_mesa_is_bufferobj(bufObj)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glMapBufferRange(target = 0x%x)", target);
       return NULL;

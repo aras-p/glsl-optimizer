@@ -53,7 +53,7 @@ _mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
 static inline GLboolean
 _mesa_is_bufferobj(const struct gl_buffer_object *obj)
 {
-   return obj->Name != 0;
+   return obj != NULL && obj->Name != 0;
 }
 
 

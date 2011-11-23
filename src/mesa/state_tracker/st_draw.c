@@ -325,7 +325,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
          if (abs(array->Ptr - firstPtr) > firstStride)
             return GL_FALSE; /* arrays start too far apart */
 
-         if ((!bufObj || !_mesa_is_bufferobj(bufObj)) != userSpaceBuffer)
+         if ((!_mesa_is_bufferobj(bufObj)) != userSpaceBuffer)
             return GL_FALSE; /* mix of VBO and user-space arrays */
       }
    }
@@ -390,7 +390,7 @@ setup_interleaved_attribs(struct gl_context *ctx,
    }
 
    /* are the arrays in user space? */
-   usingVBO = bufobj && _mesa_is_bufferobj(bufobj);
+   usingVBO = _mesa_is_bufferobj(bufobj);
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
@@ -497,7 +497,7 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
       assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
-      if (bufobj && _mesa_is_bufferobj(bufobj)) {
+      if (_mesa_is_bufferobj(bufobj)) {
          /* Attribute data is in a VBO.
           * Recall that for VBOs, the gl_client_array->Ptr field is
           * really an offset from the start of the VBO, not a pointer.
@@ -599,7 +599,7 @@ setup_index_buffer(struct gl_context *ctx,
       }
 
       /* get/create the index buffer object */
-      if (bufobj && _mesa_is_bufferobj(bufobj)) {
+      if (_mesa_is_bufferobj(bufobj)) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
@@ -775,7 +775,7 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
    info.primitive_restart = FALSE;
    info.instance_count = 1;
 
-   if (ib->obj && _mesa_is_bufferobj(ib->obj)) {
+   if (_mesa_is_bufferobj(ib->obj)) {
       ptr = pipe_buffer_map_range(pipe, ibuffer->buffer,
                                   start * ibuffer->index_size, /* start */
                                   count * ibuffer->index_size, /* length */
