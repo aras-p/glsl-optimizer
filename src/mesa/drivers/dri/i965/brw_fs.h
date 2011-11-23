@@ -48,13 +48,13 @@ extern "C" {
 #include "glsl/ir.h"
 
 enum register_file {
-   ARF = BRW_ARCHITECTURE_REGISTER_FILE,
-   GRF = BRW_GENERAL_REGISTER_FILE,
-   MRF = BRW_MESSAGE_REGISTER_FILE,
-   IMM = BRW_IMMEDIATE_VALUE,
+   BAD_FILE,
+   ARF,
+   GRF,
+   MRF,
+   IMM,
    FIXED_HW_REG, /* a struct brw_reg */
    UNIFORM, /* prog_data->params[reg] */
-   BAD_FILE
 };
 
 class fs_reg {
@@ -159,7 +159,7 @@ public:
    struct brw_reg fixed_hw_reg;
    int smear; /* -1, or a channel of the reg to smear to all channels. */
 
-   /** Value for file == BRW_IMMMEDIATE_FILE */
+   /** Value for file == IMM */
    union {
       int32_t i;
       uint32_t u;

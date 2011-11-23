@@ -573,6 +573,23 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
    }
 }
 
+static uint32_t brw_file_from_reg(fs_reg *reg)
+{
+   switch (reg->file) {
+   case ARF:
+      return BRW_ARCHITECTURE_REGISTER_FILE;
+   case GRF:
+      return BRW_GENERAL_REGISTER_FILE;
+   case MRF:
+      return BRW_MESSAGE_REGISTER_FILE;
+   case IMM:
+      return BRW_IMMEDIATE_VALUE;
+   default:
+      assert(!"not reached");
+      return BRW_GENERAL_REGISTER_FILE;
+   }
+}
+
 static struct brw_reg
 brw_reg_from_fs_reg(fs_reg *reg)
 {
@@ -583,9 +600,9 @@ brw_reg_from_fs_reg(fs_reg *reg)
    case ARF:
    case MRF:
       if (reg->smear == -1) {
-	 brw_reg = brw_vec8_reg(reg->file, reg->reg, 0);
+	 brw_reg = brw_vec8_reg(brw_file_from_reg(reg), reg->reg, 0);
       } else {
-	 brw_reg = brw_vec1_reg(reg->file, reg->reg, reg->smear);
+	 brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->reg, reg->smear);
       }
       brw_reg = retype(brw_reg, reg->type);
       if (reg->sechalf)
