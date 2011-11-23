@@ -1071,28 +1071,19 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = 0;
          break;
       case GL_TEXTURE_INTENSITY_SIZE:
-         if (img->_BaseFormat != GL_INTENSITY)
-            *params = 0;
-         else {
+      case GL_TEXTURE_LUMINANCE_SIZE:
+         if (_mesa_base_format_has_channel(img->_BaseFormat, pname)) {
             *params = _mesa_get_format_bits(texFormat, pname);
             if (*params == 0) {
-               /* intensity probably stored as rgb texture */
-               *params = MIN2(_mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE),
-                              _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE));
+               /* intensity or luminance is probably stored as RGB[A] */
+               *params = MIN2(_mesa_get_format_bits(texFormat,
+                                                    GL_TEXTURE_RED_SIZE),
+                              _mesa_get_format_bits(texFormat,
+                                                    GL_TEXTURE_GREEN_SIZE));
             }
          }
-         break;
-      case GL_TEXTURE_LUMINANCE_SIZE:
-         if (img->_BaseFormat != GL_LUMINANCE &&
-             img->_BaseFormat != GL_LUMINANCE_ALPHA)
-            *params = 0;
          else {
-            *params = _mesa_get_format_bits(texFormat, pname);
-            if (*params == 0) {
-               /* luminance probably stored as rgb texture */
-               *params = MIN2(_mesa_get_format_bits(texFormat, GL_TEXTURE_RED_SIZE),
-                              _mesa_get_format_bits(texFormat, GL_TEXTURE_GREEN_SIZE));
-            }
+            *params = 0;
          }
          break;
       case GL_TEXTURE_DEPTH_SIZE_ARB:
