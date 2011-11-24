@@ -3,9 +3,6 @@ include $(TOP)/configs/current
 
 ##### MACROS #####
 
-XA_MAJOR = 0
-XA_MINOR = 4
-XA_TINY = 0
 XA_CFLAGS = -g -fPIC -Wall
 
 XA_INCLUDES= -I$(TOP)/src/gallium/ \
