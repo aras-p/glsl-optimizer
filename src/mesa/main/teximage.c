@@ -1636,7 +1636,8 @@ texture_error_check( struct gl_context *ctx,
 
    /* additional checks for depth textures */
    if (_mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_COMPONENT) {
-      /* Only 1D, 2D, rect and array textures supported, not 3D or cubes */
+      /* Only 1D, 2D, rect, array and cube textures supported, not 3D
+       * Cubemaps are only supported for GL version > 3.0 or with EXT_gpu_shader4 */
       if (target != GL_TEXTURE_1D &&
           target != GL_PROXY_TEXTURE_1D &&
           target != GL_TEXTURE_2D &&
@@ -1646,7 +1647,9 @@ texture_error_check( struct gl_context *ctx,
           target != GL_TEXTURE_2D_ARRAY &&
           target != GL_PROXY_TEXTURE_2D_ARRAY &&
           target != GL_TEXTURE_RECTANGLE_ARB &&
-          target != GL_PROXY_TEXTURE_RECTANGLE_ARB) {
+          target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
+         !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
+           (ctx->VersionMajor >= 3 || ctx->Extensions.EXT_gpu_shader4))) {
          if (!isProxy)
             _mesa_error(ctx, GL_INVALID_ENUM,
                         "glTexImage(target/internalFormat)");
