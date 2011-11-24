@@ -355,9 +355,6 @@ android_surface_swap_buffers(struct native_surface *nsurf)
    struct android_surface *asurf = android_surface(nsurf);
    struct android_display *adpy = asurf->adpy;
 
-   if (!asurf->buf)
-      return TRUE;
-
    android_surface_enqueue_buffer(&asurf->base);
 
    asurf->stamp++;
@@ -394,6 +391,10 @@ android_surface_present(struct native_surface *nsurf,
 
    if (ctrl->swap_interval || ctrl->natt != NATIVE_ATTACHMENT_BACK_LEFT)
       return FALSE;
+
+   /* this happens when eglSwapBuffers is called more than once in a row */
+   if (!asurf->buf)
+      return TRUE;
 
    /* we always render to color_res first when it exists */
    if (asurf->color_res) {
