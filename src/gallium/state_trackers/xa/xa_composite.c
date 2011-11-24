@@ -39,7 +39,7 @@
 #define XFixedToDouble(f)    (((double) (f)) / 65536.)
 
 struct xa_composite_blend {
-    enum xa_composite_op op : 8;
+    unsigned op : 8;
 
     unsigned alpha_dst : 4;
     unsigned alpha_src : 4;

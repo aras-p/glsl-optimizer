@@ -69,6 +69,11 @@ extern int xa_surface_dma(struct xa_context *ctx,
 			  int to_surface, struct xa_box *boxes,
 			  unsigned int num_boxes);
 
+extern void *xa_surface_map(struct xa_context *ctx,
+			    struct xa_surface *srf, unsigned int usage);
+
+extern void xa_surface_unmap(struct xa_surface *srf);
+
 extern int
 xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 		 uint32_t fg);
