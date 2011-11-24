@@ -54,6 +54,9 @@ MKLIB_OPTIONS = @MKLIB_OPTIONS@
 MKDEP = @MKDEP@
 MKDEP_OPTIONS = @MKDEP_OPTIONS@
 INSTALL = @INSTALL@
+AWK = @AWK@
+GREP = @GREP@
+NM = @NM@
 
 # Python and flags (generally only needed by the developers)
 PYTHON2 = @PYTHON2@

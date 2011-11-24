@@ -1469,8 +1469,20 @@ dnl
 dnl XA configuration
 dnl
 if test "x$enable_xa" = xyes; then
+AC_PROG_AWK
+AC_PROG_GREP
+AC_CHECK_PROG(NM, nm, "nm")
+if test "x$AWK" = x || test "x$GREP" = x || test "x$NM" = x; then
+AC_MSG_WARN([Missing one of nm, grep or awk. Disabling xa.])
+enable_xa=no
+fi
+fi
+if test "x$enable_xa" = xyes; then
     GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_XA=yes
+    AC_SUBST(AWK)
+    AC_SUBST(GREP)
+    AC_SUBST(NM)
 fi
 
 dnl
