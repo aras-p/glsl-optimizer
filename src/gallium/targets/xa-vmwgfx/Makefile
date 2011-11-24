@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 XA_MAJOR = 0
 XA_MINOR = 5
 XA_TINY = 0
-XA_CFLAGS = -g -fPIC
+XA_CFLAGS = -Wall -pedantic
 
 XA_INCLUDES= -I$(TOP)/src/gallium/ \
 	-I$(TOP)/src/gallium/auxiliary \
@@ -45,7 +45,7 @@ endif
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(XA_CFLAGS) $(XA_INCLUDES) $<
+	$(CC) -c $(XA_CFLAGS) $(CFLAGS) $(XA_INCLUDES) $<
 
 
 ##### TARGETS #####

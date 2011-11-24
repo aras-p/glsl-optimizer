@@ -133,7 +133,7 @@ xa_get_pipe_format(enum xa_formats xa_format)
     return fdesc;
 }
 
-struct xa_tracker *
+XA_EXPORT struct xa_tracker *
 xa_tracker_create(int drm_fd)
 {
     struct xa_tracker *xa = calloc(1, sizeof(struct xa_tracker));
@@ -194,7 +194,7 @@ xa_tracker_create(int drm_fd)
     return NULL;
 }
 
-void
+XA_EXPORT void
 xa_tracker_destroy(struct xa_tracker *xa)
 {
     free(xa->supported_formats);
@@ -254,7 +254,7 @@ xa_get_format_stype_depth(struct xa_tracker *xa,
     return fdesc;
 }
 
-int
+XA_EXPORT int
 xa_format_check_supported(struct xa_tracker *xa,
 			  enum xa_formats xa_format, unsigned int flags)
 {
@@ -279,7 +279,7 @@ xa_format_check_supported(struct xa_tracker *xa,
     return XA_ERR_NONE;
 }
 
-struct xa_surface *
+XA_EXPORT struct xa_surface *
 xa_surface_create(struct xa_tracker *xa,
 		  int width,
 		  int height,
@@ -334,7 +334,7 @@ xa_surface_create(struct xa_tracker *xa,
     return NULL;
 }
 
-int
+XA_EXPORT int
 xa_surface_redefine(struct xa_surface *srf,
 		    int width,
 		    int height,
@@ -418,14 +418,14 @@ xa_surface_redefine(struct xa_surface *srf,
     return XA_ERR_NONE;
 }
 
-void
+XA_EXPORT void
 xa_surface_destroy(struct xa_surface *srf)
 {
     pipe_resource_reference(&srf->tex, NULL);
     free(srf);
 }
 
-extern void
+XA_EXPORT void
 xa_tracker_version(int *major, int *minor, int *patch)
 {
     *major = XA_TRACKER_VERSION_MAJOR;
@@ -433,7 +433,7 @@ xa_tracker_version(int *major, int *minor, int *patch)
     *patch = XA_TRACKER_VERSION_PATCH;
 }
 
-extern int
+XA_EXPORT int
 xa_surface_handle(struct xa_surface *srf,
 		  uint32_t * handle, unsigned int *stride)
 {
@@ -454,7 +454,7 @@ xa_surface_handle(struct xa_surface *srf,
     return XA_ERR_NONE;
 }
 
-enum xa_formats
+XA_EXPORT enum xa_formats
 xa_surface_format(const struct xa_surface *srf)
 {
     return srf->fdesc.xa_format;

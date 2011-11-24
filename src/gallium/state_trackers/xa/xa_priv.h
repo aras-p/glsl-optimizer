@@ -38,6 +38,12 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define XA_EXPORT __attribute__ ((visibility("default")))
+#else
+#define XA_EXPORT
+#endif
+
 #define XA_VB_SIZE (100 * 4 * 3 * 4)
 #define XA_LAST_SURFACE_TYPE (xa_type_yuv_component + 1)
 #define XA_MAX_SAMPLERS 3

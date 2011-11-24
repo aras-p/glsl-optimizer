@@ -35,13 +35,13 @@
 #include "pipe/p_context.h"
 
 
-struct xa_context *
+XA_EXPORT struct xa_context *
 xa_context_default(struct xa_tracker *xa)
 {
     return xa->default_ctx;
 }
 
-struct xa_context *
+XA_EXPORT struct xa_context *
 xa_context_create(struct xa_tracker *xa)
 {
     struct xa_context *ctx = calloc(1, sizeof(*ctx));
@@ -55,7 +55,7 @@ xa_context_create(struct xa_tracker *xa)
     return ctx;
 }
 
-void
+XA_EXPORT void
 xa_context_destroy(struct xa_context *r)
 {
     struct pipe_resource **vsbuf = &r->vs_const_buffer;
@@ -83,7 +83,7 @@ xa_context_destroy(struct xa_context *r)
     r->pipe->destroy(r->pipe);
 }
 
-int
+XA_EXPORT int
 xa_surface_dma(struct xa_context *ctx,
 	       struct xa_surface *srf,
 	       void *data,
@@ -132,7 +132,7 @@ xa_surface_dma(struct xa_context *ctx,
     return -XA_ERR_NORES;
 }
 
-void *
+XA_EXPORT void *
 xa_surface_map(struct xa_context *ctx,
 	       struct xa_surface *srf, unsigned int usage)
 {
@@ -168,7 +168,7 @@ xa_surface_map(struct xa_context *ctx,
     return map;
 }
 
-void
+XA_EXPORT void
 xa_surface_unmap(struct xa_surface *srf)
 {
     if (srf->transfer) {
@@ -209,7 +209,7 @@ xa_ctx_srf_destroy(struct xa_context *ctx)
     pipe_surface_reference(&ctx->srf, NULL);
 }
 
-int
+XA_EXPORT int
 xa_copy_prepare(struct xa_context *ctx,
 		struct xa_surface *dst, struct xa_surface *src)
 {
@@ -232,7 +232,7 @@ xa_copy_prepare(struct xa_context *ctx,
     return 0;
 }
 
-void
+XA_EXPORT void
 xa_copy(struct xa_context *ctx,
 	int dx, int dy, int sx, int sy, int width, int height)
 {
@@ -250,7 +250,7 @@ xa_copy(struct xa_context *ctx,
 		      (float) ctx->src->tex->height0);
 }
 
-void
+XA_EXPORT void
 xa_copy_done(struct xa_context *ctx)
 {
     if (!ctx->simple_copy) {
@@ -277,7 +277,7 @@ bind_solid_blend_state(struct xa_context *ctx)
     cso_set_blend(ctx->cso, &blend);
 }
 
-int
+XA_EXPORT int
 xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 		 uint32_t fg)
 {
@@ -326,13 +326,13 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
     return XA_ERR_NONE;
 }
 
-void
+XA_EXPORT void
 xa_solid(struct xa_context *ctx, int x, int y, int width, int height)
 {
     renderer_solid(ctx, x, y, x + width, y + height, ctx->solid_color);
 }
 
-void
+XA_EXPORT void
 xa_solid_done(struct xa_context *ctx)
 {
     renderer_draw_flush(ctx);
@@ -343,7 +343,7 @@ xa_solid_done(struct xa_context *ctx)
     ctx->num_bound_samplers = 0;
 }
 
-struct xa_fence *
+XA_EXPORT struct xa_fence *
 xa_fence_get(struct xa_context *ctx)
 {
     struct xa_fence *fence = calloc(1, sizeof(*fence));
@@ -362,7 +362,7 @@ xa_fence_get(struct xa_context *ctx)
     return fence;
 }
 
-int
+XA_EXPORT int
 xa_fence_wait(struct xa_fence *fence, uint64_t timeout)
 {
     if (!fence)
@@ -381,7 +381,7 @@ xa_fence_wait(struct xa_fence *fence, uint64_t timeout)
     return XA_ERR_NONE;
 }
 
-void
+XA_EXPORT void
 xa_fence_destroy(struct xa_fence *fence)
 {
     if (!fence)

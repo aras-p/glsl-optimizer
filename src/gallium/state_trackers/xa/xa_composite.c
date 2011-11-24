@@ -213,7 +213,7 @@ xa_is_filter_accelerated(struct xa_picture *pic)
     return 1;
 }
 
-int
+XA_EXPORT int
 xa_composite_check_accelerated(const struct xa_composite *comp)
 {
     struct xa_composite_blend blend;
@@ -448,7 +448,7 @@ bind_samplers(struct xa_context *ctx,
 				   ctx->bound_sampler_views);
 }
 
-int
+XA_EXPORT int
 xa_composite_prepare(struct xa_context *ctx,
 		     const struct xa_composite *comp)
 {
@@ -482,9 +482,10 @@ xa_composite_prepare(struct xa_context *ctx,
     return XA_ERR_NONE;
 }
 
-void xa_composite_rect(struct xa_context *ctx,
-		       int srcX, int srcY, int maskX, int maskY,
-		       int dstX, int dstY, int width, int height)
+XA_EXPORT void
+xa_composite_rect(struct xa_context *ctx,
+		  int srcX, int srcY, int maskX, int maskY,
+		  int dstX, int dstY, int width, int height)
 {
     if (ctx->num_bound_samplers == 0 ) { /* solid fill */
 	renderer_solid(ctx, dstX, dstY, dstX + width, dstY + height,
@@ -505,7 +506,7 @@ void xa_composite_rect(struct xa_context *ctx,
     }
 }
 
-void
+XA_EXPORT void
 xa_composite_done(struct xa_context *ctx)
 {
     renderer_draw_flush(ctx);
@@ -522,7 +523,7 @@ static const struct xa_composite_allocation a = {
     .xa_source_pict_size = sizeof(union xa_source_pict),
 };
 
-const struct xa_composite_allocation *
+XA_EXPORT const struct xa_composite_allocation *
 xa_composite_allocation(void)
 {
     return &a;

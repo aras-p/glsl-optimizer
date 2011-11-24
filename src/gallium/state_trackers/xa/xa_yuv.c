@@ -105,7 +105,7 @@ xa_yuv_fs_constants(struct xa_context *r, const float conversion_matrix[])
 			   conversion_matrix, param_bytes);
 }
 
-extern int
+XA_EXPORT int
 xa_yuv_planar_blit(struct xa_context *r,
 		   int src_x,
 		   int src_y,
