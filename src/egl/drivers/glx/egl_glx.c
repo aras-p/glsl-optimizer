@@ -1069,17 +1069,22 @@ static EGLBoolean
 GLX_Load(_EGLDriver *drv)
 {
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
-   void *handle;
+   void *handle = NULL;
 
-   handle = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
-   if (!handle)
-      goto fail;
+   GLX_drv->glXGetProcAddress = dlsym(RTLD_DEFAULT, "glXGetProcAddress");
+   if (!GLX_drv->glXGetProcAddress)
+      GLX_drv->glXGetProcAddress = dlsym(RTLD_DEFAULT, "glXGetProcAddressARB");
+   if (!GLX_drv->glXGetProcAddress) {
+      handle = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
+      if (!handle)
+         goto fail;
 
-   GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddress");
-   if (!GLX_drv->glXGetProcAddress)
-      GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddressARB");
-   if (!GLX_drv->glXGetProcAddress)
-      goto fail;
+      GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddress");
+      if (!GLX_drv->glXGetProcAddress)
+         GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddressARB");
+      if (!GLX_drv->glXGetProcAddress)
+         goto fail;
+   }
 
 #define GET_PROC(proc_type, proc_name, check)                        \
    do {                                                              \
