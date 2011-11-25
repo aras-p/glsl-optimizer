@@ -33,7 +33,7 @@
 #include "pipe/p_state.h"
 
 struct native_display;
-struct android_native_buffer_t;
+struct ANativeWindowBuffer;
 
 enum native_buffer_type {
    NATIVE_BUFFER_DRM,
@@ -53,7 +53,7 @@ struct native_buffer {
          unsigned stride;
       } drm;
 
-      struct android_native_buffer_t *android; /**< opaque native buffer */
+      struct ANativeWindowBuffer *android; /**< opaque native buffer */
    } u;
 };
 

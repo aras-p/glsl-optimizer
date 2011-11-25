@@ -66,7 +66,7 @@ get_format_bpp(int native)
 }
 
 static int
-get_native_buffer_name(struct android_native_buffer_t *buf)
+get_native_buffer_name(struct ANativeWindowBuffer *buf)
 {
    struct gralloc_drm_handle_t *handle;
 
@@ -280,7 +280,7 @@ droid_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 
 static _EGLImage *
 dri2_create_image_android_native_buffer(_EGLDisplay *disp,
-                                        struct android_native_buffer_t *buf)
+                                        struct ANativeWindowBuffer *buf)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img;
@@ -357,7 +357,7 @@ droid_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    switch (target) {
    case EGL_NATIVE_BUFFER_ANDROID:
       return dri2_create_image_android_native_buffer(disp,
-            (struct android_native_buffer_t *) buffer);
+            (struct ANativeWindowBuffer *) buffer);
    default:
       return dri2_create_image_khr(drv, disp, ctx, target, buffer, attr_list);
    }

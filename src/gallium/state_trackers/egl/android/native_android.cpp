@@ -25,11 +25,20 @@
  */
 
 #define LOG_TAG "EGL-GALLIUM"
-#include <cutils/log.h>
-#include <cutils/properties.h>
-#include <hardware/gralloc.h>
-#include <utils/Errors.h>
+
+#if ANDROID_VERSION >= 0x0400
+#include <stdlib.h>
+#include <system/window.h>
+#else
+#define android_native_buffer_t ANativeWindowBuffer
+#include <ui/egl/android_natives.h>
 #include <ui/android_native_buffer.h>
+#endif
+
+#include <hardware/gralloc.h>
+#include <cutils/properties.h>
+#include <cutils/log.h>
+#include <utils/Errors.h>
 
 extern "C" {
 #include "egllog.h"
@@ -59,13 +68,13 @@ struct android_surface {
    struct native_surface base;
 
    struct android_display *adpy;
-   android_native_window_t *win;
+   ANativeWindow *win;
 
    /* staging color buffer for when buffer preserving is enabled */
    struct pipe_resource *color_res;
 
    uint stamp;
-   android_native_buffer_t *buf;
+   ANativeWindowBuffer *buf;
    struct pipe_resource *buf_res;
 
    /* cache the current back buffers */
@@ -161,11 +170,11 @@ get_handle_name(buffer_handle_t handle)
 #endif /* ANDROID_BACKEND_NO_DRM */
 
 /**
- * Import an android_native_buffer_t allocated by the server.
+ * Import an ANativeWindowBuffer allocated by the server.
  */
 static struct pipe_resource *
 import_buffer(struct android_display *adpy, const struct pipe_resource *templ,
-              struct android_native_buffer_t *abuf)
+              ANativeWindowBuffer *abuf)
 {
    struct pipe_screen *screen = adpy->base.screen;
    struct pipe_resource *res;
@@ -232,7 +241,7 @@ android_surface_clear_cache(struct native_surface *nsurf)
 
 static struct pipe_resource *
 android_surface_add_cache(struct native_surface *nsurf,
-                          struct android_native_buffer_t *abuf)
+                          ANativeWindowBuffer *abuf)
 {
    struct android_surface *asurf = android_surface(nsurf);
    void *handle;
@@ -716,7 +725,7 @@ android_display_import_buffer(struct native_display *ndpy,
                               struct native_buffer *nbuf)
 {
    struct android_display *adpy = android_display(ndpy);
-   struct android_native_buffer_t *abuf;
+   ANativeWindowBuffer *abuf;
    enum pipe_format format;
    struct pipe_resource templ;
 

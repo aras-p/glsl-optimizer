@@ -206,7 +206,7 @@ egl_g3d_reference_wl_buffer(_EGLDisplay *dpy, struct wl_buffer *buffer,
 
 static struct pipe_resource *
 egl_g3d_reference_android_native_buffer(_EGLDisplay *dpy,
-                                        struct android_native_buffer_t *buf)
+                                        struct ANativeWindowBuffer *buf)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct native_buffer nbuf;
@@ -260,7 +260,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 #ifdef EGL_ANDROID_image_native_buffer
    case EGL_NATIVE_BUFFER_ANDROID:
       ptex = egl_g3d_reference_android_native_buffer(dpy,
-            (struct android_native_buffer_t *) buffer);
+            (struct ANativeWindowBuffer *) buffer);
       break;
 #endif
    default:

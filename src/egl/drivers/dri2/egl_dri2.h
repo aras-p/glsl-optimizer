@@ -50,11 +50,20 @@
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "EGL-DRI2"
-#include <ui/egl/android_natives.h>
-#include <ui/android_native_buffer.h>
-#include <cutils/log.h>
-#include <gralloc_drm_handle.h>
+
+#if ANDROID_VERSION >= 0x0400
+#  include <system/window.h>
+#else
+#  define android_native_buffer_t ANativeWindowBuffer
+#  include <ui/egl/android_natives.h>
+#  include <ui/android_native_buffer.h>
 #endif
+
+#include <hardware/gralloc.h>
+#include <gralloc_drm_handle.h>
+#include <cutils/log.h>
+
+#endif /* HAVE_ANDROID_PLATFORM */
 
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -167,8 +176,8 @@ struct dri2_egl_surface
 #endif
 
 #ifdef HAVE_ANDROID_PLATFORM
-   android_native_window_t *window;
-   android_native_buffer_t *buffer;
+   struct ANativeWindow *window;
+   struct ANativeWindowBuffer *buffer;
 
    /* EGL-owned buffers */
    __DRIbuffer           *local_buffers[__DRI_BUFFER_COUNT];

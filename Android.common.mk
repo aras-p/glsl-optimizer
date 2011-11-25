@@ -24,6 +24,12 @@
 LOCAL_C_INCLUDES += \
 	$(MESA_TOP)/include
 
+# define ANDROID_VERSION (e.g., 4.0.x => 0x0400)
+major := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
+minor := $(word 2, $(subst ., , $(PLATFORM_VERSION)))
+LOCAL_CFLAGS += \
+	-DANDROID_VERSION=0x0$(major)0$(minor)
+
 LOCAL_CFLAGS += \
 	-DPTHREADS \
 	-fvisibility=hidden \
