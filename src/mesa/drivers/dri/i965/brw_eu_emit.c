@@ -1047,7 +1047,21 @@ patch_IF_ELSE(struct brw_compile *p,
 {
    struct intel_context *intel = &p->brw->intel;
 
-   assert(!p->single_program_flow);
+   /* We shouldn't be patching IF and ELSE instructions in single program flow
+    * mode when gen < 6, because in single program flow mode on those
+    * platforms, we convert flow control instructions to conditional ADDs that
+    * operate on IP (see brw_ENDIF).
+    *
+    * However, on Gen6, writing to IP doesn't work in single program flow mode
+    * (see the SandyBridge PRM, Volume 4 part 2, p79: "When SPF is ON, IP may
+    * not be updated by non-flow control instructions.").  And on later
+    * platforms, there is no significant benefit to converting control flow
+    * instructions to conditional ADDs.  So we do patch IF and ELSE
+    * instructions in single program flow mode on those platforms.
+    */
+   if (intel->gen < 6)
+      assert(!p->single_program_flow);
+
    assert(if_inst != NULL && if_inst->header.opcode == BRW_OPCODE_IF);
    assert(endif_inst != NULL);
    assert(else_inst == NULL || else_inst->header.opcode == BRW_OPCODE_ELSE);
@@ -1161,7 +1175,19 @@ brw_ENDIF(struct brw_compile *p)
    }
    if_inst = p->if_stack[p->if_stack_depth];
 
-   if (p->single_program_flow) {
+   /* In single program flow mode, we can express IF and ELSE instructions
+    * equivalently as ADD instructions that operate on IP.  On platforms prior
+    * to Gen6, flow control instructions cause an implied thread switch, so
+    * this is a significant savings.
+    *
+    * However, on Gen6, writing to IP doesn't work in single program flow mode
+    * (see the SandyBridge PRM, Volume 4 part 2, p79: "When SPF is ON, IP may
+    * not be updated by non-flow control instructions.").  And on later
+    * platforms, there is no significant benefit to converting control flow
+    * instructions to conditional ADDs.  So we only do this trick on Gen4 and
+    * Gen5.
+    */
+   if (intel->gen < 6 && p->single_program_flow) {
       /* ENDIF is useless; don't bother emitting it. */
       convert_IF_ELSE_to_ADD(p, if_inst, else_inst);
       return;
