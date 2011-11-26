@@ -1825,6 +1825,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       GLint slice;
       GLboolean nextLevel;
       GLubyte **srcMaps, **dstMaps;
+      GLboolean success = GL_TRUE;
 
       /* get src image parameters */
       srcImage = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -1873,42 +1874,74 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       }
 
       /* Map src texture image slices */
-      srcMaps = (GLubyte **) malloc(srcDepth * sizeof(GLubyte *));
-      for (slice = 0; slice < srcDepth; slice++) {
-         ctx->Driver.MapTextureImage(ctx, srcImage, slice,
-                                     0, 0, srcWidth, srcHeight,
-                                     GL_MAP_READ_BIT,
-                                     &srcMaps[slice], &srcRowStride);
+      srcMaps = (GLubyte **) calloc(srcDepth, sizeof(GLubyte *));
+      if (srcMaps) {
+         for (slice = 0; slice < srcDepth; slice++) {
+            ctx->Driver.MapTextureImage(ctx, srcImage, slice,
+                                        0, 0, srcWidth, srcHeight,
+                                        GL_MAP_READ_BIT,
+                                        &srcMaps[slice], &srcRowStride);
+            if (!srcMaps[slice]) {
+               success = GL_FALSE;
+               break;
+            }
+         }
+      }
+      else {
+         success = GL_FALSE;
       }
 
       /* Map dst texture image slices */
-      dstMaps = (GLubyte **) malloc(dstDepth * sizeof(GLubyte *));
-      for (slice = 0; slice < dstDepth; slice++) {
-         ctx->Driver.MapTextureImage(ctx, dstImage, slice,
-                                     0, 0, dstWidth, dstHeight,
-                                     GL_MAP_WRITE_BIT,
-                                     &dstMaps[slice], &dstRowStride);
+      dstMaps = (GLubyte **) calloc(dstDepth, sizeof(GLubyte *));
+      if (dstMaps) {
+         for (slice = 0; slice < dstDepth; slice++) {
+            ctx->Driver.MapTextureImage(ctx, dstImage, slice,
+                                        0, 0, dstWidth, dstHeight,
+                                        GL_MAP_WRITE_BIT,
+                                        &dstMaps[slice], &dstRowStride);
+            if (!dstMaps[slice]) {
+               success = GL_FALSE;
+               break;
+            }
+         }
+      }
+      else {
+         success = GL_FALSE;
       }
 
-      /* generate one mipmap level (for 1D/2D/3D/array/etc texture) */
-      _mesa_generate_mipmap_level(target, datatype, comps, border,
-                                  srcWidth, srcHeight, srcDepth,
-                                  (const GLubyte **) srcMaps, srcRowStride,
-                                  dstWidth, dstHeight, dstDepth,
-                                  dstMaps, dstRowStride);
+      if (success) {
+         /* generate one mipmap level (for 1D/2D/3D/array/etc texture) */
+         _mesa_generate_mipmap_level(target, datatype, comps, border,
+                                     srcWidth, srcHeight, srcDepth,
+                                     (const GLubyte **) srcMaps, srcRowStride,
+                                     dstWidth, dstHeight, dstDepth,
+                                     dstMaps, dstRowStride);
+      }
 
       /* Unmap src image slices */
-      for (slice = 0; slice < srcDepth; slice++) {
-         ctx->Driver.UnmapTextureImage(ctx, srcImage, slice);
+      if (srcMaps) {
+         for (slice = 0; slice < srcDepth; slice++) {
+            if (srcMaps[slice]) {
+               ctx->Driver.UnmapTextureImage(ctx, srcImage, slice);
+            }
+         }
+         free(srcMaps);
       }
-      free(srcMaps);
 
       /* Unmap dst image slices */
-      for (slice = 0; slice < dstDepth; slice++) {
-         ctx->Driver.UnmapTextureImage(ctx, dstImage, slice);
+      if (dstMaps) {
+         for (slice = 0; slice < dstDepth; slice++) {
+            if (dstMaps[slice]) {
+               ctx->Driver.UnmapTextureImage(ctx, dstImage, slice);
+            }
+         }
+         free(dstMaps);
       }
-      free(dstMaps);
 
+      if (!success) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "mipmap generation");
+         break;
+      }
    } /* loop over mipmap levels */
 }
 
