@@ -489,6 +489,12 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
    /* _NEW_BUFFERS */
    key->num_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
 
+   /* _NEW_COLOR */
+   if (ctx->Color.AlphaEnabled && key->num_draw_buffers == 0) {
+      /* if alpha test is enabled we need to emit at least one color */
+      key->num_draw_buffers = 1;
+   }
+
    key->inputs_available = (inputs_available & inputs_referenced);
 
    /* compute size of state key, ignoring unused texture units */
