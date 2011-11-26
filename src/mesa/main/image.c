@@ -545,11 +545,12 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
+               return ctx->Extensions.EXT_texture_integer;
             case GL_UNSIGNED_BYTE_3_3_2:
             case GL_UNSIGNED_BYTE_2_3_3_REV:
             case GL_UNSIGNED_SHORT_5_6_5:
             case GL_UNSIGNED_SHORT_5_6_5_REV:
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->Extensions.ARB_texture_rgb10_a2ui;
             default:
                return GL_FALSE;
          }
@@ -577,6 +578,7 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
+               return ctx->Extensions.EXT_texture_integer;
             case GL_UNSIGNED_SHORT_4_4_4_4:
             case GL_UNSIGNED_SHORT_4_4_4_4_REV:
             case GL_UNSIGNED_SHORT_5_5_5_1:
@@ -585,7 +587,7 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_INT_8_8_8_8_REV:
             case GL_UNSIGNED_INT_10_10_10_2:
             case GL_UNSIGNED_INT_2_10_10_10_REV:
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->Extensions.ARB_texture_rgb10_a2ui;
             default:
                return GL_FALSE;
          }
