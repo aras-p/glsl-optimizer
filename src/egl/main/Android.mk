@@ -21,7 +21,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Android.mk for core EGL
+# Android.mk for libGLES_mesa
 
 LOCAL_PATH := $(call my-dir)
 
@@ -45,6 +45,10 @@ SOURCES = \
 	eglsurface.c \
 	eglsync.c
 
+# ---------------------------------------
+# Build libGLES_mesa
+# ---------------------------------------
+
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(SOURCES)
@@ -54,14 +58,90 @@ LOCAL_CFLAGS := \
 	-D_EGL_DRIVER_SEARCH_DIR=\"/system/lib/egl\" \
 	-D_EGL_OS_UNIX=1
 
+LOCAL_STATIC_LIBRARIES :=
+
+LOCAL_SHARED_LIBRARIES := \
+	libglapi \
+	libdl \
+	libhardware \
+	liblog \
+	libcutils
+
+# add libdrm if there are hardware drivers
+ifneq ($(MESA_GPU_DRIVERS),swrast)
+LOCAL_SHARED_LIBRARIES += libdrm
+endif
+
 ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
 LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_DRI2
-endif
-ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
-LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GALLIUM
+LOCAL_STATIC_LIBRARIES += libmesa_egl_dri2
 endif
 
-LOCAL_MODULE := libmesa_egl
+ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
+
+LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GALLIUM
+
+gallium_DRIVERS :=
+
+# swrast
+gallium_DRIVERS += libmesa_pipe_softpipe libmesa_winsys_sw_android
+
+# i915g
+ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_winsys_i915 libmesa_pipe_i915
+LOCAL_SHARED_LIBRARIES += libdrm_intel
+endif
+
+# nouveau
+ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += \
+	libmesa_winsys_nouveau \
+	libmesa_pipe_nvfx \
+	libmesa_pipe_nv50 \
+	libmesa_pipe_nvc0 \
+	libmesa_pipe_nouveau
+LOCAL_SHARED_LIBRARIES += libdrm_nouveau
+endif
+
+# r300g/r600g
+ifneq ($(filter r300g r600g, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_winsys_radeon
+ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_pipe_r300
+endif
+ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_pipe_r600
+endif
+endif
+
+# vmwgfx
+ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
+gallium_DRIVERS += libmesa_winsys_svga libmesa_pipe_svga
+endif
+
+#
+# Notes about the order here:
+#
+#  * libmesa_st_egl depends on libmesa_winsys_sw_android in $(gallium_DRIVERS)
+#  * libmesa_pipe_r300 in $(gallium_DRIVERS) depends on libmesa_st_mesa and
+#    libmesa_glsl
+#  * libmesa_st_mesa depends on libmesa_glsl
+#  * libmesa_glsl depends on libmesa_glsl_utils
+#
+LOCAL_STATIC_LIBRARIES := \
+	libmesa_egl_gallium \
+	libmesa_st_egl \
+	$(gallium_DRIVERS) \
+	libmesa_st_mesa \
+	libmesa_glsl \
+	libmesa_glsl_utils \
+	libmesa_gallium \
+	$(LOCAL_STATIC_LIBRARIES)
+
+endif # MESA_BUILD_GALLIUM
+
+LOCAL_MODULE := libGLES_mesa
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
 
 include $(MESA_COMMON_MK)
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)

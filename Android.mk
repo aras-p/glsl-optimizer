@@ -69,6 +69,7 @@ else
 MESA_BUILD_GALLIUM := false
 endif
 
+# add subdirectories
 ifneq ($(strip $(MESA_GPU_DRIVERS)),)
 
 SUBDIRS := \
@@ -87,105 +88,7 @@ ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
 SUBDIRS += src/gallium
 endif
 
-# ---------------------------------------
-# Build libGLES_mesa
-# ---------------------------------------
-
-LOCAL_PATH := $(MESA_TOP)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES :=
-LOCAL_CFLAGS :=
-LOCAL_C_INCLUDES :=
-
-LOCAL_STATIC_LIBRARIES :=
-LOCAL_WHOLE_STATIC_LIBRARIES := libmesa_egl
-
-LOCAL_SHARED_LIBRARIES := \
-	libglapi \
-	libdl \
-	libhardware \
-	liblog \
-	libcutils
-
-# hardware drivers require DRM
-ifneq ($(MESA_GPU_DRIVERS),swrast)
-LOCAL_SHARED_LIBRARIES += libdrm
-endif
-
-ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
-LOCAL_STATIC_LIBRARIES += libmesa_egl_dri2
-endif
-
-ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
-
-gallium_DRIVERS :=
-
-# swrast
-gallium_DRIVERS += libmesa_pipe_softpipe libmesa_winsys_sw_android
-
-# i915g
-ifneq ($(filter i915g, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_winsys_i915 libmesa_pipe_i915
-LOCAL_SHARED_LIBRARIES += libdrm_intel
-endif
-
-# nouveau
-ifneq ($(filter nouveau, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += \
-	libmesa_winsys_nouveau \
-	libmesa_pipe_nvfx \
-	libmesa_pipe_nv50 \
-	libmesa_pipe_nvc0 \
-	libmesa_pipe_nouveau
-LOCAL_SHARED_LIBRARIES += libdrm_nouveau
-endif
-
-# r300g/r600g
-ifneq ($(filter r300g r600g, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_winsys_radeon
-ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_pipe_r300
-endif
-ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_pipe_r600
-endif
-endif
-
-# vmwgfx
-ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
-gallium_DRIVERS += libmesa_winsys_svga libmesa_pipe_svga
-endif
-
-#
-# Notes about the order here:
-#
-#  * libmesa_st_egl depends on libmesa_winsys_sw_android in $(gallium_DRIVERS)
-#  * libmesa_pipe_r300 in $(gallium_DRIVERS) depends on libmesa_st_mesa and
-#    libmesa_glsl
-#  * libmesa_st_mesa depends on libmesa_glsl
-#  * libmesa_glsl depends on libmesa_glsl_utils
-#
-LOCAL_STATIC_LIBRARIES := \
-	libmesa_egl_gallium \
-	libmesa_st_egl \
-	$(gallium_DRIVERS) \
-	libmesa_st_mesa \
-	libmesa_glsl \
-	libmesa_glsl_utils \
-	libmesa_gallium \
-	$(LOCAL_STATIC_LIBRARIES)
-
-endif # MESA_BUILD_GALLIUM
-
-LOCAL_MODULE := libGLES_mesa
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
-
-include $(MESA_COMMON_MK)
-include $(BUILD_SHARED_LIBRARY)
-
 mkfiles := $(patsubst %,$(MESA_TOP)/%/Android.mk,$(SUBDIRS))
 include $(mkfiles)
 
-endif # MESA_GPU_DRIVERS
+endif
