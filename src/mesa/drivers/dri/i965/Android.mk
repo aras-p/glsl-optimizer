@@ -32,10 +32,6 @@ LOCAL_UNSTRIPPED_PATH := $(MESA_DRI_MODULE_UNSTRIPPED_PATH)
 # Import variables i965_*.
 include $(LOCAL_PATH)/Makefile.sources
 
-# Overriding LOCAL_CC below is an ugly workaround.  We cannot place -std=c99
-# in LOCAL_C_FLAGS because Android appends LOCAL_C_FLAGS to LOCAL_CPP_FLAGS.
-LOCAL_CC := $(TARGET_CC) -std=c99
-
 LOCAL_CFLAGS := \
 	$(MESA_DRI_CFLAGS)
 

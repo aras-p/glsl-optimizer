@@ -30,8 +30,6 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(C_SOURCES)
 
-LOCAL_CFLAGS := -std=c99
-
 LOCAL_MODULE := libmesa_pipe_i915
 
 include $(GALLIUM_COMMON_MK)

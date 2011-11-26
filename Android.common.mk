@@ -21,6 +21,15 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# use c99 compiler by default
+ifeq ($(LOCAL_CC),)
+ifeq ($(LOCAL_IS_HOST_MODULE),true)
+LOCAL_CC := $(HOST_CC) -std=c99
+else
+LOCAL_CC := $(TARGET_CC) -std=c99
+endif
+endif
+
 LOCAL_C_INCLUDES += \
 	$(MESA_TOP)/include
 

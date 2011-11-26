@@ -56,6 +56,7 @@ LOCAL_SRC_FILES := x86/gen_matypes.c
 LOCAL_CFLAGS := $(common_CFLAGS)
 LOCAL_C_INCLUDES := $(common_C_INCLUDES)
 LOCAL_MODULE := mesa_gen_matypes
+LOCAL_IS_HOST_MODULE := true
 include $(MESA_COMMON_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
@@ -145,6 +146,7 @@ LOCAL_SRC_FILES := \
 	program/symbol_table.c
 
 LOCAL_MODULE := libmesa_glsl_utils
+LOCAL_IS_HOST_MODULE := true
 
 include $(MESA_COMMON_MK)
 include $(BUILD_HOST_STATIC_LIBRARY)
