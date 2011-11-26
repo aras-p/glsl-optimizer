@@ -25,14 +25,24 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# get MAPI_GLAPI_SOURCES
+include $(LOCAL_PATH)/mapi/sources.mak
+
+mapi_abi_headers :=
+
+# ---------------------------------------
+# Build libglapi
+# ---------------------------------------
+
 include $(CLEAR_VARS)
 
-include $(LOCAL_PATH)/mapi/sources.mak
+abi_header := shared-glapi/glapi_mapi_tmp.h
+
 LOCAL_SRC_FILES := $(addprefix mapi/, $(MAPI_GLAPI_SOURCES))
 
 LOCAL_CFLAGS := \
 	-DMAPI_MODE_GLAPI \
-	-DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\"
+	-DMAPI_ABI_HEADER=\"$(abi_header)\"
 
 LOCAL_C_INCLUDES := \
 	$(MESA_TOP)/src/mapi
@@ -41,20 +51,25 @@ LOCAL_MODULE := libglapi
 
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 intermediates := $(call local-intermediates-dir)
-mapi_abi_header := $(intermediates)/shared-glapi/glapi_mapi_tmp.h
-LOCAL_GENERATED_SOURCES := $(mapi_abi_header)
+abi_header := $(intermediates)/$(abi_header)
+LOCAL_GENERATED_SOURCES := $(abi_header)
+
+$(abi_header): PRIVATE_PRINTER := shared-glapi
+
+mapi_abi_headers += $(abi_header)
+
+include $(MESA_COMMON_MK)
+include $(BUILD_SHARED_LIBRARY)
+
 
 mapi_abi_deps := \
 	$(wildcard $(LOCAL_PATH)/glapi/gen/*.py) \
 	$(wildcard $(LOCAL_PATH)/glapi/gen/*.xml) \
 	$(LOCAL_PATH)/mapi/mapi_abi.py
 
-$(mapi_abi_header): PRIVATE_SCRIPT := $(MESA_PYTHON2) $(LOCAL_PATH)/mapi/mapi_abi.py
-$(mapi_abi_header): PRIVATE_APIXML := $(LOCAL_PATH)/glapi/gen/gl_and_es_API.xml
-$(mapi_abi_header): $(mapi_abi_deps)
+$(mapi_abi_headers): PRIVATE_SCRIPT := $(MESA_PYTHON2) $(LOCAL_PATH)/mapi/mapi_abi.py
+$(mapi_abi_headers): PRIVATE_APIXML := $(LOCAL_PATH)/glapi/gen/gl_and_es_API.xml
+$(mapi_abi_headers): $(mapi_abi_deps)
 	@mkdir -p $(dir $@)
-	@echo "Gen GLAPI: $(PRIVATE_MODULE) <= $(notdir $@)"
-	$(hide) $(PRIVATE_SCRIPT) --printer shared-glapi --mode lib $(PRIVATE_APIXML) > $@
-
-include $(MESA_COMMON_MK)
-include $(BUILD_SHARED_LIBRARY)
+	@echo "target $(PRIVATE_PRINTER): $(PRIVATE_MODULE) <= $(PRIVATE_APIXML)"
+	$(hide) $(PRIVATE_SCRIPT) --printer $(PRIVATE_PRINTER) --mode lib $(PRIVATE_APIXML) > $@
