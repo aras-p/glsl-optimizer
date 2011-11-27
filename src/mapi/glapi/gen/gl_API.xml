@@ -12424,4 +12424,6 @@
 
 <xi:include href="ARB_vertex_type_2_10_10_10_rev.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_texture_rgb10_a2ui.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 </OpenGLAPI>
