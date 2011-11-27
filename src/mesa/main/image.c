@@ -243,12 +243,14 @@ _mesa_components_in_format( GLenum format )
       case GL_RGB:
       case GL_BGR:
       case GL_RGB_INTEGER_EXT:
+      case GL_BGR_INTEGER_EXT:
 	 return 3;
 
       case GL_RGBA:
       case GL_BGRA:
       case GL_ABGR_EXT:
       case GL_RGBA_INTEGER_EXT:
+      case GL_BGRA_INTEGER_EXT:
          return 4;
 
       default:
