@@ -2245,7 +2245,7 @@ get_component_mapping(GLenum format,
       *gSrc = 0;
       *rSrc = *bSrc = *aSrc = -1;
       break;
-      case GL_BLUE:
+   case GL_BLUE:
    case GL_BLUE_INTEGER_EXT:
       *bSrc = 0;
       *rSrc = *gSrc = *aSrc = -1;
