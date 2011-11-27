@@ -849,6 +849,15 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ARB_texture_rgb10_a2ui) {
+      switch (internalFormat) {
+      case GL_RGB10_A2UI:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010_UINT);
+         break;
+      default:
+         break;
+      }
+   }
    /* GL_BGRA can be an internal format *only* in OpenGL ES (1.x or 2.0).
     */
    if (ctx->API != API_OPENGL) {

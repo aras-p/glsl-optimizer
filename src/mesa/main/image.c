@@ -816,6 +816,7 @@ _mesa_is_color_format(GLenum format)
       case GL_INTENSITY16_SNORM:
       case GL_RGB9_E5:
       case GL_R11F_G11F_B10F:
+      case GL_RGB10_A2UI:
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
          /* fall-through */
@@ -1002,6 +1003,7 @@ _mesa_is_integer_format(GLenum format)
    case GL_INTENSITY8I_EXT:
    case GL_LUMINANCE8I_EXT:
    case GL_LUMINANCE_ALPHA8I_EXT:
+   case GL_RGB10_A2UI:
       return GL_TRUE;
    default:
       return GL_FALSE;

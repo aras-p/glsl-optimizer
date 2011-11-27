@@ -1642,6 +1642,20 @@ unpack_int_rgba_INTENSITY_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_int_rgba_ARGB2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      GLuint tmp = src[i];
+      dst[i][0] = (tmp >> 20) & 0x3ff;
+      dst[i][1] = (tmp >> 10) & 0x3ff;
+      dst[i][2] = (tmp >> 0) & 0x3ff;
+      dst[i][3] = (tmp >> 30) & 0x3;
+   }
+}
+
 void
 _mesa_unpack_int_rgba_row(gl_format format, GLuint n,
 			  const void *src, GLuint dst[][4])
@@ -1680,6 +1694,9 @@ _mesa_unpack_int_rgba_row(gl_format format, GLuint n,
       unpack_int_rgba_INTENSITY_UINT32(src, dst, n);
       break;
 
+   case MESA_FORMAT_ARGB2101010_UINT:
+      unpack_int_rgba_ARGB2101010_UINT(src, dst, n);
+      break;
    default:
       _mesa_problem(NULL, "%s: bad format %s", __FUNCTION__,
                     _mesa_get_format_name(format));

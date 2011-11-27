@@ -331,6 +331,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_RGBA8I_EXT:
       case GL_RGBA16I_EXT:
       case GL_RGBA32I_EXT:
+      case GL_RGB10_A2UI:
          return GL_RGBA;
       case GL_RGB8UI_EXT:
       case GL_RGB16UI_EXT:
