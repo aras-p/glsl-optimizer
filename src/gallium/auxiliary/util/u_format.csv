@@ -340,3 +340,4 @@ PIPE_FORMAT_I32_SINT                , plain, 1, 1, sp32, , , , xxxx, rgb
 PIPE_FORMAT_L32_SINT                , plain, 1, 1, sp32, , , , xxx1, rgb
 PIPE_FORMAT_L32A32_SINT             , plain, 1, 1, sp32, sp32, , , xxxy, rgb
 
+PIPE_FORMAT_B10G10R10A2_UINT        , plain, 1, 1, up10, up10, up10, up2, zyxw, rgb

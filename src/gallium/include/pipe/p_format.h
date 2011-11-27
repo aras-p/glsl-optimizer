@@ -311,6 +311,7 @@ enum pipe_format {
    PIPE_FORMAT_L32_SINT                = 223,
    PIPE_FORMAT_L32A32_SINT             = 224,
 
+   PIPE_FORMAT_B10G10R10A2_UINT        = 225, 
    PIPE_FORMAT_COUNT
 };
 
