@@ -13,7 +13,7 @@ Feature                                               Status
 GL 3.0:
 
 GLSL 1.30 (GL_EXT_gpu_shader4, etc.)                  started
-glBindFragDataLocation, glGetFragDataLocation         not started
+glBindFragDataLocation, glGetFragDataLocation         DONE
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast, softpipe, i965)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
 Clamping controls (GL_ARB_color_buffer_float)         DONE
