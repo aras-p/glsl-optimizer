@@ -1012,6 +1012,9 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 
 	/* Non-uniform formats. */
 	if (!uniform) {
+		if (desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB &&
+		    desc->channel[0].pure_integer)
+			word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
 		switch(desc->nr_channels) {
 		case 3:
 			if (desc->channel[0].size == 5 &&
