@@ -352,7 +352,7 @@ Function::convertToSSA()
       // gather blocks with assignments to lval in workList
       for (Value::DefIterator d = lval->defs.begin();
            d != lval->defs.end(); ++d) {
-         bb = (*d)->getInsn()->bb;
+         bb = ((*d)->getInsn() ? (*d)->getInsn()->bb : NULL);
          if (!bb)
             continue; // instruction likely been removed but not XXX deleted
 
@@ -436,9 +436,24 @@ bool RenamePass::run()
 
 void RenamePass::search(BasicBlock *bb)
 {
-   LValue *lval;
+   LValue *lval, *ssa;
    int d, s;
    const Target *targ = prog->getTarget();
+
+   if (bb == BasicBlock::get(func->cfg.getRoot())) {
+      for (std::deque<ValueDef>::iterator it = func->ins.begin();
+           it != func->ins.end(); ++it) {
+         lval = it->get()->asLValue();
+         assert(lval);
+
+         ssa = new_LValue(func, targ->nativeFile(lval->reg.file));
+         ssa->reg.size = lval->reg.size;
+         ssa->reg.data.id = lval->reg.data.id;
+
+         it->setSSA(ssa);
+         stack[lval->id].push(ssa);
+      }
+   }
 
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
       if (stmt->op != OP_PHI) {
@@ -486,6 +501,19 @@ void RenamePass::search(BasicBlock *bb)
 
    for (Graph::EdgeIterator ei = bb->dom.outgoing(); !ei.end(); ei.next())
       search(BasicBlock::get(ei.getNode()));
+
+   if (bb == BasicBlock::get(func->cfgExit)) {
+      for (std::deque<ValueRef>::iterator it = func->outs.begin();
+           it != func->outs.end(); ++it) {
+         lval = it->get()->asLValue();
+         if (!lval)
+            continue;
+         lval = getStackTop(lval);
+         if (!lval)
+            lval = static_cast<LValue *>(undef->getDef(0));
+         it->set(lval);
+      }
+   }
 
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
       for (d = 0; stmt->defExists(d); ++d)
