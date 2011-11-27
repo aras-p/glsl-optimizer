@@ -664,4 +664,10 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.ARB_depth_buffer_float = GL_TRUE;
    }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_UINT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW))
+       ctx->Extensions.ARB_texture_rgb10_a2ui = GL_TRUE;
+
 }
