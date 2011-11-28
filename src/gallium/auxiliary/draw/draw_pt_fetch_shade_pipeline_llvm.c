@@ -160,8 +160,13 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
           * XXX: should we flush here ?
           */
          for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
-            struct draw_llvm_variant_list_item *item =
-               last_elem(&fpme->llvm->vs_variants_list);
+            struct draw_llvm_variant_list_item *item;
+            if (is_empty_list(&fpme->llvm->vs_variants_list)) {
+               break;
+            }
+            item = last_elem(&fpme->llvm->vs_variants_list);
+            assert(item);
+            assert(item->base);
             draw_llvm_destroy_variant(item->base);
          }
       }

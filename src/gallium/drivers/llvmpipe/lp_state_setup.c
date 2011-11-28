@@ -837,7 +837,13 @@ cull_setup_variants(struct llvmpipe_context *lp)
    llvmpipe_finish(pipe, __FUNCTION__);
 
    for (i = 0; i < LP_MAX_SETUP_VARIANTS / 4; i++) {
-      struct lp_setup_variant_list_item *item = last_elem(&lp->setup_variants_list);
+      struct lp_setup_variant_list_item *item;
+      if (is_empty_list(&lp->setup_variants_list)) {
+         break;
+      }
+      item = last_elem(&lp->setup_variants_list);
+      assert(item);
+      assert(item->base);
       remove_setup_variant(lp, item->base);
    }
 }

@@ -1373,10 +1373,12 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
          if (lp->nr_fs_variants >= LP_MAX_SHADER_VARIANTS) {
             for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
                struct lp_fs_variant_list_item *item;
-               item = last_elem(&lp->fs_variants_list);
-               if (!item) {
+               if (is_empty_list(&lp->fs_variants_list)) {
                   break;
                }
+               item = last_elem(&lp->fs_variants_list);
+               assert(item);
+               assert(item->base);
                llvmpipe_remove_shader_variant(lp, item->base);
             }
          }
