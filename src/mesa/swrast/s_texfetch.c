@@ -1260,6 +1260,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_2d_z32f_x24s8,
       fetch_texel_3d_z32f_x24s8,
       store_texel_z32f_x24s8
+   },
+   {
+      MESA_FORMAT_ARGB2101010_UINT,
+      NULL,
+      NULL,
+      NULL,
+      NULL
    }
 };
 
