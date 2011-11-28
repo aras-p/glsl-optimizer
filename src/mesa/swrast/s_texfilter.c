@@ -273,6 +273,7 @@ linear_texel_locations(GLenum wrapMode,
    default:
       _mesa_problem(NULL, "Bad wrap mode");
       u = 0.0F;
+      break;
    }
    *weight = FRAC(u);
 }
@@ -471,6 +472,7 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
       _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_linear");
       i0 = i1 = 0;
       fcol = 0.0F;
+      break;
    }
    *i0out = i0;
    *i1out = i1;
@@ -533,6 +535,7 @@ nearest_texcoord(const struct gl_texture_object *texObj,
       break;
    default:
       *i = *j = *k = 0;
+      break;
    }
 }
 
@@ -589,6 +592,7 @@ linear_texcoord(const struct gl_texture_object *texObj,
 
    default:
       *slice = 0;
+      break;
    }
 }
 
@@ -787,6 +791,7 @@ get_border_color(const struct gl_texture_object *tObj,
       break;
    default:
       COPY_4V(rgba, tObj->Sampler.BorderColor.f);
+      break;
    }
 }
 
@@ -1537,6 +1542,7 @@ sample_lambda_2d(struct gl_context *ctx,
          break;
       default:
          _mesa_problem(ctx, "Bad mag filter in sample_lambda_2d");
+         break;
       }
    }
 }
@@ -2528,6 +2534,7 @@ sample_lambda_cube(struct gl_context *ctx,
          break;
       default:
          _mesa_problem(ctx, "Bad min filter in sample_lambda_cube");
+         break;
       }
    }
 
@@ -2545,6 +2552,7 @@ sample_lambda_cube(struct gl_context *ctx,
          break;
       default:
          _mesa_problem(ctx, "Bad mag filter in sample_lambda_cube");
+         break;
       }
    }
 }
@@ -3473,6 +3481,7 @@ sample_depth_texture( struct gl_context *ctx,
             break;
          default:
             _mesa_problem(ctx, "Bad depth texture mode");
+            break;
          }
       }
    }
