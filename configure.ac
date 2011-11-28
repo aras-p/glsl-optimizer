@@ -658,7 +658,7 @@ GALLIUM_DRIVERS_DEFAULT="r300,r600,swrast"
 AC_ARG_WITH([gallium-drivers],
     [AS_HELP_STRING([--with-gallium-drivers@<:@=DIRS...@:>@],
         [comma delimited Gallium drivers list, e.g.
-        "i915,i965,nouveau,r300,r600,svga,swrast"
+        "i915,nouveau,r300,r600,svga,swrast"
         @<:@default=r300,r600,swrast@:>@])],
     [with_gallium_drivers="$withval"],
     [with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT"])
@@ -2019,9 +2019,16 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
+   if echo "$GALLIUM_DRIVERS_DIRS" | grep i965 > /dev/null 2>&1; then
+      echo
+      echo "        WARNING: enabling i965 gallium driver"
+      echo "        the i965g driver is currently utterly broken, only for adventurous developers"
+      echo
+   fi
 else
     echo "        Gallium:         no"
 fi
+
 
 dnl Libraries
 echo ""
