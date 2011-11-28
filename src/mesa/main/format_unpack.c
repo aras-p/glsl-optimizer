@@ -749,13 +749,13 @@ unpack_SL8(const void *src, GLfloat dst[][4], GLuint n)
 static void
 unpack_SLA8(const void *src, GLfloat dst[][4], GLuint n)
 {
-   const GLubyte *s = (const GLubyte *) src;
+   const GLushort *s = (const GLushort *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
       dst[i][RCOMP] =
       dst[i][GCOMP] =
-      dst[i][BCOMP] = nonlinear_to_linear(s[i*2+0]);
-      dst[i][ACOMP] = UBYTE_TO_FLOAT(s[i*2+1]); /* linear! */
+      dst[i][BCOMP] = nonlinear_to_linear(s[i] & 0xff);
+      dst[i][ACOMP] = UBYTE_TO_FLOAT(s[i] >> 8); /* linear! */
    }
 }
 
