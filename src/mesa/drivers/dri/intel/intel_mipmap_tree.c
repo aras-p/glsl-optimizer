@@ -346,7 +346,7 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 
    assert(mt->level[level].slice == NULL);
 
-   mt->level[level].slice = malloc(d * sizeof(*mt->level[0].slice));
+   mt->level[level].slice = calloc(d, sizeof(*mt->level[0].slice));
    mt->level[level].slice[0].x_offset = mt->level[level].level_x;
    mt->level[level].slice[0].y_offset = mt->level[level].level_y;
 }
@@ -746,9 +746,25 @@ intel_miptree_map(struct intel_context *intel,
 		  void **out_ptr,
 		  int *out_stride)
 {
+   struct intel_miptree_map *map;
    unsigned int bw, bh;
    void *base;
    unsigned int image_x, image_y;
+
+   map = calloc(1, sizeof(struct intel_miptree_map));
+   if (!map){
+      *out_ptr = NULL;
+      *out_stride = 0;
+      return;
+   }
+
+   assert(!mt->level[level].slice[slice].map);
+   mt->level[level].slice[slice].map = map;
+   map->mode = mode;
+   map->x = x;
+   map->y = y;
+   map->w = w;
+   map->h = h;
 
    if (mt->stencil_mt) {
       /* The miptree has depthstencil format, but uses separate stencil. The
@@ -781,13 +797,16 @@ intel_miptree_map(struct intel_context *intel,
    x += image_x;
    y += image_y;
 
-   *out_stride = mt->region->pitch * mt->cpp;
-   *out_ptr = base + y * *out_stride + x * mt->cpp;
+   map->stride = mt->region->pitch * mt->cpp;
+   map->ptr = base + y * map->stride + x * mt->cpp;
+
+   *out_ptr = map->ptr;
+   *out_stride = map->stride;
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
-       x - image_x, y - image_y, w, h,
+       map->x, map->y, map->w, map->h,
        mt, _mesa_get_format_name(mt->format),
-       x, y, *out_ptr, *out_stride);
+       x, y, map->ptr, map->stride);
 }
 
 void
@@ -796,6 +815,11 @@ intel_miptree_unmap(struct intel_context *intel,
 		    unsigned int level,
 		    unsigned int slice)
 {
+   struct intel_miptree_map *map = mt->level[level].slice[slice].map;
+
+   if (!map)
+      return;
+
    DBG("%s: mt %p (%s) level %d slice %d\n", __FUNCTION__,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
@@ -811,4 +835,7 @@ intel_miptree_unmap(struct intel_context *intel,
        */
       intel_miptree_s8z24_scatter(intel, mt, level, slice);
    }
+
+   mt->level[level].slice[slice].map = NULL;
+   free(map);
 }

@@ -62,6 +62,19 @@
 struct intel_resolve_map;
 struct intel_texture_image;
 
+struct intel_miptree_map {
+   /** Bitfield of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT, GL_MAP_INVALIDATE_BIT */
+   GLbitfield mode;
+   /** Region of interest for the map. */
+   int x, y, w, h;
+   /** Possibly malloced temporary buffer for the mapping. */
+   void *buffer;
+   /** Pointer to the start of (map_x, map_y) returned by the mapping. */
+   void *ptr;
+   /** Stride of the mapping. */
+   int stride;
+};
+
 /**
  * Describes the location of each texture image within a texture region.
  */
@@ -110,6 +123,12 @@ struct intel_mipmap_level
       GLuint x_offset;
       GLuint y_offset;
       /** \} */
+
+      /**
+       * Pointer to mapping information, present across
+       * intel_tex_image_map()/unmap of the slice.
+       */
+      struct intel_miptree_map *map;
    } *slice;
 };
 
