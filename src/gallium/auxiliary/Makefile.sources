@@ -103,6 +103,7 @@ C_SOURCES := \
 	util/u_format_latc.c \
 	util/u_format_s3tc.c \
 	util/u_format_rgtc.c \
+	util/u_format_etc.c \
 	util/u_format_tests.c \
 	util/u_format_yuv.c \
 	util/u_format_zs.c \

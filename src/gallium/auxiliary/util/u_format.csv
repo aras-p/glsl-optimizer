@@ -158,6 +158,7 @@ PIPE_FORMAT_R8G8Bx_SNORM          , other,      1,  1, sn8 , sn8 ,     ,     , x
 # - http://www.opengl.org/registry/specs/EXT/texture_compression_s3tc.txt
 # - http://www.opengl.org/registry/specs/ARB/texture_compression_rgtc.txt
 # - http://www.opengl.org/registry/specs/EXT/texture_compression_latc.txt
+# - http://www.khronos.org/registry/gles/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt
 # - http://msdn.microsoft.com/en-us/library/bb694531.aspx
 PIPE_FORMAT_DXT1_RGB              , s3tc, 4, 4, x64 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_DXT1_RGBA             , s3tc, 4, 4, x64 ,     ,     ,     , xyzw, rgb
@@ -177,6 +178,8 @@ PIPE_FORMAT_LATC1_UNORM           , rgtc, 4, 4, x64,      ,     ,     , xxx1, rg
 PIPE_FORMAT_LATC1_SNORM           , rgtc, 4, 4, x64,      ,     ,     , xxx1, rgb
 PIPE_FORMAT_LATC2_UNORM           , rgtc, 4, 4, x128,     ,     ,     , xxxy, rgb
 PIPE_FORMAT_LATC2_SNORM           , rgtc, 4, 4, x128,     ,     ,     , xxxy, rgb
+
+PIPE_FORMAT_ETC1_RGB8             ,  etc, 4, 4, x64,      ,     ,     , xyz1, rgb
 
 # Straightforward D3D10-like formats (also used for 
 # vertex buffer element description)

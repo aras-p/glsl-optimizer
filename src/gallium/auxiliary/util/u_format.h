@@ -70,9 +70,14 @@ enum util_format_layout {
    UTIL_FORMAT_LAYOUT_RGTC = 5,
 
    /**
+    * Ericsson Texture Compression
+    */
+   UTIL_FORMAT_LAYOUT_ETC = 6,
+
+   /**
     * Everything else that doesn't fit in any of the above layouts.
     */
-   UTIL_FORMAT_LAYOUT_OTHER = 6
+   UTIL_FORMAT_LAYOUT_OTHER = 7
 };
 
 
