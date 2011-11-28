@@ -83,6 +83,7 @@ MAIN_SOURCES = \
 	main/texcompress_rgtc.c \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \
+	main/texcompress_etc.c \
 	main/texenv.c \
 	main/texformat.c \
 	main/texgen.c \
