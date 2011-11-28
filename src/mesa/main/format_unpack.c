@@ -1290,6 +1290,12 @@ unpack_SIGNED_LA_LATC2(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
+unpack_ETC1_RGB8(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
 unpack_SIGNED_A8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLbyte *s = ((const GLbyte *) src);
@@ -1535,6 +1541,8 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_SIGNED_L_LATC1] = unpack_SIGNED_L_LATC1;
       table[MESA_FORMAT_LA_LATC2] = unpack_LA_LATC2;
       table[MESA_FORMAT_SIGNED_LA_LATC2] = unpack_SIGNED_LA_LATC2;
+
+      table[MESA_FORMAT_ETC1_RGB8] = unpack_ETC1_RGB8;
 
       table[MESA_FORMAT_SIGNED_A8] = unpack_SIGNED_A8;
       table[MESA_FORMAT_SIGNED_L8] = unpack_SIGNED_L8;

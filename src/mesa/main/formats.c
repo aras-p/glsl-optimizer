@@ -1386,6 +1386,16 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
      4, 4, 16                     /* 16 bytes per 4x4 block */
    },
 
+   {
+      MESA_FORMAT_ETC1_RGB8,
+      "MESA_FORMAT_ETC1_RGB8",
+      GL_RGB,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 8                     /* 8 bytes per 4x4 block */
+   },
+
    /* Signed formats from EXT_texture_snorm that are not in GL3.1 */
    {
       MESA_FORMAT_SIGNED_A8,
@@ -1790,6 +1800,8 @@ _mesa_get_uncompressed_format(gl_format format)
       return MESA_FORMAT_AL88;
    case MESA_FORMAT_SIGNED_LA_LATC2:
       return MESA_FORMAT_SIGNED_AL88;
+   case MESA_FORMAT_ETC1_RGB8:
+      return MESA_FORMAT_RGB888;
    default:
 #ifdef DEBUG
       assert(!_mesa_is_format_compressed(format));
@@ -2240,6 +2252,7 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_SIGNED_L_LATC1:
    case MESA_FORMAT_LA_LATC2:
    case MESA_FORMAT_SIGNED_LA_LATC2:
+   case MESA_FORMAT_ETC1_RGB8:
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;
@@ -2775,6 +2788,9 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_SIGNED_L_LATC1:
    case MESA_FORMAT_LA_LATC2:
    case MESA_FORMAT_SIGNED_LA_LATC2:
+      return GL_FALSE;
+
+   case MESA_FORMAT_ETC1_RGB8:
       return GL_FALSE;
 
    case MESA_FORMAT_SIGNED_A8:

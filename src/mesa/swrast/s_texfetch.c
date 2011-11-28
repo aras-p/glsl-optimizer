@@ -39,6 +39,7 @@
 #include "main/texcompress_fxt1.h"
 #include "main/texcompress_s3tc.h"
 #include "main/texcompress_rgtc.h"
+#include "main/texcompress_etc.h"
 #include "main/teximage.h"
 #include "s_context.h"
 #include "s_texfetch.h"
@@ -1174,6 +1175,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       MESA_FORMAT_SIGNED_LA_LATC2,
       NULL,
       _mesa_fetch_texel_2d_f_signed_la_latc2,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC1_RGB8,
+      NULL,
+      _mesa_fetch_texel_2d_f_etc1_rgb8,
       NULL,
       NULL
    },

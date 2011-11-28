@@ -3806,6 +3806,7 @@
 	<category name="OES_matrix_get"/>
 	<category name="OES_read_format"/>
 	<category name="OES_compressed_paletted_texture"/>
+	<category name="OES_compressed_ETC1_RGB8_texture"/>
 	<category name="OES_point_size_array"/>
 	<category name="OES_point_sprite"/>
 	<category name="OES_query_matrix"/>
@@ -4105,6 +4106,7 @@
 	<category name="GLES2.0"/>
 
 	<category name="OES_compressed_paletted_texture"/>
+	<category name="OES_compressed_ETC1_RGB8_texture"/>
 	<category name="OES_depth24"/>
 	<category name="OES_depth32"/>
 	<category name="OES_fbo_render_mipmap"/>

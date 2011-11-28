@@ -919,6 +919,16 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
+      switch (internalFormat) {
+         case GL_ETC1_RGB8_OES:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_ETC1_RGB8);
+            break;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format %s in _mesa_choose_tex_format()",
                  _mesa_lookup_enum_by_nr(internalFormat));
    return MESA_FORMAT_NONE;

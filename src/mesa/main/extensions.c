@@ -219,6 +219,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_blend_func_separate",                 o(EXT_blend_func_separate),                      ES1,       2009 },
    { "GL_OES_blend_subtract",                      o(dummy_true),                                   ES1,       2009 },
    { "GL_OES_byte_coordinates",                    o(dummy_true),                                   ES1,       2002 },
+   { "GL_OES_compressed_ETC1_RGB8_texture",        o(OES_compressed_ETC1_RGB8_texture),             ES1 | ES2, 2005 },
    { "GL_OES_compressed_paletted_texture",         o(dummy_true),                                   ES1,       2003 },
    { "GL_OES_depth24",                             o(EXT_framebuffer_object),                       ES1 | ES2, 2005 },
    { "GL_OES_depth32",                             o(dummy_false),                     DISABLE,                2005 },

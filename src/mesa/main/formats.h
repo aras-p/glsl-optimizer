@@ -250,6 +250,8 @@ typedef enum
    MESA_FORMAT_SIGNED_LA_LATC2,
    /*@}*/
 
+   MESA_FORMAT_ETC1_RGB8,
+
    MESA_FORMAT_SIGNED_A8,         /*                               AAAA AAAA */
    MESA_FORMAT_SIGNED_L8,         /*                               LLLL LLLL */
    MESA_FORMAT_SIGNED_AL88,       /*                     AAAA AAAA LLLL LLLL */

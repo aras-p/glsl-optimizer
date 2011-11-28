@@ -741,6 +741,7 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
       case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
       case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+      case GL_ETC1_RGB8_OES:
       /* generic integer formats */
       case GL_RED_INTEGER_EXT:
       case GL_GREEN_INTEGER_EXT:
@@ -1050,6 +1051,8 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
       return ctx->Extensions.EXT_texture_compression_latc;
    case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
       return ctx->Extensions.ATI_texture_compression_3dc;
+   case GL_ETC1_RGB8_OES:
+      return ctx->Extensions.OES_compressed_ETC1_RGB8_texture;
 #if FEATURE_ES
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:

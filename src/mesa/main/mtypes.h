@@ -2979,6 +2979,7 @@ struct gl_extensions
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
    GLboolean OES_EGL_image_external;
+   GLboolean OES_compressed_ETC1_RGB8_texture;
    GLboolean extension_sentinel;
    /** The extension string */
    const GLubyte *String;

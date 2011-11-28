@@ -67,6 +67,7 @@
 #include "texcompress_fxt1.h"
 #include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
+#include "texcompress_etc.h"
 #include "teximage.h"
 #include "texstore.h"
 #include "enums.h"
@@ -4437,6 +4438,7 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_SIGNED_L_LATC1] = _mesa_texstore_signed_red_rgtc1;
       table[MESA_FORMAT_LA_LATC2] = _mesa_texstore_rg_rgtc2;
       table[MESA_FORMAT_SIGNED_LA_LATC2] = _mesa_texstore_signed_rg_rgtc2;
+      table[MESA_FORMAT_ETC1_RGB8] = _mesa_texstore_etc1_rgb8;
       table[MESA_FORMAT_SIGNED_A8] = _mesa_texstore_snorm8;
       table[MESA_FORMAT_SIGNED_L8] = _mesa_texstore_snorm8;
       table[MESA_FORMAT_SIGNED_AL88] = _mesa_texstore_snorm88;
