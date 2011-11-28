@@ -48,6 +48,10 @@
     <enum name="BYTE"                                     value="0x1400"/>
 </category>
 
+<category name="GL_OES_compressed_ETC1_RGB8_texture" number="5">
+    <enum name="ETC1_RGB8_OES"                            value="0x8D64"/>
+</category>
+
 <category name="GL_OES_compressed_paletted_texture" number="6">
     <enum name="PALETTE4_RGB8_OES"                        value="0x8B90"/>
     <enum name="PALETTE4_RGBA8_OES"                       value="0x8B91"/>
