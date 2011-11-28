@@ -1342,15 +1342,6 @@ struct gl_texture_object
 
    /** GL_OES_EGL_image_external */
    GLint RequiredTextureImageUnits;
-
-   /**
-    * \name For device driver.
-    * Note: instead of attaching driver data to this pointer, it's preferable
-    * to instead use this struct as a base class for your own texture object
-    * class.  Driver->NewTextureObject() can be used to implement the
-    * allocation.
-    */
-   void *DriverData;	/**< Arbitrary device driver data */
 };
 
 
