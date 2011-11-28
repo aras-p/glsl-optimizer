@@ -364,4 +364,23 @@ void i945_miptree_layout(struct intel_mipmap_tree *mt);
 void brw_miptree_layout(struct intel_context *intel,
 			struct intel_mipmap_tree *mt);
 
+void
+intel_miptree_map(struct intel_context *intel,
+		  struct intel_mipmap_tree *mt,
+		  unsigned int level,
+		  unsigned int slice,
+		  unsigned int x,
+		  unsigned int y,
+		  unsigned int w,
+		  unsigned int h,
+		  GLbitfield mode,
+		  void **out_ptr,
+		  int *out_stride);
+
+void
+intel_miptree_unmap(struct intel_context *intel,
+		    struct intel_mipmap_tree *mt,
+		    unsigned int level,
+		    unsigned int slice);
+
 #endif
