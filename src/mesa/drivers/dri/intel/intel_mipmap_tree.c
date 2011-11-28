@@ -733,6 +733,74 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 					   intel->vtbl.resolve_depth_slice);
 }
 
+static void
+intel_miptree_map_gtt(struct intel_context *intel,
+		      struct intel_mipmap_tree *mt,
+		      struct intel_miptree_map *map,
+		      unsigned int level, unsigned int slice)
+{
+   unsigned int bw, bh;
+   void *base;
+   unsigned int image_x, image_y;
+   int x = map->x;
+   int y = map->y;
+
+   if (mt->stencil_mt) {
+      /* The miptree has depthstencil format, but uses separate stencil. The
+       * embedded stencil miptree contains the real stencil data, so gather
+       * that into the depthstencil miptree.
+       *
+       * FIXME: Avoid the gather if the texture is mapped as write-only.
+       */
+      intel_miptree_s8z24_gather(intel, mt, level, slice);
+   }
+
+   /* For compressed formats, the stride is the number of bytes per
+    * row of blocks.  intel_miptree_get_image_offset() already does
+    * the divide.
+    */
+   _mesa_get_format_block_size(mt->format, &bw, &bh);
+   assert(y % bh == 0);
+   y /= bh;
+
+   base = intel_region_map(intel, mt->region, map->mode);
+   /* Note that in the case of cube maps, the caller must have passed the slice
+    * number referencing the face.
+    */
+   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+   x += image_x;
+   y += image_y;
+
+   map->stride = mt->region->pitch * mt->cpp;
+   map->ptr = base + y * map->stride + x * mt->cpp;
+
+   DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
+       map->x, map->y, map->w, map->h,
+       mt, _mesa_get_format_name(mt->format),
+       x, y, map->ptr, map->stride);
+}
+
+static void
+intel_miptree_unmap_gtt(struct intel_context *intel,
+			struct intel_mipmap_tree *mt,
+			struct intel_miptree_map *map,
+			unsigned int level,
+			unsigned int slice)
+{
+   intel_region_unmap(intel, mt->region);
+
+   if (mt->stencil_mt) {
+      /* The miptree has depthstencil format, but uses separate stencil. The
+       * embedded stencil miptree must contain the real stencil data after
+       * unmapping, so copy it from the depthstencil miptree into the stencil
+       * miptree.
+       *
+       * FIXME: Avoid the scatter if the texture was mapped as read-only.
+       */
+      intel_miptree_s8z24_scatter(intel, mt, level, slice);
+   }
+}
+
 void
 intel_miptree_map(struct intel_context *intel,
 		  struct intel_mipmap_tree *mt,
@@ -747,9 +815,6 @@ intel_miptree_map(struct intel_context *intel,
 		  int *out_stride)
 {
    struct intel_miptree_map *map;
-   unsigned int bw, bh;
-   void *base;
-   unsigned int image_x, image_y;
 
    map = calloc(1, sizeof(struct intel_miptree_map));
    if (!map){
@@ -766,47 +831,15 @@ intel_miptree_map(struct intel_context *intel,
    map->w = w;
    map->h = h;
 
-   if (mt->stencil_mt) {
-      /* The miptree has depthstencil format, but uses separate stencil. The
-       * embedded stencil miptree contains the real stencil data, so gather
-       * that into the depthstencil miptree.
-       *
-       * FIXME: Avoid the gather if the texture is mapped as write-only.
-       */
-      intel_miptree_s8z24_gather(intel, mt, level, slice);
-   }
-
    intel_miptree_slice_resolve_depth(intel, mt, level, slice);
-   if (mode & GL_MAP_WRITE_BIT) {
+   if (map->mode & GL_MAP_WRITE_BIT) {
       intel_miptree_slice_set_needs_hiz_resolve(mt, level, slice);
    }
 
-   /* For compressed formats, the stride is the number of bytes per
-    * row of blocks.  intel_miptree_get_image_offset() already does
-    * the divide.
-    */
-   _mesa_get_format_block_size(mt->format, &bw, &bh);
-   assert(y % bh == 0);
-   y /= bh;
-
-   base = intel_region_map(intel, mt->region, mode);
-   /* Note that in the case of cube maps, the caller must have passed the slice
-    * number referencing the face.
-    */
-   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
-   x += image_x;
-   y += image_y;
-
-   map->stride = mt->region->pitch * mt->cpp;
-   map->ptr = base + y * map->stride + x * mt->cpp;
+   intel_miptree_map_gtt(intel, mt, map, level, slice);
 
    *out_ptr = map->ptr;
    *out_stride = map->stride;
-
-   DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
-       map->x, map->y, map->w, map->h,
-       mt, _mesa_get_format_name(mt->format),
-       x, y, map->ptr, map->stride);
 }
 
 void
@@ -823,18 +856,7 @@ intel_miptree_unmap(struct intel_context *intel,
    DBG("%s: mt %p (%s) level %d slice %d\n", __FUNCTION__,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
-   intel_region_unmap(intel, mt->region);
-
-   if (mt->stencil_mt) {
-      /* The miptree has depthstencil format, but uses separate stencil. The
-       * embedded stencil miptree must contain the real stencil data after
-       * unmapping, so copy it from the depthstencil miptree into the stencil
-       * miptree.
-       *
-       * FIXME: Avoid the scatter if the texture was mapped as read-only.
-       */
-      intel_miptree_s8z24_scatter(intel, mt, level, slice);
-   }
+   intel_miptree_unmap_gtt(intel, mt, map, level, slice);
 
    mt->level[level].slice[slice].map = NULL;
    free(map);
