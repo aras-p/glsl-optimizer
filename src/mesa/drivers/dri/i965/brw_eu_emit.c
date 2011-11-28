@@ -2390,3 +2390,42 @@ void brw_ff_sync(struct brw_compile *p,
 			   response_length,
 			   eot);
 }
+
+/**
+ * Emit the SEND instruction necessary to generate stream output data on Gen6
+ * (for transform feedback).
+ *
+ * If send_commit_msg is true, this is the last piece of stream output data
+ * from this thread, so send the data as a committed write.  According to the
+ * Sandy Bridge PRM (volume 2 part 1, section 4.5.1):
+ *
+ *   "Prior to End of Thread with a URB_WRITE, the kernel must ensure all
+ *   writes are complete by sending the final write as a committed write."
+ */
+void
+brw_svb_write(struct brw_compile *p,
+              struct brw_reg dest,
+              GLuint msg_reg_nr,
+              struct brw_reg src0,
+              GLuint binding_table_index,
+              bool   send_commit_msg)
+{
+   struct brw_instruction *insn;
+
+   gen6_resolve_implied_move(p, &src0, msg_reg_nr);
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, insn, dest);
+   brw_set_src0(p, insn, src0);
+   brw_set_src1(p, insn, brw_imm_d(0));
+   brw_set_dp_write_message(p, insn,
+                            binding_table_index,
+                            0, /* msg_control: ignored */
+                            GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE,
+                            1, /* msg_length */
+                            true, /* header_present */
+                            0, /* last_render_target: ignored */
+                            send_commit_msg, /* response_length */
+                            0, /* end_of_thread */
+                            send_commit_msg); /* send_commit_msg */
+}

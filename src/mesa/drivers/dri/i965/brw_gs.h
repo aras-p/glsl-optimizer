@@ -50,6 +50,18 @@ struct brw_gs_prog_key {
    GLuint pv_first:1;
    GLuint need_gs_prog:1;
    GLuint userclip_active:1;
+
+   /**
+    * Number of varyings that are output to transform feedback.
+    */
+   GLuint num_transform_feedback_bindings:7; /* 0-BRW_MAX_SOL_BINDINGS */
+
+   /**
+    * Map from the index of a transform feedback binding table entry to the
+    * gl_vert_result that should be streamed out through that binding table
+    * entry.
+    */
+   unsigned char transform_feedback_bindings[BRW_MAX_SOL_BINDINGS];
 };
 
 struct brw_gs_compile {
@@ -59,6 +71,14 @@ struct brw_gs_compile {
    
    struct {
       struct brw_reg R0;
+
+      /**
+       * Register holding streamed vertex buffer pointers -- see the Sandy
+       * Bridge PRM, volume 2 part 1, section 4.4.2 (GS Thread Payload
+       * [DevSNB]).  These pointers are delivered in GRF 1.
+       */
+      struct brw_reg SVBI;
+
       struct brw_reg vertex[MAX_GS_VERTS];
       struct brw_reg header;
       struct brw_reg temp;

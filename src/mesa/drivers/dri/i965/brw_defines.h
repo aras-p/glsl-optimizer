@@ -1424,6 +1424,12 @@ enum brw_wm_barycentric_interp_mode {
 #define URB_WRITE_PRIM_START		0x2
 #define URB_WRITE_PRIM_TYPE_SHIFT	2
 
+
+/* Maximum number of entries that can be addressed using a binding table
+ * pointer of type SURFTYPE_BUFFER
+ */
+#define BRW_MAX_NUM_BUFFER_ENTRIES	(1 << 27)
+
 #include "intel_chipset.h"
 
 #endif

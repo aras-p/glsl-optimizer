@@ -183,7 +183,31 @@ static void populate_key( struct brw_context *brw,
    } else if (intel->gen == 6) {
       /* On Gen6, GS is used for transform feedback. */
       /* _NEW_TRANSFORM_FEEDBACK */
-      key->need_gs_prog = ctx->TransformFeedback.CurrentObject->Active;
+      if (ctx->TransformFeedback.CurrentObject->Active) {
+         const struct gl_shader_program *shaderprog =
+            ctx->Shader.CurrentVertexProgram;
+         const struct gl_transform_feedback_info *linked_xfb_info =
+            &shaderprog->LinkedTransformFeedback;
+         int i;
+
+         /* Make sure that the VUE slots won't overflow the unsigned chars in
+          * key->transform_feedback_bindings[].
+          */
+         STATIC_ASSERT(BRW_VERT_RESULT_MAX <= 256);
+
+         /* Make sure that we don't need more binding table entries than we've
+          * set aside for use in transform feedback.  (We shouldn't, since we
+          * set aside enough binding table entries to have one per component).
+          */
+         assert(linked_xfb_info->NumOutputs <= BRW_MAX_SOL_BINDINGS);
+
+         key->need_gs_prog = true;
+         key->num_transform_feedback_bindings = linked_xfb_info->NumOutputs;
+         for (i = 0; i < key->num_transform_feedback_bindings; ++i) {
+            key->transform_feedback_bindings[i] =
+               linked_xfb_info->Outputs[i].OutputRegister;
+         }
+      }
    } else {
       /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
        * into simpler primitives.

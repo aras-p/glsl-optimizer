@@ -38,6 +38,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
 #include "intel_fbo.h"
+#include "intel_buffer_objects.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -713,6 +714,90 @@ brw_create_constant_surface(struct brw_context *brw,
 			   *out_offset + 4,
 			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
+}
+
+/**
+ * Set up a binding table entry for use by stream output logic (transform
+ * feedback).
+ *
+ * buffer_size_minus_1 must me less than BRW_MAX_NUM_BUFFER_ENTRIES.
+ */
+void
+brw_update_sol_surface(struct brw_context *brw,
+                       struct gl_buffer_object *buffer_obj,
+                       uint32_t *out_offset, unsigned num_vector_components,
+                       unsigned stride_dwords, unsigned offset_dwords)
+{
+   drm_intel_bo *bo = intel_buffer_object(buffer_obj)->buffer;
+   uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
+                                    out_offset);
+   uint32_t pitch_minus_1 = 4*stride_dwords - 1;
+   uint32_t offset_bytes = 4 * offset_dwords;
+   size_t size_dwords = buffer_obj->Size / 4;
+   uint32_t buffer_size_minus_1, width, height, depth, surface_format;
+
+   /* FIXME: can we rely on core Mesa to ensure that the buffer isn't
+    * too big to map using a single binding table entry?
+    */
+   assert((size_dwords - offset_dwords) / stride_dwords
+          <= BRW_MAX_NUM_BUFFER_ENTRIES);
+
+   if (size_dwords > offset_dwords + num_vector_components) {
+      /* There is room for at least 1 transform feedback output in the buffer.
+       * Compute the number of additional transform feedback outputs the
+       * buffer has room for.
+       */
+      buffer_size_minus_1 =
+         (size_dwords - offset_dwords - num_vector_components) / stride_dwords;
+   } else {
+      /* There isn't even room for a single transform feedback output in the
+       * buffer.  We can't configure the binding table entry to prevent output
+       * entirely; we'll have to rely on the geometry shader to detect
+       * overflow.  But to minimize the damage in case of a bug, set up the
+       * binding table entry to just allow a single output.
+       */
+      buffer_size_minus_1 = 0;
+   }
+   width = buffer_size_minus_1 & 0x7f;
+   height = (buffer_size_minus_1 & 0xfff80) >> 7;
+   depth = (buffer_size_minus_1 & 0x7f00000) >> 20;
+
+   switch (num_vector_components) {
+   case 1:
+      surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
+      break;
+   case 2:
+      surface_format = BRW_SURFACEFORMAT_R32G32_FLOAT;
+      break;
+   case 3:
+      surface_format = BRW_SURFACEFORMAT_R32G32B32_FLOAT;
+      break;
+   case 4:
+      surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+      break;
+   default:
+      assert(!"Invalid vector size for transform feedback output");
+      surface_format = BRW_SURFACEFORMAT_R32_FLOAT;
+      break;
+   }
+
+   surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
+      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
+      surface_format << BRW_SURFACE_FORMAT_SHIFT |
+      BRW_SURFACE_RC_READ_WRITE;
+   surf[1] = bo->offset + offset_bytes; /* reloc */
+   surf[2] = (width << BRW_SURFACE_WIDTH_SHIFT |
+	      height << BRW_SURFACE_HEIGHT_SHIFT);
+   surf[3] = (depth << BRW_SURFACE_DEPTH_SHIFT |
+              pitch_minus_1 << BRW_SURFACE_PITCH_SHIFT);
+   surf[4] = 0;
+   surf[5] = 0;
+
+   /* Emit relocation to surface contents. */
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+			   *out_offset + 4,
+			   bo, offset_bytes,
+			   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
 }
 
 /* Creates a new WM constant buffer reflecting the current fragment program's

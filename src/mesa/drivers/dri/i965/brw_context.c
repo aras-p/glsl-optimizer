@@ -178,6 +178,26 @@ brwCreateContext(int api,
    
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
+   /* Hardware only supports a limited number of transform feedback buffers.
+    * So we need to override the Mesa default (which is based only on software
+    * limits).
+    */
+   ctx->Const.MaxTransformFeedbackSeparateAttribs = BRW_MAX_SOL_BUFFERS;
+
+   /* On Gen6, in the worst case, we use up one binding table entry per
+    * transform feedback component (see comments above the definition of
+    * BRW_MAX_SOL_BINDINGS, in brw_context.h), so we need to advertise a value
+    * for MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS equal to
+    * BRW_MAX_SOL_BINDINGS.
+    *
+    * In "separate components" mode, we need to divide this value by
+    * BRW_MAX_SOL_BUFFERS, so that the total number of binding table entries
+    * used up by all buffers will not exceed BRW_MAX_SOL_BINDINGS.
+    */
+   ctx->Const.MaxTransformFeedbackInterleavedComponents = BRW_MAX_SOL_BINDINGS;
+   ctx->Const.MaxTransformFeedbackSeparateComponents =
+      BRW_MAX_SOL_BINDINGS / BRW_MAX_SOL_BUFFERS;
+
    /* if conformance mode is set, swrast can handle any size AA point */
    ctx->Const.MaxPointSizeAA = 255.0;
 

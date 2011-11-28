@@ -42,14 +42,26 @@
 #include "brw_eu.h"
 #include "brw_gs.h"
 
+/**
+ * Allocate registers for GS.
+ *
+ * If svbi_payload_enable is true, then the thread will be spawned with the
+ * "SVBI Payload Enable" bit set, so GRF 1 needs to be set aside to hold the
+ * streamed vertex buffer indices.
+ */
 static void brw_gs_alloc_regs( struct brw_gs_compile *c,
-			       GLuint nr_verts )
+			       GLuint nr_verts,
+                               bool svbi_payload_enable )
 {
    GLuint i = 0,j;
 
    /* Register usage is static, precompute here:
     */
    c->reg.R0 = retype(brw_vec8_grf(i, 0), BRW_REGISTER_TYPE_UD); i++;
+
+   /* Streamed vertex buffer indices */
+   if (svbi_payload_enable)
+      c->reg.SVBI = retype(brw_vec8_grf(i++, 0), BRW_REGISTER_TYPE_UD);
 
    /* Payload vertices plus space for more generated vertices:
     */
@@ -212,7 +224,7 @@ void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
 {
    struct intel_context *intel = &c->func.brw->intel;
 
-   brw_gs_alloc_regs(c, 4);
+   brw_gs_alloc_regs(c, 4, false);
    brw_gs_initialize_header(c);
    /* Use polygons for correct edgeflag behaviour. Note that vertex 3
     * is the PV for quads, but vertex 0 for polygons:
@@ -250,7 +262,7 @@ void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
 {
    struct intel_context *intel = &c->func.brw->intel;
 
-   brw_gs_alloc_regs(c, 4);
+   brw_gs_alloc_regs(c, 4, false);
    brw_gs_initialize_header(c);
    
    if (intel->needs_ff_sync)
@@ -286,7 +298,7 @@ void brw_gs_lines( struct brw_gs_compile *c )
 {
    struct intel_context *intel = &c->func.brw->intel;
 
-   brw_gs_alloc_regs(c, 2);
+   brw_gs_alloc_regs(c, 2, false);
    brw_gs_initialize_header(c);
 
    if (intel->needs_ff_sync)
@@ -310,9 +322,80 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
 	         unsigned num_verts, bool check_edge_flags)
 {
    struct brw_compile *p = &c->func;
+   c->prog_data.svbi_postincrement_value = num_verts;
 
-   brw_gs_alloc_regs(c, num_verts);
+   brw_gs_alloc_regs(c, num_verts, true);
    brw_gs_initialize_header(c);
+
+   if (key->num_transform_feedback_bindings > 0) {
+      unsigned vertex, binding;
+      /* Note: since we use the binding table to keep track of buffer offsets
+       * and stride, the GS doesn't need to keep track of a separate pointer
+       * into each buffer; it uses a single pointer which increments by 1 for
+       * each vertex.  So we use SVBI0 for this pointer, regardless of whether
+       * transform feedback is in interleaved or separate attribs mode.
+       */
+      brw_MOV(p, get_element_ud(c->reg.header, 5),
+              get_element_ud(c->reg.SVBI, 0));
+      /* For each vertex, generate code to output each varying using the
+       * appropriate binding table entry.
+       */
+      for (vertex = 0; vertex < num_verts; ++vertex) {
+         for (binding = 0; binding < key->num_transform_feedback_bindings;
+              ++binding) {
+            unsigned char vert_result =
+               key->transform_feedback_bindings[binding];
+            unsigned char slot = c->vue_map.vert_result_to_slot[vert_result];
+            /* From the Sandybridge PRM, Volume 2, Part 1, Section 4.5.1:
+             *
+             *   "Prior to End of Thread with a URB_WRITE, the kernel must
+             *   ensure that all writes are complete by sending the final
+             *   write as a committed write."
+             */
+            bool final_write =
+               binding == key->num_transform_feedback_bindings - 1 &&
+               vertex == num_verts - 1;
+            struct brw_reg vertex_slot = c->reg.vertex[vertex];
+            vertex_slot.nr += slot / 2;
+            vertex_slot.subnr = (slot % 2) * 16;
+            brw_MOV(p, stride(c->reg.header, 4, 4, 1),
+                    retype(vertex_slot, BRW_REGISTER_TYPE_UD));
+            brw_svb_write(p,
+                          final_write ? c->reg.temp : brw_null_reg(), /* dest */
+                          1, /* msg_reg_nr */
+                          c->reg.header, /* src0 */
+                          SURF_INDEX_SOL_BINDING(binding), /* binding_table_index */
+                          final_write); /* send_commit_msg */
+         }
+
+         /* If there are more vertices to output, increment the pointer so
+          * that we will start outputting to the next location in the
+          * transform feedback buffers.
+          */
+         if (vertex != num_verts - 1) {
+            brw_ADD(p, get_element_ud(c->reg.header, 5),
+                    get_element_ud(c->reg.header, 5), brw_imm_ud(1));
+         }
+      }
+
+      /* Now, reinitialize the header register from R0 to restore the parts of
+       * the register that we overwrote while streaming out transform feedback
+       * data.
+       */
+      brw_gs_initialize_header(c);
+
+      /* Finally, wait for the write commit to occur so that we can proceed to
+       * other things safely.
+       *
+       * From the Sandybridge PRM, Volume 4, Part 1, Section 3.3:
+       *
+       *   The write commit does not modify the destination register, but
+       *   merely clears the dependency associated with the destination
+       *   register. Thus, a simple “mov” instruction using the register as a
+       *   source is sufficient to wait for the write commit to occur.
+       */
+      brw_MOV(p, c->reg.temp, c->reg.temp);
+   }
 
    brw_gs_ff_sync(c, 1);
 

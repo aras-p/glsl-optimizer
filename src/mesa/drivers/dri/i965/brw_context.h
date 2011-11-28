@@ -368,6 +368,12 @@ struct brw_clip_prog_data {
 struct brw_gs_prog_data {
    GLuint urb_read_length;
    GLuint total_grf;
+
+   /**
+    * Gen6 transform feedback: Amount by which the streaming vertex buffer
+    * indices should be incremented each time the GS is invoked.
+    */
+   unsigned svbi_postincrement_value;
 };
 
 struct brw_vs_prog_data {
@@ -407,6 +413,34 @@ struct brw_vs_ouput_sizes {
 #define BRW_MAX_DRAW_BUFFERS 8
 
 /**
+ * Max number of binding table entries used for stream output.
+ *
+ * From the OpenGL 3.0 spec, table 6.44 (Transform Feedback State), the
+ * minimum value of MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS is 64.
+ *
+ * On Gen6, the size of transform feedback data is limited not by the number
+ * of components but by the number of binding table entries we set aside.  We
+ * use one binding table entry for a float, one entry for a vector, and one
+ * entry per matrix column.  Since the only way we can communicate our
+ * transform feedback capabilities to the client is via
+ * MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS, we need to plan for the
+ * worst case, in which all the varyings are floats, so we use up one binding
+ * table entry per component.  Therefore we need to set aside at least 64
+ * binding table entries for use by transform feedback.
+ *
+ * Note: since we don't currently pack varyings, it is currently impossible
+ * for the client to actually use up all of these binding table entries--if
+ * all of their varyings were floats, they would run out of varying slots and
+ * fail to link.  But that's a bug, so it seems prudent to go ahead and
+ * allocate the number of binding table entries we will need once the bug is
+ * fixed.
+ */
+#define BRW_MAX_SOL_BINDINGS 64
+
+/** Maximum number of actual buffers used for stream output */
+#define BRW_MAX_SOL_BUFFERS 4
+
+/**
  * Helpers to create Surface Binding Table indexes for draw buffers,
  * textures, and constant buffers.
  *
@@ -436,6 +470,11 @@ struct brw_vs_ouput_sizes {
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  25 | Texture 15              |
+ *    +-----|-------------------------+
+ *    |  26 | SOL Binding 0           |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  89 | SOL Binding 63          |
  *    +-------------------------------+
  *
  * Note that nothing actually uses the SURF_INDEX_DRAW macro, so it has to be
@@ -446,9 +485,10 @@ struct brw_vs_ouput_sizes {
 #define SURF_INDEX_VERT_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 0)
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
+#define SURF_INDEX_SOL_BINDING(t)    (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + (t))
 
 /** Maximum size of the binding table. */
-#define BRW_MAX_SURFACES (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 2)
+#define BRW_MAX_SURFACES SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
 
 enum brw_cache_id {
    BRW_BLEND_STATE,
@@ -1026,6 +1066,11 @@ brw_compute_barycentric_interp_modes(bool shade_model_flat,
 
 /* brw_wm_surface_state.c */
 void brw_init_surface_formats(struct brw_context *brw);
+void
+brw_update_sol_surface(struct brw_context *brw,
+                       struct gl_buffer_object *buffer_obj,
+                       uint32_t *out_offset, unsigned num_vector_components,
+                       unsigned stride_dwords, unsigned offset_dwords);
 
 /* gen6_clip_state.c */
 bool

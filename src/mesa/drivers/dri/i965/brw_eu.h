@@ -912,6 +912,13 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint response_length,
 		   bool eot);
 
+void brw_svb_write(struct brw_compile *p,
+                   struct brw_reg dest,
+                   GLuint msg_reg_nr,
+                   struct brw_reg src0,
+                   GLuint binding_table_index,
+                   bool   send_commit_msg);
+
 void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
 		   GLuint msg_reg_nr,

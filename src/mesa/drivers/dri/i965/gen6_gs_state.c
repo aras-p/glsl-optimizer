@@ -50,13 +50,17 @@ upload_gs_state(struct brw_context *brw)
       OUT_BATCH(brw->gs.prog_offset);
       OUT_BATCH(GEN6_GS_SPF_MODE | GEN6_GS_VECTOR_MASK_ENABLE);
       OUT_BATCH(0); /* no scratch space */
-      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+      OUT_BATCH((2 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
 	        (brw->gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT));
       OUT_BATCH(((brw->max_gs_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT) |
 	        GEN6_GS_STATISTICS_ENABLE |
 		GEN6_GS_SO_STATISTICS_ENABLE |
 		GEN6_GS_RENDERING_ENABLE);
-      OUT_BATCH(GEN6_GS_ENABLE);
+      OUT_BATCH(GEN6_GS_SVBI_PAYLOAD_ENABLE |
+                GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
+                (brw->gs.prog_data->svbi_postincrement_value <<
+                 GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT) |
+                GEN6_GS_ENABLE);
       ADVANCE_BATCH();
    } else {
       BEGIN_BATCH(7);
