@@ -726,6 +726,9 @@ extern void __glXFreeVertexArrayState(struct glx_context *);
 */
 extern void __glXClientInfo(Display * dpy, int opcode);
 
+_X_HIDDEN void
+__glX_send_client_info(struct glx_display *glx_dpy);
+
 /************************************************************************/
 
 /*

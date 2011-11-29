@@ -10,6 +10,7 @@ EXTRA_DEFINES = $(EXTRA_DEFINES_XF86VIDMODE) -D_REENTRANT \
 
 SOURCES = \
 	  clientattrib.c \
+	  clientinfo.c \
 	  compsize.c \
 	  eval.c \
 	  glxconfig.c \
