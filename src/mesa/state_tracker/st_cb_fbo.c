@@ -124,6 +124,11 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       pipe_surface_reference( &strb->surface, NULL );
       pipe_resource_reference( &strb->texture, NULL );
 
+      if (width == 0 || height == 0) {
+         /* if size is zero, nothing to allocate */
+         return GL_TRUE;
+      }
+
       /* Setup new texture template.
        */
       memset(&template, 0, sizeof(template));
