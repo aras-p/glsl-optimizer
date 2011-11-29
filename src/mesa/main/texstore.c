@@ -2226,7 +2226,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
             if (dstFormat == MESA_FORMAT_AL88 ||
 		dstFormat == MESA_FORMAT_RG88) {
                for (col = 0; col < srcWidth; col++) {
-                  /* src[0] is luminance, src[1] is alpha */
+                  /* src[0] is luminance (or R), src[1] is alpha (or G) */
                  dstUS[col] = PACK_COLOR_88( src[1],
                                              src[0] );
                  src += 2;
@@ -2234,7 +2234,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
             }
             else {
                for (col = 0; col < srcWidth; col++) {
-                  /* src[0] is luminance, src[1] is alpha */
+                  /* src[0] is luminance (or R), src[1] is alpha (or G) */
                  dstUS[col] = PACK_COLOR_88_REV( src[1],
                                                  src[0] );
                  src += 2;
