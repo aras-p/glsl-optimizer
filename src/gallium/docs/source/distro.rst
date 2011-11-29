@@ -23,11 +23,6 @@ Intel i915
 
 Driver for Intel i915 and i945 chipsets.
 
-Intel i965
-^^^^^^^^^^
-
-Highly experimental driver for Intel i965 chipsets.
-
 Identity
 ^^^^^^^^
 

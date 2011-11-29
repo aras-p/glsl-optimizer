@@ -32,10 +32,7 @@
 /* for i915 */
 #include "i915/drm/i915_drm_public.h"
 #include "i915/i915_public.h"
-/* for i965 */
 #include "target-helpers/inline_wrapper_sw_helper.h"
-#include "i965/drm/i965_drm_public.h"
-#include "i965/brw_public.h"
 /* for nouveau */
 #include "nouveau/drm/nouveau_drm_public.h"
 /* for r300 */
@@ -61,31 +58,6 @@ pipe_i915_create_screen(int fd)
    screen = i915_screen_create(iws);
    if (!screen)
       return NULL;
-
-   screen = debug_screen_wrap(screen);
-
-   return screen;
-#else
-   return NULL;
-#endif
-}
-
-static struct pipe_screen *
-pipe_i965_create_screen(int fd)
-{
-#if _EGL_PIPE_I965
-   struct brw_winsys_screen *bws;
-   struct pipe_screen *screen;
-
-   bws = i965_drm_winsys_screen_create(fd);
-   if (!bws)
-      return NULL;
-
-   screen = brw_screen_create(bws);
-   if (!screen)
-      return NULL;
-
-   screen = sw_screen_wrap(screen);
 
    screen = debug_screen_wrap(screen);
 
@@ -187,8 +159,6 @@ egl_pipe_create_drm_screen(const char *name, int fd)
 {
    if (strcmp(name, "i915") == 0)
       return pipe_i915_create_screen(fd);
-   else if (strcmp(name, "i965") == 0)
-      return pipe_i965_create_screen(fd);
    else if (strcmp(name, "nouveau") == 0)
       return pipe_nouveau_create_screen(fd);
    else if (strcmp(name, "r300") == 0)

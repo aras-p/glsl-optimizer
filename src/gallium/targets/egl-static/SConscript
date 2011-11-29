@@ -90,12 +90,10 @@ if env['HAVE_DRM']:
     env.PkgUseModules('DRM')
 
     if env['HAVE_DRM_INTEL']:
-        env.Append(CPPDEFINES = ['_EGL_PIPE_I915', '_EGL_PIPE_I965'])
+        env.Append(CPPDEFINES = ['_EGL_PIPE_I915'])
         env.Prepend(LIBS = [
             i915drm,
             i915,
-            i965drm,
-            i965,
             ws_wrapper,
         ])
 

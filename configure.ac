@@ -1844,14 +1844,6 @@ if test "x$with_gallium_drivers" != x; then
             GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
             ;;
-        xi965)
-            PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
-            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965 softpipe"
-            if test "x$MESA_LLVM" = x1; then
-                GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
-            fi
-            gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
-            ;;
         xr300)
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
@@ -2019,12 +2011,6 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
-   if echo "$GALLIUM_DRIVERS_DIRS" | grep i965 > /dev/null 2>&1; then
-      echo
-      echo "        WARNING: enabling i965 gallium driver"
-      echo "        the i965g driver is currently utterly broken, only for adventurous developers"
-      echo
-   fi
 else
     echo "        Gallium:         no"
 fi

@@ -58,7 +58,7 @@ SRC_DIRS := glx egl $(SRC_DIRS)
 EGL_DRIVERS_DIRS = glx
 
 DRIVER_DIRS = dri
-GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel drm/i965 svga/drm
+GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel svga/drm
 GALLIUM_TARGET_DIRS = dri-vmwgfx
 GALLIUM_STATE_TRACKERS_DIRS = egl dri
 

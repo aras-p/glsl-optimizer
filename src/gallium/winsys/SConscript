@@ -31,9 +31,5 @@ if env['dri']:
     ])
 
     SConscript([
-        'i965/drm/SConscript',
-    ])
-
-    SConscript([
         'radeon/drm/SConscript',
     ])
