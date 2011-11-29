@@ -1282,7 +1282,8 @@ _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
    }
 #endif
 
-   assert(Elements(texfetch_funcs) == MESA_FORMAT_COUNT);
+   STATIC_ASSERT(Elements(texfetch_funcs) == MESA_FORMAT_COUNT);
+
    assert(format < MESA_FORMAT_COUNT);
 
    switch (dims) {
