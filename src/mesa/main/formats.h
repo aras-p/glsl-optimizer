@@ -110,11 +110,11 @@ typedef enum
     * \name 8-bit/channel sRGB formats
     */
    /*@{*/
-   MESA_FORMAT_SRGB8,
-   MESA_FORMAT_SRGBA8,
-   MESA_FORMAT_SARGB8,
-   MESA_FORMAT_SL8,
-   MESA_FORMAT_SLA8,
+   MESA_FORMAT_SRGB8,           /*           RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_SRGBA8,          /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
+   MESA_FORMAT_SARGB8,          /* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_SL8,             /*                               LLLL LLLL */
+   MESA_FORMAT_SLA8,            /*                     AAAA AAAA LLLL LLLL */
    MESA_FORMAT_SRGB_DXT1,
    MESA_FORMAT_SRGBA_DXT1,
    MESA_FORMAT_SRGBA_DXT3,
