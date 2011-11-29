@@ -63,7 +63,6 @@ C_SOURCES := \
 	rtasm/rtasm_cpu.c \
 	rtasm/rtasm_execmem.c \
 	rtasm/rtasm_ppc.c \
-	rtasm/rtasm_ppc_spe.c \
 	rtasm/rtasm_x86sse.c \
 	tgsi/tgsi_build.c \
 	tgsi/tgsi_dump.c \

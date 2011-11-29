@@ -112,8 +112,6 @@ linux \
 linux-i965 \
 linux-alpha \
 linux-alpha-static \
-linux-cell \
-linux-cell-debug \
 linux-debug \
 linux-dri \
 linux-dri-debug \

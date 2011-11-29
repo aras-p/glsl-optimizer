@@ -34,7 +34,6 @@
   - Pipe drivers:
     - \ref softpipe
     - \ref i915g
-    - Cell driver (cell_context.h, cell_winsys.h)
     - \ref failover
 
   - Winsys drivers:

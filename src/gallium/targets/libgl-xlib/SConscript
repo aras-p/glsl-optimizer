@@ -42,11 +42,6 @@ if True:
 if env['llvm']:
     env.Append(CPPDEFINES = ['GALLIUM_LLVMPIPE'])
     env.Prepend(LIBS = [llvmpipe])
-    
-if False:
-    # TODO: Detect Cell SDK
-    env.Append(CPPDEFINES = 'GALLIUM_CELL')
-    env.Prepend(LIBS = [cell])
 
 # libGL.so.1.5
 libgl_1_5 = env.SharedLibrary(

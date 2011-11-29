@@ -42,7 +42,7 @@
 
 
 /* Helper function to build a subset of a driver stack consisting of
- * one of the software rasterizers (cell, llvmpipe, softpipe) and the
+ * one of the software rasterizers (llvmpipe, softpipe) and the
  * xlib winsys.
  */
 static struct pipe_screen *
