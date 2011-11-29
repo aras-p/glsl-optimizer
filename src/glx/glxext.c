@@ -836,9 +836,12 @@ __glXInitialize(Display * dpy)
    dpyPriv->serverGLXvendor = 0x0;
    dpyPriv->serverGLXversion = 0x0;
 
-   /* See if the versions are compatible */
+   /* See if the versions are compatible.  This GLX implementation does not
+    * work with servers that only support GLX 1.0.
+    */
    if (!QueryVersion(dpy, dpyPriv->majorOpcode,
-		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)) {
+		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)
+       || (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion < 1)) {
       Xfree(dpyPriv);
       _XUnlockMutex(_Xglobal_lock);
       return NULL;
@@ -884,8 +887,7 @@ __glXInitialize(Display * dpy)
       return NULL;
    }
 
-   if (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion >= 1)
-      __glXClientInfo(dpy, dpyPriv->majorOpcode);
+   __glXClientInfo(dpy, dpyPriv->majorOpcode);
 
    /* Grab the lock again and add the dispay private, unless somebody
     * beat us to initializing on this display in the meantime. */
