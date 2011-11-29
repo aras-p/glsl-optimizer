@@ -173,7 +173,7 @@ enum {
 #define PRIM_END       0x20
 #define PRIM_MODE_MASK 0x0f
 
-static INLINE GLuint _tnl_translate_prim( const struct _mesa_prim *prim )
+static inline GLuint _tnl_translate_prim( const struct _mesa_prim *prim )
 {
    GLuint flag;
    flag = prim->mode;
