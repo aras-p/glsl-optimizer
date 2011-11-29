@@ -101,6 +101,37 @@ static void brw_gs_overwrite_header_dw2(struct brw_gs_compile *c,
 }
 
 /**
+ * Overwrite DWORD 2 of c->reg.header with the primitive type from c->reg.R0.
+ *
+ * When the thread is spawned, GRF 0 contains the primitive type in bits 4:0
+ * of DWORD 2.  URB_WRITE messages need the primitive type in bits 6:2 of
+ * DWORD 2.  So this function extracts the primitive type field, bitshifts it
+ * appropriately, and stores it in c->reg.header.
+ */
+static void brw_gs_overwrite_header_dw2_from_r0(struct brw_gs_compile *c)
+{
+   struct brw_compile *p = &c->func;
+   brw_AND(p, get_element_ud(c->reg.header, 2), get_element_ud(c->reg.R0, 2),
+           brw_imm_ud(0x1f));
+   brw_SHL(p, get_element_ud(c->reg.header, 2),
+           get_element_ud(c->reg.header, 2), brw_imm_ud(2));
+}
+
+/**
+ * Apply an additive offset to DWORD 2 of c->reg.header.
+ *
+ * This is used to set/unset the "PrimStart" and "PrimEnd" flags appropriately
+ * for each vertex.
+ */
+static void brw_gs_offset_header_dw2(struct brw_gs_compile *c, int offset)
+{
+   struct brw_compile *p = &c->func;
+   brw_ADD(p, get_element_d(c->reg.header, 2), get_element_d(c->reg.header, 2),
+           brw_imm_d(offset));
+}
+
+
+/**
  * Emit a vertex using the URB_WRITE message.  Use the contents of
  * c->reg.header for the message header, and the registers starting at \c vert
  * for the vertex data.
@@ -268,4 +299,65 @@ void brw_gs_lines( struct brw_gs_compile *c )
       c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
           | URB_WRITE_PRIM_END));
    brw_gs_emit_vue(c, c->reg.vertex[1], 1);
+}
+
+/**
+ * Generate the geometry shader program used on Gen6 to perform stream output
+ * (transform feedback).
+ */
+void
+gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
+	         unsigned num_verts, bool check_edge_flags)
+{
+   struct brw_compile *p = &c->func;
+
+   brw_gs_alloc_regs(c, num_verts);
+   brw_gs_initialize_header(c);
+
+   brw_gs_ff_sync(c, 1);
+
+   brw_gs_overwrite_header_dw2_from_r0(c);
+   switch (num_verts) {
+   case 1:
+      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START | URB_WRITE_PRIM_END);
+      brw_gs_emit_vue(c, c->reg.vertex[0], true);
+      break;
+   case 2:
+      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
+      brw_gs_emit_vue(c, c->reg.vertex[0], false);
+      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_END - URB_WRITE_PRIM_START);
+      brw_gs_emit_vue(c, c->reg.vertex[1], true);
+      break;
+   case 3:
+      if (check_edge_flags) {
+         /* Only emit vertices 0 and 1 if this is the first triangle of the
+          * polygon.  Otherwise they are redundant.
+          */
+         brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+         brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
+                 get_element_ud(c->reg.R0, 2),
+                 brw_imm_ud(BRW_GS_EDGE_INDICATOR_0));
+         brw_IF(p, BRW_EXECUTE_1);
+      }
+      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
+      brw_gs_emit_vue(c, c->reg.vertex[0], false);
+      brw_gs_offset_header_dw2(c, -URB_WRITE_PRIM_START);
+      brw_gs_emit_vue(c, c->reg.vertex[1], false);
+      if (check_edge_flags) {
+         brw_ENDIF(p);
+         /* Only emit vertex 2 in PRIM_END mode if this is the last triangle
+          * of the polygon.  Otherwise leave the primitive incomplete because
+          * there are more polygon vertices coming.
+          */
+         brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+         brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
+                 get_element_ud(c->reg.R0, 2),
+                 brw_imm_ud(BRW_GS_EDGE_INDICATOR_1));
+         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+      }
+      brw_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_gs_emit_vue(c, c->reg.vertex[2], true);
+      break;
+   }
 }

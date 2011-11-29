@@ -53,12 +53,6 @@ static void compile_gs_prog( struct brw_context *brw,
    void *mem_ctx;
    GLuint program_size;
 
-   /* Gen6: VF has already converted into polygon, and LINELOOP is
-    * converted to LINESTRIP at the beginning of the 3D pipeline.
-    */
-   if (intel->gen >= 6)
-      return;
-
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
@@ -80,24 +74,60 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
 
-
-   /* Note that primitives which don't require a GS program have
-    * already been weeded out by this stage:
-    */
-
-   switch (key->primitive) {
-   case _3DPRIM_QUADLIST:
-      brw_gs_quads( &c, key );
-      break;
-   case _3DPRIM_QUADSTRIP:
-      brw_gs_quad_strip( &c, key );
-      break;
-   case _3DPRIM_LINELOOP:
-      brw_gs_lines( &c );
-      break;
-   default:
-      ralloc_free(mem_ctx);
-      return;
+   if (intel->gen >= 6) {
+      unsigned num_verts;
+      bool check_edge_flag;
+      /* On Sandybridge, we use the GS for implementing transform feedback
+       * (called "Stream Out" in the PRM).
+       */
+      switch (key->primitive) {
+      case _3DPRIM_POINTLIST:
+         num_verts = 1;
+         check_edge_flag = false;
+	 break;
+      case _3DPRIM_LINELIST:
+      case _3DPRIM_LINESTRIP:
+      case _3DPRIM_LINELOOP:
+         num_verts = 2;
+         check_edge_flag = false;
+	 break;
+      case _3DPRIM_TRILIST:
+      case _3DPRIM_TRIFAN:
+      case _3DPRIM_TRISTRIP:
+      case _3DPRIM_RECTLIST:
+	 num_verts = 3;
+         check_edge_flag = false;
+         break;
+      case _3DPRIM_QUADLIST:
+      case _3DPRIM_QUADSTRIP:
+      case _3DPRIM_POLYGON:
+         num_verts = 3;
+         check_edge_flag = true;
+         break;
+      default:
+	 assert(!"Unexpected primitive type in Gen6 SOL program.");
+	 return;
+      }
+      gen6_sol_program(&c, key, num_verts, check_edge_flag);
+   } else {
+      /* On Gen4-5, we use the GS to decompose certain types of primitives.
+       * Note that primitives which don't require a GS program have already
+       * been weeded out by now.
+       */
+      switch (key->primitive) {
+      case _3DPRIM_QUADLIST:
+	 brw_gs_quads( &c, key );
+	 break;
+      case _3DPRIM_QUADSTRIP:
+	 brw_gs_quad_strip( &c, key );
+	 break;
+      case _3DPRIM_LINELOOP:
+	 brw_gs_lines( &c );
+	 break;
+      default:
+	 ralloc_free(mem_ctx);
+	 return;
+      }
    }
 
    /* get the program
@@ -148,11 +178,26 @@ static void populate_key( struct brw_context *brw,
    /* _NEW_TRANSFORM */
    key->userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
 
-   key->need_gs_prog = (intel->gen >= 6)
-      ? 0
-      : (brw->primitive == _3DPRIM_QUADLIST ||
-	 brw->primitive == _3DPRIM_QUADSTRIP ||
-	 brw->primitive == _3DPRIM_LINELOOP);
+   if (intel->gen >= 7) {
+      /* On Gen7 and later, we don't use GS (yet). */
+      key->need_gs_prog = false;
+   } else if (intel->gen == 6) {
+      /* On Gen6, GS is used for transform feedback. */
+      /* _NEW_TRANSFORM_FEEDBACK */
+      key->need_gs_prog = ctx->TransformFeedback.CurrentObject->Active;
+   } else {
+      /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
+       * into simpler primitives.
+       */
+      key->need_gs_prog = (brw->primitive == _3DPRIM_QUADLIST ||
+                           brw->primitive == _3DPRIM_QUADSTRIP ||
+                           brw->primitive == _3DPRIM_LINELOOP);
+   }
+   /* For testing, the environment variable INTEL_FORCE_GS can be used to
+    * force a GS program to be used, even if it's not necessary.
+    */
+   if (getenv("INTEL_FORCE_GS"))
+      key->need_gs_prog = true;
 }
 
 /* Calculate interpolants for triangle and line rasterization.
@@ -183,7 +228,8 @@ brw_upload_gs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
-                _NEW_TRANSFORM),
+                _NEW_TRANSFORM |
+                _NEW_TRANSFORM_FEEDBACK),
       .brw   = BRW_NEW_PRIMITIVE,
       .cache = CACHE_NEW_VS_PROG
    },

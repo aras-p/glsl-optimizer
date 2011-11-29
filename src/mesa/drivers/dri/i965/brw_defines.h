@@ -1075,6 +1075,9 @@ enum brw_message_target {
 # define GEN6_GS_SVBI_POSTINCREMENT_VALUE_MASK		INTEL_MASK(25, 16)
 # define GEN6_GS_ENABLE					(1 << 15)
 
+# define BRW_GS_EDGE_INDICATOR_0			(1 << 8)
+# define BRW_GS_EDGE_INDICATOR_1			(1 << 9)
+
 #define _3DSTATE_HS                             0x781B /* GEN7+ */
 #define _3DSTATE_TE                             0x781C /* GEN7+ */
 #define _3DSTATE_DS                             0x781D /* GEN7+ */

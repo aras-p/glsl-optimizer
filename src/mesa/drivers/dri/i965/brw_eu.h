@@ -650,6 +650,11 @@ static INLINE struct brw_reg get_element_ud( struct brw_reg reg, GLuint elt )
    return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_UD), elt));
 }
 
+static INLINE struct brw_reg get_element_d( struct brw_reg reg, GLuint elt )
+{
+   return vec1(suboffset(retype(reg, BRW_REGISTER_TYPE_D), elt));
+}
+
 
 static INLINE struct brw_reg brw_swizzle( struct brw_reg reg,
 					    GLuint x,
