@@ -887,7 +887,11 @@ __glXInitialize(Display * dpy)
       return NULL;
    }
 
+#ifdef USE_XCB
+   __glX_send_client_info(dpyPriv);
+#else
    __glXClientInfo(dpy, dpyPriv->majorOpcode);
+#endif
 
    /* Grab the lock again and add the dispay private, unless somebody
     * beat us to initializing on this display in the meantime. */
