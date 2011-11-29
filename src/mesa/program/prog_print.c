@@ -925,8 +925,8 @@ _mesa_fprint_program_parameters(FILE *f,
 {
    GLuint i;
 
-   fprintf(f, "InputsRead: 0x%x (0b%s)\n",
-                 prog->InputsRead, binary(prog->InputsRead));
+   fprintf(f, "InputsRead: 0x%llx (0b%s)\n",
+           (unsigned long long) prog->InputsRead, binary(prog->InputsRead));
    fprintf(f, "OutputsWritten: 0x%llx (0b%s)\n",
                  (unsigned long long)prog->OutputsWritten, 
 		 binary(prog->OutputsWritten));
