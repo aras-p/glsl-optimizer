@@ -11,20 +11,19 @@ SConscript('auxiliary/SConscript')
 #
 
 SConscript([
-    'drivers/failover/SConscript', 
     'drivers/galahad/SConscript',
-    'drivers/identity/SConscript', 
-    'drivers/llvmpipe/SConscript', 
+    'drivers/identity/SConscript',
+    'drivers/llvmpipe/SConscript',
     'drivers/rbug/SConscript',
     'drivers/softpipe/SConscript',
-    'drivers/svga/SConscript', 
-    'drivers/trace/SConscript', 
+    'drivers/svga/SConscript',
+    'drivers/trace/SConscript',
 ])
 
 if not env['msvc']:
     # These drivers do not build on MSVC compilers
     SConscript([
-        'drivers/i915/SConscript', 
+        'drivers/i915/SConscript',
         'drivers/r300/SConscript',
     ])
 

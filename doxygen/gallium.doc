@@ -34,7 +34,6 @@
   - Pipe drivers:
     - \ref softpipe
     - \ref i915g
-    - \ref failover
 
   - Winsys drivers:
     - X11 winsys driver (xm_winsys.c)
@@ -127,17 +126,6 @@
 
   \sa i915_context.h
   \sa i915_winsys.h
-*/
-
-/** \page failover Failover Module
-
-  The failover module acts as a selector between a hardware driver and the
-  softpipe driver. When the hardware can't implement a particular rendering
-  operation, the failover module will pass the request to the softpipe driver.
-  This is a different solution to the "software fallbacks" scheme of previous
-  Mesa drivers.
-
-  \sa fo_winsys.h
 */
 
 /** \page draw Draw Module

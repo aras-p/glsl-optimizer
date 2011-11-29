@@ -88,7 +88,6 @@ set_feedback_vertex_format(struct gl_context *ctx)
  * to implement glRasterPos.
  * This is very much like the normal draw_vbo() function above.
  * Look at code refactoring some day.
- * Might move this into the failover module some day.
  */
 void
 st_feedback_draw_vbo(struct gl_context *ctx,
