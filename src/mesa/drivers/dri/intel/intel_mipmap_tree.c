@@ -801,6 +801,80 @@ intel_miptree_unmap_gtt(struct intel_context *intel,
    }
 }
 
+static void
+intel_miptree_map_s8(struct intel_context *intel,
+		     struct intel_mipmap_tree *mt,
+		     struct intel_miptree_map *map,
+		     unsigned int level, unsigned int slice)
+{
+   map->stride = map->w;
+   map->buffer = map->ptr = malloc(map->stride * map->h);
+   if (!map->buffer)
+      return;
+
+   /* One of either READ_BIT or WRITE_BIT or both is set.  READ_BIT implies no
+    * INVALIDATE_RANGE_BIT.  WRITE_BIT needs the original values read in unless
+    * invalidate is set, since we'll be writing the whole rectangle from our
+    * temporary buffer back out.
+    */
+   if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
+      uint8_t *untiled_s8_map = map->ptr;
+      uint8_t *tiled_s8_map = intel_region_map(intel, mt->region,
+					       GL_MAP_READ_BIT);
+      unsigned int image_x, image_y;
+
+      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+
+      for (uint32_t y = 0; y < map->h; y++) {
+	 for (uint32_t x = 0; x < map->w; x++) {
+	    ptrdiff_t offset = intel_offset_S8(mt->region->pitch,
+	                                       x + image_x + map->x,
+	                                       y + image_y + map->y);
+	    untiled_s8_map[y * map->w + x] = tiled_s8_map[offset];
+	 }
+      }
+
+      intel_region_unmap(intel, mt->region);
+
+      DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
+	  map->x, map->y, map->w, map->h,
+	  mt, map->x + image_x, map->y + image_y, map->ptr, map->stride);
+   } else {
+      DBG("%s: %d,%d %dx%d from mt %p = %p/%d\n", __FUNCTION__,
+	  map->x, map->y, map->w, map->h,
+	  mt, map->ptr, map->stride);
+   }
+}
+
+static void
+intel_miptree_unmap_s8(struct intel_context *intel,
+		       struct intel_mipmap_tree *mt,
+		       struct intel_miptree_map *map,
+		       unsigned int level,
+		       unsigned int slice)
+{
+   if (map->mode & GL_MAP_WRITE_BIT) {
+      unsigned int image_x, image_y;
+      uint8_t *untiled_s8_map = map->ptr;
+      uint8_t *tiled_s8_map = intel_region_map(intel, mt->region, map->mode);
+
+      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+
+      for (uint32_t y = 0; y < map->h; y++) {
+	 for (uint32_t x = 0; x < map->w; x++) {
+	    ptrdiff_t offset = intel_offset_S8(mt->region->pitch,
+	                                       x + map->x,
+	                                       y + map->y);
+	    tiled_s8_map[offset] = untiled_s8_map[y * map->w + x];
+	 }
+      }
+
+      intel_region_unmap(intel, mt->region);
+   }
+
+   free(map->buffer);
+}
+
 void
 intel_miptree_map(struct intel_context *intel,
 		  struct intel_mipmap_tree *mt,
@@ -836,7 +910,11 @@ intel_miptree_map(struct intel_context *intel,
       intel_miptree_slice_set_needs_hiz_resolve(mt, level, slice);
    }
 
-   intel_miptree_map_gtt(intel, mt, map, level, slice);
+   if (mt->format == MESA_FORMAT_S8) {
+      intel_miptree_map_s8(intel, mt, map, level, slice);
+   } else {
+      intel_miptree_map_gtt(intel, mt, map, level, slice);
+   }
 
    *out_ptr = map->ptr;
    *out_stride = map->stride;
@@ -856,7 +934,11 @@ intel_miptree_unmap(struct intel_context *intel,
    DBG("%s: mt %p (%s) level %d slice %d\n", __FUNCTION__,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
-   intel_miptree_unmap_gtt(intel, mt, map, level, slice);
+   if (mt->format == MESA_FORMAT_S8) {
+      intel_miptree_unmap_s8(intel, mt, map, level, slice);
+   } else {
+      intel_miptree_unmap_gtt(intel, mt, map, level, slice);
+   }
 
    mt->level[level].slice[slice].map = NULL;
    free(map);

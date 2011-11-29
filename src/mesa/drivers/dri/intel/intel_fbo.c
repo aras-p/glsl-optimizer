@@ -256,68 +256,6 @@ intel_map_renderbuffer_blit(struct gl_context *ctx,
 }
 
 /**
- * \brief Map a stencil renderbuffer.
- *
- * Stencil buffers are W-tiled. Since the GTT has no W fence, we must detile
- * the buffer in software.
- *
- * This function allocates a temporary malloc'd buffer at
- * intel_renderbuffer::map_buffer, detiles the stencil buffer into it, then
- * returns the temporary buffer as the map.
- *
- * \see intel_renderbuffer::map_buffer
- * \see intel_map_renderbuffer()
- * \see intel_unmap_renderbuffer_s8()
- */
-static void
-intel_map_renderbuffer_s8(struct gl_context *ctx,
-			  struct gl_renderbuffer *rb,
-			  GLuint x, GLuint y, GLuint w, GLuint h,
-			  GLbitfield mode,
-			  GLubyte **out_map,
-			  GLint *out_stride)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   uint8_t *tiled_s8_map;
-   uint8_t *untiled_s8_map;
-
-   assert(rb->Format == MESA_FORMAT_S8);
-   assert(irb->mt);
-
-   irb->map_mode = mode;
-   irb->map_x = x;
-   irb->map_y = y;
-   irb->map_w = w;
-   irb->map_h = h;
-
-   /* Flip the Y axis for the default framebuffer. */
-   int y_flip = (rb->Name == 0) ? -1 : 1;
-   int y_bias = (rb->Name == 0) ? (rb->Height - 1) : 0;
-
-   irb->map_buffer = malloc(w * h);
-   untiled_s8_map = irb->map_buffer;
-   tiled_s8_map = intel_region_map(intel, irb->mt->region, mode);
-
-   for (uint32_t pix_y = 0; pix_y < h; pix_y++) {
-      for (uint32_t pix_x = 0; pix_x < w; pix_x++) {
-	 uint32_t flipped_y = y_flip * (int32_t)(y + pix_y) + y_bias;
-	 ptrdiff_t offset = intel_offset_S8(irb->mt->region->pitch,
-	                                    x + pix_x,
-	                                    flipped_y);
-	 untiled_s8_map[pix_y * w + pix_x] = tiled_s8_map[offset];
-      }
-   }
-
-   *out_map = untiled_s8_map;
-   *out_stride = w;
-
-   DBG("%s: rb %d (%s) s8 detiled mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
-       x, y, w, h, *out_map, *out_stride);
-}
-
-/**
  * \brief Map a depthstencil buffer with separate stencil.
  *
  * A depthstencil renderbuffer, if using separate stencil, consists of a depth
@@ -412,8 +350,32 @@ intel_map_renderbuffer(struct gl_context *ctx,
    }
 
    if (rb->Format == MESA_FORMAT_S8) {
-      intel_map_renderbuffer_s8(ctx, rb, x, y, w, h, mode,
-			        out_map, out_stride);
+      void *map;
+      int stride;
+
+      /* For a window-system renderbuffer, we need to flip the mapping we
+       * receive upside-down.  So we need to ask for a rectangle on flipped
+       * vertically, and we then return a pointer to the bottom of it with a
+       * negative stride.
+       */
+      if (rb->Name == 0) {
+	 y = rb->Height - y - h;
+      }
+
+      intel_miptree_map(intel, irb->mt, irb->mt_level, irb->mt_layer,
+			x, y, w, h, mode, &map, &stride);
+
+      if (rb->Name == 0) {
+	 map += (h - 1) * stride;
+	 stride = -stride;
+      }
+
+      DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
+	  __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+	  x, y, w, h, *out_map, *out_stride);
+
+      *out_map = map;
+      *out_stride = stride;
    } else if (irb->wrapped_depth) {
       intel_map_renderbuffer_separate_s8z24(ctx, rb, x, y, w, h, mode,
 					    out_map, out_stride);
@@ -426,52 +388,6 @@ intel_map_renderbuffer(struct gl_context *ctx,
       intel_map_renderbuffer_gtt(ctx, rb, x, y, w, h, mode,
 				 out_map, out_stride);
    }
-}
-
-/**
- * \see intel_map_renderbuffer_s8()
- */
-static void
-intel_unmap_renderbuffer_s8(struct gl_context *ctx,
-			    struct gl_renderbuffer *rb)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-
-   DBG("%s: rb %d (%s)\n", __FUNCTION__,
-       rb->Name, _mesa_get_format_name(rb->Format));
-
-   assert(rb->Format == MESA_FORMAT_S8);
-
-   if (!irb->map_buffer)
-      return;
-
-   if (irb->map_mode & GL_MAP_WRITE_BIT) {
-      /* The temporary buffer was written to, so we must copy its pixels into
-       * the real buffer.
-       */
-      uint8_t *untiled_s8_map = irb->map_buffer;
-      uint8_t *tiled_s8_map = irb->mt->region->bo->virtual;
-
-      /* Flip the Y axis for the default framebuffer. */
-      int y_flip = (rb->Name == 0) ? -1 : 1;
-      int y_bias = (rb->Name == 0) ? (rb->Height - 1) : 0;
-
-      for (uint32_t pix_y = 0; pix_y < irb->map_h; pix_y++) {
-	 for (uint32_t pix_x = 0; pix_x < irb->map_w; pix_x++) {
-	    uint32_t flipped_y = y_flip * (int32_t)(pix_y + irb->map_y) + y_bias;
-	    ptrdiff_t offset = intel_offset_S8(irb->mt->region->pitch,
-	                                       pix_x + irb->map_x,
-	                                       flipped_y);
-	    tiled_s8_map[offset] =
-	       untiled_s8_map[pix_y * irb->map_w + pix_x];
-	 }
-      }
-   }
-
-   intel_region_unmap(intel, irb->mt->region);
-   free(irb->map_buffer);
-   irb->map_buffer = NULL;
 }
 
 /**
@@ -539,13 +455,14 @@ static void
 intel_unmap_renderbuffer(struct gl_context *ctx,
 			 struct gl_renderbuffer *rb)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
    if (rb->Format == MESA_FORMAT_S8) {
-      intel_unmap_renderbuffer_s8(ctx, rb);
+      intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
    } else if (irb->wrapped_depth) {
       intel_unmap_renderbuffer_separate_s8z24(ctx, rb);
    } else if (irb->map_bo) {
