@@ -60,6 +60,7 @@ struct brw_gs_compile {
    struct {
       struct brw_reg R0;
       struct brw_reg vertex[MAX_GS_VERTS];
+      struct brw_reg header;
       struct brw_reg temp;
    } reg;
 
