@@ -2599,7 +2599,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_R8:
       return format == GL_RED && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_RG88:
-      return format == GL_LUMINANCE_ALPHA && type == GL_UNSIGNED_BYTE && littleEndian;
+      return format == GL_RG && type == GL_UNSIGNED_BYTE && littleEndian;
    case MESA_FORMAT_RG88_REV:
       return GL_FALSE;
 
