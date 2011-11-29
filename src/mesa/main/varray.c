@@ -341,8 +341,6 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    if (ctx->API == API_OPENGLES)
       legalTypes |= BYTE_BIT;
 
-   ASSERT(unit < Elements(ctx->Array.ArrayObj->TexCoord));
-
    update_array(ctx, "glTexCoordPointer", VERT_ATTRIB_TEX(unit),
                 legalTypes, 1, 4,
                 size, type, stride, GL_FALSE, GL_FALSE,
