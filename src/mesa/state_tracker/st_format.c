@@ -420,6 +420,9 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SIGNED_LA_LATC2:
       return PIPE_FORMAT_LATC2_SNORM;
 
+   case MESA_FORMAT_ETC1_RGB8:
+      return PIPE_FORMAT_ETC1_RGB8;
+
    /* signed normalized formats */
    case MESA_FORMAT_SIGNED_R8:
       return PIPE_FORMAT_R8_SNORM;
@@ -744,6 +747,9 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_LA_LATC2;
    case PIPE_FORMAT_LATC2_SNORM:
       return MESA_FORMAT_SIGNED_LA_LATC2;
+
+   case PIPE_FORMAT_ETC1_RGB8:
+      return MESA_FORMAT_ETC1_RGB8;
 
    /* signed normalized formats */
    case PIPE_FORMAT_R8_SNORM:
@@ -1187,6 +1193,12 @@ static const struct format_mapping format_map[] = {
    {
       { GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT, 0 },
       { PIPE_FORMAT_LATC2_SNORM, 0 }
+   },
+
+   /* ETC1 */
+   {
+      { GL_ETC1_RGB8_OES, 0 },
+      { PIPE_FORMAT_ETC1_RGB8, 0 }
    },
 
    /* signed/unsigned integer formats.

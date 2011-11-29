@@ -475,6 +475,14 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
    }
 
+   if (ctx->API != API_OPENGL) {
+      if (screen->is_format_supported(screen, PIPE_FORMAT_ETC1_RGB8,
+                                      PIPE_TEXTURE_2D, 0,
+                                      PIPE_BIND_SAMPLER_VIEW)) {
+         ctx->Extensions.OES_compressed_ETC1_RGB8_texture = GL_TRUE;
+      }
+   }
+
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SNORM,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW)) {
