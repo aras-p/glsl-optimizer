@@ -781,11 +781,45 @@ struct __DRIdri2LoaderExtensionRec {
  * constructors for DRI2.
  */
 #define __DRI_DRI2 "DRI_DRI2"
-#define __DRI_DRI2_VERSION 2
+#define __DRI_DRI2_VERSION 3
 
-#define __DRI_API_OPENGL	0
+#define __DRI_API_OPENGL	0	/**< OpenGL compatibility profile */
 #define __DRI_API_GLES		1
 #define __DRI_API_GLES2		2
+#define __DRI_API_OPENGL_CORE	3	/**< OpenGL 3.2+ core profile */
+
+#define __DRI_CTX_ATTRIB_MAJOR_VERSION		0
+#define __DRI_CTX_ATTRIB_MINOR_VERSION		1
+#define __DRI_CTX_ATTRIB_FLAGS			2
+
+#define __DRI_CTX_FLAG_DEBUG			0x00000001
+#define __DRI_CTX_FLAG_FORWARD_COMPATIBLE	0x00000002
+
+/**
+ * \name Reasons that __DRIdri2Extension::createContextAttribs might fail
+ */
+/*@{*/
+/** Success! */
+#define __DRI_CTX_ERROR_SUCCESS			0
+
+/** Memory allocation failure */
+#define __DRI_CTX_ERROR_NO_MEMORY		1
+
+/** Client requested an API (e.g., OpenGL ES 2.0) that the driver can't do. */
+#define __DRI_CTX_ERROR_BAD_API			2
+
+/** Client requested an API version that the driver can't do. */
+#define __DRI_CTX_ERROR_BAD_VERSION		3
+
+/** Client requested a flag or combination of flags the driver can't do. */
+#define __DRI_CTX_ERROR_BAD_FLAG		4
+
+/** Client requested an attribute the driver doesn't understand. */
+#define __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE	5
+
+/** Client requested a flag the driver doesn't understand. */
+#define __DRI_CTX_ERROR_UNKNOWN_FLAG		6
+/*@}*/
 
 struct __DRIdri2ExtensionRec {
     __DRIextension base;
@@ -820,6 +854,20 @@ struct __DRIdri2ExtensionRec {
 				  int height);
    void (*releaseBuffer)(__DRIscreen *screen,
 			 __DRIbuffer *buffer);
+
+   /**
+    * Create a context for a particular API with a set of attributes
+    *
+    * \since version 3
+    */
+   __DRIcontext *(*createContextAttribs)(__DRIscreen *screen,
+					 int api,
+					 const __DRIconfig *config,
+					 __DRIcontext *shared,
+					 unsigned num_attribs,
+					 const uint32_t *attribs,
+					 unsigned *error,
+					 void *loaderPrivate);
 };
 
 

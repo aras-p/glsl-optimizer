@@ -454,14 +454,18 @@ const __DRIcoreExtension driCoreExtension = {
 
 /** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
-    { __DRI_DRI2, __DRI_DRI2_VERSION },
+    /* Force the version to 2 because the underlying drivers don't (can't!)
+     * support the extra requirements of CreateContextAttribs.
+     */
+    { __DRI_DRI2, 2 },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
     dri2GetAPIMask,
     dri2CreateNewContextForAPI,
     dri2AllocateBuffer,
-    dri2ReleaseBuffer
+    dri2ReleaseBuffer,
+    NULL
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
