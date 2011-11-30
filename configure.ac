@@ -1993,12 +1993,17 @@ if test "x$with_gallium_drivers" != x; then
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-            if test "x$enable_r600_llvm" = xyes; then
+            if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 if test "x$LLVM_VERSION" != "x3.1"; then
                     AC_MSG_ERROR([LLVM 3.1 is required for the r600 llvm compiler.])
                 fi
                 NEED_RADEON_GALLIUM=yes;
+            fi
+            if test "x$enable_r600_llvm" = xyes; then
                 USE_R600_LLVM_COMPILER=yes;
+            fi
+            if test "x$enable_opencl" = xyes -a "x$with_llvm_shared_libs" = xno; then
+                LLVM_LIBS="${LLVM_LIBS} `llvm-config --libs bitreader asmparser`"
             fi
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;

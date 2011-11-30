@@ -916,6 +916,10 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	unsigned offset = 0;
 	char *map;
 
+	if ((transfer->resource->bind & PIPE_BIND_GLOBAL) && transfer->resource->target == PIPE_BUFFER) {
+		return r600_compute_global_transfer_map(ctx, transfer);
+	}
+
 	if (rtransfer->staging) {
 		buf = ((struct r600_resource *)rtransfer->staging)->cs_buf;
 	} else {
@@ -944,6 +948,10 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct radeon_winsys_cs_handle *buf;
+
+	if ((transfer->resource->bind & PIPE_BIND_GLOBAL) && transfer->resource->target == PIPE_BUFFER) {
+		return r600_compute_global_transfer_unmap(ctx, transfer);
+	}
 
 	if (rtransfer->staging) {
 		buf = ((struct r600_resource *)rtransfer->staging)->cs_buf;

@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_dual_blend.h"
+#include "evergreen_compute.h"
 
 static uint32_t eg_num_banks(uint32_t nbanks)
 {
@@ -1881,6 +1882,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_stream_output_target = r600_create_so_target;
 	rctx->context.stream_output_target_destroy = r600_so_target_destroy;
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
+	evergreen_init_compute_state_functions(rctx);
 }
 
 static void cayman_init_atom_start_cs(struct r600_context *rctx)

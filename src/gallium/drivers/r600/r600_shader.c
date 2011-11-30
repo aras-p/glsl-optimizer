@@ -225,6 +225,37 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx);
  * struct r600_bytecode.
  */
 
+static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
+				unsigned char * bytes,	unsigned num_bytes);
+
+#ifdef HAVE_OPENCL
+int r600_compute_shader_create(struct pipe_context * ctx,
+	LLVMModuleRef mod,  struct r600_bytecode * bytecode)
+{
+	struct r600_context *r600_ctx = (struct r600_context *)ctx;
+	unsigned char * bytes;
+	unsigned byte_count;
+	struct r600_shader_ctx shader_ctx;
+	unsigned dump = 0;
+
+	if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
+		dump = 1;
+	}
+
+	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family , dump);
+	shader_ctx.bc = bytecode;
+	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family);
+	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
+	r600_bytecode_from_byte_stream(&shader_ctx, bytes, byte_count);
+	r600_bytecode_build(shader_ctx.bc);
+	if (dump) {
+		r600_bytecode_dump(shader_ctx.bc);
+	}
+	return 1;
+}
+
+#endif /* HAVE_OPENCL */
+
 static unsigned r600_src_from_byte_stream(unsigned char * bytes,
 		unsigned bytes_read, struct r600_bytecode_alu * alu, unsigned src_idx)
 {

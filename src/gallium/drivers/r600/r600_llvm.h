@@ -2,7 +2,7 @@
 #ifndef R600_LLVM_H
 #define R600_LLVM_H
 
-#ifdef R600_USE_LLVM
+#if defined R600_USE_LLVM || defined HAVE_OPENCL
 
 #include "radeon_llvm.h"
 #include <llvm-c/Core.h>
@@ -24,6 +24,6 @@ unsigned r600_llvm_compile(
 	enum radeon_family family,
 	unsigned dump);
 
-#endif /* R600_USE_LLVM */
+#endif /* defined R600_USE_LLVM || defined HAVE_OPENCL */
 
 #endif /* R600_LLVM_H */

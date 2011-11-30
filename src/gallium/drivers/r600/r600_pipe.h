@@ -28,8 +28,11 @@
 
 #include "util/u_slab.h"
 #include "r600.h"
+#include "r600_llvm.h"
+#include "r600_public.h"
 #include "r600_shader.h"
 #include "r600_resource.h"
+#include "evergreen_compute.h"
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -98,8 +101,15 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_RESOURCE,
 	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_STATE_FETCH_SHADER,
+	R600_PIPE_STATE_SPI,
 	R600_PIPE_NSTATES
 };
+
+struct compute_memory_pool;
+void compute_memory_pool_delete(struct compute_memory_pool* pool);
+struct compute_memory_pool* compute_memory_pool_new(
+	int64_t initial_size_in_dw,
+	struct r600_screen *rscreen);
 
 struct r600_pipe_fences {
 	struct r600_resource		*bo;
@@ -123,6 +133,12 @@ struct r600_screen {
 
 	bool				use_surface_alloc;
 	int 				glsl_feature_level;
+
+	/*for compute global memory binding, we allocate stuff here, instead of
+	 * buffers.
+	 * XXX: Not sure if this is the best place for global_pool.  Also,
+	 * it's not thread safe, so it won't work with multiple contexts. */
+	struct compute_memory_pool *global_pool;
 };
 
 struct r600_pipe_sampler_view {
@@ -257,6 +273,7 @@ struct r600_context {
 	struct pipe_clip_state		clip;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
+	struct r600_pipe_compute	*cs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
@@ -266,7 +283,9 @@ struct r600_context {
 	unsigned			saved_render_cond_mode;
 	/* shader information */
 	boolean				two_side;
+	boolean				spi_dirty;
 	unsigned			sprite_coord_enable;
+	boolean				flatshade;
 	boolean				export_16bpc;
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
@@ -412,6 +431,10 @@ void r600_init_context_resource_functions(struct r600_context *r600);
 
 /* r600_shader.c */
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+#ifdef HAVE_OPENCL
+int r600_compute_shader_create(struct pipe_context * ctx,
+	LLVMModuleRef mod,  struct r600_bytecode * bytecode);
+#endif
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);

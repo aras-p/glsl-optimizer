@@ -382,6 +382,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
 	case PIPE_CAP_USER_INDEX_BUFFERS:
 	case PIPE_CAP_USER_CONSTANT_BUFFERS:
+	case PIPE_CAP_COMPUTE:
 		return 1;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
@@ -409,7 +410,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_COMPUTE:
 		return 0;
 
 	/* Stream output. */
@@ -491,6 +491,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	{
 	case PIPE_SHADER_FRAGMENT:
 	case PIPE_SHADER_VERTEX:
+        case PIPE_SHADER_COMPUTE:
 		break;
 	case PIPE_SHADER_GEOMETRY:
 		/* XXX: support and enable geometry programs */
@@ -538,8 +539,12 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return rscreen->glsl_feature_level >= 130;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 		return 16;
-	case PIPE_SHADER_CAP_PREFERRED_IR:
-		return PIPE_SHADER_IR_TGSI;
+        case PIPE_SHADER_CAP_PREFERRED_IR:
+		if (shader == PIPE_SHADER_COMPUTE) {
+			return PIPE_SHADER_IR_LLVM;
+		} else {
+			return PIPE_SHADER_IR_TGSI;
+		}
 	}
 	return 0;
 }
@@ -569,12 +574,91 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	}
 }
 
+static int r600_get_compute_param(struct pipe_screen *screen,
+        enum pipe_compute_cap param,
+        void *ret)
+{
+	//TODO: select these params by asic
+	switch (param) {
+	case PIPE_COMPUTE_CAP_IR_TARGET:
+		if (ret) {
+			strcpy(ret, "r600--");
+		}
+		return 7 * sizeof(char);
+
+	case PIPE_COMPUTE_CAP_GRID_DIMENSION:
+		if (ret) {
+			uint64_t * grid_dimension = ret;
+			grid_dimension[0] = 3;
+		}
+		return 1 * sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_GRID_SIZE:
+		if (ret) {
+			uint64_t * grid_size = ret;
+			grid_size[0] = 65535;
+			grid_size[1] = 65535;
+			grid_size[2] = 1;
+		}
+		return 3 * sizeof(uint64_t) ;
+
+	case PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE:
+		if (ret) {
+			uint64_t * block_size = ret;
+			block_size[0] = 256;
+			block_size[1] = 256;
+			block_size[2] = 256;
+		}
+		return 3 * sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK:
+		if (ret) {
+			uint64_t * max_threads_per_block = ret;
+			*max_threads_per_block = 256;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
+		if (ret) {
+			uint64_t * max_global_size = ret;
+			/* XXX: This is what the proprietary driver reports, we
+			 * may want to use a different value. */
+			*max_global_size = 201326592;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
+		if (ret) {
+			uint64_t * max_input_size = ret;
+			*max_input_size = 1024;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
+		if (ret) {
+			uint64_t * max_local_size = ret;
+			/* XXX: This is what the proprietary driver reports, we
+			 * may want to use a different value. */
+			*max_local_size = 32768;
+		}
+		return sizeof(uint64_t);
+
+	default:
+		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
+		return 0;
+	}
+}
+
 static void r600_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 
 	if (rscreen == NULL)
 		return;
+
+	if (rscreen->global_pool) {
+		compute_memory_pool_delete(rscreen->global_pool);
+	}
 
 	if (rscreen->fences.bo) {
 		struct r600_fence_block *entry, *tmp;
@@ -833,6 +917,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_shader_param = r600_get_shader_param;
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_video_param = r600_get_video_param;
+	rscreen->screen.get_compute_param = r600_get_compute_param;
+
 	if (rscreen->chip_class >= EVERGREEN) {
 		rscreen->screen.is_format_supported = evergreen_is_format_supported;
 	} else {
@@ -856,6 +942,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
 	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", TRUE) ? 130 : 120;
+
+	rscreen->global_pool = compute_memory_pool_new(1024*16, rscreen);
 
 	return &rscreen->screen;
 }
