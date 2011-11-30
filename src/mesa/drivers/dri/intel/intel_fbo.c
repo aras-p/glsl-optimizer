@@ -591,6 +591,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       bool ok = true;
       struct gl_renderbuffer *depth_rb;
       struct gl_renderbuffer *stencil_rb;
+      struct intel_renderbuffer *depth_irb, *stencil_irb;
 
       depth_rb = intel_create_wrapped_renderbuffer(ctx, width, height,
 						   MESA_FORMAT_X8_Z24);
@@ -613,6 +614,12 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 }
 	 return false;
       }
+
+      depth_irb = intel_renderbuffer(depth_rb);
+      stencil_irb = intel_renderbuffer(stencil_rb);
+
+      intel_miptree_reference(&depth_irb->mt->stencil_mt, stencil_irb->mt);
+      intel_miptree_reference(&irb->mt, depth_irb->mt);
 
       depth_rb->Wrapped = rb;
       stencil_rb->Wrapped = rb;
@@ -953,6 +960,9 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 	 if (!ok)
 	    return false;
       }
+
+      intel_miptree_reference(&depth_irb->mt->stencil_mt, stencil_irb->mt);
+      intel_miptree_reference(&irb->mt, depth_irb->mt);
    } else {
       intel_miptree_reference(&irb->mt, mt);
       intel_renderbuffer_set_draw_offset(irb);
