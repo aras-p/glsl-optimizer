@@ -139,6 +139,19 @@ struct intel_mipmap_tree
    /* Effectively the key:
     */
    GLenum target;
+
+   /**
+    * Generally, this is just the same as the gl_texture_image->TexFormat or
+    * gl_renderbuffer->Format.
+    *
+    * However, for textures and renderbuffers with packed depth/stencil formats
+    * on hardware where we want or need to use separate stencil, there will be
+    * two miptrees for storing the data.  If the depthstencil texture or rb is
+    * MESA_FORMAT_Z32_FLOAT_X24S8, then mt->format will be
+    * MESA_FORMAT_Z32_FLOAT, otherwise for MESA_FORMAT_S8_Z24 objects it will be
+    * MESA_FORMAT_S8_Z24 (textures) or MESA_FORMAT_X8_Z24 (renderbuffers).
+    * mt->stencil_mt->format will always be MESA_FORMAT_S8.
+    */
    gl_format format;
 
    /**
@@ -191,13 +204,12 @@ struct intel_mipmap_tree
    /**
     * \brief Stencil miptree for depthstencil textures.
     *
-    * This miptree is used for depthstencil textures that require separate
-    * stencil. The stencil miptree's data is the golden copy of the
-    * parent miptree's stencil bits. When necessary, we scatter/gather the
-    * stencil bits between the parent miptree and the stencil miptree.
+    * This miptree is used for depthstencil textures and renderbuffers that
+    * require separate stencil.  It always has the true copy of the stencil
+    * bits, regardless of mt->format.
     *
-    * \see intel_miptree_s8z24_scatter()
-    * \see intel_miptree_s8z24_gather()
+    * \see intel_miptree_map_depthstencil()
+    * \see intel_miptree_unmap_depthstencil()
     */
    struct intel_mipmap_tree *stencil_mt;
 
