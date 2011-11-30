@@ -109,6 +109,24 @@ static const uint32_t gen6_hiz_meta_save =
 
       MESA_META_SELECT_FEEDBACK;
 
+static void
+gen6_hiz_get_framebuffer_enum(struct gl_context *ctx,
+                              GLenum *bind_enum,
+                              GLenum *get_enum)
+{
+   /* If the blit framebuffer extension isn't supported then Mesa will
+      report an error if we try to bind GL_DRAW_FRAMEBUFFER. However in
+      that case it should be safe to just save and restore
+      GL_FRAMEBUFFER instead. */
+   if (ctx->Extensions.EXT_framebuffer_blit && ctx->API == API_OPENGL) {
+      *bind_enum = GL_DRAW_FRAMEBUFFER;
+      *get_enum = GL_DRAW_FRAMEBUFFER_BINDING;
+   } else {
+      *bind_enum = GL_FRAMEBUFFER;
+      *get_enum = GL_FRAMEBUFFER_BINDING;
+   }
+}
+
 /**
  * Initialize static data needed for HiZ operations.
  */
@@ -117,9 +135,12 @@ gen6_hiz_init(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_hiz_state *hiz = &brw->hiz;
+   GLenum fb_bind_enum, fb_get_enum;
 
    if (hiz->fbo != 0)
       return;
+
+   gen6_hiz_get_framebuffer_enum(ctx, &fb_bind_enum, &fb_get_enum);
 
    /* Create depthbuffer.
     *
@@ -139,8 +160,8 @@ gen6_hiz_init(struct brw_context *brw)
 
    /* Setup FBO. */
    _mesa_GenFramebuffersEXT(1, &hiz->fbo);
-   _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER, hiz->fbo);
-   _mesa_FramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER,
+   _mesa_BindFramebufferEXT(fb_bind_enum, hiz->fbo);
+   _mesa_FramebufferRenderbufferEXT(fb_bind_enum,
                                     GL_DEPTH_ATTACHMENT,
                                     GL_RENDERBUFFER,
                                     hiz->depth_rb->Name);
@@ -241,6 +262,7 @@ gen6_resolve_slice(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
    struct brw_hiz_state *hiz = &brw->hiz;
+   GLenum fb_bind_enum, fb_get_enum;
 
    /* Do not recurse. */
    assert(!brw->hiz.op);
@@ -250,11 +272,13 @@ gen6_resolve_slice(struct intel_context *intel,
    assert(level <= mt->last_level);
    assert(layer < mt->level[level].depth);
 
+   gen6_hiz_get_framebuffer_enum(ctx, &fb_bind_enum, &fb_get_enum);
+
    /* Save state. */
    GLint save_drawbuffer;
    GLint save_renderbuffer;
    _mesa_meta_begin(ctx, gen6_hiz_meta_save);
-   _mesa_GetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &save_drawbuffer);
+   _mesa_GetIntegerv(fb_get_enum, &save_drawbuffer);
    _mesa_GetIntegerv(GL_RENDERBUFFER_BINDING, &save_renderbuffer);
 
    /* Initialize context data for HiZ operations. */
@@ -272,7 +296,7 @@ gen6_resolve_slice(struct intel_context *intel,
 
    /* Setup FBO. */
    gen6_hiz_setup_depth_buffer(brw, mt, level, layer);
-   _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER, hiz->fbo);
+   _mesa_BindFramebufferEXT(fb_bind_enum, hiz->fbo);
 
 
    /* A rectangle primitive (3DPRIM_RECTLIST) consists of only three vertices.
@@ -316,7 +340,7 @@ gen6_resolve_slice(struct intel_context *intel,
     */
    gen6_hiz_teardown_depth_buffer(hiz->depth_rb);
    _mesa_BindRenderbufferEXT(GL_RENDERBUFFER, save_renderbuffer);
-   _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER, save_drawbuffer);
+   _mesa_BindFramebufferEXT(fb_bind_enum, save_drawbuffer);
    _mesa_meta_end(ctx);
 }
 
