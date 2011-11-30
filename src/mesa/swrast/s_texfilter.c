@@ -3437,7 +3437,8 @@ sample_depth_texture( struct gl_context *ctx,
           tObj->Target == GL_TEXTURE_2D ||
           tObj->Target == GL_TEXTURE_RECTANGLE_NV ||
           tObj->Target == GL_TEXTURE_1D_ARRAY_EXT ||
-          tObj->Target == GL_TEXTURE_2D_ARRAY_EXT);
+          tObj->Target == GL_TEXTURE_2D_ARRAY_EXT ||
+          tObj->Target == GL_TEXTURE_CUBE_MAP);
 
    ambient = tObj->Sampler.CompareFailValue;
 
@@ -3684,7 +3685,10 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_3d;
          }
       case GL_TEXTURE_CUBE_MAP:
-         if (needLambda) {
+         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+	    return &sample_depth_texture;
+	 }
+	 else if (needLambda) {
             return &sample_lambda_cube;
          }
          else if (t->Sampler.MinFilter == GL_LINEAR) {
@@ -3709,7 +3713,10 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_rect;
          }
       case GL_TEXTURE_1D_ARRAY_EXT:
-         if (needLambda) {
+         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+            return &sample_depth_texture;
+         }
+	 else if (needLambda) {
             return &sample_lambda_1d_array;
          }
          else if (t->Sampler.MinFilter == GL_LINEAR) {
@@ -3720,7 +3727,10 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_1d_array;
          }
       case GL_TEXTURE_2D_ARRAY_EXT:
-         if (needLambda) {
+         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+            return &sample_depth_texture;
+         }
+	 else if (needLambda) {
             return &sample_lambda_2d_array;
          }
          else if (t->Sampler.MinFilter == GL_LINEAR) {
