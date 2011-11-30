@@ -100,9 +100,9 @@ void intel_recreate_static_regions(struct intel_context *intel);
  *
  * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT
  */
-GLubyte *intel_region_map(struct intel_context *intel,
-                          struct intel_region *ib,
-                          GLbitfield mode);
+void *intel_region_map(struct intel_context *intel,
+		       struct intel_region *ib,
+		       GLbitfield mode);
 
 void intel_region_unmap(struct intel_context *intel, struct intel_region *ib);
 

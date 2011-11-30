@@ -108,7 +108,7 @@ debug_backtrace(void)
 
 /* XXX: Thread safety?
  */
-GLubyte *
+void *
 intel_region_map(struct intel_context *intel, struct intel_region *region,
                  GLbitfield mode)
 {
