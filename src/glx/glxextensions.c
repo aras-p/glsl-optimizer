@@ -71,6 +71,8 @@ struct extension_info
 
 /* *INDENT-OFF* */
 static const struct extension_info known_glx_extensions[] = {
+   { GLX(ARB_create_context),          VER(0,0), Y, N, N, N },
+   { GLX(ARB_create_context_profile),  VER(0,0), Y, N, N, N },
    { GLX(ARB_get_proc_address),        VER(1,4), Y, N, Y, N },
    { GLX(ARB_multisample),             VER(1,4), Y, Y, N, N },
    { GLX(ATI_pixel_format_float),      VER(0,0), N, N, N, N },

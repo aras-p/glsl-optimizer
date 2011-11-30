@@ -33,7 +33,9 @@
 
 enum
 {
-   ARB_get_proc_address_bit = 0,
+   ARB_create_context_bit = 0,
+   ARB_create_context_profile_bit,
+   ARB_get_proc_address_bit,
    ARB_multisample_bit,
    ATI_pixel_format_float_bit,
    EXT_visual_info_bit,
