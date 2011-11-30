@@ -808,6 +808,8 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    }
    default:
       assert(0);
+      *out_min_index = 0;
+      *out_max_index = 0;
    }
 
    if (transfer) {
