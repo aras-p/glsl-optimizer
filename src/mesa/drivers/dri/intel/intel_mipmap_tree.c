@@ -687,6 +687,80 @@ intel_miptree_unmap_gtt(struct intel_context *intel,
 }
 
 static void
+intel_miptree_map_blit(struct intel_context *intel,
+		       struct intel_mipmap_tree *mt,
+		       struct intel_miptree_map *map,
+		       unsigned int level, unsigned int slice)
+{
+   unsigned int image_x, image_y;
+   int x = map->x;
+   int y = map->y;
+   int ret;
+
+   /* The blitter requires the pitch to be aligned to 4. */
+   map->stride = ALIGN(map->w * mt->region->cpp, 4);
+
+   map->bo = drm_intel_bo_alloc(intel->bufmgr, "intel_miptree_map_blit() temp",
+				map->stride * map->h, 4096);
+   if (!map->bo) {
+      fprintf(stderr, "Failed to allocate blit temporary\n");
+      goto fail;
+   }
+
+   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+   x += image_x;
+   y += image_y;
+
+   if (!intelEmitCopyBlit(intel,
+			  mt->region->cpp,
+			  mt->region->pitch, mt->region->bo,
+			  0, mt->region->tiling,
+			  map->stride / mt->region->cpp, map->bo,
+			  0, I915_TILING_NONE,
+			  x, y,
+			  0, 0,
+			  map->w, map->h,
+			  GL_COPY)) {
+      fprintf(stderr, "Failed to blit\n");
+      goto fail;
+   }
+
+   intel_batchbuffer_flush(intel);
+   ret = drm_intel_bo_map(map->bo, (map->mode & GL_MAP_WRITE_BIT) != 0);
+   if (ret) {
+      fprintf(stderr, "Failed to map blit temporary\n");
+      goto fail;
+   }
+
+   map->ptr = map->bo->virtual;
+
+   DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
+       map->x, map->y, map->w, map->h,
+       mt, _mesa_get_format_name(mt->format),
+       x, y, map->ptr, map->stride);
+
+   return;
+
+fail:
+   drm_intel_bo_unreference(map->bo);
+   map->ptr = NULL;
+   map->stride = 0;
+}
+
+static void
+intel_miptree_unmap_blit(struct intel_context *intel,
+			 struct intel_mipmap_tree *mt,
+			 struct intel_miptree_map *map,
+			 unsigned int level,
+			 unsigned int slice)
+{
+   assert(!(map->mode & GL_MAP_WRITE_BIT));
+
+   drm_intel_bo_unmap(map->bo);
+   drm_intel_bo_unreference(map->bo);
+}
+
+static void
 intel_miptree_map_s8(struct intel_context *intel,
 		     struct intel_mipmap_tree *mt,
 		     struct intel_miptree_map *map,
@@ -924,6 +998,11 @@ intel_miptree_map(struct intel_context *intel,
       intel_miptree_map_s8(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
+   } else if (intel->gen >= 6 &&
+	      !(mode & GL_MAP_WRITE_BIT) &&
+	      !mt->compressed &&
+	      mt->region->tiling == I915_TILING_X) {
+      intel_miptree_map_blit(intel, mt, map, level, slice);
    } else {
       intel_miptree_map_gtt(intel, mt, map, level, slice);
    }
@@ -950,6 +1029,8 @@ intel_miptree_unmap(struct intel_context *intel,
       intel_miptree_unmap_s8(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_unmap_depthstencil(intel, mt, map, level, slice);
+   } else if (map->bo) {
+      intel_miptree_unmap_blit(intel, mt, map, level, slice);
    } else {
       intel_miptree_unmap_gtt(intel, mt, map, level, slice);
    }
