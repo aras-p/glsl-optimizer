@@ -5017,11 +5017,9 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage)
 {
-   GLubyte *dstMap;
-   GLint dstRowStride;
-
-   /* This is pretty simple, basically just do a memcpy without worrying
-    * about the usual image unpacking or image transfer operations.
+   /* This is pretty simple, because unlike the general texstore path we don't
+    * have to worry about the usual image unpacking or image transfer
+    * operations.
     */
    ASSERT(texObj);
    ASSERT(texImage);
@@ -5036,29 +5034,12 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx,
       return;
    }
 
-   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
-                                                 &ctx->Unpack,
-                                                 "glCompressedTexImage2D");
-   if (!data)
-      return;
-
-
-   /* Map dest texture buffer (write to whole region) */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               0, 0, width, height,
-                               GL_MAP_WRITE_BIT,
-                               &dstMap, &dstRowStride);
-   if (dstMap) {
-      /* copy the data */
-      memcpy(dstMap, data, imageSize);
-
-      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
-   }
-   else {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
-   }
-
-   _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
+   _mesa_store_compressed_texsubimage2d(ctx, target, level,
+					0, 0,
+					width, height,
+					texImage->TexFormat,
+					imageSize, data,
+					texObj, texImage);
 }
 
 
