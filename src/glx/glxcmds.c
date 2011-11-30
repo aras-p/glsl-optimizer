@@ -2603,6 +2603,9 @@ static const struct name_address_pair GLX_functions[] = {
    GLX_FUNCTION(glXGetDriverConfig),
 #endif
 
+   /*** GLX_ARB_create_context and GLX_ARB_create_context_profile ***/
+   GLX_FUNCTION(glXCreateContextAttribsARB),
+
    {NULL, NULL}                 /* end of list */
 };
 
