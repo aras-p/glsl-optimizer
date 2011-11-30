@@ -436,9 +436,31 @@ indirect_create_context(struct glx_screen *psc,
    return gc;
 }
 
+static struct glx_context *
+indirect_create_context_attribs(struct glx_screen *base,
+				struct glx_config *config_base,
+				struct glx_context *shareList,
+				unsigned num_attribs,
+				const uint32_t *attribs,
+				unsigned *error)
+{
+   /* All of the attribute validation for indirect contexts is handled on the
+    * server, so there's not much to do here.
+    */
+   (void) num_attribs;
+   (void) attribs;
+
+   /* The error parameter is only used on the server so that correct GLX
+    * protocol errors can be generated.  On the client, it can be ignored.
+    */
+   (void) error;
+
+   return indirect_create_context(base, config_base, shareList, 0);
+}
+
 struct glx_screen_vtable indirect_screen_vtable = {
    indirect_create_context,
-   NULL
+   indirect_create_context_attribs
 };
 
 _X_HIDDEN struct glx_screen *
