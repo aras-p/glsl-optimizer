@@ -12,6 +12,7 @@ SOURCES = \
 	  clientattrib.c \
 	  clientinfo.c \
 	  compsize.c \
+	  create_context.c \
 	  eval.c \
 	  glxconfig.c \
 	  glxcmds.c \

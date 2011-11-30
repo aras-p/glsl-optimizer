@@ -789,6 +789,8 @@ extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 #endif
 
+extern struct glx_screen *GetGLXScreenConfigs(Display * dpy, int scrn);
+
 #ifdef GLX_USE_APPLEGL
 extern struct glx_screen *
 applegl_create_screen(int screen, struct glx_display * priv);
