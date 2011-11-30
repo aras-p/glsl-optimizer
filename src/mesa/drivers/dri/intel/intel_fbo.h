@@ -47,10 +47,6 @@ struct intel_renderbuffer
    struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
    drm_intel_bo *map_bo;
 
-   void *map_buffer;
-   GLuint map_x, map_y, map_w, map_h;
-   GLbitfield map_mode;
-
    /**
     * \name Miptree view
     * \{

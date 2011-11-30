@@ -106,156 +106,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 /**
- * \brief Map a renderbuffer through the GTT.
- *
- * \see intel_map_renderbuffer()
- */
-static void
-intel_map_renderbuffer_gtt(struct gl_context *ctx,
-                           struct gl_renderbuffer *rb,
-                           GLuint x, GLuint y, GLuint w, GLuint h,
-                           GLbitfield mode,
-                           GLubyte **out_map,
-                           GLint *out_stride)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   GLubyte *map;
-   int stride, flip_stride;
-
-   assert(irb->mt);
-
-   intel_renderbuffer_resolve_depth(intel, irb);
-   if (mode & GL_MAP_WRITE_BIT) {
-      intel_renderbuffer_set_needs_hiz_resolve(irb);
-   }
-
-   irb->map_mode = mode;
-   irb->map_x = x;
-   irb->map_y = y;
-   irb->map_w = w;
-   irb->map_h = h;
-
-   stride = irb->mt->region->pitch * irb->mt->region->cpp;
-
-   if (rb->Name == 0) {
-      y = irb->mt->region->height - 1 - y;
-      flip_stride = -stride;
-   } else {
-      x += irb->draw_x;
-      y += irb->draw_y;
-      flip_stride = stride;
-   }
-
-   if (drm_intel_bo_references(intel->batch.bo, irb->mt->region->bo)) {
-      intel_batchbuffer_flush(intel);
-   }
-
-   drm_intel_gem_bo_map_gtt(irb->mt->region->bo);
-
-   map = irb->mt->region->bo->virtual;
-   map += x * irb->mt->region->cpp;
-   map += (int)y * stride;
-
-   *out_map = map;
-   *out_stride = flip_stride;
-
-   DBG("%s: rb %d (%s) gtt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
-       x, y, w, h, *out_map, *out_stride);
-}
-
-/**
- * \brief Map a renderbuffer by blitting it to a temporary gem buffer.
- *
- * On gen6+, we have LLC sharing, which means we can get high-performance
- * access to linear-mapped buffers.
- *
- * This function allocates a temporary gem buffer at
- * intel_renderbuffer::map_bo, then blits the renderbuffer into it, and
- * returns a map of that. (Note: Only X tiled buffers can be blitted).
- *
- * \see intel_renderbuffer::map_bo
- * \see intel_map_renderbuffer()
- */
-static void
-intel_map_renderbuffer_blit(struct gl_context *ctx,
-			    struct gl_renderbuffer *rb,
-			    GLuint x, GLuint y, GLuint w, GLuint h,
-			    GLbitfield mode,
-			    GLubyte **out_map,
-			    GLint *out_stride)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-
-   int src_x, src_y;
-   int dst_stride;
-
-   assert(irb->mt->region);
-   assert(intel->gen >= 6);
-   assert(!(mode & GL_MAP_WRITE_BIT));
-   assert(irb->mt->region->tiling == I915_TILING_X);
-
-   irb->map_mode = mode;
-   irb->map_x = x;
-   irb->map_y = y;
-   irb->map_w = w;
-   irb->map_h = h;
-
-   dst_stride = ALIGN(w * irb->mt->region->cpp, 4);
-
-   if (rb->Name) {
-      src_x = x + irb->draw_x;
-      src_y = y + irb->draw_y;
-   } else {
-      src_x = x;
-      src_y = irb->mt->region->height - y - h;
-   }
-
-   irb->map_bo = drm_intel_bo_alloc(intel->bufmgr, "MapRenderbuffer() temp",
-				    dst_stride * h, 4096);
-
-   /* We don't do the flip in the blit, because it's always so tricky to get
-    * right.
-    */
-   if (irb->map_bo &&
-       intelEmitCopyBlit(intel,
-			 irb->mt->region->cpp,
-			 irb->mt->region->pitch, irb->mt->region->bo,
-			 0, irb->mt->region->tiling,
-			 dst_stride / irb->mt->region->cpp, irb->map_bo,
-			 0, I915_TILING_NONE,
-			 src_x, src_y,
-			 0, 0,
-			 w, h,
-			 GL_COPY)) {
-      intel_batchbuffer_flush(intel);
-      drm_intel_bo_map(irb->map_bo, false);
-
-      if (rb->Name) {
-	 *out_map = irb->map_bo->virtual;
-	 *out_stride = dst_stride;
-      } else {
-	 *out_map = irb->map_bo->virtual + (h - 1) * dst_stride;
-	 *out_stride = -dst_stride;
-      }
-
-      DBG("%s: rb %d (%s) blit mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-	  __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
-	  src_x, src_y, w, h, *out_map, *out_stride);
-   } else {
-      /* Fallback to GTT mapping. */
-      drm_intel_bo_unreference(irb->map_bo);
-      irb->map_bo = NULL;
-      intel_map_renderbuffer_gtt(ctx, rb,
-				 x, y, w, h,
-				 mode,
-				 out_map, out_stride);
-   }
-}
-
-/**
  * \see dd_function_table::MapRenderbuffer
  */
 static void
@@ -268,6 +118,8 @@ intel_map_renderbuffer(struct gl_context *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   void *map;
+   int stride;
 
    /* We sometimes get called with this by our intel_span.c usage. */
    if (!irb->mt && !irb->wrapped_depth) {
@@ -276,42 +128,28 @@ intel_map_renderbuffer(struct gl_context *ctx,
       return;
    }
 
-   if (rb->Format == MESA_FORMAT_S8 || irb->wrapped_depth) {
-      void *map;
-      int stride;
-
-      /* For a window-system renderbuffer, we need to flip the mapping we
-       * receive upside-down.  So we need to ask for a rectangle on flipped
-       * vertically, and we then return a pointer to the bottom of it with a
-       * negative stride.
-       */
-      if (rb->Name == 0) {
-	 y = rb->Height - y - h;
-      }
-
-      intel_miptree_map(intel, irb->mt, irb->mt_level, irb->mt_layer,
-			x, y, w, h, mode, &map, &stride);
-
-      if (rb->Name == 0) {
-	 map += (h - 1) * stride;
-	 stride = -stride;
-      }
-
-      DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
-	  __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
-	  x, y, w, h, *out_map, *out_stride);
-
-      *out_map = map;
-      *out_stride = stride;
-   } else if (intel->gen >= 6 &&
-	      !(mode & GL_MAP_WRITE_BIT) &&
-	      irb->mt->region->tiling == I915_TILING_X) {
-      intel_map_renderbuffer_blit(ctx, rb, x, y, w, h, mode,
-				  out_map, out_stride);
-   } else {
-      intel_map_renderbuffer_gtt(ctx, rb, x, y, w, h, mode,
-				 out_map, out_stride);
+   /* For a window-system renderbuffer, we need to flip the mapping we receive
+    * upside-down.  So we need to ask for a rectangle on flipped vertically, and
+    * we then return a pointer to the bottom of it with a negative stride.
+    */
+   if (rb->Name == 0) {
+      y = rb->Height - y - h;
    }
+
+   intel_miptree_map(intel, irb->mt, irb->mt_level, irb->mt_layer,
+		     x, y, w, h, mode, &map, &stride);
+
+   if (rb->Name == 0) {
+      map += (h - 1) * stride;
+      stride = -stride;
+   }
+
+   DBG("%s: rb %d (%s) mt mapped: (%d, %d) (%dx%d) -> %p/%d\n",
+       __FUNCTION__, rb->Name, _mesa_get_format_name(rb->Format),
+       x, y, w, h, *out_map, *out_stride);
+
+   *out_map = map;
+   *out_stride = stride;
 }
 
 /**
@@ -327,22 +165,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
-   if (rb->Format == MESA_FORMAT_S8 || irb->wrapped_depth) {
-      intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
-   } else if (irb->map_bo) {
-      /* Paired with intel_map_renderbuffer_blit(). */
-      drm_intel_bo_unmap(irb->map_bo);
-      drm_intel_bo_unreference(irb->map_bo);
-      irb->map_bo = 0;
-   } else {
-      /* Paired with intel_map_renderbuffer_gtt(). */
-      if (irb->mt) {
-	 /* The miptree may be null when intel_map_renderbuffer() is
-	  * called from intel_span.c.
-	  */
-	 drm_intel_gem_bo_unmap_gtt(irb->mt->region->bo);
-      }
-   }
+   intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
 }
 
 /**
