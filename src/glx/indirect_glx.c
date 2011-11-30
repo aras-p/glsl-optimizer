@@ -437,7 +437,8 @@ indirect_create_context(struct glx_screen *psc,
 }
 
 struct glx_screen_vtable indirect_screen_vtable = {
-   indirect_create_context
+   indirect_create_context,
+   NULL
 };
 
 _X_HIDDEN struct glx_screen *

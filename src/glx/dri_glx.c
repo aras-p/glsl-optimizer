@@ -836,7 +836,8 @@ driBindExtensions(struct dri_screen *psc, const __DRIextension **extensions)
 }
 
 static const struct glx_screen_vtable dri_screen_vtable = {
-   dri_create_context
+   dri_create_context,
+   NULL
 };
 
 static struct glx_screen *

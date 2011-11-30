@@ -468,6 +468,14 @@ struct glx_screen_vtable {
 					 struct glx_config *config,
 					 struct glx_context *shareList,
 					 int renderType);
+
+   struct glx_context *(*create_context_attribs)(struct glx_screen *psc,
+						 struct glx_config *config,
+						 struct glx_context *shareList,
+						 unsigned num_attrib,
+						 const uint32_t *attribs,
+						 unsigned *error);
+
 };
 
 struct glx_screen
