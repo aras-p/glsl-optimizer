@@ -256,79 +256,6 @@ intel_map_renderbuffer_blit(struct gl_context *ctx,
 }
 
 /**
- * \brief Map a depthstencil buffer with separate stencil.
- *
- * A depthstencil renderbuffer, if using separate stencil, consists of a depth
- * renderbuffer and a hidden stencil renderbuffer.  This function maps the
- * depth buffer, whose format is MESA_FORMAT_X8_Z24, through the GTT and
- * returns that as the mapped pointer. The caller need not be aware of the
- * hidden stencil buffer and may safely assume that the mapped pointer points
- * to a MESA_FORMAT_S8_Z24 buffer
- *
- * The consistency between the depth buffer's S8 bits and the hidden stencil
- * buffer is managed within intel_map_renderbuffer() and
- * intel_unmap_renderbuffer() by scattering or gathering the stencil bits
- * according to the map mode.
- *
- * \see intel_map_renderbuffer()
- * \see intel_unmap_renderbuffer_separate_s8z24()
- */
-static void
-intel_map_renderbuffer_separate_s8z24(struct gl_context *ctx,
-				      struct gl_renderbuffer *rb,
-				      GLuint x, GLuint y, GLuint w, GLuint h,
-				      GLbitfield mode,
-				      GLubyte **out_map,
-				      GLint *out_stride)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-
-   uint8_t *s8z24_map;
-   int32_t s8z24_stride;
-
-   struct intel_renderbuffer *s8_irb;
-   uint8_t *s8_map;
-
-   assert(rb->Name != 0);
-   assert(rb->Format == MESA_FORMAT_S8_Z24);
-   assert(irb->wrapped_depth != NULL);
-   assert(irb->wrapped_stencil != NULL);
-
-   irb->map_mode = mode;
-   irb->map_x = x;
-   irb->map_y = y;
-   irb->map_w = w;
-   irb->map_h = h;
-
-   /* Map with write mode for the gather below. */
-   intel_map_renderbuffer_gtt(ctx, irb->wrapped_depth,
-			       x, y, w, h, mode | GL_MAP_WRITE_BIT,
-			       &s8z24_map, &s8z24_stride);
-
-   s8_irb = intel_renderbuffer(irb->wrapped_stencil);
-   s8_map = intel_region_map(intel, s8_irb->mt->region, GL_MAP_READ_BIT);
-
-   /* Gather the stencil buffer into the depth buffer. */
-   for (uint32_t pix_y = 0; pix_y < h; ++pix_y) {
-      for (uint32_t pix_x = 0; pix_x < w; ++pix_x) {
-	 ptrdiff_t s8_offset = intel_offset_S8(s8_irb->mt->region->pitch,
-					       x + pix_x,
-					       y + pix_y);
-	 ptrdiff_t s8z24_offset = pix_y * s8z24_stride
-				+ pix_x * 4
-				+ 3;
-	 s8z24_map[s8z24_offset] = s8_map[s8_offset];
-      }
-   }
-
-   intel_region_unmap(intel, s8_irb->mt->region);
-
-   *out_map = s8z24_map;
-   *out_stride = s8z24_stride;
-}
-
-/**
  * \see dd_function_table::MapRenderbuffer
  */
 static void
@@ -349,7 +276,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
       return;
    }
 
-   if (rb->Format == MESA_FORMAT_S8) {
+   if (rb->Format == MESA_FORMAT_S8 || irb->wrapped_depth) {
       void *map;
       int stride;
 
@@ -376,9 +303,6 @@ intel_map_renderbuffer(struct gl_context *ctx,
 
       *out_map = map;
       *out_stride = stride;
-   } else if (irb->wrapped_depth) {
-      intel_map_renderbuffer_separate_s8z24(ctx, rb, x, y, w, h, mode,
-					    out_map, out_stride);
    } else if (intel->gen >= 6 &&
 	      !(mode & GL_MAP_WRITE_BIT) &&
 	      irb->mt->region->tiling == I915_TILING_X) {
@@ -388,64 +312,6 @@ intel_map_renderbuffer(struct gl_context *ctx,
       intel_map_renderbuffer_gtt(ctx, rb, x, y, w, h, mode,
 				 out_map, out_stride);
    }
-}
-
-/**
- * \brief Unmap a depthstencil renderbuffer with separate stencil.
- *
- * \see intel_map_renderbuffer_separate_s8z24()
- * \see intel_unmap_renderbuffer()
- */
-static void
-intel_unmap_renderbuffer_separate_s8z24(struct gl_context *ctx,
-				        struct gl_renderbuffer *rb)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   struct intel_renderbuffer *s8z24_irb;
-
-   assert(rb->Name != 0);
-   assert(rb->Format == MESA_FORMAT_S8_Z24);
-   assert(irb->wrapped_depth != NULL);
-   assert(irb->wrapped_stencil != NULL);
-
-   s8z24_irb = intel_renderbuffer(irb->wrapped_depth);
-
-   if (irb->map_mode & GL_MAP_WRITE_BIT) {
-      /* Copy the stencil bits from the depth buffer into the stencil buffer.
-       */
-      uint32_t map_x = irb->map_x;
-      uint32_t map_y = irb->map_y;
-      uint32_t map_w = irb->map_w;
-      uint32_t map_h = irb->map_h;
-
-      struct intel_renderbuffer *s8_irb;
-      uint8_t *s8_map;
-      
-      s8_irb = intel_renderbuffer(irb->wrapped_stencil);
-      s8_map = intel_region_map(intel, s8_irb->mt->region, GL_MAP_WRITE_BIT);
-
-      int32_t s8z24_stride = 4 * s8z24_irb->mt->region->pitch;
-      uint8_t *s8z24_map = s8z24_irb->mt->region->bo->virtual
-			 + map_y * s8z24_stride
-			 + map_x * 4;
-
-      for (uint32_t pix_y = 0; pix_y < map_h; ++pix_y) {
-	 for (uint32_t pix_x = 0; pix_x < map_w; ++pix_x) {
-	    ptrdiff_t s8_offset = intel_offset_S8(s8_irb->mt->region->pitch,
-						  map_x + pix_x,
-						  map_y + pix_y);
-	    ptrdiff_t s8z24_offset = pix_y * s8z24_stride
-				   + pix_x * 4
-				   + 3;
-	    s8_map[s8_offset] = s8z24_map[s8z24_offset];
-	 }
-      }
-
-      intel_region_unmap(intel, s8_irb->mt->region);
-   }
-
-   drm_intel_gem_bo_unmap_gtt(s8z24_irb->mt->region->bo);
 }
 
 /**
@@ -461,10 +327,8 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
-   if (rb->Format == MESA_FORMAT_S8) {
+   if (rb->Format == MESA_FORMAT_S8 || irb->wrapped_depth) {
       intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
-   } else if (irb->wrapped_depth) {
-      intel_unmap_renderbuffer_separate_s8z24(ctx, rb);
    } else if (irb->map_bo) {
       /* Paired with intel_map_renderbuffer_blit(). */
       drm_intel_bo_unmap(irb->map_bo);
