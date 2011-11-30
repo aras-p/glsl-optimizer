@@ -398,4 +398,8 @@ lp_build_context_init(struct lp_build_context *bld,
                       struct lp_type type);
 
 
+unsigned
+lp_build_count_instructions(LLVMValueRef function);
+
+
 #endif /* !LP_BLD_TYPE_H */

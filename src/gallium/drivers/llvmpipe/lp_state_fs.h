@@ -88,6 +88,9 @@ struct lp_fragment_shader_variant
 
    lp_jit_frag_func jit_function[2];
 
+   /* Total number of LLVM instructions generated */
+   unsigned nr_instrs;
+
    struct lp_fs_variant_list_item list_item_global, list_item_local;
    struct lp_fragment_shader *shader;
 

@@ -73,6 +73,12 @@
 #define LP_MAX_SHADER_VARIANTS 1024
 
 /**
+ * Max number of instructions (for all fragment shaders combined per context)
+ * that will be kept around.
+ */
+#define LP_MAX_SHADER_INSTRUCTIONS (128*1024)
+
+/**
  * Max number of setup variants that will be kept around.
  *
  * These are determined by the combination of the fragment shader

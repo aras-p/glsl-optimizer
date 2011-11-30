@@ -411,3 +411,28 @@ lp_build_context_init(struct lp_build_context *bld,
    bld->zero = LLVMConstNull(bld->vec_type);
    bld->one = lp_build_one(gallivm, type);
 }
+
+
+/**
+ * Count the number of instructions in a function.
+ */
+unsigned
+lp_build_count_instructions(LLVMValueRef function)
+{
+   unsigned num_instrs = 0;
+   LLVMBasicBlockRef block;
+
+   block = LLVMGetFirstBasicBlock(function);
+   while (block) {
+      LLVMValueRef instr;
+      instr = LLVMGetFirstInstruction(block);
+      while (instr) {
+         ++num_instrs;
+
+         instr = LLVMGetNextInstruction(instr);
+      }
+      block = LLVMGetNextBasicBlock(block);
+   }
+
+   return num_instrs;
+}

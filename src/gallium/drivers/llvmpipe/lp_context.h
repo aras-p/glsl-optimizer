@@ -129,6 +129,7 @@ struct llvmpipe_context {
    /** List of all fragment shader variants */
    struct lp_fs_variant_list_item fs_variants_list;
    unsigned nr_fs_variants;
+   unsigned nr_fs_instrs;
 
    /** JIT code generation */
    struct gallivm_state *gallivm;
