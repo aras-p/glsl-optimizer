@@ -119,8 +119,10 @@ intel_miptree_create_internal(struct intel_context *intel,
    brw_miptree_layout(intel, mt);
 #endif
 
-   if (intel->has_separate_stencil &&
-       _mesa_is_depthstencil_format(_mesa_get_format_base_format(format))) {
+   if (_mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
+       (intel->must_use_separate_stencil ||
+	(intel->has_separate_stencil &&
+	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,

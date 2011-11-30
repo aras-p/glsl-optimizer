@@ -214,8 +214,16 @@ static void brw_invalidate_state( struct intel_context *intel, GLuint new_state 
 static bool brw_is_hiz_depth_format(struct intel_context *intel,
                                     gl_format format)
 {
-   /* In the future, this will support Z_FLOAT32. */
-   return intel->has_hiz && (format == MESA_FORMAT_X8_Z24);
+   if (!intel->has_hiz)
+      return false;
+
+   switch (format) {
+   case MESA_FORMAT_X8_Z24:
+   case MESA_FORMAT_S8_Z24:
+      return true;
+   default:
+      return false;
+   }
 }
 
 void brwInitVtbl( struct brw_context *brw )
