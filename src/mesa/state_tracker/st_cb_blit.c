@@ -178,7 +178,8 @@ st_BlitFramebuffer(struct gl_context *ctx,
       st->pipe->render_condition(st->pipe, NULL, 0);
    }
 
-   if (readFB->Visual.sampleBuffers > drawFB->Visual.sampleBuffers) {
+   if (readFB->Visual.sampleBuffers > drawFB->Visual.sampleBuffers &&
+       readFB->Visual.samples > 1) {
       struct pipe_resolve_info info;
 
       if (dstX0 < dstX1) {
