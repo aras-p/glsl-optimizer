@@ -3361,14 +3361,9 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                                           internalFormat, width, height, depth,
                                           border, imageSize, &reason);
 
-   if (error) {
-      _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
-      return;
-   }
-
 #if FEATURE_ES
    /* XXX this is kind of a hack */
-   if (dims == 2) {
+   if (!error && dims == 2) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:
       case GL_PALETTE4_RGBA8_OES:
@@ -3422,7 +3417,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
       struct gl_texture_image *texImage;
 
       if (error) {
-         _mesa_error(ctx, error, "glCompressedTexImage%uD", dims);
+         _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
          return;
       }
 
