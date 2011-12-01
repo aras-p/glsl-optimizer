@@ -5139,7 +5139,7 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx, GLenum target,
 
    if (dstMap) {
       bytesPerRow = srcRowStride;  /* bytes per row of blocks */
-      rows = height / bh;  /* rows in blocks */
+      rows = (height + bh - 1) / bh;  /* rows in blocks */
 
       /* copy rows of blocks */
       for (i = 0; i < rows; i++) {
