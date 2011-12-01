@@ -37,6 +37,7 @@
 #define _DRI_COMMON_H
 
 #include <GL/internal/dri_interface.h>
+#include <stdbool.h>
 
 typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
@@ -65,5 +66,10 @@ extern void InfoMessageF(const char *f, ...);
 extern void ErrorMessageF(const char *f, ...);
 
 extern void *driOpenDriver(const char *driverName);
+
+extern bool
+dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
+			 unsigned *major_ver, unsigned *minor_ver,
+			 uint32_t *flags, unsigned *api, unsigned *error);
 
 #endif /* _DRI_COMMON_H */
