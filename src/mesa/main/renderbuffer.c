@@ -1015,7 +1015,7 @@ get_values_r8(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 }
 
 /**********************************************************************
- * Functions for MESA_FORMAT_RG88.
+ * Functions for MESA_FORMAT_GR88.
  */
 static void
 get_row_rg88(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
@@ -1422,7 +1422,7 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->PutMonoValues = put_mono_values_generic;
       break;
 
-   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_GR88:
       rb->DataType = GL_UNSIGNED_BYTE;
       rb->GetValues = get_values_rg88;
       rb->GetRow = get_row_rg88;

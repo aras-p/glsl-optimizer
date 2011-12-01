@@ -1007,10 +1007,10 @@ static void store_texel_argb2101010(struct swrast_texture_image *texImage,
 #endif
 
 
-/* MESA_FORMAT_RG88 **********************************************************/
+/* MESA_FORMAT_GR88 **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rg88 texture, return 4 GLchans */
-static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
+static void FETCH(f_gr88)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -1021,7 +1021,7 @@ static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
 }
 
 #if DIM == 3
-static void store_texel_rg88(struct swrast_texture_image *texImage,
+static void store_texel_gr88(struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, const void *texel)
 {
    const GLchan *rgba = (const GLchan *) texel;

@@ -375,8 +375,8 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 1
    },
    {
-      MESA_FORMAT_RG88,
-      "MESA_FORMAT_RG88",
+      MESA_FORMAT_GR88,
+      "MESA_FORMAT_GR88",
       GL_RG,
       GL_UNSIGNED_NORMALIZED,
       8, 8, 0, 0,
@@ -1789,7 +1789,7 @@ _mesa_get_uncompressed_format(gl_format format)
    case MESA_FORMAT_SIGNED_RED_RGTC1:
       return MESA_FORMAT_SIGNED_R8;
    case MESA_FORMAT_RG_RGTC2:
-      return MESA_FORMAT_RG88;
+      return MESA_FORMAT_GR88;
    case MESA_FORMAT_SIGNED_RG_RGTC2:
       return MESA_FORMAT_SIGNED_RG88_REV;
    case MESA_FORMAT_L_LATC1:
@@ -2076,7 +2076,7 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_AL88:
    case MESA_FORMAT_AL88_REV:
-   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_GR88:
    case MESA_FORMAT_RG88_REV:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
@@ -2611,7 +2611,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
 
    case MESA_FORMAT_R8:
       return format == GL_RED && type == GL_UNSIGNED_BYTE;
-   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_GR88:
       return format == GL_RG && type == GL_UNSIGNED_BYTE && littleEndian;
    case MESA_FORMAT_RG88_REV:
       return GL_FALSE;

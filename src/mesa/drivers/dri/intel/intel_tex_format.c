@@ -14,7 +14,7 @@ intel_mesa_format_to_rb_datatype(gl_format format)
    case MESA_FORMAT_XRGB8888:
    case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_R8:
-   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_GR88:
    case MESA_FORMAT_A8:
    case MESA_FORMAT_I8:
    case MESA_FORMAT_L8:

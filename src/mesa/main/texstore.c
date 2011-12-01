@@ -2142,7 +2142,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_AL88 ||
           dstFormat == MESA_FORMAT_AL88_REV ||
-          dstFormat == MESA_FORMAT_RG88 ||
+          dstFormat == MESA_FORMAT_GR88 ||
           dstFormat == MESA_FORMAT_RG88_REV);
    ASSERT(texelBytes == 2);
 
@@ -2151,7 +2151,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
        ((dstFormat == MESA_FORMAT_AL88 &&
          baseInternalFormat == GL_LUMINANCE_ALPHA &&
          srcFormat == GL_LUMINANCE_ALPHA) ||
-        (dstFormat == MESA_FORMAT_RG88 &&
+        (dstFormat == MESA_FORMAT_GR88 &&
          baseInternalFormat == srcFormat)) &&
        srcType == GL_UNSIGNED_BYTE &&
        littleEndian) {
@@ -2183,7 +2183,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
 	 }
       }
       else {
-	 if ((littleEndian && dstFormat == MESA_FORMAT_RG88) ||
+	 if ((littleEndian && dstFormat == MESA_FORMAT_GR88) ||
 	     (!littleEndian && dstFormat == MESA_FORMAT_RG88_REV)) {
 	    dstmap[0] = 0;
 	    dstmap[1] = 1;
@@ -2225,7 +2225,7 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
          for (row = 0; row < srcHeight; row++) {
             GLushort *dstUS = (GLushort *) dstRow;
             if (dstFormat == MESA_FORMAT_AL88 ||
-		dstFormat == MESA_FORMAT_RG88) {
+		dstFormat == MESA_FORMAT_GR88) {
                for (col = 0; col < srcWidth; col++) {
                   /* src[0] is luminance (or R), src[1] is alpha (or G) */
                  dstUS[col] = PACK_COLOR_88( src[1],
@@ -4375,7 +4375,7 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_YCBCR] = _mesa_texstore_ycbcr;
       table[MESA_FORMAT_YCBCR_REV] = _mesa_texstore_ycbcr;
       table[MESA_FORMAT_R8] = _mesa_texstore_unorm8;
-      table[MESA_FORMAT_RG88] = _mesa_texstore_unorm88;
+      table[MESA_FORMAT_GR88] = _mesa_texstore_unorm88;
       table[MESA_FORMAT_RG88_REV] = _mesa_texstore_unorm88;
       table[MESA_FORMAT_R16] = _mesa_texstore_unorm16;
       table[MESA_FORMAT_RG1616] = _mesa_texstore_unorm1616;

@@ -287,7 +287,7 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_R8_UNORM;
    case MESA_FORMAT_R16:
       return PIPE_FORMAT_R16_UNORM;
-   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_GR88:
       return PIPE_FORMAT_R8G8_UNORM;
    case MESA_FORMAT_RG1616:
       return PIPE_FORMAT_R16G16_UNORM;
@@ -619,7 +619,7 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_R16_UNORM:
       return MESA_FORMAT_R16;
    case PIPE_FORMAT_R8G8_UNORM:
-      return MESA_FORMAT_RG88;
+      return MESA_FORMAT_GR88;
    case PIPE_FORMAT_R16G16_UNORM:
       return MESA_FORMAT_RG1616;
 
