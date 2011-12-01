@@ -1068,7 +1068,7 @@ _mesa_PopAttrib(void)
                      p[0] = l->QuadraticAttenuation;
                      _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION, p);
                   }
-                }
+               }
                /* light model */
                _mesa_LightModelfv(GL_LIGHT_MODEL_AMBIENT,
                                   light->Model.Ambient);
