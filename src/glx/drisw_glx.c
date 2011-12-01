@@ -414,6 +414,87 @@ drisw_create_context(struct glx_screen *base,
    return &pcp->base;
 }
 
+static struct glx_context *
+drisw_create_context_attribs(struct glx_screen *base,
+			     struct glx_config *config_base,
+			     struct glx_context *shareList,
+			     unsigned num_attribs,
+			     const uint32_t *attribs,
+			     unsigned *error)
+{
+   struct drisw_context *pcp, *pcp_shared;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
+   struct drisw_screen *psc = (struct drisw_screen *) base;
+   __DRIcontext *shared = NULL;
+
+   uint32_t minor_ver = 1;
+   uint32_t major_ver = 0;
+   uint32_t flags = 0;
+   unsigned api;
+   uint32_t ctx_attribs[2 * 4];
+   unsigned num_ctx_attribs = 0;
+
+   if (!psc->base.driScreen)
+      return NULL;
+
+   if (psc->swrast->base.version < 3)
+      return NULL;
+
+   /* Remap the GLX tokens to DRI2 tokens.
+    */
+   if (!dri2_convert_glx_attribs(num_attribs, attribs,
+				 &major_ver, &minor_ver, &flags, &api,
+				 error))
+      return NULL;
+
+   if (shareList) {
+      pcp_shared = (struct drisw_context *) shareList;
+      shared = pcp_shared->driContext;
+   }
+
+   pcp = Xmalloc(sizeof *pcp);
+   if (pcp == NULL)
+      return NULL;
+
+   memset(pcp, 0, sizeof *pcp);
+   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
+      Xfree(pcp);
+      return NULL;
+   }
+
+   ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_MAJOR_VERSION;
+   ctx_attribs[num_ctx_attribs++] = major_ver;
+   ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
+   ctx_attribs[num_ctx_attribs++] = minor_ver;
+
+   if (flags != 0) {
+      ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
+
+      /* The current __DRI_CTX_FLAG_* values are identical to the
+       * GLX_CONTEXT_*_BIT values.
+       */
+      ctx_attribs[num_ctx_attribs++] = flags;
+   }
+
+   pcp->driContext =
+      (*psc->swrast->createContextAttribs) (psc->driScreen,
+					    api,
+					    config->driConfig,
+					    shared,
+					    num_ctx_attribs / 2,
+					    ctx_attribs,
+					    error,
+					    pcp);
+   if (pcp->driContext == NULL) {
+      Xfree(pcp);
+      return NULL;
+   }
+
+   pcp->base.vtable = &drisw_context_vtable;
+
+   return &pcp->base;
+}
+
 static void
 driswDestroyDrawable(__GLXDRIdrawable * pdraw)
 {
@@ -503,7 +584,8 @@ driOpenSwrast(void)
 }
 
 static const struct glx_screen_vtable drisw_screen_vtable = {
-   drisw_create_context
+   drisw_create_context,
+   drisw_create_context_attribs
 };
 
 static void
@@ -512,6 +594,11 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
    int i;
 
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
+
+   if (psc->swrast->base.version >= 3) {
+      __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context");
+      __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context_profile");
+   }
 
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
    for (i = 0; extensions[i]; i++) {
