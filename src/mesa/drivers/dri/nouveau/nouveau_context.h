@@ -98,7 +98,8 @@ struct nouveau_context {
 GLboolean
 nouveau_context_create(gl_api api,
 		       const struct gl_config *visual, __DRIcontext *dri_ctx,
-		       void *share_ctx);
+		       unsigned major_version, unsigned minor_version,
+		       uint32_t flags, unsigned *error, void *share_ctx);
 
 GLboolean
 nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,

@@ -702,7 +702,12 @@ InitExtensionsES2(struct gl_context *ctx)
 static GLboolean
 dri_create_context(gl_api api,
 		   const struct gl_config * visual,
-		   __DRIcontext * cPriv, void *sharedContextPrivate)
+		   __DRIcontext * cPriv,
+		   unsigned major_version,
+		   unsigned minor_version,
+		   uint32_t flags,
+		   unsigned *error,
+		   void *sharedContextPrivate)
 {
     struct dri_context *ctx = NULL;
     struct dri_context *share = (struct dri_context *)sharedContextPrivate;
@@ -712,9 +717,22 @@ dri_create_context(gl_api api,
 
     TRACE;
 
+    /* Flag filtering is handled in dri2CreateContextAttribs.
+     */
+    (void) flags;
+
+    if (api == API_OPENGL
+	&& (major_version > 2
+	    || (major_version == 2 && minor_version > 1))) {
+       *error = __DRI_CTX_ERROR_BAD_VERSION;
+       goto context_fail;
+    }
+
     ctx = CALLOC_STRUCT(dri_context);
-    if (ctx == NULL)
+    if (ctx == NULL) {
+	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	goto context_fail;
+    }
 
     cPriv->driverPrivate = ctx;
     ctx->cPriv = cPriv;
@@ -731,6 +749,7 @@ dri_create_context(gl_api api,
 
     /* basic context setup */
     if (!_mesa_initialize_context(mesaCtx, api, visual, sharedCtx, &functions, (void *) cPriv)) {
+	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	goto context_fail;
     }
 
@@ -772,6 +791,7 @@ dri_create_context(gl_api api,
         break;
     }
 
+    *error = __DRI_CTX_ERROR_SUCCESS;
     return GL_TRUE;
 
 context_fail:

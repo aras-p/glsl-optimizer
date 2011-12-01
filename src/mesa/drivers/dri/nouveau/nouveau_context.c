@@ -34,6 +34,7 @@
 #include "main/framebuffer.h"
 #include "main/light.h"
 #include "main/state.h"
+#include "main/version.h"
 #include "drivers/common/meta.h"
 #include "drivers/common/driverfuncs.h"
 #include "swrast/swrast.h"
@@ -55,6 +56,10 @@ nouveau_channel_flush_notify(struct nouveau_channel *chan)
 GLboolean
 nouveau_context_create(gl_api api,
 		       const struct gl_config *visual, __DRIcontext *dri_ctx,
+		       unsigned major_version,
+		       unsigned minor_version,
+		       uint32_t flags,
+		       unsigned *error,
 		       void *share_ctx)
 {
 	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;
@@ -62,14 +67,31 @@ nouveau_context_create(gl_api api,
 	struct nouveau_context *nctx;
 	struct gl_context *ctx;
 
+	/* API and flag filtering is handled in dri2CreateContextAttribs.
+	 */
+	(void) api;
+	(void) flags;
+
 	ctx = screen->driver->context_create(screen, visual, share_ctx);
-	if (!ctx)
+	if (!ctx) {
+		*error = __DRI_CTX_ERROR_NO_MEMORY;
 		return GL_FALSE;
+	}
 
 	nctx = to_nouveau_context(ctx);
 	nctx->dri_context = dri_ctx;
 	dri_ctx->driverPrivate = ctx;
 
+	_mesa_compute_version(ctx);
+	if (ctx->VersionMajor < major_version
+	    || (ctx->VersionMajor == major_version
+		&& ctx->VersionMinor < minor_version)) {
+	   nouveau_context_destroy(dri_ctx);
+	   *error = __DRI_CTX_ERROR_BAD_VERSION;
+	   return GL_FALSE;
+	}
+
+	*error = __DRI_CTX_ERROR_SUCCESS;
 	return GL_TRUE;
 }
 

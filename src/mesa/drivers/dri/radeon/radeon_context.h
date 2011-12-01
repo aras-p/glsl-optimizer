@@ -450,6 +450,10 @@ struct r100_context {
 extern GLboolean r100CreateContext( gl_api api,
 				    const struct gl_config *glVisual,
 				    __DRIcontext *driContextPriv,
+				    unsigned major_version,
+				    unsigned minor_version,
+				    uint32_t flags,
+				    unsigned *error,
 				    void *sharedContextPrivate);
 
 

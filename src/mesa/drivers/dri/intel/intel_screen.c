@@ -516,27 +516,52 @@ static GLboolean
 intelCreateContext(gl_api api,
 		   const struct gl_config * mesaVis,
                    __DRIcontext * driContextPriv,
+		   unsigned major_version,
+		   unsigned minor_version,
+		   uint32_t flags,
+		   unsigned *error,
                    void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
+   bool success;
 
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       if (!IS_965(intelScreen->deviceID)) {
-	 return i915CreateContext(api, mesaVis, driContextPriv,
-				  sharedContextPrivate);
+	 success = i915CreateContext(api, mesaVis, driContextPriv,
+				     sharedContextPrivate);
       }
    } else {
       intelScreen->no_vbo = true;
-      return i830CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
+      success = i830CreateContext(mesaVis, driContextPriv,
+				  sharedContextPrivate);
    }
 #else
    if (IS_965(intelScreen->deviceID))
-      return brwCreateContext(api, mesaVis,
-			      driContextPriv, sharedContextPrivate);
+      success = brwCreateContext(api, mesaVis,
+			      driContextPriv,
+			      sharedContextPrivate);
 #endif
-   fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
+
+   if (success) {
+      struct gl_context *ctx =
+	 (struct gl_context *) driContextPriv->driverPrivate;
+
+      _mesa_compute_version(ctx);
+      if (ctx->VersionMajor > major_version
+	  || (ctx->VersionMajor == major_version
+	      && ctx->VersionMinor >= minor_version)) {
+	 *error = __DRI_CTX_ERROR_BAD_VERSION;
+	 return true;
+      }
+
+      intelDestroyContext(driContextPriv);
+   } else {
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
+      fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
+   }
+
    return false;
 }
 

@@ -635,6 +635,10 @@ extern void r200DestroyContext( __DRIcontext *driContextPriv );
 extern GLboolean r200CreateContext( gl_api api,
 				    const struct gl_config *glVisual,
 				    __DRIcontext *driContextPriv,
+				    unsigned major_version,
+				    unsigned minor_version,
+				    uint32_t flags,
+				    unsigned *error,
 				    void *sharedContextPrivate);
 extern GLboolean r200MakeCurrent( __DRIcontext *driContextPriv,
 				  __DRIdrawable *driDrawPriv,

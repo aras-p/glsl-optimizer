@@ -194,6 +194,8 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	    /* We can't create a context that satisfies the requirements of an
 	     * attribute that we don't understand.  Return failure.
 	     */
+	    assert(!"Should not get here.");
+	    *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	    return NULL;
 	}
     }
@@ -209,9 +211,14 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
      *
      * In Mesa, a debug context is the same as a regular context.
      */
-    if (major_version >= 3) {
-	if ((flags & ~__DRI_CTX_FLAG_DEBUG) != 0)
-	    return NULL;
+    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0) {
+	*error = __DRI_CTX_ERROR_BAD_FLAG;
+	return NULL;
+    }
+
+    if ((flags & ~__DRI_CTX_FLAG_DEBUG) != 0) {
+	*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+	return NULL;
     }
 
     context = malloc(sizeof *context);
@@ -226,7 +233,9 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
     context->driDrawablePriv = NULL;
     context->driReadablePriv = NULL;
 
-    if (!driDriverAPI.CreateContext(mesa_api, modes, context, shareCtx) ) {
+    if (!driDriverAPI.CreateContext(mesa_api, modes, context,
+				    major_version, minor_version,
+				    flags, error, shareCtx) ) {
         free(context);
         return NULL;
     }
@@ -521,10 +530,7 @@ const __DRIcoreExtension driCoreExtension = {
 
 /** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
-    /* Force the version to 2 because the underlying drivers don't (can't!)
-     * support the extra requirements of CreateContextAttribs.
-     */
-    { __DRI_DRI2, 2 },
+    { __DRI_DRI2, __DRI_DRI2_VERSION },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
