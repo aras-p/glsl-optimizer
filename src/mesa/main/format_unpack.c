@@ -275,10 +275,11 @@ unpack_ARGB1555_REV(const void *src, GLfloat dst[][4], GLuint n)
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = UBYTE_TO_FLOAT( ((s[i] >>  7) & 0xf8) | ((s[i] >> 12) & 0x7) );
-      dst[i][GCOMP] = UBYTE_TO_FLOAT( ((s[i] >>  2) & 0xf8) | ((s[i] >>  7) & 0x7) );
-      dst[i][BCOMP] = UBYTE_TO_FLOAT( ((s[i] <<  3) & 0xf8) | ((s[i] >>  2) & 0x7) );
-      dst[i][ACOMP] = UBYTE_TO_FLOAT( ((s[i] >> 15) & 0x01) * 255 );
+      GLushort tmp = (s[i] << 8) | (s[i] >> 8); /* byteswap */
+      dst[i][RCOMP] = ((tmp >> 10) & 0x1f) * (1.0F / 31.0F);
+      dst[i][GCOMP] = ((tmp >>  5) & 0x1f) * (1.0F / 31.0F);
+      dst[i][BCOMP] = ((tmp >>  0) & 0x1f) * (1.0F / 31.0F);
+      dst[i][ACOMP] = ((tmp >> 15) & 0x01) * 1.0F;
    }
 }
 
