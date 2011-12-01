@@ -129,17 +129,32 @@ __bitset_ffs(const BITSET_WORD *x, int n)
 
 /* bit range operations
  */
-#define BITSET64_TEST_RANGE(x, b, e) \
+#define BITSET64_TEST_SUBRANGE(x, b, e) \
    (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
    ((x)[BITSET64_BITWORD(b)] & BITSET64_RANGE(b, e)) : \
    (assert (!"BITSET64_TEST_RANGE: bit range crosses word boundary"), 0))
-#define BITSET64_SET_RANGE(x, b, e) \
+#define BITSET64_TEST_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   (BITSET64_TEST_SUBRANGE(x, b, e)) : \
+   (BITSET64_TEST_SUBRANGE(x, b, BITSET64_WORDBITS - 1) | \
+    BITSET64_TEST_SUBRANGE(x, BITSET64_WORDBITS, e)))
+#define BITSET64_SET_SUBRANGE(x, b, e) \
    (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
    ((x)[BITSET64_BITWORD(b)] |= BITSET64_RANGE(b, e)) : \
    (assert (!"BITSET64_SET_RANGE: bit range crosses word boundary"), 0))
-#define BITSET64_CLEAR_RANGE(x, b, e) \
+#define BITSET64_SET_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   (BITSET64_SET_SUBRANGE(x, b, e)) : \
+   (BITSET64_SET_SUBRANGE(x, b, BITSET64_WORDBITS - 1) | \
+    BITSET64_SET_SUBRANGE(x, BITSET64_WORDBITS, e)))
+#define BITSET64_CLEAR_SUBRANGE(x, b, e) \
    (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
    ((x)[BITSET64_BITWORD(b)] &= ~BITSET64_RANGE(b, e)) : \
    (assert (!"BITSET64_CLEAR_RANGE: bit range crosses word boundary"), 0))
+#define BITSET64_CLEAR_RANGE(x, b, e) \
+   (BITSET64_BITWORD(b) == BITSET64_BITWORD(e) ? \
+   (BITSET64_CLEAR_SUBRANGE(x, b, e)) : \
+   (BITSET64_CLEAR_SUBRANGE(x, b, BITSET64_WORDBITS - 1) | \
+    BITSET64_CLEAR_SUBRANGE(x, BITSET64_WORDBITS, e)))
 
 #endif
