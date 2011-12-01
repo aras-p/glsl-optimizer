@@ -369,11 +369,11 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_gr88,
    },
    {
-      MESA_FORMAT_RG88_REV,
-      fetch_texel_1d_f_rg88_rev,
-      fetch_texel_2d_f_rg88_rev,
-      fetch_texel_3d_f_rg88_rev,
-      store_texel_rg88_rev,
+      MESA_FORMAT_RG88,
+      fetch_texel_1d_f_rg88,
+      fetch_texel_2d_f_rg88,
+      fetch_texel_3d_f_rg88,
+      store_texel_rg88,
    },
    {
       MESA_FORMAT_R16,

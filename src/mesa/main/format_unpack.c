@@ -517,7 +517,7 @@ unpack_GR88(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RG88_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_RG88(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -1467,7 +1467,7 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_YCBCR_REV] = unpack_YCBCR_REV;
       table[MESA_FORMAT_R8] = unpack_R8;
       table[MESA_FORMAT_GR88] = unpack_GR88;
-      table[MESA_FORMAT_RG88_REV] = unpack_RG88_REV;
+      table[MESA_FORMAT_RG88] = unpack_RG88;
       table[MESA_FORMAT_R16] = unpack_R16;
       table[MESA_FORMAT_RG1616] = unpack_RG1616;
       table[MESA_FORMAT_RG1616_REV] = unpack_RG1616_REV;
