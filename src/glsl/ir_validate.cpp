@@ -585,6 +585,7 @@ dump_ir:
    printf("callee:\n");
    callee->print();
    abort();
+   return visit_stop;
 }
 
 void
