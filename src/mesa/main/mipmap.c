@@ -2048,6 +2048,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
       if (!dstImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+         free(temp_dst);
          return;
       }
 
