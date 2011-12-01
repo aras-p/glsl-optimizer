@@ -57,10 +57,10 @@ enum st_api_type {
  */
 enum st_profile_type
 {
-   ST_PROFILE_DEFAULT,
-   ST_PROFILE_OPENGL_CORE,
-   ST_PROFILE_OPENGL_ES1,
-   ST_PROFILE_OPENGL_ES2
+   ST_PROFILE_DEFAULT,			/**< OpenGL compatibility profile */
+   ST_PROFILE_OPENGL_CORE,		/**< OpenGL 3.2+ core profile */
+   ST_PROFILE_OPENGL_ES1,		/**< OpenGL ES 1.x */
+   ST_PROFILE_OPENGL_ES2		/**< OpenGL ES 2.0 */
 };
 
 /* for profile_mask in st_api */
@@ -71,12 +71,13 @@ enum st_profile_type
 
 /**
  * New context flags for GL 3.0 and beyond.
+ *
+ * Profile information (core vs. compatibilty for OpenGL 3.2+) is communicated
+ * through the \c st_profile_type, not through flags.
  */
-#define ST_CONTEXT_FLAG_CORE_PROFILE        (1 << 0)
-#define ST_CONTEXT_FLAG_COMPATIBLE_PROFILE  (1 << 1)
-#define ST_CONTEXT_FLAG_FORWARD_COMPATIBLE  (1 << 2)
-#define ST_CONTEXT_FLAG_DEBUG               (1 << 3)
-#define ST_CONTEXT_FLAG_ROBUST_ACCESS       (1 << 4)
+#define ST_CONTEXT_FLAG_DEBUG               (1 << 0)
+#define ST_CONTEXT_FLAG_FORWARD_COMPATIBLE  (1 << 1)
+#define ST_CONTEXT_FLAG_ROBUST_ACCESS       (1 << 2)
 
 /**
  * Used in st_context_iface->teximage.

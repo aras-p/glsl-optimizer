@@ -169,7 +169,6 @@ stw_create_context_attribs(
    ctx->iPixelFormat = iPixelFormat;
 
    memset(&attribs, 0, sizeof(attribs));
-   attribs.profile = ST_PROFILE_DEFAULT;
    attribs.visual = pfi->stvis;
    attribs.major = majorVersion;
    attribs.minor = minorVersion;
@@ -177,10 +176,23 @@ stw_create_context_attribs(
       attribs.flags |= ST_CONTEXT_FLAG_FORWARD_COMPATIBLE;
    if (contextFlags & WGL_CONTEXT_DEBUG_BIT_ARB)
       attribs.flags |= ST_CONTEXT_FLAG_DEBUG;
-   if (profileMask & WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
-      attribs.flags |= ST_CONTEXT_FLAG_CORE_PROFILE;
-   if (profileMask & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
-      attribs.flags |= ST_CONTEXT_FLAG_COMPATIBLE_PROFILE;
+
+   /* There are no profiles before OpenGL 3.2.  The
+    * WGL_ARB_create_context_profile spec says:
+    *
+    *     "If the requested OpenGL version is less than 3.2,
+    *     WGL_CONTEXT_PROFILE_MASK_ARB is ignored and the functionality of the
+    *     context is determined solely by the requested version."
+    *
+    * The spec also says:
+    *
+    *     "The default value for WGL_CONTEXT_PROFILE_MASK_ARB is
+    *     WGL_CONTEXT_CORE_PROFILE_BIT_ARB."
+    */
+   attribs.profile = ST_PROFILE_DEFAULT;
+   if ((major > 3 || (major == 3 && minor >= 2))
+       && ((profileMask & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0))
+      attribs.profile = ST_PROFILE_OPENGL_CORE;
 
    ctx->st = stw_dev->stapi->create_context(stw_dev->stapi,
          stw_dev->smapi, &attribs, shareCtx ? shareCtx->st : NULL);
