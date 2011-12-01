@@ -288,8 +288,12 @@ const __DRIcoreExtension driCoreExtension = {
 };
 
 const __DRIswrastExtension driSWRastExtension = {
-    { __DRI_SWRAST, __DRI_SWRAST_VERSION },
+    /* Force the version to 2 because the underlying driver don't (can't!)
+     * support the extra requirements of CreateContextAttribs.
+     */
+    { __DRI_SWRAST, 2 },
     driCreateNewScreen,
     driCreateNewDrawable,
-    driCreateNewContextForAPI
+    driCreateNewContextForAPI,
+    NULL
 };

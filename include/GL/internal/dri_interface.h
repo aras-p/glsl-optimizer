@@ -679,7 +679,7 @@ struct __DRIlegacyExtensionRec {
  * conjunction with the core extension.
  */
 #define __DRI_SWRAST "DRI_SWRast"
-#define __DRI_SWRAST_VERSION 2
+#define __DRI_SWRAST_VERSION 3
 
 struct __DRIswrastExtensionRec {
     __DRIextension base;
@@ -699,6 +699,22 @@ struct __DRIswrastExtensionRec {
                                            const __DRIconfig *config,
                                            __DRIcontext *shared,
                                            void *data);
+
+   /**
+    * Create a context for a particular API with a set of attributes
+    *
+    * \since version 3
+    *
+    * \sa __DRIdri2ExtensionRec::createContextAttribs
+    */
+   __DRIcontext *(*createContextAttribs)(__DRIscreen *screen,
+					 int api,
+					 const __DRIconfig *config,
+					 __DRIcontext *shared,
+					 unsigned num_attribs,
+					 const uint32_t *attribs,
+					 unsigned *error,
+					 void *loaderPrivate);
 };
 
 /**
@@ -859,6 +875,8 @@ struct __DRIdri2ExtensionRec {
     * Create a context for a particular API with a set of attributes
     *
     * \since version 3
+    *
+    * \sa __DRIswrastExtensionRec::createContextAttribs
     */
    __DRIcontext *(*createContextAttribs)(__DRIscreen *screen,
 					 int api,
