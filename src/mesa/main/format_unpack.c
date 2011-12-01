@@ -1195,8 +1195,8 @@ unpack_SIGNED_GR1616(const void *src, GLfloat dst[][4], GLuint n)
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = SHORT_TO_FLOAT_TEX( s[i] & 0xffff );
-      dst[i][GCOMP] = SHORT_TO_FLOAT_TEX( s[i] >> 16 );
+      dst[i][RCOMP] = SHORT_TO_FLOAT_TEX( (GLshort) (s[i] & 0xffff) );
+      dst[i][GCOMP] = SHORT_TO_FLOAT_TEX( (GLshort) (s[i] >> 16) );
       dst[i][BCOMP] = 0.0F;
       dst[i][ACOMP] = 1.0F;
    }
