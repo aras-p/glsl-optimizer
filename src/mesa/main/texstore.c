@@ -4834,7 +4834,7 @@ _mesa_store_texsubimage1d(struct gl_context *ctx, GLenum target, GLint level,
    if (!pixels)
       return;
 
-   /* Map dest texture buffer (write to whole region) */
+   /* Map dest texture buffer */
    ctx->Driver.MapTextureImage(ctx, texImage, 0,
                                xoffset, 0, width, 1,
                                rwMode,
@@ -4887,7 +4887,7 @@ _mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
    if (!pixels)
       return;
 
-   /* Map dest texture buffer (write to whole region) */
+   /* Map dest texture buffer */
    ctx->Driver.MapTextureImage(ctx, texImage, 0,
                                xoffset, yoffset, width, height,
                                rwMode,
@@ -5150,7 +5150,7 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx, GLenum target,
    srcRowStride = _mesa_format_row_stride(texFormat, width);
    src = (const GLubyte *) data;
 
-   /* Map dest texture buffer (write to whole region) */
+   /* Map dest texture buffer */
    ctx->Driver.MapTextureImage(ctx, texImage, 0,
                                xoffset, yoffset, width, height,
                                GL_MAP_WRITE_BIT,
