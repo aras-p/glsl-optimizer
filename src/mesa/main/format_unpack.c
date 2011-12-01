@@ -522,8 +522,8 @@ unpack_RG88_REV(const void *src, GLfloat dst[][4], GLuint n)
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = UBYTE_TO_FLOAT( s[i] & 0xff );
-      dst[i][GCOMP] = UBYTE_TO_FLOAT( s[i] >> 8 );
+      dst[i][RCOMP] = UBYTE_TO_FLOAT( s[i] >> 8 );
+      dst[i][GCOMP] = UBYTE_TO_FLOAT( s[i] & 0xff );
       dst[i][BCOMP] = 0.0;
       dst[i][ACOMP] = 1.0;
    }

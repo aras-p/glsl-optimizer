@@ -1040,8 +1040,8 @@ static void FETCH(f_rg88_rev)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_FLOAT( s & 0xff );
-   texel[GCOMP] = UBYTE_TO_FLOAT( s >> 8 );
+   texel[RCOMP] = UBYTE_TO_FLOAT( s >> 8 );
+   texel[GCOMP] = UBYTE_TO_FLOAT( s & 0xff );
    texel[BCOMP] = 0.0;
    texel[ACOMP] = 1.0;
 }
@@ -1052,7 +1052,7 @@ static void store_texel_rg88_rev(struct swrast_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_88(rgba[GCOMP], rgba[RCOMP]);
+   *dst = PACK_COLOR_88(rgba[RCOMP], rgba[GCOMP]);
 }
 #endif
 
