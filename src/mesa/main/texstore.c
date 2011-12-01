@@ -5116,8 +5116,8 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx, GLenum target,
    _mesa_get_format_block_size(texFormat, &bw, &bh);
 
    /* these should have been caught sooner */
-   ASSERT((width % bw) == 0 || width == 2 || width == 1);
-   ASSERT((height % bh) == 0 || height == 2 || height == 1);
+   ASSERT((width % bw) == 0 || width < bw);
+   ASSERT((height % bh) == 0 || height < bh);
    ASSERT((xoffset % bw) == 0);
    ASSERT((yoffset % bh) == 0);
 
