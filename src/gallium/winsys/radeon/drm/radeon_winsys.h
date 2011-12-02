@@ -103,6 +103,9 @@ struct radeon_info {
     uint32_t r600_num_tile_pipes;
     uint32_t r600_backend_map;
     boolean r600_backend_map_valid;
+    boolean r600_virtual_address;
+    uint32_t r600_va_start;
+    uint32_t r600_ib_vm_max_size;
 };
 
 enum radeon_feature_id {
@@ -249,6 +252,14 @@ struct radeon_winsys {
     boolean (*buffer_get_handle)(struct pb_buffer *buf,
                                  unsigned stride,
                                  struct winsys_handle *whandle);
+
+    /**
+     * Return the virtual address of a buffer.
+     *
+     * \param buf       A winsys buffer object
+     * \return          virtual address
+     */
+    uint64_t (*buffer_get_virtual_address)(struct pb_buffer *buf);
 
     /**************************************************************************
      * Command submission.

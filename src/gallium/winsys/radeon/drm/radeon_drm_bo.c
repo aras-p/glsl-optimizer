@@ -30,6 +30,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
+#include "util/u_double_list.h"
 #include "os/os_thread.h"
 #include "os/os_mman.h"
 
@@ -39,6 +40,11 @@
 #include <xf86drm.h>
 #include <errno.h>
 
+/*
+ * this are copy from radeon_drm, once an updated libdrm is released
+ * we should bump configure.ac requirement for it and remove the following
+ * field
+ */
 #define RADEON_BO_FLAGS_MACRO_TILE  1
 #define RADEON_BO_FLAGS_MICRO_TILE  2
 #define RADEON_BO_FLAGS_MICRO_TILE_SQUARE 0x20
@@ -57,6 +63,33 @@ struct drm_radeon_gem_wait {
 
 #endif
 
+#ifndef RADEON_VA_MAP
+
+#define RADEON_VA_MAP               1
+#define RADEON_VA_UNMAP             2
+
+#define RADEON_VA_RESULT_OK         0
+#define RADEON_VA_RESULT_ERROR      1
+#define RADEON_VA_RESULT_VA_EXIST   2
+
+#define RADEON_VM_PAGE_VALID        (1 << 0)
+#define RADEON_VM_PAGE_READABLE     (1 << 1)
+#define RADEON_VM_PAGE_WRITEABLE    (1 << 2)
+#define RADEON_VM_PAGE_SYSTEM       (1 << 3)
+#define RADEON_VM_PAGE_SNOOPED      (1 << 4)
+
+struct drm_radeon_gem_va {
+    uint32_t    handle;
+    uint32_t    operation;
+    uint32_t    vm_id;
+    uint32_t    flags;
+    uint64_t    offset;
+};
+
+#define DRM_RADEON_GEM_VA   0x2b
+#endif
+
+
 
 extern const struct pb_vtbl radeon_bo_vtbl;
 
@@ -66,6 +99,12 @@ static INLINE struct radeon_bo *radeon_bo(struct pb_buffer *bo)
     assert(bo->vtbl == &radeon_bo_vtbl);
     return (struct radeon_bo *)bo;
 }
+
+struct radeon_bo_va_hole {
+    struct list_head list;
+    uint64_t         offset;
+    uint64_t         size;
+};
 
 struct radeon_bomgr {
     /* Base class. */
@@ -77,6 +116,12 @@ struct radeon_bomgr {
     /* List of buffer handles and its mutex. */
     struct util_hash_table *bo_handles;
     pipe_mutex bo_handles_mutex;
+    pipe_mutex bo_va_mutex;
+
+    /* is virtual address supported */
+    bool va;
+    unsigned va_offset;
+    struct list_head va_holes;
 };
 
 static INLINE struct radeon_bomgr *radeon_bomgr(struct pb_manager *mgr)
@@ -151,9 +196,94 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
     }
 }
 
+static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size)
+{
+    struct radeon_bo_va_hole *hole, *n;
+    uint64_t offset = 0;
+
+    pipe_mutex_lock(mgr->bo_va_mutex);
+    /* first look for a hole */
+    LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
+        if (hole->size == size) {
+            offset = hole->offset;
+            list_del(&hole->list);
+            FREE(hole);
+            pipe_mutex_unlock(mgr->bo_va_mutex);
+            return offset;
+        }
+        if (hole->size > size) {
+            offset = hole->offset;
+            hole->size -= size;
+            hole->offset += size;
+            pipe_mutex_unlock(mgr->bo_va_mutex);
+            return offset;
+        }
+    }
+
+    offset = mgr->va_offset;
+    mgr->va_offset += size;
+    pipe_mutex_unlock(mgr->bo_va_mutex);
+    return offset;
+}
+
+static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
+{
+    pipe_mutex_lock(mgr->bo_va_mutex);
+    if (va >= mgr->va_offset) {
+        if (va > mgr->va_offset) {
+            struct radeon_bo_va_hole *hole;
+            hole = CALLOC_STRUCT(radeon_bo_va_hole);
+            if (hole) {
+                hole->size = va - mgr->va_offset;
+                hole->offset = mgr->va_offset;
+                list_add(&hole->list, &mgr->va_holes);
+            }
+        }
+        mgr->va_offset = va + size;
+    } else {
+        struct radeon_bo_va_hole *hole, *n;
+        uint64_t stmp, etmp;
+
+        /* free all holes that fall into the range
+         * NOTE that we might lose virtual address space
+         */
+        LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
+            stmp = hole->offset;
+            etmp = stmp + hole->size;
+            if (va >= stmp && va < etmp) {
+                list_del(&hole->list);
+                FREE(hole);
+            }
+        }
+    }
+    pipe_mutex_unlock(mgr->bo_va_mutex);
+}
+
+static void radeon_bomgr_free_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
+{
+    pipe_mutex_lock(mgr->bo_va_mutex);
+    if ((va + size) == mgr->va_offset) {
+        mgr->va_offset = va;
+    } else {
+        struct radeon_bo_va_hole *hole;
+
+        /* FIXME on allocation failure we just lose virtual address space
+         * maybe print a warning
+         */
+        hole = CALLOC_STRUCT(radeon_bo_va_hole);
+        if (hole) {
+            hole->size = size;
+            hole->offset = va;
+            list_add(&hole->list, &mgr->va_holes);
+        }
+    }
+    pipe_mutex_unlock(mgr->bo_va_mutex);
+}
+
 static void radeon_bo_destroy(struct pb_buffer *_buf)
 {
     struct radeon_bo *bo = radeon_bo(_buf);
+    struct radeon_bomgr *mgr = bo->mgr;
     struct drm_gem_close args;
 
     memset(&args, 0, sizeof(args));
@@ -167,6 +297,10 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
 
     if (bo->ptr)
         os_munmap(bo->ptr, bo->base.size);
+
+    if (mgr->va) {
+        radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+    }
 
     /* Close object. */
     args.handle = bo->handle;
@@ -343,6 +477,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     struct radeon_bo *bo;
     struct drm_radeon_gem_create args;
     struct radeon_bo_desc *rdesc = (struct radeon_bo_desc*)desc;
+    int r;
 
     memset(&args, 0, sizeof(args));
 
@@ -375,7 +510,37 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->mgr = mgr;
     bo->rws = mgr->rws;
     bo->handle = args.handle;
+    bo->va = 0;
     pipe_mutex_init(bo->map_mutex);
+
+    if (mgr->va) {
+        struct drm_radeon_gem_va va;
+
+        bo->va_size = align(size,  4096);
+        bo->va = radeon_bomgr_find_va(mgr, bo->va_size);
+
+        va.handle = bo->handle;
+        va.vm_id = 0;
+        va.operation = RADEON_VA_MAP;
+        va.flags = RADEON_VM_PAGE_READABLE |
+                   RADEON_VM_PAGE_WRITEABLE |
+                   RADEON_VM_PAGE_SNOOPED;
+        va.offset = bo->va;
+        r = drmCommandWriteRead(rws->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
+        if (r && va.operation == RADEON_VA_RESULT_ERROR) {
+            fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
+            fprintf(stderr, "radeon:    size      : %d bytes\n", size);
+            fprintf(stderr, "radeon:    alignment : %d bytes\n", desc->alignment);
+            fprintf(stderr, "radeon:    domains   : %d\n", args.initial_domain);
+            radeon_bo_destroy(&bo->base);
+            return NULL;
+        }
+        if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
+            radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+            bo->va = va.offset;
+            radeon_bomgr_force_va(mgr, bo->va, bo->va_size);
+        }
+    }
 
     return &bo->base;
 }
@@ -407,6 +572,7 @@ static void radeon_bomgr_destroy(struct pb_manager *_mgr)
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
     util_hash_table_destroy(mgr->bo_handles);
     pipe_mutex_destroy(mgr->bo_handles_mutex);
+    pipe_mutex_destroy(mgr->bo_va_mutex);
     FREE(mgr);
 }
 
@@ -438,6 +604,12 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
     mgr->rws = rws;
     mgr->bo_handles = util_hash_table_create(handle_hash, handle_compare);
     pipe_mutex_init(mgr->bo_handles_mutex);
+    pipe_mutex_init(mgr->bo_va_mutex);
+
+    mgr->va = rws->info.r600_virtual_address;
+    mgr->va_offset = rws->info.r600_va_start;
+    list_inithead(&mgr->va_holes);
+
     return &mgr->base;
 }
 
@@ -560,6 +732,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     struct radeon_bo *bo;
     struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
     struct drm_gem_open open_arg = {};
+    int r;
 
     memset(&open_arg, 0, sizeof(open_arg));
 
@@ -603,6 +776,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;
+    bo->va = 0;
     pipe_mutex_init(bo->map_mutex);
 
     util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)whandle->handle, bo);
@@ -612,6 +786,33 @@ done:
 
     if (stride)
         *stride = whandle->stride;
+
+    if (mgr->va) {
+        struct drm_radeon_gem_va va;
+
+        bo->va_size = ((bo->base.size + 4095) & ~4095);
+        bo->va = radeon_bomgr_find_va(mgr, bo->va_size);
+
+        va.handle = bo->handle;
+        va.operation = RADEON_VA_MAP;
+        va.vm_id = 0;
+        va.offset = bo->va;
+        va.flags = RADEON_VM_PAGE_READABLE |
+                   RADEON_VM_PAGE_WRITEABLE |
+                   RADEON_VM_PAGE_SNOOPED;
+        va.offset = bo->va;
+        r = drmCommandWriteRead(ws->fd, DRM_RADEON_GEM_VA, &va, sizeof(va));
+        if (r && va.operation == RADEON_VA_RESULT_ERROR) {
+            fprintf(stderr, "radeon: Failed to assign virtual address space\n");
+            radeon_bo_destroy(&bo->base);
+            return NULL;
+        }
+        if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
+            radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+            bo->va = va.offset;
+            radeon_bomgr_force_va(mgr, bo->va, bo->va_size);
+        }
+    }
 
     return (struct pb_buffer*)bo;
 
@@ -649,6 +850,13 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
     return TRUE;
 }
 
+static uint64_t radeon_winsys_bo_va(struct pb_buffer *buffer)
+{
+    struct radeon_bo *bo = get_radeon_bo(buffer);
+
+    return bo->va;
+}
+
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
 {
     ws->base.buffer_get_cs_handle = radeon_drm_get_cs_handle;
@@ -661,4 +869,5 @@ void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
     ws->base.buffer_create = radeon_winsys_bo_create;
     ws->base.buffer_from_handle = radeon_winsys_bo_from_handle;
     ws->base.buffer_get_handle = radeon_winsys_bo_get_handle;
+    ws->base.buffer_get_virtual_address = radeon_winsys_bo_va;
 }

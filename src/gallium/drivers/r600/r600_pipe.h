@@ -243,7 +243,8 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
 void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 					 struct r600_pipe_resource_state *rstate);
-void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
+void evergreen_pipe_mod_buffer_resource(struct pipe_context *ctx,
+					struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
 					unsigned offset, unsigned stride,
 					enum radeon_bo_usage usage);

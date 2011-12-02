@@ -1105,8 +1105,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	rstate->val[1] = (S_030004_TEX_HEIGHT(height - 1) |
 			  S_030004_TEX_DEPTH(depth - 1) |
 			  S_030004_ARRAY_MODE(array_mode));
-	rstate->val[2] = tmp->offset[0] >> 8;
-	rstate->val[3] = tmp->offset[1] >> 8;
+	rstate->val[2] = (tmp->offset[0] + r600_resource_va(ctx->screen, texture)) >> 8;
+	rstate->val[3] = (tmp->offset[1] + r600_resource_va(ctx->screen, texture)) >> 8;
 	rstate->val[4] = (word4 |
 			  S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 			  S_030010_ENDIAN_SWAP(endian) |
@@ -1343,7 +1343,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned pitch, slice;
 	unsigned color_info;
 	unsigned format, swap, ntype, endian;
-	unsigned offset;
+	uint64_t offset;
 	unsigned tile_type;
 	const struct util_format_description *desc;
 	int i;
@@ -1443,10 +1443,13 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	} else /* workaround for linear buffers */
 		tile_type = 1;
 
+	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
+	offset >>= 8;
+
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
-				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
+				offset, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
 				0x0, 0xFFFFFFFF, NULL, 0);
@@ -1475,7 +1478,8 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 {
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
-	unsigned level, first_layer, pitch, slice, format, offset, array_mode;
+	unsigned level, first_layer, pitch, slice, format, array_mode;
+	uint64_t offset;
 
 	if (state->zsbuf == NULL)
 		return;
@@ -1494,20 +1498,26 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(rtex->real_format);
 
+	offset += r600_resource_va(rctx->context.screen, surf->base.texture);
+	offset >>= 8;
+
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
-				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
+				offset, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
-				offset >> 8, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
+				offset, 0xFFFFFFFF, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL, 0);
 
 	if (rtex->stencil) {
-		uint32_t stencil_offset =
+		uint64_t stencil_offset =
 			r600_texture_get_offset(rtex->stencil, level, first_layer);
 
+		stencil_offset += r600_resource_va(rctx->context.screen, (void*)rtex->stencil);
+		stencil_offset >>= 8;
+
 		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					stencil_offset >> 8, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
+					stencil_offset, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					stencil_offset >> 8, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
+					stencil_offset, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
 					1, 0xFFFFFFFF, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 	} else {
@@ -2383,7 +2393,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	r600_pipe_state_add_reg(rstate,
 				R_028840_SQ_PGM_START_PS,
-				0, 0xFFFFFFFF, shader->bo, RADEON_USAGE_READ);
+				r600_resource_va(ctx->screen, (void *)shader->bo) >> 8,
+				0xFFFFFFFF, shader->bo, RADEON_USAGE_READ);
 	r600_pipe_state_add_reg(rstate,
 				R_028844_SQ_PGM_RESOURCES_PS,
 				S_028844_NUM_GPRS(rshader->bc.ngpr) |
@@ -2457,7 +2468,8 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 				0x0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 			R_02885C_SQ_PGM_START_VS,
-			0, 0xFFFFFFFF, shader->bo, RADEON_USAGE_READ);
+			r600_resource_va(ctx->screen, (void *)shader->bo) >> 8,
+			0xFFFFFFFF, shader->bo, RADEON_USAGE_READ);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
@@ -2474,7 +2486,7 @@ void evergreen_fetch_shader(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0288A8_SQ_PGM_RESOURCES_FS,
 				0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_START_FS,
-				0,
+				r600_resource_va(ctx->screen, (void *)ve->fetch_shader) >> 8,
 				0xFFFFFFFF, ve->fetch_shader, RADEON_USAGE_READ);
 }
 
@@ -2521,15 +2533,20 @@ void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
 }
 
 
-void evergreen_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
+void evergreen_pipe_mod_buffer_resource(struct pipe_context *ctx,
+					struct r600_pipe_resource_state *rstate,
 					struct r600_resource *rbuffer,
 					unsigned offset, unsigned stride,
 					enum radeon_bo_usage usage)
 {
+	uint64_t va;
+
+	va = r600_resource_va(ctx->screen, (void *)rbuffer);
 	rstate->bo[0] = rbuffer;
 	rstate->bo_usage[0] = usage;
-	rstate->val[0] = offset;
+	rstate->val[0] = (offset + va) & 0xFFFFFFFFUL;
 	rstate->val[1] = rbuffer->buf->size - offset - 1;
 	rstate->val[2] = S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
-	                 S_030008_STRIDE(stride);
+			 S_030008_STRIDE(stride) |
+			 (((va + offset) >> 32UL) & 0xFF);
 }

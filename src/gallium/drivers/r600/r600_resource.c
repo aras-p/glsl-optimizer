@@ -62,3 +62,14 @@ void r600_init_context_resource_functions(struct r600_pipe_context *r600)
 	r600->context.transfer_destroy = u_transfer_destroy_vtbl;
 	r600->context.transfer_inline_write = u_transfer_inline_write_vtbl;
 }
+
+uint64_t r600_resource_va(struct pipe_screen *screen, struct pipe_resource *resource)
+{
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
+	struct r600_resource *rresource = (struct r600_resource*)resource;
+
+	if (rresource->buf) {
+		return rscreen->ws->buffer_get_virtual_address(rresource->buf);
+	}
+	return 0;
+}

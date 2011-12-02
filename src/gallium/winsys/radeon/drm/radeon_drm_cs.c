@@ -71,18 +71,32 @@
 #include <stdint.h>
 #include <xf86drm.h>
 
+/*
+ * this are copy from radeon_drm, once an updated libdrm is released
+ * we should bump configure.ac requirement for it and remove the following
+ * field
+ */
 #ifndef RADEON_CHUNK_ID_FLAGS
-#define RADEON_CHUNK_ID_FLAGS	0x03
+#define RADEON_CHUNK_ID_FLAGS       0x03
 
 /* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
 #define RADEON_CS_KEEP_TILING_FLAGS 0x01
 #endif
 
+#ifndef RADEON_CS_USE_VM
+#define RADEON_CS_USE_VM            0x02
+/* The second dword of RADEON_CHUNK_ID_FLAGS is a uint32 that sets the ring type */
+#define RADEON_CS_RING_GFX          0
+#define RADEON_CS_RING_COMPUTE      1
+#endif
+
+
 #define RELOC_DWORDS (sizeof(struct drm_radeon_cs_reloc) / sizeof(uint32_t))
 
-static boolean radeon_init_cs_context(struct radeon_cs_context *csc, int fd)
+static boolean radeon_init_cs_context(struct radeon_cs_context *csc,
+                                      struct radeon_drm_winsys *ws)
 {
-    csc->fd = fd;
+    csc->fd = ws->fd;
     csc->nrelocs = 512;
     csc->relocs_bo = (struct radeon_bo**)
                      CALLOC(1, csc->nrelocs * sizeof(struct radeon_bo*));
@@ -157,11 +171,11 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
 
     cs->ws = ws;
 
-    if (!radeon_init_cs_context(&cs->csc1, cs->ws->fd)) {
+    if (!radeon_init_cs_context(&cs->csc1, cs->ws)) {
         FREE(cs);
         return NULL;
     }
-    if (!radeon_init_cs_context(&cs->csc2, cs->ws->fd)) {
+    if (!radeon_init_cs_context(&cs->csc2, cs->ws)) {
         radeon_destroy_cs_context(&cs->csc1);
         FREE(cs);
         return NULL;
@@ -440,11 +454,15 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
             p_atomic_inc(&cs->cst->relocs_bo[i]->num_active_ioctls);
         }
 
+        cs->cst->flags = 0;
+        cs->cst->cs.num_chunks = 2;
         if (flags & RADEON_FLUSH_KEEP_TILING_FLAGS) {
+            cs->cst->flags |= RADEON_CS_KEEP_TILING_FLAGS;
             cs->cst->cs.num_chunks = 3;
-            cs->cst->flags = RADEON_CS_KEEP_TILING_FLAGS;
-        } else {
-            cs->cst->cs.num_chunks = 2;
+        }
+        if (cs->ws->info.r600_virtual_address) {
+            cs->cst->cs.num_chunks = 3;
+            cs->cst->flags |= RADEON_CS_USE_VM;
         }
 
         if (cs->thread &&

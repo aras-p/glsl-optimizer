@@ -59,6 +59,8 @@ struct radeon_bo {
 
     uint32_t handle;
     uint32_t name;
+    uint64_t va;
+    uint64_t va_size;
 
     /* how many command streams is this bo referenced in? */
     int num_cs_references;

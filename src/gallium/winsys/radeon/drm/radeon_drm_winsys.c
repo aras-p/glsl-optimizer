@@ -41,6 +41,11 @@
 #include <xf86drm.h>
 #include <stdio.h>
 
+/*
+ * this are copy from radeon_drm, once an updated libdrm is released
+ * we should bump configure.ac requirement for it and remove the following
+ * field
+ */
 #ifndef RADEON_INFO_TILING_CONFIG
 #define RADEON_INFO_TILING_CONFIG 6
 #endif
@@ -68,6 +73,14 @@
 #ifndef RADEON_INFO_BACKEND_MAP
 #define RADEON_INFO_BACKEND_MAP 0xd
 #endif
+
+#ifndef RADEON_INFO_VA_START
+/* virtual address start, va < start are reserved by the kernel */
+#define RADEON_INFO_VA_START        0x0e
+/* maximum size of ib using the virtual memory cs */
+#define RADEON_INFO_IB_VM_MAX_SIZE  0x0f
+#endif
+
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -264,6 +277,16 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
             if (radeon_get_drm_value(ws->fd, RADEON_INFO_BACKEND_MAP, NULL,
                                       &ws->info.r600_backend_map))
                 ws->info.r600_backend_map_valid = TRUE;
+        }
+        ws->info.r600_virtual_address = FALSE;
+        if (ws->info.drm_minor >= 13) {
+            ws->info.r600_virtual_address = TRUE;
+            if (!radeon_get_drm_value(ws->fd, RADEON_INFO_VA_START, NULL,
+                                      &ws->info.r600_va_start))
+                ws->info.r600_virtual_address = FALSE;
+            if (!radeon_get_drm_value(ws->fd, RADEON_INFO_IB_VM_MAX_SIZE, NULL,
+                                      &ws->info.r600_ib_vm_max_size))
+                ws->info.r600_virtual_address = FALSE;
         }
     }
 

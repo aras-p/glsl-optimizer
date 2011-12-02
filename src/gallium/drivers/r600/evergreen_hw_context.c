@@ -1135,6 +1135,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
 	uint32_t *pm4;
+	uint64_t va;
 
 	if (draw->indices) {
 		ndwords = 11;
@@ -1174,9 +1175,11 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
 	pm4[3] = draw->vgt_num_instances;
 	if (draw->indices) {
-	        pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset;
-		pm4[6] = 0;
+		va = r600_resource_va(&ctx->screen->screen, (void*)draw->indices);
+		va += draw->indices_bo_offset;
+		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
+		pm4[5] = va;
+		pm4[6] = (va >> 32UL) & 0xFF;
 		pm4[7] = draw->vgt_num_indices;
 		pm4[8] = draw->vgt_draw_initiator;
 		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);

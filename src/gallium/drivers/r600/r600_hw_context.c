@@ -978,6 +978,8 @@ void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *bo)
 {
+	uint64_t va = 0;
+
 	/* if bo has already been flushed */
 	if (!(~bo->cs_buf->last_flush & flush_flags)) {
 		bo->cs_buf->last_flush &= flush_mask;
@@ -1007,10 +1009,11 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 		}
 	} else {
+		va = r600_resource_va(&ctx->screen->screen, (void *)bo);
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
 		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->size + 255) >> 8;
-		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		ctx->pm4[ctx->pm4_cdwords++] = va >> 8;
 		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
@@ -1590,14 +1593,20 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
+	uint64_t va;
+
 	r600_need_cs_space(ctx, 10, FALSE);
+
+	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
+	va = va + (offset << 2);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-	ctx->pm4[ctx->pm4_cdwords++] = offset << 2;             /* ADDRESS_LO */
-	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);   /* DATA_SEL | INT_EN | ADDRESS_HI */
+	ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
+	/* DATA_SEL | INT_EN | ADDRESS_HI */
+	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24) | ((va >> 32UL) & 0xFF);
 	ctx->pm4[ctx->pm4_cdwords++] = value;                   /* DATA_LO */
 	ctx->pm4[ctx->pm4_cdwords++] = 0;                       /* DATA_HI */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
@@ -1707,6 +1716,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned new_results_end, i;
 	u32 *results;
+	uint64_t va;
 
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
@@ -1751,13 +1761,16 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	}
 
 	/* emit begin query */
+	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
+	va += query->results_end;
+
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = va;
+		ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFF;
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
@@ -1771,8 +1784,8 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_TIME_ELAPSED:
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
-		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
+		ctx->pm4[ctx->pm4_cdwords++] = va;
+		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29) | ((va >> 32UL) & 0xFF);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		break;
@@ -1787,14 +1800,18 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
+	uint64_t va;
+
+	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
 	/* emit end query */
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		va += query->results_end + 8;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + 8;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = va;
+		ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFF;
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
@@ -1806,10 +1823,11 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
+		va += query->results_end + query->result_size/2;
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + query->result_size/2;
-		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
+		ctx->pm4[ctx->pm4_cdwords++] = va;
+		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29) | ((va >> 32UL) & 0xFF);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		break;
@@ -1826,6 +1844,8 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait)
 {
+	uint64_t va;
+
 	if (operation == PREDICATION_OP_CLEAR) {
 		r600_need_cs_space(ctx, 3, FALSE);
 
@@ -1845,12 +1865,13 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
+		va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
 
 		/* emit predicate packets for all data blocks */
 		while (results_base != query->results_end) {
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = results_base;
-			ctx->pm4[ctx->pm4_cdwords++] = op;
+			ctx->pm4[ctx->pm4_cdwords++] = (va + results_base) & 0xFFFFFFFFUL;
+			ctx->pm4[ctx->pm4_cdwords++] = op | (((va + results_base) >> 32UL) & 0xFF);
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 			ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer,
 									     RADEON_USAGE_READ);
