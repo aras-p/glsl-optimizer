@@ -534,6 +534,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		return;
 	}
 
+	if (!rctx->ps_shader || !rctx->vs_shader)
+		return;
+
 	r600_update_derived_state(rctx);
 
 	u_vbuf_draw_begin(rctx->vbuf_mgr, dinfo);
