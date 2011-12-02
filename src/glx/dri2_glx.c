@@ -923,8 +923,14 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
    __glXEnableDirectExtension(&psc->base, "INTEL_swap_event");
 
    if (psc->dri2->base.version >= 3) {
+      const unsigned mask = psc->dri2->getAPIMask(psc->driScreen);
+
       __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context");
       __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context_profile");
+
+      if ((mask & (1 << __DRI_API_GLES2)) != 0)
+	 __glXEnableDirectExtension(&psc->base,
+				    "GLX_EXT_create_context_es2_profile");
    }
 
    for (i = 0; extensions[i]; i++) {

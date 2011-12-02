@@ -488,6 +488,9 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       case GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB:
 	 *api = __DRI_API_OPENGL;
 	 break;
+      case GLX_CONTEXT_ES2_PROFILE_BIT_EXT:
+	 *api = __DRI_API_GLES2;
+	 break;
       default:
 	 *error = __DRI_CTX_ERROR_BAD_API;
 	 return false;
@@ -514,6 +517,19 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 
    if (*major_ver >= 3 && render_type == GLX_COLOR_INDEX_TYPE) {
       *error = __DRI_CTX_ERROR_BAD_FLAG;
+      return false;
+   }
+
+   /* The GLX_EXT_create_context_es2_profile spec says:
+    *
+    *     "... If the version requested is 2.0, and the
+    *     GLX_CONTEXT_ES2_PROFILE_BIT_EXT bit is set in the
+    *     GLX_CONTEXT_PROFILE_MASK_ARB attribute (see below), then the context
+    *     returned will implement OpenGL ES 2.0. This is the only way in which
+    *     an implementation may request an OpenGL ES 2.0 context."
+    */
+   if (*api == __DRI_API_GLES2 && (*major_ver != 2 || *minor_ver != 0)) {
+      *error = __DRI_CTX_ERROR_BAD_API;
       return false;
    }
 

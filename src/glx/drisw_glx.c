@@ -598,6 +598,11 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
    if (psc->swrast->base.version >= 3) {
       __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context");
       __glXEnableDirectExtension(&psc->base, "GLX_ARB_create_context_profile");
+
+      /* DRISW version >= 2 implies support for OpenGL ES 2.0.
+       */
+      __glXEnableDirectExtension(&psc->base,
+				 "GLX_EXT_create_context_es2_profile");
    }
 
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
