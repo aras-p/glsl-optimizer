@@ -191,7 +191,7 @@ struct asm_parser_state {
     * multiple ATTRIB statements bind illegal combinations of vertex
     * attributes.
     */
-   unsigned InputsBound;
+   GLbitfield64 InputsBound;
 
    enum {
       invalid_mode = 0,

@@ -1110,7 +1110,7 @@ ATTRIB_statement: ATTRIB IDENTIFIER '=' attribBinding
 	      YYERROR;
 	   } else {
 	      s->attrib_binding = $4;
-	      state->InputsBound |= (1U << s->attrib_binding);
+	      state->InputsBound |= BITFIELD64_BIT(s->attrib_binding);
 
 	      if (!validate_inputs(& @4, state)) {
 		 YYERROR;
@@ -2403,9 +2403,9 @@ set_src_reg_swz(struct asm_src_register *r, gl_register_file file, GLint index,
 int
 validate_inputs(struct YYLTYPE *locp, struct asm_parser_state *state)
 {
-   const int inputs = state->prog->InputsRead | state->InputsBound;
+   const GLbitfield64 inputs = state->prog->InputsRead | state->InputsBound;
 
-   if (((inputs & 0x0ffff) & (inputs >> 16)) != 0) {
+   if (((inputs & VERT_BIT_FF_ALL) & (inputs >> VERT_ATTRIB_GENERIC0)) != 0) {
       yyerror(locp, state, "illegal use of generic attribute and name attribute");
       return 0;
    }
