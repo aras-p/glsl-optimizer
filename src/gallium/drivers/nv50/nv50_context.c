@@ -109,7 +109,6 @@ nv50_destroy(struct pipe_context *pipe)
 struct pipe_context *
 nv50_create(struct pipe_screen *pscreen, void *priv)
 {
-   struct pipe_winsys *pipe_winsys = pscreen->winsys;
    struct nv50_screen *screen = nv50_screen(pscreen);
    struct nv50_context *nv50;
    struct pipe_context *pipe;
@@ -124,7 +123,6 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    nv50->base.copy_data = nv50_m2mf_copy_linear;
    nv50->base.push_data = nv50_sifc_linear_u8;
 
-   pipe->winsys = pipe_winsys;
    pipe->screen = pscreen;
    pipe->priv = priv;
 

@@ -4,7 +4,6 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
-#include "nouveau_drm_winsys.h"
 #include "nouveau_drm_public.h"
 
 #include "nouveau_drmif.h"
@@ -14,24 +13,11 @@
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
 
-static void
-nouveau_drm_destroy_winsys(struct pipe_winsys *s)
-{
-	struct nouveau_winsys *nv_winsys = nouveau_winsys(s);
-	struct nouveau_screen *nv_screen= nouveau_screen(nv_winsys->pscreen);
-	if (nv_screen)
-		nouveau_device_close(&nv_screen->device);
-	FREE(nv_winsys);
-}
-
 struct pipe_screen *
 nouveau_drm_screen_create(int fd)
 {
-	struct nouveau_winsys *nvws;
-	struct pipe_winsys *ws;
 	struct nouveau_device *dev = NULL;
-	struct pipe_screen *(*init)(struct pipe_winsys *,
-				    struct nouveau_device *);
+	struct pipe_screen *(*init)(struct nouveau_device *);
 	int ret;
 
 	ret = nouveau_device_open_existing(&dev, 0, fd, 0);
@@ -60,19 +46,5 @@ nouveau_drm_screen_create(int fd)
 		return NULL;
 	}
 
-	nvws = CALLOC_STRUCT(nouveau_winsys);
-	if (!nvws) {
-		nouveau_device_close(&dev);
-		return NULL;
-	}
-	ws = &nvws->base;
-	ws->destroy = nouveau_drm_destroy_winsys;
-
-	nvws->pscreen = init(ws, dev);
-	if (!nvws->pscreen) {
-		ws->destroy(ws);
-		return NULL;
-	}
-
-	return nvws->pscreen;
+	return init(dev);
 }

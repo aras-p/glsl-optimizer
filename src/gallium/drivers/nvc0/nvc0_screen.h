@@ -23,7 +23,6 @@ struct nvc0_blitctx;
 
 struct nvc0_screen {
    struct nouveau_screen base;
-   struct nouveau_winsys *nvws;
 
    struct nvc0_context *cur_ctx;
 

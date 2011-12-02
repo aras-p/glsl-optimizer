@@ -71,18 +71,13 @@ struct pipe_context *
 nvfx_create(struct pipe_screen *pscreen, void *priv)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct nvfx_context *nvfx;
-	struct nouveau_winsys *nvws = screen->nvws;
 
 	nvfx = CALLOC(1, sizeof(struct nvfx_context));
 	if (!nvfx)
 		return NULL;
 	nvfx->screen = screen;
 
-	nvfx->nvws = nvws;
-
-	nvfx->pipe.winsys = ws;
 	nvfx->pipe.screen = pscreen;
 	nvfx->pipe.priv = priv;
 	nvfx->pipe.destroy = nvfx_destroy;

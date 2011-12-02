@@ -367,7 +367,7 @@ nvc0_screen_fence_update(struct pipe_screen *pscreen)
    } while(0)
 
 struct pipe_screen *
-nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
+nvc0_screen_create(struct nouveau_device *dev)
 {
    struct nvc0_screen *screen;
    struct nouveau_channel *chan;
@@ -390,7 +390,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    chan = screen->base.channel;
    chan->user_private = screen;
 
-   pscreen->winsys = ws;
    pscreen->destroy = nvc0_screen_destroy;
    pscreen->context_create = nvc0_create;
    pscreen->is_format_supported = nvc0_screen_is_format_supported;

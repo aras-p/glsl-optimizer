@@ -22,6 +22,8 @@
 #include "state_tracker/drm_driver.h"
 #include "util/u_simple_screen.h"
 
+#include "nouveau_drmif.h"
+
 int nouveau_mesa_debug = 0;
 
 static const char *
@@ -234,14 +236,11 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 void
 nouveau_screen_fini(struct nouveau_screen *screen)
 {
-	struct pipe_winsys *ws = screen->base.winsys;
-
 	nouveau_mm_destroy(screen->mm_GART);
 	nouveau_mm_destroy(screen->mm_VRAM);
 
 	nouveau_channel_free(&screen->channel);
 
-	if (ws)
-		ws->destroy(ws);
+	nouveau_device_close(&screen->device);
 }
 

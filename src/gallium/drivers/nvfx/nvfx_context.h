@@ -138,7 +138,6 @@ struct nvfx_render_target {
 struct nvfx_context {
 	struct pipe_context pipe;
 
-	struct nouveau_winsys *nvws;
 	struct nvfx_screen *screen;
 
 	unsigned is_nv4x; /* either 0 or ~0 */

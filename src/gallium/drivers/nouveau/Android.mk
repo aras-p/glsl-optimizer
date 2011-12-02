@@ -29,7 +29,9 @@ include $(LOCAL_PATH)/Makefile.sources
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(C_SOURCES)
-LOCAL_C_INCLUDES := $(DRM_TOP)
+LOCAL_C_INCLUDES := $(DRM_TOP) \
+	$(DRM_TOP)/include/drm \
+	$(DRM_TOP)/nouveau
 
 LOCAL_MODULE := libmesa_pipe_nouveau
 

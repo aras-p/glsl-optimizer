@@ -10,7 +10,6 @@ struct pipe_screen;
 struct nvfx_screen {
 	struct nouveau_screen base;
 
-	struct nouveau_winsys *nvws;
 	struct nouveau_bo *fence;
 
 	struct nvfx_context *cur_ctx;

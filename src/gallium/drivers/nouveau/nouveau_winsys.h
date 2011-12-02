@@ -42,12 +42,12 @@ nouveau_screen_transfer_flags(unsigned pipe)
 }
 
 extern struct pipe_screen *
-nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
+nvfx_screen_create(struct nouveau_device *);
 
 extern struct pipe_screen *
-nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
+nv50_screen_create(struct nouveau_device *);
 
 extern struct pipe_screen *
-nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
+nvc0_screen_create(struct nouveau_device *);
 
 #endif

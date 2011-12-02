@@ -25,7 +25,6 @@ struct nv50_blitctx;
 
 struct nv50_screen {
    struct nouveau_screen base;
-   struct nouveau_winsys *nvws;
 
    struct nv50_context *cur_ctx;
 
