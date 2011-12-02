@@ -1413,10 +1413,10 @@ enum brw_wm_barycentric_interp_mode {
 #define CMD_MI_FLUSH                  0x0200
 
 
-/* Various values from the R0 vertex header:
- */
-#define R02_PRIM_END    0x1
-#define R02_PRIM_START  0x2
+/* Bitfields for the URB_WRITE message, DW2 of message header: */
+#define URB_WRITE_PRIM_END		0x1
+#define URB_WRITE_PRIM_START		0x2
+#define URB_WRITE_PRIM_TYPE_SHIFT	2
 
 #include "intel_chipset.h"
 

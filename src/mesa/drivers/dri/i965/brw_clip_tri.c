@@ -422,14 +422,17 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
       brw_MOV(p, get_addr_reg(vptr), brw_address(c->reg.inlist));
       brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
 
-      brw_clip_emit_vue(c, v0, 1, 0, ((_3DPRIM_TRIFAN << 2) | R02_PRIM_START));
+      brw_clip_emit_vue(c, v0, 1, 0,
+                        ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
+                         | URB_WRITE_PRIM_START));
       
       brw_ADD(p, get_addr_reg(vptr), get_addr_reg(vptr), brw_imm_uw(2));
       brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
 
       loop = brw_DO(p, BRW_EXECUTE_1);
       {
-	 brw_clip_emit_vue(c, v0, 1, 0, (_3DPRIM_TRIFAN << 2));
+	 brw_clip_emit_vue(c, v0, 1, 0,
+                           (_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT));
   
 	 brw_ADD(p, get_addr_reg(vptr), get_addr_reg(vptr), brw_imm_uw(2));
 	 brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
@@ -439,7 +442,9 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
       }
       brw_WHILE(p, loop);
 
-      brw_clip_emit_vue(c, v0, 0, 1, ((_3DPRIM_TRIFAN << 2) | R02_PRIM_END));
+      brw_clip_emit_vue(c, v0, 0, 1,
+                        ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
+                         | URB_WRITE_PRIM_END));
    }
    brw_ENDIF(p);
 }

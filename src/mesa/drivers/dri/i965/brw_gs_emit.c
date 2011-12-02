@@ -188,21 +188,29 @@ void brw_gs_quads( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
     */
    if (intel->needs_ff_sync)
       brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_START);
+   brw_gs_overwrite_header_dw2(
+      c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+          | URB_WRITE_PRIM_START));
    if (key->pv_first) {
       brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(c, _3DPRIM_POLYGON << 2);
+      brw_gs_overwrite_header_dw2(
+         c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
       brw_gs_emit_vue(c, c->reg.vertex[1], 0);
       brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_END);
+      brw_gs_overwrite_header_dw2(
+         c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+             | URB_WRITE_PRIM_END));
       brw_gs_emit_vue(c, c->reg.vertex[3], 1);
    }
    else {
       brw_gs_emit_vue(c, c->reg.vertex[3], 0);
-      brw_gs_overwrite_header_dw2(c, _3DPRIM_POLYGON << 2);
+      brw_gs_overwrite_header_dw2(
+         c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
       brw_gs_emit_vue(c, c->reg.vertex[0], 0);
       brw_gs_emit_vue(c, c->reg.vertex[1], 0);
-      brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_END);
+      brw_gs_overwrite_header_dw2(
+         c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+             | URB_WRITE_PRIM_END));
       brw_gs_emit_vue(c, c->reg.vertex[2], 1);
    }
 }
@@ -216,21 +224,29 @@ void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
    
    if (intel->needs_ff_sync)
       brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_START);
+   brw_gs_overwrite_header_dw2(
+      c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+          | URB_WRITE_PRIM_START));
    if (key->pv_first) {
       brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(c, _3DPRIM_POLYGON << 2);
+      brw_gs_overwrite_header_dw2(
+         c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
       brw_gs_emit_vue(c, c->reg.vertex[1], 0);
       brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_END);
+      brw_gs_overwrite_header_dw2(
+         c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+             | URB_WRITE_PRIM_END));
       brw_gs_emit_vue(c, c->reg.vertex[3], 1);
    }
    else {
       brw_gs_emit_vue(c, c->reg.vertex[2], 0);
-      brw_gs_overwrite_header_dw2(c, _3DPRIM_POLYGON << 2);
+      brw_gs_overwrite_header_dw2(
+         c, _3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT);
       brw_gs_emit_vue(c, c->reg.vertex[3], 0);
       brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-      brw_gs_overwrite_header_dw2(c, (_3DPRIM_POLYGON << 2) | R02_PRIM_END);
+      brw_gs_overwrite_header_dw2(
+         c, ((_3DPRIM_POLYGON << URB_WRITE_PRIM_TYPE_SHIFT)
+             | URB_WRITE_PRIM_END));
       brw_gs_emit_vue(c, c->reg.vertex[1], 1);
    }
 }
@@ -244,8 +260,12 @@ void brw_gs_lines( struct brw_gs_compile *c )
 
    if (intel->needs_ff_sync)
       brw_gs_ff_sync(c, 1);
-   brw_gs_overwrite_header_dw2(c, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_START);
+   brw_gs_overwrite_header_dw2(
+      c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
+          | URB_WRITE_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[0], 0);
-   brw_gs_overwrite_header_dw2(c, (_3DPRIM_LINESTRIP << 2) | R02_PRIM_END);
+   brw_gs_overwrite_header_dw2(
+      c, ((_3DPRIM_LINESTRIP << URB_WRITE_PRIM_TYPE_SHIFT)
+          | URB_WRITE_PRIM_END));
    brw_gs_emit_vue(c, c->reg.vertex[1], 1);
 }
