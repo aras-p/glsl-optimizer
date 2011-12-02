@@ -888,6 +888,11 @@ void emit_math1(struct brw_wm_compile *c,
 		      BRW_MATH_SATURATE_NONE);
    struct brw_reg src;
 
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code */
+
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
    if (intel->gen >= 6 && ((arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
 			    arg0[0].file != BRW_GENERAL_REGISTER_FILE) ||
 			   arg0[0].negate || arg0[0].abs)) {
@@ -902,11 +907,6 @@ void emit_math1(struct brw_wm_compile *c,
    } else {
       src = arg0[0];
    }
-
-   if (!(mask & WRITEMASK_XYZW))
-      return; /* Do not emit dead code */
-
-   assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
    /* Send two messages to perform all 16 operations:
     */
