@@ -134,6 +134,9 @@ struct pipe_mpeg12_picture_desc
    unsigned concealment_motion_vectors;
    unsigned intra_dc_precision;
    unsigned f_code[2][2];
+   unsigned top_field_first;
+   unsigned full_pel_forward_vector;
+   unsigned full_pel_backward_vector;
    unsigned num_slices;
 };
 
