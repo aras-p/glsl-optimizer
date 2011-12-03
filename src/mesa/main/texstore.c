@@ -954,8 +954,7 @@ memcpy_texture(struct gl_context *ctx,
          GLubyte *dstImage = dstSlices[dstZoffset + img]
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
-         ctx->Driver.TextureMemCpy(dstImage, srcImage,
-                                   bytesPerRow * srcHeight);
+         memcpy(dstImage, srcImage, bytesPerRow * srcHeight);
          srcImage += srcImageStride;
       }
    }
@@ -968,7 +967,7 @@ memcpy_texture(struct gl_context *ctx,
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            ctx->Driver.TextureMemCpy(dstRow, srcRow, bytesPerRow);
+            memcpy(dstRow, srcRow, bytesPerRow);
             dstRow += dstRowStride;
             srcRow += srcRowStride;
          }
