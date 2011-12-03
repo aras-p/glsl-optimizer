@@ -597,7 +597,7 @@ _swrast_validate_derived( struct gl_context *ctx )
 
 #define SWRAST_DEBUG 0
 
-/* Public entrypoints:  See also s_accum.c, s_bitmap.c, etc.
+/* Public entrypoints:  See also s_bitmap.c, etc.
  */
 void
 _swrast_Quad( struct gl_context *ctx,
@@ -754,10 +754,6 @@ _swrast_CreateContext( struct gl_context *ctx )
 
    ctx->Driver.MapTexture = _swrast_map_texture;
    ctx->Driver.UnmapTexture = _swrast_unmap_texture;
-
-   /* Optimized Accum buffer */
-   swrast->_IntegerAccumMode = GL_FALSE;
-   swrast->_IntegerAccumScaler = 0.0;
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       swrast->TextureSample[i] = NULL;

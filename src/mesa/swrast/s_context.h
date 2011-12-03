@@ -203,11 +203,6 @@ typedef struct
    /** Indicates how each attrib is to be interpolated (lines/tris) */
    GLenum _InterpMode[FRAG_ATTRIB_MAX]; /* GL_FLAT or GL_SMOOTH (for now) */
 
-   /* Accum buffer temporaries.
-    */
-   GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */
-   GLfloat _IntegerAccumScaler;	/**< Implicit scale factor */
-
    /* Working values:
     */
    GLuint StippleCounter;    /**< Line stipple counter */
