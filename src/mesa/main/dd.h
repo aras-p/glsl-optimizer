@@ -532,11 +532,6 @@ struct dd_function_table {
    void (*UnmapRenderbuffer)(struct gl_context *ctx,
 			     struct gl_renderbuffer *rb);
 
-   /**
-    * Called by glAreTextureResident().
-    */
-   GLboolean (*IsTextureResident)( struct gl_context *ctx,
-                                   struct gl_texture_object *t );
    /*@}*/
 
 

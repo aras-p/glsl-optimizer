@@ -1184,10 +1184,7 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
  *
  * \return GL_TRUE if all textures are resident and \p residences is left unchanged, 
  * 
- * \sa glAreTexturesResident().
- *
- * Looks up each texture in the hash and calls
- * dd_function_table::IsTextureResident.
+ * Note: we assume all textures are always resident
  */
 GLboolean GLAPIENTRY
 _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
@@ -1195,7 +1192,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLboolean allResident = GL_TRUE;
-   GLint i, j;
+   GLint i;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (n < 0) {
@@ -1206,6 +1203,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    if (!texName || !residences)
       return GL_FALSE;
 
+   /* We only do error checking on the texture names */
    for (i = 0; i < n; i++) {
       struct gl_texture_object *t;
       if (texName[i] == 0) {
@@ -1216,21 +1214,6 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
       if (!t) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
-      }
-      if (!ctx->Driver.IsTextureResident ||
-          ctx->Driver.IsTextureResident(ctx, t)) {
-         /* The texture is resident */
-         if (!allResident)
-            residences[i] = GL_TRUE;
-      }
-      else {
-         /* The texture is not resident */
-         if (allResident) {
-            allResident = GL_FALSE;
-            for (j = 0; j < i; j++)
-               residences[j] = GL_TRUE;
-         }
-         residences[i] = GL_FALSE;
       }
    }
    
