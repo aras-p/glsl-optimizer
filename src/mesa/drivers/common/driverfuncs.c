@@ -25,6 +25,7 @@
 
 #include "main/glheader.h"
 #include "main/imports.h"
+#include "main/accum.h"
 #include "main/arrayobj.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
@@ -80,7 +81,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    /* framebuffer/image functions */
    driver->Clear = _swrast_Clear;
-   driver->Accum = _swrast_Accum;
+   driver->Accum = _mesa_accum;
    driver->RasterPos = _tnl_RasterPos;
    driver->DrawPixels = _swrast_DrawPixels;
    driver->ReadPixels = _mesa_readpixels;

@@ -125,7 +125,6 @@ MATH_XFORM_SOURCES = \
 SWRAST_SOURCES = \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
-	swrast/s_accum.c \
 	swrast/s_alpha.c \
 	swrast/s_atifragshader.c \
 	swrast/s_bitmap.c \
@@ -209,7 +208,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_stipple.c \
 	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \
-	state_tracker/st_cb_accum.c \
 	state_tracker/st_cb_bitmap.c \
 	state_tracker/st_cb_blit.c \
 	state_tracker/st_cb_bufferobjects.c \

@@ -34,12 +34,12 @@
   */
 
 #include "main/glheader.h"
+#include "main/accum.h"
 #include "main/formats.h"
 #include "main/macros.h"
 #include "program/prog_instruction.h"
 #include "st_context.h"
 #include "st_atom.h"
-#include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_format.h"
@@ -599,8 +599,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
                       ctx->Depth.Clear, ctx->Stencil.Clear);
    }
    if (mask & BUFFER_BIT_ACCUM)
-      st_clear_accum_buffer(ctx,
-                            ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+      _mesa_clear_accum_buffer(ctx);
 }
 
 

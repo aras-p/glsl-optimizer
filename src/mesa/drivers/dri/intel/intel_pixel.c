@@ -157,7 +157,7 @@ intel_check_blit_format(struct intel_region * region,
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
-   functions->Accum = _swrast_Accum;
+   functions->Accum = _mesa_accum;
    if (!getenv("INTEL_NO_BLIT")) {
       functions->Bitmap = intelBitmap;
       functions->CopyPixels = intelCopyPixels;

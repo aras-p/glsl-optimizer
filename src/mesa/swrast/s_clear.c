@@ -23,13 +23,13 @@
  */
 
 #include "main/glheader.h"
+#include "main/accum.h"
 #include "main/colormac.h"
 #include "main/condrender.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
 
-#include "s_accum.h"
 #include "s_context.h"
 #include "s_depth.h"
 #include "s_masking.h"
@@ -225,8 +225,7 @@ _swrast_Clear(struct gl_context *ctx, GLbitfield buffers)
          _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
       }
       if (buffers & BUFFER_BIT_ACCUM) {
-         _swrast_clear_accum_buffer(ctx,
-                       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+         _mesa_clear_accum_buffer(ctx);
       }
       if (buffers & BUFFER_BIT_STENCIL) {
          _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);

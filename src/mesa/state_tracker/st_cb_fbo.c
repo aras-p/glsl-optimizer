@@ -667,6 +667,22 @@ st_MapRenderbuffer(struct gl_context *ctx,
    unsigned usage;
    GLuint y2;
 
+   if (strb->software) {
+      /* software-allocated renderbuffer (probably an accum buffer) */
+      GLubyte *map = (GLubyte *) strb->data;
+      if (strb->data) {
+         map += strb->stride * y;
+         map += util_format_get_blocksize(strb->format) * x;
+         *mapOut = map;
+         *rowStrideOut = strb->stride;
+      }
+      else {
+         *mapOut = NULL;
+         *rowStrideOut = 0;
+      }
+      return;
+   }
+
    usage = 0x0;
    if (mode & GL_MAP_READ_BIT)
       usage |= PIPE_TRANSFER_READ;
@@ -715,6 +731,11 @@ st_UnmapRenderbuffer(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_context *pipe = st->pipe;
+
+   if (strb->software) {
+      /* software-allocated renderbuffer (probably an accum buffer) */
+      return;
+   }
 
    pipe_transfer_unmap(pipe, strb->transfer);
    pipe->transfer_destroy(pipe, strb->transfer);

@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "main/imports.h"
+#include "main/accum.h"
 #include "main/context.h"
 #include "main/samplerobj.h"
 #include "main/shaderobj.h"
@@ -34,7 +35,6 @@
 #include "glapi/glapi.h"
 #include "st_context.h"
 #include "st_debug.h"
-#include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
 #include "st_cb_blit.h"
 #include "st_cb_bufferobjects.h"
@@ -276,7 +276,8 @@ void st_init_driver_functions(struct dd_function_table *functions)
    _mesa_init_shader_object_functions(functions);
    _mesa_init_sampler_object_functions(functions);
 
-   st_init_accum_functions(functions);
+   functions->Accum = _mesa_accum;
+
    st_init_blit_functions(functions);
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
