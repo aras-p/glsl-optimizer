@@ -1420,11 +1420,13 @@ st_copy_texsubimage(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    enum pipe_format dest_format, src_format;
-   GLboolean use_fallback = GL_TRUE;
    GLboolean matching_base_formats;
    GLuint format_writemask, sample_count;
    struct pipe_surface *dest_surface = NULL;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+   struct pipe_surface surf_tmpl;
+   unsigned int dst_usage;
+   GLint srcY0, srcY1;
 
    /* make sure finalize_textures has been called? 
     */
@@ -1472,99 +1474,105 @@ st_copy_texsubimage(struct gl_context *ctx,
    matching_base_formats =
       (_mesa_get_format_base_format(strb->Base.Format) ==
        _mesa_get_format_base_format(texImage->TexFormat));
-   format_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
 
-   if (ctx->_ImageTransferState == 0x0) {
-
-      if (matching_base_formats &&
-          src_format == dest_format &&
-          !do_flip)
-      {
-         /* use surface_copy() / blit */
-         struct pipe_box src_box;
-         u_box_2d_zslice(srcX, srcY, strb->surface->u.tex.first_layer,
-                         width, height, &src_box);
-
-         /* for resource_copy_region(), y=0=top, always */
-         pipe->resource_copy_region(pipe,
-                                    /* dest */
-                                    stImage->pt,
-                                    stImage->base.Level,
-                                    destX, destY, destZ + stImage->base.Face,
-                                    /* src */
-                                    strb->texture,
-                                    strb->surface->u.tex.level,
-                                    &src_box);
-         use_fallback = GL_FALSE;
-      }
-      else if (format_writemask &&
-               texBaseFormat != GL_DEPTH_COMPONENT &&
-               texBaseFormat != GL_DEPTH_STENCIL &&
-               screen->is_format_supported(screen, src_format,
-                                           PIPE_TEXTURE_2D, sample_count,
-                                           PIPE_BIND_SAMPLER_VIEW) &&
-               screen->is_format_supported(screen, dest_format,
-                                           PIPE_TEXTURE_2D, 0,
-                                           PIPE_BIND_RENDER_TARGET)) {
-         /* draw textured quad to do the copy */
-         GLint srcY0, srcY1;
-         struct pipe_surface surf_tmpl;
-         memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-         surf_tmpl.format = util_format_linear(stImage->pt->format);
-         surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
-         surf_tmpl.u.tex.level = stImage->base.Level;
-         surf_tmpl.u.tex.first_layer = stImage->base.Face + destZ;
-         surf_tmpl.u.tex.last_layer = stImage->base.Face + destZ;
-
-         dest_surface = pipe->create_surface(pipe, stImage->pt,
-                                             &surf_tmpl);
-
-         if (do_flip) {
-            srcY1 = strb->Base.Height - srcY - height;
-            srcY0 = srcY1 + height;
-         }
-         else {
-            srcY0 = srcY;
-            srcY1 = srcY0 + height;
-         }
-
-         /* Disable conditional rendering. */
-         if (st->render_condition) {
-            pipe->render_condition(pipe, NULL, 0);
-         }
-
-         util_blit_pixels_writemask(st->blit,
-                                    strb->texture,
-                                    strb->surface->u.tex.level,
-                                    srcX, srcY0,
-                                    srcX + width, srcY1,
-                                    strb->surface->u.tex.first_layer,
-                                    dest_surface,
-                                    destX, destY,
-                                    destX + width, destY + height,
-                                    0.0, PIPE_TEX_MIPFILTER_NEAREST,
-                                    format_writemask);
-
-         /* Restore conditional rendering state. */
-         if (st->render_condition) {
-            pipe->render_condition(pipe, st->render_condition,
-                                   st->condition_mode);
-         }
-
-         use_fallback = GL_FALSE;
-      }
-
-      if (dest_surface)
-         pipe_surface_reference(&dest_surface, NULL);
+   if (ctx->_ImageTransferState) {
+      goto fallback;
    }
 
-   if (use_fallback) {
+   if (matching_base_formats &&
+       src_format == dest_format &&
+       !do_flip) {
+      /* use surface_copy() / blit */
+      struct pipe_box src_box;
+      u_box_2d_zslice(srcX, srcY, strb->surface->u.tex.first_layer,
+                      width, height, &src_box);
+
+      /* for resource_copy_region(), y=0=top, always */
+      pipe->resource_copy_region(pipe,
+                                 /* dest */
+                                 stImage->pt,
+                                 stImage->base.Level,
+                                 destX, destY, destZ + stImage->base.Face,
+                                 /* src */
+                                 strb->texture,
+                                 strb->surface->u.tex.level,
+                                 &src_box);
+      return;
+   }
+
+   if (texBaseFormat == GL_DEPTH_STENCIL) {
+      goto fallback;
+   }
+
+   if (texBaseFormat == GL_DEPTH_COMPONENT) {
+      format_writemask = TGSI_WRITEMASK_XYZW;
+      dst_usage = PIPE_BIND_DEPTH_STENCIL;
+   }
+   else {
+      format_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
+      dst_usage = PIPE_BIND_RENDER_TARGET;
+   }
+
+   if (!format_writemask ||
+       !screen->is_format_supported(screen, src_format,
+                                    PIPE_TEXTURE_2D, sample_count,
+                                    PIPE_BIND_SAMPLER_VIEW) ||
+       !screen->is_format_supported(screen, dest_format,
+                                    PIPE_TEXTURE_2D, 0,
+                                    dst_usage)) {
+      goto fallback;
+   }
+
+   if (do_flip) {
+      srcY1 = strb->Base.Height - srcY - height;
+      srcY0 = srcY1 + height;
+   }
+   else {
+      srcY0 = srcY;
+      srcY1 = srcY0 + height;
+   }
+
+   /* Disable conditional rendering. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, NULL, 0);
+   }
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   surf_tmpl.format = util_format_linear(stImage->pt->format);
+   surf_tmpl.usage = dst_usage;
+   surf_tmpl.u.tex.level = stImage->base.Level;
+   surf_tmpl.u.tex.first_layer = stImage->base.Face + destZ;
+   surf_tmpl.u.tex.last_layer = stImage->base.Face + destZ;
+
+   dest_surface = pipe->create_surface(pipe, stImage->pt,
+                                       &surf_tmpl);
+   util_blit_pixels_writemask(st->blit,
+                              strb->texture,
+                              strb->surface->u.tex.level,
+                              srcX, srcY0,
+                              srcX + width, srcY1,
+                              strb->surface->u.tex.first_layer,
+                              dest_surface,
+                              destX, destY,
+                              destX + width, destY + height,
+                              0.0, PIPE_TEX_MIPFILTER_NEAREST,
+                              format_writemask);
+   pipe_surface_reference(&dest_surface, NULL);
+
+   /* Restore conditional rendering state. */
+   if (st->render_condition) {
+      pipe->render_condition(pipe, st->render_condition,
+                             st->condition_mode);
+   }
+
+   return;
+
+fallback:
       /* software fallback */
       fallback_copy_texsubimage(ctx, target, level,
                                 strb, stImage, texBaseFormat,
                                 destX, destY, destZ,
                                 srcX, srcY, width, height);
-   }
 }
 
 
