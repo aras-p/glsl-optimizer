@@ -163,27 +163,29 @@ void debug_reference_slowpath(const struct pipe_reference* p, debug_reference_de
 
       if(!existing)
       {
-         fprintf(stream, "<%s> %p %u Create\n", buf, p, serial);
+         fprintf(stream, "<%s> %p %u Create\n", buf, (void *) p, serial);
          dump_stack(symbols);
 
          /* this is there to provide a gradual change even if we don't see the initialization */
          for(i = 1; i <= refcnt - change; ++i)
          {
-            fprintf(stream, "<%s> %p %u AddRef %u\n", buf, p, serial, i);
+            fprintf(stream, "<%s> %p %u AddRef %u\n", buf, (void *) p,
+                    serial, i);
             dump_stack(symbols);
          }
       }
 
       if(change)
       {
-         fprintf(stream, "<%s> %p %u %s %u\n", buf, p, serial, change > 0 ? "AddRef" : "Release", refcnt);
+         fprintf(stream, "<%s> %p %u %s %u\n", buf, (void *) p, serial,
+                 change > 0 ? "AddRef" : "Release", refcnt);
          dump_stack(symbols);
       }
 
       if(!refcnt)
       {
          debug_serial_delete((void*)p);
-         fprintf(stream, "<%s> %p %u Destroy\n", buf, p, serial);
+         fprintf(stream, "<%s> %p %u Destroy\n", buf, (void *) p, serial);
          dump_stack(symbols);
       }
 
