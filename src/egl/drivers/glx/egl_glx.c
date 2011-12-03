@@ -720,11 +720,12 @@ static EGLBoolean
 GLX_eglDestroyContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
 {
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_context *GLX_ctx = GLX_egl_context(ctx);
 
    if (_eglPutContext(ctx)) {
       assert(GLX_ctx);
-      GLX_drv->glXDestroyContext(disp, ctx);
+      GLX_drv->glXDestroyContext(GLX_dpy->dpy, GLX_ctx->context);
 
       free(GLX_ctx);
    }
