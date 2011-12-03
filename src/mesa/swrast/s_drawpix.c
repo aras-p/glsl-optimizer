@@ -625,7 +625,8 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                                   GL_DEPTH_STENCIL_EXT, type, i, 0);
 
          if (ctx->Depth.Mask) {
-            if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24) {
+            if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24 &&
+		type == GL_UNSIGNED_INT_24_8) {
                /* fast path 24-bit zbuffer */
                GLuint zValues[MAX_WIDTH];
                GLint j;
@@ -639,7 +640,8 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                else
                   depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
             }
-            else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16) {
+            else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16 &&
+		     type == GL_UNSIGNED_INT_24_8) {
                /* fast path 16-bit zbuffer */
                GLushort zValues[MAX_WIDTH];
                GLint j;
