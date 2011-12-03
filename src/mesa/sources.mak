@@ -42,6 +42,7 @@ MAIN_SOURCES = \
 	main/ffvertex_prog.c \
 	main/fog.c \
 	main/formats.c \
+	main/format_pack.c \
 	main/format_unpack.c \
 	main/framebuffer.c \
 	main/get.c \
