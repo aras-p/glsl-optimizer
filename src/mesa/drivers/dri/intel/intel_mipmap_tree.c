@@ -876,7 +876,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 {
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
-   int packed_bpp = 4;
+   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
+   int packed_bpp = map_z32f_x24s8 ? 8 : 4;
 
    map->stride = map->w * packed_bpp;
    map->buffer = map->ptr = malloc(map->stride * map->h);
@@ -911,7 +912,12 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 	    uint8_t s = s_map[s_offset];
 	    uint32_t z = z_map[z_offset];
 
-	    packed_map[y * map->w + x] = (s << 24) | (z & 0x00ffffff);
+	    if (map_z32f_x24s8) {
+	       packed_map[(y * map->w + x) * 2 + 0] = z;
+	       packed_map[(y * map->w + x) * 2 + 1] = s;
+	    } else {
+	       packed_map[y * map->w + x] = (s << 24) | (z & 0x00ffffff);
+	    }
 	 }
       }
 
@@ -940,6 +946,7 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 {
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
+   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
 
    if (map->mode & GL_MAP_WRITE_BIT) {
       uint32_t *packed_map = map->ptr;
@@ -960,10 +967,15 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 						 y + s_image_y + map->y);
 	    ptrdiff_t z_offset = ((y + z_image_y) * z_mt->region->pitch +
 				  (x + z_image_x));
-	    uint32_t packed = packed_map[y * map->w + x];
 
-	    s_map[s_offset] = packed >> 24;
-	    z_map[z_offset] = packed;
+	    if (map_z32f_x24s8) {
+	       z_map[z_offset] = packed_map[(y * map->w + x) * 2 + 0];
+	       s_map[s_offset] = packed_map[(y * map->w + x) * 2 + 1];
+	    } else {
+	       uint32_t packed = packed_map[y * map->w + x];
+	       s_map[s_offset] = packed >> 24;
+	       z_map[z_offset] = packed;
+	    }
 	 }
       }
 
