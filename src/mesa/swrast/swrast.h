@@ -127,9 +127,6 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
 extern void
 _swrast_Clear(struct gl_context *ctx, GLbitfield buffers);
 
-extern void
-_swrast_Accum(struct gl_context *ctx, GLenum op, GLfloat value);
-
 
 
 /* Reset the stipple counter
