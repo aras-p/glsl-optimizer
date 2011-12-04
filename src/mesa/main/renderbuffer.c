@@ -1587,10 +1587,10 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
  * This function also plugs in the appropriate GetPointer, Get/PutRow and
  * Get/PutValues functions.
  */
-GLboolean
-_mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                                GLenum internalFormat,
-                                GLuint width, GLuint height)
+static GLboolean
+soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
+                          GLenum internalFormat,
+                          GLuint width, GLuint height)
 {
    switch (internalFormat) {
    case GL_RGB:
@@ -1831,9 +1831,9 @@ _mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
    if (rb) {
-      rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+      rb->AllocStorage = soft_renderbuffer_storage;
       /* Normally, one would setup the PutRow, GetRow, etc functions here.
-       * But we're doing that in the _mesa_soft_renderbuffer_storage() function
+       * But we're doing that in the soft_renderbuffer_storage() function
        * instead.
        */
    }
@@ -1849,17 +1849,17 @@ _mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
  * renderbuffer; core Mesa will handle all the buffer management and
  * rendering!
  */
-GLboolean
-_mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
-                              GLuint rgbBits, GLuint alphaBits,
-                              GLboolean frontLeft, GLboolean backLeft,
-                              GLboolean frontRight, GLboolean backRight)
+static GLboolean
+add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
+                        GLuint rgbBits, GLuint alphaBits,
+                        GLboolean frontLeft, GLboolean backLeft,
+                        GLboolean frontRight, GLboolean backRight)
 {
    gl_buffer_index b;
 
    if (rgbBits > 16 || alphaBits > 16) {
       _mesa_problem(ctx,
-                    "Unsupported bit depth in _mesa_add_color_renderbuffers");
+                    "Unsupported bit depth in add_color_renderbuffers");
       return GL_FALSE;
    }
 
@@ -1887,7 +1887,7 @@ _mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
       rb->InternalFormat = GL_RGBA;
 
-      rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+      rb->AllocStorage = soft_renderbuffer_storage;
       _mesa_add_renderbuffer(fb, b, rb);
    }
 
@@ -1903,15 +1903,15 @@ _mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
  * renderbuffer; core Mesa will handle all the buffer management and
  * rendering!
  */
-GLboolean
-_mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-                             GLuint depthBits)
+static GLboolean
+add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+                       GLuint depthBits)
 {
    struct gl_renderbuffer *rb;
 
    if (depthBits > 32) {
       _mesa_problem(ctx,
-                    "Unsupported depthBits in _mesa_add_depth_renderbuffer");
+                    "Unsupported depthBits in add_depth_renderbuffer");
       return GL_FALSE;
    }
 
@@ -1933,7 +1933,7 @@ _mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
       rb->InternalFormat = GL_DEPTH_COMPONENT32;
    }
 
-   rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+   rb->AllocStorage = soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
 
    return GL_TRUE;
@@ -1948,15 +1948,15 @@ _mesa_add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
  * renderbuffer; core Mesa will handle all the buffer management and
  * rendering!
  */
-GLboolean
-_mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-                               GLuint stencilBits)
+static GLboolean
+add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+                         GLuint stencilBits)
 {
    struct gl_renderbuffer *rb;
 
    if (stencilBits > 16) {
       _mesa_problem(ctx,
-                  "Unsupported stencilBits in _mesa_add_stencil_renderbuffer");
+                  "Unsupported stencilBits in add_stencil_renderbuffer");
       return GL_FALSE;
    }
 
@@ -1971,7 +1971,7 @@ _mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb
    assert(stencilBits <= 8);
    rb->InternalFormat = GL_STENCIL_INDEX8;
 
-   rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+   rb->AllocStorage = soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, rb);
 
    return GL_TRUE;
@@ -1986,16 +1986,16 @@ _mesa_add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb
  * renderbuffer; core Mesa will handle all the buffer management and
  * rendering!
  */
-GLboolean
-_mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
-                             GLuint redBits, GLuint greenBits,
-                             GLuint blueBits, GLuint alphaBits)
+static GLboolean
+add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+                       GLuint redBits, GLuint greenBits,
+                       GLuint blueBits, GLuint alphaBits)
 {
    struct gl_renderbuffer *rb;
 
    if (redBits > 16 || greenBits > 16 || blueBits > 16 || alphaBits > 16) {
       _mesa_problem(ctx,
-                    "Unsupported accumBits in _mesa_add_accum_renderbuffer");
+                    "Unsupported accumBits in add_accum_renderbuffer");
       return GL_FALSE;
    }
 
@@ -2008,7 +2008,7 @@ _mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
    }
 
    rb->InternalFormat = GL_RGBA16_SNORM;
-   rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+   rb->AllocStorage = soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_ACCUM, rb);
 
    return GL_TRUE;
@@ -2026,15 +2026,15 @@ _mesa_add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
  *
  * NOTE: color-index aux buffers not supported.
  */
-GLboolean
-_mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
-                            GLuint colorBits, GLuint numBuffers)
+static GLboolean
+add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
+                      GLuint colorBits, GLuint numBuffers)
 {
    GLuint i;
 
    if (colorBits > 16) {
       _mesa_problem(ctx,
-                    "Unsupported accumBits in _mesa_add_aux_renderbuffers");
+                    "Unsupported colorBits in add_aux_renderbuffers");
       return GL_FALSE;
    }
 
@@ -2053,7 +2053,7 @@ _mesa_add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
       assert (colorBits <= 8);
       rb->InternalFormat = GL_RGBA;
 
-      rb->AllocStorage = _mesa_soft_renderbuffer_storage;
+      rb->AllocStorage = soft_renderbuffer_storage;
       _mesa_add_renderbuffer(fb, BUFFER_AUX0 + i, rb);
    }
    return GL_TRUE;
@@ -2082,38 +2082,38 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    if (color) {
       assert(fb->Visual.redBits == fb->Visual.greenBits);
       assert(fb->Visual.redBits == fb->Visual.blueBits);
-      _mesa_add_color_renderbuffers(NULL, fb,
-				    fb->Visual.redBits,
-				    fb->Visual.alphaBits,
-				    frontLeft, backLeft,
-				    frontRight, backRight);
+      add_color_renderbuffers(NULL, fb,
+                              fb->Visual.redBits,
+                              fb->Visual.alphaBits,
+                              frontLeft, backLeft,
+                              frontRight, backRight);
    }
 
    if (depth) {
       assert(fb->Visual.depthBits > 0);
-      _mesa_add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
+      add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
    }
 
    if (stencil) {
       assert(fb->Visual.stencilBits > 0);
-      _mesa_add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
+      add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
    }
 
    if (accum) {
       assert(fb->Visual.accumRedBits > 0);
       assert(fb->Visual.accumGreenBits > 0);
       assert(fb->Visual.accumBlueBits > 0);
-      _mesa_add_accum_renderbuffer(NULL, fb,
-                                   fb->Visual.accumRedBits,
-                                   fb->Visual.accumGreenBits,
-                                   fb->Visual.accumBlueBits,
-                                   fb->Visual.accumAlphaBits);
+      add_accum_renderbuffer(NULL, fb,
+                             fb->Visual.accumRedBits,
+                             fb->Visual.accumGreenBits,
+                             fb->Visual.accumBlueBits,
+                             fb->Visual.accumAlphaBits);
    }
 
    if (aux) {
       assert(fb->Visual.numAuxBuffers > 0);
-      _mesa_add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
-                                  fb->Visual.numAuxBuffers);
+      add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
+                            fb->Visual.numAuxBuffers);
    }
 
 #if 0
