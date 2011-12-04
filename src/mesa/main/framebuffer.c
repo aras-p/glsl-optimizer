@@ -879,6 +879,7 @@ renderbuffer_exists(struct gl_context *ctx,
    case GL_BGRA:
    case GL_ABGR_EXT:
    case GL_RED_INTEGER_EXT:
+   case GL_RG_INTEGER:
    case GL_GREEN_INTEGER_EXT:
    case GL_BLUE_INTEGER_EXT:
    case GL_ALPHA_INTEGER_EXT:

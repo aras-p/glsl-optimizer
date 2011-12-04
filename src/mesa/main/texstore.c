@@ -3568,6 +3568,8 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT8);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
@@ -3638,6 +3640,8 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT16);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
@@ -3708,6 +3712,8 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT32);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
@@ -3778,6 +3784,8 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT8);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
@@ -3846,6 +3854,8 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT16);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
@@ -3914,6 +3924,8 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT32);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RG ||
+          baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||

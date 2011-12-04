@@ -467,6 +467,7 @@ _mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
       case GL_GREEN_INTEGER_EXT:
       case GL_BLUE_INTEGER_EXT:
       case GL_ALPHA_INTEGER_EXT:
+      case GL_RG_INTEGER:
       case GL_RGB_INTEGER_EXT:
       case GL_RGBA_INTEGER_EXT:
       case GL_BGR_INTEGER_EXT:
@@ -490,6 +491,7 @@ _mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
       case GL_GREEN_INTEGER_EXT:
       case GL_BLUE_INTEGER_EXT:
       case GL_ALPHA_INTEGER_EXT:
+      case GL_RG_INTEGER:
       case GL_RGB_INTEGER_EXT:
       case GL_RGBA_INTEGER_EXT:
       case GL_BGR_INTEGER_EXT:
@@ -3021,6 +3023,7 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
           srcFormat == GL_DU8DV8_ATI ||
           srcFormat == GL_DUDV_ATI ||
           srcFormat == GL_RED_INTEGER_EXT ||
+          srcFormat == GL_RG_INTEGER ||
           srcFormat == GL_GREEN_INTEGER_EXT ||
           srcFormat == GL_BLUE_INTEGER_EXT ||
           srcFormat == GL_ALPHA_INTEGER_EXT ||
@@ -3980,6 +3983,7 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
           srcFormat == GL_GREEN_INTEGER_EXT ||
           srcFormat == GL_BLUE_INTEGER_EXT ||
           srcFormat == GL_ALPHA_INTEGER_EXT ||
+          srcFormat == GL_RG_INTEGER ||
           srcFormat == GL_RGB_INTEGER_EXT ||
           srcFormat == GL_RGBA_INTEGER_EXT ||
           srcFormat == GL_BGR_INTEGER_EXT ||

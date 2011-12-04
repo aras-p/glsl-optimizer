@@ -238,6 +238,7 @@ _mesa_components_in_format( GLenum format )
       case GL_DEPTH_STENCIL_EXT:
       case GL_DUDV_ATI:
       case GL_DU8DV8_ATI:
+      case GL_RG_INTEGER:
 	 return 2;
 
       case GL_RGB:
@@ -527,6 +528,7 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
       case GL_GREEN_INTEGER_EXT:
       case GL_BLUE_INTEGER_EXT:
       case GL_ALPHA_INTEGER_EXT:
+      case GL_RG_INTEGER:
          switch (type) {
             case GL_BYTE:
             case GL_UNSIGNED_BYTE:
@@ -751,6 +753,7 @@ _mesa_is_color_format(GLenum format)
       case GL_RGBA_INTEGER_EXT:
       case GL_BGR_INTEGER_EXT:
       case GL_BGRA_INTEGER_EXT:
+      case GL_RG_INTEGER:
       case GL_LUMINANCE_INTEGER_EXT:
       case GL_LUMINANCE_ALPHA_INTEGER_EXT:
       /* sized integer formats */
@@ -954,6 +957,7 @@ _mesa_is_integer_format(GLenum format)
    case GL_BGRA_INTEGER_EXT:
    case GL_LUMINANCE_INTEGER_EXT:
    case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+   case GL_RG_INTEGER:
    /* specific integer formats */
    case GL_RGBA32UI_EXT:
    case GL_RGB32UI_EXT:
