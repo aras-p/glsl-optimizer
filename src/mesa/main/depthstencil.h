@@ -43,20 +43,4 @@ _mesa_new_s8_renderbuffer_wrapper(struct gl_context *ctx,
                                   struct gl_renderbuffer *dsrb);
 
 
-extern void
-_mesa_extract_stencil(struct gl_context *ctx,
-                      struct gl_renderbuffer *dsRb,
-                      struct gl_renderbuffer *stencilRb);
-
-
-extern void
-_mesa_insert_stencil(struct gl_context *ctx,
-                     struct gl_renderbuffer *dsRb,
-                     struct gl_renderbuffer *stencilRb);
-
-
-extern void
-_mesa_promote_stencil(struct gl_context *ctx, struct gl_renderbuffer *stencilRb);
-
-
 #endif /* DEPTHSTENCIL_H */
