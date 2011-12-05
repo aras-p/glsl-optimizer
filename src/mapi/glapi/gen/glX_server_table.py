@@ -362,7 +362,6 @@ class PrintGlxDispatchTables(glX_proto_common.glx_print_proto):
 		print '#include "glxext.h"'
 		print '#include "indirect_dispatch.h"'
 		print '#include "indirect_reqsize.h"'
-		print '#include "g_disptab.h"'
 		print '#include "indirect_table.h"'
 		print ''
 		return
