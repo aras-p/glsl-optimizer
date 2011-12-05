@@ -62,7 +62,7 @@ brw_upload_vs_unit(struct brw_context *brw)
     * and those dwords will be written to the second URB handle when we
     * brw_urb_WRITE() results.
     */
-   /* Disable single program flow on Ironlake.  We cannot reliably get
+   /* Force single program flow on Ironlake.  We cannot reliably get
     * all applications working without it.  See:
     * https://bugs.freedesktop.org/show_bug.cgi?id=29172
     *
