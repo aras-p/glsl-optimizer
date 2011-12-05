@@ -518,7 +518,7 @@ radeon_renderbuffer_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb)
 static void
 radeon_map_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-	GLuint i, j;
+	GLuint i;
 
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
 		"%s( %p , fb %p )\n",
@@ -534,7 +534,7 @@ radeon_map_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 radeon_unmap_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-	GLuint i, j;
+	GLuint i;
 
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
 		"%s( %p , fb %p)\n",
