@@ -33,8 +33,20 @@ import license
 import gl_XML, glX_XML
 import sys, getopt
 
-header = """
-#if defined(DEBUG) && !defined(_WIN32_WCE)
+header = """/* GLXEXT is the define used in the xserver when the GLX extension is being
+ * built.  Hijack this to determine whether this file is being built for the
+ * server or the client.
+ */
+#ifdef HAVE_DIX_CONFIG_H
+#include <dix-config.h>
+#endif
+
+#if (defined(GLXEXT) && defined(HAVE_BACKTRACE)) \\
+	|| (!defined(GLXEXT) && defined(DEBUG) && !defined(_WIN32_WCE))
+#define USE_BACKTRACE
+#endif
+
+#ifdef USE_BACKTRACE
 #include <execinfo.h>
 #endif
 
@@ -47,11 +59,22 @@ header = """
 #include "glapi.h"
 #include "glapitable.h"
 
+#ifdef GLXEXT
+#include "os.h"
+#endif
+
 static void
 __glapi_gentable_NoOp(void) {
-#if defined(DEBUG) && !defined(_WIN32_WCE)
-    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
-        const char *fstr = "Unknown";
+    const char *fstr = "Unknown";
+
+    /* Silence potential GCC warning for some #ifdef paths.
+     */
+    (void) fstr;
+#if defined(USE_BACKTRACE)
+#if !defined(GLXEXT)
+    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+#endif
+    {
         void *frames[2];
 
         if(backtrace(frames, 2) == 2) {
@@ -61,8 +84,13 @@ __glapi_gentable_NoOp(void) {
                 fstr = info.dli_sname;
         }
 
+#if !defined(GLXEXT)
         fprintf(stderr, "Call to unimplemented API: %s\\n", fstr);
+#endif
     }
+#endif
+#if defined(GLXEXT)
+    LogMessage(X_ERROR, "GLX: Call to unimplemented API: %s\\n", fstr);
 #endif
 }
 
