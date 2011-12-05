@@ -92,7 +92,11 @@ class PrintRemapTable(gl_XML.gl_print_base):
  * named function in the specified dispatch table.
  */
 
+/* GLXEXT is defined when building the GLX extension in the xserver.
+ */
+#if !defined(GLXEXT)
 #include "main/mfeatures.h"
+#endif
 """
 		return
 
