@@ -90,6 +90,7 @@ struct radeon_renderbuffer
 	GLbitfield map_mode;
 	int map_x, map_y, map_w, map_h;
 	int map_pitch;
+	void *map_buffer;
 
 	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
