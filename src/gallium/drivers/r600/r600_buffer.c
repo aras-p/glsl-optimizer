@@ -177,7 +177,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.user_ptr = NULL;
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
-		FREE(rbuffer);
+		util_slab_free(&rscreen->pool_buffers, rbuffer);
 		return NULL;
 	}
 	return &rbuffer->b.b.b;
