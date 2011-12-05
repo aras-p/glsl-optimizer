@@ -351,6 +351,8 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    cbpitch = (rrb->pitch / rrb->cpp);
    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
        cbpitch |= R200_COLOR_TILE_ENABLE;
+   if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
+       cbpitch |= RADEON_COLOR_MICROTILE_ENABLE;
 
    drb = radeon_get_depthbuffer(&r100->radeon);
    if (drb) {

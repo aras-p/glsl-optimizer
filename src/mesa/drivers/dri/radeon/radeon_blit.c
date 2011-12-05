@@ -139,6 +139,11 @@ static void inline emit_tx_setup(struct r100_context *r100,
     default:
 	    break;
     }
+    
+    if (bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+       offset |= RADEON_TXO_MACRO_TILE;
+    if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
+       offset |= RADEON_TXO_MICRO_TILE_X2;
 
     BEGIN_BATCH(18);
     OUT_BATCH_REGVAL(RADEON_PP_CNTL, RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE);
@@ -202,6 +207,12 @@ static inline void emit_cb_setup(struct r100_context *r100,
     default:
 	    break;
     }
+
+    if (bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+        dst_pitch |= RADEON_COLOR_TILE_ENABLE;
+
+    if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
+        dst_pitch |= RADEON_COLOR_MICROTILE_ENABLE;
 
     BEGIN_BATCH_NO_AUTOSTATE(18);
     OUT_BATCH_REGVAL(RADEON_RE_TOP_LEFT, 0);
