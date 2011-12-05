@@ -329,7 +329,7 @@ struct radeon_winsys {
      *
      * \param cs        A command stream.
      * \param fid       Feature ID, one of RADEON_FID_*
-     * \param enable	Whether to enable or disable the feature.
+     * \param enable    Whether to enable or disable the feature.
      */
     boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
                                   enum radeon_feature_id fid,

@@ -329,10 +329,10 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     /* Create managers. */
     ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
-	goto fail;
+        goto fail;
     ws->cman = pb_cache_manager_create(ws->kman, 1000000);
     if (!ws->cman)
-	goto fail;
+        goto fail;
 
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
@@ -349,9 +349,9 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
 
 fail:
     if (ws->cman)
-	ws->cman->destroy(ws->cman);
+        ws->cman->destroy(ws->cman);
     if (ws->kman)
-	ws->kman->destroy(ws->kman);
+        ws->kman->destroy(ws->kman);
     FREE(ws);
     return NULL;
 }

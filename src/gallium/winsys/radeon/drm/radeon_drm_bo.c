@@ -44,15 +44,15 @@
 #define RADEON_BO_FLAGS_MICRO_TILE_SQUARE 0x20
 
 #ifndef DRM_RADEON_GEM_WAIT
-#define DRM_RADEON_GEM_WAIT		0x2b
+#define DRM_RADEON_GEM_WAIT     0x2b
 
-#define RADEON_GEM_NO_WAIT	0x1
-#define RADEON_GEM_USAGE_READ	0x2
-#define RADEON_GEM_USAGE_WRITE	0x4
+#define RADEON_GEM_NO_WAIT      0x1
+#define RADEON_GEM_USAGE_READ   0x2
+#define RADEON_GEM_USAGE_WRITE  0x4
 
 struct drm_radeon_gem_wait {
-	uint32_t	handle;
-	uint32_t        flags;  /* one of RADEON_GEM_* */
+    uint32_t    handle;
+    uint32_t    flags;  /* one of RADEON_GEM_* */
 };
 
 #endif
@@ -91,9 +91,9 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
     if (_buf->vtbl == &radeon_bo_vtbl) {
         bo = radeon_bo(_buf);
     } else {
-	struct pb_buffer *base_buf;
-	pb_size offset;
-	pb_get_base_buffer(_buf, &base_buf, &offset);
+        struct pb_buffer *base_buf;
+        pb_size offset;
+        pb_get_base_buffer(_buf, &base_buf, &offset);
 
         if (base_buf->vtbl == &radeon_bo_vtbl)
             bo = radeon_bo(base_buf);
@@ -161,7 +161,7 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     if (bo->name) {
         pipe_mutex_lock(bo->mgr->bo_handles_mutex);
         util_hash_table_remove(bo->mgr->bo_handles,
-			       (void*)(uintptr_t)bo->name);
+                               (void*)(uintptr_t)bo->name);
         pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
     }
 
@@ -305,16 +305,16 @@ static void radeon_bo_unmap_internal(struct pb_buffer *_buf)
 }
 
 static void radeon_bo_get_base_buffer(struct pb_buffer *buf,
-				      struct pb_buffer **base_buf,
-				      unsigned *offset)
+                                      struct pb_buffer **base_buf,
+                                      unsigned *offset)
 {
     *base_buf = buf;
     *offset = 0;
 }
 
 static enum pipe_error radeon_bo_validate(struct pb_buffer *_buf,
-					  struct pb_validate *vl,
-					  unsigned flags)
+                                          struct pb_validate *vl,
+                                          unsigned flags)
 {
     /* Always pinned */
     return PIPE_OK;
@@ -335,8 +335,8 @@ const struct pb_vtbl radeon_bo_vtbl = {
 };
 
 static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
-						pb_size size,
-						const struct pb_desc *desc)
+                                                pb_size size,
+                                                const struct pb_desc *desc)
 {
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
     struct radeon_drm_winsys *rws = mgr->rws;
@@ -367,7 +367,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
 
     bo = CALLOC_STRUCT(radeon_bo);
     if (!bo)
-	return NULL;
+        return NULL;
 
     pipe_reference_init(&bo->base.reference, 1);
     bo->base.alignment = desc->alignment;
@@ -431,7 +431,7 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
 
     mgr = CALLOC_STRUCT(radeon_bomgr);
     if (!mgr)
-	return NULL;
+        return NULL;
 
     mgr->base.destroy = radeon_bomgr_destroy;
     mgr->base.create_buffer = radeon_bomgr_create_bo;
@@ -470,10 +470,10 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
     *microtiled = RADEON_LAYOUT_LINEAR;
     *macrotiled = RADEON_LAYOUT_LINEAR;
     if (args.tiling_flags & RADEON_BO_FLAGS_MICRO_TILE)
-	*microtiled = RADEON_LAYOUT_TILED;
+        *microtiled = RADEON_LAYOUT_TILED;
 
     if (args.tiling_flags & RADEON_BO_FLAGS_MACRO_TILE)
-	*macrotiled = RADEON_LAYOUT_TILED;
+        *macrotiled = RADEON_LAYOUT_TILED;
 }
 
 static void radeon_bo_set_tiling(struct pb_buffer *_buf,
@@ -565,13 +565,13 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     /* Assign a buffer manager. */
     if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
                 PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_CUSTOM))
-	provider = ws->cman;
+        provider = ws->cman;
     else
         provider = ws->kman;
 
     buffer = provider->create_buffer(provider, size, &desc.base);
     if (!buffer)
-	return NULL;
+        return NULL;
 
     return (struct pb_buffer*)buffer;
 }
