@@ -941,11 +941,11 @@ brw_IF(struct brw_compile *p, GLuint execute_size)
    } else if (intel->gen == 6) {
       brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
-      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      brw_set_src1(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src0(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
+      brw_set_src1(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
    } else {
-      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-      brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_dest(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
+      brw_set_src0(p, insn, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
       brw_set_src1(p, insn, brw_imm_ud(0));
       insn->bits3.break_cont.jip = 0;
       insn->bits3.break_cont.uip = 0;
