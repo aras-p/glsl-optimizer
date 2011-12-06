@@ -252,10 +252,7 @@ slow_read_rgba_pixels( struct gl_context *ctx,
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    const gl_format rbFormat = _mesa_get_srgb_format_linear(rb->Format);
-   union {
-      float f[MAX_WIDTH][4];
-      unsigned int i[MAX_WIDTH][4];
-   } rgba;
+   void *rgba;
    GLubyte *dst, *map;
    int dstStride, stride, j;
 
@@ -270,19 +267,27 @@ slow_read_rgba_pixels( struct gl_context *ctx,
       return;
    }
 
+   rgba = malloc(width * MAX_PIXEL_BYTES);
+   if (!rgba)
+      goto done;
+
    for (j = 0; j < height; j++) {
       if (_mesa_is_integer_format(format)) {
-	 _mesa_unpack_int_rgba_row(rbFormat, width, map, rgba.i);
-	 _mesa_pack_rgba_span_int(ctx, width, rgba.i, format, type, dst);
+	 _mesa_unpack_int_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
+	 _mesa_pack_rgba_span_int(ctx, width, (GLuint (*)[4]) rgba, format,
+                                  type, dst);
       } else {
-	 _mesa_unpack_rgba_row(rbFormat, width, map, rgba.f);
-	 _mesa_pack_rgba_span_float(ctx, width, rgba.f, format, type, dst,
-				    packing, transferOps);
+	 _mesa_unpack_rgba_row(rbFormat, width, map, (GLfloat (*)[4]) rgba);
+	 _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
+                                    type, dst, packing, transferOps);
       }
       dst += dstStride;
       map += stride;
    }
 
+   free(rgba);
+
+done:
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
 
