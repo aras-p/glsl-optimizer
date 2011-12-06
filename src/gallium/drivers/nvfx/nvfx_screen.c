@@ -84,7 +84,11 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
-		return 0;
+	case PIPE_CAP_MIN_TEXEL_OFFSET:
+	case PIPE_CAP_MAX_TEXEL_OFFSET:
+	case PIPE_CAP_CONDITIONAL_RENDER:
+	case PIPE_CAP_TEXTURE_BARRIER:
+                return 0;
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
                 return 0;
 	default:
