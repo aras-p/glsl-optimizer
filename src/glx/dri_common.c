@@ -340,8 +340,6 @@ driConvertConfigs(const __DRIcoreExtension * core,
       tail = tail->next;
    }
 
-   glx_config_destroy_list(configs);
-
    return head.next;
 }
 

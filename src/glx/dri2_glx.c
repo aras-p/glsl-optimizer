@@ -865,6 +865,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       priv->dri2Display;
    struct dri2_screen *psc;
    __GLXDRIscreen *psp;
+   struct glx_config *configs = NULL, *visuals = NULL;
    char *driverName, *deviceName;
    drm_magic_t magic;
    int i;
@@ -947,10 +948,16 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    extensions = psc->core->getExtensions(psc->driScreen);
    dri2BindExtensions(psc, extensions);
 
-   psc->base.configs =
-      driConvertConfigs(psc->core, psc->base.configs, driver_configs);
-   psc->base.visuals =
-      driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+   configs = driConvertConfigs(psc->core, psc->base.configs, driver_configs);
+   visuals = driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+
+   if (!configs || !visuals)
+       goto handle_error;
+
+   glx_config_destroy_list(psc->base.configs);
+   psc->base.configs = configs;
+   glx_config_destroy_list(psc->base.visuals);
+   psc->base.visuals = visuals;
 
    psc->driver_configs = driver_configs;
 
@@ -994,10 +1001,18 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    return &psc->base;
 
 handle_error:
+   if (configs)
+       glx_config_destroy_list(configs);
+   if (visuals)
+       glx_config_destroy_list(visuals);
+   if (psc->driScreen)
+       psc->core->destroyScreen(psc->driScreen);
+   psc->driScreen = NULL;
    if (psc->fd >= 0)
       close(psc->fd);
    if (psc->driver)
       dlclose(psc->driver);
+
    Xfree(driverName);
    Xfree(deviceName);
    glx_screen_cleanup(&psc->base);

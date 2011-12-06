@@ -336,7 +336,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    drm_handle_t hFB;
    int junk;
    const __DRIconfig **driver_configs;
-   struct glx_config *visual;
+   struct glx_config *visual, *configs = NULL, *visuals = NULL;
 
    /* DRI protocol version. */
    dri_version.major = driDpy->driMajor;
@@ -446,10 +446,16 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
       goto handle_error;
    }
 
-   psc->base.configs =
-      driConvertConfigs(psc->core, psc->base.configs, driver_configs);
-   psc->base.visuals =
-      driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+   configs = driConvertConfigs(psc->core, psc->base.configs, driver_configs);
+   visuals = driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+
+   if (!configs || !visuals)
+       goto handle_error;
+
+   glx_config_destroy_list(psc->base.configs);
+   psc->base.configs = configs;
+   glx_config_destroy_list(psc->base.visuals);
+   psc->base.visuals = visuals;
 
    psc->driver_configs = driver_configs;
 
@@ -478,6 +484,11 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    return psp;
 
  handle_error:
+   if (configs)
+       glx_config_destroy_list(configs);
+   if (visuals)
+       glx_config_destroy_list(visuals);
+
    if (pSAREA != MAP_FAILED)
       drmUnmap(pSAREA, SAREA_MAX);
 

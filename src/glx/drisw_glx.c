@@ -524,6 +524,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
    struct drisw_screen *psc;
+   struct glx_config *configs = NULL, *visuals = NULL;
    int i;
 
    psc = Xcalloc(1, sizeof *psc);
@@ -569,10 +570,16 @@ driswCreateScreen(int screen, struct glx_display *priv)
    extensions = psc->core->getExtensions(psc->driScreen);
    driswBindExtensions(psc, extensions);
 
-   psc->base.configs =
-      driConvertConfigs(psc->core, psc->base.configs, driver_configs);
-   psc->base.visuals =
-      driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+   configs = driConvertConfigs(psc->core, psc->base.configs, driver_configs);
+   visuals = driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
+
+   if (!configs || !visuals)
+       goto handle_error;
+
+   glx_config_destroy_list(psc->base.configs);
+   psc->base.configs = configs;
+   glx_config_destroy_list(psc->base.visuals);
+   psc->base.visuals = visuals;
 
    psc->driver_configs = driver_configs;
 
@@ -586,6 +593,14 @@ driswCreateScreen(int screen, struct glx_display *priv)
    return &psc->base;
 
  handle_error:
+   if (configs)
+       glx_config_destroy_list(configs);
+   if (visuals)
+       glx_config_destroy_list(visuals);
+   if (psc->driScreen)
+       psc->core->destroyScreen(psc->driScreen);
+   psc->driScreen = NULL;
+
    if (psc->driver)
       dlclose(psc->driver);
    glx_screen_cleanup(&psc->base);
