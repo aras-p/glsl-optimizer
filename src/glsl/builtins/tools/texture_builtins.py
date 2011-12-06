@@ -105,7 +105,7 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
             print "1",
 
         # Shadow comparitor
-        if sampler_type == "2DArrayShadow": # a special case:
+        if sampler_type == "2DArrayShadow" or sampler_type == "CubeShadow": # a special case:
             print "(swiz w (var_ref P))",   # ...array layer is z; shadow is w
         elif sampler_type.endswith("Shadow"):
             print "(swiz z (var_ref P))",
