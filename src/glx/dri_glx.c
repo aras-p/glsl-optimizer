@@ -587,6 +587,13 @@ dri_create_context(struct glx_screen *base,
       return NULL;
 
    if (shareList) {
+      /* If the shareList context is not a DRI context, we cannot possibly
+       * create a DRI context that shares it.
+       */
+      if (shareList->vtable->destroy != dri_destroy_context) {
+	 return NULL;
+      }
+
       pcp_shared = (struct dri_context *) shareList;
       shared = pcp_shared->driContext;
    }
