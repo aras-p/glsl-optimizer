@@ -36,5 +36,6 @@ enum {
 #define RADEON_CHIPSET_TCL		(1 << 0)	/* tcl support - any radeon */
 #define RADEON_CHIPSET_BROKEN_STENCIL	(1 << 1)	/* r100 stencil bug */
 #define R200_CHIPSET_YCBCR_BROKEN	(1 << 2)	/* r200 ycbcr bug */
+#define RADEON_CHIPSET_DEPTH_ALWAYS_TILED (1 << 3)      /* M7 and R200s */
 
 #endif /* _RADEON_CHIPSET_H */
