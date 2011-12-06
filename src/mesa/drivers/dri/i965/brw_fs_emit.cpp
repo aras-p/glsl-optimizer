@@ -656,12 +656,6 @@ fs_visitor::generate_code()
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
-   int loop_stack_array_size = 16;
-   int loop_stack_depth = 0;
-   int *if_depth_in_loop =
-      rzalloc_array(this->mem_ctx, int, loop_stack_array_size);
-
-
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("Native code for fragment shader %d (%d-wide dispatch):\n",
 	     prog->Name, c->dispatch_width);
@@ -781,7 +775,6 @@ fs_visitor::generate_code()
 	 } else {
 	    brw_IF(p, c->dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
 	 }
-	 if_depth_in_loop[loop_stack_depth]++;
 	 break;
 
       case BRW_OPCODE_ELSE:
@@ -789,22 +782,14 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_ENDIF:
 	 brw_ENDIF(p);
-	 if_depth_in_loop[loop_stack_depth]--;
 	 break;
 
       case BRW_OPCODE_DO:
 	 brw_DO(p, BRW_EXECUTE_8);
-	 loop_stack_depth++;
-	 if (loop_stack_array_size <= loop_stack_depth) {
-	    loop_stack_array_size *= 2;
-	    if_depth_in_loop = reralloc(this->mem_ctx, if_depth_in_loop, int,
-				        loop_stack_array_size);
-	 }
-	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
 
       case BRW_OPCODE_BREAK:
-	 brw_BREAK(p, if_depth_in_loop[loop_stack_depth]);
+	 brw_BREAK(p);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
       case BRW_OPCODE_CONTINUE:
@@ -812,13 +797,11 @@ fs_visitor::generate_code()
 	 if (intel->gen >= 6)
 	    gen6_CONT(p);
 	 else
-	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
+	    brw_CONT(p);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
 
       case BRW_OPCODE_WHILE:
-	 assert(loop_stack_depth > 0);
-	 loop_stack_depth--;
 	 brw_WHILE(p);
 	 break;
 
@@ -922,8 +905,6 @@ fs_visitor::generate_code()
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("\n");
    }
-
-   ralloc_free(if_depth_in_loop);
 
    brw_set_uip_jip(p);
 

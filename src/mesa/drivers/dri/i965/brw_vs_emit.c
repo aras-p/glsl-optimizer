@@ -1843,8 +1843,7 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
-   GLuint insn, loop_depth = 0;
-   int if_depth_in_loop[MAX_LOOP_DEPTH];
+   GLuint insn;
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
@@ -1858,7 +1857,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
-   if_depth_in_loop[loop_depth] = 0;
 
    brw_set_acc_write_control(p, 1);
 
@@ -2080,7 +2078,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 struct brw_instruction *if_inst = brw_IF(p, BRW_EXECUTE_8);
 	 /* Note that brw_IF smashes the predicate_control field. */
 	 if_inst->header.predicate_control = get_predicate(inst);
-	 if_depth_in_loop[loop_depth]++;
 	 break;
       }
       case OPCODE_ELSE:
@@ -2090,17 +2087,14 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ENDIF:
 	 clear_current_const(c);
 	 brw_ENDIF(p);
-	 if_depth_in_loop[loop_depth]--;
 	 break;			
       case OPCODE_BGNLOOP:
 	 clear_current_const(c);
 	 brw_DO(p, BRW_EXECUTE_8);
-         loop_depth++;
-	 if_depth_in_loop[loop_depth] = 0;
          break;
       case OPCODE_BRK:
 	 brw_set_predicate_control(p, get_predicate(inst));
-	 brw_BREAK(p, if_depth_in_loop[loop_depth]);
+	 brw_BREAK(p);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_CONT:
@@ -2108,14 +2102,13 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 if (intel->gen >= 6) {
 	    gen6_CONT(p);
 	 } else {
-	    brw_CONT(p, if_depth_in_loop[loop_depth]);
+	    brw_CONT(p);
 	 }
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
 
       case OPCODE_ENDLOOP:
 	 clear_current_const(c);
-	 loop_depth--;
 	 brw_WHILE(p);
          break;
 

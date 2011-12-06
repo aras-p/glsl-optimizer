@@ -134,6 +134,12 @@ struct brw_compile {
     * encountered.
     */
    int *loop_stack;
+   /**
+    * pre-gen6, the BREAK and CONT instructions had to tell how many IF/ENDIF
+    * blocks they were popping out of, to fix up the mask stack.  This tracks
+    * the IF/ENDIF nesting in each current nested loop level.
+    */
+   int *if_depth_in_loop;
    int loop_stack_depth;
    int loop_stack_array_size;
 
@@ -1026,8 +1032,8 @@ struct brw_instruction *brw_DO(struct brw_compile *p,
 
 struct brw_instruction *brw_WHILE(struct brw_compile *p);
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count);
-struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count);
+struct brw_instruction *brw_BREAK(struct brw_compile *p);
+struct brw_instruction *brw_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_CONT(struct brw_compile *p);
 /* Forward jumps:
  */

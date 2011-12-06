@@ -918,10 +918,13 @@ push_loop_stack(struct brw_compile *p, struct brw_instruction *inst)
       p->loop_stack_array_size *= 2;
       p->loop_stack = reralloc(p->mem_ctx, p->loop_stack, int,
 			       p->loop_stack_array_size);
+      p->if_depth_in_loop = reralloc(p->mem_ctx, p->if_depth_in_loop, int,
+				     p->loop_stack_array_size);
    }
 
    p->loop_stack[p->loop_stack_depth] = inst - p->store;
    p->loop_stack_depth++;
+   p->if_depth_in_loop[p->loop_stack_depth] = 0;
 }
 
 static struct brw_instruction *
@@ -980,6 +983,7 @@ brw_IF(struct brw_compile *p, GLuint execute_size)
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    push_if_stack(p, insn);
+   p->if_depth_in_loop[p->loop_stack_depth]++;
    return insn;
 }
 
@@ -1187,6 +1191,7 @@ brw_ENDIF(struct brw_compile *p)
    struct brw_instruction *if_inst = NULL;
 
    /* Pop the IF and (optional) ELSE instructions from the stack */
+   p->if_depth_in_loop[p->loop_stack_depth]--;
    p->if_stack_depth--;
    if (p->if_stack[p->if_stack_depth]->header.opcode == BRW_OPCODE_ELSE) {
       else_inst = p->if_stack[p->if_stack_depth];
@@ -1245,7 +1250,7 @@ brw_ENDIF(struct brw_compile *p)
    patch_IF_ELSE(p, if_inst, else_inst, insn);
 }
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
+struct brw_instruction *brw_BREAK(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
@@ -1260,7 +1265,7 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
       brw_set_src0(p, insn, brw_ip_reg());
       brw_set_src1(p, insn, brw_imm_d(0x0));
       insn->bits3.if_else.pad0 = 0;
-      insn->bits3.if_else.pop_count = pop_count;
+      insn->bits3.if_else.pop_count = p->if_depth_in_loop[p->loop_stack_depth];
    }
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = BRW_EXECUTE_8;
@@ -1284,7 +1289,7 @@ struct brw_instruction *gen6_CONT(struct brw_compile *p)
    return insn;
 }
 
-struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
+struct brw_instruction *brw_CONT(struct brw_compile *p)
 {
    struct brw_instruction *insn;
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
@@ -1295,7 +1300,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
    insn->header.execution_size = BRW_EXECUTE_8;
    /* insn->header.mask_control = BRW_MASK_DISABLE; */
    insn->bits3.if_else.pad0 = 0;
-   insn->bits3.if_else.pop_count = pop_count;
+   insn->bits3.if_else.pop_count = p->if_depth_in_loop[p->loop_stack_depth];
    return insn;
 }
 
