@@ -1821,7 +1821,17 @@ struct gl_transform_feedback_info {
       unsigned OutputRegister;
       unsigned OutputBuffer;
       unsigned NumComponents;
+
+      /** offset (in DWORDs) of this output within the interleaved structure */
+      unsigned DstOffset;
    } Outputs[MAX_PROGRAM_OUTPUTS];
+
+   /**
+    * Total number of components stored in each buffer.  This may be used by
+    * hardware back-ends to determine the correct stride when interleaving
+    * multiple transform feedback outputs in the same buffer.
+    */
+   unsigned BufferStride[MAX_FEEDBACK_ATTRIBS];
 };
 
 /**

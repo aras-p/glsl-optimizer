@@ -1598,7 +1598,9 @@ tfeedback_decl::store(struct gl_shader_program *prog,
       info->Outputs[info->NumOutputs].OutputRegister = this->location + v;
       info->Outputs[info->NumOutputs].NumComponents = this->vector_elements;
       info->Outputs[info->NumOutputs].OutputBuffer = buffer;
+      info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
       ++info->NumOutputs;
+      info->BufferStride[buffer] += this->vector_elements;
    }
    return true;
 }
@@ -1863,7 +1865,8 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
                      tfeedback_decl *tfeedback_decls)
 {
    unsigned total_tfeedback_components = 0;
-   prog->LinkedTransformFeedback.NumOutputs = 0;
+   memset(&prog->LinkedTransformFeedback, 0,
+          sizeof(prog->LinkedTransformFeedback));
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
       unsigned buffer =
          prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS ? i : 0;
