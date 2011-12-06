@@ -266,6 +266,7 @@ get_pixel_transfer_program(struct gl_context *ctx, const struct state_key *key)
    if (!fp->Base.Instructions) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
                   "generating pixel transfer program");
+      _mesa_free_parameter_list(params);
       return NULL;
    }
 
