@@ -417,7 +417,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RADEON_QG:
       /* all original radeons (7200) presumably have a stencil op bug */
       screen->chip_family = CHIP_FAMILY_R100;
-      screen->chip_flags = RADEON_CHIPSET_TCL | RADEON_CHIPSET_BROKEN_STENCIL;
+      screen->chip_flags = RADEON_CHIPSET_TCL | RADEON_CHIPSET_BROKEN_STENCIL | RADEON_CHIPSET_DEPTH_ALWAYS_TILED;
       break;
 
    case PCI_CHIP_RV200_QW:
