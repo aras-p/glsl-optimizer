@@ -1249,8 +1249,7 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
    return insn;
 }
 
-struct brw_instruction *gen6_CONT(struct brw_compile *p,
-				  struct brw_instruction *do_insn)
+struct brw_instruction *gen6_CONT(struct brw_compile *p)
 {
    struct brw_instruction *insn;
 

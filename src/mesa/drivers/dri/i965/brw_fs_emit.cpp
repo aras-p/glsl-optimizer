@@ -813,7 +813,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_CONTINUE:
 	 /* FINISHME: We need to write the loop instruction support still. */
 	 if (intel->gen >= 6)
-	    gen6_CONT(p, loop_stack[loop_stack_depth - 1]);
+	    gen6_CONT(p);
 	 else
 	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
