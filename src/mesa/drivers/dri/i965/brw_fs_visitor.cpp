@@ -1235,6 +1235,9 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 {
    this->result = orig_val;
 
+   if (ir->op == ir_txs)
+      return;
+
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
