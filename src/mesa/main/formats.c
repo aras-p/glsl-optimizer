@@ -1553,6 +1553,8 @@ _mesa_get_format_bytes(gl_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    ASSERT(info->BytesPerBlock);
+   ASSERT(info->BytesPerBlock <= MAX_PIXEL_BYTES ||
+          _mesa_is_format_compressed(format));
    return info->BytesPerBlock;
 }
 

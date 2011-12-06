@@ -47,6 +47,14 @@ extern "C" {
 
 
 /**
+ * Max number of bytes for any non-compressed pixel format below, or for
+ * intermediate pixel storage in Mesa.  This should never be less than
+ * 16.  Maybe 32 someday?
+ */
+#define MAX_PIXEL_BYTES 16
+
+
+/**
  * Mesa texture/renderbuffer image formats.
  */
 typedef enum
