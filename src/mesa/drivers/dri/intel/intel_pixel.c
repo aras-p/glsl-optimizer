@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "main/accum.h"
 #include "main/enums.h"
 #include "main/state.h"
 #include "main/bufferobj.h"

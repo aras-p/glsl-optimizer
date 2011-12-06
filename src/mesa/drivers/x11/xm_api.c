@@ -73,6 +73,7 @@
 #include "main/teximage.h"
 #include "glapi/glthread.h"
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -331,13 +332,13 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    /*
     * Other renderbuffer (depth, stencil, etc)
     */
-   _mesa_add_soft_renderbuffers(&b->mesa_buffer,
-                                GL_FALSE,  /* color */
-                                vis->mesa_visual.haveDepthBuffer,
-                                vis->mesa_visual.haveStencilBuffer,
-                                vis->mesa_visual.haveAccumBuffer,
-                                GL_FALSE,  /* software alpha buffer */
-                                vis->mesa_visual.numAuxBuffers > 0 );
+   _swrast_add_soft_renderbuffers(&b->mesa_buffer,
+                                  GL_FALSE,  /* color */
+                                  vis->mesa_visual.haveDepthBuffer,
+                                  vis->mesa_visual.haveStencilBuffer,
+                                  vis->mesa_visual.haveAccumBuffer,
+                                  GL_FALSE,  /* software alpha buffer */
+                                  vis->mesa_visual.numAuxBuffers > 0 );
 
    /* GLX_EXT_texture_from_pixmap */
    b->TextureTarget = 0;

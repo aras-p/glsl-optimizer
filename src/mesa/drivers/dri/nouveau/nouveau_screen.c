@@ -35,6 +35,7 @@
 
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "swrast/s_renderbuffer.h"
 
 static const __DRIextension *nouveau_screen_extensions[];
 
@@ -200,9 +201,9 @@ nouveau_create_buffer(__DRIscreen *dri_screen,
 	}
 
 	/* Software renderbuffers. */
-	_mesa_add_soft_renderbuffers(fb, GL_FALSE, GL_FALSE, GL_FALSE,
-				     visual->accumRedBits > 0,
-				     GL_FALSE, GL_FALSE);
+	_swrast_add_soft_renderbuffers(fb, GL_FALSE, GL_FALSE, GL_FALSE,
+                                       visual->accumRedBits > 0,
+                                       GL_FALSE, GL_FALSE);
 
 	drawable->driverPrivate = fb;
 

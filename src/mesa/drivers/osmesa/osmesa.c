@@ -46,6 +46,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
 #include "swrast/s_lines.h"
+#include "swrast/s_renderbuffer.h"
 #include "swrast/s_triangle.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -1160,13 +1161,13 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       /* Create depth/stencil/accum buffers.  We'll create the color
        * buffer later in OSMesaMakeCurrent().
        */
-      _mesa_add_soft_renderbuffers(osmesa->gl_buffer,
-                                   GL_FALSE, /* color */
-                                   osmesa->gl_visual->haveDepthBuffer,
-                                   osmesa->gl_visual->haveStencilBuffer,
-                                   osmesa->gl_visual->haveAccumBuffer,
-                                   GL_FALSE, /* alpha */
-                                   GL_FALSE /* aux */ );
+      _swrast_add_soft_renderbuffers(osmesa->gl_buffer,
+                                     GL_FALSE, /* color */
+                                     osmesa->gl_visual->haveDepthBuffer,
+                                     osmesa->gl_visual->haveStencilBuffer,
+                                     osmesa->gl_visual->haveAccumBuffer,
+                                     GL_FALSE, /* alpha */
+                                     GL_FALSE /* aux */ );
 
       osmesa->format = format;
       osmesa->userRowLength = 0;

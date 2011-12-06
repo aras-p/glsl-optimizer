@@ -33,6 +33,7 @@
 #include "main/hash.h"
 #include "main/fbobject.h"
 #include "main/mfeatures.h"
+#include "swrast/s_renderbuffer.h"
 
 #include "utils.h"
 #include "xmlpool.h"
@@ -470,13 +471,13 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       }
 
       /* now add any/all software-based renderbuffers we may need */
-      _mesa_add_soft_renderbuffers(fb,
-                                   false, /* never sw color */
-                                   false, /* never sw depth */
-                                   false, /* never sw stencil */
-                                   mesaVis->accumRedBits > 0,
-                                   false, /* never sw alpha */
-                                   false  /* never sw aux */ );
+      _swrast_add_soft_renderbuffers(fb,
+                                     false, /* never sw color */
+                                     false, /* never sw depth */
+                                     false, /* never sw stencil */
+                                     mesaVis->accumRedBits > 0,
+                                     false, /* never sw alpha */
+                                     false  /* never sw aux */ );
       driDrawPriv->driverPrivate = fb;
 
       return true;

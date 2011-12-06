@@ -16,6 +16,7 @@
 #include "drivers/common/meta.h"
 #include "vbo/vbo.h"
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -1610,13 +1611,13 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
         wmesa_set_renderbuffer_funcs(rb, pwfb->pixelformat, pwfb->cColorBits, 0);
 
 	/* Let Mesa own the Depth, Stencil, and Accum buffers */
-        _mesa_add_soft_renderbuffers(&pwfb->Base,
-                                     GL_FALSE, /* color */
-                                     visual->depthBits > 0,
-                                     visual->stencilBits > 0,
-                                     visual->accumRedBits > 0,
-                                     visual->alphaBits >0, 
-                                     GL_FALSE);
+        _swrast_add_soft_renderbuffers(&pwfb->Base,
+                                       GL_FALSE, /* color */
+                                       visual->depthBits > 0,
+                                       visual->stencilBits > 0,
+                                       visual->accumRedBits > 0,
+                                       visual->alphaBits >0, 
+                                       GL_FALSE);
     }
 
     if (c && pwfb)

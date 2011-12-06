@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texformat.h"
 #include "main/renderbuffer.h"
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 
 #include "radeon_common.h"
 #include "radeon_span.h"
@@ -298,13 +299,13 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 	} else if (rrb->base.Format == MESA_FORMAT_ARGB1555_REV) {
 		radeonInitPointers_ARGB1555_REV(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_Z16) {
-		_mesa_set_renderbuffer_accessors(&rrb->base);
+		_swrast_set_renderbuffer_accessors(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_X8_Z24) {
-		_mesa_set_renderbuffer_accessors(&rrb->base);
+		_swrast_set_renderbuffer_accessors(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_S8_Z24) {
-		_mesa_set_renderbuffer_accessors(&rrb->base);
+		_swrast_set_renderbuffer_accessors(&rrb->base);
 	} else if (rrb->base.Format == MESA_FORMAT_S8) {
-		_mesa_set_renderbuffer_accessors(&rrb->base);
+		_swrast_set_renderbuffer_accessors(&rrb->base);
 	} else {
 		fprintf(stderr, "radeonSetSpanFunctions: bad format: 0x%04X\n", rrb->base.Format);
 	}

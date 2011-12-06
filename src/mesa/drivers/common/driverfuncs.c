@@ -50,6 +50,7 @@
 #include "program/program.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 
 #include "driverfuncs.h"
 #include "meta.h"
@@ -179,9 +180,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    _mesa_init_sync_object_functions(driver);
 
    driver->NewFramebuffer = _mesa_new_framebuffer;
-   driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
-   driver->MapRenderbuffer = _mesa_map_soft_renderbuffer;
-   driver->UnmapRenderbuffer = _mesa_unmap_soft_renderbuffer;
+   driver->NewRenderbuffer = _swrast_new_soft_renderbuffer;
+   driver->MapRenderbuffer = _swrast_map_soft_renderbuffer;
+   driver->UnmapRenderbuffer = _swrast_unmap_soft_renderbuffer;
    driver->RenderTexture = _swrast_render_texture;
    driver->FinishRenderTexture = _swrast_finish_render_texture;
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;

@@ -46,6 +46,7 @@
 #include "intel_tex.h"
 
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 
 static void
 intel_set_span_functions(struct intel_context *intel,
@@ -415,19 +416,19 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_XRGB8888] = intel_InitPointers_xRGB8888,
    [MESA_FORMAT_ARGB8888] = intel_InitPointers_ARGB8888,
    [MESA_FORMAT_SARGB8] = intel_InitPointers_ARGB8888,
-   [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_R8] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_GR88] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_RG1616] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_RGBA_FLOAT32] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_RG_FLOAT32] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_R_FLOAT32] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_INTENSITY_FLOAT32] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_LUMINANCE_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_Z16] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_X8_Z24] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_S8_Z24] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_S8] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_R8] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_GR88] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_R16] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG1616] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_RGBA_FLOAT32] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG_FLOAT32] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_R_FLOAT32] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_INTENSITY_FLOAT32] = _swrast_set_renderbuffer_accessors,
+   [MESA_FORMAT_LUMINANCE_FLOAT32] = _swrast_set_renderbuffer_accessors,
 };
 
 bool

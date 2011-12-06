@@ -38,6 +38,7 @@
 #include "main/imports.h"
 #include "main/renderbuffer.h"
 #include "swrast/swrast.h"
+#include "swrast/s_renderbuffer.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -490,13 +491,13 @@ dri_create_buffer(__DRIscreen * sPriv,
     }
 
     /* add software renderbuffers */
-    _mesa_add_soft_renderbuffers(fb,
-				 GL_FALSE, /* color */
-				 visual->haveDepthBuffer,
-				 visual->haveStencilBuffer,
-				 visual->haveAccumBuffer,
-				 GL_FALSE, /* alpha */
-				 GL_FALSE /* aux bufs */);
+    _swrast_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   visual->haveDepthBuffer,
+                                   visual->haveStencilBuffer,
+                                   visual->haveAccumBuffer,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux bufs */);
 
     return GL_TRUE;
 

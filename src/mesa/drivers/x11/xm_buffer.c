@@ -35,6 +35,7 @@
 #include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "swrast/s_renderbuffer.h"
 
 
 #define XMESA_RENDERBUFFER 0x1234
@@ -481,8 +482,8 @@ xmesa_MapRenderbuffer(struct gl_context *ctx,
    }
 
    /* otherwise, this is an ordinary malloc-based renderbuffer */
-   _mesa_map_soft_renderbuffer(ctx, rb, x, y, w, h, mode,
-                               mapOut, rowStrideOut);
+   _swrast_map_soft_renderbuffer(ctx, rb, x, y, w, h, mode,
+                                 mapOut, rowStrideOut);
 }
 
 
@@ -528,7 +529,7 @@ xmesa_UnmapRenderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
    }
 
    /* otherwise, this is an ordinary malloc-based renderbuffer */
-   _mesa_unmap_soft_renderbuffer(ctx, rb);
+   _swrast_unmap_soft_renderbuffer(ctx, rb);
 }
 
 

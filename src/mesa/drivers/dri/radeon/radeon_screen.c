@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/fbobject.h"
+#include "swrast/s_renderbuffer.h"
 
 #define STANDALONE_MMIO
 #include "radeon_chipset.h"
@@ -651,7 +652,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
 	depth->has_surface = screen->depthHasSurface;
     }
 
-    _mesa_add_soft_renderbuffers(&rfb->base,
+    _swrast_add_soft_renderbuffers(&rfb->base,
 	    GL_FALSE, /* color */
 	    swDepth,
 	    swStencil,
