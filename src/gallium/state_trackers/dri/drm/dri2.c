@@ -104,7 +104,7 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
    for (i = 0; i < *count; i++) {
       enum pipe_format format;
       unsigned bind;
-      int att, bpp;
+      int att, depth;
 
       dri_drawable_get_format(drawable, statts[i], &format, &bind);
       if (format == PIPE_FORMAT_NONE)
@@ -134,12 +134,47 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
          break;
       }
 
-      bpp = util_format_get_blocksizebits(format);
+      /*
+       * In this switch statement we must support all formats that
+       * may occur as the stvis->color_format or
+       * stvis->depth_stencil_format.
+       */
+      switch(format) {
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+	 depth = 32;
+	 break;
+      case PIPE_FORMAT_B8G8R8X8_UNORM:
+	 depth = 24;
+	 break;
+      case PIPE_FORMAT_B5G6R5_UNORM:
+	 depth = 16;
+	 break;
+      case PIPE_FORMAT_Z16_UNORM:
+	 att = __DRI_BUFFER_DEPTH;
+	 depth = 16;
+	 break;
+      case PIPE_FORMAT_Z24X8_UNORM:
+      case PIPE_FORMAT_X8Z24_UNORM:
+	 att = __DRI_BUFFER_DEPTH;
+	 depth = 24;
+	 break;
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+	 depth = 32;
+	 break;
+      case PIPE_FORMAT_Z32_UNORM:
+	 att = __DRI_BUFFER_DEPTH;
+	 depth = 32;
+	 break;
+      default:
+	 depth = util_format_get_blocksizebits(format);
+	 assert(!"Unexpected format in dri2_drawable_get_buffers()");
+      }
 
       if (att >= 0) {
          attachments[num_attachments++] = att;
          if (with_format) {
-            attachments[num_attachments++] = bpp;
+            attachments[num_attachments++] = depth;
          }
       }
    }
