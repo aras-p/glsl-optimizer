@@ -193,6 +193,10 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
    p->if_stack_array_size = 16;
    p->if_stack =
       rzalloc_array(mem_ctx, struct brw_instruction *, p->if_stack_array_size);
+
+   p->loop_stack_depth = 0;
+   p->loop_stack_array_size = 16;
+   p->loop_stack = rzalloc_array(mem_ctx, int, p->loop_stack_array_size);
 }
 
 

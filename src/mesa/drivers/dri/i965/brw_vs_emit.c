@@ -2123,7 +2123,7 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 if (intel->gen == 5)
 	    br = 2;
 
-	 inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
+	 inst0 = inst1 = brw_WHILE(p);
 
 	 if (intel->gen < 6) {
 	    /* patch all the BREAK/CONT instructions from last BEGINLOOP */

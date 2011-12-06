@@ -128,6 +128,15 @@ struct brw_compile {
    int if_stack_depth;
    int if_stack_array_size;
 
+   /**
+    * loop_stack contains the instruction pointers of the starts of loops which
+    * must be patched (and popped) once the matching WHILE instruction is
+    * encountered.
+    */
+   int *loop_stack;
+   int loop_stack_depth;
+   int loop_stack_array_size;
+
    struct brw_glsl_label *first_label;  /**< linked list of labels */
    struct brw_glsl_call *first_call;    /**< linked list of CALs */
 };
@@ -1015,8 +1024,7 @@ void brw_ENDIF(struct brw_compile *p);
 struct brw_instruction *brw_DO(struct brw_compile *p,
 			       GLuint execute_size);
 
-struct brw_instruction *brw_WHILE(struct brw_compile *p, 
-	       struct brw_instruction *patch_insn);
+struct brw_instruction *brw_WHILE(struct brw_compile *p);
 
 struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count);
 struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count);

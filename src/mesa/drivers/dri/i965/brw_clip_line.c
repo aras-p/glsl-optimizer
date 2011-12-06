@@ -132,7 +132,6 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    struct brw_indirect newvtx0   = brw_indirect(2, 0);
    struct brw_indirect newvtx1   = brw_indirect(3, 0);
    struct brw_indirect plane_ptr = brw_indirect(4, 0);
-   struct brw_instruction *plane_loop;
    struct brw_reg v1_null_ud = retype(vec1(brw_null_reg()), BRW_REGISTER_TYPE_UD);
    GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
                                                   VERT_RESULT_HPOS);
@@ -160,7 +159,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
-   plane_loop = brw_DO(p, BRW_EXECUTE_1);
+   brw_DO(p, BRW_EXECUTE_1);
    {
       /* if (planemask & 1)
        */
@@ -245,7 +244,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
    }
-   brw_WHILE(p, plane_loop);
+   brw_WHILE(p);
 
    brw_ADD(p, c->reg.t, c->reg.t0, c->reg.t1);
    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.t, brw_imm_f(1.0));

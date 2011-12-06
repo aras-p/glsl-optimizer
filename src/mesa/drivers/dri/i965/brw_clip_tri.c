@@ -232,8 +232,6 @@ void brw_clip_tri( struct brw_clip_compile *c )
    struct brw_indirect inlist_ptr = brw_indirect(4, 0);
    struct brw_indirect outlist_ptr = brw_indirect(5, 0);
    struct brw_indirect freelist_ptr = brw_indirect(6, 0);
-   struct brw_instruction *plane_loop;
-   struct brw_instruction *vertex_loop;
    GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
                                                   VERT_RESULT_HPOS);
    
@@ -244,7 +242,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 
    brw_MOV(p, get_addr_reg(freelist_ptr), brw_address(c->reg.vertex[3]) );
 
-   plane_loop = brw_DO(p, BRW_EXECUTE_1);
+   brw_DO(p, BRW_EXECUTE_1);
    {
       /* if (planemask & 1)
        */
@@ -266,7 +264,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	 brw_MOV(p, c->reg.loopcount, c->reg.nr_verts);
 	 brw_MOV(p, c->reg.nr_verts, brw_imm_ud(0));
 
-	 vertex_loop = brw_DO(p, BRW_EXECUTE_1);
+	 brw_DO(p, BRW_EXECUTE_1);
 	 {
 	    /* vtx = *input_ptr;
 	     */
@@ -364,7 +362,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	    brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
 	 } 
-	 brw_WHILE(p, vertex_loop);
+	 brw_WHILE(p);
 
 	 /* vtxPrev = *(outlist_ptr-1)  OR: outlist[nr_verts-1]
 	  * inlist = outlist
@@ -396,7 +394,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
    }
-   brw_WHILE(p, plane_loop);
+   brw_WHILE(p);
 }
 
 
@@ -404,7 +402,6 @@ void brw_clip_tri( struct brw_clip_compile *c )
 void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *loop;
 
    /* for (loopcount = nr_verts-2; loopcount > 0; loopcount--)
     */
@@ -429,7 +426,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
       brw_ADD(p, get_addr_reg(vptr), get_addr_reg(vptr), brw_imm_uw(2));
       brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
 
-      loop = brw_DO(p, BRW_EXECUTE_1);
+      brw_DO(p, BRW_EXECUTE_1);
       {
 	 brw_clip_emit_vue(c, v0, 1, 0,
                            (_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT));
@@ -440,7 +437,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 	 brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	 brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
       }
-      brw_WHILE(p, loop);
+      brw_WHILE(p);
 
       brw_clip_emit_vue(c, v0, 0, 1,
                         ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)

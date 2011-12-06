@@ -911,6 +911,25 @@ push_if_stack(struct brw_compile *p, struct brw_instruction *inst)
    }
 }
 
+static void
+push_loop_stack(struct brw_compile *p, struct brw_instruction *inst)
+{
+   if (p->loop_stack_array_size < p->loop_stack_depth) {
+      p->loop_stack_array_size *= 2;
+      p->loop_stack = reralloc(p->mem_ctx, p->loop_stack, int,
+			       p->loop_stack_array_size);
+   }
+
+   p->loop_stack[p->loop_stack_depth] = inst - p->store;
+   p->loop_stack_depth++;
+}
+
+static struct brw_instruction *
+get_inner_do_insn(struct brw_compile *p)
+{
+   return &p->store[p->loop_stack[p->loop_stack_depth - 1]];
+}
+
 /* EU takes the value from the flag register and pushes it onto some
  * sort of a stack (presumably merging with any flag value already on
  * the stack).  Within an if block, the flags at the top of the stack
@@ -1301,9 +1320,12 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
    struct intel_context *intel = &p->brw->intel;
 
    if (intel->gen >= 6 || p->single_program_flow) {
+      push_loop_stack(p, &p->store[p->nr_insn]);
       return &p->store[p->nr_insn];
    } else {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_DO);
+
+      push_loop_stack(p, insn);
 
       /* Override the defaults for this instruction:
        */
@@ -1323,12 +1345,14 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 
 
 
-struct brw_instruction *brw_WHILE(struct brw_compile *p, 
-                                  struct brw_instruction *do_insn)
+struct brw_instruction *brw_WHILE(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
-   struct brw_instruction *insn;
+   struct brw_instruction *insn, *do_insn;
    GLuint br = 1;
+
+   do_insn = get_inner_do_insn(p);
+   p->loop_stack_depth--;
 
    if (intel->gen >= 5)
       br = 2;

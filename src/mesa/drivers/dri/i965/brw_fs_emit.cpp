@@ -828,7 +828,7 @@ fs_visitor::generate_code()
 
 	 assert(loop_stack_depth > 0);
 	 loop_stack_depth--;
-	 inst0 = inst1 = brw_WHILE(p, loop_stack[loop_stack_depth]);
+	 inst0 = inst1 = brw_WHILE(p);
 	 if (intel->gen < 6) {
 	    /* patch all the BREAK/CONT instructions from last BGNLOOP */
 	    while (inst0 > loop_stack[loop_stack_depth]) {
