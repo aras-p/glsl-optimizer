@@ -131,10 +131,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_sL_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] =  a;
@@ -183,10 +180,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_lL_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b ,a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
          dst[i] = a;
       }
@@ -196,10 +190,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_8: {
       VGubyte *dst = (VGubyte *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] = a;
@@ -227,10 +218,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_1: {
       VGshort *dst = (VGshort *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
+         VGubyte a;
          a = float_to_ubyte(rgba[i][3]);
 
          dst[i] =   (a & (128));
@@ -241,11 +229,8 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
    case VG_A_4: {
       VGshort *dst = (VGshort *)dstAddr;
       for (i = 0; i < n; ++i) {
-         VGubyte r, g, b, a;
+         VGubyte a;
          VGubyte res;
-         r = float_to_ubyte(rgba[i][0]);
-         g = float_to_ubyte(rgba[i][1]);
-         b = float_to_ubyte(rgba[i][2]);
          a = float_to_ubyte(rgba[i][3]);
 
          res = a/4;
