@@ -1520,8 +1520,12 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
                      GLenum dstType, GLvoid *dst,
                      GLuint count, const GLubyte mask[])
 {
-   GLuint tempBuffer[MAX_WIDTH][4];
+   GLuint *tempBuffer;
    const GLboolean useTemp = (src == dst);
+
+   tempBuffer = malloc(count * MAX_PIXEL_BYTES);
+   if (!tempBuffer)
+      return;
 
    ASSERT(srcType != dstType);
 
@@ -1624,6 +1628,8 @@ _mesa_convert_colors(GLenum srcType, const GLvoid *src,
    default:
       _mesa_problem(NULL, "Invalid datatype in _mesa_convert_colors");
    }
+
+   free(tempBuffer);
 }
 
 
