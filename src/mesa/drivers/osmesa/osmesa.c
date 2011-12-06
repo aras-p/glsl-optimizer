@@ -795,14 +795,6 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                             GLenum internalFormat, GLuint width, GLuint height)
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   GLint bpc; /* bits per channel */
-
-   if (rb->DataType == GL_UNSIGNED_BYTE)
-      bpc = 8;
-   else if (rb->DataType == GL_UNSIGNED_SHORT)
-      bpc = 16;
-   else
-      bpc = 32;
 
    /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
    (void) internalFormat;
