@@ -24,24 +24,20 @@
 
 
 /**
- * Functions for allocating/managing renderbuffers.
+ * Functions for allocating/managing software-based renderbuffers.
  * Also, routines for reading/writing software-based renderbuffer data as
  * ubytes, ushorts, uints, etc.
- *
- * Down the road we'll use this for run-time support of 8, 16 and 32-bit
- * color channels.  For example, Mesa may use 32-bit/float color channels
- * internally (swrast) and use wrapper renderbuffers to convert 32-bit
- * values down to 16 or 8-bit values for whatever kind of framebuffer we have.
  */
 
 
-#include "glheader.h"
-#include "imports.h"
-#include "context.h"
-#include "fbobject.h"
-#include "formats.h"
-#include "mtypes.h"
-#include "renderbuffer.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/fbobject.h"
+#include "main/formats.h"
+#include "main/mtypes.h"
+#include "main/renderbuffer.h"
+#include "swrast/s_renderbuffer.h"
 
 
 /*
@@ -1382,7 +1378,7 @@ get_values_rg_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
  * rb->RowStride pixels later.
  */
 void
-_mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
+_swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 {
    rb->GetPointer = get_pointer_generic;
    rb->GetRow = get_row_generic;
@@ -1648,7 +1644,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       return GL_FALSE;
    }
 
-   _mesa_set_renderbuffer_accessors(rb);
+   _swrast_set_renderbuffer_accessors(rb);
 
    ASSERT(rb->DataType);
    ASSERT(rb->GetPointer);
@@ -1705,12 +1701,12 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 void
-_mesa_map_soft_renderbuffer(struct gl_context *ctx,
-			    struct gl_renderbuffer *rb,
-			    GLuint x, GLuint y, GLuint w, GLuint h,
-			    GLbitfield mode,
-			    GLubyte **out_map,
-			    GLint *out_stride)
+_swrast_map_soft_renderbuffer(struct gl_context *ctx,
+                              struct gl_renderbuffer *rb,
+                              GLuint x, GLuint y, GLuint w, GLuint h,
+                              GLbitfield mode,
+                              GLubyte **out_map,
+                              GLint *out_stride)
 {
    GLubyte *map = rb->Data;
    int cpp = _mesa_get_format_bytes(rb->Format);
@@ -1725,99 +1721,13 @@ _mesa_map_soft_renderbuffer(struct gl_context *ctx,
    *out_stride = stride;
 }
 
+
 void
-_mesa_unmap_soft_renderbuffer(struct gl_context *ctx,
-			      struct gl_renderbuffer *rb)
+_swrast_unmap_soft_renderbuffer(struct gl_context *ctx,
+                                struct gl_renderbuffer *rb)
 {
 }
 
-
-
-/**********************************************************************/
-/**********************************************************************/
-/**********************************************************************/
-
-
-/**
- * Default GetPointer routine.  Always return NULL to indicate that
- * direct buffer access is not supported.
- */
-static void *
-nop_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
-{
-   return NULL;
-}
-
-
-/**
- * Initialize the fields of a gl_renderbuffer to default values.
- */
-void
-_mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
-{
-   _glthread_INIT_MUTEX(rb->Mutex);
-
-   rb->ClassID = 0;
-   rb->Name = name;
-   rb->RefCount = 0;
-   rb->Delete = _mesa_delete_renderbuffer;
-
-   /* The rest of these should be set later by the caller of this function or
-    * the AllocStorage method:
-    */
-   rb->AllocStorage = NULL;
-
-   rb->Width = 0;
-   rb->Height = 0;
-   rb->InternalFormat = GL_RGBA;
-   rb->Format = MESA_FORMAT_NONE;
-
-   rb->DataType = GL_NONE;
-   rb->Data = NULL;
-
-   /* Point back to ourself so that we don't have to check for Wrapped==NULL
-    * all over the drivers.
-    */
-   rb->Wrapped = rb;
-
-   rb->GetPointer = nop_get_pointer;
-   rb->GetRow = NULL;
-   rb->GetValues = NULL;
-   rb->PutRow = NULL;
-   rb->PutRowRGB = NULL;
-   rb->PutMonoRow = NULL;
-   rb->PutValues = NULL;
-   rb->PutMonoValues = NULL;
-}
-
-
-/**
- * Allocate a new gl_renderbuffer object.  This can be used for user-created
- * renderbuffers or window-system renderbuffers.
- */
-struct gl_renderbuffer *
-_mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
-{
-   struct gl_renderbuffer *rb = CALLOC_STRUCT(gl_renderbuffer);
-   if (rb) {
-      _mesa_init_renderbuffer(rb, name);
-   }
-   return rb;
-}
-
-
-/**
- * Delete a gl_framebuffer.
- * This is the default function for renderbuffer->Delete().
- */
-void
-_mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
-{
-   if (rb->Data) {
-      free(rb->Data);
-   }
-   free(rb);
-}
 
 
 /**
@@ -1827,7 +1737,7 @@ _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  * This would not be used for hardware-based renderbuffers.
  */
 struct gl_renderbuffer *
-_mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
+_swrast_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
    if (rb) {
@@ -2066,13 +1976,13 @@ add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
  * call the individual _mesa_add_*_renderbuffer() routines directly.
  */
 void
-_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
-                             GLboolean color,
-                             GLboolean depth,
-                             GLboolean stencil,
-                             GLboolean accum,
-                             GLboolean alpha,
-                             GLboolean aux)
+_swrast_add_soft_renderbuffers(struct gl_framebuffer *fb,
+                               GLboolean color,
+                               GLboolean depth,
+                               GLboolean stencil,
+                               GLboolean accum,
+                               GLboolean alpha,
+                               GLboolean aux)
 {
    GLboolean frontLeft = GL_TRUE;
    GLboolean backLeft = fb->Visual.doubleBufferMode;
@@ -2121,102 +2031,4 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
       /* maybe someday */
    }
 #endif
-}
-
-
-/**
- * Attach a renderbuffer to a framebuffer.
- * \param bufferName  one of the BUFFER_x tokens
- */
-void
-_mesa_add_renderbuffer(struct gl_framebuffer *fb,
-                       gl_buffer_index bufferName, struct gl_renderbuffer *rb)
-{
-   assert(fb);
-   assert(rb);
-   assert(bufferName < BUFFER_COUNT);
-
-   /* There should be no previous renderbuffer on this attachment point,
-    * with the exception of depth/stencil since the same renderbuffer may
-    * be used for both.
-    */
-   assert(bufferName == BUFFER_DEPTH ||
-          bufferName == BUFFER_STENCIL ||
-          fb->Attachment[bufferName].Renderbuffer == NULL);
-
-   /* winsys vs. user-created buffer cross check */
-   if (fb->Name) {
-      assert(rb->Name);
-   }
-   else {
-      assert(!rb->Name);
-   }
-
-   fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;
-   fb->Attachment[bufferName].Complete = GL_TRUE;
-   _mesa_reference_renderbuffer(&fb->Attachment[bufferName].Renderbuffer, rb);
-}
-
-
-/**
- * Remove the named renderbuffer from the given framebuffer.
- * \param bufferName  one of the BUFFER_x tokens
- */
-void
-_mesa_remove_renderbuffer(struct gl_framebuffer *fb,
-                          gl_buffer_index bufferName)
-{
-   struct gl_renderbuffer *rb;
-
-   assert(bufferName < BUFFER_COUNT);
-
-   rb = fb->Attachment[bufferName].Renderbuffer;
-   if (!rb)
-      return;
-
-   _mesa_reference_renderbuffer(&rb, NULL);
-
-   fb->Attachment[bufferName].Renderbuffer = NULL;
-}
-
-
-/**
- * Set *ptr to point to rb.  If *ptr points to another renderbuffer,
- * dereference that buffer first.  The new renderbuffer's refcount will
- * be incremented.  The old renderbuffer's refcount will be decremented.
- * This is normally only called from the _mesa_reference_renderbuffer() macro
- * when there's a real pointer change.
- */
-void
-_mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
-                              struct gl_renderbuffer *rb)
-{
-   if (*ptr) {
-      /* Unreference the old renderbuffer */
-      GLboolean deleteFlag = GL_FALSE;
-      struct gl_renderbuffer *oldRb = *ptr;
-
-      _glthread_LOCK_MUTEX(oldRb->Mutex);
-      ASSERT(oldRb->RefCount > 0);
-      oldRb->RefCount--;
-      /*printf("RB DECR %p (%d) to %d\n", (void*) oldRb, oldRb->Name, oldRb->RefCount);*/
-      deleteFlag = (oldRb->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldRb->Mutex);
-
-      if (deleteFlag) {
-         oldRb->Delete(oldRb);
-      }
-
-      *ptr = NULL;
-   }
-   assert(!*ptr);
-
-   if (rb) {
-      /* reference new renderbuffer */
-      _glthread_LOCK_MUTEX(rb->Mutex);
-      rb->RefCount++;
-      /*printf("RB INCR %p (%d) to %d\n", (void*) rb, rb->Name, rb->RefCount);*/
-      _glthread_UNLOCK_MUTEX(rb->Mutex);
-      *ptr = rb;
-   }
 }

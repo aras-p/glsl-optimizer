@@ -23,74 +23,44 @@
  */
 
 
-#ifndef RENDERBUFFER_H
-#define RENDERBUFFER_H
+#ifndef S_RENDERBUFFER_H
+#define S_RENDERBUFFER_H
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+
 
 struct gl_context;
 struct gl_framebuffer;
 struct gl_renderbuffer;
 
-extern void
-_mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name);
 
 extern struct gl_renderbuffer *
-_mesa_new_renderbuffer(struct gl_context *ctx, GLuint name);
+_swrast_new_soft_renderbuffer(struct gl_context *ctx, GLuint name);
 
 extern void
-_mesa_delete_renderbuffer(struct gl_renderbuffer *rb);
-
-
-extern struct gl_renderbuffer *
-_mesa_new_soft_renderbuffer(struct gl_context *ctx, GLuint name);
-
-void
-_mesa_map_soft_renderbuffer(struct gl_context *ctx,
-			    struct gl_renderbuffer *rb,
-			    GLuint x, GLuint y, GLuint w, GLuint h,
-			    GLbitfield mode,
-			    GLubyte **out_map,
-			    GLint *out_stride);
-
-void
-_mesa_unmap_soft_renderbuffer(struct gl_context *ctx,
-			      struct gl_renderbuffer *rb);
+_swrast_map_soft_renderbuffer(struct gl_context *ctx,
+                              struct gl_renderbuffer *rb,
+                              GLuint x, GLuint y, GLuint w, GLuint h,
+                              GLbitfield mode,
+                              GLubyte **out_map,
+                              GLint *out_stride);
 
 extern void
-_mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb);
+_swrast_unmap_soft_renderbuffer(struct gl_context *ctx,
+                                struct gl_renderbuffer *rb);
+
+extern void
+_swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb);
 
 
 extern void
-_mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
-                             GLboolean color,
-                             GLboolean depth,
-                             GLboolean stencil,
-                             GLboolean accum,
-                             GLboolean alpha,
-                             GLboolean aux);
-
-extern void
-_mesa_add_renderbuffer(struct gl_framebuffer *fb,
-                       gl_buffer_index bufferName, struct gl_renderbuffer *rb);
-
-extern void
-_mesa_remove_renderbuffer(struct gl_framebuffer *fb,
-                          gl_buffer_index bufferName);
-
-extern void
-_mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
-                              struct gl_renderbuffer *rb);
-
-static inline void
-_mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
-                             struct gl_renderbuffer *rb)
-{
-   if (*ptr != rb)
-      _mesa_reference_renderbuffer_(ptr, rb);
-}
-      
+_swrast_add_soft_renderbuffers(struct gl_framebuffer *fb,
+                               GLboolean color,
+                               GLboolean depth,
+                               GLboolean stencil,
+                               GLboolean accum,
+                               GLboolean alpha,
+                               GLboolean aux);
 
 
-#endif /* RENDERBUFFER_H */
+#endif /* S_RENDERBUFFER_H */
