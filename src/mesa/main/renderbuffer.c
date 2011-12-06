@@ -156,17 +156,9 @@ void
 _mesa_remove_renderbuffer(struct gl_framebuffer *fb,
                           gl_buffer_index bufferName)
 {
-   struct gl_renderbuffer *rb;
-
    assert(bufferName < BUFFER_COUNT);
-
-   rb = fb->Attachment[bufferName].Renderbuffer;
-   if (!rb)
-      return;
-
-   _mesa_reference_renderbuffer(&rb, NULL);
-
-   fb->Attachment[bufferName].Renderbuffer = NULL;
+   _mesa_reference_renderbuffer(&fb->Attachment[bufferName].Renderbuffer,
+                                NULL);
 }
 
 
