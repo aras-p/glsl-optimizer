@@ -1343,7 +1343,35 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
    }
 }
 
+/**
+ * For pre-gen6, we patch BREAK/CONT instructions to point at the WHILE
+ * instruction here.
+ *
+ * For gen6+, see brw_set_uip_jip(), which doesn't care so much about the loop
+ * nesting, since it can always just point to the end of the block/current loop.
+ */
+static void
+brw_patch_break_cont(struct brw_compile *p, struct brw_instruction *while_inst)
+{
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *do_inst = get_inner_do_insn(p);
+   struct brw_instruction *inst;
+   int br = (intel->gen == 5) ? 2 : 1;
 
+   for (inst = while_inst - 1; inst != do_inst; inst--) {
+      /* If the jump count is != 0, that means that this instruction has already
+       * been patched because it's part of a loop inside of the one we're
+       * patching.
+       */
+      if (inst->header.opcode == BRW_OPCODE_BREAK &&
+	  inst->bits3.if_else.jump_count == 0) {
+	 inst->bits3.if_else.jump_count = br * ((while_inst - inst) + 1);
+      } else if (inst->header.opcode == BRW_OPCODE_CONTINUE &&
+		 inst->bits3.if_else.jump_count == 0) {
+	 inst->bits3.if_else.jump_count = br * (while_inst - inst);
+      }
+   }
+}
 
 struct brw_instruction *brw_WHILE(struct brw_compile *p)
 {
@@ -1352,7 +1380,6 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
    GLuint br = 1;
 
    do_insn = get_inner_do_insn(p);
-   p->loop_stack_depth--;
 
    if (intel->gen >= 5)
       br = 2;
@@ -1396,10 +1423,14 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
 	 insn->bits3.if_else.jump_count = br * (do_insn - insn + 1);
 	 insn->bits3.if_else.pop_count = 0;
 	 insn->bits3.if_else.pad0 = 0;
+
+	 brw_patch_break_cont(p, insn);
       }
    }
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
+
+   p->loop_stack_depth--;
 
    return insn;
 }

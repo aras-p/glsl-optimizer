@@ -658,8 +658,6 @@ fs_visitor::generate_code()
 
    int loop_stack_array_size = 16;
    int loop_stack_depth = 0;
-   brw_instruction **loop_stack =
-      rzalloc_array(this->mem_ctx, brw_instruction *, loop_stack_array_size);
    int *if_depth_in_loop =
       rzalloc_array(this->mem_ctx, int, loop_stack_array_size);
 
@@ -795,11 +793,10 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_DO:
-	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 brw_DO(p, BRW_EXECUTE_8);
+	 loop_stack_depth++;
 	 if (loop_stack_array_size <= loop_stack_depth) {
 	    loop_stack_array_size *= 2;
-	    loop_stack = reralloc(this->mem_ctx, loop_stack, brw_instruction *,
-				  loop_stack_array_size);
 	    if_depth_in_loop = reralloc(this->mem_ctx, if_depth_in_loop, int,
 				        loop_stack_array_size);
 	 }
@@ -819,31 +816,10 @@ fs_visitor::generate_code()
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
 
-      case BRW_OPCODE_WHILE: {
-	 struct brw_instruction *inst0, *inst1;
-	 GLuint br = 1;
-
-	 if (intel->gen >= 5)
-	    br = 2;
-
+      case BRW_OPCODE_WHILE:
 	 assert(loop_stack_depth > 0);
 	 loop_stack_depth--;
-	 inst0 = inst1 = brw_WHILE(p);
-	 if (intel->gen < 6) {
-	    /* patch all the BREAK/CONT instructions from last BGNLOOP */
-	    while (inst0 > loop_stack[loop_stack_depth]) {
-	       inst0--;
-	       if (inst0->header.opcode == BRW_OPCODE_BREAK &&
-		   inst0->bits3.if_else.jump_count == 0) {
-		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
-	    }
-	       else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
-			inst0->bits3.if_else.jump_count == 0) {
-		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
-	       }
-	    }
-	 }
-      }
+	 brw_WHILE(p);
 	 break;
 
       case SHADER_OPCODE_RCP:
@@ -947,7 +923,6 @@ fs_visitor::generate_code()
       printf("\n");
    }
 
-   ralloc_free(loop_stack);
    ralloc_free(if_depth_in_loop);
 
    brw_set_uip_jip(p);

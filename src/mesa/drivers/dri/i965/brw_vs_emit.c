@@ -1844,7 +1844,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, loop_depth = 0;
-   struct brw_instruction *loop_inst[MAX_LOOP_DEPTH] = { 0 };
    int if_depth_in_loop[MAX_LOOP_DEPTH];
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
@@ -2095,7 +2094,8 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 break;			
       case OPCODE_BGNLOOP:
 	 clear_current_const(c);
-         loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 brw_DO(p, BRW_EXECUTE_8);
+         loop_depth++;
 	 if_depth_in_loop[loop_depth] = 0;
          break;
       case OPCODE_BRK:
@@ -2113,32 +2113,10 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
 
-      case OPCODE_ENDLOOP: {
+      case OPCODE_ENDLOOP:
 	 clear_current_const(c);
-	 struct brw_instruction *inst0, *inst1;
-	 GLuint br = 1;
-
 	 loop_depth--;
-
-	 if (intel->gen == 5)
-	    br = 2;
-
-	 inst0 = inst1 = brw_WHILE(p);
-
-	 if (intel->gen < 6) {
-	    /* patch all the BREAK/CONT instructions from last BEGINLOOP */
-	    while (inst0 > loop_inst[loop_depth]) {
-	       inst0--;
-	       if (inst0->header.opcode == BRW_OPCODE_BREAK &&
-		   inst0->bits3.if_else.jump_count == 0) {
-		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
-	       } else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
-			  inst0->bits3.if_else.jump_count == 0) {
-		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
-	       }
-	    }
-	 }
-      }
+	 brw_WHILE(p);
          break;
 
       case OPCODE_BRA:
