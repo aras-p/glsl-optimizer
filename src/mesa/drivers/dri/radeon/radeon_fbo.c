@@ -214,7 +214,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
    }
 
 #if defined(RADEON_R200)
-   if (rb->Format == MESA_FORMAT_S8_Z24 && !rrb->has_surface) {
+   if ((rb->Format == MESA_FORMAT_S8_Z24 || rb->Format == MESA_FORMAT_X8_Z24) && !rrb->has_surface) {
      radeon_map_renderbuffer_s8z24(ctx, rb, x, y, w, h,
 				   mode, out_map, out_stride);
      return;
@@ -286,7 +286,7 @@ radeon_unmap_renderbuffer(struct gl_context *ctx,
    GLboolean ok;
 
 #ifdef RADEON_R200
-   if (rb->Format == MESA_FORMAT_S8_Z24 && !rrb->has_surface) {
+   if ((rb->Format == MESA_FORMAT_S8_Z24 || rb->Format == MESA_FORMAT_X8_Z24) && !rrb->has_surface) {
        radeon_unmap_renderbuffer_s8z24(ctx, rb);
        return;
    }
