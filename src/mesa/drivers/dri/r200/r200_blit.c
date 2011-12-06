@@ -149,6 +149,11 @@ static void inline emit_tx_setup(struct r200_context *r200,
 	    break;
     }
 
+    if (bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+	offset |= R200_TXO_MACRO_TILE;
+    if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
+	offset |= R200_TXO_MICRO_TILE;
+
     switch (dst_mesa_format) {
     case MESA_FORMAT_ARGB8888:
     case MESA_FORMAT_XRGB8888:
@@ -326,6 +331,11 @@ static inline void emit_cb_setup(struct r200_context *r200,
     default:
 	    break;
     }
+
+    if (bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+	dst_pitch |= R200_COLOR_TILE_ENABLE;
+    if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
+	dst_pitch |= R200_COLOR_MICROTILE_ENABLE;
 
     BEGIN_BATCH_NO_AUTOSTATE(22);
     OUT_BATCH_REGVAL(R200_RE_AUX_SCISSOR_CNTL, 0);
