@@ -610,6 +610,7 @@ fast_copy_pixels(struct gl_context *ctx,
    struct gl_framebuffer *dstFb = ctx->DrawBuffer;
    struct gl_renderbuffer *srcRb, *dstRb;
    GLint row, yStep;
+   void *temp;
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
        ctx->Pixel.ZoomX != 1.0F ||
@@ -667,13 +668,20 @@ fast_copy_pixels(struct gl_context *ctx,
       yStep = 1;
    }
 
+   temp = malloc(width * MAX_PIXEL_BYTES);
+   if (!temp) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+      return GL_FALSE;
+   }
+
    for (row = 0; row < height; row++) {
-      GLuint temp[MAX_WIDTH][4];
       srcRb->GetRow(ctx, srcRb, width, srcX, srcY, temp);
       dstRb->PutRow(ctx, dstRb, width, dstX, dstY, temp, NULL);
       srcY += yStep;
       dstY += yStep;
    }
+
+   free(temp);
 
    return GL_TRUE;
 }

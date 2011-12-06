@@ -299,11 +299,17 @@ zoom_span( struct gl_context *ctx, GLint imgX, GLint imgY, const SWspan *span,
        * Also, clipping may change the span end value, so store it as well.
        */
       const GLint end = zoomed.end; /* save */
-      GLuint rgbaSave[MAX_WIDTH][4];
+      void *rgbaSave;
       const GLint pixelSize =
          (zoomed.array->ChanType == GL_UNSIGNED_BYTE) ? 4 * sizeof(GLubyte) :
          ((zoomed.array->ChanType == GL_UNSIGNED_SHORT) ? 4 * sizeof(GLushort)
           : 4 * sizeof(GLfloat));
+
+      rgbaSave = malloc(zoomed.end * pixelSize);
+      if (!rgbaSave) {
+         return;
+      }
+
       if (y1 - y0 > 1) {
          memcpy(rgbaSave, zoomed.array->rgba, zoomed.end * pixelSize);
       }
@@ -315,6 +321,8 @@ zoom_span( struct gl_context *ctx, GLint imgX, GLint imgY, const SWspan *span,
             memcpy(zoomed.array->rgba, rgbaSave, zoomed.end * pixelSize);
          }
       }
+
+      free(rgbaSave);
    }
 }
 
