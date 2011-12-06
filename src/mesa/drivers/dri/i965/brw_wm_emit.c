@@ -1109,7 +1109,7 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Emit the texcoords. */
    for (i = 0; i < nr_texcoords; i++) {
-      if (c->key.gl_clamp_mask[i] & (1 << sampler))
+      if (c->key.tex.gl_clamp_mask[i] & (1 << sampler))
 	 brw_set_saturate(p, true);
 
       if (emit & (1<<i))

@@ -671,7 +671,7 @@ static void precalc_tex( struct brw_wm_compile *c,
     * temporary, otherwise writemasking of the real dst could lose some of our
     * channels.
     */
-   if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
+   if (c->key.tex.swizzles[unit] != SWIZZLE_NOOP) {
       unswizzled_tmp = get_temp(c);
    } else {
       unswizzled_tmp = inst->DstReg;
@@ -771,9 +771,9 @@ static void precalc_tex( struct brw_wm_compile *c,
     * conversion requires allocating a temporary variable which we
     * don't have the facility to do that late in the compilation.
     */
-   if (c->key.yuvtex_mask & (1 << unit)) {
+   if (c->key.tex.yuvtex_mask & (1 << unit)) {
       /* convert ycbcr to RGBA */
-      bool  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
+      bool swap_uv = c->key.tex.yuvtex_swap_mask & (1 << unit);
 
       /* 
 	 CONST C0 = { -.5, -.0625,  -.5, 1.164 }
@@ -868,13 +868,13 @@ static void precalc_tex( struct brw_wm_compile *c,
    }
 
    /* For GL_EXT_texture_swizzle: */
-   if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
+   if (c->key.tex.swizzles[unit] != SWIZZLE_NOOP) {
       /* swizzle the result of the TEX instruction */
       struct prog_src_register tmpsrc = src_reg_from_dst(unswizzled_tmp);
       emit_op(c, OPCODE_SWZ,
               inst->DstReg,
               SATURATE_OFF, /* saturate already done above */
-              src_swizzle4(tmpsrc, c->key.tex_swizzles[unit]),
+              src_swizzle4(tmpsrc, c->key.tex.swizzles[unit]),
               src_undef(),
               src_undef());
    }
