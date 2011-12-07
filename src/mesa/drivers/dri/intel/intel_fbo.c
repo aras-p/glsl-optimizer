@@ -56,6 +56,17 @@
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
+static struct gl_renderbuffer *
+intel_new_renderbuffer(struct gl_context * ctx, GLuint name);
+
+static bool
+intel_renderbuffer_update_wrapper(struct intel_context *intel,
+                                  struct intel_renderbuffer *irb,
+                                  struct intel_mipmap_tree *mt,
+                                  uint32_t level,
+                                  uint32_t layer,
+                                  gl_format format,
+                                  GLenum internal_format);
 
 bool
 intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
@@ -193,7 +204,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   int cpp;
 
    ASSERT(rb->Name != 0);
 
@@ -235,58 +245,56 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        _mesa_lookup_enum_by_nr(internalFormat),
        _mesa_get_format_name(rb->Format), width, height);
 
-   if (irb->Base.Format == MESA_FORMAT_S8_Z24 && intel->has_separate_stencil) {
-      bool ok = true;
-      struct gl_renderbuffer *depth_rb;
-      struct gl_renderbuffer *stencil_rb;
+   irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
+						   width, height);
+   if (!irb->mt)
+      return false;
+
+   if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+      bool ok = intel_miptree_alloc_hiz(intel, irb->mt);
+      if (!ok) {
+	 intel_miptree_release(&irb->mt);
+	 return false;
+      }
+   }
+
+   if (irb->mt->stencil_mt) {
+      bool ok;
       struct intel_renderbuffer *depth_irb, *stencil_irb;
 
-      depth_rb = intel_create_wrapped_renderbuffer(ctx, width, height,
-						   MESA_FORMAT_X8_Z24);
-      stencil_rb = intel_create_wrapped_renderbuffer(ctx, width, height,
-						     MESA_FORMAT_S8);
-      ok = depth_rb && stencil_rb;
-      ok = ok && intel_alloc_renderbuffer_storage(ctx, depth_rb,
-						  depth_rb->InternalFormat,
-						  width, height);
-      ok = ok && intel_alloc_renderbuffer_storage(ctx, stencil_rb,
-						  stencil_rb->InternalFormat,
-						  width, height);
+      /* The RB got allocated as separate stencil.  Hook up our wrapped
+       * renderbuffers so that consumers of intel_get_renderbuffer() end up
+       * with pointers to the separate pieces.
+       */
+      if (!irb->wrapped_depth) {
+	 _mesa_reference_renderbuffer(&irb->wrapped_depth,
+				      intel_new_renderbuffer(ctx, ~0));
+      }
+      if (!irb->wrapped_stencil) {
+	 _mesa_reference_renderbuffer(&irb->wrapped_stencil,
+				      intel_new_renderbuffer(ctx, ~0));
+      }
 
-      if (!ok) {
-	 if (depth_rb) {
-	    intel_delete_renderbuffer(depth_rb);
-	 }
-	 if (stencil_rb) {
-	    intel_delete_renderbuffer(stencil_rb);
-	 }
+      depth_irb = intel_renderbuffer(irb->wrapped_depth);
+      stencil_irb = intel_renderbuffer(irb->wrapped_stencil);
+      if (!depth_irb || !stencil_irb) {
+	 intel_miptree_release(&irb->mt);
 	 return false;
       }
 
-      depth_irb = intel_renderbuffer(depth_rb);
-      stencil_irb = intel_renderbuffer(stencil_rb);
+      assert(irb->mt->format == MESA_FORMAT_S8_Z24);
+      ok = intel_renderbuffer_update_wrapper(intel, depth_irb, irb->mt,
+					     0, 0, /* level, layer */
+					     MESA_FORMAT_X8_Z24,
+					     GL_DEPTH_COMPONENT24);
+      assert(ok);
 
-      intel_miptree_reference(&depth_irb->mt->stencil_mt, stencil_irb->mt);
-      intel_miptree_reference(&irb->mt, depth_irb->mt);
-
-      depth_rb->Wrapped = rb;
-      stencil_rb->Wrapped = rb;
-      _mesa_reference_renderbuffer(&irb->wrapped_depth, depth_rb);
-      _mesa_reference_renderbuffer(&irb->wrapped_stencil, stencil_rb);
-
-   } else {
-      irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
-                                                      width, height);
-      if (!irb->mt)
-	 return false;
-
-      if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-	 bool ok = intel_miptree_alloc_hiz(intel, irb->mt);
-	 if (!ok) {
-	    intel_miptree_release(&irb->mt);
-	    return false;
-	 }
-      }
+      ok = intel_renderbuffer_update_wrapper(intel, stencil_irb,
+					     irb->mt->stencil_mt,
+					     0, 0, /* level, layer */
+					     MESA_FORMAT_S8,
+					     GL_STENCIL_INDEX);
+      assert(ok);
    }
 
    return true;
@@ -425,38 +433,6 @@ intel_create_renderbuffer(gl_format format)
 
    return irb;
 }
-
-
-struct gl_renderbuffer*
-intel_create_wrapped_renderbuffer(struct gl_context * ctx,
-				  int width, int height,
-				  gl_format format)
-{
-   /*
-    * The name here is irrelevant, as long as its nonzero, because the
-    * renderbuffer never gets entered into Mesa's renderbuffer hash table.
-    */
-   GLuint name = ~0;
-
-   struct intel_renderbuffer *irb = CALLOC_STRUCT(intel_renderbuffer);
-   if (!irb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
-      return NULL;
-   }
-
-   struct gl_renderbuffer *rb = &irb->Base;
-   _mesa_init_renderbuffer(rb, name);
-   rb->ClassID = INTEL_RB_CLASS;
-   rb->_BaseFormat = _mesa_get_format_base_format(format);
-   rb->Format = format;
-   rb->InternalFormat = rb->_BaseFormat;
-   rb->DataType = intel_mesa_format_to_rb_datatype(format);
-   rb->Width = width;
-   rb->Height = height;
-
-   return rb;
-}
-
 
 /**
  * Create a new renderbuffer object.
