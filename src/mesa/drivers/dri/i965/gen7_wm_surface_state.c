@@ -89,10 +89,11 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
       surf->ss0.cube_neg_z = 1;
    }
 
+   surf->ss0.is_array = depth > 1 && tObj->Target != GL_TEXTURE_3D;
+
    gen7_set_surface_tiling(surf, intelObj->mt->region->tiling);
 
    /* ss0 remaining fields:
-    * - is_array
     * - vertical_alignment
     * - horizontal_alignment
     * - vert_line_stride (exists on gen6 but we ignore it)
