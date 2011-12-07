@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 ##### MACROS #####
 
 XA_MAJOR = 0
-XA_MINOR = 5
+XA_MINOR = 6
 XA_TINY = 0
 XA_CFLAGS = -Wall -pedantic
 

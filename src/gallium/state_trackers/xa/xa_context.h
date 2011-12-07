@@ -40,6 +40,14 @@ extern struct xa_context *xa_context_create(struct xa_tracker *xa);
 
 extern void xa_context_destroy(struct xa_context *r);
 
+/**
+ * xa_yuv_planar_blit - 2D blit with color conversion and scaling.
+ *
+ * Performs a scaled blit with color conversion according to
+ * (R,G,B,A)^T = (CM)^T (Y,U,V,1)^T, where @conversion_matrix or CM in the
+ * formula is a four by four coefficient matrix. The input variable
+ * @yuv is an array of three xa_yuv_component surfaces.
+ */
 extern int xa_yuv_planar_blit(struct xa_context *r,
 			      int src_x,
 			      int src_y,

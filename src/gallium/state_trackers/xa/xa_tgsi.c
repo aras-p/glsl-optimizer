@@ -320,7 +320,7 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
 {
     struct ureg_src y_sampler, u_sampler, v_sampler;
     struct ureg_src pos;
-    struct ureg_src matrow0, matrow1, matrow2;
+    struct ureg_src matrow0, matrow1, matrow2, matrow3;
     struct ureg_dst y, u, v, rgb;
     struct ureg_dst out = ureg_DECL_output(ureg,
 					   TGSI_SEMANTIC_COLOR,
@@ -342,23 +342,19 @@ create_yuv_shader(struct pipe_context *pipe, struct ureg_program *ureg)
     matrow0 = ureg_DECL_constant(ureg, 0);
     matrow1 = ureg_DECL_constant(ureg, 1);
     matrow2 = ureg_DECL_constant(ureg, 2);
+    matrow3 = ureg_DECL_constant(ureg, 3);
 
     ureg_TEX(ureg, y, TGSI_TEXTURE_2D, pos, y_sampler);
     ureg_TEX(ureg, u, TGSI_TEXTURE_2D, pos, u_sampler);
     ureg_TEX(ureg, v, TGSI_TEXTURE_2D, pos, v_sampler);
 
-    ureg_SUB(ureg, u, ureg_src(u), ureg_scalar(matrow0, TGSI_SWIZZLE_W));
-    ureg_SUB(ureg, v, ureg_src(v), ureg_scalar(matrow0, TGSI_SWIZZLE_W));
-
-    ureg_MUL(ureg, rgb, ureg_scalar(ureg_src(y), TGSI_SWIZZLE_X), matrow0);
+    ureg_MOV(ureg, rgb, matrow3);
+    ureg_MAD(ureg, rgb,
+	     ureg_scalar(ureg_src(y), TGSI_SWIZZLE_X), matrow0, ureg_src(rgb));
     ureg_MAD(ureg, rgb,
 	     ureg_scalar(ureg_src(u), TGSI_SWIZZLE_X), matrow1, ureg_src(rgb));
     ureg_MAD(ureg, rgb,
 	     ureg_scalar(ureg_src(v), TGSI_SWIZZLE_X), matrow2, ureg_src(rgb));
-
-    /* rgb.a = 1; */
-    ureg_MOV(ureg, ureg_writemask(rgb, TGSI_WRITEMASK_W),
-	     ureg_scalar(matrow0, TGSI_SWIZZLE_X));
 
     ureg_MOV(ureg, out, ureg_src(rgb));
 
