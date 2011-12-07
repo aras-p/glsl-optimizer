@@ -122,7 +122,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    int stride;
 
    /* We sometimes get called with this by our intel_span.c usage. */
-   if (!irb->mt && !irb->wrapped_depth) {
+   if (!irb->mt) {
       *out_map = NULL;
       *out_stride = 0;
       return;
