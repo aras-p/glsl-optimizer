@@ -32,6 +32,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "tgsi/tgsi_scan.h"
 #include "sp_context.h"
@@ -100,6 +101,21 @@ get_depth_stencil_values( struct depth_data *data,
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
          data->bzzzz[j] = 0;
          data->stencilVals[j] = tile->data.stencil8[y][x];
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         data->bzzzz[j] = tile->data.depth32[y][x];
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         data->bzzzz[j] = tile->data.depth64[y][x] & 0xffffffff;
+         data->stencilVals[j] = (tile->data.depth64[y][x] >> 32) & 0xff;
       }
       break;
    default:
@@ -182,6 +198,17 @@ convert_quad_depth( struct depth_data *data,
          }
       }
       break;
+   case PIPE_FORMAT_Z32_FLOAT:
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      {
+         union fi fui;
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            fui.f = quad->output.depth[j];
+            data->qzzzz[j] = fui.ui;
+         }
+      }
+      break;
    default:
       assert(0);
    }
@@ -207,6 +234,8 @@ convert_quad_stencil( struct depth_data *data,
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
    case PIPE_FORMAT_S8_UINT:
+   case PIPE_FORMAT_Z32_FLOAT:
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       for (j = 0; j < QUAD_SIZE; j++) {
          data->shader_stencil_refs[j] = ((unsigned)(quad->output.stencil[j]));
       }
@@ -272,7 +301,20 @@ write_depth_stencil_values( struct depth_data *data,
          tile->data.stencil8[y][x] = data->stencilVals[j];
       }
       break;
-
+   case PIPE_FORMAT_Z32_FLOAT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         tile->data.depth32[y][x] = data->bzzzz[j];
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->input.x0 % TILE_SIZE + (j & 1);
+         int y = quad->input.y0 % TILE_SIZE + (j >> 1);
+         tile->data.depth64[y][x] = (uint64_t)data->bzzzz[j] | ((uint64_t)data->stencilVals[j] << 32);
+      }
+      break;
    default:
       assert(0);
    }

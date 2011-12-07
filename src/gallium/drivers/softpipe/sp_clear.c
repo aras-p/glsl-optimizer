@@ -50,7 +50,7 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
                double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   unsigned cv;
+   uint64_t cv;
    uint i;
 
    if (softpipe->no_rast)
@@ -73,7 +73,7 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
       static const union pipe_color_union zero;
       struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
 
-      cv = util_pack_z_stencil(ps->format, depth, stencil);
+      cv = util_pack64_z_stencil(ps->format, depth, stencil);
       sp_tile_cache_clear(softpipe->zsbuf_cache, &zero, cv);
    }
 

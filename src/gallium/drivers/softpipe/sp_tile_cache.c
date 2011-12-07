@@ -268,7 +268,7 @@ clear_tile_rgba(struct softpipe_cached_tile *tile,
 static void
 clear_tile(struct softpipe_cached_tile *tile,
            enum pipe_format format,
-           uint clear_value)
+           uint64_t clear_value)
 {
    uint i, j;
 
@@ -295,7 +295,19 @@ clear_tile(struct softpipe_cached_tile *tile,
       else {
          for (i = 0; i < TILE_SIZE; i++) {
             for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.color32[i][j] = clear_value;
+               tile->data.depth32[i][j] = clear_value;
+            }
+         }
+      }
+      break;
+   case 8:
+      if (clear_value == 0) {
+         memset(tile->data.any, 0, 8 * TILE_SIZE * TILE_SIZE);
+      }
+      else {
+         for (i = 0; i < TILE_SIZE; i++) {
+            for (j = 0; j < TILE_SIZE; j++) {
+               tile->data.depth64[i][j] = clear_value;
             }
          }
       }
@@ -601,7 +613,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
 void
 sp_tile_cache_clear(struct softpipe_tile_cache *tc,
                     const union pipe_color_union *color,
-                    uint clearValue)
+                    uint64_t clearValue)
 {
    uint pos;
 

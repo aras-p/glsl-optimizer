@@ -70,6 +70,7 @@ struct softpipe_cached_tile
       ubyte stencil8[TILE_SIZE][TILE_SIZE];
       uint colorui128[TILE_SIZE][TILE_SIZE][4];
       int colori128[TILE_SIZE][TILE_SIZE][4];
+      uint64_t depth64[TILE_SIZE][TILE_SIZE];
       ubyte any[1];
    } data;
 };
@@ -88,7 +89,7 @@ struct softpipe_tile_cache
    struct softpipe_cached_tile *entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    union pipe_color_union clear_color; /**< for color bufs */
-   uint clear_val;        /**< for z+stencil */
+   uint64_t clear_val;        /**< for z+stencil */
    boolean depth_stencil; /**< Is the surface a depth/stencil format? */
 
    struct softpipe_cached_tile *tile;  /**< scratch tile for clears */
@@ -123,7 +124,7 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc);
 extern void
 sp_tile_cache_clear(struct softpipe_tile_cache *tc,
                     const union pipe_color_union *color,
-                    uint clearValue);
+                    uint64_t clearValue);
 
 extern struct softpipe_cached_tile *
 sp_find_cached_tile(struct softpipe_tile_cache *tc, 

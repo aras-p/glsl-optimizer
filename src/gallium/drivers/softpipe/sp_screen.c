@@ -250,19 +250,6 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    if (bind & PIPE_BIND_DEPTH_STENCIL) {
       if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
-
-      /*
-       * TODO: Unfortunately we cannot render into anything more than 32 bits
-       * because we encode depth and stencil clear values into a 32bit word.
-       */
-      if (format_desc->block.bits > 32)
-         return FALSE;
-
-      /*
-       * TODO: eliminate this restriction
-       */
-      if (format == PIPE_FORMAT_Z32_FLOAT)
-         return FALSE;
    }
 
    /*
