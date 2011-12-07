@@ -212,6 +212,9 @@ brw_depthbuffer_format(struct brw_context *brw)
       drb = srb;
    }
 
+   if (!drb)
+      return BRW_DEPTHFORMAT_D32_FLOAT;
+
    switch (drb->Base.Format) {
    case MESA_FORMAT_Z16:
       return BRW_DEPTHFORMAT_D16_UNORM;
