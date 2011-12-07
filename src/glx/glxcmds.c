@@ -594,7 +594,7 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
                                                               (c, contextID),
                                                               NULL);
 
-   const Bool is_direct = reply->is_direct ? True : False;
+   const Bool is_direct = (reply != NULL && reply->is_direct) ? True : False;
    free(reply);
 
    return is_direct;
