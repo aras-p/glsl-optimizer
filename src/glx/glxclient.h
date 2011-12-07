@@ -227,9 +227,6 @@ struct glx_context_vtable {
    void * (*get_proc_address)(const char *symbol);
 };
 
-extern void
-glx_send_destroy_context(Display *dpy, XID xid);
-
 /**
  * GLX state that needs to be kept on the client.  One of these records
  * exist for each context that has been made current by this client.

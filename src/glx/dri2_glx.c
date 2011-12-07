@@ -120,9 +120,6 @@ dri2_destroy_context(struct glx_context *context)
 
    driReleaseDrawables(&pcp->base);
 
-   if (context->xid)
-      glx_send_destroy_context(psc->base.dpy, context->xid);
-
    if (context->extensions)
       XFree((char *) context->extensions);
 

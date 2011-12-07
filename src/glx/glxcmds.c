@@ -381,7 +381,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
                         X_GLXCreateContext, renderType, vis->screen);
 }
 
-_X_HIDDEN void
+static void
 glx_send_destroy_context(Display *dpy, XID xid)
 {
    CARD8 opcode = __glXSetupForCommand(dpy);
@@ -405,25 +405,24 @@ glXDestroyContext(Display * dpy, GLXContext ctx)
 {
    struct glx_context *gc = (struct glx_context *) ctx;
 
-   if (!gc)
+   if (gc == NULL || gc->xid == None)
       return;
 
    __glXLock();
+   if (!gc->imported)
+      glx_send_destroy_context(dpy, gc->xid);
+
    if (gc->currentDpy) {
       /* This context is bound to some thread.  According to the man page,
        * we should not actually delete the context until it's unbound.
        * Note that we set gc->xid = None above.  In MakeContextCurrent()
        * we check for that and delete the context there.
        */
-      if (!gc->imported)
-	 glx_send_destroy_context(dpy, gc->xid);
       gc->xid = None;
-      __glXUnlock();
-      return;
+   } else {
+      gc->vtable->destroy(gc);
    }
    __glXUnlock();
-
-   gc->vtable->destroy(gc);
 }
 
 /*
@@ -1566,9 +1565,30 @@ _X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
    return (ctx == NULL) ? None : ctx->xid;
 }
 
-_X_EXPORT
-GLX_ALIAS_VOID(glXFreeContextEXT, (Display *dpy, GLXContext ctx), (dpy, ctx),
-	       glXDestroyContext);
+_X_EXPORT void
+glXFreeContextEXT(Display *dpy, GLXContext ctx)
+{
+   struct glx_context *gc = (struct glx_context *) ctx;
+
+   if (gc == NULL || gc->xid == None)
+      return;
+
+   /* The GLX_EXT_import_context spec says:
+    *
+    *     "glXFreeContext does not free the server-side context information or
+    *     the XID associated with the server-side context."
+    *
+    * Don't send any protocol.  Just destroy the client-side tracking of the
+    * context.  Also, only release the context structure if it's not current.
+    */
+   __glXLock();
+   if (gc->currentDpy) {
+      gc->xid = None;
+   } else {
+      gc->vtable->destroy(gc);
+   }
+   __glXUnlock();
+}
 
 _X_EXPORT GLXFBConfig *
 glXChooseFBConfig(Display * dpy, int screen,

@@ -43,9 +43,6 @@ static struct _glapi_table *IndirectAPI = NULL;
 static void
 indirect_destroy_context(struct glx_context *gc)
 {
-   if (!gc->imported && gc->xid)
-      glx_send_destroy_context(gc->psc->dpy, gc->xid);
-
    __glXFreeVertexArrayState(gc);
 
    if (gc->vendor)
