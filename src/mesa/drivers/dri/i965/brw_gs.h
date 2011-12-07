@@ -66,6 +66,8 @@ struct brw_gs_compile {
 
    /* Number of registers used to store vertex data */
    GLuint nr_regs;
+
+   struct brw_vue_map vue_map;
 };
 
 #define ATTR_SIZE  (4*4)

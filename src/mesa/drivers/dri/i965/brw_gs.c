@@ -57,9 +57,8 @@ static void compile_gs_prog( struct brw_context *brw,
    
    c.key = *key;
    /* The geometry shader needs to access the entire VUE. */
-   struct brw_vue_map vue_map;
-   brw_compute_vue_map(&vue_map, intel, c.key.userclip_active, c.key.attrs);
-   c.nr_regs = (vue_map.num_slots + 1)/2;
+   brw_compute_vue_map(&c.vue_map, intel, c.key.userclip_active, c.key.attrs);
+   c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
    
