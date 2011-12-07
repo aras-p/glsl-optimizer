@@ -208,6 +208,7 @@ brw_depthbuffer_format(struct brw_context *brw)
 
    if (!drb &&
        (srb = intel_get_renderbuffer(fb, BUFFER_STENCIL)) &&
+       !srb->mt->stencil_mt &&
        srb->Base.Format == MESA_FORMAT_S8_Z24) {
       drb = srb;
    }
@@ -239,8 +240,10 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_mipmap_tree *stencil_mt = NULL;
    struct intel_region *hiz_region = NULL;
    unsigned int len;
+   bool separate_stencil = false;
 
    if (depth_irb &&
        depth_irb->mt &&
@@ -256,17 +259,21 @@ static void emit_depthbuffer(struct brw_context *brw)
       intel_emit_depth_stall_flushes(intel);
    }
 
-   /*
-    * If either depth or stencil buffer has packed depth/stencil format,
-    * then don't use separate stencil. Emit only a depth buffer.
-    */
-   if (depth_irb && depth_irb->Base.Format == MESA_FORMAT_S8_Z24) {
-      stencil_irb = NULL;
-   } else if (!depth_irb && stencil_irb
-	      && stencil_irb->Base.Format == MESA_FORMAT_S8_Z24) {
-      depth_irb = stencil_irb;
-      stencil_irb = NULL;
+   /* Find the real separate stencil mt if present. */
+   if (stencil_irb) {
+      stencil_mt = stencil_irb->mt;
+      if (stencil_mt->stencil_mt)
+	 stencil_mt = stencil_mt->stencil_mt;
+
+      if (stencil_mt->format == MESA_FORMAT_S8)
+	 separate_stencil = true;
    }
+
+   /* If there's a packed depth/stencil bound to stencil only, we need to
+    * emit the packed depth/stencil buffer packet.
+    */
+   if (!depth_irb && stencil_irb && !separate_stencil)
+      depth_irb = stencil_irb;
 
    if (intel->gen >= 6)
       len = 7;
@@ -275,7 +282,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    else
       len = 5;
 
-   if (!depth_irb && !stencil_irb) {
+   if (!depth_irb && !separate_stencil) {
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
@@ -292,7 +299,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       ADVANCE_BATCH();
 
-   } else if (!depth_irb && stencil_irb) {
+   } else if (!depth_irb && separate_stencil) {
       /*
        * There exists a separate stencil buffer but no depth buffer.
        *
@@ -317,10 +324,9 @@ static void emit_depthbuffer(struct brw_context *brw)
        * Section 7.5.5.1.1 3DSTATE_DEPTH_BUFFER, Bit 1.27 Tiled Surface:
        *     [DevGT+]: This field must be set to TRUE.
        */
-      struct intel_region *region = stencil_irb->mt->region;
+      struct intel_region *region = stencil_mt->region;
 
       assert(intel->has_separate_stencil);
-      assert(stencil_irb->Base.Format == MESA_FORMAT_S8);
 
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
@@ -346,7 +352,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       uint32_t tile_x, tile_y, offset;
 
       /* If using separate stencil, hiz must be enabled. */
-      assert(!stencil_irb || hiz_region);
+      assert(!separate_stencil || hiz_region);
 
       offset = intel_renderbuffer_tile_offsets(depth_irb, &tile_x, &tile_y);
 
@@ -381,7 +387,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   if (hiz_region || stencil_irb) {
+   if (hiz_region || separate_stencil) {
       /*
        * In the 3DSTATE_DEPTH_BUFFER batch emitted above, the 'separate
        * stencil enable' and 'hiz enable' bits were set. Therefore we must
@@ -408,8 +414,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       }
 
       /* Emit stencil buffer. */
-      if (stencil_irb) {
-	 struct intel_region *region = stencil_irb->mt->region;
+      if (separate_stencil) {
+	 struct intel_region *region = stencil_mt->region;
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(region->pitch * region->cpp - 1);

@@ -38,20 +38,32 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
+
+   if (drb)
+      depth_mt = drb->mt;
+
+   if (srb) {
+      stencil_mt = srb->mt;
+      if (stencil_mt->stencil_mt)
+	 stencil_mt = stencil_mt->stencil_mt;
+
+      assert(stencil_mt->format == MESA_FORMAT_S8);
+   }
+
+   /* Gen7 doesn't support packed depth/stencil */
+   assert(stencil_mt == NULL || depth_mt != stencil_mt);
 
    intel_emit_depth_stall_flushes(intel);
 
-   /* Gen7 doesn't support packed depth/stencil */
-   assert(srb == NULL || srb != drb);
-
-   if (drb == NULL) {
+   if (depth_mt == NULL) {
       uint32_t dw1 = BRW_DEPTHFORMAT_D32_FLOAT << 18;
       uint32_t dw3 = 0;
 
-      if (srb == NULL) {
+      if (stencil_mt == NULL) {
 	 dw1 |= (BRW_SURFACE_NULL << 29);
       } else {
-	 struct intel_region *region = srb->mt->region;
+	 struct intel_region *region = stencil_mt->region;
 
 	 /* _NEW_STENCIL: enable stencil buffer writes */
 	 dw1 |= ((ctx->Stencil.WriteMask != 0) << 27);
@@ -71,7 +83,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
-      struct intel_region *region = drb->mt->region;
+      struct intel_region *region = depth_mt->region;
       uint32_t tile_x, tile_y, offset;
 
       offset = intel_renderbuffer_tile_offsets(drb, &tile_x, &tile_y);
@@ -84,7 +96,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(brw_depthbuffer_format(brw) << 18) |
 		(0 << 22) /* no HiZ buffer */ |
-		((srb != NULL && ctx->Stencil.WriteMask != 0) << 27) |
+		((stencil_mt != NULL && ctx->Stencil.WriteMask != 0) << 27) |
 		((ctx->Depth.Mask != 0) << 28) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->bo,
@@ -104,7 +116,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   if (srb == NULL) {
+   if (stencil_mt == NULL) {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
       OUT_BATCH(0);
@@ -113,8 +125,8 @@ static void emit_depthbuffer(struct brw_context *brw)
    } else {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
-      OUT_BATCH(srb->mt->region->pitch * srb->mt->region->cpp - 1);
-      OUT_RELOC(srb->mt->region->bo,
+      OUT_BATCH(stencil_mt->region->pitch * stencil_mt->region->cpp - 1);
+      OUT_RELOC(stencil_mt->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		0);
       ADVANCE_BATCH();

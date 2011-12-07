@@ -72,7 +72,6 @@ struct intel_renderbuffer
     * are the real renderbuffers.
     */
    struct gl_renderbuffer *wrapped_depth;
-   struct gl_renderbuffer *wrapped_stencil;
    /** \} */
 
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */
@@ -132,11 +131,6 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    case BUFFER_DEPTH:
       if (irb->wrapped_depth) {
 	 irb = intel_renderbuffer(irb->wrapped_depth);
-      }
-      break;
-   case BUFFER_STENCIL:
-      if (irb->wrapped_stencil) {
-	 irb = intel_renderbuffer(irb->wrapped_stencil);
       }
       break;
    default:

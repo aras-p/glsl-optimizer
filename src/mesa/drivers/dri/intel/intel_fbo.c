@@ -81,9 +81,12 @@ struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
    struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-   if (irb && irb->mt)
-      return irb->mt->region;
-   else
+   if (irb && irb->mt) {
+      if (attIndex == BUFFER_STENCIL && irb->mt->stencil_mt)
+	 return irb->mt->stencil_mt->region;
+      else
+	 return irb->mt->region;
+   } else
       return NULL;
 }
 
@@ -111,7 +114,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    intel_miptree_release(&irb->mt);
 
    _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
-   _mesa_reference_renderbuffer(&irb->wrapped_stencil, NULL);
 
    free(irb);
 }
@@ -260,24 +262,19 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 
    if (irb->mt->stencil_mt) {
       bool ok;
-      struct intel_renderbuffer *depth_irb, *stencil_irb;
+      struct intel_renderbuffer *depth_irb;
 
       /* The RB got allocated as separate stencil.  Hook up our wrapped
-       * renderbuffers so that consumers of intel_get_renderbuffer() end up
-       * with pointers to the separate pieces.
+       * renderbuffer so that consumers of intel_get_renderbuffer(BUFFER_DEPTH)
+       * end up with pointers to the separate depth.
        */
       if (!irb->wrapped_depth) {
 	 _mesa_reference_renderbuffer(&irb->wrapped_depth,
 				      intel_new_renderbuffer(ctx, ~0));
       }
-      if (!irb->wrapped_stencil) {
-	 _mesa_reference_renderbuffer(&irb->wrapped_stencil,
-				      intel_new_renderbuffer(ctx, ~0));
-      }
 
       depth_irb = intel_renderbuffer(irb->wrapped_depth);
-      stencil_irb = intel_renderbuffer(irb->wrapped_stencil);
-      if (!depth_irb || !stencil_irb) {
+      if (!depth_irb) {
 	 intel_miptree_release(&irb->mt);
 	 return false;
       }
@@ -287,13 +284,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 					     0, 0, /* level, layer */
 					     MESA_FORMAT_X8_Z24,
 					     GL_DEPTH_COMPONENT24);
-      assert(ok);
-
-      ok = intel_renderbuffer_update_wrapper(intel, stencil_irb,
-					     irb->mt->stencil_mt,
-					     0, 0, /* level, layer */
-					     MESA_FORMAT_S8,
-					     GL_STENCIL_INDEX);
       assert(ok);
    }
 
@@ -541,32 +531,25 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    irb->mt_level = level;
    irb->mt_layer = layer;
 
+   intel_miptree_reference(&irb->mt, mt);
    if (mt->stencil_mt && _mesa_is_depthstencil_format(rb->InternalFormat)) {
-      assert((irb->wrapped_depth == NULL) == (irb->wrapped_stencil == NULL));
-
       struct intel_renderbuffer *depth_irb;
-      struct intel_renderbuffer *stencil_irb;
 
       if (!irb->wrapped_depth) {
 	 depth_irb = intel_renderbuffer_wrap_miptree(intel,
 	                                             mt, level, layer,
 	                                             MESA_FORMAT_X8_Z24,
 	                                             GL_DEPTH_COMPONENT24);
-	 stencil_irb = intel_renderbuffer_wrap_miptree(intel,
-	                                               mt->stencil_mt,
-	                                               level, layer,
-	                                               MESA_FORMAT_S8,
-	                                               GL_STENCIL_INDEX8);
 	 _mesa_reference_renderbuffer(&irb->wrapped_depth, &depth_irb->Base);
-	 _mesa_reference_renderbuffer(&irb->wrapped_stencil, &stencil_irb->Base);
 
-	 if (!irb->wrapped_depth || !irb->wrapped_stencil)
+	 if (!irb->wrapped_depth) {
+	    intel_miptree_release(&irb->mt);
 	    return false;
+	 }
       } else {
 	 bool ok = true;
 
 	 depth_irb = intel_renderbuffer(irb->wrapped_depth);
-	 stencil_irb = intel_renderbuffer(irb->wrapped_stencil);
 
 	 ok &= intel_renderbuffer_update_wrapper(intel,
 	                                         depth_irb,
@@ -574,20 +557,12 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 	                                         level, layer,
 	                                         MESA_FORMAT_X8_Z24,
 	                                         GL_DEPTH_COMPONENT24);
-	 ok &= intel_renderbuffer_update_wrapper(intel,
-	                                         stencil_irb,
-	                                         mt->stencil_mt,
-	                                         level, layer,
-	                                         MESA_FORMAT_S8,
-	                                         GL_STENCIL_INDEX8);
-	 if (!ok)
+	 if (!ok) {
+	    intel_miptree_release(&irb->mt);
 	    return false;
+	 }
       }
-
-      intel_miptree_reference(&depth_irb->mt->stencil_mt, stencil_irb->mt);
-      intel_miptree_reference(&irb->mt, depth_irb->mt);
    } else {
-      intel_miptree_reference(&irb->mt, mt);
       intel_renderbuffer_set_draw_offset(irb);
 
       if (mt->hiz_mt == NULL &&
@@ -857,8 +832,11 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    if (depthRb)
       depth_mt = depthRb->mt;
-   if (stencilRb)
+   if (stencilRb) {
       stencil_mt = stencilRb->mt;
+      if (stencil_mt->stencil_mt)
+	 stencil_mt = stencil_mt->stencil_mt;
+   }
 
    if (depth_mt && stencil_mt) {
       if (depth_mt == stencil_mt) {

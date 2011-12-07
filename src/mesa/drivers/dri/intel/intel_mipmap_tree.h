@@ -149,8 +149,7 @@ struct intel_mipmap_tree
     * two miptrees for storing the data.  If the depthstencil texture or rb is
     * MESA_FORMAT_Z32_FLOAT_X24S8, then mt->format will be
     * MESA_FORMAT_Z32_FLOAT, otherwise for MESA_FORMAT_S8_Z24 objects it will be
-    * MESA_FORMAT_S8_Z24 (textures) or MESA_FORMAT_X8_Z24 (renderbuffers).
-    * mt->stencil_mt->format will always be MESA_FORMAT_S8.
+    * MESA_FORMAT_S8_Z24.
     */
    gl_format format;
 
