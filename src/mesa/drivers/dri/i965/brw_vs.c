@@ -279,8 +279,10 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    struct brw_vs_prog_key key;
+   /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
+   struct gl_program *prog = (struct gl_program *) brw->vertex_program;
    int i;
 
    memset(&key, 0, sizeof(key));
@@ -314,6 +316,12 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 	 if (ctx->Point.CoordReplace[i])
 	    key.point_coord_replace |= (1 << i);
       }
+   }
+
+   /* _NEW_TEXTURE */
+   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      if (prog->TexturesUsed[i])
+	 brw_populate_sampler_prog_key_data(ctx, &key.tex, i);
    }
 
    /* BRW_NEW_VERTICES */

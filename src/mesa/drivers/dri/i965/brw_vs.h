@@ -36,6 +36,7 @@
 
 #include "brw_context.h"
 #include "brw_eu.h"
+#include "brw_program.h"
 #include "program/program.h"
 
 
@@ -76,6 +77,8 @@ struct brw_vs_prog_key {
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;
    GLuint clamp_vertex_color:1;
+
+   struct brw_sampler_prog_key_data tex;
 };
 
 
