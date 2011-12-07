@@ -1563,7 +1563,7 @@ _X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
 {
    struct glx_context *ctx = (struct glx_context *) ctx_user;
 
-   return ctx->xid;
+   return (ctx == NULL) ? None : ctx->xid;
 }
 
 _X_EXPORT
