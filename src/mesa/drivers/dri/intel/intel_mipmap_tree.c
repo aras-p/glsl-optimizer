@@ -89,9 +89,6 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
-   intel_get_texture_alignment_unit(intel, format,
-				    &mt->align_w, &mt->align_h);
-
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
       mt->depth0 = 6;
@@ -108,16 +105,6 @@ intel_miptree_create_internal(struct intel_context *intel,
       assert(intel->has_separate_stencil);
       mt->cpp = 2;
    }
-
-#ifdef I915
-   (void) intel;
-   if (intel->is_945)
-      i945_miptree_layout(mt);
-   else
-      i915_miptree_layout(mt);
-#else
-   brw_miptree_layout(intel, mt);
-#endif
 
    if (_mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
        (intel->must_use_separate_stencil ||
@@ -142,11 +129,27 @@ intel_miptree_create_internal(struct intel_context *intel,
        */
       if (mt->format == MESA_FORMAT_S8_Z24) {
 	 mt->format = MESA_FORMAT_X8_Z24;
+      } else if (mt->format == MESA_FORMAT_Z32_FLOAT_X24S8) {
+	 mt->format = MESA_FORMAT_Z32_FLOAT;
+	 mt->cpp = 4;
       } else {
-	 _mesa_problem("Unknown format %s in separate stencil\n",
+	 _mesa_problem(NULL, "Unknown format %s in separate stencil mt\n",
 		       _mesa_get_format_name(mt->format));
       }
    }
+
+   intel_get_texture_alignment_unit(intel, mt->format,
+				    &mt->align_w, &mt->align_h);
+
+#ifdef I915
+   (void) intel;
+   if (intel->is_945)
+      i945_miptree_layout(mt);
+   else
+      i915_miptree_layout(mt);
+#else
+   brw_miptree_layout(intel, mt);
+#endif
 
    return mt;
 }
