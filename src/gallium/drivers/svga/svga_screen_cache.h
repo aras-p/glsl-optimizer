@@ -1,3 +1,4 @@
+
 /**********************************************************
  * Copyright 2008-2009 VMware, Inc.  All rights reserved.
  *
@@ -39,7 +40,7 @@
 /* Guess the storage size of cached surfaces and try and keep it under
  * this amount:
  */ 
-#define SVGA_HOST_SURFACE_CACHE_BYTES 16*1024*1024
+#define SVGA_HOST_SURFACE_CACHE_BYTES (16 * 1024 * 1024)
 
 /* Maximum number of discrete surfaces in the cache:
  */
@@ -89,7 +90,7 @@ struct svga_host_surface_cache_entry
  * Cache of the host surfaces.
  * 
  * A cache entry can be in the following stages:
- * 1. empty
+ * 1. empty (entry->handle = NULL)
  * 2. holding a buffer in a validate list
  * 3. holding a flushed buffer (not in any validate list) with an active fence
  * 4. holding a flushed buffer with an expired fence
@@ -117,6 +118,9 @@ struct svga_host_surface_cache
 
    /** The actual storage for the entries */
    struct svga_host_surface_cache_entry entries[SVGA_HOST_SURFACE_CACHE_SIZE];
+
+   /** Sum of sizes of all surfaces (in bytes) */
+   unsigned total_size;
 };
 
 

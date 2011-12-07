@@ -23,16 +23,54 @@
  *
  **********************************************************/
 
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_hash.h"
 
 #include "svga_debug.h"
+#include "svga_format.h"
 #include "svga_winsys.h"
 #include "svga_screen.h"
 #include "svga_screen_cache.h"
 
 
 #define SVGA_SURFACE_CACHE_ENABLED 1
+
+
+/**
+ * Return the size of the surface described by the key (in bytes).
+ */
+static unsigned
+surface_size(const struct svga_host_surface_cache_key *key)
+{
+   unsigned bw, bh, bpb, total_size, i;
+
+   assert(key->numMipLevels > 0);
+   assert(key->numFaces > 0);
+
+   if (key->format == SVGA3D_BUFFER) {
+      /* Special case: we don't want to count vertex/index buffers
+       * against the cache size limit, so view them as zero-sized.
+       */
+      return 0;
+   }
+
+   svga_format_size(key->format, &bw, &bh, &bpb);
+
+   total_size = 0;
+
+   for (i = 0; i < key->numMipLevels; i++) {
+      unsigned w = u_minify(key->size.width, i);
+      unsigned h = u_minify(key->size.height, i);
+      unsigned d = u_minify(key->size.depth, i);
+      unsigned img_size = ((w + bw - 1) / bw) * ((h + bh - 1) / bh) * d * bpb;
+      total_size += img_size;
+   }
+
+   total_size *= key->numFaces;
+
+   return total_size;
+}
 
 
 /** 
@@ -45,6 +83,11 @@ svga_screen_cache_bucket(const struct svga_host_surface_cache_key *key)
 }
 
 
+/**
+ * Search the cache for a surface that matches the key.  If a match is
+ * found, remove it from the cache and return the surface pointer.
+ * Return NULL otherwise.
+ */
 static INLINE struct svga_winsys_surface *
 svga_screen_cache_lookup(struct svga_screen *svgascreen,
                          const struct svga_host_surface_cache_key *key)
@@ -74,9 +117,11 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
       
       if(memcmp(&entry->key, key, sizeof *key) == 0 &&
          sws->fence_signalled( sws, entry->fence, 0 ) == 0) {
+         unsigned surf_size;
+
          assert(sws->surface_is_flushed(sws, entry->handle));
          
-         handle = entry->handle; // Reference is transfered here.
+         handle = entry->handle; /* Reference is transfered here. */
          entry->handle = NULL;
          
          LIST_DEL(&entry->bucket_head);
@@ -84,6 +129,14 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
          LIST_DEL(&entry->head);
          
          LIST_ADD(&entry->head, &cache->empty);
+
+         /* update the cache size */
+         surf_size = surface_size(&entry->key);
+         assert(surf_size <= cache->total_size);
+         if (surf_size > cache->total_size)
+            cache->total_size = 0; /* should never happen, but be safe */
+         else
+            cache->total_size -= surf_size;
 
          break;
       }
@@ -102,6 +155,45 @@ svga_screen_cache_lookup(struct svga_screen *svgascreen,
 }
 
 
+/**
+ * Free the least recently used entries in the surface cache until the
+ * cache size is <= the target size OR there are no unused entries left
+ * to discard.  We don't do any flushing to try to free up additional
+ * surfaces.
+ */
+static void
+svga_screen_cache_shrink(struct svga_screen *svgascreen,
+                         unsigned target_size)
+{
+   struct svga_host_surface_cache *cache = &svgascreen->cache;
+   struct svga_winsys_screen *sws = svgascreen->sws;
+   struct svga_host_surface_cache_entry *entry, *next_entry;
+
+   /* Walk over the list of unused buffers in reverse order: from oldest
+    * to newest.
+    */
+   LIST_FOR_EACH_ENTRY_SAFE_REV(entry, next_entry, &cache->unused, head) {
+      if (entry->key.format != SVGA3D_BUFFER) {
+         /* we don't want to discard vertex/index buffers */
+
+         cache->total_size -= surface_size(&entry->key);
+
+         assert(entry->handle);
+         sws->surface_reference(sws, &entry->handle, NULL);
+
+         LIST_DEL(&entry->bucket_head);
+         LIST_DEL(&entry->head);
+         LIST_ADD(&entry->head, &cache->empty);
+
+         if (cache->total_size <= target_size) {
+            /* all done */
+            break;
+         }
+      }
+   }
+}
+
+
 /*
  * Transfers a handle reference.
  */
@@ -115,6 +207,7 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_host_surface_cache_entry *entry = NULL;
    struct svga_winsys_surface *handle = *p_handle;
+   unsigned surf_size;
    
    assert(key->cachable);
 
@@ -122,9 +215,37 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    if(!handle)
       return;
    
+   surf_size = surface_size(key);
+
    *p_handle = NULL;
    pipe_mutex_lock(cache->mutex);
    
+   if (surf_size >= SVGA_HOST_SURFACE_CACHE_BYTES) {
+      /* this surface is too large to cache, just free it */
+      sws->surface_reference(sws, &handle, NULL);
+      pipe_mutex_unlock(cache->mutex);
+      return;
+   }
+
+   if (cache->total_size + surf_size > SVGA_HOST_SURFACE_CACHE_BYTES) {
+      /* Adding this surface would exceed the cache size.
+       * Try to discard least recently used entries until we hit the
+       * new target cache size.
+       */
+      unsigned target_size = SVGA_HOST_SURFACE_CACHE_BYTES - surf_size;
+
+      svga_screen_cache_shrink(svgascreen, target_size);
+
+      if (cache->total_size > target_size) {
+         /* we weren't able to shrink the cache as much as we wanted so
+          * just discard this surface.
+          */
+         sws->surface_reference(sws, &handle, NULL);
+         pipe_mutex_unlock(cache->mutex);
+         return;
+      }
+   }
+
    if(!LIST_IS_EMPTY(&cache->empty)) {
       /* use the first empty entry */
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->empty.next, head);
@@ -136,6 +257,9 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
       entry = LIST_ENTRY(struct svga_host_surface_cache_entry, cache->unused.prev, head);
       SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
                "unref sid %p (make space)\n", entry->handle);
+
+      cache->total_size -= surface_size(&entry->key);
+
       sws->surface_reference(sws, &entry->handle, NULL);
 
       LIST_DEL(&entry->bucket_head);
@@ -150,6 +274,8 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
       SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
                "cache sid %p\n", entry->handle);
       LIST_ADD(&entry->head, &cache->validated);
+
+      cache->total_size += surf_size;
    }
    else {
       /* Couldn't cache the buffer -- this really shouldn't happen */
@@ -216,6 +342,8 @@ svga_screen_cache_cleanup(struct svga_screen *svgascreen)
 	 SVGA_DBG(DEBUG_CACHE|DEBUG_DMA,
                   "unref sid %p (shutdown)\n", cache->entries[i].handle);
 	 sws->surface_reference(sws, &cache->entries[i].handle, NULL);
+
+         cache->total_size -= surface_size(&cache->entries[i].key);
       }
 
       if(cache->entries[i].fence)
@@ -231,6 +359,8 @@ svga_screen_cache_init(struct svga_screen *svgascreen)
 {
    struct svga_host_surface_cache *cache = &svgascreen->cache;
    unsigned i;
+
+   assert(cache->total_size == 0);
 
    pipe_mutex_init(cache->mutex);
    
