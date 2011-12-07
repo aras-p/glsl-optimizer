@@ -1411,14 +1411,23 @@ _X_EXPORT GLXContext
 glXImportContextEXT(Display *dpy, GLXContextID contextID)
 {
    struct glx_display *priv = __glXInitialize(dpy);
-   struct glx_screen *psc;
+   struct glx_screen *psc = NULL;
    xGLXQueryContextReply reply;
    CARD8 opcode;
    struct glx_context *ctx;
-   int propList[__GLX_MAX_CONTEXT_PROPS * 2], *pProp, nPropListBytes;
+
+   /* This GLX implementation knows about 5 different properties, so
+    * allow the server to send us one of each.
+    */
+   int propList[5 * 2], *pProp, nPropListBytes;
+   int numProps;
    int i, renderType;
    XID share;
    struct glx_config *mode;
+   uint32_t fbconfigID = 0;
+   uint32_t visualID = 0;
+   uint32_t screen;
+   Bool got_screen = False;
 
    if (contextID == None || __glXIsDirect(dpy, contextID))
       return NULL;
@@ -1463,34 +1472,44 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    UnlockDisplay(dpy);
    SyncHandle();
 
-   /* Look up screen first so we can look up visuals/fbconfigs later */
-   psc = NULL;
-   for (i = 0, pProp = propList; i < reply.n; i++, pProp += 2)
-      if (pProp[0] == GLX_SCREEN)
-	 psc = GetGLXScreenConfigs(dpy, pProp[1]);
-   if (psc == NULL)
-      return NULL;
-
+   numProps = nPropListBytes / (2 * sizeof(propList[0]));
    share = None;
    mode = NULL;
    renderType = 0;
    pProp = propList;
 
-   for (i = 0, pProp = propList; i < reply.n; i++, pProp += 2)
+   for (i = 0, pProp = propList; i < numProps; i++, pProp += 2)
       switch (pProp[0]) {
+      case GLX_SCREEN:
+	 screen = pProp[1];
+	 got_screen = True;
+	 break;
       case GLX_SHARE_CONTEXT_EXT:
 	 share = pProp[1];
 	 break;
       case GLX_VISUAL_ID_EXT:
-	 mode = glx_config_find_visual(psc->visuals, pProp[1]);
+	 visualID = pProp[1];
 	 break;
       case GLX_FBCONFIG_ID:
-	 mode = glx_config_find_fbconfig(psc->configs, pProp[1]);
+	 fbconfigID = pProp[1];
 	 break;
       case GLX_RENDER_TYPE:
 	 renderType = pProp[1];
 	 break;
       }
+
+   if (!got_screen)
+      return NULL;
+
+   psc = GetGLXScreenConfigs(dpy, screen);
+   if (psc == NULL)
+      return NULL;
+
+   if (fbconfigID != 0) {
+      mode = glx_config_find_fbconfig(psc->configs, fbconfigID);
+   } else if (visualID != 0) {
+      mode = glx_config_find_visual(psc->visuals, visualID);
+   }
 
    if (mode == NULL)
       return NULL;
