@@ -1878,7 +1878,56 @@ vec4_visitor::visit(ir_texture *ir)
 
    emit(inst);
 
-   this->result = src_reg(inst->dst);
+   swizzle_result(ir, src_reg(inst->dst), sampler);
+}
+
+void
+vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
+{
+   this->result = orig_val;
+
+   int s = c->key.tex.swizzles[sampler];
+
+   if (ir->op == ir_txs || ir->type == glsl_type::float_type
+			|| s == SWIZZLE_NOOP)
+      return;
+
+   int zero_mask = 0, one_mask = 0, copy_mask = 0;
+   int swizzle[4];
+
+   for (int i = 0; i < 4; i++) {
+      switch (GET_SWZ(s, i)) {
+      case SWIZZLE_ZERO:
+	 zero_mask |= (1 << i);
+	 break;
+      case SWIZZLE_ONE:
+	 one_mask |= (1 << i);
+	 break;
+      default:
+	 copy_mask |= (1 << i);
+	 swizzle[i] = GET_SWZ(s, i);
+	 break;
+      }
+   }
+
+   this->result = src_reg(this, ir->type);
+   dst_reg swizzled_result(this->result);
+
+   if (copy_mask) {
+      orig_val.swizzle = BRW_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
+      swizzled_result.writemask = copy_mask;
+      emit(MOV(swizzled_result, orig_val));
+   }
+
+   if (zero_mask) {
+      swizzled_result.writemask = zero_mask;
+      emit(MOV(swizzled_result, src_reg(0.0f)));
+   }
+
+   if (one_mask) {
+      swizzled_result.writemask = one_mask;
+      emit(MOV(swizzled_result, src_reg(1.0f)));
+   }
 }
 
 void

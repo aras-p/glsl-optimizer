@@ -497,6 +497,8 @@ public:
    void emit_math2_gen4(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
    void emit_math(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
 
+   void swizzle_result(ir_texture *ir, src_reg orig_val, int sampler);
+
    void emit_ndc_computation();
    void emit_psiz_and_flags(struct brw_reg reg);
    void emit_clip_distances(struct brw_reg reg, int offset);
