@@ -293,6 +293,7 @@ brwCreateContext(int api,
 	 brw->urb.max_vs_entries = 128; /* volume 2a (see 3DSTATE_URB) */
 	 brw->urb.max_gs_entries = 256;
       }
+      brw->urb.gen6_gs_previously_active = false;
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;
       brw->max_vs_threads = 72;

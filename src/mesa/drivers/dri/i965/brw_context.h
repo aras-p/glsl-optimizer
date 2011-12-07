@@ -708,6 +708,11 @@ struct brw_context
       GLuint sf_start;
       GLuint cs_start;
       GLuint size; /* Hardware URB size, in KB. */
+
+      /* gen6: True if the most recently sent _3DSTATE_URB message allocated
+       * URB space for the GS.
+       */
+      bool gen6_gs_previously_active;
    } urb;
 
    
