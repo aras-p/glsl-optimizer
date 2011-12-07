@@ -619,20 +619,16 @@ intel_renderbuffer_wrap_miptree(struct intel_context *intel,
                                 GLenum internal_format)
 
 {
-   const GLuint name = ~0;   /* not significant, but distinct for debugging */
    struct gl_context *ctx = &intel->ctx;
+   struct gl_renderbuffer *rb;
    struct intel_renderbuffer *irb;
 
    intel_miptree_check_level_layer(mt, level, layer);
 
-   irb = CALLOC_STRUCT(intel_renderbuffer);
-   if (!irb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture");
+   rb = intel_new_renderbuffer(ctx, ~0);
+   irb = intel_renderbuffer(rb);
+   if (!irb)
       return NULL;
-   }
-
-   _mesa_init_renderbuffer(&irb->Base, name);
-   irb->Base.ClassID = INTEL_RB_CLASS;
 
    if (!intel_renderbuffer_update_wrapper(intel, irb,
                                           mt, level, layer,
