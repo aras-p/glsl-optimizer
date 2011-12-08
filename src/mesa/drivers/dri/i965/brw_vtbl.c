@@ -95,15 +95,11 @@ brw_update_draw_buffer(struct intel_context *intel)
 {
    struct gl_context *ctx = &intel->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *irbStencil = NULL;
-   bool fb_has_hiz = intel_framebuffer_has_hiz(fb);
 
    if (!fb) {
       /* this can happen during the initial context initialization */
       return;
    }
-
-   irbStencil = intel_get_renderbuffer(fb, BUFFER_STENCIL);
 
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
@@ -121,18 +117,6 @@ brw_update_draw_buffer(struct intel_context *intel)
        */
       /*_mesa_debug(ctx, "DrawBuffer: incomplete user FBO\n");*/
       return;
-   }
-
-   /* Check some stencil invariants.  These should probably be in
-    * emit_depthbuffer().
-    */
-   if (irbStencil && irbStencil->mt) {
-      if (!intel->has_separate_stencil)
-	 assert(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
-      if (fb_has_hiz || intel->must_use_separate_stencil)
-	 assert(irbStencil->Base.Format == MESA_FORMAT_S8);
-      if (irbStencil->Base.Format == MESA_FORMAT_S8)
-	 assert(intel->has_separate_stencil);
    }
 
    /* Mesa's Stencil._Enabled field is updated when
