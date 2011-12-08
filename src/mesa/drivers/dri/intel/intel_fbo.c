@@ -113,8 +113,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    intel_miptree_release(&irb->mt);
 
-   _mesa_reference_renderbuffer(&irb->wrapped_depth, NULL);
-
    free(irb);
 }
 
@@ -258,34 +256,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 intel_miptree_release(&irb->mt);
 	 return false;
       }
-   }
-
-   if (irb->mt->stencil_mt) {
-      bool ok;
-      struct intel_renderbuffer *depth_irb;
-
-      /* The RB got allocated as separate stencil.  Hook up our wrapped
-       * renderbuffer so that consumers of intel_get_renderbuffer(BUFFER_DEPTH)
-       * end up with pointers to the separate depth.
-       */
-      if (!irb->wrapped_depth) {
-	 _mesa_reference_renderbuffer(&irb->wrapped_depth,
-				      intel_new_renderbuffer(ctx, ~0));
-      }
-
-      depth_irb = intel_renderbuffer(irb->wrapped_depth);
-      if (!depth_irb) {
-	 intel_miptree_release(&irb->mt);
-	 return false;
-      }
-
-      assert(irb->mt->format == MESA_FORMAT_S8_Z24 ||
-	     irb->mt->format == MESA_FORMAT_X8_Z24);
-      ok = intel_renderbuffer_update_wrapper(intel, depth_irb, irb->mt,
-					     0, 0, /* level, layer */
-					     MESA_FORMAT_X8_Z24,
-					     GL_DEPTH_COMPONENT24);
-      assert(ok);
    }
 
    return true;
@@ -533,45 +503,14 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    irb->mt_layer = layer;
 
    intel_miptree_reference(&irb->mt, mt);
-   if (mt->stencil_mt && _mesa_is_depthstencil_format(rb->InternalFormat)) {
-      struct intel_renderbuffer *depth_irb;
 
-      if (!irb->wrapped_depth) {
-	 depth_irb = intel_renderbuffer_wrap_miptree(intel,
-	                                             mt, level, layer,
-	                                             MESA_FORMAT_X8_Z24,
-	                                             GL_DEPTH_COMPONENT24);
-	 _mesa_reference_renderbuffer(&irb->wrapped_depth, &depth_irb->Base);
+   intel_renderbuffer_set_draw_offset(irb);
 
-	 if (!irb->wrapped_depth) {
-	    intel_miptree_release(&irb->mt);
-	    return false;
-	 }
-      } else {
-	 bool ok = true;
-
-	 depth_irb = intel_renderbuffer(irb->wrapped_depth);
-
-	 ok &= intel_renderbuffer_update_wrapper(intel,
-	                                         depth_irb,
-	                                         mt,
-	                                         level, layer,
-	                                         MESA_FORMAT_X8_Z24,
-	                                         GL_DEPTH_COMPONENT24);
-	 if (!ok) {
-	    intel_miptree_release(&irb->mt);
-	    return false;
-	 }
-      }
-   } else {
-      intel_renderbuffer_set_draw_offset(irb);
-
-      if (mt->hiz_mt == NULL &&
-	  intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-	 intel_miptree_alloc_hiz(intel, mt);
-         if (!mt->hiz_mt)
-            return false;
-      }
+   if (mt->hiz_mt == NULL &&
+       intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
+      intel_miptree_alloc_hiz(intel, mt);
+      if (!mt->hiz_mt)
+	 return false;
    }
 
    return true;
@@ -982,11 +921,6 @@ intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb)
       intel_miptree_slice_set_needs_hiz_resolve(irb->mt,
                                                 irb->mt_level,
                                                 irb->mt_layer);
-   } else if (irb->wrapped_depth) {
-      intel_renderbuffer_set_needs_hiz_resolve(
-	    intel_renderbuffer(irb->wrapped_depth));
-   } else {
-      return;
    }
 }
 
@@ -997,11 +931,6 @@ intel_renderbuffer_set_needs_depth_resolve(struct intel_renderbuffer *irb)
       intel_miptree_slice_set_needs_depth_resolve(irb->mt,
                                                   irb->mt_level,
                                                   irb->mt_layer);
-   } else if (irb->wrapped_depth) {
-      intel_renderbuffer_set_needs_depth_resolve(
-	    intel_renderbuffer(irb->wrapped_depth));
-   } else {
-      return;
    }
 }
 
@@ -1014,9 +943,6 @@ intel_renderbuffer_resolve_hiz(struct intel_context *intel,
                                              irb->mt,
                                              irb->mt_level,
                                              irb->mt_layer);
-   if (irb->wrapped_depth)
-      return intel_renderbuffer_resolve_hiz(intel,
-					    intel_renderbuffer(irb->wrapped_depth));
 
    return false;
 }
@@ -1030,10 +956,6 @@ intel_renderbuffer_resolve_depth(struct intel_context *intel,
                                                irb->mt,
                                                irb->mt_level,
                                                irb->mt_layer);
-
-   if (irb->wrapped_depth)
-      return intel_renderbuffer_resolve_depth(intel,
-                                              intel_renderbuffer(irb->wrapped_depth));
 
    return false;
 }

@@ -64,16 +64,6 @@ struct intel_renderbuffer
    unsigned int mt_layer;
    /** \} */
 
-   /**
-    * \name Packed depth/stencil unwrappers
-    *
-    * If the intel_context is using separate stencil and this renderbuffer has
-    * a packed depth/stencil format, then wrapped_depth and wrapped_stencil
-    * are the real renderbuffers.
-    */
-   struct gl_renderbuffer *wrapped_depth;
-   /** \} */
-
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */
 };
 
@@ -115,7 +105,6 @@ static INLINE struct intel_renderbuffer *
 intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 {
    struct gl_renderbuffer *rb;
-   struct intel_renderbuffer *irb;
 
    assert((unsigned)attIndex < ARRAY_SIZE(fb->Attachment));
 
@@ -123,21 +112,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    if (!rb)
       return NULL;
 
-   irb = intel_renderbuffer(rb);
-   if (!irb)
-      return NULL;
-
-   switch (attIndex) {
-   case BUFFER_DEPTH:
-      if (irb->wrapped_depth) {
-	 irb = intel_renderbuffer(irb->wrapped_depth);
-      }
-      break;
-   default:
-      break;
-   }
-
-   return irb;
+   return intel_renderbuffer(rb);
 }
 
 bool
