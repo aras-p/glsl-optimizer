@@ -344,6 +344,7 @@ CreateContext(Display *dpy, int generic_id, struct glx_config *config,
    UnlockDisplay(dpy);
    SyncHandle();
 
+   gc->share_xid = shareList ? shareList->xid : None;
    gc->imported = GL_FALSE;
    gc->renderType = renderType;
 
