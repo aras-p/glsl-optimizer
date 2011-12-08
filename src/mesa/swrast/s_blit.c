@@ -478,7 +478,15 @@ simple_blit(struct gl_context *ctx,
    ASSERT(srcX1 - srcX0 == dstX1 - dstX0);
    ASSERT(srcY1 - srcY0 == dstY1 - dstY0);
 
-   /* determine if copy should be bottom-to-top or top-to-bottom */
+   /* From the GL_ARB_framebuffer_object spec:
+    *
+    *     "If the source and destination buffers are identical, and the source
+    *      and destination rectangles overlap, the result of the blit operation
+    *      is undefined."
+    *
+    * However, we provide the expected result anyway by flipping the order of
+    * the memcpy of rows.
+    */
    if (srcY0 > dstY0) {
       /* src above dst: copy bottom-to-top */
       yStep = 1;
