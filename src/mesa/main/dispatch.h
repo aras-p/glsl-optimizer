@@ -40,7 +40,11 @@
  * named function in the specified dispatch table.
  */
 
+/* GLXEXT is defined when building the GLX extension in the xserver.
+ */
+#if !defined(GLXEXT)
 #include "main/mfeatures.h"
+#endif
 
 #define CALL_by_offset(disp, cast, offset, parameters) \
     (*(cast (GET_by_offset(disp, offset)))) parameters
