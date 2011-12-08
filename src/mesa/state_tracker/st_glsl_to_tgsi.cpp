@@ -3514,25 +3514,23 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
          break;
 
       case TGSI_OPCODE_ENDIF:
-         --level;
-         break;
-
       case TGSI_OPCODE_ELSE:
-         /* Clear all channels written inside the preceding if block from the
-          * write array, but leave those that were not touched.
-          *
-          * FIXME: This destroys opportunities to remove dead code inside of
-          * IF blocks that are followed by an ELSE block.
+         /* Promote the recorded level all channels written inside the preceding
+          * if or else block to the level above the if/else block.
           */
          for (int r = 0; r < this->next_temp; r++) {
             for (int c = 0; c < 4; c++) {
                if (!writes[4 * r + c])
         	         continue;
 
-               if (write_level[4 * r + c] >= level)
-        	         writes[4 * r + c] = NULL;
+               if (write_level[4 * r + c] == level)
+        	         write_level[4 * r + c] = level-1;
             }
          }
+
+         if(inst->op == TGSI_OPCODE_ENDIF)
+            --level;
+         
          break;
 
       case TGSI_OPCODE_IF:
