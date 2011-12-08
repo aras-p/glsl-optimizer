@@ -3961,7 +3961,7 @@ dst_register(struct st_translate *t,
 
    case PROGRAM_TEMPORARY:
       if (ureg_dst_is_undef(t->temps[index]))
-         t->temps[index] = ureg_DECL_temporary(t->ureg);
+         t->temps[index] = ureg_DECL_local_temporary(t->ureg);
 
       return t->temps[index];
 
@@ -4002,7 +4002,7 @@ src_register(struct st_translate *t,
       assert(index >= 0);
       assert(index < Elements(t->temps));
       if (ureg_dst_is_undef(t->temps[index]))
-         t->temps[index] = ureg_DECL_temporary(t->ureg);
+         t->temps[index] = ureg_DECL_local_temporary(t->ureg);
       return ureg_src(t->temps[index]);
 
    case PROGRAM_NAMED_PARAM:
@@ -4259,7 +4259,7 @@ emit_wpos_adjustment( struct st_translate *t,
           * or not, which is determined by testing against the inversion
           * state variable used below, which will be either +1 or -1.
           */
-         struct ureg_dst adj_temp = ureg_DECL_temporary(ureg);
+         struct ureg_dst adj_temp = ureg_DECL_local_temporary(ureg);
 
          ureg_CMP(ureg, adj_temp,
                   ureg_scalar(wpostrans, invert ? 2 : 0),
@@ -4622,7 +4622,7 @@ st_translate_program(
        */
       for (i = 0; i < (unsigned)program->next_temp; i++) {
          /* XXX use TGSI_FILE_TEMPORARY_ARRAY when it's supported by ureg */
-         t->temps[i] = ureg_DECL_temporary(t->ureg);
+         t->temps[i] = ureg_DECL_local_temporary(t->ureg);
       }
    }
 
