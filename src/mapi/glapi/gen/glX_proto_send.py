@@ -1008,25 +1008,25 @@ class PrintGlxProtoInit_h(gl_XML.gl_print_base):
  * \\author Ian Romanick <idr@us.ibm.com>
  */
 """
-		self.printVisibility( "HIDDEN", "hidden" )
 		self.printFastcall()
 		self.printNoinline()
 
 		print """
+#include <X11/Xfuncproto.h>
 #include "glxclient.h"
 
-extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
+extern _X_HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
     void * dest, GLboolean reply_is_always_array );
 
-extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
+extern _X_HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
     struct glx_context * gc, unsigned max_dim, GLint width, GLint height,
     GLint depth, GLenum format, GLenum type, void * dest,
     GLboolean dimensions_in_reply );
 
-extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
+extern _X_HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
     struct glx_context * gc, GLint sop, GLint cmdlen );
 
-extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
+extern _X_HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
     struct glx_context * gc, GLint code, GLint vop, GLint cmdlen );
 """
 
@@ -1035,13 +1035,13 @@ extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
 		for func in api.functionIterateGlx():
 			params = func.get_parameter_string()
 
-			print 'extern HIDDEN %s __indirect_gl%s(%s);' % (func.return_type, func.name, params)
+			print 'extern _X_HIDDEN %s __indirect_gl%s(%s);' % (func.return_type, func.name, params)
 
 			for n in func.entry_points:
 				if func.has_different_protocol(n):
 					asdf = func.static_glx_name(n)
 					if asdf not in func.static_entry_points:
-						print 'extern HIDDEN %s gl%s(%s);' % (func.return_type, asdf, params)
+						print 'extern _X_HIDDEN %s gl%s(%s);' % (func.return_type, asdf, params)
 						# give it a easy-to-remember name
 						if func.client_handcode:
 							print '#define gl_dispatch_stub_%s gl%s' % (n, asdf)
@@ -1052,7 +1052,7 @@ extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
 
 		print ''
 		print '#ifdef GLX_SHARED_GLAPI'
-		print 'extern HIDDEN void (*__indirect_get_proc_address(const char *name))(void);'
+		print 'extern _X_HIDDEN void (*__indirect_get_proc_address(const char *name))(void);'
 		print '#endif'
 
 

@@ -41,7 +41,8 @@ class PrintGlxDispatch_h(gl_XML.gl_print_base):
 
 
 	def printRealHeader(self):
-		self.printVisibility( "HIDDEN", "hidden" )
+		print '#  include <X11/Xfuncproto.h>'
+		print ''
 		print 'struct __GLXclientStateRec;'
 		print ''
 		return
@@ -51,16 +52,16 @@ class PrintGlxDispatch_h(gl_XML.gl_print_base):
 		for func in api.functionIterateAll():
 			if not func.ignore and not func.vectorequiv:
 				if func.glx_rop:
-					print 'extern HIDDEN void __glXDisp_%s(GLbyte * pc);' % (func.name)
-					print 'extern HIDDEN void __glXDispSwap_%s(GLbyte * pc);' % (func.name)
+					print 'extern _X_HIDDEN void __glXDisp_%s(GLbyte * pc);' % (func.name)
+					print 'extern _X_HIDDEN void __glXDispSwap_%s(GLbyte * pc);' % (func.name)
 				elif func.glx_sop or func.glx_vendorpriv:
-					print 'extern HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
-					print 'extern HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
+					print 'extern _X_HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
+					print 'extern _X_HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (func.name)
 
 					if func.glx_sop and func.glx_vendorpriv:
 						n = func.glx_vendorpriv_names[0]
-						print 'extern HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
-						print 'extern HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
+						print 'extern _X_HIDDEN int __glXDisp_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
+						print 'extern _X_HIDDEN int __glXDispSwap_%s(struct __GLXclientStateRec *, GLbyte *);' % (n)
 
 		return
 
