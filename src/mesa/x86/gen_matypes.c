@@ -32,6 +32,11 @@
  * Mesa, including lighting, clipping, texture image conversion etc.
  */
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "tnl/t_context.h"
@@ -68,7 +73,7 @@ do {									\
    printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
 
 #define DEFINE( s, d )							\
-   printf( "#define %s\t0x%llx\n", s, (uint64_t)d );
+   printf( "#define %s\t0x%" PRIx64 "\n", s, (uint64_t) d );
 
 
 
