@@ -412,6 +412,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
+   const struct gl_program *prog = (struct gl_program *) brw->fragment_program;
    GLuint lookup = 0;
    GLuint line_aa;
    GLuint i;
@@ -487,7 +488,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      brw_populate_sampler_prog_key_data(ctx, &key->tex, i);
+      if (prog->TexturesUsed[i])
+	 brw_populate_sampler_prog_key_data(ctx, &key->tex, i);
    }
 
    /* _NEW_BUFFERS */
