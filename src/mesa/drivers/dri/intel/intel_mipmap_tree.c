@@ -162,10 +162,26 @@ intel_miptree_create(struct intel_context *intel,
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
-      else if (format == MESA_FORMAT_S8)
-	 tiling = I915_TILING_NONE;
       else if (width0 >= 64)
 	 tiling = I915_TILING_X;
+   }
+
+   if (format == MESA_FORMAT_S8) {
+      /* The stencil buffer is W tiled. However, we request from the kernel a
+       * non-tiled buffer because the GTT is incapable of W fencing.
+       *
+       * The stencil buffer has quirky pitch requirements.  From Vol 2a,
+       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+       *    The pitch must be set to 2x the value computed based on width, as
+       *    the stencil buffer is stored with two rows interleaved.
+       * To accomplish this, we resort to the nasty hack of doubling the drm
+       * region's cpp and halving its height.
+       *
+       * If we neglect to double the pitch, then render corruption occurs.
+       */
+      tiling = I915_TILING_NONE;
+      width0 = ALIGN(width0, 64);
+      height0 = ALIGN((height0 + 1) / 2, 64);
    }
 
    mt = intel_miptree_create_internal(intel, target, format,
@@ -217,21 +233,14 @@ intel_miptree_create_for_region(struct intel_context *intel,
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
-                                      uint32_t tiling,
-                                      uint32_t cpp,
                                       uint32_t width,
                                       uint32_t height)
 {
-   struct intel_region *region;
    struct intel_mipmap_tree *mt;
 
-   region = intel_region_alloc(intel->intelScreen,
-                               tiling, cpp, width, height, true);
-   if (!region)
-      return NULL;
+   mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
+			     width, height, 1, true);
 
-   mt = intel_miptree_create_for_region(intel, GL_TEXTURE_2D, format, region);
-   intel_region_release(&region);
    return mt;
 }
 

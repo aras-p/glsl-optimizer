@@ -193,7 +193,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   int cpp, tiling;
+   int cpp;
 
    ASSERT(rb->Name != 0);
 
@@ -226,7 +226,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    rb->Height = height;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
-   cpp = _mesa_get_format_bytes(rb->Format);
 
    intel_flush(ctx);
 
@@ -236,45 +235,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        _mesa_lookup_enum_by_nr(internalFormat),
        _mesa_get_format_name(rb->Format), width, height);
 
-   tiling = I915_TILING_NONE;
-   if (intel->use_texture_tiling) {
-      GLenum base_format = _mesa_get_format_base_format(rb->Format);
-
-      if (intel->gen >= 4 && (base_format == GL_DEPTH_COMPONENT ||
-			      base_format == GL_STENCIL_INDEX ||
-			      base_format == GL_DEPTH_STENCIL))
-	 tiling = I915_TILING_Y;
-      else
-	 tiling = I915_TILING_X;
-   }
-
-   if (irb->Base.Format == MESA_FORMAT_S8) {
-      /*
-       * The stencil buffer is W tiled. However, we request from the kernel a
-       * non-tiled buffer because the GTT is incapable of W fencing.
-       *
-       * The stencil buffer has quirky pitch requirements.  From Vol 2a,
-       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
-       * To accomplish this, we resort to the nasty hack of doubling the drm
-       * region's cpp and halving its height.
-       *
-       * If we neglect to double the pitch, then render corruption occurs.
-       */
-      irb->mt = intel_miptree_create_for_renderbuffer(
-		  intel,
-		  rb->Format,
-		  I915_TILING_NONE,
-		  cpp * 2,
-		  ALIGN(width, 64),
-		  ALIGN((height + 1) / 2, 64));
-      if (!irb->mt)
-	 return false;
-
-   } else if (irb->Base.Format == MESA_FORMAT_S8_Z24
-	      && intel->has_separate_stencil) {
-
+   if (irb->Base.Format == MESA_FORMAT_S8_Z24 && intel->has_separate_stencil) {
       bool ok = true;
       struct gl_renderbuffer *depth_rb;
       struct gl_renderbuffer *stencil_rb;
@@ -315,7 +276,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 
    } else {
       irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
-                                                      tiling, cpp,
                                                       width, height);
       if (!irb->mt)
 	 return false;

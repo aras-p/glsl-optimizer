@@ -246,8 +246,6 @@ intel_miptree_create_for_region(struct intel_context *intel,
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
-                                      uint32_t tiling,
-                                      uint32_t cpp,
                                       uint32_t width,
                                       uint32_t height);
 
