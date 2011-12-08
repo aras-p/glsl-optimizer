@@ -852,26 +852,29 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    const struct intel_renderbuffer *stencilRb =
       intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
    int i;
 
-   /*
-    * The depth and stencil renderbuffers are the same renderbuffer or wrap
-    * the same texture.
-    */
-   if (depthRb && stencilRb) {
-      bool depth_stencil_are_same;
-      if (depthRb == stencilRb)
-	 depth_stencil_are_same = true;
-      else if ((fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE) &&
-	       (fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE) &&
-	       (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
-		fb->Attachment[BUFFER_STENCIL].Texture->Name))
-	 depth_stencil_are_same = true;
-      else
-	 depth_stencil_are_same = false;
+   if (depthRb)
+      depth_mt = depthRb->mt;
+   if (stencilRb)
+      stencil_mt = stencilRb->mt;
 
-      if (!intel->has_separate_stencil && !depth_stencil_are_same) {
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   if (depth_mt && stencil_mt) {
+      if (depth_mt == stencil_mt) {
+	 /* For true packed depth/stencil (not faked on prefers-separate-stencil
+	  * hardware) we need to be sure they're the same level/layer, since
+	  * we'll be emitting a single packet describing the packed setup.
+	  */
+	 if (depthRb->mt_level != stencilRb->mt_level ||
+	     depthRb->mt_layer != stencilRb->mt_layer) {
+	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 }
+      } else {
+	 if (!intel->has_separate_stencil)
+	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 if (stencil_mt->format != MESA_FORMAT_S8)
+	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       }
    }
 
