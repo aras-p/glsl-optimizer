@@ -36,6 +36,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_bitmask.h"
 
 union tgsi_any_token {
    struct tgsi_header header;
@@ -75,7 +76,6 @@ struct ureg_tokens {
 #define UREG_MAX_OUTPUT PIPE_MAX_ATTRIBS
 #define UREG_MAX_CONSTANT_RANGE 32
 #define UREG_MAX_IMMEDIATE 256
-#define UREG_MAX_TEMP 256
 #define UREG_MAX_ADDR 2
 #define UREG_MAX_PRED 1
 
@@ -151,7 +151,7 @@ struct ureg_program
    } sampler_view[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned nr_sampler_views;
 
-   unsigned temps_active[UREG_MAX_TEMP / 32];
+   struct util_bitmask *free_temps;
    unsigned nr_temps;
 
    struct const_decl const_decls;
@@ -530,43 +530,27 @@ out:
    return ureg_src_register(TGSI_FILE_CONSTANT, index);
 }
 
-
-/* Allocate a new temporary.  Temporaries greater than UREG_MAX_TEMP
- * are legal, but will not be released.
- */
 struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
 {
-   unsigned i;
-
-   for (i = 0; i < UREG_MAX_TEMP; i += 32) {
-      int bit = ffs(~ureg->temps_active[i/32]);
-      if (bit != 0) {
-         i += bit - 1;
-         goto out;
-      }
-   }
-
-   /* No reusable temps, so allocate a new one:
+   /* Look for a released temporary.
     */
-   i = ureg->nr_temps++;
+   unsigned i = util_bitmask_get_first_index(ureg->free_temps);
 
-out:
-   if (i < UREG_MAX_TEMP)
-      ureg->temps_active[i/32] |= 1 << (i % 32);
+   /* Or allocate a new one.
+    */
+   if (i == UTIL_BITMASK_INVALID_INDEX)
+      i = ureg->nr_temps++;
 
-   if (i >= ureg->nr_temps)
-      ureg->nr_temps = i + 1;
+   util_bitmask_clear(ureg->free_temps, i);
 
    return ureg_dst_register( TGSI_FILE_TEMPORARY, i );
 }
-
 
 void ureg_release_temporary( struct ureg_program *ureg,
                              struct ureg_dst tmp )
 {
    if(tmp.File == TGSI_FILE_TEMPORARY)
-      if (tmp.Index < UREG_MAX_TEMP)
-         ureg->temps_active[tmp.Index/32] &= ~(1 << (tmp.Index % 32));
+      util_bitmask_set(ureg->free_temps, tmp.Index);
 }
 
 
@@ -1669,7 +1653,16 @@ struct ureg_program *ureg_create( unsigned processor )
    ureg->property_gs_input_prim = ~0;
    ureg->property_gs_output_prim = ~0;
    ureg->property_gs_max_vertices = ~0;
+
+   ureg->free_temps = util_bitmask_create();
+   if (ureg->free_temps == NULL)
+      goto fail;
+
    return ureg;
+
+fail:
+   FREE(ureg);
+   return NULL;
 }
 
 
@@ -1682,6 +1675,8 @@ void ureg_destroy( struct ureg_program *ureg )
           ureg->domain[i].tokens != error_tokens)
          FREE(ureg->domain[i].tokens);
    }
-   
+
+   util_bitmask_destroy(ureg->free_temps);
+
    FREE(ureg);
 }
