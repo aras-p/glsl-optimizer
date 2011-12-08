@@ -37,12 +37,12 @@
 #include "glapi.h"
 #include "glxextensions.h"
 #include "indirect.h"
+#include "glx_error.h"
 
 #ifdef GLX_DIRECT_RENDERING
 #ifdef GLX_USE_APPLEGL
 #include "apple_glx_context.h"
 #include "apple_glx.h"
-#include "glx_error.h"
 #else
 #include <sys/time.h>
 #ifdef XF86VIDMODE
@@ -589,12 +589,19 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
 
 #ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_generic_error_t *err;
    xcb_glx_is_direct_reply_t *reply = xcb_glx_is_direct_reply(c,
                                                               xcb_glx_is_direct
                                                               (c, contextID),
-                                                              NULL);
+                                                              &err);
 
    const Bool is_direct = (reply != NULL && reply->is_direct) ? True : False;
+
+   if (err != NULL) {
+      __glXSendErrorForXcb(dpy, err);
+      free(err);
+   }
+
    free(reply);
 
    return is_direct;
@@ -1429,7 +1436,23 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    uint32_t screen;
    Bool got_screen = False;
 
-   if (contextID == None || __glXIsDirect(dpy, contextID))
+   /* The GLX_EXT_import_context spec says:
+    *
+    *     "If <contextID> does not refer to a valid context, then a BadContext
+    *     error is generated; if <contextID> refers to direct rendering
+    *     context then no error is generated but glXImportContextEXT returns
+    *     NULL."
+    *
+    * If contextID is None, generate BadContext on the client-side.  Other
+    * sorts of invalid contexts will be detected by the server in the
+    * __glXIsDirect call.
+    */
+   if (contextID == None) {
+      __glXSendError(dpy, GLXBadContext, contextID, X_GLXIsDirect, false);
+      return NULL;
+   }
+
+   if (__glXIsDirect(dpy, contextID))
       return NULL;
 
    opcode = __glXSetupForCommand(dpy);
