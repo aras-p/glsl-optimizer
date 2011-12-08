@@ -580,3 +580,159 @@ svga_get_format_cap(struct svga_screen *ss,
    /* Unsupported format */
    caps->value = 0;
 }
+
+
+/**
+ * Return block size and bytes per block for the given SVGA3D format.
+ * block_width and block_height are one for uncompressed formats and
+ * greater than one for compressed formats.
+ * Note: we don't handle formats that are unsupported, according to
+ * the format_cap_table above.
+ */
+void
+svga_format_size(SVGA3dSurfaceFormat format,
+                 unsigned *block_width,
+                 unsigned *block_height,
+                 unsigned *bytes_per_block)
+{
+   *block_width = *block_height = 1;
+
+   switch (format) {
+   case SVGA3D_X8R8G8B8:
+   case SVGA3D_A8R8G8B8:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_R5G6B5:
+   case SVGA3D_X1R5G5B5:
+   case SVGA3D_A1R5G5B5:
+   case SVGA3D_A4R4G4B4:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_Z_D32:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_Z_D16:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_Z_D24S8:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_Z_D15S1:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_LUMINANCE8:
+   case SVGA3D_LUMINANCE4_ALPHA4:
+      *bytes_per_block = 1;
+      return;
+
+   case SVGA3D_LUMINANCE16:
+   case SVGA3D_LUMINANCE8_ALPHA8:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_DXT1:
+   case SVGA3D_DXT2:
+      *block_width = *block_height = 4;
+      *bytes_per_block = 8;
+      return;
+
+   case SVGA3D_DXT3:
+   case SVGA3D_DXT4:
+   case SVGA3D_DXT5:
+      *block_width = *block_height = 4;
+      *bytes_per_block = 16;
+      return;
+
+   case SVGA3D_BUMPU8V8:
+   case SVGA3D_BUMPL6V5U5:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_BUMPX8L8V8U8:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_ARGB_S10E5:
+      *bytes_per_block = 8;
+      return;
+
+   case SVGA3D_ARGB_S23E8:
+      *bytes_per_block = 16;
+      return;
+
+   case SVGA3D_A2R10G10B10:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_Q8W8V8U8:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_CxV8U8:
+      *bytes_per_block = 2;
+      return;
+
+   case SVGA3D_X8L8V8U8:
+   case SVGA3D_A2W10V10U10:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_ALPHA8:
+      *bytes_per_block = 1;
+      return;
+
+   case SVGA3D_R_S10E5:
+      *bytes_per_block = 2;
+      return;
+   case SVGA3D_R_S23E8:
+      *bytes_per_block = 4;
+      return;
+   case SVGA3D_RG_S10E5:
+      *bytes_per_block = 4;
+      return;
+   case SVGA3D_RG_S23E8:
+      *bytes_per_block = 8;
+      return;
+
+   case SVGA3D_BUFFER:
+      *bytes_per_block = 1;
+      return;
+
+   case SVGA3D_Z_D24X8:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_V16U16:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_G16R16:
+      *bytes_per_block = 4;
+      return;
+
+   case SVGA3D_A16B16G16R16:
+      *bytes_per_block = 8;
+      return;
+
+   case SVGA3D_Z_DF16:
+      *bytes_per_block = 2;
+      return;
+   case SVGA3D_Z_DF24:
+      *bytes_per_block = 4;
+      return;
+   case SVGA3D_Z_D24S8_INT:
+      *bytes_per_block = 4;
+      return;
+
+   default:
+      debug_printf("format %u\n", (unsigned) format);
+      assert(!"unexpected format in svga_format_size()");
+      *bytes_per_block = 4;
+   }
+}

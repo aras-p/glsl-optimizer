@@ -27,6 +27,7 @@
 #define SVGA_FORMAT_H_
 
 
+#include "pipe/p_format.h"
 #include "svga_types.h"
 #include "svga_reg.h"
 #include "svga3d_reg.h"
@@ -44,6 +45,12 @@ void
 svga_get_format_cap(struct svga_screen *ss,
                     SVGA3dSurfaceFormat format,
                     SVGA3dSurfaceFormatCaps *caps);
+
+void
+svga_format_size(SVGA3dSurfaceFormat format,
+                 unsigned *block_width,
+                 unsigned *block_height,
+                 unsigned *bytes_per_block);
 
 
 #endif /* SVGA_FORMAT_H_ */
