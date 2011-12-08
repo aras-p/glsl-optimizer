@@ -32,6 +32,12 @@
 
 #define YYLEX_PARAM state->scanner
 
+#undef yyerror
+
+static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
+{
+   _mesa_glsl_error(loc, st, "%s", msg);
+}
 %}
 
 %pure-parser
