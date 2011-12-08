@@ -95,15 +95,15 @@ arb_input_attrib_string(GLint index, GLenum progType)
    /*
     * These strings should match the VERT_ATTRIB_x and FRAG_ATTRIB_x tokens.
     */
-   const char *vertAttribs[] = {
+   static const char *const vertAttribs[] = {
       "vertex.position",
       "vertex.weight",
       "vertex.normal",
       "vertex.color.primary",
       "vertex.color.secondary",
       "vertex.fogcoord",
-      "vertex.(six)",
-      "vertex.(seven)",
+      "vertex.(six)", /* VERT_ATTRIB_COLOR_INDEX */
+      "vertex.(seven)", /* VERT_ATTRIB_EDGEFLAG */
       "vertex.texcoord[0]",
       "vertex.texcoord[1]",
       "vertex.texcoord[2]",
@@ -112,7 +112,7 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "vertex.texcoord[5]",
       "vertex.texcoord[6]",
       "vertex.texcoord[7]",
-      "vertex.pointsize",
+      "vertex.(sixteen)", /* VERT_ATTRIB_POINT_SIZE */
       "vertex.attrib[0]",
       "vertex.attrib[1]",
       "vertex.attrib[2]",
@@ -128,9 +128,9 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "vertex.attrib[12]",
       "vertex.attrib[13]",
       "vertex.attrib[14]",
-      "vertex.attrib[15]"
+      "vertex.attrib[15]" /* MAX_VARYING = 16 */
    };
-   const char *fragAttribs[] = {
+   static const char *const fragAttribs[] = {
       "fragment.position",
       "fragment.color.primary",
       "fragment.color.secondary",
@@ -143,6 +143,10 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.texcoord[5]",
       "fragment.texcoord[6]",
       "fragment.texcoord[7]",
+      "fragment.(twelve)", /* FRAG_ATTRIB_FACE */
+      "fragment.(thirteen)", /* FRAG_ATTRIB_PNTC */
+      "fragment.(fourteen)", /* FRAG_ATTRIB_CLIP_DIST0 */
+      "fragment.(fifteen)", /* FRAG_ATTRIB_CLIP_DIST1 */
       "fragment.varying[0]",
       "fragment.varying[1]",
       "fragment.varying[2]",
@@ -150,18 +154,31 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.varying[4]",
       "fragment.varying[5]",
       "fragment.varying[6]",
-      "fragment.varying[7]"
+      "fragment.varying[7]",
+      "fragment.varying[8]",
+      "fragment.varying[9]",
+      "fragment.varying[10]",
+      "fragment.varying[11]",
+      "fragment.varying[12]",
+      "fragment.varying[13]",
+      "fragment.varying[14]",
+      "fragment.varying[15]" /* MAX_VARYING = 16 */
    };
 
    /* sanity checks */
+   STATIC_ASSERT(Elements(vertAttribs) == VERT_ATTRIB_MAX);
+   STATIC_ASSERT(Elements(fragAttribs) == FRAG_ATTRIB_MAX);
    assert(strcmp(vertAttribs[VERT_ATTRIB_TEX0], "vertex.texcoord[0]") == 0);
    assert(strcmp(vertAttribs[VERT_ATTRIB_GENERIC15], "vertex.attrib[15]") == 0);
+   assert(strcmp(fragAttribs[FRAG_ATTRIB_TEX0], "fragment.texcoord[0]") == 0);
+   assert(strcmp(fragAttribs[FRAG_ATTRIB_VAR0+15], "fragment.varying[15]") == 0);
 
    if (progType == GL_VERTEX_PROGRAM_ARB) {
       assert(index < Elements(vertAttribs));
       return vertAttribs[index];
    }
    else {
+      assert(progType == GL_FRAGMENT_PROGRAM_ARB);
       assert(index < Elements(fragAttribs));
       return fragAttribs[index];
    }
@@ -214,7 +231,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
    /*
     * These strings should match the VERT_RESULT_x and FRAG_RESULT_x tokens.
     */
-   const char *vertResults[] = {
+   static const char *const vertResults[] = {
       "result.position",
       "result.color.primary",
       "result.color.secondary",
@@ -227,6 +244,13 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.texcoord[5]",
       "result.texcoord[6]",
       "result.texcoord[7]",
+      "result.pointsize", /* VERT_RESULT_PSIZ */
+      "result.(thirteen)", /* VERT_RESULT_BFC0 */
+      "result.(fourteen)", /* VERT_RESULT_BFC1 */
+      "result.(fifteen)", /* VERT_RESULT_EDGE */
+      "result.(sixteen)", /* VERT_RESULT_CLIP_VERTEX */
+      "result.(seventeen)", /* VERT_RESULT_CLIP_DIST0 */
+      "result.(eighteen)", /* VERT_RESULT_CLIP_DIST1 */
       "result.varying[0]",
       "result.varying[1]",
       "result.varying[2]",
@@ -234,23 +258,43 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.varying[4]",
       "result.varying[5]",
       "result.varying[6]",
-      "result.varying[7]"
+      "result.varying[7]",
+      "result.varying[8]",
+      "result.varying[9]",
+      "result.varying[10]",
+      "result.varying[11]",
+      "result.varying[12]",
+      "result.varying[13]",
+      "result.varying[14]",
+      "result.varying[15]" /* MAX_VARYING = 16 */
    };
-   const char *fragResults[] = {
-      "result.color",
-      "result.color(half)",
-      "result.depth",
-      "result.color[0]",
+   static const char *const fragResults[] = {
+      "result.depth", /* FRAG_RESULT_DEPTH */
+      "result.color(half)", /* FRAG_RESULT_STENCIL */
+      "result.color", /* FRAG_RESULT_COLOR */
+      "result.color[0]", /* FRAG_RESULT_DATA0 (named for GLSL's gl_FragData) */
       "result.color[1]",
       "result.color[2]",
-      "result.color[3]"
+      "result.color[3]",
+      "result.color[4]",
+      "result.color[5]",
+      "result.color[6]",
+      "result.color[7]" /* MAX_DRAW_BUFFERS = 8 */
    };
+
+   /* sanity checks */
+   STATIC_ASSERT(Elements(vertResults) == VERT_RESULT_MAX);
+   STATIC_ASSERT(Elements(fragResults) == FRAG_RESULT_MAX);
+   assert(strcmp(vertResults[VERT_RESULT_HPOS], "result.position") == 0);
+   assert(strcmp(vertResults[VERT_RESULT_VAR0], "result.varying[0]") == 0);
+   assert(strcmp(fragResults[FRAG_RESULT_DATA0], "result.color[0]") == 0);
 
    if (progType == GL_VERTEX_PROGRAM_ARB) {
       assert(index < Elements(vertResults));
       return vertResults[index];
    }
    else {
+      assert(progType == GL_FRAGMENT_PROGRAM_ARB);
       assert(index < Elements(fragResults));
       return fragResults[index];
    }
