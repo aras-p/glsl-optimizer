@@ -39,7 +39,7 @@ SOURCES = \
 	../compsize.c \
 	../glxconfig.c \
 	glx_empty.c \
-	glx_error.c \
+	../glx_error.c \
 	../glx_pbuffer.c \
 	../glx_query.c \
 	../glxcmds.c \

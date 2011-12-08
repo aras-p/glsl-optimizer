@@ -15,6 +15,7 @@ SOURCES = \
 	  glxconfig.c \
 	  glxcmds.c \
 	  glxcurrent.c \
+	  glx_error.c \
 	  glxext.c \
 	  glxextensions.c \
 	  indirect_glx.c \
