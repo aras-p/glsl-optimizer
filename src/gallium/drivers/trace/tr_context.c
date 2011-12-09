@@ -1067,6 +1067,76 @@ trace_context_set_index_buffer(struct pipe_context *_pipe,
    trace_dump_call_end();
 }
 
+
+static INLINE struct pipe_stream_output_target *
+trace_context_create_stream_output_target(struct pipe_context *_pipe,
+                                          struct pipe_resource *res,
+                                          unsigned buffer_offset,
+                                          unsigned buffer_size)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_stream_output_target *result;
+
+   res = trace_resource_unwrap(tr_ctx, res);
+
+   trace_dump_call_begin("pipe_context", "create_stream_output_target");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, res);
+   trace_dump_arg(uint, buffer_offset);
+   trace_dump_arg(uint, buffer_size);
+
+   result = pipe->create_stream_output_target(pipe,
+                                              res, buffer_offset, buffer_size);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
+static INLINE void
+trace_context_stream_output_target_destroy(
+   struct pipe_context *_pipe,
+   struct pipe_stream_output_target *target)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "stream_output_target_destroy");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, target);
+
+   pipe->stream_output_target_destroy(pipe, target);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
+trace_context_set_stream_output_targets(struct pipe_context *_pipe,
+                                        unsigned num_targets,
+                                        struct pipe_stream_output_target **tgs,
+                                        unsigned append_bitmask)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "set_stream_output_targets");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, num_targets);
+   trace_dump_arg_array(ptr, tgs, num_targets);
+   trace_dump_arg(uint, append_bitmask);
+
+   pipe->set_stream_output_targets(pipe, num_targets, tgs, append_bitmask);
+
+   trace_dump_call_end();
+}
+
+
 static INLINE void
 trace_context_resource_copy_region(struct pipe_context *_pipe,
                                    struct pipe_resource *dst,
@@ -1528,6 +1598,9 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.surface_destroy = trace_surface_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_index_buffer = trace_context_set_index_buffer;
+   tr_ctx->base.create_stream_output_target = trace_context_create_stream_output_target;
+   tr_ctx->base.stream_output_target_destroy = trace_context_stream_output_target_destroy;
+   tr_ctx->base.set_stream_output_targets = trace_context_set_stream_output_targets;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.clear_render_target = trace_context_clear_render_target;
