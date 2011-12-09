@@ -2355,6 +2355,8 @@ struct gl_transform_feedback_object
    GLint RefCount;
    GLboolean Active;  /**< Is transform feedback enabled? */
    GLboolean Paused;  /**< Is transform feedback paused? */
+   GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
+                                at least once? */
 
    /** The feedback buffers */
    GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];

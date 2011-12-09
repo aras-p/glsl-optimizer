@@ -233,7 +233,8 @@ void vbo_rebase_prims( struct gl_context *ctx,
 	 ib, 
 	 GL_TRUE,
 	 0, 
-	 max_index - min_index );
+	 max_index - min_index,
+	 NULL );
    
    if (tmp_indices)
       free(tmp_indices);

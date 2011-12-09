@@ -294,18 +294,6 @@ resume_transform_feedback(struct gl_context *ctx,
    /* nop */
 }
 
-/** Default fallback for ctx->Driver.DrawTransformFeedback() */
-static void
-draw_transform_feedback(struct gl_context *ctx, GLenum mode,
-                        struct gl_transform_feedback_object *obj)
-{
-   /* XXX to do */
-   /*
-    * Get number of vertices in obj's feedback buffer.
-    * Call ctx->Exec.DrawArrays(mode, 0, count);
-    */
-}
-
 
 /**
  * Plug in default device driver functions for transform feedback.
@@ -320,7 +308,6 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
    driver->EndTransformFeedback = end_transform_feedback;
    driver->PauseTransformFeedback = pause_transform_feedback;
    driver->ResumeTransformFeedback = resume_transform_feedback;
-   driver->DrawTransformFeedback = draw_transform_feedback;
 }
 
 
@@ -342,7 +329,6 @@ _mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
    SET_IsTransformFeedback(disp, _mesa_IsTransformFeedback);
    SET_PauseTransformFeedback(disp, _mesa_PauseTransformFeedback);
    SET_ResumeTransformFeedback(disp, _mesa_ResumeTransformFeedback);
-   SET_DrawTransformFeedback(disp, _mesa_DrawTransformFeedback);
 }
 
 
@@ -401,6 +387,7 @@ _mesa_EndTransformFeedback(void)
 
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    ctx->TransformFeedback.CurrentObject->Active = GL_FALSE;
+   ctx->TransformFeedback.CurrentObject->EndedAnytime = GL_TRUE;
 
    assert(ctx->Driver.EndTransformFeedback);
    ctx->Driver.EndTransformFeedback(ctx, obj);
@@ -714,8 +701,8 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
 
 
 
-static struct gl_transform_feedback_object *
-lookup_transform_feedback_object(struct gl_context *ctx, GLuint name)
+struct gl_transform_feedback_object *
+_mesa_lookup_transform_feedback_object(struct gl_context *ctx, GLuint name)
 {
    if (name == 0) {
       return ctx->TransformFeedback.DefaultObject;
@@ -780,7 +767,7 @@ _mesa_IsTransformFeedback(GLuint name)
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (name && lookup_transform_feedback_object(ctx, name))
+   if (name && _mesa_lookup_transform_feedback_object(ctx, name))
       return GL_TRUE;
    else
       return GL_FALSE;
@@ -809,7 +796,7 @@ _mesa_BindTransformFeedback(GLenum target, GLuint name)
       return;
    }
 
-   obj = lookup_transform_feedback_object(ctx, name);
+   obj = _mesa_lookup_transform_feedback_object(ctx, name);
    if (!obj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindTransformFeedback(name=%u)", name);
@@ -844,7 +831,7 @@ _mesa_DeleteTransformFeedbacks(GLsizei n, const GLuint *names)
    for (i = 0; i < n; i++) {
       if (names[i] > 0) {
          struct gl_transform_feedback_object *obj
-            = lookup_transform_feedback_object(ctx, names[i]);
+            = _mesa_lookup_transform_feedback_object(ctx, names[i]);
          if (obj) {
             if (obj->Active) {
                _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -910,42 +897,6 @@ _mesa_ResumeTransformFeedback(void)
 
    assert(ctx->Driver.ResumeTransformFeedback);
    ctx->Driver.ResumeTransformFeedback(ctx, obj);
-}
-
-
-/**
- * Draw the vertex data in a transform feedback object.
- * \param mode  GL_POINTS, GL_LINES, GL_TRIANGLE_STRIP, etc.
- * \param name  the transform feedback object
- * The number of vertices comes from the transform feedback object.
- * User still has to setup of the vertex attribute info with
- * glVertexPointer, glColorPointer, etc.
- * Part of GL_ARB_transform_feedback2.
- */
-void GLAPIENTRY
-_mesa_DrawTransformFeedback(GLenum mode, GLuint name)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_transform_feedback_object *obj =
-      lookup_transform_feedback_object(ctx, name);
-
-   if (mode > GL_POLYGON) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glDrawTransformFeedback(mode=0x%x)", mode);
-      return;
-   }
-   if (!obj) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glDrawTransformFeedback(name = %u)", name);
-      return;
-   }
-
-   /* XXX check if EndTransformFeedback has never been called while
-    * the object was bound
-    */
-
-   assert(ctx->Driver.DrawTransformFeedback);
-   ctx->Driver.DrawTransformFeedback(ctx, mode, obj);
 }
 
 #endif /* FEATURE_EXT_transform_feedback */

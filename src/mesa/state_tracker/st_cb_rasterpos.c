@@ -251,7 +251,8 @@ st_RasterPos(struct gl_context *ctx, const GLfloat v[4])
    rs->array[0].Ptr = (GLubyte *) v;
 
    /* draw the point */
-   st_feedback_draw_vbo(ctx, rs->arrays, &rs->prim, 1, NULL, GL_TRUE, 0, 1);
+   st_feedback_draw_vbo(ctx, rs->arrays, &rs->prim, 1, NULL, GL_TRUE, 0, 1,
+                        NULL);
 
    /* restore draw's rasterization stage depending on rendermode */
    if (ctx->RenderMode == GL_FEEDBACK) {

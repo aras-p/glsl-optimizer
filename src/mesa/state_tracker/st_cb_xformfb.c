@@ -105,18 +105,6 @@ st_resume_transform_feedback(struct gl_context *ctx,
 }
 
 
-static void
-st_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
-                           struct gl_transform_feedback_object *obj)
-{
-   /* XXX to do */
-   /*
-    * Get number of vertices in obj's feedback buffer.
-    * Call ctx->Exec.DrawArrays(mode, 0, count);
-    */
-}
-
-
 void
 st_init_xformfb_functions(struct dd_function_table *functions)
 {
@@ -128,7 +116,6 @@ st_init_xformfb_functions(struct dd_function_table *functions)
    functions->EndTransformFeedback = st_end_transform_feedback;
    functions->PauseTransformFeedback = st_pause_transform_feedback;
    functions->ResumeTransformFeedback = st_resume_transform_feedback;
-   functions->DrawTransformFeedback = st_draw_transform_feedback;
 }
 
 #endif /* FEATURE_EXT_transform_feedback */

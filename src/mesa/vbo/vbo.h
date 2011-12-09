@@ -36,6 +36,7 @@
 
 struct gl_client_array;
 struct gl_context;
+struct gl_transform_feedback_object;
 
 struct _mesa_prim {
    GLuint mode:8;    /**< GL_POINTS, GL_LINES, GL_QUAD_STRIP, etc */
@@ -77,7 +78,8 @@ typedef void (*vbo_draw_func)( struct gl_context *ctx,
 			       const struct _mesa_index_buffer *ib,
 			       GLboolean index_bounds_valid,
 			       GLuint min_index,
-			       GLuint max_index );
+			       GLuint max_index,
+			       struct gl_transform_feedback_object *tfb_vertcount );
 
 
 

@@ -964,8 +964,6 @@ struct dd_function_table {
                                   struct gl_transform_feedback_object *obj);
    void (*ResumeTransformFeedback)(struct gl_context *ctx,
                                    struct gl_transform_feedback_object *obj);
-   void (*DrawTransformFeedback)(struct gl_context *ctx, GLenum mode,
-                                 struct gl_transform_feedback_object *obj);
 
    /**
     * \name GL_NV_texture_barrier interface
@@ -1194,6 +1192,7 @@ typedef struct {
    void (GLAPIENTRYP DrawElementsInstancedBaseVertex)(GLenum mode, GLsizei count,
                                             GLenum type, const GLvoid *indices,
                                             GLsizei primcount, GLint basevertex);
+   void (GLAPIENTRYP DrawTransformFeedback)(GLenum mode, GLuint name);
    /*@}*/
 
    /**
