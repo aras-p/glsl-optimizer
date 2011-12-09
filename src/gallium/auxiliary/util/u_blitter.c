@@ -63,6 +63,7 @@ struct blitter_context_priv
    /* Constant state objects. */
    /* Vertex shaders. */
    void *vs; /**< Vertex shader which passes {pos, generic} to the output.*/
+   void *vs_pos_only; /**< Vertex shader which passes pos to the output.*/
 
    /* Fragment shaders. */
    /* The shader at index i outputs color to color buffers 0,1,...,i-1. */
@@ -87,15 +88,18 @@ struct blitter_context_priv
    void *dsa_keep_depth_stencil;
    void *dsa_keep_depth_write_stencil;
 
+   /* Vertex elements states. */
    void *velem_state;
    void *velem_uint_state;
    void *velem_sint_state;
+   void *velem_state_readbuf;
 
    /* Sampler state. */
    void *sampler_state;
 
    /* Rasterizer state. */
    void *rs_state;
+   void *rs_discard_state;
 
    /* Viewport state. */
    struct pipe_viewport_state viewport;
@@ -210,7 +214,12 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    rs_state.flatshade = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
 
-   /* vertex elements state */
+   if (ctx->has_stream_out) {
+      rs_state.rasterizer_discard = 1;
+      ctx->rs_discard_state = pipe->create_rasterizer_state(pipe, &rs_state);
+   }
+
+   /* vertex elements states */
    memset(&velem[0], 0, sizeof(velem[0]) * 2);
    for (i = 0; i < 2; i++) {
       velem[i].src_offset = i * 4 * sizeof(float);
@@ -234,9 +243,14 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
    }
 
+   if (ctx->has_stream_out) {
+      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      ctx->velem_state_readbuf = pipe->create_vertex_elements_state(pipe, 1, &velem[0]);
+   }
+
    /* fragment shaders are created on-demand */
 
-   /* vertex shader */
+   /* vertex shaders */
    {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_GENERIC };
@@ -244,6 +258,20 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       ctx->vs =
          util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
                                              semantic_indices);
+   }
+   if (ctx->has_stream_out) {
+      struct pipe_stream_output_info so;
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION };
+      const uint semantic_indices[] = { 0 };
+
+      memset(&so, 0, sizeof(so));
+      so.num_outputs = 1;
+      so.output[0].register_mask = TGSI_WRITEMASK_XYZW;
+      so.stride = 4;
+
+      ctx->vs_pos_only =
+         util_make_vertex_passthrough_shader_with_so(pipe, 1, semantic_names,
+                                                     semantic_indices, &so);
    }
 
    /* set invariant vertex coordinates */
@@ -274,12 +302,18 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
+   if (ctx->rs_discard_state)
+      pipe->delete_rasterizer_state(pipe, ctx->rs_discard_state);
    pipe->delete_vs_state(pipe, ctx->vs);
+   if (ctx->vs_pos_only)
+      pipe->delete_vs_state(pipe, ctx->vs_pos_only);
    pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
    if (ctx->vertex_has_integers) {
       pipe->delete_vertex_elements_state(pipe, ctx->velem_sint_state);
       pipe->delete_vertex_elements_state(pipe, ctx->velem_uint_state);
    }
+   if (ctx->velem_state_readbuf)
+      pipe->delete_vertex_elements_state(pipe, ctx->velem_state_readbuf);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
       if (ctx->fs_texfetch_col[i])
@@ -1177,4 +1211,53 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    blitter_restore_fragment_states(ctx);
    blitter_restore_fb_state(ctx);
    blitter_unset_running_flag(ctx);
+}
+
+void util_blitter_copy_buffer(struct blitter_context *blitter,
+                              struct pipe_resource *dst,
+                              unsigned dstx,
+                              struct pipe_resource *src,
+                              unsigned srcx,
+                              unsigned size)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->base.pipe;
+   struct pipe_vertex_buffer vb;
+   struct pipe_stream_output_target *so_target;
+
+   /* Drivers not capable of Stream Out should not call this function
+    * in the first place. */
+   assert(ctx->has_stream_out);
+
+   /* Some alignment is required. */
+   if (srcx % 4 != 0 || dstx % 4 != 0 || size % 16 != 0 ||
+       !ctx->has_stream_out) {
+      struct pipe_box box;
+      u_box_1d(srcx, size, &box);
+      util_resource_copy_region(pipe, dst, 0, dstx, 0, 0, src, 0, &box);
+      return;
+   }
+
+   blitter_set_running_flag(ctx);
+   blitter_check_saved_vertex_states(ctx);
+
+   vb.buffer = src;
+   vb.buffer_offset = srcx;
+   vb.stride = 4;
+
+   pipe->set_vertex_buffers(pipe, 1, &vb);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state_readbuf);
+   pipe->bind_vs_state(pipe, ctx->vs_pos_only);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
+   pipe->bind_rasterizer_state(pipe, ctx->rs_discard_state);
+
+   so_target = pipe->create_stream_output_target(pipe, dst, dstx, size);
+   pipe->set_stream_output_targets(pipe, 1, &so_target, 0);
+
+   util_draw_arrays(pipe, PIPE_PRIM_POINTS, 0, size / 16);
+
+   blitter_restore_vertex_states(ctx);
+   blitter_unset_running_flag(ctx);
+   pipe_so_target_reference(&so_target, NULL);
 }

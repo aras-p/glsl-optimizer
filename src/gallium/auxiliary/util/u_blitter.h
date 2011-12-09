@@ -218,6 +218,17 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     unsigned src_width0, unsigned src_height0);
 
 /**
+ * Copy data from one buffer to another using the Stream Output functionality.
+ * Some alignment is required, otherwise software fallback is used.
+ */
+void util_blitter_copy_buffer(struct blitter_context *blitter,
+                              struct pipe_resource *dst,
+                              unsigned dstx,
+                              struct pipe_resource *src,
+                              unsigned srcx,
+                              unsigned size);
+
+/**
  * Clear a region of a (color) surface to a constant value.
  *
  * These states must be saved in the blitter in addition to the state objects
