@@ -51,6 +51,10 @@ extern "C" {
 #include <math.h>
 #include <stdarg.h>
 
+#ifdef PIPE_OS_UNIX
+#include <strings.h> /* for ffs */
+#endif
+
 
 #ifndef M_SQRT2
 #define M_SQRT2 1.41421356237309504880
