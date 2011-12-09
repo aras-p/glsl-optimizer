@@ -488,10 +488,6 @@
 #define I915_MAX_DECL_INSN    27
 #define I915_MAX_TEMPORARY    16
 
-#define I915_MAX_INSN          (I915_MAX_DECL_INSN + \
-				I915_MAX_TEX_INSN + \
-				I915_MAX_ALU_INSN)
-
 
 /* Each instruction is 3 dwords long, though most don't require all
  * this space.  Maximum of 123 instructions.  Smaller maxes per insn

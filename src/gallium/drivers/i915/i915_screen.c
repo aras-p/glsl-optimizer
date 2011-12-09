@@ -114,7 +114,7 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
          return draw_get_shader_param(shader, cap);
       }
    case PIPE_SHADER_FRAGMENT:
-      /* XXX: these are just shader model 2.0 values, fix this! */
+      /* XXX: some of these are just shader model 2.0 values, fix this! */
       switch(cap) {
       case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
          return I915_MAX_ALU_INSN + I915_MAX_TEX_INSN;
