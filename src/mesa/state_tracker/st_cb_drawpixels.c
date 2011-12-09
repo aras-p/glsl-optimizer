@@ -671,6 +671,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_samplers(cso);
    cso_save_fragment_sampler_views(cso);
    cso_save_fragment_shader(cso);
+   cso_save_stream_outputs(cso);
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
@@ -761,6 +762,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    }
 
    cso_set_vertex_elements(cso, 3, st->velems_util_draw);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
    /* texture state: */
    cso_set_fragment_sampler_views(cso, num_sampler_view, sv);
@@ -796,6 +798,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
+   cso_restore_stream_outputs(cso);
    if (write_stencil) {
       cso_restore_depth_stencil_alpha(cso);
       cso_restore_blend(cso);

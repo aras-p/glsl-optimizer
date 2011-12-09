@@ -5095,4 +5095,31 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    return GL_TRUE;
 }
 
+void
+st_translate_stream_output_info(struct glsl_to_tgsi_visitor *glsl_to_tgsi,
+                                const GLuint outputMapping[],
+                                struct pipe_stream_output_info *so)
+{
+   static unsigned comps_to_mask[] = {
+      0,
+      TGSI_WRITEMASK_X,
+      TGSI_WRITEMASK_XY,
+      TGSI_WRITEMASK_XYZ,
+      TGSI_WRITEMASK_XYZW
+   };
+   unsigned i;
+   struct gl_transform_feedback_info *info =
+      &glsl_to_tgsi->shader_program->LinkedTransformFeedback;
+
+   for (i = 0; i < info->NumOutputs; i++) {
+      assert(info->Outputs[i].NumComponents < Elements(comps_to_mask));
+      so->output[i].register_index =
+         outputMapping[info->Outputs[i].OutputRegister];
+      so->output[i].register_mask =
+         comps_to_mask[info->Outputs[i].NumComponents];
+      so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
+   }
+   so->num_outputs = info->NumOutputs;
+}
+
 } /* extern "C" */

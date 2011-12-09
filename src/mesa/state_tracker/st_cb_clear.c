@@ -250,6 +250,7 @@ clear_with_quad(struct gl_context *ctx,
    cso_save_viewport(st->cso_context);
    cso_save_clip(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
+   cso_save_stream_outputs(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
    cso_save_geometry_shader(st->cso_context);
    cso_save_vertex_elements(st->cso_context);
@@ -306,6 +307,7 @@ clear_with_quad(struct gl_context *ctx,
    }
 
    cso_set_vertex_elements(st->cso_context, 2, st->velems_util_draw);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
 
@@ -350,6 +352,7 @@ clear_with_quad(struct gl_context *ctx,
    cso_restore_geometry_shader(st->cso_context);
    cso_restore_vertex_elements(st->cso_context);
    cso_restore_vertex_buffers(st->cso_context);
+   cso_restore_stream_outputs(st->cso_context);
 }
 
 

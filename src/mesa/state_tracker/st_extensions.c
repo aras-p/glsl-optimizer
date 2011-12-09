@@ -221,6 +221,13 @@ void st_init_limits(struct st_context *st)
 
    c->UniformBooleanTrue = ~0;
 
+   c->MaxTransformFeedbackSeparateAttribs =
+      screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS);
+   c->MaxTransformFeedbackSeparateComponents =
+      screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS);
+   c->MaxTransformFeedbackInterleavedComponents =
+      screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS);
+
    c->StripTextureBorder = GL_TRUE;
 
    c->GLSLSkipStrictMaxUniformLimitCheck =
@@ -682,4 +689,12 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW))
        ctx->Extensions.ARB_texture_rgb10_a2ui = GL_TRUE;
 
+   if (screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) != 0) {
+      ctx->Extensions.EXT_transform_feedback = GL_TRUE;
+
+      if (screen->get_param(screen,
+                            PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME) != 0) {
+         ctx->Extensions.ARB_transform_feedback2 = GL_TRUE;
+      }
+   }
 }

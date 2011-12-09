@@ -117,6 +117,14 @@ void cso_save_vertex_buffers(struct cso_context *ctx);
 void cso_restore_vertex_buffers(struct cso_context *ctx);
 
 
+void cso_set_stream_outputs(struct cso_context *ctx,
+                            unsigned num_targets,
+                            struct pipe_stream_output_target **targets,
+                            unsigned append_bitmask);
+void cso_save_stream_outputs(struct cso_context *ctx);
+void cso_restore_stream_outputs(struct cso_context *ctx);
+
+
 /* These aren't really sensible -- most of the time the api provides
  * object semantics for shaders anyway, and the cases where it doesn't
  * (eg mesa's internall-generated texenv programs), it will be up to

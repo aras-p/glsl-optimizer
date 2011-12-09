@@ -1558,6 +1558,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_fragment_sampler_views(ctx->cso);
+   cso_save_stream_outputs(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
@@ -1572,6 +1573,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
+   cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
    set_fragment_shader(ctx, type);
    set_vertex_shader(ctx);
@@ -1688,4 +1690,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_viewport(ctx->cso);
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
+   cso_restore_stream_outputs(ctx->cso);
 }

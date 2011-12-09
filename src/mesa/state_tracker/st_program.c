@@ -367,6 +367,12 @@ st_translate_vertex_program(struct st_context *st,
 
    ureg_destroy( ureg );
 
+   if (stvp->glsl_to_tgsi) {
+      st_translate_stream_output_info(stvp->glsl_to_tgsi,
+                                      stvp->result_to_output,
+                                      &vpv->tgsi.stream_output);
+   }
+
    vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
 
    if (ST_DEBUG & DEBUG_TGSI) {
@@ -993,6 +999,12 @@ st_translate_geometry_program(struct st_context *st,
    stgp->num_inputs = gs_num_inputs;
    stgp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
+
+   if (stgp->glsl_to_tgsi) {
+      st_translate_stream_output_info(stgp->glsl_to_tgsi,
+                                      outputMapping,
+                                      &stgp->tgsi.stream_output);
+   }
 
    /* fill in new variant */
    gpv->driver_shader = pipe->create_gs_state(pipe, &stgp->tgsi);

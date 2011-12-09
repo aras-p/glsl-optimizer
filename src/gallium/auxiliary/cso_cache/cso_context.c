@@ -79,6 +79,7 @@ struct cso_context {
    struct cso_cache *cache;
 
    boolean has_geometry_shader;
+   boolean has_streamout;
 
    struct sampler_info fragment_samplers;
    struct sampler_info vertex_samplers;
@@ -88,6 +89,12 @@ struct cso_context {
 
    uint nr_vertex_buffers_saved;
    struct pipe_vertex_buffer vertex_buffers_saved[PIPE_MAX_ATTRIBS];
+
+   unsigned nr_so_targets;
+   struct pipe_stream_output_target *so_targets[PIPE_MAX_SO_BUFFERS];
+
+   unsigned nr_so_targets_saved;
+   struct pipe_stream_output_target *so_targets_saved[PIPE_MAX_SO_BUFFERS];
 
    /** Current and saved state.
     * The saved state is used as a 1-deep stack.
@@ -276,6 +283,10 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
                                 PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
       ctx->has_geometry_shader = TRUE;
    }
+   if (pipe->screen->get_param(pipe->screen,
+                               PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) != 0) {
+      ctx->has_streamout = TRUE;
+   }
 
    return ctx;
 
@@ -306,6 +317,7 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->set_fragment_sampler_views(ctx->pipe, 0, NULL);
       if (ctx->pipe->set_vertex_sampler_views)
          ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
+      ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, 0);
    }
 
    /* free fragment samplers, views */
@@ -331,6 +343,11 @@ void cso_release_all( struct cso_context *ctx )
    util_copy_vertex_buffers(ctx->vertex_buffers_saved,
                             &ctx->nr_vertex_buffers_saved,
                             NULL, 0);
+
+   for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {
+      pipe_so_target_reference(&ctx->so_targets[i], NULL);
+      pipe_so_target_reference(&ctx->so_targets_saved[i], NULL);
+   }
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -1310,4 +1327,88 @@ cso_restore_vertex_sampler_views(struct cso_context *ctx)
 {
    restore_sampler_views(ctx, &ctx->vertex_samplers,
                          ctx->pipe->set_vertex_sampler_views);
+}
+
+
+void
+cso_set_stream_outputs(struct cso_context *ctx,
+                       unsigned num_targets,
+                       struct pipe_stream_output_target **targets,
+                       unsigned append_bitmask)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   uint i;
+
+   if (!ctx->has_streamout) {
+      assert(num_targets == 0);
+      return;
+   }
+
+   if (ctx->nr_so_targets == 0 && num_targets == 0) {
+      /* Nothing to do. */
+      return;
+   }
+
+   /* reference new targets */
+   for (i = 0; i < num_targets; i++) {
+      pipe_so_target_reference(&ctx->so_targets[i], targets[i]);
+   }
+   /* unref extra old targets, if any */
+   for (; i < ctx->nr_so_targets; i++) {
+      pipe_so_target_reference(&ctx->so_targets[i], NULL);
+   }
+
+   pipe->set_stream_output_targets(pipe, num_targets, targets,
+                                   append_bitmask);
+   ctx->nr_so_targets = num_targets;
+}
+
+void
+cso_save_stream_outputs(struct cso_context *ctx)
+{
+   uint i;
+
+   if (!ctx->has_streamout) {
+      return;
+   }
+
+   ctx->nr_so_targets_saved = ctx->nr_so_targets;
+
+   for (i = 0; i < ctx->nr_so_targets; i++) {
+      assert(!ctx->so_targets_saved[i]);
+      pipe_so_target_reference(&ctx->so_targets_saved[i], ctx->so_targets[i]);
+   }
+}
+
+void
+cso_restore_stream_outputs(struct cso_context *ctx)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   uint i;
+
+   if (!ctx->has_streamout) {
+      return;
+   }
+
+   if (ctx->nr_so_targets == 0 && ctx->nr_so_targets_saved == 0) {
+      /* Nothing to do. */
+      return;
+   }
+
+   for (i = 0; i < ctx->nr_so_targets_saved; i++) {
+      pipe_so_target_reference(&ctx->so_targets[i], NULL);
+      /* move the reference from one pointer to another */
+      ctx->so_targets[i] = ctx->so_targets_saved[i];
+      ctx->so_targets_saved[i] = NULL;
+   }
+   for (; i < ctx->nr_so_targets; i++) {
+      pipe_so_target_reference(&ctx->so_targets[i], NULL);
+   }
+
+   /* ~0 means append */
+   pipe->set_stream_output_targets(pipe, ctx->nr_so_targets_saved,
+                                   ctx->so_targets, ~0);
+
+   ctx->nr_so_targets = ctx->nr_so_targets_saved;
+   ctx->nr_so_targets_saved = 0;
 }

@@ -227,6 +227,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
 
    cso_save_viewport(cso);
+   cso_save_stream_outputs(cso);
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
@@ -246,6 +247,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
       velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
    cso_set_vertex_elements(cso, numAttribs, velements);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
    /* viewport state: viewport matching window dims */
    {
@@ -281,6 +283,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
+   cso_restore_stream_outputs(cso);
 }
 
 

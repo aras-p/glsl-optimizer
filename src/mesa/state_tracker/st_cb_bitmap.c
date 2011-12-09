@@ -483,6 +483,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_fragment_sampler_views(cso);
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
+   cso_save_stream_outputs(cso);
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
@@ -542,6 +543,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    }
 
    cso_set_vertex_elements(cso, 3, st->velems_util_draw);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
    /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
    z = z * 2.0f - 1.0f;
@@ -568,6 +570,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
+   cso_restore_stream_outputs(cso);
 }
 
 

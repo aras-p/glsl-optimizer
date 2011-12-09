@@ -529,6 +529,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_fragment_sampler_views(ctx->cso);
+   cso_save_stream_outputs(ctx->cso);
    cso_save_viewport(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
@@ -546,6 +547,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
+   cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
    /* sampler */
    ctx->sampler.normalized_coords = normalized;
@@ -622,6 +624,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_vertex_buffers(ctx->cso);
+   cso_restore_stream_outputs(ctx->cso);
 
    pipe_sampler_view_reference(&sampler_view, NULL);
    if (dst_surface != dst)
@@ -722,6 +725,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_fragment_sampler_views(ctx->cso);
+   cso_save_stream_outputs(ctx->cso);
    cso_save_viewport(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
@@ -737,6 +741,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
+   cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
    /* sampler */
    ctx->sampler.normalized_coords = normalized;
@@ -801,4 +806,5 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_vertex_buffers(ctx->cso);
+   cso_restore_stream_outputs(ctx->cso);
 }
