@@ -41,6 +41,8 @@ void debug_describe_reference(char* buf, const struct pipe_reference*ptr);
 void debug_describe_resource(char* buf, const struct pipe_resource *ptr);
 void debug_describe_surface(char* buf, const struct pipe_surface *ptr);
 void debug_describe_sampler_view(char* buf, const struct pipe_sampler_view *ptr);
+void debug_describe_so_target(char* buf,
+                              const struct pipe_stream_output_target *ptr);
 
 #ifdef __cplusplus
 }

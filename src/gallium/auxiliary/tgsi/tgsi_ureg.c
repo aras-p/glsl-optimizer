@@ -1590,14 +1590,19 @@ const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
 
 
 void *ureg_create_shader( struct ureg_program *ureg,
-                          struct pipe_context *pipe )
+                          struct pipe_context *pipe,
+                          const struct pipe_stream_output_info *so )
 {
    struct pipe_shader_state state;
 
    state.tokens = ureg_finalize(ureg);
    if(!state.tokens)
       return NULL;
-   memset(&state.stream_output, 0, sizeof(state.stream_output));
+
+   if (so)
+      state.stream_output = *so;
+   else
+      memset(&state.stream_output, 0, sizeof(state.stream_output));
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX)
       return pipe->create_vs_state( pipe, &state );

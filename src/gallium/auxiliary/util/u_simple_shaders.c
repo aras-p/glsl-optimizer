@@ -56,6 +56,18 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     const uint *semantic_names,
                                     const uint *semantic_indexes)
 {
+   return util_make_vertex_passthrough_shader_with_so(pipe, num_attribs,
+                                                      semantic_names,
+                                                      semantic_indexes, NULL);
+}
+
+void *
+util_make_vertex_passthrough_shader_with_so(struct pipe_context *pipe,
+                                    uint num_attribs,
+                                    const uint *semantic_names,
+                                    const uint *semantic_indexes,
+				    const struct pipe_stream_output_info *so)
+{
    struct ureg_program *ureg;
    uint i;
 
@@ -78,7 +90,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    ureg_END( ureg );
 
-   return ureg_create_shader_and_destroy( ureg, pipe );
+   return ureg_create_shader_with_so_and_destroy( ureg, pipe, so );
 }
 
 

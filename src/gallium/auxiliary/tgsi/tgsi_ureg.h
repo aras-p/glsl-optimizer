@@ -37,6 +37,7 @@ extern "C" {
 #endif
    
 struct ureg_program;
+struct pipe_stream_output_info;
 
 /* Almost a tgsi_src_register, but we need to pull in the Absolute
  * flag from the _ext token.  Indirect flag always implies ADDR[0].
@@ -97,7 +98,8 @@ ureg_finalize( struct ureg_program * );
  */
 void *
 ureg_create_shader( struct ureg_program *,
-                    struct pipe_context *pipe );
+                    struct pipe_context *pipe,
+		    const struct pipe_stream_output_info *so );
 
 
 /* Alternately, return the built token stream and hand ownership of
@@ -120,12 +122,20 @@ ureg_destroy( struct ureg_program * );
  * Convenience routine:
  */
 static INLINE void *
+ureg_create_shader_with_so_and_destroy( struct ureg_program *p,
+			struct pipe_context *pipe,
+			const struct pipe_stream_output_info *so )
+{
+   void *result = ureg_create_shader( p, pipe, so );
+   ureg_destroy( p );
+   return result;
+}
+
+static INLINE void *
 ureg_create_shader_and_destroy( struct ureg_program *p,
                                 struct pipe_context *pipe )
 {
-   void *result = ureg_create_shader( p, pipe );
-   ureg_destroy( p );
-   return result;
+   return ureg_create_shader_with_so_and_destroy(p, pipe, NULL);
 }
 
 
