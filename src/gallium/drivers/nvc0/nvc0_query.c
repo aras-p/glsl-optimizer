@@ -27,7 +27,8 @@
 
 struct nvc0_query {
    uint32_t *data;
-   uint32_t type;
+   uint16_t type;
+   uint16_t index;
    uint32_t sequence;
    struct nouveau_bo *bo;
    uint32_t base;
@@ -103,7 +104,6 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
    switch (type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
       q->rotate = 32;
       space = NVC0_QUERY_ALLOC_SPACE;
       break;
@@ -112,6 +112,7 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
       space = 512;
       break;
    case PIPE_QUERY_SO_STATISTICS:
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
       q->is64bit = TRUE;
       space = 64;
       break;
@@ -123,7 +124,7 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       space = 32;
       break;
-   case NVC0_QUERY_TFB_BUFFER_OFFSETS:
+   case NVC0_QUERY_TFB_BUFFER_OFFSET:
       space = 16;
       break;
    default:
@@ -141,7 +142,9 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
       /* we advance before query_begin ! */
       q->offset -= q->rotate;
       q->data -= q->rotate / sizeof(*q->data);
-   }
+   } else
+   if (!q->is64bit)
+      q->data[0] = 0; /* initialize sequence */
 
    return (struct pipe_query *)q;
 }
@@ -176,8 +179,6 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct nvc0_query *q = nvc0_query(pq);
 
-   const int index = 0; /* vertex stream */
-
    /* For occlusion queries we have to change the storage, because a previous
     * query might set the initial render conition to FALSE even *after* we re-
     * initialized it to TRUE.
@@ -188,12 +189,12 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       /* XXX: can we do this with the GPU, and sync with respect to a previous
        *  query ?
        */
+      q->data[0] = q->sequence; /* initialize sequence */
       q->data[1] = 1; /* initial render condition = TRUE */
       q->data[4] = q->sequence + 1; /* for comparison COND_MODE */
       q->data[5] = 0;
    }
-   if (!q->is64bit)
-      q->data[0] = q->sequence++; /* the previously used one */
+   q->sequence++;
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -208,14 +209,17 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       }
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(chan, q, 0x10, 0x06805002 | (index << 5));
+      nvc0_query_get(chan, q, 0x10, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      nvc0_query_get(chan, q, 0x10, 0x05805002 | (index << 5));
+      nvc0_query_get(chan, q, 0x10, 0x05805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      nvc0_query_get(chan, q, 0x20, 0x05805002 | (index << 5));
-      nvc0_query_get(chan, q, 0x30, 0x06805002 | (index << 5));
+      nvc0_query_get(chan, q, 0x20, 0x05805002 | (q->index << 5));
+      nvc0_query_get(chan, q, 0x30, 0x06805002 | (q->index << 5));
+      break;
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+      nvc0_query_get(chan, q, 0x10, 0x03005002 | (q->index << 5));
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
@@ -247,15 +251,11 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct nvc0_query *q = nvc0_query(pq);
 
-   const int index = 0; /* for multiple vertex streams */
-
    if (!q->active) {
       /* some queries don't require 'begin' to be called (e.g. GPU_FINISHED) */
       if (q->rotate)
          nvc0_query_rotate(nvc0, q);
-      else
-      if (!q->is64bit)
-         q->data[0] = q->sequence++;
+      q->sequence++;
    }
    q->ready = FALSE;
    q->active = FALSE;
@@ -268,17 +268,20 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
          IMMED_RING(chan, RING_3D(SAMPLECNT_ENABLE), 0);
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(chan, q, 0, 0x06805002 | (index << 5));
+      nvc0_query_get(chan, q, 0, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      nvc0_query_get(chan, q, 0, 0x05805002 | (index << 5));
+      nvc0_query_get(chan, q, 0, 0x05805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      nvc0_query_get(chan, q, 0x00, 0x05805002 | (index << 5));
-      nvc0_query_get(chan, q, 0x10, 0x06805002 | (index << 5));
+      nvc0_query_get(chan, q, 0x00, 0x05805002 | (q->index << 5));
+      nvc0_query_get(chan, q, 0x10, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      nvc0_query_get(chan, q, 0x00, 0x02005002 | (index << 5));
+      /* TODO: How do we sum over all streams for render condition ? */
+      /* PRIMS_DROPPED doesn't write sequence, use a ZERO query to sync on */
+      nvc0_query_get(chan, q, 0x00, 0x03005002 | (q->index << 5));
+      nvc0_query_get(chan, q, 0x20, 0x00005002);
       break;
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
@@ -300,11 +303,9 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
       nvc0_query_get(chan, q, 0x80, 0x0d808002); /* TCP, LAUNCHES */
       nvc0_query_get(chan, q, 0x90, 0x0e809002); /* TEP, LAUNCHES */
       break;
-   case NVC0_QUERY_TFB_BUFFER_OFFSETS:
-      nvc0_query_get(chan, q, 0x00, 0x1d005002); /* TFB, BUFFER_OFFSET */
-      nvc0_query_get(chan, q, 0x04, 0x1d005022);
-      nvc0_query_get(chan, q, 0x08, 0x1d005042);
-      nvc0_query_get(chan, q, 0x0c, 0x1d005062);
+   case NVC0_QUERY_TFB_BUFFER_OFFSET:
+      /* indexed by TFB buffer instead of by vertex stream */
+      nvc0_query_get(chan, q, 0x00, 0x0d005002 | (q->index << 5));
       break;
    default:
       assert(0);
@@ -315,7 +316,14 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 static INLINE boolean
 nvc0_query_ready(struct nvc0_query *q)
 {
-   return q->ready || (!q->is64bit && (q->data[0] == q->sequence));
+   if (q->is64bit) {
+      if (nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOWAIT))
+         return FALSE;
+      nouveau_bo_unmap(q->bo);
+      return TRUE;
+   } else {
+      return q->data[0] == q->sequence;
+   }
 }
 
 static INLINE boolean
@@ -355,14 +363,12 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 
    switch (q->type) {
    case PIPE_QUERY_GPU_FINISHED:
-      res32[0] = 0;
       res8[0] = TRUE;
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER: /* u32 sequence, u32 count, u64 time */
       res64[0] = q->data[1] - q->data[5];
       break;
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      res32[0] = 0;
       res8[0] = q->data[1] != q->data[5];
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED: /* u64 count, u64 time */
@@ -374,15 +380,13 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       res64[1] = data64[2] - data64[6];
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      res32[0] = 0;
-      res8[0] = !q->data[1];
+      res8[0] = data64[0] != data64[2];
       break;
    case PIPE_QUERY_TIMESTAMP:
       res64[0] = data64[1];
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT: /* u32 sequence, u32 0, u64 time */
       res64[0] = 1000000000;
-      res32[2] = 0;
       res8[8] = (data64[1] == data64[3]) ? FALSE : TRUE;
       break;
    case PIPE_QUERY_TIME_ELAPSED:
@@ -392,17 +396,31 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       for (i = 0; i < 10; ++i)
          res64[i] = data64[i * 2] - data64[24 + i * 2];
       break;
-   case NVC0_QUERY_TFB_BUFFER_OFFSETS:
-      res32[0] = q->data[0];
-      res32[1] = q->data[1];
-      res32[2] = q->data[2];
-      res32[3] = q->data[3];
+   case NVC0_QUERY_TFB_BUFFER_OFFSET:
+      res32[0] = q->data[1];
       break;
    default:
       return FALSE;
    }
 
    return TRUE;
+}
+
+void
+nvc0_query_fifo_wait(struct nouveau_channel *chan, struct pipe_query *pq)
+{
+   struct nvc0_query *q = nvc0_query(pq);
+   unsigned offset = q->offset;
+
+   if (q->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) offset += 0x20;
+
+   MARK_RING (chan, 5, 2);
+   BEGIN_RING(chan, RING_3D_(NV84_SUBCHAN_SEMAPHORE_ADDRESS_HIGH), 4);
+   OUT_RELOCh(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+   OUT_RING  (chan, q->sequence);
+   OUT_RING  (chan, (1 << 12) |
+              NV84_SUBCHAN_SEMAPHORE_TRIGGER_ACQUIRE_EQUAL);
 }
 
 static void
@@ -427,9 +445,8 @@ nvc0_render_condition(struct pipe_context *pipe,
    /* NOTE: comparison of 2 queries only works if both have completed */
    switch (q->type) {
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      /* query writes 1 if there was no overflow */
-      cond = negated ? NVC0_3D_COND_MODE_RES_NON_ZERO :
-                       NVC0_3D_COND_MODE_EQUAL;
+      cond = negated ? NVC0_3D_COND_MODE_EQUAL :
+                       NVC0_3D_COND_MODE_NOT_EQUAL;
       wait = TRUE;
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -450,14 +467,8 @@ nvc0_render_condition(struct pipe_context *pipe,
       break;
    }
 
-   if (wait) {
-      MARK_RING (chan, 5, 2);
-      BEGIN_RING(chan, RING_3D_(NV84_SUBCHAN_QUERY_ADDRESS_HIGH), 4);
-      OUT_RELOCh(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-      OUT_RELOCl(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-      OUT_RING  (chan, q->sequence);
-      OUT_RING  (chan, 0x00001001);
-   }
+   if (wait)
+      nvc0_query_fifo_wait(chan, pq);
 
    MARK_RING (chan, 4, 2);
    BEGIN_RING(chan, RING_3D(COND_ADDRESS_HIGH), 3);
@@ -467,13 +478,33 @@ nvc0_render_condition(struct pipe_context *pipe,
 }
 
 void
-nvc0_query_pushbuf_submit(struct nvc0_context *nvc0,
+nvc0_query_pushbuf_submit(struct nouveau_channel *chan,
                           struct pipe_query *pq, unsigned result_offset)
 {
    struct nvc0_query *q = nvc0_query(pq);
 
-   nouveau_pushbuf_submit(nvc0->screen->base.channel,
-                          q->bo, q->offset + result_offset, 4);
+#define NVC0_IB_ENTRY_1_NO_PREFETCH (1 << (31 - 8))
+
+   nouveau_pushbuf_submit(chan, q->bo, q->offset + result_offset, 4 |
+                          NVC0_IB_ENTRY_1_NO_PREFETCH);
+}
+
+void
+nvc0_so_target_save_offset(struct pipe_context *pipe,
+                           struct pipe_stream_output_target *ptarg,
+                           unsigned index, boolean *serialize)
+{
+   struct nvc0_so_target *targ = nvc0_so_target(ptarg);
+
+   if (*serialize) {
+      struct nouveau_channel *chan = nvc0_context(pipe)->screen->base.channel;
+      *serialize = FALSE;
+      IMMED_RING(chan, RING_3D(SERIALIZE), 0);
+   }
+
+   nvc0_query(targ->pq)->index = index;
+
+   nvc0_query_end(pipe, targ->pq);
 }
 
 void

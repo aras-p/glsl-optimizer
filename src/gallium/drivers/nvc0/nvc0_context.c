@@ -77,7 +77,7 @@ nvc0_context_unreference_resources(struct nvc0_context *nvc0)
    }
 
    for (i = 0; i < nvc0->num_tfbbufs; ++i)
-      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
+      pipe_so_target_reference(&nvc0->tfbbuf[i], NULL);
 }
 
 static void

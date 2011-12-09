@@ -520,7 +520,12 @@ nvc0_sp_state_create(struct pipe_context *pipe,
       return NULL;
 
    prog->type = type;
-   prog->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+
+   if (cso->tokens)
+      prog->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+
+   if (cso->stream_output.num_outputs)
+      prog->pipe.stream_output = cso->stream_output;
 
    return (void *)prog;
 }
@@ -747,72 +752,75 @@ nvc0_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
     nvc0->dirty |= NVC0_NEW_VERTEX;
 }
 
-static void *
-nvc0_tfb_state_create(struct pipe_context *pipe,
-                      const struct pipe_stream_output_info *pso)
+static struct pipe_stream_output_target *
+nvc0_so_target_create(struct pipe_context *pipe,
+                      struct pipe_resource *res,
+                      unsigned offset, unsigned size)
 {
-   struct nvc0_transform_feedback_state *so;
-   int n = 0;
-   int i, c, b;
-
-   so = MALLOC(sizeof(*so) + pso->num_outputs * 4 * sizeof(uint8_t));
-   if (!so)
+   struct nvc0_so_target *targ = MALLOC_STRUCT(nvc0_so_target);
+   if (!targ)
       return NULL;
 
-   for (b = 0; b < 4; ++b) {
-      for (i = 0; i < pso->num_outputs; ++i) {
-         if (pso->output[i].output_buffer != b)
-            continue;
-         for (c = 0; c < 4; ++c) {
-            if (!(pso->output[i].register_mask & (1 << c)))
-               continue;
-            so->varying_count[b]++;
-            so->varying_index[n++] = (pso->output[i].register_index << 2) | c;
-         }
-      }
-      so->stride[b] = so->varying_count[b] * 4;
+   targ->pq = pipe->create_query(pipe, NVC0_QUERY_TFB_BUFFER_OFFSET);
+   if (!targ->pq) {
+      FREE(targ);
+      return NULL;
    }
-   if (pso->stride)
-      so->stride[0] = pso->stride;
+   targ->clean = TRUE;
 
-   return so;
+   targ->pipe.buffer_size = size;
+   targ->pipe.buffer_offset = offset;
+   targ->pipe.context = pipe;
+   targ->pipe.buffer = NULL;
+   pipe_resource_reference(&targ->pipe.buffer, res);
+   pipe_reference_init(&targ->pipe.reference, 1);
+
+   return &targ->pipe;
 }
 
 static void
-nvc0_tfb_state_delete(struct pipe_context *pipe, void *hwcso)
+nvc0_so_target_destroy(struct pipe_context *pipe,
+                       struct pipe_stream_output_target *ptarg)
 {
-   FREE(hwcso);
+   struct nvc0_so_target *targ = nvc0_so_target(ptarg);
+   pipe->destroy_query(pipe, targ->pq);
+   FREE(targ);
 }
 
 static void
-nvc0_tfb_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-   nvc0_context(pipe)->tfb = hwcso;
-   nvc0_context(pipe)->dirty |= NVC0_NEW_TFB;
-}
-
-static void
-nvc0_set_transform_feedback_buffers(struct pipe_context *pipe,
-                                    struct pipe_resource **buffers,
-                                    int *offsets,
-                                    int num_buffers)
+nvc0_set_transform_feedback_targets(struct pipe_context *pipe,
+                                    unsigned num_targets,
+                                    struct pipe_stream_output_target **targets,
+                                    unsigned append_mask)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   int i;
+   unsigned i;
+   boolean serialize = TRUE;
 
-   assert(num_buffers >= 0 && num_buffers <= 4); /* why signed ? */
+   assert(num_targets <= 4);
 
-   for (i = 0; i < num_buffers; ++i) {
-       assert(offsets[i] >= 0);
-       nvc0->tfb_offset[i] = offsets[i];
-       pipe_resource_reference(&nvc0->tfbbuf[i], buffers[i]);
+   for (i = 0; i < num_targets; ++i) {
+      if (nvc0->tfbbuf[i] == targets[i] && (append_mask & (1 << i)))
+         continue;
+      nvc0->tfbbuf_dirty |= 1 << i;
+
+      if (nvc0->tfbbuf[i] && nvc0->tfbbuf[i] != targets[i])
+         nvc0_so_target_save_offset(pipe, nvc0->tfbbuf[i], i, &serialize);
+
+      if (targets[i] && !(append_mask & (1 << i)))
+         nvc0_so_target(targets[i])->clean = TRUE;
+
+      pipe_so_target_reference(&nvc0->tfbbuf[i], targets[i]);
    }
-   for (; i < nvc0->num_tfbbufs; ++i)
-      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
+   for (; i < nvc0->num_tfbbufs; ++i) {
+      nvc0->tfbbuf_dirty |= 1 << i;
+      nvc0_so_target_save_offset(pipe, nvc0->tfbbuf[i], i, &serialize);
+      pipe_so_target_reference(&nvc0->tfbbuf[i], NULL);
+   }
+   nvc0->num_tfbbufs = num_targets;
 
-   nvc0->num_tfbbufs = num_buffers;
-
-   nvc0->dirty |= NVC0_NEW_TFB_BUFFERS;
+   if (nvc0->tfbbuf_dirty)
+      nvc0->dirty |= NVC0_NEW_TFB_TARGETS;
 }
 
 void
@@ -871,17 +879,9 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_vertex_buffers = nvc0_set_vertex_buffers;
    pipe->set_index_buffer = nvc0_set_index_buffer;
 
-#if 0
-   pipe->create_stream_output_state = nvc0_tfb_state_create;
-   pipe->delete_stream_output_state = nvc0_tfb_state_delete;
-   pipe->bind_stream_output_state = nvc0_tfb_state_bind;
-   pipe->set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
-#else
-   (void)nvc0_tfb_state_create;
-   (void)nvc0_tfb_state_delete;
-   (void)nvc0_tfb_state_bind;
-   (void)nvc0_set_transform_feedback_buffers;
-#endif
+   pipe->create_stream_output_target = nvc0_so_target_create;
+   pipe->stream_output_target_destroy = nvc0_so_target_destroy;
+   pipe->set_stream_output_targets = nvc0_set_transform_feedback_targets;
 
    pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }

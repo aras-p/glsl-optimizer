@@ -480,6 +480,40 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
    return 0;
 }
 
+static struct nvc0_transform_feedback_state *
+nvc0_program_create_tfb_state(const struct nv50_ir_prog_info *info,
+                              const struct pipe_stream_output_info *pso)
+{
+   struct nvc0_transform_feedback_state *tfb;
+   int n = 0;
+   int i, c, b;
+
+   tfb = MALLOC(sizeof(*tfb) + pso->num_outputs * 4 * sizeof(uint8_t));
+   if (!tfb)
+      return NULL;
+
+   for (b = 0; b < 4; ++b) {
+      tfb->varying_count[b] = 0;
+
+      for (i = 0; i < pso->num_outputs; ++i) {
+         if (pso->output[i].output_buffer != b)
+            continue;
+         for (c = 0; c < 4; ++c) {
+            if (!(pso->output[i].register_mask & (1 << c)))
+               continue;
+            tfb->varying_count[b]++;
+            tfb->varying_index[n++] =
+               info->out[pso->output[i].register_index].slot[c];
+         }
+      }
+      tfb->stride[b] = tfb->varying_count[b] * 4;
+   }
+   if (pso->stride)
+      tfb->stride[0] = pso->stride;
+
+   return tfb;
+}
+
 #ifdef DEBUG
 static void
 nvc0_program_dump(struct nvc0_program *prog)
@@ -576,6 +610,10 @@ nvc0_program_translate(struct nvc0_program *prog)
    }
    if (info->io.globalAccess)
       prog->hdr[0] |= 1 << 16;
+
+   if (prog->pipe.stream_output.num_outputs)
+      prog->tfb = nvc0_program_create_tfb_state(info,
+                                                &prog->pipe.stream_output);
 
 out:
    FREE(info);
@@ -675,6 +713,11 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
       FREE(prog->immd_data);
    if (prog->relocs)
       FREE(prog->relocs);
+   if (prog->tfb) {
+      if (nvc0->state.tfb == prog->tfb)
+         nvc0->state.tfb = NULL;
+      FREE(prog->tfb);
+   }
 
    memset(prog->hdr, 0, sizeof(prog->hdr));
 

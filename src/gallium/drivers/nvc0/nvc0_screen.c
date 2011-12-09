@@ -104,9 +104,15 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
+   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
       return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-      return 0;
+      return 4;
+   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS:
+      return 4;
+   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+      return 128;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:

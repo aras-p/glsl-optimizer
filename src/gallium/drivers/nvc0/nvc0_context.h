@@ -49,14 +49,14 @@
 #define NVC0_NEW_CONSTBUF     (1 << 18)
 #define NVC0_NEW_TEXTURES     (1 << 19)
 #define NVC0_NEW_SAMPLERS     (1 << 20)
-#define NVC0_NEW_TFB          (1 << 21)
-#define NVC0_NEW_TFB_BUFFERS  (1 << 22)
+#define NVC0_NEW_TFB_TARGETS  (1 << 21)
 
 #define NVC0_BUFCTX_CONSTANT 0
 #define NVC0_BUFCTX_FRAME    1
 #define NVC0_BUFCTX_VERTEX   2
 #define NVC0_BUFCTX_TEXTURES 3
-#define NVC0_BUFCTX_COUNT    4
+#define NVC0_BUFCTX_TFB      4
+#define NVC0_BUFCTX_COUNT    5
 
 struct nvc0_context {
    struct nouveau_context base;
@@ -75,6 +75,7 @@ struct nvc0_context {
       boolean prim_restart;
       boolean early_z;
       uint16_t scissor;
+      boolean rasterizer_discard;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
@@ -84,6 +85,7 @@ struct nvc0_context {
       uint8_t clip_enable;
       uint32_t clip_mode;
       uint32_t uniform_buffer_bound[5];
+      struct nvc0_transform_feedback_state *tfb;
    } state;
 
    struct nvc0_blend_stateobj *blend;
@@ -125,10 +127,9 @@ struct nvc0_context {
 
    boolean vbo_push_hint;
 
-   struct nvc0_transform_feedback_state *tfb;
-   struct pipe_resource *tfbbuf[4];
+   uint8_t tfbbuf_dirty;
+   struct pipe_stream_output_target *tfbbuf[4];
    unsigned num_tfbbufs;
-   unsigned tfb_offset[4];
 
    struct draw_context *draw;
 };
@@ -170,10 +171,14 @@ void nvc0_program_library_upload(struct nvc0_context *);
 
 /* nvc0_query.c */
 void nvc0_init_query_functions(struct nvc0_context *);
-void nvc0_query_pushbuf_submit(struct nvc0_context *nvc0,
-                               struct pipe_query *pq, unsigned result_offset);
+void nvc0_query_pushbuf_submit(struct nouveau_channel *,
+                               struct pipe_query *, unsigned result_offset);
+void nvc0_query_fifo_wait(struct nouveau_channel *, struct pipe_query *);
+void nvc0_so_target_save_offset(struct pipe_context *,
+                                struct pipe_stream_output_target *, unsigned i,
+                                boolean *serialize);
 
-#define NVC0_QUERY_TFB_BUFFER_OFFSETS (PIPE_QUERY_TYPES + 0)
+#define NVC0_QUERY_TFB_BUFFER_OFFSET (PIPE_QUERY_TYPES + 0)
 
 /* nvc0_shader_state.c */
 void nvc0_vertprog_validate(struct nvc0_context *);

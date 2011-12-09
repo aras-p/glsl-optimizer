@@ -273,7 +273,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 {
    struct push_context ctx;
    unsigned i, index_size;
-   unsigned inst = info->instance_count;
+   unsigned inst_count = info->instance_count;
+   unsigned vert_count = info->count;
    boolean apply_bias = info->indexed && info->index_bias;
 
    init_push_context(nvc0, &ctx);
@@ -312,26 +313,34 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       index_size = 0;
       ctx.primitive_restart = FALSE;
       ctx.restart_index = 0;
+
+      if (info->count_from_stream_output) {
+         struct pipe_context *pipe = &nvc0->base.pipe;
+         struct nvc0_so_target *targ;
+         targ = nvc0_so_target(info->count_from_stream_output);
+         pipe->get_query_result(pipe, targ->pq, TRUE, &vert_count);
+         vert_count /= targ->stride;
+      }
    }
 
    ctx.instance_id = info->start_instance;
    ctx.prim = nvc0_prim_gl(info->mode);
 
-   while (inst--) {
+   while (inst_count--) {
       BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
       OUT_RING  (ctx.chan, ctx.prim);
       switch (index_size) {
       case 0:
-         emit_vertices_seq(&ctx, info->start, info->count);
+         emit_vertices_seq(&ctx, info->start, vert_count);
          break;
       case 1:
-         emit_vertices_i08(&ctx, info->start, info->count);
+         emit_vertices_i08(&ctx, info->start, vert_count);
          break;
       case 2:
-         emit_vertices_i16(&ctx, info->start, info->count);
+         emit_vertices_i16(&ctx, info->start, vert_count);
          break;
       case 4:
-         emit_vertices_i32(&ctx, info->start, info->count);
+         emit_vertices_i32(&ctx, info->start, vert_count);
          break;
       default:
          assert(0);

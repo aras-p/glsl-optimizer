@@ -569,6 +569,38 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
    }
 }
 
+static void
+nvc0_draw_stream_output(struct nvc0_context *nvc0,
+                        const struct pipe_draw_info *info)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nvc0_so_target *so = nvc0_so_target(info->count_from_stream_output);
+   struct nv04_resource *res = nv04_resource(so->pipe.buffer);
+   unsigned mode = nvc0_prim_gl(info->mode);
+   unsigned num_instances = info->instance_count;
+
+   if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
+      res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      IMMED_RING(chan, RING_3D(SERIALIZE), 0);
+      nvc0_query_fifo_wait(chan, so->pq);
+      IMMED_RING(chan, RING_3D(VERTEX_ARRAY_FLUSH), 0);
+   }
+
+   while (num_instances--) {
+      BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
+      OUT_RING  (chan, mode);
+      BEGIN_RING(chan, RING_3D(DRAW_TFB_BASE), 1);
+      OUT_RING  (chan, 0);
+      BEGIN_RING(chan, RING_3D(DRAW_TFB_STRIDE), 1);
+      OUT_RING  (chan, so->stride);
+      BEGIN_RING(chan, RING_3D(DRAW_TFB_BYTES), 1);
+      nvc0_query_pushbuf_submit(chan, so->pq, 0x4);
+      IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
+
+      mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
+   }
+}
+
 void
 nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
@@ -615,6 +647,9 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       nvc0->base.vbo_dirty = FALSE;
    }
 
+   if (unlikely(info->count_from_stream_output)) {
+      nvc0_draw_stream_output(nvc0, info);
+   } else
    if (!info->indexed) {
       nvc0_draw_arrays(nvc0,
                        info->mode, info->start, info->count,

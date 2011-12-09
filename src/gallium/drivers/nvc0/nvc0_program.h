@@ -6,6 +6,14 @@
 
 #define NVC0_CAP_MAX_PROGRAM_TEMPS 128
 
+
+struct nvc0_transform_feedback_state {
+   uint32_t stride[4];
+   uint8_t varying_count[4];
+   uint8_t varying_index[0];
+};
+
+
 #define NVC0_SHADER_HEADER_SIZE (20 * 4)
 
 struct nvc0_program {
@@ -31,7 +39,6 @@ struct nvc0_program {
       uint8_t clip_enable; /* only applies if num_ucps == 0 */
       uint8_t edgeflag;
       uint8_t num_ucps;
-      uint8_t out_pos[PIPE_MAX_SHADER_OUTPUTS];
    } vp;
    struct {
       uint8_t early_z;
@@ -43,6 +50,8 @@ struct nvc0_program {
    } tp;
 
    void *relocs;
+
+   struct nvc0_transform_feedback_state *tfb;
 
    struct nouveau_resource *res;
 };

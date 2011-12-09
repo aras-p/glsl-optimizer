@@ -428,12 +428,23 @@ nvc0_validate_derived_1(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    boolean early_z;
+   boolean rasterizer_discard;
 
    early_z = nvc0->fragprog->fp.early_z && !nvc0->zsa->pipe.alpha.enabled;
 
    if (early_z != nvc0->state.early_z) {
       nvc0->state.early_z = early_z;
       IMMED_RING(chan, RING_3D(EARLY_FRAGMENT_TESTS), early_z);
+   }
+
+   rasterizer_discard = (!nvc0->fragprog || !nvc0->fragprog->hdr[18]) &&
+      !nvc0->zsa->pipe.depth.enabled && !nvc0->zsa->pipe.stencil[0].enabled;
+   rasterizer_discard = rasterizer_discard ||
+      nvc0->rast->pipe.rasterizer_discard;
+
+   if (rasterizer_discard != nvc0->state.rasterizer_discard) {
+      nvc0->state.rasterizer_discard = rasterizer_discard;
+      IMMED_RING(chan, RING_3D(RASTERIZE_ENABLE), !rasterizer_discard);
    }
 }
 
@@ -484,13 +495,14 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
-    { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA },
+    { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA |
+                                   NVC0_NEW_RASTERIZER },
     { nvc0_validate_clip,          NVC0_NEW_CLIP },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
     { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
-    { nvc0_tfb_validate,           NVC0_NEW_TFB | NVC0_NEW_TFB_BUFFERS }
+    { nvc0_tfb_validate,           NVC0_NEW_TFB_TARGETS | NVC0_NEW_GMTYPROG }
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 

@@ -744,7 +744,8 @@ nvc0_blitctx_prepare_state(struct nvc0_blitctx *blit)
    IMMED_RING(chan, RING_3D(STENCIL_ENABLE), 0);
    IMMED_RING(chan, RING_3D(ALPHA_TEST_ENABLE), 0);
 
-   /* transform feedback ? */
+   /* disable transform feedback */
+   IMMED_RING(chan, RING_3D(TFB_ENABLE), 0);
 }
 
 static void
@@ -830,7 +831,8 @@ nvc0_blitctx_post_blit(struct nvc0_context *nvc0, struct nvc0_blitctx *blit)
        NVC0_NEW_RASTERIZER | NVC0_NEW_ZSA | NVC0_NEW_BLEND |
        NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS |
        NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
-       NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG);
+       NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
+       NVC0_NEW_TFB_TARGETS);
 }
 
 static void
