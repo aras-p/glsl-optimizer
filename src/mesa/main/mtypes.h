@@ -2830,6 +2830,15 @@ struct gl_constants
     * Texture borders are deprecated in GL 3.0.
     **/
    GLboolean StripTextureBorder;
+
+   /**
+    * For drivers which can do a better job at eliminating unused varyings
+    * and uniforms than the GLSL compiler.
+    *
+    * XXX Remove these as soon as a better solution is available.
+    */
+   GLboolean GLSLSkipStrictMaxVaryingLimitCheck;
+   GLboolean GLSLSkipStrictMaxUniformLimitCheck;
 };
 
 

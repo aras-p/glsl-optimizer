@@ -222,6 +222,12 @@ void st_init_limits(struct st_context *st)
    c->UniformBooleanTrue = ~0;
 
    c->StripTextureBorder = GL_TRUE;
+
+   c->GLSLSkipStrictMaxUniformLimitCheck =
+      screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS);
+
+   c->GLSLSkipStrictMaxVaryingLimitCheck =
+      screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS);
 }
 
 

@@ -1815,18 +1815,34 @@ assign_varying_locations(struct gl_context *ctx,
 
    if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
       if (varying_vectors > ctx->Const.MaxVarying) {
-	 linker_error(prog, "shader uses too many varying vectors "
-		      "(%u > %u)\n",
-		      varying_vectors, ctx->Const.MaxVarying);
-	 return false;
+         if (ctx->Const.GLSLSkipStrictMaxVaryingLimitCheck) {
+            linker_warning(prog, "shader uses too many varying vectors "
+                           "(%u > %u), but the driver will try to optimize "
+                           "them out; this is non-portable out-of-spec "
+                           "behavior\n",
+                           varying_vectors, ctx->Const.MaxVarying);
+         } else {
+            linker_error(prog, "shader uses too many varying vectors "
+                         "(%u > %u)\n",
+                         varying_vectors, ctx->Const.MaxVarying);
+            return false;
+         }
       }
    } else {
       const unsigned float_components = varying_vectors * 4;
       if (float_components > ctx->Const.MaxVarying * 4) {
-	 linker_error(prog, "shader uses too many varying components "
-		      "(%u > %u)\n",
-		      float_components, ctx->Const.MaxVarying * 4);
-	 return false;
+         if (ctx->Const.GLSLSkipStrictMaxVaryingLimitCheck) {
+            linker_warning(prog, "shader uses too many varying components "
+                           "(%u > %u), but the driver will try to optimize "
+                           "them out; this is non-portable out-of-spec "
+                           "behavior\n",
+                           float_components, ctx->Const.MaxVarying * 4);
+         } else {
+            linker_error(prog, "shader uses too many varying components "
+                         "(%u > %u)\n",
+                         float_components, ctx->Const.MaxVarying * 4);
+            return false;
+         }
       }
    }
 
@@ -1960,8 +1976,15 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
       }
 
       if (sh->num_uniform_components > max_uniform_components[i]) {
-         linker_error(prog, "Too many %s shader uniform components",
-		      shader_names[i]);
+         if (ctx->Const.GLSLSkipStrictMaxUniformLimitCheck) {
+            linker_warning(prog, "Too many %s shader uniform components, "
+                           "but the driver will try to optimize them out; "
+                           "this is non-portable out-of-spec behavior\n",
+                           shader_names[i]);
+         } else {
+            linker_error(prog, "Too many %s shader uniform components",
+                         shader_names[i]);
+         }
       }
    }
 
