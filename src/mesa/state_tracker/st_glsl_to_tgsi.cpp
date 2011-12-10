@@ -3786,6 +3786,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
     * new visitor. */
    foreach_iter(exec_list_iterator, iter, original->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      glsl_to_tgsi_instruction *newinst;
       st_src_reg src_regs[3];
 
       if (inst->dst.file == PROGRAM_OUTPUT)
@@ -3803,7 +3804,8 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
             prog->InputsRead |= BITFIELD64_BIT(src_regs[i].index);
       }
 
-      v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+      newinst = v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+      newinst->tex_target = inst->tex_target;
    }
 
    /* Make modifications to fragment program info. */
@@ -3867,6 +3869,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
     * new visitor. */
    foreach_iter(exec_list_iterator, iter, original->instructions) {
       glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      glsl_to_tgsi_instruction *newinst;
       st_src_reg src_regs[3];
 
       if (inst->dst.file == PROGRAM_OUTPUT)
@@ -3878,7 +3881,8 @@ get_bitmap_visitor(struct st_fragment_program *fp,
             prog->InputsRead |= BITFIELD64_BIT(src_regs[i].index);
       }
 
-      v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+      newinst = v->emit(NULL, inst->op, inst->dst, src_regs[0], src_regs[1], src_regs[2]);
+      newinst->tex_target = inst->tex_target;
    }
 
    /* Make modifications to fragment program info. */
