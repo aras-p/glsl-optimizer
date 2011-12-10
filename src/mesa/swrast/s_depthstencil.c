@@ -989,8 +989,10 @@ _swrast_update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
             wrapper = new_z24_renderbuffer_wrapper(ctx, depthRb);
          }
          _mesa_reference_renderbuffer(&fb->_DepthBuffer, wrapper);
-         ASSERT(fb->_DepthBuffer->Wrapped == depthRb);
       }
+      ASSERT(fb->_DepthBuffer->Wrapped == depthRb);
+      fb->_DepthBuffer->Width = depthRb->Width;
+      fb->_DepthBuffer->Height = depthRb->Height;
    }
    else {
       /* depthRb may be null */
@@ -1023,8 +1025,10 @@ _swrast_update_stencil_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          struct gl_renderbuffer *wrapper
             = new_s8_renderbuffer_wrapper(ctx, stencilRb);
          _mesa_reference_renderbuffer(&fb->_StencilBuffer, wrapper);
-         ASSERT(fb->_StencilBuffer->Wrapped == stencilRb);
       }
+      ASSERT(fb->_StencilBuffer->Wrapped == stencilRb);
+      fb->_StencilBuffer->Width = stencilRb->Width;
+      fb->_StencilBuffer->Height = stencilRb->Height;
    }
    else {
       /* stencilRb may be null */
