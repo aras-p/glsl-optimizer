@@ -1182,12 +1182,9 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   /* Get the dest renderbuffer.  If there's a wrapper, use the
-    * underlying renderbuffer.
-    */
-   rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
-   if (rbDraw->Base.Wrapped)
-      rbDraw = st_renderbuffer(rbDraw->Base.Wrapped);
+   /* Get the dest renderbuffer */
+   rbDraw = st_renderbuffer(ctx->DrawBuffer->
+                            Attachment[BUFFER_STENCIL].Renderbuffer);
 
    /* this will do stencil pixel transfer ops */
    _mesa_readpixels(ctx, srcx, srcy, width, height,
@@ -1484,7 +1481,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    }
    else {
       assert(type == GL_DEPTH);
-      rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+      rbRead = st_renderbuffer(ctx->ReadBuffer->
+                               Attachment[BUFFER_DEPTH].Renderbuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
       fpv = get_depth_stencil_fp_variant(st, GL_TRUE, GL_FALSE);
@@ -1495,10 +1493,6 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    /* update fragment program constants */
    st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
-
-
-   if (rbRead->Base.Wrapped)
-      rbRead = st_renderbuffer(rbRead->Base.Wrapped);
 
    sample_count = rbRead->texture->nr_samples;
    /* I believe this would be legal, presumably would need to do a resolve
