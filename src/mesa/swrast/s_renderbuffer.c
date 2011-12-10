@@ -1888,6 +1888,31 @@ add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 }
 
 
+static GLboolean
+add_depth_stencil_renderbuffer(struct gl_context *ctx,
+                               struct gl_framebuffer *fb)
+{
+   struct gl_renderbuffer *rb;
+
+   assert(fb->Attachment[BUFFER_DEPTH].Renderbuffer == NULL);
+   assert(fb->Attachment[BUFFER_STENCIL].Renderbuffer == NULL);
+
+   rb = _mesa_new_renderbuffer(ctx, 0);
+   if (!rb) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating depth+stencil buffer");
+      return GL_FALSE;
+   }
+
+   rb->InternalFormat = GL_DEPTH_STENCIL;
+
+   rb->AllocStorage = soft_renderbuffer_storage;
+   _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
+   _mesa_add_renderbuffer(fb, BUFFER_STENCIL, rb);
+
+   return GL_TRUE;
+}
+
+
 /**
  * Add a software-based accumulation renderbuffer to the given framebuffer.
  * This is a helper routine for device drivers when creating a
@@ -1999,14 +2024,29 @@ _swrast_add_soft_renderbuffers(struct gl_framebuffer *fb,
                               frontRight, backRight);
    }
 
-   if (depth) {
-      assert(fb->Visual.depthBits > 0);
-      add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
+#if 0
+   /* This is pretty much for debugging purposes only since there's a perf
+    * hit for using combined depth/stencil in swrast.
+    */
+   if (depth && fb->Visual.depthBits == 24 &&
+       stencil && fb->Visual.stencilBits == 8) {
+      /* use combined depth/stencil buffer */
+      add_depth_stencil_renderbuffer(NULL, fb);
    }
+   else
+#else
+   (void) add_depth_stencil_renderbuffer;
+#endif
+   {
+      if (depth) {
+         assert(fb->Visual.depthBits > 0);
+         add_depth_renderbuffer(NULL, fb, fb->Visual.depthBits);
+      }
 
-   if (stencil) {
-      assert(fb->Visual.stencilBits > 0);
-      add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
+      if (stencil) {
+         assert(fb->Visual.stencilBits > 0);
+         add_stencil_renderbuffer(NULL, fb, fb->Visual.stencilBits);
+      }
    }
 
    if (accum) {
