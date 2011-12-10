@@ -265,7 +265,15 @@ x11_screen_enable_dri2(struct x11_screen *xscr,
       if (!x11_screen_probe_dri2(xscr, NULL, NULL))
          return -1;
 
-      fd = open(xscr->dri_device, O_RDWR);
+#ifdef O_CLOEXEC
+      fd = open(xscr->dri_device, O_RDWR | O_CLOEXEC);
+      if (fd == -1 && errno == EINVAL)
+#endif
+      {
+         fd = open(xscr->dri_device, O_RDWR);
+         if (fd != -1)
+            fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+      }
       if (fd < 0) {
          _eglLog(_EGL_WARNING, "failed to open %s", xscr->dri_device);
          return -1;

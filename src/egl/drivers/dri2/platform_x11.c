@@ -1083,7 +1083,16 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_load_driver(disp))
       goto cleanup_conn;
 
+#ifdef O_CLOEXEC
    dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR | O_CLOEXEC);
+   if (dri2_dpy->fd == -1 && errno == EINVAL)
+#endif
+   {
+      dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
+      if (dri2_dpy->fd != -1)
+         fcntl(dri2_dpy->fd, F_SETFD, fcntl(dri2_dpy->fd, F_GETFD) |
+            FD_CLOEXEC);
+   }
    if (dri2_dpy->fd == -1) {
       _eglLog(_EGL_WARNING,
 	      "DRI2: could not open %s (%s)", dri2_dpy->device_name,

@@ -133,7 +133,15 @@ drm_handle_device(void *data, struct wl_drm *drm, const char *device)
    if (!drmdpy->device_name)
       return;
 
-   drmdpy->fd = open(drmdpy->device_name, O_RDWR);
+#ifdef O_CLOEXEC
+   drmdpy->fd = open(drmdpy->device_name, O_RDWR | O_CLOEXEC);
+   if (drmdpy->fd == -1 && errno == EINVAL)
+#endif
+   {
+      drmdpy->fd = open(drmdpy->device_name, O_RDWR);
+      if (drmdpy->fd != -1)
+         fcntl(drmdpy->fd, F_SETFD, fcntl(drmdpy->fd, F_GETFD) | FD_CLOEXEC);
+   }
    if (drmdpy->fd == -1) {
       _eglLog(_EGL_WARNING, "wayland-egl: could not open %s (%s)",
               drmdpy->device_name, strerror(errno));

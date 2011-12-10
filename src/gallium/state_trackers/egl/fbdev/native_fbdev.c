@@ -515,7 +515,16 @@ native_create_display(void *dpy, boolean use_sw)
 
    /* well, this makes fd 0 being ignored */
    if (!dpy) {
-      fd = open("/dev/fb0", O_RDWR);
+      const char *device_name="/dev/fb0";
+#ifdef O_CLOEXEC
+      fd = open(device_name, O_RDWR | O_CLOEXEC);
+      if (fd == -1 && errno == EINVAL)
+#endif
+      {
+         fd = open(device_name, O_RDWR);
+         if (fd != -1)
+            fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+      }
    }
    else {
       fd = dup((int) pointer_to_intptr(dpy));
