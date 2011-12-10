@@ -27,7 +27,6 @@ MAIN_SOURCES = \
 	main/cpuinfo.c \
 	main/debug.c \
 	main/depth.c \
-	main/depthstencil.c \
 	main/dlist.c \
 	main/dlopen.c \
 	main/drawpix.c \
