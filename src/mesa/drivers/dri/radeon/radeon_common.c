@@ -313,8 +313,8 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE);
 
 
-	if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
-		rrbDepth = radeon_renderbuffer(fb->_DepthBuffer->Wrapped);
+	if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
+		rrbDepth = radeon_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
 		if (rrbDepth && rrbDepth->bo) {
 			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DEPTH_BUFFER, GL_FALSE);
 		} else {
@@ -325,8 +325,8 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		rrbDepth = NULL;
 	}
 
-	if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
-		rrbStencil = radeon_renderbuffer(fb->_StencilBuffer->Wrapped);
+	if (fb->Attachment[BUFFER_STENCIL].Renderbuffer) {
+		rrbStencil = radeon_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
 		if (rrbStencil && rrbStencil->bo) {
 			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
 			/* need to re-compute stencil hw state */

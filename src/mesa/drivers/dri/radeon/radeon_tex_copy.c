@@ -58,13 +58,12 @@ do_copy_texsubimage(struct gl_context *ctx,
     }
 
     if (_mesa_get_format_bits(timg->base.Base.TexFormat, GL_DEPTH_BITS) > 0) {
-        if (ctx->ReadBuffer->_DepthBuffer && ctx->ReadBuffer->_DepthBuffer->Wrapped) {
-            rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
-        } else {
-            rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
-        }
+        /* copying a depth values */
+        rrb = radeon_renderbuffer(ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer);
+        assert(rrb);
         flip_y = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Type == GL_NONE;
     } else {
+        /* copying color */
         rrb = radeon_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
         flip_y = ctx->ReadBuffer->Attachment[BUFFER_COLOR0].Type == GL_NONE;
     }
