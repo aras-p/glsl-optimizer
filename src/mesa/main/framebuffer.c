@@ -34,7 +34,6 @@
 #include "imports.h"
 #include "buffers.h"
 #include "context.h"
-#include "depthstencil.h"
 #include "enums.h"
 #include "formats.h"
 #include "macros.h"
@@ -738,8 +737,6 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
     */
    update_color_draw_buffers(ctx, fb);
    update_color_read_buffer(ctx, fb);
-   _mesa_update_depth_buffer(ctx, fb);
-   _mesa_update_stencil_buffer(ctx, fb);
 
    compute_depth_max(fb);
 }
