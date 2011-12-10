@@ -66,7 +66,7 @@ nv20_clear(struct gl_context *ctx, GLbitfield buffers)
 
 	if (buffers & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
 		struct nouveau_surface *s = &to_nouveau_renderbuffer(
-			fb->_DepthBuffer->Wrapped)->surface;
+			fb->Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 		if (buffers & BUFFER_BIT_DEPTH && ctx->Depth.Mask)
 			clear |= NV20_3D_CLEAR_BUFFERS_DEPTH;

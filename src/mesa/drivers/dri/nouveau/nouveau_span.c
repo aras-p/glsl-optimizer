@@ -152,8 +152,8 @@ framebuffer_map_unmap(struct gl_framebuffer *fb, GLboolean map)
 
 	renderbuffer_map_unmap(fb->_ColorReadBuffer, map);
 
-	if (fb->_DepthBuffer)
-		renderbuffer_map_unmap(fb->_DepthBuffer->Wrapped, map);
+	if (fb->Attachment[BUFFER_DEPTH].Renderbuffer)
+		renderbuffer_map_unmap(fb->Attachment[BUFFER_DEPTH].Renderbuffer, map);
 }
 
 static void

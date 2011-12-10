@@ -125,9 +125,9 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 	}
 
 	/* depth/stencil */
-	if (fb->_DepthBuffer) {
+	if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
 		s = &to_nouveau_renderbuffer(
-			fb->_DepthBuffer->Wrapped)->surface;
+			fb->Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 		rt_format |= get_rt_format(s->format);
 		zeta_pitch = s->pitch;

@@ -61,10 +61,11 @@ nv10_use_viewport_zclear(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	struct gl_renderbuffer *depthRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
 
 	return context_chipset(ctx) < 0x17 &&
-		!nctx->hierz.clear_blocked && fb->_DepthBuffer &&
-		(_mesa_get_format_bits(fb->_DepthBuffer->Format,
+		!nctx->hierz.clear_blocked && depthRb &&
+		(_mesa_get_format_bits(depthRb->Format,
 				       GL_DEPTH_BITS) >= 24);
 }
 
@@ -97,7 +98,7 @@ nv10_zclear(struct gl_context *ctx, GLbitfield *buffers)
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(
-		fb->_DepthBuffer->Wrapped)->surface;
+		fb->Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 	if (nv10_use_viewport_zclear(ctx)) {
 		int x, y, w, h;
@@ -148,7 +149,7 @@ nv17_zclear(struct gl_context *ctx, GLbitfield *buffers)
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(
 		ctx->DrawBuffer);
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(
-		nfb->base._DepthBuffer->Wrapped)->surface;
+		nfb->base.Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 	/* Clear the hierarchical depth buffer */
 	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_FILL_VALUE, 1);
