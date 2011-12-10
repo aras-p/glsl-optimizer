@@ -213,6 +213,9 @@ _swrast_Clear(struct gl_context *ctx, GLbitfield buffers)
    if (!_mesa_check_conditional_render(ctx))
       return; /* don't clear */
 
+   if (SWRAST_CONTEXT(ctx)->NewState)
+      _swrast_validate_derived(ctx);
+
    swrast_render_start(ctx);
 
    /* do software clearing here */

@@ -573,6 +573,9 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
       return;
    }
 
+   if (SWRAST_CONTEXT(ctx)->NewState)
+      _swrast_validate_derived(ctx);
+
    swrast_render_start(ctx);
 
    if (srcX1 - srcX0 == dstX1 - dstX0 &&
