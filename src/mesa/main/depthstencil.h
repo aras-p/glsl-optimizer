@@ -27,20 +27,13 @@
 #define DEPTHSTENCIL_H
 
 struct gl_context;
+struct gl_framebuffer;
 
-extern struct gl_renderbuffer *
-_mesa_new_z24_renderbuffer_wrapper(struct gl_context *ctx,
-                                   struct gl_renderbuffer *dsrb);
+void
+_mesa_update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb);
 
-
-extern struct gl_renderbuffer *
-_mesa_new_z32f_renderbuffer_wrapper(struct gl_context *ctx,
-                                    struct gl_renderbuffer *dsrb);
-
-
-extern struct gl_renderbuffer *
-_mesa_new_s8_renderbuffer_wrapper(struct gl_context *ctx,
-                                  struct gl_renderbuffer *dsrb);
+void
+_mesa_update_stencil_buffer(struct gl_context *ctx, struct gl_framebuffer *fb);
 
 
 #endif /* DEPTHSTENCIL_H */
