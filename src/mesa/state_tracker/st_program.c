@@ -649,6 +649,25 @@ st_translate_fragment_program(struct st_context *st,
       if (write_all == GL_TRUE)
          ureg_property_fs_color0_writes_all_cbufs(ureg, 1);
 
+      if (stfp->Base.FragDepthLayout != FRAG_DEPTH_LAYOUT_NONE) {
+         switch (stfp->Base.FragDepthLayout) {
+         case FRAG_DEPTH_LAYOUT_ANY:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_ANY);
+            break;
+         case FRAG_DEPTH_LAYOUT_GREATER:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_GREATER);
+            break;
+         case FRAG_DEPTH_LAYOUT_LESS:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_LESS);
+            break;
+         case FRAG_DEPTH_LAYOUT_UNCHANGED:
+            ureg_property_fs_depth_layout(ureg, TGSI_FS_DEPTH_LAYOUT_UNCHANGED);
+            break;
+         default:
+            assert(0);
+         }
+      }
+
       if (stfp->glsl_to_tgsi)
          st_translate_program(st->ctx,
                               TGSI_PROCESSOR_FRAGMENT,
