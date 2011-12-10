@@ -138,6 +138,7 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 		      inst->SrcReg[i].Symbol->param_binding_length);
 
 	       if (new_begin < 0) {
+		  _mesa_free_parameter_list(layout);
 		  return GL_FALSE;
 	       }
 
