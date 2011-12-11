@@ -232,7 +232,7 @@ BITS(
                         ... )
 {
    va_list  args;
-   unsigned himask = ~0UL >> (31 - (hi));
+   unsigned himask = 0xFFFFFFFFUL >> (31 - (hi));
 
    PRINTF(stream, "\t\t ");
 
