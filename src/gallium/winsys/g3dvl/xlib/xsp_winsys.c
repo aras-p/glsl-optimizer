@@ -25,13 +25,13 @@
  *
  **************************************************************************/
 
-#include <X11/Xlibint.h>
-
 #include "pipe/p_state.h"
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_inlines.h"
+
+#include <X11/Xlibint.h>
 
 #include "state_tracker/xlib_sw_winsys.h"
 #include "softpipe/sp_public.h"
