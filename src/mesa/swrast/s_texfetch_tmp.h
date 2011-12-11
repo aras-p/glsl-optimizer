@@ -2270,7 +2270,7 @@ static void FETCH(f_z24_s8)( const struct swrast_texture_image *texImage,
 {
    /* only return Z, not stencil data */
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    texel[0] = ((*src) >> 8) * scale;
    ASSERT(texImage->Base.TexFormat == MESA_FORMAT_Z24_S8 ||
 	  texImage->Base.TexFormat == MESA_FORMAT_Z24_X8);
@@ -2298,7 +2298,7 @@ static void FETCH(f_s8_z24)( const struct swrast_texture_image *texImage,
 {
    /* only return Z, not stencil data */
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    texel[0] = ((*src) & 0x00ffffff) * scale;
    ASSERT(texImage->Base.TexFormat == MESA_FORMAT_S8_Z24 ||
 	  texImage->Base.TexFormat == MESA_FORMAT_X8_Z24);

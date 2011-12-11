@@ -587,7 +587,7 @@ unpack_Z24_S8(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
       dst[i][0] =
@@ -604,7 +604,7 @@ unpack_S8_Z24(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
       dst[i][0] =
@@ -1761,7 +1761,7 @@ unpack_float_z_Z24_X8(GLuint n, const void *src, GLfloat *dst)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
       dst[i] = (s[i] >> 8) * scale;
@@ -1775,7 +1775,7 @@ unpack_float_z_X8_Z24(GLuint n, const void *src, GLfloat *dst)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
-   const GLfloat scale = 1.0F / (GLfloat) 0xffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
       dst[i] = (s[i] & 0x00ffffff) * scale;

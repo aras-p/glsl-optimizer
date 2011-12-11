@@ -2058,7 +2058,7 @@ pack_float_z_Z24_S8(const GLfloat *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
-   const GLfloat scale = (GLfloat) 0xffffff;
+   const GLdouble scale = (GLdouble) 0xffffff;
    GLuint s = *d & 0xff;
    GLuint z = (GLuint) (*src * scale);
    assert(z <= 0xffffff);
@@ -2070,7 +2070,7 @@ pack_float_z_S8_Z24(const GLfloat *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
-   const GLfloat scale = (GLfloat) 0xffffff;
+   const GLdouble scale = (GLdouble) 0xffffff;
    GLuint s = *d & 0xff000000;
    GLuint z = (GLuint) (*src * scale);
    assert(z <= 0xffffff);
@@ -2089,7 +2089,7 @@ static void
 pack_float_z_Z32(const GLfloat *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
-   const GLfloat scale = (GLfloat) 0xffffffff;
+   const GLdouble scale = (GLdouble) 0xffffffff;
    *d = (GLuint) (*src * scale);
 }
 
@@ -2169,7 +2169,7 @@ static void
 pack_uint_z_Z32_FLOAT(const GLuint *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
-   const GLfloat scale = 1.0f / (GLfloat) 0xffffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
    *d = *src * scale;
    assert(*d >= 0.0f);
    assert(*d <= 1.0f);
@@ -2179,7 +2179,7 @@ static void
 pack_uint_z_Z32_FLOAT_X24S8(const GLuint *src, void *dst)
 {
    GLfloat *d = ((GLfloat *) dst);
-   const GLfloat scale = 1.0f / (GLfloat) 0xffffffff;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
    *d = *src * scale;
    assert(*d >= 0.0f);
    assert(*d <= 1.0f);
@@ -2280,7 +2280,7 @@ _mesa_pack_float_z_row(gl_format format, GLuint n,
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);
-         const GLfloat scale = (GLfloat) 0xffffff;
+         const GLdouble scale = (GLdouble) 0xffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
             GLuint s = d[i] & 0xff;
@@ -2295,7 +2295,7 @@ _mesa_pack_float_z_row(gl_format format, GLuint n,
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);
-         const GLfloat scale = (GLfloat) 0xffffff;
+         const GLdouble scale = (GLdouble) 0xffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
             GLuint s = d[i] & 0xff000000;
@@ -2318,7 +2318,7 @@ _mesa_pack_float_z_row(gl_format format, GLuint n,
    case MESA_FORMAT_Z32:
       {
          GLuint *d = ((GLuint *) dst);
-         const GLfloat scale = (GLfloat) 0xffffffff;
+         const GLdouble scale = (GLdouble) 0xffffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
             d[i] = (GLuint) (src[i] * scale);
@@ -2392,7 +2392,7 @@ _mesa_pack_uint_z_row(gl_format format, GLuint n,
    case MESA_FORMAT_Z32_FLOAT:
       {
          GLuint *d = ((GLuint *) dst);
-         const GLfloat scale = 1.0f / (GLfloat) 0xffffffff;
+         const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
             d[i] = src[i] * scale;
@@ -2404,7 +2404,7 @@ _mesa_pack_uint_z_row(gl_format format, GLuint n,
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       {
          GLfloat *d = ((GLfloat *) dst);
-         const GLfloat scale = 1.0f / (GLfloat) 0xffffffff;
+         const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
             d[i * 2] = src[i] * scale;
