@@ -236,6 +236,17 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         return R300_TX_FORMAT_CxV8U8 | result;
     }
 
+    /* Integer and fixed-point 16.16 textures are not supported. */
+    for (i = 0; i < 4; i++) {
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_FIXED ||
+            ((desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED ||
+              desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED) &&
+             (!desc->channel[i].normalized ||
+              desc->channel[i].pure_integer))) {
+            return ~0; /* Unsupported/unknown. */
+        }
+    }
+
     /* Add sign. */
     for (i = 0; i < desc->nr_channels; i++) {
         if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
