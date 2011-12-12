@@ -323,6 +323,7 @@ typedef struct
    struct pipe_surface *surface;
    struct pipe_sampler_view *sampler_view;
    struct pipe_fence_handle *fence;
+   struct u_rect dirty_area;
 } vlVdpOutputSurface;
 
 typedef struct

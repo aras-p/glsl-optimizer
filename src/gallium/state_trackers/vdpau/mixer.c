@@ -152,7 +152,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 uint32_t layer_count,
                                 VdpLayer const *layers)
 {
-   struct pipe_video_rect src_rect;
+   struct pipe_video_rect src_rect, dst_rect, dst_clip;
 
    vlVdpVideoMixer *vmixer;
    vlVdpSurface *surf;
@@ -173,7 +173,10 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    vl_compositor_clear_layers(&vmixer->compositor);
    vl_compositor_set_buffer_layer(&vmixer->compositor, 0, surf->video_buffer,
                                   RectToPipe(video_source_rect, &src_rect), NULL);
-   vl_compositor_render(&vmixer->compositor, dst->surface, NULL, NULL, NULL);
+   vl_compositor_render(&vmixer->compositor, dst->surface,
+                        RectToPipe(destination_video_rect, &dst_rect),
+                        RectToPipe(destination_rect, &dst_clip),
+                        &dst->dirty_area);
 
    return VDP_STATUS_OK;
 }

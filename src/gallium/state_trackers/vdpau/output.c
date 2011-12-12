@@ -114,6 +114,8 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    
    pipe_resource_reference(&res, NULL);
 
+   vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
+
    return VDP_STATUS_OK;
 }
 
