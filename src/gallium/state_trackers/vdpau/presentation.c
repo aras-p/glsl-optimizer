@@ -213,7 +213,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    struct pipe_context *pipe;
    struct pipe_surface *drawable_surface;
-   struct pipe_video_rect vo_rect;
+   struct pipe_video_rect src_rect, dst_clip;
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
@@ -229,14 +229,19 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    surf->timestamp = (vlVdpTime)earliest_presentation_time;
 
-   vo_rect.x = 0;
-   vo_rect.y = 0;
-   vo_rect.w = clip_width;
-   vo_rect.h = clip_height;
+   src_rect.x = 0;
+   src_rect.y = 0;
+   src_rect.w = drawable_surface->width;
+   src_rect.h = drawable_surface->height;
+
+   dst_clip.x = 0;
+   dst_clip.y = 0;
+   dst_clip.w = clip_width;
+   dst_clip.h = clip_height;
 
    vl_compositor_clear_layers(&pq->compositor);
-   vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
-   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &vo_rect, &pq->dirty_area);
+   vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, &src_rect, NULL);
+   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &dst_clip, &pq->dirty_area);
 
    pipe = pq->device->context->pipe;
 
