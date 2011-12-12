@@ -112,6 +112,7 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "vertex.texcoord[5]",
       "vertex.texcoord[6]",
       "vertex.texcoord[7]",
+      "vertex.pointsize",
       "vertex.attrib[0]",
       "vertex.attrib[1]",
       "vertex.attrib[2]",
