@@ -32,6 +32,8 @@
 #include "pipe/p_video_decoder.h"
 #include "pipe/p_video_state.h"
 
+#include "util/u_rect.h"
+
 #include "vl_types.h"
 
 struct pipe_context;
@@ -62,6 +64,7 @@ struct vl_compositor
 
    struct pipe_framebuffer_state fb_state;
    struct pipe_viewport_state viewport;
+   struct pipe_scissor_state scissor;
    struct pipe_vertex_buffer vertex_buf;
    struct pipe_resource *csc_matrix;
 
@@ -82,7 +85,6 @@ struct vl_compositor
    } fs_palette;
 
    union pipe_color_union clear_color;
-   struct vertex2f dirty_tl, dirty_br;
 
    unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
    struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];
@@ -104,7 +106,7 @@ vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float mat[1
  * reset dirty area, so it's cleared with the clear colour
  */
 void
-vl_compositor_reset_dirty_area(struct vl_compositor *compositor);
+vl_compositor_reset_dirty_area(struct u_rect *dirty);
 
 /**
  * set the clear color
@@ -178,7 +180,7 @@ vl_compositor_render(struct vl_compositor   *compositor,
                      struct pipe_surface    *dst_surface,
                      struct pipe_video_rect *dst_area,
                      struct pipe_video_rect *dst_clip,
-                     bool clear_dirty_area);
+                     struct u_rect          *dirty_area);
 
 /**
  * destroy this compositor

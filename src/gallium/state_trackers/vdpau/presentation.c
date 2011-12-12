@@ -75,6 +75,8 @@ vlVdpPresentationQueueCreate(VdpDevice device,
       goto no_compositor;
    }
 
+   vl_compositor_reset_dirty_area(&pq->dirty_area);
+
    *presentation_queue = vlAddDataHTAB(pq);
    if (*presentation_queue == 0) {
       ret = VDP_STATUS_ERROR;
@@ -234,7 +236,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, NULL, NULL);
-   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &vo_rect, true);
+   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &vo_rect, &pq->dirty_area);
 
    pipe = pq->device->context->pipe;
 

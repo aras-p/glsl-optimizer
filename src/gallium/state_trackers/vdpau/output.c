@@ -312,7 +312,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    vl_compositor_clear_layers(compositor);
    vl_compositor_set_palette_layer(compositor, 0, sv_idx, sv_tbl, NULL, NULL, false);
    vl_compositor_render(compositor, vlsurface->surface,
-                        RectToPipe(destination_rect, &dst_rect), NULL, false);
+                        RectToPipe(destination_rect, &dst_rect), NULL, NULL);
 
    pipe_sampler_view_reference(&sv_idx, NULL);
    pipe_sampler_view_reference(&sv_tbl, NULL);

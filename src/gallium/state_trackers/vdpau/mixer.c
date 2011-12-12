@@ -173,7 +173,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    vl_compositor_clear_layers(&vmixer->compositor);
    vl_compositor_set_buffer_layer(&vmixer->compositor, 0, surf->video_buffer,
                                   RectToPipe(video_source_rect, &src_rect), NULL);
-   vl_compositor_render(&vmixer->compositor, dst->surface, NULL, NULL, false);
+   vl_compositor_render(&vmixer->compositor, dst->surface, NULL, NULL, NULL);
 
    return VDP_STATUS_OK;
 }

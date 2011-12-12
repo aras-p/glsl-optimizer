@@ -40,6 +40,9 @@
 #include "vl_types.h"
 #include "vl_compositor.h"
 
+#define MIN_DIRTY (0)
+#define MAX_DIRTY (1 << 15)
+
 typedef float csc_matrix[16];
 
 static void *
@@ -470,8 +473,27 @@ gen_rect_verts(struct vertex4f *vb, struct vl_compositor_layer *layer)
    vb[3].w = layer->src.br.y;
 }
 
+static INLINE struct u_rect
+calc_drawn_area(struct vl_compositor *c, struct vl_compositor_layer *layer)
+{
+   struct u_rect result;
+
+   // scale
+   result.x0 = layer->dst.tl.x * c->viewport.scale[0] + c->viewport.translate[0];
+   result.y0 = layer->dst.tl.y * c->viewport.scale[1] + c->viewport.translate[1];
+   result.x1 = layer->dst.br.x * c->viewport.scale[0] + c->viewport.translate[0];
+   result.y1 = layer->dst.br.y * c->viewport.scale[1] + c->viewport.translate[1];
+
+   // and clip
+   result.x0 = MAX2(result.x0, c->scissor.minx);
+   result.y0 = MAX2(result.y0, c->scissor.miny);
+   result.x1 = MIN2(result.x1, c->scissor.maxx);
+   result.y1 = MIN2(result.y1, c->scissor.maxy);
+   return result;
+}
+
 static void
-gen_vertex_data(struct vl_compositor *c)
+gen_vertex_data(struct vl_compositor *c, struct u_rect *dirty)
 {
    struct vertex4f *vb;
    struct pipe_transfer *buf_transfer;
@@ -497,15 +519,18 @@ gen_vertex_data(struct vl_compositor *c)
          gen_rect_verts(vb, layer);
          vb += 4;
 
-         if (layer->clearing &&
-             c->dirty_tl.x >= layer->dst.tl.x &&
-             c->dirty_tl.y >= layer->dst.tl.y &&
-             c->dirty_br.x <= layer->dst.br.x &&
-             c->dirty_br.y <= layer->dst.br.y) {
+         if (dirty && layer->clearing) {
+            struct u_rect drawn = calc_drawn_area(c, layer);
+            if (
+             dirty->x0 >= drawn.x0 &&
+             dirty->y0 >= drawn.y0 &&
+             dirty->x1 <= drawn.x1 &&
+             dirty->y1 <= drawn.y1) {
 
-            // We clear the dirty area anyway, no need for clear_render_target
-            c->dirty_tl.x = c->dirty_tl.y = 1.0f;
-            c->dirty_br.x = c->dirty_br.y = 0.0f;
+               // We clear the dirty area anyway, no need for clear_render_target
+               dirty->x0 = dirty->y0 = MAX_DIRTY;
+               dirty->x1 = dirty->y1 = MIN_DIRTY;
+            }
          }
       }
    }
@@ -514,7 +539,7 @@ gen_vertex_data(struct vl_compositor *c)
 }
 
 static void
-draw_layers(struct vl_compositor *c)
+draw_layers(struct vl_compositor *c, struct u_rect *dirty)
 {
    unsigned vb_index, i;
 
@@ -533,22 +558,25 @@ draw_layers(struct vl_compositor *c)
          util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, vb_index * 4, 4);
          vb_index++;
 
-         // Remember the currently drawn area as dirty for the next draw command
-         c->dirty_tl.x = MIN2(layer->dst.tl.x, c->dirty_tl.x);
-         c->dirty_tl.y = MIN2(layer->dst.tl.y, c->dirty_tl.y);
-         c->dirty_br.x = MAX2(layer->dst.br.x, c->dirty_br.x);
-         c->dirty_br.y = MAX2(layer->dst.br.y, c->dirty_br.y);
+         if (dirty) {
+            // Remember the currently drawn area as dirty for the next draw command
+            struct u_rect drawn = calc_drawn_area(c, layer);
+            dirty->x0 = MIN2(drawn.x0, dirty->x0);
+            dirty->y0 = MIN2(drawn.y0, dirty->y0);
+            dirty->x1 = MAX2(drawn.x1, dirty->x1);
+            dirty->y1 = MAX2(drawn.y1, dirty->y1);
+         }
       }
    }
 }
 
 void
-vl_compositor_reset_dirty_area(struct vl_compositor *c)
+vl_compositor_reset_dirty_area(struct u_rect *dirty)
 {
-   assert(c);
+   assert(dirty);
 
-   c->dirty_tl.x = c->dirty_tl.y = 0.0f;
-   c->dirty_br.x = c->dirty_br.y = 1.0f;
+   dirty->x0 = dirty->y0 = MIN_DIRTY;
+   dirty->x1 = dirty->y1 = MAX_DIRTY;
 }
 
 void
@@ -715,10 +743,8 @@ vl_compositor_render(struct vl_compositor   *c,
                      struct pipe_surface    *dst_surface,
                      struct pipe_video_rect *dst_area,
                      struct pipe_video_rect *dst_clip,
-                     bool clear_dirty_area)
+                     struct u_rect          *dirty_area)
 {
-   struct pipe_scissor_state scissor;
-
    assert(c);
    assert(dst_surface);
 
@@ -739,28 +765,29 @@ vl_compositor_render(struct vl_compositor   *c,
    }
 
    if (dst_clip) {
-      scissor.minx = dst_clip->x;
-      scissor.miny = dst_clip->y;
-      scissor.maxx = dst_clip->x + dst_clip->w;
-      scissor.maxy = dst_clip->y + dst_clip->h;
+      c->scissor.minx = dst_clip->x;
+      c->scissor.miny = dst_clip->y;
+      c->scissor.maxx = dst_clip->x + dst_clip->w;
+      c->scissor.maxy = dst_clip->y + dst_clip->h;
    } else {
-      scissor.minx = 0;
-      scissor.miny = 0;
-      scissor.maxx = dst_surface->width;
-      scissor.maxy = dst_surface->height;
+      c->scissor.minx = 0;
+      c->scissor.miny = 0;
+      c->scissor.maxx = dst_surface->width;
+      c->scissor.maxy = dst_surface->height;
    }
 
-   gen_vertex_data(c);
+   gen_vertex_data(c, dirty_area);
 
-   if (clear_dirty_area && (c->dirty_tl.x < c->dirty_br.x ||
-                            c->dirty_tl.y < c->dirty_br.y)) {
+   if (dirty_area && (dirty_area->x0 < dirty_area->x1 ||
+                      dirty_area->y0 < dirty_area->y1)) {
+
       util_clear_render_target(c->pipe, dst_surface, &c->clear_color,
                                0, 0, dst_surface->width, dst_surface->height);
-      c->dirty_tl.x = c->dirty_tl.y = 1.0f;
-      c->dirty_br.x = c->dirty_br.y = 0.0f;
+      dirty_area->x0 = dirty_area->y0 = MAX_DIRTY;
+      dirty_area->x0 = dirty_area->y1 = MIN_DIRTY;
    }
 
-   c->pipe->set_scissor_state(c->pipe, &scissor);
+   c->pipe->set_scissor_state(c->pipe, &c->scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
    c->pipe->set_viewport_state(c->pipe, &c->viewport);
    c->pipe->bind_vs_state(c->pipe, c->vs);
@@ -769,7 +796,7 @@ vl_compositor_render(struct vl_compositor   *c,
    c->pipe->set_constant_buffer(c->pipe, PIPE_SHADER_FRAGMENT, 0, c->csc_matrix);
    c->pipe->bind_rasterizer_state(c->pipe, c->rast);
 
-   draw_layers(c);
+   draw_layers(c, dirty_area);
 }
 
 bool
@@ -800,7 +827,6 @@ vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
 
    c->clear_color.f[0] = c->clear_color.f[1] = 0.0f;
    c->clear_color.f[2] = c->clear_color.f[3] = 0.0f;
-   vl_compositor_reset_dirty_area(c);
 
    return true;
 }

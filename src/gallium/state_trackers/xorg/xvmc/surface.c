@@ -381,7 +381,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       pipe_surface_reference(&context_priv->drawable_surface, NULL);
       context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
       context_priv->dst_rect = dst_rect;
-      vl_compositor_reset_dirty_area(compositor);
+      vl_compositor_reset_dirty_area(&context_priv->dirty_area);
    }
 
    if (!context_priv->drawable_surface)
@@ -425,7 +425,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL, true);
+   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL, &context_priv->dirty_area);
                         
    pipe->flush(pipe, &surface_priv->fence);
 

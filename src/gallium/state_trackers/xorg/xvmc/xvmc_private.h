@@ -35,6 +35,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_rect.h"
 
 #include "vl/vl_csc.h"
 #include "vl/vl_compositor.h"
@@ -64,6 +65,7 @@ typedef struct
 
    struct pipe_video_rect dst_rect;
    struct pipe_surface *drawable_surface;
+   struct u_rect dirty_area;
 
 } XvMCContextPrivate;
 

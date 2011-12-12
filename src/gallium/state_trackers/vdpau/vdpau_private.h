@@ -37,6 +37,7 @@
 #include "pipe/p_video_decoder.h"
 
 #include "util/u_debug.h"
+#include "util/u_rect.h"
 #include "vl/vl_compositor.h"
 
 #include "vl_winsys.h"
@@ -298,6 +299,7 @@ typedef struct
    vlVdpDevice *device;
    Drawable drawable;
    struct vl_compositor compositor;
+   struct u_rect dirty_area;
 } vlVdpPresentationQueue;
 
 typedef struct
