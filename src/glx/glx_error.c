@@ -35,8 +35,8 @@
 #include "glx_error.h"
 
 void
-__glXSendError(Display * dpy, int errorCode, unsigned long resourceID,
-               unsigned long minorCode, bool coreX11error)
+__glXSendError(Display * dpy, int_fast8_t errorCode, uint_fast32_t resourceID,
+               uint_fast16_t minorCode, bool coreX11error)
 {
    struct glx_display *glx_dpy = __glXInitialize(dpy);
    struct glx_context *gc = __glXGetCurrentContext();

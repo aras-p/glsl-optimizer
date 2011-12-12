@@ -27,7 +27,9 @@
  prior written authorization.
 */
 #include <stdbool.h>
+#include <stdint.h>
 #include <X11/Xlib.h>
 
-void __glXSendError(Display * dpy, int errorCode, unsigned long resourceID,
-                    unsigned long minorCode, bool coreX11error);
+void __glXSendError(Display * dpy, int_fast8_t errorCode,
+		    uint_fast32_t resourceID, uint_fast16_t minorCode,
+		    bool coreX11error);
