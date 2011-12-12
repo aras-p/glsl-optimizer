@@ -65,3 +65,22 @@ __glXSendError(Display * dpy, int_fast8_t errorCode, uint_fast32_t resourceID,
 
    UnlockDisplay(dpy);
 }
+
+void
+__glXSendErrorForXcb(Display * dpy, const xcb_generic_error_t *err)
+{
+   xError error;
+
+   LockDisplay(dpy);
+
+   error.type = X_Error;
+   error.errorCode = err->error_code;
+   error.sequenceNumber = err->sequence;
+   error.resourceID = err->resource_id;
+   error.minorCode = err->minor_code;
+   error.majorCode = err->major_code;
+
+   _XError(dpy, &error);
+
+   UnlockDisplay(dpy);
+}
