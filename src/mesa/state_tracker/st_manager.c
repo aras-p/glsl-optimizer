@@ -600,6 +600,7 @@ st_context_destroy(struct st_context_iface *stctxi)
 static struct st_context_iface *
 st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
                       const struct st_context_attribs *attribs,
+                      enum st_context_error *error,
                       struct st_context_iface *shared_stctxi)
 {
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
@@ -623,17 +624,21 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       break;
    case ST_PROFILE_OPENGL_CORE:
    default:
+      *error = ST_CONTEXT_ERROR_BAD_API;
       return NULL;
       break;
    }
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
-   if (!pipe)
+   if (!pipe) {
+      *error = ST_CONTEXT_ERROR_NO_MEMORY;
       return NULL;
+   }
 
    st_visual_to_context_mode(&attribs->visual, &mode);
    st = st_create_context(api, pipe, &mode, shared_ctx);
    if (!st) {
+      *error = ST_CONTEXT_ERROR_NO_MEMORY;
       pipe->destroy(pipe);
       return NULL;
    }
@@ -645,6 +650,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       /* is the actual version less than the requested version? */
       if (st->ctx->VersionMajor * 10 + st->ctx->VersionMinor <
           attribs->major * 10 + attribs->minor) {
+	 *error = ST_CONTEXT_ERROR_BAD_VERSION;
          st_destroy_context(st);
          return NULL;
       }
@@ -660,6 +666,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    st->iface.share = st_context_share;
    st->iface.st_context_private = (void *) smapi;
 
+   *error = ST_CONTEXT_SUCCESS;
    return &st->iface;
 }
 

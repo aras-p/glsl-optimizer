@@ -163,28 +163,36 @@ vg_context_destroy(struct st_context_iface *stctxi)
 static struct st_context_iface *
 vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
                       const struct st_context_attribs *attribs,
+                      enum st_context_error *error,
                       struct st_context_iface *shared_stctxi)
 {
    struct vg_context *shared_ctx = (struct vg_context *) shared_stctxi;
    struct vg_context *ctx;
    struct pipe_context *pipe;
 
-   if (!(stapi->profile_mask & (1 << attribs->profile)))
+   if (!(stapi->profile_mask & (1 << attribs->profile))) {
+      *error = ST_CONTEXT_ERROR_BAD_API;
       return NULL;
+   }
 
    /* only 1.0 is supported */
-   if (attribs->major > 1 || (attribs->major == 1 && attribs->minor > 0))
+   if (attribs->major > 1 || (attribs->major == 1 && attribs->minor > 0)) {
+      *error = ST_CONTEXT_ERROR_BAD_VERSION;
       return NULL;
+   }
 
    /* for VGHandle / pointer lookups */
    init_handles();
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
-   if (!pipe)
+   if (!pipe) {
+      *error = ST_CONTEXT_ERROR_NO_MEMORY;
       return NULL;
+   }
    ctx = vg_create_context(pipe, NULL, shared_ctx);
    if (!ctx) {
       pipe->destroy(pipe);
+      *error = ST_CONTEXT_ERROR_NO_MEMORY;
       return NULL;
    }
 

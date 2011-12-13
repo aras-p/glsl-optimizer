@@ -80,6 +80,19 @@ enum st_profile_type
 #define ST_CONTEXT_FLAG_ROBUST_ACCESS       (1 << 2)
 
 /**
+ * Reasons that context creation might fail.
+ */
+enum st_context_error {
+   ST_CONTEXT_SUCCESS = 0,
+   ST_CONTEXT_ERROR_NO_MEMORY,
+   ST_CONTEXT_ERROR_BAD_API,
+   ST_CONTEXT_ERROR_BAD_VERSION,
+   ST_CONTEXT_ERROR_BAD_FLAG,
+   ST_CONTEXT_ERROR_UNKNOWN_ATTRIBUTE,
+   ST_CONTEXT_ERROR_UNKNOWN_FLAG
+};
+
+/**
  * Used in st_context_iface->teximage.
  */
 enum st_texture_type {
@@ -434,6 +447,7 @@ struct st_api
    struct st_context_iface *(*create_context)(struct st_api *stapi,
                                               struct st_manager *smapi,
                                               const struct st_context_attribs *attribs,
+                                              enum st_context_error *error,
                                               struct st_context_iface *stsharei);
 
    /**
