@@ -872,8 +872,12 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         r300_mark_atom_dirty(r300, &r300->dsa_state);
     }
 
-    /* The tiling flags are dependent on the surface miplevel, unfortunately. */
-    r300_fb_set_tiling_flags(r300, state);
+    if (r300->screen->info.drm_minor < 12) {
+       /* The tiling flags are dependent on the surface miplevel, unfortunately.
+        * This workarounds a bad design decision in old kernels which were
+        * rewriting tile fields in registers. */
+        r300_fb_set_tiling_flags(r300, state);
+    }
 
     util_copy_framebuffer_state(r300->fb_state.state, state);
 
