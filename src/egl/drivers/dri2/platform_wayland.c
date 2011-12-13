@@ -731,6 +731,10 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
    free(dri2_dpy->driver_name);
+   free(dri2_dpy->device_name);
+   wl_drm_destroy(dri2_dpy->wl_drm);
+   if (dri2_dpy->own_device)
+      wl_display_destroy(dri2_dpy->wl_dpy);
    free(dri2_dpy);
    disp->DriverData = NULL;
 
@@ -819,6 +823,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       dri2_dpy->wl_dpy = wl_display_connect(NULL);
       if (dri2_dpy->wl_dpy == NULL)
          goto cleanup_dpy;
+      dri2_dpy->own_device = 1;
    } else {
       dri2_dpy->wl_dpy = disp->PlatformDisplay;
    }

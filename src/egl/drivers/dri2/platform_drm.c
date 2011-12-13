@@ -108,7 +108,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    gbm = disp->PlatformDisplay;
    if (gbm == NULL) {
       fd = open("/dev/dri/card0", O_RDWR);
-      dri2_dpy->own_gbm_device = 1;
+      dri2_dpy->own_device = 1;
       gbm = gbm_create_device(fd);
       if (gbm == NULL)
          return EGL_FALSE;
