@@ -3515,8 +3515,8 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
 
       case TGSI_OPCODE_ENDIF:
       case TGSI_OPCODE_ELSE:
-         /* Promote the recorded level all channels written inside the preceding
-          * if or else block to the level above the if/else block.
+         /* Promote the recorded level of all channels written inside the
+          * preceding if or else block to the level above the if/else block.
           */
          for (int r = 0; r < this->next_temp; r++) {
             for (int c = 0; c < 4; c++) {
