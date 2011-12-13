@@ -1807,27 +1807,27 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
    case ir_binop_lshift:
       if (native_integers) {
-         emit(ir, TGSI_OPCODE_SHL, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_SHL, result_dst, op[0], op[1]);
          break;
       }
    case ir_binop_rshift:
       if (native_integers) {
-         emit(ir, TGSI_OPCODE_ISHR, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_ISHR, result_dst, op[0], op[1]);
          break;
       }
    case ir_binop_bit_and:
       if (native_integers) {
-         emit(ir, TGSI_OPCODE_AND, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_AND, result_dst, op[0], op[1]);
          break;
       }
    case ir_binop_bit_xor:
       if (native_integers) {
-         emit(ir, TGSI_OPCODE_XOR, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_XOR, result_dst, op[0], op[1]);
          break;
       }
    case ir_binop_bit_or:
       if (native_integers) {
-         emit(ir, TGSI_OPCODE_OR, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_OR, result_dst, op[0], op[1]);
          break;
       }
    case ir_unop_round_even:
