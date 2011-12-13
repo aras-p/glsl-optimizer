@@ -250,7 +250,19 @@ lp_disassemble(const void* func)
       return;
    }
 
-#if HAVE_LLVM >= 0x0300
+#if HAVE_LLVM >= 0x0301
+   TargetOptions options;
+#if defined(DEBUG)
+   options.JITEmitDebugInfo = true;
+#endif
+#if defined(PIPE_ARCH_X86)
+   options.StackAlignmentOverride = 4;
+#endif
+#if defined(DEBUG) || defined(PROFILE)
+   options.NoFramePointerElim = true;
+#endif
+   TargetMachine *TM = T->createTargetMachine(Triple, sys::getHostCPUName(), "", options);
+#elif HAVE_LLVM == 0x0300
    TargetMachine *TM = T->createTargetMachine(Triple, sys::getHostCPUName(), "");
 #else
    TargetMachine *TM = T->createTargetMachine(Triple, "");
