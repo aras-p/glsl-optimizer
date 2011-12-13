@@ -632,7 +632,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACE_CUBEFACE_ENABLES |
-	      (translate_tex_format(firstImage->TexFormat,
+	      (translate_tex_format(mt->format,
 				    firstImage->InternalFormat,
 				    sampler->DepthMode,
 				    sampler->sRGBDecode) <<

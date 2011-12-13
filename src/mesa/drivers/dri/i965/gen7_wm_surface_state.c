@@ -76,7 +76,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
       surf->ss0.vertical_alignment = 1;
 
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
-   surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
+   surf->ss0.surface_format = translate_tex_format(mt->format,
                                                    firstImage->InternalFormat,
                                                    sampler->DepthMode,
                                                    sampler->sRGBDecode);
