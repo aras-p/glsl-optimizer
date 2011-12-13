@@ -263,6 +263,12 @@ void st_init_extensions(struct st_context *st)
    ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(st->ctx);
 
+   /* Extensions that only depend on the GLSL version:
+    */
+   if (ctx->Const.GLSLVersion >= 130) {
+      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
+   }
+
    /*
     * Extensions that are supported by all Gallium drivers:
     */
