@@ -113,8 +113,7 @@ blend_for_op(struct xa_composite_blend *blend,
     /*
      * Temporarily disable component alpha since it appears buggy.
      */
-    if (src_pic->component_alpha ||
-	(mask_pic && mask_pic->component_alpha))
+    if (mask_pic && mask_pic->component_alpha)
 	return FALSE;
 
     /*
