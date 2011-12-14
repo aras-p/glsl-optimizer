@@ -125,6 +125,8 @@ typedef EGLBoolean (*BindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp,
 typedef EGLBoolean (*UnbindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
 #endif
 
+typedef EGLBoolean (*PostSubBufferNV_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surface, EGLint x, EGLint y, EGLint width, EGLint height);
+
 /**
  * The API dispatcher jumps through these functions
  */
@@ -198,6 +200,8 @@ struct _egl_api
    BindWaylandDisplayWL_t BindWaylandDisplayWL;
    UnbindWaylandDisplayWL_t UnbindWaylandDisplayWL;
 #endif
+
+   PostSubBufferNV_t PostSubBufferNV;
 };
 
 #endif /* EGLAPI_INCLUDED */

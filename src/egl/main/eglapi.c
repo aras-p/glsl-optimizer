@@ -941,6 +941,7 @@ eglGetProcAddress(const char *procname)
       { "eglBindWaylandDisplayWL", (_EGLProc) eglBindWaylandDisplayWL },
       { "eglUnbindWaylandDisplayWL", (_EGLProc) eglUnbindWaylandDisplayWL },
 #endif
+      { "eglPostSubBufferNV", (_EGLProc) eglPostSubBufferNV },
       { NULL, NULL }
    };
    EGLint i;
@@ -1540,3 +1541,23 @@ eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
    RETURN_EGL_EVAL(disp, ret);
 }
 #endif
+
+
+EGLBoolean EGLAPIENTRY
+eglPostSubBufferNV(EGLDisplay dpy, EGLSurface surface,
+                   EGLint x, EGLint y, EGLint width, EGLint height)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSurface *surf = _eglLookupSurface(surface, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+
+   if (!disp->Extensions.NV_post_sub_buffer)
+      RETURN_EGL_EVAL(disp, EGL_FALSE);
+
+   ret = drv->API.PostSubBufferNV(drv, disp, surf, x, y, width, height);
+
+   RETURN_EGL_EVAL(disp, ret);
+}

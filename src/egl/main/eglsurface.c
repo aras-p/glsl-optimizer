@@ -170,6 +170,18 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          }
          surf->RenderBuffer = val;
          break;
+      case EGL_POST_SUB_BUFFER_SUPPORTED_NV:
+         if (!dpy->Extensions.NV_post_sub_buffer ||
+             type != EGL_WINDOW_BIT) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+         if (val != EGL_TRUE && val != EGL_FALSE) {
+            err = EGL_BAD_PARAMETER;
+            break;
+         }
+         surf->PostSubBufferSupportedNV = val;
+         break;
       /* pbuffer surface attributes */
       case EGL_WIDTH:
          if (type != EGL_PBUFFER_BIT) {
@@ -323,6 +335,8 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
    surf->VerticalResolution = EGL_UNKNOWN;
    surf->AspectRatio = EGL_UNKNOWN;
 
+   surf->PostSubBufferSupportedNV = EGL_FALSE;
+
    /* the default swap interval is 1 */
    _eglClampSwapInterval(surf, 1);
 
@@ -391,6 +405,9 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       break;
    case EGL_VG_COLORSPACE:
       *value = surface->VGColorspace;
+      break;
+   case EGL_POST_SUB_BUFFER_SUPPORTED_NV:
+      *value = surface->PostSubBufferSupportedNV;
       break;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");
