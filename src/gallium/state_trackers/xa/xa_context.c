@@ -220,7 +220,9 @@ xa_copy_prepare(struct xa_context *ctx,
 	int ret = xa_ctx_srf_create(ctx, dst);
 	if (ret != XA_ERR_NONE)
 	    return ret;
-	renderer_copy_prepare(ctx, ctx->srf, src->tex);
+	renderer_copy_prepare(ctx, ctx->srf, src->tex,
+			      src->fdesc.xa_format,
+			      dst->fdesc.xa_format);
 	ctx->simple_copy = 0;
     } else
 	ctx->simple_copy = 1;

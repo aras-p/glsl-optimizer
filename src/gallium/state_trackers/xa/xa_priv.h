@@ -237,7 +237,10 @@ void renderer_bind_destination(struct xa_context *r,
 void renderer_init_state(struct xa_context *r);
 void renderer_copy_prepare(struct xa_context *r,
 			   struct pipe_surface *dst_surface,
-			   struct pipe_resource *src_texture);
+			   struct pipe_resource *src_texture,
+			   const enum xa_formats src_xa_format,
+			   const enum xa_formats dst_xa_format);
+
 void renderer_copy(struct xa_context *r, int dx,
 		   int dy,
 		   int sx,

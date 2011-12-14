@@ -413,7 +413,9 @@ renderer_set_constants(struct xa_context *r,
 void
 renderer_copy_prepare(struct xa_context *r,
 		      struct pipe_surface *dst_surface,
-		      struct pipe_resource *src_texture)
+		      struct pipe_resource *src_texture,
+		      const enum xa_formats src_xa_format,
+		      const enum xa_formats dst_xa_format)
 {
     struct pipe_context *pipe = r->pipe;
     struct pipe_screen *screen = pipe->screen;
@@ -474,6 +476,9 @@ renderer_copy_prepare(struct xa_context *r,
 	fs_traits |= FS_SRC_LUMINANCE;
     if (dst_surface->format == PIPE_FORMAT_L8_UNORM)
 	fs_traits |= FS_DST_LUMINANCE;
+    if (xa_format_a(dst_xa_format) != 0 &&
+	xa_format_a(src_xa_format) == 0)
+	fs_traits |= FS_SRC_SET_ALPHA;
 
     shader = xa_shaders_get(r->shaders, VS_COMPOSITE, fs_traits);
     cso_set_vertex_shader_handle(r->cso, shader.vs);
