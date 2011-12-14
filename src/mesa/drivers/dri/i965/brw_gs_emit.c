@@ -193,6 +193,28 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
 }
 
 /**
+ * De-allocate the URB entry that was previously allocated to this thread
+ * (without writing any vertex data to it), and terminate the thread.  This is
+ * used to implement RASTERIZER_DISCARD functionality.
+ */
+static void brw_gs_terminate(struct brw_gs_compile *c)
+{
+   struct brw_compile *p = &c->func;
+   brw_urb_WRITE(p,
+                 retype(brw_null_reg(), BRW_REGISTER_TYPE_UD), /* dest */
+                 0, /* msg_reg_nr */
+                 c->reg.header, /* src0 */
+                 false, /* allocate */
+                 false, /* used */
+                 1, /* msg_length */
+                 0, /* response_length */
+                 true, /* eot */
+                 true, /* writes_complete */
+                 0, /* offset */
+                 BRW_URB_SWIZZLE_NONE);
+}
+
+/**
  * Send an FF_SYNC message to ensure that all previously spawned GS threads
  * have finished sending primitives down the pipeline, and to allocate a URB
  * entry for the first output vertex.  Only needed when intel->needs_ff_sync
@@ -408,6 +430,14 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
    }
 
    brw_gs_ff_sync(c, 1);
+
+   /* If RASTERIZER_DISCARD is enabled, we have nothing further to do, so
+    * release the URB that was just allocated, and terminate the thread.
+    */
+   if (key->rasterizer_discard) {
+      brw_gs_terminate(c);
+      return;
+   }
 
    brw_gs_overwrite_header_dw2_from_r0(c);
    switch (num_verts) {

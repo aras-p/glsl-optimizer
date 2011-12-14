@@ -208,6 +208,12 @@ static void populate_key( struct brw_context *brw,
                linked_xfb_info->Outputs[i].OutputRegister;
          }
       }
+      /* On Gen6, GS is also used for rasterizer discard. */
+      /* _NEW_TRANSFORM_FEEDBACK */
+      if (ctx->TransformFeedback.RasterDiscard) {
+         key->need_gs_prog = true;
+         key->rasterizer_discard = true;
+      }
    } else {
       /* Pre-gen6, GS is used to transform QUADLIST, QUADSTRIP, and LINELOOP
        * into simpler primitives.
