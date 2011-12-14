@@ -606,6 +606,12 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
       dpy->Extensions.WL_bind_wayland_display = EGL_TRUE;
 #endif
 
+#ifdef EGL_NOK_swap_region
+   if (gdpy->native->get_param(gdpy->native, NATIVE_PARAM_PRESENT_REGION) &&
+       gdpy->native->get_param(gdpy->native, NATIVE_PARAM_PRESERVE_BUFFER))
+      dpy->Extensions.NOK_swap_region = EGL_TRUE;
+#endif
+
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;

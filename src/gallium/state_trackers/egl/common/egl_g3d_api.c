@@ -546,7 +546,8 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static EGLBoolean
-egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
+             EGLint num_rects, const EGLint *rects, EGLBoolean preserve)
 {
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
    _EGLContext *ctx = _eglGetCurrentContext();
@@ -572,12 +573,33 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 
    memset(&ctrl, 0, sizeof(ctrl));
    ctrl.natt = NATIVE_ATTACHMENT_BACK_LEFT;
-   ctrl.preserve = (gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED);
+   ctrl.preserve = preserve;
    ctrl.swap_interval = gsurf->base.SwapInterval;
    ctrl.premultiplied_alpha = (gsurf->base.VGAlphaFormat == EGL_VG_ALPHA_FORMAT_PRE);
+   ctrl.num_rects = num_rects;
+   ctrl.rects = rects;
 
    return gsurf->native->present(gsurf->native, &ctrl);
 }
+
+static EGLBoolean
+egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+{
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+
+   return swap_buffers(drv, dpy, surf, 0, NULL,
+                       (gsurf->base.SwapBehavior == EGL_BUFFER_PRESERVED));
+}
+
+#ifdef EGL_NOK_swap_region
+static EGLBoolean
+egl_g3d_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
+                            EGLint num_rects, const EGLint *rects)
+{
+   /* Note: y=0=top */
+   return swap_buffers(drv, dpy, surf, num_rects, rects, EGL_TRUE);
+}
+#endif /* EGL_NOK_swap_region */
 
 static EGLBoolean
 egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
@@ -866,5 +888,9 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 #ifdef EGL_MESA_screen_surface
    drv->API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;
    drv->API.ShowScreenSurfaceMESA = egl_g3d_show_screen_surface;
+#endif
+
+#ifdef EGL_NOK_swap_region
+   drv->API.SwapBuffersRegionNOK = egl_g3d_swap_buffers_region;
 #endif
 }

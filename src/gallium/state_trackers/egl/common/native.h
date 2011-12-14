@@ -81,7 +81,13 @@ enum native_param_type {
     * EGL_ALPHA_SIZE.  EGL_VG_ALPHA_FORMAT attribute of a surface will affect
     * how the surface is presented.
     */
-   NATIVE_PARAM_PREMULTIPLIED_ALPHA
+   NATIVE_PARAM_PREMULTIPLIED_ALPHA,
+
+   /**
+    * Return TRUE if native_surface::present supports presenting a partial
+    * surface.
+    */
+   NATIVE_PARAM_PRESENT_REGION
 };
 
 /**
@@ -99,6 +105,11 @@ struct native_present_control {
 
    /**< pixels use premultiplied alpha */
    boolean premultiplied_alpha;
+
+   /**< The region to present. y=0=top.
+        If num_rects is 0, the whole surface is to be presented */
+   int num_rects;
+   const int *rects; /* x, y, width, height */
 };
 
 struct native_surface {
