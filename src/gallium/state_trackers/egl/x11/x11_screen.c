@@ -341,21 +341,24 @@ x11_drawable_enable_dri2(struct x11_screen *xscr,
  * Copy between buffers of the DRI2 drawable.
  */
 void
-x11_drawable_copy_buffers(struct x11_screen *xscr, Drawable drawable,
-                          int x, int y, int width, int height,
-                          int src_buf, int dst_buf)
+x11_drawable_copy_buffers_region(struct x11_screen *xscr, Drawable drawable,
+                                 int num_rects, const int *rects,
+                                 int src_buf, int dst_buf)
 {
-   XRectangle rect;
    XserverRegion region;
+   XRectangle *rectangles = CALLOC(num_rects, sizeof(XRectangle));
 
-   rect.x = x;
-   rect.y = y;
-   rect.width = width;
-   rect.height = height;
+   for (int i = 0; i < num_rects; i++) {
+      rectangles[i].x = rects[i * 4 + 0];
+      rectangles[i].y = rects[i * 4 + 1];
+      rectangles[i].width = rects[i * 4 + 2];
+      rectangles[i].height = rects[i * 4 + 3];
+   }
 
-   region = XFixesCreateRegion(xscr->dpy, &rect, 1);
+   region = XFixesCreateRegion(xscr->dpy, rectangles, num_rects);
    DRI2CopyRegion(xscr->dpy, drawable, region, dst_buf, src_buf);
    XFixesDestroyRegion(xscr->dpy, region);
+   FREE(rectangles);
 }
 
 /**

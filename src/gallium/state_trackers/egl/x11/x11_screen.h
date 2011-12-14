@@ -108,9 +108,21 @@ x11_drawable_enable_dri2(struct x11_screen *xscr,
                          Drawable drawable, boolean on);
 
 void
+x11_drawable_copy_buffers_region(struct x11_screen *xscr, Drawable drawable,
+                                 int num_rects, const int *rects,
+                                 int src_buf, int dst_buf);
+
+/**
+ * Copy between buffers of the DRI2 drawable.
+ */
+static INLINE void
 x11_drawable_copy_buffers(struct x11_screen *xscr, Drawable drawable,
                           int x, int y, int width, int height,
-                          int src_buf, int dst_buf);
+                          int src_buf, int dst_buf)
+{
+    int rect[4] = { x, y, width, height };
+    x11_drawable_copy_buffers_region(xscr, drawable, 1, rect, src_buf, dst_buf);
+}
 
 struct x11_drawable_buffer *
 x11_drawable_get_buffers(struct x11_screen *xscr, Drawable drawable,
