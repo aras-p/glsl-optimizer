@@ -248,6 +248,12 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       free(reply);
    }
 
+   if (dri2_dpy->dri2 && type == EGL_WINDOW_BIT &&
+       dri2_surf->base.RenderBuffer == EGL_BACK_BUFFER)
+      dri2_surf->base.PostSubBufferSupportedNV = EGL_TRUE;
+   else
+      dri2_surf->base.PostSubBufferSupportedNV = EGL_FALSE;
+
    return &dri2_surf->base;
 
  cleanup_dri_drawable:
@@ -749,6 +755,15 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 }
 
 static EGLBoolean
+dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
+		     EGLint x, EGLint y, EGLint width, EGLint height)
+{
+   const EGLint rect[4] = { x, draw->Height - y - height, width, height };
+
+   return dri2_swap_buffers_region(drv, disp, draw, 1, rect);
+}
+
+static EGLBoolean
 dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
 		  EGLNativePixmapType target)
 {
@@ -971,6 +986,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CopyBuffers = dri2_copy_buffers;
    drv->API.CreateImageKHR = dri2_x11_create_image_khr;
    drv->API.SwapBuffersRegionNOK = dri2_swap_buffers_region;
+   drv->API.PostSubBufferNV = dri2_post_sub_buffer;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -1041,6 +1057,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;
    disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
+   disp->Extensions.NV_post_sub_buffer = EGL_TRUE;
 
 #ifdef HAVE_WAYLAND_PLATFORM
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
