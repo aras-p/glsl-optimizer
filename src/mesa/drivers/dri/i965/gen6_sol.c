@@ -26,6 +26,7 @@
  * Code to initialize the binding table entries used by transform feedback.
  */
 
+#include "main/macros.h"
 #include "brw_context.h"
 #include "intel_batchbuffer.h"
 #include "brw_defines.h"
@@ -70,6 +71,43 @@ const struct brw_tracked_state gen6_sol_surface = {
    },
    .emit = gen6_update_sol_surfaces,
 };
+
+void
+brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
+			     struct gl_transform_feedback_object *obj)
+{
+   struct intel_context *intel = intel_context(ctx);
+   const struct gl_shader_program *vs_prog =
+      ctx->Shader.CurrentVertexProgram;
+   const struct gl_transform_feedback_info *linked_xfb_info =
+      &vs_prog->LinkedTransformFeedback;
+   struct gl_transform_feedback_object *xfb_obj =
+      ctx->TransformFeedback.CurrentObject;
+
+   unsigned max_index = 0xffffffff;
+
+   /* Compute the maximum number of vertices that we can write without
+    * overflowing any of the buffers currently being used for feedback.
+    */
+   for (int i = 0; i < BRW_MAX_SOL_BUFFERS; ++i) {
+      unsigned stride = linked_xfb_info->BufferStride[i];
+
+      /* Skip any inactive buffers, which have a stride of 0. */
+      if (stride == 0)
+	 continue;
+
+      unsigned max_for_this_buffer = xfb_obj->Size[i] / (4 * stride);
+      max_index = MIN2(max_index, max_for_this_buffer);
+   }
+
+   /* Initialize the SVBI 0 register to zero and set the maximum index. */
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+   OUT_BATCH(0); /* SVBI 0 */
+   OUT_BATCH(0);
+   OUT_BATCH(max_index);
+   ADVANCE_BATCH();
+}
 
 void
 brw_end_transform_feedback(struct gl_context *ctx,

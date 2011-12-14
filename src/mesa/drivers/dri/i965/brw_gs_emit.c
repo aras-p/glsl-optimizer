@@ -337,6 +337,15 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
        */
       brw_MOV(p, get_element_ud(c->reg.header, 5),
               get_element_ud(c->reg.SVBI, 0));
+
+      /* Make sure that the buffers have enough room for all the vertices. */
+      brw_ADD(p, get_element_ud(c->reg.temp, 0),
+	         get_element_ud(c->reg.SVBI, 0), brw_imm_ud(num_verts));
+      brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_LE,
+	         get_element_ud(c->reg.temp, 0),
+	         get_element_ud(c->reg.SVBI, 4));
+      brw_IF(p, BRW_EXECUTE_1);
+
       /* For each vertex, generate code to output each varying using the
        * appropriate binding table entry.
        */
@@ -377,6 +386,7 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
                     get_element_ud(c->reg.header, 5), brw_imm_ud(1));
          }
       }
+      brw_ENDIF(p);
 
       /* Now, reinitialize the header register from R0 to restore the parts of
        * the register that we overwrote while streaming out transform feedback

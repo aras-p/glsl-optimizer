@@ -117,6 +117,7 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
    brw_init_queryobj_functions(functions);
 
    functions->PrepareExecBegin = brwPrepareExecBegin;
+   functions->BeginTransformFeedback = brw_begin_transform_feedback;
    functions->EndTransformFeedback = brw_end_transform_feedback;
 }
 

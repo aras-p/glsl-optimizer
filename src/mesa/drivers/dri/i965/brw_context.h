@@ -1078,6 +1078,9 @@ brw_fprog_uses_noperspective(const struct gl_fragment_program *fprog);
 
 /* gen6_sol.c */
 void
+brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
+			     struct gl_transform_feedback_object *obj);
+void
 brw_end_transform_feedback(struct gl_context *ctx,
                            struct gl_transform_feedback_object *obj);
 
