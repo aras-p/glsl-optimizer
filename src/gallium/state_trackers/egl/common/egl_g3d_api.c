@@ -296,6 +296,14 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
        gconf->stvis.buffer_mask & ST_ATTACHMENT_FRONT_LEFT_MASK)
       gsurf->stvis.render_buffer = ST_ATTACHMENT_FRONT_LEFT;
 
+   if (dpy->Extensions.NV_post_sub_buffer) {
+      if (gsurf->base.Type == EGL_WINDOW_BIT &&
+          gsurf->base.RenderBuffer == EGL_BACK_BUFFER)
+         gsurf->base.PostSubBufferSupportedNV = EGL_TRUE;
+      else
+         gsurf->base.PostSubBufferSupportedNV = EGL_FALSE;
+   }
+
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
       nsurf->destroy(nsurf);
@@ -602,6 +610,16 @@ egl_g3d_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf
 #endif /* EGL_NOK_swap_region */
 
 static EGLBoolean
+egl_g3d_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
+                        EGLint x, EGLint y, EGLint width, EGLint height)
+{
+   /* Note: y=0=bottom */
+   const EGLint rect[4] = { x, surf->Height - y - height, width, height };
+
+   return swap_buffers(drv, dpy, surf, 1, rect, EGL_TRUE);
+}
+
+static EGLBoolean
 egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                      EGLNativePixmapType target)
 {
@@ -891,4 +909,6 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 #ifdef EGL_NOK_swap_region
    drv->API.SwapBuffersRegionNOK = egl_g3d_swap_buffers_region;
 #endif
+
+   drv->API.PostSubBufferNV = egl_g3d_post_sub_buffer;
 }
