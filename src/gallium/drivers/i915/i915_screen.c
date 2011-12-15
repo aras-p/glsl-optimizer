@@ -195,6 +195,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_SM3:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+   case PIPE_CAP_SCALED_RESOLVE:
    case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
    case PIPE_CAP_CONDITIONAL_RENDER:
@@ -223,6 +224,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MIN_TEXEL_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
       return 0;
 
    /* Render targets. */
