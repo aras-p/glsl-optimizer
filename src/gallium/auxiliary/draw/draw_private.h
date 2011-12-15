@@ -270,7 +270,7 @@ struct draw_context
 
    /** Stream output (vertex feedback) state */
    struct {
-      struct pipe_stream_output_state state;
+      struct pipe_stream_output_info state;
       void *buffers[PIPE_MAX_SO_BUFFERS];
       uint num_buffers;
    } so;

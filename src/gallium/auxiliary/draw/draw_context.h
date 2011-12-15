@@ -202,7 +202,7 @@ draw_set_mapped_so_buffers(struct draw_context *draw,
                            unsigned num_buffers);
 void
 draw_set_so_state(struct draw_context *draw,
-                  struct pipe_stream_output_state *state);
+                  struct pipe_stream_output_info *state);
 
 
 /***********************************************************************

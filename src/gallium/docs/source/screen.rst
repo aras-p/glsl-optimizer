@@ -51,6 +51,8 @@ The integer capabilities:
   from color blend equations, in :ref:`Blend` state.
 * ``PIPE_CAP_SM3``: Whether the vertex shader and fragment shader support equivalent
   opcodes to the Shader Model 3 specification. XXX oh god this is horrible
+* ``PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS``: The maximum number of stream buffers.
+* ``PIPE_CAP_PRIMITIVE_RESTART``: Whether primitive restart is supported.
 * ``PIPE_CAP_MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
   the vertex and fragment shader, inclusive.
 * ``PIPE_CAP_INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
@@ -179,6 +181,7 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_CONSTANT_BUFFER``: A buffer of shader constants.
 * ``PIPE_BIND_TRANSFER_WRITE``: A transfer object which will be written to.
 * ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
+* ``PIPE_BIND_STREAM_OUTPUT``: A stream output buffer.
 * ``PIPE_BIND_CUSTOM``:
 * ``PIPE_BIND_SCANOUT``: A front color buffer or scanout buffer.
 * ``PIPE_BIND_SHARED``: A sharable buffer that can be given to another

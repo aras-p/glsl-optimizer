@@ -423,6 +423,7 @@ void
 util_dump_shader_state(FILE *stream, const struct pipe_shader_state *state)
 {
    char str[8192];
+   unsigned i;
 
    if(!state) {
       util_dump_null(stream);
@@ -435,6 +436,24 @@ util_dump_shader_state(FILE *stream, const struct pipe_shader_state *state)
 
    util_dump_member_begin(stream, "tokens");
    util_dump_string(stream, str);
+   util_dump_member_end(stream);
+
+   util_dump_member_begin(stream, "stream_output");
+   util_dump_struct_begin(stream, "pipe_stream_output_info");
+   util_dump_member(stream, uint, &state->stream_output, num_outputs);
+   util_dump_member(stream, uint, &state->stream_output, stride);
+   util_dump_array_begin(stream);
+   for(i = 0; i < state->stream_output.num_outputs; ++i) {
+      util_dump_elem_begin(stream);
+      util_dump_struct_begin(stream, ""); /* anonymous */
+      util_dump_member(stream, uint, &state->stream_output.output[i], register_index);
+      util_dump_member(stream, uint, &state->stream_output.output[i], register_mask);
+      util_dump_member(stream, uint, &state->stream_output.output[i], output_buffer);
+      util_dump_struct_end(stream);
+      util_dump_elem_end(stream);
+   }
+   util_dump_array_end(stream);
+   util_dump_struct_end(stream);
    util_dump_member_end(stream);
 
    util_dump_struct_end(stream);

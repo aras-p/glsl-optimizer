@@ -722,11 +722,11 @@ draw_set_mapped_so_buffers(struct draw_context *draw,
 
 void
 draw_set_so_state(struct draw_context *draw,
-                  struct pipe_stream_output_state *state)
+                  struct pipe_stream_output_info *state)
 {
    memcpy(&draw->so.state,
           state,
-          sizeof(struct pipe_stream_output_state));
+          sizeof(struct pipe_stream_output_info));
 }
 
 void

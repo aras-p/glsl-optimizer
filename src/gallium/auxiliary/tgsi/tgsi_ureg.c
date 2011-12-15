@@ -1597,6 +1597,7 @@ void *ureg_create_shader( struct ureg_program *ureg,
    state.tokens = ureg_finalize(ureg);
    if(!state.tokens)
       return NULL;
+   memset(&state.stream_output, 0, sizeof(state.stream_output));
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX)
       return pipe->create_vs_state( pipe, &state );

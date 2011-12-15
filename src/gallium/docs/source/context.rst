@@ -54,8 +54,6 @@ buffers, surfaces) are bound to the driver.
 
 * ``set_index_buffer``
 
-* ``set_stream_output_buffers``
-
 
 Non-CSO State
 ^^^^^^^^^^^^^
@@ -138,6 +136,47 @@ cube, and 3d textures otherwise they are 0.
 
 * ``surface_destroy`` destroys a surface and releases its reference to the
   associated resource.
+
+Stream output targets
+^^^^^^^^^^^^^^^^^^^^^
+
+Stream output, also known as transform feedback, allows writing the primitives
+produced by the vertex pipeline to buffers. This is done after the geometry
+shader or vertex shader if no geometry shader is present.
+
+The stream output targets are views into buffer resources which can be bound
+as stream outputs and specify a memory range where it's valid to write
+primitives. The pipe driver must implement memory protection such that any
+primitives written outside of the specified memory range are discarded.
+
+Two stream output targets can use the same resource at the same time, but
+with a disjoint memory range.
+
+Additionally, the stream output target internally maintains the offset
+into the buffer which is incremented everytime something is written to it.
+The internal offset is equal to how much data has already been written.
+It can be stored in device memory and the CPU actually doesn't have to query
+it.
+
+The stream output target can be used in a draw command to provide
+the vertex count. The vertex count is derived from the internal offset
+discussed above.
+
+* ``create_stream_output_target`` create a new target.
+
+* ``stream_output_target_destroy`` destroys a target. Users of this should
+  use pipe_so_target_reference instead.
+
+* ``set_stream_output_targets`` binds stream output targets. The parameter
+  append_bitmask is a bitmask, where the i-th bit specifies whether new
+  primitives should be appended to the i-th buffer (writing starts at
+  the internal offset), or whether writing should start at the beginning
+  (the internal offset is effectively set to 0).
+
+NOTE: The currently-bound vertex or geometry shader must be compiled with
+the properly-filled-in structure pipe_stream_output_info describing which
+outputs should be written to buffers and how. The structure is part of
+pipe_shader_state.
 
 Clearing
 ^^^^^^^^
@@ -393,24 +432,6 @@ the sample points, but returning the value of the centermost sample is preferred
 The interfaces to these calls are likely to change to make it easier
 for a driver to batch multiple blits with the same source and
 destination.
-
-
-Stream Output
-^^^^^^^^^^^^^
-
-Stream output, also known as transform feedback allows writing the results of the
-vertex pipeline (after the geometry shader or vertex shader if no geometry shader
-is present) to be written to a buffer created with a ``PIPE_BIND_STREAM_OUTPUT``
-flag.
-
-First a stream output state needs to be created with the
-``create_stream_output_state`` call. It specific the details of what's being written,
-to which buffer and with what kind of a writemask.
-
-Then target buffers needs to be set with the call to ``set_stream_output_buffers``
-which sets the buffers and the offsets from the start of those buffer to where
-the data will be written to.
-
 
 Transfers
 ^^^^^^^^^

@@ -35,7 +35,7 @@
 
 static void *
 llvmpipe_create_stream_output_state(struct pipe_context *pipe,
-                                    const struct pipe_stream_output_state *templ)
+                                    const struct pipe_stream_output_info *templ)
 {
    struct lp_so_state *so;
    so = (struct lp_so_state *) CALLOC_STRUCT(lp_so_state);

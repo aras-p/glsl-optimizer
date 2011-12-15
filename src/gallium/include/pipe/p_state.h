@@ -121,6 +121,12 @@ struct pipe_rasterizer_state
     */
    unsigned gl_rasterization_rules:1;
 
+   /**
+    * When true, rasterization is disabled and no pixels are written.
+    * This only makes sense with the Stream Out functionality.
+    */
+   unsigned rasterizer_discard:1;
+
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
 
@@ -164,9 +170,30 @@ struct pipe_clip_state
 };
 
 
+/**
+ * Stream output for vertex transform feedback.
+ */
+struct pipe_stream_output_info
+{
+   unsigned num_outputs;
+   /** stride for an entire vertex, only used if all output_buffers are 0 */
+   unsigned stride;
+   /**
+    * Array of stream outputs, in the order they are to be written in.
+    * Selected components are tightly packed into the output buffer.
+    */
+   struct {
+      unsigned register_index:8; /**< 0 to PIPE_MAX_SHADER_OUTPUTS */
+      unsigned register_mask:4;  /**< TGSI_WRITEMASK_x */
+      unsigned output_buffer:4;  /**< 0 to PIPE_MAX_SO_BUFFERS */
+   } output[PIPE_MAX_SHADER_OUTPUTS];
+};
+
+
 struct pipe_shader_state
 {
    const struct tgsi_token *tokens;
+   struct pipe_stream_output_info stream_output;
 };
 
 
@@ -375,24 +402,6 @@ struct pipe_resource
 
 
 /**
- * Stream output for vertex transform feedback.
- */
-struct pipe_stream_output_state
-{
-   /** number of the output buffer to insert each element into */
-   int output_buffer[PIPE_MAX_SHADER_OUTPUTS];
-   /** which register to grab each output from */
-   int register_index[PIPE_MAX_SHADER_OUTPUTS];
-   /** TGSI_WRITEMASK signifying which components to output */
-   ubyte register_mask[PIPE_MAX_SHADER_OUTPUTS];
-   /** number of outputs */
-   int num_outputs;
-   /** stride for an entire vertex, only used if all output_buffers are 0 */
-   unsigned stride;
-};
-
-
-/**
  * Transfer object.  For data transfer to/from a resource.
  */
 struct pipe_transfer
@@ -418,6 +427,30 @@ struct pipe_vertex_buffer
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_resource *buffer;  /**< the actual buffer */
+};
+
+
+/**
+ * A stream output target. The structure specifies the range vertices can
+ * be written to.
+ *
+ * In addition to that, the structure should internally maintain the offset
+ * into the buffer, which should be incremented everytime something is written
+ * (appended) to it. The internal offset is buffer_offset + how many bytes
+ * have been written. The internal offset can be stored on the device
+ * and the CPU actually doesn't have to query it.
+ *
+ * Use PIPE_QUERY_SO_STATISTICS to know how many primitives have
+ * actually been written.
+ */
+struct pipe_stream_output_target
+{
+   struct pipe_reference reference;
+   struct pipe_resource *buffer; /**< buffer into which this is a target view */
+   struct pipe_context *context; /**< context this view belongs to */
+
+   unsigned buffer_offset;  /**< offset where data should be written, in bytes */
+   unsigned buffer_size;    /**< how much data is allowed to be written */
 };
 
 
@@ -481,6 +514,22 @@ struct pipe_draw_info
     */
    boolean primitive_restart;
    unsigned restart_index;
+
+   /**
+    * Stream output target. If not NULL, it's used to provide the 'count'
+    * parameter based on the number vertices captured by the stream output
+    * stage. (or generally, based on the number of bytes captured)
+    *
+    * Only 'mode', 'start_instance', and 'instance_count' are taken into
+    * account, all the other variables from pipe_draw_info are ignored.
+    *
+    * 'start' is implicitly 0 and 'count' is set as discussed above.
+    * The draw command is non-indexed.
+    *
+    * Note that this only provides the count. The vertex buffers must
+    * be set via set_vertex_buffers manually.
+    */
+   struct pipe_stream_output_target *count_from_stream_output;
 };
 
 

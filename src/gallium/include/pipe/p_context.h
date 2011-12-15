@@ -56,7 +56,7 @@ struct pipe_sampler_view;
 struct pipe_scissor_state;
 struct pipe_shader_state;
 struct pipe_stencil_ref;
-struct pipe_stream_output_state;
+struct pipe_stream_output_target;
 struct pipe_surface;
 struct pipe_vertex_buffer;
 struct pipe_vertex_element;
@@ -86,11 +86,6 @@ struct pipe_context {
    /*@{*/
    void (*draw_vbo)( struct pipe_context *pipe,
                      const struct pipe_draw_info *info );
-
-   /**
-    * Draw the stream output buffer at index 0
-    */
-   void (*draw_stream_output)( struct pipe_context *pipe, unsigned mode );
    /*@}*/
 
    /**
@@ -179,11 +174,6 @@ struct pipe_context {
    void   (*bind_vertex_elements_state)(struct pipe_context *, void *);
    void   (*delete_vertex_elements_state)(struct pipe_context *, void *);
 
-   void * (*create_stream_output_state)(struct pipe_context *,
-                                        const struct pipe_stream_output_state *);
-   void   (*bind_stream_output_state)(struct pipe_context *, void *);
-   void   (*delete_stream_output_state)(struct pipe_context*, void*);
-
    /*@}*/
 
    /**
@@ -237,12 +227,26 @@ struct pipe_context {
    void (*set_index_buffer)( struct pipe_context *pipe,
                              const struct pipe_index_buffer * );
 
-   void (*set_stream_output_buffers)(struct pipe_context *,
-                                     struct pipe_resource **buffers,
-                                     int *offsets, /*array of offsets
-                                                     from the start of each
-                                                     of the buffers */
-                                     int num_buffers);
+   /*@}*/
+
+   /**
+    * Stream output functions.
+    */
+   /*@{*/
+
+   struct pipe_stream_output_target *(*create_stream_output_target)(
+                        struct pipe_context *,
+                        struct pipe_resource *,
+                        unsigned buffer_offset,
+                        unsigned buffer_size);
+
+   void (*stream_output_target_destroy)(struct pipe_context *,
+                                        struct pipe_stream_output_target *);
+
+   void (*set_stream_output_targets)(struct pipe_context *,
+                              unsigned num_targets,
+                              struct pipe_stream_output_target **targets,
+                              unsigned append_bitmask);
 
    /*@}*/
 

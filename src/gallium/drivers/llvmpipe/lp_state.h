@@ -86,7 +86,7 @@ struct lp_velems_state
 };
 
 struct lp_so_state {
-   struct pipe_stream_output_state base;
+   struct pipe_stream_output_info base;
 };
 
 

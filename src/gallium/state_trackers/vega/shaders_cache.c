@@ -441,6 +441,7 @@ struct vg_shader * shader_create_from_text(struct pipe_context *pipe,
                 type == PIPE_SHADER_FRAGMENT);
 
    state.tokens = tokens;
+   memset(&state.stream_output, 0, sizeof(state.stream_output));
    shader->type = type;
    shader->tokens = tokens;
 

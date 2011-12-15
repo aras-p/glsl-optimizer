@@ -130,7 +130,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    unsigned input_vertex_stride = so->input_vertex_stride;
    struct draw_context *draw = so->draw;
    const float (*input_ptr)[4];
-   const struct pipe_stream_output_state *state =
+   const struct pipe_stream_output_info *state =
       &draw->so.state;
    float **buffer = 0;
 
@@ -143,12 +143,12 @@ static void so_emit_prim(struct pt_so_emit *so,
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
       for (slot = 0; slot < state->num_outputs; ++slot) {
-         unsigned idx = state->register_index[slot];
-         unsigned writemask = state->register_mask[slot];
+         unsigned idx = state->output[slot].register_index;
+         unsigned writemask = state->output[slot].register_mask;
          unsigned written_compos = 0;
          unsigned compo;
 
-         buffer = (float**)&so->buffers[state->output_buffer[slot]];
+         buffer = (float**)&so->buffers[state->output[slot].output_buffer];
 
          /*debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
            slot, vs_slot, idx);*/
@@ -249,7 +249,7 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
    }
    emit->single_buffer = TRUE;
    for (i = 0; i < draw->so.state.num_outputs; ++i) {
-      if (draw->so.state.output_buffer[i] != 0)
+      if (draw->so.state.output[i].output_buffer != 0)
          emit->single_buffer = FALSE;
    }
 

@@ -36,7 +36,7 @@
 
 static void *
 softpipe_create_stream_output_state(struct pipe_context *pipe,
-                                    const struct pipe_stream_output_state *templ)
+                                    const struct pipe_stream_output_info *templ)
 {
    struct sp_so_state *so;
    so = (struct sp_so_state *) CALLOC_STRUCT(sp_so_state);
@@ -44,15 +44,8 @@ softpipe_create_stream_output_state(struct pipe_context *pipe,
    if (so) {
       so->base.num_outputs = templ->num_outputs;
       so->base.stride = templ->stride;
-      memcpy(so->base.output_buffer,
-             templ->output_buffer,
-             sizeof(int) * templ->num_outputs);
-      memcpy(so->base.register_index,
-             templ->register_index,
-             sizeof(int) * templ->num_outputs);
-      memcpy(so->base.register_mask,
-             templ->register_mask,
-             sizeof(ubyte) * templ->num_outputs);
+      memcpy(so->base.output, templ->output,
+             templ->num_outputs * sizeof(templ->output[0]));
    }
    return so;
 }

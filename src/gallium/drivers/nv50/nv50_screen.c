@@ -116,7 +116,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
-   case PIPE_CAP_STREAM_OUTPUT:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       return 0;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
    case PIPE_CAP_INDEP_BLEND_ENABLE:

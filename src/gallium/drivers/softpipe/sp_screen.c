@@ -105,7 +105,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 1;
-   case PIPE_CAP_STREAM_OUTPUT:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       return 0;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return 1;

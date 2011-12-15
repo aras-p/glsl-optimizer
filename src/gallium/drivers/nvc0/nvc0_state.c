@@ -749,7 +749,7 @@ nvc0_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
 
 static void *
 nvc0_tfb_state_create(struct pipe_context *pipe,
-                      const struct pipe_stream_output_state *pso)
+                      const struct pipe_stream_output_info *pso)
 {
    struct nvc0_transform_feedback_state *so;
    int n = 0;
@@ -761,13 +761,13 @@ nvc0_tfb_state_create(struct pipe_context *pipe,
 
    for (b = 0; b < 4; ++b) {
       for (i = 0; i < pso->num_outputs; ++i) {
-         if (pso->output_buffer[i] != b)
+         if (pso->output[i].output_buffer != b)
             continue;
          for (c = 0; c < 4; ++c) {
-            if (!(pso->register_mask[i] & (1 << c)))
+            if (!(pso->output[i].register_mask & (1 << c)))
                continue;
             so->varying_count[b]++;
-            so->varying_index[n++] = (pso->register_index[i] << 2) | c;
+            so->varying_index[n++] = (pso->output[i].register_index << 2) | c;
          }
       }
       so->stride[b] = so->varying_count[b] * 4;
