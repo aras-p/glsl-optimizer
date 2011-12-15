@@ -510,9 +510,9 @@ i915_translate_instruction(struct i915_fp_compile *p,
       src0 = src_vector(p, &inst->Src[0], fs);
       src1 = src_vector(p, &inst->Src[1], fs);
       src2 = src_vector(p, &inst->Src[2], fs);
-      i915_emit_arith(p, A0_CMP, 
+      i915_emit_arith(p, A0_CMP,
                       get_result_vector(p, &inst->Dst[0]),
-                      get_result_flags(inst), 
+                      get_result_flags(inst),
                       0, src0, src2, src1);   /* NOTE: order of src2, src1 */
       break;
 
@@ -655,7 +655,16 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_KILP:
-      assert(0); /* not tested yet */
+      /* We emit an unconditional kill; we may want to revisit
+       * if we ever implement conditionals.
+       */
+      i915_emit_texld(p,
+                      tmp,                                   /* dest reg: a dummy reg */
+                      A0_DEST_CHANNEL_ALL,                   /* dest writemask */
+                      0,                                     /* sampler */
+                      negate(swizzle(0, ONE, ONE, ONE, ONE), 1, 1, 1, 1), /* coord */
+                      T0_TEXKILL,                            /* opcode */
+                      1);                                    /* num_coord */
       break;
 
    case TGSI_OPCODE_LG2:
