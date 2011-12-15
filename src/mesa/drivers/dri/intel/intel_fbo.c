@@ -279,7 +279,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 return false;
       }
 
-      assert(irb->mt->format == MESA_FORMAT_S8_Z24);
+      assert(irb->mt->format == MESA_FORMAT_S8_Z24 ||
+	     irb->mt->format == MESA_FORMAT_X8_Z24);
       ok = intel_renderbuffer_update_wrapper(intel, depth_irb, irb->mt,
 					     0, 0, /* level, layer */
 					     MESA_FORMAT_X8_Z24,

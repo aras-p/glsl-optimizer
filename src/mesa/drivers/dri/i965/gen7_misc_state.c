@@ -53,6 +53,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
    /* Gen7 doesn't support packed depth/stencil */
    assert(stencil_mt == NULL || depth_mt != stencil_mt);
+   assert(!depth_mt || !_mesa_is_format_packed_depth_stencil(depth_mt->format));
 
    intel_emit_depth_stall_flushes(intel);
 

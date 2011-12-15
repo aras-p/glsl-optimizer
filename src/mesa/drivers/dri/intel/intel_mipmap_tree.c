@@ -136,6 +136,16 @@ intel_miptree_create_internal(struct intel_context *intel,
 	 intel_miptree_release(&mt);
 	 return NULL;
       }
+
+      /* Fix up the Z miptree format for how we're splitting out separate
+       * stencil.  Gen7 expects there to be no stencil bits in its depth buffer.
+       */
+      if (mt->format == MESA_FORMAT_S8_Z24) {
+	 mt->format = MESA_FORMAT_X8_Z24;
+      } else {
+	 _mesa_problem("Unknown format %s in separate stencil\n",
+		       _mesa_get_format_name(mt->format));
+      }
    }
 
    return mt;
@@ -320,8 +330,12 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    GLuint level = intelImage->base.Base.Level;
    int width, height, depth;
 
-   if (image->TexFormat != mt->format)
+   if (image->TexFormat != mt->format &&
+       !(image->TexFormat == MESA_FORMAT_S8_Z24 &&
+	 mt->format == MESA_FORMAT_X8_Z24 &&
+	 mt->stencil_mt)) {
       return false;
+   }
 
    intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
 
