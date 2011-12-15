@@ -202,7 +202,7 @@ struct i915_rasterizer_state {
 };
 
 struct i915_sampler_state {
-   const struct pipe_sampler_state templ;
+   struct pipe_sampler_state templ;
    unsigned state[3];
    unsigned minlod;
    unsigned maxlod;

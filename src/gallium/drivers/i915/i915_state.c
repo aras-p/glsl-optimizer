@@ -223,7 +223,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
    unsigned minFilt, magFilt;
    unsigned mipFilt;
 
-   memcpy(&cso->templ, sampler, sizeof(struct pipe_sampler_state));
+   cso->templ = *sampler;
 
    mipFilt = translate_mip_filter(sampler->min_mip_filter);
    minFilt = translate_img_filter( sampler->min_img_filter );
