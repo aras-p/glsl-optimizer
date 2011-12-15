@@ -75,6 +75,14 @@ brw_queryobj_get_results(struct gl_context *ctx,
       }
       break;
 
+   case GL_PRIMITIVES_GENERATED:
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+      /* We don't actually query the hardware for this value, so query->bo
+       * should always be NULL and execution should never reach here.
+       */
+      assert(!"Unreachable");
+      break;
+
    default:
       assert(!"Unrecognized query target in brw_queryobj_get_results()");
       break;
@@ -158,6 +166,20 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       intel->stats_wm++;
       break;
 
+   case GL_PRIMITIVES_GENERATED:
+      /* We don't actually query the hardware for this value; we keep track of
+       * it a software counter.  So just reset the counter.
+       */
+      brw->sol.primitives_generated = 0;
+      break;
+
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+      /* We don't actually query the hardware for this value; we keep track of
+       * it a software counter.  So just reset the counter.
+       */
+      brw->sol.primitives_written = 0;
+      break;
+
    default:
       assert(!"Unrecognized query target in brw_begin_query()");
       break;
@@ -219,6 +241,32 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       brw->query.obj = NULL;
 
       intel->stats_wm--;
+      break;
+
+   case GL_PRIMITIVES_GENERATED:
+      /* We don't actually query the hardware for this value; we keep track of
+       * it in a software counter.  So just read the counter and store it in
+       * the query object.
+       */
+      query->Base.Result = brw->sol.primitives_generated;
+
+      /* And set brw->query.obj to NULL so that this query won't try to wait
+       * for any rendering to complete.
+       */
+      query->bo = NULL;
+      break;
+
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+      /* We don't actually query the hardware for this value; we keep track of
+       * it in a software counter.  So just read the counter and store it in
+       * the query object.
+       */
+      query->Base.Result = brw->sol.primitives_written;
+
+      /* And set brw->query.obj to NULL so that this query won't try to wait
+       * for any rendering to complete.
+       */
+      query->bo = NULL;
       break;
 
    default:

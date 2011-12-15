@@ -388,6 +388,7 @@ brw_update_primitive_count(struct brw_context *brw,
                            const struct _mesa_prim *prim)
 {
    uint32_t count = count_tessellated_primitives(prim);
+   brw->sol.primitives_generated += count;
    if (brw->intel.ctx.TransformFeedback.CurrentObject->Active) {
       /* Update brw->sol.svbi_0_max_index to reflect the amount by which the
        * hardware is going to increment SVBI 0 when this drawing operation
@@ -404,6 +405,9 @@ brw_update_primitive_count(struct brw_context *brw,
       uint32_t primitives_written = MIN2 (space_avail, count);
       brw->sol.svbi_0_starting_index +=
          svbi_postincrement_value * primitives_written;
+
+      /* And update the TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN query. */
+      brw->sol.primitives_written += primitives_written;
    }
 }
 
