@@ -317,7 +317,8 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->set_fragment_sampler_views(ctx->pipe, 0, NULL);
       if (ctx->pipe->set_vertex_sampler_views)
          ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
-      ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, 0);
+      if (ctx->pipe->set_stream_output_targets)
+         ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, 0);
    }
 
    /* free fragment samplers, views */
