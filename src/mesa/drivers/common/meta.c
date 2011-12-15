@@ -2943,43 +2943,20 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
          break;
       }
 
-      /* Set MaxLevel large enough to hold the new level when we allocate it  */
+      /* Allocate storage for the destination mipmap image(s) */
+
+      /* Set MaxLevel large enough to hold the new level when we allocate it */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, dstLevel);
 
-      /* Create empty dest image */
-      if (target == GL_TEXTURE_1D) {
-         _mesa_TexImage1D(target, dstLevel, srcImage->InternalFormat,
-                          dstWidth, border,
-                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      }
-      else if (target == GL_TEXTURE_3D) {
-         _mesa_TexImage3D(target, dstLevel, srcImage->InternalFormat,
-                          dstWidth, dstHeight, dstDepth, border,
-                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      }
-      else {
-         /* 2D or cube */
-         _mesa_TexImage2D(faceTarget, dstLevel, srcImage->InternalFormat,
-                          dstWidth, dstHeight, border,
-                          GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-         if (target == GL_TEXTURE_CUBE_MAP) {
-            /* If texturing from a cube, we need to make sure all src faces
-             * have been defined (even if we're not sampling from them.)
-             * Otherwise the texture object will be 'incomplete' and
-             * texturing from it will not be allowed.
-             */
-            GLuint face;
-            for (face = 0; face < 6; face++) {
-               if (!texObj->Image[face][srcLevel] ||
-                   texObj->Image[face][srcLevel]->Width != srcWidth) {
-                  _mesa_TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-                                   srcLevel, srcImage->InternalFormat,
-                                   srcWidth, srcHeight, border,
-                                   GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-               }
-            }
-         }
+      if (!_mesa_prepare_mipmap_level(ctx, texObj, dstLevel,
+                                      dstWidth, dstHeight, dstDepth,
+                                      srcImage->Border,
+                                      srcImage->InternalFormat,
+                                      srcImage->TexFormat)) {
+         /* All done.  We either ran out of memory or we would go beyond the
+          * last valid level of an immutable texture if we continued.
+          */
+         break;
       }
 
       /* limit minification to src level */
