@@ -52,9 +52,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    intel_update_max_level(intelObj, sampler);
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
-   intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
-                                          &width, &height, &depth);
-
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
     *
@@ -64,13 +61,10 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     * of that, we just always relayout on baselevel change.
     */
    if (intelObj->mt &&
-       (intelObj->mt->target != intelObj->base.Target ||
-	intelObj->mt->format != firstImage->base.Base.TexFormat ||
+       (!intel_miptree_match_image(intelObj->mt, &firstImage->base.Base) ||
+	intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
-	intelObj->mt->last_level < intelObj->_MaxLevel ||
-	intelObj->mt->width0 != width ||
-	intelObj->mt->height0 != height ||
-	intelObj->mt->depth0 != depth)) {
+	intelObj->mt->last_level < intelObj->_MaxLevel)) {
       intel_miptree_release(&intelObj->mt);
    }
 
@@ -78,6 +72,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
+      intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
+					     &width, &height, &depth);
+
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
 					  firstImage->base.Base.TexFormat,
