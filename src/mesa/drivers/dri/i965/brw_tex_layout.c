@@ -124,7 +124,8 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	 mt->total_height += y;
 	 width  = minify(width);
 	 height = minify(height);
-	 depth  = minify(depth);
+	 if (mt->target == GL_TEXTURE_3D)
+	    depth = minify(depth);
 
 	 if (mt->compressed) {
 	    pack_y_pitch = (height + 3) / 4;
