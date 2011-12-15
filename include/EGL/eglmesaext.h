@@ -102,28 +102,11 @@ typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETDRMDISPLAYMESA) (int fd);
 
 #endif /* EGL_MESA_drm_display */
 
-#ifndef EGL_MESA_drm_image
-#define EGL_MESA_drm_image 1
-#define EGL_DRM_BUFFER_FORMAT_MESA		0x31D0	/* eglCreateImageKHR attribute */
-#define EGL_DRM_BUFFER_USE_MESA			0x31D1
-
-/* EGL_DRM_BUFFER_FORMAT_MESA tokens */
-#define EGL_DRM_BUFFER_FORMAT_ARGB32_MESA	0x31D2
-
-/* EGL_DRM_BUFFER_USE_MESA bits */
-#define EGL_DRM_BUFFER_USE_SCANOUT_MESA		0x0001
-#define EGL_DRM_BUFFER_USE_SHARE_MESA		0x0002
+#ifdef EGL_MESA_drm_image
+/* Mesa's extension to EGL_MESA_drm_image... */
+#ifndef EGL_DRM_BUFFER_USE_CURSOR_MESA
 #define EGL_DRM_BUFFER_USE_CURSOR_MESA		0x0004
-
-#define EGL_DRM_BUFFER_MESA			0x31D3  /* eglCreateImageKHR target */
-#define EGL_DRM_BUFFER_STRIDE_MESA		0x31D4	/* eglCreateImageKHR attribute */
-
-#ifdef EGL_EGLEXT_PROTOTYPES
-EGLAPI EGLImageKHR EGLAPIENTRY eglCreateDRMImageMESA(EGLDisplay dpy, const EGLint *attrib_list);
-EGLAPI EGLBoolean EGLAPIENTRY eglExportDRMImageMESA(EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
 #endif
-typedef EGLImageKHR (EGLAPIENTRYP PFNEGLCREATEDRMIMAGEMESA) (EGLDisplay dpy, const EGLint *attrib_list);
-typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDRMIMAGEMESA) (EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
 #endif
 
 #ifndef EGL_WL_bind_wayland_display
