@@ -1803,6 +1803,81 @@ next_mipmap_level_size(GLenum target, GLint border,
    }
 }
 
+
+/**
+ * Helper function for mipmap generation.
+ * Make sure the specified destination mipmap level is the right size/format
+ * for mipmap generation.  If not, (re) allocate it.
+ * \return GL_TRUE if successful, GL_FALSE if mipmap generation should stop
+ */
+GLboolean
+_mesa_prepare_mipmap_level(struct gl_context *ctx,
+                           struct gl_texture_object *texObj, GLuint level,
+                           GLsizei width, GLsizei height, GLsizei depth,
+                           GLsizei border, GLenum intFormat, gl_format format)
+{
+   const GLuint numFaces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+   GLuint face;
+
+   if (texObj->Immutable) {
+      /* The texture was created with glTexStorage() so the number/size of
+       * mipmap levels is fixed and the storage for all images is already
+       * allocated.
+       */
+      if (!texObj->Image[0][level]) {
+         /* No more levels to create - we're done */
+         return GL_FALSE;
+      }
+      else {
+         /* Nothing to do - the texture memory must have already been
+          * allocated to the right size so we're all set.
+          */
+         return GL_TRUE;
+      }
+   }
+
+   for (face = 0; face < numFaces; face++) {
+      struct gl_texture_image *dstImage;
+      GLenum target;
+
+      if (numFaces == 1)
+         target = texObj->Target;
+      else
+         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+
+      dstImage = _mesa_get_tex_image(ctx, texObj, target, level);
+      if (!dstImage) {
+         /* out of memory */
+         return GL_FALSE;
+      }
+
+      if (dstImage->Width != width ||
+          dstImage->Height != height ||
+          dstImage->Depth != depth ||
+          dstImage->Border != border ||
+          dstImage->InternalFormat != intFormat ||
+          dstImage->TexFormat != format) {
+         /* need to (re)allocate image */
+         ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
+
+         _mesa_init_teximage_fields(ctx, target, dstImage,
+                                    width, height, depth,
+                                    border, intFormat, format);
+
+         ctx->Driver.AllocTextureImageBuffer(ctx, dstImage,
+                                             format, width, height, depth);
+
+         /* in case the mipmap level is part of an FBO: */
+         _mesa_update_fbo_texture(ctx, texObj, face, level);
+
+         ctx->NewState |= _NEW_TEXTURE;
+      }
+   }
+
+   return GL_TRUE;
+}
+
+
 static void
 generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
 			     struct gl_texture_object *texObj,
@@ -1841,30 +1916,19 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       if (!nextLevel)
          return;
 
+      if (!_mesa_prepare_mipmap_level(ctx, texObj, level + 1,
+                                      dstWidth, dstHeight, dstDepth,
+                                      border, srcImage->InternalFormat,
+                                      srcImage->TexFormat)) {
+         return;
+      }
+
       /* get dest gl_texture_image */
       dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
       if (!dstImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
          return;
       }
-
-      /* Free old image data */
-      ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
-
-      _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->InternalFormat,
-                                 srcImage->TexFormat);
-
-      /* Alloc storage for new texture image */
-      if (!ctx->Driver.AllocTextureImageBuffer(ctx, dstImage,
-                                               dstImage->TexFormat,
-                                               dstWidth, dstHeight,
-                                               dstDepth)) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
-         return;
-      }
-
-      ASSERT(dstImage->TexFormat);
 
       if (target == GL_TEXTURE_1D_ARRAY) {
 	 srcDepth = srcHeight;
@@ -2052,9 +2116,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
          return;
       }
 
-      /* Free old image data */
-      ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
-
+      /* rescale src image to dest image */
       _mesa_generate_mipmap_level(target, temp_datatype, components, border,
                                   srcWidth, srcHeight, srcDepth,
                                   (const GLubyte **) &temp_src,
@@ -2062,19 +2124,19 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
                                   dstWidth, dstHeight, dstDepth,
                                   &temp_dst, temp_dst_stride);
 
-      /* initialize new image */
-      _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->InternalFormat,
-                                 srcImage->TexFormat);
+      if (!_mesa_prepare_mipmap_level(ctx, texObj, level + 1,
+                                      dstWidth, dstHeight, dstDepth,
+                                      border, srcImage->InternalFormat,
+                                      srcImage->TexFormat)) {
+         return;
+      }
 
-      /* Free old dest texture image buffer */
-      ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
-
-      ctx->Driver.TexImage2D(ctx, target, level + 1,
-			     srcImage->InternalFormat,
-			     dstWidth, dstHeight, border,
-			     temp_base_format, temp_datatype,
-			     temp_dst, &ctx->DefaultPacking, texObj, dstImage);
+      /* The image space was allocated above so use glTexSubImage now */
+      ctx->Driver.TexSubImage2D(ctx, target, level + 1,
+                                0, 0, dstWidth, dstHeight,
+                                temp_base_format, temp_datatype,
+                                temp_dst, &ctx->DefaultPacking,
+                                texObj, dstImage);
 
       /* swap src and dest pointers */
       {

@@ -41,6 +41,12 @@ _mesa_generate_mipmap_level(GLenum target,
                             GLint dstRowStride);
 
 
+extern GLboolean
+_mesa_prepare_mipmap_level(struct gl_context *ctx,
+                           struct gl_texture_object *texObj, GLuint level,
+                           GLsizei width, GLsizei height, GLsizei depth,
+                           GLsizei border, GLenum intFormat, gl_format format);
+
 extern void
 _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj);
