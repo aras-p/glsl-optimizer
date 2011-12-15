@@ -188,6 +188,8 @@ struct i915_depth_stencil_state {
 };
 
 struct i915_rasterizer_state {
+   struct pipe_rasterizer_state templ;
+
    unsigned light_twoside : 1;
    unsigned st;
    enum interp_mode color_interp;
@@ -196,14 +198,12 @@ struct i915_rasterizer_state {
    unsigned LIS7;
    unsigned sc[1];
 
-   struct pipe_rasterizer_state templ;
-
    union { float f; unsigned u; } ds[2];
 };
 
 struct i915_sampler_state {
+   const struct pipe_sampler_state templ;
    unsigned state[3];
-   const struct pipe_sampler_state *templ;
    unsigned minlod;
    unsigned maxlod;
 };

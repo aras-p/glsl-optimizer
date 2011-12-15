@@ -223,12 +223,12 @@ i915_create_sampler_state(struct pipe_context *pipe,
    unsigned minFilt, magFilt;
    unsigned mipFilt;
 
-   cso->templ = sampler;
+   memcpy(&cso->templ, sampler, sizeof(struct pipe_sampler_state));
 
    mipFilt = translate_mip_filter(sampler->min_mip_filter);
    minFilt = translate_img_filter( sampler->min_img_filter );
    magFilt = translate_img_filter( sampler->mag_img_filter );
-   
+
    if (sampler->max_anisotropy > 1)
       minFilt = magFilt = FILTER_ANISOTROPIC;
 
