@@ -836,6 +836,8 @@ dri2_display_hash_table_compare(void *key1, void *key2)
    return ((char *) key1 - (char *) key2);
 }
 
+#ifdef HAVE_WAYLAND_BACKEND
+
 static int
 dri2_display_authenticate(void *user_data, uint32_t magic)
 {
@@ -844,8 +846,6 @@ dri2_display_authenticate(void *user_data, uint32_t magic)
 
    return x11_screen_authenticate(dri2dpy->xscr, magic);
 }
-
-#ifdef HAVE_WAYLAND_BACKEND
 
 static struct wayland_drm_callbacks wl_drm_callbacks = {
    dri2_display_authenticate,
