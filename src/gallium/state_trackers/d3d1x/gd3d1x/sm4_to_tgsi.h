@@ -30,5 +30,6 @@
 #include "sm4.h"
 
 void* sm4_to_tgsi(struct sm4_program& program);
+void* sm4_to_tgsi_linkage_only(struct sm4_program& program);
 
 #endif /* SM4_TO_TGSI_H_ */

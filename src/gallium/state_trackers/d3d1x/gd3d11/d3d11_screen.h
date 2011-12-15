@@ -72,13 +72,13 @@ static unsigned caps_dx_10_0[] = {
 	UTIL_CHECK_CAP(ANISOTROPIC_FILTER),
 	UTIL_CHECK_CAP(MIXED_COLORBUFFER_FORMATS),
 	UTIL_CHECK_CAP(FRAGMENT_COLOR_CLAMP_CONTROL),
-	UTIL_CHECK_CAP(STREAM_OUTPUT),
 	UTIL_CHECK_CAP(CONDITIONAL_RENDER),
 	UTIL_CHECK_CAP(PRIMITIVE_RESTART),
 	UTIL_CHECK_CAP(TGSI_INSTANCEID),
 	UTIL_CHECK_INT(MAX_RENDER_TARGETS, 8),
 	UTIL_CHECK_INT(MAX_TEXTURE_2D_LEVELS, 13),
 	UTIL_CHECK_INT(MAX_TEXTURE_ARRAY_LAYERS, 512),
+	UTIL_CHECK_INT(MAX_STREAM_OUTPUT_BUFFERS, 4),
 	UTIL_CHECK_SHADER(VERTEX, MAX_INPUTS, 16),
 	UTIL_CHECK_SHADER(GEOMETRY, MAX_CONST_BUFFERS, 14),
 	UTIL_CHECK_SHADER(GEOMETRY, MAX_TEXTURE_SAMPLERS, 16),
@@ -108,7 +108,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 	{
 		memset(&screen_caps, 0, sizeof(screen_caps));
 		screen_caps.gs = screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0;
-		screen_caps.so = !!screen->get_param(screen, PIPE_CAP_STREAM_OUTPUT);
+		screen_caps.so = screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) > 0;
 		screen_caps.queries = screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY);
 		screen_caps.render_condition = screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER);
 		for(unsigned i = 0; i < PIPE_SHADER_TYPES; ++i)
@@ -1347,19 +1347,31 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		return S_OK;
 	}
 
+#define D3D1X_SHVER_GEOMETRY_SHADER 2 /* D3D11_SHVER_GEOMETRY_SHADER */
+
 	GalliumD3D11Shader<>* create_stage_shader(unsigned type, const void* shader_bytecode, SIZE_T bytecode_length
 #if API >= 11
 			, ID3D11ClassLinkage *class_linkage
 #endif
-			)
+			, struct pipe_stream_output_info* so_info)
 	{
 		bool dump = debug_get_option_dump_shaders();
 
+		std::auto_ptr<sm4_program> sm4(0);
+
 		dxbc_chunk_header* sm4_chunk = dxbc_find_shader_bytecode(shader_bytecode, bytecode_length);
 		if(!sm4_chunk)
-			return 0;
-
-		std::auto_ptr<sm4_program> sm4(sm4_parse(sm4_chunk + 1, bswap_le32(sm4_chunk->size)));
+		{
+			if(so_info)
+				sm4.reset(new sm4_program());
+		}
+		else
+		{
+			sm4.reset(sm4_parse(sm4_chunk + 1, bswap_le32(sm4_chunk->size)));
+			// check if this is a dummy GS, in which case we only need a place to store the signature
+			if(sm4.get() && so_info && sm4->version.type != D3D1X_SHVER_GEOMETRY_SHADER)
+				sm4.reset(new sm4_program());
+		}
 		if(!sm4.get())
 			return 0;
 
@@ -1382,7 +1394,13 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 
 		struct pipe_shader_state tgsi_shader;
 		memset(&tgsi_shader, 0, sizeof(tgsi_shader));
-		tgsi_shader.tokens = (const tgsi_token*)sm4_to_tgsi(*sm4);
+		if(so_info)
+			memcpy(&tgsi_shader.stream_output, so_info, sizeof(tgsi_shader.stream_output));
+
+		if(so_info && sm4->version.type != D3D1X_SHVER_GEOMETRY_SHADER)
+			tgsi_shader.tokens = (const tgsi_token*)sm4_to_tgsi_linkage_only(*sm4);
+		else
+			tgsi_shader.tokens = (const tgsi_token*)sm4_to_tgsi(*sm4);
 		if(!tgsi_shader.tokens)
 			return 0;
 
@@ -1435,7 +1453,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		ID3D11##Stage##Shader **out_shader) \
 	{ \
 		SYNCHRONIZED; \
-		GalliumD3D11##Stage##Shader* shader = (GalliumD3D11##Stage##Shader*)create_stage_shader(PIPE_SHADER_##GALLIUM, PASS_SHADER_ARGS); \
+		GalliumD3D11##Stage##Shader* shader = (GalliumD3D11##Stage##Shader*)create_stage_shader(PIPE_SHADER_##GALLIUM, PASS_SHADER_ARGS, NULL); \
 		if(!shader) \
 			return E_FAIL; \
 		if(out_shader) \
@@ -1483,10 +1501,58 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		ID3D11GeometryShader **out_geometry_shader)
 	{
 		SYNCHRONIZED;
+		GalliumD3D11GeometryShader* gs;
 
-		return E_NOTIMPL;
+#if API >= 11
+		if(rasterized_stream != 0)
+			return E_NOTIMPL; // not yet supported by gallium
+#endif
+		struct dxbc_chunk_signature* sig = dxbc_find_signature(shader_bytecode, bytecode_length, DXBC_FIND_OUTPUT_SIGNATURE);
+		if(!sig)
+			return E_INVALIDARG;
+		D3D11_SIGNATURE_PARAMETER_DESC* out;
+		unsigned num_outputs = dxbc_parse_signature(sig, &out);
 
-		// remember to return S_FALSE if ppGeometyShader == NULL and the shader is OK
+		struct pipe_stream_output_info so;
+		memset(&so, 0, sizeof(so));
+
+#if API >= 11
+		if(num_strides)
+			so.stride = buffer_strides[0];
+		if(num_strides > 1)
+			debug_printf("Warning: multiple user-specified strides not implemented !\n");
+#else
+		so.stride = output_stream_stride;
+#endif
+
+		for(unsigned i = 0; i < num_entries; ++i)
+		{
+			unsigned j;
+			for(j = 0; j < num_outputs; ++j)
+				if(out[j].SemanticIndex == so_declaration[i].SemanticIndex && !strcasecmp(out[j].SemanticName, so_declaration[i].SemanticName))
+					break;
+			if(j >= num_outputs)
+				continue;
+			const int first_comp = ffs(out[j].Mask) - 1 + so_declaration[i].StartComponent;
+			so.output[i].output_buffer = so_declaration[i].OutputSlot;
+			so.output[i].register_index = out[j].Register;
+			so.output[i].register_mask = ((1 << so_declaration[i].ComponentCount) - 1) << first_comp;
+			++so.num_outputs;
+		}
+		if(out)
+			free(out);
+
+		gs = reinterpret_cast<GalliumD3D11GeometryShader*>(create_stage_shader(PIPE_SHADER_GEOMETRY, PASS_SHADER_ARGS, &so));
+		if(!gs)
+			return E_FAIL;
+
+		if(!out_geometry_shader) {
+			gs->Release();
+			return S_FALSE;
+		}
+		*out_geometry_shader = gs;
+
+		return S_OK;
 	}
 
 #if API >= 11

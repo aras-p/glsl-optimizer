@@ -846,8 +846,8 @@ struct dxgi_blitter
 		pipe->bind_vs_state(pipe, vs);
 		if(pipe->bind_gs_state)
 			pipe->bind_gs_state(pipe, 0);
-		if(pipe->bind_stream_output_state)
-			pipe->bind_stream_output_state(pipe, 0);
+		if(pipe->set_stream_output_targets)
+			pipe->set_stream_output_targets(pipe, 0, NULL, 0);
 		pipe->set_fragment_sampler_views(pipe, 1, &view);
 
 		pipe->draw_vbo(pipe, &draw);
