@@ -1822,6 +1822,10 @@ unpack_float_z_Z32X24S8(GLuint n, const void *src, GLfloat *dst)
 
 
 
+/**
+ * Unpack Z values.
+ * The returned values will always be in the range [0.0, 1.0].
+ */
 void
 _mesa_unpack_float_z_row(gl_format format, GLuint n,
                          const void *src, GLfloat *dst)
@@ -1901,6 +1905,10 @@ unpack_uint_z_Z32(const void *src, GLuint *dst, GLuint n)
 }
 
 
+/**
+ * Unpack Z values.
+ * The returned values will always be in the range [0, 0xffffffff].
+ */
 void
 _mesa_unpack_uint_z_row(gl_format format, GLuint n,
                         const void *src, GLuint *dst)
