@@ -819,7 +819,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
                fbo_incomplete("width or height mismatch", -1);
                return;
             }
-            /* check that all color buffer have same format */
+            /* check that all color buffers are the same format */
             if (intFormat != GL_NONE && f != intFormat) {
                fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
                fbo_incomplete("format mismatch", -1);
@@ -831,8 +831,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE;
             fbo_incomplete("inconsistant number of samples", i);
             return;
-         }            
-
+         }
       }
    }
 
@@ -1273,7 +1272,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RG32I:
       return ctx->Extensions.ARB_texture_rg &&
              ctx->Extensions.EXT_texture_integer ? GL_RG : 0;
-      
+
    case GL_INTENSITY8I_EXT:
    case GL_INTENSITY8UI_EXT:
    case GL_INTENSITY16I_EXT:
@@ -1820,7 +1819,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                   /* bind default */
                   ASSERT(fb->RefCount >= 2);
                   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-               }    
+               }
             }
 
 	    /* remove from hash table immediately, to free the ID */
@@ -1897,6 +1896,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
    return buffer->_Status;
 }
 
+
 /**
  * Replicate the src attachment point. Used by framebuffer_texture() when
  * the same texture is attached at GL_DEPTH_ATTACHMENT and
@@ -1911,7 +1911,7 @@ reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
    struct gl_renderbuffer_attachment *src_att = &fb->Attachment[src];
 
    assert(src_att->Texture != NULL);
-   assert (src_att->Renderbuffer != NULL);
+   assert(src_att->Renderbuffer != NULL);
 
    _mesa_reference_texobj(&dst_att->Texture, src_att->Texture);
    _mesa_reference_renderbuffer(&dst_att->Renderbuffer, src_att->Renderbuffer);
@@ -1920,6 +1920,7 @@ reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
    dst_att->TextureLevel = src_att->TextureLevel;
    dst_att->Zoffset = src_att->Zoffset;
 }
+
 
 /**
  * Common code called by glFramebufferTexture1D/2D/3DEXT().
@@ -1948,7 +1949,6 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
                   "glFramebufferTexture%sEXT", caller);
       return;
    }
-
 
    /* The textarget, level, and zoffset parameters are only validated if
     * texture is non-zero.
@@ -2002,7 +2002,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          }
       }
 
-      if ((level < 0) || 
+      if ((level < 0) ||
           (level >= _mesa_max_texture_levels(ctx, texObj->Target))) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glFramebufferTexture%sEXT(level)", caller);
@@ -2031,7 +2031,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_DEPTH,
 	                                      BUFFER_STENCIL);
       } else if (attachment == GL_STENCIL_ATTACHMENT &&
-	         texObj== fb->Attachment[BUFFER_DEPTH].Texture) {
+	         texObj == fb->Attachment[BUFFER_DEPTH].Texture) {
 	 /* As above, but with depth and stencil juxtasposed. */
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_STENCIL,
 	                                      BUFFER_DEPTH);
@@ -2797,6 +2797,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 }
 #endif /* FEATURE_EXT_framebuffer_blit */
 
+
 #if FEATURE_ARB_geometry_shader4
 void GLAPIENTRY
 _mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
@@ -2807,6 +2808,7 @@ _mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
                "glFramebufferTextureARB "
                "not implemented!");
 }
+
 
 void GLAPIENTRY
 _mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
