@@ -1,4 +1,4 @@
-dnl Process this file with autoconf to create configure.
+nl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.59])
 
@@ -16,6 +16,7 @@ AC_INIT([Mesa],[mesa_version],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE([foreign])
 
 dnl Save user CFLAGS and CXXFLAGS so one can override the default ones
 USER_CFLAGS="$CFLAGS"
@@ -64,6 +65,19 @@ solaris*)
     SHELL="$POSIX_SHELL"
     ;;
 esac
+
+AC_PATH_PROG([GTESTCONFIG], [gtest-config])
+if test "x$GTESTCONFIG" != "x"; then
+    GTEST_CFLAGS=`gtest-config --cppflags --cxxflags`
+    GTEST_LIBS=`gtest-config --ldflags --libs`
+    HAVE_GTEST=1
+    AC_SUBST([GTEST_CFLAGS])
+    AC_SUBST([GTEST_LIBS])
+    HAVE_GTEST=yes
+else
+    HAVE_GTEST=no
+fi
+AM_CONDITIONAL(HAVE_GTEST, test x$HAVE_GTEST = xyes)
 
 dnl clang is mostly GCC-compatible, but its version is much lower,
 dnl so we have to check for it.
@@ -1907,7 +1921,9 @@ CFLAGS="$CFLAGS $USER_CFLAGS"
 CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
-AC_CONFIG_FILES([configs/autoconf])
+AC_CONFIG_FILES([configs/autoconf
+		tests/Makefile
+		tests/glx/Makefile])
 
 dnl Replace the configs/current symlink
 AC_CONFIG_COMMANDS([configs],[

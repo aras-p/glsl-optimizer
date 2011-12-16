@@ -23,7 +23,7 @@ doxygen:
 
 check:
 	cd src/glsl/tests/ && ./optimization-test
-	@echo "All tests passed."
+	make -C tests check
 
 clean:
 	-@touch $(TOP)/configs/current
