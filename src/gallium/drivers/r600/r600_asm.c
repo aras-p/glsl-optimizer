@@ -290,6 +290,9 @@ int r600_bytecode_add_output(struct r600_bytecode *bc, const struct r600_bytecod
 {
 	int r;
 
+	if (output->gpr >= bc->ngpr)
+		bc->ngpr = output->gpr + 1;
+
 	if (bc->cf_last && (bc->cf_last->inst == output->inst ||
 		(bc->cf_last->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT) &&
 		output->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE))) &&
