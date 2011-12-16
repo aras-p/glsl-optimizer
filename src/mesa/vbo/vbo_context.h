@@ -67,6 +67,7 @@ struct vbo_context {
    struct gl_client_array *generic_currval;
    struct gl_client_array *mat_currval;
 
+   /** Map VERT_ATTRIB_x to VBO_ATTRIB_y */
    GLuint map_vp_none[VERT_ATTRIB_MAX];
    GLuint map_vp_arb[VERT_ATTRIB_MAX];
 
