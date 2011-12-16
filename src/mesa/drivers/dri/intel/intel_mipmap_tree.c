@@ -345,6 +345,9 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
    intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
 
+   if (mt->target == GL_TEXTURE_CUBE_MAP)
+      depth = 6;
+
    /* Test image dimensions against the base level image adjusted for
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
