@@ -2205,9 +2205,10 @@ check_rtt_cb(GLuint key, void *data, void *userData)
  * in size or format since that effects FBO completeness.
  * Any FBOs rendering into the texture must be re-validated.
  */
-static void
-update_fbo_texture(struct gl_context *ctx, struct gl_texture_object *texObj,
-                   GLuint face, GLuint level)
+void
+_mesa_update_fbo_texture(struct gl_context *ctx,
+                         struct gl_texture_object *texObj,
+                         GLuint face, GLuint level)
 {
    /* Only check this texture if it's been marked as RenderToTexture */
    if (texObj->_RenderToTexture) {
@@ -2502,7 +2503,7 @@ teximage(struct gl_context *ctx, GLuint dims,
 
                check_gen_mipmap(ctx, target, texObj, level);
 
-               update_fbo_texture(ctx, texObj, face, level);
+               _mesa_update_fbo_texture(ctx, texObj, face, level);
 
                /* state update */
                texObj->_Complete = GL_FALSE;
@@ -2844,7 +2845,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
             check_gen_mipmap(ctx, target, texObj, level);
 
-            update_fbo_texture(ctx, texObj, face, level);
+            _mesa_update_fbo_texture(ctx, texObj, face, level);
 
             /* state update */
             texObj->_Complete = GL_FALSE;
