@@ -508,14 +508,14 @@ intel_flush_rendering_to_batch(struct gl_context *ctx)
 }
 
 void
-intel_flush(struct gl_context *ctx)
+_intel_flush(struct gl_context *ctx, const char *file, int line)
 {
    struct intel_context *intel = intel_context(ctx);
 
    intel_flush_rendering_to_batch(ctx);
 
    if (intel->batch.used)
-      intel_batchbuffer_flush(intel);
+      _intel_batchbuffer_flush(intel, file, line);
 }
 
 static void

@@ -506,7 +506,9 @@ extern bool intelInitContext(struct intel_context *intel,
 
 extern void intelFinish(struct gl_context * ctx);
 extern void intel_flush_rendering_to_batch(struct gl_context *ctx);
-extern void intel_flush(struct gl_context * ctx);
+extern void _intel_flush(struct gl_context * ctx, const char *file, int line);
+
+#define intel_flush(ctx) _intel_flush(ctx, __FILE__, __LINE__)
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 
