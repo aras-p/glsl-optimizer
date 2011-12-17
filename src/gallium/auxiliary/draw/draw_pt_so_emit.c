@@ -79,72 +79,6 @@ void draw_pt_so_emit_prepare(struct pt_so_emit *emit)
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 }
 
-static boolean
-is_component_writable(unsigned mask,
-                      unsigned compo)
-{
-   switch (mask) {
-   case TGSI_WRITEMASK_NONE:
-      return FALSE;
-   case TGSI_WRITEMASK_X:
-      return compo == 0;
-   case TGSI_WRITEMASK_Y:
-      return compo == 1;
-   case TGSI_WRITEMASK_XY:
-      return compo == 0 || compo == 1;
-   case TGSI_WRITEMASK_Z:
-      return compo == 2;
-   case TGSI_WRITEMASK_XZ:
-      return compo == 0 || compo == 2;
-   case TGSI_WRITEMASK_YZ:
-      return compo == 1 || compo == 2;
-   case TGSI_WRITEMASK_XYZ:
-      return compo == 0 || compo == 1 || compo == 2;
-   case TGSI_WRITEMASK_W:
-      return compo == 3;
-   case TGSI_WRITEMASK_XW:
-      return compo == 0 || compo == 3;
-   case TGSI_WRITEMASK_YW:
-      return compo == 1 || compo == 3;
-   case TGSI_WRITEMASK_XYW:
-      return compo == 0 || compo == 1 || compo == 3;
-   case TGSI_WRITEMASK_ZW:
-      return compo == 2 || compo == 3;
-   case TGSI_WRITEMASK_XZW:
-      return compo == 0 || compo == 1 || compo == 3;
-   case TGSI_WRITEMASK_YZW:
-      return compo == 1 || compo == 2 || compo == 4;
-   case TGSI_WRITEMASK_XYZW:
-      return compo < 4;
-   default:
-      debug_assert(!"Unknown writemask in stream out");
-      return compo < 4;
-   }
-}
-
-static INLINE int mask_num_comps(int register_mask)
-{
-   int comps = 0;
-   switch (register_mask) {
-   case TGSI_WRITEMASK_XYZW:
-      comps = 4;
-      break;
-   case TGSI_WRITEMASK_XYZ:
-      comps = 3;
-      break;
-   case TGSI_WRITEMASK_XY:
-      comps = 2;
-      break;
-   case TGSI_WRITEMASK_X:
-      comps = 1;
-      break;
-   default:
-      assert(0);
-      break;
-   }
-   return comps;
-}
-
 static void so_emit_prim(struct pt_so_emit *so,
                          unsigned *indices,
                          unsigned num_vertices)
@@ -170,14 +104,14 @@ static void so_emit_prim(struct pt_so_emit *so,
    /* check have we space to emit prim first - if not don't do anything */
    for (i = 0; i < num_vertices; ++i) {
       for (slot = 0; slot < state->num_outputs; ++slot) {
-         unsigned writemask = state->output[slot].register_mask;
+         unsigned num_comps = state->output[slot].num_components;
          int ob = state->output[slot].output_buffer;
 
-         if ((buffer_total_bytes[ob] + mask_num_comps(writemask) * sizeof(float)) >
+         if ((buffer_total_bytes[ob] + num_comps * sizeof(float)) >
              draw->so.targets[ob]->target.buffer_size) {
             return;
          }
-         buffer_total_bytes[ob] += mask_num_comps(writemask) * sizeof(float);
+         buffer_total_bytes[ob] += num_comps * sizeof(float);
       }
    }
 
@@ -190,21 +124,16 @@ static void so_emit_prim(struct pt_so_emit *so,
 
       for (slot = 0; slot < state->num_outputs; ++slot) {
          unsigned idx = state->output[slot].register_index;
-         unsigned writemask = state->output[slot].register_mask;
-         unsigned written_compos = 0;
-         unsigned compo;
+         unsigned start_comp = state->output[slot].start_component;
+         unsigned num_comps = state->output[slot].num_components;
          int ob = state->output[slot].output_buffer;
 
          buffer = (float *)((char *)draw->so.targets[ob]->mapping +
                             draw->so.targets[ob]->target.buffer_offset +
                             draw->so.targets[ob]->internal_offset);
-         for (compo = 0; compo < 4; ++compo) {
-            if (is_component_writable(writemask, compo)) {
-               buffer[written_compos++] = input[idx][compo];
-            }
-         }
-         draw->so.targets[ob]->internal_offset += written_compos * sizeof(float);
-         total_written_compos += written_compos;
+         memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
+         draw->so.targets[ob]->internal_offset += num_comps * sizeof(float);
+         total_written_compos += num_comps;
       }
    }
    so->emitted_vertices += num_vertices;

@@ -42,7 +42,7 @@ llvmpipe_create_stream_output_state(struct pipe_context *pipe,
 
    if (so) {
       so->base.num_outputs = templ->num_outputs;
-      so->base.stride = templ->stride;
+      memcpy(so->base.stride, templ->stride, sizeof(templ->stride));
       memcpy(so->base.output, templ->output,
              templ->num_outputs * sizeof(templ->output[0]));
    }

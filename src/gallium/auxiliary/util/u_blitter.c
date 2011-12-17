@@ -263,8 +263,8 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
       memset(&so, 0, sizeof(so));
       so.num_outputs = 1;
-      so.output[0].register_mask = TGSI_WRITEMASK_XYZW;
-      so.stride = 4;
+      so.output[0].num_components = 4;
+      so.stride[0] = 4;
 
       ctx->vs_pos_only =
          util_make_vertex_passthrough_shader_with_so(pipe, 1, semantic_names,

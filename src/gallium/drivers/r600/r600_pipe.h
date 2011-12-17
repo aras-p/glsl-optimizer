@@ -147,7 +147,6 @@ struct r600_pipe_shader {
 	struct tgsi_token		*tokens;
 	unsigned	sprite_coord_enable;
 	struct pipe_stream_output_info	so;
-	unsigned			so_strides[4];
 };
 
 struct r600_pipe_sampler_state {

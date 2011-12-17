@@ -5097,25 +5097,21 @@ st_translate_stream_output_info(glsl_to_tgsi_visitor *glsl_to_tgsi,
                                 const GLuint outputMapping[],
                                 struct pipe_stream_output_info *so)
 {
-   static unsigned comps_to_mask[] = {
-      0,
-      TGSI_WRITEMASK_X,
-      TGSI_WRITEMASK_XY,
-      TGSI_WRITEMASK_XYZ,
-      TGSI_WRITEMASK_XYZW
-   };
    unsigned i;
    struct gl_transform_feedback_info *info =
       &glsl_to_tgsi->shader_program->LinkedTransformFeedback;
 
    for (i = 0; i < info->NumOutputs; i++) {
-      assert(info->Outputs[i].NumComponents < Elements(comps_to_mask));
       so->output[i].register_index =
          outputMapping[info->Outputs[i].OutputRegister];
-      so->output[i].register_mask =
-         comps_to_mask[info->Outputs[i].NumComponents]
-         << info->Outputs[i].ComponentOffset;
+      so->output[i].start_component = info->Outputs[i].ComponentOffset;
+      so->output[i].num_components = info->Outputs[i].NumComponents;
       so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
+      so->output[i].dst_offset = info->Outputs[i].DstOffset;
+   }
+
+   for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {
+      so->stride[i] = info->BufferStride[i];
    }
    so->num_outputs = info->NumOutputs;
 }

@@ -2033,7 +2033,7 @@ static void r600_set_streamout_enable(struct r600_context *ctx, unsigned buffer_
 void r600_context_streamout_begin(struct r600_context *ctx)
 {
 	struct r600_so_target **t = ctx->so_targets;
-	unsigned *strides = ctx->vs_shader_so_strides;
+	unsigned *stride_in_dw = ctx->vs_so_stride_in_dw;
 	unsigned buffer_en, i, update_flags = 0;
 
 	buffer_en = (ctx->num_so_targets >= 1 && t[0] ? 1 : 0) |
@@ -2064,7 +2064,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 	for (i = 0; i < ctx->num_so_targets; i++) {
 		if (t[i]) {
-			t[i]->stride = strides[i];
+			t[i]->stride_in_dw = stride_in_dw[i];
 			t[i]->so_index = i;
 
 			update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
@@ -2074,7 +2074,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 							16*i - R600_CONTEXT_REG_OFFSET) >> 2;
 			ctx->pm4[ctx->pm4_cdwords++] = (t[i]->b.buffer_offset +
 							t[i]->b.buffer_size) >> 2; /* BUFFER_SIZE (in DW) */
-			ctx->pm4[ctx->pm4_cdwords++] = strides[i] >> 2;		   /* VTX_STRIDE (in DW) */
+			ctx->pm4[ctx->pm4_cdwords++] = stride_in_dw[i];		   /* VTX_STRIDE (in DW) */
 			ctx->pm4[ctx->pm4_cdwords++] = 0;			   /* BUFFER_BASE */
 
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
@@ -2186,7 +2186,7 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = (R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = t->stride >> 2;
+	ctx->pm4[ctx->pm4_cdwords++] = t->stride_in_dw;
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_COPY_DW, 4, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;

@@ -196,7 +196,7 @@ struct r600_so_target {
 
 	/* The buffer where BUFFER_FILLED_SIZE is stored. */
 	struct r600_resource	*filled_size;
-	unsigned		stride;
+	unsigned		stride_in_dw;
 	unsigned		so_index;
 };
 
@@ -248,7 +248,7 @@ struct r600_context {
 	struct r600_so_target		*so_targets[PIPE_MAX_SO_BUFFERS];
 	boolean				streamout_start;
 	unsigned			streamout_append_bitmask;
-	unsigned			*vs_shader_so_strides;
+	unsigned			*vs_so_stride_in_dw;
 };
 
 struct r600_draw {

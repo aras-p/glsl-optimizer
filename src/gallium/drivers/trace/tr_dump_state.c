@@ -274,14 +274,16 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
    trace_dump_member_begin("stream_output");
    trace_dump_struct_begin("pipe_stream_output_info");
    trace_dump_member(uint, &state->stream_output, num_outputs);
-   trace_dump_member(uint, &state->stream_output, stride);
+   trace_dump_array(uint, state->stream_output.stride, PIPE_MAX_SO_BUFFERS);
    trace_dump_array_begin();
    for(i = 0; i < state->stream_output.num_outputs; ++i) {
       trace_dump_elem_begin();
       trace_dump_struct_begin(""); /* anonymous */
       trace_dump_member(uint, &state->stream_output.output[i], register_index);
-      trace_dump_member(uint, &state->stream_output.output[i], register_mask);
+      trace_dump_member(uint, &state->stream_output.output[i], start_component);
+      trace_dump_member(uint, &state->stream_output.output[i], num_components);
       trace_dump_member(uint, &state->stream_output.output[i], output_buffer);
+      trace_dump_member(uint, &state->stream_output.output[i], dst_offset);
       trace_dump_struct_end();
       trace_dump_elem_end();
    }

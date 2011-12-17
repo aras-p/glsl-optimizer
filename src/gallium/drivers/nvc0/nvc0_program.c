@@ -503,20 +503,17 @@ nvc0_program_create_tfb_state(const struct nv50_ir_prog_info *info,
       tfb->varying_count[b] = 0;
 
       for (i = 0; i < pso->num_outputs; ++i) {
+         unsigned startc = pso->output[i].start_component;
          if (pso->output[i].output_buffer != b)
             continue;
-         for (c = 0; c < 4; ++c) {
-            if (!(pso->output[i].register_mask & (1 << c)))
-               continue;
+         for (c = 0; c < pso->output[i].num_components; ++c) {
             tfb->varying_count[b]++;
             tfb->varying_index[n++] =
-               info->out[pso->output[i].register_index].slot[c];
+               info->out[pso->output[i].register_index].slot[startc + c];
          }
       }
-      tfb->stride[b] = tfb->varying_count[b] * 4;
+      tfb->stride[b] = pso->stride[b] * 4;
    }
-   if (pso->stride)
-      tfb->stride[0] = pso->stride;
 
    return tfb;
 }

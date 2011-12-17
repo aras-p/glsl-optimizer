@@ -649,7 +649,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		}
 	}
 
-	rctx->ctx.vs_shader_so_strides = rctx->vs_shader->so_strides;
+	rctx->ctx.vs_so_stride_in_dw = rctx->vs_shader->so.stride;
 
 	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
