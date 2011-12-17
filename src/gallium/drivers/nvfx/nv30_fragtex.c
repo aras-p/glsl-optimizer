@@ -9,8 +9,6 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 			  struct nvfx_sampler_state *ps,
 			  const struct pipe_sampler_state *cso)
 {
-	float limit;
-
 	if (cso->max_anisotropy >= 2)
 	{
 		if (cso->max_anisotropy >= 8)
@@ -21,7 +19,6 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 			ps->en |= NV30_3D_TEX_ENABLE_ANISO_2X;
 	}
 
-	limit = CLAMP(cso->lod_bias, -16.0, 15.0 + (255.0 / 256.0));
 	ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
 
 	ps->max_lod = (int)CLAMP(cso->max_lod, 0.0, 15.0);
