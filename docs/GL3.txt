@@ -30,7 +30,7 @@ Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       DONE (swrast, gallium r600)
 Red and red/green texture formats                     DONE (swrast, i965, gallium)
-Transform feedback (GL_EXT_transform_feedback)        ~50% done
+Transform feedback (GL_EXT_transform_feedback)        DONE
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     core GL done (i965, gallium), GLX todo
 glClearBuffer commands                                DONE
@@ -98,7 +98,7 @@ GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   not started
 GL_ARB_texture_cube_map_array                        not started
 GL_ARB_texture_gather                                not started
-GL_ARB_transform_feedback2                           started
+GL_ARB_transform_feedback2                           DONE
 GL_ARB_transform_feedback3                           not started
 
 
