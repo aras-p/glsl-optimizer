@@ -396,6 +396,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 	case PIPE_CAP_SCALED_RESOLVE:
+	case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
+	case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
 		return 0;
 
 	/* Stream output. */
