@@ -304,9 +304,10 @@ drisw_bind_tex_image(Display * dpy,
    struct glx_context *gc = __glXGetCurrentContext();
    struct drisw_context *pcp = (struct drisw_context *) gc;
    __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
-   struct glx_display *dpyPriv = __glXInitialize(dpy);
    struct drisw_drawable *pdraw = (struct drisw_drawable *) base;
    struct drisw_screen *psc;
+
+   __glXInitialize(dpy);
 
    if (pdraw != NULL) {
       psc = (struct drisw_screen *) base->psc;
