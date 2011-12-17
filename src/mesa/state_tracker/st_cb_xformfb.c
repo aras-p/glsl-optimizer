@@ -55,6 +55,11 @@ struct st_transform_feedback_object {
 
    unsigned num_targets;
    struct pipe_stream_output_target *targets[PIPE_MAX_SO_BUFFERS];
+
+   /* This encapsulates the count that can be used as a source for draw_vbo.
+    * It contains a stream output target from the last call of
+    * EndTransformFeedback. */
+   struct pipe_stream_output_target *draw_count;
 };
 
 
@@ -80,6 +85,8 @@ st_delete_transform_feedback(struct gl_context *ctx,
    struct st_transform_feedback_object *sobj =
          (struct st_transform_feedback_object*)obj;
    unsigned i;
+
+   pipe_so_target_reference(&sobj->draw_count, NULL);
 
    /* Unreference targets. */
    for (i = 0; i < sobj->num_targets; i++) {
@@ -115,6 +122,7 @@ st_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
       if (bo) {
          /* Check whether we need to recreate the target. */
          if (!sobj->targets[i] ||
+             sobj->targets[i] == sobj->draw_count ||
              sobj->targets[i]->buffer != bo->buffer ||
              sobj->targets[i]->buffer_offset != sobj->base.Offset[i] ||
              sobj->targets[i]->buffer_size != sobj->base.Size[i]) {
@@ -141,7 +149,7 @@ st_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 
 
 static void
-st_stop_transform_feedback(struct gl_context *ctx,
+st_pause_transform_feedback(struct gl_context *ctx,
                            struct gl_transform_feedback_object *obj)
 {
    struct st_context *st = st_context(ctx);
@@ -161,11 +169,9 @@ st_resume_transform_feedback(struct gl_context *ctx,
                           ~0);
 }
 
-/* Set count_from_stream_output to any stream output target
- * from the transform feedback object. */
-void
-st_transform_feedback_draw_init(struct gl_transform_feedback_object *obj,
-                                struct pipe_draw_info *out)
+
+static struct pipe_stream_output_target *
+st_transform_feedback_get_draw_target(struct gl_transform_feedback_object *obj)
 {
    struct st_transform_feedback_object *sobj =
          (struct st_transform_feedback_object*)obj;
@@ -173,13 +179,38 @@ st_transform_feedback_draw_init(struct gl_transform_feedback_object *obj,
 
    for (i = 0; i < Elements(sobj->targets); i++) {
       if (sobj->targets[i]) {
-         out->count_from_stream_output = sobj->targets[i];
-         return;
+         return sobj->targets[i];
       }
    }
 
    assert(0);
-   out->count_from_stream_output = NULL;
+   return NULL;
+}
+
+
+static void
+st_end_transform_feedback(struct gl_context *ctx,
+                          struct gl_transform_feedback_object *obj)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_transform_feedback_object *sobj =
+         (struct st_transform_feedback_object*)obj;
+
+   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
+
+   pipe_so_target_reference(&sobj->draw_count,
+                            st_transform_feedback_get_draw_target(obj));
+}
+
+
+void
+st_transform_feedback_draw_init(struct gl_transform_feedback_object *obj,
+                                struct pipe_draw_info *out)
+{
+   struct st_transform_feedback_object *sobj =
+         (struct st_transform_feedback_object*)obj;
+
+   out->count_from_stream_output = sobj->draw_count;
 }
 
 
@@ -189,8 +220,8 @@ st_init_xformfb_functions(struct dd_function_table *functions)
    functions->NewTransformFeedback = st_new_transform_feedback;
    functions->DeleteTransformFeedback = st_delete_transform_feedback;
    functions->BeginTransformFeedback = st_begin_transform_feedback;
-   functions->EndTransformFeedback = st_stop_transform_feedback;
-   functions->PauseTransformFeedback = st_stop_transform_feedback;
+   functions->EndTransformFeedback = st_end_transform_feedback;
+   functions->PauseTransformFeedback = st_pause_transform_feedback;
    functions->ResumeTransformFeedback = st_resume_transform_feedback;
 }
 
