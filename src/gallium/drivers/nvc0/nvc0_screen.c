@@ -108,8 +108,6 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       return 4;
-   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS:
-      return 4;
    case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
       return 128;

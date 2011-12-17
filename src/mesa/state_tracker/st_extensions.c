@@ -222,7 +222,7 @@ void st_init_limits(struct st_context *st)
    c->UniformBooleanTrue = ~0;
 
    c->MaxTransformFeedbackSeparateAttribs =
-      screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS);
+      screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS);
    c->MaxTransformFeedbackSeparateComponents =
       screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS);
    c->MaxTransformFeedbackInterleavedComponents =
