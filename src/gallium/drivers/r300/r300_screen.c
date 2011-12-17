@@ -132,6 +132,10 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MIN_TEXEL_OFFSET:
         case PIPE_CAP_MAX_TEXEL_OFFSET:
         case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+        case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_ATTRIBS:
+        case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+        case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+        case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
             return 0;
 
         /* SWTCL-only features. */
