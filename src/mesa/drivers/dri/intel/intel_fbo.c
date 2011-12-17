@@ -237,8 +237,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
 
-   intel_flush(ctx);
-
    intel_miptree_release(&irb->mt);
 
    DBG("%s: %s: %s (%dx%d)\n", __FUNCTION__,
