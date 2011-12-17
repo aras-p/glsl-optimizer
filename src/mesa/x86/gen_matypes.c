@@ -68,7 +68,7 @@ do {									\
    printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
 
 #define DEFINE( s, d )							\
-   printf( "#define %s\t0x%x\n", s, d );
+   printf( "#define %s\t0x%llx\n", s, (uint64_t)d );
 
 
 
