@@ -270,7 +270,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
    };
    static const char *const fragResults[] = {
       "result.depth", /* FRAG_RESULT_DEPTH */
-      "result.color(half)", /* FRAG_RESULT_STENCIL */
+      "result.(one)", /* FRAG_RESULT_STENCIL */
       "result.color", /* FRAG_RESULT_COLOR */
       "result.color[0]", /* FRAG_RESULT_DATA0 (named for GLSL's gl_FragData) */
       "result.color[1]",
