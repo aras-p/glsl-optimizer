@@ -1439,8 +1439,7 @@ public:
    bool accumulate_num_outputs(struct gl_shader_program *prog, unsigned *count);
    bool store(struct gl_context *ctx, struct gl_shader_program *prog,
               struct gl_transform_feedback_info *info, unsigned buffer,
-              unsigned varying, const unsigned max_outputs) const;
-
+              const unsigned max_outputs) const;
 
    /**
     * True if assign_location() has been called for this object.
@@ -1448,6 +1447,16 @@ public:
    bool is_assigned() const
    {
       return this->location != -1;
+   }
+
+   bool is_next_buffer_separator() const
+   {
+      return this->next_buffer_separator;
+   }
+
+   bool is_varying() const
+   {
+      return !this->next_buffer_separator && !this->skip_components;
    }
 
    /**
@@ -1527,6 +1536,17 @@ private:
     * glGetTransformFeedbackVarying().
     */
    unsigned size;
+
+   /**
+    * How many components to skip. If non-zero, this is
+    * gl_SkipComponents{1,2,3,4} from ARB_transform_feedback3.
+    */
+   unsigned skip_components;
+
+   /**
+    * Whether this is gl_NextBuffer from ARB_transform_feedback3.
+    */
+   bool next_buffer_separator;
 };
 
 
@@ -1546,7 +1566,31 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
    this->location = -1;
    this->orig_name = input;
    this->is_clip_distance_mesa = false;
+   this->skip_components = 0;
+   this->next_buffer_separator = false;
 
+   if (ctx->Extensions.ARB_transform_feedback3) {
+      /* Parse gl_NextBuffer. */
+      if (strcmp(input, "gl_NextBuffer") == 0) {
+         this->next_buffer_separator = true;
+         return true;
+      }
+
+      /* Parse gl_SkipComponents. */
+      if (strcmp(input, "gl_SkipComponents1") == 0)
+         this->skip_components = 1;
+      else if (strcmp(input, "gl_SkipComponents2") == 0)
+         this->skip_components = 2;
+      else if (strcmp(input, "gl_SkipComponents3") == 0)
+         this->skip_components = 3;
+      else if (strcmp(input, "gl_SkipComponents4") == 0)
+         this->skip_components = 4;
+
+      if (this->skip_components)
+         return true;
+   }
+
+   /* Parse a declaration. */
    const char *bracket = strrchr(input, '[');
 
    if (bracket) {
@@ -1581,6 +1625,8 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
 bool
 tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
 {
+   assert(x.is_varying() && y.is_varying());
+
    if (strcmp(x.var_name, y.var_name) != 0)
       return false;
    if (x.is_subscripted != y.is_subscripted)
@@ -1603,6 +1649,8 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
                                 struct gl_shader_program *prog,
                                 ir_variable *output_var)
 {
+   assert(this->is_varying());
+
    if (output_var->type->is_array()) {
       /* Array variable */
       const unsigned matrix_cols =
@@ -1677,6 +1725,10 @@ bool
 tfeedback_decl::accumulate_num_outputs(struct gl_shader_program *prog,
                                        unsigned *count)
 {
+   if (!this->is_varying()) {
+      return true;
+   }
+
    if (!this->is_assigned()) {
       /* From GL_EXT_transform_feedback:
        *   A program will fail to link if:
@@ -1709,9 +1761,16 @@ tfeedback_decl::accumulate_num_outputs(struct gl_shader_program *prog,
 bool
 tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
                       struct gl_transform_feedback_info *info,
-                      unsigned buffer,
-                      unsigned varying, const unsigned max_outputs) const
+                      unsigned buffer, const unsigned max_outputs) const
 {
+   assert(!this->next_buffer_separator);
+
+   /* Handle gl_SkipComponents. */
+   if (this->skip_components) {
+      info->BufferStride[buffer] += this->skip_components;
+      return true;
+   }
+
    /* From GL_EXT_transform_feedback:
     *   A program will fail to link if:
     *
@@ -1757,9 +1816,9 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
    }
    assert(components_so_far == this->num_components());
 
-   info->Varyings[varying].Name = ralloc_strdup(prog, this->orig_name);
-   info->Varyings[varying].Type = this->type;
-   info->Varyings[varying].Size = this->size;
+   info->Varyings[info->NumVarying].Name = ralloc_strdup(prog, this->orig_name);
+   info->Varyings[info->NumVarying].Type = this->type;
+   info->Varyings[info->NumVarying].Size = this->size;
    info->NumVarying++;
 
    return true;
@@ -1781,6 +1840,10 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
    for (unsigned i = 0; i < num_names; ++i) {
       if (!decls[i].init(ctx, prog, mem_ctx, varying_names[i]))
          return false;
+
+      if (!decls[i].is_varying())
+         continue;
+
       /* From GL_EXT_transform_feedback:
        *   A program will fail to link if:
        *
@@ -1792,6 +1855,9 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
        * feedback of arrays would be useless otherwise.
        */
       for (unsigned j = 0; j < i; ++j) {
+         if (!decls[j].is_varying())
+            continue;
+
          if (tfeedback_decl::is_same(decls[i], decls[j])) {
             linker_error(prog, "Transform feedback varying %s specified "
                          "more than once.", varying_names[i]);
@@ -1948,6 +2014,9 @@ assign_varying_locations(struct gl_context *ctx,
       }
 
       for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+         if (!tfeedback_decls[i].is_varying())
+            continue;
+
          if (!tfeedback_decls[i].is_assigned() &&
              tfeedback_decls[i].matches_var(output_var)) {
             if (output_var->location == -1) {
@@ -2059,9 +2128,6 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
    memset(&prog->LinkedTransformFeedback, 0,
           sizeof(prog->LinkedTransformFeedback));
 
-   prog->LinkedTransformFeedback.NumBuffers =
-      separate_attribs_mode ? num_tfeedback_decls : 1;
-
    prog->LinkedTransformFeedback.Varyings =
       rzalloc_array(prog,
 		    struct gl_transform_feedback_varying_info,
@@ -2077,14 +2143,37 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
                     struct gl_transform_feedback_output,
                     num_outputs);
 
-   for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
-      unsigned buffer = separate_attribs_mode ? i : 0;
-      if (!tfeedback_decls[i].store(ctx, prog, &prog->LinkedTransformFeedback,
-                                    buffer, i, num_outputs))
-         return false;
+   unsigned num_buffers = 0;
+
+   if (separate_attribs_mode) {
+      /* GL_SEPARATE_ATTRIBS */
+      for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+         if (!tfeedback_decls[i].store(ctx, prog, &prog->LinkedTransformFeedback,
+                                       num_buffers, num_outputs))
+            return false;
+
+         num_buffers++;
+      }
    }
+   else {
+      /* GL_INVERLEAVED_ATTRIBS */
+      for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+         if (tfeedback_decls[i].is_next_buffer_separator()) {
+            num_buffers++;
+            continue;
+         }
+
+         if (!tfeedback_decls[i].store(ctx, prog,
+                                       &prog->LinkedTransformFeedback,
+                                       num_buffers, num_outputs))
+            return false;
+      }
+      num_buffers++;
+   }
+
    assert(prog->LinkedTransformFeedback.NumOutputs == num_outputs);
 
+   prog->LinkedTransformFeedback.NumBuffers = num_buffers;
    return true;
 }
 
