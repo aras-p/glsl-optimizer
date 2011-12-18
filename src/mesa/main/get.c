@@ -1232,7 +1232,7 @@ static const struct value_desc values[] = {
      CONTEXT_INT(Const.MaxTransformFeedbackInterleavedComponents),
      extra_EXT_transform_feedback },
    { GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS,
-     CONTEXT_INT(Const.MaxTransformFeedbackSeparateAttribs),
+     CONTEXT_INT(Const.MaxTransformFeedbackBuffers),
      extra_EXT_transform_feedback },
    { GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS,
      CONTEXT_INT(Const.MaxTransformFeedbackSeparateComponents),
@@ -2544,7 +2544,7 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
       return TYPE_INT_4;
 
    case GL_TRANSFORM_FEEDBACK_BUFFER_START:
-      if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs)
+      if (index >= ctx->Const.MaxTransformFeedbackBuffers)
 	 goto invalid_value;
       if (!ctx->Extensions.EXT_transform_feedback)
 	 goto invalid_enum;
@@ -2552,7 +2552,7 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
       return TYPE_INT64;
 
    case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
-      if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs)
+      if (index >= ctx->Const.MaxTransformFeedbackBuffers)
 	 goto invalid_value;
       if (!ctx->Extensions.EXT_transform_feedback)
 	 goto invalid_enum;
@@ -2560,7 +2560,7 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
       return TYPE_INT64;
 
    case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
-      if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs)
+      if (index >= ctx->Const.MaxTransformFeedbackBuffers)
 	 goto invalid_value;
       if (!ctx->Extensions.EXT_transform_feedback)
 	 goto invalid_enum;

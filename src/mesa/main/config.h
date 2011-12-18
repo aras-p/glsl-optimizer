@@ -249,6 +249,7 @@
 #define SUPPORTED_ATI_BUMP_UNITS 0xff
 
 /** For GL_EXT_transform_feedback */
+#define MAX_FEEDBACK_BUFFERS 4
 #define MAX_FEEDBACK_ATTRIBS 32
 
 /** For GL_ARB_geometry_shader4 */

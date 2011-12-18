@@ -1795,7 +1795,7 @@ struct gl_transform_feedback_info
     * hardware back-ends to determine the correct stride when interleaving
     * multiple transform feedback outputs in the same buffer.
     */
-   unsigned BufferStride[MAX_FEEDBACK_ATTRIBS];
+   unsigned BufferStride[MAX_FEEDBACK_BUFFERS];
 };
 
 
@@ -1812,13 +1812,13 @@ struct gl_transform_feedback_object
                                 at least once? */
 
    /** The feedback buffers */
-   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
-   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+   GLuint BufferNames[MAX_FEEDBACK_BUFFERS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_BUFFERS];
 
    /** Start of feedback data in dest buffer */
-   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
+   GLintptr Offset[MAX_FEEDBACK_BUFFERS];
    /** Max data to put into dest buffer (in bytes) */
-   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+   GLsizeiptr Size[MAX_FEEDBACK_BUFFERS];
 };
 
 
@@ -2834,7 +2834,7 @@ struct gl_constants
    GLbitfield ProfileMask;   /**< Mask of CONTEXT_x_PROFILE_BIT */
 
    /** GL_EXT_transform_feedback */
-   GLuint MaxTransformFeedbackSeparateAttribs;
+   GLuint MaxTransformFeedbackBuffers;
    GLuint MaxTransformFeedbackSeparateComponents;
    GLuint MaxTransformFeedbackInterleavedComponents;
 

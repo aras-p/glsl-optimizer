@@ -869,7 +869,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          if (ctx->TransformFeedback.CurrentBuffer == bufObj) {
             _mesa_BindBufferARB( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
          }
-         for (j = 0; j < MAX_FEEDBACK_ATTRIBS; j++) {
+         for (j = 0; j < MAX_FEEDBACK_BUFFERS; j++) {
             if (ctx->TransformFeedback.CurrentObject->Buffers[j] == bufObj) {
                _mesa_BindBufferBase( GL_TRANSFORM_FEEDBACK_BUFFER, j, 0 );
             }

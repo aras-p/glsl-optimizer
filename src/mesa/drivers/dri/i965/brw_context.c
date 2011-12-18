@@ -138,7 +138,7 @@ brwCreateContext(int api,
     * So we need to override the Mesa default (which is based only on software
     * limits).
     */
-   ctx->Const.MaxTransformFeedbackSeparateAttribs = BRW_MAX_SOL_BUFFERS;
+   ctx->Const.MaxTransformFeedbackBuffers = BRW_MAX_SOL_BUFFERS;
 
    /* On Gen6, in the worst case, we use up one binding table entry per
     * transform feedback component (see comments above the definition of
