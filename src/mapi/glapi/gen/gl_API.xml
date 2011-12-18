@@ -8005,7 +8005,36 @@
 
 <xi:include href="ARB_vertex_type_2_10_10_10_rev.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions #86...#94 -->
+<!-- ARB extensions #86...#93 -->
+
+<category name="GL_ARB_transform_feedback3" number="94">
+  <enum name="MAX_TRANSFORM_FEEDBACK_BUFFERS" value="0x8E70"/>
+  <enum name="MAX_VERTEX_STREAMS"             value="0x8E71"/>
+
+  <function name="DrawTransformFeedbackStream" offset="assign">
+    <param name="mode" type="GLenum"/>
+    <param name="id" type="GLuint"/>
+    <param name="stream" type="GLuint"/>
+  </function>
+
+  <function name="BeginQueryIndexed" offset="assign">
+    <param name="target" type="GLenum"/>
+    <param name="index" type="GLuint"/>
+    <param name="id" type="GLuint"/>
+  </function>
+
+  <function name="EndQueryIndexed" offset="assign">
+    <param name="target" type="GLenum"/>
+    <param name="index" type="GLuint"/>
+  </function>
+
+  <function name="GetQueryIndexediv" offset="assign">
+    <param name="target" type="GLenum"/>
+    <param name="index" type="GLuint"/>
+    <param name="pname" type="GLenum"/>
+    <param name="params" type="GLint *"/>
+  </function>
+</category>
 
 <xi:include href="ARB_ES2_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
