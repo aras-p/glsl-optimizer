@@ -328,6 +328,7 @@ EXTRA_EXT(ARB_sync);
 EXTRA_EXT(ARB_vertex_shader);
 EXTRA_EXT(EXT_transform_feedback);
 EXTRA_EXT(ARB_transform_feedback2);
+EXTRA_EXT(ARB_transform_feedback3);
 EXTRA_EXT(EXT_pixel_buffer_object);
 EXTRA_EXT(ARB_vertex_program);
 EXTRA_EXT2(NV_point_sprite, ARB_point_sprite);
@@ -1246,6 +1247,14 @@ static const struct value_desc values[] = {
      extra_ARB_transform_feedback2 },
    { GL_TRANSFORM_FEEDBACK_BINDING, LOC_CUSTOM, TYPE_INT, 0,
      extra_ARB_transform_feedback2 },
+
+   /* GL_ARB_transform_feedback3 */
+   { GL_MAX_TRANSFORM_FEEDBACK_BUFFERS,
+     CONTEXT_INT(Const.MaxTransformFeedbackBuffers),
+     extra_ARB_transform_feedback3 },
+   { GL_MAX_VERTEX_STREAMS,
+     CONTEXT_INT(Const.MaxVertexStreams),
+     extra_ARB_transform_feedback3 },
 
    /* GL_ARB_geometry_shader4 */
    { GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB,

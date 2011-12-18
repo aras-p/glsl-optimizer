@@ -603,6 +603,38 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
       return;
    }
 
+   if (ctx->Extensions.ARB_transform_feedback3) {
+      if (bufferMode == GL_INTERLEAVED_ATTRIBS) {
+         unsigned buffers = 1;
+
+         for (i = 0; i < count; i++) {
+            if (strcmp(varyings[i], "gl_NextBuffer") == 0)
+               buffers++;
+         }
+
+         if (buffers > ctx->Const.MaxTransformFeedbackBuffers) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glTransformFeedbackVaryings(too many gl_NextBuffer "
+                        "occurences)");
+            return;
+         }
+      } else {
+         for (i = 0; i < count; i++) {
+            if (strcmp(varyings[i], "gl_NextBuffer") == 0 ||
+                strcmp(varyings[i], "gl_SkipComponents1") == 0 ||
+                strcmp(varyings[i], "gl_SkipComponents2") == 0 ||
+                strcmp(varyings[i], "gl_SkipComponents3") == 0 ||
+                strcmp(varyings[i], "gl_SkipComponents4") == 0) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glTransformFeedbackVaryings(SEPARATE_ATTRIBS,"
+                           "varying=%s)",
+                           varyings[i]);
+               return;
+            }
+         }
+      }
+   }
+
    /* free existing varyings, if any */
    for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
       free(shProg->TransformFeedback.VaryingNames[i]);
