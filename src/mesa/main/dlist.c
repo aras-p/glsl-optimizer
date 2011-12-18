@@ -475,6 +475,11 @@ typedef enum
    /* ARB_transform_feedback3 */
    OPCODE_BEGIN_QUERY_INDEXED,
    OPCODE_END_QUERY_INDEXED,
+   OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM,
+
+   /* ARB_transform_feedback_instanced */
+   OPCODE_DRAW_TRANSFORM_FEEDBACK_INSTANCED,
+   OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM_INSTANCED,
 
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
@@ -508,6 +513,7 @@ union gl_dlist_node
    GLuint ui;
    GLenum e;
    GLfloat f;
+   GLsizei si;
    GLvoid *data;
    void *next;                  /* If prev node's opcode==OPCODE_CONTINUE */
 };
@@ -6476,6 +6482,60 @@ save_DrawTransformFeedback(GLenum mode, GLuint name)
    }
 }
 
+static void GLAPIENTRY
+save_DrawTransformFeedbackStream(GLenum mode, GLuint name, GLuint stream)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM, 3);
+   if (n) {
+      n[1].e = mode;
+      n[2].ui = name;
+      n[3].ui = stream;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_DrawTransformFeedbackStream(ctx->Exec, (mode, name, stream));
+   }
+}
+
+static void GLAPIENTRY
+save_DrawTransformFeedbackInstanced(GLenum mode, GLuint name,
+                                    GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DRAW_TRANSFORM_FEEDBACK_INSTANCED, 3);
+   if (n) {
+      n[1].e = mode;
+      n[2].ui = name;
+      n[3].si = primcount;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_DrawTransformFeedbackInstanced(ctx->Exec, (mode, name, primcount));
+   }
+}
+
+static void GLAPIENTRY
+save_DrawTransformFeedbackStreamInstanced(GLenum mode, GLuint name,
+                                          GLuint stream, GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM_INSTANCED, 4);
+   if (n) {
+      n[1].e = mode;
+      n[2].ui = name;
+      n[3].ui = stream;
+      n[4].si = primcount;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_DrawTransformFeedbackStreamInstanced(ctx->Exec, (mode, name, stream,
+                                                            primcount));
+   }
+}
 
 /* aka UseProgram() */
 static void GLAPIENTRY
@@ -8727,6 +8787,18 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_DRAW_TRANSFORM_FEEDBACK:
             CALL_DrawTransformFeedback(ctx->Exec, (n[1].e, n[2].ui));
             break;
+         case OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM:
+            CALL_DrawTransformFeedbackStream(ctx->Exec,
+                                             (n[1].e, n[2].ui, n[3].ui));
+            break;
+         case OPCODE_DRAW_TRANSFORM_FEEDBACK_INSTANCED:
+            CALL_DrawTransformFeedbackInstanced(ctx->Exec,
+                                                (n[1].e, n[2].ui, n[3].si));
+            break;
+         case OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM_INSTANCED:
+            CALL_DrawTransformFeedbackStreamInstanced(ctx->Exec,
+                                       (n[1].e, n[2].ui, n[3].ui, n[4].si));
+            break;
 
 
          case OPCODE_BIND_SAMPLER:
@@ -10502,6 +10574,11 @@ _mesa_create_save_table(void)
    SET_PauseTransformFeedback(table, save_PauseTransformFeedback);
    SET_ResumeTransformFeedback(table, save_ResumeTransformFeedback);
    SET_DrawTransformFeedback(table, save_DrawTransformFeedback);
+   SET_DrawTransformFeedbackStream(table, save_DrawTransformFeedbackStream);
+   SET_DrawTransformFeedbackInstanced(table,
+                                      save_DrawTransformFeedbackInstanced);
+   SET_DrawTransformFeedbackStreamInstanced(table,
+                                save_DrawTransformFeedbackStreamInstanced);
 #if FEATURE_queryobj
    SET_BeginQueryIndexed(table, save_BeginQueryIndexed);
    SET_EndQueryIndexed(table, save_EndQueryIndexed);
