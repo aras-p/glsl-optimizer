@@ -4,6 +4,8 @@
 
 #include "nv50/nv50_resource.h"
 
+#define NVC0_RESOURCE_FLAG_VIDEO (NOUVEAU_RESOURCE_FLAG_DRV_PRIV << 0)
+
 
 #define NVC0_TILE_SHIFT_X(m) ((((m) >> 0) & 0xf) + 6)
 #define NVC0_TILE_SHIFT_Y(m) ((((m) >> 4) & 0xf) + 3)
