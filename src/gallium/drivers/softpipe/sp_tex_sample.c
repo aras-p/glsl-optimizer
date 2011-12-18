@@ -2172,13 +2172,22 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
       break;
    }
 
-   /* convert four pass/fail values to an intensity in [0,1] */
-   val = 0.25F * (k0 + k1 + k2 + k3);
+   if (sampler->mag_img_filter == PIPE_TEX_FILTER_LINEAR) {
+      /* convert four pass/fail values to an intensity in [0,1] */
+      val = 0.25F * (k0 + k1 + k2 + k3);
 
-   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
-   for (j = 0; j < 4; j++) {
-      rgba[0][j] = rgba[1][j] = rgba[2][j] = val;
-      rgba[3][j] = 1.0F;
+      /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
+      for (j = 0; j < 4; j++) {
+	 rgba[0][j] = rgba[1][j] = rgba[2][j] = val;
+	 rgba[3][j] = 1.0F;
+      }
+   } else {
+      for (j = 0; j < 4; j++) {
+	 rgba[0][j] = k0;
+	 rgba[1][j] = k1;
+	 rgba[2][j] = k2;
+	 rgba[3][j] = 1.0F;
+      }
    }
 }
 
