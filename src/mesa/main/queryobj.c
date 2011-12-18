@@ -263,28 +263,51 @@ _mesa_IsQueryARB(GLuint id)
       return GL_FALSE;
 }
 
+static GLboolean
+query_error_check_index(struct gl_context *ctx, GLenum target, GLuint index)
+{
+   switch (target) {
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+   case GL_PRIMITIVES_GENERATED:
+      if (index >= ctx->Const.MaxVertexStreams) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glBeginQueryIndexed(index>=MaxVertexStreams)");
+         return GL_FALSE;
+      }
+      break;
+   default:
+      if (index > 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glBeginQueryIndexed(index>0)");
+         return GL_FALSE;
+      }
+   }
+   return GL_TRUE;
+}
 
 static void GLAPIENTRY
-_mesa_BeginQueryARB(GLenum target, GLuint id)
+_mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 {
    struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glBeginQuery(%s, %u)\n",
-                  _mesa_lookup_enum_by_nr(target), id);
+      _mesa_debug(ctx, "glBeginQueryIndexed(%s, %u, %u)\n",
+                  _mesa_lookup_enum_by_nr(target), index, id);
+
+   if (!query_error_check_index(ctx, target, index))
+      return;
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
    bindpt = get_query_binding_point(ctx, target);
    if (!bindpt) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQuery{Indexed}(target)");
       return;
    }
 
    if (id == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB(id==0)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQuery{Indexed}(id==0)");
       return;
    }
 
@@ -293,7 +316,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
       /* create new object */
       q = ctx->Driver.NewQueryObject(ctx, id);
       if (!q) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBeginQueryARB");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBeginQuery{Indexed}");
          return;
       }
       _mesa_HashInsert(ctx->Query.QueryObjects, id, q);
@@ -302,7 +325,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
       /* pre-existing object */
       if (q->Active) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBeginQueryARB(query already active)");
+                     "glBeginQuery{Indexed}(query already active)");
          return;
       }
    }
@@ -320,20 +343,24 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
 
 
 static void GLAPIENTRY
-_mesa_EndQueryARB(GLenum target)
+_mesa_EndQueryIndexed(GLenum target, GLuint index)
 {
    struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glEndQuery(%s)\n", _mesa_lookup_enum_by_nr(target));
+      _mesa_debug(ctx, "glEndQueryIndexed(%s, %u)\n",
+                  _mesa_lookup_enum_by_nr(target), index);
+
+   if (!query_error_check_index(ctx, target, index))
+      return;
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
    bindpt = get_query_binding_point(ctx, target);
    if (!bindpt) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glEndQuery{Indexed}(target)");
       return;
    }
 
@@ -343,7 +370,7 @@ _mesa_EndQueryARB(GLenum target)
 
    if (!q || !q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glEndQueryARB(no matching glBeginQueryARB)");
+                  "glEndQuery{Indexed}(no matching glBeginQuery{Indexed})");
       return;
    }
 
@@ -351,6 +378,17 @@ _mesa_EndQueryARB(GLenum target)
    ctx->Driver.EndQuery(ctx, q);
 }
 
+static void GLAPIENTRY
+_mesa_BeginQueryARB(GLenum target, GLuint id)
+{
+   _mesa_BeginQueryIndexed(target, 0, id);
+}
+
+static void GLAPIENTRY
+_mesa_EndQueryARB(GLenum target)
+{
+   _mesa_EndQueryIndexed(target, 0);
+}
 
 static void GLAPIENTRY
 _mesa_QueryCounter(GLuint id, GLenum target)
@@ -410,16 +448,21 @@ _mesa_QueryCounter(GLuint id, GLenum target)
 
 
 static void GLAPIENTRY
-_mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
+_mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
+                        GLint *params)
 {
    struct gl_query_object *q = NULL, **bindpt = NULL;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glGetQueryiv(%s, %s)\n",
+      _mesa_debug(ctx, "glGetQueryIndexediv(%s, %u, %s)\n",
                   _mesa_lookup_enum_by_nr(target),
+                  index,
                   _mesa_lookup_enum_by_nr(pname));
+
+   if (!query_error_check_index(ctx, target, index))
+      return;
 
    if (target == GL_TIMESTAMP) {
       if (!ctx->Extensions.ARB_timer_query) {
@@ -430,7 +473,7 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
    else {
       bindpt = get_query_binding_point(ctx, target);
       if (!bindpt) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryARB(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQuery{Indexed}iv(target)");
          return;
       }
 
@@ -445,11 +488,16 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
          *params = q ? q->Id : 0;
          break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryivARB(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQuery{Indexed}iv(pname)");
          return;
    }
 }
 
+static void GLAPIENTRY
+_mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
+{
+   _mesa_GetQueryIndexediv(target, 0, pname, params);
+}
 
 static void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
@@ -650,6 +698,10 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
 
    SET_GetQueryObjecti64vEXT(disp, _mesa_GetQueryObjecti64vEXT);
    SET_GetQueryObjectui64vEXT(disp, _mesa_GetQueryObjectui64vEXT);
+
+   SET_BeginQueryIndexed(disp, _mesa_BeginQueryIndexed);
+   SET_EndQueryIndexed(disp, _mesa_EndQueryIndexed);
+   SET_GetQueryIndexediv(disp, _mesa_GetQueryIndexediv);
 }
 
 
