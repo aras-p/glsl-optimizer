@@ -83,7 +83,9 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
 extern GLboolean
 _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLenum mode,
-                                     struct gl_transform_feedback_object *obj);
+                                     struct gl_transform_feedback_object *obj,
+                                     GLuint stream,
+                                     GLsizei numInstances);
 
 #endif
 

@@ -593,26 +593,42 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
 GLboolean
 _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLenum mode,
-                                     struct gl_transform_feedback_object *obj)
+                                     struct gl_transform_feedback_object *obj,
+                                     GLuint stream,
+                                     GLsizei numInstances)
 {
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
-   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawTransformFeedback")) {
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawTransformFeedback*(mode)")) {
       return GL_FALSE;
    }
 
    if (!obj) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawTransformFeedback(name)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawTransformFeedback*(name)");
       return GL_FALSE;
    }
 
    if (!obj->EndedAnytime) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawTransformFeedback");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawTransformFeedback*");
       return GL_FALSE;
    }
 
-   if (!check_valid_to_render(ctx, "glDrawTransformFeedback")) {
+   if (stream >= ctx->Const.MaxVertexStreams) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glDrawTransformFeedbackStream*(index>=MaxVertexStream)");
+      return GL_FALSE;
+   }
+
+   if (numInstances <= 0) {
+      if (numInstances < 0)
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glDrawTransformFeedback*Instanced(numInstances=%d)",
+                     numInstances);
+      return GL_FALSE;
+   }
+
+   if (!check_valid_to_render(ctx, "glDrawTransformFeedback*")) {
       return GL_FALSE;
    }
 

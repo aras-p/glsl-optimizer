@@ -111,6 +111,11 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_DrawElementsInstancedBaseVertex(tab, vfmt->DrawElementsInstancedBaseVertex);
    SET_DrawElementsInstancedBaseVertexBaseInstance(tab, vfmt->DrawElementsInstancedBaseVertexBaseInstance);
    SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
+   SET_DrawTransformFeedbackStream(tab, vfmt->DrawTransformFeedbackStream);
+   SET_DrawTransformFeedbackInstanced(tab,
+                                      vfmt->DrawTransformFeedbackInstanced);
+   SET_DrawTransformFeedbackStreamInstanced(tab,
+                                vfmt->DrawTransformFeedbackStreamInstanced);
 
    /* GL_NV_vertex_program */
    SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);

@@ -1068,6 +1068,45 @@ _save_DrawTransformFeedback(GLenum mode, GLuint name)
 
 
 static void GLAPIENTRY
+_save_DrawTransformFeedbackStream(GLenum mode, GLuint name, GLuint stream)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   (void) mode;
+   (void) name;
+   (void) stream;
+   _mesa_compile_error(ctx, GL_INVALID_OPERATION,
+                       "glDrawTransformFeedbackStream");
+}
+
+
+static void GLAPIENTRY
+_save_DrawTransformFeedbackInstanced(GLenum mode, GLuint name,
+                                     GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   (void) mode;
+   (void) name;
+   (void) primcount;
+   _mesa_compile_error(ctx, GL_INVALID_OPERATION,
+                       "glDrawTransformFeedbackInstanced");
+}
+
+
+static void GLAPIENTRY
+_save_DrawTransformFeedbackStreamInstanced(GLenum mode, GLuint name,
+                                           GLuint stream, GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   (void) mode;
+   (void) name;
+   (void) stream;
+   (void) primcount;
+   _mesa_compile_error(ctx, GL_INVALID_OPERATION,
+                       "glDrawTransformFeedbackStreamInstanced");
+}
+
+
+static void GLAPIENTRY
 _save_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1416,9 +1455,13 @@ _save_vtxfmt_init(struct gl_context *ctx)
    vfmt->DrawRangeElements = _save_DrawRangeElements;
    vfmt->DrawElementsBaseVertex = _save_DrawElementsBaseVertex;
    vfmt->DrawRangeElementsBaseVertex = _save_DrawRangeElementsBaseVertex;
-   vfmt->DrawTransformFeedback = _save_DrawTransformFeedback;
    vfmt->MultiDrawElementsEXT = _save_MultiDrawElements;
    vfmt->MultiDrawElementsBaseVertex = _save_MultiDrawElementsBaseVertex;
+   vfmt->DrawTransformFeedback = _save_DrawTransformFeedback;
+   vfmt->DrawTransformFeedbackStream = _save_DrawTransformFeedbackStream;
+   vfmt->DrawTransformFeedbackInstanced = _save_DrawTransformFeedbackInstanced;
+   vfmt->DrawTransformFeedbackStreamInstanced =
+         _save_DrawTransformFeedbackStreamInstanced;
 }
 
 
