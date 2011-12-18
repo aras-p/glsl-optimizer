@@ -8044,7 +8044,24 @@
 
 <xi:include href="ARB_robustness.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions #106...#116 -->
+<!-- ARB extensions #106...#108 -->
+
+<category name="GL_ARB_transform_feedback_instanced" number="109">
+  <function name="DrawTransformFeedbackInstanced" offset="assign">
+    <param name="mode" type="GLenum"/>
+    <param name="id" type="GLuint"/>
+    <param name="primcount" type="GLsizei"/>
+  </function>
+
+  <function name="DrawTransformFeedbackStreamInstanced" offset="assign">
+    <param name="mode" type="GLenum"/>
+    <param name="id" type="GLuint"/>
+    <param name="stream" type="GLuint"/>
+    <param name="primcount" type="GLsizei"/>
+  </function>
+</category>
+
+<!-- ARB extensions #110...#116 -->
 
 <xi:include href="ARB_base_instance.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
