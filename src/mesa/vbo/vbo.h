@@ -137,6 +137,9 @@ void vbo_check_buffers_are_unmapped(struct gl_context *ctx);
 
 void vbo_bind_arrays(struct gl_context *ctx);
 
+size_t
+count_tessellated_primitives(const struct _mesa_prim *prim);
+
 void GLAPIENTRY
 _es_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 

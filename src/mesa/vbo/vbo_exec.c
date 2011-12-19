@@ -90,3 +90,51 @@ void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state )
 
    _ae_invalidate_state(ctx, new_state);
 }
+
+
+/**
+ * Figure out the number of transform feedback primitives that will be output
+ * by the given _mesa_prim command, assuming that no geometry shading is done
+ * and primitive restart is not used.
+ *
+ * This is intended for use by driver back-ends in implementing the
+ * PRIMITIVES_GENERATED and TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN queries.
+ */
+size_t
+count_tessellated_primitives(const struct _mesa_prim *prim)
+{
+   size_t num_primitives;
+   switch (prim->mode) {
+   case GL_POINTS:
+      num_primitives = prim->count;
+      break;
+   case GL_LINE_STRIP:
+      num_primitives = prim->count >= 2 ? prim->count - 1 : 0;
+      break;
+   case GL_LINE_LOOP:
+      num_primitives = prim->count >= 2 ? prim->count : 0;
+      break;
+   case GL_LINES:
+      num_primitives = prim->count / 2;
+      break;
+   case GL_TRIANGLE_STRIP:
+   case GL_TRIANGLE_FAN:
+   case GL_POLYGON:
+      num_primitives = prim->count >= 3 ? prim->count - 2 : 0;
+      break;
+   case GL_TRIANGLES:
+      num_primitives = prim->count / 3;
+      break;
+   case GL_QUAD_STRIP:
+      num_primitives = prim->count >= 4 ? ((prim->count / 2) - 1) * 2 : 0;
+      break;
+   case GL_QUADS:
+      num_primitives = (prim->count / 4) * 2;
+      break;
+   default:
+      assert(!"Unexpected primitive type in count_tessellated_primitives");
+      num_primitives = 0;
+      break;
+   }
+   return num_primitives * prim->num_instances;
+}
