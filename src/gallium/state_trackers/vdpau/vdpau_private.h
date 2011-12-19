@@ -306,6 +306,9 @@ typedef struct
 {
    vlVdpDevice *device;
    struct vl_compositor compositor;
+   unsigned video_width, video_height;
+   enum pipe_video_chroma_format chroma_format;
+   unsigned max_layers;
 } vlVdpVideoMixer;
 
 typedef struct

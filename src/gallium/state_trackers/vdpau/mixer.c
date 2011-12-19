@@ -49,12 +49,16 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vlVdpVideoMixer *vmixer = NULL;
    VdpStatus ret;
    float csc[16];
+   struct pipe_screen *screen;
+   unsigned max_width, max_height, i;
+   enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating VideoMixer\n");
 
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
+   screen = dev->vscreen->pscreen;
 
    vmixer = CALLOC(1, sizeof(vlVdpVideoMixer));
    if (!vmixer)
@@ -72,7 +76,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vl_compositor_set_csc_matrix(&vmixer->compositor, csc);
 
    /*
-    * TODO: Handle features and parameters
+    * TODO: Handle features
     */
 
    *mixer = vlAddDataHTAB(vmixer);
@@ -80,10 +84,49 @@ vlVdpVideoMixerCreate(VdpDevice device,
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
-
+   vmixer->chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+   ret = VDP_STATUS_INVALID_VIDEO_MIXER_PARAMETER;
+   for (i = 0; i < parameter_count; ++i) {
+      switch (parameters[i]) {
+      case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
+         vmixer->video_width = *(uint32_t*)parameter_values[i];
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
+         vmixer->video_height = *(uint32_t*)parameter_values[i];
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE:
+         vmixer->chroma_format = ChromaToPipe(*(VdpChromaType*)parameter_values[i]);
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_LAYERS:
+         vmixer->max_layers = *(uint32_t*)parameter_values[i];
+         break;
+      default: goto no_params;
+      }
+   }
+   ret = VDP_STATUS_INVALID_VALUE;
+   if (vmixer->max_layers > 4) {
+      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Max layers > 4 not supported\n", vmixer->max_layers);
+      goto no_params;
+   }
+   max_width = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_WIDTH);
+   max_height = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_HEIGHT);
+   if (vmixer->video_width < 48 ||
+       vmixer->video_width > max_width) {
+      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] 48 < %u < %u not valid for width\n", vmixer->video_width, max_width);
+      goto no_params;
+   }
+   if (vmixer->video_height < 48 ||
+       vmixer->video_height > max_height) {
+      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] 48 < %u < %u  not valid for height\n", vmixer->video_height, max_height);
+      goto no_params;
+   }
    return VDP_STATUS_OK;
 
+no_params:
+   vlRemoveDataHTAB(*mixer);
 no_handle:
+   vl_compositor_cleanup(&vmixer->compositor);
+   FREE(vmixer);
    return ret;
 }
 
@@ -100,6 +143,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
    vmixer = vlGetDataHTAB(mixer);
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
+   vlRemoveDataHTAB(mixer);
 
    vl_compositor_cleanup(&vmixer->compositor);
 
@@ -165,6 +209,17 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    surf = vlGetDataHTAB(video_surface_current);
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
+
+   if (surf->device != vmixer->device)
+      return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
+
+   if (vmixer->video_width > surf->video_buffer->width ||
+       vmixer->video_height > surf->video_buffer->height ||
+       vmixer->chroma_format != surf->video_buffer->chroma_format)
+      return VDP_STATUS_INVALID_SIZE;
+
+   if (layer_count > vmixer->max_layers)
+      return VDP_STATUS_INVALID_VALUE;
 
    dst = vlGetDataHTAB(destination_surface);
    if (!dst)
@@ -237,7 +292,34 @@ vlVdpVideoMixerGetParameterValues(VdpVideoMixer mixer,
                                   VdpVideoMixerParameter const *parameters,
                                   void *const *parameter_values)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpVideoMixer *vmixer = vlGetDataHTAB(mixer);
+   unsigned i;
+   if (!vmixer)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (!parameter_count)
+      return VDP_STATUS_OK;
+   if (!(parameters && parameter_values))
+      return VDP_STATUS_INVALID_POINTER;
+   for (i = 0; i < parameter_count; ++i) {
+      switch (parameters[i]) {
+      case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
+         *(uint32_t*)parameter_values[i] = vmixer->video_width;
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
+         *(uint32_t*)parameter_values[i] = vmixer->video_height;
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE:
+         *(VdpChromaType*)parameter_values[i] = PipeToChroma(vmixer->chroma_format);
+         break;
+      case VDP_VIDEO_MIXER_PARAMETER_LAYERS:
+         *(uint32_t*)parameter_values[i] = vmixer->max_layers;
+         break;
+      default:
+         return VDP_STATUS_INVALID_VIDEO_MIXER_PARAMETER;
+      }
+   }
+   return VDP_STATUS_OK;
 }
 
 /**

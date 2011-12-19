@@ -288,7 +288,18 @@ vlVdpVideoMixerQueryParameterSupport(VdpDevice device, VdpVideoMixerParameter pa
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   switch (parameter) {
+   case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
+   case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
+   case VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE:
+   case VDP_VIDEO_MIXER_PARAMETER_LAYERS:
+      *is_supported = VDP_TRUE;
+      break;
+   default:
+      *is_supported = VDP_FALSE;
+      break;
+   }
+   return VDP_STATUS_OK;
 }
 
 /**
@@ -298,10 +309,34 @@ VdpStatus
 vlVdpVideoMixerQueryParameterValueRange(VdpDevice device, VdpVideoMixerParameter parameter,
                                         void *min_value, void *max_value)
 {
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   struct pipe_screen *screen;
+   enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
    if (!(min_value && max_value))
       return VDP_STATUS_INVALID_POINTER;
+   screen = dev->vscreen->pscreen;
+   switch (parameter) {
+   case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH:
+      *(uint32_t*)min_value = 48;
+      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_WIDTH);
+      break;
+   case VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT:
+      *(uint32_t*)min_value = 48;
+      *(uint32_t*)max_value = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_HEIGHT);
+      break;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   case VDP_VIDEO_MIXER_PARAMETER_LAYERS:
+      *(uint32_t*)min_value = 0;
+      *(uint32_t*)max_value = 4;
+      break;
+
+   case VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE:
+   default:
+      return VDP_STATUS_INVALID_VIDEO_MIXER_PARAMETER;
+   }
+   return VDP_STATUS_OK;
 }
 
 /**
