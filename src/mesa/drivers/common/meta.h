@@ -69,6 +69,9 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state);
 extern void
 _mesa_meta_end(struct gl_context *ctx);
 
+extern GLboolean
+_mesa_meta_in_progress(struct gl_context *ctx);
+
 extern void
 _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,

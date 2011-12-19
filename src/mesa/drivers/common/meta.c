@@ -985,6 +985,16 @@ _mesa_meta_end(struct gl_context *ctx)
 
 
 /**
+ * Determine whether Mesa is currently in a meta state.
+ */
+GLboolean
+_mesa_meta_in_progress(struct gl_context *ctx)
+{
+   return ctx->Meta->SaveStackDepth != 0;
+}
+
+
+/**
  * Convert Z from a normalized value in the range [0, 1] to an object-space
  * Z coordinate in [-1, +1] so that drawing at the new Z position with the
  * default/identity ortho projection results in the original Z value.
