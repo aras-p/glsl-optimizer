@@ -196,6 +196,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 VdpLayer const *layers)
 {
    struct pipe_video_rect src_rect, dst_rect, dst_clip;
+   unsigned layer = 0;
 
    vlVdpVideoMixer *vmixer;
    vlVdpSurface *surf;
@@ -224,8 +225,16 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!dst)
       return VDP_STATUS_INVALID_HANDLE;
 
+   if (background_surface != VDP_INVALID_HANDLE) {
+      vlVdpOutputSurface *bg = vlGetDataHTAB(background_surface);
+      if (!bg)
+         return VDP_STATUS_INVALID_HANDLE;
+      vl_compositor_set_rgba_layer(&vmixer->compositor, layer++, bg->sampler_view,
+                                   RectToPipe(background_source_rect, &src_rect), NULL);
+   }
+
    vl_compositor_clear_layers(&vmixer->compositor);
-   vl_compositor_set_buffer_layer(&vmixer->compositor, 0, surf->video_buffer,
+   vl_compositor_set_buffer_layer(&vmixer->compositor, layer++, surf->video_buffer,
                                   RectToPipe(video_source_rect, &src_rect), NULL);
    vl_compositor_render(&vmixer->compositor, dst->surface,
                         RectToPipe(destination_video_rect, &dst_rect),
