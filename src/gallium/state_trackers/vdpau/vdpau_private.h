@@ -308,7 +308,9 @@ typedef struct
    struct vl_compositor compositor;
    unsigned video_width, video_height;
    enum pipe_video_chroma_format chroma_format;
-   unsigned max_layers;
+   unsigned max_layers, skip_chroma_deint, custom_csc;
+   float luma_key_min, luma_key_max, sharpness, noise_reduction_level;
+   float csc[16];
 } vlVdpVideoMixer;
 
 typedef struct

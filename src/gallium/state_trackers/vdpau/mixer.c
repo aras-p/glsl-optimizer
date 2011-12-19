@@ -48,7 +48,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
 {
    vlVdpVideoMixer *vmixer = NULL;
    VdpStatus ret;
-   float csc[16];
    struct pipe_screen *screen;
    unsigned max_width, max_height, i;
    enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
@@ -67,13 +66,9 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vmixer->device = dev;
    vl_compositor_init(&vmixer->compositor, dev->context->pipe);
 
-   vl_csc_get_matrix
-   (
-      debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
-      VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
-      NULL, true, csc
-   );
-   vl_compositor_set_csc_matrix(&vmixer->compositor, csc);
+   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, vmixer->csc);
+   if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
+      vl_compositor_set_csc_matrix(&vmixer->compositor, vmixer->csc);
 
    /*
     * TODO: Handle features
@@ -120,6 +115,10 @@ vlVdpVideoMixerCreate(VdpDevice device,
       VDPAU_MSG(VDPAU_TRACE, "[VDPAU] 48 < %u < %u  not valid for height\n", vmixer->video_height, max_height);
       goto no_params;
    }
+   vmixer->luma_key_min = 0.f;
+   vmixer->luma_key_max = 1.f;
+   vmixer->noise_reduction_level = 0.f;
+   vmixer->sharpness = 0.f;
    return VDP_STATUS_OK;
 
 no_params:
@@ -245,6 +244,12 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
                                   VdpVideoMixerAttribute const *attributes,
                                   void const *const *attribute_values)
 {
+   const VdpColor *background_color;
+   union pipe_color_union color;
+   const float *vdp_csc;
+   float val;
+   unsigned i;
+
    if (!(attributes && attribute_values))
       return VDP_STATUS_INVALID_POINTER;
 
@@ -252,9 +257,59 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
-   /*
-    * TODO: Implement the function
-    */
+   for (i = 0; i < attribute_count; ++i) {
+      switch (attributes[i]) {
+      case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
+         background_color = attribute_values[i];
+         color.f[0] = background_color->red;
+         color.f[1] = background_color->green;
+         color.f[2] = background_color->blue;
+         color.f[3] = background_color->alpha;
+         vl_compositor_set_clear_color(&vmixer->compositor, &color);
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
+         vdp_csc = attribute_values[i];
+         vmixer->custom_csc = !!vdp_csc;
+         if (!vdp_csc)
+            vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, 1, vmixer->csc);
+         else
+            memcpy(vmixer->csc, vdp_csc, sizeof(float)*12);
+         if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
+            vl_compositor_set_csc_matrix(&vmixer->compositor, vmixer->csc);
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
+         val = *(float*)attribute_values[i];
+         if (val < 0.f || val > 1.f)
+            return VDP_STATUS_INVALID_VALUE;
+         vmixer->noise_reduction_level = val;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MIN_LUMA:
+         val = *(float*)attribute_values[i];
+         if (val < 0.f || val > 1.f)
+            return VDP_STATUS_INVALID_VALUE;
+         vmixer->luma_key_min = val;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MAX_LUMA:
+         val = *(float*)attribute_values[i];
+         if (val < 0.f || val > 1.f)
+            return VDP_STATUS_INVALID_VALUE;
+         vmixer->luma_key_max = val;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL:
+         val = *(float*)attribute_values[i];
+         if (val < -1.f || val > 1.f)
+            return VDP_STATUS_INVALID_VALUE;
+         vmixer->sharpness = val;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE:
+         if (*(uint8_t*)attribute_values[i] > 1)
+            return VDP_STATUS_INVALID_VALUE;
+         vmixer->skip_chroma_deint = *(uint8_t*)attribute_values[i];
+         break;
+      default:
+         return VDP_STATUS_INVALID_VIDEO_MIXER_ATTRIBUTE;
+      }
+   }
 
    return VDP_STATUS_OK;
 }
@@ -331,7 +386,49 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
                                   VdpVideoMixerAttribute const *attributes,
                                   void *const *attribute_values)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   unsigned i;
+   VdpCSCMatrix **vdp_csc;
+
+   if (!(attributes && attribute_values))
+      return VDP_STATUS_INVALID_POINTER;
+
+   vlVdpVideoMixer *vmixer = vlGetDataHTAB(mixer);
+   if (!vmixer)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   for (i = 0; i < attribute_count; ++i) {
+      switch (attributes[i]) {
+      case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
+         vl_compositor_get_clear_color(&vmixer->compositor, attribute_values[i]);
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
+         vdp_csc = attribute_values[i];
+         if (!vmixer->custom_csc) {
+             *vdp_csc = NULL;
+            break;
+         }
+         memcpy(*vdp_csc, vmixer->csc, sizeof(float)*12);
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
+         *(float*)attribute_values[i] = vmixer->noise_reduction_level;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MIN_LUMA:
+         *(float*)attribute_values[i] = vmixer->luma_key_min;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MAX_LUMA:
+         *(float*)attribute_values[i] = vmixer->luma_key_max;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL:
+         *(float*)attribute_values[i] = vmixer->sharpness;
+         break;
+      case VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE:
+         *(uint8_t*)attribute_values[i] = vmixer->skip_chroma_deint;
+         break;
+      default:
+         return VDP_STATUS_INVALID_VIDEO_MIXER_ATTRIBUTE;
+      }
+   }
+   return VDP_STATUS_OK;
 }
 
 /**

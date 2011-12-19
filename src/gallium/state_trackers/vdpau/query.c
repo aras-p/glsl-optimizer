@@ -349,7 +349,20 @@ vlVdpVideoMixerQueryAttributeSupport(VdpDevice device, VdpVideoMixerAttribute at
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   switch (attribute) {
+   case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MIN_LUMA:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MAX_LUMA:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE:
+      *is_supported = VDP_TRUE;
+      break;
+   default:
+      *is_supported = VDP_FALSE;
+   }
+   return VDP_STATUS_OK;
 }
 
 /**
@@ -362,5 +375,25 @@ vlVdpVideoMixerQueryAttributeValueRange(VdpDevice device, VdpVideoMixerAttribute
    if (!(min_value && max_value))
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   switch (attribute) {
+   case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MIN_LUMA:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MAX_LUMA:
+      *(float*)min_value = 0.f;
+      *(float*)max_value = 1.f;
+      break;
+   case VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL:
+      *(float*)min_value = -1.f;
+      *(float*)max_value = 1.f;
+      break;
+   case VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE:
+      *(uint8_t*)min_value = 0;
+      *(uint8_t*)max_value = 1;
+      break;
+   case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
+   case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
+   default:
+      return VDP_STATUS_INVALID_VIDEO_MIXER_ATTRIBUTE;
+   }
+   return VDP_STATUS_OK;
 }
