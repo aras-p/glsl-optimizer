@@ -104,7 +104,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);
 
-   if (intel->gen == 6 && override_version >= 30)
+   if (intel->gen == 6)
       ctx->Extensions.EXT_transform_feedback = true;
 
    if (intel->gen >= 5)
