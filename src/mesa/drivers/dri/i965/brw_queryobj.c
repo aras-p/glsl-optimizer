@@ -60,16 +60,24 @@ brw_queryobj_get_results(struct gl_context *ctx,
 
    drm_intel_bo_map(query->bo, false);
    results = query->bo->virtual;
-   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+   switch (query->Base.Target) {
+   case GL_TIME_ELAPSED_EXT:
       if (intel->gen >= 6)
 	 query->Base.Result += 80 * (results[1] - results[0]);
       else
 	 query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
-   } else {
+      break;
+
+   case GL_SAMPLES_PASSED_ARB:
       /* Map and count the pixels from the current query BO */
       for (i = query->first_index; i <= query->last_index; i++) {
 	 query->Base.Result += results[i * 2 + 1] - results[i * 2];
       }
+      break;
+
+   default:
+      assert(!"Unrecognized query target in brw_queryobj_get_results()");
+      break;
    }
    drm_intel_bo_unmap(query->bo);
 
@@ -108,7 +116,8 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+   switch (query->Base.Target) {
+   case GL_TIME_ELAPSED_EXT:
       drm_intel_bo_unreference(query->bo);
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
 				     4096, 4096);
@@ -136,7 +145,9 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 	  OUT_BATCH(0);
 	  ADVANCE_BATCH();
       }
-   } else {
+      break;
+
+   case GL_SAMPLES_PASSED_ARB:
       /* Reset our driver's tracking of query state. */
       drm_intel_bo_unreference(query->bo);
       query->bo = NULL;
@@ -145,6 +156,11 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 
       brw->query.obj = query;
       intel->stats_wm++;
+      break;
+
+   default:
+      assert(!"Unrecognized query target in brw_begin_query()");
+      break;
    }
 }
 
@@ -158,7 +174,8 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+   switch (query->Base.Target) {
+   case GL_TIME_ELAPSED_EXT:
       if (intel->gen >= 6) {
 	  BEGIN_BATCH(4);
 	  OUT_BATCH(_3DSTATE_PIPE_CONTROL);
@@ -184,7 +201,9 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       }
 
       intel_batchbuffer_flush(intel);
-   } else {
+      break;
+
+   case GL_SAMPLES_PASSED_ARB:
       /* Flush the batchbuffer in case it has writes to our query BO.
        * Have later queries write to a new query BO so that further rendering
        * doesn't delay the collection of our results.
@@ -200,6 +219,11 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       brw->query.obj = NULL;
 
       intel->stats_wm--;
+      break;
+
+   default:
+      assert(!"Unrecognized query target in brw_end_query()");
+      break;
    }
 }
 
