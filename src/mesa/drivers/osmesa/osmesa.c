@@ -989,6 +989,10 @@ new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
       case GL_UNSIGNED_SHORT:
          rb->Format = MESA_FORMAT_RGBA_16;
          break;
+      case GL_UNSIGNED_SHORT_5_6_5:
+         rb->Format = MESA_FORMAT_RGB565;
+         type = GL_UNSIGNED_BYTE;
+         break;
       case GL_FLOAT:
          rb->Format = MESA_FORMAT_RGBA_FLOAT32;
          break;
