@@ -72,11 +72,34 @@ const struct brw_tracked_state gen6_sol_surface = {
    .emit = gen6_update_sol_surfaces,
 };
 
+static void
+gen6_update_sol_indices(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+   OUT_BATCH(brw->sol.svbi_0_starting_index); /* BRW_NEW_SOL_INDICES */
+   OUT_BATCH(0);
+   OUT_BATCH(brw->sol.svbi_0_max_index); /* BRW_NEW_SOL_INDICES */
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state gen6_sol_indices = {
+   .dirty = {
+      .mesa = 0,
+      .brw = (BRW_NEW_BATCH |
+              BRW_NEW_SOL_INDICES),
+      .cache = 0
+   },
+   .emit = gen6_update_sol_indices,
+};
+
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 			     struct gl_transform_feedback_object *obj)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
    const struct gl_shader_program *vs_prog =
       ctx->Shader.CurrentVertexProgram;
    const struct gl_transform_feedback_info *linked_xfb_info =
@@ -100,13 +123,12 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
       max_index = MIN2(max_index, max_for_this_buffer);
    }
 
-   /* Initialize the SVBI 0 register to zero and set the maximum index. */
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-   OUT_BATCH(0); /* SVBI 0 */
-   OUT_BATCH(0);
-   OUT_BATCH(max_index);
-   ADVANCE_BATCH();
+   /* Initialize the SVBI 0 register to zero and set the maximum index.
+    * These values will be sent to the hardware on the next draw.
+    */
+   brw->state.dirty.brw |= BRW_NEW_SOL_INDICES;
+   brw->sol.svbi_0_starting_index = 0;
+   brw->sol.svbi_0_max_index = max_index;
 }
 
 void

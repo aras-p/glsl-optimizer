@@ -145,6 +145,7 @@ enum brw_state_id {
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
    BRW_STATE_HIZ,
+   BRW_STATE_SOL_INDICES,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -174,6 +175,7 @@ enum brw_state_id {
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
 #define BRW_NEW_HIZ			(1 << BRW_STATE_HIZ)
+#define BRW_NEW_SOL_INDICES		(1 << BRW_STATE_SOL_INDICES)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -982,6 +984,11 @@ struct brw_context
       GLuint fbo;
       struct gl_renderbuffer *depth_rb;
    } hiz;
+
+   struct brw_sol_state {
+      uint32_t svbi_0_starting_index;
+      uint32_t svbi_0_max_index;
+   } sol;
 
    uint32_t render_target_format[MESA_FORMAT_COUNT];
    bool format_supported_as_render_target[MESA_FORMAT_COUNT];

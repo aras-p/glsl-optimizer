@@ -171,6 +171,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_drawing_rect,
 
+   &gen6_sol_indices,
    &brw_indices,
    &brw_index_buffer,
    &brw_vertices,
