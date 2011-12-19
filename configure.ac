@@ -1753,7 +1753,7 @@ if test "x$enable_gallium_llvm" = xyes; then
 
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version`
-	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags|sed 's/-DNDEBUG\>//g'`
+	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags|sed -e 's/-DNDEBUG\>//g' -e 's/-pedantic//g'`
 	LLVM_LIBS="`$LLVM_CONFIG --libs`"
 
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
