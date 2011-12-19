@@ -835,7 +835,6 @@ nouveau_video_buffer_create(struct pipe_context *pipe,
 
 error:
    nouveau_video_buffer_destroy(&buffer->base);
-   FREE(buffer);
    return NULL;
 }
 
