@@ -1760,7 +1760,6 @@ exec_tex(struct tgsi_exec_machine *mach,
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
-   case TGSI_TEXTURE_SHADOW1D:
       FETCH(&r[0], 0, CHAN_X);
 
       if (modifier == TEX_MODIFIER_PROJECTED) {
@@ -1769,6 +1768,19 @@ exec_tex(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &ZeroVec, &ZeroVec, lod,  /* S, T, P, LOD */
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
+      break;
+   case TGSI_TEXTURE_SHADOW1D:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+      }
+
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &ZeroVec, &r[2], lod,  /* S, T, P, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       break;
