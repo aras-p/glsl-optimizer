@@ -1144,6 +1144,7 @@ fs_visitor::propagate_constants()
 	       break;
 
 	    case BRW_OPCODE_CMP:
+	    case BRW_OPCODE_IF:
 	       if (i == 1) {
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
