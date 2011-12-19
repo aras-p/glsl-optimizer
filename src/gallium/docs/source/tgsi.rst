@@ -585,6 +585,17 @@ This instruction replicates its result.
 
   dst = texture_sample(unit, coord, bias)
 
+  for array textures src0.y contains the slice for 1D,
+  and src0.z contain the slice for 2D.
+  for shadow textures with no arrays, src0.z contains
+  the reference value.
+  for shadow textures with arrays, src0.z contains
+  the reference value for 1D arrays, and src0.w contains
+  the reference value for 2D arrays.
+  There is no way to pass a bias in the .w value for
+  shadow arrays, and GLSL doesn't allow this.
+  GLSL does allow cube shadows maps to take a bias value,
+  and we have to determine how this will look in TGSI.
 
 .. opcode:: TXD - Texture Lookup with Derivatives
 
