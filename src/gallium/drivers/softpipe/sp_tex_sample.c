@@ -2113,15 +2113,22 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
 
    /**
     * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
+    * for 2D Array texture we need to use the 'c0' (aka Q).
     * When we sampled the depth texture, the depth value was put into all
     * RGBA channels.  We look at the red channel here.
     */
 
-   pc0 = CLAMP(p[0], 0.0F, 1.0F);
-   pc1 = CLAMP(p[1], 0.0F, 1.0F);
-   pc2 = CLAMP(p[2], 0.0F, 1.0F);
-   pc3 = CLAMP(p[3], 0.0F, 1.0F);
-
+   if (samp->view->texture->target == PIPE_TEXTURE_2D_ARRAY) {
+      pc0 = CLAMP(c0[0], 0.0F, 1.0F);
+      pc1 = CLAMP(c0[1], 0.0F, 1.0F);
+      pc2 = CLAMP(c0[2], 0.0F, 1.0F);
+      pc3 = CLAMP(c0[3], 0.0F, 1.0F);
+   } else {
+      pc0 = CLAMP(p[0], 0.0F, 1.0F);
+      pc1 = CLAMP(p[1], 0.0F, 1.0F);
+      pc2 = CLAMP(p[2], 0.0F, 1.0F);
+      pc3 = CLAMP(p[3], 0.0F, 1.0F);
+   }
    /* compare four texcoords vs. four texture samples */
    switch (sampler->compare_func) {
    case PIPE_FUNC_LESS:

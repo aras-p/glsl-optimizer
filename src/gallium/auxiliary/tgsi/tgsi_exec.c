@@ -1822,7 +1822,6 @@ exec_tex(struct tgsi_exec_machine *mach,
       break;
 
    case TGSI_TEXTURE_2D_ARRAY:
-   case TGSI_TEXTURE_SHADOW2D_ARRAY:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
@@ -1837,7 +1836,17 @@ exec_tex(struct tgsi_exec_machine *mach,
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+      FETCH(&r[3], 0, CHAN_W);
 
+      fetch_texel(mach->Samplers[unit],
+                  &r[0], &r[1], &r[2], &r[3],     /* S, T, P, LOD */
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);  /* outputs */
+      break;
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       FETCH(&r[0], 0, CHAN_X);
