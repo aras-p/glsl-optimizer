@@ -37,10 +37,54 @@ extern "C" {
 #include "glsl/ir_print_visitor.h"
 
 void
+fs_visitor::patch_discard_jumps_to_fb_writes()
+{
+   if (intel->gen < 6 || this->discard_halt_patches.is_empty())
+      return;
+
+   /* There is a somewhat strange undocumented requirement of using
+    * HALT, according to the simulator.  If some channel has HALTed to
+    * a particular UIP, then by the end of the program, every channel
+    * must have HALTed to that UIP.  Furthermore, the tracking is a
+    * stack, so you can't do the final halt of a UIP after starting
+    * halting to a new UIP.
+    *
+    * Symptoms of not emitting this instruction on actual hardware
+    * included GPU hangs and sparkly rendering on the piglit discard
+    * tests.
+    */
+   struct brw_instruction *last_halt = gen6_HALT(p);
+   last_halt->bits3.break_cont.uip = 2;
+   last_halt->bits3.break_cont.jip = 2;
+
+   int ip = p->nr_insn;
+
+   foreach_list(node, &this->discard_halt_patches) {
+      ip_record *patch_ip = (ip_record *)node;
+      struct brw_instruction *patch = &p->store[patch_ip->ip];
+      int br = (intel->gen >= 5) ? 2 : 1;
+
+      /* HALT takes a distance from the pre-incremented IP, so '1'
+       * would be the next instruction after jmpi.
+       */
+      assert(patch->header.opcode == BRW_OPCODE_HALT);
+      patch->bits3.break_cont.uip = (ip - patch_ip->ip) * br;
+   }
+
+   this->discard_halt_patches.make_empty();
+}
+
+void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
    bool eot = inst->eot;
    struct brw_reg implied_header;
+
+   /* Note that the jumps emitted to this point mean that the g0 ->
+    * base_mrf setup must be inside of this function, so that we jump
+    * to a point containing it.
+    */
+   patch_discard_jumps_to_fb_writes();
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -482,6 +526,17 @@ fs_visitor::generate_discard(fs_inst *inst)
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_AND(p, g1, f0, g1);
       brw_pop_insn_state(p);
+
+      /* GLSL 1.30+ say that discarded channels should stop executing
+       * (so, for example, an infinite loop that would otherwise in
+       * just that channel does not occur.
+       *
+       * This HALT will be patched up at FB write time to point UIP at
+       * the end of the program, and at brw_uip_jip() JIP will be set
+       * to the end of the current block (or the program).
+       */
+      this->discard_halt_patches.push_tail(new(mem_ctx) ip_record(p->nr_insn));
+      gen6_HALT(p);
    } else {
       struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
 

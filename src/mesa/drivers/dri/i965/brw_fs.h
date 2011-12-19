@@ -171,6 +171,26 @@ static const fs_reg reg_undef;
 static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
 static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
+class ip_record : public exec_node {
+public:
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = rzalloc_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
+   ip_record(int ip)
+   {
+      this->ip = ip;
+   }
+
+   int ip;
+};
+
 class fs_inst : public exec_node {
 public:
    /* Callers of this ralloc-based new need not call delete. It's
@@ -489,6 +509,7 @@ public:
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions();
+   void patch_discard_jumps_to_fb_writes();
    void fail(const char *msg, ...);
 
    void push_force_uncompressed();
@@ -572,6 +593,7 @@ public:
    struct gl_shader_program *prog;
    void *mem_ctx;
    exec_list instructions;
+   exec_list discard_halt_patches;
 
    /* Delayed setup of c->prog_data.params[] due to realloc of
     * ParamValues[] during compile.
