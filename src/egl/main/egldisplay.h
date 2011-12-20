@@ -111,7 +111,6 @@ struct _egl_extensions
    EGLBoolean NOK_texture_from_pixmap;
 
    EGLBoolean ANDROID_image_native_buffer;
-   EGLBoolean ANDROID_swap_rectangle;
 };
 
 

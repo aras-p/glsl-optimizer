@@ -131,10 +131,6 @@ typedef EGLBoolean (*BindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp,
 typedef EGLBoolean (*UnbindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
 #endif
 
-#ifdef EGL_ANDROID_swap_rectangle
-typedef EGLBoolean (*SetSwapRectangleANDROID_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw, EGLint left, EGLint top, EGLint width, EGLint height);
-#endif
-
 /**
  * The API dispatcher jumps through these functions
  */
@@ -213,10 +209,6 @@ struct _egl_api
 #ifdef EGL_WL_bind_wayland_display
    BindWaylandDisplayWL_t BindWaylandDisplayWL;
    UnbindWaylandDisplayWL_t UnbindWaylandDisplayWL;
-#endif
-
-#ifdef EGL_ANDROID_swap_rectangle
-   SetSwapRectangleANDROID_t SetSwapRectangleANDROID;
 #endif
 };
 
