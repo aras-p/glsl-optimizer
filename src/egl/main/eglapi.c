@@ -925,6 +925,11 @@ eglGetProcAddress(const char *procname)
 #endif
       { "eglCreateImageKHR", (_EGLProc) eglCreateImageKHR },
       { "eglDestroyImageKHR", (_EGLProc) eglDestroyImageKHR },
+      { "eglCreateSyncKHR", (_EGLProc) eglCreateSyncKHR },
+      { "eglDestroySyncKHR", (_EGLProc) eglDestroySyncKHR },
+      { "eglClientWaitSyncKHR", (_EGLProc) eglClientWaitSyncKHR },
+      { "eglSignalSyncKHR", (_EGLProc) eglSignalSyncKHR },
+      { "eglGetSyncAttribKHR", (_EGLProc) eglGetSyncAttribKHR },
 #ifdef EGL_NOK_swap_region
       { "eglSwapBuffersRegionNOK", (_EGLProc) eglSwapBuffersRegionNOK },
 #endif
