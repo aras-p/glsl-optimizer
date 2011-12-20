@@ -86,6 +86,15 @@ vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
                                     struct pipe_video_decoder *vdec);
 
 /**
+ * fill a resource template for the given plane
+ */
+void
+vl_vide_buffer_template(struct pipe_resource *templ,
+			const struct pipe_video_buffer *templat,
+                        enum pipe_format resource_format,
+                        unsigned depth, unsigned usage, unsigned plane);
+
+/**
  * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer
  */
 struct pipe_video_buffer *
@@ -100,5 +109,13 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const struct pipe_video_buffer *templat,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
                           unsigned depth, unsigned usage);
+
+/**
+ * even more extended create function, provide the pipe_resource for each plane
+ */
+struct pipe_video_buffer *
+vl_video_buffer_create_ex2(struct pipe_context *pipe,
+                           const struct pipe_video_buffer *templat,
+                           struct pipe_resource *resources[VL_MAX_PLANES]);
 
 #endif /* vl_video_buffer_h */

@@ -126,6 +126,32 @@ vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
       return NULL;
 }
 
+void
+vl_vide_buffer_template(struct pipe_resource *templ,
+                        const struct pipe_video_buffer *tmpl,
+                        enum pipe_format resource_format,
+                        unsigned depth, unsigned usage, unsigned plane)
+{
+   memset(templ, 0, sizeof(*templ));
+   templ->target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
+   templ->format = resource_format;
+   templ->width0 = tmpl->width;
+   templ->height0 = tmpl->height;
+   templ->depth0 = depth;
+   templ->array_size = 1;
+   templ->bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   templ->usage = usage;
+
+   if (plane > 0) {
+      if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+         templ->width0 /= 2;
+         templ->height0 /= 2;
+      } else if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
+         templ->height0 /= 2;
+      }
+   }
+}
+
 static void
 vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 {
@@ -292,11 +318,51 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
                           unsigned depth, unsigned usage)
 {
-   struct vl_video_buffer *buffer;
-   struct pipe_resource templ;
+   struct pipe_resource res_tmpl, *resources[VL_MAX_PLANES] = {};
    unsigned i;
 
    assert(pipe);
+
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[0], depth, usage, 0);
+   resources[0] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
+   if (!resources[0])
+      goto error;
+
+   if (resource_formats[1] == PIPE_FORMAT_NONE) {
+      assert(tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
+      assert(resource_formats[2] == PIPE_FORMAT_NONE);
+      return vl_video_buffer_create_ex2(pipe, tmpl, resources);
+   }
+
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[1], depth, usage, 1);
+   resources[1] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
+   if (!resources[1])
+      goto error;
+
+   if (resource_formats[2] == PIPE_FORMAT_NONE)
+      return vl_video_buffer_create_ex2(pipe, tmpl, resources);
+
+   vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[2], depth, usage, 2);
+   resources[2] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
+   if (!resources[2])
+      goto error;
+
+   return vl_video_buffer_create_ex2(pipe, tmpl, resources);
+
+error:
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      pipe_resource_reference(&resources[i], NULL);
+
+   return NULL;
+}
+
+struct pipe_video_buffer *
+vl_video_buffer_create_ex2(struct pipe_context *pipe,
+                           const struct pipe_video_buffer *tmpl,
+                           struct pipe_resource *resources[VL_MAX_PLANES])
+{
+   struct vl_video_buffer *buffer;
+   unsigned i;
 
    buffer = CALLOC_STRUCT(vl_video_buffer);
 
@@ -306,57 +372,13 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
    buffer->base.get_sampler_view_planes = vl_video_buffer_sampler_view_planes;
    buffer->base.get_sampler_view_components = vl_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = vl_video_buffer_surfaces;
-   buffer->num_planes = 1;
+   buffer->num_planes = 0;
 
-   memset(&templ, 0, sizeof(templ));
-   templ.target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
-   templ.format = resource_formats[0];
-   templ.width0 = tmpl->width;
-   templ.height0 = tmpl->height;
-   templ.depth0 = depth;
-   templ.array_size = 1;
-   templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   templ.usage = usage;
-
-   buffer->resources[0] = pipe->screen->resource_create(pipe->screen, &templ);
-   if (!buffer->resources[0])
-      goto error;
-
-   if (resource_formats[1] == PIPE_FORMAT_NONE) {
-      assert(tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
-      assert(resource_formats[2] == PIPE_FORMAT_NONE);
-      return &buffer->base;
-   } else
-      buffer->num_planes = 2;
-
-   templ.format = resource_formats[1];
-   if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      templ.width0 /= 2;
-      templ.height0 /= 2;
-   } else if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-      templ.height0 /= 2;
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      buffer->resources[i] = resources[i];
+      if (resources[i])
+         buffer->num_planes++;
    }
 
-   buffer->resources[1] = pipe->screen->resource_create(pipe->screen, &templ);
-   if (!buffer->resources[1])
-      goto error;
-
-   if (resource_formats[2] == PIPE_FORMAT_NONE)
-      return &buffer->base;
-   else
-      buffer->num_planes = 3;
-
-   templ.format = resource_formats[2];
-   buffer->resources[2] = pipe->screen->resource_create(pipe->screen, &templ);
-   if (!buffer->resources[2])
-      goto error;
-
    return &buffer->base;
-
-error:
-   for (i = 0; i < VL_MAX_PLANES; ++i)
-      pipe_resource_reference(&buffer->resources[i], NULL);
-   FREE(buffer);
-
-   return NULL;
 }
