@@ -37,9 +37,28 @@ extern "C" {
 
 #include <stdint.h>
 
+/**
+ * \file gbm.h
+ * \brief Generic Buffer Manager
+ */
+
 struct gbm_device;
 struct gbm_bo;
 
+/**
+ * \mainpage The Generic Buffer Manager
+ *
+ * This module provides an abstraction that the caller can use to request a
+ * buffer from the underlying memory management system for the platform.
+ *
+ * This allows the creation of portable code whilst still allowing access to
+ * the underlying memory manager.
+ */
+
+/**
+ * Abstraction representing the handle to a buffer allocated by the
+ * manager
+ */
 union gbm_bo_handle {
    void *ptr;
    int32_t s32;
@@ -48,14 +67,36 @@ union gbm_bo_handle {
    uint64_t u64;
 };
 
+/** Format of the allocated buffer */
 enum gbm_bo_format {
-   GBM_BO_FORMAT_XRGB8888,
-   GBM_BO_FORMAT_ARGB8888,
+   /** RGB with 8 bits per channel in a 32 bit value */
+   GBM_BO_FORMAT_XRGB8888, 
+   /** ARGB with 8 bits per channel in a 32 bit value */
+   GBM_BO_FORMAT_ARGB8888
 };
 
+/**
+ * Flags to indicate the intended use for the buffer - these are passed into
+ * gbm_bo_create(). The caller must set the union of all the flags that are
+ * appropriate
+ *
+ * \sa Use gbm_device_is_format_supported() to check if the combination of format
+ * and use flags are supported
+ */
 enum gbm_bo_flags {
+   /**
+    * Buffer is going to be presented to the screen using an API such as KMS
+    */
    GBM_BO_USE_SCANOUT      = (1 << 0),
+   /**
+    * Buffer is going to be used as cursor - the dimensions for the buffer
+    * must be 64x64 if this flag is passed.
+    */
    GBM_BO_USE_CURSOR_64X64 = (1 << 1),
+   /**
+    * Buffer is to be used for rendering - for example it is going to be used
+    * as the storage for a color buffer
+    */
    GBM_BO_USE_RENDERING    = (1 << 2),
 };
 
