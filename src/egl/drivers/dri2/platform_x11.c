@@ -248,11 +248,8 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       free(reply);
    }
 
-   if (dri2_dpy->dri2 && type == EGL_WINDOW_BIT &&
-       dri2_surf->base.RenderBuffer == EGL_BACK_BUFFER)
-      dri2_surf->base.PostSubBufferSupportedNV = EGL_TRUE;
-   else
-      dri2_surf->base.PostSubBufferSupportedNV = EGL_FALSE;
+   /* we always copy the back buffer to front */
+   dri2_surf->base.PostSubBufferSupportedNV = EGL_TRUE;
 
    return &dri2_surf->base;
 
@@ -759,6 +756,9 @@ dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 		     EGLint x, EGLint y, EGLint width, EGLint height)
 {
    const EGLint rect[4] = { x, draw->Height - y - height, width, height };
+
+   if (x < 0 || y < 0 || width < 0 || height < 0)
+      _eglError(EGL_BAD_PARAMETER, "eglPostSubBufferNV");
 
    return dri2_swap_buffers_region(drv, disp, draw, 1, rect);
 }
