@@ -764,6 +764,31 @@ dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 }
 
 static EGLBoolean
+dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint interval)
+{
+#if XCB_DRI2_MINOR_VERSION >= 3
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+
+   /* XXX Check vblank_mode here? */
+
+   if (interval > surf->Config->MaxSwapInterval)
+      interval = surf->Config->MaxSwapInterval;
+   else if (interval < surf->Config->MinSwapInterval)
+      interval = surf->Config->MinSwapInterval;
+
+   if (interval != surf->SwapInterval && dri2_dpy->swap_available)
+      xcb_dri2_swap_interval(dri2_dpy->conn, dri2_surf->drawable, interval);
+
+   surf->SwapInterval = interval;
+
+   return EGL_TRUE;
+#else
+   return EGL_FALSE;
+#endif
+}
+
+static EGLBoolean
 dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
 		  EGLNativePixmapType target)
 {
@@ -987,6 +1012,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreateImageKHR = dri2_x11_create_image_khr;
    drv->API.SwapBuffersRegionNOK = dri2_swap_buffers_region;
    drv->API.PostSubBufferNV = dri2_post_sub_buffer;
+   drv->API.SwapInterval = dri2_swap_interval;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -1045,6 +1071,8 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
    dri2_dpy->extensions[1] = &image_lookup_extension.base;
    dri2_dpy->extensions[2] = NULL;
+
+   dri2_dpy->swap_available = (dri2_dpy->dri2_minor >= 2);
 
    if (!dri2_create_screen(disp))
       goto cleanup_fd;

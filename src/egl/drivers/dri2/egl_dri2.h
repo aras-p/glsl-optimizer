@@ -102,6 +102,7 @@ struct dri2_egl_display
    int                       fd;
 
    int                       own_device;
+   int                       swap_available;
 #ifdef HAVE_DRM_PLATFORM
    struct gbm_dri_device    *gbm_dri;
 #endif

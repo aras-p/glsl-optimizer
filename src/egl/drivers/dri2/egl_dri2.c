@@ -259,8 +259,14 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       return NULL;
    }
 
-   if (double_buffer)
+   if (double_buffer) {
       surface_type &= ~EGL_PIXMAP_BIT;
+
+      if (dri2_dpy->swap_available) {
+         conf->base.MinSwapInterval = 0;
+         conf->base.MaxSwapInterval = 1000; /* XXX arbitrary value */
+      }
+   }
 
    conf->base.SurfaceType |= surface_type;
 
