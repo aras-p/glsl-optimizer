@@ -786,7 +786,7 @@ entry:
    }
 }
 
-static INLINE bool
+static INLINE void
 decode_slice(struct vl_mpg12_bs *bs)
 {
    struct pipe_mpeg12_macroblock mb;
@@ -800,6 +800,7 @@ decode_slice(struct vl_mpg12_bs *bs)
    mb.blocks = dct_blocks;
 
    reset_predictor(bs);
+   vl_vlc_fillbits(&bs->vlc);
    dct_scale = quant_scale[bs->desc.q_scale_type][vl_vlc_get_uimsbf(&bs->vlc, 5)];
 
    if (vl_vlc_get_uimsbf(&bs->vlc, 1))
@@ -807,13 +808,15 @@ decode_slice(struct vl_mpg12_bs *bs)
          vl_vlc_fillbits(&bs->vlc);
 
    vl_vlc_fillbits(&bs->vlc);
+   assert(vl_vlc_bits_left(&bs->vlc) > 23 && vl_vlc_peekbits(&bs->vlc, 23));
    do {
       int inc = 0;
 
-      while (vl_vlc_peekbits(&bs->vlc, 11) == 15) {
-         vl_vlc_eatbits(&bs->vlc, 11);
-         vl_vlc_fillbits(&bs->vlc);
-      }
+      if (bs->decoder->profile == PIPE_VIDEO_PROFILE_MPEG1)
+         while (vl_vlc_peekbits(&bs->vlc, 11) == 15) {
+            vl_vlc_eatbits(&bs->vlc, 11);
+            vl_vlc_fillbits(&bs->vlc);
+         }
 
       while (vl_vlc_peekbits(&bs->vlc, 11) == 8) {
          vl_vlc_eatbits(&bs->vlc, 11);
@@ -928,7 +931,6 @@ decode_slice(struct vl_mpg12_bs *bs)
 
    mb.num_skipped_macroblocks = 0;
    bs->decoder->decode_macroblock(bs->decoder, &mb.base, 1);
-   return true;
 }
 
 void
@@ -959,32 +961,22 @@ void
 vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const uint8_t *buffer)
 {
    assert(bs);
-   assert(buffer && num_bytes);
 
-   while(num_bytes > 2) {
-      if (buffer[0] == 0x00 && buffer[1] == 0x00 && buffer[2] == 0x01 &&
-	buffer[3] >= 0x01 && buffer[3] < 0xAF) {
-         unsigned consumed;
+   vl_vlc_init(&bs->vlc, 1, (const void * const *)&buffer, &num_bytes);
+   while (vl_vlc_bits_left(&bs->vlc) > 32) {
+      uint32_t code = vl_vlc_peekbits(&bs->vlc, 32);
 
-         buffer += 3;
-         num_bytes -= 3;
+      if (code >= 0x101 && code <= 0x1AF) {
+         vl_vlc_eatbits(&bs->vlc, 24);
+         decode_slice(bs);
 
-         vl_vlc_init(&bs->vlc, buffer, num_bytes);
-
-         if (!decode_slice(bs))
-            return;
-
-         consumed = num_bytes - vl_vlc_bits_left(&bs->vlc) / 8;
-
-         /* crap, this is a bug we have consumed more bytes than left in the buffer */
-         assert(consumed <= num_bytes);
-
-         num_bytes -= consumed;
-         buffer += consumed;
+         /* align to a byte again */
+         vl_vlc_eatbits(&bs->vlc, vl_vlc_valid_bits(&bs->vlc) & 7);
 
       } else {
-         ++buffer;
-         --num_bytes;
+         vl_vlc_eatbits(&bs->vlc, 8);
       }
+
+      vl_vlc_fillbits(&bs->vlc);
    }
 }
