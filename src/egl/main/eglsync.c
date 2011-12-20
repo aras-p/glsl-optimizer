@@ -33,9 +33,6 @@
 #include "egllog.h"
 
 
-#ifdef EGL_KHR_reusable_sync
-
-
 /**
  * Parse the list of sync attributes and return the proper error code.
  */
@@ -117,6 +114,3 @@ _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
 
    return EGL_TRUE;
 }
-
-
-#endif /* EGL_KHR_reusable_sync */

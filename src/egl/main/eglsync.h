@@ -34,9 +34,6 @@
 #include "egldisplay.h"
 
 
-#ifdef EGL_KHR_reusable_sync
-
-
 /**
  * "Base" class for device driver syncs.
  */
@@ -129,9 +126,6 @@ _eglGetSyncHandle(_EGLSync *sync)
    return (res && _eglIsResourceLinked(res)) ?
       (EGLSyncKHR) sync : EGL_NO_SYNC_KHR;
 }
-
-
-#endif /* EGL_KHR_reusable_sync */
 
 
 #endif /* EGLSYNC_INCLUDED */

@@ -158,7 +158,6 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
-#ifdef EGL_VERSION_1_2
 static EGLint
 _eglQueryContextRenderBuffer(_EGLContext *ctx)
 {
@@ -173,7 +172,6 @@ _eglQueryContextRenderBuffer(_EGLContext *ctx)
       rb = surf->RenderBuffer;
    return rb;
 }
-#endif /* EGL_VERSION_1_2 */
 
 
 EGLBoolean
@@ -195,14 +193,12 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
    case EGL_CONTEXT_CLIENT_VERSION:
       *value = c->ClientVersion;
       break;
-#ifdef EGL_VERSION_1_2
    case EGL_CONTEXT_CLIENT_TYPE:
       *value = c->ClientAPI;
       break;
    case EGL_RENDER_BUFFER:
       *value = _eglQueryContextRenderBuffer(c);
       break;
-#endif /* EGL_VERSION_1_2 */
    default:
       return _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
    }
@@ -310,7 +306,6 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
       return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
 
    switch (ctx->ClientAPI) {
-#ifdef EGL_VERSION_1_4
    /* OpenGL and OpenGL ES are conflicting */
    case EGL_OPENGL_ES_API:
       conflict_api = EGL_OPENGL_API;
@@ -318,7 +313,6 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
    case EGL_OPENGL_API:
       conflict_api = EGL_OPENGL_ES_API;
       break;
-#endif
    default:
       conflict_api = -1;
       break;

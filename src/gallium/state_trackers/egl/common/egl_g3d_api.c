@@ -878,12 +878,10 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 
 #endif
 
-#ifdef EGL_KHR_reusable_sync
    drv->API.CreateSyncKHR = egl_g3d_create_sync;
    drv->API.DestroySyncKHR = egl_g3d_destroy_sync;
    drv->API.ClientWaitSyncKHR = egl_g3d_client_wait_sync;
    drv->API.SignalSyncKHR = egl_g3d_signal_sync;
-#endif
 
 #ifdef EGL_MESA_screen_surface
    drv->API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;

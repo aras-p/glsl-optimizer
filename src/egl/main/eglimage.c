@@ -34,9 +34,6 @@
 #include "egllog.h"
 
 
-#ifdef EGL_KHR_image_base
-
-
 /**
  * Parse the list of image attributes and return the proper error code.
  */
@@ -113,6 +110,3 @@ _eglInitImage(_EGLImage *img, _EGLDisplay *dpy)
 
    return EGL_TRUE;
 }
-
-
-#endif /* EGL_KHR_image_base */

@@ -103,18 +103,14 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->API.QueryModeStringMESA = _eglQueryModeStringMESA;
 #endif /* EGL_MESA_screen_surface */
 
-#ifdef EGL_KHR_image_base
    drv->API.CreateImageKHR = NULL;
    drv->API.DestroyImageKHR = NULL;
-#endif /* EGL_KHR_image_base */
 
-#ifdef EGL_KHR_reusable_sync
    drv->API.CreateSyncKHR = NULL;
    drv->API.DestroySyncKHR = NULL;
    drv->API.ClientWaitSyncKHR = NULL;
    drv->API.SignalSyncKHR = NULL;
    drv->API.GetSyncAttribKHR = _eglGetSyncAttribKHR;
-#endif /* EGL_KHR_reusable_sync */
 
 #ifdef EGL_MESA_drm_image
    drv->API.CreateDRMImageMESA = NULL;

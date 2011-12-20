@@ -96,24 +96,18 @@ typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy,
 #endif /* EGL_MESA_screen_surface */
 
 
-#ifdef EGL_VERSION_1_2
 typedef _EGLSurface *(*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum buftype, EGLClientBuffer buffer, _EGLConfig *config, const EGLint *attrib_list);
-#endif /* EGL_VERSION_1_2 */
 
 
-#ifdef EGL_KHR_image_base
 typedef _EGLImage *(*CreateImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attr_list);
 typedef EGLBoolean (*DestroyImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
-#endif /* EGL_KHR_image_base */
 
 
-#ifdef EGL_KHR_reusable_sync
 typedef _EGLSync *(*CreateSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum type, const EGLint *attrib_list);
 typedef EGLBoolean (*DestroySyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync);
 typedef EGLint (*ClientWaitSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLint flags, EGLTimeKHR timeout);
 typedef EGLBoolean (*SignalSyncKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLenum mode);
 typedef EGLBoolean (*GetSyncAttribKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync, EGLint attribute, EGLint *value);
-#endif /* EGL_KHR_reusable_sync */
 
 
 #ifdef EGL_NOK_swap_region
@@ -180,22 +174,16 @@ struct _egl_api
    QueryModeStringMESA_t QueryModeStringMESA;
 #endif /* EGL_MESA_screen_surface */
 
-#ifdef EGL_VERSION_1_2
    CreatePbufferFromClientBuffer_t CreatePbufferFromClientBuffer;
-#endif
 
-#ifdef EGL_KHR_image_base
    CreateImageKHR_t CreateImageKHR;
    DestroyImageKHR_t DestroyImageKHR;
-#endif /* EGL_KHR_image_base */
 
-#ifdef EGL_KHR_reusable_sync
    CreateSyncKHR_t CreateSyncKHR;
    DestroySyncKHR_t DestroySyncKHR;
    ClientWaitSyncKHR_t ClientWaitSyncKHR;
    SignalSyncKHR_t SignalSyncKHR;
    GetSyncAttribKHR_t GetSyncAttribKHR;
-#endif /* EGL_KHR_reusable_sync */
 
 #ifdef EGL_NOK_swap_region
    SwapBuffersRegionNOK_t SwapBuffersRegionNOK;
