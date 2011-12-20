@@ -28,7 +28,6 @@
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-#include "intel_decode.h"
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
@@ -118,6 +117,45 @@ intel_batchbuffer_free(struct intel_context *intel)
    clear_cache(intel);
 }
 
+static void
+do_batch_dump(struct intel_context *intel)
+{
+   struct drm_intel_decode *decode;
+   struct intel_batchbuffer *batch = &intel->batch;
+   int ret;
+
+   decode = drm_intel_decode_context_alloc(intel->intelScreen->deviceID);
+   if (!decode)
+      return;
+
+   ret = drm_intel_bo_map(batch->bo, false);
+   if (ret == 0) {
+      drm_intel_decode_set_batch_pointer(decode,
+					 batch->bo->virtual,
+					 batch->bo->offset,
+					 batch->used);
+   } else {
+      fprintf(stderr,
+	      "WARNING: failed to map batchbuffer (%s), "
+	      "dumping uploaded data instead.\n", strerror(ret));
+
+      drm_intel_decode_set_batch_pointer(decode,
+					 batch->map,
+					 batch->bo->offset,
+					 batch->used);
+   }
+
+   drm_intel_decode(decode);
+
+   drm_intel_decode_context_free(decode);
+
+   if (ret == 0) {
+      drm_intel_bo_unmap(batch->bo);
+
+      if (intel->vtbl.debug_batch != NULL)
+	 intel->vtbl.debug_batch(intel);
+   }
+}
 
 /* TODO: Push this whole function into bufmgr.
  */
@@ -152,16 +190,8 @@ do_flush_locked(struct intel_context *intel)
 				     flags);
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
-      drm_intel_bo_map(batch->bo, false);
-      intel_decode(batch->bo->virtual, batch->used,
-		   batch->bo->offset,
-		   intel->intelScreen->deviceID, true);
-      drm_intel_bo_unmap(batch->bo);
-
-      if (intel->vtbl.debug_batch != NULL)
-	 intel->vtbl.debug_batch(intel);
-   }
+   if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
+      do_batch_dump(intel);
 
    if (ret != 0) {
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));

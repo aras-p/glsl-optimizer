@@ -41,7 +41,6 @@ i915_C_FILES := \
 	i915_state.c \
 	i915_vtbl.c \
 	intel_context.c \
-	intel_decode.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \
