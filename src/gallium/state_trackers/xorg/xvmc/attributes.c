@@ -53,15 +53,12 @@ static const XvAttribute attributes[] = {
 PUBLIC
 XvAttribute* XvMCQueryAttributes(Display *dpy, XvMCContext *context, int *number)
 {
-   XvMCContextPrivate *context_priv;
    XvAttribute *result;
 
    assert(dpy && number);
 
    if (!context || !context->privData)
       return NULL;
-
-   context_priv = context->privData;
 
    result = malloc(sizeof(attributes));
    if (!result)
