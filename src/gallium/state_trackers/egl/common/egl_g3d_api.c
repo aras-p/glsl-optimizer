@@ -296,13 +296,9 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
        gconf->stvis.buffer_mask & ST_ATTACHMENT_FRONT_LEFT_MASK)
       gsurf->stvis.render_buffer = ST_ATTACHMENT_FRONT_LEFT;
 
-   if (dpy->Extensions.NV_post_sub_buffer) {
-      if (gsurf->base.Type == EGL_WINDOW_BIT &&
-          gsurf->base.RenderBuffer == EGL_BACK_BUFFER)
-         gsurf->base.PostSubBufferSupportedNV = EGL_TRUE;
-      else
-         gsurf->base.PostSubBufferSupportedNV = EGL_FALSE;
-   }
+   /* surfaces can always be posted when the display supports it */
+   if (dpy->Extensions.NV_post_sub_buffer)
+      gsurf->base.PostSubBufferSupportedNV = EGL_TRUE;
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
@@ -613,8 +609,25 @@ static EGLBoolean
 egl_g3d_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                         EGLint x, EGLint y, EGLint width, EGLint height)
 {
+   EGLint rect[4];
+
+   if (x < 0 || y < 0 || width < 0 || height < 0)
+      return _eglError(EGL_BAD_PARAMETER, "eglPostSubBufferNV");
+
+   /* clamp */
+   if (x + width > surf->Width)
+      width = surf->Width - x;
+   if (y + height > surf->Height)
+      height = surf->Height - y;
+
+   if (width <= 0 || height <= 0)
+      return EGL_TRUE;
+
+   rect[0] = x;
    /* Note: y=0=bottom */
-   const EGLint rect[4] = { x, surf->Height - y - height, width, height };
+   rect[1] = surf->Height - y - height;
+   rect[2] = width;
+   rect[3] = height;
 
    return swap_buffers(drv, dpy, surf, 1, rect, EGL_TRUE);
 }
