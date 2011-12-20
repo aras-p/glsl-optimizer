@@ -132,7 +132,7 @@ create_frag_shader_palette(struct vl_compositor *c, bool include_cc)
    if (!shader)
       return false;
 
-   for (i = 0; i < 3; ++i)
+   for (i = 0; include_cc && i < 3; ++i)
       csc[i] = ureg_DECL_constant(shader, i);
 
    tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
