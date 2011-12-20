@@ -223,7 +223,10 @@ brw_depthbuffer_format(struct brw_context *brw)
    case MESA_FORMAT_Z32_FLOAT:
       return BRW_DEPTHFORMAT_D32_FLOAT;
    case MESA_FORMAT_X8_Z24:
-      return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
+      if (intel->gen >= 5)
+	 return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
+      else /* Gen4 doesn't support X8; use S8 instead. */
+	 return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
    case MESA_FORMAT_S8_Z24:
       return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
