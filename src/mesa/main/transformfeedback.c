@@ -387,6 +387,7 @@ _mesa_EndTransformFeedback(void)
 
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    ctx->TransformFeedback.CurrentObject->Active = GL_FALSE;
+   ctx->TransformFeedback.CurrentObject->Paused = GL_FALSE;
    ctx->TransformFeedback.CurrentObject->EndedAnytime = GL_TRUE;
 
    assert(ctx->Driver.EndTransformFeedback);
