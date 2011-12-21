@@ -3073,6 +3073,12 @@ struct gl_matrix_stack
 #define _NEW_FRAG_CLAMP        (1 << 29)
 #define _NEW_TRANSFORM_FEEDBACK (1 << 30) /**< gl_context::TransformFeedback */
 #define _NEW_ALL ~0
+
+/**
+ * We use _NEW_TRANSFORM for GL_RASTERIZER_DISCARD.  This #define is for
+ * clarity.
+ */
+#define _NEW_RASTERIZER_DISCARD _NEW_TRANSFORM
 /*@}*/
 
 

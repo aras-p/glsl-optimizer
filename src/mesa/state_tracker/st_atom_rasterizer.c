@@ -258,7 +258,7 @@ static void update_raster_state( struct st_context *st )
    raster->clamp_fragment_color = ctx->Color._ClampFragmentColor;
    raster->gl_rasterization_rules = 1;
 
-   /* _NEW_TRANSFORM */
+   /* _NEW_RASTERIZER_DISCARD */
    raster->rasterizer_discard = ctx->RasterDiscard;
 
    cso_set_rasterizer(st->cso_context, raster);
@@ -276,7 +276,7 @@ const struct st_tracked_state st_update_rasterizer = {
        _NEW_PROGRAM |
        _NEW_SCISSOR |
        _NEW_FRAG_CLAMP |
-       _NEW_TRANSFORM),      /* mesa state dependencies*/
+       _NEW_RASTERIZER_DISCARD),      /* mesa state dependencies*/
       ST_NEW_VERTEX_PROGRAM,  /* state tracker dependencies */
    },
    update_raster_state     /* update function */
