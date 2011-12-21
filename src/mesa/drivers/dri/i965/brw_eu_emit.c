@@ -1451,11 +1451,10 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
 
 /* FORWARD JUMPS:
  */
-void brw_land_fwd_jump(struct brw_compile *p, 
-		       struct brw_instruction *jmp_insn)
+void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx)
 {
    struct intel_context *intel = &p->brw->intel;
-   struct brw_instruction *landing = &p->store[p->nr_insn];
+   struct brw_instruction *jmp_insn = &p->store[jmp_insn_idx];
    GLuint jmpi = 1;
 
    if (intel->gen >= 5)
@@ -1464,7 +1463,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
    assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
 
-   jmp_insn->bits3.ud = jmpi * ((landing - jmp_insn) - 1);
+   jmp_insn->bits3.ud = jmpi * (p->nr_insn - jmp_insn_idx - 1);
 }
 
 

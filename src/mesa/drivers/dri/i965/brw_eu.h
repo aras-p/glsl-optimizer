@@ -1039,8 +1039,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_CONT(struct brw_compile *p);
 /* Forward jumps:
  */
-void brw_land_fwd_jump(struct brw_compile *p, 
-		       struct brw_instruction *jmp_insn);
+void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx);
 
 
 

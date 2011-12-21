@@ -1528,7 +1528,7 @@ void emit_fb_write(struct brw_wm_compile *c,
    else {
       struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
       struct brw_reg ip = brw_ip_reg();
-      struct brw_instruction *jmp;
+      int jmp;
       
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
@@ -1537,7 +1537,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 	      get_element_ud(brw_vec8_grf(1,0), 6), 
 	      brw_imm_ud(1<<26)); 
 
-      jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+      jmp = brw_JMPI(p, ip, ip, brw_imm_w(0)) - p->store;
       {
 	 emit_aa(c, arg1, 2);
 	 fire_fb_write(c, 0, nr, target, eot);

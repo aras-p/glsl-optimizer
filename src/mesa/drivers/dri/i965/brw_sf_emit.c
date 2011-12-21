@@ -717,7 +717,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    struct brw_reg payload_prim = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0);
    struct brw_reg payload_attr = get_element_ud(brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0), 0); 
    struct brw_reg primmask;
-   struct brw_instruction *jmp;
+   int jmp;
    struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
    
    GLuint saveflag;
@@ -738,7 +738,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_POLYGON) |
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -759,7 +759,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT) |
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -772,7 +772,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
