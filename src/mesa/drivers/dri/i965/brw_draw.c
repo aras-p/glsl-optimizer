@@ -389,7 +389,8 @@ brw_update_primitive_count(struct brw_context *brw,
 {
    uint32_t count = count_tessellated_primitives(prim);
    brw->sol.primitives_generated += count;
-   if (brw->intel.ctx.TransformFeedback.CurrentObject->Active) {
+   if (brw->intel.ctx.TransformFeedback.CurrentObject->Active &&
+       !brw->intel.ctx.TransformFeedback.CurrentObject->Paused) {
       /* Update brw->sol.svbi_0_max_index to reflect the amount by which the
        * hardware is going to increment SVBI 0 when this drawing operation
        * occurs.  This is necessary because the kernel does not (yet) save and

@@ -47,7 +47,8 @@ gen6_update_sol_surfaces(struct brw_context *brw)
 
    for (i = 0; i < BRW_MAX_SOL_BINDINGS; ++i) {
       const int surf_index = SURF_INDEX_SOL_BINDING(i);
-      if (xfb_obj->Active && i < linked_xfb_info->NumOutputs) {
+      if (xfb_obj->Active && !xfb_obj->Paused &&
+          i < linked_xfb_info->NumOutputs) {
          unsigned buffer = linked_xfb_info->Outputs[i].OutputBuffer;
          unsigned buffer_offset =
             xfb_obj->Offset[buffer] / 4 +
