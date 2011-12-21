@@ -62,7 +62,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (intelObj->mt &&
        (!intel_miptree_match_image(intelObj->mt, &firstImage->base.Base) ||
-	intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
 	intelObj->mt->last_level < intelObj->_MaxLevel)) {
       intel_miptree_release(&intelObj->mt);

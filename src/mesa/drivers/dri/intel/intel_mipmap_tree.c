@@ -333,6 +333,9 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    GLuint level = intelImage->base.Base.Level;
    int width, height, depth;
 
+   if (target_to_target(image->TexObject->Target) != mt->target)
+      return false;
+
    if (image->TexFormat != mt->format &&
        !(image->TexFormat == MESA_FORMAT_S8_Z24 &&
 	 mt->format == MESA_FORMAT_X8_Z24 &&
