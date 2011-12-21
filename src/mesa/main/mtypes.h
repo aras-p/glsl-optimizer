@@ -2386,8 +2386,6 @@ struct gl_transform_feedback
 {
    GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
 
-   GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
-
    /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
    struct gl_buffer_object *CurrentBuffer;
 
@@ -3406,6 +3404,8 @@ struct gl_context
     * transformation?
     */
    GLboolean mvp_with_dp4;
+
+   GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
 
    /**
     * \name Hooks for module contexts.  

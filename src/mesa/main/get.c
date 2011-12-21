@@ -1204,7 +1204,7 @@ static const struct value_desc values[] = {
    /* GL_EXT_transform_feedback */
    { GL_TRANSFORM_FEEDBACK_BUFFER_BINDING, LOC_CUSTOM, TYPE_INT, 0,
      extra_EXT_transform_feedback },
-   { GL_RASTERIZER_DISCARD, CONTEXT_BOOL(TransformFeedback.RasterDiscard),
+   { GL_RASTERIZER_DISCARD, CONTEXT_BOOL(RasterDiscard),
      extra_EXT_transform_feedback },
    { GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS,
      CONTEXT_INT(Const.MaxTransformFeedbackInterleavedComponents),

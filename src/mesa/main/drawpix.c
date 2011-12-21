@@ -98,7 +98,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       goto end;      /* the error code was recorded */
    }
 
-   if (ctx->TransformFeedback.RasterDiscard) {
+   if (ctx->RasterDiscard) {
       goto end;
    }
 
@@ -210,7 +210,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       goto end;
    }
 
-   if (ctx->TransformFeedback.RasterDiscard) {
+   if (ctx->RasterDiscard) {
       goto end;
    }
 
@@ -268,7 +268,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       return;
    }
 
-   if (ctx->TransformFeedback.RasterDiscard)
+   if (ctx->RasterDiscard)
       return;
 
    if (ctx->RenderMode == GL_RENDER) {

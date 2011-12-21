@@ -259,7 +259,7 @@ static void update_raster_state( struct st_context *st )
    raster->gl_rasterization_rules = 1;
 
    /* _NEW_TRANSFORM */
-   raster->rasterizer_discard = ctx->TransformFeedback.RasterDiscard;
+   raster->rasterizer_discard = ctx->RasterDiscard;
 
    cso_set_rasterizer(st->cso_context, raster);
 }

@@ -210,7 +210,7 @@ static void populate_key( struct brw_context *brw,
       }
       /* On Gen6, GS is also used for rasterizer discard. */
       /* _NEW_TRANSFORM_FEEDBACK */
-      if (ctx->TransformFeedback.RasterDiscard) {
+      if (ctx->RasterDiscard) {
          key->need_gs_prog = true;
          key->rasterizer_discard = true;
       }

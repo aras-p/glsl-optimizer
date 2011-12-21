@@ -100,7 +100,7 @@ _mesa_Accum( GLenum op, GLfloat value )
       return;
    }
 
-   if (ctx->TransformFeedback.RasterDiscard)
+   if (ctx->RasterDiscard)
       return;
 
    if (ctx->RenderMode == GL_RENDER) {
