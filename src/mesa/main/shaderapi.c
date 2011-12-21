@@ -1436,7 +1436,7 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (obj->Active) {
+   if (obj->Active && !obj->Paused) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
       return;
@@ -1638,7 +1638,8 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       return;
    }
 
-   if (ctx->TransformFeedback.CurrentObject->Active) {
+   if (ctx->TransformFeedback.CurrentObject->Active &&
+       !ctx->TransformFeedback.CurrentObject->Paused) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseShaderProgramEXT(transform feedback is active)");
       return;

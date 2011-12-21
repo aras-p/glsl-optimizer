@@ -98,7 +98,8 @@ reference_transform_feedback_object(struct gl_transform_feedback_object **ptr,
 GLboolean
 _mesa_validate_primitive_mode(struct gl_context *ctx, GLenum mode)
 {
-   if (ctx->TransformFeedback.CurrentObject->Active) {
+   if (ctx->TransformFeedback.CurrentObject->Active &&
+       !ctx->TransformFeedback.CurrentObject->Paused) {
       switch (mode) {
       case GL_POINTS:
          return ctx->TransformFeedback.Mode == GL_POINTS;
