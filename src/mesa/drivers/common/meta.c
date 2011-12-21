@@ -180,6 +180,7 @@ struct save_state
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
+   GLboolean RasterDiscard;
 };
 
 /**
@@ -702,6 +703,9 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->Lighting = ctx->Light.Enabled;
       if (ctx->Light.Enabled)
          _mesa_set_enable(ctx, GL_LIGHTING, GL_FALSE);
+      save->RasterDiscard = ctx->RasterDiscard;
+      if (ctx->RasterDiscard)
+         _mesa_set_enable(ctx, GL_RASTERIZER_DISCARD, GL_FALSE);
    }
 }
 
@@ -980,6 +984,9 @@ _mesa_meta_end(struct gl_context *ctx)
    /* misc */
    if (save->Lighting) {
       _mesa_set_enable(ctx, GL_LIGHTING, GL_TRUE);
+   }
+   if (save->RasterDiscard) {
+      _mesa_set_enable(ctx, GL_RASTERIZER_DISCARD, GL_TRUE);
    }
 }
 
