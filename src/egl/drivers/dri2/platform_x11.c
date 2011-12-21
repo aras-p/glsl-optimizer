@@ -740,23 +740,12 @@ dri2_swap_buffers_msc(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 #endif
 
    return swap_count;
-#else /* XCB_DRI2_MINOR_VERSION >= 3 */
-   return dri2_copy_region(drv, disp, draw, dri2_surf->region) ? 0 : -1;
-#endif
-}
-
-static void
-dri2_flush_if_current(_EGLDriver *drv, _EGLSurface *draw)
-{
-   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+#else
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
 
-   if (dri2_drv->glFlush) {
-      _EGLContext *ctx = _eglGetCurrentContext();
+   return dri2_copy_region(drv, disp, draw, dri2_surf->region) ? 0 : -1;
+#endif /* XCB_DRI2_MINOR_VERSION >= 3 */
 
-      if (ctx && ctx->DrawSurface == &dri2_surf->base)
-         dri2_drv->glFlush();
-   }
 }
 
 static EGLBoolean
@@ -766,8 +755,6 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
 
    if (dri2_dpy->dri2) {
-      dri2_flush_if_current(drv, draw);
-
       return dri2_swap_buffers_msc(drv, disp, draw, 0, 0, 0) != -1;
    } else {
       assert(dri2_dpy->swrast);
@@ -787,8 +774,6 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
    xcb_xfixes_region_t region;
    xcb_rectangle_t rectangles[16];
    int i;
-
-   dri2_flush_if_current(drv, draw);
 
    if (numRects > (int)ARRAY_SIZE(rectangles))
       return dri2_copy_region(drv, disp, draw, dri2_surf->region);
@@ -827,6 +812,7 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint
 #if XCB_DRI2_MINOR_VERSION >= 3
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+#endif
 
    /* XXX Check vblank_mode here? */
 
@@ -835,15 +821,14 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint
    else if (interval < surf->Config->MinSwapInterval)
       interval = surf->Config->MinSwapInterval;
 
+#if XCB_DRI2_MINOR_VERSION >= 3
    if (interval != surf->SwapInterval && dri2_dpy->swap_available)
       xcb_dri2_swap_interval(dri2_dpy->conn, dri2_surf->drawable, interval);
+#endif
 
    surf->SwapInterval = interval;
 
    return EGL_TRUE;
-#else
-   return EGL_FALSE;
-#endif
 }
 
 static EGLBoolean
@@ -1130,8 +1115,10 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->extensions[1] = &image_lookup_extension.base;
    dri2_dpy->extensions[2] = NULL;
 
+#if XCB_DRI2_MINOR_VERSION >= 3
    dri2_dpy->swap_available = (dri2_dpy->dri2_minor >= 2);
    dri2_dpy->invalidate_available = (dri2_dpy->dri2_minor >= 3);
+#endif
 
    if (!dri2_create_screen(disp))
       goto cleanup_fd;
