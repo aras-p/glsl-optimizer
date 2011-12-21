@@ -65,6 +65,7 @@
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"
+#include "main/transformfeedback.h"
 #include "main/uniforms.h"
 #include "main/varray.h"
 #include "main/viewport.h"
@@ -181,6 +182,7 @@ struct save_state
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
    GLboolean RasterDiscard;
+   GLboolean TransformFeedbackNeedsResume;
 };
 
 /**
@@ -422,6 +424,15 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth++];
    memset(save, 0, sizeof(*save));
    save->SavedState = state;
+
+   /* Pausing transform feedback needs to be done early, or else we won't be
+    * able to change other state.
+    */
+   save->TransformFeedbackNeedsResume =
+      ctx->TransformFeedback.CurrentObject->Active &&
+      !ctx->TransformFeedback.CurrentObject->Paused;
+   if (save->TransformFeedbackNeedsResume)
+      _mesa_PauseTransformFeedback();
 
    if (state & MESA_META_ALPHA_TEST) {
       save->AlphaEnabled = ctx->Color.AlphaEnabled;
@@ -988,6 +999,8 @@ _mesa_meta_end(struct gl_context *ctx)
    if (save->RasterDiscard) {
       _mesa_set_enable(ctx, GL_RASTERIZER_DISCARD, GL_TRUE);
    }
+   if (save->TransformFeedbackNeedsResume)
+      _mesa_ResumeTransformFeedback();
 }
 
 
