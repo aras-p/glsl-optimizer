@@ -933,7 +933,7 @@ FlowInstruction::FlowInstruction(Function *fn, operation op,
    if (op == OP_JOIN)
       terminator = targ ? 1 : 0;
 
-   allWarp = absolute = limit = 0;
+   allWarp = absolute = limit = builtin = 0;
 }
 
 FlowInstruction *
