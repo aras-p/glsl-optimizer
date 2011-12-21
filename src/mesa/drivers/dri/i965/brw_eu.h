@@ -101,10 +101,10 @@ struct brw_glsl_call;
 
 
 #define BRW_EU_MAX_INSN_STACK 5
-#define BRW_EU_MAX_INSN 10000
 
 struct brw_compile {
-   struct brw_instruction store[BRW_EU_MAX_INSN];
+   struct brw_instruction *store;
+   int store_size;
    GLuint nr_insn;
 
    void *mem_ctx;

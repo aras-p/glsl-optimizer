@@ -691,7 +691,15 @@ brw_next_insn(struct brw_compile *p, GLuint opcode)
 {
    struct brw_instruction *insn;
 
-   assert(p->nr_insn + 1 < BRW_EU_MAX_INSN);
+   if (p->nr_insn + 1 > p->store_size) {
+      if (0)
+         printf("incresing the store size to %d\n", p->store_size << 1);
+      p->store_size <<= 1;
+      p->store = reralloc(p->mem_ctx, p->store,
+                          struct brw_instruction, p->store_size);
+      if (!p->store)
+         assert(!"realloc eu store memeory failed");
+   }
 
    insn = &p->store[p->nr_insn++];
    memcpy(insn, p->current, sizeof(*insn));

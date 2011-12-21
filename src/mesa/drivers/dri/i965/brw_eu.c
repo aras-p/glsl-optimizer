@@ -174,6 +174,13 @@ void
 brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 {
    p->brw = brw;
+   /*
+    * Set the initial instruction store array size to 1024, if found that
+    * isn't enough, then it will double the store size at brw_next_insn()
+    * until out of memory.
+    */
+   p->store_size = 1024;
+   p->store = rzalloc_array(mem_ctx, struct brw_instruction, p->store_size);
    p->nr_insn = 0;
    p->current = p->stack;
    p->compressed = false;
