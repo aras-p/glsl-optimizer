@@ -1197,15 +1197,7 @@ brw_ENDIF(struct brw_compile *p)
    struct brw_instruction *else_inst = NULL;
    struct brw_instruction *if_inst = NULL;
    struct brw_instruction *tmp;
-
-   /* Pop the IF and (optional) ELSE instructions from the stack */
-   p->if_depth_in_loop[p->loop_stack_depth]--;
-   tmp = pop_if_stack(p);
-   if (tmp->header.opcode == BRW_OPCODE_ELSE) {
-      else_inst = tmp;
-      tmp = pop_if_stack(p);
-   }
-   if_inst = tmp;
+   bool emit_endif = true;
 
    /* In single program flow mode, we can express IF and ELSE instructions
     * equivalently as ADD instructions that operate on IP.  On platforms prior
@@ -1219,13 +1211,31 @@ brw_ENDIF(struct brw_compile *p)
     * instructions to conditional ADDs.  So we only do this trick on Gen4 and
     * Gen5.
     */
-   if (intel->gen < 6 && p->single_program_flow) {
+   if (intel->gen < 6 && p->single_program_flow)
+      emit_endif = false;
+
+   /*
+    * A single next_insn() may change the base adress of instruction store
+    * memory(p->store), so call it first before referencing the instruction
+    * store pointer from an index
+    */
+   if (emit_endif)
+      insn = next_insn(p, BRW_OPCODE_ENDIF);
+
+   /* Pop the IF and (optional) ELSE instructions from the stack */
+   p->if_depth_in_loop[p->loop_stack_depth]--;
+   tmp = pop_if_stack(p);
+   if (tmp->header.opcode == BRW_OPCODE_ELSE) {
+      else_inst = tmp;
+      tmp = pop_if_stack(p);
+   }
+   if_inst = tmp;
+
+   if (!emit_endif) {
       /* ENDIF is useless; don't bother emitting it. */
       convert_IF_ELSE_to_ADD(p, if_inst, else_inst);
       return;
    }
-
-   insn = next_insn(p, BRW_OPCODE_ENDIF);
 
    if (intel->gen < 6) {
       brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
@@ -1392,13 +1402,12 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
    struct brw_instruction *insn, *do_insn;
    GLuint br = 1;
 
-   do_insn = get_inner_do_insn(p);
-
    if (intel->gen >= 5)
       br = 2;
 
    if (intel->gen >= 7) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
+      do_insn = get_inner_do_insn(p);
 
       brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -1408,6 +1417,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
       insn->header.execution_size = BRW_EXECUTE_8;
    } else if (intel->gen == 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
+      do_insn = get_inner_do_insn(p);
 
       brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = br * (do_insn - insn);
@@ -1418,6 +1428,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
    } else {
       if (p->single_program_flow) {
 	 insn = next_insn(p, BRW_OPCODE_ADD);
+         do_insn = get_inner_do_insn(p);
 
 	 brw_set_dest(p, insn, brw_ip_reg());
 	 brw_set_src0(p, insn, brw_ip_reg());
@@ -1425,6 +1436,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
 	 insn->header.execution_size = BRW_EXECUTE_1;
       } else {
 	 insn = next_insn(p, BRW_OPCODE_WHILE);
+         do_insn = get_inner_do_insn(p);
 
 	 assert(do_insn->header.opcode == BRW_OPCODE_DO);
 
