@@ -123,8 +123,10 @@ struct brw_compile {
    /* Control flow stacks:
     * - if_stack contains IF and ELSE instructions which must be patched
     *   (and popped) once the matching ENDIF instruction is encountered.
+    *
+    *   Just store the instruction pointer(an index).
     */
-   struct brw_instruction **if_stack;
+   int *if_stack;
    int if_stack_depth;
    int if_stack_array_size;
 

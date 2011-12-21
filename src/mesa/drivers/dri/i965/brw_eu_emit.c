@@ -901,14 +901,21 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
 static void
 push_if_stack(struct brw_compile *p, struct brw_instruction *inst)
 {
-   p->if_stack[p->if_stack_depth] = inst;
+   p->if_stack[p->if_stack_depth] = inst - p->store;
 
    p->if_stack_depth++;
    if (p->if_stack_array_size <= p->if_stack_depth) {
       p->if_stack_array_size *= 2;
-      p->if_stack = reralloc(p->mem_ctx, p->if_stack, struct brw_instruction *,
+      p->if_stack = reralloc(p->mem_ctx, p->if_stack, int,
 			     p->if_stack_array_size);
    }
+}
+
+static struct brw_instruction *
+pop_if_stack(struct brw_compile *p)
+{
+   p->if_stack_depth--;
+   return &p->store[p->if_stack[p->if_stack_depth]];
 }
 
 static void
@@ -1189,15 +1196,16 @@ brw_ENDIF(struct brw_compile *p)
    struct brw_instruction *insn;
    struct brw_instruction *else_inst = NULL;
    struct brw_instruction *if_inst = NULL;
+   struct brw_instruction *tmp;
 
    /* Pop the IF and (optional) ELSE instructions from the stack */
    p->if_depth_in_loop[p->loop_stack_depth]--;
-   p->if_stack_depth--;
-   if (p->if_stack[p->if_stack_depth]->header.opcode == BRW_OPCODE_ELSE) {
-      else_inst = p->if_stack[p->if_stack_depth];
-      p->if_stack_depth--;
+   tmp = pop_if_stack(p);
+   if (tmp->header.opcode == BRW_OPCODE_ELSE) {
+      else_inst = tmp;
+      tmp = pop_if_stack(p);
    }
-   if_inst = p->if_stack[p->if_stack_depth];
+   if_inst = tmp;
 
    /* In single program flow mode, we can express IF and ELSE instructions
     * equivalently as ADD instructions that operate on IP.  On platforms prior
