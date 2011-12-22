@@ -35,7 +35,7 @@
 typedef struct {
    GLuint NewState;
    GLenum render_prim;
-   DECLARE_RENDERINPUTS(last_index_bitset);
+   GLbitfield64 last_index_bitset;
    SWvertex *verts;
    GLboolean intColors;
 } SScontext;

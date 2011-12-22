@@ -483,18 +483,6 @@ struct tnl_device_driver
 };
 
 
-#define DECLARE_RENDERINPUTS(name) GLbitfield64 name
-#define RENDERINPUTS_COPY(x, y) do { (x) = (y); } while (0)
-#define RENDERINPUTS_EQUAL(x, y) ((x) == (y))
-#define RENDERINPUTS_ZERO(x) do { (x) = 0; } while (0)
-#define RENDERINPUTS_ONES(x) do { (x) = ~(GLbitfield64)0; } while (0)
-#define RENDERINPUTS_TEST(x, b) (((x) & BITFIELD64_BIT(b)) != 0)
-#define RENDERINPUTS_SET(x, b) ((x) |= BITFIELD64_BIT(b))
-#define RENDERINPUTS_CLEAR(x, b) ((x) &= ~BITFIELD64_BIT(b))
-#define RENDERINPUTS_TEST_RANGE(x, b, e) \
-   (((x) & BITFIELD64_RANGE((b), (e) - (b) + 1)) != 0)
-
-
 /**
  * Context state for T&L context.
  */
@@ -520,7 +508,7 @@ typedef struct
    GLboolean AllowPixelFog;
    GLboolean _DoVertexFog;  /* eval fog function at each vertex? */
 
-   DECLARE_RENDERINPUTS(render_inputs_bitset);
+   GLbitfield64 render_inputs_bitset;
 
    GLvector4f tmp_inputs[VERT_ATTRIB_MAX];
 
