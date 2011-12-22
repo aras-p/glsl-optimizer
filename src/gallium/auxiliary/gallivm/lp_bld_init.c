@@ -345,6 +345,7 @@ gallivm_remove_garbage_collector_callback(garbage_collect_callback_func func,
       if (cb->func == func && cb->cb_data == cb_data) {
          /* found, remove it */
          remove_from_list(cb);
+         FREE(cb);
          return;
       }
    }
