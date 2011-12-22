@@ -1078,6 +1078,7 @@ void emit_tex(struct brw_wm_compile *c,
    case TEXTURE_2D_INDEX:
    case TEXTURE_1D_ARRAY_INDEX:
    case TEXTURE_RECT_INDEX:
+   case TEXTURE_EXTERNAL_INDEX:
       emit = WRITEMASK_XY;
       nr_texcoords = 2;
       break;
@@ -1212,6 +1213,7 @@ void emit_txb(struct brw_wm_compile *c,
       break;
    case TEXTURE_2D_INDEX:
    case TEXTURE_RECT_INDEX:
+   case TEXTURE_EXTERNAL_INDEX:
       brw_MOV(p, brw_message_reg(2 + 0 * mrf_per_channel), arg[0]);
       brw_MOV(p, brw_message_reg(2 + 1 * mrf_per_channel), arg[1]);
       brw_MOV(p, brw_message_reg(2 + 2 * mrf_per_channel), brw_imm_f(0));

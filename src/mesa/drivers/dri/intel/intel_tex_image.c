@@ -84,6 +84,8 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 	  intelImage->base.Base.Level == firstLevel &&
 	  (intel->gen < 4 || firstLevel == 0)) {
 	 lastLevel = firstLevel;
+      } else if (intelObj->base.Target == GL_TEXTURE_EXTERNAL_OES) {
+	 lastLevel = firstLevel;
       } else {
 	 lastLevel = firstLevel + _mesa_logbase2(MAX2(MAX2(width, height), depth));
       }
