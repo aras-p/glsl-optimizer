@@ -55,7 +55,7 @@ swtnl_emit_attr(struct gl_context *ctx, struct tnl_attr_map *m, int attr, int em
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, attr))
+	if (tnl->render_inputs_bitset & BITFIELD64_BIT(attr))
 		*m = (struct tnl_attr_map) {
 			.attrib = attr,
 			.format = emit,

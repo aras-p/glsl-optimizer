@@ -123,7 +123,7 @@ swtnl_choose_attrs(struct gl_context *ctx)
 		if (!sa->fields)
 			continue; /* Unsupported attribute. */
 
-		if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, i)) {
+		if (tnl->render_inputs_bitset & BITFIELD64_BIT(i)) {
 			if (sa->fields > 0)
 				fields = sa->fields;
 			else
