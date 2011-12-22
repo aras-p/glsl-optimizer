@@ -828,7 +828,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 	 drm_intel_bo_unreference(brw->wm.const_bo);
 	 brw->wm.const_bo = NULL;
 	 brw->bind.surf_offset[surf_index] = 0;
-	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+	 brw->state.dirty.brw |= BRW_NEW_SURFACES;
       }
       return;
    }
@@ -850,7 +850,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
 				       params->NumParameters,
 				       &brw->bind.surf_offset[surf_index]);
 
-   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state brw_wm_pull_constants = {
@@ -1004,7 +1004,7 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw)
    } else {
       intel->vtbl.update_null_renderbuffer_surface(brw, 0);
    }
-   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state brw_renderbuffer_surfaces = {
@@ -1046,7 +1046,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
       }
    }
 
-   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state brw_texture_surfaces = {
@@ -1075,7 +1075,7 @@ brw_upload_binding_table(struct brw_context *brw)
 			  sizeof(uint32_t) * BRW_MAX_SURFACES,
 			  32, &brw->bind.bo_offset);
 
-   /* BRW_NEW_WM_SURFACES and BRW_NEW_VS_CONSTBUF */
+   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
    for (i = 0; i < BRW_MAX_SURFACES; i++) {
       bind[i] = brw->bind.surf_offset[i];
    }
@@ -1089,7 +1089,7 @@ const struct brw_tracked_state brw_binding_table = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
 	      BRW_NEW_VS_CONSTBUF |
-	      BRW_NEW_WM_SURFACES),
+	      BRW_NEW_SURFACES),
       .cache = 0
    },
    .emit = brw_upload_binding_table,
