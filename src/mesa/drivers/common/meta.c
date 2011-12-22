@@ -588,6 +588,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
                _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
             if (ctx->Extensions.NV_texture_rectangle)
                _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
+            if (ctx->Extensions.OES_EGL_image_external)
+               _mesa_set_enable(ctx, GL_TEXTURE_EXTERNAL_OES, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
             _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
