@@ -79,12 +79,10 @@ i830_render_start(struct intel_context *intel)
    struct i830_context *i830 = i830_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   DECLARE_RENDERINPUTS(index_bitset);
+   GLbitfield64 index_bitset = tnl->render_inputs_bitset;
    GLuint v0 = _3DSTATE_VFT0_CMD;
    GLuint v2 = _3DSTATE_VFT1_CMD;
    GLuint mcsb1 = 0;
-
-   RENDERINPUTS_COPY(index_bitset, tnl->render_inputs_bitset);
 
    /* Important:
     */
@@ -94,7 +92,7 @@ i830_render_start(struct intel_context *intel)
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   if (RENDERINPUTS_TEST_RANGE(index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX)) {
+   if (index_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)) {
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, VFT0_XYZW);
       intel->coloroffset = 4;
    }
@@ -103,33 +101,33 @@ i830_render_start(struct intel_context *intel)
       intel->coloroffset = 3;
    }
 
-   if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_POINTSIZE)) {
+   if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_POINTSIZE)) {
       EMIT_ATTR(_TNL_ATTRIB_POINTSIZE, EMIT_1F, VFT0_POINT_WIDTH);
    }
 
    EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, VFT0_DIFFUSE);
 
    intel->specoffset = 0;
-   if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR1) ||
-       RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_FOG)) {
-      if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR1)) {
+   if (index_bitset & (BITFIELD64_BIT(_TNL_ATTRIB_COLOR1) |
+                       BITFIELD64_BIT(_TNL_ATTRIB_FOG))) {
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_COLOR1)) {
          intel->specoffset = intel->coloroffset + 1;
          EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, VFT0_SPEC);
       }
       else
          EMIT_PAD(3);
 
-      if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_FOG))
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_FOG))
          EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1UB_1F, VFT0_SPEC);
       else
          EMIT_PAD(1);
    }
 
-   if (RENDERINPUTS_TEST_RANGE(index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX)) {
+   if (index_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)) {
       int i, count = 0;
 
       for (i = 0; i < I830_TEX_UNITS; i++) {
-         if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_TEX(i))) {
+         if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_TEX(i))) {
             GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
             GLuint emit;
             GLuint mcs = (i830->state.Tex[i][I830_TEXREG_MCS] &
@@ -179,7 +177,7 @@ i830_render_start(struct intel_context *intel)
    if (v0 != i830->state.Ctx[I830_CTXREG_VF] ||
        v2 != i830->state.Ctx[I830_CTXREG_VF2] ||
        mcsb1 != i830->state.Ctx[I830_CTXREG_MCSB1] ||
-       !RENDERINPUTS_EQUAL(index_bitset, i830->last_index_bitset)) {
+       index_bitset != i830->last_index_bitset) {
       int k;
 
       I830_STATECHANGE(i830, I830_UPLOAD_CTX);
@@ -198,7 +196,7 @@ i830_render_start(struct intel_context *intel)
       i830->state.Ctx[I830_CTXREG_VF] = v0;
       i830->state.Ctx[I830_CTXREG_VF2] = v2;
       i830->state.Ctx[I830_CTXREG_MCSB1] = mcsb1;
-      RENDERINPUTS_COPY(i830->last_index_bitset, index_bitset);
+      i830->last_index_bitset = index_bitset;
 
       k = i830_check_vertex_size(intel, intel->vertex_size);
       assert(k);
