@@ -116,7 +116,9 @@ struct pipe_video_decoder
     * decode a bitstream
     */
    void (*decode_bitstream)(struct pipe_video_decoder *decoder,
-                            unsigned num_bytes, const void *data);
+                            unsigned num_buffers,
+                            const void * const *buffers,
+                            const unsigned *sizes);
 
    /**
     * end decoding of the current frame

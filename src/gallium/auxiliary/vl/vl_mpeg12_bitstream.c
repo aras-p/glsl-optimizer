@@ -958,11 +958,12 @@ vl_mpg12_bs_set_picture_desc(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_
 }
 
 void
-vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_bytes, const uint8_t *buffer)
+vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_buffers,
+                   const void * const *buffers, const unsigned *sizes)
 {
    assert(bs);
 
-   vl_vlc_init(&bs->vlc, 1, (const void * const *)&buffer, &num_bytes);
+   vl_vlc_init(&bs->vlc, num_buffers, buffers, sizes);
    while (vl_vlc_bits_left(&bs->vlc) > 32) {
       uint32_t code = vl_vlc_peekbits(&bs->vlc, 32);
 

@@ -690,7 +690,9 @@ vl_mpeg12_decode_macroblock(struct pipe_video_decoder *decoder,
 
 static void
 vl_mpeg12_decode_bitstream(struct pipe_video_decoder *decoder,
-                           unsigned num_bytes, const void *data)
+                           unsigned num_buffers,
+                           const void * const *buffers,
+                           const unsigned *sizes)
 {
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder *)decoder;
    struct vl_mpeg12_buffer *buf;
@@ -706,7 +708,7 @@ vl_mpeg12_decode_bitstream(struct pipe_video_decoder *decoder,
       vl_zscan_set_layout(&buf->zscan[i], dec->picture_desc.alternate_scan ?
                           dec->zscan_alternate : dec->zscan_normal);
 
-   vl_mpg12_bs_decode(&buf->bs, num_bytes, data);
+   vl_mpg12_bs_decode(&buf->bs, num_buffers, buffers, sizes);
 }
 
 static void
