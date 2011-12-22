@@ -1345,7 +1345,7 @@ enum brw_wm_barycentric_interp_mode {
 # define GEN7_WM_STATISTICS_ENABLE			(1 << 31)
 # define GEN7_WM_DEPTH_CLEAR				(1 << 30)
 # define GEN7_WM_DISPATCH_ENABLE			(1 << 29)
-# define GEN6_WM_DEPTH_RESOLVE				(1 << 28)
+# define GEN7_WM_DEPTH_RESOLVE				(1 << 28)
 # define GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE		(1 << 27)
 # define GEN7_WM_KILL_ENABLE				(1 << 25)
 # define GEN7_WM_PSCDEPTH_OFF			        (0 << 23)
