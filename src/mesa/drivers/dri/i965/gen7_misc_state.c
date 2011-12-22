@@ -38,10 +38,15 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct intel_renderbuffer *drb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *srb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-   struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
+   struct intel_mipmap_tree *depth_mt = NULL,
+			    *stencil_mt = NULL,
+			    *hiz_mt = NULL;
 
    if (drb)
       depth_mt = drb->mt;
+
+   if (depth_mt)
+      hiz_mt = depth_mt->hiz_mt;
 
    if (srb) {
       stencil_mt = srb->mt;
@@ -97,7 +102,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(brw_depthbuffer_format(brw) << 18) |
-		(0 << 22) /* no HiZ buffer */ |
+		((hiz_mt ? 1 : 0) << 22) | /* hiz enable */
 		((stencil_mt != NULL && ctx->Stencil.WriteMask != 0) << 27) |
 		((ctx->Depth.Mask != 0) << 28) |
 		(BRW_SURFACE_2D << 29));
@@ -112,12 +117,22 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (4 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (hiz_mt == NULL) {
+      BEGIN_BATCH(5);
+      OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(5);
+      OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
+      OUT_BATCH(hiz_mt->region->pitch * hiz_mt->region->cpp - 1);
+      OUT_RELOC(hiz_mt->region->bo,
+                I915_GEM_DOMAIN_RENDER,
+                I915_GEM_DOMAIN_RENDER,
+                0);
+      ADVANCE_BATCH();
+   }
 
    if (stencil_mt == NULL) {
       BEGIN_BATCH(3);
