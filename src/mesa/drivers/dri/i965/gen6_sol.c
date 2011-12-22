@@ -61,6 +61,8 @@ gen6_update_sol_surfaces(struct brw_context *brw)
          brw->bind.surf_offset[surf_index] = 0;
       }
    }
+
+   brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
 
 const struct brw_tracked_state gen6_sol_surface = {
