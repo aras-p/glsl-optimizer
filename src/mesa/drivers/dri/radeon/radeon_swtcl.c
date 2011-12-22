@@ -92,11 +92,9 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
    r100ContextPtr rmesa = R100_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   DECLARE_RENDERINPUTS(index_bitset);
+   GLbitfield64 index_bitset = tnl->render_inputs_bitset;
    int fmt_0 = 0;
    int offset = 0;
-
-   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
    /* Important:
     */
@@ -114,7 +112,8 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
     * build up a hardware vertex.
     */
    if ( !rmesa->swtcl.needproj ||
-        RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {	/* for projtex */
+        (index_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX))) {
+      /* for projtex */
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F, 
 		 RADEON_CP_VC_FRMT_XY |	RADEON_CP_VC_FRMT_Z | RADEON_CP_VC_FRMT_W0 );
       offset = 4;
@@ -136,11 +135,11 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
    offset += 1;
 
    rmesa->swtcl.specoffset = 0;
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
-       RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
+   if (index_bitset &
+       (BITFIELD64_BIT(_TNL_ATTRIB_COLOR1) | BITFIELD64_BIT(_TNL_ATTRIB_FOG))) {
 
 #if MESA_LITTLE_ENDIAN 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_COLOR1)) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
 	 	    RADEON_CP_VC_FRMT_PKSPEC );
@@ -149,7 +148,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 	 EMIT_PAD( 3 );
       }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_FOG)) {
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F,
 	 	    RADEON_CP_VC_FRMT_PKSPEC );
       }
@@ -157,7 +156,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 	 EMIT_PAD( 1 );
       }
 #else
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_FOG)) {
 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F,
 	 	    RADEON_CP_VC_FRMT_PKSPEC );
       }
@@ -165,7 +164,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 	 EMIT_PAD( 1 );
       }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
+      if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_COLOR1)) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR,
 	 	    RADEON_CP_VC_FRMT_PKSPEC );
@@ -176,11 +175,11 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 #endif
    }
 
-   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+   if (index_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)) {
       int i;
 
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+	 if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_TEX(i))) {
 	    GLuint sz = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->size;
 
 	    switch (sz) {
@@ -214,8 +213,8 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
       }
    }
 
-   if (!RENDERINPUTS_EQUAL( rmesa->radeon.tnl_index_bitset, index_bitset ) ||
-	fmt_0 != rmesa->swtcl.vertex_format) {
+   if (rmesa->radeon.tnl_index_bitset != index_bitset ||
+       fmt_0 != rmesa->swtcl.vertex_format) {
       RADEON_NEWPRIM(rmesa);
       rmesa->swtcl.vertex_format = fmt_0;
       rmesa->radeon.swtcl.vertex_size =
@@ -224,7 +223,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 			      rmesa->radeon.swtcl.vertex_attr_count,
 			      NULL, 0 );
       rmesa->radeon.swtcl.vertex_size /= 4;
-      RENDERINPUTS_COPY( rmesa->radeon.tnl_index_bitset, index_bitset );
+      rmesa->radeon.tnl_index_bitset = index_bitset;
       radeon_print(RADEON_SWRENDER, RADEON_VERBOSE,
 	  "%s: vertex_size= %d floats\n",  __FUNCTION__, rmesa->radeon.swtcl.vertex_size);
    }
@@ -290,9 +289,10 @@ void radeonChooseVertexState( struct gl_context *ctx )
     * bigger one.
     */
 
-   if ((!RENDERINPUTS_TEST_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ) &&
-       !RENDERINPUTS_TEST( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 ))
-       || (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
+   if ((0 == (tnl->render_inputs_bitset & 
+        (BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)
+         | BITFIELD64_BIT(_TNL_ATTRIB_COLOR1))))
+        || (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
       rmesa->swtcl.needproj = GL_TRUE;
       se_coord_fmt |= (RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
 		      RADEON_VTX_Z_PRE_MULT_1_OVER_W0);
@@ -824,7 +824,7 @@ void radeonFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 	     */
 	    _tnl_invalidate_vertex_state( ctx, ~0 );
 	    _tnl_invalidate_vertices( ctx, ~0 );
-	    RENDERINPUTS_ZERO( rmesa->radeon.tnl_index_bitset );
+	    rmesa->radeon.tnl_index_bitset = 0;
 	    radeonChooseVertexState( ctx );
 	    radeonChooseRenderState( ctx );
 	 }

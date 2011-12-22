@@ -412,7 +412,7 @@ struct radeon_context {
    GLuint TclFallback;
    GLuint Fallback;
    GLuint NewGLState;
-   DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
+   GLbitfield64 tnl_index_bitset;	/* index of bits for last tnl_install_attrs */
 
    /* Drawable information */
    unsigned int lastStamp;
