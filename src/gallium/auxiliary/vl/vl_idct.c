@@ -614,9 +614,9 @@ init_source(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 }
 
 static void
-cleanup_source(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+cleanup_source(struct vl_idct_buffer *buffer)
 {
-   assert(idct && buffer);
+   assert(buffer);
 
    pipe_surface_reference(&buffer->fb_state_mismatch.cbufs[0], NULL);
 
@@ -665,13 +665,13 @@ error_surfaces:
 }
 
 static void
-cleanup_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+cleanup_intermediate(struct vl_idct_buffer *buffer)
 {
    unsigned i;
 
-   assert(idct && buffer);
+   assert(buffer);
 
-   for(i = 0; i < idct->nr_of_render_targets; ++i)
+   for(i = 0; i < PIPE_MAX_COLOR_BUFS; ++i)
       pipe_surface_reference(&buffer->fb_state.cbufs[i], NULL);
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
@@ -802,8 +802,6 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 
    memset(buffer, 0, sizeof(struct vl_idct_buffer));
 
-   buffer->idct = idct;
-
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->transpose);
@@ -823,20 +821,17 @@ vl_idct_cleanup_buffer(struct vl_idct_buffer *buffer)
 {
    assert(buffer);
 
-   cleanup_source(buffer->idct, buffer);
-   cleanup_intermediate(buffer->idct, buffer);
+   cleanup_source(buffer);
+   cleanup_intermediate(buffer);
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, NULL);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, NULL);
 }
 
 void
-vl_idct_flush(struct vl_idct_buffer *buffer, unsigned num_instances)
+vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_instances)
 {
-   struct vl_idct *idct;
    assert(buffer);
-   
-   idct = buffer->idct;
 
    idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
    idct->pipe->bind_blend_state(idct->pipe, idct->blend);
@@ -859,13 +854,13 @@ vl_idct_flush(struct vl_idct_buffer *buffer, unsigned num_instances)
 }
 
 void
-vl_idct_prepare_stage2(struct vl_idct_buffer *buffer)
+vl_idct_prepare_stage2(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    assert(buffer);
 
    /* second stage */
-   buffer->idct->pipe->bind_rasterizer_state(buffer->idct->pipe, buffer->idct->rs_state);
-   buffer->idct->pipe->bind_fragment_sampler_states(buffer->idct->pipe, 2, buffer->idct->samplers);
-   buffer->idct->pipe->set_fragment_sampler_views(buffer->idct->pipe, 2, buffer->sampler_views.stage[1]);
+   idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
+   idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
+   idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
 }
 

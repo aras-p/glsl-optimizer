@@ -58,8 +58,6 @@ struct vl_idct
 /* a set of buffers to work with */
 struct vl_idct_buffer
 {
-   struct vl_idct *idct;
-   
    struct pipe_viewport_state viewport_mismatch;
    struct pipe_viewport_state viewport;
 
@@ -113,9 +111,9 @@ vl_idct_cleanup_buffer(struct vl_idct_buffer *buffer);
 
 /* flush the buffer and start rendering, vertex buffers needs to be setup before calling this */
 void
-vl_idct_flush(struct vl_idct_buffer *buffer, unsigned num_verts);
+vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);
 
 void
-vl_idct_prepare_stage2(struct vl_idct_buffer *buffer);
+vl_idct_prepare_stage2(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 #endif

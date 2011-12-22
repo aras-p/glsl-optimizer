@@ -583,8 +583,9 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder)
       dec->intra_matrix[0] = 1 << (7 - dec->picture_desc.intra_dc_precision);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      vl_zscan_upload_quant(&buf->zscan[i], dec->intra_matrix, true);
-      vl_zscan_upload_quant(&buf->zscan[i], dec->non_intra_matrix, false);
+      struct vl_zscan *zscan = i == 0 ? &dec->zscan_y : &dec->zscan_c;
+      vl_zscan_upload_quant(zscan, &buf->zscan[i], dec->intra_matrix, true);
+      vl_zscan_upload_quant(zscan, &buf->zscan[i], dec->non_intra_matrix, false);
    }
 
    vl_vb_map(&buf->vertex_stream, dec->base.context);
@@ -746,7 +747,7 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder)
          vb[2] = vl_vb_get_mv(&buf->vertex_stream, j);;
          dec->base.context->set_vertex_buffers(dec->base.context, 3, vb);
 
-         vl_mc_render_ref(&buf->mc[i], dec->ref_frames[j][i]);
+         vl_mc_render_ref(i ? &dec->mc_c : &dec->mc_y, &buf->mc[i], dec->ref_frames[j][i]);
       }
    }
 
@@ -757,10 +758,10 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder)
       vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, i);
       dec->base.context->set_vertex_buffers(dec->base.context, 2, vb);
 
-      vl_zscan_render(&buf->zscan[i] , buf->num_ycbcr_blocks[i]);
+      vl_zscan_render(i ? &dec->zscan_c : & dec->zscan_y, &buf->zscan[i] , buf->num_ycbcr_blocks[i]);
 
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
-         vl_idct_flush(&buf->idct[i], buf->num_ycbcr_blocks[i]);
+         vl_idct_flush(i ? &dec->idct_c : &dec->idct_y, &buf->idct[i], buf->num_ycbcr_blocks[i]);
    }
 
    mc_source_sv = dec->mc_source->get_sampler_view_planes(dec->mc_source);
@@ -775,12 +776,12 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder)
          dec->base.context->set_vertex_buffers(dec->base.context, 2, vb);
 
          if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
-            vl_idct_prepare_stage2(&buf->idct[component]);
+            vl_idct_prepare_stage2(i ? &dec->idct_c : &dec->idct_y, &buf->idct[component]);
          else {
             dec->base.context->set_fragment_sampler_views(dec->base.context, 1, &mc_source_sv[component]);
             dec->base.context->bind_fragment_sampler_states(dec->base.context, 1, &dec->sampler_ycbcr);
          }
-         vl_mc_render_ycbcr(&buf->mc[i], j, buf->num_ycbcr_blocks[component]);
+         vl_mc_render_ycbcr(i ? &dec->mc_c : &dec->mc_y, &buf->mc[i], j, buf->num_ycbcr_blocks[component]);
       }
    }
 }

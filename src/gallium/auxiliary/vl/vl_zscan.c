@@ -473,8 +473,6 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
 
    memset(buffer, 0, sizeof(struct vl_zscan_buffer));
 
-   buffer->zscan = zscan;
-
    pipe_sampler_view_reference(&buffer->src, src);
 
    buffer->viewport.scale[0] = dst->width;
@@ -537,7 +535,8 @@ vl_zscan_set_layout(struct vl_zscan_buffer *buffer, struct pipe_sampler_view *la
 }
 
 void
-vl_zscan_upload_quant(struct vl_zscan_buffer *buffer, const uint8_t matrix[64], bool intra)
+vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
+                      const uint8_t matrix[64], bool intra)
 {
    struct pipe_context *pipe;
    struct pipe_transfer *buf_transfer;
@@ -555,9 +554,9 @@ vl_zscan_upload_quant(struct vl_zscan_buffer *buffer, const uint8_t matrix[64], 
    assert(buffer);
    assert(matrix);
 
-   pipe = buffer->zscan->pipe;
+   pipe = zscan->pipe;
 
-   rect.width *= buffer->zscan->blocks_per_line;
+   rect.width *= zscan->blocks_per_line;
 
    buf_transfer = pipe->get_transfer
    (
@@ -574,7 +573,7 @@ vl_zscan_upload_quant(struct vl_zscan_buffer *buffer, const uint8_t matrix[64], 
    if (!data)
       goto error_map;
 
-   for (i = 0; i < buffer->zscan->blocks_per_line; ++i)
+   for (i = 0; i < zscan->blocks_per_line; ++i)
       for (y = 0; y < BLOCK_HEIGHT; ++y)
          for (x = 0; x < BLOCK_WIDTH; ++x)
             data[i * BLOCK_WIDTH + y * pitch + x] = matrix[x + y * BLOCK_WIDTH];
@@ -589,13 +588,9 @@ error_transfer:
 }
 
 void
-vl_zscan_render(struct vl_zscan_buffer *buffer, unsigned num_instances)
+vl_zscan_render(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer, unsigned num_instances)
 {
-   struct vl_zscan *zscan;
-
    assert(buffer);
-
-   zscan = buffer->zscan;
 
    zscan->pipe->bind_rasterizer_state(zscan->pipe, zscan->rs_state);
    zscan->pipe->bind_blend_state(zscan->pipe, zscan->blend);

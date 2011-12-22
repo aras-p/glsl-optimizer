@@ -59,8 +59,6 @@ struct vl_mc
 
 struct vl_mc_buffer
 {
-   struct vl_mc *renderer;
-
    bool surface_cleared;
 
    struct pipe_viewport_state viewport;
@@ -92,8 +90,8 @@ void vl_mc_cleanup_buffer(struct vl_mc_buffer *buffer);
 
 void vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface);
 
-void vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref);
+void vl_mc_render_ref(struct vl_mc *renderer, struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref);
 
-void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances);
+void vl_mc_render_ycbcr(struct vl_mc *renderer, struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances);
 
 #endif /* vl_mc_h */

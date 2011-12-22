@@ -551,8 +551,6 @@ vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer)
 {
    assert(renderer && buffer);
 
-   buffer->renderer = renderer;
-
    buffer->viewport.scale[2] = 1;
    buffer->viewport.scale[3] = 1;
    buffer->viewport.translate[0] = 0;
@@ -588,13 +586,10 @@ vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface)
 }
 
 static void
-prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned mask)
+prepare_pipe_4_rendering(struct vl_mc *renderer, struct vl_mc_buffer *buffer, unsigned mask)
 {
-   struct vl_mc *renderer;
-
    assert(buffer);
 
-   renderer = buffer->renderer;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
 
    if (buffer->surface_cleared)
@@ -607,15 +602,11 @@ prepare_pipe_4_rendering(struct vl_mc_buffer *buffer, unsigned mask)
 }
 
 void
-vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
+vl_mc_render_ref(struct vl_mc *renderer, struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 {
-   struct vl_mc *renderer;
-
    assert(buffer && ref);
 
-   prepare_pipe_4_rendering(buffer, PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B);
-
-   renderer = buffer->renderer;
+   prepare_pipe_4_rendering(renderer, buffer, PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ref);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
@@ -631,9 +622,8 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances)
+vl_mc_render_ycbcr(struct vl_mc *renderer, struct vl_mc_buffer *buffer, unsigned component, unsigned num_instances)
 {
-   struct vl_mc *renderer;
    unsigned mask = 1 << component;
 
    assert(buffer);
@@ -641,9 +631,7 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned component, unsigned num
    if (num_instances == 0)
       return;
 
-   prepare_pipe_4_rendering(buffer, mask);
-
-   renderer = buffer->renderer;
+   prepare_pipe_4_rendering(renderer, buffer, mask);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
