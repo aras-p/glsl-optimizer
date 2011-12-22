@@ -3716,6 +3716,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    /* Copy attributes of the glsl_to_tgsi_visitor in the original shader. */
    v->ctx = original->ctx;
    v->prog = prog;
+   v->shader_program = NULL;
    v->glsl_version = original->glsl_version;
    v->native_integers = original->native_integers;
    v->options = original->options;
@@ -3845,6 +3846,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    /* Copy attributes of the glsl_to_tgsi_visitor in the original shader. */
    v->ctx = original->ctx;
    v->prog = prog;
+   v->shader_program = NULL;
    v->glsl_version = original->glsl_version;
    v->native_integers = original->native_integers;
    v->options = original->options;
@@ -4558,6 +4560,15 @@ st_translate_program(
    t->pointSizeOutIndex = -1;
    t->prevInstWrotePointSize = GL_FALSE;
 
+   if (program->shader_program) {
+      for (i = 0; i < program->shader_program->NumUserUniformStorage; i++) {
+         struct gl_uniform_storage *const storage =
+               &program->shader_program->UniformStorage[i];
+
+         _mesa_uniform_detach_all_driver_storage(storage);
+      }
+   }
+
    /*
     * Declare input attributes.
     */
@@ -4782,6 +4793,20 @@ st_translate_program(
    for (i = 0; i < t->labels_count; i++) {
       ureg_fixup_label(ureg, t->labels[i].token,
                        t->insn[t->labels[i].branch_target]);
+   }
+
+   if (program->shader_program) {
+      /* This has to be done last.  Any operation the can cause
+       * prog->ParameterValues to get reallocated (e.g., anything that adds a
+       * program constant) has to happen before creating this linkage.
+       */
+      for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+         if (program->shader_program->_LinkedShaders[i] == NULL)
+            continue;
+
+         _mesa_associate_uniform_storage(ctx, program->shader_program,
+               program->shader_program->_LinkedShaders[i]->Program->Parameters);
+      }
    }
 
 out:
