@@ -479,7 +479,7 @@ _mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
    (void) params;
 
    /*
-   _mesa_get_uniform(ctx, program, location, bufSize, GL_DOUBLE, params);
+   _mesa_get_uniform(ctx, program, location, bufSize, GLSL_TYPE_DOUBLE, params);
    */
    _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformdvARB"
                "(GL_ARB_gpu_shader_fp64 not implemented)");

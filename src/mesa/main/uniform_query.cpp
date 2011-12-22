@@ -203,10 +203,18 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
       const union gl_constant_value *const src =
 	 &uni->storage[offset * elements];
 
-      unsigned bytes = sizeof(uni->storage[0]) * elements;
-      if (bytes > (unsigned) bufSize) {
-	 elements = bufSize / sizeof(uni->storage[0]);
-	 bytes = bufSize;
+      assert(returnType == GLSL_TYPE_FLOAT || returnType == GLSL_TYPE_INT ||
+             returnType == GLSL_TYPE_UINT);
+      /* The three (currently) supported types all have the same size,
+       * which is of course the same as their union. That'll change
+       * with glGetUniformdv()...
+       */
+      unsigned bytes = sizeof(src[0]) * elements;
+      if (bufSize < 0 || bytes > (unsigned) bufSize) {
+	 _mesa_error( ctx, GL_INVALID_OPERATION,
+	             "glGetnUniform*vARB(out of bounds: bufSize is %d,"
+	             " but %u bytes are required)", bufSize, bytes );
+	 return;
       }
 
       /* If the return type and the uniform's native type are "compatible,"
