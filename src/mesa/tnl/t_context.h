@@ -50,7 +50,7 @@
 #define _T_CONTEXT_H
 
 #include "main/glheader.h"
-#include "main/bitset.h"
+#include "main/imports.h"
 #include "main/mtypes.h"
 
 #include "math/m_vector.h"
@@ -161,6 +161,9 @@ enum {
 
 #define _TNL_FIRST_MAT       _TNL_ATTRIB_MAT_FRONT_AMBIENT /* GENERIC0 */
 #define _TNL_LAST_MAT        _TNL_ATTRIB_MAT_BACK_INDEXES  /* GENERIC11 */
+
+/* Number of available texture attributes */
+#define _TNL_NUM_TEX 8
 
 /* Number of available generic attributes */
 #define _TNL_NUM_GENERIC 16
@@ -480,17 +483,16 @@ struct tnl_device_driver
 };
 
 
-#define DECLARE_RENDERINPUTS(name) BITSET64_DECLARE(name, _TNL_ATTRIB_MAX)
-#define RENDERINPUTS_COPY BITSET64_COPY
-#define RENDERINPUTS_EQUAL BITSET64_EQUAL
-#define RENDERINPUTS_ZERO BITSET64_ZERO
-#define RENDERINPUTS_ONES BITSET64_ONES
-#define RENDERINPUTS_TEST BITSET64_TEST
-#define RENDERINPUTS_SET BITSET64_SET
-#define RENDERINPUTS_CLEAR BITSET64_CLEAR
-#define RENDERINPUTS_TEST_RANGE BITSET64_TEST_RANGE
-#define RENDERINPUTS_SET_RANGE BITSET64_SET_RANGE
-#define RENDERINPUTS_CLEAR_RANGE BITSET64_CLEAR_RANGE
+#define DECLARE_RENDERINPUTS(name) GLbitfield64 name
+#define RENDERINPUTS_COPY(x, y) do { (x) = (y); } while (0)
+#define RENDERINPUTS_EQUAL(x, y) ((x) == (y))
+#define RENDERINPUTS_ZERO(x) do { (x) = 0; } while (0)
+#define RENDERINPUTS_ONES(x) do { (x) = ~(GLbitfield64)0; } while (0)
+#define RENDERINPUTS_TEST(x, b) (((x) & BITFIELD64_BIT(b)) != 0)
+#define RENDERINPUTS_SET(x, b) ((x) |= BITFIELD64_BIT(b))
+#define RENDERINPUTS_CLEAR(x, b) ((x) &= ~BITFIELD64_BIT(b))
+#define RENDERINPUTS_TEST_RANGE(x, b, e) \
+   (((x) & BITFIELD64_RANGE((b), (e) - (b) + 1)) != 0)
 
 
 /**

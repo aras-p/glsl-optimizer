@@ -56,6 +56,12 @@ typedef GLuint64 GLbitfield64;
 
 /** Set a single bit */
 #define BITFIELD64_BIT(b)      ((GLbitfield64)1 << (b))
+/** Set all bits up to excluding bit b */
+#define BITFIELD64_MASK(b)      \
+   ((b) == 64 ? (~(GLbitfield64)0) : BITFIELD64_BIT(b) - 1)
+/** Set count bits starting from bit b  */
+#define BITFIELD64_RANGE(b, count) \
+   (BITFIELD64_MASK((b) + (count)) & ~BITFIELD64_MASK(b))
 
 
 /**
