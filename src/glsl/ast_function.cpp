@@ -93,13 +93,20 @@ prototype_string(const glsl_type *return_type, const char *name,
    return str;
 }
 
+/**
+ * If a function call is generated, \c call_ir will point to it on exit.
+ * Otherwise \c call_ir will be set to \c NULL.
+ */
 static ir_rvalue *
 generate_call(exec_list *instructions, ir_function_signature *sig,
 	      YYLTYPE *loc, exec_list *actual_parameters,
+	      ir_call **call_ir,
 	      struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
    exec_list post_call_conversions;
+
+   *call_ir = NULL;
 
    /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
     * isn't done in ir_function::matching_signature because that function
@@ -256,10 +263,12 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       deref = new(ctx) ir_dereference_variable(var);
       ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);
       instructions->push_tail(assign);
+      *call_ir = call;
 
       deref = new(ctx) ir_dereference_variable(var);
    } else {
       instructions->push_tail(call);
+      *call_ir = call;
       deref = NULL;
    }
    instructions->append_list(&post_call_conversions);
@@ -269,6 +278,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 static ir_rvalue *
 match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, exec_list *actual_parameters,
+		       ir_call **call_ir,
 		       struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
@@ -342,7 +352,8 @@ done:
       }
 
       /* Finally, generate a call instruction. */
-      return generate_call(instructions, sig, loc, actual_parameters, state);
+      return generate_call(instructions, sig, loc, actual_parameters,
+			   call_ir, state);
    } else {
       char *str = prototype_string(NULL, name, actual_parameters);
 
@@ -1442,9 +1453,53 @@ ast_function_expression::hir(exec_list *instructions,
       process_parameters(instructions, &actual_parameters, &this->expressions,
 			 state);
 
-      return match_function_by_name(instructions, 
-				    id->primary_expression.identifier, & loc,
-				    &actual_parameters, state);
+      ir_call *call = NULL;
+      ir_rvalue *const value =
+	 match_function_by_name(instructions,
+				id->primary_expression.identifier,
+				&loc, &actual_parameters, &call, state);
+
+      if (call != NULL) {
+	 /* If a function was found, make sure that none of the 'out' or 'inout'
+	  * parameters violate the extra l-value rules.
+	  */
+	 ir_function_signature *f = call->get_callee();
+	 assert(f != NULL);
+
+	 exec_node *formal_node = f->parameters.head;
+
+	 foreach_list (actual_node, &this->expressions) {
+	    /* Both parameter lists had better be the same length!
+	     */
+	    assert(!actual_node->is_tail_sentinel());
+
+	    const ir_variable *const formal_parameter =
+	       (ir_variable *) formal_node;
+	    const ast_expression *const actual_parameter =
+	       exec_node_data(ast_expression, actual_node, link);
+
+	    if ((formal_parameter->mode == ir_var_out
+		 || formal_parameter->mode == ir_var_inout)
+		&& actual_parameter->non_lvalue_description != NULL) {
+	       YYLTYPE loc = actual_parameter->get_location();
+
+	       _mesa_glsl_error(&loc, state,
+				"function parameter '%s %s' references a %s",
+				(formal_parameter->mode == ir_var_out)
+				? "out" : "inout",
+				formal_parameter->name,
+				actual_parameter->non_lvalue_description);
+	       return ir_call::get_error_instruction(ctx);
+	    }
+
+	    /* Only advance the formal_node pointer here because the
+	     * foreach_list business already advances actual_node.
+	     */
+	    formal_node = formal_node->next;
+	 }
+      }
+
+      return value;
    }
 
    return ir_call::get_error_instruction(ctx);
