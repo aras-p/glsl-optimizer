@@ -45,13 +45,16 @@
 /**
  * Allocate registers for GS.
  *
- * If svbi_payload_enable is true, then the thread will be spawned with the
- * "SVBI Payload Enable" bit set, so GRF 1 needs to be set aside to hold the
- * streamed vertex buffer indices.
+ * If sol_program is true, then:
+ *
+ * - The thread will be spawned with the "SVBI Payload Enable" bit set, so GRF
+ *   1 needs to be set aside to hold the streamed vertex buffer indices.
+ *
+ * - The thread will need to use the destination_indices register.
  */
 static void brw_gs_alloc_regs( struct brw_gs_compile *c,
 			       GLuint nr_verts,
-                               bool svbi_payload_enable )
+                               bool sol_program )
 {
    GLuint i = 0,j;
 
@@ -60,7 +63,7 @@ static void brw_gs_alloc_regs( struct brw_gs_compile *c,
    c->reg.R0 = retype(brw_vec8_grf(i, 0), BRW_REGISTER_TYPE_UD); i++;
 
    /* Streamed vertex buffer indices */
-   if (svbi_payload_enable)
+   if (sol_program)
       c->reg.SVBI = retype(brw_vec8_grf(i++, 0), BRW_REGISTER_TYPE_UD);
 
    /* Payload vertices plus space for more generated vertices:
@@ -72,6 +75,11 @@ static void brw_gs_alloc_regs( struct brw_gs_compile *c,
 
    c->reg.header = retype(brw_vec8_grf(i++, 0), BRW_REGISTER_TYPE_UD);
    c->reg.temp = retype(brw_vec8_grf(i++, 0), BRW_REGISTER_TYPE_UD);
+
+   if (sol_program) {
+      c->reg.destination_indices =
+         retype(brw_vec4_grf(i++, 0), BRW_REGISTER_TYPE_UD);
+   }
 
    c->prog_data.urb_read_length = c->nr_regs; 
    c->prog_data.total_grf = i;
@@ -351,16 +359,17 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
 
    if (key->num_transform_feedback_bindings > 0) {
       unsigned vertex, binding;
+      struct brw_reg destination_indices_uw =
+         vec8(retype(c->reg.destination_indices, BRW_REGISTER_TYPE_UW));
+
       /* Note: since we use the binding table to keep track of buffer offsets
        * and stride, the GS doesn't need to keep track of a separate pointer
        * into each buffer; it uses a single pointer which increments by 1 for
        * each vertex.  So we use SVBI0 for this pointer, regardless of whether
        * transform feedback is in interleaved or separate attribs mode.
+       *
+       * Make sure that the buffers have enough room for all the vertices.
        */
-      brw_MOV(p, get_element_ud(c->reg.header, 5),
-              get_element_ud(c->reg.SVBI, 0));
-
-      /* Make sure that the buffers have enough room for all the vertices. */
       brw_ADD(p, get_element_ud(c->reg.temp, 0),
 	         get_element_ud(c->reg.SVBI, 0), brw_imm_ud(num_verts));
       brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_LE,
@@ -368,10 +377,58 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
 	         get_element_ud(c->reg.SVBI, 4));
       brw_IF(p, BRW_EXECUTE_1);
 
+      /* Compute the destination indices to write to.  Usually we use SVBI[0]
+       * + (0, 1, 2).  However, for odd-numbered triangles in tristrips, the
+       * vertices come down the pipeline in reversed winding order, so we need
+       * to flip the order when writing to the transform feedback buffer.  To
+       * ensure that flatshading accuracy is preserved, we need to write them
+       * in order SVBI[0] + (0, 2, 1) if we're using the first provoking
+       * vertex convention, and in order SVBI[0] + (1, 0, 2) if we're using
+       * the last provoking vertex convention.
+       *
+       * Note: since brw_imm_v can only be used in instructions in
+       * packed-word execution mode, and SVBI is a double-word, we need to
+       * first move the appropriate immediate constant ((0, 1, 2), (0, 2, 1),
+       * or (1, 0, 2)) to the destination_indices register, and then add SVBI
+       * using a separate instruction.  Also, since the immediate constant is
+       * expressed as packed words, and we need to load double-words into
+       * destination_indices, we need to intersperse zeros to fill the upper
+       * halves of each double-word.
+       */
+      brw_MOV(p, destination_indices_uw,
+              brw_imm_v(0x00020100)); /* (0, 1, 2) */
+      if (num_verts == 3) {
+         /* Get primitive type into temp register. */
+         brw_AND(p, get_element_ud(c->reg.temp, 0),
+                 get_element_ud(c->reg.R0, 2), brw_imm_ud(0x1f));
+
+         /* Test if primitive type is TRISTRIP_REVERSE.  We need to do this as
+          * an 8-wide comparison so that the conditional MOV that follows
+          * moves all 8 words correctly.
+          */
+         brw_CMP(p, vec8(brw_null_reg()), BRW_CONDITIONAL_EQ,
+                 get_element_ud(c->reg.temp, 0),
+                 brw_imm_ud(_3DPRIM_TRISTRIP_REVERSE));
+
+         /* If so, then overwrite destination_indices_uw with the appropriate
+          * reordering.
+          */
+         brw_MOV(p, destination_indices_uw,
+                 brw_imm_v(key->pv_first ? 0x00010200    /* (0, 2, 1) */
+                                         : 0x00020001)); /* (1, 0, 2) */
+         brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      }
+      brw_ADD(p, c->reg.destination_indices,
+              c->reg.destination_indices, get_element_ud(c->reg.SVBI, 0));
+
       /* For each vertex, generate code to output each varying using the
        * appropriate binding table entry.
        */
       for (vertex = 0; vertex < num_verts; ++vertex) {
+         /* Set up the correct destination index for this vertex */
+         brw_MOV(p, get_element_ud(c->reg.header, 5),
+                 get_element_ud(c->reg.destination_indices, vertex));
+
          for (binding = 0; binding < key->num_transform_feedback_bindings;
               ++binding) {
             unsigned char vert_result =
@@ -397,15 +454,6 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
                           c->reg.header, /* src0 */
                           SURF_INDEX_SOL_BINDING(binding), /* binding_table_index */
                           final_write); /* send_commit_msg */
-         }
-
-         /* If there are more vertices to output, increment the pointer so
-          * that we will start outputting to the next location in the
-          * transform feedback buffers.
-          */
-         if (vertex != num_verts - 1) {
-            brw_ADD(p, get_element_ud(c->reg.header, 5),
-                    get_element_ud(c->reg.header, 5), brw_imm_ud(1));
          }
       }
       brw_ENDIF(p);

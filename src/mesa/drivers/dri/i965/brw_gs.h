@@ -83,6 +83,12 @@ struct brw_gs_compile {
       struct brw_reg vertex[MAX_GS_VERTS];
       struct brw_reg header;
       struct brw_reg temp;
+
+      /**
+       * Register holding destination indices for streamed buffer writes.
+       * Only used for SOL programs.
+       */
+      struct brw_reg destination_indices;
    } reg;
 
    /* Number of registers used to store vertex data */
