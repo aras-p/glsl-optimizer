@@ -626,6 +626,7 @@ ast_expression::ast_expression(int oper,
    this->subexpressions[0] = ex0;
    this->subexpressions[1] = ex1;
    this->subexpressions[2] = ex2;
+   this->non_lvalue_description = NULL;
 }
 
 

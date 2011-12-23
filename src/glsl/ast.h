@@ -207,6 +207,7 @@ public:
       subexpressions[1] = NULL;
       subexpressions[2] = NULL;
       primary_expression.identifier = (char *) identifier;
+      this->non_lvalue_description = NULL;
    }
 
    static const char *operator_string(enum ast_operators op);
@@ -234,6 +235,18 @@ public:
     * \c ast_function_call
     */
    exec_list expressions;
+
+   /**
+    * For things that can't be l-values, this describes what it is.
+    *
+    * This text is used by the code that generates IR for assignments to
+    * detect and emit useful messages for assignments to some things that
+    * can't be l-values.  For example, pre- or post-incerement expressions.
+    *
+    * \note
+    * This pointer may be \c NULL.
+    */
+   const char *non_lvalue_description;
 };
 
 class ast_expression_bin : public ast_expression {

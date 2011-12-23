@@ -1463,6 +1463,9 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_pre_inc:
    case ast_pre_dec: {
+      this->non_lvalue_description = (this->oper == ast_pre_inc)
+	 ? "pre-increment operation" : "pre-decrement operation";
+
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
@@ -1481,6 +1484,8 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_post_inc:
    case ast_post_dec: {
+      this->non_lvalue_description = (this->oper == ast_post_inc)
+	 ? "post-increment operation" : "post-decrement operation";
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = constant_one_for_inc_dec(ctx, op[0]->type);
 
