@@ -98,6 +98,34 @@ vl_video_buffer_max_size(struct pipe_screen *screen)
    return 1 << (max_2d_texture_level-1);
 }
 
+void
+vl_video_buffer_set_associated_data(struct pipe_video_buffer *vbuf,
+                                    struct pipe_video_decoder *vdec,
+                                    void *associated_data,
+                                    void (*destroy_associated_data)(void *))
+{
+   vbuf->decoder = vdec;
+
+   if (vbuf->associated_data == associated_data)
+      return;
+
+   if (vbuf->associated_data)
+      vbuf->destroy_associated_data(vbuf->associated_data);
+
+   vbuf->associated_data = associated_data;
+   vbuf->destroy_associated_data = destroy_associated_data;
+}
+
+void *
+vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
+                                    struct pipe_video_decoder *vdec)
+{
+   if (vbuf->decoder == vdec)
+      return vbuf->associated_data;
+   else
+      return NULL;
+}
+
 static void
 vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
 {
@@ -112,6 +140,7 @@ vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
       pipe_sampler_view_reference(&buf->sampler_view_components[i], NULL);
       pipe_resource_reference(&buf->resources[i], NULL);
    }
+   vl_video_buffer_set_associated_data(buffer, NULL, NULL, NULL);
 
    FREE(buffer);
 }

@@ -335,9 +335,6 @@ typedef struct
 {
    vlVdpDevice *device;
    struct pipe_video_decoder *decoder;
-   unsigned num_buffers;
-   void **buffers;
-   unsigned cur_buffer;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;

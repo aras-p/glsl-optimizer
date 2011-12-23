@@ -60,21 +60,6 @@ struct pipe_video_decoder
    void (*destroy)(struct pipe_video_decoder *decoder);
 
    /**
-    * Creates a decoder buffer
-    */
-   void *(*create_buffer)(struct pipe_video_decoder *decoder);
-
-   /**
-    * Destroys a decoder buffer
-    */
-   void (*destroy_buffer)(struct pipe_video_decoder *decoder, void *buffer);
-
-   /**
-    * set the current decoder buffer
-    */
-   void (*set_decode_buffer)(struct pipe_video_decoder *decoder, void *buffer);
-
-   /**
     * set the picture parameters for the next frame
     * only used for bitstream decoding
     */
@@ -163,6 +148,21 @@ struct pipe_video_buffer
     * get a individual surfaces for each plane
     */
    struct pipe_surface **(*get_surfaces)(struct pipe_video_buffer *buffer);
+
+   /*
+    * auxiliary associated data
+    */
+   void *associated_data;
+
+   /*
+    * decoder where the associated data came from
+    */
+   struct pipe_video_decoder *decoder;
+
+   /*
+    * destroy the associated data
+    */
+   void (*destroy_associated_data)(void *associated_data);
 };
 
 #ifdef __cplusplus

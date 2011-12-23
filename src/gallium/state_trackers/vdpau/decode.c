@@ -48,7 +48,6 @@ vlVdpDecoderCreate(VdpDevice device,
    vlVdpDevice *dev;
    vlVdpDecoder *vldecoder;
    VdpStatus ret;
-   unsigned i;
    bool supported;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating decoder\n");
@@ -90,31 +89,13 @@ vlVdpDecoderCreate(VdpDevice device,
       pipe, p_profile,
       PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
       PIPE_VIDEO_CHROMA_FORMAT_420,
-      width, height, max_references
+      width, height, max_references,
+      false
    );
 
    if (!vldecoder->decoder) {
       ret = VDP_STATUS_ERROR;
       goto error_decoder;
-   }
-
-   vldecoder->num_buffers = pipe->screen->get_video_param
-   (
-      pipe->screen, p_profile,
-      PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED
-   );
-   vldecoder->cur_buffer = 0;
-
-   vldecoder->buffers = CALLOC(vldecoder->num_buffers, sizeof(void*));
-   if (!vldecoder->buffers)
-         goto error_alloc_buffers;
-
-   for (i = 0; i < vldecoder->num_buffers; ++i) {
-      vldecoder->buffers[i] = vldecoder->decoder->create_buffer(vldecoder->decoder);
-      if (!vldecoder->buffers[i]) {
-         ret = VDP_STATUS_ERROR;
-         goto error_create_buffers;
-      }
    }
 
    *decoder = vlAddDataHTAB(vldecoder);
@@ -128,15 +109,6 @@ vlVdpDecoderCreate(VdpDevice device,
    return VDP_STATUS_OK;
 
 error_handle:
-error_create_buffers:
-
-   for (i = 0; i < vldecoder->num_buffers; ++i)
-      if (vldecoder->buffers[i])
-         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
-
-   FREE(vldecoder->buffers);
-
-error_alloc_buffers:
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -152,19 +124,12 @@ VdpStatus
 vlVdpDecoderDestroy(VdpDecoder decoder)
 {
    vlVdpDecoder *vldecoder;
-   unsigned i;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying decoder\n");
 
    vldecoder = (vlVdpDecoder *)vlGetDataHTAB(decoder);
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
-
-   for (i = 0; i < vldecoder->num_buffers; ++i)
-      if (vldecoder->buffers[i])
-         vldecoder->decoder->destroy_buffer(vldecoder->decoder, vldecoder->buffers[i]);
-
-   FREE(vldecoder->buffers);
 
    vldecoder->decoder->destroy(vldecoder->decoder);
 
@@ -413,10 +378,6 @@ vlVdpDecoderRender(VdpDecoder decoder,
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
-   ++vldecoder->cur_buffer;
-   vldecoder->cur_buffer %= vldecoder->num_buffers;
-
-   dec->set_decode_buffer(dec, vldecoder->buffers[vldecoder->cur_buffer]);
    dec->set_decode_target(dec, vlsurf->video_buffer);
 
    switch (u_reduce_video_profile(dec->profile)) {

@@ -410,7 +410,8 @@ struct pipe_context {
                                                        enum pipe_video_profile profile,
                                                        enum pipe_video_entrypoint entrypoint,
                                                        enum pipe_video_chroma_format chroma_format,
-                                                       unsigned width, unsigned height, unsigned max_references );
+                                                       unsigned width, unsigned height, unsigned max_references,
+                                                       bool expect_chunked_decode);
 
    /**
     * Creates a video buffer as decoding target

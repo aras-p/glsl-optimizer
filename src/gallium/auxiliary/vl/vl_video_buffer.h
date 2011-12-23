@@ -69,6 +69,22 @@ vl_video_buffer_is_format_supported(struct pipe_screen *screen,
                                     enum pipe_format format,
                                     enum pipe_video_profile profile);
 
+/*
+ * set the associated data for the given video buffer
+ */
+void
+vl_video_buffer_set_associated_data(struct pipe_video_buffer *vbuf,
+                                    struct pipe_video_decoder *vdec,
+                                    void *associated_data,
+                                    void (*destroy_associated_data)(void *));
+
+/*
+ * get the associated data for the given video buffer
+ */
+void *
+vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
+                                    struct pipe_video_decoder *vdec);
+
 /**
  * creates a video buffer, can be used as a standard implementation for pipe->create_video_buffer
  */

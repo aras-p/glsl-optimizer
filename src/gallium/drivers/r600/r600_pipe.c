@@ -528,8 +528,6 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	case PIPE_VIDEO_CAP_MAX_WIDTH:
 	case PIPE_VIDEO_CAP_MAX_HEIGHT:
 		return vl_video_buffer_max_size(screen);
-	case PIPE_VIDEO_CAP_NUM_BUFFERS_DESIRED:
-		return vl_num_buffers_desired(screen, profile);
 	default:
 		return 0;
 	}

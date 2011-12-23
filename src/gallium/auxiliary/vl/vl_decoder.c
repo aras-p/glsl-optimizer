@@ -44,25 +44,13 @@ vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile
    }
 }
 
-unsigned
-vl_num_buffers_desired(struct pipe_screen *screen, enum pipe_video_profile profile)
-{
-   assert(screen);
-   switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
-         return 4;
-
-      default:
-         return 1;
-   }
-}
-
 struct pipe_video_decoder *
 vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,
                   enum pipe_video_entrypoint entrypoint,
                   enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, unsigned max_references)
+                  unsigned width, unsigned height, unsigned max_references,
+                  bool expect_chunked_decode)
 {
    unsigned buffer_width, buffer_height;
    bool pot_buffers;
@@ -82,7 +70,9 @@ vl_create_decoder(struct pipe_context *pipe,
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format, buffer_width, buffer_height, max_references);
+         return vl_create_mpeg12_decoder(pipe, profile, entrypoint, chroma_format,
+                                         buffer_width, buffer_height, max_references,
+                                         expect_chunked_decode);
       default:
          return NULL;
    }

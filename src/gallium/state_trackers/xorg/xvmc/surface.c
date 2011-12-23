@@ -114,8 +114,6 @@ SetDecoderStatus(XvMCSurfacePrivate *surface)
    context_priv = surface->context->privData;
    decoder = context_priv->decoder;
 
-   if (surface->decode_buffer)
-      decoder->set_decode_buffer(decoder, surface->decode_buffer);
    decoder->set_decode_target(decoder, surface->video_buffer);
 
    for (i = 0; i < 2; ++i) {
@@ -186,8 +184,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   if (context_priv->decoder->create_buffer)
-      surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
    surface_priv->video_buffer = pipe->create_video_buffer
    (
       pipe, PIPE_FORMAT_NV12, context_priv->decoder->chroma_format,
@@ -504,8 +500,6 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       SetDecoderStatus(surface_priv);
       context_priv->decoder->end_frame(context_priv->decoder);
    }
-   if (surface_priv->decode_buffer)
-      context_priv->decoder->destroy_buffer(context_priv->decoder, surface_priv->decode_buffer);
    surface_priv->video_buffer->destroy(surface_priv->video_buffer);
    FREE(surface_priv);
    surface->privData = NULL;

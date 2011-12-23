@@ -71,7 +71,6 @@ typedef struct
 
 typedef struct
 {
-   void *decode_buffer;
    struct pipe_video_buffer *video_buffer;
 
    /* nonzero if this picture is already being decoded */

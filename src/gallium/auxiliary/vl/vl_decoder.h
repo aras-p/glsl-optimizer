@@ -38,12 +38,6 @@ bool
 vl_profile_supported(struct pipe_screen *screen, enum pipe_video_profile profile);
 
 /**
- * the desired number of buffers for optimal operation
- */
-unsigned
-vl_num_buffers_desired(struct pipe_screen *screen, enum pipe_video_profile profile);
-
-/**
  * standard implementation of pipe->create_video_decoder
  */
 struct pipe_video_decoder *
@@ -51,6 +45,7 @@ vl_create_decoder(struct pipe_context *pipe,
                   enum pipe_video_profile profile,
                   enum pipe_video_entrypoint entrypoint,
                   enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, unsigned max_references);
+                  unsigned width, unsigned height, unsigned max_references,
+                  bool expect_chunked_decode);
 
 #endif /* vl_decoder_h */
