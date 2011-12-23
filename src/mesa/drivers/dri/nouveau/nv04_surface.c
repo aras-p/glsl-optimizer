@@ -196,12 +196,14 @@ nv04_surface_copy_swizzle(struct gl_context *ctx,
 			  int dx, int dy, int sx, int sy,
 			  int w, int h)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf_refn refs[] = {
+		{ src->bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM | NOUVEAU_BO_GART },
+		{ dst->bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM },
+	};
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *swzsurf = hw->swzsurf;
-	struct nouveau_grobj *sifm = hw->sifm;
-	struct nouveau_bo_context *bctx = context_bctx(ctx, SURFACE);
-	const unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
+	struct nouveau_object *swzsurf = hw->swzsurf;
+	struct nv04_fifo *fifo = hw->chan->data;
 	/* Max width & height may not be the same on all HW, but must be POT */
 	const unsigned max_w = 1024;
 	const unsigned max_h = 1024;
@@ -213,20 +215,10 @@ nv04_surface_copy_swizzle(struct gl_context *ctx,
 	assert(_mesa_is_pow_two(dst->width) &&
 	       _mesa_is_pow_two(dst->height));
 
-	nouveau_bo_marko(bctx, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE,
-			 src->bo, bo_flags | NOUVEAU_BO_RD);
-	nouveau_bo_marko(bctx, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE,
-			 dst->bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	nouveau_bo_markl(bctx, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET,
-			 dst->bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-
-	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
-	OUT_RING  (chan, swzsurf_format(dst->format) |
-		   log2i(dst->width) << 16 |
-		   log2i(dst->height) << 24);
-
-	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
-	OUT_RING  (chan, swzsurf->handle);
+	if (context_chipset(ctx) < 0x10) {
+		BEGIN_NV04(push, NV01_SUBC(SURF, OBJECT), 1);
+		PUSH_DATA (push, swzsurf->handle);
+	}
 
 	for (y = 0; y < h; y += sub_h) {
 		sub_h = MIN2(sub_h, h - y);
@@ -234,37 +226,49 @@ nv04_surface_copy_swizzle(struct gl_context *ctx,
 		for (x = 0; x < w; x += sub_w) {
 			sub_w = MIN2(sub_w, w - x);
 
-			MARK_RING(chan, 15, 1);
+			if (nouveau_pushbuf_space(push, 64, 4, 0) ||
+			    nouveau_pushbuf_refn (push, refs, 2))
+				return;
 
-			BEGIN_RING(chan, sifm,
-				   NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT, 8);
-			OUT_RING(chan, sifm_format(src->format));
-			OUT_RING(chan, NV03_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-			OUT_RING(chan, (y + dy) << 16 | (x + dx));
-			OUT_RING(chan, sub_h << 16 | sub_w);
-			OUT_RING(chan, (y + dy) << 16 | (x + dx));
-			OUT_RING(chan, sub_h << 16 | sub_w);
-			OUT_RING(chan, 1 << 20);
-			OUT_RING(chan, 1 << 20);
+			BEGIN_NV04(push, NV04_SSWZ(DMA_IMAGE), 1);
+			PUSH_DATA (push, fifo->vram);
+			BEGIN_NV04(push, NV04_SSWZ(FORMAT), 2);
+			PUSH_DATA (push, swzsurf_format(dst->format) |
+					 log2i(dst->width) << 16 |
+					 log2i(dst->height) << 24);
+			PUSH_RELOC(push, dst->bo, dst->offset, NOUVEAU_BO_LOW, 0, 0);
 
-			BEGIN_RING(chan, sifm,
-				   NV03_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
-			OUT_RING(chan, align(sub_h, 2) << 16 | align(sub_w, 2));
-			OUT_RING(chan, src->pitch  |
-				 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
-				 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-			OUT_RELOCl(chan, src->bo, src->offset +
-				   (y + sy) * src->pitch +
-				   (x + sx) * src->cpp,
-				   bo_flags | NOUVEAU_BO_RD);
-			OUT_RING(chan, 0);
+			BEGIN_NV04(push, NV03_SIFM(DMA_IMAGE), 1);
+			PUSH_RELOC(push, src->bo, 0, NOUVEAU_BO_OR, fifo->vram, fifo->gart);
+			BEGIN_NV04(push, NV05_SIFM(SURFACE), 1);
+			PUSH_DATA (push, swzsurf->handle);
+
+			BEGIN_NV04(push, NV03_SIFM(COLOR_FORMAT), 8);
+			PUSH_DATA (push, sifm_format(src->format));
+			PUSH_DATA (push, NV03_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
+			PUSH_DATA (push, (y + dy) << 16 | (x + dx));
+			PUSH_DATA (push, sub_h << 16 | sub_w);
+			PUSH_DATA (push, (y + dy) << 16 | (x + dx));
+			PUSH_DATA (push, sub_h << 16 | sub_w);
+			PUSH_DATA (push, 1 << 20);
+			PUSH_DATA (push, 1 << 20);
+
+			BEGIN_NV04(push, NV03_SIFM(SIZE), 4);
+			PUSH_DATA (push, align(sub_h, 2) << 16 | align(sub_w, 2));
+			PUSH_DATA (push, src->pitch  |
+					 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
+					 NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
+			PUSH_RELOC(push, src->bo, src->offset + (y + sy) * src->pitch +
+					 (x + sx) * src->cpp, NOUVEAU_BO_LOW, 0, 0);
+			PUSH_DATA (push, 0);
 		}
 	}
 
-	nouveau_bo_context_reset(bctx);
-
-	if (context_chipset(ctx) < 0x10)
-		FIRE_RING(chan);
+	if (context_chipset(ctx) < 0x10) {
+		BEGIN_NV04(push, NV01_SUBC(SURF, OBJECT), 1);
+		PUSH_DATA (push, hw->surf3d->handle);
+		PUSH_KICK(push);
+	}
 }
 
 static void
@@ -274,45 +278,43 @@ nv04_surface_copy_m2mf(struct gl_context *ctx,
 		       int dx, int dy, int sx, int sy,
 		       int w, int h)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf_refn refs[] = {
+		{ src->bo, NOUVEAU_BO_RD | NOUVEAU_BO_VRAM | NOUVEAU_BO_GART },
+		{ dst->bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM | NOUVEAU_BO_GART },
+	};
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *m2mf = hw->m2mf;
-	struct nouveau_bo_context *bctx = context_bctx(ctx, SURFACE);
-	const unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
+	struct nv04_fifo *fifo = hw->chan->data;
 	unsigned dst_offset = dst->offset + dy * dst->pitch + dx * dst->cpp;
 	unsigned src_offset = src->offset + sy * src->pitch + sx * src->cpp;
-
-	nouveau_bo_marko(bctx, m2mf, NV04_M2MF_DMA_BUFFER_IN,
-			 src->bo, bo_flags | NOUVEAU_BO_RD);
-	nouveau_bo_marko(bctx, m2mf, NV04_M2MF_DMA_BUFFER_OUT,
-			 dst->bo, bo_flags | NOUVEAU_BO_WR);
 
 	while (h) {
 		int count = (h > 2047) ? 2047 : h;
 
-		MARK_RING(chan, 9, 2);
+		if (nouveau_pushbuf_space(push, 16, 4, 0) ||
+		    nouveau_pushbuf_refn (push, refs, 2))
+			return;
 
-		BEGIN_RING(chan, m2mf, NV04_M2MF_OFFSET_IN, 8);
-		OUT_RELOCl(chan, src->bo, src_offset,
-			   bo_flags | NOUVEAU_BO_RD);
-		OUT_RELOCl(chan, dst->bo, dst_offset,
-			   bo_flags | NOUVEAU_BO_WR);
-		OUT_RING  (chan, src->pitch);
-		OUT_RING  (chan, dst->pitch);
-		OUT_RING  (chan, w * src->cpp);
-		OUT_RING  (chan, count);
-		OUT_RING  (chan, 0x0101);
-		OUT_RING  (chan, 0);
+		BEGIN_NV04(push, NV03_M2MF(DMA_BUFFER_IN), 2);
+		PUSH_RELOC(push, src->bo, 0, NOUVEAU_BO_OR, fifo->vram, fifo->gart);
+		PUSH_RELOC(push, dst->bo, 0, NOUVEAU_BO_OR, fifo->vram, fifo->gart);
+		BEGIN_NV04(push, NV03_M2MF(OFFSET_IN), 8);
+		PUSH_RELOC(push, src->bo, src->offset, NOUVEAU_BO_LOW, 0, 0);
+		PUSH_RELOC(push, dst->bo, dst->offset, NOUVEAU_BO_LOW, 0, 0);
+		PUSH_DATA (push, src->pitch);
+		PUSH_DATA (push, dst->pitch);
+		PUSH_DATA (push, w * src->cpp);
+		PUSH_DATA (push, count);
+		PUSH_DATA (push, 0x0101);
+		PUSH_DATA (push, 0);
 
-		h -= count;
 		src_offset += src->pitch * count;
 		dst_offset += dst->pitch * count;
+		h -= count;
 	}
 
-	nouveau_bo_context_reset(bctx);
-
 	if (context_chipset(ctx) < 0x10)
-		FIRE_RING(chan);
+		PUSH_KICK(push);
 }
 
 typedef unsigned (*get_offset_t)(struct nouveau_surface *s,
@@ -374,8 +376,8 @@ nv04_surface_copy_cpu(struct gl_context *ctx,
 				get_swizzled_offset : get_linear_offset);
 	void *dp, *sp;
 
-	nouveau_bo_map(dst->bo, NOUVEAU_BO_WR);
-	nouveau_bo_map(src->bo, NOUVEAU_BO_RD);
+	nouveau_bo_map(dst->bo, NOUVEAU_BO_WR, context_client(ctx));
+	nouveau_bo_map(src->bo, NOUVEAU_BO_RD, context_client(ctx));
 
 	dp = dst->bo->map + dst->offset;
 	sp = src->bo->map + src->offset;
@@ -386,9 +388,6 @@ nv04_surface_copy_cpu(struct gl_context *ctx,
 			       sp + get_src(src, sx + x, sy + y), dst->cpp);
 		}
 	}
-
-	nouveau_bo_unmap(src->bo);
-	nouveau_bo_unmap(dst->bo);
 }
 
 void
@@ -422,40 +421,41 @@ nv04_surface_fill(struct gl_context *ctx,
 		  unsigned mask, unsigned value,
 		  int dx, int dy, int w, int h)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf_refn refs[] = {
+		{ dst->bo, NOUVEAU_BO_WR | NOUVEAU_BO_VRAM | NOUVEAU_BO_GART },
+	};
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *surf2d = hw->surf2d;
-	struct nouveau_grobj *patt = hw->patt;
-	struct nouveau_grobj *rect = hw->rect;
-	unsigned bo_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
+	struct nv04_fifo *fifo = hw->chan->data;
 
-	MARK_RING (chan, 19, 4);
+	if (nouveau_pushbuf_space(push, 64, 4, 0) ||
+	    nouveau_pushbuf_refn (push, refs, 1))
+		return;
 
-	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
-	OUT_RELOCo(chan, dst->bo, bo_flags | NOUVEAU_BO_WR);
-	OUT_RELOCo(chan, dst->bo, bo_flags | NOUVEAU_BO_WR);
-	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
-	OUT_RING  (chan, surf2d_format(dst->format));
-	OUT_RING  (chan, (dst->pitch << 16) | dst->pitch);
-	OUT_RELOCl(chan, dst->bo, dst->offset, bo_flags | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, dst->bo, dst->offset, bo_flags | NOUVEAU_BO_WR);
+	BEGIN_NV04(push, NV04_SF2D(DMA_IMAGE_SOURCE), 2);
+	PUSH_RELOC(push, dst->bo, 0, NOUVEAU_BO_OR, fifo->vram, fifo->gart);
+	PUSH_RELOC(push, dst->bo, 0, NOUVEAU_BO_OR, fifo->vram, fifo->gart);
+	BEGIN_NV04(push, NV04_SF2D(FORMAT), 4);
+	PUSH_DATA (push, surf2d_format(dst->format));
+	PUSH_DATA (push, (dst->pitch << 16) | dst->pitch);
+	PUSH_RELOC(push, dst->bo, dst->offset, NOUVEAU_BO_LOW, 0, 0);
+	PUSH_RELOC(push, dst->bo, dst->offset, NOUVEAU_BO_LOW, 0, 0);
 
-	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_COLOR_FORMAT, 1);
-	OUT_RING  (chan, rect_format(dst->format));
-	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_MONOCHROME_COLOR1, 1);
-	OUT_RING  (chan, mask | ~0ll << (8 * dst->cpp));
+	BEGIN_NV04(push, NV01_PATT(COLOR_FORMAT), 1);
+	PUSH_DATA (push, rect_format(dst->format));
+	BEGIN_NV04(push, NV01_PATT(MONOCHROME_COLOR1), 1);
+	PUSH_DATA (push, mask | ~0ll << (8 * dst->cpp));
 
-	BEGIN_RING(chan, rect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);
-	OUT_RING  (chan, rect_format(dst->format));
-	BEGIN_RING(chan, rect, NV04_GDI_RECTANGLE_TEXT_COLOR1_A, 1);
-	OUT_RING  (chan, value);
-	BEGIN_RING(chan, rect,
-		   NV04_GDI_RECTANGLE_TEXT_UNCLIPPED_RECTANGLE_POINT(0), 2);
-	OUT_RING  (chan, (dx << 16) | dy);
-	OUT_RING  (chan, ( w << 16) |  h);
+	BEGIN_NV04(push, NV04_GDI(COLOR_FORMAT), 1);
+	PUSH_DATA (push, rect_format(dst->format));
+	BEGIN_NV04(push, NV04_GDI(COLOR1_A), 1);
+	PUSH_DATA (push, value);
+	BEGIN_NV04(push, NV04_GDI(UNCLIPPED_RECTANGLE_POINT(0)), 2);
+	PUSH_DATA (push, (dx << 16) | dy);
+	PUSH_DATA (push, ( w << 16) |  h);
 
 	if (context_chipset(ctx) < 0x10)
-		FIRE_RING(chan);
+		PUSH_KICK(push);
 }
 
 void
@@ -463,123 +463,144 @@ nv04_surface_takedown(struct gl_context *ctx)
 {
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
 
-	nouveau_grobj_free(&hw->swzsurf);
-	nouveau_grobj_free(&hw->sifm);
-	nouveau_grobj_free(&hw->rect);
-	nouveau_grobj_free(&hw->rop);
-	nouveau_grobj_free(&hw->patt);
-	nouveau_grobj_free(&hw->surf2d);
-	nouveau_grobj_free(&hw->m2mf);
-	nouveau_notifier_free(&hw->ntfy);
+	nouveau_object_del(&hw->swzsurf);
+	nouveau_object_del(&hw->sifm);
+	nouveau_object_del(&hw->rect);
+	nouveau_object_del(&hw->rop);
+	nouveau_object_del(&hw->patt);
+	nouveau_object_del(&hw->surf2d);
+	nouveau_object_del(&hw->m2mf);
+	nouveau_object_del(&hw->ntfy);
 }
 
 GLboolean
 nv04_surface_init(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nouveau_object *chan = hw->chan;
 	unsigned handle = 0x88000000, class;
 	int ret;
 
 	/* Notifier object. */
-	ret = nouveau_notifier_alloc(chan, handle++, 1, &hw->ntfy);
+	ret = nouveau_object_new(chan, handle++, NOUVEAU_NOTIFIER_CLASS,
+				 &(struct nv04_notify) {
+					.length = 32,
+				 }, sizeof(struct nv04_notify), &hw->ntfy);
 	if (ret)
 		goto fail;
 
 	/* Memory to memory format. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV04_M2MF, &hw->m2mf);
+	ret = nouveau_object_new(chan, handle++, NV03_M2MF_CLASS,
+				 NULL, 0, &hw->m2mf);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, hw->m2mf, NV04_M2MF_DMA_NOTIFY, 1);
-	OUT_RING  (chan, hw->ntfy->handle);
+	BEGIN_NV04(push, NV01_SUBC(M2MF, OBJECT), 1);
+	PUSH_DATA (push, hw->m2mf->handle);
+	BEGIN_NV04(push, NV03_M2MF(DMA_NOTIFY), 1);
+	PUSH_DATA (push, hw->ntfy->handle);
 
 	/* Context surfaces 2D. */
 	if (context_chipset(ctx) < 0x10)
-		class = NV04_CONTEXT_SURFACES_2D;
+		class = NV04_SURFACE_2D_CLASS;
 	else
-		class = NV10_CONTEXT_SURFACES_2D;
+		class = NV10_SURFACE_2D_CLASS;
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->surf2d);
+	ret = nouveau_object_new(chan, handle++, class, NULL, 0, &hw->surf2d);
 	if (ret)
 		goto fail;
+
+	BEGIN_NV04(push, NV01_SUBC(SF2D, OBJECT), 1);
+	PUSH_DATA (push, hw->surf2d->handle);
 
 	/* Raster op. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV03_CONTEXT_ROP, &hw->rop);
+	ret = nouveau_object_new(chan, handle++, NV03_ROP_CLASS,
+				 NULL, 0, &hw->rop);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, hw->rop, NV03_CONTEXT_ROP_DMA_NOTIFY, 1);
-	OUT_RING  (chan, hw->ntfy->handle);
+	BEGIN_NV04(push, NV01_SUBC(PATT, OBJECT), 1);
+	PUSH_DATA (push, hw->rop->handle);
+	BEGIN_NV04(push, NV01_ROP(DMA_NOTIFY), 1);
+	PUSH_DATA (push, hw->ntfy->handle);
 
-	BEGIN_RING(chan, hw->rop, NV03_CONTEXT_ROP_ROP, 1);
-	OUT_RING  (chan, 0xca); /* DPSDxax in the GDI speech. */
+	BEGIN_NV04(push, NV01_ROP(ROP), 1);
+	PUSH_DATA (push, 0xca); /* DPSDxax in the GDI speech. */
 
 	/* Image pattern. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV04_IMAGE_PATTERN,
-				  &hw->patt);
+	ret = nouveau_object_new(chan, handle++, NV04_PATTERN_CLASS,
+				 NULL, 0, &hw->patt);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_DMA_NOTIFY, 1);
-	OUT_RING  (chan, hw->ntfy->handle);
+	BEGIN_NV04(push, NV01_SUBC(PATT, OBJECT), 1);
+	PUSH_DATA (push, hw->patt->handle);
+	BEGIN_NV04(push, NV01_PATT(DMA_NOTIFY), 1);
+	PUSH_DATA (push, hw->ntfy->handle);
 
-	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_MONOCHROME_FORMAT, 3);
-	OUT_RING  (chan, NV04_IMAGE_PATTERN_MONOCHROME_FORMAT_LE);
-	OUT_RING  (chan, NV04_IMAGE_PATTERN_MONOCHROME_SHAPE_8X8);
-	OUT_RING  (chan, NV04_IMAGE_PATTERN_PATTERN_SELECT_MONO);
+	BEGIN_NV04(push, NV01_PATT(MONOCHROME_FORMAT), 3);
+	PUSH_DATA (push, NV04_IMAGE_PATTERN_MONOCHROME_FORMAT_LE);
+	PUSH_DATA (push, NV04_IMAGE_PATTERN_MONOCHROME_SHAPE_8X8);
+	PUSH_DATA (push, NV04_IMAGE_PATTERN_PATTERN_SELECT_MONO);
 
-	BEGIN_RING(chan, hw->patt, NV04_IMAGE_PATTERN_MONOCHROME_COLOR0, 4);
-	OUT_RING  (chan, 0);
-	OUT_RING  (chan, 0);
-	OUT_RING  (chan, ~0);
-	OUT_RING  (chan, ~0);
+	BEGIN_NV04(push, NV01_PATT(MONOCHROME_COLOR0), 4);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, ~0);
+	PUSH_DATA (push, ~0);
 
 	/* GDI rectangle text. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV04_GDI_RECTANGLE_TEXT,
-				  &hw->rect);
+	ret = nouveau_object_new(chan, handle++, NV04_GDI_CLASS,
+				 NULL, 0, &hw->rect);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
-	OUT_RING  (chan, hw->ntfy->handle);
-	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
-	OUT_RING  (chan, hw->surf2d->handle);
-	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_ROP, 1);
-	OUT_RING  (chan, hw->rop->handle);
-	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_PATTERN, 1);
-	OUT_RING  (chan, hw->patt->handle);
+	BEGIN_NV04(push, NV01_SUBC(GDI, OBJECT), 1);
+	PUSH_DATA (push, hw->rect->handle);
+	BEGIN_NV04(push, NV04_GDI(DMA_NOTIFY), 1);
+	PUSH_DATA (push, hw->ntfy->handle);
+	BEGIN_NV04(push, NV04_GDI(SURFACE), 1);
+	PUSH_DATA (push, hw->surf2d->handle);
+	BEGIN_NV04(push, NV04_GDI(ROP), 1);
+	PUSH_DATA (push, hw->rop->handle);
+	BEGIN_NV04(push, NV04_GDI(PATTERN), 1);
+	PUSH_DATA (push, hw->patt->handle);
 
-	BEGIN_RING(chan, hw->rect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
-	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_OPERATION_ROP_AND);
-	BEGIN_RING(chan, hw->rect,
-		   NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
-	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
+	BEGIN_NV04(push, NV04_GDI(OPERATION), 1);
+	PUSH_DATA (push, NV04_GDI_RECTANGLE_TEXT_OPERATION_ROP_AND);
+	BEGIN_NV04(push, NV04_GDI(MONOCHROME_FORMAT), 1);
+	PUSH_DATA (push, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
 	/* Swizzled surface. */
 	if (context_chipset(ctx) < 0x20)
-		class = NV04_SWIZZLED_SURFACE;
+		class = NV04_SURFACE_SWZ_CLASS;
 	else
-		class = NV20_SWIZZLED_SURFACE;
+		class = NV20_SURFACE_SWZ_CLASS;
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->swzsurf);
+	ret = nouveau_object_new(chan, handle++, class, NULL, 0, &hw->swzsurf);
 	if (ret)
 		goto fail;
+
+	BEGIN_NV04(push, NV01_SUBC(SURF, OBJECT), 1);
+	PUSH_DATA (push, hw->swzsurf->handle);
 
 	/* Scaled image from memory. */
 	if  (context_chipset(ctx) < 0x10)
-		class = NV04_SCALED_IMAGE_FROM_MEMORY;
+		class = NV04_SIFM_CLASS;
 	else
-		class = NV10_SCALED_IMAGE_FROM_MEMORY;
+		class = NV10_SIFM_CLASS;
 
-	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->sifm);
+	ret = nouveau_object_new(chan, handle++, class, NULL, 0, &hw->sifm);
 	if (ret)
 		goto fail;
 
+	BEGIN_NV04(push, NV01_SUBC(SIFM, OBJECT), 1);
+	PUSH_DATA (push, hw->sifm->handle);
+
 	if (context_chipset(ctx) >= 0x10) {
-		BEGIN_RING(chan, hw->sifm,
-			   NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 1);
-		OUT_RING(chan, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
+		BEGIN_NV04(push, NV05_SIFM(COLOR_CONVERSION), 1);
+		PUSH_DATA (push, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
 	}
 
 	return GL_TRUE;

@@ -144,18 +144,17 @@ static void
 nv17_zclear(struct gl_context *ctx, GLbitfield *buffers)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(
 		ctx->DrawBuffer);
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(
 		nfb->base.Attachment[BUFFER_DEPTH].Renderbuffer)->surface;
 
 	/* Clear the hierarchical depth buffer */
-	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_FILL_VALUE, 1);
-	OUT_RING(chan, pack_zs_f(s->format, ctx->Depth.Clear, 0));
-	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_BUFFER_CLEAR, 1);
-	OUT_RING(chan, 1);
+	BEGIN_NV04(push, NV17_3D(HIERZ_FILL_VALUE), 1);
+	PUSH_DATA (push, pack_zs_f(s->format, ctx->Depth.Clear, 0));
+	BEGIN_NV04(push, NV17_3D(HIERZ_BUFFER_CLEAR), 1);
+	PUSH_DATA (push, 1);
 
 	/* Mark the depth buffer as cleared */
 	if (use_fast_zclear(ctx, *buffers)) {
@@ -173,7 +172,16 @@ nv17_zclear(struct gl_context *ctx, GLbitfield *buffers)
 static void
 nv10_clear(struct gl_context *ctx, GLbitfield buffers)
 {
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
+
 	nouveau_validate_framebuffer(ctx);
+
+	nouveau_pushbuf_bufctx(push, nctx->hw.bufctx);
+	if (nouveau_pushbuf_validate(push)) {
+		nouveau_pushbuf_bufctx(push, NULL);
+		return;
+	}
 
 	if ((buffers & BUFFER_BIT_DEPTH) && ctx->Depth.Mask) {
 		if (context_chipset(ctx) >= 0x17)
@@ -185,219 +193,222 @@ nv10_clear(struct gl_context *ctx, GLbitfield buffers)
 		_mesa_update_state(ctx);
 	}
 
+	nouveau_pushbuf_bufctx(push, NULL);
 	nouveau_clear(ctx, buffers);
 }
 
 static void
 nv10_hwctx_init(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
+	struct nv04_fifo *fifo = hw->chan->data;
 	int i;
 
-	BEGIN_RING(chan, celsius, NV10_3D_DMA_NOTIFY, 1);
-	OUT_RING(chan, hw->ntfy->handle);
+	BEGIN_NV04(push, NV01_SUBC(3D, OBJECT), 1);
+	PUSH_DATA (push, hw->eng3d->handle);
+	BEGIN_NV04(push, NV10_3D(DMA_NOTIFY), 1);
+	PUSH_DATA (push, hw->ntfy->handle);
 
-	BEGIN_RING(chan, celsius, NV10_3D_DMA_TEXTURE0, 3);
-	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, chan->gart->handle);
-	OUT_RING(chan, chan->gart->handle);
-	BEGIN_RING(chan, celsius, NV10_3D_DMA_COLOR, 2);
-	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, chan->vram->handle);
+	BEGIN_NV04(push, NV10_3D(DMA_TEXTURE0), 3);
+	PUSH_DATA (push, fifo->vram);
+	PUSH_DATA (push, fifo->gart);
+	PUSH_DATA (push, fifo->gart);
+	BEGIN_NV04(push, NV10_3D(DMA_COLOR), 2);
+	PUSH_DATA (push, fifo->vram);
+	PUSH_DATA (push, fifo->vram);
 
-	BEGIN_RING(chan, celsius, NV04_GRAPH_NOP, 1);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+	PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius, NV10_3D_RT_HORIZ, 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV10_3D(RT_HORIZ), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_HORIZ(0), 1);
-	OUT_RING(chan, 0x7ff << 16 | 0x800);
-	BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_VERT(0), 1);
-	OUT_RING(chan, 0x7ff << 16 | 0x800);
+	BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_HORIZ(0)), 1);
+	PUSH_DATA (push, 0x7ff << 16 | 0x800);
+	BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_VERT(0)), 1);
+	PUSH_DATA (push, 0x7ff << 16 | 0x800);
 
 	for (i = 1; i < 8; i++) {
-		BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_HORIZ(i), 1);
-		OUT_RING(chan, 0);
-		BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_VERT(i), 1);
-		OUT_RING(chan, 0);
+		BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_HORIZ(i)), 1);
+		PUSH_DATA (push, 0);
+		BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_VERT(i)), 1);
+		PUSH_DATA (push, 0);
 	}
 
-	BEGIN_RING(chan, celsius, 0x290, 1);
-	OUT_RING(chan, 0x10 << 16 | 1);
-	BEGIN_RING(chan, celsius, 0x3f4, 1);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, SUBC_3D(0x290), 1);
+	PUSH_DATA (push, 0x10 << 16 | 1);
+	BEGIN_NV04(push, SUBC_3D(0x3f4), 1);
+	PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius,  NV04_GRAPH_NOP, 1);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+	PUSH_DATA (push, 0);
 
 	if (context_chipset(ctx) >= 0x17) {
-		BEGIN_RING(chan, celsius, NV17_3D_UNK01AC, 2);
-		OUT_RING(chan, chan->vram->handle);
-		OUT_RING(chan, chan->vram->handle);
+		BEGIN_NV04(push, NV17_3D(UNK01AC), 2);
+		PUSH_DATA (push, fifo->vram);
+		PUSH_DATA (push, fifo->vram);
 
-		BEGIN_RING(chan, celsius, 0xd84, 1);
-		OUT_RING(chan, 0x3);
+		BEGIN_NV04(push, SUBC_3D(0xd84), 1);
+		PUSH_DATA (push, 0x3);
 
-		BEGIN_RING(chan, celsius, NV17_3D_COLOR_MASK_ENABLE, 1);
-		OUT_RING(chan, 1);
+		BEGIN_NV04(push, NV17_3D(COLOR_MASK_ENABLE), 1);
+		PUSH_DATA (push, 1);
 	}
 
 	if (context_chipset(ctx) >= 0x11) {
-		BEGIN_RING(chan, celsius, 0x120, 3);
-		OUT_RING(chan, 0);
-		OUT_RING(chan, 1);
-		OUT_RING(chan, 2);
+		BEGIN_NV04(push, SUBC_3D(0x120), 3);
+		PUSH_DATA (push, 0);
+		PUSH_DATA (push, 1);
+		PUSH_DATA (push, 2);
 
-		BEGIN_RING(chan, celsius, NV04_GRAPH_NOP, 1);
-		OUT_RING(chan, 0);
+		BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+		PUSH_DATA (push, 0);
 	}
 
-	BEGIN_RING(chan, celsius,  NV04_GRAPH_NOP, 1);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+	PUSH_DATA (push, 0);
 
 	/* Set state */
-	BEGIN_RING(chan, celsius, NV10_3D_FOG_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_ALPHA_FUNC_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_ALPHA_FUNC_FUNC, 2);
-	OUT_RING(chan, 0x207);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_TEX_ENABLE(0), 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV10_3D(FOG_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(ALPHA_FUNC_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(ALPHA_FUNC_FUNC), 2);
+	PUSH_DATA (push, 0x207);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(TEX_ENABLE(0)), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius, NV10_3D_BLEND_FUNC_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_DITHER_ENABLE, 2);
-	OUT_RING(chan, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_LINE_SMOOTH_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_WEIGHT_ENABLE, 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_BLEND_FUNC_SRC, 4);
-	OUT_RING(chan, 1);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0x8006);
-	BEGIN_RING(chan, celsius, NV10_3D_STENCIL_MASK, 8);
-	OUT_RING(chan, 0xff);
-	OUT_RING(chan, 0x207);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0xff);
-	OUT_RING(chan, 0x1e00);
-	OUT_RING(chan, 0x1e00);
-	OUT_RING(chan, 0x1e00);
-	OUT_RING(chan, 0x1d01);
-	BEGIN_RING(chan, celsius, NV10_3D_NORMALIZE_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_FOG_ENABLE, 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_LIGHT_MODEL, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_SEPARATE_SPECULAR_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_ENABLED_LIGHTS, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_POLYGON_OFFSET_POINT_ENABLE, 3);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_DEPTH_FUNC, 1);
-	OUT_RING(chan, 0x201);
-	BEGIN_RING(chan, celsius, NV10_3D_DEPTH_WRITE_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_DEPTH_TEST_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_POLYGON_OFFSET_FACTOR, 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_POINT_SIZE, 1);
-	OUT_RING(chan, 8);
-	BEGIN_RING(chan, celsius, NV10_3D_POINT_PARAMETERS_ENABLE, 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_LINE_WIDTH, 1);
-	OUT_RING(chan, 8);
-	BEGIN_RING(chan, celsius, NV10_3D_LINE_SMOOTH_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_POLYGON_MODE_FRONT, 2);
-	OUT_RING(chan, 0x1b02);
-	OUT_RING(chan, 0x1b02);
-	BEGIN_RING(chan, celsius, NV10_3D_CULL_FACE, 2);
-	OUT_RING(chan, 0x405);
-	OUT_RING(chan, 0x901);
-	BEGIN_RING(chan, celsius, NV10_3D_POLYGON_SMOOTH_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_CULL_FACE_ENABLE, 1);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_TEX_GEN_MODE(0, 0), 8);
+	BEGIN_NV04(push, NV10_3D(BLEND_FUNC_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(DITHER_ENABLE), 2);
+	PUSH_DATA (push, 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(LINE_SMOOTH_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_WEIGHT_ENABLE), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(BLEND_FUNC_SRC), 4);
+	PUSH_DATA (push, 1);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0x8006);
+	BEGIN_NV04(push, NV10_3D(STENCIL_MASK), 8);
+	PUSH_DATA (push, 0xff);
+	PUSH_DATA (push, 0x207);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0xff);
+	PUSH_DATA (push, 0x1e00);
+	PUSH_DATA (push, 0x1e00);
+	PUSH_DATA (push, 0x1e00);
+	PUSH_DATA (push, 0x1d01);
+	BEGIN_NV04(push, NV10_3D(NORMALIZE_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(FOG_ENABLE), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(LIGHT_MODEL), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(SEPARATE_SPECULAR_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(ENABLED_LIGHTS), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(POLYGON_OFFSET_POINT_ENABLE), 3);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(DEPTH_FUNC), 1);
+	PUSH_DATA (push, 0x201);
+	BEGIN_NV04(push, NV10_3D(DEPTH_WRITE_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(DEPTH_TEST_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(POLYGON_OFFSET_FACTOR), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(POINT_SIZE), 1);
+	PUSH_DATA (push, 8);
+	BEGIN_NV04(push, NV10_3D(POINT_PARAMETERS_ENABLE), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(LINE_WIDTH), 1);
+	PUSH_DATA (push, 8);
+	BEGIN_NV04(push, NV10_3D(LINE_SMOOTH_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(POLYGON_MODE_FRONT), 2);
+	PUSH_DATA (push, 0x1b02);
+	PUSH_DATA (push, 0x1b02);
+	BEGIN_NV04(push, NV10_3D(CULL_FACE), 2);
+	PUSH_DATA (push, 0x405);
+	PUSH_DATA (push, 0x901);
+	BEGIN_NV04(push, NV10_3D(POLYGON_SMOOTH_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(CULL_FACE_ENABLE), 1);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(TEX_GEN_MODE(0, 0)), 8);
 	for (i = 0; i < 8; i++)
-		OUT_RING(chan, 0);
+		PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX_ENABLE(0), 2);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_FOG_COEFF(0), 3);
-	OUT_RING(chan, 0x3fc00000);	/* -1.50 */
-	OUT_RING(chan, 0xbdb8aa0a);	/* -0.09 */
-	OUT_RING(chan, 0);		/*  0.00 */
+	BEGIN_NV04(push, NV10_3D(TEX_MATRIX_ENABLE(0)), 2);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(FOG_COEFF(0)), 3);
+	PUSH_DATA (push, 0x3fc00000);	/* -1.50 */
+	PUSH_DATA (push, 0xbdb8aa0a);	/* -0.09 */
+	PUSH_DATA (push, 0);		/*  0.00 */
 
-	BEGIN_RING(chan, celsius,  NV04_GRAPH_NOP, 1);
-	OUT_RING(chan, 0);
+	BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+	PUSH_DATA (push, 0);
 
-	BEGIN_RING(chan, celsius, NV10_3D_FOG_MODE, 2);
-	OUT_RING(chan, 0x802);
-	OUT_RING(chan, 2);
+	BEGIN_NV04(push, NV10_3D(FOG_MODE), 2);
+	PUSH_DATA (push, 0x802);
+	PUSH_DATA (push, 2);
 	/* for some reason VIEW_MATRIX_ENABLE need to be 6 instead of 4 when
 	 * using texturing, except when using the texture matrix
 	 */
-	BEGIN_RING(chan, celsius, NV10_3D_VIEW_MATRIX_ENABLE, 1);
-	OUT_RING(chan, 6);
-	BEGIN_RING(chan, celsius, NV10_3D_COLOR_MASK, 1);
-	OUT_RING(chan, 0x01010101);
+	BEGIN_NV04(push, NV10_3D(VIEW_MATRIX_ENABLE), 1);
+	PUSH_DATA (push, 6);
+	BEGIN_NV04(push, NV10_3D(COLOR_MASK), 1);
+	PUSH_DATA (push, 0x01010101);
 
 	/* Set vertex component */
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_COL_4F_R, 4);
-	OUT_RINGf(chan, 1.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 1.0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_COL2_3F_R, 3);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_NOR_3F_X, 3);
-	OUT_RING(chan, 0);
-	OUT_RING(chan, 0);
-	OUT_RINGf(chan, 1.0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_TX0_4F_S, 4);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 1.0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_TX1_4F_S, 4);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 1.0);
-	BEGIN_RING(chan, celsius, NV10_3D_VERTEX_FOG_1F, 1);
-	OUT_RINGf(chan, 0.0);
-	BEGIN_RING(chan, celsius, NV10_3D_EDGEFLAG_ENABLE, 1);
-	OUT_RING(chan, 1);
+	BEGIN_NV04(push, NV10_3D(VERTEX_COL_4F_R), 4);
+	PUSH_DATAf(push, 1.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 1.0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_COL2_3F_R), 3);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_NOR_3F_X), 3);
+	PUSH_DATA (push, 0);
+	PUSH_DATA (push, 0);
+	PUSH_DATAf(push, 1.0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_TX0_4F_S), 4);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 1.0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_TX1_4F_S), 4);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 1.0);
+	BEGIN_NV04(push, NV10_3D(VERTEX_FOG_1F), 1);
+	PUSH_DATAf(push, 0.0);
+	BEGIN_NV04(push, NV10_3D(EDGEFLAG_ENABLE), 1);
+	PUSH_DATA (push, 1);
 
-	BEGIN_RING(chan, celsius, NV10_3D_DEPTH_RANGE_NEAR, 2);
-	OUT_RINGf(chan, 0.0);
-	OUT_RINGf(chan, 16777216.0);
+	BEGIN_NV04(push, NV10_3D(DEPTH_RANGE_NEAR), 2);
+	PUSH_DATAf(push, 0.0);
+	PUSH_DATAf(push, 16777216.0);
 
-	FIRE_RING(chan);
+	PUSH_KICK (push);
 }
 
 static void
@@ -409,7 +420,7 @@ nv10_context_destroy(struct gl_context *ctx)
 	nv10_swtnl_destroy(ctx);
 	nv10_vbo_destroy(ctx);
 
-	nouveau_grobj_free(&nctx->hw.eng3d);
+	nouveau_object_del(&nctx->hw.eng3d);
 
 	nouveau_context_deinit(ctx);
 	FREE(ctx);
@@ -455,14 +466,14 @@ nv10_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 
 	/* 3D engine. */
 	if (context_chipset(ctx) >= 0x17)
-		celsius_class = NV17_3D;
+		celsius_class = NV17_3D_CLASS;
 	else if (context_chipset(ctx) >= 0x11)
-		celsius_class = NV11_3D;
+		celsius_class = NV15_3D_CLASS;
 	else
-		celsius_class = NV10_3D;
+		celsius_class = NV10_3D_CLASS;
 
-	ret = nouveau_grobj_alloc(context_chan(ctx), 0xbeef0001, celsius_class,
-				  &nctx->hw.eng3d);
+	ret = nouveau_object_new(context_chan(ctx), 0xbeef0001, celsius_class,
+				 NULL, 0, &nctx->hw.eng3d);
 	if (ret)
 		goto fail;
 

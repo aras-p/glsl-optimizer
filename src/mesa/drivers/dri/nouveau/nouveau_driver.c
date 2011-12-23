@@ -57,9 +57,9 @@ static void
 nouveau_flush(struct gl_context *ctx)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 
-	FIRE_RING(chan);
+	PUSH_KICK(push);
 
 	if (ctx->DrawBuffer->Name == 0 &&
 	    ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {

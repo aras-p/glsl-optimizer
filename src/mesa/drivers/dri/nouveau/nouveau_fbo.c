@@ -146,7 +146,7 @@ nouveau_renderbuffer_map(struct gl_context *ctx,
 	if (mode & GL_MAP_WRITE_BIT)
 		flags |= NOUVEAU_BO_WR;
 
-	nouveau_bo_map(s->bo, flags);
+	nouveau_bo_map(s->bo, flags, context_client(ctx));
 
 	map = s->bo->map;
 	stride = s->pitch;
@@ -167,9 +167,6 @@ static void
 nouveau_renderbuffer_unmap(struct gl_context *ctx,
 			   struct gl_renderbuffer *rb)
 {
-	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
-
-	nouveau_bo_unmap(s->bo);
 }
 
 static GLboolean

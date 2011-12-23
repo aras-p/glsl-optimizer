@@ -88,12 +88,11 @@ get_material_bitmask(unsigned m)
 void
 nv20_emit_color_material(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	unsigned mask = get_material_bitmask(ctx->Light.ColorMaterialBitmask);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_COLOR_MATERIAL, 1);
-	OUT_RING(chan, ctx->Light.ColorMaterialEnabled ? mask : 0);
+	BEGIN_NV04(push, NV20_3D(COLOR_MATERIAL), 1);
+	PUSH_DATA (push, ctx->Light.ColorMaterialEnabled ? mask : 0);
 }
 
 static unsigned
@@ -152,8 +151,7 @@ void
 nv20_emit_fog(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_fog_attrib *f = &ctx->Fog;
 	unsigned source = nctx->fallback == HWTNL ?
 		f->FogCoordinateSource : GL_FOG_COORDINATE_EXT;
@@ -161,64 +159,62 @@ nv20_emit_fog(struct gl_context *ctx, int emit)
 
 	nv10_get_fog_coeff(ctx, k);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_FOG_MODE, 4);
-	OUT_RING(chan, ((source == GL_FRAGMENT_DEPTH_EXT &&
+	BEGIN_NV04(push, NV20_3D(FOG_MODE), 4);
+	PUSH_DATA (push, ((source == GL_FRAGMENT_DEPTH_EXT &&
 			 f->FogDistanceMode == GL_EYE_PLANE_ABSOLUTE_NV) ?
 			get_fog_mode_unsigned(f->Mode) :
 			get_fog_mode_signed(f->Mode)));
-	OUT_RING(chan, get_fog_source(source, f->FogDistanceMode));
-	OUT_RINGb(chan, f->Enabled);
-	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
+	PUSH_DATA (push, get_fog_source(source, f->FogDistanceMode));
+	PUSH_DATAb(push, f->Enabled);
+	PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
 
-	BEGIN_RING(chan, kelvin, NV20_3D_FOG_COEFF(0), 3);
-	OUT_RINGp(chan, k, 3);
+	BEGIN_NV04(push, NV20_3D(FOG_COEFF(0)), 3);
+	PUSH_DATAp(push, k, 3);
 }
 
 void
 nv20_emit_light_model(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_lightmodel *m = &ctx->Light.Model;
 
-	BEGIN_RING(chan, kelvin, NV20_3D_SEPARATE_SPECULAR_ENABLE, 1);
-	OUT_RINGb(chan, m->ColorControl == GL_SEPARATE_SPECULAR_COLOR);
+	BEGIN_NV04(push, NV20_3D(SEPARATE_SPECULAR_ENABLE), 1);
+	PUSH_DATAb(push, m->ColorControl == GL_SEPARATE_SPECULAR_COLOR);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_MODEL, 1);
-	OUT_RING(chan, ((m->LocalViewer ?
+	BEGIN_NV04(push, NV20_3D(LIGHT_MODEL), 1);
+	PUSH_DATA (push, ((m->LocalViewer ?
 			 NV20_3D_LIGHT_MODEL_VIEWER_LOCAL :
 			 NV20_3D_LIGHT_MODEL_VIEWER_NONLOCAL) |
 			(_mesa_need_secondary_color(ctx) ?
 			 NV20_3D_LIGHT_MODEL_SEPARATE_SPECULAR :
 			 0)));
 
-	BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_MODEL_TWO_SIDE_ENABLE, 1);
-	OUT_RINGb(chan, ctx->Light.Model.TwoSide);
+	BEGIN_NV04(push, NV20_3D(LIGHT_MODEL_TWO_SIDE_ENABLE), 1);
+	PUSH_DATAb(push, ctx->Light.Model.TwoSide);
 }
 
 void
 nv20_emit_light_source(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_LIGHT_SOURCE0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_light *l = &ctx->Light.Light[i];
 
 	if (l->_Flags & LIGHT_POSITIONAL) {
-		BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_POSITION_X(i), 3);
-		OUT_RINGp(chan, l->_Position, 3);
+		BEGIN_NV04(push, NV20_3D(LIGHT_POSITION_X(i)), 3);
+		PUSH_DATAp(push, l->_Position, 3);
 
-		BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_ATTENUATION_CONSTANT(i), 3);
-		OUT_RINGf(chan, l->ConstantAttenuation);
-		OUT_RINGf(chan, l->LinearAttenuation);
-		OUT_RINGf(chan, l->QuadraticAttenuation);
+		BEGIN_NV04(push, NV20_3D(LIGHT_ATTENUATION_CONSTANT(i)), 3);
+		PUSH_DATAf(push, l->ConstantAttenuation);
+		PUSH_DATAf(push, l->LinearAttenuation);
+		PUSH_DATAf(push, l->QuadraticAttenuation);
 
 	} else {
-		BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_DIRECTION_X(i), 3);
-		OUT_RINGp(chan, l->_VP_inf_norm, 3);
+		BEGIN_NV04(push, NV20_3D(LIGHT_DIRECTION_X(i)), 3);
+		PUSH_DATAp(push, l->_VP_inf_norm, 3);
 
-		BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_HALF_VECTOR_X(i), 3);
-		OUT_RINGp(chan, l->_h_inf_norm, 3);
+		BEGIN_NV04(push, NV20_3D(LIGHT_HALF_VECTOR_X(i)), 3);
+		PUSH_DATAp(push, l->_h_inf_norm, 3);
 	}
 
 	if (l->_Flags & LIGHT_SPOT) {
@@ -226,8 +222,8 @@ nv20_emit_light_source(struct gl_context *ctx, int emit)
 
 		nv10_get_spot_coeff(l, k);
 
-		BEGIN_RING(chan, kelvin, NV20_3D_LIGHT_SPOT_CUTOFF(i, 0), 7);
-		OUT_RINGp(chan, k, 7);
+		BEGIN_NV04(push, NV20_3D(LIGHT_SPOT_CUTOFF(i, 0)), 7);
+		PUSH_DATAp(push, k, 7);
 	}
 }
 
@@ -239,8 +235,7 @@ void
 nv20_emit_material_ambient(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_AMBIENT;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	float (*mat)[4] = ctx->Light.Material.Attrib;
 	float c_scene[3], c_factor[3];
 	struct gl_light *l;
@@ -259,12 +254,12 @@ nv20_emit_material_ambient(struct gl_context *ctx, int emit)
 		ZERO_3V(c_factor);
 	}
 
-	BEGIN_RING(chan, kelvin, LIGHT_MODEL_AMBIENT_R(side), 3);
-	OUT_RINGp(chan, c_scene, 3);
+	BEGIN_NV04(push, SUBC_3D(LIGHT_MODEL_AMBIENT_R(side)), 3);
+	PUSH_DATAp(push, c_scene, 3);
 
 	if (ctx->Light.ColorMaterialEnabled) {
-		BEGIN_RING(chan, kelvin, MATERIAL_FACTOR_R(side), 3);
-		OUT_RINGp(chan, c_factor, 3);
+		BEGIN_NV04(push, SUBC_3D(MATERIAL_FACTOR_R(side)), 3);
+		PUSH_DATAp(push, c_factor, 3);
 	}
 
 	foreach(l, &ctx->Light.EnabledList) {
@@ -273,8 +268,8 @@ nv20_emit_material_ambient(struct gl_context *ctx, int emit)
 				  l->Ambient :
 				  l->_MatAmbient[side]);
 
-		BEGIN_RING(chan, kelvin, LIGHT_AMBIENT_R(side, i), 3);
-		OUT_RINGp(chan, c_light, 3);
+		BEGIN_NV04(push, SUBC_3D(LIGHT_AMBIENT_R(side, i)), 3);
+		PUSH_DATAp(push, c_light, 3);
 	}
 }
 
@@ -282,13 +277,12 @@ void
 nv20_emit_material_diffuse(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_DIFFUSE;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 	struct gl_light *l;
 
-	BEGIN_RING(chan, kelvin, MATERIAL_FACTOR_A(side), 1);
-	OUT_RINGf(chan, mat[MAT_ATTRIB_DIFFUSE(side)][3]);
+	BEGIN_NV04(push, SUBC_3D(MATERIAL_FACTOR_A(side)), 1);
+	PUSH_DATAf(push, mat[MAT_ATTRIB_DIFFUSE(side)][3]);
 
 	foreach(l, &ctx->Light.EnabledList) {
 		const int i = l - ctx->Light.Light;
@@ -296,8 +290,8 @@ nv20_emit_material_diffuse(struct gl_context *ctx, int emit)
 				  l->Diffuse :
 				  l->_MatDiffuse[side]);
 
-		BEGIN_RING(chan, kelvin, LIGHT_DIFFUSE_R(side, i), 3);
-		OUT_RINGp(chan, c_light, 3);
+		BEGIN_NV04(push, SUBC_3D(LIGHT_DIFFUSE_R(side, i)), 3);
+		PUSH_DATAp(push, c_light, 3);
 	}
 }
 
@@ -305,8 +299,7 @@ void
 nv20_emit_material_specular(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_SPECULAR;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_light *l;
 
 	foreach(l, &ctx->Light.EnabledList) {
@@ -315,8 +308,8 @@ nv20_emit_material_specular(struct gl_context *ctx, int emit)
 				  l->Specular :
 				  l->_MatSpecular[side]);
 
-		BEGIN_RING(chan, kelvin, LIGHT_SPECULAR_R(side, i), 3);
-		OUT_RINGp(chan, c_light, 3);
+		BEGIN_NV04(push, SUBC_3D(LIGHT_SPECULAR_R(side, i)), 3);
+		PUSH_DATAp(push, c_light, 3);
 	}
 }
 
@@ -324,8 +317,7 @@ void
 nv20_emit_material_shininess(struct gl_context *ctx, int emit)
 {
 	const int side = emit - NOUVEAU_STATE_MATERIAL_FRONT_SHININESS;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	float (*mat)[4] = ctx->Light.Material.Attrib;
 	float k[6];
 
@@ -333,16 +325,15 @@ nv20_emit_material_shininess(struct gl_context *ctx, int emit)
 		CLAMP(mat[MAT_ATTRIB_SHININESS(side)][0], 0, 1024),
 		k);
 
-	BEGIN_RING(chan, kelvin, MATERIAL_SHININESS(side), 6);
-	OUT_RINGp(chan, k, 6);
+	BEGIN_NV04(push, SUBC_3D(MATERIAL_SHININESS(side)), 6);
+	PUSH_DATAp(push, k, 6);
 }
 
 void
 nv20_emit_modelview(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	GLmatrix *m = ctx->ModelviewMatrixStack.Top;
 
 	if (nctx->fallback != HWTNL)
@@ -350,19 +341,18 @@ nv20_emit_modelview(struct gl_context *ctx, int emit)
 
 	if (ctx->Light._NeedEyeCoords || ctx->Fog.Enabled ||
 	    (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)) {
-		BEGIN_RING(chan, kelvin, NV20_3D_MODELVIEW_MATRIX(0, 0), 16);
-		OUT_RINGm(chan, m->m);
+		BEGIN_NV04(push, NV20_3D(MODELVIEW_MATRIX(0, 0)), 16);
+		PUSH_DATAm(push, m->m);
 	}
 
 	if (ctx->Light.Enabled ||
 	    (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)) {
 		int i, j;
 
-		BEGIN_RING(chan, kelvin,
-			   NV20_3D_INVERSE_MODELVIEW_MATRIX(0, 0), 12);
+		BEGIN_NV04(push, NV20_3D(INVERSE_MODELVIEW_MATRIX(0, 0)), 12);
 		for (i = 0; i < 3; i++)
 			for (j = 0; j < 4; j++)
-				OUT_RINGf(chan, m->inv[4*i + j]);
+				PUSH_DATAf(push, m->inv[4*i + j]);
 	}
 }
 
@@ -370,8 +360,7 @@ void
 nv20_emit_projection(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	GLmatrix m;
 
 	_math_matrix_ctr(&m);
@@ -380,8 +369,8 @@ nv20_emit_projection(struct gl_context *ctx, int emit)
 	if (nctx->fallback == HWTNL)
 		_math_matrix_mul_matrix(&m, &m, &ctx->_ModelProjectMatrix);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_PROJECTION_MATRIX(0), 16);
-	OUT_RINGm(chan, m.m);
+	BEGIN_NV04(push, NV20_3D(PROJECTION_MATRIX(0)), 16);
+	PUSH_DATAm(push, m.m);
 
 	_math_matrix_dtr(&m);
 }

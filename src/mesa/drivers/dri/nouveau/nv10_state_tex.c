@@ -37,8 +37,7 @@ nv10_emit_tex_gen(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_GEN0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
 	int j;
 
@@ -48,17 +47,16 @@ nv10_emit_tex_gen(struct gl_context *ctx, int emit)
 			float *k = get_texgen_coeff(coord);
 
 			if (k) {
-				BEGIN_RING(chan, celsius,
-					   NV10_3D_TEX_GEN_COEFF(i, j), 4);
-				OUT_RINGp(chan, k, 4);
+				BEGIN_NV04(push, NV10_3D(TEX_GEN_COEFF(i, j)), 4);
+				PUSH_DATAp(push, k, 4);
 			}
 
-			BEGIN_RING(chan, celsius, NV10_3D_TEX_GEN_MODE(i,j), 1);
-			OUT_RING(chan, nvgl_texgen_mode(coord->Mode));
+			BEGIN_NV04(push, NV10_3D(TEX_GEN_MODE(i,j)), 1);
+			PUSH_DATA (push, nvgl_texgen_mode(coord->Mode));
 
 		} else {
-			BEGIN_RING(chan, celsius, NV10_3D_TEX_GEN_MODE(i,j), 1);
-			OUT_RING(chan, 0);
+			BEGIN_NV04(push, NV10_3D(TEX_GEN_MODE(i,j)), 1);
+			PUSH_DATA (push, 0);
 		}
 	}
 
@@ -70,21 +68,20 @@ nv10_emit_tex_mat(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 
 	if (nctx->fallback == HWTNL &&
 	    ((ctx->Texture._TexMatEnabled & 1 << i) ||
 	     ctx->Texture.Unit[i]._GenFlags)) {
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX_ENABLE(i), 1);
-		OUT_RING(chan, 1);
+		BEGIN_NV04(push, NV10_3D(TEX_MATRIX_ENABLE(i)), 1);
+		PUSH_DATA (push, 1);
 
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX(i, 0), 16);
-		OUT_RINGm(chan, ctx->TextureMatrixStack[i].Top->m);
+		BEGIN_NV04(push, NV10_3D(TEX_MATRIX(i, 0)), 16);
+		PUSH_DATAm(push, ctx->TextureMatrixStack[i].Top->m);
 
 	} else {
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX_ENABLE(i), 1);
-		OUT_RING(chan, 0);
+		BEGIN_NV04(push, NV10_3D(TEX_MATRIX_ENABLE(i)), 1);
+		PUSH_DATA (push, 0);
 	}
 }
 
@@ -147,18 +144,18 @@ void
 nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx_i(ctx, TEXTURE, i);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	const int bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART | NOUVEAU_BO_VRAM;
 	struct gl_texture_object *t;
 	struct nouveau_surface *s;
 	struct gl_texture_image *ti;
 	uint32_t tx_format, tx_filter, tx_enable;
 
+	PUSH_RESET(push, BUFCTX_TEX(i));
+
 	if (!ctx->Texture.Unit[i]._ReallyEnabled) {
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_ENABLE(i), 1);
-		OUT_RING(chan, 0);
+		BEGIN_NV04(push, NV10_3D(TEX_ENABLE(i)), 1);
+		PUSH_DATA (push, 0);
 		return;
 	}
 
@@ -183,10 +180,10 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 		| log2i(t->Sampler.MaxAnisotropy) << 4;
 
 	if (t->Target == GL_TEXTURE_RECTANGLE) {
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_NPOT_PITCH(i), 1);
-		OUT_RING(chan, s->pitch << 16);
-		BEGIN_RING(chan, celsius, NV10_3D_TEX_NPOT_SIZE(i), 1);
-		OUT_RING(chan, align(s->width, 2) << 16 | s->height);
+		BEGIN_NV04(push, NV10_3D(TEX_NPOT_PITCH(i)), 1);
+		PUSH_DATA (push, s->pitch << 16);
+		BEGIN_NV04(push, NV10_3D(TEX_NPOT_SIZE(i)), 1);
+		PUSH_DATA (push, align(s->width, 2) << 16 | s->height);
 
 		tx_format |= get_tex_format_rect(ti);
 	} else {
@@ -211,19 +208,20 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 	}
 
 	/* Write it to the hardware. */
-	nouveau_bo_mark(bctx, celsius, NV10_3D_TEX_FORMAT(i),
-			s->bo, tx_format, 0,
-			NV10_3D_TEX_FORMAT_DMA0,
-			NV10_3D_TEX_FORMAT_DMA1,
-			bo_flags | NOUVEAU_BO_OR);
+	BEGIN_NV04(push, NV10_3D(TEX_FORMAT(i)), 1);
+	PUSH_MTHD (push, NV10_3D(TEX_FORMAT(i)), BUFCTX_TEX(i),
+			 s->bo, tx_format, bo_flags | NOUVEAU_BO_OR,
+			 NV10_3D_TEX_FORMAT_DMA0,
+			 NV10_3D_TEX_FORMAT_DMA1);
 
-	nouveau_bo_markl(bctx, celsius, NV10_3D_TEX_OFFSET(i),
+	BEGIN_NV04(push, NV10_3D(TEX_OFFSET(i)), 1);
+	PUSH_MTHDl(push, NV10_3D(TEX_OFFSET(i)), BUFCTX_TEX(i),
 			 s->bo, s->offset, bo_flags);
 
-	BEGIN_RING(chan, celsius, NV10_3D_TEX_FILTER(i), 1);
-	OUT_RING(chan, tx_filter);
+	BEGIN_NV04(push, NV10_3D(TEX_FILTER(i)), 1);
+	PUSH_DATA (push, tx_filter);
 
-	BEGIN_RING(chan, celsius, NV10_3D_TEX_ENABLE(i), 1);
-	OUT_RING(chan, tx_enable);
+	BEGIN_NV04(push, NV10_3D(TEX_ENABLE(i)), 1);
+	PUSH_DATA (push, tx_enable);
 }
 

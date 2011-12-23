@@ -29,6 +29,7 @@
 #include "nouveau_context.h"
 #include "nouveau_bufferobj.h"
 #include "nouveau_fbo.h"
+#include "nv_object.xml.h"
 
 #include "main/dd.h"
 #include "main/framebuffer.h"
@@ -42,16 +43,6 @@
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-
-static void
-nouveau_channel_flush_notify(struct nouveau_channel *chan)
-{
-	struct nouveau_context *nctx = chan->user_private;
-	struct gl_context *ctx = &nctx->base;
-
-	if (nctx->fallback < SWRAST)
-		nouveau_bo_state_emit(ctx);
-}
 
 GLboolean
 nouveau_context_create(gl_api api,
@@ -118,7 +109,6 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
                                  share_ctx, &functions, NULL);
 
 	nouveau_state_init(ctx);
-	nouveau_bo_state_init(ctx);
 	nouveau_scratch_init(ctx);
 	_mesa_meta_init(ctx);
 	_swrast_CreateContext(ctx);
@@ -128,15 +118,48 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	_mesa_allow_light_in_model(ctx, GL_FALSE);
 
 	/* Allocate a hardware channel. */
-	ret = nouveau_channel_alloc(context_dev(ctx), 0xbeef0201, 0xbeef0202,
-				    512*1024, &nctx->hw.chan);
+	ret = nouveau_object_new(&context_dev(ctx)->object, 0xbeef0000,
+				 NOUVEAU_FIFO_CHANNEL_CLASS,
+				 &(struct nv04_fifo){
+					.vram = 0xbeef0201,
+					.gart = 0xbeef0202
+				 }, sizeof(struct nv04_fifo), &nctx->hw.chan);
 	if (ret) {
 		nouveau_error("Error initializing the FIFO.\n");
 		return GL_FALSE;
 	}
 
-	nctx->hw.chan->flush_notify = nouveau_channel_flush_notify;
-	nctx->hw.chan->user_private = nctx;
+	/* Allocate a client (thread data) */
+	ret = nouveau_client_new(context_dev(ctx), &nctx->hw.client);
+	if (ret) {
+		nouveau_error("Error creating thread data\n");
+		return GL_FALSE;
+	}
+
+	/* Allocate a push buffer */
+	ret = nouveau_pushbuf_new(nctx->hw.client, nctx->hw.chan, 4,
+				  512 * 1024, true, &nctx->hw.pushbuf);
+	if (ret) {
+		nouveau_error("Error allocating DMA push buffer\n");
+		return GL_FALSE;
+	}
+
+	/* Allocate buffer context */
+	ret = nouveau_bufctx_new(nctx->hw.client, 16, &nctx->hw.bufctx);
+	if (ret) {
+		nouveau_error("Error allocating buffer context\n");
+		return GL_FALSE;
+	}
+
+	nctx->hw.pushbuf->user_priv = nctx->hw.bufctx;
+
+	/* Allocate NULL object */
+	ret = nouveau_object_new(nctx->hw.chan, 0x00000000, NV01_NULL_CLASS,
+				 NULL, 0, &nctx->hw.null);
+	if (ret) {
+		nouveau_error("Error allocating NULL object\n");
+		return GL_FALSE;
+	}
 
 	/* Enable any supported extensions. */
 	ctx->Extensions.EXT_blend_color = true;
@@ -170,11 +193,12 @@ nouveau_context_deinit(struct gl_context *ctx)
 	if (ctx->Meta)
 		_mesa_meta_free(ctx);
 
-	if (nctx->hw.chan)
-		nouveau_channel_free(&nctx->hw.chan);
+	nouveau_bufctx_del(&nctx->hw.bufctx);
+	nouveau_pushbuf_del(&nctx->hw.pushbuf);
+	nouveau_client_del(&nctx->hw.client);
+	nouveau_object_del(&nctx->hw.chan);
 
 	nouveau_scratch_destroy(ctx);
-	nouveau_bo_state_destroy(ctx);
 	_mesa_free_context_data(ctx);
 }
 
@@ -254,7 +278,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		s->cpp = buffers[i].cpp;
 
 		if (index == BUFFER_DEPTH && s->bo) {
-			ret = nouveau_bo_handle_get(s->bo, &old_name);
+			ret = nouveau_bo_name_get(s->bo, &old_name);
 			/*
 			 * Disable fast Z clears in the next frame, the
 			 * depth buffer contents are undefined.
@@ -264,8 +288,8 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 		}
 
 		nouveau_bo_ref(NULL, &s->bo);
-		ret = nouveau_bo_handle_ref(context_dev(ctx),
-					    buffers[i].name, &s->bo);
+		ret = nouveau_bo_name_ref(context_dev(ctx),
+					  buffers[i].name, &s->bo);
 		assert(!ret);
 	}
 
@@ -286,8 +310,8 @@ update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
 
 	/* Clean up references to the old framebuffer objects. */
 	context_dirty(ctx, FRAMEBUFFER);
-	context_bctx(ctx, FRAMEBUFFER);
-	FIRE_RING(context_chan(ctx));
+	nouveau_bufctx_reset(to_nouveau_context(ctx)->hw.bufctx, BUFCTX_FB);
+	PUSH_KICK(context_push(ctx));
 }
 
 GLboolean
@@ -338,9 +362,11 @@ nouveau_fallback(struct gl_context *ctx, enum nouveau_fallback mode)
 
 	if (mode < SWRAST) {
 		nouveau_state_emit(ctx);
+#if 0
 		nouveau_bo_state_emit(ctx);
+#endif
 	} else {
-		FIRE_RING(context_chan(ctx));
+		PUSH_KICK(context_push(ctx));
 	}
 }
 

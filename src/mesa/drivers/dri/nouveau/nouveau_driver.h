@@ -38,15 +38,11 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include "nouveau_device.h"
-#include "nouveau_grobj.h"
-#include "nouveau_channel.h"
-#include "nouveau_bo.h"
-#include "nouveau_notifier.h"
+#include <libdrm/nouveau.h>
 #include "nouveau_screen.h"
 #include "nouveau_state.h"
 #include "nouveau_surface.h"
-#include "nv04_pushbuf.h"
+#include "nouveau_local.h"
 
 #define DRIVER_AUTHOR	"Nouveau"
 

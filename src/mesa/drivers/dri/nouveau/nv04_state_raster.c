@@ -136,8 +136,8 @@ nv04_defer_control(struct gl_context *ctx, int emit)
 void
 nv04_emit_control(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 
 	if (nv04_mtex_engine(fahrenheit)) {
 		int cull_mode = ctx->Polygon.CullFaceMode;
@@ -202,10 +202,10 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 			get_stencil_op(ctx->Stencil.ZFailFunc[0]) << 4 |
 			get_stencil_op(ctx->Stencil.FailFunc[0]);
 
-		BEGIN_RING(chan, fahrenheit, NV04_MULTITEX_TRIANGLE_CONTROL0, 3);
-		OUT_RING(chan, ctrl0);
-		OUT_RING(chan, ctrl1);
-		OUT_RING(chan, ctrl2);
+		BEGIN_NV04(push, NV04_MTRI(CONTROL0), 3);
+		PUSH_DATA (push, ctrl0);
+		PUSH_DATA (push, ctrl1);
+		PUSH_DATA (push, ctrl2);
 
 	} else {
 		int cull_mode = ctx->Polygon.CullFaceMode;
@@ -242,8 +242,8 @@ nv04_emit_control(struct gl_context *ctx, int emit)
 		ctrl |= get_comparison_op(ctx->Color.AlphaFunc) << 8 |
 			FLOAT_TO_UBYTE(ctx->Color.AlphaRef);
 
-		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_CONTROL, 1);
-		OUT_RING(chan, ctrl);
+		BEGIN_NV04(push, NV04_TTRI(CONTROL), 1);
+		PUSH_DATA (push, ctrl);
 	}
 }
 
@@ -256,8 +256,8 @@ nv04_defer_blend(struct gl_context *ctx, int emit)
 void
 nv04_emit_blend(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 
 	if (nv04_mtex_engine(fahrenheit)) {
 		uint32_t blend = 0x2 << 4 |
@@ -284,12 +284,12 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 		if (ctx->Fog.Enabled)
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_FOG_ENABLE;
 
-		BEGIN_RING(chan, fahrenheit, NV04_MULTITEX_TRIANGLE_BLEND, 1);
-		OUT_RING(chan, blend);
+		BEGIN_NV04(push, NV04_MTRI(BLEND), 1);
+		PUSH_DATA (push, blend);
 
-		BEGIN_RING(chan, fahrenheit, NV04_MULTITEX_TRIANGLE_FOGCOLOR, 1);
-		OUT_RING(chan, pack_rgba_f(MESA_FORMAT_ARGB8888,
-					   ctx->Fog.Color));
+		BEGIN_NV04(push, NV04_MTRI(FOGCOLOR), 1);
+		PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_ARGB8888,
+					     ctx->Fog.Color));
 
 	} else {
 		uint32_t blend = 0x2 << 4 |
@@ -322,11 +322,11 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 		if (ctx->Fog.Enabled)
 			blend |= NV04_TEXTURED_TRIANGLE_BLEND_FOG_ENABLE;
 
-		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_BLEND, 1);
-		OUT_RING(chan, blend);
+		BEGIN_NV04(push, NV04_TTRI(BLEND), 1);
+		PUSH_DATA (push, blend);
 
-		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_FOGCOLOR, 1);
-		OUT_RING(chan, pack_rgba_f(MESA_FORMAT_ARGB8888,
-					   ctx->Fog.Color));
+		BEGIN_NV04(push, NV04_TTRI(FOGCOLOR), 1);
+		PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_ARGB8888,
+					     ctx->Fog.Color));
 	}
 }

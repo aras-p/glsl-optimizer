@@ -6,7 +6,6 @@ NOUVEAU_DRIVER_FILES = \
 	nouveau_state.c \
 	nouveau_bufferobj.c \
 	nouveau_span.c \
-	nouveau_bo_state.c \
 	nouveau_texture.c \
 	nouveau_surface.c \
 	nouveau_scratch.c \

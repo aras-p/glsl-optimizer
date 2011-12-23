@@ -101,7 +101,7 @@ static void
 dispatch_l(struct gl_context *ctx, unsigned int start, int delta,
 	   unsigned int n)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	RENDER_LOCALS(ctx);
 
 	EMIT_VBO(L, ctx, start, delta, n);
@@ -111,7 +111,7 @@ static void
 dispatch_i32(struct gl_context *ctx, unsigned int start, int delta,
 	     unsigned int n)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	RENDER_LOCALS(ctx);
 
 	EMIT_VBO(I32, ctx, start, delta, n);
@@ -121,7 +121,7 @@ static void
 dispatch_i16(struct gl_context *ctx, unsigned int start, int delta,
 	     unsigned int n)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	RENDER_LOCALS(ctx);
 
 	EMIT_VBO(I32, ctx, start, delta, n & 1);

@@ -27,7 +27,6 @@
 #include "nouveau_driver.h"
 #include "nouveau_fbo.h"
 #include "nouveau_context.h"
-#include "nouveau_bo.h"
 
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
@@ -35,29 +34,27 @@
 
 
 static void
-renderbuffer_map_unmap(struct gl_renderbuffer *rb, GLboolean map)
+renderbuffer_map_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		       GLboolean map)
 {
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
 
-	if (map) {
-		nouveau_bo_map(s->bo, NOUVEAU_BO_RDWR);
-	} else {
-		nouveau_bo_unmap(s->bo);
-	}
+	if (map)
+		nouveau_bo_map(s->bo, NOUVEAU_BO_RDWR, context_client(ctx));
 }
 
 static void
-framebuffer_map_unmap(struct gl_framebuffer *fb, GLboolean map)
+framebuffer_map_unmap(struct gl_context *ctx, struct gl_framebuffer *fb, GLboolean map)
 {
 	int i;
 
 	for (i = 0; i < fb->_NumColorDrawBuffers; i++)
-		renderbuffer_map_unmap(fb->_ColorDrawBuffers[i], map);
+		renderbuffer_map_unmap(ctx, fb->_ColorDrawBuffers[i], map);
 
-	renderbuffer_map_unmap(fb->_ColorReadBuffer, map);
+	renderbuffer_map_unmap(ctx, fb->_ColorReadBuffer, map);
 
 	if (fb->Attachment[BUFFER_DEPTH].Renderbuffer)
-		renderbuffer_map_unmap(fb->Attachment[BUFFER_DEPTH].Renderbuffer, map);
+		renderbuffer_map_unmap(ctx, fb->Attachment[BUFFER_DEPTH].Renderbuffer, map);
 }
 
 static void
@@ -65,10 +62,10 @@ span_map_unmap(struct gl_context *ctx, GLboolean map)
 {
 	int i;
 
-	framebuffer_map_unmap(ctx->DrawBuffer, map);
+	framebuffer_map_unmap(ctx, ctx->DrawBuffer, map);
 
 	if (ctx->ReadBuffer != ctx->DrawBuffer)
-		framebuffer_map_unmap(ctx->ReadBuffer, map);
+		framebuffer_map_unmap(ctx, ctx->ReadBuffer, map);
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (map)

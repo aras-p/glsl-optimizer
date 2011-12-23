@@ -45,12 +45,13 @@ texunit_needs_combiners(struct gl_texture_unit *u)
 		u->EnvMode == GL_ADD;
 }
 
-struct nouveau_grobj *
+struct nouveau_object *
 nv04_context_engine(struct gl_context *ctx)
 {
 	struct nv04_context *nctx = to_nv04_context(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *fahrenheit;
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_object *fahrenheit;
 
 	if ((ctx->Texture.Unit[0]._ReallyEnabled &&
 	     texunit_needs_combiners(&ctx->Texture.Unit[0])) ||
@@ -67,6 +68,9 @@ nv04_context_engine(struct gl_context *ctx)
 	if (fahrenheit != nctx->eng3d) {
 		nctx->eng3d = fahrenheit;
 
+		BEGIN_NV04(push, NV01_SUBC(3D, OBJECT), 1);
+		PUSH_DATA (push, fahrenheit->handle);
+
 		if (nv04_mtex_engine(fahrenheit)) {
 			context_dirty_i(ctx, TEX_ENV, 0);
 			context_dirty_i(ctx, TEX_ENV, 1);
@@ -75,7 +79,8 @@ nv04_context_engine(struct gl_context *ctx)
 			context_dirty(ctx, CONTROL);
 			context_dirty(ctx, BLEND);
 		} else {
-			context_bctx_i(ctx, TEXTURE, 1);
+			nouveau_bufctx_reset(to_nouveau_context(ctx)->hw.
+					     bufctx, BUFCTX_TEX(1));
 			context_dirty_i(ctx, TEX_ENV, 0);
 			context_dirty_i(ctx, TEX_OBJ, 0);
 			context_dirty(ctx, CONTROL);
@@ -87,52 +92,36 @@ nv04_context_engine(struct gl_context *ctx)
 }
 
 static void
-nv04_channel_flush_notify(struct nouveau_channel *chan)
-{
-	struct nouveau_context *nctx = chan->user_private;
-	struct gl_context *ctx = &nctx->base;
-
-	if (nctx->fallback < SWRAST) {
-		nouveau_bo_state_emit(ctx);
-
-		/* Reemit the engine state. */
-		context_emit(ctx, TEX_OBJ0);
-		context_emit(ctx, TEX_OBJ1);
-		context_emit(ctx, TEX_ENV0);
-		context_emit(ctx, TEX_ENV1);
-		context_emit(ctx, CONTROL);
-		context_emit(ctx, BLEND);
-	}
-}
-
-static void
 nv04_hwctx_init(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *surf3d = hw->surf3d;
-	struct nouveau_grobj *eng3d = hw->eng3d;
-	struct nouveau_grobj *eng3dm = hw->eng3dm;
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nv04_fifo *fifo = hw->chan->data;
 
-	BIND_RING(chan, surf3d, 7);
-	BEGIN_RING(chan, surf3d, NV04_CONTEXT_SURFACES_3D_DMA_NOTIFY, 3);
-	OUT_RING(chan, hw->ntfy->handle);
-	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, chan->vram->handle);
+	BEGIN_NV04(push, NV01_SUBC(SURF, OBJECT), 1);
+	PUSH_DATA (push, hw->surf3d->handle);
+	BEGIN_NV04(push, NV04_SF3D(DMA_NOTIFY), 3);
+	PUSH_DATA (push, hw->ntfy->handle);
+	PUSH_DATA (push, fifo->vram);
+	PUSH_DATA (push, fifo->vram);
 
-	BEGIN_RING(chan, eng3d, NV04_TEXTURED_TRIANGLE_DMA_NOTIFY, 4);
-	OUT_RING(chan, hw->ntfy->handle);
-	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, chan->gart->handle);
-	OUT_RING(chan, surf3d->handle);
+	BEGIN_NV04(push, NV01_SUBC(3D, OBJECT), 1);
+	PUSH_DATA (push, hw->eng3d->handle);
+	BEGIN_NV04(push, NV04_TTRI(DMA_NOTIFY), 4);
+	PUSH_DATA (push, hw->ntfy->handle);
+	PUSH_DATA (push, fifo->vram);
+	PUSH_DATA (push, fifo->gart);
+	PUSH_DATA (push, hw->surf3d->handle);
 
-	BEGIN_RING(chan, eng3dm, NV04_MULTITEX_TRIANGLE_DMA_NOTIFY, 4);
-	OUT_RING(chan, hw->ntfy->handle);
-	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, chan->gart->handle);
-	OUT_RING(chan, surf3d->handle);
+	BEGIN_NV04(push, NV01_SUBC(3D, OBJECT), 1);
+	PUSH_DATA (push, hw->eng3dm->handle);
+	BEGIN_NV04(push, NV04_MTRI(DMA_NOTIFY), 4);
+	PUSH_DATA (push, hw->ntfy->handle);
+	PUSH_DATA (push, fifo->vram);
+	PUSH_DATA (push, fifo->gart);
+	PUSH_DATA (push, hw->surf3d->handle);
 
-	FIRE_RING(chan);
+	PUSH_KICK (push);
 }
 
 static void
@@ -144,9 +133,8 @@ init_dummy_texture(struct gl_context *ctx)
 			      NOUVEAU_BO_MAP | NOUVEAU_BO_VRAM,
 			      MESA_FORMAT_ARGB8888, 1, 1);
 
-	nouveau_bo_map(s->bo, NOUVEAU_BO_WR);
+	nouveau_bo_map(s->bo, NOUVEAU_BO_WR, context_client(ctx));
 	*(uint32_t *)s->bo->map = 0xffffffff;
-	nouveau_bo_unmap(s->bo);
 }
 
 static void
@@ -158,9 +146,9 @@ nv04_context_destroy(struct gl_context *ctx)
 	nv04_render_destroy(ctx);
 	nouveau_surface_ref(NULL, &to_nv04_context(ctx)->dummy_texture);
 
-	nouveau_grobj_free(&nctx->hw.eng3d);
-	nouveau_grobj_free(&nctx->hw.eng3dm);
-	nouveau_grobj_free(&nctx->hw.surf3d);
+	nouveau_object_del(&nctx->hw.eng3d);
+	nouveau_object_del(&nctx->hw.eng3dm);
+	nouveau_object_del(&nctx->hw.surf3d);
 
 	nouveau_context_deinit(ctx);
 	FREE(ctx);
@@ -185,8 +173,6 @@ nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
 		goto fail;
 
-	hw->chan->flush_notify = nv04_channel_flush_notify;
-
 	/* GL constants. */
 	ctx->Const.MaxTextureLevels = 11;
 	ctx->Const.MaxTextureCoordUnits = NV04_TEXTURE_UNITS;
@@ -201,18 +187,21 @@ nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 		goto fail;
 
 	/* 3D engine. */
-	ret = nouveau_grobj_alloc(context_chan(ctx), 0xbeef0001,
-				  NV04_TEXTURED_TRIANGLE, &hw->eng3d);
+	ret = nouveau_object_new(context_chan(ctx), 0xbeef0001,
+				 NV04_TEXTURED_TRIANGLE_CLASS, NULL, 0,
+				 &hw->eng3d);
 	if (ret)
 		goto fail;
 
-	ret = nouveau_grobj_alloc(context_chan(ctx), 0xbeef0002,
-				  NV04_MULTITEX_TRIANGLE, &hw->eng3dm);
+	ret = nouveau_object_new(context_chan(ctx), 0xbeef0002,
+				 NV04_MULTITEX_TRIANGLE_CLASS, NULL, 0,
+				 &hw->eng3dm);
 	if (ret)
 		goto fail;
 
-	ret = nouveau_grobj_alloc(context_chan(ctx), 0xbeef0003,
-				  NV04_CONTEXT_SURFACES_3D, &hw->surf3d);
+	ret = nouveau_object_new(context_chan(ctx), 0xbeef0003,
+				 NV04_SURFACE_3D_CLASS, NULL, 0,
+				 &hw->surf3d);
 	if (ret)
 		goto fail;
 

@@ -71,7 +71,7 @@ static void
 swtnl_choose_attrs(struct gl_context *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 	struct nv04_context *nctx = to_nv04_context(ctx);
 	static struct tnl_attr_map map[NUM_VERTEX_ATTRS];
 	int n = 0;
@@ -96,13 +96,21 @@ swtnl_choose_attrs(struct gl_context *ctx)
 static void
 swtnl_start(struct gl_context *ctx)
 {
+	struct nouveau_pushbuf *push = context_push(ctx);
+
+	nouveau_pushbuf_bufctx(push, push->user_priv);
+	nouveau_pushbuf_validate(push);
+
 	swtnl_choose_attrs(ctx);
 }
 
 static void
 swtnl_finish(struct gl_context *ctx)
 {
-	FIRE_RING(context_chan(ctx));
+	struct nouveau_pushbuf *push = context_push(ctx);
+
+	nouveau_pushbuf_bufctx(push, NULL);
+	PUSH_KICK(push);
 }
 
 static void
@@ -118,31 +126,27 @@ swtnl_reset_stipple(struct gl_context *ctx)
 /* Primitive rendering */
 
 #define BEGIN_PRIMITIVE(n)						\
-	struct nouveau_channel *chan = context_chan(ctx);		\
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);	\
+	struct nouveau_pushbuf *push = context_push(ctx);		\
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);	\
 	int vertex_len = TNL_CONTEXT(ctx)->clipspace.vertex_size / 4;	\
 									\
 	if (nv04_mtex_engine(fahrenheit))				\
-		BEGIN_RING(chan, fahrenheit,				\
-			   NV04_MULTITEX_TRIANGLE_TLMTVERTEX_SX(0),	\
+		BEGIN_NV04(push, NV04_MTRI(TLMTVERTEX_SX(0)),		\
 			   n * vertex_len);				\
 	else								\
-		BEGIN_RING(chan, fahrenheit,				\
-			   NV04_TEXTURED_TRIANGLE_TLVERTEX_SX(0),	\
+		BEGIN_NV04(push, NV04_TTRI(TLVERTEX_SX(0)),		\
 			   n * vertex_len);				\
 
-#define OUT_VERTEX(i)						\
-	OUT_RINGp(chan, _tnl_get_vertex(ctx, i), vertex_len);
+#define OUT_VERTEX(i)							\
+	PUSH_DATAp(push, _tnl_get_vertex(ctx, i), vertex_len);
 
 #define END_PRIMITIVE(draw)						\
 	if (nv04_mtex_engine(fahrenheit)) {				\
-		BEGIN_RING(chan, fahrenheit,				\
-			   NV04_MULTITEX_TRIANGLE_DRAWPRIMITIVE(0), 1); \
-		OUT_RING(chan, draw);					\
+		BEGIN_NV04(push, NV04_MTRI(DRAWPRIMITIVE(0)), 1);	\
+		PUSH_DATA (push, draw);					\
 	} else {							\
-		BEGIN_RING(chan, fahrenheit,				\
-			   NV04_TEXTURED_TRIANGLE_DRAWPRIMITIVE(0), 1); \
-		OUT_RING(chan, draw);					\
+		BEGIN_NV04(push, NV04_TTRI(DRAWPRIMITIVE(0)), 1);	\
+		PUSH_DATA (push, draw);					\
 	}
 
 static void
@@ -158,6 +162,13 @@ swtnl_line(struct gl_context *ctx, GLuint v1, GLuint v2)
 static void
 swtnl_triangle(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3)
 {
+	context_emit(ctx, TEX_OBJ0);
+	context_emit(ctx, TEX_OBJ1);
+	context_emit(ctx, TEX_ENV0);
+	context_emit(ctx, TEX_ENV1);
+	context_emit(ctx, CONTROL);
+	context_emit(ctx, BLEND);
+
 	BEGIN_PRIMITIVE(3);
 	OUT_VERTEX(v1);
 	OUT_VERTEX(v2);
@@ -168,6 +179,13 @@ swtnl_triangle(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3)
 static void
 swtnl_quad(struct gl_context *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint v4)
 {
+	context_emit(ctx, TEX_OBJ0);
+	context_emit(ctx, TEX_OBJ1);
+	context_emit(ctx, TEX_ENV0);
+	context_emit(ctx, TEX_ENV1);
+	context_emit(ctx, CONTROL);
+	context_emit(ctx, BLEND);
+
 	BEGIN_PRIMITIVE(4);
 	OUT_VERTEX(v1);
 	OUT_VERTEX(v2);

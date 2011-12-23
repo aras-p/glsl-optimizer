@@ -133,8 +133,7 @@ static void
 nv20_render_set_format(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	int i, attr, hw_format;
 
 	FOR_EACH_ATTR(render, i, attr) {
@@ -150,8 +149,8 @@ nv20_render_set_format(struct gl_context *ctx)
 			hw_format = NV20_3D_VTXBUF_FMT_TYPE_FLOAT;
 		}
 
-		BEGIN_RING(chan, kelvin, NV20_3D_VTXBUF_FMT(i), 1);
-		OUT_RING(chan, hw_format);
+		BEGIN_NV04(push, NV20_3D(VTXBUF_FMT(i)), 1);
+		PUSH_DATA (push, hw_format);
 	}
 }
 
@@ -159,61 +158,65 @@ static void
 nv20_render_bind_vertices(struct gl_context *ctx)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, VERTEX);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	int i, attr;
 
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		struct nouveau_array *a = &render->attrs[attr];
 
-		nouveau_bo_mark(bctx, kelvin,
-				NV20_3D_VTXBUF_OFFSET(i),
-				a->bo, a->offset, 0,
-				0, NV20_3D_VTXBUF_OFFSET_DMA1,
-				NOUVEAU_BO_LOW | NOUVEAU_BO_OR |
-				NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+		BEGIN_NV04(push, NV20_3D(VTXBUF_OFFSET(i)), 1);
+		PUSH_MTHD (push, NV20_3D(VTXBUF_OFFSET(i)), BUFCTX_VTX,
+				 a->bo, a->offset, NOUVEAU_BO_LOW |
+				 NOUVEAU_BO_OR | NOUVEAU_BO_GART |
+				 NOUVEAU_BO_RD, 0,
+				 NV20_3D_VTXBUF_OFFSET_DMA1);
 	}
 }
 
+static void
+nv20_render_release_vertices(struct gl_context *ctx)
+{
+	PUSH_RESET(context_push(ctx), BUFCTX_VTX);
+}
+
 /* Vertex array rendering defs. */
-#define RENDER_LOCALS(ctx)					\
-	struct nouveau_grobj *kelvin = context_eng3d(ctx)
+#define RENDER_LOCALS(ctx)
 
 #define BATCH_VALIDATE()						\
-	BEGIN_RING(chan, kelvin, NV20_3D_VTXBUF_VALIDATE, 1);	\
-	OUT_RING(chan, 0)
+	BEGIN_NV04(push, NV20_3D(VTXBUF_VALIDATE), 1);	\
+	PUSH_DATA (push, 0)
 
 #define BATCH_BEGIN(prim)					\
-	BEGIN_RING(chan, kelvin, NV20_3D_VERTEX_BEGIN_END, 1);	\
-	OUT_RING(chan, prim)
+	BEGIN_NV04(push, NV20_3D(VERTEX_BEGIN_END), 1);	\
+	PUSH_DATA (push, prim)
 #define BATCH_END()						\
-	BEGIN_RING(chan, kelvin, NV20_3D_VERTEX_BEGIN_END, 1);	\
-	OUT_RING(chan, 0)
+	BEGIN_NV04(push, NV20_3D(VERTEX_BEGIN_END), 1);	\
+	PUSH_DATA (push, 0)
 
 #define MAX_PACKET 0x400
 
 #define MAX_OUT_L 0x100
 #define BATCH_PACKET_L(n)						\
-	BEGIN_RING_NI(chan, kelvin, NV20_3D_VTXBUF_BATCH, n)
+	BEGIN_NI04(push, NV20_3D(VTXBUF_BATCH), n)
 #define BATCH_OUT_L(i, n)			\
-	OUT_RING(chan, ((n) - 1) << 24 | (i))
+	PUSH_DATA (push, ((n) - 1) << 24 | (i))
 
 #define MAX_OUT_I16 0x2
 #define BATCH_PACKET_I16(n)					\
-	BEGIN_RING_NI(chan, kelvin, NV20_3D_VTXBUF_ELEMENT_U16, n)
+	BEGIN_NI04(push, NV20_3D(VTXBUF_ELEMENT_U16), n)
 #define BATCH_OUT_I16(i0, i1)			\
-	OUT_RING(chan, (i1) << 16 | (i0))
+	PUSH_DATA (push, (i1) << 16 | (i0))
 
 #define MAX_OUT_I32 0x1
 #define BATCH_PACKET_I32(n)					\
-	BEGIN_RING_NI(chan, kelvin, NV20_3D_VTXBUF_ELEMENT_U32, n)
+	BEGIN_NI04(push, NV20_3D(VTXBUF_ELEMENT_U32), n)
 #define BATCH_OUT_I32(i)			\
-	OUT_RING(chan, i)
+	PUSH_DATA (push, i)
 
 #define IMM_PACKET(m, n)			\
-	BEGIN_RING(chan, kelvin, m, n)
+	BEGIN_NV04(push, SUBC_3D(m), n)
 #define IMM_OUT(x)				\
-	OUT_RINGf(chan, x)
+	PUSH_DATAf(push, x)
 
 #define TAG(x) nv20_##x
 #include "nouveau_render_t.c"

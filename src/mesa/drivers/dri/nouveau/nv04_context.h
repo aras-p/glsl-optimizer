@@ -32,15 +32,15 @@
 
 struct nv04_context {
 	struct nouveau_context base;
-	struct nouveau_grobj *eng3d;
+	struct nouveau_object *eng3d;
 	struct nouveau_surface dummy_texture;
 	float viewport[16];
 };
 #define to_nv04_context(ctx) ((struct nv04_context *)(ctx))
 
-#define nv04_mtex_engine(obj) ((obj)->grclass == NV04_MULTITEX_TRIANGLE)
+#define nv04_mtex_engine(obj) ((obj)->oclass == NV04_MULTITEX_TRIANGLE_CLASS)
 
-struct nouveau_grobj *
+struct nouveau_object *
 nv04_context_engine(struct gl_context *ctx);
 
 extern const struct nouveau_driver nv04_driver;

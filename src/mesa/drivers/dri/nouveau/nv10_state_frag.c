@@ -369,8 +369,7 @@ void
 nv10_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	uint32_t a_in, a_out, c_in, c_out, k;
 
 	nv10_get_general_combiner(ctx, i, &a_in, &a_out, &c_in, &c_out, &k);
@@ -383,16 +382,16 @@ nv10_emit_tex_env(struct gl_context *ctx, int emit)
 			c_out |= 0x3 << 27;
 	}
 
-	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_ALPHA(i), 1);
-	OUT_RING(chan, a_in);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_RGB(i), 1);
-	OUT_RING(chan, c_in);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_COLOR(i), 1);
-	OUT_RING(chan, k);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_ALPHA(i), 1);
-	OUT_RING(chan, a_out);
-	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_RGB(i), 1);
-	OUT_RING(chan, c_out);
+	BEGIN_NV04(push, NV10_3D(RC_IN_ALPHA(i)), 1);
+	PUSH_DATA (push, a_in);
+	BEGIN_NV04(push, NV10_3D(RC_IN_RGB(i)), 1);
+	PUSH_DATA (push, c_in);
+	BEGIN_NV04(push, NV10_3D(RC_COLOR(i)), 1);
+	PUSH_DATA (push, k);
+	BEGIN_NV04(push, NV10_3D(RC_OUT_ALPHA(i)), 1);
+	PUSH_DATA (push, a_out);
+	BEGIN_NV04(push, NV10_3D(RC_OUT_RGB(i)), 1);
+	PUSH_DATA (push, c_out);
 
 	context_dirty(ctx, FRAG);
 }
@@ -400,14 +399,13 @@ nv10_emit_tex_env(struct gl_context *ctx, int emit)
 void
 nv10_emit_frag(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	uint64_t in;
 	int n;
 
 	nv10_get_final_combiner(ctx, &in, &n);
 
-	BEGIN_RING(chan, celsius, NV10_3D_RC_FINAL0, 2);
-	OUT_RING(chan, in);
-	OUT_RING(chan, in >> 32);
+	BEGIN_NV04(push, NV10_3D(RC_FINAL0), 2);
+	PUSH_DATA (push, in);
+	PUSH_DATA (push, in >> 32);
 }

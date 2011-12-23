@@ -28,6 +28,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_array.h"
 #include "nouveau_bufferobj.h"
+#include "nouveau_context.h"
 
 #define EXTRACT(in_t, out_t) extract_func_##in_t##_to_##out_t
 
@@ -98,8 +99,10 @@ get_array_extract(struct nouveau_array *a, extract_u_t *extract_u,
 void
 nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 		   int fields, int type, struct gl_buffer_object *obj,
-		   const void *ptr, GLboolean map)
+		   const void *ptr, GLboolean map, struct gl_context *ctx)
 {
+	struct nouveau_client *client = context_client(ctx);
+
 	a->attr = attr;
 	a->stride = stride;
 	a->fields = fields;
@@ -115,7 +118,7 @@ nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 			a->offset = (intptr_t)ptr;
 
 			if (map) {
-				nouveau_bo_map(a->bo, NOUVEAU_BO_RD);
+				nouveau_bo_map(a->bo, NOUVEAU_BO_RD, client);
 				a->buf = a->bo->map + a->offset;
 			}
 
@@ -136,11 +139,6 @@ nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 void
 nouveau_deinit_array(struct nouveau_array *a)
 {
-	if (a->bo) {
-		if (a->bo->map)
-			nouveau_bo_unmap(a->bo);
-	}
-
 	a->buf = NULL;
 	a->fields = 0;
 }

@@ -54,9 +54,7 @@ get_rt_format(gl_format format)
 static void
 setup_hierz_buffer(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, HIERZ);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_framebuffer *nfb = to_nouveau_framebuffer(fb);
 	unsigned pitch = align(fb->Width, 128),
@@ -64,34 +62,37 @@ setup_hierz_buffer(struct gl_context *ctx)
 		size = pitch * height;
 
 	if (!nfb->hierz.bo || nfb->hierz.bo->size != size) {
+		union nouveau_bo_config config = {
+			.nv04.surf_flags = NV04_BO_ZETA,
+			.nv04.surf_pitch = 0
+		};
+
 		nouveau_bo_ref(NULL, &nfb->hierz.bo);
-		nouveau_bo_new_tile(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
-				    0, NOUVEAU_BO_TILE_ZETA, &nfb->hierz.bo);
+		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, size,
+			       &config, &nfb->hierz.bo);
 	}
 
-	nouveau_bo_markl(bctx, celsius, NV17_3D_HIERZ_OFFSET,
+	PUSH_SPACE(push, 11);
+	BEGIN_NV04(push, NV17_3D(HIERZ_OFFSET), 1);
+	PUSH_MTHDl(push, NV17_3D(HIERZ_OFFSET), BUFCTX_FB,
 			 nfb->hierz.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+	BEGIN_NV04(push, NV17_3D(HIERZ_WINDOW_X), 4);
+	PUSH_DATAf(push, - 1792);
+	PUSH_DATAf(push, - 2304 + fb->Height);
+	PUSH_DATAf(push, fb->_DepthMaxF / 2);
+	PUSH_DATAf(push, 0);
 
-	WAIT_RING(chan, 9);
-	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_WINDOW_X, 4);
-	OUT_RINGf(chan, - 1792);
-	OUT_RINGf(chan, - 2304 + fb->Height);
-	OUT_RINGf(chan, fb->_DepthMaxF / 2);
-	OUT_RINGf(chan, 0);
+	BEGIN_NV04(push, NV17_3D(HIERZ_PITCH), 1);
+	PUSH_DATA (push, pitch);
 
-	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_PITCH, 1);
-	OUT_RING(chan, pitch);
-
-	BEGIN_RING(chan, celsius, NV17_3D_HIERZ_ENABLE, 1);
-	OUT_RING(chan, 1);
+	BEGIN_NV04(push, NV17_3D(HIERZ_ENABLE), 1);
+	PUSH_DATA (push, 1);
 }
 
 void
 nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
-	struct nouveau_bo_context *bctx = context_bctx(ctx, FRAMEBUFFER);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_surface *s;
 	unsigned rt_format = NV10_3D_RT_FORMAT_TYPE_LINEAR;
@@ -101,14 +102,16 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 	if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		return;
 
+	PUSH_RESET(push, BUFCTX_FB);
+
 	/* At least nv11 seems to get sad if we don't do this before
 	 * swapping RTs.*/
 	if (context_chipset(ctx) < 0x17) {
 		int i;
 
 		for (i = 0; i < 6; i++) {
-			BEGIN_RING(chan, celsius, NV04_GRAPH_NOP, 1);
-			OUT_RING(chan, 0);
+			BEGIN_NV04(push, NV04_GRAPH(3D, NOP), 1);
+			PUSH_DATA (push, 0);
 		}
 	}
 
@@ -120,7 +123,8 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 		rt_format |= get_rt_format(s->format);
 		zeta_pitch = rt_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, celsius, NV10_3D_COLOR_OFFSET,
+		BEGIN_NV04(push, NV10_3D(COLOR_OFFSET), 1);
+		PUSH_MTHDl(push, NV10_3D(COLOR_OFFSET), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 	}
 
@@ -132,7 +136,8 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 		rt_format |= get_rt_format(s->format);
 		zeta_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, celsius, NV10_3D_ZETA_OFFSET,
+		BEGIN_NV04(push, NV10_3D(ZETA_OFFSET), 1);
+		PUSH_MTHDl(push, NV10_3D(ZETA_OFFSET), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 
 		if (context_chipset(ctx) >= 0x17) {
@@ -141,9 +146,9 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 		}
 	}
 
-	BEGIN_RING(chan, celsius, NV10_3D_RT_FORMAT, 2);
-	OUT_RING(chan, rt_format);
-	OUT_RING(chan, zeta_pitch << 16 | rt_pitch);
+	BEGIN_NV04(push, NV10_3D(RT_FORMAT), 2);
+	PUSH_DATA (push, rt_format);
+	PUSH_DATA (push, zeta_pitch << 16 | rt_pitch);
 
 	context_dirty(ctx, VIEWPORT);
 	context_dirty(ctx, SCISSOR);
@@ -157,22 +162,20 @@ nv10_emit_render_mode(struct gl_context *ctx, int emit)
 void
 nv10_emit_scissor(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	int x, y, w, h;
 
 	get_scissors(ctx->DrawBuffer, &x, &y, &w, &h);
 
-	BEGIN_RING(chan, celsius, NV10_3D_RT_HORIZ, 2);
-	OUT_RING(chan, w << 16 | x);
-	OUT_RING(chan, h << 16 | y);
+	BEGIN_NV04(push, NV10_3D(RT_HORIZ), 2);
+	PUSH_DATA (push, w << 16 | x);
+	PUSH_DATA (push, h << 16 | y);
 }
 
 void
 nv10_emit_viewport(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_viewport_attrib *vp = &ctx->Viewport;
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
@@ -183,13 +186,13 @@ nv10_emit_viewport(struct gl_context *ctx, int emit)
 	if (nv10_use_viewport_zclear(ctx))
 		a[2] = nv10_transform_depth(ctx, (vp->Far + vp->Near) / 2);
 
-	BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_TRANSLATE_X, 4);
-	OUT_RINGp(chan, a, 4);
+	BEGIN_NV04(push, NV10_3D(VIEWPORT_TRANSLATE_X), 4);
+	PUSH_DATAp(push, a, 4);
 
-	BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_HORIZ(0), 1);
-	OUT_RING(chan, (fb->Width - 1) << 16 | 0x08000800);
-	BEGIN_RING(chan, celsius, NV10_3D_VIEWPORT_CLIP_VERT(0), 1);
-	OUT_RING(chan, (fb->Height - 1) << 16 | 0x08000800);
+	BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_HORIZ(0)), 1);
+	PUSH_DATA (push, (fb->Width - 1) << 16 | 0x08000800);
+	BEGIN_NV04(push, NV10_3D(VIEWPORT_CLIP_VERT(0)), 1);
+	PUSH_DATA (push, (fb->Height - 1) << 16 | 0x08000800);
 
 	context_dirty(ctx, PROJECTION);
 }
@@ -198,20 +201,19 @@ void
 nv10_emit_zclear(struct gl_context *ctx, int emit)
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_framebuffer *nfb =
 		to_nouveau_framebuffer(ctx->DrawBuffer);
 
 	if (nfb->hierz.bo) {
-		BEGIN_RING(chan, celsius, NV17_3D_ZCLEAR_ENABLE, 2);
-		OUT_RINGb(chan, !nctx->hierz.clear_blocked);
-		OUT_RING(chan, nfb->hierz.clear_value |
+		BEGIN_NV04(push, NV17_3D(ZCLEAR_ENABLE), 2);
+		PUSH_DATAb(push, !nctx->hierz.clear_blocked);
+		PUSH_DATA (push, nfb->hierz.clear_value |
 			 (nctx->hierz.clear_seq & 0xff));
 	} else {
-		BEGIN_RING(chan, celsius, NV10_3D_DEPTH_RANGE_NEAR, 2);
-		OUT_RINGf(chan, nv10_transform_depth(ctx, 0));
-		OUT_RINGf(chan, nv10_transform_depth(ctx, 1));
+		BEGIN_NV04(push, NV10_3D(DEPTH_RANGE_NEAR), 2);
+		PUSH_DATAf(push, nv10_transform_depth(ctx, 0));
+		PUSH_DATAf(push, nv10_transform_depth(ctx, 1));
 		context_dirty(ctx, VIEWPORT);
 	}
 }

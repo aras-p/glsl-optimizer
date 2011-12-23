@@ -60,12 +60,13 @@ void
 nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
-	struct nouveau_bo_context *bctx = context_bctx_i(ctx, TEXTURE, i);
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 	const int bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART | NOUVEAU_BO_VRAM;
 	struct nouveau_surface *s;
 	uint32_t format = 0xa0, filter = 0x1010;
+
+	PUSH_RESET(push, BUFCTX_TEX(i));
 
 	if (i && !nv04_mtex_engine(fahrenheit))
 		return;
@@ -115,36 +116,34 @@ nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 	}
 
 	if (nv04_mtex_engine(fahrenheit)) {
-		nouveau_bo_markl(bctx, fahrenheit,
-				 NV04_MULTITEX_TRIANGLE_OFFSET(i),
+		BEGIN_NV04(push, NV04_MTRI(OFFSET(i)), 1);
+		PUSH_MTHDl(push, NV04_MTRI(OFFSET(i)), BUFCTX_TEX(i),
 				 s->bo, s->offset, bo_flags);
 
-		nouveau_bo_mark(bctx, fahrenheit,
-				NV04_MULTITEX_TRIANGLE_FORMAT(i),
-				s->bo, format, 0,
-				NV04_MULTITEX_TRIANGLE_FORMAT_DMA_A,
-				NV04_MULTITEX_TRIANGLE_FORMAT_DMA_B,
-				bo_flags | NOUVEAU_BO_OR);
+		BEGIN_NV04(push, NV04_MTRI(FORMAT(i)), 1);
+		PUSH_MTHD (push, NV04_MTRI(FORMAT(i)), BUFCTX_TEX(i),
+				 s->bo, format, bo_flags | NOUVEAU_BO_OR,
+				 NV04_MULTITEX_TRIANGLE_FORMAT_DMA_A,
+				 NV04_MULTITEX_TRIANGLE_FORMAT_DMA_B);
 
-		BEGIN_RING(chan, fahrenheit, NV04_MULTITEX_TRIANGLE_FILTER(i), 1);
-		OUT_RING(chan, filter);
+		BEGIN_NV04(push, NV04_MTRI(FILTER(i)), 1);
+		PUSH_DATA (push, filter);
 
 	} else {
-		nouveau_bo_markl(bctx, fahrenheit,
-				 NV04_TEXTURED_TRIANGLE_OFFSET,
+		BEGIN_NV04(push, NV04_TTRI(OFFSET), 1);
+		PUSH_MTHDl(push, NV04_TTRI(OFFSET), BUFCTX_TEX(0),
 				 s->bo, s->offset, bo_flags);
 
-		nouveau_bo_mark(bctx, fahrenheit,
-				NV04_TEXTURED_TRIANGLE_FORMAT,
-				s->bo, format, 0,
-				NV04_TEXTURED_TRIANGLE_FORMAT_DMA_A,
-				NV04_TEXTURED_TRIANGLE_FORMAT_DMA_B,
-				bo_flags | NOUVEAU_BO_OR);
+		BEGIN_NV04(push, NV04_TTRI(FORMAT), 1);
+		PUSH_MTHD (push, NV04_TTRI(FORMAT), BUFCTX_TEX(0),
+				 s->bo, format, bo_flags | NOUVEAU_BO_OR,
+				 NV04_TEXTURED_TRIANGLE_FORMAT_DMA_A,
+				 NV04_TEXTURED_TRIANGLE_FORMAT_DMA_B);
 
-		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_COLORKEY, 1);
-		OUT_RING(chan, 0);
+		BEGIN_NV04(push, NV04_TTRI(COLORKEY), 1);
+		PUSH_DATA (push, 0);
 
-		BEGIN_RING(chan, fahrenheit, NV04_TEXTURED_TRIANGLE_FILTER, 1);
-		OUT_RING(chan, filter);
+		BEGIN_NV04(push, NV04_TTRI(FILTER), 1);
+		PUSH_DATA (push, filter);
 	}
 }

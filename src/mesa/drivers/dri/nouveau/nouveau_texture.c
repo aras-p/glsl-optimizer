@@ -86,10 +86,11 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	struct nouveau_surface *s = &nti->surface;
 	struct nouveau_surface *st = &nti->transfer.surface;
+	struct nouveau_client *client = context_client(ctx);
 
 	if (s->bo) {
 		if (!(access & GL_MAP_READ_BIT) &&
-		    nouveau_bo_pending(s->bo)) {
+		    nouveau_pushbuf_refd(context_push(ctx), s->bo)) {
 			/*
 			 * Heuristic: use a bounce buffer to pipeline
 			 * teximage transfers.
@@ -115,7 +116,7 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 				flags |= NOUVEAU_BO_WR;
 
 			if (!s->bo->map) {
-				ret = nouveau_bo_map(s->bo, flags);
+				ret = nouveau_bo_map(s->bo, flags, client);
 				assert(!ret);
 			}
 
@@ -137,10 +138,7 @@ nouveau_teximage_unmap(struct gl_context *ctx, struct gl_texture_image *ti)
 					       st->width, st->height);
 		nouveau_surface_ref(NULL, st);
 
-	} else if (s->bo) {
-		nouveau_bo_unmap(s->bo);
 	}
-
 	nti->base.Map = NULL;
 }
 
@@ -157,13 +155,14 @@ nouveau_map_texture_image(struct gl_context *ctx,
 	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	struct nouveau_surface *s = &nti->surface;
 	struct nouveau_surface *st = &nti->transfer.surface;
+	struct nouveau_client *client = context_client(ctx);
 
 	/* Nouveau has no support for 3D or cubemap textures. */
 	assert(slice == 0);
 
 	if (s->bo) {
 		if (!(mode & GL_MAP_READ_BIT) &&
-		    nouveau_bo_pending(s->bo)) {
+		    nouveau_pushbuf_refd(context_push(ctx), s->bo)) {
 			/*
 			 * Heuristic: use a bounce buffer to pipeline
 			 * teximage transfers.
@@ -189,7 +188,7 @@ nouveau_map_texture_image(struct gl_context *ctx,
 				flags |= NOUVEAU_BO_WR;
 
 			if (!s->bo->map) {
-				ret = nouveau_bo_map(s->bo, flags);
+				ret = nouveau_bo_map(s->bo, flags, client);
 				assert(!ret);
 			}
 
@@ -216,8 +215,6 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 					       st->width, st->height);
 		nouveau_surface_ref(NULL, st);
 
-	} else if (s->bo) {
-		nouveau_bo_unmap(s->bo);
 	}
 
 	nti->base.Map = NULL;
@@ -392,7 +389,7 @@ relayout_texture(struct gl_context *ctx, struct gl_texture_object *t)
 
 		ret = nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_MAP |
 				     NOUVEAU_BO_GART | NOUVEAU_BO_VRAM,
-				     0, size, &ss[last].bo);
+				     0, size, NULL, &ss[last].bo);
 		assert(!ret);
 
 		for (i = t->BaseLevel; i < last; i++)
@@ -421,7 +418,7 @@ nouveau_texture_validate(struct gl_context *ctx, struct gl_texture_object *t)
 					  s->width, s->height, 1);
 		}
 
-		FIRE_RING(context_chan(ctx));
+		PUSH_KICK(context_push(ctx));
 	}
 
 	return GL_TRUE;

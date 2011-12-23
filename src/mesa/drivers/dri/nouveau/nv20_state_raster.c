@@ -34,10 +34,9 @@
 void
 nv20_emit_logic_opcode(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_COLOR_LOGIC_OP_ENABLE, 2);
-	OUT_RINGb(chan, ctx->Color.ColorLogicOpEnabled);
-	OUT_RING(chan, nvgl_logicop_func(ctx->Color.LogicOp));
+	BEGIN_NV04(push, NV20_3D(COLOR_LOGIC_OP_ENABLE), 2);
+	PUSH_DATAb(push, ctx->Color.ColorLogicOpEnabled);
+	PUSH_DATA (push, nvgl_logicop_func(ctx->Color.LogicOp));
 }

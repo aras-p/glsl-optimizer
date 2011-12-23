@@ -49,10 +49,7 @@ get_rt_format(gl_format format)
 void
 nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *surf3d = hw->surf3d;
-	struct nouveau_bo_context *bctx = context_bctx(ctx, FRAMEBUFFER);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct nouveau_surface *s;
 	uint32_t rt_format = NV04_CONTEXT_SURFACES_3D_FORMAT_TYPE_PITCH;
@@ -62,6 +59,8 @@ nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 	if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		return;
 
+	PUSH_RESET(push, BUFCTX_FB);
+
 	/* Render target */
 	if (fb->_ColorDrawBuffers[0]) {
 		s = &to_nouveau_renderbuffer(
@@ -70,8 +69,8 @@ nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 		rt_format |= get_rt_format(s->format);
 		zeta_pitch = rt_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, surf3d,
-				 NV04_CONTEXT_SURFACES_3D_OFFSET_COLOR,
+		BEGIN_NV04(push, NV04_SF3D(OFFSET_COLOR), 1);
+		PUSH_MTHDl(push, NV04_SF3D(OFFSET_COLOR), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 	}
 
@@ -82,15 +81,15 @@ nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 
 		zeta_pitch = s->pitch;
 
-		nouveau_bo_markl(bctx, surf3d,
-				 NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA,
+		BEGIN_NV04(push, NV04_SF3D(OFFSET_ZETA), 1);
+		PUSH_MTHDl(push, NV04_SF3D(OFFSET_ZETA), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 	}
 
-	BEGIN_RING(chan, surf3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
-	OUT_RING(chan, rt_format);
-	BEGIN_RING(chan, surf3d, NV04_CONTEXT_SURFACES_3D_PITCH, 1);
-	OUT_RING(chan, zeta_pitch << 16 | rt_pitch);
+	BEGIN_NV04(push, NV04_SF3D(FORMAT), 1);
+	PUSH_DATA (push, rt_format);
+	BEGIN_NV04(push, NV04_SF3D(PITCH), 1);
+	PUSH_DATA (push, zeta_pitch << 16 | rt_pitch);
 
 	/* Recompute the scissor state. */
 	context_dirty(ctx, SCISSOR);
@@ -99,16 +98,14 @@ nv04_emit_framebuffer(struct gl_context *ctx, int emit)
 void
 nv04_emit_scissor(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
-	struct nouveau_grobj *surf3d = hw->surf3d;
+	struct nouveau_pushbuf *push = context_push(ctx);
 	int x, y, w, h;
 
 	get_scissors(ctx->DrawBuffer, &x, &y, &w, &h);
 
-	BEGIN_RING(chan, surf3d, NV04_CONTEXT_SURFACES_3D_CLIP_HORIZONTAL, 2);
-	OUT_RING(chan, w << 16 | x);
-	OUT_RING(chan, h << 16 | y);
+	BEGIN_NV04(push, NV04_SF3D(CLIP_HORIZONTAL), 2);
+	PUSH_DATA (push, w << 16 | x);
+	PUSH_DATA (push, h << 16 | y);
 
 	/* Messing with surf3d invalidates the engine state. */
 	context_dirty_i(ctx, TEX_ENV, 0);

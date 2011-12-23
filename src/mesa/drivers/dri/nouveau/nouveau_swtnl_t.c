@@ -185,6 +185,8 @@ swtnl_unbind_vertices(struct gl_context *ctx)
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i, attr;
 
+	TAG(render_release_vertices)(ctx);
+
 	FOR_EACH_BOUND_ATTR(render, i, attr) {
 		nouveau_bo_ref(NULL, &render->attrs[attr].bo);
 		render->map[i] = -1;
@@ -196,28 +198,28 @@ swtnl_unbind_vertices(struct gl_context *ctx)
 static void
 swtnl_flush_vertices(struct gl_context *ctx)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl;
-	unsigned push, start = 0, count = swtnl->vertex_count;
+	unsigned npush, start = 0, count = swtnl->vertex_count;
 	RENDER_LOCALS(ctx);
 
 	swtnl_bind_vertices(ctx);
 
 	while (count) {
-		push = get_max_vertices(ctx, NULL, AVAIL_RING(chan));
-		push = MIN2(push / 12 * 12, count);
-		count -= push;
+		npush = get_max_vertices(ctx, NULL, PUSH_AVAIL(push));
+		npush = MIN2(npush / 12 * 12, count);
+		count -= npush;
 
-		if (!push) {
-			FIRE_RING(chan);
+		if (!npush) {
+			PUSH_KICK(push);
 			continue;
 		}
 
 		BATCH_BEGIN(nvgl_primitive(swtnl->primitive));
-		EMIT_VBO(L, ctx, start, 0, push);
+		EMIT_VBO(L, ctx, start, 0, npush);
 		BATCH_END();
 
-		FIRE_RING(chan);
+		PUSH_KICK(push);
 	}
 
 	swtnl_alloc_vertices(ctx);

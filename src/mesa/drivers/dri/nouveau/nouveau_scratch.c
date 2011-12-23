@@ -35,6 +35,7 @@ void *
 nouveau_get_scratch(struct gl_context *ctx, unsigned size,
 		    struct nouveau_bo **bo, unsigned *offset)
 {
+	struct nouveau_client *client = context_client(ctx);
 	struct nouveau_scratch_state *scratch =
 		&to_nouveau_context(ctx)->scratch;
 	void *buf;
@@ -50,20 +51,18 @@ nouveau_get_scratch(struct gl_context *ctx, unsigned size,
 		scratch->index = (scratch->index + 1) % NOUVEAU_SCRATCH_COUNT;
 		nouveau_bo_ref(scratch->bo[scratch->index], bo);
 
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
+		nouveau_bo_map(*bo, NOUVEAU_BO_WR, client);
 		buf = scratch->buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
 
 		*offset = 0;
 		scratch->offset = size;
 
 	} else {
-		nouveau_bo_new(context_dev(ctx),
-			       NOUVEAU_BO_MAP | NOUVEAU_BO_GART, 0, size, bo);
+		nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_GART |
+			       NOUVEAU_BO_MAP, 0, size, NULL, bo);
 
-		nouveau_bo_map(*bo, NOUVEAU_BO_WR);
+		nouveau_bo_map(*bo, NOUVEAU_BO_WR, client);
 		buf = (*bo)->map;
-		nouveau_bo_unmap(*bo);
 
 		*offset = 0;
 	}
@@ -79,9 +78,9 @@ nouveau_scratch_init(struct gl_context *ctx)
 	int ret, i;
 
 	for (i = 0; i < NOUVEAU_SCRATCH_COUNT; i++) {
-		ret = nouveau_bo_new(context_dev(ctx),
-				     NOUVEAU_BO_MAP | NOUVEAU_BO_GART,
-				     0, NOUVEAU_SCRATCH_SIZE, &scratch->bo[i]);
+		ret = nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_GART |
+				     NOUVEAU_BO_MAP, 0, NOUVEAU_SCRATCH_SIZE,
+				     NULL, &scratch->bo[i]);
 		assert(!ret);
 	}
 }

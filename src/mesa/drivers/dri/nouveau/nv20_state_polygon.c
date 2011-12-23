@@ -33,12 +33,11 @@
 void
 nv20_emit_point_mode(struct gl_context *ctx, int emit)
 {
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
 
-	BEGIN_RING(chan, kelvin, NV20_3D_POINT_SIZE, 1);
+	BEGIN_NV04(push, NV20_3D(POINT_SIZE), 1);
 	if (context_chipset(ctx) >= 0x25)
-		OUT_RINGf(chan, ctx->Point.Size);
+		PUSH_DATAf(push, ctx->Point.Size);
 	else
-		OUT_RING(chan, (uint32_t)(ctx->Point.Size * 8));
+		PUSH_DATA (push, (uint32_t)(ctx->Point.Size * 8));
 }

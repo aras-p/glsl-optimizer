@@ -47,7 +47,7 @@ struct nouveau_array {
 void
 nouveau_init_array(struct nouveau_array *a, int attr, int stride,
 		   int fields, int type, struct gl_buffer_object *obj,
-		   const void *ptr, GLboolean map);
+		   const void *ptr, GLboolean map, struct gl_context *ctx);
 
 void
 nouveau_deinit_array(struct nouveau_array *a);

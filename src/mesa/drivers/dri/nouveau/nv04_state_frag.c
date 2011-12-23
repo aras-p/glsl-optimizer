@@ -238,8 +238,8 @@ void
 nv04_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *fahrenheit = nv04_context_engine(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 	struct combiner_state rc_a = {}, rc_c = {};
 
 	if (!nv04_mtex_engine(fahrenheit)) {
@@ -276,13 +276,11 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 	}
 
 	/* Write the register combiner state out to the hardware. */
-	BEGIN_RING(chan, fahrenheit,
-		   NV04_MULTITEX_TRIANGLE_COMBINE_ALPHA(i), 2);
-	OUT_RING(chan, rc_a.hw);
-	OUT_RING(chan, rc_c.hw);
+	BEGIN_NV04(push, NV04_MTRI(COMBINE_ALPHA(i)), 2);
+	PUSH_DATA (push, rc_a.hw);
+	PUSH_DATA (push, rc_c.hw);
 
-	BEGIN_RING(chan, fahrenheit,
-		   NV04_MULTITEX_TRIANGLE_COMBINE_FACTOR, 1);
-	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_ARGB8888,
-				   ctx->Texture.Unit[0].EnvColor));
+	BEGIN_NV04(push, NV04_MTRI(COMBINE_FACTOR), 1);
+	PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_ARGB8888,
+				     ctx->Texture.Unit[0].EnvColor));
 }
