@@ -632,15 +632,19 @@ emit_combine_source(struct texenv_fragment_program *p,
 					   new(p->mem_ctx) ir_constant(1.0f),
 					   src);
 
-   case OPR_SRC_ALPHA: 
-      return new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
+   case OPR_SRC_ALPHA:
+      return src->type->is_scalar()
+	 ? src : (ir_rvalue *) new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
 
-   case OPR_ONE_MINUS_SRC_ALPHA: 
+   case OPR_ONE_MINUS_SRC_ALPHA: {
+      ir_rvalue *const scalar = (src->type->is_scalar())
+	 ? src : (ir_rvalue *) new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
+
       return new(p->mem_ctx) ir_expression(ir_binop_sub,
 					   new(p->mem_ctx) ir_constant(1.0f),
-					   new(p->mem_ctx) ir_swizzle(src,
-								      3, 3,
-								      3, 3, 1));
+					   scalar);
+   }
+
    case OPR_ZERO:
       return new(p->mem_ctx) ir_constant(0.0f);
    case OPR_ONE:
