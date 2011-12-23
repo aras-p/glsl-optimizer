@@ -47,7 +47,9 @@ WINGDIAPI const char * APIENTRY
 wglGetExtensionsStringARB(
    HDC hdc )
 {
-   (void) hdc;
+   if (!hdc) {
+      return NULL;
+   }
 
    return stw_extension_string;
 }
