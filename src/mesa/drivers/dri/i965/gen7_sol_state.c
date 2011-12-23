@@ -187,6 +187,10 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
       dw1 |= SO_FUNCTION_ENABLE;
       dw1 |= SO_STATISTICS_ENABLE;
 
+      /* _NEW_LIGHT */
+      if (ctx->Light.ProvokingVertex != GL_FIRST_VERTEX_CONVENTION)
+	 dw1 |= SO_REORDER_TRAILING;
+
       for (i = 0; i < 4; i++) {
 	 if (xfb_obj->Buffers[i]) {
 	    dw1 |= SO_BUFFER_ENABLE(i);
@@ -240,6 +244,7 @@ upload_sol_state(struct brw_context *brw)
 const struct brw_tracked_state gen7_sol_state = {
    .dirty = {
       .mesa  = (_NEW_RASTERIZER_DISCARD |
+		_NEW_LIGHT |
 		_NEW_TRANSFORM_FEEDBACK |
 		_NEW_TRANSFORM),
       .brw   = (BRW_NEW_BATCH |
