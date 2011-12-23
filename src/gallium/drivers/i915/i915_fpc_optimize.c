@@ -203,6 +203,7 @@ static void i915_fpc_optimize_useless_mov(union i915_full_token* current, union 
         next->FullInstruction.Instruction.Saturate == TGSI_SAT_NONE &&
         next->FullInstruction.Src[0].Register.Absolute == 0 &&
         next->FullInstruction.Src[0].Register.Negate == 0 &&
+        next->FullInstruction.Dst[0].Register.File == TGSI_FILE_OUTPUT &&
         is_unswizzled(&next->FullInstruction.Src[0], next->FullInstruction.Dst[0].Register.WriteMask) &&
         current->FullInstruction.Dst[0].Register.WriteMask == next->FullInstruction.Dst[0].Register.WriteMask &&
         same_src_dst_reg(&next->FullInstruction.Src[0], &current->FullInstruction.Dst[0]) )
