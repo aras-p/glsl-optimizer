@@ -775,11 +775,6 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
 						  lvalue, NULL));
 
-   /* Once we've created this temporary, mark it read only so it's no
-    * longer considered an lvalue.
-    */
-   var->read_only = true;
-
    return new(ctx) ir_dereference_variable(var);
 }
 
