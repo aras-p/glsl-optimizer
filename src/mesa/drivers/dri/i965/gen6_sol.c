@@ -82,8 +82,8 @@ gen6_update_sol_indices(struct brw_context *brw)
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-   OUT_BATCH(brw->sol.svbi_0_starting_index); /* BRW_NEW_SOL_INDICES */
    OUT_BATCH(0);
+   OUT_BATCH(brw->sol.svbi_0_starting_index); /* BRW_NEW_SOL_INDICES */
    OUT_BATCH(brw->sol.svbi_0_max_index); /* BRW_NEW_SOL_INDICES */
    ADVANCE_BATCH();
 }
