@@ -4888,35 +4888,56 @@ _mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
    const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLubyte *dstMap;
-   GLint dstRowStride;
-   GLboolean success;
+   GLboolean success = GL_FALSE;
+   GLuint slice, numSlices, sliceOffset, srcImageStride;
+   const GLubyte *src;
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
-   pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
-                                        pixels, packing, "glTexSubImage2D");
-   if (!pixels)
+   src = (const GLubyte *)
+      _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
+                                  pixels, packing, "glTexSubImage2D");
+   if (!src)
       return;
 
-   /* Map dest texture buffer */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               xoffset, yoffset, width, height,
-                               rwMode,
-                               &dstMap, &dstRowStride);
-
-   if (dstMap) {
-      success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
-                               texImage->TexFormat,
-                               0, 0, 0,  /* dstX/Y/Zoffset */
-                               dstRowStride,
-                               &dstMap,
-                               width, height, 1,
-                               format, type, pixels, packing);
-
-      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
+   if (target == GL_TEXTURE_1D_ARRAY) {
+      /* map each slice of the 1D array separately */
+      numSlices = height;
+      sliceOffset = yoffset;
+      height = 1;
+      yoffset = 0;
+      srcImageStride = _mesa_image_row_stride(packing, width, format, type);
    }
    else {
-      success = GL_FALSE;
+      /* regular 2D image */
+      numSlices = 1;
+      sliceOffset = 0;
+      srcImageStride = 0;
+   }
+
+   for (slice = 0; slice < numSlices; slice++) {
+      GLubyte *dstMap;
+      GLint dstRowStride;
+
+      ctx->Driver.MapTextureImage(ctx, texImage,
+                                  slice + sliceOffset,
+                                  xoffset, yoffset, width, height,
+                                  rwMode, &dstMap, &dstRowStride);
+      if (dstMap) {
+         success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+                                  texImage->TexFormat,
+                                  0, 0, 0,  /* dstX/Y/Zoffset */
+                                  dstRowStride,
+                                  &dstMap,
+                                  width, height, 1,  /* w, h, d */
+                                  format, type, src, packing);
+
+         ctx->Driver.UnmapTextureImage(ctx, texImage, slice + sliceOffset);
+      }
+
+      src += srcImageStride;
+
+      if (!success)
+         break;
    }
 
    if (!success)
