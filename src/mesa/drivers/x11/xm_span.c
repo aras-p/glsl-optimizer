@@ -136,7 +136,7 @@ static unsigned long read_pixel( XMesaDisplay *dpy,
  *
  * The function naming convention is:
  *
- *   [put|get]_[mono]_[row|values]_[format]_[pixmap|ximage]
+ *   [put|get]_[row|values]_[format]_[pixmap|ximage]
  *
  * New functions optimized for specific cases can be added without too much
  * trouble.  An example might be the 24-bit TrueColor mode 8A8R8G8B which is
@@ -1811,423 +1811,6 @@ static void put_values_DITHER_5R6G5B_ximage( PUT_VALUES_ARGS )
 
 
 /**********************************************************************/
-/*** Write MONO COLOR SPAN functions                                ***/
-/**********************************************************************/
-
-#define PUT_MONO_ROW_ARGS \
-	struct gl_context *ctx, struct gl_renderbuffer *rb,	\
-	GLuint n, GLint x, GLint y, const void *value,	\
-	const GLubyte mask[]
-
-
-
-/*
- * Write a span of identical pixels to a pixmap.
- */
-static void put_mono_row_pixmap( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   register GLuint i;
-   XMesaSetForeground( xmesa->display, gc, pixel );
-   y = YFLIP(xrb, y);
-
-   /* New code contributed by Jeff Epler and cleaned up by Keith
-    * Whitwell.  
-    */
-   for (i = 0; i < n; ) {
-      GLuint start = i;
-
-      /* Identify and emit contiguous rendered pixels
-       */
-      while (i < n && (!mask || mask[i]))
-	 i++;
-
-      if (start < i) 
-	 XMesaFillRectangle( dpy, buffer, gc,
-			     (int)(x+start), (int) y,
-			     (int)(i-start), 1);
-
-      /* Eat up non-rendered pixels
-       */
-      while (i < n && !mask[i])
-	 i++;
-   }
-}
-
-
-
-/*
- * Write a span of PF_TRUEDITHER pixels to a pixmap.
- */
-static void put_mono_row_TRUEDITHER_pixmap( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLuint i;
-   int yy = YFLIP(xrb, y);
-   for (i=0;i<n;i++,x++) {
-      if (!mask || mask[i]) {
-         unsigned long p;
-         PACK_TRUEDITHER(p, x, yy, r, g, b);
-         XMesaSetForeground( dpy, gc, p );
-         XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) yy );
-      }
-   }
-}
-
-
-/*
- * Write a span of identical pixels to an XImage.
- */
-static void put_mono_row_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaImage *img = xrb->ximage;
-   register GLuint i;
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   y = YFLIP(xrb, y);
-   for (i=0;i<n;i++,x++) {
-      if (!mask || mask[i]) {
-	 XMesaPutPixel( img, x, y, pixel );
-      }
-   }
-}
-
-
-/*
- * Write a span of identical PF_TRUEDITHER pixels to an XImage.
- */
-static void put_mono_row_TRUEDITHER_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaImage *img = xrb->ximage;
-   const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   GLuint i;
-   y = YFLIP(xrb, y);
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-         unsigned long p;
-         PACK_TRUEDITHER( p, x+i, y, r, g, b);
-	 XMesaPutPixel( img, x+i, y, p );
-      }
-   }
-}
-
-
-/*
- * Write a span of identical 8A8B8G8R pixels to an XImage.
- */
-static void put_mono_row_8A8B8G8R_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLuint i, *ptr;
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   ptr = PIXEL_ADDR4(xrb, x, y );
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-	 ptr[i] = pixel;
-      }
-   }
-}
-
-/*
- * Write a span of identical 8A8R8G8B pixels to an XImage.
- */
-static void put_mono_row_8A8R8G8B_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   GLuint i, *ptr;
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   ptr = PIXEL_ADDR4(xrb, x, y );
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-	 ptr[i] = pixel;
-      }
-   }
-}
-
-
-/*
- * Write a span of identical 8R8G8B pixels to an XImage.
- */
-static void put_mono_row_8R8G8B_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const GLuint pixel = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
-   GLuint *ptr = PIXEL_ADDR4(xrb, x, y );
-   GLuint i;
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-	 ptr[i] = pixel;
-      }
-   }
-}
-
-
-/*
- * Write a span of identical 8R8G8B pixels to an XImage.
- */
-static void put_mono_row_8R8G8B24_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const GLubyte r = color[RCOMP];
-   const GLubyte g = color[GCOMP];
-   const GLubyte b = color[BCOMP];
-   GLuint i;
-   bgr_t *ptr = PIXEL_ADDR3(xrb, x, y );
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-         ptr[i].r = r;
-         ptr[i].g = g;
-         ptr[i].b = b;
-      }
-   }
-}
-
-
-/*
- * Write a span of identical PF_DITHER_5R6G5B pixels to an XImage.
- */
-static void put_mono_row_DITHER_5R6G5B_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y );
-   const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   GLuint i;
-   y = YFLIP(xrb, y);
-   for (i=0;i<n;i++) {
-      if (!mask || mask[i]) {
-         PACK_TRUEDITHER(ptr[i], x+i, y, r, g, b);
-      }
-   }
-}
-
-
-
-/**********************************************************************/
-/*** Write MONO COLOR PIXELS functions                              ***/
-/**********************************************************************/
-
-#define PUT_MONO_VALUES_ARGS \
-	struct gl_context *ctx, struct gl_renderbuffer *rb,	\
-	GLuint n, const GLint x[], const GLint y[],	\
-	const void *value, const GLubyte mask[]
-
-
-
-/*
- * Write an array of identical pixels to a pixmap.
- */
-static void put_mono_values_pixmap( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   register GLuint i;
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   XMesaSetForeground( xmesa->display, gc, pixel );
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 XMesaDrawPoint( dpy, buffer, gc,
-                         (int) x[i], (int) YFLIP(xrb, y[i]) );
-      }
-   }
-}
-
-
-/*
- * Write an array of PF_TRUEDITHER pixels to a pixmap.
- */
-static void put_mono_values_TRUEDITHER_pixmap( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   register GLuint i;
-   const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-         unsigned long p;
-         PACK_TRUEDITHER(p, x[i], y[i], r, g, b);
-         XMesaSetForeground( dpy, gc, p );
-	 XMesaDrawPoint( dpy, buffer, gc,
-                         (int) x[i], (int) YFLIP(xrb, y[i]) );
-      }
-   }
-}
-
-
-/*
- * Write an array of identical pixels to an XImage.
- */
-static void put_mono_values_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaImage *img = xrb->ximage;
-   register GLuint i;
-   const unsigned long pixel = xmesa_color_to_pixel(ctx, color[RCOMP],
-               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), pixel );
-      }
-   }
-}
-
-
-/*
- * Write an array of identical TRUEDITHER pixels to an XImage.
- */
-static void put_mono_values_TRUEDITHER_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaImage *img = xrb->ximage;
-   register GLuint i;
-   const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-         unsigned long p;
-         PACK_TRUEDITHER(p, x[i], YFLIP(xrb, y[i]), r, g, b);
-	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), p );
-      }
-   }
-}
-
-
-
-/*
- * Write an array of identical 8A8B8G8R pixels to an XImage
- */
-static void put_mono_values_8A8B8G8R_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const GLuint p = PACK_8A8B8G8R(color[RCOMP], color[GCOMP],
-                                  color[BCOMP], color[ACOMP]);
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
-	 *ptr = p;
-      }
-   }
-}
-
-/*
- * Write an array of identical 8A8R8G8B pixels to an XImage
- */
-static void put_mono_values_8A8R8G8B_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const GLuint p = PACK_8A8R8G8B(color[RCOMP], color[GCOMP],
-                                  color[BCOMP], color[ACOMP]);
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
-	 *ptr = p;
-      }
-   }
-}
-
-/*
- * Write an array of identical 8R8G8B pixels to an XImage.
- */
-static void put_mono_values_8R8G8B_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   register GLuint i;
-   const GLuint p = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
-	 *ptr = p;
-      }
-   }
-}
-
-
-/*
- * Write an array of identical 8R8G8B pixels to an XImage.
- */
-static void put_mono_values_8R8G8B24_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 bgr_t *ptr = PIXEL_ADDR3(xrb, x[i], y[i] );
-         ptr->r = r;
-         ptr->g = g;
-         ptr->b = b;
-      }
-   }
-}
-
-
-/*
- * Write an array of identical PF_DITHER_5R6G5B pixels to an XImage.
- */
-static void put_mono_values_DITHER_5R6G5B_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-	 GLushort *ptr = PIXEL_ADDR2(xrb, x[i], y[i] );
-         PACK_TRUEDITHER(*ptr, x[i], y[i], r, g, b);
-      }
-   }
-}
-
-
-
-/**********************************************************************/
 /*****                      Pixel reading                         *****/
 /**********************************************************************/
 
@@ -2723,128 +2306,96 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
       if (pixmap) {
          xrb->Base.PutRow        = put_row_TRUECOLOR_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_TRUECOLOR_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_TRUECOLOR_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_TRUECOLOR_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_TRUECOLOR_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_ximage;
          xrb->Base.PutValues     = put_values_TRUECOLOR_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_ximage;
       }
       break;
    case PF_Dither_True:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_TRUEDITHER_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_TRUEDITHER_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
          xrb->Base.PutValues     = put_values_TRUEDITHER_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_TRUEDITHER_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_TRUEDITHER_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_ximage;
          xrb->Base.PutValues     = put_values_TRUEDITHER_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_ximage;
       }
       break;
    case PF_8A8B8G8R:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_8A8B8G8R_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_8A8B8G8R_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_8A8B8G8R_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_8A8B8G8R_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_8A8B8G8R_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8A8B8G8R_ximage;
          xrb->Base.PutValues     = put_values_8A8B8G8R_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8A8B8G8R_ximage;
       }
       break;
    case PF_8A8R8G8B:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_8A8R8G8B_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_8A8R8G8B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_8A8R8G8B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_8A8R8G8B_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_8A8R8G8B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8A8R8G8B_ximage;
          xrb->Base.PutValues     = put_values_8A8R8G8B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8A8R8G8B_ximage;
       }
       break;
    case PF_8R8G8B:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_8R8G8B_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_8R8G8B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_8R8G8B_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8R8G8B_ximage;
          xrb->Base.PutValues     = put_values_8R8G8B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8R8G8B_ximage;
       }
       break;
    case PF_8R8G8B24:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_8R8G8B24_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B24_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_8R8G8B24_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_8R8G8B24_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B24_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8R8G8B24_ximage;
          xrb->Base.PutValues     = put_values_8R8G8B24_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8R8G8B24_ximage;
       }
       break;
    case PF_5R6G5B:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_5R6G5B_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_5R6G5B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
          xrb->Base.PutValues     = put_values_5R6G5B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_5R6G5B_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_5R6G5B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_ximage;
          xrb->Base.PutValues     = put_values_5R6G5B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_ximage;
       }
       break;
    case PF_Dither_5R6G5B:
       if (pixmap) {
          xrb->Base.PutRow        = put_row_DITHER_5R6G5B_pixmap;
          xrb->Base.PutRowRGB     = put_row_rgb_DITHER_5R6G5B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
          xrb->Base.PutValues     = put_values_DITHER_5R6G5B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
       }
       else {
          xrb->Base.PutRow        = put_row_DITHER_5R6G5B_ximage;
          xrb->Base.PutRowRGB     = put_row_rgb_DITHER_5R6G5B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_DITHER_5R6G5B_ximage;
          xrb->Base.PutValues     = put_values_DITHER_5R6G5B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_DITHER_5R6G5B_ximage;
       }
       break;
    default:

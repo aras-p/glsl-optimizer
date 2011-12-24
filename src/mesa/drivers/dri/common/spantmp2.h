@@ -63,9 +63,6 @@
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
 
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_565( color[0], color[1], color[2] )
-
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, ((((int)r & 0xf8) << 8) |				\
 		      (((int)g & 0xfc) << 3) |				\
@@ -97,9 +94,6 @@
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
 
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_565_REV( color[0], color[1], color[2] )
-
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, PACK_COLOR_565_REV( r, g, b ))
 
@@ -129,9 +123,6 @@
 #define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
-
-#define INIT_MONO_PIXEL(p, color) \
-   p = PACK_COLOR_4444_REV(color[3], color[0], color[1], color[2])
 
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, PACK_COLOR_4444_REV(a, r, g, b))			\
@@ -163,9 +154,6 @@
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
 
-#define INIT_MONO_PIXEL(p, color) \
-   p = PACK_COLOR_4444(color[3], color[0], color[1], color[2])
-
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, PACK_COLOR_4444(a, r, g, b))			\
 
@@ -196,9 +184,6 @@
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
 
-#define INIT_MONO_PIXEL(p, color) \
-   p = PACK_COLOR_1555(color[3], color[0], color[1], color[2])
-
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, PACK_COLOR_1555(a, r, g, b))			\
 
@@ -227,9 +212,6 @@
 #define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
 #define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
-
-#define INIT_MONO_PIXEL(p, color) \
-   p = PACK_COLOR_1555_REV(color[3], color[0], color[1], color[2])
 
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    PUT_VALUE(_x, _y, PACK_COLOR_1555_REV(a, r, g, b))			\
@@ -260,9 +242,6 @@
 #define GET_VALUE(_x, _y) *(volatile GLuint *)(GET_PTR(_x, _y))
 #define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = PACK_COLOR_8888(color[3], color[0], color[1], color[2]) 
 
 # define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
    PUT_VALUE(_x, _y, ((r << 16) |					\
@@ -315,9 +294,6 @@
 #define GET_VALUE(_x, _y) *(volatile GLuint *)(GET_PTR(_x, _y))
 #define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = PACK_COLOR_8888(color[2], color[1], color[0], color[3]) 
 
 # define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
    PUT_VALUE(_x, _y, ((r << 8) |					\
@@ -374,9 +350,6 @@
 #define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
 
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = PACK_COLOR_8888(0xff, color[0], color[1], color[2])
-
 # define WRITE_RGBA(_x, _y, r, g, b, a)					\
    PUT_VALUE(_x, _y, ((r << 16) |					\
 		      (g << 8) |					\
@@ -427,9 +400,6 @@
 #define GET_VALUE(_x, _y) *(volatile GLubyte *)(GET_PTR(_x, _y))
 #define PUT_VALUE(_x, _y, _v) *(volatile GLubyte *)(GET_PTR(_x, _y)) = (_v)
 #endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = color[3]
 
 # define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
    PUT_VALUE(_x, _y, a | (r & 0 /* quiet warnings */))
@@ -586,91 +556,6 @@ static void TAG(WriteRGBAPixels)( struct gl_context *ctx,
 				    rgba[i][0], rgba[i][1],
 				    rgba[i][2], rgba[i][3] );
 	          }
-	       }
-	    }
-	 HW_ENDCLIPLOOP();
-      }
-   HW_WRITE_UNLOCK();
-}
-
-
-static void TAG(WriteMonoRGBASpan)( struct gl_context *ctx,	
-                                    struct gl_renderbuffer *rb,
-				    GLuint n, GLint x, GLint y, 
-				    const void *value, const GLubyte mask[] )
-{
-   (void) ctx;
-
-   HW_WRITE_LOCK()
-      {
-         const GLubyte *color = (const GLubyte *) value;
-	 GLint x1;
-	 GLint n1;
-	 LOCAL_VARS;
-	 INIT_MONO_PIXEL(p, color);
-
-	 y = Y_FLIP( y );
-
-	 if (DBG) fprintf(stderr, "WriteMonoRGBASpan\n");
-
-	 HW_WRITE_CLIPLOOP()
-	    {
-	       GLint i = 0;
-	       CLIPSPAN(x,y,n,x1,n1,i);
-	       if (mask)
-	       {
-	          for (;n1>0;i++,x1++,n1--)
-		     if (mask[i])
-		        WRITE_PIXEL( x1, y, p );
-	       }
-	       else
-	       {
-	          for (;n1>0;i++,x1++,n1--)
-		     WRITE_PIXEL( x1, y, p );
-	       }
-	    }
-	 HW_ENDCLIPLOOP();
-      }
-   HW_WRITE_UNLOCK();
-}
-
-
-static void TAG(WriteMonoRGBAPixels)( struct gl_context *ctx,
-                                      struct gl_renderbuffer *rb,
-				      GLuint n,
-				      const GLint x[], const GLint y[],
-				      const void *value,
-				      const GLubyte mask[] ) 
-{
-   (void) ctx;
-
-   HW_WRITE_LOCK()
-      {
-         const GLubyte *color = (const GLubyte *) value;
-	 GLint i;
-	 LOCAL_VARS;
-	 INIT_MONO_PIXEL(p, color);
-
-	 if (DBG) fprintf(stderr, "WriteMonoRGBAPixels\n");
-
-	 HW_WRITE_CLIPLOOP()
-	    {
-	       if (mask)
-	       {
-		  for (i=0;i<n;i++)
-		     if (mask[i]) {
-			int fy = Y_FLIP(y[i]);
-			if (CLIPPIXEL( x[i], fy ))
-			   WRITE_PIXEL( x[i], fy, p );
-		     }
-	       }
-	       else
-	       {
-		  for (i=0;i<n;i++) {
-		     int fy = Y_FLIP(y[i]);
-		     if (CLIPPIXEL( x[i], fy ))
-			WRITE_PIXEL( x[i], fy, p );
-		  }
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
@@ -879,9 +764,7 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 {
    rb->PutRow = TAG(WriteRGBASpan);
    rb->PutRowRGB = TAG(WriteRGBSpan);
-   rb->PutMonoRow = TAG(WriteMonoRGBASpan);
    rb->PutValues = TAG(WriteRGBAPixels);
-   rb->PutMonoValues = TAG(WriteMonoRGBAPixels);
    rb->GetValues = TAG(ReadRGBAPixels);
 
 #if defined(GET_PTR)
@@ -923,7 +806,6 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 }
 
 
-#undef INIT_MONO_PIXEL
 #undef WRITE_PIXEL
 #undef WRITE_RGBA
 #undef READ_RGBA

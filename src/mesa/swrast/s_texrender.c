@@ -298,64 +298,6 @@ texture_put_row_rgb(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint c
 
 
 static void
-texture_put_mono_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
-   const GLint z = trb->Zoffset;
-   GLuint i;
-
-   y += trb->Yoffset;
-
-   if (rb->DataType == CHAN_TYPE) {
-      const GLchan *rgba = (const GLchan *) value;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x + i, y, z, rgba);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_SHORT) {
-      const GLushort zValue = *((const GLushort *) value);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x + i, y, z, &zValue);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT) {
-      const GLuint zValue = *((const GLuint *) value);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x + i, y, z, &zValue);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
-      const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x + i, y, z, &flt);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
-      const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (GLfloat) ((zValue & 0xffffff) * (1.0 / 0xffffff));
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x + i, y, z, &flt);
-         }
-      }
-   }
-   else {
-      _mesa_problem(ctx, "invalid rb->DataType in texture_put_mono_row");
-   }
-}
-
-
-static void
 texture_put_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], const void *values,
                    const GLubyte *mask)
@@ -414,63 +356,6 @@ texture_put_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
 
 
 static void
-texture_put_mono_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                        GLuint count, const GLint x[], const GLint y[],
-                        const void *value, const GLubyte *mask)
-{
-   struct texture_renderbuffer *trb = texture_renderbuffer(rb);
-   const GLint z = trb->Zoffset;
-   GLuint i;
-
-   if (rb->DataType == CHAN_TYPE) {
-      const GLchan *rgba = (const GLchan *) value;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, rgba);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT) {
-      const GLuint zValue = *((const GLuint *) value);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &zValue);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_SHORT) {
-      const GLushort zValue = *((const GLushort *) value);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &zValue);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
-      const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
-         }
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
-      const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (GLfloat) ((zValue & 0xffffff) * (1.0 / 0xffffff));
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
-         }
-      }
-   }
-   else {
-      _mesa_problem(ctx, "invalid rb->DataType in texture_put_mono_values");
-   }
-}
-
-
-static void
 store_nop(struct swrast_texture_image *texImage,
           GLint col, GLint row, GLint img,
           const void *texel)
@@ -515,9 +400,7 @@ wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    trb->Base.GetValues = texture_get_values;
    trb->Base.PutRow = texture_put_row;
    trb->Base.PutRowRGB = texture_put_row_rgb;
-   trb->Base.PutMonoRow = texture_put_mono_row;
    trb->Base.PutValues = texture_put_values;
-   trb->Base.PutMonoValues = texture_put_mono_values;
 
    /* update attachment point */
    _mesa_reference_renderbuffer(&att->Renderbuffer, &(trb->Base));

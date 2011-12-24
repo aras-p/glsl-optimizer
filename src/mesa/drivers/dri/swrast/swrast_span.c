@@ -277,36 +277,28 @@ swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
 	xrb->Base.GetValues = get_values_A8R8G8B8;
 	xrb->Base.PutRow = put_row_A8R8G8B8;
 	xrb->Base.PutRowRGB = put_row_rgb_A8R8G8B8;
-	xrb->Base.PutMonoRow = put_mono_row_A8R8G8B8;
 	xrb->Base.PutValues = put_values_A8R8G8B8;
-	xrb->Base.PutMonoValues = put_mono_values_A8R8G8B8;
 	break;
     case PF_X8R8G8B8:
 	xrb->Base.GetRow = get_row_X8R8G8B8;
 	xrb->Base.GetValues = get_values_X8R8G8B8;
 	xrb->Base.PutRow = put_row_X8R8G8B8;
 	xrb->Base.PutRowRGB = put_row_rgb_X8R8G8B8;
-	xrb->Base.PutMonoRow = put_mono_row_X8R8G8B8;
 	xrb->Base.PutValues = put_values_X8R8G8B8;
-	xrb->Base.PutMonoValues = put_mono_values_X8R8G8B8;
 	break;
     case PF_R5G6B5:
 	xrb->Base.GetRow = get_row_R5G6B5;
 	xrb->Base.GetValues = get_values_R5G6B5;
 	xrb->Base.PutRow = put_row_R5G6B5;
 	xrb->Base.PutRowRGB = put_row_rgb_R5G6B5;
-	xrb->Base.PutMonoRow = put_mono_row_R5G6B5;
 	xrb->Base.PutValues = put_values_R5G6B5;
-	xrb->Base.PutMonoValues = put_mono_values_R5G6B5;
 	break;
     case PF_R3G3B2:
 	xrb->Base.GetRow = get_row_R3G3B2;
 	xrb->Base.GetValues = get_values_R3G3B2;
 	xrb->Base.PutRow = put_row_R3G3B2;
 	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2;
-	xrb->Base.PutMonoRow = put_mono_row_R3G3B2;
 	xrb->Base.PutValues = put_values_R3G3B2;
-	xrb->Base.PutMonoValues = put_mono_values_R3G3B2;
 	break;
     default:
 	assert(0);
@@ -333,36 +325,28 @@ swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
 	xrb->Base.GetValues = get_values_A8R8G8B8_front;
 	xrb->Base.PutRow = put_row_A8R8G8B8_front;
 	xrb->Base.PutRowRGB = put_row_rgb_A8R8G8B8_front;
-	xrb->Base.PutMonoRow = put_mono_row_A8R8G8B8_front;
 	xrb->Base.PutValues = put_values_A8R8G8B8_front;
-	xrb->Base.PutMonoValues = put_mono_values_A8R8G8B8_front;
 	break;
     case PF_X8R8G8B8:
 	xrb->Base.GetRow = get_row_X8R8G8B8_front;
 	xrb->Base.GetValues = get_values_X8R8G8B8_front;
 	xrb->Base.PutRow = put_row_X8R8G8B8_front;
 	xrb->Base.PutRowRGB = put_row_rgb_X8R8G8B8_front;
-	xrb->Base.PutMonoRow = put_mono_row_X8R8G8B8_front;
 	xrb->Base.PutValues = put_values_X8R8G8B8_front;
-	xrb->Base.PutMonoValues = put_mono_values_X8R8G8B8_front;
 	break;
     case PF_R5G6B5:
 	xrb->Base.GetRow = get_row_R5G6B5_front;
 	xrb->Base.GetValues = get_values_R5G6B5_front;
 	xrb->Base.PutRow = put_row_R5G6B5_front;
 	xrb->Base.PutRowRGB = put_row_rgb_R5G6B5_front;
-	xrb->Base.PutMonoRow = put_mono_row_R5G6B5_front;
 	xrb->Base.PutValues = put_values_R5G6B5_front;
-	xrb->Base.PutMonoValues = put_mono_values_R5G6B5_front;
 	break;
     case PF_R3G3B2:
 	xrb->Base.GetRow = get_row_R3G3B2_front;
 	xrb->Base.GetValues = get_values_R3G3B2_front;
 	xrb->Base.PutRow = put_row_R3G3B2_front;
 	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2_front;
-	xrb->Base.PutMonoRow = put_mono_row_R3G3B2_front;
 	xrb->Base.PutValues = put_values_R3G3B2_front;
-	xrb->Base.PutMonoValues = put_mono_values_R3G3B2_front;
 	break;
     default:
 	assert(0);

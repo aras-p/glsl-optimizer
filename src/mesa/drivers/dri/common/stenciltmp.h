@@ -61,62 +61,6 @@ static void TAG(WriteStencilSpan)( struct gl_context *ctx,
    HW_WRITE_UNLOCK();
 }
 
-#if HAVE_HW_STENCIL_SPANS
-/* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
-static void
-TAG(WriteMonoStencilSpan)( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                           GLuint n, GLint x, GLint y,
-                           const void *value, const GLubyte mask[] )
-{
-   const GLuint stenVal = *((GLuint *) value);
-   GLuint stens[MAX_WIDTH];
-   GLuint i;
-   for (i = 0; i < n; i++)
-      stens[i] = stenVal;
-   TAG(WriteStencilSpan)(ctx, rb, n, x, y, stens, mask);
-}
-#else /* HAVE_HW_STENCIL_SPANS */
-static void TAG(WriteMonoStencilSpan)( struct gl_context *ctx,
-                                       struct gl_renderbuffer *rb,
-                                       GLuint n, GLint x, GLint y,
-                                       const void *value,
-                                       const GLubyte mask[] )
-{
-   HW_WRITE_LOCK()
-      {
-         const GLubyte stencil = *((const GLubyte *) value);
-	 GLint x1;
-	 GLint n1;
-	 LOCAL_STENCIL_VARS;
-
-	 y = Y_FLIP(y);
-
-	 HW_CLIPLOOP() 
-	    {
-	       GLint i = 0;
-	       CLIPSPAN(x,y,n,x1,n1,i);
-
-	       if (DBG) fprintf(stderr, "WriteStencilSpan %d..%d (x1 %d)\n",
-				(int)i, (int)n1, (int)x1);
-
-	       if (mask)
-	       {
-		  for (;n1>0;i++,x1++,n1--)
-		     if (mask[i])
-			WRITE_STENCIL( x1, y, stencil );
-	       }
-	       else
-	       {
-		  for (;n1>0;i++,x1++,n1--)
-		     WRITE_STENCIL( x1, y, stencil );
-	       }
-	    }
-	 HW_ENDCLIPLOOP();
-      }
-   HW_WRITE_UNLOCK();
-}
-#endif /* !HAVE_HW_STENCIL_SPANS */
-
 
 static void TAG(WriteStencilPixels)( struct gl_context *ctx,
                                      struct gl_renderbuffer *rb,
@@ -234,9 +178,7 @@ static void TAG(InitStencilPointers)(struct gl_renderbuffer *rb)
    rb->GetValues = TAG(ReadStencilPixels);
    rb->PutRow = TAG(WriteStencilSpan);
    rb->PutRowRGB = NULL;
-   rb->PutMonoRow = TAG(WriteMonoStencilSpan);
    rb->PutValues = TAG(WriteStencilPixels);
-   rb->PutMonoValues = NULL;
 }
 
 

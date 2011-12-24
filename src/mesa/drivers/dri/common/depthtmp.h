@@ -71,63 +71,6 @@ static void TAG(WriteDepthSpan)( struct gl_context *ctx,
 }
 
 
-#if HAVE_HW_DEPTH_SPANS
-/* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
-static void
-TAG(WriteMonoDepthSpan)( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                         GLuint n, GLint x, GLint y,
-                         const void *value, const GLubyte mask[] )
-{
-   const GLuint depthVal = *((GLuint *) value);
-   GLuint depths[MAX_WIDTH];
-   GLuint i;
-   for (i = 0; i < n; i++)
-      depths[i] = depthVal;
-   TAG(WriteDepthSpan)(ctx, rb, n, x, y, depths, mask);
-}
-#else
-static void TAG(WriteMonoDepthSpan)( struct gl_context *ctx,
-                                     struct gl_renderbuffer *rb,
-                                     GLuint n, GLint x, GLint y,
-                                     const void *value,
-                                     const GLubyte mask[] )
-{
-   HW_WRITE_LOCK()
-      {
-         const GLuint depth = *((GLuint *) value);
-	 GLint x1;
-	 GLint n1;
-	 LOCAL_DEPTH_VARS;
-
-	 y = Y_FLIP( y );
-
-	 HW_CLIPLOOP()
-	    {
-	       GLint i = 0;
-	       CLIPSPAN( x, y, n, x1, n1, i );
-
-	       if ( DBG ) fprintf( stderr, "%s %d..%d (x1 %d) = %u\n",
-				   __FUNCTION__, (int)i, (int)n1, (int)x1, (GLuint)depth );
-
-	       if ( mask ) {
-		  for ( ; n1>0 ; i++, x1++, n1-- ) {
-		     if ( mask[i] ) WRITE_DEPTH( x1, y, depth );
-		  }
-	       } else {
-		  for ( ; n1>0 ; x1++, n1-- ) {
-		     WRITE_DEPTH( x1, y, depth );
-		  }
-	       }
-	    }
-	 HW_ENDCLIPLOOP();
-      }
-   HW_WRITE_UNLOCK();
-
-   (void) ctx;
-}
-#endif
-
-
 static void TAG(WriteDepthPixels)( struct gl_context *ctx,
                                    struct gl_renderbuffer *rb,
 				   GLuint n,
@@ -259,9 +202,7 @@ static void TAG(InitDepthPointers)(struct gl_renderbuffer *rb)
    rb->GetValues = TAG(ReadDepthPixels);
    rb->PutRow = TAG(WriteDepthSpan);
    rb->PutRowRGB = NULL;
-   rb->PutMonoRow = TAG(WriteMonoDepthSpan);
    rb->PutValues = TAG(WriteDepthPixels);
-   rb->PutMonoValues = NULL;
 }
 
 

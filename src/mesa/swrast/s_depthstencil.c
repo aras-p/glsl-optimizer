@@ -207,59 +207,6 @@ put_row_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
    }
 }
 
-static void
-put_mono_row_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
-                 GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = z24rb->Wrapped;
-   GLuint *dst = (GLuint *) dsrb->GetPointer(ctx, dsrb, x, y);
-   ASSERT(z24rb->DataType == GL_UNSIGNED_INT);
-   ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT);
-   if (dst) {
-      /* direct access */
-      GLuint i;
-      if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-         const GLuint shiftedVal = *((GLuint *) value) << 8;
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               dst[i] = shiftedVal | (dst[i] & 0xff);
-            }
-         }
-      }
-      else {
-         const GLuint shiftedVal = *((GLuint *) value);
-         assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               dst[i] = shiftedVal | (dst[i] & 0xff000000);
-            }
-         }
-      }
-   }
-   else {
-      /* get, modify, put */
-      GLuint temp[MAX_WIDTH], i;
-      dsrb->GetRow(ctx, dsrb, count, x, y, temp);
-      if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-         const GLuint shiftedVal = *((GLuint *) value) << 8;
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               temp[i] = shiftedVal | (temp[i] & 0xff);
-            }
-         }
-      }
-      else {
-         const GLuint shiftedVal = *((GLuint *) value);
-         assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               temp[i] = shiftedVal | (temp[i] & 0xff000000);
-            }
-         }
-      }
-      dsrb->PutRow(ctx, dsrb, count, x, y, temp, mask);
-   }
-}
 
 static void
 put_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint count,
@@ -314,35 +261,6 @@ put_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb, GLuint cou
    }
 }
 
-static void
-put_mono_values_z24(struct gl_context *ctx, struct gl_renderbuffer *z24rb,
-                    GLuint count, const GLint x[], const GLint y[],
-                    const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = z24rb->Wrapped;
-   GLuint temp[MAX_WIDTH], i;
-   /* get, modify, put */
-   dsrb->GetValues(ctx, dsrb, count, x, y, temp);
-   if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-      const GLuint shiftedVal = *((GLuint *) value) << 8;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i] = shiftedVal | (temp[i] & 0xff);
-         }
-      }
-   }
-   else {
-      const GLuint shiftedVal = *((GLuint *) value);
-      assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i] = shiftedVal | (temp[i] & 0xff000000);
-         }
-      }
-   }
-   dsrb->PutValues(ctx, dsrb, count, x, y, temp, mask);
-}
-
 
 /**
  * Wrap the given GL_DEPTH_STENCIL renderbuffer so that it acts like
@@ -386,9 +304,7 @@ new_z24_renderbuffer_wrapper(struct gl_context *ctx,
    z24rb->GetValues = get_values_z24;
    z24rb->PutRow = put_row_z24;
    z24rb->PutRowRGB = NULL;
-   z24rb->PutMonoRow = put_mono_row_z24;
    z24rb->PutValues = put_values_z24;
-   z24rb->PutMonoValues = put_mono_values_z24;
 
    return z24rb;
 }
@@ -467,39 +383,6 @@ put_row_z32f(struct gl_context *ctx, struct gl_renderbuffer *z32frb, GLuint coun
    }
 }
 
-static void
-put_mono_row_z32f(struct gl_context *ctx, struct gl_renderbuffer *z32frb, GLuint count,
-                  GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = z32frb->Wrapped;
-   GLfloat *dst = (GLfloat *) dsrb->GetPointer(ctx, dsrb, x, y);
-   ASSERT(z32frb->DataType == GL_FLOAT);
-   ASSERT(dsrb->DataType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
-   ASSERT(dsrb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
-   if (dst) {
-      /* direct access */
-      GLuint i;
-      const GLfloat val = *(GLfloat*)value;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            dst[i*2] = val;
-         }
-      }
-   }
-   else {
-      /* get, modify, put */
-      GLfloat temp[MAX_WIDTH*2];
-      GLuint i;
-      const GLfloat val = *(GLfloat *)value;
-      dsrb->GetRow(ctx, dsrb, count, x, y, temp);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i*2] = val;
-         }
-      }
-      dsrb->PutRow(ctx, dsrb, count, x, y, temp, mask);
-   }
-}
 
 static void
 put_values_z32f(struct gl_context *ctx, struct gl_renderbuffer *z32frb, GLuint count,
@@ -533,28 +416,6 @@ put_values_z32f(struct gl_context *ctx, struct gl_renderbuffer *z32frb, GLuint c
       }
       dsrb->PutValues(ctx, dsrb, count, x, y, temp, mask);
    }
-}
-
-static void
-put_mono_values_z32f(struct gl_context *ctx, struct gl_renderbuffer *z32frb,
-                     GLuint count, const GLint x[], const GLint y[],
-                     const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = z32frb->Wrapped;
-   GLfloat temp[MAX_WIDTH*2];
-   GLuint i;
-   const GLfloat val = *(GLfloat *)value;
-   ASSERT(z32frb->DataType == GL_FLOAT);
-   ASSERT(dsrb->DataType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
-   ASSERT(dsrb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
-   /* get, modify, put */
-   dsrb->GetValues(ctx, dsrb, count, x, y, temp);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         temp[i*2] = val;
-      }
-   }
-   dsrb->PutValues(ctx, dsrb, count, x, y, temp, mask);
 }
 
 
@@ -597,9 +458,7 @@ new_z32f_renderbuffer_wrapper(struct gl_context *ctx,
    z32frb->GetValues = get_values_z32f;
    z32frb->PutRow = put_row_z32f;
    z32frb->PutRowRGB = NULL;
-   z32frb->PutMonoRow = put_mono_row_z32f;
    z32frb->PutValues = put_values_z32f;
-   z32frb->PutMonoValues = put_mono_values_z32f;
 
    return z32frb;
 }
@@ -739,71 +598,6 @@ put_row_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
    }
 }
 
-static void
-put_mono_row_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
-                GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = s8rb->Wrapped;
-   const GLubyte val = *((GLubyte *) value);
-   GLuint *dst = (GLuint *) dsrb->GetPointer(ctx, dsrb, x, y);
-   ASSERT(s8rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(dsrb->DataType == GL_UNSIGNED_INT_24_8_EXT ||
-          dsrb->DataType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
-   if (dst) {
-      /* direct access */
-      GLuint i;
-      if (dsrb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               dst[i*2+1] = val;
-            }
-         }
-      }
-      else if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               dst[i] = (dst[i] & 0xffffff00) | val;
-            }
-         }
-      }
-      else {
-         assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               dst[i] = (dst[i] & 0xffffff) | (val << 24);
-            }
-         }
-      }
-   }
-   else {
-      /* get, modify, put */
-      GLuint temp[MAX_WIDTH*2], i;
-      dsrb->GetRow(ctx, dsrb, count, x, y, temp);
-      if (dsrb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               temp[i*2+1] = val;
-            }
-         }
-      }
-      else if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               temp[i] = (temp[i] & 0xffffff00) | val;
-            }
-         }
-      }
-      else {
-         assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-         for (i = 0; i < count; i++) {
-            if (!mask || mask[i]) {
-               temp[i] = (temp[i] & 0xffffff) | (val << 24);
-            }
-         }
-      }
-      dsrb->PutRow(ctx, dsrb, count, x, y, temp, mask);
-   }
-}
 
 static void
 put_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
@@ -874,41 +668,6 @@ put_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count
    }
 }
 
-static void
-put_mono_values_s8(struct gl_context *ctx, struct gl_renderbuffer *s8rb, GLuint count,
-                   const GLint x[], const GLint y[],
-                   const void *value, const GLubyte *mask)
-{
-   struct gl_renderbuffer *dsrb = s8rb->Wrapped;
-   GLuint temp[MAX_WIDTH*2], i;
-   const GLubyte val = *((GLubyte *) value);
-   /* get, modify, put */
-   dsrb->GetValues(ctx, dsrb, count, x, y, temp);
-   if (dsrb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i*2+1] = val;
-         }
-      }
-   }
-   else if (dsrb->Format == MESA_FORMAT_Z24_S8) {
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i] = (temp[i] & 0xffffff00) | val;
-         }
-      }
-   }
-   else {
-      assert(dsrb->Format == MESA_FORMAT_S8_Z24);
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            temp[i] = (temp[i] & 0xffffff) | (val << 24);
-         }
-      }
-   }
-   dsrb->PutValues(ctx, dsrb, count, x, y, temp, mask);
-}
-
 
 /**
  * Wrap the given GL_DEPTH_STENCIL renderbuffer so that it acts like
@@ -951,9 +710,7 @@ new_s8_renderbuffer_wrapper(struct gl_context *ctx, struct gl_renderbuffer *dsrb
    s8rb->GetValues = get_values_s8;
    s8rb->PutRow = put_row_s8;
    s8rb->PutRowRGB = NULL;
-   s8rb->PutMonoRow = put_mono_row_s8;
    s8rb->PutValues = put_values_s8;
-   s8rb->PutMonoValues = put_mono_values_s8;
 
    return s8rb;
 }

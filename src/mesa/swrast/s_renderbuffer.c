@@ -158,31 +158,6 @@ put_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
 }
 
-static void
-put_mono_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
-		     GLuint count, GLint x, GLint y,
-		     const void *value, const GLubyte *mask)
-{
-   void *row = rb->GetPointer(ctx, rb, x, y);
-   int format_bytes = _mesa_get_format_bytes(rb->Format) / sizeof(GLfloat);
-   unsigned int i;
-
-   if (mask) {
-      for (i = 0; i < count; i++) {
-	 char *dst = (char *) row + i * format_bytes;
-         if (mask[i]) {
-	    memcpy(dst, value, format_bytes);
-         }
-      }
-   }
-   else {
-      for (i = 0; i < count; i++) {
-	 char *dst = (char *) row + i * format_bytes;
-	 memcpy(dst, value, format_bytes);
-      }
-   }
-}
-
 
 static void
 put_values_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
@@ -203,22 +178,6 @@ put_values_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 
-static void
-put_mono_values_generic(struct gl_context *ctx,
-			struct gl_renderbuffer *rb,
-			GLuint count, const GLint x[], const GLint y[],
-			const void *value, const GLubyte *mask)
-{
-   int format_bytes = _mesa_get_format_bytes(rb->Format) / sizeof(GLfloat);
-   unsigned int i;
-
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-	 void *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
-	 memcpy(dst, value, format_bytes);
-      }
-   }
-}
 
 /**********************************************************************
  * Functions for buffers of 1 X GLubyte values.
@@ -261,30 +220,6 @@ put_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                   GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   const GLubyte val = *((const GLubyte *) value);
-   GLubyte *dst = (GLubyte *) rb->Data + y * rb->RowStride + x;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   if (mask) {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            dst[i] = val;
-         }
-      }
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         dst[i] = val;
-      }
-   }
-}
-
-
-static void
 put_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                  const GLint x[], const GLint y[],
                  const void *values, const GLubyte *mask)
@@ -296,23 +231,6 @@ put_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint coun
       if (!mask || mask[i]) {
          GLubyte *dst = (GLubyte *) rb->Data + y[i] * rb->RowStride + x[i];
          *dst = src[i];
-      }
-   }
-}
-
-
-static void
-put_mono_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                      const GLint x[], const GLint y[],
-                      const void *value, const GLubyte *mask)
-{
-   const GLubyte val = *((const GLubyte *) value);
-   GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         GLubyte *dst = (GLubyte *) rb->Data + y[i] * rb->RowStride + x[i];
-         *dst = val;
       }
    }
 }
@@ -359,30 +277,6 @@ put_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                    GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   const GLushort val = *((const GLushort *) value);
-   GLushort *dst = (GLushort *) rb->Data + y * rb->RowStride + x;
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
-   if (mask) {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            dst[i] = val;
-         }
-      }
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         dst[i] = val;
-      }
-   }
-}
-
-
-static void
 put_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
@@ -394,32 +288,6 @@ put_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint cou
       if (!mask || mask[i]) {
          GLushort *dst = (GLushort *) rb->Data + y[i] * rb->RowStride + x[i];
          *dst = src[i];
-      }
-   }
-}
- 
-
-static void
-put_mono_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                       GLuint count, const GLint x[], const GLint y[],
-                       const void *value, const GLubyte *mask)
-{
-   const GLushort val = *((const GLushort *) value);
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
-   if (mask) {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            GLushort *dst = (GLushort *) rb->Data + y[i] * rb->RowStride + x[i];
-            *dst = val;
-         }
-      }
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         GLushort *dst = (GLushort *) rb->Data + y[i] * rb->RowStride + x[i];
-         *dst = val;
       }
    }
 }
@@ -468,31 +336,6 @@ put_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_mono_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                  GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   const GLuint val = *((const GLuint *) value);
-   GLuint *dst = (GLuint *) rb->Data + y * rb->RowStride + x;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
-          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
-   if (mask) {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            dst[i] = val;
-         }
-      }
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         dst[i] = val;
-      }
-   }
-}
-
-
-static void
 put_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                 const GLint x[], const GLint y[], const void *values,
                 const GLubyte *mask)
@@ -505,24 +348,6 @@ put_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + y[i] * rb->RowStride + x[i];
          *dst = src[i];
-      }
-   }
-}
-
-
-static void
-put_mono_values_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     const GLint x[], const GLint y[], const void *value,
-                     const GLubyte *mask)
-{
-   const GLuint val = *((const GLuint *) value);
-   GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
-          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         GLuint *dst = (GLuint *) rb->Data + y[i] * rb->RowStride + x[i];
-         *dst = val;
       }
    }
 }
@@ -626,34 +451,6 @@ put_row_rgb_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
 
 
 static void
-put_mono_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                    GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   /* note: incoming value is RGB+A! */
-   const GLubyte val0 = ((const GLubyte *) value)[0];
-   const GLubyte val1 = ((const GLubyte *) value)[1];
-   const GLubyte val2 = ((const GLubyte *) value)[2];
-   GLubyte *dst = (GLubyte *) rb->Data + 3 * (y * rb->RowStride + x);
-   ASSERT(rb->Format == MESA_FORMAT_RGB888);
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   if (!mask && val0 == val1 && val1 == val2) {
-      /* optimized case */
-      memset(dst, val0, 3 * count);
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            dst[i * 3 + 0] = val0;
-            dst[i * 3 + 1] = val1;
-            dst[i * 3 + 2] = val2;
-         }
-      }
-   }
-}
-
-
-static void
 put_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
@@ -669,30 +466,6 @@ put_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint cou
          dst[0] = src[i * 4 + 0];
          dst[1] = src[i * 4 + 1];
          dst[2] = src[i * 4 + 2];
-      }
-   }
-}
-
-
-static void
-put_mono_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                       GLuint count, const GLint x[], const GLint y[],
-                       const void *value, const GLubyte *mask)
-{
-   /* note: incoming value is RGB+A! */
-   const GLubyte val0 = ((const GLubyte *) value)[0];
-   const GLubyte val1 = ((const GLubyte *) value)[1];
-   const GLubyte val2 = ((const GLubyte *) value)[2];
-   GLuint i;
-   ASSERT(rb->Format == MESA_FORMAT_RGB888);
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         GLubyte *dst = ((GLubyte *) rb->Data) +
-				     3 * (y[i] * rb->RowStride + x[i]);
-         dst[0] = val0;
-         dst[1] = val1;
-         dst[2] = val2;
       }
    }
 }
@@ -767,40 +540,6 @@ put_row_rgb_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
 
 
 static void
-put_mono_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                    GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   /* treat 4*GLubyte as 1*GLuint */
-   const GLuint val = *((const GLuint *) value);
-   GLuint *dst = (GLuint *) rb->Data + (y * rb->RowStride + x);
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
-          rb->Format == MESA_FORMAT_RGBA8888_REV);
-   if (!mask && val == 0) {
-      /* common case */
-      memset(dst, 0, count * 4 * sizeof(GLubyte));
-   }
-   else {
-      /* general case */
-      if (mask) {
-         GLuint i;
-         for (i = 0; i < count; i++) {
-            if (mask[i]) {
-               dst[i] = val;
-            }
-         }
-      }
-      else {
-         GLuint i;
-         for (i = 0; i < count; i++) {
-            dst[i] = val;
-         }
-      }
-   }
-}
-
-
-static void
 put_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
@@ -815,26 +554,6 @@ put_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint cou
       if (!mask || mask[i]) {
          GLuint *dst = (GLuint *) rb->Data + (y[i] * rb->RowStride + x[i]);
          *dst = src[i];
-      }
-   }
-}
-
-
-static void
-put_mono_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                       GLuint count, const GLint x[], const GLint y[],
-                       const void *value, const GLubyte *mask)
-{
-   /* treat 4*GLubyte as 1*GLuint */
-   const GLuint val = *((const GLuint *) value);
-   GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
-          rb->Format == MESA_FORMAT_RGBA8888_REV);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         GLuint *dst = (GLuint *) rb->Data + (y[i] * rb->RowStride + x[i]);
-         *dst = val;
       }
    }
 }
@@ -910,34 +629,6 @@ put_row_rgb_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint c
 
 
 static void
-put_mono_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     GLint x, GLint y, const void *value, const GLubyte *mask)
-{
-   const GLushort val0 = ((const GLushort *) value)[0];
-   const GLushort val1 = ((const GLushort *) value)[1];
-   const GLushort val2 = ((const GLushort *) value)[2];
-   const GLushort val3 = ((const GLushort *) value)[3];
-   GLushort *dst = (GLushort *) rb->Data + 4 * (y * rb->RowStride + x);
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
-   if (!mask && val0 == 0 && val1 == 0 && val2 == 0 && val3 == 0) {
-      /* common case for clearing accum buffer */
-      memset(dst, 0, count * 4 * sizeof(GLushort));
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (!mask || mask[i]) {
-            dst[i * 4 + 0] = val0;
-            dst[i * 4 + 1] = val1;
-            dst[i * 4 + 2] = val2;
-            dst[i * 4 + 3] = val3;
-         }
-      }
-   }
-}
-
-
-static void
 put_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                    const GLint x[], const GLint y[], const void *values,
                    const GLubyte *mask)
@@ -957,29 +648,6 @@ put_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
    }
 }
 
-
-static void
-put_mono_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                        GLuint count, const GLint x[], const GLint y[],
-                        const void *value, const GLubyte *mask)
-{
-   const GLushort val0 = ((const GLushort *) value)[0];
-   const GLushort val1 = ((const GLushort *) value)[1];
-   const GLushort val2 = ((const GLushort *) value)[2];
-   const GLushort val3 = ((const GLushort *) value)[3];
-   GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         GLushort *dst = ((GLushort *) rb->Data) +
-				       4 * (y[i] * rb->RowStride + x[i]);
-         dst[0] = val0;
-         dst[1] = val1;
-         dst[2] = val2;
-         dst[3] = val3;
-      }
-   }
-}
 
 /**********************************************************************
  * Functions for MESA_FORMAT_R8.
@@ -1241,29 +909,6 @@ put_row_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 static void
-put_mono_row_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
-		       GLuint count, GLint x, GLint y,
-		       const void *value, const GLubyte *mask)
-{
-   float *dst = rb->GetPointer(ctx, rb, x, y);
-   const float *src = value;
-   unsigned int i;
-
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-	    dst[i] = src[ACOMP];
-         }
-      }
-   }
-   else {
-      for (i = 0; i < count; i++) {
-	 dst[i] = src[ACOMP];
-      }
-   }
-}
-
-static void
 put_values_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
 		     GLuint count, const GLint x[], const GLint y[],
 		     const void *values, const GLubyte *mask)
@@ -1276,23 +921,6 @@ put_values_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
 	 float *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
 
 	 *dst = src[i * 4 + ACOMP];
-      }
-   }
-}
-
-static void
-put_mono_values_a_float32(struct gl_context *ctx,
-			  struct gl_renderbuffer *rb,
-			  GLuint count, const GLint x[], const GLint y[],
-			  const void *value, const GLubyte *mask)
-{
-   const float *src = value;
-   unsigned int i;
-
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-	 float *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
-	 *dst = src[ACOMP];
       }
    }
 }
@@ -1391,9 +1019,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_ubyte3;
       rb->PutRow = put_row_ubyte3;
       rb->PutRowRGB = put_row_rgb_ubyte3;
-      rb->PutMonoRow = put_mono_row_ubyte3;
       rb->PutValues = put_values_ubyte3;
-      rb->PutMonoValues = put_mono_values_ubyte3;
       break;
 
    case MESA_FORMAT_RGBA8888:
@@ -1402,9 +1028,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_ubyte4;
       rb->PutRow = put_row_ubyte4;
       rb->PutRowRGB = put_row_rgb_ubyte4;
-      rb->PutMonoRow = put_mono_row_ubyte4;
       rb->PutValues = put_values_ubyte4;
-      rb->PutMonoValues = put_mono_values_ubyte4;
       break;
 
    case MESA_FORMAT_R8:
@@ -1413,9 +1037,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_r8;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = put_row_generic;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_GR88:
@@ -1424,9 +1046,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_rg88;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = put_row_generic;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_R16:
@@ -1435,9 +1055,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_r16;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = put_row_generic;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_RG1616:
@@ -1446,9 +1064,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_rg1616;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = put_row_generic;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_SIGNED_RGBA_16:
@@ -1456,9 +1072,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_ushort4;
       rb->PutRow = put_row_ushort4;
       rb->PutRowRGB = put_row_rgb_ushort4;
-      rb->PutMonoRow = put_mono_row_ushort4;
       rb->PutValues = put_values_ushort4;
-      rb->PutMonoValues = put_mono_values_ushort4;
       break;
 
    case MESA_FORMAT_S8:
@@ -1466,9 +1080,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_ubyte;
       rb->PutRow = put_row_ubyte;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ubyte;
       rb->PutValues = put_values_ubyte;
-      rb->PutMonoValues = put_mono_values_ubyte;
       break;
 
    case MESA_FORMAT_Z16:
@@ -1476,9 +1088,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_ushort;
       rb->PutRow = put_row_ushort;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ushort;
       rb->PutValues = put_values_ushort;
-      rb->PutMonoValues = put_mono_values_ushort;
       break;
 
    case MESA_FORMAT_Z32:
@@ -1488,9 +1098,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
-      rb->PutMonoValues = put_mono_values_uint;
       break;
 
    case MESA_FORMAT_Z24_S8:
@@ -1499,9 +1107,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
-      rb->PutMonoValues = put_mono_values_uint;
       break;
 
    case MESA_FORMAT_RGBA_FLOAT32:
@@ -1509,9 +1115,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_generic;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_INTENSITY_FLOAT32:
@@ -1519,9 +1123,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_i_float32;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_LUMINANCE_FLOAT32:
@@ -1529,9 +1131,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_l_float32;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_ALPHA_FLOAT32:
@@ -1539,9 +1139,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_a_float32;
       rb->PutRow = put_row_a_float32;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_a_float32;
       rb->PutValues = put_values_a_float32;
-      rb->PutMonoValues = put_mono_values_a_float32;
       break;
 
    case MESA_FORMAT_RG_FLOAT32:
@@ -1549,9 +1147,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_rg_float32;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    case MESA_FORMAT_R_FLOAT32:
@@ -1559,9 +1155,7 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_r_float32;
       rb->PutRow = put_row_generic;
       rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
-      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    default:
@@ -1651,9 +1245,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->GetRow);
    ASSERT(rb->GetValues);
    ASSERT(rb->PutRow);
-   ASSERT(rb->PutMonoRow);
    ASSERT(rb->PutValues);
-   ASSERT(rb->PutMonoValues);
 
    /* free old buffer storage */
    if (rb->Data) {

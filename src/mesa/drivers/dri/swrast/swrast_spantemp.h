@@ -92,8 +92,7 @@ GET_ROW( struct gl_context *glCtx, GLint x, GLint y, GLuint n, char *row )
 
 /*
  * Templates for the span/pixel-array write/read functions called via
- * the gl_renderbuffer's GetRow, GetValues, PutRow, PutMonoRow, PutValues
- * and PutMonoValues functions.
+ * the gl_renderbuffer's GetRow, GetValues, PutRow and PutValues.
  *
  * Define the following macros before including this file:
  *   NAME(BASE)  to generate the function name (i.e. add prefix or suffix)
@@ -230,39 +229,6 @@ NAME(put_row_rgb)( struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_mono_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                    GLuint count, GLint x, GLint y,
-                    const void *value, const GLubyte mask[] )
-{
-#ifdef SPAN_VARS
-   SPAN_VARS
-#endif
-   const RB_TYPE *src = (const RB_TYPE *) value;
-   GLuint i;
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            RB_TYPE row[4];
-            INIT_PIXEL_PTR(pixel, x, y);
-            STORE_PIXEL(pixel, x + i, y, src);
-            PUT_PIXEL(ctx, x + i, YFLIP(xrb, y), pixel);
-         }
-      }
-   }
-   else {
-      char *row = swrast_drawable(ctx->DrawBuffer)->row;
-      INIT_PIXEL_PTR(pixel, x, y);
-      for (i = 0; i < count; i++) {
-         STORE_PIXEL(pixel, x + i, y, src);
-         INC_PIXEL_PTR(pixel);
-      }
-      PUT_ROW( ctx, x, YFLIP(xrb, y), count, row );
-   }
-   (void) rb;
-}
-
-
-static void
 NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[],
                   const void *values, const GLubyte mask[] )
@@ -285,27 +251,6 @@ NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 
-static void
-NAME(put_mono_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                       GLuint count, const GLint x[], const GLint y[],
-                       const void *value, const GLubyte mask[] )
-{
-#ifdef SPAN_VARS
-   SPAN_VARS
-#endif
-   const RB_TYPE *src = (const RB_TYPE *) value;
-   GLuint i;
-   ASSERT(mask);
-   for (i = 0; i < count; i++) {
-      if (mask[i]) {
-         RB_TYPE row[4];
-         INIT_PIXEL_PTR(pixel, x, y);
-         STORE_PIXEL(pixel, x[i], y[i], src);
-         PUT_PIXEL(ctx, x[i], YFLIP(xrb, y[i]), pixel);
-      }
-   }
-   (void) rb;
-}
 
 
 #undef NAME
