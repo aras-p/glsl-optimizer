@@ -52,18 +52,6 @@ ENDIF
 */
 
 
-/**
- * Return the address of a stencil value in a renderbuffer.
- */
-static inline GLubyte *
-get_stencil_address(struct gl_renderbuffer *rb, GLint x, GLint y)
-{
-   const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLint rowStride = rb->RowStride * bpp;
-   assert(rb->Data);
-   return (GLubyte *) rb->Data + y * rowStride + x * bpp;
-}
-
 
 /**
  * Compute/return the offset of the stencil value in a pixel.
@@ -342,7 +330,7 @@ put_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    for (i = 0; i < count; i++) {
       if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
-         GLubyte *dst = get_stencil_address(rb, x[i], y[i]);
+         GLubyte *dst = _swrast_pixel_address(rb, x[i], y[i]);
          _mesa_pack_ubyte_stencil_row(rb->Format, 1, &stencil[i], dst);
       }
    }
@@ -377,7 +365,7 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
        * 8 bits for all MESA_FORMATs, we just need to use the right offset
        * and stride to access them.
        */
-      stencilBuf = get_stencil_address(rb, span->x, span->y) + stencilOffset;
+      stencilBuf = _swrast_pixel_address(rb, span->x, span->y) + stencilOffset;
    }
 
    /*
@@ -458,8 +446,6 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLint n, GLint x, GLint y, GLubyte stencil[])
 {
    GLubyte *src;
-   const GLuint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLuint rowStride = rb->RowStride * bpp;
 
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
@@ -481,7 +467,7 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
       return;
    }
 
-   src = get_stencil_address(rb, x, y);
+   src = _swrast_pixel_address(rb, x, y);
    _mesa_unpack_ubyte_stencil_row(rb->Format, n, src, stencil);
 }
 
@@ -524,7 +510,7 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
       return;
    }
 
-   stencilBuf = get_stencil_address(rb, x, y);
+   stencilBuf = _swrast_pixel_address(rb, x, y);
 
    if ((stencilMask & stencilMax) != stencilMax) {
       /* need to apply writemask */

@@ -422,5 +422,17 @@ _swrast_unmap_renderbuffers(struct gl_context *ctx);
 #define ATTRIB_LOOP_END } }
 
 
+/**
+ * Return the address of a pixel value in a mapped renderbuffer.
+ */
+static inline GLubyte *
+_swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
+{
+   const GLint bpp = _mesa_get_format_bytes(rb->Format);
+   const GLint rowStride = rb->RowStride * bpp;
+   return (GLubyte *) rb->Data + y * rowStride + x * bpp;
+}
+
+
 
 #endif

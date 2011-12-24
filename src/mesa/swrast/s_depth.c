@@ -31,6 +31,7 @@
 #include "main/macros.h"
 #include "main/imports.h"
 
+#include "s_context.h"
 #include "s_depth.h"
 #include "s_span.h"
 
@@ -267,18 +268,6 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Return the address of a Z value in a renderbuffer.
- */
-static INLINE void *
-get_z_address(struct gl_renderbuffer *rb, GLint x, GLint y)
-{
-   const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLint rowStride = rb->RowStride * bpp;
-   return (GLubyte *) rb->Data + y * rowStride + x * bpp;
-}
-
-
-/**
  * Apply depth (Z) buffer testing to the span.
  * \return approx number of pixels that passed (only zero is reliable)
  */
@@ -288,7 +277,7 @@ _swrast_depth_test_span(struct gl_context *ctx, SWspan *span)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   void *zStart = get_z_address(rb, span->x, span->y);
+   void *zStart = _swrast_pixel_address(rb, span->x, span->y);
    const GLuint count = span->end;
    const GLuint *fragZ = span->array->z;
    GLubyte *mask = span->array->mask;
@@ -486,7 +475,8 @@ _swrast_read_depth_span_float(struct gl_context *ctx,
       return;
    }
 
-   _mesa_unpack_float_z_row(rb->Format, n, get_z_address(rb, x, y), depth);
+   _mesa_unpack_float_z_row(rb->Format, n, _swrast_pixel_address(rb, x, y),
+                            depth);
 }
 
 
