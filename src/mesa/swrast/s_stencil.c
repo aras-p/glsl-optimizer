@@ -1045,39 +1045,6 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
 }
 
 
-#if 0
-GLuint
-clip_span(GLuint bufferWidth, GLuint bufferHeight,
-          GLint x, GLint y, GLuint *count)
-{
-   GLuint n = *count;
-   GLuint skipPixels = 0;
-
-   if (y < 0 || y >= bufferHeight || x + n <= 0 || x >= bufferWidth) {
-      /* totally out of bounds */
-      n = 0;
-   }
-   else {
-      /* left clip */
-      if (x < 0) {
-         skipPixels = -x;
-         x = 0;
-         n -= skipPixels;
-      }
-      /* right clip */
-      if (x + n > bufferWidth) {
-         GLint dx = x + n - bufferWidth;
-         n -= dx;
-      }
-   }
-
-   *count = n;
-
-   return skipPixels;
-}
-#endif
-
-
 /**
  * Return a span of stencil values from the stencil buffer.
  * Used for glRead/CopyPixels
