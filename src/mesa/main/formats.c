@@ -27,6 +27,7 @@
 #include "imports.h"
 #include "formats.h"
 #include "mfeatures.h"
+#include "macros.h"
 
 
 /**
@@ -1610,6 +1611,21 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
       _mesa_problem(NULL, "bad pname in _mesa_get_format_bits()");
       return 0;
    }
+}
+
+
+GLuint
+_mesa_get_format_max_bits(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   GLuint max = MAX2(info->RedBits, info->GreenBits);
+   max = MAX2(max, info->BlueBits);
+   max = MAX2(max, info->AlphaBits);
+   max = MAX2(max, info->LuminanceBits);
+   max = MAX2(max, info->IntensityBits);
+   max = MAX2(max, info->DepthBits);
+   max = MAX2(max, info->StencilBits);
+   return max;
 }
 
 

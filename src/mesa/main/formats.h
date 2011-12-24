@@ -290,6 +290,9 @@ _mesa_get_format_bytes(gl_format format);
 extern GLint
 _mesa_get_format_bits(gl_format format, GLenum pname);
 
+extern GLuint
+_mesa_get_format_max_bits(gl_format format);
+
 extern GLenum
 _mesa_get_format_datatype(gl_format format);
 
