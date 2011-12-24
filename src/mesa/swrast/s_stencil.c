@@ -26,6 +26,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
+#include "main/format_pack.h"
 #include "main/format_unpack.h"
 
 #include "s_context.h"
@@ -49,6 +50,20 @@ ELSE
 ENDIF
 
 */
+
+
+/**
+ * Return the address of a stencil value in a renderbuffer.
+ */
+static inline GLubyte *
+get_stencil_address(struct gl_renderbuffer *rb, GLint x, GLint y)
+{
+   const GLint bpp = _mesa_get_format_bytes(rb->Format);
+   const GLint rowStride = rb->RowStride * bpp;
+   assert(rb->Data);
+   return (GLubyte *) rb->Data + y * rowStride + x * bpp;
+}
+
 
 
 /**
@@ -1075,6 +1090,8 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLint n, GLint x, GLint y, GLubyte stencil[])
 {
    GLubyte *src;
+   const GLuint bpp = _mesa_get_format_bytes(rb->Format);
+   const GLuint rowStride = rb->RowStride * bpp;
 
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
@@ -1096,7 +1113,7 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
       return;
    }
 
-   src = (GLubyte *) rb->Data + y * rb->RowStride +x;
+   src = get_stencil_address(rb, x, y);
    _mesa_unpack_ubyte_stencil_row(rb->Format, n, src, stencil);
 }
 
@@ -1115,9 +1132,10 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
                            const GLubyte stencil[] )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->_StencilBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    const GLuint stencilMax = (1 << fb->Visual.stencilBits) - 1;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
+   GLubyte *stencilBuf;
 
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
@@ -1138,19 +1156,22 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
       return;
    }
 
+   stencilBuf = get_stencil_address(rb, x, y);
+
    if ((stencilMask & stencilMax) != stencilMax) {
       /* need to apply writemask */
       GLubyte destVals[MAX_WIDTH], newVals[MAX_WIDTH];
       GLint i;
-      rb->GetRow(ctx, rb, n, x, y, destVals);
+
+      _mesa_unpack_ubyte_stencil_row(rb->Format, n, stencilBuf, destVals);
       for (i = 0; i < n; i++) {
          newVals[i]
             = (stencil[i] & stencilMask) | (destVals[i] & ~stencilMask);
       }
-      rb->PutRow(ctx, rb, n, x, y, newVals, NULL);
+      _mesa_pack_ubyte_stencil_row(rb->Format, n, newVals, stencilBuf);
    }
    else {
-      rb->PutRow(ctx, rb, n, x, y, stencil, NULL);
+      _mesa_pack_ubyte_stencil_row(rb->Format, n, stencil, stencilBuf);
    }
 }
 
