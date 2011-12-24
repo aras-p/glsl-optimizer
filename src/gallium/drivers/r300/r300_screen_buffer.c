@@ -107,13 +107,21 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     struct radeon_winsys *rws = r300screen->rws;
     struct r300_resource *rbuf = r300_resource(transfer->resource);
     uint8_t *map;
+    enum pipe_transfer_usage usage;
 
     if (rbuf->b.user_ptr)
         return (uint8_t *) rbuf->b.user_ptr + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
-    map = rws->buffer_map(rbuf->buf, r300->cs, transfer->usage);
+    /* Buffers are never used for write, therefore mapping for read can be
+     * unsynchronized. */
+    usage = transfer->usage;
+    if (!(usage & PIPE_TRANSFER_WRITE)) {
+       usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+    }
+
+    map = rws->buffer_map(rbuf->buf, r300->cs, usage);
 
     if (map == NULL)
         return NULL;
