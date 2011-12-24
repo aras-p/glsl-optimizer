@@ -245,7 +245,7 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                    GLint destx, GLint desty )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *readRb = fb->_DepthBuffer;
+   struct gl_renderbuffer *readRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
    GLint j;
@@ -339,7 +339,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
                      GLint destx, GLint desty )
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct gl_renderbuffer *rb = fb->_StencilBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint sy, dy, stepy;
    GLint j;
    GLubyte *p, *tmpImage;
@@ -446,7 +446,7 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
 
    depthDrawRb = ctx->DrawBuffer->_DepthBuffer;
    depthReadRb = ctx->ReadBuffer->_DepthBuffer;
-   stencilReadRb = ctx->ReadBuffer->_StencilBuffer;
+   stencilReadRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
 
    ASSERT(depthDrawRb);
    ASSERT(depthReadRb);
@@ -599,7 +599,7 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
 
 
 /**
- * Try to do a fast copy pixels.
+ * Try to do a fast copy pixels with memcpy.
  * \return GL_TRUE if successful, GL_FALSE otherwise.
  */
 static GLboolean
@@ -630,12 +630,12 @@ fast_copy_pixels(struct gl_context *ctx,
       dstRb = dstFb->_ColorDrawBuffers[0];
    }
    else if (type == GL_STENCIL) {
-      srcRb = srcFb->_StencilBuffer;
-      dstRb = dstFb->_StencilBuffer;
+      srcRb = srcFb->Attachment[BUFFER_STENCIL].Renderbuffer;
+      dstRb = dstFb->Attachment[BUFFER_STENCIL].Renderbuffer;
    }
    else if (type == GL_DEPTH) {
-      srcRb = srcFb->_DepthBuffer;
-      dstRb = dstFb->_DepthBuffer;
+      srcRb = srcFb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
    }
    else {
       ASSERT(type == GL_DEPTH_STENCIL_EXT);
@@ -647,6 +647,19 @@ fast_copy_pixels(struct gl_context *ctx,
    /* src and dst renderbuffers must be same format */
    if (!srcRb || !dstRb || srcRb->Format != dstRb->Format) {
       return GL_FALSE;
+   }
+
+   if (type == GL_STENCIL || type == GL_DEPTH_COMPONENT) {
+      /* can't handle packed depth+stencil here */
+      if (_mesa_is_format_packed_depth_stencil(srcRb->Format) ||
+          _mesa_is_format_packed_depth_stencil(dstRb->Format))
+         return GL_FALSE;
+   }
+   else if (type == GL_DEPTH_STENCIL) {
+      /* can't handle separate depth/stencil buffers */
+      if (srcRb != srcFb->Attachment[BUFFER_STENCIL].Renderbuffer ||
+          dstRb != dstFb->Attachment[BUFFER_STENCIL].Renderbuffer)
+         return GL_FALSE;
    }
 
    /* clipping not supported */
