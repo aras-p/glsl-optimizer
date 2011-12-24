@@ -111,6 +111,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
    /*
     * Ready to draw!
     */
+   swrast_render_start(ctx);
 
    if (format == GL_RGBA && type == rbType) {
       const GLubyte *src
@@ -139,7 +140,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
          }
          span.array->ChanType = CHAN_TYPE;
       }
-      return GL_TRUE;
+      goto end;
    }
 
    if (format == GL_RGB && type == rbType) {
@@ -170,12 +171,14 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
          }
          span.array->ChanType = CHAN_TYPE;
       }
-      return GL_TRUE;
+      goto end;
    }
 
    /* Remaining cases haven't been tested with alignment != 1 */
-   if (userUnpack->Alignment != 1)
+   if (userUnpack->Alignment != 1) {
+      swrast_render_finish(ctx);
       return GL_FALSE;
+   }
 
    if (format == GL_LUMINANCE && type == CHAN_TYPE && rbType == CHAN_TYPE) {
       const GLchan *src = (const GLchan *) pixels
@@ -217,7 +220,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
             destY++;
          }
       }
-      return GL_TRUE;
+      goto end;
    }
 
    if (format == GL_LUMINANCE_ALPHA && type == CHAN_TYPE && rbType == CHAN_TYPE) {
@@ -263,7 +266,7 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
             destY++;
          }
       }
-      return GL_TRUE;
+      goto end;
    }
 
    if (format == GL_COLOR_INDEX && type == GL_UNSIGNED_BYTE) {
@@ -299,12 +302,17 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
                destY++;
             }
          }
-         return GL_TRUE;
+         goto end;
       }
    }
 
    /* can't handle this pixel format and/or data type */
    return GL_FALSE;
+
+end:
+   /* success, unmap render buffers */
+   swrast_render_finish(ctx);
+   return GL_TRUE;
 }
 
 
@@ -480,6 +488,8 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
       return;
    }
 
+   swrast_render_start(ctx);
+
    INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
    span.arrayMask = SPAN_RGBA;
@@ -547,6 +557,8 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
    if (convImage) {
       free(convImage);
    }
+
+   swrast_render_finish(ctx);
 }
 
 
@@ -739,8 +751,6 @@ _swrast_DrawPixels( struct gl_context *ctx,
     */
    _mesa_set_vp_override(ctx, GL_TRUE);
 
-   swrast_render_start(ctx);
-
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
@@ -749,7 +759,6 @@ _swrast_DrawPixels( struct gl_context *ctx,
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels) {
-      swrast_render_finish(ctx);
       _mesa_set_vp_override(ctx, save_vp_override);
       return;
    }
@@ -759,20 +768,25 @@ _swrast_DrawPixels( struct gl_context *ctx,
     */
    switch (format) {
    case GL_STENCIL_INDEX:
+      swrast_render_start(ctx);
       draw_stencil_pixels( ctx, x, y, width, height, type, unpack, pixels );
+      swrast_render_finish(ctx);
       break;
    case GL_DEPTH_COMPONENT:
+      swrast_render_start(ctx);
       draw_depth_pixels( ctx, x, y, width, height, type, unpack, pixels );
+      swrast_render_finish(ctx);
       break;
    case GL_DEPTH_STENCIL_EXT:
+      swrast_render_start(ctx);
       draw_depth_stencil_pixels(ctx, x, y, width, height, type, unpack, pixels);
+      swrast_render_finish(ctx);
       break;
    default:
       /* all other formats should be color formats */
       draw_rgba_pixels(ctx, x, y, width, height, format, type, unpack, pixels);
    }
 
-   swrast_render_finish(ctx);
    _mesa_set_vp_override(ctx, save_vp_override);
 
    _mesa_unmap_pbo_source(ctx, unpack);
