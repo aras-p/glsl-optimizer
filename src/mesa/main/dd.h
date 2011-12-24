@@ -491,6 +491,8 @@ struct dd_function_table {
    void (*FreeTextureImageBuffer)( struct gl_context *ctx, struct gl_texture_image *tImage );
 
    /** Map a slice of a texture image into user space.
+    * Note: for GL_TEXTURE_1D_ARRAY, height must be 1, y must be 0 and slice
+    * indicates the 1D array index.
     * \param texImage  the texture image
     * \param slice  the 3D image slice or array texture slice
     * \param x, y, w, h  region of interest
