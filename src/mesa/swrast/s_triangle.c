@@ -887,7 +887,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
    if (rb->Format == MESA_FORMAT_Z16) {					\
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
-         rb->GetPointer(ctx, rb, span.x, span.y);			\
+         _swrast_pixel_address(rb, span.x, span.y);                     \
       for (i = 0; i < span.end; i++) {					\
          GLuint z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
@@ -899,7 +899,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
    else {								\
       GLuint i;								\
       const GLuint *zRow = (const GLuint *)				\
-         rb->GetPointer(ctx, rb, span.x, span.y);			\
+         _swrast_pixel_address(rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
          if ((GLuint)span.z < zRow[i]) {				\
             q->Result++;						\

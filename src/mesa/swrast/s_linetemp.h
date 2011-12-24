@@ -166,7 +166,7 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    */
 
 #ifdef DEPTH_TYPE
-   zPtr = (DEPTH_TYPE *) zrb->GetPointer(ctx, zrb, x0, y0);
+   zPtr = (DEPTH_TYPE *) _swrast_pixel_address(zrb, x0, y0);
 #endif
 #ifdef PIXEL_ADDRESS
    pixelPtr = (PIXEL_TYPE *) PIXEL_ADDRESS(x0,y0);
