@@ -118,7 +118,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %token INVARIANT
 %token LOWP MEDIUMP HIGHP SUPERP PRECISION
 
-%token VERSION EXTENSION LINE COLON EOL INTERFACE OUTPUT
+%token VERSION_TOK EXTENSION LINE COLON EOL INTERFACE OUTPUT
 %token PRAGMA_DEBUG_ON PRAGMA_DEBUG_OFF
 %token PRAGMA_OPTIMIZE_ON PRAGMA_OPTIMIZE_OFF
 %token PRAGMA_INVARIANT_ALL
@@ -246,7 +246,7 @@ translation_unit:
 
 version_statement:
 	/* blank - no #version specified: defaults are already set */
-	| VERSION INTCONSTANT EOL
+	| VERSION_TOK INTCONSTANT EOL
 	{
 	   bool supported = false;
 

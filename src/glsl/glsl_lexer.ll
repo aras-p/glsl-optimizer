@@ -148,7 +148,7 @@ HASH		^{SPC}#{SPC}
 
     /* Preprocessor tokens. */ 
 ^[ \t]*#[ \t]*$			;
-^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION; }
+^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION_TOK; }
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
 {HASH}line{SPCP}{INT}{SPCP}{INT}{SPC}$ {
 				   /* Eat characters until the first digit is
