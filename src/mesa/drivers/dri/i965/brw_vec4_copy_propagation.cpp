@@ -323,7 +323,7 @@ vec4_visitor::opt_copy_propagation()
 
 	    for (int i = 0; i < virtual_grf_reg_count; i++) {
 	       for (int j = 0; j < 4; j++) {
-		  if (inst->dst.writemask & (1 << i) &&
+		  if (inst->dst.writemask & (1 << j) &&
 		      cur_value[i][j] &&
 		      cur_value[i][j]->file == GRF &&
 		      cur_value[i][j]->reg == inst->dst.reg &&
