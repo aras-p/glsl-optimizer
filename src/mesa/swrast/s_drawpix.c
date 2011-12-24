@@ -551,6 +551,41 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
 
 
 /**
+ * Draw depth+stencil values into a MESA_FORAMT_Z24_S8 or MESA_FORMAT_S8_Z24
+ * renderbuffer.  No masking, zooming, scaling, etc.
+ */
+static void
+fast_draw_depth_stencil(struct gl_context *ctx, GLint x, GLint y,
+                        GLsizei width, GLsizei height,
+                        const struct gl_pixelstore_attrib *unpack,
+                        const GLvoid *pixels)
+{
+   const GLenum format = GL_DEPTH_STENCIL_EXT;
+   const GLenum type = GL_UNSIGNED_INT_24_8;
+   struct gl_renderbuffer *rb =
+      ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   GLubyte *src, *dst;
+   GLint srcRowStride, dstRowStride;
+   GLint i;
+
+   src = _mesa_image_address2d(unpack, pixels, width, height,
+                               format, type, 0, 0);
+   srcRowStride = _mesa_image_row_stride(unpack, width, format, type);
+
+   dst = _swrast_pixel_address(rb, x, y);
+   dstRowStride = rb->RowStride * 4;
+
+   for (i = 0; i < height; i++) {
+      _mesa_pack_uint_24_8_depth_stencil_row(rb->Format, width,
+                                             (const GLuint *) src, dst);
+      dst += dstRowStride;
+      src += srcRowStride;
+   }
+}
+
+
+
+/**
  * This is a bit different from drawing GL_DEPTH_COMPONENT pixels.
  * The only per-pixel operations that apply are depth scale/bias,
  * stencil offset/shift, GL_DEPTH_WRITEMASK and GL_STENCIL_WRITEMASK,
@@ -587,27 +622,16 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    ASSERT(depthRb);
    ASSERT(stencilRb);
 
-   if (depthRb->_BaseFormat == GL_DEPTH_STENCIL_EXT &&
-       depthRb->Format == MESA_FORMAT_Z24_S8 &&
+   if (depthRb == stencilRb &&
+       (depthRb->Format == MESA_FORMAT_Z24_S8 ||
+        depthRb->Format == MESA_FORMAT_S8_Z24) &&
        type == GL_UNSIGNED_INT_24_8 &&
-       depthRb == stencilRb &&
-       depthRb->GetRow &&  /* May be null if depthRb is a wrapper around
-			    * separate depth and stencil buffers. */
        !scaleOrBias &&
        !zoom &&
        ctx->Depth.Mask &&
        (stencilMask & 0xff) == 0xff) {
-      /* This is the ideal case.
-       * Drawing GL_DEPTH_STENCIL pixels into a combined depth/stencil buffer.
-       * Plus, no pixel transfer ops, zooming, or masking needed.
-       */
-      GLint i;
-      for (i = 0; i < height; i++) {
-         const GLuint *src = (const GLuint *) 
-            _mesa_image_address2d(&clippedUnpack, pixels, width, height,
-                                  GL_DEPTH_STENCIL_EXT, type, i, 0);
-         depthRb->PutRow(ctx, depthRb, width, x, y + i, src, NULL);
-      }
+      fast_draw_depth_stencil(ctx, x, y, width, height,
+                              &clippedUnpack, pixels);
    }
    else {
       /* sub-optimal cases:
