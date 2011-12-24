@@ -874,36 +874,27 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
 /*
  * Special tri function for occlusion testing
  */
-#define NAME occlusion_zless_triangle
+#define NAME occlusion_zless_16_triangle
 #define INTERP_Z 1
 #define SETUP_CODE							\
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_DepthBuffer;		\
+   struct gl_renderbuffer *rb =                                         \
+      ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;           \
    struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;	\
    ASSERT(ctx->Depth.Test);						\
    ASSERT(!ctx->Depth.Mask);						\
    ASSERT(ctx->Depth.Func == GL_LESS);					\
+   assert(rb->Format == MESA_FORMAT_Z16);                               \
    if (!q) {								\
       return;								\
    }
 #define RENDER_SPAN( span )						\
-   if (rb->Format == MESA_FORMAT_Z16) {					\
+   {                                                                    \
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
          _swrast_pixel_address(rb, span.x, span.y);                     \
       for (i = 0; i < span.end; i++) {					\
          GLuint z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
-            q->Result++;						\
-         }								\
-         span.z += span.zStep;						\
-      }									\
-   }									\
-   else {								\
-      GLuint i;								\
-      const GLuint *zRow = (const GLuint *)				\
-         _swrast_pixel_address(rb, span.x, span.y);			\
-      for (i = 0; i < span.end; i++) {					\
-         if ((GLuint)span.z < zRow[i]) {				\
             q->Result++;						\
          }								\
          span.z += span.zStep;						\
@@ -1014,6 +1005,8 @@ _swrast_choose_triangle( struct gl_context *ctx )
    }
 
    if (ctx->RenderMode==GL_RENDER) {
+      struct gl_renderbuffer *depthRb =
+         ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 
       if (ctx->Polygon.SmoothFlag) {
          _swrast_set_aa_triangle_function(ctx);
@@ -1026,12 +1019,14 @@ _swrast_choose_triangle( struct gl_context *ctx )
           ctx->Depth.Test &&
           ctx->Depth.Mask == GL_FALSE &&
           ctx->Depth.Func == GL_LESS &&
-          !ctx->Stencil._Enabled) {
+          !ctx->Stencil._Enabled &&
+          depthRb &&
+          depthRb->Format == MESA_FORMAT_Z16) {
          if (ctx->Color.ColorMask[0][0] == 0 &&
 	     ctx->Color.ColorMask[0][1] == 0 &&
 	     ctx->Color.ColorMask[0][2] == 0 &&
 	     ctx->Color.ColorMask[0][3] == 0) {
-            USE(occlusion_zless_triangle);
+            USE(occlusion_zless_16_triangle);
             return;
          }
       }
