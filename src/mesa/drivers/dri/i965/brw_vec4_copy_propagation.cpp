@@ -297,30 +297,26 @@ vec4_visitor::opt_copy_propagation()
       }
 
       /* Track available source registers. */
-      if (is_direct_copy(inst)) {
-	 int reg = virtual_grf_reg_map[inst->dst.reg] + inst->dst.reg_offset;
-	 for (int i = 0; i < 4; i++) {
-	    if (inst->dst.writemask & (1 << i)) {
-	       cur_value[reg][i] = &inst->src[0];
-	    }
+      const int reg = virtual_grf_reg_map[inst->dst.reg] + inst->dst.reg_offset;
+
+      /* Update our destination's current channel values.  For a direct copy,
+       * the value is the newly propagated source.  Otherwise, we don't know
+       * the new value, so clear it.
+       */
+      bool direct_copy = is_direct_copy(inst);
+      for (int i = 0; i < 4; i++) {
+	 if (inst->dst.writemask & (1 << i)) {
+	    cur_value[reg][i] = direct_copy ? &inst->src[0] : NULL;
 	 }
-	 continue;
       }
 
-      /* For any updated channels, clear tracking of them as a source
-       * or destination.
+      /* Clear the records for any registers whose current value came from
+       * our destination's updated channels, as the two are no longer equal.
        */
       if (inst->dst.file == GRF) {
 	 if (inst->dst.reladdr)
 	    memset(cur_value, 0, sizeof(cur_value));
 	 else {
-	    int reg = virtual_grf_reg_map[inst->dst.reg] + inst->dst.reg_offset;
-
-	    for (int i = 0; i < 4; i++) {
-	       if (inst->dst.writemask & (1 << i))
-		  cur_value[reg][i] = NULL;
-	    }
-
 	    for (int i = 0; i < virtual_grf_reg_count; i++) {
 	       for (int j = 0; j < 4; j++) {
 		  if (inst->dst.writemask & (1 << j) &&
