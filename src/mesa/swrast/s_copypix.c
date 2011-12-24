@@ -600,6 +600,7 @@ copy_depth_stencil_pixels(struct gl_context *ctx,
 
 /**
  * Try to do a fast copy pixels.
+ * \return GL_TRUE if successful, GL_FALSE otherwise.
  */
 static GLboolean
 fast_copy_pixels(struct gl_context *ctx,
@@ -609,8 +610,10 @@ fast_copy_pixels(struct gl_context *ctx,
    struct gl_framebuffer *srcFb = ctx->ReadBuffer;
    struct gl_framebuffer *dstFb = ctx->DrawBuffer;
    struct gl_renderbuffer *srcRb, *dstRb;
-   GLint row, yStep;
-   void *temp;
+   GLint row;
+   GLuint pixelBytes, widthInBytes;
+   GLubyte *srcMap, *dstMap;
+   GLint srcRowStride, dstRowStride;
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
        ctx->Pixel.ZoomX != 1.0F ||
@@ -641,10 +644,8 @@ fast_copy_pixels(struct gl_context *ctx,
       dstRb = dstFb->Attachment[BUFFER_DEPTH].Renderbuffer;
    }
 
-   /* src and dst renderbuffers must be same format and type */
-   if (!srcRb || !dstRb ||
-       srcRb->DataType != dstRb->DataType ||
-       srcRb->_BaseFormat != dstRb->_BaseFormat) {
+   /* src and dst renderbuffers must be same format */
+   if (!srcRb || !dstRb || srcRb->Format != dstRb->Format) {
       return GL_FALSE;
    }
 
@@ -656,32 +657,73 @@ fast_copy_pixels(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   /* overlapping src/dst doesn't matter, just determine Y direction */
-   if (srcY < dstY) {
-      /* top-down  max-to-min */
-      srcY = srcY + height - 1;
-      dstY = dstY + height - 1;
-      yStep = -1;
+   pixelBytes = _mesa_get_format_bytes(srcRb->Format);
+   widthInBytes = width * pixelBytes;
+
+   if (srcRb == dstRb) {
+      /* map whole buffer for read/write */
+      /* XXX we could be clever and just map the union region of the
+       * source and dest rects.
+       */
+      GLubyte *map;
+      GLint rowStride;
+
+      ctx->Driver.MapRenderbuffer(ctx, srcRb, 0, 0,
+                                  srcRb->Width, srcRb->Height,
+                                  GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                  &map, &rowStride);
+      if (!srcMap) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+         return GL_TRUE; /* don't retry with slow path */
+      }
+
+      srcMap = map + srcY * rowStride + srcX * pixelBytes;
+      dstMap = map + dstY * rowStride + dstX * pixelBytes;
+
+      /* this handles overlapping copies */
+      if (srcY < dstY) {
+         /* copy in reverse (top->down) order */
+         srcMap += rowStride * (height - 1);
+         dstMap += rowStride * (height - 1);
+         srcRowStride = -rowStride;
+         dstRowStride = -rowStride;
+      }
+      else {
+         /* copy in normal (bottom->up) order */
+         srcRowStride = rowStride;
+         dstRowStride = rowStride;
+      }
    }
    else {
-      /* bottom-up  min-to-max */
-      yStep = 1;
-   }
-
-   temp = malloc(width * MAX_PIXEL_BYTES);
-   if (!temp) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
-      return GL_FALSE;
+      /* different src/dst buffers */
+      ctx->Driver.MapRenderbuffer(ctx, srcRb, srcX, srcY,
+                                  width, height,
+                                  GL_MAP_READ_BIT, &srcMap, &srcRowStride);
+      if (!srcMap) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+         return GL_TRUE; /* don't retry with slow path */
+      }
+      ctx->Driver.MapRenderbuffer(ctx, dstRb, dstX, dstY,
+                                  width, height,
+                                  GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
+      if (!dstMap) {
+         ctx->Driver.UnmapRenderbuffer(ctx, srcRb);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+         return GL_TRUE; /* don't retry with slow path */
+      }
    }
 
    for (row = 0; row < height; row++) {
-      srcRb->GetRow(ctx, srcRb, width, srcX, srcY, temp);
-      dstRb->PutRow(ctx, dstRb, width, dstX, dstY, temp, NULL);
-      srcY += yStep;
-      dstY += yStep;
+      /* memmove() in case of overlap */
+      memmove(dstMap, srcMap, widthInBytes);
+      dstMap += dstRowStride;
+      srcMap += srcRowStride;
    }
 
-   free(temp);
+   ctx->Driver.UnmapRenderbuffer(ctx, srcRb);
+   if (dstRb != srcRb) {
+      ctx->Driver.UnmapRenderbuffer(ctx, dstRb);
+   }
 
    return GL_TRUE;
 }
@@ -697,7 +739,6 @@ _swrast_CopyPixels( struct gl_context *ctx,
 		    GLint destx, GLint desty, GLenum type )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   swrast_render_start(ctx);
       
    if (!_mesa_check_conditional_render(ctx))
       return; /* don't copy */
@@ -705,23 +746,28 @@ _swrast_CopyPixels( struct gl_context *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (!fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
-      switch (type) {
-      case GL_COLOR:
-         copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
-         break;
-      case GL_DEPTH:
-         copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );
-         break;
-      case GL_STENCIL:
-         copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
-         break;
-      case GL_DEPTH_STENCIL_EXT:
-         copy_depth_stencil_pixels(ctx, srcx, srcy, width, height, destx, desty);
-         break;
-      default:
-         _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");
-      }
+   if (fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
+      /* all done */
+      return;
+   }
+
+   swrast_render_start(ctx);
+
+   switch (type) {
+   case GL_COLOR:
+      copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      break;
+   case GL_DEPTH:
+      copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      break;
+   case GL_STENCIL:
+      copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
+      break;
+   case GL_DEPTH_STENCIL_EXT:
+      copy_depth_stencil_pixels(ctx, srcx, srcy, width, height, destx, desty);
+      break;
+   default:
+      _mesa_problem(ctx, "unexpected type in _swrast_CopyPixels");
    }
 
    swrast_render_finish(ctx);
