@@ -187,6 +187,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     pipe_reference_init(&rbuf->b.b.b.reference, 1);
     rbuf->b.b.b.screen = screen;
     rbuf->b.user_ptr = NULL;
+    rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
 
@@ -196,16 +197,10 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
         return &rbuf->b.b.b;
     }
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
-    /* Force buffer placement to GTT on big endian machines, because
-     * the vertex fetcher can't swap bytes from VRAM. */
-    rbuf->b.b.b.usage = PIPE_USAGE_STAGING;
-#endif
-
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
                                        rbuf->b.b.b.width0, alignment,
-                                       rbuf->b.b.b.bind, rbuf->b.b.b.usage);
+                                       rbuf->b.b.b.bind, rbuf->domain);
     if (!rbuf->buf) {
         util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;
@@ -239,6 +234,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.b.flags = 0;
     rbuf->b.b.vtbl = &r300_buffer_vtbl;
     rbuf->b.user_ptr = ptr;
+    rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
     return &rbuf->b.b.b;

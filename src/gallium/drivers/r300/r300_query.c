@@ -58,7 +58,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
         q->num_pipes = r300screen->info.r300_num_gb_pipes;
 
     q->buf = r300->rws->buffer_create(r300->rws, 4096, 4096,
-                                      PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING);
+                                      PIPE_BIND_CUSTOM, RADEON_DOMAIN_GTT);
     if (!q->buf) {
         FREE(q);
         return NULL;

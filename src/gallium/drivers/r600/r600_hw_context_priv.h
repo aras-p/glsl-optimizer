@@ -90,7 +90,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 
 	assert(usage);
 
-	reloc_index = ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage);
+	reloc_index = ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains);
 	if (reloc_index >= ctx->creloc)
 		ctx->creloc = reloc_index+1;
 

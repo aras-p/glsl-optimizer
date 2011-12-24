@@ -42,7 +42,6 @@ struct radeon_bo_desc {
     struct pb_desc base;
 
     unsigned initial_domains;
-    unsigned reloc_domains;
 };
 
 struct radeon_bo {
@@ -58,7 +57,6 @@ struct radeon_bo {
     void *ptr;
     pipe_mutex map_mutex;
 
-    uint32_t reloc_domains;
     uint32_t handle;
     uint32_t name;
 

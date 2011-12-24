@@ -302,6 +302,8 @@ struct r300_surface {
     struct pb_buffer *buf;
     struct radeon_winsys_cs_handle *cs_buf;
 
+    enum radeon_bo_domain domain;
+
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
     uint32_t pitch_zmask; /* ZMASK_PITCH */
@@ -385,6 +387,7 @@ struct r300_resource
     /* Winsys buffer backing this resource. */
     struct pb_buffer *buf;
     struct radeon_winsys_cs_handle *cs_buf;
+    enum radeon_bo_domain domain;
 
     /* Constant buffers are in user memory. */
     uint8_t *constant_buffer;

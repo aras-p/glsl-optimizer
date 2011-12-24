@@ -901,6 +901,9 @@ r300_texture_create_object(struct r300_screen *rscreen,
     tex->tex.microtile = microtile;
     tex->tex.macrotile[0] = macrotile;
     tex->tex.stride_in_bytes_override = stride_in_bytes_override;
+    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
+                  RADEON_DOMAIN_GTT :
+                  RADEON_DOMAIN_VRAM | RADEON_DOMAIN_GTT;
     tex->buf = buffer;
 
     r300_resource_set_properties(&rscreen->screen, &tex->b.b.b, base);
@@ -908,7 +911,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
     /* Create the backing buffer if needed. */
     if (!tex->buf) {
         tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
-                                      base->bind, base->usage);
+                                      base->bind, tex->domain);
 
         if (!tex->buf) {
             FREE(tex);
@@ -1018,6 +1021,11 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
 
         surface->buf = tex->buf;
         surface->cs_buf = tex->cs_buf;
+
+        /* Prefer VRAM if there are multiple domains to choose from. */
+        surface->domain = tex->domain;
+        if (surface->domain & RADEON_DOMAIN_VRAM)
+            surface->domain &= ~RADEON_DOMAIN_GTT;
 
         surface->offset = r300_texture_get_offset(tex, level,
                                                   surf_tmpl->u.tex.first_layer);

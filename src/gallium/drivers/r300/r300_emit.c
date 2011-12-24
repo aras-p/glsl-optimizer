@@ -1190,14 +1190,16 @@ validate:
             tex = r300_resource(fb->cbufs[i]->texture);
             assert(tex && tex->buf && "cbuf is marked, but NULL!");
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf,
-                                    RADEON_USAGE_READWRITE);
+                                    RADEON_USAGE_READWRITE,
+                                    r300_surface(fb->cbufs[i])->domain);
         }
         /* ...depth buffer... */
         if (fb->zsbuf) {
             tex = r300_resource(fb->zsbuf->texture);
             assert(tex && tex->buf && "zsbuf is marked, but NULL!");
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf,
-                                    RADEON_USAGE_READWRITE);
+                                    RADEON_USAGE_READWRITE,
+                                    r300_surface(fb->zsbuf)->domain);
         }
     }
     if (r300->textures_state.dirty) {
@@ -1208,17 +1210,19 @@ validate:
             }
 
             tex = r300_resource(texstate->sampler_views[i]->base.texture);
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, RADEON_USAGE_READ);
+            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, RADEON_USAGE_READ,
+                                    tex->domain);
         }
     }
     /* ...occlusion query buffer... */
     if (r300->query_current)
         r300->rws->cs_add_reloc(r300->cs, r300->query_current->cs_buf,
-                                RADEON_USAGE_WRITE);
+                                RADEON_USAGE_WRITE, RADEON_DOMAIN_GTT);
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo)
         r300->rws->cs_add_reloc(r300->cs, r300_resource(r300->vbo)->cs_buf,
-                                RADEON_USAGE_READ);
+                                RADEON_USAGE_READ,
+                                r300_resource(r300->vbo)->domain);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
         struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->real_vertex_buffer;
@@ -1231,13 +1235,15 @@ validate:
                 continue;
 
             r300->rws->cs_add_reloc(r300->cs, r300_resource(buf)->cs_buf,
-                                    RADEON_USAGE_READ);
+                                    RADEON_USAGE_READ,
+                                    r300_resource(buf)->domain);
         }
     }
     /* ...and index buffer for HWTCL path. */
     if (index_buffer)
         r300->rws->cs_add_reloc(r300->cs, r300_resource(index_buffer)->cs_buf,
-                                RADEON_USAGE_READ);
+                                RADEON_USAGE_READ,
+                                r300_resource(index_buffer)->domain);
 
     /* Now do the validation (flush is called inside cs_validate on failure). */
     if (!r300->rws->cs_validate(r300->cs)) {
