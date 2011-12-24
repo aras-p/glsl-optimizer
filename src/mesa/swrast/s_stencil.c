@@ -26,6 +26,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
+#include "main/format_unpack.h"
 
 #include "s_context.h"
 #include "s_depth.h"
@@ -1044,6 +1045,8 @@ void
 _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLint n, GLint x, GLint y, GLubyte stencil[])
 {
+   GLubyte *src;
+
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
       /* span is completely outside framebuffer */
@@ -1064,7 +1067,8 @@ _swrast_read_stencil_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
       return;
    }
 
-   rb->GetRow(ctx, rb, n, x, y, stencil);
+   src = (GLubyte *) rb->Data + y * rb->RowStride +x;
+   _mesa_unpack_ubyte_stencil_row(rb->Format, n, src, stencil);
 }
 
 
