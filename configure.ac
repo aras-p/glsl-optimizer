@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to create configure.
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.60])
 
 dnl Versioning - scrape the version from configs/default
 m4_define([mesa_version],
