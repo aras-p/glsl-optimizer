@@ -195,6 +195,8 @@ clear_color_buffers(struct gl_context *ctx)
 void
 _swrast_Clear(struct gl_context *ctx, GLbitfield buffers)
 {
+   const GLbitfield BUFFER_DS = BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL;
+
 #ifdef DEBUG_FOO
    {
       const GLbitfield legalBits =
@@ -216,24 +218,39 @@ _swrast_Clear(struct gl_context *ctx, GLbitfield buffers)
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived(ctx);
 
-   swrast_render_start(ctx);
-
-   /* do software clearing here */
-   if (buffers) {
-      if ((buffers & BUFFER_BITS_COLOR)
-          && (ctx->DrawBuffer->_NumColorDrawBuffers > 0)) {
-         clear_color_buffers(ctx);
-      }
-      if (buffers & BUFFER_BIT_DEPTH) {
-         _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
-      }
-      if (buffers & BUFFER_BIT_ACCUM) {
-         _mesa_clear_accum_buffer(ctx);
-      }
-      if (buffers & BUFFER_BIT_STENCIL) {
-         _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);
-      }
+   if ((buffers & BUFFER_BITS_COLOR)
+       && (ctx->DrawBuffer->_NumColorDrawBuffers > 0)) {
+      /* XXX remove the swrast_render_start/finish() calls after
+       * clear_color_buffers() is converted to use Map/UnmapRenderbuffer()
+       * The other clearing functions don't need these calls.
+       */
+      swrast_render_start(ctx);
+      clear_color_buffers(ctx);
+      swrast_render_finish(ctx);
    }
 
-   swrast_render_finish(ctx);
+   if (buffers & BUFFER_BIT_ACCUM) {
+      _mesa_clear_accum_buffer(ctx);
+   }
+
+   if (buffers & BUFFER_DS) {
+      struct gl_renderbuffer *depthRb =
+         ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+      struct gl_renderbuffer *stencilRb =
+         ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+      if ((buffers & BUFFER_DS) == BUFFER_DS && depthRb == stencilRb) {
+         /* clear depth and stencil together */
+         _swrast_clear_depth_stencil_buffer(ctx);
+      }
+      else {
+         /* clear depth, stencil separately */
+         if (buffers & BUFFER_BIT_DEPTH) {
+            _swrast_clear_depth_buffer(ctx);
+         }
+         if (buffers & BUFFER_BIT_STENCIL) {
+            _swrast_clear_stencil_buffer(ctx);
+         }
+      }
+   }
 }

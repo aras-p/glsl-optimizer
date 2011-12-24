@@ -1124,25 +1124,24 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
 
 
 /**
- * Clear the stencil buffer.
+ * Clear the stencil buffer.  If the buffer is a combined
+ * depth+stencil buffer, only the stencil bits will be touched.
  */
 void
-_swrast_clear_stencil_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb )
+_swrast_clear_stencil_buffer(struct gl_context *ctx)
 {
+   struct gl_renderbuffer *rb =
+      ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
    const GLubyte stencilBits = ctx->DrawBuffer->Visual.stencilBits;
-   const GLuint mask = ctx->Stencil.WriteMask[0];
-   const GLuint invMask = ~mask;
-   const GLuint clearVal = (ctx->Stencil.Clear & mask);
+   const GLuint writeMask = ctx->Stencil.WriteMask[0];
    const GLuint stencilMax = (1 << stencilBits) - 1;
    GLint x, y, width, height;
+   GLubyte *map;
+   GLint rowStride, i, j;
+   GLbitfield mapMode;
 
-   if (!rb || mask == 0)
+   if (!rb || writeMask == 0)
       return;
-
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE ||
-          rb->DataType == GL_UNSIGNED_SHORT);
-
-   ASSERT(rb->_BaseFormat == GL_STENCIL_INDEX);
 
    /* compute region to clear */
    x = ctx->DrawBuffer->_Xmin;
@@ -1150,95 +1149,82 @@ _swrast_clear_stencil_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb
    width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
    height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
-   if (rb->GetPointer(ctx, rb, 0, 0)) {
-      /* Direct buffer access */
-      if ((mask & stencilMax) != stencilMax) {
-         /* need to mask the clear */
-         if (rb->DataType == GL_UNSIGNED_BYTE) {
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLubyte *stencil = (GLubyte*) rb->GetPointer(ctx, rb, x, y + i);
-               for (j = 0; j < width; j++) {
-                  stencil[j] = (stencil[j] & invMask) | clearVal;
-               }
-            }
-         }
-         else {
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLushort *stencil = (GLushort*) rb->GetPointer(ctx, rb, x, y + i);
-               for (j = 0; j < width; j++) {
-                  stencil[j] = (stencil[j] & invMask) | clearVal;
-               }
-            }
-         }
-      }
-      else {
-         /* no bit masking */
-         if (width == (GLint) rb->Width && rb->DataType == GL_UNSIGNED_BYTE) {
-            /* optimized case */
-            /* Note: bottom-to-top raster assumed! */
-            GLubyte *stencil = (GLubyte *) rb->GetPointer(ctx, rb, x, y);
-            GLuint len = width * height * sizeof(GLubyte);
-            memset(stencil, clearVal, len);
-         }
-         else {
-            /* general case */
-            GLint i;
-            for (i = 0; i < height; i++) {
-               GLvoid *stencil = rb->GetPointer(ctx, rb, x, y + i);
-               if (rb->DataType == GL_UNSIGNED_BYTE) {
-                  memset(stencil, clearVal, width);
-               }
-               else {
-                  _mesa_memset16((short unsigned int*) stencil, clearVal, width);
-               }
-            }
-         }
-      }
+   mapMode = GL_MAP_WRITE_BIT;
+   if ((writeMask & stencilMax) != stencilMax) {
+      /* need to mask stencil values */
+      mapMode |= GL_MAP_READ_BIT;
    }
-   else {
-      /* no direct access */
-      if ((mask & stencilMax) != stencilMax) {
-         /* need to mask the clear */
-         if (rb->DataType == GL_UNSIGNED_BYTE) {
-            GLint i, j;
+   else if (_mesa_get_format_bits(rb->Format, GL_DEPTH_BITS) > 0) {
+      /* combined depth+stencil, need to mask Z values */
+      mapMode |= GL_MAP_READ_BIT;
+   }
+
+   ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height,
+                               mapMode, &map, &rowStride);
+   if (!map) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClear(stencil)");
+      return;
+   }
+
+   switch (rb->Format) {
+   case MESA_FORMAT_S8:
+      {
+         GLubyte clear = ctx->Stencil.Clear & writeMask & 0xff;
+         GLubyte mask = (~writeMask) & 0xff;
+         if (mask != 0) {
+            /* masked clear */
             for (i = 0; i < height; i++) {
-               GLubyte stencil[MAX_WIDTH];
-               rb->GetRow(ctx, rb, width, x, y + i, stencil);
+               GLubyte *row = map;
                for (j = 0; j < width; j++) {
-                  stencil[j] = (stencil[j] & invMask) | clearVal;
+                  row[j] = (row[j] & mask) | clear;
                }
-               rb->PutRow(ctx, rb, width, x, y + i, stencil, NULL);
+               map += rowStride;
             }
          }
+         else if (rowStride == width) {
+            /* clear whole buffer */
+            memset(map, clear, width * height);
+         }
          else {
-            GLint i, j;
+            /* clear scissored */
             for (i = 0; i < height; i++) {
-               GLushort stencil[MAX_WIDTH];
-               rb->GetRow(ctx, rb, width, x, y + i, stencil);
-               for (j = 0; j < width; j++) {
-                  stencil[j] = (stencil[j] & invMask) | clearVal;
-               }
-               rb->PutRow(ctx, rb, width, x, y + i, stencil, NULL);
+               memset(map, clear, width);
+               map += rowStride;
             }
          }
       }
-      else {
-         /* no bit masking */
-         const GLubyte clear8 = (GLubyte) clearVal;
-         const GLushort clear16 = (GLushort) clearVal;
-         const void *clear;
-         GLint i;
-         if (rb->DataType == GL_UNSIGNED_BYTE) {
-            clear = &clear8;
-         }
-         else {
-            clear = &clear16;
-         }
+      break;
+   case MESA_FORMAT_S8_Z24:
+      {
+         GLuint clear = (ctx->Stencil.Clear & writeMask & 0xff) << 24;
+         GLuint mask = (((~writeMask) & 0xff) << 24) | 0xffffff;
          for (i = 0; i < height; i++) {
-            rb->PutMonoRow(ctx, rb, width, x, y + i, clear, NULL);
+            GLuint *row = (GLuint *) map;
+            for (j = 0; j < width; j++) {
+               row[j] = (row[j] & mask) | clear;
+            }
+            map += rowStride;
          }
       }
+      break;
+   case MESA_FORMAT_Z24_S8:
+      {
+         GLuint clear = ctx->Stencil.Clear & writeMask & 0xff;
+         GLuint mask = 0xffffff00 | ((~writeMask) & 0xff);
+         for (i = 0; i < height; i++) {
+            GLuint *row = (GLuint *) map;
+            for (j = 0; j < width; j++) {
+               row[j] = (row[j] & mask) | clear;
+            }
+            map += rowStride;
+         }
+      }
+      break;
+   default:
+      _mesa_problem(ctx, "Unexpected stencil buffer format %s"
+                    " in _swrast_clear_stencil_buffer()",
+                    _mesa_get_format_name(rb->Format));
    }
+
+   ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }

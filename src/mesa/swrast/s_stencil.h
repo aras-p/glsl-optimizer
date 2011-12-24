@@ -47,7 +47,7 @@ _swrast_write_stencil_span( struct gl_context *ctx, GLint n, GLint x, GLint y,
 
 
 extern void
-_swrast_clear_stencil_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb );
+_swrast_clear_stencil_buffer(struct gl_context *ctx);
 
 
 #endif

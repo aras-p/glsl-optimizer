@@ -49,7 +49,10 @@ _swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *r
                                GLint n, GLint x, GLint y, GLfloat depth[] );
 
 extern void
-_swrast_clear_depth_buffer( struct gl_context *ctx, struct gl_renderbuffer *rb );
+_swrast_clear_depth_buffer(struct gl_context *ctx);
+
+extern void
+_swrast_clear_depth_stencil_buffer(struct gl_context *ctx);
 
 
 #endif
