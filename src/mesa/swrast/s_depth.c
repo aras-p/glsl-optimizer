@@ -203,41 +203,6 @@ _swrast_depth_clamp_span( struct gl_context *ctx, SWspan *span )
 
 
 /**
- * Get array of 16-bit z values from the depth buffer.  With clipping.
- */
-static void
-get_z16_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
-               GLuint count, const GLint x[], const GLint y[],
-               GLushort zbuffer[])
-{
-   const GLint w = rb->Width, h = rb->Height;
-   const GLubyte *map = (const GLubyte *) rb->Data;
-   GLuint i;
-
-   if (rb->Format == MESA_FORMAT_Z16) {
-      const GLuint rowStride = rb->RowStride * 2;
-      for (i = 0; i < count; i++) {
-         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
-            zbuffer[i] = *((GLushort *) (map + y[i] * rowStride + x[i] * 2));
-         }
-      }
-   }
-   else {
-      const GLuint bpp = _mesa_get_format_bytes(rb->Format);
-      const GLuint rowStride = rb->RowStride * bpp;
-      for (i = 0; i < count; i++) {
-         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
-            GLuint d32;
-            const GLubyte *src = map + y[i] * rowStride + x[i] * bpp;
-            _mesa_unpack_uint_z_row(rb->Format, 1, src, &d32);
-            zbuffer[i] = d32 >> 16;
-         }
-      }
-   }
-}
-
-
-/**
  * Get array of 32-bit z values from the depth buffer.  With clipping.
  */
 static void
@@ -311,7 +276,6 @@ get_z_address(struct gl_renderbuffer *rb, GLint x, GLint y)
    const GLint rowStride = rb->RowStride * bpp;
    return (GLubyte *) rb->Data + y * rowStride + x * bpp;
 }
-
 
 
 /**
@@ -429,67 +393,42 @@ GLboolean
 _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *rb = fb->_DepthBuffer;
+   struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   const GLint bpp = _mesa_get_format_bytes(rb->Format);
+   const GLint rowStride = rb->RowStride * bpp;
+   GLubyte *zStart = (GLubyte*) rb->Data + span->y * rowStride + span->x * bpp;
    GLuint zMin = (GLuint) (ctx->Depth.BoundsMin * fb->_DepthMaxF + 0.5F);
    GLuint zMax = (GLuint) (ctx->Depth.BoundsMax * fb->_DepthMaxF + 0.5F);
    GLubyte *mask = span->array->mask;
    const GLuint count = span->end;
    GLuint i;
    GLboolean anyPass = GL_FALSE;
+   GLuint zBufferTemp[MAX_WIDTH];
+   const GLuint *zBufferVals;
 
-   if (rb->DataType == GL_UNSIGNED_SHORT) {
-      /* get 16-bit values */
-      GLushort zbuffer16[MAX_WIDTH], *zbuffer;
-      if (span->arrayMask & SPAN_XY) {
-         get_z16_values(ctx, rb, count, span->array->x, span->array->y,
-                        zbuffer16);
-         zbuffer = zbuffer16;
-      }
-      else {
-         zbuffer = (GLushort*) rb->GetPointer(ctx, rb, span->x, span->y);
-         if (!zbuffer) {
-            rb->GetRow(ctx, rb, count, span->x, span->y, zbuffer16);
-            zbuffer = zbuffer16;
-         }
-      }
-      assert(zbuffer);
-
-      /* Now do the tests */
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            if (zbuffer[i] < zMin || zbuffer[i] > zMax)
-               mask[i] = GL_FALSE;
-            else
-               anyPass = GL_TRUE;
-         }
-      }
+   if (rb->Format == MESA_FORMAT_Z32 && !(span->arrayMask & SPAN_XY)) {
+      /* directly access 32-bit values in the depth buffer */
+      zBufferVals = (const GLuint *) zStart;
    }
    else {
-      /* get 32-bit values */
-      GLuint zbuffer32[MAX_WIDTH], *zbuffer;
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
+      /* unpack Z values into a temporary array */
       if (span->arrayMask & SPAN_XY) {
          get_z32_values(ctx, rb, count, span->array->x, span->array->y,
-                        zbuffer32);
-         zbuffer = zbuffer32;
+                        zBufferTemp);
       }
       else {
-         zbuffer = (GLuint*) rb->GetPointer(ctx, rb, span->x, span->y);
-         if (!zbuffer) {
-            rb->GetRow(ctx, rb, count, span->x, span->y, zbuffer32);
-            zbuffer = zbuffer32;
-         }
+         _mesa_unpack_uint_z_row(rb->Format, count, zStart, zBufferTemp);
       }
-      assert(zbuffer);
+      zBufferVals = zBufferTemp;
+   }
 
-      /* Now do the tests */
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            if (zbuffer[i] < zMin || zbuffer[i] > zMax)
-               mask[i] = GL_FALSE;
-            else
-               anyPass = GL_TRUE;
-         }
+   /* Now do the tests */
+   for (i = 0; i < count; i++) {
+      if (mask[i]) {
+         if (zBufferVals[i] < zMin || zBufferVals[i] > zMax)
+            mask[i] = GL_FALSE;
+         else
+            anyPass = GL_TRUE;
       }
    }
 
