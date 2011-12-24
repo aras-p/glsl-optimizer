@@ -449,18 +449,15 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
  * bounds.
  */
 void
-_swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                               GLint n, GLint x, GLint y, GLfloat depth[] )
+_swrast_read_depth_span_float(struct gl_context *ctx,
+                              struct gl_renderbuffer *rb,
+                              GLint n, GLint x, GLint y, GLfloat depth[])
 {
-   const GLfloat scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-
    if (!rb) {
       /* really only doing this to prevent FP exceptions later */
       memset(depth, 0, n * sizeof(GLfloat));
       return;
    }
-
-   ASSERT(rb->_BaseFormat == GL_DEPTH_COMPONENT);
 
    if (y < 0 || y >= (GLint) rb->Height ||
        x + n <= 0 || x >= (GLint) rb->Width) {
@@ -489,25 +486,7 @@ _swrast_read_depth_span_float( struct gl_context *ctx, struct gl_renderbuffer *r
       return;
    }
 
-   if (rb->DataType == GL_UNSIGNED_INT) {
-      GLuint temp[MAX_WIDTH];
-      GLint i;
-      rb->GetRow(ctx, rb, n, x, y, temp);
-      for (i = 0; i < n; i++) {
-         depth[i] = temp[i] * scale;
-      }
-   }
-   else if (rb->DataType == GL_UNSIGNED_SHORT) {
-      GLushort temp[MAX_WIDTH];
-      GLint i;
-      rb->GetRow(ctx, rb, n, x, y, temp);
-      for (i = 0; i < n; i++) {
-         depth[i] = temp[i] * scale;
-      }
-   }
-   else {
-      _mesa_problem(ctx, "Invalid depth renderbuffer data type");
-   }
+   _mesa_unpack_float_z_row(rb->Format, n, get_z_address(rb, x, y), depth);
 }
 
 
