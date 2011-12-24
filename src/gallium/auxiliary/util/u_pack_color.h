@@ -122,7 +122,7 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
    case PIPE_FORMAT_L8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
       {
-         uc->ub = a;
+         uc->ub = r;
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
