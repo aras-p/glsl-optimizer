@@ -215,7 +215,7 @@ vl_vlc_bits_left(struct vl_vlc *vlc)
 static INLINE unsigned
 vl_vlc_peekbits(struct vl_vlc *vlc, unsigned num_bits)
 {
-   assert(vl_vlc_valid_bits(vlc) <= num_bits || vlc->data >= vlc->end);
+   assert(vl_vlc_valid_bits(vlc) >= num_bits || vlc->data >= vlc->end);
    return vlc->buffer >> (64 - num_bits);
 }
 
@@ -225,7 +225,7 @@ vl_vlc_peekbits(struct vl_vlc *vlc, unsigned num_bits)
 static INLINE void
 vl_vlc_eatbits(struct vl_vlc *vlc, unsigned num_bits)
 {
-   assert(vl_vlc_valid_bits(vlc) <= num_bits);
+   assert(vl_vlc_valid_bits(vlc) >= num_bits);
 
    vlc->buffer <<= num_bits;
    vlc->invalid_bits += num_bits;
@@ -239,7 +239,7 @@ vl_vlc_get_uimsbf(struct vl_vlc *vlc, unsigned num_bits)
 {
    unsigned value;
 
-   assert(vl_vlc_valid_bits(vlc) <= num_bits);
+   assert(vl_vlc_valid_bits(vlc) >= num_bits);
 
    value = vlc->buffer >> (64 - num_bits);
    vl_vlc_eatbits(vlc, num_bits);
@@ -255,7 +255,7 @@ vl_vlc_get_simsbf(struct vl_vlc *vlc, unsigned num_bits)
 {
    signed value;
 
-   assert(vl_vlc_valid_bits(vlc) <= num_bits);
+   assert(vl_vlc_valid_bits(vlc) >= num_bits);
 
    value = ((int64_t)vlc->buffer) >> (64 - num_bits);
    vl_vlc_eatbits(vlc, num_bits);
