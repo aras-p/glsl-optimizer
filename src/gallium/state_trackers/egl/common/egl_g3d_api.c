@@ -150,6 +150,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    struct egl_g3d_context *gctx;
    struct st_context_attribs stattribs;
+   enum st_context_error ctx_err = 0;
 
    gctx = CALLOC_STRUCT(egl_g3d_context);
    if (!gctx) {
@@ -172,8 +173,8 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
       return NULL;
    }
 
-   gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi,
-         &stattribs, (gshare) ? gshare->stctxi : NULL);
+   gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi, 
+         &stattribs, &ctx_err, (gshare) ? gshare->stctxi : NULL);
    if (!gctx->stctxi) {
       FREE(gctx);
       return NULL;

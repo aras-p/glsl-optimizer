@@ -863,6 +863,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
 {
    XMesaDisplay xmdpy = xmesa_init_display(v->display);
    struct st_context_attribs attribs;
+   enum st_context_error ctx_err = 0;
    XMesaContext c;
 
    if (!xmdpy)
@@ -905,8 +906,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
        && ((profileMask & GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0))
       attribs.profile = ST_PROFILE_OPENGL_CORE;
 
-   c->st = stapi->create_context(stapi, xmdpy->smapi,
-         &attribs, (share_list) ? share_list->st : NULL);
+   c->st = stapi->create_context(stapi, xmdpy->smapi, &attribs,
+         &ctx_err, (share_list) ? share_list->st : NULL);
    if (c->st == NULL)
       goto fail;
 

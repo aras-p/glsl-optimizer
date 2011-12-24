@@ -142,6 +142,7 @@ stw_create_context_attribs(
    struct st_context_attribs attribs;
    struct stw_context *ctx = NULL;
    struct stw_context *shareCtx = NULL;
+   enum st_context_error ctx_err = 0;
 
    if (!stw_dev)
       return 0;
@@ -190,12 +191,12 @@ stw_create_context_attribs(
     *     WGL_CONTEXT_CORE_PROFILE_BIT_ARB."
     */
    attribs.profile = ST_PROFILE_DEFAULT;
-   if ((major > 3 || (major == 3 && minor >= 2))
+   if ((majorVersion > 3 || (majorVersion == 3 && minorVersion >= 2))
        && ((profileMask & WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0))
       attribs.profile = ST_PROFILE_OPENGL_CORE;
 
    ctx->st = stw_dev->stapi->create_context(stw_dev->stapi,
-         stw_dev->smapi, &attribs, shareCtx ? shareCtx->st : NULL);
+         stw_dev->smapi, &attribs, &ctx_err, shareCtx ? shareCtx->st : NULL);
    if (ctx->st == NULL)
       goto no_st_ctx;
 
