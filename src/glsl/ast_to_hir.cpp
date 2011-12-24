@@ -1184,7 +1184,7 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      type = op[0]->type;
+      type = error_emitted ? glsl_type::error_type : op[0]->type;
       result = new(ctx) ir_expression(ir_unop_bit_not, type, op[0], NULL);
       break;
 
