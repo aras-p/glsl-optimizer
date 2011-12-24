@@ -879,6 +879,35 @@ stencil_test_pixels( struct gl_context *ctx, GLuint face, GLuint n,
 
 
 
+static void
+get_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
+              GLuint count, const GLint x[], const GLint y[],
+              GLubyte stencil[])
+{
+   const GLint w = rb->Width, h = rb->Height;
+   const GLubyte *map = (const GLubyte *) rb->Data;
+   GLuint i;
+
+   if (rb->Format == MESA_FORMAT_S8) {
+      const GLuint rowStride = rb->RowStride;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            stencil[i] = *(map + y[i] * rowStride + x[i]);
+         }
+      }
+   }
+   else {
+      const GLuint bpp = _mesa_get_format_bytes(rb->Format);
+      const GLuint rowStride = rb->RowStride * bpp;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            const GLubyte *src = map + y[i] * rowStride + x[i] * bpp;
+            _mesa_unpack_ubyte_stencil_row(rb->Format, 1, src, &stencil[i]);
+         }
+      }
+   }
+}
+
 
 /**
  * Apply stencil and depth testing to an array of pixels.
@@ -916,7 +945,7 @@ stencil_and_ztest_pixels( struct gl_context *ctx, SWspan *span, GLuint face )
       GLubyte stencil[MAX_WIDTH];
 
       ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-      _swrast_get_values(ctx, rb, n, x, y, stencil, sizeof(GLubyte));
+      get_s8_values(ctx, rb, n, x, y, stencil);
 
       memcpy(origMask, mask, n * sizeof(GLubyte));          
 
