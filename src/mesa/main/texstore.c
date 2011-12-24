@@ -4565,354 +4565,96 @@ get_read_write_mode(GLenum userFormat, gl_format texFormat)
       return GL_MAP_WRITE_BIT;
 }
 
-/**
- * This is the software fallback for Driver.TexImage1D().
- * \sa _mesa_store_teximage2d()
- */
-void
-_mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
-{
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLubyte *dstMap;
-   GLint dstRowStride;
-   GLboolean success;
-
-   (void) border;
-
-   if (width == 0)
-      return;
-
-   /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, 1, 1)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-      return;
-   }
-
-   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type,
-                                        pixels, packing, "glTexImage1D");
-   if (!pixels) {
-      /* Note: we check for a NULL image pointer here, _after_ we allocated
-       * memory for the texture.  That's what the GL spec calls for.
-       */
-      return;
-   }
-
-   /* Map dest texture buffer (write to whole region) */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               0, 0, width, 1,
-                               rwMode,
-                               &dstMap, &dstRowStride);
-   if (dstMap) {
-      success = _mesa_texstore(ctx, 1, texImage->_BaseFormat,
-                               texImage->TexFormat,
-                               0, 0, 0,  /* dstX/Y/Zoffset */
-                               0, /* dstRowStride */
-                               &dstMap,
-                               width, 1, 1,
-                               format, type, pixels, packing);
-
-      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
-   }
-   else {
-      success = GL_FALSE;
-   }
-
-   if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-
-   _mesa_unmap_teximage_pbo(ctx, packing);
-}
-
 
 /**
- * This is the software fallback for Driver.TexImage2D().
- *
- * This function is oriented toward storing images in main memory, rather
- * than VRAM.  Device driver's can easily plug in their own replacement.
+ * Helper function for storing 1D, 2D, 3D whole and subimages into texture
+ * memory.
+ * The source of the image data may be user memory or a PBO.  In the later
+ * case, we'll map the PBO, copy from it, then unmap it.
  */
-void
-_mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint border,
-                       GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
+static void
+store_texsubimage(struct gl_context *ctx,
+                  struct gl_texture_image *texImage,
+                  GLint xoffset, GLint yoffset, GLint zoffset,
+                  GLint width, GLint height, GLint depth,
+                  GLenum format, GLenum type, const GLvoid *pixels,
+                  const struct gl_pixelstore_attrib *packing,
+                  const char *caller)
+
 {
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLubyte *dstMap;
-   GLint dstRowStride;
-   GLboolean success;
-
-   (void) border;
-
-   if (width == 0 || height == 0)
-      return;
-
-   /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, height, 1)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-      return;
-   }
-
-   pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
-                                        pixels, packing, "glTexImage2D");
-   if (!pixels) {
-      /* Note: we check for a NULL image pointer here, _after_ we allocated
-       * memory for the texture.  That's what the GL spec calls for.
-       */
-      return;
-   }
-
-   if (target == GL_TEXTURE_1D_ARRAY) {
-      const GLint srcStride =
-         _mesa_image_row_stride(packing, width, format, type);
-      int y;
-
-      success = GL_TRUE;
-
-      for (y = 0; y < height; y++) {
-         /* Map dest texture buffer (write to whole region) */
-         ctx->Driver.MapTextureImage(ctx, texImage, y,
-                                     0, 0, width, 1,
-                                     rwMode,
-                                     &dstMap, &dstRowStride);
-         if (dstMap) {
-            success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
-                                     texImage->TexFormat,
-                                     0, 0, 0,  /* dstX/Y/Zoffset */
-                                     dstRowStride,
-                                     &dstMap,
-                                     width, 1, 1,
-                                     format, type, pixels, packing);
-            ctx->Driver.UnmapTextureImage(ctx, texImage, y);
-         }
-         else {
-            success = GL_FALSE;
-         }
-
-         if (!success)
-            break;
-
-         pixels = (const GLubyte *) pixels + srcStride;
-      }
-   } else {
-      /* Map dest texture buffer (write to whole region) */
-      ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                                  0, 0, width, height,
-                                  rwMode,
-                                  &dstMap, &dstRowStride);
-      if (dstMap) {
-         success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
-                                  texImage->TexFormat,
-                                  0, 0, 0,  /* dstX/Y/Zoffset */
-                                  dstRowStride,
-                                  &dstMap,
-                                  width, height, 1,
-                                  format, type, pixels, packing);
-
-         ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
-      }
-      else {
-         success = GL_FALSE;
-      }
-   }
-
-   if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-
-   _mesa_unmap_teximage_pbo(ctx, packing);
-}
-
-
-
-/**
- * This is the software fallback for Driver.TexImage3D().
- * \sa _mesa_store_teximage2d()
- */
-void
-_mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint depth, GLint border,
-                       GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
-{
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLboolean success = GL_TRUE;
-   GLint slice;
-   GLubyte **sliceMaps;
-   GLint dstRowStride;
-
-   (void) border;
-
-   if (width == 0 || height == 0 || depth == 0)
-      return;
-
-   /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, height, depth)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
-      return;
-   }
-
-   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth,
-                                        format, type,
-                                        pixels, packing, "glTexImage3D");
-   if (!pixels) {
-      /* Note: we check for a NULL image pointer here, _after_ we allocated
-       * memory for the texture.  That's what the GL spec calls for.
-       */
-      return;
-   }
-
-   if (target == GL_TEXTURE_1D_ARRAY) {
-      depth = height;
-      height = 1;
-   }
-
-   sliceMaps = (GLubyte **) calloc(depth, sizeof(GLubyte *));
-
-   /* Map dest texture buffer slices */
-   for (slice = 0; slice < depth; slice++) {
-      ctx->Driver.MapTextureImage(ctx, texImage, slice,
-                                  0, 0, width, height,
-                                  rwMode,
-                                  &sliceMaps[slice], &dstRowStride);
-      if (!sliceMaps[slice]) {
-         success = GL_FALSE;
-         break;
-      }
-   }
-
-   if (success) {
-      success = _mesa_texstore(ctx, 3, texImage->_BaseFormat,
-                               texImage->TexFormat,
-                               0, 0, 0,  /* dstX/Y/Zoffset */
-                               dstRowStride,
-                               sliceMaps,
-                               width, height, depth,
-                               format, type, pixels, packing);
-   }
-
-   /* Unmap dest texture buffer slices */
-   for (slice = 0; slice < depth; slice++) {
-      if (sliceMaps[slice]) {
-         ctx->Driver.UnmapTextureImage(ctx, texImage, slice);
-      }
-   }
-
-   if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
-
-   _mesa_unmap_teximage_pbo(ctx, packing);
-
-   free(sliceMaps);
-}
-
-
-
-
-/*
- * This is the software fallback for Driver.TexSubImage1D()
- * and Driver.CopyTexSubImage1D().
- */
-void
-_mesa_store_texsubimage1d(struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint width,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage)
-{
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLubyte *dstMap;
-   GLint dstRowStride;
-   GLboolean success;
-
-   /* get pointer to src pixels (may be in a pbo which we'll map here) */
-   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type,
-                                        pixels, packing, "glTexSubImage1D");
-   if (!pixels)
-      return;
-
-   /* Map dest texture buffer */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               xoffset, 0, width, 1,
-                               rwMode,
-                               &dstMap, &dstRowStride);
-
-   if (dstMap) {
-      success = _mesa_texstore(ctx, 1, texImage->_BaseFormat,
-                               texImage->TexFormat,
-                               0, 0, 0,  /* dstX/Y/Zoffset */
-                               dstRowStride,
-                               &dstMap,
-                               width, 1, 1,
-                               format, type, pixels, packing);
-
-      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
-   }
-   else {
-      success = GL_FALSE;
-   }
-
-   if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
-
-   _mesa_unmap_teximage_pbo(ctx, packing);
-}
-
-
-
-/**
- * This is the software fallback for Driver.TexSubImage2D()
- * and Driver.CopyTexSubImage2D().
- */
-void
-_mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset,
-                          GLint width, GLint height,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage)
-{
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
+   const GLbitfield mapMode = get_read_write_mode(format, texImage->TexFormat);
+   const GLenum target = texImage->TexObject->Target;
    GLboolean success = GL_FALSE;
-   GLuint slice, numSlices, sliceOffset, srcImageStride;
+   GLuint dims, slice, numSlices = 1, sliceOffset = 0;
+   GLint srcImageStride = 0;
    const GLubyte *src;
+
+   assert(xoffset + width <= texImage->Width);
+   assert(yoffset + height <= texImage->Height);
+   assert(zoffset + depth <= texImage->Depth);
+
+   switch (target) {
+   case GL_TEXTURE_1D:
+      dims = 1;
+      break;
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_3D:
+      dims = 3;
+      break;
+   default:
+      dims = 2;
+   }
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
    src = (const GLubyte *)
-      _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
-                                  pixels, packing, "glTexSubImage2D");
+      _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
+                                  format, type, pixels, packing, caller);
    if (!src)
       return;
 
-   if (target == GL_TEXTURE_1D_ARRAY) {
-      /* map each slice of the 1D array separately */
+   /* compute slice info (and do some sanity checks) */
+   switch (target) {
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_CUBE_MAP:
+      /* one image slice, nothing special needs to be done */
+      break;
+   case GL_TEXTURE_1D:
+      assert(height == 1);
+      assert(depth == 1);
+      assert(yoffset == 0);
+      assert(zoffset == 0);
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+      assert(depth == 1);
+      assert(zoffset == 0);
       numSlices = height;
       sliceOffset = yoffset;
       height = 1;
       yoffset = 0;
       srcImageStride = _mesa_image_row_stride(packing, width, format, type);
+      break;
+   case GL_TEXTURE_2D_ARRAY:
+      numSlices = depth;
+      sliceOffset = zoffset;
+      depth = 1;
+      zoffset = 0;
+      srcImageStride = _mesa_image_image_stride(packing, width, height,
+                                                format, type);
+      break;
+   case GL_TEXTURE_3D:
+      /* we'll store 3D images as a series of slices */
+      numSlices = depth;
+      sliceOffset = zoffset;
+      srcImageStride = _mesa_image_image_stride(packing, width, height,
+                                                format, type);
+      break;
+   default:
+      _mesa_warning(ctx, "Unexpected target 0x%x in store_texsubimage()", target);
+      return;
    }
-   else {
-      /* regular 2D image */
-      numSlices = 1;
-      sliceOffset = 0;
-      srcImageStride = 0;
-   }
+
+   assert(numSlices == 1 || srcImageStride != 0);
 
    for (slice = 0; slice < numSlices; slice++) {
       GLubyte *dstMap;
@@ -4921,9 +4663,13 @@ _mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
       ctx->Driver.MapTextureImage(ctx, texImage,
                                   slice + sliceOffset,
                                   xoffset, yoffset, width, height,
-                                  rwMode, &dstMap, &dstRowStride);
+                                  mapMode, &dstMap, &dstRowStride);
       if (dstMap) {
-         success = _mesa_texstore(ctx, 2, texImage->_BaseFormat,
+         /* Note: we're only storing a 2D (or 1D) slice at a time but we need
+          * to pass the right 'dims' value so that GL_UNPACK_SKIP_IMAGES is
+          * used for 3D images.
+          */
+         success = _mesa_texstore(ctx, dims, texImage->_BaseFormat,
                                   texImage->TexFormat,
                                   0, 0, 0,  /* dstX/Y/Zoffset */
                                   dstRowStride,
@@ -4941,15 +4687,138 @@ _mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
    }
 
    if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "%s", caller);
 
    _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
+
+/**
+ * This is the fallback for Driver.TexImage1D().
+ */
+void
+_mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint border,
+                       GLenum format, GLenum type, const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage)
+{
+   if (width == 0)
+      return;
+
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, 1, 1)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
+      return;
+   }
+
+   store_texsubimage(ctx, texImage,
+                     0, 0, 0, width, 1, 1,
+                     format, type, pixels, packing, "glTexImage1D");
+}
+
+
+/**
+ * This is the fallback for Driver.TexImage2D().
+ */
+void
+_mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint height, GLint border,
+                       GLenum format, GLenum type, const void *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage)
+{
+   if (width == 0 || height == 0)
+      return;
+
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, height, 1)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+      return;
+   }
+
+   store_texsubimage(ctx, texImage,
+                     0, 0, 0, width, height, 1,
+                     format, type, pixels, packing, "glTexImage2D");
+}
+
+
+
+/**
+ * This is the fallback for Driver.TexImage3D().
+ */
+void
+_mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
+                       GLint internalFormat,
+                       GLint width, GLint height, GLint depth, GLint border,
+                       GLenum format, GLenum type, const void *pixels,
+                       const struct gl_pixelstore_attrib *packing,
+                       struct gl_texture_object *texObj,
+                       struct gl_texture_image *texImage)
+{
+   if (width == 0 || height == 0 || depth == 0)
+      return;
+
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
+                                            width, height, depth)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
+      return;
+   }
+
+   store_texsubimage(ctx, texImage,
+                     0, 0, 0, width, height, depth,
+                     format, type, pixels, packing, "glTexImage3D");
+}
+
+
+
+
 /*
- * This is the software fallback for Driver.TexSubImage3D().
- * and Driver.CopyTexSubImage3D().
+ * This is the fallback for Driver.TexSubImage1D().
+ */
+void
+_mesa_store_texsubimage1d(struct gl_context *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLint width,
+                          GLenum format, GLenum type, const void *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage)
+{
+   store_texsubimage(ctx, texImage,
+                     xoffset, 0, 0, width, 1, 1,
+                     format, type, pixels, packing, "glTexSubImage1D");
+}
+
+
+
+/**
+ * This is the fallback for Driver.TexSubImage2D().
+ */
+void
+_mesa_store_texsubimage2d(struct gl_context *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLint yoffset,
+                          GLint width, GLint height,
+                          GLenum format, GLenum type, const void *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage)
+{
+   store_texsubimage(ctx, texImage,
+                     xoffset, yoffset, 0, width, height, 1,
+                     format, type, pixels, packing, "glTexSubImage2D");
+}
+
+
+/*
+ * This is the fallback for Driver.TexSubImage3D().
  */
 void
 _mesa_store_texsubimage3d(struct gl_context *ctx, GLenum target, GLint level,
@@ -4960,56 +4829,9 @@ _mesa_store_texsubimage3d(struct gl_context *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   const GLbitfield rwMode = get_read_write_mode(format, texImage->TexFormat);
-   GLboolean success = GL_TRUE;
-   GLint slice;
-   GLubyte **sliceMaps;
-   GLint dstRowStride;
-
-   /* get pointer to src pixels (may be in a pbo which we'll map here) */
-   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format,
-                                        type, pixels, packing,
-                                        "glTexSubImage3D");
-   if (!pixels)
-      return;
-
-   sliceMaps = (GLubyte **) calloc(depth, sizeof(GLubyte *));
-
-   /* Map dest texture buffer slices */
-   for (slice = 0; slice < depth; slice++) {
-      ctx->Driver.MapTextureImage(ctx, texImage, zoffset + slice,
-                                  xoffset, yoffset, width, height,
-                                  rwMode,
-                                  &sliceMaps[slice], &dstRowStride);
-      if (!sliceMaps[slice]) {
-         success = GL_FALSE;
-         break;
-      }
-   }
-
-   if (success) {
-      success = _mesa_texstore(ctx, 3, texImage->_BaseFormat,
-                               texImage->TexFormat,
-                               0, 0, 0,
-                               dstRowStride,
-                               sliceMaps,
-                               width, height, depth,
-                               format, type, pixels, packing);
-   }
-
-   /* Unmap dest texture buffer slices */
-   for (slice = 0; slice < depth; slice++) {
-      if (sliceMaps[slice]) {
-         ctx->Driver.UnmapTextureImage(ctx, texImage, zoffset + slice);
-      }
-   }
-
-   if (!success)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage3D");
-
-   _mesa_unmap_teximage_pbo(ctx, packing);
-
-   free(sliceMaps);
+   store_texsubimage(ctx, texImage,
+                     xoffset, yoffset, zoffset, width, height, depth,
+                     format, type, pixels, packing, "glTexSubImage3D");
 }
 
 
