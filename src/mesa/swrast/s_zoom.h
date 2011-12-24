@@ -50,7 +50,7 @@ _swrast_write_zoomed_stencil_span(struct gl_context *ctx, GLint imgX, GLint imgY
 extern void
 _swrast_write_zoomed_z_span(struct gl_context *ctx, GLint imgX, GLint imgY,
                             GLint width, GLint spanX, GLint spanY,
-                            const GLvoid *z);
+                            const GLuint *zVals);
 
 
 #endif

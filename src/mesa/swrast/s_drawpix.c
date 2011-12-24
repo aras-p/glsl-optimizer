@@ -28,6 +28,7 @@
 #include "main/colormac.h"
 #include "main/condrender.h"
 #include "main/context.h"
+#include "main/format_pack.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/macros.h"
@@ -547,7 +548,6 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
-   const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLenum stencilType = GL_UNSIGNED_BYTE;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
@@ -585,57 +585,27 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       /* XXX need to handle very wide images (skippixels) */
       GLint i;
 
-      depthRb = ctx->DrawBuffer->_DepthBuffer;
-
       for (i = 0; i < height; i++) {
          const GLuint *depthStencilSrc = (const GLuint *)
             _mesa_image_address2d(&clippedUnpack, pixels, width, height,
                                   GL_DEPTH_STENCIL_EXT, type, i, 0);
 
          if (ctx->Depth.Mask) {
-            if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 24 &&
-		type == GL_UNSIGNED_INT_24_8) {
-               /* fast path 24-bit zbuffer */
-               GLuint zValues[MAX_WIDTH];
-               GLint j;
-               ASSERT(depthRb->DataType == GL_UNSIGNED_INT);
-               for (j = 0; j < width; j++) {
-                  zValues[j] = depthStencilSrc[j] >> 8;
-               }
-               if (zoom)
-                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
-                                              x, y + i, zValues);
-               else
-                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
-            }
-            else if (!scaleOrBias && ctx->DrawBuffer->Visual.depthBits == 16 &&
-		     type == GL_UNSIGNED_INT_24_8) {
-               /* fast path 16-bit zbuffer */
-               GLushort zValues[MAX_WIDTH];
-               GLint j;
-               ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
-               for (j = 0; j < width; j++) {
-                  zValues[j] = depthStencilSrc[j] >> 16;
-               }
-               if (zoom)
-                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width,
-                                              x, y + i, zValues);
-               else
-                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
+            GLuint zValues[MAX_WIDTH];  /* 32-bit Z values */
+            _mesa_unpack_depth_span(ctx, width,
+                                    GL_UNSIGNED_INT, /* dest type */
+                                    zValues,         /* dest addr */
+                                    0xffffffff,      /* depth max */
+                                    type,            /* src type */
+                                    depthStencilSrc, /* src addr */
+                                    &clippedUnpack);
+            if (zoom) {
+               _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,
+                                           y + i, zValues);
             }
             else {
-               /* general case */
-               GLuint zValues[MAX_WIDTH];  /* 16 or 32-bit Z value storage */
-               _mesa_unpack_depth_span(ctx, width,
-                                       depthRb->DataType, zValues, depthMax,
-                                       type, depthStencilSrc, &clippedUnpack);
-               if (zoom) {
-                  _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,
-                                              y + i, zValues);
-               }
-               else {
-                  depthRb->PutRow(ctx, depthRb, width, x, y + i, zValues,NULL);
-               }
+               GLubyte *dst = _swrast_pixel_address(depthRb, x, y + i);
+               _mesa_pack_uint_z_row(depthRb->Format, width, zValues, dst);
             }
          }
 
