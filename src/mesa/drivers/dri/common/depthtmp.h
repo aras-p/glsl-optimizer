@@ -201,7 +201,6 @@ static void TAG(InitDepthPointers)(struct gl_renderbuffer *rb)
    rb->GetRow = TAG(ReadDepthSpan);
    rb->GetValues = TAG(ReadDepthPixels);
    rb->PutRow = TAG(WriteDepthSpan);
-   rb->PutRowRGB = NULL;
    rb->PutValues = TAG(WriteDepthPixels);
 }
 

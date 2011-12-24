@@ -526,33 +526,6 @@ static void write_rgba_span_front(struct gl_context *ctx,
    }
 }
 
-/* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span_front(struct gl_context *ctx, 
-				 struct gl_renderbuffer *rb, 
-				 GLuint n, GLint x, GLint y,
-				 const void *values, 
-				 const GLubyte *mask)
-{
-    const GLubyte (*rgb)[3] = (const GLubyte (*)[3])values;
-    WMesaContext pwc = wmesa_context(ctx);
-    GLuint i;
-    
-    (void) ctx;
-    y=FLIP(y);
-    if (mask) {
-	for (i=0; i<n; i++)
-	    if (mask[i])
-		SetPixel(pwc->hDC, x+i, y, RGB(rgb[i][RCOMP], rgb[i][GCOMP], 
-					       rgb[i][BCOMP]));
-    }
-    else {
-	for (i=0; i<n; i++)
-	    SetPixel(pwc->hDC, x+i, y, RGB(rgb[i][RCOMP], rgb[i][GCOMP], 
-					   rgb[i][BCOMP]));
-    }
-    
-}
-
 
 /* Write an array of RGBA pixels with a boolean mask. */
 static void write_rgba_pixels_front(struct gl_context *ctx, 
@@ -655,35 +628,6 @@ static void write_rgba_span_32(struct gl_context *ctx,
     }
 }
 
-
-/* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span_32(struct gl_context *ctx, 
-			      struct gl_renderbuffer *rb, 
-			      GLuint n, GLint x, GLint y,
-			      const void *values, 
-			      const GLubyte *mask)
-{
-    const GLubyte (*rgb)[3] = (const GLubyte (*)[3])values;
-    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
-    GLuint i;
-    LPDWORD lpdw;
-
-    (void) ctx;
-    
-    y=FLIP(y);
-    lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
-    if (mask) {
-	for (i=0; i<n; i++)
-	    if (mask[i])
-                lpdw[i] = BGR32(rgb[i][RCOMP], rgb[i][GCOMP], 
-				rgb[i][BCOMP]);
-    }
-    else {
-	for (i=0; i<n; i++)
-                *lpdw++ = BGR32(rgb[i][RCOMP], rgb[i][GCOMP], 
-				rgb[i][BCOMP]);
-    }
-}
 
 /* Write an array of RGBA pixels with a boolean mask. */
 static void write_rgba_pixels_32(struct gl_context *ctx, 
@@ -794,40 +738,6 @@ static void write_rgba_span_24(struct gl_context *ctx,
 }
 
 
-/* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span_24(struct gl_context *ctx, 
-			      struct gl_renderbuffer *rb, 
-			      GLuint n, GLint x, GLint y,
-			      const void *values, 
-			      const GLubyte *mask)
-{
-    const GLubyte (*rgb)[3] = (const GLubyte (*)[3])values;
-    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
-    GLuint i;
-    LPBYTE lpb;
-
-    (void) ctx;
-    
-    y=FLIP(y);
-    lpb = ((LPBYTE)(pwfb->pbPixels + pwfb->ScanWidth * y)) + (3 * x);
-    if (mask) {
-	for (i=0; i<n; i++)
-	    if (mask[i]) {
-            lpb[3*i] = rgb[i][BCOMP];
-            lpb[3*i+1] = rgb[i][GCOMP];
-            lpb[3*i+2] = rgb[i][RCOMP];
-	    }
-    }
-    else {
-    	for (i=0; i<n; i++) {
-    		*lpb++ = rgb[i][BCOMP];
-    		*lpb++ = rgb[i][GCOMP];
-    		*lpb++ = rgb[i][RCOMP];
-    	}
-    }
-}
-
-
 /* Write an array of RGBA pixels with a boolean mask. */
 static void write_rgba_pixels_24(struct gl_context *ctx, 
 				 struct gl_renderbuffer *rb,
@@ -928,35 +838,6 @@ static void write_rgba_span_16(struct gl_context *ctx,
     }
 }
 
-
-/* Write a horizontal span of RGB color pixels with a boolean mask. */
-static void write_rgb_span_16(struct gl_context *ctx, 
-			      struct gl_renderbuffer *rb, 
-			      GLuint n, GLint x, GLint y,
-			      const void *values, 
-			      const GLubyte *mask)
-{
-    const GLubyte (*rgb)[3] = (const GLubyte (*)[3])values;
-    WMesaFramebuffer pwfb = wmesa_framebuffer(ctx->DrawBuffer);
-    GLuint i;
-    LPWORD lpw;
-
-    (void) ctx;
-    
-    y=FLIP(y);
-    lpw = ((LPWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
-    if (mask) {
-	for (i=0; i<n; i++)
-	    if (mask[i])
-                lpw[i] = BGR16(rgb[i][RCOMP], rgb[i][GCOMP], 
-			       rgb[i][BCOMP]);
-    }
-    else {
-	for (i=0; i<n; i++)
-                *lpw++ = BGR16(rgb[i][RCOMP], rgb[i][GCOMP], 
-			       rgb[i][BCOMP]);
-    }
-}
 
 
 /* Write an array of RGBA pixels with a boolean mask. */
@@ -1073,7 +954,6 @@ wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	switch(pixelformat) {
 	case PF_5R6G5B:
 	    rb->PutRow = write_rgba_span_16;
-	    rb->PutRowRGB = write_rgb_span_16;
 	    rb->PutValues = write_rgba_pixels_16;
 	    rb->GetRow = read_rgba_span_16;
 	    rb->GetValues = read_rgba_pixels_16;
@@ -1082,7 +962,6 @@ wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 		if (cColorBits == 24)
 		{
 		    rb->PutRow = write_rgba_span_24;
-		    rb->PutRowRGB = write_rgb_span_24;
 		    rb->PutValues = write_rgba_pixels_24;
 		    rb->GetRow = read_rgba_span_24;
 		    rb->GetValues = read_rgba_pixels_24;
@@ -1090,7 +969,6 @@ wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 		else
 		{
                     rb->PutRow = write_rgba_span_32;
-                    rb->PutRowRGB = write_rgb_span_32;
                     rb->PutValues = write_rgba_pixels_32;
                     rb->GetRow = read_rgba_span_32;
                     rb->GetValues = read_rgba_pixels_32;
@@ -1103,7 +981,6 @@ wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
     else {
         /* front buffer (actual Windows window) */
 	rb->PutRow = write_rgba_span_front;
-	rb->PutRowRGB = write_rgb_span_front;
 	rb->PutValues = write_rgba_pixels_front;
 	rb->GetRow = read_rgba_span_front;
 	rb->GetValues = read_rgba_pixels_front;

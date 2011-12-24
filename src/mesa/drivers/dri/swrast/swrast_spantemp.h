@@ -188,47 +188,6 @@ NAME(put_row)( struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 static void
-NAME(put_row_rgb)( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                   GLuint count, GLint x, GLint y,
-                   const void *values, const GLubyte mask[] )
-{
-#ifdef SPAN_VARS
-   SPAN_VARS
-#endif
-   const RB_TYPE (*src)[3] = (const RB_TYPE (*)[3]) values;
-   GLuint i;
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            RB_TYPE row[4];
-            INIT_PIXEL_PTR(pixel, x, y);
-#ifdef STORE_PIXEL_RGB
-            STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
-#else
-            STORE_PIXEL(pixel, x + i, y, src[i]);
-#endif
-            PUT_PIXEL(ctx, x + i, YFLIP(xrb, y), pixel);
-         }
-      }
-   }
-   else {
-      char *row = swrast_drawable(ctx->DrawBuffer)->row;
-      INIT_PIXEL_PTR(pixel, x, y);
-      for (i = 0; i < count; i++) {
-#ifdef STORE_PIXEL_RGB
-         STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
-#else
-         STORE_PIXEL(pixel, x + i, y, src[i]);
-#endif
-         INC_PIXEL_PTR(pixel);
-      }
-      PUT_ROW( ctx, x, YFLIP(xrb, y), count, row );
-   }
-   (void) rb;
-}
-
-
-static void
 NAME(put_values)( struct gl_context *ctx, struct gl_renderbuffer *rb,
                   GLuint count, const GLint x[], const GLint y[],
                   const void *values, const GLubyte mask[] )

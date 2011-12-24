@@ -78,7 +78,6 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->GetRow = NULL;
    rb->GetValues = NULL;
    rb->PutRow = NULL;
-   rb->PutRowRGB = NULL;
    rb->PutValues = NULL;
 }
 

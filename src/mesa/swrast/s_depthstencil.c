@@ -303,7 +303,6 @@ new_z24_renderbuffer_wrapper(struct gl_context *ctx,
    z24rb->GetRow = get_row_z24;
    z24rb->GetValues = get_values_z24;
    z24rb->PutRow = put_row_z24;
-   z24rb->PutRowRGB = NULL;
    z24rb->PutValues = put_values_z24;
 
    return z24rb;
@@ -457,7 +456,6 @@ new_z32f_renderbuffer_wrapper(struct gl_context *ctx,
    z32frb->GetRow = get_row_z32f;
    z32frb->GetValues = get_values_z32f;
    z32frb->PutRow = put_row_z32f;
-   z32frb->PutRowRGB = NULL;
    z32frb->PutValues = put_values_z32f;
 
    return z32frb;
@@ -709,7 +707,6 @@ new_s8_renderbuffer_wrapper(struct gl_context *ctx, struct gl_renderbuffer *dsrb
    s8rb->GetRow = get_row_s8;
    s8rb->GetValues = get_values_s8;
    s8rb->PutRow = put_row_s8;
-   s8rb->PutRowRGB = NULL;
    s8rb->PutValues = put_values_s8;
 
    return s8rb;

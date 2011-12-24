@@ -177,7 +177,6 @@ static void TAG(InitStencilPointers)(struct gl_renderbuffer *rb)
    rb->GetRow = TAG(ReadStencilSpan);
    rb->GetValues = TAG(ReadStencilPixels);
    rb->PutRow = TAG(WriteStencilSpan);
-   rb->PutRowRGB = NULL;
    rb->PutValues = TAG(WriteStencilPixels);
 }
 

@@ -431,26 +431,6 @@ put_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                   GLint x, GLint y, const void *values, const GLubyte *mask)
-{
-   /* note: incoming values are RGB+A! */
-   const GLubyte *src = (const GLubyte *) values;
-   GLubyte *dst = (GLubyte *) rb->Data + 3 * (y * rb->RowStride + x);
-   GLuint i;
-   ASSERT(rb->Format == MESA_FORMAT_RGB888);
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         dst[i * 3 + 0] = src[i * 3 + 0];
-         dst[i * 3 + 1] = src[i * 3 + 1];
-         dst[i * 3 + 2] = src[i * 3 + 2];
-      }
-   }
-}
-
-
-static void
 put_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
@@ -518,28 +498,6 @@ put_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
 
 
 static void
-put_row_rgb_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                   GLint x, GLint y, const void *values, const GLubyte *mask)
-{
-   /* Store RGB values in RGBA buffer */
-   const GLubyte *src = (const GLubyte *) values;
-   GLubyte *dst = (GLubyte *) rb->Data + 4 * (y * rb->RowStride + x);
-   GLuint i;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888 ||
-          rb->Format == MESA_FORMAT_RGBA8888_REV);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
-         dst[i * 4 + 0] = src[i * 3 + 0];
-         dst[i * 4 + 1] = src[i * 3 + 1];
-         dst[i * 4 + 2] = src[i * 3 + 2];
-         dst[i * 4 + 3] = 0xff;
-      }
-   }
-}
-
-
-static void
 put_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                   const GLint x[], const GLint y[], const void *values,
                   const GLubyte *mask)
@@ -594,31 +552,6 @@ put_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
             dst[i * 4 + 1] = src[i * 4 + 1];
             dst[i * 4 + 2] = src[i * 4 + 2];
             dst[i * 4 + 3] = src[i * 4 + 3];
-         }
-      }
-   }
-   else {
-      memcpy(dst, src, 4 * count * sizeof(GLushort));
-   }
-}
-
-
-static void
-put_row_rgb_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                    GLint x, GLint y, const void *values, const GLubyte *mask)
-{
-   /* Put RGB values in RGBA buffer */
-   const GLushort *src = (const GLushort *) values;
-   GLushort *dst = (GLushort *) rb->Data + 4 * (y * rb->RowStride + x);
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
-   if (mask) {
-      GLuint i;
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            dst[i * 4 + 0] = src[i * 3 + 0];
-            dst[i * 4 + 1] = src[i * 3 + 1];
-            dst[i * 4 + 2] = src[i * 3 + 2];
-            dst[i * 4 + 3] = 0xffff;
          }
       }
    }
@@ -1018,7 +951,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_ubyte3;
       rb->GetValues = get_values_ubyte3;
       rb->PutRow = put_row_ubyte3;
-      rb->PutRowRGB = put_row_rgb_ubyte3;
       rb->PutValues = put_values_ubyte3;
       break;
 
@@ -1027,7 +959,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_UNSIGNED_BYTE;
       rb->GetValues = get_values_ubyte4;
       rb->PutRow = put_row_ubyte4;
-      rb->PutRowRGB = put_row_rgb_ubyte4;
       rb->PutValues = put_values_ubyte4;
       break;
 
@@ -1036,7 +967,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_r8;
       rb->GetRow = get_row_r8;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = put_row_generic;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1045,7 +975,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_rg88;
       rb->GetRow = get_row_rg88;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = put_row_generic;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1054,7 +983,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_r16;
       rb->GetRow = get_row_r16;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = put_row_generic;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1063,7 +991,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetValues = get_values_rg1616;
       rb->GetRow = get_row_rg1616;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = put_row_generic;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1071,7 +998,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_SHORT;
       rb->GetValues = get_values_ushort4;
       rb->PutRow = put_row_ushort4;
-      rb->PutRowRGB = put_row_rgb_ushort4;
       rb->PutValues = put_values_ushort4;
       break;
 
@@ -1079,7 +1005,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_UNSIGNED_BYTE;
       rb->GetValues = get_values_ubyte;
       rb->PutRow = put_row_ubyte;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_ubyte;
       break;
 
@@ -1087,7 +1012,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_UNSIGNED_SHORT;
       rb->GetValues = get_values_ushort;
       rb->PutRow = put_row_ushort;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_ushort;
       break;
 
@@ -1097,7 +1021,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_UNSIGNED_INT;
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_uint;
       break;
 
@@ -1106,7 +1029,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_uint;
       break;
 
@@ -1114,7 +1036,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_generic;
       rb->GetValues = get_values_generic;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1122,7 +1043,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_i_float32;
       rb->GetValues = get_values_i_float32;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1130,7 +1050,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_l_float32;
       rb->GetValues = get_values_l_float32;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1138,7 +1057,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_a_float32;
       rb->GetValues = get_values_a_float32;
       rb->PutRow = put_row_a_float32;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_a_float32;
       break;
 
@@ -1146,7 +1064,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_rg_float32;
       rb->GetValues = get_values_rg_float32;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_generic;
       break;
 
@@ -1154,7 +1071,6 @@ _swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->GetRow = get_row_r_float32;
       rb->GetValues = get_values_r_float32;
       rb->PutRow = put_row_generic;
-      rb->PutRowRGB = NULL;
       rb->PutValues = put_values_generic;
       break;
 

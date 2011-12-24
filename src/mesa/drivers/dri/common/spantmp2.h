@@ -475,46 +475,6 @@ static void TAG(WriteRGBASpan)( struct gl_context *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBSpan)( struct gl_context *ctx,
-                               struct gl_renderbuffer *rb,
-			       GLuint n, GLint x, GLint y,
-			       const void *values, const GLubyte mask[] )
-{
-   (void) ctx;
-
-   HW_WRITE_LOCK()
-      {
-         const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
-	 GLint x1;
-	 GLint n1;
-	 LOCAL_VARS;
-
-	 y = Y_FLIP(y);
-
-	 HW_WRITE_CLIPLOOP()
-	    {
-	       GLint i = 0;
-	       CLIPSPAN(x,y,n,x1,n1,i);
-
-	       if (DBG) fprintf(stderr, "WriteRGBSpan %d..%d (x1 %d)\n",
-				(int)i, (int)n1, (int)x1);
-
-	       if (mask)
-	       {
-		  for (;n1>0;i++,x1++,n1--)
-		     if (mask[i])
-			WRITE_RGBA( x1, y, rgb[i][0], rgb[i][1], rgb[i][2], 255 );
-	       }
-	       else
-	       {
-		  for (;n1>0;i++,x1++,n1--)
-		     WRITE_RGBA( x1, y, rgb[i][0], rgb[i][1], rgb[i][2], 255 );
-	       }
-	    }
-	 HW_ENDCLIPLOOP();
-      }
-   HW_WRITE_UNLOCK();
-}
 
 static void TAG(WriteRGBAPixels)( struct gl_context *ctx,
                                   struct gl_renderbuffer *rb,
@@ -763,7 +723,6 @@ static void TAG(ReadRGBAPixels)( struct gl_context *ctx,
 static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 {
    rb->PutRow = TAG(WriteRGBASpan);
-   rb->PutRowRGB = TAG(WriteRGBSpan);
    rb->PutValues = TAG(WriteRGBAPixels);
    rb->GetValues = TAG(ReadRGBAPixels);
 

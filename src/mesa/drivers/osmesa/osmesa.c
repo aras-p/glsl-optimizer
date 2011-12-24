@@ -805,21 +805,18 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
          rb->GetRow = get_row_RGBA8;
          rb->GetValues = get_values_RGBA8;
          rb->PutRow = put_row_RGBA8;
-         rb->PutRowRGB = put_row_rgb_RGBA8;
          rb->PutValues = put_values_RGBA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->GetRow = get_row_RGBA16;
          rb->GetValues = get_values_RGBA16;
          rb->PutRow = put_row_RGBA16;
-         rb->PutRowRGB = put_row_rgb_RGBA16;
          rb->PutValues = put_values_RGBA16;
       }
       else {
          rb->GetRow = get_row_RGBA32;
          rb->GetValues = get_values_RGBA32;
          rb->PutRow = put_row_RGBA32;
-         rb->PutRowRGB = put_row_rgb_RGBA32;
          rb->PutValues = put_values_RGBA32;
       }
    }
@@ -828,21 +825,18 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
          rb->GetRow = get_row_BGRA8;
          rb->GetValues = get_values_BGRA8;
          rb->PutRow = put_row_BGRA8;
-         rb->PutRowRGB = put_row_rgb_BGRA8;
          rb->PutValues = put_values_BGRA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->GetRow = get_row_BGRA16;
          rb->GetValues = get_values_BGRA16;
          rb->PutRow = put_row_BGRA16;
-         rb->PutRowRGB = put_row_rgb_BGRA16;
          rb->PutValues = put_values_BGRA16;
       }
       else {
          rb->GetRow = get_row_BGRA32;
          rb->GetValues = get_values_BGRA32;
          rb->PutRow = put_row_BGRA32;
-         rb->PutRowRGB = put_row_rgb_BGRA32;
          rb->PutValues = put_values_BGRA32;
       }
    }
@@ -851,21 +845,18 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
          rb->GetRow = get_row_ARGB8;
          rb->GetValues = get_values_ARGB8;
          rb->PutRow = put_row_ARGB8;
-         rb->PutRowRGB = put_row_rgb_ARGB8;
          rb->PutValues = put_values_ARGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->GetRow = get_row_ARGB16;
          rb->GetValues = get_values_ARGB16;
          rb->PutRow = put_row_ARGB16;
-         rb->PutRowRGB = put_row_rgb_ARGB16;
          rb->PutValues = put_values_ARGB16;
       }
       else {
          rb->GetRow = get_row_ARGB32;
          rb->GetValues = get_values_ARGB32;
          rb->PutRow = put_row_ARGB32;
-         rb->PutRowRGB = put_row_rgb_ARGB32;
          rb->PutValues = put_values_ARGB32;
       }
    }
@@ -874,21 +865,18 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
          rb->GetRow = get_row_RGB8;
          rb->GetValues = get_values_RGB8;
          rb->PutRow = put_row_RGB8;
-         rb->PutRowRGB = put_row_rgb_RGB8;
          rb->PutValues = put_values_RGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->GetRow = get_row_RGB16;
          rb->GetValues = get_values_RGB16;
          rb->PutRow = put_row_RGB16;
-         rb->PutRowRGB = put_row_rgb_RGB16;
          rb->PutValues = put_values_RGB16;
       }
       else {
          rb->GetRow = get_row_RGB32;
          rb->GetValues = get_values_RGB32;
          rb->PutRow = put_row_RGB32;
-         rb->PutRowRGB = put_row_rgb_RGB32;
          rb->PutValues = put_values_RGB32;
       }
    }
@@ -897,21 +885,18 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
          rb->GetRow = get_row_BGR8;
          rb->GetValues = get_values_BGR8;
          rb->PutRow = put_row_BGR8;
-         rb->PutRowRGB = put_row_rgb_BGR8;
          rb->PutValues = put_values_BGR8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->GetRow = get_row_BGR16;
          rb->GetValues = get_values_BGR16;
          rb->PutRow = put_row_BGR16;
-         rb->PutRowRGB = put_row_rgb_BGR16;
          rb->PutValues = put_values_BGR16;
       }
       else {
          rb->GetRow = get_row_BGR32;
          rb->GetValues = get_values_BGR32;
          rb->PutRow = put_row_BGR32;
-         rb->PutRowRGB = put_row_rgb_BGR32;
          rb->PutValues = put_values_BGR32;
       }
    }
@@ -920,7 +905,6 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_RGB_565;
       rb->GetValues = get_values_RGB_565;
       rb->PutRow = put_row_RGB_565;
-      rb->PutRowRGB = put_row_rgb_RGB_565;
       rb->PutValues = put_values_RGB_565;
    }
    else {
