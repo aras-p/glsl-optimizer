@@ -26,6 +26,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/formats.h"
+#include "main/format_unpack.h"
 #include "main/format_pack.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -544,6 +545,74 @@ _swrast_depth_clamp_span( struct gl_context *ctx, SWspan *span )
 	 zValues[i] = min;
       if (zValues[i] > max)
 	 zValues[i] = max;
+   }
+}
+
+
+/**
+ * Get array of 16-bit z values from the depth buffer.  With clipping.
+ */
+static void
+get_z16_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
+               GLuint count, const GLint x[], const GLint y[],
+               GLushort zbuffer[])
+{
+   const GLint w = rb->Width, h = rb->Height;
+   const GLubyte *map = (const GLubyte *) rb->Data;
+   GLuint i;
+
+   if (rb->Format == MESA_FORMAT_Z16) {
+      const GLuint rowStride = rb->RowStride * 2;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            zbuffer[i] = *((GLushort *) (map + y[i] * rowStride + x[i] * 2));
+         }
+      }
+   }
+   else {
+      const GLuint bpp = _mesa_get_format_bytes(rb->Format);
+      const GLuint rowStride = rb->RowStride * bpp;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            GLuint d32;
+            const GLubyte *src = map + y[i] * rowStride + x[i] * bpp;
+            _mesa_unpack_uint_z_row(rb->Format, 1, src, &d32);
+            zbuffer[i] = d32 >> 16;
+         }
+      }
+   }
+}
+
+
+/**
+ * Get array of 32-bit z values from the depth buffer.  With clipping.
+ */
+static void
+get_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
+               GLuint count, const GLint x[], const GLint y[],
+               GLuint zbuffer[])
+{
+   const GLint w = rb->Width, h = rb->Height;
+   const GLubyte *map = (const GLubyte *) rb->Data;
+   GLuint i;
+
+   if (rb->Format == MESA_FORMAT_Z32) {
+      const GLuint rowStride = rb->RowStride * 4;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            zbuffer[i] = *((GLuint *) (map + y[i] * rowStride + x[i] * 4));
+         }
+      }
+   }
+   else {
+      const GLuint bpp = _mesa_get_format_bytes(rb->Format);
+      const GLuint rowStride = rb->RowStride * bpp;
+      for (i = 0; i < count; i++) {
+         if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
+            const GLubyte *src = map + y[i] * rowStride+ x[i] * bpp;
+            _mesa_unpack_uint_z_row(rb->Format, 1, src, &zbuffer[i]);
+         }
+      }
    }
 }
 
@@ -1129,14 +1198,14 @@ depth_test_pixels( struct gl_context *ctx, SWspan *span )
       /* read depth values from buffer, test, write back */
       if (rb->DataType == GL_UNSIGNED_SHORT) {
          GLushort zbuffer[MAX_WIDTH];
-         _swrast_get_values(ctx, rb, count, x, y, zbuffer, sizeof(GLushort));
+         get_z16_values(ctx, rb, count, x, y, zbuffer);
          depth_test_span16(ctx, count, zbuffer, z, mask);
          rb->PutValues(ctx, rb, count, x, y, zbuffer, mask);
       }
       else {
          GLuint zbuffer[MAX_WIDTH];
          ASSERT(rb->DataType == GL_UNSIGNED_INT);
-         _swrast_get_values(ctx, rb, count, x, y, zbuffer, sizeof(GLuint));
+         get_z32_values(ctx, rb, count, x, y, zbuffer);
          depth_test_span32(ctx, count, zbuffer, z, mask);
          rb->PutValues(ctx, rb, count, x, y, zbuffer, mask);
       }
@@ -1183,8 +1252,8 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
       /* get 16-bit values */
       GLushort zbuffer16[MAX_WIDTH], *zbuffer;
       if (span->arrayMask & SPAN_XY) {
-         _swrast_get_values(ctx, rb, count, span->array->x, span->array->y,
-                            zbuffer16, sizeof(GLushort));
+         get_z16_values(ctx, rb, count, span->array->x, span->array->y,
+                        zbuffer16);
          zbuffer = zbuffer16;
       }
       else {
@@ -1211,8 +1280,8 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
       GLuint zbuffer32[MAX_WIDTH], *zbuffer;
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       if (span->arrayMask & SPAN_XY) {
-         _swrast_get_values(ctx, rb, count, span->array->x, span->array->y,
-                            zbuffer32, sizeof(GLuint));
+         get_z32_values(ctx, rb, count, span->array->x, span->array->y,
+                        zbuffer32);
          zbuffer = zbuffer32;
       }
       else {
