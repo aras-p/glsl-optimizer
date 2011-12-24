@@ -617,7 +617,6 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       GLint i;
 
       depthRb = ctx->DrawBuffer->_DepthBuffer;
-      stencilRb = ctx->DrawBuffer->_StencilBuffer;
 
       for (i = 0; i < height; i++) {
          const GLuint *depthStencilSrc = (const GLuint *)
