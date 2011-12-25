@@ -62,6 +62,11 @@ struct st_transform_feedback_object {
    struct pipe_stream_output_target *draw_count;
 };
 
+static INLINE struct st_transform_feedback_object *
+st_transform_feedback_object(struct gl_transform_feedback_object *obj)
+{
+   return (struct st_transform_feedback_object *) obj;
+}
 
 static struct gl_transform_feedback_object *
 st_new_transform_feedback(struct gl_context *ctx, GLuint name)
@@ -83,7 +88,7 @@ st_delete_transform_feedback(struct gl_context *ctx,
                              struct gl_transform_feedback_object *obj)
 {
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
    unsigned i;
 
    pipe_so_target_reference(&sobj->draw_count, NULL);
@@ -109,7 +114,7 @@ st_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
    unsigned i, max_num_targets;
 
    max_num_targets = MIN2(Elements(sobj->base.Buffers),
@@ -163,7 +168,7 @@ st_resume_transform_feedback(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
 
    cso_set_stream_outputs(st->cso_context, sobj->num_targets, sobj->targets,
                           ~0);
@@ -174,7 +179,7 @@ static struct pipe_stream_output_target *
 st_transform_feedback_get_draw_target(struct gl_transform_feedback_object *obj)
 {
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
    unsigned i;
 
    for (i = 0; i < Elements(sobj->targets); i++) {
@@ -194,7 +199,7 @@ st_end_transform_feedback(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
 
    cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
@@ -208,7 +213,7 @@ st_transform_feedback_draw_init(struct gl_transform_feedback_object *obj,
                                 struct pipe_draw_info *out)
 {
    struct st_transform_feedback_object *sobj =
-         (struct st_transform_feedback_object*)obj;
+         st_transform_feedback_object(obj);
 
    out->count_from_stream_output = sobj->draw_count;
 }
