@@ -7927,7 +7927,9 @@
 
 <!-- ARB extension number 55 is a GLX extension. -->
 <!-- ARB extension number 56 is a WGL extension. -->
-<!-- 57. GL_ARB_uniform_buffer_object -->
+
+<xi:include href="ARB_uniform_buffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <!-- 58. GL_ARB_compatibility -->
 
 <xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
