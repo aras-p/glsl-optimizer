@@ -624,22 +624,6 @@ _mesa_material_bitmask( struct gl_context *ctx, GLenum face, GLenum pname,
 
 
 
-/* Perform a straight copy between materials.
- */
-void
-_mesa_copy_materials( struct gl_material *dst,
-                      const struct gl_material *src,
-                      GLuint bitmask )
-{
-   int i;
-
-   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
-      if (bitmask & (1<<i))
-	 COPY_4FV( dst->Attrib[i], src->Attrib[i] );
-}
-
-
-
 /* Update derived values following a change in ctx->Light.Material
  */
 void

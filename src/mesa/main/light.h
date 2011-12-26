@@ -123,10 +123,6 @@ extern void _mesa_update_tnl_spaces( struct gl_context *ctx, GLuint new_state );
 extern void _mesa_update_material( struct gl_context *ctx,
                                    GLuint bitmask );
 
-extern void _mesa_copy_materials( struct gl_material *dst,
-				  const struct gl_material *src,
-				  GLuint bitmask );
-
 extern void _mesa_update_color_material( struct gl_context *ctx,
                                          const GLfloat rgba[4] );
 
