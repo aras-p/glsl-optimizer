@@ -959,6 +959,43 @@ case $ARCH in
         fi
 	;;
 
+	'Haiku')
+		if [ $STATIC = 1 ] ; then
+			LIBNAME="lib${LIBNAME}.a"
+			if [ "x$LINK" = "x" ] ; then
+				# -linker was not specified so set default link command now
+				if [ $CPLUSPLUS = 1 ] ; then
+					LINK=g++
+				else
+					LINK=gcc
+				fi
+			fi
+
+			OPTS="-ru"
+			if [ "${ALTOPTS}" ] ; then
+				OPTS=${ALTOPTS}
+			fi
+
+			echo "mklib: Making static library for Haiku: " ${LIBNAME}
+
+			# expand .a into .o files
+			NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+			# make static lib
+			FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+			# remove temporary extracted .o files
+			rm -rf ${LIBNAME}.obj
+        else
+			LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+			OPTS="-shared"
+
+			echo "mklib: Making shared library for Haiku: " ${LIBNAME}
+			${LINK} ${OPTS} ${LDFLAGS} ${OBJECTS} ${DEPS} -o ${LIBNAME}
+			FINAL_LIBS="${LIBNAME}"
+		fi
+	;;
+
     'example')
 	# If you're adding support for a new architecture, you can
 	# start with this:
