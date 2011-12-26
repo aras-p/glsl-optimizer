@@ -683,8 +683,6 @@ struct gl_light
    GLfloat _MatAmbient[2][3];	/**< material ambient * light ambient */
    GLfloat _MatDiffuse[2][3];	/**< material diffuse * light diffuse */
    GLfloat _MatSpecular[2][3];	/**< material spec * light specular */
-   GLfloat _dli;		/**< CI diffuse light intensity */
-   GLfloat _sli;		/**< CI specular light intensity */
    /*@}*/
 };
 

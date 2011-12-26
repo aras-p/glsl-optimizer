@@ -105,13 +105,12 @@ userclip_point( struct gl_context *ctx, const GLfloat v[] )
 
 
 /**
- * Compute lighting for the raster position.  Both RGB and CI modes computed.
+ * Compute lighting for the raster position.  RGB modes computed.
  * \param ctx the context
  * \param vertex vertex location
  * \param normal normal vector
  * \param Rcolor returned color
  * \param Rspec returned specular color (if separate specular enabled)
- * \param Rindex returned color index
  */
 static void
 shade_rastpos(struct gl_context *ctx,
@@ -123,7 +122,6 @@ shade_rastpos(struct gl_context *ctx,
    /*const*/ GLfloat (*base)[3] = ctx->Light._BaseColor;
    const struct gl_light *light;
    GLfloat diffuseColor[4], specularColor[4];  /* for RGB mode only */
-   GLfloat diffuseCI = 0.0, specularCI = 0.0;  /* for CI mode only */
 
    _mesa_validate_all_lighting_tables( ctx );
 
@@ -191,7 +189,6 @@ shade_rastpos(struct gl_context *ctx,
       /* Ambient + diffuse */
       COPY_3V(diffuseContrib, light->_MatAmbient[0]);
       ACC_SCALE_SCALAR_3V(diffuseContrib, n_dot_VP, light->_MatDiffuse[0]);
-      diffuseCI += n_dot_VP * light->_dli * attenuation;
 
       /* Specular */
       {
@@ -232,8 +229,6 @@ shade_rastpos(struct gl_context *ctx,
                   ACC_SCALE_SCALAR_3V( diffuseContrib, spec_coef,
                                        light->_MatSpecular[0]);
                }
-               /*assert(light->_sli > 0.0);*/
-               specularCI += spec_coef * light->_sli * attenuation;
 	    }
 	 }
       }
