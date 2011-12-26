@@ -189,8 +189,12 @@ _swrast_map_teximage(struct gl_context *ctx,
    stride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
    _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
 
-   assert(swImage->Buffer);
-
+   if (!swImage->Buffer) {
+      /* probably ran out of memory when allocating tex mem */
+      *mapOut = NULL;
+      return;
+   }
+      
    map = swImage->Buffer;
 
    if (texImage->TexObject->Target == GL_TEXTURE_3D ||
