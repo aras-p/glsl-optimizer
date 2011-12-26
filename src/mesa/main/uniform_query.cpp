@@ -648,7 +648,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
       if (offset >= uni->array_elements)
 	 return;
 
-      count = MIN2(count, (uni->array_elements - offset));
+      count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
@@ -797,7 +797,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
       if (offset >= uni->array_elements)
 	 return;
 
-      count = MIN2(count, (uni->array_elements - offset));
+      count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
