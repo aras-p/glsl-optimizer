@@ -122,14 +122,21 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
       int buffer = linked_xfb_info->Outputs[i].OutputBuffer;
       uint16_t decl = 0;
       int vert_result = linked_xfb_info->Outputs[i].OutputRegister;
+      unsigned component_mask =
+         (1 << linked_xfb_info->Outputs[i].NumComponents) - 1;
+
+      /* gl_PointSize is stored in VERT_RESULT_PSIZ.w. */
+      if (vert_result == VERT_RESULT_PSIZ) {
+         assert(linked_xfb_info->Outputs[i].NumComponents == 1);
+         component_mask <<= 3;
+      }
 
       buffer_mask |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
       decl |= vue_map->vert_result_to_slot[vert_result] <<
 	 SO_DECL_REGISTER_INDEX_SHIFT;
-      decl |= ((1 << linked_xfb_info->Outputs[i].NumComponents) - 1) <<
-	 SO_DECL_COMPONENT_MASK_SHIFT;
+      decl |= component_mask << SO_DECL_COMPONENT_MASK_SHIFT;
 
       /* This assert should be true until GL_ARB_transform_feedback_instanced
        * is added and we start using the hole flag.

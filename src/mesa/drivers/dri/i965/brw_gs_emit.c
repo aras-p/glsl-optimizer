@@ -446,8 +446,13 @@ gen6_sol_program(struct brw_gs_compile *c, struct brw_gs_prog_key *key,
             struct brw_reg vertex_slot = c->reg.vertex[vertex];
             vertex_slot.nr += slot / 2;
             vertex_slot.subnr = (slot % 2) * 16;
+            /* gl_PointSize is stored in VERT_RESULT_PSIZ.w. */
+            vertex_slot.dw1.bits.swizzle = vert_result == VERT_RESULT_PSIZ
+               ? BRW_SWIZZLE_WWWW : BRW_SWIZZLE_NOOP;
+            brw_set_access_mode(p, BRW_ALIGN_16);
             brw_MOV(p, stride(c->reg.header, 4, 4, 1),
                     retype(vertex_slot, BRW_REGISTER_TYPE_UD));
+            brw_set_access_mode(p, BRW_ALIGN_1);
             brw_svb_write(p,
                           final_write ? c->reg.temp : brw_null_reg(), /* dest */
                           1, /* msg_reg_nr */
