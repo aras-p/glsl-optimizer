@@ -701,6 +701,8 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
          return;
       }
 
+      vbo_draw_method(exec, DRAW_BEGIN_END);
+
       if (ctx->Driver.PrepareExecBegin)
 	 ctx->Driver.PrepareExecBegin(ctx);
 

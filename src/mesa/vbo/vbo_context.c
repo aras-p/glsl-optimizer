@@ -176,17 +176,14 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
    {
       GLuint i;
 
-      /* When no vertex program, pull in the material attributes in
-       * the generic range.
-       */
-      for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) 
+      /* identity mapping */
+      for (i = 0; i < Elements(vbo->map_vp_none); i++) 
 	 vbo->map_vp_none[i] = i;
+      /* map material attribs to generic slots */
       for (i = 0; i < NR_MAT_ATTRIBS; i++) 
 	 vbo->map_vp_none[VERT_ATTRIB_GENERIC(i)]
             = VBO_ATTRIB_MAT_FRONT_AMBIENT + i;
-      for (i = NR_MAT_ATTRIBS; i < VERT_ATTRIB_GENERIC_MAX; i++)
-	 vbo->map_vp_none[VERT_ATTRIB_GENERIC(i)] = i;
-      
+
       for (i = 0; i < Elements(vbo->map_vp_arb); i++)
 	 vbo->map_vp_arb[i] = i;
    }

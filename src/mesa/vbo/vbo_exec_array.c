@@ -558,6 +558,8 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
 
    vbo_bind_arrays(ctx);
 
+   vbo_draw_method(exec, DRAW_ARRAYS);
+
    /* Again... because we may have changed the bitmask of per-vertex varying
     * attributes.  If we regenerate the fixed-function vertex program now
     * we may be able to prune down the number of vertex attributes which we
@@ -772,6 +774,8 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    }
 
    vbo_bind_arrays( ctx );
+
+   vbo_draw_method(exec, DRAW_ARRAYS);
 
    /* check for dirty state again */
    if (ctx->NewState)
