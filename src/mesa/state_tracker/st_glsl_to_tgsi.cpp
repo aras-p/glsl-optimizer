@@ -5191,7 +5191,8 @@ st_translate_stream_output_info(struct glsl_to_tgsi_visitor *glsl_to_tgsi,
       so->output[i].register_index =
          outputMapping[info->Outputs[i].OutputRegister];
       so->output[i].register_mask =
-         comps_to_mask[info->Outputs[i].NumComponents];
+         comps_to_mask[info->Outputs[i].NumComponents]
+         << info->Outputs[i].ComponentOffset;
       so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
    }
    so->num_outputs = info->NumOutputs;
