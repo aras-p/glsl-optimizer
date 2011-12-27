@@ -129,6 +129,8 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
       if (vert_result == VERT_RESULT_PSIZ) {
          assert(linked_xfb_info->Outputs[i].NumComponents == 1);
          component_mask <<= 3;
+      } else {
+         component_mask <<= linked_xfb_info->Outputs[i].ComponentOffset;
       }
 
       buffer_mask |= 1 << buffer;

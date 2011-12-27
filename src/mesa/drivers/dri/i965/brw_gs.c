@@ -154,6 +154,13 @@ static void compile_gs_prog( struct brw_context *brw,
 static void populate_key( struct brw_context *brw,
 			  struct brw_gs_prog_key *key )
 {
+   static const unsigned swizzle_for_offset[4] = {
+      BRW_SWIZZLE4(0, 1, 2, 3),
+      BRW_SWIZZLE4(1, 2, 3, 3),
+      BRW_SWIZZLE4(2, 3, 3, 3),
+      BRW_SWIZZLE4(3, 3, 3, 3)
+   };
+
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
 
@@ -207,6 +214,8 @@ static void populate_key( struct brw_context *brw,
          for (i = 0; i < key->num_transform_feedback_bindings; ++i) {
             key->transform_feedback_bindings[i] =
                linked_xfb_info->Outputs[i].OutputRegister;
+            key->transform_feedback_swizzles[i] =
+               swizzle_for_offset[linked_xfb_info->Outputs[i].ComponentOffset];
          }
       }
       /* On Gen6, GS is also used for rasterizer discard. */
