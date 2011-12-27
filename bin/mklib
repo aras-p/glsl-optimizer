@@ -986,7 +986,7 @@ case $ARCH in
 
 			# remove temporary extracted .o files
 			rm -rf ${LIBNAME}.obj
-        else
+		else
 			LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 			OPTS="-shared"
 
