@@ -1606,6 +1606,7 @@ tfeedback_decl::store(struct gl_shader_program *prog,
       info->Outputs[info->NumOutputs].NumComponents = this->vector_elements;
       info->Outputs[info->NumOutputs].OutputBuffer = buffer;
       info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
+      info->Outputs[info->NumOutputs].ComponentOffset = 0;
       ++info->NumOutputs;
       info->BufferStride[buffer] += this->vector_elements;
    }

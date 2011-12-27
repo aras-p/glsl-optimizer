@@ -1839,6 +1839,13 @@ struct gl_transform_feedback_info {
 
       /** offset (in DWORDs) of this output within the interleaved structure */
       unsigned DstOffset;
+
+      /**
+       * Offset into the output register of the data to output.  For example,
+       * if NumComponents is 2 and ComponentOffset is 1, then the data to
+       * offset is in the y and z components of the output register.
+       */
+      unsigned ComponentOffset;
    } Outputs[MAX_PROGRAM_OUTPUTS];
 
    /** Transform feedback varyings used for the linking of this shader program.
