@@ -39,9 +39,7 @@
 #include "atifragshader.h"
 #include "attrib.h"
 #include "blend.h"
-#if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
-#endif
 #include "arrayobj.h"
 #if FEATURE_draw_read_buffer
 #include "buffers.h"
@@ -580,7 +578,6 @@ _mesa_create_exec_table(void)
 #endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
-#if FEATURE_ARB_vertex_buffer_object
    SET_BindBufferARB(exec, _mesa_BindBufferARB);
    SET_BufferDataARB(exec, _mesa_BufferDataARB);
    SET_BufferSubDataARB(exec, _mesa_BufferSubDataARB);
@@ -592,7 +589,6 @@ _mesa_create_exec_table(void)
    SET_IsBufferARB(exec, _mesa_IsBufferARB);
    SET_MapBufferARB(exec, _mesa_MapBufferARB);
    SET_UnmapBufferARB(exec, _mesa_UnmapBufferARB);
-#endif
 
    /* ARB 29. GL_ARB_occlusion_query */
    _mesa_init_queryobj_dispatch(exec);

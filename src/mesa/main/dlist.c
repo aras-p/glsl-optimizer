@@ -40,9 +40,7 @@
 #endif
 #include "config.h"
 #include "mfeatures.h"
-#if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
-#endif
 #include "arrayobj.h"
 #include "context.h"
 #include "dlist.h"
@@ -10184,7 +10182,6 @@ _mesa_create_save_table(void)
 #endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
-#if FEATURE_ARB_vertex_buffer_object
    /* None of the extension's functions get compiled */
    SET_BindBufferARB(table, _mesa_BindBufferARB);
    SET_BufferDataARB(table, _mesa_BufferDataARB);
@@ -10197,7 +10194,6 @@ _mesa_create_save_table(void)
    SET_IsBufferARB(table, _mesa_IsBufferARB);
    SET_MapBufferARB(table, _mesa_MapBufferARB);
    SET_UnmapBufferARB(table, _mesa_UnmapBufferARB);
-#endif
 
 #if FEATURE_queryobj
    _mesa_init_queryobj_dispatch(table); /* glGetQuery, etc */

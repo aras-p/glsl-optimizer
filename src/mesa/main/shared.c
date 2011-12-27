@@ -89,9 +89,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    shared->ShaderObjects = _mesa_NewHashTable();
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    shared->BufferObjects = _mesa_NewHashTable();
-#endif
 
 #if FEATURE_ARB_sampler_objects
    /* GL_ARB_sampler_objects */
@@ -342,10 +340,8 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_delete_ati_fragment_shader(ctx, shared->DefaultFragmentShader);
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    _mesa_HashDeleteAll(shared->BufferObjects, delete_bufferobj_cb, ctx);
    _mesa_DeleteHashTable(shared->BufferObjects);
-#endif
 
 #if FEATURE_EXT_framebuffer_object
    _mesa_HashDeleteAll(shared->FrameBuffers, delete_framebuffer_cb, ctx);
@@ -354,9 +350,7 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_DeleteHashTable(shared->RenderBuffers);
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
-#endif
 
    {
       struct simple_node *node;

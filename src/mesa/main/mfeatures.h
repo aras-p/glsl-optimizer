@@ -124,7 +124,6 @@
 #define FEATURE_ARB_pixel_buffer_object   (FEATURE_GL && FEATURE_EXT_pixel_buffer_object)
 #define FEATURE_ARB_sampler_objects       FEATURE_GL
 #define FEATURE_ARB_sync                  FEATURE_GL
-#define FEATURE_ARB_vertex_buffer_object  1
 
 #define FEATURE_EXT_framebuffer_blit      FEATURE_GL
 #define FEATURE_EXT_framebuffer_object    1

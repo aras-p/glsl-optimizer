@@ -45,9 +45,7 @@
 #include "imports.h"
 #include "context.h"
 #include "mfeatures.h"
-#if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
-#endif
 #include "arrayobj.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -195,11 +193,9 @@ init_array(struct gl_context *ctx,
    array->Normalized = GL_FALSE;
    array->Integer = GL_FALSE;
    array->_ElementSize = size * _mesa_sizeof_type(type);
-#if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */
    _mesa_reference_buffer_object(ctx, &array->BufferObj,
                                  ctx->Shared->NullBufferObj);
-#endif
 }
 
 
