@@ -1376,8 +1376,8 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
 class tfeedback_decl
 {
 public:
-   bool init(struct gl_shader_program *prog, const void *mem_ctx,
-             const char *input);
+   bool init(struct gl_context *ctx, struct gl_shader_program *prog,
+             const void *mem_ctx, const char *input);
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
    bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
                         ir_variable *output_var);
@@ -1434,6 +1434,13 @@ private:
    unsigned array_index;
 
    /**
+    * Which component to extract from the vertex shader output location that
+    * the linker assigned to this variable.  -1 if all components should be
+    * extracted.
+    */
+   int single_component;
+
+   /**
     * The vertex shader output location that the linker assigned for this
     * variable.  -1 if a location hasn't been assigned yet.
     */
@@ -1462,8 +1469,8 @@ private:
  * reported using linker_error(), and false is returned.
  */
 bool
-tfeedback_decl::init(struct gl_shader_program *prog, const void *mem_ctx,
-                     const char *input)
+tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
+                     const void *mem_ctx, const char *input)
 {
    /* We don't have to be pedantic about what is a valid GLSL variable name,
     * because any variable with an invalid name can't exist in the IR anyway.
@@ -1471,23 +1478,34 @@ tfeedback_decl::init(struct gl_shader_program *prog, const void *mem_ctx,
 
    this->location = -1;
    this->orig_name = input;
+   this->single_component = -1;
 
    const char *bracket = strrchr(input, '[');
 
    if (bracket) {
       this->var_name = ralloc_strndup(mem_ctx, input, bracket - input);
-      if (sscanf(bracket, "[%u]", &this->array_index) == 1) {
-         this->is_array = true;
-         return true;
+      if (sscanf(bracket, "[%u]", &this->array_index) != 1) {
+         linker_error(prog, "Cannot parse transform feedback varying %s", input);
+         return false;
       }
+      this->is_array = true;
    } else {
       this->var_name = ralloc_strdup(mem_ctx, input);
       this->is_array = false;
-      return true;
    }
 
-   linker_error(prog, "Cannot parse transform feedback varying %s", input);
-   return false;
+   /* For drivers that lower gl_ClipDistance to gl_ClipDistanceMESA, we need
+    * to convert a request for gl_ClipDistance[n] into a request for a
+    * component of gl_ClipDistanceMESA[n/4].
+    */
+   if (ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].LowerClipDistance &&
+       strcmp(this->var_name, "gl_ClipDistance") == 0) {
+      this->var_name = "gl_ClipDistanceMESA";
+      this->single_component = this->array_index % 4;
+      this->array_index /= 4;
+   }
+
+   return true;
 }
 
 
@@ -1503,6 +1521,8 @@ tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
    if (x.is_array != y.is_array)
       return false;
    if (x.is_array && x.array_index != y.array_index)
+      return false;
+   if (x.single_component != y.single_component)
       return false;
    return true;
 }
@@ -1602,13 +1622,16 @@ tfeedback_decl::store(struct gl_shader_program *prog,
       return false;
    }
    for (unsigned v = 0; v < this->matrix_columns; ++v) {
+      unsigned num_components =
+         this->single_component >= 0 ? 1 : this->vector_elements;
       info->Outputs[info->NumOutputs].OutputRegister = this->location + v;
-      info->Outputs[info->NumOutputs].NumComponents = this->vector_elements;
+      info->Outputs[info->NumOutputs].NumComponents = num_components;
       info->Outputs[info->NumOutputs].OutputBuffer = buffer;
       info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
-      info->Outputs[info->NumOutputs].ComponentOffset = 0;
+      info->Outputs[info->NumOutputs].ComponentOffset =
+         this->single_component >= 0 ? this->single_component : 0;
       ++info->NumOutputs;
-      info->BufferStride[buffer] += this->vector_elements;
+      info->BufferStride[buffer] += num_components;
    }
 
    info->Varyings[varying].Name = ralloc_strdup(prog, this->orig_name);
@@ -1632,12 +1655,12 @@ tfeedback_decl::store(struct gl_shader_program *prog,
  * is returned.
  */
 static bool
-parse_tfeedback_decls(struct gl_shader_program *prog, const void *mem_ctx,
-                      unsigned num_names, char **varying_names,
-                      tfeedback_decl *decls)
+parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
+                      const void *mem_ctx, unsigned num_names,
+                      char **varying_names, tfeedback_decl *decls)
 {
    for (unsigned i = 0; i < num_names; ++i) {
-      if (!decls[i].init(prog, mem_ctx, varying_names[i]))
+      if (!decls[i].init(ctx, prog, mem_ctx, varying_names[i]))
          return false;
       /* From GL_EXT_transform_feedback:
        *   A program will fail to link if:
@@ -2213,7 +2236,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
       tfeedback_decls = ralloc_array(mem_ctx, tfeedback_decl,
                                      prog->TransformFeedback.NumVarying);
-      if (!parse_tfeedback_decls(prog, mem_ctx, num_tfeedback_decls,
+      if (!parse_tfeedback_decls(ctx, prog, mem_ctx, num_tfeedback_decls,
                                  prog->TransformFeedback.VaryingNames,
                                  tfeedback_decls))
          goto done;
