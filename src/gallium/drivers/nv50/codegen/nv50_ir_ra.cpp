@@ -466,10 +466,10 @@ RegAlloc::buildLiveSets(BasicBlock *bb)
       if (bn->cfg.visit(sequence))
          if (!buildLiveSets(bn))
             return false;
-      if (n++ == 0)
-         bb->liveSet = bn->liveSet;
-      else
+      if (n++ || bb->liveSet.marker)
          bb->liveSet |= bn->liveSet;
+      else
+         bb->liveSet = bn->liveSet;
    }
    if (!n && !bb->liveSet.marker)
       bb->liveSet.fill(0);
