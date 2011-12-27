@@ -58,6 +58,11 @@ target_to_target(GLenum target)
    }
 }
 
+/**
+ * @param for_region Indicates that the caller is
+ *        intel_miptree_create_for_region(). If true, then do not create
+ *        \c stencil_mt.
+ */
 static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
 			      GLenum target,
@@ -66,7 +71,8 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
-			      GLuint depth0)
+			      GLuint depth0,
+			      bool for_region)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
@@ -106,7 +112,8 @@ intel_miptree_create_internal(struct intel_context *intel,
       mt->cpp = 2;
    }
 
-   if (_mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
+   if (!for_region &&
+       _mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
 	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
@@ -199,7 +206,8 @@ intel_miptree_create(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
-				      height0, depth0);
+				      height0, depth0,
+				      false);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -234,7 +242,8 @@ intel_miptree_create_for_region(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
-				      region->width, region->height, 1);
+				      region->width, region->height, 1,
+				      true);
    if (!mt)
       return mt;
 
