@@ -1421,7 +1421,7 @@ private:
    /**
     * The name of the variable, parsed from orig_name.
     */
-   char *var_name;
+   const char *var_name;
 
    /**
     * True if the declaration in orig_name represents an array.
