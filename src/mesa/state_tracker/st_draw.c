@@ -584,20 +584,7 @@ setup_index_buffer(struct gl_context *ctx,
    if (ib) {
       struct gl_buffer_object *bufobj = ib->obj;
 
-      switch (ib->type) {
-      case GL_UNSIGNED_INT:
-         ibuffer->index_size = 4;
-         break;
-      case GL_UNSIGNED_SHORT:
-         ibuffer->index_size = 2;
-         break;
-      case GL_UNSIGNED_BYTE:
-         ibuffer->index_size = 1;
-         break;
-      default:
-         assert(0);
-	 return;
-      }
+      ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
 
       /* get/create the index buffer object */
       if (_mesa_is_bufferobj(bufobj)) {

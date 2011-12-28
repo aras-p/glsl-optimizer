@@ -75,6 +75,22 @@ vbo_check_buffers_are_unmapped(struct gl_context *ctx)
    assert(!_mesa_bufferobj_mapped(exec->vtx.bufferobj));
 }
 
+int
+vbo_sizeof_ib_type(GLenum type)
+{
+   switch (type) {
+   case GL_UNSIGNED_INT:
+      return sizeof(GLuint);
+   case GL_UNSIGNED_SHORT:
+      return sizeof(GLushort);
+   case GL_UNSIGNED_BYTE:
+      return sizeof(GLubyte);
+   default:
+      assert(!"unsupported index data type");
+      /* In case assert is turned off */
+      return 0;
+   }
+}
 
 
 /**
@@ -96,24 +112,8 @@ vbo_get_minmax_index(struct gl_context *ctx,
    GLuint i;
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      unsigned map_size;
-
-      switch (ib->type) {
-      case GL_UNSIGNED_INT:
-	 map_size = count * sizeof(GLuint);
-	 break;
-      case GL_UNSIGNED_SHORT:
-	 map_size = count * sizeof(GLushort);
-	 break;
-      case GL_UNSIGNED_BYTE:
-	 map_size = count * sizeof(GLubyte);
-	 break;
-      default:
-	 assert(0);
-	 map_size = 0;
-      }
-
-      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr, map_size,
+      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr,
+                                           count * vbo_sizeof_ib_type(ib->type),
 					   GL_MAP_READ_BIT, ib->obj);
    } else {
       indices = ib->ptr;
@@ -1053,7 +1053,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    struct vbo_exec_context *exec = &vbo->exec;
    struct _mesa_index_buffer ib;
    struct _mesa_prim *prim;
-   unsigned int index_type_size = 0;
+   unsigned int index_type_size = vbo_sizeof_ib_type(type);
    uintptr_t min_index_ptr, max_index_ptr;
    GLboolean fallback = GL_FALSE;
    int i;
@@ -1082,20 +1082,6 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    /* check for dirty state again */
    if (ctx->NewState)
       _mesa_update_state( ctx );
-
-   switch (type) {
-   case GL_UNSIGNED_INT:
-      index_type_size = 4;
-      break;
-   case GL_UNSIGNED_SHORT:
-      index_type_size = 2;
-      break;
-   case GL_UNSIGNED_BYTE:
-      index_type_size = 1;
-      break;
-   default:
-      assert(0);
-   }
 
    min_index_ptr = (uintptr_t)indices[0];
    max_index_ptr = 0;

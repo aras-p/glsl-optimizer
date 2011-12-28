@@ -122,6 +122,10 @@ void vbo_rebase_prims( struct gl_context *ctx,
 		       GLuint min_index,
 		       GLuint max_index,
 		       vbo_draw_func draw );
+
+int
+vbo_sizeof_ib_type(GLenum type);
+
 void
 vbo_get_minmax_index(struct gl_context *ctx, const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
