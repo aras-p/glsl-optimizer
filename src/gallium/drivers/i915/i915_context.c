@@ -92,6 +92,13 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (i915->num_vertex_sampler_views > 0)
       i915_cleanup_vertex_sampling(i915);
+
+   /*
+    * TODO: Flush only when a user vertex/index buffer is present
+    * (or even better, modify draw module to do this
+    * internally when this condition is seen?)
+    */
+   draw_flush(i915->draw);
 }
 
 
