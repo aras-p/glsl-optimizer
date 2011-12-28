@@ -663,7 +663,9 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
        */
       if (src == dst) {
 	 char *ptr = intel_bufferobj_map_range(ctx, 0, dst->Size,
-					       GL_MAP_READ_BIT, dst);
+					       GL_MAP_READ_BIT |
+					       GL_MAP_WRITE_BIT,
+					       dst);
 	 memmove(ptr + write_offset, ptr + read_offset, size);
 	 intel_bufferobj_unmap(ctx, dst);
       } else {
