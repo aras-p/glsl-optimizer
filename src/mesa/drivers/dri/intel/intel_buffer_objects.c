@@ -657,7 +657,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
       return;
 
    /* If we're in system memory, just map and memcpy. */
-   if (intel_src->sys_buffer || intel_dst->sys_buffer || intel->gen >= 6) {
+   if (intel_src->sys_buffer || intel_dst->sys_buffer) {
       /* The same buffer may be used, but note that regions copied may
        * not overlap.
        */
