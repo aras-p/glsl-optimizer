@@ -491,7 +491,7 @@ intel_emit_linear_blit(struct intel_context *intel,
     * we want width to match pitch. Max width is (1 << 15 - 1),
     * rounding that down to the nearest DWORD is 1 << 15 - 4
     */
-   pitch = MIN2(size, (1 << 15) - 4);
+   pitch = ROUND_DOWN_TO(MIN2(size, (1 << 15) - 1), 4);
    height = size / pitch;
    ok = intelEmitCopyBlit(intel, 1,
 			  pitch, src_bo, src_offset, I915_TILING_NONE,
@@ -506,11 +506,11 @@ intel_emit_linear_blit(struct intel_context *intel,
    dst_offset += pitch * height;
    size -= pitch * height;
    assert (size < (1 << 15));
-   assert ((size & 3) == 0); /* Pitch must be DWORD aligned */
+   pitch = ALIGN(size, 4);
    if (size != 0) {
       ok = intelEmitCopyBlit(intel, 1,
-			     size, src_bo, src_offset, I915_TILING_NONE,
-			     size, dst_bo, dst_offset, I915_TILING_NONE,
+			     pitch, src_bo, src_offset, I915_TILING_NONE,
+			     pitch, dst_bo, dst_offset, I915_TILING_NONE,
 			     0, 0, /* src x/y */
 			     0, 0, /* dst x/y */
 			     size, 1, /* w, h */
