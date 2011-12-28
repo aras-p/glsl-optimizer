@@ -568,7 +568,7 @@ _mesa_init_sqrt_table(void);
 
 #ifdef __GNUC__
 
-#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(ANDROID)
+#if defined(__MINGW32__) || defined(__CYGWIN__) || defined(ANDROID) || defined(__APPLE__)
 #define ffs __builtin_ffs
 #define ffsll __builtin_ffsll
 #endif
