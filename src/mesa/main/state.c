@@ -63,130 +63,6 @@ update_separate_specular(struct gl_context *ctx)
 
 
 /**
- * Helper for update_arrays().
- * \return  min(current min, array->_MaxElement).
- */
-static GLuint
-update_min(GLuint min, struct gl_client_array *array)
-{
-   _mesa_update_array_max_element(array);
-   return MIN2(min, array->_MaxElement);
-}
-
-
-/**
- * Update ctx->Array._MaxElement (the max legal index into all enabled arrays).
- * Need to do this upon new array state or new buffer object state.
- */
-static void
-update_arrays( struct gl_context *ctx )
-{
-   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
-   GLuint i, min = ~0;
-
-   /* find min of _MaxElement values for all enabled arrays.
-    * Note that the generic arrays always take precedence over
-    * the legacy arrays.
-    */
-
-   /* 0 */
-   if (ctx->VertexProgram._Current
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC0]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_POS]);
-   }
-
-   /* 1 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC1].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC1]);
-   }
-   /* no conventional vertex weight array */
-
-   /* 2 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC2].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC2]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL]);
-   }
-
-   /* 3 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC3].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC3]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0]);
-   }
-
-   /* 4 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC4].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC4]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1]);
-   }
-
-   /* 5 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC5].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC5]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_FOG]);
-   }
-
-   /* 6 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC6].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC6]);
-   }
-   else if (arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX]);
-   }
-
-   /* 7 */
-   if (ctx->VertexProgram._Enabled
-       && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC7].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC7]);
-   }
-
-   /* 8..15 */
-   for (i = 0; i < VERT_ATTRIB_TEX_MAX; i++) {
-      if (ctx->VertexProgram._Enabled
-          && arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC8 + i].Enabled) {
-         min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC8 + i]);
-      }
-      else if (i < ctx->Const.MaxTextureCoordUnits
-               && arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)].Enabled) {
-         min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(i)]);
-      }
-   }
-
-   /* 16..31 */
-   if (ctx->VertexProgram._Current) {
-      for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-         if (arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled) {
-            min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)]);
-         }
-      }
-   }
-
-   if (arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
-      min = update_min(min, &arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]);
-   }
-
-   /* _MaxElement is one past the last legal array element */
-   arrayObj->_MaxElement = min;
-}
-
-
-/**
  * Update the following fields:
  *   ctx->VertexProgram._Enabled
  *   ctx->FragmentProgram._Enabled
@@ -690,7 +566,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    }
 
    if (new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT))
-      update_arrays( ctx );
+      _mesa_update_array_object_max_element(ctx, ctx->Array.ArrayObj);
 
  out:
    new_prog_state |= update_program_constants(ctx);
