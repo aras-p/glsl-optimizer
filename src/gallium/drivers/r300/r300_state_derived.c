@@ -785,7 +785,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 offset = tex->tex.offset_in_bytes[base_level];
 
                 r300_texture_setup_format_state(r300->screen, tex,
+                                                view->base.format,
                                                 base_level,
+                                                view->width0_override,
+		                                view->height0_override,
                                                 &texstate->format);
                 texstate->format.tile_config |= offset & 0xffffffe0;
                 assert((offset & 0x1f) == 0);
@@ -795,11 +798,11 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->format.format1 |= view->texcache_region;
 
             /* Depth textures are kinda special. */
-            if (util_format_is_depth_or_stencil(tex->b.b.b.format)) {
+            if (util_format_is_depth_or_stencil(view->base.format)) {
                 unsigned char depth_swizzle[4];
 
                 if (!r300->screen->caps.is_r500 &&
-                    util_format_get_blocksizebits(tex->b.b.b.format) == 32) {
+                    util_format_get_blocksizebits(view->base.format) == 32) {
                     /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
                      * The depth here is at the Y component. */
                     for (j = 0; j < 4; j++)
@@ -824,7 +827,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             if (r300->screen->caps.dxtc_swizzle &&
-                util_format_is_compressed(tex->b.b.b.format)) {
+                util_format_is_compressed(view->base.format)) {
                 texstate->filter1 |= R400_DXTC_SWIZZLE_ENABLE;
             }
 
@@ -870,7 +873,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             /* Float textures only support nearest and mip-nearest filtering. */
-            if (util_format_is_float(tex->b.b.b.format)) {
+            if (util_format_is_float(view->base.format)) {
                 /* No MAG linear filtering. */
                 if ((texstate->filter0 & R300_TX_MAG_FILTER_MASK) ==
                     R300_TX_MAG_FILTER_LINEAR) {

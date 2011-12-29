@@ -50,4 +50,7 @@ void r300_texture_desc_init(struct r300_screen *rscreen,
 unsigned r300_texture_get_offset(struct r300_resource *tex,
                                  unsigned level, unsigned layer);
 
+unsigned r300_stride_to_width(enum pipe_format format,
+                              unsigned stride_in_bytes);
+
 #endif

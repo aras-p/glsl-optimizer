@@ -434,21 +434,14 @@ void r300_decompress_zmask_locked(struct r300_context *r300)
     pipe_surface_reference(&r300->locked_zbuffer, NULL);
 }
 
-/* Copy a block of pixels from one surface to another using HW. */
-static void r300_hw_copy_region(struct pipe_context* pipe,
-                                struct pipe_resource *dst,
-                                unsigned dst_level,
-                                unsigned dstx, unsigned dsty, unsigned dstz,
-                                struct pipe_resource *src,
-                                unsigned src_level,
-                                const struct pipe_box *src_box)
+bool r300_is_blit_supported(enum pipe_format format)
 {
-    struct r300_context* r300 = r300_context(pipe);
+    const struct util_format_description *desc =
+        util_format_description(format);
 
-    r300_blitter_begin(r300, R300_COPY);
-    util_blitter_copy_texture(r300->blitter, dst, dst_level, dstx, dsty, dstz,
-                              src, src_level, src_box, TRUE);
-    r300_blitter_end(r300);
+    return desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ||
+           desc->layout == UTIL_FORMAT_LAYOUT_S3TC ||
+           desc->layout == UTIL_FORMAT_LAYOUT_RGTC;
 }
 
 /* Copy a block of pixels from one surface to another. */
@@ -460,24 +453,120 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
                                       unsigned src_level,
                                       const struct pipe_box *src_box)
 {
+    struct pipe_screen *screen = pipe->screen;
     struct r300_context *r300 = r300_context(pipe);
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct pipe_resource old_src = *src;
-    struct pipe_resource old_dst = *dst;
-    struct pipe_resource new_src = old_src;
-    struct pipe_resource new_dst = old_dst;
-    const struct util_format_description *desc =
-            util_format_description(dst->format);
+    unsigned src_width0 = r300_resource(src)->tex.width0;
+    unsigned src_height0 = r300_resource(src)->tex.height0;
+    unsigned dst_width0 = r300_resource(dst)->tex.width0;
+    unsigned dst_height0 = r300_resource(dst)->tex.height0;
+    unsigned layout;
     struct pipe_box box;
+    struct pipe_sampler_view src_templ, *src_view;
+    struct pipe_surface dst_templ, *dst_view;
 
     /* Fallback for buffers. */
-    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+    if ((dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) ||
+        !r300_is_blit_supported(dst->format)) {
         util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                                   src, src_level, src_box);
         return;
     }
 
+    /* The code below changes the texture format so that the copy can be done
+     * on hardware. E.g. depth-stencil surfaces are copied as RGBA
+     * colorbuffers. */
+
+    util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz, src_box);
+    util_blitter_default_src_texture(&src_templ, src, src_level);
+
+    layout = util_format_description(dst_templ.format)->layout;
+
+    /* Handle non-renderable plain formats. */
+    if (layout == UTIL_FORMAT_LAYOUT_PLAIN &&
+        (!screen->is_format_supported(screen, src_templ.format, src->target,
+                                      src->nr_samples,
+                                      PIPE_BIND_SAMPLER_VIEW) ||
+         !screen->is_format_supported(screen, dst_templ.format, dst->target,
+                                      dst->nr_samples,
+                                      PIPE_BIND_RENDER_TARGET))) {
+        switch (util_format_get_blocksize(dst_templ.format)) {
+            case 1:
+                dst_templ.format = PIPE_FORMAT_I8_UNORM;
+                break;
+            case 2:
+                dst_templ.format = PIPE_FORMAT_B4G4R4A4_UNORM;
+                break;
+            case 4:
+                dst_templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+                break;
+            case 8:
+                dst_templ.format = PIPE_FORMAT_R16G16B16A16_UNORM;
+                break;
+            default:
+                debug_printf("r300: copy_region: Unhandled format: %s. Falling back to software.\n"
+                             "r300: copy_region: Software fallback doesn't work for tiled textures.\n",
+                             util_format_short_name(dst_templ.format));
+        }
+        src_templ.format = dst_templ.format;
+    }
+
+    /* Handle compressed formats. */
+    if (layout == UTIL_FORMAT_LAYOUT_S3TC ||
+        layout == UTIL_FORMAT_LAYOUT_RGTC) {
+        assert(src_templ.format == dst_templ.format);
+
+        box = *src_box;
+        src_box = &box;
+
+        dst_width0 = align(dst_width0, 4);
+        dst_height0 = align(dst_height0, 4);
+        src_width0 = align(src_width0, 4);
+        src_height0 = align(src_height0, 4);
+        box.width = align(box.width, 4);
+        box.height = align(box.height, 4);
+
+        switch (util_format_get_blocksize(dst_templ.format)) {
+        case 8:
+            /* one 4x4 pixel block has 8 bytes.
+             * we set 1 pixel = 4 bytes ===> 1 block corrensponds to 2 pixels. */
+            dst_templ.format = PIPE_FORMAT_R8G8B8A8_UNORM;
+            dst_width0 = dst_width0 / 2;
+            src_width0 = src_width0 / 2;
+            dstx /= 2;
+            box.x /= 2;
+            box.width /= 2;
+            break;
+        case 16:
+            /* one 4x4 pixel block has 16 bytes.
+             * we set 1 pixel = 4 bytes ===> 1 block corresponds to 4 pixels. */
+            dst_templ.format = PIPE_FORMAT_R8G8B8A8_UNORM;
+            break;
+        }
+        src_templ.format = dst_templ.format;
+
+        dst_height0 = dst_height0 / 4;
+        src_height0 = src_height0 / 4;
+        dsty /= 4;
+        box.y /= 4;
+        box.height /= 4;
+    }
+
+    /* Fallback for textures. */
+    if (!screen->is_format_supported(screen, dst_templ.format,
+                                     dst->target, dst->nr_samples,
+                                     PIPE_BIND_RENDER_TARGET) ||
+	!screen->is_format_supported(screen, src_templ.format,
+                                     src->target, src->nr_samples,
+                                     PIPE_BIND_SAMPLER_VIEW)) {
+        assert(0 && "this shouldn't happen, update r300_is_blit_supported");
+        util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                  src, src_level, src_box);
+        return;
+    }
+
+    /* Decompress ZMASK. */
     if (r300->zmask_in_use && !r300->locked_zbuffer) {
         if (fb->zsbuf->texture == src ||
             fb->zsbuf->texture == dst) {
@@ -485,78 +574,17 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         }
     }
 
-    /* Handle non-renderable plain formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
-        (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
-         !pipe->screen->is_format_supported(pipe->screen,
-                                            src->format, src->target,
-                                            src->nr_samples,
-                                            PIPE_BIND_SAMPLER_VIEW) ||
-         !pipe->screen->is_format_supported(pipe->screen,
-                                            dst->format, dst->target,
-                                            dst->nr_samples,
-                                            PIPE_BIND_RENDER_TARGET))) {
-        switch (util_format_get_blocksize(old_dst.format)) {
-            case 1:
-                new_dst.format = PIPE_FORMAT_I8_UNORM;
-                break;
-            case 2:
-                new_dst.format = PIPE_FORMAT_B4G4R4A4_UNORM;
-                break;
-            case 4:
-                new_dst.format = PIPE_FORMAT_B8G8R8A8_UNORM;
-                break;
-            case 8:
-                new_dst.format = PIPE_FORMAT_R16G16B16A16_UNORM;
-                break;
-            default:
-                debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"
-                             "r300: surface_copy: Software fallback doesn't work for tiled textures.\n",
-                             util_format_short_name(dst->format));
-        }
-        new_src.format = new_dst.format;
-    }
+    dst_view = r300_create_surface_custom(pipe, dst, &dst_templ, dst_width0, dst_height0);
+    src_view = r300_create_sampler_view_custom(pipe, src, &src_templ, src_width0, src_height0);
 
-    /* Handle compressed formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC ||
-        desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
-        switch (util_format_get_blocksize(old_dst.format)) {
-        case 8:
-            /* 1 pixel = 4 bits,
-             * we set 1 pixel = 2 bytes ===> 4 times larger pixels. */
-            new_dst.format = PIPE_FORMAT_B4G4R4A4_UNORM;
-            break;
-        case 16:
-            /* 1 pixel = 8 bits,
-             * we set 1 pixel = 4 bytes ===> 4 times larger pixels. */
-            new_dst.format = PIPE_FORMAT_B8G8R8A8_UNORM;
-            break;
-        }
+    r300_blitter_begin(r300, R300_COPY);
+    util_blitter_copy_texture_view(r300->blitter, dst_view, dstx, dsty,
+                                   src_view, src_box,
+                                   src_width0, src_height0);
+    r300_blitter_end(r300);
 
-        /* Since the pixels are 4 times larger, we must decrease
-         * the image size and the coordinates 4 times. */
-        new_src.format = new_dst.format;
-        new_dst.height0 = (new_dst.height0 + 3) / 4;
-        new_src.height0 = (new_src.height0 + 3) / 4;
-        dsty /= 4;
-        box = *src_box;
-        box.y /= 4;
-        box.height = (box.height + 3) / 4;
-        src_box = &box;
-    }
-
-    if (old_src.format != new_src.format)
-        r300_resource_set_properties(pipe->screen, src, &new_src);
-    if (old_dst.format != new_dst.format)
-        r300_resource_set_properties(pipe->screen, dst, &new_dst);
-
-    r300_hw_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
-                        src, src_level, src_box);
-
-    if (old_src.format != new_src.format)
-        r300_resource_set_properties(pipe->screen, src, &old_src);
-    if (old_dst.format != new_dst.format)
-        r300_resource_set_properties(pipe->screen, dst, &old_dst);
+    pipe_surface_reference(&dst_view, NULL);
+    pipe_sampler_view_reference(&src_view, NULL);
 }
 
 void r300_init_blit_functions(struct r300_context *r300)

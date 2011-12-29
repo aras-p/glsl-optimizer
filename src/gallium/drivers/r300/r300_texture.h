@@ -46,10 +46,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 
-void r300_resource_set_properties(struct pipe_screen *screen,
-                                  struct pipe_resource *tex,
-                                  const struct pipe_resource *new_properties);
-
 boolean r300_is_colorbuffer_format_supported(enum pipe_format format);
 
 boolean r300_is_zs_format_supported(enum pipe_format format);
@@ -58,7 +54,10 @@ boolean r300_is_sampler_format_supported(enum pipe_format format);
 
 void r300_texture_setup_format_state(struct r300_screen *screen,
                                      struct r300_resource *tex,
+                                     enum pipe_format format,
                                      unsigned level,
+                                     unsigned width0_override,
+                                     unsigned height0_override,
                                      struct r300_texture_format_state *out);
 
 boolean r300_resource_get_handle(struct pipe_screen* screen,
@@ -74,6 +73,11 @@ struct pipe_resource*
 r300_texture_create(struct pipe_screen* screen,
 		    const struct pipe_resource* templ);
 
+struct pipe_surface* r300_create_surface_custom(struct pipe_context * ctx,
+                                         struct pipe_resource* texture,
+                                         const struct pipe_surface *surf_tmpl,
+                                         unsigned width0_override,
+					 unsigned height0_override);
 
 struct pipe_surface* r300_create_surface(struct pipe_context *ctx,
                                          struct pipe_resource* texture,

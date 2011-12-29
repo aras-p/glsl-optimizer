@@ -206,8 +206,8 @@ static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
 }
 
 /* Get a width in pixels from a stride in bytes. */
-static unsigned stride_to_width(enum pipe_format format,
-                                unsigned stride_in_bytes)
+unsigned r300_stride_to_width(enum pipe_format format,
+                              unsigned stride_in_bytes)
 {
     return (stride_in_bytes / util_format_get_blocksize(format)) *
             util_format_get_blockwidth(format);
@@ -261,7 +261,6 @@ static void r300_setup_miptree(struct r300_screen *screen,
         tex->tex.size_in_bytes = tex->tex.offset_in_bytes[i] + size;
         tex->tex.layer_size_in_bytes[i] = layer_size;
         tex->tex.stride_in_bytes[i] = stride;
-        tex->tex.stride_in_pixels[i] = stride_to_width(tex->b.b.b.format, stride);
         tex->tex.cbzb_allowed[i] = tex->tex.cbzb_allowed[i] && aligned_for_cbzb;
 
         SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Texture miptree: Level %d "
@@ -277,7 +276,7 @@ static void r300_setup_flags(struct r300_resource *tex)
     tex->tex.uses_stride_addressing =
         !util_is_power_of_two(tex->b.b.b.width0) ||
         (tex->tex.stride_in_bytes_override &&
-         stride_to_width(tex->b.b.b.format,
+         r300_stride_to_width(tex->b.b.b.format,
                          tex->tex.stride_in_bytes_override) != tex->b.b.b.width0);
 
     tex->tex.is_npot =
@@ -368,7 +367,9 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
         for (i = 0; i <= tex->b.b.b.last_level; i++) {
             unsigned zcomp_numdw, zcompsize, hiz_numdw, stride, height;
 
-            stride = align(tex->tex.stride_in_pixels[i], 16);
+            stride = r300_stride_to_width(tex->b.b.b.format,
+                                          tex->tex.stride_in_bytes[i]);
+            stride = align(stride, 16);
             height = u_minify(tex->b.b.b.height0, i);
 
             /* The 8x8 compression mode needs macrotiling. */
@@ -467,7 +468,7 @@ static void r300_tex_print_info(struct r300_resource *tex,
             func,
             tex->tex.macrotile[0] ? "YES" : " NO",
             tex->tex.microtile ? "YES" : " NO",
-            tex->tex.stride_in_pixels[0],
+            r300_stride_to_width(tex->b.b.b.format, tex->tex.stride_in_bytes[0]),
             tex->b.b.b.width0, tex->b.b.b.height0, tex->b.b.b.depth0,
             tex->b.b.b.last_level, tex->tex.size_in_bytes,
             util_format_short_name(tex->b.b.b.format));
