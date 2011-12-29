@@ -489,7 +489,6 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
 {
    struct gl_renderbuffer *rb =
       ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
-   GLuint clearValue;
    GLint x, y, width, height;
    GLubyte *map;
    GLint rowStride, i, j;
@@ -498,14 +497,6 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
    if (!rb || !ctx->Depth.Mask) {
       /* no depth buffer, or writing to it is disabled */
       return;
-   }
-
-   /* compute integer clearing value */
-   if (ctx->Depth.Clear == 1.0) {
-      clearValue = ctx->DrawBuffer->_DepthMax;
-   }
-   else {
-      clearValue = (GLuint) (ctx->Depth.Clear * ctx->DrawBuffer->_DepthMaxF);
    }
 
    /* compute region to clear */
