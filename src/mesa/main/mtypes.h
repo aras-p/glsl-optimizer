@@ -1821,6 +1821,11 @@ struct gl_uniform_list;
 struct gl_transform_feedback_info {
    unsigned NumOutputs;
 
+   /**
+    * Number of transform feedback buffers in use by this program.
+    */
+   unsigned NumBuffers;
+
    struct {
       unsigned OutputRegister;
       unsigned OutputBuffer;

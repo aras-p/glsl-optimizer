@@ -1865,11 +1865,14 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
                      tfeedback_decl *tfeedback_decls)
 {
    unsigned total_tfeedback_components = 0;
+   bool separate_attribs_mode =
+      prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS;
    memset(&prog->LinkedTransformFeedback, 0,
           sizeof(prog->LinkedTransformFeedback));
+   prog->LinkedTransformFeedback.NumBuffers =
+      separate_attribs_mode ? num_tfeedback_decls : 1;
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
-      unsigned buffer =
-         prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS ? i : 0;
+      unsigned buffer = separate_attribs_mode ? i : 0;
       if (!tfeedback_decls[i].store(prog, &prog->LinkedTransformFeedback,
                                     buffer))
          return false;

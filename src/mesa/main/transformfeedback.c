@@ -342,9 +342,12 @@ void GLAPIENTRY
 _mesa_BeginTransformFeedback(GLenum mode)
 {
    struct gl_transform_feedback_object *obj;
+   struct gl_transform_feedback_info *info;
+   int i;
    GET_CURRENT_CONTEXT(ctx);
 
    obj = ctx->TransformFeedback.CurrentObject;
+   info = &ctx->Shader.CurrentVertexProgram->LinkedTransformFeedback;
 
    switch (mode) {
    case GL_POINTS:
@@ -361,6 +364,15 @@ _mesa_BeginTransformFeedback(GLenum mode)
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(already active)");
       return;
+   }
+
+   for (i = 0; i < info->NumBuffers; ++i) {
+      if (obj->BufferNames[i] == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBeginTransformFeedback(binding point %d does not have "
+                     "a buffer object bound)", i);
+         return;
+      }
    }
 
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
