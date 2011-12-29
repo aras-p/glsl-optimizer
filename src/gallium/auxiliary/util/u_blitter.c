@@ -850,6 +850,43 @@ boolean is_overlap(unsigned sx1, unsigned sx2, unsigned sy1, unsigned sy2,
    return sx1 < dx2 && sx2 > dx1 && sy1 < dy2 && sy2 > dy1;
 }
 
+void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
+                                      struct pipe_resource *dst,
+                                      unsigned dstlevel,
+                                      unsigned dstz,
+                                      const struct pipe_box *srcbox)
+{
+    memset(dst_templ, 0, sizeof(*dst_templ));
+    dst_templ->format = dst->format;
+    if (util_format_is_depth_or_stencil(dst->format)) {
+	dst_templ->usage = PIPE_BIND_DEPTH_STENCIL;
+    } else {
+	dst_templ->usage = PIPE_BIND_RENDER_TARGET;
+    }
+    dst_templ->format = util_format_linear(dst->format);
+    dst_templ->u.tex.level = dstlevel;
+    dst_templ->u.tex.first_layer = dstz;
+    dst_templ->u.tex.last_layer = dstz + srcbox->depth - 1;
+}
+
+void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
+                                      struct pipe_resource *src,
+                                      unsigned srclevel)
+{
+    memset(src_templ, 0, sizeof(*src_templ));
+    src_templ->format = util_format_linear(src->format);
+    src_templ->u.tex.first_level = srclevel;
+    src_templ->u.tex.last_level = srclevel;
+    src_templ->u.tex.first_layer = 0;
+    src_templ->u.tex.last_layer =
+        src->target == PIPE_TEXTURE_3D ? src->depth0 - 1
+                                       : src->array_size - 1;
+    src_templ->swizzle_r = PIPE_SWIZZLE_RED;
+    src_templ->swizzle_g = PIPE_SWIZZLE_GREEN;
+    src_templ->swizzle_b = PIPE_SWIZZLE_BLUE;
+    src_templ->swizzle_a = PIPE_SWIZZLE_ALPHA;
+}
+
 void util_blitter_copy_texture(struct blitter_context *blitter,
                                struct pipe_resource *dst,
                                unsigned dstlevel,
@@ -862,8 +899,8 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *dstsurf, surf_templ;
-   struct pipe_sampler_view viewTempl, *view;
+   struct pipe_surface *dst_view, dst_templ;
+   struct pipe_sampler_view src_templ, *src_view;
    unsigned bind;
    boolean is_stencil, is_depth;
 
@@ -898,27 +935,19 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    }
 
    /* Initialize the surface. */
-   memset(&surf_templ, 0, sizeof(surf_templ));
-   u_surface_default_template(&surf_templ, dst, bind);
-   surf_templ.format = util_format_linear(dst->format);
-   surf_templ.u.tex.level = dstlevel;
-   surf_templ.u.tex.first_layer = dstz;
-   surf_templ.u.tex.last_layer = dstz + srcbox->depth - 1;
-   dstsurf = pipe->create_surface(pipe, dst, &surf_templ);
+   util_blitter_default_dst_texture(&dst_templ, dst, dstlevel, dstz, srcbox);
+   dst_view = pipe->create_surface(pipe, dst, &dst_templ);
 
    /* Initialize the sampler view. */
-   u_sampler_view_default_template(&viewTempl, src,
-                                   util_format_linear(src->format));
-   viewTempl.u.tex.first_level = srclevel;
-   viewTempl.u.tex.last_level = srclevel;
-   view = pipe->create_sampler_view(pipe, src, &viewTempl);
+   util_blitter_default_src_texture(&src_templ, src, srclevel);
+   src_view = pipe->create_sampler_view(pipe, src, &src_templ);
 
    /* Copy. */
-   util_blitter_copy_texture_view(blitter, dstsurf, dstx, dsty, view, srcbox,
-                                  src->width0, src->height0);
+   util_blitter_copy_texture_view(blitter, dst_view, dstx, dsty, src_view,
+                                  srcbox, src->width0, src->height0);
 
-   pipe_surface_reference(&dstsurf, NULL);
-   pipe_sampler_view_reference(&view, NULL);
+   pipe_surface_reference(&dst_view, NULL);
+   pipe_sampler_view_reference(&src_view, NULL);
 }
 
 void util_blitter_copy_texture_view(struct blitter_context *blitter,

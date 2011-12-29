@@ -218,6 +218,24 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     unsigned src_width0, unsigned src_height0);
 
 /**
+ * Helper function to initialize a view for copy_texture_view.
+ * The parameters must match copy_texture_view.
+ */
+void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
+                                      struct pipe_resource *dst,
+                                      unsigned dstlevel,
+                                      unsigned dstz,
+                                      const struct pipe_box *srcbox);
+
+/**
+ * Helper function to initialize a view for copy_texture_view.
+ * The parameters must match copy_texture_view.
+ */
+void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
+                                      struct pipe_resource *src,
+                                      unsigned srclevel);
+
+/**
  * Copy data from one buffer to another using the Stream Output functionality.
  * Some alignment is required, otherwise software fallback is used.
  */
