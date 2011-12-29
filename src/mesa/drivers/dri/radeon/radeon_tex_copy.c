@@ -38,15 +38,16 @@
 
 static GLboolean
 do_copy_texsubimage(struct gl_context *ctx,
-                    GLenum target, GLint level,
                     struct radeon_tex_obj *tobj,
                     radeon_texture_image *timg,
                     GLint dstx, GLint dsty,
+                    struct radeon_renderbuffer *rrb,
                     GLint x, GLint y,
                     GLsizei width, GLsizei height)
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-    struct radeon_renderbuffer *rrb;
+    const GLuint face = timg->base.Base.Face;
+    const GLuint level = timg->base.Base.Level;
     unsigned src_bpp;
     unsigned dst_bpp;
     gl_format src_mesaformat;
@@ -57,20 +58,17 @@ do_copy_texsubimage(struct gl_context *ctx,
         return GL_FALSE;
     }
 
-    if (_mesa_get_format_bits(timg->base.Base.TexFormat, GL_DEPTH_BITS) > 0) {
-        /* copying a depth values */
-        rrb = radeon_renderbuffer(ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer);
-        assert(rrb);
-        flip_y = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Type == GL_NONE;
-    } else {
-        /* copying color */
-        rrb = radeon_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-        flip_y = ctx->ReadBuffer->Attachment[BUFFER_COLOR0].Type == GL_NONE;
-    }
-
     // This is software renderbuffer, fallback to swrast
     if (!rrb) {
         return GL_FALSE;
+    }
+
+    if (_mesa_get_format_bits(timg->base.Base.TexFormat, GL_DEPTH_BITS) > 0) {
+        /* copying depth values */
+        flip_y = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Type == GL_NONE;
+    } else {
+        /* copying color */
+        flip_y = ctx->ReadBuffer->Attachment[BUFFER_COLOR0].Type == GL_NONE;
     }
 
     if (!timg->mt) {
@@ -84,11 +82,11 @@ do_copy_texsubimage(struct gl_context *ctx,
     assert(timg->base.Base.Height >= dsty + height);
 
     intptr_t src_offset = rrb->draw_offset;
-    intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, _mesa_tex_target_to_face(target), level);
+    intptr_t dst_offset = radeon_miptree_image_offset(timg->mt, face, level);
 
     if (0) {
         fprintf(stderr, "%s: copying to face %d, level %d\n",
-                __FUNCTION__, _mesa_tex_target_to_face(target), level);
+                __FUNCTION__, face, level);
         fprintf(stderr, "to: x %d, y %d, offset %d\n", dstx, dsty, (uint32_t) dst_offset);
         fprintf(stderr, "from (%dx%d) width %d, height %d, offset %d, pitch %d\n",
                 x, y, rrb->base.Width, rrb->base.Height, (uint32_t) src_offset, rrb->pitch/rrb->cpp);
@@ -136,26 +134,27 @@ do_copy_texsubimage(struct gl_context *ctx,
 }
 
 void
-radeonCopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
+radeonCopyTexSubImage2D(struct gl_context *ctx,
+                        struct gl_texture_image *texImage,
                         GLint xoffset, GLint yoffset,
+                        struct gl_renderbuffer *rb,
                         GLint x, GLint y,
                         GLsizei width, GLsizei height)
 {
-    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
-    struct gl_texture_object *texObj = _mesa_select_tex_object(ctx, texUnit, target);
-    struct gl_texture_image *texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     radeon_prepare_render(radeon);
 
-    if (!do_copy_texsubimage(ctx, target, level,
-                             radeon_tex_obj(texObj), (radeon_texture_image *)texImage,
-                             xoffset, yoffset, x, y, width, height)) {
+    if (!do_copy_texsubimage(ctx,
+                             radeon_tex_obj(texImage->TexObject),
+                             (radeon_texture_image *)texImage,
+                             xoffset, yoffset,
+                             radeon_renderbuffer(rb),                                                        x, y, width, height)) {
 
         radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
                      "Falling back to sw for glCopyTexSubImage2D\n");
 
-        _mesa_meta_CopyTexSubImage2D(ctx, target, level,
-                                     xoffset, yoffset, x, y, width, height);
+        _mesa_meta_CopyTexSubImage2D(ctx, texImage,
+                                     xoffset, yoffset,
+                                     rb, x, y, width, height);
     }
 }

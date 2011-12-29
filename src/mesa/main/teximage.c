@@ -2752,6 +2752,25 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
 
 
 /**
+ * For glCopyTexSubImage, return the source renderbuffer to copy texel data
+ * from.  This depends on whether the texture contains color or depth values.
+ */
+static struct gl_renderbuffer *
+get_copy_tex_image_source(struct gl_context *ctx, gl_format texFormat)
+{
+   if (_mesa_get_format_bits(texFormat, GL_DEPTH_BITS) > 0) {
+      /* reading from depth/stencil buffer */
+      return ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   }
+   else {
+      /* copying from color buffer */
+      return ctx->ReadBuffer->_ColorReadBuffer;
+   }
+}
+
+
+
+/**
  * Implement the glCopyTexImage1/2D() functions.
  */
 static void
@@ -2828,13 +2847,16 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
             if (_mesa_clip_copytexsubimage(ctx, &dstX, &dstY, &srcX, &srcY,
                                            &width, &height)) {
+               struct gl_renderbuffer *srcRb =
+                  get_copy_tex_image_source(ctx, texImage->TexFormat);
+
                if (dims == 1)
-                  ctx->Driver.CopyTexSubImage1D(ctx, target, level, dstX,
-                                                srcX, srcY, width);
+                  ctx->Driver.CopyTexSubImage1D(ctx, texImage, dstX,
+                                                srcRb, srcX, srcY, width);
                                                 
                else
-                  ctx->Driver.CopyTexSubImage2D(ctx, target, level, dstX, dstY,
-                                                srcX, srcY, width, height);
+                  ctx->Driver.CopyTexSubImage2D(ctx, texImage, dstX, dstY,
+                                                srcRb, srcX, srcY, width, height);
             }
 
             check_gen_mipmap(ctx, target, texObj, level);
@@ -2930,20 +2952,22 @@ copytexsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
 
          if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
                                         &width, &height)) {
+            struct gl_renderbuffer *srcRb =
+               get_copy_tex_image_source(ctx, texImage->TexFormat);
+
             switch (dims) {
             case 1:
-               ctx->Driver.CopyTexSubImage1D(ctx, target, level,
-                                             xoffset, x, y, width);
+               ctx->Driver.CopyTexSubImage1D(ctx, texImage, xoffset,
+                                             srcRb, x, y, width);
                break;
             case 2:
-               ctx->Driver.CopyTexSubImage2D(ctx, target, level,
-                                             xoffset, yoffset,
-                                             x, y, width, height);
+               ctx->Driver.CopyTexSubImage2D(ctx, texImage, xoffset, yoffset,
+                                             srcRb, x, y, width, height);
                break;
             case 3:
-               ctx->Driver.CopyTexSubImage3D(ctx, target, level,
+               ctx->Driver.CopyTexSubImage3D(ctx, texImage,
                                              xoffset, yoffset, zoffset,
-                                             x, y, width, height);
+                                             srcRb, x, y, width, height);
                break;
             default:
                _mesa_problem(ctx, "bad dims in copytexsubimage()");

@@ -32,6 +32,8 @@
 #include "main/formats.h"
 #include "intel_context.h"
 
+struct intel_renderbuffer;
+
 void intelInitTextureFuncs(struct dd_function_table *functions);
 
 void intelInitTextureImageFuncs(struct dd_function_table *functions);
@@ -77,9 +79,10 @@ intel_tex_image_s8z24_create_renderbuffers(struct intel_context *intel,
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
 bool intel_copy_texsubimage(struct intel_context *intel,
-                                 struct intel_texture_image *intelImage,
-                                 GLint dstx, GLint dsty,
-                                 GLint x, GLint y,
-                                 GLsizei width, GLsizei height);
+                            struct intel_texture_image *intelImage,
+                            GLint dstx, GLint dsty,
+                            struct intel_renderbuffer *irb,
+                            GLint x, GLint y,
+                            GLsizei width, GLsizei height);
 
 #endif

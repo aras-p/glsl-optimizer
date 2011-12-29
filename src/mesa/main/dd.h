@@ -283,31 +283,33 @@ struct dd_function_table {
                         struct gl_texture_image *texImage );
 
    /**
-    * Called by glCopyTexSubImage1D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
+    * Called by glCopyTexSubImage1D() and glCopyTexImage1D().
     */
-   void (*CopyTexSubImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset,
-                              GLint x, GLint y, GLsizei width );
+   void (*CopyTexSubImage1D)(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
+                             GLint xoffset,
+                             struct gl_renderbuffer *rb,
+                             GLint x, GLint y, GLsizei width);
+
    /**
-    * Called by glCopyTexSubImage2D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
+    * Called by glCopyTexSubImage2D() and glCopyTexImage2D().
     */
-   void (*CopyTexSubImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset, GLint yoffset,
-                              GLint x, GLint y,
-                              GLsizei width, GLsizei height );
+   void (*CopyTexSubImage2D)(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
+                             GLint xoffset, GLint yoffset,
+                             struct gl_renderbuffer *rb,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height);
+
    /**
-    * Called by glCopyTexSubImage3D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
+    * Called by glCopyTexSubImage3D() and glCopyTexImage3D().
     */
-   void (*CopyTexSubImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset, GLint yoffset, GLint zoffset,
-                              GLint x, GLint y,
-                              GLsizei width, GLsizei height );
+   void (*CopyTexSubImage3D)(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
+                             GLint xoffset, GLint yoffset, GLint zoffset,
+                             struct gl_renderbuffer *rb,
+                             GLint x, GLint y,
+                             GLsizei width, GLsizei height);
 
    /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.

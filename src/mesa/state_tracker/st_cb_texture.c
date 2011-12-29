@@ -736,7 +736,7 @@ st_GetTexImage(struct gl_context * ctx,
  * Note: srcY=0=TOP of renderbuffer
  */
 static void
-fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
+fallback_copy_texsubimage(struct gl_context *ctx,
                           struct st_renderbuffer *strb,
                           struct st_texture_image *stImage,
                           GLenum baseFormat,
@@ -931,17 +931,12 @@ compatible_src_dst_formats(struct gl_context *ctx,
  */
 static void
 st_copy_texsubimage(struct gl_context *ctx,
-                    GLenum target, GLint level,
+                    struct gl_texture_image *texImage,
                     GLint destX, GLint destY, GLint destZ,
+                    struct gl_renderbuffer *rb,
                     GLint srcX, GLint srcY,
                     GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
    const GLenum texBaseFormat = texImage->_BaseFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
@@ -1096,7 +1091,7 @@ st_copy_texsubimage(struct gl_context *ctx,
 
 fallback:
    /* software fallback */
-   fallback_copy_texsubimage(ctx, target, level,
+   fallback_copy_texsubimage(ctx,
                              strb, stImage, texBaseFormat,
                              destX, destY, destZ,
                              srcX, srcY, width, height);
@@ -1105,37 +1100,44 @@ fallback:
 
 
 static void
-st_CopyTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
-                     GLint xoffset, GLint x, GLint y, GLsizei width)
+st_CopyTexSubImage1D(struct gl_context *ctx,
+                     struct gl_texture_image *texImage,
+                     GLint xoffset,
+                     struct gl_renderbuffer *rb,
+                     GLint x, GLint y, GLsizei width)
 {
    const GLint yoffset = 0, zoffset = 0;
    const GLsizei height = 1;
-   st_copy_texsubimage(ctx, target, level,
+   st_copy_texsubimage(ctx, texImage,
                        xoffset, yoffset, zoffset,  /* destX,Y,Z */
-                       x, y, width, height);  /* src X, Y, size */
+                       rb, x, y, width, height);  /* src X, Y, size */
 }
 
 
 static void
-st_CopyTexSubImage2D(struct gl_context * ctx, GLenum target, GLint level,
+st_CopyTexSubImage2D(struct gl_context *ctx,
+                     struct gl_texture_image *texImage,
                      GLint xoffset, GLint yoffset,
+                     struct gl_renderbuffer *rb,
                      GLint x, GLint y, GLsizei width, GLsizei height)
 {
    const GLint zoffset = 0;
-   st_copy_texsubimage(ctx, target, level,
+   st_copy_texsubimage(ctx, texImage,
                        xoffset, yoffset, zoffset,  /* destX,Y,Z */
-                       x, y, width, height);  /* src X, Y, size */
+                       rb, x, y, width, height);  /* src X, Y, size */
 }
 
 
 static void
-st_CopyTexSubImage3D(struct gl_context * ctx, GLenum target, GLint level,
+st_CopyTexSubImage3D(struct gl_context *ctx,
+                     struct gl_texture_image *texImage,
                      GLint xoffset, GLint yoffset, GLint zoffset,
+                     struct gl_renderbuffer *rb,
                      GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   st_copy_texsubimage(ctx, target, level,
+   st_copy_texsubimage(ctx, texImage,
                        xoffset, yoffset, zoffset,  /* destX,Y,Z */
-                       x, y, width, height);  /* src X, Y, size */
+                       rb, x, y, width, height);  /* src X, Y, size */
 }
 
 

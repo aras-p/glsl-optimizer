@@ -3098,19 +3098,18 @@ get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
  */
 static void
 copy_tex_sub_image(struct gl_context *ctx,
-                   GLuint dims, GLenum target, GLint level,
+                   GLuint dims,
+                   struct gl_texture_image *texImage,
                    GLint xoffset, GLint yoffset, GLint zoffset,
+                   struct gl_renderbuffer *rb,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
 {
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+   struct gl_texture_object *texObj = texImage->TexObject;
+   const GLenum target = texObj->Target;
    GLenum format, type;
    GLint bpp;
    void *buf;
-
-   texObj = _mesa_get_current_tex_object(ctx, target);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
    /* Choose format/type for temporary image buffer */
    format = _mesa_get_format_base_format(texImage->TexFormat);
@@ -3180,34 +3179,40 @@ copy_tex_sub_image(struct gl_context *ctx,
 
 
 void
-_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
                              GLint xoffset,
+                             struct gl_renderbuffer *rb,
                              GLint x, GLint y, GLsizei width)
 {
-   copy_tex_sub_image(ctx, 1, target, level, xoffset, 0, 0,
-                      x, y, width, 1);
+   copy_tex_sub_image(ctx, 1, texImage, xoffset, 0, 0,
+                      rb, x, y, width, 1);
 }
 
 
 void
-_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
                              GLint xoffset, GLint yoffset,
+                             struct gl_renderbuffer *rb,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height)
 {
-   copy_tex_sub_image(ctx, 2, target, level, xoffset, yoffset, 0,
-                      x, y, width, height);
+   copy_tex_sub_image(ctx, 2, texImage, xoffset, yoffset, 0,
+                      rb, x, y, width, height);
 }
 
 
 void
-_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx,
+                             struct gl_texture_image *texImage,
                              GLint xoffset, GLint yoffset, GLint zoffset,
+                             struct gl_renderbuffer *rb,
                              GLint x, GLint y,
                              GLsizei width, GLsizei height)
 {
-   copy_tex_sub_image(ctx, 3, target, level, xoffset, yoffset, zoffset,
-                      x, y, width, height);
+   copy_tex_sub_image(ctx, 3, texImage, xoffset, yoffset, zoffset,
+                      rb, x, y, width, height);
 }
 
 

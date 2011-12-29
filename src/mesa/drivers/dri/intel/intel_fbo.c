@@ -854,13 +854,15 @@ intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
       const struct gl_framebuffer *readFb = ctx->ReadBuffer;
       const struct gl_renderbuffer_attachment *drawAtt =
          &drawFb->Attachment[drawFb->_ColorDrawBufferIndexes[0]];
+      struct intel_renderbuffer *srcRb = 
+         intel_renderbuffer(readFb->_ColorReadBuffer);
 
       /* If the source and destination are the same size with no
          mirroring, the rectangles are within the size of the
          texture and there is no scissor then we can use
          glCopyTexSubimage2D to implement the blit. This will end
          up as a fast hardware blit on some drivers */
-      if (drawAtt && drawAtt->Texture &&
+      if (srcRb && drawAtt && drawAtt->Texture &&
           srcX0 - srcX1 == dstX0 - dstX1 &&
           srcY0 - srcY1 == dstY0 - dstY1 &&
           srcX1 >= srcX0 &&
@@ -880,6 +882,7 @@ intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
          if (intel_copy_texsubimage(intel_context(ctx),
                                     intel_texture_image(texImage),
                                     dstX0, dstY0,
+                                    srcRb,
                                     srcX0, srcY0,
                                     srcX1 - srcX0, /* width */
                                     srcY1 - srcY0))
