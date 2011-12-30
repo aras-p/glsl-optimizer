@@ -42,13 +42,11 @@
 
 static bool
 intel_blit_texsubimage(struct gl_context * ctx,
-		       GLenum target, GLint level,
+		       struct gl_texture_image *texImage,
 		       GLint xoffset, GLint yoffset,
 		       GLint width, GLint height,
 		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing,
-		       struct gl_texture_object *texObj,
-		       struct gl_texture_image *texImage)
+		       const struct gl_pixelstore_attrib *packing)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -69,7 +67,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (intelImage->mt->region->tiling == I915_TILING_Y)
       return false;
 
-   if (target != GL_TEXTURE_2D)
+   if (texImage->TexObject->Target != GL_TEXTURE_2D)
       return false;
 
    /* On gen6, it's probably not worth swapping to the blit ring to do
@@ -83,8 +81,8 @@ intel_blit_texsubimage(struct gl_context * ctx,
 
    DBG("BLT subimage %s target %s level %d offset %d,%d %dx%d\n",
        __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target),
-       level, xoffset, yoffset, width, height);
+       _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
+       texImage->Level, xoffset, yoffset, width, height);
 
    pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1,
 					format, type, pixels, packing,
@@ -112,7 +110,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    dstMap = temp_bo->virtual;
    dstRowStride = pitch;
 
-   intel_miptree_get_image_offset(intelImage->mt, level,
+   intel_miptree_get_image_offset(intelImage->mt, texImage->Level,
 				  intelImage->base.Base.Face, 0,
 				  &blit_x, &blit_y);
    blit_x += xoffset;
@@ -155,26 +153,21 @@ intel_blit_texsubimage(struct gl_context * ctx,
 
 static void
 intelTexSubImage2D(struct gl_context * ctx,
-                   GLenum target,
-                   GLint level,
+                   struct gl_texture_image *texImage,
                    GLint xoffset, GLint yoffset,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const GLvoid * pixels,
-                   const struct gl_pixelstore_attrib *packing,
-                   struct gl_texture_object *texObj,
-                   struct gl_texture_image *texImage)
+                   const struct gl_pixelstore_attrib *packing)
 {
-   if (!intel_blit_texsubimage(ctx, target, level,
+   if (!intel_blit_texsubimage(ctx, texImage,
 			       xoffset, yoffset,
 			       width, height,
-			       format, type, pixels, packing,
-			       texObj, texImage)) {
-      _mesa_store_texsubimage2d(ctx, target, level,
+			       format, type, pixels, packing)) {
+      _mesa_store_texsubimage2d(ctx, texImage,
 				xoffset, yoffset,
 				width, height,
-				format, type, pixels,
-				packing, texObj, texImage);
+				format, type, pixels, packing);
    }
 }
 

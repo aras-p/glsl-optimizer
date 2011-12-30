@@ -245,41 +245,39 @@ struct dd_function_table {
     * with new texel data.
     * \sa dd_function_table::TexImage1D.
     */
-   void (*TexSubImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLsizei width,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
+   void (*TexSubImage1D)(struct gl_context *ctx,
+                         struct gl_texture_image *texImage,
+                         GLint xoffset, GLsizei width,
+                         GLenum format, GLenum type,
+                         const GLvoid *pixels,
+                         const struct gl_pixelstore_attrib *packing);
    
    /**
     * Called by glTexSubImage2D().
     *
     * \sa dd_function_table::TexSubImage1D.
     */
-   void (*TexSubImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset,
-                          GLsizei width, GLsizei height,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
+   void (*TexSubImage2D)(struct gl_context *ctx,
+                         struct gl_texture_image *texImage,
+                         GLint xoffset, GLint yoffset,
+                         GLsizei width, GLsizei height,
+                         GLenum format, GLenum type,
+                         const GLvoid *pixels,
+                         const struct gl_pixelstore_attrib *packing);
    
    /**
     * Called by glTexSubImage3D().
     *
     * \sa dd_function_table::TexSubImage1D.
     */
-   void (*TexSubImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset, GLint zoffset,
-                          GLsizei width, GLsizei height, GLint depth,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
+   void (*TexSubImage3D)(struct gl_context *ctx,
+                         struct gl_texture_image *texImage,
+                         GLint xoffset, GLint yoffset, GLint zoffset,
+                         GLsizei width, GLsizei height, GLint depth,
+                         GLenum format, GLenum type,
+                         const GLvoid *pixels,
+                         const struct gl_pixelstore_attrib *packing);
+
 
    /**
     * Called by glGetTexImage().

@@ -547,13 +547,12 @@ nouveau_teximage_3d(struct gl_context *ctx, GLenum target, GLint level,
 }
 
 static void
-nouveau_texsubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
+nouveau_texsubimage(struct gl_context *ctx, GLint dims,
+		    struct gl_texture_image *ti,
 		    GLint xoffset, GLint yoffset, GLint zoffset,
 		    GLint width, GLint height, GLint depth,
 		    GLenum format, GLenum type, const void *pixels,
-		    const struct gl_pixelstore_attrib *packing,
-		    struct gl_texture_object *t,
-		    struct gl_texture_image *ti)
+		    const struct gl_pixelstore_attrib *packing)
 {
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
@@ -577,50 +576,48 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint lev
 		_mesa_unmap_teximage_pbo(ctx, packing);
 	}
 
-	if (!to_nouveau_texture(t)->dirty)
-		validate_teximage(ctx, t, level, xoffset, yoffset, zoffset,
+	if (!to_nouveau_texture(ti->TexObject)->dirty)
+		validate_teximage(ctx, ti->TexObject, ti->Level,
+				  xoffset, yoffset, zoffset,
 				  width, height, depth);
 }
 
 static void
-nouveau_texsubimage_3d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_texsubimage_3d(struct gl_context *ctx,
+		       struct gl_texture_image *ti,
 		       GLint xoffset, GLint yoffset, GLint zoffset,
 		       GLint width, GLint height, GLint depth,
 		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing,
-		       struct gl_texture_object *t,
-		       struct gl_texture_image *ti)
+		       const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_texsubimage(ctx, 3, target, level, xoffset, yoffset, zoffset,
+	nouveau_texsubimage(ctx, 3, ti, xoffset, yoffset, zoffset,
 			    width, height, depth, format, type, pixels,
-			    packing, t, ti);
+			    packing);
 }
 
 static void
-nouveau_texsubimage_2d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_texsubimage_2d(struct gl_context *ctx,
+		       struct gl_texture_image *ti,
 		       GLint xoffset, GLint yoffset,
 		       GLint width, GLint height,
 		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing,
-		       struct gl_texture_object *t,
-		       struct gl_texture_image *ti)
+		       const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_texsubimage(ctx, 2, target, level, xoffset, yoffset, 0,
+	nouveau_texsubimage(ctx, 2, ti, xoffset, yoffset, 0,
 			    width, height, 1, format, type, pixels,
-			    packing, t, ti);
+			    packing);
 }
 
 static void
-nouveau_texsubimage_1d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_texsubimage_1d(struct gl_context *ctx,
+		       struct gl_texture_image *ti,
 		       GLint xoffset, GLint width,
 		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing,
-		       struct gl_texture_object *t,
-		       struct gl_texture_image *ti)
+		       const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_texsubimage(ctx, 1, target, level, xoffset, 0, 0,
+	nouveau_texsubimage(ctx, 1, ti, xoffset, 0, 0,
 			    width, 1, 1, format, type, pixels,
-			    packing, t, ti);
+			    packing);
 }
 
 static void
