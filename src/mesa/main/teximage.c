@@ -3446,27 +3446,24 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                switch (dims) {
                case 1:
                   ASSERT(ctx->Driver.CompressedTexImage1D);
-                  ctx->Driver.CompressedTexImage1D(ctx, target, level,
+                  ctx->Driver.CompressedTexImage1D(ctx, texImage,
                                                    internalFormat,
                                                    width,
-                                                   border, imageSize, data,
-                                                   texObj, texImage);
+                                                   border, imageSize, data);
                   break;
                case 2:
                   ASSERT(ctx->Driver.CompressedTexImage2D);
-                  ctx->Driver.CompressedTexImage2D(ctx, target, level,
+                  ctx->Driver.CompressedTexImage2D(ctx, texImage,
                                                    internalFormat,
                                                    width, height,
-                                                   border, imageSize, data,
-                                                   texObj, texImage);
+                                                   border, imageSize, data);
                   break;
                case 3:
                   ASSERT(ctx->Driver.CompressedTexImage3D);
-                  ctx->Driver.CompressedTexImage3D(ctx, target, level,
+                  ctx->Driver.CompressedTexImage3D(ctx, texImage,
                                                    internalFormat,
                                                    width, height, depth,
-                                                   border, imageSize, data,
-                                                   texObj, texImage);
+                                                   border, imageSize, data);
                   break;
                default:
                   _mesa_problem(ctx, "bad dims in compressedteximage");
@@ -3564,28 +3561,25 @@ compressed_tex_sub_image(GLuint dims, GLenum target, GLint level,
          switch (dims) {
          case 1:
             if (ctx->Driver.CompressedTexSubImage1D) {
-               ctx->Driver.CompressedTexSubImage1D(ctx, target, level,
+               ctx->Driver.CompressedTexSubImage1D(ctx, texImage,
                                                    xoffset, width,
-                                                   format, imageSize, data,
-                                                   texObj, texImage);
+                                                   format, imageSize, data);
             }
             break;
          case 2:
             if (ctx->Driver.CompressedTexSubImage2D) {
-               ctx->Driver.CompressedTexSubImage2D(ctx, target, level,
+               ctx->Driver.CompressedTexSubImage2D(ctx, texImage,
                                                    xoffset, yoffset,
                                                    width, height,
-                                                   format, imageSize, data,
-                                                   texObj, texImage);
+                                                   format, imageSize, data);
             }
             break;
          case 3:
             if (ctx->Driver.CompressedTexSubImage3D) {
-               ctx->Driver.CompressedTexSubImage3D(ctx, target, level,
+               ctx->Driver.CompressedTexSubImage3D(ctx, texImage,
                                                    xoffset, yoffset, zoffset,
                                                    width, height, depth,
-                                                   format, imageSize, data,
-                                                   texObj, texImage);
+                                                   format, imageSize, data);
             }
             break;
          default:

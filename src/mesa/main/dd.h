@@ -336,96 +336,65 @@ struct dd_function_table {
 
    /**
     * Called by glCompressedTexImage1D().
-    *
-    * \param target user specified.
-    * \param format user specified.
-    * \param type user specified.
-    * \param pixels user specified.
-    * \param packing indicates the image packing of pixels.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p depth, \p border and \p internalFormat information.
-    *      
-    * \a retainInternalCopy is returned by this function and indicates whether
-    * core Mesa should keep an internal copy of the texture image.
+    * The parameters are the same as for glCompressedTexImage1D(), plus a
+    * pointer to the destination texure image.
     */
-   void (*CompressedTexImage1D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage1D)(struct gl_context *ctx,
+                                struct gl_texture_image *texImage,
+                                GLint internalFormat,
+                                GLsizei width, GLint border,
+                                GLsizei imageSize, const GLvoid *data);
    /**
     * Called by glCompressedTexImage2D().
     *
     * \sa dd_function_table::CompressedTexImage1D.
     */
-   void (*CompressedTexImage2D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLsizei height, GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage2D)(struct gl_context *ctx,
+                                struct gl_texture_image *texImage,
+                                GLint internalFormat,
+                                GLsizei width, GLsizei height, GLint border,
+                                GLsizei imageSize, const GLvoid *data);
+
    /**
     * Called by glCompressedTexImage3D().
     *
     * \sa dd_function_table::CompressedTexImage3D.
     */
-   void (*CompressedTexImage3D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLsizei height, GLsizei depth,
-                                 GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage3D)(struct gl_context *ctx,
+                                struct gl_texture_image *texImage,
+                                GLint internalFormat,
+                                GLsizei width, GLsizei height, GLsizei depth,
+                                GLint border,
+                                GLsizei imageSize, const GLvoid *data);
 
    /**
     * Called by glCompressedTexSubImage1D().
-    * 
-    * \param target user specified.
-    * \param level user specified.
-    * \param xoffset user specified.
-    * \param yoffset user specified.
-    * \param zoffset user specified.
-    * \param width user specified.
-    * \param height user specified.
-    * \param depth user specified.
-    * \param imageSize user specified.
-    * \param data user specified.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p depth, \p border and \p internalFormat information.
     */
-   void (*CompressedTexSubImage1D)(struct gl_context *ctx, GLenum target, GLint level,
+   void (*CompressedTexSubImage1D)(struct gl_context *ctx,
+                                   struct gl_texture_image *texImage,
                                    GLint xoffset, GLsizei width,
                                    GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
+                                   GLsizei imageSize, const GLvoid *data);
+
    /**
     * Called by glCompressedTexSubImage2D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
     */
-   void (*CompressedTexSubImage2D)(struct gl_context *ctx, GLenum target, GLint level,
+   void (*CompressedTexSubImage2D)(struct gl_context *ctx,
+                                   struct gl_texture_image *texImage,
                                    GLint xoffset, GLint yoffset,
                                    GLsizei width, GLint height,
                                    GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
+                                   GLsizei imageSize, const GLvoid *data);
+
    /**
     * Called by glCompressedTexSubImage3D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
     */
-   void (*CompressedTexSubImage3D)(struct gl_context *ctx, GLenum target, GLint level,
+   void (*CompressedTexSubImage3D)(struct gl_context *ctx,
+                                   struct gl_texture_image *texImage,
                                    GLint xoffset, GLint yoffset, GLint zoffset,
                                    GLsizei width, GLint height, GLint depth,
                                    GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
+                                   GLsizei imageSize, const GLvoid *data);
 
 
    /**

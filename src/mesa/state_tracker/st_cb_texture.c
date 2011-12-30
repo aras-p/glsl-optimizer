@@ -776,12 +776,11 @@ st_TexImage1D(struct gl_context * ctx,
 
 
 static void
-st_CompressedTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
+st_CompressedTexImage2D(struct gl_context *ctx,
+                        struct gl_texture_image *texImage,
                         GLint internalFormat,
                         GLint width, GLint height, GLint border,
-                        GLsizei imageSize, const GLvoid *data,
-                        struct gl_texture_object *texObj,
-                        struct gl_texture_image *texImage)
+                        GLsizei imageSize, const GLvoid *data)
 {
    st_TexImage(ctx, 2, texImage, internalFormat, width, height, 1, border,
                0, 0, data, &ctx->Unpack, imageSize, GL_TRUE);
@@ -924,25 +923,23 @@ st_GetTexImage(struct gl_context * ctx,
 
 
 static void
-st_CompressedTexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
+st_CompressedTexSubImage1D(struct gl_context *ctx,
+                           struct gl_texture_image *texImage,
                            GLint xoffset, GLsizei width,
                            GLenum format,
-                           GLsizei imageSize, const GLvoid *data,
-                           struct gl_texture_object *texObj,
-                           struct gl_texture_image *texImage)
+                           GLsizei imageSize, const GLvoid *data)
 {
    assert(0);
 }
 
 
 static void
-st_CompressedTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
+st_CompressedTexSubImage2D(struct gl_context *ctx,
+                           struct gl_texture_image *texImage,
                            GLint xoffset, GLint yoffset,
                            GLsizei width, GLint height,
                            GLenum format,
-                           GLsizei imageSize, const GLvoid *data,
-                           struct gl_texture_object *texObj,
-                           struct gl_texture_image *texImage)
+                           GLsizei imageSize, const GLvoid *data)
 {
    struct st_context *st = st_context(ctx);
    struct st_texture_image *stImage = st_texture_image(texImage);
@@ -991,13 +988,12 @@ st_CompressedTexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
 
 
 static void
-st_CompressedTexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
+st_CompressedTexSubImage3D(struct gl_context *ctx,
+                           struct gl_texture_image *texImage,
                            GLint xoffset, GLint yoffset, GLint zoffset,
                            GLsizei width, GLint height, GLint depth,
                            GLenum format,
-                           GLsizei imageSize, const GLvoid *data,
-                           struct gl_texture_object *texObj,
-                           struct gl_texture_image *texImage)
+                           GLsizei imageSize, const GLvoid *data)
 {
    assert(0);
 }
