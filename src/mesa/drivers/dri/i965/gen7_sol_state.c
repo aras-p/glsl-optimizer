@@ -240,6 +240,8 @@ upload_sol_state(struct brw_context *brw)
    if (active) {
       upload_3dstate_so_buffers(brw);
       upload_3dstate_so_decl_list(brw, &vue_map);
+
+      intel->batch.needs_sol_reset = true;
    }
 
    /* Finally, set up the SOL stage.  This command must always follow updates to

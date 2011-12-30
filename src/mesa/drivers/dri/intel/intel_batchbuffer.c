@@ -85,6 +85,7 @@ intel_batchbuffer_reset(struct intel_context *intel)
    intel->batch.reserved_space = BATCH_RESERVED;
    intel->batch.state_batch_offset = intel->batch.bo->size;
    intel->batch.used = 0;
+   intel->batch.needs_sol_reset = false;
 }
 
 void
@@ -135,16 +136,20 @@ do_flush_locked(struct intel_context *intel)
    }
 
    if (!intel->intelScreen->no_hw) {
-      int ring;
+      int flags;
 
       if (intel->gen < 6 || !batch->is_blit) {
-	 ring = I915_EXEC_RENDER;
+	 flags = I915_EXEC_RENDER;
       } else {
-	 ring = I915_EXEC_BLT;
+	 flags = I915_EXEC_BLT;
       }
 
+      if (batch->needs_sol_reset)
+	 flags |= I915_EXEC_GEN7_SOL_RESET;
+
       if (ret == 0)
-	 ret = drm_intel_bo_mrb_exec(batch->bo, 4*batch->used, NULL, 0, 0, ring);
+	 ret = drm_intel_bo_mrb_exec(batch->bo, 4*batch->used, NULL, 0, 0,
+				     flags);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
