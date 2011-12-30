@@ -603,10 +603,9 @@ _mesa_get_teximage(struct gl_context *ctx,
  * All error checking will have been done before this routine is called.
  */
 void
-_mesa_get_compressed_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                              GLvoid *img,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage)
+_mesa_get_compressed_teximage(struct gl_context *ctx,
+                              struct gl_texture_image *texImage,
+                              GLvoid *img)
 {
    const GLuint row_stride =
       _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
@@ -981,8 +980,7 @@ _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
 
    _mesa_lock_texture(ctx, texObj);
    {
-      ctx->Driver.GetCompressedTexImage(ctx, target, level, img,
-                                        texObj, texImage);
+      ctx->Driver.GetCompressedTexImage(ctx, texImage, img);
    }
    _mesa_unlock_texture(ctx, texObj);
 }

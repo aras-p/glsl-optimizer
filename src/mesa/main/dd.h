@@ -400,10 +400,9 @@ struct dd_function_table {
    /**
     * Called by glGetCompressedTexImage.
     */
-   void (*GetCompressedTexImage)(struct gl_context *ctx, GLenum target, GLint level,
-                                 GLvoid *img,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage);
+   void (*GetCompressedTexImage)(struct gl_context *ctx,
+                                 struct gl_texture_image *texImage,
+                                 GLvoid *data);
 
    /*@}*/
 
