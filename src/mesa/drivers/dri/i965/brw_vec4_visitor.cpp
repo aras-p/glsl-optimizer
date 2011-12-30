@@ -1762,7 +1762,7 @@ vec4_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
-   vec4_instruction *inst;
+   vec4_instruction *inst = NULL;
    switch (ir->op) {
    case ir_tex:
    case ir_txl:
