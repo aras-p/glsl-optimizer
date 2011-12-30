@@ -1294,7 +1294,8 @@ make_variant_key(struct llvmpipe_context *lp,
        *
        * Also, force rgb/alpha func/factors match, to make AoS blending easier.
        */
-      if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W) {
+      if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W ||
+	  format_desc->swizzle[3] == format_desc->swizzle[0]) {
          blend_rt->rgb_src_factor   = force_dst_alpha_one(blend_rt->rgb_src_factor);
          blend_rt->rgb_dst_factor   = force_dst_alpha_one(blend_rt->rgb_dst_factor);
          blend_rt->alpha_func       = blend_rt->rgb_func;
