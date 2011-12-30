@@ -544,9 +544,6 @@ st_TexImage(struct gl_context * ctx,
    assert(texImage->Height == height);
    assert(texImage->Depth == depth);
 
-   stImage->base.Face = _mesa_tex_target_to_face(target);
-   stImage->base.Level = level;
-
    /* Release the reference to a potentially orphaned buffer.   
     * Release any old malloced memory.
     */
