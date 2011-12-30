@@ -1201,7 +1201,7 @@ void
 brw_ENDIF(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
-   struct brw_instruction *insn;
+   struct brw_instruction *insn = NULL;
    struct brw_instruction *else_inst = NULL;
    struct brw_instruction *if_inst = NULL;
    struct brw_instruction *tmp;
