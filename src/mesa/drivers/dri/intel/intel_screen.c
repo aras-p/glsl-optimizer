@@ -697,6 +697,10 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       intelScreen->deviceID = strtod(devid_override, NULL);
    }
 
+   intelScreen->kernel_has_gen7_sol_reset =
+      intel_get_boolean(intelScreen->driScrnPriv,
+			I915_PARAM_HAS_GEN7_SOL_RESET);
+
    if (IS_GEN7(intelScreen->deviceID)) {
       intelScreen->gen = 7;
    } else if (IS_GEN6(intelScreen->deviceID)) {

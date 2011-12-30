@@ -114,6 +114,8 @@ struct intel_screen
    bool hw_has_hiz;
    enum intel_dri2_has_hiz dri2_has_hiz;
 
+   bool kernel_has_gen7_sol_reset;
+
    bool no_vbo;
    dri_bufmgr *bufmgr;
    struct _mesa_HashTable *named_regions;
