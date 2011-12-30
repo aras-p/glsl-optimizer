@@ -930,143 +930,6 @@ st_GetTexImage(struct gl_context * ctx,
 
 
 static void
-st_TexSubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
-               GLint xoffset, GLint yoffset, GLint zoffset,
-               GLint width, GLint height, GLint depth,
-               GLenum format, GLenum type, const void *pixels,
-               const struct gl_pixelstore_attrib *packing,
-               struct gl_texture_object *texObj,
-               struct gl_texture_image *texImage)
-{
-   struct st_context *st = st_context(ctx);
-   struct st_texture_image *stImage = st_texture_image(texImage);
-   GLuint dstRowStride;
-   const GLuint srcImageStride =
-      _mesa_image_image_stride(packing, width, height, format, type);
-   GLint i;
-   const GLubyte *src;
-   /* init to silence warning only: */
-   enum pipe_transfer_usage transfer_usage = PIPE_TRANSFER_WRITE;
-   GLubyte *dstMap;
-
-   DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target),
-       level, xoffset, yoffset, width, height);
-
-   pixels =
-      _mesa_validate_pbo_teximage(ctx, dims, width, height, depth, format,
-                                  type, pixels, packing, "glTexSubImage2D");
-   if (!pixels)
-      return;
-
-   /* for a 1D array upload the image as a series of layer with height = 1 */
-   if (target == GL_TEXTURE_1D_ARRAY) {
-      depth = height;
-      height = 1;
-   }
-
-   /* Map buffer if necessary.  Need to lock to prevent other contexts
-    * from uploading the buffer under us.
-    */
-   if (stImage->pt) {
-      if (format == GL_DEPTH_COMPONENT &&
-          util_format_is_depth_and_stencil(stImage->pt->format))
-         transfer_usage = PIPE_TRANSFER_READ_WRITE;
-      else
-         transfer_usage = PIPE_TRANSFER_WRITE;
-
-      dstMap = st_texture_image_map(st, stImage, zoffset, 
-                                    transfer_usage,
-                                    xoffset, yoffset,
-                                    width, height);
-   }
-
-   if (!dstMap) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
-      goto done;
-   }
-
-   src = (const GLubyte *) pixels;
-   dstRowStride = stImage->transfer->stride;
-
-   for (i = 0; i < depth; i++) {
-      if (!_mesa_texstore(ctx, dims, texImage->_BaseFormat,
-                          texImage->TexFormat,
-                          0, 0, 0,
-                          dstRowStride,
-                          (GLubyte **) &dstMap,
-                          width, height, 1,
-                          format, type, src, packing)) {
-	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
-      }
-
-      if (stImage->pt && i + 1 < depth) {
-         /* unmap this slice */
-	 st_texture_image_unmap(st, stImage);
-         /* map next slice of 3D texture */
-	 dstMap = st_texture_image_map(st, stImage,
-                                       zoffset + i + 1,
-                                       transfer_usage,
-                                       xoffset, yoffset,
-                                       width, height);
-	 src += srcImageStride;
-      }
-   }
-
-done:
-   _mesa_unmap_teximage_pbo(ctx, packing);
-
-   if (stImage->pt && stImage->transfer) {
-      st_texture_image_unmap(st, stImage);
-   }
-}
-
-
-
-static void
-st_TexSubImage3D(struct gl_context *ctx, GLenum target, GLint level,
-                 GLint xoffset, GLint yoffset, GLint zoffset,
-                 GLsizei width, GLsizei height, GLsizei depth,
-                 GLenum format, GLenum type, const GLvoid *pixels,
-                 const struct gl_pixelstore_attrib *packing,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
-{
-   st_TexSubimage(ctx, 3, target, level, xoffset, yoffset, zoffset,
-                  width, height, depth, format, type,
-                  pixels, packing, texObj, texImage);
-}
-
-
-static void
-st_TexSubImage2D(struct gl_context *ctx, GLenum target, GLint level,
-                 GLint xoffset, GLint yoffset,
-                 GLsizei width, GLsizei height,
-                 GLenum format, GLenum type, const GLvoid * pixels,
-                 const struct gl_pixelstore_attrib *packing,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
-{
-   st_TexSubimage(ctx, 2, target, level, xoffset, yoffset, 0,
-                  width, height, 1, format, type,
-                  pixels, packing, texObj, texImage);
-}
-
-
-static void
-st_TexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
-                 GLint xoffset, GLsizei width, GLenum format, GLenum type,
-                 const GLvoid * pixels,
-                 const struct gl_pixelstore_attrib *packing,
-                 struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage)
-{
-   st_TexSubimage(ctx, 1, target, level, xoffset, 0, 0, width, 1, 1,
-                  format, type, pixels, packing, texObj, texImage);
-}
-
-
-static void
 st_CompressedTexSubImage1D(struct gl_context *ctx, GLenum target, GLint level,
                            GLint xoffset, GLsizei width,
                            GLenum format,
@@ -1866,9 +1729,9 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TexImage1D = st_TexImage1D;
    functions->TexImage2D = st_TexImage2D;
    functions->TexImage3D = st_TexImage3D;
-   functions->TexSubImage1D = st_TexSubImage1D;
-   functions->TexSubImage2D = st_TexSubImage2D;
-   functions->TexSubImage3D = st_TexSubImage3D;
+   functions->TexSubImage1D = _mesa_store_texsubimage1d;
+   functions->TexSubImage2D = _mesa_store_texsubimage2d;
+   functions->TexSubImage3D = _mesa_store_texsubimage3d;
    functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
    functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
    functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
