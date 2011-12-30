@@ -2665,7 +2665,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
                                 GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
 
    /* parse attrib_list */
-   for (i = 0; !done && attrib_list[i]; i++) {
+   for (i = 0; !done && attrib_list && attrib_list[i]; i++) {
       switch (attrib_list[i]) {
       case GLX_CONTEXT_MAJOR_VERSION_ARB:
          majorVersion = attrib_list[++i];
