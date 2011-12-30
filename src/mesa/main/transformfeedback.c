@@ -461,7 +461,7 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
 
    if ((size <= 0) || (size & 0x3)) {
       /* must be positive and multiple of four */
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size%d)", (int) size);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size=%d)", (int) size);
       return;
    }  
 

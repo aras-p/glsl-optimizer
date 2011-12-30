@@ -751,7 +751,7 @@ link_program(struct gl_context *ctx, GLuint program)
 	   || shProg == ctx->Shader.CurrentGeometryProgram
 	   || shProg == ctx->Shader.CurrentFragmentProgram)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glLinkProgram(transform feedback active");
+                  "glLinkProgram(transform feedback active)");
       return;
    }
 
