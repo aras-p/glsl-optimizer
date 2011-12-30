@@ -365,9 +365,9 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    for (unsigned i = 0; i < num_user_uniforms; i++) {
       assert(uniforms[i].storage != NULL);
    }
-#endif
 
    assert(parcel.values == data_end);
+#endif
 
    prog->NumUserUniformStorage = num_user_uniforms;
    prog->UniformStorage = uniforms;
