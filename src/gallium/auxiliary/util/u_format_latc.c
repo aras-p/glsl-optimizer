@@ -47,6 +47,9 @@ util_format_latc1_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsi
    (void) u_format_signed_encode_rgtc_ubyte;
 
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 1);
+   dst[1] = dst[0];
+   dst[2] = dst[0];
+   dst[3] = 255;
 }
 
 void
@@ -173,7 +176,9 @@ void
 util_format_latc2_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsigned i, unsigned j)
 {
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 2);
-   u_format_unsigned_fetch_texel_rgtc(0, src + 8, i, j, dst + 1, 2);
+   dst[1] = dst[0];
+   dst[2] = dst[0];
+   u_format_unsigned_fetch_texel_rgtc(0, src + 8, i, j, dst + 3, 2);
 }
 
 void
