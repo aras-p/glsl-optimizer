@@ -196,10 +196,11 @@ class Format:
 
     def inv_swizzles(self):
         '''Return an array[4] of inverse swizzle terms'''
+        '''Only pick the first matching value to avoid l8 getting blue and i8 getting alpha'''
         inv_swizzle = [None]*4
         for i in range(4):
             swizzle = self.swizzles[i]
-            if swizzle < 4:
+            if swizzle < 4 and inv_swizzle[swizzle] == None:
                 inv_swizzle[swizzle] = i
         return inv_swizzle
 
