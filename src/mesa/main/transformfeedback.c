@@ -347,7 +347,20 @@ _mesa_BeginTransformFeedback(GLenum mode)
    GET_CURRENT_CONTEXT(ctx);
 
    obj = ctx->TransformFeedback.CurrentObject;
+
+   if (ctx->Shader.CurrentVertexProgram == NULL) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBeginTransformFeedback(no program active)");
+      return;
+   }
+
    info = &ctx->Shader.CurrentVertexProgram->LinkedTransformFeedback;
+
+   if (info->NumOutputs == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBeginTransformFeedback(no varyings to record)");
+      return;
+   }
 
    switch (mode) {
    case GL_POINTS:
@@ -578,6 +591,13 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
    if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glBindBufferOffsetEXT(index=%d)", index);
+      return;
+   }
+
+   if (offset & 0x3) {
+      /* must be multiple of four */
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glBindBufferOffsetEXT(offset=%d)", (int) offset);
       return;
    }
 
