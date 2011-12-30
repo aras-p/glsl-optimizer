@@ -53,27 +53,31 @@
  */
 static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 {
+	struct r600_screen *rscreen = ctx->screen;
 	struct r600_fence *fence = NULL;
 
-	if (!ctx->fences.bo) {
+	pipe_mutex_lock(rscreen->fences.mutex);
+
+	if (!rscreen->fences.bo) {
 		/* Create the shared buffer object */
-		ctx->fences.bo = (struct r600_resource*)
-			pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM,
+		rscreen->fences.bo = (struct r600_resource*)
+			pipe_buffer_create(&rscreen->screen, PIPE_BIND_CUSTOM,
 					   PIPE_USAGE_STAGING, 4096);
-		if (!ctx->fences.bo) {
+		if (!rscreen->fences.bo) {
 			R600_ERR("r600: failed to create bo for fence objects\n");
-			return NULL;
+			goto out;
 		}
-		ctx->fences.data = ctx->ws->buffer_map(ctx->fences.bo->buf, ctx->ctx.cs,
-						       PIPE_TRANSFER_WRITE);
+		rscreen->fences.data = ctx->ws->buffer_map(rscreen->fences.bo->buf,
+							   ctx->ctx.cs,
+							   PIPE_TRANSFER_READ_WRITE);
 	}
 
-	if (!LIST_IS_EMPTY(&ctx->fences.pool)) {
+	if (!LIST_IS_EMPTY(&rscreen->fences.pool)) {
 		struct r600_fence *entry;
 
 		/* Try to find a freed fence that has been signalled */
-		LIST_FOR_EACH_ENTRY(entry, &ctx->fences.pool, head) {
-			if (ctx->fences.data[entry->index] != 0) {
+		LIST_FOR_EACH_ENTRY(entry, &rscreen->fences.pool, head) {
+			if (rscreen->fences.data[entry->index] != 0) {
 				LIST_DELINIT(&entry->head);
 				fence = entry;
 				break;
@@ -86,33 +90,34 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 		struct r600_fence_block *block;
 		unsigned index;
 
-		if ((ctx->fences.next_index + 1) >= 1024) {
+		if ((rscreen->fences.next_index + 1) >= 1024) {
 			R600_ERR("r600: too many concurrent fences\n");
-			return NULL;
+			goto out;
 		}
 
-		index = ctx->fences.next_index++;
+		index = rscreen->fences.next_index++;
 
 		if (!(index % FENCE_BLOCK_SIZE)) {
 			/* Allocate a new block */
 			block = CALLOC_STRUCT(r600_fence_block);
 			if (block == NULL)
-				return NULL;
+				goto out;
 
-			LIST_ADD(&block->head, &ctx->fences.blocks);
+			LIST_ADD(&block->head, &rscreen->fences.blocks);
 		} else {
-			block = LIST_ENTRY(struct r600_fence_block, ctx->fences.blocks.next, head);
+			block = LIST_ENTRY(struct r600_fence_block, rscreen->fences.blocks.next, head);
 		}
 
 		fence = &block->fences[index % FENCE_BLOCK_SIZE];
-		fence->ctx = ctx;
 		fence->index = index;
 	}
 
 	pipe_reference_init(&fence->reference, 1);
 
-	ctx->fences.data[fence->index] = 0;
-	r600_context_emit_fence(&ctx->ctx, ctx->fences.bo, fence->index, 1);
+	rscreen->fences.data[fence->index] = 0;
+	r600_context_emit_fence(&ctx->ctx, rscreen->fences.bo, fence->index, 1);
+out:
+	pipe_mutex_unlock(rscreen->fences.mutex);
 	return fence;
 }
 
@@ -191,18 +196,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_vbuf_destroy(rctx->vbuf_mgr);
 	util_slab_destroy(&rctx->pool_transfers);
 
-	if (rctx->fences.bo) {
-		struct r600_fence_block *entry, *tmp;
-
-		LIST_FOR_EACH_ENTRY_SAFE(entry, tmp, &rctx->fences.blocks, head) {
-			LIST_DEL(&entry->head);
-			FREE(entry);
-		}
-
-		rctx->ws->buffer_unmap(rctx->fences.bo->buf);
-		pipe_resource_reference((struct pipe_resource**)&rctx->fences.bo, NULL);
-	}
-
 	r600_update_num_contexts(rctx->screen, -1);
 
 	FREE(rctx);
@@ -229,12 +222,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->ws = rscreen->ws;
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
-
-	rctx->fences.bo = NULL;
-	rctx->fences.data = NULL;
-	rctx->fences.next_index = 0;
-	LIST_INITHEAD(&rctx->fences.pool);
-	LIST_INITHEAD(&rctx->fences.blocks);
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
@@ -555,6 +542,19 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (rscreen == NULL)
 		return;
 
+	if (rscreen->fences.bo) {
+		struct r600_fence_block *entry, *tmp;
+
+		LIST_FOR_EACH_ENTRY_SAFE(entry, tmp, &rscreen->fences.blocks, head) {
+			LIST_DEL(&entry->head);
+			FREE(entry);
+		}
+
+		rscreen->ws->buffer_unmap(rscreen->fences.bo->buf);
+		pipe_resource_reference((struct pipe_resource**)&rscreen->fences.bo, NULL);
+	}
+	pipe_mutex_destroy(rscreen->fences.mutex);
+
 	rscreen->ws->destroy(rscreen->ws);
 
 	util_slab_destroy(&rscreen->pool_buffers);
@@ -570,8 +570,10 @@ static void r600_fence_reference(struct pipe_screen *pscreen,
 	struct r600_fence *newf = (struct r600_fence*)fence;
 
 	if (pipe_reference(&(*oldf)->reference, &newf->reference)) {
-		struct r600_pipe_context *ctx = (*oldf)->ctx;
-		LIST_ADDTAIL(&(*oldf)->head, &ctx->fences.pool);
+		struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+		pipe_mutex_lock(rscreen->fences.mutex);
+		LIST_ADDTAIL(&(*oldf)->head, &rscreen->fences.pool);
+		pipe_mutex_unlock(rscreen->fences.mutex);
 	}
 
 	*ptr = fence;
@@ -580,18 +582,18 @@ static void r600_fence_reference(struct pipe_screen *pscreen,
 static boolean r600_fence_signalled(struct pipe_screen *pscreen,
                                     struct pipe_fence_handle *fence)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	struct r600_fence *rfence = (struct r600_fence*)fence;
-	struct r600_pipe_context *ctx = rfence->ctx;
 
-	return ctx->fences.data[rfence->index];
+	return rscreen->fences.data[rfence->index];
 }
 
 static boolean r600_fence_finish(struct pipe_screen *pscreen,
                                  struct pipe_fence_handle *fence,
                                  uint64_t timeout)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	struct r600_fence *rfence = (struct r600_fence*)fence;
-	struct r600_pipe_context *ctx = rfence->ctx;
 	int64_t start_time = 0;
 	unsigned spins = 0;
 
@@ -602,7 +604,7 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 		timeout /= 1000;
 	}
 
-	while (ctx->fences.data[rfence->index] == 0) {
+	while (rscreen->fences.data[rfence->index] == 0) {
 		if (++spins % 256)
 			continue;
 #ifdef PIPE_OS_UNIX
@@ -800,6 +802,13 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 			 UTIL_SLAB_SINGLETHREADED);
 
 	pipe_mutex_init(rscreen->mutex_num_contexts);
+
+	rscreen->fences.bo = NULL;
+	rscreen->fences.data = NULL;
+	rscreen->fences.next_index = 0;
+	LIST_INITHEAD(&rscreen->fences.pool);
+	LIST_INITHEAD(&rscreen->fences.blocks);
+	pipe_mutex_init(rscreen->fences.mutex);
 
 	return &rscreen->screen;
 }
