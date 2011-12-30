@@ -65,34 +65,13 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
                                     GLenum format,
                                     GLenum type, GLboolean fbo);
 
-void radeonTexImage1D(struct gl_context * ctx, GLenum target, GLint level,
-		      GLint internalFormat,
-		      GLint width, GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing,
-		      struct gl_texture_object *texObj,
-		      struct gl_texture_image *texImage);
-void radeonTexImage2D(struct gl_context * ctx, GLenum target, GLint level,
-		      GLint internalFormat,
-		      GLint width, GLint height, GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing,
-		      struct gl_texture_object *texObj,
-		      struct gl_texture_image *texImage);
 void radeonCompressedTexImage2D(struct gl_context * ctx, GLenum target,
 				GLint level, GLint internalFormat,
 				GLint width, GLint height, GLint border,
 				GLsizei imageSize, const GLvoid * data,
 				struct gl_texture_object *texObj,
 				struct gl_texture_image *texImage);
-void radeonTexImage3D(struct gl_context * ctx, GLenum target, GLint level,
-		      GLint internalFormat,
-		      GLint width, GLint height, GLint depth,
-		      GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing,
-		      struct gl_texture_object *texObj,
-		      struct gl_texture_image *texImage);
+
 void radeonTexSubImage1D(struct gl_context * ctx, GLenum target, GLint level,
 			 GLint xoffset,
 			 GLsizei width,

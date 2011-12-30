@@ -578,58 +578,56 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
  */
 static void radeon_teximage(
 	struct gl_context *ctx, int dims,
-	GLenum target, GLint level,
+	struct gl_texture_image *texImage,
 	GLint internalFormat,
 	GLint width, GLint height, GLint depth,
 	GLsizei imageSize,
 	GLenum format, GLenum type, const GLvoid * pixels,
 	const struct gl_pixelstore_attrib *packing,
-	struct gl_texture_object *texObj,
-	struct gl_texture_image *texImage,
 	int compressed)
 {
-	_mesa_store_teximage3d(ctx, target, level, internalFormat,
+	_mesa_store_teximage3d(ctx, texImage, internalFormat,
 			       width, height, depth, 0,
 			       format, type, pixels,
-			       packing, texObj, texImage);
+			       packing);
 }
 
-void radeonTexImage1D(struct gl_context * ctx, GLenum target, GLint level,
+static void
+radeonTexImage1D(struct gl_context * ctx,
+		      struct gl_texture_image *texImage,
 		      GLint internalFormat,
 		      GLint width, GLint border,
 		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing,
-		      struct gl_texture_object *texObj,
-		      struct gl_texture_image *texImage)
+		      const struct gl_pixelstore_attrib *packing)
 {
-	radeon_teximage(ctx, 1, target, level, internalFormat, width, 1, 1,
-		0, format, type, pixels, packing, texObj, texImage, 0);
+	radeon_teximage(ctx, 1, texImage, internalFormat, width, 1, 1,
+		0, format, type, pixels, packing, 0);
 }
 
-void radeonTexImage2D(struct gl_context * ctx, GLenum target, GLint level,
-			   GLint internalFormat,
-			   GLint width, GLint height, GLint border,
-			   GLenum format, GLenum type, const GLvoid * pixels,
-			   const struct gl_pixelstore_attrib *packing,
-			   struct gl_texture_object *texObj,
-			   struct gl_texture_image *texImage)
+static void
+radeonTexImage2D(struct gl_context * ctx,
+		      struct gl_texture_image *texImage,
+		      GLint internalFormat,
+		      GLint width, GLint height, GLint border,
+		      GLenum format, GLenum type, const GLvoid * pixels,
+		      const struct gl_pixelstore_attrib *packing)
 
 {
-	radeon_teximage(ctx, 2, target, level, internalFormat, width, height, 1,
-		0, format, type, pixels, packing, texObj, texImage, 0);
+	radeon_teximage(ctx, 2, texImage, internalFormat, width, height, 1,
+		0, format, type, pixels, packing, 0);
 }
 
-void radeonTexImage3D(struct gl_context * ctx, GLenum target, GLint level,
+static void
+radeonTexImage3D(struct gl_context * ctx,
+		      struct gl_texture_image *texImage,
 		      GLint internalFormat,
 		      GLint width, GLint height, GLint depth,
 		      GLint border,
 		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing,
-		      struct gl_texture_object *texObj,
-		      struct gl_texture_image *texImage)
+		      const struct gl_pixelstore_attrib *packing)
 {
-	radeon_teximage(ctx, 3, target, level, internalFormat, width, height, depth,
-		0, format, type, pixels, packing, texObj, texImage, 0);
+	radeon_teximage(ctx, 3, texImage, internalFormat, width, height, depth,
+		0, format, type, pixels, packing, 0);
 }
 
 unsigned radeonIsFormatRenderable(gl_format mesa_format)

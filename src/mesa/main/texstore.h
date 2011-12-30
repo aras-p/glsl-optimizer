@@ -91,33 +91,30 @@ _mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
 			    GLbitfield transferOps);
 
 extern void
-_mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage1d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage);
+                       const struct gl_pixelstore_attrib *packing);
 
 
 extern void
-_mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage2d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint height, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage);
+                       const struct gl_pixelstore_attrib *packing);
 
 
 extern void
-_mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage3d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint height, GLint depth, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage);
+                       const struct gl_pixelstore_attrib *packing);
 
 
 extern void

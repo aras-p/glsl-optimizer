@@ -2481,22 +2481,19 @@ teximage(struct gl_context *ctx, GLuint dims,
                ASSERT(ctx->Driver.TexImage3D);
                switch (dims) {
                case 1:
-                  ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                  ctx->Driver.TexImage1D(ctx, texImage, internalFormat,
                                          width, border, format,
-                                         type, pixels, unpack, texObj,
-                                         texImage);
+                                         type, pixels, unpack);
                   break;
                case 2:
-                  ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                  ctx->Driver.TexImage2D(ctx, texImage, internalFormat,
                                          width, height, border, format,
-                                         type, pixels, unpack, texObj,
-                                         texImage);
+                                         type, pixels, unpack);
                   break;
                case 3:
-                  ctx->Driver.TexImage3D(ctx, target, level, internalFormat,
+                  ctx->Driver.TexImage3D(ctx, texImage, internalFormat,
                                          width, height, depth, border, format,
-                                         type, pixels, unpack, texObj,
-                                         texImage);
+                                         type, pixels, unpack);
                   break;
                default:
                   _mesa_problem(ctx, "invalid dims=%u in teximage()", dims);
@@ -2820,14 +2817,14 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
             /* Allocate texture memory (no pixel data yet) */
             if (dims == 1) {
-               ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+               ctx->Driver.TexImage1D(ctx, texImage, internalFormat,
                                       width, border, GL_NONE, GL_NONE, NULL,
-                                      &ctx->Unpack, texObj, texImage);
+                                      &ctx->Unpack);
             }
             else {
-               ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+               ctx->Driver.TexImage2D(ctx, texImage, internalFormat,
                                       width, height, border, GL_NONE, GL_NONE,
-                                      NULL, &ctx->Unpack, texObj, texImage);
+                                      NULL, &ctx->Unpack);
             }
 
             if (_mesa_clip_copytexsubimage(ctx, &dstX, &dstY, &srcX, &srcY,

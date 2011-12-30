@@ -203,42 +203,38 @@ struct dd_function_table {
     * fully initialized.
     * The parameters are the same as glTexImage1D(), plus:
     * \param packing describes how to unpack the source data.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.
+    * \param texImage is the destination texture image.
     */
-   void (*TexImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
+   void (*TexImage1D)(struct gl_context *ctx,
+                      struct gl_texture_image *texImage,
+                      GLint internalFormat,
+                      GLint width, GLint border,
+                      GLenum format, GLenum type, const GLvoid *pixels,
+                      const struct gl_pixelstore_attrib *packing);
 
    /**
     * Called by glTexImage2D().
     * 
     * \sa dd_function_table::TexImage1D.
     */
-   void (*TexImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
+   void (*TexImage2D)(struct gl_context *ctx,
+                      struct gl_texture_image *texImage,
+                      GLint internalFormat,
+                      GLint width, GLint height, GLint border,
+                      GLenum format, GLenum type, const GLvoid *pixels,
+                      const struct gl_pixelstore_attrib *packing);
    
    /**
     * Called by glTexImage3D().
     * 
     * \sa dd_function_table::TexImage1D.
     */
-   void (*TexImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint depth, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
+   void (*TexImage3D)(struct gl_context *ctx,
+                      struct gl_texture_image *texImage,
+                      GLint internalFormat,
+                      GLint width, GLint height, GLint depth, GLint border,
+                      GLenum format, GLenum type, const GLvoid *pixels,
+                      const struct gl_pixelstore_attrib *packing);
 
    /**
     * Called by glTexSubImage1D().  Replace a subset of the target texture

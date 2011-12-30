@@ -799,10 +799,10 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
       /* set image data */
-      ctx->Driver.TexImage2D(ctx, GL_TEXTURE_2D, 0, GL_RGBA,
+      ctx->Driver.TexImage2D(ctx, texImage, GL_RGBA,
                              8, 8, 0,
                              GL_RGBA, GL_UNSIGNED_BYTE, texels,
-                             &ctx->DefaultPacking, texObj, texImage);
+                             &ctx->DefaultPacking);
 
       _mesa_test_texobj_completeness(ctx, texObj);
       assert(texObj->_Complete);

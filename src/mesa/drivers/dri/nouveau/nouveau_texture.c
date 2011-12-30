@@ -452,14 +452,15 @@ get_teximage_placement(struct gl_texture_image *ti)
 }
 
 static void
-nouveau_teximage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
+nouveau_teximage(struct gl_context *ctx, GLint dims,
+		 struct gl_texture_image *ti,
 		 GLint internalFormat,
 		 GLint width, GLint height, GLint depth, GLint border,
 		 GLenum format, GLenum type, const GLvoid *pixels,
-		 const struct gl_pixelstore_attrib *packing,
-		 struct gl_texture_object *t,
-		 struct gl_texture_image *ti)
+		 const struct gl_pixelstore_attrib *packing)
 {
+	struct gl_texture_object *t = ti->TexObject;
+	const GLuint level = ti->Level;
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	int ret;
@@ -505,45 +506,42 @@ nouveau_teximage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
 }
 
 static void
-nouveau_teximage_1d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_teximage_1d(struct gl_context *ctx,
+		    struct gl_texture_image *ti,
 		    GLint internalFormat,
 		    GLint width, GLint border,
 		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing,
-		    struct gl_texture_object *t,
-		    struct gl_texture_image *ti)
+		    const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_teximage(ctx, 1, target, level, internalFormat,
+	nouveau_teximage(ctx, 1, ti, internalFormat,
 			 width, 1, 1, border, format, type, pixels,
-			 packing, t, ti);
+			 packing);
 }
 
 static void
-nouveau_teximage_2d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_teximage_2d(struct gl_context *ctx,
+		    struct gl_texture_image *ti,
 		    GLint internalFormat,
 		    GLint width, GLint height, GLint border,
 		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing,
-		    struct gl_texture_object *t,
-		    struct gl_texture_image *ti)
+		    const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_teximage(ctx, 2, target, level, internalFormat,
+	nouveau_teximage(ctx, 2, ti, internalFormat,
 			 width, height, 1, border, format, type, pixels,
-			 packing, t, ti);
+			 packing);
 }
 
 static void
-nouveau_teximage_3d(struct gl_context *ctx, GLenum target, GLint level,
+nouveau_teximage_3d(struct gl_context *ctx,
+		    struct gl_texture_image *ti,
 		    GLint internalFormat,
 		    GLint width, GLint height, GLint depth, GLint border,
 		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing,
-		    struct gl_texture_object *t,
-		    struct gl_texture_image *ti)
+		    const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_teximage(ctx, 3, target, level, internalFormat,
+	nouveau_teximage(ctx, 3, ti, internalFormat,
 			 width, height, depth, border, format, type, pixels,
-			 packing, t, ti);
+			 packing);
 }
 
 static void

@@ -501,19 +501,20 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
 static void
 st_TexImage(struct gl_context * ctx,
             GLint dims,
-            GLenum target, GLint level,
+            struct gl_texture_image *texImage,
             GLint internalFormat,
             GLint width, GLint height, GLint depth,
             GLint border,
             GLenum format, GLenum type, const void *pixels,
             const struct gl_pixelstore_attrib *unpack,
-            struct gl_texture_object *texObj,
-            struct gl_texture_image *texImage,
             GLsizei imageSize, GLboolean compressed_src)
 {
    struct st_context *st = st_context(ctx);
+   struct gl_texture_object *texObj = texImage->TexObject;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
+   const GLenum target = texObj->Target;
+   const GLuint level = texImage->Level;
    GLuint dstRowStride = 0;
    enum pipe_transfer_usage transfer_usage = 0;
    GLubyte *dstMap;
@@ -736,48 +737,41 @@ done:
 
 static void
 st_TexImage3D(struct gl_context * ctx,
-              GLenum target, GLint level,
+              struct gl_texture_image *texImage,
               GLint internalFormat,
               GLint width, GLint height, GLint depth,
               GLint border,
               GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack,
-              struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage)
+              const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 3, target, level, internalFormat, width, height, depth,
-               border, format, type, pixels, unpack, texObj, texImage,
-               0, GL_FALSE);
+   st_TexImage(ctx, 3, texImage, internalFormat, width, height, depth, border,
+               format, type, pixels, unpack, 0, GL_FALSE);
 }
 
 
 static void
 st_TexImage2D(struct gl_context * ctx,
-              GLenum target, GLint level,
+              struct gl_texture_image *texImage,
               GLint internalFormat,
               GLint width, GLint height, GLint border,
               GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack,
-              struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage)
+              const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 2, target, level, internalFormat, width, height, 1, border,
-               format, type, pixels, unpack, texObj, texImage, 0, GL_FALSE);
+   st_TexImage(ctx, 2, texImage, internalFormat, width, height, 1, border,
+               format, type, pixels, unpack, 0, GL_FALSE);
 }
 
 
 static void
 st_TexImage1D(struct gl_context * ctx,
-              GLenum target, GLint level,
+              struct gl_texture_image *texImage,
               GLint internalFormat,
               GLint width, GLint border,
               GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack,
-              struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage)
+              const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 1, target, level, internalFormat, width, 1, 1, border,
-               format, type, pixels, unpack, texObj, texImage, 0, GL_FALSE);
+   st_TexImage(ctx, 1, texImage, internalFormat, width, 1, 1, border,
+               format, type, pixels, unpack, 0, GL_FALSE);
 }
 
 
@@ -789,8 +783,8 @@ st_CompressedTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
                         struct gl_texture_object *texObj,
                         struct gl_texture_image *texImage)
 {
-   st_TexImage(ctx, 2, target, level, internalFormat, width, height, 1, border,
-               0, 0, data, &ctx->Unpack, texObj, texImage, imageSize, GL_TRUE);
+   st_TexImage(ctx, 2, texImage, internalFormat, width, height, 1, border,
+               0, 0, data, &ctx->Unpack, imageSize, GL_TRUE);
 }
 
 
@@ -1644,13 +1638,13 @@ st_get_default_texture(struct st_context *st)
                                  16, 16, 1, 0,  /* w, h, d, border */
                                  GL_RGBA, MESA_FORMAT_RGBA8888);
 
-      st_TexImage(st->ctx, 2, target,
-                  0, GL_RGBA,    /* level, intformat */
+      st_TexImage(st->ctx, 2,
+                  texImg,
+                  GL_RGBA,    /* level, intformat */
                   16, 16, 1, 0,  /* w, h, d, border */
                   GL_RGBA, GL_UNSIGNED_BYTE, pixels,
                   &st->ctx->DefaultPacking,
-                  texObj, texImg,
-                  0, 0);
+                  0, GL_FALSE);
 
       texObj->Sampler.MinFilter = GL_NEAREST;
       texObj->Sampler.MagFilter = GL_NEAREST;

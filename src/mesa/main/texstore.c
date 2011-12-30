@@ -4698,13 +4698,12 @@ store_texsubimage(struct gl_context *ctx,
  * This is the fallback for Driver.TexImage1D().
  */
 void
-_mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage1d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint border,
                        GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
+                       const struct gl_pixelstore_attrib *packing)
 {
    if (width == 0)
       return;
@@ -4726,13 +4725,12 @@ _mesa_store_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
  * This is the fallback for Driver.TexImage2D().
  */
 void
-_mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage2d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint height, GLint border,
                        GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
+                       const struct gl_pixelstore_attrib *packing)
 {
    if (width == 0 || height == 0)
       return;
@@ -4755,13 +4753,12 @@ _mesa_store_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
  * This is the fallback for Driver.TexImage3D().
  */
 void
-_mesa_store_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_teximage3d(struct gl_context *ctx,
+                       struct gl_texture_image *texImage,
                        GLint internalFormat,
                        GLint width, GLint height, GLint depth, GLint border,
                        GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage)
+                       const struct gl_pixelstore_attrib *packing)
 {
    if (width == 0 || height == 0 || depth == 0)
       return;
