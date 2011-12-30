@@ -988,6 +988,7 @@ struct brw_context
    struct brw_sol_state {
       uint32_t svbi_0_starting_index;
       uint32_t svbi_0_max_index;
+      uint32_t offset_0_batch_start;
       uint32_t primitives_generated;
       uint32_t primitives_written;
    } sol;

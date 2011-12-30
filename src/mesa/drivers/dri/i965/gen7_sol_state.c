@@ -56,6 +56,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
       struct gl_buffer_object *bufferobj = xfb_obj->Buffers[i];
       drm_intel_bo *bo;
       uint32_t start, end;
+      uint32_t stride;
 
       if (!xfb_obj->Buffers[i]) {
 	 /* The pitch of 0 in this command indicates that the buffer is
@@ -72,17 +73,23 @@ upload_3dstate_so_buffers(struct brw_context *brw)
       }
 
       bo = intel_buffer_object(bufferobj)->buffer;
+      stride = linked_xfb_info->BufferStride[i] * 4;
 
       start = xfb_obj->Offset[i];
       assert(start % 4 == 0);
       end = ALIGN(start + xfb_obj->Size[i], 4);
       assert(end <= bo->size);
 
+      /* Offset the starting offset by the current vertex index into the
+       * feedback buffer, offset register is always set to 0 at the start of the
+       * batchbuffer.
+       */
+      start += brw->sol.offset_0_batch_start * stride;
+      assert(start <= end);
+
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_SO_BUFFER << 16 | (4 - 2));
-      OUT_BATCH((i << SO_BUFFER_INDEX_SHIFT) |
-		((linked_xfb_info->BufferStride[i] * 4) <<
-		 SO_BUFFER_PITCH_SHIFT));
+      OUT_BATCH((i << SO_BUFFER_INDEX_SHIFT) | stride);
       OUT_RELOC(bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, start);
       OUT_RELOC(bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, end);
       ADVANCE_BATCH();

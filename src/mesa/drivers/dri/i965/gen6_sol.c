@@ -132,6 +132,7 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    brw->state.dirty.brw |= BRW_NEW_SOL_INDICES;
    brw->sol.svbi_0_starting_index = 0;
    brw->sol.svbi_0_max_index = max_index;
+   brw->sol.offset_0_batch_start = 0;
 }
 
 void
