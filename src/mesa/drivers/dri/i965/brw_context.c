@@ -109,7 +109,8 @@ static void brwPrepareExecBegin(struct gl_context *ctx)
    }
 }
 
-static void brwInitDriverFunctions( struct dd_function_table *functions )
+static void brwInitDriverFunctions(struct intel_screen *screen,
+				   struct dd_function_table *functions)
 {
    intelInitDriverFunctions( functions );
 
@@ -118,7 +119,11 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 
    functions->PrepareExecBegin = brwPrepareExecBegin;
    functions->BeginTransformFeedback = brw_begin_transform_feedback;
-   functions->EndTransformFeedback = brw_end_transform_feedback;
+
+   if (screen->gen >= 7)
+      functions->EndTransformFeedback = gen7_end_transform_feedback;
+   else
+      functions->EndTransformFeedback = brw_end_transform_feedback;
 }
 
 bool
@@ -127,6 +132,8 @@ brwCreateContext(int api,
 		 __DRIcontext *driContextPriv,
 	         void *sharedContextPrivate)
 {
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
+   struct intel_screen *screen = sPriv->driverPrivate;
    struct dd_function_table functions;
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
    struct intel_context *intel = &brw->intel;
@@ -138,7 +145,7 @@ brwCreateContext(int api,
       return false;
    }
 
-   brwInitDriverFunctions( &functions );
+   brwInitDriverFunctions(screen, &functions);
 
    if (!intelInitContext( intel, api, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {

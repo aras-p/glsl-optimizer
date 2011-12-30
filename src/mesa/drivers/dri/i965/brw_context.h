@@ -1093,6 +1093,11 @@ void
 brw_end_transform_feedback(struct gl_context *ctx,
                            struct gl_transform_feedback_object *obj);
 
+/* gen7_sol_state.c */
+void
+gen7_end_transform_feedback(struct gl_context *ctx,
+			    struct gl_transform_feedback_object *obj);
+
 
 
 /*======================================================================

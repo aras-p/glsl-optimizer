@@ -264,3 +264,19 @@ const struct brw_tracked_state gen7_sol_state = {
    },
    .emit = upload_sol_state,
 };
+
+void
+gen7_end_transform_feedback(struct gl_context *ctx,
+			    struct gl_transform_feedback_object *obj)
+{
+   /* Because we have to rely on the kernel to reset our SO write offsets, and
+    * we only get to do it once per batchbuffer, flush the batch after feedback
+    * so another transform feedback can get the write offset reset it needs.
+    *
+    * This also covers any cache flushing required.
+    */
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
+
+   intel_batchbuffer_flush(intel);
+}
