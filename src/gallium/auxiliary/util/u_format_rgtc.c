@@ -42,6 +42,9 @@ void
 util_format_rgtc1_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsigned i, unsigned j)
 {
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 1);
+   dst[1] = 0;
+   dst[2] = 0;
+   dst[3] = 255;
 }
 
 void
@@ -58,6 +61,9 @@ util_format_rgtc1_unorm_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride
             for(i = 0; i < bw; ++i) {
                uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*comps;
 	       u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 1);
+	       dst[1] = 0;
+	       dst[2] = 0;
+	       dst[3] = 255;
 	    }
 	 }
 	 src += block_size;
@@ -229,6 +235,8 @@ util_format_rgtc2_unorm_fetch_rgba_8unorm(uint8_t *dst, const uint8_t *src, unsi
 {
    u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 2);
    u_format_unsigned_fetch_texel_rgtc(0, src + 8, i, j, dst + 1, 2);
+   dst[2] = 0;
+   dst[3] = 255;
 }
 
 void
@@ -246,7 +254,8 @@ util_format_rgtc2_unorm_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride
                uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*comps;
 	       u_format_unsigned_fetch_texel_rgtc(0, src, i, j, dst, 2);
 	       u_format_unsigned_fetch_texel_rgtc(0, src + 8, i, j, dst + 1, 2);
-
+	       dst[2] = 0;
+	       dst[3] = 255;
 	    }
 	 }
 	 src += block_size;
