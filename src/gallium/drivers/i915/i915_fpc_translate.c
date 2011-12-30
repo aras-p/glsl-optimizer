@@ -658,6 +658,8 @@ i915_translate_instruction(struct i915_fp_compile *p,
       /* We emit an unconditional kill; we may want to revisit
        * if we ever implement conditionals.
        */
+      tmp = i915_get_utemp(p);
+
       i915_emit_texld(p,
                       tmp,                                   /* dest reg: a dummy reg */
                       A0_DEST_CHANNEL_ALL,                   /* dest writemask */
