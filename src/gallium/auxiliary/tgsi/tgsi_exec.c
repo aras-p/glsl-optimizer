@@ -2988,16 +2988,8 @@ exec_lit(struct tgsi_exec_machine *mach,
    union tgsi_exec_channel r[3];
    union tgsi_exec_channel d[3];
 
-   if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_X) {
-      store_dest(mach, &OneVec, &inst->Dst[0], inst, CHAN_X, TGSI_EXEC_DATA_FLOAT);
-   }
    if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_YZ) {
       fetch_source(mach, &r[0], &inst->Src[0], CHAN_X, TGSI_EXEC_DATA_FLOAT);
-      if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Y) {
-         micro_max(&d[CHAN_Y], &r[0], &ZeroVec);
-         store_dest(mach, &d[CHAN_Y], &inst->Dst[0], inst, CHAN_Y, TGSI_EXEC_DATA_FLOAT);
-      }
-
       if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Z) {
          fetch_source(mach, &r[1], &inst->Src[0], CHAN_Y, TGSI_EXEC_DATA_FLOAT);
          micro_max(&r[1], &r[1], &ZeroVec);
@@ -3009,7 +3001,15 @@ exec_lit(struct tgsi_exec_machine *mach,
          micro_lt(&d[CHAN_Z], &ZeroVec, &r[0], &r[1], &ZeroVec);
          store_dest(mach, &d[CHAN_Z], &inst->Dst[0], inst, CHAN_Z, TGSI_EXEC_DATA_FLOAT);
       }
+      if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_Y) {
+         micro_max(&d[CHAN_Y], &r[0], &ZeroVec);
+         store_dest(mach, &d[CHAN_Y], &inst->Dst[0], inst, CHAN_Y, TGSI_EXEC_DATA_FLOAT);
+      }
    }
+   if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_X) {
+      store_dest(mach, &OneVec, &inst->Dst[0], inst, CHAN_X, TGSI_EXEC_DATA_FLOAT);
+   }
+
    if (inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_W) {
       store_dest(mach, &OneVec, &inst->Dst[0], inst, CHAN_W, TGSI_EXEC_DATA_FLOAT);
    }
