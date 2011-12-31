@@ -530,12 +530,12 @@ st_translate_fragment_program(struct st_context *st,
             case FRAG_ATTRIB_COL0:
                input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
                input_semantic_index[slot] = 0;
-               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
                break;
             case FRAG_ATTRIB_COL1:
                input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
                input_semantic_index[slot] = 1;
-               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
                break;
             case FRAG_ATTRIB_FOGC:
                input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
