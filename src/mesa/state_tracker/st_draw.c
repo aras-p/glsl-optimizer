@@ -990,7 +990,8 @@ st_draw_vbo(struct gl_context *ctx,
       /* Gallium probably doesn't want this in some cases. */
       if (!index_bounds_valid)
          if (!all_varyings_in_vbos(arrays))
-            vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+            vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
+                                   nr_prims);
 
       for (i = 0; i < nr_prims; i++) {
          num_instances = MAX2(num_instances, prims[i].num_instances);

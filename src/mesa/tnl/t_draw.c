@@ -418,7 +418,7 @@ void _tnl_vbo_draw_prims(struct gl_context *ctx,
 			 struct gl_transform_feedback_object *tfb_vertcount)
 {
    if (!index_bounds_valid)
-      vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
+      vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
 
    _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 }

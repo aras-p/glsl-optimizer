@@ -99,24 +99,23 @@ vbo_sizeof_ib_type(GLenum type)
  * If primitive restart is enabled, we need to ignore restart
  * indexes when computing min/max.
  */
-void
+static void
 vbo_get_minmax_index(struct gl_context *ctx,
 		     const struct _mesa_prim *prim,
 		     const struct _mesa_index_buffer *ib,
-		     GLuint *min_index, GLuint *max_index)
+		     GLuint *min_index, GLuint *max_index,
+		     const GLuint count)
 {
    const GLboolean restart = ctx->Array.PrimitiveRestart;
    const GLuint restartIndex = ctx->Array.RestartIndex;
-   const GLuint count = prim->count;
    const void *indices;
    GLuint i;
 
+   indices = (void *)ib->ptr + prim->start * vbo_sizeof_ib_type(ib->type);
    if (_mesa_is_bufferobj(ib->obj)) {
-      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr,
-                                           count * vbo_sizeof_ib_type(ib->type),
-					   GL_MAP_READ_BIT, ib->obj);
-   } else {
-      indices = ib->ptr;
+      GLsizeiptr size = MIN2(count * vbo_sizeof_ib_type(ib->type), ib->obj->Size);
+      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) indices, size,
+                                           GL_MAP_READ_BIT, ib->obj);
    }
 
    switch (ib->type) {
@@ -193,6 +192,41 @@ vbo_get_minmax_index(struct gl_context *ctx,
 
    if (_mesa_is_bufferobj(ib->obj)) {
       ctx->Driver.UnmapBuffer(ctx, ib->obj);
+   }
+}
+
+/**
+ * Compute min and max elements for nr_prims
+ */
+void
+vbo_get_minmax_indices(struct gl_context *ctx,
+                       const struct _mesa_prim *prims,
+                       const struct _mesa_index_buffer *ib,
+                       GLuint *min_index,
+                       GLuint *max_index,
+                       GLuint nr_prims)
+{
+   GLuint tmp_min, tmp_max;
+   GLuint i;
+   GLuint count;
+
+   *min_index = ~0;
+   *max_index = 0;
+
+   for (i = 0; i < nr_prims; i++) {
+      const struct _mesa_prim *start_prim;
+
+      start_prim = &prims[i];
+      count = start_prim->count;
+      /* Do combination if possible to reduce map/unmap count */
+      while ((i + 1 < nr_prims) &&
+             (prims[i].start + prims[i].count == prims[i+1].start)) {
+         count += prims[i+1].count;
+         i++;
+      }
+      vbo_get_minmax_index(ctx, start_prim, ib, &tmp_min, &tmp_max, count);
+      *min_index = MIN2(*min_index, tmp_min);
+      *max_index = MAX2(*max_index, tmp_max);
    }
 }
 

@@ -184,7 +184,7 @@ check_index_bounds(struct gl_context *ctx, GLsizei count, GLenum type,
    ib.ptr = indices;
    ib.obj = ctx->Array.ArrayObj->ElementArrayBufferObj;
 
-   vbo_get_minmax_index(ctx, &prim, &ib, &min, &max);
+   vbo_get_minmax_indices(ctx, &prim, &ib, &min, &max, 1);
 
    if ((int)(min + basevertex) < 0 ||
        max + basevertex > ctx->Array.ArrayObj->_MaxElement) {

@@ -119,7 +119,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    st_validate_state(st);
 
    if (!index_bounds_valid)
-      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+      vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
 
    /* must get these after state validation! */
    vp = st->vp;

@@ -586,7 +586,7 @@ void brw_draw_prims( struct gl_context *ctx,
 
    if (!vbo_all_varyings_in_vbos(arrays)) {
       if (!index_bounds_valid)
-	 vbo_get_minmax_index(ctx, prim, ib, &min_index, &max_index);
+	 vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
 
       /* Decide if we want to rebase.  If so we end up recursing once
        * only into this function.

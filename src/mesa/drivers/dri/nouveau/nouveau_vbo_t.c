@@ -437,7 +437,8 @@ TAG(vbo_render_prims)(struct gl_context *ctx,
 	struct nouveau_render_state *render = to_render_state(ctx);
 
 	if (!index_bounds_valid)
-		vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+		vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
+				       nr_prims);
 
 	vbo_choose_render_mode(ctx, arrays);
 	vbo_choose_attrs(ctx, arrays);

@@ -127,9 +127,9 @@ int
 vbo_sizeof_ib_type(GLenum type);
 
 void
-vbo_get_minmax_index(struct gl_context *ctx, const struct _mesa_prim *prim,
-		     const struct _mesa_index_buffer *ib,
-		     GLuint *min_index, GLuint *max_index);
+vbo_get_minmax_indices(struct gl_context *ctx, const struct _mesa_prim *prim,
+                       const struct _mesa_index_buffer *ib,
+                       GLuint *min_index, GLuint *max_index, GLuint nr_prims);
 
 void vbo_use_buffer_objects(struct gl_context *ctx);
 
