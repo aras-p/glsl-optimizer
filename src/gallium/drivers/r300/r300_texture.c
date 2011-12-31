@@ -830,21 +830,6 @@ static void r300_texture_setup_fb_state(struct r300_surface *surf)
     }
 }
 
-static void r300_resource_set_properties(struct pipe_screen *screen,
-                                  struct pipe_resource *tex,
-                                  const struct pipe_resource *new_properties)
-{
-    struct r300_screen *rscreen = r300_screen(screen);
-    struct r300_resource *res = r300_resource(tex);
-
-    SCREEN_DBG(rscreen, DBG_TEX,
-        "r300: texture_set_properties: %s -> %s\n",
-        util_format_short_name(tex->format),
-        util_format_short_name(new_properties->format));
-
-    r300_texture_desc_init(rscreen, res, new_properties);
-}
-
 static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
@@ -912,7 +897,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
                   RADEON_DOMAIN_VRAM | RADEON_DOMAIN_GTT;
     tex->buf = buffer;
 
-    r300_resource_set_properties(&rscreen->screen, &tex->b.b.b, base);
+    r300_texture_desc_init(rscreen, tex, base);
 
     /* Create the backing buffer if needed. */
     if (!tex->buf) {
