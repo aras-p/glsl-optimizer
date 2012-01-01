@@ -715,7 +715,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe, float scale)
    buf_transfer = pipe->get_transfer
    (
       pipe, matrix,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &rect
    );
    if (!buf_transfer)

@@ -502,14 +502,14 @@ gen_vertex_data(struct vl_compositor *c, struct u_rect *dirty)
    assert(c);
 
    vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
-                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_DONTBLOCK,
+                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_DONTBLOCK,
                         &buf_transfer);
 
    if (!vb) {
       // If buffer is still locked from last draw create a new one
       create_vertex_buffer(c);
       vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
-                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
                            &buf_transfer);
    }
 
@@ -635,7 +635,7 @@ vl_compositor_set_csc_matrix(struct vl_compositor *c, const float matrix[16])
    memcpy
    (
       pipe_buffer_map(c->pipe, c->csc_matrix,
-                      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
                       &buf_transfer),
       matrix,
       sizeof(csc_matrix)

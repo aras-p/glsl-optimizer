@@ -126,7 +126,7 @@ svga_vbuf_render_map_vertices( struct vbuf_render *render )
                                          svga_render->vbuf,
                                          PIPE_TRANSFER_WRITE |
                                          PIPE_TRANSFER_FLUSH_EXPLICIT |
-                                         PIPE_TRANSFER_DISCARD |
+                                         PIPE_TRANSFER_DISCARD_RANGE |
                                          PIPE_TRANSFER_UNSYNCHRONIZED,
                                          &svga_render->vbuf_transfer);
       if (ptr)

@@ -161,7 +161,7 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
     assert(rbuf->b.user_ptr == NULL);
 
     map = rws->buffer_map(rbuf->buf, r300->cs,
-                          PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
+                          PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
 
     memcpy(map + box->x, data, box->width);
 

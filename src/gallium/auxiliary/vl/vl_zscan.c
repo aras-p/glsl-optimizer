@@ -382,7 +382,7 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
    buf_transfer = pipe->get_transfer
    (
       pipe, res,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &rect
    );
    if (!buf_transfer)
@@ -561,7 +561,7 @@ vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    buf_transfer = pipe->get_transfer
    (
       pipe, buffer->quant->texture,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &rect
    );
    if (!buf_transfer)

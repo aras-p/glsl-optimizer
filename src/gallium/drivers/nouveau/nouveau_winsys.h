@@ -31,7 +31,7 @@ nouveau_screen_transfer_flags(unsigned pipe)
 		flags |= NOUVEAU_BO_RD;
 	if (pipe & PIPE_TRANSFER_WRITE)
 		flags |= NOUVEAU_BO_WR;
-	if (pipe & PIPE_TRANSFER_DISCARD)
+	if (pipe & PIPE_TRANSFER_DISCARD_RANGE)
 		flags |= NOUVEAU_BO_INVAL;
 	if (pipe & PIPE_TRANSFER_UNSYNCHRONIZED)
 		flags |= NOUVEAU_BO_NOSYNC;

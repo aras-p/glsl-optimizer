@@ -233,7 +233,6 @@ enum pipe_transfer_usage {
     * See also:
     * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
     */
-   PIPE_TRANSFER_DISCARD = (1 << 8), /* DEPRECATED */
    PIPE_TRANSFER_DISCARD_RANGE = (1 << 8),
 
    /**

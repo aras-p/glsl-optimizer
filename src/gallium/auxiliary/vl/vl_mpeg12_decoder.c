@@ -598,7 +598,7 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder)
    buf->tex_transfer = dec->base.context->get_transfer
    (
       dec->base.context, tex,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &rect
    );
 

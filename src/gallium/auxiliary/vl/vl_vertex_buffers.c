@@ -65,7 +65,7 @@ vl_vb_upload_quads(struct pipe_context *pipe)
    (
       pipe,
       quad.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &buf_transfer
    );
 
@@ -109,7 +109,7 @@ vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height)
    (
       pipe,
       pos.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
       &buf_transfer
    );
 
@@ -298,7 +298,7 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
       (
          pipe,
          buffer->ycbcr[i].resource,
-         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
          &buffer->ycbcr[i].transfer
       );
    }
@@ -308,7 +308,7 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
       (
          pipe,
          buffer->mv[i].resource,
-         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
          &buffer->mv[i].transfer
       );
    }
