@@ -194,7 +194,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    uint8_t *out_map;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
    struct pipe_resource *out_buffer = NULL;
-   unsigned i, num_verts, out_offset;
+   unsigned i, out_offset, num_verts = max_index + 1 - min_index;
    boolean upload_flushed = FALSE;
 
    memset(&key, 0, sizeof(key));
@@ -244,18 +244,17 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       if (vb_translated[i]) {
          struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[i];
 
-         uint8_t *map = pipe_buffer_map(mgr->pipe, vb->buffer,
-                                        PIPE_TRANSFER_READ, &vb_transfer[i]);
+         uint8_t *map =
+            pipe_buffer_map_range(mgr->pipe, vb->buffer,
+                                  vb->buffer_offset + vb->stride * min_index,
+                                  num_verts * vb->stride,
+                                  PIPE_TRANSFER_READ, &vb_transfer[i]);
 
-         tr->set_buffer(tr, i,
-                        map + vb->buffer_offset + vb->stride * min_index,
-                        vb->stride, ~0);
+         tr->set_buffer(tr, i, map, vb->stride, ~0);
       }
    }
 
    /* Create and map the output buffer. */
-   num_verts = max_index + 1 - min_index;
-
    u_upload_alloc(mgr->b.uploader,
                   key.output_stride * min_index,
                   key.output_stride * num_verts,
@@ -269,7 +268,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
 
    /* Unmap all buffers. */
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
-      if (vb_translated[i]) {
+      if (vb_transfer[i]) {
          pipe_buffer_unmap(mgr->pipe, vb_transfer[i]);
       }
    }
