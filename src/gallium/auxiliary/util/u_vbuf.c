@@ -243,12 +243,17 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       if (vb_translated[i]) {
          struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[i];
+         unsigned offset = vb->buffer_offset + vb->stride * min_index;
+         unsigned size = vb->stride ? num_verts * vb->stride
+                                    : vb->buffer->width0 - offset;
+         uint8_t *map;
 
-         uint8_t *map =
-            pipe_buffer_map_range(mgr->pipe, vb->buffer,
-                                  vb->buffer_offset + vb->stride * min_index,
-                                  num_verts * vb->stride,
-                                  PIPE_TRANSFER_READ, &vb_transfer[i]);
+         if (u_vbuf_resource(vb->buffer)->user_ptr) {
+            map = u_vbuf_resource(vb->buffer)->user_ptr + offset;
+         } else {
+            map = pipe_buffer_map_range(mgr->pipe, vb->buffer, offset, size,
+                                        PIPE_TRANSFER_READ, &vb_transfer[i]);
+         }
 
          tr->set_buffer(tr, i, map, vb->stride, ~0);
       }
