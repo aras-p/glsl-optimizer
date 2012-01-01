@@ -38,7 +38,6 @@ void r300_upload_index_buffer(struct r300_context *r300,
 			      unsigned count, uint8_t *ptr)
 {
     unsigned index_offset;
-    boolean flushed;
 
     *index_buffer = NULL;
 
@@ -46,7 +45,7 @@ void r300_upload_index_buffer(struct r300_context *r300,
                   0, count * index_size,
                   ptr + (*start * index_size),
                   &index_offset,
-                  index_buffer, &flushed);
+                  index_buffer);
 
     *start = index_offset / index_size;
 }

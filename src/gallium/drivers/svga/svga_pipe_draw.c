@@ -138,7 +138,6 @@ svga_upload_user_buffers(struct svga_context *svga,
 
       if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
          struct svga_buffer *buffer = svga_buffer(vb->buffer);
-         boolean flushed;
 
          /*
           * Check if already uploaded. Otherwise go ahead and upload.
@@ -153,8 +152,7 @@ svga_upload_user_buffers(struct svga_context *svga,
                                 buffer->uploaded.end - buffer->uploaded.start,
                                 &buffer->b.b,
                                 &buffer->uploaded.offset,
-                                &buffer->uploaded.buffer,
-                                &flushed);
+                                &buffer->uploaded.buffer);
 
          if (ret)
             return ret;

@@ -36,12 +36,11 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 	struct pipe_resource *out_buffer = NULL;
 	unsigned out_offset;
 	void *ptr;
-	boolean flushed;
 
 	switch (ib->index_size) {
 	case 1:
 		u_upload_alloc(r600->vbuf_mgr->uploader, 0, count * 2,
-			       &out_offset, &out_buffer, &flushed, &ptr);
+			       &out_offset, &out_buffer, &ptr);
 
 		util_shorten_ubyte_elts_to_userptr(
 				&r600->context, ib->buffer, 0, ib->offset, count, ptr);

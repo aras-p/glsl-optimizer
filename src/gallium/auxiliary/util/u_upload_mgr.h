@@ -94,7 +94,6 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
                                 unsigned size,
                                 unsigned *out_offset,
                                 struct pipe_resource **outbuf,
-                                boolean *flushed,
                                 void **ptr );
 
 
@@ -109,8 +108,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
                                unsigned size,
                                const void *data,
                                unsigned *out_offset,
-                               struct pipe_resource **outbuf,
-                               boolean *flushed );
+                               struct pipe_resource **outbuf);
 
 
 /**
@@ -125,8 +123,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                                  unsigned size,
                                  struct pipe_resource *inbuf,
                                  unsigned *out_offset,
-                                 struct pipe_resource **outbuf,
-                                 boolean *flushed );
+                                 struct pipe_resource **outbuf);
 
 
 

@@ -158,7 +158,6 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
                                 unsigned size,
                                 unsigned *out_offset,
                                 struct pipe_resource **outbuf,
-                                boolean *flushed,
                                 void **ptr )
 {
    unsigned alloc_size = align( size, upload->alignment );
@@ -172,10 +171,6 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
                                                   alloc_offset + alloc_size);
       if (ret != PIPE_OK)
          return ret;
-
-      *flushed = TRUE;
-   } else {
-      *flushed = FALSE;
    }
 
    offset = MAX2(upload->offset, alloc_offset);
@@ -214,12 +209,11 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
                                unsigned size,
                                const void *data,
                                unsigned *out_offset,
-                               struct pipe_resource **outbuf,
-                               boolean *flushed )
+                               struct pipe_resource **outbuf)
 {
    uint8_t *ptr;
    enum pipe_error ret = u_upload_alloc(upload, min_out_offset, size,
-                                        out_offset, outbuf, flushed,
+                                        out_offset, outbuf,
                                         (void**)&ptr);
    if (ret != PIPE_OK)
       return ret;
@@ -240,8 +234,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                                  unsigned size,
                                  struct pipe_resource *inbuf,
                                  unsigned *out_offset,
-                                 struct pipe_resource **outbuf,
-                                 boolean *flushed )
+                                 struct pipe_resource **outbuf)
 {
    enum pipe_error ret = PIPE_OK;
    struct pipe_transfer *transfer = NULL;
@@ -265,7 +258,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                         size,
                         map,
                         out_offset,
-                        outbuf, flushed );
+                        outbuf);
 
    pipe_buffer_unmap( upload->pipe, transfer );
 

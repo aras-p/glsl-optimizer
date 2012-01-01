@@ -33,12 +33,11 @@ void r300_translate_index_buffer(struct r300_context *r300,
     struct pipe_resource *out_buffer = NULL;
     unsigned out_offset;
     void *ptr;
-    boolean flushed;
 
     switch (*index_size) {
     case 1:
         u_upload_alloc(r300->vbuf_mgr->uploader, 0, count * 2,
-                       &out_offset, &out_buffer, &flushed, &ptr);
+                       &out_offset, &out_buffer, &ptr);
 
         util_shorten_ubyte_elts_to_userptr(
                 &r300->context, *index_buffer, index_offset,
@@ -53,7 +52,7 @@ void r300_translate_index_buffer(struct r300_context *r300,
     case 2:
         if (index_offset) {
             u_upload_alloc(r300->vbuf_mgr->uploader, 0, count * 2,
-                           &out_offset, &out_buffer, &flushed, &ptr);
+                           &out_offset, &out_buffer, &ptr);
 
             util_rebuild_ushort_elts_to_userptr(&r300->context, *index_buffer,
                                                 index_offset, *start,
@@ -68,7 +67,7 @@ void r300_translate_index_buffer(struct r300_context *r300,
     case 4:
         if (index_offset) {
             u_upload_alloc(r300->vbuf_mgr->uploader, 0, count * 4,
-                           &out_offset, &out_buffer, &flushed, &ptr);
+                           &out_offset, &out_buffer, &ptr);
 
             util_rebuild_uint_elts_to_userptr(&r300->context, *index_buffer,
                                               index_offset, *start,

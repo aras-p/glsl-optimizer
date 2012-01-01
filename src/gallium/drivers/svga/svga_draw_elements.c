@@ -121,7 +121,6 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
    if (index_buffer && 
        svga_buffer_is_user_buffer(index_buffer)) 
    {
-      boolean flushed;
       assert( index_buffer->width0 >= index_offset + count * index_size );
 
       ret = u_upload_buffer( hwtnl->upload_ib,
@@ -130,8 +129,7 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
                              count * index_size,
                              index_buffer,
                              &index_offset,
-                             &upload_buffer,
-                             &flushed );
+                             &upload_buffer);
       if (ret != PIPE_OK)
          goto done;
 

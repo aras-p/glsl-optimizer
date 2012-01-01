@@ -241,10 +241,9 @@ void r600_upload_index_buffer(struct r600_pipe_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count)
 {
 	struct r600_resource *rbuffer = r600_resource(ib->buffer);
-	boolean flushed;
 
 	u_upload_data(rctx->vbuf_mgr->uploader, 0, count * ib->index_size,
-		      rbuffer->b.user_ptr, &ib->offset, &ib->buffer, &flushed);
+		      rbuffer->b.user_ptr, &ib->offset, &ib->buffer);
 }
 
 void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource **rbuffer,
@@ -253,7 +252,6 @@ void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resour
 	if ((*rbuffer)->b.user_ptr) {
 		uint8_t *ptr = (*rbuffer)->b.user_ptr;
 		unsigned size = (*rbuffer)->b.b.b.width0;
-		boolean flushed;
 
 		*rbuffer = NULL;
 
@@ -271,12 +269,12 @@ void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resour
 			}
 
 			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, const_offset,
-				      (struct pipe_resource**)rbuffer, &flushed);
+				      (struct pipe_resource**)rbuffer);
 
 			free(tmpPtr);
 		} else {
 			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, ptr, const_offset,
-				      (struct pipe_resource**)rbuffer, &flushed);
+				      (struct pipe_resource**)rbuffer);
 		}
 	} else {
 		*const_offset = 0;

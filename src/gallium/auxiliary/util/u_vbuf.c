@@ -195,7 +195,6 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
    struct pipe_resource *out_buffer = NULL;
    unsigned i, out_offset, num_verts = max_index + 1 - min_index;
-   boolean upload_flushed = FALSE;
 
    memset(&key, 0, sizeof(key));
    memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
@@ -263,7 +262,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    u_upload_alloc(mgr->b.uploader,
                   key.output_stride * min_index,
                   key.output_stride * num_verts,
-                  &out_offset, &out_buffer, &upload_flushed,
+                  &out_offset, &out_buffer,
                   (void**)&out_map);
 
    out_offset -= key.output_stride * min_index;
@@ -600,7 +599,6 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    /* Upload buffers. */
    for (i = 0; i < nr_vbufs; i++) {
       unsigned start, end = end_offset[i];
-      boolean flushed;
       struct pipe_vertex_buffer *real_vb;
       uint8_t *ptr;
 
@@ -615,7 +613,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
       ptr = u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr;
 
       u_upload_data(mgr->b.uploader, start, end - start, ptr + start,
-                    &real_vb->buffer_offset, &real_vb->buffer, &flushed);
+                    &real_vb->buffer_offset, &real_vb->buffer);
 
       real_vb->buffer_offset -= start;
    }
