@@ -218,26 +218,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
          continue;
       }
 
-      /* Workaround for translate: output floats instead of halfs. */
-      switch (output_format) {
-      case PIPE_FORMAT_R16_FLOAT:
-         output_format = PIPE_FORMAT_R32_FLOAT;
-         output_format_size = 4;
-         break;
-      case PIPE_FORMAT_R16G16_FLOAT:
-         output_format = PIPE_FORMAT_R32G32_FLOAT;
-         output_format_size = 8;
-         break;
-      case PIPE_FORMAT_R16G16B16_FLOAT:
-         output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-         output_format_size = 12;
-         break;
-      case PIPE_FORMAT_R16G16B16A16_FLOAT:
-         output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         output_format_size = 16;
-         break;
-      default:;
-      }
+      assert(translate_is_output_format_supported(output_format));
 
       /* Add this vertex element. */
       te = &key.element[key.nr_elements];
