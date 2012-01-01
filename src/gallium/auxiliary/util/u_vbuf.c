@@ -539,7 +539,7 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
 static void
 u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
                       int min_index, int max_index,
-                      unsigned instance_count)
+                      unsigned start_instance, unsigned instance_count)
 {
    unsigned i;
    unsigned count = max_index + 1 - min_index;
@@ -577,6 +577,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
       } else if (instance_div) {
          /* Per-instance attrib. */
          unsigned count = (instance_count + instance_div - 1) / instance_div;
+         first += vb->stride * start_instance;
          size = vb->stride * (count - 1) + mgr->ve->src_format_size[i];
       } else {
          /* Per-vertex attrib. */
@@ -838,7 +839,8 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      u_vbuf_upload_buffers(mgr, min_index, max_index, info->instance_count);
+      u_vbuf_upload_buffers(mgr, min_index, max_index,
+                            info->start_instance, info->instance_count);
    }
    return U_VBUF_BUFFERS_UPDATED;
 }
