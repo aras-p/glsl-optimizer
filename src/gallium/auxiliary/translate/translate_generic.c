@@ -32,6 +32,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
+#include "util/u_half.h"
 #include "util/u_math.h"
 #include "pipe/p_state.h"
 #include "translate.h"
@@ -105,6 +106,7 @@ emit_##NAME(const float *attrib, void *ptr)		\
 
 #define TO_64_FLOAT(x)   ((double) x)
 #define TO_32_FLOAT(x)   (x)
+#define TO_16_FLOAT(x)   util_float_to_half(x)
 
 #define TO_8_USCALED(x)  ((unsigned char) x)
 #define TO_16_USCALED(x) ((unsigned short) x)
@@ -134,6 +136,11 @@ ATTRIB( R32G32B32A32_FLOAT,   4, float, TO_32_FLOAT )
 ATTRIB( R32G32B32_FLOAT,      3, float, TO_32_FLOAT )
 ATTRIB( R32G32_FLOAT,         2, float, TO_32_FLOAT )
 ATTRIB( R32_FLOAT,            1, float, TO_32_FLOAT )
+
+ATTRIB( R16G16B16A16_FLOAT,   4, ushort, TO_16_FLOAT )
+ATTRIB( R16G16B16_FLOAT,      3, ushort, TO_16_FLOAT )
+ATTRIB( R16G16_FLOAT,         2, ushort, TO_16_FLOAT )
+ATTRIB( R16_FLOAT,            1, ushort, TO_16_FLOAT )
 
 ATTRIB( R32G32B32A32_USCALED, 4, unsigned, TO_32_USCALED )
 ATTRIB( R32G32B32_USCALED,    3, unsigned, TO_32_USCALED )
@@ -241,6 +248,15 @@ static emit_func get_emit_func( enum pipe_format format )
       return &emit_R32G32B32_FLOAT;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       return &emit_R32G32B32A32_FLOAT;
+
+   case PIPE_FORMAT_R16_FLOAT:
+      return &emit_R16_FLOAT;
+   case PIPE_FORMAT_R16G16_FLOAT:
+      return &emit_R16G16_FLOAT;
+   case PIPE_FORMAT_R16G16B16_FLOAT:
+      return &emit_R16G16B16_FLOAT;
+   case PIPE_FORMAT_R16G16B16A16_FLOAT:
+      return &emit_R16G16B16A16_FLOAT;
 
    case PIPE_FORMAT_R32_UNORM:
       return &emit_R32_UNORM;
@@ -594,6 +610,11 @@ boolean translate_generic_is_output_format_supported(enum pipe_format format)
    case PIPE_FORMAT_R32G32B32_FLOAT: return TRUE;
    case PIPE_FORMAT_R32G32_FLOAT: return TRUE;
    case PIPE_FORMAT_R32_FLOAT: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_FLOAT: return TRUE;
+   case PIPE_FORMAT_R16G16B16_FLOAT: return TRUE;
+   case PIPE_FORMAT_R16G16_FLOAT: return TRUE;
+   case PIPE_FORMAT_R16_FLOAT: return TRUE;
 
    case PIPE_FORMAT_R32G32B32A32_USCALED: return TRUE;
    case PIPE_FORMAT_R32G32B32_USCALED: return TRUE;
