@@ -252,10 +252,7 @@ pipe_buffer_map_range(struct pipe_context *pipe,
       return NULL;
    }
 
-   /* Match old screen->buffer_map_range() behaviour, return pointer
-    * to where the beginning of the buffer would be:
-    */
-   return (void *)((char *)map - offset);
+   return map;
 }
 
 
@@ -374,7 +371,7 @@ pipe_buffer_read(struct pipe_context *pipe,
 					 &src_transfer);
 
    if (map)
-      memcpy(data, map + offset, size);
+      memcpy(data, map, size);
 
    pipe_buffer_unmap(pipe, src_transfer);
 }

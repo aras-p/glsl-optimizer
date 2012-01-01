@@ -824,15 +824,16 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
                                   start * ibuffer->index_size, /* start */
                                   count * ibuffer->index_size, /* length */
                                   PIPE_TRANSFER_READ, &transfer);
+      if (!ptr)
+         return;
+
+      ptr = (uint8_t*)ptr + (ibuffer->offset - start * ibuffer->index_size);
    }
    else {
       ptr = ib->ptr;
+      if (!ptr)
+         return;
    }
-
-   if (!ptr)
-      return;
-
-   ptr = ADD_POINTERS(ptr, ibuffer->offset);
 
    sub_prims = find_sub_primitives(ptr, ibuffer->index_size,
                                    0, count, orig_info->restart_index,

@@ -291,10 +291,6 @@ st_bufferobj_map_range(struct gl_context *ctx,
                                         flags,
                                         &st_obj->transfer);
    if (obj->Pointer) {
-      obj->Pointer = (ubyte *) obj->Pointer + offset;
-   }
-
-   if (obj->Pointer) {
       obj->Offset = offset;
       obj->Length = length;
       obj->AccessFlags = access;

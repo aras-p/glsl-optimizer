@@ -228,6 +228,7 @@ update_zero_stride( struct svga_context *svga,
                                                util_format_get_blocksize(vel->src_format),
                                                PIPE_TRANSFER_READ,
 					       &transfer);
+         mapped_buffer = (uint8_t*)mapped_buffer - vel->src_offset;
 
          translate->set_buffer(translate, vel->vertex_buffer_index,
                                mapped_buffer,

@@ -192,6 +192,8 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
          *ptr = NULL;
          return PIPE_ERROR_OUT_OF_MEMORY;
       }
+
+      upload->map -= offset;
    }
 
    assert(offset < upload->buffer->width0);
@@ -261,7 +263,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
    ret = u_upload_data( upload,
                         min_out_offset,
                         size,
-                        map + offset,
+                        map,
                         out_offset,
                         outbuf, flushed );
 
