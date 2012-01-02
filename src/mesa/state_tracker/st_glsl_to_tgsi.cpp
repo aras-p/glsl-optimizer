@@ -414,7 +414,6 @@ public:
 
    bool process_move_condition(ir_rvalue *ir);
 
-   void remove_output_reads(gl_register_file type);
    void simplify_cmp(void);
 
    void rename_temp_register(int index, int new_index);
@@ -2921,89 +2920,6 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
       }
 
       loc++;
-   }
-}
-
-/*
- * Scan/rewrite program to remove reads of custom (output) registers.
- * The passed type has to be either PROGRAM_OUTPUT or PROGRAM_VARYING
- * (for vertex shaders).
- * In GLSL shaders, varying vars can be read and written.
- * On some hardware, trying to read an output register causes trouble.
- * So, rewrite the program to use a temporary register in this case.
- * 
- * Based on _mesa_remove_output_reads from programopt.c.
- */
-void
-glsl_to_tgsi_visitor::remove_output_reads(gl_register_file type)
-{
-   GLuint i;
-   GLint outputMap[VERT_RESULT_MAX];
-   GLint outputTypes[VERT_RESULT_MAX];
-   GLuint numVaryingReads = 0;
-   GLboolean *usedTemps;
-   GLuint firstTemp = 0;
-
-   usedTemps = new GLboolean[MAX_TEMPS];
-   if (!usedTemps) {
-      return;
-   }
-   _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
-                             usedTemps, MAX_TEMPS);
-
-   assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
-
-   for (i = 0; i < VERT_RESULT_MAX; i++)
-      outputMap[i] = -1;
-
-   /* look for instructions which read from varying vars */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
-      const GLuint numSrc = num_inst_src_regs(inst->op);
-      GLuint j;
-      for (j = 0; j < numSrc; j++) {
-         if (inst->src[j].file == type) {
-            /* replace the read with a temp reg */
-            const GLuint var = inst->src[j].index;
-            if (outputMap[var] == -1) {
-               numVaryingReads++;
-               outputMap[var] = _mesa_find_free_register(usedTemps,
-                                                         MAX_TEMPS,
-                                                         firstTemp);
-               outputTypes[var] = inst->src[j].type;
-               firstTemp = outputMap[var] + 1;
-            }
-            inst->src[j].file = PROGRAM_TEMPORARY;
-            inst->src[j].index = outputMap[var];
-         }
-      }
-   }
-
-   delete [] usedTemps;
-
-   if (numVaryingReads == 0)
-      return; /* nothing to be done */
-
-   /* look for instructions which write to the varying vars identified above */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
-      if (inst->dst.file == type && outputMap[inst->dst.index] >= 0) {
-         /* change inst to write to the temp reg, instead of the varying */
-         inst->dst.file = PROGRAM_TEMPORARY;
-         inst->dst.index = outputMap[inst->dst.index];
-      }
-   }
-   
-   /* insert new MOV instructions at the end */
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (outputMap[i] >= 0) {
-         /* MOV VAR[i], TEMP[tmp]; */
-         st_src_reg src = st_src_reg(PROGRAM_TEMPORARY, outputMap[i], outputTypes[i]);
-         st_dst_reg dst = st_dst_reg(type, WRITEMASK_XYZW, outputTypes[i]);
-         dst.index = i;
-         this->emit(NULL, TGSI_OPCODE_MOV, dst, src);
-      }
    }
 }
 
