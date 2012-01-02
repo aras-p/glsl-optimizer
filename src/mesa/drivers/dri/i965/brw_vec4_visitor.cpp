@@ -1786,7 +1786,7 @@ vec4_visitor::visit(ir_texture *ir)
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->sampler = sampler;
-   inst->dst = dst_reg(this, glsl_type::get_instance(ir->type->base_type,4,1));
+   inst->dst = dst_reg(this, ir->type);
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 
    if (ir->offset != NULL)
