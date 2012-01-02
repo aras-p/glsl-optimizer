@@ -226,6 +226,22 @@ enum pipe_transfer_usage {
    PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2),
 
    /**
+    * The transfer should map the resource storage directly and the GPU should
+    * be able to see what the CPU has written. Such a storage may stay mapped
+    * while issuing draw commands which use it. The only allowed usage is
+    * non-overlapping writes which are suballocated out of a big buffer.
+    * The minimum allowed alignment of suballocations is 256 bytes (this is
+    * a subject to change).
+    * The flag is intended to be used to avoid mapping and unmapping
+    * resources repeatedly when doing uploads and draws intermixed.
+    *
+    * The driver may return NULL if that isn't possible, and the state
+    * tracker needs to cope with that and use an alternative path
+    * without this flag.
+    */
+   PIPE_TRANSFER_MAP_PERMANENTLY = (1 << 3),
+
+   /**
     * Discards the memory within the mapped region.
     *
     * It should not be used with PIPE_TRANSFER_READ.

@@ -630,6 +630,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	int r;
 	boolean use_staging_texture = FALSE;
 
+	if (usage & PIPE_TRANSFER_MAP_PERMANENTLY) {
+	   return NULL;
+	}
+
 	/* We cannot map a tiled texture directly because the data is
 	 * in a different order, therefore we do detiling using a blit.
 	 *

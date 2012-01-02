@@ -172,7 +172,13 @@ nouveau_buffer_transfer_get(struct pipe_context *pipe,
 {
    struct nv04_resource *buf = nv04_resource(resource);
    struct nouveau_context *nv = nouveau_context(pipe);
-   struct nouveau_transfer *xfr = CALLOC_STRUCT(nouveau_transfer);
+   struct nouveau_transfer *xfr;
+
+   if (usage & PIPE_TRANSFER_MAP_PERMANENTLY) {
+      return NULL;
+   }
+
+   xfr = CALLOC_STRUCT(nouveau_transfer);
    if (!xfr)
       return NULL;
 

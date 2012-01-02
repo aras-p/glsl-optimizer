@@ -243,7 +243,7 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
    uint32_t size;
    int ret;
 
-   if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
+   if (usage & (PIPE_TRANSFER_MAP_DIRECTLY | PIPE_TRANSFER_MAP_PERMANENTLY))
       return NULL;
 
    tx = CALLOC_STRUCT(nv50_transfer);

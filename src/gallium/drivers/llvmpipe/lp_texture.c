@@ -587,6 +587,10 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
    assert(resource);
    assert(level <= resource->last_level);
 
+   if (usage & PIPE_TRANSFER_MAP_PERMANENTLY) {
+      return NULL;
+   }
+
    /*
     * Transfers, like other pipe operations, must happen in order, so flush the
     * context if necessary.

@@ -74,6 +74,10 @@ svga_buffer_get_transfer(struct pipe_context *pipe,
    struct svga_buffer *sbuf = svga_buffer(resource);
    struct pipe_transfer *transfer;
 
+   if (usage & PIPE_TRANSFER_MAP_PERMANENTLY) {
+      return NULL;
+   }
+
    transfer = CALLOC_STRUCT(pipe_transfer);
    if (transfer == NULL) {
       return NULL;
