@@ -44,7 +44,7 @@ static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbu
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
 		"%s(rb %p)\n",
-		__func__, rb);
+		__func__, (void *) rb);
 	if (rrb && rrb->base.ClassID == RADEON_RB_CLASS)
 		return rrb;
 	else
@@ -55,7 +55,7 @@ static inline struct radeon_renderbuffer *radeon_get_renderbuffer(struct gl_fram
 {
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
 		"%s(fb %p, index %d)\n",
-		__func__, fb, att_index);
+		__func__, (void *) fb, att_index);
 
 	if (att_index >= 0)
 		return radeon_renderbuffer(fb->Attachment[att_index].Renderbuffer);
