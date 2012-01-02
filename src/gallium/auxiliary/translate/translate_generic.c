@@ -257,6 +257,126 @@ emit_B8G8R8A8_UNORM( const void *attrib, void *ptr)
    out[3] = TO_8_UNORM(in[3]);
 }
 
+static void
+emit_B10G10R10A2_UNORM( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= ((uint32_t)(CLAMP(src[2], 0, 1) * 0x3ff)) & 0x3ff;
+   value |= (((uint32_t)(CLAMP(src[1], 0, 1) * 0x3ff)) & 0x3ff) << 10;
+   value |= (((uint32_t)(CLAMP(src[0], 0, 1) * 0x3ff)) & 0x3ff) << 20;
+   value |= ((uint32_t)(CLAMP(src[3], 0, 1) * 0x3)) << 30;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_B10G10R10A2_USCALED( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= ((uint32_t)CLAMP(src[2], 0, 1023)) & 0x3ff;
+   value |= (((uint32_t)CLAMP(src[1], 0, 1023)) & 0x3ff) << 10;
+   value |= (((uint32_t)CLAMP(src[0], 0, 1023)) & 0x3ff) << 20;
+   value |= ((uint32_t)CLAMP(src[3], 0, 3)) << 30;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_B10G10R10A2_SNORM( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= (uint32_t)(((uint32_t)(CLAMP(src[2], -1, 1) * 0x1ff)) & 0x3ff) ;
+   value |= (uint32_t)((((uint32_t)(CLAMP(src[1], -1, 1) * 0x1ff)) & 0x3ff) << 10) ;
+   value |= (uint32_t)((((uint32_t)(CLAMP(src[0], -1, 1) * 0x1ff)) & 0x3ff) << 20) ;
+   value |= (uint32_t)(((uint32_t)(CLAMP(src[3], -1, 1) * 0x1)) << 30) ;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_B10G10R10A2_SSCALED( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= (uint32_t)(((uint32_t)CLAMP(src[2], -512, 511)) & 0x3ff) ;
+   value |= (uint32_t)((((uint32_t)CLAMP(src[1], -512, 511)) & 0x3ff) << 10) ;
+   value |= (uint32_t)((((uint32_t)CLAMP(src[0], -512, 511)) & 0x3ff) << 20) ;
+   value |= (uint32_t)(((uint32_t)CLAMP(src[3], -2, 1)) << 30) ;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_R10G10B10A2_UNORM( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= ((uint32_t)(CLAMP(src[0], 0, 1) * 0x3ff)) & 0x3ff;
+   value |= (((uint32_t)(CLAMP(src[1], 0, 1) * 0x3ff)) & 0x3ff) << 10;
+   value |= (((uint32_t)(CLAMP(src[2], 0, 1) * 0x3ff)) & 0x3ff) << 20;
+   value |= ((uint32_t)(CLAMP(src[3], 0, 1) * 0x3)) << 30;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_R10G10B10A2_USCALED( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= ((uint32_t)CLAMP(src[0], 0, 1023)) & 0x3ff;
+   value |= (((uint32_t)CLAMP(src[1], 0, 1023)) & 0x3ff) << 10;
+   value |= (((uint32_t)CLAMP(src[2], 0, 1023)) & 0x3ff) << 20;
+   value |= ((uint32_t)CLAMP(src[3], 0, 3)) << 30;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_R10G10B10A2_SNORM( const void *attrib, void *ptr )
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= (uint32_t)(((uint32_t)(CLAMP(src[0], -1, 1) * 0x1ff)) & 0x3ff) ;
+   value |= (uint32_t)((((uint32_t)(CLAMP(src[1], -1, 1) * 0x1ff)) & 0x3ff) << 10) ;
+   value |= (uint32_t)((((uint32_t)(CLAMP(src[2], -1, 1) * 0x1ff)) & 0x3ff) << 20) ;
+   value |= (uint32_t)(((uint32_t)(CLAMP(src[3], -1, 1) * 0x1)) << 30) ;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
+static void
+emit_R10G10B10A2_SSCALED( const void *attrib, void *ptr)
+{
+   float *src = (float *)ptr;
+   uint32_t value = 0;
+   value |= (uint32_t)(((uint32_t)CLAMP(src[0], -512, 511)) & 0x3ff) ;
+   value |= (uint32_t)((((uint32_t)CLAMP(src[1], -512, 511)) & 0x3ff) << 10) ;
+   value |= (uint32_t)((((uint32_t)CLAMP(src[2], -512, 511)) & 0x3ff) << 20) ;
+   value |= (uint32_t)(((uint32_t)CLAMP(src[3], -2, 1)) << 30) ;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   value = util_bswap32(value);
+#endif
+   *(uint32_t *)attrib = value;
+}
+
 static void 
 emit_NULL( const void *attrib, void *ptr )
 {
@@ -460,6 +580,24 @@ static emit_func get_emit_func( enum pipe_format format )
       return &emit_R8G8B8_SINT;
    case PIPE_FORMAT_R8G8B8A8_SINT:
       return &emit_R8G8B8A8_SINT;
+
+   case PIPE_FORMAT_B10G10R10A2_UNORM:
+      return &emit_B10G10R10A2_UNORM;
+   case PIPE_FORMAT_B10G10R10A2_USCALED:
+      return &emit_B10G10R10A2_USCALED;
+   case PIPE_FORMAT_B10G10R10A2_SNORM:
+      return &emit_B10G10R10A2_SNORM;
+   case PIPE_FORMAT_B10G10R10A2_SSCALED:
+      return &emit_B10G10R10A2_SSCALED;
+
+   case PIPE_FORMAT_R10G10B10A2_UNORM:
+      return &emit_R10G10B10A2_UNORM;
+   case PIPE_FORMAT_R10G10B10A2_USCALED:
+      return &emit_R10G10B10A2_USCALED;
+   case PIPE_FORMAT_R10G10B10A2_SNORM:
+      return &emit_R10G10B10A2_SNORM;
+   case PIPE_FORMAT_R10G10B10A2_SSCALED:
+      return &emit_R10G10B10A2_SSCALED;
 
    default:
       assert(0); 
@@ -835,6 +973,16 @@ boolean translate_generic_is_output_format_supported(enum pipe_format format)
    case PIPE_FORMAT_R8G8B8_SINT: return TRUE;
    case PIPE_FORMAT_R8G8_SINT: return TRUE;
    case PIPE_FORMAT_R8_SINT: return TRUE;
+
+   case PIPE_FORMAT_B10G10R10A2_UNORM: return TRUE;
+   case PIPE_FORMAT_B10G10R10A2_USCALED: return TRUE;
+   case PIPE_FORMAT_B10G10R10A2_SNORM: return TRUE;
+   case PIPE_FORMAT_B10G10R10A2_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R10G10B10A2_UNORM: return TRUE;
+   case PIPE_FORMAT_R10G10B10A2_USCALED: return TRUE;
+   case PIPE_FORMAT_R10G10B10A2_SNORM: return TRUE;
+   case PIPE_FORMAT_R10G10B10A2_SSCALED: return TRUE;
 
    default: return FALSE;
    }
