@@ -33,6 +33,7 @@
 #include "main/hash.h"
 #include "main/fbobject.h"
 #include "main/mfeatures.h"
+#include "main/version.h"
 #include "swrast/s_renderbuffer.h"
 
 #include "utils.h"
