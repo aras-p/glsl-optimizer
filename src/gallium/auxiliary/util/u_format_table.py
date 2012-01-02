@@ -169,17 +169,23 @@ def write_format_table(formats):
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name() 
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
-            print "   &util_format_%s_pack_signed  /* pack_rgba_sint */" % format.short_name()
+            print "   &util_format_%s_pack_signed,  /* pack_rgba_sint */" % format.short_name()
+            print "   &util_format_%s_fetch_unsigned,  /* fetch_rgba_uint */" % format.short_name()
+            print "   NULL  /* fetch_rgba_sint */"
         elif format.colorspace != ZS and format.channels[0].pure == True and format.channels[0].type == SIGNED:
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
-            print "   &util_format_%s_pack_signed  /* pack_rgba_sint */" % format.short_name()
+            print "   &util_format_%s_pack_signed,  /* pack_rgba_sint */" % format.short_name()
+            print "   NULL,  /* fetch_rgba_uint */"
+            print "   &util_format_%s_fetch_signed  /* fetch_rgba_sint */" % format.short_name()
         else:
             print "   NULL, /* unpack_rgba_uint */" 
             print "   NULL, /* pack_rgba_uint */" 
             print "   NULL, /* unpack_rgba_sint */" 
-            print "   NULL  /* pack_rgba_sint */" 
+            print "   NULL, /* pack_rgba_sint */"
+            print "   NULL, /* fetch_rgba_uint */"
+            print "   NULL  /* fetch_rgba_sint */"
         print "};"
         print
         

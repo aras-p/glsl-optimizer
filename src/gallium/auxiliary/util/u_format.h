@@ -254,7 +254,7 @@ struct util_format_description
    /**
     * Fetch a single pixel (i, j) from a block.
     *
-    * Only defined for non-depth-stencil formats.
+    * Only defined for non-depth-stencil and non-integer formats.
     */
    void
    (*fetch_rgba_float)(float *dst,
@@ -358,6 +358,26 @@ struct util_format_description
    (*pack_rgba_sint)(uint8_t *dst, unsigned dst_stride,
                      const int *src, unsigned src_stride,
                      unsigned width, unsigned height);
+
+   /**
+    * Fetch a single pixel (i, j) from a block.
+    *
+    * Only defined for unsigned (pure) integer formats.
+    */
+   void
+   (*fetch_rgba_uint)(uint32_t *dst,
+                      const uint8_t *src,
+                      unsigned i, unsigned j);
+
+   /**
+    * Fetch a single pixel (i, j) from a block.
+    *
+    * Only defined for signed (pure) integer formats.
+    */
+   void
+   (*fetch_rgba_sint)(int32_t *dst,
+                      const uint8_t *src,
+                      unsigned i, unsigned j);
 };
 
 

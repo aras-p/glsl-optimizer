@@ -686,6 +686,7 @@ def generate(formats):
 
                 generate_format_unpack(format, channel, native_type, suffix)
                 generate_format_pack(format, channel, native_type, suffix)
+                generate_format_fetch(format, channel, native_type, suffix)
 
                 channel = Channel(SIGNED, False, True, 32)
                 native_type = 'int'
@@ -699,6 +700,7 @@ def generate(formats):
 
                 generate_format_unpack(format, channel, native_type, suffix)
                 generate_format_pack(format, channel, native_type, suffix)   
+                generate_format_fetch(format, channel, native_type, suffix)
 
                 native_type = 'unsigned'
                 suffix = 'unsigned'
