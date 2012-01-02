@@ -4894,6 +4894,13 @@ get_mesa_program(struct gl_context *ctx,
    _mesa_generate_parameters_list_for_uniforms(shader_program, shader,
 					       prog->Parameters);
 
+   if (!screen->get_shader_param(screen, pipe_shader_type,
+                                 PIPE_SHADER_CAP_OUTPUT_READ)) {
+      /* Remove reads to output registers, and to varyings in vertex shaders. */
+      lower_output_reads(shader->ir);
+   }
+
+
    /* Emit intermediate IR for main(). */
    visit_exec_list(shader->ir, v);
 
@@ -4940,14 +4947,6 @@ get_mesa_program(struct gl_context *ctx,
    }
 #endif
 
-   if (!screen->get_shader_param(screen, pipe_shader_type,
-                                 PIPE_SHADER_CAP_OUTPUT_READ)) {
-      /* Remove reads to output registers, and to varyings in vertex shaders. */
-      v->remove_output_reads(PROGRAM_OUTPUT);
-      if (target == GL_VERTEX_PROGRAM_ARB)
-         v->remove_output_reads(PROGRAM_VARYING);
-   }
-   
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->simplify_cmp();
    v->copy_propagate();
