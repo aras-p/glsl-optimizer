@@ -93,6 +93,8 @@ void _radeon_print(const radeon_debug_type_t type,
 	   const char* message,
 	   ...)
 {
+	va_list values;
+
 	GET_CURRENT_CONTEXT(ctx);
 	if (ctx) {
 		radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -100,7 +102,6 @@ void _radeon_print(const radeon_debug_type_t type,
 		if (radeon->debug.indent_depth)
 			fprintf(stderr, "%s", radeon->debug.indent);
 	}
-	va_list values;
 	va_start( values, message );
 	vfprintf(stderr, message, values);
 	va_end( values );
