@@ -244,6 +244,14 @@ st_prepare_vertex_program(struct gl_context *ctx,
             stvp->output_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
             stvp->output_semantic_index[slot] = 0;
             break;
+         case VERT_RESULT_CLIP_DIST0:
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
+            stvp->output_semantic_index[slot] = 0;
+            break;
+         case VERT_RESULT_CLIP_DIST1:
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
+            stvp->output_semantic_index[slot] = 1;
+            break;
          case VERT_RESULT_EDGE:
             assert(0);
             break;
@@ -546,6 +554,16 @@ st_translate_fragment_program(struct st_context *st,
                input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
                input_semantic_index[slot] = 0;
                interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+               break;
+            case FRAG_ATTRIB_CLIP_DIST0:
+               input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
+               input_semantic_index[slot] = 0;
+               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+               break;
+            case FRAG_ATTRIB_CLIP_DIST1:
+               input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
+               input_semantic_index[slot] = 1;
+               interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
                break;
                /* In most cases, there is nothing special about these
                 * inputs, so adopt a convention to use the generic
