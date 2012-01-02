@@ -1781,6 +1781,9 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_floor:
       emit(ir, TGSI_OPCODE_FLR, result_dst, op[0]);
       break;
+   case ir_unop_round_even:
+      emit(ir, TGSI_OPCODE_ROUND, result_dst, op[0]);
+      break;
    case ir_unop_fract:
       emit(ir, TGSI_OPCODE_FRC, result_dst, op[0]);
       break;
@@ -1830,7 +1833,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          emit(ir, TGSI_OPCODE_OR, result_dst, op[0], op[1]);
          break;
       }
-   case ir_unop_round_even:
+
       assert(!"GLSL 1.30 features unsupported");
       break;
 
