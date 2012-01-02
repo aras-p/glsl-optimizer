@@ -53,7 +53,8 @@ upload_3dstate_so_buffers(struct brw_context *brw)
     * gl_transform_feedback_object.
     */
    for (i = 0; i < 4; i++) {
-      struct gl_buffer_object *bufferobj = xfb_obj->Buffers[i];
+      struct intel_buffer_object *bufferobj =
+	 intel_buffer_object(xfb_obj->Buffers[i]);
       drm_intel_bo *bo;
       uint32_t start, end;
       uint32_t stride;
@@ -72,7 +73,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
 	 continue;
       }
 
-      bo = intel_buffer_object(bufferobj)->buffer;
+      bo = intel_bufferobj_buffer(intel, bufferobj, INTEL_WRITE_PART);
       stride = linked_xfb_info->BufferStride[i] * 4;
 
       start = xfb_obj->Offset[i];
