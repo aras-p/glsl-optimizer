@@ -480,7 +480,7 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat,
 				     ti->TexFormat,
-				     0, 0, 0, s->pitch,
+				     s->pitch,
                                      &nti->base.Data,
 				     width, height, depth,
 				     format, type, pixels, packing);
@@ -564,7 +564,7 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 				     xoffset, yoffset, width, height);
 
 		ret = _mesa_texstore(ctx, 3, ti->_BaseFormat, ti->TexFormat,
-                                     0, 0, 0, s->pitch,
+                                     s->pitch,
 				     &nti->base.Data,
                                      width, height, depth,
 				     format, type, pixels, packing);

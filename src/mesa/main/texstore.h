@@ -58,7 +58,6 @@
 	struct gl_context *ctx, GLuint dims, \
 	GLenum baseInternalFormat, \
 	gl_format dstFormat, \
-	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
         GLint dstRowStride, \
         GLubyte **dstSlices, \
 	GLint srcWidth, GLint srcHeight, GLint srcDepth, \

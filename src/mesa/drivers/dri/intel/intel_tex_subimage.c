@@ -118,7 +118,6 @@ intel_blit_texsubimage(struct gl_context * ctx,
 
    if (!_mesa_texstore(ctx, 2, texImage->_BaseFormat,
 		       texImage->TexFormat,
-		       0, 0, 0,  /* x, y, z offset in dest buffer */
 		       dstRowStride,
 		       &dstMap,
 		       width, height, 1,

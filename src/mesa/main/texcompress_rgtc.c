@@ -92,7 +92,6 @@ GLboolean
 _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
 {
    GLubyte *dst;
-   const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLubyte *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
@@ -102,11 +101,6 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    GLint dstRowDiff;
    ASSERT(dstFormat == MESA_FORMAT_RED_RGTC1 ||
           dstFormat == MESA_FORMAT_L_LATC1);
-   ASSERT(dstXoffset % 4 == 0);
-   ASSERT(dstYoffset % 4 == 0);
-   ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset;
-
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
 					  baseInternalFormat,
@@ -117,9 +111,7 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    if (!tempImage)
       return GL_FALSE; /* out of memory */
 
-   dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat,
-                                        texWidth, dstSlices[0]);
+   dst = dstSlices[0];
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
@@ -147,7 +139,6 @@ GLboolean
 _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
 {
    GLbyte *dst;
-   const GLint texWidth = dstRowStride * 4 / 8; /* a bit of a hack */
    const GLfloat *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
@@ -157,10 +148,6 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
    GLint dstRowDiff;
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
           dstFormat == MESA_FORMAT_SIGNED_L_LATC1);
-   ASSERT(dstXoffset % 4 == 0);
-   ASSERT(dstYoffset % 4 == 0);
-   ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset;
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -171,9 +158,7 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
    if (!tempImage)
       return GL_FALSE; /* out of memory */
 
-   dst = (GLbyte *)_mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-						  dstFormat,
-						  texWidth, dstSlices[0]);
+   dst = (GLbyte *) dstSlices[0];
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
@@ -201,7 +186,6 @@ GLboolean
 _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
 {
    GLubyte *dst;
-   const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLubyte *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
@@ -212,10 +196,6 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2 ||
           dstFormat == MESA_FORMAT_LA_LATC2);
-   ASSERT(dstXoffset % 4 == 0);
-   ASSERT(dstYoffset % 4 == 0);
-   ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset;
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
 					  baseInternalFormat,
@@ -226,9 +206,7 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
    if (!tempImage)
       return GL_FALSE; /* out of memory */
 
-   dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-                                        dstFormat,
-                                        texWidth, dstSlices[0]);
+   dst = dstSlices[0];
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
@@ -262,7 +240,6 @@ GLboolean
 _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 {
    GLbyte *dst;
-   const GLint texWidth = dstRowStride * 4 / 16; /* a bit of a hack */
    const GLfloat *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
@@ -273,10 +250,6 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_RG_RGTC2 ||
           dstFormat == MESA_FORMAT_SIGNED_LA_LATC2);
-   ASSERT(dstXoffset % 4 == 0);
-   ASSERT(dstYoffset % 4 == 0);
-   ASSERT(dstZoffset % 4 == 0);
-   (void) dstZoffset;
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -287,9 +260,7 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
    if (!tempImage)
       return GL_FALSE; /* out of memory */
 
-   dst = (GLbyte *)_mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
-						  dstFormat,
-						  texWidth, dstSlices[0]);
+   dst = (GLbyte *) dstSlices[0];
 
    blkaddr = dst;
    dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
