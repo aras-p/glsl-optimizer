@@ -252,7 +252,7 @@ dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
     unsigned error;
 
     return dri2CreateContextAttribs(screen, api, config, shared, 0, NULL,
-				    data, &error);
+				    &error, data);
 }
 
 static __DRIcontext *
