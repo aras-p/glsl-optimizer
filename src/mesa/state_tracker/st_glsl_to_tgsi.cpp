@@ -3505,10 +3505,15 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
       switch (inst->op) {
       case TGSI_OPCODE_BGNLOOP:
       case TGSI_OPCODE_ENDLOOP:
+      case TGSI_OPCODE_CONT:
+      case TGSI_OPCODE_BRK:
          /* End of a basic block, clear the write array entirely.
-          * FIXME: This keeps us from killing dead code when the writes are
+          *
+          * This keeps us from killing dead code when the writes are
           * on either side of a loop, even when the register isn't touched
-          * inside the loop.
+          * inside the loop.  However, glsl_to_tgsi_visitor doesn't seem to emit
+          * dead code of this type, so it shouldn't make a difference as long as
+          * the dead code elimination pass in the GLSL compiler does its job.
           */
          memset(writes, 0, sizeof(*writes) * this->next_temp * 4);
          break;
