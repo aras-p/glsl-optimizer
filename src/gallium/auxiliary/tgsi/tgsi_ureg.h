@@ -229,6 +229,12 @@ ureg_DECL_system_value(struct ureg_program *,
                        unsigned semantic_index);
 
 struct ureg_dst
+ureg_DECL_output_masked( struct ureg_program *,
+                         unsigned semantic_name,
+                         unsigned semantic_index,
+                         unsigned usage_mask );
+
+struct ureg_dst
 ureg_DECL_output( struct ureg_program *,
                   unsigned semantic_name,
                   unsigned semantic_index );
