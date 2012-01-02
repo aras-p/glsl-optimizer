@@ -909,6 +909,7 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
 {
    unsigned nr_of_idct_render_targets, max_inst;
    enum pipe_format formats[3];
+   struct pipe_video_buffer templat;
 
    struct pipe_sampler_view *matrix = NULL;
 
@@ -930,21 +931,28 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
       nr_of_idct_render_targets = 1;
 
    formats[0] = formats[1] = formats[2] = format_config->idct_source_format;
+   memset(&templat, 0, sizeof(templat));
+   templat.width = dec->base.width / 4;
+   templat.height = dec->base.height;
+   templat.chroma_format = dec->base.chroma_format;
    dec->idct_source = vl_video_buffer_create_ex
    (
-      dec->base.context, dec->base.width / 4, dec->base.height, 1,
-      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+      dec->base.context, &templat,
+      formats, 1, PIPE_USAGE_STATIC
    );
 
    if (!dec->idct_source)
       goto error_idct_source;
 
    formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
+   memset(&templat, 0, sizeof(templat));
+   templat.width = dec->base.width / nr_of_idct_render_targets;
+   templat.height = dec->base.height / 4;
+   templat.chroma_format = dec->base.chroma_format;
    dec->mc_source = vl_video_buffer_create_ex
    (
-      dec->base.context, dec->base.width / nr_of_idct_render_targets,
-      dec->base.height / 4, nr_of_idct_render_targets,
-      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+      dec->base.context, &templat,
+      formats, nr_of_idct_render_targets, PIPE_USAGE_STATIC
    );
 
    if (!dec->mc_source)
@@ -985,12 +993,17 @@ static bool
 init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_config)
 {
    enum pipe_format formats[3];
+   struct pipe_video_buffer templat;
 
    formats[0] = formats[1] = formats[2] = format_config->mc_source_format;
+   memset(&templat, 0, sizeof(templat));
+   templat.width = dec->base.width;
+   templat.height = dec->base.height;
+   templat.chroma_format = dec->base.chroma_format;
    dec->mc_source = vl_video_buffer_create_ex
    (
-      dec->base.context, dec->base.width, dec->base.height, 1,
-      dec->base.chroma_format, formats, PIPE_USAGE_STATIC
+      dec->base.context, &templat,
+      formats, 1, PIPE_USAGE_STATIC
    );
       
    return dec->mc_source != NULL;

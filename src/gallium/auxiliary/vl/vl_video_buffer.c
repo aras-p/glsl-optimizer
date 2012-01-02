@@ -253,17 +253,14 @@ error:
 
 struct pipe_video_buffer *
 vl_video_buffer_create(struct pipe_context *pipe,
-                       enum pipe_format buffer_format,
-                       enum pipe_video_chroma_format chroma_format,
-                       unsigned width, unsigned height)
+                       const struct pipe_video_buffer *tmpl)
 {
    const enum pipe_format *resource_formats;
-   struct pipe_video_buffer *result;
-   unsigned buffer_width, buffer_height;
+   struct pipe_video_buffer templat;
    bool pot_buffers;
 
    assert(pipe);
-   assert(width > 0 && height > 0);
+   assert(tmpl->width > 0 && tmpl->height > 0);
 
    pot_buffers = !pipe->screen->get_video_param
    (
@@ -272,30 +269,28 @@ vl_video_buffer_create(struct pipe_context *pipe,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 
-   resource_formats = vl_video_buffer_formats(pipe->screen, buffer_format);
+   resource_formats = vl_video_buffer_formats(pipe->screen, tmpl->buffer_format);
    if (!resource_formats)
       return NULL;
 
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+   templat = *tmpl;
+   templat.width = pot_buffers ? util_next_power_of_two(tmpl->width)
+                 : align(tmpl->width, MACROBLOCK_WIDTH);
+   templat.height = pot_buffers ? util_next_power_of_two(tmpl->height)
+                  : align(tmpl->height, MACROBLOCK_HEIGHT);
 
-   result = vl_video_buffer_create_ex
+   return vl_video_buffer_create_ex
    (
-      pipe, buffer_width, buffer_height, 1,
-      chroma_format, resource_formats, PIPE_USAGE_STATIC
+      pipe, &templat, resource_formats,
+      1, PIPE_USAGE_STATIC
    );
-   if (result)
-      result->buffer_format = buffer_format;
-
-   return result;
 }
 
 struct pipe_video_buffer *
 vl_video_buffer_create_ex(struct pipe_context *pipe,
-                          unsigned width, unsigned height, unsigned depth,
-                          enum pipe_video_chroma_format chroma_format,
+                          const struct pipe_video_buffer *tmpl,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
-                          unsigned usage)
+                          unsigned depth, unsigned usage)
 {
    struct vl_video_buffer *buffer;
    struct pipe_resource templ;
@@ -305,21 +300,19 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
 
    buffer = CALLOC_STRUCT(vl_video_buffer);
 
+   buffer->base = *tmpl;
    buffer->base.context = pipe;
    buffer->base.destroy = vl_video_buffer_destroy;
    buffer->base.get_sampler_view_planes = vl_video_buffer_sampler_view_planes;
    buffer->base.get_sampler_view_components = vl_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = vl_video_buffer_surfaces;
-   buffer->base.chroma_format = chroma_format;
-   buffer->base.width = width;
-   buffer->base.height = height;
    buffer->num_planes = 1;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
    templ.format = resource_formats[0];
-   templ.width0 = width;
-   templ.height0 = height;
+   templ.width0 = tmpl->width;
+   templ.height0 = tmpl->height;
    templ.depth0 = depth;
    templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
@@ -330,17 +323,17 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
       goto error;
 
    if (resource_formats[1] == PIPE_FORMAT_NONE) {
-      assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
+      assert(tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
       assert(resource_formats[2] == PIPE_FORMAT_NONE);
       return &buffer->base;
    } else
       buffer->num_planes = 2;
 
    templ.format = resource_formats[1];
-   if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+   if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       templ.width0 /= 2;
       templ.height0 /= 2;
-   } else if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
+   } else if (tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
       templ.height0 /= 2;
    }
 

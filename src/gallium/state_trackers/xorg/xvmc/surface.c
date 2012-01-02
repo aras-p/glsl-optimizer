@@ -167,6 +167,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCContextPrivate *context_priv;
    struct pipe_context *pipe;
    XvMCSurfacePrivate *surface_priv;
+   struct pipe_video_buffer tmpl;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
 
@@ -184,12 +185,13 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   surface_priv->video_buffer = pipe->create_video_buffer
-   (
-      pipe, PIPE_FORMAT_NV12, context_priv->decoder->chroma_format,
-      context_priv->decoder->width, context_priv->decoder->height
-   );
-   
+   memset(&tmpl, 0, sizeof(tmpl));
+   tmpl.buffer_format = PIPE_FORMAT_NV12;
+   tmpl.chroma_format = context_priv->decoder->chroma_format;
+   tmpl.width = context_priv->decoder->width;
+   tmpl.height = context_priv->decoder->height;
+
+   surface_priv->video_buffer = pipe->create_video_buffer(pipe, &tmpl);
    surface_priv->context = context;
 
    surface->surface_id = XAllocID(dpy);

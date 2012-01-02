@@ -90,18 +90,15 @@ vl_video_buffer_get_associated_data(struct pipe_video_buffer *vbuf,
  */
 struct pipe_video_buffer *
 vl_video_buffer_create(struct pipe_context *pipe,
-                       enum pipe_format buffer_format,
-                       enum pipe_video_chroma_format chroma_format,
-                       unsigned width, unsigned height);
+                       const struct pipe_video_buffer *templat);
 
 /**
  * extended create function, gets depth, usage and formats for each plane seperately
  */
 struct pipe_video_buffer *
 vl_video_buffer_create_ex(struct pipe_context *pipe,
-                          unsigned width, unsigned height, unsigned depth,
-                          enum pipe_video_chroma_format chroma_format,
+                          const struct pipe_video_buffer *templat,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
-                          unsigned usage);
+                          unsigned depth, unsigned usage);
 
 #endif /* vl_video_buffer_h */

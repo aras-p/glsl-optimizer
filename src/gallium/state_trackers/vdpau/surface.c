@@ -44,6 +44,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
                         uint32_t width, uint32_t height,
                         VdpVideoSurface *surface)
 {
+   struct pipe_video_buffer tmpl;
    vlVdpSurface *p_surf;
    VdpStatus ret;
 
@@ -72,12 +73,15 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    }
 
    p_surf->device = dev;
+   memset(&tmpl, 0, sizeof(tmpl));
+   tmpl.buffer_format = PIPE_FORMAT_YV12;
+   tmpl.chroma_format = ChromaToPipe(chroma_type);
+   tmpl.width = width;
+   tmpl.height = height;
    p_surf->video_buffer = dev->context->pipe->create_video_buffer
    (
       dev->context->pipe,
-      PIPE_FORMAT_YV12, // most common used
-      ChromaToPipe(chroma_type),
-      width, height
+      &tmpl
    );
 
    *surface = vlAddDataHTAB(p_surf);

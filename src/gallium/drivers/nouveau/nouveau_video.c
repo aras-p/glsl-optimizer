@@ -780,24 +780,23 @@ nouveau_video_buffer_destroy(struct pipe_video_buffer *buffer)
 static struct pipe_video_buffer *
 nouveau_video_buffer_create(struct pipe_context *pipe,
                             struct nouveau_screen *screen,
-                            enum pipe_format buffer_format,
-                            enum pipe_video_chroma_format chroma_format,
-                            unsigned width, unsigned height)
+                            const struct pipe_video_buffer *templat)
 {
    struct nouveau_video_buffer *buffer;
    struct pipe_resource templ;
+   unsigned width, height;
 
    /* Only do a linear surface when a hardware decoder is used
     * hardware decoder is only supported on some chipsets
     * and it only supports the NV12 format
     */
-   if (buffer_format != PIPE_FORMAT_NV12 || getenv("XVMC_VL") ||
+   if (templat->buffer_format != PIPE_FORMAT_NV12 || getenv("XVMC_VL") ||
        (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0))
-      return vl_video_buffer_create(pipe, buffer_format, chroma_format, width, height);
+      return vl_video_buffer_create(pipe, templat);
 
-   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-   width = align(width, 64);
-   height = align(height, 64);
+   assert(templat->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   width = align(templat->width, 64);
+   height = align(templat->height, 64);
 
    buffer = CALLOC_STRUCT(nouveau_video_buffer);
    if (!buffer)
@@ -808,7 +807,7 @@ nouveau_video_buffer_create(struct pipe_context *pipe,
    buffer->base.get_sampler_view_planes = nouveau_video_buffer_sampler_view_planes;
    buffer->base.get_sampler_view_components = nouveau_video_buffer_sampler_view_components;
    buffer->base.get_surfaces = nouveau_video_buffer_surfaces;
-   buffer->base.chroma_format = chroma_format;
+   buffer->base.chroma_format = templat->chroma_format;
    buffer->base.width = width;
    buffer->base.height = height;
    buffer->num_planes = 2;
@@ -882,12 +881,10 @@ nvfx_context_create_decoder(struct pipe_context *context,
 
 static struct pipe_video_buffer *
 nvfx_context_video_buffer_create(struct pipe_context *pipe,
-                                 enum pipe_format buffer_format,
-                                 enum pipe_video_chroma_format chroma_format,
-                                 unsigned width, unsigned height)
+                                 const struct pipe_video_buffer *templat)
 {
    struct nouveau_screen *screen = &nvfx_context(pipe)->screen->base;
-   return nouveau_video_buffer_create(pipe, screen, buffer_format, chroma_format, width, height);
+   return nouveau_video_buffer_create(pipe, screen, templat);
 }
 
 void
@@ -913,12 +910,10 @@ nouveau_context_create_decoder(struct pipe_context *context,
 
 static struct pipe_video_buffer *
 nouveau_context_video_buffer_create(struct pipe_context *pipe,
-                                    enum pipe_format buffer_format,
-                                    enum pipe_video_chroma_format chroma_format,
-                                    unsigned width, unsigned height)
+                                    const struct pipe_video_buffer *templat)
 {
    struct nouveau_screen *screen = nouveau_context(pipe)->screen;
-   return nouveau_video_buffer_create(pipe, screen, buffer_format, chroma_format, width, height);
+   return nouveau_video_buffer_create(pipe, screen, templat);
 }
 
 void
