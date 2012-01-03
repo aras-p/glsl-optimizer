@@ -71,7 +71,7 @@ struct extension_info
 
 /* *INDENT-OFF* */
 static const struct extension_info known_glx_extensions[] = {
-#ifdef XCB_GLX_CREATE_CONTEXT_ATTRIBS_ARB
+#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    { GLX(ARB_create_context),          VER(0,0), Y, N, N, N },
    { GLX(ARB_create_context_profile),  VER(0,0), Y, N, N, N },
 #else
@@ -85,7 +85,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(EXT_visual_info),             VER(0,0), Y, Y, N, N },
    { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
    { GLX(EXT_framebuffer_sRGB),        VER(0,0), Y, Y, N, N },
-#ifdef XCB_GLX_CREATE_CONTEXT_ATTRIBS_ARB
+#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    { GLX(EXT_create_context_es2_profile), VER(0,0), Y, N, N, Y },
 #else
    { GLX(EXT_create_context_es2_profile), VER(0,0), N, N, N, N },

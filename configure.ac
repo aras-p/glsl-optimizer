@@ -1030,11 +1030,33 @@ xyesno)
         GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
     fi
 
+    # Check to see if the xcb-glx library is new enough to support
+    # GLX_ARB_create_context.  This bit of hackery is necessary until XCB 1.8
+    # is released.
+    save_CPPFLAGS="$CPPFLAGS"
+    save_LDFLAGS="$LDFLAGS"
+    CPPFLAGS="$CPPFLAGS $X11_INCLUDES"
+    LDFLAGS="$LDFLAGS $GL_LIB_DEPS"
+    AC_CHECK_LIB(xcb-glx, xcb_glx_create_context_attribs_arb_checked,
+        [HAVE_XCB_GLX_CREATE_CONTEXT=yes],
+        [HAVE_XCB_GLX_CREATE_CONTEXT=no])
+    CPPFLAGS="$save_CPPFLAGS"
+    LDFLAGS="$save_LDFLAGS"
+
+    if test x$HAVE_XCB_GLX_CREATE_CONTEXT = xyes; then
+        X11_INCLUDES="$X11_INCLUDES -DHAVE_XCB_GLX_CREATE_CONTEXT"
+    fi
+
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
     ;;
 esac
+
+# This is outside the case (above) so that it is invoked even for non-GLX
+# builds.
+AM_CONDITIONAL(HAVE_XCB_GLX_CREATE_CONTEXT,
+    test x$HAVE_XCB_GLX_CREATE_CONTEXT = xyes)
 
 GLESv1_CM_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
 GLESv1_CM_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"

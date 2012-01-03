@@ -94,7 +94,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
     * the protocol error and handle it.  Part of handling the error is freeing
     * the possibly non-NULL value returned by this function.
     */
-#ifdef XCB_GLX_CREATE_CONTEXT_ATTRIBS_ARB
+#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    cookie =
       xcb_glx_create_context_attribs_arb_checked(c,
 						 gc->xid,
