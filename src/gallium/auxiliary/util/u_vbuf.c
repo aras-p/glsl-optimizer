@@ -922,7 +922,8 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
                   const struct pipe_draw_info *info)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
-   int start, count;
+   int start_vertex;
+   unsigned num_vertices;
 
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
@@ -932,40 +933,46 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
 
    if (info->indexed) {
       int min_index, max_index;
+      bool index_bounds_valid = false;
 
       if (info->max_index != ~0) {
-         min_index = info->min_index + info->index_bias;
-         max_index = info->max_index + info->index_bias;
+         min_index = info->min_index;
+         max_index = info->max_index;
+         index_bounds_valid = true;
       } else if (u_vbuf_need_minmax_index(mgr)) {
          u_vbuf_get_minmax_index(mgr->pipe, &mgr->b.index_buffer, info,
                                  &min_index, &max_index);
-         min_index += info->index_bias;
-         max_index += info->index_bias;
-      } else {
-         min_index = 0;
-         max_index = 0;
+         index_bounds_valid = true;
       }
 
-      assert(min_index <= max_index);
-      start = min_index;
-      count = max_index + 1 - min_index;
-   } else {
-      start = info->start;
-      count = info->count;
-   }
+      /* If the index bounds are valid, it means some upload or translation
+       * of per-vertex attribs will be performed. */
+      if (index_bounds_valid) {
+         assert(min_index <= max_index);
 
-   assert(count > 0);
+         start_vertex = min_index + info->index_bias;
+         num_vertices = max_index + 1 - min_index;
+      } else {
+         /* Nothing to do for per-vertex attribs. */
+         start_vertex = 0;
+         num_vertices = 0;
+         min_index = 0;
+      }
+   } else {
+      start_vertex = info->start;
+      num_vertices = info->count;
+   }
 
    /* Translate vertices with non-native layouts or formats. */
    if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {
       /* XXX check the return value */
-      u_vbuf_translate_begin(mgr, start, count,
+      u_vbuf_translate_begin(mgr, start_vertex, num_vertices,
                              info->start_instance, info->instance_count);
    }
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      u_vbuf_upload_buffers(mgr, start, count,
+      u_vbuf_upload_buffers(mgr, start_vertex, num_vertices,
                             info->start_instance, info->instance_count);
    }
 
