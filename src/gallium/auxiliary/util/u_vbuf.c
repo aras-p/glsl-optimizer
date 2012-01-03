@@ -164,11 +164,9 @@ void u_vbuf_destroy(struct u_vbuf *mgrb)
 }
 
 static void
-u_vbuf_translate_buffers(struct u_vbuf_priv *mgr,
-                         struct translate_key *key,
-                         unsigned vb_mask,
-                         unsigned out_vb,
-                         int start, unsigned count)
+u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
+                         unsigned vb_mask, unsigned out_vb,
+                         int start_vertex, unsigned num_vertices)
 {
    struct translate *tr;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
@@ -183,13 +181,13 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr,
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       if (vb_mask & (1 << i)) {
          struct pipe_vertex_buffer *vb = &mgr->b.vertex_buffer[i];
-         unsigned offset = vb->buffer_offset + vb->stride * start;
+         unsigned offset = vb->buffer_offset + vb->stride * start_vertex;
          uint8_t *map;
 
          if (u_vbuf_resource(vb->buffer)->user_ptr) {
             map = u_vbuf_resource(vb->buffer)->user_ptr + offset;
          } else {
-            unsigned size = vb->stride ? count * vb->stride
+            unsigned size = vb->stride ? num_vertices * vb->stride
                                        : sizeof(double)*4;
 
             if (offset+size > vb->buffer->width0) {
@@ -206,15 +204,15 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr,
 
    /* Create and map the output buffer. */
    u_upload_alloc(mgr->b.uploader,
-                  key->output_stride * start,
-                  key->output_stride * count,
+                  key->output_stride * start_vertex,
+                  key->output_stride * num_vertices,
                   &out_offset, &out_buffer,
                   (void**)&out_map);
 
-   out_offset -= key->output_stride * start;
+   out_offset -= key->output_stride * start_vertex;
 
    /* Translate. */
-   tr->run(tr, 0, count, 0, out_map);
+   tr->run(tr, 0, num_vertices, 0, out_map);
 
    /* Unmap all buffers. */
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
@@ -298,7 +296,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       0                 /* CONST */
    };
 
-   unsigned count[VB_NUM] = {
+   unsigned num[VB_NUM] = {
       num_vertices,     /* VERTEX */
       num_instances,    /* INSTANCE */
       1                 /* CONST */
@@ -378,7 +376,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       if (key[type].nr_elements) {
          u_vbuf_translate_buffers(mgr, &key[type], mask[type],
                                   mgr->fallback_vbs[type],
-                                  start[type], count[type]);
+                                  start[type], num[type]);
 
          /* Fixup the stride for constant attribs. */
          if (type == VB_CONST) {
