@@ -286,11 +286,6 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
       shProg->UniformHash = NULL;
    }
 
-   if (shProg->Varying) {
-      _mesa_free_parameter_list(shProg->Varying);
-      shProg->Varying = NULL;
-   }
-
    assert(shProg->InfoLog != NULL);
    ralloc_free(shProg->InfoLog);
    shProg->InfoLog = ralloc_strdup(shProg, "");

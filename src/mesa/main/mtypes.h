@@ -2297,7 +2297,6 @@ struct gl_shader_program
    /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
    gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
-   struct gl_program_parameter_list *Varying;
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
