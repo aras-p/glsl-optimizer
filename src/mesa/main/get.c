@@ -2498,7 +2498,7 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
 	 goto invalid_value;
       if (!ctx->Extensions.EXT_transform_feedback)
 	 goto invalid_enum;
-      v->value_int = ctx->TransformFeedback.CurrentObject->Buffers[index]->Name;
+      v->value_int = ctx->TransformFeedback.CurrentObject->BufferNames[index];
       return TYPE_INT;
    }
 
