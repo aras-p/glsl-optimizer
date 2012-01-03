@@ -940,16 +940,8 @@ if test "x$enable_glx" = xyes -a "x$no_x" = xyes; then
     AC_MSG_ERROR([X11 development libraries needed for GLX])
 fi
 
-dnl XCB - this is only used for GLX right now
-AC_ARG_ENABLE([xcb],
-    [AS_HELP_STRING([--enable-xcb],
-        [use XCB for GLX @<:@default=disabled@:>@])],
-    [enable_xcb="$enableval"],
-    [enable_xcb=no])
-if test "x$enable_xcb" = xyes; then
+if test "x$enable_glx" = xyes; then
     DEFINES="$DEFINES -DUSE_XCB"
-else
-    enable_xcb=no
 fi
 
 dnl Direct rendering or just indirect rendering
@@ -1008,17 +1000,12 @@ xyesno)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
-        dri_modules="x11 xext xdamage xfixes"
+        dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx"
 
         # add xf86vidmode if available
         PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
         if test "$HAVE_XF86VIDMODE" = yes ; then
             dri_modules="$dri_modules xxf86vm"
-        fi
-
-        # add xcb modules if necessary
-        if test "$enable_xcb" = yes; then
-            dri_modules="$dri_modules x11-xcb xcb-glx"
         fi
 
         PKG_CHECK_MODULES([DRIGL], [$dri_modules])
@@ -1037,12 +1024,10 @@ xyesno)
         GL_PC_CFLAGS="$X11_INCLUDES"
 
         # XCB can only be used from pkg-config
-        if test "$enable_xcb" = yes; then
-            PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx])
-            GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV x11-xcb xcb-glx"
-            X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
-            GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
-        fi
+        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx])
+        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV x11-xcb xcb-glx"
+        X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
+        GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
     fi
 
     # need DRM libs, -lpthread, etc.
@@ -1981,7 +1966,6 @@ xyesyes)
     ;;
 xyesno)
     echo "        GLX:             DRI-based"
-    echo "        Use XCB:         $enable_xcb"
     ;;
 *)
     echo "        GLX:             $enable_glx"
