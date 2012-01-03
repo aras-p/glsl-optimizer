@@ -196,7 +196,8 @@ st_feedback_draw_vbo(struct gl_context *ctx,
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
                                arrays[mesaAttr]->Format,
-                               arrays[mesaAttr]->Normalized);
+                               arrays[mesaAttr]->Normalized,
+                               arrays[mesaAttr]->Integer);
       assert(velements[attr].src_format);
 
       /* tell draw about this attribute */
