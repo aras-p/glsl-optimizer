@@ -694,8 +694,7 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
                                   GLsizei *size, GLenum *type, GLchar *name)
 {
    const struct gl_shader_program *shProg;
-   const GLchar *varyingName;
-   GLint v;
+   const struct gl_transform_feedback_info *linked_xfb_info;
    GET_CURRENT_CONTEXT(ctx);
 
    shProg = _mesa_lookup_shader_program(ctx, program);
@@ -705,36 +704,22 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
       return;
    }
 
-   if (index >= shProg->TransformFeedback.NumVarying) {
+   linked_xfb_info = &shProg->LinkedTransformFeedback;
+   if (index >= linked_xfb_info->NumVarying) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetTransformFeedbackVaryings(index=%u)", index);
       return;
    }
 
-   varyingName = shProg->TransformFeedback.VaryingNames[index];
+   /* return the varying's name and length */
+   _mesa_copy_string(name, bufSize, length,
+		     linked_xfb_info->Varyings[index].Name);
 
-   v = _mesa_lookup_parameter_index(shProg->Varying, -1, varyingName);
-   if (v >= 0) {
-      struct gl_program_parameter *param = &shProg->Varying->Parameters[v];
-
-      /* return the varying's name and length */
-      _mesa_copy_string(name, bufSize, length, varyingName);
-
-      /* return the datatype and value's size (in datatype units) */
-      if (type)
-         *type = param->DataType;
-      if (size)
-         *size = param->Size;
-   }
-   else {
-      name[0] = 0;
-      if (length)
-         *length = 0;
-      if (type)
-         *type = 0;
-      if (size)
-         *size = 0;
-   }
+   /* return the datatype and value's size (in datatype units) */
+   if (type)
+      *type = linked_xfb_info->Varyings[index].Type;
+   if (size)
+      *size = linked_xfb_info->Varyings[index].Size;
 }
 
 

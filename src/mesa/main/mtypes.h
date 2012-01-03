@@ -1817,6 +1817,12 @@ struct prog_instruction;
 struct gl_program_parameter_list;
 struct gl_uniform_list;
 
+struct gl_transform_feedback_varying_info {
+   char *Name;
+   GLenum Type;
+   GLint Size;
+};
+
 /** Post-link transform feedback info. */
 struct gl_transform_feedback_info {
    unsigned NumOutputs;
@@ -1834,6 +1840,13 @@ struct gl_transform_feedback_info {
       /** offset (in DWORDs) of this output within the interleaved structure */
       unsigned DstOffset;
    } Outputs[MAX_PROGRAM_OUTPUTS];
+
+   /** Transform feedback varyings used for the linking of this shader program.
+    *
+    * Use for glGetTransformFeedbackVarying().
+    */
+   struct gl_transform_feedback_varying_info *Varyings;
+   GLint NumVarying;
 
    /**
     * Total number of components stored in each buffer.  This may be used by
@@ -2227,7 +2240,13 @@ struct gl_shader_program
     */
    struct string_to_uint_map *FragDataBindings;
 
-   /** Transform feedback varyings */
+   /**
+    * Transform feedback varyings last specified by
+    * glTransformFeedbackVaryings().
+    *
+    * For the current set of transform feeedback varyings used for transform
+    * feedback output, see LinkedTransformFeedback.
+    */
    struct {
       GLenum BufferMode;
       GLuint NumVarying;

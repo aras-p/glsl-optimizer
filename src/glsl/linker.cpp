@@ -1382,7 +1382,8 @@ public:
    bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
                         ir_variable *output_var);
    bool store(struct gl_shader_program *prog,
-              struct gl_transform_feedback_info *info, unsigned buffer) const;
+              struct gl_transform_feedback_info *info, unsigned buffer,
+	      unsigned varying) const;
 
 
    /**
@@ -1413,7 +1414,7 @@ public:
 private:
    /**
     * The name that was supplied to glTransformFeedbackVaryings.  Used for
-    * error reporting.
+    * error reporting and glGetTransformFeedbackVarying().
     */
    const char *orig_name;
 
@@ -1449,6 +1450,9 @@ private:
     * if this variable is not a matrix.
     */
    unsigned matrix_columns;
+
+   /** Type of the varying returned by glGetTransformFeedbackVarying() */
+   GLenum type;
 };
 
 
@@ -1520,8 +1524,9 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       /* Array variable */
       if (!this->is_array) {
          linker_error(prog, "Transform feedback varying %s found, "
-                      "but it's not an array ([] not expected).",
-                      this->orig_name);
+                      "but array dereference required for varying %s[%d]).",
+                      this->orig_name,
+		      output_var->name, output_var->type->length);
          return false;
       }
       /* Check array bounds. */
@@ -1538,6 +1543,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       this->location = output_var->location + this->array_index * matrix_cols;
       this->vector_elements = output_var->type->fields.array->vector_elements;
       this->matrix_columns = matrix_cols;
+      this->type = GL_NONE;
    } else {
       /* Regular variable (scalar, vector, or matrix) */
       if (this->is_array) {
@@ -1549,6 +1555,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       this->location = output_var->location;
       this->vector_elements = output_var->type->vector_elements;
       this->matrix_columns = output_var->type->matrix_columns;
+      this->type = output_var->type->gl_type;
    }
    /* From GL_EXT_transform_feedback:
     *   A program will fail to link if:
@@ -1580,7 +1587,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
 bool
 tfeedback_decl::store(struct gl_shader_program *prog,
                       struct gl_transform_feedback_info *info,
-                      unsigned buffer) const
+                      unsigned buffer, unsigned varying) const
 {
    if (!this->is_assigned()) {
       /* From GL_EXT_transform_feedback:
@@ -1602,6 +1609,16 @@ tfeedback_decl::store(struct gl_shader_program *prog,
       ++info->NumOutputs;
       info->BufferStride[buffer] += this->vector_elements;
    }
+
+   info->Varyings[varying].Name = ralloc_strdup(prog, this->orig_name);
+   info->Varyings[varying].Type = this->type;
+   /* Since we require that transform feedback varyings dereference
+    * arrays, there's always only one element of the GL datatype above
+    * present in this varying.
+    */
+   info->Varyings[varying].Size = 1;
+   info->NumVarying++;
+
    return true;
 }
 
@@ -1871,10 +1888,21 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
           sizeof(prog->LinkedTransformFeedback));
    prog->LinkedTransformFeedback.NumBuffers =
       separate_attribs_mode ? num_tfeedback_decls : 1;
+
+   ralloc_free(prog->LinkedTransformFeedback.Varyings);
+
+   memset(&prog->LinkedTransformFeedback, 0,
+          sizeof(prog->LinkedTransformFeedback));
+
+   prog->LinkedTransformFeedback.Varyings =
+      rzalloc_array(prog->LinkedTransformFeedback.Varyings,
+		    struct gl_transform_feedback_varying_info,
+		    num_tfeedback_decls);
+
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
       unsigned buffer = separate_attribs_mode ? i : 0;
       if (!tfeedback_decls[i].store(prog, &prog->LinkedTransformFeedback,
-                                    buffer))
+                                    buffer, i))
          return false;
       total_tfeedback_components += tfeedback_decls[i].num_components();
    }
