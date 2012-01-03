@@ -62,7 +62,7 @@
 #include "util/u_math.h"
 
 
-#define FAST_MATH 1
+#define FAST_MATH 0
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
