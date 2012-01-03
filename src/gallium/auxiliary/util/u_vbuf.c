@@ -168,7 +168,7 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr,
                          struct translate_key *key,
                          unsigned vb_mask,
                          unsigned out_vb,
-                         unsigned start, unsigned count)
+                         int start, unsigned count)
 {
    struct translate *tr;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
@@ -284,24 +284,24 @@ u_vbuf_translate_find_free_vb_slots(struct u_vbuf_priv *mgr,
 
 static boolean
 u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
-                       int min_index, int max_index,
-                       int start_instance, int num_instances)
+                       int start_vertex, unsigned num_vertices,
+                       int start_instance, unsigned num_instances)
 {
    unsigned mask[VB_NUM] = {0};
    struct translate_key key[VB_NUM];
    unsigned elem_index[VB_NUM][PIPE_MAX_ATTRIBS]; /* ... into key.elements */
    unsigned i, type;
 
-   unsigned start[VB_NUM] = {
-      min_index,        /* VERTEX */
+   int start[VB_NUM] = {
+      start_vertex,     /* VERTEX */
       start_instance,   /* INSTANCE */
       0                 /* CONST */
    };
 
    unsigned count[VB_NUM] = {
-      max_index + 1 - min_index, /* VERTEX */
-      num_instances,             /* INSTANCE */
-      1                          /* CONST */
+      num_vertices,     /* VERTEX */
+      num_instances,    /* INSTANCE */
+      1                 /* CONST */
    };
 
    memset(key, 0, sizeof(key));
@@ -653,11 +653,10 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
 
 static void
 u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
-                      int min_index, int max_index,
-                      unsigned start_instance, unsigned instance_count)
+                      int start_vertex, unsigned num_vertices,
+                      int start_instance, unsigned num_instances)
 {
    unsigned i;
-   unsigned count = max_index + 1 - min_index;
    unsigned nr_velems = mgr->ve->count;
    unsigned nr_vbufs = mgr->b.nr_vertex_buffers;
    struct pipe_vertex_element *velems =
@@ -693,13 +692,13 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
          size = mgr->ve->src_format_size[i];
       } else if (instance_div) {
          /* Per-instance attrib. */
-         unsigned count = (instance_count + instance_div - 1) / instance_div;
+         unsigned count = (num_instances + instance_div - 1) / instance_div;
          first += vb->stride * start_instance;
          size = vb->stride * (count - 1) + mgr->ve->src_format_size[i];
       } else {
          /* Per-vertex attrib. */
-         first += vb->stride * min_index;
-         size = vb->stride * (count - 1) + mgr->ve->src_format_size[i];
+         first += vb->stride * start_vertex;
+         size = vb->stride * (num_vertices - 1) + mgr->ve->src_format_size[i];
       }
 
       /* Update offsets. */
@@ -923,7 +922,7 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
                   const struct pipe_draw_info *info)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
-   int min_index, max_index;
+   int start, count;
 
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
@@ -932,6 +931,8 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
    }
 
    if (info->indexed) {
+      int min_index, max_index;
+
       if (info->max_index != ~0) {
          min_index = info->min_index + info->index_bias;
          max_index = info->max_index + info->index_bias;
@@ -944,21 +945,27 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
          min_index = 0;
          max_index = 0;
       }
+
+      assert(min_index <= max_index);
+      start = min_index;
+      count = max_index + 1 - min_index;
    } else {
-      min_index = info->start;
-      max_index = info->start + info->count - 1;
+      start = info->start;
+      count = info->count;
    }
+
+   assert(count > 0);
 
    /* Translate vertices with non-native layouts or formats. */
    if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {
       /* XXX check the return value */
-      u_vbuf_translate_begin(mgr, min_index, max_index,
+      u_vbuf_translate_begin(mgr, start, count,
                              info->start_instance, info->instance_count);
    }
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      u_vbuf_upload_buffers(mgr, min_index, max_index,
+      u_vbuf_upload_buffers(mgr, start, count,
                             info->start_instance, info->instance_count);
    }
 
