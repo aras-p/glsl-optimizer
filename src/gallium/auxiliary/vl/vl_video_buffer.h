@@ -45,7 +45,7 @@ struct vl_video_buffer
    struct pipe_resource     *resources[VL_MAX_PLANES];
    struct pipe_sampler_view *sampler_view_planes[VL_MAX_PLANES];
    struct pipe_sampler_view *sampler_view_components[VL_MAX_PLANES];
-   struct pipe_surface      *surfaces[VL_MAX_PLANES];
+   struct pipe_surface      *surfaces[VL_MAX_PLANES * 2];
 };
 
 /**

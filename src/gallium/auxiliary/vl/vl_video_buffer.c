@@ -161,11 +161,14 @@ vl_video_buffer_destroy(struct pipe_video_buffer *buffer)
    assert(buf);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      pipe_surface_reference(&buf->surfaces[i], NULL);
       pipe_sampler_view_reference(&buf->sampler_view_planes[i], NULL);
       pipe_sampler_view_reference(&buf->sampler_view_components[i], NULL);
       pipe_resource_reference(&buf->resources[i], NULL);
    }
+
+   for (i = 0; i < VL_MAX_PLANES * 2; ++i)
+      pipe_surface_reference(&buf->surfaces[i], NULL);
+
    vl_video_buffer_set_associated_data(buffer, NULL, NULL, NULL);
 
    FREE(buffer);
@@ -251,27 +254,32 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_surface surf_templ;
    struct pipe_context *pipe;
-   unsigned i;
+   unsigned i, j, surf;
 
    assert(buf);
 
    pipe = buf->base.context;
 
-   for (i = 0; i < buf->num_planes; ++i ) {
-      if (!buf->surfaces[i]) {
-         memset(&surf_templ, 0, sizeof(surf_templ));
-         surf_templ.format = buf->resources[i]->format;
-         surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-         buf->surfaces[i] = pipe->create_surface(pipe, buf->resources[i], &surf_templ);
-         if (!buf->surfaces[i])
-            goto error;
+   for (i = 0, surf = 0; i < buf->num_planes; ++i ) {
+      for (j = 0; j < buf->resources[i]->depth0; ++j, ++surf) {
+         assert(surf < (VL_MAX_PLANES * 2));
+
+         if (!buf->surfaces[surf]) {
+            memset(&surf_templ, 0, sizeof(surf_templ));
+            surf_templ.format = buf->resources[i]->format;
+            surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+            surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = j;
+            buf->surfaces[i] = pipe->create_surface(pipe, buf->resources[i], &surf_templ);
+            if (!buf->surfaces[i])
+               goto error;
+         }
       }
    }
 
    return buf->surfaces;
 
 error:
-   for (i = 0; i < buf->num_planes; ++i )
+   for (i = 0; i < (VL_MAX_PLANES * 2); ++i )
       pipe_surface_reference(&buf->surfaces[i], NULL);
 
    return NULL;
@@ -305,10 +313,13 @@ vl_video_buffer_create(struct pipe_context *pipe,
    templat.height = pot_buffers ? util_next_power_of_two(tmpl->height)
                   : align(tmpl->height, MACROBLOCK_HEIGHT);
 
+   if (tmpl->interlaced)
+      templat.height /= 2;
+
    return vl_video_buffer_create_ex
    (
       pipe, &templat, resource_formats,
-      1, PIPE_USAGE_STATIC
+      tmpl->interlaced ? 2 : 1, PIPE_USAGE_STATIC
    );
 }
 
