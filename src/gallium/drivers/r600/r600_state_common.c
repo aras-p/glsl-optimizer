@@ -605,7 +605,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_update_derived_state(rctx);
 
-	u_vbuf_draw_begin(rctx->vbuf_mgr, dinfo);
+	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
 	r600_vertex_buffer_update(rctx);
 
 	rdraw.vgt_num_indices = info.count;

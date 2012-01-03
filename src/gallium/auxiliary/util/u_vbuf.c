@@ -166,7 +166,9 @@ void u_vbuf_destroy(struct u_vbuf *mgrb)
 static void
 u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
                          unsigned vb_mask, unsigned out_vb,
-                         int start_vertex, unsigned num_vertices)
+                         int start_vertex, unsigned num_vertices,
+                         int start_index, unsigned num_indices, int min_index,
+                         bool unroll_indices)
 {
    struct translate *tr;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
@@ -198,21 +200,65 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
                                         PIPE_TRANSFER_READ, &vb_transfer[i]);
          }
 
+         /* Subtract min_index so that indexing with the index buffer works. */
+         if (unroll_indices) {
+            map -= vb->stride * min_index;
+         }
+
          tr->set_buffer(tr, i, map, vb->stride, ~0);
       }
    }
 
-   /* Create and map the output buffer. */
-   u_upload_alloc(mgr->b.uploader,
-                  key->output_stride * start_vertex,
-                  key->output_stride * num_vertices,
-                  &out_offset, &out_buffer,
-                  (void**)&out_map);
-
-   out_offset -= key->output_stride * start_vertex;
-
    /* Translate. */
-   tr->run(tr, 0, num_vertices, 0, out_map);
+   if (unroll_indices) {
+      struct pipe_index_buffer *ib = &mgr->b.index_buffer;
+      struct pipe_transfer *transfer = NULL;
+      unsigned offset = ib->offset + start_index * ib->index_size;
+      uint8_t *map;
+
+      assert(ib->buffer && ib->index_size);
+
+      if (u_vbuf_resource(ib->buffer)->user_ptr) {
+         map = u_vbuf_resource(ib->buffer)->user_ptr + offset;
+      } else {
+         map = pipe_buffer_map_range(mgr->pipe, ib->buffer, offset,
+                                     num_indices * ib->index_size,
+                                     PIPE_TRANSFER_READ, &transfer);
+      }
+
+      /* Create and map the output buffer. */
+      u_upload_alloc(mgr->b.uploader, 0,
+                     key->output_stride * num_indices,
+                     &out_offset, &out_buffer,
+                     (void**)&out_map);
+
+      switch (ib->index_size) {
+      case 4:
+         tr->run_elts(tr, (unsigned*)map, num_indices, 0, out_map);
+         break;
+      case 2:
+         tr->run_elts16(tr, (uint16_t*)map, num_indices, 0, out_map);
+         break;
+      case 1:
+         tr->run_elts8(tr, map, num_indices, 0, out_map);
+         break;
+      }
+
+      if (transfer) {
+         pipe_buffer_unmap(mgr->pipe, transfer);
+      }
+   } else {
+      /* Create and map the output buffer. */
+      u_upload_alloc(mgr->b.uploader,
+                     key->output_stride * start_vertex,
+                     key->output_stride * num_vertices,
+                     &out_offset, &out_buffer,
+                     (void**)&out_map);
+
+      out_offset -= key->output_stride * start_vertex;
+
+      tr->run(tr, 0, num_vertices, 0, out_map);
+   }
 
    /* Unmap all buffers. */
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
@@ -283,7 +329,9 @@ u_vbuf_translate_find_free_vb_slots(struct u_vbuf_priv *mgr,
 static boolean
 u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
                        int start_vertex, unsigned num_vertices,
-                       int start_instance, unsigned num_instances)
+                       int start_instance, unsigned num_instances,
+                       int start_index, unsigned num_indices, int min_index,
+                       bool unroll_indices)
 {
    unsigned mask[VB_NUM] = {0};
    struct translate_key key[VB_NUM];
@@ -310,16 +358,24 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
    for (i = 0; i < mgr->ve->count; i++) {
       unsigned vb_index = mgr->ve->ve[i].vertex_buffer_index;
 
-      if (!mgr->ve->incompatible_layout_elem[i] &&
-          !mgr->incompatible_vb[vb_index]) {
-         continue;
-      }
-
       if (!mgr->b.vertex_buffer[vb_index].stride) {
+         if (!mgr->ve->incompatible_layout_elem[i] &&
+             !mgr->incompatible_vb[vb_index]) {
+            continue;
+         }
          mask[VB_CONST] |= 1 << vb_index;
       } else if (mgr->ve->ve[i].instance_divisor) {
+         if (!mgr->ve->incompatible_layout_elem[i] &&
+             !mgr->incompatible_vb[vb_index]) {
+            continue;
+         }
          mask[VB_INSTANCE] |= 1 << vb_index;
       } else {
+         if (!unroll_indices &&
+             !mgr->ve->incompatible_layout_elem[i] &&
+             !mgr->incompatible_vb[vb_index]) {
+            continue;
+         }
          mask[VB_VERTEX] |= 1 << vb_index;
       }
    }
@@ -336,15 +392,16 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       struct translate_key *k;
       struct translate_element *te;
       unsigned bit, vb_index = mgr->ve->ve[i].vertex_buffer_index;
+      bit = 1 << vb_index;
 
       if (!mgr->ve->incompatible_layout_elem[i] &&
-          !mgr->incompatible_vb[vb_index]) {
+          !mgr->incompatible_vb[vb_index] &&
+          (!unroll_indices || !(mask[VB_VERTEX] & bit))) {
          continue;
       }
 
       /* Set type to what we will translate.
        * Whether vertex, instance, or constant attribs. */
-      bit = 1 << vb_index;
       for (type = 0; type < VB_NUM; type++) {
          if (mask[type] & bit) {
             break;
@@ -376,7 +433,9 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       if (key[type].nr_elements) {
          u_vbuf_translate_buffers(mgr, &key[type], mask[type],
                                   mgr->fallback_vbs[type],
-                                  start[type], num[type]);
+                                  start[type], num[type],
+                                  start_index, num_indices, min_index,
+                                  unroll_indices && type == VB_VERTEX);
 
          /* Fixup the stride for constant attribs. */
          if (type == VB_CONST) {
@@ -917,11 +976,12 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
 
 enum u_vbuf_return_flags
 u_vbuf_draw_begin(struct u_vbuf *mgrb,
-                  const struct pipe_draw_info *info)
+                  struct pipe_draw_info *info)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
-   int start_vertex;
+   int start_vertex, min_index;
    unsigned num_vertices;
+   bool unroll_indices = false;
 
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
@@ -930,7 +990,7 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
    }
 
    if (info->indexed) {
-      int min_index, max_index;
+      int max_index;
       bool index_bounds_valid = false;
 
       if (info->max_index != ~0) {
@@ -950,6 +1010,17 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
 
          start_vertex = min_index + info->index_bias;
          num_vertices = max_index + 1 - min_index;
+
+         /* Primitive restart doesn't work when unrolling indices.
+          * We would have to break this drawing operation into several ones. */
+         /* Use some heuristic to see if unrolling indices improves
+          * performance. */
+         if (!info->primitive_restart &&
+             num_vertices > info->count*2 &&
+             num_vertices-info->count > 32) {
+            /*printf("num_vertices=%i count=%i\n", num_vertices, info->count);*/
+            unroll_indices = true;
+         }
       } else {
          /* Nothing to do for per-vertex attribs. */
          start_vertex = 0;
@@ -959,13 +1030,18 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
    } else {
       start_vertex = info->start;
       num_vertices = info->count;
+      min_index = 0;
    }
 
    /* Translate vertices with non-native layouts or formats. */
-   if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {
+   if (unroll_indices ||
+       mgr->incompatible_vb_layout ||
+       mgr->ve->incompatible_layout) {
       /* XXX check the return value */
       u_vbuf_translate_begin(mgr, start_vertex, num_vertices,
-                             info->start_instance, info->instance_count);
+                             info->start_instance, info->instance_count,
+                             info->start, info->count, min_index,
+                             unroll_indices);
    }
 
    /* Upload user buffers. */
@@ -974,7 +1050,15 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
                             info->start_instance, info->instance_count);
    }
 
-   /*unsigned i;
+   /*
+   if (unroll_indices) {
+      printf("unrolling indices: start_vertex = %i, num_vertices = %i\n",
+             start_vertex, num_vertices);
+      util_dump_draw_info(stdout, info);
+      printf("\n");
+   }
+
+   unsigned i;
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       printf("input %i: ", i);
       util_dump_vertex_buffer(stdout, mgr->b.vertex_buffer+i);
@@ -984,7 +1068,16 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
       printf("real %i: ", i);
       util_dump_vertex_buffer(stdout, mgr->b.real_vertex_buffer+i);
       printf("\n");
-   }*/
+   }
+   */
+
+   if (unroll_indices) {
+      info->indexed = FALSE;
+      info->index_bias = 0;
+      info->min_index = 0;
+      info->max_index = info->count - 1;
+      info->start = 0;
+   }
 
    return U_VBUF_BUFFERS_UPDATED;
 }

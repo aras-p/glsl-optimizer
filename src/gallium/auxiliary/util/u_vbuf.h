@@ -130,7 +130,7 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
                              const struct pipe_index_buffer *ib);
 
 enum u_vbuf_return_flags u_vbuf_draw_begin(struct u_vbuf *mgr,
-                                           const struct pipe_draw_info *info);
+                                           struct pipe_draw_info *info);
 
 unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgr);
 
