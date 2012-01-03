@@ -87,9 +87,8 @@ XCreateDrawable(struct drisw_drawable * pdp,
    XChangeGC(dpy, pdp->swapgc, GCGraphicsExposures, &gcvalues);
 
    /* visual */
-   visTemp.screen = DefaultScreen(dpy);
    visTemp.visualid = visualid;
-   visMask = (VisualScreenMask | VisualIDMask);
+   visMask = VisualIDMask;
    pdp->visinfo = XGetVisualInfo(dpy, visMask, &visTemp, &num_visuals);
 
    /* create XImage */
