@@ -502,19 +502,20 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
                           GLintptr readOffset, GLintptr writeOffset,
                           GLsizeiptr size)
 {
-   GLubyte *srcPtr, *dstPtr;
+   void *srcPtr, *dstPtr;
 
    /* buffer should not already be mapped */
    assert(!_mesa_bufferobj_mapped(src));
    assert(!_mesa_bufferobj_mapped(dst));
 
-   srcPtr = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, src->Size,
-						   GL_MAP_READ_BIT, src);
-   dstPtr = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, dst->Size,
-						   GL_MAP_WRITE_BIT, dst);
+   srcPtr = ctx->Driver.MapBufferRange(ctx, readOffset, size,
+                                       GL_MAP_READ_BIT, src);
+   dstPtr = ctx->Driver.MapBufferRange(ctx, writeOffset, size,
+                                       (GL_MAP_WRITE_BIT |
+                                        GL_MAP_INVALIDATE_RANGE_BIT), dst);
 
    if (srcPtr && dstPtr)
-      memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+      memcpy(dstPtr, srcPtr, size);
 
    ctx->Driver.UnmapBuffer(ctx, src);
    ctx->Driver.UnmapBuffer(ctx, dst);
