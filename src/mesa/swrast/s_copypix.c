@@ -438,14 +438,6 @@ fast_copy_pixels(struct gl_context *ctx,
    GLubyte *srcMap, *dstMap;
    GLint srcRowStride, dstRowStride;
 
-   if (SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
-       ctx->Pixel.ZoomX != 1.0F ||
-       ctx->Pixel.ZoomY != 1.0F ||
-       ctx->_ImageTransferState) {
-      /* can't handle these */
-      return GL_FALSE;
-   }
-
    if (type == GL_COLOR) {
       if (dstFb->_NumColorDrawBuffers != 1)
          return GL_FALSE;
@@ -582,7 +574,11 @@ _swrast_CopyPixels( struct gl_context *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
+   if (!(SWRAST_CONTEXT(ctx)->_RasterMask != 0x0 ||
+	 ctx->Pixel.ZoomX != 1.0F ||
+	 ctx->Pixel.ZoomY != 1.0F ||
+	 ctx->_ImageTransferState) &&
+       fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
       /* all done */
       return;
    }
