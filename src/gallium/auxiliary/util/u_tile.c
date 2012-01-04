@@ -407,7 +407,7 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       z32f_x24s8_get_tile_rgba((float *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_X32_S8X24_UINT:
-      x32_s8_get_tile_rgba((float *) src, w, h, dst, dst_stride);
+      x32_s8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
    default:
       util_format_read_4f(format,
