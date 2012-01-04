@@ -147,7 +147,8 @@ struct tgsi_declaration_dimension
 #define TGSI_SEMANTIC_VERTEXID   11
 #define TGSI_SEMANTIC_STENCIL    12
 #define TGSI_SEMANTIC_CLIPDIST   13
-#define TGSI_SEMANTIC_COUNT      14 /**< number of semantic values */
+#define TGSI_SEMANTIC_CLIPVERTEX 14
+#define TGSI_SEMANTIC_COUNT      15 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
