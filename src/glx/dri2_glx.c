@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
@@ -90,6 +91,8 @@ struct dri2_screen {
 
    void *driver;
    int fd;
+
+   Bool show_fps;
 };
 
 struct dri2_context
@@ -108,6 +111,9 @@ struct dri2_drawable
    int have_back;
    int have_fake_front;
    int swap_interval;
+
+   double previous_time;
+   unsigned frames;
 };
 
 static const struct glx_context_vtable dri2_context_vtable;
@@ -661,6 +667,26 @@ unsigned dri2GetSwapEventType(Display* dpy, XID drawable)
       return glx_dpy->codes->first_event + GLX_BufferSwapComplete;
 }
 
+static void show_fps(struct dri2_drawable *draw)
+{
+   struct timeval tv;
+   double current_time;
+
+   gettimeofday(&tv, 0);
+   current_time = (double)tv.tv_sec + (double)tv.tv_usec * 0.000001;
+
+   draw->frames++;
+
+   if (draw->previous_time + 1 < current_time) {
+      if (draw->previous_time) {
+         fprintf(stderr, "libGL: FPS = %.1f\n",
+                 draw->frames / (current_time - draw->previous_time));
+      }
+      draw->frames = 0;
+      draw->previous_time = current_time;
+   }
+}
+
 static int64_t
 dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 		int64_t remainder)
@@ -697,6 +723,10 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable,
 		       target_msc, divisor, remainder, &ret);
 #endif
+    }
+
+    if (psc->show_fps) {
+       show_fps(priv);
     }
 
     /* Old servers don't send invalidate events */
@@ -967,7 +997,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    struct dri2_screen *psc;
    __GLXDRIscreen *psp;
    struct glx_config *configs = NULL, *visuals = NULL;
-   char *driverName, *deviceName;
+   char *driverName, *deviceName, *tmp;
    drm_magic_t magic;
    int i;
 
@@ -1098,6 +1128,9 @@ dri2CreateScreen(int screen, struct glx_display * priv)
 
    Xfree(driverName);
    Xfree(deviceName);
+
+   tmp = getenv("LIBGL_SHOW_FPS");
+   psc->show_fps = tmp && strcmp(tmp, "1") == 0;
 
    return &psc->base;
 
