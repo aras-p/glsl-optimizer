@@ -1860,7 +1860,7 @@ _mesa_prepare_mipmap_level(struct gl_context *ctx,
          /* need to (re)allocate image */
          ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
 
-         _mesa_init_teximage_fields(ctx, target, dstImage,
+         _mesa_init_teximage_fields(ctx, dstImage,
                                     width, height, depth,
                                     border, intFormat, format);
 

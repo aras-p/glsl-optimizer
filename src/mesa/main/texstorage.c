@@ -155,7 +155,7 @@ setup_texstorage(struct gl_context *ctx,
             return;
 	 }
 
-         _mesa_init_teximage_fields(ctx, target, texImage,
+         _mesa_init_teximage_fields(ctx, texImage,
                                     levelWidth, levelHeight, levelDepth,
                                     0, internalFormat, texFormat);
       }
@@ -180,7 +180,7 @@ setup_texstorage(struct gl_context *ctx,
             for (face = 0; face < numFaces; face++) {
                struct gl_texture_image *texImage = texObj->Image[face][level];
                if (texImage) {
-                  _mesa_init_teximage_fields(ctx, target, texImage,
+                  _mesa_init_teximage_fields(ctx, texImage,
                                              0, 0, 0, 0,
                                              GL_NONE, MESA_FORMAT_NONE);
                }
@@ -223,7 +223,7 @@ clear_image_fields(struct gl_context *ctx,
             return;
 	 }
 
-         _mesa_init_teximage_fields(ctx, target, texImage,
+         _mesa_init_teximage_fields(ctx, texImage,
                                     0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
       }
    }

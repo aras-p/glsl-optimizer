@@ -533,7 +533,7 @@ st_TexImage(struct gl_context * ctx,
       texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
                                               internalFormat, format, type);
 
-      _mesa_init_teximage_fields(ctx, target, texImage,
+      _mesa_init_teximage_fields(ctx, texImage,
                                  width, height, depth, border,
                                  internalFormat, texFormat);
 
@@ -1625,7 +1625,7 @@ st_get_default_texture(struct st_context *st)
 
       texImg = _mesa_get_tex_image(st->ctx, texObj, target, 0);
 
-      _mesa_init_teximage_fields(st->ctx, target, texImg,
+      _mesa_init_teximage_fields(st->ctx, texImg,
                                  16, 16, 1, 0,  /* w, h, d, border */
                                  GL_RGBA, MESA_FORMAT_RGBA8888);
 

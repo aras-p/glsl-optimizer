@@ -125,7 +125,7 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
 
    texFormat = st_pipe_format_to_mesa_format(ps->format);
 
-   _mesa_init_teximage_fields(ctx, target, texImage,
+   _mesa_init_teximage_fields(ctx, texImage,
                               ps->width, ps->height, 1, 0, internalFormat,
                               texFormat);
 

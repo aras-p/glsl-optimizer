@@ -67,7 +67,7 @@ _mesa_delete_texture_image( struct gl_context *ctx,
 
 
 extern void
-_mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
+_mesa_init_teximage_fields(struct gl_context *ctx,
                            struct gl_texture_image *img,
                            GLsizei width, GLsizei height, GLsizei depth,
                            GLint border, GLenum internalFormat,

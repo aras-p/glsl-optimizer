@@ -793,7 +793,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
                                                   GL_UNSIGNED_BYTE);
 
       /* init the image fields */
-      _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
+      _mesa_init_teximage_fields(ctx, texImage,
                                  8, 8, 1, 0, GL_RGBA, texFormat); 
 
       ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);

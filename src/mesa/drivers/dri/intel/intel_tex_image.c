@@ -291,7 +291,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
 
-   _mesa_init_teximage_fields(&intel->ctx, target, image,
+   _mesa_init_teximage_fields(&intel->ctx, image,
 			      region->width, region->height, 1,
 			      0, internalFormat, format);
 

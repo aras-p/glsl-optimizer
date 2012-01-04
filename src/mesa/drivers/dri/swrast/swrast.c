@@ -91,7 +91,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     else
 	texFormat = MESA_FORMAT_ARGB8888;
 
-    _mesa_init_teximage_fields(&dri_ctx->Base, target, texImage,
+    _mesa_init_teximage_fields(&dri_ctx->Base, texImage,
 			       w, h, 1, 0, internalFormat, texFormat);
 
     sPriv->swrast_loader->getImage(dPriv, x, y, w, h, (char *)swImage->Data,

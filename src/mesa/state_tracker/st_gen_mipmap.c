@@ -244,7 +244,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
       ctx->Driver.FreeTextureImageBuffer(ctx, dstImage);
 
       /* initialize new image */
-      _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
+      _mesa_init_teximage_fields(ctx, dstImage, dstWidth, dstHeight,
                                  dstDepth, border, srcImage->InternalFormat,
                                  srcImage->TexFormat);
 
