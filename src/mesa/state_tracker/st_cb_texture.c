@@ -1172,11 +1172,11 @@ st_copy_texsubimage(struct gl_context *ctx,
    return;
 
 fallback:
-      /* software fallback */
-      fallback_copy_texsubimage(ctx, target, level,
-                                strb, stImage, texBaseFormat,
-                                destX, destY, destZ,
-                                srcX, srcY, width, height);
+   /* software fallback */
+   fallback_copy_texsubimage(ctx, target, level,
+                             strb, stImage, texBaseFormat,
+                             destX, destY, destZ,
+                             srcX, srcY, width, height);
 }
 
 
