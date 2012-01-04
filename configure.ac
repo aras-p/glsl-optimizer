@@ -1,4 +1,4 @@
-nl Process this file with autoconf to create configure.
+dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.59])
 
