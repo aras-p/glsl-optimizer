@@ -1408,7 +1408,10 @@ public:
     */
    unsigned num_components() const
    {
-      return this->vector_elements * this->matrix_columns;
+      if (this->single_component == -1)
+         return this->vector_elements * this->matrix_columns * this->size;
+      else
+         return 1;
    }
 
 private:
@@ -1631,6 +1634,7 @@ tfeedback_decl::store(struct gl_shader_program *prog,
                    this->orig_name);
       return false;
    }
+   unsigned components_so_far = 0;
    for (unsigned index = 0; index < this->size; ++index) {
       for (unsigned v = 0; v < this->matrix_columns; ++v) {
          unsigned num_components =
@@ -1644,8 +1648,10 @@ tfeedback_decl::store(struct gl_shader_program *prog,
             this->single_component >= 0 ? this->single_component : 0;
          ++info->NumOutputs;
          info->BufferStride[buffer] += num_components;
+         components_so_far += num_components;
       }
    }
+   assert(components_so_far == this->num_components());
 
    info->Varyings[varying].Name = ralloc_strdup(prog, this->orig_name);
    info->Varyings[varying].Type = this->type;
