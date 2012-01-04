@@ -255,6 +255,10 @@ st_prepare_vertex_program(struct gl_context *ctx,
          case VERT_RESULT_EDGE:
             assert(0);
             break;
+         case VERT_RESULT_CLIP_VERTEX:
+            stvp->output_semantic_name[slot] = TGSI_SEMANTIC_CLIPVERTEX;
+            stvp->output_semantic_index[slot] = 0;
+            break;
 
          case VERT_RESULT_TEX0:
          case VERT_RESULT_TEX1:
