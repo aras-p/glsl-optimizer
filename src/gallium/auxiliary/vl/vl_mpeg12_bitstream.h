@@ -35,7 +35,7 @@ struct vl_mpg12_bs
 {
    struct pipe_video_decoder *decoder;
 
-   struct pipe_mpeg12_picture_desc desc;
+   struct pipe_mpeg12_picture_desc *desc;
    struct dct_coeff *intra_dct_tbl;
 
    struct vl_vlc vlc;
@@ -46,10 +46,11 @@ void
 vl_mpg12_bs_init(struct vl_mpg12_bs *bs, struct pipe_video_decoder *decoder);
 
 void
-vl_mpg12_bs_set_picture_desc(struct vl_mpg12_bs *bs, struct pipe_mpeg12_picture_desc *picture);
-
-void
-vl_mpg12_bs_decode(struct vl_mpg12_bs *bs, unsigned num_buffers,
-                   const void * const *buffers, const unsigned *sizes);
+vl_mpg12_bs_decode(struct vl_mpg12_bs *bs,
+                   struct pipe_video_buffer *target,
+                   struct pipe_mpeg12_picture_desc *picture,
+                   unsigned num_buffers,
+                   const void * const *buffers,
+                   const unsigned *sizes);
 
 #endif /* vl_mpeg12_bitstream_h */

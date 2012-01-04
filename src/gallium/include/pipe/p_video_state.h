@@ -138,14 +138,11 @@ struct pipe_mpeg12_picture_desc
    unsigned full_pel_forward_vector;
    unsigned full_pel_backward_vector;
    unsigned num_slices;
-};
-
-struct pipe_mpeg12_quant_matrix
-{
-   struct pipe_quant_matrix base;
 
    const uint8_t *intra_matrix;
    const uint8_t *non_intra_matrix;
+
+   struct pipe_video_buffer *ref[2];
 };
 
 struct pipe_mpeg12_macroblock
@@ -191,6 +188,7 @@ struct pipe_mpeg12_macroblock
 struct pipe_mpeg4_picture_desc
 {
    struct pipe_picture_desc base;
+
    int32_t trd[2];
    int32_t trb[2];
    uint16_t vop_time_increment_resolution;
@@ -205,19 +203,17 @@ struct pipe_mpeg4_picture_desc
    uint8_t rounding_control;
    uint8_t alternate_vertical_scan_flag;
    uint8_t top_field_first;
-};
-
-struct pipe_mpeg4_quant_matrix
-{
-   struct pipe_quant_matrix base;
 
    const uint8_t *intra_matrix;
    const uint8_t *non_intra_matrix;
+
+   struct pipe_video_buffer *ref[2];
 };
 
 struct pipe_vc1_picture_desc
 {
    struct pipe_picture_desc base;
+
    uint32_t slice_count;
    uint8_t picture_type;
    uint8_t frame_coding_mode;
@@ -247,6 +243,8 @@ struct pipe_vc1_picture_desc
    uint8_t maxbframes;
    uint8_t deblockEnable;
    uint8_t pquant;
+
+   struct pipe_video_buffer *ref[2];
 };
 
 #ifdef __cplusplus

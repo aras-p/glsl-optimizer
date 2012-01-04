@@ -97,35 +97,23 @@ MacroBlocksToPipe(XvMCContextPrivate *context,
 }
 
 static void
-SetDecoderStatus(XvMCSurfacePrivate *surface)
+GetPictureDescription(XvMCSurfacePrivate *surface, struct pipe_mpeg12_picture_desc *desc)
 {
-   struct pipe_video_decoder *decoder;
-   struct pipe_video_buffer *ref_frames[2];
-   struct pipe_mpeg12_picture_desc desc = { { PIPE_VIDEO_PROFILE_MPEG1} };
-
-   XvMCContextPrivate *context_priv;
-
    unsigned i, num_refs = 0;
 
-   desc.picture_structure = surface->picture_structure;
+   assert(surface && desc);
 
-   assert(surface);
-
-   context_priv = surface->context->privData;
-   decoder = context_priv->decoder;
-
-   decoder->set_decode_target(decoder, surface->video_buffer);
-
+   memset(desc, 0, sizeof(*desc));
+   desc->base.profile = PIPE_VIDEO_PROFILE_MPEG1;
+   desc->picture_structure = surface->picture_structure;
    for (i = 0; i < 2; ++i) {
       if (surface->ref[i]) {
          XvMCSurfacePrivate *ref = surface->ref[i]->privData;
 
          if (ref)
-            ref_frames[num_refs++] = ref->video_buffer;
+            desc->ref[num_refs++] = ref->video_buffer;
       }
    }
-   decoder->set_reference_frames(decoder, ref_frames, num_refs);
-   decoder->set_picture_parameters(context_priv->decoder, &desc.base);
 }
 
 static void
@@ -151,13 +139,14 @@ RecursiveEndFrame(XvMCSurfacePrivate *surface)
    }
 
    if (surface->picture_structure) {
-      SetDecoderStatus(surface);
+      struct pipe_mpeg12_picture_desc desc;
+      GetPictureDescription(surface, &desc);
       surface->picture_structure = 0;
 
       for (i = 0; i < 2; ++i)
          surface->ref[i] = NULL;
 
-      context_priv->decoder->end_frame(context_priv->decoder);
+      context_priv->decoder->end_frame(context_priv->decoder, surface->video_buffer, &desc.base);
    }
 }
 
@@ -217,6 +206,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 {
    struct pipe_mpeg12_macroblock mb[num_macroblocks];
    struct pipe_video_decoder *decoder;
+   struct pipe_mpeg12_picture_desc desc;
 
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
@@ -289,17 +279,20 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    target_surface_priv->ref[1] = future_surface;
 
    if (target_surface_priv->picture_structure)
-      SetDecoderStatus(target_surface_priv);
+      GetPictureDescription(target_surface_priv, &desc);
    else {
       target_surface_priv->picture_structure = picture_structure;
-      SetDecoderStatus(target_surface_priv);
-      decoder->begin_frame(decoder);
+      GetPictureDescription(target_surface_priv, &desc);
+      decoder->begin_frame(decoder, target_surface_priv->video_buffer, &desc.base);
    }
 
    MacroBlocksToPipe(context_priv, target_surface_priv, picture_structure,
                      xvmc_mb, blocks, mb, num_macroblocks);
 
-   context_priv->decoder->decode_macroblock(context_priv->decoder, &mb[0].base, num_macroblocks);
+   context_priv->decoder->decode_macroblock(context_priv->decoder,
+                                            target_surface_priv->video_buffer,
+                                            &desc.base,
+                                            &mb[0].base, num_macroblocks);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 
@@ -499,8 +492,9 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
    context_priv = surface_priv->context->privData;
    
    if (surface_priv->picture_structure) {
-      SetDecoderStatus(surface_priv);
-      context_priv->decoder->end_frame(context_priv->decoder);
+      struct pipe_mpeg12_picture_desc desc;
+      GetPictureDescription(surface_priv, &desc);
+      context_priv->decoder->end_frame(context_priv->decoder, surface_priv->video_buffer, &desc.base);
    }
    surface_priv->video_buffer->destroy(surface_priv->video_buffer);
    FREE(surface_priv);

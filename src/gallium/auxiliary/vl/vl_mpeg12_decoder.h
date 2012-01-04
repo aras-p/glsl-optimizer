@@ -77,14 +77,6 @@ struct vl_mpeg12_decoder
 
    unsigned current_buffer;
    struct vl_mpeg12_buffer *dec_buffers[4];
-
-   struct pipe_mpeg12_picture_desc picture_desc;
-   uint8_t intra_matrix[64];
-   uint8_t non_intra_matrix[64];
-   struct pipe_sampler_view *ref_frames[VL_MAX_REF_FRAMES][VL_MAX_PLANES];
-
-   struct pipe_video_buffer *target;
-   struct pipe_surface *target_surfaces[VL_MAX_PLANES];
 };
 
 struct vl_mpeg12_buffer
