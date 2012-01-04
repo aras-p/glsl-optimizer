@@ -640,12 +640,13 @@ intel_miptree_all_slices_resolve(struct intel_context *intel,
 				 resolve_func_t func)
 {
    bool did_resolve = false;
-   struct intel_resolve_map *i;
+   struct intel_resolve_map *i, *next;
 
-   for (i = mt->hiz_map.next; i; i = i->next) {
+   for (i = mt->hiz_map.next; i; i = next) {
       if (i->need != need)
 	 continue;
       func(intel, mt, i->level, i->layer);
+      next = i->next;
       intel_resolve_map_remove(i);
       did_resolve = true;
    }
