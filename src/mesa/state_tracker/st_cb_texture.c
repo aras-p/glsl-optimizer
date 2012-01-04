@@ -153,7 +153,8 @@ st_DeleteTextureObject(struct gl_context *ctx,
 
 /** called via ctx->Driver.FreeTextureImageBuffer() */
 static void
-st_FreeTextureImageBuffer(struct gl_context * ctx, struct gl_texture_image *texImage)
+st_FreeTextureImageBuffer(struct gl_context *ctx,
+                          struct gl_texture_image *texImage)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
 
