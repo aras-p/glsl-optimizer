@@ -34,6 +34,8 @@
 #include "util/u_upload_mgr.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
+#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_hash.h"
 
 struct u_vbuf_elements {
    unsigned count;
@@ -66,6 +68,7 @@ struct u_vbuf_priv {
    struct u_vbuf b;
    struct pipe_context *pipe;
    struct translate_cache *translate_cache;
+   struct cso_cache *cso_cache;
 
    /* Vertex element state bound by the state tracker. */
    void *saved_ve;
@@ -131,6 +134,7 @@ u_vbuf_create(struct pipe_context *pipe,
    struct u_vbuf_priv *mgr = CALLOC_STRUCT(u_vbuf_priv);
 
    mgr->pipe = pipe;
+   mgr->cso_cache = cso_cache_create();
    mgr->translate_cache = translate_cache_create();
    memset(mgr->fallback_vbs, ~0, sizeof(mgr->fallback_vbs));
 
@@ -144,6 +148,46 @@ u_vbuf_create(struct pipe_context *pipe,
    u_vbuf_init_format_caps(mgr);
 
    return &mgr->b;
+}
+
+/* XXX I had to fork this off of cso_context. */
+static void *
+u_vbuf_pipe_set_vertex_elements(struct u_vbuf_priv *mgr,
+                                unsigned count,
+                                const struct pipe_vertex_element *states)
+{
+   unsigned key_size, hash_key;
+   struct cso_hash_iter iter;
+   void *handle;
+   struct cso_velems_state velems_state;
+
+   /* need to include the count into the stored state data too. */
+   key_size = sizeof(struct pipe_vertex_element) * count + sizeof(unsigned);
+   velems_state.count = count;
+   memcpy(velems_state.velems, states,
+          sizeof(struct pipe_vertex_element) * count);
+   hash_key = cso_construct_key((void*)&velems_state, key_size);
+   iter = cso_find_state_template(mgr->cso_cache, hash_key, CSO_VELEMENTS,
+                                  (void*)&velems_state, key_size);
+
+   if (cso_hash_iter_is_null(iter)) {
+      struct cso_velements *cso = MALLOC_STRUCT(cso_velements);
+      memcpy(&cso->state, &velems_state, key_size);
+      cso->data =
+            mgr->pipe->create_vertex_elements_state(mgr->pipe, count,
+                                                    &cso->state.velems[0]);
+      cso->delete_state =
+            (cso_state_callback)mgr->pipe->delete_vertex_elements_state;
+      cso->context = mgr->pipe;
+
+      iter = cso_insert_state(mgr->cso_cache, hash_key, CSO_VELEMENTS, cso);
+      handle = cso->data;
+   } else {
+      handle = ((struct cso_velements *)cso_hash_iter_data(iter))->data;
+   }
+
+   mgr->pipe->bind_vertex_elements_state(mgr->pipe, handle);
+   return handle;
 }
 
 void u_vbuf_destroy(struct u_vbuf *mgrb)
@@ -160,6 +204,7 @@ void u_vbuf_destroy(struct u_vbuf *mgrb)
 
    translate_cache_destroy(mgr->translate_cache);
    u_upload_destroy(mgr->b.uploader);
+   cso_cache_delete(mgr->cso_cache);
    FREE(mgr);
 }
 
@@ -467,13 +512,10 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       }
    }
 
-   mgr->fallback_ve =
-      mgr->pipe->create_vertex_elements_state(mgr->pipe, mgr->ve->count,
-                                              mgr->fallback_velems);
-
    /* Preserve saved_ve. */
    mgr->ve_binding_lock = TRUE;
-   mgr->pipe->bind_vertex_elements_state(mgr->pipe, mgr->fallback_ve);
+   mgr->fallback_ve = u_vbuf_pipe_set_vertex_elements(mgr, mgr->ve->count,
+                                                      mgr->fallback_velems);
    mgr->ve_binding_lock = FALSE;
    return TRUE;
 }
@@ -482,14 +524,9 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
 {
    unsigned i;
 
-   if (mgr->fallback_ve == NULL) {
-      return;
-   }
-
    /* Restore vertex elements. */
    /* Note that saved_ve will be overwritten in bind_vertex_elements_state. */
    mgr->pipe->bind_vertex_elements_state(mgr->pipe, mgr->saved_ve);
-   mgr->pipe->delete_vertex_elements_state(mgr->pipe, mgr->fallback_ve);
    mgr->fallback_ve = NULL;
 
    /* Unreference the now-unused VBOs. */
