@@ -215,12 +215,19 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                      GLuint zoffset, enum pipe_transfer_usage usage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
+   struct st_texture_object *stObj =
+      st_texture_object(stImage->base.TexObject);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *pt = stImage->pt;
+   GLuint level;
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->base.Level,
+   if (stObj->pt != stImage->pt)
+      level = 0;
+   else
+      level = stImage->base.Level;
+
+   stImage->transfer = pipe_get_transfer(st->pipe, stImage->pt, level,
                                          stImage->base.Face + zoffset,
                                          usage, x, y, w, h);
 

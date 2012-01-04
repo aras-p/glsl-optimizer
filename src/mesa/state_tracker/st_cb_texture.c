@@ -415,8 +415,6 @@ guess_and_alloc_texture(struct st_context *st,
  * Called via ctx->Driver.AllocTextureImageBuffer().
  * If the texture object/buffer already has space for the indicated image,
  * we're done.  Otherwise, allocate memory for the new texture image.
- * XXX This function and st_TexImage() have some duplicated code.  That
- * can be cleaned up in the future.
  */
 static GLboolean
 st_AllocTextureImageBuffer(struct gl_context *ctx,
@@ -471,7 +469,10 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    }
    else {
       /* Create a new, temporary texture/resource/buffer to hold this
-       * one texture image.
+       * one texture image.  Note that when we later access this image
+       * (either for mapping or copying) we'll want to always specify
+       * mipmap level=0, even if the image represents some other mipmap
+       * level.
        */
       enum pipe_format format =
          st_mesa_format_to_pipe_format(texImage->TexFormat);
@@ -531,227 +532,6 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 }
 
 
-/**
- * Do glTexImage1/2/3D().
- */
-static void
-st_TexImage(struct gl_context * ctx,
-            GLint dims,
-            struct gl_texture_image *texImage,
-            GLint internalFormat,
-            GLint width, GLint height, GLint depth,
-            GLint border,
-            GLenum format, GLenum type, const void *pixels,
-            const struct gl_pixelstore_attrib *unpack,
-            GLsizei imageSize, GLboolean compressed_src)
-{
-   struct st_context *st = st_context(ctx);
-   struct gl_texture_object *texObj = texImage->TexObject;
-   struct st_texture_object *stObj = st_texture_object(texObj);
-   struct st_texture_image *stImage = st_texture_image(texImage);
-   const GLenum target = texObj->Target;
-   const GLuint level = texImage->Level;
-   GLuint dstRowStride = 0;
-   enum pipe_transfer_usage transfer_usage = 0;
-   GLubyte *dstMap;
-
-   DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
-
-   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
-                 format, type);
-
-   assert(texImage->Width == width);
-   assert(texImage->Height == height);
-   assert(texImage->Depth == depth);
-
-   /* Release the reference to a potentially orphaned buffer.   
-    * Release any old malloced memory.
-    */
-   if (stImage->pt) {
-      pipe_resource_reference(&stImage->pt, NULL);
-      assert(!stImage->TexData);
-   }
-   else if (stImage->TexData) {
-      _mesa_align_free(stImage->TexData);
-   }
-
-   /*
-    * See if the new image is somehow incompatible with the existing
-    * mipmap.  If so, free the old mipmap.
-    */
-   if (stObj->pt) {
-      if (level > (GLint) stObj->pt->last_level ||
-          !st_texture_match_image(stObj->pt, &stImage->base)) {
-         DBG("release it\n");
-         pipe_resource_reference(&stObj->pt, NULL);
-         assert(!stObj->pt);
-         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-      }
-   }
-
-   if (width == 0 || height == 0 || depth == 0) {
-      /* stop after freeing old image */
-      return;
-   }
-
-   if (!stObj->pt) {
-      if (!guess_and_alloc_texture(st, stObj, stImage)) {
-         /* Probably out of memory.
-          * Try flushing any pending rendering, then retry.
-          */
-         st_finish(st);
-         if (!guess_and_alloc_texture(st, stObj, stImage)) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-            return;
-         }
-      }
-   }
-
-   assert(!stImage->pt);
-
-   /* Check if this texture image can live inside the texture object's buffer.
-    * If so, store the image there.  Otherwise the image will temporarily live
-    * in its own buffer.
-    */
-   if (stObj->pt &&
-       st_texture_match_image(stObj->pt, &stImage->base)) {
-
-      pipe_resource_reference(&stImage->pt, stObj->pt);
-      assert(stImage->pt);
-   }
-
-   if (!stImage->pt)
-      DBG("XXX: Image did not fit into texture - storing in local memory!\n");
-
-   /* Pixel data may come from regular user memory or a PBO.  For the later,
-    * do bounds checking and map the PBO to read pixels data from it.
-    *
-    * XXX we should try to use a GPU-accelerated path to copy the image data
-    * from the PBO to the texture.
-    */
-   if (compressed_src) {
-      pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, pixels,
-						      unpack,
-						      "glCompressedTexImage");
-   }
-   else {
-      pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, 1,
-					   format, type,
-					   pixels, unpack, "glTexImage");
-   }
-
-   /* for a 1D array upload the image as a series of layer with height = 1 */
-   if (target == GL_TEXTURE_1D_ARRAY) {
-      depth = height;
-      height = 1;
-   }
-
-   /*
-    * Prepare to store the texture data.  Either map the gallium texture buffer
-    * memory or malloc space for it.
-    */
-   if (stImage->pt) {
-      if (!pixels) {
-         /* We've allocated texture resource, but have no pixel data - all done. */
-         goto done;
-      }
-
-      /* Store the image in the gallium transfer object */
-      if (format == GL_DEPTH_COMPONENT &&
-          util_format_is_depth_and_stencil(stImage->pt->format))
-         transfer_usage = PIPE_TRANSFER_READ_WRITE;
-      else
-         transfer_usage = PIPE_TRANSFER_WRITE;
-
-      dstMap = st_texture_image_map(st, stImage, 0,
-                                    transfer_usage, 0, 0, width, height);
-      if(stImage->transfer)
-         dstRowStride = stImage->transfer->stride;
-   }
-   else {
-      /* Allocate regular memory and store the image there temporarily.   */
-      GLuint imageSize = _mesa_format_image_size(texImage->TexFormat,
-                                                 width, height, depth);
-      dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
-
-      stImage->TexData = _mesa_align_malloc(imageSize, 16);
-      dstMap = stImage->TexData;
-   }
-
-   if (!dstMap) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-      return;
-   }
-
-   if (!pixels) {
-      /* We've allocated texture memory, but have no pixel data - all done. */
-      goto done;
-   }
-
-   DBG("Upload image %dx%dx%d row_len %x pitch %x\n",
-       width, height, depth, width, dstRowStride);
-
-   /* Copy user texture image into the mapped texture buffer.
-    */
-   if (compressed_src) {
-      const GLuint srcRowStride =
-         _mesa_format_row_stride(texImage->TexFormat, width);
-      if (dstRowStride == srcRowStride) {
-         memcpy(dstMap, pixels, imageSize);
-      }
-      else {
-         GLubyte *dst = dstMap;
-         const char *src = pixels;
-         GLuint i, bw, bh, lines;
-         _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
-         lines = (height + bh - 1) / bh;
-
-         for (i = 0; i < lines; ++i) {
-            memcpy(dst, src, srcRowStride);
-            dst += dstRowStride;
-            src += srcRowStride;
-         }
-      }
-   }
-   else {
-      const GLuint srcImageStride =
-         _mesa_image_image_stride(unpack, width, height, format, type);
-      GLint i;
-      const GLubyte *src = (const GLubyte *) pixels;
-
-      for (i = 0; i < depth; i++) {
-	 if (!_mesa_texstore(ctx, dims, 
-                             texImage->_BaseFormat, 
-                             texImage->TexFormat, 
-                             dstRowStride,
-                             (GLubyte **) &dstMap, /* dstSlice */
-                             width, height, 1,
-                             format, type, src, unpack)) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-	 }
-
-	 if (stImage->pt && i + 1 < depth) {
-            /* unmap this slice */
-	    st_texture_image_unmap(st, stImage);
-            /* map next slice of 3D texture */
-            dstMap = st_texture_image_map(st, stImage, i + 1,
-                                          transfer_usage, 0, 0,
-                                          width, height);
-	    src += srcImageStride;
-	 }
-      }
-   }
-
-done:
-   _mesa_unmap_teximage_pbo(ctx, unpack);
-
-   if (stImage->pt && stImage->transfer) {
-      st_texture_image_unmap(st, stImage);
-   }
-}
-
-
 static void
 st_TexImage3D(struct gl_context * ctx,
               struct gl_texture_image *texImage,
@@ -761,8 +541,10 @@ st_TexImage3D(struct gl_context * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 3, texImage, internalFormat, width, height, depth, border,
-               format, type, pixels, unpack, 0, GL_FALSE);
+   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
+                 format, type);
+   _mesa_store_teximage3d(ctx, texImage, internalFormat, width, height, depth,
+                          border, format, type, pixels, unpack);
 }
 
 
@@ -774,8 +556,10 @@ st_TexImage2D(struct gl_context * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 2, texImage, internalFormat, width, height, 1, border,
-               format, type, pixels, unpack, 0, GL_FALSE);
+   prep_teximage(ctx, texImage, internalFormat, width, height, 1, border,
+                 format, type);
+   _mesa_store_teximage2d(ctx, texImage, internalFormat, width, height,
+                          border, format, type, pixels, unpack);
 }
 
 
@@ -787,8 +571,10 @@ st_TexImage1D(struct gl_context * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack)
 {
-   st_TexImage(ctx, 1, texImage, internalFormat, width, 1, 1, border,
-               format, type, pixels, unpack, 0, GL_FALSE);
+   prep_teximage(ctx, texImage, internalFormat, width, 1, 1, border,
+                 format, type);
+   _mesa_store_teximage1d(ctx, texImage, internalFormat, width,
+                          border, format, type, pixels, unpack);
 }
 
 
@@ -799,8 +585,10 @@ st_CompressedTexImage2D(struct gl_context *ctx,
                         GLint width, GLint height, GLint border,
                         GLsizei imageSize, const GLvoid *data)
 {
-   st_TexImage(ctx, 2, texImage, internalFormat, width, height, 1, border,
-               0, 0, data, &ctx->Unpack, imageSize, GL_TRUE);
+   prep_teximage(ctx, texImage, internalFormat, width, 1, 1, border,
+                 GL_NONE, GL_NONE);
+   _mesa_store_compressed_teximage2d(ctx, texImage, internalFormat, width,
+                                     height, border, imageSize, data);
 }
 
 
@@ -1451,9 +1239,15 @@ copy_image_data_to_texture(struct st_context *st,
    if (stImage->pt) {
       /* Copy potentially with the blitter:
        */
+      GLuint src_level;
+      if (stImage->pt != stObj->pt)
+         src_level = 0;
+      else
+         src_level = stImage->base.Level;
+
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
-                            stImage->pt, stImage->base.Level, /* src texture, level */
+                            stImage->pt, src_level, /* src texture, level */
                             stImage->base.Face);
 
       pipe_resource_reference(&stImage->pt, NULL);
@@ -1650,13 +1444,11 @@ st_get_default_texture(struct st_context *st)
                                  16, 16, 1, 0,  /* w, h, d, border */
                                  GL_RGBA, MESA_FORMAT_RGBA8888);
 
-      st_TexImage(st->ctx, 2,
-                  texImg,
-                  GL_RGBA,    /* level, intformat */
-                  16, 16, 1, 0,  /* w, h, d, border */
-                  GL_RGBA, GL_UNSIGNED_BYTE, pixels,
-                  &st->ctx->DefaultPacking,
-                  0, GL_FALSE);
+      _mesa_store_teximage2d(st->ctx, texImg, 
+                             GL_RGBA,    /* level, intformat */
+                             16, 16, 1,  /* w, h, d, border */
+                             GL_RGBA, GL_UNSIGNED_BYTE, pixels,
+                             &st->ctx->DefaultPacking);
 
       texObj->Sampler.MinFilter = GL_NEAREST;
       texObj->Sampler.MagFilter = GL_NEAREST;
