@@ -2483,7 +2483,7 @@ struct gl_shared_state
    struct gl_texture_object *DefaultTex[NUM_TEXTURE_TARGETS];
 
    /** Fallback texture used when a bound texture is incomplete */
-   struct gl_texture_object *FallbackTex;
+   struct gl_texture_object *FallbackTex[NUM_TEXTURE_TARGETS];
 
    /**
     * \name Thread safety and statechange notification for texture

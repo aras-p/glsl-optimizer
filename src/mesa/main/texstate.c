@@ -586,9 +586,15 @@ update_texture_state( struct gl_context *ctx )
              * object, but there isn't one (or it's incomplete).  Use the
              * fallback texture.
              */
-            struct gl_texture_object *texObj = _mesa_get_fallback_texture(ctx);
-            texUnit->_ReallyEnabled = 1 << TEXTURE_2D_INDEX;
+            struct gl_texture_object *texObj;
+            gl_texture_index texTarget;
+
+            assert(_mesa_bitcount(enabledTargets) == 1);
+
+            texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
+            texObj = _mesa_get_fallback_texture(ctx, texTarget);
             _mesa_reference_texobj(&texUnit->_Current, texObj);
+            texUnit->_ReallyEnabled = 1 << texTarget;
          }
          else {
             /* fixed-function: texture unit is really disabled */

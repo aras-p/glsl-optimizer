@@ -34,8 +34,8 @@
 
 #include "compiler.h"
 #include "glheader.h"
+#include "mtypes.h"
 
-struct gl_context;
 
 /**
  * \name Internal functions
@@ -89,7 +89,7 @@ _mesa_dirty_texobj(struct gl_context *ctx, struct gl_texture_object *texObj,
                    GLboolean invalidate_state);
 
 extern struct gl_texture_object *
-_mesa_get_fallback_texture(struct gl_context *ctx);
+_mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex);
 
 extern void
 _mesa_unlock_context_textures( struct gl_context *ctx );

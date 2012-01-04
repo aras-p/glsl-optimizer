@@ -759,59 +759,127 @@ _mesa_dirty_texobj(struct gl_context *ctx, struct gl_texture_object *texObj,
 
 
 /**
- * Return pointer to a default/fallback texture.
- * The texture is a 2D 8x8 RGBA texture with all texels = (0,0,0,1).
- * That's the value a sampler should get when sampling from an
+ * Return pointer to a default/fallback texture of the given type/target.
+ * The texture is an RGBA texture with all texels = (0,0,0,1).
+ * That's the value a GLSL sampler should get when sampling from an
  * incomplete texture.
  */
 struct gl_texture_object *
-_mesa_get_fallback_texture(struct gl_context *ctx)
+_mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
 {
-   if (!ctx->Shared->FallbackTex) {
+   if (!ctx->Shared->FallbackTex[tex]) {
       /* create fallback texture now */
-      static GLubyte texels[8 * 8][4];
+      const GLsizei width = 1, height = 1, depth = 1;
+      GLubyte texel[4];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
       gl_format texFormat;
-      GLuint i;
+      GLuint dims, face, numFaces = 1;
+      GLenum target;
 
-      for (i = 0; i < 8 * 8; i++) {
-         texels[i][0] =
-         texels[i][1] =
-         texels[i][2] = 0x0;
-         texels[i][3] = 0xff;
+      texel[0] =
+      texel[1] =
+      texel[2] = 0x0;
+      texel[3] = 0xff;
+
+      switch (tex) {
+      case TEXTURE_2D_ARRAY_INDEX:
+         dims = 3;
+         target = GL_TEXTURE_2D_ARRAY;
+         break;
+      case TEXTURE_1D_ARRAY_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_1D_ARRAY;
+         break;
+      case TEXTURE_CUBE_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_CUBE_MAP;
+         numFaces = 6;
+         break;
+      case TEXTURE_3D_INDEX:
+         dims = 3;
+         target = GL_TEXTURE_3D;
+         break;
+      case TEXTURE_RECT_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_RECTANGLE;
+         break;
+      case TEXTURE_2D_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_2D;
+         break;
+      case TEXTURE_1D_INDEX:
+         dims = 1;
+         target = GL_TEXTURE_1D;
+         break;
+      case TEXTURE_BUFFER_INDEX:
+      case TEXTURE_EXTERNAL_INDEX:
+      default:
+         /* no-op */
+         return NULL;
       }
 
       /* create texture object */
-      texObj = ctx->Driver.NewTextureObject(ctx, 0, GL_TEXTURE_2D);
+      texObj = ctx->Driver.NewTextureObject(ctx, 0, target);
+      if (!texObj)
+         return NULL;
+
       assert(texObj->RefCount == 1);
       texObj->Sampler.MinFilter = GL_NEAREST;
       texObj->Sampler.MagFilter = GL_NEAREST;
 
-      /* create level[0] texture image */
-      texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, 0);
-
       texFormat = ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA,
                                                   GL_UNSIGNED_BYTE);
 
-      /* init the image fields */
-      _mesa_init_teximage_fields(ctx, texImage,
-                                 8, 8, 1, 0, GL_RGBA, texFormat); 
+      /* need a loop here just for cube maps */
+      for (face = 0; face < numFaces; face++) {
+         GLenum faceTarget;
 
-      ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+         if (target == GL_TEXTURE_CUBE_MAP)
+            faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+         else
+            faceTarget = target;
 
-      /* set image data */
-      ctx->Driver.TexImage2D(ctx, texImage, GL_RGBA,
-                             8, 8, 0,
-                             GL_RGBA, GL_UNSIGNED_BYTE, texels,
-                             &ctx->DefaultPacking);
+         /* initialize level[0] texture image */
+         texImage = _mesa_get_tex_image(ctx, texObj, faceTarget, 0);
+
+         _mesa_init_teximage_fields(ctx, texImage,
+                                    width,
+                                    (dims > 1) ? height : 1,
+                                    (dims > 2) ? depth : 1,
+                                    0, /* border */
+                                    GL_RGBA, texFormat);
+
+         switch (dims) {
+         case 1:
+            ctx->Driver.TexImage1D(ctx, texImage, GL_RGBA,
+                                   width, 0,
+                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
+                                   &ctx->DefaultPacking);
+            break;
+         case 2:
+            ctx->Driver.TexImage2D(ctx, texImage, GL_RGBA,
+                                   width, height, 0,
+                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
+                                   &ctx->DefaultPacking);
+            break;
+         case 3:
+            ctx->Driver.TexImage3D(ctx, texImage, GL_RGBA,
+                                   width, height, depth, 0,
+                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
+                                   &ctx->DefaultPacking);
+            break;
+         default:
+            _mesa_problem(ctx, "bad dims in _mesa_get_fallback_texture()");
+         }
+      }
 
       _mesa_test_texobj_completeness(ctx, texObj);
       assert(texObj->_Complete);
 
-      ctx->Shared->FallbackTex = texObj;
+      ctx->Shared->FallbackTex[tex] = texObj;
    }
-   return ctx->Shared->FallbackTex;
+   return ctx->Shared->FallbackTex[tex];
 }
 
 
