@@ -495,6 +495,42 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    }
 }
 
+
+/**
+ * Preparation prior to glTexImage.  Basically check the 'surface_based'
+ * field and switch to a "normal" tex image if necessary.
+ */
+static void
+prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
+              GLint internalFormat,
+              GLint width, GLint height, GLint depth, GLint border,
+              GLenum format, GLenum type)
+{
+   struct gl_texture_object *texObj = texImage->TexObject;
+   struct st_texture_object *stObj = st_texture_object(texObj);
+
+   /* switch to "normal" */
+   if (stObj->surface_based) {
+      const GLenum target = texObj->Target;
+      const GLuint level = texImage->Level;
+      gl_format texFormat;
+
+      _mesa_clear_texture_object(ctx, texObj);
+      pipe_resource_reference(&stObj->pt, NULL);
+
+      /* oops, need to init this image again */
+      texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
+                                              internalFormat, format, type);
+
+      _mesa_init_teximage_fields(ctx, texImage,
+                                 width, height, depth, border,
+                                 internalFormat, texFormat);
+
+      stObj->surface_based = GL_FALSE;
+   }
+}
+
+
 /**
  * Do glTexImage1/2/3D().
  */
@@ -522,23 +558,8 @@ st_TexImage(struct gl_context * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   /* switch to "normal" */
-   if (stObj->surface_based) {
-      gl_format texFormat;
-
-      _mesa_clear_texture_object(ctx, texObj);
-      pipe_resource_reference(&stObj->pt, NULL);
-
-      /* oops, need to init this image again */
-      texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                              internalFormat, format, type);
-
-      _mesa_init_teximage_fields(ctx, texImage,
-                                 width, height, depth, border,
-                                 internalFormat, texFormat);
-
-      stObj->surface_based = GL_FALSE;
-   }
+   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
+                 format, type);
 
    assert(texImage->Width == width);
    assert(texImage->Height == height);
