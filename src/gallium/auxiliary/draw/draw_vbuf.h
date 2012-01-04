@@ -124,7 +124,8 @@ struct vbuf_render {
     */
    void (*set_stream_output_info)( struct vbuf_render *vbufr,
                                    unsigned primitive_count,
-                                   unsigned vertices_count );
+                                   unsigned vertices_count,
+                                   unsigned primitive_generated );
 };
 
 

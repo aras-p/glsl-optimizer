@@ -217,6 +217,7 @@ draw_create_vs_exec(struct draw_context *draw,
 
    tgsi_scan_shader(state->tokens, &vs->base.info);
 
+   vs->base.state.stream_output = state->stream_output;
    vs->base.draw = draw;
    vs->base.prepare = vs_exec_prepare;
    vs->base.run_linear = vs_exec_run_linear;

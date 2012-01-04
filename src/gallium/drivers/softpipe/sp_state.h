@@ -159,9 +159,6 @@ softpipe_draw_vbo(struct pipe_context *pipe,
                   const struct pipe_draw_info *info);
 
 void
-softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
-
-void
 softpipe_map_transfers(struct softpipe_context *sp);
 
 void

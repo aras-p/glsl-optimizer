@@ -55,7 +55,6 @@ struct sp_vertex_shader;
 struct sp_velems_state;
 struct sp_so_state;
 
-
 struct softpipe_context {
    struct pipe_context pipe;  /**< base class */
 
@@ -88,13 +87,12 @@ struct softpipe_context {
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_index_buffer index_buffer;
-   struct {
-      struct softpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
-      int offset[PIPE_MAX_SO_BUFFERS];
-      int so_count[PIPE_MAX_SO_BUFFERS];
-      int num_buffers;
-   } so_target;
+
+   struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
+   int num_so_targets;
+   
    struct pipe_query_data_so_statistics so_stats;
+   unsigned num_primitives_generated;
 
    unsigned num_fragment_samplers;
    unsigned num_fragment_sampler_views;

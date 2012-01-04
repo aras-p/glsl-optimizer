@@ -50,7 +50,18 @@ struct draw_fragment_shader;
 struct tgsi_sampler;
 struct gallivm_state;
 
-
+/*
+ * structure to contain driver internal information 
+ * for stream out support. mapping stores the pointer
+ * to the buffer contents, and internal offset stores
+ * stores an internal counter to how much of the stream
+ * out buffer is used (in bytes).
+ */
+struct draw_so_target {
+   struct pipe_stream_output_target target;
+   void *mapping;
+   int internal_offset;
+};
 
 struct draw_context *draw_create( struct pipe_context *pipe );
 
@@ -202,6 +213,12 @@ void
 draw_set_mapped_so_buffers(struct draw_context *draw,
                            void *buffers[PIPE_MAX_SO_BUFFERS],
                            unsigned num_buffers);
+
+void
+draw_set_mapped_so_targets(struct draw_context *draw,
+                           int num_targets,
+                           struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS]);
+
 void
 draw_set_so_state(struct draw_context *draw,
                   struct pipe_stream_output_info *state);

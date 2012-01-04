@@ -542,19 +542,16 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 }
 
 static void
-sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint vertices)
+sp_vbuf_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
+                uint prim_generated)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   unsigned i;
 
-   for (i = 0; i < softpipe->so_target.num_buffers; ++i) {
-      softpipe->so_target.so_count[i] += vertices;
-   }
-
-   softpipe->so_stats.num_primitives_written = primitives;
+   softpipe->so_stats.num_primitives_written += primitives;
    softpipe->so_stats.primitives_storage_needed =
       vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
+   softpipe->num_primitives_generated += prim_generated;
 }
 
 

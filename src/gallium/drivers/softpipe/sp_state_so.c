@@ -32,109 +32,58 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
+#include "pipebuffer/pb_buffer.h"
 
-
-static void *
-softpipe_create_stream_output_state(struct pipe_context *pipe,
-                                    const struct pipe_stream_output_info *templ)
+static struct pipe_stream_output_target *
+softpipe_create_so_target(struct pipe_context *pipe,
+                          struct pipe_resource *buffer,
+                          unsigned buffer_offset,
+                          unsigned buffer_size)
 {
-   struct sp_so_state *so;
-   so = (struct sp_so_state *) CALLOC_STRUCT(sp_so_state);
+   struct draw_so_target *t;
 
-   if (so) {
-      so->base.num_outputs = templ->num_outputs;
-      so->base.stride = templ->stride;
-      memcpy(so->base.output, templ->output,
-             templ->num_outputs * sizeof(templ->output[0]));
-   }
-   return so;
+   t = CALLOC_STRUCT(draw_so_target);
+   t->target.context = pipe;
+   t->target.reference.count = 1;
+   pipe_resource_reference(&t->target.buffer, buffer);
+   t->target.buffer_offset = buffer_offset;
+   t->target.buffer_size = buffer_size;
+   return &t->target;
 }
 
-
 static void
-softpipe_bind_stream_output_state(struct pipe_context *pipe,
-                                  void *so)
+softpipe_so_target_destroy(struct pipe_context *pipe,
+                           struct pipe_stream_output_target *target)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   struct sp_so_state *sp_so = (struct sp_so_state *) so;
-
-   softpipe->so = sp_so;
-
-   softpipe->dirty |= SP_NEW_SO;
-
-   if (sp_so)
-      draw_set_so_state(softpipe->draw, &sp_so->base);
+   pipe_resource_reference(&target->buffer, NULL);
+   FREE(target);
 }
 
-
 static void
-softpipe_delete_stream_output_state(struct pipe_context *pipe, void *so)
-{
-   FREE( so );
-}
-
-
-static void
-softpipe_set_stream_output_buffers(struct pipe_context *pipe,
-                                   struct pipe_resource **buffers,
-                                   int *offsets,
-                                   int num_buffers)
+softpipe_set_so_targets(struct pipe_context *pipe,
+                        unsigned num_targets,
+                        struct pipe_stream_output_target **targets,
+                        unsigned append_bitmask)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    int i;
-   void *map_buffers[PIPE_MAX_SO_BUFFERS];
 
-   assert(num_buffers <= PIPE_MAX_SO_BUFFERS);
-   if (num_buffers > PIPE_MAX_SO_BUFFERS)
-      num_buffers = PIPE_MAX_SO_BUFFERS;
-
-   softpipe->dirty |= SP_NEW_SO_BUFFERS;
-
-   for (i = 0; i < num_buffers; ++i) {
-      void *mapped;
-      struct softpipe_resource *res = softpipe_resource(buffers[i]);
-
-      if (!res) {
-         /* the whole call is invalid, bail out */
-         softpipe->so_target.num_buffers = 0;
-         draw_set_mapped_so_buffers(softpipe->draw, 0, 0);
-         return;
-      }
-
-      softpipe->so_target.buffer[i] = res;
-      softpipe->so_target.offset[i] = offsets[i];
-      softpipe->so_target.so_count[i] = 0;
-
-      mapped = res->data;
-      if (offsets[i] >= 0)
-         map_buffers[i] = ((char*)mapped) + offsets[i];
-      else {
-         /* this is a buffer append */
-         assert(!"appending not implemented");
-         map_buffers[i] = mapped;
-      }
+   for (i = 0; i < num_targets; i++) {
+      pipe_so_target_reference((struct pipe_stream_output_target **)&softpipe->so_targets[i], targets[i]);
    }
-   softpipe->so_target.num_buffers = num_buffers;
 
-   draw_set_mapped_so_buffers(softpipe->draw, map_buffers, num_buffers);
+   for (; i < softpipe->num_so_targets; i++) {
+      pipe_so_target_reference((struct pipe_stream_output_target **)&softpipe->so_targets[i], NULL);
+   }
+
+   softpipe->num_so_targets = num_targets;
 }
-
-
 
 void
 softpipe_init_streamout_funcs(struct pipe_context *pipe)
 {
-#if 0
-   pipe->create_stream_output_state = softpipe_create_stream_output_state;
-   pipe->bind_stream_output_state = softpipe_bind_stream_output_state;
-   pipe->delete_stream_output_state = softpipe_delete_stream_output_state;
-
-   pipe->set_stream_output_buffers = softpipe_set_stream_output_buffers;
-#else
-   (void) softpipe_create_stream_output_state;
-   (void) softpipe_bind_stream_output_state;
-   (void) softpipe_delete_stream_output_state;
-   (void) softpipe_set_stream_output_buffers;
-#endif
+   pipe->create_stream_output_target = softpipe_create_so_target;
+   pipe->stream_output_target_destroy = softpipe_so_target_destroy;
+   pipe->set_stream_output_targets = softpipe_set_so_targets;
 }
 

@@ -106,7 +106,10 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-      return 0;
+      return PIPE_MAX_SO_BUFFERS;
+   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+      return 16*4;
    case PIPE_CAP_PRIMITIVE_RESTART:
       return 1;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:

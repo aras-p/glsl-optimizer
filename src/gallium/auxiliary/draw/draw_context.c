@@ -725,16 +725,25 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
 }
 
 void
+draw_set_mapped_so_targets(struct draw_context *draw,
+                           int num_targets,
+                           struct draw_so_target *targets[PIPE_MAX_SO_BUFFERS])
+{
+   int i;
+
+   for (i = 0; i < num_targets; i++)
+      draw->so.targets[i] = targets[i];
+   for (i = num_targets; i < PIPE_MAX_SO_BUFFERS; i++)
+      draw->so.targets[i] = NULL;
+
+   draw->so.num_targets = num_targets;
+}
+
+void
 draw_set_mapped_so_buffers(struct draw_context *draw,
                            void *buffers[PIPE_MAX_SO_BUFFERS],
                            unsigned num_buffers)
 {
-   int i;
-
-   for (i = 0; i < num_buffers; ++i) {
-      draw->so.buffers[i] = buffers[i];
-   }
-   draw->so.num_buffers = num_buffers;
 }
 
 void
