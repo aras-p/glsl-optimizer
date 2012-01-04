@@ -727,84 +727,6 @@ st_GetTexImage(struct gl_context * ctx,
 }
 
 
-static void
-st_CompressedTexSubImage1D(struct gl_context *ctx,
-                           struct gl_texture_image *texImage,
-                           GLint xoffset, GLsizei width,
-                           GLenum format,
-                           GLsizei imageSize, const GLvoid *data)
-{
-   assert(0);
-}
-
-
-static void
-st_CompressedTexSubImage2D(struct gl_context *ctx,
-                           struct gl_texture_image *texImage,
-                           GLint xoffset, GLint yoffset,
-                           GLsizei width, GLint height,
-                           GLenum format,
-                           GLsizei imageSize, const GLvoid *data)
-{
-   struct st_context *st = st_context(ctx);
-   struct st_texture_image *stImage = st_texture_image(texImage);
-   int srcBlockStride;
-   int dstBlockStride;
-   int y;
-   enum pipe_format pformat;
-   GLubyte *dstMap;
-
-   if (stImage->pt) {
-      pformat = stImage->pt->format;
-
-      dstMap = st_texture_image_map(st, stImage, 0, 
-                                    PIPE_TRANSFER_WRITE,
-                                    xoffset, yoffset,
-                                    width, height);
-      
-      srcBlockStride = util_format_get_stride(pformat, width);
-      dstBlockStride = stImage->transfer->stride;
-   } else {
-      assert(stImage->pt);
-      /* TODO find good values for block and strides */
-      /* TODO also adjust texImage->data for yoffset/xoffset */
-      return;
-   }
-
-   if (!dstMap) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage");
-      return;
-   }
-
-   assert(xoffset % util_format_get_blockwidth(pformat) == 0);
-   assert(yoffset % util_format_get_blockheight(pformat) == 0);
-
-   for (y = 0; y < height; y += util_format_get_blockheight(pformat)) {
-      /* don't need to adjust for xoffset and yoffset as st_texture_image_map does that */
-      const char *src = (const char*)data + srcBlockStride * util_format_get_nblocksy(pformat, y);
-      char *dst = (char *) dstMap + dstBlockStride * util_format_get_nblocksy(pformat, y);
-      memcpy(dst, src, util_format_get_stride(pformat, width));
-   }
-
-   if (stImage->pt && stImage->transfer) {
-      st_texture_image_unmap(st, stImage);
-   }
-}
-
-
-static void
-st_CompressedTexSubImage3D(struct gl_context *ctx,
-                           struct gl_texture_image *texImage,
-                           GLint xoffset, GLint yoffset, GLint zoffset,
-                           GLsizei width, GLint height, GLint depth,
-                           GLenum format,
-                           GLsizei imageSize, const GLvoid *data)
-{
-   assert(0);
-}
-
-
-
 /**
  * Do a CopyTexSubImage operation using a read transfer from the source,
  * a write transfer to the destination and get_tile()/put_tile() to access
@@ -1530,9 +1452,9 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TexSubImage1D = _mesa_store_texsubimage1d;
    functions->TexSubImage2D = _mesa_store_texsubimage2d;
    functions->TexSubImage3D = _mesa_store_texsubimage3d;
-   functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
-   functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
-   functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
+   functions->CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+   functions->CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+   functions->CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
