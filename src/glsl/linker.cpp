@@ -1576,9 +1576,9 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
    } else {
       /* Regular variable (scalar, vector, or matrix) */
       if (this->is_subscripted) {
-         linker_error(prog, "Transform feedback varying %s found, "
-                      "but it's an array ([] expected).",
-                      this->orig_name);
+         linker_error(prog, "Transform feedback varying %s requested, "
+                      "but %s is not an array.",
+                      this->orig_name, this->var_name);
          return false;
       }
       this->location = output_var->location;
