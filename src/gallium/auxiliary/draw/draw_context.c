@@ -692,6 +692,16 @@ draw_current_shader_position_output(const struct draw_context *draw)
 
 
 /**
+ * Return the index of the shader output which will contain the
+ * vertex position.
+ */
+uint
+draw_current_shader_clipvertex_output(const struct draw_context *draw)
+{
+   return draw->vs.clipvertex_output;
+}
+
+/**
  * Return a pointer/handle for a driver/CSO rasterizer object which
  * disabled culling, stippling, unfilled tris, etc.
  * This is used by some pipeline stages (such as wide_point, aa_line

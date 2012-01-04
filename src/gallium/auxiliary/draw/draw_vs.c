@@ -120,6 +120,7 @@ draw_create_vertex_shader(struct draw_context *draw,
    if (vs)
    {
       uint i;
+      bool found_clipvertex = FALSE;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
              vs->info.output_semantic_index[i] == 0)
@@ -127,7 +128,14 @@ draw_create_vertex_shader(struct draw_context *draw,
          else if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_EDGEFLAG &&
              vs->info.output_semantic_index[i] == 0)
             vs->edgeflag_output = i;
+         else if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_CLIPVERTEX &&
+                  vs->info.output_semantic_index[i] == 0) {
+            found_clipvertex = TRUE;
+            vs->clipvertex_output = i;
+         }
       }
+      if (!found_clipvertex)
+         vs->clipvertex_output = vs->position_output;
    }
 
    assert(vs);
@@ -147,6 +155,7 @@ draw_bind_vertex_shader(struct draw_context *draw,
       draw->vs.num_vs_outputs = dvs->info.num_outputs;
       draw->vs.position_output = dvs->position_output;
       draw->vs.edgeflag_output = dvs->edgeflag_output;
+      draw->vs.clipvertex_output = dvs->clipvertex_output;
       dvs->prepare( dvs, draw );
    }
    else {

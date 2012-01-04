@@ -76,6 +76,7 @@ struct vertex_header {
    unsigned vertex_id:16;
 
    float clip[4];
+   float pre_clip_pos[4];
 
    /* This will probably become float (*data)[4] soon:
     */
@@ -230,6 +231,7 @@ struct draw_context
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
       uint position_output;
       uint edgeflag_output;
+      uint clipvertex_output;
 
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;
@@ -378,7 +380,7 @@ void draw_gs_destroy( struct draw_context *draw );
  */
 uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
-
+uint draw_current_shader_clipvertex_output(const struct draw_context *draw);
 int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
                                    uint semantic_name, uint semantic_index);
 void draw_remove_extra_vertex_attribs(struct draw_context *draw);

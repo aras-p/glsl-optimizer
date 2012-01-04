@@ -74,9 +74,9 @@ draw_pt_fetch_prepare(struct pt_fetch *fetch,
    /* Leave the clipmask/edgeflags/pad/vertex_id untouched
     */
    dst_offset += 1 * sizeof(float);
-   /* Just leave the clip[] array untouched.
+   /* Just leave the clip[] and pre_clip_pos[] array untouched.
     */
-   dst_offset += 4 * sizeof(float);
+   dst_offset += 8 * sizeof(float);
 
    if (instance_id_index != ~0) {
       num_extra_inputs++;

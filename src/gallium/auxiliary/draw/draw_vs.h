@@ -111,6 +111,7 @@ struct draw_vertex_shader {
    struct tgsi_shader_info info;
    unsigned position_output;
    unsigned edgeflag_output;
+   unsigned clipvertex_output;
 
    /* Extracted from shader:
     */

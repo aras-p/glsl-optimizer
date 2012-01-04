@@ -268,15 +268,16 @@ static LLVMTypeRef
 create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
 {
    LLVMTargetDataRef target = gallivm->target;
-   LLVMTypeRef elem_types[3];
+   LLVMTypeRef elem_types[4];
    LLVMTypeRef vertex_header;
    char struct_name[24];
 
    util_snprintf(struct_name, 23, "vertex_header%d", data_elems);
 
-   elem_types[0]  = LLVMIntTypeInContext(gallivm->context, 32);
-   elem_types[1]  = LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
-   elem_types[2]  = LLVMArrayType(elem_types[1], data_elems);
+   elem_types[DRAW_JIT_VERTEX_VERTEX_ID]  = LLVMIntTypeInContext(gallivm->context, 32);
+   elem_types[DRAW_JIT_VERTEX_CLIP]  = LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
+   elem_types[DRAW_JIT_VERTEX_PRE_CLIP_POS]  = LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
+   elem_types[DRAW_JIT_VERTEX_DATA]  = LLVMArrayType(elem_types[1], data_elems);
 
 #if HAVE_LLVM >= 0x0300
    vertex_header = LLVMStructCreateNamed(gallivm->context, struct_name);
@@ -307,6 +308,9 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
    LP_CHECK_MEMBER_OFFSET(struct vertex_header, clip,
                           target, vertex_header,
                           DRAW_JIT_VERTEX_CLIP);
+   LP_CHECK_MEMBER_OFFSET(struct vertex_header, pre_clip_pos,
+                          target, vertex_header,
+                          DRAW_JIT_VERTEX_PRE_CLIP_POS);
    LP_CHECK_MEMBER_OFFSET(struct vertex_header, data,
                           target, vertex_header,
                           DRAW_JIT_VERTEX_DATA);

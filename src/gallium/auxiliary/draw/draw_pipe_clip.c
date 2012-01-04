@@ -118,6 +118,7 @@ static void interp( const struct clip_stage *clip,
 {
    const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
+   const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
    unsigned j;
 
    /* Vertex header.
@@ -130,12 +131,14 @@ static void interp( const struct clip_stage *clip,
    /* Interpolate the clip-space coords.
     */
    interp_attr(dst->clip, t, in->clip, out->clip);
+   /* interpolate the clip-space position */
+   interp_attr(dst->pre_clip_pos, t, in->pre_clip_pos, out->pre_clip_pos);
 
    /* Do the projective divide and viewport transformation to get
     * new window coordinates:
     */
    {
-      const float *pos = dst->clip;
+      const float *pos = dst->pre_clip_pos;
       const float *scale = clip->stage.draw->viewport.scale;
       const float *trans = clip->stage.draw->viewport.translate;
       const float oow = 1.0f / pos[3];
@@ -149,8 +152,8 @@ static void interp( const struct clip_stage *clip,
    /* Other attributes
     */
    for (j = 0; j < nr_attrs; j++) {
-      if (j != pos_attr)
-         interp_attr(dst->data[j], t, in->data[j], out->data[j]);
+      if (j != pos_attr && j != clip_attr)
+        interp_attr(dst->data[j], t, in->data[j], out->data[j]);
    }
 }
 
