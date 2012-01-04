@@ -1426,12 +1426,12 @@ private:
    /**
     * True if the declaration in orig_name represents an array.
     */
-   bool is_array;
+   bool is_subscripted;
 
    /**
-    * If is_array is true, the array index that was specified in orig_name.
+    * If is_subscripted is true, the subscript that was specified in orig_name.
     */
-   unsigned array_index;
+   unsigned array_subscript;
 
    /**
     * Which component to extract from the vertex shader output location that
@@ -1460,6 +1460,12 @@ private:
 
    /** Type of the varying returned by glGetTransformFeedbackVarying() */
    GLenum type;
+
+   /**
+    * If location != -1, the size that should be returned by
+    * glGetTransformFeedbackVarying().
+    */
+   unsigned size;
 };
 
 
@@ -1484,14 +1490,14 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
 
    if (bracket) {
       this->var_name = ralloc_strndup(mem_ctx, input, bracket - input);
-      if (sscanf(bracket, "[%u]", &this->array_index) != 1) {
+      if (sscanf(bracket, "[%u]", &this->array_subscript) != 1) {
          linker_error(prog, "Cannot parse transform feedback varying %s", input);
          return false;
       }
-      this->is_array = true;
+      this->is_subscripted = true;
    } else {
       this->var_name = ralloc_strdup(mem_ctx, input);
-      this->is_array = false;
+      this->is_subscripted = false;
    }
 
    /* For drivers that lower gl_ClipDistance to gl_ClipDistanceMESA, we need
@@ -1501,8 +1507,10 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
    if (ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].LowerClipDistance &&
        strcmp(this->var_name, "gl_ClipDistance") == 0) {
       this->var_name = "gl_ClipDistanceMESA";
-      this->single_component = this->array_index % 4;
-      this->array_index /= 4;
+      if (this->is_subscripted) {
+         this->single_component = this->array_subscript % 4;
+         this->array_subscript /= 4;
+      }
    }
 
    return true;
@@ -1518,9 +1526,9 @@ tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
 {
    if (strcmp(x.var_name, y.var_name) != 0)
       return false;
-   if (x.is_array != y.is_array)
+   if (x.is_subscripted != y.is_subscripted)
       return false;
-   if (x.is_array && x.array_index != y.array_index)
+   if (x.is_subscripted && x.array_subscript != y.array_subscript)
       return false;
    if (x.single_component != y.single_component)
       return false;
@@ -1542,37 +1550,39 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
 {
    if (output_var->type->is_array()) {
       /* Array variable */
-      if (!this->is_array) {
-         linker_error(prog, "Transform feedback varying %s found, "
-                      "but array dereference required for varying %s[%d]).",
-                      this->orig_name,
-		      output_var->name, output_var->type->length);
-         return false;
-      }
-      /* Check array bounds. */
-      if (this->array_index >=
-          (unsigned) output_var->type->array_size()) {
-         linker_error(prog, "Transform feedback varying %s has index "
-                      "%i, but the array size is %i.",
-                      this->orig_name, this->array_index,
-                      output_var->type->array_size());
-         return false;
-      }
       const unsigned matrix_cols =
          output_var->type->fields.array->matrix_columns;
-      this->location = output_var->location + this->array_index * matrix_cols;
+
+      if (this->is_subscripted) {
+         /* Check array bounds. */
+         if (this->array_subscript >=
+             (unsigned) output_var->type->array_size()) {
+            linker_error(prog, "Transform feedback varying %s has index "
+                         "%i, but the array size is %i.",
+                         this->orig_name, this->array_subscript,
+                         output_var->type->array_size());
+            return false;
+         }
+         this->location =
+            output_var->location + this->array_subscript * matrix_cols;
+         this->size = 1;
+      } else {
+         this->location = output_var->location;
+         this->size = (unsigned) output_var->type->array_size();
+      }
       this->vector_elements = output_var->type->fields.array->vector_elements;
       this->matrix_columns = matrix_cols;
-      this->type = GL_NONE;
+      this->type = output_var->type->fields.array->gl_type;
    } else {
       /* Regular variable (scalar, vector, or matrix) */
-      if (this->is_array) {
+      if (this->is_subscripted) {
          linker_error(prog, "Transform feedback varying %s found, "
                       "but it's an array ([] expected).",
                       this->orig_name);
          return false;
       }
       this->location = output_var->location;
+      this->size = 1;
       this->vector_elements = output_var->type->vector_elements;
       this->matrix_columns = output_var->type->matrix_columns;
       this->type = output_var->type->gl_type;
@@ -1621,26 +1631,25 @@ tfeedback_decl::store(struct gl_shader_program *prog,
                    this->orig_name);
       return false;
    }
-   for (unsigned v = 0; v < this->matrix_columns; ++v) {
-      unsigned num_components =
-         this->single_component >= 0 ? 1 : this->vector_elements;
-      info->Outputs[info->NumOutputs].OutputRegister = this->location + v;
-      info->Outputs[info->NumOutputs].NumComponents = num_components;
-      info->Outputs[info->NumOutputs].OutputBuffer = buffer;
-      info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
-      info->Outputs[info->NumOutputs].ComponentOffset =
-         this->single_component >= 0 ? this->single_component : 0;
-      ++info->NumOutputs;
-      info->BufferStride[buffer] += num_components;
+   for (unsigned index = 0; index < this->size; ++index) {
+      for (unsigned v = 0; v < this->matrix_columns; ++v) {
+         unsigned num_components =
+            this->single_component >= 0 ? 1 : this->vector_elements;
+         info->Outputs[info->NumOutputs].OutputRegister =
+            this->location + v + index * this->matrix_columns;
+         info->Outputs[info->NumOutputs].NumComponents = num_components;
+         info->Outputs[info->NumOutputs].OutputBuffer = buffer;
+         info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
+         info->Outputs[info->NumOutputs].ComponentOffset =
+            this->single_component >= 0 ? this->single_component : 0;
+         ++info->NumOutputs;
+         info->BufferStride[buffer] += num_components;
+      }
    }
 
    info->Varyings[varying].Name = ralloc_strdup(prog, this->orig_name);
    info->Varyings[varying].Type = this->type;
-   /* Since we require that transform feedback varyings dereference
-    * arrays, there's always only one element of the GL datatype above
-    * present in this varying.
-    */
-   info->Varyings[varying].Size = 1;
+   info->Varyings[varying].Size = this->size;
    info->NumVarying++;
 
    return true;
