@@ -260,12 +260,13 @@ MacroBlockTypeToPipeWeights(const struct pipe_mpeg12_macroblock *mb, unsigned we
       break;
 
    default:
-      if (mb->macroblock_type & PIPE_MPEG12_MB_TYPE_PATTERN) {
-         /* patern without a motion vector, just copy the old frame content */
-         weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
+      if (mb->macroblock_type & PIPE_MPEG12_MB_TYPE_INTRA) {
+         weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
          weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
       } else {
-         weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
+         /* no motion vector, but also not intra mb ->
+            just copy the old frame content */
+         weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
          weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
       }
       break;
