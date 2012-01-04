@@ -650,9 +650,6 @@ void r500BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 		}
 	}
 
-	/* Make sure TEX_SEM_WAIT is set on the last instruction */
-	code->inst[code->inst_end].inst0 |= R500_INST_TEX_SEM_WAIT;
-
 	if (code->max_temp_idx >= compiler->Base.max_temp_regs)
 		rc_error(&compiler->Base, "Too many hardware temporaries used");
 
@@ -673,6 +670,9 @@ void r500BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 		ip = ++code->inst_end;
 		code->inst[ip].inst0 = R500_INST_TYPE_OUT | R500_INST_TEX_SEM_WAIT;
 	}
+
+	/* Make sure TEX_SEM_WAIT is set on the last instruction */
+	code->inst[code->inst_end].inst0 |= R500_INST_TEX_SEM_WAIT;
 
 	/* Enable full flow control mode if we are using loops or have if
 	 * statements nested at least four deep. */

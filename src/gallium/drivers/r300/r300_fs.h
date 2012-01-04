@@ -31,6 +31,7 @@
 #include "r300_shader_semantics.h"
 
 struct r300_fragment_shader_code {
+    struct rX00_fragment_program_code code;
     struct tgsi_shader_info info;
     struct r300_shader_semantics inputs;
 
@@ -48,7 +49,6 @@ struct r300_fragment_shader_code {
     uint32_t us_out_w;          /* R300_US_W_FMT:     0x46b4 */
 
     struct r300_fragment_program_external_state compare_state;
-    struct rX00_fragment_program_code code;
 
     unsigned cb_code_size;
     uint32_t *cb_code;
