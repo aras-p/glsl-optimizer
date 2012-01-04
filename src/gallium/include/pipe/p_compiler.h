@@ -308,6 +308,17 @@ void _ReadWriteBarrier(void);
 #endif
 
 
+/**
+ * Static (compile-time) assertion.
+ * Basically, use COND to dimension an array.  If COND is false/zero the
+ * array size will be -1 and we'll get a compilation error.
+ */
+#define STATIC_ASSERT(COND) \
+   do { \
+      typedef int static_assertion_failed[(!!(COND))*2-1]; \
+   } while (0)
+
+
 #if defined(__cplusplus)
 }
 #endif
