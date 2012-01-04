@@ -2277,6 +2277,8 @@ struct gl_shader_program
    /** Vertex shader state - copied into gl_vertex_program at link time */
    struct {
       GLboolean UsesClipDistance; /**< True if gl_ClipDistance is written to. */
+      GLuint ClipDistanceArraySize; /**< Size of the gl_ClipDistance array, or
+                                         0 if not present. */
    } Vert;
 
    /* post-link info: */
