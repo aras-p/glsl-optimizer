@@ -500,7 +500,7 @@ swrast_fast_copy_pixels(struct gl_context *ctx,
                                   srcRb->Width, srcRb->Height,
                                   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
                                   &map, &rowStride);
-      if (!srcMap) {
+      if (!map) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
          return GL_TRUE; /* don't retry with slow path */
       }
