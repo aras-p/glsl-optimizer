@@ -128,6 +128,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 7;
    case PIPE_CAP_CONDITIONAL_RENDER:
       return 1;
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+      return 1;
    default:
       return 0;
    }

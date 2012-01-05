@@ -894,7 +894,7 @@ blend_fallback(struct quad_stage *qs,
          /* If fixed-point dest color buffer, need to clamp the incoming
           * fragment colors now.
           */
-         if (clamp) {
+         if (clamp || softpipe->rasterizer->clamp_fragment_color) {
             clamp_colors(quadColor);
          }
 
@@ -982,7 +982,7 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
       /* If fixed-point dest color buffer, need to clamp the incoming
        * fragment colors now.
        */
-      if (bqs->clamp[0]) {
+      if (bqs->clamp[0] || qs->softpipe->rasterizer->clamp_fragment_color) {
          clamp_colors(quadColor);
       }
 
@@ -1055,7 +1055,7 @@ blend_single_add_one_one(struct quad_stage *qs,
       /* If fixed-point dest color buffer, need to clamp the incoming
        * fragment colors now.
        */
-      if (bqs->clamp[0]) {
+      if (bqs->clamp[0] || qs->softpipe->rasterizer->clamp_fragment_color) {
          clamp_colors(quadColor);
       }
 
@@ -1110,6 +1110,9 @@ single_output_color(struct quad_stage *qs,
       float (*quadColor)[4] = quad->output.color[0];
       const int itx = (quad->input.x0 & (TILE_SIZE-1));
       const int ity = (quad->input.y0 & (TILE_SIZE-1));
+
+      if (qs->softpipe->rasterizer->clamp_fragment_color)
+         clamp_colors(quadColor);
 
       rebase_colors(bqs->base_format[0], quadColor);
 
