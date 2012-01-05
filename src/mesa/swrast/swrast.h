@@ -110,6 +110,11 @@ _swrast_CopyPixels( struct gl_context *ctx,
 		    GLsizei width, GLsizei height,
 		    GLenum type );
 
+extern GLboolean
+swrast_fast_copy_pixels(struct gl_context *ctx,
+			GLint srcX, GLint srcY, GLsizei width, GLsizei height,
+			GLint dstX, GLint dstY, GLenum type);
+
 extern void
 _swrast_DrawPixels( struct gl_context *ctx,
 		    GLint x, GLint y,

@@ -422,13 +422,13 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
 
 
 /**
- * Try to do a fast copy pixels with memcpy.
+ * Try to do a fast 1:1 blit with memcpy.
  * \return GL_TRUE if successful, GL_FALSE otherwise.
  */
-static GLboolean
-fast_copy_pixels(struct gl_context *ctx,
-                 GLint srcX, GLint srcY, GLsizei width, GLsizei height,
-                 GLint dstX, GLint dstY, GLenum type)
+GLboolean
+swrast_fast_copy_pixels(struct gl_context *ctx,
+			GLint srcX, GLint srcY, GLsizei width, GLsizei height,
+			GLint dstX, GLint dstY, GLenum type)
 {
    struct gl_framebuffer *srcFb = ctx->ReadBuffer;
    struct gl_framebuffer *dstFb = ctx->DrawBuffer;
@@ -578,7 +578,8 @@ _swrast_CopyPixels( struct gl_context *ctx,
 	 ctx->Pixel.ZoomX != 1.0F ||
 	 ctx->Pixel.ZoomY != 1.0F ||
 	 ctx->_ImageTransferState) &&
-       fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
+       swrast_fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty,
+			       type)) {
       /* all done */
       return;
    }

@@ -449,117 +449,6 @@ blit_linear(struct gl_context *ctx,
    free(dstBuffer);
 }
 
-
-/**
- * Simple case:  Blit color, depth or stencil with no scaling or flipping.
- * XXX we could easily support vertical flipping here.
- */
-static void
-simple_blit(struct gl_context *ctx,
-            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-            GLbitfield buffer)
-{
-   struct gl_renderbuffer *readRb, *drawRb;
-   const GLint width = srcX1 - srcX0;
-   const GLint height = srcY1 - srcY0;
-   GLint row, srcY, dstY, yStep;
-   GLint comps, bytesPerRow;
-   void *rowBuffer;
-
-   /* only one buffer */
-   ASSERT(_mesa_bitcount(buffer) == 1);
-   /* no flipping checks */
-   ASSERT(srcX0 < srcX1);
-   ASSERT(srcY0 < srcY1);
-   ASSERT(dstX0 < dstX1);
-   ASSERT(dstY0 < dstY1);
-   /* size checks */
-   ASSERT(srcX1 - srcX0 == dstX1 - dstX0);
-   ASSERT(srcY1 - srcY0 == dstY1 - dstY0);
-
-   /* From the GL_ARB_framebuffer_object spec:
-    *
-    *     "If the source and destination buffers are identical, and the source
-    *      and destination rectangles overlap, the result of the blit operation
-    *      is undefined."
-    *
-    * However, we provide the expected result anyway by flipping the order of
-    * the memcpy of rows.
-    */
-   if (srcY0 > dstY0) {
-      /* src above dst: copy bottom-to-top */
-      yStep = 1;
-      srcY = srcY0;
-      dstY = dstY0;
-   }
-   else {
-      /* src below dst: copy top-to-bottom */
-      yStep = -1;
-      srcY = srcY1 - 1;
-      dstY = dstY1 - 1;
-   }
-
-   switch (buffer) {
-   case GL_COLOR_BUFFER_BIT:
-      readRb = ctx->ReadBuffer->_ColorReadBuffer;
-      drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-      comps = 4;
-      break;
-   case GL_DEPTH_BUFFER_BIT:
-      readRb = ctx->ReadBuffer->_DepthBuffer;
-      drawRb = ctx->DrawBuffer->_DepthBuffer;
-      comps = 1;
-      break;
-   case GL_STENCIL_BUFFER_BIT:
-      readRb = ctx->ReadBuffer->_StencilBuffer;
-      drawRb = ctx->DrawBuffer->_StencilBuffer;
-      comps = 1;
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected buffer in simple_blit()");
-      return;
-   }
-
-   ASSERT(readRb->DataType == drawRb->DataType);
-
-   /* compute bytes per row */
-   switch (readRb->DataType) {
-   case GL_UNSIGNED_BYTE:
-      bytesPerRow = comps * width * sizeof(GLubyte);
-      break;
-   case GL_UNSIGNED_SHORT:
-      bytesPerRow = comps * width * sizeof(GLushort);
-      break;
-   case GL_UNSIGNED_INT:
-      bytesPerRow = comps * width * sizeof(GLuint);
-      break;
-   case GL_FLOAT:
-      bytesPerRow = comps * width * sizeof(GLfloat);
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected buffer type in simple_blit");
-      return;
-   }
-
-   /* allocate the row buffer */
-   rowBuffer = malloc(bytesPerRow);
-   if (!rowBuffer) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
-      return;
-   }
-
-   for (row = 0; row < height; row++) {
-      readRb->GetRow(ctx, readRb, width, srcX0, srcY, rowBuffer);
-      drawRb->PutRow(ctx, drawRb, width, dstX0, dstY, rowBuffer, NULL);
-      srcY += yStep;
-      dstY += yStep;
-   }
-
-   free(rowBuffer);
-}
-
-
 /**
  * Software fallback for glBlitFramebufferEXT().
  */
@@ -574,6 +463,11 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
       GL_DEPTH_BUFFER_BIT,
       GL_STENCIL_BUFFER_BIT
    };
+   static const GLenum buffer_enums[3] = {
+      GL_COLOR,
+      GL_DEPTH,
+      GL_STENCIL,
+   };
    GLint i;
 
    if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
@@ -584,39 +478,46 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived(ctx);
 
-   swrast_render_start(ctx);
-
+   /* First, try covering whatever buffers possible using the fast 1:1 copy
+    * path.
+    */
    if (srcX1 - srcX0 == dstX1 - dstX0 &&
        srcY1 - srcY0 == dstY1 - dstY0 &&
        srcX0 < srcX1 &&
        srcY0 < srcY1 &&
        dstX0 < dstX1 &&
        dstY0 < dstY1) {
-      /* no stretching or flipping.
-       * filter doesn't matter.
-       */
       for (i = 0; i < 3; i++) {
          if (mask & buffers[i]) {
-            simple_blit(ctx, srcX0, srcY0, srcX1, srcY1,
-                        dstX0, dstY0, dstX1, dstY1, buffers[i]);
-         }
+	    if (swrast_fast_copy_pixels(ctx,
+					srcX0, srcY0,
+					srcX1 - srcX0, srcY1 - srcY0,
+					dstX0, dstY0,
+					buffer_enums[i])) {
+	       mask &= ~buffers[i];
+	    }
+	 }
+      }
+
+      if (!mask)
+	 return;
+   }
+
+   swrast_render_start(ctx);
+
+   if (filter == GL_NEAREST) {
+      for (i = 0; i < 3; i++) {
+	 if (mask & buffers[i]) {
+	    blit_nearest(ctx,  srcX0, srcY0, srcX1, srcY1,
+			 dstX0, dstY0, dstX1, dstY1, buffers[i]);
+	 }
       }
    }
    else {
-      if (filter == GL_NEAREST) {
-         for (i = 0; i < 3; i++) {
-            if (mask & buffers[i]) {
-               blit_nearest(ctx,  srcX0, srcY0, srcX1, srcY1,
-                            dstX0, dstY0, dstX1, dstY1, buffers[i]);
-            }
-         }
-      }
-      else {
-         ASSERT(filter == GL_LINEAR);
-         if (mask & GL_COLOR_BUFFER_BIT) {  /* depth/stencil not allowed */
-            blit_linear(ctx,  srcX0, srcY0, srcX1, srcY1,
-                        dstX0, dstY0, dstX1, dstY1);
-         }
+      ASSERT(filter == GL_LINEAR);
+      if (mask & GL_COLOR_BUFFER_BIT) {  /* depth/stencil not allowed */
+	 blit_linear(ctx,  srcX0, srcY0, srcX1, srcY1,
+		     dstX0, dstY0, dstX1, dstY1);
       }
    }
 
