@@ -1037,6 +1037,7 @@ micro_sub(union tgsi_exec_channel *dst,
 
 static void
 fetch_src_file_channel(const struct tgsi_exec_machine *mach,
+                       const uint chan_index,
                        const uint file,
                        const uint swizzle,
                        const union tgsi_exec_channel *index,
@@ -1097,7 +1098,7 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
        * gl_FragCoord, for example, in a sys value register.
        */
       for (i = 0; i < QUAD_SIZE; i++) {
-         chan->f[i] = mach->SystemValue[index->i[i]][0];
+         chan->u[i] = mach->SystemValue[index->i[i]].u[i];
       }
       break;
 
@@ -1221,6 +1222,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
       /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
       fetch_src_file_channel(mach,
+                             chan_index,
                              reg->Indirect.File,
                              swizzle,
                              &index2,
@@ -1280,6 +1282,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
 
          swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
          fetch_src_file_channel(mach,
+                                chan_index,
                                 reg->DimIndirect.File,
                                 swizzle,
                                 &index2,
@@ -1314,6 +1317,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
 
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(mach,
+                          chan_index,
                           reg->Register.File,
                           swizzle,
                           &index,
@@ -1384,6 +1388,7 @@ store_dest(struct tgsi_exec_machine *mach,
 
       /* fetch values from the address/indirection register */
       fetch_src_file_channel(mach,
+                             chan_index,
                              reg->Indirect.File,
                              swizzle,
                              &index,
@@ -1433,6 +1438,7 @@ store_dest(struct tgsi_exec_machine *mach,
 
          swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
          fetch_src_file_channel(mach,
+                                chan_index,
                                 reg->DimIndirect.File,
                                 swizzle,
                                 &index2,
@@ -1995,11 +2001,11 @@ exec_txf(struct tgsi_exec_machine *mach,
    if (inst->Texture.NumOffsets == 1) {
       union tgsi_exec_channel index;
       index.i[0] = index.i[1] = index.i[2] = index.i[3] = inst->TexOffsets[0].Index;
-      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+      fetch_src_file_channel(mach, 0, inst->TexOffsets[0].File,
                              inst->TexOffsets[0].SwizzleX, &index, &ZeroVec, &offset[0]);
-      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+      fetch_src_file_channel(mach, 0, inst->TexOffsets[0].File,
                              inst->TexOffsets[0].SwizzleY, &index, &ZeroVec, &offset[1]);
-      fetch_src_file_channel(mach, inst->TexOffsets[0].File,
+      fetch_src_file_channel(mach, 0, inst->TexOffsets[0].File,
                              inst->TexOffsets[0].SwizzleZ, &index, &ZeroVec, &offset[2]);
      offsets[0] = offset[0].i[0];
      offsets[1] = offset[1].i[0];
