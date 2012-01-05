@@ -723,6 +723,83 @@ if test "x$enable_shared_glapi" = xyes; then
 fi
 AC_SUBST([SHARED_GLAPI])
 
+dnl
+dnl Driver configuration. Options are xlib, dri and osmesa right now.
+dnl More later: fbdev, ...
+dnl
+default_driver="xlib"
+
+case "$host_os" in
+linux*)
+    case "$host_cpu" in
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
+    esac
+    ;;
+*freebsd* | dragonfly* | *netbsd*)
+    case "$host_cpu" in
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
+    esac
+    ;;
+esac
+
+if test "x$enable_opengl" = xno; then
+    default_driver="no"
+fi
+
+AC_ARG_WITH([driver],
+    [AS_HELP_STRING([--with-driver=DRIVER], [DEPRECATED])],
+    [mesa_driver="$withval"],
+    [mesa_driver=auto])
+dnl Check for valid option
+case "x$mesa_driver" in
+xxlib|xdri|xosmesa|xno)
+    if test "x$enable_dri" != xauto -o \
+            "x$enable_glx" != xauto -o \
+            "x$enable_osmesa" != xauto -o \
+            "x$enable_xlib_glx" != xauto; then
+        AC_MSG_ERROR([--with-driver=$mesa_driver is deprecated])
+    fi
+    ;;
+xauto)
+    mesa_driver="$default_driver"
+    ;;
+*)
+    AC_MSG_ERROR([Driver '$mesa_driver' is not a valid option])
+    ;;
+esac
+
+# map $mesa_driver to APIs
+if test "x$enable_dri" = xauto; then
+    case "x$mesa_driver" in
+    xdri) enable_dri=yes ;;
+    *)    enable_dri=no ;;
+    esac
+fi
+
+if test "x$enable_glx" = xauto; then
+    case "x$mesa_driver" in
+    xdri|xxlib) enable_glx=yes ;;
+    *)          enable_glx=no ;;
+    esac
+fi
+
+if test "x$enable_osmesa" = xauto; then
+    case "x$mesa_driver" in
+    xxlib|xosmesa) enable_osmesa=yes ;;
+    *)             enable_osmesa=no ;;
+    esac
+fi
+
+if test "x$enable_xlib_glx" = xauto; then
+    case "x$mesa_driver" in
+    xxlib) enable_xlib_glx=yes ;;
+    *)     enable_xlib_glx=no ;;
+    esac
+fi
+
+if test "x$enable_glx" = xno; then
+    enable_xlib_glx=no
+fi
 
 dnl
 dnl Driver specific build directories
