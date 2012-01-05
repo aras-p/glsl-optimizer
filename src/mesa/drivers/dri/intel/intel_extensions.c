@@ -113,8 +113,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (intel->gen >= 4) {
       ctx->Extensions.ARB_color_buffer_float = true;
-      if (override_version >= 30)
-	 ctx->Extensions.ARB_depth_buffer_float = true;
+      ctx->Extensions.ARB_depth_buffer_float = true;
       ctx->Extensions.ARB_depth_clamp = true;
       ctx->Extensions.ARB_fragment_coord_conventions = true;
       ctx->Extensions.ARB_fragment_program_shadow = true;
