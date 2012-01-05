@@ -270,6 +270,11 @@ vec2  mix(vec2  x, vec2  y, float a);
 vec3  mix(vec3  x, vec3  y, float a);
 vec4  mix(vec4  x, vec4  y, float a);
 
+float mix(float x, float y, bool  a);
+vec2  mix(vec2  x, vec2  y, bvec2 a);
+vec3  mix(vec3  x, vec3  y, bvec3 a);
+vec4  mix(vec4  x, vec4  y, bvec4 a);
+
 float step(float edge, float x);
 vec2  step(vec2  edge, vec2  x);
 vec3  step(vec3  edge, vec3  x);
