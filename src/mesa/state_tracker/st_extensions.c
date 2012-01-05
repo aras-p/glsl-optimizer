@@ -263,12 +263,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(st->ctx);
 
-   /* Extensions that only depend on the GLSL version:
-    */
-   if (ctx->Const.GLSLVersion >= 130) {
-      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
-   }
-
    /*
     * Extensions that are supported by all Gallium drivers:
     */
@@ -587,6 +581,23 @@ void st_init_extensions(struct st_context *st)
 #endif
    }
 
+   if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
+                                PIPE_SHADER_CAP_INTEGERS) &&
+       screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
+                                PIPE_SHADER_CAP_INTEGERS)) {
+      ctx->Const.NativeIntegers = GL_TRUE;
+   }
+
+   if (ctx->Const.NativeIntegers)
+      ctx->Const.GLSLVersion = 130;
+
+   /* Extensions that only depend on the GLSL version:
+    */
+   if (ctx->Const.GLSLVersion >= 130) {
+      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
+      ctx->Const.MaxClipPlanes = 8;
+   }
+
    ctx->Extensions.NV_primitive_restart = GL_TRUE;
    if (!screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
       st->sw_primitive_restart = GL_TRUE;
@@ -703,4 +714,12 @@ void st_init_extensions(struct st_context *st)
          ctx->Extensions.ARB_transform_feedback2 = GL_TRUE;
       }
    }
+
+   if (ctx->Const.NativeIntegers &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_UINT, PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_SINT, PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+      ctx->Extensions.EXT_texture_integer = GL_TRUE;
+
 }

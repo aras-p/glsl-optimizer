@@ -5010,13 +5010,18 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       num_clip_distances[i] = get_clip_distance_size(ir);
 
       do {
+         unsigned what_to_lower = MOD_TO_FRACT | DIV_TO_MUL_RCP |
+            EXP_TO_EXP2 | LOG_TO_LOG2;
+         if (options->EmitNoPow)
+            what_to_lower |= POW_TO_EXP2;
+         if (!ctx->Const.NativeIntegers)
+            what_to_lower |= INT_DIV_TO_MUL_RCP;
+
          progress = false;
 
          /* Lowering */
          do_mat_op_to_vec(ir);
-         lower_instructions(ir, (MOD_TO_FRACT | DIV_TO_MUL_RCP | EXP_TO_EXP2
-				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP
-        			 | ((options->EmitNoPow) ? POW_TO_EXP2 : 0)));
+         lower_instructions(ir, what_to_lower);
 
          progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
 
