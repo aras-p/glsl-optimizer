@@ -2453,7 +2453,7 @@ _mesa_pack_ubyte_stencil_row(gl_format format, GLuint n,
       break;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       {
-         GLfloat *d = ((GLfloat *) dst);
+         GLuint *d = dst;
          GLuint i;
          for (i = 0; i < n; i++) {
             d[i * 2 + 1] = src[i];
