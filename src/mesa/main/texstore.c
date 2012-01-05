@@ -975,12 +975,11 @@ static GLboolean
 _mesa_texstore_z32(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffffff;
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    GLenum dstType;
    (void) dims;
    ASSERT(dstFormat == MESA_FORMAT_Z32 ||
           dstFormat == MESA_FORMAT_Z32_FLOAT);
-   ASSERT(texelBytes == sizeof(GLuint));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == sizeof(GLuint));
 
    if (dstFormat == MESA_FORMAT_Z32)
       dstType = GL_UNSIGNED_INT;
@@ -1090,10 +1089,9 @@ static GLboolean
 _mesa_texstore_z16(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffff;
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    (void) dims;
    ASSERT(dstFormat == MESA_FORMAT_Z16);
-   ASSERT(texelBytes == sizeof(GLushort));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == sizeof(GLushort));
 
    if (ctx->Pixel.DepthScale == 1.0f &&
        ctx->Pixel.DepthBias == 0.0f &&
@@ -1134,12 +1132,11 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGB565 ||
           dstFormat == MESA_FORMAT_RGB565_REV);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1237,14 +1234,13 @@ static GLboolean
 _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA8888 ||
           dstFormat == MESA_FORMAT_RGBA8888_REV ||
           dstFormat == MESA_FORMAT_RGBX8888 ||
           dstFormat == MESA_FORMAT_RGBX8888_REV);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1362,14 +1358,13 @@ static GLboolean
 _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = GL_RGBA;
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
           dstFormat == MESA_FORMAT_ARGB8888_REV ||
           dstFormat == MESA_FORMAT_XRGB8888 ||
           dstFormat == MESA_FORMAT_XRGB8888_REV );
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1559,11 +1554,10 @@ static GLboolean
 _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGB888);
-   ASSERT(texelBytes == 3);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1677,11 +1671,10 @@ static GLboolean
 _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_BGR888);
-   ASSERT(texelBytes == 3);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1775,12 +1768,11 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB4444 ||
           dstFormat == MESA_FORMAT_ARGB4444_REV);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1840,11 +1832,10 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA5551);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1893,12 +1884,11 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB1555 ||
           dstFormat == MESA_FORMAT_ARGB1555_REV);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -1959,11 +1949,10 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB2101010);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2038,11 +2027,10 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_unorm44(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_AL44);
-   ASSERT(texelBytes == 1);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
    {
       /* general path */
@@ -2082,14 +2070,13 @@ static GLboolean
 _mesa_texstore_unorm88(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_AL88 ||
           dstFormat == MESA_FORMAT_AL88_REV ||
           dstFormat == MESA_FORMAT_GR88 ||
           dstFormat == MESA_FORMAT_RG88);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2199,14 +2186,13 @@ static GLboolean
 _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_AL1616 ||
           dstFormat == MESA_FORMAT_AL1616_REV ||
 	  dstFormat == MESA_FORMAT_RG1616 ||
           dstFormat == MESA_FORMAT_RG1616_REV);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2276,14 +2262,13 @@ static GLboolean
 _mesa_texstore_unorm16(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_R16 ||
           dstFormat == MESA_FORMAT_A16 ||
           dstFormat == MESA_FORMAT_L16 ||
           dstFormat == MESA_FORMAT_I16);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2333,11 +2318,10 @@ _mesa_texstore_unorm16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_16(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA_16);
-   ASSERT(texelBytes == 8);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 8);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2468,11 +2452,10 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGB332);
-   ASSERT(texelBytes == 1);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2521,14 +2504,13 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_unorm8(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_A8 ||
           dstFormat == MESA_FORMAT_L8 ||
           dstFormat == MESA_FORMAT_I8 ||
           dstFormat == MESA_FORMAT_R8);
-   ASSERT(texelBytes == 1);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2604,13 +2586,12 @@ static GLboolean
 _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
 
    (void) ctx; (void) dims; (void) baseInternalFormat;
 
    ASSERT((dstFormat == MESA_FORMAT_YCBCR) ||
           (dstFormat == MESA_FORMAT_YCBCR_REV));
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
    ASSERT(ctx->Extensions.MESA_ycbcr_texture);
    ASSERT(srcFormat == GL_YCBCR_MESA);
    ASSERT((srcType == GL_UNSIGNED_SHORT_8_8_MESA) ||
@@ -2735,14 +2716,13 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_snorm8(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_A8 ||
           dstFormat == MESA_FORMAT_SIGNED_L8 ||
           dstFormat == MESA_FORMAT_SIGNED_I8 ||
           dstFormat == MESA_FORMAT_SIGNED_R8);
-   ASSERT(texelBytes == 1);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2791,12 +2771,11 @@ static GLboolean
 _mesa_texstore_snorm88(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_AL88 ||
           dstFormat == MESA_FORMAT_SIGNED_RG88_REV);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2846,14 +2825,13 @@ static GLboolean
 _mesa_texstore_snorm16(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_R16 ||
           dstFormat == MESA_FORMAT_SIGNED_A16 ||
           dstFormat == MESA_FORMAT_SIGNED_L16 ||
           dstFormat == MESA_FORMAT_SIGNED_I16);
-   ASSERT(texelBytes == 2);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2906,12 +2884,11 @@ static GLboolean
 _mesa_texstore_snorm1616(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_AL1616 ||
           dstFormat == MESA_FORMAT_SIGNED_GR1616);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -2966,11 +2943,10 @@ _mesa_texstore_snorm1616(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_RGBX8888);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    {
       /* general path */
@@ -3015,12 +2991,11 @@ static GLboolean
 _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_RGBA8888 ||
           dstFormat == MESA_FORMAT_SIGNED_RGBA8888_REV);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -3315,7 +3290,6 @@ _mesa_texstore_s8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3335,7 +3309,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY ||
           baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_RG);
-   ASSERT(texelBytes == components * sizeof(GLfloat));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLfloat));
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -3386,7 +3360,6 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3406,7 +3379,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
           baseInternalFormat == GL_INTENSITY ||
           baseInternalFormat == GL_RED ||
           baseInternalFormat == GL_RG);
-   ASSERT(texelBytes == components * sizeof(GLhalfARB));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLhalfARB));
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
@@ -3456,7 +3429,6 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3476,7 +3448,7 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLbyte));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLbyte));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -3526,7 +3498,6 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3546,7 +3517,7 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLshort));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLshort));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -3596,7 +3567,6 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3616,7 +3586,7 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLint));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLint));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -3666,7 +3636,6 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3686,7 +3655,7 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLubyte));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLubyte));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -3734,7 +3703,6 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3754,7 +3722,7 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLushort));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLushort));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -3802,7 +3770,6 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
    const GLint components = _mesa_components_in_format(baseFormat);
 
@@ -3822,7 +3789,7 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_INTENSITY);
-   ASSERT(texelBytes == components * sizeof(GLuint));
+   ASSERT(_mesa_get_format_bytes(dstFormat) == components * sizeof(GLuint));
 
    /* Note: Pixel transfer ops (scale, bias, table lookup) do not apply
     * to integer formats.
@@ -4147,11 +4114,10 @@ _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb2101010_uint(TEXSTORE_PARAMS)
 {
-   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB2101010_UINT);
-   ASSERT(texelBytes == 4);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!srcPacking->SwapBytes &&
        dstFormat == MESA_FORMAT_ARGB2101010_UINT &&
