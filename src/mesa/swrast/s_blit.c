@@ -27,6 +27,8 @@
 #include "main/condrender.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "main/format_unpack.h"
+#include "main/format_pack.h"
 #include "s_context.h"
 
 
@@ -122,10 +124,18 @@ blit_nearest(struct gl_context *ctx,
 
    const GLboolean invertX = (srcX1 < srcX0) ^ (dstX1 < dstX0);
    const GLboolean invertY = (srcY1 < srcY0) ^ (dstY1 < dstY0);
-
+   enum mode {
+      DIRECT,
+      UNPACK_RGBA_FLOAT,
+      UNPACK_Z_FLOAT,
+      UNPACK_Z_INT,
+      UNPACK_S,
+   } mode;
+   GLubyte *srcMap, *dstMap;
+   GLint srcRowStride, dstRowStride;
    GLint dstRow;
 
-   GLint comps, pixelSize;
+   GLint pixelSize;
    GLvoid *srcBuffer, *dstBuffer;
    GLint prevY = -1;
 
@@ -138,39 +148,40 @@ blit_nearest(struct gl_context *ctx,
    case GL_COLOR_BUFFER_BIT:
       readRb = ctx->ReadBuffer->_ColorReadBuffer;
       drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-      comps = 4;
+
+      if (readRb->Format == drawRb->Format) {
+	 mode = DIRECT;
+	 pixelSize = _mesa_get_format_bytes(readRb->Format);
+      } else {
+	 mode = UNPACK_RGBA_FLOAT;
+	 pixelSize = 16;
+      }
+
       break;
    case GL_DEPTH_BUFFER_BIT:
-      readRb = ctx->ReadBuffer->_DepthBuffer;
-      drawRb = ctx->DrawBuffer->_DepthBuffer;
-      comps = 1;
+      readRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+      drawRb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+
+      /* Note that for depth/stencil, the formats of src/dst must match.  By
+       * using the core helpers for pack/unpack, we avoid needing to handle
+       * masking for things like DEPTH copies of Z24S8.
+       */
+      if (readRb->Format == MESA_FORMAT_Z32_FLOAT ||
+	  readRb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
+	 mode = UNPACK_Z_FLOAT;
+      } else {
+	 mode = UNPACK_Z_INT;
+      }
+      pixelSize = 4;
       break;
    case GL_STENCIL_BUFFER_BIT:
-      readRb = ctx->ReadBuffer->_StencilBuffer;
-      drawRb = ctx->DrawBuffer->_StencilBuffer;
-      comps = 1;
+      readRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+      drawRb = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+      mode = UNPACK_S;
+      pixelSize = 1;
       break;
    default:
       _mesa_problem(ctx, "unexpected buffer in blit_nearest()");
-      return;
-   }
-
-   switch (readRb->DataType) {
-   case GL_UNSIGNED_BYTE:
-      pixelSize = comps * sizeof(GLubyte);
-      break;
-   case GL_UNSIGNED_SHORT:
-      pixelSize = comps * sizeof(GLushort);
-      break;
-   case GL_UNSIGNED_INT:
-      pixelSize = comps * sizeof(GLuint);
-      break;
-   case GL_FLOAT:
-      pixelSize = comps * sizeof(GLfloat);
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected buffer type (0x%x) in blit_nearest",
-                    readRb->DataType);
       return;
    }
 
@@ -197,6 +208,62 @@ blit_nearest(struct gl_context *ctx,
       return;
    }
 
+   if (readRb == drawRb) {
+      /* map whole buffer for read/write */
+      /* XXX we could be clever and just map the union region of the
+       * source and dest rects.
+       */
+      GLubyte *map;
+      GLint rowStride;
+      GLint formatSize = _mesa_get_format_bytes(readRb->Format);
+
+      ctx->Driver.MapRenderbuffer(ctx, readRb, 0, 0,
+                                  readRb->Width, readRb->Height,
+                                  GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                  &map, &rowStride);
+      if (!map) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
+
+      srcMap = map + srcYpos * rowStride + srcXpos * formatSize;
+      dstMap = map + dstYpos * rowStride + dstXpos * formatSize;
+
+      /* this handles overlapping copies */
+      if (srcY0 < dstY0) {
+         /* copy in reverse (top->down) order */
+         srcMap += rowStride * (readRb->Height - 1);
+         dstMap += rowStride * (readRb->Height - 1);
+         srcRowStride = -rowStride;
+         dstRowStride = -rowStride;
+      }
+      else {
+         /* copy in normal (bottom->up) order */
+         srcRowStride = rowStride;
+         dstRowStride = rowStride;
+      }
+   }
+   else {
+      /* different src/dst buffers */
+      ctx->Driver.MapRenderbuffer(ctx, readRb,
+				  srcXpos, srcYpos,
+                                  srcWidth, srcHeight,
+                                  GL_MAP_READ_BIT, &srcMap, &srcRowStride);
+      if (!srcMap) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
+      ctx->Driver.MapRenderbuffer(ctx, drawRb,
+				  dstXpos, dstYpos,
+                                  dstWidth, dstHeight,
+                                  GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
+      if (!dstMap) {
+         ctx->Driver.UnmapRenderbuffer(ctx, readRb);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
+   }
+
    /* allocate the src/dst row buffers */
    srcBuffer = malloc(pixelSize * srcWidth);
    if (!srcBuffer) {
@@ -211,9 +278,8 @@ blit_nearest(struct gl_context *ctx,
    }
 
    for (dstRow = 0; dstRow < dstHeight; dstRow++) {
-      const GLint dstY = dstYpos + dstRow;
       GLint srcRow = (dstRow * srcHeight) / dstHeight;
-      GLint srcY;
+      GLubyte *dstRowStart = dstMap + dstRowStride * dstRow;
 
       ASSERT(srcRow >= 0);
       ASSERT(srcRow < srcHeight);
@@ -222,21 +288,67 @@ blit_nearest(struct gl_context *ctx,
          srcRow = srcHeight - 1 - srcRow;
       }
 
-      srcY = srcYpos + srcRow;
-
       /* get pixel row from source and resample to match dest width */
-      if (prevY != srcY) {
-         readRb->GetRow(ctx, readRb, srcWidth, srcXpos, srcY, srcBuffer);
+      if (prevY != srcRow) {
+	 GLubyte *srcRowStart = srcMap + srcRowStride * srcRow;
+
+	 switch (mode) {
+	 case DIRECT:
+	    memcpy(srcBuffer, srcRowStart, pixelSize * srcWidth);
+	    break;
+	 case UNPACK_RGBA_FLOAT:
+	    _mesa_unpack_rgba_row(readRb->Format, srcWidth, srcRowStart,
+				  srcBuffer);
+	    break;
+	 case UNPACK_Z_FLOAT:
+	    _mesa_unpack_float_z_row(readRb->Format, srcWidth, srcRowStart,
+				     srcBuffer);
+	    break;
+	 case UNPACK_Z_INT:
+	    _mesa_unpack_uint_z_row(readRb->Format, srcWidth, srcRowStart,
+				    srcBuffer);
+	    break;
+	 case UNPACK_S:
+	    _mesa_unpack_ubyte_stencil_row(readRb->Format, srcWidth,
+					   srcRowStart, srcBuffer);
+	    break;
+	 }
+
          (*resampleRow)(srcWidth, dstWidth, srcBuffer, dstBuffer, invertX);
-         prevY = srcY;
+         prevY = srcRow;
       }
 
       /* store pixel row in destination */
-      drawRb->PutRow(ctx, drawRb, dstWidth, dstXpos, dstY, dstBuffer, NULL);
+      switch (mode) {
+      case DIRECT:
+	 memcpy(dstRowStart, dstBuffer, pixelSize * srcWidth);
+	 break;
+      case UNPACK_RGBA_FLOAT:
+	 _mesa_pack_float_rgba_row(drawRb->Format, dstWidth, dstBuffer,
+				   dstRowStart);
+	 break;
+      case UNPACK_Z_FLOAT:
+	 _mesa_pack_float_z_row(drawRb->Format, dstWidth, dstBuffer,
+				dstRowStart);
+	 break;
+      case UNPACK_Z_INT:
+	 _mesa_pack_uint_z_row(drawRb->Format, dstWidth, dstBuffer,
+			       dstRowStart);
+	 break;
+      case UNPACK_S:
+	 _mesa_pack_ubyte_stencil_row(drawRb->Format, dstWidth, dstBuffer,
+				      dstRowStart);
+	 break;
+      }
    }
 
    free(srcBuffer);
    free(dstBuffer);
+
+   ctx->Driver.UnmapRenderbuffer(ctx, readRb);
+   if (drawRb != readRb) {
+      ctx->Driver.UnmapRenderbuffer(ctx, drawRb);
+   }
 }
 
 
@@ -503,8 +615,6 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
 	 return;
    }
 
-   swrast_render_start(ctx);
-
    if (filter == GL_NEAREST) {
       for (i = 0; i < 3; i++) {
 	 if (mask & buffers[i]) {
@@ -516,10 +626,11 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
    else {
       ASSERT(filter == GL_LINEAR);
       if (mask & GL_COLOR_BUFFER_BIT) {  /* depth/stencil not allowed */
+	 swrast_render_start(ctx);
 	 blit_linear(ctx,  srcX0, srcY0, srcX1, srcY1,
 		     dstX0, dstY0, dstX1, dstY1);
+	 swrast_render_finish(ctx);
       }
    }
 
-   swrast_render_finish(ctx);
 }
