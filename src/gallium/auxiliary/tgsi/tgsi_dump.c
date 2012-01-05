@@ -32,6 +32,7 @@
 #include "tgsi_dump.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
+#include "tgsi_strings.h"
 
 
 /** Number of spaces to indent for IF/LOOP/etc */
@@ -83,62 +84,6 @@ dump_enum(
 #define FLT(F)          ctx->printf( ctx, "%10.4f", F )
 #define ENM(E,ENUMS)    dump_enum( ctx, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
-static const char *processor_type_names[] =
-{
-   "FRAG",
-   "VERT",
-   "GEOM"
-};
-
-const char *
-tgsi_file_names[TGSI_FILE_COUNT] =
-{
-   "NULL",
-   "CONST",
-   "IN",
-   "OUT",
-   "TEMP",
-   "SAMP",
-   "ADDR",
-   "IMM",
-   "PRED",
-   "SV",
-   "IMMX",
-   "TEMPX",
-   "RES"
-};
-
-static const char *interpolate_names[] =
-{
-   "CONSTANT",
-   "LINEAR",
-   "PERSPECTIVE"
-};
-
-static const char *semantic_names[] =
-{
-   "POSITION",
-   "COLOR",
-   "BCOLOR",
-   "FOG",
-   "PSIZE",
-   "GENERIC",
-   "NORMAL",
-   "FACE",
-   "EDGEFLAG",
-   "PRIM_ID",
-   "INSTANCEID",
-   "VERTEXID",
-   "STENCIL"
-};
-
-static const char *immediate_type_names[] =
-{
-   "FLT32",
-   "UINT32",
-   "INT32"
-};
-
 const char *
 tgsi_swizzle_names[4] =
 {
@@ -147,75 +92,6 @@ tgsi_swizzle_names[4] =
    "z",
    "w"
 };
-
-const char *
-tgsi_texture_names[TGSI_TEXTURE_COUNT] =
-{
-   "UNKNOWN",
-   "1D",
-   "2D",
-   "3D",
-   "CUBE",
-   "RECT",
-   "SHADOW1D",
-   "SHADOW2D",
-   "SHADOWRECT",
-   "1DARRAY",
-   "2DARRAY",
-   "SHADOW1DARRAY",
-   "SHADOW2DARRAY",
-};
-
-const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =
-{
-   "GS_INPUT_PRIMITIVE",
-   "GS_OUTPUT_PRIMITIVE",
-   "GS_MAX_OUTPUT_VERTICES",
-   "FS_COORD_ORIGIN",
-   "FS_COORD_PIXEL_CENTER",
-   "FS_COLOR0_WRITES_ALL_CBUFS",
-   "FS_DEPTH_LAYOUT"
-};
-
-static const char *tgsi_type_names[] =
-{
-   "UNORM",
-   "SNORM",
-   "SINT",
-   "UINT",
-   "FLOAT"
-};
-
-const char *tgsi_primitive_names[PIPE_PRIM_MAX] =
-{
-   "POINTS",
-   "LINES",
-   "LINE_LOOP",
-   "LINE_STRIP",
-   "TRIANGLES",
-   "TRIANGLE_STRIP",
-   "TRIANGLE_FAN",
-   "QUADS",
-   "QUAD_STRIP",
-   "POLYGON",
-   "LINES_ADJACENCY",
-   "LINE_STRIP_ADJACENCY",
-   "TRIANGLES_ADJACENCY",
-   "TRIANGLE_STRIP_ADJACENCY"
-};
-
-const char *tgsi_fs_coord_origin_names[2] =
-{
-   "UPPER_LEFT",
-   "LOWER_LEFT"
-};
-
-const char *tgsi_fs_coord_pixel_center_names[2] =
-{
-   "HALF_INTEGER",
-   "INTEGER"
-};
-
 
 static void
 _dump_register_src(
@@ -367,9 +243,6 @@ iter_declaration(
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
 
-   assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
-   assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
-
    TXT( "DCL " );
 
    ENM(decl->Declaration.File, tgsi_file_names);
@@ -400,7 +273,7 @@ iter_declaration(
 
    if (decl->Declaration.Semantic) {
       TXT( ", " );
-      ENM( decl->Semantic.Name, semantic_names );
+      ENM( decl->Semantic.Name, tgsi_semantic_names );
       if (decl->Semantic.Index != 0 ||
           decl->Semantic.Name == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
@@ -433,7 +306,7 @@ iter_declaration(
        decl->Declaration.File == TGSI_FILE_INPUT)
    {
       TXT( ", " );
-      ENM( decl->Declaration.Interpolate, interpolate_names );
+      ENM( decl->Declaration.Interpolate, tgsi_interpolate_names );
    }
 
    if (decl->Declaration.Centroid) {
@@ -521,8 +394,6 @@ iter_property(
    int i;
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
 
-   assert(Elements(tgsi_property_names) == TGSI_PROPERTY_COUNT);
-
    TXT( "PROPERTY " );
    ENM(prop->Property.PropertyName, tgsi_property_names);
 
@@ -571,7 +442,7 @@ iter_immediate(
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
 
    TXT( "IMM " );
-   ENM( imm->Immediate.DataType, immediate_type_names );
+   ENM( imm->Immediate.DataType, tgsi_immediate_type_names );
 
    dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
                  imm->Immediate.DataType);
@@ -753,7 +624,7 @@ prolog(
    struct tgsi_iterate_context *iter )
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
-   ENM( iter->processor.Processor, processor_type_names );
+   ENM( iter->processor.Processor, tgsi_processor_type_names );
    EOL();
    return TRUE;
 }

@@ -35,6 +35,7 @@
 #include "tgsi_info.h"
 #include "tgsi_parse.h"
 #include "tgsi_sanity.h"
+#include "tgsi_strings.h"
 #include "tgsi_util.h"
 #include "tgsi_dump.h"
 
@@ -270,23 +271,6 @@ static boolean parse_label( struct translate_ctx *ctx, uint *val )
    return FALSE;
 }
 
-static const char *file_names[TGSI_FILE_COUNT] =
-{
-   "NULL",
-   "CONST",
-   "IN",
-   "OUT",
-   "TEMP",
-   "SAMP",
-   "ADDR",
-   "IMM",
-   "PRED",
-   "SV",
-   "IMMX",
-   "TEMPX",
-   "RES"
-};
-
 static boolean
 parse_file( const char **pcur, uint *file )
 {
@@ -295,7 +279,7 @@ parse_file( const char **pcur, uint *file )
    for (i = 0; i < TGSI_FILE_COUNT; i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, file_names[i] )) {
+      if (str_match_no_case( &cur, tgsi_file_names[i] )) {
          if (!is_digit_alpha_underscore( cur )) {
             *pcur = cur;
             *file = i;
@@ -816,32 +800,6 @@ parse_src_operand(
    return TRUE;
 }
 
-static const char *texture_names[TGSI_TEXTURE_COUNT] =
-{
-   "UNKNOWN",
-   "1D",
-   "2D",
-   "3D",
-   "CUBE",
-   "RECT",
-   "SHADOW1D",
-   "SHADOW2D",
-   "SHADOWRECT",
-   "1DARRAY",
-   "2DARRAY",
-   "SHADOW1DARRAY",
-   "SHADOW2DARRAY"
-};
-
-static const char *type_names[] =
-{
-   "UNORM",
-   "SNORM",
-   "SINT",
-   "UINT",
-   "FLOAT"
-};
-
 static boolean
 match_inst_mnemonic(const char **pcur,
                     const struct tgsi_opcode_info *info)
@@ -965,7 +923,7 @@ parse_instruction(
          uint j;
 
          for (j = 0; j < TGSI_TEXTURE_COUNT; j++) {
-            if (str_match_no_case( &ctx->cur, texture_names[j] )) {
+            if (str_match_no_case( &ctx->cur, tgsi_texture_names[j] )) {
                if (!is_digit_alpha_underscore( ctx->cur )) {
                   inst.Instruction.Texture = 1;
                   inst.Texture.Texture = j;
@@ -1009,31 +967,6 @@ parse_instruction(
 
    return TRUE;
 }
-
-static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
-{
-   "POSITION",
-   "COLOR",
-   "BCOLOR",
-   "FOG",
-   "PSIZE",
-   "GENERIC",
-   "NORMAL",
-   "FACE",
-   "EDGEFLAG",
-   "PRIM_ID",
-   "INSTANCEID",
-   "VERTEXID",
-   "STENCIL"
-};
-
-static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
-{
-   "CONSTANT",
-   "LINEAR",
-   "PERSPECTIVE"
-};
-
 
 /* parses a 4-touple of the form {x, y, z, w}
  * where x, y, z, w are numbers */
@@ -1085,9 +1018,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    boolean is_vs_input;
    boolean is_imm_array;
 
-   assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
-   assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
-
    if (!eat_white( &ctx->cur )) {
       report_error( ctx, "Syntax error" );
       return FALSE;
@@ -1125,7 +1055,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       eat_opt_white( &cur );
       if (file == TGSI_FILE_RESOURCE) {
          for (i = 0; i < TGSI_TEXTURE_COUNT; i++) {
-            if (str_match_no_case(&cur, texture_names[i])) {
+            if (str_match_no_case(&cur, tgsi_texture_names[i])) {
                if (!is_digit_alpha_underscore(cur)) {
                   decl.Resource.Resource = i;
                   break;
@@ -1145,7 +1075,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          eat_opt_white( &cur );
          for (j = 0; j < 4; ++j) {
             for (i = 0; i < PIPE_TYPE_COUNT; ++i) {
-               if (str_match_no_case(&cur, type_names[i])) {
+               if (str_match_no_case(&cur, tgsi_type_names[i])) {
                   if (!is_digit_alpha_underscore(cur)) {
                      switch (j) {
                      case 0:
@@ -1194,7 +1124,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          ctx->cur = cur;
       } else {
          for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
-            if (str_match_no_case( &cur, semantic_names[i] )) {
+            if (str_match_no_case( &cur, tgsi_semantic_names[i] )) {
                const char *cur2 = cur;
                uint index;
 
@@ -1276,7 +1206,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       cur++;
       eat_opt_white( &cur );
       for (i = 0; i < TGSI_INTERPOLATE_COUNT; i++) {
-         if (str_match_no_case( &cur, interpolate_names[i] )) {
+         if (str_match_no_case( &cur, tgsi_interpolate_names[i] )) {
             if (is_digit_alpha_underscore( cur ))
                continue;
             decl.Declaration.Interpolate = i;

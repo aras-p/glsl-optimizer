@@ -73,6 +73,7 @@ C_SOURCES := \
 	tgsi/tgsi_ppc.c \
 	tgsi/tgsi_sanity.c \
 	tgsi/tgsi_scan.c \
+	tgsi/tgsi_strings.c \
 	tgsi/tgsi_text.c \
 	tgsi/tgsi_transform.c \
 	tgsi/tgsi_ureg.c \

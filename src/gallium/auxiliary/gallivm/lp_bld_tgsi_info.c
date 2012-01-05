@@ -31,6 +31,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_strings.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_tgsi.h"
 
