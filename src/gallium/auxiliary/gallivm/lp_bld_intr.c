@@ -70,13 +70,6 @@ lp_declare_intrinsic(LLVMModuleRef module,
 
    assert(LLVMIsDeclaration(function));
 
-   if(name[0] == 'l' &&
-      name[1] == 'l' &&
-      name[2] == 'v' &&
-      name[3] == 'm' &&
-      name[4] == '.')
-      assert(LLVMGetIntrinsicID(function));
-
    return function;
 }
 
