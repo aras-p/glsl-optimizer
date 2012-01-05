@@ -133,8 +133,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_draw_buffers2 = true;
       ctx->Extensions.EXT_framebuffer_sRGB = true;
       ctx->Extensions.EXT_texture_array = true;
-      if (override_version >= 30)
-	 ctx->Extensions.EXT_texture_integer = true;
+      ctx->Extensions.EXT_texture_integer = true;
       ctx->Extensions.EXT_texture_snorm = true;
       ctx->Extensions.EXT_texture_sRGB = true;
       ctx->Extensions.EXT_texture_sRGB_decode = true;
