@@ -2118,7 +2118,8 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
     * RGBA channels.  We look at the red channel here.
     */
 
-   if (samp->view->texture->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (samp->view->texture->target == PIPE_TEXTURE_2D_ARRAY ||
+       samp->view->texture->target == PIPE_TEXTURE_CUBE) {
       pc0 = CLAMP(c0[0], 0.0F, 1.0F);
       pc1 = CLAMP(c0[1], 0.0F, 1.0F);
       pc2 = CLAMP(c0[2], 0.0F, 1.0F);
