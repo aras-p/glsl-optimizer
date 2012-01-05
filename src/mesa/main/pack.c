@@ -692,6 +692,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i] = (GLubyte) rgba[i][ACOMP];
                   }
                   break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = (GLubyte) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLubyte) rgba[i][GCOMP];
+                  }
+                  break;
                case GL_RGB_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = (GLubyte) rgba[i][RCOMP];
@@ -841,6 +847,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                case GL_ALPHA_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i] = (GLbyte) rgba[i][ACOMP];
+                  }
+                  break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = (GLbyte) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLbyte) rgba[i][GCOMP];
                   }
                   break;
                case GL_RGB_INTEGER_EXT:
@@ -994,6 +1006,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i] = (GLushort) rgba[i][ACOMP];
                   }
                   break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = (GLushort) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLushort) rgba[i][GCOMP];
+                  }
+                  break;
                case GL_RGB_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = (GLushort) rgba[i][RCOMP];
@@ -1145,6 +1163,13 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i] = (GLshort) rgba[i][ACOMP];
                   }
                   break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*3+0] = (GLshort) rgba[i][RCOMP];
+                     dst[i*3+1] = (GLshort) rgba[i][GCOMP];
+                     dst[i*3+2] = (GLshort) rgba[i][BCOMP];
+                  }
+                  break;
                case GL_RGB_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i*3+0] = (GLshort) rgba[i][RCOMP];
@@ -1294,6 +1319,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                case GL_ALPHA_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i] = (GLuint) rgba[i][ACOMP];
+                  }
+                  break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = (GLuint) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLuint) rgba[i][GCOMP];
                   }
                   break;
                case GL_RGB_INTEGER_EXT:
@@ -1452,6 +1483,12 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                case GL_ALPHA_INTEGER_EXT:
                   for (i=0;i<n;i++) {
                      dst[i] = (GLint) rgba[i][ACOMP];
+                  }
+                  break;
+               case GL_RG_INTEGER:
+                  for (i=0;i<n;i++) {
+                     dst[i*2+0] = (GLint) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLint) rgba[i][GCOMP];
                   }
                   break;
                case GL_RGB_INTEGER_EXT:
@@ -2397,6 +2434,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcFormat == GL_GREEN_INTEGER_EXT ||
           srcFormat == GL_BLUE_INTEGER_EXT ||
           srcFormat == GL_ALPHA_INTEGER_EXT ||
+          srcFormat == GL_RG_INTEGER ||
           srcFormat == GL_RGB_INTEGER_EXT ||
           srcFormat == GL_RGBA_INTEGER_EXT ||
           srcFormat == GL_BGR_INTEGER_EXT ||
@@ -3778,6 +3816,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
           srcFormat == GL_GREEN_INTEGER_EXT ||
           srcFormat == GL_BLUE_INTEGER_EXT ||
           srcFormat == GL_ALPHA_INTEGER_EXT ||
+          srcFormat == GL_RG_INTEGER ||
           srcFormat == GL_RGB_INTEGER_EXT ||
           srcFormat == GL_RGBA_INTEGER_EXT ||
           srcFormat == GL_BGR_INTEGER_EXT ||
