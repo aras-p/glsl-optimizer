@@ -50,7 +50,7 @@
 #include "sp_tex_tile_cache.h"
 #include "sp_texture.h"
 #include "sp_query.h"
-
+#include "sp_screen.h"
 
 
 /**
@@ -230,6 +230,7 @@ struct pipe_context *
 softpipe_create_context( struct pipe_screen *screen,
 			 void *priv )
 {
+   struct softpipe_screen *sp_screen = softpipe_screen(screen);
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
 
@@ -304,7 +305,7 @@ softpipe_create_context( struct pipe_screen *screen,
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   if (debug_get_bool_option("SOFTPIPE_USE_LLVM", FALSE))
+   if (sp_screen->using_llvm)
       softpipe->draw = draw_create(&softpipe->pipe);
    else
       softpipe->draw = draw_create_no_llvm(&softpipe->pipe);

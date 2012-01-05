@@ -45,6 +45,7 @@
 #include "sp_fence.h"
 #include "sp_public.h"
 
+DEBUG_GET_ONCE_BOOL_OPTION(use_llvm, "SOFTPIPE_USE_LLVM", FALSE);
 
 static const char *
 softpipe_get_vendor(struct pipe_screen *screen)
@@ -135,6 +136,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 static int
 softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
 {
+   struct softpipe_screen *sp_screen = softpipe_screen(screen);
    switch(shader)
    {
    case PIPE_SHADER_FRAGMENT:
@@ -144,11 +146,17 @@ softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
       switch (param) {
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 #ifdef HAVE_LLVM
-         /* Softpipe doesn't yet know how to tell draw/llvm about textures */
-         return 0;
-#else
-         return PIPE_MAX_VERTEX_SAMPLERS;
+         if (sp_screen->use_llvm)
+            /* Softpipe doesn't yet know how to tell draw/llvm about textures */
+            return 0;
 #endif
+         return PIPE_MAX_VERTEX_SAMPLERS;
+      case PIPE_SHADER_CAP_INTEGERS:
+#ifdef HAVE_LLVM /* gallivm doesn't support integers yet */
+         if (sp_screen->use_llvm)
+            return 0;
+#endif
+         /* fallthrough */
       default:
          return draw_get_shader_param(shader, param);
       }
@@ -325,6 +333,8 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
+
+   screen->using_llvm = debug_get_option_use_llvm();
 
    util_format_s3tc_init();
 
