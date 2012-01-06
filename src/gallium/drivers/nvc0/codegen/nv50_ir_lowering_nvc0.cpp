@@ -657,13 +657,7 @@ NVC0LoweringPass::checkPredicate(Instruction *insn)
 bool
 NVC0LoweringPass::visit(Instruction *i)
 {
-   if (i->prev)
-      bld.setPosition(i->prev, true);
-   else
-   if (i->next)
-      bld.setPosition(i->next, false);
-   else
-      bld.setPosition(i->bb, true);
+   bld.setPosition(i, false);
 
    if (i->cc != CC_ALWAYS)
       checkPredicate(i);
