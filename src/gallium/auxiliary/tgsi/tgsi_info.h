@@ -35,6 +35,39 @@
 extern "C" {
 #endif
 
+/* This enum describes how an opcode calculates its result. */
+enum tgsi_output_mode {
+   /** The opcode produces no result. */
+   TGSI_OUTPUT_NONE            = 0,
+
+   /** When this opcode writes to a channel of the destination register,
+    *  it takes as arguments values from the same channel of the source
+    *  register(s).
+    *
+    *  Example: TGSI_OPCODE_ADD
+    */
+   TGSI_OUTPUT_COMPONENTWISE   = 1,
+
+   /** This opcode writes the same value to all enabled channels of the
+    * destination register.
+    *
+    *  Example: TGSI_OPCODE_RSQ
+    */
+   TGSI_OUTPUT_REPLICATE       = 2,
+
+   /** The operation performed by this opcode is dependent on which channel
+    *  of the destination register is being written.
+    *
+    *  Example: TGSI_OPCODE_LOG
+    */
+   TGSI_OUTPUT_CHAN_DEPENDENT  = 3,
+
+   /**
+    * Example: TGSI_OPCODE_TEX
+    */
+   TGSI_OUTPUT_OTHER           = 4
+};
+
 struct tgsi_opcode_info
 {
    unsigned num_dst:3;
@@ -43,6 +76,7 @@ struct tgsi_opcode_info
    unsigned is_branch:1;
    int pre_dedent:2;
    int post_indent:2;
+   enum tgsi_output_mode output_mode:3;
    const char *mnemonic;
    uint opcode;
 };
