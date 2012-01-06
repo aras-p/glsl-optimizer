@@ -88,7 +88,7 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 	intel->is_front_buffer_rendering;
 
       intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
-	|| (mode == GL_FRONT);
+	|| (mode == GL_FRONT) || (mode == GL_FRONT_AND_BACK);
 
       /* If we weren't front-buffer rendering before but we are now,
        * invalidate our DRI drawable so we'll ask for new buffers
