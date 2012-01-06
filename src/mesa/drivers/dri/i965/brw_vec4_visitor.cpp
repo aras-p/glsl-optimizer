@@ -1701,21 +1701,44 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 
    if (ir->type->is_matrix()) {
       for (int i = 0; i < ir->type->matrix_columns; i++) {
+	 float *vec = &ir->value.f[i * ir->type->vector_elements];
+
 	 for (int j = 0; j < ir->type->vector_elements; j++) {
 	    dst->writemask = 1 << j;
 	    dst->type = BRW_REGISTER_TYPE_F;
 
-	    emit(MOV(*dst,
-		     src_reg(ir->value.f[i * ir->type->vector_elements + j])));
+	    emit(MOV(*dst, src_reg(vec[j])));
 	 }
 	 dst->reg_offset++;
       }
       return;
    }
 
+   int remaining_writemask = (1 << ir->type->vector_elements) - 1;
+
    for (int i = 0; i < ir->type->vector_elements; i++) {
+      if (!(remaining_writemask & (1 << i)))
+	 continue;
+
       dst->writemask = 1 << i;
       dst->type = brw_type_for_base_type(ir->type);
+
+      /* Find other components that match the one we're about to
+       * write.  Emits fewer instructions for things like vec4(0.5,
+       * 1.5, 1.5, 1.5).
+       */
+      for (int j = i + 1; j < ir->type->vector_elements; j++) {
+	 if (ir->type->base_type == GLSL_TYPE_BOOL) {
+	    if (ir->value.b[i] == ir->value.b[j])
+	       dst->writemask |= (1 << j);
+	 } else {
+	    /* u, i, and f storage all line up, so no need for a
+	     * switch case for comparing each type.
+	     */
+	    if (ir->value.u[i] == ir->value.u[j])
+	       dst->writemask |= (1 << j);
+	 }
+      }
 
       switch (ir->type->base_type) {
       case GLSL_TYPE_FLOAT:
@@ -1734,6 +1757,8 @@ vec4_visitor::emit_constant_values(dst_reg *dst, ir_constant *ir)
 	 assert(!"Non-float/uint/int/bool constant");
 	 break;
       }
+
+      remaining_writemask &= ~dst->writemask;
    }
    dst->reg_offset++;
 }
