@@ -2673,12 +2673,6 @@ struct gl_framebuffer
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS];
    struct gl_renderbuffer *_ColorReadBuffer;
 
-   /** Wrappers to make combined depth/stencil buffers look like separate
-    * buffers.  Only used by swrast.  Will be removed in the future.
-    */
-   struct gl_renderbuffer *_DepthBuffer;
-   struct gl_renderbuffer *_StencilBuffer;
-
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);
 };

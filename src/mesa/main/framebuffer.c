@@ -222,10 +222,6 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
       ASSERT(!att->Texture);
       att->Type = GL_NONE;
    }
-
-   /* unbind _Depth/_StencilBuffer to decr ref counts */
-   _mesa_reference_renderbuffer(&fb->_DepthBuffer, NULL);
-   _mesa_reference_renderbuffer(&fb->_StencilBuffer, NULL);
 }
 
 
@@ -681,8 +677,6 @@ update_color_read_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
  *    _ColorDrawBuffers
  *    _NumColorDrawBuffers
  *    _ColorReadBuffer
- *    _DepthBuffer
- *    _StencilBuffer
  *
  * If the framebuffer is user-created, make sure it's complete.
  *
