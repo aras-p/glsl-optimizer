@@ -103,6 +103,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->clamp_fragment_color = rs->clamp_fragment_color;
 
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
+	rctx->two_side = rs->two_side;
 
 	rctx->rasterizer = rs;
 
@@ -568,6 +569,7 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 	}
 
 	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
+	    (rctx->ps_shader->shader.two_side != rctx->two_side) ||
 	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
 	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs))) {
 		r600_shader_rebuild(&rctx->context, rctx->ps_shader);

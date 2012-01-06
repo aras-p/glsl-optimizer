@@ -958,6 +958,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	rs->clamp_fragment_color = state->clamp_fragment_color;
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
+	rs->two_side = state->light_twoside;
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 	/* offset */

@@ -193,6 +193,8 @@ struct r600_shader_ctx {
 	boolean                                 input_linear;
 	boolean                                 input_perspective;
 	int					num_interp_gpr;
+	int					face_gpr;
+	int					colors_used;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -376,12 +378,6 @@ static int r600_spi_sid(struct r600_shader_io * io)
 			/* For generic params simply use sid from tgsi */
 			index = io->sid;
 		} else {
-
-			/* FIXME: two-side rendering is broken in r600g, this will
-			 * keep old functionality */
-			if (name == TGSI_SEMANTIC_BCOLOR)
-				name = TGSI_SEMANTIC_COLOR;
-
 			/* For non-generic params - pack name and sid into 8 bits */
 			index = 0x80 | (name<<3) | (io->sid);
 		}
@@ -394,6 +390,51 @@ static int r600_spi_sid(struct r600_shader_io * io)
 
 	return index;
 };
+
+/* turn input into interpolate on EG */
+static int evergreen_interp_input(struct r600_shader_ctx *ctx, int index)
+{
+	int r = 0;
+
+	if (ctx->shader->input[index].spi_sid) {
+		ctx->shader->input[index].lds_pos = ctx->shader->nlds++;
+		if (ctx->shader->input[index].interpolate > 0) {
+			r = evergreen_interp_alu(ctx, index);
+		} else {
+			r = evergreen_interp_flat(ctx, index);
+		}
+	}
+	return r;
+}
+
+static int select_twoside_color(struct r600_shader_ctx *ctx, int front, int back)
+{
+	struct r600_bytecode_alu alu;
+	int i, r;
+	int gpr_front = ctx->shader->input[front].gpr;
+	int gpr_back = ctx->shader->input[back].gpr;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGT);
+		alu.is_op3 = 1;
+		alu.dst.write = 1;
+		alu.dst.sel = gpr_front;
+		alu.src[0].sel = ctx->face_gpr;
+		alu.src[1].sel = gpr_front;
+		alu.src[2].sel = gpr_back;
+
+		alu.dst.chan = i;
+		alu.src[1].chan = i;
+		alu.src[2].chan = i;
+		alu.last = (i==3);
+
+		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+			return r;
+	}
+
+	return 0;
+}
 
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
@@ -410,15 +451,15 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
-		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chip_class >= EVERGREEN) {
-			/* turn input into interpolate on EG */
-			if (ctx->shader->input[i].spi_sid) {
-				ctx->shader->input[i].lds_pos = ctx->shader->nlds++;
-				if (ctx->shader->input[i].interpolate > 0) {
-					evergreen_interp_alu(ctx, i);
-				} else {
-					evergreen_interp_flat(ctx, i);
-				}
+		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
+			if (ctx->shader->input[i].name == TGSI_SEMANTIC_FACE)
+				ctx->face_gpr = ctx->shader->input[i].gpr;
+			else if (ctx->shader->input[i].name == TGSI_SEMANTIC_COLOR)
+				ctx->colors_used++;
+			if (ctx->bc->chip_class >= EVERGREEN) {
+				r = evergreen_interp_input(ctx, i);
+				if (r)
+					return r;
 			}
 		}
 		break;
@@ -699,6 +740,47 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
+{
+	int i, r, count = ctx->shader->ninput;
+
+	/* additional inputs will be allocated right after the existing inputs,
+	 * we won't need them after the color selection, so we don't need to
+	 * reserve these gprs for the rest of the shader code and to adjust
+	 * output offsets etc. */
+	int gpr = ctx->file_offset[TGSI_FILE_INPUT] +
+			ctx->info.file_max[TGSI_FILE_INPUT] + 1;
+
+	if (ctx->face_gpr == -1) {
+		i = ctx->shader->ninput++;
+		ctx->shader->input[i].name = TGSI_SEMANTIC_FACE;
+		ctx->shader->input[i].spi_sid = 0;
+		ctx->shader->input[i].gpr = gpr++;
+		ctx->face_gpr = ctx->shader->input[i].gpr;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (ctx->shader->input[i].name == TGSI_SEMANTIC_COLOR) {
+			int ni = ctx->shader->ninput++;
+			memcpy(&ctx->shader->input[ni],&ctx->shader->input[i], sizeof(struct r600_shader_io));
+			ctx->shader->input[ni].name = TGSI_SEMANTIC_BCOLOR;
+			ctx->shader->input[ni].spi_sid = r600_spi_sid(&ctx->shader->input[ni]);
+			ctx->shader->input[ni].gpr = gpr++;
+
+			if (ctx->bc->chip_class >= EVERGREEN) {
+				r = evergreen_interp_input(ctx, ni);
+				if (r)
+					return r;
+			}
+
+			r = select_twoside_color(ctx, i, ni);
+			if (r)
+				return r;
+		}
+	}
+	return 0;
+}
+
 static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pipe_shader *pipeshader)
 {
 	struct r600_shader *shader = &pipeshader->shader;
@@ -721,6 +803,11 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	ctx.type = ctx.parse.FullHeader.Processor.Processor;
 	shader->processor_type = ctx.type;
 	ctx.bc->type = shader->processor_type;
+
+	ctx.face_gpr = -1;
+	ctx.colors_used = 0;
+
+	shader->two_side = (ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->two_side;
 
 	shader->clamp_color = (((ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->clamp_fragment_color) ||
 		((ctx.type == TGSI_PROCESSOR_VERTEX) && rctx->clamp_vertex_color));
@@ -801,6 +888,31 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 				goto out_err;
 			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
+			break;
+		case TGSI_TOKEN_TYPE_PROPERTY:
+			property = &ctx.parse.FullToken.FullProperty;
+			if (property->Property.PropertyName == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
+				if (property->u[0].Data == 1)
+					shader->fs_write_all = TRUE;
+			}
+			break;
+		default:
+			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);
+			r = -EINVAL;
+			goto out_err;
+		}
+	}
+
+	if (shader->two_side && ctx.colors_used) {
+		if ((r = process_twoside_color_inputs(&ctx)))
+			return r;
+	}
+
+	tgsi_parse_init(&ctx.parse, tokens);
+	while (!tgsi_parse_end_of_tokens(&ctx.parse)) {
+		tgsi_parse_token(&ctx.parse);
+		switch (ctx.parse.FullToken.Token.Type) {
+		case TGSI_TOKEN_TYPE_INSTRUCTION:
 			r = tgsi_is_supported(&ctx);
 			if (r)
 				goto out_err;
@@ -823,17 +935,8 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			if (r)
 				goto out_err;
 			break;
-		case TGSI_TOKEN_TYPE_PROPERTY:
-			property = &ctx.parse.FullToken.FullProperty;
-			if (property->Property.PropertyName == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
-				if (property->u[0].Data == 1)
-					shader->fs_write_all = TRUE;
-			}
-			break;
 		default:
-			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);
-			r = -EINVAL;
-			goto out_err;
+			break;
 		}
 	}
 

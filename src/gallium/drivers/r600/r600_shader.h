@@ -47,6 +47,7 @@ struct r600_shader {
 	boolean			uses_kill;
 	boolean			fs_write_all;
 	boolean			clamp_color;
+	boolean			two_side;
 	unsigned		nr_cbufs;
 };
 
