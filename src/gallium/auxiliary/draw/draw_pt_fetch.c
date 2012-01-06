@@ -91,6 +91,28 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
          key.element[nr].output_offset = dst_offset;
 
          dst_offset += sizeof(uint);
+      } else if (util_format_is_pure_sint(draw->pt.vertex_element[i].src_format)) {
+         key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
+         key.element[nr].input_format = draw->pt.vertex_element[ei].src_format;
+         key.element[nr].input_buffer = draw->pt.vertex_element[ei].vertex_buffer_index;
+         key.element[nr].input_offset = draw->pt.vertex_element[ei].src_offset;
+         key.element[nr].instance_divisor = draw->pt.vertex_element[ei].instance_divisor;
+         key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_SINT;
+         key.element[nr].output_offset = dst_offset;
+
+         ei++;
+         dst_offset += 4 * sizeof(int);
+      } else if (util_format_is_pure_uint(draw->pt.vertex_element[i].src_format)) {
+         key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
+         key.element[nr].input_format = draw->pt.vertex_element[ei].src_format;
+         key.element[nr].input_buffer = draw->pt.vertex_element[ei].vertex_buffer_index;
+         key.element[nr].input_offset = draw->pt.vertex_element[ei].src_offset;
+         key.element[nr].instance_divisor = draw->pt.vertex_element[ei].instance_divisor;
+         key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_UINT;
+         key.element[nr].output_offset = dst_offset;
+
+         ei++;
+         dst_offset += 4 * sizeof(unsigned);
       } else {
          key.element[nr].type = TRANSLATE_ELEMENT_NORMAL;
          key.element[nr].input_format = draw->pt.vertex_element[ei].src_format;
