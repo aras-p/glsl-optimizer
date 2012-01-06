@@ -195,6 +195,21 @@ static void calc_wm_input_sizes( struct brw_context *brw )
    GLuint insn;
    GLuint i;
 
+   /* Mesa IR is not generated for GLSL vertex shaders.  If there's no Mesa
+    * IR, the code below cannot determine which output components are
+    * written.  So, skip it and assume everything is written.  This
+    * circumvents some optimizations in the fragment shader, but it guarantees
+    * that correct code is generated.
+    */
+   if (vp->program.Base.NumInstructions == 0) {
+      brw->wm.input_size_masks[0] = ~0;
+      brw->wm.input_size_masks[1] = ~0;
+      brw->wm.input_size_masks[2] = ~0;
+      brw->wm.input_size_masks[3] = ~0;
+      return;
+   }
+
+
    memset(&t, 0, sizeof(t));
 
    /* _NEW_LIGHT | _NEW_PROGRAM */
