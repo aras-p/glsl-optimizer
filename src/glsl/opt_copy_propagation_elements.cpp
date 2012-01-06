@@ -108,6 +108,7 @@ public:
    virtual ir_visitor_status visit_leave(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
+   virtual ir_visitor_status visit_leave(class ir_swizzle *);
 
    void handle_rvalue(ir_rvalue **rvalue);
 
@@ -176,6 +177,15 @@ ir_copy_propagation_elements_visitor::visit_leave(ir_assignment *ir)
 
    add_copy(ir);
 
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_copy_propagation_elements_visitor::visit_leave(ir_swizzle *ir)
+{
+   /* Don't visit the values of swizzles since they are handled while
+    * visiting the swizzle itself.
+    */
    return visit_continue;
 }
 
