@@ -65,6 +65,9 @@ endif
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_R600=1
 endif
+ifneq ($(filter radeonsi, $(MESA_GPU_DRIVERS)),)
+LOCAL_CFLAGS += -D_EGL_PIPE_RADEONSI=1
+endif
 ifneq ($(filter vmwgfx, $(MESA_GPU_DRIVERS)),)
 LOCAL_CFLAGS += -D_EGL_PIPE_VMWGFX=1
 endif

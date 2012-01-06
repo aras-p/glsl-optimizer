@@ -45,6 +45,12 @@ static const int r600_chip_ids[] = {
 #undef CHIPSET
 };
 
+static const int radeonsi_chip_ids[] = {
+#define CHIPSET(chip, name, family) chip,
+#include "pci_ids/radeonsi_pci_ids.h"
+#undef CHIPSET
+};
+
 static const int vmwgfx_chip_ids[] = {
 #define CHIPSET(chip, name, family) chip,
 #include "pci_ids/vmwgfx_pci_ids.h"
@@ -65,6 +71,7 @@ static const struct {
 #endif
    { 0x1002, "r300", r300_chip_ids, ARRAY_SIZE(r300_chip_ids) },
    { 0x1002, "r600", r600_chip_ids, ARRAY_SIZE(r600_chip_ids) },
+   { 0x1002, "radeonsi", radeonsi_chip_ids, ARRAY_SIZE(radeonsi_chip_ids) },
    { 0x10de, "nouveau", NULL, -1 },
    { 0x15ad, "vmwgfx", vmwgfx_chip_ids, ARRAY_SIZE(vmwgfx_chip_ids) },
    { 0x0000, NULL, NULL, 0 },

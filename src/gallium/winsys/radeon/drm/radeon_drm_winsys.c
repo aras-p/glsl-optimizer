@@ -226,6 +226,12 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
         ws->gen = R600;
         break;
 
+#define CHIPSET(pci_id, name, family) case pci_id:
+#include "pci_ids/radeonsi_pci_ids.h"
+#undef CHIPSET
+        ws->gen = SI;
+        break;
+
     default:
         fprintf(stderr, "radeon: Invalid PCI ID.\n");
         return FALSE;
@@ -256,7 +262,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                                   &ws->info.r300_num_z_pipes))
             return FALSE;
     }
-    else if (ws->gen == R600) {
+    else if (ws->gen >= R600) {
         if (ws->info.drm_minor >= 9 &&
             !radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BACKENDS,
                                   "num backends",

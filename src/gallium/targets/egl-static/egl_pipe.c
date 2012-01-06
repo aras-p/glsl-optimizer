@@ -40,6 +40,8 @@
 #include "r300/r300_public.h"
 /* for r600 */
 #include "r600/r600_public.h"
+/* for radeonsi */
+#include "radeonsi/radeonsi_public.h"
 /* for vmwgfx */
 #include "svga/drm/svga_drm_public.h"
 #include "svga/svga_public.h"
@@ -132,6 +134,29 @@ pipe_r600_create_screen(int fd)
 }
 
 static struct pipe_screen *
+pipe_radeonsi_create_screen(int fd)
+{
+#if _EGL_PIPE_RADEONSI
+   struct radeon_winsys *rw;
+   struct pipe_screen *screen;
+
+   rw = radeon_drm_winsys_create(fd);
+   if (!rw)
+      return NULL;
+
+   screen = radeonsi_screen_create(rw);
+   if (!screen)
+      return NULL;
+
+   screen = debug_screen_wrap(screen);
+
+   return screen;
+#else
+   return NULL;
+#endif
+}
+
+static struct pipe_screen *
 pipe_vmwgfx_create_screen(int fd)
 {
 #if _EGL_PIPE_VMWGFX
@@ -165,6 +190,8 @@ egl_pipe_create_drm_screen(const char *name, int fd)
       return pipe_r300_create_screen(fd);
    else if (strcmp(name, "r600") == 0)
       return pipe_r600_create_screen(fd);
+   else if (strcmp(name, "radeonsi") == 0)
+      return pipe_radeonsi_create_screen(fd);
    else if (strcmp(name, "vmwgfx") == 0)
       return pipe_vmwgfx_create_screen(fd);
    else

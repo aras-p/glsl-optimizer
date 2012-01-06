@@ -80,6 +80,12 @@ r600_LIBS = \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
 r600_SYS += -ldrm_radeon
 
+# radeonsi pipe driver
+radeonsi_LIBS = \
+	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
+	$(TOP)/src/gallium/drivers/radeonsi/libradeonsi.a
+radeonsi_SYS += -ldrm_radeon
+
 # vmwgfx pipe driver
 vmwgfx_LIBS = \
 	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
@@ -123,6 +129,13 @@ ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
 ifneq ($(findstring r600,$(GALLIUM_DRIVERS_DIRS)),)
 _pipe_TARGETS_CC += $(PIPE_PREFIX)r600.so
 pipe_SOURCES += pipe_r600.c
+endif
+endif
+
+ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring radeonsi,$(GALLIUM_DRIVERS_DIRS)),)
+_pipe_TARGETS_CC += $(PIPE_PREFIX)radeonsi.so
+pipe_SOURCES += pipe_radeonsi.c
 endif
 endif
 

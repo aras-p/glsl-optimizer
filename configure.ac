@@ -67,6 +67,8 @@ if test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.y"; then
 fi
 AC_PROG_LEX
 
+AC_PATH_PROG([PERL], [perl])
+
 dnl Our fallback install-sh is a symlink to minstall. Use the existing
 dnl configuration in that case.
 AC_PROG_INSTALL
@@ -1647,9 +1649,12 @@ if test "x$with_gallium_drivers" != x; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
 fi
 
+AC_SUBST([LLVM_BINDIR])
 AC_SUBST([LLVM_CFLAGS])
+AC_SUBST([LLVM_CXXFLAGS])
 AC_SUBST([LLVM_LIBS])
 AC_SUBST([LLVM_LDFLAGS])
+AC_SUBST([LLVM_INCLUDEDIR])
 AC_SUBST([LLVM_VERSION])
 
 case "x$enable_opengl$enable_gles1$enable_gles2" in
@@ -1795,6 +1800,9 @@ if test "x$enable_gallium_llvm" = xyes; then
 	    LLVM_LIBS="`$LLVM_CONFIG --libs engine bitwriter`"
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
+	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
+	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags`
+	LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
 	DEFINES="$DEFINES -D__STDC_CONSTANT_MACROS"
 	MESA_LLVM=1
     else
@@ -1898,6 +1906,14 @@ if test "x$with_gallium_drivers" != x; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;
+        xradeonsi)
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
+            if test "x$LLVM_VERSION" != "x3.1"; then
+                AC_MSG_ERROR([LLVM 3.1 is required to build the radeonsi driver.])
+            fi
+	    NEED_RADEON_GALLIUM=yes;
+            gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi"
+            ;;
         xnouveau)
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50 nvc0"
@@ -1957,6 +1973,7 @@ done
 AM_CONDITIONAL(HAVE_GALAHAD_GALLIUM, test x$HAVE_GALAHAD_GALLIUM = xyes)
 AM_CONDITIONAL(HAVE_IDENTITY_GALLIUM, test x$HAVE_IDENTITY_GALLIUM = xyes)
 AM_CONDITIONAL(HAVE_NOOP_GALLIUM, test x$HAVE_NOOP_GALLIUM = xyes)
+AM_CONDITIONAL(NEED_RADEON_GALLIUM, test x$NEED_RADEON_GALLIUM = xyes)
 AC_SUBST([GALLIUM_MAKE_DIRS])
 
 dnl prepend CORE_DIRS to SRC_DIRS

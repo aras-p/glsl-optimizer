@@ -49,14 +49,17 @@ SUBDIRS += \
 	drivers/nvc0
 endif
 
-# r300g/r600g
-ifneq ($(filter r300g r600g, $(MESA_GPU_DRIVERS)),)
+# r300g/r600g/radeonsi
+ifneq ($(filter r300g r600g radeonsi, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += winsys/radeon/drm
 ifneq ($(filter r300g, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += drivers/r300
 endif
 ifneq ($(filter r600g, $(MESA_GPU_DRIVERS)),)
 SUBDIRS += drivers/r600
+endif
+ifneq ($(filter radeonsi, $(MESA_GPU_DRIVERS)),)
+SUBDIRS += drivers/radeonsi
 endif
 endif
 

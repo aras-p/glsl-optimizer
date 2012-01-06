@@ -98,11 +98,12 @@ if env['HAVE_DRM']:
         ])
 
     if env['HAVE_DRM_RADEON']:
-        env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
+        env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600', '_EGL_PIPE_RADEONSI'])
         env.Prepend(LIBS = [
             radeonwinsys,
             r300,
             r600,
+            radeonsi,
         ])
 
     env.Append(CPPDEFINES = ['_EGL_PIPE_VMWGFX'])

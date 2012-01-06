@@ -1,0 +1,151 @@
+//===-- SIISelLowering.cpp - TODO: Add brief description -------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// TODO: Add full description
+//
+//===----------------------------------------------------------------------===//
+
+#include "SIISelLowering.h"
+#include "SIInstrInfo.h"
+#include "SIRegisterInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+
+using namespace llvm;
+
+SITargetLowering::SITargetLowering(TargetMachine &TM) :
+    AMDGPUTargetLowering(TM),
+    TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo()))
+{
+  addRegisterClass(MVT::v4f32, &AMDIL::VReg_128RegClass);
+  addRegisterClass(MVT::f32, &AMDIL::VReg_32RegClass);
+
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Legal);
+}
+
+MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
+    MachineInstr * MI, MachineBasicBlock * BB) const
+{
+  const struct TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
+  MachineRegisterInfo & MRI = BB->getParent()->getRegInfo();
+  MachineBasicBlock::iterator I = MI;
+
+  if (TII->get(MI->getOpcode()).TSFlags & SIInstrFlags::NEED_WAIT) {
+    AppendS_WAITCNT(MI, *BB, llvm::next(I));
+  }
+
+  switch (MI->getOpcode()) {
+  default:
+    return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
+  case AMDIL::SI_INTERP:
+    LowerSI_INTERP(MI, *BB, I, MRI);
+    break;
+  case AMDIL::SI_INTERP_CONST:
+    LowerSI_INTERP_CONST(MI, *BB, I);
+    break;
+  case AMDIL::SI_V_CNDLT:
+    LowerSI_V_CNDLT(MI, *BB, I, MRI);
+    break;
+  case AMDIL::USE_SGPR_32:
+  case AMDIL::USE_SGPR_64:
+    lowerUSE_SGPR(MI, BB->getParent(), MRI);
+    MI->eraseFromParent();
+    break;
+  case AMDIL::VS_LOAD_BUFFER_INDEX:
+    addLiveIn(MI, BB->getParent(), MRI, TII, AMDIL::VGPR0);
+    MI->eraseFromParent();
+    break;
+  }
+  return BB;
+}
+
+void SITargetLowering::AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
+    MachineBasicBlock::iterator I) const
+{
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_WAITCNT))
+          .addImm(0);
+}
+
+void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
+    MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
+{
+  unsigned tmp = MRI.createVirtualRegister(&AMDIL::VReg_32RegClass);
+  MachineOperand dst = MI->getOperand(0);
+  MachineOperand iReg = MI->getOperand(1);
+  MachineOperand jReg = MI->getOperand(2);
+  MachineOperand attr_chan = MI->getOperand(3);
+  MachineOperand attr = MI->getOperand(4);
+  MachineOperand params = MI->getOperand(5);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_MOV_B32))
+          .addReg(AMDIL::M0)
+          .addOperand(params);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_P1_F32), tmp)
+          .addOperand(iReg)
+          .addOperand(attr_chan)
+          .addOperand(attr);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_P2_F32))
+          .addOperand(dst)
+          .addReg(tmp)
+          .addOperand(jReg)
+          .addOperand(attr_chan)
+          .addOperand(attr);
+
+  MI->eraseFromParent();
+}
+
+void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
+    MachineBasicBlock &BB, MachineBasicBlock::iterator I) const
+{
+  MachineOperand dst = MI->getOperand(0);
+  MachineOperand attr_chan = MI->getOperand(1);
+  MachineOperand attr = MI->getOperand(2);
+  MachineOperand params = MI->getOperand(3);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_MOV_B32))
+          .addReg(AMDIL::M0)
+          .addOperand(params);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_MOV_F32))
+          .addOperand(dst)
+          .addOperand(attr_chan)
+          .addOperand(attr);
+
+  MI->eraseFromParent();
+}
+
+void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
+    MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
+{
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_CMP_LT_F32_e32))
+          .addOperand(MI->getOperand(1))
+          .addReg(AMDIL::SREG_LIT_0);
+
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_CNDMASK_B32))
+          .addOperand(MI->getOperand(0))
+          .addOperand(MI->getOperand(2))
+          .addOperand(MI->getOperand(3));
+
+  MI->eraseFromParent();
+}
+
+void SITargetLowering::lowerUSE_SGPR(MachineInstr *MI,
+    MachineFunction * MF, MachineRegisterInfo & MRI) const
+{
+  const struct TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
+  unsigned dstReg = MI->getOperand(0).getReg();
+  int64_t newIndex = MI->getOperand(1).getImm();
+  const TargetRegisterClass * dstClass = MRI.getRegClass(dstReg);
+
+  unsigned newReg = dstClass->getRegister(newIndex);
+  addLiveIn(MI, MF, MRI, TII, newReg); 
+}
+

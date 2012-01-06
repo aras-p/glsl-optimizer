@@ -130,6 +130,17 @@ egl_SYS += -ldrm_radeon
 endif
 endif
 
+# radeonsi
+ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring radeonsi,$(GALLIUM_DRIVERS_DIRS)),)
+egl_CPPFLAGS += -D_EGL_PIPE_RADEONSI=1
+egl_LIBS += \
+	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
+	$(TOP)/src/gallium/drivers/radeonsi/libradeonsi.a
+egl_SYS += -ldrm_radeon
+endif
+endif
+
 # vmwgfx
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
 egl_CPPFLAGS += -D_EGL_PIPE_VMWGFX=1

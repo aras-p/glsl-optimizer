@@ -35,7 +35,8 @@
 
 enum radeon_generation {
     R300,
-    R600
+    R600,
+    SI
 };
 
 struct radeon_drm_winsys {

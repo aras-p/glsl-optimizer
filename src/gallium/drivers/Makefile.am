@@ -10,6 +10,8 @@ AM_CPPFLAGS = \
 
 noinst_LIBRARIES =
 
+SUBDIRS =
+
 ################################################################################
 
 if HAVE_GALAHAD_GALLIUM
@@ -52,7 +54,16 @@ noop_libnoop_a_SOURCES = \
 endif
 
 ################################################################################
-SUBDIRS = $(GALLIUM_MAKE_DIRS)
+
+if NEED_RADEON_GALLIUM
+
+SUBDIRS+= radeon
+
+endif
+
+################################################################################
+
+SUBDIRS+= $(GALLIUM_MAKE_DIRS)
 
 # FIXME: Remove when the rest of Gallium is converted to automake.
 default: all
