@@ -72,7 +72,7 @@ struct tgsi_sampler;
 struct vertex_header {
    unsigned clipmask:DRAW_TOTAL_CLIP_PLANES;
    unsigned edgeflag:1;
-   unsigned pad:1;
+   unsigned have_clipdist:1;
    unsigned vertex_id:16;
 
    float clip[4];
@@ -232,7 +232,7 @@ struct draw_context
       uint position_output;
       uint edgeflag_output;
       uint clipvertex_output;
-
+      uint clipdistance_output[2];
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;
 
@@ -381,6 +381,7 @@ void draw_gs_destroy( struct draw_context *draw );
 uint draw_current_shader_outputs(const struct draw_context *draw);
 uint draw_current_shader_position_output(const struct draw_context *draw);
 uint draw_current_shader_clipvertex_output(const struct draw_context *draw);
+uint draw_current_shader_clipdistance_output(const struct draw_context *draw, int index);
 int draw_alloc_extra_vertex_attrib(struct draw_context *draw,
                                    uint semantic_name, uint semantic_index);
 void draw_remove_extra_vertex_attribs(struct draw_context *draw);

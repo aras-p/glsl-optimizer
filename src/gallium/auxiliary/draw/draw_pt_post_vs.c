@@ -31,7 +31,7 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
-
+#include "draw/draw_vs.h"
 
 #define DO_CLIP_XY           0x1
 #define DO_CLIP_FULL_Z       0x2
@@ -56,7 +56,7 @@ initialize_vertex_header(struct vertex_header *header)
 {
    header->clipmask = 0;
    header->edgeflag = 1;
-   header->pad = 0;
+   header->have_clipdist = 0;
    header->vertex_id = UNDEFINED_VERTEX_ID;
 }
 

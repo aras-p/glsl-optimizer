@@ -701,6 +701,12 @@ draw_current_shader_clipvertex_output(const struct draw_context *draw)
    return draw->vs.clipvertex_output;
 }
 
+uint
+draw_current_shader_clipdistance_output(const struct draw_context *draw, int index)
+{
+   return draw->vs.clipdistance_output[index];
+}
+
 /**
  * Return a pointer/handle for a driver/CSO rasterizer object which
  * disabled culling, stippling, unfilled tris, etc.

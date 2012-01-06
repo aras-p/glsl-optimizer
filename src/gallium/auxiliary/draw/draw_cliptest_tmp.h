@@ -36,12 +36,19 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
    /* const */ float (*plane)[4] = pvs->draw->plane;
    const unsigned pos = draw_current_shader_position_output(pvs->draw);
    const unsigned cv = draw_current_shader_clipvertex_output(pvs->draw);
+   unsigned cd[2];
    const unsigned ef = pvs->draw->vs.edgeflag_output;
    const unsigned ucp_enable = pvs->draw->rasterizer->clip_plane_enable;
    const unsigned flags = (FLAGS);
    unsigned need_pipeline = 0;
    unsigned j;
    unsigned i;
+   bool have_cd = false;
+   cd[0] = draw_current_shader_clipdistance_output(pvs->draw, 0);
+   cd[1] = draw_current_shader_clipdistance_output(pvs->draw, 1);
+  
+   if (cd[0] != pos || cd[1] != pos)
+     have_cd = true;
 
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
@@ -89,14 +96,31 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 
          if (flags & DO_CLIP_USER) {
             unsigned ucp_mask = ucp_enable;
-
+            int num_written_clipdistance = pvs->draw->vs.vertex_shader->info.num_written_clipdistance;
             while (ucp_mask) {
                unsigned plane_idx = ffs(ucp_mask)-1;
                ucp_mask &= ~(1 << plane_idx);
                plane_idx += 6;
 
-               if (dot4(clipvertex, plane[plane_idx]) < 0) {
-                  mask |= 1 << plane_idx;
+               /*
+                * for user clipping check if we have a clip distance output
+                * and the shader has written to it, otherwise use clipvertex
+                * to decide when the plane is clipping.
+                */
+               if (have_cd && num_written_clipdistance) {
+                  float clipdist;
+                  i = plane_idx - 6;
+                  out->have_clipdist = 1;
+                  /* first four clip distance in first vector etc. */
+                  if (i < 4)
+                     clipdist = out->data[cd[0]][i];
+                  else
+                     clipdist = out->data[cd[1]][i-4];
+                  if (clipdist < 0)
+                     mask |= 1 << plane_idx;
+               } else {
+                  if (dot4(clipvertex, plane[plane_idx]) < 0)
+                     mask |= 1 << plane_idx;
                }
             }
          }

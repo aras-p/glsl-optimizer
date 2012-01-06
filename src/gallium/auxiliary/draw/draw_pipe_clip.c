@@ -119,13 +119,17 @@ static void interp( const struct clip_stage *clip,
    const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
+   unsigned clip_dist[2];
    unsigned j;
+
+   clip_dist[0] = draw_current_shader_clipdistance_output(clip->stage.draw, 0);
+   clip_dist[1] = draw_current_shader_clipdistance_output(clip->stage.draw, 1);
 
    /* Vertex header.
     */
    dst->clipmask = 0;
    dst->edgeflag = 0;        /* will get overwritten later */
-   dst->pad = 0;
+   dst->have_clipdist = in->have_clipdist;
    dst->vertex_id = UNDEFINED_VERTEX_ID;
 
    /* Interpolate the clip-space coords.
@@ -241,6 +245,29 @@ dot4(const float *a, const float *b)
            a[3] * b[3]);
 }
 
+/*
+ * this function extracts the clip distance for the current plane,
+ * it first checks if the shader provided a clip distance, otherwise
+ * it works out the value using the clipvertex
+ */
+static INLINE float getclipdist(const struct clip_stage *clipper,
+                                struct vertex_header *vert,
+                                int plane_idx)
+{
+   const float *plane;
+   float dp;
+   if (vert->have_clipdist && plane_idx >= 6) {
+      /* pick the correct clipdistance element from the output vectors */
+      int _idx = plane_idx - 6;
+      int cdi = _idx >= 4;
+      int vidx = cdi ? _idx - 4 : _idx;
+      dp = vert->data[draw_current_shader_clipdistance_output(clipper->stage.draw, cdi)][vidx];
+   } else {
+      plane = clipper->plane[plane_idx];
+      dp = dot4(vert->clip, plane);
+   }
+   return dp;
+}
 
 /* Clip a triangle against the viewport and user clip planes.
  */
@@ -281,12 +308,12 @@ do_clip_tri( struct draw_stage *stage,
    while (clipmask && n >= 3) {
       const unsigned plane_idx = ffs(clipmask)-1;
       const boolean is_user_clip_plane = plane_idx >= 6;
-      const float *plane = clipper->plane[plane_idx];
       struct vertex_header *vert_prev = inlist[0];
       boolean *edge_prev = &inEdges[0];
-      float dp_prev = dot4( vert_prev->clip, plane );
+      float dp_prev;
       unsigned outcount = 0;
 
+      dp_prev = getclipdist(clipper, vert_prev, plane_idx);
       clipmask &= ~(1<<plane_idx);
 
       assert(n < MAX_CLIPPED_VERTICES);
@@ -299,7 +326,7 @@ do_clip_tri( struct draw_stage *stage,
 	 struct vertex_header *vert = inlist[i];
          boolean *edge = &inEdges[i];
 
-	 float dp = dot4( vert->clip, plane );
+         float dp = getclipdist(clipper, vert, plane_idx);
 
 	 if (!IS_NEGATIVE(dp_prev)) {
             assert(outcount < MAX_CLIPPED_VERTICES);
@@ -421,17 +448,14 @@ do_clip_line( struct draw_stage *stage,
    const struct clip_stage *clipper = clip_stage( stage );
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
-   const float *pos0 = v0->clip;
-   const float *pos1 = v1->clip;
    float t0 = 0.0F;
    float t1 = 0.0F;
    struct prim_header newprim;
 
    while (clipmask) {
       const unsigned plane_idx = ffs(clipmask)-1;
-      const float *plane = clipper->plane[plane_idx];
-      const float dp0 = dot4( pos0, plane );
-      const float dp1 = dot4( pos1, plane );
+      const float dp0 = getclipdist(clipper, v0, plane_idx);
+      const float dp1 = getclipdist(clipper, v1, plane_idx);
 
       if (dp1 < 0.0F) {
 	 float t = dp1 / (dp1 - dp0);
