@@ -432,10 +432,13 @@ st_get_vp_variant(struct st_context *st,
 
 
 static unsigned
-st_translate_interp(enum glsl_interp_qualifier glsl_qual)
+st_translate_interp(enum glsl_interp_qualifier glsl_qual, bool is_color)
 {
    switch (glsl_qual) {
    case INTERP_QUALIFIER_NONE:
+      if (is_color)
+         return TGSI_INTERPOLATE_LINEAR;
+      return TGSI_INTERPOLATE_PERSPECTIVE;
    case INTERP_QUALIFIER_SMOOTH:
       return TGSI_INTERPOLATE_PERSPECTIVE;
    case INTERP_QUALIFIER_FLAT:
@@ -538,12 +541,14 @@ st_translate_fragment_program(struct st_context *st,
             case FRAG_ATTRIB_COL0:
                input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
                input_semantic_index[slot] = 0;
-               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
+               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],
+                                                      TRUE);
                break;
             case FRAG_ATTRIB_COL1:
                input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
                input_semantic_index[slot] = 1;
-               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
+               interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],
+                                                      TRUE);
                break;
             case FRAG_ATTRIB_FOGC:
                input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
@@ -600,7 +605,8 @@ st_translate_fragment_program(struct st_context *st,
                if (attr == FRAG_ATTRIB_PNTC)
                   interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
                else
-                  interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr]);
+                  interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],
+                                                         FALSE);
                break;
             }
          }
