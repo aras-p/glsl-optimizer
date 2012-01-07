@@ -321,6 +321,7 @@ static nv50_ir::SVSemantic translateSysVal(uint sysval)
    case TGSI_SEMANTIC_PSIZE:      return nv50_ir::SV_POINT_SIZE;
    case TGSI_SEMANTIC_PRIMID:     return nv50_ir::SV_PRIMITIVE_ID;
    case TGSI_SEMANTIC_INSTANCEID: return nv50_ir::SV_INSTANCE_ID;
+   case TGSI_SEMANTIC_VERTEXID:   return nv50_ir::SV_VERTEX_ID;
    default:
       assert(0);
       return nv50_ir::SV_CLOCK;
@@ -769,7 +770,7 @@ int Source::inferSysValDirection(unsigned sn) const
 {
    switch (sn) {
    case TGSI_SEMANTIC_INSTANCEID:
-// case TGSI_SEMANTIC_VERTEXID:
+   case TGSI_SEMANTIC_VERTEXID:
       return 1;
 #if 0
    case TGSI_SEMANTIC_LAYER:

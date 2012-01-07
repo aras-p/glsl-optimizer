@@ -18,7 +18,7 @@ static nv50_ir::SVSemantic irSemantic(unsigned sn)
    case NV50_SEMANTIC_VIEWPORTINDEX: return nv50_ir::SV_VIEWPORT_INDEX;
    case TGSI_SEMANTIC_PSIZE:         return nv50_ir::SV_POINT_SIZE;
    case NV50_SEMANTIC_CLIPDISTANCE:  return nv50_ir::SV_CLIP_DISTANCE;
-   case NV50_SEMANTIC_VERTEXID:      return nv50_ir::SV_VERTEX_ID;
+   case TGSI_SEMANTIC_VERTEXID:      return nv50_ir::SV_VERTEX_ID;
    case TGSI_SEMANTIC_INSTANCEID:    return nv50_ir::SV_INSTANCE_ID;
    case TGSI_SEMANTIC_PRIMID:        return nv50_ir::SV_PRIMITIVE_ID;
    case NV50_SEMANTIC_TESSFACTOR:    return nv50_ir::SV_TESS_FACTOR;
@@ -652,7 +652,7 @@ Converter::tgsiSemantic(SVSemantic sv, int index)
    case SV_VIEWPORT_INDEX: return NV50_SEMANTIC_VIEWPORTINDEX;
    case SV_POINT_SIZE:     return TGSI_SEMANTIC_PSIZE;
    case SV_CLIP_DISTANCE:  return NV50_SEMANTIC_CLIPDISTANCE;
-   case SV_VERTEX_ID:      return NV50_SEMANTIC_VERTEXID;
+   case SV_VERTEX_ID:      return TGSI_SEMANTIC_VERTEXID;
    case SV_INSTANCE_ID:    return TGSI_SEMANTIC_INSTANCEID;
    case SV_PRIMITIVE_ID:   return TGSI_SEMANTIC_PRIMID;
    case SV_TESS_FACTOR:    return NV50_SEMANTIC_TESSFACTOR;
@@ -712,7 +712,7 @@ Converter::parseSignature()
          info.in[r].sn = TGSI_SEMANTIC_POSITION;
          break;
       case D3D_NAME_VERTEX_ID:
-         info.in[r].sn = NV50_SEMANTIC_VERTEXID;
+         info.in[r].sn = TGSI_SEMANTIC_VERTEXID;
          break;
       case D3D_NAME_PRIMITIVE_ID:
          info.in[r].sn = TGSI_SEMANTIC_PRIMID;

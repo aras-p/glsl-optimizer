@@ -65,7 +65,7 @@ nvc0_shader_input_address(unsigned sn, unsigned si, unsigned ubase)
    case NV50_SEMANTIC_POINTCOORD:   return 0x2e0;
    case NV50_SEMANTIC_TESSCOORD:    return 0x2f0;
    case TGSI_SEMANTIC_INSTANCEID:   return 0x2f8;
-   case NV50_SEMANTIC_VERTEXID:     return 0x2fc;
+   case TGSI_SEMANTIC_VERTEXID:     return 0x2fc;
    case NV50_SEMANTIC_TEXCOORD:     return 0x300 + si * 0x10;
    case TGSI_SEMANTIC_FACE:         return 0x3fc;
    case NV50_SEMANTIC_INVOCATIONID: return ~0;
@@ -108,7 +108,7 @@ nvc0_vp_assign_input_slots(struct nv50_ir_prog_info *info)
    for (n = 0, i = 0; i < info->numInputs; ++i) {
       switch (info->in[i].sn) {
       case TGSI_SEMANTIC_INSTANCEID:
-      case NV50_SEMANTIC_VERTEXID:
+      case TGSI_SEMANTIC_VERTEXID:
          info->in[i].mask = 0x1;
          info->in[i].slot[0] =
             nvc0_shader_input_address(info->in[i].sn, 0, 0) / 4;
@@ -264,7 +264,7 @@ nvc0_vtgp_gen_header(struct nvc0_program *vp, struct nv50_ir_prog_info *info)
       case TGSI_SEMANTIC_INSTANCEID:
          vp->hdr[10] |= 1 << 30;
          break;
-      case NV50_SEMANTIC_VERTEXID:
+      case TGSI_SEMANTIC_VERTEXID:
          vp->hdr[10] |= 1 << 31;
          break;
       default:
