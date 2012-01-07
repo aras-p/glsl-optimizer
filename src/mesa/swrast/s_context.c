@@ -718,9 +718,9 @@ _swrast_CreateContext( struct gl_context *ctx )
    GLuint i;
    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
 #ifdef _OPENMP
-   const GLint maxThreads = omp_get_max_threads();
+   const GLuint maxThreads = omp_get_max_threads();
 #else
-   const GLint maxThreads = 1;
+   const GLuint maxThreads = 1;
 #endif
 
    if (SWRAST_DEBUG) {
