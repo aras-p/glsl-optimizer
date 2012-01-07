@@ -236,7 +236,7 @@ fse_run_linear(struct draw_pt_middle_end *middle,
    return;
 
 fail:
-   assert(0);
+   debug_warn_once("allocate or map of vertex buffer failed (out of memory?)");
    return;
 }
 
@@ -293,7 +293,7 @@ fse_run(struct draw_pt_middle_end *middle,
    return;
 
 fail:
-   assert(0);
+   debug_warn_once("allocate or map of vertex buffer failed (out of memory?)");
    return;
 }
 

@@ -201,7 +201,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 
    hw_verts = draw->render->map_vertices( draw->render );
    if (!hw_verts) {
-      assert(0);
+      debug_warn_once("vertex buffer allocation failed (out of memory?)");
       return;
    }
 
@@ -292,7 +292,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    return;
 
 fail:
-   assert(0);
+   debug_warn_once("allocate or map of vertex buffer failed (out of memory?)");
    return;
 }
 

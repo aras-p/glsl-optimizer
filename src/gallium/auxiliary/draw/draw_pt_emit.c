@@ -150,7 +150,7 @@ draw_pt_emit(struct pt_emit *emit,
 
    hw_verts = render->map_vertices( render );
    if (!hw_verts) {
-      assert(0);
+      debug_warn_once("map of vertex buffer failed (out of memory?)");
       return;
    }
 
@@ -262,7 +262,7 @@ draw_pt_emit_linear(struct pt_emit *emit,
    return;
 
 fail:
-   assert(0);
+   debug_warn_once("allocate or map of vertex buffer failed (out of memory?)");
    return;
 }
 
