@@ -1410,8 +1410,10 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_unop_abs:
-      assert(result_dst.type == GLSL_TYPE_FLOAT);
-      emit(ir, TGSI_OPCODE_ABS, result_dst, op[0]);
+      if (result_dst.type == GLSL_TYPE_INT || result_dst.type == GLSL_TYPE_UINT)
+         emit(ir, TGSI_OPCODE_IABS, result_dst, op[0]);
+      else
+         emit(ir, TGSI_OPCODE_ABS, result_dst, op[0]);
       break;
    case ir_unop_sign:
       emit(ir, TGSI_OPCODE_SSG, result_dst, op[0]);
