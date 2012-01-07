@@ -40,11 +40,6 @@ _mesa_unpack_rgba_block(gl_format format,
                         GLuint x, GLuint y, GLuint width, GLuint height);
 
 extern void
-_mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
-			   const void *src, GLuint dst[][4]);
-
-
-extern void
 _mesa_unpack_float_z_row(gl_format format, GLuint n,
                          const void *src, GLfloat *dst);
 
