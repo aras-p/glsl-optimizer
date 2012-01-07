@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
