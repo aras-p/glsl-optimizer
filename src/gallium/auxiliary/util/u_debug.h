@@ -215,6 +215,25 @@ void _debug_assert_fail(const char *expr,
 
 
 /**
+ * Emit a warning message, but only once.
+ */
+#ifdef DEBUG
+#define debug_warn_once(__msg) \
+   do { \
+      static bool warned = FALSE; \
+      if (!warned) { \
+         _debug_printf("%s:%u:%s: one time warning: %s\n", \
+                       __FILE__, __LINE__, __FUNCTION__, __msg); \
+         warned = TRUE; \
+      } \
+   } while (0)
+#else
+#define debug_warn_once(__msg) \
+   ((void)0) 
+#endif
+
+
+/**
  * Output an error message. Not muted on release version.
  */
 #ifdef DEBUG
