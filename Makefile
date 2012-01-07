@@ -184,7 +184,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-PACKAGE_VERSION=7.12-devel
+PACKAGE_VERSION=8.0-devel
 PACKAGE_DIR = Mesa-$(PACKAGE_VERSION)
 PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 
