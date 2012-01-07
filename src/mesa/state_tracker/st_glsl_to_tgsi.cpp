@@ -2374,7 +2374,7 @@ glsl_to_tgsi_visitor::visit(ir_constant *ir)
       gl_type = native_integers ? GL_BOOL : GL_FLOAT;
       for (i = 0; i < ir->type->vector_elements; i++) {
          if (native_integers)
-            values[i].b = ir->value.b[i];
+            values[i].u = ir->value.b[i] ? ~0 : 0;
          else
             values[i].f = ir->value.b[i];
       }
