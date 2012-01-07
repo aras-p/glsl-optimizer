@@ -1402,8 +1402,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_unop_neg:
-      assert(result_dst.type == GLSL_TYPE_FLOAT || result_dst.type == GLSL_TYPE_INT);
-      if (result_dst.type == GLSL_TYPE_INT)
+      if (result_dst.type == GLSL_TYPE_INT || result_dst.type == GLSL_TYPE_UINT)
          emit(ir, TGSI_OPCODE_INEG, result_dst, op[0]);
       else {
          op[0].negate = ~op[0].negate;
