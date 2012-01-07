@@ -77,21 +77,62 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 }
 
 GLboolean
-brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
+brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
    unsigned int stage;
 
-   if (!_mesa_ir_link_shader(ctx, prog))
-      return false;
-
-   for (stage = 0; stage < ARRAY_SIZE(prog->_LinkedShaders); stage++) {
+   for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
       struct brw_shader *shader =
-	 (struct brw_shader *)prog->_LinkedShaders[stage];
+	 (struct brw_shader *)shProg->_LinkedShaders[stage];
+      static const GLenum targets[] = {
+	 GL_VERTEX_PROGRAM_ARB,
+	 GL_FRAGMENT_PROGRAM_ARB,
+	 GL_GEOMETRY_PROGRAM_NV
+      };
 
       if (!shader)
 	 continue;
+
+      struct gl_program *prog =
+	 ctx->Driver.NewProgram(ctx, targets[stage], shader->base.Name);
+      if (!prog)
+	return NULL;
+      prog->Parameters = _mesa_new_parameter_list();
+
+      _mesa_generate_parameters_list_for_uniforms(shProg, &shader->base,
+						  prog->Parameters);
+
+      if (stage == 0) {
+	 struct gl_vertex_program *vp = (struct gl_vertex_program *) prog;
+	 vp->UsesClipDistance = shProg->Vert.UsesClipDistance;
+      }
+
+      if (stage == 1) {
+	 class uses_kill_visitor : public ir_hierarchical_visitor {
+	 public:
+	    uses_kill_visitor() : uses_kill(false)
+	    {
+	       /* empty */
+	    }
+
+	    virtual ir_visitor_status visit_enter(class ir_discard *ir)
+	    {
+	       this->uses_kill = true;
+	       return visit_stop;
+	    }
+
+	    bool uses_kill;
+	 };
+
+	 uses_kill_visitor v;
+
+	 v.run(shader->base.ir);
+
+	 struct gl_fragment_program *fp = (struct gl_fragment_program *) prog;
+	 fp->UsesKill = v.uses_kill;
+      }
 
       void *mem_ctx = ralloc_context(NULL);
       bool progress;
@@ -147,13 +188,50 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	   || progress;
       } while (progress);
 
+      /* Make a pass over the IR to add state references for any built-in
+       * uniforms that are used.  This has to be done now (during linking).
+       * Code generation doesn't happen until the first time this shader is
+       * used for rendering.  Waiting until then to generate the parameters is
+       * too late.  At that point, the values for the built-in informs won't
+       * get sent to the shader.
+       */
+      foreach_list(node, shader->ir) {
+	 ir_variable *var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform)
+	     || (strncmp(var->name, "gl_", 3) != 0))
+	    continue;
+
+	 const ir_state_slot *const slots = var->state_slots;
+	 assert(var->state_slots != NULL);
+
+	 for (unsigned int i = 0; i < var->num_state_slots; i++) {
+	    _mesa_add_state_reference(prog->Parameters,
+				      (gl_state_index *) slots[i].tokens);
+	 }
+      }
+
       validate_ir_tree(shader->ir);
 
       reparent_ir(shader->ir, shader->ir);
       ralloc_free(mem_ctx);
+
+      do_set_program_inouts(shader->ir, prog,
+			    shader->base.Type == GL_FRAGMENT_SHADER);
+
+      prog->SamplersUsed = shader->base.active_samplers;
+      _mesa_update_shader_textures_used(shProg, prog);
+
+      _mesa_reference_program(ctx, &shader->base.Program, prog);
+
+      /* This has to be done last.  Any operation that can cause
+       * prog->ParameterValues to get reallocated (e.g., anything that adds a
+       * program constant) has to happen before creating this linkage.
+       */
+      _mesa_associate_uniform_storage(ctx, shProg, prog->Parameters);
    }
 
-   if (!brw_shader_precompile(ctx, prog))
+   if (!brw_shader_precompile(ctx, shProg))
       return false;
 
    return true;
