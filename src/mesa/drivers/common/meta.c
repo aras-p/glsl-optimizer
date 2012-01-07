@@ -1026,7 +1026,7 @@ _mesa_meta_in_progress(struct gl_context *ctx)
 static INLINE GLfloat
 invert_z(GLfloat normZ)
 {
-   GLfloat objZ = 1.0 - 2.0 * normZ;
+   GLfloat objZ = 1.0f - 2.0f * normZ;
    return objZ;
 }
 
@@ -2920,7 +2920,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    /* setup texcoords (XXX what about border?) */
    setup_texture_coords(faceTarget,
-                        0.0, 0.0, /* width, height never used here */
+                        0.0f, 0.0f, /* width, height never used here */
                         slice,
                         verts[0].tex,
                         verts[1].tex,
