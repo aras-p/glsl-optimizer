@@ -698,6 +698,14 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       }
       break;
 
+   case OP_MOD:
+      if (i->sType == TYPE_U32 && imm.isPow2()) {
+         bld.setPosition(i, false);
+         i->op = OP_AND;
+         i->setSrc(1, bld.loadImm(NULL, imm.reg.data.u32 - 1));
+      }
+      break;
+
    case OP_SET: // TODO: SET_AND,OR,XOR
    {
       CmpInstruction *si = findOriginForTestWithZero(i->getSrc(t));
