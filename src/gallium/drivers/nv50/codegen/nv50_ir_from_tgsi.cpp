@@ -378,6 +378,7 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_IDIV:
    case TGSI_OPCODE_IMAX:
    case TGSI_OPCODE_IMIN:
+   case TGSI_OPCODE_IABS:
    case TGSI_OPCODE_INEG:
    case TGSI_OPCODE_ISGE:
    case TGSI_OPCODE_ISHR:
@@ -514,6 +515,7 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(IDIV, DIV);
    NV50_IR_OPCODE_CASE(IMAX, MAX);
    NV50_IR_OPCODE_CASE(IMIN, MIN);
+   NV50_IR_OPCODE_CASE(IABS, ABS);
    NV50_IR_OPCODE_CASE(INEG, NEG);
    NV50_IR_OPCODE_CASE(ISGE, SET);
    NV50_IR_OPCODE_CASE(ISHR, SHR);
@@ -1737,6 +1739,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_FLR:
    case TGSI_OPCODE_TRUNC:
    case TGSI_OPCODE_RCP:
+   case TGSI_OPCODE_IABS:
    case TGSI_OPCODE_INEG:
    case TGSI_OPCODE_NOT:
    case TGSI_OPCODE_DDX:
