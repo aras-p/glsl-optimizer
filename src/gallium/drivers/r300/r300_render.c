@@ -981,15 +981,13 @@ static void r300_render_release_vertices(struct vbuf_render* render)
     r300render->vbo_max_used = 0;
 }
 
-static boolean r300_render_set_primitive(struct vbuf_render* render,
-                                               unsigned prim)
+static void r300_render_set_primitive(struct vbuf_render* render,
+                                      unsigned prim)
 {
     struct r300_render* r300render = r300_render(render);
 
     r300render->prim = prim;
     r300render->hwprim = r300_translate_primitive(prim);
-
-    return TRUE;
 }
 
 static void r300_render_draw_arrays(struct vbuf_render* render,

@@ -132,7 +132,7 @@ sp_vbuf_unmap_vertices(struct vbuf_render *vbr,
 }
 
 
-static boolean
+static void
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
@@ -142,7 +142,6 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 
    cvbr->softpipe->reduced_prim = u_reduced_prim(prim);
    cvbr->prim = prim;
-   return TRUE;
 }
 
 

@@ -54,7 +54,6 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    unsigned dst_offset;
    struct translate_key hw_key;
    unsigned i;
-   boolean ok;
    
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
     */
@@ -66,11 +65,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
     */
    emit->prim = prim;
 
-   ok = draw->render->set_primitive(draw->render, emit->prim);
-   if (!ok) {
-      assert(0);
-      return;
-   }
+   draw->render->set_primitive(draw->render, emit->prim);
 
    /* Must do this after set_primitive() above:
     */
@@ -113,10 +108,10 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
    if (!emit->translate ||
        translate_key_compare(&emit->translate->key, &hw_key) != 0)
-   {
-      translate_key_sanitize(&hw_key);
-      emit->translate = translate_cache_find(emit->cache, &hw_key);
-   }
+      {
+         translate_key_sanitize(&hw_key);
+         emit->translate = translate_cache_find(emit->cache, &hw_key);
+      }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
@@ -147,10 +142,7 @@ void draw_pt_emit( struct pt_emit *emit,
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...
     */
-   if (!draw->render->set_primitive(draw->render, emit->prim)) {
-      assert(0);
-      return;
-   }
+   draw->render->set_primitive(draw->render, emit->prim);
 
    render->allocate_vertices(render,
                              (ushort)translate->key.output_stride,
@@ -221,8 +213,7 @@ void draw_pt_emit_linear(struct pt_emit *emit,
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...
     */
-   if (!draw->render->set_primitive(draw->render, emit->prim)) 
-      goto fail;
+   draw->render->set_primitive(draw->render, emit->prim);
 
    if (!render->allocate_vertices(render,
                                   (ushort)translate->key.output_stride,

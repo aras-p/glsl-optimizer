@@ -98,7 +98,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    struct draw_context *draw = feme->draw;
    const struct vertex_info *vinfo;
    unsigned i, dst_offset;
-   boolean ok;
    struct translate_key key;
 
    unsigned gs_out_prim = (draw->gs.geometry_shader ? 
@@ -107,12 +106,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 
 
 
-   ok = draw->render->set_primitive( draw->render, 
-                                     gs_out_prim );
-   if (!ok) {
-      assert(0);
-      return;
-   }
+   draw->render->set_primitive(draw->render, gs_out_prim);
    
    /* Must do this after set_primitive() above:
     */

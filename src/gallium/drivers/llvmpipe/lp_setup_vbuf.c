@@ -113,11 +113,10 @@ lp_setup_unmap_vertices(struct vbuf_render *vbr,
 }
 
 
-static boolean
+static void
 lp_setup_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    lp_setup_context(vbr)->prim = prim;
-   return TRUE;
 }
 
 typedef const float (*const_float4_ptr)[4];

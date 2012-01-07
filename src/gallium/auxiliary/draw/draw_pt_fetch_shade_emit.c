@@ -83,11 +83,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
     */
    assert(!draw->gs.geometry_shader);
 
-   if (!draw->render->set_primitive( draw->render,
-                                     prim )) {
-      assert(0);
-      return;
-   }
+   draw->render->set_primitive(draw->render, prim);
 
    /* Must do this after set_primitive() above:
     */

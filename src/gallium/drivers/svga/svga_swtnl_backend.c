@@ -161,14 +161,12 @@ svga_vbuf_render_unmap_vertices( struct vbuf_render *render,
    svga_render->vbuf_used = MAX2(svga_render->vbuf_used, used);
 }
 
-static boolean
+static void
 svga_vbuf_render_set_primitive( struct vbuf_render *render,
                                 unsigned prim )
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    svga_render->prim = prim;
-
-   return TRUE;
 }
 
 static void
