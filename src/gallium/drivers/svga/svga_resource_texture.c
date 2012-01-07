@@ -196,9 +196,6 @@ svga_transfer_dma(struct svga_context *svga,
 }
 
 
-
-
-
 static boolean 
 svga_texture_get_handle(struct pipe_screen *screen,
                                struct pipe_resource *texture,
@@ -234,11 +231,6 @@ svga_texture_destroy(struct pipe_screen *screen,
 
    FREE(tex);
 }
-
-
-
-
-
 
 
 /* XXX: Still implementing this as if it was a screen function, but
@@ -396,9 +388,6 @@ svga_texture_transfer_destroy(struct pipe_context *pipe,
 }
 
 
-
-
-
 struct u_resource_vtbl svga_texture_vtbl = 
 {
    svga_texture_get_handle,	      /* get_handle */
@@ -410,8 +399,6 @@ struct u_resource_vtbl svga_texture_vtbl =
    svga_texture_transfer_unmap,	      /* transfer_unmap */
    u_default_transfer_inline_write    /* transfer_inline_write */
 };
-
-
 
 
 struct pipe_resource *
@@ -504,8 +491,6 @@ error1:
 }
 
 
-
-
 struct pipe_resource *
 svga_texture_from_handle(struct pipe_screen *screen,
 			 const struct pipe_resource *template,
@@ -568,4 +553,3 @@ svga_texture_from_handle(struct pipe_screen *screen,
 
    return &tex->b.b;
 }
-
