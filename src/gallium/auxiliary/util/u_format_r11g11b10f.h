@@ -119,12 +119,12 @@ static INLINE float uf11_to_f32(uint16_t val)
       float scale, decimal;
       exponent -= 15;
       if (exponent < 0) {
-         scale = 1.0 / (1 << -exponent);
+         scale = 1.0f / (1 << -exponent);
       }
       else {
-         scale = 1 << exponent;
+         scale = (float) (1 << exponent);
       }
-      decimal = 1.0 + (float) mantissa / 64;
+      decimal = 1.0f + (float) mantissa / 64;
       f32.f = scale * decimal;
    }
 
@@ -208,9 +208,9 @@ static INLINE float uf10_to_f32(uint16_t val)
          scale = 1.0 / (1 << -exponent);
       }
       else {
-         scale = 1 << exponent;
+         scale = (float) (1 << exponent);
       }
-      decimal = 1.0 + (float) mantissa / 32;
+      decimal = 1.0f + (float) mantissa / 32;
       f32.f = scale * decimal;
    }
 
