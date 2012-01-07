@@ -2532,10 +2532,10 @@ _mesa_pack_colormask(gl_format format, const GLubyte colorMask[4], void *dst)
          GLuint i;
 
          /* this should put non-zero values into the channels of dst */
-         maskColor[0] = colorMask[0] ? -1.0 : 0.0;
-         maskColor[1] = colorMask[1] ? -1.0 : 0.0;
-         maskColor[2] = colorMask[2] ? -1.0 : 0.0;
-         maskColor[3] = colorMask[3] ? -1.0 : 0.0;
+         maskColor[0] = colorMask[0] ? -1.0f : 0.0f;
+         maskColor[1] = colorMask[1] ? -1.0f : 0.0f;
+         maskColor[2] = colorMask[2] ? -1.0f : 0.0f;
+         maskColor[3] = colorMask[3] ? -1.0f : 0.0f;
          _mesa_pack_float_rgba_row(format, 1,
                                    (const GLfloat (*)[4]) maskColor, dst);
 
