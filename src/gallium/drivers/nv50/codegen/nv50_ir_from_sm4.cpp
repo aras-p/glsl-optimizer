@@ -899,10 +899,10 @@ Converter::inspectDeclaration(const sm4_dcl& dcl)
          assert(prog->getType() != Program::TYPE_FRAGMENT);
          break;
       case SM4_SV_CULL_DISTANCE: // XXX: order ?
-         info.io.cullDistanceMask |= 1 << info.io.clipDistanceCount;
-	 // fall through
+         info.io.cullDistanceMask |= 1 << info.io.clipDistanceMask;
+      // fall through
       case SM4_SV_CLIP_DISTANCE:
-         info.io.clipDistanceCount++;
+         info.io.clipDistanceMask++; // abuse as count
          break;
       default:
          break;
@@ -2256,6 +2256,9 @@ Converter::run()
    nrArrays = 0;
    for (unsigned int pos = 0; pos < sm4.dcls.size(); ++pos)
       handleDeclaration(*sm4.dcls[pos]);
+
+   info.io.genUserClip = -1; // no UCPs permitted with SM4 shaders
+   info.io.clipDistanceMask = (1 << info.io.clipDistanceMask) - 1;
 
    info.assignSlots(&info);
 

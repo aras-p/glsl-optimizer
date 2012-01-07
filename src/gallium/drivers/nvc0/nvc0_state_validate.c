@@ -301,7 +301,7 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct nvc0_program *vp;
-   uint8_t clip_enable;
+   uint8_t clip_enable = nvc0->rast->pipe.clip_plane_enable;
 
    if (nvc0->dirty & NVC0_NEW_CLIP)
       nvc0_upload_uclip_planes(nvc0);
@@ -312,13 +312,11 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
       if (!vp)
          vp = nvc0->vertprog;
    }
-   clip_enable = vp->vp.clip_enable;
 
-   if (!clip_enable) {
-      clip_enable = nvc0->rast->pipe.clip_plane_enable;
-      if (unlikely(clip_enable))
-         nvc0_check_program_ucps(nvc0, vp, clip_enable);
-   }
+   if (clip_enable && vp->vp.num_ucps < PIPE_MAX_CLIP_PLANES)
+      nvc0_check_program_ucps(nvc0, vp, clip_enable);
+
+   clip_enable &= vp->vp.clip_enable;
 
    if (nvc0->state.clip_enable != clip_enable) {
       nvc0->state.clip_enable = clip_enable;

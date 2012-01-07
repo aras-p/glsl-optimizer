@@ -36,9 +36,9 @@ struct nvc0_program {
 
    struct {
       uint32_t clip_mode; /* clip/cull selection */
-      uint8_t clip_enable; /* only applies if num_ucps == 0 */
+      uint8_t clip_enable; /* mask of defined clip planes */
       uint8_t edgeflag;
-      uint8_t num_ucps;
+      uint8_t num_ucps; /* also set to max if ClipDistance is used */
    } vp;
    struct {
       uint8_t early_z;

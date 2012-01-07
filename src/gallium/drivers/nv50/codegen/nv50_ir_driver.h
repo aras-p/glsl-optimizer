@@ -152,8 +152,9 @@ struct nv50_ir_prog_info
 
    struct {
       uint8_t clipDistance;      /* index of first clip distance output */
-      uint8_t clipDistanceCount;
+      uint8_t clipDistanceMask;  /* mask of clip distances defined */
       uint8_t cullDistanceMask;  /* clip distance mode (1 bit per output) */
+      int8_t genUserClip;        /* request user clip planes for ClipVertex */
       uint8_t pointSize;         /* output index for PointSize */
       uint8_t edgeFlagIn;
       uint8_t edgeFlagOut;

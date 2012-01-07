@@ -59,7 +59,9 @@ nvc0_shader_input_address(unsigned sn, unsigned si, unsigned ubase)
    case TGSI_SEMANTIC_FOG:          return 0x270;
    case TGSI_SEMANTIC_COLOR:        return 0x280 + si * 0x10;
    case TGSI_SEMANTIC_BCOLOR:       return 0x2a0 + si * 0x10;
-   case NV50_SEMANTIC_CLIPDISTANCE: return 0x2c0 + si * 0x10;
+   case NV50_SEMANTIC_CLIPDISTANCE: return 0x2c0 + si * 0x4;
+   case TGSI_SEMANTIC_CLIPDIST:     return 0x2c0 + si * 0x10;
+   case TGSI_SEMANTIC_CLIPVERTEX:   return 0x260;
    case NV50_SEMANTIC_POINTCOORD:   return 0x2e0;
    case NV50_SEMANTIC_TESSCOORD:    return 0x2f0;
    case TGSI_SEMANTIC_INSTANCEID:   return 0x2f8;
@@ -87,7 +89,9 @@ nvc0_shader_output_address(unsigned sn, unsigned si, unsigned ubase)
    case TGSI_SEMANTIC_FOG:           return 0x270;
    case TGSI_SEMANTIC_COLOR:         return 0x280 + si * 0x10;
    case TGSI_SEMANTIC_BCOLOR:        return 0x2a0 + si * 0x10;
-   case NV50_SEMANTIC_CLIPDISTANCE:  return 0x2c0 + si * 0x10;
+   case NV50_SEMANTIC_CLIPDISTANCE:  return 0x2c0 + si * 0x4;
+   case TGSI_SEMANTIC_CLIPDIST:      return 0x2c0 + si * 0x10;
+   case TGSI_SEMANTIC_CLIPVERTEX:    return 0x260;
    case NV50_SEMANTIC_TEXCOORD:      return 0x300 + si * 0x10;
    case TGSI_SEMANTIC_EDGEFLAG:      return ~0;
    default:
@@ -268,10 +272,13 @@ nvc0_vtgp_gen_header(struct nvc0_program *vp, struct nv50_ir_prog_info *info)
       }
    }
 
-   vp->vp.clip_enable = (1 << info->io.clipDistanceCount) - 1;
+   vp->vp.clip_enable = info->io.clipDistanceMask;
    for (i = 0; i < 8; ++i)
       if (info->io.cullDistanceMask & (1 << i))
          vp->vp.clip_mode |= 1 << (i * 4);
+
+   if (info->io.genUserClip < 0)
+      vp->vp.num_ucps = PIPE_MAX_CLIP_PLANES; /* prevent rebuilding */
 
    return 0;
 }
@@ -282,7 +289,7 @@ nvc0_vp_gen_header(struct nvc0_program *vp, struct nv50_ir_prog_info *info)
    vp->hdr[0] = 0x20061 | (1 << 10);
    vp->hdr[4] = 0xff000;
 
-   vp->hdr[18] = (1 << info->io.clipDistanceCount) - 1;
+   vp->hdr[18] = info->io.clipDistanceMask;
 
    return nvc0_vtgp_gen_header(vp, info);
 }
@@ -549,7 +556,7 @@ nvc0_program_translate(struct nvc0_program *prog)
    info->bin.sourceRep = NV50_PROGRAM_IR_TGSI;
    info->bin.source = (void *)prog->pipe.tokens;
 
-   info->io.clipDistanceCount = prog->vp.num_ucps;
+   info->io.genUserClip = prog->vp.num_ucps;
 
    info->assignSlots = nvc0_program_assign_varying_slots;
 

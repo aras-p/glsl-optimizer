@@ -593,6 +593,8 @@ public:
 
    bool mainTempsInLMem;
 
+   int clipVertexOutput;
+
    uint8_t *resourceTargets; // TGSI_TEXTURE_*
    unsigned resourceCount;
 
@@ -651,6 +653,8 @@ bool Source::scanSource()
    if (!insns)
       return false;
 
+   clipVertexOutput = -1;
+
    resourceCount = scan.file_max[TGSI_FILE_RESOURCE] + 1;
    resourceTargets = new uint8_t[resourceCount];
 
@@ -707,6 +711,9 @@ bool Source::scanSource()
    if (mainTempsInLMem)
       info->bin.tlsSpace += (scan.file_max[TGSI_FILE_TEMPORARY] + 1) * 16;
 
+   if (info->io.genUserClip > 0)
+      info->io.clipDistanceMask = (1 << info->io.genUserClip) - 1;
+
    return info->assignSlots(info) == 0;
 }
 
@@ -733,6 +740,9 @@ void Source::scanProperty(const struct tgsi_full_property *prop)
    case TGSI_PROPERTY_FS_COORD_ORIGIN:
    case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
       // we don't care
+      break;
+   case TGSI_PROPERTY_VS_PROHIBIT_UCPS:
+      info->io.genUserClip = -1;
       break;
    default:
       INFO("unhandled TGSI property %d\n", prop->Property.PropertyName);
@@ -820,6 +830,9 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
          case TGSI_SEMANTIC_POSITION:
             if (info->type == PIPE_SHADER_FRAGMENT)
                info->io.fragDepth = i;
+            else
+            if (clipVertexOutput < 0)
+               clipVertexOutput = i;
             break;
          case TGSI_SEMANTIC_COLOR:
             if (info->type == PIPE_SHADER_FRAGMENT)
@@ -827,6 +840,14 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
             break;
          case TGSI_SEMANTIC_EDGEFLAG:
             info->io.edgeFlagOut = i;
+            break;
+         case TGSI_SEMANTIC_CLIPVERTEX:
+            clipVertexOutput = i;
+            break;
+         case TGSI_SEMANTIC_CLIPDIST:
+            info->io.clipDistanceMask |=
+               decl->Declaration.UsageMask << (si * 4);
+            info->io.genUserClip = -1;
             break;
          default:
             break;
@@ -1324,9 +1345,9 @@ Converter::storeDst(int d, int c, Value *val)
    Value *ptr = dst.isIndirect(0) ?
       fetchSrc(dst.getIndirect(0), 0, NULL) : NULL;
 
-   if (info->io.clipDistanceCount &&
+   if (info->io.genUserClip > 0 &&
        dst.getFile() == TGSI_FILE_OUTPUT &&
-       info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_POSITION) {
+       !dst.isIndirect(0) && dst.getIndex(0) == code->clipVertexOutput) {
       mkMov(clipVtx[c], val);
       val = clipVtx[c];
    }
@@ -2136,7 +2157,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       setPosition(epilogue, true);
       if (prog->getType() == Program::TYPE_FRAGMENT)
          exportOutputs();
-      if (info->io.clipDistanceCount)
+      if (info->io.genUserClip > 0)
          handleUserClipPlanes();
       mkOp(OP_EXIT, TYPE_NONE, NULL)->terminator = 1;
    }
@@ -2173,7 +2194,7 @@ Converter::handleUserClipPlanes()
    int i, c;
 
    for (c = 0; c < 4; ++c) {
-      for (i = 0; i < info->io.clipDistanceCount; ++i) {
+      for (i = 0; i < info->io.genUserClip; ++i) {
          Value *ucp;
          ucp = mkLoad(TYPE_F32, mkSymbol(FILE_MEMORY_CONST, 15, TYPE_F32,
                                          i * 16 + c * 4), NULL);
@@ -2184,7 +2205,7 @@ Converter::handleUserClipPlanes()
       }
    }
 
-   for (i = 0; i < info->io.clipDistanceCount; ++i)
+   for (i = 0; i < info->io.genUserClip; ++i)
       mkOp2(OP_WRSV, TYPE_F32, NULL, mkSysVal(SV_CLIP_DISTANCE, i), res[i]);
 }
 
@@ -2275,7 +2296,7 @@ Converter::run()
    entryBBs.push(entry);
    leaveBBs.push(leave);
 
-   if (info->io.clipDistanceCount) {
+   if (info->io.genUserClip > 0) {
       for (int c = 0; c < 4; ++c)
          clipVtx[c] = getScratch();
    }
