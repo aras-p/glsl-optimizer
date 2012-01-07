@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -50,7 +50,6 @@ struct fetch_shade_emit {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
 
-
    /* Temporaries:
     */
    const float *constants;
@@ -61,16 +60,16 @@ struct fetch_shade_emit {
    struct draw_vs_variant_key key;
    struct draw_vs_variant *active;
 
-
    const struct vertex_info *vinfo;
 };
 
 
 
-static void fse_prepare( struct draw_pt_middle_end *middle,
-                         unsigned prim,
-                         unsigned opt,
-                         unsigned *max_vertices )
+static void
+fse_prepare(struct draw_pt_middle_end *middle,
+            unsigned prim,
+            unsigned opt,
+            unsigned *max_vertices)
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
@@ -89,7 +88,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
     */
    fse->vinfo = vinfo = draw->render->get_vertex_info(draw->render);
 
-
    fse->key.output_stride = vinfo->size * 4;
    fse->key.nr_outputs = vinfo->num_attribs;
    fse->key.nr_inputs = num_vs_inputs;
@@ -101,7 +99,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    fse->key.clip = draw->clip_xy || draw->clip_z || draw->clip_user;
    fse->key.const_vbuffers = 0;
 
-   memset(fse->key.element, 0, 
+   memset(fse->key.element, 0,
           fse->key.nr_elements * sizeof(fse->key.element[0]));
 
    for (i = 0; i < num_vs_inputs; i++) {
@@ -115,14 +113,14 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       fse->key.element[i].in.offset = src->src_offset;
       nr_vbs = MAX2(nr_vbs, src->vertex_buffer_index + 1);
    }
-   
+
    for (i = 0; i < 5 && i < nr_vbs; i++) {
       if (draw->pt.vertex_buffer[i].stride == 0)
          fse->key.const_vbuffers |= (1<<i);
    }
 
    if (0) debug_printf("%s: lookup const_vbuffers: %x\n", __FUNCTION__, fse->key.const_vbuffers);
-   
+
    {
       unsigned dst_offset = 0;
 
@@ -139,14 +137,13 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
          fse->key.element[i].out.format = vinfo->attrib[i].emit;
          fse->key.element[i].out.vs_output = vinfo->attrib[i].src_index;
          fse->key.element[i].out.offset = dst_offset;
-      
+
          dst_offset += emit_sz;
          assert(fse->key.output_stride >= dst_offset);
       }
    }
 
-   
-   fse->active = draw_vs_lookup_variant( draw->vs.vertex_shader, 
+   fse->active = draw_vs_lookup_variant( draw->vs.vertex_shader,
                                          &fse->key );
 
    if (!fse->active) {
@@ -154,21 +151,21 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       return ;
    }
 
-   if (0) debug_printf("%s: found const_vbuffers: %x\n", __FUNCTION__, 
+   if (0) debug_printf("%s: found const_vbuffers: %x\n", __FUNCTION__,
                        fse->active->key.const_vbuffers);
 
    /* Now set buffer pointers:
     */
    for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-      fse->active->set_buffer( fse->active, 
-                               i, 
-                               ((const ubyte *) draw->pt.user.vbuffer[i] + 
+      fse->active->set_buffer( fse->active,
+                               i,
+                               ((const ubyte *) draw->pt.user.vbuffer[i] +
                                 draw->pt.vertex_buffer[i].buffer_offset),
                               draw->pt.vertex_buffer[i].stride,
                               draw->pt.max_index );
    }
 
-   *max_vertices = (draw->render->max_vertex_buffer_bytes / 
+   *max_vertices = (draw->render->max_vertex_buffer_bytes /
                     (vinfo->size * 4));
 
    /* Probably need to do this somewhere (or fix exec shader not to
@@ -182,10 +179,11 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
 
 
-static void fse_run_linear( struct draw_pt_middle_end *middle, 
-                            unsigned start, 
-                            unsigned count,
-                            unsigned prim_flags )
+static void
+fse_run_linear(struct draw_pt_middle_end *middle,
+               unsigned start,
+               unsigned count,
+               unsigned prim_flags)
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
@@ -208,10 +206,9 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
     * Clipping is done elsewhere -- either by the API or on hardware,
     * or for some other reason not required...
     */
-   fse->active->run_linear( fse->active, 
+   fse->active->run_linear( fse->active,
                             start, count,
                             hw_verts );
-
 
    if (0) {
       unsigned i;
@@ -220,11 +217,11 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
                       fse->key.output_stride,
                       fse->key.output_stride * i);
 
-         draw_dump_emitted_vertex( fse->vinfo, 
+         draw_dump_emitted_vertex( fse->vinfo,
                                    (const uint8_t *)hw_verts + fse->key.output_stride * i );
       }
    }
-   
+
    draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
 
    /* Draw arrays path to avoid re-emitting index list again and
@@ -233,7 +230,6 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
    draw->render->draw_arrays( draw->render,
                               0,
                               count );
-   
 
    draw->render->release_vertices( draw->render );
 
@@ -256,8 +252,8 @@ fse_run(struct draw_pt_middle_end *middle,
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
    void *hw_verts;
-   
-   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
@@ -266,35 +262,32 @@ fse_run(struct draw_pt_middle_end *middle,
                                          (ushort)fetch_count ))
       goto fail;
 
-   hw_verts = draw->render->map_vertices( draw->render ); 
-   if (!hw_verts) 
+   hw_verts = draw->render->map_vertices( draw->render );
+   if (!hw_verts)
       goto fail;
-         
-					
+
    /* Single routine to fetch vertices, run shader and emit HW verts.
     */
-   fse->active->run_elts( fse->active, 
+   fse->active->run_elts( fse->active,
                           fetch_elts,
                           fetch_count,
                           hw_verts );
-
 
    if (0) {
       unsigned i;
       for (i = 0; i < fetch_count; i++) {
          debug_printf("\n\n%s vertex %d:\n", __FUNCTION__, i);
-         draw_dump_emitted_vertex( fse->vinfo, 
-                                   (const uint8_t *)hw_verts + 
+         draw_dump_emitted_vertex( fse->vinfo,
+                                   (const uint8_t *)hw_verts +
                                    fse->key.output_stride * i );
       }
    }
 
    draw->render->unmap_vertices( draw->render, 0, (ushort)(fetch_count - 1) );
-   
-   draw->render->draw_elements( draw->render, 
-                                draw_elts, 
-                                draw_count );
 
+   draw->render->draw_elements( draw->render,
+                                draw_elts,
+                                draw_count );
 
    draw->render->release_vertices( draw->render );
    return;
@@ -306,12 +299,13 @@ fail:
 
 
 
-static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle, 
-                                 unsigned start, 
-                                 unsigned count,
-                                 const ushort *draw_elts,
-                                 unsigned draw_count,
-                                 unsigned prim_flags )
+static boolean
+fse_run_linear_elts(struct draw_pt_middle_end *middle,
+                    unsigned start,
+                    unsigned count,
+                    const ushort *draw_elts,
+                    unsigned draw_count,
+                    unsigned prim_flags)
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
@@ -327,22 +321,20 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
       return FALSE;
 
    hw_verts = draw->render->map_vertices( draw->render );
-   if (!hw_verts) 
+   if (!hw_verts)
       return FALSE;
 
    /* Single routine to fetch vertices, run shader and emit HW verts.
     * Clipping is done elsewhere -- either by the API or on hardware,
     * or for some other reason not required...
     */
-   fse->active->run_linear( fse->active, 
+   fse->active->run_linear( fse->active,
                             start, count,
                             hw_verts );
 
-
-   draw->render->draw_elements( draw->render, 
-                                draw_elts, 
+   draw->render->draw_elements( draw->render,
+                                draw_elts,
                                 draw_count );
-   
 
    draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
 
@@ -353,18 +345,21 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
 
 
 
-static void fse_finish( struct draw_pt_middle_end *middle )
+static void
+fse_finish(struct draw_pt_middle_end *middle)
 {
 }
 
 
 static void
-fse_destroy( struct draw_pt_middle_end *middle ) 
+fse_destroy(struct draw_pt_middle_end *middle)
 {
    FREE(middle);
 }
 
-struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw )
+
+struct draw_pt_middle_end *
+draw_pt_middle_fse(struct draw_context *draw)
 {
    struct fetch_shade_emit *fse = CALLOC_STRUCT(fetch_shade_emit);
    if (!fse)

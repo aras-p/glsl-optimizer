@@ -46,7 +46,8 @@ struct pt_fetch {
 };
 
 
-/* Perform the fetch from API vertex elements & vertex buffers, to a
+/**
+ * Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
  * vertex_shader->run_linear() method.
  *
@@ -55,10 +56,11 @@ struct pt_fetch {
  * directly to hw vertices.
  *
  */
-void draw_pt_fetch_prepare( struct pt_fetch *fetch,
-                            unsigned vs_input_count,
-                            unsigned vertex_size,
-                            unsigned instance_id_index )
+void
+draw_pt_fetch_prepare(struct pt_fetch *fetch,
+                      unsigned vs_input_count,
+                      unsigned vertex_size,
+                      unsigned instance_id_index)
 {
    struct draw_context *draw = fetch->draw;
    unsigned nr_inputs;
@@ -141,43 +143,41 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       translate_key_sanitize(&key);
       fetch->translate = translate_cache_find(fetch->cache, &key);
    }
-
 }
 
 
-
-
-void draw_pt_fetch_run( struct pt_fetch *fetch,
-			const unsigned *elts,
-			unsigned count,
-			char *verts )
+void
+draw_pt_fetch_run(struct pt_fetch *fetch,
+                  const unsigned *elts,
+                  unsigned count,
+                  char *verts)
 {
    struct draw_context *draw = fetch->draw;
    struct translate *translate = fetch->translate;
    unsigned i;
 
    for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-      translate->set_buffer(translate, 
-			    i, 
-			    ((char *)draw->pt.user.vbuffer[i] + 
+      translate->set_buffer(translate,
+			    i,
+			    ((char *)draw->pt.user.vbuffer[i] +
 			     draw->pt.vertex_buffer[i].buffer_offset),
 			    draw->pt.vertex_buffer[i].stride,
 			    draw->pt.max_index);
    }
 
    translate->run_elts( translate,
-			elts, 
+			elts,
 			count,
                         draw->instance_id,
 			verts );
-
 }
 
 
-void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
-                               unsigned start,
-                               unsigned count,
-                               char *verts )
+void
+draw_pt_fetch_run_linear(struct pt_fetch *fetch,
+                         unsigned start,
+                         unsigned count,
+                         char *verts)
 {
    struct draw_context *draw = fetch->draw;
    struct translate *translate = fetch->translate;
@@ -200,7 +200,8 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
 }
 
 
-struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
+struct pt_fetch *
+draw_pt_fetch_create(struct draw_context *draw)
 {
    struct pt_fetch *fetch = CALLOC_STRUCT(pt_fetch);
    if (!fetch)
@@ -216,11 +217,12 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
    return fetch;
 }
 
-void draw_pt_fetch_destroy( struct pt_fetch *fetch )
+
+void
+draw_pt_fetch_destroy(struct pt_fetch *fetch)
 {
    if (fetch->cache)
       translate_cache_destroy(fetch->cache);
 
    FREE(fetch);
 }
-

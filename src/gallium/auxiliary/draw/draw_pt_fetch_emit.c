@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -40,15 +40,15 @@
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
-/* The simplest 'middle end' in the new vertex code.  
- * 
+/* The simplest 'middle end' in the new vertex code.
+ *
  * The responsibilities of a middle end are to:
  *  - perform vertex fetch using
  *       - draw vertex element/buffer state
  *       - a list of fetch indices we received as an input
  *  - run the vertex shader
- *  - cliptest, 
- *  - clip coord calculation 
+ *  - cliptest,
+ *  - clip coord calculation
  *  - viewport transformation
  *  - if necessary, run the primitive pipeline, passing it:
  *       - a linear array of vertex_header vertices constructed here
@@ -75,7 +75,7 @@
 struct fetch_emit_middle_end {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
-   
+
    struct translate *translate;
    const struct vertex_info *vinfo;
 
@@ -85,8 +85,6 @@ struct fetch_emit_middle_end {
 
    struct translate_cache *cache;
 };
-
-
 
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
@@ -99,20 +97,15 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    const struct vertex_info *vinfo;
    unsigned i, dst_offset;
    struct translate_key key;
-
-   unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+   unsigned gs_out_prim = (draw->gs.geometry_shader ?
                            draw->gs.geometry_shader->output_primitive :
                            prim);
 
-
-
    draw->render->set_primitive(draw->render, gs_out_prim);
-   
+
    /* Must do this after set_primitive() above:
     */
    vinfo = feme->vinfo = draw->render->get_vertex_info(draw->render);
-   
-   
 
    /* Transform from API vertices to HW vertices, skipping the
     * pipeline_vertex intermediate step.
@@ -148,7 +141,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       key.element[i].instance_divisor = src->instance_divisor;
       key.element[i].output_format = output_format;
       key.element[i].output_offset = dst_offset;
-      
+
       dst_offset += emit_sz;
    }
 
@@ -158,37 +151,33 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    /* Don't bother with caching at this stage:
     */
    if (!feme->translate ||
-       translate_key_compare(&feme->translate->key, &key) != 0) 
+       translate_key_compare(&feme->translate->key, &key) != 0)
    {
       translate_key_sanitize(&key);
       feme->translate = translate_cache_find(feme->cache,
                                              &key);
 
-
-      feme->translate->set_buffer(feme->translate, 
-				  draw->pt.nr_vertex_buffers, 
+      feme->translate->set_buffer(feme->translate,
+				  draw->pt.nr_vertex_buffers,
 				  &feme->point_size,
 				  0,
 				  ~0);
    }
-   
+
    feme->point_size = draw->rasterizer->point_size;
 
    for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-      feme->translate->set_buffer(feme->translate, 
-                                  i, 
-                                  ((char *)draw->pt.user.vbuffer[i] + 
+      feme->translate->set_buffer(feme->translate,
+                                  i,
+                                  ((char *)draw->pt.user.vbuffer[i] +
                                    draw->pt.vertex_buffer[i].buffer_offset),
                                   draw->pt.vertex_buffer[i].stride,
                                   draw->pt.max_index);
    }
 
-   *max_vertices = (draw->render->max_vertex_buffer_bytes / 
+   *max_vertices = (draw->render->max_vertex_buffer_bytes /
                     (vinfo->size * 4));
 }
-
-
-
 
 
 static void fetch_emit_run( struct draw_pt_middle_end *middle,
@@ -201,8 +190,8 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    void *hw_verts;
-   
-   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
@@ -215,11 +204,10 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
       assert(0);
       return;
    }
-         
-					
+
    /* Single routine to fetch vertices and emit HW verts.
     */
-   feme->translate->run_elts( feme->translate, 
+   feme->translate->run_elts( feme->translate,
 			      fetch_elts,
 			      fetch_count,
                               draw->instance_id,
@@ -229,23 +217,23 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
       unsigned i;
       for (i = 0; i < fetch_count; i++) {
          debug_printf("\n\nvertex %d:\n", i);
-         draw_dump_emitted_vertex( feme->vinfo, 
+         draw_dump_emitted_vertex( feme->vinfo,
                                    (const uint8_t *)hw_verts + feme->vinfo->size * 4 * i );
       }
    }
 
-   draw->render->unmap_vertices( draw->render, 
-                                 0, 
+   draw->render->unmap_vertices( draw->render,
+                                 0,
                                  (ushort)(fetch_count - 1) );
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw_elements( draw->render, 
-                                draw_elts, 
+   draw->render->draw_elements( draw->render,
+                                draw_elts,
                                 draw_count );
 
-   /* Done -- that was easy, wasn't it: 
+   /* Done -- that was easy, wasn't it:
     */
    draw->render->release_vertices( draw->render );
 
@@ -267,11 +255,11 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
 
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)feme->translate->key.output_stride,
-                                         (ushort)count )) 
+                                         (ushort)count ))
       goto fail;
 
    hw_verts = draw->render->map_vertices( draw->render );
-   if (!hw_verts) 
+   if (!hw_verts)
       goto fail;
 
    /* Single routine to fetch vertices and emit HW verts.
@@ -330,7 +318,7 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
       return FALSE;
 
    hw_verts = draw->render->map_vertices( draw->render );
-   if (!hw_verts) 
+   if (!hw_verts)
       return FALSE;
 
    /* Single routine to fetch vertices and emit HW verts.
@@ -346,8 +334,8 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw_elements( draw->render, 
-                                draw_elts, 
+   draw->render->draw_elements( draw->render,
+                                draw_elts,
                                 draw_count );
 
    /* Done -- that was easy, wasn't it:
@@ -358,12 +346,11 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
 }
 
 
-
-
 static void fetch_emit_finish( struct draw_pt_middle_end *middle )
 {
    /* nothing to do */
 }
+
 
 static void fetch_emit_destroy( struct draw_pt_middle_end *middle )
 {
@@ -396,7 +383,7 @@ struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
    fetch_emit->base.destroy    = fetch_emit_destroy;
 
    fetch_emit->draw = draw;
-     
+
    return &fetch_emit->base;
 }
 
