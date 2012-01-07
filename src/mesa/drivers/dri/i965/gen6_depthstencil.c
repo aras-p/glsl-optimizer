@@ -97,7 +97,7 @@ gen6_upload_depth_stencil_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_depth_stencil_state = {
    .dirty = {
-      .mesa = _NEW_DEPTH | _NEW_STENCIL,
+      .mesa = _NEW_DEPTH | _NEW_STENCIL | _NEW_BUFFERS,
       .brw  = (BRW_NEW_BATCH |
 	       BRW_NEW_HIZ),
       .cache = 0,
