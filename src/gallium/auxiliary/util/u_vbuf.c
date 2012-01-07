@@ -912,6 +912,39 @@ static boolean u_vbuf_need_minmax_index(struct u_vbuf_priv *mgr)
    return FALSE;
 }
 
+static boolean u_vbuf_mapping_vertex_buffer_blocks(struct u_vbuf_priv *mgr)
+{
+   unsigned i, nr = mgr->ve->count;
+
+   for (i = 0; i < nr; i++) {
+      struct pipe_vertex_buffer *vb;
+      unsigned index;
+
+      /* Per-instance attribs are not per-vertex data. */
+      if (mgr->ve->ve[i].instance_divisor) {
+         continue;
+      }
+
+      index = mgr->ve->ve[i].vertex_buffer_index;
+      vb = &mgr->b.vertex_buffer[index];
+
+      /* Constant attribs are not per-vertex data. */
+      if (!vb->stride) {
+         continue;
+      }
+
+      /* Return true for the hw buffers which don't need to be translated. */
+      /* XXX we could use some kind of a is-busy query. */
+      if (!u_vbuf_resource(vb->buffer)->user_ptr &&
+          !mgr->ve->incompatible_layout_elem[i] &&
+          !mgr->incompatible_vb[index]) {
+         return TRUE;
+      }
+   }
+
+   return FALSE;
+}
+
 static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
                                     struct pipe_index_buffer *ib,
                                     const struct pipe_draw_info *info,
@@ -1054,7 +1087,8 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
           * performance. */
          if (!info->primitive_restart &&
              num_vertices > info->count*2 &&
-             num_vertices-info->count > 32) {
+             num_vertices-info->count > 32 &&
+             !u_vbuf_mapping_vertex_buffer_blocks(mgr)) {
             /*printf("num_vertices=%i count=%i\n", num_vertices, info->count);*/
             unroll_indices = true;
          }
