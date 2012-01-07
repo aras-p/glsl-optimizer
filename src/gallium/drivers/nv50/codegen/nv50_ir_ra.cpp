@@ -513,6 +513,10 @@ RegAlloc::coalesceValues(unsigned int mask)
       case OP_MOV:
          if (!(mask & JOIN_MASK_MOV))
             break;
+         i = insn->getDef(0)->uses ? insn->getDef(0)->uses->getInsn() : NULL;
+         // if this is a contraint-move there will only be a single use
+         if (i && i->op == OP_CONSTRAINT)
+            break;
          i = insn->getSrc(0)->getUniqueInsn();
          if (i && !i->constrainedDefs())
             insn->getDef(0)->coalesce(insn->getSrc(0), false);
