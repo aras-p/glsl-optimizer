@@ -426,6 +426,7 @@ nv50_ir::CondCode Instruction::getSetCond() const
    case TGSI_OPCODE_USEQ:
       return CC_EQ;
    case TGSI_OPCODE_SNE:
+      return CC_NEU;
    case TGSI_OPCODE_USNE:
       return CC_NE;
    case TGSI_OPCODE_SFL:
