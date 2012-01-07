@@ -492,7 +492,7 @@ static void
 _swrast_update_active_attribs(struct gl_context *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint attribsMask;
+   GLbitfield64 attribsMask;
 
    /*
     * Compute _ActiveAttribsMask = which fragment attributes are needed.

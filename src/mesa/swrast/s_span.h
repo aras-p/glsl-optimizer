@@ -155,7 +155,8 @@ typedef struct sw_span
     */
    GLbitfield arrayMask;
 
-   GLbitfield arrayAttribs;
+   /** Mask of FRAG_BIT_x bits */
+   GLbitfield64 arrayAttribs;
 
    /**
     * We store the arrays of fragment values in a separate struct so

@@ -163,7 +163,8 @@ _swrast_span_default_attribs(struct gl_context *ctx, SWspan *span)
  * should have computed attrStart/Step values for FRAG_ATTRIB_WPOS[3]!
  */
 static inline void
-interpolate_active_attribs(struct gl_context *ctx, SWspan *span, GLbitfield attrMask)
+interpolate_active_attribs(struct gl_context *ctx, SWspan *span,
+                           GLbitfield64 attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -1038,7 +1039,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    const GLuint *colorMask = (GLuint *) ctx->Color.ColorMask;
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
-   const GLbitfield origArrayAttribs = span->arrayAttribs;
+   const GLbitfield64 origArrayAttribs = span->arrayAttribs;
    const GLenum origChanType = span->array->ChanType;
    void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current

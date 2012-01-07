@@ -196,8 +196,8 @@ typedef struct
 
    /** List/array of the fragment attributes to interpolate */
    GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
-   /** Same info, but as a bitmask */
-   GLbitfield _ActiveAttribMask;
+   /** Same info, but as a bitmask of FRAG_BIT_x bits */
+   GLbitfield64 _ActiveAttribMask;
    /** Number of fragment attributes to interpolate */
    GLuint _NumActiveAttribs;
    /** Indicates how each attrib is to be interpolated (lines/tris) */
