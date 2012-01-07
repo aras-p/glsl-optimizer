@@ -504,7 +504,7 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
 {
    void *srcPtr, *dstPtr;
 
-   /* buffer should not already be mapped */
+   /* the buffers should not be mapped */
    assert(!_mesa_bufferobj_mapped(src));
    assert(!_mesa_bufferobj_mapped(dst));
 
@@ -514,6 +514,9 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
                                        (GL_MAP_WRITE_BIT |
                                         GL_MAP_INVALIDATE_RANGE_BIT), dst);
 
+   /* Note: the src and dst regions will never overlap.  Trying to do so
+    * would generate GL_INVALID_VALUE earlier.
+    */
    if (srcPtr && dstPtr)
       memcpy(dstPtr, srcPtr, size);
 
