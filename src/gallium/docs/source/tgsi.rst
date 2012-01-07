@@ -1043,6 +1043,19 @@ XXX so let's discuss it, yeah?
   destination register, which is assumed to be an address (ADDR) register.
 
 
+.. opcode:: IABS - Integer Absolute Value
+
+.. math::
+
+  dst.x = |src.x|
+
+  dst.y = |src.y|
+
+  dst.z = |src.z|
+
+  dst.w = |src.w|
+
+
 .. opcode:: SAD - Sum Of Absolute Differences
 
 .. math::

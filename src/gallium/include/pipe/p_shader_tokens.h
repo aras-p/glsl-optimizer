@@ -376,8 +376,9 @@ struct tgsi_property_data {
 
 #define TGSI_OPCODE_UARL                157
 #define TGSI_OPCODE_UCMP                158
+#define TGSI_OPCODE_IABS                159
 
-#define TGSI_OPCODE_LAST                159
+#define TGSI_OPCODE_LAST                160
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

@@ -4193,6 +4193,10 @@ exec_instruction(
       exec_vector_trinary(mach, inst, micro_ucmp, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
       break;
 
+   case TGSI_OPCODE_IABS:
+      exec_vector_unary(mach, inst, micro_iabs, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_INT);
+      break;
+
    default:
       assert( 0 );
    }
