@@ -453,20 +453,20 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
       for (c = 0; c < 4; ++c) {
          if (!(info->in[i].mask & (1 << c)))
             continue;
-	 a = info->in[i].slot[c];
+         a = info->in[i].slot[c];
          if (info->in[i].slot[0] >= (0x060 / 4) &&
              info->in[i].slot[0] <= (0x07c / 4)) {
             fp->hdr[5] |= 1 << (24 + (a - 0x060 / 4));
          } else
-         if (info->in[i].slot[0] == (0x2e0 / 4)) {
-            if (c <= 1)
-               fp->hdr[14] |= 1 << (24 + c);
+         if (info->in[i].slot[0] >= (0x2c0 / 4) &&
+             info->in[i].slot[0] <= (0x2fc / 4)) {
+            fp->hdr[14] |= (1 << (a - 0x280 / 4)) & 0x03ff0000;
          } else {
             if (info->in[i].slot[c] < (0x040 / 4) ||
                 info->in[i].slot[c] > (0x380 / 4))
                continue;
             a *= 2;
-            if (info->in[i].slot[0] >= (0x2c0 / 4))
+            if (info->in[i].slot[0] >= (0x300 / 4))
                a -= 32;
             fp->hdr[4 + a / 32] |= m << (a % 32);
          }
