@@ -322,10 +322,13 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       Value *ticRel = i->getIndirectR();
       Value *tscRel = i->getIndirectS();
 
-      if (arrayIndex)
-         bld.mkCvt(OP_CVT, TYPE_U16, src, TYPE_F32, arrayIndex);
-      else
+      if (arrayIndex) {
+         int sat = (i->op == OP_TXF) ? 1 : 0;
+         DataType sTy = (i->op == OP_TXF) ? TYPE_U32 : TYPE_F32;
+         bld.mkCvt(OP_CVT, TYPE_U16, src, sTy, arrayIndex)->saturate = sat;
+      } else {
          bld.loadImm(src, 0);
+      }
 
       if (ticRel) {
          i->setSrc(i->tex.rIndirectSrc, NULL);
