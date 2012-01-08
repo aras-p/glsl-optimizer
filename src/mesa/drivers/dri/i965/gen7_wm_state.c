@@ -170,7 +170,6 @@ upload_ps_state(struct brw_context *brw)
       dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
    }
 
-   /* BRW_NEW_CURBE_OFFSETS */
    dw5 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
    dw5 |= (brw->wm.prog_data->first_curbe_grf_16 <<
@@ -197,8 +196,7 @@ upload_ps_state(struct brw_context *brw)
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_FRAGMENT_PROGRAM |
+      .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_PS_BINDING_TABLE |
 		BRW_NEW_BATCH),
       .cache = (CACHE_NEW_SAMPLER |
