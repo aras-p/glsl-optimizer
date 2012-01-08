@@ -305,7 +305,10 @@ softpipe_create_context( struct pipe_screen *screen,
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   softpipe->draw = draw_create(&softpipe->pipe);
+   if (debug_get_bool_option("SOFTPIPE_USE_LLVM", FALSE))
+      softpipe->draw = draw_create(&softpipe->pipe);
+   else
+      softpipe->draw = draw_create_no_llvm(&softpipe->pipe);
    if (!softpipe->draw) 
       goto fail;
 
