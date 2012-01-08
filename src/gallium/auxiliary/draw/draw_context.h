@@ -54,6 +54,8 @@ struct gallivm_state;
 
 struct draw_context *draw_create( struct pipe_context *pipe );
 
+struct draw_context *draw_create_no_llvm(struct pipe_context *pipe);
+
 struct draw_context *
 draw_create_gallivm(struct pipe_context *pipe, struct gallivm_state *gallivm);
 
