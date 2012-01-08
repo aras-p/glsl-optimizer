@@ -101,6 +101,7 @@ upload_ps_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5;
 
+   /* BRW_NEW_PS_BINDING_TABLE */
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_PS << 16 | (2 - 2));
    OUT_BATCH(brw->bind.bo_offset);
@@ -143,6 +144,7 @@ upload_ps_state(struct brw_context *brw)
 
    dw2 = dw4 = dw5 = 0;
 
+   /* CACHE_NEW_SAMPLER */
    dw2 |= (ALIGN(brw->sampler.count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
    /* Use ALT floating point mode for ARB fragment programs, because they
@@ -151,7 +153,6 @@ upload_ps_state(struct brw_context *brw)
    if (intel->ctx.Shader.CurrentFragmentProgram == NULL)
       dw2 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
-   /* CACHE_NEW_SAMPLER */
    dw4 |= (brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
