@@ -84,7 +84,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
 
    /* Command packets:
     */
-   &brw_invarient_state,
+   &brw_invariant_state,
    &brw_state_base_address,
 
    &brw_binding_table_pointers,
@@ -121,7 +121,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_sf_vp,
 
    /* Command packets: */
-   &brw_invarient_state,
+   &brw_invariant_state,
 
    /* must do before binding table pointers, cc state ptrs */
    &brw_state_base_address,
@@ -187,7 +187,7 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_wm_prog,
 
    /* Command packets: */
-   &brw_invarient_state,
+   &brw_invariant_state,
 
    /* must do before binding table pointers, cc state ptrs */
    &brw_state_base_address,

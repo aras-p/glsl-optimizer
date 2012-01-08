@@ -45,7 +45,7 @@ extern const struct brw_tracked_state brw_vs_pull_constants;
 extern const struct brw_tracked_state brw_wm_pull_constants;
 extern const struct brw_tracked_state brw_constant_buffer;
 extern const struct brw_tracked_state brw_curbe_offsets;
-extern const struct brw_tracked_state brw_invarient_state;
+extern const struct brw_tracked_state brw_invariant_state;
 extern const struct brw_tracked_state brw_gs_prog;
 extern const struct brw_tracked_state brw_gs_unit;
 extern const struct brw_tracked_state brw_line_stipple;

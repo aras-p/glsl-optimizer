@@ -630,10 +630,10 @@ const struct brw_tracked_state brw_line_stipple = {
 
 
 /***********************************************************************
- * Misc invarient state packets
+ * Misc invariant state packets
  */
 
-static void upload_invarient_state( struct brw_context *brw )
+static void upload_invariant_state( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
@@ -695,13 +695,13 @@ static void upload_invarient_state( struct brw_context *brw )
    ADVANCE_BATCH();
 }
 
-const struct brw_tracked_state brw_invarient_state = {
+const struct brw_tracked_state brw_invariant_state = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .emit = upload_invarient_state
+   .emit = upload_invariant_state
 };
 
 /**
