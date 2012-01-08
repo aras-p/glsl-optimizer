@@ -89,7 +89,6 @@ const struct brw_tracked_state gen7_wm_state = {
       .mesa  = (_NEW_LINE | _NEW_LIGHT | _NEW_POLYGON |
 	        _NEW_COLOR | _NEW_BUFFERS),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
       .cache = 0,
    },
@@ -201,7 +200,6 @@ const struct brw_tracked_state gen7_ps_state = {
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_PS_BINDING_TABLE |
-		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
       .cache = (CACHE_NEW_SAMPLER |
 		CACHE_NEW_WM_PROG)

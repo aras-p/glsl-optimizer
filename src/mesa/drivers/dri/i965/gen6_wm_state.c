@@ -231,7 +231,6 @@ const struct brw_tracked_state gen6_wm_state = {
 		_NEW_PROGRAM_CONSTANTS |
 		_NEW_POLYGON),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH |
 		BRW_NEW_HIZ),
       .cache = (CACHE_NEW_SAMPLER |

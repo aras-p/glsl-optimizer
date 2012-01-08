@@ -219,8 +219,7 @@ upload_vs_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_vs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
-      .brw   = (BRW_NEW_URB_FENCE |
-		BRW_NEW_CONTEXT |
+      .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
 		BRW_NEW_BATCH),
       .cache = CACHE_NEW_VS_PROG | CACHE_NEW_SAMPLER

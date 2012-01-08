@@ -106,7 +106,6 @@ const struct brw_tracked_state gen7_vs_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
-		BRW_NEW_URB_FENCE |
 		BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
 		BRW_NEW_VS_BINDING_TABLE |
