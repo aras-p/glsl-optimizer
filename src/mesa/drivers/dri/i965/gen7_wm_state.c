@@ -133,7 +133,7 @@ upload_ps_state(struct brw_context *brw)
 		      brw->wm.prog_data->dispatch_width) / 8);
       OUT_BATCH(0);
       /* Pointer to the WM constant buffer.  Covered by the set of
-       * state flags from gen7_prepare_wm_constants
+       * state flags from gen6_upload_wm_push_constants.
        */
       OUT_BATCH(brw->wm.push_const_offset);
       OUT_BATCH(0);
