@@ -46,7 +46,7 @@ brw_upload_cc_vp(struct brw_context *brw)
    ccv = brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
 			 sizeof(*ccv), 32, &brw->cc.vp_offset);
 
-   /* _NEW_TRANSOFORM */
+   /* _NEW_TRANSFORM */
    if (ctx->Transform.DepthClamp) {
       /* _NEW_VIEWPORT */
       ccv->min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);

@@ -95,7 +95,7 @@ brw_upload_clip_unit(struct brw_context *brw)
    clip->clip5.userclip_enable_flags = 0x7f;
    clip->clip5.userclip_must_clip = 1;
    clip->clip5.guard_band_enable = 0;
-   /* _NEW_TRANSOFORM */
+   /* _NEW_TRANSFORM */
    if (!ctx->Transform.DepthClamp)
       clip->clip5.viewport_z_clip_enable = 1;
    clip->clip5.viewport_xy_clip_enable = 1;
