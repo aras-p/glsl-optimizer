@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -30,7 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   *   Brian Paul
   */
- 
+
 
 #include "main/macros.h"
 #include "main/mtypes.h"
@@ -182,8 +182,10 @@ st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
    return stObj->sampler_view;
 }
 
+
 static GLboolean
-update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_view,
+update_single_texture(struct st_context *st,
+                      struct pipe_sampler_view **sampler_view,
 		      GLuint texUnit)
 {
    struct pipe_context *pipe = st->pipe;
@@ -233,7 +235,6 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
 	 st_view_format = firstImageFormat;
    }
 
-
    /* if sampler view has changed dereference it */
    if (stObj->sampler_view) {
       if (check_sampler_swizzle(stObj->sampler_view,
@@ -251,7 +252,8 @@ update_single_texture(struct st_context *st, struct pipe_sampler_view **sampler_
    return GL_TRUE;
 }
 
-static void 
+
+static void
 update_vertex_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
@@ -275,7 +277,8 @@ update_vertex_textures(struct st_context *st)
 
          st->state.num_vertex_textures = su + 1;
       }
-      pipe_sampler_view_reference(&st->state.sampler_vertex_views[su], sampler_view);
+      pipe_sampler_view_reference(&st->state.sampler_vertex_views[su],
+                                  sampler_view);
    }
 
    if (ctx->Const.MaxVertexTextureImageUnits > 0) {
@@ -287,7 +290,8 @@ update_vertex_textures(struct st_context *st)
    }
 }
 
-static void 
+
+static void
 update_fragment_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
@@ -319,6 +323,7 @@ update_fragment_textures(struct st_context *st)
                                   st->state.sampler_views);
 }
 
+
 const struct st_tracked_state st_update_texture = {
    "st_update_texture",					/* name */
    {							/* dirty */
@@ -328,8 +333,9 @@ const struct st_tracked_state st_update_texture = {
    update_fragment_textures				/* update */
 };
 
+
 const struct st_tracked_state st_update_vertex_texture = {
-   "st_update_vertex_texture",					/* name */
+   "st_update_vertex_texture",				/* name */
    {							/* dirty */
       _NEW_TEXTURE,					/* mesa */
       ST_NEW_VERTEX_PROGRAM,				/* st */
@@ -337,7 +343,9 @@ const struct st_tracked_state st_update_vertex_texture = {
    update_vertex_textures				/* update */
 };
 
-static void 
+
+
+static void
 finalize_textures(struct st_context *st)
 {
    struct gl_context *ctx = st->ctx;
@@ -369,7 +377,6 @@ finalize_textures(struct st_context *st)
    if (prev_missing_textures != st->missing_textures)
       st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 }
-
 
 
 const struct st_tracked_state st_finalize_textures = {
