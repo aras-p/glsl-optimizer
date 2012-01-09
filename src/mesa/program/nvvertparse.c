@@ -1424,6 +1424,7 @@ _mesa_parse_nv_vertex_program(struct gl_context *ctx, GLenum dstTarget,
 	 index = _mesa_add_state_reference(program->Base.Parameters,
 					   state_tokens);
 	 assert(index == i);
+	 (void)index;
       }
       program->Base.NumParameters = program->Base.Parameters->NumParameters;
 
