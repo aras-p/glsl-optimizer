@@ -105,6 +105,7 @@ upload_sbe_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
+      /* _NEW_LIGHT | _NEW_PROGRAM */
       attr_overrides[input_index++] =
          get_attr_override(&vue_map, urb_entry_read_offset, attr,
                            ctx->VertexProgram._TwoSideEnabled);
@@ -133,6 +134,7 @@ const struct brw_tracked_state gen7_sbe_state = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
 		_NEW_POINT |
+		_NEW_PROGRAM |
 		_NEW_TRANSFORM),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM),
