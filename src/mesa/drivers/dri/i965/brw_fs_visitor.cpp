@@ -1676,7 +1676,7 @@ fs_visitor::visit(ir_loop *ir)
 {
    fs_reg counter = reg_undef;
 
-   if (c->dispatch_width == 16) {
+   if (intel->gen < 6 && c->dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
