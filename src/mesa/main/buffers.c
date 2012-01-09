@@ -51,7 +51,8 @@
  * \return  bitmask of BUFFER_BIT_* flags
  */
 static GLbitfield
-supported_buffer_bitmask(const struct gl_context *ctx, const struct gl_framebuffer *fb)
+supported_buffer_bitmask(const struct gl_context *ctx,
+                         const struct gl_framebuffer *fb)
 {
    GLbitfield mask = 0x0;
 
@@ -242,7 +243,8 @@ _mesa_DrawBuffer(GLenum buffer)
       destMask = draw_buffer_enum_to_bitmask(buffer);
       if (destMask == BAD_MASK) {
          /* totally bogus buffer */
-         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(buffer=0x%x)", buffer);
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glDrawBuffer(buffer=0x%x)", buffer);
          return;
       }
       destMask &= supportedMask;
@@ -340,6 +342,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
       ctx->Driver.DrawBuffer(ctx, n > 0 ? buffers[0] : GL_NONE);
 }
 
+
 /**
  * Performs necessary state updates when _mesa_drawbuffers makes an
  * actual change.
@@ -360,6 +363,7 @@ updated_drawbuffers(struct gl_context *ctx)
    }
 #endif
 }
+
 
 /**
  * Helper function to set the GL_DRAW_BUFFER state in the context and
