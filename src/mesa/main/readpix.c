@@ -273,7 +273,7 @@ slow_read_rgba_pixels( struct gl_context *ctx,
 
    for (j = 0; j < height; j++) {
       if (_mesa_is_integer_format(format)) {
-	 _mesa_unpack_int_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
+	 _mesa_unpack_uint_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
 	 _mesa_pack_rgba_span_int(ctx, width, (GLuint (*)[4]) rgba, format,
                                   type, dst);
       } else {

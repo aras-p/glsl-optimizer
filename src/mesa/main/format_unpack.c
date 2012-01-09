@@ -1770,8 +1770,8 @@ unpack_int_rgba_ARGB2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
 }
 
 void
-_mesa_unpack_int_rgba_row(gl_format format, GLuint n,
-			  const void *src, GLuint dst[][4])
+_mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
+                           const void *src, GLuint dst[][4])
 {
    switch (format) {
       /* Since there won't be any sign extension happening, there's no need to
