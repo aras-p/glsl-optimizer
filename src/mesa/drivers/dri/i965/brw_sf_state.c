@@ -272,6 +272,7 @@ static void upload_sf_unit( struct brw_context *brw )
    sf->sf7.point_size = CLAMP(rint(CLAMP(ctx->Point.Size,
 					 ctx->Point.MinSize,
 					 ctx->Point.MaxSize)), 1, 255) * (1<<3);
+   /* _NEW_PROGRAM | _NEW_POINT */
    sf->sf7.use_point_size_state = !(ctx->VertexProgram.PointSizeEnabled ||
 				    ctx->Point._Attenuated);
    sf->sf7.aa_line_distance_mode = 0;
@@ -313,6 +314,7 @@ static void upload_sf_unit( struct brw_context *brw )
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
       .mesa  = (_NEW_POLYGON | 
+		_NEW_PROGRAM |
 		_NEW_LIGHT |
 		_NEW_LINE | 
 		_NEW_POINT | 
