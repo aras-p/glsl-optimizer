@@ -306,11 +306,17 @@ fs_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_div:
+      if (intel->gen >= 7 && c->dispatch_width == 16)
+	 fail("16-wide INTDIV unsupported\n");
+
       /* Floating point should be lowered by DIV_TO_MUL_RCP in the compiler. */
       assert(ir->type->is_integer());
       emit_math(SHADER_OPCODE_INT_QUOTIENT, this->result, op[0], op[1]);
       break;
    case ir_binop_mod:
+      if (intel->gen >= 7 && c->dispatch_width == 16)
+	 fail("16-wide INTDIV unsupported\n");
+
       /* Floating point should be lowered by MOD_TO_FRACT in the compiler. */
       assert(ir->type->is_integer());
       emit_math(SHADER_OPCODE_INT_REMAINDER, this->result, op[0], op[1]);
