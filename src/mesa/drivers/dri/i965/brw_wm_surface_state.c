@@ -702,7 +702,7 @@ brw_create_constant_surface(struct brw_context *brw,
 	      ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
 
    surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
-	      (width * 16 - 1) << BRW_SURFACE_PITCH_SHIFT);
+	      (16 - 1) << BRW_SURFACE_PITCH_SHIFT); /* ignored */
 
    surf[4] = 0;
    surf[5] = 0;

@@ -157,7 +157,7 @@ gen7_create_constant_surface(struct brw_context *brw,
    surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
    surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf->ss3.pitch = (width * 16) - 1; /* ignored?? */
+   surf->ss3.pitch = (16 - 1); /* ignored */
    gen7_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
