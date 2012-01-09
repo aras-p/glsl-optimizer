@@ -104,7 +104,8 @@ rbug_shader_create_locked(struct pipe_context *pipe,
                           struct tgsi_token *tokens)
 {
    void *state = NULL;
-   struct pipe_shader_state pss = { 0 };
+   struct pipe_shader_state pss;
+   memset(&pss, 0, sizeof(pss));
    pss.tokens = tokens;
 
    switch(rb_shader->type) {
