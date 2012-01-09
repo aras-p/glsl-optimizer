@@ -138,9 +138,11 @@ static boolean radeon_get_drm_value(int fd, unsigned request,
     info.request = request;
 
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (retval && errname) {
-        fprintf(stderr, "radeon: Failed to get %s, error number %d\n",
-                errname, retval);
+    if (retval) {
+        if (errname) {
+            fprintf(stderr, "radeon: Failed to get %s, error number %d\n",
+                    errname, retval);
+        }
         return FALSE;
     }
     return TRUE;
