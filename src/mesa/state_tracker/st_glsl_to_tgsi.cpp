@@ -664,6 +664,9 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
       case3(SLT, ISLT, USLT);
       
       case2iu(ISHR, USHR);
+
+      case2fi(SSG, ISSG);
+      case3(ABS, IABS, IABS);
       
       default: break;
    }
@@ -1410,10 +1413,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_unop_abs:
-      if (result_dst.type == GLSL_TYPE_INT || result_dst.type == GLSL_TYPE_UINT)
-         emit(ir, TGSI_OPCODE_IABS, result_dst, op[0]);
-      else
-         emit(ir, TGSI_OPCODE_ABS, result_dst, op[0]);
+      emit(ir, TGSI_OPCODE_ABS, result_dst, op[0]);
       break;
    case ir_unop_sign:
       emit(ir, TGSI_OPCODE_SSG, result_dst, op[0]);
