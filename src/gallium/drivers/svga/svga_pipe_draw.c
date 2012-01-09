@@ -399,6 +399,9 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       }
    }
 
+   /* XXX: Silence warnings, do something sensible here? */
+   (void)ret;
+
    svga_release_user_upl_buffers( svga );
 
    if (SVGA_DEBUG & DEBUG_FLUSH) {
