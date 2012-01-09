@@ -19,7 +19,6 @@ create_screen(int fd)
    if (!screen)
       return NULL;
 
-   vmw_winsys_screen_set_throttling(screen, 0);
    screen = sw_screen_wrap(screen);
 
    screen = debug_screen_wrap(screen);

@@ -59,7 +59,6 @@ struct vmw_winsys_screen
    struct svga_winsys_screen base;
 
    boolean use_old_scanout_flag;
-   uint32_t default_throttle_us;
 
    struct {
       int drm_fd;
