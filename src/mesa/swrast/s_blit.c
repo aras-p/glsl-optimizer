@@ -423,9 +423,66 @@ resample_linear_row_ub(GLint srcWidth, GLint dstWidth,
 }
 
 
+/**
+ * Bilinear interpolation of two source rows.  floating point pixels.
+ */
+static void
+resample_linear_row_float(GLint srcWidth, GLint dstWidth,
+                          const GLvoid *srcBuffer0, const GLvoid *srcBuffer1,
+                          GLvoid *dstBuffer, GLboolean flip, GLfloat rowWeight)
+{
+   const GLfloat (*srcColor0)[4] = (const GLfloat (*)[4]) srcBuffer0;
+   const GLfloat (*srcColor1)[4] = (const GLfloat (*)[4]) srcBuffer1;
+   GLfloat (*dstColor)[4] = (GLfloat (*)[4]) dstBuffer;
+   const GLfloat dstWidthF = (GLfloat) dstWidth;
+   GLint dstCol;
+
+   for (dstCol = 0; dstCol < dstWidth; dstCol++) {
+      const GLfloat srcCol = (dstCol * srcWidth) / dstWidthF;
+      GLint srcCol0 = IFLOOR(srcCol);
+      GLint srcCol1 = srcCol0 + 1;
+      GLfloat colWeight = srcCol - srcCol0; /* fractional part of srcCol */
+      GLfloat red, green, blue, alpha;
+
+      ASSERT(srcCol0 >= 0);
+      ASSERT(srcCol0 < srcWidth);
+      ASSERT(srcCol1 <= srcWidth);
+
+      if (srcCol1 == srcWidth) {
+         /* last column fudge */
+         srcCol1--;
+         colWeight = 0.0;
+      }
+
+      if (flip) {
+         srcCol0 = srcWidth - 1 - srcCol0;
+         srcCol1 = srcWidth - 1 - srcCol1;
+      }
+
+      red = lerp_2d(colWeight, rowWeight,
+                    srcColor0[srcCol0][RCOMP], srcColor0[srcCol1][RCOMP],
+                    srcColor1[srcCol0][RCOMP], srcColor1[srcCol1][RCOMP]);
+      green = lerp_2d(colWeight, rowWeight,
+                    srcColor0[srcCol0][GCOMP], srcColor0[srcCol1][GCOMP],
+                    srcColor1[srcCol0][GCOMP], srcColor1[srcCol1][GCOMP]);
+      blue = lerp_2d(colWeight, rowWeight,
+                    srcColor0[srcCol0][BCOMP], srcColor0[srcCol1][BCOMP],
+                    srcColor1[srcCol0][BCOMP], srcColor1[srcCol1][BCOMP]);
+      alpha = lerp_2d(colWeight, rowWeight,
+                    srcColor0[srcCol0][ACOMP], srcColor0[srcCol1][ACOMP],
+                    srcColor1[srcCol0][ACOMP], srcColor1[srcCol1][ACOMP]);
+      
+      dstColor[dstCol][RCOMP] = red;
+      dstColor[dstCol][GCOMP] = green;
+      dstColor[dstCol][BCOMP] = blue;
+      dstColor[dstCol][ACOMP] = alpha;
+   }
+}
+
+
 
 /**
- * Bilinear filtered blit (color only).
+ * Bilinear filtered blit (color only, non-integer values).
  */
 static void
 blit_linear(struct gl_context *ctx,
@@ -456,23 +513,25 @@ blit_linear(struct gl_context *ctx,
    GLint srcBufferY0 = -1, srcBufferY1 = -1;
    GLvoid *dstBuffer;
 
-   switch (readRb->DataType) {
-   case GL_UNSIGNED_BYTE:
+   gl_format readFormat = _mesa_get_srgb_format_linear(readRb->Format);
+   gl_format drawFormat = _mesa_get_srgb_format_linear(drawRb->Format);
+   GLuint bpp = _mesa_get_format_bytes(readFormat);
+
+   GLenum pixelType;
+
+   GLubyte *srcMap, *dstMap;
+   GLint srcRowStride, dstRowStride;
+
+
+   /* Determine datatype for resampling */
+   if (_mesa_get_format_max_bits(readFormat) == 8 &&
+       _mesa_get_format_datatype(readFormat) == GL_UNSIGNED_NORMALIZED) {
+      pixelType = GL_UNSIGNED_BYTE;
       pixelSize = 4 * sizeof(GLubyte);
-      break;
-   case GL_UNSIGNED_SHORT:
-      pixelSize = 4 * sizeof(GLushort);
-      break;
-   case GL_UNSIGNED_INT:
-      pixelSize = 4 * sizeof(GLuint);
-      break;
-   case GL_FLOAT:
+   }
+   else {
+      pixelType = GL_FLOAT;
       pixelSize = 4 * sizeof(GLfloat);
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected buffer type (0x%x) in blit_nearest",
-                    readRb->DataType);
-      return;
    }
 
    /* Allocate the src/dst row buffers.
@@ -495,6 +554,45 @@ blit_linear(struct gl_context *ctx,
       free(srcBuffer1);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
+   }
+
+   /*
+    * Map src / dst renderbuffers
+    */
+   if (readRb == drawRb) {
+      /* map whole buffer for read/write */
+      ctx->Driver.MapRenderbuffer(ctx, readRb,
+                                  0, 0, readRb->Width, readRb->Height,
+                                  GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                  &srcMap, &srcRowStride);
+      if (!srcMap) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
+
+      dstMap = srcMap;
+      dstRowStride = srcRowStride;
+   }
+   else {
+      /* different src/dst buffers */
+      /* XXX with a bit of work we could just map the regions to be
+       * read/written instead of the whole buffers.
+       */
+      ctx->Driver.MapRenderbuffer(ctx, readRb,
+				  0, 0, readRb->Width, readRb->Height,
+                                  GL_MAP_READ_BIT, &srcMap, &srcRowStride);
+      if (!srcMap) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
+      ctx->Driver.MapRenderbuffer(ctx, drawRb,
+                                  0, 0, drawRb->Width, drawRb->Height,
+                                  GL_MAP_WRITE_BIT, &dstMap, &dstRowStride);
+      if (!dstMap) {
+         ctx->Driver.UnmapRenderbuffer(ctx, readRb);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFramebuffer");
+         return;
+      }
    }
 
    for (dstRow = 0; dstRow < dstHeight; dstRow++) {
@@ -531,35 +629,72 @@ blit_linear(struct gl_context *ctx,
          srcBuffer0 = srcBuffer1;
          srcBuffer1 = tmp;
          /* get y1 row */
-         readRb->GetRow(ctx, readRb, srcWidth, srcXpos, srcY1, srcBuffer1);
+         {
+            GLubyte *src = srcMap + srcY1 * srcRowStride + srcXpos * bpp;
+            if (pixelType == GL_UNSIGNED_BYTE) {
+               _mesa_unpack_ubyte_rgba_row(readFormat, srcWidth,
+                                           src, srcBuffer1);
+            }
+            else {
+               _mesa_unpack_rgba_row(readFormat, srcWidth,
+                                     src, srcBuffer1);
+            }
+         }            
          srcBufferY0 = srcY0;
          srcBufferY1 = srcY1;
       }
       else {
          /* get both new rows */
-         readRb->GetRow(ctx, readRb, srcWidth, srcXpos, srcY0, srcBuffer0);
-         readRb->GetRow(ctx, readRb, srcWidth, srcXpos, srcY1, srcBuffer1);
+         {
+            GLubyte *src0 = srcMap + srcY0 * srcRowStride + srcXpos * bpp;
+            GLubyte *src1 = srcMap + srcY1 * srcRowStride + srcXpos * bpp;
+            if (pixelType == GL_UNSIGNED_BYTE) {
+               _mesa_unpack_ubyte_rgba_row(readFormat, srcWidth,
+                                           src0, srcBuffer0);
+               _mesa_unpack_ubyte_rgba_row(readFormat, srcWidth,
+                                           src1, srcBuffer1);
+            }
+            else {
+               _mesa_unpack_rgba_row(readFormat, srcWidth, src0, srcBuffer0);
+               _mesa_unpack_rgba_row(readFormat, srcWidth, src1, srcBuffer1);
+            }
+         }
          srcBufferY0 = srcY0;
          srcBufferY1 = srcY1;
       }
 
-      if (readRb->DataType == GL_UNSIGNED_BYTE) {
+      if (pixelType == GL_UNSIGNED_BYTE) {
          resample_linear_row_ub(srcWidth, dstWidth, srcBuffer0, srcBuffer1,
                                 dstBuffer, invertX, rowWeight);
       }
       else {
-         _mesa_problem(ctx, "Unsupported color channel type in sw blit");
-         break;
+         resample_linear_row_float(srcWidth, dstWidth, srcBuffer0, srcBuffer1,
+                                   dstBuffer, invertX, rowWeight);
       }
 
       /* store pixel row in destination */
-      drawRb->PutRow(ctx, drawRb, dstWidth, dstXpos, dstY, dstBuffer, NULL);
+      {
+         GLubyte *dst = dstMap + dstY * dstRowStride + dstXpos * bpp;
+         if (pixelType == GL_UNSIGNED_BYTE) {
+            _mesa_pack_ubyte_rgba_row(drawFormat, dstWidth, dstBuffer, dst);
+         }
+         else {
+            _mesa_pack_float_rgba_row(drawFormat, dstWidth, dstBuffer, dst);
+         }
+      }
    }
 
    free(srcBuffer0);
    free(srcBuffer1);
    free(dstBuffer);
+
+   ctx->Driver.UnmapRenderbuffer(ctx, readRb);
+   if (drawRb != readRb) {
+      ctx->Driver.UnmapRenderbuffer(ctx, drawRb);
+   }
 }
+
+
 
 /**
  * Software fallback for glBlitFramebufferEXT().
@@ -626,10 +761,8 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
    else {
       ASSERT(filter == GL_LINEAR);
       if (mask & GL_COLOR_BUFFER_BIT) {  /* depth/stencil not allowed */
-	 swrast_render_start(ctx);
 	 blit_linear(ctx,  srcX0, srcY0, srcX1, srcY1,
 		     dstX0, dstY0, dstX1, dstY1);
-	 swrast_render_finish(ctx);
       }
    }
 
