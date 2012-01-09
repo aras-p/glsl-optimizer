@@ -2742,6 +2742,19 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
    }
 
+   if (filter == GL_LINEAR && (mask & GL_COLOR_BUFFER_BIT)) {
+      /* 3.1 spec, page 199:
+       * "Calling BlitFramebuffer will result in an INVALID_OPERATION error
+       * if filter is LINEAR and read buffer contains integer data."
+       */
+      GLenum type = _mesa_get_format_datatype(colorReadRb->Format);
+      if (type == GL_INT || type == GL_UNSIGNED_INT) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBlitFramebufferEXT(integer color type)");
+         return;
+      }
+   }
+
    if (!ctx->Extensions.EXT_framebuffer_blit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebufferEXT");
       return;
