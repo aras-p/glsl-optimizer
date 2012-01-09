@@ -1388,7 +1388,7 @@ public:
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
    bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
                         ir_variable *output_var);
-   bool store(struct gl_shader_program *prog,
+   bool store(struct gl_context *ctx, struct gl_shader_program *prog,
               struct gl_transform_feedback_info *info, unsigned buffer,
 	      unsigned varying) const;
 
@@ -1631,7 +1631,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
  * is returned.
  */
 bool
-tfeedback_decl::store(struct gl_shader_program *prog,
+tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
                       struct gl_transform_feedback_info *info,
                       unsigned buffer, unsigned varying) const
 {
@@ -1647,6 +1647,35 @@ tfeedback_decl::store(struct gl_shader_program *prog,
                    this->orig_name);
       return false;
    }
+
+   /* From GL_EXT_transform_feedback:
+    *   A program will fail to link if:
+    *
+    *     * the total number of components to capture is greater than
+    *       the constant MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS_EXT
+    *       and the buffer mode is INTERLEAVED_ATTRIBS_EXT.
+    */
+   if (prog->TransformFeedback.BufferMode == GL_INTERLEAVED_ATTRIBS &&
+       info->BufferStride[buffer] + this->num_components() >
+       ctx->Const.MaxTransformFeedbackInterleavedComponents) {
+      linker_error(prog, "The MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS "
+                   "limit has been exceeded.");
+      return false;
+   }
+
+   /* Verify that the checks on MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS
+    * and MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS are sufficient to prevent
+    * overflow of info->Outputs[].  In worst case we generate one entry in
+    * Outputs[] per component so a conservative check is to verify that the
+    * size of the array is greater than or equal to both
+    * MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS and
+    * MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS.
+    */
+   assert(Elements(info->Outputs) >=
+          ctx->Const.MaxTransformFeedbackInterleavedComponents);
+   assert(Elements(info->Outputs) >=
+          ctx->Const.MaxTransformFeedbackSeparateComponents);
+
    unsigned translated_size = this->size;
    if (this->is_clip_distance_mesa)
       translated_size = (translated_size + 3) / 4;
@@ -1943,7 +1972,6 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
                      unsigned num_tfeedback_decls,
                      tfeedback_decl *tfeedback_decls)
 {
-   unsigned total_tfeedback_components = 0;
    bool separate_attribs_mode =
       prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS;
 
@@ -1962,25 +1990,9 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
 
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
       unsigned buffer = separate_attribs_mode ? i : 0;
-      if (!tfeedback_decls[i].store(prog, &prog->LinkedTransformFeedback,
+      if (!tfeedback_decls[i].store(ctx, prog, &prog->LinkedTransformFeedback,
                                     buffer, i))
          return false;
-      total_tfeedback_components += tfeedback_decls[i].num_components();
-   }
-
-   /* From GL_EXT_transform_feedback:
-    *   A program will fail to link if:
-    *
-    *     * the total number of components to capture is greater than
-    *       the constant MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS_EXT
-    *       and the buffer mode is INTERLEAVED_ATTRIBS_EXT.
-    */
-   if (prog->TransformFeedback.BufferMode == GL_INTERLEAVED_ATTRIBS &&
-       total_tfeedback_components >
-       ctx->Const.MaxTransformFeedbackInterleavedComponents) {
-      linker_error(prog, "The MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS "
-                   "limit has been exceeded.");
-      return false;
    }
 
    return true;
