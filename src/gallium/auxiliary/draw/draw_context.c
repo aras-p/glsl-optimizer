@@ -74,7 +74,7 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm,
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
-      goto fail;
+      goto err_out;
 
 #if HAVE_LLVM
    if (try_llvm && draw_get_option_use_llvm()) {
@@ -83,20 +83,26 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm,
          draw->own_gallivm = gallivm;
       }
 
-      if (gallivm)
-         draw->llvm = draw_llvm_create(draw, gallivm);
+      if (!gallivm)
+         goto err_destroy;
+
+      draw->llvm = draw_llvm_create(draw, gallivm);
+
+      if (!draw->llvm)
+         goto err_destroy;
    }
 #endif
 
    if (!draw_init(draw))
-      goto fail;
+      goto err_destroy;
 
    draw->pipe = pipe;
 
    return draw;
 
-fail:
+err_destroy:
    draw_destroy( draw );
+err_out:
    return NULL;
 }
 
