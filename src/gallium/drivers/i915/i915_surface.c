@@ -66,7 +66,6 @@ i915_surface_copy_render(struct pipe_context *pipe,
    util_blitter_save_fragment_shader(i915->blitter, i915->saved_fs);
    util_blitter_save_vertex_shader(i915->blitter, i915->saved_vs);
    util_blitter_save_viewport(i915->blitter, &i915->viewport);
-   util_blitter_save_clip(i915->blitter, &i915->saved_clip);
    util_blitter_save_vertex_elements(i915->blitter, i915->saved_velems);
    util_blitter_save_vertex_buffers(i915->blitter, i915->saved_nr_vertex_buffers,
                                     i915->saved_vertex_buffers);

@@ -227,3 +227,17 @@ gl_rasterization_rules
     Whether the rasterizer should use (0.5, 0.5) pixel centers. When not set,
     the rasterizer will use (0, 0) for pixel centers.
 
+depth_clip
+    When false, the near and far depth clipping planes of the view volume are
+    disabled and the depth value will be clamped at the per-pixel level, after
+    polygon offset has been applied and before depth testing.
+
+clip_plane_enable
+    For each k in [0, PIPE_MAX_CLIP_PLANES), if bit k of this field is set,
+    clipping half-space k is enabled, if it is clear, it is disabled.
+    The clipping half-spaces are defined either by the user clip planes in
+    ``pipe_clip_state``, or by the clip distance outputs of the shader stage
+    preceding the fragment shader.
+    If any clip distance output is written, those half-spaces for which no
+    clip distance is written count as disabled; i.e. user clip planes and
+    shader clip distances cannot be mixed, and clip distances take precedence.

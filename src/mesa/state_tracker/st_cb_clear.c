@@ -68,6 +68,7 @@ st_init_clear(struct st_context *st)
    memset(&st->clear, 0, sizeof(st->clear));
 
    st->clear.raster.gl_rasterization_rules = 1;
+   st->clear.raster.depth_clip = 1;
    st->clear.enable_ds_separate = pscreen->get_param(pscreen, PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE);
 }
 
@@ -248,7 +249,6 @@ clear_with_quad(struct gl_context *ctx,
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_viewport(st->cso_context);
-   cso_save_clip(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
    cso_save_stream_outputs(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
@@ -326,7 +326,6 @@ clear_with_quad(struct gl_context *ctx,
       cso_set_viewport(st->cso_context, &vp);
    }
 
-   cso_set_clip(st->cso_context, &st->clear.clip);
    set_fragment_shader(st);
    set_vertex_shader(st);
    cso_set_geometry_shader_handle(st->cso_context, NULL);
@@ -346,7 +345,6 @@ clear_with_quad(struct gl_context *ctx,
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_viewport(st->cso_context);
-   cso_restore_clip(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
    cso_restore_geometry_shader(st->cso_context);

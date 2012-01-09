@@ -213,42 +213,48 @@ nv50_validate_viewport(struct nv50_context *nv50)
 #endif
 }
 
+static INLINE void
+nv50_check_program_ucps(struct nv50_context *nv50,
+                        struct nv50_program *vp, uint8_t mask)
+{
+   const unsigned n = util_logbase2(mask) + 1;
+
+   if (vp->vp.clpd_nr >= n)
+      return;
+   nv50_program_destroy(nv50, vp);
+
+   vp->vp.clpd_nr = n;
+   if (likely(vp == nv50->vertprog))
+      nv50_vertprog_validate(nv50);
+   else
+      nv50_gmtyprog_validate(nv50);
+   nv50_fp_linkage_validate(nv50);
+}
+
 static void
 nv50_validate_clip(struct nv50_context *nv50)
 {
    struct nouveau_channel *chan = nv50->screen->base.channel;
-   uint32_t clip;
+   struct nv50_program *vp;
+   uint8_t clip_enable;
 
-   if (nv50->clip.depth_clamp) {
-      clip =
-         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
-         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
-         NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
-   } else {
-      clip = 0;
-   }
-
-#ifndef NV50_SCISSORS_CLIPPING
-   clip |=
-      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK7 |
-      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
-#endif
-
-   BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
-   OUT_RING  (chan, clip);
-
-   if (nv50->clip.nr) {
+   if (nv50->dirty & NV50_NEW_CLIP) {
       BEGIN_RING(chan, RING_3D(CB_ADDR), 1);
       OUT_RING  (chan, (0 << 8) | NV50_CB_AUX);
-      BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), nv50->clip.nr * 4);
-      OUT_RINGp (chan, &nv50->clip.ucp[0][0], nv50->clip.nr * 4);
+      BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), PIPE_MAX_CLIP_PLANES * 4);
+      OUT_RINGp (chan, &nv50->clip.ucp[0][0], PIPE_MAX_CLIP_PLANES * 4);
    }
 
-   BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
-   OUT_RING  (chan, (1 << nv50->clip.nr) - 1);
+   vp = nv50->gmtyprog;
+   if (likely(!vp))
+      vp = nv50->vertprog;
 
-   if (nv50->vertprog && nv50->clip.nr > nv50->vertprog->vp.clpd_nr)
-      nv50->dirty |= NV50_NEW_VERTPROG;
+   clip_enable = nv50->rast->pipe.clip_plane_enable;
+
+   BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
+   OUT_RING  (chan, clip_enable);
+
+   nv50_check_program_ucps(nv50, vp, clip_enable);
 }
 
 static void
@@ -350,7 +356,8 @@ static struct state_validate {
     { nv50_validate_scissor,       NV50_NEW_SCISSOR },
 #endif
     { nv50_validate_viewport,      NV50_NEW_VIEWPORT },
-    { nv50_validate_clip,          NV50_NEW_CLIP },
+    { nv50_validate_clip,          NV50_NEW_CLIP | NV50_NEW_RASTERIZER |
+                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
     { nv50_vertprog_validate,      NV50_NEW_VERTPROG },
     { nv50_gmtyprog_validate,      NV50_NEW_GMTYPROG },
     { nv50_fragprog_validate,      NV50_NEW_FRAGPROG },

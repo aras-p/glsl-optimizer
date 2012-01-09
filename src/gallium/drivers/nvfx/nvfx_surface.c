@@ -187,7 +187,6 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 	util_blitter_save_vertex_shader(blitter, nvfx->vertprog);
 	util_blitter_save_viewport(blitter, &nvfx->viewport);
 	util_blitter_save_framebuffer(blitter, &nvfx->framebuffer);
-	util_blitter_save_clip(blitter, &nvfx->clip);
 	util_blitter_save_vertex_elements(blitter, nvfx->vtxelt);
 	util_blitter_save_vertex_buffers(blitter, nvfx->vtxbuf_nr, nvfx->vtxbuf);
 

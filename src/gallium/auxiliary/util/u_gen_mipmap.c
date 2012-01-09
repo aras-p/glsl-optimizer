@@ -63,7 +63,6 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
-   struct pipe_clip_state clip;
    struct pipe_vertex_element velem[2];
 
    void *vs;
@@ -1283,6 +1282,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.cull_face = PIPE_FACE_NONE;
    ctx->rasterizer.gl_rasterization_rules = 1;
+   ctx->rasterizer.depth_clip = 1;
 
    /* sampler state */
    memset(&ctx->sampler, 0, sizeof(ctx->sampler));
@@ -1564,14 +1564,12 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_vertex_shader(ctx->cso);
    cso_save_geometry_shader(ctx->cso);
    cso_save_viewport(ctx->cso);
-   cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
@@ -1688,7 +1686,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_geometry_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
-   cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);
 }

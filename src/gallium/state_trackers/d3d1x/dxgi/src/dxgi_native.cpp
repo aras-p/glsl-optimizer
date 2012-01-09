@@ -754,6 +754,7 @@ struct dxgi_blitter
 		memset(&rs_state, 0, sizeof(rs_state));
 		rs_state.cull_face = PIPE_FACE_NONE;
 		rs_state.gl_rasterization_rules = 1;
+		rs_state.depth_clip = 1;
 		rs_state.flatshade = 1;
 		rasterizer = pipe->create_rasterizer_state(pipe, &rs_state);
 

@@ -127,6 +127,22 @@ struct pipe_rasterizer_state
     */
    unsigned rasterizer_discard:1;
 
+   /**
+    * When false, depth clipping is disabled and the depth value will be
+    * clamped later at the per-pixel level before depth testing.
+    * This depends on PIPE_CAP_DEPTH_CLIP_DISABLE.
+    */
+   unsigned depth_clip:1;
+
+   /**
+    * Enable bits for clipping half-spaces.
+    * This applies to both user clip planes and shader clip distances.
+    * Note that if the bound shader exports any clip distances, these
+    * replace all user clip planes, and clip half-spaces enabled here
+    * but not written by the shader count as disabled.
+    */
+   unsigned clip_plane_enable:PIPE_MAX_CLIP_PLANES;
+
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
 
@@ -165,8 +181,6 @@ struct pipe_scissor_state
 struct pipe_clip_state
 {
    float ucp[PIPE_MAX_CLIP_PLANES][4];
-   unsigned nr;
-   unsigned depth_clamp:1;
 };
 
 

@@ -270,6 +270,7 @@ init_state(struct vl_zscan *zscan)
 
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.gl_rasterization_rules = true;
+   rs_state.depth_clip = 1;
    zscan->rs_state = zscan->pipe->create_rasterizer_state(zscan->pipe, &rs_state);
    if (!zscan->rs_state)
       goto error_rs_state;

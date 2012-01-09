@@ -592,7 +592,7 @@ void st_init_extensions(struct st_context *st)
       st->sw_primitive_restart = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_DEPTH_CLAMP)) {
+   if (screen->get_param(screen, PIPE_CAP_DEPTH_CLIP_DISABLE)) {
       ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    }
 

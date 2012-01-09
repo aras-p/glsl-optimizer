@@ -100,7 +100,8 @@ const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =
    "FS_COORD_ORIGIN",
    "FS_COORD_PIXEL_CENTER",
    "FS_COLOR0_WRITES_ALL_CBUFS",
-   "FS_DEPTH_LAYOUT"
+   "FS_DEPTH_LAYOUT",
+   "VS_PROHIBIT_UCPS"
 };
 
 const char *tgsi_type_names[5] =

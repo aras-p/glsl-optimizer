@@ -433,7 +433,6 @@ struct nv50_blitctx
       struct pipe_sampler_view *texture;
       struct nv50_tsc_entry *sampler;
       unsigned dirty;
-      unsigned clip_nr;
    } saved;
    struct nv50_program vp;
    struct nv50_program fp;
@@ -775,10 +774,6 @@ nv50_blitctx_pre_blit(struct nv50_blitctx *blit, struct nv50_context *nv50)
    nv50->gmtyprog = NULL;
    nv50->fragprog = &blit->fp;
 
-   blit->saved.clip_nr = nv50->clip.nr;
-
-   nv50->clip.nr = 0;
-
    for (s = 0; s < 3; ++s) {
       blit->saved.num_textures[s] = nv50->num_textures[s];
       blit->saved.num_samplers[s] = nv50->num_samplers[s];
@@ -815,8 +810,6 @@ nv50_blitctx_post_blit(struct nv50_context *nv50, struct nv50_blitctx *blit)
    nv50->vertprog = blit->saved.vp;
    nv50->gmtyprog = blit->saved.gp;
    nv50->fragprog = blit->saved.fp;
-
-   nv50->clip.nr = blit->saved.clip_nr;
 
    pipe_sampler_view_reference(&nv50->textures[2][0], NULL);
 

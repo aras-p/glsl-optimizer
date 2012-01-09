@@ -429,6 +429,7 @@ init_pipe_state(struct vl_mc *r)
    rs_state.point_quad_rasterization = true;
    rs_state.point_size = BLOCK_WIDTH;
    rs_state.gl_rasterization_rules = true;
+   rs_state.depth_clip = 1;
    r->rs_state = r->pipe->create_rasterizer_state(r->pipe, &rs_state);
    if (!r->rs_state)
       goto error_rs_state;

@@ -1021,7 +1021,7 @@ generate_clipmask(struct gallivm_state *gallivm,
                   boolean clip_z,
                   boolean clip_user,
                   boolean clip_halfz,
-                  unsigned nr,
+                  unsigned ucp_enable,
                   LLVMValueRef context_ptr)
 {
    LLVMBuilderRef builder = gallivm->builder;
@@ -1030,7 +1030,6 @@ generate_clipmask(struct gallivm_state *gallivm,
    LLVMValueRef zero, shift;
    LLVMValueRef pos_x, pos_y, pos_z, pos_w;
    LLVMValueRef plane1, planes, plane_ptr, sum;
-   unsigned i;
    struct lp_type f32_type = lp_type_float_vec(32); 
 
    mask = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 0);
@@ -1098,12 +1097,15 @@ generate_clipmask(struct gallivm_state *gallivm,
    if (clip_user) {
       LLVMValueRef planes_ptr = draw_jit_context_planes(gallivm, context_ptr);
       LLVMValueRef indices[3];
-      temp = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 32);
 
       /* userclip planes */
-      for (i = 6; i < nr; i++) {
+      while (ucp_enable) {
+         unsigned plane_idx = ffs(ucp_enable)-1;
+         ucp_enable &= ~(1 << plane_idx);
+         plane_idx += 6;
+
          indices[0] = lp_build_const_int32(gallivm, 0);
-         indices[1] = lp_build_const_int32(gallivm, i);
+         indices[1] = lp_build_const_int32(gallivm, plane_idx);
 
          indices[2] = lp_build_const_int32(gallivm, 0);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
@@ -1133,8 +1135,8 @@ generate_clipmask(struct gallivm_state *gallivm,
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
          test = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GREATER, zero, sum);
-         temp = LLVMBuildShl(builder, temp, shift, "");
-         test = LLVMBuildAnd(builder, test, temp, ""); 
+         temp = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 1 << plane_idx);
+         test = LLVMBuildAnd(builder, test, temp, "");
          mask = LLVMBuildOr(builder, mask, test, "");
       }
    }
@@ -1365,7 +1367,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
                                       variant->key.clip_halfz,
-                                      variant->key.nr_planes,
+                                      variant->key.ucp_enable,
                                       context_ptr);
          /* return clipping boolean value for function */
          clipmask_bool(gallivm, clipmask, ret_ptr);
@@ -1447,7 +1449,7 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->bypass_viewport = llvm->draw->identity_viewport;
    key->clip_halfz = !llvm->draw->rasterizer->gl_rasterization_rules;
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
-   key->nr_planes = llvm->draw->nr_planes;
+   key->ucp_enable = llvm->draw->rasterizer->clip_plane_enable;
    key->pad = 0;
 
    /* All variants of this shader will have the same value for

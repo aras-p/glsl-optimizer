@@ -36,7 +36,7 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
    /* const */ float (*plane)[4] = pvs->draw->plane;
    const unsigned pos = draw_current_shader_position_output(pvs->draw);
    const unsigned ef = pvs->draw->vs.edgeflag_output;
-   const unsigned nr = pvs->draw->nr_planes;
+   const unsigned ucp_enable = pvs->draw->rasterizer->clip_plane_enable;
    const unsigned flags = (FLAGS);
    unsigned need_pipeline = 0;
    unsigned j;
@@ -81,10 +81,16 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
          }
 
          if (flags & DO_CLIP_USER) {
-            unsigned i;
-            for (i = 6; i < nr; i++) {
-               if (dot4(position, plane[i]) < 0) 
-                  mask |= (1<<i);
+            unsigned ucp_mask = ucp_enable;
+
+            while (ucp_mask) {
+               unsigned plane_idx = ffs(ucp_mask)-1;
+               ucp_mask &= ~(1 << plane_idx);
+               plane_idx += 6;
+
+               if (dot4(position, plane[plane_idx]) < 0) {
+                  mask |= 1 << plane_idx;
+               }
             }
          }
 

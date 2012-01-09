@@ -260,43 +260,74 @@ nvc0_validate_viewport(struct nvc0_context *nvc0)
     OUT_RINGf (chan, zmax);
 }
 
+static INLINE void
+nvc0_upload_uclip_planes(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_bo *bo = nvc0->screen->uniforms;
+
+   MARK_RING (chan, 6 + PIPE_MAX_CLIP_PLANES * 4, 2);
+   BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+   OUT_RING  (chan, 256);
+   OUT_RELOCh(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   BEGIN_RING_1I(chan, RING_3D(CB_POS), PIPE_MAX_CLIP_PLANES * 4 + 1);
+   OUT_RING  (chan, 0);
+   OUT_RINGp (chan, &nvc0->clip.ucp[0][0], PIPE_MAX_CLIP_PLANES * 4);
+}
+
+static INLINE void
+nvc0_check_program_ucps(struct nvc0_context *nvc0,
+                        struct nvc0_program *vp, uint8_t mask)
+{
+   const unsigned n = util_logbase2(mask) + 1;
+
+   if (vp->vp.num_ucps >= n)
+      return;
+   nvc0_program_destroy(nvc0, vp);
+
+   vp->vp.num_ucps = n;
+   if (likely(vp == nvc0->vertprog))
+      nvc0_vertprog_validate(nvc0);
+   else
+   if (likely(vp == nvc0->gmtyprog))
+      nvc0_vertprog_validate(nvc0);
+   else
+      nvc0_tevlprog_validate(nvc0);
+}
+
 static void
 nvc0_validate_clip(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
-   uint32_t clip;
+   struct nvc0_program *vp;
+   uint8_t clip_enable;
 
-   if (nvc0->clip.depth_clamp) {
-      clip =
-         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1 |
-         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
-         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
-         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK2;
-   } else {
-      clip = NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1;
+   if (nvc0->dirty & NVC0_NEW_CLIP)
+      nvc0_upload_uclip_planes(nvc0);
+
+   vp = nvc0->gmtyprog;
+   if (!vp) {
+      vp = nvc0->tevlprog;
+      if (!vp)
+         vp = nvc0->vertprog;
+   }
+   clip_enable = vp->vp.clip_enable;
+
+   if (!clip_enable) {
+      clip_enable = nvc0->rast->pipe.clip_plane_enable;
+      if (unlikely(clip_enable))
+         nvc0_check_program_ucps(nvc0, vp, clip_enable);
    }
 
-   BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
-   OUT_RING  (chan, clip);
-
-   if (nvc0->clip.nr) {
-      struct nouveau_bo *bo = nvc0->screen->uniforms;
-
-      MARK_RING (chan, 6 + nvc0->clip.nr * 4, 2);
-      BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
-      OUT_RING  (chan, 256);
-      OUT_RELOCh(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-      OUT_RELOCl(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-      BEGIN_RING_1I(chan, RING_3D(CB_POS), nvc0->clip.nr * 4 + 1);
-      OUT_RING  (chan, 0);
-      OUT_RINGp (chan, &nvc0->clip.ucp[0][0], nvc0->clip.nr * 4);
+   if (nvc0->state.clip_enable != clip_enable) {
+      nvc0->state.clip_enable = clip_enable;
+      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_ENABLE), clip_enable);
    }
-
-   if (nvc0->vertprog->vp.num_ucps) {
-      nvc0->state.clip_mode = 0;
-      nvc0->state.clip_enable = (1 << nvc0->clip.nr) - 1;
-      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_ENABLE), nvc0->state.clip_enable);
-      IMMED_RING(chan, RING_3D(CLIP_DISTANCE_MODE), 0);
+   if (nvc0->state.clip_mode != vp->vp.clip_mode) {
+      nvc0->state.clip_mode = vp->vp.clip_mode;
+      BEGIN_RING(chan, RING_3D(CLIP_DISTANCE_MODE), 1);
+      OUT_RING  (chan, vp->vp.clip_mode);
    }
 }
 
@@ -497,7 +528,10 @@ static struct state_validate {
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
     { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA |
                                    NVC0_NEW_RASTERIZER },
-    { nvc0_validate_clip,          NVC0_NEW_CLIP },
+    { nvc0_validate_clip,          NVC0_NEW_CLIP | NVC0_NEW_RASTERIZER |
+                                   NVC0_NEW_VERTPROG |
+                                   NVC0_NEW_TEVLPROG |
+                                   NVC0_NEW_GMTYPROG },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },

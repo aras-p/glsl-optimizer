@@ -578,6 +578,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		state.offset_scale = rasterizer_desc->SlopeScaledDepthBias;
 		state.offset_units = rasterizer_desc->DepthBias;
 		state.offset_clamp = rasterizer_desc->DepthBiasClamp;
+		state.depth_clip = rasterizer_desc->DepthClipEnable;
 		state.scissor = !!rasterizer_desc->ScissorEnable;
 		state.multisample = !!rasterizer_desc->MultisampleEnable;
 		state.line_smooth = !!rasterizer_desc->AntialiasedLineEnable;
@@ -595,7 +596,7 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(!object)
 			return E_FAIL;
 
-		*out_rasterizer_state = new GalliumD3D11RasterizerState(this, object, *rasterizer_desc, !rasterizer_desc->DepthClipEnable);
+		*out_rasterizer_state = new GalliumD3D11RasterizerState(this, object, *rasterizer_desc);
 		return S_OK;
 	}
 

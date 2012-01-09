@@ -107,6 +107,7 @@ renderer_init_state(struct xorg_renderer *r)
    /* XXX: move to renderer_init_state? */
    memset(&raster, 0, sizeof(struct pipe_rasterizer_state));
    raster.gl_rasterization_rules = 1;
+   raster.depth_clip = 1;
    cso_set_rasterizer(r->cso, &raster);
 
    /* vertex elements state */

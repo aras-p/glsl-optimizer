@@ -152,6 +152,7 @@ static void init_prog(struct program *p)
 	memset(&p->rasterizer, 0, sizeof(p->rasterizer));
 	p->rasterizer.cull_face = PIPE_FACE_NONE;
 	p->rasterizer.gl_rasterization_rules = 1;
+	p->rasterizer.depth_clip = 1;
 
 	surf_tmpl.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;

@@ -114,16 +114,23 @@ nvfx_ucp_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
-	unsigned enables[7] =
+	unsigned enables[] =
 	{
-			0,
 			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0,
-			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1,
-			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2,
-			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3,
-			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE4,
-			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE0 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE4 | NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE5,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE1,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE2,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE3,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE4,
+			NV30_3D_VP_CLIP_PLANES_ENABLE_PLANE5
 	};
+	unsigned i, enable = 0, nr = 0;
+
+	for (i = 0; i < 6; i++) {
+		if (nvfx->rasterizer->pipe.clip_plane_enable & (1 << i)) {
+			enable |= enables[i];
+			nr = i+1;
+		}
+	}
 
 	if(!nvfx->use_vp_clipping)
 	{
@@ -131,12 +138,12 @@ nvfx_ucp_validate(struct nvfx_context* nvfx)
 		OUT_RING(chan, 0);
 
 		BEGIN_RING(chan, eng3d, NV30_3D_VP_CLIP_PLANE(0, 0),
-			   nvfx->clip.nr * 4);
-		OUT_RINGp(chan, &nvfx->clip.ucp[0][0], nvfx->clip.nr * 4);
+			   nr * 4);
+		OUT_RINGp(chan, &nvfx->clip.ucp[0][0], nr * 4);
 	}
 
 	BEGIN_RING(chan, eng3d, NV30_3D_VP_CLIP_PLANES_ENABLE, 1);
-	OUT_RING(chan, enables[nvfx->clip.nr]);
+	OUT_RING(chan, enable);
 }
 
 static void
@@ -146,7 +153,10 @@ nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned i;
 	struct nvfx_vertex_program* vp = nvfx->hw_vertprog;
-	if(nvfx->clip.nr != vp->clip_nr)
+	unsigned enable = nvfx->rasterizer->pipe.clip_plane_enable;
+	unsigned nr = util_bitcount(enable);
+
+	if(nr != vp->clip_nr)
 	{
 		unsigned idx;
 
@@ -161,21 +171,24 @@ nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 		}
 
 		 /* set last instruction bit */
-		idx = vp->nr_insns - 7 + nvfx->clip.nr;
+		idx = vp->nr_insns - 7 + nr;
 		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING(chan,  vp->exec->start + idx);
 		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_INST(0), 4);
 		OUT_RINGp(chan, vp->insns[idx].data, 3);
 		OUT_RING(chan, vp->insns[idx].data[3] | 1);
-		vp->clip_nr = nvfx->clip.nr;
+		vp->clip_nr = nr;
 	}
 
 	// TODO: only do this for the ones changed
-	for(i = 0; i < nvfx->clip.nr; ++i)
+	for(i = 0; enable; ++i)
 	{
+		unsigned index = ffs(enable) - 1;
+		enable &= ~(1 << index);
+
 		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_CONST_ID, 5);
 		OUT_RING(chan, vp->data->start + i);
-		OUT_RINGp (chan, nvfx->clip.ucp[i], 4);
+		OUT_RINGp (chan, nvfx->clip.ucp[index], 4);
 	}
 }
 
@@ -266,10 +279,10 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_STIPPLE)
 		nvfx_state_stipple_validate(nvfx);
 
-       if(nvfx->dirty & NVFX_NEW_UCP)
+       if(nvfx->dirty & (NVFX_NEW_UCP | NVFX_NEW_RAST))
 	       nvfx_ucp_validate(nvfx);
 
-	if(nvfx->use_vp_clipping && (nvfx->dirty & (NVFX_NEW_UCP | NVFX_NEW_VERTPROG)))
+	if(nvfx->use_vp_clipping && (nvfx->dirty & (NVFX_NEW_UCP | NVFX_NEW_VERTPROG | NVFX_NEW_RAST)))
 		nvfx_vertprog_ucp_validate(nvfx);
 
 	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST | NVFX_NEW_VERTPROG | NVFX_NEW_SPRITE))
@@ -282,7 +295,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(nvfx->is_nv4x)
 	{
 		unsigned vp_output = nvfx->hw_vertprog->or | nvfx->hw_fragprog->or;
-		vp_output |= (1 << (nvfx->clip.nr + 6)) - (1 << 6);
+		vp_output |= ((1 << (nvfx->rasterizer->pipe.clip_plane_enable & 63)) - 1) << 6;
 
 		if(vp_output != nvfx->hw_vp_output)
 		{

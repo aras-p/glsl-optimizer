@@ -121,6 +121,8 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
    trace_dump_member(bool, state, flatshade);
    trace_dump_member(bool, state, light_twoside);
+   trace_dump_member(bool, state, clamp_vertex_color);
+   trace_dump_member(bool, state, clamp_fragment_color);
    trace_dump_member(uint, state, front_ccw);
    trace_dump_member(uint, state, cull_face);
    trace_dump_member(uint, state, fill_front);
@@ -144,6 +146,9 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(bool, state, line_last_pixel);
    trace_dump_member(bool, state, flatshade_first);
    trace_dump_member(bool, state, gl_rasterization_rules);
+   trace_dump_member(bool, state, rasterizer_discard);
+   trace_dump_member(bool, state, depth_clip);
+   trace_dump_member(uint, state, clip_plane_enable);
 
    trace_dump_member(float, state, line_width);
    trace_dump_member(float, state, point_size);
@@ -240,8 +245,6 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
    }
    trace_dump_array_end();
    trace_dump_member_end();
-
-   trace_dump_member(uint, state, nr);
 
    trace_dump_struct_end();
 }

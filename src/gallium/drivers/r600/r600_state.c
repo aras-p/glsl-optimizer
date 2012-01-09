@@ -1029,6 +1029,10 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
+			S_028810_PS_UCP_MODE(3) | (state->clip_plane_enable & 63) |
+			S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
+			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip), 0xFFFFFFFF, NULL, 0);
 
 	return rstate;
 }
@@ -1313,7 +1317,7 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 
 	rctx->clip = *state;
 	rstate->id = R600_PIPE_STATE_CLIP;
-	for (int i = 0; i < state->nr; i++) {
+	for (int i = 0; i < 6; i++) {
 		r600_pipe_state_add_reg(rstate,
 					R_028E20_PA_CL_UCP0_X + i * 16,
 					fui(state->ucp[i][0]), 0xFFFFFFFF, NULL, 0);
@@ -1327,10 +1331,6 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 					R_028E2C_PA_CL_UCP0_W + i * 16,
 					fui(state->ucp[i][3]), 0xFFFFFFFF, NULL, 0);
 	}
-	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
-			S_028810_PS_UCP_MODE(3) | ((1 << state->nr) - 1) |
-			S_028810_ZCLIP_NEAR_DISABLE(state->depth_clamp) |
-			S_028810_ZCLIP_FAR_DISABLE(state->depth_clamp), 0xFFFFFFFF, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_CLIP]);
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;

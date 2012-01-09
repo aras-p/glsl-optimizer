@@ -88,6 +88,7 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_screen *pscreen)
 
    p->rasterizer.cull_face = PIPE_FACE_NONE;
    p->rasterizer.gl_rasterization_rules = 1;
+   p->rasterizer.depth_clip = 1;
 
    p->sampler.wrap_s = p->sampler.wrap_t = p->sampler.wrap_r =
       PIPE_TEX_WRAP_CLAMP_TO_EDGE;

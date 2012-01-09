@@ -78,8 +78,6 @@ struct r300_blend_color_state {
 };
 
 struct r300_clip_state {
-    struct pipe_clip_state clip;
-
     uint32_t cb[29];
 };
 
@@ -139,7 +137,7 @@ struct r300_gpu_flush {
     uint32_t cb_flush_clean[6];
 };
 
-#define RS_STATE_MAIN_SIZE 25
+#define RS_STATE_MAIN_SIZE 27
 
 struct r300_rs_state {
     /* Original rasterizer state. */

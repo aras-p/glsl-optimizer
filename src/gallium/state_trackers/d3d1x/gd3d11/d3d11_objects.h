@@ -210,10 +210,8 @@ struct GalliumD3D10BlendState : public GalliumD3D10BlendStateBase
 
 struct GalliumD3D11RasterizerState : public GalliumD3D11RasterizerStateBase
 {
-	bool depth_clamp;
-
-	GalliumD3D11RasterizerState(GalliumD3D11Screen* device, void* object, const D3D11_RASTERIZER_DESC& desc, bool depth_clamp)
-	: GalliumD3D11RasterizerStateBase(device, object, desc), depth_clamp(depth_clamp)
+	GalliumD3D11RasterizerState(GalliumD3D11Screen* device, void* object, const D3D11_RASTERIZER_DESC& desc)
+	: GalliumD3D11RasterizerStateBase(device, object, desc)
 	{}
 };
 

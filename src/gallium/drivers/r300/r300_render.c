@@ -1194,7 +1194,6 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     r300_update_derived_state(r300);
 
     /* Mark some states we don't care about as non-dirty. */
-    r300->clip_state.dirty = FALSE;
     r300->viewport_state.dirty = FALSE;
 
     if (!r300_prepare_for_rendering(r300, PREP_EMIT_STATES, NULL, dwords, 0, 0, -1))
@@ -1244,7 +1243,6 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
 
 done:
     /* Restore the state. */
-    r300_mark_atom_dirty(r300, &r300->clip_state);
     r300_mark_atom_dirty(r300, &r300->rs_state);
     r300_mark_atom_dirty(r300, &r300->viewport_state);
 

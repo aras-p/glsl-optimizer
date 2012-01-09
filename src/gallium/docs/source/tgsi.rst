@@ -1754,6 +1754,17 @@ Specifies that writes to the fragment shader color 0 are replicated to all
 bound cbufs. This facilitates OpenGL's fragColor output vs fragData[0] where
 fragData is directed to a single color buffer, but fragColor is broadcast.
 
+VS_PROHIBIT_UCPS
+""""""""""""""""""""""""""
+If this property is set on the program bound to the shader stage before the
+fragment shader, user clip planes should have no effect (be disabled) even if
+that shader does not write to any clip distance outputs and the rasterizer's
+clip_plane_enable is non-zero.
+This property is only supported by drivers that also support shader clip
+distance outputs.
+This is useful for APIs that don't have UCPs and where clip distances written
+by a shader cannot be disabled.
+
 
 Texture Sampling and Texture Formats
 ------------------------------------

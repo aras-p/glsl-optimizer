@@ -493,21 +493,13 @@ static void r300_set_clip_state(struct pipe_context* pipe,
             (struct r300_clip_state*)r300->clip_state.state;
     CB_LOCALS;
 
-    clip->clip = *state;
-
     if (r300->screen->caps.has_tcl) {
-        r300->clip_state.size = 2 + !!state->nr * 3 + state->nr * 4;
-
         BEGIN_CB(clip->cb, r300->clip_state.size);
-        if (state->nr) {
-           OUT_CB_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+        OUT_CB_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                    (r300->screen->caps.is_r500 ?
                     R500_PVS_UCP_START : R300_PVS_UCP_START));
-           OUT_CB_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, state->nr * 4);
-           OUT_CB_TABLE(state->ucp, state->nr * 4);
-        }
-        OUT_CB_REG(R300_VAP_CLIP_CNTL, ((1 << state->nr) - 1) |
-                   R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
+        OUT_CB_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
+        OUT_CB_TABLE(state->ucp, 6 * 4);
         END_CB;
 
         r300_mark_atom_dirty(r300, &r300->clip_state);
@@ -1027,6 +1019,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
     float psiz;
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
+    uint32_t vap_clip_cntl;         /* R300_VAP_CLIP_CNTL: 0x221C */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
@@ -1166,6 +1159,13 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         }
     }
 
+    if (r300_screen(pipe->screen)->caps.has_tcl) {
+       vap_clip_cntl = (state->clip_plane_enable & 63) |
+                       R300_PS_UCP_MODE_CLIP_AS_TRIFAN;
+    } else {
+       vap_clip_cntl = R300_CLIP_DISABLE;
+    }
+
     /* Vertex color clamping. FP20 means no clamping. */
     round_mode =
       R300_GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST |
@@ -1175,13 +1175,14 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     /* Build the main command buffer. */
     BEGIN_CB(rs->cb_main, RS_STATE_MAIN_SIZE);
     OUT_CB_REG(R300_VAP_CNTL_STATUS, vap_control_status);
+    OUT_CB_REG(R300_VAP_CLIP_CNTL, vap_clip_cntl);
     OUT_CB_REG(R300_GA_POINT_SIZE, point_size);
     OUT_CB_REG_SEQ(R300_GA_POINT_MINMAX, 2);
     OUT_CB(point_minmax);
     OUT_CB(line_control);
     OUT_CB_REG_SEQ(R300_SU_POLY_OFFSET_ENABLE, 2);
     OUT_CB(polygon_offset_enable);
-    rs->cull_mode_index = 9;
+    rs->cull_mode_index = 11;
     OUT_CB(cull_mode);
     OUT_CB_REG(R300_GA_LINE_STIPPLE_CONFIG, line_stipple_config);
     OUT_CB_REG(R300_GA_LINE_STIPPLE_VALUE, line_stipple_value);

@@ -204,7 +204,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
-    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
+    R300_INIT_ATOM(clip_state, has_tcl ? 3 + (6 * 4) : 0);
     /* VAP, RS, GA, GB, SU, SC. */
     R300_INIT_ATOM(rs_block_state, 0);
     R300_INIT_ATOM(rs_state, 0);
@@ -277,8 +277,6 @@ static void r300_init_states(struct pipe_context *pipe)
     struct pipe_blend_color bc = {{0}};
     struct pipe_clip_state cs = {{{0}}};
     struct pipe_scissor_state ss = {0};
-    struct r300_clip_state *clip =
-            (struct r300_clip_state*)r300->clip_state.state;
     struct r300_gpu_flush *gpuflush =
             (struct r300_gpu_flush*)r300->gpu_flush.state;
     struct r300_vap_invariant_state *vap_invariant =
@@ -289,16 +287,8 @@ static void r300_init_states(struct pipe_context *pipe)
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
+    pipe->set_clip_state(pipe, &cs);
     pipe->set_scissor_state(pipe, &ss);
-
-    /* Initialize the clip state. */
-    if (r300->screen->caps.has_tcl) {
-        pipe->set_clip_state(pipe, &cs);
-    } else {
-        BEGIN_CB(clip->cb, 2);
-        OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
-        END_CB;
-    }
 
     /* Initialize the GPU flush. */
     {

@@ -151,11 +151,10 @@ boolean draw_init(struct draw_context *draw)
    ASSIGN_4V( draw->plane[3],  0,  1,  0, 1 );
    ASSIGN_4V( draw->plane[4],  0,  0,  1, 1 ); /* yes these are correct */
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
-   draw->nr_planes = 6;
    draw->clip_xy = TRUE;
    draw->clip_z = TRUE;
 
-
+   draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
 
@@ -247,8 +246,9 @@ static void update_clip_flags( struct draw_context *draw )
    draw->guard_band_xy = (!draw->driver.bypass_clip_xy &&
                           draw->driver.guard_band_xy);
    draw->clip_z = (!draw->driver.bypass_clip_z &&
-                   !draw->depth_clamp);
-   draw->clip_user = (draw->nr_planes > 6);
+                   draw->rasterizer && draw->rasterizer->depth_clip);
+   draw->clip_user = draw->rasterizer &&
+                     draw->rasterizer->clip_plane_enable != 0;
 }
 
 /**
@@ -264,8 +264,8 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 
       draw->rasterizer = raster;
       draw->rast_handle = rast_handle;
-
-  }
+      update_clip_flags(draw);
+   }
 }
 
 /* With a little more work, llvmpipe will be able to turn this off and
@@ -311,14 +311,7 @@ void draw_set_clip_state( struct draw_context *draw,
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   assert(clip->nr <= PIPE_MAX_CLIP_PLANES);
-   memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
-   draw->nr_planes = 6 + clip->nr;
-   draw->depth_clamp = clip->depth_clamp;
-
-   draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
-
-   update_clip_flags(draw);
+   memcpy(&draw->plane[6], clip->ucp, sizeof(clip->ucp));
 }
 
 

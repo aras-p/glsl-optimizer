@@ -104,9 +104,6 @@ struct blitter_context_priv
    /* Viewport state. */
    struct pipe_viewport_state viewport;
 
-   /* Clip state. */
-   struct pipe_clip_state clip;
-
    /* Destination surface dimensions. */
    unsigned dst_width;
    unsigned dst_height;
@@ -193,7 +190,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->dsa_write_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
-
    dsa.depth.enabled = 0;
    dsa.depth.writemask = 0;
    ctx->dsa_keep_depth_write_stencil =
@@ -212,6 +208,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    rs_state.cull_face = PIPE_FACE_NONE;
    rs_state.gl_rasterization_rules = 1;
    rs_state.flatshade = 1;
+   rs_state.depth_clip = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
 
    if (ctx->has_stream_out) {
@@ -439,7 +436,6 @@ static void blitter_restore_fragment_states(struct blitter_context_priv *ctx)
     * (depending on the operation) */
    pipe->set_stencil_ref(pipe, &ctx->base.saved_stencil_ref);
    pipe->set_viewport_state(pipe, &ctx->base.saved_viewport);
-   pipe->set_clip_state(pipe, &ctx->base.saved_clip);
 }
 
 static void blitter_check_saved_fb_state(struct blitter_context_priv *ctx)
@@ -516,9 +512,6 @@ static void blitter_set_rectangle(struct blitter_context_priv *ctx,
    ctx->viewport.translate[2] = 0.0f;
    ctx->viewport.translate[3] = 0.0f;
    ctx->base.pipe->set_viewport_state(ctx->base.pipe, &ctx->viewport);
-
-   /* clip */
-   ctx->base.pipe->set_clip_state(ctx->base.pipe, &ctx->clip);
 }
 
 static void blitter_set_clear_color(struct blitter_context_priv *ctx,

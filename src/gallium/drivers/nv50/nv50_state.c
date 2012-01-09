@@ -225,6 +225,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
 {
    struct nv50_rasterizer_stateobj *so;
+   uint32_t reg;
 
    so = CALLOC_STRUCT(nv50_rasterizer_stateobj);
    if (!so)
@@ -311,6 +312,22 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
       SB_BEGIN_3D(so, POLYGON_OFFSET_CLAMP, 1);
       SB_DATA    (so, fui(cso->offset_clamp));
    }
+
+   if (cso->depth_clip) {
+      reg = 0;
+   } else {
+      reg =
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
+   }
+#ifndef NV50_SCISSORS_CLIPPING
+   reg |=
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK7 |
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
+#endif
+   SB_BEGIN_3D(so, VIEW_VOLUME_CLIP_CTRL, 1);
+   SB_DATA    (so, reg);
 
    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return (void *)so;
@@ -763,12 +780,8 @@ nv50_set_clip_state(struct pipe_context *pipe,
                     const struct pipe_clip_state *clip)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   const unsigned size = clip->nr * sizeof(clip->ucp[0]);
 
-   memcpy(&nv50->clip.ucp[0][0], &clip->ucp[0][0], size);
-   nv50->clip.nr = clip->nr;
-
-   nv50->clip.depth_clamp = clip->depth_clamp;
+   memcpy(nv50->clip.ucp, clip->ucp, sizeof(clip->ucp));
 
    nv50->dirty |= NV50_NEW_CLIP;
 }

@@ -246,7 +246,7 @@ static int emit_rss( struct svga_context *svga,
 
    if (dirty & SVGA_NEW_CLIP) {
       /* the number of clip planes is how many planes to enable */
-      unsigned enabled = (1 << svga->curr.clip.nr) - 1;
+      unsigned enabled = svga->curr.rast->templ.clip_plane_enable;
       EMIT_RS( svga, enabled, CLIPPLANEENABLE, fail );
    }
 

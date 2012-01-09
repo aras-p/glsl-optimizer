@@ -278,8 +278,6 @@ struct draw_context
    /* Clip derived state:
     */
    float plane[DRAW_TOTAL_CLIP_PLANES][4];
-   unsigned nr_planes;
-   boolean depth_clamp;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */

@@ -171,8 +171,8 @@ struct draw_llvm_variant_key
    unsigned clip_halfz:1;
    unsigned bypass_viewport:1;
    unsigned need_edgeflags:1;
-   unsigned nr_planes:4;
-   unsigned pad:5;
+   unsigned ucp_enable:PIPE_MAX_CLIP_PLANES;
+   unsigned pad:9-PIPE_MAX_CLIP_PLANES;
 
    /* Variable number of vertex elements:
     */

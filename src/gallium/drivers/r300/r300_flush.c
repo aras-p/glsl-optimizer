@@ -59,6 +59,7 @@ static void r300_flush_and_cleanup(struct r300_context *r300, unsigned flags)
     if (!r300->screen->caps.has_tcl) {
         r300->vs_state.dirty = FALSE;
         r300->vs_constants.dirty = FALSE;
+        r300->clip_state.dirty = FALSE;
     }
 }
 

@@ -191,7 +191,8 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
 #define TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS 5
 #define TGSI_PROPERTY_FS_DEPTH_LAYOUT        6
-#define TGSI_PROPERTY_COUNT                  7
+#define TGSI_PROPERTY_VS_PROHIBIT_UCPS       7
+#define TGSI_PROPERTY_COUNT                  8
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */

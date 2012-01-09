@@ -75,7 +75,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	float blend_color[4];
 	unsigned sample_mask;
 	unsigned stencil_ref;
-	bool depth_clamp;
 
 	void* default_input_layout;
 	void* default_rasterizer;
@@ -169,7 +168,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		memset(blend_color, 0, sizeof(blend_color));
 		sample_mask = ~0;
 		stencil_ref = 0;
-		depth_clamp = 0;
 
 		// derived state
 		primitive_mode = 0;
@@ -194,6 +192,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		rasterizerd.flatshade_first = 1;
 		rasterizerd.line_width = 1.0f;
 		rasterizerd.point_size = 1.0f;
+		rasterizerd.depth_clip = TRUE;
 		default_rasterizer = pipe->create_rasterizer_state(pipe, &rasterizerd);
 
 		struct pipe_depth_stencil_alpha_state depth_stencild;
@@ -938,14 +937,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 	}
 #endif
 
-	void set_clip()
-	{
-		pipe_clip_state clip;
-		clip.nr = 0;
-		clip.depth_clamp = depth_clamp;
-		pipe->set_clip_state(pipe, &clip);
-	}
-
 	virtual void STDMETHODCALLTYPE RSSetState(
 		ID3D11RasterizerState *new_rasterizer_state)
 	{
@@ -954,12 +945,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		{
 			rasterizer_state = new_rasterizer_state;
 			pipe->bind_rasterizer_state(pipe, new_rasterizer_state ? ((GalliumD3D11RasterizerState*)new_rasterizer_state)->object : default_rasterizer);
-			bool new_depth_clamp = new_rasterizer_state ? ((GalliumD3D11RasterizerState*)new_rasterizer_state)->depth_clamp : false;
-			if(depth_clamp != new_depth_clamp)
-			{
-				depth_clamp = new_depth_clamp;
-				set_clip();
-			}
 		}
 	}
 
@@ -1688,7 +1673,6 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			pipe->set_stream_output_targets(pipe, num_so_targets, so_targets, ~0);
 		set_framebuffer();
 		set_viewport();
-		set_clip();
 		set_render_condition();
 
 		update_flags |= UPDATE_VERTEX_BUFFERS | (1 << (UPDATE_SAMPLERS_SHIFT + D3D11_STAGE_PS)) | (1 << (UPDATE_VIEWS_SHIFT + D3D11_STAGE_PS));

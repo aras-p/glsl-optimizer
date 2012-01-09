@@ -456,6 +456,7 @@ static void init( void )
       rasterizer.cull_face = PIPE_FACE_NONE;
       rasterizer.point_size = 8.0;
       rasterizer.gl_rasterization_rules = 1;
+      rasterizer.depth_clip = 1;
       handle = ctx->create_rasterizer_state(ctx, &rasterizer);
       ctx->bind_rasterizer_state(ctx, handle);
    }

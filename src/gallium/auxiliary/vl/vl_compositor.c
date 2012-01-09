@@ -305,6 +305,7 @@ init_pipe_state(struct vl_compositor *c)
    rast.offset_units = 1;
    rast.offset_scale = 1;
    rast.gl_rasterization_rules = 1;
+   rast.depth_clip = 1;
 
    c->rast = c->pipe->create_rasterizer_state(c->pipe, &rast);
 

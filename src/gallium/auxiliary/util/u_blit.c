@@ -62,7 +62,6 @@ struct blit_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
-   struct pipe_clip_state clip;
    struct pipe_vertex_element velem[2];
    enum pipe_texture_target internal_target;
 
@@ -109,6 +108,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.cull_face = PIPE_FACE_NONE;
    ctx->rasterizer.gl_rasterization_rules = 1;
+   ctx->rasterizer.depth_clip = 1;
 
    /* samplers */
    memset(&ctx->sampler, 0, sizeof(ctx->sampler));
@@ -535,7 +535,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
    cso_save_geometry_shader(ctx->cso);
-   cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
    cso_save_vertex_buffers(ctx->cso);
 
@@ -545,7 +544,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                dst_is_depth ? &ctx->depthstencil_write :
                                               &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
@@ -621,7 +619,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_geometry_shader(ctx->cso);
-   cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_vertex_buffers(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);
@@ -731,7 +728,6 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
    cso_save_geometry_shader(ctx->cso);
-   cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
    cso_save_vertex_buffers(ctx->cso);
 
@@ -739,7 +735,6 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
@@ -803,7 +798,6 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_geometry_shader(ctx->cso);
-   cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_vertex_buffers(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);

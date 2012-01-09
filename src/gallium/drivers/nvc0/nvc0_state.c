@@ -270,6 +270,18 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         SB_DATA    (so, fui(cso->offset_clamp));
     }
 
+    if (cso->depth_clip)
+       reg = NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1;
+    else
+       reg =
+          NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1 |
+          NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
+          NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
+          NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK2;
+
+    SB_BEGIN_3D(so, VIEW_VOLUME_CLIP_CTRL, 1);
+    SB_DATA    (so, reg);
+
     assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return (void *)so;
 }
@@ -647,12 +659,8 @@ nvc0_set_clip_state(struct pipe_context *pipe,
                     const struct pipe_clip_state *clip)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
-    const unsigned size = clip->nr * sizeof(clip->ucp[0]);
 
-    memcpy(&nvc0->clip.ucp[0][0], &clip->ucp[0][0], size);
-    nvc0->clip.nr = clip->nr;
-
-    nvc0->clip.depth_clamp = clip->depth_clamp;
+    memcpy(nvc0->clip.ucp, clip->ucp, sizeof(clip->ucp));
 
     nvc0->dirty |= NVC0_NEW_CLIP;
 }

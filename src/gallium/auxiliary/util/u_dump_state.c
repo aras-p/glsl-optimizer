@@ -303,6 +303,8 @@ util_dump_rasterizer_state(FILE *stream, const struct pipe_rasterizer_state *sta
 
    util_dump_member(stream, bool, state, flatshade);
    util_dump_member(stream, bool, state, light_twoside);
+   util_dump_member(stream, bool, state, clamp_vertex_color);
+   util_dump_member(stream, bool, state, clamp_fragment_color);
    util_dump_member(stream, uint, state, front_ccw);
    util_dump_member(stream, uint, state, cull_face);
    util_dump_member(stream, uint, state, fill_front);
@@ -326,6 +328,9 @@ util_dump_rasterizer_state(FILE *stream, const struct pipe_rasterizer_state *sta
    util_dump_member(stream, bool, state, line_last_pixel);
    util_dump_member(stream, bool, state, flatshade_first);
    util_dump_member(stream, bool, state, gl_rasterization_rules);
+   util_dump_member(stream, bool, state, rasterizer_discard);
+   util_dump_member(stream, bool, state, depth_clip);
+   util_dump_member(stream, uint, state, clip_plane_enable);
 
    util_dump_member(stream, float, state, line_width);
    util_dump_member(stream, float, state, point_size);
@@ -412,8 +417,6 @@ util_dump_clip_state(FILE *stream, const struct pipe_clip_state *state)
    }
    util_dump_array_end(stream);
    util_dump_member_end(stream);
-
-   util_dump_member(stream, uint, state, nr);
 
    util_dump_struct_end(stream);
 }
