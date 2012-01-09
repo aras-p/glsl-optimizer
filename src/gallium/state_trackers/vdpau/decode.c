@@ -316,6 +316,66 @@ vlVdpDecoderRenderVC1(struct pipe_vc1_picture_desc *picture,
    return VDP_STATUS_OK;
 }
 
+static VdpStatus
+vlVdpDecoderRenderH264(struct pipe_h264_picture_desc *picture,
+                       VdpPictureInfoH264 *picture_info)
+{
+   unsigned i;
+
+   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding H264\n");
+
+   picture->slice_count = picture_info->slice_count;
+   picture->field_order_cnt[0] = picture_info->field_order_cnt[0];
+   picture->field_order_cnt[1] = picture_info->field_order_cnt[1];
+   picture->is_reference = picture_info->is_reference;
+   picture->frame_num = picture_info->frame_num;
+   picture->field_pic_flag = picture_info->field_pic_flag;
+   picture->bottom_field_flag = picture_info->bottom_field_flag;
+   picture->num_ref_frames = picture_info->num_ref_frames;
+   picture->mb_adaptive_frame_field_flag = picture_info->mb_adaptive_frame_field_flag;
+   picture->constrained_intra_pred_flag = picture_info->constrained_intra_pred_flag;
+   picture->weighted_pred_flag = picture_info->weighted_pred_flag;
+   picture->weighted_bipred_idc = picture_info->weighted_bipred_idc;
+   picture->frame_mbs_only_flag = picture_info->frame_mbs_only_flag;
+   picture->transform_8x8_mode_flag = picture_info->transform_8x8_mode_flag;
+   picture->chroma_qp_index_offset = picture_info->chroma_qp_index_offset;
+   picture->second_chroma_qp_index_offset = picture_info->second_chroma_qp_index_offset;
+   picture->pic_init_qp_minus26 = picture_info->pic_init_qp_minus26;
+   picture->num_ref_idx_l0_active_minus1 = picture_info->num_ref_idx_l0_active_minus1;
+   picture->num_ref_idx_l1_active_minus1 = picture_info->num_ref_idx_l1_active_minus1;
+   picture->log2_max_frame_num_minus4 = picture_info->log2_max_frame_num_minus4;
+   picture->pic_order_cnt_type = picture_info->pic_order_cnt_type;
+   picture->log2_max_pic_order_cnt_lsb_minus4 = picture_info->log2_max_pic_order_cnt_lsb_minus4;
+   picture->delta_pic_order_always_zero_flag = picture_info->delta_pic_order_always_zero_flag;
+   picture->direct_8x8_inference_flag = picture_info->direct_8x8_inference_flag;
+   picture->entropy_coding_mode_flag = picture_info->entropy_coding_mode_flag;
+   picture->pic_order_present_flag = picture_info->pic_order_present_flag;
+   picture->deblocking_filter_control_present_flag = picture_info->deblocking_filter_control_present_flag;
+   picture->redundant_pic_cnt_present_flag = picture_info->redundant_pic_cnt_present_flag;
+
+   memcpy(picture->scaling_lists_4x4, picture_info->scaling_lists_4x4, 6*16);
+   memcpy(picture->scaling_lists_8x8, picture_info->scaling_lists_8x8, 2*64);
+
+   for (i = 0; i < 16; ++i) {
+      VdpStatus ret = vlVdpGetReferenceFrame
+      (
+         picture_info->referenceFrames[i].surface,
+         &picture->ref[i]
+      );
+      if (ret != VDP_STATUS_OK)
+         return ret;
+
+      picture->is_long_term[i] = picture_info->referenceFrames[i].is_long_term;
+      picture->top_is_reference[i] = picture_info->referenceFrames[i].top_is_reference;
+      picture->bottom_is_reference[i] = picture_info->referenceFrames[i].bottom_is_reference;
+      picture->field_order_cnt_list[i][0] = picture_info->referenceFrames[i].field_order_cnt[0];
+      picture->field_order_cnt_list[i][1] = picture_info->referenceFrames[i].field_order_cnt[1];
+      picture->frame_num_list[i] = picture_info->referenceFrames[i].frame_idx;
+   }
+
+   return VDP_STATUS_OK;
+}
+
 /**
  * Decode a compressed field/frame and render the result into a VdpVideoSurface.
  */
@@ -338,6 +398,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
       struct pipe_mpeg12_picture_desc mpeg12;
       struct pipe_mpeg4_picture_desc mpeg4;
       struct pipe_vc1_picture_desc vc1;
+      struct pipe_h264_picture_desc h264;
    } desc;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Decoding\n");
@@ -372,6 +433,9 @@ vlVdpDecoderRender(VdpDecoder decoder,
       break;
    case PIPE_VIDEO_CODEC_VC1:
       ret = vlVdpDecoderRenderVC1(&desc.vc1, (VdpPictureInfoVC1 *)picture_info);
+      break;
+   case PIPE_VIDEO_CODEC_MPEG4_AVC:
+      ret = vlVdpDecoderRenderH264(&desc.h264, (VdpPictureInfoH264 *)picture_info);
       break;
    default:
       return VDP_STATUS_INVALID_DECODER_PROFILE;
