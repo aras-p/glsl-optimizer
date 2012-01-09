@@ -2683,10 +2683,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if ((readRb == NULL) || (drawRb == NULL)) {
 	 mask &= ~GL_STENCIL_BUFFER_BIT;
       }
-      else if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
-	       _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
+      else if (readRb->Format != drawRb->Format) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(stencil buffer size mismatch)");
+                     "glBlitFramebufferEXT(stencil buffer format mismatch)");
          return;
       }
    }
@@ -2706,10 +2705,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if ((readRb == NULL) || (drawRb == NULL)) {
 	 mask &= ~GL_DEPTH_BUFFER_BIT;
       }
-      else if (_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
-	       _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
+      else if (readRb->Format != drawRb->Format) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(depth buffer size mismatch)");
+                     "glBlitFramebufferEXT(depth buffer format mismatch)");
          return;
       }
    }
