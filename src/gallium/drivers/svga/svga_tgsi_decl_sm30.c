@@ -528,14 +528,7 @@ svga_translate_decl_sm30( struct svga_shader_emitter *emit,
 {
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
-   unsigned semantic = 0;
-   unsigned semantic_idx = 0;
    unsigned idx;
-
-   if (decl->Declaration.Semantic) {
-      semantic = decl->Semantic.Name;
-      semantic_idx = decl->Semantic.Index;
-   }
 
    for( idx = first; idx <= last; idx++ ) {
       boolean ok;
