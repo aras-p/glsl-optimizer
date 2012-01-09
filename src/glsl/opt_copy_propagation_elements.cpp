@@ -461,7 +461,20 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
 	 swizzle[i] = orig_swizzle[j++];
    }
 
-   entry = new(this->mem_ctx) acp_entry(lhs->var, rhs->var, ir->write_mask,
+   int write_mask = ir->write_mask;
+   if (lhs->var == rhs->var) {
+      /* If this is a copy from the variable to itself, then we need
+       * to be sure not to include the updated channels from this
+       * instruction in the set of new source channels to be
+       * copy-propagated from.
+       */
+      for (int i = 0; i < 4; i++) {
+	 if (ir->write_mask & (1 << orig_swizzle[i]))
+	    write_mask &= ~(1 << i);
+      }
+   }
+
+   entry = new(this->mem_ctx) acp_entry(lhs->var, rhs->var, write_mask,
 					swizzle);
    this->acp->push_tail(entry);
 }
