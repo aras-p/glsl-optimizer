@@ -851,7 +851,6 @@ _mesa_source_buffer_exists(struct gl_context *ctx, GLenum format)
 
 /**
  * As above, but for drawing operations.
- * XXX could do some code merging w/ above function.
  */
 GLboolean
 _mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format)
