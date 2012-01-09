@@ -178,11 +178,12 @@ brwCreateContext(int api,
 	   ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
-   /* minimum maximum.  Users are likely to run into memory problems
-    * even at this size, since 64 * 2048 * 2048 * 4 = 1GB and we can't
-    * address that much.
-    */
-   ctx->Const.MaxArrayTextureLayers = 64;
+
+   if (intel->gen >= 7)
+      ctx->Const.MaxArrayTextureLayers = 2048;
+   else
+      ctx->Const.MaxArrayTextureLayers = 512;
+
    ctx->Const.MaxTextureRectSize = (1<<12);
    
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
