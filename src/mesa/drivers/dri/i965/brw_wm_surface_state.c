@@ -698,10 +698,10 @@ brw_create_constant_surface(struct brw_context *brw,
 
    surf[1] = bo->offset; /* reloc */
 
-   surf[2] = (((w & 0x7f) - 1) << BRW_SURFACE_WIDTH_SHIFT |
-	      (((w >> 7) & 0x1fff) - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+   surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
+	      ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf[3] = ((((w >> 20) & 0x7f) - 1) << BRW_SURFACE_DEPTH_SHIFT |
+   surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
 	      (width * 16 - 1) << BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = 0;
