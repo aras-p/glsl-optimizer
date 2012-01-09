@@ -887,7 +887,6 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
    struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    GLboolean retval = (GLboolean) 0;
-   const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
 #ifdef USE_XCB
       xcb_connection_t *c = XGetXCBConnection(dpy);
@@ -903,6 +902,7 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
       retval = reply->ret_val;
       free(reply);
 #else
+      const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
       GLubyte const *pc =
          __glXSetupSingleRequest(gc, X_GLsop_AreTexturesResident, cmdlen);
       (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
