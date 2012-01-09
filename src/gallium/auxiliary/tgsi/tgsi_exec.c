@@ -2371,6 +2371,10 @@ exec_declaration(struct tgsi_exec_machine *mach,
                eval = eval_perspective_coef;
                break;
 
+            case TGSI_INTERPOLATE_COLOR:
+               eval = mach->flatshade_color ? eval_constant_coef : eval_perspective_coef;
+               break;
+
             default:
                assert(0);
                return;

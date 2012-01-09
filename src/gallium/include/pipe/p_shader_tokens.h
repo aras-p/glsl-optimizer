@@ -100,7 +100,8 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_CONSTANT      0
 #define TGSI_INTERPOLATE_LINEAR        1
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
-#define TGSI_INTERPOLATE_COUNT         3
+#define TGSI_INTERPOLATE_COLOR         3 /* special color case for smooth/flat */
+#define TGSI_INTERPOLATE_COUNT         4
 
 #define TGSI_CYLINDRICAL_WRAP_X (1 << 0)
 #define TGSI_CYLINDRICAL_WRAP_Y (1 << 1)

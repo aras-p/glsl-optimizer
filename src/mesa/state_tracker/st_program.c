@@ -441,7 +441,7 @@ st_translate_interp(enum glsl_interp_qualifier glsl_qual, bool is_color)
    switch (glsl_qual) {
    case INTERP_QUALIFIER_NONE:
       if (is_color)
-         return TGSI_INTERPOLATE_LINEAR;
+         return TGSI_INTERPOLATE_COLOR;
       return TGSI_INTERPOLATE_PERSPECTIVE;
    case INTERP_QUALIFIER_SMOOTH:
       return TGSI_INTERPOLATE_PERSPECTIVE;

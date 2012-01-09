@@ -117,7 +117,8 @@ const char *tgsi_interpolate_names[TGSI_INTERPOLATE_COUNT] =
 {
    "CONSTANT",
    "LINEAR",
-   "PERSPECTIVE"
+   "PERSPECTIVE",
+   "COLOR"
 };
 
 const char *tgsi_primitive_names[PIPE_PRIM_MAX] =
