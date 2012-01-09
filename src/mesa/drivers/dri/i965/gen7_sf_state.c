@@ -111,8 +111,8 @@ upload_sbe_state(struct brw_context *brw)
                            ctx->VertexProgram._TwoSideEnabled);
    }
 
-   for (; attr < FRAG_ATTRIB_MAX; attr++)
-      attr_overrides[input_index++] = 0;
+   for (; input_index < FRAG_ATTRIB_MAX; input_index++)
+      attr_overrides[input_index] = 0;
 
    BEGIN_BATCH(14);
    OUT_BATCH(_3DSTATE_SBE << 16 | (14 - 2));
