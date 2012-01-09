@@ -318,8 +318,6 @@ ps30_output(struct svga_shader_emitter *emit,
             struct tgsi_declaration_semantic semantic,
             unsigned idx)
 {
-   SVGA3dShaderDestToken reg;
-
    switch (semantic.Name) {
    case TGSI_SEMANTIC_COLOR:
       if (emit->unit == PIPE_SHADER_FRAGMENT &&
@@ -345,7 +343,8 @@ ps30_output(struct svga_shader_emitter *emit,
       break;
    default:
       assert(0);
-      reg = dst_register( SVGA3DREG_COLOROUT, 0 );
+      /* A wild stab in the dark. */
+      emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 0 );
       break;
    }
 
