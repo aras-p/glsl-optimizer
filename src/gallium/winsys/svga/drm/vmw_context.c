@@ -300,6 +300,7 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
    ret = pb_validate_add_buffer(vswc->validate, reloc->buffer, translated_flags);
    /* TODO: Update pipebuffer to reserve buffers and not fail here */
    assert(ret == PIPE_OK);
+   (void)ret;
 
    /*
     * Flush preemptively the FIFO commands to keep the GMR working set within
