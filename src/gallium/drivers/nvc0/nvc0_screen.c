@@ -466,6 +466,12 @@ nvc0_screen_create(struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(COND_MODE), 1);
    OUT_RING  (chan, NVC0_3D_COND_MODE_ALWAYS);
 
+   if (debug_get_bool_option("NOUVEAU_SHADER_WATCHDOG", TRUE)) {
+      /* kill shaders after about 1 second (at 100 MHz) */
+      BEGIN_RING(chan, RING_3D(WATCHDOG_TIMER), 1);
+      OUT_RING  (chan, 0x17);
+   }
+
    BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
    OUT_RING  (chan, 1);
 
