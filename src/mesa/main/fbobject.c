@@ -2716,7 +2716,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
        drawFb->Visual.samples > 0 &&
        readFb->Visual.samples != drawFb->Visual.samples) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBlitFramebufferEXT(mismatched samples");
+                  "glBlitFramebufferEXT(mismatched samples)");
       return;
    }
 
