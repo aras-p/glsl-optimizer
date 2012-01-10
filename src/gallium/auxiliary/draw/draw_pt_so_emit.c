@@ -259,13 +259,11 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
 {
    struct draw_context *draw = emit->draw;
    struct vbuf_render *render = draw->render;
-   struct pipe_stream_output_info *so;
    unsigned start, i;
 
    if (!emit->has_so)
       return;
 
-   so = &draw->vs.vertex_shader->state.stream_output;
    emit->emitted_vertices = 0;
    emit->emitted_primitives = 0;
    emit->generated_primitives = 0;
