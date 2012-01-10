@@ -428,6 +428,8 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 void
 nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf)
 {
+	assert (0);
+
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
 	struct pipe_resource template;
 	memset(&template, 0, sizeof(struct pipe_resource));

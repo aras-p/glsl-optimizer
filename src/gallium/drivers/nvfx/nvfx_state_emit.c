@@ -199,7 +199,6 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned dirty;
 	unsigned still_dirty = 0;
-	int new_fb_mode = -1; /* 1 = all swizzled, 0 = make all linear */
 	boolean flush_tex_cache = FALSE;
 	unsigned render_temps;
 
@@ -213,29 +212,12 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		nvfx->relocs_needed = NVFX_RELOCATE_ALL;
 	}
 
-	/* These can trigger use the of 3D engine to copy temporaries.
-	 * That will recurse here and thus dirty all 3D state, so we need to this before anything else, and in a loop..
-	 * This converges to having clean temps, then binding both fragtexes and framebuffers.
-	 */
-	while(nvfx->dirty & (NVFX_NEW_FB | NVFX_NEW_SAMPLER))
-	{
-		if(nvfx->dirty & NVFX_NEW_SAMPLER)
-		{
-			nvfx->dirty &=~ NVFX_NEW_SAMPLER;
-			nvfx_fragtex_validate(nvfx);
+	if(nvfx->dirty & NVFX_NEW_SAMPLER) {
+		nvfx->dirty &=~ NVFX_NEW_SAMPLER;
+		nvfx_fragtex_validate(nvfx);
 
-			// TODO: only set this if really necessary
-			flush_tex_cache = TRUE;
-		}
-
-		if(nvfx->dirty & NVFX_NEW_FB)
-		{
-			nvfx->dirty &=~ NVFX_NEW_FB;
-			new_fb_mode = nvfx_framebuffer_prepare(nvfx);
-
-			// TODO: make sure this doesn't happen, i.e. fbs have matching formats
-			assert(new_fb_mode >= 0);
-		}
+		// TODO: only set this if really necessary
+		flush_tex_cache = TRUE;
 	}
 
 	dirty = nvfx->dirty;
@@ -305,8 +287,8 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		}
 	}
 
-	if(new_fb_mode >= 0)
-		nvfx_framebuffer_validate(nvfx, new_fb_mode);
+	if(dirty & NVFX_NEW_FB)
+		nvfx_framebuffer_validate(nvfx);
 
 	if(dirty & NVFX_NEW_BLEND)
 		sb_emit(chan, nvfx->blend->sb, nvfx->blend->sb_len);
@@ -324,19 +306,19 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
    etracer, neverball, foobillard, glest totally misrender
    TODO: find the right fix
 */
-	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA) || (new_fb_mode >= 0))
+	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA))
 	{
 		nvfx_state_viewport_validate(nvfx);
 	}
 
-	if(dirty & NVFX_NEW_ZSA || (new_fb_mode >= 0))
+	if(dirty & (NVFX_NEW_ZSA | NVFX_NEW_FB))
 	{
 		BEGIN_RING(chan, eng3d, NV30_3D_DEPTH_WRITE_ENABLE, 2);
 		OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.writemask);
-	        OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
+	    OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
 	}
 
-	if((new_fb_mode >= 0) || (dirty & NVFX_NEW_FRAGPROG))
+	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FB))
 		nvfx_coord_conventions_validate(nvfx);
 
 	if(flush_tex_cache)
@@ -352,25 +334,6 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	}
 
 	nvfx->dirty = dirty & still_dirty;
-
-	render_temps = nvfx->state.render_temps;
-	if(render_temps)
-	{
-		for(int i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)
-		{
-			if(render_temps & (1 << i)) {
-				assert(((struct nvfx_surface*)nvfx->framebuffer.cbufs[i])->temp);
-				util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.cbufs[i]),
-						(struct util_dirty_surface*)nvfx->framebuffer.cbufs[i]);
-			}
-		}
-
-		if(render_temps & 0x80) {
-			assert(((struct nvfx_surface*)nvfx->framebuffer.zsbuf)->temp);
-			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.zsbuf),
-					(struct util_dirty_surface*)nvfx->framebuffer.zsbuf);
-		}
-	}
 
 	return TRUE;
 }

@@ -247,7 +247,7 @@ extern void nvfx_vtxfmt_validate(struct nvfx_context *nvfx);
 
 /* nvfx_fb.c */
 extern int nvfx_framebuffer_prepare(struct nvfx_context *nvfx);
-extern void nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result);
+extern void nvfx_framebuffer_validate(struct nvfx_context *nvfx);
 void
 nvfx_framebuffer_relocate(struct nvfx_context *nvfx);
 

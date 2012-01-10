@@ -3,96 +3,25 @@
 #include "util/u_format.h"
 
 static inline boolean
-nvfx_surface_linear_renderable(struct pipe_surface* surf)
+nvfx_surface_linear_target(struct pipe_surface* surf)
 {
-	/* TODO: precompute this in nvfx_surface creation */
-	return (surf->texture->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
-		&& !(((struct nvfx_surface*)surf)->offset & 63)
-		&& !(((struct nvfx_surface*)surf)->pitch & 63);
+	return !!((struct nvfx_miptree*)surf->texture)->linear_pitch;
 }
 
-static inline boolean
-nvfx_surface_swizzled_renderable(struct pipe_framebuffer_state* fb, struct pipe_surface* surf)
-{
-	/* TODO: precompute this in nvfx_surface creation */
-	return !((struct nvfx_miptree*)surf->texture)->linear_pitch
-		&& (surf->texture->target != PIPE_TEXTURE_3D || u_minify(surf->texture->depth0, surf->u.tex.level) <= 1)
-		&& !(((struct nvfx_surface*)surf)->offset & 127)
-		&& (surf->width == fb->width)
-		&& (surf->height == fb->height)
-		&& !((struct nvfx_surface*)surf)->temp
-		&& (surf->format == PIPE_FORMAT_B8G8R8A8_UNORM || surf->format == PIPE_FORMAT_B8G8R8X8_UNORM || surf->format == PIPE_FORMAT_B5G6R5_UNORM);
-}
-
-static boolean
-nvfx_surface_get_render_target(struct pipe_surface* surf, int all_swizzled, struct nvfx_render_target* target)
+static void
+nvfx_surface_get_render_target(struct pipe_surface* surf,
+                               struct nvfx_render_target* target)
 {
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
-	if(!ns->temp)
-	{
-		target->bo = ((struct nvfx_miptree*)surf->texture)->base.bo;
-		target->offset = ns->offset;
-		target->pitch = align(ns->pitch, 64);
-		assert(target->pitch);
-		return FALSE;
-	}
-	else
-	{
-		target->offset = 0;
-		target->pitch = ns->temp->linear_pitch;
-		target->bo = ns->temp->base.bo;
-		assert(target->pitch);
-		return TRUE;
-	}
-}
 
-int
-nvfx_framebuffer_prepare(struct nvfx_context *nvfx)
-{
-	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
-	int i, color_format = 0, zeta_format = 0;
-	int all_swizzled = 1;
-
-	if(!nvfx->is_nv4x)
-		assert(fb->nr_cbufs <= 1);
-	else
-		assert(fb->nr_cbufs <= 4);
-
-	for (i = 0; i < fb->nr_cbufs; i++) {
-		if (color_format) {
-			if(color_format != fb->cbufs[i]->format)
-				return -1;
-		} else
-			color_format = fb->cbufs[i]->format;
-
-		if(!nvfx_surface_swizzled_renderable(fb, fb->cbufs[i]))
-			all_swizzled = 0;
-	}
-
-	if (fb->zsbuf) {
-		/* TODO: return FALSE if we have a format not supporting a depth buffer (e.g. r8); currently those are not supported at all */
-		if(!nvfx_surface_swizzled_renderable(fb, fb->zsbuf))
-			all_swizzled = 0;
-
-		if(all_swizzled && util_format_get_blocksize(color_format) != util_format_get_blocksize(zeta_format))
-			all_swizzled = 0;
-	}
-
-	for (i = 0; i < fb->nr_cbufs; i++) {
-		if(!((struct nvfx_surface*)fb->cbufs[i])->temp && !all_swizzled && !nvfx_surface_linear_renderable(fb->cbufs[i]))
-			nvfx_surface_create_temp(&nvfx->pipe, fb->cbufs[i]);
-	}
-
-	if(fb->zsbuf) {
-		if(!((struct nvfx_surface*)fb->zsbuf)->temp && !all_swizzled && !nvfx_surface_linear_renderable(fb->zsbuf))
-			nvfx_surface_create_temp(&nvfx->pipe, fb->zsbuf);
-	}
-
-	return all_swizzled;
+	target->bo = ((struct nvfx_miptree*)surf->texture)->base.bo;
+	target->offset = ns->offset;
+	target->pitch = align(ns->pitch, 64);
+	assert(target->pitch);
 }
 
 void
-nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
+nvfx_framebuffer_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
@@ -102,37 +31,69 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;
+	int all_swizzled =1 , cb_format = 0;
+
+	/* do some sanity checks on the render target state and check if the targets
+	 * are swizzled
+	 */
+	nvfx->is_nv4x ? assert(fb->nr_cbufs <= 4) : assert(fb->nr_cbufs <= 1);
+	if(fb->nr_cbufs && fb->zsbuf)
+		assert(util_format_get_blocksize(fb->cbufs[0]->format) ==
+			   util_format_get_blocksize(fb->zsbuf->format));
+
+	for(i = 0; i < fb->nr_cbufs; i++) {
+		if(cb_format)
+			assert(cb_format == fb->cbufs[i]->format);
+		else
+			cb_format = fb->cbufs[i]->format;
+
+		if(nvfx_surface_linear_target(fb->cbufs[i]))
+			all_swizzled = 0;
+	}
+
+	if(fb->zsbuf && nvfx_surface_linear_target(fb->zsbuf))
+		all_swizzled = 0;
 
 	rt_enable = (NV30_3D_RT_ENABLE_COLOR0 << fb->nr_cbufs) - 1;
-	if (rt_enable & (NV30_3D_RT_ENABLE_COLOR1 |
-			 NV40_3D_RT_ENABLE_COLOR2 | NV40_3D_RT_ENABLE_COLOR3))
+	if(rt_enable & (NV30_3D_RT_ENABLE_COLOR1 |
+                    NV40_3D_RT_ENABLE_COLOR2 | NV40_3D_RT_ENABLE_COLOR3))
 		rt_enable |= NV30_3D_RT_ENABLE_MRT;
 
-	nvfx->state.render_temps = 0;
-
-	for (i = 0; i < fb->nr_cbufs; i++)
-		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->cbufs[i], prepare_result, &nvfx->hw_rt[i]) << i;
+	for(i = 0; i < fb->nr_cbufs; i++)
+		nvfx_surface_get_render_target(fb->cbufs[i], &nvfx->hw_rt[i]);
 
 	for(; i < 4; ++i)
 		nvfx->hw_rt[i].bo = NULL;
 
 	nvfx->hw_zeta.bo = NULL;
 
-	if (fb->zsbuf) {
-		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->zsbuf, prepare_result, &nvfx->hw_zeta) << 7;
-
-		assert(util_format_get_stride(fb->zsbuf->format, fb->width) <= nvfx->hw_zeta.pitch);
-		assert(nvfx->hw_zeta.offset + nvfx->hw_zeta.pitch * fb->height <= nvfx->hw_zeta.bo->size);
+	if(fb->zsbuf) {
+		nvfx_surface_get_render_target(fb->zsbuf, &nvfx->hw_zeta);
+		assert(util_format_get_stride(fb->zsbuf->format, fb->width) <=
+			   nvfx->hw_zeta.pitch);
 	}
 
-	if (prepare_result) {
-		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
+	if(all_swizzled) {
+		/* hardware rounds down render target offset to 64 bytes,
+		 * but surfaces with a size of 2x2 pixel (16bpp) or 1x1 pixel (32bpp)
+		 * have an unaligned start address, for those two important square
+		 * formats we can hack around this limitation by adjusting the viewport
+		 */
+		if(nvfx->hw_rt[0].offset & 63) {
+			int delta = nvfx->hw_rt[0].offset & 63;
+			h = 2;
+			w = 16;
+			nvfx->viewport.translate[0] += delta /
+						(util_format_get_blocksize(fb->cbufs[0]->format) * 2);
+			nvfx->dirty |= NVFX_NEW_VIEWPORT;
+		}
 
 		rt_format = NV30_3D_RT_FORMAT_TYPE_SWIZZLED |
-			(util_logbase2(fb->width) << NV30_3D_RT_FORMAT_LOG2_WIDTH__SHIFT) |
-			(util_logbase2(fb->height) << NV30_3D_RT_FORMAT_LOG2_HEIGHT__SHIFT);
-	} else
+			(util_logbase2(w) << NV30_3D_RT_FORMAT_LOG2_WIDTH__SHIFT) |
+			(util_logbase2(h) << NV30_3D_RT_FORMAT_LOG2_HEIGHT__SHIFT);
+	} else {
 		rt_format = NV30_3D_RT_FORMAT_TYPE_LINEAR;
+	}
 
 	if(fb->nr_cbufs > 0) {
 		switch (fb->cbufs[0]->format) {
