@@ -50,6 +50,18 @@ const enum pipe_format const_resource_formats_NV12[3] = {
    PIPE_FORMAT_NONE
 };
 
+const unsigned const_resource_plane_order_YUV[3] = {
+   0,
+   1,
+   2
+};
+
+const unsigned const_resource_plane_order_YVU[3] = {
+   0,
+   2,
+   1
+};
+
 const enum pipe_format *
 vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
 {
@@ -59,6 +71,21 @@ vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
 
    case PIPE_FORMAT_NV12:
       return const_resource_formats_NV12;
+
+   default:
+      return NULL;
+   }
+}
+
+const unsigned *
+vl_video_buffer_plane_order(enum pipe_format format)
+{
+    switch(format) {
+   case PIPE_FORMAT_YV12:
+      return const_resource_plane_order_YVU;
+
+   case PIPE_FORMAT_NV12:
+      return const_resource_plane_order_YUV;
 
    default:
       return NULL;
@@ -215,24 +242,28 @@ vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_sampler_view sv_templ;
    struct pipe_context *pipe;
+   const unsigned *plane_order;
    unsigned i, j, component;
 
    assert(buf);
 
    pipe = buf->base.context;
 
+   plane_order = vl_video_buffer_plane_order(buf->base.buffer_format);
+
    for (component = 0, i = 0; i < buf->num_planes; ++i ) {
-      unsigned nr_components = util_format_get_nr_components(buf->resources[i]->format);
+      struct pipe_resource *res = buf->resources[plane_order[i]];
+      unsigned nr_components = util_format_get_nr_components(res->format);
 
       for (j = 0; j < nr_components; ++j, ++component) {
          assert(component < VL_MAX_PLANES);
 
          if (!buf->sampler_view_components[component]) {
             memset(&sv_templ, 0, sizeof(sv_templ));
-            u_sampler_view_default_template(&sv_templ, buf->resources[i], buf->resources[i]->format);
+            u_sampler_view_default_template(&sv_templ, res, res->format);
             sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
             sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
-            buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, buf->resources[i], &sv_templ);
+            buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, res, &sv_templ);
             if (!buf->sampler_view_components[component])
                goto error;
          }

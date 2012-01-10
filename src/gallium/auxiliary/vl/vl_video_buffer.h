@@ -55,6 +55,12 @@ const enum pipe_format *
 vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format);
 
 /**
+ * get YUV plane order
+ */
+const unsigned *
+vl_video_buffer_plane_order(enum pipe_format format);
+
+/**
  * get maximum size of video buffers
  */
 unsigned
