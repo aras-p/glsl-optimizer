@@ -74,7 +74,12 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
 
    p_surf->device = dev;
    memset(&tmpl, 0, sizeof(tmpl));
-   tmpl.buffer_format = PIPE_FORMAT_YV12;
+   tmpl.buffer_format = dev->context->pipe->screen->get_video_param
+   (
+      dev->context->pipe->screen,
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_CAP_PREFERED_FORMAT
+   );
    tmpl.chroma_format = ChromaToPipe(chroma_type);
    tmpl.width = width;
    tmpl.height = height;

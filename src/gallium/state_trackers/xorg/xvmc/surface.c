@@ -175,7 +175,12 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
 
    memset(&tmpl, 0, sizeof(tmpl));
-   tmpl.buffer_format = PIPE_FORMAT_NV12;
+   tmpl.buffer_format = pipe->screen->get_video_param
+   (
+      pipe->screen,
+      PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+      PIPE_VIDEO_CAP_PREFERED_FORMAT
+   );
    tmpl.chroma_format = context_priv->decoder->chroma_format;
    tmpl.width = context_priv->decoder->width;
    tmpl.height = context_priv->decoder->height;
