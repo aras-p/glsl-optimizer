@@ -205,6 +205,14 @@ wayland_buffer_is_drm(struct wl_buffer *buffer)
 		(void (**)(void)) &drm_buffer_interface;
 }
 
+uint32_t
+wayland_drm_buffer_get_format(struct wl_buffer *buffer_base)
+{
+	struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) buffer_base;
+
+	return buffer->format;
+}
+
 void *
 wayland_drm_buffer_get_buffer(struct wl_buffer *buffer_base)
 {
