@@ -36,7 +36,7 @@
 
 #define EXPAND_2_8(X)  ( ((X) << 6) | ((X) << 4) | ((X) << 2) | (X) )
 
-#define EXPAND_3_8(X)  ( ((X) << 5) | ((X) << 2) | ((X) > 1) )
+#define EXPAND_3_8(X)  ( ((X) << 5) | ((X) << 2) | ((X) >> 1) )
 
 #define EXPAND_4_8(X)  ( ((X) << 4) | (X) )
 
