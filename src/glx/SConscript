@@ -24,6 +24,7 @@ env.Prepend(LIBS = [
 ])
 
 env.PkgUseModules('X11')
+env.PkgUseModules('XCB')
 env.PkgUseModules('DRM')
 
 if env['HAVE_XF86VIDMODE']:
@@ -35,8 +36,10 @@ if False: # XXX: SHARED_GLAPI
 
 sources = [
     'clientattrib.c',
+    'create_context.c',
     'compsize.c',
     'eval.c',
+    'glx_error.c',
     'glxconfig.c',
     'glxcmds.c',
     'glxcurrent.c',
