@@ -2010,6 +2010,29 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
       var->interpolation = INTERP_QUALIFIER_NONE;
 
+   if (var->interpolation != INTERP_QUALIFIER_NONE &&
+       !(state->target == vertex_shader && var->mode == ir_var_out) &&
+       !(state->target == fragment_shader && var->mode == ir_var_in)) {
+      const char *qual_string = NULL;
+      switch (var->interpolation) {
+      case INTERP_QUALIFIER_FLAT:
+	 qual_string = "flat";
+	 break;
+      case INTERP_QUALIFIER_NOPERSPECTIVE:
+	 qual_string = "noperspective";
+	 break;
+      case INTERP_QUALIFIER_SMOOTH:
+	 qual_string = "smooth";
+	 break;
+      }
+
+      _mesa_glsl_error(loc, state,
+		       "interpolation qualifier `%s' can only be applied to "
+		       "vertex shader outputs and fragment shader inputs.",
+		       qual_string);
+
+   }
+
    var->pixel_center_integer = qual->flags.q.pixel_center_integer;
    var->origin_upper_left = qual->flags.q.origin_upper_left;
    if ((qual->flags.q.origin_upper_left || qual->flags.q.pixel_center_integer)
