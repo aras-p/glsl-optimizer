@@ -90,31 +90,20 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 	rgn->y = y;
 	rgn->z = 0;
 
-	if(surf->temp)
-	{
-		rgn->bo = surf->temp->base.bo;
-		rgn->offset = 0;
-		rgn->pitch = surf->temp->linear_pitch;
+	rgn->bo = ((struct nvfx_resource*)surf->base.texture)->bo;
+	rgn->offset = surf->offset;
 
-		if(for_write)
-			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(&surf->base.base), &surf->base);
-	} else {
-		rgn->bo = ((struct nvfx_resource*)surf->base.base.texture)->bo;
-		rgn->offset = surf->offset;
-
-		if(surf->base.base.texture->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
-			rgn->pitch = surf->pitch;
-	        else
-	        {
-		        rgn->pitch = 0;
-		        rgn->z = surf->base.base.u.tex.first_layer;
-		        rgn->w = surf->base.base.width;
-		        rgn->h = surf->base.base.height;
-		        rgn->d = u_minify(surf->base.base.texture->depth0, surf->base.base.u.tex.level);
-	        }
+	if(surf->base.texture->flags & NOUVEAU_RESOURCE_FLAG_LINEAR)
+		rgn->pitch = surf->pitch;
+	else {
+		rgn->pitch = 0;
+		rgn->z = surf->base.u.tex.first_layer;
+		rgn->w = surf->base.width;
+		rgn->h = surf->base.height;
+		rgn->d = u_minify(surf->base.texture->depth0, surf->base.u.tex.level);
 	}
 
-	nvfx_region_set_format(rgn, surf->base.base.format);
+	nvfx_region_set_format(rgn, surf->base.format);
 	if(!rgn->pitch)
 		nv04_region_try_to_linearize(rgn);
 }
@@ -125,7 +114,7 @@ nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* 
 	if(pt->target != PIPE_BUFFER)
 	{
 		struct nvfx_surface* ns = (struct nvfx_surface*)util_surfaces_peek(&((struct nvfx_miptree*)pt)->surfaces, pt, level, z);
-		if(ns && util_dirty_surface_is_dirty(&ns->base))
+		if(ns)
 		{
 			nvfx_region_init_for_surface(rgn, ns, x, y, for_write);
 			return;
@@ -373,107 +362,6 @@ nvfx_screen_surface_init(struct pipe_screen *pscreen)
 		return -1;
 	nvfx_screen(pscreen)->eng2d = ctx;
 	return 0;
-}
-
-static void
-nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int to_temp)
-{
-	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
-	struct pipe_box box;
-	struct nvfx_context* nvfx = nvfx_context(pipe);
-	struct nvfx_miptree* temp;
-	unsigned use_vertex_buffers;
-	boolean use_index_buffer;
-	unsigned base_vertex;
-
-	/* temporarily detach the temp, so it isn't used in place of the actual resource */
-	temp = ns->temp;
-	ns->temp = 0;
-
-	// TODO: we really should do this validation before setting these variable in draw calls
-	use_vertex_buffers = nvfx->use_vertex_buffers;
-	use_index_buffer = nvfx->use_index_buffer;
-	base_vertex = nvfx->base_vertex;
-
-	box.x = box.y = 0;
-	assert(surf->u.tex.first_layer == surf->u.tex.last_layer);
-	box.width = surf->width;
-	box.height = surf->height;
-	box.depth = 1;
-
-	if(to_temp) {
-	        box.z = surf->u.tex.first_layer;
-		nvfx_resource_copy_region(pipe, &temp->base.base, 0, 0, 0, 0, surf->texture, surf->u.tex.level, &box);
-	}
-	else {
-		box.z = 0;
-		nvfx_resource_copy_region(pipe, surf->texture, surf->u.tex.level, 0, 0, surf->u.tex.first_layer, &temp->base.base, 0, &box);
-	}
-
-	/* If this triggers, it probably means we attempted to use the blitter
-	 * but failed due to non-renderability of the target.
-	 * Obviously, this would lead to infinite recursion if supported. */
-	assert(!ns->temp);
-
-	ns->temp = temp;
-
-	nvfx->use_vertex_buffers = use_vertex_buffers;
-	nvfx->use_index_buffer = use_index_buffer;
-        nvfx->base_vertex = base_vertex;
-
-	nvfx->dirty |= NVFX_NEW_ARRAYS;
-	nvfx->draw_dirty |= NVFX_NEW_ARRAYS;
-}
-
-void
-nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf)
-{
-	assert (0);
-
-	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
-	struct pipe_resource template;
-	memset(&template, 0, sizeof(struct pipe_resource));
-	template.target = PIPE_TEXTURE_2D;
-	template.format = surf->format;
-	template.width0 = surf->width;
-	template.height0 = surf->height;
-	template.depth0 = 1;
-	template.nr_samples = surf->texture->nr_samples;
-	template.flags = NOUVEAU_RESOURCE_FLAG_LINEAR;
-
-	assert(!ns->temp && !util_dirty_surface_is_dirty(&ns->base));
-
-	ns->temp = (struct nvfx_miptree*)nvfx_miptree_create(pipe->screen, &template);
-	nvfx_surface_copy_temp(pipe, surf, 1);
-}
-
-void
-nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf)
-{
-	struct nvfx_context* nvfx = (struct nvfx_context*)pipe;
-	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
-	boolean bound = FALSE;
-
-	nvfx_surface_copy_temp(pipe, surf, 0);
-
-	util_dirty_surface_set_clean(nvfx_surface_get_dirty_surfaces(surf), &ns->base);
-
-	if(nvfx->framebuffer.zsbuf == surf)
-		bound = TRUE;
-	else
-	{
-		for(unsigned i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)
-		{
-			if(nvfx->framebuffer.cbufs[i] == surf)
-			{
-				bound = TRUE;
-				break;
-			}
-		}
-	}
-
-	if(!bound)
-		pipe_resource_reference((struct pipe_resource**)&ns->temp, 0);
 }
 
 static void

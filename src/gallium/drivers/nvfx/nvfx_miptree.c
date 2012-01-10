@@ -99,9 +99,7 @@ nvfx_miptree_layout(struct nvfx_miptree *mt)
 static void
 nvfx_miptree_surface_final_destroy(struct pipe_surface* ps)
 {
-	struct nvfx_surface* ns = (struct nvfx_surface*)ps;
 	pipe_resource_reference(&ps->texture, 0);
-	pipe_resource_reference((struct pipe_resource**)&ns->temp, 0);
 	FREE(ps);
 }
 
@@ -127,7 +125,6 @@ nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_reso
                 return NULL;
 
         mt->base.base = *pt;
-        util_dirty_surfaces_init(&mt->dirty_surfaces);
 
         pipe_reference_init(&mt->base.base.reference, 1);
         mt->base.base.screen = pscreen;
@@ -201,24 +198,17 @@ nvfx_miptree_surface_new(struct pipe_context *pipe, struct pipe_resource *pt,
 	if(util_surfaces_get(&mt->surfaces, sizeof(struct nvfx_surface), pipe,
                              pt, level, surf_tmpl->u.tex.first_layer,
                              surf_tmpl->usage, (struct pipe_surface **)&ns)) {
-                util_dirty_surface_init(&ns->base);
                 ns->pitch = nvfx_subresource_pitch(pt, level);
                 ns->offset = nvfx_subresource_offset(pt, surf_tmpl->u.tex.first_layer, level, surf_tmpl->u.tex.first_layer);
 	}
 
-	return &ns->base.base;
+	return &ns->base;
 }
 
 void
 nvfx_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps)
 {
-	struct nvfx_surface* ns = (struct nvfx_surface*)ps;
-
-	if(!ns->temp)
-	{
-		assert(!util_dirty_surface_is_dirty(&ns->base));
-		util_surfaces_detach(&((struct nvfx_miptree*)ps->texture)->surfaces, ps);
-		pipe_resource_reference(&ps->texture, 0);
-		FREE(ps);
-	}
+	util_surfaces_detach(&((struct nvfx_miptree*)ps->texture)->surfaces, ps);
+	pipe_resource_reference(&ps->texture, 0);
+	FREE(ps);
 }

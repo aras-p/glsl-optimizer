@@ -47,18 +47,6 @@ nvfx_resource_on_gpu(struct pipe_resource* pr)
 
 #define NVFX_MAX_TEXTURE_LEVELS  16
 
-/* We have the following invariants for render temporaries
- *
- * 1. Render temporaries are always linear
- * 2. Render temporaries are always up to date
- * 3. Currently, render temporaries are destroyed when the resource is used for sampling, but kept for any other use
- *
- * Also, we do NOT flush temporaries on any pipe->flush().
- * This is fine, as long as scanout targets and shared resources never need temps.
- *
- * TODO: we may want to also support swizzled temporaries to improve performance in some cases.
- */
-
 struct nvfx_miptree {
         struct nvfx_resource base;
 
@@ -67,15 +55,12 @@ struct nvfx_miptree {
         unsigned level_offset[NVFX_MAX_TEXTURE_LEVELS];
 
         struct util_surfaces surfaces;
-        struct util_dirty_surfaces dirty_surfaces;
 };
 
 struct nvfx_surface {
-	struct util_dirty_surface base;
+	struct pipe_surface base;
 	unsigned pitch;
 	unsigned offset;
-
-	struct nvfx_miptree* temp;
 };
 
 static INLINE struct nouveau_bo *
@@ -84,13 +69,6 @@ nvfx_surface_buffer(struct pipe_surface *surf)
 	struct nvfx_resource *mt = nvfx_resource(surf->texture);
 
 	return mt->bo;
-}
-
-static INLINE struct util_dirty_surfaces*
-nvfx_surface_get_dirty_surfaces(struct pipe_surface* surf)
-{
-	struct nvfx_miptree *mt = (struct nvfx_miptree *)surf->texture;
-	return &mt->dirty_surfaces;
 }
 
 void
@@ -158,12 +136,6 @@ nvfx_subresource_pitch(struct pipe_resource* pt, unsigned level)
 			return util_format_get_stride(pt->format, u_minify(pt->width0, level));
 	}
 }
-
-void
-nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf);
-
-void
-nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf);
 
 struct nvfx_buffer
 {
