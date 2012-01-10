@@ -454,16 +454,19 @@ svga_texture_create(struct pipe_screen *screen,
    }
 
    /* 
-    * XXX: Never pass the SVGA3D_SURFACE_HINT_RENDERTARGET hint. Mesa cannot
+    * Note: Previously we never passed the
+    * SVGA3D_SURFACE_HINT_RENDERTARGET hint. Mesa cannot
     * know beforehand whether a texture will be used as a rendertarget or not
     * and it always requests PIPE_BIND_RENDER_TARGET, therefore
     * passing the SVGA3D_SURFACE_HINT_RENDERTARGET here defeats its purpose.
+    *
+    * However, this was changed since other state trackers
+    * (XA for example) uses it accurately and certain device versions
+    * relies on it in certain situations to render correctly.
     */
-#if 0
    if((template->bind & PIPE_BIND_RENDER_TARGET) &&
       !util_format_is_s3tc(template->format))
       tex->key.flags |= SVGA3D_SURFACE_HINT_RENDERTARGET;
-#endif
    
    if(template->bind & PIPE_BIND_DEPTH_STENCIL)
       tex->key.flags |= SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
