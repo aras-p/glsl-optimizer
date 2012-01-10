@@ -88,8 +88,12 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 	case PIPE_CAP_CONDITIONAL_RENDER:
 	case PIPE_CAP_TEXTURE_BARRIER:
-                return 0;
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+	case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
+	case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
                 return 0;
 	default:
 		NOUVEAU_ERR("Warning: unknown PIPE_CAP %d\n", param);
