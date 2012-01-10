@@ -222,7 +222,6 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
          continue;
       }
 
-      memset(&surf_tmpl, 0, sizeof(surf_tmpl));
       u_surface_default_template(&surf_tmpl, textures[i],
                                  PIPE_BIND_RENDER_TARGET);
       ps = st->pipe->create_surface(st->pipe, textures[i], &surf_tmpl);
