@@ -672,9 +672,11 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 		     return;
 		  }
 		  /* Don't support GL_DEPTH_COMPONENT for cube maps */
-		  if (t->Image[face][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
-		     incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
-		     return;
+                  if (ctx->VersionMajor < 3 && !ctx->Extensions.EXT_gpu_shader4) {
+                     if (t->Image[face][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
+                        incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
+                        return;
+                     }
 		  }
 		  /* check that all six images have same size */
                   if (t->Image[face][i]->Width2 != width || 
