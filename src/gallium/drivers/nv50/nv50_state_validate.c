@@ -254,7 +254,8 @@ nv50_validate_clip(struct nv50_context *nv50)
    BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
    OUT_RING  (chan, clip_enable);
 
-   nv50_check_program_ucps(nv50, vp, clip_enable);
+   if (clip_enable)
+      nv50_check_program_ucps(nv50, vp, clip_enable);
 }
 
 static void
@@ -356,8 +357,6 @@ static struct state_validate {
     { nv50_validate_scissor,       NV50_NEW_SCISSOR },
 #endif
     { nv50_validate_viewport,      NV50_NEW_VIEWPORT },
-    { nv50_validate_clip,          NV50_NEW_CLIP | NV50_NEW_RASTERIZER |
-                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
     { nv50_vertprog_validate,      NV50_NEW_VERTPROG },
     { nv50_gmtyprog_validate,      NV50_NEW_GMTYPROG },
     { nv50_fragprog_validate,      NV50_NEW_FRAGPROG },
@@ -365,6 +364,8 @@ static struct state_validate {
                                    NV50_NEW_GMTYPROG },
     { nv50_gp_linkage_validate,    NV50_NEW_GMTYPROG | NV50_NEW_VERTPROG },
     { nv50_validate_derived_rs,    NV50_NEW_FRAGPROG | NV50_NEW_RASTERIZER |
+                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
+    { nv50_validate_clip,          NV50_NEW_CLIP | NV50_NEW_RASTERIZER |
                                    NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
     { nv50_constbufs_validate,     NV50_NEW_CONSTBUF },
     { nv50_validate_textures,      NV50_NEW_TEXTURES },
