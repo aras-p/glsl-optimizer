@@ -338,7 +338,7 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
                      drawbuffer);
          return;
       }
-      else if (!ctx->RasterDiscard) {
+      else if (ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer && !ctx->RasterDiscard) {
          /* Save current stencil clear value, set to 'value', do the
           * stencil clear and restore the clear value.
           * XXX in the future we may have a new ctx->Driver.ClearBuffer()
@@ -513,7 +513,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
                      drawbuffer);
          return;
       }
-      else if (!ctx->RasterDiscard) {
+      else if (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer && !ctx->RasterDiscard) {
          /* Save current depth clear value, set to 'value', do the
           * depth clear and restore the clear value.
           * XXX in the future we may have a new ctx->Driver.ClearBuffer()
@@ -592,6 +592,8 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
                     GLfloat depth, GLint stencil)
 {
    GET_CURRENT_CONTEXT(ctx);
+   GLbitfield mask = 0;
+
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    FLUSH_CURRENT(ctx, 0);
@@ -622,7 +624,12 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
       _mesa_update_state( ctx );
    }
 
-   {
+   if (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer)
+      mask |= BUFFER_BIT_DEPTH;
+   if (ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer)
+      mask |= BUFFER_BIT_STENCIL;
+
+   if (mask) {
       /* save current clear values */
       const GLclampd clearDepthSave = ctx->Depth.Clear;
       const GLuint clearStencilSave = ctx->Stencil.Clear;
@@ -636,7 +643,7 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
          ctx->Driver.ClearStencil(ctx, stencil);
 
       /* clear buffers */
-      ctx->Driver.Clear(ctx, BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
+      ctx->Driver.Clear(ctx, mask);
 
       /* restore */
       ctx->Depth.Clear = clearDepthSave;
