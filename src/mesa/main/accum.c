@@ -117,19 +117,6 @@ _mesa_init_accum_dispatch(struct _glapi_table *disp)
 }
 
 
-#endif /* FEATURE_accum */
-
-
-void 
-_mesa_init_accum( struct gl_context *ctx )
-{
-   /* Accumulate buffer group */
-   ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
-}
-
-
-
-
 /**
  * Clear the accumulation buffer by mapping the renderbuffer and
  * writing the clear color to it.  Called by the driver's implementation
@@ -506,4 +493,15 @@ _mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value)
       _mesa_problem(ctx, "invalid mode in _mesa_accum()");
       break;
    }
+}
+
+
+#endif /* FEATURE_accum */
+
+
+void 
+_mesa_init_accum( struct gl_context *ctx )
+{
+   /* Accumulate buffer group */
+   ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
 }
