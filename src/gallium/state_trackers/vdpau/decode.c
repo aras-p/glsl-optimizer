@@ -391,6 +391,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
    vlVdpDecoder *vldecoder;
    vlVdpSurface *vlsurf;
    VdpStatus ret;
+   struct pipe_screen *screen;
    struct pipe_video_decoder *dec;
    unsigned i;
    union {
@@ -410,6 +411,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
    dec = vldecoder->decoder;
+   screen = dec->context->screen;
 
    vlsurf = (vlVdpSurface *)vlGetDataHTAB(target);
    if (!vlsurf)
@@ -418,9 +420,27 @@ vlVdpDecoderRender(VdpDecoder decoder,
    if (vlsurf->device != vldecoder->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 
-   if (vlsurf->video_buffer->chroma_format != dec->chroma_format)
+   if (vlsurf->video_buffer != NULL && vlsurf->video_buffer->chroma_format != dec->chroma_format)
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
+
+   if (vlsurf->video_buffer == NULL ||
+       !screen->is_video_format_supported(screen, vlsurf->video_buffer->buffer_format, dec->profile)) {
+
+      /* destroy the old one */
+      if (vlsurf->video_buffer)
+         vlsurf->video_buffer->destroy(vlsurf->video_buffer);
+
+      /* set the buffer format to the prefered one */
+      vlsurf->templat.buffer_format = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_PREFERED_FORMAT);
+
+      /* and recreate the video buffer */
+      vlsurf->video_buffer = dec->context->create_video_buffer(dec->context, &vlsurf->templat);
+
+      /* still no luck? get me out of here... */
+      if (!vlsurf->video_buffer)
+         return VDP_STATUS_NO_IMPLEMENTATION;
+   }
 
    memset(&desc, 0, sizeof(desc));
    desc.base.profile = dec->profile;
