@@ -316,7 +316,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   struct pipe_video_buffer *video_buffer;
+   struct pipe_video_buffer templat, *video_buffer;
 } vlVdpSurface;
 
 typedef uint64_t vlVdpTime;

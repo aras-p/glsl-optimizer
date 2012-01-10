@@ -44,7 +44,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
                         uint32_t width, uint32_t height,
                         VdpVideoSurface *surface)
 {
-   struct pipe_video_buffer tmpl;
+   struct pipe_context *pipe;
    vlVdpSurface *p_surf;
    VdpStatus ret;
 
@@ -73,21 +73,19 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    }
 
    p_surf->device = dev;
-   memset(&tmpl, 0, sizeof(tmpl));
-   tmpl.buffer_format = dev->context->pipe->screen->get_video_param
+   pipe = dev->context->pipe;
+
+   memset(&p_surf->templat, 0, sizeof(p_surf->templat));
+   p_surf->templat.buffer_format = pipe->screen->get_video_param
    (
-      dev->context->pipe->screen,
+      pipe->screen,
       PIPE_VIDEO_PROFILE_UNKNOWN,
       PIPE_VIDEO_CAP_PREFERED_FORMAT
    );
-   tmpl.chroma_format = ChromaToPipe(chroma_type);
-   tmpl.width = width;
-   tmpl.height = height;
-   p_surf->video_buffer = dev->context->pipe->create_video_buffer
-   (
-      dev->context->pipe,
-      &tmpl
-   );
+   p_surf->templat.chroma_format = ChromaToPipe(chroma_type);
+   p_surf->templat.width = width;
+   p_surf->templat.height = height;
+   p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
 
    *surface = vlAddDataHTAB(p_surf);
    if (*surface == 0) {
@@ -143,9 +141,15 @@ vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   *width = p_surf->video_buffer->width;
-   *height = p_surf->video_buffer->height;
-   *chroma_type = PipeToChroma(p_surf->video_buffer->chroma_format);
+   if (p_surf->video_buffer) {
+      *width = p_surf->video_buffer->width;
+      *height = p_surf->video_buffer->height;
+      *chroma_type = PipeToChroma(p_surf->video_buffer->chroma_format);
+   } else {
+      *width = p_surf->templat.width;
+      *height = p_surf->templat.height;
+      *chroma_type = PipeToChroma(p_surf->templat.chroma_format);
+   }
 
    return VDP_STATUS_OK;
 }
@@ -200,9 +204,23 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {
-      assert(0); // TODO Recreate resource
-      return VDP_STATUS_NO_IMPLEMENTATION;
+   if (p_surf->video_buffer == NULL || p_surf->video_buffer->interlaced ||
+       pformat != p_surf->video_buffer->buffer_format) {
+
+      /* destroy the old one */
+      if (p_surf->video_buffer)
+         p_surf->video_buffer->destroy(p_surf->video_buffer);
+
+      /* adjust the template parameters */
+      p_surf->templat.buffer_format = pformat;
+      p_surf->templat.interlaced = false;
+
+      /* and try to create the video buffer with the new format */
+      p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+
+      /* stil no luck? ok forget it we don't support it */
+      if (!p_surf->video_buffer)
+         return VDP_STATUS_NO_IMPLEMENTATION;
    }
 
    sampler_views = p_surf->video_buffer->get_sampler_view_planes(p_surf->video_buffer);
