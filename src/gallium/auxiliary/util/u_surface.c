@@ -42,17 +42,21 @@
 #include "util/u_surface.h"
 #include "util/u_pack_color.h"
 
+
+/**
+ * Initialize a pipe_surface object.  'view' is considered to have
+ * uninitialized contents.
+ */
 void
-u_surface_default_template(struct pipe_surface *view,
+u_surface_default_template(struct pipe_surface *surf,
                            const struct pipe_resource *texture,
                            unsigned bind)
 {
-   view->format = texture->format;
-   view->u.tex.level = 0;
-   view->u.tex.first_layer = 0;
-   view->u.tex.last_layer = 0;
+   memset(surf, 0, sizeof(*surf));
+
+   surf->format = texture->format;
    /* XXX should filter out all non-rt/ds bind flags ? */
-   view->usage = bind;
+   surf->usage = bind;
 }
 
 /**
@@ -108,7 +112,6 @@ util_create_rgba_surface(struct pipe_context *pipe,
       return FALSE;
 
    /* create surface */
-   memset(&surf_templ, 0, sizeof(surf_templ));
    u_surface_default_template(&surf_templ, *textureOut, bind);
    /* create surface / view into texture */
    *surfaceOut = pipe->create_surface(pipe,

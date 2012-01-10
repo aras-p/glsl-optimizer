@@ -30,12 +30,18 @@
 #include "u_sampler.h"
 
 
+/**
+ * Initialize a pipe_sampler_view.  'view' is considered to have
+ * uninitialized contents.
+ */
 static void
 default_template(struct pipe_sampler_view *view,
                  const struct pipe_resource *texture,
                  enum pipe_format format,
                  unsigned expand_green_blue)
 {
+   memset(view, 0, sizeof(*view));
+
    /* XXX: Check if format is compatible with texture->format.
     */
 
