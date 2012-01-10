@@ -1951,7 +1951,7 @@ _mesa_test_formats(void)
 {
    GLuint i;
 
-   assert(Elements(format_info) == MESA_FORMAT_COUNT);
+   STATIC_ASSERT(Elements(format_info) == MESA_FORMAT_COUNT);
 
    for (i = 0; i < MESA_FORMAT_COUNT; i++) {
       const struct gl_format_info *info = _mesa_get_format_info(i);

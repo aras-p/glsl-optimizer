@@ -923,7 +923,7 @@ validate_samplers(const struct gl_program *prog, char *errMsg)
    GLbitfield samplersUsed = prog->SamplersUsed;
    GLuint i;
 
-   assert(Elements(targetName) == NUM_TEXTURE_TARGETS);
+   STATIC_ASSERT(Elements(targetName) == NUM_TEXTURE_TARGETS);
 
    if (samplersUsed == 0x0)
       return GL_TRUE;

@@ -695,7 +695,7 @@ alloc_proxy_textures( struct gl_context *ctx )
    };
    GLint tgt;
 
-   ASSERT(Elements(targets) == NUM_TEXTURE_TARGETS);
+   STATIC_ASSERT(Elements(targets) == NUM_TEXTURE_TARGETS);
 
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
       if (!(ctx->Texture.ProxyTex[tgt]
