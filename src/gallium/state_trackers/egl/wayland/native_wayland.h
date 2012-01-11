@@ -37,9 +37,8 @@
 struct wayland_surface;
 
 enum wayland_format_flag {
-   HAS_ARGB32        = (1 << 0),
-   HAS_PREMUL_ARGB32 = (1 << 1),
-   HAS_XRGB32        = (1 << 2)
+   HAS_ARGB8888        = (1 << 0),
+   HAS_XRGB8888        = (1 << 1)
 };
 
 struct wayland_display {

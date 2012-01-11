@@ -1094,11 +1094,10 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
    attrs.Height = buffer->height;
 
    switch (wayland_drm_buffer_get_format(buffer)) {
-   case WL_DRM_FORMAT_ARGB32:
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+   case WL_DRM_FORMAT_ARGB8888:
       format = __DRI_IMAGE_FORMAT_ARGB8888;
       break;
-   case WL_DRM_FORMAT_XRGB32:
+   case WL_DRM_FORMAT_XRGB8888:
       format = __DRI_IMAGE_FORMAT_XRGB8888;
       break;
    default:
@@ -1273,11 +1272,10 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name,
    int dri_format;
 
    switch (format) {
-   case WL_DRM_FORMAT_ARGB32:
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+   case WL_DRM_FORMAT_ARGB8888:
       dri_format =__DRI_IMAGE_FORMAT_ARGB8888;
       break;
-   case WL_DRM_FORMAT_XRGB32:
+   case WL_DRM_FORMAT_XRGB8888:
       dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
       break;
    default:

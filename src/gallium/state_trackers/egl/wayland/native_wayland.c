@@ -41,14 +41,8 @@ const static struct {
    enum pipe_format format;
    enum wayland_format_flag flag;
 } wayland_formats[] = {
-   /*
-    * HAS_PREMUL_ARGB32 is ignored here.  For the case that HAS_PREMUL_ARGB32
-    * is set but HAS_ARGB32 isn't, we should not claim
-    * PIPE_FORMAT_B8G8R8A8_UNORM support because we will not be able to present
-    * a surface with non-premultiplied alpha.
-    */
-   { PIPE_FORMAT_B8G8R8A8_UNORM, HAS_ARGB32 },
-   { PIPE_FORMAT_B8G8R8X8_UNORM, HAS_XRGB32 },
+   { PIPE_FORMAT_B8G8R8A8_UNORM, HAS_ARGB8888 },
+   { PIPE_FORMAT_B8G8R8X8_UNORM, HAS_XRGB8888 },
 };
 
 static const struct native_config **
@@ -104,8 +98,7 @@ wayland_display_get_param(struct native_display *ndpy,
 
    switch (param) {
    case NATIVE_PARAM_PREMULTIPLIED_ALPHA:
-      val = ((display->formats & HAS_ARGB32) &&
-             (display->formats & HAS_PREMUL_ARGB32));
+      val = 1;
       break;
    case NATIVE_PARAM_USE_NATIVE_BUFFER:
    case NATIVE_PARAM_PRESERVE_BUFFER:

@@ -109,11 +109,10 @@ wayland_create_drm_buffer(struct wayland_display *display,
 
    switch (surface->color_format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      format = (surface->premultiplied_alpha) ?
-         WL_DRM_FORMAT_PREMULTIPLIED_ARGB32 : WL_DRM_FORMAT_ARGB32;
+      format = WL_DRM_FORMAT_ARGB8888;
       break;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-      format = WL_DRM_FORMAT_XRGB32;
+      format = WL_DRM_FORMAT_XRGB8888;
       break;
    default:
       return NULL;
@@ -151,14 +150,11 @@ drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
    struct wayland_drm_display *drmdpy = data;
 
    switch (format) {
-   case WL_DRM_FORMAT_ARGB32:
-      drmdpy->base.formats |= HAS_ARGB32;
+   case WL_DRM_FORMAT_ARGB8888:
+      drmdpy->base.formats |= HAS_ARGB8888;
       break;
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
-      drmdpy->base.formats |= HAS_PREMUL_ARGB32;
-      break;
-   case WL_DRM_FORMAT_XRGB32:
-      drmdpy->base.formats |= HAS_XRGB32;
+   case WL_DRM_FORMAT_XRGB8888:
+      drmdpy->base.formats |= HAS_XRGB8888;
       break;
    }
 }

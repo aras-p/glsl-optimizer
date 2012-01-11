@@ -117,13 +117,10 @@ shm_handle_format(void *data, struct wl_shm *shm, uint32_t format)
 
    switch (format) {
    case WL_SHM_FORMAT_ARGB32:
-      shmdpy->base.formats |= HAS_ARGB32;
+      shmdpy->base.formats |= HAS_ARGB8888;
       break;
-   case WL_SHM_FORMAT_PREMULTIPLIED_ARGB32:
-      shmdpy->base.formats |= HAS_PREMUL_ARGB32;
-      break;
-   case WL_SHM_FORMAT_XRGB32:
-      shmdpy->base.formats |= HAS_XRGB32;
+   case WL_SHM_FORMAT_XRGB8888:
+      shmdpy->base.formats |= HAS_XRGB8888;
       break;
    }
 }

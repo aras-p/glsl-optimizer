@@ -23,11 +23,10 @@ egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
    enum pipe_format pf;
 
    switch (format) {
-   case WL_DRM_FORMAT_ARGB32:
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
+   case WL_DRM_FORMAT_ARGB8888:
       pf = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
-   case WL_DRM_FORMAT_XRGB32:
+   case WL_DRM_FORMAT_XRGB8888:
       pf = PIPE_FORMAT_B8G8R8X8_UNORM;
       break;
    default:

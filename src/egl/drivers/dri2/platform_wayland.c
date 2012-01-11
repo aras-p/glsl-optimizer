@@ -41,9 +41,8 @@
 #include "wayland-drm-client-protocol.h"
 
 enum wl_drm_format_flags {
-   HAS_ARGB32 = 1,
-   HAS_PREMUL_ARGB32 = 2,
-   HAS_XRGB32 = 4
+   HAS_ARGB8888 = 1,
+   HAS_XRGB8888 = 2
 };
 
 static void
@@ -108,11 +107,9 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    dri2_surf->block_swap_buffers = EGL_FALSE;
 
    if (conf->AlphaSize == 0)
-      dri2_surf->format = WL_DRM_FORMAT_XRGB32;
-   else if (dri2_surf->base.VGAlphaFormat == EGL_VG_ALPHA_FORMAT_PRE)
-      dri2_surf->format = WL_DRM_FORMAT_PREMULTIPLIED_ARGB32;
+      dri2_surf->format = WL_DRM_FORMAT_XRGB8888;
    else
-      dri2_surf->format = WL_DRM_FORMAT_ARGB32;
+      dri2_surf->format = WL_DRM_FORMAT_ARGB8888;
 
    switch (type) {
    case EGL_WINDOW_BIT:
@@ -671,7 +668,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
 			   wl_egl_pixmap->width,
 			   wl_egl_pixmap->height,
 			   dri2_buf->dri_buffer->pitch,
-			   WL_DRM_FORMAT_PREMULTIPLIED_ARGB32);
+			   WL_DRM_FORMAT_ARGB8888);
 
    wl_attr_list[1] = wl_egl_pixmap->width;
    wl_attr_list[3] = wl_egl_pixmap->height;
@@ -768,14 +765,11 @@ drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
    struct dri2_egl_display *dri2_dpy = data;
 
    switch (format) {
-   case WL_DRM_FORMAT_ARGB32:
-      dri2_dpy->formats |= HAS_ARGB32;
+   case WL_DRM_FORMAT_ARGB8888:
+      dri2_dpy->formats |= HAS_ARGB8888;
       break;
-   case WL_DRM_FORMAT_PREMULTIPLIED_ARGB32:
-      dri2_dpy->formats |= HAS_PREMUL_ARGB32;
-      break;
-   case WL_DRM_FORMAT_XRGB32:
-      dri2_dpy->formats |= HAS_XRGB32;
+   case WL_DRM_FORMAT_XRGB8888:
+      dri2_dpy->formats |= HAS_XRGB8888;
       break;
    }
 }
@@ -871,14 +865,11 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       goto cleanup_driver;
 
    types = EGL_WINDOW_BIT | EGL_PIXMAP_BIT;
-   if (dri2_dpy->formats & HAS_PREMUL_ARGB32)
-      types |= EGL_VG_ALPHA_FORMAT_PRE_BIT;
-
    for (i = 0; dri2_dpy->driver_configs[i]; i++) {
       config = dri2_dpy->driver_configs[i];
-      if (dri2_dpy->formats & HAS_XRGB32)
+      if (dri2_dpy->formats & HAS_XRGB8888)
 	 dri2_add_config(disp, config, i + 1, 0, types, NULL, rgb_masks);
-      if (dri2_dpy->formats & (HAS_ARGB32 | HAS_PREMUL_ARGB32))
+      if (dri2_dpy->formats & HAS_ARGB8888)
 	 dri2_add_config(disp, config, i + 1, 0, types, NULL, argb_masks);
    }
 
