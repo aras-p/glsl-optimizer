@@ -244,8 +244,8 @@ static int emit_rss( struct svga_context *svga,
       EMIT_RS_FLOAT( svga, bias, DEPTHBIAS, fail );
    }
 
-   if (dirty & SVGA_NEW_CLIP) {
-      /* the number of clip planes is how many planes to enable */
+   if (dirty & SVGA_NEW_RAST) {
+      /* bitmask of the enabled clip planes */
       unsigned enabled = svga->curr.rast->templ.clip_plane_enable;
       EMIT_RS( svga, enabled, CLIPPLANEENABLE, fail );
    }
@@ -285,7 +285,6 @@ struct svga_tracked_state svga_hw_rss =
 
    (SVGA_NEW_BLEND |
     SVGA_NEW_BLEND_COLOR |
-    SVGA_NEW_CLIP |
     SVGA_NEW_DEPTH_STENCIL |
     SVGA_NEW_STENCIL_REF |
     SVGA_NEW_RAST |

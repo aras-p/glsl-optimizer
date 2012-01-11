@@ -477,7 +477,7 @@ emit_clip_planes( struct svga_context *svga,
 
    /* TODO: just emit directly from svga_set_clip_state()?
     */
-   for (i = 0; i < 6; i++) {
+   for (i = 0; i < SVGA3D_MAX_CLIP_PLANES; i++) {
       /* need to express the plane in D3D-style coordinate space.
        * GL coords get converted to D3D coords with the matrix:
        * [ 1  0  0  0 ]
