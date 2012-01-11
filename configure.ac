@@ -70,7 +70,6 @@ AC_PATH_PROG([GTESTCONFIG], [gtest-config])
 if test "x$GTESTCONFIG" != "x"; then
     GTEST_CFLAGS=`gtest-config --cppflags --cxxflags`
     GTEST_LIBS=`gtest-config --ldflags --libs`
-    HAVE_GTEST=1
     AC_SUBST([GTEST_CFLAGS])
     AC_SUBST([GTEST_LIBS])
     HAVE_GTEST=yes
