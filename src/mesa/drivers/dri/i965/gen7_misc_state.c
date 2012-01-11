@@ -107,8 +107,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_RELOC(region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		offset);
-      OUT_BATCH(((drb->Base.Width - 1) << 4) |
-                ((drb->Base.Height - 1) << 18));
+      OUT_BATCH((((drb->Base.Width + tile_x) - 1) << 4) |
+                (((drb->Base.Height + tile_y) - 1) << 18));
       OUT_BATCH(0);
       OUT_BATCH(tile_x | (tile_y << 16));
       OUT_BATCH(0);

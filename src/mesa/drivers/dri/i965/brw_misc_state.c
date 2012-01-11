@@ -376,8 +376,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
-		((depth_irb->Base.Width - 1) << 6) |
-		((depth_irb->Base.Height - 1) << 19));
+		(((depth_irb->Base.Width + tile_x)- 1) << 6) |
+		(((depth_irb->Base.Height + tile_y) - 1) << 19));
       OUT_BATCH(0);
 
       if (intel->is_g4x || intel->gen >= 5)
