@@ -480,6 +480,26 @@ _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 }
 
 
+/**
+ * Return the number of entries in the hash table.
+ */
+GLuint
+_mesa_HashNumEntries(const struct _mesa_HashTable *table)
+{
+   GLuint pos, count = 0;
+
+   for (pos = 0; pos < TABLE_SIZE; pos++) {
+      const struct HashEntry *entry;
+      for (entry = table->Table[pos]; entry; entry = entry->Next) {
+         count++;
+      }
+   }
+
+   return count;
+}
+
+
+
 #if 0 /* debug only */
 
 /**

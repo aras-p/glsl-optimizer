@@ -63,6 +63,9 @@ extern void _mesa_HashPrint(const struct _mesa_HashTable *table);
 
 extern GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys);
 
+extern GLuint
+_mesa_HashNumEntries(const struct _mesa_HashTable *table);
+
 extern void _mesa_test_hash_functions(void);
 
 
