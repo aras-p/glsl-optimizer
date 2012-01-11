@@ -13,6 +13,7 @@ DRIVER_DEFINES = \
 DRIVER_PIPES = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
+	$(TOP)/src/gallium/drivers/nv30/libnv30.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \

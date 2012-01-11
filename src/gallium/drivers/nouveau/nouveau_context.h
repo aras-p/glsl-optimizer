@@ -3,12 +3,11 @@
 
 #include "pipe/p_context.h"
 
-struct nouveau_pushbuf;
-
 struct nouveau_context {
    struct pipe_context pipe;
    struct nouveau_screen *screen;
 
+   struct nouveau_client *client;
    struct nouveau_pushbuf *pushbuf;
 
    boolean vbo_dirty;

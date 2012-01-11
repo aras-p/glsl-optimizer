@@ -135,7 +135,7 @@ nouveau_buffer_upload(struct nouveau_context *nv, struct nv04_resource *buf,
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
-   if (size <= 192) {
+   if (size <= 192 && (nv->push_data || nv->push_cb)) {
       if (buf->base.bind & PIPE_BIND_CONSTANT_BUFFER)
          nv->push_cb(nv, buf->bo, buf->domain, buf->offset, buf->base.width0,
                      start, size / 4, (const uint32_t *)(buf->data + start));

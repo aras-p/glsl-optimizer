@@ -21,13 +21,11 @@ nouveau_drm_screen_create(int fd)
 		return NULL;
 
 	switch (dev->chipset & 0xf0) {
-#if 0
 	case 0x30:
 	case 0x40:
 	case 0x60:
 		init = nv30_screen_create;
 		break;
-#endif
 	case 0x50:
 	case 0x80:
 	case 0x90:

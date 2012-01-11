@@ -27,8 +27,6 @@
 #include "nv50_screen.h"
 #include "nv50_resource.h"
 
-#include "nouveau/nouveau_reloc.h"
-
 static void
 nv50_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
