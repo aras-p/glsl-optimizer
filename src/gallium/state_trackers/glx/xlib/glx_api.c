@@ -1788,6 +1788,9 @@ glXChooseFBConfig(Display *dpy, int screen,
 {
    XMesaVisual xmvis;
 
+   /* register ourselves as an extension on this display */
+   register_with_display(dpy);
+
    if (!attribList || !attribList[0]) {
       /* return list of all configs (per GLX_SGIX_fbconfig spec) */
       return glXGetFBConfigs(dpy, screen, nitems);
