@@ -1375,7 +1375,8 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 
    if (rb->InternalFormat == internalFormat &&
        rb->Width == (GLuint) width &&
-       rb->Height == (GLuint) height) {
+       rb->Height == (GLuint) height &&
+       rb->NumSamples == samples) {
       /* no change in allocation needed */
       return;
    }
