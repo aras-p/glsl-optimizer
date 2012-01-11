@@ -429,8 +429,10 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
    uint32_t profile;
    int render_type = GLX_RGBA_TYPE;
 
-   if (num_attribs == 0)
+   if (num_attribs == 0) {
+      *api = __DRI_API_OPENGL;
       return true;
+   }
 
    /* This is actually an internal error, but what the heck.
     */
