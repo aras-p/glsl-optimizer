@@ -42,17 +42,6 @@ struct gl_context;
 #define MESA_VERSION_CODE MESA_VERSION(MESA_MAJOR, MESA_MINOR, MESA_PATCH)
 
 
-/* OpenGL API version */
-#define OPENGL_MAJOR 2
-#define OPENGL_MINOR 1
-#define OPENGL_PATCH 0
-#define OPENGL_VERSION_STRING "2.1"
-
-/* To make version comparison easy */
-#define OPENGL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR, OPENGL_PATCH)
-
-
 extern void
 _mesa_compute_version(struct gl_context *ctx);
 
