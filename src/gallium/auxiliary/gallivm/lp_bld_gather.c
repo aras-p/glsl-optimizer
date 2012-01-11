@@ -147,3 +147,20 @@ lp_build_gather(struct gallivm_state *gallivm,
 
    return res;
 }
+
+LLVMValueRef
+lp_build_gather_values(struct gallivm_state * gallivm,
+                       LLVMValueRef * values,
+                       unsigned value_count)
+{
+   LLVMTypeRef vec_type = LLVMVectorType(LLVMTypeOf(values[0]), value_count);
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef vec = LLVMGetUndef(vec_type);
+   unsigned i;
+
+   for (i = 0; i < value_count; i++) {
+      LLVMValueRef index = lp_build_const_int32(gallivm, i);
+      vec = LLVMBuildInsertElement(builder, vec, values[i], index, "");
+   }
+   return vec;
+}

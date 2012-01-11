@@ -57,5 +57,9 @@ lp_build_gather(struct gallivm_state *gallivm,
                 LLVMValueRef base_ptr,
                 LLVMValueRef offsets);
 
+LLVMValueRef
+lp_build_gather_values(struct gallivm_state * gallivm,
+                       LLVMValueRef * values,
+                       unsigned value_count);
 
 #endif /* LP_BLD_GATHER_H_ */
