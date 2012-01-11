@@ -1099,11 +1099,11 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
       format = __DRI_IMAGE_FORMAT_ARGB8888;
       break;
    case WL_DRM_FORMAT_XRGB32:
-      _eglError(EGL_BAD_PARAMETER,
-		"dri2_create_image_khr: unsupported wl_buffer format");
       format = __DRI_IMAGE_FORMAT_XRGB8888;
       break;
    default:
+      _eglError(EGL_BAD_PARAMETER,
+		"dri2_create_image_khr: unsupported wl_buffer format");
       return NULL;
    }
 
