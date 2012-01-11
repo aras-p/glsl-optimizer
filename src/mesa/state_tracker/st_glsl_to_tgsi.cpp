@@ -2646,8 +2646,9 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->shadow_comparitor->accept(this);
 
       /* XXX This will need to be updated for cubemap array samplers. */
-      if (sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
-          sampler_type->sampler_array) {
+      if ((sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
+	   sampler_type->sampler_array) ||
+	  sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE) {
          coord_dst.writemask = WRITEMASK_W;
       } else {
          coord_dst.writemask = WRITEMASK_Z;

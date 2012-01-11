@@ -279,6 +279,7 @@ translate_texture_target( GLuint textarget,
       case TEXTURE_RECT_INDEX: return TGSI_TEXTURE_SHADOWRECT;
       case TEXTURE_1D_ARRAY_INDEX: return TGSI_TEXTURE_SHADOW1D_ARRAY;
       case TEXTURE_2D_ARRAY_INDEX: return TGSI_TEXTURE_SHADOW2D_ARRAY;
+      case TEXTURE_CUBE_INDEX: return TGSI_TEXTURE_SHADOWCUBE;
       default: break;
       }
    }
