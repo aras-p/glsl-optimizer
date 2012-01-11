@@ -115,13 +115,15 @@ intelDRI2Flush(__DRIdrawable *drawable)
    GET_CURRENT_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
 
-   if (intel->gen < 4)
-      INTEL_FIREVERTICES(intel);
+   if (intel != NULL) {
+      if (intel->gen < 4)
+	 INTEL_FIREVERTICES(intel);
 
-   intel->need_throttle = true;
+      intel->need_throttle = true;
 
-   if (intel->batch.used)
-      intel_batchbuffer_flush(intel);
+      if (intel->batch.used)
+	 intel_batchbuffer_flush(intel);
+   }
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
