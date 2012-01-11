@@ -69,8 +69,6 @@ static void emit_depthbuffer(struct brw_context *brw)
       if (stencil_mt == NULL) {
 	 dw1 |= (BRW_SURFACE_NULL << 29);
       } else {
-	 struct intel_region *region = stencil_mt->region;
-
 	 /* _NEW_STENCIL: enable stencil buffer writes */
 	 dw1 |= ((ctx->Stencil.WriteMask != 0) << 27);
 

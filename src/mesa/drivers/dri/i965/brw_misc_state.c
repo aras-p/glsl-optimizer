@@ -330,8 +330,6 @@ static void emit_depthbuffer(struct brw_context *brw)
        * Section 7.5.5.1.1 3DSTATE_DEPTH_BUFFER, Bit 1.27 Tiled Surface:
        *     [DevGT+]: This field must be set to TRUE.
        */
-      struct intel_region *region = stencil_mt->region;
-
       assert(intel->has_separate_stencil);
 
       BEGIN_BATCH(len);
