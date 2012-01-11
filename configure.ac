@@ -38,8 +38,8 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_PROGS([MAKE], [gmake make])
 AC_CHECK_PROGS([PYTHON2], [python2 python])
+AC_PROG_SED
 AC_PATH_PROG([MKDEP], [makedepend])
-AC_PATH_PROG([SED], [sed])
 
 if test "x$MKDEP" = "x"; then
     AC_MSG_ERROR([makedepend is required to build Mesa])
