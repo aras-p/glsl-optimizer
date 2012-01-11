@@ -191,6 +191,8 @@ PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 EXTRA_FILES = \
 	aclocal.m4					\
 	configure					\
+	tests/Makefile.in				\
+	tests/glx/Makefile.in				\
 	src/glsl/glsl_parser.cpp			\
 	src/glsl/glsl_parser.h				\
 	src/glsl/glsl_lexer.cpp				\
