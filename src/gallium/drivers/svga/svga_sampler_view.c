@@ -105,7 +105,12 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
 
    sv = CALLOC_STRUCT(svga_sampler_view);
    pipe_reference_init(&sv->reference, 1);
-   pipe_resource_reference(&sv->texture, pt);
+
+   /* Note: we're not refcounting the texture resource here to avoid
+    * a circular dependency.
+    */
+   sv->texture = pt;
+
    sv->min_lod = min_lod;
    sv->max_lod = max_lod;
 
@@ -206,6 +211,11 @@ svga_destroy_sampler_view_priv(struct svga_sampler_view *v)
       SVGA_DBG(DEBUG_DMA, "unref sid %p (sampler view)\n", v->handle);
       svga_screen_surface_destroy(ss, &v->key, &v->handle);
    }
-   pipe_resource_reference(&v->texture, NULL);
+
+   /* Note: we're not refcounting the texture resource here to avoid
+    * a circular dependency.
+    */
+   v->texture = NULL;
+
    FREE(v);
 }
