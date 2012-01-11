@@ -188,6 +188,7 @@ const struct brw_tracked_state *gen7_atoms[] =
 
    /* Command packets: */
    &brw_invariant_state,
+   &gen7_push_constant_alloc,
 
    /* must do before binding table pointers, cc state ptrs */
    &brw_state_base_address,

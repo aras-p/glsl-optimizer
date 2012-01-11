@@ -51,6 +51,30 @@
  * See "Volume 2a: 3D Pipeline," section 1.8.
  */
 static void
+gen7_allocate_push_constants(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
+   OUT_BATCH(8);
+   ADVANCE_BATCH();
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_PS << 16 | (2 - 2));
+   OUT_BATCH(8 | 8 << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state gen7_push_constant_alloc = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_CONTEXT,
+      .cache = 0,
+   },
+   .emit = gen7_allocate_push_constants,
+};
+
+static void
 gen7_upload_urb(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -74,16 +98,6 @@ gen7_upload_urb(struct brw_context *brw)
    assert(brw->urb.nr_gs_entries % 8 == 0);
    /* GS requirement */
    assert(!brw->gs.prog_active);
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_VS << 16 | (2 - 2));
-   OUT_BATCH(8);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_PUSH_CONSTANT_ALLOC_PS << 16 | (2 - 2));
-   OUT_BATCH(8 | 8 << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT);
-   ADVANCE_BATCH();
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));

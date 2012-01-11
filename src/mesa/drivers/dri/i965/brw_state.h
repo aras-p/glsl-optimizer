@@ -110,6 +110,7 @@ extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_depth_stencil_state_pointer;
 extern const struct brw_tracked_state gen7_disable_stages;
 extern const struct brw_tracked_state gen7_ps_state;
+extern const struct brw_tracked_state gen7_push_constant_alloc;
 extern const struct brw_tracked_state gen7_samplers;
 extern const struct brw_tracked_state gen7_sbe_state;
 extern const struct brw_tracked_state gen7_sf_clip_viewport;
