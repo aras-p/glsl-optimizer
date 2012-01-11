@@ -114,16 +114,16 @@ static int host_byte_order( void )
 static int check_for_xshm( XMesaDisplay *display )
 {
 #if defined(USE_XSHM) 
-   int major, minor, ignore;
-   Bool pixmaps;
+   int ignore;
 
    if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
-      if (XShmQueryVersion( display, &major, &minor, &pixmaps )==True) {
-	 return (pixmaps==True) ? 2 : 1;
-      }
-      else {
-	 return 0;
-      }
+      /* Note: we're no longer calling XShmQueryVersion() here.  It seems
+       * to be flakey (triggers a spurious X protocol error when we close
+       * one display connection and start using a new one.  XShm has been
+       * around a long time and hasn't changed so if MIT_SHM is supported
+       * we assume we're good to go.
+       */
+      return 2;
    }
    else {
       return 0;
