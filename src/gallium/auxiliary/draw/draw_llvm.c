@@ -885,7 +885,8 @@ convert_to_aos(struct gallivm_state *gallivm,
 static void
 store_clip(struct gallivm_state *gallivm,
            LLVMValueRef io_ptr,           
-           LLVMValueRef (*outputs)[NUM_CHANNELS])
+           LLVMValueRef (*outputs)[NUM_CHANNELS],
+           boolean pre_clip_pos)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef out[4];
@@ -914,10 +915,18 @@ store_clip(struct gallivm_state *gallivm,
    io2_ptr = LLVMBuildGEP(builder, io_ptr, &ind2, 1, "");
    io3_ptr = LLVMBuildGEP(builder, io_ptr, &ind3, 1, "");
 
-   clip_ptr0 = draw_jit_header_clip(gallivm, io0_ptr);
-   clip_ptr1 = draw_jit_header_clip(gallivm, io1_ptr);
-   clip_ptr2 = draw_jit_header_clip(gallivm, io2_ptr);
-   clip_ptr3 = draw_jit_header_clip(gallivm, io3_ptr);
+   /* FIXME: this needs updating for clip vertex support */
+   if (!pre_clip_pos) {
+      clip_ptr0 = draw_jit_header_clip(gallivm, io0_ptr);
+      clip_ptr1 = draw_jit_header_clip(gallivm, io1_ptr);
+      clip_ptr2 = draw_jit_header_clip(gallivm, io2_ptr);
+      clip_ptr3 = draw_jit_header_clip(gallivm, io3_ptr);
+   } else {
+      clip_ptr0 = draw_jit_header_pre_clip_pos(gallivm, io0_ptr);
+      clip_ptr1 = draw_jit_header_pre_clip_pos(gallivm, io1_ptr);
+      clip_ptr2 = draw_jit_header_pre_clip_pos(gallivm, io2_ptr);
+      clip_ptr3 = draw_jit_header_pre_clip_pos(gallivm, io3_ptr);
+   }
 
    for (i = 0; i<4; i++) {
       clip0_ptr = LLVMBuildGEP(builder, clip_ptr0, indices, 2, ""); /* x0 */
@@ -1361,7 +1370,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
-      store_clip(gallivm, io, outputs);
+      store_clip(gallivm, io, outputs, 0);
+      store_clip(gallivm, io, outputs, 1);
 
       /* do cliptest */
       if (enable_cliptest) {
