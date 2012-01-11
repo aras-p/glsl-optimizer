@@ -118,13 +118,13 @@ static void emit_depthbuffer(struct brw_context *brw)
    }
 
    if (hiz_mt == NULL) {
-      BEGIN_BATCH(5);
+      BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
-      BEGIN_BATCH(5);
+      BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
       OUT_BATCH(hiz_mt->region->pitch * hiz_mt->region->cpp - 1);
       OUT_RELOC(hiz_mt->region->bo,
