@@ -1909,6 +1909,13 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                      "glCopyTexImage%dD(invalid readbuffer)", dimensions);
          return GL_TRUE;
       }
+
+      if (ctx->ReadBuffer->Visual.samples > 0) {
+	 _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION,
+		     "glCopyTexImage%dD(multisample FBO)",
+		     dimensions);
+	 return GL_TRUE;
+      }
    }
 
    /* Check border */
@@ -2007,6 +2014,13 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
          _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                      "glCopyTexImage%dD(invalid readbuffer)", dimensions);
          return GL_TRUE;
+      }
+
+      if (ctx->ReadBuffer->Visual.samples > 0) {
+	 _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION,
+		     "glCopyTexSubImage%dD(multisample FBO)",
+		     dimensions);
+	 return GL_TRUE;
       }
    }
 
