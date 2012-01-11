@@ -203,6 +203,12 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       goto end;
    }
 
+   if (ctx->ReadBuffer->Name != 0 && ctx->ReadBuffer->Visual.samples > 0) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION,
+		  "glCopyPixels(multisample FBO)");
+      goto end;
+   }
+
    if (!_mesa_source_buffer_exists(ctx, type) ||
        !_mesa_dest_buffer_exists(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
