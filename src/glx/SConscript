@@ -31,9 +31,6 @@ if env['HAVE_XF86VIDMODE']:
     env.Append(CPPDEFINES = ['XF86VIDMODE'])
     env.PkgUseModules('XF86VIDMODE')
 
-if False: # XXX: SHARED_GLAPI
-    env.Append(CPPDEFINES = ['GLX_SHARED_GLAPI'])
-
 sources = [
     'clientattrib.c',
     'clientinfo.c',

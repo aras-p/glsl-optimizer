@@ -10672,8 +10672,6 @@ __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
 }
 
 
-#ifdef GLX_SHARED_GLAPI
-
 static const struct proc_pair {
     const char *name;
     _glapi_proc proc;
@@ -10728,8 +10726,6 @@ __indirect_get_proc_address(const char *name)
 
     return (pair) ? pair->proc : NULL;
 }
-
-#endif /* GLX_SHARED_GLAPI */
 
 
 #undef FASTCALL
