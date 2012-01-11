@@ -269,7 +269,7 @@ src_register( struct st_translate *t,
  * Map mesa texture target to TGSI texture target.
  */
 unsigned
-translate_texture_target( GLuint textarget,
+st_translate_texture_target( GLuint textarget,
                           GLboolean shadow )
 {
    if (shadow) {
@@ -516,7 +516,7 @@ static void emit_ddy( struct st_translate *t,
 
 
 
-unsigned
+static unsigned
 translate_opcode( unsigned op )
 {
    switch( op ) {
@@ -708,7 +708,7 @@ compile_instruction(
       ureg_tex_insn( ureg,
                      translate_opcode( inst->Opcode ),
                      dst, num_dst, 
-                     translate_texture_target( inst->TexSrcTarget,
+                     st_translate_texture_target( inst->TexSrcTarget,
                                                inst->TexShadow ),
                      NULL, 0,
                      src, num_src );

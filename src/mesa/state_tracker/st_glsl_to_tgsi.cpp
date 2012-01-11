@@ -4182,7 +4182,7 @@ compile_tgsi_instruction(struct st_translate *t,
       ureg_tex_insn(ureg,
                     inst->op,
                     dst, num_dst, 
-                    translate_texture_target(inst->tex_target, inst->tex_shadow),
+                    st_translate_texture_target(inst->tex_target, inst->tex_shadow),
                     texoffsets, inst->tex_offset_num_offset,
                     src, num_src);
       return;
