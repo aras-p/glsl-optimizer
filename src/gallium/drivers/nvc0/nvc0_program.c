@@ -711,6 +711,9 @@ nvc0_program_library_upload(struct nvc0_context *nvc0)
 void
 nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
+   const struct pipe_shader_state pipe = prog->pipe;
+   const ubyte type = prog->type;
+
    if (prog->res)
       nouveau_resource_free(&prog->res);
 
@@ -726,7 +729,8 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
       FREE(prog->tfb);
    }
 
-   memset(prog->hdr, 0, sizeof(prog->hdr));
+   memset(prog, 0, sizeof(*prog));
 
-   prog->translated = FALSE;
+   prog->pipe = pipe;
+   prog->type = type;
 }
