@@ -334,7 +334,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 
-   screen->using_llvm = debug_get_option_use_llvm();
+   screen->use_llvm = debug_get_option_use_llvm();
 
    util_format_s3tc_init();
 

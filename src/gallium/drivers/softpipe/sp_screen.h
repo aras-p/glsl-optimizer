@@ -46,7 +46,7 @@ struct softpipe_screen {
     * this.
     */
    unsigned timestamp;
-   boolean using_llvm;
+   boolean use_llvm;
 };
 
 static INLINE struct softpipe_screen *
