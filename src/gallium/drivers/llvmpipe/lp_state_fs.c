@@ -1025,19 +1025,15 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       case TGSI_INTERPOLATE_PERSPECTIVE:
 	 shader->inputs[i].interp = LP_INTERP_PERSPECTIVE;
 	 break;
+      case TGSI_INTERPOLATE_COLOR:
+	 shader->inputs[i].interp = LP_INTERP_COLOR;
+	 break;
       default:
 	 assert(0);
 	 break;
       }
 
       switch (shader->info.base.input_semantic_name[i]) {
-      case TGSI_SEMANTIC_COLOR:
-         /* Colors may be either linearly or constant interpolated in
-	  * the fragment shader, but that information isn't available
-	  * here.  Mark color inputs and fix them up later.
-          */
-	 shader->inputs[i].interp = LP_INTERP_COLOR;
-         break;
       case TGSI_SEMANTIC_FACE:
 	 shader->inputs[i].interp = LP_INTERP_FACING;
 	 break;
