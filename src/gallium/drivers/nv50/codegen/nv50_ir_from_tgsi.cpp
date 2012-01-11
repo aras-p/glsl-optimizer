@@ -385,6 +385,7 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_ISGE:
    case TGSI_OPCODE_ISHR:
    case TGSI_OPCODE_ISLT:
+   case TGSI_OPCODE_ISSG:
    case TGSI_OPCODE_SAD: // not sure about SAD, but no one has a float version
    case TGSI_OPCODE_MOD:
    case TGSI_OPCODE_UARL:
@@ -1892,14 +1893,18 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
          }
       }
       break;
+   case TGSI_OPCODE_ISSG:
    case TGSI_OPCODE_SSG:
       FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
          src0 = fetchSrc(0, c);
          val0 = getScratch();
          val1 = getScratch();
-         mkCmp(OP_SET, CC_GT, TYPE_F32, val0, src0, zero);
-         mkCmp(OP_SET, CC_LT, TYPE_F32, val1, src0, zero);
-         mkOp2(OP_SUB, TYPE_F32, dst0[c], val0, val1);
+         mkCmp(OP_SET, CC_GT, srcTy, val0, src0, zero);
+         mkCmp(OP_SET, CC_LT, srcTy, val1, src0, zero);
+         if (srcTy == TYPE_F32)
+            mkOp2(OP_SUB, TYPE_F32, dst0[c], val0, val1);
+         else
+            mkOp2(OP_SUB, TYPE_S32, dst0[c], val1, val0);
       }
       break;
    case TGSI_OPCODE_UCMP:
