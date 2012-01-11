@@ -525,7 +525,7 @@ intelCreateContext(gl_api api,
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
-   bool success;
+   bool success = false;
 
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
