@@ -130,16 +130,14 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_half_float_pixel &&
                               ctx->Extensions.ARB_half_float_vertex &&
                               ctx->Extensions.ARB_map_buffer_range &&
+                              ctx->Extensions.ARB_shader_texture_lod &&
                               ctx->Extensions.ARB_texture_float &&
                               ctx->Extensions.ARB_texture_rg &&
                               ctx->Extensions.ARB_texture_compression_rgtc &&
                               ctx->Extensions.APPLE_vertex_array_object &&
                               ctx->Extensions.EXT_draw_buffers2 &&
-                              ctx->Extensions.EXT_framebuffer_blit &&
-                              ctx->Extensions.EXT_framebuffer_multisample &&
-                              ctx->Extensions.EXT_framebuffer_object &&
+                              ctx->Extensions.ARB_framebuffer_object &&
                               ctx->Extensions.EXT_framebuffer_sRGB &&
-                              ctx->Extensions.EXT_packed_depth_stencil &&
                               ctx->Extensions.EXT_packed_float &&
                               ctx->Extensions.EXT_texture_array &&
                               ctx->Extensions.EXT_texture_integer &&
