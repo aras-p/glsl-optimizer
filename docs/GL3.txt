@@ -36,8 +36,8 @@ sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     DONE (i965, r600)
 glClearBuffer commands                                DONE
 glGetStringi command                                  DONE
 glTexParameterI, glGetTexParameterI commands          DONE
-glVertexAttribI commands                              DONE (but converts int
-                                                            values to floats)
+glVertexAttribI commands                              ~50% done (converts int
+                                                                 values to floats)
 Depth format cube textures                            DONE
 GLX_ARB_create_context (GLX 1.4 is required)          DONE
 
