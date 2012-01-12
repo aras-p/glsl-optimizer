@@ -285,7 +285,7 @@ _swrast_map_textures(struct gl_context *ctx)
 
    /* loop over enabled texture units */
    while (enabledUnits) {
-      GLuint unit = _mesa_ffs(enabledUnits) - 1;
+      GLuint unit = ffs(enabledUnits) - 1;
       struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
       
       _swrast_map_texture(ctx, texObj);
@@ -305,7 +305,7 @@ _swrast_unmap_textures(struct gl_context *ctx)
 
    /* loop over enabled texture units */
    while (enabledUnits) {
-      GLuint unit = _mesa_ffs(enabledUnits) - 1;
+      GLuint unit = ffs(enabledUnits) - 1;
       struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
       
       _swrast_unmap_texture(ctx, texObj);

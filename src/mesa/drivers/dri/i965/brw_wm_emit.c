@@ -766,7 +766,7 @@ void emit_dp2(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1)
 {
-   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -787,7 +787,7 @@ void emit_dp3(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1)
 {
-   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -809,7 +809,7 @@ void emit_dp4(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1)
 {
-   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -832,7 +832,7 @@ void emit_dph(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1)
 {
-   const int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   const int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -882,7 +882,7 @@ void emit_math1(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
-   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
    GLuint saturate = ((mask & SATURATE) ?
 		      BRW_MATH_SATURATE_SATURATE :
 		      BRW_MATH_SATURATE_NONE);
@@ -945,7 +945,7 @@ void emit_math2(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
-   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+   int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */

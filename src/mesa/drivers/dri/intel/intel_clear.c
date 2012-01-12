@@ -171,7 +171,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
     * buffer with it.
     */
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      int color_bit = _mesa_ffs(mask & BUFFER_BITS_COLOR);
+      int color_bit = ffs(mask & BUFFER_BITS_COLOR);
       if (color_bit != 0) {
 	 tri_mask |= blit_mask & (1 << (color_bit - 1));
 	 blit_mask &= ~(1 << (color_bit - 1));

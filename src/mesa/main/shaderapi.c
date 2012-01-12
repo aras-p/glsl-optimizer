@@ -928,6 +928,7 @@ _mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
       ctx->Driver.UseProgram(ctx, shProg);
 }
 
+
 /**
  * Do validation of the given shader program.
  * \param errMsg  returns error message if validation fails.

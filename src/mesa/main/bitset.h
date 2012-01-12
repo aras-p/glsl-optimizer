@@ -88,7 +88,7 @@ __bitset_ffs(const BITSET_WORD *x, int n)
 
    for (i = 0; i < n; i++) {
       if (x[i])
-	 return _mesa_ffs(x[i]) + BITSET_WORDBITS * i;
+	 return ffs(x[i]) + BITSET_WORDBITS * i;
    }
 
    return 0;

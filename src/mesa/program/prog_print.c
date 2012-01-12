@@ -194,7 +194,7 @@ _mesa_print_vp_inputs(GLbitfield inputs)
 {
    printf("VP Inputs 0x%x: \n", inputs);
    while (inputs) {
-      GLint attr = _mesa_ffs(inputs) - 1;
+      GLint attr = ffs(inputs) - 1;
       const char *name = arb_input_attrib_string(attr,
                                                  GL_VERTEX_PROGRAM_ARB);
       printf("  %d: %s\n", attr, name);
@@ -212,7 +212,7 @@ _mesa_print_fp_inputs(GLbitfield inputs)
 {
    printf("FP Inputs 0x%x: \n", inputs);
    while (inputs) {
-      GLint attr = _mesa_ffs(inputs) - 1;
+      GLint attr = ffs(inputs) - 1;
       const char *name = arb_input_attrib_string(attr,
                                                  GL_FRAGMENT_PROGRAM_ARB);
       printf("  %d: %s\n", attr, name);

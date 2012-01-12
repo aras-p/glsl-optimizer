@@ -303,7 +303,7 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
    GLuint min = ~0u;
 
    while (enabled) {
-      GLint attrib = _mesa_ffsll(enabled) - 1;
+      GLint attrib = ffsll(enabled) - 1;
       enabled &= ~BITFIELD64_BIT(attrib);
       min = update_min(min, &arrayObj->VertexAttrib[attrib]);
    }

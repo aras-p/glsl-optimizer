@@ -159,7 +159,7 @@ static struct prog_dst_register dst_undef( void )
 
 static struct prog_dst_register get_temp( struct brw_wm_compile *c )
 {
-   int bit = _mesa_ffs( ~c->fp_temp );
+   int bit = ffs( ~c->fp_temp );
 
    if (!bit) {
       printf("%s: out of temporaries\n", __FILE__);
@@ -260,7 +260,7 @@ static struct prog_instruction *emit_scalar_insn(struct brw_wm_compile *c,
    if (inst0->DstReg.WriteMask == 0)
       return NULL;
 
-   dst_chan = _mesa_ffs(inst0->DstReg.WriteMask) - 1;
+   dst_chan = ffs(inst0->DstReg.WriteMask) - 1;
    inst = get_fp_inst(c);
    *inst = *inst0;
    inst->DstReg.WriteMask = 1 << dst_chan;

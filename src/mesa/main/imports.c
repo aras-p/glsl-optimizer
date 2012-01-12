@@ -458,9 +458,8 @@ _mesa_inv_sqrtf(float n)
  * Find the first bit set in a word.
  */
 int
-_mesa_ffs(int32_t i)
+ffs(int i)
 {
-#if (defined(_WIN32) ) || defined(__IBMC__) || defined(__IBMCPP__)
    register int bit = 0;
    if (i != 0) {
       if ((i & 0xffff) == 0) {
@@ -482,9 +481,6 @@ _mesa_ffs(int32_t i)
       bit++;
    }
    return bit;
-#else
-   return ffs(i);
-#endif
 }
 
 
@@ -495,23 +491,24 @@ _mesa_ffs(int32_t i)
  *          if no bits set.
  */
 int
-_mesa_ffsll(int64_t val)
+ffsll(long long int val)
 {
    int bit;
 
    assert(sizeof(val) == 8);
 
-   bit = _mesa_ffs((int32_t)val);
+   bit = ffs((int) val);
    if (bit != 0)
       return bit;
 
-   bit = _mesa_ffs((int32_t)(val >> 32));
+   bit = ffs((int) (val >> 32));
    if (bit != 0)
       return 32 + bit;
 
    return 0;
 }
-#endif
+#endif /* __GNUC__ */
+
 
 #if !defined(__GNUC__) ||\
    ((__GNUC__ * 100 + __GNUC_MINOR__) < 304) /* Not gcc 3.4 or later */

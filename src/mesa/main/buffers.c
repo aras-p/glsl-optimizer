@@ -402,7 +402,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
    if (n == 1) {
       GLuint count = 0, destMask0 = destMask[0];
       while (destMask0) {
-         GLint bufIndex = _mesa_ffs(destMask0) - 1;
+         GLint bufIndex = ffs(destMask0) - 1;
          if (fb->_ColorDrawBufferIndexes[count] != bufIndex) {
             updated_drawbuffers(ctx);
             fb->_ColorDrawBufferIndexes[count] = bufIndex;
@@ -417,7 +417,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       GLuint count = 0;
       for (buf = 0; buf < n; buf++ ) {
          if (destMask[buf]) {
-            GLint bufIndex = _mesa_ffs(destMask[buf]) - 1;
+            GLint bufIndex = ffs(destMask[buf]) - 1;
             /* only one bit should be set in the destMask[buf] field */
             ASSERT(_mesa_bitcount(destMask[buf]) == 1);
             if (fb->_ColorDrawBufferIndexes[buf] != bufIndex) {

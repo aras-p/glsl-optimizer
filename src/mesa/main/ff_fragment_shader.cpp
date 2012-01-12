@@ -295,7 +295,7 @@ need_saturate( GLuint mode )
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
    ASSERT(bit);
-   return _mesa_ffs(bit) - 1;
+   return ffs(bit) - 1;
 }
 
 

@@ -573,10 +573,15 @@ _mesa_init_sqrt_table(void);
 #define ffsll __builtin_ffsll
 #endif
 
-#define _mesa_ffs(i)  ffs(i)
-#define _mesa_ffsll(i)  ffsll(i)
+#else
 
-#if ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+extern int ffs(int i);
+extern int ffsll(long long int i);
+
+#endif /*__ GNUC__ */
+
+
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
 #define _mesa_bitcount(i) __builtin_popcount(i)
 #define _mesa_bitcount_64(i) __builtin_popcountll(i)
 #else
@@ -586,16 +591,6 @@ extern unsigned int
 _mesa_bitcount_64(uint64_t n);
 #endif
 
-#else
-extern int
-_mesa_ffs(int32_t i);
-
-extern int
-_mesa_ffsll(int64_t i);
-
-extern unsigned int
-_mesa_bitcount(unsigned int n);
-#endif
 
 extern GLhalfARB
 _mesa_float_to_half(float f);
