@@ -30,7 +30,13 @@
  */
 
 /**
- * Process a list of nodes using a hierarchical vistor
+ * Process a list of nodes using a hierarchical vistor.
+ *
+ * If statement_list is true (the default), this is a list of statements, so
+ * v->base_ir will be set to point to each statement just before iterating
+ * over it, and restored after iteration is complete.  If statement_list is
+ * false, this is a list that appears inside a statement (e.g. a parameter
+ * list), so v->base_ir will be left alone.
  *
  * \warning
  * This function will operate correctly if a node being processed is removed
@@ -38,19 +44,22 @@
  * processed, some of the added nodes may not be processed.
  */
 ir_visitor_status
-visit_list_elements(ir_hierarchical_visitor *v, exec_list *l)
+visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
+                    bool statement_list)
 {
    ir_instruction *prev_base_ir = v->base_ir;
 
    foreach_list_safe(n, l) {
       ir_instruction *const ir = (ir_instruction *) n;
-      v->base_ir = ir;
+      if (statement_list)
+         v->base_ir = ir;
       ir_visitor_status s = ir->accept(v);
 
       if (s != visit_continue)
 	 return s;
    }
-   v->base_ir = prev_base_ir;
+   if (statement_list)
+      v->base_ir = prev_base_ir;
 
    return visit_continue;
 }
@@ -129,7 +138,7 @@ ir_function::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = visit_list_elements(v, &this->signatures);
+   s = visit_list_elements(v, &this->signatures, false);
    return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
@@ -314,7 +323,7 @@ ir_call::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = visit_list_elements(v, &this->actual_parameters);
+   s = visit_list_elements(v, &this->actual_parameters, false);
    if (s == visit_stop)
       return s;
 

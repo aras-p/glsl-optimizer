@@ -178,6 +178,7 @@ void visit_tree(ir_instruction *ir,
 		void (*callback)(class ir_instruction *ir, void *data),
 		void *data);
 
-ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l);
+ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l,
+                                      bool statement_list = true);
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */
