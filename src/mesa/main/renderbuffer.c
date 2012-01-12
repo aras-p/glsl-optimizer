@@ -132,7 +132,7 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
           fb->Attachment[bufferName].Renderbuffer == NULL);
 
    /* winsys vs. user-created buffer cross check */
-   if (fb->Name) {
+   if (_mesa_is_user_fbo(fb)) {
       assert(rb->Name);
    }
    else {

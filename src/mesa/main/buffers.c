@@ -35,6 +35,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "enums.h"
+#include "fbobject.h"
 #include "mtypes.h"
 
 
@@ -56,7 +57,7 @@ supported_buffer_bitmask(const struct gl_context *ctx,
 {
    GLbitfield mask = 0x0;
 
-   if (fb->Name > 0) {
+   if (_mesa_is_user_fbo(fb)) {
       /* A user-created renderbuffer */
       GLuint i;
       ASSERT(ctx->Extensions.EXT_framebuffer_object);
@@ -357,7 +358,7 @@ updated_drawbuffers(struct gl_context *ctx)
       struct gl_framebuffer *fb = ctx->DrawBuffer;
 
       /* Flag the FBO as requiring validation. */
-      if (fb->Name != 0) {
+      if (_mesa_is_user_fbo(fb)) {
 	 fb->_Status = 0;
       }
    }
@@ -452,7 +453,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       fb->ColorDrawBuffer[buf] = GL_NONE;
    }
 
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* also set context drawbuffer state */
       for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
          if (ctx->Color.DrawBuffer[buf] != fb->ColorDrawBuffer[buf]) {
@@ -476,7 +477,7 @@ _mesa_update_draw_buffers(struct gl_context *ctx)
    GLuint i;
 
    /* should be a window system FBO */
-   assert(ctx->DrawBuffer->Name == 0);
+   assert(_mesa_is_winsys_fbo(ctx->DrawBuffer));
 
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++)
       buffers[i] = ctx->Color.DrawBuffer[i];
@@ -497,7 +498,7 @@ _mesa_readbuffer(struct gl_context *ctx, GLenum buffer, GLint bufferIndex)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
 
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* Only update the per-context READ_BUFFER state if we're bound to
        * a window-system framebuffer.
        */
@@ -533,7 +534,7 @@ _mesa_ReadBuffer(GLenum buffer)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
 
-   if (fb->Name > 0 && buffer == GL_NONE) {
+   if (_mesa_is_user_fbo(fb) && buffer == GL_NONE) {
       /* This is legal for user-created framebuffer objects */
       srcBuffer = -1;
    }

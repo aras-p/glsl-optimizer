@@ -32,6 +32,28 @@
 struct gl_context;
 struct gl_texture_object;
 
+
+/**
+ * Is the given FBO a user-created FBO?
+ */
+static inline GLboolean
+_mesa_is_user_fbo(const struct gl_framebuffer *fb)
+{
+   return fb->Name != 0;
+}
+
+
+/**
+ * Is the given FBO a window system FBO (like an X window)?
+ */
+static inline GLboolean
+_mesa_is_winsys_fbo(const struct gl_framebuffer *fb)
+{
+   return fb->Name == 0;
+}
+
+
+
 extern void
 _mesa_init_fbobjects(struct gl_context *ctx);
 

@@ -281,8 +281,8 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
     * and return early.
     */
 
-   /* For window system framebuffers, Name is zero */
-   assert(fb->Name == 0);
+   /* Can only resize win-sys framebuffer objects */
+   assert(_mesa_is_winsys_fbo(fb));
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
@@ -408,7 +408,7 @@ update_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
    GLuint i;
 
    /* user-created framebuffers only */
-   assert(fb->Name);
+   assert(_mesa_is_user_fbo(fb));
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
@@ -687,7 +687,7 @@ update_color_read_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* This is a window-system framebuffer */
       /* Need to update the FB's GL_DRAW_BUFFER state to match the
        * context state (GL_READ_BUFFER too).

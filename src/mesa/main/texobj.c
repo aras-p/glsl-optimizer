@@ -893,7 +893,7 @@ unbind_texobj_from_fbo(struct gl_context *ctx,
 
    for (i = 0; i < n; i++) {
       struct gl_framebuffer *fb = (i == 0) ? ctx->DrawBuffer : ctx->ReadBuffer;
-      if (fb->Name) {
+      if (_mesa_is_user_fbo(fb)) {
          GLuint j;
          for (j = 0; j < BUFFER_COUNT; j++) {
             if (fb->Attachment[j].Type == GL_TEXTURE &&

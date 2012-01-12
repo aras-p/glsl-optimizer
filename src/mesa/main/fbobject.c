@@ -79,26 +79,6 @@ static struct gl_renderbuffer DummyRenderbuffer;
 static struct gl_framebuffer IncompleteFramebuffer;
 
 
-/**
- * Is the given FBO a user-created FBO?
- */
-static inline GLboolean
-is_user_fbo(const struct gl_framebuffer *fb)
-{
-   return fb->Name != 0;
-}
-
-
-/**
- * Is the given FBO a window system FBO (like an X window)?
- */
-static inline GLboolean
-is_winsys_fbo(const struct gl_framebuffer *fb)
-{
-   return fb->Name == 0;
-}
-
-
 static void
 delete_dummy_renderbuffer(struct gl_renderbuffer *rb)
 {
@@ -214,7 +194,7 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
 {
    GLuint i;
 
-   assert(is_user_fbo(fb));
+   assert(_mesa_is_user_fbo(fb));
 
    switch (attachment) {
    case GL_COLOR_ATTACHMENT0_EXT:
@@ -265,7 +245,7 @@ static struct gl_renderbuffer_attachment *
 _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                          GLenum attachment)
 {
-   assert(is_winsys_fbo(fb));
+   assert(_mesa_is_winsys_fbo(fb));
 
    switch (attachment) {
    case GL_FRONT_LEFT:
@@ -711,7 +691,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLint i;
    GLuint j;
 
-   assert(is_user_fbo(fb));
+   assert(_mesa_is_user_fbo(fb));
 
    numImages = 0;
    fb->Width = 0;
@@ -1009,10 +989,10 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
             }
 
-            if (is_user_fbo(ctx->DrawBuffer)) {
+            if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
                detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
             }
-            if (is_user_fbo(ctx->ReadBuffer)
+            if (_mesa_is_user_fbo(ctx->ReadBuffer)
                 && ctx->ReadBuffer != ctx->DrawBuffer) {
                detach_renderbuffer(ctx, ctx->ReadBuffer, rb);
             }
@@ -1318,7 +1298,7 @@ invalidate_rb(GLuint key, void *data, void *userData)
    struct gl_renderbuffer *rb = (struct gl_renderbuffer *) userData;
 
    /* If this is a user-created FBO */
-   if (is_user_fbo(fb)) {
+   if (_mesa_is_user_fbo(fb)) {
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
@@ -1609,7 +1589,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
    GLuint i;
    ASSERT(ctx->Driver.RenderTexture);
 
-   if (is_winsys_fbo(fb))
+   if (_mesa_is_winsys_fbo(fb))
       return; /* can't render to texture with winsys framebuffers */
 
    for (i = 0; i < BUFFER_COUNT; i++) {
@@ -1629,7 +1609,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   if (is_winsys_fbo(fb))
+   if (_mesa_is_winsys_fbo(fb))
       return; /* can't render to texture with winsys framebuffers */
 
    if (ctx->Driver.FinishRenderTexture) {
@@ -1882,7 +1862,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
       return 0;
    }
 
-   if (is_winsys_fbo(buffer)) {
+   if (_mesa_is_winsys_fbo(buffer)) {
       /* The window system / default framebuffer is always complete */
       return GL_FRAMEBUFFER_COMPLETE_EXT;
    }
@@ -1944,7 +1924,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    }
 
    /* check framebuffer binding */
-   if (is_winsys_fbo(fb)) {
+   if (_mesa_is_winsys_fbo(fb)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glFramebufferTexture%sEXT", caller);
       return;
@@ -2204,7 +2184,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   if (is_winsys_fbo(fb)) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* Can't attach new renderbuffers to a window system framebuffer */
       _mesa_error(ctx, GL_INVALID_OPERATION, "glFramebufferRenderbufferEXT");
       return;
@@ -2285,7 +2265,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   if (is_winsys_fbo(buffer)) {
+   if (_mesa_is_winsys_fbo(buffer)) {
       /* Page 126 (page 136 of the PDF) of the OpenGL ES 2.0.25 spec
        * says:
        *
@@ -2332,7 +2312,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
-      *params = is_winsys_fbo(buffer) ? GL_FRAMEBUFFER_DEFAULT : att->Type;
+      *params = _mesa_is_winsys_fbo(buffer)
+         ? GL_FRAMEBUFFER_DEFAULT : att->Type;
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT:
       if (att->Type == GL_RENDERBUFFER_EXT) {

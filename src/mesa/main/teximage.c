@@ -1900,7 +1900,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    }
 
    /* Check that the source buffer is complete */
-   if (ctx->ReadBuffer->Name) {
+   if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
       if (ctx->ReadBuffer->_Status == 0) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
@@ -1999,7 +1999,7 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
                               GLenum target, GLint level)
 {
    /* Check that the source buffer is complete */
-   if (ctx->ReadBuffer->Name) {
+   if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
       if (ctx->ReadBuffer->_Status == 0) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
@@ -2179,7 +2179,7 @@ check_rtt_cb(GLuint key, void *data, void *userData)
    const GLuint level = info->level, face = info->face;
 
    /* If this is a user-created FBO */
-   if (fb->Name) {
+   if (_mesa_is_user_fbo(fb)) {
       GLuint i;
       /* check if any of the FBO's attachments point to 'texObj' */
       for (i = 0; i < BUFFER_COUNT; i++) {
