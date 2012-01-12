@@ -228,7 +228,7 @@ update_program(struct gl_context *ctx)
 {
    const struct gl_shader_program *vsProg = ctx->Shader.CurrentVertexProgram;
    const struct gl_shader_program *gsProg = ctx->Shader.CurrentGeometryProgram;
-   const struct gl_shader_program *fsProg = ctx->Shader.CurrentFragmentProgram;
+   struct gl_shader_program *fsProg = ctx->Shader.CurrentFragmentProgram;
    const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
    const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
    const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
