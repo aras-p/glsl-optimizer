@@ -175,7 +175,7 @@ NAME(line)(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
                              line.attrPlane[attr][c]);
             }
          }
-         line.span.arrayAttribs |= (1 << attr);
+         line.span.arrayAttribs |= BITFIELD64_BIT(attr);
          if (attr >= FRAG_ATTRIB_TEX0 && attr < FRAG_ATTRIB_VAR0) {
             const GLuint u = attr - FRAG_ATTRIB_TEX0;
             const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;

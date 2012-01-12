@@ -531,7 +531,7 @@ _swrast_update_active_attribs(struct gl_context *ctx)
    {
       GLuint i, num = 0;
       for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
-         if (attribsMask & (1 << i)) {
+         if (attribsMask & BITFIELD64_BIT(i)) {
             swrast->_ActiveAttribs[num++] = i;
             /* how should this attribute be interpolated? */
             if (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1)

@@ -175,7 +175,7 @@ interpolate_active_attribs(struct gl_context *ctx, SWspan *span,
    attrMask &= ~span->arrayAttribs;
 
    ATTRIB_LOOP_BEGIN
-      if (attrMask & (1 << attr)) {
+      if (attrMask & BITFIELD64_BIT(attr)) {
          const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
          GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
          const GLfloat dv0dx = span->attrStepX[attr][0];
@@ -199,8 +199,8 @@ interpolate_active_attribs(struct gl_context *ctx, SWspan *span,
             v3 += dv3dx;
             w += dwdx;
          }
-         ASSERT((span->arrayAttribs & (1 << attr)) == 0);
-         span->arrayAttribs |= (1 << attr);
+         ASSERT((span->arrayAttribs & BITFIELD64_BIT(attr)) == 0);
+         span->arrayAttribs |= BITFIELD64_BIT(attr);
       }
    ATTRIB_LOOP_END
 }
