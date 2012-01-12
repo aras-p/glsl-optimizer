@@ -1984,7 +1984,7 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
       separate_attribs_mode ? num_tfeedback_decls : 1;
 
    prog->LinkedTransformFeedback.Varyings =
-      rzalloc_array(prog->LinkedTransformFeedback.Varyings,
+      rzalloc_array(prog,
 		    struct gl_transform_feedback_varying_info,
 		    num_tfeedback_decls);
 
