@@ -56,6 +56,8 @@
 #include "vbo/vbo.h"
 
 
+#define OSMESA_RENDERBUFFER_CLASS 0x053
+
 
 /**
  * OSMesa rendering context, derived from core Mesa struct gl_context.
@@ -932,11 +934,12 @@ new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
       rb->RefCount = 1;
       rb->Delete = osmesa_delete_renderbuffer;
       rb->AllocStorage = osmesa_renderbuffer_storage;
+      rb->ClassID = OSMESA_RENDERBUFFER_CLASS;
 
       rb->InternalFormat = GL_RGBA;
       switch (type) {
       case GL_UNSIGNED_BYTE:
-         rb->Format = MESA_FORMAT_RGBA8888;
+         rb->Format = MESA_FORMAT_RGBA8888_REV;
          break;
       case GL_UNSIGNED_SHORT:
          rb->Format = MESA_FORMAT_RGBA_16;
@@ -956,6 +959,56 @@ new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
       rb->DataType = type;
    }
    return rb;
+}
+
+
+
+static void
+osmesa_MapRenderbuffer(struct gl_context *ctx,
+                       struct gl_renderbuffer *rb,
+                       GLuint x, GLuint y, GLuint w, GLuint h,
+                       GLbitfield mode,
+                       GLubyte **mapOut, GLint *rowStrideOut)
+{
+   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+
+   if (rb->ClassID == OSMESA_RENDERBUFFER_CLASS) {
+      /* this is an OSMesa renderbuffer which wraps user memory */
+      const GLuint bpp = _mesa_get_format_bytes(rb->Format);
+      GLint rowStride; /* in bytes */
+
+      if (osmesa->userRowLength)
+         rowStride = osmesa->userRowLength * bpp;
+      else
+         rowStride = rb->Width * bpp;
+
+      if (!osmesa->yup) {
+         /* Y=0 is top line of window */
+         y = rb->Height - y - 1;
+         *rowStrideOut = -rowStride;
+      }
+      else {
+         *rowStrideOut = rowStride;
+      }
+
+      *mapOut = (GLubyte *) rb->Data + y * rowStride + x * bpp;
+   }
+   else {
+      _swrast_map_soft_renderbuffer(ctx, rb, x, y, w, h, mode,
+                                    mapOut, rowStrideOut);
+   }
+}
+
+
+static void
+osmesa_UnmapRenderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
+{
+   if (rb->ClassID == OSMESA_RENDERBUFFER_CLASS) {
+      /* no-op */
+   }
+   else {
+      _swrast_unmap_soft_renderbuffer(ctx, rb);
+   }
 }
 
 
@@ -1156,6 +1209,9 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          /* use default TCL pipeline */
          tnl = TNL_CONTEXT(ctx);
          tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
+         ctx->Driver.MapRenderbuffer = osmesa_MapRenderbuffer;
+         ctx->Driver.UnmapRenderbuffer = osmesa_UnmapRenderbuffer;
 
          /* Extend the software rasterizer with our optimized line and triangle
           * drawing functions.
