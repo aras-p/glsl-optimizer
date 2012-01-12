@@ -108,13 +108,14 @@ vbo_get_minmax_index(struct gl_context *ctx,
 {
    const GLboolean restart = ctx->Array.PrimitiveRestart;
    const GLuint restartIndex = ctx->Array.RestartIndex;
-   const void *indices;
+   const int index_size = vbo_sizeof_ib_type(ib->type);
+   const char *indices;
    GLuint i;
 
-   indices = (void *)ib->ptr + prim->start * vbo_sizeof_ib_type(ib->type);
+   indices = (char *) ib->ptr + prim->start * index_size;
    if (_mesa_is_bufferobj(ib->obj)) {
-      GLsizeiptr size = MIN2(count * vbo_sizeof_ib_type(ib->type), ib->obj->Size);
-      indices = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) indices, size,
+      GLsizeiptr size = MIN2(count * ib_size, index->obj->Size);
+      indices = ctx->Driver.MapBufferRange(ctx, (GLintptr) indices, size,
                                            GL_MAP_READ_BIT, ib->obj);
    }
 
