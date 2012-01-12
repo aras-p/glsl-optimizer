@@ -651,10 +651,10 @@ intel_render_texture(struct gl_context * ctx,
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct intel_mipmap_tree *mt = intel_image->mt;
+   int layer;
 
    (void) fb;
 
-   int layer;
    if (att->CubeMapFace > 0) {
       assert(att->Zoffset == 0);
       layer = att->CubeMapFace;
