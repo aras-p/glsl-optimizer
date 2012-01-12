@@ -864,6 +864,13 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
       }
       break;
    case TGSI_FILE_SYSTEM_VALUE:
+      switch (sn) {
+      case TGSI_SEMANTIC_VERTEXID:
+         info->io.vertexId = first;
+         break;
+      default:
+         break;
+      }
       for (i = first; i <= last; ++i, ++si) {
          info->sv[i].sn = sn;
          info->sv[i].si = si;

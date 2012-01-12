@@ -263,7 +263,8 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_element *ve;
    unsigned i;
 
-   if (unlikely(vertex->need_conversion || NVC0_USING_EDGEFLAG(nvc0))) {
+   if (unlikely(vertex->need_conversion) ||
+       unlikely(nvc0->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)) {
       nvc0->vbo_fifo = ~0;
       nvc0->vbo_user = 0;
    } else {

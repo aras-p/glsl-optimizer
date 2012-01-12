@@ -938,6 +938,7 @@ nv50_ir_init_prog_info(struct nv50_ir_prog_info *info)
    }
    info->io.clipDistance = 0xff;
    info->io.pointSize = 0xff;
+   info->io.vertexId = 0xff;
    info->io.edgeFlagIn = 0xff;
    info->io.edgeFlagOut = 0xff;
    info->io.fragDepth = 0xff;

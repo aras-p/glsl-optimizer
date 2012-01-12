@@ -21,6 +21,7 @@ struct push_context {
    struct translate *translate;
 
    boolean primitive_restart;
+   boolean need_vertex_id;
    uint32_t prim;
    uint32_t restart_index;
    uint32_t instance_id;
@@ -42,22 +43,23 @@ init_push_context(struct nvc0_context *nvc0, struct push_context *ctx)
    ctx->chan = nvc0->screen->base.channel;
    ctx->translate = nvc0->vertex->translate;
 
+   if (likely(nvc0->vertex->num_elements < 32))
+      ctx->need_vertex_id = nvc0->vertprog->vp.need_vertex_id;
+   else
+      ctx->need_vertex_id = FALSE;
+
+   ctx->edgeflag.buffer = -1;
    ctx->edgeflag.value = 0.5f;
 
-   if (NVC0_USING_EDGEFLAG(nvc0)) {
+   if (unlikely(nvc0->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)) {
       ve = &nvc0->vertex->element[nvc0->vertprog->vp.edgeflag].pipe;
-
       ctx->edgeflag.buffer = ve->vertex_buffer_index;
       ctx->edgeflag.offset = ve->src_offset;
-
       ctx->packet_vertex_limit = 1;
    } else {
-      ctx->edgeflag.buffer = -1;
-      ctx->edgeflag.offset = 0;
-      ctx->edgeflag.stride = 0;
-      ctx->edgeflag.data = NULL;
-
       ctx->packet_vertex_limit = nvc0->vertex->vtx_per_packet_max;
+      if (unlikely(ctx->need_vertex_id))
+         ctx->packet_vertex_limit = 1;
    }
 
    ctx->vertex_words = nvc0->vertex->vtx_size;
@@ -72,6 +74,17 @@ set_edgeflag(struct push_context *ctx, unsigned vtx_id)
       ctx->edgeflag.value = f;
       IMMED_RING(ctx->chan, RING_3D(EDGEFLAG_ENABLE), f ? 1 : 0);
    }
+}
+
+static INLINE void
+set_vertexid(struct push_context *ctx, uint32_t vtx_id)
+{
+#if 0
+   BEGIN_RING(ctx->chan, RING_3D(VERTEX_ID), 1); /* broken on nvc0 */
+#else
+   BEGIN_RING(ctx->chan, RING_3D(VERTEX_DATA), 1); /* as last attribute */
+#endif
+   OUT_RING  (ctx->chan, vtx_id);
 }
 
 static INLINE unsigned
@@ -117,7 +130,7 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
       if (ctx->primitive_restart)
          nr = prim_restart_search_i08(elts, push, ctx->restart_index);
 
-      if (unlikely(ctx->edgeflag.buffer >= 0) && nr)
+      if (unlikely(ctx->edgeflag.buffer >= 0) && likely(nr))
          set_edgeflag(ctx, elts[0]);
 
       size = ctx->vertex_words * nr;
@@ -126,8 +139,11 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
       ctx->translate->run_elts8(ctx->translate, elts, nr, ctx->instance_id,
                                 ctx->chan->cur);
-
       ctx->chan->cur += size;
+
+      if (unlikely(ctx->need_vertex_id) && likely(size))
+         set_vertexid(ctx, elts[0]);
+
       count -= nr;
       elts += nr;
 
@@ -155,7 +171,7 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
       if (ctx->primitive_restart)
          nr = prim_restart_search_i16(elts, push, ctx->restart_index);
 
-      if (unlikely(ctx->edgeflag.buffer >= 0) && nr)
+      if (unlikely(ctx->edgeflag.buffer >= 0) && likely(nr))
          set_edgeflag(ctx, elts[0]);
 
       size = ctx->vertex_words * nr;
@@ -164,8 +180,11 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
       ctx->translate->run_elts16(ctx->translate, elts, nr, ctx->instance_id,
                                  ctx->chan->cur);
-
       ctx->chan->cur += size;
+
+      if (unlikely(ctx->need_vertex_id))
+         set_vertexid(ctx, elts[0]);
+
       count -= nr;
       elts += nr;
 
@@ -193,7 +212,7 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
       if (ctx->primitive_restart)
          nr = prim_restart_search_i32(elts, push, ctx->restart_index);
 
-      if (unlikely(ctx->edgeflag.buffer >= 0) && nr)
+      if (unlikely(ctx->edgeflag.buffer >= 0) && likely(nr))
          set_edgeflag(ctx, elts[0]);
 
       size = ctx->vertex_words * nr;
@@ -202,8 +221,11 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
       ctx->translate->run_elts(ctx->translate, elts, nr, ctx->instance_id,
                                ctx->chan->cur);
-
       ctx->chan->cur += size;
+
+      if (unlikely(ctx->need_vertex_id))
+         set_vertexid(ctx, elts[0]);
+
       count -= nr;
       elts += nr;
 
@@ -233,6 +255,10 @@ emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
       ctx->translate->run(ctx->translate, start, push, ctx->instance_id,
                           ctx->chan->cur);
       ctx->chan->cur += size;
+
+      if (unlikely(ctx->need_vertex_id))
+         set_vertexid(ctx, start);
+
       count -= push;
       start += push;
    }
@@ -326,6 +352,16 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    ctx.instance_id = info->start_instance;
    ctx.prim = nvc0_prim_gl(info->mode);
 
+   if (unlikely(ctx.need_vertex_id)) {
+      const unsigned a = nvc0->vertex->num_elements;
+      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
+      OUT_RING  (ctx.chan, (a << NVC0_3D_VERTEX_ATTRIB_FORMAT_BUFFER__SHIFT) |
+                 NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
+                 NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32);
+      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ID_REPLACE), 1);
+      OUT_RING  (ctx.chan, (((0x80 + a * 0x10) / 4) << 4) | 1);
+   }
+
    while (inst_count--) {
       BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
       OUT_RING  (ctx.chan, ctx.prim);
@@ -354,6 +390,16 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 
    if (unlikely(ctx.edgeflag.value == 0.0f))
       IMMED_RING(ctx.chan, RING_3D(EDGEFLAG_ENABLE), 1);
+
+   if (unlikely(ctx.need_vertex_id)) {
+      const unsigned a = nvc0->vertex->num_elements;
+      IMMED_RING(ctx.chan, RING_3D(VERTEX_ID_REPLACE), 0);
+      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
+      OUT_RING  (ctx.chan,
+                 NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST |
+                 NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
+                 NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32);
+   }
 
    if (info->indexed)
       nouveau_resource_unmap(nv04_resource(nvc0->idxbuf.buffer));

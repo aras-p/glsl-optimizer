@@ -107,7 +107,7 @@ nvc0_vp_assign_input_slots(struct nv50_ir_prog_info *info)
 
    for (n = 0, i = 0; i < info->numInputs; ++i) {
       switch (info->in[i].sn) {
-      case TGSI_SEMANTIC_INSTANCEID:
+      case TGSI_SEMANTIC_INSTANCEID: /* for SM4 only, in TGSI they're SVs */
       case TGSI_SEMANTIC_VERTEXID:
          info->in[i].mask = 0x1;
          info->in[i].slot[0] =
@@ -580,7 +580,11 @@ nvc0_program_translate(struct nvc0_program *prog)
    prog->relocs = info->bin.relocData;
    prog->max_gpr = MAX2(4, (info->bin.maxGPR + 1));
 
-   prog->vp.edgeflag = PIPE_MAX_ATTRIBS;
+   prog->vp.need_vertex_id = info->io.vertexId < PIPE_MAX_SHADER_INPUTS;
+
+   if (info->io.edgeFlagOut < PIPE_MAX_ATTRIBS)
+      info->out[info->io.edgeFlagOut].mask = 0; /* for headergen */
+   prog->vp.edgeflag = info->io.edgeFlagIn;
 
    switch (prog->type) {
    case PIPE_SHADER_VERTEX:
