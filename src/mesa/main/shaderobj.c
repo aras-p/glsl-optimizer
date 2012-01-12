@@ -35,6 +35,7 @@
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/shaderobj.h"
+#include "main/uniforms.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/hash_table.h"
@@ -276,6 +277,7 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
    if (shProg->UniformStorage) {
+      _mesa_uniform_detach_all_driver_storage(shProg->UniformStorage);
       ralloc_free(shProg->UniformStorage);
       shProg->NumUserUniformStorage = 0;
       shProg->UniformStorage = NULL;
