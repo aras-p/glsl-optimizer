@@ -21,12 +21,10 @@ Float textures, renderbuffers (GL_ARB_texture_float)  DONE (i965, r300, r600)
 GL_EXT_packed_float                                   DONE (i965, r600)
 GL_EXT_texture_shared_exponent                        DONE (i965, r600, swrast)
 Float depth buffers (GL_ARB_depth_buffer_float)       DONE (i965, r600)
-Framebuffer objects (GL_EXT_framebuffer_object)       DONE (i965, r300, r600, swrast)
+Framebuffer objects (GL_ARB_framebuffer_object)       DONE (i965, r300, r600, swrast)
 Half-float                                            DONE
-Multisample blit                                      DONE
 Non-normalized Integer texture/framebuffer formats    ~50% done
 1D/2D Texture arrays                                  DONE
-Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE (i965, r600, swrast)
 GL_EXT_texture_compression_rgtc                       DONE (i965, r300, r600, swrast)
 Red and red/green texture formats                     DONE (i965, swrast, gallium)
