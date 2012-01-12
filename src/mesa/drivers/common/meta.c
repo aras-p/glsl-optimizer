@@ -2920,8 +2920,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    /* setup texcoords (XXX what about border?) */
    setup_texture_coords(faceTarget,
-                        0.0f, 0.0f, /* width, height never used here */
                         slice,
+                        0, 0, /* width, height never used here */
                         verts[0].tex,
                         verts[1].tex,
                         verts[2].tex,
