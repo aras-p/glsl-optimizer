@@ -229,6 +229,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * program constant) has to happen before creating this linkage.
        */
       _mesa_associate_uniform_storage(ctx, shProg, prog->Parameters);
+
+      _mesa_reference_program(ctx, &prog, NULL);
    }
 
    if (!brw_shader_precompile(ctx, shProg))
