@@ -70,7 +70,6 @@ INTEL_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_intel)
 NOUVEAU_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_nouveau)
 NOUVEAU_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_nouveau)
 
-LIBDRM_RADEON_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_radeon)
-LIBDRM_RADEON_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_radeon)
-RADEON_CFLAGS = "-DHAVE_LIBDRM_RADEON=1 $(LIBDRM_RADEON_CFLAGS)"
+RADEON_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_radeon)
+RADEON_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_radeon)
 RADEON_LDFLAGS = $(LIBDRM_RADEON_LIBS)
