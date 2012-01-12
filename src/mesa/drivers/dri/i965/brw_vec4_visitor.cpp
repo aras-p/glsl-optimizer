@@ -2601,10 +2601,6 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->live_intervals_valid = false;
 
    this->uniforms = 0;
-
-   this->variable_ht = hash_table_ctor(0,
-				       hash_table_pointer_hash,
-				       hash_table_pointer_compare);
 }
 
 vec4_visitor::~vec4_visitor()
