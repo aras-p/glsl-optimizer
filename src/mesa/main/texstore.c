@@ -515,9 +515,9 @@ make_temp_uint_image(struct gl_context *ctx, GLuint dims,
          for (k = 0; k < texComponents; k++) {
             GLint j = map[k];
             if (j == ZERO)
-               newImage[i * texComponents + k] = 0.0F;
+               newImage[i * texComponents + k] = 0;
             else if (j == ONE)
-               newImage[i * texComponents + k] = 1.0F;
+               newImage[i * texComponents + k] = 1;
             else
                newImage[i * texComponents + k] = tempImage[i * logComponents + j];
          }
@@ -4094,7 +4094,7 @@ _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
                _mesa_unpack_depth_span(ctx, srcWidth,
                                        GL_FLOAT_32_UNSIGNED_INT_24_8_REV, /* dst type */
                                        dstRow, /* dst addr */
-                                       1.0f, srcType, src, srcPacking);
+                                       ~0U, srcType, src, srcPacking);
 
             if (srcFormat != GL_DEPTH_COMPONENT)
                _mesa_unpack_stencil_span(ctx, srcWidth,
