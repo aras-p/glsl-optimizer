@@ -528,7 +528,7 @@ struct texenv_fragment_program {
     */
 
    /* Texcoord override from bumpmapping. */
-   struct ir_variable *texcoord_tex[MAX_TEXTURE_COORD_UNITS];
+   ir_variable *texcoord_tex[MAX_TEXTURE_COORD_UNITS];
 
    /* Reg containing texcoord for a texture unit,
     * needed for bump mapping, else undef.
