@@ -18,6 +18,9 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 
+LT_PREREQ([2.2])
+LT_INIT([disable-static])
+
 dnl Save user CFLAGS and CXXFLAGS so one can override the default ones
 USER_CFLAGS="$CFLAGS"
 USER_CXXFLAGS="$CXXFLAGS"
@@ -1282,8 +1285,17 @@ AC_SUBST([DRI_LIB_DEPS])
 case $DRI_DIRS in
 *i915*|*i965*)
     PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+
+    case $DRI_DIRS in
+    *i965*)
+	HAVE_I965_DRI=yes;
+	;;
+    esac
+
     ;;
 esac
+
+AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
 
 case $DRI_DIRS in
 *nouveau*)
@@ -1924,6 +1936,7 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		src/mesa/drivers/dri/i965/Makefile
 		tests/Makefile
 		tests/glx/Makefile])
 

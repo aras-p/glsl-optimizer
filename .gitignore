@@ -2,6 +2,7 @@
 *.dll
 *.exe
 *.ilk
+*.lo
 *.o
 *.obj
 *.os
@@ -19,9 +20,11 @@
 *~
 depend
 depend.bak
+bin/ltmain.sh
 lib
 lib64
 configure
+configure.lineno
 autom4te.cache
 aclocal.m4
 config.log
@@ -30,5 +33,6 @@ cscope*
 .scon*
 config.py
 build
+libtool
 manifest.txt
 .dir-locals.el
