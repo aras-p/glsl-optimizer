@@ -566,6 +566,9 @@ _mesa_inv_sqrtf(float x);
 extern void
 _mesa_init_sqrt_table(void);
 
+
+#ifndef FFS_DEFINED
+#define FFS_DEFINED 1
 #ifdef __GNUC__
 
 #if defined(__MINGW32__) || defined(__CYGWIN__) || defined(ANDROID) || defined(__APPLE__)
@@ -579,6 +582,7 @@ extern int ffs(int i);
 extern int ffsll(long long int i);
 
 #endif /*__ GNUC__ */
+#endif /* FFS_DEFINED */
 
 
 #if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */

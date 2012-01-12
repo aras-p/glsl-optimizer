@@ -340,6 +340,9 @@ util_is_inf_or_nan(float x)
  * Find first bit set in word.  Least significant bit is 1.
  * Return 0 if no bits set.
  */
+#ifndef FFS_DEFINED
+#define FFS_DEFINED 1
+
 #if defined(_MSC_VER) && _MSC_VER >= 1300 && (_M_IX86 || _M_AMD64 || _M_IA64)
 unsigned char _BitScanForward(unsigned long* Index, unsigned long Mask);
 #pragma intrinsic(_BitScanForward)
@@ -371,6 +374,8 @@ unsigned ffs( unsigned u )
 #elif defined(__MINGW32__) || defined(PIPE_OS_ANDROID)
 #define ffs __builtin_ffs
 #endif
+
+#endif /* FFS_DEFINED */
 
 
 /* Destructively loop over all of the bits in a mask as in:
