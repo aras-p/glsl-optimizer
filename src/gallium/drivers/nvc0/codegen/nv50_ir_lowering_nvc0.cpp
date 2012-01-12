@@ -703,11 +703,6 @@ NVC0LoweringPass::visit(Instruction *i)
          assert(prog->getType() != Program::TYPE_FRAGMENT);
       }
       break;
-   case OP_PINTERP:
-      if (i->getSrc(0)->reg.data.offset >= 0x280 &&
-          i->getSrc(0)->reg.data.offset <  0x2c0)
-         i->setInterpolate(i->getSampleMode() | NV50_IR_INTERP_SC);
-      break;
    default:
       break;
    }   

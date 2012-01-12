@@ -817,9 +817,11 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
                case TGSI_INTERPOLATE_CONSTANT:
                   info->in[i].flat = 1;
                   break;
+               case TGSI_INTERPOLATE_COLOR:
+                  info->in[i].sc = 1;
+                  break;
                case TGSI_INTERPOLATE_LINEAR:
-                  if (sn != TGSI_SEMANTIC_COLOR) // GL_NICEST
-                     info->in[i].linear = 1;
+                  info->in[i].linear = 1;
                   break;
                default:
                   break;
@@ -1141,7 +1143,7 @@ Converter::makeSym(uint tgsiFile, int fileIdx, int idx, int c, uint32_t address)
 static inline uint8_t
 translateInterpMode(const struct nv50_ir_varying *var, operation& op)
 {
-   uint8_t mode;
+   uint8_t mode = NV50_IR_INTERP_PERSPECTIVE;
 
    if (var->flat)
       mode = NV50_IR_INTERP_FLAT;
@@ -1149,9 +1151,11 @@ translateInterpMode(const struct nv50_ir_varying *var, operation& op)
    if (var->linear)
       mode = NV50_IR_INTERP_LINEAR;
    else
-      mode = NV50_IR_INTERP_PERSPECTIVE;
+   if (var->sc)
+      mode = NV50_IR_INTERP_SC;
 
-   op = (mode == NV50_IR_INTERP_PERSPECTIVE) ? OP_PINTERP : OP_LINTERP;
+   op = (mode == NV50_IR_INTERP_PERSPECTIVE || mode == NV50_IR_INTERP_SC)
+      ? OP_PINTERP : OP_LINTERP;
 
    if (var->centroid)
       mode |= NV50_IR_INTERP_CENTROID;

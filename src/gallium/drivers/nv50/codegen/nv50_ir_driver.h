@@ -42,6 +42,7 @@ struct nv50_ir_varying
    unsigned mask     : 4; /* vec4 mask */
    unsigned linear   : 1; /* linearly interpolated if true (and not flat) */
    unsigned flat     : 1;
+   unsigned sc       : 1; /* special colour interpolation mode (SHADE_MODEL) */
    unsigned centroid : 1;
    unsigned patch    : 1; /* patch constant value */
    unsigned regular  : 1; /* driver-specific meaning (e.g. input in sreg) */
