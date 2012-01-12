@@ -45,7 +45,7 @@
 #include "sp_fence.h"
 #include "sp_public.h"
 
-DEBUG_GET_ONCE_BOOL_OPTION(use_llvm, "SOFTPIPE_USE_LLVM", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(use_llvm, "SOFTPIPE_USE_LLVM", FALSE)
 
 static const char *
 softpipe_get_vendor(struct pipe_screen *screen)
