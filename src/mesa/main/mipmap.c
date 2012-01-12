@@ -476,7 +476,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       GLuint *dst = (GLuint *) dstRow;
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
-         dst[i] = (GLfloat)(rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4);
+         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
       }
    }
 
