@@ -386,6 +386,8 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 
    DBG("%s\n", __FUNCTION__);
 
+   drm_intel_bo_unreference(cache->bo);
+   cache->bo = NULL;
    brw_clear_cache(brw, cache);
    free(cache->items);
    cache->items = NULL;
