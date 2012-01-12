@@ -154,13 +154,19 @@ struct ra_graph {
    unsigned int stack_count;
 };
 
+/**
+ * Creates a set of registers for the allocator.
+ *
+ * mem_ctx is a ralloc context for the allocator.  The reg set may be freed
+ * using ralloc_free().
+ */
 struct ra_regs *
-ra_alloc_reg_set(unsigned int count)
+ra_alloc_reg_set(void *mem_ctx, unsigned int count)
 {
    unsigned int i;
    struct ra_regs *regs;
 
-   regs = rzalloc(NULL, struct ra_regs);
+   regs = rzalloc(mem_ctx, struct ra_regs);
    regs->count = count;
    regs->regs = rzalloc_array(regs, struct ra_reg, count);
 

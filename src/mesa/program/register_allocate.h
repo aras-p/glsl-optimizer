@@ -36,7 +36,7 @@ struct ra_regs;
  * registers, such as aligned register pairs that conflict with the
  * two real registers from which they are composed.
  */
-struct ra_regs *ra_alloc_reg_set(unsigned int count);
+struct ra_regs *ra_alloc_reg_set(void *mem_ctx, unsigned int count);
 unsigned int ra_alloc_reg_class(struct ra_regs *regs);
 void ra_add_reg_conflict(struct ra_regs *regs,
 			 unsigned int r1, unsigned int r2);

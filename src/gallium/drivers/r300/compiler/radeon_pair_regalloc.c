@@ -547,7 +547,7 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 	struct ra_graph * graph;
 
 	/* Allocate the main ra data structure */
-	regs = ra_alloc_reg_set(s->C->max_temp_regs * RC_MASK_XYZW);
+	regs = ra_alloc_reg_set(NULL, s->C->max_temp_regs * RC_MASK_XYZW);
 
 	/* Get list of program variables */
 	variables = rc_get_variables(s->C);

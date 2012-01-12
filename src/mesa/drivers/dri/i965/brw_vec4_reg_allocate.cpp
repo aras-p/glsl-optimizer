@@ -108,7 +108,7 @@ brw_alloc_reg_set_for_classes(struct brw_context *brw,
    ralloc_free(brw->vs.ra_reg_to_grf);
    brw->vs.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
    ralloc_free(brw->vs.regs);
-   brw->vs.regs = ra_alloc_reg_set(ra_reg_count);
+   brw->vs.regs = ra_alloc_reg_set(brw, ra_reg_count);
    ralloc_free(brw->vs.classes);
    brw->vs.classes = ralloc_array(brw, int, class_count + 1);
 
