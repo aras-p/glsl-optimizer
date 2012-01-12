@@ -114,7 +114,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
 
    indices = (char *) ib->ptr + prim->start * index_size;
    if (_mesa_is_bufferobj(ib->obj)) {
-      GLsizeiptr size = MIN2(count * ib_size, index->obj->Size);
+      GLsizeiptr size = MIN2(count * index_size, ib->obj->Size);
       indices = ctx->Driver.MapBufferRange(ctx, (GLintptr) indices, size,
                                            GL_MAP_READ_BIT, ib->obj);
    }
