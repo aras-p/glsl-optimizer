@@ -30,6 +30,7 @@
 
 
 #include <stdbool.h>
+#include <string.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
 
