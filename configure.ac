@@ -662,7 +662,7 @@ AC_ARG_ENABLE([gallium_gbm],
     [enable_gallium_gbm=auto])
 
 # Option for Gallium drivers
-GALLIUM_DRIVERS_DEFAULT="r300,r600,swrast"
+GALLIUM_DRIVERS_DEFAULT="r300,r600,svga,swrast"
 
 AC_ARG_WITH([gallium-drivers],
     [AS_HELP_STRING([--with-gallium-drivers@<:@=DIRS...@:>@],
