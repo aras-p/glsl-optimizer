@@ -39,3 +39,6 @@ manifest.txt
 *.user
 *.suo
 *.dSYM
+xcuserdata
+*.xcworkspace
+
