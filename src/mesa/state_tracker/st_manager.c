@@ -26,16 +26,6 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "state_tracker/st_gl_api.h"
-
-#include "pipe/p_context.h"
-#include "pipe/p_screen.h"
-#include "util/u_format.h"
-#include "util/u_pointer.h"
-#include "util/u_inlines.h"
-#include "util/u_atomic.h"
-#include "util/u_surface.h"
-
 #include "main/mtypes.h"
 #include "main/context.h"
 #include "main/mfeatures.h"
@@ -53,6 +43,16 @@
 #include "st_cb_fbo.h"
 #include "st_cb_flush.h"
 #include "st_manager.h"
+
+#include "state_tracker/st_gl_api.h"
+
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+#include "util/u_format.h"
+#include "util/u_pointer.h"
+#include "util/u_inlines.h"
+#include "util/u_atomic.h"
+#include "util/u_surface.h"
 
 /**
  * Cast wrapper to convert a struct gl_framebuffer to an st_framebuffer.
