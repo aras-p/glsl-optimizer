@@ -45,6 +45,7 @@
 #include "main/mtypes.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
+#include "main/uniforms.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "ralloc.h"
@@ -936,8 +937,6 @@ static GLboolean
 validate_shader_program(const struct gl_shader_program *shProg,
                         char *errMsg)
 {
-   unsigned i;
-
    if (!shProg->LinkStatus) {
       return GL_FALSE;
    }
