@@ -1064,26 +1064,14 @@ DRI_CXXFLAGS='$(CXXFLAGS)'
 DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
 MESA_MODULES='$(TOP)/src/mesa/libmesa.a'
 
-AC_ARG_ENABLE([shared-dricore],
-    [AS_HELP_STRING([--enable-shared-dricore],
-        [link DRI modules with shared core DRI routines @<:@default=disabled@:>@])],
-    [enable_dricore="$enableval"],
-    [enable_dricore=no])
 if test "x$enable_dri" = xyes ; then
-   if test "$enable_dricore" = yes ; then
-      if test "$GCC$GXX" != yesyes ; then
-      	 AC_MSG_WARN([Shared dricore requires GCC-compatible rpath handling.  Disabling shared dricore])
-	 enable_dricore=no
-      else
-	 DRICORE_GLSL_LIBS='$(TOP)/$(LIB_DIR)/libglsl.so'
-	 DRICORE_LIBS='$(TOP)/$(LIB_DIR)/libdricore.so'
-	 DRICORE_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -lglsl'
-      	 DRI_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -ldricore -lglsl'
-      	 DRI_CFLAGS='$(CFLAGS_NOVISIBILITY) -DUSE_DRICORE'
-      	 DRI_CXXFLAGS='$(CXXFLAGS_NOVISIBILITY) -DUSE_DRICORE'
-      	 MESA_MODULES='$(DRICORE_LIBS) $(DRICORE_GLSL_LIBS)'
-      fi
-   fi
+    DRICORE_GLSL_LIBS='$(TOP)/$(LIB_DIR)/libglsl.so'
+    DRICORE_LIBS='$(TOP)/$(LIB_DIR)/libdricore.so'
+    DRICORE_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -lglsl'
+    DRI_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -ldricore -lglsl'
+    DRI_CFLAGS='$(CFLAGS_NOVISIBILITY) -DUSE_DRICORE'
+    DRI_CXXFLAGS='$(CXXFLAGS_NOVISIBILITY) -DUSE_DRICORE'
+    MESA_MODULES='$(DRICORE_LIBS) $(DRICORE_GLSL_LIBS)'
 fi
 AC_SUBST([DRICORE_LIBS])
 AC_SUBST([DRICORE_GLSL_LIBS])
@@ -1258,7 +1246,7 @@ if test "x$enable_dri" = xyes; then
         fi
     fi
 
-    # put all the necessary libs together, including possibly libdricore
+    # put all the necessary libs together
     DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
 AC_SUBST([DRI_DIRS])
@@ -1967,7 +1955,6 @@ if test "x$enable_dri" != xno; then
             echo "        DRI drivers:     $dri_dirs"
         fi
         echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
-        echo "        Shared dricore:  $enable_dricore"
 fi
 
 case "x$enable_glx$enable_xlib_glx" in
