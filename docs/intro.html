@@ -132,12 +132,26 @@ June 2007: Mesa 7.0 is released, implementing the OpenGL 2.1 specification
 and OpenGL Shading Language.
 </p>
 
+<p>
+2008: Keith Whitwell and other Tungsten Graphics employees develop
+<a href="http://en.wikipedia.org/wiki/Gallium3D"  target="_parent">Gallium</a>
+- a new GPU abstraction layer.  The latest Mesa drivers are based on
+Gallium and other APIs such as OpenVG are implemented on top of Gallium.
+</p>
 
 <p>
-Ongoing: Mesa is used as the core of many hardware OpenGL drivers for
-the XFree86 and X.org X servers within the
-<A href="http://dri.freedesktop.org/" target="_parent">DRI project</A>.
-I continue to enhance Mesa with new extensions and features.
+February 2012: Mesa 8.0 is released, implementing the OpenGL 3.0 specification
+and version 1.30 of the OpenGL Shading Language.
+</p>
+
+<p>
+Ongoing: Mesa is the OpenGL implementation for several types of hardware
+made by Intel, AMD and NVIDIA, plus the VMware virtual GPU.
+There's also several software-based renderers: swrast (the legacy
+Mesa rasterizer), softpipe (a gallium reference driver) and llvmpipe
+(LLVM/JIT-based high-speed rasterizer).
+Work continues on the drivers and core Mesa to implement newer versions
+of the OpenGL specification.
 </p>
 
 
@@ -148,6 +162,15 @@ I continue to enhance Mesa with new extensions and features.
 This is a summary of the major versions of Mesa.
 Mesa's major version number has been incremented whenever a new version
 of the OpenGL specification is implemented.
+</p>
+
+
+<H2>Version 8.x features</H2>
+<p>
+Version 8.x of Mesa implements the OpenGL 3.0 API.
+The developers at Intel deserve a lot of credit for implementing most
+of the OpenGL 3.0 features in core Mesa, the GLSL compiler as well as
+the i965 driver.
 </p>
 
 
