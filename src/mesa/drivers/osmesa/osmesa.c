@@ -723,9 +723,8 @@ osmesa_choose_line( struct gl_context *ctx )
 static void
 compute_row_addresses( OSMesaContext osmesa )
 {
-   GLint bytesPerPixel, bytesPerRow, i;
+   GLint bytesPerRow, i;
    GLubyte *origin = (GLubyte *) osmesa->rb->Data;
-   GLint bpc; /* bytes per channel */
    GLint rowlength; /* in pixels */
    GLint height = osmesa->rb->Height;
 
@@ -734,32 +733,7 @@ compute_row_addresses( OSMesaContext osmesa )
    else
       rowlength = osmesa->rb->Width;
 
-   if (osmesa->rb->DataType == GL_UNSIGNED_BYTE)
-      bpc = 1;
-   else if (osmesa->rb->DataType == GL_UNSIGNED_SHORT)
-      bpc = 2;
-   else if (osmesa->rb->DataType == GL_FLOAT)
-      bpc = 4;
-   else {
-      _mesa_problem(&osmesa->mesa,
-                    "Unexpected datatype in osmesa::compute_row_addresses");
-      return;
-   }
-
-   if ((osmesa->format == OSMESA_RGB) || (osmesa->format == OSMESA_BGR)) {
-      /* RGB mode */
-      bytesPerPixel = 3 * bpc;
-   }
-   else if (osmesa->format == OSMESA_RGB_565) {
-      /* 5/6/5 RGB pixel in 16 bits */
-      bytesPerPixel = 2;
-   }
-   else {
-      /* RGBA mode */
-      bytesPerPixel = 4 * bpc;
-   }
-
-   bytesPerRow = rowlength * bytesPerPixel;
+   bytesPerRow = rowlength * _mesa_get_format_bytes(osmesa->rb->Format);
 
    if (osmesa->yup) {
       /* Y=0 is bottom line of window */
@@ -802,20 +776,33 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
    (void) internalFormat;
 
+   /* Given the user-provided format and type, figure out which MESA_FORMAT_x
+    * to use.
+    * XXX There aren't Mesa formats for all the possible combinations here!
+    * XXX Specifically, there's only RGBA-order 16-bit/channel and float
+    * XXX formats.
+    * XXX The 8-bit/channel formats should all be OK.
+    */
    if (osmesa->format == OSMESA_RGBA) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
+         if (_mesa_little_endian())
+            rb->Format = MESA_FORMAT_RGBA8888_REV;
+         else
+            rb->Format = MESA_FORMAT_RGBA8888;
          rb->GetRow = get_row_RGBA8;
          rb->GetValues = get_values_RGBA8;
          rb->PutRow = put_row_RGBA8;
          rb->PutValues = put_values_RGBA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
+         rb->Format = MESA_FORMAT_RGBA_16;
          rb->GetRow = get_row_RGBA16;
          rb->GetValues = get_values_RGBA16;
          rb->PutRow = put_row_RGBA16;
          rb->PutValues = put_values_RGBA16;
       }
       else {
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32;
          rb->GetRow = get_row_RGBA32;
          rb->GetValues = get_values_RGBA32;
          rb->PutRow = put_row_RGBA32;
@@ -824,18 +811,26 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_BGRA) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
+         if (_mesa_little_endian())
+            rb->Format = MESA_FORMAT_ARGB8888;
+         else
+            rb->Format = MESA_FORMAT_ARGB8888_REV;
          rb->GetRow = get_row_BGRA8;
          rb->GetValues = get_values_BGRA8;
          rb->PutRow = put_row_BGRA8;
          rb->PutValues = put_values_BGRA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
+         _mesa_warning(ctx, "Unsupported OSMesa format BGRA/GLushort");
+         rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
          rb->GetRow = get_row_BGRA16;
          rb->GetValues = get_values_BGRA16;
          rb->PutRow = put_row_BGRA16;
          rb->PutValues = put_values_BGRA16;
       }
       else {
+         _mesa_warning(ctx, "Unsupported OSMesa format BGRA/GLfloat");
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
          rb->GetRow = get_row_BGRA32;
          rb->GetValues = get_values_BGRA32;
          rb->PutRow = put_row_BGRA32;
@@ -844,18 +839,26 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_ARGB) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
+         if (_mesa_little_endian())
+            rb->Format = MESA_FORMAT_ARGB8888_REV;
+         else
+            rb->Format = MESA_FORMAT_ARGB8888;
          rb->GetRow = get_row_ARGB8;
          rb->GetValues = get_values_ARGB8;
          rb->PutRow = put_row_ARGB8;
          rb->PutValues = put_values_ARGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
+         _mesa_warning(ctx, "Unsupported OSMesa format ARGB/GLushort");
+         rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
          rb->GetRow = get_row_ARGB16;
          rb->GetValues = get_values_ARGB16;
          rb->PutRow = put_row_ARGB16;
          rb->PutValues = put_values_ARGB16;
       }
       else {
+         _mesa_warning(ctx, "Unsupported OSMesa format ARGB/GLfloat");
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
          rb->GetRow = get_row_ARGB32;
          rb->GetValues = get_values_ARGB32;
          rb->PutRow = put_row_ARGB32;
@@ -864,18 +867,23 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_RGB) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
+         rb->Format = MESA_FORMAT_RGB888;
          rb->GetRow = get_row_RGB8;
          rb->GetValues = get_values_RGB8;
          rb->PutRow = put_row_RGB8;
          rb->PutValues = put_values_RGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
+         _mesa_warning(ctx, "Unsupported OSMesa format RGB/GLushort");
+         rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
          rb->GetRow = get_row_RGB16;
          rb->GetValues = get_values_RGB16;
          rb->PutRow = put_row_RGB16;
          rb->PutValues = put_values_RGB16;
       }
       else {
+         _mesa_warning(ctx, "Unsupported OSMesa format RGB/GLfloat");
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
          rb->GetRow = get_row_RGB32;
          rb->GetValues = get_values_RGB32;
          rb->PutRow = put_row_RGB32;
@@ -884,18 +892,23 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_BGR) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
+         rb->Format = MESA_FORMAT_BGR888;
          rb->GetRow = get_row_BGR8;
          rb->GetValues = get_values_BGR8;
          rb->PutRow = put_row_BGR8;
          rb->PutValues = put_values_BGR8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
+         _mesa_warning(ctx, "Unsupported OSMesa format BGR/GLushort");
+         rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
          rb->GetRow = get_row_BGR16;
          rb->GetValues = get_values_BGR16;
          rb->PutRow = put_row_BGR16;
          rb->PutValues = put_values_BGR16;
       }
       else {
+         _mesa_warning(ctx, "Unsupported OSMesa format BGR/GLfloat");
+         rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
          rb->GetRow = get_row_BGR32;
          rb->GetValues = get_values_BGR32;
          rb->PutRow = put_row_BGR32;
@@ -904,6 +917,7 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_RGB_565) {
       ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+      rb->Format = MESA_FORMAT_RGB565;
       rb->GetRow = get_row_RGB_565;
       rb->GetValues = get_values_RGB_565;
       rb->PutRow = put_row_RGB_565;
@@ -937,24 +951,6 @@ new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
       rb->ClassID = OSMESA_RENDERBUFFER_CLASS;
 
       rb->InternalFormat = GL_RGBA;
-      switch (type) {
-      case GL_UNSIGNED_BYTE:
-         rb->Format = MESA_FORMAT_RGBA8888_REV;
-         break;
-      case GL_UNSIGNED_SHORT:
-         rb->Format = MESA_FORMAT_RGBA_16;
-         break;
-      case GL_UNSIGNED_SHORT_5_6_5:
-         rb->Format = MESA_FORMAT_RGB565;
-         type = GL_UNSIGNED_BYTE;
-         break;
-      case GL_FLOAT:
-         rb->Format = MESA_FORMAT_RGBA_FLOAT32;
-         break;
-      default:
-         assert(0 && "Unexpected type in new_osmesa_renderbuffer()");
-         rb->Format = MESA_FORMAT_RGBA8888;
-      }
       rb->_BaseFormat = GL_RGBA;
       rb->DataType = type;
    }
