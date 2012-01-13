@@ -54,11 +54,14 @@ if test "x$MKDEP" = "x"; then
     AC_MSG_ERROR([makedepend is required to build Mesa])
 fi
 
-AC_PATH_PROG([FLEX], [flex])
-test "x$FLEX" = "x" && AC_MSG_ERROR([flex is needed to build Mesa])
-
-AC_PATH_PROG([BISON], [bison])
-test "x$BISON" = "x" && AC_MSG_ERROR([bison is needed to build Mesa])
+AC_PROG_YACC
+AC_PATH_PROG([YACC_INST], $YACC)
+if test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.y"; then
+    if test -z "$YACC_INST"; then
+        AC_MSG_ERROR([yacc not found - unable to compile glcpp-parse.y])
+    fi
+fi
+AC_PROG_LEX
 
 dnl Our fallback install-sh is a symlink to minstall. Use the existing
 dnl configuration in that case.

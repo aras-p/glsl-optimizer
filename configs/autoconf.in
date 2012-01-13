@@ -63,8 +63,8 @@ PYTHON2 = @PYTHON2@
 PYTHON_FLAGS = -t -O -O
 
 # Flex and Bison for GLSL compiler
-FLEX = @FLEX@
-BISON = @BISON@
+FLEX = @LEX@
+BISON = @YACC@
 
 # Library names (base name)
 GL_LIB = @GL_LIB@
