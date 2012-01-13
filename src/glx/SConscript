@@ -36,6 +36,7 @@ if False: # XXX: SHARED_GLAPI
 
 sources = [
     'clientattrib.c',
+    'clientinfo.c',
     'create_context.c',
     'compsize.c',
     'eval.c',
