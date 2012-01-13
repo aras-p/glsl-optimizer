@@ -636,7 +636,7 @@ pack_float_ARGB1555_REV(const GLfloat src[4], void *dst)
 static void
 pack_ubyte_AL44(const GLubyte src[4], void *dst)
 {
-   GLushort *d = ((GLushort *) dst);
+   GLubyte *d = ((GLubyte *) dst);
    *d = PACK_COLOR_44(src[ACOMP], src[RCOMP]);
 }
 
