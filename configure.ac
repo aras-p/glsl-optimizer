@@ -18,6 +18,10 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 
+dnl http://people.gnome.org/~walters/docs/build-api.txt
+dnl We don't support srcdir != builddir.
+echo \#buildapi-variable-no-builddir >/dev/null
+
 # Support silent build rules, requires at least automake-1.11. Disable
 # by either passing --disable-silent-rules to configure or passing V=1
 # to make
