@@ -57,7 +57,7 @@ struct radeon_compiler;
 
 struct rc_pair_instruction_source {
 	unsigned int Used:1;
-	unsigned int File:3;
+	unsigned int File:4;
 	unsigned int Index:RC_REGISTER_INDEX_BITS;
 };
 

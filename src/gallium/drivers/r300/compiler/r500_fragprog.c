@@ -218,6 +218,8 @@ static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 			return 1;
 
 		return 0;
+	} else if (reg.File == RC_FILE_INLINE) {
+		return 1;
 	} else {
 		/* ALU instructions support almost everything */
 		relevant = 0;

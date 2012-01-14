@@ -125,6 +125,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"emulate loops",		1, !is_r500,	rc_emulate_loops,		NULL},
 		{"register rename",		1, !is_r500 || opt,		rc_rename_regs,			NULL},
 		{"dataflow optimize",		1, opt,		rc_optimize,			NULL},
+		{"inline literals",		1, is_r500 && opt,		rc_inline_literals,			NULL},
 		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
 		{"pair translate",		1, 1,		rc_pair_translate,		NULL},

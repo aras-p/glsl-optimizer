@@ -268,7 +268,15 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = rc_init_swizzle(swz, 1);
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->Alpha.Arg[i].Negate = !!(inst->SrcReg[i].Negate & RC_MASK_W);
+
+			if (istranscendent) {
+				pair->Alpha.Arg[i].Negate =
+					!!(inst->SrcReg[i].Negate &
+							inst->DstReg.WriteMask);
+			} else {
+				pair->Alpha.Arg[i].Negate =
+					!!(inst->SrcReg[i].Negate & RC_MASK_W);
+			}
 		}
 	}
 

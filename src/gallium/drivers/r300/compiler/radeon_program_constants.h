@@ -85,7 +85,12 @@ typedef enum {
 	 * Indicates this register should use the result of the presubtract
 	 * operation.
 	 */
-	RC_FILE_PRESUB
+	RC_FILE_PRESUB,
+
+	/**
+	 * Indicates that the source index has been encoded as a 7-bit float.
+	 */
+	RC_FILE_INLINE
 } rc_register_file;
 
 enum {

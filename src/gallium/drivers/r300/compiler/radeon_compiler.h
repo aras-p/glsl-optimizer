@@ -161,6 +161,7 @@ struct rc_program_stats {
 	unsigned num_presub_ops;
 	unsigned num_temp_regs;
 	unsigned num_omod_ops;
+	unsigned num_inline_literals;
 };
 
 void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s);

@@ -130,5 +130,6 @@ void rc_dataflow_swizzles(struct radeon_compiler * c, void *user);
 /*@}*/
 
 void rc_optimize(struct radeon_compiler * c, void *user);
+void rc_inline_literals(struct radeon_compiler *c, void *user);
 
 #endif /* RADEON_DATAFLOW_H */

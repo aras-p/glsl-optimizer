@@ -28,6 +28,7 @@ C_SOURCES := \
 	compiler/radeon_compiler_util.c \
 	compiler/radeon_emulate_branches.c \
 	compiler/radeon_emulate_loops.c \
+	compiler/radeon_inline_literals.c \
 	compiler/radeon_program.c \
 	compiler/radeon_program_print.c \
 	compiler/radeon_opcodes.c \

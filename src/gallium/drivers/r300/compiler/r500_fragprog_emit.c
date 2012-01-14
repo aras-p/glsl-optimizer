@@ -210,6 +210,8 @@ static unsigned int use_source(struct r500_fragment_program_code* code, struct r
 	} else if (src.File == RC_FILE_TEMPORARY || src.File == RC_FILE_INPUT) {
 		use_temporary(code, src.Index);
 		return src.Index;
+	} else if (src.File == RC_FILE_INLINE) {
+		return src.Index | (1 << 7);
 	}
 
 	return 0;

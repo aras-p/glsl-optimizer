@@ -357,21 +357,22 @@ void rc_transform_fragment_face(struct radeon_compiler *c, unsigned face)
 static void reg_count_callback(void * userdata, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int mask)
 {
-	int *max_reg = userdata;
+	struct rc_program_stats *s = userdata;
 	if (file == RC_FILE_TEMPORARY)
-		(int)index > *max_reg ? *max_reg = index : 0;
+		(int)index > s->num_temp_regs ? s->num_temp_regs = index : 0;
+	if (file == RC_FILE_INLINE)
+		s->num_inline_literals++;
 }
 
 void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 {
-	int max_reg = -1;
 	struct rc_instruction * tmp;
 	memset(s, 0, sizeof(*s));
 
 	for(tmp = c->Program.Instructions.Next; tmp != &c->Program.Instructions;
 							tmp = tmp->Next){
 		const struct rc_opcode_info * info;
-		rc_for_all_reads_mask(tmp, reg_count_callback, &max_reg);
+		rc_for_all_reads_mask(tmp, reg_count_callback, s);
 		if (tmp->Type == RC_INSTRUCTION_NORMAL) {
 			info = rc_get_opcode_info(tmp->U.I.Opcode);
 			if (info->Opcode == RC_OPCODE_BEGIN_TEX)
@@ -405,7 +406,9 @@ void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 			s->num_tex_insts++;
 		s->num_insts++;
 	}
-	s->num_temp_regs = max_reg + 1;
+	/* Increment here because the reg_count_callback store the max
+	 * temporary reg index in s->nun_temp_regs. */
+	s->num_temp_regs++;
 }
 
 static void print_stats(struct radeon_compiler * c)
@@ -437,10 +440,11 @@ static void print_stats(struct radeon_compiler * c)
 			       "~%4u Presub Operations\n"
 			       "~%4u OMOD Operations\n"
 			       "~%4u Temporary Registers\n"
+			       "~%4u Inline Literals\n"
 			       "~~~~~~~~~~~~~~ END ~~~~~~~~~~~~~~\n",
 			       s.num_insts, s.num_rgb_insts, s.num_alpha_insts,
 			       s.num_fc_insts, s.num_tex_insts, s.num_presub_ops,
-			       s.num_omod_ops, s.num_temp_regs);
+			       s.num_omod_ops, s.num_temp_regs, s.num_inline_literals);
 		break;
 	default:
 		assert(0);
