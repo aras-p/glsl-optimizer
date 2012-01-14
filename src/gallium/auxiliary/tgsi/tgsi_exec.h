@@ -45,6 +45,19 @@ extern "C" {
 #define TGSI_NUM_CHANNELS 4  /* R,G,B,A */
 #define TGSI_QUAD_SIZE    4  /* 4 pixel/quad */
 
+#define TGSI_FOR_EACH_CHANNEL( CHAN )\
+   for (CHAN = 0; CHAN < TGSI_NUM_CHANNELS; CHAN++)
+
+#define TGSI_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
+   ((INST)->Dst[0].Register.WriteMask & (1 << (CHAN)))
+
+#define TGSI_IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
+   if (TGSI_IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
+
+#define TGSI_FOR_EACH_DST0_ENABLED_CHANNEL( INST, CHAN )\
+   TGSI_FOR_EACH_CHANNEL( CHAN )\
+      TGSI_IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )
+
 
 /**
   * Registers may be treated as float, signed int or unsigned int.
