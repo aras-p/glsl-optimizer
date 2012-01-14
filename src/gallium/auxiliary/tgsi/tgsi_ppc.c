@@ -70,12 +70,6 @@ ppc_builtin_constants[] = {
    FOR_EACH_CHANNEL( CHAN )\
       IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )
 
-#define CHAN_X 0
-#define CHAN_Y 1
-#define CHAN_Z 2
-#define CHAN_W 3
-
-
 /**
  * How many TGSI temps should be implemented with real PPC vector registers
  * rather than memory.
@@ -573,7 +567,7 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int v0, v1;
    uint chan_index;
 
-   v0 = get_src_vec(gen, inst, 0, CHAN_X);
+   v0 = get_src_vec(gen, inst, 0, TGSI_CHAN_X);
    v1 = ppc_allocate_vec_register(gen->f);
 
    switch (inst->Instruction.Opcode) {
@@ -790,25 +784,25 @@ emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
    ppc_vzero(gen->f, v2);                  /* v2 = {0, 0, 0, 0} */
 
-   v0 = get_src_vec(gen, inst, 0, CHAN_X); /* v0 = src0.XXXX */
-   v1 = get_src_vec(gen, inst, 1, CHAN_X); /* v1 = src1.XXXX */
+   v0 = get_src_vec(gen, inst, 0, TGSI_CHAN_X); /* v0 = src0.XXXX */
+   v1 = get_src_vec(gen, inst, 1, TGSI_CHAN_X); /* v1 = src1.XXXX */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   v0 = get_src_vec(gen, inst, 0, CHAN_Y); /* v0 = src0.YYYY */
-   v1 = get_src_vec(gen, inst, 1, CHAN_Y); /* v1 = src1.YYYY */
+   v0 = get_src_vec(gen, inst, 0, TGSI_CHAN_Y); /* v0 = src0.YYYY */
+   v1 = get_src_vec(gen, inst, 1, TGSI_CHAN_Y); /* v1 = src1.YYYY */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   v0 = get_src_vec(gen, inst, 0, CHAN_Z); /* v0 = src0.ZZZZ */
-   v1 = get_src_vec(gen, inst, 1, CHAN_Z); /* v1 = src1.ZZZZ */
+   v0 = get_src_vec(gen, inst, 0, TGSI_CHAN_Z); /* v0 = src0.ZZZZ */
+   v1 = get_src_vec(gen, inst, 1, TGSI_CHAN_Z); /* v1 = src1.ZZZZ */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_DP4) {
-      v0 = get_src_vec(gen, inst, 0, CHAN_W); /* v0 = src0.WWWW */
-      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      v0 = get_src_vec(gen, inst, 0, TGSI_CHAN_W); /* v0 = src0.WWWW */
+      v1 = get_src_vec(gen, inst, 1, TGSI_CHAN_W); /* v1 = src1.WWWW */
       ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
    }
    else if (inst->Instruction.Opcode == TGSI_OPCODE_DPH) {
-      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      v1 = get_src_vec(gen, inst, 1, TGSI_CHAN_W); /* v1 = src1.WWWW */
       ppc_vaddfp(gen->f, v2, v2, v1);         /* v2 = v2 + v1 */
    }
 
@@ -847,26 +841,26 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int one_vec = gen_one_vec(gen);
 
    /* Compute X */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
-      emit_store(gen, one_vec, inst, CHAN_X, FALSE);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X)) {
+      emit_store(gen, one_vec, inst, TGSI_CHAN_X, FALSE);
    }
 
    /* Compute Y, Z */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
-       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
       int x_vec;
       int zero_vec = ppc_allocate_vec_register(gen->f);
 
-      x_vec = get_src_vec(gen, inst, 0, CHAN_X);  /* x_vec = src[0].x */
+      x_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_X);  /* x_vec = src[0].x */
 
       ppc_vzero(gen->f, zero_vec);                /* zero = {0,0,0,0} */
       ppc_vmaxfp(gen->f, x_vec, x_vec, zero_vec); /* x_vec = max(x_vec, 0) */
 
-      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-         emit_store(gen, x_vec, inst, CHAN_Y, FALSE);
+      if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y)) {
+         emit_store(gen, x_vec, inst, TGSI_CHAN_Y, FALSE);
       }
 
-      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
          int y_vec, w_vec;
          int z_vec = ppc_allocate_vec_register(gen->f);
          int pow_vec = ppc_allocate_vec_register(gen->f);
@@ -874,10 +868,10 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          int p128_vec = ppc_allocate_vec_register(gen->f);
          int n128_vec = ppc_allocate_vec_register(gen->f);
 
-         y_vec = get_src_vec(gen, inst, 0, CHAN_Y);  /* y_vec = src[0].y */
+         y_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_Y);  /* y_vec = src[0].y */
          ppc_vmaxfp(gen->f, y_vec, y_vec, zero_vec); /* y_vec = max(y_vec, 0) */
 
-         w_vec = get_src_vec(gen, inst, 0, CHAN_W);  /* w_vec = src[0].w */
+         w_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_W);  /* w_vec = src[0].w */
 
          /* clamp W to [-128, 128] */
          load_constant_vec(gen, p128_vec, 128.0f);
@@ -894,7 +888,7 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vcmpgtfpx(gen->f, pos_vec, x_vec, zero_vec); /* pos = x > 0 */
          ppc_vand(gen->f, z_vec, pow_vec, pos_vec);       /* z = pow & pos */
 
-         emit_store(gen, z_vec, inst, CHAN_Z, FALSE);
+         emit_store(gen, z_vec, inst, TGSI_CHAN_Z, FALSE);
 
          ppc_release_vec_register(gen->f, z_vec);
          ppc_release_vec_register(gen->f, pow_vec);
@@ -907,8 +901,8 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
    }
 
    /* Compute W */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
-      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_W)) {
+      emit_store(gen, one_vec, inst, TGSI_CHAN_W, FALSE);
    }
 
    release_src_vecs(gen);
@@ -922,38 +916,38 @@ emit_exp(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int src_vec;
 
    /* get src arg */
-   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+   src_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_X);
 
    /* Compute X = 2^floor(src) */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
-      int dst_vec = get_dst_vec(gen, inst, CHAN_X);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X)) {
+      int dst_vec = get_dst_vec(gen, inst, TGSI_CHAN_X);
       int tmp_vec = ppc_allocate_vec_register(gen->f);
       ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
       ppc_vexptefp(gen->f, dst_vec, tmp_vec);          /* dst = 2 ^ tmp */
-      emit_store(gen, dst_vec, inst, CHAN_X, TRUE);
+      emit_store(gen, dst_vec, inst, TGSI_CHAN_X, TRUE);
       ppc_release_vec_register(gen->f, tmp_vec);
    }
 
    /* Compute Y = src - floor(src) */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-      int dst_vec = get_dst_vec(gen, inst, CHAN_Y);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y)) {
+      int dst_vec = get_dst_vec(gen, inst, TGSI_CHAN_Y);
       int tmp_vec = ppc_allocate_vec_register(gen->f);
       ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
       ppc_vsubfp(gen->f, dst_vec, src_vec, tmp_vec);   /* dst = src - tmp */
-      emit_store(gen, dst_vec, inst, CHAN_Y, TRUE);
+      emit_store(gen, dst_vec, inst, TGSI_CHAN_Y, TRUE);
       ppc_release_vec_register(gen->f, tmp_vec);
    }
 
    /* Compute Z = RoughApprox2ToX(src) */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, TGSI_CHAN_Z);
       ppc_vexptefp(gen->f, dst_vec, src_vec);          /* dst = 2 ^ src */
-      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+      emit_store(gen, dst_vec, inst, TGSI_CHAN_Z, TRUE);
    }
 
    /* Compute W = 1.0 */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
-      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_W)) {
+      emit_store(gen, one_vec, inst, TGSI_CHAN_W, FALSE);
    }
 
    release_src_vecs(gen);
@@ -968,14 +962,14 @@ emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int src_vec, abs_vec;
 
    /* get src arg */
-   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+   src_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_X);
 
    /* compute abs(src) */
    abs_vec = ppc_allocate_vec_register(gen->f);
    ppc_vandc(gen->f, abs_vec, src_vec, bit31_vec);     /* abs = src & ~bit31 */
 
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) &&
-       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X) &&
+       IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y)) {
 
       /* compute tmp = floor(log2(abs)) */
       int tmp_vec = ppc_allocate_vec_register(gen->f);
@@ -983,19 +977,19 @@ emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
       ppc_vrfim(gen->f, tmp_vec, tmp_vec);             /* tmp = floor(tmp); */
 
       /* Compute X = tmp */
-      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
-         emit_store(gen, tmp_vec, inst, CHAN_X, FALSE);
+      if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X)) {
+         emit_store(gen, tmp_vec, inst, TGSI_CHAN_X, FALSE);
       }
       
       /* Compute Y = abs / 2^tmp */
-      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+      if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y)) {
          const int zero_vec = ppc_allocate_vec_register(gen->f);
          ppc_vzero(gen->f, zero_vec);
          ppc_vexptefp(gen->f, tmp_vec, tmp_vec);       /* tmp = 2 ^ tmp */
          ppc_vrefp(gen->f, tmp_vec, tmp_vec);          /* tmp = 1 / tmp */
          /* tmp = abs * tmp + zero */
          ppc_vmaddfp(gen->f, tmp_vec, abs_vec, tmp_vec, zero_vec);
-         emit_store(gen, tmp_vec, inst, CHAN_Y, FALSE);
+         emit_store(gen, tmp_vec, inst, TGSI_CHAN_Y, FALSE);
          ppc_release_vec_register(gen->f, zero_vec);
       }
 
@@ -1003,15 +997,15 @@ emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
    }
 
    /* Compute Z = RoughApproxLog2(abs) */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, TGSI_CHAN_Z);
       ppc_vlogefp(gen->f, dst_vec, abs_vec);           /* dst = log2(abs) */
-      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+      emit_store(gen, dst_vec, inst, TGSI_CHAN_Z, TRUE);
    }
 
    /* Compute W = 1.0 */
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
-      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_W)) {
+      emit_store(gen, one_vec, inst, TGSI_CHAN_W, FALSE);
    }
 
    ppc_release_vec_register(gen->f, abs_vec);
@@ -1022,8 +1016,8 @@ emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
 static void
 emit_pow(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int s0_vec = get_src_vec(gen, inst, 0, CHAN_X);
-   int s1_vec = get_src_vec(gen, inst, 1, CHAN_X);
+   int s0_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_X);
+   int s1_vec = get_src_vec(gen, inst, 1, TGSI_CHAN_X);
    int pow_vec = ppc_allocate_vec_register(gen->f);
    int chan;
 
@@ -1053,42 +1047,42 @@ emit_xpd(struct gen_context *gen, struct tgsi_full_instruction *inst)
    tmp_vec = ppc_allocate_vec_register(gen->f);
    tmp2_vec = ppc_allocate_vec_register(gen->f);
 
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
-       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      x0_vec = get_src_vec(gen, inst, 0, CHAN_X);
-      x1_vec = get_src_vec(gen, inst, 1, CHAN_X);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
+      x0_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_X);
+      x1_vec = get_src_vec(gen, inst, 1, TGSI_CHAN_X);
    }
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) ||
-       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      y0_vec = get_src_vec(gen, inst, 0, CHAN_Y);
-      y1_vec = get_src_vec(gen, inst, 1, CHAN_Y);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z)) {
+      y0_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_Y);
+      y1_vec = get_src_vec(gen, inst, 1, TGSI_CHAN_Y);
    }
-   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) ||
-       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-      z0_vec = get_src_vec(gen, inst, 0, CHAN_Z);
-      z1_vec = get_src_vec(gen, inst, 1, CHAN_Z);
+   if (IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y)) {
+      z0_vec = get_src_vec(gen, inst, 0, TGSI_CHAN_Z);
+      z1_vec = get_src_vec(gen, inst, 1, TGSI_CHAN_Z);
    }
 
-   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) {
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_X) {
       /* tmp = y0 * z1 */
       ppc_vmaddfp(gen->f, tmp_vec, y0_vec, z1_vec, zero_vec);
       /* tmp = tmp - z0 * y1*/
       ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, z0_vec, y1_vec);
-      emit_store(gen, tmp_vec, inst, CHAN_X, FALSE);
+      emit_store(gen, tmp_vec, inst, TGSI_CHAN_X, FALSE);
    }
-   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) {
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Y) {
       /* tmp = z0 * x1 */
       ppc_vmaddfp(gen->f, tmp_vec, z0_vec, x1_vec, zero_vec);
       /* tmp = tmp - x0 * z1 */
       ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, x0_vec, z1_vec);
-      emit_store(gen, tmp_vec, inst, CHAN_Y, FALSE);
+      emit_store(gen, tmp_vec, inst, TGSI_CHAN_Y, FALSE);
    }
-   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z) {
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, TGSI_CHAN_Z) {
       /* tmp = x0 * y1 */
       ppc_vmaddfp(gen->f, tmp_vec, x0_vec, y1_vec, zero_vec);
       /* tmp = tmp - y0 * x1 */
       ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, y0_vec, x1_vec);
-      emit_store(gen, tmp_vec, inst, CHAN_Z, FALSE);
+      emit_store(gen, tmp_vec, inst, TGSI_CHAN_Z, FALSE);
    }
    /* W is undefined */
 

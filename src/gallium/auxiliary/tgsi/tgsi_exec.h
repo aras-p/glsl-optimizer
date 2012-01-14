@@ -37,6 +37,10 @@
 extern "C" {
 #endif
 
+#define TGSI_CHAN_X 0
+#define TGSI_CHAN_Y 1
+#define TGSI_CHAN_Z 2
+#define TGSI_CHAN_W 3
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
