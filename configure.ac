@@ -273,39 +273,9 @@ if test "x$enable_64bit" = xyes; then
     fi
 fi
 
-dnl
-dnl shared/static libraries, mimic libtool options
-dnl
-AC_ARG_ENABLE([static],
-    [AS_HELP_STRING([--enable-static],
-        [build static libraries @<:@default=disabled@:>@])],
-    [enable_static="$enableval"],
-    [enable_static=no]
-)
-case "x$enable_static" in
-xyes|xno ) ;;
-x ) enable_static=no ;;
-* )
-    AC_MSG_ERROR([Static library option '$enable_static' is not a valid])
-    ;;
-esac
-AC_ARG_ENABLE([shared],
-    [AS_HELP_STRING([--disable-shared],
-        [build shared libraries @<:@default=enabled@:>@])],
-    [enable_shared="$enableval"],
-    [enable_shared=yes]
-)
-case "x$enable_shared" in
-xyes|xno ) ;;
-x ) enable_shared=yes ;;
-* )
-    AC_MSG_ERROR([Shared library option '$enable_shared' is not a valid])
-    ;;
-esac
-
 dnl Can't have static and shared libraries, default to static if user
 dnl explicitly requested. If both disabled, set to static since shared
-dnl was explicitly requirested.
+dnl was explicitly requested.
 case "x$enable_static$enable_shared" in
 xyesyes )
     AC_MSG_WARN([Can't build static and shared libraries, disabling shared])
