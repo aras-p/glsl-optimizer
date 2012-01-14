@@ -453,8 +453,8 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
 				return r;
 			break;
-		}
-
+		} else if (d->Semantic.Name == TGSI_SEMANTIC_VERTEXID)
+			break;
 	default:
 		R600_ERR("unsupported file %d declaration\n", d->Declaration.File);
 		return -EINVAL;
@@ -541,12 +541,19 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 		r600_src->sel = V_SQ_ALU_SRC_LITERAL;
 		memcpy(r600_src->value, ctx->literals + index * 4, sizeof(r600_src->value));
 	} else if (tgsi_src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-		/* assume we wan't TGSI_SEMANTIC_INSTANCEID here */
-		r600_src->swizzle[0] = 3;
-		r600_src->swizzle[1] = 3;
-		r600_src->swizzle[2] = 3;
-		r600_src->swizzle[3] = 3;
-		r600_src->sel = 0;
+		if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_INSTANCEID) {
+			r600_src->swizzle[0] = 3;
+			r600_src->swizzle[1] = 3;
+			r600_src->swizzle[2] = 3;
+			r600_src->swizzle[3] = 3;
+			r600_src->sel = 0;
+		} else if (ctx->info.system_value_semantic_name[tgsi_src->Register.Index] == TGSI_SEMANTIC_VERTEXID) {
+			r600_src->swizzle[0] = 0;
+			r600_src->swizzle[1] = 0;
+			r600_src->swizzle[2] = 0;
+			r600_src->swizzle[3] = 0;
+			r600_src->sel = 0;
+		}
 	} else {
 		if (tgsi_src->Register.Indirect)
 			r600_src->rel = V_SQ_REL_RELATIVE;
