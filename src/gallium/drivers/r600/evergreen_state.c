@@ -508,6 +508,10 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 		return V_028C70_COLOR_X24_8_32_FLOAT;
 
+	case PIPE_FORMAT_R32_UINT:
+	case PIPE_FORMAT_R32_SINT:
+		return V_028C70_COLOR_32;
+
 	case PIPE_FORMAT_R32_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT:
 		return V_028C70_COLOR_32_FLOAT;
