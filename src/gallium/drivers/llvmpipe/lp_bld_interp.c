@@ -143,10 +143,10 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
    for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
       const unsigned mask = bld->mask[attrib];
       const unsigned interp = bld->interp[attrib];
-      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          if (mask & (1 << chan)) {
             LLVMValueRef index = lp_build_const_int32(gallivm,
-                                      attrib * NUM_CHANNELS + chan);
+                                      attrib * TGSI_NUM_CHANNELS + chan);
             LLVMValueRef a0 = zero;
             LLVMValueRef dadx = zero;
             LLVMValueRef dady = zero;
@@ -292,7 +292,7 @@ attribs_update(struct lp_build_interp_soa_context *bld,
    for(attrib = start; attrib < end; ++attrib) {
       const unsigned mask = bld->mask[attrib];
       const unsigned interp = bld->interp[attrib];
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for(chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          if(mask & (1 << chan)) {
             LLVMValueRef a;
             if (interp == LP_INTERP_CONSTANT ||
@@ -418,7 +418,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    coeff_type.floating = TRUE;
    coeff_type.sign = TRUE;
    coeff_type.width = 32;
-   coeff_type.length = QUAD_SIZE;
+   coeff_type.length = TGSI_QUAD_SIZE;
 
    /* XXX: we don't support interpolating into any other types */
    assert(memcmp(&coeff_type, &type, sizeof coeff_type) == 0);
@@ -427,7 +427,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
    /* For convenience */
    bld->pos = bld->attribs[0];
-   bld->inputs = (const LLVMValueRef (*)[NUM_CHANNELS]) bld->attribs[1];
+   bld->inputs = (const LLVMValueRef (*)[TGSI_NUM_CHANNELS]) bld->attribs[1];
 
    /* Position */
    bld->num_attribs = 1;
@@ -443,7 +443,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
    /* Ensure all masked out input channels have a valid value */
    for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          bld->attribs[attrib][chan] = bld->coeff_bld.undef;
       }
    }

@@ -90,7 +90,7 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
       float (*quadColor)[4] = quad->output.color[cbuf];
       unsigned j;
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          assert(quad->input.coverage[j] >= 0.0);
          assert(quad->input.coverage[j] <= 1.0);
          quadColor[3][j] *= quad->input.coverage[j];

@@ -29,7 +29,7 @@
 #define LP_TILE_SOA_H
 
 #include "pipe/p_compiler.h"
-#include "tgsi/tgsi_exec.h" /* for NUM_CHANNELS */
+#include "tgsi/tgsi_exec.h" /* for TGSI_NUM_CHANNELS */
 #include "lp_limits.h"
 
 #ifdef __cplusplus
@@ -47,8 +47,8 @@ extern const unsigned char
 tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 
 #define TILE_C_STRIDE (TILE_VECTOR_HEIGHT * TILE_VECTOR_WIDTH) //16
-#define TILE_X_STRIDE (NUM_CHANNELS * TILE_C_STRIDE) //64
-#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS) //1024
+#define TILE_X_STRIDE (TGSI_NUM_CHANNELS * TILE_C_STRIDE) //64
+#define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * TGSI_NUM_CHANNELS) //1024
 
 
 #ifdef DEBUG

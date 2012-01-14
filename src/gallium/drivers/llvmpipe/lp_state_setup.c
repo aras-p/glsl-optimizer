@@ -911,7 +911,7 @@ lp_dump_setup_coef( const struct lp_setup_variant_key *key,
 {
    int i, slot;
 
-   for (i = 0; i < NUM_CHANNELS; i++) {
+   for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
       float a0   = sa0  [0][i];
       float dadx = sdadx[0][i];
       float dady = sdady[0][i];
@@ -923,7 +923,7 @@ lp_dump_setup_coef( const struct lp_setup_variant_key *key,
 
    for (slot = 0; slot < key->num_inputs; slot++) {
       unsigned usage_mask = key->inputs[slot].usage_mask;
-      for (i = 0; i < NUM_CHANNELS; i++) {
+      for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
 	 if (usage_mask & (1 << i)) {
 	    float a0   = sa0  [1 + slot][i];
 	    float dadx = sdadx[1 + slot][i];

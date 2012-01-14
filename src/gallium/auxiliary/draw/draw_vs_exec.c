@@ -103,7 +103,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    if (shader->info.uses_instanceid) {
       unsigned i = machine->SysSemanticToIndex[TGSI_SEMANTIC_INSTANCEID];
       assert(i < Elements(machine->SystemValue));
-      for (j = 0; j < QUAD_SIZE; j++)
+      for (j = 0; j < TGSI_QUAD_SIZE; j++)
          machine->SystemValue[i].i[j] = shader->draw->instance_id;
    }
 

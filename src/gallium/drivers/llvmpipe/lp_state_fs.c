@@ -233,7 +233,7 @@ generate_fs(struct gallivm_state *gallivm,
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef vec_type;
    LLVMValueRef consts_ptr;
-   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    LLVMValueRef z;
    LLVMValueRef zs_value = NULL;
    LLVMValueRef stencil_refs[2];
@@ -289,7 +289,7 @@ generate_fs(struct gallivm_state *gallivm,
 
    /* Declare the color and z variables */
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for(chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
 	 color[cbuf][chan] = lp_build_alloca(gallivm, vec_type, "color");
       }
    }
@@ -406,7 +406,7 @@ generate_fs(struct gallivm_state *gallivm,
           shader->info.base.output_semantic_index[attrib] < key->nr_cbufs)
       {
          unsigned cbuf = shader->info.base.output_semantic_index[attrib];
-         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         for(chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
             if(outputs[attrib][chan]) {
                /* XXX: just initialize outputs to point at colors[] and
                 * skip this.
@@ -536,7 +536,7 @@ generate_fragment(struct llvmpipe_context *lp,
    struct lp_build_sampler_soa *sampler;
    struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
-   LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
+   LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
    LLVMValueRef function;
    LLVMValueRef facing;
@@ -684,7 +684,7 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef depth_offset = LLVMConstInt(int32_type,
                                                i*fs_type.length*zs_format_desc->block.bits/8,
                                                0);
-      LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
+      LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
 
       depth_ptr_i = LLVMBuildGEP(builder, depth_ptr, &depth_offset, 1, "");
@@ -706,7 +706,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   counter);
 
       for (cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
-         for (chan = 0; chan < NUM_CHANNELS; ++chan)
+         for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan)
             fs_out_color[cbuf][chan][i] =
                out_color[cbuf * !cbuf0_write_all][chan];
    }
@@ -718,13 +718,13 @@ generate_fragment(struct llvmpipe_context *lp,
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
       LLVMValueRef color_ptr;
       LLVMValueRef index = lp_build_const_int32(gallivm, cbuf);
-      LLVMValueRef blend_in_color[NUM_CHANNELS];
+      LLVMValueRef blend_in_color[TGSI_NUM_CHANNELS];
       unsigned rt;
 
       /* 
        * Convert the fs's output color and mask to fit to the blending type. 
        */
-      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for(chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          LLVMValueRef fs_color_vals[LP_MAX_VECTOR_LENGTH];
          
          for (i = 0; i < num_fs; i++) {

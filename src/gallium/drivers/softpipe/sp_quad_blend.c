@@ -267,8 +267,8 @@ blend_quad(struct quad_stage *qs,
    static const float zero[4] = { 0, 0, 0, 0 };
    static const float one[4] = { 1, 1, 1, 1 };
    struct softpipe_context *softpipe = qs->softpipe;
-   float source[4][QUAD_SIZE] = { { 0 } };
-   float blend_dest[4][QUAD_SIZE];
+   float source[4][TGSI_QUAD_SIZE] = { { 0 } };
+   float blend_dest[4][TGSI_QUAD_SIZE];
 
    /*
     * Compute src/first term RGB
@@ -576,7 +576,7 @@ blend_quad(struct quad_stage *qs,
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       {
-         float one_minus_alpha[QUAD_SIZE];
+         float one_minus_alpha[TGSI_QUAD_SIZE];
          VEC4_SUB(one_minus_alpha, one, quadColor[3]);
          VEC4_MUL(blend_dest[0], blend_dest[0], one_minus_alpha); /* R */
          VEC4_MUL(blend_dest[1], blend_dest[1], one_minus_alpha); /* G */
@@ -671,7 +671,7 @@ blend_quad(struct quad_stage *qs,
       /* fall-through */
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       {
-         float one_minus_alpha[QUAD_SIZE];
+         float one_minus_alpha[TGSI_QUAD_SIZE];
          VEC4_SUB(one_minus_alpha, one, quadColor[3]);
          VEC4_MUL(blend_dest[3], blend_dest[3], one_minus_alpha); /* A */
       }
@@ -786,7 +786,7 @@ clamp_colors(float (*quadColor)[4])
 {
    unsigned i, j;
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       for (i = 0; i < 4; i++) {
          quadColor[i][j] = CLAMP(quadColor[i][j], 0.0F, 1.0F);
       }
@@ -859,7 +859,7 @@ blend_fallback(struct quad_stage *qs,
    {
       /* which blend/mask state index to use: */
       const uint blend_buf = blend->independent_blend_enable ? cbuf : 0;
-      float dest[4][QUAD_SIZE];
+      float dest[4][TGSI_QUAD_SIZE];
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
                               quads[0]->input.x0, 
@@ -876,12 +876,12 @@ blend_fallback(struct quad_stage *qs,
       for (q = 0; q < nr; q++) {
          struct quad_header *quad = quads[q];
          float (*quadColor)[4];
-         float temp_quad_color[QUAD_SIZE][4];
+         float temp_quad_color[TGSI_QUAD_SIZE][4];
          const int itx = (quad->input.x0 & (TILE_SIZE-1));
          const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
          if (write_all) {
-            for (j = 0; j < QUAD_SIZE; j++) {
+            for (j = 0; j < TGSI_QUAD_SIZE; j++) {
                for (i = 0; i < 4; i++) {
                   temp_quad_color[i][j] = quad->output.color[0][i][j];
                }
@@ -900,7 +900,7 @@ blend_fallback(struct quad_stage *qs,
 
          /* get/swizzle dest colors
           */
-         for (j = 0; j < QUAD_SIZE; j++) {
+         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
             int x = itx + (j & 1);
             int y = ity + (j >> 1);
             for (i = 0; i < 4; i++) {
@@ -932,7 +932,7 @@ blend_fallback(struct quad_stage *qs,
    
          /* Output color values
           */
-         for (j = 0; j < QUAD_SIZE; j++) {
+         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
             if (quad->inout.mask & (1 << j)) {
                int x = itx + (j & 1);
                int y = ity + (j >> 1);
@@ -953,9 +953,9 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
 {
    const struct blend_quad_stage *bqs = blend_quad_stage(qs);
    static const float one[4] = { 1, 1, 1, 1 };
-   float one_minus_alpha[QUAD_SIZE];
-   float dest[4][QUAD_SIZE];
-   float source[4][QUAD_SIZE];
+   float one_minus_alpha[TGSI_QUAD_SIZE];
+   float dest[4][TGSI_QUAD_SIZE];
+   float source[4][TGSI_QUAD_SIZE];
    uint i, j, q;
 
    struct softpipe_cached_tile *tile
@@ -971,7 +971,7 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
       const int ity = (quad->input.y0 & (TILE_SIZE-1));
       
       /* get/swizzle dest colors */
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          int x = itx + (j & 1);
          int y = ity + (j >> 1);
          for (i = 0; i < 4; i++) {
@@ -1011,7 +1011,7 @@ blend_single_add_src_alpha_inv_src_alpha(struct quad_stage *qs,
 
       rebase_colors(bqs->base_format[0], quadColor);
 
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          if (quad->inout.mask & (1 << j)) {
             int x = itx + (j & 1);
             int y = ity + (j >> 1);
@@ -1029,7 +1029,7 @@ blend_single_add_one_one(struct quad_stage *qs,
                          unsigned nr)
 {
    const struct blend_quad_stage *bqs = blend_quad_stage(qs);
-   float dest[4][QUAD_SIZE];
+   float dest[4][TGSI_QUAD_SIZE];
    uint i, j, q;
 
    struct softpipe_cached_tile *tile
@@ -1044,7 +1044,7 @@ blend_single_add_one_one(struct quad_stage *qs,
       const int ity = (quad->input.y0 & (TILE_SIZE-1));
       
       /* get/swizzle dest colors */
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          int x = itx + (j & 1);
          int y = ity + (j >> 1);
          for (i = 0; i < 4; i++) {
@@ -1073,7 +1073,7 @@ blend_single_add_one_one(struct quad_stage *qs,
 
       rebase_colors(bqs->base_format[0], quadColor);
 
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          if (quad->inout.mask & (1 << j)) {
             int x = itx + (j & 1);
             int y = ity + (j >> 1);
@@ -1116,7 +1116,7 @@ single_output_color(struct quad_stage *qs,
 
       rebase_colors(bqs->base_format[0], quadColor);
 
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          if (quad->inout.mask & (1 << j)) {
             int x = itx + (j & 1);
             int y = ity + (j >> 1);

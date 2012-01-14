@@ -559,9 +559,9 @@ wrap_array_layer(const float coord[4], unsigned size, int layer[4])
  */
 static float
 compute_lambda_1d(const struct sp_sampler_variant *samp,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE])
+                  const float s[TGSI_QUAD_SIZE],
+                  const float t[TGSI_QUAD_SIZE],
+                  const float p[TGSI_QUAD_SIZE])
 {
    const struct pipe_resource *texture = samp->view->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
@@ -574,9 +574,9 @@ compute_lambda_1d(const struct sp_sampler_variant *samp,
 
 static float
 compute_lambda_2d(const struct sp_sampler_variant *samp,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE])
+                  const float s[TGSI_QUAD_SIZE],
+                  const float t[TGSI_QUAD_SIZE],
+                  const float p[TGSI_QUAD_SIZE])
 {
    const struct pipe_resource *texture = samp->view->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
@@ -593,9 +593,9 @@ compute_lambda_2d(const struct sp_sampler_variant *samp,
 
 static float
 compute_lambda_3d(const struct sp_sampler_variant *samp,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE])
+                  const float s[TGSI_QUAD_SIZE],
+                  const float t[TGSI_QUAD_SIZE],
+                  const float p[TGSI_QUAD_SIZE])
 {
    const struct pipe_resource *texture = samp->view->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
@@ -622,9 +622,9 @@ compute_lambda_3d(const struct sp_sampler_variant *samp,
  */
 static float
 compute_lambda_vert(const struct sp_sampler_variant *samp,
-                    const float s[QUAD_SIZE],
-                    const float t[QUAD_SIZE],
-                    const float p[QUAD_SIZE])
+                    const float s[TGSI_QUAD_SIZE],
+                    const float t[TGSI_QUAD_SIZE],
+                    const float p[TGSI_QUAD_SIZE])
 {
    return 0.0f;
 }
@@ -826,7 +826,7 @@ pot_level_size(unsigned base_pot, unsigned level)
 
 
 static void
-print_sample(const char *function, float rgba[NUM_CHANNELS][QUAD_SIZE])
+print_sample(const char *function, float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    debug_printf("%s %g %g %g %g, %g %g %g %g, %g %g %g %g, %g %g %g %g\n",
                 function,
@@ -841,12 +841,12 @@ print_sample(const char *function, float rgba[NUM_CHANNELS][QUAD_SIZE])
  */
 static INLINE void
 img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
-                                const float s[QUAD_SIZE],
-                                const float t[QUAD_SIZE],
-                                const float p[QUAD_SIZE],
-                                const float c0[QUAD_SIZE],
+                                const float s[TGSI_QUAD_SIZE],
+                                const float t[TGSI_QUAD_SIZE],
+                                const float p[TGSI_QUAD_SIZE],
+                                const float c0[TGSI_QUAD_SIZE],
                                 enum tgsi_sampler_control control,
-                                float rgba[NUM_CHANNELS][QUAD_SIZE])
+                                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned  j;
@@ -860,7 +860,7 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    addr.value = 0;
    addr.bits.level = samp->level;
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int c;
 
       float u = s[j] * xpot - 0.5F;
@@ -904,12 +904,12 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
 
 static INLINE void
 img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
-                                 const float s[QUAD_SIZE],
-                                 const float t[QUAD_SIZE],
-                                 const float p[QUAD_SIZE],
-                                 const float c0[QUAD_SIZE],
+                                 const float s[TGSI_QUAD_SIZE],
+                                 const float t[TGSI_QUAD_SIZE],
+                                 const float p[TGSI_QUAD_SIZE],
+                                 const float c0[TGSI_QUAD_SIZE],
                                  enum tgsi_sampler_control control,
-                                 float rgba[NUM_CHANNELS][QUAD_SIZE])
+                                 float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned  j;
@@ -921,7 +921,7 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    addr.value = 0;
    addr.bits.level = samp->level;
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int c;
 
       float u = s[j] * xpot;
@@ -948,12 +948,12 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
 
 static INLINE void
 img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
-                                const float s[QUAD_SIZE],
-                                const float t[QUAD_SIZE],
-                                const float p[QUAD_SIZE],
-                                const float c0[QUAD_SIZE],
+                                const float s[TGSI_QUAD_SIZE],
+                                const float t[TGSI_QUAD_SIZE],
+                                const float p[TGSI_QUAD_SIZE],
+                                const float c0[TGSI_QUAD_SIZE],
                                 enum tgsi_sampler_control control,
-                                float rgba[NUM_CHANNELS][QUAD_SIZE])
+                                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned  j;
@@ -965,7 +965,7 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
    addr.value = 0;
    addr.bits.level = samp->level;
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int c;
 
       float u = s[j] * xpot;
@@ -1001,12 +1001,12 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        const float c0[QUAD_SIZE],
+                        const float s[TGSI_QUAD_SIZE],
+                        const float t[TGSI_QUAD_SIZE],
+                        const float p[TGSI_QUAD_SIZE],
+                        const float c0[TGSI_QUAD_SIZE],
                         enum tgsi_sampler_control control,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1025,7 +1025,7 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
 
    samp->nearest_texcoord_s(s, width, x);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_2d(samp, addr, x[j], 0);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1041,12 +1041,12 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
-                            const float s[QUAD_SIZE],
-                            const float t[QUAD_SIZE],
-                            const float p[QUAD_SIZE],
-                            const float c0[QUAD_SIZE],
+                            const float s[TGSI_QUAD_SIZE],
+                            const float t[TGSI_QUAD_SIZE],
+                            const float p[TGSI_QUAD_SIZE],
+                            const float c0[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
-                            float rgba[NUM_CHANNELS][QUAD_SIZE])
+                            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1066,7 +1066,7 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
    samp->nearest_texcoord_s(s, width, x);
    wrap_array_layer(t, texture->array_size, layer);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_1d_array(samp, addr, x[j], layer[j]);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1082,12 +1082,12 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
-                      const float s[QUAD_SIZE],
-                      const float t[QUAD_SIZE],
-                      const float p[QUAD_SIZE],
-                      const float c0[QUAD_SIZE],
+                      const float s[TGSI_QUAD_SIZE],
+                      const float t[TGSI_QUAD_SIZE],
+                      const float p[TGSI_QUAD_SIZE],
+                      const float c0[TGSI_QUAD_SIZE],
                       enum tgsi_sampler_control control,
-                      float rgba[NUM_CHANNELS][QUAD_SIZE])
+                      float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1110,7 +1110,7 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
    samp->nearest_texcoord_s(s, width, x);
    samp->nearest_texcoord_t(t, height, y);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_2d(samp, addr, x[j], y[j]);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1126,12 +1126,12 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
-                            const float s[QUAD_SIZE],
-                            const float t[QUAD_SIZE],
-                            const float p[QUAD_SIZE],
-                            const float c0[QUAD_SIZE],
+                            const float s[TGSI_QUAD_SIZE],
+                            const float t[TGSI_QUAD_SIZE],
+                            const float p[TGSI_QUAD_SIZE],
+                            const float c0[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
-                            float rgba[NUM_CHANNELS][QUAD_SIZE])
+                            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1154,7 +1154,7 @@ img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
    samp->nearest_texcoord_t(t, height, y);
    wrap_array_layer(p, texture->array_size, layer);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_2d_array(samp, addr, x[j], y[j], layer[j]);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1178,12 +1178,12 @@ face(union tex_tile_address addr, unsigned face )
 
 static void
 img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        const float c0[QUAD_SIZE],
+                        const float s[TGSI_QUAD_SIZE],
+                        const float t[TGSI_QUAD_SIZE],
+                        const float p[TGSI_QUAD_SIZE],
+                        const float c0[TGSI_QUAD_SIZE],
                         enum tgsi_sampler_control control,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1206,7 +1206,7 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
    samp->nearest_texcoord_s(s, width, x);
    samp->nearest_texcoord_t(t, height, y);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_2d(samp, face(addr, faces[j]), x[j], y[j]);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1222,12 +1222,12 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
-                      const float s[QUAD_SIZE],
-                      const float t[QUAD_SIZE],
-                      const float p[QUAD_SIZE],
-                      const float c0[QUAD_SIZE],
+                      const float s[TGSI_QUAD_SIZE],
+                      const float t[TGSI_QUAD_SIZE],
+                      const float p[TGSI_QUAD_SIZE],
+                      const float c0[TGSI_QUAD_SIZE],
                       enum tgsi_sampler_control control,
-                      float rgba[NUM_CHANNELS][QUAD_SIZE])
+                      float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1252,7 +1252,7 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
    addr.value = 0;
    addr.bits.level = samp->level;
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *out = get_texel_3d(samp, addr, x[j], y[j], z[j]);
       int c;
       for (c = 0; c < 4; c++) {
@@ -1264,12 +1264,12 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
-                     const float s[QUAD_SIZE],
-                     const float t[QUAD_SIZE],
-                     const float p[QUAD_SIZE],
-                     const float c0[QUAD_SIZE],
+                     const float s[TGSI_QUAD_SIZE],
+                     const float t[TGSI_QUAD_SIZE],
+                     const float p[TGSI_QUAD_SIZE],
+                     const float c0[TGSI_QUAD_SIZE],
                      enum tgsi_sampler_control control,
-                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1289,7 +1289,7 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
 
    samp->linear_texcoord_s(s, width, x0, x1, xw);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *tx0 = get_texel_2d(samp, addr, x0[j], 0);
       const float *tx1 = get_texel_2d(samp, addr, x1[j], 0);
       int c;
@@ -1304,12 +1304,12 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
-                           const float s[QUAD_SIZE],
-                           const float t[QUAD_SIZE],
-                           const float p[QUAD_SIZE],
-                           const float c0[QUAD_SIZE],
+                           const float s[TGSI_QUAD_SIZE],
+                           const float t[TGSI_QUAD_SIZE],
+                           const float p[TGSI_QUAD_SIZE],
+                           const float c0[TGSI_QUAD_SIZE],
                            enum tgsi_sampler_control control,
-                           float rgba[NUM_CHANNELS][QUAD_SIZE])
+                           float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1330,7 +1330,7 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_s(s, width, x0, x1, xw);
    wrap_array_layer(t, texture->array_size, layer);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *tx0 = get_texel_1d_array(samp, addr, x0[j], layer[j]);
       const float *tx1 = get_texel_1d_array(samp, addr, x1[j], layer[j]);
       int c;
@@ -1345,12 +1345,12 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
-                     const float s[QUAD_SIZE],
-                     const float t[QUAD_SIZE],
-                     const float p[QUAD_SIZE],
-                     const float c0[QUAD_SIZE],
+                     const float s[TGSI_QUAD_SIZE],
+                     const float t[TGSI_QUAD_SIZE],
+                     const float p[TGSI_QUAD_SIZE],
+                     const float c0[TGSI_QUAD_SIZE],
                      enum tgsi_sampler_control control,
-                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1373,7 +1373,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
    samp->linear_texcoord_t(t, height, y0, y1, yw);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *tx0 = get_texel_2d(samp, addr, x0[j], y0[j]);
       const float *tx1 = get_texel_2d(samp, addr, x1[j], y0[j]);
       const float *tx2 = get_texel_2d(samp, addr, x0[j], y1[j]);
@@ -1392,12 +1392,12 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
-                           const float s[QUAD_SIZE],
-                           const float t[QUAD_SIZE],
-                           const float p[QUAD_SIZE],
-                           const float c0[QUAD_SIZE],
+                           const float s[TGSI_QUAD_SIZE],
+                           const float t[TGSI_QUAD_SIZE],
+                           const float p[TGSI_QUAD_SIZE],
+                           const float c0[TGSI_QUAD_SIZE],
                            enum tgsi_sampler_control control,
-                           float rgba[NUM_CHANNELS][QUAD_SIZE])
+                           float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1421,7 +1421,7 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_t(t, height, y0, y1, yw);
    wrap_array_layer(p, texture->array_size, layer);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       const float *tx0 = get_texel_2d_array(samp, addr, x0[j], y0[j], layer[j]);
       const float *tx1 = get_texel_2d_array(samp, addr, x1[j], y0[j], layer[j]);
       const float *tx2 = get_texel_2d_array(samp, addr, x0[j], y1[j], layer[j]);
@@ -1440,12 +1440,12 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
-                       const float s[QUAD_SIZE],
-                       const float t[QUAD_SIZE],
-                       const float p[QUAD_SIZE],
-                       const float c0[QUAD_SIZE],
+                       const float s[TGSI_QUAD_SIZE],
+                       const float t[TGSI_QUAD_SIZE],
+                       const float p[TGSI_QUAD_SIZE],
+                       const float c0[TGSI_QUAD_SIZE],
                        enum tgsi_sampler_control control,
-                       float rgba[NUM_CHANNELS][QUAD_SIZE])
+                       float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1469,7 +1469,7 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
    samp->linear_texcoord_t(t, height, y0, y1, yw);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       union tex_tile_address addrj = face(addr, faces[j]);
       const float *tx0 = get_texel_2d(samp, addrj, x0[j], y0[j]);
       const float *tx1 = get_texel_2d(samp, addrj, x1[j], y0[j]);
@@ -1489,12 +1489,12 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
 
 static void
 img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
-                     const float s[QUAD_SIZE],
-                     const float t[QUAD_SIZE],
-                     const float p[QUAD_SIZE],
-                     const float c0[QUAD_SIZE],
+                     const float s[TGSI_QUAD_SIZE],
+                     const float t[TGSI_QUAD_SIZE],
+                     const float p[TGSI_QUAD_SIZE],
+                     const float c0[TGSI_QUAD_SIZE],
                      enum tgsi_sampler_control control,
-                     float rgba[NUM_CHANNELS][QUAD_SIZE])
+                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1520,7 +1520,7 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
    samp->linear_texcoord_t(t, height, y0, y1, yw);
    samp->linear_texcoord_p(p, depth,  z0, z1, zw);
 
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int c;
 
       const float *tx00 = get_texel_3d(samp, addr, x0[j], y0[j], z0[j]);
@@ -1551,12 +1551,12 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
 static INLINE void
 compute_lod(const struct pipe_sampler_state *sampler,
             const float biased_lambda,
-            const float lodbias[QUAD_SIZE],
-            float lod[QUAD_SIZE])
+            const float lodbias[TGSI_QUAD_SIZE],
+            float lod[TGSI_QUAD_SIZE])
 {
    uint i;
 
-   for (i = 0; i < QUAD_SIZE; i++) {
+   for (i = 0; i < TGSI_QUAD_SIZE; i++) {
       lod[i] = biased_lambda + lodbias[i];
       lod[i] = CLAMP(lod[i], sampler->min_lod, sampler->max_lod);
    }
@@ -1565,18 +1565,18 @@ compute_lod(const struct pipe_sampler_state *sampler,
 
 static void
 mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  const float c0[QUAD_SIZE],
+                  const float s[TGSI_QUAD_SIZE],
+                  const float t[TGSI_QUAD_SIZE],
+                  const float p[TGSI_QUAD_SIZE],
+                  const float c0[TGSI_QUAD_SIZE],
                   enum tgsi_sampler_control control,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+                  float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int level0;
    float lambda;
-   float lod[QUAD_SIZE];
+   float lod[TGSI_QUAD_SIZE];
 
    if (control == tgsi_sampler_lod_bias) {
       lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
@@ -1612,7 +1612,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
       samp->level = level0+1;
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba1);
 
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
          }
@@ -1632,17 +1632,17 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
  */
 static void
 mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
-                   const float s[QUAD_SIZE],
-                   const float t[QUAD_SIZE],
-                   const float p[QUAD_SIZE],
-                   const float c0[QUAD_SIZE],
+                   const float s[TGSI_QUAD_SIZE],
+                   const float t[TGSI_QUAD_SIZE],
+                   const float p[TGSI_QUAD_SIZE],
+                   const float c0[TGSI_QUAD_SIZE],
                    enum tgsi_sampler_control control,
-                   float rgba[NUM_CHANNELS][QUAD_SIZE])
+                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    float lambda;
-   float lod[QUAD_SIZE];
+   float lod[TGSI_QUAD_SIZE];
 
    if (control == tgsi_sampler_lod_bias) {
       lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
@@ -1675,16 +1675,16 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
 
 static void
 mip_filter_none(struct tgsi_sampler *tgsi_sampler,
-                const float s[QUAD_SIZE],
-                const float t[QUAD_SIZE],
-                const float p[QUAD_SIZE],
-                const float c0[QUAD_SIZE],
+                const float s[TGSI_QUAD_SIZE],
+                const float t[TGSI_QUAD_SIZE],
+                const float p[TGSI_QUAD_SIZE],
+                const float c0[TGSI_QUAD_SIZE],
                 enum tgsi_sampler_control control,
-                float rgba[NUM_CHANNELS][QUAD_SIZE])
+                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    float lambda;
-   float lod[QUAD_SIZE];
+   float lod[TGSI_QUAD_SIZE];
 
    if (control == tgsi_sampler_lod_bias) {
       lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
@@ -1743,14 +1743,14 @@ create_filter_table(void)
  */
 static void
 img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  const float c0[QUAD_SIZE],
+                  const float s[TGSI_QUAD_SIZE],
+                  const float t[TGSI_QUAD_SIZE],
+                  const float p[TGSI_QUAD_SIZE],
+                  const float c0[TGSI_QUAD_SIZE],
                   enum tgsi_sampler_control control,
                   const float dudx, const float dvdx,
                   const float dudy, const float dvdy,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+                  float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
@@ -1781,10 +1781,10 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
    float box_u = 2.0 / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
    float box_v = 2.0 / d * sqrt(A*d*F); /* box_v -> half of bbox height */
 
-   float rgba_temp[NUM_CHANNELS][QUAD_SIZE];
-   float s_buffer[QUAD_SIZE];
-   float t_buffer[QUAD_SIZE];
-   float weight_buffer[QUAD_SIZE];
+   float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
+   float s_buffer[TGSI_QUAD_SIZE];
+   float t_buffer[TGSI_QUAD_SIZE];
+   float weight_buffer[TGSI_QUAD_SIZE];
    unsigned buffer_next;
    int j;
    float den;// = 0.0F;
@@ -1810,7 +1810,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
     */
    ddq = 2 * A;
    
-   for (j = 0; j < QUAD_SIZE; j++) {
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       /* Heckbert MS thesis, p. 59; scan over the bounding box of the ellipse
        * and incrementally update the value of Ax^2+Bxy*Cy^2; when this
        * value, q, is less than F, we're inside the ellipse
@@ -1847,7 +1847,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                t_buffer[buffer_next] = v / ((float) height);
             
                buffer_next++;
-               if (buffer_next == QUAD_SIZE) {
+               if (buffer_next == TGSI_QUAD_SIZE) {
                   /* 4 texel coords are in the buffer -> read it now */
                   unsigned jj;
                   /* it is assumed that samp->min_img_filter is set to
@@ -1928,18 +1928,18 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
  */
 static void
 mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
-                        const float s[QUAD_SIZE],
-                        const float t[QUAD_SIZE],
-                        const float p[QUAD_SIZE],
-                        const float c0[QUAD_SIZE],
+                        const float s[TGSI_QUAD_SIZE],
+                        const float t[TGSI_QUAD_SIZE],
+                        const float p[TGSI_QUAD_SIZE],
+                        const float c0[TGSI_QUAD_SIZE],
                         enum tgsi_sampler_control control,
-                        float rgba[NUM_CHANNELS][QUAD_SIZE])
+                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int level0;
    float lambda;
-   float lod[QUAD_SIZE];
+   float lod[TGSI_QUAD_SIZE];
 
    float s_to_u = u_minify(texture->width0, samp->view->u.tex.first_level);
    float t_to_v = u_minify(texture->height0, samp->view->u.tex.first_level);
@@ -2028,18 +2028,18 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
 static void
 mip_filter_linear_2d_linear_repeat_POT(
    struct tgsi_sampler *tgsi_sampler,
-   const float s[QUAD_SIZE],
-   const float t[QUAD_SIZE],
-   const float p[QUAD_SIZE],
-   const float c0[QUAD_SIZE],
+   const float s[TGSI_QUAD_SIZE],
+   const float t[TGSI_QUAD_SIZE],
+   const float p[TGSI_QUAD_SIZE],
+   const float c0[TGSI_QUAD_SIZE],
    enum tgsi_sampler_control control,
-   float rgba[NUM_CHANNELS][QUAD_SIZE])
+   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int level0;
    float lambda;
-   float lod[QUAD_SIZE];
+   float lod[TGSI_QUAD_SIZE];
 
    if (control == tgsi_sampler_lod_bias) {
       lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
@@ -2077,7 +2077,7 @@ mip_filter_linear_2d_linear_repeat_POT(
       samp->level = level0+1;
       img_filter_2d_linear_repeat_POT(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba1);
 
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp(levelBlend, rgba0[c][j], rgba1[c][j]);
          }
@@ -2096,12 +2096,12 @@ mip_filter_linear_2d_linear_repeat_POT(
  */
 static void
 sample_compare(struct tgsi_sampler *tgsi_sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               const float c0[QUAD_SIZE],
+               const float s[TGSI_QUAD_SIZE],
+               const float t[TGSI_QUAD_SIZE],
+               const float p[TGSI_QUAD_SIZE],
+               const float c0[TGSI_QUAD_SIZE],
                enum tgsi_sampler_control control,
-               float rgba[NUM_CHANNELS][QUAD_SIZE])
+               float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_sampler_state *sampler = samp->sampler;
@@ -2206,12 +2206,12 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
  */
 static void
 sample_cube(struct tgsi_sampler *tgsi_sampler,
-            const float s[QUAD_SIZE],
-            const float t[QUAD_SIZE],
-            const float p[QUAD_SIZE],
-            const float c0[QUAD_SIZE],
+            const float s[TGSI_QUAD_SIZE],
+            const float t[TGSI_QUAD_SIZE],
+            const float p[TGSI_QUAD_SIZE],
+            const float c0[TGSI_QUAD_SIZE],
             enum tgsi_sampler_control control,
-            float rgba[NUM_CHANNELS][QUAD_SIZE])
+            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned j;
@@ -2251,7 +2251,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
       if (arx >= ary && arx >= arz) {
          float sign = (rx >= 0.0F) ? 1.0F : -1.0F;
          uint face = (rx >= 0.0F) ? PIPE_TEX_FACE_POS_X : PIPE_TEX_FACE_NEG_X;
-         for (j = 0; j < QUAD_SIZE; j++) {
+         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
             const float ima = -0.5F / fabsf(s[j]);
             ssss[j] = sign *  p[j] * ima + 0.5F;
             tttt[j] =         t[j] * ima + 0.5F;
@@ -2261,7 +2261,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
       else if (ary >= arx && ary >= arz) {
          float sign = (ry >= 0.0F) ? 1.0F : -1.0F;
          uint face = (ry >= 0.0F) ? PIPE_TEX_FACE_POS_Y : PIPE_TEX_FACE_NEG_Y;
-         for (j = 0; j < QUAD_SIZE; j++) {
+         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
             const float ima = -0.5F / fabsf(t[j]);
             ssss[j] =        -s[j] * ima + 0.5F;
             tttt[j] = sign * -p[j] * ima + 0.5F;
@@ -2271,7 +2271,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
       else {
          float sign = (rz >= 0.0F) ? 1.0F : -1.0F;
          uint face = (rz >= 0.0F) ? PIPE_TEX_FACE_POS_Z : PIPE_TEX_FACE_NEG_Z;
-         for (j = 0; j < QUAD_SIZE; j++) {
+         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
             const float ima = -0.5F / fabsf(p[j]);
             ssss[j] = sign * -s[j] * ima + 0.5F;
             tttt[j] =         t[j] * ima + 0.5F;
@@ -2288,8 +2288,8 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
 }
 
 static void do_swizzling(const struct sp_sampler_variant *samp,
-                         float in[NUM_CHANNELS][QUAD_SIZE],
-                         float out[NUM_CHANNELS][QUAD_SIZE])
+                         float in[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE],
+                         float out[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    int j;
    const unsigned swizzle_r = samp->key.bits.swizzle_r;
@@ -2360,15 +2360,15 @@ static void do_swizzling(const struct sp_sampler_variant *samp,
 
 static void
 sample_swizzle(struct tgsi_sampler *tgsi_sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               const float c0[QUAD_SIZE],
+               const float s[TGSI_QUAD_SIZE],
+               const float t[TGSI_QUAD_SIZE],
+               const float p[TGSI_QUAD_SIZE],
+               const float c0[TGSI_QUAD_SIZE],
                enum tgsi_sampler_control control,
-               float rgba[NUM_CHANNELS][QUAD_SIZE])
+               float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
-   float rgba_temp[NUM_CHANNELS][QUAD_SIZE];
+   float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
 
    samp->sample_target(tgsi_sampler, s, t, p, c0, control, rgba_temp);
 
@@ -2634,12 +2634,12 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
    via the TGSI TXF opcode. */
 static void
 sample_get_texels(struct tgsi_sampler *tgsi_sampler,
-	   const int v_i[QUAD_SIZE],
-	   const int v_j[QUAD_SIZE],
-	   const int v_k[QUAD_SIZE],
-	   const int lod[QUAD_SIZE],
+	   const int v_i[TGSI_QUAD_SIZE],
+	   const int v_j[TGSI_QUAD_SIZE],
+	   const int v_k[TGSI_QUAD_SIZE],
+	   const int lod[TGSI_QUAD_SIZE],
 	   const int8_t offset[3],
-	   float rgba[NUM_CHANNELS][QUAD_SIZE])
+	   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    union tex_tile_address addr;
@@ -2657,7 +2657,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
 
    switch(texture->target) {
    case PIPE_TEXTURE_1D:
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
 	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0], 0);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
@@ -2665,7 +2665,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEXTURE_1D_ARRAY:
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
 	 tx = get_texel_1d_array(samp, addr, v_i[j] + offset[0],
 				 v_j[j] + offset[1]);
 	 for (c = 0; c < 4; c++) {
@@ -2675,7 +2675,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
 	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0],
 			   v_j[j] + offset[1]);
 	 for (c = 0; c < 4; c++) {
@@ -2684,7 +2684,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEXTURE_2D_ARRAY:
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
 	 tx = get_texel_2d_array(samp, addr, v_i[j] + offset[0],
 				 v_j[j] + offset[1],
 				 v_k[j] + offset[2]);
@@ -2694,7 +2694,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       }
       break;
    case PIPE_TEXTURE_3D:
-      for (j = 0; j < QUAD_SIZE; j++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
 	 tx = get_texel_3d(samp, addr, v_i[j] + offset[0], 
 			   v_j[j] + offset[1],
 			   v_k[j] + offset[2]);
@@ -2710,7 +2710,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    }
 
    if (need_swizzle) {
-      float rgba_temp[NUM_CHANNELS][QUAD_SIZE];
+      float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
       memcpy(rgba_temp, rgba, sizeof(rgba_temp));
       do_swizzling(samp, rgba_temp, rgba);
    }

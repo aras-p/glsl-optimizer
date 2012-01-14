@@ -75,7 +75,7 @@ struct lp_shader_input {
 
 struct lp_build_interp_soa_context
 {
-   /* QUAD_SIZE x float */
+   /* TGSI_QUAD_SIZE x float */
    struct lp_build_context coeff_bld;
 
    unsigned num_attribs;
@@ -85,18 +85,18 @@ struct lp_build_interp_soa_context
    LLVMValueRef x;
    LLVMValueRef y;
 
-   LLVMValueRef a   [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-   LLVMValueRef dadq[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   LLVMValueRef a   [1 + PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
+   LLVMValueRef dadq[1 + PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
 
    LLVMValueRef oow;
 
-   LLVMValueRef attribs[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+   LLVMValueRef attribs[1 + PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
 
    /*
     * Convenience pointers. Callers may access this one.
     */
    const LLVMValueRef *pos;
-   const LLVMValueRef (*inputs)[NUM_CHANNELS];
+   const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS];
 };
 
 

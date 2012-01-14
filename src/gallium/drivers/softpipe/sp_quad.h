@@ -62,7 +62,7 @@
 struct quad_header_input
 {
    int x0, y0;                /**< quad window pos, always even */
-   float coverage[QUAD_SIZE]; /**< fragment coverage for antialiasing */
+   float coverage[TGSI_QUAD_SIZE]; /**< fragment coverage for antialiasing */
    unsigned facing:1;         /**< Front (0) or back (1) facing? */
    unsigned prim:2;           /**< QUAD_PRIM_POINT, LINE, TRI */
 };
@@ -83,9 +83,9 @@ struct quad_header_inout
 struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
-   float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
-   float depth[QUAD_SIZE];
-   uint8_t stencil[QUAD_SIZE];
+   float color[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
+   float depth[TGSI_QUAD_SIZE];
+   uint8_t stencil[TGSI_QUAD_SIZE];
 };
 
 

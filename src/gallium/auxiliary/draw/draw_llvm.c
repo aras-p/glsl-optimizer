@@ -469,8 +469,8 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
 static void
 generate_vs(struct draw_llvm *llvm,
             LLVMBuilderRef builder,
-            LLVMValueRef (*outputs)[NUM_CHANNELS],
-            const LLVMValueRef (*inputs)[NUM_CHANNELS],
+            LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
+            const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
             LLVMValueRef system_values_array,
             LLVMValueRef context_ptr,
             struct lp_build_sampler_soa *draw_sampler,
@@ -518,7 +518,7 @@ generate_vs(struct draw_llvm *llvm,
       lp_build_context_init(&bld, llvm->gallivm, vs_type);
 
       for (attrib = 0; attrib < info->num_outputs; ++attrib) {
-         for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+         for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
             if (outputs[attrib][chan]) {
                switch (info->output_semantic_name[attrib]) {
                case TGSI_SEMANTIC_COLOR:
@@ -644,19 +644,19 @@ aos_to_soa(struct gallivm_state *gallivm,
 
 static void
 soa_to_aos(struct gallivm_state *gallivm,
-           LLVMValueRef soa[NUM_CHANNELS],
-           LLVMValueRef aos[NUM_CHANNELS])
+           LLVMValueRef soa[TGSI_NUM_CHANNELS],
+           LLVMValueRef aos[TGSI_NUM_CHANNELS])
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef comp;
    int i = 0;
 
-   debug_assert(NUM_CHANNELS == 4);
+   debug_assert(TGSI_NUM_CHANNELS == 4);
 
    aos[0] = LLVMConstNull(LLVMTypeOf(soa[0]));
    aos[1] = aos[2] = aos[3] = aos[0];
 
-   for (i = 0; i < NUM_CHANNELS; ++i) {
+   for (i = 0; i < TGSI_NUM_CHANNELS; ++i) {
       LLVMValueRef channel = lp_build_const_int32(gallivm, i);
 
       comp = LLVMBuildExtractElement(builder, soa[i],
@@ -681,13 +681,13 @@ soa_to_aos(struct gallivm_state *gallivm,
 
 static void
 convert_to_soa(struct gallivm_state *gallivm,
-               LLVMValueRef (*aos)[NUM_CHANNELS],
-               LLVMValueRef (*soa)[NUM_CHANNELS],
+               LLVMValueRef (*aos)[TGSI_NUM_CHANNELS],
+               LLVMValueRef (*soa)[TGSI_NUM_CHANNELS],
                int num_attribs)
 {
    int i;
 
-   debug_assert(NUM_CHANNELS == 4);
+   debug_assert(TGSI_NUM_CHANNELS == 4);
 
    for (i = 0; i < num_attribs; ++i) {
       LLVMValueRef val0 = aos[i][0];
@@ -791,7 +791,7 @@ store_aos(struct gallivm_state *gallivm,
 static void
 store_aos_array(struct gallivm_state *gallivm,
                 LLVMValueRef io_ptr,
-                LLVMValueRef aos[NUM_CHANNELS],
+                LLVMValueRef aos[TGSI_NUM_CHANNELS],
                 int attrib,
                 int num_outputs,
                 LLVMValueRef clipmask)
@@ -805,7 +805,7 @@ store_aos_array(struct gallivm_state *gallivm,
    LLVMValueRef io0_ptr, io1_ptr, io2_ptr, io3_ptr;
    LLVMValueRef clipmask0, clipmask1, clipmask2, clipmask3;
    
-   debug_assert(NUM_CHANNELS == 4);
+   debug_assert(TGSI_NUM_CHANNELS == 4);
 
    io0_ptr = LLVMBuildGEP(builder, io_ptr,
                           &ind0, 1, "");
@@ -840,7 +840,7 @@ store_aos_array(struct gallivm_state *gallivm,
 static void
 convert_to_aos(struct gallivm_state *gallivm,
                LLVMValueRef io,
-               LLVMValueRef (*outputs)[NUM_CHANNELS],
+               LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                LLVMValueRef clipmask,
                int num_outputs,
                int max_vertices)
@@ -854,7 +854,7 @@ convert_to_aos(struct gallivm_state *gallivm,
    for (attrib = 0; attrib < num_outputs; ++attrib) {
       LLVMValueRef soa[4];
       LLVMValueRef aos[4];
-      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+      for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
          if (outputs[attrib][chan]) {
             LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
             lp_build_name(out, "output%u.%c", attrib, "xyzw"[chan]);
@@ -890,7 +890,7 @@ convert_to_aos(struct gallivm_state *gallivm,
 static void
 store_clip(struct gallivm_state *gallivm,
            LLVMValueRef io_ptr,           
-           LLVMValueRef (*outputs)[NUM_CHANNELS],
+           LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
            boolean pre_clip_pos)
 {
    LLVMBuilderRef builder = gallivm->builder;
@@ -983,7 +983,7 @@ vec4f_from_scalar(struct gallivm_state *gallivm,
 static void
 generate_viewport(struct draw_llvm *llvm,
                   LLVMBuilderRef builder,
-                  LLVMValueRef (*outputs)[NUM_CHANNELS],
+                  LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                   LLVMValueRef context_ptr)
 {
    int i;
@@ -1034,7 +1034,7 @@ generate_viewport(struct draw_llvm *llvm,
  */
 static LLVMValueRef 
 generate_clipmask(struct gallivm_state *gallivm,
-                  LLVMValueRef (*outputs)[NUM_CHANNELS],
+                  LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                   boolean clip_xy,
                   boolean clip_z,
                   boolean clip_user,
@@ -1212,7 +1212,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
    const int max_vertices = 4;
-   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    LLVMValueRef fetch_max;
    void *code;
    struct lp_build_sampler_soa *sampler = 0;
@@ -1317,11 +1317,11 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    lp_build_loop_begin(&lp_loop, gallivm, start);
    {
-      LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS] = { { 0 } };
+      LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
+      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS] = { { 0 } };
       LLVMValueRef io;
       LLVMValueRef clipmask;   /* holds the clipmask value */
-      const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
+      const LLVMValueRef (*ptr_aos)[TGSI_NUM_CHANNELS];
 
       if (elts)
          io_itr = lp_loop.counter;
@@ -1333,7 +1333,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       lp_build_printf(builder, " --- io %d = %p, loop counter %d\n",
                       io_itr, io, lp_loop.counter);
 #endif
-      for (i = 0; i < NUM_CHANNELS; ++i) {
+      for (i = 0; i < TGSI_NUM_CHANNELS; ++i) {
          LLVMValueRef true_index =
             LLVMBuildAdd(builder,
                          lp_loop.counter,
@@ -1364,7 +1364,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       convert_to_soa(gallivm, aos_attribs, inputs,
                      draw->pt.nr_vertex_elements);
 
-      ptr_aos = (const LLVMValueRef (*)[NUM_CHANNELS]) inputs;
+      ptr_aos = (const LLVMValueRef (*)[TGSI_NUM_CHANNELS]) inputs;
       generate_vs(llvm,
                   builder,
                   outputs,

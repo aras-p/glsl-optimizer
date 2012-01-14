@@ -45,17 +45,17 @@ typedef void (*wrap_linear_func)(const float s[4],
                                  float w[4]);
 
 typedef float (*compute_lambda_func)(const struct sp_sampler_variant *sampler,
-                                     const float s[QUAD_SIZE],
-                                     const float t[QUAD_SIZE],
-                                     const float p[QUAD_SIZE]);
+                                     const float s[TGSI_QUAD_SIZE],
+                                     const float t[TGSI_QUAD_SIZE],
+                                     const float p[TGSI_QUAD_SIZE]);
 
 typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
-                            const float s[QUAD_SIZE],
-                            const float t[QUAD_SIZE],
-                            const float p[QUAD_SIZE],
-                            const float c0[QUAD_SIZE],
+                            const float s[TGSI_QUAD_SIZE],
+                            const float t[TGSI_QUAD_SIZE],
+                            const float p[TGSI_QUAD_SIZE],
+                            const float c0[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
-                            float rgba[NUM_CHANNELS][QUAD_SIZE]);
+                            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
 union sp_sampler_key {
@@ -148,11 +148,11 @@ sp_sampler_variant(const struct tgsi_sampler *sampler)
 
 extern void
 sp_get_samples(struct tgsi_sampler *tgsi_sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
+               const float s[TGSI_QUAD_SIZE],
+               const float t[TGSI_QUAD_SIZE],
+               const float p[TGSI_QUAD_SIZE],
                float lodbias,
-               float rgba[NUM_CHANNELS][QUAD_SIZE]);
+               float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
 #endif /* SP_TEX_SAMPLE_H */
