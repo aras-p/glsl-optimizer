@@ -34,6 +34,7 @@ struct r600_shader_io {
 	unsigned		interpolate;
 	boolean                 centroid;
 	unsigned		lds_pos; /* for evergreen */
+	unsigned		write_mask;
 };
 
 struct r600_shader {
@@ -46,9 +47,14 @@ struct r600_shader {
 	struct r600_shader_io	output[32];
 	boolean			uses_kill;
 	boolean			fs_write_all;
+	boolean			vs_prohibit_ucps;
 	boolean			clamp_color;
 	boolean			two_side;
 	unsigned		nr_cbufs;
+	/* bit n is set if the shader writes gl_ClipDistance[n] */
+	unsigned		clip_dist_write;
+	/* flag is set if the shader writes VS_OUT_MISC_VEC (e.g. for PSIZE) */
+	boolean			vs_out_misc_write;
 };
 
 #endif

@@ -554,6 +554,30 @@ static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shade
 static void r600_update_derived_state(struct r600_pipe_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
+	struct r600_pipe_state rstate;
+	unsigned user_clip_plane_enable;
+	unsigned clip_dist_enable;
+
+	if (rctx->vs_shader->shader.clip_dist_write || rctx->vs_shader->shader.vs_prohibit_ucps)
+		user_clip_plane_enable = 0;
+	else
+		user_clip_plane_enable = rctx->rasterizer->clip_plane_enable & 0x3F;
+
+	clip_dist_enable = rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write & 0xFF;
+	rstate.nregs = 0;
+
+	if (user_clip_plane_enable != rctx->user_clip_plane_enable) {
+		r600_pipe_state_add_reg(&rstate, R_028810_PA_CL_CLIP_CNTL, user_clip_plane_enable , 0x3F, NULL, 0);
+		rctx->user_clip_plane_enable = user_clip_plane_enable;
+	}
+
+	if (clip_dist_enable != rctx->clip_dist_enable) {
+		r600_pipe_state_add_reg(&rstate, R_02881C_PA_CL_VS_OUT_CNTL, clip_dist_enable, 0xFF, NULL, 0);
+		rctx->clip_dist_enable = clip_dist_enable;
+	}
+
+	if (rstate.nregs)
+		r600_context_pipe_state_set(&rctx->ctx, &rstate);
 
 	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)

@@ -907,6 +907,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
 	rs->two_side = state->light_twoside;
+	rs->clip_plane_enable = state->clip_plane_enable;
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
@@ -944,8 +945,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02881C_PA_CL_VS_OUT_CNTL,
-			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
-			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex), 0xFFFFFFFF, NULL, 0);
+			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex),
+			S_02881C_USE_VTX_POINT_SIZE(1), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028820_PA_CL_NANINF_CNTL, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
@@ -992,9 +993,10 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
-			S_028810_PS_UCP_MODE(3) | (state->clip_plane_enable & 63) |
-			S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
-			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip), 0xFFFFFFFF, NULL, 0);
+			S_028810_PS_UCP_MODE(3) | S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
+			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip),
+			S_028810_PS_UCP_MODE(3) | S_028810_ZCLIP_NEAR_DISABLE(1) |
+			S_028810_ZCLIP_FAR_DISABLE(1), NULL, 0);
 	return rstate;
 }
 
@@ -2479,6 +2481,16 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
 				0xFFFFFFFF, NULL, 0);
+
+	r600_pipe_state_add_reg(rstate,
+				R_02881C_PA_CL_VS_OUT_CNTL,
+				S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
+				S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
+				S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write),
+				S_02881C_VS_OUT_CCDIST0_VEC_ENA(1) |
+				S_02881C_VS_OUT_CCDIST1_VEC_ENA(1) |
+				S_02881C_VS_OUT_MISC_VEC_ENA(1),
+				NULL, 0);
 }
 
 void evergreen_fetch_shader(struct pipe_context *ctx,

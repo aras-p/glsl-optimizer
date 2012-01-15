@@ -470,6 +470,17 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
 		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
+		ctx->shader->output[i].write_mask = d->Declaration.UsageMask;
+		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
+			switch (d->Semantic.Name) {
+			case TGSI_SEMANTIC_CLIPDIST:
+				ctx->shader->clip_dist_write |= d->Declaration.UsageMask << (d->Semantic.Index << 2);
+				break;
+			case TGSI_SEMANTIC_PSIZE:
+				ctx->shader->vs_out_misc_write = 1;
+				break;
+			}
+		}
 		break;
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:
@@ -891,9 +902,15 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			break;
 		case TGSI_TOKEN_TYPE_PROPERTY:
 			property = &ctx.parse.FullToken.FullProperty;
-			if (property->Property.PropertyName == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
+			switch (property->Property.PropertyName) {
+			case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
 				if (property->u[0].Data == 1)
 					shader->fs_write_all = TRUE;
+				break;
+			case TGSI_PROPERTY_VS_PROHIBIT_UCPS:
+				if (property->u[0].Data == 1)
+					shader->vs_prohibit_ucps = TRUE;
+				break;
 			}
 			break;
 		default:
@@ -1038,8 +1055,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	/* export output */
 	j = 0;
+
 	for (i = 0, pos0 = 0; i < noutput; i++) {
-		memset(&output[i], 0, sizeof(struct r600_bytecode_output));
+		memset(&output[i+j], 0, sizeof(struct r600_bytecode_output));
 		output[i + j].gpr = shader->output[i].gpr;
 		output[i + j].elem_size = 3;
 		output[i + j].swizzle_x = 0;
@@ -1049,21 +1067,41 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 		output[i + j].burst_count = 1;
 		output[i + j].barrier = 1;
 		output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
-		output[i + j].array_base = i - pos0;
+		output[i + j].array_base = i+j - pos0;
 		output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 		switch (ctx.type) {
 		case TGSI_PROCESSOR_VERTEX:
-			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
+			switch (shader->output[i].name) {
+			case TGSI_SEMANTIC_POSITION:
 				output[i + j].array_base = 60;
 				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
 				pos0++;
-			}
-			if (shader->output[i].name == TGSI_SEMANTIC_PSIZE) {
+				break;
+
+			case TGSI_SEMANTIC_PSIZE:
 				output[i + j].array_base = 61;
 				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
 				pos0++;
+				break;
+
+			case TGSI_SEMANTIC_CLIPDIST:
+				/* array base for enabled OUT_MISC_VEC & CCDIST[0|1]_VEC
+				 * vectors is allocated sequentially, starting from 61 */
+				output[i + j].array_base = 61 + shader->output[i].sid
+					/* +1 if OUT_MISC_VEC is enabled */
+					+ shader->vs_out_misc_write
+					/* -1 if OUT_CCDIST0_VEC is disabled */
+					- (((shader->clip_dist_write & 0xF) == 0)? 1 : 0);
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				j++;
+				pos0++;
+				/* duplicate it as PARAM to pass to the pixel shader */
+				memcpy(&output[i+j], &output[i+j-1], sizeof(struct r600_bytecode_output));
+				output[i + j].array_base = i+j-pos0;
+				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+				break;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
