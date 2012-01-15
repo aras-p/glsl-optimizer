@@ -37,7 +37,6 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vertprog.c \
 		 r200_blit.c \
 		 radeon_screen.c \
-		 $(EGL_SOURCES) \
 		 $(RADEON_COMMON_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
