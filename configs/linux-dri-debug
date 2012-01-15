@@ -6,9 +6,3 @@ include $(TOP)/configs/linux-dri
 CONFIG_NAME = linux-dri-debug
 OPT_FLAGS  = -O0 -g
 ARCH_FLAGS = -DDEBUG
-
-# Helpful to reduce the amount of stuff that gets built sometimes:
-#DRI_DIRS = i915tex i915 
-#DRI_DIRS = i965
-#DRI_DIRS = r200
-

@@ -15,6 +15,3 @@ LIB_DIR = lib64
 
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib64
-
-DRI_DIRS = i915 i965 r200
-
