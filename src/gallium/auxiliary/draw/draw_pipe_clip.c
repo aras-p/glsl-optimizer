@@ -119,11 +119,7 @@ static void interp( const struct clip_stage *clip,
    const unsigned nr_attrs = draw_current_shader_outputs(clip->stage.draw);
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
-   unsigned clip_dist[2];
    unsigned j;
-
-   clip_dist[0] = draw_current_shader_clipdistance_output(clip->stage.draw, 0);
-   clip_dist[1] = draw_current_shader_clipdistance_output(clip->stage.draw, 1);
 
    /* Vertex header.
     */
