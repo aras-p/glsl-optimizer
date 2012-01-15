@@ -86,6 +86,9 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT:
 			return 2;
 
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
@@ -161,6 +164,9 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT:
 			return 2;
 
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
@@ -505,10 +511,7 @@ static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode
 			/* Note that FLT_TO_INT_* instructions are vector-only instructions
 			 * on Evergreen, despite what the documentation says. FLT_TO_INT
 			 * can do both vector and scalar. */
-			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
-			        alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
