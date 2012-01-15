@@ -47,5 +47,5 @@ DRIVER_DIRS = dri
 
 DRM_SOURCE_PATH=$(TOP)/../drm
 
-DRI_DIRS = i915 i965 r200 radeon
+DRI_DIRS = i915 i965 r200
 

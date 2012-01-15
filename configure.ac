@@ -1271,8 +1271,24 @@ case $DRI_DIRS in
     ;;
 esac
 
+case $DRI_DIRS in
+*radeon*)
+    PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+
+    for d in $(echo $DRI_DIRS | sed 's/,/ /g'); do
+        case $d in
+        radeon)
+            HAVE_RADEON_DRI=yes;
+            ;;
+        esac
+    done
+
+    ;;
+esac
+
 AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
 AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
+AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
 
 case $DRI_DIRS in
 *nouveau*)
@@ -1281,7 +1297,7 @@ case $DRI_DIRS in
 esac
 
 case $DRI_DIRS in
-*radeon*|*r200*)
+*r200*)
     PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
     ;;
 esac
@@ -1912,6 +1928,7 @@ dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
+		src/mesa/drivers/dri/radeon/Makefile
 		tests/Makefile
 		tests/glx/Makefile])
 

@@ -10,5 +10,5 @@ ARCH_FLAGS = -DDEBUG
 # Helpful to reduce the amount of stuff that gets built sometimes:
 #DRI_DIRS = i915tex i915 
 #DRI_DIRS = i965
-#DRI_DIRS = radeon r200
+#DRI_DIRS = r200
 
