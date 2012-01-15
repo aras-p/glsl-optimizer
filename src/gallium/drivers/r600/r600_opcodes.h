@@ -363,7 +363,7 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_64              0x00000097
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED_64      0x00000098
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_64                   0x00000099
-/* TODO Fill in more ALU */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT               0x0000009A
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT                0x0000009B
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT               0x0000009C
 /* TODO Fill in more ALU */

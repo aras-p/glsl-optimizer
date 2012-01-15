@@ -105,6 +105,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
@@ -178,6 +179,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE:
@@ -514,6 +516,7 @@ static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
