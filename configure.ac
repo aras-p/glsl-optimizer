@@ -1932,6 +1932,8 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		src/mesa/drivers/dri/dri.pc
+		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
 		src/mesa/drivers/dri/nouveau/Makefile

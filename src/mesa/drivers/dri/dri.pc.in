@@ -1,8 +1,8 @@
-prefix=@INSTALL_DIR@
-exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
-dridriverdir=@DRI_DRIVER_DIR@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+dridriverdir=@DRI_DRIVER_INSTALL_DIR@
 
 Name: dri
 Description: Direct Rendering Infrastructure
