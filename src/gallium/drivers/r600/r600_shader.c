@@ -1910,7 +1910,7 @@ static int tgsi_f2i(struct r600_shader_ctx *ctx)
 			continue;
 
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT);
+		alu.inst = ctx->inst_info->r600_opcode;
 
 		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 
@@ -3855,7 +3855,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ISGE,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_INT, tgsi_op2},
 	{TGSI_OPCODE_ISHR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ISLT,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_INT, tgsi_op2_swap},
-	{TGSI_OPCODE_F2U,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_F2U,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT, tgsi_f2i},
 	{TGSI_OPCODE_U2F,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT, tgsi_op2},
 	{TGSI_OPCODE_UADD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT, tgsi_op2},
 	{TGSI_OPCODE_UDIV,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
