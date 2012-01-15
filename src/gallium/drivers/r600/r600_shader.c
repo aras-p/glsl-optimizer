@@ -1927,6 +1927,64 @@ static int tgsi_f2i(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_iabs(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bytecode_alu alu;
+	int i, r;
+	unsigned write_mask = inst->Dst[0].Register.WriteMask;
+	int last_inst = tgsi_last_instruction(write_mask);
+
+	/* tmp = -src */
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SUB_INT);
+
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+
+		r600_bytecode_src(&alu.src[1], &ctx->src[0], i);
+		alu.src[0].sel = V_SQ_ALU_SRC_0;
+
+		if (i == last_inst)
+			alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	/* dst = (src >= 0 ? src : tmp) */
+	for (i = 0; i < 4; i++) {
+		if (!(write_mask & (1<<i)))
+			continue;
+
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGE_INT);
+		alu.is_op3 = 1;
+		alu.dst.write = 1;
+
+		tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+
+		r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+		r600_bytecode_src(&alu.src[1], &ctx->src[0], i);
+		alu.src[2].sel = ctx->temp_reg;
+		alu.src[2].chan = i;
+
+		if (i == last_inst)
+			alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
+
+
 static int tgsi_ssg(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -3715,6 +3773,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SAMPLE_INFO, 0, 0, tgsi_unsupported},
 	{TGSI_OPCODE_UARL,      0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT, tgsi_r600_arl},
 	{TGSI_OPCODE_UCMP,      0, 0, tgsi_unsupported},
+	{TGSI_OPCODE_IABS,      0, 0, tgsi_iabs},
 	{TGSI_OPCODE_LAST,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 };
 
@@ -3887,6 +3946,7 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SAMPLE_INFO, 0, 0, tgsi_unsupported},
 	{TGSI_OPCODE_UARL,      0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT, tgsi_eg_arl},
 	{TGSI_OPCODE_UCMP,      0, 0, tgsi_unsupported},
+	{TGSI_OPCODE_IABS,      0, 0, tgsi_iabs},
 	{TGSI_OPCODE_LAST,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 };
 
