@@ -1296,11 +1296,18 @@ case $DRI_DIRS in
     ;;
 esac
 
+case $DRI_DIRS in
+*swrast*)
+    HAVE_SWRAST_DRI=yes;
+    ;;
+esac
+
 AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
 AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
 AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
 AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
 AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
+AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
 
 dnl
 dnl OSMesa configuration
@@ -1930,6 +1937,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/nouveau/Makefile
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
+		src/mesa/drivers/dri/swrast/Makefile
 		tests/Makefile
 		tests/glx/Makefile])
 
