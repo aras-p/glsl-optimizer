@@ -2,7 +2,7 @@
 i915_INCLUDES := \
 	src/mesa/drivers/dri/intel
 
-i915_C_SOURCES := \
+i915_C_FILES := \
 	i830_context.c \
 	i830_state.c \
 	i830_texblend.c \

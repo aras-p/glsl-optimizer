@@ -62,7 +62,7 @@ GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel svga/drm
 GALLIUM_TARGET_DIRS = dri-vmwgfx
 GALLIUM_STATE_TRACKERS_DIRS = egl dri
 
-DRI_DIRS = i915 nouveau r200 radeon swrast
+DRI_DIRS = nouveau r200 radeon swrast
 
 INTEL_LIBS = $(shell $(PKG_CONFIG) --libs libdrm_intel)
 INTEL_CFLAGS = $(shell $(PKG_CONFIG) --cflags libdrm_intel)

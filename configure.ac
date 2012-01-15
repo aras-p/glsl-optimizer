@@ -1257,15 +1257,21 @@ case $DRI_DIRS in
 *i915*|*i965*)
     PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
 
-    case $DRI_DIRS in
-    *i965*)
-	HAVE_I965_DRI=yes;
-	;;
-    esac
+    for d in $(echo $DRI_DIRS | sed 's/,/ /g'); do
+        case $d in
+        i915)
+            HAVE_I915_DRI=yes;
+            ;;
+        i965)
+            HAVE_I965_DRI=yes;
+            ;;
+        esac
+    done
 
     ;;
 esac
 
+AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
 AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
 
 case $DRI_DIRS in
@@ -1904,6 +1910,7 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
 		tests/Makefile
 		tests/glx/Makefile])
