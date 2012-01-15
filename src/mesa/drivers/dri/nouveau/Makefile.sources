@@ -1,13 +1,4 @@
-# src/mesa/drivers/dri/nouveau/Makefile
-
-TOP = ../../../../..
-include $(TOP)/configs/current
-
-LIBNAME = nouveau_vieux_dri.so
-
-include ../Makefile.defines
-
-DRIVER_SOURCES = \
+NOUVEAU_DRIVER_FILES = \
 	nouveau_screen.c \
 	nouveau_context.c \
 	nouveau_fbo.c \
@@ -44,15 +35,5 @@ DRIVER_SOURCES = \
 	nv20_state_frag.c \
 	nv20_state_tnl.c
 
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES =
-
-INCLUDES += $(NOUVEAU_CFLAGS)
-DRI_LIB_DEPS += $(NOUVEAU_LIBS)
-
-include ../Makefile.targets
-
-symlinks:
+NOUVEAU_C_FILES = \
+	$(NOUVEAU_DRIVER_FILES)

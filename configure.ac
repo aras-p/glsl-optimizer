@@ -1272,6 +1272,13 @@ case $DRI_DIRS in
 esac
 
 case $DRI_DIRS in
+*nouveau*)
+    PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
+    HAVE_NOUVEAU_DRI=yes;
+    ;;
+esac
+
+case $DRI_DIRS in
 *radeon*|*r200*)
     PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
 
@@ -1291,14 +1298,9 @@ esac
 
 AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
 AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
+AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
 AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
 AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
-
-case $DRI_DIRS in
-*nouveau*)
-    PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
-    ;;
-esac
 
 dnl
 dnl OSMesa configuration
@@ -1925,6 +1927,7 @@ dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
+		src/mesa/drivers/dri/nouveau/Makefile
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
 		tests/Makefile
