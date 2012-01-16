@@ -272,15 +272,12 @@ map_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   if (!ctx->Driver.MapTexture)
-      return;
-
    for (u = 0; u < ctx->Const.MaxVertexTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].
           */
-         ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[u]._Current);
+         _swrast_map_texture(ctx, ctx->Texture.Unit[u]._Current);
       }
    }
 }
@@ -294,15 +291,12 @@ unmap_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   if (!ctx->Driver.MapTexture)
-      return;
-
    for (u = 0; u < ctx->Const.MaxVertexTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].
           */
-         ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[u]._Current);
+         _swrast_unmap_texture(ctx, ctx->Texture.Unit[u]._Current);
       }
    }
 }
