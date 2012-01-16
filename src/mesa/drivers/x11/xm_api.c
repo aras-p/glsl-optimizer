@@ -1484,7 +1484,7 @@ GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
 {
    struct gl_renderbuffer *rb
       = b->mesa_buffer.Attachment[BUFFER_DEPTH].Renderbuffer;
-   if (!rb || !rb->Data) {
+   if (!rb || !rb->Buffer) {
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
@@ -1496,7 +1496,7 @@ GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
       *height = b->mesa_buffer.Height;
       *bytesPerValue = b->mesa_buffer.Visual.depthBits <= 16
          ? sizeof(GLushort) : sizeof(GLuint);
-      *buffer = rb->Data;
+      *buffer = (void *) rb->Buffer;
       return GL_TRUE;
    }
 }

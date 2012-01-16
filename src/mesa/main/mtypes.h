@@ -2559,7 +2559,7 @@ struct gl_renderbuffer
    gl_format Format;      /**< The actual renderbuffer memory format */
 
    /* XXX the following fields are obsolete and wil go away */
-   GLvoid *Data;        /**< This may not be used by some kinds of RBs */
+   GLvoid *Buffer;        /**< Malloc'd memory for software buffers */
 
    /** The following fields are only valid while the buffer is mapped */
    GLubyte *Map;

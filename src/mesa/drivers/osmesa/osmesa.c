@@ -354,7 +354,7 @@ static void
 compute_row_addresses( OSMesaContext osmesa )
 {
    GLint bytesPerRow, i;
-   GLubyte *origin = (GLubyte *) osmesa->rb->Data;
+   GLubyte *origin = (GLubyte *) osmesa->rb->Buffer;
    GLint rowlength; /* in pixels */
    GLint height = osmesa->rb->Height;
 
@@ -383,7 +383,7 @@ compute_row_addresses( OSMesaContext osmesa )
 
 
 /**
- * Don't use _mesa_delete_renderbuffer since we can't free rb->Data.
+ * Don't use _mesa_delete_renderbuffer since we can't free rb->Buffer.
  */
 static void
 osmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
@@ -891,7 +891,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
    /* Set renderbuffer fields.  Set width/height = 0 to force 
     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
     */
-   osmesa->rb->Data = buffer;
+   osmesa->rb->Buffer = buffer;
    osmesa->rb->Width = osmesa->rb->Height = 0;
 
    /* Set the framebuffer's size.  This causes the
@@ -1024,7 +1024,7 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
    if (c->gl_buffer)
       rb = c->gl_buffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 
-   if (!rb || !rb->Data) {
+   if (!rb || !rb->Buffer) {
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
@@ -1038,7 +1038,7 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
          *bytesPerValue = sizeof(GLushort);
       else
          *bytesPerValue = sizeof(GLuint);
-      *buffer = rb->Data;
+      *buffer = (void *) rb->Buffer;
       return GL_TRUE;
    }
 }
@@ -1056,11 +1056,11 @@ GLAPI GLboolean GLAPIENTRY
 OSMesaGetColorBuffer( OSMesaContext osmesa, GLint *width,
                       GLint *height, GLint *format, void **buffer )
 {
-   if (osmesa->rb && osmesa->rb->Data) {
+   if (osmesa->rb && osmesa->rb->Buffer) {
       *width = osmesa->rb->Width;
       *height = osmesa->rb->Height;
       *format = osmesa->format;
-      *buffer = osmesa->rb->Data;
+      *buffer = (void *) osmesa->rb->Buffer;
       return GL_TRUE;
    }
    else {

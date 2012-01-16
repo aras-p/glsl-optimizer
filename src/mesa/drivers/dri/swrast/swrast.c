@@ -265,7 +265,7 @@ swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
     TRACE;
 
-    free(rb->Data);
+    free(rb->Buffer);
     free(rb);
 }
 
@@ -289,7 +289,7 @@ swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
     (void) ctx;
     (void) internalFormat;
 
-    rb->Data = NULL;
+    rb->Buffer = NULL;
     rb->Width = width;
     rb->Height = height;
     xrb->pitch = bytes_per_line(width * xrb->bpp, 32);
@@ -305,11 +305,11 @@ swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
     TRACE;
 
-    free(rb->Data);
+    free(rb->Buffer);
 
     swrast_alloc_front_storage(ctx, rb, internalFormat, width, height);
 
-    rb->Data = malloc(height * xrb->pitch);
+    rb->Buffer = malloc(height * xrb->pitch);
 
     return GL_TRUE;
 }
@@ -380,7 +380,7 @@ swrast_map_renderbuffer(struct gl_context *ctx,
 			GLint *out_stride)
 {
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
-   GLubyte *map = rb->Data;
+   GLubyte *map = rb->Buffer;
    int cpp = _mesa_get_format_bytes(rb->Format);
    int stride = rb->Width * cpp;
 
@@ -395,18 +395,18 @@ swrast_map_renderbuffer(struct gl_context *ctx,
       xrb->map_h = h;
 
       stride = w * cpp;
-      rb->Data = malloc(h * stride);
+      rb->Buffer = malloc(h * stride);
 
       sPriv->swrast_loader->getImage(dPriv, x, y, w, h,
-				     (char *)rb->Data,
+				     (char *)rb->Buffer,
 				     dPriv->loaderPrivate);
 
-      *out_map = rb->Data;
+      *out_map = rb->Buffer;
       *out_stride = stride;
       return;
    }
 
-   ASSERT(rb->Data);
+   ASSERT(rb->Buffer);
 
    if (rb->AllocStorage == swrast_alloc_back_storage) {
       map += (rb->Height - 1) * stride;
@@ -434,12 +434,12 @@ swrast_unmap_renderbuffer(struct gl_context *ctx,
 	 sPriv->swrast_loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_DRAW,
 					xrb->map_x, xrb->map_y,
 					xrb->map_w, xrb->map_h,
-					rb->Data,
+					rb->Buffer,
 					dPriv->loaderPrivate);
       }
 
-      free(rb->Data);
-      rb->Data = NULL;
+      free(rb->Buffer);
+      rb->Buffer = NULL;
    }
 }
 
@@ -556,7 +556,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 				   0, 0,
 				   frontrb->Base.Width,
 				   frontrb->Base.Height,
-				   backrb->Base.Data,
+				   backrb->Base.Buffer,
 				   dPriv->loaderPrivate);
 }
 

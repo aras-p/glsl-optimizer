@@ -132,11 +132,11 @@ intel_map_renderbuffer(struct gl_context *ctx,
    void *map;
    int stride;
 
-   if (!irb && rb->Data) {
+   if (!irb && rb->Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       GLint bpp = _mesa_get_format_bytes(rb->Format);
       GLint rowStride = rb->RowStrideBytes;
-      *out_map = (GLubyte *) rb->Data + y * rowStride + x * bpp;
+      *out_map = (GLubyte *) rb->Buffer + y * rowStride + x * bpp;
       *out_stride = rowStride;
       return;
    }
@@ -185,7 +185,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
-   if (!irb && rb->Data) {
+   if (!irb && rb->Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       /* nothing to do */
       return;

@@ -113,18 +113,18 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
 
    /* free old buffer storage */
-   if (rb->Data) {
-      free(rb->Data);
-      rb->Data = NULL;
+   if (rb->Buffer) {
+      free(rb->Buffer);
+      rb->Buffer = NULL;
    }
 
    rb->RowStrideBytes = width * _mesa_get_format_bytes(rb->Format);
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      rb->Data = malloc(width * height * _mesa_get_format_bytes(rb->Format));
+      rb->Buffer = malloc(width * height * _mesa_get_format_bytes(rb->Format));
 
-      if (rb->Data == NULL) {
+      if (rb->Buffer == NULL) {
          rb->Width = 0;
          rb->Height = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
@@ -162,9 +162,9 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 static void
 soft_renderbuffer_delete(struct gl_renderbuffer *rb)
 {
-   if (rb->Data) {
-      free(rb->Data);
-      rb->Data = NULL;
+   if (rb->Buffer) {
+      free(rb->Buffer);
+      rb->Buffer = NULL;
    }
    free(rb);
 }
@@ -178,11 +178,14 @@ _swrast_map_soft_renderbuffer(struct gl_context *ctx,
                               GLubyte **out_map,
                               GLint *out_stride)
 {
-   GLubyte *map = rb->Data;
+   GLubyte *map = rb->Buffer;
    int cpp = _mesa_get_format_bytes(rb->Format);
    int stride = rb->Width * cpp;
 
-   ASSERT(rb->Data);
+   if (!map) {
+      *out_map = NULL;
+      *out_stride = 0;
+   }
 
    map += y * stride;
    map += x * cpp;

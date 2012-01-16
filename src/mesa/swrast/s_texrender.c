@@ -135,12 +135,12 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
     */
    if (att->Texture->Target == GL_TEXTURE_3D ||
        att->Texture->Target == GL_TEXTURE_2D_ARRAY_EXT) {
-      trb->Base.Data = trb->TexImage->Buffer +
+      trb->Base.Buffer = trb->TexImage->Buffer +
          trb->TexImage->ImageOffsets[trb->Zoffset] *
          _mesa_get_format_bytes(trb->TexImage->Base.TexFormat);
    }
    else {
-      trb->Base.Data = trb->TexImage->Buffer;
+      trb->Base.Buffer = trb->TexImage->Buffer;
    }
 
    /* XXX may need more special cases here */
