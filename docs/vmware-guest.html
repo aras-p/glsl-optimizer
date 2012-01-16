@@ -54,13 +54,16 @@ The components involved in this include:
   <pre>
   sudo apt-get install git-core
   sudo apt-get install automake libtool libpthread-stubs0-dev
-  sudo apt-get install xserver-xorg-dev x11proto-xinerama-dev
+  sudo apt-get install xserver-xorg-dev x11proto-xinerama-dev libx11-xcb-dev
+  sudo apt-get install libxcb-glx0-dev libxrender-dev
   sudo apt-get build-dep libgl1-mesa-dri libxcb-glx0-dev
   </pre>
 <li>Fedora: For Fedora you also need to install a number of build dependencies. 
   <pre>
   sudo yum install mesa-libGL-devel xorg-x11-server-devel xorg-x11-util-macros
+  sudo yum install libXrender-devel.i686
   sudo yum install automake gcc libtool expat-devel kernel-devel git-core
+  sudo yum install makedepend flex bison
   </pre>
 </ul>
 
