@@ -69,16 +69,16 @@ intel_copy_texsubimage(struct intel_context *intel,
       assert(region);
    }
 
-   copy_supported = intelImage->base.Base.TexFormat == irb->Base.Format;
+   copy_supported = intelImage->base.Base.TexFormat == intel_rb_format(irb);
 
    /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
-   if (irb->Base.Format == MESA_FORMAT_ARGB8888 &&
+   if (intel_rb_format(irb) == MESA_FORMAT_ARGB8888 &&
        intelImage->base.Base.TexFormat == MESA_FORMAT_XRGB8888) {
       copy_supported = true;
    }
 
    /* Converting XRGB8888 to ARGB8888 requires setting the alpha bits to 1.0 */
-   if (irb->Base.Format == MESA_FORMAT_XRGB8888 &&
+   if (intel_rb_format(irb) == MESA_FORMAT_XRGB8888 &&
        intelImage->base.Base.TexFormat == MESA_FORMAT_ARGB8888) {
       copy_supported_with_alpha_override = true;
    }
@@ -88,7 +88,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 	 fprintf(stderr, "%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
 		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
-		 _mesa_get_format_name(irb->Base.Format));
+		 _mesa_get_format_name(intel_rb_format(irb)));
       return false;
    }
 

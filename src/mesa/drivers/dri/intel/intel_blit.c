@@ -328,7 +328,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
 	 _mesa_unclamped_float_rgba_to_ubyte(clear, color);
 
-	 switch (irb->Base.Format) {
+	 switch (intel_rb_format(irb)) {
 	 case MESA_FORMAT_ARGB8888:
 	 case MESA_FORMAT_XRGB8888:
 	    clear_val = PACK_COLOR_8888(clear[3], clear[0],

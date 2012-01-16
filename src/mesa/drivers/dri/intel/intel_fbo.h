@@ -115,6 +115,14 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
    return intel_renderbuffer(rb);
 }
 
+
+static INLINE gl_format
+intel_rb_format(const struct intel_renderbuffer *rb)
+{
+   return rb->Base.Format;
+}
+
+
 bool
 intel_framebuffer_has_hiz(struct gl_framebuffer *fb);
 

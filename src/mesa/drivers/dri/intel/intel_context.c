@@ -225,7 +225,7 @@ intel_flush_front(struct gl_context *ctx)
 static unsigned
 intel_bits_per_pixel(const struct intel_renderbuffer *rb)
 {
-   return _mesa_get_format_bytes(rb->Base.Format) * 8;
+   return _mesa_get_format_bytes(intel_rb_format(rb)) * 8;
 }
 
 static void
@@ -1066,7 +1066,7 @@ intel_process_dri2_buffer_no_separate_stencil(struct intel_context *intel,
 
       rb->mt = intel_miptree_create_for_region(intel,
                                                GL_TEXTURE_2D,
-                                               rb->Base.Format,
+                                               intel_rb_format(rb),
                                                region);
       intel_region_release(&region);
       if (!rb->mt)
@@ -1163,7 +1163,7 @@ intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
       (*attachments)[i++] = __DRI_BUFFER_DEPTH;
       (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
 
-      if (intel->vtbl.is_hiz_depth_format(intel, depth_rb->Base.Format)) {
+      if (intel->vtbl.is_hiz_depth_format(intel, intel_rb_format(depth_rb))) {
 	 /* Depth and hiz buffer have same bpp. */
 	 (*attachments)[i++] = __DRI_BUFFER_HIZ;
 	 (*attachments)[i++] = intel_bits_per_pixel(depth_rb);
@@ -1171,7 +1171,7 @@ intel_query_dri2_buffers_with_separate_stencil(struct intel_context *intel,
    }
 
    if (stencil_rb) {
-      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
+      assert(intel_rb_format(stencil_rb) == MESA_FORMAT_S8);
       (*attachments)[i++] = __DRI_BUFFER_STENCIL;
       (*attachments)[i++] = intel_bits_per_pixel(stencil_rb);
    }
@@ -1283,7 +1283,7 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
    struct intel_mipmap_tree *mt =
       intel_miptree_create_for_region(intel,
 				      GL_TEXTURE_2D,
-				      rb->Base.Format,
+				      intel_rb_format(rb),
 				      region);
    intel_region_release(&region);
 
@@ -1366,8 +1366,8 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
        */
       struct intel_renderbuffer *depth_rb =
 	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
-      assert(stencil_rb->Base.Format == MESA_FORMAT_S8);
-      assert(depth_rb && depth_rb->Base.Format == MESA_FORMAT_X8_Z24);
+      assert(intel_rb_format(stencil_rb) == MESA_FORMAT_S8);
+      assert(depth_rb && intel_rb_format(depth_rb) == MESA_FORMAT_X8_Z24);
 
       if (stencil_rb->mt->region->tiling == I915_TILING_NONE) {
 	 /*
@@ -1456,7 +1456,7 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
 	 struct intel_mipmap_tree *mt =
 	       intel_miptree_create_for_region(intel,
 	                                       GL_TEXTURE_2D,
-	                                       depth_stencil_rb->Base.Format,
+	                                       intel_rb_format(depth_stencil_rb),
 	                                       region);
 	 intel_region_release(&region);
 	 if (!mt)

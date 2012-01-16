@@ -209,8 +209,8 @@ brw_depthbuffer_format(struct brw_context *brw)
    if (!drb &&
        (srb = intel_get_renderbuffer(fb, BUFFER_STENCIL)) &&
        !srb->mt->stencil_mt &&
-       (srb->Base.Format == MESA_FORMAT_S8_Z24 ||
-	srb->Base.Format == MESA_FORMAT_Z32_FLOAT_X24S8)) {
+       (intel_rb_format(srb) == MESA_FORMAT_S8_Z24 ||
+	intel_rb_format(srb) == MESA_FORMAT_Z32_FLOAT_X24S8)) {
       drb = srb;
    }
 
@@ -246,7 +246,7 @@ brw_depthbuffer_format(struct brw_context *brw)
       return BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
    default:
       _mesa_problem(ctx, "Unexpected depth format %s\n",
-		    _mesa_get_format_name(drb->Base.Format));
+		    _mesa_get_format_name(intel_rb_format(drb)));
       return BRW_DEPTHFORMAT_D16_UNORM;
    }
 }

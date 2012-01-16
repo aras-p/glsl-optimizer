@@ -88,6 +88,7 @@ do_blit_copypixels(struct gl_context * ctx,
    bool flip = false;
    struct intel_renderbuffer *draw_irb = NULL;
    struct intel_renderbuffer *read_irb = NULL;
+   gl_format read_format, draw_format;
 
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
@@ -128,12 +129,15 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
-   if (draw_irb->Base.Format != read_irb->Base.Format &&
-       !(draw_irb->Base.Format == MESA_FORMAT_XRGB8888 &&
-	 read_irb->Base.Format == MESA_FORMAT_ARGB8888)) {
+   read_format = intel_rb_format(read_irb);
+   draw_format = intel_rb_format(draw_irb);
+
+   if (draw_format != read_format &&
+       !(draw_format == MESA_FORMAT_XRGB8888 &&
+	 read_format == MESA_FORMAT_ARGB8888)) {
       fallback_debug("glCopyPixels() fallback: mismatched formats (%s -> %s\n",
-		     _mesa_get_format_name(read_irb->Base.Format),
-		     _mesa_get_format_name(draw_irb->Base.Format));
+		     _mesa_get_format_name(read_format),
+                     _mesa_get_format_name(draw_format));
       return false;
    }
 
