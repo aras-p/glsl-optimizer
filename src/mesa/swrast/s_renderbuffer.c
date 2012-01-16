@@ -58,6 +58,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLuint width, GLuint height)
 {
    struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
+   GLuint bpp;
 
    switch (internalFormat) {
    case GL_RGB:
@@ -115,25 +116,26 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       return GL_FALSE;
    }
 
+   bpp = _mesa_get_format_bytes(rb->Format);
+
    /* free old buffer storage */
    if (srb->Buffer) {
       free(srb->Buffer);
       srb->Buffer = NULL;
    }
 
-   srb->RowStride = width * _mesa_get_format_bytes(rb->Format);
+   srb->RowStride = width * bpp;
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      srb->Buffer = malloc(width * height
-                           * _mesa_get_format_bytes(rb->Format));
+      srb->Buffer = malloc(srb->RowStride * height);
 
       if (srb->Buffer == NULL) {
          rb->Width = 0;
          rb->Height = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
                      "software renderbuffer allocation (%d x %d x %d)",
-                     width, height, _mesa_get_format_bytes(rb->Format));
+                     width, height, bpp);
          return GL_FALSE;
       }
    }
