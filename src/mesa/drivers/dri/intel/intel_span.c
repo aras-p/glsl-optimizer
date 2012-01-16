@@ -48,74 +48,6 @@
 #include "swrast/swrast.h"
 #include "swrast/s_renderbuffer.h"
 
-static void
-intel_set_span_functions(struct intel_context *intel,
-			 struct gl_renderbuffer *rb);
-
-#undef DBG
-#define DBG 0
-
-#define LOCAL_VARS							\
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   int minx = 0, miny = 0;						\
-   int maxx = rb->Width;						\
-   int maxy = rb->Height;						\
-   int pitch = rb->RowStrideBytes;                                      \
-   void *buf = rb->Map;                                                 \
-   GLuint p;								\
-   (void) p;
-
-#define HW_CLIPLOOP()
-#define HW_ENDCLIPLOOP()
-
-#define Y_FLIP(_y) (_y)
-
-#define HW_LOCK()
-
-#define HW_UNLOCK()
-
-/* r5g6b5 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_RGB
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
-#define TAG(x) intel_##x##_RGB565
-#define TAG2(x,y) intel_##x##y_RGB565
-#include "spantmp2.h"
-
-/* a4r4g4b4 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
-#define TAG(x) intel_##x##_ARGB4444
-#define TAG2(x,y) intel_##x##y_ARGB4444
-#include "spantmp2.h"
-
-/* a1r5g5b5 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
-#define TAG(x) intel_##x##_ARGB1555
-#define TAG2(x,y) intel_##x##y##_ARGB1555
-#include "spantmp2.h"
-
-/* a8r8g8b8 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-#define TAG(x) intel_##x##_ARGB8888
-#define TAG2(x,y) intel_##x##y##_ARGB8888
-#include "spantmp2.h"
-
-/* x8r8g8b8 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_BGR
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-#define TAG(x) intel_##x##_xRGB8888
-#define TAG2(x,y) intel_##x##y##_xRGB8888
-#include "spantmp2.h"
-
-/* a8 color span and pixel functions */
-#define SPANTMP_PIXEL_FMT GL_ALPHA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_BYTE
-#define TAG(x) intel_##x##_A8
-#define TAG2(x,y) intel_##x##y##_A8
-#include "spantmp2.h"
-
 /**
  * \brief Get pointer offset into stencil buffer.
  *
@@ -203,8 +135,6 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    rb->Map = map;
    rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
    rb->RowStrideBytes = stride;
-
-   intel_set_span_functions(intel, rb);
 }
 
 static void
@@ -227,8 +157,6 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
-   rb->GetRow = NULL;
-   rb->PutRow = NULL;
    rb->Map = NULL;
    rb->RowStride = 0;
    rb->RowStrideBytes = 0;
@@ -407,31 +335,6 @@ intel_unmap_vertex_shader_textures(struct gl_context *ctx)
    }
 }
 
-typedef void (*span_init_func)(struct gl_renderbuffer *rb);
-
-static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
-{
-   [MESA_FORMAT_A8] = intel_InitPointers_A8,
-   [MESA_FORMAT_RGB565] = intel_InitPointers_RGB565,
-   [MESA_FORMAT_ARGB4444] = intel_InitPointers_ARGB4444,
-   [MESA_FORMAT_ARGB1555] = intel_InitPointers_ARGB1555,
-   [MESA_FORMAT_XRGB8888] = intel_InitPointers_xRGB8888,
-   [MESA_FORMAT_ARGB8888] = intel_InitPointers_ARGB8888,
-   [MESA_FORMAT_SARGB8] = intel_InitPointers_ARGB8888,
-   [MESA_FORMAT_Z16] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_X8_Z24] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8_Z24] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_S8] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_R8] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_GR88] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_R16] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_RG1616] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_RGBA_FLOAT32] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_RG_FLOAT32] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_R_FLOAT32] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_INTENSITY_FLOAT32] = _swrast_set_renderbuffer_accessors,
-   [MESA_FORMAT_LUMINANCE_FLOAT32] = _swrast_set_renderbuffer_accessors,
-};
 
 bool
 intel_span_supports_format(gl_format format)
@@ -440,27 +343,6 @@ intel_span_supports_format(gl_format format)
     * rather than coding up new paths through GetRow/PutRow(), so claim support
     * for those formats in here for now.
     */
-   return (intel_span_init_funcs[format] != NULL ||
-	   _mesa_is_format_integer_color(format));
+   return true;
 }
 
-/**
- * Plug in appropriate span read/write functions for the given renderbuffer.
- * These are used for the software fallbacks.
- */
-static void
-intel_set_span_functions(struct intel_context *intel,
-			 struct gl_renderbuffer *rb)
-{
-   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-
-   assert(intel_span_init_funcs[irb->Base.Format]);
-   intel_span_init_funcs[irb->Base.Format](rb);
-
-   if (rb->DataType == GL_NONE) {
-      _mesa_problem(NULL,
-		    "renderbuffer format %s is missing "
-		    "intel_mesa_format_to_rb_datatype() support.",
-		    _mesa_get_format_name(rb->Format));
-   }
-}

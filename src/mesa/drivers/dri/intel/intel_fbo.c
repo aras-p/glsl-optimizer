@@ -194,19 +194,6 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
 }
 
-/**
- * Return a pointer to a specific pixel in a renderbuffer.
- */
-static void *
-intel_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
-                  GLint x, GLint y)
-{
-   /* By returning NULL we force all software rendering to go through
-    * the span routines.
-    */
-   return NULL;
-}
-
 
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
@@ -403,7 +390,6 @@ intel_create_renderbuffer(gl_format format)
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_window_storage;
-   irb->Base.GetPointer = intel_get_pointer;
 
    return irb;
 }
@@ -430,7 +416,6 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
-   irb->Base.GetPointer = intel_get_pointer;
    /* span routines set in alloc_storage function */
 
    return &irb->Base;
