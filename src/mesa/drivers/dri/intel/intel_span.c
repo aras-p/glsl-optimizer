@@ -121,7 +121,7 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (!irb)
       return;
 
-   if (rb->Map) {
+   if (irb->Base.Map) {
       /* Renderbuffer is already mapped. This usually happens when a single
        * buffer is attached to the framebuffer's depth and stencil attachment
        * points.
@@ -132,8 +132,8 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
 			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
 			       &map, &stride);
-   rb->Map = map;
-   rb->RowStrideBytes = stride;
+   irb->Base.Map = map;
+   irb->Base.RowStride = stride;
 }
 
 static void
@@ -146,7 +146,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (!irb)
       return;
 
-   if (!rb->Map) {
+   if (!irb->Base.Map) {
       /* Renderbuffer is already unmapped. This usually happens when a single
        * buffer is attached to the framebuffer's depth and stencil attachment
        * points.
@@ -156,8 +156,8 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
-   rb->Map = NULL;
-   rb->RowStrideBytes = 0;
+   irb->Base.Map = NULL;
+   irb->Base.RowStride = 0;
 }
 
 static void

@@ -132,11 +132,11 @@ intel_map_renderbuffer(struct gl_context *ctx,
    void *map;
    int stride;
 
-   if (!irb && rb->Buffer) {
+   if (!irb && irb->Base.Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       GLint bpp = _mesa_get_format_bytes(rb->Format);
-      GLint rowStride = rb->RowStrideBytes;
-      *out_map = (GLubyte *) rb->Buffer + y * rowStride + x * bpp;
+      GLint rowStride = irb->Base.RowStride;
+      *out_map = (GLubyte *) irb->Base.Buffer + y * rowStride + x * bpp;
       *out_stride = rowStride;
       return;
    }
@@ -185,7 +185,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
-   if (!irb && rb->Buffer) {
+   if (!irb && irb->Base.Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       /* nothing to do */
       return;
@@ -368,9 +368,10 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
 struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format)
 {
-   GET_CURRENT_CONTEXT(ctx);
-
    struct intel_renderbuffer *irb;
+   struct gl_renderbuffer *rb;
+
+   GET_CURRENT_CONTEXT(ctx);
 
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
@@ -378,15 +379,17 @@ intel_create_renderbuffer(gl_format format)
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&irb->Base, 0);
-   irb->Base.ClassID = INTEL_RB_CLASS;
-   irb->Base._BaseFormat = _mesa_get_format_base_format(format);
-   irb->Base.Format = format;
-   irb->Base.InternalFormat = irb->Base._BaseFormat;
+   rb = &irb->Base.Base;
+
+   _mesa_init_renderbuffer(rb, 0);
+   rb->ClassID = INTEL_RB_CLASS;
+   rb->_BaseFormat = _mesa_get_format_base_format(format);
+   rb->Format = format;
+   rb->InternalFormat = rb->_BaseFormat;
 
    /* intel-specific methods */
-   irb->Base.Delete = intel_delete_renderbuffer;
-   irb->Base.AllocStorage = intel_alloc_window_storage;
+   rb->Delete = intel_delete_renderbuffer;
+   rb->AllocStorage = intel_alloc_window_storage;
 
    return irb;
 }
@@ -400,6 +403,7 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
    /*struct intel_context *intel = intel_context(ctx); */
    struct intel_renderbuffer *irb;
+   struct gl_renderbuffer *rb;
 
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
@@ -407,15 +411,17 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&irb->Base, name);
-   irb->Base.ClassID = INTEL_RB_CLASS;
+   rb = &irb->Base.Base;
+
+   _mesa_init_renderbuffer(rb, name);
+   rb->ClassID = INTEL_RB_CLASS;
 
    /* intel-specific methods */
-   irb->Base.Delete = intel_delete_renderbuffer;
-   irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
+   rb->Delete = intel_delete_renderbuffer;
+   rb->AllocStorage = intel_alloc_renderbuffer_storage;
    /* span routines set in alloc_storage function */
 
-   return &irb->Base;
+   return rb;
 }
 
 
@@ -479,7 +485,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
                                   gl_format format,
                                   GLenum internal_format)
 {
-   struct gl_renderbuffer *rb = &irb->Base;
+   struct gl_renderbuffer *rb = &irb->Base.Base;
 
    rb->Format = format;
    rb->InternalFormat = internal_format;
@@ -487,8 +493,8 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;
 
-   irb->Base.Delete = intel_delete_renderbuffer;
-   irb->Base.AllocStorage = intel_nop_alloc_storage;
+   rb->Delete = intel_delete_renderbuffer;
+   rb->AllocStorage = intel_nop_alloc_storage;
 
    intel_miptree_check_level_layer(mt, level, layer);
    irb->mt_level = level;
@@ -661,7 +667,7 @@ intel_render_texture(struct gl_context * ctx,
 
       if (irb) {
          /* bind the wrapper to the attachment point */
-         _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base);
+         _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base.Base);
       }
       else {
          /* fallback to software rendering */
@@ -682,7 +688,7 @@ intel_render_texture(struct gl_context * ctx,
    DBG("Begin render %s texture tex=%u w=%d h=%d refcount=%d\n",
        _mesa_get_format_name(image->TexFormat),
        att->Texture->Name, image->Width, image->Height,
-       irb->Base.RefCount);
+       irb->Base.Base.RefCount);
 
    intel_image->used_as_render_target = true;
 

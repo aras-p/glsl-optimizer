@@ -437,11 +437,11 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 
       /* setup the hardware-based renderbuffers */
       rb = intel_create_renderbuffer(rgbFormat);
-      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base);
+      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base.Base);
 
       if (mesaVis->doubleBufferMode) {
 	 rb = intel_create_renderbuffer(rgbFormat);
-         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base.Base);
       }
 
       /*
@@ -460,17 +460,17 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 	     * enum intel_dri2_has_hiz).
 	     */
 	    rb = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
 	    rb = intel_create_renderbuffer(MESA_FORMAT_S8);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
 	 } else {
 	    /*
 	     * Use combined depth/stencil. Note that the renderbuffer is
 	     * attached to two attachment points.
 	     */
 	    rb = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
+	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
 	 }
       }
       else if (mesaVis->depthBits == 16) {
@@ -478,7 +478,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
 	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base.Base);
       }
       else {
 	 assert(mesaVis->depthBits == 0);

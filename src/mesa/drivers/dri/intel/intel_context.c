@@ -1401,8 +1401,8 @@ intel_verify_dri2_has_hiz(struct intel_context *intel,
 	 /* 2. Create new depth/stencil renderbuffer. */
 	 struct intel_renderbuffer *depth_stencil_rb =
 	    intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth_stencil_rb->Base);
-	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depth_stencil_rb->Base);
+	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth_stencil_rb->Base.Base);
+	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depth_stencil_rb->Base.Base);
 
 	 /* 3. Append DRI2BufferDepthStencil to attachment list. */
 	 int old_count = *count;

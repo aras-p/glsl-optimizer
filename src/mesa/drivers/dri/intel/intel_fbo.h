@@ -43,7 +43,7 @@ struct intel_texture_image;
  */
 struct intel_renderbuffer
 {
-   struct gl_renderbuffer Base;
+   struct swrast_renderbuffer Base;
    struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
    drm_intel_bo *map_bo;
 
@@ -84,7 +84,7 @@ static INLINE struct intel_renderbuffer *
 intel_renderbuffer(struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   if (irb && irb->Base.ClassID == INTEL_RB_CLASS) {
+   if (irb && irb->Base.Base.ClassID == INTEL_RB_CLASS) {
       /*_mesa_warning(NULL, "Returning non-intel Rb\n");*/
       return irb;
    }
@@ -119,7 +119,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 static INLINE gl_format
 intel_rb_format(const struct intel_renderbuffer *rb)
 {
-   return rb->Base.Format;
+   return rb->Base.Base.Format;
 }
 
 
