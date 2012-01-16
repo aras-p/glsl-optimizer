@@ -148,7 +148,7 @@ copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       p = tmpImage;
       for (row = 0; row < height; row++) {
          _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                 width, srcx, sy + row, GL_FLOAT, p );
+                                 width, srcx, sy + row, p );
          p += width * 4;
       }
       p = tmpImage;
@@ -172,7 +172,7 @@ copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       else {
          /* get from framebuffer */
          _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                 width, srcx, sy, GL_FLOAT, rgba );
+                                 width, srcx, sy, rgba );
       }
 
       if (transferOps) {

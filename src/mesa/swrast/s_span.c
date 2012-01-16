@@ -1324,16 +1324,16 @@ end:
 
 
 /**
- * Read RGBA pixels from a renderbuffer.  Clipping will be done to prevent
- * reading ouside the buffer's boundaries.
- * \param dstType  datatype for returned colors
+ * Read float RGBA pixels from a renderbuffer.  Clipping will be done to
+ * prevent reading ouside the buffer's boundaries.
  * \param rgba  the returned colors
  */
 void
 _swrast_read_rgba_span( struct gl_context *ctx, struct gl_renderbuffer *rb,
-                        GLuint n, GLint x, GLint y, GLenum dstType,
+                        GLuint n, GLint x, GLint y,
                         GLvoid *rgba)
 {
+   GLenum dstType = GL_FLOAT;
    const GLint bufWidth = (GLint) rb->Width;
    const GLint bufHeight = (GLint) rb->Height;
 
