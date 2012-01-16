@@ -293,7 +293,7 @@ get_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
               GLubyte stencil[])
 {
    const GLint w = rb->Width, h = rb->Height;
-   const GLubyte *map = (const GLubyte *) rb->Data;
+   const GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_S8) {

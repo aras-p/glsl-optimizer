@@ -213,7 +213,7 @@ get_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
                GLuint zbuffer[])
 {
    const GLint w = rb->Width, h = rb->Height;
-   const GLubyte *map = (const GLubyte *) rb->Data;
+   const GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_Z32) {
@@ -247,7 +247,7 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
                const GLuint zvalues[], const GLubyte mask[])
 {
    const GLint w = rb->Width, h = rb->Height;
-   GLubyte *map = (GLubyte *) rb->Data;
+   GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_Z32) {
@@ -283,7 +283,7 @@ _swrast_depth_test_span(struct gl_context *ctx, SWspan *span)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   void *zStart = _swrast_pixel_address(rb, span->x, span->y);
+   void *zStart;
    const GLuint count = span->end;
    const GLuint *fragZ = span->array->z;
    GLubyte *mask = span->array->mask;
@@ -292,6 +292,11 @@ _swrast_depth_test_span(struct gl_context *ctx, SWspan *span)
    GLuint passed;
    GLuint zBits = _mesa_get_format_bits(rb->Format, GL_DEPTH_BITS);
    GLboolean ztest16 = GL_FALSE;
+
+   if (span->arrayMask & SPAN_XY)
+      zStart = NULL;
+   else
+      zStart = _swrast_pixel_address(rb, span->x, span->y);
 
    if (rb->Format == MESA_FORMAT_Z16 && !(span->arrayMask & SPAN_XY)) {
       /* directly read/write row of 16-bit Z values */
@@ -405,9 +410,7 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
 {
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLint rowStride = rb->RowStride * bpp;
-   GLubyte *zStart = (GLubyte*) rb->Data + span->y * rowStride + span->x * bpp;
+   GLubyte *zStart;
    GLuint zMin = (GLuint) (ctx->Depth.BoundsMin * fb->_DepthMaxF + 0.5F);
    GLuint zMax = (GLuint) (ctx->Depth.BoundsMax * fb->_DepthMaxF + 0.5F);
    GLubyte *mask = span->array->mask;
@@ -416,6 +419,11 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
    GLboolean anyPass = GL_FALSE;
    GLuint zBufferTemp[MAX_WIDTH];
    const GLuint *zBufferVals;
+
+   if (span->arrayMask & SPAN_XY)
+      zStart = NULL;
+   else
+      zStart = _swrast_pixel_address(rb, span->x, span->y);
 
    if (rb->Format == MESA_FORMAT_Z32 && !(span->arrayMask & SPAN_XY)) {
       /* directly access 32-bit values in the depth buffer */
