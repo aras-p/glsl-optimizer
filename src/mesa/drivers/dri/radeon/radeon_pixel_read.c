@@ -150,17 +150,17 @@ do_blit_readpixels(struct gl_context * ctx,
     /* Disable source Y flipping for FBOs */
     flip_y = (ctx->ReadBuffer->Name == 0);
     if (pack->Invert) {
-        y = rrb->base.Height - height - y;
+        y = rrb->base.Base.Height - height - y;
         flip_y = !flip_y;
     }
 
     if (radeon->vtbl.blit(ctx,
                           rrb->bo,
                           rrb->draw_offset,
-                          rrb->base.Format,
+                          rrb->base.Base.Format,
                           rrb->pitch / rrb->cpp,
-                          rrb->base.Width,
-                          rrb->base.Height,
+                          rrb->base.Base.Width,
+                          rrb->base.Base.Height,
                           x,
                           y,
                           dst_buffer,

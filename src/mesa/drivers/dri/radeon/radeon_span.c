@@ -64,8 +64,8 @@ radeon_renderbuffer_map(struct gl_context *ctx, struct gl_renderbuffer *rb)
 				    GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
 				    &map, &stride);
 
-	rb->Map = map;
-	rb->RowStrideBytes = stride;
+	rrb->base.Map = map;
+	rrb->base.RowStride = stride;
 }
 
 static void
@@ -77,8 +77,8 @@ radeon_renderbuffer_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb)
 
 	ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
-	rb->Map = NULL;
-	rb->RowStrideBytes = 0;
+	rrb->base.Map = NULL;
+	rrb->base.RowStride = 0;
 }
 
 static void

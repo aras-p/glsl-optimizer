@@ -294,7 +294,7 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 static unsigned
 radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
 {
-   return _mesa_get_format_bytes(rb->base.Format) * 8; 
+   return _mesa_get_format_bytes(rb->base.Base.Format) * 8; 
 }
 
 /*
@@ -484,8 +484,8 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 
 		rb->cpp = buffers[i].cpp;
 		rb->pitch = buffers[i].pitch;
-		rb->base.Width = drawable->w;
-		rb->base.Height = drawable->h;
+		rb->base.Base.Width = drawable->w;
+		rb->base.Base.Height = drawable->h;
 		rb->has_surface = 0;
 
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
@@ -602,9 +602,9 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 	if (driDrawPriv != driReadPriv)
 	   radeon_update_renderbuffers(driContextPriv, driReadPriv, GL_FALSE);
 	_mesa_reference_renderbuffer(&radeon->state.color.rb,
-		&(radeon_get_renderbuffer(drfb, BUFFER_BACK_LEFT)->base));
+		&(radeon_get_renderbuffer(drfb, BUFFER_BACK_LEFT)->base.Base));
 	_mesa_reference_renderbuffer(&radeon->state.depth.rb,
-		&(radeon_get_renderbuffer(drfb, BUFFER_DEPTH)->base));
+		&(radeon_get_renderbuffer(drfb, BUFFER_DEPTH)->base.Base));
 
 	if (RADEON_DEBUG & RADEON_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);

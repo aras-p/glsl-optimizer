@@ -263,7 +263,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
 	   src_y = y;
        } else {
 	   src_x = x;
-	   src_y = rrb->base.Height - y - h;
+	   src_y = rrb->base.Base.Height - y - h;
        }
 
        /* Make a temporary buffer and blit the current contents of the renderbuffer
@@ -645,7 +645,7 @@ radeon_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    /* Make sure all window system renderbuffers are up to date */
    for (i = 0; i < 2; i++) {
-      struct gl_renderbuffer *rb = &radeon_fb->color_rb[i]->base;
+      struct gl_renderbuffer *rb = &radeon_fb->color_rb[i]->base.Base;
 
       /* only resize if size is changing */
       if (rb && (rb->Width != width || rb->Height != height)) {
@@ -673,6 +673,7 @@ struct radeon_renderbuffer *
 radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
 {
     struct radeon_renderbuffer *rrb;
+    struct gl_renderbuffer *rb;
 
     rrb = CALLOC_STRUCT(radeon_renderbuffer);
 
@@ -683,18 +684,18 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
     if (!rrb)
 	return NULL;
 
-    _mesa_init_renderbuffer(&rrb->base, 0);
-    rrb->base.ClassID = RADEON_RB_CLASS;
+    rb = &rrb->base.Base;
 
-    rrb->base.Format = format;
-
-    rrb->base._BaseFormat = _mesa_get_format_base_format(format);
+    _mesa_init_renderbuffer(rb, 0);
+    rb->ClassID = RADEON_RB_CLASS;
+    rb->Format = format;
+    rb->_BaseFormat = _mesa_get_format_base_format(format);
+    rb->InternalFormat = _mesa_get_format_base_format(format);
 
     rrb->dPriv = driDrawPriv;
-    rrb->base.InternalFormat = _mesa_get_format_base_format(format);
 
-    rrb->base.Delete = radeon_delete_renderbuffer;
-    rrb->base.AllocStorage = radeon_alloc_window_storage;
+    rb->Delete = radeon_delete_renderbuffer;
+    rb->AllocStorage = radeon_alloc_window_storage;
 
     rrb->bo = NULL;
     return rrb;
@@ -704,6 +705,8 @@ static struct gl_renderbuffer *
 radeon_new_renderbuffer(struct gl_context * ctx, GLuint name)
 {
   struct radeon_renderbuffer *rrb;
+  struct gl_renderbuffer *rb;
+
 
   rrb = CALLOC_STRUCT(radeon_renderbuffer);
 
@@ -714,13 +717,14 @@ radeon_new_renderbuffer(struct gl_context * ctx, GLuint name)
   if (!rrb)
     return NULL;
 
-  _mesa_init_renderbuffer(&rrb->base, name);
-  rrb->base.ClassID = RADEON_RB_CLASS;
+  rb = &rrb->base.Base;
 
-  rrb->base.Delete = radeon_delete_renderbuffer;
-  rrb->base.AllocStorage = radeon_alloc_renderbuffer_storage;
+  _mesa_init_renderbuffer(rb, name);
+  rb->ClassID = RADEON_RB_CLASS;
+  rb->Delete = radeon_delete_renderbuffer;
+  rb->AllocStorage = radeon_alloc_renderbuffer_storage;
 
-  return &rrb->base;
+  return rb;
 }
 
 static void
@@ -761,19 +765,21 @@ static GLboolean
 radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb, 
 		     struct gl_texture_image *texImage)
 {
+	struct gl_renderbuffer *rb = &rrb->base.Base;
+
 	radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 		"%s(%p, rrb %p, texImage %p, texFormat %s) \n",
 		__func__, ctx, rrb, texImage, _mesa_get_format_name(texImage->TexFormat));
 
 	rrb->cpp = _mesa_get_format_bytes(texImage->TexFormat);
 	rrb->pitch = texImage->Width * rrb->cpp;
-	rrb->base.Format = texImage->TexFormat;
-	rrb->base.InternalFormat = texImage->InternalFormat;
-	rrb->base._BaseFormat = _mesa_base_fbo_format(ctx, rrb->base.InternalFormat);
-	rrb->base.Width = texImage->Width;
-	rrb->base.Height = texImage->Height;
-	rrb->base.Delete = radeon_delete_renderbuffer;
-	rrb->base.AllocStorage = radeon_nop_alloc_storage;
+	rb->Format = texImage->TexFormat;
+	rb->InternalFormat = texImage->InternalFormat;
+	rb->_BaseFormat = _mesa_base_fbo_format(ctx, rb->InternalFormat);
+	rb->Width = texImage->Width;
+	rb->Height = texImage->Height;
+	rb->Delete = radeon_delete_renderbuffer;
+	rb->AllocStorage = radeon_nop_alloc_storage;
 
 	return GL_TRUE;
 }
@@ -797,8 +803,8 @@ radeon_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&rrb->base, name);
-   rrb->base.ClassID = RADEON_RB_CLASS;
+   _mesa_init_renderbuffer(&rrb->base.Base, name);
+   rrb->base.Base.ClassID = RADEON_RB_CLASS;
 
    if (!radeon_update_wrapper(ctx, rrb, texImage)) {
       free(rrb);
@@ -840,7 +846,7 @@ radeon_render_texture(struct gl_context * ctx,
       rrb = radeon_wrap_texture(ctx, newImage);
       if (rrb) {
          /* bind the wrapper to the attachment point */
-         _mesa_reference_renderbuffer(&att->Renderbuffer, &rrb->base);
+         _mesa_reference_renderbuffer(&att->Renderbuffer, &rrb->base.Base);
       }
       else {
          /* fallback to software rendering */
@@ -858,7 +864,7 @@ radeon_render_texture(struct gl_context * ctx,
    DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
-       rrb->base.RefCount);
+       rrb->base.Base.RefCount);
 
    /* point the renderbufer's region to the texture image region */
    if (rrb->bo != radeon_image->mt->bo) {

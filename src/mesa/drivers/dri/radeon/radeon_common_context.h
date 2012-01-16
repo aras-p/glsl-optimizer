@@ -80,7 +80,8 @@ typedef struct radeon_context *radeonContextPtr;
 
 struct radeon_renderbuffer
 {
-	struct gl_renderbuffer base;
+	struct swrast_renderbuffer base;
+
 	struct radeon_bo *bo;
 	unsigned int cpp;
 	/* unsigned int offset; */

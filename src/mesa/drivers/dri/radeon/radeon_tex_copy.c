@@ -89,12 +89,12 @@ do_copy_texsubimage(struct gl_context *ctx,
                 __FUNCTION__, face, level);
         fprintf(stderr, "to: x %d, y %d, offset %d\n", dstx, dsty, (uint32_t) dst_offset);
         fprintf(stderr, "from (%dx%d) width %d, height %d, offset %d, pitch %d\n",
-                x, y, rrb->base.Width, rrb->base.Height, (uint32_t) src_offset, rrb->pitch/rrb->cpp);
+                x, y, rrb->base.Base.Width, rrb->base.Base.Height, (uint32_t) src_offset, rrb->pitch/rrb->cpp);
         fprintf(stderr, "src size %d, dst size %d\n", rrb->bo->size, timg->mt->bo->size);
 
     }
 
-    src_mesaformat = rrb->base.Format;
+    src_mesaformat = rrb->base.Base.Format;
     dst_mesaformat = timg->base.Base.TexFormat;
     src_bpp = _mesa_get_format_bytes(src_mesaformat);
     dst_bpp = _mesa_get_format_bytes(dst_mesaformat);
@@ -126,7 +126,7 @@ do_copy_texsubimage(struct gl_context *ctx,
 
     /* blit from src buffer to texture */
     return radeon->vtbl.blit(ctx, rrb->bo, src_offset, src_mesaformat, rrb->pitch/rrb->cpp,
-                             rrb->base.Width, rrb->base.Height, x, y,
+                             rrb->base.Base.Width, rrb->base.Base.Height, x, y,
                              timg->mt->bo, dst_offset, dst_mesaformat,
                              timg->mt->levels[level].rowstride / dst_bpp,
                              timg->base.Base.Width, timg->base.Base.Height,

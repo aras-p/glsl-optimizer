@@ -1619,8 +1619,8 @@ void r200_vtbl_update_scissor( struct gl_context *ctx )
       rrb = radeon_get_colorbuffer(&r200->radeon);
       x1 = 0;
       y1 = 0;
-      x2 = rrb->base.Width - 1;
-      y2 = rrb->base.Height - 1;
+      x2 = rrb->base.Base.Width - 1;
+      y2 = rrb->base.Base.Height - 1;
    }
 
    R200_SET_STATE(r200, sci, SCI_XY_1, x1 | (y1 << 16));

@@ -620,13 +620,13 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
 
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
-    _mesa_add_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT, &rfb->color_rb[0]->base);
+    _mesa_add_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT, &rfb->color_rb[0]->base.Base);
     rfb->color_rb[0]->has_surface = 1;
 
     /* back color renderbuffer */
     if (mesaVis->doubleBufferMode) {
       rfb->color_rb[1] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_BACK_LEFT, &rfb->color_rb[1]->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_BACK_LEFT, &rfb->color_rb[1]->base.Base);
 	rfb->color_rb[1]->has_surface = 1;
     }
 
@@ -634,21 +634,21 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
       if (mesaVis->stencilBits == 8) {
 	struct radeon_renderbuffer *depthStencilRb =
            radeon_create_renderbuffer(MESA_FORMAT_S8_Z24, driDrawPriv);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depthStencilRb->base);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &depthStencilRb->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depthStencilRb->base.Base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &depthStencilRb->base.Base);
 	depthStencilRb->has_surface = screen->depthHasSurface;
       } else {
 	/* depth renderbuffer */
 	struct radeon_renderbuffer *depth =
            radeon_create_renderbuffer(MESA_FORMAT_X8_Z24, driDrawPriv);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base.Base);
 	depth->has_surface = screen->depthHasSurface;
       }
     } else if (mesaVis->depthBits == 16) {
         /* just 16-bit depth buffer, no hw stencil */
 	struct radeon_renderbuffer *depth =
            radeon_create_renderbuffer(MESA_FORMAT_Z16, driDrawPriv);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base.Base);
 	depth->has_surface = screen->depthHasSurface;
     }
 

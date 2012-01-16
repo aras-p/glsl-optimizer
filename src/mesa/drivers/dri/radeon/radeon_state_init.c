@@ -334,7 +334,7 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
    if (rrb->cpp == 4)
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
-   else switch (rrb->base.Format) {
+   else switch (rrb->base.Base.Format) {
    case MESA_FORMAT_RGB565:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
 	break;
@@ -404,8 +404,8 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    OUT_BATCH(0);
    OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
    if (rrb) {
-       OUT_BATCH(((rrb->base.Width - 1) << RADEON_RE_WIDTH_SHIFT) |
-                 ((rrb->base.Height - 1) << RADEON_RE_HEIGHT_SHIFT));
+       OUT_BATCH(((rrb->base.Base.Width - 1) << RADEON_RE_WIDTH_SHIFT) |
+                 ((rrb->base.Base.Height - 1) << RADEON_RE_HEIGHT_SHIFT));
    } else {
        OUT_BATCH(0);
    }

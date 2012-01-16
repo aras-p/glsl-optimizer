@@ -45,7 +45,7 @@ static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbu
 	radeon_print(RADEON_MEMORY, RADEON_TRACE,
 		"%s(rb %p)\n",
 		__func__, (void *) rb);
-	if (rrb && rrb->base.ClassID == RADEON_RB_CLASS)
+	if (rrb && rrb->base.Base.ClassID == RADEON_RB_CLASS)
 		return rrb;
 	else
 		return NULL;
