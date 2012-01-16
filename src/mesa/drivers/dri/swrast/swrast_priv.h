@@ -100,7 +100,7 @@ swrast_drawable(struct gl_framebuffer *fb)
     return (struct dri_drawable *) fb;
 }
 
-struct swrast_renderbuffer {
+struct dri_swrast_renderbuffer {
     struct gl_renderbuffer Base;
     __DRIdrawable *dPriv;
 
@@ -114,10 +114,10 @@ struct swrast_renderbuffer {
     GLuint bpp;
 };
 
-static INLINE struct swrast_renderbuffer *
-swrast_renderbuffer(struct gl_renderbuffer *rb)
+static INLINE struct dri_swrast_renderbuffer *
+dri_swrast_renderbuffer(struct gl_renderbuffer *rb)
 {
-    return (struct swrast_renderbuffer *) rb;
+    return (struct dri_swrast_renderbuffer *) rb;
 }
 
 

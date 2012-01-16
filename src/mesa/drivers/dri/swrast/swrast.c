@@ -282,7 +282,7 @@ static GLboolean
 swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			   GLenum internalFormat, GLuint width, GLuint height)
 {
-    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+    struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
 
     TRACE;
 
@@ -301,7 +301,7 @@ static GLboolean
 swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 			  GLenum internalFormat, GLuint width, GLuint height)
 {
-    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+    struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
 
     TRACE;
 
@@ -314,11 +314,11 @@ swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
     return GL_TRUE;
 }
 
-static struct swrast_renderbuffer *
+static struct dri_swrast_renderbuffer *
 swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 			GLboolean front)
 {
-    struct swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
+    struct dri_swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
     GLuint pixel_format;
 
     TRACE;
@@ -379,7 +379,7 @@ swrast_map_renderbuffer(struct gl_context *ctx,
 			GLubyte **out_map,
 			GLint *out_stride)
 {
-   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+   struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
    GLubyte *map = rb->Buffer;
    int cpp = _mesa_get_format_bytes(rb->Format);
    int stride = rb->Width * cpp;
@@ -424,7 +424,7 @@ static void
 swrast_unmap_renderbuffer(struct gl_context *ctx,
 			  struct gl_renderbuffer *rb)
 {
-   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+   struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
 
    if (rb->AllocStorage == swrast_alloc_front_storage) {
       __DRIdrawable *dPriv = xrb->dPriv;
@@ -450,7 +450,7 @@ dri_create_buffer(__DRIscreen * sPriv,
 {
     struct dri_drawable *drawable = NULL;
     struct gl_framebuffer *fb;
-    struct swrast_renderbuffer *frontrb, *backrb;
+    struct dri_swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
 
@@ -531,16 +531,16 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 
     struct dri_drawable *drawable = dri_drawable(dPriv);
     struct gl_framebuffer *fb;
-    struct swrast_renderbuffer *frontrb, *backrb;
+    struct dri_swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
 
     fb = &drawable->Base;
 
     frontrb =
-	swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+	dri_swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
     backrb =
-	swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+	dri_swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
     if (backrb == NULL)
