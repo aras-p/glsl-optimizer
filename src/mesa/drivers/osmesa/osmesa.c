@@ -40,6 +40,7 @@
 #include "main/formats.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
+#include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/renderbuffer.h"
 #include "swrast/swrast.h"
@@ -119,372 +120,6 @@ osmesa_update_state( struct gl_context *ctx, GLuint new_state )
    _vbo_InvalidateState( ctx, new_state );
 }
 
-
-
-/**********************************************************************/
-/*****        Read/write spans/arrays of pixels                   *****/
-/**********************************************************************/
-
-/* 8-bit RGBA */
-#define NAME(PREFIX) PREFIX##_RGBA8
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP];  \
-   DST[3] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP];  \
-   DST[3] = 255
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-/* 16-bit RGBA */
-#define NAME(PREFIX) PREFIX##_RGBA16
-#define RB_TYPE GLushort
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP];  \
-   DST[3] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP];  \
-   DST[3] = 65535
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-/* 32-bit RGBA */
-#define NAME(PREFIX) PREFIX##_RGBA32
-#define RB_TYPE GLfloat
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLfloat *P = (GLfloat *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = MAX2((VALUE[RCOMP]), 0.0F); \
-   DST[1] = MAX2((VALUE[GCOMP]), 0.0F); \
-   DST[2] = MAX2((VALUE[BCOMP]), 0.0F); \
-   DST[3] = CLAMP((VALUE[ACOMP]), 0.0F, 1.0F)
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[0] = MAX2((VALUE[RCOMP]), 0.0F); \
-   DST[1] = MAX2((VALUE[GCOMP]), 0.0F); \
-   DST[2] = MAX2((VALUE[BCOMP]), 0.0F); \
-   DST[3] = 1.0F
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-
-/* 8-bit BGRA */
-#define NAME(PREFIX) PREFIX##_BGRA8
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = 255
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-/* 16-bit BGRA */
-#define NAME(PREFIX) PREFIX##_BGRA16
-#define RB_TYPE GLushort
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = 65535
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-/* 32-bit BGRA */
-#define NAME(PREFIX) PREFIX##_BGRA32
-#define RB_TYPE GLfloat
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLfloat *P = (GLfloat *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP];  \
-   DST[3] = 1.0F
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = SRC[3]
-#include "swrast/s_spantemp.h"
-
-
-/* 8-bit ARGB */
-#define NAME(PREFIX) PREFIX##_ARGB8
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = 255
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[1];  \
-   DST[GCOMP] = SRC[2];  \
-   DST[BCOMP] = SRC[3];  \
-   DST[ACOMP] = SRC[0]
-#include "swrast/s_spantemp.h"
-
-/* 16-bit ARGB */
-#define NAME(PREFIX) PREFIX##_ARGB16
-#define RB_TYPE GLushort
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = 65535
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[1];  \
-   DST[GCOMP] = SRC[2];  \
-   DST[BCOMP] = SRC[3];  \
-   DST[ACOMP] = SRC[0]
-#include "swrast/s_spantemp.h"
-
-/* 32-bit ARGB */
-#define NAME(PREFIX) PREFIX##_ARGB32
-#define RB_TYPE GLfloat
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLfloat *P = (GLfloat *) osmesa->rowaddr[Y] + 4 * (X)
-#define INC_PIXEL_PTR(P) P += 4
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = VALUE[ACOMP]
-#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[1] = VALUE[RCOMP];  \
-   DST[2] = VALUE[GCOMP];  \
-   DST[3] = VALUE[BCOMP];  \
-   DST[0] = 1.0F
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[1];  \
-   DST[GCOMP] = SRC[2];  \
-   DST[BCOMP] = SRC[3];  \
-   DST[ACOMP] = SRC[0]
-#include "swrast/s_spantemp.h"
-
-
-/* 8-bit RGB */
-#define NAME(PREFIX) PREFIX##_RGB8
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = 255
-#include "swrast/s_spantemp.h"
-
-/* 16-bit RGB */
-#define NAME(PREFIX) PREFIX##_RGB16
-#define RB_TYPE GLushort
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = 65535U
-#include "swrast/s_spantemp.h"
-
-/* 32-bit RGB */
-#define NAME(PREFIX) PREFIX##_RGB32
-#define RB_TYPE GLfloat
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLfloat *P = (GLfloat *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[0] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[2] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[0];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[2];  \
-   DST[ACOMP] = 1.0F
-#include "swrast/s_spantemp.h"
-
-
-/* 8-bit BGR */
-#define NAME(PREFIX) PREFIX##_BGR8
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = 255
-#include "swrast/s_spantemp.h"
-
-/* 16-bit BGR */
-#define NAME(PREFIX) PREFIX##_BGR16
-#define RB_TYPE GLushort
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = 65535
-#include "swrast/s_spantemp.h"
-
-/* 32-bit BGR */
-#define NAME(PREFIX) PREFIX##_BGR32
-#define RB_TYPE GLfloat
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLfloat *P = (GLfloat *) osmesa->rowaddr[Y] + 3 * (X)
-#define INC_PIXEL_PTR(P) P += 3
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[2] = VALUE[RCOMP];  \
-   DST[1] = VALUE[GCOMP];  \
-   DST[0] = VALUE[BCOMP]
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = SRC[2];  \
-   DST[GCOMP] = SRC[1];  \
-   DST[BCOMP] = SRC[0];  \
-   DST[ACOMP] = 1.0F
-#include "swrast/s_spantemp.h"
-
-
-/* 16-bit 5/6/5 RGB */
-#define NAME(PREFIX) PREFIX##_RGB_565
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) osmesa->rowaddr[Y] + (X)
-#define INC_PIXEL_PTR(P) P += 1
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   *DST = ( (((VALUE[RCOMP]) & 0xf8) << 8) | (((VALUE[GCOMP]) & 0xfc) << 3) | ((VALUE[BCOMP]) >> 3) )
-#define FETCH_PIXEL(DST, SRC) \
-   DST[RCOMP] = ( (((*SRC) >> 8) & 0xf8) | (((*SRC) >> 11) & 0x7) ); \
-   DST[GCOMP] = ( (((*SRC) >> 3) & 0xfc) | (((*SRC) >>  5) & 0x3) ); \
-   DST[BCOMP] = ( (((*SRC) << 3) & 0xf8) | (((*SRC)      ) & 0x7) ); \
-   DST[ACOMP] = CHAN_MAX
-#include "swrast/s_spantemp.h"
 
 
 /**
@@ -789,24 +424,12 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
             rb->Format = MESA_FORMAT_RGBA8888_REV;
          else
             rb->Format = MESA_FORMAT_RGBA8888;
-         rb->GetRow = get_row_RGBA8;
-         rb->GetValues = get_values_RGBA8;
-         rb->PutRow = put_row_RGBA8;
-         rb->PutValues = put_values_RGBA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          rb->Format = MESA_FORMAT_RGBA_16;
-         rb->GetRow = get_row_RGBA16;
-         rb->GetValues = get_values_RGBA16;
-         rb->PutRow = put_row_RGBA16;
-         rb->PutValues = put_values_RGBA16;
       }
       else {
          rb->Format = MESA_FORMAT_RGBA_FLOAT32;
-         rb->GetRow = get_row_RGBA32;
-         rb->GetValues = get_values_RGBA32;
-         rb->PutRow = put_row_RGBA32;
-         rb->PutValues = put_values_RGBA32;
       }
    }
    else if (osmesa->format == OSMESA_BGRA) {
@@ -815,26 +438,14 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
             rb->Format = MESA_FORMAT_ARGB8888;
          else
             rb->Format = MESA_FORMAT_ARGB8888_REV;
-         rb->GetRow = get_row_BGRA8;
-         rb->GetValues = get_values_BGRA8;
-         rb->PutRow = put_row_BGRA8;
-         rb->PutValues = put_values_BGRA8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          _mesa_warning(ctx, "Unsupported OSMesa format BGRA/GLushort");
          rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
-         rb->GetRow = get_row_BGRA16;
-         rb->GetValues = get_values_BGRA16;
-         rb->PutRow = put_row_BGRA16;
-         rb->PutValues = put_values_BGRA16;
       }
       else {
          _mesa_warning(ctx, "Unsupported OSMesa format BGRA/GLfloat");
          rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
-         rb->GetRow = get_row_BGRA32;
-         rb->GetValues = get_values_BGRA32;
-         rb->PutRow = put_row_BGRA32;
-         rb->PutValues = put_values_BGRA32;
       }
    }
    else if (osmesa->format == OSMESA_ARGB) {
@@ -843,85 +454,45 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
             rb->Format = MESA_FORMAT_ARGB8888_REV;
          else
             rb->Format = MESA_FORMAT_ARGB8888;
-         rb->GetRow = get_row_ARGB8;
-         rb->GetValues = get_values_ARGB8;
-         rb->PutRow = put_row_ARGB8;
-         rb->PutValues = put_values_ARGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          _mesa_warning(ctx, "Unsupported OSMesa format ARGB/GLushort");
          rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
-         rb->GetRow = get_row_ARGB16;
-         rb->GetValues = get_values_ARGB16;
-         rb->PutRow = put_row_ARGB16;
-         rb->PutValues = put_values_ARGB16;
       }
       else {
          _mesa_warning(ctx, "Unsupported OSMesa format ARGB/GLfloat");
          rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
-         rb->GetRow = get_row_ARGB32;
-         rb->GetValues = get_values_ARGB32;
-         rb->PutRow = put_row_ARGB32;
-         rb->PutValues = put_values_ARGB32;
       }
    }
    else if (osmesa->format == OSMESA_RGB) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
          rb->Format = MESA_FORMAT_RGB888;
-         rb->GetRow = get_row_RGB8;
-         rb->GetValues = get_values_RGB8;
-         rb->PutRow = put_row_RGB8;
-         rb->PutValues = put_values_RGB8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          _mesa_warning(ctx, "Unsupported OSMesa format RGB/GLushort");
          rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
-         rb->GetRow = get_row_RGB16;
-         rb->GetValues = get_values_RGB16;
-         rb->PutRow = put_row_RGB16;
-         rb->PutValues = put_values_RGB16;
       }
       else {
          _mesa_warning(ctx, "Unsupported OSMesa format RGB/GLfloat");
          rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
-         rb->GetRow = get_row_RGB32;
-         rb->GetValues = get_values_RGB32;
-         rb->PutRow = put_row_RGB32;
-         rb->PutValues = put_values_RGB32;
       }
    }
    else if (osmesa->format == OSMESA_BGR) {
       if (rb->DataType == GL_UNSIGNED_BYTE) {
          rb->Format = MESA_FORMAT_BGR888;
-         rb->GetRow = get_row_BGR8;
-         rb->GetValues = get_values_BGR8;
-         rb->PutRow = put_row_BGR8;
-         rb->PutValues = put_values_BGR8;
       }
       else if (rb->DataType == GL_UNSIGNED_SHORT) {
          _mesa_warning(ctx, "Unsupported OSMesa format BGR/GLushort");
          rb->Format = MESA_FORMAT_RGBA_16; /* not exactly right */
-         rb->GetRow = get_row_BGR16;
-         rb->GetValues = get_values_BGR16;
-         rb->PutRow = put_row_BGR16;
-         rb->PutValues = put_values_BGR16;
       }
       else {
          _mesa_warning(ctx, "Unsupported OSMesa format BGR/GLfloat");
          rb->Format = MESA_FORMAT_RGBA_FLOAT32; /* not exactly right */
-         rb->GetRow = get_row_BGR32;
-         rb->GetValues = get_values_BGR32;
-         rb->PutRow = put_row_BGR32;
-         rb->PutValues = put_values_BGR32;
       }
    }
    else if (osmesa->format == OSMESA_RGB_565) {
       ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
       rb->Format = MESA_FORMAT_RGB565;
-      rb->GetRow = get_row_RGB_565;
-      rb->GetValues = get_values_RGB_565;
-      rb->PutRow = put_row_RGB_565;
-      rb->PutValues = put_values_RGB_565;
    }
    else {
       _mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");
