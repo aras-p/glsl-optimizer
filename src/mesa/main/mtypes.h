@@ -2558,13 +2558,6 @@ struct gl_renderbuffer
                                GL_STENCIL_INDEX. */
    gl_format Format;      /**< The actual renderbuffer memory format */
 
-   /* XXX the following fields are obsolete and wil go away */
-   GLvoid *Buffer;        /**< Malloc'd memory for software buffers */
-
-   /** The following fields are only valid while the buffer is mapped */
-   GLubyte *Map;
-   GLint RowStrideBytes;
-
    /* Delete this renderbuffer */
    void (*Delete)(struct gl_renderbuffer *rb);
 
