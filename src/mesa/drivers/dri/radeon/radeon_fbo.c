@@ -456,16 +456,6 @@ radeon_unmap_renderbuffer(struct gl_context *ctx,
    rrb->map_bo = NULL;
 }
 
-static void *
-radeon_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb,
-		   GLint x, GLint y)
-{
-  radeon_print(RADEON_TEXTURE, RADEON_TRACE,
-		"%s(%p, rb %p) \n",
-		__func__, ctx, rb);
-
-  return NULL;
-}
 
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
@@ -756,7 +746,6 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
 
     rrb->base.Delete = radeon_delete_renderbuffer;
     rrb->base.AllocStorage = radeon_alloc_window_storage;
-    rrb->base.GetPointer = radeon_get_pointer;
 
     rrb->bo = NULL;
     return rrb;
@@ -781,7 +770,6 @@ radeon_new_renderbuffer(struct gl_context * ctx, GLuint name)
 
   rrb->base.Delete = radeon_delete_renderbuffer;
   rrb->base.AllocStorage = radeon_alloc_renderbuffer_storage;
-  rrb->base.GetPointer = radeon_get_pointer;
 
   return &rrb->base;
 }
