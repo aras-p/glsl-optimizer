@@ -86,6 +86,8 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
       
       frame_pointer = next_frame_pointer;
    }
+#else
+   (void) frame_pointer;
 #endif
    
    while(nr_frames) {
