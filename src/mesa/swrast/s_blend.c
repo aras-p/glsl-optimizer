@@ -1000,7 +1000,6 @@ _swrast_blend_span(struct gl_context *ctx, struct gl_renderbuffer *rb, SWspan *s
 
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
-   ASSERT(rb->DataType == span->array->ChanType);
    ASSERT(!ctx->Color.ColorLogicOpEnabled);
 
    rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
