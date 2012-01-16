@@ -332,15 +332,3 @@ intel_unmap_vertex_shader_textures(struct gl_context *ctx)
       }
    }
 }
-
-
-bool
-intel_span_supports_format(gl_format format)
-{
-   /* Rendering to/from integer textures will be done using MapRenderbuffer,
-    * rather than coding up new paths through GetRow/PutRow(), so claim support
-    * for those formats in here for now.
-    */
-   return true;
-}
-

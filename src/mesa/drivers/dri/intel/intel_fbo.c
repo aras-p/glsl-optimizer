@@ -833,14 +833,6 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	     _mesa_get_format_name(intel_rb_format(irb)));
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       }
-
-#ifdef I915
-      if (!intel_span_supports_format(intel_rb_format(irb))) {
-	 DBG("Unsupported swrast texture/renderbuffer format attached: %s\n",
-	     _mesa_get_format_name(intel_rb_format(irb)));
-	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
-      }
-#endif
    }
 }
 
