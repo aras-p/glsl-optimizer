@@ -259,7 +259,7 @@ add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
 
       assert(fb->Attachment[b].Renderbuffer == NULL);
 
-      rb = _mesa_new_renderbuffer(ctx, 0);
+      rb = ctx->Driver.NewRenderbuffer(ctx, 0);
       if (!rb) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating color buffer");
          return GL_FALSE;
@@ -297,7 +297,7 @@ add_depth_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    assert(fb->Attachment[BUFFER_DEPTH].Renderbuffer == NULL);
 
-   rb = _mesa_new_renderbuffer(ctx, 0);
+   rb = _swrast_new_soft_renderbuffer(ctx, 0);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating depth buffer");
       return GL_FALSE;
@@ -342,7 +342,7 @@ add_stencil_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    assert(fb->Attachment[BUFFER_STENCIL].Renderbuffer == NULL);
 
-   rb = _mesa_new_renderbuffer(ctx, 0);
+   rb = _swrast_new_soft_renderbuffer(ctx, 0);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating stencil buffer");
       return GL_FALSE;
@@ -367,7 +367,7 @@ add_depth_stencil_renderbuffer(struct gl_context *ctx,
    assert(fb->Attachment[BUFFER_DEPTH].Renderbuffer == NULL);
    assert(fb->Attachment[BUFFER_STENCIL].Renderbuffer == NULL);
 
-   rb = _mesa_new_renderbuffer(ctx, 0);
+   rb = _swrast_new_soft_renderbuffer(ctx, 0);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating depth+stencil buffer");
       return GL_FALSE;
@@ -406,7 +406,7 @@ add_accum_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 
    assert(fb->Attachment[BUFFER_ACCUM].Renderbuffer == NULL);
 
-   rb = _mesa_new_renderbuffer(ctx, 0);
+   rb = _swrast_new_soft_renderbuffer(ctx, 0);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating accum buffer");
       return GL_FALSE;
@@ -446,7 +446,7 @@ add_aux_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
    assert(numBuffers <= MAX_AUX_BUFFERS);
 
    for (i = 0; i < numBuffers; i++) {
-      struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, 0);
+      struct gl_renderbuffer *rb = _swrast_new_soft_renderbuffer(ctx, 0);
 
       assert(fb->Attachment[BUFFER_AUX0 + i].Renderbuffer == NULL);
 

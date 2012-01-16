@@ -37,7 +37,7 @@ wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    ASSERT(att->Type == GL_TEXTURE);
    ASSERT(att->Renderbuffer == NULL);
 
-   rb = CALLOC_STRUCT(gl_renderbuffer);
+   rb = ctx->Driver.NewRenderbuffer(ctx, name);
    if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "wrap_texture");
       return;
