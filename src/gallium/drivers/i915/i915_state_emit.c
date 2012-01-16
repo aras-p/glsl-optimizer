@@ -151,8 +151,25 @@ emit_immediate(struct i915_context *i915)
    }
 
    for (i = 1; i < I915_MAX_IMMEDIATE; i++) {
-      if (dirty & (1 << i))
-         OUT_BATCH(i915->current.immediate[i]);
+      if (dirty & (1 << i)) {
+         /* Fixup blend function for A8 dst buffers.
+          * When we blend to an A8 buffer, the GPU thinks it's a G8 buffer,
+          * and therefore we need to use the color factor for alphas. */
+         if ((i == I915_IMMEDIATE_S6) &&
+             (i915->current.target_fixup_format == PIPE_FORMAT_A8_UNORM)) {
+            uint32_t imm = i915->current.immediate[i];
+            uint32_t srcRGB = (imm >> S6_CBUF_SRC_BLEND_FACT_SHIFT) & BLENDFACT_MASK;
+            if (srcRGB == BLENDFACT_DST_ALPHA)
+               srcRGB = BLENDFACT_DST_COLR;
+            else if (srcRGB == BLENDFACT_INV_DST_ALPHA)
+               srcRGB = BLENDFACT_INV_DST_COLR;
+            imm &= ~SRC_BLND_FACT(BLENDFACT_MASK);
+            imm |= SRC_BLND_FACT(srcRGB);
+            OUT_BATCH(imm);
+         } else {
+            OUT_BATCH(i915->current.immediate[i]);
+         }
+      }
    }
 }
 
@@ -346,7 +363,7 @@ emit_constants(struct i915_context *i915)
 static void
 validate_program(struct i915_context *i915, unsigned *batch_space)
 {
-   uint additional_size = i915->current.need_target_fixup;
+   uint additional_size = i915->current.target_fixup_format ? 1 : 0;
 
    /* we need more batch space if we want to emulate rgba framebuffers */
    *batch_space = i915->fs->program_len + 3 * additional_size;
@@ -355,7 +372,7 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
 static void
 emit_program(struct i915_context *i915)
 {
-   uint target_fixup = i915->current.need_target_fixup;
+   uint need_target_fixup = i915->current.target_fixup_format ? 1 : 0;
    uint i;
 
    /* we should always have, at least, a pass-through program */
@@ -364,7 +381,7 @@ emit_program(struct i915_context *i915)
    {
       /* first word has the size, we have to adjust that */
       uint size = (i915->fs->program[0]);
-      size += target_fixup * 3;
+      size += need_target_fixup * 3;
       OUT_BATCH(size);
    }
 
@@ -373,7 +390,7 @@ emit_program(struct i915_context *i915)
       OUT_BATCH(i915->fs->program[i]);
 
    /* we emit an additional mov with swizzle to fake RGBA framebuffers */
-   if (target_fixup) {
+   if (need_target_fixup) {
       /* mov out_color, out_color.zyxw */
       OUT_BATCH(A0_MOV |
                 (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) |
