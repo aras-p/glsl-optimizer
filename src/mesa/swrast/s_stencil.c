@@ -326,12 +326,14 @@ put_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
               const GLubyte stencil[])
 {
    const GLint w = rb->Width, h = rb->Height;
+   gl_pack_ubyte_stencil_func pack_stencil =
+      _mesa_get_pack_ubyte_stencil_func(rb->Format);
    GLuint i;
 
    for (i = 0; i < count; i++) {
       if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
          GLubyte *dst = _swrast_pixel_address(rb, x[i], y[i]);
-         _mesa_pack_ubyte_stencil_row(rb->Format, 1, &stencil[i], dst);
+         pack_stencil(&stencil[i], dst);
       }
    }
 }
