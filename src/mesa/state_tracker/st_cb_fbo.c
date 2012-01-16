@@ -185,23 +185,6 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
 
 
 /**
- * gl_renderbuffer::GetPointer()
- */
-static void *
-null_get_pointer(struct gl_context * ctx, struct gl_renderbuffer *rb,
-                 GLint x, GLint y)
-{
-   /* By returning NULL we force all software rendering to go through
-    * the span routines.
-    */
-#if 0
-   assert(0);  /* Should never get called with softpipe */
-#endif
-   return NULL;
-}
-
-
-/**
  * Called via ctx->Driver.NewFramebuffer()
  */
 static struct gl_framebuffer *
@@ -223,7 +206,6 @@ st_new_renderbuffer(struct gl_context *ctx, GLuint name)
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
       strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
-      strb->Base.GetPointer = null_get_pointer;
       strb->format = PIPE_FORMAT_NONE;
       return &strb->Base;
    }
@@ -307,7 +289,6 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    /* st-specific methods */
    strb->Base.Delete = st_renderbuffer_delete;
    strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
-   strb->Base.GetPointer = null_get_pointer;
 
    /* surface is allocated in st_renderbuffer_alloc_storage() */
    strb->surface = NULL;
