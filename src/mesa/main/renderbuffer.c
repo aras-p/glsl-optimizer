@@ -55,8 +55,6 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->InternalFormat = GL_RGBA;
    rb->Format = MESA_FORMAT_NONE;
 
-   rb->Data = NULL;
-
    /* Point back to ourself so that we don't have to check for Wrapped==NULL
     * all over the drivers.
     */
@@ -86,10 +84,7 @@ _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
 void
 _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   if (rb->Data) {
-      free(rb->Data);
-   }
-   free(rb);
+   /* no-op */
 }
 
 

@@ -156,6 +156,20 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 
+/**
+ * Called via gl_renderbuffer::Delete()
+ */
+static void
+soft_renderbuffer_delete(struct gl_renderbuffer *rb)
+{
+   if (rb->Data) {
+      free(rb->Data);
+      rb->Data = NULL;
+   }
+   free(rb);
+}
+
+
 void
 _swrast_map_soft_renderbuffer(struct gl_context *ctx,
                               struct gl_renderbuffer *rb,
@@ -198,6 +212,7 @@ _swrast_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
    if (rb) {
       rb->AllocStorage = soft_renderbuffer_storage;
+      rb->Delete = soft_renderbuffer_delete;
    }
    return rb;
 }
