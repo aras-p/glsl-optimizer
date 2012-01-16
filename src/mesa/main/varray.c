@@ -555,7 +555,7 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
       return array->BufferObj->Name;
    case GL_VERTEX_ATTRIB_ARRAY_INTEGER:
-      if (ctx->Extensions.EXT_gpu_shader4) {
+      if (ctx->VersionMajor >= 3 || ctx->Extensions.EXT_gpu_shader4) {
          return array->Integer;
       }
       goto error;
