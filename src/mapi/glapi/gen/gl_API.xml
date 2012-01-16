@@ -7893,43 +7893,101 @@
     </enum>
 </category>
 
-<xi:include href="ARB_ES2_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="ARB_color_buffer_float.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_depth_clamp.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_map_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_sync.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_seamless_cube_map.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_draw_elements_base_vertex.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="NV_conditional_render.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="NV_primitive_restart.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="NV_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_sampler_objects.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="EXT_transform_feedback.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<!-- 40. GL_ARB_half_float_pixel -->
+<!-- 41. GL_ARB_texture_float -->
+<!-- 42. GL_ARB_pixel_buffer_object -->
+<!-- 43. GL_ARB_depth_buffer_float -->
 
 <xi:include href="ARB_draw_instanced.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 46. GL_ARB_framebuffer_sRGB -->
+
 <xi:include href="ARB_geometry_shader4.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_color_buffer_float.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<!-- 48. GL_ARB_half_float_vertex -->
+
+<xi:include href="ARB_instanced_arrays.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="ARB_map_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="ARB_texture_buffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 52. GL_ARB_texture_compression_rgtc -->
+<!-- 53. GL_ARB_texture_rg -->
+
+<xi:include href="ARB_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extension number 55 is a GLX extension. -->
+<!-- ARB extension number 56 is a WGL extension. -->
+<!-- 57. GL_ARB_uniform_buffer_object -->
+<!-- 58. GL_ARB_compatibility -->
+
+<xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 60. GL_ARB_shader_texture_lod -->
+
+<xi:include href="ARB_depth_clamp.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="ARB_draw_elements_base_vertex.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 63. GL_ARB_fragment_coord_conventions -->
+<!-- 64. GL_ARB_provoking_vertex -->
+
+<xi:include href="ARB_seamless_cube_map.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="ARB_sync.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 67. GL_ARB_texture_multisample -->
+<!-- 68. GL_ARB_vertex_array_bgra -->
+
+<xi:include href="ARB_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="AMD_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 70. GL_ARB_sample_shading -->
+<!-- 71. GL_ARB_texture_cube_map_array -->
+<!-- 72. GL_ARB_texture_gather -->
+<!-- 73. GL_ARB_texture_query_lod -->
+
+<!-- ARB extension number 74 is a WGL extension. -->
+<!-- ARB extension number 75 is a GLX extension. -->
+
+<!-- 76. GL_ARB_shading_language_include -->
+<!-- 77. GL_ARB_texture_compression_bptc -->
+
+<xi:include href="ARB_blend_func_extended.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 79. GL_ARB_explicit_attrib_location -->
+<!-- 80. GL_ARB_occlusion_query2 -->
+
+<xi:include href="ARB_sampler_objects.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 82. GL_ARB_shader_bit_encoding -->
+
+<xi:include href="ARB_texture_rgb10_a2ui.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- 84. GL_ARB_texture_swizzle -->
+<!-- 85. GL_ARB_timer_query -->
+
+<xi:include href="ARB_vertex_type_2_10_10_10_rev.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extensions #86...#94 -->
+
+<xi:include href="ARB_ES2_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extensions #96...#103 -->
 
 <xi:include href="ARB_debug_output.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_robustness.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extensions #106...#116 -->
+
+<xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 
 <!-- Non-ARB extensions sorted by extension number. -->
 
@@ -12417,18 +12475,11 @@
 <xi:include href="EXT_gpu_shader4.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <xi:include href="GL3x.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_instanced_arrays.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="NV_conditional_render.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-<xi:include href="AMD_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="NV_primitive_restart.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_texture_buffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="NV_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_vertex_type_2_10_10_10_rev.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_texture_rgb10_a2ui.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_blend_func_extended.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="EXT_transform_feedback.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </OpenGLAPI>
