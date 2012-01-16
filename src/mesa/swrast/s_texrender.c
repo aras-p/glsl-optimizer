@@ -15,40 +15,6 @@
  */
 
 
-/**
- * Derived from gl_renderbuffer class
- */
-struct texture_renderbuffer
-{
-   struct gl_renderbuffer Base;   /**< Base class object */
-   struct swrast_texture_image *TexImage;
-   StoreTexelFunc Store;
-   FetchTexelFunc Fetch;
-   GLint Yoffset;                 /**< Layer for 1D array textures. */
-   GLint Zoffset;                 /**< Layer for 2D array textures, or slice
-				   * for 3D textures
-				   */
-};
-
-
-/** cast wrapper */
-static inline struct texture_renderbuffer *
-texture_renderbuffer(struct gl_renderbuffer *rb)
-{
-   return (struct texture_renderbuffer *) rb;
-}
-
-
-
-
-static void
-store_nop(struct swrast_texture_image *texImage,
-          GLint col, GLint row, GLint img,
-          const void *texel)
-{
-}
-
-
 static void
 delete_texture_wrapper(struct gl_renderbuffer *rb)
 {
@@ -65,26 +31,26 @@ delete_texture_wrapper(struct gl_renderbuffer *rb)
 static void
 wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
-   struct texture_renderbuffer *trb;
+   struct gl_renderbuffer *rb;
    const GLuint name = 0;
 
    ASSERT(att->Type == GL_TEXTURE);
    ASSERT(att->Renderbuffer == NULL);
 
-   trb = CALLOC_STRUCT(texture_renderbuffer);
-   if (!trb) {
+   rb = CALLOC_STRUCT(gl_renderbuffer);
+   if (!rb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "wrap_texture");
       return;
    }
 
    /* init base gl_renderbuffer fields */
-   _mesa_init_renderbuffer(&trb->Base, name);
+   _mesa_init_renderbuffer(rb, name);
    /* plug in our texture_renderbuffer-specific functions */
-   trb->Base.Delete = delete_texture_wrapper;
-   trb->Base.AllocStorage = NULL; /* illegal! */
+   rb->Delete = delete_texture_wrapper;
+   rb->AllocStorage = NULL; /* illegal! */
 
    /* update attachment point */
-   _mesa_reference_renderbuffer(&att->Renderbuffer, &(trb->Base));
+   _mesa_reference_renderbuffer(&att->Renderbuffer, rb);
 }
 
 /**
@@ -95,89 +61,43 @@ wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 static void
 update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
-   struct texture_renderbuffer *trb
-      = (struct texture_renderbuffer *) att->Renderbuffer;
+   struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct swrast_texture_image *swImage;
+   gl_format format;
+   GLuint zOffset;
 
    (void) ctx;
-   ASSERT(trb);
 
-   trb->TexImage = swrast_texture_image(_mesa_get_attachment_teximage(att));
-   ASSERT(trb->TexImage);
+   swImage = swrast_texture_image(_mesa_get_attachment_teximage(att));
+   assert(swImage);
 
-   trb->Store = _mesa_get_texel_store_func(trb->TexImage->Base.TexFormat);
-   if (!trb->Store) {
-      /* we'll never draw into some textures (compressed formats) */
-      trb->Store = store_nop;
-   }
-
-   if (!trb->TexImage->FetchTexel) {
-      _mesa_update_fetch_functions(trb->TexImage->Base.TexObject);
-   }
-   trb->Fetch = trb->TexImage->FetchTexel;
-   assert(trb->Fetch);
+   format = swImage->Base.TexFormat;
 
    if (att->Texture->Target == GL_TEXTURE_1D_ARRAY_EXT) {
-      trb->Yoffset = att->Zoffset;
-      trb->Zoffset = 0;
+      zOffset = 0;
    }
    else {
-      trb->Yoffset = 0;
-      trb->Zoffset = att->Zoffset;
+      zOffset = att->Zoffset;
    }
 
-   trb->Base.Width = trb->TexImage->Base.Width;
-   trb->Base.Height = trb->TexImage->Base.Height;
-   trb->Base.InternalFormat = trb->TexImage->Base.InternalFormat;
-   trb->Base.Format = trb->TexImage->Base.TexFormat;
+   rb->Width = swImage->Base.Width;
+   rb->Height = swImage->Base.Height;
+   rb->InternalFormat = swImage->Base.InternalFormat;
+   rb->_BaseFormat = _mesa_get_format_base_format(format);
 
-   /* Set the gl_renderbuffer::Data field so that mapping the buffer
-    * in renderbuffer.c succeeds.
-    */
+   /* Want to store linear values, not sRGB */
+   rb->Format = _mesa_get_srgb_format_linear(format);
+ 
+   /* Set the gl_renderbuffer::Buffer field so that mapping the buffer
+    * succeeds.
+     */
    if (att->Texture->Target == GL_TEXTURE_3D ||
        att->Texture->Target == GL_TEXTURE_2D_ARRAY_EXT) {
-      trb->Base.Buffer = trb->TexImage->Buffer +
-         trb->TexImage->ImageOffsets[trb->Zoffset] *
-         _mesa_get_format_bytes(trb->TexImage->Base.TexFormat);
+      rb->Buffer = swImage->Buffer +
+         swImage->ImageOffsets[zOffset] * _mesa_get_format_bytes(format);
    }
    else {
-      trb->Base.Buffer = trb->TexImage->Buffer;
-   }
-
-   /* XXX may need more special cases here */
-   switch (trb->TexImage->Base.TexFormat) {
-   case MESA_FORMAT_Z24_S8:
-      trb->Base._BaseFormat = GL_DEPTH_STENCIL;
-      break;
-   case MESA_FORMAT_S8_Z24:
-      trb->Base._BaseFormat = GL_DEPTH_STENCIL;
-      break;
-   case MESA_FORMAT_Z24_X8:
-      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_X8_Z24:
-      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_Z16:
-      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_Z32:
-      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   /* SRGB formats pre EXT_framebuffer_sRGB don't do sRGB translations on FBO readback */
-   case MESA_FORMAT_SRGB8:
-      trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_RGB888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base._BaseFormat = GL_RGBA;
-      break;
-   case MESA_FORMAT_SRGBA8:
-      trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_RGBA8888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base._BaseFormat = GL_RGBA;
-      break;
-   case MESA_FORMAT_SARGB8:
-      trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_ARGB8888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base._BaseFormat = GL_RGBA;
-      break;
-   default:
-      trb->Base._BaseFormat = GL_RGBA;
+      rb->Buffer = swImage->Buffer;
    }
 }
 
