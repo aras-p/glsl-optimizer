@@ -263,10 +263,12 @@ choose_pixel_format(const struct gl_config *v)
 static void
 swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
+    struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
+
     TRACE;
 
-    free(rb->Buffer);
-    free(rb);
+    free(xrb->Base.Buffer);
+    free(xrb);
 }
 
 /* see bytes_per_line in libGL */
@@ -289,7 +291,7 @@ swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
     (void) ctx;
     (void) internalFormat;
 
-    rb->Buffer = NULL;
+    xrb->Base.Buffer = NULL;
     rb->Width = width;
     rb->Height = height;
     xrb->pitch = bytes_per_line(width * xrb->bpp, 32);
@@ -305,11 +307,11 @@ swrast_alloc_back_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
     TRACE;
 
-    free(rb->Buffer);
+    free(xrb->Base.Buffer);
 
     swrast_alloc_front_storage(ctx, rb, internalFormat, width, height);
 
-    rb->Buffer = malloc(height * xrb->pitch);
+    xrb->Base.Buffer = malloc(height * xrb->pitch);
 
     return GL_TRUE;
 }
@@ -319,6 +321,7 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 			GLboolean front)
 {
     struct dri_swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
+    struct gl_renderbuffer *rb;
     GLuint pixel_format;
 
     TRACE;
@@ -326,42 +329,44 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
     if (!xrb)
 	return NULL;
 
-    _mesa_init_renderbuffer(&xrb->Base, 0);
+    rb = &xrb->Base.Base;
+
+    _mesa_init_renderbuffer(rb, 0);
 
     pixel_format = choose_pixel_format(visual);
 
     xrb->dPriv = dPriv;
-    xrb->Base.Delete = swrast_delete_renderbuffer;
+    xrb->Base.Base.Delete = swrast_delete_renderbuffer;
     if (front) {
-	xrb->Base.AllocStorage = swrast_alloc_front_storage;
+        rb->AllocStorage = swrast_alloc_front_storage;
     }
     else {
-	xrb->Base.AllocStorage = swrast_alloc_back_storage;
+	rb->AllocStorage = swrast_alloc_back_storage;
     }
 
     switch (pixel_format) {
     case PF_A8R8G8B8:
-	xrb->Base.Format = MESA_FORMAT_ARGB8888;
-	xrb->Base.InternalFormat = GL_RGBA;
-	xrb->Base._BaseFormat = GL_RGBA;
+	rb->Format = MESA_FORMAT_ARGB8888;
+	rb->InternalFormat = GL_RGBA;
+	rb->_BaseFormat = GL_RGBA;
 	xrb->bpp = 32;
 	break;
     case PF_X8R8G8B8:
-	xrb->Base.Format = MESA_FORMAT_ARGB8888; /* XXX */
-	xrb->Base.InternalFormat = GL_RGB;
-	xrb->Base._BaseFormat = GL_RGB;
+	rb->Format = MESA_FORMAT_ARGB8888; /* XXX */
+	rb->InternalFormat = GL_RGB;
+	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 32;
 	break;
     case PF_R5G6B5:
-	xrb->Base.Format = MESA_FORMAT_RGB565;
-	xrb->Base.InternalFormat = GL_RGB;
-	xrb->Base._BaseFormat = GL_RGB;
+	rb->Format = MESA_FORMAT_RGB565;
+	rb->InternalFormat = GL_RGB;
+	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 16;
 	break;
     case PF_R3G3B2:
-	xrb->Base.Format = MESA_FORMAT_RGB332;
-	xrb->Base.InternalFormat = GL_RGB;
-	xrb->Base._BaseFormat = GL_RGB;
+	rb->Format = MESA_FORMAT_RGB332;
+	rb->InternalFormat = GL_RGB;
+	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 8;
 	break;
     default:
@@ -380,7 +385,7 @@ swrast_map_renderbuffer(struct gl_context *ctx,
 			GLint *out_stride)
 {
    struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
-   GLubyte *map = rb->Buffer;
+   GLubyte *map = xrb->Base.Buffer;
    int cpp = _mesa_get_format_bytes(rb->Format);
    int stride = rb->Width * cpp;
 
@@ -395,18 +400,18 @@ swrast_map_renderbuffer(struct gl_context *ctx,
       xrb->map_h = h;
 
       stride = w * cpp;
-      rb->Buffer = malloc(h * stride);
+      xrb->Base.Buffer = malloc(h * stride);
 
       sPriv->swrast_loader->getImage(dPriv, x, y, w, h,
-				     (char *)rb->Buffer,
+				     (char *) xrb->Base.Buffer,
 				     dPriv->loaderPrivate);
 
-      *out_map = rb->Buffer;
+      *out_map = xrb->Base.Buffer;
       *out_stride = stride;
       return;
    }
 
-   ASSERT(rb->Buffer);
+   ASSERT(xrb->Base.Buffer);
 
    if (rb->AllocStorage == swrast_alloc_back_storage) {
       map += (rb->Height - 1) * stride;
@@ -434,12 +439,12 @@ swrast_unmap_renderbuffer(struct gl_context *ctx,
 	 sPriv->swrast_loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_DRAW,
 					xrb->map_x, xrb->map_y,
 					xrb->map_w, xrb->map_h,
-					rb->Buffer,
+					(char *) xrb->Base.Buffer,
 					dPriv->loaderPrivate);
       }
 
-      free(rb->Buffer);
-      rb->Buffer = NULL;
+      free(xrb->Base.Buffer);
+      xrb->Base.Buffer = NULL;
    }
 }
 
@@ -475,12 +480,12 @@ dri_create_buffer(__DRIscreen * sPriv,
 
     /* add front renderbuffer */
     frontrb = swrast_new_renderbuffer(visual, dPriv, GL_TRUE);
-    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontrb->Base);
+    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontrb->Base.Base);
 
     /* add back renderbuffer */
     if (visual->doubleBufferMode) {
 	backrb = swrast_new_renderbuffer(visual, dPriv, GL_FALSE);
-	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backrb->Base);
+	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backrb->Base.Base);
     }
 
     /* add software renderbuffers */
@@ -554,9 +559,9 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 
     sPriv->swrast_loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_SWAP,
 				   0, 0,
-				   frontrb->Base.Width,
-				   frontrb->Base.Height,
-				   backrb->Base.Buffer,
+				   frontrb->Base.Base.Width,
+				   frontrb->Base.Base.Height,
+				   (char *) backrb->Base.Buffer,
 				   dPriv->loaderPrivate);
 }
 

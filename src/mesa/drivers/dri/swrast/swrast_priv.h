@@ -31,6 +31,7 @@
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
 #include "dri_util.h"
+#include "swrast/s_context.h"
 
 
 /**
@@ -101,7 +102,7 @@ swrast_drawable(struct gl_framebuffer *fb)
 }
 
 struct dri_swrast_renderbuffer {
-    struct gl_renderbuffer Base;
+    struct swrast_renderbuffer Base;
     __DRIdrawable *dPriv;
 
     /* GL_MAP_*_BIT, used for mapping of front buffer. */
