@@ -39,9 +39,6 @@
 struct gl_context;
 struct pipe_screen;
 
-extern GLenum
-st_format_datatype(enum pipe_format format);
-
 
 extern enum pipe_format
 st_mesa_format_to_pipe_format(gl_format mesaFormat);
