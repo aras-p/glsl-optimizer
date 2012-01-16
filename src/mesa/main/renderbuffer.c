@@ -55,7 +55,6 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->InternalFormat = GL_RGBA;
    rb->Format = MESA_FORMAT_NONE;
 
-   rb->DataType = GL_NONE;
    rb->Data = NULL;
 
    /* Point back to ourself so that we don't have to check for Wrapped==NULL

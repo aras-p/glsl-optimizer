@@ -230,7 +230,6 @@ gen6_hiz_setup_depth_buffer(struct brw_context *brw,
 
    rb->Format = mt->format;
    rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
-   rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
    rb->InternalFormat = rb->_BaseFormat;
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;

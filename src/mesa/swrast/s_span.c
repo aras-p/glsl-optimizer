@@ -1048,6 +1048,7 @@ shade_texture_span(struct gl_context *ctx, SWspan *span)
 /** Put colors at x/y locations into a renderbuffer */
 static void
 put_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
+           GLenum datatype,
            GLuint count, const GLint x[], const GLint y[],
            const void *values, const GLubyte *mask)
 {
@@ -1057,12 +1058,12 @@ put_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
       if (mask[i]) {
          GLubyte *dst = _swrast_pixel_address(rb, x[i], y[i]);
 
-         if (rb->DataType == GL_UNSIGNED_BYTE) {
+         if (datatype == GL_UNSIGNED_BYTE) {
             _mesa_pack_ubyte_rgba_row(rb->Format, 1,
                                       (const GLubyte (*)[4]) values + i, dst);
          }
          else {
-            assert(rb->DataType == GL_FLOAT);
+            assert(datatype == GL_FLOAT);
             _mesa_pack_float_rgba_row(rb->Format, count,
                                       (const GLfloat (*)[4]) values + i, dst);
          }
@@ -1074,18 +1075,19 @@ put_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 /** Put row of colors into renderbuffer */
 void
 _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
+                GLenum datatype,
                 GLuint count, GLint x, GLint y,
                 const void *values, const GLubyte *mask)
 {
    GLubyte *dst = _swrast_pixel_address(rb, x, y);
 
    if (!mask) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
+      if (datatype == GL_UNSIGNED_BYTE) {
          _mesa_pack_ubyte_rgba_row(rb->Format, count,
                                    (const GLubyte (*)[4]) values, dst);
       }
       else {
-         assert(rb->DataType == GL_FLOAT);
+         assert(datatype == GL_FLOAT);
          _mesa_pack_float_rgba_row(rb->Format, count,
                                    (const GLfloat (*)[4]) values, dst);
       }
@@ -1107,13 +1109,13 @@ _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
          if (!mask[i] || i == count - 1) {
             /* might be the end of a run of pixels */
             if (runLen > 0) {
-               if (rb->DataType == GL_UNSIGNED_BYTE) {
+               if (datatype == GL_UNSIGNED_BYTE) {
                   _mesa_pack_ubyte_rgba_row(rb->Format, runLen,
                                      (const GLubyte (*)[4]) values + runStart,
                                      dst + runStart * bpp);
                }
                else {
-                  assert(rb->DataType == GL_FLOAT);
+                  assert(datatype == GL_FLOAT);
                   _mesa_pack_float_rgba_row(rb->Format, runLen,
                                    (const GLfloat (*)[4]) values + runStart,
                                    dst + runStart * bpp);
@@ -1329,23 +1331,13 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
 
          if (rb) {
             GLchan rgbaSave[MAX_WIDTH][4];
-            const GLuint fragOutput = multiFragOutputs ? buf : 0;
 
-            /* set span->array->rgba to colors for render buffer's datatype */
-            if (rb->DataType != span->array->ChanType || fragOutput > 0) {
-               convert_color_type(span, rb->DataType, fragOutput);
+            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+               span->array->rgba = span->array->rgba8;
             }
             else {
-               if (rb->DataType == GL_UNSIGNED_BYTE) {
-                  span->array->rgba = span->array->rgba8;
-               }
-               else if (rb->DataType == GL_UNSIGNED_SHORT) {
-                  span->array->rgba = (void *) span->array->rgba16;
-               }
-               else {
-                  span->array->rgba = (void *)
-                     span->array->attribs[FRAG_ATTRIB_COL0];
-               }
+               span->array->rgba = (void *)
+                  span->array->attribs[FRAG_ATTRIB_COL0];
             }
 
             if (!multiFragOutputs && numBuffers > 1) {
@@ -1373,13 +1365,16 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
 
             if (span->arrayMask & SPAN_XY) {
                /* array of pixel coords */
-               put_values(ctx, rb, span->end,
+               put_values(ctx, rb,
+                          span->array->ChanType, span->end,
                           span->array->x, span->array->y,
                           span->array->rgba, span->array->mask);
             }
             else {
                /* horizontal run of pixels */
-               _swrast_put_row(ctx, rb, span->end, span->x, span->y,
+               _swrast_put_row(ctx, rb,
+                               span->array->ChanType,
+                               span->end, span->x, span->y,
                                span->array->rgba,
                                span->writeAll ? NULL: span->array->mask);
             }

@@ -40,98 +40,6 @@
 #include "swrast/s_renderbuffer.h"
 
 
-
-/**
- * This is the default software fallback for gl_renderbuffer's span
- * access functions.
- *
- * The assumptions are that rb->Data will be a pointer to (0,0), that pixels
- * are packed in the type of rb->Format, and that subsequent rows appear
- * rb->RowStride pixels later.
- */
-void
-_swrast_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
-{
-   switch (rb->Format) {
-   case MESA_FORMAT_RGB888:
-      rb->DataType = GL_UNSIGNED_BYTE;
-      break;
-
-   case MESA_FORMAT_RGBA8888:
-   case MESA_FORMAT_RGBA8888_REV:
-      rb->DataType = GL_UNSIGNED_BYTE;
-      break;
-
-   case MESA_FORMAT_R8:
-      rb->DataType = GL_UNSIGNED_BYTE;
-
-      break;
-
-   case MESA_FORMAT_GR88:
-      rb->DataType = GL_UNSIGNED_BYTE;
-      break;
-
-   case MESA_FORMAT_R16:
-      rb->DataType = GL_UNSIGNED_SHORT;
-
-      break;
-
-   case MESA_FORMAT_RG1616:
-      rb->DataType = GL_UNSIGNED_SHORT;
-      break;
-
-   case MESA_FORMAT_SIGNED_RGBA_16:
-      rb->DataType = GL_SHORT;
-      break;
-
-   case MESA_FORMAT_S8:
-      rb->DataType = GL_UNSIGNED_BYTE;
-      break;
-
-   case MESA_FORMAT_Z16:
-      rb->DataType = GL_UNSIGNED_SHORT;
-      break;
-
-   case MESA_FORMAT_Z32:
-   case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_Z24_X8:
-      rb->DataType = GL_UNSIGNED_INT;
-      break;
-
-   case MESA_FORMAT_Z24_S8:
-   case MESA_FORMAT_S8_Z24:
-      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      break;
-
-   case MESA_FORMAT_RGBA_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   case MESA_FORMAT_INTENSITY_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   case MESA_FORMAT_LUMINANCE_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   case MESA_FORMAT_ALPHA_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   case MESA_FORMAT_RG_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   case MESA_FORMAT_R_FLOAT32:
-      rb->DataType = GL_FLOAT;
-      break;
-
-   default:
-      break;
-   }
-}
-
 /**
  * This is a software fallback for the gl_renderbuffer->AllocStorage
  * function.
@@ -203,10 +111,6 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       /* unsupported format */
       return GL_FALSE;
    }
-
-   _swrast_set_renderbuffer_accessors(rb);
-
-   ASSERT(rb->DataType);
 
    /* free old buffer storage */
    if (rb->Data) {

@@ -282,7 +282,7 @@ radeon_create_image_from_renderbuffer(__DRIcontext *context,
    image->internal_format = rb->InternalFormat;
    image->format = rb->Format;
    image->cpp = rrb->cpp;
-   image->data_type = rb->DataType;
+   image->data_type = GL_UNSIGNED_BYTE;
    image->data = loaderPrivate;
    radeon_bo_ref(rrb->bo);
    image->bo = rrb->bo;

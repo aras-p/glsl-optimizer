@@ -481,7 +481,6 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_RGB4:
    case GL_RGB5:
       rb->Format = _radeon_texformat_rgb565;
-      rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 2;
       break;
    case GL_RGB:
@@ -490,7 +489,6 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_RGB12:
    case GL_RGB16:
       rb->Format = _radeon_texformat_argb8888;
-      rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
    case GL_RGBA:
@@ -502,7 +500,6 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_RGBA12:
    case GL_RGBA16:
       rb->Format = _radeon_texformat_argb8888;
-      rb->DataType = GL_UNSIGNED_BYTE;
       cpp = 4;
       break;
    case GL_STENCIL_INDEX:
@@ -512,25 +509,21 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
       rb->Format = MESA_FORMAT_S8_Z24;
-      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
-      rb->DataType = GL_UNSIGNED_SHORT;
       cpp = 2;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
       rb->Format = MESA_FORMAT_X8_Z24;
-      rb->DataType = GL_UNSIGNED_INT;
       cpp = 4;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       rb->Format = MESA_FORMAT_S8_Z24;
-      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       cpp = 4;
       break;
    default:
@@ -604,7 +597,6 @@ radeon_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Width = image->width;
    rb->Height = image->height;
    rb->Format = image->format;
-   rb->DataType = image->data_type;
    rb->_BaseFormat = _mesa_base_fbo_format(radeon->glCtx,
                                            image->internal_format);
 }
@@ -696,49 +688,6 @@ radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
 
     rrb->base.Format = format;
 
-    switch (format) {
-        case MESA_FORMAT_RGB565:
-	    assert(_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-        case MESA_FORMAT_RGB565_REV:
-	    assert(!_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-        case MESA_FORMAT_XRGB8888:
-	    assert(_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-        case MESA_FORMAT_XRGB8888_REV:
-	    assert(!_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case MESA_FORMAT_ARGB8888:
-	    assert(_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case MESA_FORMAT_ARGB8888_REV:
-	    assert(!_mesa_little_endian());
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case MESA_FORMAT_S8:
-	    rrb->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case MESA_FORMAT_Z16:
-	    rrb->base.DataType = GL_UNSIGNED_SHORT;
-	    break;
-	case MESA_FORMAT_X8_Z24:
-	    rrb->base.DataType = GL_UNSIGNED_INT;
-	    break;
-	case MESA_FORMAT_S8_Z24:
-	    rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-	    break;
-	default:
-	    fprintf(stderr, "%s: Unknown format %s\n",
-                    __FUNCTION__, _mesa_get_format_name(format));
-	    _mesa_delete_renderbuffer(&rrb->base);
-	    return NULL;
-    }
     rrb->base._BaseFormat = _mesa_get_format_base_format(format);
 
     rrb->dPriv = driDrawPriv;
@@ -816,35 +765,6 @@ radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb,
 		"%s(%p, rrb %p, texImage %p, texFormat %s) \n",
 		__func__, ctx, rrb, texImage, _mesa_get_format_name(texImage->TexFormat));
 
-	switch (texImage->TexFormat) {
-		case MESA_FORMAT_RGBA8888:
-		case MESA_FORMAT_RGBA8888_REV:
-		case MESA_FORMAT_ARGB8888:
-		case MESA_FORMAT_ARGB8888_REV:
-		case MESA_FORMAT_XRGB8888:
-		case MESA_FORMAT_XRGB8888_REV:
-		case MESA_FORMAT_RGB565:
-		case MESA_FORMAT_RGB565_REV:
-		case MESA_FORMAT_RGBA5551:
-		case MESA_FORMAT_ARGB1555:
-		case MESA_FORMAT_ARGB1555_REV:
-		case MESA_FORMAT_ARGB4444:
-		case MESA_FORMAT_ARGB4444_REV:
-			rrb->base.DataType = GL_UNSIGNED_BYTE;
-			break;
-		case MESA_FORMAT_Z16:
-			rrb->base.DataType = GL_UNSIGNED_SHORT;
-			break;
-		case MESA_FORMAT_X8_Z24:
-			rrb->base.DataType = GL_UNSIGNED_INT;
-			break;
-		case MESA_FORMAT_S8_Z24:
-			rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-			break;
-		default:
-			_mesa_problem(ctx, "Unexpected texture format in radeon_update_wrapper()");
-	}
-		
 	rrb->cpp = _mesa_get_format_bytes(texImage->TexFormat);
 	rrb->pitch = texImage->Width * rrb->cpp;
 	rrb->base.Format = texImage->TexFormat;

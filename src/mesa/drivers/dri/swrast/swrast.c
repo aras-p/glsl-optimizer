@@ -344,28 +344,24 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 	xrb->Base.Format = MESA_FORMAT_ARGB8888;
 	xrb->Base.InternalFormat = GL_RGBA;
 	xrb->Base._BaseFormat = GL_RGBA;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 32;
 	break;
     case PF_X8R8G8B8:
 	xrb->Base.Format = MESA_FORMAT_ARGB8888; /* XXX */
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 32;
 	break;
     case PF_R5G6B5:
 	xrb->Base.Format = MESA_FORMAT_RGB565;
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 16;
 	break;
     case PF_R3G3B2:
 	xrb->Base.Format = MESA_FORMAT_RGB332;
 	xrb->Base.InternalFormat = GL_RGB;
 	xrb->Base._BaseFormat = GL_RGB;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 8;
 	break;
     default:

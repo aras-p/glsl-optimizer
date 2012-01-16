@@ -146,47 +146,37 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    /* XXX may need more special cases here */
    switch (trb->TexImage->Base.TexFormat) {
    case MESA_FORMAT_Z24_S8:
-      trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
       break;
    case MESA_FORMAT_S8_Z24:
-      trb->Base.DataType = GL_UNSIGNED_INT_8_24_REV_MESA;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
       break;
    case MESA_FORMAT_Z24_X8:
-      trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case MESA_FORMAT_X8_Z24:
-      trb->Base.DataType = GL_UNSIGNED_INT_8_24_REV_MESA;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case MESA_FORMAT_Z16:
-      trb->Base.DataType = GL_UNSIGNED_SHORT;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case MESA_FORMAT_Z32:
-      trb->Base.DataType = GL_UNSIGNED_INT;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    /* SRGB formats pre EXT_framebuffer_sRGB don't do sRGB translations on FBO readback */
    case MESA_FORMAT_SRGB8:
       trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_RGB888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
       break;
    case MESA_FORMAT_SRGBA8:
       trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_RGBA8888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
       break;
    case MESA_FORMAT_SARGB8:
       trb->Fetch = _mesa_get_texel_fetch_func(MESA_FORMAT_ARGB8888, _mesa_get_texture_dimensions(att->Texture->Target));
-      trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
       break;
    default:
-      trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
    }
 }

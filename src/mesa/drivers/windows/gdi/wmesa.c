@@ -1233,7 +1233,6 @@ wmesa_new_renderbuffer(void)
     
     rb->_BaseFormat = GL_RGBA;
     rb->InternalFormat = GL_RGBA;
-    rb->DataType = CHAN_TYPE;
     rb->Delete = wmesa_delete_renderbuffer;
     rb->AllocStorage = wmesa_renderbuffer_storage;
     return rb;

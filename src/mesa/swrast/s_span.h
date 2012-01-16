@@ -205,6 +205,7 @@ _swrast_read_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 extern void
 _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
+                GLenum datatype,
                 GLuint count, GLint x, GLint y,
                 const void *values, const GLubyte *mask);
 

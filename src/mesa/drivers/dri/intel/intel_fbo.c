@@ -237,7 +237,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    rb->Width = width;
    rb->Height = height;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
-   rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
 
    intel_miptree_release(&irb->mt);
 
@@ -303,7 +302,6 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Width = image->region->width;
    rb->Height = image->region->height;
    rb->Format = image->format;
-   rb->DataType = image->data_type;
    rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
 					   image->internal_format);
 }
@@ -385,7 +383,6 @@ intel_create_renderbuffer(gl_format format)
    irb->Base._BaseFormat = _mesa_get_format_base_format(format);
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
-   irb->Base.DataType = intel_mesa_format_to_rb_datatype(format);
 
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
@@ -486,7 +483,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 
    rb->Format = format;
    rb->InternalFormat = internal_format;
-   rb->DataType = intel_mesa_format_to_rb_datatype(rb->Format);
    rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;

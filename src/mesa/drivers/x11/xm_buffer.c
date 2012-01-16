@@ -336,7 +336,6 @@ xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name,
 
       xrb->Base.InternalFormat = GL_RGBA;
       xrb->Base._BaseFormat = GL_RGBA;
-      xrb->Base.DataType = GL_UNSIGNED_BYTE;
       xrb->Base.ClassID = XMESA_RENDERBUFFER;
 
       switch (xmvis->undithered_pf) {

@@ -46,26 +46,22 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_RGB8:
 		rb->_BaseFormat  = GL_RGB;
 		rb->Format = MESA_FORMAT_XRGB8888;
-		rb->DataType = GL_UNSIGNED_BYTE;
 		s->cpp = 4;
 		break;
 	case GL_RGBA:
 	case GL_RGBA8:
 		rb->_BaseFormat  = GL_RGBA;
 		rb->Format = MESA_FORMAT_ARGB8888;
-		rb->DataType = GL_UNSIGNED_BYTE;
 		s->cpp = 4;
 		break;
 	case GL_RGB5:
 		rb->_BaseFormat  = GL_RGB;
 		rb->Format = MESA_FORMAT_RGB565;
-		rb->DataType = GL_UNSIGNED_BYTE;
 		s->cpp = 2;
 		break;
 	case GL_DEPTH_COMPONENT16:
 		rb->_BaseFormat  = GL_DEPTH_COMPONENT;
 		rb->Format = MESA_FORMAT_Z16;
-		rb->DataType = GL_UNSIGNED_SHORT;
 		s->cpp = 2;
 		break;
 	case GL_DEPTH_COMPONENT:
@@ -74,7 +70,6 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_DEPTH24_STENCIL8_EXT:
 		rb->_BaseFormat  = GL_DEPTH_STENCIL;
 		rb->Format = MESA_FORMAT_Z24_S8;
-		rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
 		s->cpp = 4;
 		break;
 	default:

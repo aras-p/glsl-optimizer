@@ -2560,7 +2560,6 @@ struct gl_renderbuffer
 
    /* XXX the following fields are obsolete and wil go away */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
-   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
 
    /** The following fields are only valid while the buffer is mapped */
    GLubyte *Map;
