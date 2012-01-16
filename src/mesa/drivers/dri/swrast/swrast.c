@@ -335,11 +335,9 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
     xrb->Base.Delete = swrast_delete_renderbuffer;
     if (front) {
 	xrb->Base.AllocStorage = swrast_alloc_front_storage;
-	swrast_set_span_funcs_front(xrb, pixel_format);
     }
     else {
 	xrb->Base.AllocStorage = swrast_alloc_back_storage;
-	swrast_set_span_funcs_back(xrb, pixel_format);
     }
 
     switch (pixel_format) {

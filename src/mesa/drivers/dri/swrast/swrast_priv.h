@@ -130,14 +130,4 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
 #define PF_X8R8G8B8   4		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
 
 
-/* swrast_span.c */
-
-extern void
-swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
-			   GLuint pixel_format);
-
-extern void
-swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
-			    GLuint pixel_format);
-
 #endif /* _SWRAST_PRIV_H_ */
