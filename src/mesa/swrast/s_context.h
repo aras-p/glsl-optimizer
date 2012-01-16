@@ -168,6 +168,31 @@ swrast_texture_image_const(const struct gl_texture_image *img)
 
 
 /**
+ * Subclass of gl_renderbuffer with extra fields needed for software
+ * rendering.
+ */
+struct swrast_renderbuffer
+{
+   struct gl_renderbuffer Base;
+
+   GLubyte *Buffer;     /**< The malloc'd memory for buffer */
+
+   /** These fields are only valid while buffer is mapped for rendering */
+   GLubyte *Map;
+   GLint RowStride;    /**< in bytes */
+};
+
+
+/** cast wrapper */
+static inline struct swrast_renderbuffer *
+swrast_renderbuffer(struct gl_renderbuffer *img)
+{
+   return (struct swrast_renderbuffer *) img;
+}
+
+
+
+/**
  * \struct SWcontext
  * \brief  Per-context state that's private to the software rasterizer module.
  */
