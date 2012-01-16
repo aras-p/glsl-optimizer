@@ -127,7 +127,6 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 
    trb->Base.Width = trb->TexImage->Base.Width;
    trb->Base.Height = trb->TexImage->Base.Height;
-   trb->Base.RowStride = trb->TexImage->RowStride;
    trb->Base.InternalFormat = trb->TexImage->Base.InternalFormat;
    trb->Base.Format = trb->TexImage->Base.TexFormat;
 

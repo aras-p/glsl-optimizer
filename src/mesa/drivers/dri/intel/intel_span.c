@@ -133,7 +133,6 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
 			       &map, &stride);
    rb->Map = map;
-   rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
    rb->RowStrideBytes = stride;
 }
 
@@ -158,7 +157,6 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
    rb->Map = NULL;
-   rb->RowStride = 0;
    rb->RowStrideBytes = 0;
 }
 

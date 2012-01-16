@@ -522,7 +522,7 @@ fast_draw_depth_stencil(struct gl_context *ctx, GLint x, GLint y,
    srcRowStride = _mesa_image_row_stride(unpack, width, format, type);
 
    dst = _swrast_pixel_address(rb, x, y);
-   dstRowStride = rb->RowStride * 4;
+   dstRowStride = rb->RowStrideBytes;
 
    for (i = 0; i < height; i++) {
       _mesa_pack_uint_24_8_depth_stencil_row(rb->Format, width,

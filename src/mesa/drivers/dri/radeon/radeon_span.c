@@ -65,7 +65,6 @@ radeon_renderbuffer_map(struct gl_context *ctx, struct gl_renderbuffer *rb)
 				    &map, &stride);
 
 	rb->Map = map;
-	rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
 	rb->RowStrideBytes = stride;
 }
 
@@ -79,7 +78,6 @@ radeon_renderbuffer_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb)
 	ctx->Driver.UnmapRenderbuffer(ctx, rb);
 
 	rb->Map = NULL;
-	rb->RowStride = 0;
 	rb->RowStrideBytes = 0;
 }
 

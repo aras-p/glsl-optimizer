@@ -2558,10 +2558,9 @@ struct gl_renderbuffer
                                GL_STENCIL_INDEX. */
    gl_format Format;      /**< The actual renderbuffer memory format */
 
-   /* XXX the following 3 fields are obsolete and wil go away */
-   GLint RowStride;       /**< Padded width in units of pixels */
-   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
+   /* XXX the following fields are obsolete and wil go away */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
+   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
 
    /** The following fields are only valid while the buffer is mapped */
    GLubyte *Map;

@@ -292,7 +292,6 @@ swrast_alloc_front_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
     rb->Data = NULL;
     rb->Width = width;
     rb->Height = height;
-    rb->RowStride = width;
     xrb->pitch = bytes_per_line(width * xrb->bpp, 32);
 
     return GL_TRUE;
@@ -387,7 +386,7 @@ swrast_map_renderbuffer(struct gl_context *ctx,
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
    GLubyte *map = rb->Data;
    int cpp = _mesa_get_format_bytes(rb->Format);
-   int stride = rb->RowStride * cpp;
+   int stride = rb->Width * cpp;
 
    if (rb->AllocStorage == swrast_alloc_front_storage) {
       __DRIdrawable *dPriv = xrb->dPriv;

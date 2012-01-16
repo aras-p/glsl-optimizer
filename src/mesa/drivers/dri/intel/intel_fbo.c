@@ -135,7 +135,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    if (!irb && rb->Data) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       GLint bpp = _mesa_get_format_bytes(rb->Format);
-      GLint rowStride = rb->RowStride * bpp;
+      GLint rowStride = rb->RowStrideBytes;
       *out_map = (GLubyte *) rb->Data + y * rowStride + x * bpp;
       *out_stride = rowStride;
       return;

@@ -374,7 +374,6 @@ unmap_attachment(struct gl_context *ctx,
    }
 
    rb->Map = NULL;
-   rb->RowStrideBytes = 0;
 }
  
  

@@ -214,7 +214,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       rb->Data = NULL;
    }
 
-   rb->RowStride = width;
+   rb->RowStrideBytes = width * _mesa_get_format_bytes(rb->Format);
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
@@ -223,7 +223,6 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       if (rb->Data == NULL) {
          rb->Width = 0;
          rb->Height = 0;
-	 rb->RowStride = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
                      "software renderbuffer allocation (%d x %d x %d)",
                      width, height, _mesa_get_format_bytes(rb->Format));
@@ -263,7 +262,7 @@ _swrast_map_soft_renderbuffer(struct gl_context *ctx,
 {
    GLubyte *map = rb->Data;
    int cpp = _mesa_get_format_bytes(rb->Format);
-   int stride = rb->RowStride * cpp;
+   int stride = rb->Width * cpp;
 
    ASSERT(rb->Data);
 
