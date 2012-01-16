@@ -600,8 +600,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
    }
 
    if (b && window) {
-      char *data;
-
       /* Do window-specific initializations */
 
       /* these should have been set in create_xmesa_buffer */
@@ -633,19 +631,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
                                GCGraphicsExposures, &gcvalues);
       }
       XMesaSetFunction( v->display, b->swapgc, GXcopy );
-
-      /* Initialize the row buffer XImage for use in write_color_span() */
-      data = (char*) MALLOC(MAX_WIDTH*4);
-      b->rowimage = XCreateImage( v->display,
-                                  v->visinfo->visual,
-                                  v->visinfo->depth,
-                                  ZPixmap, 0,           /*format, offset*/
-                                  data,                 /*data*/
-                                  MAX_WIDTH, 1,         /*width, height*/
-                                  32,                   /*bitmap_pad*/
-                                  0                     /*bytes_per_line*/ );
-      if (!b->rowimage)
-         return GL_FALSE;
    }
 
    return GL_TRUE;

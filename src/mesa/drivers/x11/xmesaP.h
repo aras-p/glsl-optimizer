@@ -209,7 +209,7 @@ struct xmesa_buffer {
    XShmSegmentInfo shminfo;
 #endif
 
-   XMesaImage *rowimage;	/* Used for optimized span writing */
+   //   XMesaImage *rowimage;	/* Used for optimized span writing */
    XMesaPixmap stipple_pixmap;	/* For polygon stippling */
    XMesaGC stipple_gc;		/* For polygon stippling */
 
@@ -355,9 +355,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 extern void
 xmesa_update_state( struct gl_context *ctx, GLbitfield new_state );
 
-extern void
-xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
-                             enum pixel_format pixelformat, GLint depth);
 
 extern void
 xmesa_MapRenderbuffer(struct gl_context *ctx,

@@ -720,15 +720,11 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
 
       front_xrb = xmbuf->frontxrb;
       if (front_xrb) {
-         xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
-                                      xmesa->xm_visual->BitsPerPixel);
          front_xrb->clearFunc = clear_pixmap;
       }
 
       back_xrb = xmbuf->backxrb;
       if (back_xrb) {
-         xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
-                                      xmesa->xm_visual->BitsPerPixel);
          if (xmbuf->backxrb->pixmap) {
             back_xrb->clearFunc = clear_pixmap;
          }

@@ -409,12 +409,6 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
       }
    }
 
-   if (b->rowimage) {
-      free( b->rowimage->data );
-      b->rowimage->data = NULL;
-      XMesaDestroyImage( b->rowimage );
-   }
-
    _mesa_free_framebuffer_data(fb);
    free(fb);
 }
