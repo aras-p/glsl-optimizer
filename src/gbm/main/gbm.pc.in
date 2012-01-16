@@ -1,12 +1,12 @@
-prefix=@INSTALL_DIR@
-exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: gbm
 Description: Mesa gbm library
 Requires.private: @GBM_PC_REQ_PRIV@
 Version: @VERSION@
-Libs: -L${libdir} -l@GBM_LIB@
+Libs: -L${libdir} -lgbm
 Libs.private: @GBM_PC_LIB_PRIV@
-Cflags: -I${includedir} @GBM_PC_CFLAGS@
+Cflags: -I${includedir}

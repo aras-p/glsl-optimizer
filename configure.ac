@@ -414,7 +414,6 @@ GLESv2_LIB_NAME='lib$(GLESv2_LIB).'${LIB_EXTENSION}
 VG_LIB_NAME='lib$(VG_LIB).'${LIB_EXTENSION}
 GLAPI_LIB_NAME='lib$(GLAPI_LIB).'${LIB_EXTENSION}
 WAYLAND_EGL_LIB_NAME='lib$(WAYLAND_EGL_LIB).'${LIB_EXTENSION}
-GBM_LIB_NAME='lib$(GBM_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLU_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
@@ -426,7 +425,6 @@ GLESv2_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLESv2_LIB)'${LIB_VERSION_SEPARATOR}'*'${LI
 VG_LIB_GLOB=${LIB_PREFIX_GLOB}'$(VG_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 GLAPI_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLAPI_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 WAYLAND_EGL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(WAYLAND_EGL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
-GBM_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GBM_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
@@ -437,7 +435,6 @@ AC_SUBST([GLESv2_LIB_NAME])
 AC_SUBST([VG_LIB_NAME])
 AC_SUBST([GLAPI_LIB_NAME])
 AC_SUBST([WAYLAND_EGL_LIB_NAME])
-AC_SUBST([GBM_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
@@ -448,7 +445,6 @@ AC_SUBST([GLESv2_LIB_GLOB])
 AC_SUBST([VG_LIB_GLOB])
 AC_SUBST([GLAPI_LIB_GLOB])
 AC_SUBST([WAYLAND_EGL_LIB_GLOB])
-AC_SUBST([GBM_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -784,6 +780,8 @@ fi
 if test "x$enable_glx" = xno; then
     enable_xlib_glx=no
 fi
+
+AM_CONDITIONAL(HAVE_DRI, test x"$enable_dri" = xyes)
 
 dnl
 dnl Driver specific build directories
@@ -1364,24 +1362,14 @@ if test "x$enable_gbm" = xauto; then
 fi
 if test "x$enable_gbm" = xyes; then
     SRC_DIRS="$SRC_DIRS gbm"
-    GBM_BACKEND_DIRS=""
 
     PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
                       AC_MSG_ERROR([gbm needs udev]))
-    GBM_LIB_DEPS="$DLOPEN_LIBS $LIBUDEV_LIBS"
-
-    if test "x$enable_dri" = xyes; then
-        GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
-    fi
 fi
-AC_SUBST([GBM_LIB_DEPS])
-AC_SUBST([GBM_BACKEND_DIRS])
 GBM_PC_REQ_PRIV="libudev"
 GBM_PC_LIB_PRIV="$DLOPEN_LIBS"
-GBM_PC_CFLAGS=
 AC_SUBST([GBM_PC_REQ_PRIV])
 AC_SUBST([GBM_PC_LIB_PRIV])
-AC_SUBST([GBM_PC_CFLAGS])
 
 dnl
 dnl EGL configuration
@@ -1930,6 +1918,8 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		src/gbm/Makefile
+		src/gbm/main/gbm.pc
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/i915/Makefile
