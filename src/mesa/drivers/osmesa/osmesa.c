@@ -67,7 +67,7 @@ struct osmesa_context
 {
    struct gl_context mesa;		/*< Base class - this must be first */
    struct gl_config *gl_visual;		/*< Describes the buffers */
-   struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
+   struct swrast_renderbuffer *srb;     /*< The user's colorbuffer */
    struct gl_framebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
    GLenum format;		/*< User-specified context format */
    GLint userRowLength;		/*< user-specified number of pixels per row */
@@ -354,16 +354,16 @@ static void
 compute_row_addresses( OSMesaContext osmesa )
 {
    GLint bytesPerRow, i;
-   GLubyte *origin = (GLubyte *) osmesa->rb->Buffer;
+   GLubyte *origin = (GLubyte *) osmesa->srb->Buffer;
    GLint rowlength; /* in pixels */
-   GLint height = osmesa->rb->Height;
+   GLint height = osmesa->srb->Base.Height;
 
    if (osmesa->userRowLength)
       rowlength = osmesa->userRowLength;
    else
-      rowlength = osmesa->rb->Width;
+      rowlength = osmesa->srb->Base.Width;
 
-   bytesPerRow = rowlength * _mesa_get_format_bytes(osmesa->rb->Format);
+   bytesPerRow = rowlength * _mesa_get_format_bytes(osmesa->srb->Base.Format);
 
    if (osmesa->yup) {
       /* Y=0 is bottom line of window */
@@ -505,21 +505,25 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 /**
  * Allocate a new renderbuffer to describe the user-provided color buffer.
  */
-static struct gl_renderbuffer *
+static struct swrast_renderbuffer *
 new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
 {
    const GLuint name = 0;
-   struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
-   if (rb) {
-      rb->RefCount = 1;
-      rb->Delete = osmesa_delete_renderbuffer;
-      rb->AllocStorage = osmesa_renderbuffer_storage;
-      rb->ClassID = OSMESA_RENDERBUFFER_CLASS;
+   struct swrast_renderbuffer *srb = CALLOC_STRUCT(swrast_renderbuffer);
 
-      rb->InternalFormat = GL_RGBA;
-      rb->_BaseFormat = GL_RGBA;
+   if (srb) {
+      _mesa_init_renderbuffer(&srb->Base, name);
+
+      srb->Base.ClassID = OSMESA_RENDERBUFFER_CLASS;
+      srb->Base.Delete = osmesa_delete_renderbuffer;
+      srb->Base.AllocStorage = osmesa_renderbuffer_storage;
+
+      srb->Base.InternalFormat = GL_RGBA;
+      srb->Base._BaseFormat = GL_RGBA;
+
+      return srb;
    }
-   return rb;
+   return NULL;
 }
 
 
@@ -535,6 +539,7 @@ osmesa_MapRenderbuffer(struct gl_context *ctx,
 
    if (rb->ClassID == OSMESA_RENDERBUFFER_CLASS) {
       /* this is an OSMesa renderbuffer which wraps user memory */
+      struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
       const GLuint bpp = _mesa_get_format_bytes(rb->Format);
       GLint rowStride; /* in bytes */
 
@@ -552,7 +557,7 @@ osmesa_MapRenderbuffer(struct gl_context *ctx,
          *rowStrideOut = rowStride;
       }
 
-      *mapOut = (GLubyte *) rb->Data + y * rowStride + x * bpp;
+      *mapOut = (GLubyte *) srb->Buffer + y * rowStride + x * bpp;
    }
    else {
       _swrast_map_soft_renderbuffer(ctx, rb, x, y, w, h, mode,
@@ -795,8 +800,8 @@ GLAPI void GLAPIENTRY
 OSMesaDestroyContext( OSMesaContext osmesa )
 {
    if (osmesa) {
-      if (osmesa->rb)
-         _mesa_reference_renderbuffer(&osmesa->rb, NULL);
+      if (osmesa->srb)
+         _mesa_reference_renderbuffer((struct gl_renderbuffer **) &osmesa->srb, NULL);
 
       _mesa_meta_free( &osmesa->mesa );
 
@@ -879,11 +884,12 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * that converts rendering from CHAN_BITS to the user-requested channel
     * size.
     */
-   if (!osmesa->rb) {
-      osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
+   if (!osmesa->srb) {
+      osmesa->srb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
       _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
-      _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
-      assert(osmesa->rb->RefCount == 2);
+      _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT,
+                             &osmesa->srb->Base);
+      assert(osmesa->srb->Base.RefCount == 2);
    }
 
    osmesa->DataType = type;
@@ -891,8 +897,8 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
    /* Set renderbuffer fields.  Set width/height = 0 to force 
     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
     */
-   osmesa->rb->Buffer = buffer;
-   osmesa->rb->Width = osmesa->rb->Height = 0;
+   osmesa->srb->Buffer = buffer;
+   osmesa->srb->Base.Width = osmesa->srb->Base.Height = 0;
 
    /* Set the framebuffer's size.  This causes the
     * osmesa_renderbuffer_storage() function to get called.
@@ -906,7 +912,8 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * renderbuffer adaptor/wrapper if needed (for bpp conversion).
     */
    _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
-   _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+   _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT,
+                          &osmesa->srb->Base);
 
 
    /* this updates the visual's red/green/blue/alphaBits fields */
@@ -981,12 +988,7 @@ OSMesaGetIntegerv( GLint pname, GLint *value )
          return;
       case OSMESA_TYPE:
          /* current color buffer's data type */
-         if (osmesa->rb) {
-            *value = osmesa->DataType;
-         }
-         else {
-            *value = 0;
-         }
+         *value = osmesa->DataType;
          return;
       case OSMESA_ROW_LENGTH:
          *value = osmesa->userRowLength;
@@ -1019,12 +1021,13 @@ GLAPI GLboolean GLAPIENTRY
 OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
                       GLint *bytesPerValue, void **buffer )
 {
-   struct gl_renderbuffer *rb = NULL;
+   struct swrast_renderbuffer *srb = NULL;
 
    if (c->gl_buffer)
-      rb = c->gl_buffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+      srb = swrast_renderbuffer(c->gl_buffer->
+                                Attachment[BUFFER_DEPTH].Renderbuffer);
 
-   if (!rb || !rb->Buffer) {
+   if (!srb || !srb->Buffer) {
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
@@ -1032,13 +1035,13 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
       return GL_FALSE;
    }
    else {
-      *width = rb->Width;
-      *height = rb->Height;
+      *width = srb->Base.Width;
+      *height = srb->Base.Height;
       if (c->gl_visual->depthBits <= 16)
          *bytesPerValue = sizeof(GLushort);
       else
          *bytesPerValue = sizeof(GLuint);
-      *buffer = (void *) rb->Buffer;
+      *buffer = (void *) srb->Buffer;
       return GL_TRUE;
    }
 }
@@ -1056,11 +1059,11 @@ GLAPI GLboolean GLAPIENTRY
 OSMesaGetColorBuffer( OSMesaContext osmesa, GLint *width,
                       GLint *height, GLint *format, void **buffer )
 {
-   if (osmesa->rb && osmesa->rb->Buffer) {
-      *width = osmesa->rb->Width;
-      *height = osmesa->rb->Height;
+   if (osmesa->srb && osmesa->srb->Buffer) {
+      *width = osmesa->srb->Base.Width;
+      *height = osmesa->srb->Base.Height;
       *format = osmesa->format;
-      *buffer = (void *) osmesa->rb->Buffer;
+      *buffer = (void *) osmesa->srb->Buffer;
       return GL_TRUE;
    }
    else {
