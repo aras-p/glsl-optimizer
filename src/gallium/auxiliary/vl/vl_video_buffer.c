@@ -360,10 +360,13 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const enum pipe_format resource_formats[VL_MAX_PLANES],
                           unsigned depth, unsigned usage)
 {
-   struct pipe_resource res_tmpl, *resources[VL_MAX_PLANES] = {};
+   struct pipe_resource res_tmpl;
+   struct pipe_resource *resources[VL_MAX_PLANES];
    unsigned i;
 
    assert(pipe);
+
+   memset(resources, 0, sizeof resources);
 
    vl_vide_buffer_template(&res_tmpl, tmpl, resource_formats[0], depth, usage, 0);
    resources[0] = pipe->screen->resource_create(pipe->screen, &res_tmpl);
