@@ -2577,43 +2577,6 @@ struct gl_renderbuffer
    GLboolean (*AllocStorage)(struct gl_context *ctx, struct gl_renderbuffer *rb,
                              GLenum internalFormat,
                              GLuint width, GLuint height);
-
-   /* Lock/Unlock are called before/after calling the Get/Put functions.
-    * Not sure this is the right place for these yet.
-   void (*Lock)(struct gl_context *ctx, struct gl_renderbuffer *rb);
-   void (*Unlock)(struct gl_context *ctx, struct gl_renderbuffer *rb);
-    */
-
-   /* Return a pointer to the element/pixel at (x,y).
-    * Should return NULL if the buffer memory can't be directly addressed.
-    */
-   void *(*GetPointer)(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                       GLint x, GLint y);
-
-   /* Get/Read a row of values.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*GetRow)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                  GLint x, GLint y, void *values);
-
-   /* Get/Read values at arbitrary locations.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*GetValues)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     const GLint x[], const GLint y[], void *values);
-
-   /* Put/Write a row of values.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutRow)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                  GLint x, GLint y, const void *values, const GLubyte *mask);
-
-   /* Put/Write values at arbitrary locations.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutValues)(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     const GLint x[], const GLint y[], const void *values,
-                     const GLubyte *mask);
 };
 
 
