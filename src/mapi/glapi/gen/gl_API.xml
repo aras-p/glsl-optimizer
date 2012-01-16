@@ -7916,7 +7916,7 @@
 
 <xi:include href="ARB_texture_buffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- 52. GL_ARB_texture_compression_rgtc -->
+<xi:include href="ARB_texture_compression_rgtc.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_texture_rg.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 

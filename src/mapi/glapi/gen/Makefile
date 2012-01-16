@@ -80,6 +80,7 @@ API_XML = \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
 	ARB_texture_buffer_object.xml \
+	ARB_texture_compression_rgtc.xml \
 	ARB_texture_rg.xml \
 	ARB_texture_storage.xml \
 	ARB_vertex_array_object.xml \
