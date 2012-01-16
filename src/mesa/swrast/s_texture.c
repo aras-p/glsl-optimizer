@@ -342,14 +342,11 @@ map_attachment(struct gl_context *ctx,
    }
    else if (rb) {
       /* Map ordinary renderbuffer */
-      /* XXX don't map color buffers yet */
-      if (buffer == BUFFER_DEPTH || buffer == BUFFER_STENCIL) {
          ctx->Driver.MapRenderbuffer(ctx, rb,
                                      0, 0, rb->Width, rb->Height,
                                      GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
                                      &rb->Map, &rb->RowStrideBytes);
          assert(rb->Map);
-      }
    }
 }
  
@@ -373,10 +370,7 @@ unmap_attachment(struct gl_context *ctx,
     }
    else if (rb) {
       /* unmap ordinary renderbuffer */
-      /* XXX don't map color buffers yet */
-      if (buffer == BUFFER_DEPTH || buffer == BUFFER_STENCIL) {
-         ctx->Driver.UnmapRenderbuffer(ctx, rb);
-      }
+      ctx->Driver.UnmapRenderbuffer(ctx, rb);
    }
 
    rb->Map = NULL;

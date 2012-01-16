@@ -203,6 +203,11 @@ extern void
 _swrast_read_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
                        GLuint n, GLint x, GLint y, GLvoid *rgba);
 
+extern void
+_swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
+                GLuint count, GLint x, GLint y,
+                const void *values, const GLubyte *mask);
+
 extern void *
 _swrast_get_dest_rgba(struct gl_context *ctx, struct gl_renderbuffer *rb,
                       SWspan *span);

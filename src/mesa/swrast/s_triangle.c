@@ -157,7 +157,7 @@ _swrast_culltriangle( struct gl_context *ctx,
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
-   rb->PutRow(ctx, rb, span.end, span.x, span.y, rgba, NULL);
+   _swrast_put_row(ctx, rb, span.end, span.x, span.y, rgba, NULL);
 
 #include "s_tritemp.h"
 
@@ -223,7 +223,7 @@ _swrast_culltriangle( struct gl_context *ctx,
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
-   rb->PutRow(ctx, rb, span.end, span.x, span.y, rgba, span.array->mask);
+   _swrast_put_row(ctx, rb, span.end, span.x, span.y, rgba, span.array->mask);
 
 #include "s_tritemp.h"
 

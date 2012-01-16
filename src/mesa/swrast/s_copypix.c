@@ -558,6 +558,46 @@ swrast_fast_copy_pixels(struct gl_context *ctx,
 
 
 /**
+ * Find/map the renderbuffer that we'll be reading from.
+ * The swrast_render_start() function only maps the drawing buffers,
+ * not the read buffer.
+ */
+static struct gl_renderbuffer *
+map_readbuffer(struct gl_context *ctx, GLenum type)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct gl_renderbuffer *rb;
+
+   switch (type) {
+   case GL_COLOR:
+      rb = fb->Attachment[fb->_ColorReadBufferIndex].Renderbuffer;
+      break;
+   case GL_DEPTH:
+   case GL_DEPTH_STENCIL:
+      rb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      break;
+   case GL_STENCIL:
+      rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+      break;
+   default:
+      return NULL;
+   }
+
+   if (!rb || rb->Map) {
+      /* no buffer, or buffer is mapped already, we're done */
+      return NULL;
+   }
+
+   ctx->Driver.MapRenderbuffer(ctx, rb,
+                               0, 0, rb->Width, rb->Height,
+                               GL_MAP_READ_BIT,
+                               &rb->Map, &rb->RowStrideBytes);
+
+   return rb;
+}
+
+
+/**
  * Do software-based glCopyPixels.
  * By time we get here, all parameters will have been error-checked.
  */
@@ -567,6 +607,7 @@ _swrast_CopyPixels( struct gl_context *ctx,
 		    GLint destx, GLint desty, GLenum type )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_renderbuffer *rb;
       
    if (!_mesa_check_conditional_render(ctx))
       return; /* don't copy */
@@ -585,6 +626,7 @@ _swrast_CopyPixels( struct gl_context *ctx,
    }
 
    swrast_render_start(ctx);
+   rb = map_readbuffer(ctx, type);
 
    switch (type) {
    case GL_COLOR:
@@ -606,4 +648,9 @@ _swrast_CopyPixels( struct gl_context *ctx,
    }
 
    swrast_render_finish(ctx);
+
+   if (rb) {
+      ctx->Driver.UnmapRenderbuffer(ctx, rb);
+      rb->Map = NULL;
+   }
 }
