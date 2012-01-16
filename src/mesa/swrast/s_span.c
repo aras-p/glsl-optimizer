@@ -1437,41 +1437,6 @@ _swrast_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Wrapper for gl_renderbuffer::PutRow() which does clipping.
- * \param valueSize  size of each value (pixel) in bytes
- */
-void
-_swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                GLuint count, GLint x, GLint y,
-                const GLvoid *values, GLuint valueSize)
-{
-   GLint skip = 0;
-
-   if (y < 0 || y >= (GLint) rb->Height)
-      return; /* above or below */
-
-   if (x + (GLint) count <= 0 || x >= (GLint) rb->Width)
-      return; /* entirely left or right */
-
-   if ((GLint) (x + count) > (GLint) rb->Width) {
-      /* right clip */
-      GLint clip = x + count - rb->Width;
-      count -= clip;
-   }
-
-   if (x < 0) {
-      /* left clip */
-      skip = -x;
-      x = 0;
-      count -= skip;
-   }
-
-   rb->PutRow(ctx, rb, count, x, y,
-              (const GLubyte *) values + skip * valueSize, NULL);
-}
-
-
-/**
  * Wrapper for gl_renderbuffer::GetRow() which does clipping.
  * \param valueSize  size of each value (pixel) in bytes
  */
