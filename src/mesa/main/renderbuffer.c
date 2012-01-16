@@ -33,17 +33,6 @@
 
 
 /**
- * Default GetPointer routine.  Always return NULL to indicate that
- * direct buffer access is not supported.
- */
-static void *
-nop_get_pointer(struct gl_context *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
-{
-   return NULL;
-}
-
-
-/**
  * Initialize the fields of a gl_renderbuffer to default values.
  */
 void
@@ -73,12 +62,6 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
     * all over the drivers.
     */
    rb->Wrapped = rb;
-
-   rb->GetPointer = nop_get_pointer;
-   rb->GetRow = NULL;
-   rb->GetValues = NULL;
-   rb->PutRow = NULL;
-   rb->PutValues = NULL;
 }
 
 
