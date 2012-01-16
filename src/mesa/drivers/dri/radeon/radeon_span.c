@@ -74,8 +74,8 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   void *buf = rb->Data;						\
-   int pitch = rb->RowStride * rrb->cpp;				\
+   void *buf = rb->Map;						\
+   int pitch = rb->RowStrideBytes;				\
    GLuint p;						\
    (void)p;
 
@@ -178,8 +178,9 @@ radeon_renderbuffer_map(struct gl_context *ctx, struct gl_renderbuffer *rb)
 				    GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
 				    &map, &stride);
 
-	rb->Data = map;
+	rb->Map = map;
 	rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
+	rb->RowStrideBytes = stride;
 
 	radeonSetSpanFunctions(rrb);
 }
@@ -195,8 +196,9 @@ radeon_renderbuffer_unmap(struct gl_context *ctx, struct gl_renderbuffer *rb)
 
 	rb->GetRow = NULL;
 	rb->PutRow = NULL;
-	rb->Data = NULL;
+	rb->Map = NULL;
 	rb->RowStride = 0;
+	rb->RowStrideBytes = 0;
 }
 
 static void

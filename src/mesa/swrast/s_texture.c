@@ -315,57 +315,130 @@ _swrast_unmap_textures(struct gl_context *ctx)
 }
 
 
-/**
- * Map or unmap any textures that we may be rendering to as renderbuffers.
- */
 static void
-map_unmap_renderbuffers(struct gl_context *ctx,
-                        struct gl_framebuffer *fb,
-                        GLboolean map)
+map_attachment(struct gl_context *ctx,
+                 struct gl_framebuffer *fb,
+                 gl_buffer_index buffer)
 {
-   GLuint i;
+   struct gl_texture_object *texObj = fb->Attachment[buffer].Texture;
+   struct gl_renderbuffer *rb = fb->Attachment[buffer].Renderbuffer;
 
-   for (i = 0; i < Elements(fb->Attachment); i++) {
-      struct gl_texture_object *texObj = fb->Attachment[i].Texture;
-      if (texObj) {
-         const GLuint level = fb->Attachment[i].TextureLevel;
-         const GLuint face = fb->Attachment[i].CubeMapFace;
-         struct gl_texture_image *texImage = texObj->Image[face][level];
-         if (texImage) {
-            struct swrast_texture_image *swImage
-               = swrast_texture_image(texImage);
+   if (texObj) {
+      const GLuint level = fb->Attachment[buffer].TextureLevel;
+      const GLuint face = fb->Attachment[buffer].CubeMapFace;
+      struct gl_texture_image *texImage = texObj->Image[face][level];
+      if (texImage) {
+         struct swrast_texture_image *swImage
+            = swrast_texture_image(texImage);
 
-            if (map) {
-               /* XXX we'll eventually call _swrast_map_teximage() here */
-               swImage->Map = swImage->Buffer;
-            }
-            else {
-               /* XXX we'll eventually call _swrast_unmap_teximage() here */
-               swImage->Map = NULL;
-            }
+         /* XXX we'll eventually call _swrast_map_teximage() here */
+         swImage->Map = swImage->Buffer;
+         if (rb) {
+            rb->Map = swImage->Buffer;
+            rb->RowStrideBytes = swImage->RowStride *
+               _mesa_get_format_bytes(swImage->Base.TexFormat);
          }
       }
    }
+   else if (rb) {
+      /* Map ordinary renderbuffer */
+      /* XXX don't map color buffers yet */
+      if (buffer == BUFFER_DEPTH || buffer == BUFFER_STENCIL) {
+         ctx->Driver.MapRenderbuffer(ctx, rb,
+                                     0, 0, rb->Width, rb->Height,
+                                     GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                     &rb->Map, &rb->RowStrideBytes);
+         assert(rb->Map);
+      }
+   }
 }
+ 
 
+static void
+unmap_attachment(struct gl_context *ctx,
+                   struct gl_framebuffer *fb,
+                   gl_buffer_index buffer)
+{
+   struct gl_texture_object *texObj = fb->Attachment[buffer].Texture;
+   struct gl_renderbuffer *rb = fb->Attachment[buffer].Renderbuffer;
 
+   if (texObj) {
+      const GLuint level = fb->Attachment[buffer].TextureLevel;
+      const GLuint face = fb->Attachment[buffer].CubeMapFace;
+      struct gl_texture_image *texImage = texObj->Image[face][level];
+      if (texImage) {
+
+         /* XXX we'll eventually call _swrast_unmap_teximage() here */
+       }
+    }
+   else if (rb) {
+      /* unmap ordinary renderbuffer */
+      /* XXX don't map color buffers yet */
+      if (buffer == BUFFER_DEPTH || buffer == BUFFER_STENCIL) {
+         ctx->Driver.UnmapRenderbuffer(ctx, rb);
+      }
+   }
+
+   rb->Map = NULL;
+   rb->RowStrideBytes = 0;
+}
+ 
+ 
+/**
+ * Map the renderbuffers we'll use for tri/line/point rendering.
+ */
 void
 _swrast_map_renderbuffers(struct gl_context *ctx)
 {
-   map_unmap_renderbuffers(ctx, ctx->DrawBuffer, GL_TRUE);
-   if (ctx->ReadBuffer != ctx->DrawBuffer)
-      map_unmap_renderbuffers(ctx, ctx->ReadBuffer, GL_TRUE);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_renderbuffer *depthRb, *stencilRb;
+   GLuint buf;
+
+   depthRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   if (depthRb) {
+      /* map depth buffer */
+      map_attachment(ctx, fb, BUFFER_DEPTH);
+   }
+
+   stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   if (stencilRb && stencilRb != depthRb) {
+      /* map stencil buffer */
+      map_attachment(ctx, fb, BUFFER_STENCIL);
+   }
+
+   for (buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
+      map_attachment(ctx, fb, fb->_ColorDrawBufferIndexes[buf]);
+   }
 }
-
-
+ 
+ 
+/**
+ * Unmap renderbuffers after rendering.
+ */
 void
 _swrast_unmap_renderbuffers(struct gl_context *ctx)
 {
-   map_unmap_renderbuffers(ctx, ctx->DrawBuffer, GL_FALSE);
-   if (ctx->ReadBuffer != ctx->DrawBuffer)
-      map_unmap_renderbuffers(ctx, ctx->ReadBuffer, GL_FALSE);
-}
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_renderbuffer *depthRb, *stencilRb;
+   GLuint buf;
 
+   depthRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   if (depthRb) {
+      /* map depth buffer */
+      unmap_attachment(ctx, fb, BUFFER_DEPTH);
+   }
+
+   stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   if (stencilRb && stencilRb != depthRb) {
+      /* map stencil buffer */
+      unmap_attachment(ctx, fb, BUFFER_STENCIL);
+   }
+
+   for (buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
+      unmap_attachment(ctx, fb, fb->_ColorDrawBufferIndexes[buf]);
+   }
+}
+ 
 
 
 /**

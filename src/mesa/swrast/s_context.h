@@ -429,7 +429,7 @@ static inline GLubyte *
 _swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
 {
    const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLint rowStride = rb->RowStride * bpp;
+   const GLint rowStride = rb->RowStrideBytes;
    assert(x >= 0);
    assert(y >= 0);
    /* NOTE: using <= only because of s_tritemp.h which gets a pixel
@@ -437,8 +437,8 @@ _swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
     */
    assert(x <= (GLint) rb->Width);
    assert(y <= (GLint) rb->Height);
-   assert(rb->Data);
-   return (GLubyte *) rb->Data + y * rowStride + x * bpp;
+   assert(rb->Map);
+   return (GLubyte *) rb->Map + y * rowStride + x * bpp;
 }
 
 

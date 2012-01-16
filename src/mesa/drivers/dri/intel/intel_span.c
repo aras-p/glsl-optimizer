@@ -60,8 +60,8 @@ intel_set_span_functions(struct intel_context *intel,
    int minx = 0, miny = 0;						\
    int maxx = rb->Width;						\
    int maxy = rb->Height;						\
-   int pitch = rb->RowStride * irb->mt->region->cpp;			\
-   void *buf = rb->Data;						\
+   int pitch = rb->RowStrideBytes;                                      \
+   void *buf = rb->Map;                                                 \
    GLuint p;								\
    (void) p;
 
@@ -189,7 +189,7 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (!irb)
       return;
 
-   if (rb->Data) {
+   if (rb->Map) {
       /* Renderbuffer is already mapped. This usually happens when a single
        * buffer is attached to the framebuffer's depth and stencil attachment
        * points.
@@ -200,8 +200,9 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
 			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
 			       &map, &stride);
-   rb->Data = map;
+   rb->Map = map;
    rb->RowStride = stride / _mesa_get_format_bytes(rb->Format);
+   rb->RowStrideBytes = stride;
 
    intel_set_span_functions(intel, rb);
 }
@@ -216,7 +217,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (!irb)
       return;
 
-   if (!rb->Data) {
+   if (!rb->Map) {
       /* Renderbuffer is already unmapped. This usually happens when a single
        * buffer is attached to the framebuffer's depth and stencil attachment
        * points.
@@ -228,8 +229,9 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;
-   rb->Data = NULL;
+   rb->Map = NULL;
    rb->RowStride = 0;
+   rb->RowStrideBytes = 0;
 }
 
 static void
