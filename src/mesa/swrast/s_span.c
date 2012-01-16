@@ -1404,10 +1404,10 @@ _swrast_read_rgba_span( struct gl_context *ctx, struct gl_renderbuffer *rb,
  * \param valueSize is the size in bytes of each value (pixel) put into the
  *                  values array.
  */
-void
-_swrast_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                   GLuint count, const GLint x[], const GLint y[],
-                   void *values, GLuint valueSize)
+static void
+get_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
+           GLuint count, const GLint x[], const GLint y[],
+           void *values, GLuint valueSize)
 {
    GLuint i, inCount = 0, inStart = 0;
 
@@ -1440,10 +1440,10 @@ _swrast_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
  * Wrapper for gl_renderbuffer::GetRow() which does clipping.
  * \param valueSize  size of each value (pixel) in bytes
  */
-void
-_swrast_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                GLuint count, GLint x, GLint y,
-                GLvoid *values, GLuint valueSize)
+static void
+get_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
+        GLuint count, GLint x, GLint y,
+        GLvoid *values, GLuint valueSize)
 {
    GLint skip = 0;
 
@@ -1487,12 +1487,12 @@ _swrast_get_dest_rgba(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    /* Get destination values from renderbuffer */
    if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
-                         rbPixels, pixelSize);
+      get_values(ctx, rb, span->end, span->array->x, span->array->y,
+                 rbPixels, pixelSize);
    }
    else {
-      _swrast_get_row(ctx, rb, span->end, span->x, span->y,
-                      rbPixels, pixelSize);
+      get_row(ctx, rb, span->end, span->x, span->y,
+              rbPixels, pixelSize);
    }
 
    return rbPixels;
