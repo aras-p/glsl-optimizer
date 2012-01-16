@@ -2530,39 +2530,32 @@ struct gl_shared_state
 
 
 
-
 /**
- * A renderbuffer stores colors or depth values or stencil values.
- * A framebuffer object will have a collection of these.
- * Data are read/written to the buffer with a handful of Get/Put functions.
- *
- * Instances of this object are allocated with the Driver's NewRenderbuffer
- * hook.  Drivers will likely wrap this class inside a driver-specific
- * class to simulate inheritance.
+ * Renderbuffers represent drawing surfaces such as color, depth and/or
+ * stencil.  A framebuffer object has a set of renderbuffers.
+ * Drivers will typically derive subclasses of this type.
  */
 struct gl_renderbuffer
 {
-   _glthread_Mutex Mutex;		   /**< for thread safety */
+   _glthread_Mutex Mutex; /**< for thread safety */
    GLuint ClassID;        /**< Useful for drivers */
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
-   GLboolean Purgeable;   /**< Is the buffer purgeable under memory pressure? */
-
+   GLboolean Purgeable;  /**< Is the buffer purgeable under memory pressure? */
    GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
-
    GLubyte NumSamples;
-
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
    gl_format Format;      /**< The actual renderbuffer memory format */
 
-   /* Delete this renderbuffer */
+   /** Delete this renderbuffer */
    void (*Delete)(struct gl_renderbuffer *rb);
 
-   /* Allocate new storage for this renderbuffer */
-   GLboolean (*AllocStorage)(struct gl_context *ctx, struct gl_renderbuffer *rb,
+   /** Allocate new storage for this renderbuffer */
+   GLboolean (*AllocStorage)(struct gl_context *ctx,
+                             struct gl_renderbuffer *rb,
                              GLenum internalFormat,
                              GLuint width, GLuint height);
 };
