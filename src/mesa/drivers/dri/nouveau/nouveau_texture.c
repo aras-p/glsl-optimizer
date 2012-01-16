@@ -680,31 +680,6 @@ nouveau_set_texbuffer(__DRIcontext *dri_ctx,
 	_mesa_unlock_texture(ctx, t);
 }
 
-static void
-nouveau_texture_map(struct gl_context *ctx, struct gl_texture_object *t)
-{
-	int i;
-
-	for (i = t->BaseLevel; i < t->_MaxLevel; i++) {
-		struct gl_texture_image *ti = t->Image[0][i];
-
-		if (ti)
-			nouveau_teximage_map(ctx, ti, GL_MAP_READ_BIT,
-					     0, 0, ti->Width, ti->Height);
-	}
-}
-
-static void
-nouveau_texture_unmap(struct gl_context *ctx, struct gl_texture_object *t)
-{
-	int i;
-
-	for (i = t->BaseLevel; i < t->_MaxLevel; i++) {
-		if (t->Image[0][i])
-			nouveau_teximage_unmap(ctx, t->Image[0][i]);
-	}
-}
-
 void
 nouveau_texture_functions_init(struct dd_function_table *functions)
 {
@@ -720,8 +695,6 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->TexSubImage2D = nouveau_texsubimage_2d;
 	functions->TexSubImage3D = nouveau_texsubimage_3d;
 	functions->BindTexture = nouveau_bind_texture;
-	functions->MapTexture = nouveau_texture_map;
-	functions->UnmapTexture = nouveau_texture_unmap;
 	functions->MapTextureImage = nouveau_map_texture_image;
 	functions->UnmapTextureImage = nouveau_unmap_texture_image;
 }

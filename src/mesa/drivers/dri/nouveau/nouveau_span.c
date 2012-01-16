@@ -46,18 +46,6 @@ renderbuffer_map_unmap(struct gl_renderbuffer *rb, GLboolean map)
 }
 
 static void
-texture_unit_map_unmap(struct gl_context *ctx, struct gl_texture_unit *u, GLboolean map)
-{
-	if (!u->_ReallyEnabled)
-		return;
-
-	if (map)
-		ctx->Driver.MapTexture(ctx, u->_Current);
-	else
-		ctx->Driver.UnmapTexture(ctx, u->_Current);
-}
-
-static void
 framebuffer_map_unmap(struct gl_framebuffer *fb, GLboolean map)
 {
 	int i;
@@ -82,7 +70,10 @@ span_map_unmap(struct gl_context *ctx, GLboolean map)
 		framebuffer_map_unmap(ctx->ReadBuffer, map);
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-		texture_unit_map_unmap(ctx, &ctx->Texture.Unit[i], map);
+		if (map)
+			_swrast_map_texture(ctx, ctx->Texture.Unit[i]._Current);
+		else
+			_swrast_unmap_texture(ctx, ctx->Texture.Unit[i]._Current);
 }
 
 static void
