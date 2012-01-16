@@ -123,7 +123,6 @@ test_round(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
    char *error = NULL;
    test_round_t round_func, trunc_func, floor_func, ceil_func;
    float unpacked[4];
-   unsigned packed;
    boolean success = TRUE;
    int i;
 
@@ -145,7 +144,6 @@ test_round(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
    ceil_func = (test_round_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_ceil));
 
    memset(unpacked, 0, sizeof unpacked);
-   packed = 0;
 
    if (0)
       LLVMDumpModule(module);
