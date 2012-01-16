@@ -122,12 +122,18 @@ else:
     ])
     target = 'glu'
 
-glu = env.SharedLibrary(
-    target = target,
-    source = sources
-)
+if env['platform'] == 'haiku':
+    glu = env.StaticLibrary(
+        target = target,
+        source = sources
+    )
+else:
+    glu = env.SharedLibrary(
+        target = target,
+        source = sources
+    )
+    env.Alias('glu', env.InstallSharedLibrary(glu, version=(1, 3, 0)))
 
-env.Alias('glu', env.InstallSharedLibrary(glu, version=(1, 3, 0)))
 
 if env['platform'] == 'windows':
     glu = env.FindIxes(glu, 'LIBPREFIX', 'LIBSUFFIX')
