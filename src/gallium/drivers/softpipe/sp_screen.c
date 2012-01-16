@@ -138,7 +138,9 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 static int
 softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
 {
+#ifdef HAVE_LLVM
    struct softpipe_screen *sp_screen = softpipe_screen(screen);
+#endif
    switch(shader)
    {
    case PIPE_SHADER_FRAGMENT:
