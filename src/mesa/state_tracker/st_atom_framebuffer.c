@@ -139,7 +139,6 @@ update_framebuffer_state( struct st_context *st )
     */
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
    if (strb) {
-      strb = st_renderbuffer(strb->Base.Wrapped);
       if (strb->rtt) {
          /* rendering to a GL texture, may have to update surface */
          update_renderbuffer_surface(st, strb);
@@ -149,7 +148,6 @@ update_framebuffer_state( struct st_context *st )
    else {
       strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       if (strb) {
-         strb = st_renderbuffer(strb->Base.Wrapped);
          assert(strb->surface);
          pipe_surface_reference(&framebuffer->zsbuf, strb->surface);
       }

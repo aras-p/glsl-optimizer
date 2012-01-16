@@ -2565,9 +2565,6 @@ struct gl_renderbuffer
    GLubyte *Map;
    GLint RowStrideBytes;
 
-   /* Used to wrap one renderbuffer around another: */
-   struct gl_renderbuffer *Wrapped;
-
    /* Delete this renderbuffer */
    void (*Delete)(struct gl_renderbuffer *rb);
 

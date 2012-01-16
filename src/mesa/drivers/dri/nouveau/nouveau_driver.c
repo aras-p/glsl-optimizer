@@ -96,7 +96,7 @@ nouveau_clear(struct gl_context *ctx, GLbitfield buffers)
 			continue;
 
 		s = &to_nouveau_renderbuffer(
-			fb->Attachment[i].Renderbuffer->Wrapped)->surface;
+			fb->Attachment[i].Renderbuffer)->surface;
 
 		if (buf & BUFFER_BITS_COLOR) {
 			mask = pack_rgba_i(s->format, ctx->Color.ColorMask[0]);

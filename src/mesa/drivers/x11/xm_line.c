@@ -120,7 +120,7 @@ void xmesa_choose_point( struct gl_context *ctx )
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped)
+   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0])
 
 
 /*
@@ -461,7 +461,7 @@ get_line_func(struct gl_context *ctx)
    if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;
 
-   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
 
    if (xrb->ximage
        && swrast->_RasterMask==DEPTH_BIT

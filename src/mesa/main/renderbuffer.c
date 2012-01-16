@@ -54,11 +54,6 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->Height = 0;
    rb->InternalFormat = GL_RGBA;
    rb->Format = MESA_FORMAT_NONE;
-
-   /* Point back to ourself so that we don't have to check for Wrapped==NULL
-    * all over the drivers.
-    */
-   rb->Wrapped = rb;
 }
 
 
