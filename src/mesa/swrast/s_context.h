@@ -430,6 +430,14 @@ _swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
 {
    const GLint bpp = _mesa_get_format_bytes(rb->Format);
    const GLint rowStride = rb->RowStride * bpp;
+   assert(x >= 0);
+   assert(y >= 0);
+   /* NOTE: using <= only because of s_tritemp.h which gets a pixel
+    * address but doesn't necessarily access it.
+    */
+   assert(x <= (GLint) rb->Width);
+   assert(y <= (GLint) rb->Height);
+   assert(rb->Data);
    return (GLubyte *) rb->Data + y * rowStride + x * bpp;
 }
 
