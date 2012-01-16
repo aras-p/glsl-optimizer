@@ -29,6 +29,7 @@
 
 #include "xmesa.h"
 #include "main/mtypes.h"
+#include "swrast/s_context.h"
 
 
 extern _glthread_Mutex _xmesa_lock;
@@ -151,7 +152,7 @@ typedef enum {
  */
 struct xmesa_renderbuffer
 {
-   struct gl_renderbuffer Base;  /* Base class */
+   struct swrast_renderbuffer Base;  /* Base class */
 
    XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
    XMesaDrawable drawable;	/* Usually the X window ID */

@@ -138,7 +138,7 @@ clear_pixmap(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
    assert(xmbuf->cleargc);
 
    XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                       x, xrb->Base.Height - y - height,
+                       x, xrb->Base.Base.Height - y - height,
                        width, height );
 }
 
@@ -215,9 +215,9 @@ clear_32bit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
             | ((pixel << 24) & 0xff000000);
    }
 
-   if (width == xrb->Base.Width && height == xrb->Base.Height) {
+   if (width == xrb->Base.Base.Width && height == xrb->Base.Base.Height) {
       /* clearing whole buffer */
-      const GLuint n = xrb->Base.Width * xrb->Base.Height;
+      const GLuint n = xrb->Base.Base.Width * xrb->Base.Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
          /* common case */
@@ -332,7 +332,7 @@ can_do_DrawPixels_8R8G8B(struct gl_context *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
+                _mesa_get_format_bits(xrb->Base.Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
@@ -465,7 +465,7 @@ can_do_DrawPixels_5R6G5B(struct gl_context *ctx, GLenum format, GLenum type)
             struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
             if (xrb &&
                 xrb->pixmap && /* drawing to pixmap or window */
-                _mesa_get_format_bits(xrb->Base.Format, GL_ALPHA_BITS) == 0) {
+                _mesa_get_format_bits(xrb->Base.Base.Format, GL_ALPHA_BITS) == 0) {
                return GL_TRUE;
             }
          }
