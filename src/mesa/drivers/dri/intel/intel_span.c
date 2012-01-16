@@ -178,7 +178,7 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
    return u;
 }
 
-void
+static void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
    struct gl_context *ctx = &intel->ctx;
@@ -206,7 +206,7 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    intel_set_span_functions(intel, rb);
 }
 
-void
+static void
 intel_renderbuffer_unmap(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {

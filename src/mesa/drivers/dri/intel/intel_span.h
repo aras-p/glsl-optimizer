@@ -35,10 +35,7 @@ extern void intelInitSpanFuncs(struct gl_context * ctx);
 
 extern void intelSpanRenderFinish(struct gl_context * ctx);
 extern void intelSpanRenderStart(struct gl_context * ctx);
-void intel_renderbuffer_map(struct intel_context *intel,
-			    struct gl_renderbuffer *rb);
-void intel_renderbuffer_unmap(struct intel_context *intel,
-			      struct gl_renderbuffer *rb);
+
 void intel_map_vertex_shader_textures(struct gl_context *ctx);
 void intel_unmap_vertex_shader_textures(struct gl_context *ctx);
 bool intel_span_supports_format(gl_format format);
