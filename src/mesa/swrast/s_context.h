@@ -453,8 +453,9 @@ _swrast_unmap_renderbuffers(struct gl_context *ctx);
 static inline GLubyte *
 _swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
 {
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
    const GLint bpp = _mesa_get_format_bytes(rb->Format);
-   const GLint rowStride = rb->RowStrideBytes;
+   const GLint rowStride = srb->RowStride;
    assert(x >= 0);
    assert(y >= 0);
    /* NOTE: using <= only because of s_tritemp.h which gets a pixel
@@ -462,8 +463,8 @@ _swrast_pixel_address(struct gl_renderbuffer *rb, GLint x, GLint y)
     */
    assert(x <= (GLint) rb->Width);
    assert(y <= (GLint) rb->Height);
-   assert(rb->Map);
-   return (GLubyte *) rb->Map + y * rowStride + x * bpp;
+   assert(srb->Map);
+   return (GLubyte *) srb->Map + y * rowStride + x * bpp;
 }
 
 

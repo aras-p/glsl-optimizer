@@ -513,6 +513,7 @@ fast_draw_depth_stencil(struct gl_context *ctx, GLint x, GLint y,
    const GLenum type = GL_UNSIGNED_INT_24_8;
    struct gl_renderbuffer *rb =
       ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
    GLubyte *src, *dst;
    GLint srcRowStride, dstRowStride;
    GLint i;
@@ -522,7 +523,7 @@ fast_draw_depth_stencil(struct gl_context *ctx, GLint x, GLint y,
    srcRowStride = _mesa_image_row_stride(unpack, width, format, type);
 
    dst = _swrast_pixel_address(rb, x, y);
-   dstRowStride = rb->RowStrideBytes;
+   dstRowStride = srb->RowStride;
 
    for (i = 0; i < height; i++) {
       _mesa_pack_uint_24_8_depth_stencil_row(rb->Format, width,

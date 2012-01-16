@@ -322,6 +322,7 @@ map_attachment(struct gl_context *ctx,
 {
    struct gl_texture_object *texObj = fb->Attachment[buffer].Texture;
    struct gl_renderbuffer *rb = fb->Attachment[buffer].Renderbuffer;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
 
    if (texObj) {
       const GLuint level = fb->Attachment[buffer].TextureLevel;
@@ -333,20 +334,20 @@ map_attachment(struct gl_context *ctx,
 
          /* XXX we'll eventually call _swrast_map_teximage() here */
          swImage->Map = swImage->Buffer;
-         if (rb) {
-            rb->Map = swImage->Buffer;
-            rb->RowStrideBytes = swImage->RowStride *
+         if (srb) {
+            srb->Map = swImage->Buffer;
+            srb->RowStride = swImage->RowStride *
                _mesa_get_format_bytes(swImage->Base.TexFormat);
          }
       }
    }
    else if (rb) {
       /* Map ordinary renderbuffer */
-         ctx->Driver.MapRenderbuffer(ctx, rb,
-                                     0, 0, rb->Width, rb->Height,
-                                     GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
-                                     &rb->Map, &rb->RowStrideBytes);
-         assert(rb->Map);
+      ctx->Driver.MapRenderbuffer(ctx, rb,
+                                  0, 0, rb->Width, rb->Height,
+                                  GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                  &srb->Map, &srb->RowStride);
+      assert(srb->Map);
    }
 }
  
@@ -358,6 +359,7 @@ unmap_attachment(struct gl_context *ctx,
 {
    struct gl_texture_object *texObj = fb->Attachment[buffer].Texture;
    struct gl_renderbuffer *rb = fb->Attachment[buffer].Renderbuffer;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
 
    if (texObj) {
       const GLuint level = fb->Attachment[buffer].TextureLevel;
@@ -373,7 +375,7 @@ unmap_attachment(struct gl_context *ctx,
       ctx->Driver.UnmapRenderbuffer(ctx, rb);
    }
 
-   rb->Map = NULL;
+   srb->Map = NULL;
 }
  
  

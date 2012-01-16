@@ -62,6 +62,7 @@ static void
 update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
    struct gl_renderbuffer *rb = att->Renderbuffer;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
    struct swrast_texture_image *swImage;
    gl_format format;
    GLuint zOffset;
@@ -93,11 +94,11 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
      */
    if (att->Texture->Target == GL_TEXTURE_3D ||
        att->Texture->Target == GL_TEXTURE_2D_ARRAY_EXT) {
-      rb->Buffer = swImage->Buffer +
+      srb->Buffer = swImage->Buffer +
          swImage->ImageOffsets[zOffset] * _mesa_get_format_bytes(format);
    }
    else {
-      rb->Buffer = swImage->Buffer;
+      srb->Buffer = swImage->Buffer;
    }
 }
 

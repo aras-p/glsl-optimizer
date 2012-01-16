@@ -567,6 +567,7 @@ map_readbuffer(struct gl_context *ctx, GLenum type)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb;
+   struct swrast_renderbuffer *srb;
 
    switch (type) {
    case GL_COLOR:
@@ -583,7 +584,9 @@ map_readbuffer(struct gl_context *ctx, GLenum type)
       return NULL;
    }
 
-   if (!rb || rb->Map) {
+   srb = swrast_renderbuffer(rb);
+
+   if (!srb || srb->Map) {
       /* no buffer, or buffer is mapped already, we're done */
       return NULL;
    }
@@ -591,7 +594,7 @@ map_readbuffer(struct gl_context *ctx, GLenum type)
    ctx->Driver.MapRenderbuffer(ctx, rb,
                                0, 0, rb->Width, rb->Height,
                                GL_MAP_READ_BIT,
-                               &rb->Map, &rb->RowStrideBytes);
+                               &srb->Map, &srb->RowStride);
 
    return rb;
 }
@@ -650,7 +653,8 @@ _swrast_CopyPixels( struct gl_context *ctx,
    swrast_render_finish(ctx);
 
    if (rb) {
+      struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
       ctx->Driver.UnmapRenderbuffer(ctx, rb);
-      rb->Map = NULL;
+      srb->Map = NULL;
    }
 }

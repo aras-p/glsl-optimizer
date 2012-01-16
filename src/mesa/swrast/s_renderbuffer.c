@@ -37,6 +37,7 @@
 #include "main/formats.h"
 #include "main/mtypes.h"
 #include "main/renderbuffer.h"
+#include "swrast/s_context.h"
 #include "swrast/s_renderbuffer.h"
 
 
@@ -56,6 +57,8 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
                           GLenum internalFormat,
                           GLuint width, GLuint height)
 {
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
+
    switch (internalFormat) {
    case GL_RGB:
    case GL_R3_G3_B2:
@@ -113,18 +116,19 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
 
    /* free old buffer storage */
-   if (rb->Buffer) {
-      free(rb->Buffer);
-      rb->Buffer = NULL;
+   if (srb->Buffer) {
+      free(srb->Buffer);
+      srb->Buffer = NULL;
    }
 
-   rb->RowStrideBytes = width * _mesa_get_format_bytes(rb->Format);
+   srb->RowStride = width * _mesa_get_format_bytes(rb->Format);
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      rb->Buffer = malloc(width * height * _mesa_get_format_bytes(rb->Format));
+      srb->Buffer = malloc(width * height
+                           * _mesa_get_format_bytes(rb->Format));
 
-      if (rb->Buffer == NULL) {
+      if (srb->Buffer == NULL) {
          rb->Width = 0;
          rb->Height = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
@@ -162,11 +166,13 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 static void
 soft_renderbuffer_delete(struct gl_renderbuffer *rb)
 {
-   if (rb->Buffer) {
-      free(rb->Buffer);
-      rb->Buffer = NULL;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
+
+   if (srb->Buffer) {
+      free(srb->Buffer);
+      srb->Buffer = NULL;
    }
-   free(rb);
+   free(srb);
 }
 
 
@@ -178,7 +184,8 @@ _swrast_map_soft_renderbuffer(struct gl_context *ctx,
                               GLubyte **out_map,
                               GLint *out_stride)
 {
-   GLubyte *map = rb->Buffer;
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
+   GLubyte *map = srb->Buffer;
    int cpp = _mesa_get_format_bytes(rb->Format);
    int stride = rb->Width * cpp;
 
@@ -212,12 +219,13 @@ _swrast_unmap_soft_renderbuffer(struct gl_context *ctx,
 struct gl_renderbuffer *
 _swrast_new_soft_renderbuffer(struct gl_context *ctx, GLuint name)
 {
-   struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
-   if (rb) {
-      rb->AllocStorage = soft_renderbuffer_storage;
-      rb->Delete = soft_renderbuffer_delete;
+   struct swrast_renderbuffer *srb = CALLOC_STRUCT(swrast_renderbuffer);
+   if (srb) {
+      _mesa_init_renderbuffer(&srb->Base, name);
+      srb->Base.AllocStorage = soft_renderbuffer_storage;
+      srb->Base.Delete = soft_renderbuffer_delete;
    }
-   return rb;
+   return &srb->Base;
 }
 
 

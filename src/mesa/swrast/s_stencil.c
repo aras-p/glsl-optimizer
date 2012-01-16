@@ -292,12 +292,13 @@ get_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
               GLuint count, const GLint x[], const GLint y[],
               GLubyte stencil[])
 {
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
    const GLint w = rb->Width, h = rb->Height;
    const GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_S8) {
-      const GLint rowStride = rb->RowStrideBytes;
+      const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             stencil[i] = *(map + y[i] * rowStride + x[i]);
@@ -306,7 +307,7 @@ get_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else {
       const GLint bpp = _mesa_get_format_bytes(rb->Format);
-      const GLint rowStride = rb->RowStrideBytes;
+      const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             const GLubyte *src = map + y[i] * rowStride + x[i] * bpp;
