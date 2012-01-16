@@ -119,8 +119,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->FreeTextureImageBuffer = _swrast_free_texture_image_buffer;
    driver->MapTextureImage = _swrast_map_teximage;
    driver->UnmapTextureImage = _swrast_unmap_teximage;
-   driver->MapTexture = NULL;
-   driver->UnmapTexture = NULL;
    driver->DrawTex = _mesa_meta_DrawTex;
 
    /* Vertex/fragment programs */

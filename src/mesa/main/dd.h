@@ -476,11 +476,6 @@ struct dd_function_table {
 			     struct gl_texture_image *texImage,
 			     GLuint slice);
 
-   /** Map texture image data into user space */
-   void (*MapTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
-   /** Unmap texture images from user space */
-   void (*UnmapTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
-
    /** For GL_ARB_texture_storage.  Allocate memory for whole mipmap stack.
     * All the gl_texture_images in the texture object will have their
     * dimensions, format, etc. initialized already.
