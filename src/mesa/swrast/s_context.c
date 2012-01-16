@@ -872,10 +872,11 @@ void
 _swrast_render_finish( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   if (swrast->Driver.SpanRenderFinish)
-      swrast->Driver.SpanRenderFinish( ctx );
 
    _swrast_flush(ctx);
+
+   if (swrast->Driver.SpanRenderFinish)
+      swrast->Driver.SpanRenderFinish( ctx );
 }
 
 
