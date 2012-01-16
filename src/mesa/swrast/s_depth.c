@@ -217,7 +217,7 @@ get_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_Z32) {
-      const GLint rowStride = rb->RowStride * 4;
+      const GLint rowStride = rb->RowStrideBytes;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             zbuffer[i] = *((GLuint *) (map + y[i] * rowStride + x[i] * 4));
@@ -226,7 +226,7 @@ get_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else {
       const GLint bpp = _mesa_get_format_bytes(rb->Format);
-      const GLint rowStride = rb->RowStride * bpp;
+      const GLint rowStride = rb->RowStrideBytes;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             const GLubyte *src = map + y[i] * rowStride+ x[i] * bpp;
@@ -251,7 +251,7 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_Z32) {
-      const GLuint rowStride = rb->RowStride * 4;
+      const GLuint rowStride = rb->RowStrideBytes;
       for (i = 0; i < count; i++) {
          if (mask[i] && x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             GLuint *dst = (GLuint *) (map + y[i] * rowStride + x[i] * 4);
@@ -262,7 +262,7 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    else {
       gl_pack_uint_z_func packZ = _mesa_get_pack_uint_z_func(rb->Format);
       const GLint bpp = _mesa_get_format_bytes(rb->Format);
-      const GLint rowStride = rb->RowStride * bpp;
+      const GLint rowStride = rb->RowStrideBytes;
       for (i = 0; i < count; i++) {
          if (mask[i] && x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             void *dst = map + y[i] * rowStride + x[i] * bpp;
