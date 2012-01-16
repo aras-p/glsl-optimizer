@@ -247,7 +247,7 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
                swrast_texture_image(texImage);
 
             /* XXX we'll eventually call _swrast_map_teximage() here */
-            swImage->Data = swImage->Buffer;
+            swImage->Map = swImage->Buffer;
          }
       }
    }
@@ -268,7 +268,7 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
                = swrast_texture_image(texImage);
 
             /* XXX we'll eventually call _swrast_unmap_teximage() here */
-            swImage->Data = NULL;
+            swImage->Map = NULL;
          }
       }
    }
@@ -337,11 +337,11 @@ map_unmap_renderbuffers(struct gl_context *ctx,
 
             if (map) {
                /* XXX we'll eventually call _swrast_map_teximage() here */
-               swImage->Data = swImage->Buffer;
+               swImage->Map = swImage->Buffer;
             }
             else {
                /* XXX we'll eventually call _swrast_unmap_teximage() here */
-               swImage->Data = NULL;
+               swImage->Map = NULL;
             }
          }
       }

@@ -43,7 +43,7 @@
 #if DIM == 1
 
 #define TEXEL_ADDR( type, image, i, j, k, size ) \
-	((void) (j), (void) (k), ((type *)(image)->Data + (i) * (size)))
+	((void) (j), (void) (k), ((type *)(image)->Map + (i) * (size)))
 
 #define FETCH(x) fetch_texel_1d_##x
 
@@ -51,14 +51,14 @@
 
 #define TEXEL_ADDR( type, image, i, j, k, size )			\
 	((void) (k),							\
-	 ((type *)(image)->Data + ((image)->RowStride * (j) + (i)) * (size)))
+	 ((type *)(image)->Map + ((image)->RowStride * (j) + (i)) * (size)))
 
 #define FETCH(x) fetch_texel_2d_##x
 
 #elif DIM == 3
 
 #define TEXEL_ADDR( type, image, i, j, k, size )			\
-	((type *)(image)->Data + ((image)->ImageOffsets[k]		\
+	((type *)(image)->Map + ((image)->ImageOffsets[k]		\
              + (image)->RowStride * (j) + (i)) * (size))
 
 #define FETCH(x) fetch_texel_3d_##x

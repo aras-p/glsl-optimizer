@@ -170,7 +170,7 @@ static void teximage_set_map_data(radeon_texture_image *image)
 
 	lvl = &image->mt->levels[image->base.Base.Level];
 
-	image->base.Data = image->mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
+	image->base.Map = image->mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
 	image->base.RowStride = lvl->rowstride / _mesa_get_format_bytes(image->base.Base.TexFormat);
 }
 
@@ -185,7 +185,7 @@ void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
 			__func__, image,
 			write_enable ? "true": "false");
 	if (image->mt) {
-		assert(!image->base.Data);
+		assert(!image->base.Map);
 
 		radeon_bo_map(image->mt->bo, write_enable);
 		teximage_set_map_data(image);
@@ -199,9 +199,9 @@ void radeon_teximage_unmap(radeon_texture_image *image)
 			"%s(img %p)\n",
 			__func__, image);
 	if (image->mt) {
-		assert(image->base.Data);
+		assert(image->base.Map);
 
-		image->base.Data = 0;
+		image->base.Map = 0;
 		radeon_bo_unmap(image->mt->bo);
 	}
 }
@@ -788,7 +788,7 @@ radeon_swrast_map_image(radeonContextPtr rmesa,
 
 	radeon_bo_map(mt->bo, 1);
 	
-	image->base.Data = mt->bo->ptr + lvl->faces[face].offset;
+	image->base.Map = mt->bo->ptr + lvl->faces[face].offset;
 	if (mt->target == GL_TEXTURE_3D) {
 		int i;
 
@@ -803,7 +803,7 @@ radeon_swrast_unmap_image(radeonContextPtr rmesa,
 			  radeon_texture_image *image)
 {
 	if (image && image->mt) {
-		image->base.Data = NULL;
+		image->base.Map = NULL;
 		radeon_bo_unmap(image->mt->bo);
 	}
 }

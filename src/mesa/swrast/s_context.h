@@ -142,7 +142,7 @@ struct swrast_texture_image
    GLint RowStride;		/**< Padded width in units of texels */
    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */
-   GLubyte *Data;		/**< Image data, accessed via FetchTexel() */
+   GLubyte *Map;		/**< Pointer to mapped image memory */
 
    /** Malloc'd texture memory */
    GLubyte *Buffer;

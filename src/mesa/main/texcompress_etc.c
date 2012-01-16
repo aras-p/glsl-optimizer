@@ -58,7 +58,7 @@ _mesa_fetch_texel_2d_f_etc1_rgb8(const struct swrast_texture_image *texImage,
    GLubyte dst[3];
    const GLubyte *src;
 
-   src = (const GLubyte *) texImage->Data +
+   src = (const GLubyte *) texImage->Map +
       (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
 
    etc1_parse_block(&block, src);

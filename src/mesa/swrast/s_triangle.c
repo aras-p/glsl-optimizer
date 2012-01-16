@@ -132,7 +132,7 @@ _swrast_culltriangle( struct gl_context *ctx,
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
    const GLint twidth_log2 = texImg->WidthLog2;				\
-   const GLubyte *texture = (const GLubyte *) swImg->Data;		\
+   const GLubyte *texture = (const GLubyte *) swImg->Map;		\
    const GLint smask = texImg->Width - 1;				\
    const GLint tmask = texImg->Height - 1;				\
    ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
@@ -189,7 +189,7 @@ _swrast_culltriangle( struct gl_context *ctx,
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
    const GLint twidth_log2 = texImg->WidthLog2;				\
-   const GLubyte *texture = (const GLubyte *) swImg->Data;		\
+   const GLubyte *texture = (const GLubyte *) swImg->Map;		\
    const GLint smask = texImg->Width - 1;				\
    const GLint tmask = texImg->Height - 1;				\
    ASSERT(texImg->TexFormat == MESA_FORMAT_RGB888);			\
@@ -543,7 +543,7 @@ affine_span(struct gl_context *ctx, SWspan *span,
       swrast_texture_image_const(texImg);				\
    const GLfloat twidth = (GLfloat) texImg->Width;			\
    const GLfloat theight = (GLfloat) texImg->Height;			\
-   info.texture = (const GLchan *) swImg->Data;				\
+   info.texture = (const GLchan *) swImg->Map;				\
    info.twidth_log2 = texImg->WidthLog2;				\
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
@@ -810,7 +810,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
       obj->Image[0][obj->BaseLevel];			 		\
    const struct swrast_texture_image *swImg =				\
       swrast_texture_image_const(texImg);				\
-   info.texture = (const GLchan *) swImg->Data;				\
+   info.texture = (const GLchan *) swImg->Map;				\
    info.twidth_log2 = texImg->WidthLog2;				\
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\

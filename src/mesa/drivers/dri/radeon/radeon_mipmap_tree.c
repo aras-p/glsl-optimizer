@@ -440,7 +440,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		radeon_bo_unmap(image->mt->bo);
 
 		radeon_miptree_unreference(&image->mt);
-	} else if (image->base.Data) {
+	} else if (image->base.Map) {
 		/* This condition should be removed, it's here to workaround
 		 * a segfault when mapping textures during software fallbacks.
 		 */
@@ -456,11 +456,11 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 			rows = (rows + blockHeight - 1) / blockHeight;
 		}
 
-		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
+		copy_rows(dest, dstlvl->rowstride, image->base.Map, srcrowstride,
 				  rows, srcrowstride);
 
-		_mesa_align_free(image->base.Data);
-		image->base.Data = 0;
+		_mesa_align_free(image->base.Map);
+		image->base.Map = 0;
 	}
 
 	radeon_bo_unmap(mt->bo);

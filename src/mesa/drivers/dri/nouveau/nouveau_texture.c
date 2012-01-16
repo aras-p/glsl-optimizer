@@ -103,7 +103,7 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 			nti->transfer.x = x;
 			nti->transfer.y = y;
 
-			nti->base.Data = nouveau_get_scratch(ctx, st->pitch * h,
+			nti->base.Map = nouveau_get_scratch(ctx, st->pitch * h,
 						       &st->bo, &st->offset);
 
 		} else {
@@ -119,7 +119,7 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 				assert(!ret);
 			}
 
-			nti->base.Data = s->bo->map + y * s->pitch + x * s->cpp;
+			nti->base.Map = s->bo->map + y * s->pitch + x * s->cpp;
 		}
 	}
 }
@@ -141,7 +141,7 @@ nouveau_teximage_unmap(struct gl_context *ctx, struct gl_texture_image *ti)
 		nouveau_bo_unmap(s->bo);
 	}
 
-	nti->base.Data = NULL;
+	nti->base.Map = NULL;
 }
 
 
@@ -197,7 +197,7 @@ nouveau_map_texture_image(struct gl_context *ctx,
 			*stride = s->pitch;
 		}
 	} else {
-		*map = nti->base.Data + y * s->pitch + x * s->cpp;
+		*map = nti->base.Map + y * s->pitch + x * s->cpp;
 		*stride = s->pitch;
 	}
 }
@@ -220,7 +220,7 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 		nouveau_bo_unmap(s->bo);
 	}
 
-	nti->base.Data = NULL;
+	nti->base.Map = NULL;
 }
 
 static gl_format
@@ -481,7 +481,7 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat,
 				     ti->TexFormat,
 				     s->pitch,
-                                     &nti->base.Data,
+                                     &nti->base.Map,
 				     width, height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
@@ -565,7 +565,7 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 
 		ret = _mesa_texstore(ctx, 3, ti->_BaseFormat, ti->TexFormat,
                                      s->pitch,
-				     &nti->base.Data,
+				     &nti->base.Map,
                                      width, height, depth,
 				     format, type, pixels, packing);
 		assert(ret);

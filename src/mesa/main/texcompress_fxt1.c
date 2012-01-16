@@ -163,7 +163,7 @@ _mesa_fetch_texel_2d_f_rgba_fxt1( const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, rgba);
+   fxt1_decode_1(texImage->Map, texImage->RowStride, i, j, rgba);
    texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
    texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
@@ -178,7 +178,7 @@ _mesa_fetch_texel_2d_f_rgb_fxt1( const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, rgba);
+   fxt1_decode_1(texImage->Map, texImage->RowStride, i, j, rgba);
    texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
    texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
