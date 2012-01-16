@@ -1052,20 +1052,25 @@ put_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
            GLuint count, const GLint x[], const GLint y[],
            const void *values, const GLubyte *mask)
 {
+   gl_pack_ubyte_rgba_func pack_ubyte;
+   gl_pack_float_rgba_func pack_float;
    GLuint i;
+
+   if (datatype == GL_UNSIGNED_BYTE)
+      pack_ubyte = _mesa_get_pack_ubyte_rgba_function(rb->Format);
+   else
+      pack_float = _mesa_get_pack_float_rgba_function(rb->Format);
 
    for (i = 0; i < count; i++) {
       if (mask[i]) {
          GLubyte *dst = _swrast_pixel_address(rb, x[i], y[i]);
 
          if (datatype == GL_UNSIGNED_BYTE) {
-            _mesa_pack_ubyte_rgba_row(rb->Format, 1,
-                                      (const GLubyte (*)[4]) values + i, dst);
+            pack_ubyte((const GLubyte *) values + 4 * i, dst);
          }
          else {
             assert(datatype == GL_FLOAT);
-            _mesa_pack_float_rgba_row(rb->Format, count,
-                                      (const GLfloat (*)[4]) values + i, dst);
+            pack_float((const GLfloat *) values + 4 * i, dst);
          }
       }
    }
