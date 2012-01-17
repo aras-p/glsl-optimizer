@@ -223,10 +223,23 @@ brw_depthbuffer_format(struct brw_context *brw)
    case MESA_FORMAT_Z32_FLOAT:
       return BRW_DEPTHFORMAT_D32_FLOAT;
    case MESA_FORMAT_X8_Z24:
-      if (intel->gen >= 5)
+      if (intel->gen >= 6) {
 	 return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
-      else /* Gen4 doesn't support X8; use S8 instead. */
+      } else {
+	 /* Use D24_UNORM_S8, not D24_UNORM_X8.
+	  *
+	  * D24_UNORM_X8 was not introduced until Gen5. (See the Ironlake PRM,
+	  * Volume 2, Part 1, Section 8.4.6 "Depth/Stencil Buffer State", Bits
+	  * 3DSTATE_DEPTH_BUFFER.Surface_Format).
+	  *
+	  * However, on Gen5, D24_UNORM_X8 may be used only if separate
+	  * stencil is enabled, and we never enable it. From the Ironlake PRM,
+	  * same section as above, Bit 3DSTATE_DEPTH_BUFFER.Separate_Stencil_Buffer_Enable:
+	  *     If this field is disabled, the Surface Format of the depth
+	  *     buffer cannot be D24_UNORM_X8_UINT.
+	  */
 	 return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
+      }
    case MESA_FORMAT_S8_Z24:
       return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
