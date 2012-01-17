@@ -189,6 +189,8 @@ st_MapTextureImage(struct gl_context *ctx,
       pipeMode |= PIPE_TRANSFER_READ;
    if (mode & GL_MAP_WRITE_BIT)
       pipeMode |= PIPE_TRANSFER_WRITE;
+   if (mode & GL_MAP_INVALIDATE_RANGE_BIT)
+      pipeMode |= PIPE_TRANSFER_DISCARD_RANGE;
 
    map = st_texture_image_map(st, stImage, slice, pipeMode, x, y, w, h);
    if (map) {

@@ -688,6 +688,8 @@ st_MapRenderbuffer(struct gl_context *ctx,
       usage |= PIPE_TRANSFER_READ;
    if (mode & GL_MAP_WRITE_BIT)
       usage |= PIPE_TRANSFER_WRITE;
+   if (mode & GL_MAP_INVALIDATE_RANGE_BIT)
+      usage |= PIPE_TRANSFER_DISCARD_RANGE;
 
    /* Note: y=0=bottom of buffer while y2=0=top of buffer.
     * 'invert' will be true for window-system buffers and false for
