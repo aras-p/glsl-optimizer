@@ -129,7 +129,7 @@ i915_miptree_layout_cube(struct intel_mipmap_tree * mt)
       intel_miptree_set_level_info(mt, level,
 				   0, 0,
 				   lvlWidth, lvlHeight,
-				   1);
+				   6);
       lvlWidth /= 2;
       lvlHeight /= 2;
    }
@@ -337,7 +337,7 @@ i945_miptree_layout_cube(struct intel_mipmap_tree * mt)
    for (level = mt->first_level; level <= mt->last_level; level++) {
       intel_miptree_set_level_info(mt, level,
 				   0, 0,
-				   lvlWidth, lvlHeight, 1);
+				   lvlWidth, lvlHeight, 6);
       lvlWidth /= 2;
       lvlHeight /= 2;
    }

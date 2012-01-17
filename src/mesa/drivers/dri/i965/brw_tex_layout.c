@@ -77,6 +77,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	 brw_miptree_layout_texture_array(intel, mt);
 	 break;
       }
+      assert(mt->depth0 == 6);
       /* FALLTHROUGH */
 
    case GL_TEXTURE_3D: {
@@ -101,7 +102,6 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
       pack_x_nr = 1;
 
       for (level = mt->first_level ; level <= mt->last_level ; level++) {
-	 GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
 	 GLint x = 0;
 	 GLint y = 0;
 	 GLint q, j;
@@ -110,8 +110,8 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 				      0, mt->total_height,
 				      width, height, depth);
 
-	 for (q = 0; q < nr_images;) {
-	    for (j = 0; j < pack_x_nr && q < nr_images; j++, q++) {
+	 for (q = 0; q < depth; /* empty */) {
+	    for (j = 0; j < pack_x_nr && q < depth; j++, q++) {
 	       intel_miptree_set_image_offset(mt, level, q, x, y);
 	       x += pack_x_pitch;
 	    }
