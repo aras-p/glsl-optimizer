@@ -60,6 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vertprog.h"
 #include "radeon_queryobj.h"
 #include "r200_blit.h"
+#include "radeon_fog.h"
 
 #include "radeon_span.h"
 
@@ -230,7 +231,7 @@ GLboolean r200CreateContext( gl_api api,
    rmesa->radeon.radeonScreen = screen;
    r200_init_vtbl(&rmesa->radeon);
    /* init exp fog table data */
-   r200InitStaticFogData();
+   radeonInitStaticFogData();
 
    /* Parse configuration files.
     * Do this here so that initialMaxAnisotropy is set before we create

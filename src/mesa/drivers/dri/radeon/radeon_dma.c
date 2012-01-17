@@ -32,6 +32,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <errno.h>
 #include "radeon_common.h"
+#include "radeon_fog.h"
 #include "main/simple_list.h"
 
 #if defined(USE_X86_ASM)
@@ -161,6 +162,41 @@ void rcommon_emit_vector(struct gl_context * ctx, struct radeon_aos *aos,
 	default:
 		assert(0);
 		break;
+	}
+	radeon_bo_unmap(aos->bo);
+}
+
+void rcommon_emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
+			 GLvoid *data, int stride, int count)
+{
+	int i;
+	float *out;
+	int size = 1;
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+
+	if (RADEON_DEBUG & RADEON_VERTS)
+		fprintf(stderr, "%s count %d stride %d\n",
+			__FUNCTION__, count, stride);
+
+	if (stride == 0) {
+		radeonAllocDmaRegion( rmesa, &aos->bo, &aos->offset, size * 4, 32 );
+		count = 1;
+		aos->stride = 0;
+	} else {
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * count * 4, 32);
+		aos->stride = size;
+	}
+
+	aos->components = size;
+	aos->count = count;
+
+	/* Emit the data */
+	radeon_bo_map(aos->bo, 1);
+	out = (float*)((char*)aos->bo->ptr + aos->offset);
+	for (i = 0; i < count; i++) {
+		out[0] = radeonComputeFogBlendFactor( ctx, *(GLfloat *)data );
+		out++;
+		data += stride;
 	}
 	radeon_bo_unmap(aos->bo);
 }

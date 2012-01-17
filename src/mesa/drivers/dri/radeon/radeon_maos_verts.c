@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_swtcl.h"
 #include "radeon_maos.h"
-
+#include "radeon_fog.h"
 
 #define RADEON_TCL_MAX_SETUP 19
 

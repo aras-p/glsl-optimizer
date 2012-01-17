@@ -63,6 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_queryobj.h"
 #include "radeon_blit.h"
+#include "radeon_fog.h"
 
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */

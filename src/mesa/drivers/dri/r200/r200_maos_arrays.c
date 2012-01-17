@@ -70,36 +70,6 @@ do {						\
 } while (0)
 #endif
 
-static void r200_emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
-			     GLvoid *data, int stride, int count)
-{
-	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-	GLfloat *out;
-	int i;
-	int size = 1;
-
-	if (stride == 0) {
-		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
-		count = 1;
-		aos->stride = 0;
-	} else {
-		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * count * 4, 32);
-		aos->stride = size;
-	}
-
-	aos->components = size;
-	aos->count = count;
-
-	radeon_bo_map(aos->bo, 1);
-	out = (GLfloat*)((char*)aos->bo->ptr + aos->offset);
-	for (i = 0; i < count; i++) {
-	  out[0] = r200ComputeFogBlendFactor( ctx, *(GLfloat *)data );
-	  out++;
-	  data += stride;
-	}
-	radeon_bo_unmap(aos->bo);
-}
-
 /* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
  */
@@ -153,11 +123,11 @@ void r200EmitArrays( struct gl_context *ctx, GLubyte *vimap_rev )
 				       VB->AttribPtr[attrib]->stride,
 				       count);
 	       else
-		 r200_emit_vecfog( ctx,
-				   &(rmesa->radeon.tcl.aos[nr]),
-				   (char *)VB->AttribPtr[attrib]->data,
-				   VB->AttribPtr[attrib]->stride,
-				   count);
+		 rcommon_emit_vecfog( ctx,
+				      &(rmesa->radeon.tcl.aos[nr]),
+				      (char *)VB->AttribPtr[attrib]->data,
+				      VB->AttribPtr[attrib]->stride,
+				      count);
 	    }
 	    vfmt0 |= R200_VTX_DISCRETE_FOG;
 	    goto after_emit;
