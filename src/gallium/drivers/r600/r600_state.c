@@ -2075,7 +2075,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
-	unsigned tmp, sid;
+	unsigned tmp, sid, ufi = 0;
 
 	rstate->nregs = 0;
 
@@ -2153,6 +2153,10 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 			S_0286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
 	}
 
+	/* HW bug in original R600 */
+	if (rctx->family == CHIP_R600)
+		ufi = 1;
+
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, spi_ps_in_control_1, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL, 0);
@@ -2162,7 +2166,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	r600_pipe_state_add_reg(rstate,
 				R_028850_SQ_PGM_RESOURCES_PS,
 				S_028850_NUM_GPRS(rshader->bc.ngpr) |
-				S_028850_STACK_SIZE(rshader->bc.nstack),
+				S_028850_STACK_SIZE(rshader->bc.nstack) |
+				S_028850_UNCACHED_FIRST_INST(ufi),
 				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028854_SQ_PGM_EXPORTS_PS,
