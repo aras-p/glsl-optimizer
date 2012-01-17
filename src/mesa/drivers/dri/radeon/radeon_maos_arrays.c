@@ -66,7 +66,7 @@ static void emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
       aos->stride = 0;
    }
    else {
-      radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
+      radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * count * 4, 32);
       aos->stride = size;
    }
 
