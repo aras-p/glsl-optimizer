@@ -367,16 +367,10 @@ brwCreateContext(int api,
 
    brw_draw_init( brw );
 
-   brw->new_vs_backend = (getenv("INTEL_OLD_VS") == NULL);
    brw->precompile = driQueryOptionb(&intel->optionCache, "shader_precompile");
 
-   /* If we're using the new shader backend, we require integer uniforms
-    * stored as actual integers.
-    */
-   if (brw->new_vs_backend) {
-      ctx->Const.NativeIntegers = true;
-      ctx->Const.UniformBooleanTrue = 1;
-   }
+   ctx->Const.NativeIntegers = true;
+   ctx->Const.UniformBooleanTrue = 1;
 
    return true;
 }

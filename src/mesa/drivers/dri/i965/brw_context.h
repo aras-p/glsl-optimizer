@@ -645,7 +645,6 @@ struct brw_context
    bool has_negative_rhw_bug;
    bool has_aa_line_parameters;
    bool has_pln;
-   bool new_vs_backend;
    bool precompile;
 
    struct {

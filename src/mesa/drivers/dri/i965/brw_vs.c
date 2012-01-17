@@ -231,7 +231,7 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   if (brw->new_vs_backend && prog) {
+   if (prog) {
       if (!brw_vs_emit(prog, &c)) {
 	 ralloc_free(mem_ctx);
 	 return false;
