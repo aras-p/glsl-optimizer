@@ -84,10 +84,18 @@ gen6_resolve_implied_move(struct brw_compile *p,
 static void
 gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
 {
+   /* From the BSpec / ISA Reference / send - [DevIVB+]:
+    * "The send with EOT should use register space R112-R127 for <src>. This is
+    *  to enable loading of a new thread into the same slot while the message
+    *  with EOT for current thread is pending dispatch."
+    *
+    * Since we're pretending to have 16 MRFs anyway, we may as well use the
+    * registers required for messages with EOT.
+    */
    struct intel_context *intel = &p->brw->intel;
    if (intel->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
       reg->file = BRW_GENERAL_REGISTER_FILE;
-      reg->nr += 111;
+      reg->nr += 112;
    }
 }
 
