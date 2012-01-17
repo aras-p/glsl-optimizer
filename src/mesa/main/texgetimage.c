@@ -837,6 +837,9 @@ _mesa_GetnTexImageARB( GLenum target, GLint level, GLenum format,
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
+   if (_mesa_is_zero_size_texture(texImage))
+      return;
+
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
       _mesa_debug(ctx, "glGetTexImage(tex %u) format = %s, w=%d, h=%d,"
                   " dstFmt=0x%x, dstType=0x%x\n",
@@ -969,6 +972,9 @@ _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+   if (_mesa_is_zero_size_texture(texImage))
+      return;
 
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE)) {
       _mesa_debug(ctx,
