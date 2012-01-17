@@ -74,6 +74,8 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 
    if (mt->align_h == 4)
       surf->ss0.vertical_alignment = 1;
+   if (mt->align_w == 8)
+      surf->ss0.horizontal_alignment = 1;
 
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(mt->format,
@@ -94,7 +96,6 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    gen7_set_surface_tiling(surf, intelObj->mt->region->tiling);
 
    /* ss0 remaining fields:
-    * - horizontal_alignment
     * - vert_line_stride (exists on gen6 but we ignore it)
     * - vert_line_stride_ofs (exists on gen6 but we ignore it)
     * - surface_array_spacing
@@ -206,6 +207,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    if (irb->mt->align_h == 4)
       surf->ss0.vertical_alignment = 1;
+   if (irb->mt->align_w == 8)
+      surf->ss0.horizontal_alignment = 1;
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_SARGB8:
