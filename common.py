@@ -31,9 +31,15 @@ _machine_map = {
 	'i486': 'x86',
 	'i586': 'x86',
 	'i686': 'x86',
+	'BePC': 'x86',
+	'Intel': 'x86',
 	'ppc' : 'ppc',
+	'BeBox': 'ppc',
+	'BeMac': 'ppc',
 	'AMD64': 'x86_64',
 	'x86_64': 'x86_64',
+	'sparc': 'sparc',
+	'sun4u': 'sparc',
 }
 
 
