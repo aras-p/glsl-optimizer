@@ -120,7 +120,7 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
       return result.u;
 
    case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
-      return 16.0;
+      return 15.0;
 
    default:
       return 0;
