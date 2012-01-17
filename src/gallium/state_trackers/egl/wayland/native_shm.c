@@ -94,11 +94,10 @@ wayland_create_shm_buffer(struct wayland_display *display,
 
    switch (surface->color_format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      format = (surface->premultiplied_alpha) ?
-         WL_SHM_FORMAT_PREMULTIPLIED_ARGB32 : WL_SHM_FORMAT_ARGB32;
+      format = WL_SHM_FORMAT_ARGB8888;
       break;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-      format = WL_SHM_FORMAT_XRGB32;
+      format = WL_SHM_FORMAT_XRGB8888;
       break;
    default:
       return NULL;
@@ -116,7 +115,7 @@ shm_handle_format(void *data, struct wl_shm *shm, uint32_t format)
    struct wayland_shm_display *shmdpy = data;
 
    switch (format) {
-   case WL_SHM_FORMAT_ARGB32:
+   case WL_SHM_FORMAT_ARGB8888:
       shmdpy->base.formats |= HAS_ARGB8888;
       break;
    case WL_SHM_FORMAT_XRGB8888:
