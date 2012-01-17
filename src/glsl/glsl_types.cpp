@@ -147,12 +147,12 @@ glsl_type::sampler_index() const
       return TEXTURE_RECT_INDEX;
    case GLSL_SAMPLER_DIM_BUF:
       assert(!"FINISHME: Implement ARB_texture_buffer_object");
-      break;
+      return TEXTURE_BUFFER_INDEX;
    case GLSL_SAMPLER_DIM_EXTERNAL:
       return TEXTURE_EXTERNAL_INDEX;
    default:
       assert(!"Should not get here.");
-      break;
+      return TEXTURE_BUFFER_INDEX;
    }
 }
 
