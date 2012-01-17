@@ -7898,7 +7898,8 @@
 <!-- 40. GL_ARB_half_float_pixel -->
 <!-- 41. GL_ARB_texture_float -->
 <!-- 42. GL_ARB_pixel_buffer_object -->
-<!-- 43. GL_ARB_depth_buffer_float -->
+
+<xi:include href="ARB_depth_buffer_float.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_draw_instanced.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
