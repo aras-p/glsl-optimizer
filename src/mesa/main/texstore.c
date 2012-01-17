@@ -4404,7 +4404,7 @@ get_read_write_mode(GLenum userFormat, gl_format texFormat)
        && _mesa_get_format_base_format(texFormat) == GL_DEPTH_STENCIL)
       return GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
    else
-      return GL_MAP_WRITE_BIT;
+      return GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT;
 }
 
 
@@ -4805,7 +4805,7 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx,
    /* Map dest texture buffer */
    ctx->Driver.MapTextureImage(ctx, texImage, 0,
                                xoffset, yoffset, width, height,
-                               GL_MAP_WRITE_BIT,
+                               GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT,
                                &dstMap, &dstRowStride);
 
    if (dstMap) {
