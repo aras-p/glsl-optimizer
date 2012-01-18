@@ -125,8 +125,8 @@ svga_create_sampler_state(struct pipe_context *pipe,
     *    - min/max LOD clamping
     */
    cso->min_lod = 0;
-   cso->view_min_lod = MAX2(sampler->min_lod, 0);
-   cso->view_max_lod = MAX2(sampler->max_lod, 0);
+   cso->view_min_lod = MAX2((int) (sampler->min_lod + 0.5), 0);
+   cso->view_max_lod = MAX2((int) (sampler->max_lod + 0.5), 0);
 
    /* Use min_mipmap */
    if (svga->debug.use_min_mipmap) {
