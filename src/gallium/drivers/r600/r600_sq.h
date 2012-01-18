@@ -471,4 +471,11 @@
 #define SQ_ALU_SCL_122                           0x00000001
 #define SQ_ALU_SCL_212                           0x00000002
 #define SQ_ALU_SCL_221                           0x00000003
+
+#define   INDEX_MODE_AR_X 0
+#define   INDEX_MODE_AR_Y 1
+#define   INDEX_MODE_AR_Z 2
+#define   INDEX_MODE_AR_W 3
+#define   INDEX_MODE_LOOP 4
+
 #endif

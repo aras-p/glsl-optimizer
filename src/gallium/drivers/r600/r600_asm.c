@@ -94,6 +94,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
@@ -249,8 +250,18 @@ static struct r600_bytecode_tex *r600_bytecode_tex(void)
 	return tex;
 }
 
-void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class)
+void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class, enum radeon_family family)
 {
+	if ((chip_class == R600) && (family != CHIP_RV670))
+		bc->ar_handling = AR_HANDLE_RV6XX;
+	else
+		bc->ar_handling = AR_HANDLE_NORMAL;
+
+	if ((chip_class == R600) && (family != CHIP_RV670 && family != CHIP_RS780 &&
+					   family != CHIP_RS880))
+		bc->r6xx_nop_after_rel_dst = 1;
+	else
+		bc->r6xx_nop_after_rel_dst = 0;
 	LIST_INITHEAD(&bc->cf);
 	bc->chip_class = chip_class;
 }
@@ -441,7 +452,8 @@ static int is_alu_mova_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *
 		return !alu->is_op3 && (
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA ||
 			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT);
 	case EVERGREEN:
 	case CAYMAN:
 	default:
@@ -457,7 +469,8 @@ static int is_alu_vec_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_a
 	case R600:
 	case R700:
 		return is_alu_reduction_inst(bc, alu) ||
-			is_alu_mova_inst(bc, alu);
+			(is_alu_mova_inst(bc, alu) && 
+			 (alu->inst != V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT));
 	case EVERGREEN:
 	case CAYMAN:
 	default:
@@ -478,6 +491,7 @@ static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode
 	case R700:
 		if (!alu->is_op3)
 			return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
 			        alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT ||
 				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
@@ -546,6 +560,19 @@ static int is_alu_any_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_a
 	return !is_alu_vec_unit_inst(bc, alu) &&
 		!is_alu_trans_unit_inst(bc, alu);
 }
+
+static int is_nop_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
+{
+	switch (bc->chip_class) {
+	case R600:
+	case R700:
+		return (!alu->is_op3 && alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP);
+	case EVERGREEN:
+	case CAYMAN:
+	default:
+		return (!alu->is_op3 && alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP);
+	}
+}		
 
 static int assign_alu_units(struct r600_bytecode *bc, struct r600_bytecode_alu *alu_first,
 			    struct r600_bytecode_alu *assignment[5])
@@ -1048,6 +1075,10 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 		alu = slots[i];
 		num_once_inst += is_alu_once_inst(bc, alu);
 
+		/* don't reschedule NOPs */
+		if (is_nop_inst(bc, alu))
+			return 0;
+
 		/* Let's check dst gpr. */
 		if (alu->dst.rel) {
 			if (have_mova)
@@ -1236,11 +1267,59 @@ static int r600_bytecode_alloc_kcache_lines(struct r600_bytecode *bc, struct r60
 	return 0;
 }
 
+static int insert_nop_r6xx(struct r600_bytecode *bc)
+{
+	struct r600_bytecode_alu alu;
+	int r, i;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+		alu.src[0].chan = i;
+		alu.dst.chan = i;
+		alu.last = (i == 3);
+		r = r600_bytecode_add_alu(bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
+/* load AR register from gpr (bc->ar_reg) with MOVA_INT */
+static int load_ar_r6xx(struct r600_bytecode *bc)
+{
+	struct r600_bytecode_alu alu;
+	int r;
+
+	if (bc->ar_loaded)
+		return 0;
+
+	/* hack to avoid making MOVA the last instruction in the clause */
+	if ((bc->cf_last->ndw>>1) >= 110)
+		bc->force_add_cf = 1;
+
+	memset(&alu, 0, sizeof(alu));
+	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT;
+	alu.src[0].sel = bc->ar_reg;
+	alu.last = 1;
+	alu.index_mode = INDEX_MODE_LOOP;
+	r = r600_bytecode_add_alu(bc, &alu);
+	if (r)
+		return r;
+
+	/* no requirement to set uses waterfall on MOVA_GPR_INT */
+	bc->ar_loaded = 1;
+	return 0;
+}
+
 /* load AR register from gpr (bc->ar_reg) with MOVA_INT */
 static int load_ar(struct r600_bytecode *bc)
 {
 	struct r600_bytecode_alu alu;
 	int r;
+
+	if (bc->ar_handling)
+		return load_ar_r6xx(bc);
 
 	if (bc->ar_loaded)
 		return 0;
@@ -1376,6 +1455,10 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytec
 		bc->cf_last->prev_bs_head = bc->cf_last->curr_bs_head;
 		bc->cf_last->curr_bs_head = NULL;
 	}
+
+	if (nalu->dst.rel && bc->r6xx_nop_after_rel_dst)
+		insert_nop_r6xx(bc);
+
 	return 0;
 }
 
@@ -1599,6 +1682,7 @@ static int r600_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecod
 				S_SQ_ALU_WORD0_SRC1_REL(alu->src[1].rel) |
 				S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
 				S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
+				S_SQ_ALU_WORD0_INDEX_MODE(alu->index_mode) |
 				S_SQ_ALU_WORD0_LAST(alu->last);
 
 	if (alu->is_op3) {
@@ -2286,7 +2370,8 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "SRC1(SEL:%d ", alu->src[1].sel);
 			fprintf(stderr, "REL:%d ", alu->src[1].rel);
 			fprintf(stderr, "CHAN:%d ", alu->src[1].chan);
-			fprintf(stderr, "NEG:%d) ", alu->src[1].neg);
+			fprintf(stderr, "NEG:%d ", alu->src[1].neg);
+			fprintf(stderr, "IM:%d) ", alu->index_mode);
 			fprintf(stderr, "LAST:%d)\n", alu->last);
 			id++;
 			fprintf(stderr, "%04d %08X %c ", id, bc->bytecode[id], alu->last ? '*' : ' ');
@@ -2565,7 +2650,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	}
 
 	memset(&bc, 0, sizeof(bc));
-	r600_bytecode_init(&bc, rctx->chip_class);
+	r600_bytecode_init(&bc, rctx->chip_class, rctx->family);
 
 	for (i = 0; i < ve->count; i++) {
 		if (elements[i].instance_divisor > 1) {
