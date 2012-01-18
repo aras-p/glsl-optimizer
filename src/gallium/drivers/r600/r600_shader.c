@@ -1014,7 +1014,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
 			output.burst_count = 1;
 			output.barrier = 1;
-			output.array_size = 0;
+			/* array_size is an upper limit for the burst_count
+			 * with MEM_STREAM instructions */
+			output.array_size = 0xFFF;
 			output.comp_mask = (1 << so.output[i].num_components) - 1;
 			if (ctx.bc->chip_class >= EVERGREEN) {
 				switch (so.output[i].output_buffer) {
