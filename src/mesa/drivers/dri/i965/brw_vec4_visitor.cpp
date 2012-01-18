@@ -1285,16 +1285,26 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_min:
-      emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_L));
+      if (intel->gen >= 6) {
+	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_L;
+      } else {
+	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_L));
 
-      inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-      inst->predicate = BRW_PREDICATE_NORMAL;
+	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
+	 inst->predicate = BRW_PREDICATE_NORMAL;
+      }
       break;
    case ir_binop_max:
-      emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_G));
+      if (intel->gen >= 6) {
+	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
+	 inst->conditional_mod = BRW_CONDITIONAL_G;
+      } else {
+	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_G));
 
-      inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-      inst->predicate = BRW_PREDICATE_NORMAL;
+	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
+	 inst->predicate = BRW_PREDICATE_NORMAL;
+      }
       break;
 
    case ir_binop_pow:
