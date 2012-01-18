@@ -25,6 +25,7 @@
 
 extern "C" {
 #include "brw_eu.h"
+#include "main/macros.h"
 };
 
 using namespace brw;
@@ -94,6 +95,13 @@ vec4_visitor::setup_attributes(int payload_reg)
       nr_attributes = 1;
 
    prog_data->urb_read_length = (nr_attributes + 1) / 2;
+
+   unsigned vue_entries = MAX2(nr_attributes, c->vue_map.num_slots);
+
+   if (intel->gen == 6)
+      c->prog_data.urb_entry_size = ALIGN(vue_entries, 8) / 8;
+   else
+      c->prog_data.urb_entry_size = ALIGN(vue_entries, 4) / 4;
 
    return payload_reg + nr_attributes;
 }

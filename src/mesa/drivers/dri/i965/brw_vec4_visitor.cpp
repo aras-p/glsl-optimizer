@@ -2286,11 +2286,6 @@ vec4_visitor::emit_urb_writes()
        */
       inst->offset = (max_usable_mrf - base_mrf) / 2;
    }
-
-   if (intel->gen == 6)
-      c->prog_data.urb_entry_size = ALIGN(c->vue_map.num_slots, 8) / 8;
-   else
-      c->prog_data.urb_entry_size = ALIGN(c->vue_map.num_slots, 4) / 4;
 }
 
 src_reg
