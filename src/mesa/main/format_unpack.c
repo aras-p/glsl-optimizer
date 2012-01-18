@@ -2916,6 +2916,32 @@ unpack_uint_z_Z32(const void *src, GLuint *dst, GLuint n)
    memcpy(dst, src, n * sizeof(GLuint));
 }
 
+static void
+unpack_uint_z_Z32_FLOAT(const void *src, GLuint *dst, GLuint n)
+{
+   const float *s = (const float *)src;
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i] = FLOAT_TO_UINT(IROUND(CLAMP((s[i]), 0.0F, 1.0F)));
+   }
+}
+
+static void
+unpack_uint_z_Z32_FLOAT_X24S8(const void *src, GLuint *dst, GLuint n)
+{
+   struct z32f_x24s8 {
+      float z;
+      uint32_t x24s8;
+   };
+
+   const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
+   GLuint i;
+
+   for (i = 0; i < n; i++) {
+      dst[i] = FLOAT_TO_UINT(IROUND(CLAMP((s[i].z), 0.0F, 1.0F)));
+   }
+}
+
 
 /**
  * Unpack Z values.
@@ -2942,6 +2968,12 @@ _mesa_unpack_uint_z_row(gl_format format, GLuint n,
       break;
    case MESA_FORMAT_Z32:
       unpack = unpack_uint_z_Z32;
+      break;
+   case MESA_FORMAT_Z32_FLOAT:
+      unpack = unpack_uint_z_Z32_FLOAT;
+      break;
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      unpack = unpack_uint_z_Z32_FLOAT_X24S8;
       break;
    default:
       _mesa_problem(NULL, "bad format %s in _mesa_unpack_uint_z_row",
