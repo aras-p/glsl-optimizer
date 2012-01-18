@@ -2076,6 +2076,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
 	unsigned tmp, sid, ufi = 0;
+	int need_linear = 0;
 
 	rstate->nregs = 0;
 
@@ -2089,11 +2090,12 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 
 		tmp = S_028644_SEMANTIC(sid);
 
-		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-				rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-				rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(1);
 		}
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR ||
+		    rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT)
+			tmp |= S_028644_FLAT_SHADE(1);
 
 		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
 				rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
@@ -2103,8 +2105,10 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 		if (rshader->input[i].centroid)
 			tmp |= S_028644_SEL_CENTROID(1);
 
-		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR) {
+			need_linear = 1;
 			tmp |= S_028644_SEL_LINEAR(1);
+		}
 
 		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4,
 				tmp, 0xFFFFFFFF, NULL, 0);
@@ -2137,7 +2141,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	}
 
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
-				S_0286CC_PERSP_GRADIENT_ENA(1);
+				S_0286CC_PERSP_GRADIENT_ENA(1)|
+				S_0286CC_LINEAR_GRADIENT_ENA(need_linear);
 	spi_input_z = 0;
 	if (pos_index != -1) {
 		spi_ps_in_control_0 |= (S_0286CC_POSITION_ENA(1) |
