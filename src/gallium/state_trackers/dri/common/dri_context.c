@@ -166,7 +166,7 @@ dri_destroy_context(__DRIcontext * cPriv)
    FREE(ctx->optionCache.values);
 
    /* No particular reason to wait for command completion before
-    * destroying a context, but it is probably worthwhile flushing it
+    * destroying a context, but we flush the context here
     * to avoid having to add code elsewhere to cope with flushing a
     * partially destroyed context.
     */
@@ -188,7 +188,11 @@ dri_unbind_context(__DRIcontext * cPriv)
 
    if (--ctx->bind_count == 0) {
       if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
-         ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
+         /* For conformance, unbind is supposed to flush the context.
+          * However, if we do it here we might end up flushing a partially
+          * destroyed context. Instead, we flush in dri_make_current and
+          * in dri_destroy_context which should cover all the cases.
+          */
          stapi->make_current(stapi, NULL, NULL, NULL);
       }
    }
@@ -207,6 +211,7 @@ dri_make_current(__DRIcontext * cPriv,
    struct dri_drawable *read = dri_drawable(driReadPriv);
    struct st_context_iface *old_st = ctx->stapi->get_current(ctx->stapi);
 
+   /* Flush the old context here so we don't have to flush on unbind() */
    if (old_st && old_st != ctx->st)
       old_st->flush(old_st, ST_FLUSH_FRONT, NULL);
 
