@@ -1231,8 +1231,10 @@ if test "x$enable_dri" = xyes; then
             EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
             ])
         AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
+	save_LIBS="$LIBS"
         AC_CHECK_LIB([expat],[XML_ParserCreate],[],
             [AC_MSG_ERROR([Expat required for DRI.])])
+	LIBS="$save_LIBS"
     fi
 
     # libdrm is required for all except swrast
