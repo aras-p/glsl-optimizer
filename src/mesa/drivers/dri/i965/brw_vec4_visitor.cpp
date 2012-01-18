@@ -313,7 +313,9 @@ vec4_visitor::emit_math(opcode opcode, dst_reg dst, src_reg src)
       return;
    }
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 7) {
+      emit(opcode, dst, src);
+   } else if (intel->gen == 6) {
       return emit_math1_gen6(opcode, dst, src);
    } else {
       return emit_math1_gen4(opcode, dst, src);
@@ -380,7 +382,9 @@ vec4_visitor::emit_math(enum opcode opcode,
       return;
    }
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 7) {
+      emit(opcode, dst, src0, src1);
+   } else if (intel->gen == 6) {
       return emit_math2_gen6(opcode, dst, src0, src1);
    } else {
       return emit_math2_gen4(opcode, dst, src0, src1);
