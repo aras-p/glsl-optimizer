@@ -72,7 +72,7 @@ intel_bufferobj_alloc(struct gl_context * ctx, GLuint name, GLenum target)
 {
    struct intel_buffer_object *obj = CALLOC_STRUCT(intel_buffer_object);
 
-   _mesa_initialize_buffer_object(&obj->Base, name, target);
+   _mesa_initialize_buffer_object(ctx, &obj->Base, name, target);
 
    obj->buffer = NULL;
 

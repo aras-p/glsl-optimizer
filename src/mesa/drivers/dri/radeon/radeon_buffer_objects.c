@@ -46,7 +46,7 @@ radeonNewBufferObject(struct gl_context * ctx,
 {
     struct radeon_buffer_object *obj = CALLOC_STRUCT(radeon_buffer_object);
 
-    _mesa_initialize_buffer_object(&obj->Base, name, target);
+    _mesa_initialize_buffer_object(ctx, &obj->Base, name, target);
 
     obj->bo = NULL;
 

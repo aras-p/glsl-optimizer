@@ -56,7 +56,7 @@ nouveau_bufferobj_new(struct gl_context *ctx, GLuint buffer, GLenum target)
 	if (!nbo)
 		return NULL;
 
-	_mesa_initialize_buffer_object(&nbo->base, buffer, target);
+	_mesa_initialize_buffer_object(ctx, &nbo->base, buffer, target);
 
 	return &nbo->base;
 }
