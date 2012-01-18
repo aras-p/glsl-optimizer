@@ -255,6 +255,7 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
 {
    struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
+   unsigned dri_use = 0;
 
    (void) egl_dpy;
 
@@ -276,6 +277,16 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
    if (bo->image == NULL)
       return NULL;
    
+   if (usage & GBM_BO_USE_SCANOUT)
+      dri_use |= __DRI_IMAGE_USE_SCANOUT;
+   if (usage & GBM_BO_USE_CURSOR_64X64)
+      dri_use |= __DRI_IMAGE_USE_CURSOR;
+   if (dri->image->base.version >= 2 &&
+       !dri->image->validateUsage(bo->image, dri_use)) {
+      free(bo);
+      return NULL;
+   }
+
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
                           &bo->base.base.handle.s32);
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE,

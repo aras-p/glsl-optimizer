@@ -375,7 +375,7 @@ radeon_query_image(__DRIimage *image, int attrib, int *value)
 }
 
 static struct __DRIimageExtensionRec radeonImageExtension = {
-    { __DRI_IMAGE, __DRI_IMAGE_VERSION },
+    { __DRI_IMAGE, 1 },
    radeon_create_image_from_name,
    radeon_create_image_from_renderbuffer,
    radeon_destroy_image,

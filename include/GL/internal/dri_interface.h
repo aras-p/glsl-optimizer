@@ -894,7 +894,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 1
+#define __DRI_IMAGE_VERSION 2
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -946,6 +946,13 @@ struct __DRIimageExtensionRec {
     * The new __DRIimage will share the content with the old one, see dup(2).
     */
    __DRIimage *(*dupImage)(__DRIimage *image, void *loaderPrivate);
+
+   /**
+    * Validate that a __DRIimage can be used a certain way.
+    *
+    * \since 2
+    */
+   GLboolean (*validateUsage)(__DRIimage *image, unsigned int use);
 };
 
 

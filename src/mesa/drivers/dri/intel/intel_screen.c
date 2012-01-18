@@ -324,14 +324,26 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    return image;
 }
 
+static GLboolean
+intel_validate_usage(__DRIimage *image, unsigned int use)
+{
+   if (use & __DRI_IMAGE_USE_CURSOR) {
+      if (image->region->width != 64 || image->region->height != 64)
+	 return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
-    { __DRI_IMAGE, __DRI_IMAGE_VERSION },
+    { __DRI_IMAGE, 2 },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
     intel_create_image,
     intel_query_image,
-    intel_dup_image
+    intel_dup_image,
+    intel_validate_usage
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
