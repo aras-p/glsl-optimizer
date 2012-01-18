@@ -1029,7 +1029,18 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    break;
 
 	case BRW_SFID_DATAPORT_WRITE:
-	    if (gen >= 6) {
+	    if (gen >= 7) {
+		format (file, " (");
+
+		err |= control (file, "DP rc message type",
+				dp_rc_msg_type_gen6,
+				inst->bits3.gen7_dp.msg_type, &space);
+
+		format (file, ", %d, %d, %d)",
+			inst->bits3.gen7_dp.binding_table_index,
+			inst->bits3.gen7_dp.msg_control,
+			inst->bits3.gen7_dp.msg_type);
+	    } else if (gen == 6) {
 		format (file, " (");
 
 		err |= control (file, "DP rc message type",
