@@ -2772,6 +2772,12 @@ struct gl_constants
    GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
 
    /**
+    * Changes default GLSL extension behavior from "error" to "warn".  It's out
+    * of spec, but it can make some apps work that otherwise wouldn't.
+    */
+   GLboolean ForceGLSLExtensionsWarn;
+
+   /**
     * Does the driver support real 32-bit integers?  (Otherwise, integers are
     * simulated via floats.)
     */

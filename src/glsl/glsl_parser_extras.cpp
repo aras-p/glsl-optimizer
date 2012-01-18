@@ -114,6 +114,9 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    }
 
    this->supported_version_string = supported;
+
+   if (ctx->Const.ForceGLSLExtensionsWarn)
+      _mesa_glsl_process_extension("all", NULL, "warn", NULL, this);
 }
 
 const char *
