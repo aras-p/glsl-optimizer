@@ -82,12 +82,14 @@ update_tss_binding(struct svga_context *svga,
       const struct svga_sampler_state *s = svga->curr.sampler[i];
       struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
       struct pipe_resource *texture = NULL;
+      struct pipe_sampler_view *sv = svga->curr.sampler_views[i];
 
       /* get min max lod */
-      if (svga->curr.sampler_views[i]) {
-         min_lod = MAX2(s->view_min_lod, 0);
-         max_lod = MIN2(s->view_max_lod, svga->curr.sampler_views[i]->texture->last_level);
-         texture = svga->curr.sampler_views[i]->texture;
+      if (sv) {
+         min_lod = MAX2(0, (s->view_min_lod + sv->u.tex.first_level));
+         max_lod = MIN2(s->view_max_lod, sv->texture->last_level);
+         max_lod += sv->u.tex.first_level;
+         texture = sv->texture;
       } else {
          min_lod = 0;
          max_lod = 0;
