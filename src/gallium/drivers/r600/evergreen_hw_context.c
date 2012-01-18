@@ -1168,6 +1168,12 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		r600_context_block_resource_emit_dirty(ctx, dirty_block);
 	}
 
+	/* Enable stream out if needed. */
+	if (ctx->streamout_start) {
+		r600_context_streamout_begin(ctx);
+		ctx->streamout_start = FALSE;
+	}
+
 	/* draw packet */
 	pm4 = &ctx->pm4[ctx->pm4_cdwords];
 	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
