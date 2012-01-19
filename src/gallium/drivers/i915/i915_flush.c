@@ -45,7 +45,10 @@ static void i915_flush_pipe( struct pipe_context *pipe,
 
    draw_flush(i915->draw);
 
-   if (i915->batch->map == i915->batch->ptr) {
+   /* Only shortcut this if we have no fence, otherwise we must flush the
+    * empty batchbuffer to get our fence back.
+    */
+   if (!fence && i915->batch && (i915->batch->map == i915->batch->ptr)) {
       return;
    }
 
