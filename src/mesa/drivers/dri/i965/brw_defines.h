@@ -1128,6 +1128,7 @@ enum brw_message_target {
 /* DW1 (for gen6) */
 # define GEN6_SF_NUM_OUTPUTS_SHIFT			22
 # define GEN6_SF_SWIZZLE_ENABLE				(1 << 21)
+# define GEN6_SF_POINT_SPRITE_UPPERLEFT			(0 << 20)
 # define GEN6_SF_POINT_SPRITE_LOWERLEFT			(1 << 20)
 # define GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT		11
 # define GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT		4
