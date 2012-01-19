@@ -110,77 +110,6 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
    return u;
 }
 
-static void
-intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
-{
-   struct gl_context *ctx = &intel->ctx;
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   GLubyte *map;
-   int stride;
-
-   if (!irb)
-      return;
-
-   if (irb->Base.Map) {
-      /* Renderbuffer is already mapped. This usually happens when a single
-       * buffer is attached to the framebuffer's depth and stencil attachment
-       * points.
-       */
-      return;
-   }
-
-   ctx->Driver.MapRenderbuffer(ctx, rb, 0, 0, rb->Width, rb->Height,
-			       GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
-			       &map, &stride);
-   irb->Base.Map = map;
-   irb->Base.RowStride = stride;
-}
-
-static void
-intel_renderbuffer_unmap(struct intel_context *intel,
-			 struct gl_renderbuffer *rb)
-{
-   struct gl_context *ctx = &intel->ctx;
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-
-   if (!irb)
-      return;
-
-   if (!irb->Base.Map) {
-      /* Renderbuffer is already unmapped. This usually happens when a single
-       * buffer is attached to the framebuffer's depth and stencil attachment
-       * points.
-       */
-      return;
-   }
-
-   ctx->Driver.UnmapRenderbuffer(ctx, rb);
-
-   irb->Base.Map = NULL;
-   irb->Base.RowStride = 0;
-}
-
-static void
-intel_framebuffer_map(struct intel_context *intel, struct gl_framebuffer *fb)
-{
-   int i;
-
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      intel_renderbuffer_map(intel, fb->Attachment[i].Renderbuffer);
-   }
-
-   intel_check_front_buffer_rendering(intel);
-}
-
-static void
-intel_framebuffer_unmap(struct intel_context *intel, struct gl_framebuffer *fb)
-{
-   int i;
-
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      intel_renderbuffer_unmap(intel, fb->Attachment[i].Renderbuffer);
-   }
-}
 
 /**
  * Resolve all buffers that will be mapped by intelSpanRenderStart().
@@ -236,10 +165,7 @@ intel_span_map_buffers(struct intel_context *intel)
 			   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
    }
 
-   intel_framebuffer_map(intel, ctx->DrawBuffer);
-   if (ctx->ReadBuffer != ctx->DrawBuffer) {
-      intel_framebuffer_map(intel, ctx->ReadBuffer);
-   }
+   _swrast_map_renderbuffers(ctx);
 }
 
 /**
@@ -279,10 +205,7 @@ intelSpanRenderFinish(struct gl_context * ctx)
       }
    }
 
-   intel_framebuffer_unmap(intel, ctx->DrawBuffer);
-   if (ctx->ReadBuffer != ctx->DrawBuffer) {
-      intel_framebuffer_unmap(intel, ctx->ReadBuffer);
-   }
+   _swrast_unmap_renderbuffers(ctx);
 }
 
 
