@@ -3,6 +3,14 @@
 #include <time.h>
 #include "../src/glsl/glsl_optimizer.h"
 
+#if __linux__
+#define GOT_GFX 0
+#else
+#define GOT_GFX 1
+#endif
+
+#if GOT_GFX
+
 #ifdef _MSC_VER
 #include <windows.h>
 #include <gl/GL.h>
@@ -31,10 +39,19 @@ static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 #include <dirent.h>
 #endif
 
+#else // GOT_GFX
+#include <cstdio>
+#include <cstring>
+#include "dirent.h"
+#include "GL/gl.h"
+#include "GL/glext.h"
+#endif
 
 static bool InitializeOpenGL ()
 {
 	bool hasGLSL = false;
+
+#if GOT_GFX
 
 #ifdef _MSC_VER
 	// setup minimal required GL
@@ -77,7 +94,7 @@ static bool InitializeOpenGL ()
 	aglSetCurrentContext (agl);
 
 #endif
-	
+
 	// check if we have GLSL
 	const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
 	hasGLSL = strstr(extensions, "GL_ARB_shader_objects") && strstr(extensions, "GL_ARB_vertex_shader") && strstr(extensions, "GL_ARB_fragment_shader");
@@ -93,7 +110,8 @@ static bool InitializeOpenGL ()
 		glGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)wglGetProcAddress("glGetObjectParameterivARB");
 	}
 #endif
-	
+
+#endif
 	return hasGLSL;
 }
 
@@ -126,7 +144,8 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 		replace_string (src, "GL_EXT_shader_texture_lod", "GL_ARB_shader_texture_lod", 0);
 	}
 	const char* sourcePtr = src.c_str();
-	
+
+#if GOT_GFX
 	
 	GLhandleARB shader = glCreateShaderObjectARB (vertex ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (shader, 1, &sourcePtr, NULL);
@@ -144,6 +163,10 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 	}
 	glDeleteObjectARB (shader);
 	return res;
+#else
+	// just assume it's ok...
+	return true;
+#endif
 }
 
 

@@ -24,7 +24,10 @@ Usage
 
 Visual Studio 2008 (Windows, x86) and Xcode 3.2 (Mac, i386) project files for a static
 library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
-respectively. A Linux Makefile (x86/x86_64) is at `src/glsl`.
+respectively.
+
+For Linux you can use cmake. Just type "cmake . && make" in the root directory.
+This will build the optimizer library and some executable binaries.
 
 Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
  
