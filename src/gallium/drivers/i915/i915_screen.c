@@ -368,7 +368,7 @@ i915_fence_signalled(struct pipe_screen *screen,
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_signalled(is->iws, fence) == 0;
+   return is->iws->fence_signalled(is->iws, fence) == 1;
 }
 
 static boolean
@@ -378,7 +378,7 @@ i915_fence_finish(struct pipe_screen *screen,
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_finish(is->iws, fence) == 0;
+   return is->iws->fence_finish(is->iws, fence) == 1;
 }
 
 
