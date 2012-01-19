@@ -316,9 +316,12 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    const GLuint depth = texImage->Depth;
    GLuint img, row;
    GLfloat (*rgba)[4];
+   GLuint (*rgba_uint)[4];
+   GLboolean is_integer = _mesa_is_format_integer_color(texImage->TexFormat);
 
    /* Allocate buffer for one row of texels */
    rgba = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+   rgba_uint = (GLuint (*)[4]) rgba;
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
       return;
@@ -339,44 +342,83 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
                                              width, height, format, type,
                                              img, row, 0);
 
-            _mesa_unpack_rgba_row(texFormat, width, src, rgba);
+	    if (is_integer) {
+	       _mesa_unpack_uint_rgba_row(texFormat, width, src, rgba_uint);
 
-            if (texImage->_BaseFormat == GL_ALPHA) {
-               GLint col;
-               for (col = 0; col < width; col++) {
-                  rgba[col][RCOMP] = 0.0F;
-                  rgba[col][GCOMP] = 0.0F;
-                  rgba[col][BCOMP] = 0.0F;
-               }
-            }
-            else if (texImage->_BaseFormat == GL_LUMINANCE) {
-               GLint col;
-               for (col = 0; col < width; col++) {
-                  rgba[col][GCOMP] = 0.0F;
-                  rgba[col][BCOMP] = 0.0F;
-                  rgba[col][ACOMP] = 1.0F;
-               }
-            }
-            else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-               GLint col;
-               for (col = 0; col < width; col++) {
-                  rgba[col][GCOMP] = 0.0F;
-                  rgba[col][BCOMP] = 0.0F;
-               }
-            }
-            else if (texImage->_BaseFormat == GL_INTENSITY) {
-               GLint col;
-               for (col = 0; col < width; col++) {
-                  rgba[col][GCOMP] = 0.0F;
-                  rgba[col][BCOMP] = 0.0F;
-                  rgba[col][ACOMP] = 1.0F;
-               }
-            }
+	       if (texImage->_BaseFormat == GL_ALPHA) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba_uint[col][RCOMP] = 0;
+		     rgba_uint[col][GCOMP] = 0;
+		     rgba_uint[col][BCOMP] = 0;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_LUMINANCE) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba_uint[col][GCOMP] = 0;
+		     rgba_uint[col][BCOMP] = 0;
+		     rgba_uint[col][ACOMP] = 1;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba_uint[col][GCOMP] = 0;
+		     rgba_uint[col][BCOMP] = 0;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_INTENSITY) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba_uint[col][GCOMP] = 0;
+		     rgba_uint[col][BCOMP] = 0;
+		     rgba_uint[col][ACOMP] = 1;
+		  }
+	       }
 
-            _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                       format, type, dest,
-                                       &ctx->Pack, transferOps);
-         }
+	       _mesa_pack_rgba_span_int(ctx, width, rgba_uint,
+					format, type, dest);
+	    } else {
+	       _mesa_unpack_rgba_row(texFormat, width, src, rgba);
+
+	       if (texImage->_BaseFormat == GL_ALPHA) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba[col][RCOMP] = 0.0F;
+		     rgba[col][GCOMP] = 0.0F;
+		     rgba[col][BCOMP] = 0.0F;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_LUMINANCE) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba[col][GCOMP] = 0.0F;
+		     rgba[col][BCOMP] = 0.0F;
+		     rgba[col][ACOMP] = 1.0F;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba[col][GCOMP] = 0.0F;
+		     rgba[col][BCOMP] = 0.0F;
+		  }
+	       }
+	       else if (texImage->_BaseFormat == GL_INTENSITY) {
+		  GLint col;
+		  for (col = 0; col < width; col++) {
+		     rgba[col][GCOMP] = 0.0F;
+		     rgba[col][BCOMP] = 0.0F;
+		     rgba[col][ACOMP] = 1.0F;
+		  }
+	       }
+
+	       _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+					  format, type, dest,
+					  &ctx->Pack, transferOps);
+	    }
+	 }
 
          /* Unmap the src texture buffer */
          ctx->Driver.UnmapTextureImage(ctx, texImage, img);
