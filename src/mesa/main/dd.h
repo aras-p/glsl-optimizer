@@ -398,18 +398,16 @@ struct dd_function_table {
                                    GLenum format,
                                    GLsizei imageSize, const GLvoid *data);
 
-
    /**
     * Called by glGetCompressedTexImage.
     */
    void (*GetCompressedTexImage)(struct gl_context *ctx,
                                  struct gl_texture_image *texImage,
                                  GLvoid *data);
-
    /*@}*/
 
    /**
-    * \name Texture object functions
+    * \name Texture object / image functions
     */
    /*@{*/
 
@@ -420,24 +418,20 @@ struct dd_function_table {
                         struct gl_texture_object *tObj );
 
    /**
-    * Called to allocate a new texture object.
-    * A new gl_texture_object should be returned.  The driver should
-    * attach to it any device-specific info it needs.
+    * Called to allocate a new texture object.  Drivers will usually
+    * allocate/return a subclass of gl_texture_object.
     */
-   struct gl_texture_object * (*NewTextureObject)( struct gl_context *ctx, GLuint name,
-                                                   GLenum target );
+   struct gl_texture_object * (*NewTextureObject)(struct gl_context *ctx,
+                                                  GLuint name, GLenum target);
    /**
-    * Called when a texture object is about to be deallocated.  
-    *
-    * Driver should delete the gl_texture_object object and anything
-    * hanging off of it.
+    * Called to delete/free a texture object.  Drivers should free the
+    * object and any image data it contains.
     */
-   void (*DeleteTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
+   void (*DeleteTexture)(struct gl_context *ctx,
+                         struct gl_texture_object *texObj);
 
-   /**
-    * Called to allocate a new texture image object.
-    */
-   struct gl_texture_image * (*NewTextureImage)( struct gl_context *ctx );
+   /** Called to allocate a new texture image object. */
+   struct gl_texture_image * (*NewTextureImage)(struct gl_context *ctx);
 
    /** Called to free a texture image object returned by NewTextureImage() */
    void (*DeleteTextureImage)(struct gl_context *ctx,
@@ -449,10 +443,9 @@ struct dd_function_table {
                                         gl_format format, GLsizei width,
                                         GLsizei height, GLsizei depth);
 
-   /** 
-    * Called to free tImage->Data.
-    */
-   void (*FreeTextureImageBuffer)( struct gl_context *ctx, struct gl_texture_image *tImage );
+   /** Free the memory for a single texture image */
+   void (*FreeTextureImageBuffer)(struct gl_context *ctx,
+                                  struct gl_texture_image *texImage);
 
    /** Map a slice of a texture image into user space.
     * Note: for GL_TEXTURE_1D_ARRAY, height must be 1, y must be 0 and slice
