@@ -565,20 +565,16 @@ map_attachment(struct gl_context *ctx,
    struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
 
    if (texObj) {
+      /* map texture image (render to texture) */
       const GLuint level = fb->Attachment[buffer].TextureLevel;
       const GLuint face = fb->Attachment[buffer].CubeMapFace;
+      const GLuint slice = fb->Attachment[buffer].Zoffset;
       struct gl_texture_image *texImage = texObj->Image[face][level];
       if (texImage) {
-         struct swrast_texture_image *swImage
-            = swrast_texture_image(texImage);
-
-         /* XXX we'll eventually call _swrast_map_teximage() here */
-         swImage->Map = swImage->Buffer;
-         if (srb) {
-            srb->Map = swImage->Buffer;
-            srb->RowStride = swImage->RowStride *
-               _mesa_get_format_bytes(swImage->Base.TexFormat);
-         }
+         ctx->Driver.MapTextureImage(ctx, texImage, slice,
+                                     0, 0, texImage->Width, texImage->Height,
+                                     GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
+                                     &srb->Map, &srb->RowStride);
       }
    }
    else if (rb) {
@@ -587,8 +583,9 @@ map_attachment(struct gl_context *ctx,
                                   0, 0, rb->Width, rb->Height,
                                   GL_MAP_READ_BIT | GL_MAP_WRITE_BIT,
                                   &srb->Map, &srb->RowStride);
-      assert(srb->Map);
    }
+
+   assert(srb->Map);
 }
  
 
@@ -602,14 +599,15 @@ unmap_attachment(struct gl_context *ctx,
    struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
 
    if (texObj) {
+      /* unmap texture image (render to texture) */
       const GLuint level = fb->Attachment[buffer].TextureLevel;
       const GLuint face = fb->Attachment[buffer].CubeMapFace;
+      const GLuint slice = fb->Attachment[buffer].Zoffset;
       struct gl_texture_image *texImage = texObj->Image[face][level];
       if (texImage) {
-
-         /* XXX we'll eventually call _swrast_unmap_teximage() here */
-       }
-    }
+         ctx->Driver.UnmapTextureImage(ctx, texImage, slice);
+      }
+   }
    else if (rb) {
       /* unmap ordinary renderbuffer */
       ctx->Driver.UnmapRenderbuffer(ctx, rb);
