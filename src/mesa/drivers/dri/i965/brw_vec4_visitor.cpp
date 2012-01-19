@@ -1546,9 +1546,6 @@ vec4_visitor::emit_block_move(dst_reg *dst, src_reg *src,
 
    dst->writemask = (1 << type->vector_elements) - 1;
 
-   /* Do we need to worry about swizzling a swizzle? */
-   assert(src->swizzle == BRW_SWIZZLE_NOOP
-	  || src->swizzle == swizzle_for_size(type->vector_elements));
    src->swizzle = swizzle_for_size(type->vector_elements);
 
    vec4_instruction *inst = emit(MOV(*dst, *src));
@@ -1630,6 +1627,15 @@ vec4_visitor::visit(ir_assignment *ir)
       if (ir->condition) {
 	 emit_bool_to_cond_code(ir->condition, &predicate);
       }
+
+      /* emit_block_move doesn't account for swizzles in the source register.
+       * This should be ok, since the source register is a structure or an
+       * array, and those can't be swizzled.  But double-check to be sure.
+       */
+      assert(src.swizzle ==
+             (ir->rhs->type->is_matrix()
+              ? swizzle_for_size(ir->rhs->type->vector_elements)
+              : BRW_SWIZZLE_NOOP));
 
       emit_block_move(&dst, &src, ir->rhs->type, predicate);
       return;
