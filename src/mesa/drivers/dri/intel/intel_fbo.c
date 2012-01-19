@@ -804,6 +804,15 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 if (stencil_mt->format != MESA_FORMAT_S8)
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 if (intel->gen < 7 && depth_mt->hiz_mt == NULL) {
+	    /* Before Gen7, separate depth and stencil buffers can be used
+	     * only if HiZ is enabled. From the Sandybridge PRM, Volume 2,
+	     * Part 1, Bit 3DSTATE_DEPTH_BUFFER.SeparateStencilBufferEnable:
+	     *     [DevSNB]: This field must be set to the same value (enabled
+	     *     or disabled) as Hierarchical Depth Buffer Enable.
+	     */
+	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
+	 }
       }
    }
 
