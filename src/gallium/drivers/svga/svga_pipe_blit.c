@@ -44,8 +44,7 @@ static void svga_surface_copy(struct pipe_context *pipe,
                               const struct pipe_box *src_box)
  {
    struct svga_context *svga = svga_context(pipe);
-   struct svga_texture *stex = svga_texture(src_tex);
-   struct svga_texture *dtex = svga_texture(dst_tex);
+   struct svga_texture *stex, *dtex;
 /*   struct pipe_screen *screen = pipe->screen;
    SVGA3dCopyBox *box;
    enum pipe_error ret;
@@ -62,6 +61,9 @@ static void svga_surface_copy(struct pipe_context *pipe,
                                 src_tex, src_level, src_box);
       return;
    }
+
+   stex = svga_texture(src_tex);
+   dtex = svga_texture(dst_tex);
 
 #if 0
    srcsurf = screen->get_tex_surface(screen, src_tex,
