@@ -81,16 +81,6 @@ static void FETCH(f_z32)( const struct swrast_texture_image *texImage,
    texel[0] = src[0] * (1.0F / 0xffffffff);
 }
 
-#if DIM == 3
-static void store_texel_z32(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLuint *depth = (const GLuint *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   dst[0] = *depth;
-}
-#endif
-
 
 /* MESA_FORMAT_Z16 ***********************************************************/
 
@@ -105,15 +95,6 @@ static void FETCH(f_z16)(const struct swrast_texture_image *texImage,
    texel[0] = src[0] * (1.0F / 65535.0F);
 }
 
-#if DIM == 3
-static void store_texel_z16(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLushort *depth = (const GLushort *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   dst[0] = *depth;
-}
-#endif
 
 
 /* MESA_FORMAT_RGBA_F32 ******************************************************/
@@ -130,18 +111,7 @@ static void FETCH(f_rgba_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = src[3];
 }
 
-#if DIM == 3
-static void store_texel_rgba_f32(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *depth = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 4);
-   dst[0] = depth[RCOMP];
-   dst[1] = depth[GCOMP];
-   dst[2] = depth[BCOMP];
-   dst[3] = depth[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_F16 ******************************************************/
@@ -159,18 +129,7 @@ static void FETCH(f_rgba_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = _mesa_half_to_float(src[3]);
 }
 
-#if DIM == 3
-static void store_texel_rgba_f16(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 4);
-   dst[0] = _mesa_float_to_half(src[RCOMP]);
-   dst[1] = _mesa_float_to_half(src[GCOMP]);
-   dst[2] = _mesa_float_to_half(src[BCOMP]);
-   dst[3] = _mesa_float_to_half(src[ACOMP]);
-}
-#endif
+
 
 /* MESA_FORMAT_RGB_F32 *******************************************************/
 
@@ -187,17 +146,7 @@ static void FETCH(f_rgb_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb_f32(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 3);
-   dst[0] = src[RCOMP];
-   dst[1] = src[GCOMP];
-   dst[2] = src[BCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGB_F16 *******************************************************/
@@ -215,17 +164,7 @@ static void FETCH(f_rgb_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb_f16(struct swrast_texture_image *texImage,
-                                GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 3);
-   dst[0] = _mesa_float_to_half(src[RCOMP]);
-   dst[1] = _mesa_float_to_half(src[GCOMP]);
-   dst[2] = _mesa_float_to_half(src[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_ALPHA_F32 *****************************************************/
@@ -243,15 +182,7 @@ static void FETCH(f_alpha_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = src[0];
 }
 
-#if DIM == 3
-static void store_texel_alpha_f32(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   dst[0] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_ALPHA_F32 *****************************************************/
@@ -269,15 +200,7 @@ static void FETCH(f_alpha_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = _mesa_half_to_float(src[0]);
 }
 
-#if DIM == 3
-static void store_texel_alpha_f16(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_LUMINANCE_F32 *************************************************/
@@ -295,15 +218,7 @@ static void FETCH(f_luminance_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_luminance_f32(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   dst[0] = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_LUMINANCE_F16 *************************************************/
@@ -321,15 +236,7 @@ static void FETCH(f_luminance_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_luminance_f16(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_LUMINANCE_ALPHA_F32 *******************************************/
@@ -347,16 +254,7 @@ static void FETCH(f_luminance_alpha_f32)( const struct swrast_texture_image *tex
    texel[ACOMP] = src[1];
 }
 
-#if DIM == 3
-static void store_texel_luminance_alpha_f32(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_LUMINANCE_ALPHA_F16 *******************************************/
@@ -374,16 +272,7 @@ static void FETCH(f_luminance_alpha_f16)( const struct swrast_texture_image *tex
    texel[ACOMP] = _mesa_half_to_float(src[1]);
 }
 
-#if DIM == 3
-static void store_texel_luminance_alpha_f16(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 2);
-   dst[0] = _mesa_float_to_half(rgba[RCOMP]);
-   dst[1] = _mesa_float_to_half(rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_INTENSITY_F32 *************************************************/
@@ -401,15 +290,7 @@ static void FETCH(f_intensity_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = src[0];
 }
 
-#if DIM == 3
-static void store_texel_intensity_f32(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   dst[0] = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_INTENSITY_F16 *************************************************/
@@ -427,15 +308,7 @@ static void FETCH(f_intensity_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = _mesa_half_to_float(src[0]);
 }
 
-#if DIM == 3
-static void store_texel_intensity_f16(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_R_FLOAT32 *****************************************************/
@@ -453,15 +326,7 @@ static void FETCH(f_r_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_r_f32(struct swrast_texture_image *texImage,
-                              GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   dst[0] = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_R_FLOAT16 *****************************************************/
@@ -479,15 +344,7 @@ static void FETCH(f_r_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_r_f16(struct swrast_texture_image *texImage,
-                              GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RG_FLOAT32 ****************************************************/
@@ -505,16 +362,7 @@ static void FETCH(f_rg_f32)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rg_f32(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RG_FLOAT16 ****************************************************/
@@ -532,16 +380,7 @@ static void FETCH(f_rg_f16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rg_f16(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *rgba = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 2);
-   dst[0] = _mesa_float_to_half(rgba[RCOMP]);
-   dst[1] = _mesa_float_to_half(rgba[GCOMP]);
-}
-#endif
+
 
 
 /*
@@ -563,15 +402,7 @@ static void FETCH(f_rgba8888)( const struct swrast_texture_image *texImage,
 
 
 
-#if DIM == 3
-static void store_texel_rgba8888(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA888_REV ***************************************************/
@@ -587,15 +418,7 @@ static void FETCH(f_rgba8888_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
 }
 
-#if DIM == 3
-static void store_texel_rgba8888_rev(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB8888 ******************************************************/
@@ -611,15 +434,7 @@ static void FETCH(f_argb8888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
 }
 
-#if DIM == 3
-static void store_texel_argb8888(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB8888_REV **************************************************/
@@ -635,15 +450,7 @@ static void FETCH(f_argb8888_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
 }
 
-#if DIM == 3
-static void store_texel_argb8888_rev(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[BCOMP], rgba[GCOMP], rgba[RCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBX8888 ******************************************************/
@@ -659,15 +466,7 @@ static void FETCH(f_rgbx8888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-#if DIM == 3
-static void store_texel_rgbx8888(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 0xff);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBX888_REV ***************************************************/
@@ -683,15 +482,7 @@ static void FETCH(f_rgbx8888_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-#if DIM == 3
-static void store_texel_rgbx8888_rev(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 0xff);
-}
-#endif
+
 
 
 /* MESA_FORMAT_XRGB8888 ******************************************************/
@@ -707,15 +498,7 @@ static void FETCH(f_xrgb8888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-#if DIM == 3
-static void store_texel_xrgb8888(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(0xff, rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_XRGB8888_REV **************************************************/
@@ -731,15 +514,7 @@ static void FETCH(f_xrgb8888_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-#if DIM == 3
-static void store_texel_xrgb8888_rev(struct swrast_texture_image *texImage,
-                                     GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[BCOMP], rgba[GCOMP], rgba[RCOMP], 0xff);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGB888 ********************************************************/
@@ -755,17 +530,7 @@ static void FETCH(f_rgb888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb888(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[BCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_BGR888 ********************************************************/
@@ -781,17 +546,7 @@ static void FETCH(f_bgr888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_bgr888(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-}
-#endif
+
 
 
 /* use color expansion like (g << 2) | (g >> 4) (does somewhat random rounding)
@@ -811,15 +566,7 @@ static void FETCH(f_rgb565)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb565(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_565(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGB565_REV ****************************************************/
@@ -836,18 +583,7 @@ static void FETCH(f_rgb565_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb565_rev(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   GLushort p = PACK_COLOR_565(CHAN_TO_UBYTE(rgba[RCOMP]),
-                               CHAN_TO_UBYTE(rgba[GCOMP]),
-                               CHAN_TO_UBYTE(rgba[BCOMP]));
-   *dst = (p >> 8) | (p << 8); /* byte swap */
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB4444 ******************************************************/
@@ -864,18 +600,7 @@ static void FETCH(f_argb4444)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
 }
 
-#if DIM == 3
-static void store_texel_argb4444(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_4444(CHAN_TO_UBYTE(rgba[ACOMP]),
-                          CHAN_TO_UBYTE(rgba[RCOMP]),
-                          CHAN_TO_UBYTE(rgba[GCOMP]),
-                          CHAN_TO_UBYTE(rgba[BCOMP]));
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB4444_REV **************************************************/
@@ -891,18 +616,7 @@ static void FETCH(f_argb4444_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
 }
 
-#if DIM == 3
-static void store_texel_argb4444_rev(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_4444(CHAN_TO_UBYTE(rgba[GCOMP]),
-                          CHAN_TO_UBYTE(rgba[BCOMP]),
-                          CHAN_TO_UBYTE(rgba[ACOMP]),
-                          CHAN_TO_UBYTE(rgba[RCOMP]));
-}
-#endif
+
 
 /* MESA_FORMAT_RGBA5551 ******************************************************/
 
@@ -918,15 +632,7 @@ static void FETCH(f_rgba5551)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s      ) & 0x01) * 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgba5551(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_5551(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 /* MESA_FORMAT_ARGB1555 ******************************************************/
 
@@ -942,15 +648,7 @@ static void FETCH(f_argb1555)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s >> 15) & 0x01) * 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_argb1555(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_1555(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB1555_REV **************************************************/
@@ -967,15 +665,7 @@ static void FETCH(f_argb1555_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( ((s >> 15) & 0x01) * 255 );
 }
 
-#if DIM == 3
-static void store_texel_argb1555_rev(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_1555_REV(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_ARGB2101010 ***************************************************/
@@ -992,19 +682,7 @@ static void FETCH(f_argb2101010)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s >> 30) & 0x03) * (1.0F / 3.0F);
 }
 
-#if DIM == 3
-static void store_texel_argb2101010(struct swrast_texture_image *texImage,
-                                    GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLushort r = CHAN_TO_USHORT(rgba[RCOMP]);
-   GLushort g = CHAN_TO_USHORT(rgba[GCOMP]);
-   GLushort b = CHAN_TO_USHORT(rgba[BCOMP]);
-   GLushort a = CHAN_TO_USHORT(rgba[ACOMP]);
-   *dst = PACK_COLOR_2101010_US(a, r, g, b);
-}
-#endif
+
 
 
 /* MESA_FORMAT_GR88 **********************************************************/
@@ -1020,17 +698,7 @@ static void FETCH(f_gr88)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_gr88(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   GLubyte r = CHAN_TO_UBYTE(rgba[RCOMP]);
-   GLubyte g = CHAN_TO_UBYTE(rgba[GCOMP]);
-   *dst = PACK_COLOR_88(g, r);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RG88 ******************************************************/
@@ -1046,15 +714,7 @@ static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_rg88(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_88(rgba[RCOMP], rgba[GCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_AL44 **********************************************************/
@@ -1070,15 +730,7 @@ static void FETCH(f_al44)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = ((s >> 4) & 0xf) * (1.0F / 15.0F);
 }
 
-#if DIM == 3
-static void store_texel_al44(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_44(rgba[ACOMP], rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_AL88 **********************************************************/
@@ -1094,15 +746,7 @@ static void FETCH(f_al88)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( s >> 8 );
 }
 
-#if DIM == 3
-static void store_texel_al88(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_88(rgba[ACOMP], rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_R8 ************************************************************/
@@ -1118,15 +762,7 @@ static void FETCH(f_r8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_r8(struct swrast_texture_image *texImage,
-			   GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_R16 ***********************************************************/
@@ -1142,15 +778,7 @@ static void FETCH(f_r16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_r16(struct swrast_texture_image *texImage,
-			    GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = CHAN_TO_USHORT(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_AL88_REV ******************************************************/
@@ -1166,15 +794,7 @@ static void FETCH(f_al88_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( s & 0xff );
 }
 
-#if DIM == 3
-static void store_texel_al88_rev(struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_88(rgba[RCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RG1616 ********************************************************/
@@ -1190,17 +810,7 @@ static void FETCH(f_rg1616)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_rg1616(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLushort r = CHAN_TO_USHORT(rgba[RCOMP]);
-   GLushort g = CHAN_TO_USHORT(rgba[GCOMP]);
-   *dst = PACK_COLOR_1616(g, r);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RG1616_REV ****************************************************/
@@ -1216,15 +826,7 @@ static void FETCH(f_rg1616_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0;
 }
 
-#if DIM == 3
-static void store_texel_rg1616_rev(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_1616(rgba[GCOMP], rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_AL1616 ********************************************************/
@@ -1240,17 +842,7 @@ static void FETCH(f_al1616)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = USHORT_TO_FLOAT( s >> 16 );
 }
 
-#if DIM == 3
-static void store_texel_al1616(struct swrast_texture_image *texImage,
-                             GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLushort l = CHAN_TO_USHORT(rgba[RCOMP]);
-   GLushort a = CHAN_TO_USHORT(rgba[ACOMP]);
-   *dst = PACK_COLOR_1616(a, l);
-}
-#endif
+
 
 
 /* MESA_FORMAT_AL1616_REV ****************************************************/
@@ -1266,15 +858,7 @@ static void FETCH(f_al1616_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = USHORT_TO_FLOAT( s & 0xffff );
 }
 
-#if DIM == 3
-static void store_texel_al1616_rev(struct swrast_texture_image *texImage,
-				   GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLushort *rgba = (const GLushort *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_1616(rgba[RCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGB332 ********************************************************/
@@ -1291,15 +875,7 @@ static void FETCH(f_rgb332)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb332(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_332(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_A8 ************************************************************/
@@ -1315,15 +891,7 @@ static void FETCH(f_a8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( src[0] );
 }
 
-#if DIM == 3
-static void store_texel_a8(struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_A16 ************************************************************/
@@ -1339,15 +907,7 @@ static void FETCH(f_a16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = USHORT_TO_FLOAT( src[0] );
 }
 
-#if DIM == 3
-static void store_texel_a16(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = CHAN_TO_USHORT(rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_L8 ************************************************************/
@@ -1363,15 +923,7 @@ static void FETCH(f_l8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_l8(struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_L16 ***********************************************************/
@@ -1387,15 +939,7 @@ static void FETCH(f_l16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_l16(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = CHAN_TO_USHORT(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_I8 ************************************************************/
@@ -1411,15 +955,7 @@ static void FETCH(f_i8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( src[0] );
 }
 
-#if DIM == 3
-static void store_texel_i8(struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_I16 ***********************************************************/
@@ -1435,15 +971,7 @@ static void FETCH(f_i16)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = USHORT_TO_FLOAT( src[0] );
 }
 
-#if DIM == 3
-static void store_texel_i16(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = CHAN_TO_USHORT(rgba[RCOMP]);
-}
-#endif
+
 
 
 /* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
@@ -1458,17 +986,7 @@ static void FETCH(srgb8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_srgb8(struct swrast_texture_image *texImage,
-                              GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[BCOMP]; /* no conversion */
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[RCOMP];
-}
-#endif
+
 
 /* Fetch texel from 1D, 2D or 3D srgba8 texture, return 4 GLfloats */
 static void FETCH(srgba8)(const struct swrast_texture_image *texImage,
@@ -1481,15 +999,7 @@ static void FETCH(srgba8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff ); /* linear! */
 }
 
-#if DIM == 3
-static void store_texel_srgba8(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 /* Fetch texel from 1D, 2D or 3D sargb8 texture, return 4 GLfloats */
 static void FETCH(sargb8)(const struct swrast_texture_image *texImage,
@@ -1502,15 +1012,7 @@ static void FETCH(sargb8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24) ); /* linear! */
 }
 
-#if DIM == 3
-static void store_texel_sargb8(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
-}
-#endif
+
 
 /* Fetch texel from 1D, 2D or 3D sl8 texture, return 4 GLfloats */
 static void FETCH(sl8)(const struct swrast_texture_image *texImage,
@@ -1523,15 +1025,7 @@ static void FETCH(sl8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_sl8(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
-   dst[0] = rgba[RCOMP];
-}
-#endif
+
 
 /* Fetch texel from 1D, 2D or 3D sla8 texture, return 4 GLfloats */
 static void FETCH(sla8)(const struct swrast_texture_image *texImage,
@@ -1544,16 +1038,7 @@ static void FETCH(sla8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT(src[1]); /* linear */
 }
 
-#if DIM == 3
-static void store_texel_sla8(struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 2);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_INT8 **************************************************/
@@ -1569,19 +1054,7 @@ FETCH(rgba_int8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_int8(struct swrast_texture_image *texImage,
-                      GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_INT16 **************************************************/
@@ -1597,19 +1070,7 @@ FETCH(rgba_int16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_int16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLshort *rgba = (const GLshort *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_INT32 **************************************************/
@@ -1625,19 +1086,7 @@ FETCH(rgba_int32)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_int32(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLint *rgba = (const GLint *) texel;
-   GLint *dst = TEXEL_ADDR(GLint, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_UINT8 **************************************************/
@@ -1653,19 +1102,7 @@ FETCH(rgba_uint8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_uint8(struct swrast_texture_image *texImage,
-                      GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_UINT16 **************************************************/
@@ -1681,19 +1118,7 @@ FETCH(rgba_uint16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_uint16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLushort *rgba = (const GLushort *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGBA_UINT32 **************************************************/
@@ -1709,19 +1134,7 @@ FETCH(rgba_uint32)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_uint32(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLuint *rgba = (const GLuint *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
-   dst[3] = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_DUDV8 ********************************************************/
@@ -1751,15 +1164,7 @@ static void FETCH(signed_r8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_signed_r8(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_A8 ***********************************************/
@@ -1774,15 +1179,7 @@ static void FETCH(signed_a8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( s );
 }
 
-#if DIM == 3
-static void store_texel_signed_a8(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
-   *dst = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_L8 ***********************************************/
@@ -1797,15 +1194,7 @@ static void FETCH(signed_l8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_signed_l8(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_I8 ***********************************************/
@@ -1820,15 +1209,7 @@ static void FETCH(signed_i8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( s );
 }
 
-#if DIM == 3
-static void store_texel_signed_i8(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RG88_REV ***********************************************/
@@ -1843,15 +1224,7 @@ static void FETCH(signed_rg88_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_signed_rg88_rev(struct swrast_texture_image *texImage,
-                                        GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rg = (const GLbyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   dst[0] = PACK_COLOR_88(rg[GCOMP], rg[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_AL88 ***********************************************/
@@ -1866,15 +1239,7 @@ static void FETCH(signed_al88)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 8) );
 }
 
-#if DIM == 3
-static void store_texel_signed_al88(struct swrast_texture_image *texImage,
-                                    GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rg = (const GLbyte *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   dst[0] = PACK_COLOR_88(rg[ACOMP], rg[RCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RGBX8888 ***********************************************/
@@ -1889,15 +1254,7 @@ static void FETCH(signed_rgbx8888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-#if DIM == 3
-static void store_texel_signed_rgbx8888(struct swrast_texture_image *texImage,
-                                        GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 255);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RGBA8888 ***********************************************/
@@ -1912,15 +1269,7 @@ static void FETCH(signed_rgba8888)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s      ) );
 }
 
-#if DIM == 3
-static void store_texel_signed_rgba8888(struct swrast_texture_image *texImage,
-                                        GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLbyte *rgba = (const GLbyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 static void FETCH(signed_rgba8888_rev)( const struct swrast_texture_image *texImage,
                                         GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1932,15 +1281,7 @@ static void FETCH(signed_rgba8888_rev)( const struct swrast_texture_image *texIm
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 24) );
 }
 
-#if DIM == 3
-static void store_texel_signed_rgba8888_rev(struct swrast_texture_image *texImage,
-                                            GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLubyte *rgba = (const GLubyte *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
-}
-#endif
+
 
 
 
@@ -1957,16 +1298,7 @@ FETCH(signed_r16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void
-store_texel_signed_r16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLshort *rgba = (const GLshort *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
-   *dst = rgba[0];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_A16 ***********************************************/
@@ -1982,16 +1314,7 @@ FETCH(signed_a16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = SHORT_TO_FLOAT_TEX( s );
 }
 
-#if DIM == 3
-static void
-store_texel_signed_a16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLshort *rgba = (const GLshort *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
-   *dst = rgba[ACOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_L16 ***********************************************/
@@ -2007,16 +1330,7 @@ FETCH(signed_l16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void
-store_texel_signed_l16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLshort *rgba = (const GLshort *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_I16 ***********************************************/
@@ -2032,16 +1346,7 @@ FETCH(signed_i16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = SHORT_TO_FLOAT_TEX( s );
 }
 
-#if DIM == 3
-static void
-store_texel_signed_i16(struct swrast_texture_image *texImage,
-                       GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLshort *rgba = (const GLshort *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
-   *dst = rgba[RCOMP];
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RG1616 ***********************************************/
@@ -2057,17 +1362,7 @@ FETCH(signed_rg1616)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void
-store_texel_signed_rg1616(struct swrast_texture_image *texImage,
-                         GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
-   dst[0] = CHAN_TO_SHORT(rgba[RCOMP]);
-   dst[1] = CHAN_TO_SHORT(rgba[GCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_AL1616 ***********************************************/
@@ -2083,17 +1378,7 @@ FETCH(signed_al1616)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = SHORT_TO_FLOAT_TEX( s[1] );
 }
 
-#if DIM == 3
-static void
-store_texel_signed_al1616(struct swrast_texture_image *texImage,
-                         GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
-   dst[0] = CHAN_TO_SHORT(rgba[RCOMP]);
-   dst[1] = CHAN_TO_SHORT(rgba[ACOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
@@ -2109,18 +1394,7 @@ FETCH(signed_rgb_16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void
-store_texel_signed_rgb_16(struct swrast_texture_image *texImage,
-                          GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 3);
-   dst[0] = CHAN_TO_SHORT(rgba[RCOMP]);
-   dst[1] = CHAN_TO_SHORT(rgba[GCOMP]);
-   dst[2] = CHAN_TO_SHORT(rgba[BCOMP]);
-}
-#endif
+
 
 
 /* MESA_FORMAT_SIGNED_RGBA_16 ***********************************************/
@@ -2136,19 +1410,7 @@ FETCH(signed_rgba_16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = SHORT_TO_FLOAT_TEX( s[3] );
 }
 
-#if DIM == 3
-static void
-store_texel_signed_rgba_16(struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
-   dst[0] = CHAN_TO_SHORT(rgba[RCOMP]);
-   dst[1] = CHAN_TO_SHORT(rgba[GCOMP]);
-   dst[2] = CHAN_TO_SHORT(rgba[BCOMP]);
-   dst[3] = CHAN_TO_SHORT(rgba[ACOMP]);
-}
-#endif
+
 
 
 
@@ -2165,19 +1427,7 @@ FETCH(rgba_16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = USHORT_TO_FLOAT( s[3] );
 }
 
-#if DIM == 3
-static void
-store_texel_rgba_16(struct swrast_texture_image *texImage,
-                    GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLchan *rgba = (const GLchan *) texel;
-   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 4);
-   dst[0] = CHAN_TO_USHORT(rgba[RCOMP]);
-   dst[1] = CHAN_TO_USHORT(rgba[GCOMP]);
-   dst[2] = CHAN_TO_USHORT(rgba[BCOMP]);
-   dst[3] = CHAN_TO_USHORT(rgba[ACOMP]);
-}
-#endif
+
 
 
 
@@ -2208,18 +1458,7 @@ static void FETCH(f_ycbcr)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_ycbcr(struct swrast_texture_image *texImage,
-                              GLint i, GLint j, GLint k, const void *texel)
-{
-   (void) texImage;
-   (void) i;
-   (void) j;
-   (void) k;
-   (void) texel;
-   /* XXX to do */
-}
-#endif
+
 
 
 /* MESA_FORMAT_YCBCR_REV *****************************************************/
@@ -2249,18 +1488,7 @@ static void FETCH(f_ycbcr_rev)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_ycbcr_rev(struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, const void *texel)
-{
-   (void) texImage;
-   (void) i;
-   (void) j;
-   (void) k;
-   (void) texel;
-   /* XXX to do */
-}
-#endif
+
 
 
 /* MESA_TEXFORMAT_Z24_S8 ***************************************************/
@@ -2278,17 +1506,7 @@ static void FETCH(f_z24_s8)( const struct swrast_texture_image *texImage,
    ASSERT(texel[0] <= 1.0F);
 }
 
-#if DIM == 3
-static void store_texel_z24_s8(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   /* only store Z, not stencil */
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLfloat depth = *((GLfloat *) texel);
-   GLuint zi = ((GLuint) (depth * 0xffffff)) << 8;
-   *dst = zi | (*dst & 0xff);
-}
-#endif
+
 
 
 /* MESA_TEXFORMAT_S8_Z24 ***************************************************/
@@ -2306,17 +1524,7 @@ static void FETCH(f_s8_z24)( const struct swrast_texture_image *texImage,
    ASSERT(texel[0] <= 1.0F);
 }
 
-#if DIM == 3
-static void store_texel_s8_z24(struct swrast_texture_image *texImage,
-                               GLint i, GLint j, GLint k, const void *texel)
-{
-   /* only store Z, not stencil */
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   GLfloat depth = *((GLfloat *) texel);
-   GLuint zi = (GLuint) (depth * 0xffffff);
-   *dst = zi | (*dst & 0xff000000);
-}
-#endif
+
 
 
 /* MESA_FORMAT_RGB9_E5 ******************************************************/
@@ -2329,15 +1537,7 @@ static void FETCH(rgb9_e5)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_rgb9_e5(struct swrast_texture_image *texImage,
-                                GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = float3_to_rgb9e5(src);
-}
-#endif
+
 
 
 /* MESA_FORMAT_R11_G11_B10_FLOAT *********************************************/
@@ -2350,15 +1550,7 @@ static void FETCH(r11_g11_b10f)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_r11_g11_b10f(struct swrast_texture_image *texImage,
-                                     GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   *dst = float3_to_r11g11b10f(src);
-}
-#endif
+
 
 
 /* MESA_FORMAT_Z32_FLOAT_X24S8 ***********************************************/
@@ -2373,15 +1565,6 @@ static void FETCH(z32f_x24s8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-#if DIM == 3
-static void store_texel_z32f_x24s8(struct swrast_texture_image *texImage,
-                                   GLint i, GLint j, GLint k, const void *texel)
-{
-   const GLfloat *src = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
-   dst[0] = src[0];
-}
-#endif
 
 
 #undef TEXEL_ADDR

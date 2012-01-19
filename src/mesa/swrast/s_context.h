@@ -120,14 +120,10 @@ typedef void (*FetchTexelFunc)(const struct swrast_texture_image *texImage,
                                GLfloat *texelOut);
 
 
-typedef void (*StoreTexelFunc)(struct swrast_texture_image *texImage,
-                               GLint col, GLint row, GLint img,
-                               const void *texel);
-
 /**
  * Subclass of gl_texture_image.
  * We need extra fields/info to keep tracking of mapped texture buffers,
- * strides and Fetch/Store functions.
+ * strides and Fetch functions.
  */
 struct swrast_texture_image
 {
@@ -148,7 +144,6 @@ struct swrast_texture_image
    GLubyte *Buffer;
 
    FetchTexelFunc FetchTexel;
-   StoreTexelFunc Store;
 };
 
 
