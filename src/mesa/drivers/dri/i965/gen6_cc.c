@@ -57,19 +57,36 @@ gen6_upload_blend_state(struct brw_context *brw)
    memset(blend, 0, size);
 
    for (b = 0; b < nr_draw_buffers; b++) {
+      /* _NEW_BUFFERS */
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[b];
+      GLenum rb_type;
+      bool integer;
+
+      if (rb)
+	 rb_type = _mesa_get_format_datatype(rb->Format);
+      else
+	 rb_type = GL_UNSIGNED_NORMALIZED;
+
+      /* Used for implementing the following bit of GL_EXT_texture_integer:
+       *
+       *     "Per-fragment operations that require floating-point color
+       *      components, including multisample alpha operations, alpha test,
+       *      blending, and dithering, have no effect when the corresponding
+       *      colors are written to an integer color buffer."
+      */
+      integer = (rb_type == GL_INT || rb_type == GL_UNSIGNED_INT);
+
       /* _NEW_COLOR */
       if (ctx->Color.ColorLogicOpEnabled) {
-	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[b];
-	 /* _NEW_BUFFERS */
 	 /* Floating point RTs should have no effect from LogicOp,
 	  * except for disabling of blending
 	  */
-	 if (rb && _mesa_get_format_datatype(rb->Format) != GL_FLOAT) {
+	 if (rb_type != GL_FLOAT) {
 	    blend[b].blend1.logic_op_enable = 1;
 	    blend[b].blend1.logic_op_func =
 	       intel_translate_logic_op(ctx->Color.LogicOp);
 	 }
-      } else if (ctx->Color.BlendEnabled & (1 << b)) {
+      } else if (ctx->Color.BlendEnabled & (1 << b) && !integer) {
 	 GLenum eqRGB = ctx->Color.Blend[0].EquationRGB;
 	 GLenum eqA = ctx->Color.Blend[0].EquationA;
 	 GLenum srcRGB = ctx->Color.Blend[0].SrcRGB;
@@ -121,7 +138,7 @@ gen6_upload_blend_state(struct brw_context *brw)
       blend[b].blend1.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
 
       /* _NEW_COLOR */
-      if (ctx->Color.AlphaEnabled) {
+      if (ctx->Color.AlphaEnabled && !integer) {
 	 blend[b].blend1.alpha_test_enable = 1;
 	 blend[b].blend1.alpha_test_func =
 	    intel_translate_compare_func(ctx->Color.AlphaFunc);
@@ -129,7 +146,7 @@ gen6_upload_blend_state(struct brw_context *brw)
       }
 
       /* _NEW_COLOR */
-      if (ctx->Color.DitherFlag) {
+      if (ctx->Color.DitherFlag && !integer) {
 	 blend[b].blend1.dither_enable = 1;
 	 blend[b].blend1.y_dither_offset = 0;
 	 blend[b].blend1.x_dither_offset = 0;
