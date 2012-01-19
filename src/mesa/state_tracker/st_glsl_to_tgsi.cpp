@@ -357,7 +357,7 @@ public:
 
    /** List of immediate_storage */
    exec_list immediates;
-   int num_immediates;
+   unsigned num_immediates;
 
    /** List of function_entry */
    exec_list function_signatures;
@@ -3645,6 +3645,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
    memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
+   v->num_immediates = original->num_immediates;
 
    /*
     * Get initial pixel color from the texture.
@@ -3775,6 +3776,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
    memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
+   v->num_immediates = original->num_immediates;
 
    /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
    coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
@@ -4679,8 +4681,10 @@ st_translate_program(
    i = 0;
    foreach_iter(exec_list_iterator, iter, program->immediates) {
       immediate_storage *imm = (immediate_storage *)iter.get();
+      assert(i < program->num_immediates);
       t->immediates[i++] = emit_immediate(t, imm->values, imm->type, imm->size);
    }
+   assert(i == program->num_immediates);
 
    /* texture samplers */
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
