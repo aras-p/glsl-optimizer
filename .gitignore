@@ -50,3 +50,5 @@ CMakeCache.txt
 .cproject
 glsl_main
 glsl_test
+glcpp
+glslopt
