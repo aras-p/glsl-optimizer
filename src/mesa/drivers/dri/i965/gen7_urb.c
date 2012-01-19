@@ -99,6 +99,8 @@ gen7_upload_urb(struct brw_context *brw)
    /* GS requirement */
    assert(!brw->gs.prog_active);
 
+   gen7_emit_vs_workaround_flush(intel);
+
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
    OUT_BATCH(brw->urb.nr_vs_entries |

@@ -56,13 +56,13 @@ intel_batchbuffer_init(struct intel_context *intel)
 {
    intel_batchbuffer_reset(intel);
 
-   if (intel->gen == 6) {
+   if (intel->gen >= 6) {
       /* We can't just use brw_state_batch to get a chunk of space for
        * the gen6 workaround because it involves actually writing to
        * the buffer, and the kernel doesn't let us write to the batch.
        */
       intel->batch.workaround_bo = drm_intel_bo_alloc(intel->bufmgr,
-						      "gen6 workaround",
+						      "pipe_control workaround",
 						      4096, 4096);
    }
 }
@@ -389,6 +389,28 @@ intel_emit_depth_stall_flushes(struct intel_context *intel)
    OUT_BATCH(_3DSTATE_PIPE_CONTROL);
    OUT_BATCH(PIPE_CONTROL_DEPTH_STALL);
    OUT_BATCH(0); /* address */
+   OUT_BATCH(0); /* write data */
+   ADVANCE_BATCH();
+}
+
+/**
+ * From the BSpec, volume 2a.03: VS Stage Input / State:
+ * "[DevIVB] A PIPE_CONTROL with Post-Sync Operation set to 1h and a depth
+ *  stall needs to be sent just prior to any 3DSTATE_VS, 3DSTATE_URB_VS,
+ *  3DSTATE_CONSTANT_VS, 3DSTATE_BINDING_TABLE_POINTER_VS,
+ *  3DSTATE_SAMPLER_STATE_POINTER_VS command.  Only one PIPE_CONTROL needs
+ *  to be sent before any combination of VS associated 3DSTATE."
+ */
+void
+gen7_emit_vs_workaround_flush(struct intel_context *intel)
+{
+   assert(intel->gen == 7);
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
+   OUT_RELOC(intel->batch.workaround_bo,
+	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 }

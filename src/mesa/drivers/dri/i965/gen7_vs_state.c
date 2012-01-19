@@ -35,6 +35,8 @@ upload_vs_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    uint32_t floating_point_mode = 0;
 
+   gen7_emit_vs_workaround_flush(intel);
+
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_VS << 16 | (2 - 2));
    OUT_BATCH(brw->bind.bo_offset);
