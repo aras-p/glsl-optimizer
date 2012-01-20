@@ -475,7 +475,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 
    rb->Format = image->TexFormat;
    rb->InternalFormat = image->InternalFormat;
-   rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
+   rb->_BaseFormat = image->_BaseFormat;
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;
 
