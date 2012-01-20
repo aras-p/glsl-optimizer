@@ -385,8 +385,8 @@ emit_program(struct i915_context *i915)
       OUT_BATCH(size);
    }
 
-   /* output the declarations of the program */
-   for (i=1 ; i < i915->fs->program_len; i++)
+   /* output the declarations and the program */
+   for (i = 1 ; i < i915->fs->program_len; i++)
       OUT_BATCH(i915->fs->program[i]);
 
    /* we emit an additional mov with swizzle to fake RGBA framebuffers */
