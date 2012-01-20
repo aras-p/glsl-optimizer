@@ -2022,7 +2022,7 @@ static void r600_set_streamout_enable(struct r600_context *ctx, unsigned buffer_
 
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = (R_028B20_VGT_STRMOUT_BUFFER_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = buffer_enable_bit;
+		ctx->pm4[ctx->pm4_cdwords++] = S_028B20_BUFFER_0_EN(buffer_enable_bit);
 	} else {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
