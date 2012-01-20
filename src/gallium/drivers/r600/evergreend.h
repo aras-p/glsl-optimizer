@@ -1523,7 +1523,9 @@
 #define R_028050_DB_Z_WRITE_BASE                     0x00028050
 #define R_028054_DB_STENCIL_WRITE_BASE               0x00028054
 #define R_028140_ALU_CONST_BUFFER_SIZE_PS_0          0x00028140
+#define R_028144_ALU_CONST_BUFFER_SIZE_PS_1          0x00028144
 #define R_028180_ALU_CONST_BUFFER_SIZE_VS_0          0x00028180
+#define R_028184_ALU_CONST_BUFFER_SIZE_VS_1          0x00028184
 #define R_028200_PA_SC_WINDOW_OFFSET                 0x00028200
 #define R_02820C_PA_SC_CLIPRECT_RULE                 0x0002820C
 #define R_028210_PA_SC_CLIPRECT_0_TL                 0x00028210
@@ -1700,7 +1702,9 @@
 #define R_028924_SQ_GS_VERT_ITEMSIZE_2               0x00028924
 #define R_028928_SQ_GS_VERT_ITEMSIZE_3               0x00028928
 #define R_028940_ALU_CONST_CACHE_PS_0                0x00028940
+#define R_028944_ALU_CONST_CACHE_PS_1                0x00028944
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
+#define R_028984_ALU_CONST_CACHE_VS_1                0x00028984
 #define R_028A04_PA_SU_POINT_MINMAX                  0x00028A04
 #define R_028A08_PA_SU_LINE_CNTL                     0x00028A08
 #define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)

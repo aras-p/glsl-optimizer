@@ -195,6 +195,8 @@ struct r600_shader_ctx {
 	int					num_interp_gpr;
 	int					face_gpr;
 	int					colors_used;
+	boolean                 clip_vertex_write;
+	unsigned                cv_output;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -478,6 +480,10 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 				break;
 			case TGSI_SEMANTIC_PSIZE:
 				ctx->shader->vs_out_misc_write = 1;
+				break;
+			case TGSI_SEMANTIC_CLIPVERTEX:
+				ctx->clip_vertex_write = TRUE;
+				ctx->cv_output = i;
 				break;
 			}
 		}
@@ -803,7 +809,8 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	struct r600_bytecode_output output[32];
 	unsigned output_done, noutput;
 	unsigned opcode;
-	int i, j, r = 0, pos0;
+	int i, j, k, r = 0;
+	int next_pixel_base = 0, next_pos_base = 60, next_param_base = 0;
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
@@ -817,6 +824,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	ctx.face_gpr = -1;
 	ctx.colors_used = 0;
+	ctx.clip_vertex_write = 0;
 
 	shader->two_side = (ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->two_side;
 
@@ -959,6 +967,47 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 
 	noutput = shader->noutput;
 
+	if (ctx.clip_vertex_write) {
+		/* need to convert a clipvertex write into clipdistance writes and not export
+		   the clip vertex anymore */
+
+		memset(&shader->output[noutput], 0, 2*sizeof(struct r600_shader_io));
+		shader->output[noutput].name = TGSI_SEMANTIC_CLIPDIST;
+		shader->output[noutput].gpr = ctx.temp_reg;
+		noutput++;
+		shader->output[noutput].name = TGSI_SEMANTIC_CLIPDIST;
+		shader->output[noutput].gpr = ctx.temp_reg+1;
+		noutput++;
+
+		shader->clip_dist_write = 0xFF;
+
+		for (i = 0; i < 8; i++) {
+			int oreg = i >> 2;
+			int ochan = i & 3;
+
+			for (j = 0; j < 4; j++) {
+				struct r600_bytecode_alu alu;
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4);
+				alu.src[0].sel = shader->output[ctx.cv_output].gpr;
+				alu.src[0].chan = j;
+
+				alu.src[1].sel = 512 + i;
+				alu.src[1].kc_bank = 1;
+				alu.src[1].chan = j;
+
+				alu.dst.sel = ctx.temp_reg + oreg;
+				alu.dst.chan = j;
+				alu.dst.write = (j == ochan);
+				if (j == 3)
+					alu.last = 1;
+				r = r600_bytecode_add_alu(ctx.bc, &alu);
+				if (r)
+					return r;
+			}
+		}
+	}
+
 	/* clamp color outputs */
 	if (shader->clamp_color) {
 		for (i = 0; i < noutput; i++) {
@@ -1056,89 +1105,81 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	}
 
 	/* export output */
-	j = 0;
-
-	for (i = 0, pos0 = 0; i < noutput; i++) {
-		memset(&output[i+j], 0, sizeof(struct r600_bytecode_output));
-		output[i + j].gpr = shader->output[i].gpr;
-		output[i + j].elem_size = 3;
-		output[i + j].swizzle_x = 0;
-		output[i + j].swizzle_y = 1;
-		output[i + j].swizzle_z = 2;
-		output[i + j].swizzle_w = 3;
-		output[i + j].burst_count = 1;
-		output[i + j].barrier = 1;
-		output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
-		output[i + j].array_base = i+j - pos0;
-		output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+	for (i = 0, j = 0; i < noutput; i++, j++) {
+		memset(&output[j], 0, sizeof(struct r600_bytecode_output));
+		output[j].gpr = shader->output[i].gpr;
+		output[j].elem_size = 3;
+		output[j].swizzle_x = 0;
+		output[j].swizzle_y = 1;
+		output[j].swizzle_z = 2;
+		output[j].swizzle_w = 3;
+		output[j].burst_count = 1;
+		output[j].barrier = 1;
+		output[j].type = -1;
+		output[j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 		switch (ctx.type) {
 		case TGSI_PROCESSOR_VERTEX:
 			switch (shader->output[i].name) {
 			case TGSI_SEMANTIC_POSITION:
-				output[i + j].array_base = 60;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
-				/* position doesn't count in array_base */
-				pos0++;
+				output[j].array_base = next_pos_base++;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				break;
 
 			case TGSI_SEMANTIC_PSIZE:
-				output[i + j].array_base = 61;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
-				/* position doesn't count in array_base */
-				pos0++;
+				output[j].array_base = next_pos_base++;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				break;
-
+			case TGSI_SEMANTIC_CLIPVERTEX:
+				j--;
+				break;
 			case TGSI_SEMANTIC_CLIPDIST:
-				/* array base for enabled OUT_MISC_VEC & CCDIST[0|1]_VEC
-				 * vectors is allocated sequentially, starting from 61 */
-				output[i + j].array_base = 61 + shader->output[i].sid
-					/* +1 if OUT_MISC_VEC is enabled */
-					+ shader->vs_out_misc_write
-					/* -1 if OUT_CCDIST0_VEC is disabled */
-					- (((shader->clip_dist_write & 0xF) == 0)? 1 : 0);
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
-				j++;
-				pos0++;
-				/* duplicate it as PARAM to pass to the pixel shader */
-				memcpy(&output[i+j], &output[i+j-1], sizeof(struct r600_bytecode_output));
-				output[i + j].array_base = i+j-pos0;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+				output[j].array_base = next_pos_base++;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				/* spi_sid is 0 for clipdistance outputs that were generated
+				 * for clipvertex - we don't need to pass them to PS */
+				if (shader->output[i].spi_sid) {
+					j++;
+					/* duplicate it as PARAM to pass to the pixel shader */
+					memcpy(&output[j], &output[j-1], sizeof(struct r600_bytecode_output));
+					output[j].array_base = next_param_base++;
+					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+				}
 				break;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
-				output[i + j].array_base = shader->output[i].sid;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[j].array_base = next_pixel_base++;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				if (shader->fs_write_all && (rctx->chip_class >= EVERGREEN)) {
-					for (j = 1; j < shader->nr_cbufs; j++) {
-						memset(&output[i + j], 0, sizeof(struct r600_bytecode_output));
-						output[i + j].gpr = shader->output[i].gpr;
-						output[i + j].elem_size = 3;
-						output[i + j].swizzle_x = 0;
-						output[i + j].swizzle_y = 1;
-						output[i + j].swizzle_z = 2;
-						output[i + j].swizzle_w = 3;
-						output[i + j].burst_count = 1;
-						output[i + j].barrier = 1;
-						output[i + j].array_base = shader->output[i].sid + j;
-						output[i + j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
-						output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+					for (k = 1; k < shader->nr_cbufs; k++) {
+						j++;
+						memset(&output[j], 0, sizeof(struct r600_bytecode_output));
+						output[j].gpr = shader->output[i].gpr;
+						output[j].elem_size = 3;
+						output[j].swizzle_x = 0;
+						output[j].swizzle_y = 1;
+						output[j].swizzle_z = 2;
+						output[j].swizzle_w = 3;
+						output[j].burst_count = 1;
+						output[j].barrier = 1;
+						output[j].array_base = next_pixel_base++;
+						output[j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+						output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 					}
-					j = shader->nr_cbufs-1;
 				}
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				output[i + j].array_base = 61;
-				output[i + j].swizzle_x = 2;
-				output[i + j].swizzle_y = 7;
-				output[i + j].swizzle_z = output[i + j].swizzle_w = 7;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[j].array_base = 61;
+				output[j].swizzle_x = 2;
+				output[j].swizzle_y = 7;
+				output[j].swizzle_z = output[j].swizzle_w = 7;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else if (shader->output[i].name == TGSI_SEMANTIC_STENCIL) {
-				output[i + j].array_base = 61;
-				output[i + j].swizzle_x = 7;
-				output[i + j].swizzle_y = 1;
-				output[i + j].swizzle_z = output[i + j].swizzle_w = 7;
-				output[i + j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[j].array_base = 61;
+				output[j].swizzle_x = 7;
+				output[j].swizzle_y = 1;
+				output[j].swizzle_z = output[j].swizzle_w = 7;
+				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
 				r = -EINVAL;
@@ -1150,48 +1191,49 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			r = -EINVAL;
 			goto out_err;
 		}
+
+		if (output[j].type==-1) {
+			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+			output[j].array_base = next_param_base++;
+		}
 	}
-	noutput += j;
+
 	/* add fake param output for vertex shader if no param is exported */
-	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
-		for (i = 0, pos0 = 0; i < noutput; i++) {
-			if (output[i].type == V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM) {
-				pos0 = 1;
-				break;
-			}
-		}
-		if (!pos0) {
-			memset(&output[i], 0, sizeof(struct r600_bytecode_output));
-			output[i].gpr = 0;
-			output[i].elem_size = 3;
-			output[i].swizzle_x = 7;
-			output[i].swizzle_y = 7;
-			output[i].swizzle_z = 7;
-			output[i].swizzle_w = 7;
-			output[i].burst_count = 1;
-			output[i].barrier = 1;
-			output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
-			output[i].array_base = 0;
-			output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
-			noutput++;
-		}
+	if (ctx.type == TGSI_PROCESSOR_VERTEX && next_param_base == 0) {
+			memset(&output[j], 0, sizeof(struct r600_bytecode_output));
+			output[j].gpr = 0;
+			output[j].elem_size = 3;
+			output[j].swizzle_x = 7;
+			output[j].swizzle_y = 7;
+			output[j].swizzle_z = 7;
+			output[j].swizzle_w = 7;
+			output[j].burst_count = 1;
+			output[j].barrier = 1;
+			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+			output[j].array_base = 0;
+			output[j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+			j++;
 	}
+
 	/* add fake pixel export */
-	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && !noutput) {
-		memset(&output[0], 0, sizeof(struct r600_bytecode_output));
-		output[0].gpr = 0;
-		output[0].elem_size = 3;
-		output[0].swizzle_x = 7;
-		output[0].swizzle_y = 7;
-		output[0].swizzle_z = 7;
-		output[0].swizzle_w = 7;
-		output[0].burst_count = 1;
-		output[0].barrier = 1;
-		output[0].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
-		output[0].array_base = 0;
-		output[0].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
-		noutput++;
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && j == 0) {
+		memset(&output[j], 0, sizeof(struct r600_bytecode_output));
+		output[j].gpr = 0;
+		output[j].elem_size = 3;
+		output[j].swizzle_x = 7;
+		output[j].swizzle_y = 7;
+		output[j].swizzle_z = 7;
+		output[j].swizzle_w = 7;
+		output[j].burst_count = 1;
+		output[j].barrier = 1;
+		output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+		output[j].array_base = 0;
+		output[j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+		j++;
 	}
+
+	noutput = j;
+
 	/* set export done on last export of each type */
 	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
 		if (ctx.bc->chip_class < CAYMAN) {

@@ -1211,6 +1211,7 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct pipe_resource *cbuf;
 
 	if (rstate == NULL)
 		return;
@@ -1235,6 +1236,13 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	free(rctx->states[R600_PIPE_STATE_CLIP]);
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
+
+	cbuf = pipe_user_buffer_create(ctx->screen,
+                                   state->ucp,
+                                   4*4*8, /* 8*4 floats */
+                                   PIPE_BIND_CONSTANT_BUFFER);
+	r600_set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, cbuf);
+	pipe_resource_reference(&cbuf, NULL);
 }
 
 static void evergreen_set_polygon_stipple(struct pipe_context *ctx,

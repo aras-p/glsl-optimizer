@@ -39,7 +39,7 @@
 #include "r600_shader.h"
 #include "r600_resource.h"
 
-#define R600_MAX_CONST_BUFFERS 1
+#define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
 #ifdef PIPE_ARCH_BIG_ENDIAN

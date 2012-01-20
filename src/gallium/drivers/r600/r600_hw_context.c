@@ -408,9 +408,13 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028128_CB_CLEAR_BLUE, 0, 0, 0},
 	{R_02812C_CB_CLEAR_ALPHA, 0, 0, 0},
 	{R_028140_ALU_CONST_BUFFER_SIZE_PS_0, REG_FLAG_DIRTY_ALWAYS, 0, 0},
+	{R_028144_ALU_CONST_BUFFER_SIZE_PS_1, REG_FLAG_DIRTY_ALWAYS, 0, 0},
 	{R_028180_ALU_CONST_BUFFER_SIZE_VS_0, REG_FLAG_DIRTY_ALWAYS, 0, 0},
+	{R_028184_ALU_CONST_BUFFER_SIZE_VS_1, REG_FLAG_DIRTY_ALWAYS, 0, 0},
 	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
 	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
 	{R_02823C_CB_SHADER_MASK, 0, 0, 0},
 	{R_028238_CB_TARGET_MASK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
@@ -1329,15 +1333,20 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 			if (block->pm4_bo_index[j]) {
 				/* find relocation */
 				struct r600_block_reloc *reloc = &block->reloc[block->pm4_bo_index[j]];
-				block->pm4[reloc->bo_pm4_index] =
-					r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
-				r600_context_bo_flush(ctx,
-						      reloc->flush_flags,
-						      reloc->flush_mask,
-						      reloc->bo);
+				if (reloc->bo) {
+					block->pm4[reloc->bo_pm4_index] =
+							r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
+					r600_context_bo_flush(ctx,
+							reloc->flush_flags,
+							reloc->flush_mask,
+							reloc->bo);
+				} else {
+					block->pm4[reloc->bo_pm4_index] = 0;
+				}
 				nbo--;
 				if (nbo == 0)
 					break;
+
 			}
 		}
 		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;

@@ -357,11 +357,11 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	case PIPE_SHADER_VERTEX:
 		rctx->vs_const_buffer.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
+					R_028180_ALU_CONST_BUFFER_SIZE_VS_0 + index * 4,
 					ALIGN_DIVUP(buffer->width0 >> 4, 16),
 					0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028980_ALU_CONST_CACHE_VS_0,
+					R_028980_ALU_CONST_CACHE_VS_0 + index * 4,
 					va_offset, 0xFFFFFFFF, rbuffer, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 
@@ -563,7 +563,7 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 	else
 		user_clip_plane_enable = rctx->rasterizer->clip_plane_enable & 0x3F;
 
-	clip_dist_enable = rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write & 0xFF;
+	clip_dist_enable = rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write;
 	rstate.nregs = 0;
 
 	if (user_clip_plane_enable != rctx->user_clip_plane_enable) {
