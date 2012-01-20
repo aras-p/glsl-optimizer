@@ -79,9 +79,14 @@ gen6_upload_blend_state(struct brw_context *brw)
       /* _NEW_COLOR */
       if (ctx->Color.ColorLogicOpEnabled) {
 	 /* Floating point RTs should have no effect from LogicOp,
-	  * except for disabling of blending
+	  * except for disabling of blending.
+	  *
+	  * From the Sandy Bridge PRM, Vol 2 Par 1, Section 8.1.11, "Logic Ops",
+	  *
+	  *     "Logic Ops are only supported on *_UNORM surfaces (excluding
+	  *      _SRGB variants), otherwise Logic Ops must be DISABLED."
 	  */
-	 if (rb_type != GL_FLOAT) {
+	 if (rb_type == GL_UNSIGNED_NORMALIZED) {
 	    blend[b].blend1.logic_op_enable = 1;
 	    blend[b].blend1.logic_op_func =
 	       intel_translate_logic_op(ctx->Color.LogicOp);
