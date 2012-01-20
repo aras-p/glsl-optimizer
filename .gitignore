@@ -42,3 +42,13 @@ manifest.txt
 xcuserdata
 *.xcworkspace
 
+cmake_install.cmake
+Makefile
+CMakeFiles/
+CMakeCache.txt
+.project
+.cproject
+glsl_main
+glsl_test
+glcpp
+glslopt
