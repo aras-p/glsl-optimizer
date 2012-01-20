@@ -769,7 +769,13 @@ static void upload_state_base_address( struct brw_context *brw )
 		 1); /* Instruction base address: shader kernels (incl. SIP) */
 
        OUT_BATCH(1); /* General state upper bound */
-       OUT_BATCH(1); /* Dynamic state upper bound */
+       /* Dynamic state upper bound.  Although the documentation says that
+	* programming it to zero will cause it to be ignored, that is a lie.
+	* If this isn't programmed to a real bound, the sampler border color
+	* pointer is rejected, causing border color to mysteriously fail.
+	*/
+       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		 intel->batch.bo->size | 1);
        OUT_BATCH(1); /* Indirect object upper bound */
        OUT_BATCH(1); /* Instruction access upper bound */
        ADVANCE_BATCH();
