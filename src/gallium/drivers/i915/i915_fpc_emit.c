@@ -245,7 +245,7 @@ uint i915_emit_texld( struct i915_fp_compile *p,
          ignore |= (0xf << UREG_CHANNEL_W_SHIFT);
    }
 
-   if ( (coord &~ignore ) != (k & ~ignore) ) {
+   if ( (coord & ~ignore ) != (k & ~ignore) ) {
       /* texcoord is swizzled or negated.  Need to allocate a new temporary
        * register (a utemp / unpreserved temp) won't do.
        */
