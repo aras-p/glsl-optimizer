@@ -312,8 +312,8 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    const gl_format texFormat =
       _mesa_get_srgb_format_linear(texImage->TexFormat);
    const GLuint width = texImage->Width;
-   const GLuint height = texImage->Height;
-   const GLuint depth = texImage->Depth;
+   GLuint height = texImage->Height;
+   GLuint depth = texImage->Depth;
    GLuint img, row;
    GLfloat (*rgba)[4];
    GLuint (*rgba_uint)[4];
@@ -325,6 +325,11 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
       return;
+   }
+
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
    }
 
    for (img = 0; img < depth; img++) {
