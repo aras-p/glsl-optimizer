@@ -2035,6 +2035,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 	struct r600_so_target **t = ctx->so_targets;
 	unsigned *stride_in_dw = ctx->vs_so_stride_in_dw;
 	unsigned buffer_en, i, update_flags = 0;
+	uint64_t va;
 
 	buffer_en = (ctx->num_so_targets >= 1 && t[0] ? 1 : 0) |
 		    (ctx->num_so_targets >= 2 && t[1] ? 2 : 0) |
@@ -2066,6 +2067,8 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 		if (t[i]) {
 			t[i]->stride_in_dw = stride_in_dw[i];
 			t[i]->so_index = i;
+			va = r600_resource_va(&ctx->screen->screen,
+					      (void*)t[i]->b.buffer);
 
 			update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
 
@@ -2075,7 +2078,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 			ctx->pm4[ctx->pm4_cdwords++] = (t[i]->b.buffer_offset +
 							t[i]->b.buffer_size) >> 2; /* BUFFER_SIZE (in DW) */
 			ctx->pm4[ctx->pm4_cdwords++] = stride_in_dw[i];		   /* VTX_STRIDE (in DW) */
-			ctx->pm4[ctx->pm4_cdwords++] = 0;			   /* BUFFER_BASE */
+			ctx->pm4[ctx->pm4_cdwords++] = va >> 8;			   /* BUFFER_BASE */
 
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 			ctx->pm4[ctx->pm4_cdwords++] =
@@ -2083,14 +2086,16 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 						      RADEON_USAGE_WRITE);
 
 			if (ctx->streamout_append_bitmask & (1 << i)) {
+				va = r600_resource_va(&ctx->screen->screen,
+						      (void*)t[i]->filled_size);
 				/* Append. */
 				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
 				ctx->pm4[ctx->pm4_cdwords++] = STRMOUT_SELECT_BUFFER(i) |
 							       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_MEM); /* control */
 				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
 				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* src address lo */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* src address hi */
+				ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL; /* src address lo */
+				ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* src address hi */
 
 				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 				ctx->pm4[ctx->pm4_cdwords++] =
@@ -2119,6 +2124,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 {
 	struct r600_so_target **t = ctx->so_targets;
 	unsigned i, flush_flags = 0;
+	uint64_t va;
 
 	if (ctx->screen->chip_class >= EVERGREEN) {
 		evergreen_flush_vgt_streamout(ctx);
@@ -2128,12 +2134,14 @@ void r600_context_streamout_end(struct r600_context *ctx)
 
 	for (i = 0; i < ctx->num_so_targets; i++) {
 		if (t[i]) {
+			va = r600_resource_va(&ctx->screen->screen,
+					      (void*)t[i]->filled_size);
 			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
 			ctx->pm4[ctx->pm4_cdwords++] = STRMOUT_SELECT_BUFFER(i) |
 						       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_NONE) |
 						       STRMOUT_STORE_BUFFER_FILLED_SIZE; /* control */
-			ctx->pm4[ctx->pm4_cdwords++] = 0; /* dst address lo */
-			ctx->pm4[ctx->pm4_cdwords++] = 0; /* dst address hi */
+			ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;     /* dst address lo */
+			ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* dst address hi */
 			ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
 			ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
 
@@ -2178,6 +2186,9 @@ void r600_context_streamout_end(struct r600_context *ctx)
 
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
 {
+	uint64_t va = r600_resource_va(&ctx->screen->screen,
+				       (void*)t->filled_size);
+
 	r600_need_cs_space(ctx, 14 + 21, TRUE);
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
@@ -2190,8 +2201,8 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_COPY_DW, 4, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* src address lo */
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* src address hi */
+	ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;     /* src address lo */
+	ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* src address hi */
 	ctx->pm4[ctx->pm4_cdwords++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
 	ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
 
