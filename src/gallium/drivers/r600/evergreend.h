@@ -675,13 +675,6 @@
 #define   G_028814_MULTI_PRIM_IB_ENA(x)                (((x) >> 21) & 0x1)
 #define   C_028814_MULTI_PRIM_IB_ENA                   0xFFDFFFFF
 
-#define R_028004_DB_DEPTH_VIEW                       0x028004
-#define   S_028004_SLICE_START(x)                      (((x) & 0x7FF) << 0)
-#define   G_028004_SLICE_START(x)                      (((x) >> 0) & 0x7FF)
-#define   C_028004_SLICE_START                         0xFFFFF800
-#define   S_028004_SLICE_MAX(x)                        (((x) & 0x7FF) << 13)
-#define   G_028004_SLICE_MAX(x)                        (((x) >> 13) & 0x7FF)
-#define   C_028004_SLICE_MAX                           0xFF001FFF
 #define R_028D24_DB_HTILE_SURFACE                    0x028D24
 #define   S_028D24_HTILE_WIDTH(x)                      (((x) & 0x1) << 0)
 #define   G_028D24_HTILE_WIDTH(x)                      (((x) >> 0) & 0x1)
@@ -1469,6 +1462,12 @@
 #define   S_028004_ZPASS_INCREMENT_DISABLE        (((x) & 0x1) << 0)
 #define   S_028004_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 1)
 #define R_028008_DB_DEPTH_VIEW                       0x00028008
+#define   S_028008_SLICE_START(x)                      (((x) & 0x7FF) << 0)
+#define   G_028008_SLICE_START(x)                      (((x) >> 0) & 0x7FF)
+#define   C_028008_SLICE_START                         0xFFFFF800
+#define   S_028008_SLICE_MAX(x)                        (((x) & 0x7FF) << 13)
+#define   G_028008_SLICE_MAX(x)                        (((x) >> 13) & 0x7FF)
+#define   C_028008_SLICE_MAX                           0xFF001FFF
 #define R_02800C_DB_RENDER_OVERRIDE                  0x0002800C
 #define   V_02800C_FORCE_OFF                         0
 #define   V_02800C_FORCE_ENABLE                      1
