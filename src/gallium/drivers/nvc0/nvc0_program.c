@@ -492,28 +492,31 @@ nvc0_program_create_tfb_state(const struct nv50_ir_prog_info *info,
                               const struct pipe_stream_output_info *pso)
 {
    struct nvc0_transform_feedback_state *tfb;
-   int n = 0;
-   int i, c, b;
+   unsigned b, i, c;
 
-   tfb = MALLOC(sizeof(*tfb) + pso->num_outputs * 4 * sizeof(uint8_t));
+   tfb = MALLOC_STRUCT(nvc0_transform_feedback_state);
    if (!tfb)
       return NULL;
-
    for (b = 0; b < 4; ++b) {
-      tfb->varying_count[b] = 0;
-
-      for (i = 0; i < pso->num_outputs; ++i) {
-         unsigned startc = pso->output[i].start_component;
-         if (pso->output[i].output_buffer != b)
-            continue;
-         for (c = 0; c < pso->output[i].num_components; ++c) {
-            tfb->varying_count[b]++;
-            tfb->varying_index[n++] =
-               info->out[pso->output[i].register_index].slot[startc + c];
-         }
-      }
       tfb->stride[b] = pso->stride[b] * 4;
+      tfb->varying_count[b] = 0;
    }
+   memset(tfb->varying_index, 0xff, sizeof(tfb->varying_index)); /* = skip */
+
+   for (i = 0; i < pso->num_outputs; ++i) {
+      unsigned s = pso->output[i].start_component;
+      unsigned p = pso->output[i].dst_offset;
+      b = pso->output[i].output_buffer;
+
+      for (c = 0; c < pso->output[i].num_components; ++c)
+         tfb->varying_index[b][p++] =
+            info->out[pso->output[i].register_index].slot[s + c];
+
+      tfb->varying_count[b] = MAX2(tfb->varying_count[b], p);
+   }
+   for (b = 0; b < 4; ++b) // zero unused indices (looks nicer)
+      for (c = tfb->varying_count[b]; c & 3; ++c)
+         tfb->varying_index[b][c] = 0;
 
    return tfb;
 }

@@ -207,7 +207,7 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct nvc0_transform_feedback_state *tfb;
-   unsigned b, n, i;
+   unsigned b;
 
    if (nvc0->gmtyprog) tfb = nvc0->gmtyprog->tfb;
    else
@@ -218,22 +218,16 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
    IMMED_RING(chan, RING_3D(TFB_ENABLE), (tfb && nvc0->num_tfbbufs) ? 1 : 0);
 
    if (tfb && tfb != nvc0->state.tfb) {
-      uint8_t var[128];
-
-      for (n = 0, b = 0; b < 4; n += tfb->varying_count[b++]) {
+      for (b = 0; b < 4; ++b) {
          if (tfb->varying_count[b]) {
+            unsigned n = (tfb->varying_count[b] + 3) / 4;
+
             BEGIN_RING(chan, RING_3D(TFB_STREAM(b)), 3);
             OUT_RING  (chan, 0);
             OUT_RING  (chan, tfb->varying_count[b]);
             OUT_RING  (chan, tfb->stride[b]);
-
-            for (i = 0; i < tfb->varying_count[b]; ++i)
-               var[i] = tfb->varying_index[n + i];
-            for (; i & 3; ++i)
-               var[i] = 0; /* zero rest of method word bits */
-
-            BEGIN_RING(chan, RING_3D(TFB_VARYING_LOCS(b, 0)), i / 4);
-            OUT_RINGp (chan, var, i / 4);
+            BEGIN_RING(chan, RING_3D(TFB_VARYING_LOCS(b, 0)), n);
+            OUT_RINGp (chan, tfb->varying_index[b], n);
 
             if (nvc0->tfbbuf[b])
                nvc0_so_target(nvc0->tfbbuf[b])->stride = tfb->stride[b];
