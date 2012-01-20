@@ -1388,9 +1388,10 @@ public:
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
    bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
                         ir_variable *output_var);
+   bool accumulate_num_outputs(struct gl_shader_program *prog, unsigned *count);
    bool store(struct gl_context *ctx, struct gl_shader_program *prog,
               struct gl_transform_feedback_info *info, unsigned buffer,
-	      unsigned varying) const;
+              unsigned varying, const unsigned max_outputs) const;
 
 
    /**
@@ -1624,16 +1625,9 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
 }
 
 
-/**
- * Update gl_transform_feedback_info to reflect this tfeedback_decl.
- *
- * If an error occurs, the error is reported through linker_error() and false
- * is returned.
- */
 bool
-tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
-                      struct gl_transform_feedback_info *info,
-                      unsigned buffer, unsigned varying) const
+tfeedback_decl::accumulate_num_outputs(struct gl_shader_program *prog,
+                                       unsigned *count)
 {
    if (!this->is_assigned()) {
       /* From GL_EXT_transform_feedback:
@@ -1648,6 +1642,28 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       return false;
    }
 
+   unsigned translated_size = this->size;
+   if (this->is_clip_distance_mesa)
+      translated_size = (translated_size + 3) / 4;
+
+   *count += translated_size * this->matrix_columns;
+
+   return true;
+}
+
+
+/**
+ * Update gl_transform_feedback_info to reflect this tfeedback_decl.
+ *
+ * If an error occurs, the error is reported through linker_error() and false
+ * is returned.
+ */
+bool
+tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
+                      struct gl_transform_feedback_info *info,
+                      unsigned buffer,
+                      unsigned varying, const unsigned max_outputs) const
+{
    /* From GL_EXT_transform_feedback:
     *   A program will fail to link if:
     *
@@ -1663,19 +1679,6 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       return false;
    }
 
-   /* Verify that the checks on MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS
-    * and MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS are sufficient to prevent
-    * overflow of info->Outputs[].  In worst case we generate one entry in
-    * Outputs[] per component so a conservative check is to verify that the
-    * size of the array is greater than or equal to both
-    * MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS and
-    * MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS.
-    */
-   assert(Elements(info->Outputs) >=
-          ctx->Const.MaxTransformFeedbackInterleavedComponents);
-   assert(Elements(info->Outputs) >=
-          ctx->Const.MaxTransformFeedbackSeparateComponents);
-
    unsigned translated_size = this->size;
    if (this->is_clip_distance_mesa)
       translated_size = (translated_size + 3) / 4;
@@ -1683,6 +1686,7 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
    for (unsigned index = 0; index < translated_size; ++index) {
       for (unsigned v = 0; v < this->matrix_columns; ++v) {
          unsigned num_components = this->vector_elements;
+         assert(info->NumOutputs < max_outputs);
          info->Outputs[info->NumOutputs].ComponentOffset = 0;
          if (this->is_clip_distance_mesa) {
             if (this->is_subscripted) {
@@ -1976,6 +1980,7 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
       prog->TransformFeedback.BufferMode == GL_SEPARATE_ATTRIBS;
 
    ralloc_free(prog->LinkedTransformFeedback.Varyings);
+   ralloc_free(prog->LinkedTransformFeedback.Outputs);
 
    memset(&prog->LinkedTransformFeedback, 0,
           sizeof(prog->LinkedTransformFeedback));
@@ -1988,12 +1993,23 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
 		    struct gl_transform_feedback_varying_info,
 		    num_tfeedback_decls);
 
+   unsigned num_outputs = 0;
+   for (unsigned i = 0; i < num_tfeedback_decls; ++i)
+      if (!tfeedback_decls[i].accumulate_num_outputs(prog, &num_outputs))
+         return false;
+
+   prog->LinkedTransformFeedback.Outputs =
+      rzalloc_array(prog,
+                    struct gl_transform_feedback_output,
+                    num_outputs);
+
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
       unsigned buffer = separate_attribs_mode ? i : 0;
       if (!tfeedback_decls[i].store(ctx, prog, &prog->LinkedTransformFeedback,
-                                    buffer, i))
+                                    buffer, i, num_outputs))
          return false;
    }
+   assert(prog->LinkedTransformFeedback.NumOutputs == num_outputs);
 
    return true;
 }

@@ -1827,6 +1827,22 @@ struct gl_transform_feedback_varying_info {
    GLint Size;
 };
 
+struct gl_transform_feedback_output {
+   unsigned OutputRegister;
+   unsigned OutputBuffer;
+   unsigned NumComponents;
+
+   /** offset (in DWORDs) of this output within the interleaved structure */
+   unsigned DstOffset;
+
+   /**
+    * Offset into the output register of the data to output.  For example,
+    * if NumComponents is 2 and ComponentOffset is 1, then the data to
+    * offset is in the y and z components of the output register.
+    */
+   unsigned ComponentOffset;
+};
+
 /** Post-link transform feedback info. */
 struct gl_transform_feedback_info {
    unsigned NumOutputs;
@@ -1836,21 +1852,7 @@ struct gl_transform_feedback_info {
     */
    unsigned NumBuffers;
 
-   struct {
-      unsigned OutputRegister;
-      unsigned OutputBuffer;
-      unsigned NumComponents;
-
-      /** offset (in DWORDs) of this output within the interleaved structure */
-      unsigned DstOffset;
-
-      /**
-       * Offset into the output register of the data to output.  For example,
-       * if NumComponents is 2 and ComponentOffset is 1, then the data to
-       * offset is in the y and z components of the output register.
-       */
-      unsigned ComponentOffset;
-   } Outputs[MAX_PROGRAM_OUTPUTS];
+   struct gl_transform_feedback_output *Outputs;
 
    /** Transform feedback varyings used for the linking of this shader program.
     *
