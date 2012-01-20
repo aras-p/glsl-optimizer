@@ -50,6 +50,7 @@
 #include "s_stencil.h"
 #include "s_texcombine.h"
 
+#include <stdbool.h>
 
 /**
  * Set default fragment attributes for the span using the
@@ -968,7 +969,25 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
 static inline void
 shade_texture_span(struct gl_context *ctx, SWspan *span)
 {
-   if (ctx->FragmentProgram._Current ||
+   /* This is a hack to work around drivers such as i965 that:
+    *
+    *     - Set _MaintainTexEnvProgram to generate GLSL IR for
+    *       fixed-function fragment processing.
+    *     - Don't call _mesa_ir_link_shader to generate Mesa IR from
+    *       the GLSL IR.
+    *     - May use swrast to handle glDrawPixels.
+    *
+    * Since _mesa_ir_link_shader is never called, there is no Mesa IR
+    * to execute.  Instead do regular fixed-function processing.
+    *
+    * It is also worth noting that the software fixed-function path is
+    * much faster than the software shader path.
+    */
+   const bool use_fragment_program =
+      ctx->FragmentProgram._Current
+      && ctx->FragmentProgram._Current != ctx->FragmentProgram._TexEnvProgram;
+
+   if (use_fragment_program ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
@@ -997,7 +1016,7 @@ shade_texture_span(struct gl_context *ctx, SWspan *span)
          interpolate_wpos(ctx, span);
 
       /* Run fragment program/shader now */
-      if (ctx->FragmentProgram._Current) {
+      if (use_fragment_program) {
          _swrast_exec_fragment_program(ctx, span);
       }
       else {
