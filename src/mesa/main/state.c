@@ -33,6 +33,7 @@
 
 #include "glheader.h"
 #include "mtypes.h"
+#include "arrayobj.h"
 #include "context.h"
 #include "debug.h"
 #include "macros.h"
