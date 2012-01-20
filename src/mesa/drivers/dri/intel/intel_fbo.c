@@ -59,15 +59,6 @@
 static struct gl_renderbuffer *
 intel_new_renderbuffer(struct gl_context * ctx, GLuint name);
 
-static bool
-intel_renderbuffer_update_wrapper(struct intel_context *intel,
-                                  struct intel_renderbuffer *irb,
-                                  struct intel_mipmap_tree *mt,
-                                  uint32_t level,
-                                  uint32_t layer,
-                                  gl_format format,
-                                  GLenum internal_format);
-
 bool
 intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
 {
@@ -470,19 +461,20 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
  *
  * @return true on success
  */
+
 static bool
 intel_renderbuffer_update_wrapper(struct intel_context *intel,
                                   struct intel_renderbuffer *irb,
-                                  struct intel_mipmap_tree *mt,
-                                  uint32_t level,
-                                  uint32_t layer,
-                                  gl_format format,
-                                  GLenum internal_format)
+				  struct gl_texture_image *image,
+                                  uint32_t layer)
 {
    struct gl_renderbuffer *rb = &irb->Base.Base;
+   struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct intel_mipmap_tree *mt = intel_image->mt;
+   int level = image->Level;
 
-   rb->Format = format;
-   rb->InternalFormat = internal_format;
+   rb->Format = image->TexFormat;
+   rb->InternalFormat = image->InternalFormat;
    rb->_BaseFormat = _mesa_get_format_base_format(rb->Format);
    rb->Width = mt->level[level].width;
    rb->Height = mt->level[level].height;
@@ -628,10 +620,7 @@ intel_render_texture(struct gl_context * ctx,
       }
    }
 
-   if (!intel_renderbuffer_update_wrapper(intel, irb,
-                                          mt, att->TextureLevel, layer,
-                                          image->TexFormat,
-                                          image->InternalFormat)) {
+   if (!intel_renderbuffer_update_wrapper(intel, irb, image, layer)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _swrast_render_texture(ctx, fb, att);
        return;
