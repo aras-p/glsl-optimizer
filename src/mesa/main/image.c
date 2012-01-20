@@ -759,36 +759,48 @@ _mesa_is_color_format(GLenum format)
       /* sized integer formats */
       case GL_RGBA32UI_EXT:
       case GL_RGB32UI_EXT:
+      case GL_RG32UI:
+      case GL_R32UI:
       case GL_ALPHA32UI_EXT:
       case GL_INTENSITY32UI_EXT:
       case GL_LUMINANCE32UI_EXT:
       case GL_LUMINANCE_ALPHA32UI_EXT:
       case GL_RGBA16UI_EXT:
       case GL_RGB16UI_EXT:
+      case GL_RG16UI:
+      case GL_R16UI:
       case GL_ALPHA16UI_EXT:
       case GL_INTENSITY16UI_EXT:
       case GL_LUMINANCE16UI_EXT:
       case GL_LUMINANCE_ALPHA16UI_EXT:
       case GL_RGBA8UI_EXT:
       case GL_RGB8UI_EXT:
+      case GL_RG8UI:
+      case GL_R8UI:
       case GL_ALPHA8UI_EXT:
       case GL_INTENSITY8UI_EXT:
       case GL_LUMINANCE8UI_EXT:
       case GL_LUMINANCE_ALPHA8UI_EXT:
       case GL_RGBA32I_EXT:
       case GL_RGB32I_EXT:
+      case GL_RG32I:
+      case GL_R32I:
       case GL_ALPHA32I_EXT:
       case GL_INTENSITY32I_EXT:
       case GL_LUMINANCE32I_EXT:
       case GL_LUMINANCE_ALPHA32I_EXT:
       case GL_RGBA16I_EXT:
       case GL_RGB16I_EXT:
+      case GL_RG16I:
+      case GL_R16I:
       case GL_ALPHA16I_EXT:
       case GL_INTENSITY16I_EXT:
       case GL_LUMINANCE16I_EXT:
       case GL_LUMINANCE_ALPHA16I_EXT:
       case GL_RGBA8I_EXT:
       case GL_RGB8I_EXT:
+      case GL_RG8I:
+      case GL_R8I:
       case GL_ALPHA8I_EXT:
       case GL_INTENSITY8I_EXT:
       case GL_LUMINANCE8I_EXT:
