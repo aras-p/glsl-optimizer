@@ -472,7 +472,8 @@ struct gl_shader *brw_new_shader(struct gl_context *ctx, GLuint name, GLuint typ
 struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint name);
 
 bool brw_color_buffer_write_enabled(struct brw_context *brw);
-bool brw_render_target_supported(struct intel_context *intel, gl_format format);
+bool brw_render_target_supported(struct intel_context *intel,
+				 struct gl_renderbuffer *rb);
 void brw_wm_payload_setup(struct brw_context *brw,
 			  struct brw_wm_compile *c);
 bool do_wm_prog(struct brw_context *brw,

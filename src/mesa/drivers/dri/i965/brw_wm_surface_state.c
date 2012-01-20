@@ -557,12 +557,12 @@ brw_init_surface_formats(struct brw_context *brw)
 }
 
 bool
-brw_render_target_supported(struct intel_context *intel, gl_format format)
+brw_render_target_supported(struct intel_context *intel,
+			    struct gl_renderbuffer *rb)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   /* Not exactly true, as some of those formats are not renderable.
-    * But at least we know how to translate them.
-    */
+   gl_format format = rb->Format;
+
    return brw->format_supported_as_render_target[format];
 }
 

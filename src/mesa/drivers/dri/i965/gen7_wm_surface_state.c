@@ -221,7 +221,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 	 surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
-      assert(brw_render_target_supported(intel, rb_format));
+      assert(brw_render_target_supported(intel, rb));
       surf->ss0.surface_format = brw->render_target_format[rb_format];
       if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
 	 _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
