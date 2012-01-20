@@ -83,24 +83,6 @@ _mesa_get_cpu_string(void)
 
    strcat(buffer, "SPARC");
 
-#elif defined(USE_PPC_ASM)
-
-   if (_mesa_ppc_cpu_features) {
-      strcat(buffer, (cpu_has_64) ? "PowerPC 64" : "PowerPC");
-   }
-
-# ifdef USE_VMX_ASM
-
-   if (cpu_has_vmx) {
-      strcat(buffer, "/Altivec");
-   }
-
-# endif
-
-   if (! cpu_has_fpu) {
-      strcat(buffer, "/No FPU");
-   }
-
 #endif
 
    assert(strlen(buffer) < MAX_STRING);

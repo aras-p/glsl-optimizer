@@ -277,7 +277,6 @@ ASM_C_SOURCES =	\
 	x86/sse.c \
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
-	ppc/common_ppc.c \
 	x86-64/x86-64.c
 
 X86_SOURCES =			\
@@ -336,7 +335,6 @@ MESA_GALLIUM_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
 	$(PROGRAM_SOURCES)	\
-	ppc/common_ppc.c	\
 	x86/common_x86.c
 
 MESA_GALLIUM_CXX_SOURCES = \

@@ -519,11 +519,6 @@ if test "x$enable_asm" = xyes; then
         GLAPI_ASM_SOURCES='$(X86-64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
-    ppc)
-        ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-        MESA_ASM_SOURCES='$(PPC_SOURCES)'
-        AC_MSG_RESULT([yes, ppc])
-        ;;
     sparc)
         ASM_FLAGS="-DUSE_SPARC_ASM"
         MESA_ASM_SOURCES='$(SPARC_SOURCES)'

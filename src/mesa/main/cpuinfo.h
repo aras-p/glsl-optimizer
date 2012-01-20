@@ -31,10 +31,6 @@
 #include "x86/common_x86_asm.h"
 #endif
 
-#if defined(USE_PPC_ASM)
-#include "ppc/common_ppc_features.h"
-#endif
-
 
 extern void
 _mesa_get_cpu_features(void);

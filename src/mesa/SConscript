@@ -423,14 +423,6 @@ if env['gcc'] and env['platform'] != 'windows':
             'x86-64/x86-64.c',
             'x86-64/xform4.S',
         ]
-    elif env['machine'] == 'ppc':
-        env.Append(CPPDEFINES = [
-            'USE_PPC_ASM',
-            'USE_VMX_ASM',
-        ])
-        mesa_sources += [
-            'ppc/common_ppc.c',
-        ]
     elif env['machine'] == 'sparc':
         mesa_sources += [
             'sparc/sparc.c',
