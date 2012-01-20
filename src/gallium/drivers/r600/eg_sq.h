@@ -78,6 +78,10 @@
 #define   S_SQ_CF_ALU_WORD0_KCACHE_MODE0(x)                          (((x) & 0x3) << 30)
 #define   G_SQ_CF_ALU_WORD0_KCACHE_MODE0(x)                          (((x) >> 30) & 0x3)
 #define   C_SQ_CF_ALU_WORD0_KCACHE_MODE0                             0x3FFFFFFF
+#define     V_SQ_CF_KCACHE_NOP                                       0x00000000
+#define     V_SQ_CF_KCACHE_LOCK_1                                    0x00000001
+#define     V_SQ_CF_KCACHE_LOCK_2                                    0x00000002
+#define     V_SQ_CF_KCACHE_LOCK_LOOP_INDEX                           0x00000003
 #define P_SQ_CF_ALU_WORD1
 #define   S_SQ_CF_ALU_WORD1_KCACHE_MODE1(x)                          (((x) & 0x3) << 0)
 #define   G_SQ_CF_ALU_WORD1_KCACHE_MODE1(x)                          (((x) >> 0) & 0x3)
@@ -103,7 +107,50 @@
 #define   S_SQ_CF_ALU_WORD1_BARRIER(x)                               (((x) & 0x1) << 31)
 #define   G_SQ_CF_ALU_WORD1_BARRIER(x)                               (((x) >> 31) & 0x1)
 #define   C_SQ_CF_ALU_WORD1_BARRIER                                  0x7FFFFFFF
-/* extended TODO */
+
+#define P_SQ_CF_ALU_WORD0_EXT
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE0(x)           (((x) & 0x3) << 4)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE0(x)           (((x) >> 4) & 0x3)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE0              0xFFFFFFCF
+#define	    V_SQ_CF_INDEX_NONE                                       0x00
+#define	    V_SQ_CF_INDEX_0                                          0x01
+#define	    V_SQ_CF_INDEX_1                                          0x02
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE1(x)           (((x) & 0x3) << 6)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE1(x)           (((x) >> 6) & 0x3)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE1              0xFFFFFF3F
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE2(x)           (((x) & 0x3) << 8)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE2(x)           (((x) >> 8) & 0x3)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE2              0xFFFFFCFF
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE3(x)           (((x) & 0x3) << 10)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE3(x)           (((x) >> 10) & 0x3)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE3              0xFFFFF3FF
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK2(x)                      (((x) & 0xF) << 22)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK2(x)                      (((x) >> 22) & 0xF)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK2                         0xFC3FFFFF
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK3(x)                      (((x) & 0xF) << 26)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK3(x)                      (((x) >> 26) & 0xF)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK3                         0xC3FFFFFF
+#define   S_SQ_CF_ALU_WORD0_EXT_KCACHE_MODE2(x)                      (((x) & 0x3) << 30)
+#define   G_SQ_CF_ALU_WORD0_EXT_KCACHE_MODE2(x)                      (((x) >> 30) & 0x3)
+#define   C_SQ_CF_ALU_WORD0_EXT_KCACHE_MODE2                         0x3FFFFFFF
+
+#define P_SQ_CF_ALU_WORD1_EXT
+#define   S_SQ_CF_ALU_WORD1_EXT_KCACHE_MODE3(x)                      (((x) & 0x3) << 0)
+#define   G_SQ_CF_ALU_WORD1_EXT_KCACHE_MODE3(x)                      (((x) >> 0) & 0x3)
+#define   C_SQ_CF_ALU_WORD1_EXT_KCACHE_MODE3                         0xFFFFFFFC
+#define   S_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR2(x)                      (((x) & 0xFF) << 2)
+#define   G_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR2(x)                      (((x) >> 2) & 0xFF)
+#define   C_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR2                         0xFFFFFC03
+#define   S_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR3(x)                      (((x) & 0xFF) << 10)
+#define   G_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR3(x)                      (((x) >> 10) & 0xFF)
+#define   C_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR3                         0xFFFC03FF
+#define   S_SQ_CF_ALU_WORD1_EXT_CF_INST(x)                           (((x) & 0xF) << 26)
+#define   G_SQ_CF_ALU_WORD1_EXT_CF_INST(x)                           (((x) >> 26) & 0xF)
+#define   C_SQ_CF_ALU_WORD1_EXT_CF_INST                              0xC3FFFFFF
+#define   S_SQ_CF_ALU_WORD1_EXT_BARRIER(x)                           (((x) & 0x1) << 31)
+#define   G_SQ_CF_ALU_WORD1_EXT_BARRIER(x)                           (((x) >> 31) & 0x1)
+#define   C_SQ_CF_ALU_WORD1_EXT_BARRIER                              0x7FFFFFFF
+
 /* done */
 #define P_SQ_CF_ALLOC_EXPORT_WORD0
 #define   S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(x)                   (((x) & 0x1FFF) << 0)

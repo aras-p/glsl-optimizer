@@ -273,8 +273,14 @@ static int r600_bytecode_add_cf(struct r600_bytecode *bc)
 	if (cf == NULL)
 		return -ENOMEM;
 	LIST_ADDTAIL(&cf->list, &bc->cf);
-	if (bc->cf_last)
+	if (bc->cf_last) {
 		cf->id = bc->cf_last->id + 2;
+		if (bc->cf_last->eg_alu_extended) {
+			/* take into account extended alu size */
+			cf->id += 2;
+			bc->ndw += 2;
+		}
+	}
 	bc->cf_last = cf;
 	bc->ncf++;
 	bc->ndw += 2;
@@ -1154,115 +1160,156 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 	return 0;
 }
 
-/* This code handles kcache lines as single blocks of 32 constants. We could
- * probably do slightly better by recognizing that we actually have two
- * consecutive lines of 16 constants, but the resulting code would also be
- * somewhat more complicated. */
-static int r600_bytecode_alloc_kcache_lines(struct r600_bytecode *bc, struct r600_bytecode_alu *alu, int type)
+/* we'll keep kcache sets sorted by bank & addr */
+static int r600_bytecode_alloc_kcache_line(struct r600_bytecode *bc,
+		struct r600_bytecode_kcache *kcache,
+		unsigned bank, unsigned line)
 {
-	struct r600_bytecode_kcache *kcache = bc->cf_last->kcache;
-	unsigned int required_lines;
-	unsigned int free_lines = 0;
-	unsigned int cache_line[3];
-	unsigned int count = 0;
-	unsigned int i, j;
-	int r;
+	int i, kcache_banks = bc->chip_class >= EVERGREEN ? 4 : 2;
 
-	/* Collect required cache lines. */
-	for (i = 0; i < 3; ++i) {
-		boolean found = false;
-		unsigned int line;
+	for (i = 0; i < kcache_banks; i++) {
+		if (kcache[i].mode) {
+			int d;
 
-		if (alu->src[i].sel < 512)
+			if (kcache[i].bank < bank)
+				continue;
+
+			if ((kcache[i].bank == bank && kcache[i].addr > line+1) ||
+					kcache[i].bank > bank) {
+				/* try to insert new line */
+				if (kcache[kcache_banks-1].mode) {
+					/* all sets are in use */
+					return -ENOMEM;
+				}
+
+				memmove(&kcache[i+1],&kcache[i], (kcache_banks-i-1)*sizeof(struct r600_bytecode_kcache));
+				kcache[i].mode = V_SQ_CF_KCACHE_LOCK_1;
+				kcache[i].bank = bank;
+				kcache[i].addr = line;
+				return 0;
+			}
+
+			d = line - kcache[i].addr;
+
+			if (d == -1) {
+				kcache[i].addr--;
+				if (kcache[i].mode == V_SQ_CF_KCACHE_LOCK_2) {
+					/* we are prepending the line to the current set,
+					 * discarding the existing second line,
+					 * so we'll have to insert line+2 after it */
+					line += 2;
+					continue;
+				} else if (kcache[i].mode == V_SQ_CF_KCACHE_LOCK_1) {
+					kcache[i].mode = V_SQ_CF_KCACHE_LOCK_2;
+					return 0;
+				} else {
+					/* V_SQ_CF_KCACHE_LOCK_LOOP_INDEX is not supported */
+					return -ENOMEM;
+				}
+			} else if (d == 1) {
+				kcache[i].mode = V_SQ_CF_KCACHE_LOCK_2;
+				return 0;
+			} else if (d == 0)
+				return 0;
+		} else { /* free kcache set - use it */
+			kcache[i].mode = V_SQ_CF_KCACHE_LOCK_1;
+			kcache[i].bank = bank;
+			kcache[i].addr = line;
+			return 0;
+		}
+	}
+	return -ENOMEM;
+}
+
+static int r600_bytecode_alloc_inst_kcache_lines(struct r600_bytecode *bc,
+		struct r600_bytecode_kcache *kcache,
+		struct r600_bytecode_alu *alu)
+{
+	int i, r;
+
+	for (i = 0; i < 3; i++) {
+		unsigned bank, line, sel = alu->src[i].sel;
+
+		if (sel < 512)
 			continue;
 
-		line = ((alu->src[i].sel - 512) / 32) * 2;
+		bank = alu->src[i].kc_bank;
+		line = (sel-512)>>4;
 
-		for (j = 0; j < count; ++j) {
-			if (cache_line[j] == line) {
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-			cache_line[count++] = line;
-	}
-
-	/* This should never actually happen. */
-	if (count >= 3) return -ENOMEM;
-
-	for (i = 0; i < 2; ++i) {
-		if (kcache[i].mode == V_SQ_CF_KCACHE_NOP) {
-			++free_lines;
-		}
-	}
-
-	/* Filter lines pulled in by previous intructions. Note that this is
-	 * only for the required_lines count, we can't remove these from the
-	 * cache_line array since we may have to start a new ALU clause. */
-	for (i = 0, required_lines = count; i < count; ++i) {
-		for (j = 0; j < 2; ++j) {
-			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
-			    kcache[j].addr == cache_line[i]) {
-				--required_lines;
-				break;
-			}
-		}
-	}
-
-	/* Start a new ALU clause if needed. */
-	if (required_lines > free_lines) {
-		if ((r = r600_bytecode_add_cf(bc))) {
+		if ((r = r600_bytecode_alloc_kcache_line(bc, kcache, bank, line)))
 			return r;
-		}
-		bc->cf_last->inst = type;
-		kcache = bc->cf_last->kcache;
 	}
+	return 0;
+}
 
-	/* Setup the kcache lines. */
-	for (i = 0; i < count; ++i) {
-		boolean found = false;
-
-		for (j = 0; j < 2; ++j) {
-			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
-			    kcache[j].addr == cache_line[i]) {
-				found = true;
-				break;
-			}
-		}
-
-		if (found) continue;
-
-		for (j = 0; j < 2; ++j) {
-			if (kcache[j].mode == V_SQ_CF_KCACHE_NOP) {
-				kcache[j].bank = 0;
-				kcache[j].addr = cache_line[i];
-				kcache[j].mode = V_SQ_CF_KCACHE_LOCK_2;
-				break;
-			}
-		}
-	}
+static int r600_bytecode_assign_kcache_banks(struct r600_bytecode *bc,
+		struct r600_bytecode_alu *alu,
+		struct r600_bytecode_kcache * kcache)
+{
+	int i, j;
 
 	/* Alter the src operands to refer to the kcache. */
 	for (i = 0; i < 3; ++i) {
 		static const unsigned int base[] = {128, 160, 256, 288};
-		unsigned int line;
+		unsigned int line, sel = alu->src[i].sel, found = 0;
 
-		if (alu->src[i].sel < 512)
+		if (sel < 512)
 			continue;
 
-		alu->src[i].sel -= 512;
-		line = (alu->src[i].sel / 32) * 2;
+		sel -= 512;
+		line = sel>>4;
 
-		for (j = 0; j < 2; ++j) {
-			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
-			    kcache[j].addr == line) {
-				alu->src[i].sel &= 0x1f;
-				alu->src[i].sel += base[j];
-				break;
+		for (j = 0; j < 4 && !found; ++j) {
+			switch (kcache[j].mode) {
+			case V_SQ_CF_KCACHE_NOP:
+			case V_SQ_CF_KCACHE_LOCK_LOOP_INDEX:
+				R600_ERR("unexpected kcache line mode\n");
+				return -ENOMEM;
+			default:
+				if (kcache[j].bank == alu->src[i].kc_bank &&
+						kcache[j].addr <= line &&
+						line < kcache[j].addr + kcache[j].mode) {
+					alu->src[i].sel = sel - (kcache[j].addr<<4);
+					alu->src[i].sel += base[j];
+					found=1;
+			    }
 			}
 		}
+	}
+	return 0;
+}
+
+static int r600_bytecode_alloc_kcache_lines(struct r600_bytecode *bc, struct r600_bytecode_alu *alu, int type)
+{
+	struct r600_bytecode_kcache kcache_sets[4];
+	struct r600_bytecode_kcache *kcache = kcache_sets;
+	int r;
+
+	memcpy(kcache, bc->cf_last->kcache, 4 * sizeof(struct r600_bytecode_kcache));
+
+	if ((r = r600_bytecode_alloc_inst_kcache_lines(bc, kcache, alu))) {
+		/* can't alloc, need to start new clause */
+		if ((r = r600_bytecode_add_cf(bc))) {
+			return r;
+		}
+		bc->cf_last->inst = type;
+
+		/* retry with the new clause */
+		kcache = bc->cf_last->kcache;
+		if ((r = r600_bytecode_alloc_inst_kcache_lines(bc, kcache, alu))) {
+			/* can't alloc again- should never happen */
+			return r;
+		}
+	} else {
+		/* update kcache sets */
+		memcpy(bc->cf_last->kcache, kcache, 4 * sizeof(struct r600_bytecode_kcache));
+	}
+
+	/* if we actually used more than 2 kcache sets - use ALU_EXTENDED on eg+ */
+	if (kcache[2].mode != V_SQ_CF_KCACHE_NOP) {
+		if (bc->chip_class < EVERGREEN)
+			return -ENOMEM;
+		bc->cf_last->eg_alu_extended = 1;
 	}
 
 	return 0;
@@ -1933,6 +1980,8 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 					if (r)
 						return r;
 					r600_bytecode_alu_adjust_literals(bc, alu, literal, nliteral);
+					r600_bytecode_assign_kcache_banks(bc, alu, cf->kcache);
+
 					switch(bc->chip_class) {
 					case EVERGREEN: /* eg alu is same encoding as r700 */
 					case CAYMAN:
@@ -2028,6 +2077,8 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 					if (r)
 						return r;
 					r600_bytecode_alu_adjust_literals(bc, alu, literal, nliteral);
+					r600_bytecode_assign_kcache_banks(bc, alu, cf->kcache);
+
 					switch(bc->chip_class) {
 					case R600:
 						r = r600_bytecode_alu_build(bc, alu, addr);
@@ -2168,6 +2219,19 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER:
 			case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER:
 			case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE:
+				if (cf->eg_alu_extended) {
+					fprintf(stderr, "%04d %08X ALU_EXT0 ", id, bc->bytecode[id]);
+					fprintf(stderr, "KCACHE_BANK2:%X ", cf->kcache[2].bank);
+					fprintf(stderr, "KCACHE_BANK3:%X ", cf->kcache[3].bank);
+					fprintf(stderr, "KCACHE_MODE2:%X\n", cf->kcache[2].mode);
+					id++;
+					fprintf(stderr, "%04d %08X ALU_EXT1 ", id, bc->bytecode[id]);
+					fprintf(stderr, "KCACHE_MODE3:%X ", cf->kcache[3].mode);
+					fprintf(stderr, "KCACHE_ADDR2:%X ", cf->kcache[2].addr);
+					fprintf(stderr, "KCACHE_ADDR3:%X\n", cf->kcache[3].addr);
+					id++;
+				}
+
 				fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
 				fprintf(stderr, "ADDR:%d ", cf->addr);
 				fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache[0].mode);

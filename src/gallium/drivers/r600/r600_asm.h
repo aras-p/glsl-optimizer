@@ -32,6 +32,7 @@ struct r600_bytecode_alu_src {
 	unsigned			neg;
 	unsigned			abs;
 	unsigned			rel;
+	unsigned			kc_bank;
 	uint32_t			value;
 };
 
@@ -144,8 +145,9 @@ struct r600_bytecode_cf {
 	unsigned			cond;
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
-	struct r600_bytecode_kcache		kcache[2];
+	struct r600_bytecode_kcache		kcache[4];
 	unsigned			r6xx_uses_waterfall;
+	unsigned			eg_alu_extended;
 	struct list_head		alu;
 	struct list_head		tex;
 	struct list_head		vtx;

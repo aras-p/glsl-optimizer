@@ -38,6 +38,23 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER:
 	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER:
 	case EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE:
+		/* prepend ALU_EXTENDED if we need more than 2 kcache sets */
+		if (cf->eg_alu_extended) {
+			bc->bytecode[id++] =
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE0(V_SQ_CF_INDEX_NONE) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE1(V_SQ_CF_INDEX_NONE) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE2(V_SQ_CF_INDEX_NONE) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK_INDEX_MODE3(V_SQ_CF_INDEX_NONE) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK2(cf->kcache[2].bank) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_BANK3(cf->kcache[3].bank) |
+				S_SQ_CF_ALU_WORD0_EXT_KCACHE_MODE2(cf->kcache[2].mode);
+			bc->bytecode[id++] = EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_EXTENDED |
+				S_SQ_CF_ALU_WORD1_EXT_KCACHE_MODE3(cf->kcache[3].mode) |
+				S_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR2(cf->kcache[2].addr) |
+				S_SQ_CF_ALU_WORD1_EXT_KCACHE_ADDR3(cf->kcache[3].addr) |
+				S_SQ_CF_ALU_WORD1_EXT_BARRIER(1);
+		}
+
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
