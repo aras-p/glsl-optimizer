@@ -3131,6 +3131,11 @@ copy_tex_sub_image(struct gl_context *ctx,
       format = GL_RGBA;
    }
 
+   if (_mesa_is_format_integer_color(texImage->TexFormat)) {
+      _mesa_problem(ctx, "unsupported integer color copyteximage");
+      return;
+   }
+
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {
