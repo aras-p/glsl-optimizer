@@ -136,6 +136,8 @@ update_program(struct gl_context *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
 			       (struct gl_fragment_program *)
 			       fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			       NULL);
    }
    else if (ctx->FragmentProgram._Enabled) {
       /* Use user-defined fragment program */
@@ -144,6 +146,8 @@ update_program(struct gl_context *ctx)
 				     NULL);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                ctx->FragmentProgram.Current);
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			       NULL);
    }
    else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       /* Use fragment program generated from fixed-function state */
@@ -155,10 +159,15 @@ update_program(struct gl_context *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
 			       (struct gl_fragment_program *)
                                f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			       (struct gl_fragment_program *)
+                               f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
    }
    else {
       /* No fragment program */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+			       NULL);
    }
 
    if (gsProg && gsProg->LinkStatus
