@@ -457,14 +457,6 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_draw_buffer(ctx);
 }
 
-static struct intel_renderbuffer*
-intel_renderbuffer_wrap_miptree(struct intel_context *intel,
-                                struct intel_mipmap_tree *mt,
-                                uint32_t level,
-                                uint32_t layer,
-                                gl_format format,
-                                GLenum internal_format);
-
 /**
  * \par Special case for separate stencil
  *
@@ -514,45 +506,6 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    }
 
    return true;
-}
-
-/**
- * \brief Wrap a renderbuffer around a single slice of a miptree.
- *
- * Called by glFramebufferTexture*(). This just allocates a
- * ``struct intel_renderbuffer`` then calls
- * intel_renderbuffer_update_wrapper() to do the real work.
- *
- * \see intel_renderbuffer_update_wrapper()
- */
-static struct intel_renderbuffer*
-intel_renderbuffer_wrap_miptree(struct intel_context *intel,
-                                struct intel_mipmap_tree *mt,
-                                uint32_t level,
-                                uint32_t layer,
-                                gl_format format,
-                                GLenum internal_format)
-
-{
-   struct gl_context *ctx = &intel->ctx;
-   struct gl_renderbuffer *rb;
-   struct intel_renderbuffer *irb;
-
-   intel_miptree_check_level_layer(mt, level, layer);
-
-   rb = intel_new_renderbuffer(ctx, ~0);
-   irb = intel_renderbuffer(rb);
-   if (!irb)
-      return NULL;
-
-   if (!intel_renderbuffer_update_wrapper(intel, irb,
-                                          mt, level, layer,
-                                          format, internal_format)) {
-      free(irb);
-      return NULL;
-   }
-
-   return irb;
 }
 
 void
@@ -660,12 +613,9 @@ intel_render_texture(struct gl_context * ctx,
       return;
    }
    else if (!irb) {
-      irb = intel_renderbuffer_wrap_miptree(intel,
-                                            mt,
-                                            att->TextureLevel,
-                                            layer,
-                                            image->TexFormat,
-                                            image->InternalFormat);
+      intel_miptree_check_level_layer(mt, att->TextureLevel, layer);
+
+      irb = (struct intel_renderbuffer *)intel_new_renderbuffer(ctx, ~0);
 
       if (irb) {
          /* bind the wrapper to the attachment point */
