@@ -58,6 +58,8 @@
 #include "viewport.h"
 #include "mtypes.h"
 #include "main/dispatch.h"
+#include "hash.h"
+#include <stdbool.h>
 
 
 /**
@@ -1337,7 +1339,8 @@ copy_array_object(struct gl_context *ctx,
 static void
 copy_array_attrib(struct gl_context *ctx,
                   struct gl_array_attrib *dest,
-                  struct gl_array_attrib *src)
+                  struct gl_array_attrib *src,
+                  bool vbo_deleted)
 {
    /* skip ArrayObj */
    /* skip DefaultArrayObj, Objects */
@@ -1349,7 +1352,8 @@ copy_array_attrib(struct gl_context *ctx,
    /* skip NewState */
    /* skip RebindArrays */
 
-   copy_array_object(ctx, dest->ArrayObj, src->ArrayObj);
+   if (!vbo_deleted)
+      copy_array_object(ctx, dest->ArrayObj, src->ArrayObj);
 
    /* skip ArrayBufferObj */
    /* skip ElementArrayBufferObj */
@@ -1367,7 +1371,7 @@ save_array_attrib(struct gl_context *ctx,
     * Needs to match value in the object hash. */
    dest->ArrayObj->Name = src->ArrayObj->Name;
    /* And copy all of the rest. */
-   copy_array_attrib(ctx, dest, src);
+   copy_array_attrib(ctx, dest, src, false);
 
    /* Just reference them here */
    _mesa_reference_buffer_object(ctx, &dest->ArrayBufferObj,
@@ -1384,17 +1388,44 @@ restore_array_attrib(struct gl_context *ctx,
                      struct gl_array_attrib *dest,
                      struct gl_array_attrib *src)
 {
-   /* Restore or recreate the array object by its name ... */
+   /* The ARB_vertex_array_object spec says:
+    *
+    *     "BindVertexArray fails and an INVALID_OPERATION error is generated
+    *     if array is not a name returned from a previous call to
+    *     GenVertexArrays, or if such a name has since been deleted with
+    *     DeleteVertexArrays."
+    *
+    * Therefore popping a deleted VAO cannot magically recreate it.
+    *
+    * The semantics of objects created using APPLE_vertex_array_objects behave
+    * differently.  These objects expect to be recreated by pop.  Alas.
+    */
+   const bool arb_vao = (src->ArrayObj->Name != 0
+			 && src->ArrayObj->ARBsemantics);
+
+   if (arb_vao && !_mesa_IsVertexArrayAPPLE(src->ArrayObj->Name))
+      return;
+
    _mesa_BindVertexArrayAPPLE(src->ArrayObj->Name);
 
-   /* ... and restore its content */
-   copy_array_attrib(ctx, dest, src);
-
    /* Restore or recreate the buffer objects by the names ... */
-   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
-                       src->ArrayBufferObj->Name);
-   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
-                       src->ArrayObj->ElementArrayBufferObj->Name);
+   if (!arb_vao
+       || src->ArrayBufferObj->Name == 0
+       || _mesa_IsBufferARB(src->ArrayBufferObj->Name)) {
+      /* ... and restore its content */
+      copy_array_attrib(ctx, dest, src, false);
+
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+			  src->ArrayBufferObj->Name);
+   } else {
+      copy_array_attrib(ctx, dest, src, true);
+   }
+
+   if (!arb_vao
+       || src->ArrayObj->ElementArrayBufferObj->Name == 0
+       || _mesa_IsBufferARB(src->ArrayObj->ElementArrayBufferObj->Name))
+      _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
+			  src->ArrayObj->ElementArrayBufferObj->Name);
 
    /* Better safe than sorry?! */
    dest->RebindArrays = GL_TRUE;
