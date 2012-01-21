@@ -3184,7 +3184,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		src_gpr = ctx->temp_reg;
 	}
 
-	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
+	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+
 		static const unsigned src0_swizzle[] = {2, 2, 0, 1};
 		static const unsigned src1_swizzle[] = {1, 0, 2, 2};
 
