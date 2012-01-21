@@ -1365,7 +1365,30 @@
 #define   S_028860_UNCACHED_FIRST_INST(x)              (((x) & 0x1) << 28)
 #define   G_028860_UNCACHED_FIRST_INST(x)              (((x) >> 28) & 0x1)
 #define   C_028860_UNCACHED_FIRST_INST                 0xEFFFFFFF
+
 #define R_028864_SQ_PGM_RESOURCES_2_VS               0x028864
+#define   S_028864_SINGLE_ROUND(x)                     (((x) & 0x3) << 0)
+#define   G_028864_SINGLE_ROUND(x)                     (((x) >> 0) & 0x3)
+#define   C_028864_SINGLE_ROUND                        0xFFFFFFFC
+#define     V_SQ_ROUND_NEAREST_EVEN                    0x00
+#define     V_SQ_ROUND_PLUS_INFINITY                   0x01
+#define     V_SQ_ROUND_MINUS_INFINITY                  0x02
+#define     V_SQ_ROUND_TO_ZERO                         0x03
+#define   S_028864_DOUBLE_ROUND(x)                     (((x) & 0x3) << 2)
+#define   G_028864_DOUBLE_ROUND(x)                     (((x) >> 2) & 0x3)
+#define   C_028864_DOUBLE_ROUND                        0xFFFFFFF3
+#define   S_028864_ALLOW_SINGLE_DENORM_IN(x)           (((x) & 0x1) << 4)
+#define   G_028864_ALLOW_SINGLE_DENORM_IN(x)           (((x) >> 4) & 0x1)
+#define   C_028864_ALLOW_SINGLE_DENORM_IN              0xFFFFFFEF
+#define   S_028864_ALLOW_SINGLE_DENORM_OUT(x)          (((x) & 0x1) << 5)
+#define   G_028864_ALLOW_SINGLE_DENORM_OUT(x)          (((x) >> 5) & 0x1)
+#define   C_028864_ALLOW_SINGLE_DENORM_OUT             0xFFFFFFDF
+#define   S_028864_ALLOW_DOUBLE_DENORM_IN(x)           (((x) & 0x1) << 6)
+#define   G_028864_ALLOW_DOUBLE_DENORM_IN(x)           (((x) >> 6) & 0x1)
+#define   C_028864_ALLOW_DOUBLE_DENORM_IN              0xFFFFFFBF
+#define   S_028864_ALLOW_DOUBLE_DENORM_OUT(x)          (((x) & 0x1) << 7)
+#define   G_028864_ALLOW_DOUBLE_DENORM_OUT(x)          (((x) >> 7) & 0x1)
+#define   C_028864_ALLOW_DOUBLE_DENORM_OUT             0xFFFFFF7F
 
 #define R_028844_SQ_PGM_RESOURCES_PS                 0x028844
 #define   S_028844_NUM_GPRS(x)                         (((x) & 0xFF) << 0)
@@ -1379,14 +1402,33 @@
 #define   C_028844_DX10_CLAMP                          0xFFDFFFFF
 #define   S_028844_PRIME_CACHE_ON_DRAW(x)              (((x) & 0x1) << 23)
 #define   G_028844_PRIME_CACHE_ON_DRAW(x)              (((x) >> 23) & 0x1)
-
+#define   C_028844_PRIME_CACHE_ON_DRAW                 0xFF7FFFFF
 #define   S_028844_UNCACHED_FIRST_INST(x)              (((x) & 0x1) << 28)
 #define   G_028844_UNCACHED_FIRST_INST(x)              (((x) >> 28) & 0x1)
 #define   C_028844_UNCACHED_FIRST_INST                 0xEFFFFFFF
 #define   S_028844_CLAMP_CONSTS(x)                     (((x) & 0x1) << 31)
 #define   G_028844_CLAMP_CONSTS(x)                     (((x) >> 31) & 0x1)
 #define   C_028844_CLAMP_CONSTS                        0x7FFFFFFF
-#define R_028848_SQ_PGM_RESOURCES_2_PS                 0x028848
+
+#define R_028848_SQ_PGM_RESOURCES_2_PS               0x028848
+#define   S_028848_SINGLE_ROUND(x)                     (((x) & 0x3) << 0)
+#define   G_028848_SINGLE_ROUND(x)                     (((x) >> 0) & 0x3)
+#define   C_028848_SINGLE_ROUND                        0xFFFFFFFC
+#define   S_028848_DOUBLE_ROUND(x)                     (((x) & 0x3) << 2)
+#define   G_028848_DOUBLE_ROUND(x)                     (((x) >> 2) & 0x3)
+#define   C_028848_DOUBLE_ROUND                        0xFFFFFFF3
+#define   S_028848_ALLOW_SINGLE_DENORM_IN(x)           (((x) & 0x1) << 4)
+#define   G_028848_ALLOW_SINGLE_DENORM_IN(x)           (((x) >> 4) & 0x1)
+#define   C_028848_ALLOW_SINGLE_DENORM_IN              0xFFFFFFEF
+#define   S_028848_ALLOW_SINGLE_DENORM_OUT(x)          (((x) & 0x1) << 5)
+#define   G_028848_ALLOW_SINGLE_DENORM_OUT(x)          (((x) >> 5) & 0x1)
+#define   C_028848_ALLOW_SINGLE_DENORM_OUT             0xFFFFFFDF
+#define   S_028848_ALLOW_DOUBLE_DENORM_IN(x)           (((x) & 0x1) << 6)
+#define   G_028848_ALLOW_DOUBLE_DENORM_IN(x)           (((x) >> 6) & 0x1)
+#define   C_028848_ALLOW_DOUBLE_DENORM_IN              0xFFFFFFBF
+#define   S_028848_ALLOW_DOUBLE_DENORM_OUT(x)          (((x) & 0x1) << 7)
+#define   G_028848_ALLOW_DOUBLE_DENORM_OUT(x)          (((x) >> 7) & 0x1)
+#define   C_028848_ALLOW_DOUBLE_DENORM_OUT             0xFFFFFF7F
 
 #define R_028644_SPI_PS_INPUT_CNTL_0                 0x028644
 #define   S_028644_SEMANTIC(x)                         (((x) & 0xFF) << 0)

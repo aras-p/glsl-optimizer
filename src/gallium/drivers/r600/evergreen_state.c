@@ -2418,7 +2418,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028848_SQ_PGM_RESOURCES_2_PS,
-				0x0, 0xFFFFFFFF, NULL, 0);
+				S_028848_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO),
+				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL, 0);
@@ -2480,7 +2481,8 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 			0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028864_SQ_PGM_RESOURCES_2_VS,
-				0x0, 0xFFFFFFFF, NULL, 0);
+				S_028864_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO),
+				0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 			R_02885C_SQ_PGM_START_VS,
 			r600_resource_va(ctx->screen, (void *)shader->bo) >> 8,
