@@ -39,7 +39,7 @@ AM_CFLAGS = \
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 
-if HAVE_I965_DRI
+if HAVE_SWRAST_DRI
 dri_LTLIBRARIES = swrast_dri.la
 endif
 
