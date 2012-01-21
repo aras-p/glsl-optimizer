@@ -478,6 +478,7 @@ static int is_alu_vec_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_a
 			is_alu_mova_inst(bc, alu) ||
 			(alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
 			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0 ||
 			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY ||
 			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW);
 	}
