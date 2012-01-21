@@ -2315,14 +2315,14 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 			tmp = S_028644_SEMANTIC(sid);
 
-			if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-					rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-					rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+			if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
+				rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR ||
+				rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT) {
 				tmp |= S_028644_FLAT_SHADE(1);
 			}
 
 			if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
-					rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
+					(rctx->sprite_coord_enable & (1 << rshader->input[i].sid))) {
 				tmp |= S_028644_PT_SPRITE_TEX(1);
 			}
 
