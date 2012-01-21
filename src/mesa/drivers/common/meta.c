@@ -1451,7 +1451,12 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    struct vertex verts[4];
    GLboolean newTex;
 
-   if (srcW > maxTexSize || srcH > maxTexSize) {
+   /* In addition to falling back if the blit size is larger than the maximum
+    * texture size, fallback if the source is multisampled.  This fallback can
+    * be removed once Mesa gets support ARB_texture_multisample.
+    */
+   if (srcW > maxTexSize || srcH > maxTexSize
+       || ctx->ReadBuffer->Visual.samples > 0) {
       /* XXX avoid this fallback */
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
