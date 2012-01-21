@@ -70,7 +70,15 @@ HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
-OTHER		[^][(){}.&*~!/%<>^|;,=#[:space:]+-]+
+
+/* The OTHER class is simply a catch-all for things that the CPP
+parser just doesn't care about. Since flex regular expressions that
+match longer strings take priority over those matching shorter
+strings, we have to be careful to avoid OTHER matching and hiding
+something that CPP does care about. So we simply exclude all
+characters that appear in any other expressions. */
+
+OTHER		[^][_#[:space:]#a-zA-Z0-9(){}.&*~!/%<>^|;,=+-]
 
 DIGITS			[0-9][0-9]*
 DECIMAL_INTEGER		[1-9][0-9]*[uU]?
