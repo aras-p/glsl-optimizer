@@ -468,36 +468,98 @@ static int is_alu_mova_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *
 	}
 }
 
-#define RANGE(a, b) ((alu->inst>=(a))&&(alu->inst<=(b)))
-
 /* alu instructions that can only execute on the vector unit */
 static int is_alu_vec_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
 {
 	switch (bc->chip_class) {
 	case R600:
 	case R700:
-		return alu->is_op3 ? RANGE(0x08, 0x0B) : RANGE(0x07, 0x07) |
-				RANGE(0x15, 0x18) | RANGE(0x1B, 0x1D) |
-				RANGE(0x50, 0x53) | RANGE(0x7A, 0x7E);
+		return is_alu_reduction_inst(bc, alu) ||
+			(is_alu_mova_inst(bc, alu) && 
+			 (alu->inst != V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT));
 	case EVERGREEN:
-		return alu->is_op3 ? RANGE(0x04, 0x11) : RANGE(0xA0, 0xE2);
+	case CAYMAN:
+	default:
+		return is_alu_reduction_inst(bc, alu) ||
+			is_alu_mova_inst(bc, alu) ||
+			(alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0 ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY ||
+			 alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW);
 	}
 }
 
 /* alu instructions that can only execute on the trans unit */
 static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
 {
-
 	switch (bc->chip_class) {
 	case R600:
 	case R700:
-		return alu->is_op3 ? RANGE(0x0C, 0x0C) : RANGE(0x60, 0x6F) | RANGE(0x73, 0x79);
+		if (!alu->is_op3)
+			return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+			        alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
+		else
+			return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2 ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2 ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4;
 	case EVERGREEN:
-		return alu->is_op3 ? RANGE(0x1F, 0x1F) : RANGE(0x81, 0x9C);
+	case CAYMAN:
+	default:
+		if (!alu->is_op3)
+			/* Note that FLT_TO_INT_* instructions are vector-only instructions
+			 * on Evergreen, despite what the documentation says. FLT_TO_INT
+			 * can do both vector and scalar. */
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
+		else
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
 	}
 }
-
-#undef RANGE
 
 /* alu instructions that can execute on any unit */
 static int is_alu_any_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
