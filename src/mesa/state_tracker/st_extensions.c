@@ -387,19 +387,14 @@ void st_init_extensions(struct st_context *st)
     */
    if (screen->is_format_supported(screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
                                    PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_DEPTH_STENCIL) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
+                                   PIPE_BIND_DEPTH_STENCIL |
+                                   PIPE_BIND_SAMPLER_VIEW) ||
+       screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
                                    PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_DEPTH_STENCIL |
                                    PIPE_BIND_SAMPLER_VIEW)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
-   }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
-                                        PIPE_TEXTURE_2D, 0,
-                                        PIPE_BIND_DEPTH_STENCIL) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
-                                        PIPE_TEXTURE_2D, 0,
-                                        PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
+      ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
 
    /* float support - assume nothing exclusively supports 64-bit floats */
@@ -514,12 +509,6 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS) > 1) {
       ctx->Extensions.EXT_texture_array = GL_TRUE;
       ctx->Extensions.MESA_texture_array = GL_TRUE;
-   }
-
-   /* GL_ARB_framebuffer_object */
-   if (ctx->Extensions.EXT_packed_depth_stencil) {
-      /* we support always support GL_EXT_framebuffer_blit */
-      ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER)) {
