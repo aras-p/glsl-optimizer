@@ -47,6 +47,7 @@ AC_PROG_CXX
 AC_CHECK_PROGS([MAKE], [gmake make])
 AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PROG_SED
+AC_PROG_MKDIR_P
 AC_PATH_PROG([MKDEP], [makedepend])
 
 if test "x$MKDEP" = "x"; then
