@@ -139,7 +139,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_framebuffer_sRGB &&
                               ctx->Extensions.EXT_packed_float &&
                               ctx->Extensions.EXT_texture_array &&
-                              ctx->Extensions.EXT_texture_integer &&
                               ctx->Extensions.EXT_texture_shared_exponent &&
                               ctx->Extensions.EXT_transform_feedback &&
                               ctx->Extensions.NV_conditional_render);

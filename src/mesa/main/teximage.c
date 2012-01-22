@@ -323,7 +323,8 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
    }
 #endif /* FEATURE_EXT_texture_sRGB */
 
-   if (ctx->Extensions.EXT_texture_integer) {
+   if (ctx->VersionMajor >= 3 ||
+       ctx->Extensions.EXT_texture_integer) {
       switch (internalFormat) {
       case GL_RGBA8UI_EXT:
       case GL_RGBA16UI_EXT:
@@ -340,6 +341,11 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_RGB16I_EXT:
       case GL_RGB32I_EXT:
          return GL_RGB;
+      }
+   }
+
+   if (ctx->Extensions.EXT_texture_integer) {
+      switch (internalFormat) {
       case GL_ALPHA8UI_EXT:
       case GL_ALPHA16UI_EXT:
       case GL_ALPHA32UI_EXT:
@@ -391,7 +397,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_R16UI:
       case GL_R32I:
       case GL_R32UI:
-	 if (!ctx->Extensions.EXT_texture_integer)
+	 if (ctx->VersionMajor < 3 && !ctx->Extensions.EXT_texture_integer)
 	    break;
 	 /* FALLTHROUGH */
       case GL_R8:
@@ -416,7 +422,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_RG16UI:
       case GL_RG32I:
       case GL_RG32UI:
-	 if (!ctx->Extensions.EXT_texture_integer)
+	 if (ctx->VersionMajor < 3 && !ctx->Extensions.EXT_texture_integer)
 	    break;
 	 /* FALLTHROUGH */
       case GL_RG:
@@ -1680,7 +1686,7 @@ texture_error_check( struct gl_context *ctx,
    }
 
    /* additional checks for integer textures */
-   if (ctx->Extensions.EXT_texture_integer &&
+   if ((ctx->VersionMajor >= 3 || ctx->Extensions.EXT_texture_integer) &&
        (_mesa_is_integer_format(format) !=
         _mesa_is_integer_format(internalFormat))) {
       if (!isProxy) {

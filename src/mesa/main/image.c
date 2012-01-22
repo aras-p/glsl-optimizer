@@ -536,7 +536,8 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->VersionMajor >= 3 ||
+                      ctx->Extensions.EXT_texture_integer;
             default:
                return GL_FALSE;
          }
@@ -549,7 +550,8 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->VersionMajor >= 3 ||
+                      ctx->Extensions.EXT_texture_integer;
             case GL_UNSIGNED_BYTE_3_3_2:
             case GL_UNSIGNED_BYTE_2_3_3_REV:
             case GL_UNSIGNED_SHORT_5_6_5:
@@ -568,7 +570,8 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             /* NOTE: no packed formats w/ BGR format */
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->VersionMajor >= 3 ||
+                      ctx->Extensions.EXT_texture_integer;
             default:
                return GL_FALSE;
          }
@@ -582,7 +585,8 @@ _mesa_is_legal_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return ctx->Extensions.EXT_texture_integer;
+               return ctx->VersionMajor >= 3 ||
+                      ctx->Extensions.EXT_texture_integer;
             case GL_UNSIGNED_SHORT_4_4_4_4:
             case GL_UNSIGNED_SHORT_4_4_4_4_REV:
             case GL_UNSIGNED_SHORT_5_5_5_1:
