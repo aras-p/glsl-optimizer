@@ -3176,7 +3176,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		src_gpr = ctx->temp_reg;
 	}
 
-	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE &&
+	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
 
 		static const unsigned src0_swizzle[] = {2, 2, 0, 1};
@@ -3277,7 +3278,19 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bytecode_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-
+		/* write initial W value into Z component */
+		if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+			r600_bytecode_src(&alu.src[0], &ctx->src[0], 3);
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = 2;
+			alu.dst.write = 1;
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
 		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
 	}
@@ -3304,6 +3317,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT ||
+	    inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
 	    inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY) {
 		switch (opcode) {
@@ -3351,6 +3365,12 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.src_sel_y = 0;
 		tex.src_sel_z = 3;
 		tex.src_sel_w = 1;
+	}
+	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) {
+		tex.src_sel_x = 1;
+		tex.src_sel_y = 0;
+		tex.src_sel_z = 3;
+		tex.src_sel_w = 2; /* route Z compare value into W */
 	}
 
 	if (inst->Texture.Texture != TGSI_TEXTURE_RECT &&
