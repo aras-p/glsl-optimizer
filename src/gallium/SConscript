@@ -14,17 +14,12 @@ SConscript('auxiliary/SConscript')
 SConscript([
     'drivers/galahad/SConscript',
     'drivers/identity/SConscript',
+    'drivers/llvmpipe/SConscript',
     'drivers/rbug/SConscript',
     'drivers/softpipe/SConscript',
+    'drivers/svga/SConscript',
     'drivers/trace/SConscript',
 ])
-
-# These drivers do not build on Haiku
-if env['platform'] not in ['haiku']:
-    SConscript([
-        'drivers/llvmpipe/SConscript',
-        'drivers/svga/SConscript',
-    ])
 
 if not env['msvc']:
     # These drivers do not build on MSVC compilers
