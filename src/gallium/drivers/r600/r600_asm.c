@@ -493,6 +493,7 @@ static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode
 
 	switch (bc->chip_class) {
 	case R600:
+		return alu->is_op3 ? RANGE(0x0C, 0x0C) : RANGE(0x60, 0x79);
 	case R700:
 		return alu->is_op3 ? RANGE(0x0C, 0x0C) : RANGE(0x60, 0x6F) | RANGE(0x73, 0x79);
 	case EVERGREEN:
