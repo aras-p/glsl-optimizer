@@ -1060,7 +1060,7 @@ DRI_CXXFLAGS='$(CXXFLAGS)'
 DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
 MESA_MODULES='$(TOP)/src/mesa/libmesa.a'
 
-if test "x$enable_dri" = xyes ; then
+if test "x$enable_dri" = xyes && test "x$driglx_direct" = xyes ; then
     DRICORE_GLSL_LIBS='$(TOP)/$(LIB_DIR)/libglsl.so'
     DRICORE_LIBS='$(TOP)/$(LIB_DIR)/libdricore.so'
     DRICORE_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -lglsl'
