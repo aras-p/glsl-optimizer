@@ -436,7 +436,16 @@ void st_init_extensions(struct st_context *st)
    }
 
    /* s3tc support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGB,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGBA,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_DXT3_RGBA,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW) &&
        (ctx->Mesa_DXTn || st_get_s3tc_override())) {
