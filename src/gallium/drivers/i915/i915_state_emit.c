@@ -366,7 +366,7 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
    uint additional_size = i915->current.target_fixup_format ? 1 : 0;
 
    /* we need more batch space if we want to emulate rgba framebuffers */
-   *batch_space = i915->fs->program_len + 3 * additional_size;
+   *batch_space = i915->fs->decl_len + i915->fs->program_len + 3 * additional_size;
 }
 
 static void
@@ -378,15 +378,19 @@ emit_program(struct i915_context *i915)
    /* we should always have, at least, a pass-through program */
    assert(i915->fs->program_len > 0);
 
+   /* output the declarations */
    {
       /* first word has the size, we have to adjust that */
-      uint size = (i915->fs->program[0]);
+      uint size = (i915->fs->decl[0]);
       size += need_target_fixup * 3;
       OUT_BATCH(size);
    }
 
-   /* output the declarations and the program */
-   for (i = 1 ; i < i915->fs->program_len; i++)
+   for (i = 1 ; i < i915->fs->decl_len; i++)
+      OUT_BATCH(i915->fs->decl[i]);
+
+   /* output the program */
+   for (i = 0 ; i < i915->fs->program_len; i++)
       OUT_BATCH(i915->fs->program[i]);
 
    /* we emit an additional mov with swizzle to fake RGBA framebuffers */

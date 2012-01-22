@@ -1277,17 +1277,26 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 
       /* Copy compilation results to fragment program struct: 
        */
+      assert(!ifs->decl);
       assert(!ifs->program);
-      ifs->program
-         = (uint *) MALLOC((program_size + decl_size) * sizeof(uint));
-      if (ifs->program) {
-         ifs->program_len = program_size + decl_size;
 
-         memcpy(ifs->program,
+      ifs->decl
+         = (uint *) MALLOC(decl_size * sizeof(uint));
+      ifs->program
+         = (uint *) MALLOC(program_size * sizeof(uint));
+
+      if (ifs->decl) {
+         ifs->decl_len = decl_size;
+
+         memcpy(ifs->decl,
                 p->declarations,
                 decl_size * sizeof(uint));
+      }
 
-         memcpy(ifs->program + decl_size,
+      if (ifs->program) {
+         ifs->program_len = program_size;
+
+         memcpy(ifs->program,
                 p->program,
                 program_size * sizeof(uint));
       }
