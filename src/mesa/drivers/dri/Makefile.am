@@ -26,3 +26,6 @@ endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dri.pc
+
+driincludedir = $(includedir)/GL/internal
+driinclude_HEADERS = $(top_srcdir)/include/GL/internal/dri_interface.h
