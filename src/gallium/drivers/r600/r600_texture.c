@@ -869,6 +869,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	const struct util_format_description *desc;
 	boolean uniform = TRUE;
 	static int r600_enable_s3tc = -1;
+	bool is_srgb_valid = FALSE;
 
 	int i;
 	const uint32_t sign_bit[4] = {
@@ -980,14 +981,17 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		case PIPE_FORMAT_DXT1_SRGB:
 		case PIPE_FORMAT_DXT1_SRGBA:
 			result = FMT_BC1;
+			is_srgb_valid = TRUE;
 			goto out_word4;
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT3_SRGBA:
 			result = FMT_BC2;
+			is_srgb_valid = TRUE;
 			goto out_word4;
 		case PIPE_FORMAT_DXT5_RGBA:
 		case PIPE_FORMAT_DXT5_SRGBA:
 			result = FMT_BC3;
+			is_srgb_valid = TRUE;
 			goto out_word4;
 		default:
 			goto out_unknown;
@@ -1095,6 +1099,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 				goto out_word4;
 			case 4:
 				result = FMT_8_8_8_8;
+				is_srgb_valid = TRUE;
 				goto out_word4;
 			}
 			goto out_unknown;
@@ -1158,6 +1163,9 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	}
 
 out_word4:
+
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB && !is_srgb_valid)
+		return ~0;
 	if (word4_p)
 		*word4_p = word4;
 	if (yuv_format_p)
