@@ -792,7 +792,7 @@ lp_rast_finish( struct lp_rasterizer *rast )
  *   2. do work
  *   3. signal that we're done
  */
-static PIPE_THREAD_ROUTINE( thread_func, init_data )
+static PIPE_THREAD_ROUTINE( thread_function, init_data )
 {
    struct lp_rasterizer_task *task = (struct lp_rasterizer_task *) init_data;
    struct lp_rasterizer *rast = task->rast;
@@ -860,7 +860,7 @@ create_rast_threads(struct lp_rasterizer *rast)
    for (i = 0; i < rast->num_threads; i++) {
       pipe_semaphore_init(&rast->tasks[i].work_ready, 0);
       pipe_semaphore_init(&rast->tasks[i].work_done, 0);
-      rast->threads[i] = pipe_thread_create(thread_func,
+      rast->threads[i] = pipe_thread_create(thread_function,
                                             (void *) &rast->tasks[i]);
    }
 }
