@@ -99,9 +99,6 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	if (state == NULL)
 		return;
 
-	rctx->clamp_vertex_color = rs->clamp_vertex_color;
-	rctx->clamp_fragment_color = rs->clamp_fragment_color;
-
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->two_side = rs->two_side;
 
@@ -588,12 +585,7 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 		r600_update_sampler_states(rctx);
 	}
 
-	if (rctx->vs_shader->shader.clamp_color != rctx->clamp_vertex_color) {
-		r600_shader_rebuild(&rctx->context, rctx->vs_shader);
-	}
-
-	if ((rctx->ps_shader->shader.clamp_color != rctx->clamp_fragment_color) ||
-	    (rctx->ps_shader->shader.two_side != rctx->two_side) ||
+	if ((rctx->ps_shader->shader.two_side != rctx->two_side) ||
 	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
 	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs))) {
 		r600_shader_rebuild(&rctx->context, rctx->ps_shader);

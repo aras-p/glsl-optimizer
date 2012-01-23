@@ -105,8 +105,6 @@ struct r600_pipe_sampler_view {
 
 struct r600_pipe_rasterizer {
 	struct r600_pipe_state		rstate;
-	boolean				clamp_vertex_color;
-	boolean				clamp_fragment_color;
 	boolean				flatshade;
 	boolean				two_side;
 	unsigned			sprite_coord_enable;
@@ -217,8 +215,6 @@ struct r600_pipe_context {
 	struct pipe_query		*saved_render_cond;
 	unsigned			saved_render_cond_mode;
 	/* shader information */
-	boolean				clamp_vertex_color;
-	boolean				clamp_fragment_color;
 	boolean				two_side;
 	unsigned			user_clip_plane_enable;
 	unsigned			clip_dist_enable;

@@ -835,10 +835,6 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	ctx.clip_vertex_write = 0;
 
 	shader->two_side = (ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->two_side;
-
-	shader->clamp_color = (((ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->clamp_fragment_color) ||
-		((ctx.type == TGSI_PROCESSOR_VERTEX) && rctx->clamp_vertex_color));
-
 	shader->nr_cbufs = rctx->nr_cbufs;
 
 	/* register allocations */
@@ -1030,37 +1026,6 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 				r = r600_bytecode_add_alu(ctx.bc, &alu);
 				if (r)
 					return r;
-			}
-		}
-	}
-
-	/* clamp color outputs */
-	if (shader->clamp_color) {
-		for (i = 0; i < noutput; i++) {
-			if (shader->output[i].name == TGSI_SEMANTIC_COLOR ||
-				shader->output[i].name == TGSI_SEMANTIC_BCOLOR) {
-
-				int j;
-				for (j = 0; j < 4; j++) {
-					struct r600_bytecode_alu alu;
-					memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-
-					/* MOV_SAT R, R */
-					alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
-					alu.dst.sel = shader->output[i].gpr;
-					alu.dst.chan = j;
-					alu.dst.write = 1;
-					alu.dst.clamp = 1;
-					alu.src[0].sel = alu.dst.sel;
-					alu.src[0].chan = j;
-
-					if (j == 3) {
-						alu.last = 1;
-					}
-					r = r600_bytecode_add_alu(ctx.bc, &alu);
-					if (r)
-						return r;
-				}
 			}
 		}
 	}

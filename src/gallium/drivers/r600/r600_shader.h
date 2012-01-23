@@ -48,7 +48,6 @@ struct r600_shader {
 	boolean			uses_kill;
 	boolean			fs_write_all;
 	boolean			vs_prohibit_ucps;
-	boolean			clamp_color;
 	boolean			two_side;
 	unsigned		nr_cbufs;
 	/* bit n is set if the shader writes gl_ClipDistance[n] */
