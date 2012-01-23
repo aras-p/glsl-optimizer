@@ -197,6 +197,7 @@ struct r600_shader_ctx {
 	int					colors_used;
 	boolean                 clip_vertex_write;
 	unsigned                cv_output;
+	int					fragcoord_input;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -454,13 +455,19 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
-			if (ctx->shader->input[i].name == TGSI_SEMANTIC_FACE)
+			switch (ctx->shader->input[i].name) {
+			case TGSI_SEMANTIC_FACE:
 				ctx->face_gpr = ctx->shader->input[i].gpr;
-			else if (ctx->shader->input[i].name == TGSI_SEMANTIC_COLOR)
+				break;
+			case TGSI_SEMANTIC_COLOR:
 				ctx->colors_used++;
+				break;
+			case TGSI_SEMANTIC_POSITION:
+				ctx->fragcoord_input = i;
+				break;
+			}
 			if (ctx->bc->chip_class >= EVERGREEN) {
-				r = evergreen_interp_input(ctx, i);
-				if (r)
+				if ((r = evergreen_interp_input(ctx, i)))
 					return r;
 			}
 		}
@@ -823,6 +830,7 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	ctx.bc->type = shader->processor_type;
 
 	ctx.face_gpr = -1;
+	ctx.fragcoord_input = -1;
 	ctx.colors_used = 0;
 	ctx.clip_vertex_write = 0;
 
@@ -926,6 +934,21 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			r = -EINVAL;
 			goto out_err;
 		}
+	}
+
+	if (ctx.fragcoord_input >= 0) {
+		struct r600_bytecode_alu alu;
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
+		alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
+		alu.src[0].chan = 3;
+
+		alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
+		alu.dst.chan = 3;
+		alu.dst.write = 1;
+		alu.last = 1;
+		if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
+			return r;
 	}
 
 	if (shader->two_side && ctx.colors_used) {
