@@ -1320,7 +1320,7 @@ copy_array_object(struct gl_context *ctx,
    /* skip RefCount */
 
    /* In theory must be the same anyway, but on recreate make sure it matches */
-   dest->VBOonly = src->VBOonly;
+   dest->ARBsemantics = src->ARBsemantics;
 
    for (i = 0; i < Elements(src->VertexAttrib); i++)
       _mesa_copy_client_array(ctx, &dest->VertexAttrib[i], &src->VertexAttrib[i]);

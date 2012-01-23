@@ -1614,7 +1614,22 @@ struct gl_array_object
 
    GLint RefCount;
    _glthread_Mutex Mutex;
-   GLboolean VBOonly;  /**< require all arrays to live in VBOs? */
+
+   /**
+    * Does the VAO use ARB semantics or Apple semantics?
+    *
+    * There are several ways in which ARB_vertex_array_object and
+    * APPLE_vertex_array_object VAOs have differing semantics.  At the very
+    * least,
+    *
+    *     - ARB VAOs require that all array data be sourced from vertex buffer
+    *       objects, but Apple VAOs do not.
+    *
+    *     - ARB VAOs require that names come from GenVertexArrays.
+    *
+    * This flag notes which behavior governs this VAO.
+    */
+   GLboolean ARBsemantics;
 
    /** Vertex attribute arrays */
    struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];

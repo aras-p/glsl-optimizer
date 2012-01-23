@@ -194,7 +194,7 @@ update_array(struct gl_context *ctx,
       return;
    }
 
-   if (ctx->Array.ArrayObj->VBOonly &&
+   if (ctx->Array.ArrayObj->ARBsemantics &&
        !_mesa_is_bufferobj(ctx->Array.ArrayBufferObj)) {
       /* GL_ARB_vertex_array_object requires that all arrays reside in VBOs.
        * Generate GL_INVALID_OPERATION if that's not true.

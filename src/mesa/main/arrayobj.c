@@ -372,6 +372,14 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindVertexArrayAPPLE");
             return;
          }
+
+         /* The "Interactions with APPLE_vertex_array_object" section of the
+          * GL_ARB_vertex_array_object spec says:
+          *
+          *     "The first bind call, either BindVertexArray or
+          *     BindVertexArrayAPPLE, determines the semantic of the object."
+          */
+         newObj->ARBsemantics = genRequired;
          save_array_object(ctx, newObj);
       }
    }
@@ -468,8 +476,7 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
  * \param vboOnly Will arrays have to reside in VBOs?
  */
 static void 
-gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays,
-                  GLboolean vboOnly)
+gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
 {
    GLuint first;
    GLint i;
@@ -496,7 +503,6 @@ gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
          return;
       }
-      obj->VBOonly = vboOnly;
       save_array_object(ctx, obj);
       arrays[i] = first + i;
    }
@@ -511,7 +517,7 @@ void GLAPIENTRY
 _mesa_GenVertexArrays(GLsizei n, GLuint *arrays)
 {
    GET_CURRENT_CONTEXT(ctx);
-   gen_vertex_arrays(ctx, n, arrays, GL_TRUE);
+   gen_vertex_arrays(ctx, n, arrays);
 }
 
 
@@ -523,7 +529,7 @@ void GLAPIENTRY
 _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 {
    GET_CURRENT_CONTEXT(ctx);
-   gen_vertex_arrays(ctx, n, arrays, GL_FALSE);
+   gen_vertex_arrays(ctx, n, arrays);
 }
 
 
