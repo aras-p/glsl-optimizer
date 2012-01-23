@@ -56,6 +56,7 @@ struct vl_compositor_layer
    struct {
       struct vertex2f tl, br;
    } src, dst;
+   struct vertex2f size;
 };
 
 struct vl_compositor
@@ -77,6 +78,7 @@ struct vl_compositor
 
    void *vs;
    void *fs_video_buffer;
+   void *fs_weave;
    void *fs_rgba;
 
    struct {

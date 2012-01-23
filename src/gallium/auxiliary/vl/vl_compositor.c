@@ -43,6 +43,14 @@
 #define MIN_DIRTY (0)
 #define MAX_DIRTY (1 << 15)
 
+enum VS_OUTPUT
+{
+   VS_O_VPOS,
+   VS_O_VTEX,
+   VS_O_VTOP,
+   VS_O_VBOTTOM,
+};
+
 typedef float csc_matrix[16];
 
 static void *
@@ -50,7 +58,9 @@ create_vert_shader(struct vl_compositor *c)
 {
    struct ureg_program *shader;
    struct ureg_src vpos, vtex;
+   struct ureg_dst tmp;
    struct ureg_dst o_vpos, o_vtex;
+   struct ureg_dst o_vtop, o_vbottom;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -58,8 +68,11 @@ create_vert_shader(struct vl_compositor *c)
 
    vpos = ureg_DECL_vs_input(shader, 0);
    vtex = ureg_DECL_vs_input(shader, 1);
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, 0);
-   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, 1);
+   tmp = ureg_DECL_temporary(shader);
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
+   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX);
+   o_vtop = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
+   o_vbottom = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
 
    /*
     * o_vpos = vpos
@@ -67,6 +80,27 @@ create_vert_shader(struct vl_compositor *c)
     */
    ureg_MOV(shader, o_vpos, vpos);
    ureg_MOV(shader, o_vtex, vtex);
+
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X),
+            ureg_scalar(vtex, TGSI_SWIZZLE_W), ureg_imm1f(shader, 0.5f));
+   ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y),
+            ureg_scalar(vtex, TGSI_SWIZZLE_W), ureg_imm1f(shader, 0.25f));
+
+   ureg_MOV(shader, ureg_writemask(o_vtop, TGSI_WRITEMASK_X), vtex);
+   ureg_MAD(shader, ureg_writemask(o_vtop, TGSI_WRITEMASK_Y), ureg_scalar(vtex, TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X), ureg_imm1f(shader, 0.25f));
+   ureg_MAD(shader, ureg_writemask(o_vtop, TGSI_WRITEMASK_Z), ureg_scalar(vtex, TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), ureg_imm1f(shader, 0.25f));
+   ureg_RCP(shader, ureg_writemask(o_vtop, TGSI_WRITEMASK_W),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
+
+   ureg_MOV(shader, ureg_writemask(o_vbottom, TGSI_WRITEMASK_X), vtex);
+   ureg_MAD(shader, ureg_writemask(o_vbottom, TGSI_WRITEMASK_Y), ureg_scalar(vtex, TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X), ureg_imm1f(shader, -0.25f));
+   ureg_MAD(shader, ureg_writemask(o_vbottom, TGSI_WRITEMASK_Z), ureg_scalar(vtex, TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y), ureg_imm1f(shader, -0.25f));
+   ureg_RCP(shader, ureg_writemask(o_vbottom, TGSI_WRITEMASK_W),
+            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y));
 
    ureg_END(shader);
 
@@ -101,7 +135,7 @@ create_frag_shader_video_buffer(struct vl_compositor *c)
     * fragment = csc * texel
     */
    for (i = 0; i < 3; ++i)
-      ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_2D, tc, sampler[i]);
+      ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, tc, sampler[i]);
 
    ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
@@ -111,6 +145,98 @@ create_frag_shader_video_buffer(struct vl_compositor *c)
    ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
    ureg_release_temporary(shader, texel);
+   ureg_END(shader);
+
+   return ureg_create_shader_and_destroy(shader, c->pipe);
+}
+
+static void *
+create_frag_shader_weave(struct vl_compositor *c)
+{
+   struct ureg_program *shader;
+   struct ureg_src i_tc[2];
+   struct ureg_src csc[3];
+   struct ureg_src sampler[3];
+   struct ureg_dst t_tc[2];
+   struct ureg_dst t_texel[2];
+   struct ureg_dst o_fragment;
+   unsigned i, j;
+
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
+
+   i_tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP, TGSI_INTERPOLATE_LINEAR);
+   i_tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM, TGSI_INTERPOLATE_LINEAR);
+
+   for (i = 0; i < 3; ++i) {
+      csc[i] = ureg_DECL_constant(shader, i);
+      sampler[i] = ureg_DECL_sampler(shader, i);
+   }
+
+   for (i = 0; i < 2; ++i) {
+      t_tc[i] = ureg_DECL_temporary(shader);
+      t_texel[i] = ureg_DECL_temporary(shader);
+   }
+   o_fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   /* calculate the texture offsets
+    * t_tc.x = i_tc.x
+    * t_tc.y = (round(i_tc.y) + 0.5) / height * 2
+    */
+   for (i = 0; i < 2; ++i) {
+      ureg_MOV(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_X), i_tc[i]);
+      ureg_ROUND(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_YZ), i_tc[i]);
+      ureg_MOV(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_W),
+               ureg_imm1f(shader, i ? 0.75f : 0.25f));
+      ureg_ADD(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_YZ),
+               ureg_src(t_tc[i]), ureg_imm1f(shader, 0.5f));
+      ureg_MUL(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_Y),
+               ureg_src(t_tc[i]), ureg_scalar(i_tc[0], TGSI_SWIZZLE_W));
+      ureg_MUL(shader, ureg_writemask(t_tc[i], TGSI_WRITEMASK_Z),
+               ureg_src(t_tc[i]), ureg_scalar(i_tc[1], TGSI_SWIZZLE_W));
+   }
+
+   /* fetch the texels
+    * texel[0..1].x = tex(t_tc[0..1][0])
+    * texel[0..1].y = tex(t_tc[0..1][1])
+    * texel[0..1].z = tex(t_tc[0..1][2])
+    */
+   for (i = 0; i < 2; ++i)
+      for (j = 0; j < 3; ++j) {
+         struct ureg_src src = ureg_swizzle(ureg_src(t_tc[i]),
+            TGSI_SWIZZLE_X, j ? TGSI_SWIZZLE_Z : TGSI_SWIZZLE_Y, TGSI_SWIZZLE_W, TGSI_SWIZZLE_W);
+
+         ureg_TEX(shader, ureg_writemask(t_texel[i], TGSI_WRITEMASK_X << j),
+                  TGSI_TEXTURE_3D, src, sampler[j]);
+      }
+
+   /* calculate linear interpolation factor
+    * factor = |round(i_tc.y) - i_tc.y| * 2
+    */
+   ureg_ROUND(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_YZ), i_tc[0]);
+   ureg_ADD(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_YZ),
+            ureg_src(t_tc[0]), ureg_negate(i_tc[0]));
+   ureg_MUL(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_XY),
+            ureg_abs(ureg_src(t_tc[0])), ureg_imm1f(shader, 2.0f));
+   ureg_LRP(shader, t_texel[0], ureg_swizzle(ureg_src(t_tc[0]),
+            TGSI_SWIZZLE_Y, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_Z),
+            ureg_src(t_texel[1]), ureg_src(t_texel[0]));
+
+   /* and finally do colour space transformation
+    * fragment = csc * texel
+    */
+   ureg_MOV(shader, ureg_writemask(t_texel[0], TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
+   for (i = 0; i < 3; ++i)
+      ureg_DP4(shader, ureg_writemask(o_fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(t_texel[0]));
+
+   ureg_MOV(shader, ureg_writemask(o_fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
+
+   for (i = 0; i < 2; ++i) {
+      ureg_release_temporary(shader, t_texel[i]);
+      ureg_release_temporary(shader, t_tc[i]);
+   }
+
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, c->pipe);
@@ -135,7 +261,7 @@ create_frag_shader_palette(struct vl_compositor *c, bool include_cc)
    for (i = 0; include_cc && i < 3; ++i)
       csc[i] = ureg_DECL_constant(shader, i);
 
-   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
+   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
    palette = ureg_DECL_sampler(shader, 1);
 
@@ -177,7 +303,7 @@ create_frag_shader_rgba(struct vl_compositor *c)
    if (!shader)
       return false;
 
-   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
+   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -204,6 +330,12 @@ init_shaders(struct vl_compositor *c)
    c->fs_video_buffer = create_frag_shader_video_buffer(c);
    if (!c->fs_video_buffer) {
       debug_printf("Unable to create YCbCr-to-RGB fragment shader.\n");
+      return false;
+   }
+
+   c->fs_weave = create_frag_shader_weave(c);
+   if (!c->fs_weave) {
+      debug_printf("Unable to create YCbCr-to-RGB weave fragment shader.\n");
       return false;
    }
 
@@ -234,6 +366,7 @@ static void cleanup_shaders(struct vl_compositor *c)
 
    c->pipe->delete_vs_state(c->pipe, c->vs);
    c->pipe->delete_fs_state(c->pipe, c->fs_video_buffer);
+   c->pipe->delete_fs_state(c->pipe, c->fs_weave);
    c->pipe->delete_fs_state(c->pipe, c->fs_palette.yuv);
    c->pipe->delete_fs_state(c->pipe, c->fs_palette.rgb);
    c->pipe->delete_fs_state(c->pipe, c->fs_rgba);
@@ -261,7 +394,7 @@ init_pipe_state(struct vl_compositor *c)
    memset(&sampler, 0, sizeof(sampler));
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_r = PIPE_TEX_WRAP_REPEAT;
    sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
@@ -358,7 +491,7 @@ create_vertex_buffer(struct vl_compositor *c)
       c->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
       PIPE_USAGE_STREAM,
-      sizeof(struct vertex4f) * VL_COMPOSITOR_MAX_LAYERS * 4
+      c->vertex_buf.stride * VL_COMPOSITOR_MAX_LAYERS * 4
    );
 
    return c->vertex_buf.buffer != NULL;
@@ -374,7 +507,7 @@ init_buffers(struct vl_compositor *c)
    /*
     * Create our vertex buffer and vertex buffer elements
     */
-   c->vertex_buf.stride = sizeof(struct vertex4f);
+   c->vertex_buf.stride = sizeof(struct vertex2f) + sizeof(struct vertex4f);
    c->vertex_buf.buffer_offset = 0;
    create_vertex_buffer(c);
 
@@ -385,7 +518,7 @@ init_buffers(struct vl_compositor *c)
    vertex_elems[1].src_offset = sizeof(struct vertex2f);
    vertex_elems[1].instance_divisor = 0;
    vertex_elems[1].vertex_buffer_index = 0;
-   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[1].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    c->vertex_elems_state = c->pipe->create_vertex_elements_state(c->pipe, 2, vertex_elems);
 
    /*
@@ -418,7 +551,7 @@ static INLINE struct pipe_video_rect
 default_rect(struct vl_compositor_layer *layer)
 {
    struct pipe_resource *res = layer->sampler_views[0]->texture;
-   struct pipe_video_rect rect = { 0, 0, res->width0, res->height0 };
+   struct pipe_video_rect rect = { 0, 0, res->width0, res->height0 * res->depth0 };
    return rect;
 }
 
@@ -446,32 +579,37 @@ calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned hei
    layer->src.br = calc_bottomright(size, src);
    layer->dst.tl = calc_topleft(size, dst);
    layer->dst.br = calc_bottomright(size, dst);
+   layer->size = size;
 }
 
 static void
-gen_rect_verts(struct vertex4f *vb, struct vl_compositor_layer *layer)
+gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
 {
    assert(vb && layer);
 
-   vb[0].x = layer->dst.tl.x;
-   vb[0].y = layer->dst.tl.y;
-   vb[0].z = layer->src.tl.x;
-   vb[0].w = layer->src.tl.y;
+   vb[ 0].x = layer->dst.tl.x;
+   vb[ 0].y = layer->dst.tl.y;
+   vb[ 1].x = layer->src.tl.x;
+   vb[ 1].y = layer->src.tl.y;
+   vb[ 2] = layer->size;
 
-   vb[1].x = layer->dst.br.x;
-   vb[1].y = layer->dst.tl.y;
-   vb[1].z = layer->src.br.x;
-   vb[1].w = layer->src.tl.y;
+   vb[ 3].x = layer->dst.br.x;
+   vb[ 3].y = layer->dst.tl.y;
+   vb[ 4].x = layer->src.br.x;
+   vb[ 4].y = layer->src.tl.y;
+   vb[ 5] = layer->size;
 
-   vb[2].x = layer->dst.br.x;
-   vb[2].y = layer->dst.br.y;
-   vb[2].z = layer->src.br.x;
-   vb[2].w = layer->src.br.y;
+   vb[ 6].x = layer->dst.br.x;
+   vb[ 6].y = layer->dst.br.y;
+   vb[ 7].x = layer->src.br.x;
+   vb[ 7].y = layer->src.br.y;
+   vb[ 8] = layer->size;
 
-   vb[3].x = layer->dst.tl.x;
-   vb[3].y = layer->dst.br.y;
-   vb[3].z = layer->src.tl.x;
-   vb[3].w = layer->src.br.y;
+   vb[ 9].x = layer->dst.tl.x;
+   vb[ 9].y = layer->dst.br.y;
+   vb[10].x = layer->src.tl.x;
+   vb[10].y = layer->src.br.y;
+   vb[11] = layer->size;
 }
 
 static INLINE struct u_rect
@@ -496,7 +634,7 @@ calc_drawn_area(struct vl_compositor *c, struct vl_compositor_layer *layer)
 static void
 gen_vertex_data(struct vl_compositor *c, struct u_rect *dirty)
 {
-   struct vertex4f *vb;
+   struct vertex2f *vb;
    struct pipe_transfer *buf_transfer;
    unsigned i;
 
@@ -518,7 +656,7 @@ gen_vertex_data(struct vl_compositor *c, struct u_rect *dirty)
       if (c->used_layers & (1 << i)) {
          struct vl_compositor_layer *layer = &c->layers[i];
          gen_rect_verts(vb, layer);
-         vb += 4;
+         vb += 12;
 
          if (dirty && layer->clearing) {
             struct u_rect drawn = calc_drawn_area(c, layer);
@@ -673,7 +811,7 @@ vl_compositor_set_buffer_layer(struct vl_compositor *c,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].fs = c->fs_video_buffer;
+   c->layers[layer].fs = buffer->interlaced ? c->fs_weave : c->fs_video_buffer;
 
    sampler_views = buffer->get_sampler_view_components(buffer);
    for (i = 0; i < 3; ++i) {
