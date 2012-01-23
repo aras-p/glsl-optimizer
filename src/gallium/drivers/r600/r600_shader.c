@@ -1450,6 +1450,34 @@ static int cayman_emit_float_instr(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int cayman_mul_int_instr(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	int i, j, k, r;
+	struct r600_bytecode_alu alu;
+	int last_slot = (inst->Dst[0].Register.WriteMask & 0x8) ? 4 : 3;
+	for (k = 0; k < last_slot; k++) {
+		if (!(inst->Dst[0].Register.WriteMask & (1 << k)))
+			continue;
+
+		for (i = 0 ; i < 4; i++) {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = ctx->inst_info->r600_opcode;
+			for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
+				r600_bytecode_src(&alu.src[j], &ctx->src[j], k);
+			}
+			tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+			alu.dst.write = (i == k);
+			if (i == 3)
+				alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+	}
+	return 0;
+}
+
 /*
  * r600 - trunc to -PI..PI range
  * r700 - normalize by dividing by 2PI
@@ -4996,7 +5024,7 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_UMAX,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_UINT, tgsi_op2},
 	{TGSI_OPCODE_UMIN,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_UINT, tgsi_op2},
 	{TGSI_OPCODE_UMOD,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_UMUL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT, tgsi_op2},
+	{TGSI_OPCODE_UMUL,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT, cayman_mul_int_instr},
 	{TGSI_OPCODE_USEQ,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE_INT, tgsi_op2},
 	{TGSI_OPCODE_USGE,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_UINT, tgsi_op2},
 	{TGSI_OPCODE_USHR,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT, tgsi_op2},
