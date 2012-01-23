@@ -1145,6 +1145,11 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 				}
 				break;
+			case TGSI_SEMANTIC_FOG:
+				output[j].swizzle_y = 4; /* 0 */
+				output[j].swizzle_z = 4; /* 0 */
+				output[j].swizzle_w = 5; /* 1 */
+				break;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
