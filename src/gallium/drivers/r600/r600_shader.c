@@ -979,6 +979,9 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 		shader->output[noutput].gpr = ctx.temp_reg+1;
 		noutput++;
 
+		/* reset spi_sid for clipvertex output to avoid confusing spi */
+		shader->output[ctx.cv_output].spi_sid = 0;
+
 		shader->clip_dist_write = 0xFF;
 
 		for (i = 0; i < 8; i++) {
