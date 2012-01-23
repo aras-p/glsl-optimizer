@@ -528,7 +528,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
       /* 
-       * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
+       * t0.xy = MUL x.xx11, x.x111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, 1
        * t0 = MUL t0.xxz1 t0.z111    ; x^6 x^4 x^2 1
        * result = DP4 t0, cos_constants
