@@ -95,7 +95,6 @@
 #define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_MEM_WRITE                         0x3D
 #define PKT3_INDIRECT_BUFFER                   0x32
-#define PKT3_CP_INTERRUPT                      0x40
 #define PKT3_SURFACE_SYNC                      0x43
 #define PKT3_ME_INITIALIZE                     0x44
 #define PKT3_COND_WRITE                        0x45

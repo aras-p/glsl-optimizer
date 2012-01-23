@@ -87,7 +87,6 @@
 #define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_MEM_WRITE                         0x3D
 #define PKT3_INDIRECT_BUFFER                   0x32
-#define PKT3_CP_INTERRUPT                      0x40
 #define PKT3_SURFACE_SYNC                      0x43
 #define PKT3_ME_INITIALIZE                     0x44
 #define PKT3_COND_WRITE                        0x45
@@ -580,7 +579,7 @@
 #define   S_028434_STENCILWRITEMASK_BF(x)              (((x) & 0xFF) << 16)
 #define   G_028434_STENCILWRITEMASK_BF(x)              (((x) >> 16) & 0xFF)
 #define   C_028434_STENCILWRITEMASK_BF                 0xFF00FFFF
-#define R_028780_CB_BLEND_CONTROL                    0x028780
+#define R_028780_CB_BLEND0_CONTROL                   0x028780
 #define   S_028780_COLOR_SRCBLEND(x)                   (((x) & 0x1F) << 0)
 #define   G_028780_COLOR_SRCBLEND(x)                   (((x) >> 0) & 0x1F)
 #define   C_028780_COLOR_SRCBLEND                      0xFFFFFFE0
@@ -675,35 +674,31 @@
 #define   G_028814_MULTI_PRIM_IB_ENA(x)                (((x) >> 21) & 0x1)
 #define   C_028814_MULTI_PRIM_IB_ENA                   0xFFDFFFFF
 
-#define R_028D24_DB_HTILE_SURFACE                    0x028D24
-#define   S_028D24_HTILE_WIDTH(x)                      (((x) & 0x1) << 0)
-#define   G_028D24_HTILE_WIDTH(x)                      (((x) >> 0) & 0x1)
-#define   C_028D24_HTILE_WIDTH                         0xFFFFFFFE
-#define   S_028D24_HTILE_HEIGHT(x)                     (((x) & 0x1) << 1)
-#define   G_028D24_HTILE_HEIGHT(x)                     (((x) >> 1) & 0x1)
-#define   C_028D24_HTILE_HEIGHT                        0xFFFFFFFD
-#define   S_028D24_LINEAR(x)                           (((x) & 0x1) << 2)
-#define   G_028D24_LINEAR(x)                           (((x) >> 2) & 0x1)
-#define   C_028D24_LINEAR                              0xFFFFFFFB
-#define   S_028D24_FULL_CACHE(x)                       (((x) & 0x1) << 3)
-#define   G_028D24_FULL_CACHE(x)                       (((x) >> 3) & 0x1)
-#define   C_028D24_FULL_CACHE                          0xFFFFFFF7
-#define   S_028D24_HTILE_USES_PRELOAD_WIN(x)           (((x) & 0x1) << 4)
-#define   G_028D24_HTILE_USES_PRELOAD_WIN(x)           (((x) >> 4) & 0x1)
-#define   C_028D24_HTILE_USES_PRELOAD_WIN              0xFFFFFFEF
-#define   S_028D24_PRELOAD(x)                          (((x) & 0x1) << 5)
-#define   G_028D24_PRELOAD(x)                          (((x) >> 5) & 0x1)
-#define   C_028D24_PRELOAD                             0xFFFFFFDF
-#define   S_028D24_PREFETCH_WIDTH(x)                   (((x) & 0x3F) << 6)
-#define   G_028D24_PREFETCH_WIDTH(x)                   (((x) >> 6) & 0x3F)
-#define   C_028D24_PREFETCH_WIDTH                      0xFFFFF03F
-#define   S_028D24_PREFETCH_HEIGHT(x)                  (((x) & 0x3F) << 12)
-#define   G_028D24_PREFETCH_HEIGHT(x)                  (((x) >> 12) & 0x3F)
-#define   C_028D24_PREFETCH_HEIGHT                     0xFFFC0FFF
-#define R_028D34_DB_PREFETCH_LIMIT                   0x028D34
-#define   S_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) & 0x3FF) << 0)
-#define   G_028D34_DEPTH_HEIGHT_TILE_MAX(x)            (((x) >> 0) & 0x3FF)
-#define   C_028D34_DEPTH_HEIGHT_TILE_MAX               0xFFFFFC00
+#define R_028ABC_DB_HTILE_SURFACE                    0x028ABC
+#define   S_028ABC_HTILE_WIDTH(x)                      (((x) & 0x1) << 0)
+#define   G_028ABC_HTILE_WIDTH(x)                      (((x) >> 0) & 0x1)
+#define   C_028ABC_HTILE_WIDTH                         0xFFFFFFFE
+#define   S_028ABC_HTILE_HEIGHT(x)                     (((x) & 0x1) << 1)
+#define   G_028ABC_HTILE_HEIGHT(x)                     (((x) >> 1) & 0x1)
+#define   C_028ABC_HTILE_HEIGHT                        0xFFFFFFFD
+#define   S_028ABC_LINEAR(x)                           (((x) & 0x1) << 2)
+#define   G_028ABC_LINEAR(x)                           (((x) >> 2) & 0x1)
+#define   C_028ABC_LINEAR                              0xFFFFFFFB
+#define   S_028ABC_FULL_CACHE(x)                       (((x) & 0x1) << 3)
+#define   G_028ABC_FULL_CACHE(x)                       (((x) >> 3) & 0x1)
+#define   C_028ABC_FULL_CACHE                          0xFFFFFFF7
+#define   S_028ABC_HTILE_USES_PRELOAD_WIN(x)           (((x) & 0x1) << 4)
+#define   G_028ABC_HTILE_USES_PRELOAD_WIN(x)           (((x) >> 4) & 0x1)
+#define   C_028ABC_HTILE_USES_PRELOAD_WIN              0xFFFFFFEF
+#define   S_028ABC_PRELOAD(x)                          (((x) & 0x1) << 5)
+#define   G_028ABC_PRELOAD(x)                          (((x) >> 5) & 0x1)
+#define   C_028ABC_PRELOAD                             0xFFFFFFDF
+#define   S_028ABC_PREFETCH_WIDTH(x)                   (((x) & 0x3F) << 6)
+#define   G_028ABC_PREFETCH_WIDTH(x)                   (((x) >> 6) & 0x3F)
+#define   C_028ABC_PREFETCH_WIDTH                      0xFFFFF03F
+#define   S_028ABC_PREFETCH_HEIGHT(x)                  (((x) & 0x3F) << 12)
+#define   G_028ABC_PREFETCH_HEIGHT(x)                  (((x) >> 12) & 0x3F)
+#define   C_028ABC_PREFETCH_HEIGHT                     0xFFFC0FFF
 #define R_02880C_DB_SHADER_CONTROL                    0x02880C
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)
@@ -746,16 +741,6 @@
 #define   S_028A40_CUT_MODE(x)                         (((x) & 0x3) << 3)
 #define   G_028A40_CUT_MODE(x)                         (((x) >> 3) & 0x3)
 #define   C_028A40_CUT_MODE                            0xFFFFFFE7
-#define R_028AA8_IA_MULTI_VGT_PARAM                  0x028AA8
-#define   S_028AA8_PRIMGROUP_SIZE(x)                   (((x) & 0xFFFF) << 0)
-#define   G_028AA8_PRIMGROUP_SIZE(x)                   (((x) >> 0) & 0xFFFF)
-#define   C_028AA8_PRIMGROUP_SIZE                      0xFFFF0000
-#define   S_028AA8_PARTIAL_VS_WAVE_ON(x)               (((x) & 0x1) << 16)
-#define   G_028AA8_PARTIAL_VS_WAVE_ON(x)               (((x) >> 16) & 0x1)
-#define   C_028AA8_PARTIAL_VS_WAVE_ON                  0xFFFEFFFF
-#define   S_028AA8_SWITCH_ON_EOP(x)                    (((x) & 0x1) << 17)
-#define   G_028AA8_SWITCH_ON_EOP(x)                    (((x) >> 17) & 0x1)
-#define   C_028AA8_SWITCH_ON_EOP                       0xFFFDFFFF
 #define R_008040_WAIT_UNTIL                          0x008040
 #define   S_008040_WAIT_CP_DMA_IDLE(x)                 (((x) & 0x1) << 8)
 #define   G_008040_WAIT_CP_DMA_IDLE(x)                 (((x) >> 8) & 0x1)
@@ -869,7 +854,7 @@
 
 
 /* new - diff */
-#define R_028250_PA_SC_VPORT_SCISSOR_TL                0x028250
+#define R_028250_PA_SC_VPORT_SCISSOR_0_TL            0x028250
 #define   S_028250_TL_X(x)                             (((x) & 0x7FFF) << 0)
 #define   G_028250_TL_X(x)                             (((x) >> 0) & 0x7FFF)
 #define   C_028250_TL_X                                0xFFFF8000
@@ -879,7 +864,7 @@
 #define   S_028250_WINDOW_OFFSET_DISABLE(x)            (((x) & 0x1) << 31)
 #define   G_028250_WINDOW_OFFSET_DISABLE(x)            (((x) >> 31) & 0x1)
 #define   C_028250_WINDOW_OFFSET_DISABLE               0x7FFFFFFF
-#define R_028254_PA_SC_VPORT_SCISSOR_BR                0x028254
+#define R_028254_PA_SC_VPORT_SCISSOR_0_BR            0x028254
 #define   S_028254_BR_X(x)                             (((x) & 0x7FFF) << 0)
 #define   G_028254_BR_X(x)                             (((x) >> 0) & 0x7FFF)
 #define   C_028254_BR_X                                0xFFFF8000
@@ -1487,7 +1472,6 @@
 #define SQ_TEX_INST_SAMPLE_C 0x18
 
 #define R_008A14_PA_CL_ENHANCE                       0x00008A14
-#define R_008C0C_SQ_THREAD_RESOURCE_MGMT             0x00008C0C
 #define R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ        0x00008D8C
 #define R_028000_DB_RENDER_CONTROL                   0x00028000
 #define   S_028000_DEPTH_CLEAR_ENABLE(x)               (((x) & 0x1) << 0)
@@ -1582,8 +1566,6 @@
 #define R_028234_PA_SU_HARDWARE_SCREEN_OFFSET        0x00028234
 #define R_028238_CB_TARGET_MASK                      0x00028238
 #define R_02823C_CB_SHADER_MASK                      0x0002823C
-#define R_028250_PA_SC_VPORT_SCISSOR_0_TL            0x00028250
-#define R_028254_PA_SC_VPORT_SCISSOR_0_BR            0x00028254
 #define R_028350_SX_MISC                             0x00028350
 #define R_028380_SQ_VTX_SEMANTIC_0                   0x00028380
 #define R_028384_SQ_VTX_SEMANTIC_1                   0x00028384
@@ -1704,7 +1686,6 @@
 #define R_0286DC_SPI_FOG_CNTL                        0x000286DC
 #define R_0286E4_SPI_PS_IN_CONTROL_2                 0x000286E4
 #define R_0286E8_SPI_COMPUTE_INPUT_CNTL              0x000286E8
-#define R_028780_CB_BLEND0_CONTROL                   0x00028780
 #define R_028784_CB_BLEND1_CONTROL                   0x00028784
 #define R_028788_CB_BLEND2_CONTROL                   0x00028788
 #define R_02878C_CB_BLEND3_CONTROL                   0x0002878C
@@ -1773,7 +1754,6 @@
 #define   C_028A94_RESET_EN                            0xFFFFFFFE
 #define R_028AB4_VGT_REUSE_OFF                       0x00028AB4
 #define R_028AB8_VGT_VTX_CNT_EN                      0x00028AB8
-#define R_028ABC_DB_HTILE_SURFACE                    0x00028ABC
 #define R_028AC0_DB_SRESULTS_COMPARE_STATE0          0x00028AC0
 #define R_028AC4_DB_SRESULTS_COMPARE_STATE1          0x00028AC4
 #define R_028AC8_DB_PRELOAD_CONTROL                  0x00028AC8
@@ -1851,7 +1831,7 @@
 #define R_028C10_PA_CL_GB_VERT_DISC_ADJ              0x00028C10
 #define R_028C14_PA_CL_GB_HORZ_CLIP_ADJ              0x00028C14
 #define R_028C18_PA_CL_GB_HORZ_DISC_ADJ              0x00028C18
-#define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x00028C1C
+#define R_028C1C_PA_SC_AA_SAMPLE_LOCS_0              0x00028C1C
 #define R_028C3C_PA_SC_AA_MASK                       0x00028C3C
 #define R_028C60_CB_COLOR0_BASE                      0x00028C60
 #define R_028C6C_CB_COLOR0_VIEW                      0x00028C6C
@@ -2026,7 +2006,6 @@
 #define   G_0085F0_CR2_ACTION_ENA(x)                   (((x) >> 31) & 0x1)
 #define   C_0085F0_CR2_ACTION_ENA                      0x7FFFFFFF
 #define R_008970_VGT_NUM_INDICES                     0x008970
-#define R_0287F0_VGT_DRAW_INITIATOR                  0x0287F0
 
 #define R_03CFF0_SQ_VTX_BASE_VTX_LOC                    0x03CFF0
 #define R_03CFF4_SQ_VTX_START_INST_LOC                  0x03CFF4
@@ -2040,17 +2019,17 @@
 
 #define CM_R_0288E8_SQ_LDS_ALLOC                     0x000288E8
 
-#define CM_R_028804_DB_EQAA 0x00028804
+#define CM_R_028804_DB_EQAA                          0x00028804
 
 #define CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0        0x00028BD4
 #define CM_R_028BD8_PA_SC_CENTROID_PRIORITY_1        0x00028BD8
-#define CM_R_028BDC_PA_SC_LINE_CNTL 0x28bdc
-#define CM_R_028BE0_PA_SC_AA_CONFIG 0x28be0
-#define CM_R_028BE4_PA_SU_VTX_CNTL 0x28be4
-#define CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ 0x28be8
-#define CM_R_028BEC_PA_CL_GB_VERT_DISC_ADJ 0x28bec
-#define CM_R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ 0x28bf0
-#define CM_R_028BF4_PA_CL_GB_HORZ_DISC_ADJ 0x28bf4
+#define CM_R_028BDC_PA_SC_LINE_CNTL                  0x28bdc
+#define CM_R_028BE0_PA_SC_AA_CONFIG                  0x28be0
+#define CM_R_028BE4_PA_SU_VTX_CNTL                   0x28be4
+#define CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ           0x28be8
+#define CM_R_028BEC_PA_CL_GB_VERT_DISC_ADJ           0x28bec
+#define CM_R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ           0x28bf0
+#define CM_R_028BF4_PA_CL_GB_HORZ_DISC_ADJ           0x28bf4
 
 #define CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0 0x28bf8
 #define CM_R_028BFC_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_1 0x28bfc
@@ -2072,7 +2051,18 @@
 #define CM_R_028C30_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_2 0x28c30
 #define CM_R_028C34_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_3 0x28c34
 
-#define CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0 0x28c38
-#define CM_R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1 0x28c3c
+#define CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0           0x28c38
+#define CM_R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1           0x28c3c
+
+#define CM_R_028AA8_IA_MULTI_VGT_PARAM                0x028AA8
+#define   S_028AA8_PRIMGROUP_SIZE(x)                   (((x) & 0xFFFF) << 0)
+#define   G_028AA8_PRIMGROUP_SIZE(x)                   (((x) >> 0) & 0xFFFF)
+#define   C_028AA8_PRIMGROUP_SIZE                      0xFFFF0000
+#define   S_028AA8_PARTIAL_VS_WAVE_ON(x)               (((x) & 0x1) << 16)
+#define   G_028AA8_PARTIAL_VS_WAVE_ON(x)               (((x) >> 16) & 0x1)
+#define   C_028AA8_PARTIAL_VS_WAVE_ON                  0xFFFEFFFF
+#define   S_028AA8_SWITCH_ON_EOP(x)                    (((x) & 0x1) << 17)
+#define   G_028AA8_SWITCH_ON_EOP(x)                    (((x) >> 17) & 0x1)
+#define   C_028AA8_SWITCH_ON_EOP                       0xFFFDFFFF
 
 #endif
