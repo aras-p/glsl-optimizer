@@ -346,7 +346,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 	       _mesa_unpack_uint_rgba_row(texFormat, width, src, rgba_uint);
 
 	       if (texImage->_BaseFormat == GL_ALPHA) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba_uint[col][RCOMP] = 0;
 		     rgba_uint[col][GCOMP] = 0;
@@ -354,7 +354,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_LUMINANCE) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba_uint[col][GCOMP] = 0;
 		     rgba_uint[col][BCOMP] = 0;
@@ -362,14 +362,14 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba_uint[col][GCOMP] = 0;
 		     rgba_uint[col][BCOMP] = 0;
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_INTENSITY) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba_uint[col][GCOMP] = 0;
 		     rgba_uint[col][BCOMP] = 0;
@@ -383,7 +383,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 	       _mesa_unpack_rgba_row(texFormat, width, src, rgba);
 
 	       if (texImage->_BaseFormat == GL_ALPHA) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba[col][RCOMP] = 0.0F;
 		     rgba[col][GCOMP] = 0.0F;
@@ -391,7 +391,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_LUMINANCE) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba[col][GCOMP] = 0.0F;
 		     rgba[col][BCOMP] = 0.0F;
@@ -399,14 +399,14 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba[col][GCOMP] = 0.0F;
 		     rgba[col][BCOMP] = 0.0F;
 		  }
 	       }
 	       else if (texImage->_BaseFormat == GL_INTENSITY) {
-		  GLint col;
+		  GLuint col;
 		  for (col = 0; col < width; col++) {
 		     rgba[col][GCOMP] = 0.0F;
 		     rgba[col][BCOMP] = 0.0F;
