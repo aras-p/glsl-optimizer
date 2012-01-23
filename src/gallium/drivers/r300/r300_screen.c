@@ -102,6 +102,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_BARRIER:
         case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
         case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
+        case PIPE_CAP_VERTEX_COLOR_CLAMPED:
             return 1;
 
         /* r300 cannot do swizzling of compressed textures. Supported otherwise. */
@@ -109,7 +110,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
 
         /* Supported on r500 only. */
-        case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+        case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
         case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
         case PIPE_CAP_SM3:
             return is_r500 ? 1 : 0;
@@ -135,6 +136,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
         case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
         case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
+        case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
             return 0;
 
         /* SWTCL-only features. */

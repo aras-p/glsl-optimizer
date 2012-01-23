@@ -450,6 +450,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    memset(&key, 0, sizeof(key));
    key.st = st;
    key.bitmap = GL_TRUE;
+   key.clamp_color = st->clamp_frag_color_in_shader &&
+                     st->ctx->Color._ClampFragmentColor;
 
    fpv = st_get_fp_variant(st, st->fp, &key);
 

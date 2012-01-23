@@ -76,6 +76,17 @@ void st_invalidate_state(struct gl_context * ctx, GLuint new_state)
 {
    struct st_context *st = st_context(ctx);
 
+   /* Replace _NEW_FRAG_CLAMP with ST_NEW_FRAGMENT_PROGRAM for the fallback. */
+   if (st->clamp_frag_color_in_shader && (new_state & _NEW_FRAG_CLAMP)) {
+      new_state &= ~_NEW_FRAG_CLAMP;
+      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+   }
+
+   /* Update the vertex shader if ctx->Light._ClampVertexColor was changed. */
+   if (st->clamp_vert_color_in_shader && (new_state & _NEW_LIGHT)) {
+      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+   }
+
    st->dirty.mesa |= new_state;
    st->dirty.st |= ST_NEW_MESA;
 

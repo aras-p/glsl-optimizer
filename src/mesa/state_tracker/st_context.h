@@ -76,6 +76,8 @@ struct st_context
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
    struct draw_stage *rastpos_stage;  /**< For glRasterPos */
    GLboolean sw_primitive_restart;
+   GLboolean clamp_frag_color_in_shader;
+   GLboolean clamp_vert_color_in_shader;
 
 
    /* On old libGL's for linux we need to invalidate the drawables

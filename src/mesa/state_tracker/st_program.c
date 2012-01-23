@@ -351,7 +351,8 @@ st_translate_vertex_program(struct st_context *st,
                                    stvp->result_to_output,
                                    stvp->output_semantic_name,
                                    stvp->output_semantic_index,
-                                   key->passthrough_edgeflags );
+                                   key->passthrough_edgeflags,
+                                   key->clamp_color);
    else
       error = st_translate_mesa_program(st->ctx,
                                         TGSI_PROCESSOR_VERTEX,
@@ -368,7 +369,8 @@ st_translate_vertex_program(struct st_context *st,
                                         stvp->result_to_output,
                                         stvp->output_semantic_name,
                                         stvp->output_semantic_index,
-                                        key->passthrough_edgeflags );
+                                        key->passthrough_edgeflags,
+                                        key->clamp_color);
 
    if (error)
       goto fail;
@@ -505,7 +507,8 @@ st_translate_fragment_program(struct st_context *st,
    }
 #endif
 
-   if (!stfp->tgsi.tokens) {
+   /* XXX this will be cleaned up in the following commit */
+   if (1) {
       /* need to translate Mesa instructions to TGSI now */
       GLuint outputMapping[FRAG_RESULT_MAX];
       GLuint inputMapping[FRAG_ATTRIB_MAX];
@@ -718,7 +721,8 @@ st_translate_fragment_program(struct st_context *st,
                               fs_num_outputs,
                               outputMapping,
                               fs_output_semantic_name,
-                              fs_output_semantic_index, FALSE );
+                              fs_output_semantic_index, FALSE,
+                              key->clamp_color );
       else
          st_translate_mesa_program(st->ctx,
                                    TGSI_PROCESSOR_FRAGMENT,
@@ -734,7 +738,8 @@ st_translate_fragment_program(struct st_context *st,
                                    fs_num_outputs,
                                    outputMapping,
                                    fs_output_semantic_name,
-                                   fs_output_semantic_index, FALSE );
+                                   fs_output_semantic_index, FALSE,
+                                   key->clamp_color);
 
       stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
       ureg_destroy( ureg );
@@ -1022,6 +1027,7 @@ st_translate_geometry_program(struct st_context *st,
                              outputMapping,
                              gs_output_semantic_name,
                              gs_output_semantic_index,
+                             FALSE,
                              FALSE);
 
    stgp->num_inputs = gs_num_inputs;

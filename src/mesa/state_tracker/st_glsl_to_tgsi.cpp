@@ -4055,7 +4055,7 @@ src_register(struct st_translate *t,
 static struct ureg_dst
 translate_dst(struct st_translate *t,
               const st_dst_reg *dst_reg,
-              bool saturate)
+              bool saturate, bool clamp_color)
 {
    struct ureg_dst dst = dst_register(t, 
                                       dst_reg->file,
@@ -4065,6 +4065,27 @@ translate_dst(struct st_translate *t,
    
    if (saturate)
       dst = ureg_saturate(dst);
+   else if (clamp_color && dst_reg->file == PROGRAM_OUTPUT) {
+      /* Clamp colors for ARB_color_buffer_float. */
+      switch (t->procType) {
+      case TGSI_PROCESSOR_VERTEX:
+         /* XXX if the geometry shader is present, this must be done there
+          * instead of here. */
+         if (dst_reg->index == VERT_RESULT_COL0 ||
+             dst_reg->index == VERT_RESULT_COL1 ||
+             dst_reg->index == VERT_RESULT_BFC0 ||
+             dst_reg->index == VERT_RESULT_BFC1) {
+            dst = ureg_saturate(dst);
+         }
+         break;
+
+      case TGSI_PROCESSOR_FRAGMENT:
+         if (dst_reg->index >= FRAG_RESULT_COLOR) {
+            dst = ureg_saturate(dst);
+         }
+         break;
+      }
+   }
 
    if (dst_reg->reladdr != NULL)
       dst = ureg_dst_indirect(dst, ureg_src(t->address[0]));
@@ -4134,7 +4155,8 @@ translate_tex_offset(struct st_translate *t,
 
 static void
 compile_tgsi_instruction(struct st_translate *t,
-                         const glsl_to_tgsi_instruction *inst)
+                         const glsl_to_tgsi_instruction *inst,
+                         bool clamp_dst_color_output)
 {
    struct ureg_program *ureg = t->ureg;
    GLuint i;
@@ -4151,7 +4173,8 @@ compile_tgsi_instruction(struct st_translate *t,
    if (num_dst) 
       dst[0] = translate_dst(t, 
                              &inst->dst,
-                             inst->saturate);
+                             inst->saturate,
+                             clamp_dst_color_output);
 
    for (i = 0; i < num_src; i++) 
       src[i] = translate_src(t, &inst->src[i]);
@@ -4457,7 +4480,8 @@ st_translate_program(
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
    const ubyte outputSemanticIndex[],
-   boolean passthrough_edgeflags)
+   boolean passthrough_edgeflags,
+   boolean clamp_color)
 {
    struct st_translate *t;
    unsigned i;
@@ -4697,7 +4721,8 @@ st_translate_program(
     */
    foreach_iter(exec_list_iterator, iter, program->instructions) {
       set_insn_start(t, ureg_get_instruction_number(ureg));
-      compile_tgsi_instruction(t, (glsl_to_tgsi_instruction *)iter.get());
+      compile_tgsi_instruction(t, (glsl_to_tgsi_instruction *)iter.get(),
+                               clamp_color);
 
       if (t->prevInstWrotePointSize && proginfo->Id) {
          /* The previous instruction wrote to the (fake) vertex point size

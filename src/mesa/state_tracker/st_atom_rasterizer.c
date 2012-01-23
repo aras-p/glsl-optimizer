@@ -112,7 +112,8 @@ static void update_raster_state( struct st_context *st )
       raster->light_twoside = 1;
    }
 
-   raster->clamp_vertex_color = ctx->Light._ClampVertexColor;
+   raster->clamp_vertex_color = !st->clamp_vert_color_in_shader &&
+                                ctx->Light._ClampVertexColor;
 
    /* _NEW_POLYGON
     */
@@ -255,7 +256,8 @@ static void update_raster_state( struct st_context *st )
       raster->scissor = 1;
 
    /* _NEW_FRAG_CLAMP */
-   raster->clamp_fragment_color = ctx->Color._ClampFragmentColor;
+   raster->clamp_fragment_color = !st->clamp_frag_color_in_shader &&
+                                  ctx->Color._ClampFragmentColor;
    raster->gl_rasterization_rules = 1;
 
    /* _NEW_RASTERIZER_DISCARD */

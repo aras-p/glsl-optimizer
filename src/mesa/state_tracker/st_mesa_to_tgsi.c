@@ -306,7 +306,8 @@ st_translate_texture_target( GLuint textarget,
 static struct ureg_dst
 translate_dst( struct st_translate *t,
                const struct prog_dst_register *DstReg,
-               boolean saturate )
+               boolean saturate,
+               boolean clamp_color)
 {
    struct ureg_dst dst = dst_register( t, 
                                        DstReg->File,
@@ -317,6 +318,27 @@ translate_dst( struct st_translate *t,
    
    if (saturate)
       dst = ureg_saturate( dst );
+   else if (clamp_color && DstReg->File == PROGRAM_OUTPUT) {
+      /* Clamp colors for ARB_color_buffer_float. */
+      switch (t->procType) {
+      case TGSI_PROCESSOR_VERTEX:
+         /* XXX if the geometry shader is present, this must be done there
+          * instead of here. */
+         if (DstReg->Index == VERT_RESULT_COL0 ||
+             DstReg->Index == VERT_RESULT_COL1 ||
+             DstReg->Index == VERT_RESULT_BFC0 ||
+             DstReg->Index == VERT_RESULT_BFC1) {
+            dst = ureg_saturate(dst);
+         }
+         break;
+
+      case TGSI_PROCESSOR_FRAGMENT:
+         if (DstReg->Index >= FRAG_RESULT_COLOR) {
+            dst = ureg_saturate(dst);
+         }
+         break;
+      }
+   }
 
    if (DstReg->RelAddr)
       dst = ureg_dst_indirect( dst, ureg_src(t->address[0]) );
@@ -662,7 +684,8 @@ translate_opcode( unsigned op )
 static void
 compile_instruction(
    struct st_translate *t,
-   const struct prog_instruction *inst )
+   const struct prog_instruction *inst,
+   boolean clamp_dst_color_output)
 {
    struct ureg_program *ureg = t->ureg;
    GLuint i;
@@ -677,7 +700,8 @@ compile_instruction(
    if (num_dst) 
       dst[0] = translate_dst( t, 
                               &inst->DstReg,
-                              inst->SaturateMode );
+                              inst->SaturateMode,
+                              clamp_dst_color_output);
 
    for (i = 0; i < num_src; i++) 
       src[i] = translate_src( t, &inst->SrcReg[i] );
@@ -1016,7 +1040,8 @@ st_translate_mesa_program(
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
    const ubyte outputSemanticIndex[],
-   boolean passthrough_edgeflags )
+   boolean passthrough_edgeflags,
+   boolean clamp_color)
 {
    struct st_translate translate, *t;
    unsigned i;
@@ -1233,7 +1258,7 @@ st_translate_mesa_program(
     */
    for (i = 0; i < program->NumInstructions; i++) {
       set_insn_start( t, ureg_get_instruction_number( ureg ));
-      compile_instruction( t, &program->Instructions[i] );
+      compile_instruction( t, &program->Instructions[i], clamp_color );
 
       if (t->prevInstWrotePointSize && program->Id) {
          /* The previous instruction wrote to the (fake) vertex point size

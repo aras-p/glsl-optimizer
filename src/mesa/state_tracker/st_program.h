@@ -55,6 +55,9 @@ struct st_fp_variant_key
    GLuint pixelMaps:1;            /**< glDrawPixels w/ pixel lookup map? */
    GLuint drawpixels_z:1;         /**< glDrawPixels(GL_DEPTH) */
    GLuint drawpixels_stencil:1;   /**< glDrawPixels(GL_STENCIL) */
+
+   /** for ARB_color_buffer_float */
+   GLuint clamp_color:1;
 };
 
 
@@ -98,6 +101,9 @@ struct st_vp_variant_key
 {
    struct st_context *st;          /**< variants are per-context */
    boolean passthrough_edgeflags;
+
+   /** for ARB_color_buffer_float */
+   boolean clamp_color;
 };
 
 
