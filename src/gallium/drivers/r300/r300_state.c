@@ -1231,7 +1231,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
     int last_sprite_coord_enable = r300->sprite_coord_enable;
     boolean last_two_sided_color = r300->two_sided_color;
-    boolean last_frag_clamp = r300->frag_clamp;
 
     if (r300->draw && rs) {
         draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
@@ -1241,12 +1240,10 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         r300->polygon_offset_enabled = rs->polygon_offset_enable;
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
         r300->two_sided_color = rs->rs.light_twoside;
-        r300->frag_clamp = rs->rs.clamp_fragment_color;
     } else {
         r300->polygon_offset_enabled = FALSE;
         r300->sprite_coord_enable = 0;
         r300->two_sided_color = FALSE;
-        r300->frag_clamp = FALSE;
     }
 
     UPDATE_STATE(state, r300->rs_state);
@@ -1255,11 +1252,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {
         r300_mark_atom_dirty(r300, &r300->rs_block_state);
-    }
-
-    if (last_frag_clamp != r300->frag_clamp &&
-        r300->fs_status == FRAGMENT_SHADER_VALID) {
-        r300->fs_status = FRAGMENT_SHADER_MAYBE_DIRTY;
     }
 }
 

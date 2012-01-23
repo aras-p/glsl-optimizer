@@ -147,10 +147,7 @@ static void get_external_state(
     struct r300_fragment_program_external_state* state)
 {
     struct r300_textures_state *texstate = r300->textures_state.state;
-    struct r300_rs_state *rs = r300->rs_state.state;
     unsigned i;
-
-    state->frag_clamp = rs ? rs->rs.clamp_fragment_color : 0;
 
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state *s = texstate->sampler_states[i];
