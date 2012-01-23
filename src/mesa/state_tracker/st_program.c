@@ -110,7 +110,8 @@ delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
    if (fpv->parameters)
       _mesa_free_parameter_list(fpv->parameters);
-      
+   if (fpv->tgsi.tokens)
+      st_free_tokens(fpv->tgsi.tokens);
    FREE(fpv);
 }
 
@@ -741,16 +742,16 @@ st_translate_fragment_program(struct st_context *st,
                                    fs_output_semantic_index, FALSE,
                                    key->clamp_color);
 
-      stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
+      variant->tgsi.tokens = ureg_get_tokens( ureg, NULL );
       ureg_destroy( ureg );
    }
 
    /* fill in variant */
-   variant->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
+   variant->driver_shader = pipe->create_fs_state(pipe, &variant->tgsi);
    variant->key = *key;
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( variant->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
    }
 

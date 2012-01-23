@@ -94,7 +94,7 @@ st_print_current(void)
    if (st->vp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->vp->Base.Base.Parameters);
 
-   tgsi_dump( st->fp->tgsi.tokens, 0 );
+   tgsi_dump( st->fp->variants[0].tgsi.tokens, 0 );
    if (st->fp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->fp->Base.Base.Parameters);
 }

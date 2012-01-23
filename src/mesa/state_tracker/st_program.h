@@ -69,6 +69,8 @@ struct st_fp_variant
    /** Parameters which generated this version of fragment program */
    struct st_fp_variant_key key;
 
+   struct pipe_shader_state tgsi;
+
    /** Driver's compiled shader */
    void *driver_shader;
 
@@ -88,8 +90,6 @@ struct st_fragment_program
 {
    struct gl_fragment_program Base;
    struct glsl_to_tgsi_visitor* glsl_to_tgsi;
-
-   struct pipe_shader_state tgsi;
 
    struct st_fp_variant *variants;
 };
