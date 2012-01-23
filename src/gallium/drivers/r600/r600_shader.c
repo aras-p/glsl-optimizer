@@ -4489,11 +4489,9 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 	}
 
 	r600_bytecode_add_cfinst(ctx->bc, ctx->inst_info->r600_opcode);
-	ctx->bc->cf_last->pop_count = 1;
 
 	fc_set_mid(ctx, fscp);
 
-	pops(ctx, 1);
 	callstack_check_depth(ctx, FC_PUSH_VPM, 1);
 	return 0;
 }
