@@ -2808,9 +2808,6 @@ struct gl_constants
    /** GL_EXT_gpu_shader4 */
    GLint MinProgramTexelOffset, MaxProgramTexelOffset;
 
-   /* GL_EXT_framebuffer_sRGB */
-   GLboolean sRGBCapable; /* can enable sRGB blend/update on FBOs */
-
    /* GL_ARB_robustness */
    GLenum ResetStrategy;
 

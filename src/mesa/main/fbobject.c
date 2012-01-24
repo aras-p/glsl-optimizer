@@ -2405,7 +2405,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-         if (ctx->Extensions.EXT_framebuffer_sRGB && ctx->Const.sRGBCapable) {
+         if (ctx->Extensions.EXT_framebuffer_sRGB) {
             *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
          }
          else {

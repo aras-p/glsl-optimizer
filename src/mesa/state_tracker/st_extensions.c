@@ -425,7 +425,6 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_RENDER_TARGET)) {
          ctx->Extensions.EXT_framebuffer_sRGB = GL_TRUE;
-         ctx->Const.sRGBCapable = GL_TRUE;
       }
    }
 

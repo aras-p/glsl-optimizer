@@ -697,7 +697,6 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    if (intel->gen >= 4) {
-      ctx->Const.sRGBCapable = true;
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {
