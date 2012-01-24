@@ -74,6 +74,26 @@ The integer capabilities:
   property FS_COORD_PIXEL_CENTER with value HALF_INTEGER is supported.
 * ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER``: Whether the TGSI
   property FS_COORD_PIXEL_CENTER with value INTEGER is supported.
+* ``PIPE_CAP_DEPTH_CLIP_DISABLE``: Whether the driver is capable of disabling
+  depth clipping (through pipe_rasterizer_state)
+* ``PIPE_CAP_SHADER_STENCIL_EXPORT``: Whether a stencil reference value can be
+  written from a fragment shader.
+* ``PIPE_CAP_TGSI_INSTANCEID``: Whether TGSI_SEMANTIC_INSTANCEID is supported
+  in the vertex shader.
+* ``PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR``: Whether the driver supports
+  per-instance vertex attribs.
+* ``PIPE_CAP_FRAGMENT_COLOR_CLAMPED``: Whether fragment color clamping is
+  supported.
+* ``PIPE_CAP_MIXED_COLORBUFFER_FORMATS``: Whether mixed colorbuffer formats are
+  supported, e.g. RGBA8 and RGBA32F as the first and second colorbuffer, resp.
+* ``PIPE_CAP_VERTEX_COLOR_UNCLAMPED``: Whether the driver is capable of
+  outputting unclamped vertex colors from a vertex shader. If unsupported,
+  the vertex colors are always clamped. This is the default for DX9 hardware.
+* ``PIPE_CAP_VERTEX_COLOR_CLAMPED``: Whether the driver is capable of
+  clamping vertex colors when they come out of a vertex shader. If unsupported,
+  the vertex colors are never clamped. This is the default for DX10 hardware.
+  If both clamped and unclamped CAPs are supported, the clamping can be
+  controlled through pipe_rasterizer_state.
 
 
 .. _pipe_capf:
