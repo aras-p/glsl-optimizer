@@ -277,9 +277,9 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
 		if (i < 4)
-			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW;
+			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_ZW;
 		else
-			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY;
+			alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_XY;
 
 		if ((i > 1) && (i < 6)) {
 			alu.dst.sel = ctx->shader->input[input].gpr;
@@ -311,7 +311,7 @@ static int evergreen_interp_flat(struct r600_shader_ctx *ctx, int input)
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
-		alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0;
+		alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_LOAD_P0;
 
 		alu.dst.sel = ctx->shader->input[input].gpr;
 		alu.dst.write = 1;
