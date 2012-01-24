@@ -730,7 +730,10 @@ brw_update_sol_surface(struct brw_context *brw,
                        uint32_t *out_offset, unsigned num_vector_components,
                        unsigned stride_dwords, unsigned offset_dwords)
 {
-   drm_intel_bo *bo = intel_buffer_object(buffer_obj)->buffer;
+   struct intel_context *intel = &brw->intel;
+   struct intel_buffer_object *intel_bo = intel_buffer_object(buffer_obj);
+   drm_intel_bo *bo =
+      intel_bufferobj_buffer(intel, intel_bo, INTEL_WRITE_PART);
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
                                     out_offset);
    uint32_t pitch_minus_1 = 4*stride_dwords - 1;
