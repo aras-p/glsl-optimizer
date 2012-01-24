@@ -29,7 +29,6 @@
 
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
-#include <xorg/fourcc.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_video_decoder.h"
@@ -46,6 +45,8 @@
 #include "xvmc_private.h"
 
 #define FOURCC_RGB 0x0000003
+#define FOURCC_AI44 0x34344941
+#define FOURCC_IA44 0x34344149
 
 static enum pipe_format XvIDToPipe(int xvimage_id)
 {
