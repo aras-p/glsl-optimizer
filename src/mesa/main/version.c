@@ -77,7 +77,6 @@ _mesa_override_glsl_version(struct gl_context *ctx)
 
 /**
  * Examine enabled GL extensions to determine GL version.
- * Return major and minor version numbers.
  */
 static void
 compute_version(struct gl_context *ctx)
