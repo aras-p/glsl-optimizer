@@ -1103,7 +1103,7 @@ _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
       /* We can't pass a 'mask' array to the _mesa_pack_rgba_row() functions
        * so look for runs where mask=1...
        */
-      runLen = 0;
+      runLen = runStart = 0;
       for (i = 0; i < count; i++) {
          if (mask[i]) {
             if (runLen == 0)
