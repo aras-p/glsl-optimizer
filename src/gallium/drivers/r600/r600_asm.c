@@ -468,43 +468,111 @@ static int is_alu_mova_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *
 	}
 }
 
-#define RANGE(a, b) ((alu->inst>=(a))&&(alu->inst<=(b)))
+static int is_opcode_in_range(unsigned opcode, unsigned min, unsigned max)
+{
+	return min <= opcode && opcode <= max;
+}
 
-/* alu instructions that can only execute on the vector unit */
+/* ALU instructions that can only execute on the vector unit:
+ *
+ * opcode ranges:
+ * R6xx/R7xx:
+ *   op3 : [0x08 - 0x0B]
+ *   op2 : 0x07, [0x15 - 0x18], [0x1B - 0x1D], [0x50 - 0x53], [0x7A - 0x7E]
+ *
+ * EVERGREEN:
+ *   op3: [0x04 - 0x11]
+ *   op2: [0xA0 - 0xE2]
+ */
 static int is_alu_vec_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
 {
 	switch (bc->chip_class) {
 	case R600:
 	case R700:
-		return alu->is_op3 ? RANGE(0x08, 0x0B) : RANGE(0x07, 0x07) |
-				RANGE(0x15, 0x18) | RANGE(0x1B, 0x1D) |
-				RANGE(0x50, 0x53) | RANGE(0x7A, 0x7E);
+		if (alu->is_op3)
+			return is_opcode_in_range(alu->inst,
+					V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64,
+					V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64_D2);
+		else
+			return (alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FREXP_64) ||
+					is_opcode_in_range(alu->inst,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT) ||
+					is_opcode_in_range(alu->inst,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_64,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT32_TO_FLT64) ||
+					is_opcode_in_range(alu->inst,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4) ||
+					is_opcode_in_range(alu->inst,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDEXP_64,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_64);
+
 	case EVERGREEN:
-		return alu->is_op3 ? RANGE(0x04, 0x11) : RANGE(0xA0, 0xE2);
+		if (alu->is_op3)
+			return is_opcode_in_range(alu->inst,
+					EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BFE_UINT,
+					EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_LDS_IDX_OP);
+		else
+			return is_opcode_in_range(alu->inst,
+					EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_BFM_INT,
+					EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_LOAD_P20);
 	case CAYMAN:
+	default:
 		assert(0);
 		return 0;
 	}
 }
 
-/* alu instructions that can only execute on the trans unit */
+/* ALU instructions that can only execute on the trans unit:
+ *
+ * opcode ranges:
+ * R600:
+ *   op3: 0x0C
+ *   op2: [0x60 - 0x79]
+ *
+ * R700:
+ *   op3: 0x0C
+ *   op2: [0x60 - 0x6F], [0x73 - 0x79]
+ *
+ * EVERGREEN:
+ *   op3: 0x1F
+ *   op2: [0x81 - 0x9C]
+ */
 static int is_alu_trans_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
 {
 
 	switch (bc->chip_class) {
 	case R600:
-		return alu->is_op3 ? RANGE(0x0C, 0x0C) : RANGE(0x60, 0x79);
+		if (alu->is_op3)
+			return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
+		else
+			return is_opcode_in_range(alu->inst,
+					V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT,
+					V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT);
 	case R700:
-		return alu->is_op3 ? RANGE(0x0C, 0x0C) : RANGE(0x60, 0x6F) | RANGE(0x73, 0x79);
+		if (alu->is_op3)
+			return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
+		else
+			return is_opcode_in_range(alu->inst,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT,
+						V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS) ||
+					is_opcode_in_range(alu->inst,
+							V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT,
+							V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT);
 	case EVERGREEN:
-		return alu->is_op3 ? RANGE(0x1F, 0x1F) : RANGE(0x81, 0x9C);
+		if (alu->is_op3)
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
+		else
+			return is_opcode_in_range(alu->inst,
+					EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE,
+					EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT);
 	case CAYMAN:
+	default:
 		assert(0);
 		return 0;
 	}
 }
-
-#undef RANGE
 
 /* alu instructions that can execute on any unit */
 static int is_alu_any_unit_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
