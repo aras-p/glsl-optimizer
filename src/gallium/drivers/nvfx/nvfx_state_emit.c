@@ -244,6 +244,9 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	}
 
 	if(dirty & NVFX_NEW_SAMPLER) {
+		/* XXX: we take the big hammer here, I have no idea why this is needed
+		   to make this work properly */
+		nvfx->dirty &= ~NVFX_NEW_SAMPLER;
 		nvfx_fragtex_validate(nvfx);
 
 		// TODO: only set this if really necessary
@@ -303,7 +306,8 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_SR)
 		nvfx_state_sr_validate(nvfx);
 
-	if(dirty & NVFX_NEW_VIEWPORT)
+	/* XXX: nv3x needs viewport revalidation after RAST or ZSA change */
+	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA))
 	{
 		nvfx_state_viewport_validate(nvfx);
 	}
