@@ -46,6 +46,9 @@
 #include "dlist.h"
 #include "enums.h"
 #include "eval.h"
+#if FEATURE_EXT_framebuffer_object
+#include "fbobject.h"
+#endif
 #include "framebuffer.h"
 #include "glapi/glapi.h"
 #include "hash.h"
@@ -10111,6 +10114,21 @@ _mesa_create_save_table(void)
    SET_DeleteVertexArraysAPPLE(table, _mesa_DeleteVertexArraysAPPLE);
    SET_GenVertexArraysAPPLE(table, _mesa_GenVertexArraysAPPLE);
    SET_IsVertexArrayAPPLE(table, _mesa_IsVertexArrayAPPLE);
+
+   /* 310. GL_EXT_framebuffer_object */
+   SET_GenFramebuffersEXT(table, _mesa_GenFramebuffersEXT);
+   SET_BindFramebufferEXT(table, _mesa_BindFramebufferEXT);
+   SET_DeleteFramebuffersEXT(table, _mesa_DeleteFramebuffersEXT);
+   SET_CheckFramebufferStatusEXT(table, _mesa_CheckFramebufferStatusEXT);
+   SET_GenRenderbuffersEXT(table, _mesa_GenRenderbuffersEXT);
+   SET_BindRenderbufferEXT(table, _mesa_BindRenderbufferEXT);
+   SET_DeleteRenderbuffersEXT(table, _mesa_DeleteRenderbuffersEXT);
+   SET_RenderbufferStorageEXT(table, _mesa_RenderbufferStorageEXT);
+   SET_FramebufferTexture1DEXT(table, _mesa_FramebufferTexture1DEXT);
+   SET_FramebufferTexture2DEXT(table, _mesa_FramebufferTexture2DEXT);
+   SET_FramebufferTexture3DEXT(table, _mesa_FramebufferTexture3DEXT);
+   SET_FramebufferRenderbufferEXT(table, _mesa_FramebufferRenderbufferEXT);
+   SET_GenerateMipmapEXT(table, _mesa_GenerateMipmapEXT);
 
    /* GL_ARB_vertex_array_object */
    SET_BindVertexArray(table, _mesa_BindVertexArray);
