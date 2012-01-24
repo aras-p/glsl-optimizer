@@ -595,8 +595,9 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 		r600_update_alpha_ref(rctx);
 	}
 
-	if (rctx->ps_shader && rctx->sprite_coord_enable &&
-		(rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable)) {
+	if (rctx->ps_shader && ((rctx->sprite_coord_enable &&
+		(rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable)) ||
+		(rctx->rasterizer && rctx->rasterizer->flatshade != rctx->ps_shader->flatshade))) {
 
 		if (rctx->chip_class >= EVERGREEN)
 			evergreen_pipe_shader_ps(ctx, rctx->ps_shader);

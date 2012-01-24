@@ -146,6 +146,7 @@ struct r600_pipe_shader {
 	struct r600_vertex_element	vertex_elements;
 	struct tgsi_token		*tokens;
 	unsigned	sprite_coord_enable;
+	unsigned	flatshade;
 	struct pipe_stream_output_info	so;
 };
 

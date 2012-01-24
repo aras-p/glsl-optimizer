@@ -967,7 +967,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
 	if (state->flatshade_first)
 		prov_vtx = 0;
-	tmp = S_0286D4_FLAT_SHADE_ENA(state->flatshade);
+	tmp = S_0286D4_FLAT_SHADE_ENA(1);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
 			S_0286D4_PNT_SPRITE_OVRD_X(2) |
@@ -1035,9 +1035,11 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
 			S_028810_PS_UCP_MODE(3) | S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
-			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip),
-			S_028810_PS_UCP_MODE(3) | S_028810_ZCLIP_NEAR_DISABLE(1) |
-			S_028810_ZCLIP_FAR_DISABLE(1), NULL, 0);
+			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
+			S_028810_DX_LINEAR_ATTR_CLIP_ENA(1),
+			~(C_028810_PS_UCP_MODE & C_028810_ZCLIP_NEAR_DISABLE &
+			C_028810_ZCLIP_FAR_DISABLE &
+			C_028810_DX_LINEAR_ATTR_CLIP_ENA), NULL, 0);
 	return rstate;
 }
 
@@ -2096,11 +2098,10 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 
 		tmp = S_028644_SEMANTIC(sid);
 
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
-			tmp |= S_028644_FLAT_SHADE(1);
-		}
-		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR ||
-		    rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT)
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION ||
+			rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+			(rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
+				rctx->rasterizer && rctx->rasterizer->flatshade))
 			tmp |= S_028644_FLAT_SHADE(1);
 
 		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
@@ -2203,6 +2204,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 				0xFFFFFFFF, NULL, 0);
 
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
+	if (rctx->rasterizer)
+		shader->flatshade = rctx->rasterizer->flatshade;
 }
 
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
