@@ -135,6 +135,7 @@ pp_free_fbos(struct pp_queue_t *ppq)
       pipe_surface_reference(&ppq->inner_tmps[i], NULL);
       pipe_resource_reference(&ppq->inner_tmp[i], NULL);
    }
+   pipe_resource_reference(&ppq->depth, NULL);
    pipe_surface_reference(&ppq->stencils, NULL);
    pipe_resource_reference(&ppq->stencil, NULL);
 
@@ -244,7 +245,7 @@ pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
 
    tmp_res.format = p->surf.format = indepth->format;
    tmp_res.bind = p->surf.usage = PIPE_BIND_DEPTH_STENCIL;
-   ppq->depth = indepth;
+   pipe_resource_reference(&ppq->depth, indepth);
    if (!ppq->depth)
       goto error;
 
