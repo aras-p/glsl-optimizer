@@ -246,6 +246,18 @@ static GLboolean st_get_s3tc_override(void)
    return GL_FALSE;
 }
 
+/**
+ * Given a member \c x of struct gl_extensions, return offset of
+ * \c x in bytes.
+ */
+#define o(x) offsetof(struct gl_extensions, x)
+
+
+struct st_extension_cap_mapping {
+   int extension_offset;
+   int cap;
+};
+
 
 /**
  * Use pipe_screen::get_param() to query PIPE_CAP_ values to determine
@@ -259,6 +271,45 @@ void st_init_extensions(struct st_context *st)
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_context *ctx = st->ctx;
    int i, glsl_feature_level;
+   GLboolean *extensions = (GLboolean *) &ctx->Extensions;
+
+   static const struct st_extension_cap_mapping cap_mapping[] = {
+      { o(ARB_depth_clamp),                  PIPE_CAP_DEPTH_CLIP_DISABLE               },
+      { o(ARB_depth_texture),                PIPE_CAP_TEXTURE_SHADOW_MAP               },
+      { o(ARB_draw_buffers_blend),           PIPE_CAP_INDEP_BLEND_FUNC                 },
+      { o(ARB_draw_instanced),               PIPE_CAP_TGSI_INSTANCEID                  },
+      { o(ARB_fragment_program_shadow),      PIPE_CAP_TEXTURE_SHADOW_MAP               },
+      { o(ARB_instanced_arrays),             PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR  },
+      { o(ARB_occlusion_query),              PIPE_CAP_OCCLUSION_QUERY                  },
+      { o(ARB_occlusion_query2),             PIPE_CAP_OCCLUSION_QUERY                  },
+      { o(ARB_point_sprite),                 PIPE_CAP_POINT_SPRITE                     },
+      { o(ARB_seamless_cube_map),            PIPE_CAP_SEAMLESS_CUBE_MAP                },
+      { o(ARB_shader_stencil_export),        PIPE_CAP_SHADER_STENCIL_EXPORT            },
+      { o(ARB_shader_texture_lod),           PIPE_CAP_SM3                              },
+      { o(ARB_shadow),                       PIPE_CAP_TEXTURE_SHADOW_MAP               },
+      { o(ARB_texture_non_power_of_two),     PIPE_CAP_NPOT_TEXTURES                    },
+      { o(ARB_transform_feedback2),          PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME       },
+
+      { o(EXT_blend_equation_separate),      PIPE_CAP_BLEND_EQUATION_SEPARATE          },
+      { o(EXT_draw_buffers2),                PIPE_CAP_INDEP_BLEND_ENABLE               },
+      { o(EXT_shadow_funcs),                 PIPE_CAP_TEXTURE_SHADOW_MAP               },
+      { o(EXT_stencil_two_side),             PIPE_CAP_TWO_SIDED_STENCIL                },
+      { o(EXT_texture_array),                PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
+      { o(EXT_texture_filter_anisotropic),   PIPE_CAP_ANISOTROPIC_FILTER               },
+      { o(EXT_texture_mirror_clamp),         PIPE_CAP_TEXTURE_MIRROR_CLAMP             },
+      { o(EXT_texture_swizzle),              PIPE_CAP_TEXTURE_SWIZZLE                  },
+      { o(EXT_timer_query),                  PIPE_CAP_TIMER_QUERY                      },
+      { o(EXT_transform_feedback),           PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS        },
+
+      { o(AMD_seamless_cubemap_per_texture), PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE    },
+      { o(ATI_separate_stencil),             PIPE_CAP_TWO_SIDED_STENCIL                },
+      { o(ATI_texture_mirror_once),          PIPE_CAP_TEXTURE_MIRROR_CLAMP             },
+      { o(NV_conditional_render),            PIPE_CAP_CONDITIONAL_RENDER               },
+      { o(NV_texture_barrier),               PIPE_CAP_TEXTURE_BARRIER                  },
+      /* GL_NV_point_sprite is not supported by gallium because we don't
+       * support the GL_POINT_SPRITE_R_MODE_NV option. */
+      { o(MESA_texture_array),               PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
+   };
 
    /*
     * Extensions that are supported by all Gallium drivers:
@@ -327,6 +378,13 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif
 
+   /* Expose the extensions which directly correspond to gallium caps. */
+   for (i = 0; i < Elements(cap_mapping); i++) {
+      if (screen->get_param(screen, cap_mapping[i].cap)) {
+         extensions[cap_mapping[i].extension_offset] = GL_TRUE;
+      }
+   }
+
    /* Figure out GLSL support. */
    glsl_feature_level = screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL);
 
@@ -357,55 +415,6 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that depend on the driver/hardware:
     */
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_SWIZZLE) > 0) {
-      ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_BLEND_EQUATION_SEPARATE)) {
-      ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_CLAMP) > 0) {
-      ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
-      ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
-      ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_TWO_SIDED_STENCIL)) {
-      ctx->Extensions.ATI_separate_stencil = GL_TRUE;
-      ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_ANISOTROPIC_FILTER)) {
-      ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_POINT_SPRITE)) {
-      ctx->Extensions.ARB_point_sprite = GL_TRUE;
-      /* GL_NV_point_sprite is not supported by gallium because we don't
-       * support the GL_POINT_SPRITE_R_MODE_NV option.
-       */
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY)) {
-      ctx->Extensions.ARB_occlusion_query = GL_TRUE;
-      ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
-   }
-   if (screen->get_param(screen, PIPE_CAP_TIMER_QUERY)) {
-      ctx->Extensions.EXT_timer_query = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
-      ctx->Extensions.ARB_depth_texture = GL_TRUE;
-      ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
-      ctx->Extensions.ARB_shadow = GL_TRUE;
-      ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
-      /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
-   }
-
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
@@ -537,24 +546,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    }
 
-   /* GL_EXT_texture_array */
-   if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS) > 1) {
-      ctx->Extensions.EXT_texture_array = GL_TRUE;
-      ctx->Extensions.MESA_texture_array = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_CONDITIONAL_RENDER)) {
-      ctx->Extensions.NV_conditional_render = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_ENABLE)) {
-      ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
-      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
-   }
-
    /* GL_ARB_half_float_vertex */
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
                                    PIPE_BUFFER, 0,
@@ -607,10 +598,6 @@ void st_init_extensions(struct st_context *st)
       st->sw_primitive_restart = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_DEPTH_CLIP_DISABLE)) {
-      ctx->Extensions.ARB_depth_clamp = GL_TRUE;
-   }
-
    if (screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_UNCLAMPED)) {
       ctx->Extensions.ARB_color_buffer_float = GL_TRUE;
 
@@ -623,23 +610,8 @@ void st_init_extensions(struct st_context *st)
       }
    }
 
-   if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
-      ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_TGSI_INSTANCEID)) {
-      ctx->Extensions.ARB_draw_instanced = GL_TRUE;
-   }
-   if (screen->get_param(screen, PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR)) {
-      ctx->Extensions.ARB_instanced_arrays = GL_TRUE;
-   }
-
    if (screen->fence_finish) {
       ctx->Extensions.ARB_sync = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_BARRIER)) {
-      ctx->Extensions.NV_texture_barrier = GL_TRUE;
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT,
@@ -665,18 +637,6 @@ void st_init_extensions(struct st_context *st)
       }
    }
 
-   if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE)) {
-      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
-      ctx->Extensions.AMD_seamless_cubemap_per_texture = GL_TRUE;
-   }
-   else if (screen->get_param(screen, PIPE_CAP_SEAMLESS_CUBE_MAP)) {
-      ctx->Extensions.ARB_seamless_cube_map = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_SM3)) {
-      ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
-   }
-
    if (screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT,
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_DEPTH_STENCIL |
@@ -693,20 +653,10 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW))
        ctx->Extensions.ARB_texture_rgb10_a2ui = GL_TRUE;
 
-   if (screen->get_param(screen, PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS) != 0) {
-      ctx->Extensions.EXT_transform_feedback = GL_TRUE;
-
-      if (screen->get_param(screen,
-                            PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME) != 0) {
-         ctx->Extensions.ARB_transform_feedback2 = GL_TRUE;
-      }
-   }
-
    if (ctx->Const.NativeIntegers &&
        screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_UINT, PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET) &&
        screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_SINT, PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
       ctx->Extensions.EXT_texture_integer = GL_TRUE;
-
 }
