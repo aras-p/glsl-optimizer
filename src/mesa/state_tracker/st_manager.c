@@ -688,7 +688,9 @@ st_framebuffer_reuse_or_create(struct gl_framebuffer *fb,
 {
    struct st_framebuffer *cur = st_ws_framebuffer(fb), *stfb = NULL;
 
-   if (cur && cur->iface == stfbi) {
+   /* dummy framebuffers cant be used as st_framebuffer */
+   if (cur && &cur->Base != _mesa_get_incomplete_framebuffer() &&
+       cur->iface == stfbi) {
       /* reuse the current stfb */
       st_framebuffer_reference(&stfb, cur);
    }
@@ -779,7 +781,7 @@ st_manager_flush_frontbuffer(struct st_context *st)
       return;
 
    /* never a dummy fb */
-   assert(stfb->iface);
+   assert(&stfb->Base != _mesa_get_incomplete_framebuffer());
    stfb->iface->flush_front(stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
 }
 
