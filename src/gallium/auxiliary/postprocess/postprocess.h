@@ -72,8 +72,7 @@ void pp_free(struct pp_queue_t *);
 void pp_free_fbos(struct pp_queue_t *);
 void pp_debug(const char *, ...);
 struct program *pp_init_prog(struct pp_queue_t *, struct pipe_screen *);
-void pp_init_fbos(struct pp_queue_t *, unsigned int, unsigned int,
-                  struct pipe_resource *);
+void pp_init_fbos(struct pp_queue_t *, unsigned int, unsigned int);
 
 /* The filters */
 

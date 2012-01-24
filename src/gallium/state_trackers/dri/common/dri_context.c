@@ -237,8 +237,7 @@ dri_make_current(__DRIcontext * cPriv,
    if (draw->textures[ST_ATTACHMENT_BACK_LEFT] && draw->textures[ST_ATTACHMENT_DEPTH_STENCIL]
       && ctx->pp)
          pp_init_fbos(ctx->pp, draw->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
-            draw->textures[ST_ATTACHMENT_BACK_LEFT]->height0,
-            draw->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+            draw->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
 
    return GL_TRUE;
 }

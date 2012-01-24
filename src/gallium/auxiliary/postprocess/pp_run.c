@@ -49,7 +49,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
        in->height0 != ppq->p->framebuffer.height) {
       pp_debug("Resizing the temp pp buffers\n");
       pp_free_fbos(ppq);
-      pp_init_fbos(ppq, in->width0, in->height0, indepth);
+      pp_init_fbos(ppq, in->width0, in->height0);
    }
 
    if (in == out && ppq->n_filters == 1) {
