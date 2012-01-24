@@ -10130,6 +10130,9 @@ _mesa_create_save_table(void)
    SET_FramebufferRenderbufferEXT(table, _mesa_FramebufferRenderbufferEXT);
    SET_GenerateMipmapEXT(table, _mesa_GenerateMipmapEXT);
 
+   /* 317. GL_EXT_framebuffer_multisample */
+   SET_RenderbufferStorageMultisample(table, _mesa_RenderbufferStorageMultisample);
+
    /* GL_ARB_vertex_array_object */
    SET_BindVertexArray(table, _mesa_BindVertexArray);
    SET_GenVertexArrays(table, _mesa_GenVertexArrays);
