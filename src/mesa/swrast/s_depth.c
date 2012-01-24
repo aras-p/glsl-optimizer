@@ -253,7 +253,7 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    GLuint i;
 
    if (rb->Format == MESA_FORMAT_Z32) {
-      const GLuint rowStride = srb->RowStride;
+      const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (mask[i] && x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
             GLuint *dst = (GLuint *) (map + y[i] * rowStride + x[i] * 4);
