@@ -128,15 +128,16 @@ intel_map_renderbuffer(struct gl_context *ctx,
 		       GLint *out_stride)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    void *map;
    int stride;
 
-   if (!irb && irb->Base.Buffer) {
-      /* this is a malloc'd renderbuffer (accum buffer) */
+   if (srb->Buffer) {
+      /* this is a malloc'd renderbuffer (accum buffer), not an irb */
       GLint bpp = _mesa_get_format_bytes(rb->Format);
-      GLint rowStride = irb->Base.RowStride;
-      *out_map = (GLubyte *) irb->Base.Buffer + y * rowStride + x * bpp;
+      GLint rowStride = srb->RowStride;
+      *out_map = (GLubyte *) srb->Buffer + y * rowStride + x * bpp;
       *out_stride = rowStride;
       return;
    }
@@ -180,12 +181,13 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
 			 struct gl_renderbuffer *rb)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
 
-   if (!irb && irb->Base.Buffer) {
+   if (srb->Buffer) {
       /* this is a malloc'd renderbuffer (accum buffer) */
       /* nothing to do */
       return;
