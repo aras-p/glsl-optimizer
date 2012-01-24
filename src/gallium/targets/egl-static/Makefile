@@ -8,6 +8,7 @@
 #   EGL_PLATFORMS       - platforms to support
 #   EGL_CLIENT_APIS     - state trackers to support
 #   GALLIUM_WINSYS_DIRS - pipe drivers to support
+#   SHARED_GLAPI        - st/mesa can be statically linked or not
 #
 
 TOP = ../../../..
@@ -69,8 +70,14 @@ endif
 # st/mesa
 ifneq ($(filter $(GL_LIB), $(EGL_CLIENT_APIS)),)
 egl_CPPFLAGS += -I$(TOP)/src/mesa $(API_DEFINES)
+# make st/mesa built-in when there is a single glapi provider
+ifeq ($(SHARED_GLAPI),1)
 egl_LIBS += $(TOP)/src/mesa/libmesagallium.a
 egl_SYS += -lm -lpthread $(DLOPEN_LIBS) -l$(GLAPI_LIB)
+else
+egl_CPPFLAGS += -D_EGL_EXTERNAL_GL=1
+OUTPUTS += st_GL
+endif # SHARED_GLAPI
 endif
 
 # st/vega
