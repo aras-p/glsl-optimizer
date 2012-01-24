@@ -258,10 +258,7 @@ void st_init_extensions(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_context *ctx = st->ctx;
-   int i;
-
-   ctx->Const.GLSLVersion = 120;
-   _mesa_override_glsl_version(st->ctx);
+   int i, glsl_feature_level;
 
    /*
     * Extensions that are supported by all Gallium drivers:
@@ -329,6 +326,33 @@ void st_init_extensions(struct st_context *st)
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif
+
+   /* Figure out GLSL support. */
+   glsl_feature_level = screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL);
+
+   if (glsl_feature_level >= 130) {
+      ctx->Const.GLSLVersion = 130;
+   } else {
+      ctx->Const.GLSLVersion = 120;
+   }
+
+   _mesa_override_glsl_version(st->ctx);
+
+   if (ctx->Const.GLSLVersion >= 130) {
+      ctx->Const.NativeIntegers = GL_TRUE;
+      ctx->Const.MaxClipPlanes = 8;
+
+      /* Extensions that only depend on GLSL 1.3. */
+      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
+   } else {
+      /* Optional integer support for GLSL 1.2. */
+      if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
+                                   PIPE_SHADER_CAP_INTEGERS) &&
+          screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
+                                   PIPE_SHADER_CAP_INTEGERS)) {
+         ctx->Const.NativeIntegers = GL_TRUE;
+      }
+   }
 
    /*
     * Extensions that depend on the driver/hardware:
@@ -576,23 +600,6 @@ void st_init_extensions(struct st_context *st)
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
       ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
 #endif
-   }
-
-   if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
-                                PIPE_SHADER_CAP_INTEGERS) &&
-       screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
-                                PIPE_SHADER_CAP_INTEGERS)) {
-      ctx->Const.NativeIntegers = GL_TRUE;
-   }
-
-   if (ctx->Const.NativeIntegers)
-      ctx->Const.GLSLVersion = 130;
-
-   /* Extensions that only depend on the GLSL version:
-    */
-   if (ctx->Const.GLSLVersion >= 130) {
-      ctx->Extensions.ARB_conservative_depth = GL_TRUE;
-      ctx->Const.MaxClipPlanes = 8;
    }
 
    ctx->Extensions.NV_primitive_restart = GL_TRUE;

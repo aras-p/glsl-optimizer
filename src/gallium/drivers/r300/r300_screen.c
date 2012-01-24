@@ -105,6 +105,9 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_VERTEX_COLOR_CLAMPED:
             return 1;
 
+        case PIPE_CAP_GLSL_FEATURE_LEVEL:
+            return 120;
+
         /* r300 cannot do swizzling of compressed textures. Supported otherwise. */
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;

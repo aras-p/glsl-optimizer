@@ -94,6 +94,9 @@ The integer capabilities:
   the vertex colors are never clamped. This is the default for DX10 hardware.
   If both clamped and unclamped CAPs are supported, the clamping can be
   controlled through pipe_rasterizer_state.
+* ``PIPE_CAP_GLSL_FEATURE_LEVEL``: Whether the driver supports features
+  equivalent to a specific GLSL version. E.g. for GLSL 1.3, report 130.
+
 
 
 .. _pipe_capf:

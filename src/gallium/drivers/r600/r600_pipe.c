@@ -367,6 +367,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
 		return 1;
 
+	case PIPE_CAP_GLSL_FEATURE_LEVEL:
+		return debug_get_bool_option("R600_GLSL130", FALSE) ? 130 : 120;
+
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 	case PIPE_CAP_INDEP_BLEND_FUNC:
