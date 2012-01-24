@@ -46,7 +46,7 @@ lp_print_counters(void)
 {
    if (LP_DEBUG & DEBUG_COUNTERS) {
       unsigned total_64, total_16, total_4;
-      float p1, p2, p3, p5, p6;
+      float p1, p2, p3, p4, p5, p6;
 
       debug_printf("llvmpipe: nr_triangles:                 %9u\n", lp_count.nr_tris);
       debug_printf("llvmpipe: nr_culled_triangles:          %9u\n", lp_count.nr_culled_tris);
@@ -90,12 +90,13 @@ lp_print_counters(void)
       p1 = 100.0 * (float) lp_count.nr_empty_4 / (float) total_4;
       p2 = 100.0 * (float) lp_count.nr_fully_covered_4 / (float) total_4;
       p3 = 100.0 * (float) lp_count.nr_partially_covered_4 / (float) total_4;
+      p4 = 100.0 * (float) lp_count.nr_non_empty_4 / (float) total_4;
 
       debug_printf("llvmpipe: nr_tri_4x4:                   %9u\n", total_4);
       debug_printf("llvmpipe:   nr_fully_covered_4x4:       %9u (%3.0f%% of %u)\n", lp_count.nr_fully_covered_4, p2, total_4);
       debug_printf("llvmpipe:   nr_partially_covered_4x4:   %9u (%3.0f%% of %u)\n", lp_count.nr_partially_covered_4, p3, total_4);
       debug_printf("llvmpipe:   nr_empty_4x4:               %9u (%3.0f%% of %u)\n", lp_count.nr_empty_4, p1, total_4);
-      debug_printf("llvmpipe:   nr_non_empty_4x4:           %9u (%3.0f%% of %u)\n", lp_count.nr_non_empty_4, p2, total_4);
+      debug_printf("llvmpipe:   nr_non_empty_4x4:           %9u (%3.0f%% of %u)\n", lp_count.nr_non_empty_4, p4, total_4);
 
       debug_printf("llvmpipe: nr_color_tile_clear:          %9u\n", lp_count.nr_color_tile_clear);
       debug_printf("llvmpipe: nr_color_tile_load:           %9u\n", lp_count.nr_color_tile_load);
