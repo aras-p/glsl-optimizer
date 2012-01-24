@@ -16,8 +16,7 @@
 
 MAPI_UTIL_SOURCES = \
 	u_current.c \
-	u_execmem.c \
-	u_thread.c
+	u_execmem.c
 
 MAPI_SOURCES = \
 	entry.c \

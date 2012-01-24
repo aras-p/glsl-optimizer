@@ -42,6 +42,8 @@
 #ifndef _U_THREAD_H_
 #define _U_THREAD_H_
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "u_compiler.h"
 
 #if defined(PTHREADS)
@@ -57,6 +59,20 @@
 #endif
 #endif
 
+/*
+ * Error messages
+ */
+#define INIT_TSD_ERROR "_glthread_: failed to allocate key for thread specific data"
+#define GET_TSD_ERROR "_glthread_: failed to get thread specific data"
+#define SET_TSD_ERROR "_glthread_: thread failed to set thread specific data"
+
+
+/*
+ * Magic number to determine if a TSD object has been initialized.
+ * Kind of a hack but there doesn't appear to be a better cross-platform
+ * solution.
+ */
+#define INIT_MAGIC 0xff8adc98
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,6 +105,46 @@ typedef pthread_mutex_t u_mutex;
 #define u_mutex_lock(name)    (void) pthread_mutex_lock(&(name))
 #define u_mutex_unlock(name)  (void) pthread_mutex_unlock(&(name))
 
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return (unsigned long) pthread_self();
+}
+
+
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+      perror(INIT_TSD_ERROR);
+      exit(-1);
+   }
+   tsd->initMagic = INIT_MAGIC;
+}
+
+
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != (int) INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   return pthread_getspecific(tsd->key);
+}
+
+
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   if (tsd->initMagic != (int) INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   if (pthread_setspecific(tsd->key, ptr) != 0) {
+      perror(SET_TSD_ERROR);
+      exit(-1);
+   }
+}
+
 #endif /* PTHREADS */
 
 
@@ -115,6 +171,60 @@ typedef CRITICAL_SECTION u_mutex;
 #define u_mutex_lock(name)    EnterCriticalSection(&name)
 #define u_mutex_unlock(name)  LeaveCriticalSection(&name)
 
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return GetCurrentThreadId();
+}
+
+
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   tsd->key = TlsAlloc();
+   if (tsd->key == TLS_OUT_OF_INDEXES) {
+      perror(INIT_TSD_ERROR);
+      exit(-1);
+   }
+   tsd->initMagic = INIT_MAGIC;
+}
+
+
+static INLINE void
+u_tsd_destroy(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      return;
+   }
+   TlsFree(tsd->key);
+   tsd->initMagic = 0x0;
+}
+
+
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   return TlsGetValue(tsd->key);
+}
+
+
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   /* the following code assumes that the struct u_tsd has been initialized
+      to zero at creation */
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   if (TlsSetValue(tsd->key, ptr) == 0) {
+      perror(SET_TSD_ERROR);
+      exit(-1);
+   }
+}
+
 #endif /* WIN32 */
 
 
@@ -135,23 +245,39 @@ typedef unsigned u_mutex;
 #define u_mutex_lock(name)             (void) name
 #define u_mutex_unlock(name)           (void) name
 
+/*
+ * no-op functions
+ */
+
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return 0;
+}
+
+
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   (void) tsd;
+}
+
+
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   (void) tsd;
+   return NULL;
+}
+
+
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   (void) tsd;
+   (void) ptr;
+}
 #endif /* THREADS */
-
-
-unsigned long
-u_thread_self(void);
-
-void
-u_tsd_init(struct u_tsd *tsd);
-
-void
-u_tsd_destroy(struct u_tsd *tsd); /* WIN32 only */
-
-void *
-u_tsd_get(struct u_tsd *tsd);
-
-void
-u_tsd_set(struct u_tsd *tsd, void *ptr);
 
 
 #ifdef __cplusplus
