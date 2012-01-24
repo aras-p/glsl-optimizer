@@ -940,54 +940,6 @@ wmesa_renderbuffer_storage(struct gl_context *ctx,
 
 
 /**
- * Plug in the Get/PutRow/Values functions for a renderbuffer depending
- * on if we're drawing to the front or back color buffer.
- */
-static void
-wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
-                             int cColorBits, int double_buffer)
-{
-    if (double_buffer) {
-        /* back buffer */
-	/* Picking the correct span functions is important because
-	 * the DIB was allocated with the indicated depth. */
-	switch(pixelformat) {
-	case PF_5R6G5B:
-	    rb->PutRow = write_rgba_span_16;
-	    rb->PutValues = write_rgba_pixels_16;
-	    rb->GetRow = read_rgba_span_16;
-	    rb->GetValues = read_rgba_pixels_16;
-	    break;
-	case PF_8R8G8B:
-		if (cColorBits == 24)
-		{
-		    rb->PutRow = write_rgba_span_24;
-		    rb->PutValues = write_rgba_pixels_24;
-		    rb->GetRow = read_rgba_span_24;
-		    rb->GetValues = read_rgba_pixels_24;
-		}
-		else
-		{
-                    rb->PutRow = write_rgba_span_32;
-                    rb->PutValues = write_rgba_pixels_32;
-                    rb->GetRow = read_rgba_span_32;
-                    rb->GetValues = read_rgba_pixels_32;
-		}
-	    break;
-	default:
-	    break;
-	}
-    }
-    else {
-        /* front buffer (actual Windows window) */
-	rb->PutRow = write_rgba_span_front;
-	rb->PutValues = write_rgba_pixels_front;
-	rb->GetRow = read_rgba_span_front;
-	rb->GetValues = read_rgba_pixels_front;
-    }
-}
-
-/**
  * Called by ctx->Driver.ResizeBuffers()
  * Resize the front/back colorbuffers to match the latest window size.
  */
@@ -1275,11 +1227,9 @@ void WMesaMakeCurrent(WMesaContext c, HDC hdc)
         if (visual->doubleBufferMode == 1) {
             rb = wmesa_new_renderbuffer();
             _mesa_add_renderbuffer(&pwfb->Base, BUFFER_BACK_LEFT, rb);
-            wmesa_set_renderbuffer_funcs(rb, pwfb->pixelformat, pwfb->cColorBits, 1);
 	}
         rb = wmesa_new_renderbuffer();
         _mesa_add_renderbuffer(&pwfb->Base, BUFFER_FRONT_LEFT, rb);
-        wmesa_set_renderbuffer_funcs(rb, pwfb->pixelformat, pwfb->cColorBits, 0);
 
 	/* Let Mesa own the Depth, Stencil, and Accum buffers */
         _swrast_add_soft_renderbuffers(&pwfb->Base,
