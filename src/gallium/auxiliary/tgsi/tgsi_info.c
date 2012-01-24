@@ -243,3 +243,100 @@ tgsi_get_processor_name( uint processor )
       return "unknown shader type!";
    }
 }
+
+/*
+ * infer the source type of a TGSI opcode.
+ * MOV is special so return VOID
+ */
+enum tgsi_opcode_type
+tgsi_opcode_infer_src_type( uint opcode )
+{
+   switch (opcode) {
+   case TGSI_OPCODE_MOV:
+      return TGSI_TYPE_UNTYPED;
+   case TGSI_OPCODE_AND:
+   case TGSI_OPCODE_OR:
+   case TGSI_OPCODE_XOR:
+   case TGSI_OPCODE_SAD:
+   case TGSI_OPCODE_U2F:
+   case TGSI_OPCODE_UADD:
+   case TGSI_OPCODE_UDIV:
+   case TGSI_OPCODE_UMOD:
+   case TGSI_OPCODE_UMAD:
+   case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_UMAX:
+   case TGSI_OPCODE_UMIN:
+   case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_USNE:
+   case TGSI_OPCODE_USHR:
+   case TGSI_OPCODE_SHL:
+   case TGSI_OPCODE_TXQ:
+      return TGSI_TYPE_UNSIGNED;
+   case TGSI_OPCODE_MOD:
+   case TGSI_OPCODE_I2F:
+   case TGSI_OPCODE_IDIV:
+   case TGSI_OPCODE_IMAX:
+   case TGSI_OPCODE_IMIN:
+   case TGSI_OPCODE_INEG:
+   case TGSI_OPCODE_ISGE:
+   case TGSI_OPCODE_ISHR:
+   case TGSI_OPCODE_ISLT:
+   case TGSI_OPCODE_IABS:
+   case TGSI_OPCODE_ISSG:
+   case TGSI_OPCODE_UARL:
+      return TGSI_TYPE_SIGNED;
+   default:
+      return TGSI_TYPE_FLOAT;
+   }
+}
+
+/*
+ * infer the destination type of a TGSI opcode.
+ * MOV is special so return VOID
+ */
+enum tgsi_opcode_type
+tgsi_opcode_infer_dst_type( uint opcode )
+{
+   switch (opcode) {
+   case TGSI_OPCODE_MOV:
+      return TGSI_TYPE_UNTYPED;
+   case TGSI_OPCODE_F2U:
+   case TGSI_OPCODE_AND:
+   case TGSI_OPCODE_OR:
+   case TGSI_OPCODE_XOR:
+   case TGSI_OPCODE_SAD:
+   case TGSI_OPCODE_UADD:
+   case TGSI_OPCODE_UDIV:
+   case TGSI_OPCODE_UMOD:
+   case TGSI_OPCODE_UMAD:
+   case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_UMAX:
+   case TGSI_OPCODE_UMIN:
+   case TGSI_OPCODE_USEQ:
+   case TGSI_OPCODE_USGE:
+   case TGSI_OPCODE_USLT:
+   case TGSI_OPCODE_USNE:
+   case TGSI_OPCODE_USHR:
+   case TGSI_OPCODE_SHL:
+   case TGSI_OPCODE_TXQ:
+      return TGSI_TYPE_UNSIGNED;
+   case TGSI_OPCODE_F2I:
+   case TGSI_OPCODE_IDIV:
+   case TGSI_OPCODE_IMAX:
+   case TGSI_OPCODE_IMIN:
+   case TGSI_OPCODE_INEG:
+   case TGSI_OPCODE_ISGE:
+   case TGSI_OPCODE_ISHR:
+   case TGSI_OPCODE_ISLT:
+   case TGSI_OPCODE_MOD:
+   case TGSI_OPCODE_UARL:
+   case TGSI_OPCODE_ARL:
+   case TGSI_OPCODE_IABS:
+   case TGSI_OPCODE_ISSG:
+      return TGSI_TYPE_SIGNED;
+   default:
+      return TGSI_TYPE_FLOAT;
+   }
+}

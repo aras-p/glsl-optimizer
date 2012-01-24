@@ -30,6 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_format.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -90,6 +91,20 @@ tgsi_get_opcode_name( uint opcode );
 const char *
 tgsi_get_processor_name( uint processor );
 
+enum tgsi_opcode_type {
+   TGSI_TYPE_UNTYPED, /* for MOV */
+   TGSI_TYPE_VOID,
+   TGSI_TYPE_UNSIGNED,
+   TGSI_TYPE_SIGNED,
+   TGSI_TYPE_FLOAT,
+   TGSI_TYPE_DOUBLE,
+};
+
+enum tgsi_opcode_type
+tgsi_opcode_infer_src_type( uint opcode );
+
+enum tgsi_opcode_type
+tgsi_opcode_infer_dst_type( uint opcode );
 
 #if defined __cplusplus
 }
