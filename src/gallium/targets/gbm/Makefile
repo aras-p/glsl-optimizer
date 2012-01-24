@@ -25,7 +25,7 @@ GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIB) -lm \
 
 
 GBM_CFLAGS = \
-	     -DGBM_BACKEND_SEARCH_DIR=\"$(GBM_BACKEND_INSTALL_DIR)\" \
+	     -DGBM_BACKEND_SEARCH_DIR=\"$(INSTALL_LIB_DIR)/gbm\" \
 	     -DPIPE_PREFIX=\"$(PIPE_PREFIX)\" \
 	     $(LIBUDEV_CFLAGS) \
 	     $(LIBDRM_CFLAGS)  
@@ -169,9 +169,9 @@ $(pipe_OBJECTS): %.o: %.c
 	$(CC) -c -o $@ $< $(pipe_INCLUDES) $(pipe_CFLAGS) $(CFLAGS)
 
 install-pipes: $(GBM_EXTRA_TARGETS)
-	$(INSTALL) -d $(DESTDIR)$(GBM_BACKEND_INSTALL_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/gbm
 	for tgt in $(GBM_EXTRA_TARGETS); do \
-		$(MINSTALL) "$$tgt" $(DESTDIR)$(GBM_BACKEND_INSTALL_DIR); \
+		$(MINSTALL) "$$tgt" $(DESTDIR)$(INSTALL_LIB_DIR)/gbm; \
 	done
 
 clean-pipes:
