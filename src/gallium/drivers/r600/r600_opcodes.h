@@ -57,6 +57,7 @@
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN                       0x00000004
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_DX10                  0x00000005
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_DX10                  0x00000006
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FREXP_64                  0x00000007
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE                      0x00000008
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT                     0x00000009
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE                     0x0000000A
@@ -72,9 +73,13 @@
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR                     0x00000014
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA                      0x00000015
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR                0x00000016
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_64                    0x00000017
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT                  0x00000018
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV                       0x00000019
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP                       0x0000001A
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_64                    0x0000001B
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT64_TO_FLT32            0x0000001C
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT32_TO_FLT64            0x0000001D
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT           0x0000001E
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT           0x0000001F
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE                 0x00000020
@@ -129,6 +134,7 @@
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE                 0x00000051
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE                      0x00000052
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4                      0x00000053
+
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT              0x00000060
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE                  0x00000061
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED               0x00000062
@@ -155,7 +161,16 @@
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT                 0x00000077
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT                0x00000078
 #define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT               0x00000079
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDEXP_64                  0x0000007A
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT_64                  0x0000007B
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_64             0x0000007C
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_64              0x0000007D
+#define     V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_64             0x0000007E
 
+#define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64                 0x00000008
+#define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64_M2              0x00000009
+#define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64_M4              0x0000000A
+#define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_64_D2              0x0000000B
 #define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT                   0x0000000C
 #define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2                0x0000000D
 #define     V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4                0x0000000E
@@ -273,9 +288,6 @@
 /* same again from here */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV                       0x00000019
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP                       0x0000001A
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_64                    0x0000001B /* new EG */
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT64_TO_FLT32            0x0000001C /* new EG */
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT32_TO_FLT64            0x0000001D /* new EG */
 /* same */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT           0x0000001E
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT           0x0000001F
@@ -340,6 +352,10 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_CF_IDX1               0x00000059 /* not on CAYMAN */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_LDS_SIZE              0x0000005A
 
+#define     CM_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_INT24                 0x0000005B /* not on evergreen*/
+#define     CM_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT24               0x0000005C /* not on evergreen*/
+#define     CM_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_TRUNC          0x0000005D /* not on evergreen*/
+
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE                  0x00000081
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED               0x00000082
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE                  0x00000083
@@ -366,21 +382,85 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT               0x0000009A
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT                0x0000009B
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT               0x0000009C
-/* TODO Fill in more ALU */
+
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_BFM_INT                   0x000000A0
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT32_TO_FLT16            0x000000A2
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT16_TO_FLT32            0x000000A3
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UBYTE0_FLT                0x000000A4
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UBYTE1_FLT                0x000000A5
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UBYTE2_FLT                0x000000A6
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UBYTE3_FLT                0x000000A7
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_BCNT_INT                  0x000000AA
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FFBH_UINT                 0x000000AB
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FFBL_INT                  0x000000AC
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FFBH_INT                  0x000000AD
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT4              0x000000AE
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT_IEEE                  0x000000AF
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_RPI            0x000000B0
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR          0x000000B1
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT24              0x000000B2
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MBCNT_32HI_INT            0x000000B3
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_OFFSET_TO_FLT             0x000000B4
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_UINT24                0x000000B5
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_BCNT_ACCUM_PREV_INT       0x000000B6
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MBCNT_32LO_ACCUM_PREV_INT 0x000000B7
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE_64                   0x000000B8
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE_64                  0x000000B9
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_64                  0x000000BA
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_64                  0x000000BB
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_64                    0x000000BC
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_64                    0x000000BD
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4                      0x000000BE
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE                 0x000000BF
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE                      0x000000C0
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4                      0x000000C1
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FREXP_64                  0x000000C4
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDEXP_64                  0x000000C5
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT_64                  0x000000C6
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_64             0x000000C7
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_64              0x000000C8
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_64             0x000000C9
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_64                    0x000000CA
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_64                    0x000000CB
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT                  0x000000CC
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT64_TO_FLT32            0x000000CD
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT32_TO_FLT64            0x000000CE
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SAD_ACCUM_PREV_UINT       0x000000CF
 
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT                       0x000000D0
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_PREV                  0x000000D1
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_IEEE_PREV             0x000000D2
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_PREV                  0x000000D3
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULADD_PREV               0x000000D4
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULADD_IEEE_PREV          0x000000D5
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY                      0x000000D6
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW                      0x000000D7
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_X                       0x000000D8
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_Z                       0x000000D9
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_STORE_FLAGS               0x000000DA
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOAD_STORE_FLAGS          0x000000DB
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDS_1A                    0x000000DC
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDS_1A1D                  0x000000DD
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LDS_2A                    0x000000DF
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_LOAD_P0                 0x000000E0
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_LOAD_P10           0x000000E1
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INTERP_LOAD_P20           0x000000E2
 
-/* TODO ADD OTHER OP3 */
+/* OP3 */
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BFE_UINT                  0x00000004
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BFE_INT                   0x00000005
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BFI_INT                   0x00000006
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_FMA                       0x00000007
+#define     CM_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_INT24              0x00000008 /* not on evergreen*/
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDNE_64                  0x00000009
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_FMA_64                    0x0000000A
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_LERP_UINT                 0x0000000B
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BIT_ALIGN_INT             0x0000000C
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_BYTE_ALIGN_INT            0x0000000D
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_SAD_ACCUM_UINT            0x0000000E
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_SAD_ACCUM_HI_UINT         0x0000000F
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_UINT24             0x00000010
+#define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_LDS_IDX_OP                0x00000011
 #define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD                    0x00000014
 #define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_M2                 0x00000015
 #define     EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_M4                 0x00000016
