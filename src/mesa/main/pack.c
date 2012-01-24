@@ -462,7 +462,7 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
 #undef FN_NAME
 
 #define DST_TYPE GLushort
-#define SRC_CONVERT(x) (x)
+#define SRC_CONVERT(x) MIN2(x, 0xffff)
 #define FN_NAME pack_ushort_from_uint_rgba
 #include "pack_tmp.h"
 #undef DST_TYPE
@@ -470,7 +470,7 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
 #undef FN_NAME
 
 #define DST_TYPE GLshort
-#define SRC_CONVERT(x) (x)
+#define SRC_CONVERT(x) CLAMP((int)x, -32768, 32767)
 #define FN_NAME pack_short_from_uint_rgba
 #include "pack_tmp.h"
 #undef DST_TYPE
@@ -478,7 +478,7 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
 #undef FN_NAME
 
 #define DST_TYPE GLubyte
-#define SRC_CONVERT(x) (x)
+#define SRC_CONVERT(x) MIN2(x, 0xff)
 #define FN_NAME pack_ubyte_from_uint_rgba
 #include "pack_tmp.h"
 #undef DST_TYPE
@@ -486,7 +486,7 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
 #undef FN_NAME
 
 #define DST_TYPE GLbyte
-#define SRC_CONVERT(x) (x)
+#define SRC_CONVERT(x) CLAMP((int)x, -128, 127)
 #define FN_NAME pack_byte_from_uint_rgba
 #include "pack_tmp.h"
 #undef DST_TYPE
