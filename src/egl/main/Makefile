@@ -77,7 +77,6 @@ INCLUDE_DIRS += $(WAYLAND_CFLAGS)
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 EGL_LIB_DEPS += -lgbm
-LDFLAGS += -L$(TOP)/src/gbm/.libs
 INCLUDE_DIRS += -I$(TOP)/src/gbm/main
 endif
 

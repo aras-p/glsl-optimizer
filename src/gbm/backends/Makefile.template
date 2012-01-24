@@ -26,7 +26,7 @@ $(GBM_BACKEND_PATH): $(GBM_BACKEND).so
 
 $(GBM_BACKEND).so: $(GBM_OBJECTS) Makefile $(TOP)/src/gbm/backends/Makefile.template
 	@$(MKLIB) -o $(GBM_BACKEND).so -noprefix \
-		-linker '$(CC)' -ldflags '-L$(TOP)/src/gbm/.libs $(LDFLAGS)' \
+		-linker '$(CC)' -ldflags '-L$(TOP)/$(LIB_DIR) $(LDFLAGS)' \
 		$(MKLIB_OPTIONS) \
 		$(GBM_OBJECTS) $(GBM_LIBS) -lgbm
 
