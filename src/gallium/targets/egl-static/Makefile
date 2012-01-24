@@ -58,6 +58,7 @@ endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 egl_CPPFLAGS += $(LIBDRM_CFLAGS)
 egl_SYS += $(LIBDRM_LIB) -lgbm
+LDFLAGS += -L$(TOP)/src/gbm/.libs
 endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
