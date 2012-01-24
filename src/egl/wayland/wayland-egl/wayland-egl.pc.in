@@ -1,12 +1,10 @@
-prefix=@INSTALL_DIR@
-exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: wayland-egl
 Description: Mesa wayland-egl library
-Requires.private: @WAYLAND_EGL_PC_REQ_PRIV@
 Version: @VERSION@
-Libs: -L${libdir} -l@WAYLAND_EGL_LIB@
-Libs.private: @WAYLAND_EGL_PC_LIB_PRIV@
-Cflags: -I${includedir} @WAYLAND_EGL_PC_CFLAGS@
+Libs: -L${libdir} -lwayland-egl
+Cflags: -I${includedir}

@@ -62,7 +62,6 @@ GLESv1_CM_LIB = GLESv1_CM
 GLESv2_LIB = GLESv2
 VG_LIB = OpenVG
 GLAPI_LIB = glapi
-WAYLAND_EGL_LIB = wayland-egl
 
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
@@ -74,7 +73,6 @@ GLESv1_CM_LIB_NAME = lib$(GLESv1_CM_LIB).so
 GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
 VG_LIB_NAME = lib$(VG_LIB).so
 GLAPI_LIB_NAME = lib$(GLAPI_LIB).so
-WAYLAND_EGL_LIB_NAME = lib$(WAYLAND_EGL_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -86,7 +84,6 @@ GLESv1_CM_LIB_GLOB = $(GLESv1_CM_LIB_NAME)*
 GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
-WAYLAND_EGL_LIB_GLOB = $(WAYLAND_EGL_LIB_NAME)*
 
 DRI_CFLAGS = $(CFLAGS)
 DRI_CXXFLAGS = $(CXXFLAGS)
@@ -134,7 +131,6 @@ GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 GLAPI_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
-WAYLAND_EGL_LIB_DEPS = $(EXTRA_LIB_PATH) -lwayland-client -ldrm
 
 # Program dependencies - specific GL libraries added in Makefiles
 X11_LIBS = -lX11
@@ -179,6 +175,3 @@ GLESv2_PC_CFLAGS =
 VG_PC_REQ_PRIV =
 VG_PC_LIB_PRIV =
 VG_PC_CFLAGS =
-WAYLAND_EGL_PC_REQ_PRIV =
-WAYLAND_EGL_PC_LIB_PRIV =
-WAYLAND_EGL_PC_CFLAGS =

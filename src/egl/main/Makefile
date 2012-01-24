@@ -71,7 +71,7 @@ endif
 
 # libs/cflags for display type autodetection
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
-LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
+LOCAL_LIBS += $(TOP)/src/egl/wayland/wayland-drm/.libs/libwayland-drm.a
 EGL_LIB_DEPS += $(WAYLAND_LIBS)
 INCLUDE_DIRS += $(WAYLAND_CFLAGS)
 endif

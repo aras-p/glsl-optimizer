@@ -53,7 +53,7 @@ endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 egl_CPPFLAGS += $(LIBDRM_CFLAGS)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/wayland/libws_wayland.a
-egl_LIBS += $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
+egl_LIBS += $(TOP)/src/egl/wayland/wayland-drm/.libs/libwayland-drm.a
 egl_SYS += $(LIBDRM_LIB) $(WAYLAND_LIBS)
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)

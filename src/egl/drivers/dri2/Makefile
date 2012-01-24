@@ -42,7 +42,7 @@ EGL_INCLUDES += -DHAVE_WAYLAND_PLATFORM $(WAYLAND_CFLAGS) \
 		-I$(TOP)/src/egl/wayland/wayland-egl \
 		-I$(TOP)/src/egl/wayland/wayland-drm
 EGL_LIBS += $(WAYLAND_LIBS) \
-	    $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a
+	    $(TOP)/src/egl/wayland/wayland-drm/.libs/libwayland-drm.a
 endif
 
 include ../Makefile.template
