@@ -3465,13 +3465,14 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking, 0x0);
-      const GLfloat *src = tempImage;
+      const GLuint *tempImage = make_temp_uint_image(ctx, dims,
+						     baseInternalFormat,
+						     baseFormat,
+						     srcWidth, srcHeight, srcDepth,
+						     srcFormat, srcType,
+						     srcAddr,
+						     srcPacking);
+      const GLuint *src = tempImage;
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
@@ -3534,13 +3535,14 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking, 0x0);
-      const GLfloat *src = tempImage;
+      const GLuint *tempImage = make_temp_uint_image(ctx, dims,
+						     baseInternalFormat,
+						     baseFormat,
+						     srcWidth, srcHeight, srcDepth,
+						     srcFormat, srcType,
+						     srcAddr,
+						     srcPacking);
+      const GLuint *src = tempImage;
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
@@ -3603,13 +3605,14 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 baseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking, 0x0);
-      const GLfloat *src = tempImage;
+      const GLuint *tempImage = make_temp_uint_image(ctx, dims,
+						     baseInternalFormat,
+						     baseFormat,
+						     srcWidth, srcHeight, srcDepth,
+						     srcFormat, srcType,
+						     srcAddr,
+						     srcPacking);
+      const GLuint *src = tempImage;
       GLint img, row;
       if (!tempImage)
          return GL_FALSE;
