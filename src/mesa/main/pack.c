@@ -3008,27 +3008,6 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 
 
 static inline GLuint
-clamp_byte_to_uint(GLbyte b)
-{
-   return b < 0 ? 0 : b;
-}
-
-
-static inline GLuint
-clamp_short_to_uint(GLshort s)
-{
-   return s < 0 ? 0 : s;
-}
-
-
-static inline GLuint
-clamp_int_to_uint(GLint i)
-{
-   return i < 0 ? 0 : i;
-}
-
-
-static inline GLuint
 clamp_float_to_uint(GLfloat f)
 {
    return f < 0.0F ? 0 : IROUND(f);
@@ -3150,10 +3129,10 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
          PROCESS(aSrc, ACOMP, 1, GLubyte, (GLuint));
          break;
       case GL_BYTE:
-         PROCESS(rSrc, RCOMP, 0, GLbyte, clamp_byte_to_uint);
-         PROCESS(gSrc, GCOMP, 0, GLbyte, clamp_byte_to_uint);
-         PROCESS(bSrc, BCOMP, 0, GLbyte, clamp_byte_to_uint);
-         PROCESS(aSrc, ACOMP, 1, GLbyte, clamp_byte_to_uint);
+         PROCESS(rSrc, RCOMP, 0, GLbyte, (GLuint));
+         PROCESS(gSrc, GCOMP, 0, GLbyte, (GLuint));
+         PROCESS(bSrc, BCOMP, 0, GLbyte, (GLuint));
+         PROCESS(aSrc, ACOMP, 1, GLbyte, (GLuint));
          break;
       case GL_UNSIGNED_SHORT:
          PROCESS(rSrc, RCOMP, 0, GLushort, (GLuint));
@@ -3162,10 +3141,10 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
          PROCESS(aSrc, ACOMP, 1, GLushort, (GLuint));
          break;
       case GL_SHORT:
-         PROCESS(rSrc, RCOMP, 0, GLshort, clamp_short_to_uint);
-         PROCESS(gSrc, GCOMP, 0, GLshort, clamp_short_to_uint);
-         PROCESS(bSrc, BCOMP, 0, GLshort, clamp_short_to_uint);
-         PROCESS(aSrc, ACOMP, 1, GLshort, clamp_short_to_uint);
+         PROCESS(rSrc, RCOMP, 0, GLshort, (GLuint));
+         PROCESS(gSrc, GCOMP, 0, GLshort, (GLuint));
+         PROCESS(bSrc, BCOMP, 0, GLshort, (GLuint));
+         PROCESS(aSrc, ACOMP, 1, GLshort, (GLuint));
          break;
       case GL_UNSIGNED_INT:
          PROCESS(rSrc, RCOMP, 0, GLuint, (GLuint));
@@ -3174,10 +3153,10 @@ extract_uint_rgba(GLuint n, GLuint rgba[][4],
          PROCESS(aSrc, ACOMP, 1, GLuint, (GLuint));
          break;
       case GL_INT:
-         PROCESS(rSrc, RCOMP, 0, GLint, clamp_int_to_uint);
-         PROCESS(gSrc, GCOMP, 0, GLint, clamp_int_to_uint);
-         PROCESS(bSrc, BCOMP, 0, GLint, clamp_int_to_uint);
-         PROCESS(aSrc, ACOMP, 1, GLint, clamp_int_to_uint);
+         PROCESS(rSrc, RCOMP, 0, GLint, (GLuint));
+         PROCESS(gSrc, GCOMP, 0, GLint, (GLuint));
+         PROCESS(bSrc, BCOMP, 0, GLint, (GLuint));
+         PROCESS(aSrc, ACOMP, 1, GLint, (GLuint));
          break;
       case GL_FLOAT:
          PROCESS(rSrc, RCOMP, 0, GLfloat, clamp_float_to_uint);
