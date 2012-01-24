@@ -1,6 +1,5 @@
 SWRAST_DRIVER_FILES = \
-	swrast.c \
-	swrast_span.c
+	swrast.c 
 
 SWRAST_COMMON_FILES = \
 	../common/utils.c \
