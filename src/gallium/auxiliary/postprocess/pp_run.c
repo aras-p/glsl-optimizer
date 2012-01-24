@@ -64,6 +64,12 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
       in = ppq->tmp[0];
    }
 
+   // Kept only for this frame.
+   struct pipe_resource *refin = NULL, *refout = NULL;
+   pipe_resource_reference(&ppq->depth, indepth);
+   pipe_resource_reference(&refin, in);
+   pipe_resource_reference(&refout, out);
+
    switch (ppq->n_filters) {
    case 1:                     /* No temp buf */
       ppq->pp_queue[0] (ppq, in, out, 0);
@@ -93,6 +99,10 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
       break;
    }
+
+   pipe_resource_reference(&ppq->depth, NULL);
+   pipe_resource_reference(&refin, NULL);
+   pipe_resource_reference(&refout, NULL);
 }
 
 
