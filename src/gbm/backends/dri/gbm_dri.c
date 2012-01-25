@@ -54,6 +54,49 @@ dri_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
    return dri->lookup_image(screen, image, dri->lookup_user_data);
 }
 
+static __DRIbuffer *
+dri_get_buffers(__DRIdrawable * driDrawable,
+		 int *width, int *height,
+		 unsigned int *attachments, int count,
+		 int *out_count, void *data)
+{
+   struct gbm_dri_surface *surf = data;
+   struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
+
+   if (dri->get_buffers == NULL)
+      return NULL;
+
+   return dri->get_buffers(driDrawable, width, height, attachments,
+                           count, out_count, surf->dri_private);
+}
+
+static void
+dri_flush_front_buffer(__DRIdrawable * driDrawable, void *data)
+{
+   struct gbm_dri_surface *surf = data;
+   struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
+
+   if (dri->flush_front_buffer != NULL)
+      dri->flush_front_buffer(driDrawable, surf->dri_private);
+}
+
+static __DRIbuffer *
+dri_get_buffers_with_format(__DRIdrawable * driDrawable,
+                            int *width, int *height,
+                            unsigned int *attachments, int count,
+                            int *out_count, void *data)
+{
+   struct gbm_dri_surface *surf = data;
+   struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
+
+   if (dri->get_buffers_with_format == NULL)
+      return NULL;
+
+   return
+      dri->get_buffers_with_format(driDrawable, width, height, attachments,
+                                   count, out_count, surf->dri_private);
+}
+
 static const __DRIuseInvalidateExtension use_invalidate = {
    { __DRI_USE_INVALIDATE, 1 }
 };
@@ -61,6 +104,13 @@ static const __DRIuseInvalidateExtension use_invalidate = {
 static const __DRIimageLookupExtension image_lookup_extension = {
    { __DRI_IMAGE_LOOKUP, 1 },
    dri_lookup_egl_image
+};
+
+const __DRIdri2LoaderExtension dri2_loader_extension = {
+   { __DRI_DRI2_LOADER, 3 },
+   dri_get_buffers,
+   dri_flush_front_buffer,
+   dri_get_buffers_with_format,
 };
 
 struct dri_extension_match {
@@ -187,7 +237,8 @@ dri_screen_create(struct gbm_dri_device *dri)
 
    dri->extensions[0] = &image_lookup_extension.base;
    dri->extensions[1] = &use_invalidate.base;
-   dri->extensions[2] = NULL;
+   dri->extensions[2] = &dri2_loader_extension.base;
+   dri->extensions[3] = NULL;
 
    if (dri->dri2 == NULL)
       return -1;
