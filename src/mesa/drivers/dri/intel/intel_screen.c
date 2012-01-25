@@ -74,6 +74,7 @@ PUBLIC const char __driConfigOptions[] =
      DRI_CONF_NO_RAST(false)
      DRI_CONF_ALWAYS_FLUSH_BATCH(false)
      DRI_CONF_ALWAYS_FLUSH_CACHE(false)
+     DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(false)
 
       DRI_CONF_OPT_BEGIN(stub_occlusion_query, bool, false)
 	 DRI_CONF_DESC(en, "Enable stub ARB_occlusion_query support on 915/945.")
@@ -85,7 +86,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 12;
+const GLuint __driNConfigOptions = 13;
 
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"

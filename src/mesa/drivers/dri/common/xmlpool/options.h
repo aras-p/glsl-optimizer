@@ -626,3 +626,13 @@ DRI_CONF_OPT_BEGIN(always_flush_cache,bool,def) \
         DRI_CONF_DESC(fr,"Enable flushing GPU caches with each draw call") \
         DRI_CONF_DESC(sv,"Enable flushing GPU caches with each draw call") \
 DRI_CONF_OPT_END
+
+#define DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(def) \
+DRI_CONF_OPT_BEGIN(force_glsl_extensions_warn,bool,def) \
+        DRI_CONF_DESC(en,"Force GLSL extension default behavior to 'warn'") \
+        DRI_CONF_DESC(de,"Force GLSL extension default behavior to 'warn'") \
+        DRI_CONF_DESC(es,"Force GLSL extension default behavior to 'warn'") \
+        DRI_CONF_DESC(nl,"Force GLSL extension default behavior to 'warn'") \
+        DRI_CONF_DESC(fr,"Force GLSL extension default behavior to 'warn'") \
+        DRI_CONF_DESC(sv,"Force GLSL extension default behavior to 'warn'") \
+DRI_CONF_OPT_END
