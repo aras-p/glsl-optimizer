@@ -387,6 +387,34 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    return &bo->base.base;
 }
 
+static struct gbm_surface *
+gbm_dri_surface_create(struct gbm_device *gbm,
+                       uint32_t width, uint32_t height,
+		       uint32_t format, uint32_t flags)
+{
+   struct gbm_dri_surface *surf;
+
+   surf = calloc(1, sizeof *surf);
+   if (surf == NULL)
+      return NULL;
+
+   surf->base.gbm = gbm;
+   surf->base.width = width;
+   surf->base.height = height;
+   surf->base.format = format;
+   surf->base.flags = flags;
+
+   return &surf->base;
+}
+
+static void
+gbm_dri_surface_destroy(struct gbm_surface *_surf)
+{
+   struct gbm_dri_surface *surf = gbm_dri_surface(_surf);
+
+   free(surf);
+}
+
 static void
 dri_destroy(struct gbm_device *gbm)
 {
@@ -414,6 +442,8 @@ dri_device_create(int fd)
    dri->base.base.is_format_supported = gbm_dri_is_format_supported;
    dri->base.base.bo_destroy = gbm_dri_bo_destroy;
    dri->base.base.destroy = dri_destroy;
+   dri->base.base.surface_create = gbm_dri_surface_create;
+   dri->base.base.surface_destroy = gbm_dri_surface_destroy;
 
    dri->base.type = GBM_DRM_DRIVER_TYPE_DRI;
    dri->base.base.name = "drm";

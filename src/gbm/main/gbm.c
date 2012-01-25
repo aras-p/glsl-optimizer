@@ -84,8 +84,7 @@ gbm_device_get_backend_name(struct gbm_device *gbm)
  */
 int
 gbm_device_is_format_supported(struct gbm_device *gbm,
-                               enum gbm_bo_format format,
-                               uint32_t usage)
+                               uint32_t format, uint32_t usage)
 {
    return gbm->is_format_supported(gbm, format, usage);
 }
@@ -263,7 +262,7 @@ gbm_bo_destroy(struct gbm_bo *bo)
 GBM_EXPORT struct gbm_bo *
 gbm_bo_create(struct gbm_device *gbm,
               uint32_t width, uint32_t height,
-              enum gbm_bo_format format, uint32_t usage)
+              uint32_t format, uint32_t usage)
 {
    if (width == 0 || height == 0)
       return NULL;
@@ -304,4 +303,106 @@ gbm_bo_create_from_egl_image(struct gbm_device *gbm,
 
    return gbm->bo_create_from_egl_image(gbm, egl_dpy, egl_image,
                                         width, height, usage);
+}
+
+/**
+ * Allocate a surface object
+ *
+ * \param gbm The gbm device returned from gbm_create_device()
+ * \param width The width for the surface
+ * \param height The height for the surface
+ * \param format The format to use for the surface
+ *
+ * \return A newly allocated surface that should be freed with
+ * gbm_surface_destroy() when no longer needed. If an error occurs
+ * during allocation %NULL will be returned.
+ *
+ * \sa enum gbm_bo_format for the list of formats
+ */
+GBM_EXPORT struct gbm_surface *
+gbm_surface_create(struct gbm_device *gbm,
+                   uint32_t width, uint32_t height,
+		   uint32_t format, uint32_t flags)
+{
+   return gbm->surface_create(gbm, width, height, format, flags);
+}
+
+/**
+ * Destroys the given surface and frees all resources associated with
+ * it.
+ *
+ * All buffers locked with gbm_surface_lock_front_buffer() should be
+ * released prior to calling this function.
+ *
+ * \param surf The surface
+ */
+GBM_EXPORT void
+gbm_surface_destroy(struct gbm_surface *surf)
+{
+   surf->gbm->surface_destroy(surf);
+}
+
+/**
+ * Lock the surface's current front buffer
+ *
+ * Lock rendering to the surface's current front buffer until it is
+ * released with gbm_surface_release_buffer().
+ *
+ * This function must be called exactly once after calling
+ * eglSwapBuffers.  Calling it before any eglSwapBuffer has happened
+ * on the surface or two or more times after eglSwapBuffers is an
+ * error.  A new bo representing the new front buffer is returned.  On
+ * multiple invocations, all the returned bos must be released in
+ * order to release the actual surface buffer.
+ *
+ * \param surf The surface
+ *
+ * \return A newly allocated buffer object that should be released
+ * with gbm_surface_release_buffer() when no longer needed.  This bo
+ * should not be destroyed using gbm_bo_destroy().  If an error occurs
+ * this function returns %NULL.
+ */
+GBM_EXPORT struct gbm_bo *
+gbm_surface_lock_front_buffer(struct gbm_surface *surf)
+{
+   return surf->gbm->surface_lock_front_buffer(surf);
+}
+
+/**
+ * Release a locked buffer obtained with gbm_surface_lock_front_buffer()
+ *
+ * The bo is destroyed after a call to this function and returns the
+ * underlying buffer to the gbm surface.  Releasing a bo will
+ * typically make gbm_surface_has_free_buffer() return 1 and thus
+ * allow rendering the next frame, but not always.
+ *
+ * \param surf The surface
+ * \param bo The buffer object
+ */
+GBM_EXPORT void
+gbm_surface_release_buffer(struct gbm_surface *surf, struct gbm_bo *bo)
+{
+   surf->gbm->surface_release_buffer(surf, bo);
+}
+
+/**
+ * Return whether or not a surface has free (non-locked) buffers
+ *
+ * Before starting a new frame, the surface must have a buffer
+ * available for rendering.  Initially, a gbm surface will have a free
+ * buffer, but after one of more buffers have been locked (\sa
+ * gbm_surface_lock_front_buffer()), the application must check for a
+ * free buffer before rendering.
+ *
+ * If a surface doesn't have a free buffer, the application must
+ * return a buffer to the surface using gbm_surface_release_buffer()
+ * and after that, the application can query for free buffers again.
+ *
+ * \param surf The surface
+ * \return 1 if the surface has free buffers, 0 otherwise
+ */
+GBM_EXPORT int
+gbm_surface_has_free_buffers(struct gbm_surface *surf)
+{
+   return surf->gbm->surface_has_free_buffers(surf);
 }

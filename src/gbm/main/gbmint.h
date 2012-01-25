@@ -59,18 +59,27 @@ struct gbm_device {
 
    void (*destroy)(struct gbm_device *gbm);
    int (*is_format_supported)(struct gbm_device *gbm,
-                              enum gbm_bo_format format,
+                              uint32_t format,
                               uint32_t usage);
 
    struct gbm_bo *(*bo_create)(struct gbm_device *gbm,
                                uint32_t width, uint32_t height,
-                               enum gbm_bo_format format,
+                               uint32_t format,
                                uint32_t usage);
    struct gbm_bo *(*bo_create_from_egl_image)(struct gbm_device *gbm,
                                               void *egl_dpy, void *egl_img,
                                               uint32_t width, uint32_t height,
                                               uint32_t usage);
    void (*bo_destroy)(struct gbm_bo *bo);
+
+   struct gbm_surface *(*surface_create)(struct gbm_device *gbm,
+                                         uint32_t width, uint32_t height,
+                                         uint32_t format, uint32_t flags);
+   struct gbm_bo *(*surface_lock_front_buffer)(struct gbm_surface *surface);
+   void (*surface_release_buffer)(struct gbm_surface *surface,
+                                  struct gbm_bo *bo);
+   int (*surface_has_free_buffers)(struct gbm_surface *surface);
+   void (*surface_destroy)(struct gbm_surface *surface);
 };
 
 /**
@@ -85,6 +94,14 @@ struct gbm_bo {
    uint32_t pitch;
    uint32_t format;
    union gbm_bo_handle  handle;
+};
+
+struct gbm_surface {
+   struct gbm_device *gbm;
+   uint32_t width;
+   uint32_t height;
+   uint32_t format;
+   uint32_t flags;
 };
 
 struct gbm_backend {

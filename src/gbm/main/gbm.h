@@ -44,6 +44,7 @@ extern "C" {
 
 struct gbm_device;
 struct gbm_bo;
+struct gbm_surface;
 
 /**
  * \mainpage The Generic Buffer Manager
@@ -246,6 +247,23 @@ gbm_bo_get_handle(struct gbm_bo *bo);
 
 void
 gbm_bo_destroy(struct gbm_bo *bo);
+
+struct gbm_surface *
+gbm_surface_create(struct gbm_device *gbm,
+                   uint32_t width, uint32_t height,
+		   uint32_t format, uint32_t flags);
+
+struct gbm_bo *
+gbm_surface_lock_front_buffer(struct gbm_surface *surface);
+
+void
+gbm_surface_release_buffer(struct gbm_surface *surface, struct gbm_bo *bo);
+
+int
+gbm_surface_has_free_buffers(struct gbm_surface *surface);
+
+void
+gbm_surface_destroy(struct gbm_surface *surface);
 
 #ifdef __cplusplus
 }

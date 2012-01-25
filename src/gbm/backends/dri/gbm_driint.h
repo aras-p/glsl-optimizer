@@ -61,6 +61,15 @@ struct gbm_dri_bo {
    __DRIimage *image;
 };
 
+struct gbm_dri_surface {
+   struct gbm_surface base;
+
+   __DRIbuffer *(*get_front_buffer)(struct gbm_dri_surface *, void *);
+   void (*release_buffer)(struct gbm_dri_surface *, __DRIbuffer *, void *);
+   int (*has_free_buffers)(void *);
+   void *dri_private;
+};
+
 static inline struct gbm_dri_device *
 gbm_dri_device(struct gbm_device *gbm)
 {
@@ -71,6 +80,12 @@ static inline struct gbm_dri_bo *
 gbm_dri_bo(struct gbm_bo *bo)
 {
    return (struct gbm_dri_bo *) bo;
+}
+
+static inline struct gbm_dri_surface *
+gbm_dri_surface(struct gbm_surface *surface)
+{
+   return (struct gbm_dri_surface *) surface;
 }
 
 char *
