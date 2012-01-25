@@ -1041,8 +1041,8 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 				r = -EINVAL;
 				goto out_err;
 			}
-			if (so.output[i].start_component) {
-			   R600_ERR("stream_output - start_component cannot be non-zero\n");
+			if (so.output[i].dst_offset < so.output[i].start_component) {
+			   R600_ERR("stream_output - dst_offset cannot be less than start_component\n");
 			   r = -EINVAL;
 			   goto out_err;
 			}
@@ -1050,14 +1050,14 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 			memset(&output, 0, sizeof(struct r600_bytecode_output));
 			output.gpr = shader->output[so.output[i].register_index].gpr;
 			output.elem_size = 0;
-			output.array_base = so.output[i].dst_offset;
+			output.array_base = so.output[i].dst_offset - so.output[i].start_component;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
 			output.burst_count = 1;
 			output.barrier = 1;
 			/* array_size is an upper limit for the burst_count
 			 * with MEM_STREAM instructions */
 			output.array_size = 0xFFF;
-			output.comp_mask = (1 << so.output[i].num_components) - 1;
+			output.comp_mask = ((1 << so.output[i].num_components) - 1) << so.output[i].start_component;
 			if (ctx.bc->chip_class >= EVERGREEN) {
 				switch (so.output[i].output_buffer) {
 				case 0:
