@@ -35,7 +35,7 @@
 #define VL_BLOCK_WIDTH 8
 #define VL_BLOCK_HEIGHT 8
 
-#define VL_MAX_PLANES 3
+#define VL_NUM_COMPONENTS 3
 #define VL_MAX_REF_FRAMES 2
 
 #endif

@@ -685,7 +685,7 @@ nouveau_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
       unsigned nr_components = util_format_get_nr_components(buf->resources[i]->format);
 
       for (j = 0; j < nr_components; ++j, ++component) {
-         assert(component < VL_MAX_PLANES);
+         assert(component < VL_NUM_COMPONENTS);
 
          if (!buf->sampler_view_components[component]) {
             memset(&sv_templ, 0, sizeof(sv_templ));

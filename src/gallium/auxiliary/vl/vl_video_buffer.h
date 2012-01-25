@@ -42,10 +42,10 @@ struct vl_video_buffer
 {
    struct pipe_video_buffer base;
    unsigned                 num_planes;
-   struct pipe_resource     *resources[VL_MAX_PLANES];
-   struct pipe_sampler_view *sampler_view_planes[VL_MAX_PLANES];
-   struct pipe_sampler_view *sampler_view_components[VL_MAX_PLANES];
-   struct pipe_surface      *surfaces[VL_MAX_PLANES * 2];
+   struct pipe_resource     *resources[VL_NUM_COMPONENTS];
+   struct pipe_sampler_view *sampler_view_planes[VL_NUM_COMPONENTS];
+   struct pipe_sampler_view *sampler_view_components[VL_NUM_COMPONENTS];
+   struct pipe_surface      *surfaces[VL_NUM_COMPONENTS * 2];
 };
 
 /**
@@ -113,7 +113,7 @@ vl_video_buffer_create(struct pipe_context *pipe,
 struct pipe_video_buffer *
 vl_video_buffer_create_ex(struct pipe_context *pipe,
                           const struct pipe_video_buffer *templat,
-                          const enum pipe_format resource_formats[VL_MAX_PLANES],
+                          const enum pipe_format resource_formats[VL_NUM_COMPONENTS],
                           unsigned depth, unsigned usage);
 
 /**
@@ -122,6 +122,6 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
 struct pipe_video_buffer *
 vl_video_buffer_create_ex2(struct pipe_context *pipe,
                            const struct pipe_video_buffer *templat,
-                           struct pipe_resource *resources[VL_MAX_PLANES]);
+                           struct pipe_resource *resources[VL_NUM_COMPONENTS]);
 
 #endif /* vl_video_buffer_h */

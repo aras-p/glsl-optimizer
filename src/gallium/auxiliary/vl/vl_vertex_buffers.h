@@ -96,7 +96,7 @@ struct vl_vertex_buffer
       struct pipe_resource  *resource;
       struct pipe_transfer  *transfer;
       struct vl_ycbcr_block *vertex_stream;
-   } ycbcr[VL_MAX_PLANES];
+   } ycbcr[VL_NUM_COMPONENTS];
 
    struct {
       struct pipe_resource   *resource;

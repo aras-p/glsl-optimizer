@@ -89,14 +89,14 @@ struct vl_mpeg12_buffer
    struct pipe_sampler_view *zscan_source;
 
    struct vl_mpg12_bs bs;
-   struct vl_zscan_buffer zscan[VL_MAX_PLANES];
-   struct vl_idct_buffer idct[VL_MAX_PLANES];
-   struct vl_mc_buffer mc[VL_MAX_PLANES];
+   struct vl_zscan_buffer zscan[VL_NUM_COMPONENTS];
+   struct vl_idct_buffer idct[VL_NUM_COMPONENTS];
+   struct vl_mc_buffer mc[VL_NUM_COMPONENTS];
 
    struct pipe_transfer *tex_transfer;
    short *texels;
 
-   struct vl_ycbcr_block *ycbcr_stream[VL_MAX_PLANES];
+   struct vl_ycbcr_block *ycbcr_stream[VL_NUM_COMPONENTS];
    struct vl_motionvector *mv_stream[VL_MAX_REF_FRAMES];
 };
 

@@ -36,7 +36,7 @@
 #include "vl_defines.h"
 #include "vl_types.h"
 
-#define VL_MC_NUM_BLENDERS (1 << VL_MAX_PLANES)
+#define VL_MC_NUM_BLENDERS (1 << VL_NUM_COMPONENTS)
 
 struct pipe_context;
 
