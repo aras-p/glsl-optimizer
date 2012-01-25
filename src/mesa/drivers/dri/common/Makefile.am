@@ -35,3 +35,5 @@ libdricommon_la_SOURCES = \
 	utils.c \
 	dri_util.c \
 	xmlconfig.c
+
+sysconf_DATA = drirc

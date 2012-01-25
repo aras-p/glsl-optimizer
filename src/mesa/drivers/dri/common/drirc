@@ -1,0 +1,7 @@
+<driconf>
+    <device screen="0" driver="i965">
+        <application name="Sanctuary">
+            <option name="force_glsl_extensions_warn" value="true" />
+	</application>
+    </device>
+</driconf>
