@@ -29,11 +29,11 @@
 #define vl_defines_h
 
 /* constants usually used with all known codecs */
-#define MACROBLOCK_WIDTH 16
-#define MACROBLOCK_HEIGHT 16
+#define VL_MACROBLOCK_WIDTH 16
+#define VL_MACROBLOCK_HEIGHT 16
 
-#define BLOCK_WIDTH 8
-#define BLOCK_HEIGHT 8
+#define VL_BLOCK_WIDTH 8
+#define VL_BLOCK_HEIGHT 8
 
 #define VL_MAX_PLANES 3
 #define VL_MAX_REF_FRAMES 2

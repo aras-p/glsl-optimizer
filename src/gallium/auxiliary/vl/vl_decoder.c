@@ -65,8 +65,8 @@ vl_create_decoder(struct pipe_context *pipe,
       PIPE_VIDEO_CAP_NPOT_TEXTURES
    );
 
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, VL_MACROBLOCK_WIDTH);
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, VL_MACROBLOCK_HEIGHT);
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:

@@ -346,9 +346,9 @@ vl_video_buffer_create(struct pipe_context *pipe,
 
    templat = *tmpl;
    templat.width = pot_buffers ? util_next_power_of_two(tmpl->width)
-                 : align(tmpl->width, MACROBLOCK_WIDTH);
+                 : align(tmpl->width, VL_MACROBLOCK_WIDTH);
    templat.height = pot_buffers ? util_next_power_of_two(tmpl->height)
-                  : align(tmpl->height, MACROBLOCK_HEIGHT);
+                  : align(tmpl->height, VL_MACROBLOCK_HEIGHT);
 
    if (tmpl->interlaced)
       templat.height /= 2;

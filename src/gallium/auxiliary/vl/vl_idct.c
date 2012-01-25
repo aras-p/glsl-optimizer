@@ -162,9 +162,9 @@ create_mismatch_vert_shader(struct vl_idct *idct)
    o_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1);
 
    /*
-    * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
+    * scale = (VL_BLOCK_WIDTH, VL_BLOCK_HEIGHT) / (dst.width, dst.height)
     *
-    * t_vpos = vpos + 7 / BLOCK_WIDTH
+    * t_vpos = vpos + 7 / VL_BLOCK_WIDTH
     * o_vpos.xy = t_vpos * scale
     *
     * o_addr = calc_addr(...)
@@ -172,8 +172,8 @@ create_mismatch_vert_shader(struct vl_idct *idct)
     */
 
    scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->buffer_width,
-      (float)BLOCK_HEIGHT / idct->buffer_height);
+      (float)VL_BLOCK_WIDTH / idct->buffer_width,
+      (float)VL_BLOCK_HEIGHT / idct->buffer_height);
 
    ureg_MAD(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), vpos, scale, scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
@@ -283,7 +283,7 @@ create_stage1_vert_shader(struct vl_idct *idct)
    o_r_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR1);
 
    /*
-    * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
+    * scale = (VL_BLOCK_WIDTH, VL_BLOCK_HEIGHT) / (dst.width, dst.height)
     *
     * t_vpos = vpos + vrect
     * o_vpos.xy = t_vpos * scale
@@ -295,8 +295,8 @@ create_stage1_vert_shader(struct vl_idct *idct)
     */
 
    scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->buffer_width,
-      (float)BLOCK_HEIGHT / idct->buffer_height);
+      (float)VL_BLOCK_WIDTH / idct->buffer_width,
+      (float)VL_BLOCK_HEIGHT / idct->buffer_height);
 
    ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, vrect);
    ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
@@ -307,7 +307,7 @@ create_stage1_vert_shader(struct vl_idct *idct)
    ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
 
    calc_addr(shader, o_l_addr, ureg_src(t_tex), ureg_src(t_start), false, false, idct->buffer_width / 4);
-   calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
+   calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, VL_BLOCK_WIDTH / 4);
 
    ureg_release_temporary(shader, t_tex);
    ureg_release_temporary(shader, t_start);
@@ -366,7 +366,7 @@ create_stage1_frag_shader(struct vl_idct *idct)
    for (i = 0; i < idct->nr_of_render_targets; ++i) {
       struct ureg_src s_addr[2];
 
-      increment_addr(shader, r, r_addr, true, true, i - (signed)idct->nr_of_render_targets / 2, BLOCK_HEIGHT);
+      increment_addr(shader, r, r_addr, true, true, i - (signed)idct->nr_of_render_targets / 2, VL_BLOCK_HEIGHT);
 
       s_addr[0] = ureg_src(r[0]);
       s_addr[1] = ureg_src(r[1]);
@@ -414,15 +414,15 @@ vl_idct_stage2_vert_shader(struct vl_idct *idct, struct ureg_program *shader,
    o_r_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, first_output + VS_O_R_ADDR1);
 
    scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->buffer_width,
-      (float)BLOCK_HEIGHT / idct->buffer_height);
+      (float)VL_BLOCK_WIDTH / idct->buffer_width,
+      (float)VL_BLOCK_HEIGHT / idct->buffer_height);
 
    ureg_MUL(shader, ureg_writemask(tex, TGSI_WRITEMASK_Z),
       ureg_scalar(vrect, TGSI_SWIZZLE_X),
-      ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
+      ureg_imm1f(shader, VL_BLOCK_WIDTH / idct->nr_of_render_targets));
    ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
 
-   calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
+   calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, VL_BLOCK_WIDTH / 4);
    calc_addr(shader, o_r_addr, ureg_src(tex), ureg_src(t_start), true, false, idct->buffer_height / 4);
 
    ureg_MOV(shader, ureg_writemask(o_r_addr[0], TGSI_WRITEMASK_Z), ureg_src(tex));
@@ -690,8 +690,8 @@ vl_idct_upload_matrix(struct pipe_context *pipe, float scale)
    struct pipe_box rect =
    {
       0, 0, 0,
-      BLOCK_WIDTH / 4,
-      BLOCK_HEIGHT,
+      VL_BLOCK_WIDTH / 4,
+      VL_BLOCK_HEIGHT,
       1
    };
 
@@ -728,8 +728,8 @@ vl_idct_upload_matrix(struct pipe_context *pipe, float scale)
    if (!f)
       goto error_map;
 
-   for(i = 0; i < BLOCK_HEIGHT; ++i)
-      for(j = 0; j < BLOCK_WIDTH; ++j)
+   for(i = 0; i < VL_BLOCK_HEIGHT; ++i)
+      for(j = 0; j < VL_BLOCK_WIDTH; ++j)
          // transpose and scale
          f[i * pitch + j] = ((const float (*)[8])const_matrix)[j][i] * scale;
 

@@ -96,7 +96,7 @@ init_zscan_buffer(struct vl_mpeg12_decoder *dec, struct vl_mpeg12_buffer *buffer
    memset(&res_tmpl, 0, sizeof(res_tmpl));
    res_tmpl.target = PIPE_TEXTURE_2D;
    res_tmpl.format = dec->zscan_source_format;
-   res_tmpl.width0 = dec->blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT;
+   res_tmpl.width0 = dec->blocks_per_line * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
    res_tmpl.height0 = align(dec->num_blocks, dec->blocks_per_line) / dec->blocks_per_line;
    res_tmpl.depth0 = 1;
    res_tmpl.array_size = 1;
@@ -463,8 +463,8 @@ vl_mpeg12_get_decode_buffer(struct vl_mpeg12_decoder *dec, struct pipe_video_buf
       return NULL;
 
    if (!vl_vb_init(&buffer->vertex_stream, dec->base.context,
-                   dec->base.width / MACROBLOCK_WIDTH,
-                   dec->base.height / MACROBLOCK_HEIGHT))
+                   dec->base.width / VL_MACROBLOCK_WIDTH,
+                   dec->base.height / VL_MACROBLOCK_HEIGHT))
       goto error_vertex_buffer;
 
    if (!init_mc_buffer(dec, buffer))
@@ -1026,7 +1026,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
                          unsigned width, unsigned height, unsigned max_references,
                          bool expect_chunked_decode)
 {
-   const unsigned block_size_pixels = BLOCK_WIDTH * BLOCK_HEIGHT;
+   const unsigned block_size_pixels = VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
    const struct format_config *format_config;
    struct vl_mpeg12_decoder *dec;
 
@@ -1054,7 +1054,7 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
 
    dec->blocks_per_line = MAX2(util_next_power_of_two(dec->base.width) / block_size_pixels, 4);
    dec->num_blocks = (dec->base.width * dec->base.height) / block_size_pixels;
-   dec->width_in_macroblocks = align(dec->base.width, MACROBLOCK_WIDTH) / MACROBLOCK_WIDTH;
+   dec->width_in_macroblocks = align(dec->base.width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
    dec->expect_chunked_decode = expect_chunked_decode;
 
    /* TODO: Implement 422, 444 */
@@ -1077,8 +1077,8 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    dec->quads = vl_vb_upload_quads(dec->base.context);
    dec->pos = vl_vb_upload_pos(
       dec->base.context,
-      dec->base.width / MACROBLOCK_WIDTH,
-      dec->base.height / MACROBLOCK_HEIGHT
+      dec->base.width / VL_MACROBLOCK_WIDTH,
+      dec->base.height / VL_MACROBLOCK_HEIGHT
    );
 
    dec->ves_ycbcr = vl_vb_get_ves_ycbcr(dec->base.context);
@@ -1120,13 +1120,13 @@ vl_create_mpeg12_decoder(struct pipe_context *context,
    }
 
    if (!vl_mc_init(&dec->mc_y, dec->base.context, dec->base.width, dec->base.height,
-                   MACROBLOCK_HEIGHT, format_config->mc_scale,
+                   VL_MACROBLOCK_HEIGHT, format_config->mc_scale,
                    mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_y;
 
    // TODO
    if (!vl_mc_init(&dec->mc_c, dec->base.context, dec->base.width, dec->base.height,
-                   BLOCK_HEIGHT, format_config->mc_scale,
+                   VL_BLOCK_HEIGHT, format_config->mc_scale,
                    mc_vert_shader_callback, mc_frag_shader_callback, dec))
       goto error_mc_c;
 

@@ -109,8 +109,8 @@ create_vert_shader(struct vl_zscan *zscan)
    o_vtex = MALLOC(zscan->num_channels * sizeof(struct ureg_dst));
 
    scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / zscan->buffer_width,
-      (float)BLOCK_HEIGHT / zscan->buffer_height);
+      (float)VL_BLOCK_WIDTH / zscan->buffer_width,
+      (float)VL_BLOCK_HEIGHT / zscan->buffer_height);
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
@@ -147,7 +147,8 @@ create_vert_shader(struct vl_zscan *zscan)
 
    for (i = 0; i < zscan->num_channels; ++i) {
       ureg_ADD(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y),
-               ureg_imm1f(shader, 1.0f / (zscan->blocks_per_line * BLOCK_WIDTH) * (i - (signed)zscan->num_channels / 2)));
+               ureg_imm1f(shader, 1.0f / (zscan->blocks_per_line * VL_BLOCK_WIDTH)
+                * (i - (signed)zscan->num_channels / 2)));
 
       ureg_MAD(shader, ureg_writemask(o_vtex[i], TGSI_WRITEMASK_X), vrect,
                ureg_imm1f(shader, 1.0f / zscan->blocks_per_line), ureg_src(tmp));
@@ -343,7 +344,7 @@ cleanup_state(struct vl_zscan *zscan)
 struct pipe_sampler_view *
 vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks_per_line)
 {
-   const unsigned total_size = blocks_per_line * BLOCK_WIDTH * BLOCK_HEIGHT;
+   const unsigned total_size = blocks_per_line * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
 
    int patched_layout[64];
 
@@ -356,8 +357,8 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
    struct pipe_box rect =
    {
       0, 0, 0,
-      BLOCK_WIDTH * blocks_per_line,
-      BLOCK_HEIGHT,
+      VL_BLOCK_WIDTH * blocks_per_line,
+      VL_BLOCK_HEIGHT,
       1
    };
 
@@ -369,8 +370,8 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
    memset(&res_tmpl, 0, sizeof(res_tmpl));
    res_tmpl.target = PIPE_TEXTURE_2D;
    res_tmpl.format = PIPE_FORMAT_R32_FLOAT;
-   res_tmpl.width0 = BLOCK_WIDTH * blocks_per_line;
-   res_tmpl.height0 = BLOCK_HEIGHT;
+   res_tmpl.width0 = VL_BLOCK_WIDTH * blocks_per_line;
+   res_tmpl.height0 = VL_BLOCK_HEIGHT;
    res_tmpl.depth0 = 1;
    res_tmpl.array_size = 1;
    res_tmpl.usage = PIPE_USAGE_IMMUTABLE;
@@ -396,14 +397,14 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
       goto error_map;
 
    for (i = 0; i < blocks_per_line; ++i)
-      for (y = 0; y < BLOCK_HEIGHT; ++y)
-         for (x = 0; x < BLOCK_WIDTH; ++x) {
-            float addr = patched_layout[x + y * BLOCK_WIDTH] +
-               i * BLOCK_WIDTH * BLOCK_HEIGHT;
+      for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+         for (x = 0; x < VL_BLOCK_WIDTH; ++x) {
+            float addr = patched_layout[x + y * VL_BLOCK_WIDTH] +
+               i * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
 
             addr /= total_size;
 
-            f[i * BLOCK_WIDTH + y * pitch + x] = addr;
+            f[i * VL_BLOCK_WIDTH + y * pitch + x] = addr;
          }
 
    pipe->transfer_unmap(pipe, buf_transfer);
@@ -493,8 +494,8 @@ vl_zscan_init_buffer(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    memset(&res_tmpl, 0, sizeof(res_tmpl));
    res_tmpl.target = PIPE_TEXTURE_3D;
    res_tmpl.format = PIPE_FORMAT_R8_UNORM;
-   res_tmpl.width0 = BLOCK_WIDTH * zscan->blocks_per_line;
-   res_tmpl.height0 = BLOCK_HEIGHT;
+   res_tmpl.width0 = VL_BLOCK_WIDTH * zscan->blocks_per_line;
+   res_tmpl.height0 = VL_BLOCK_HEIGHT;
    res_tmpl.depth0 = 2;
    res_tmpl.array_size = 1;
    res_tmpl.usage = PIPE_USAGE_IMMUTABLE;
@@ -547,8 +548,8 @@ vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
    struct pipe_box rect =
    {
       0, 0, intra ? 1 : 0,
-      BLOCK_WIDTH,
-      BLOCK_HEIGHT,
+      VL_BLOCK_WIDTH,
+      VL_BLOCK_HEIGHT,
       1
    };
 
@@ -575,9 +576,9 @@ vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
       goto error_map;
 
    for (i = 0; i < zscan->blocks_per_line; ++i)
-      for (y = 0; y < BLOCK_HEIGHT; ++y)
-         for (x = 0; x < BLOCK_WIDTH; ++x)
-            data[i * BLOCK_WIDTH + y * pitch + x] = matrix[x + y * BLOCK_WIDTH];
+      for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+         for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+            data[i * VL_BLOCK_WIDTH + y * pitch + x] = matrix[x + y * VL_BLOCK_WIDTH];
 
    pipe->transfer_unmap(pipe, buf_transfer);
 
