@@ -364,10 +364,6 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
-        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.0'):
-            ccflags += [
-                '-Wmissing-field-initializers',
-            ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
             ccflags += [
                 '-Wpointer-arith',
