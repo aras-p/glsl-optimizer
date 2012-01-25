@@ -563,6 +563,17 @@ brw_render_target_supported(struct intel_context *intel,
    struct brw_context *brw = brw_context(&intel->ctx);
    gl_format format = rb->Format;
 
+   /* Many integer formats are promoted to RGBA (like XRGB8888 is), which means
+    * we would consider them renderable even though we don't have surface
+    * support for their alpha behavior and don't have the blending unit
+    * available to fake it like we do for XRGB8888.  Force them to being
+    * unsupported.
+    */
+   if ((rb->_BaseFormat != GL_RGBA &&
+	rb->_BaseFormat != GL_RG &&
+	rb->_BaseFormat != GL_RED) && _mesa_is_format_integer_color(format))
+      return false;
+
    return brw->format_supported_as_render_target[format];
 }
 
