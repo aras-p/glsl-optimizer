@@ -56,6 +56,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 {
    loop_variable_state *const ls = this->state->get(ir);
    int iterations;
+   unsigned ir_count;
 
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
@@ -77,6 +78,20 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
     */
    if (iterations > (int) max_iterations)
       return visit_continue;
+
+   /* Don't try to unroll nested loops and loops with a huge body.
+    */
+   ir_count = 0;
+   foreach_list(node, &ir->body_instructions) {
+      ++ir_count;
+
+      /* If the loop body gets to huge, do not unroll. */
+      if (5*max_iterations < ir_count*iterations)
+          return visit_continue;
+      /* Do not unroll loops with child loop nodes. */
+      if (((ir_instruction *) node)->as_loop())
+          return visit_continue;
+   }
 
    if (ls->num_loop_jumps > 1)
       return visit_continue;
