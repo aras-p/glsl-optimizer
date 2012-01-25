@@ -364,7 +364,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_CONDITIONAL_RENDER:
 	case PIPE_CAP_TEXTURE_BARRIER:
-	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
 		return 1;
 
@@ -392,6 +391,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
 		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 4 : 0;
+	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
+		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return 16*4;
