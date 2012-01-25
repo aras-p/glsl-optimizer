@@ -683,6 +683,7 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder,
    unsigned nr_components;
 
    assert(dec && target && picture);
+   assert(!target->interlaced);
 
    buf = vl_mpeg12_get_decode_buffer(dec, target);
 
@@ -734,7 +735,7 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder,
 
    plane_order = vl_video_buffer_plane_order(target->buffer_format);
    mc_source_sv = dec->mc_source->get_sampler_view_planes(dec->mc_source);
-   for (i = 0, component = 0; i < VL_NUM_COMPONENTS; ++i) {
+   for (i = 0, component = 0; component < VL_NUM_COMPONENTS; ++i) {
       if (!target_surfaces[i]) continue;
 
       nr_components = util_format_get_nr_components(target_surfaces[i]->texture->format);

@@ -36,6 +36,7 @@
 #define VL_BLOCK_HEIGHT 8
 
 #define VL_NUM_COMPONENTS 3
+#define VL_MAX_SURFACES (VL_NUM_COMPONENTS * 2)
 #define VL_MAX_REF_FRAMES 2
 
 #endif
