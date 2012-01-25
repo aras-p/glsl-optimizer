@@ -477,7 +477,7 @@ st_translate_fragment_program(struct st_context *st,
    GLuint inputMapping[FRAG_ATTRIB_MAX];
    GLuint interpMode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
    GLuint attr;
-   const GLbitfield64 inputsRead = stfp->Base.Base.InputsRead;
+   GLbitfield64 inputsRead;
    struct ureg_program *ureg;
 
    GLboolean write_all = GL_FALSE;
@@ -531,6 +531,7 @@ st_translate_fragment_program(struct st_context *st,
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
     */
+   inputsRead = stfp->Base.Base.InputsRead;
    for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
       if ((inputsRead & BITFIELD64_BIT(attr)) != 0) {
          const GLuint slot = fs_num_inputs++;
@@ -804,7 +805,7 @@ st_translate_geometry_program(struct st_context *st,
    GLuint outputMapping[GEOM_RESULT_MAX];
    struct pipe_context *pipe = st->pipe;
    GLuint attr;
-   const GLbitfield64 inputsRead = stgp->Base.Base.InputsRead;
+   GLbitfield64 inputsRead;
    GLuint vslot = 0;
    GLuint num_generic = 0;
 
@@ -844,6 +845,7 @@ st_translate_geometry_program(struct st_context *st,
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
     */
+   inputsRead = stgp->Base.Base.InputsRead;
    for (attr = 0; attr < GEOM_ATTRIB_MAX; attr++) {
       if ((inputsRead & BITFIELD64_BIT(attr)) != 0) {
          const GLuint slot = gs_num_inputs;
