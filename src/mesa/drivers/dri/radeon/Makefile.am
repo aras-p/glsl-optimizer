@@ -52,7 +52,8 @@ radeon_dri_la_LDFLAGS = -module -avoid-version -shared
 radeon_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
 	$(DRICORE_LIB_DEPS) \
-	$(RADEON_LIBS)
+	$(RADEON_LIBS) \
+	../common/libdricommon.la
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
