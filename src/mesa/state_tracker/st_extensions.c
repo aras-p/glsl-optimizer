@@ -258,6 +258,55 @@ struct st_extension_cap_mapping {
    int cap;
 };
 
+struct st_extension_format_mapping {
+   int extension_offset[2];
+   enum pipe_format format[8];
+
+   /* If TRUE, at least one format must be supported for the extensions to be
+    * advertised. If FALSE, all the formats must be supported. */
+   GLboolean need_at_least_one;
+};
+
+/**
+ * Enable extensions if certain pipe formats are supported by the driver.
+ * What extensions will be enabled and what formats must be supported is
+ * described by the array of st_extension_format_mapping.
+ *
+ * target and bind_flags are passed to is_format_supported.
+ */
+static void init_format_extensions(struct st_context *st,
+                           const struct st_extension_format_mapping *mapping,
+                           unsigned num_mappings,
+                           enum pipe_texture_target target,
+                           unsigned bind_flags)
+{
+   struct pipe_screen *screen = st->pipe->screen;
+   GLboolean *extensions = (GLboolean *) &st->ctx->Extensions;
+   int i, j;
+   int num_formats = Elements(mapping->format);
+   int num_ext = Elements(mapping->extension_offset);
+
+   for (i = 0; i < num_mappings; i++) {
+      int num_supported = 0;
+
+      /* Examine each format in the list. */
+      for (j = 0; j < num_formats && mapping[i].format[j]; j++) {
+         if (screen->is_format_supported(screen, mapping[i].format[j],
+                                         target, 0, bind_flags)) {
+            num_supported++;
+         }
+      }
+
+      if (!num_supported ||
+          (!mapping[i].need_at_least_one && num_supported != j)) {
+         continue;
+      }
+
+      /* Enable all extensions in the list. */
+      for (j = 0; j < num_ext && mapping[i].extension_offset[j]; j++)
+         extensions[mapping[i].extension_offset[j]] = GL_TRUE;
+   }
+}
 
 /**
  * Use pipe_screen::get_param() to query PIPE_CAP_ values to determine
@@ -309,6 +358,108 @@ void st_init_extensions(struct st_context *st)
       /* GL_NV_point_sprite is not supported by gallium because we don't
        * support the GL_POINT_SPRITE_R_MODE_NV option. */
       { o(MESA_texture_array),               PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
+   };
+
+   /* Required: render target and sampler support */
+   static const struct st_extension_format_mapping rendertarget_mapping[] = {
+      { { o(ARB_texture_float) },
+        { PIPE_FORMAT_R32G32B32A32_FLOAT,
+          PIPE_FORMAT_R16G16B16A16_FLOAT } },
+
+      { { o(ARB_texture_rgb10_a2ui) },
+        { PIPE_FORMAT_B10G10R10A2_UINT } },
+
+      { { o(EXT_framebuffer_sRGB) },
+        { PIPE_FORMAT_A8B8G8R8_SRGB,
+          PIPE_FORMAT_B8G8R8A8_SRGB },
+         GL_TRUE }, /* at least one format must be supported */
+
+      { { o(EXT_packed_float) },
+        { PIPE_FORMAT_R11G11B10_FLOAT } },
+
+      { { o(EXT_texture_integer) },
+        { PIPE_FORMAT_R32G32B32A32_UINT,
+          PIPE_FORMAT_R32G32B32A32_SINT } },
+   };
+
+   /* Required: depth stencil and sampler support */
+   static const struct st_extension_format_mapping depthstencil_mapping[] = {
+      { { o(ARB_depth_buffer_float) },
+        { PIPE_FORMAT_Z32_FLOAT,
+          PIPE_FORMAT_Z32_FLOAT_S8X24_UINT } },
+
+      { { o(ARB_framebuffer_object),
+          o(EXT_packed_depth_stencil) },
+        { PIPE_FORMAT_S8_UINT_Z24_UNORM,
+          PIPE_FORMAT_Z24_UNORM_S8_UINT },
+        GL_TRUE }, /* at least one format must be supported */
+   };
+
+   /* Required: sampler support */
+   static const struct st_extension_format_mapping texture_mapping[] = {
+      { { o(ARB_texture_compression_rgtc) },
+        { PIPE_FORMAT_RGTC1_UNORM,
+          PIPE_FORMAT_RGTC1_SNORM,
+          PIPE_FORMAT_RGTC2_UNORM,
+          PIPE_FORMAT_RGTC2_SNORM } },
+
+      { { o(ARB_texture_rg) },
+        { PIPE_FORMAT_R8G8_UNORM } },
+
+      { { o(EXT_texture_compression_latc) },
+        { PIPE_FORMAT_LATC1_UNORM,
+          PIPE_FORMAT_LATC1_SNORM,
+          PIPE_FORMAT_LATC2_UNORM,
+          PIPE_FORMAT_LATC2_SNORM } },
+
+      { { o(EXT_texture_compression_s3tc),
+          o(S3_s3tc) },
+        { PIPE_FORMAT_DXT1_RGB,
+          PIPE_FORMAT_DXT1_RGBA,
+          PIPE_FORMAT_DXT3_RGBA,
+          PIPE_FORMAT_DXT5_RGBA } },
+
+      { { o(EXT_texture_shared_exponent) },
+        { PIPE_FORMAT_R9G9B9E5_FLOAT } },
+
+      { { o(EXT_texture_snorm) },
+        { PIPE_FORMAT_R8G8B8A8_SNORM } },
+
+      { { o(EXT_texture_sRGB),
+          o(EXT_texture_sRGB_decode) },
+        { PIPE_FORMAT_A8B8G8R8_SRGB,
+          PIPE_FORMAT_B8G8R8A8_SRGB },
+        GL_TRUE }, /* at least one format must be supported */
+
+      { { o(ATI_texture_compression_3dc) },
+        { PIPE_FORMAT_LATC2_UNORM } },
+
+      { { o(MESA_ycbcr_texture) },
+        { PIPE_FORMAT_UYVY,
+          PIPE_FORMAT_YUYV },
+        GL_TRUE }, /* at least one format must be supported */
+
+      { { o(OES_compressed_ETC1_RGB8_texture) },
+        { PIPE_FORMAT_ETC1_RGB8 } },
+   };
+
+   /* Required: vertex fetch support. */
+   static const struct st_extension_format_mapping vertex_mapping[] = {
+      { { o(ARB_ES2_compatibility) },
+        { PIPE_FORMAT_R32G32B32A32_FIXED } },
+
+      { { o(ARB_half_float_vertex) },
+        { PIPE_FORMAT_R16G16B16A16_FLOAT } },
+
+      { { o(ARB_vertex_type_2_10_10_10_rev) },
+        { PIPE_FORMAT_R10G10B10A2_UNORM,
+          PIPE_FORMAT_B10G10R10A2_UNORM,
+          PIPE_FORMAT_R10G10B10A2_SNORM,
+          PIPE_FORMAT_B10G10R10A2_SNORM,
+          PIPE_FORMAT_R10G10B10A2_USCALED,
+          PIPE_FORMAT_B10G10R10A2_USCALED,
+          PIPE_FORMAT_R10G10B10A2_SSCALED,
+          PIPE_FORMAT_B10G10R10A2_SSCALED } },
    };
 
    /*
@@ -385,6 +536,18 @@ void st_init_extensions(struct st_context *st)
       }
    }
 
+   /* Expose the extensions which directly correspond to gallium formats. */
+   init_format_extensions(st, rendertarget_mapping,
+                          Elements(rendertarget_mapping), PIPE_TEXTURE_2D,
+                          PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW);
+   init_format_extensions(st, depthstencil_mapping,
+                          Elements(depthstencil_mapping), PIPE_TEXTURE_2D,
+                          PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_SAMPLER_VIEW);
+   init_format_extensions(st, texture_mapping, Elements(texture_mapping),
+                          PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
+   init_format_extensions(st, vertex_mapping, Elements(vertex_mapping),
+                          PIPE_BUFFER, PIPE_BIND_VERTEX_BUFFER);
+
    /* Figure out GLSL support. */
    glsl_feature_level = screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL);
 
@@ -412,178 +575,11 @@ void st_init_extensions(struct st_context *st)
       }
    }
 
-   /*
-    * Extensions that depend on the driver/hardware:
-    */
-   /* GL_EXT_packed_depth_stencil requires both the ability to render to
-    * a depth/stencil buffer and texture from depth/stencil source.
-    */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_DEPTH_STENCIL |
-                                   PIPE_BIND_SAMPLER_VIEW) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_UINT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_DEPTH_STENCIL |
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
-      ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
-   }
+   /* Below are the cases which cannot be moved into tables easily. */
 
-   /* float support - assume nothing exclusively supports 64-bit floats */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_FLOAT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW |
-                                   PIPE_BIND_RENDER_TARGET) &&
-      screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW |
-                                   PIPE_BIND_RENDER_TARGET)) {
-      ctx->Extensions.ARB_texture_float = GL_TRUE;
-   }
-
-   /* sRGB support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) ||
-      screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
-      ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
-      if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_RENDER_TARGET) ||
-          screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_RENDER_TARGET)) {
-         ctx->Extensions.EXT_framebuffer_sRGB = GL_TRUE;
-      }
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.ARB_texture_rg = GL_TRUE;
-   }
-
-   /* s3tc support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGB,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGBA,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_DXT3_RGBA,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       (ctx->Mesa_DXTn || st_get_s3tc_override())) {
-      ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
-      ctx->Extensions.S3_s3tc = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_SNORM,
-				   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_SNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)
-       ) {
-     ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_LATC1_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_LATC1_SNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_LATC2_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_LATC2_SNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_LATC2_UNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
-   }
-
-   if (ctx->API != API_OPENGL) {
-      if (screen->is_format_supported(screen, PIPE_FORMAT_ETC1_RGB8,
-                                      PIPE_TEXTURE_2D, 0,
-                                      PIPE_BIND_SAMPLER_VIEW)) {
-         ctx->Extensions.OES_compressed_ETC1_RGB8_texture = GL_TRUE;
-      }
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SNORM,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_texture_snorm = GL_TRUE;
-   }
-
-   /* ycbcr support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY, 
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_YUYV, 
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
-   }
-
-   /* GL_ARB_half_float_vertex */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER)) {
-      ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_FIXED,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER)) {
-      ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_UNORM,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_UNORM,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_SNORM,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_SNORM,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_USCALED,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_USCALED,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_SSCALED,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_SSCALED,
-                                   PIPE_BUFFER, 0,
-                                   PIPE_BIND_VERTEX_BUFFER)) {
-      ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = GL_TRUE;
+   if (!ctx->Mesa_DXTn && !st_get_s3tc_override()) {
+      ctx->Extensions.EXT_texture_compression_s3tc = GL_FALSE;
+      ctx->Extensions.S3_s3tc = GL_FALSE;
    }
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,
@@ -614,19 +610,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_sync = GL_TRUE;
    }
 
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R11G11B10_FLOAT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_RENDER_TARGET |
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.EXT_packed_float = GL_TRUE;
-   }
-
    /* Maximum sample count. */
    for (i = 16; i > 0; --i) {
       if (screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -636,27 +619,4 @@ void st_init_extensions(struct st_context *st)
          break;
       }
    }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_DEPTH_STENCIL |
-                                   PIPE_BIND_SAMPLER_VIEW) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_Z32_FLOAT_S8X24_UINT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_DEPTH_STENCIL |
-                                   PIPE_BIND_SAMPLER_VIEW)) {
-      ctx->Extensions.ARB_depth_buffer_float = GL_TRUE;
-   }
-
-   if (screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_UINT,
-                                   PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW))
-       ctx->Extensions.ARB_texture_rgb10_a2ui = GL_TRUE;
-
-   if (ctx->Const.NativeIntegers &&
-       screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_UINT, PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_SINT, PIPE_TEXTURE_2D, 0,
-                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
-      ctx->Extensions.EXT_texture_integer = GL_TRUE;
 }
