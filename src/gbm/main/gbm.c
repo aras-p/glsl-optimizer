@@ -211,7 +211,7 @@ gbm_bo_get_pitch(struct gbm_bo *bo)
  * the format of this handle is platform specific.
  *
  * \param bo The buffer object
- * \return Returns the stride of the allocated buffer object
+ * \return Returns the handle of the allocated buffer object
  */
 GBM_EXPORT union gbm_bo_handle
 gbm_bo_get_handle(struct gbm_bo *bo)
