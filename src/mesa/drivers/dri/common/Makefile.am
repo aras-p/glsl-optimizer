@@ -1,6 +1,4 @@
-
-
-# Copyright © 2011 Intel Corporation
+# Copyright © 2012 Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,54 +19,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-include Makefile.sources
-
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
-	-I../common \
-	-I../intel \
-	-I../intel/server \
 	$(DEFINES) \
 	$(ASM_FLAGS) \
 	$(API_DEFINES) \
-	$(INTEL_CFLAGS)
+	$(LIBDRM_CFLAGS)
 
-AM_CXXFLAGS = $(AM_CFLAGS)
+noinst_LTLIBRARIES = libdricommon.la
 
-dridir = $(DRI_DRIVER_INSTALL_DIR)
-
-if HAVE_I965_DRI
-dri_LTLIBRARIES = i965_dri.la
-endif
-
-i965_dri_la_SOURCES = \
-	$(i965_C_FILES) \
-	$(i965_CXX_FILES)
-
-i965_dri_la_LDFLAGS = -module -avoid-version -shared
-i965_dri_la_LIBADD = \
-	$(DRI_LIB_DEPS) \
-	$(DRICORE_LIB_DEPS) \
-	$(INTEL_LIBS) \
-	../common/libdricommon.la
-
-# Test build to make sure that we didn't leave any undefined symbols in the
-# driver.
-noinst_PROGRAMS = i965_symbols_test
-
-i965_symbols_test_SOURCES = \
-	../common/dri_test.c
-i965_symbols_test_LDADD = \
-	i965_dri.la
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: i965_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/i965_dri.so $(top_builddir)/$(LIB_DIR)/i965_dri.so;
+libdricommon_la_SOURCES = \
+	utils.c \
+	dri_util.c \
+	xmlconfig.c

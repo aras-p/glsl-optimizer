@@ -46,23 +46,16 @@ if HAVE_I915_DRI
 dri_LTLIBRARIES = i915_dri.la
 endif
 
-# These should be an ltlibrary that's built once.  Let's fix that once
-# the other drivers are converted to automake.
-COMMON_FILES = \
-	../common/utils.c \
-	../common/dri_util.c \
-	../common/xmlconfig.c
-
 i915_dri_la_SOURCES = \
 	$(i915_C_FILES) \
-	$(i915_CXX_FILES) \
-	$(COMMON_FILES)
+	$(i915_CXX_FILES)
 
 i915_dri_la_LDFLAGS = -module -avoid-version -shared
 i915_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
 	$(DRICORE_LIB_DEPS) \
-	$(INTEL_LIBS)
+	$(INTEL_LIBS) \
+	../common/libdricommon.la
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
