@@ -177,6 +177,17 @@ struct dri2_egl_surface
    int			  format;
 #endif
 
+#ifdef HAVE_DRM_PLATFORM
+   struct gbm_dri_surface *gbm_surf;
+   struct {
+      struct gbm_bo       *bo;
+      int                  locked;
+   } color_buffers[3], *back, *current;
+#ifndef HAVE_WAYLAND_PLATFORM
+   __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
+#endif
+#endif
+
 #ifdef HAVE_ANDROID_PLATFORM
    struct ANativeWindow *window;
    struct ANativeWindowBuffer *buffer;
