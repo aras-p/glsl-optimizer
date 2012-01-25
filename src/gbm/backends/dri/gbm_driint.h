@@ -46,6 +46,7 @@ struct gbm_dri_device {
    __DRIcoreExtension   *core;
    __DRIdri2Extension   *dri2;
    __DRIimageExtension  *image;
+   __DRI2flushExtension *flush;
 
    const __DRIconfig   **driver_configs;
    const __DRIextension *extensions[3];
