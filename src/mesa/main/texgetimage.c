@@ -462,6 +462,15 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
          transferOps |= IMAGE_CLAMP_BIT;
       }
    }
+   /* This applies to RGB, RGBA textures. if the format is either LUMINANCE
+    * or LUMINANCE ALPHA, luminance (L) is computed as L=R+G+B .we need to
+    * clamp the sum to [0,1].
+    */
+   else if ((format == GL_LUMINANCE ||
+            format == GL_LUMINANCE_ALPHA) &&
+            dataType == GL_UNSIGNED_NORMALIZED) {
+      transferOps |= IMAGE_CLAMP_BIT;
+   }
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       get_tex_rgba_compressed(ctx, dimensions, format, type,
