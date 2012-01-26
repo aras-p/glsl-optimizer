@@ -1710,7 +1710,8 @@ yes)
 				  [AC_MSG_ERROR([cannot find libwayland-client])])
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/wayland"
 
-                WAYLAND_SCANNER_RULES(['$(top_srcdir)/src/egl/wayland/wayland-drm/protocol'])
+                m4_ifdef([WAYLAND_SCANNER_RULES],
+                         [WAYLAND_SCANNER_RULES(['$(top_srcdir)/src/egl/wayland/wayland-drm/protocol'])])
 	fi
         if test "$plat" = "drm" && test "x$enable_gbm" = "xno"; then
                 AC_MSG_ERROR([EGL platform drm needs gbm])
