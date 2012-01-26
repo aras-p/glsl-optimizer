@@ -653,16 +653,17 @@ brw_set_dp_read_message(struct brw_compile *p,
    }
 }
 
-static void brw_set_sampler_message(struct brw_compile *p,
-                                    struct brw_instruction *insn,
-                                    GLuint binding_table_index,
-                                    GLuint sampler,
-                                    GLuint msg_type,
-                                    GLuint response_length,
-                                    GLuint msg_length,
-                                    GLuint header_present,
-                                    GLuint simd_mode,
-				    GLuint return_format)
+void
+brw_set_sampler_message(struct brw_compile *p,
+                        struct brw_instruction *insn,
+                        GLuint binding_table_index,
+                        GLuint sampler,
+                        GLuint msg_type,
+                        GLuint response_length,
+                        GLuint msg_length,
+                        GLuint header_present,
+                        GLuint simd_mode,
+                        GLuint return_format)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
