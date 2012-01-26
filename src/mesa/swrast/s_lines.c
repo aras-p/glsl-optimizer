@@ -236,7 +236,7 @@ _swrast_choose_line( struct gl_context *ctx )
          ASSERT(swrast->Line);
       }
       else if (ctx->Texture._EnabledCoordUnits
-               || ctx->FragmentProgram._Current
+               || _swrast_use_fragment_program(ctx)
                || swrast->_FogEnabled
                || specular) {
          USE(general_line);

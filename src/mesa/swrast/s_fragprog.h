@@ -31,6 +31,8 @@
 
 struct gl_context;
 
+GLboolean
+_swrast_use_fragment_program(struct gl_context *ctx);
 
 extern void
 _swrast_exec_fragment_program(struct gl_context *ctx, SWspan *span);

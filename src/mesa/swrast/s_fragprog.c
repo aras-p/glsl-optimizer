@@ -30,6 +30,18 @@
 #include "s_fragprog.h"
 #include "s_span.h"
 
+/**
+ * \brief Should swrast use a fragment program?
+ *
+ * \return true if the current fragment program exists and is not the fixed
+ *         function fragment program
+ */
+GLboolean
+_swrast_use_fragment_program(struct gl_context *ctx)
+{
+   struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+   return fp && fp != ctx->FragmentProgram._TexEnvProgram;
+}
 
 /**
  * Apply texture object's swizzle (X/Y/Z/W/0/1) to incoming 'texel'

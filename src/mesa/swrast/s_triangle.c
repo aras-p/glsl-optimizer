@@ -1038,7 +1038,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
        * needs to be interpolated.
        */
       if (ctx->Texture._EnabledCoordUnits ||
-          ctx->FragmentProgram._Current ||
+	  _swrast_use_fragment_program(ctx) ||
           ctx->ATIFragmentShader._Enabled ||
           _mesa_need_secondary_color(ctx) ||
           swrast->_FogEnabled) {
@@ -1060,7 +1060,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
 
          /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledCoordUnits == 0x1
-             && !ctx->FragmentProgram._Current
+             && !_swrast_use_fragment_program(ctx)
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture._EnabledUnits == 0x1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT

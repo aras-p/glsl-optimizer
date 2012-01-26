@@ -105,7 +105,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
    }
 
 
-   if (ctx->FragmentProgram._Current) {
+   if (_swrast_use_fragment_program(ctx)) {
       rasterMask |= FRAGPROG_BIT;
    }
 
@@ -170,7 +170,7 @@ _swrast_update_fog_hint( struct gl_context *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
-                              ctx->FragmentProgram._Current ||
+			      _swrast_use_fragment_program(ctx) ||
 			      (ctx->Hint.Fog == GL_NICEST &&
 			       swrast->AllowPixelFog));
 }
@@ -220,13 +220,14 @@ _swrast_update_deferred_texture(struct gl_context *ctx)
       swrast->_DeferredTexture = GL_FALSE;
    }
    else {
+      GLboolean use_fprog = _swrast_use_fragment_program(ctx);
       const struct gl_fragment_program *fprog
          = ctx->FragmentProgram._Current;
-      if (fprog && (fprog->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH))) {
+      if (use_fprog && (fprog->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH))) {
          /* Z comes from fragment program/shader */
          swrast->_DeferredTexture = GL_FALSE;
       }
-      else if (fprog && fprog->UsesKill) {
+      else if (use_fprog && fprog->UsesKill) {
          swrast->_DeferredTexture = GL_FALSE;
       }
       else if (ctx->Query.CurrentOcclusionObject) {
@@ -254,7 +255,8 @@ _swrast_update_fog_state( struct gl_context *ctx )
           (fp->Base.Target == GL_FRAGMENT_PROGRAM_NV));
 
    /* determine if fog is needed, and if so, which fog mode */
-   swrast->_FogEnabled = (fp == NULL && ctx->Fog.Enabled);
+   swrast->_FogEnabled = (!_swrast_use_fragment_program(ctx) &&
+			  ctx->Fog.Enabled);
 }
 
 
@@ -265,10 +267,11 @@ _swrast_update_fog_state( struct gl_context *ctx )
 static void
 _swrast_update_fragment_program(struct gl_context *ctx, GLbitfield newState)
 {
-   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
-   if (fp) {
-      _mesa_load_state_parameters(ctx, fp->Base.Parameters);
-   }
+   if (!_swrast_use_fragment_program(ctx))
+      return;
+
+   _mesa_load_state_parameters(ctx,
+                               ctx->FragmentProgram._Current->Base.Parameters);
 }
 
 
@@ -286,7 +289,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
 
    swrast->SpecularVertexAdd = (separateSpecular
                                 && ctx->Texture._EnabledUnits == 0x0
-                                && !ctx->FragmentProgram._Current
+                                && !_swrast_use_fragment_program(ctx)
                                 && !ctx->ATIFragmentShader._Enabled);
 }
 
@@ -497,7 +500,7 @@ _swrast_update_active_attribs(struct gl_context *ctx)
    /*
     * Compute _ActiveAttribsMask = which fragment attributes are needed.
     */
-   if (ctx->FragmentProgram._Current) {
+   if (_swrast_use_fragment_program(ctx)) {
       /* fragment program/shader */
       attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
       attribsMask &= ~FRAG_BIT_WPOS; /* WPOS is always handled specially */

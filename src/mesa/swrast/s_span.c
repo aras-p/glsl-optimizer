@@ -139,7 +139,8 @@ _swrast_span_default_attribs(struct gl_context *ctx, SWspan *span)
       for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
          const GLuint attr = FRAG_ATTRIB_TEX0 + i;
          const GLfloat *tc = ctx->Current.RasterTexCoords[i];
-         if (ctx->FragmentProgram._Current || ctx->ATIFragmentShader._Enabled) {
+         if (_swrast_use_fragment_program(ctx) ||
+             ctx->ATIFragmentShader._Enabled) {
             COPY_4V(span->attrStart[attr], tc);
          }
          else if (tc[3] > 0.0F) {
@@ -498,7 +499,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
                swrast_texture_image_const(img);
 
             needLambda = (obj->Sampler.MinFilter != obj->Sampler.MagFilter)
-               || ctx->FragmentProgram._Current;
+               || _swrast_use_fragment_program(ctx);
             /* LOD is calculated directly in the ansiotropic filter, we can
              * skip the normal lambda function as the result is ignored.
              */
@@ -518,7 +519,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
 
          if (needLambda) {
             GLuint i;
-            if (ctx->FragmentProgram._Current
+            if (_swrast_use_fragment_program(ctx)
                 || ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
@@ -559,7 +560,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
          }
          else {
             GLuint i;
-            if (ctx->FragmentProgram._Current ||
+            if (_swrast_use_fragment_program(ctx) ||
                 ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
@@ -833,7 +834,7 @@ add_specular(struct gl_context *ctx, SWspan *span)
    GLfloat (*col1)[4] = span->array->attribs[FRAG_ATTRIB_COL1];
    GLuint i;
 
-   ASSERT(!ctx->FragmentProgram._Current);
+   ASSERT(!_swrast_use_fragment_program(ctx));
    ASSERT(span->arrayMask & SPAN_RGBA);
    ASSERT(swrast->_ActiveAttribMask & FRAG_BIT_COL1);
    (void) swrast; /* silence warning */
@@ -971,25 +972,7 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
 static inline void
 shade_texture_span(struct gl_context *ctx, SWspan *span)
 {
-   /* This is a hack to work around drivers such as i965 that:
-    *
-    *     - Set _MaintainTexEnvProgram to generate GLSL IR for
-    *       fixed-function fragment processing.
-    *     - Don't call _mesa_ir_link_shader to generate Mesa IR from
-    *       the GLSL IR.
-    *     - May use swrast to handle glDrawPixels.
-    *
-    * Since _mesa_ir_link_shader is never called, there is no Mesa IR
-    * to execute.  Instead do regular fixed-function processing.
-    *
-    * It is also worth noting that the software fixed-function path is
-    * much faster than the software shader path.
-    */
-   const bool use_fragment_program =
-      ctx->FragmentProgram._Current
-      && ctx->FragmentProgram._Current != ctx->FragmentProgram._TexEnvProgram;
-
-   if (use_fragment_program ||
+   if (_swrast_use_fragment_program(ctx) ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
@@ -1018,7 +1001,7 @@ shade_texture_span(struct gl_context *ctx, SWspan *span)
          interpolate_wpos(ctx, span);
 
       /* Run fragment program/shader now */
-      if (use_fragment_program) {
+      if (_swrast_use_fragment_program(ctx)) {
          _swrast_exec_fragment_program(ctx, span);
       }
       else {
@@ -1151,7 +1134,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    const GLbitfield64 origArrayAttribs = span->arrayAttribs;
    const GLenum origChanType = span->array->ChanType;
    void * const origRgba = span->array->rgba;
-   const GLboolean shader = (ctx->FragmentProgram._Current
+   const GLboolean shader = (_swrast_use_fragment_program(ctx)
                              || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledCoordUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -1326,7 +1309,8 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
       const GLuint numBuffers = fb->_NumColorDrawBuffers;
       const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
       const GLboolean multiFragOutputs = 
-         (fp && fp->Base.OutputsWritten >= (1 << FRAG_RESULT_DATA0));
+         _swrast_use_fragment_program(ctx)
+         && fp->Base.OutputsWritten >= (1 << FRAG_RESULT_DATA0);
       GLuint buf;
 
       for (buf = 0; buf < numBuffers; buf++) {
