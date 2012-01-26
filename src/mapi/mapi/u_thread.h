@@ -92,7 +92,7 @@ extern "C" {
 
 struct u_tsd {
    pthread_key_t key;
-   int initMagic;
+   unsigned initMagic;
 };
 
 typedef pthread_mutex_t u_mutex;
@@ -126,7 +126,7 @@ u_tsd_init(struct u_tsd *tsd)
 static INLINE void *
 u_tsd_get(struct u_tsd *tsd)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
+   if (tsd->initMagic != INIT_MAGIC) {
       u_tsd_init(tsd);
    }
    return pthread_getspecific(tsd->key);
@@ -136,7 +136,7 @@ u_tsd_get(struct u_tsd *tsd)
 static INLINE void
 u_tsd_set(struct u_tsd *tsd, void *ptr)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
+   if (tsd->initMagic != INIT_MAGIC) {
       u_tsd_init(tsd);
    }
    if (pthread_setspecific(tsd->key, ptr) != 0) {
@@ -157,7 +157,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
 
 struct u_tsd {
    DWORD key;
-   int   initMagic;
+   unsigned initMagic;
 };
 
 typedef CRITICAL_SECTION u_mutex;
@@ -234,7 +234,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
 #ifndef THREADS
 
 struct u_tsd {
-   int initMagic; 
+   unsigned initMagic;
 };
 
 typedef unsigned u_mutex;
