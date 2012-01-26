@@ -1179,7 +1179,7 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
    switch (target) {
    case GL_PROXY_TEXTURE_1D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
       if (level >= ctx->Const.MaxTextureLevels)
          return GL_FALSE;
@@ -1191,9 +1191,9 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    case GL_PROXY_TEXTURE_2D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
-      if (height < 2 * border || height > 2 + maxSize)
+      if (height < 2 * border || height > maxSize)
          return GL_FALSE;
       if (level >= ctx->Const.MaxTextureLevels)
          return GL_FALSE;
@@ -1207,11 +1207,11 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    case GL_PROXY_TEXTURE_3D:
       maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
-      if (height < 2 * border || height > 2 + maxSize)
+      if (height < 2 * border || height > maxSize)
          return GL_FALSE;
-      if (depth < 2 * border || depth > 2 + maxSize)
+      if (depth < 2 * border || depth > maxSize)
          return GL_FALSE;
       if (level >= ctx->Const.Max3DTextureLevels)
          return GL_FALSE;
@@ -1237,9 +1237,9 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
-      if (height < 2 * border || height > 2 + maxSize)
+      if (height < 2 * border || height > maxSize)
          return GL_FALSE;
       if (level >= ctx->Const.MaxCubeTextureLevels)
          return GL_FALSE;
@@ -1253,7 +1253,7 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
       if (height < 1 || height > ctx->Const.MaxArrayTextureLayers)
          return GL_FALSE;
@@ -1267,9 +1267,9 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize)
+      if (width < 2 * border || width > maxSize)
          return GL_FALSE;
-      if (height < 2 * border || height > 2 + maxSize)
+      if (height < 2 * border || height > maxSize)
          return GL_FALSE;
       if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers)
          return GL_FALSE;
