@@ -526,11 +526,23 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
    assert(!_mesa_bufferobj_mapped(src));
    assert(!_mesa_bufferobj_mapped(dst));
 
-   srcPtr = ctx->Driver.MapBufferRange(ctx, readOffset, size,
-                                       GL_MAP_READ_BIT, src);
-   dstPtr = ctx->Driver.MapBufferRange(ctx, writeOffset, size,
-                                       (GL_MAP_WRITE_BIT |
-                                        GL_MAP_INVALIDATE_RANGE_BIT), dst);
+   if (src == dst) {
+      srcPtr = dstPtr = ctx->Driver.MapBufferRange(ctx, 0, src->Size,
+						   GL_MAP_READ_BIT |
+						   GL_MAP_WRITE_BIT, src);
+
+      if (!srcPtr)
+	 return;
+
+      srcPtr += readOffset;
+      dstPtr += writeOffset;
+   } else {
+      srcPtr = ctx->Driver.MapBufferRange(ctx, readOffset, size,
+					  GL_MAP_READ_BIT, src);
+      dstPtr = ctx->Driver.MapBufferRange(ctx, writeOffset, size,
+					  (GL_MAP_WRITE_BIT |
+					   GL_MAP_INVALIDATE_RANGE_BIT), dst);
+   }
 
    /* Note: the src and dst regions will never overlap.  Trying to do so
     * would generate GL_INVALID_VALUE earlier.
@@ -539,7 +551,8 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
       memcpy(dstPtr, srcPtr, size);
 
    ctx->Driver.UnmapBuffer(ctx, src);
-   ctx->Driver.UnmapBuffer(ctx, dst);
+   if (dst != src)
+      ctx->Driver.UnmapBuffer(ctx, dst);
 }
 
 
