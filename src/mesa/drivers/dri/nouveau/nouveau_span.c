@@ -30,6 +30,7 @@
 #include "nouveau_bo.h"
 
 #include "swrast/swrast.h"
+#include "swrast/s_context.h"
 
 
 
