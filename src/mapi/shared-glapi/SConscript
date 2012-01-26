@@ -8,8 +8,14 @@ Import('*')
 def mapi_objects(env, printer, mode):
     """Return mapi objects built for the given printer and mode."""
     mapi_sources = {
-        'glapi': ['entry.c', 'mapi_glapi.c', 'stub.c', 'table.c',
-                  'u_current.c', 'u_execmem.c', 'u_thread.c'],
+        'glapi': [
+            'entry.c',
+            'mapi_glapi.c',
+            'stub.c',
+            'table.c',
+            'u_current.c',
+            'u_execmem.c',
+        ],
         'bridge': ['entry.c'],
     }
     mapi_defines = {

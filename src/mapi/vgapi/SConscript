@@ -32,7 +32,6 @@ mapi_sources = [
     'table.c',
     'u_current.c',
     'u_execmem.c',
-    'u_thread.c',
 ]
 
 vgapi_objects = []
