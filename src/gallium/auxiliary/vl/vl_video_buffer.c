@@ -285,23 +285,29 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_surface surf_templ;
    struct pipe_context *pipe;
-   unsigned i, j, surf;
+   unsigned i, j, depth, surf;
 
    assert(buf);
 
    pipe = buf->base.context;
 
-   for (i = 0, surf = 0; i < buf->num_planes; ++i ) {
-      for (j = 0; j < buf->resources[i]->depth0; ++j, ++surf) {
+   depth = buffer->interlaced ? 2 : 1;
+   for (i = 0, surf = 0; i < depth; ++i ) {
+      for (j = 0; j < VL_MAX_PLANES; ++j, ++surf) {
          assert(surf < (VL_MAX_PLANES * 2));
+
+         if (!buf->resources[j]) {
+            pipe_surface_reference(&buf->surfaces[surf], NULL);
+            continue;
+         }
 
          if (!buf->surfaces[surf]) {
             memset(&surf_templ, 0, sizeof(surf_templ));
-            surf_templ.format = buf->resources[i]->format;
+            surf_templ.format = buf->resources[j]->format;
             surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-            surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = j;
-            buf->surfaces[i] = pipe->create_surface(pipe, buf->resources[i], &surf_templ);
-            if (!buf->surfaces[i])
+            surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = i;
+            buf->surfaces[surf] = pipe->create_surface(pipe, buf->resources[j], &surf_templ);
+            if (!buf->surfaces[surf])
                goto error;
          }
       }
