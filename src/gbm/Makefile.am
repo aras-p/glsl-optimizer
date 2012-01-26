@@ -18,6 +18,7 @@ libgbm_la_SOURCES = \
 	main/backend.c \
 	main/common.c
 libgbm_la_LDFLAGS = -version-info 1:0
+libgbm_la_LIBADD = $(LIBUDEV_LIBS) $(DLOPEN_LIBS)
 
 if HAVE_DRI
 noinst_LTLIBRARIES = libgbm_dri.la
@@ -30,7 +31,8 @@ libgbm_dri_la_CFLAGS = \
 	-DDEFAULT_DRIVER_DIR='"$(DRI_DRIVER_SEARCH_DIR)"' \
 	$(LIBDRM_CFLAGS)
 
-libgbm_la_LIBADD = libgbm_dri.la
+libgbm_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR)
+libgbm_la_LIBADD += libgbm_dri.la -lglapi
 endif
 
 all-local: libgbm.la
