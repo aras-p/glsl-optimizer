@@ -41,8 +41,6 @@
 #include "brw_draw.h"
 #include "brw_state.h"
 
-#include "gen6_hiz.h"
-
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -57,58 +55,6 @@
  * Mesa's Driver Functions
  ***************************************/
 
-/**
- * \brief Prepare for entry into glBegin/glEnd block.
- *
- * Resolve buffers before entering a glBegin/glEnd block. This is
- * necessary to prevent recursive calls to FLUSH_VERTICES.
- *
- * This resolves the depth buffer of each enabled depth texture and the HiZ
- * buffer of the attached depth renderbuffer.
- *
- * Details
- * -------
- * When vertices are queued during a glBegin/glEnd block, those vertices must
- * be drawn before any rendering state changes. To ensure this, Mesa calls
- * FLUSH_VERTICES as a prehook to such state changes. Therefore,
- * FLUSH_VERTICES itself cannot change rendering state without falling into a
- * recursive trap.
- *
- * This precludes meta-ops, namely buffer resolves, from occurring while any
- * vertices are queued. To prevent that situation, we resolve some buffers on
- * entering a glBegin/glEnd
- *
- * \see brwCleanupExecEnd()
- */
-static void brwPrepareExecBegin(struct gl_context *ctx)
-{
-   struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
-   struct intel_renderbuffer *draw_irb;
-   struct intel_texture_object *tex_obj;
-
-   if (!intel->has_hiz) {
-      /* The context uses no feature that requires buffer resolves. */
-      return;
-   }
-
-   /* Resolve each enabled texture. */
-   for (int i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (!ctx->Texture.Unit[i]._ReallyEnabled)
-	 continue;
-      tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
-      if (!tex_obj || !tex_obj->mt)
-	 continue;
-      intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
-   }
-
-   /* Resolve the attached depth buffer. */
-   draw_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   if (draw_irb) {
-      intel_renderbuffer_resolve_hiz(intel, draw_irb);
-   }
-}
-
 static void brwInitDriverFunctions(struct intel_screen *screen,
 				   struct dd_function_table *functions)
 {
@@ -117,7 +63,6 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
    brwInitFragProgFuncs( functions );
    brw_init_queryobj_functions(functions);
 
-   functions->PrepareExecBegin = brwPrepareExecBegin;
    functions->BeginTransformFeedback = brw_begin_transform_feedback;
 
    if (screen->gen >= 7)

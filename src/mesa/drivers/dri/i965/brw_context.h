@@ -119,6 +119,10 @@
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
+struct brw_instruction;
+struct brw_vs_prog_key;
+struct brw_wm_prog_key;
+struct brw_wm_prog_data;
 
 enum brw_state_id {
    BRW_STATE_URB_FENCE,
@@ -144,7 +148,6 @@ enum brw_state_id {
    BRW_STATE_VS_CONSTBUF,
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
-   BRW_STATE_HIZ,
    BRW_STATE_SOL_INDICES,
 };
 
@@ -174,7 +177,6 @@ enum brw_state_id {
 #define BRW_NEW_VS_CONSTBUF            (1 << BRW_STATE_VS_CONSTBUF)
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
-#define BRW_NEW_HIZ			(1 << BRW_STATE_HIZ)
 #define BRW_NEW_SOL_INDICES		(1 << BRW_STATE_SOL_INDICES)
 
 struct brw_state_flags {
@@ -950,38 +952,18 @@ struct brw_context
    int state_batch_count;
 
    /**
-    * \brief State needed to execute HiZ meta-ops
+    * \brief State needed to execute HiZ ops.
     *
-    * All fields except \c op are initialized by gen6_hiz_init().
+    * \see gen6_hiz_init()
+    * \see gen6_hiz_exec()
     */
    struct brw_hiz_state {
-      /**
-       * \brief Indicates which HiZ operation is in progress.
+      /** \brief VBO for rectangle primitive.
        *
-       * See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
-       *   - 7.5.3.1 Depth Buffer Clear
-       *   - 7.5.3.2 Depth Buffer Resolve
-       *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
+       * Rather than using glGenBuffers(), we allocate the VBO directly
+       * through drm.
        */
-      enum brw_hiz_op {
-	 BRW_HIZ_OP_NONE = 0,
-	 BRW_HIZ_OP_DEPTH_CLEAR,
-	 BRW_HIZ_OP_DEPTH_RESOLVE,
-	 BRW_HIZ_OP_HIZ_RESOLVE,
-      } op;
-
-      /** \brief Shader state */
-      struct {
-	 GLuint program;
-	 GLuint position_vbo;
-	 GLint position_location;
-      } shader;
-
-      /** \brief VAO for the rectangle primitive's vertices. */
-      GLuint vao;
-
-      GLuint fbo;
-      struct gl_renderbuffer *depth_rb;
+      drm_intel_bo *vertex_bo;
    } hiz;
 
    struct brw_sol_state {

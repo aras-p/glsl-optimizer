@@ -39,23 +39,6 @@ upload_clip_state(struct brw_context *brw)
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct gl_fragment_program *fprog = brw->fragment_program;
 
-   if (brw->hiz.op) {
-      /* HiZ operations emit a rectangle primitive, which requires clipping to
-       * be disabled. From page 10 of the Sandy Bridge PRM Volume 2 Part 1
-       * Section 1.3 3D Primitives Overview:
-       *    RECTLIST:
-       *    Either the CLIP unit should be DISABLED, or the CLIP unit's Clip
-       *    Mode should be set to a value other than CLIPMODE_NORMAL.
-       */
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-      return;
-   }
-
    /* _NEW_BUFFERS */
    bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
@@ -133,8 +116,7 @@ const struct brw_tracked_state gen7_clip_state = {
                 _NEW_LIGHT |
                 _NEW_TRANSFORM),
       .brw   = (BRW_NEW_CONTEXT |
-                BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_HIZ),
+                BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0
    },
    .emit = upload_clip_state,

@@ -149,8 +149,7 @@ const struct brw_tracked_state gen7_sbe_state = {
 		_NEW_PROGRAM |
 		_NEW_TRANSFORM),
       .brw   = (BRW_NEW_CONTEXT |
-		BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_HIZ),
+		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sbe_state,
@@ -166,17 +165,8 @@ upload_sf_state(struct brw_context *brw)
    /* _NEW_BUFFERS */
    bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
-   dw1 = GEN6_SF_STATISTICS_ENABLE;
-
-   /* Enable viewport transform only if no HiZ operation is progress
-    *
-    * From page 11 of the SandyBridge PRM, Volume 2, Part 1, Section 1.3, "3D
-    * Primitives Overview":
-    *     RECTLIST: Viewport Mapping must be DISABLED (as is typical with the
-    *     use of screen- space coordinates).
-    */
-   if (!brw->hiz.op)
-      dw1 |= GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw1 = GEN6_SF_STATISTICS_ENABLE |
+         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    /* _NEW_BUFFERS */
    dw1 |= (brw_depthbuffer_format(brw) << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);
@@ -310,8 +300,7 @@ const struct brw_tracked_state gen7_sf_state = {
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
 		_NEW_POINT),
-      .brw   = (BRW_NEW_CONTEXT |
-		BRW_NEW_HIZ),
+      .brw   = BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sf_state,

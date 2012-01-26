@@ -49,23 +49,6 @@ upload_wm_state(struct brw_context *brw)
    dw1 |= GEN7_WM_LINE_AA_WIDTH_1_0;
    dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_0_5;
 
-   switch (brw->hiz.op) {
-   case BRW_HIZ_OP_NONE:
-      break;
-   case BRW_HIZ_OP_DEPTH_CLEAR:
-      dw1 |= GEN7_WM_DEPTH_CLEAR;
-      break;
-   case BRW_HIZ_OP_DEPTH_RESOLVE:
-      dw1 |= GEN7_WM_DEPTH_RESOLVE;
-      break;
-   case BRW_HIZ_OP_HIZ_RESOLVE:
-      dw1 |= GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
-      break;
-   default:
-      assert(0);
-      break;
-   }
-
    /* _NEW_LINE */
    if (ctx->Line.StippleFlag)
       dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
@@ -106,7 +89,6 @@ const struct brw_tracked_state gen7_wm_state = {
       .mesa  = (_NEW_LINE | _NEW_LIGHT | _NEW_POLYGON |
 	        _NEW_COLOR | _NEW_BUFFERS),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-                BRW_NEW_HIZ |
 		BRW_NEW_BATCH),
       .cache = 0,
    },

@@ -149,23 +149,6 @@ upload_wm_state(struct brw_context *brw)
    dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
 
-   switch (brw->hiz.op) {
-   case BRW_HIZ_OP_NONE:
-      break;
-   case BRW_HIZ_OP_DEPTH_CLEAR:
-      dw4 |= GEN6_WM_DEPTH_CLEAR;
-      break;
-   case BRW_HIZ_OP_DEPTH_RESOLVE:
-      dw4 |= GEN6_WM_DEPTH_RESOLVE;
-      break;
-   case BRW_HIZ_OP_HIZ_RESOLVE:
-      dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
-      break;
-   default:
-      assert(0);
-      break;
-   }
-
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
@@ -233,8 +216,7 @@ const struct brw_tracked_state gen6_wm_state = {
 		_NEW_PROGRAM_CONSTANTS |
 		_NEW_POLYGON),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_BATCH |
-		BRW_NEW_HIZ),
+		BRW_NEW_BATCH),
       .cache = (CACHE_NEW_SAMPLER |
 		CACHE_NEW_WM_PROG)
    },

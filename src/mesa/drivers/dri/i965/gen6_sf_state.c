@@ -149,17 +149,8 @@ upload_sf_state(struct brw_context *brw)
       urb_entry_read_length << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
       urb_entry_read_offset << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT;
 
-   dw2 = GEN6_SF_STATISTICS_ENABLE;
-
-   /* Enable viewport transform only if no HiZ operation is progress
-    *
-    * From page 11 of the SandyBridge PRM, Volume 2, Part 1, Section 1.3, "3D
-    * Primitives Overview":
-    *     RECTLIST: Viewport Mapping must be DISABLED (as is typical with the
-    *     use of screen- space coordinates).
-    */
-   if (!brw->hiz.op)
-      dw2 |= GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw2 = GEN6_SF_STATISTICS_ENABLE |
+         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
 
    dw3 = 0;
    dw4 = 0;
@@ -354,8 +345,7 @@ const struct brw_tracked_state gen6_sf_state = {
 		_NEW_POINT |
 		_NEW_TRANSFORM),
       .brw   = (BRW_NEW_CONTEXT |
-		BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_HIZ),
+		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sf_state,

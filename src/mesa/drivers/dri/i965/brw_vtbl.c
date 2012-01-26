@@ -50,6 +50,7 @@
 #include "brw_wm.h"
 
 #include "gen6_hiz.h"
+#include "gen7_hiz.h"
 
 #include "glsl/ralloc.h"
 
@@ -70,9 +71,11 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
+
    ralloc_free(brw->wm.compile_data);
 
    dri_bo_release(&brw->curbe.curbe_bo);
+   dri_bo_release(&brw->hiz.vertex_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->wm.const_bo);
 
@@ -236,8 +239,15 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
 
    if (brw->intel.has_hiz) {
-      brw->intel.vtbl.resolve_depth_slice = gen6_resolve_depth_slice;
-      brw->intel.vtbl.resolve_hiz_slice = gen6_resolve_hiz_slice;
+      if (brw->intel.gen == 7) {
+         brw->intel.vtbl.resolve_depth_slice = gen7_resolve_depth_slice;
+         brw->intel.vtbl.resolve_hiz_slice = gen7_resolve_hiz_slice;
+      } else if (brw->intel.gen == 6) {
+         brw->intel.vtbl.resolve_depth_slice = gen6_resolve_depth_slice;
+         brw->intel.vtbl.resolve_hiz_slice = gen6_resolve_hiz_slice;
+      } else {
+         assert(0);
+      }
    }
 
    if (brw->intel.gen >= 7) {

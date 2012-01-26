@@ -133,6 +133,15 @@ upload_vs_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    uint32_t floating_point_mode = 0;
 
+   /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
+    * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
+    *   [DevSNB] A pipeline flush must be programmed prior to a 3DSTATE_VS
+    *   command that causes the VS Function Enable to toggle. Pipeline
+    *   flush can be executed by sending a PIPE_CONTROL command with CS
+    *   stall bit set and a post sync operation.
+    */
+   intel_emit_post_sync_nonzero_flush(intel);
+
    if (brw->vs.push_const_size == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);

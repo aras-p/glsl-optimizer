@@ -372,7 +372,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_GS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_PS_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
-   DEFINE_BIT(BRW_NEW_HIZ),
    {0, 0, 0}
 };
 
