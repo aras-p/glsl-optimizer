@@ -334,6 +334,7 @@ public:
    int virtual_grf_count;
    int virtual_grf_array_size;
    int first_non_payload_grf;
+   unsigned int max_grf;
    int *virtual_grf_def;
    int *virtual_grf_use;
    dst_reg userplane[MAX_CLIP_PLANES];

@@ -2615,6 +2615,8 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->virtual_grf_array_size = 0;
    this->live_intervals_valid = false;
 
+   this->max_grf = intel->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+
    this->uniforms = 0;
 }
 
