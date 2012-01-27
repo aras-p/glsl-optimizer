@@ -2934,7 +2934,6 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_SIGNED_RGBA8888 ||
@@ -3891,9 +3890,8 @@ _mesa_texstore_rgb9_e5(TEXSTORE_PARAMS)
    ASSERT(baseInternalFormat == GL_RGB);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       srcFormat == GL_RGB &&
-       srcType == GL_UNSIGNED_INT_5_9_9_9_REV) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -3940,9 +3938,8 @@ _mesa_texstore_r11_g11_b10f(TEXSTORE_PARAMS)
    ASSERT(baseInternalFormat == GL_RGB);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       srcFormat == GL_RGB &&
-       srcType == GL_UNSIGNED_INT_10F_11F_11F_REV) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -4051,11 +4048,9 @@ _mesa_texstore_argb2101010_uint(TEXSTORE_PARAMS)
    ASSERT(dstFormat == MESA_FORMAT_ARGB2101010_UINT);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
-   if (!srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_ARGB2101010_UINT &&
-       srcFormat == GL_BGRA_INTEGER_EXT &&
-       srcType == GL_UNSIGNED_INT_2_10_10_10_REV &&
-       baseInternalFormat == GL_RGBA) {
+   if (baseInternalFormat == GL_RGBA &&
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
