@@ -213,8 +213,7 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
       return GL_FALSE;
 
    /* check for things we can't handle here */
-   if (packing->SwapBytes ||
-       packing->LsbFirst) {
+   if (packing->SwapBytes) {
       return GL_FALSE;
    }
 
