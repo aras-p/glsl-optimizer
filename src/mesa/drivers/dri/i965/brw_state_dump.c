@@ -292,7 +292,6 @@ static void dump_gen7_sampler_state(struct brw_context *brw,
       samp++;
       offset += sizeof(*samp);
    }
-   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 
