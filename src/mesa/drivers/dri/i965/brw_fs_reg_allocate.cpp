@@ -63,9 +63,9 @@ fs_visitor::assign_regs_trivial()
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
 
-   if (this->grf_used >= BRW_MAX_GRF) {
+   if (this->grf_used >= max_grf) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
-	   this->grf_used, BRW_MAX_GRF);
+	   this->grf_used, max_grf);
    }
 
 }
@@ -156,7 +156,7 @@ fs_visitor::assign_regs()
    int reg_width = c->dispatch_width / 8;
    int hw_reg_mapping[this->virtual_grf_next];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
-   int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
+   int base_reg_count = (max_grf - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
    int class_count = 0;
 

@@ -37,6 +37,17 @@
 /** Number of general purpose registers (VS, WM, etc) */
 #define BRW_MAX_GRF 128
 
+/**
+ * First GRF used for the MRF hack.
+ *
+ * On gen7, MRFs are no longer used, and contiguous GRFs are used instead.  We
+ * haven't converted our compiler to be aware of this, so it asks for MRFs and
+ * brw_eu_emit.c quietly converts them to be accesses of the top GRFs.  The
+ * register allocators have to be careful of this to avoid corrupting the "MRF"s
+ * with actual GRF allocations.
+ */
+#define GEN7_MRF_HACK_START 112.
+
 /** Number of message register file registers */
 #define BRW_MAX_MRF 16
 

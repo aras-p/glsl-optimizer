@@ -95,7 +95,7 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
    struct intel_context *intel = &p->brw->intel;
    if (intel->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
       reg->file = BRW_GENERAL_REGISTER_FILE;
-      reg->nr += 112;
+      reg->nr += GEN7_MRF_HACK_START;
    }
 }
 
