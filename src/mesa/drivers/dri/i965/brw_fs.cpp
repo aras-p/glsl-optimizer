@@ -1590,7 +1590,7 @@ fs_visitor::compute_to_mrf()
 }
 
 /**
- * Walks through basic blocks, locking for repeated MRF writes and
+ * Walks through basic blocks, looking for repeated MRF writes and
  * removing the later ones.
  */
 bool
