@@ -2545,13 +2545,21 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA8888:
-      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8)
+      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8 && !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV && swapBytes)
          return GL_TRUE;
 
       if (format == GL_RGBA && type == GL_UNSIGNED_BYTE && !littleEndian)
          return GL_TRUE;
 
-      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8_REV)
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8_REV
+          && !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8
+          && swapBytes)
          return GL_TRUE;
 
       if (format == GL_ABGR_EXT && type == GL_UNSIGNED_BYTE && littleEndian)
@@ -2560,10 +2568,35 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA8888_REV:
-      return format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV;
+      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+          !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8 && swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE && littleEndian)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8 &&
+          !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+          swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_BYTE && !littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
 
    case MESA_FORMAT_ARGB8888:
-      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV)
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+          !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8 && swapBytes)
          return GL_TRUE;
 
       if (format == GL_BGRA && type == GL_UNSIGNED_BYTE && littleEndian)
@@ -2572,7 +2605,11 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_ARGB8888_REV:
-      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8)
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8 && !swapBytes)
+         return GL_TRUE;
+
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+          swapBytes)
          return GL_TRUE;
 
       if (format == GL_BGRA && type == GL_UNSIGNED_BYTE && !littleEndian)
@@ -2595,7 +2632,8 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_RGB && type == GL_UNSIGNED_BYTE && littleEndian;
 
    case MESA_FORMAT_RGB565:
-      return format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5;
+      return format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5 && !swapBytes;
+
    case MESA_FORMAT_RGB565_REV:
       /* Some of the 16-bit MESA_FORMATs that would seem to correspond to
        * GL_UNSIGNED_SHORT_* are byte-swapped instead of channel-reversed,
@@ -2604,15 +2642,20 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_ARGB4444:
-      return format == GL_BGRA && type == GL_UNSIGNED_SHORT_4_4_4_4_REV;
+      return format == GL_BGRA && type == GL_UNSIGNED_SHORT_4_4_4_4_REV &&
+         !swapBytes;
+
    case MESA_FORMAT_ARGB4444_REV:
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA5551:
-      return format == GL_RGBA && type == GL_UNSIGNED_SHORT_5_5_5_1;
+      return format == GL_RGBA && type == GL_UNSIGNED_SHORT_5_5_5_1 &&
+         !swapBytes;
 
    case MESA_FORMAT_ARGB1555:
-      return format == GL_BGRA && type == GL_UNSIGNED_SHORT_1_5_5_5_REV;
+      return format == GL_BGRA && type == GL_UNSIGNED_SHORT_1_5_5_5_REV &&
+         !swapBytes;
+
    case MESA_FORMAT_ARGB1555_REV:
       return GL_FALSE;
 
@@ -2624,7 +2667,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_AL1616:
-      return format == GL_LUMINANCE_ALPHA && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_LUMINANCE_ALPHA && type == GL_UNSIGNED_SHORT && littleEndian && !swapBytes;
    case MESA_FORMAT_AL1616_REV:
       return GL_FALSE;
 
@@ -2634,15 +2677,18 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_A8:
       return format == GL_ALPHA && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_A16:
-      return format == GL_ALPHA && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_ALPHA && type == GL_UNSIGNED_SHORT &&
+         littleEndian && !swapBytes;
    case MESA_FORMAT_L8:
       return format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_L16:
-      return format == GL_LUMINANCE && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_LUMINANCE && type == GL_UNSIGNED_SHORT &&
+         littleEndian && !swapBytes;
    case MESA_FORMAT_I8:
       return format == GL_INTENSITY && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_I16:
-      return format == GL_INTENSITY && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_INTENSITY && type == GL_UNSIGNED_SHORT &&
+         littleEndian && !swapBytes;
 
    case MESA_FORMAT_YCBCR:
    case MESA_FORMAT_YCBCR_REV:
@@ -2656,29 +2702,35 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_R16:
-      return format == GL_RED && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_RED && type == GL_UNSIGNED_SHORT && littleEndian &&
+         !swapBytes;
    case MESA_FORMAT_RG1616:
-      return format == GL_RG && type == GL_UNSIGNED_SHORT && littleEndian;
+      return format == GL_RG && type == GL_UNSIGNED_SHORT && littleEndian &&
+         !swapBytes;
    case MESA_FORMAT_RG1616_REV:
       return GL_FALSE;
 
    case MESA_FORMAT_ARGB2101010:
-      return format == GL_BGRA && type == GL_UNSIGNED_INT_2_10_10_10_REV;
+      return format == GL_BGRA && type == GL_UNSIGNED_INT_2_10_10_10_REV &&
+         !swapBytes;
 
    case MESA_FORMAT_Z24_S8:
-      return format == GL_DEPTH_STENCIL && type == GL_UNSIGNED_INT_24_8;
+      return format == GL_DEPTH_STENCIL && type == GL_UNSIGNED_INT_24_8 &&
+         !swapBytes;
    case MESA_FORMAT_Z24_X8:
    case MESA_FORMAT_S8_Z24:
       return GL_FALSE;
 
    case MESA_FORMAT_Z16:
-      return format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_SHORT;
+      return format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_SHORT &&
+         !swapBytes;
 
    case MESA_FORMAT_X8_Z24:
       return GL_FALSE;
 
    case MESA_FORMAT_Z32:
-      return format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_INT;
+      return format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_INT &&
+         !swapBytes;
 
    case MESA_FORMAT_S8:
       return GL_FALSE;
@@ -2703,44 +2755,44 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA_FLOAT32:
-      return format == GL_RGBA && type == GL_FLOAT;
+      return format == GL_RGBA && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_RGBA_FLOAT16:
-      return format == GL_RGBA && type == GL_HALF_FLOAT;
+      return format == GL_RGBA && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_RGB_FLOAT32:
-      return format == GL_RGB && type == GL_FLOAT;
+      return format == GL_RGB && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_RGB_FLOAT16:
-      return format == GL_RGB && type == GL_HALF_FLOAT;
+      return format == GL_RGB && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_ALPHA_FLOAT32:
-      return format == GL_ALPHA && type == GL_FLOAT;
+      return format == GL_ALPHA && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_ALPHA_FLOAT16:
-      return format == GL_ALPHA && type == GL_HALF_FLOAT;
+      return format == GL_ALPHA && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_LUMINANCE_FLOAT32:
-      return format == GL_LUMINANCE && type == GL_FLOAT;
+      return format == GL_LUMINANCE && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_LUMINANCE_FLOAT16:
-      return format == GL_LUMINANCE && type == GL_HALF_FLOAT;
+      return format == GL_LUMINANCE && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
-      return format == GL_LUMINANCE_ALPHA && type == GL_FLOAT;
+      return format == GL_LUMINANCE_ALPHA && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
-      return format == GL_LUMINANCE_ALPHA && type == GL_HALF_FLOAT;
+      return format == GL_LUMINANCE_ALPHA && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_INTENSITY_FLOAT32:
-      return format == GL_INTENSITY && type == GL_FLOAT;
+      return format == GL_INTENSITY && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_INTENSITY_FLOAT16:
-      return format == GL_INTENSITY && type == GL_HALF_FLOAT;
+      return format == GL_INTENSITY && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_R_FLOAT32:
-      return format == GL_RED && type == GL_FLOAT;
+      return format == GL_RED && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_R_FLOAT16:
-      return format == GL_RED && type == GL_HALF_FLOAT;
+      return format == GL_RED && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_RG_FLOAT32:
-      return format == GL_RG && type == GL_FLOAT;
+      return format == GL_RG && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_RG_FLOAT16:
-      return format == GL_RG && type == GL_HALF_FLOAT;
+      return format == GL_RG && type == GL_HALF_FLOAT && !swapBytes;
 
       /* FINISHME: What do we want to do for GL_EXT_texture_integer? */
    case MESA_FORMAT_ALPHA_UINT8:
@@ -2847,12 +2899,15 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_RGB9_E5_FLOAT:
-      return format == GL_RGB && type == GL_UNSIGNED_INT_5_9_9_9_REV;
+      return format == GL_RGB && type == GL_UNSIGNED_INT_5_9_9_9_REV &&
+         !swapBytes;
+
    case MESA_FORMAT_R11_G11_B10_FLOAT:
-      return format == GL_RGB && type == GL_UNSIGNED_INT_10F_11F_11F_REV;
+      return format == GL_RGB && type == GL_UNSIGNED_INT_10F_11F_11F_REV &&
+         !swapBytes;
 
    case MESA_FORMAT_Z32_FLOAT:
-      return format == GL_DEPTH_COMPONENT && type == GL_FLOAT;
+      return format == GL_DEPTH_COMPONENT && type == GL_FLOAT && !swapBytes;
 
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       return GL_FALSE;
