@@ -31,9 +31,9 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
-	-I../common \
-	-I../intel \
-	-I../intel/server \
+	-I$(top_srcdir)/src/mesa/drivers/dri/common \
+	-I$(top_srcdir)/src/mesa/drivers/dri/intel \
+	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
 	$(DEFINES) \
 	$(ASM_FLAGS) \
 	$(API_DEFINES) \
