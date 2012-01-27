@@ -1,11 +1,11 @@
-prefix=@INSTALL_DIR@
-exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: osmesa
 Description: Mesa Off-screen Rendering library
-Requires: @OSMESA_PC_REQ@
+Requires:
 Version: @VERSION@
 Libs: -L${libdir} -l@OSMESA_LIB@
 Libs.private: @OSMESA_PC_LIB_PRIV@

@@ -1,0 +1,7 @@
+.deps
+.libs
+Makefile
+Makefile.in
+libOSMesa.la
+libOSMesa16.la
+libOSMesa32.la
