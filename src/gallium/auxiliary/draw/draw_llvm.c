@@ -65,7 +65,12 @@ static void
 draw_llvm_garbage_collect_callback(void *cb_data)
 {
    struct draw_llvm *llvm = (struct draw_llvm *) cb_data;
+   struct draw_context *draw = llvm->draw;
    struct draw_llvm_variant_list_item *li;
+
+   /* Ensure prepare will be run and shaders recompiled */
+   assert(!draw->suspend_flushing);
+   draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
 
    /* free all shader variants */
    li = first_elem(&llvm->vs_variants_list);
