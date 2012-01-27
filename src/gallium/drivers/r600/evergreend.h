@@ -1729,6 +1729,12 @@
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
 #define R_028984_ALU_CONST_CACHE_VS_1                0x00028984
 #define R_028A04_PA_SU_POINT_MINMAX                  0x00028A04
+#define   S_028A04_MIN_SIZE(x)                         (((x) & 0xFFFF) << 0)
+#define   G_028A04_MIN_SIZE(x)                         (((x) >> 0) & 0xFFFF)
+#define   C_028A04_MIN_SIZE                            0xFFFF0000
+#define   S_028A04_MAX_SIZE(x)                         (((x) & 0xFFFF) << 16)
+#define   G_028A04_MAX_SIZE(x)                         (((x) >> 16) & 0xFFFF)
+#define   C_028A04_MAX_SIZE                            0x0000FFFF
 #define R_028A08_PA_SU_LINE_CNTL                     0x00028A08
 #define   S_028A08_WIDTH(x)                            (((x) & 0xFFFF) << 0)
 #define   G_028A08_WIDTH(x)                            (((x) >> 0) & 0xFFFF)

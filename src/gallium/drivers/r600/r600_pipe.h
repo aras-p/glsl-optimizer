@@ -385,4 +385,11 @@ static inline unsigned r600_tex_aniso_filter(unsigned filter)
 	 /* else */        return 4;
 }
 
+/* 12.4 fixed-point */
+static INLINE unsigned r600_pack_float_12p4(float x)
+{
+	return x <= 0    ? 0 :
+	       x >= 4096 ? 0xffff : x * 16;
+}
+
 #endif

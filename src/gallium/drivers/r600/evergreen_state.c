@@ -889,6 +889,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
 	unsigned clip_rule;
+	float psize_min, psize_max;
 
 	if (rs == NULL) {
 		return NULL;
@@ -942,7 +943,14 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX, 0x80000000, 0xFFFFFFFF, NULL, 0);
+
+	psize_min = util_get_min_point_size(state);
+	psize_max = 8192;
+	/* Divide by two, because 0.5 = 1 pixel. */
+	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX,
+				S_028A04_MIN_SIZE(r600_pack_float_12p4(psize_min/2)) |
+				S_028A04_MAX_SIZE(r600_pack_float_12p4(psize_max/2)),
+				0xFFFFFFFF, NULL, 0);
 
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL, 0);
