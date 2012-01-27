@@ -495,29 +495,6 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
             value[3] = ctx->Point.Threshold;
          }
          return;
-      case STATE_POINT_SIZE_IMPL_CLAMP:
-         {
-           /* for implementation clamp only in vs */
-            GLfloat minImplSize;
-            GLfloat maxImplSize;
-            if (ctx->Point.PointSprite) {
-               minImplSize = ctx->Const.MinPointSizeAA;
-               maxImplSize = ctx->Const.MaxPointSize;
-            }
-            else if (ctx->Point.SmoothFlag || ctx->Multisample._Enabled) {
-               minImplSize = ctx->Const.MinPointSizeAA;
-               maxImplSize = ctx->Const.MaxPointSizeAA;
-            }
-            else {
-               minImplSize = ctx->Const.MinPointSize;
-               maxImplSize = ctx->Const.MaxPointSize;
-            }
-            value[0] = ctx->Point.Size;
-            value[1] = minImplSize;
-            value[2] = maxImplSize;
-            value[3] = ctx->Point.Threshold;
-         }
-         return;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
          {
             /* here, state[2] is the light number */
@@ -729,7 +706,6 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
       case STATE_POINT_SIZE_CLAMPED:
-      case STATE_POINT_SIZE_IMPL_CLAMP:
          return _NEW_POINT | _NEW_MULTISAMPLE;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       case STATE_LIGHT_POSITION:
@@ -920,9 +896,6 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_POINT_SIZE_CLAMPED:
       append(dst, "pointSizeClamped");
-      break;
-   case STATE_POINT_SIZE_IMPL_CLAMP:
-      append(dst, "pointSizeImplClamp");
       break;
    case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       append(dst, "lightSpotDirNormalized");

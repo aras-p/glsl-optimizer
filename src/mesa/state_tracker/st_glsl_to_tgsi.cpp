@@ -3843,12 +3843,6 @@ struct st_translate {
    struct ureg_src samplers[PIPE_MAX_SAMPLERS];
    struct ureg_src systemValues[SYSTEM_VALUE_MAX];
 
-   /* Extra info for handling point size clamping in vertex shader */
-   struct ureg_dst pointSizeResult; /**< Actual point size output register */
-   struct ureg_src pointSizeConst;  /**< Point size range constant register */
-   GLint pointSizeOutIndex;         /**< Temp point size output register */
-   GLboolean prevInstWrotePointSize;
-
    const GLuint *inputMapping;
    const GLuint *outputMapping;
 
@@ -3970,9 +3964,6 @@ dst_register(struct st_translate *t,
       return t->temps[index];
 
    case PROGRAM_OUTPUT:
-      if (t->procType == TGSI_PROCESSOR_VERTEX && index == VERT_RESULT_PSIZ)
-         t->prevInstWrotePointSize = GL_TRUE;
-
       if (t->procType == TGSI_PROCESSOR_VERTEX)
          assert(index < VERT_RESULT_MAX);
       else if (t->procType == TGSI_PROCESSOR_FRAGMENT)
@@ -4502,8 +4493,6 @@ st_translate_program(
    t->inputMapping = inputMapping;
    t->outputMapping = outputMapping;
    t->ureg = ureg;
-   t->pointSizeOutIndex = -1;
-   t->prevInstWrotePointSize = GL_FALSE;
 
    if (program->shader_program) {
       for (i = 0; i < program->shader_program->NumUserUniformStorage; i++) {
@@ -4596,25 +4585,6 @@ st_translate_program(
             t->outputs[i] = ureg_DECL_output(ureg,
                                              outputSemanticName[i],
                                              outputSemanticIndex[i]);
-         }
-         if ((outputSemanticName[i] == TGSI_SEMANTIC_PSIZE) && proginfo->Id) {
-            /* Writing to the point size result register requires special
-             * handling to implement clamping.
-             */
-            static const gl_state_index pointSizeClampState[STATE_LENGTH]
-               = { STATE_INTERNAL, STATE_POINT_SIZE_IMPL_CLAMP, (gl_state_index)0, (gl_state_index)0, (gl_state_index)0 };
-               /* XXX: note we are modifying the incoming shader here!  Need to
-               * do this before emitting the constant decls below, or this
-               * will be missed.
-               */
-            unsigned pointSizeClampConst =
-               _mesa_add_state_reference(proginfo->Parameters,
-                                         pointSizeClampState);
-            struct ureg_dst psizregtemp = ureg_DECL_temporary(ureg);
-            t->pointSizeConst = ureg_DECL_constant(ureg, pointSizeClampConst);
-            t->pointSizeResult = t->outputs[i];
-            t->pointSizeOutIndex = i;
-            t->outputs[i] = psizregtemp;
          }
       }
       if (passthrough_edgeflags)
@@ -4723,25 +4693,6 @@ st_translate_program(
       set_insn_start(t, ureg_get_instruction_number(ureg));
       compile_tgsi_instruction(t, (glsl_to_tgsi_instruction *)iter.get(),
                                clamp_color);
-
-      if (t->prevInstWrotePointSize && proginfo->Id) {
-         /* The previous instruction wrote to the (fake) vertex point size
-          * result register.  Now we need to clamp that value to the min/max
-          * point size range, putting the result into the real point size
-          * register.
-          * Note that we can't do this easily at the end of program due to
-          * possible early return.
-          */
-         set_insn_start(t, ureg_get_instruction_number(ureg));
-         ureg_MAX(t->ureg,
-                  ureg_writemask(t->outputs[t->pointSizeOutIndex], WRITEMASK_X),
-                  ureg_src(t->outputs[t->pointSizeOutIndex]),
-                  ureg_swizzle(t->pointSizeConst, 1,1,1,1));
-         ureg_MIN(t->ureg, ureg_writemask(t->pointSizeResult, WRITEMASK_X),
-                  ureg_src(t->outputs[t->pointSizeOutIndex]),
-                  ureg_swizzle(t->pointSizeConst, 2,2,2,2));
-      }
-      t->prevInstWrotePointSize = GL_FALSE;
    }
 
    /* Fix up all emitted labels:
