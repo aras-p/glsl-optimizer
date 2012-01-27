@@ -2543,21 +2543,40 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_RGBA8888:
-      return ((format == GL_RGBA && (type == GL_UNSIGNED_INT_8_8_8_8 ||
-				     (type == GL_UNSIGNED_BYTE && !littleEndian))) ||
-	      (format == GL_ABGR_EXT && (type == GL_UNSIGNED_INT_8_8_8_8_REV ||
-					 (type == GL_UNSIGNED_BYTE && littleEndian))));
+      if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8)
+         return GL_TRUE;
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE && !littleEndian)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_INT_8_8_8_8_REV)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_UNSIGNED_BYTE && littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
 
    case MESA_FORMAT_RGBA8888_REV:
-      return ((format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV));
+      return format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV;
 
    case MESA_FORMAT_ARGB8888:
-      return ((format == GL_BGRA && (type == GL_UNSIGNED_INT_8_8_8_8_REV ||
-				     (type == GL_UNSIGNED_BYTE && littleEndian))));
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV)
+         return GL_TRUE;
+
+      if (format == GL_BGRA && type == GL_UNSIGNED_BYTE && littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
 
    case MESA_FORMAT_ARGB8888_REV:
-      return ((format == GL_BGRA && (type == GL_UNSIGNED_INT_8_8_8_8 ||
-				     (type == GL_UNSIGNED_BYTE && !littleEndian))));
+      if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8)
+         return GL_TRUE;
+
+      if (format == GL_BGRA && type == GL_UNSIGNED_BYTE && !littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
 
    case MESA_FORMAT_RGBX8888:
    case MESA_FORMAT_RGBX8888_REV:
