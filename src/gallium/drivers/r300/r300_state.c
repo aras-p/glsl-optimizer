@@ -1017,7 +1017,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
-    float psiz;
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t vap_clip_cntl;         /* R300_VAP_CLIP_CNTL: 0x221C */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
@@ -1070,14 +1069,16 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     if (state->point_size_per_vertex) {
         /* Per-vertex point size.
          * Clamp to [0, max FB size] */
-        psiz = pipe->screen->get_paramf(pipe->screen,
+        float min_psiz = util_get_min_point_size(state);
+        float max_psiz = pipe->screen->get_paramf(pipe->screen,
                                         PIPE_CAPF_MAX_POINT_WIDTH);
         point_minmax =
-            pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT;
+            (pack_float_16_6x(min_psiz) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
+            (pack_float_16_6x(max_psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT);
     } else {
         /* We cannot disable the point-size vertex output,
          * so clamp it. */
-        psiz = state->point_size;
+        float psiz = state->point_size;
         point_minmax =
             (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
             (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT);
