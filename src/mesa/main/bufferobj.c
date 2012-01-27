@@ -520,7 +520,7 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
                           GLintptr readOffset, GLintptr writeOffset,
                           GLsizeiptr size)
 {
-   void *srcPtr, *dstPtr;
+   GLubyte *srcPtr, *dstPtr;
 
    /* the buffers should not be mapped */
    assert(!_mesa_bufferobj_mapped(src));
