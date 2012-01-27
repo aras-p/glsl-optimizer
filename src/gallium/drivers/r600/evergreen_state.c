@@ -417,11 +417,6 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 {
 	switch (format) {
 	/* 8-bit buffers. */
-	case PIPE_FORMAT_L4A4_UNORM:
-	case PIPE_FORMAT_R4A4_UNORM:
-	case PIPE_FORMAT_A4R4_UNORM:
-		return V_028C70_COLOR_4_4;
-
 	case PIPE_FORMAT_A8_UNORM:
 	case PIPE_FORMAT_A8_UINT:
 	case PIPE_FORMAT_A8_SINT:
@@ -579,8 +574,6 @@ static uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
 {
 	if (R600_BIG_ENDIAN) {
 		switch(colorformat) {
-		case V_028C70_COLOR_4_4:
-			return ENDIAN_NONE;
 
 		/* 8-bit buffers. */
 		case V_028C70_COLOR_8:
