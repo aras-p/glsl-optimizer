@@ -1939,6 +1939,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-drm/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
+		src/mesa/drivers/dri/common/Makefile
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
 		src/mesa/drivers/dri/nouveau/Makefile
