@@ -2733,7 +2733,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
          !swapBytes;
 
    case MESA_FORMAT_S8:
-      return GL_FALSE;
+      return format == GL_STENCIL_INDEX && type == GL_UNSIGNED_BYTE;
 
    case MESA_FORMAT_SRGB8:
    case MESA_FORMAT_SRGBA8:
@@ -2859,8 +2859,26 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_SIGNED_R8:
    case MESA_FORMAT_SIGNED_RG88_REV:
    case MESA_FORMAT_SIGNED_RGBX8888:
+      return GL_FALSE;
+
    case MESA_FORMAT_SIGNED_RGBA8888:
+      if (format == GL_RGBA && type == GL_BYTE && !littleEndian)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_BYTE && littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
+
    case MESA_FORMAT_SIGNED_RGBA8888_REV:
+      if (format == GL_RGBA && type == GL_BYTE && littleEndian)
+         return GL_TRUE;
+
+      if (format == GL_ABGR_EXT && type == GL_BYTE && !littleEndian)
+         return GL_TRUE;
+
+      return GL_FALSE;
+
    case MESA_FORMAT_SIGNED_R16:
    case MESA_FORMAT_SIGNED_GR1616:
    case MESA_FORMAT_SIGNED_RGB_16:
@@ -2896,7 +2914,9 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_ARGB2101010_UINT:
-      return GL_FALSE;
+      return (format == GL_BGRA_INTEGER_EXT &&
+              type == GL_UNSIGNED_INT_2_10_10_10_REV &&
+              !swapBytes);
 
    case MESA_FORMAT_RGB9_E5_FLOAT:
       return format == GL_RGB && type == GL_UNSIGNED_INT_5_9_9_9_REV &&
