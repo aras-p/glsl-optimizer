@@ -213,11 +213,6 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
                                              ctx->Pack.SwapBytes))
       return GL_FALSE;
 
-   /* check for things we can't handle here */
-   if (packing->SwapBytes) {
-      return GL_FALSE;
-   }
-
    dstStride = _mesa_image_row_stride(packing, width, format, type);
    dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
 					   format, type, 0, 0);
