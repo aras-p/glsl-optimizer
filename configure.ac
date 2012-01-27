@@ -176,7 +176,20 @@ esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99"
+    CFLAGS="$CFLAGS -Wall -std=c99"
+
+    # Enable -Werror=implicit-function-declaration and
+    # -Werror=missing-prototypes, if available, or otherwise, just
+    # -Wmissing-prototypes.  This is particularly useful to avoid
+    # generating a loadable driver module that has undefined symbols.
+    save_CFLAGS="$CFLAGS"
+    AC_MSG_CHECKING([whether $CC supports -Werror=missing-prototypes])
+    CFLAGS="$CFLAGS -Werror=implicit-function-declaration"
+    CFLAGS="$CFLAGS -Werror=missing-prototypes"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM()],
+		   AC_MSG_RESULT([yes]),
+		   [CFLAGS="$save_CFLAGS -Wmissing-prototypes";
+		    AC_MSG_RESULT([no])]);
 
     # Enable -fvisibility=hidden if using a gcc that supports it
     save_CFLAGS="$CFLAGS"
