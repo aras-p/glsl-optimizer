@@ -1139,11 +1139,9 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_RGB565 &&
        baseInternalFormat == GL_RGB &&
-       srcFormat == GL_RGB &&
-       srcType == GL_UNSIGNED_SHORT_5_6_5) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -1513,18 +1511,15 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGB888);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
        baseInternalFormat == GL_RGB &&
-       srcFormat == GL_BGR &&
-       srcType == GL_UNSIGNED_BYTE &&
-       littleEndian) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -1630,18 +1625,15 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_BGR888);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
        baseInternalFormat == GL_RGB &&
-       srcFormat == GL_RGB &&
-       srcType == GL_UNSIGNED_BYTE &&
-       littleEndian) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -1735,11 +1727,9 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_ARGB4444 &&
        baseInternalFormat == GL_RGBA &&
-       srcFormat == GL_BGRA &&
-       srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
