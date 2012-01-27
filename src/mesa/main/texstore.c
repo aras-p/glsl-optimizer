@@ -2402,9 +2402,9 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
    ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
        baseInternalFormat == GL_RGB &&
-       srcFormat == GL_RGB && srcType == GL_UNSIGNED_BYTE_3_3_2) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
@@ -2942,25 +2942,10 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
    ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_SIGNED_RGBA8888 &&
        baseInternalFormat == GL_RGBA &&
-      ((srcFormat == GL_RGBA && srcType == GL_BYTE && !littleEndian) ||
-       (srcFormat == GL_ABGR_EXT && srcType == GL_BYTE && littleEndian))) {
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
        /* simple memcpy path */
-      memcpy_texture(ctx, dims,
-                     dstFormat,
-                     dstRowStride, dstSlices,
-                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
-                     srcAddr, srcPacking);
-   }
-   else if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_SIGNED_RGBA8888_REV &&
-       baseInternalFormat == GL_RGBA &&
-      ((srcFormat == GL_RGBA && srcType == GL_BYTE && littleEndian) ||
-       (srcFormat == GL_ABGR_EXT && srcType == GL_BYTE && !littleEndian))) {
-      /* simple memcpy path */
       memcpy_texture(ctx, dims,
                      dstFormat,
                      dstRowStride, dstSlices,
