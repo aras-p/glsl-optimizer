@@ -2516,14 +2516,16 @@ _mesa_format_to_type_and_comps(gl_format format,
 /**
  * Check if a gl_format exactly matches a GL formaat/type combination
  * such that we can use memcpy() from one to the other.
- *
- * Note: this matching assumes that GL_PACK/UNPACK_SWAP_BYTES is unset.
- *
+ * \param gl_format  a MESA_FORMAT_x value
+ * \param format  the user-specified image format
+ * \param type  the user-specified image datatype
+ * \param swapBytes  typically the current pixel pack/unpack byteswap state
  * \return GL_TRUE if the formats match, GL_FALSE otherwise.
  */
 GLboolean
 _mesa_format_matches_format_and_type(gl_format gl_format,
-				     GLenum format, GLenum type)
+				     GLenum format, GLenum type,
+                                     GLboolean swapBytes)
 {
    const GLboolean littleEndian = _mesa_little_endian();
 
