@@ -2020,14 +2020,10 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
    if (dstPacking->SwapBytes) {
       GLint swapSize = _mesa_sizeof_packed_type(dstType);
       if (swapSize == 2) {
-         if (dstPacking->SwapBytes) {
-            _mesa_swap2((GLushort *) dstAddr, n * comps);
-         }
+         _mesa_swap2((GLushort *) dstAddr, n * comps);
       }
       else if (swapSize == 4) {
-         if (dstPacking->SwapBytes) {
-            _mesa_swap4((GLuint *) dstAddr, n * comps);
-         }
+         _mesa_swap4((GLuint *) dstAddr, n * comps);
       }
    }
 
