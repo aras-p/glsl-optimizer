@@ -58,15 +58,6 @@ i965_dri_la_LIBADD = \
 	$(INTEL_LIBS) \
 	../common/libdricommon.la
 
-# Test build to make sure that we didn't leave any undefined symbols in the
-# driver.
-noinst_PROGRAMS = i965_symbols_test
-
-i965_symbols_test_SOURCES = \
-	../common/dri_test.c
-i965_symbols_test_LDADD = \
-	i965_dri.la
-
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 all-local: i965_dri.la
