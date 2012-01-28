@@ -1829,8 +1829,9 @@ void r600_adjust_gprs(struct r600_pipe_context *rctx)
 	tmp = 0;
 	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
 	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
+	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(rctx->r6xx_num_clause_temp_gprs);
 	rstate.nregs = 0;
-	r600_pipe_state_add_reg(&rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0x0FFFFFFF, NULL, 0);
+	r600_pipe_state_add_reg(&rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL, 0);
 
 	r600_context_pipe_state_set(&rctx->ctx, &rstate);
 }
@@ -2008,6 +2009,7 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
 	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
 	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
+	rctx->r6xx_num_clause_temp_gprs = num_temp_gprs;
 	r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, 0xFFFFFFFF, NULL, 0);
 
 	/* SQ_GPR_RESOURCE_MGMT_2 */
