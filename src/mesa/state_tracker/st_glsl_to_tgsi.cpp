@@ -2978,7 +2978,7 @@ glsl_to_tgsi_visitor::simplify_cmp(void)
    if (!tempWrites) {
       return;
    }
-   memset(tempWrites, 0, sizeof(tempWrites));
+   memset(tempWrites, 0, sizeof(unsigned) * MAX_TEMPS);
    memset(outputWrites, 0, sizeof(outputWrites));
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
