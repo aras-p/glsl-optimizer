@@ -51,7 +51,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_nesting_ast = NULL;
-   this->switch_nesting_ast = NULL;
+   this->switch_state.switch_nesting_ast = NULL;
 
    this->num_builtins_to_link = 0;
 

@@ -3405,7 +3405,7 @@ ast_jump_statement::hir(exec_list *instructions,
 			  "continue may only appear in a loop");
       } else if (mode == ast_break &&
 		 state->loop_nesting_ast == NULL &&
-		 state->switch_nesting_ast == NULL) {
+		 state->switch_state.switch_nesting_ast == NULL) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state,
@@ -3423,11 +3423,11 @@ ast_jump_statement::hir(exec_list *instructions,
 							  state);
 	 }
 
-	 if (state->is_switch_innermost &&
+	 if (state->switch_state.is_switch_innermost &&
 	     mode == ast_break) {
 	    /* Force break out of switch by setting is_break switch state.
 	     */
-	    ir_variable *const is_break_var = state->is_break_var;
+	    ir_variable *const is_break_var = state->switch_state.is_break_var;
 	    ir_dereference_variable *const deref_is_break_var =
 	       new(ctx) ir_dereference_variable(is_break_var);
 	    ir_constant *const true_val = new(ctx) ir_constant(true);
@@ -3530,25 +3530,22 @@ ast_switch_statement::hir(exec_list *instructions,
 
    /* Track the switch-statement nesting in a stack-like manner.
     */
-   ir_variable *saved_test_var = state->test_var;
-   ir_variable *saved_is_fallthru_var = state->is_fallthru_var;
-   
-   bool save_is_switch_innermost = state->is_switch_innermost;
-   ast_switch_statement *saved_nesting_ast = state->switch_nesting_ast;
+   struct glsl_switch_state saved = state->switch_state;
 
-   state->is_switch_innermost = true;
-   state->switch_nesting_ast = this;
+   state->switch_state.is_switch_innermost = true;
+   state->switch_state.switch_nesting_ast = this;
 
    /* Initalize is_fallthru state to false.
     */
    ir_rvalue *const is_fallthru_val = new (ctx) ir_constant(false);
-   state->is_fallthru_var = new(ctx) ir_variable(glsl_type::bool_type,
-					        "switch_is_fallthru_tmp",
-					        ir_var_temporary);
-   instructions->push_tail(state->is_fallthru_var);
+   state->switch_state.is_fallthru_var =
+      new(ctx) ir_variable(glsl_type::bool_type,
+			   "switch_is_fallthru_tmp",
+			   ir_var_temporary);
+   instructions->push_tail(state->switch_state.is_fallthru_var);
 
    ir_dereference_variable *deref_is_fallthru_var =
-      new(ctx) ir_dereference_variable(state->is_fallthru_var);
+      new(ctx) ir_dereference_variable(state->switch_state.is_fallthru_var);
    instructions->push_tail(new(ctx) ir_assignment(deref_is_fallthru_var,
 						  is_fallthru_val,
 						  NULL));
@@ -3556,13 +3553,13 @@ ast_switch_statement::hir(exec_list *instructions,
    /* Initalize is_break state to false.
     */
    ir_rvalue *const is_break_val = new (ctx) ir_constant(false);
-   state->is_break_var = new(ctx) ir_variable(glsl_type::bool_type,
-					      "switch_is_break_tmp",
-					      ir_var_temporary);
-   instructions->push_tail(state->is_break_var);
+   state->switch_state.is_break_var = new(ctx) ir_variable(glsl_type::bool_type,
+							   "switch_is_break_tmp",
+							   ir_var_temporary);
+   instructions->push_tail(state->switch_state.is_break_var);
 
    ir_dereference_variable *deref_is_break_var =
-      new(ctx) ir_dereference_variable(state->is_break_var);
+      new(ctx) ir_dereference_variable(state->switch_state.is_break_var);
    instructions->push_tail(new(ctx) ir_assignment(deref_is_break_var,
 						  is_break_val,
 						  NULL));
@@ -3575,254 +3572,248 @@ ast_switch_statement::hir(exec_list *instructions,
     */
    body->hir(instructions, state);
 
-   /* Restore previous nesting before returning.
-    */
-   state->switch_nesting_ast = saved_nesting_ast;
-   state->is_switch_innermost = save_is_switch_innermost;
+   state->switch_state = saved;
 
-   state->test_var = saved_test_var;
-   state->is_fallthru_var = saved_is_fallthru_var;
-
-   /* Switch statements do not have r-values.
-    */
-   return NULL;
-}
+     /* Switch statements do not have r-values.
+      */
+     return NULL;
+  }
 
 
-void
-ast_switch_statement::test_to_hir(exec_list *instructions,
-				  struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
+  void
+  ast_switch_statement::test_to_hir(exec_list *instructions,
+				    struct _mesa_glsl_parse_state *state)
+  {
+     void *ctx = state;
 
-   /* Cache value of test expression.
-    */
-   ir_rvalue *const test_val =
-      test_expression->hir(instructions,
-			   state);
+     /* Cache value of test expression.
+      */
+     ir_rvalue *const test_val =
+	test_expression->hir(instructions,
+			     state);
 
-   state->test_var = new(ctx) ir_variable(glsl_type::int_type,
-					  "switch_test_tmp",
-					  ir_var_temporary);
-   ir_dereference_variable *deref_test_var =
-      new(ctx) ir_dereference_variable(state->test_var);
+     state->switch_state.test_var = new(ctx) ir_variable(glsl_type::int_type,
+							 "switch_test_tmp",
+							 ir_var_temporary);
+     ir_dereference_variable *deref_test_var =
+	new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
-   instructions->push_tail(state->test_var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_test_var,
-						  test_val,
-						  NULL));
-}
-
-
-ir_rvalue *
-ast_switch_body::hir(exec_list *instructions,
-		     struct _mesa_glsl_parse_state *state)
-{
-   if (stmts != NULL)
-      stmts->hir(instructions, state);
-      
-   /* Switch bodies do not have r-values.
-    */
-   return NULL;
-}
+     instructions->push_tail(state->switch_state.test_var);
+     instructions->push_tail(new(ctx) ir_assignment(deref_test_var,
+						    test_val,
+						    NULL));
+  }
 
 
-ir_rvalue *
-ast_case_statement_list::hir(exec_list *instructions,
-			     struct _mesa_glsl_parse_state *state)
-{
-   foreach_list_typed (ast_case_statement, case_stmt, link, & this->cases)
-      case_stmt->hir(instructions, state);
-         
-   /* Case statements do not have r-values.
-    */
-   return NULL;
-}
+  ir_rvalue *
+  ast_switch_body::hir(exec_list *instructions,
+		       struct _mesa_glsl_parse_state *state)
+  {
+     if (stmts != NULL)
+	stmts->hir(instructions, state);
+
+     /* Switch bodies do not have r-values.
+      */
+     return NULL;
+  }
 
 
-ir_rvalue *
-ast_case_statement::hir(exec_list *instructions,
-			struct _mesa_glsl_parse_state *state)
-{
-   labels->hir(instructions, state);
-   
-   /* Conditionally set fallthru state based on break state.
-    */
-   ir_constant *const false_val = new(state) ir_constant(false);
-   ir_dereference_variable *const deref_is_fallthru_var =
-      new(state) ir_dereference_variable(state->is_fallthru_var);
-   ir_dereference_variable *const deref_is_break_var =
-      new(state) ir_dereference_variable(state->is_break_var);
-   ir_assignment *const reset_fallthru_on_break =
-      new(state) ir_assignment(deref_is_fallthru_var,
-			       false_val,
-			       deref_is_break_var);
-   instructions->push_tail(reset_fallthru_on_break);
+  ir_rvalue *
+  ast_case_statement_list::hir(exec_list *instructions,
+			       struct _mesa_glsl_parse_state *state)
+  {
+     foreach_list_typed (ast_case_statement, case_stmt, link, & this->cases)
+	case_stmt->hir(instructions, state);
 
-   /* Guard case statements depending on fallthru state.
-    */
-   ir_dereference_variable *const deref_fallthru_guard =
-      new(state) ir_dereference_variable(state->is_fallthru_var);
-   ir_if *const test_fallthru = new(state) ir_if(deref_fallthru_guard);
-   
-   foreach_list_typed (ast_node, stmt, link, & this->stmts)
-      stmt->hir(& test_fallthru->then_instructions, state);
-
-   instructions->push_tail(test_fallthru);
-         
-   /* Case statements do not have r-values.
-    */
-   return NULL;
-}
+     /* Case statements do not have r-values.
+      */
+     return NULL;
+  }
 
 
-ir_rvalue *
-ast_case_label_list::hir(exec_list *instructions,
-			 struct _mesa_glsl_parse_state *state)
-{
-   foreach_list_typed (ast_case_label, label, link, & this->labels)
-      label->hir(instructions, state);
-         
-   /* Case labels do not have r-values.
-    */
-   return NULL;
-}
+  ir_rvalue *
+  ast_case_statement::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+  {
+     labels->hir(instructions, state);
+
+     /* Conditionally set fallthru state based on break state.
+      */
+     ir_constant *const false_val = new(state) ir_constant(false);
+     ir_dereference_variable *const deref_is_fallthru_var =
+	new(state) ir_dereference_variable(state->switch_state.is_fallthru_var);
+     ir_dereference_variable *const deref_is_break_var =
+	new(state) ir_dereference_variable(state->switch_state.is_break_var);
+     ir_assignment *const reset_fallthru_on_break =
+	new(state) ir_assignment(deref_is_fallthru_var,
+				 false_val,
+				 deref_is_break_var);
+     instructions->push_tail(reset_fallthru_on_break);
+
+     /* Guard case statements depending on fallthru state.
+      */
+     ir_dereference_variable *const deref_fallthru_guard =
+	new(state) ir_dereference_variable(state->switch_state.is_fallthru_var);
+     ir_if *const test_fallthru = new(state) ir_if(deref_fallthru_guard);
+
+     foreach_list_typed (ast_node, stmt, link, & this->stmts)
+	stmt->hir(& test_fallthru->then_instructions, state);
+
+     instructions->push_tail(test_fallthru);
+
+     /* Case statements do not have r-values.
+      */
+     return NULL;
+  }
 
 
-ir_rvalue *
-ast_case_label::hir(exec_list *instructions,
-		    struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
+  ir_rvalue *
+  ast_case_label_list::hir(exec_list *instructions,
+			   struct _mesa_glsl_parse_state *state)
+  {
+     foreach_list_typed (ast_case_label, label, link, & this->labels)
+	label->hir(instructions, state);
 
-   ir_dereference_variable *deref_fallthru_var =
-      new(ctx) ir_dereference_variable(state->is_fallthru_var);
-   
-   ir_rvalue *const true_val = new(ctx) ir_constant(true);
-
-   /* If not default case, ...
-    */
-   if (this->test_value != NULL) {
-      /* Conditionally set fallthru state based on
-       * comparison of cached test expression value to case label.
-       */
-      ir_rvalue *const test_val = this->test_value->hir(instructions, state);
-
-      ir_dereference_variable *deref_test_var =
-	 new(ctx) ir_dereference_variable(state->test_var);
-
-      ir_rvalue *const test_cond = new(ctx) ir_expression(ir_binop_all_equal,
-							  glsl_type::bool_type,
-							  test_val,
-							  deref_test_var);
-
-      ir_assignment *set_fallthru_on_test =
-	 new(ctx) ir_assignment(deref_fallthru_var,
-				true_val,
-				test_cond);
-   
-      instructions->push_tail(set_fallthru_on_test);
-   } else { /* default case */
-      /* Set falltrhu state.
-       */
-      ir_assignment *set_fallthru =
-	 new(ctx) ir_assignment(deref_fallthru_var,
-				true_val,
-				NULL);
-   
-      instructions->push_tail(set_fallthru);
-   }
-   
-   /* Case statements do not have r-values.
-    */
-   return NULL;
-}
+     /* Case labels do not have r-values.
+      */
+     return NULL;
+  }
 
 
-void
-ast_iteration_statement::condition_to_hir(ir_loop *stmt,
-					  struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
+  ir_rvalue *
+  ast_case_label::hir(exec_list *instructions,
+		      struct _mesa_glsl_parse_state *state)
+  {
+     void *ctx = state;
 
-   if (condition != NULL) {
-      ir_rvalue *const cond =
-	 condition->hir(& stmt->body_instructions, state);
+     ir_dereference_variable *deref_fallthru_var =
+	new(ctx) ir_dereference_variable(state->switch_state.is_fallthru_var);
 
-      if ((cond == NULL)
-	  || !cond->type->is_boolean() || !cond->type->is_scalar()) {
-	 YYLTYPE loc = condition->get_location();
+     ir_rvalue *const true_val = new(ctx) ir_constant(true);
 
-	 _mesa_glsl_error(& loc, state,
-			  "loop condition must be scalar boolean");
-      } else {
-	 /* As the first code in the loop body, generate a block that looks
-	  * like 'if (!condition) break;' as the loop termination condition.
-	  */
-	 ir_rvalue *const not_cond =
-	    new(ctx) ir_expression(ir_unop_logic_not, glsl_type::bool_type, cond,
-				   NULL);
+     /* If not default case, ...
+      */
+     if (this->test_value != NULL) {
+	/* Conditionally set fallthru state based on
+	 * comparison of cached test expression value to case label.
+	 */
+	ir_rvalue *const test_val = this->test_value->hir(instructions, state);
 
-	 ir_if *const if_stmt = new(ctx) ir_if(not_cond);
+	ir_dereference_variable *deref_test_var =
+	   new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
-	 ir_jump *const break_stmt =
-	    new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
+	ir_rvalue *const test_cond = new(ctx) ir_expression(ir_binop_all_equal,
+							    glsl_type::bool_type,
+							    test_val,
+							    deref_test_var);
 
-	 if_stmt->then_instructions.push_tail(break_stmt);
-	 stmt->body_instructions.push_tail(if_stmt);
-      }
-   }
-}
+	ir_assignment *set_fallthru_on_test =
+	   new(ctx) ir_assignment(deref_fallthru_var,
+				  true_val,
+				  test_cond);
+
+	instructions->push_tail(set_fallthru_on_test);
+     } else { /* default case */
+	/* Set falltrhu state.
+	 */
+	ir_assignment *set_fallthru =
+	   new(ctx) ir_assignment(deref_fallthru_var,
+				  true_val,
+				  NULL);
+
+	instructions->push_tail(set_fallthru);
+     }
+
+     /* Case statements do not have r-values.
+      */
+     return NULL;
+  }
 
 
-ir_rvalue *
-ast_iteration_statement::hir(exec_list *instructions,
-			     struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
+  void
+  ast_iteration_statement::condition_to_hir(ir_loop *stmt,
+					    struct _mesa_glsl_parse_state *state)
+  {
+     void *ctx = state;
 
-   /* For-loops and while-loops start a new scope, but do-while loops do not.
-    */
-   if (mode != ast_do_while)
-      state->symbols->push_scope();
+     if (condition != NULL) {
+	ir_rvalue *const cond =
+	   condition->hir(& stmt->body_instructions, state);
 
-   if (init_statement != NULL)
-      init_statement->hir(instructions, state);
+	if ((cond == NULL)
+	    || !cond->type->is_boolean() || !cond->type->is_scalar()) {
+	   YYLTYPE loc = condition->get_location();
 
-   ir_loop *const stmt = new(ctx) ir_loop();
-   instructions->push_tail(stmt);
+	   _mesa_glsl_error(& loc, state,
+			    "loop condition must be scalar boolean");
+	} else {
+	   /* As the first code in the loop body, generate a block that looks
+	    * like 'if (!condition) break;' as the loop termination condition.
+	    */
+	   ir_rvalue *const not_cond =
+	      new(ctx) ir_expression(ir_unop_logic_not, glsl_type::bool_type, cond,
+				     NULL);
 
-   /* Track the current loop nesting.
-    */
-   ast_iteration_statement *nesting_ast = state->loop_nesting_ast;
+	   ir_if *const if_stmt = new(ctx) ir_if(not_cond);
 
-   state->loop_nesting_ast = this;
+	   ir_jump *const break_stmt =
+	      new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
 
-   /* Likewise, indicate that following code is closest to a loop,
-    * NOT closest to a switch.
-    */
-   bool saved_is_switch_innermost = state->is_switch_innermost;
-   state->is_switch_innermost = false;
+	   if_stmt->then_instructions.push_tail(break_stmt);
+	   stmt->body_instructions.push_tail(if_stmt);
+	}
+     }
+  }
 
-   if (mode != ast_do_while)
-      condition_to_hir(stmt, state);
 
-   if (body != NULL)
-      body->hir(& stmt->body_instructions, state);
+  ir_rvalue *
+  ast_iteration_statement::hir(exec_list *instructions,
+			       struct _mesa_glsl_parse_state *state)
+  {
+     void *ctx = state;
 
-   if (rest_expression != NULL)
-      rest_expression->hir(& stmt->body_instructions, state);
+     /* For-loops and while-loops start a new scope, but do-while loops do not.
+      */
+     if (mode != ast_do_while)
+	state->symbols->push_scope();
 
-   if (mode == ast_do_while)
-      condition_to_hir(stmt, state);
+     if (init_statement != NULL)
+	init_statement->hir(instructions, state);
 
-   if (mode != ast_do_while)
-      state->symbols->pop_scope();
+     ir_loop *const stmt = new(ctx) ir_loop();
+     instructions->push_tail(stmt);
 
-   /* Restore previous nesting before returning.
-    */
-   state->loop_nesting_ast = nesting_ast;
-   state->is_switch_innermost = saved_is_switch_innermost;
+     /* Track the current loop nesting.
+      */
+     ast_iteration_statement *nesting_ast = state->loop_nesting_ast;
+
+     state->loop_nesting_ast = this;
+
+     /* Likewise, indicate that following code is closest to a loop,
+      * NOT closest to a switch.
+      */
+     bool saved_is_switch_innermost = state->switch_state.is_switch_innermost;
+     state->switch_state.is_switch_innermost = false;
+
+     if (mode != ast_do_while)
+	condition_to_hir(stmt, state);
+
+     if (body != NULL)
+	body->hir(& stmt->body_instructions, state);
+
+     if (rest_expression != NULL)
+	rest_expression->hir(& stmt->body_instructions, state);
+
+     if (mode == ast_do_while)
+	condition_to_hir(stmt, state);
+
+     if (mode != ast_do_while)
+	state->symbols->pop_scope();
+
+     /* Restore previous nesting before returning.
+      */
+     state->loop_nesting_ast = nesting_ast;
+     state->switch_state.is_switch_innermost = saved_is_switch_innermost;
 
    /* Loops do not have r-values.
     */
