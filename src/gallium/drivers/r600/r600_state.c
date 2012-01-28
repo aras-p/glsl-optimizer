@@ -855,7 +855,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
-	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
+	unsigned db_depth_control, alpha_test_control, alpha_ref;
 	unsigned db_render_override, db_render_control;
 	struct r600_pipe_state *rstate;
 
@@ -871,8 +871,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	rstate = &dsa->rstate;
 
 	rstate->id = R600_PIPE_STATE_DSA;
-	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
-	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
 		S_028800_ZFUNC(state->depth.func);
@@ -917,10 +915,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0286E4_SPI_FOG_FUNC_BIAS, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL, 0);
-	/* The DB_SHADER_CONTROL mask is 0xFFFFFFBC since Z_EXPORT_ENABLE,
-	 * STENCIL_EXPORT_ENABLE and KILL_ENABLE are controlled by
-	 * r600_pipe_shader_ps().*/
-	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL, db_shader_control, 0xFFFFFFBC, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D0C_DB_RENDER_CONTROL, db_render_control, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D10_DB_RENDER_OVERRIDE, db_render_override, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 0x00000000, 0xFFFFFFFF, NULL, 0);
@@ -2108,7 +2102,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 				tmp, 0xFFFFFFFF, NULL, 0);
 	}
 
-	db_shader_control = 0;
+	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
@@ -2181,10 +2175,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	/* only set some bits here, the other bits are set in the dsa state */
 	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
 				db_shader_control,
-				S_02880C_Z_EXPORT_ENABLE(1) |
-				S_02880C_STENCIL_REF_EXPORT_ENABLE(1) |
-				S_02880C_KILL_ENABLE(1),
-				NULL, 0);
+				0xFFFFFFFF, NULL, 0);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0, 0x01000FFF,
@@ -2299,10 +2290,6 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	}
 
 	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	r600_pipe_state_add_reg(rstate,
-				R_02880C_DB_SHADER_CONTROL,
-				0x0,
-				S_02880C_DUAL_EXPORT_ENABLE(1), NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028D0C_DB_RENDER_CONTROL,
 				S_028D0C_DEPTH_COPY_ENABLE(1) |
