@@ -2492,9 +2492,7 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 				S_028000_DEPTH_COPY_ENABLE(1) |
 				S_028000_STENCIL_COPY_ENABLE(1) |
 				S_028000_COPY_CENTROID(1),
-				S_028000_DEPTH_COPY_ENABLE(1) |
-				S_028000_STENCIL_COPY_ENABLE(1) |
-				S_028000_COPY_CENTROID(1), NULL, 0);
+				0xFFFFFFFF, NULL, 0);
 	return rstate;
 }
 
