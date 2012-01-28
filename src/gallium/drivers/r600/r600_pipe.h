@@ -121,6 +121,8 @@ struct r600_pipe_blend {
 struct r600_pipe_dsa {
 	struct r600_pipe_state		rstate;
 	unsigned			alpha_ref;
+	ubyte				valuemask[2];
+	ubyte				writemask[2];
 };
 
 struct r600_vertex_element
@@ -182,6 +184,13 @@ struct r600_fence_block {
 
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
+
+struct r600_stencil_ref
+{
+	ubyte ref_value[2];
+	ubyte valuemask[2];
+	ubyte writemask[2];
+};
 
 struct r600_pipe_context {
 	struct pipe_context		context;
@@ -364,8 +373,8 @@ void r600_set_so_targets(struct pipe_context *ctx,
 			 unsigned num_targets,
 			 struct pipe_stream_output_target **targets,
 			 unsigned append_bitmask);
-
-
+void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
+			       const struct pipe_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*

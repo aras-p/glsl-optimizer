@@ -799,20 +799,23 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
-	unsigned stencil_ref_mask, stencil_ref_mask_bf, db_render_override, db_render_control;
+	unsigned db_render_override, db_render_control;
 	struct r600_pipe_state *rstate;
 
 	if (dsa == NULL) {
 		return NULL;
 	}
 
+	dsa->valuemask[0] = state->stencil[0].valuemask;
+	dsa->valuemask[1] = state->stencil[1].valuemask;
+	dsa->writemask[0] = state->stencil[0].writemask;
+	dsa->writemask[1] = state->stencil[1].writemask;
+
 	rstate = &dsa->rstate;
 
 	rstate->id = R600_PIPE_STATE_DSA;
 	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
-	stencil_ref_mask = 0;
-	stencil_ref_mask_bf = 0;
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
 		S_028800_ZFUNC(state->depth.func);
@@ -825,17 +828,12 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
 		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
 
-
-		stencil_ref_mask = S_028430_STENCILMASK(state->stencil[0].valuemask) |
-			S_028430_STENCILWRITEMASK(state->stencil[0].writemask);
 		if (state->stencil[1].enabled) {
 			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
 			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
 			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
 			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
 			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
-			stencil_ref_mask_bf = S_028434_STENCILMASK_BF(state->stencil[1].valuemask) |
-				S_028434_STENCILWRITEMASK_BF(state->stencil[1].writemask);
 		}
 	}
 
@@ -858,12 +856,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028028_DB_STENCIL_CLEAR, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028430_DB_STENCILREFMASK, stencil_ref_mask,
-				0xFFFFFFFF & C_028430_STENCILREF, NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028434_DB_STENCILREFMASK_BF, stencil_ref_mask_bf,
-				0xFFFFFFFF & C_028434_STENCILREF_BF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL, 0);
 	/* The DB_SHADER_CONTROL mask is 0xFFFFFFBC since Z_EXPORT_ENABLE,
@@ -1298,32 +1290,6 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
-static void evergreen_set_stencil_ref(struct pipe_context *ctx,
-				const struct pipe_stencil_ref *state)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	u32 tmp;
-
-	if (rstate == NULL)
-		return;
-
-	rctx->stencil_ref = *state;
-	rstate->id = R600_PIPE_STATE_STENCIL_REF;
-	tmp = S_028430_STENCILREF(state->ref_value[0]);
-	r600_pipe_state_add_reg(rstate,
-				R_028430_DB_STENCILREFMASK, tmp,
-				~C_028430_STENCILREF, NULL, 0);
-	tmp = S_028434_STENCILREF_BF(state->ref_value[1]);
-	r600_pipe_state_add_reg(rstate,
-				R_028434_DB_STENCILREFMASK_BF, tmp,
-				~C_028434_STENCILREF_BF, NULL, 0);
-
-	free(rctx->states[R600_PIPE_STATE_STENCIL_REF]);
-	rctx->states[R600_PIPE_STATE_STENCIL_REF] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
-}
-
 static void evergreen_set_viewport_state(struct pipe_context *ctx,
 					const struct pipe_viewport_state *state)
 {
@@ -1708,7 +1674,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
 	rctx->context.set_scissor_state = evergreen_set_scissor_state;
-	rctx->context.set_stencil_ref = evergreen_set_stencil_ref;
+	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
