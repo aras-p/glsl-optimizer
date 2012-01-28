@@ -799,6 +799,14 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
             _mesa_TexParameterf(target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB,
                                 samp->CompareFailValue);
          }
+         if (ctx->Extensions.ARB_shadow) {
+            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_MODE,
+                                samp->CompareMode);
+            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_FUNC,
+                                samp->CompareFunc);
+         }
+         if (ctx->Extensions.ARB_depth_texture)
+            _mesa_TexParameteri(target, GL_DEPTH_TEXTURE_MODE, samp->DepthMode);
       }
 
       /* remove saved references to the texture objects */
