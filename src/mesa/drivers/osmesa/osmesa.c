@@ -75,7 +75,7 @@ struct osmesa_context
    GLvoid *rowaddr[MAX_HEIGHT];	/*< address of first pixel in each image row */
    GLboolean yup;		/*< TRUE  -> Y increases upward */
 				/*< FALSE -> Y increases downward */
-   GLboolean DataType;
+   GLenum DataType;
 };
 
 
