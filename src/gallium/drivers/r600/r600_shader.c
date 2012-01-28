@@ -487,6 +487,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 				break;
 			case TGSI_SEMANTIC_PSIZE:
 				ctx->shader->vs_out_misc_write = 1;
+				ctx->shader->vs_out_point_size = 1;
 				break;
 			case TGSI_SEMANTIC_CLIPVERTEX:
 				ctx->clip_vertex_write = TRUE;

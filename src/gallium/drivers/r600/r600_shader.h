@@ -54,6 +54,7 @@ struct r600_shader {
 	unsigned		clip_dist_write;
 	/* flag is set if the shader writes VS_OUT_MISC_VEC (e.g. for PSIZE) */
 	boolean			vs_out_misc_write;
+	boolean			vs_out_point_size;
 };
 
 #endif

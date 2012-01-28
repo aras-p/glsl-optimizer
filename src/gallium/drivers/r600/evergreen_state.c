@@ -925,16 +925,19 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028814_POLY_MODE(polygon_dual_mode) |
 		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)), 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02881C_PA_CL_VS_OUT_CNTL,
-			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex),
-			S_02881C_USE_VTX_POINT_SIZE(1), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028820_PA_CL_NANINF_CNTL, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), 0xFFFFFFFF, NULL, 0);
 
-	psize_min = util_get_min_point_size(state);
-	psize_max = 8192;
+	if (state->point_size_per_vertex) {
+		psize_min = util_get_min_point_size(state);
+		psize_max = 8192;
+	} else {
+		/* Force the point size to be as if the vertex output was disabled. */
+		psize_min = state->point_size;
+		psize_max = state->point_size;
+	}
 	/* Divide by two, because 0.5 = 1 pixel. */
 	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX,
 				S_028A04_MIN_SIZE(r600_pack_float_12p4(psize_min/2)) |
@@ -2458,10 +2461,12 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 				R_02881C_PA_CL_VS_OUT_CNTL,
 				S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
 				S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
-				S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write),
+				S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
+				S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size),
 				S_02881C_VS_OUT_CCDIST0_VEC_ENA(1) |
 				S_02881C_VS_OUT_CCDIST1_VEC_ENA(1) |
-				S_02881C_VS_OUT_MISC_VEC_ENA(1),
+				S_02881C_VS_OUT_MISC_VEC_ENA(1) |
+				S_02881C_USE_VTX_POINT_SIZE(1),
 				NULL, 0);
 }
 
