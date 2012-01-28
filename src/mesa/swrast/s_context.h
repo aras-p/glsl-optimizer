@@ -47,6 +47,7 @@
 #include "main/mtypes.h"
 #include "program/prog_execute.h"
 #include "swrast.h"
+#include "s_fragprog.h"
 #include "s_span.h"
 
 
