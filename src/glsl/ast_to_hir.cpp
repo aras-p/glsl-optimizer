@@ -3697,14 +3697,26 @@ ast_switch_statement::hir(exec_list *instructions,
 	/* Conditionally set fallthru state based on
 	 * comparison of cached test expression value to case label.
 	 */
-	ir_rvalue *const test_val = this->test_value->hir(instructions, state);
+	ir_rvalue *const label_rval = this->test_value->hir(instructions, state);
+	ir_constant *label_const = label_rval->constant_expression_value();
+
+	if (!label_const) {
+	   YYLTYPE loc = this->test_value->get_location();
+
+	   _mesa_glsl_error(& loc, state,
+			    "switch statement case label must be a "
+			    "constant expression");
+
+	   /* Stuff a dummy value in to allow processing to continue. */
+	   label_const = new(ctx) ir_constant(0);
+	}
 
 	ir_dereference_variable *deref_test_var =
 	   new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
 	ir_rvalue *const test_cond = new(ctx) ir_expression(ir_binop_all_equal,
 							    glsl_type::bool_type,
-							    test_val,
+							    label_const,
 							    deref_test_var);
 
 	ir_assignment *set_fallthru_on_test =
