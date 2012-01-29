@@ -213,7 +213,7 @@ struct r600_context;
 struct r600_screen;
 
 void r600_get_backend_mask(struct r600_context *ctx);
-int r600_context_init(struct r600_context *ctx, struct r600_screen *screen);
+int r600_context_init(struct r600_context *ctx);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
@@ -244,7 +244,7 @@ void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 
-int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen);
+int evergreen_context_init(struct r600_context *ctx);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 void evergreen_context_flush_dest_caches(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);

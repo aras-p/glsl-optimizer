@@ -236,7 +236,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R600:
 	case R700:
 		r600_init_state_functions(rctx);
-		if (r600_context_init(rctx, rctx->screen)) {
+		if (r600_context_init(rctx)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -246,7 +246,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
-		if (evergreen_context_init(rctx, rctx->screen)) {
+		if (evergreen_context_init(rctx)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}

@@ -827,12 +827,9 @@ int r600_setup_block_table(struct r600_context *ctx)
 	return 0;
 }
 
-int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
+int r600_context_init(struct r600_context *ctx)
 {
 	int r;
-
-	ctx->screen = screen;
-	ctx->ws = screen->ws;
 
 	LIST_INITHEAD(&ctx->active_query_list);
 
@@ -909,7 +906,7 @@ int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
 	if (r)
 		goto out_err;
 
-	ctx->cs = screen->ws->cs_create(screen->ws);
+	ctx->cs = ctx->ws->cs_create(ctx->ws);
 
 	/* allocate cs variables */
 	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
