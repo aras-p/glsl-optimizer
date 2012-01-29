@@ -1227,8 +1227,12 @@ static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean en
 
 	rstate->id = R600_PIPE_STATE_SEAMLESS_CUBEMAP;
 	r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
-				(enable ? 0 : S_009508_DISABLE_CUBE_WRAP(1)),
-				1, NULL, 0);
+				(enable ? 0 : S_009508_DISABLE_CUBE_WRAP(1)) |
+				S_009508_DISABLE_CUBE_ANISO(1) |
+				S_009508_SYNC_GRADIENT(1) |
+				S_009508_SYNC_WALKER(1) |
+				S_009508_SYNC_ALIGNER(1),
+				0xFFFFFFFF, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP]);
 	rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP] = rstate;
@@ -1995,21 +1999,11 @@ void r600_init_config(struct r600_pipe_context *rctx)
 
 	if (rctx->chip_class >= R700) {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
-					S_009508_DISABLE_CUBE_ANISO(1) |
-					S_009508_SYNC_GRADIENT(1) |
-					S_009508_SYNC_WALKER(1) |
-					S_009508_SYNC_ALIGNER(1), 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x00000000, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x00420204, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	} else {
 		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00000000, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
-					S_009508_DISABLE_CUBE_ANISO(1) |
-					S_009508_SYNC_GRADIENT(1) |
-					S_009508_SYNC_WALKER(1) |
-					S_009508_SYNC_ALIGNER(1), 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x82000000, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x01020204, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000001, 0xFFFFFFFF, NULL, 0);
@@ -2047,6 +2041,8 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
+
+	r600_set_seamless_cubemap(rctx, FALSE);
 }
 
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
