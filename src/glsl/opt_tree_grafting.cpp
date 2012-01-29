@@ -349,7 +349,7 @@ tree_grafting_basic_block(ir_instruction *bb_first,
 	  lhs_var->mode == ir_var_inout)
 	 continue;
 
-      variable_entry *entry = info->refs->get_variable_entry(lhs_var);
+      ir_variable_refcount_entry *entry = info->refs->get_variable_entry(lhs_var);
 
       if (!entry->declaration ||
 	  entry->assigned_count != 1 ||
