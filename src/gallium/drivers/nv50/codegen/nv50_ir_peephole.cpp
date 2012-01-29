@@ -2020,6 +2020,8 @@ GlobalCSE::visit(BasicBlock *bb)
       if (phi->getSrc(0)->refCount() > 1)
          continue;
       ik = phi->getSrc(0)->getInsn();
+      if (!ik)
+         continue; // probably a function input
       for (s = 1; phi->srcExists(s); ++s) {
          if (phi->getSrc(s)->refCount() > 1)
             break;
