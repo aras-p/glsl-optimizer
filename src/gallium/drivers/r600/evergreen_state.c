@@ -750,7 +750,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	blend->cb_target_mask = target_mask;
 	
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
-				color_control, 0xFFFFFFFD, NULL, 0);
+				color_control, 0xFFFFFFFF, NULL, 0);
 
 	if (rctx->chip_class != CAYMAN)
 		r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL, 0);
