@@ -167,6 +167,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->two_side = rs->two_side;
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
+	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
 
 	rctx->rasterizer = rs;
 
@@ -754,9 +755,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
-					0,
-					S_028814_PROVOKING_VTX_LAST(1), NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL, 0, 0xFFFFFFFF, NULL, 0);
 		if (rctx->chip_class <= R700)
 			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, 0xFFFFFFFF, NULL, 0);
 	}
@@ -779,9 +778,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
 
 	if (info.mode == PIPE_PRIM_QUADS || info.mode == PIPE_PRIM_QUAD_STRIP || info.mode == PIPE_PRIM_POLYGON) {
-		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1));
+		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1) | rctx->pa_su_sc_mode_cntl);
 	} else {
-		r600_pipe_state_mod_reg(&rctx->vgt, 0);
+		r600_pipe_state_mod_reg(&rctx->vgt, rctx->pa_su_sc_mode_cntl);
 	}
 	if (rctx->chip_class <= R700)
 		r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_color_control);

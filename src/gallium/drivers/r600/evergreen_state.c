@@ -884,6 +884,12 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		return NULL;
 	}
 
+	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
+				state->fill_back != PIPE_POLYGON_MODE_FILL);
+
+	if (state->flatshade_first)
+		prov_vtx = 0;
+
 	rstate = &rs->rstate;
 	rs->flatshade = state->flatshade;
 	rs->sprite_coord_enable = state->sprite_coord_enable;
@@ -892,6 +898,17 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rs->pa_sc_line_stipple = state->line_stipple_enable ?
 				S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
 				S_028A0C_REPEAT_COUNT(state->line_stipple_factor) : 0;
+	rs->pa_su_sc_mode_cntl =
+		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
+		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+		S_028814_FACE(!state->front_ccw) |
+		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+		S_028814_POLY_MODE(polygon_dual_mode) |
+		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
+		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back));
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
@@ -900,8 +917,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rs->offset_scale = state->offset_scale * 12.0f;
 
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
-	if (state->flatshade_first)
-		prov_vtx = 0;
 	tmp = S_0286D4_FLAT_SHADE_ENA(1);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
@@ -915,19 +930,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	}
 	r600_pipe_state_add_reg(rstate, R_0286D4_SPI_INTERP_CONTROL_0, tmp, 0xFFFFFFFF, NULL, 0);
 
-	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
-				state->fill_back != PIPE_POLYGON_MODE_FILL);
-	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
-		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
-		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
-		S_028814_FACE(!state->front_ccw) |
-		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
-		S_028814_POLY_MODE(polygon_dual_mode) |
-		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
-		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028820_PA_CL_NANINF_CNTL, 0x00000000, 0xFFFFFFFF, NULL, 0);
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
