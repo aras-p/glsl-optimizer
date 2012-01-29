@@ -1604,7 +1604,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	u32 shader_mask, tl, br, shader_control, target_mask;
+	u32 shader_mask, tl, br, shader_control;
 
 	if (rstate == NULL)
 		return;
@@ -1627,12 +1627,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->ctx.num_dest_buffers++;
 	}
 
-	target_mask = 0x00000000;
-	target_mask = 0xFFFFFFFF;
 	shader_mask = 0;
 	shader_control = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
-		target_mask ^= 0xf << (i * 4);
 		shader_mask |= 0xf << (i * 4);
 		shader_control |= 1 << i;
 	}
@@ -1674,8 +1671,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
 				shader_control, 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028238_CB_TARGET_MASK,
-				0x00000000, target_mask, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
 				shader_mask, 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,

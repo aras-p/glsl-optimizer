@@ -1523,7 +1523,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	u32 shader_mask, tl, br, target_mask;
+	u32 shader_mask, tl, br;
 	int tl_x, tl_y, br_x, br_y;
 
 	if (rstate == NULL)
@@ -1548,11 +1548,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->ctx.num_dest_buffers++;
 	}
 
-	target_mask = 0x00000000;
-	target_mask = 0xFFFFFFFF;
 	shader_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
-		target_mask ^= 0xf << (i * 4);
 		shader_mask |= 0xf << (i * 4);
 	}
 	tl_x = 0;
@@ -1602,9 +1599,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
 				0xFFFFFFFF, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028238_CB_TARGET_MASK,
-				0x00000000, target_mask, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
 				shader_mask, 0xFFFFFFFF, NULL, 0);
 
