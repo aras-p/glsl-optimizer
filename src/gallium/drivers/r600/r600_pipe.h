@@ -116,6 +116,7 @@ struct r600_pipe_rasterizer {
 struct r600_pipe_blend {
 	struct r600_pipe_state		rstate;
 	unsigned			cb_target_mask;
+	unsigned			cb_color_control;
 };
 
 struct r600_pipe_dsa {
@@ -207,6 +208,7 @@ struct r600_pipe_context {
 	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			cb_target_mask;
+	unsigned			cb_color_control;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;

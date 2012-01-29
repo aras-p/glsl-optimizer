@@ -73,6 +73,11 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	rstate = &blend->rstate;
 	rctx->states[rstate->id] = rstate;
 	rctx->cb_target_mask = blend->cb_target_mask;
+
+	/* Replace every bit except MULTIWRITE_ENABLE. */
+	rctx->cb_color_control &= ~C_028808_MULTIWRITE_ENABLE;
+	rctx->cb_color_control |= blend->cb_color_control & C_028808_MULTIWRITE_ENABLE;
+
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
@@ -326,6 +331,9 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	rctx->ps_shader = (struct r600_pipe_shader *)state;
 	if (state) {
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
+
+		rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
+		rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->shader.fs_write_all);
 	}
 	if (rctx->ps_shader && rctx->vs_shader) {
 		r600_adjust_gprs(rctx);
@@ -750,6 +758,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL,
 					0,
 					S_028814_PROVOKING_VTX_LAST(1), NULL, 0);
+		if (rctx->chip_class <= R700)
+			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, 0xFFFFFFFF, NULL, 0);
 	}
 
 	rctx->vgt.nregs = 0;
@@ -771,7 +781,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (info.mode == PIPE_PRIM_QUADS || info.mode == PIPE_PRIM_QUAD_STRIP || info.mode == PIPE_PRIM_POLYGON) {
 		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1));
+	} else {
+		r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	}
+	if (rctx->chip_class <= R700)
+		r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_color_control);
 
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
 
