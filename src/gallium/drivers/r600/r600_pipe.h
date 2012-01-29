@@ -199,7 +199,7 @@ struct r600_stencil_ref
 	ubyte writemask[2];
 };
 
-struct r600_pipe_context {
+struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
 	enum radeon_family		family;
@@ -209,7 +209,6 @@ struct r600_pipe_context {
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
-	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
 	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
@@ -251,17 +250,61 @@ struct r600_pipe_context {
 	boolean				have_depth_texture, have_depth_fb;
 
 	unsigned default_ps_gprs, default_vs_gprs;
+
+	/* Below are variables from the old r600_context.
+	 */
+	struct radeon_winsys_cs	*cs;
+	struct pipe_context	*pipe;
+
+	void (*flush)(void *pipe, unsigned flags);
+
+	struct r600_range	*range;
+	unsigned		nblocks;
+	struct r600_block	**blocks;
+	struct list_head	dirty;
+	struct list_head	resource_dirty;
+	struct list_head	enable_list;
+	unsigned		pm4_dirty_cdwords;
+	unsigned		ctx_pm4_ndwords;
+	unsigned		init_dwords;
+
+	unsigned		creloc;
+	struct r600_resource	**bo;
+
+	uint32_t		*pm4;
+	unsigned		pm4_cdwords;
+
+	/* The list of active queries. Only one query of each type can be active. */
+	struct list_head	active_query_list;
+	unsigned		num_cs_dw_queries_suspend;
+	unsigned		num_cs_dw_streamout_end;
+
+	unsigned		backend_mask;
+	unsigned                max_db; /* for OQ */
+	unsigned                num_dest_buffers;
+	unsigned		flags;
+	boolean                 predicate_drawing;
+	struct r600_range	ps_resources;
+	struct r600_range	vs_resources;
+	struct r600_range	fs_resources;
+	int			num_ps_resources, num_vs_resources, num_fs_resources;
+
+	unsigned		num_so_targets;
+	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
+	boolean			streamout_start;
+	unsigned		streamout_append_bitmask;
+	unsigned		*vs_so_stride_in_dw;
 };
 
 /* evergreen_state.c */
-void evergreen_init_state_functions(struct r600_pipe_context *rctx);
-void evergreen_init_config(struct r600_pipe_context *rctx);
+void evergreen_init_state_functions(struct r600_context *rctx);
+void evergreen_init_config(struct r600_context *rctx);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
-void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
-void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
-void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
+void evergreen_polygon_offset_update(struct r600_context *rctx);
+void evergreen_pipe_init_buffer_resource(struct r600_context *rctx,
 					 struct r600_pipe_resource_state *rstate);
 void evergreen_pipe_mod_buffer_resource(struct pipe_context *ctx,
 					struct r600_pipe_resource_state *rstate,
@@ -275,10 +318,10 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      unsigned usage);
 
 /* r600_blit.c */
-void r600_init_blit_functions(struct r600_pipe_context *rctx);
+void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
-void r600_flush_depth_textures(struct r600_pipe_context *rctx);
+void r600_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,
@@ -290,7 +333,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-void r600_upload_index_buffer(struct r600_pipe_context *rctx,
+void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count);
 
 
@@ -299,10 +342,10 @@ void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		unsigned flags);
 
 /* r600_query.c */
-void r600_init_query_functions(struct r600_pipe_context *rctx);
+void r600_init_query_functions(struct r600_context *rctx);
 
 /* r600_resource.c */
-void r600_init_context_resource_functions(struct r600_pipe_context *r600);
+void r600_init_context_resource_functions(struct r600_context *r600);
 
 /* r600_shader.c */
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader);
@@ -311,21 +354,21 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);
 
 /* r600_state.c */
-void r600_update_sampler_states(struct r600_pipe_context *rctx);
-void r600_init_state_functions(struct r600_pipe_context *rctx);
-void r600_init_config(struct r600_pipe_context *rctx);
+void r600_update_sampler_states(struct r600_context *rctx);
+void r600_init_state_functions(struct r600_context *rctx);
+void r600_init_config(struct r600_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
-void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
-void r600_polygon_offset_update(struct r600_pipe_context *rctx);
-void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+void *r600_create_db_flush_dsa(struct r600_context *rctx);
+void r600_polygon_offset_update(struct r600_context *rctx);
+void r600_pipe_init_buffer_resource(struct r600_context *rctx,
 				    struct r600_pipe_resource_state *rstate);
 void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride,
 				   enum radeon_bo_usage usage);
-void r600_adjust_gprs(struct r600_pipe_context *rctx);
+void r600_adjust_gprs(struct r600_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,
 				 enum pipe_texture_target target,
@@ -334,7 +377,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
-void r600_init_surface_functions(struct r600_pipe_context *r600);
+void r600_init_surface_functions(struct r600_context *r600);
 uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format format,
 				  const unsigned char *swizzle_view,
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
@@ -342,7 +385,7 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned layer);
 
 /* r600_translate.c */
-void r600_translate_index_buffer(struct r600_pipe_context *r600,
+void r600_translate_index_buffer(struct r600_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count);
 

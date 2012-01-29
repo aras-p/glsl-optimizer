@@ -778,8 +778,6 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->blocks);
 	free(ctx->bo);
 	ctx->ws->cs_destroy(ctx->cs);
-
-	memset(ctx, 0, sizeof(struct r600_context));
 }
 
 static void r600_add_resource_block(struct r600_context *ctx, struct r600_range *range, int num_blocks, int *index)
@@ -833,7 +831,6 @@ int r600_context_init(struct r600_context *ctx, struct r600_screen *screen)
 {
 	int r;
 
-	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->screen = screen;
 	ctx->ws = screen->ws;
 

@@ -24,7 +24,7 @@
 #define R600_ASM_H
 
 struct r600_vertex_element;
-struct r600_pipe_context;
+struct r600_context;
 
 struct r600_bytecode_alu_src {
 	unsigned			sel;
@@ -223,7 +223,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc);
 
 int cm_bytecode_add_cf_end(struct r600_bytecode *bc);
 
-int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve);
+int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r600_vertex_element *ve);
 
 /* r700_asm.c */
 void r700_bytecode_cf_vtx_build(uint32_t *bytecode, const struct r600_bytecode_cf *cf);

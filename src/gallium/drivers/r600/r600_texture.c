@@ -759,7 +759,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct pb_buffer *buf;
 	enum pipe_format format = transfer->resource->format;
@@ -781,7 +781,7 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
 
-	if (!(map = rctx->ws->buffer_map(buf, rctx->ctx.cs, transfer->usage))) {
+	if (!(map = rctx->ws->buffer_map(buf, rctx->cs, transfer->usage))) {
 		return NULL;
 	}
 
@@ -792,7 +792,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pb_buffer *buf;
 
 	if (rtransfer->staging_texture) {
@@ -809,7 +809,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	rctx->ws->buffer_unmap(buf);
 }
 
-void r600_init_surface_functions(struct r600_pipe_context *r600)
+void r600_init_surface_functions(struct r600_context *r600)
 {
 	r600->context.create_surface = r600_create_surface;
 	r600->context.surface_destroy = r600_surface_destroy;

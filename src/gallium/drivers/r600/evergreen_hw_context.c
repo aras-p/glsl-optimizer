@@ -912,7 +912,6 @@ int evergreen_context_init(struct r600_context *ctx, struct r600_screen *screen)
 {
 	int r;
 
-	memset(ctx, 0, sizeof(struct r600_context));
 	ctx->screen = screen;
 	ctx->ws = screen->ws;
 

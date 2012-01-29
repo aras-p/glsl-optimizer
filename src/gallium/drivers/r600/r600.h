@@ -198,53 +198,6 @@ struct r600_so_target {
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
 #define R600_CONTEXT_CHECK_EVENT_FLUSH	(1 << 2)
 
-struct r600_context {
-	struct r600_screen	*screen;
-	struct radeon_winsys	*ws;
-	struct radeon_winsys_cs	*cs;
-	struct pipe_context	*pipe;
-
-	void (*flush)(void *pipe, unsigned flags);
-
-	struct r600_range	*range;
-	unsigned		nblocks;
-	struct r600_block	**blocks;
-	struct list_head	dirty;
-	struct list_head	resource_dirty;
-	struct list_head	enable_list;
-	unsigned		pm4_dirty_cdwords;
-	unsigned		ctx_pm4_ndwords;
-	unsigned		init_dwords;
-
-	unsigned		creloc;
-	struct r600_resource	**bo;
-
-	uint32_t		*pm4;
-	unsigned		pm4_cdwords;
-
-	/* The list of active queries. Only one query of each type can be active. */
-	struct list_head	active_query_list;
-	unsigned		num_cs_dw_queries_suspend;
-	unsigned		num_cs_dw_streamout_end;
-
-	unsigned		backend_mask;
-	unsigned                max_db; /* for OQ */
-	unsigned                num_dest_buffers;
-	unsigned		flags;
-	boolean                 predicate_drawing;
-	struct r600_range ps_resources;
-	struct r600_range vs_resources;
-	struct r600_range fs_resources;
-	int num_ps_resources, num_vs_resources, num_fs_resources;
-	boolean			have_depth_texture, have_depth_fb;
-
-	unsigned		num_so_targets;
-	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
-	boolean			streamout_start;
-	unsigned		streamout_append_bitmask;
-	unsigned		*vs_so_stride_in_dw;
-};
-
 struct r600_draw {
 	uint32_t		vgt_num_indices;
 	uint32_t		vgt_num_instances;
@@ -255,6 +208,9 @@ struct r600_draw {
 	unsigned		db_render_control;
 	struct r600_resource	*indices;
 };
+
+struct r600_context;
+struct r600_screen;
 
 void r600_get_backend_mask(struct r600_context *ctx);
 int r600_context_init(struct r600_context *ctx, struct r600_screen *screen);
@@ -309,7 +265,7 @@ void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
 				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage);
 
-#define r600_pipe_state_add_reg(state, offset, value, bo, usage) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
+#define r600_pipe_state_add_reg(state, offset, value, bo, usage) _r600_pipe_state_add_reg(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
 
 static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 					   uint32_t value)

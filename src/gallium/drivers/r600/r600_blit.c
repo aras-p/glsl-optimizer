@@ -43,9 +43,9 @@ enum r600_blitter_op /* bitmask */
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	r600_context_queries_suspend(&rctx->ctx);
+	r600_context_queries_suspend(rctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
 	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);
@@ -62,8 +62,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_vertex_buffers(rctx->blitter,
 					 rctx->vbuf_mgr->nr_vertex_buffers,
 					 rctx->vbuf_mgr->vertex_buffer);
-	util_blitter_save_so_targets(rctx->blitter, rctx->ctx.num_so_targets,
-				     (struct pipe_stream_output_target**)rctx->ctx.so_targets);
+	util_blitter_save_so_targets(rctx->blitter, rctx->num_so_targets,
+				     (struct pipe_stream_output_target**)rctx->so_targets);
 
 	if (op & R600_SAVE_FRAMEBUFFER)
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
@@ -88,14 +88,14 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 static void r600_blitter_end(struct pipe_context *ctx)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	if (rctx->saved_render_cond) {
 		rctx->context.render_condition(&rctx->context,
 					       rctx->saved_render_cond,
 					       rctx->saved_render_cond_mode);
 		rctx->saved_render_cond = NULL;
 	}
-	r600_context_queries_resume(&rctx->ctx);
+	r600_context_queries_resume(rctx);
 }
 
 static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
@@ -116,7 +116,7 @@ static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
 
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned layer, level;
 	float depth = 1.0f;
 
@@ -158,7 +158,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	texture->dirty_db = FALSE;
 }
 
-void r600_flush_depth_textures(struct r600_pipe_context *rctx)
+void r600_flush_depth_textures(struct r600_context *rctx)
 {
 	unsigned int i;
 
@@ -200,7 +200,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       const union pipe_color_union *color,
 		       double depth, unsigned stencil)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 	
 	r600_blitter_begin(ctx, R600_CLEAR);
@@ -216,7 +216,7 @@ static void r600_clear_render_target(struct pipe_context *ctx,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_clear_render_target(rctx->blitter, dst, color,
@@ -232,7 +232,7 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
@@ -251,7 +251,7 @@ static void r600_hw_copy_region(struct pipe_context *ctx,
 				unsigned src_level,
 				const struct pipe_box *src_box)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_COPY);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
@@ -358,7 +358,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		r600_reset_blittable_to_compressed(dst, &orig_info[1]);
 }
 
-void r600_init_blit_functions(struct r600_pipe_context *rctx)
+void r600_init_blit_functions(struct r600_context *rctx)
 {
 	rctx->context.clear = r600_clear;
 	rctx->context.clear_render_target = r600_clear_render_target;

@@ -699,7 +699,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-void r600_polygon_offset_update(struct r600_pipe_context *rctx)
+void r600_polygon_offset_update(struct r600_context *rctx)
 {
 	struct r600_pipe_state state;
 
@@ -745,14 +745,14 @@ void r600_polygon_offset_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_add_reg(&state,
 				R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
 				offset_db_fmt_cntl, NULL, 0);
-		r600_context_pipe_state_set(&rctx->ctx, &state);
+		r600_context_pipe_state_set(rctx, &state);
 	}
 }
 
 static void r600_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
 	if (rstate == NULL)
@@ -765,13 +765,13 @@ static void r600_set_blend_color(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028420_CB_BLEND_ALPHA, fui(state->color[3]), NULL, 0);
 	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
 	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
 static void *r600_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
 	uint32_t color_control = 0, target_mask;
@@ -851,7 +851,7 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 static void *r600_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
 	unsigned db_render_override, db_render_control;
@@ -928,7 +928,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 static void *r600_create_rs_state(struct pipe_context *ctx,
 				  const struct pipe_rasterizer_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
@@ -1167,7 +1167,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	return &view->base;
 }
 
-static void r600_set_sampler_views(struct r600_pipe_context *rctx,
+static void r600_set_sampler_views(struct r600_context *rctx,
 				   struct r600_textures_info *dst,
 				   unsigned count,
 				   struct pipe_sampler_view **views,
@@ -1186,9 +1186,9 @@ static void r600_set_sampler_views(struct r600_pipe_context *rctx,
 			     rviews[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) != dst->is_array_sampler[i])
 				dst->samplers_dirty = true;
 
-			set_resource(&rctx->ctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
+			set_resource(rctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
 		} else {
-			set_resource(&rctx->ctx, NULL, i + R600_MAX_CONST_BUFFERS);
+			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
 		}
 
 		pipe_sampler_view_reference(
@@ -1198,7 +1198,7 @@ static void r600_set_sampler_views(struct r600_pipe_context *rctx,
 
 	for (i = count; i < dst->n_views; i++) {
 		if (dst->views[i]) {
-			set_resource(&rctx->ctx, NULL, i + R600_MAX_CONST_BUFFERS);
+			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], NULL);
 		}
 	}
@@ -1209,7 +1209,7 @@ static void r600_set_sampler_views(struct r600_pipe_context *rctx,
 static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 				      struct pipe_sampler_view **views)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views,
 			       r600_context_pipe_state_set_vs_resource);
 }
@@ -1217,12 +1217,12 @@ static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 				      struct pipe_sampler_view **views)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views,
 			       r600_context_pipe_state_set_ps_resource);
 }
 
-static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean enable)
+static void r600_set_seamless_cubemap(struct r600_context *rctx, boolean enable)
 {
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	if (rstate == NULL)
@@ -1239,10 +1239,10 @@ static void r600_set_seamless_cubemap(struct r600_pipe_context *rctx, boolean en
 
 	free(rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP]);
 	rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void r600_bind_samplers(struct r600_pipe_context *rctx,
+static void r600_bind_samplers(struct r600_context *rctx,
 			       struct r600_textures_info *dst,
 			       unsigned count, void **states)
 {
@@ -1253,17 +1253,17 @@ static void r600_bind_samplers(struct r600_pipe_context *rctx,
 
 static void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	r600_bind_samplers(rctx, &rctx->vs_samplers, count, states);
 }
 
 static void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	r600_bind_samplers(rctx, &rctx->ps_samplers, count, states);
 }
 
-static void r600_update_samplers(struct r600_pipe_context *rctx,
+static void r600_update_samplers(struct r600_context *rctx,
 				 struct r600_textures_info *tex,
 				 void (*set_sampler)(struct r600_context*, struct r600_pipe_state*, unsigned))
 {
@@ -1289,7 +1289,7 @@ static void r600_update_samplers(struct r600_pipe_context *rctx,
 				}
 			}
 
-			set_sampler(&rctx->ctx, &tex->samplers[i]->rstate, i);
+			set_sampler(rctx, &tex->samplers[i]->rstate, i);
 
 			if (tex->samplers[i])
 				seamless = tex->samplers[i]->seamless_cube_map;
@@ -1302,7 +1302,7 @@ static void r600_update_samplers(struct r600_pipe_context *rctx,
 	}
 }
 
-void r600_update_sampler_states(struct r600_pipe_context *rctx)
+void r600_update_sampler_states(struct r600_context *rctx)
 {
 	r600_update_samplers(rctx, &rctx->vs_samplers,
 			     r600_context_pipe_state_set_vs_sampler);
@@ -1313,7 +1313,7 @@ void r600_update_sampler_states(struct r600_pipe_context *rctx)
 static void r600_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct pipe_resource * cbuf;
 
@@ -1339,7 +1339,7 @@ static void r600_set_clip_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_CLIP]);
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 
 	cbuf = pipe_user_buffer_create(ctx->screen,
                                    state->ucp,
@@ -1361,7 +1361,7 @@ static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask
 static void r600_set_scissor_state(struct pipe_context *ctx,
 					const struct pipe_scissor_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t tl, br;
 
@@ -1398,13 +1398,13 @@ static void r600_set_scissor_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
 	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
 static void r600_set_viewport_state(struct pipe_context *ctx,
 					const struct pipe_viewport_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
 	if (rstate == NULL)
@@ -1424,10 +1424,10 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
 	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
+static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_resource_texture *rtex;
@@ -1561,7 +1561,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				0x00000000, NULL, 0);
 }
 
-static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
+static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			const struct pipe_framebuffer_state *state)
 {
 	struct r600_resource_texture *rtex;
@@ -1603,15 +1603,15 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 static void r600_set_framebuffer_state(struct pipe_context *ctx,
 					const struct pipe_framebuffer_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t shader_mask, tl, br, shader_control;
 
 	if (rstate == NULL)
 		return;
 
-	r600_context_flush_dest_caches(&rctx->ctx);
-	rctx->ctx.num_dest_buffers = state->nr_cbufs;
+	r600_context_flush_dest_caches(rctx);
+	rctx->num_dest_buffers = state->nr_cbufs;
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
@@ -1625,7 +1625,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		r600_db(rctx, rstate, state);
-		rctx->ctx.num_dest_buffers++;
+		rctx->num_dest_buffers++;
 	}
 
 	shader_mask = 0;
@@ -1693,7 +1693,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 
 	if (state->zsbuf) {
 		r600_polygon_offset_update(rctx);
@@ -1702,16 +1702,16 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 static void r600_texture_barrier(struct pipe_context *ctx)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
+	r600_context_flush_all(rctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
 			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
 			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
 			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
 			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1));
 }
 
-void r600_init_state_functions(struct r600_pipe_context *rctx)
+void r600_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -1757,7 +1757,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
-void r600_adjust_gprs(struct r600_pipe_context *rctx)
+void r600_adjust_gprs(struct r600_context *rctx)
 {
 	struct r600_pipe_state rstate;
 	unsigned num_ps_gprs = rctx->default_ps_gprs;
@@ -1792,10 +1792,10 @@ void r600_adjust_gprs(struct r600_pipe_context *rctx)
 	rstate.nregs = 0;
 	r600_pipe_state_add_reg(&rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, NULL, 0);
 
-	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+	r600_context_pipe_state_set(rctx, &rstate);
 }
 
-void r600_init_config(struct r600_pipe_context *rctx)
+void r600_init_config(struct r600_context *rctx)
 {
 	int ps_prio;
 	int vs_prio;
@@ -2043,14 +2043,14 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0x00000000, NULL, 0);
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 
 	r600_set_seamless_cubemap(rctx, FALSE);
 }
 
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
@@ -2175,7 +2175,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10] = {};
@@ -2236,7 +2236,7 @@ void r600_fetch_shader(struct pipe_context *ctx,
 		       struct r600_vertex_element *ve)
 {
 	struct r600_pipe_state *rstate;
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
@@ -2250,7 +2250,7 @@ void r600_fetch_shader(struct pipe_context *ctx,
 				ve->fetch_shader, RADEON_USAGE_READ);
 }
 
-void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
+void *r600_create_db_flush_dsa(struct r600_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
 	struct r600_pipe_state *rstate;
@@ -2289,7 +2289,7 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void r600_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+void r600_pipe_init_buffer_resource(struct r600_context *rctx,
 				    struct r600_pipe_resource_state *rstate)
 {
 	rstate->id = R600_PIPE_STATE_RESOURCE;

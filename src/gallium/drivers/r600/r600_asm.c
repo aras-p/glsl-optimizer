@@ -2702,7 +2702,7 @@ out_unknown:
 	R600_ERR("unsupported vertex format %s\n", util_format_name(pformat));
 }
 
-int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve)
+int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r600_vertex_element *ve)
 {
 	static int dump_shaders = -1;
 
@@ -2818,7 +2818,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		return -ENOMEM;
 	}
 
-	bytecode = rctx->ws->buffer_map(ve->fetch_shader->buf, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
+	bytecode = rctx->ws->buffer_map(ve->fetch_shader->buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	if (bytecode == NULL) {
 		r600_bytecode_clear(&bc);
 		pipe_resource_reference((struct pipe_resource**)&ve->fetch_shader, NULL);

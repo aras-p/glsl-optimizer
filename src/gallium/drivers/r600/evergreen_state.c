@@ -695,7 +695,7 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 static void evergreen_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
 	if (rstate == NULL)
@@ -709,13 +709,13 @@ static void evergreen_set_blend_color(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
 	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
 static void *evergreen_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
 	uint32_t color_control, target_mask;
@@ -796,7 +796,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
 	unsigned db_render_override, db_render_control;
@@ -873,7 +873,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 static void *evergreen_create_rs_state(struct pipe_context *ctx,
 					const struct pipe_rasterizer_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
@@ -1120,12 +1120,12 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
 					struct pipe_sampler_view **views)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state,
+			evergreen_context_pipe_state_set_vs_resource(rctx, &resource[i]->state,
 								     i + R600_MAX_CONST_BUFFERS);
 		}
 	}
@@ -1134,7 +1134,7 @@ static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned cou
 static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 					struct pipe_sampler_view **views)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
 	int i;
 	int has_depth = 0;
@@ -1144,10 +1144,10 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 			if (resource[i]) {
 				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
 					has_depth = 1;
-				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
+				evergreen_context_pipe_state_set_ps_resource(rctx, &resource[i]->state,
 									     i + R600_MAX_CONST_BUFFERS);
 			} else
-				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+				evergreen_context_pipe_state_set_ps_resource(rctx, NULL,
 									     i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
@@ -1162,7 +1162,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i]) {
-			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+			evergreen_context_pipe_state_set_ps_resource(rctx, NULL,
 								     i + R600_MAX_CONST_BUFFERS);
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
@@ -1173,7 +1173,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 
 static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
 
@@ -1181,24 +1181,24 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	rctx->ps_samplers.n_samplers = count;
 
 	for (int i = 0; i < count; i++) {
-		evergreen_context_pipe_state_set_ps_sampler(&rctx->ctx, rstates[i], i);
+		evergreen_context_pipe_state_set_ps_sampler(rctx, rstates[i], i);
 	}
 }
 
 static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
 	for (int i = 0; i < count; i++) {
-		evergreen_context_pipe_state_set_vs_sampler(&rctx->ctx, rstates[i], i);
+		evergreen_context_pipe_state_set_vs_sampler(rctx, rstates[i], i);
 	}
 }
 
 static void evergreen_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct pipe_resource *cbuf;
 
@@ -1224,7 +1224,7 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_CLIP]);
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 
 	cbuf = pipe_user_buffer_create(ctx->screen,
                                    state->ucp,
@@ -1246,7 +1246,7 @@ static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample
 static void evergreen_set_scissor_state(struct pipe_context *ctx,
 					const struct pipe_scissor_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t tl, br;
 
@@ -1283,13 +1283,13 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
 	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
 static void evergreen_set_viewport_state(struct pipe_context *ctx,
 					const struct pipe_viewport_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
 	if (rstate == NULL)
@@ -1309,10 +1309,10 @@ static void evergreen_set_viewport_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
 	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
+static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_resource_texture *rtex;
@@ -1451,7 +1451,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 				&rtex->resource, RADEON_USAGE_READWRITE);
 }
 
-static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rstate,
+static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			 const struct pipe_framebuffer_state *state)
 {
 	struct r600_resource_texture *rtex;
@@ -1517,7 +1517,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 					const struct pipe_framebuffer_state *state)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t shader_mask, tl, br;
 	int tl_x, tl_y, br_x, br_y;
@@ -1525,8 +1525,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
-	evergreen_context_flush_dest_caches(&rctx->ctx);
-	rctx->ctx.num_dest_buffers = state->nr_cbufs;
+	evergreen_context_flush_dest_caches(rctx);
+	rctx->num_dest_buffers = state->nr_cbufs;
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
@@ -1541,7 +1541,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		evergreen_db(rctx, rstate, state);
-		rctx->ctx.num_dest_buffers++;
+		rctx->num_dest_buffers++;
 	}
 
 	shader_mask = 0;
@@ -1611,7 +1611,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 
 	if (state->zsbuf) {
 		evergreen_polygon_offset_update(rctx);
@@ -1620,9 +1620,9 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 static void evergreen_texture_barrier(struct pipe_context *ctx)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
+	r600_context_flush_all(rctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
 			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
 			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
 			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
@@ -1631,7 +1631,7 @@ static void evergreen_texture_barrier(struct pipe_context *ctx)
 			S_0085F0_CB10_DEST_BASE_ENA(1) | S_0085F0_CB11_DEST_BASE_ENA(1));
 }
 
-void evergreen_init_state_functions(struct r600_pipe_context *rctx)
+void evergreen_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
@@ -1677,7 +1677,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
-static void cayman_init_config(struct r600_pipe_context *rctx)
+static void cayman_init_config(struct r600_context *rctx)
 {
   	struct r600_pipe_state *rstate = &rctx->config;
 	unsigned tmp;
@@ -1756,10 +1756,10 @@ static void cayman_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_0288EC_SQ_LDS_ALLOC_PS, 0, NULL, 0);
 
 	r600_pipe_state_add_reg(rstate, CM_R_028804_DB_EQAA, 0x110000, NULL, 0);
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
-void evergreen_init_config(struct r600_pipe_context *rctx)
+void evergreen_init_config(struct r600_context *rctx)
 {
 	struct r600_pipe_state *rstate = &rctx->config;
 	int ps_prio;
@@ -2182,10 +2182,10 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 
 	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, NULL, 0);
 
-	r600_context_pipe_state_set(&rctx->ctx, rstate);
+	r600_context_pipe_state_set(rctx, rstate);
 }
 
-void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
+void evergreen_polygon_offset_update(struct r600_context *rctx)
 {
 	struct r600_pipe_state state;
 
@@ -2231,13 +2231,13 @@ void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_add_reg(&state,
 				R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
 				offset_db_fmt_cntl, NULL, 0);
-		r600_context_pipe_state_set(&rctx->ctx, &state);
+		r600_context_pipe_state_set(rctx, &state);
 	}
 }
 
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
@@ -2395,7 +2395,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10] = {};
@@ -2457,7 +2457,7 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 void evergreen_fetch_shader(struct pipe_context *ctx,
 			    struct r600_vertex_element *ve)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
 	rstate->nregs = 0;
@@ -2468,7 +2468,7 @@ void evergreen_fetch_shader(struct pipe_context *ctx,
 				ve->fetch_shader, RADEON_USAGE_READ);
 }
 
-void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
+void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
 	struct r600_pipe_state *rstate;
@@ -2485,7 +2485,7 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void evergreen_pipe_init_buffer_resource(struct r600_pipe_context *rctx,
+void evergreen_pipe_init_buffer_resource(struct r600_context *rctx,
 					 struct r600_pipe_resource_state *rstate)
 {
 	rstate->id = R600_PIPE_STATE_RESOURCE;

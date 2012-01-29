@@ -51,9 +51,9 @@
 /*
  * pipe_context
  */
-static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
+static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 {
-	struct r600_screen *rscreen = ctx->screen;
+	struct r600_screen *rscreen = rctx->screen;
 	struct r600_fence *fence = NULL;
 
 	pipe_mutex_lock(rscreen->fences.mutex);
@@ -67,8 +67,8 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			goto out;
 		}
-		rscreen->fences.data = ctx->ws->buffer_map(rscreen->fences.bo->buf,
-							   ctx->ctx.cs,
+		rscreen->fences.data = rctx->ws->buffer_map(rscreen->fences.bo->buf,
+							   rctx->cs,
 							   PIPE_TRANSFER_READ_WRITE);
 	}
 
@@ -115,7 +115,7 @@ static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
 	pipe_reference_init(&fence->reference, 1);
 
 	rscreen->fences.data[fence->index] = 0;
-	r600_context_emit_fence(&ctx->ctx, rscreen->fences.bo, fence->index, 1);
+	r600_context_emit_fence(rctx, rscreen->fences.bo, fence->index, 1);
 out:
 	pipe_mutex_unlock(rscreen->fences.mutex);
 	return fence;
@@ -125,7 +125,7 @@ out:
 void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		unsigned flags)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_fence **rfence = (struct r600_fence**)fence;
 	struct pipe_query *render_cond = NULL;
 	unsigned render_cond_mode = 0;
@@ -140,7 +140,7 @@ void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		ctx->render_condition(ctx, NULL, 0);
 	}
 
-	r600_context_flush(&rctx->ctx, flags);
+	r600_context_flush(rctx, flags);
 
 	/* Re-enable render condition. */
 	if (render_cond) {
@@ -180,12 +180,12 @@ static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
 
 static void r600_destroy_context(struct pipe_context *context)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
+	struct r600_context *rctx = (struct r600_context *)context;
 
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
 	util_unreference_framebuffer_state(&rctx->framebuffer);
 
-	r600_context_fini(&rctx->ctx);
+	r600_context_fini(rctx);
 
 	util_blitter_destroy(rctx->blitter);
 
@@ -203,7 +203,7 @@ static void r600_destroy_context(struct pipe_context *context)
 
 static struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 {
-	struct r600_pipe_context *rctx = CALLOC_STRUCT(r600_pipe_context);
+	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
 
 	if (rctx == NULL)
@@ -236,7 +236,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R600:
 	case R700:
 		r600_init_state_functions(rctx);
-		if (r600_context_init(&rctx->ctx, rctx->screen)) {
+		if (r600_context_init(rctx, rctx->screen)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -246,7 +246,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
-		if (evergreen_context_init(&rctx->ctx, rctx->screen)) {
+		if (evergreen_context_init(rctx, rctx->screen)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
@@ -259,9 +259,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->ctx.pipe = &rctx->context;
-	rctx->ctx.flush = r600_flush_from_winsys;
-	rctx->ws->cs_set_flush_callback(rctx->ctx.cs, r600_flush_from_winsys, rctx);
+	rctx->pipe = &rctx->context;
+	rctx->flush = r600_flush_from_winsys;
+	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,
@@ -284,7 +284,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	r600_get_backend_mask(&rctx->ctx); /* this emits commands and must be last */
+	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 
 	return &rctx->context;
 }

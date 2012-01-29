@@ -52,7 +52,7 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 					       unsigned usage,
 					       const struct pipe_box *box)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
 
 	transfer->resource = resource;
@@ -73,13 +73,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
 	struct r600_resource *rbuffer = r600_resource(transfer->resource);
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
+	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
 
 	if (rbuffer->b.user_ptr)
 		return (uint8_t*)rbuffer->b.user_ptr + transfer->box.x;
 
-	data = rctx->ws->buffer_map(rbuffer->buf, rctx->ctx.cs, transfer->usage);
+	data = rctx->ws->buffer_map(rbuffer->buf, rctx->cs, transfer->usage);
 	if (!data)
 		return NULL;
 
@@ -90,7 +90,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 					struct pipe_transfer *transfer)
 {
 	struct r600_resource *rbuffer = r600_resource(transfer->resource);
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
+	struct r600_context *rctx = (struct r600_context*)pipe;
 
 	if (rbuffer->b.user_ptr)
 		return;
@@ -107,7 +107,7 @@ static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 static void r600_transfer_destroy(struct pipe_context *ctx,
 				  struct pipe_transfer *transfer)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	util_slab_free(&rctx->pool_transfers, transfer);
 }
 
@@ -120,13 +120,13 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 						unsigned stride,
 						unsigned layer_stride)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context*)pipe;
+	struct r600_context *rctx = (struct r600_context*)pipe;
 	struct r600_resource *rbuffer = r600_resource(resource);
 	uint8_t *map = NULL;
 
 	assert(rbuffer->b.user_ptr == NULL);
 
-	map = rctx->ws->buffer_map(rbuffer->buf, rctx->ctx.cs,
+	map = rctx->ws->buffer_map(rbuffer->buf, rctx->cs,
 				   PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
 
 	memcpy(map + box->x, data, box->width);
@@ -237,7 +237,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	return &rbuffer->b.b.b;
 }
 
-void r600_upload_index_buffer(struct r600_pipe_context *rctx,
+void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count)
 {
 	struct r600_resource *rbuffer = r600_resource(ib->buffer);
@@ -246,7 +246,7 @@ void r600_upload_index_buffer(struct r600_pipe_context *rctx,
 		      rbuffer->b.user_ptr, &ib->offset, &ib->buffer);
 }
 
-void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource **rbuffer,
+void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
 			     uint32_t *const_offset)
 {
 	if ((*rbuffer)->b.user_ptr) {

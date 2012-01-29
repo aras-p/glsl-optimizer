@@ -59,7 +59,7 @@ The compiler must issue the source argument to slots z, y, and x
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_shader *rshader = &shader->shader;
 	uint32_t *ptr;
 	int	i;
@@ -71,7 +71,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->buf, rctx->ctx.cs, PIPE_TRANSFER_WRITE);
+		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->buf, rctx->cs, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < rshader->bc.ndw; ++i) {
 				ptr[i] = bswap_32(rshader->bc.bytecode[i]);
@@ -103,12 +103,12 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	return 0;
 }
 
-static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pipe_shader *pipeshader);
+static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_shader *pipeshader);
 
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	static int dump_shaders = -1;
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	int r;
 
 	/* Would like some magic "get_bool_option_once" routine.
@@ -806,7 +806,7 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pipe_shader *pipeshader)
+static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_shader *pipeshader)
 {
 	struct r600_shader *shader = &pipeshader->shader;
 	struct tgsi_token *tokens = pipeshader->tokens;
