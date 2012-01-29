@@ -10,20 +10,20 @@ LIBNAME = glsl
 include Makefile.sources
 
 GLCPP_SOURCES = \
-	$(LIBGLCPP_GENERATED_SOURCES) \
-	$(LIBGLCPP_SOURCES) \
+	$(LIBGLCPP_GENERATED_FILES) \
+	$(LIBGLCPP_FILES) \
 	ralloc.c \
 	glcpp/glcpp.c
 
 C_SOURCES = \
-	$(LIBGLCPP_GENERATED_SOURCES) \
-	$(LIBGLCPP_SOURCES) \
-	$(LIBGLSL_SOURCES)
+	$(LIBGLCPP_GENERATED_FILES) \
+	$(LIBGLCPP_FILES) \
+	$(LIBGLSL_FILES)
 
 # common sources for builtin_compiler and libglsl
 CXX_SOURCES = \
-	$(BUILTIN_COMPILER_GENERATED_CXX_SOURCES) \
-	$(LIBGLSL_CXX_SOURCES)
+	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
+	$(LIBGLSL_CXX_FILES)
 
 LIBS = \
 	$(TOP)/src/glsl/libglsl.a
@@ -34,7 +34,7 @@ GLSL2_C_SOURCES = \
 	../mesa/program/hash_table.c \
 	../mesa/program/symbol_table.c
 GLSL2_CXX_SOURCES = \
-	$(GLSL_COMPILER_CXX_SOURCES)
+	$(GLSL_COMPILER_CXX_FILES)
 
 GLSL2_OBJECTS = \
 	$(GLSL2_C_SOURCES:.c=.o) \

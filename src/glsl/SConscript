@@ -42,7 +42,7 @@ glsl_sources = [
 source_lists = env.ParseSourceList('Makefile.sources')
 
 # add non-generated sources
-for l in ('LIBGLCPP_SOURCES', 'LIBGLSL_SOURCES', 'LIBGLSL_CXX_SOURCES'):
+for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES', 'LIBGLSL_CXX_FILES'):
     glsl_sources += source_lists[l]
 
 if env['msvc']:
@@ -57,7 +57,7 @@ else:
     env.Command('hash_table.c', '#src/mesa/program/hash_table.c', Copy('$TARGET', '$SOURCE'))
     env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
 
-    compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_SOURCES'])
+    compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
 
     mesa_objs = env.StaticObject([
         'hash_table.c',
@@ -69,7 +69,7 @@ else:
     builtin_compiler = env.Program(
         target = 'builtin_compiler',
         source = compiler_objs + glsl_sources + \
-            source_lists['BUILTIN_COMPILER_CXX_SOURCES'],
+            source_lists['BUILTIN_COMPILER_CXX_FILES'],
     )
 
     # SCons builtin dependency scanner doesn't detect that glsl_lexer.ll

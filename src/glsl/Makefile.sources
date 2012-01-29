@@ -2,20 +2,20 @@
 
 # libglcpp
 
-LIBGLCPP_SOURCES := \
+LIBGLCPP_FILES := \
 	glcpp/pp.c
 
-LIBGLCPP_GENERATED_SOURCES := \
+LIBGLCPP_GENERATED_FILES := \
 	glcpp/glcpp-lex.c \
 	glcpp/glcpp-parse.c
 
 # libglsl
 
-LIBGLSL_SOURCES := \
+LIBGLSL_FILES := \
 	strtod.c \
 	ralloc.c
 
-LIBGLSL_CXX_SOURCES := \
+LIBGLSL_CXX_FILES := \
 	ast_expr.cpp \
 	ast_function.cpp \
 	ast_to_hir.cpp \
@@ -82,7 +82,7 @@ LIBGLSL_CXX_SOURCES := \
 
 # glsl_compiler
 
-GLSL_COMPILER_CXX_SOURCES := \
+GLSL_COMPILER_CXX_FILES := \
 	standalone_scaffolding.cpp \
 	main.cpp
 
@@ -92,14 +92,14 @@ GLSL_COMPILER_CXX_SOURCES := \
 # For this to work, a dummy version of builtin_function.cpp,
 # builtin_stubs.cpp, is used.
 
-BUILTIN_COMPILER_CXX_SOURCES := \
+BUILTIN_COMPILER_CXX_FILES := \
 	builtin_stubs.cpp
 
-BUILTIN_COMPILER_GENERATED_CXX_SOURCES := \
+BUILTIN_COMPILER_GENERATED_CXX_FILES := \
 	glsl_lexer.cpp \
 	glsl_parser.cpp
 
 # libglsl generated sources
-LIBGLSL_GENERATED_CXX_SOURCES := \
-	$(BUILTIN_COMPILER_GENERATED_CXX_SOURCES) \
+LIBGLSL_GENERATED_CXX_FILES := \
+	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
 	builtin_function.cpp
