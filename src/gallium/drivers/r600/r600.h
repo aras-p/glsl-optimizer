@@ -111,7 +111,6 @@ struct r600_resource {
 
 struct r600_pipe_reg {
 	u32				value;
-	u32				mask;
 	struct r600_block 		*block;
 	struct r600_resource		*bo;
 	enum radeon_bo_usage		bo_usage;

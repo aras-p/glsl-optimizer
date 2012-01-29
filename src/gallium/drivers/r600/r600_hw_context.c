@@ -1077,7 +1077,6 @@ void r600_context_dirty_block(struct r600_context *ctx,
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state)
 {
 	struct r600_block *block;
-	unsigned new_val;
 	int dirty;
 	for (int i = 0; i < state->nregs; i++) {
 		unsigned id, reloc_id;
@@ -1088,11 +1087,8 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 
 		dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
-		new_val = block->reg[id];
-		new_val &= ~reg->mask;
-		new_val |= reg->value;
-		if (new_val != block->reg[id]) {
-			block->reg[id] = new_val;
+		if (reg->value != block->reg[id]) {
+			block->reg[id] = reg->value;
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 		if (block->flags & REG_FLAG_DIRTY_ALWAYS)
