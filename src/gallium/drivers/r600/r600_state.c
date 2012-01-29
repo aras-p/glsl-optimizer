@@ -1467,6 +1467,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned offset;
 	const struct util_format_description *desc;
 	int i;
+	unsigned blend_bypass = 0, blend_clamp = 1;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -1515,10 +1516,20 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		endian = r600_colorformat_endian_swap(format);
 	}
 
+	/* set blend bypass according to docs if SINT/UINT or
+	   8/24 COLOR variants */
+	if (ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT ||
+	    format == V_0280A0_COLOR_8_24 || format == V_0280A0_COLOR_24_8 ||
+	    format == V_0280A0_COLOR_X24_8_32_FLOAT) {
+		blend_clamp = 0;
+		blend_bypass = 1;
+	}
+
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
-		S_0280A0_BLEND_CLAMP(1) |
+		S_0280A0_BLEND_BYPASS(blend_bypass) |
+		S_0280A0_BLEND_CLAMP(blend_clamp) |
 		S_0280A0_NUMBER_TYPE(ntype) |
 		S_0280A0_ENDIAN(endian);
 
