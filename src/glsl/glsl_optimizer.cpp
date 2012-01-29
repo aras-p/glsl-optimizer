@@ -26,8 +26,9 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
 
+   ctx->Const.GLSLVersion = 120;
 
-   /* 1.10 minimums. */
+   /* 1.20 minimums. */
    ctx->Const.MaxLights = 8;
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxTextureUnits = 2;
