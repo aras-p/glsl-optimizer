@@ -303,17 +303,17 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
-			      u32 offset, u32 value, u32 mask,
+			      u32 offset, u32 value,
 			      u32 range_id, u32 block_id,
 			      struct r600_resource *bo,
 			      enum radeon_bo_usage usage);
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     u32 offset, u32 value, u32 mask,
+				     u32 offset, u32 value,
 				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage);
 
-#define r600_pipe_state_add_reg(state, offset, value, mask, bo, usage) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, mask, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
+#define r600_pipe_state_add_reg(state, offset, value, bo, usage) _r600_pipe_state_add_reg(&rctx->ctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
 
 static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 					   u32 value)

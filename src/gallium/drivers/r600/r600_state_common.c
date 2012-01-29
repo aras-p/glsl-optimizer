@@ -96,13 +96,13 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 				S_028430_STENCILREF(state->ref_value[0]) |
 				S_028430_STENCILMASK(state->valuemask[0]) |
 				S_028430_STENCILWRITEMASK(state->writemask[0]),
-				0xFFFFFFFF, NULL, 0);
+				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028434_DB_STENCILREFMASK_BF,
 				S_028434_STENCILREF_BF(state->ref_value[1]) |
 				S_028434_STENCILMASK_BF(state->valuemask[1]) |
 				S_028434_STENCILWRITEMASK_BF(state->writemask[1]),
-				0xFFFFFFFF, NULL, 0);
+				NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_STENCIL_REF]);
 	rctx->states[R600_PIPE_STATE_STENCIL_REF] = rstate;
@@ -394,7 +394,7 @@ static void r600_update_alpha_ref(struct r600_pipe_context *rctx)
 	rstate.nregs = 0;
 	if (rctx->export_16bpc)
 		alpha_ref &= ~0x1FFF;
-	r600_pipe_state_add_reg(&rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL, 0);
+	r600_pipe_state_add_reg(&rstate, R_028438_SX_ALPHA_REF, alpha_ref, NULL, 0);
 
 	r600_context_pipe_state_set(&rctx->ctx, &rstate);
 	rctx->alpha_ref_dirty = false;
@@ -427,10 +427,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028180_ALU_CONST_BUFFER_SIZE_VS_0 + index * 4,
 					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL, 0);
+					NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0 + index * 4,
-					va_offset, 0xFFFFFFFF, rbuffer, RADEON_USAGE_READ);
+					va_offset, rbuffer, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 
 		rstate = &rctx->vs_const_buffer_resource[index];
@@ -455,10 +455,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
 					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL, 0);
+					NULL, 0);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					va_offset, 0xFFFFFFFF, rbuffer, RADEON_USAGE_READ);
+					va_offset, rbuffer, RADEON_USAGE_READ);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 
 		rstate = &rctx->ps_const_buffer_resource[index];
@@ -728,21 +728,21 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL, 0, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL, 0, NULL, 0);
 		if (rctx->chip_class <= R700)
-			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0, 0xFFFFFFFF, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0, 0xFFFFFFFF, NULL, 0);
+			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0, NULL, 0);
 	}
 
 	rctx->vgt.nregs = 0;
@@ -798,7 +798,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
-			      u32 offset, u32 value, u32 mask,
+			      u32 offset, u32 value,
 			      u32 range_id, u32 block_id,
 			      struct r600_resource *bo,
 			      enum radeon_bo_usage usage)
@@ -814,7 +814,7 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 	state->regs[state->nregs].id = (offset - block->start_offset) >> 2;
 
 	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].mask = mask;
+	state->regs[state->nregs].mask = 0xFFFFFFFF;
 	state->regs[state->nregs].bo = bo;
 	state->regs[state->nregs].bo_usage = usage;
 
@@ -823,7 +823,7 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 }
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     u32 offset, u32 value, u32 mask,
+				     u32 offset, u32 value,
 				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage)
 {
@@ -832,7 +832,7 @@ void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
 	state->regs[state->nregs].id = offset;
 	state->regs[state->nregs].block = NULL;
 	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].mask = mask;
+	state->regs[state->nregs].mask = 0xFFFFFFFF;
 	state->regs[state->nregs].bo = bo;
 	state->regs[state->nregs].bo_usage = usage;
 
