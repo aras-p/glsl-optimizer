@@ -257,6 +257,7 @@ struct r600_draw {
 	u32			vgt_draw_initiator;
 	u32			indices_bo_offset;
 	unsigned		db_render_override;
+	unsigned		db_render_control;
 	struct r600_resource	*indices;
 };
 

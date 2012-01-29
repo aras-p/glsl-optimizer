@@ -665,6 +665,7 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
@@ -780,9 +781,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
 
+	rdraw.db_render_override = dsa->db_render_override;
+	rdraw.db_render_control = dsa->db_render_control;
+
 	if (rctx->chip_class >= EVERGREEN) {
-		struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
-		rdraw.db_render_override = dsa->db_render_override;
 		evergreen_context_draw(&rctx->ctx, &rdraw);
 	} else {
 		r600_context_draw(&rctx->ctx, &rdraw);

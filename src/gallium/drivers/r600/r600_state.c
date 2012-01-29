@@ -919,6 +919,9 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028D30_DB_PRELOAD_CONTROL, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D44_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
 
+	dsa->db_render_override = db_render_override;
+	dsa->db_render_control = db_render_control;
+
 	return rstate;
 }
 
@@ -2251,6 +2254,8 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
 	struct r600_pipe_state *rstate;
+	struct r600_pipe_dsa *dsa_state;
+	unsigned db_render_control;
 	boolean quirk = false;
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
@@ -2270,12 +2275,17 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	}
 
 	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	r600_pipe_state_add_reg(rstate,
-				R_028D0C_DB_RENDER_CONTROL,
-				S_028D0C_DEPTH_COPY_ENABLE(1) |
-				S_028D0C_STENCIL_COPY_ENABLE(1) |
-				S_028D0C_COPY_CENTROID(1),
-				NULL, 0);
+	dsa_state = (struct r600_pipe_dsa*)rstate;
+
+	db_render_control =
+		S_028D0C_DEPTH_COPY_ENABLE(1) |
+		S_028D0C_STENCIL_COPY_ENABLE(1) |
+		S_028D0C_COPY_CENTROID(1);
+
+	r600_pipe_state_add_reg(rstate, R_028D0C_DB_RENDER_CONTROL, db_render_control, NULL, 0);
+
+	dsa_state->db_render_control = db_render_control;
+
 	return rstate;
 }
 

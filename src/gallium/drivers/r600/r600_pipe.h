@@ -126,6 +126,7 @@ struct r600_pipe_dsa {
 	struct r600_pipe_state		rstate;
 	unsigned			alpha_ref;
 	unsigned			db_render_override;
+	unsigned			db_render_control;
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
 };

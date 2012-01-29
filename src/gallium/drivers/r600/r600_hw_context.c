@@ -1452,23 +1452,14 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	if (draw->indices) {
 		ndwords = 11;
 	}
+	if (ctx->num_cs_dw_queries_suspend) {
+		if (ctx->screen->family >= CHIP_RV770)
+			ndwords += 3;
+		ndwords += 3;
+	}
+
 	/* when increasing ndwords, bump the max limit too */
 	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
-
-	/* queries need some special values
-	 * (this is non-zero if any query is active) */
-	if (ctx->num_cs_dw_queries_suspend) {
-		if (ctx->screen->family >= CHIP_RV770) {
-			r600_context_reg(ctx,
-					R_028D0C_DB_RENDER_CONTROL,
-					S_028D0C_R700_PERFECT_ZPASS_COUNTS(1),
-					S_028D0C_R700_PERFECT_ZPASS_COUNTS(1));
-		}
-		r600_context_reg(ctx,
-				R_028D10_DB_RENDER_OVERRIDE,
-				S_028D10_NOOP_CULL_DISABLE(1),
-				S_028D10_NOOP_CULL_DISABLE(1));
-	}
 
 	r600_need_cs_space(ctx, 0, TRUE);
 	assert(ctx->pm4_cdwords + ctx->pm4_dirty_cdwords + ndwords < RADEON_MAX_CMDBUF_DWORDS);
@@ -1486,6 +1477,25 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	if (ctx->streamout_start) {
 		r600_context_streamout_begin(ctx);
 		ctx->streamout_start = FALSE;
+	}
+
+	/* queries need some special values
+	 * (this is non-zero if any query is active) */
+	if (ctx->num_cs_dw_queries_suspend) {
+		if (ctx->screen->family >= CHIP_RV770) {
+			pm4 = &ctx->pm4[ctx->pm4_cdwords];
+			pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+			pm4[1] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
+			pm4[2] = draw->db_render_control | S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
+			ctx->pm4_cdwords += 3;
+			ndwords -= 3;
+		}
+		pm4 = &ctx->pm4[ctx->pm4_cdwords];
+		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		pm4[1] = (R_028D10_DB_RENDER_OVERRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
+		pm4[2] = draw->db_render_override | S_028D10_NOOP_CULL_DISABLE(1);
+		ctx->pm4_cdwords += 3;
+		ndwords -= 3;
 	}
 
 	/* draw packet */
