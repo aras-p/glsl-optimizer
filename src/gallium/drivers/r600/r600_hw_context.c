@@ -957,7 +957,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		ctx->flush(ctx->pipe, RADEON_FLUSH_ASYNC);
+		r600_flush(&ctx->context, NULL, RADEON_FLUSH_ASYNC);
 	}
 }
 
