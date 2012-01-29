@@ -125,6 +125,7 @@ struct r600_pipe_blend {
 struct r600_pipe_dsa {
 	struct r600_pipe_state		rstate;
 	unsigned			alpha_ref;
+	unsigned			db_render_override;
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
 };

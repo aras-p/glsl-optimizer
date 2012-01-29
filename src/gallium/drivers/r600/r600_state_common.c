@@ -781,6 +781,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
 
 	if (rctx->chip_class >= EVERGREEN) {
+		struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
+		rdraw.db_render_override = dsa->db_render_override;
 		evergreen_context_draw(&rctx->ctx, &rdraw);
 	} else {
 		r600_context_draw(&rctx->ctx, &rdraw);

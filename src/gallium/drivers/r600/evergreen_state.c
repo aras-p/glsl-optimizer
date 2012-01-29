@@ -865,6 +865,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AC8_DB_PRELOAD_CONTROL, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
+	dsa->db_render_override = db_render_override;
 
 	return rstate;
 }

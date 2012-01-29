@@ -1148,21 +1148,11 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	if (draw->indices) {
 		ndwords = 11;
 	}
+	if (ctx->num_cs_dw_queries_suspend)
+		ndwords += 6;
+
 	/* when increasing ndwords, bump the max limit too */
 	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
-
-	/* queries need some special values
-	 * (this is non-zero if any query is active) */
-	if (ctx->num_cs_dw_queries_suspend) {
-		r600_context_reg(ctx,
-				R_028004_DB_COUNT_CONTROL,
-				S_028004_PERFECT_ZPASS_COUNTS(1),
-				S_028004_PERFECT_ZPASS_COUNTS(1));
-		r600_context_reg(ctx,
-				R_02800C_DB_RENDER_OVERRIDE,
-				S_02800C_NOOP_CULL_DISABLE(1),
-				S_02800C_NOOP_CULL_DISABLE(1));
-	}
 
 	r600_need_cs_space(ctx, 0, TRUE);
 	assert(ctx->pm4_cdwords + ctx->pm4_dirty_cdwords + ndwords < RADEON_MAX_CMDBUF_DWORDS);
@@ -1180,6 +1170,20 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	if (ctx->streamout_start) {
 		r600_context_streamout_begin(ctx);
 		ctx->streamout_start = FALSE;
+	}
+
+	/* queries need some special values
+	 * (this is non-zero if any query is active) */
+	if (ctx->num_cs_dw_queries_suspend) {
+		pm4 = &ctx->pm4[ctx->pm4_cdwords];
+		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		pm4[1] = (R_028004_DB_COUNT_CONTROL - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		pm4[2] = S_028004_PERFECT_ZPASS_COUNTS(1);
+		pm4[3] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		pm4[4] = (R_02800C_DB_RENDER_OVERRIDE - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		pm4[5] = draw->db_render_override | S_02800C_NOOP_CULL_DISABLE(1);
+		ctx->pm4_cdwords += 6;
+		ndwords -= 6;
 	}
 
 	/* draw packet */

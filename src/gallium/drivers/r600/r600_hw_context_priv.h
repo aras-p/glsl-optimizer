@@ -30,7 +30,7 @@
 #include "util/u_hash_table.h"
 #include "os/os_thread.h"
 
-#define R600_MAX_DRAW_CS_DWORDS 11
+#define R600_MAX_DRAW_CS_DWORDS 17
 
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
