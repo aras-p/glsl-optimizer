@@ -34,6 +34,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_SM3:
 		/* TODO: >= nv4x support Shader Model 3.0 */
 		return 0;
+	case PIPE_CAP_GLSL_FEATURE_LEVEL:
+		return 120;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
 	case PIPE_CAP_POINT_SPRITE:
