@@ -34,10 +34,14 @@ total=0
 pass=0
 clean=0
 
+builddir=`pwd`
+testdir=`dirname $0`
+cd $testdir
+
 echo "====== Testing for correctness ======"
 for test in *.c; do
     echo -n "Testing $test..."
-    ../glcpp < $test > $test.out 2>&1
+    $builddir/glcpp < $test > $test.out 2>&1
     total=$((total+1))
     if cmp $test.expected $test.out >/dev/null 2>&1; then
 	echo "PASS"
