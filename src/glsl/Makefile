@@ -27,6 +27,7 @@ SRC = ast_expr.cpp \
 	ir_expression_flattening.cpp \
 	ir_function.cpp \
 	ir_function_can_inline.cpp \
+	ir_function_detect_recursion.cpp \
 	ir_hierarchical_visitor.cpp \
 	ir_hv_accept.cpp \
 	ir_import_prototypes.cpp \
@@ -73,6 +74,7 @@ SRC = ast_expr.cpp \
 	opt_tree_grafting.cpp \
 	ralloc.c \
 	s_expression.cpp \
+	standalone_scaffolding.cpp \
 	strtod.c \
 	glcpp/glcpp-lex.c \
 	glcpp/glcpp-parse.c \
