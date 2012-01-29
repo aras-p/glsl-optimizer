@@ -54,7 +54,6 @@ i965_dri_la_SOURCES = \
 i965_dri_la_LDFLAGS = -module -avoid-version -shared
 i965_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
-	$(DRICORE_LIB_DEPS) \
 	$(INTEL_LIBS) \
 	../common/libdricommon.la
 

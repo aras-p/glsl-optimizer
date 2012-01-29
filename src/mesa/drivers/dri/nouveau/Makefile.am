@@ -49,7 +49,6 @@ nouveau_vieux_dri_la_SOURCES = \
 nouveau_vieux_dri_la_LDFLAGS = -module -avoid-version -shared
 nouveau_vieux_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
-	$(DRICORE_LIB_DEPS) \
 	$(NOUVEAU_LIBS) \
 	../common/libdricommon.la
 

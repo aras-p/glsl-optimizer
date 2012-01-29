@@ -51,7 +51,6 @@ radeon_dri_la_SOURCES = \
 radeon_dri_la_LDFLAGS = -module -avoid-version -shared
 radeon_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
-	$(DRICORE_LIB_DEPS) \
 	$(RADEON_LIBS) \
 	../common/libdricommon.la
 

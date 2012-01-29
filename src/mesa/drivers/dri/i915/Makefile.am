@@ -53,7 +53,6 @@ i915_dri_la_SOURCES = \
 i915_dri_la_LDFLAGS = -module -avoid-version -shared
 i915_dri_la_LIBADD = \
 	$(DRI_LIB_DEPS) \
-	$(DRICORE_LIB_DEPS) \
 	$(INTEL_LIBS) \
 	../common/libdricommon.la
 
