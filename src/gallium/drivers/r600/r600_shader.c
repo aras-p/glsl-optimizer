@@ -182,12 +182,12 @@ struct r600_shader_ctx {
 	unsigned				file_offset[TGSI_FILE_COUNT];
 	unsigned				temp_reg;
 	struct r600_shader_tgsi_instruction	*inst_info;
-	struct r600_bytecode				*bc;
+	struct r600_bytecode			*bc;
 	struct r600_shader			*shader;
 	struct r600_shader_src			src[4];
-	u32					*literals;
-	u32					nliterals;
-	u32					max_driver_temp_used;
+	uint32_t				*literals;
+	uint32_t				nliterals;
+	uint32_t				max_driver_temp_used;
 	/* needed for evergreen interpolation */
 	boolean                                 input_centroid;
 	boolean                                 input_linear;
@@ -3277,7 +3277,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	const boolean src_requires_loading = tgsi_tex_src_requires_loading(ctx, 0);
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = 1;
-	u8 offset_x = 0, offset_y = 0, offset_z = 0;
+	uint8_t offset_x = 0, offset_y = 0, offset_z = 0;
 
 	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
 

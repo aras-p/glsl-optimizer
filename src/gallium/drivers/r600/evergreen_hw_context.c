@@ -847,7 +847,7 @@ static int r600_resource_range_init(struct r600_context *ctx, struct r600_range 
 }
 
 /* SHADER SAMPLER R600/R700 */
-static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
+static int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
 {
 	struct r600_reg r600_shader_sampler[] = {
 		{R_03C000_SQ_TEX_SAMPLER_WORD0_0, 0, 0, 0},
@@ -863,7 +863,7 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 }
 
 /* SHADER SAMPLER BORDER EG/CM */
-static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 offset, unsigned id)
+static int evergreen_state_sampler_border_init(struct r600_context *ctx, uint32_t offset, unsigned id)
 {
 	struct r600_reg r600_shader_sampler_border[] = {
 		{R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, 0, 0, 0},
@@ -893,7 +893,7 @@ static int evergreen_state_sampler_border_init(struct r600_context *ctx, u32 off
 	return 0;
 }
 
-static int evergreen_loop_const_init(struct r600_context *ctx, u32 offset)
+static int evergreen_loop_const_init(struct r600_context *ctx, uint32_t offset)
 {
 	unsigned nreg = 32;
 	struct r600_reg r600_loop_consts[32];

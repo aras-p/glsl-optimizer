@@ -389,7 +389,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 /*
  * common helpers
  */
-static INLINE u32 S_FIXED(float value, u32 frac_bits)
+static INLINE uint32_t S_FIXED(float value, uint32_t frac_bits)
 {
 	return value * (1 << frac_bits);
 }

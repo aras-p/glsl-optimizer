@@ -718,7 +718,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
-	u32 color_control, target_mask;
+	uint32_t color_control, target_mask;
 	/* FIXME there is more then 8 framebuffer */
 	unsigned blend_cntl[8];
 
@@ -1248,7 +1248,7 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	u32 tl, br;
+	uint32_t tl, br;
 
 	if (rstate == NULL)
 		return;
@@ -1519,7 +1519,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	u32 shader_mask, tl, br;
+	uint32_t shader_mask, tl, br;
 	int tl_x, tl_y, br_x, br_y;
 
 	if (rstate == NULL)

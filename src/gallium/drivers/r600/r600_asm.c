@@ -941,7 +941,7 @@ static int replace_gpr_with_pv_ps(struct r600_bytecode *bc,
 	return 0;
 }
 
-void r600_bytecode_special_constants(u32 value, unsigned *sel, unsigned *neg)
+void r600_bytecode_special_constants(uint32_t value, unsigned *sel, unsigned *neg)
 {
 	switch(value) {
 	case 0:
@@ -2712,7 +2712,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	const struct util_format_description *desc;
 	unsigned fetch_resource_start = rctx->chip_class >= EVERGREEN ? 0 : 160;
 	unsigned format, num_format, format_comp, endian;
-	u32 *bytecode;
+	uint32_t *bytecode;
 	int i, r;
 
 	/* Vertex element offsets need special handling. If the offset is

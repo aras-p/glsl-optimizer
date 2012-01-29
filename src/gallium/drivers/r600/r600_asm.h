@@ -194,8 +194,8 @@ struct r600_bytecode {
 	unsigned			nstack;
 	unsigned			nresource;
 	unsigned			force_add_cf;
-	u32				*bytecode;
-	u32				fc_sp;
+	uint32_t			*bytecode;
+	uint32_t			fc_sp;
 	struct r600_cf_stack_entry	fc_stack[32];
 	unsigned			call_sp;
 	struct r600_cf_callstack	callstack[SQ_MAX_CALL_DEPTH];
@@ -218,7 +218,7 @@ int r600_bytecode_add_output(struct r600_bytecode *bc, const struct r600_bytecod
 int r600_bytecode_build(struct r600_bytecode *bc);
 int r600_bytecode_add_cfinst(struct r600_bytecode *bc, int inst);
 int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytecode_alu *alu, int type);
-void r600_bytecode_special_constants(u32 value, unsigned *sel, unsigned *neg);
+void r600_bytecode_special_constants(uint32_t value, unsigned *sel, unsigned *neg);
 void r600_bytecode_dump(struct r600_bytecode *bc);
 
 int cm_bytecode_add_cf_end(struct r600_bytecode *bc);

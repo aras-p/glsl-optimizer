@@ -35,7 +35,7 @@
 void r600_get_backend_mask(struct r600_context *ctx)
 {
 	struct r600_resource *buffer;
-	u32 *results;
+	uint32_t *results;
 	unsigned num_backends = ctx->screen->info.r600_num_backends;
 	unsigned i, mask = 0;
 
@@ -109,7 +109,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 
 err:
 	/* fallback to old method - set num_backends lower bits to 1 */
-	ctx->backend_mask = (~((u32)0))>>(32-num_backends);
+	ctx->backend_mask = (~((uint32_t)0))>>(32-num_backends);
 	return;
 }
 
@@ -684,7 +684,7 @@ static int r600_resource_range_init(struct r600_context *ctx, struct r600_range 
 }
 
 /* SHADER SAMPLER R600/R700 */
-static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
+static int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
 {
 	struct r600_reg r600_shader_sampler[] = {
 		{R_03C000_SQ_TEX_SAMPLER_WORD0_0, 0, 0, 0},
@@ -700,7 +700,7 @@ static int r600_state_sampler_init(struct r600_context *ctx, u32 offset)
 }
 
 /* SHADER SAMPLER BORDER R600/R700 */
-static int r600_state_sampler_border_init(struct r600_context *ctx, u32 offset)
+static int r600_state_sampler_border_init(struct r600_context *ctx, uint32_t offset)
 {
 	struct r600_reg r600_shader_sampler_border[] = {
 		{R_00A400_TD_PS_SAMPLER0_BORDER_RED, 0, 0, 0},
@@ -716,7 +716,7 @@ static int r600_state_sampler_border_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_shader_sampler_border, nreg, PKT3_SET_CONFIG_REG, R600_CONFIG_REG_OFFSET);
 }
 
-static int r600_loop_const_init(struct r600_context *ctx, u32 offset)
+static int r600_loop_const_init(struct r600_context *ctx, uint32_t offset)
 {
 	unsigned nreg = 32;
 	struct r600_reg r600_loop_consts[32];
@@ -1703,7 +1703,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned new_results_end, i;
-	u32 *results;
+	uint32_t *results;
 	uint64_t va;
 
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
@@ -1720,7 +1720,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
-			results = (u32*)((char*)results + query->results_end);
+			results = (uint32_t*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
 
 			/* Set top bits for unused backends */
@@ -1740,7 +1740,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
 		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
-		results = (u32*)((char*)results + query->results_end);
+		results = (uint32_t*)((char*)results + query->results_end);
 		memset(results, 0, query->result_size);
 		ctx->ws->buffer_unmap(query->buffer->buf);
 		break;
@@ -1843,7 +1843,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 	} else {
 		unsigned results_base = query->results_start;
 		unsigned count;
-		u32 op;
+		uint32_t op;
 
 		/* find count of the query data blocks */
 		count = (query->buffer->b.b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.b.width0;

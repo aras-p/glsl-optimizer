@@ -802,8 +802,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,
-			      u32 offset, u32 value,
-			      u32 range_id, u32 block_id,
+			      uint32_t offset, uint32_t value,
+			      uint32_t range_id, uint32_t block_id,
 			      struct r600_resource *bo,
 			      enum radeon_bo_usage usage)
 {
@@ -826,7 +826,7 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 }
 
 void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     u32 offset, u32 value,
+				     uint32_t offset, uint32_t value,
 				     struct r600_resource *bo,
 				     enum radeon_bo_usage usage)
 {
