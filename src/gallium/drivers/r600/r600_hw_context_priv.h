@@ -70,9 +70,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
 int r600_setup_block_table(struct r600_context *ctx);
-void r600_context_reg(struct r600_context *ctx,
-		      unsigned offset, unsigned value,
-		      unsigned mask);
 void r600_init_cs(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 

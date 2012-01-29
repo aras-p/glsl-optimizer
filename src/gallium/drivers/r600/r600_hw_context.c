@@ -1025,33 +1025,6 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
 }
 
-void r600_context_reg(struct r600_context *ctx,
-		      unsigned offset, unsigned value,
-		      unsigned mask)
-{
-	struct r600_range *range;
-	struct r600_block *block;
-	unsigned id;
-	unsigned new_val;
-	int dirty;
-
-	range = &ctx->range[CTX_RANGE_ID(offset)];
-	block = range->blocks[CTX_BLOCK_ID(offset)];
-	id = (offset - block->start_offset) >> 2;
-
-	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
-
-	new_val = block->reg[id];
-	new_val &= ~mask;
-	new_val |= value;
-	if (new_val != block->reg[id]) {
-		dirty |= R600_BLOCK_STATUS_DIRTY;
-		block->reg[id] = new_val;
-	}
-	if (dirty)
-		r600_context_dirty_block(ctx, block, dirty, id);
-}
-
 void r600_context_dirty_block(struct r600_context *ctx,
 			      struct r600_block *block,
 			      int dirty, int index)
