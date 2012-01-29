@@ -168,6 +168,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->two_side = rs->two_side;
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
 	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
+	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
 
 	rctx->rasterizer = rs;
 
@@ -622,19 +623,8 @@ static void r600_update_derived_state(struct r600_pipe_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
 	struct r600_pipe_state rstate;
-	unsigned user_clip_plane_enable;
-
-	if (rctx->vs_shader->shader.clip_dist_write || rctx->vs_shader->shader.vs_prohibit_ucps)
-		user_clip_plane_enable = 0;
-	else
-		user_clip_plane_enable = rctx->rasterizer->clip_plane_enable & 0x3F;
 
 	rstate.nregs = 0;
-
-	if (user_clip_plane_enable != rctx->user_clip_plane_enable) {
-		r600_pipe_state_add_reg(&rstate, R_028810_PA_CL_CLIP_CNTL, user_clip_plane_enable , 0x3F, NULL, 0);
-		rctx->user_clip_plane_enable = user_clip_plane_enable;
-	}
 
 	if (rstate.nregs)
 		r600_context_pipe_state_set(&rctx->ctx, &rstate);
@@ -752,6 +742,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		if (rctx->chip_class <= R700)
 			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, 0xFFFFFFFF, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0, 0xFFFFFFFF, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0, 0xFFFFFFFF, NULL, 0);
 	}
 
 	rctx->vgt.nregs = 0;
@@ -781,6 +772,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_pipe_state_mod_reg(&rctx->vgt,
 				rctx->vs_shader->pa_cl_vs_out_cntl |
 				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write));
+	r600_pipe_state_mod_reg(&rctx->vgt,
+				rctx->pa_cl_clip_cntl |
+				(rctx->vs_shader->shader.clip_dist_write ||
+				 rctx->vs_shader->shader.vs_prohibit_ucps ?
+				 0 : rctx->rasterizer->clip_plane_enable & 0x3F));
 
 	r600_context_pipe_state_set(&rctx->ctx, &rctx->vgt);
 

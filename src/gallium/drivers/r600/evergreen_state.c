@@ -909,6 +909,11 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028814_POLY_MODE(polygon_dual_mode) |
 		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back));
+	rs->pa_cl_clip_cntl =
+		S_028810_PS_UCP_MODE(3) |
+		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
+		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
+		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
@@ -980,11 +985,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	}
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), 0xFFFFFFFF, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, 0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
-			S_028810_PS_UCP_MODE(3) | S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
-			S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
-			S_028810_DX_LINEAR_ATTR_CLIP_ENA(1),
-			0xFFFFFFFF, NULL, 0);
 	return rstate;
 }
 
