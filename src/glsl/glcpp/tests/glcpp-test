@@ -72,7 +72,7 @@ if [ "$do_valgrind" = "yes" ]; then
     echo "$clean/$total tests are valgrind-clean"
 fi
 
-if [ "$pass" = "$total" ] && [ "$clean" = "$total" ]; then
+if [ "$pass" = "$total" ] && [ "$do_valgrind" != "yes" ] || [ "$pass" = "$total" ]; then
     exit 0
 else
     exit 1
