@@ -152,6 +152,7 @@ struct r600_pipe_shader {
 	struct tgsi_token		*tokens;
 	unsigned	sprite_coord_enable;
 	unsigned	flatshade;
+	unsigned	pa_cl_vs_out_cntl;
 	struct pipe_stream_output_info	so;
 };
 
@@ -234,7 +235,6 @@ struct r600_pipe_context {
 	/* shader information */
 	boolean				two_side;
 	unsigned			user_clip_plane_enable;
-	unsigned			clip_dist_enable;
 	unsigned			sprite_coord_enable;
 	boolean				export_16bpc;
 	unsigned			alpha_ref;

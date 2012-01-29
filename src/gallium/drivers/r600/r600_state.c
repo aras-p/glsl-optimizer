@@ -2226,17 +2226,11 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
 				0xFFFFFFFF, NULL, 0);
 
-	r600_pipe_state_add_reg(rstate,
-				R_02881C_PA_CL_VS_OUT_CNTL,
-				S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
-				S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
-				S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
-				S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size),
-				S_02881C_VS_OUT_CCDIST0_VEC_ENA(1) |
-				S_02881C_VS_OUT_CCDIST1_VEC_ENA(1) |
-				S_02881C_VS_OUT_MISC_VEC_ENA(1) |
-				S_02881C_USE_VTX_POINT_SIZE(1),
-				NULL, 0);
+	shader->pa_cl_vs_out_cntl =
+		S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
+		S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
+		S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
+		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size);
 }
 
 void r600_fetch_shader(struct pipe_context *ctx,
