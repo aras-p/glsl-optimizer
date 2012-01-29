@@ -943,6 +943,9 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	rs->sprite_coord_enable = state->sprite_coord_enable;
 	rs->two_side = state->light_twoside;
 	rs->clip_plane_enable = state->clip_plane_enable;
+	rs->pa_sc_line_stipple = state->line_stipple_enable ?
+				S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
+				S_028A0C_REPEAT_COUNT(state->line_stipple_factor) : 0;
 
 	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 	/* offset */
@@ -999,13 +1002,6 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), 0xFFFFFFFF, NULL, 0);
-
-	if (state->line_stipple_enable) {
-		r600_pipe_state_add_reg(rstate, R_028A0C_PA_SC_LINE_STIPPLE,
-					S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
-					S_028A0C_REPEAT_COUNT(state->line_stipple_factor),
-					0x9FFFFFFF, NULL, 0);
-	}
 
 	if (rctx->chip_class >= R700)
 		sc_mode_cntl = 0x514002;

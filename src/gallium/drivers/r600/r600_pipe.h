@@ -109,6 +109,7 @@ struct r600_pipe_rasterizer {
 	boolean				two_side;
 	unsigned			sprite_coord_enable;
 	unsigned                        clip_plane_enable;
+	unsigned			pa_sc_line_stipple;
 	float				offset_units;
 	float				offset_scale;
 };
@@ -209,6 +210,7 @@ struct r600_pipe_context {
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
+	unsigned			pa_sc_line_stipple;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
