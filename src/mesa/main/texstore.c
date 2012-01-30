@@ -55,6 +55,7 @@
 #include "glheader.h"
 #include "bufferobj.h"
 #include "colormac.h"
+#include "format_pack.h"
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -1132,8 +1133,6 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_RGB565 ||
           dstFormat == MESA_FORMAT_RGB565_REV);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
@@ -1187,37 +1186,20 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
-            /* check for byteswapped format */
-            if (dstFormat == MESA_FORMAT_RGB565) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_565( src[RCOMP],
-                                               src[GCOMP],
-                                               src[BCOMP] );
-                  src += 3;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_565_REV( src[RCOMP],
-                                                   src[GCOMP],
-                                                   src[BCOMP] );
-                  src += 3;
-               }
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1232,7 +1214,6 @@ static GLboolean
 _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA8888 ||
           dstFormat == MESA_FORMAT_RGBA8888_REV ||
@@ -1291,39 +1272,20 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLuint *dstUI = (GLuint *) dstRow;
-            if (dstFormat == MESA_FORMAT_RGBA8888 ||
-                dstFormat == MESA_FORMAT_RGBX8888) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888( src[RCOMP],
-                                                src[GCOMP],
-                                                src[BCOMP],
-                                                src[ACOMP] );
-                  src += 4;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888_REV( src[RCOMP],
-                                                    src[GCOMP],
-                                                    src[BCOMP],
-                                                    src[ACOMP] );
-                  src += 4;
-               }
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1335,7 +1297,6 @@ static GLboolean
 _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
-   const GLenum baseFormat = GL_RGBA;
 
    ASSERT(dstFormat == MESA_FORMAT_ARGB8888 ||
           dstFormat == MESA_FORMAT_ARGB8888_REV ||
@@ -1460,47 +1421,20 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLuint *dstUI = (GLuint *) dstRow;
-            if (dstFormat == MESA_FORMAT_ARGB8888) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888( src[ACOMP],
-                                                src[RCOMP],
-                                                src[GCOMP],
-                                                src[BCOMP] );
-                  src += 4;
-               }
-            }
-            else if (dstFormat == MESA_FORMAT_XRGB8888) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888( 0xff,
-                                                src[RCOMP],
-                                                src[GCOMP],
-                                                src[BCOMP] );
-                  src += 4;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888_REV( src[ACOMP],
-                                                    src[RCOMP],
-                                                    src[GCOMP],
-                                                    src[BCOMP] );
-                  src += 4;
-               }
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1511,8 +1445,6 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_RGB888);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
@@ -1577,44 +1509,20 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = (const GLubyte *) tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-#if 0
-            if (littleEndian) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstRow[col * 3 + 0] = src[RCOMP];
-                  dstRow[col * 3 + 1] = src[GCOMP];
-                  dstRow[col * 3 + 2] = src[BCOMP];
-                  srcUB += 3;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstRow[col * 3 + 0] = srcUB[BCOMP];
-                  dstRow[col * 3 + 1] = srcUB[GCOMP];
-                  dstRow[col * 3 + 2] = srcUB[RCOMP];
-                  srcUB += 3;
-               }
-            }
-#else
-            for (col = 0; col < srcWidth; col++) {
-               dstRow[col * 3 + 0] = src[BCOMP];
-               dstRow[col * 3 + 1] = src[GCOMP];
-               dstRow[col * 3 + 2] = src[RCOMP];
-               src += 3;
-            }
-#endif
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1625,8 +1533,6 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_BGR888);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 3);
 
@@ -1691,25 +1597,20 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = (const GLubyte *) tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            for (col = 0; col < srcWidth; col++) {
-               dstRow[col * 3 + 0] = src[RCOMP];
-               dstRow[col * 3 + 1] = src[GCOMP];
-               dstRow[col * 3 + 2] = src[BCOMP];
-               src += 3;
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1720,8 +1621,6 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_ARGB4444 ||
           dstFormat == MESA_FORMAT_ARGB4444_REV);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
@@ -1741,38 +1640,20 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
-            if (dstFormat == MESA_FORMAT_ARGB4444) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_4444( src[ACOMP],
-                                                src[RCOMP],
-                                                src[GCOMP],
-                                                src[BCOMP] );
-                  src += 4;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_4444_REV( src[ACOMP],
-                                                    src[RCOMP],
-                                                    src[GCOMP],
-                                                    src[BCOMP] );
-                  src += 4;
-               }
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1782,8 +1663,6 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_RGBA5551);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
 
@@ -1802,27 +1681,20 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src =tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
-	    for (col = 0; col < srcWidth; col++) {
-	       dstUS[col] = PACK_COLOR_5551( src[RCOMP],
-					     src[GCOMP],
-					     src[BCOMP],
-					     src[ACOMP] );
-	      src += 4;
-	    }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -1832,8 +1704,6 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_ARGB1555 ||
           dstFormat == MESA_FORMAT_ARGB1555_REV);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 2);
@@ -1853,38 +1723,20 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src =tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
-            if (dstFormat == MESA_FORMAT_ARGB1555) {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_1555( src[ACOMP],
-                                                src[RCOMP],
-                                                src[GCOMP],
-                                                src[BCOMP] );
-                  src += 4;
-               }
-            }
-            else {
-               for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_1555_REV( src[ACOMP],
-                                                    src[RCOMP],
-                                                    src[GCOMP],
-                                                    src[BCOMP] );
-                  src += 4;
-               }
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
@@ -2396,8 +2248,6 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 {
-   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
-
    ASSERT(dstFormat == MESA_FORMAT_RGB332);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 1);
 
@@ -2416,25 +2266,20 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
       /* general path */
       const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
                                                  baseInternalFormat,
-                                                 baseFormat,
+                                                 GL_RGBA,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking);
       const GLubyte *src = tempImage;
-      GLint img, row, col;
+      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+      GLint img;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstSlices[img];
-         for (row = 0; row < srcHeight; row++) {
-            for (col = 0; col < srcWidth; col++) {
-               dstRow[col] = PACK_COLOR_332( src[RCOMP],
-                                             src[GCOMP],
-                                             src[BCOMP] );
-               src += 3;
-            }
-            dstRow += dstRowStride;
-         }
+         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                    src, srcRowStride,
+                                    dstSlices[img], dstRowStride);
+         src += srcHeight * srcRowStride;
       }
       free((void *) tempImage);
    }
