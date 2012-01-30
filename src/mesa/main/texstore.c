@@ -968,6 +968,41 @@ memcpy_texture(struct gl_context *ctx,
 }
 
 
+/**
+ * General-case function for storing a color texture images with
+ * components that can be represented with ubytes.  Example destination
+ * texture formats are MESA_FORMAT_ARGB888, ARGB4444, RGB565.
+ */
+static GLboolean
+store_ubyte_texture(TEXSTORE_PARAMS)
+{
+   const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
+   GLubyte *tempImage, *src;
+   GLint img;
+
+   tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
+                                           baseInternalFormat,
+                                           GL_RGBA,
+                                           srcWidth, srcHeight, srcDepth,
+                                           srcFormat, srcType, srcAddr,
+                                           srcPacking);
+   if (!tempImage)
+      return GL_FALSE;
+
+   src = tempImage;
+   for (img = 0; img < srcDepth; img++) {
+      _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
+                                 src, srcRowStride,
+                                 dstSlices[img], dstRowStride);
+      src += srcHeight * srcRowStride;
+   }
+   free(tempImage);
+
+   return GL_TRUE;
+}
+
+
+
 
 /**
  * Store a 32-bit integer or float depth component texture image.
@@ -1183,25 +1218,10 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
       }
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1269,25 +1289,10 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 				srcPacking);      
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1418,25 +1423,10 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 				srcPacking);      
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1506,25 +1496,10 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 				srcPacking);      
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = (const GLubyte *) tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1594,25 +1569,10 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 				srcPacking);      
    }   
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = (const GLubyte *) tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1637,25 +1597,10 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1678,25 +1623,10 @@ _mesa_texstore_rgba5551(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src =tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -1720,25 +1650,10 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src =tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
@@ -2263,25 +2178,10 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else {
-      /* general path */
-      const GLubyte *tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 GL_RGBA,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLubyte *src = tempImage;
-      const GLint srcRowStride = srcWidth * 4 * sizeof(GLubyte);
-      GLint img;
-      if (!tempImage)
-         return GL_FALSE;
-      for (img = 0; img < srcDepth; img++) {
-         _mesa_pack_ubyte_rgba_rect(dstFormat, srcWidth, srcHeight,
-                                    src, srcRowStride,
-                                    dstSlices[img], dstRowStride);
-         src += srcHeight * srcRowStride;
-      }
-      free((void *) tempImage);
+      return store_ubyte_texture(ctx, dims, baseInternalFormat,
+                                 dstFormat, dstRowStride, dstSlices,
+                                 srcWidth, srcHeight, srcDepth,
+                                 srcFormat, srcType, srcAddr, srcPacking);
    }
    return GL_TRUE;
 }
