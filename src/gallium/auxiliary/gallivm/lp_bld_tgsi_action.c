@@ -449,7 +449,7 @@ lit_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   LLVMValueRef tmp0, tmp2;
+   LLVMValueRef tmp0, tmp1, tmp2;
 
    /* dst.x */
    emit_data->output[TGSI_CHAN_X] = bld_base->base.one;
@@ -462,7 +462,7 @@ lit_emit(
 
    /* dst.z */
    /* XMM[1] = SrcReg[0].yyyy */
-   LLVMValueRef tmp1 = emit_data->args[1];
+   tmp1 = emit_data->args[1];
    /* XMM[1] = max(XMM[1], 0) */
    tmp1 = lp_build_emit_llvm_binary(bld_base, TGSI_OPCODE_MAX,
                                     tmp1, bld_base->base.zero);
