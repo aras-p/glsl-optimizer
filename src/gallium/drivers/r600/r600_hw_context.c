@@ -2182,7 +2182,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 
 	ctx->num_cs_dw_streamout_end = 0;
 
-	/* XXX print some debug info */
+#if 0
 	for (i = 0; i < ctx->num_so_targets; i++) {
 		if (!t[i])
 			continue;
@@ -2191,6 +2191,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		printf("FILLED_SIZE%i: %u\n", i, *ptr);
 		ctx->ws->buffer_unmap(t[i]->filled_size->buf);
 	}
+#endif
 }
 
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
