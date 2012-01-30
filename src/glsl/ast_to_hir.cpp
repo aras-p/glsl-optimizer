@@ -3537,6 +3537,7 @@ ast_switch_statement::hir(exec_list *instructions,
    state->switch_state.switch_nesting_ast = this;
    state->switch_state.labels_ht = hash_table_ctor(0, hash_table_pointer_hash,
 						   hash_table_pointer_compare);
+   state->switch_state.previous_default = NULL;
 
    /* Initalize is_fallthru state to false.
     */
@@ -3749,6 +3750,20 @@ ast_switch_statement::hir(exec_list *instructions,
 
 	instructions->push_tail(set_fallthru_on_test);
      } else { /* default case */
+	if (state->switch_state.previous_default) {
+	   printf("a\n");
+	   YYLTYPE loc = this->get_location();
+	   _mesa_glsl_error(& loc, state,
+			       "multiple default labels in one switch");
+
+	   printf("b\n");
+
+	   loc = state->switch_state.previous_default->get_location();
+	   _mesa_glsl_error(& loc, state,
+			    "this is the first default label");
+	}
+	state->switch_state.previous_default = this;
+
 	/* Set falltrhu state.
 	 */
 	ir_assignment *set_fallthru =

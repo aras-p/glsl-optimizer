@@ -51,6 +51,7 @@ struct glsl_switch_state {
 
    /** Table of constant values already used in case labels */
    struct hash_table *labels_ht;
+   class ast_case_label *previous_default;
 
    bool is_switch_innermost; // if switch stmt is closest to break, ...
 };
