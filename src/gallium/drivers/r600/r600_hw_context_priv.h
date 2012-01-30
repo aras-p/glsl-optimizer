@@ -74,16 +74,8 @@ void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_en
 static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
 					     enum radeon_bo_usage usage)
 {
-	unsigned reloc_index;
-
 	assert(usage);
-
-	reloc_index = ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains);
-	if (reloc_index >= ctx->creloc)
-		ctx->creloc = reloc_index+1;
-
-	pipe_resource_reference((struct pipe_resource**)&ctx->bo[reloc_index], &rbo->b.b.b);
-	return reloc_index * 4;
+	return ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains) * 4;
 }
 
 #endif

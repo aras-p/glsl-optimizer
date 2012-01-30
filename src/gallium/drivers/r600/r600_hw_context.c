@@ -781,7 +781,6 @@ void r600_context_fini(struct r600_context *ctx)
 	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
 	free(ctx->range);
 	free(ctx->blocks);
-	free(ctx->bo);
 	ctx->ws->cs_destroy(ctx->cs);
 }
 
@@ -912,13 +911,6 @@ int r600_context_init(struct r600_context *ctx)
 		goto out_err;
 
 	ctx->cs = ctx->ws->cs_create(ctx->ws);
-
-	/* allocate cs variables */
-	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
-	if (ctx->bo == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
 
 	r600_init_cs(ctx);
 	ctx->max_db = 4;
@@ -1463,11 +1455,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* Flush the CS. */
 	ctx->ws->cs_flush(ctx->cs, flags);
 
-	/* restart */
-	for (int i = 0; i < ctx->creloc; i++) {
-		pipe_resource_reference((struct pipe_resource**)&ctx->bo[i], NULL);
-	}
-	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 

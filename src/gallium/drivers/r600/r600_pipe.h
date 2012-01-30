@@ -294,9 +294,6 @@ struct r600_context {
 	unsigned		ctx_pm4_ndwords;
 	unsigned		init_dwords;
 
-	unsigned		creloc;
-	struct r600_resource	**bo;
-
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
 	unsigned		num_cs_dw_queries_suspend;

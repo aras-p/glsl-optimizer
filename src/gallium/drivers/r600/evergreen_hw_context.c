@@ -997,13 +997,6 @@ int evergreen_context_init(struct r600_context *ctx)
 
 	ctx->cs = ctx->ws->cs_create(ctx->ws);
 
-	/* allocate cs variables */
-	ctx->bo = calloc(RADEON_MAX_CMDBUF_DWORDS, sizeof(void *));
-	if (ctx->bo == NULL) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-
 	r600_init_cs(ctx);
 	ctx->max_db = 8;
 	return 0;
