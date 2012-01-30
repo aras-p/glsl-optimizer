@@ -1940,7 +1940,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 	ctx->num_cs_dw_streamout_end =
 		12 + /* flush_vgt_streamout */
 		util_bitcount(buffer_en) * 8 +
-		8;
+		3;
 
 	r600_need_cs_space(ctx,
 			   12 + /* flush_vgt_streamout */
@@ -2056,15 +2056,11 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		r600_set_streamout_enable(ctx, 0);
 	}
 
-	if (ctx->screen->family < CHIP_RV770) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+	if (ctx->screen->chip_class < R700) {
+		r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
 	} else {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-		cs->buf[cs->cdw++] = flush_flags;     /* CP_COHER_CNTL */
-		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
-		cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
-		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
+		ctx->atom_surface_sync.flush_flags |= flush_flags;
+		r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
 	}
 
 	ctx->num_cs_dw_streamout_end = 0;
@@ -2105,6 +2101,5 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 	cs->buf[cs->cdw++] = 0; /* unused */
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx,  t->filled_size,
-							     RADEON_USAGE_READ);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, t->filled_size, RADEON_USAGE_READ);
 }
