@@ -902,7 +902,7 @@ static int evergreen_loop_const_init(struct r600_context *ctx, uint32_t offset)
 	for (i = 0; i < nreg; i++) {
 		r600_loop_consts[i].offset = EVERGREEN_LOOP_CONST_OFFSET + ((offset + i) * 4);
 		r600_loop_consts[i].flags = REG_FLAG_DIRTY_ALWAYS;
-		r600_loop_consts[i].flush_flags = 0;
+		r600_loop_consts[i].sbu_flags = 0;
 	}
 	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, EVERGREEN_LOOP_CONST_OFFSET);
 }

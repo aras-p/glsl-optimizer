@@ -47,7 +47,7 @@
 struct r600_reg {
 	unsigned			offset;
 	unsigned			flags;
-	unsigned			flush_flags;
+	unsigned			sbu_flags;
 };
 
 /*
