@@ -56,17 +56,12 @@ struct r600_reg {
 /*
  * r600_hw_context.c
  */
-void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
-			boolean count_draw_in);
-
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *rbo);
 struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base);
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block);
-void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
-void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
 int r600_setup_block_table(struct r600_context *ctx);

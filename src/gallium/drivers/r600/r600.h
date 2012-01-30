@@ -243,6 +243,9 @@ void r600_context_flush_dest_caches(struct r600_context *ctx);
 void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
+void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
+void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
+void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 
 int evergreen_context_init(struct r600_context *ctx);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);

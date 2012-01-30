@@ -1136,8 +1136,6 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	unsigned ndwords = 7;
-	struct r600_block *dirty_block = NULL;
-	struct r600_block *next_block;
 	uint32_t *pm4;
 	uint64_t va;
 
@@ -1149,24 +1147,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 
 	/* when increasing ndwords, bump the max limit too */
 	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
-
-	r600_need_cs_space(ctx, 0, TRUE);
-	assert(ctx->pm4_cdwords + ctx->pm4_dirty_cdwords + ndwords < RADEON_MAX_CMDBUF_DWORDS);
-
-	/* enough room to copy packet */
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
-		r600_context_block_emit_dirty(ctx, dirty_block);
-	}
-
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->resource_dirty,list) {
-		r600_context_block_resource_emit_dirty(ctx, dirty_block);
-	}
-
-	/* Enable stream out if needed. */
-	if (ctx->streamout_start) {
-		r600_context_streamout_begin(ctx);
-		ctx->streamout_start = FALSE;
-	}
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
@@ -1204,11 +1184,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		pm4[6] = draw->vgt_draw_initiator;
 	}
 	ctx->pm4_cdwords += ndwords;
-
-	ctx->flags |= (R600_CONTEXT_DRAW_PENDING | R600_CONTEXT_DST_CACHES_DIRTY);
-
-	/* all dirty state have been scheduled in current cs */
-	ctx->pm4_dirty_cdwords = 0;
 }
 
 void evergreen_context_flush_dest_caches(struct r600_context *ctx)

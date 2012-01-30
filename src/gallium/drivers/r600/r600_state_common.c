@@ -670,6 +670,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
 	unsigned prim, mask, ls_mask = 0;
+	struct r600_block *dirty_block = NULL, *next_block = NULL;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
@@ -784,11 +785,30 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rdraw.db_render_override = dsa->db_render_override;
 	rdraw.db_render_control = dsa->db_render_control;
 
+	/* Emit states. */
+	r600_need_cs_space(rctx, 0, TRUE);
+
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
+		r600_context_block_emit_dirty(rctx, dirty_block);
+	}
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->resource_dirty,list) {
+		r600_context_block_resource_emit_dirty(rctx, dirty_block);
+	}
+	rctx->pm4_dirty_cdwords = 0;
+
+	/* Enable stream out if needed. */
+	if (rctx->streamout_start) {
+		r600_context_streamout_begin(rctx);
+		rctx->streamout_start = FALSE;
+	}
+
 	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_context_draw(rctx, &rdraw);
 	} else {
 		r600_context_draw(rctx, &rdraw);
 	}
+
+	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
 
 	if (rctx->framebuffer.zsbuf)
 	{
