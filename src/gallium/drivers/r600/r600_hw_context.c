@@ -416,10 +416,10 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028144_ALU_CONST_BUFFER_SIZE_PS_1, REG_FLAG_DIRTY_ALWAYS, 0, 0},
 	{R_028180_ALU_CONST_BUFFER_SIZE_VS_0, REG_FLAG_DIRTY_ALWAYS, 0, 0},
 	{R_028184_ALU_CONST_BUFFER_SIZE_VS_1, REG_FLAG_DIRTY_ALWAYS, 0, 0},
-	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, 0, 0},
+	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, 0, 0},
 	{R_02823C_CB_SHADER_MASK, 0, 0, 0},
 	{R_028238_CB_TARGET_MASK, 0, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0, 0},
@@ -587,11 +587,11 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028638_SPI_VS_OUT_ID_9, 0, 0, 0},
 	{R_0286C4_SPI_VS_OUT_CONFIG, 0, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{R_028858_SQ_PGM_START_VS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028858_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028868_SQ_PGM_RESOURCES_VS, 0, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{R_028894_SQ_PGM_START_FS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028894_SQ_PGM_START_FS, REG_FLAG_NEED_BO, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_0288A4_SQ_PGM_RESOURCES_FS, 0, 0, 0},
 	{R_0288D0_SQ_PGM_CF_OFFSET_VS, 0, 0, 0},
@@ -632,7 +632,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_0286D0_SPI_PS_IN_CONTROL_1, 0, 0, 0},
 	{R_0286D8_SPI_INPUT_Z, 0, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
-	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0, 0},
 	{R_028850_SQ_PGM_RESOURCES_PS, 0, 0, 0},
 	{R_028854_SQ_PGM_EXPORTS_PS, 0, 0, 0},
@@ -675,8 +675,8 @@ int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsig
 static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
-		{R_038000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
-		{R_038004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_038000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, 0, 0},
+		{R_038004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, 0, 0},
 		{R_038008_RESOURCE0_WORD2, 0, 0, 0},
 		{R_03800C_RESOURCE0_WORD3, 0, 0, 0},
 		{R_038010_RESOURCE0_WORD4, 0, 0, 0},
@@ -971,20 +971,6 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 }
 
-/* Flushes all surfaces */
-void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	r600_need_cs_space(ctx, 5, FALSE);
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-	cs->buf[cs->cdw++] = flush_flags;     /* CP_COHER_CNTL */
-	cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
-	cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
-	cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
-}
-
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *bo)
 {
@@ -997,38 +983,14 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 		return;
 	}
 
-	if ((ctx->screen->family < CHIP_RV770) &&
-	    (G_0085F0_CB_ACTION_ENA(flush_flags) ||
-	     G_0085F0_DB_ACTION_ENA(flush_flags))) {
-		if (ctx->flags & R600_CONTEXT_CHECK_EVENT_FLUSH) {
-			/* the rv670 seems to fail fbo-generatemipmap unless we flush the CB1 dest base ena */
-			if ((bo->cs_buf->binding & BO_BOUND_TEXTURE) &&
-			    (flush_flags & S_0085F0_CB_ACTION_ENA(1))) {
-				if ((ctx->screen->family == CHIP_RV670) ||
-				    (ctx->screen->family == CHIP_RS780) ||
-				    (ctx->screen->family == CHIP_RS880)) {
-					cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-					cs->buf[cs->cdw++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
-					cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
-					cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
-					cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
-				}
-			}
-
-			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
-		}
-	} else {
-		va = r600_resource_va(&ctx->screen->screen, (void *)bo);
-		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-		cs->buf[cs->cdw++] = flush_flags;
-		cs->buf[cs->cdw++] = (bo->buf->size + 255) >> 8;
-		cs->buf[cs->cdw++] = va >> 8;
-		cs->buf[cs->cdw++] = 0x0000000A;
-		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
-	}
+	va = r600_resource_va(&ctx->screen->screen, (void *)bo);
+	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+	cs->buf[cs->cdw++] = flush_flags;
+	cs->buf[cs->cdw++] = (bo->buf->size + 255) >> 8;
+	cs->buf[cs->cdw++] = va >> 8;
+	cs->buf[cs->cdw++] = 0x0000000A;
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
 	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
 }
 
@@ -1387,43 +1349,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	LIST_DELINIT(&block->list);
 }
 
-void r600_context_flush_dest_caches(struct r600_context *ctx)
-{
-	struct r600_resource *cb[8];
-	struct r600_resource *db;
-	int i;
-
-	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
-		return;
-
-	db = r600_context_reg_bo(ctx, R_02800C_DB_DEPTH_BASE);
-	cb[0] = r600_context_reg_bo(ctx, R_028040_CB_COLOR0_BASE);
-	cb[1] = r600_context_reg_bo(ctx, R_028044_CB_COLOR1_BASE);
-	cb[2] = r600_context_reg_bo(ctx, R_028048_CB_COLOR2_BASE);
-	cb[3] = r600_context_reg_bo(ctx, R_02804C_CB_COLOR3_BASE);
-	cb[4] = r600_context_reg_bo(ctx, R_028050_CB_COLOR4_BASE);
-	cb[5] = r600_context_reg_bo(ctx, R_028054_CB_COLOR5_BASE);
-	cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
-	cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
-
-	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
-	/* flush the color buffers */
-	for (i = 0; i < 8; i++) {
-		if (!cb[i])
-			continue;
-
-		r600_context_bo_flush(ctx,
-					(S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
-					S_0085F0_CB_ACTION_ENA(1),
-					0, cb[i]);
-	}
-	if (db) {
-		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1), 0, db);
-	}
-	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
-	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
-}
-
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
@@ -1483,6 +1408,66 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	cs->cdw += ndwords;
 }
 
+void r600_inval_shader_cache(struct r600_context *ctx)
+{
+	ctx->atom_surface_sync.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
+	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+}
+
+void r600_inval_texture_cache(struct r600_context *ctx)
+{
+	ctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
+	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+}
+
+void r600_inval_vertex_cache(struct r600_context *ctx)
+{
+	if (ctx->family == CHIP_RV610 ||
+	    ctx->family == CHIP_RV620 ||
+	    ctx->family == CHIP_RS780 ||
+	    ctx->family == CHIP_RS880 ||
+	    ctx->family == CHIP_RV710 ||
+	    ctx->family == CHIP_CEDAR ||
+	    ctx->family == CHIP_PALM ||
+	    ctx->family == CHIP_SUMO ||
+	    ctx->family == CHIP_SUMO2 ||
+	    ctx->family == CHIP_CAICOS ||
+	    ctx->family == CHIP_CAYMAN) {
+		/* Some GPUs don't have the vertex cache and must use the texture cache instead. */
+		ctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
+	} else {
+		ctx->atom_surface_sync.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
+	}
+	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+}
+
+void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
+{
+	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
+		return;
+
+	ctx->atom_surface_sync.flush_flags |=
+		r600_get_cb_flush_flags(ctx) |
+		(ctx->framebuffer.zsbuf ? S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1) : 0);
+
+	if (flush_now) {
+		r600_emit_atom(ctx, &ctx->atom_surface_sync.atom);
+	} else {
+		r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+	}
+
+	/* Also add a complete cache flush to work around broken flushing on R6xx. */
+	if (ctx->chip_class == R600) {
+		if (flush_now) {
+			r600_emit_atom(ctx, &ctx->atom_r6xx_flush_and_inv);
+		} else {
+			r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
+		}
+	}
+
+	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
+}
+
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
@@ -1504,10 +1489,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		streamout_suspended = true;
 	}
 
-	if (ctx->screen->chip_class >= EVERGREEN)
-		evergreen_context_flush_dest_caches(ctx);
-	else
-		r600_context_flush_dest_caches(ctx);
+	r600_flush_framebuffer(ctx, true);
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);

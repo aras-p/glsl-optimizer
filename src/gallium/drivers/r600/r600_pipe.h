@@ -67,6 +67,11 @@ struct r600_atom {
 	struct list_head	head;
 };
 
+struct r600_atom_surface_sync {
+	struct r600_atom atom;
+	unsigned flush_flags; /* CP_COHER_CNTL */
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -272,6 +277,8 @@ struct r600_context {
 
 	/* States based on r600_state. */
 	struct list_head		dirty_states;
+	struct r600_atom_surface_sync	atom_surface_sync;
+	struct r600_atom		atom_r6xx_flush_and_inv;
 
 	/* Below are variables from the old r600_context.
 	 */
@@ -426,6 +433,9 @@ void r600_translate_index_buffer(struct r600_context *r600,
 				 unsigned count);
 
 /* r600_state_common.c */
+void r600_init_common_atoms(struct r600_context *rctx);
+unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
+void r600_texture_barrier(struct pipe_context *ctx);
 void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib);
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,

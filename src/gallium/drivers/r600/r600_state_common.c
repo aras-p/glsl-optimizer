@@ -34,6 +34,70 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 
+static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_atom_surface_sync *a = (struct r600_atom_surface_sync*)atom;
+
+	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+	cs->buf[cs->cdw++] = a->flush_flags;  /* CP_COHER_CNTL */
+	cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
+	cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
+	cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
+
+	a->flush_flags = 0;
+}
+
+static void r600_emit_r6xx_flush_and_inv(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+}
+
+static void r600_init_atom(struct r600_atom *atom,
+			   void (*emit)(struct r600_context *ctx, struct r600_atom *state),
+			   unsigned num_dw,
+			   enum r600_atom_flags flags)
+{
+	atom->emit = emit;
+	atom->num_dw = num_dw;
+	atom->flags = flags;
+}
+
+void r600_init_common_atoms(struct r600_context *rctx)
+{
+	r600_init_atom(&rctx->atom_surface_sync.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
+	r600_init_atom(&rctx->atom_r6xx_flush_and_inv,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
+}
+
+unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
+{
+	unsigned flags = 0;
+
+	if (rctx->framebuffer.nr_cbufs) {
+		flags |= S_0085F0_CB_ACTION_ENA(1) |
+			 (((1 << rctx->framebuffer.nr_cbufs) - 1) << S_0085F0_CB0_DEST_BASE_ENA_SHIFT);
+	}
+
+	/* Workaround for broken flushing on some R6xx chipsets. */
+	if (rctx->screen->family == CHIP_RV670 ||
+	    rctx->screen->family == CHIP_RS780 ||
+	    rctx->screen->family == CHIP_RS880) {
+		flags |=  S_0085F0_CB1_DEST_BASE_ENA(1) |
+			  S_0085F0_DEST_BASE_0_ENA(1);
+	}
+	return flags;
+}
+
+void r600_texture_barrier(struct pipe_context *ctx)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	rctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1) | r600_get_cb_flush_flags(rctx);
+	r600_atom_dirty(rctx, &rctx->atom_surface_sync.atom);
+}
+
 static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 {
 	static const int prim_conv[] = {
@@ -226,6 +290,7 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 
 	rctx->vertex_elements = v;
 	if (v) {
+		r600_inval_shader_cache(rctx);
 		u_vbuf_bind_vertex_elements(rctx->vbuf_mgr, state,
 						v->vmgr_elements);
 
@@ -333,6 +398,7 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	/* TODO delete old shader */
 	rctx->ps_shader = (struct r600_pipe_shader *)state;
 	if (state) {
+		r600_inval_shader_cache(rctx);
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
 
 		rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
@@ -350,6 +416,7 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 	/* TODO delete old shader */
 	rctx->vs_shader = (struct r600_pipe_shader *)state;
 	if (state) {
+		r600_inval_shader_cache(rctx);
 		r600_context_pipe_state_set(rctx, &rctx->vs_shader->rstate);
 	}
 	if (rctx->ps_shader && rctx->vs_shader) {
@@ -415,6 +482,8 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	if (buffer == NULL) {
 		return;
 	}
+
+	r600_inval_shader_cache(rctx);
 
 	r600_upload_const_buffer(rctx, &rbuffer, &offset);
 	va_offset = r600_resource_va(ctx->screen, (void*)rbuffer);
@@ -557,6 +626,8 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 	struct r600_resource *rbuffer;
 	struct pipe_vertex_buffer *vertex_buffer;
 	unsigned i, count, offset;
+
+	r600_inval_vertex_cache(rctx);
 
 	if (rctx->vertex_elements->vbuffer_need_offset) {
 		/* one resource per vertex elements */

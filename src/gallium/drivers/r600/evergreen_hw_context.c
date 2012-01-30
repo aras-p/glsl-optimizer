@@ -274,14 +274,14 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_02881C_PA_CL_VS_OUT_CNTL, 0, 0, 0},
 	{R_028820_PA_CL_NANINF_CNTL, 0, 0, 0},
 	{R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1, 0, 0, 0},
-	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0, 0},
 	{R_028844_SQ_PGM_RESOURCES_PS, 0, 0, 0},
 	{R_028848_SQ_PGM_RESOURCES_2_PS, 0, 0, 0},
 	{R_02884C_SQ_PGM_EXPORTS_PS, 0, 0, 0},
-	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0, 0},
 	{R_028860_SQ_PGM_RESOURCES_VS, 0, 0, 0},
 	{R_028864_SQ_PGM_RESOURCES_2_VS, 0, 0, 0},
-	{R_0288A4_SQ_PGM_START_FS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_0288A4_SQ_PGM_START_FS, REG_FLAG_NEED_BO, 0, 0},
 	{R_0288A8_SQ_PGM_RESOURCES_FS, 0, 0, 0},
 	{R_0288EC_SQ_LDS_ALLOC_PS, 0, 0, 0},
 	{R_028900_SQ_ESGS_RING_ITEMSIZE, 0, 0, 0},
@@ -294,10 +294,10 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028920_SQ_GS_VERT_ITEMSIZE_1, 0, 0, 0},
 	{R_028924_SQ_GS_VERT_ITEMSIZE_2, 0, 0, 0},
 	{R_028928_SQ_GS_VERT_ITEMSIZE_3, 0, 0, 0},
-	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, 0, 0},
+	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, 0, 0},
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0, 0},
@@ -642,14 +642,14 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_02881C_PA_CL_VS_OUT_CNTL, 0, 0, 0},
 	{R_028820_PA_CL_NANINF_CNTL, 0, 0, 0},
 	{R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1, 0, 0, 0},
-	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0, 0},
 	{R_028844_SQ_PGM_RESOURCES_PS, 0, 0, 0},
 	{R_028848_SQ_PGM_RESOURCES_2_PS, 0, 0, 0},
 	{R_02884C_SQ_PGM_EXPORTS_PS, 0, 0, 0},
-	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0, 0},
 	{R_028860_SQ_PGM_RESOURCES_VS, 0, 0, 0},
 	{R_028864_SQ_PGM_RESOURCES_2_VS, 0, 0, 0},
-	{R_0288A4_SQ_PGM_START_FS, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_0288A4_SQ_PGM_START_FS, REG_FLAG_NEED_BO, 0, 0},
 	{R_0288A8_SQ_PGM_RESOURCES_FS, 0, 0, 0},
 	{CM_R_0288E8_SQ_LDS_ALLOC, 0, 0, 0},
 	{R_0288EC_SQ_LDS_ALLOC_PS, 0, 0, 0},
@@ -663,10 +663,10 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028920_SQ_GS_VERT_ITEMSIZE_1, 0, 0, 0},
 	{R_028924_SQ_GS_VERT_ITEMSIZE_2, 0, 0, 0},
 	{R_028928_SQ_GS_VERT_ITEMSIZE_3, 0, 0, 0},
-	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
-	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, S_0085F0_SH_ACTION_ENA(1), 0xFFFFFFFF},
+	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, 0, 0},
+	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, 0, 0},
+	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, 0, 0},
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0, 0},
@@ -832,8 +832,8 @@ static const struct r600_reg cayman_context_reg_list[] = {
 static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
-		{R_030000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
-		{R_030004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_VC_ACTION_ENA(1), 0xFFFFFFFF},
+		{R_030000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, 0, 0},
+		{R_030004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, 0, 0},
 		{R_030008_RESOURCE0_WORD2, 0, 0, 0},
 		{R_03000C_RESOURCE0_WORD3, 0, 0, 0},
 		{R_030010_RESOURCE0_WORD4, 0, 0, 0},
@@ -1186,54 +1186,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		pm4[6] = draw->vgt_draw_initiator;
 	}
 	cs->cdw += ndwords;
-}
-
-void evergreen_context_flush_dest_caches(struct r600_context *ctx)
-{
-	struct r600_resource *cb[12];
-	struct r600_resource *db;
-
-	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
-		return;
-
-	/* find number of color buffer */
-	db = r600_context_reg_bo(ctx, R_028048_DB_Z_READ_BASE);
-	cb[0] = r600_context_reg_bo(ctx, R_028C60_CB_COLOR0_BASE);
-	cb[1] = r600_context_reg_bo(ctx, R_028C9C_CB_COLOR1_BASE);
-	cb[2] = r600_context_reg_bo(ctx, R_028CD8_CB_COLOR2_BASE);
-	cb[3] = r600_context_reg_bo(ctx, R_028D14_CB_COLOR3_BASE);
-	cb[4] = r600_context_reg_bo(ctx, R_028D50_CB_COLOR4_BASE);
-	cb[5] = r600_context_reg_bo(ctx, R_028D8C_CB_COLOR5_BASE);
-	cb[6] = r600_context_reg_bo(ctx, R_028DC8_CB_COLOR6_BASE);
-	cb[7] = r600_context_reg_bo(ctx, R_028E04_CB_COLOR7_BASE);
-	cb[8] = r600_context_reg_bo(ctx, R_028E40_CB_COLOR8_BASE);
-	cb[9] = r600_context_reg_bo(ctx, R_028E5C_CB_COLOR9_BASE);
-	cb[10] = r600_context_reg_bo(ctx, R_028E78_CB_COLOR10_BASE);
-	cb[11] = r600_context_reg_bo(ctx, R_028E94_CB_COLOR11_BASE);
-
-	/* flush color buffer */
-	for (int i = 0; i < 12; i++) {
-		if (cb[i]) {
-			unsigned flush;
-
-			if (i > 7) {
-				flush = (S_0085F0_CB8_DEST_BASE_ENA(1) << (i - 8)) |
-					S_0085F0_CB_ACTION_ENA(1);
-			} else {
-				flush = (S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
-					S_0085F0_CB_ACTION_ENA(1);
-			}
-			r600_context_bo_flush(ctx, flush, 0, cb[i]);
-		}
-	}
-	if (db) {
-		r600_context_bo_flush(ctx,
-					S_0085F0_DB_ACTION_ENA(1) |
-					S_0085F0_DB_DEST_BASE_ENA(1),
-					0, db);
-	}
-
-	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
 
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)

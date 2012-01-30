@@ -1176,6 +1176,9 @@ static void r600_set_sampler_views(struct r600_context *rctx,
 	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
 	unsigned i;
 
+	if (count)
+		r600_inval_texture_cache(rctx);
+
 	for (i = 0; i < count; i++) {
 		if (rviews[i]) {
 			if (((struct r600_resource_texture *)rviews[i]->base.texture)->depth)
@@ -1610,7 +1613,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
-	r600_context_flush_dest_caches(rctx);
+	r600_flush_framebuffer(rctx, false);
 	rctx->num_dest_buffers = state->nr_cbufs;
 
 	/* unreference old buffer and reference new one */
@@ -1698,17 +1701,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (state->zsbuf) {
 		r600_polygon_offset_update(rctx);
 	}
-}
-
-static void r600_texture_barrier(struct pipe_context *ctx)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	r600_context_flush_all(rctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
-			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
-			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
-			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
-			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1));
 }
 
 void r600_init_state_functions(struct r600_context *rctx)

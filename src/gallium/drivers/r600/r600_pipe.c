@@ -232,6 +232,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;
 
+	r600_init_common_atoms(rctx);
+
 	switch (rctx->chip_class) {
 	case R600:
 	case R700:

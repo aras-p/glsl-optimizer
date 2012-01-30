@@ -237,8 +237,10 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);
-void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
-void r600_context_flush_dest_caches(struct r600_context *ctx);
+void r600_inval_shader_cache(struct r600_context *ctx);
+void r600_inval_texture_cache(struct r600_context *ctx);
+void r600_inval_vertex_cache(struct r600_context *ctx);
+void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now);
 
 void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
@@ -249,7 +251,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 
 int evergreen_context_init(struct r600_context *ctx);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
-void evergreen_context_flush_dest_caches(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);

@@ -1176,6 +1176,8 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
+	if (count)
+		r600_inval_texture_cache(rctx);
 
 	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
 	rctx->ps_samplers.n_samplers = count;
@@ -1189,6 +1191,9 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
+
+	if (count)
+		r600_inval_texture_cache(rctx);
 
 	for (int i = 0; i < count; i++) {
 		evergreen_context_pipe_state_set_vs_sampler(rctx, rstates[i], i);
@@ -1525,7 +1530,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
-	evergreen_context_flush_dest_caches(rctx);
+	r600_flush_framebuffer(rctx, false);
 	rctx->num_dest_buffers = state->nr_cbufs;
 
 	/* unreference old buffer and reference new one */
@@ -1618,19 +1623,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
-static void evergreen_texture_barrier(struct pipe_context *ctx)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	r600_context_flush_all(rctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
-			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
-			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
-			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
-			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1) |
-			S_0085F0_CB8_DEST_BASE_ENA(1) | S_0085F0_CB9_DEST_BASE_ENA(1) |
-			S_0085F0_CB10_DEST_BASE_ENA(1) | S_0085F0_CB11_DEST_BASE_ENA(1));
-}
-
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
@@ -1671,7 +1663,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
-	rctx->context.texture_barrier = evergreen_texture_barrier;
+	rctx->context.texture_barrier = r600_texture_barrier;
 	rctx->context.create_stream_output_target = r600_create_so_target;
 	rctx->context.stream_output_target_destroy = r600_so_target_destroy;
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
