@@ -2219,33 +2219,4 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx,  t->filled_size,
 							     RADEON_USAGE_READ);
-
-#if 0 /* I have not found this useful yet. */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_COPY_DW, 4, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = COPY_DW_SRC_IS_REG | COPY_DW_DST_IS_REG;
-	ctx->pm4[ctx->pm4_cdwords++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* src register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-	ctx->pm4[ctx->pm4_cdwords++] = R_0085F4_CP_COHER_SIZE >> 2; /* dst register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_0085F0_CP_COHER_CNTL - R600_CONFIG_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_SO0_DEST_BASE_ENA(1) << t->so_index;
-
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_0085F8_CP_COHER_BASE - R600_CONFIG_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = t->b.buffer_offset >> 2;
-
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, (struct r600_resource*)t->b.buffer,
-							     RADEON_USAGE_WRITE);
-
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = R_0085FC_CP_COHER_STATUS >> 2;  /* register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff; /* mask */
-	ctx->pm4[ctx->pm4_cdwords++] = 4; /* poll interval */
-#endif
 }
