@@ -1472,42 +1472,42 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
 
    if (!ctx->Extensions.ARB_map_buffer_range) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glMapBufferRange(extension not supported)");
+                  "glFlushMappedBufferRange(extension not supported)");
       return;
    }
 
    if (offset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(offset = %ld)", (long)offset);
+                  "glFlushMappedBufferRange(offset = %ld)", (long)offset);
       return;
    }
 
    if (length < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glMapBufferRange(length = %ld)", (long)length);
+                  "glFlushMappedBufferRange(length = %ld)", (long)length);
       return;
    }
 
-   bufObj = get_buffer(ctx, "glMapBufferRange", target);
+   bufObj = get_buffer(ctx, "glFlushMappedBufferRange", target);
    if (!bufObj)
       return;
 
    if (!_mesa_bufferobj_mapped(bufObj)) {
       /* buffer is not mapped */
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glMapBufferRange(buffer is not mapped)");
+                  "glFlushMappedBufferRange(buffer is not mapped)");
       return;
    }
 
    if ((bufObj->AccessFlags & GL_MAP_FLUSH_EXPLICIT_BIT) == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glMapBufferRange(GL_MAP_FLUSH_EXPLICIT_BIT not set)");
+                  "glFlushMappedBufferRange(GL_MAP_FLUSH_EXPLICIT_BIT not set)");
       return;
    }
 
    if (offset + length > bufObj->Length) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glMapBufferRange(offset %ld + length %ld > mapped length %ld)",
+		  "glFlushMappedBufferRange(offset %ld + length %ld > mapped length %ld)",
 		  (long)offset, (long)length, (long)bufObj->Length);
       return;
    }
