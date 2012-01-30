@@ -199,11 +199,6 @@ static void r600_init_block(struct r600_context *ctx,
 			block->pm4[block->pm4_ndwords++] = reg[i+j].flush_flags;
 		}
 	}
-	for (j = 0; j < n; j++) {
-		if (reg[i+j].flush_flags) {
-			block->pm4_flush_ndwords += 7;
-		}
-	}
 	/* check that we stay in limit */
 	assert(block->pm4_ndwords < R600_BLOCK_MAX_REG);
 }
@@ -944,7 +939,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in framebuffer cache flushes at the end of CS. */
-	num_dw += ctx->num_dest_buffers * 7;
+	num_dw += 7; /* one SURFACE_SYNC and CACHE_FLUSH_AND_INV (r6xx-only) */
 
 	/* Save 16 dwords for the fence mechanism. */
 	num_dw += 16;
@@ -964,7 +959,7 @@ void r600_context_dirty_block(struct r600_context *ctx,
 
 	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
 		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 		if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
 			block->status |= R600_BLOCK_STATUS_ENABLED;
 			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
@@ -1018,7 +1013,7 @@ static void r600_context_dirty_resource_block(struct r600_context *ctx,
 
 	if ((dirty != (block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
 		block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
 		if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
 			block->status |= R600_BLOCK_STATUS_ENABLED;
 			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
@@ -1477,8 +1472,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 				enable_block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 			}
 		}
-		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords + 
-			enable_block->pm4_flush_ndwords;
+		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords;
 		enable_block->nreg_dirty = enable_block->nreg;
 	}
 }
