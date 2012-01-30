@@ -321,7 +321,7 @@ vl_video_buffer_create(struct pipe_context *pipe,
                        const struct pipe_video_buffer *tmpl)
 {
    const enum pipe_format *resource_formats;
-   struct pipe_video_buffer templat;
+   struct pipe_video_buffer templat, *result;
    bool pot_buffers;
 
    assert(pipe);
@@ -347,11 +347,17 @@ vl_video_buffer_create(struct pipe_context *pipe,
    if (tmpl->interlaced)
       templat.height /= 2;
 
-   return vl_video_buffer_create_ex
+   result = vl_video_buffer_create_ex
    (
       pipe, &templat, resource_formats,
       tmpl->interlaced ? 2 : 1, PIPE_USAGE_STATIC
    );
+
+
+   if (result && tmpl->interlaced)
+      result->height *= 2;
+
+   return result;
 }
 
 struct pipe_video_buffer *
