@@ -1691,10 +1691,12 @@ case_label:
 	CASE expression ':'
 	{
 	   $$ = new(state) ast_case_label($2);
+	   $$->set_location(yylloc);
 	}
 	| DEFAULT ':'
 	{
 	   $$ = new(state) ast_case_label(NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
