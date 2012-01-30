@@ -191,13 +191,6 @@ static void r600_init_block(struct r600_context *ctx,
 			block->pm4_bo_index[j] = block->nbo;
 			block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0, 0);
 			block->pm4[block->pm4_ndwords++] = 0x00000000;
-			if (reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
-				block->reloc[block->nbo].flush_flags = 0;
-				block->reloc[block->nbo].flush_mask = 0;
-			} else {
-				block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
-				block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
-			}
 			block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
 		}
 		if ((ctx->screen->family > CHIP_R600) &&

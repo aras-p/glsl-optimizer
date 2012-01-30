@@ -134,8 +134,6 @@ struct r600_pipe_resource_state {
 struct r600_block_reloc {
 	struct r600_resource	*bo;
 	enum radeon_bo_usage	bo_usage;
-	unsigned		flush_flags;
-	unsigned		flush_mask;
 	unsigned		bo_pm4_index;
 };
 
