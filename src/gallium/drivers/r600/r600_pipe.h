@@ -268,9 +268,6 @@ struct r600_context {
 	unsigned		creloc;
 	struct r600_resource	**bo;
 
-	uint32_t		*pm4;
-	unsigned		pm4_cdwords;
-
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
 	unsigned		num_cs_dw_queries_suspend;

@@ -1003,7 +1003,6 @@ int evergreen_context_init(struct r600_context *ctx)
 		r = -ENOMEM;
 		goto out_err;
 	}
-	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	ctx->max_db = 8;
@@ -1063,11 +1062,13 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 
 static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
+
 	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
 		return;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
 	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
 }
@@ -1135,6 +1136,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	unsigned ndwords = 7;
 	uint32_t *pm4;
 	uint64_t va;
@@ -1151,19 +1153,19 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
 	if (ctx->num_cs_dw_queries_suspend) {
-		pm4 = &ctx->pm4[ctx->pm4_cdwords];
+		pm4 = &cs->buf[cs->cdw];
 		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		pm4[1] = (R_028004_DB_COUNT_CONTROL - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
 		pm4[2] = S_028004_PERFECT_ZPASS_COUNTS(1);
 		pm4[3] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		pm4[4] = (R_02800C_DB_RENDER_OVERRIDE - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
 		pm4[5] = draw->db_render_override | S_02800C_NOOP_CULL_DISABLE(1);
-		ctx->pm4_cdwords += 6;
+		cs->cdw += 6;
 		ndwords -= 6;
 	}
 
 	/* draw packet */
-	pm4 = &ctx->pm4[ctx->pm4_cdwords];
+	pm4 = &cs->buf[cs->cdw];
 	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
 	pm4[1] = draw->vgt_index_type;
 	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
@@ -1183,7 +1185,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		pm4[5] = draw->vgt_num_indices;
 		pm4[6] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4_cdwords += ndwords;
+	cs->cdw += ndwords;
 }
 
 void evergreen_context_flush_dest_caches(struct r600_context *ctx)
@@ -1236,35 +1238,39 @@ void evergreen_context_flush_dest_caches(struct r600_context *ctx)
 
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 {
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_0084FC_CP_STRMOUT_CNTL - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	struct radeon_winsys_cs *cs = ctx->cs;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
+	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
+	cs->buf[cs->cdw++] = (R_0084FC_CP_STRMOUT_CNTL - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
+	cs->buf[cs->cdw++] = 0;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = R_0084FC_CP_STRMOUT_CNTL >> 2;  /* register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* mask */
-	ctx->pm4[ctx->pm4_cdwords++] = 4; /* poll interval */
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
+
+	cs->buf[cs->cdw++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
+	cs->buf[cs->cdw++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
+	cs->buf[cs->cdw++] = R_0084FC_CP_STRMOUT_CNTL >> 2;  /* register */
+	cs->buf[cs->cdw++] = 0;
+	cs->buf[cs->cdw++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* reference value */
+	cs->buf[cs->cdw++] = S_0084FC_OFFSET_UPDATE_DONE(1); /* mask */
+	cs->buf[cs->cdw++] = 4; /* poll interval */
 }
 
 void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit)
 {
-	if (buffer_enable_bit) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = S_028B94_STREAMOUT_0_EN(1);
+	struct radeon_winsys_cs *cs = ctx->cs;
 
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028B98_VGT_STRMOUT_BUFFER_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit);
+	if (buffer_enable_bit) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(1);
+
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028B98_VGT_STRMOUT_BUFFER_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit);
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = S_028B94_STREAMOUT_0_EN(0);
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(0);
 	}
 }

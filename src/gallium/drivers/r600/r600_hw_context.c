@@ -34,6 +34,7 @@
 /* Get backends mask */
 void r600_get_backend_mask(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_resource *buffer;
 	uint32_t *results;
 	unsigned num_backends = ctx->screen->info.r600_num_backends;
@@ -80,13 +81,13 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		ctx->ws->buffer_unmap(buffer->buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = 0;
 
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
+		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
 		results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
@@ -115,28 +116,32 @@ err:
 
 static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
+
 	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
 		return;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
 	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
 }
 
 void r600_init_cs(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
+
 	/* R6xx requires this packet at the start of each command buffer */
 	if (ctx->screen->family < CHIP_RV770) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
+		cs->buf[cs->cdw++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
+		cs->buf[cs->cdw++] = 0x00000000;
 	}
 	/* All asics require this one */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
-	ctx->pm4[ctx->pm4_cdwords++] = 0x80000000;
+	cs->buf[cs->cdw++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
+	cs->buf[cs->cdw++] = 0x80000000;
+	cs->buf[cs->cdw++] = 0x80000000;
 
-	ctx->init_dwords = ctx->pm4_cdwords;
+	ctx->init_dwords = cs->cdw;
 }
 
 static void r600_init_block(struct r600_context *ctx,
@@ -914,7 +919,6 @@ int r600_context_init(struct r600_context *ctx)
 		r = -ENOMEM;
 		goto out_err;
 	}
-	ctx->pm4 = ctx->cs->buf;
 
 	r600_init_cs(ctx);
 	ctx->max_db = 4;
@@ -928,7 +932,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
 	/* The number of dwords we already used in the CS so far. */
-	num_dw += ctx->pm4_cdwords;
+	num_dw += ctx->cs->cdw;
 
 	if (count_draw_in) {
 		/* The number of dwords all the dirty states would take. */
@@ -964,18 +968,21 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 /* Flushes all surfaces */
 void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
+
 	r600_need_cs_space(ctx, 5, FALSE);
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
-	ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
-	ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
-	ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+	cs->buf[cs->cdw++] = flush_flags;     /* CP_COHER_CNTL */
+	cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
+	cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
+	cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
 }
 
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_resource *bo)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va = 0;
 
 	/* if bo has already been flushed */
@@ -994,27 +1001,27 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				if ((ctx->screen->family == CHIP_RV670) ||
 				    (ctx->screen->family == CHIP_RS780) ||
 				    (ctx->screen->family == CHIP_RS880)) {
-					ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-					ctx->pm4[ctx->pm4_cdwords++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
-					ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
-					ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
-					ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+					cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+					cs->buf[cs->cdw++] = S_0085F0_CB1_DEST_BASE_ENA(1);     /* CP_COHER_CNTL */
+					cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
+					cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
+					cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
 				}
 			}
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 			ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 		}
 	} else {
 		va = r600_resource_va(&ctx->screen->screen, (void *)bo);
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
-		ctx->pm4[ctx->pm4_cdwords++] = (bo->buf->size + 255) >> 8;
-		ctx->pm4[ctx->pm4_cdwords++] = va >> 8;
-		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
+		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+		cs->buf[cs->cdw++] = flush_flags;
+		cs->buf[cs->cdw++] = (bo->buf->size + 255) >> 8;
+		cs->buf[cs->cdw++] = va >> 8;
+		cs->buf[cs->cdw++] = 0x0000000A;
+		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
 	}
 	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
 }
@@ -1280,6 +1287,7 @@ struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned off
 
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
 	int cp_dwords = block->pm4_ndwords, start_dword = 0;
 	int new_dwords = 0;
@@ -1318,19 +1326,19 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 	optional &= (block->nreg_dirty != block->nreg);
 	if (optional) {
 		new_dwords = block->nreg_dirty;
-		start_dword = ctx->pm4_cdwords;
+		start_dword = cs->cdw;
 		cp_dwords = new_dwords + 2;
 	}
-	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
-	ctx->pm4_cdwords += cp_dwords;
+	memcpy(&cs->buf[cs->cdw], block->pm4, cp_dwords * 4);
+	cs->cdw += cp_dwords;
 
 	if (optional) {
 		uint32_t newword;
 
-		newword = ctx->pm4[start_dword];
+		newword = cs->buf[start_dword];
 		newword &= PKT_COUNT_C;
 		newword |= PKT_COUNT_S(new_dwords);
-		ctx->pm4[start_dword] = newword;
+		cs->buf[start_dword] = newword;
 	}
 out:
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
@@ -1340,6 +1348,7 @@ out:
 
 void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	int cp_dwords = block->pm4_ndwords;
 	int nbo = block->nbo;
 
@@ -1364,8 +1373,8 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 
-	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, cp_dwords * 4);
-	ctx->pm4_cdwords += cp_dwords;
+	memcpy(&cs->buf[cs->cdw], block->pm4, cp_dwords * 4);
+	cs->cdw += cp_dwords;
 
 	block->status ^= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 	block->nreg_dirty = 0;
@@ -1411,6 +1420,7 @@ void r600_context_flush_dest_caches(struct r600_context *ctx)
 
 void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	unsigned ndwords = 7;
 	uint32_t *pm4;
 
@@ -1430,23 +1440,23 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	 * (this is non-zero if any query is active) */
 	if (ctx->num_cs_dw_queries_suspend) {
 		if (ctx->screen->family >= CHIP_RV770) {
-			pm4 = &ctx->pm4[ctx->pm4_cdwords];
+			pm4 = &cs->buf[cs->cdw];
 			pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 			pm4[1] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
 			pm4[2] = draw->db_render_control | S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
-			ctx->pm4_cdwords += 3;
+			cs->cdw += 3;
 			ndwords -= 3;
 		}
-		pm4 = &ctx->pm4[ctx->pm4_cdwords];
+		pm4 = &cs->buf[cs->cdw];
 		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		pm4[1] = (R_028D10_DB_RENDER_OVERRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
 		pm4[2] = draw->db_render_override | S_028D10_NOOP_CULL_DISABLE(1);
-		ctx->pm4_cdwords += 3;
+		cs->cdw += 3;
 		ndwords -= 3;
 	}
 
 	/* draw packet */
-	pm4 = &ctx->pm4[ctx->pm4_cdwords];
+	pm4 = &cs->buf[cs->cdw];
 	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
 	pm4[1] = draw->vgt_index_type;
 	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
@@ -1464,16 +1474,17 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		pm4[5] = draw->vgt_num_indices;
 		pm4[6] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4_cdwords += ndwords;
+	cs->cdw += ndwords;
 }
 
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_block *enable_block = NULL;
 	bool queries_suspended = false;
 	bool streamout_suspended = false;
 
-	if (ctx->pm4_cdwords == ctx->init_dwords)
+	if (cs->cdw == ctx->init_dwords)
 		return;
 
 	/* suspend queries */
@@ -1493,16 +1504,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		r600_context_flush_dest_caches(ctx);
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
 	/* Flush the CS. */
-	ctx->cs->cdw = ctx->pm4_cdwords;
 	ctx->ws->cs_flush(ctx->cs, flags);
-
-	/* We need to get the pointer to the other CS,
-	 * the command streams are double-buffered. */
-	ctx->pm4 = ctx->cs->buf;
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
@@ -1511,7 +1517,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
-	ctx->pm4_cdwords = 0;
 	ctx->flags = 0;
 
 	r600_init_cs(ctx);
@@ -1549,6 +1554,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
 	r600_need_cs_space(ctx, 10, FALSE);
@@ -1556,17 +1562,17 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-	ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
 	/* DATA_SEL | INT_EN | ADDRESS_HI */
-	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24) | ((va >> 32UL) & 0xFF);
-	ctx->pm4[ctx->pm4_cdwords++] = value;                   /* DATA_LO */
-	ctx->pm4[ctx->pm4_cdwords++] = 0;                       /* DATA_HI */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, fence_bo, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = (1 << 29) | (0 << 24) | ((va >> 32UL) & 0xFF);
+	cs->buf[cs->cdw++] = value;                   /* DATA_LO */
+	cs->buf[cs->cdw++] = 0;                       /* DATA_HI */
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, fence_bo, RADEON_USAGE_WRITE);
 }
 
 static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
@@ -1670,6 +1676,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	unsigned new_results_end, i;
 	uint32_t *results;
 	uint64_t va;
@@ -1723,39 +1730,40 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = va;
-		ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFF;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
+		cs->buf[cs->cdw++] = query->results_end;
+		cs->buf[cs->cdw++] = 0;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = va;
-		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29) | ((va >> 32UL) & 0xFF);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = 0;
 		break;
 	default:
 		assert(0);
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	ctx->num_cs_dw_queries_suspend += query->num_cs_dw;
 }
 
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
 	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer);
@@ -1764,34 +1772,34 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		va += query->results_end + 8;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		ctx->pm4[ctx->pm4_cdwords++] = va;
-		ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFF;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
-		ctx->pm4[ctx->pm4_cdwords++] = query->results_end + query->result_size/2;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
+		cs->buf[cs->cdw++] = query->results_end + query->result_size/2;
+		cs->buf[cs->cdw++] = 0;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		va += query->results_end + query->result_size/2;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		ctx->pm4[ctx->pm4_cdwords++] = va;
-		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29) | ((va >> 32UL) & 0xFF);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = 0;
 		break;
 	default:
 		assert(0);
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
 	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
 	ctx->num_cs_dw_queries_suspend -= query->num_cs_dw;
@@ -1800,14 +1808,15 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
 	if (operation == PREDICATION_OP_CLEAR) {
 		r600_need_cs_space(ctx, 3, FALSE);
 
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = 0;
-		ctx->pm4[ctx->pm4_cdwords++] = PRED_OP(PREDICATION_OP_CLEAR);
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = PRED_OP(PREDICATION_OP_CLEAR);
 	} else {
 		unsigned results_base = query->results_start;
 		unsigned count;
@@ -1825,11 +1834,11 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 
 		/* emit predicate packets for all data blocks */
 		while (results_base != query->results_end) {
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = (va + results_base) & 0xFFFFFFFFUL;
-			ctx->pm4[ctx->pm4_cdwords++] = op | (((va + results_base) >> 32UL) & 0xFF);
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx, query->buffer,
+			cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+			cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
+			cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+			cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer,
 									     RADEON_USAGE_READ);
 			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
 
@@ -1953,41 +1962,46 @@ void r600_context_queries_resume(struct r600_context *ctx)
 
 static void r600_flush_vgt_streamout(struct r600_context *ctx)
 {
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_008490_CP_STRMOUT_CNTL - R600_CONFIG_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	struct radeon_winsys_cs *cs = ctx->cs;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
+	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
+	cs->buf[cs->cdw++] = (R_008490_CP_STRMOUT_CNTL - R600_CONFIG_REG_OFFSET) >> 2;
+	cs->buf[cs->cdw++] = 0;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = R_008490_CP_STRMOUT_CNTL >> 2;  /* register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = S_008490_OFFSET_UPDATE_DONE(1); /* reference value */
-	ctx->pm4[ctx->pm4_cdwords++] = S_008490_OFFSET_UPDATE_DONE(1); /* mask */
-	ctx->pm4[ctx->pm4_cdwords++] = 4; /* poll interval */
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
+
+	cs->buf[cs->cdw++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
+	cs->buf[cs->cdw++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
+	cs->buf[cs->cdw++] = R_008490_CP_STRMOUT_CNTL >> 2;  /* register */
+	cs->buf[cs->cdw++] = 0;
+	cs->buf[cs->cdw++] = S_008490_OFFSET_UPDATE_DONE(1); /* reference value */
+	cs->buf[cs->cdw++] = S_008490_OFFSET_UPDATE_DONE(1); /* mask */
+	cs->buf[cs->cdw++] = 4; /* poll interval */
 }
 
 static void r600_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit)
 {
-	if (buffer_enable_bit) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = S_028AB0_STREAMOUT(1);
+	struct radeon_winsys_cs *cs = ctx->cs;
 
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028B20_VGT_STRMOUT_BUFFER_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = buffer_enable_bit;
+	if (buffer_enable_bit) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028AB0_STREAMOUT(1);
+
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028B20_VGT_STRMOUT_BUFFER_EN - R600_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = buffer_enable_bit;
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		ctx->pm4[ctx->pm4_cdwords++] = S_028AB0_STREAMOUT(0);
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028AB0_STREAMOUT(0);
 	}
 }
 
 void r600_context_streamout_begin(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_so_target **t = ctx->so_targets;
 	unsigned *stride_in_dw = ctx->vs_so_stride_in_dw;
 	unsigned buffer_en, i, update_flags = 0;
@@ -2028,16 +2042,16 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 			update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 3, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = (R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 +
+			cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 3, 0);
+			cs->buf[cs->cdw++] = (R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 +
 							16*i - R600_CONTEXT_REG_OFFSET) >> 2;
-			ctx->pm4[ctx->pm4_cdwords++] = (t[i]->b.buffer_offset +
+			cs->buf[cs->cdw++] = (t[i]->b.buffer_offset +
 							t[i]->b.buffer_size) >> 2; /* BUFFER_SIZE (in DW) */
-			ctx->pm4[ctx->pm4_cdwords++] = stride_in_dw[i];		   /* VTX_STRIDE (in DW) */
-			ctx->pm4[ctx->pm4_cdwords++] = va >> 8;			   /* BUFFER_BASE */
+			cs->buf[cs->cdw++] = stride_in_dw[i];		   /* VTX_STRIDE (in DW) */
+			cs->buf[cs->cdw++] = va >> 8;			   /* BUFFER_BASE */
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-			ctx->pm4[ctx->pm4_cdwords++] =
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+			cs->buf[cs->cdw++] =
 				r600_context_bo_reloc(ctx, r600_resource(t[i]->b.buffer),
 						      RADEON_USAGE_WRITE);
 
@@ -2045,39 +2059,40 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 				va = r600_resource_va(&ctx->screen->screen,
 						      (void*)t[i]->filled_size);
 				/* Append. */
-				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-				ctx->pm4[ctx->pm4_cdwords++] = STRMOUT_SELECT_BUFFER(i) |
+				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
+				cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
 							       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_MEM); /* control */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-				ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL; /* src address lo */
-				ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* src address hi */
+				cs->buf[cs->cdw++] = 0; /* unused */
+				cs->buf[cs->cdw++] = 0; /* unused */
+				cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL; /* src address lo */
+				cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFUL; /* src address hi */
 
-				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-				ctx->pm4[ctx->pm4_cdwords++] =
+				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+				cs->buf[cs->cdw++] =
 					r600_context_bo_reloc(ctx,  t[i]->filled_size,
 							      RADEON_USAGE_READ);
 			} else {
 				/* Start from the beginning. */
-				ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-				ctx->pm4[ctx->pm4_cdwords++] = STRMOUT_SELECT_BUFFER(i) |
+				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
+				cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
 							       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_PACKET); /* control */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-				ctx->pm4[ctx->pm4_cdwords++] = t[i]->b.buffer_offset >> 2; /* buffer offset in DW */
-				ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
+				cs->buf[cs->cdw++] = 0; /* unused */
+				cs->buf[cs->cdw++] = 0; /* unused */
+				cs->buf[cs->cdw++] = t[i]->b.buffer_offset >> 2; /* buffer offset in DW */
+				cs->buf[cs->cdw++] = 0; /* unused */
 			}
 		}
 	}
 
 	if (ctx->screen->family > CHIP_R600 && ctx->screen->family < CHIP_RV770) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = update_flags;
+		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
+		cs->buf[cs->cdw++] = update_flags;
 	}
 }
 
 void r600_context_streamout_end(struct r600_context *ctx)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_so_target **t = ctx->so_targets;
 	unsigned i, flush_flags = 0;
 	uint64_t va;
@@ -2092,17 +2107,17 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		if (t[i]) {
 			va = r600_resource_va(&ctx->screen->screen,
 					      (void*)t[i]->filled_size);
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-			ctx->pm4[ctx->pm4_cdwords++] = STRMOUT_SELECT_BUFFER(i) |
+			cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
+			cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
 						       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_NONE) |
 						       STRMOUT_STORE_BUFFER_FILLED_SIZE; /* control */
-			ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;     /* dst address lo */
-			ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* dst address hi */
-			ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
-			ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
+			cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;     /* dst address lo */
+			cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFUL; /* dst address hi */
+			cs->buf[cs->cdw++] = 0; /* unused */
+			cs->buf[cs->cdw++] = 0; /* unused */
 
-			ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-			ctx->pm4[ctx->pm4_cdwords++] =
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+			cs->buf[cs->cdw++] =
 				r600_context_bo_reloc(ctx,  t[i]->filled_size,
 						      RADEON_USAGE_WRITE);
 
@@ -2117,14 +2132,14 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	}
 
 	if (ctx->screen->family < CHIP_RV770) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-		ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
-		ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
-		ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
-		ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+		cs->buf[cs->cdw++] = flush_flags;     /* CP_COHER_CNTL */
+		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
+		cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
+		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
 	}
 
 	ctx->num_cs_dw_streamout_end = 0;
@@ -2143,27 +2158,28 @@ void r600_context_streamout_end(struct r600_context *ctx)
 
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
 {
+	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va = r600_resource_va(&ctx->screen->screen,
 				       (void*)t->filled_size);
 
 	r600_need_cs_space(ctx, 14 + 21, TRUE);
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET - R600_CONTEXT_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+	cs->buf[cs->cdw++] = (R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET - R600_CONTEXT_REG_OFFSET) >> 2;
+	cs->buf[cs->cdw++] = 0;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = (R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
-	ctx->pm4[ctx->pm4_cdwords++] = t->stride_in_dw;
+	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+	cs->buf[cs->cdw++] = (R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
+	cs->buf[cs->cdw++] = t->stride_in_dw;
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_COPY_DW, 4, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
-	ctx->pm4[ctx->pm4_cdwords++] = va & 0xFFFFFFFFUL;     /* src address lo */
-	ctx->pm4[ctx->pm4_cdwords++] = (va >> 32UL) & 0xFFUL; /* src address hi */
-	ctx->pm4[ctx->pm4_cdwords++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
-	ctx->pm4[ctx->pm4_cdwords++] = 0; /* unused */
+	cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
+	cs->buf[cs->cdw++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
+	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;     /* src address lo */
+	cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFUL; /* src address hi */
+	cs->buf[cs->cdw++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
+	cs->buf[cs->cdw++] = 0; /* unused */
 
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = r600_context_bo_reloc(ctx,  t->filled_size,
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx,  t->filled_size,
 							     RADEON_USAGE_READ);
 }
