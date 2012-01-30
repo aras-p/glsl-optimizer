@@ -933,18 +933,35 @@ static int r600_shader_from_tgsi(struct r600_pipe_context * rctx, struct r600_pi
 	}
 
 	if (ctx.fragcoord_input >= 0) {
-		struct r600_bytecode_alu alu;
-		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-		alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
-		alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
-		alu.src[0].chan = 3;
+		if (ctx.bc->chip_class == CAYMAN) {
+			for (j = 0 ; j < 4; j++) {
+				struct r600_bytecode_alu alu;
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
+				alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
+				alu.src[0].chan = 3;
 
-		alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
-		alu.dst.chan = 3;
-		alu.dst.write = 1;
-		alu.last = 1;
-		if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
-			return r;
+				alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
+				alu.dst.chan = j;
+				alu.dst.write = (j == 3);
+				alu.last = 1;
+				if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
+					return r;
+			}
+		} else {
+			struct r600_bytecode_alu alu;
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
+			alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
+			alu.src[0].chan = 3;
+
+			alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
+			alu.dst.chan = 3;
+			alu.dst.write = 1;
+			alu.last = 1;
+			if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
+				return r;
+		}
 	}
 
 	if (shader->two_side && ctx.colors_used) {
