@@ -51,13 +51,9 @@ struct r600_reg {
 	unsigned			flush_mask;
 };
 
-#define BO_BOUND_TEXTURE 1
-
 /*
  * r600_hw_context.c
  */
-void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
-				unsigned flush_mask, struct r600_resource *rbo);
 struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base);

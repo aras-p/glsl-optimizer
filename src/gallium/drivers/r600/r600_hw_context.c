@@ -971,29 +971,6 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 }
 
-void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
-				unsigned flush_mask, struct r600_resource *bo)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	uint64_t va = 0;
-
-	/* if bo has already been flushed */
-	if (!(~bo->cs_buf->last_flush & flush_flags)) {
-		bo->cs_buf->last_flush &= flush_mask;
-		return;
-	}
-
-	va = r600_resource_va(&ctx->screen->screen, (void *)bo);
-	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-	cs->buf[cs->cdw++] = flush_flags;
-	cs->buf[cs->cdw++] = (bo->buf->size + 255) >> 8;
-	cs->buf[cs->cdw++] = va >> 8;
-	cs->buf[cs->cdw++] = 0x0000000A;
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, bo, RADEON_USAGE_WRITE);
-	bo->cs_buf->last_flush = (bo->cs_buf->last_flush | flush_flags) & flush_mask;
-}
-
 void r600_context_dirty_block(struct r600_context *ctx,
 			      struct r600_block *block,
 			      int dirty, int index)
@@ -1074,9 +1051,6 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
-		if (block->reloc[1].bo)
-			block->reloc[1].bo->cs_buf->binding &= ~BO_BOUND_TEXTURE;
-
 		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, NULL);
 		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, NULL);
 		LIST_DELINIT(&block->list);
@@ -1121,7 +1095,6 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 			block->reloc[1].bo_usage = state->bo_usage[0];
 			pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b.b);
 			block->reloc[2].bo_usage = state->bo_usage[1];
-			state->bo[0]->cs_buf->binding |= BO_BOUND_TEXTURE;
 		}
 
 		if (is_vertex)
@@ -1275,10 +1248,6 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 				if (reloc->bo) {
 					block->pm4[reloc->bo_pm4_index] =
 							r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
-					r600_context_bo_flush(ctx,
-							reloc->flush_flags,
-							reloc->flush_mask,
-							reloc->bo);
 				} else {
 					block->pm4[reloc->bo_pm4_index] = 0;
 				}
@@ -1333,10 +1302,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 			struct r600_block_reloc *reloc = &block->reloc[block->pm4_bo_index[j]];
 			block->pm4[reloc->bo_pm4_index] =
 				r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
-			r600_context_bo_flush(ctx,
-					      reloc->flush_flags,
-					      reloc->flush_mask,
-					      reloc->bo);
 		}
 	}
 	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
@@ -1500,7 +1465,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {
-		ctx->bo[i]->cs_buf->last_flush = 0;
 		pipe_resource_reference((struct pipe_resource**)&ctx->bo[i], NULL);
 	}
 	ctx->creloc = 0;

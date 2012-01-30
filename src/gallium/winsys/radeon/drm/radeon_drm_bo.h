@@ -47,10 +47,6 @@ struct radeon_bo_desc {
 struct radeon_bo {
     struct pb_buffer base;
 
-    /* Don't move these! */
-    unsigned last_flush;
-    unsigned binding;
-
     struct radeon_bomgr *mgr;
     struct radeon_drm_winsys *rws;
 
