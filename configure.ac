@@ -36,7 +36,7 @@ USER_CXXFLAGS="$CXXFLAGS"
 
 dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.24
-LIBDRM_RADEON_REQUIRED=2.4.24
+LIBDRM_RADEON_REQUIRED=2.4.31
 LIBDRM_INTEL_REQUIRED=2.4.30
 LIBDRM_NOUVEAU_REQUIRED=0.6
 DRI2PROTO_REQUIRED=2.6
@@ -1864,11 +1864,13 @@ if test "x$with_gallium_drivers" != x; then
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
             ;;
         xr300)
+            PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
             gallium_check_st "radeon/drm" "dri-r300" "xorg-r300" "" "xvmc-r300" "vdpau-r300" "va-r300"
             ;;
         xr600)
+            PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;

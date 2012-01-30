@@ -620,9 +620,28 @@ static void *radeon_bo_map(struct pb_buffer *buf,
     return pb_map(buf, get_pb_usage_from_transfer_flags(usage), cs);
 }
 
+static unsigned eg_tile_split(unsigned tile_split)
+{
+    switch (tile_split) {
+    case 0:     tile_split = 64;    break;
+    case 1:     tile_split = 128;   break;
+    case 2:     tile_split = 256;   break;
+    case 3:     tile_split = 512;   break;
+    default:
+    case 4:     tile_split = 1024;  break;
+    case 5:     tile_split = 2048;  break;
+    case 6:     tile_split = 4096;  break;
+    }
+    return tile_split;
+}
+
 static void radeon_bo_get_tiling(struct pb_buffer *_buf,
                                  enum radeon_bo_layout *microtiled,
-                                 enum radeon_bo_layout *macrotiled)
+                                 enum radeon_bo_layout *macrotiled,
+                                 unsigned *bankw, unsigned *bankh,
+                                 unsigned *tile_split,
+                                 unsigned *stencil_tile_split,
+                                 unsigned *mtilea)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_set_tiling args;
@@ -643,6 +662,14 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
 
     if (args.tiling_flags & RADEON_BO_FLAGS_MACRO_TILE)
         *macrotiled = RADEON_LAYOUT_TILED;
+    if (bankw && tile_split && stencil_tile_split && mtilea && tile_split) {
+        *bankw = (args.tiling_flags >> RADEON_TILING_EG_BANKW_SHIFT) & RADEON_TILING_EG_BANKW_MASK;
+        *bankh = (args.tiling_flags >> RADEON_TILING_EG_BANKH_SHIFT) & RADEON_TILING_EG_BANKH_MASK;
+        *tile_split = (args.tiling_flags >> RADEON_TILING_EG_TILE_SPLIT_SHIFT) & RADEON_TILING_EG_TILE_SPLIT_MASK;
+        *stencil_tile_split = (args.tiling_flags >> RADEON_TILING_EG_STENCIL_TILE_SPLIT_SHIFT) & RADEON_TILING_EG_STENCIL_TILE_SPLIT_MASK;
+        *mtilea = (args.tiling_flags >> RADEON_TILING_EG_MACRO_TILE_ASPECT_SHIFT) & RADEON_TILING_EG_MACRO_TILE_ASPECT_MASK;
+        *tile_split = eg_tile_split(*tile_split);
+    }
 }
 
 static void radeon_bo_set_tiling(struct pb_buffer *_buf,

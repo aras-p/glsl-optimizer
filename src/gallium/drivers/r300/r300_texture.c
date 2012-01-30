@@ -963,7 +963,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
     if (!buffer)
         return NULL;
 
-    rws->buffer_get_tiling(buffer, &microtile, &macrotile);
+    rws->buffer_get_tiling(buffer, &microtile, &macrotile, NULL, NULL, NULL, NULL, NULL);
 
     /* Enforce a microtiled zbuffer. */
     if (util_format_is_depth_or_stencil(base->format) &&

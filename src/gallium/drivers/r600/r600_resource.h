@@ -60,6 +60,7 @@ struct r600_resource_texture {
 	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
+	struct radeon_surface		surface;
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)

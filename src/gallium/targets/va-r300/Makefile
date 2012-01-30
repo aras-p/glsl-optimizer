@@ -19,7 +19,7 @@ C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm --libs) -lXfixes
+DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm --libs) -lXfixes -ldrm_radeon
 
 include ../Makefile.va
 

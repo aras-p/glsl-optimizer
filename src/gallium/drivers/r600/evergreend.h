@@ -366,6 +366,11 @@
 #define   S_028C74_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 4)
 #define   G_028C74_NON_DISP_TILING_ORDER(x)            (((x) >> 4) & 0x1)
 #define   C_028C74_NON_DISP_TILING_ORDER               0xFFFFFFEF
+#define   S_028C74_TILE_SPLIT(x)                       (((x) & 0xf) << 5)
+#define   S_028C74_NUM_BANKS(x)                        (((x) & 0x3) << 10)
+#define   S_028C74_BANK_WIDTH(x)                       (((x) & 0x3) << 13)
+#define   S_028C74_BANK_HEIGHT(x)                      (((x) & 0x3) << 16)
+#define   S_028C74_MACRO_TILE_ASPECT(x)                (((x) & 0x3) << 19)
 
 #define R_028C78_CB_COLOR0_DIM                         0x028C78
 #define   S_028C78_WIDTH_MAX(x)                        (((x) & 0xFFFF) << 0)
@@ -540,11 +545,17 @@
 #define   S_028040_ZRANGE_PRECISION(x)                 (((x) & 0x1) << 31)
 #define   G_028040_ZRANGE_PRECISION(x)                 (((x) >> 31) & 0x1)
 #define   C_028040_ZRANGE_PRECISION                    0x7FFFFFFF
+#define   S_028040_TILE_SPLIT(x)                       (((x) & 0x7) << 8)
+#define   S_028040_NUM_BANKS(x)                        (((x) & 0x3) << 12)
+#define   S_028040_BANK_WIDTH(x)                       (((x) & 0x3) << 16)
+#define   S_028040_BANK_HEIGHT(x)                      (((x) & 0x3) << 20)
+#define   S_028040_MACRO_TILE_ASPECT(x)                (((x) & 0x3) << 24)
 
 #define R_028044_DB_STENCIL_INFO                     0x028044
 #define   S_028044_FORMAT(x)                           (((x) & 0x1) << 0)
 #define   G_028044_FORMAT(x)                           (((x) >> 0) & 0x1)
 #define   C_028044_FORMAT                              0xFFFFFFFE
+#define   S_028044_TILE_SPLIT(x)                       (((x) & 0x7) << 8)
 
 #define R_028058_DB_DEPTH_SIZE                       0x028058
 #define   S_028058_PITCH_TILE_MAX(x)                   (((x) & 0x7FF) << 0)
@@ -1053,7 +1064,12 @@
 #define   S_030018_INTERLACED(x)                       (((x) & 0x1) << 6)
 #define   G_030018_INTERLACED(x)                       (((x) >> 6) & 0x1)
 #define   C_030018_INTERLACED                          0xFFFFFFBF
+#define   S_030018_TILE_SPLIT(x)                       (((x) & 0x7) << 29)
 #define R_03001C_SQ_TEX_RESOURCE_WORD7_0             0x03001C
+#define   S_03001C_MACRO_TILE_ASPECT(x)                (((x) & 0x3) << 6)
+#define   S_03001C_BANK_WIDTH(x)                       (((x) & 0x3) << 8)
+#define   S_03001C_BANK_HEIGHT(x)                      (((x) & 0x3) << 10)
+#define   S_03001C_NUM_BANKS(x)                        (((x) & 0x3) << 16)
 #define   S_03001C_TYPE(x)                             (((x) & 0x3) << 30)
 #define   G_03001C_TYPE(x)                             (((x) >> 30) & 0x3)
 #define   C_03001C_TYPE                                0x3FFFFFFF
@@ -1841,6 +1857,12 @@
 #define R_028C3C_PA_SC_AA_MASK                       0x00028C3C
 #define R_028C60_CB_COLOR0_BASE                      0x00028C60
 #define R_028C6C_CB_COLOR0_VIEW                      0x00028C6C
+#define   S_028C6C_SLICE_START(x)                      (((x) & 0x7FF) << 0)
+#define   G_028C6C_SLICE_START(x)                      (((x) >> 0) & 0x7FF)
+#define   C_028C6C_SLICE_START                         0xFFFFF800
+#define   S_028C6C_SLICE_MAX(x)                        (((x) & 0x7FF) << 13)
+#define   G_028C6C_SLICE_MAX(x)                        (((x) >> 13) & 0x7FF)
+#define   C_028C6C_SLICE_MAX                           0xFF001FFF
 #define R_028C9C_CB_COLOR1_BASE                      0x00028C9C
 #define R_028CA0_CB_COLOR1_PITCH                     0x00028CA0
 #define R_028CA4_CB_COLOR1_SLICE                     0x00028CA4

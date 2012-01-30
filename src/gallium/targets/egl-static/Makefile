@@ -115,6 +115,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_R300=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
+egl_SYS += -ldrm_radeon
 endif
 endif
 
@@ -125,6 +126,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_R600=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
+egl_SYS += -ldrm_radeon
 endif
 endif
 

@@ -302,6 +302,7 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
+    radeon_surface_manager_free(ws->surf_man);
     FREE(rws);
 }
 
@@ -339,6 +340,22 @@ static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
     return FALSE;
 }
 
+static int radeon_drm_winsys_surface_init(struct radeon_winsys *rws,
+                                          struct radeon_surface *surf)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+
+    return radeon_surface_init(ws->surf_man, surf);
+}
+
+static int radeon_drm_winsys_surface_best(struct radeon_winsys *rws,
+                                          struct radeon_surface *surf)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+
+    return radeon_surface_best(ws->surf_man, surf);
+}
+
 struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws = CALLOC_STRUCT(radeon_drm_winsys);
@@ -359,10 +376,17 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     if (!ws->cman)
         goto fail;
 
+    /* FIXME check for libdrm version ?? */
+    ws->surf_man = radeon_surface_manager_new(fd);
+    if (!ws->surf_man)
+        goto fail;
+
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
     ws->base.query_info = radeon_query_info;
     ws->base.cs_request_feature = radeon_cs_request_feature;
+    ws->base.surface_init = radeon_drm_winsys_surface_init;
+    ws->base.surface_best = radeon_drm_winsys_surface_best;
 
     radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);
@@ -377,6 +401,8 @@ fail:
         ws->cman->destroy(ws->cman);
     if (ws->kman)
         ws->kman->destroy(ws->kman);
+    if (ws->surf_man)
+        radeon_surface_manager_free(ws->surf_man);
     FREE(ws);
     return NULL;
 }

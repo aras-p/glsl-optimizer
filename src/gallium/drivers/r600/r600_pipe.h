@@ -117,6 +117,7 @@ struct r600_screen {
 	struct r600_pipe_fences		fences;
 
 	unsigned			num_contexts;
+	unsigned			use_surface;
 
 	/* for thread-safe write accessing to num_contexts */
 	pipe_mutex			mutex_num_contexts;

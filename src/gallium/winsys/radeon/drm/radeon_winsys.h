@@ -43,6 +43,7 @@
 #include "pipebuffer/pb_bufmgr.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "libdrm/radeon_surface.h"
 
 #define RADEON_MAX_CMDBUF_DWORDS (16 * 1024)
 
@@ -200,7 +201,11 @@ struct radeon_winsys {
      */
     void (*buffer_get_tiling)(struct pb_buffer *buf,
                               enum radeon_bo_layout *microtile,
-                              enum radeon_bo_layout *macrotile);
+                              enum radeon_bo_layout *macrotile,
+                              unsigned *bankw, unsigned *bankh,
+                              unsigned *tile_split,
+                              unsigned *stencil_tile_split,
+                              unsigned *mtilea);
 
     /**
      * Set tiling flags describing a memory layout of a buffer object.
@@ -347,6 +352,24 @@ struct radeon_winsys {
     boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
                                   enum radeon_feature_id fid,
                                   boolean enable);
+
+    /**
+     * Initialize surface
+     *
+     * \param ws        The winsys this function is called from.
+     * \param surf      Surface structure ptr
+     */
+    int (*surface_init)(struct radeon_winsys *ws,
+                        struct radeon_surface *surf);
+
+    /**
+     * Find best values for a surface
+     *
+     * \param ws        The winsys this function is called from.
+     * \param surf      Surface structure ptr
+     */
+    int (*surface_best)(struct radeon_winsys *ws,
+                        struct radeon_surface *surf);
 };
 
 #endif

@@ -1439,6 +1439,9 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
+	/* force to keep tiling flags */
+	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
+
 	/* Flush the CS. */
 	ctx->ws->cs_flush(ctx->cs, flags);
 

@@ -1081,6 +1081,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_pipe_resource_state *rstate;
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
@@ -1122,48 +1123,107 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	offset_level = state->u.tex.first_level;
 	last_level = state->u.tex.last_level - offset_level;
-	width = u_minify(texture->width0, offset_level);
-	height = u_minify(texture->height0, offset_level);
-	depth = u_minify(texture->depth0, offset_level);
+	if (!rscreen->use_surface) {
+		width = u_minify(texture->width0, offset_level);
+		height = u_minify(texture->height0, offset_level);
+		depth = u_minify(texture->depth0, offset_level);
 
-	pitch = align(tmp->pitch_in_blocks[offset_level] *
-		      util_format_get_blockwidth(state->format), 8);
-	array_mode = tmp->array_mode[offset_level];
-	tile_type = tmp->tile_type;
+		pitch = align(tmp->pitch_in_blocks[offset_level] *
+				util_format_get_blockwidth(state->format), 8);
+		array_mode = tmp->array_mode[offset_level];
+		tile_type = tmp->tile_type;
 
-	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
-	        height = 1;
-		depth = texture->array_size;
-	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
-		depth = texture->array_size;
+		if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
+			height = 1;
+			depth = texture->array_size;
+		} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
+			depth = texture->array_size;
+		}
+
+		rstate->bo[0] = &tmp->resource;
+		rstate->bo[1] = &tmp->resource;
+		rstate->bo_usage[0] = RADEON_USAGE_READ;
+		rstate->bo_usage[1] = RADEON_USAGE_READ;
+
+		rstate->val[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
+				S_038000_TILE_MODE(array_mode) |
+				S_038000_TILE_TYPE(tile_type) |
+				S_038000_PITCH((pitch / 8) - 1) |
+				S_038000_TEX_WIDTH(width - 1));
+		rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
+				S_038004_TEX_DEPTH(depth - 1) |
+				S_038004_DATA_FORMAT(format));
+		rstate->val[2] = tmp->offset[offset_level] >> 8;
+		rstate->val[3] = tmp->offset[offset_level+1] >> 8;
+		rstate->val[4] = (word4 |
+				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
+				S_038010_REQUEST_SIZE(1) |
+				S_038010_ENDIAN_SWAP(endian) |
+				S_038010_BASE_LEVEL(0));
+		rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
+				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+				S_038014_LAST_ARRAY(state->u.tex.last_layer));
+		rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
+				S_038018_MAX_ANISO(4 /* max 16 samples */));
+	} else {
+		width = tmp->surface.level[offset_level].npix_x;
+		height = tmp->surface.level[offset_level].npix_y;
+		depth = tmp->surface.level[offset_level].npix_z;
+		pitch = tmp->surface.level[offset_level].nblk_x * util_format_get_blockwidth(state->format);
+		tile_type = tmp->tile_type;
+
+		if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
+			height = 1;
+			depth = texture->array_size;
+		} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
+			depth = texture->array_size;
+		}
+		switch (tmp->surface.level[offset_level].mode) {
+		case RADEON_SURF_MODE_LINEAR_ALIGNED:
+			array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
+			break;
+		case RADEON_SURF_MODE_1D:
+			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
+			break;
+		case RADEON_SURF_MODE_2D:
+			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
+			break;
+		case RADEON_SURF_MODE_LINEAR:
+		default:
+			array_mode = V_038000_ARRAY_LINEAR_GENERAL;
+			break;
+		}
+
+		rstate->bo[0] = &tmp->resource;
+		rstate->bo[1] = &tmp->resource;
+		rstate->bo_usage[0] = RADEON_USAGE_READ;
+		rstate->bo_usage[1] = RADEON_USAGE_READ;
+
+		rstate->val[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
+				S_038000_TILE_MODE(array_mode) |
+				S_038000_TILE_TYPE(tile_type) |
+				S_038000_PITCH((pitch / 8) - 1) |
+				S_038000_TEX_WIDTH(width - 1));
+		rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
+				S_038004_TEX_DEPTH(depth - 1) |
+				S_038004_DATA_FORMAT(format));
+		rstate->val[2] = tmp->surface.level[offset_level].offset >> 8;
+		if (offset_level >= tmp->surface.last_level) {
+			rstate->val[3] = tmp->surface.level[offset_level].offset >> 8;
+		} else {
+			rstate->val[3] = tmp->surface.level[offset_level + 1].offset >> 8;
+		}
+		rstate->val[4] = (word4 |
+				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
+				S_038010_REQUEST_SIZE(1) |
+				S_038010_ENDIAN_SWAP(endian) |
+				S_038010_BASE_LEVEL(0));
+		rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
+				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+				S_038014_LAST_ARRAY(state->u.tex.last_layer));
+		rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
+				S_038018_MAX_ANISO(4 /* max 16 samples */));
 	}
-
-	rstate->bo[0] = &tmp->resource;
-	rstate->bo[1] = &tmp->resource;
-	rstate->bo_usage[0] = RADEON_USAGE_READ;
-	rstate->bo_usage[1] = RADEON_USAGE_READ;
-
-	rstate->val[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
-			  S_038000_TILE_MODE(array_mode) |
-			  S_038000_TILE_TYPE(tile_type) |
-			  S_038000_PITCH((pitch / 8) - 1) |
-			  S_038000_TEX_WIDTH(width - 1));
-	rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
-			  S_038004_TEX_DEPTH(depth - 1) |
-			  S_038004_DATA_FORMAT(format));
-	rstate->val[2] = tmp->offset[offset_level] >> 8;
-	rstate->val[3] = tmp->offset[offset_level+1] >> 8;
-	rstate->val[4] = (word4 |
-			  S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
-			  S_038010_REQUEST_SIZE(1) |
-			  S_038010_ENDIAN_SWAP(endian) |
-			  S_038010_BASE_LEVEL(0));
-	rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
-			  S_038014_BASE_ARRAY(state->u.tex.first_layer) |
-			  S_038014_LAST_ARRAY(state->u.tex.last_layer));
-	rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
-			  S_038018_MAX_ANISO(4 /* max 16 samples */));
-
 	return &view->base;
 }
 
@@ -1433,6 +1493,7 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			const struct pipe_framebuffer_state *state, int cb)
 {
+	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
@@ -1451,15 +1512,47 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		rctx->have_depth_fb = TRUE;
 
 	if (rtex->depth && !rtex->is_flushing_texture) {
-	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
 	}
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset(rtex,
-					 level, state->cbufs[cb]->u.tex.first_layer);
-	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
-	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
+	if (!rscreen->use_surface) {
+		offset = r600_texture_get_offset(rtex,
+						 level, state->cbufs[cb]->u.tex.first_layer);
+		pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+		slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64;
+		if (slice) {
+			slice = slice - 1;
+		}
+		color_info = S_0280A0_ARRAY_MODE(rtex->array_mode[level]);
+	} else {
+		offset = rtex->surface.level[level].offset;
+		if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+			offset += rtex->surface.level[level].slice_size *
+				  state->cbufs[cb]->u.tex.first_layer;
+		}
+		pitch = rtex->surface.level[level].nblk_x / 8 - 1;
+		slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+		if (slice) {
+			slice = slice - 1;
+		}
+		color_info = 0;
+		switch (rtex->surface.level[level].mode) {
+		case RADEON_SURF_MODE_LINEAR_ALIGNED:
+			color_info = S_0280A0_ARRAY_MODE(V_038000_ARRAY_LINEAR_ALIGNED);
+			break;
+		case RADEON_SURF_MODE_1D:
+			color_info = S_0280A0_ARRAY_MODE(V_038000_ARRAY_1D_TILED_THIN1);
+			break;
+		case RADEON_SURF_MODE_2D:
+			color_info = S_0280A0_ARRAY_MODE(V_038000_ARRAY_2D_TILED_THIN1);
+			break;
+		case RADEON_SURF_MODE_LINEAR:
+		default:
+			color_info = S_0280A0_ARRAY_MODE(V_038000_ARRAY_LINEAR_GENERAL);
+			break;
+		}
+	}
 	desc = util_format_description(surf->base.format);
 
 	for (i = 0; i < 4; i++) {
@@ -1500,9 +1593,8 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	color_info = S_0280A0_FORMAT(format) |
+	color_info |= S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
-		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_BYPASS(blend_bypass) |
 		S_0280A0_BLEND_CLAMP(blend_clamp) |
 		S_0280A0_NUMBER_TYPE(ntype) |
@@ -1550,9 +1642,23 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 				S_028060_PITCH_TILE_MAX(pitch) |
 				S_028060_SLICE_TILE_MAX(slice),
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028080_CB_COLOR0_VIEW + cb * 4,
-				0x00000000, NULL, 0);
+	if (!rscreen->use_surface) {
+		r600_pipe_state_add_reg(rstate,
+					R_028080_CB_COLOR0_VIEW + cb * 4,
+					0x00000000, NULL, 0);
+	} else {
+		if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+			r600_pipe_state_add_reg(rstate,
+						R_028080_CB_COLOR0_VIEW + cb * 4,
+						0x00000000, NULL, 0);
+		} else {
+			r600_pipe_state_add_reg(rstate,
+						R_028080_CB_COLOR0_VIEW + cb * 4,
+						S_028080_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
+						S_028080_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer),
+						NULL, 0);
+		}
+	}
 	r600_pipe_state_add_reg(rstate,
 				R_0280E0_CB_COLOR0_FRAG + cb * 4,
 				0, &rtex->resource, RADEON_USAGE_READWRITE);
@@ -1567,6 +1673,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			const struct pipe_framebuffer_state *state)
 {
+	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level, pitch, slice, format, offset, array_mode;
@@ -1579,15 +1686,39 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 
-	/* XXX remove this once tiling is properly supported */
-	array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
-					       V_0280A0_ARRAY_1D_TILED_THIN1;
+	if (!rscreen->use_surface) {
+		/* XXX remove this once tiling is properly supported */
+		array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
+			V_0280A0_ARRAY_1D_TILED_THIN1;
 
-	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
-					 level, state->zsbuf->u.tex.first_layer);
-	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
-	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
+		/* XXX quite sure for dx10+ hw don't need any offset hacks */
+		offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
+				level, state->zsbuf->u.tex.first_layer);
+		pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+		slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64;
+		if (slice) {
+			slice = slice - 1;
+		}
+	} else {
+		offset = rtex->surface.level[level].offset;
+		pitch = rtex->surface.level[level].nblk_x / 8 - 1;
+		slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+		if (slice) {
+			slice = slice - 1;
+		}
+		switch (rtex->surface.level[level].mode) {
+		case RADEON_SURF_MODE_2D:
+			array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
+			break;
+		case RADEON_SURF_MODE_1D:
+		case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		case RADEON_SURF_MODE_LINEAR:
+		default:
+			array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
+			break;
+		}
+	}
+
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
@@ -1595,7 +1726,14 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, 0x00000000, NULL, 0);
+	if (!rscreen->use_surface) {
+		r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, 0x00000000, NULL, 0);
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW,
+					S_028004_SLICE_START(state->zsbuf->u.tex.first_layer) |
+					S_028004_SLICE_MAX(state->zsbuf->u.tex.last_layer),
+					NULL, 0);
+	}
 	r600_pipe_state_add_reg(rstate, R_028010_DB_DEPTH_INFO,
 				S_028010_ARRAY_MODE(array_mode) | S_028010_FORMAT(format),
 				&rtex->resource, RADEON_USAGE_READWRITE);
