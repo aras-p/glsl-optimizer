@@ -3,5 +3,8 @@
         <application executable="Sanctuary">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
+        <application executable="Tropics">
+            <option name="force_glsl_extensions_warn" value="true" />
+	</application>
     </device>
 </driconf>
