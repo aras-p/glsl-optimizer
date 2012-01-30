@@ -514,7 +514,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    if (ret == -1)
      return NULL;
 
-   if (getenv("R300_NO_TCL"))
+   if (getenv("RADEON_NO_TCL"))
 	   screen->chip_flags &= ~RADEON_CHIPSET_TCL;
 
    i = 0;
