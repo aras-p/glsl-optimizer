@@ -48,6 +48,10 @@ struct glsl_switch_state {
    ir_variable *is_fallthru_var;
    ir_variable *is_break_var;
    class ast_switch_statement *switch_nesting_ast;
+
+   /** Table of constant values already used in case labels */
+   struct hash_table *labels_ht;
+
    bool is_switch_innermost; // if switch stmt is closest to break, ...
 };
 

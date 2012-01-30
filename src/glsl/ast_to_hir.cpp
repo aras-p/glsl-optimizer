@@ -54,6 +54,7 @@
 #include "glsl_parser_extras.h"
 #include "ast.h"
 #include "glsl_types.h"
+#include "program/hash_table.h"
 #include "ir.h"
 
 void
@@ -3534,6 +3535,8 @@ ast_switch_statement::hir(exec_list *instructions,
 
    state->switch_state.is_switch_innermost = true;
    state->switch_state.switch_nesting_ast = this;
+   state->switch_state.labels_ht = hash_table_ctor(0, hash_table_pointer_hash,
+						   hash_table_pointer_compare);
 
    /* Initalize is_fallthru state to false.
     */
@@ -3571,6 +3574,8 @@ ast_switch_statement::hir(exec_list *instructions,
    /* Emit code for body of switch stmt.
     */
    body->hir(instructions, state);
+
+   hash_table_dtor(state->switch_state.labels_ht);
 
    state->switch_state = saved;
 
@@ -3709,6 +3714,24 @@ ast_switch_statement::hir(exec_list *instructions,
 
 	   /* Stuff a dummy value in to allow processing to continue. */
 	   label_const = new(ctx) ir_constant(0);
+	} else {
+	   ast_expression *previous_label = (ast_expression *)
+	      hash_table_find(state->switch_state.labels_ht,
+			      (void *)(uintptr_t)label_const->value.u[0]);
+
+	   if (previous_label) {
+	      YYLTYPE loc = this->test_value->get_location();
+	      _mesa_glsl_error(& loc, state,
+			       "duplicate case value");
+
+	      loc = previous_label->get_location();
+	      _mesa_glsl_error(& loc, state,
+			       "this is the previous case label");
+	   } else {
+	      hash_table_insert(state->switch_state.labels_ht,
+				this->test_value,
+				(void *)(uintptr_t)label_const->value.u[0]);
+	   }
 	}
 
 	ir_dereference_variable *deref_test_var =
