@@ -191,7 +191,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    enum pipe_format pformat = FormatYCBCRToPipe(source_ycbcr_format);
    struct pipe_context *pipe;
    struct pipe_sampler_view **sampler_views;
-   unsigned i;
+   unsigned i, j;
 
    if (!vlCreateHTAB())
       return VDP_STATUS_RESOURCES;
@@ -204,8 +204,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (p_surf->video_buffer == NULL || p_surf->video_buffer->interlaced ||
-       pformat != p_surf->video_buffer->buffer_format) {
+   if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {
 
       /* destroy the old one */
       if (p_surf->video_buffer)
@@ -213,7 +212,6 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
 
       /* adjust the template parameters */
       p_surf->templat.buffer_format = pformat;
-      p_surf->templat.interlaced = false;
 
       /* and try to create the video buffer with the new format */
       p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
@@ -227,27 +225,35 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!sampler_views)
       return VDP_STATUS_RESOURCES;
 
-   for (i = 0; i < 3; ++i) { //TODO put nr of planes into util format
+   for (i = 0; i < 3; ++i) {
       struct pipe_sampler_view *sv = sampler_views[i];
-      struct pipe_box dst_box = { 0, 0, 0, sv->texture->width0, sv->texture->height0, 1 };
+      if (!sv) continue;
 
-      struct pipe_transfer *transfer;
-      void *map;
+      for (j = 0; j < sv->texture->depth0; ++j) {
+         struct pipe_box dst_box = {
+            0, 0, j,
+            sv->texture->width0, sv->texture->height0, 1
+         };
 
-      transfer = pipe->get_transfer(pipe, sv->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
-      if (!transfer)
-         return VDP_STATUS_RESOURCES;
+         struct pipe_transfer *transfer;
+         void *map;
 
-      map = pipe->transfer_map(pipe, transfer);
-      if (map) {
-         util_copy_rect(map, sv->texture->format, transfer->stride, 0, 0,
-                        dst_box.width, dst_box.height,
-                        source_data[i], source_pitches[i], 0, 0);
+         transfer = pipe->get_transfer(pipe, sv->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
+         if (!transfer)
+            return VDP_STATUS_RESOURCES;
+
+         map = pipe->transfer_map(pipe, transfer);
+         if (map) {
+            util_copy_rect(map, sv->texture->format, transfer->stride, 0, 0,
+                           dst_box.width, dst_box.height,
+                           source_data[i] + source_pitches[i] * j,
+                           source_pitches[i] * sv->texture->depth0,
+                           0, 0);
+         }
 
          pipe->transfer_unmap(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
-
-      pipe->transfer_destroy(pipe, transfer);
    }
 
    return VDP_STATUS_OK;
