@@ -2050,6 +2050,48 @@ _mesa_pack_ubyte_rgba_row(gl_format format, GLuint n,
 
 
 /**
+ * Pack a 2D image of ubyte RGBA pixels in the given format.
+ * \param srcRowStride  source image row stride in bytes
+ * \param dstRowStride  destination image row stride in bytes
+ */
+void
+_mesa_pack_ubyte_rgba_rect(gl_format format, GLuint width, GLuint height,
+                           const GLubyte *src, GLint srcRowStride,
+                           void *dst, GLint dstRowStride)
+{
+   pack_ubyte_rgba_row_func packrow = get_pack_ubyte_rgba_row_function(format);
+   GLubyte *dstUB = (GLubyte *) dst;
+   GLuint i;
+
+   if (packrow) {
+      if (srcRowStride == width * 4 * sizeof(GLubyte) &&
+          dstRowStride == _mesa_format_row_stride(format, width)) {
+         /* do whole image at once */
+         packrow(width * height, (const GLubyte (*)[4]) src, dst);
+      }
+      else {
+         /* row by row */
+         for (i = 0; i < height; i++) {
+            packrow(width, (const GLubyte (*)[4]) src, dstUB);
+            src += srcRowStride;
+            dstUB += dstRowStride;
+         }
+      }
+   }
+   else {
+      /* slower fallback */
+      for (i = 0; i < height; i++) {
+         _mesa_pack_ubyte_rgba_row(format, width,
+                                   (const GLubyte (*)[4]) src, dstUB);
+         src += srcRowStride;
+         dstUB += dstRowStride;
+      }
+   }
+}
+
+
+
+/**
  ** Pack float Z pixels
  **/
 

@@ -77,6 +77,10 @@ _mesa_pack_ubyte_rgba_row(gl_format format, GLuint n,
                           const GLubyte src[][4], void *dst);
 
 
+extern void
+_mesa_pack_ubyte_rgba_rect(gl_format format, GLuint width, GLuint height,
+                           const GLubyte *src, GLint srcRowStride,
+                           void *dst, GLint dstRowStride);
 
 extern void
 _mesa_pack_float_z_row(gl_format format, GLuint n,
