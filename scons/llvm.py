@@ -166,7 +166,7 @@ def generate(env):
                 pass
             env.MergeFlags(cppflags)
 
-            env.ParseConfig('llvm-config --libs')
+            env.ParseConfig('llvm-config --libs engine bitwriter')
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version
