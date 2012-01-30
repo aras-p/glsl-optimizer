@@ -48,6 +48,25 @@
 #define R600_BIG_ENDIAN 0
 #endif
 
+enum r600_atom_flags {
+	/* When set, atoms are added at the beginning of the dirty list
+	 * instead of the end. */
+	EMIT_EARLY = (1 << 0)
+};
+
+/* This encapsulates a state or an operation which can emitted into the GPU
+ * command stream. It's not limited to states only, it can be used for anything
+ * that wants to write commands into the CS (e.g. cache flushes). */
+struct r600_atom {
+	void (*emit)(struct r600_context *ctx, struct r600_atom *state);
+
+	unsigned		num_dw;
+	enum r600_atom_flags	flags;
+	bool			dirty;
+
+	struct list_head	head;
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -251,6 +270,9 @@ struct r600_context {
 
 	unsigned default_ps_gprs, default_vs_gprs;
 
+	/* States based on r600_state. */
+	struct list_head		dirty_states;
+
 	/* Below are variables from the old r600_context.
 	 */
 	struct radeon_winsys_cs	*cs;
@@ -289,6 +311,26 @@ struct r600_context {
 	unsigned		streamout_append_bitmask;
 	unsigned		*vs_so_stride_in_dw;
 };
+
+static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
+{
+	atom->emit(rctx, atom);
+	atom->dirty = false;
+	if (atom->head.next && atom->head.prev)
+		LIST_DELINIT(&atom->head);
+}
+
+static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *state)
+{
+	if (!state->dirty) {
+		if (state->flags & EMIT_EARLY) {
+			LIST_ADD(&state->head, &rctx->dirty_states);
+		} else {
+			LIST_ADDTAIL(&state->head, &rctx->dirty_states);
+		}
+		state->dirty = true;
+	}
+}
 
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_context *rctx);

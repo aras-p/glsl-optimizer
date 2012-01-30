@@ -282,6 +282,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	LIST_INITHEAD(&rctx->dirty_states);
+
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 
 	return &rctx->context;

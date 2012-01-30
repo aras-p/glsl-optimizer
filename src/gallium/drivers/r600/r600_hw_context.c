@@ -931,11 +931,17 @@ out_err:
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
+	struct r600_atom *state;
+
 	/* The number of dwords we already used in the CS so far. */
 	num_dw += ctx->cs->cdw;
 
 	if (count_draw_in) {
 		/* The number of dwords all the dirty states would take. */
+		LIST_FOR_EACH_ENTRY(state, &ctx->dirty_states, head) {
+			num_dw += state->num_dw;
+		}
+
 		num_dw += ctx->pm4_dirty_cdwords;
 
 		/* The upper-bound of how much a draw command would take. */

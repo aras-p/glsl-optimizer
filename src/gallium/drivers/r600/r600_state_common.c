@@ -671,6 +671,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_index_buffer ib = {};
 	unsigned prim, mask, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
+	struct r600_atom *state = NULL, *next_state = NULL;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
@@ -788,6 +789,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	/* Emit states. */
 	r600_need_cs_space(rctx, 0, TRUE);
 
+	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
+		r600_emit_atom(rctx, state);
+	}
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
 		r600_context_block_emit_dirty(rctx, dirty_block);
 	}
