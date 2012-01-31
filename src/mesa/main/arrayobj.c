@@ -373,6 +373,10 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
             return;
          }
 
+         save_array_object(ctx, newObj);
+      }
+
+      if (!newObj->_Used) {
          /* The "Interactions with APPLE_vertex_array_object" section of the
           * GL_ARB_vertex_array_object spec says:
           *
@@ -380,7 +384,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
           *     BindVertexArrayAPPLE, determines the semantic of the object."
           */
          newObj->ARBsemantics = genRequired;
-         save_array_object(ctx, newObj);
+         newObj->_Used = GL_TRUE;
       }
    }
 

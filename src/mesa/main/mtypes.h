@@ -1631,6 +1631,11 @@ struct gl_array_object
     */
    GLboolean ARBsemantics;
 
+   /**
+    * Has this array object been bound?
+    */
+   GLboolean _Used;
+
    /** Vertex attribute arrays */
    struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
