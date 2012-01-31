@@ -67,6 +67,14 @@ struct r600_atom {
 	struct list_head	head;
 };
 
+/* This is an atom containing GPU commands that never change.
+ * This is supposed to be copied directly into the CS. */
+struct r600_command_buffer {
+	struct r600_atom atom;
+	uint32_t *buf;
+	unsigned max_num_dw;
+};
+
 struct r600_atom_surface_sync {
 	struct r600_atom atom;
 	unsigned flush_flags; /* CP_COHER_CNTL */
@@ -245,7 +253,6 @@ struct r600_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
-	struct r600_pipe_state		config;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
 	struct r600_pipe_state		vs_const_buffer;
@@ -277,6 +284,7 @@ struct r600_context {
 
 	/* States based on r600_state. */
 	struct list_head		dirty_states;
+	struct r600_command_buffer	atom_start_cs; /* invariant state mostly */
 	struct r600_atom_surface_sync	atom_surface_sync;
 	struct r600_atom		atom_r6xx_flush_and_inv;
 
@@ -292,7 +300,6 @@ struct r600_context {
 	struct list_head	enable_list;
 	unsigned		pm4_dirty_cdwords;
 	unsigned		ctx_pm4_ndwords;
-	unsigned		init_dwords;
 
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
@@ -336,7 +343,7 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_context *rctx);
-void evergreen_init_config(struct r600_context *rctx);
+void evergreen_init_atom_start_cs(struct r600_context *rctx);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
@@ -394,7 +401,7 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 /* r600_state.c */
 void r600_update_sampler_states(struct r600_context *rctx);
 void r600_init_state_functions(struct r600_context *rctx);
-void r600_init_config(struct r600_context *rctx);
+void r600_init_atom_start_cs(struct r600_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
@@ -477,6 +484,58 @@ unsigned r600_tex_wrap(unsigned wrap);
 unsigned r600_tex_filter(unsigned filter);
 unsigned r600_tex_mipfilter(unsigned filter);
 unsigned r600_tex_compare(unsigned compare);
+
+/*
+ * Helpers for building command buffers
+ */
+
+#define PKT3_SET_CONFIG_REG	0x68
+#define PKT3_SET_CONTEXT_REG	0x69
+
+#define R600_CONFIG_REG_OFFSET	0x8000
+#define R600_CONTEXT_REG_OFFSET 0x28000
+
+#define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
+#define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
+#define PKT3_IT_OPCODE_S(x)             (((x) & 0xFF) << 8)
+#define PKT3_PREDICATE(x)               (((x) >> 0) & 0x1)
+#define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT_COUNT_S(count) | PKT3_IT_OPCODE_S(op) | PKT3_PREDICATE(predicate))
+
+static INLINE void r600_store_value(struct r600_command_buffer *cb, unsigned value)
+{
+	cb->buf[cb->atom.num_dw++] = value;
+}
+
+static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
+{
+	assert(reg < R600_CONTEXT_REG_OFFSET);
+	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONFIG_REG, num, 0);
+	cb->buf[cb->atom.num_dw++] = (reg - R600_CONFIG_REG_OFFSET) >> 2;
+}
+
+static INLINE void r600_store_context_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
+{
+	assert(reg >= R600_CONTEXT_REG_OFFSET);
+	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0);
+	cb->buf[cb->atom.num_dw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
+}
+
+static INLINE void r600_store_config_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
+{
+	r600_store_config_reg_seq(cb, reg, 1);
+	r600_store_value(cb, value);
+}
+
+static INLINE void r600_store_context_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
+{
+	r600_store_context_reg_seq(cb, reg, 1);
+	r600_store_value(cb, value);
+}
+
+void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw, enum r600_atom_flags flags);
+void r600_release_command_buffer(struct r600_command_buffer *cb);
 
 /*
  * common helpers

@@ -1787,7 +1787,7 @@ void r600_adjust_gprs(struct r600_context *rctx)
 	r600_context_pipe_state_set(rctx, &rstate);
 }
 
-void r600_init_config(struct r600_context *rctx)
+void r600_init_atom_start_cs(struct r600_context *rctx)
 {
 	int ps_prio;
 	int vs_prio;
@@ -1807,8 +1807,20 @@ void r600_init_config(struct r600_context *rctx)
 	int num_gs_stack_entries;
 	int num_es_stack_entries;
 	enum radeon_family family;
-	struct r600_pipe_state *rstate = &rctx->config;
+	struct r600_command_buffer *cb = &rctx->atom_start_cs;
 	uint32_t tmp;
+
+	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+
+	/* R6xx requires this packet at the start of each command buffer */
+	if (rctx->chip_class == R600) {
+		r600_store_value(cb, PKT3(PKT3_START_3D_CMDBUF, 0, 0));
+		r600_store_value(cb, 0);
+	}
+	/* All asics require this one */
+	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
+	r600_store_value(cb, 0x80000000);
+	r600_store_value(cb, 0x80000000);
 
 	family = rctx->family;
 	ps_prio = 0;
@@ -1931,8 +1943,7 @@ void r600_init_config(struct r600_context *rctx)
 
 	rctx->default_ps_gprs = num_ps_gprs;
 	rctx->default_vs_gprs = num_vs_gprs;
-
-	rstate->id = R600_PIPE_STATE_CONFIG;
+	rctx->r6xx_num_clause_temp_gprs = num_temp_gprs;
 
 	/* SQ_CONFIG */
 	tmp = 0;
@@ -1953,91 +1964,82 @@ void r600_init_config(struct r600_context *rctx)
 	tmp |= S_008C00_VS_PRIO(vs_prio);
 	tmp |= S_008C00_GS_PRIO(gs_prio);
 	tmp |= S_008C00_ES_PRIO(es_prio);
-	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, NULL, 0);
-
-	/* SQ_GPR_RESOURCE_MGMT_1 */
-	tmp = 0;
-	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
-	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
-	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
-	rctx->r6xx_num_clause_temp_gprs = num_temp_gprs;
-	r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, NULL, 0);
+	r600_store_config_reg(cb, R_008C00_SQ_CONFIG, tmp);
 
 	/* SQ_GPR_RESOURCE_MGMT_2 */
-	tmp = 0;
-	tmp |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
+	tmp = S_008C08_NUM_GS_GPRS(num_gs_gprs);
 	tmp |= S_008C08_NUM_ES_GPRS(num_es_gprs);
-	r600_pipe_state_add_reg(rstate, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, NULL, 0);
+	r600_store_config_reg_seq(cb, R_008C08_SQ_GPR_RESOURCE_MGMT_2, 4);
+	r600_store_value(cb, tmp);
 
 	/* SQ_THREAD_RESOURCE_MGMT */
-	tmp = 0;
-	tmp |= S_008C0C_NUM_PS_THREADS(num_ps_threads);
+	tmp = S_008C0C_NUM_PS_THREADS(num_ps_threads);
 	tmp |= S_008C0C_NUM_VS_THREADS(num_vs_threads);
 	tmp |= S_008C0C_NUM_GS_THREADS(num_gs_threads);
 	tmp |= S_008C0C_NUM_ES_THREADS(num_es_threads);
-	r600_pipe_state_add_reg(rstate, R_008C0C_SQ_THREAD_RESOURCE_MGMT, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C0C_SQ_THREAD_RESOURCE_MGMT */
 
 	/* SQ_STACK_RESOURCE_MGMT_1 */
-	tmp = 0;
-	tmp |= S_008C10_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
+	tmp = S_008C10_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
 	tmp |= S_008C10_NUM_VS_STACK_ENTRIES(num_vs_stack_entries);
-	r600_pipe_state_add_reg(rstate, R_008C10_SQ_STACK_RESOURCE_MGMT_1, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C10_SQ_STACK_RESOURCE_MGMT_1 */
 
 	/* SQ_STACK_RESOURCE_MGMT_2 */
-	tmp = 0;
-	tmp |= S_008C14_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
+	tmp = S_008C14_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
 	tmp |= S_008C14_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
-	r600_pipe_state_add_reg(rstate, R_008C14_SQ_STACK_RESOURCE_MGMT_2, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C14_SQ_STACK_RESOURCE_MGMT_2 */
 
-	r600_pipe_state_add_reg(rstate, R_009714_VC_ENHANCE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x00000000, NULL, 0);
+	r600_store_config_reg(cb, R_009714_VC_ENHANCE, 0);
+
+	r600_store_context_reg(cb, R_028350_SX_MISC, 0);
 
 	if (rctx->chip_class >= R700) {
-		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x00000000, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x00420204, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000000, NULL, 0);
+		r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000);
+		r600_store_config_reg(cb, R_009830_DB_DEBUG, 0);
+		r600_store_config_reg(cb, R_009838_DB_WATERMARKS, 0x00420204);
+		r600_store_context_reg(cb, R_0286C8_SPI_THREAD_GROUPING, 0);
 	} else {
-		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00000000, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009830_DB_DEBUG, 0x82000000, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_009838_DB_WATERMARKS, 0x01020204, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_0286C8_SPI_THREAD_GROUPING, 0x00000001, NULL, 0);
+		r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0);
+		r600_store_config_reg(cb, R_009830_DB_DEBUG, 0x82000000);
+		r600_store_config_reg(cb, R_009838_DB_WATERMARKS, 0x01020204);
+		r600_store_context_reg(cb, R_0286C8_SPI_THREAD_GROUPING, 1);
 	}
-	r600_pipe_state_add_reg(rstate, R_0288A8_SQ_ESGS_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288AC_SQ_GSVS_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288B0_SQ_ESTMP_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288B4_SQ_GSTMP_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288B8_SQ_VSTMP_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288BC_SQ_PSTMP_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288C0_SQ_FBUF_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288C4_SQ_REDUC_RING_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288C8_SQ_GS_VERT_ITEMSIZE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A14_VGT_HOS_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A20_VGT_HOS_REUSE_DEPTH, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A24_VGT_GROUP_PRIM_TYPE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A28_VGT_GROUP_FIRST_DECR, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A2C_VGT_GROUP_DECR, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB0_VGT_STRMOUT_EN, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000001, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B20_VGT_STRMOUT_BUFFER_EN, 0x00000000, NULL, 0);
+	r600_store_context_reg_seq(cb, R_0288A8_SQ_ESGS_RING_ITEMSIZE, 9);
+	r600_store_value(cb, 0); /* R_0288A8_SQ_ESGS_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288AC_SQ_GSVS_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288B0_SQ_ESTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288B4_SQ_GSTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288B8_SQ_VSTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288BC_SQ_PSTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288C0_SQ_FBUF_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288C4_SQ_REDUC_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_0288C8_SQ_GS_VERT_ITEMSIZE */
 
-	r600_pipe_state_add_reg(rstate, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A84_VGT_PRIMITIVEID_EN, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0x00000000, NULL, 0);
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_store_context_reg_seq(cb, R_028A10_VGT_OUTPUT_PATH_CNTL, 13);
+	r600_store_value(cb, 0); /* R_028A10_VGT_OUTPUT_PATH_CNTL */
+	r600_store_value(cb, 0); /* R_028A14_VGT_HOS_CNTL */
+	r600_store_value(cb, 0); /* R_028A18_VGT_HOS_MAX_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A1C_VGT_HOS_MIN_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A20_VGT_HOS_REUSE_DEPTH */
+	r600_store_value(cb, 0); /* R_028A24_VGT_GROUP_PRIM_TYPE */
+	r600_store_value(cb, 0); /* R_028A28_VGT_GROUP_FIRST_DECR */
+	r600_store_value(cb, 0); /* R_028A2C_VGT_GROUP_DECR */
+	r600_store_value(cb, 0); /* R_028A30_VGT_GROUP_VECT_0_CNTL */
+	r600_store_value(cb, 0); /* R_028A34_VGT_GROUP_VECT_1_CNTL */
+	r600_store_value(cb, 0); /* R_028A38_VGT_GROUP_VECT_0_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A40_VGT_GS_MODE, 0); */
 
-	r600_set_seamless_cubemap(rctx, FALSE);
+	r600_store_context_reg(cb, R_028A84_VGT_PRIMITIVEID_EN, 0);
+	r600_store_context_reg(cb, R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0);
+	r600_store_context_reg(cb, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0);
+
+	r600_store_context_reg_seq(cb, R_028AB0_VGT_STRMOUT_EN, 3);
+	r600_store_value(cb, 0); /* R_028AB0_VGT_STRMOUT_EN */
+	r600_store_value(cb, 1); /* R_028AB4_VGT_REUSE_OFF */
+	r600_store_value(cb, 0); /* R_028AB8_VGT_VTX_CNT_EN */
+
+	r600_store_context_reg(cb, R_028B20_VGT_STRMOUT_BUFFER_EN, 0);
 }
 
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)

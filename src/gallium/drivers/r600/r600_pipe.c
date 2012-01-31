@@ -207,6 +207,7 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	r600_update_num_contexts(rctx->screen, -1);
 
+	r600_release_command_buffer(&rctx->atom_start_cs);
 	FREE(rctx);
 }
 
@@ -246,21 +247,21 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R600:
 	case R700:
 		r600_init_state_functions(rctx);
+		r600_init_atom_start_cs(rctx);
 		if (r600_context_init(rctx)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
-		r600_init_config(rctx);
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		break;
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
+		evergreen_init_atom_start_cs(rctx);
 		if (evergreen_context_init(rctx)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;
 		}
-		evergreen_init_config(rctx);
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		break;
 	default:

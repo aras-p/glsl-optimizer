@@ -34,6 +34,30 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 
+static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_command_buffer *cb = (struct r600_command_buffer*)atom;
+
+	assert(cs->cdw + cb->atom.num_dw <= RADEON_MAX_CMDBUF_DWORDS);
+	memcpy(cs->buf + cs->cdw, cb->buf, 4 * cb->atom.num_dw);
+	cs->cdw += cb->atom.num_dw;
+}
+
+void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw, enum r600_atom_flags flags)
+{
+	cb->atom.emit = r600_emit_command_buffer;
+	cb->atom.num_dw = 0;
+	cb->atom.flags = flags;
+	cb->buf = CALLOC(1, 4 * num_dw);
+	cb->max_num_dw = num_dw;
+}
+
+void r600_release_command_buffer(struct r600_command_buffer *cb)
+{
+	FREE(cb->buf);
+}
+
 static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;

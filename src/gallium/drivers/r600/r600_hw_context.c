@@ -127,23 +127,6 @@ static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
 }
 
-void r600_init_cs(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	/* R6xx requires this packet at the start of each command buffer */
-	if (ctx->family < CHIP_RV770) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
-		cs->buf[cs->cdw++] = 0x00000000;
-	}
-	/* All asics require this one */
-	cs->buf[cs->cdw++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
-	cs->buf[cs->cdw++] = 0x80000000;
-	cs->buf[cs->cdw++] = 0x80000000;
-
-	ctx->init_dwords = cs->cdw;
-}
-
 static void r600_init_block(struct r600_context *ctx,
 			    struct r600_block *block,
 			    const struct r600_reg *reg, int index, int nreg,
@@ -262,17 +245,8 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 /* R600/R700 configuration */
 static const struct r600_reg r600_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0},
-	{R_008C00_SQ_CONFIG, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_008C08_SQ_GPR_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_008C0C_SQ_THREAD_RESOURCE_MGMT, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_008C10_SQ_STACK_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_008C14_SQ_STACK_RESOURCE_MGMT_2, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 	{R_009508_TA_CNTL_AUX, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_009714_VC_ENHANCE, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_009830_DB_DEBUG, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-	{R_009838_DB_WATERMARKS, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 };
 
 static const struct r600_reg r600_ctl_const_list[] = {
@@ -281,35 +255,7 @@ static const struct r600_reg r600_ctl_const_list[] = {
 };
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_028350_SX_MISC, 0, 0},
-	{R_0286C8_SPI_THREAD_GROUPING, 0, 0},
-	{R_0288A8_SQ_ESGS_RING_ITEMSIZE, 0, 0},
-	{R_0288AC_SQ_GSVS_RING_ITEMSIZE, 0, 0},
-	{R_0288B0_SQ_ESTMP_RING_ITEMSIZE, 0, 0},
-	{R_0288B4_SQ_GSTMP_RING_ITEMSIZE, 0, 0},
-	{R_0288B8_SQ_VSTMP_RING_ITEMSIZE, 0, 0},
-	{R_0288BC_SQ_PSTMP_RING_ITEMSIZE, 0, 0},
-	{R_0288C0_SQ_FBUF_RING_ITEMSIZE, 0, 0},
-	{R_0288C4_SQ_REDUC_RING_ITEMSIZE, 0, 0},
-	{R_0288C8_SQ_GS_VERT_ITEMSIZE, 0, 0},
-	{R_028A10_VGT_OUTPUT_PATH_CNTL, 0, 0},
-	{R_028A14_VGT_HOS_CNTL, 0, 0},
-	{R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0, 0},
-	{R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0, 0},
-	{R_028A20_VGT_HOS_REUSE_DEPTH, 0, 0},
-	{R_028A24_VGT_GROUP_PRIM_TYPE, 0, 0},
-	{R_028A28_VGT_GROUP_FIRST_DECR, 0, 0},
-	{R_028A2C_VGT_GROUP_DECR, 0, 0},
-	{R_028A30_VGT_GROUP_VECT_0_CNTL, 0, 0},
-	{R_028A34_VGT_GROUP_VECT_1_CNTL, 0, 0},
-	{R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0, 0},
-	{R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0, 0},
-	{R_028A40_VGT_GS_MODE, 0, 0},
 	{R_028A4C_PA_SC_MODE_CNTL, 0, 0},
-	{R_028AB0_VGT_STRMOUT_EN, 0, 0},
-	{R_028AB4_VGT_REUSE_OFF, 0, 0},
-	{R_028AB8_VGT_VTX_CNT_EN, 0, 0},
-	{R_028B20_VGT_STRMOUT_BUFFER_EN, 0, 0},
 	{R_028028_DB_STENCIL_CLEAR, 0, 0},
 	{R_02802C_DB_DEPTH_CLEAR, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
@@ -629,10 +575,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028404_VGT_MIN_VTX_INDX, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
-	{R_028A84_VGT_PRIMITIVEID_EN, 0, 0},
 	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
-	{R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0, 0},
-	{R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0, 0},
 };
 
 /* SHADER RESOURCE R600/R700 */
@@ -898,8 +841,8 @@ int r600_context_init(struct r600_context *ctx)
 		goto out_err;
 
 	ctx->cs = ctx->ws->cs_create(ctx->ws);
+	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
 
-	r600_init_cs(ctx);
 	ctx->max_db = 4;
 	return 0;
 out_err:
@@ -1419,7 +1362,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	bool queries_suspended = false;
 	bool streamout_suspended = false;
 
-	if (cs->cdw == ctx->init_dwords)
+	if (cs->cdw == ctx->atom_start_cs.atom.num_dw)
 		return;
 
 	/* suspend queries */
@@ -1448,7 +1391,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
-	r600_init_cs(ctx);
+	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;

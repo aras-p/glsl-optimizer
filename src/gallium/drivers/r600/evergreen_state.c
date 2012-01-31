@@ -1803,91 +1803,105 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
-static void cayman_init_config(struct r600_context *rctx)
+static void cayman_init_atom_start_cs(struct r600_context *rctx)
 {
-  	struct r600_pipe_state *rstate = &rctx->config;
-	unsigned tmp;
+	struct r600_command_buffer *cb = &rctx->atom_start_cs;
 
-	tmp = 0x00000000;
-	tmp |= S_008C00_EXPORT_SRC_C(1);
-	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, NULL, 0);
+	r600_init_command_buffer(cb, 256, EMIT_EARLY);
 
+	/* This must be first. */
+	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
+	r600_store_value(cb, 0x80000000);
+	r600_store_value(cb, 0x80000000);
+
+	r600_store_config_reg_seq(cb, R_008C00_SQ_CONFIG, 2);
+	r600_store_value(cb, S_008C00_EXPORT_SRC_C(1)); /* R_008C00_SQ_CONFIG */
 	/* always set the temp clauses */
-	r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, S_008C04_NUM_CLAUSE_TEMP_GPRS(4), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), NULL, 0);
+	r600_store_value(cb, S_008C04_NUM_CLAUSE_TEMP_GPRS(4)); /* R_008C04_SQ_GPR_RESOURCE_MGMT_1 */
 
-	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, NULL, 0);
+	r600_store_config_reg_seq(cb, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 2);
+	r600_store_value(cb, 0); /* R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1 */
+	r600_store_value(cb, 0); /* R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2 */
 
-	r600_pipe_state_add_reg(rstate, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A14_VGT_HOS_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A2C_VGT_GROUP_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B94_VGT_STRMOUT_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, CM_R_028AA8_IA_MULTI_VGT_PARAM, S_028AA8_SWITCH_ON_EOP(1) | S_028AA8_PARTIAL_VS_WAVE_ON(1) | S_028AA8_PRIMGROUP_SIZE(63), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, NULL, 0);
+	r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8));
 
-	r600_pipe_state_add_reg(rstate, R_028380_SQ_VTX_SEMANTIC_0, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028384_SQ_VTX_SEMANTIC_1, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028388_SQ_VTX_SEMANTIC_2, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02838C_SQ_VTX_SEMANTIC_3, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028390_SQ_VTX_SEMANTIC_4, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028394_SQ_VTX_SEMANTIC_5, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028398_SQ_VTX_SEMANTIC_6, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02839C_SQ_VTX_SEMANTIC_7, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A0_SQ_VTX_SEMANTIC_8, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A4_SQ_VTX_SEMANTIC_9, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A8_SQ_VTX_SEMANTIC_10, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283AC_SQ_VTX_SEMANTIC_11, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B0_SQ_VTX_SEMANTIC_12, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B4_SQ_VTX_SEMANTIC_13, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B8_SQ_VTX_SEMANTIC_14, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283BC_SQ_VTX_SEMANTIC_15, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C0_SQ_VTX_SEMANTIC_16, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C4_SQ_VTX_SEMANTIC_17, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C8_SQ_VTX_SEMANTIC_18, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283CC_SQ_VTX_SEMANTIC_19, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D0_SQ_VTX_SEMANTIC_20, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D4_SQ_VTX_SEMANTIC_21, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D8_SQ_VTX_SEMANTIC_22, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283DC_SQ_VTX_SEMANTIC_23, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E0_SQ_VTX_SEMANTIC_24, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E4_SQ_VTX_SEMANTIC_25, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E8_SQ_VTX_SEMANTIC_26, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283EC_SQ_VTX_SEMANTIC_27, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F0_SQ_VTX_SEMANTIC_28, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F4_SQ_VTX_SEMANTIC_29, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F8_SQ_VTX_SEMANTIC_30, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283FC_SQ_VTX_SEMANTIC_31, 0x0, NULL, 0);
+	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
-	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028A10_VGT_OUTPUT_PATH_CNTL, 13);
+	r600_store_value(cb, 0); /* R_028A10_VGT_OUTPUT_PATH_CNTL */
+	r600_store_value(cb, 0); /* R_028A14_VGT_HOS_CNTL */
+	r600_store_value(cb, 0); /* R_028A18_VGT_HOS_MAX_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A1C_VGT_HOS_MIN_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A20_VGT_HOS_REUSE_DEPTH */
+	r600_store_value(cb, 0); /* R_028A24_VGT_GROUP_PRIM_TYPE */
+	r600_store_value(cb, 0); /* R_028A28_VGT_GROUP_FIRST_DECR */
+	r600_store_value(cb, 0); /* R_028A2C_VGT_GROUP_DECR */
+	r600_store_value(cb, 0); /* R_028A30_VGT_GROUP_VECT_0_CNTL */
+	r600_store_value(cb, 0); /* R_028A34_VGT_GROUP_VECT_1_CNTL */
+	r600_store_value(cb, 0); /* R_028A38_VGT_GROUP_VECT_0_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A40_VGT_GS_MODE */
 
-	r600_pipe_state_add_reg(rstate, CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210, NULL, 0);
-	r600_pipe_state_add_reg(rstate, CM_R_028BD8_PA_SC_CENTROID_PRIORITY_1, 0xfedcba98, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
+	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
+	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 
-	r600_pipe_state_add_reg(rstate, CM_R_0288E8_SQ_LDS_ALLOC, 0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288EC_SQ_LDS_ALLOC_PS, 0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028AB4_VGT_REUSE_OFF, 2);
+	r600_store_value(cb, 0); /* R_028AB4_VGT_REUSE_OFF */
+	r600_store_value(cb, 0); /* R_028AB8_VGT_VTX_CNT_EN */
 
-	r600_pipe_state_add_reg(rstate, CM_R_028804_DB_EQAA, 0x110000, NULL, 0);
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_store_config_reg(cb, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1);
+
+	r600_store_context_reg(cb, CM_R_028AA8_IA_MULTI_VGT_PARAM, S_028AA8_SWITCH_ON_EOP(1) | S_028AA8_PARTIAL_VS_WAVE_ON(1) | S_028AA8_PRIMGROUP_SIZE(63));
+
+	r600_store_context_reg_seq(cb, CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0, 2);
+	r600_store_value(cb, 0x76543210); /* CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0 */
+	r600_store_value(cb, 0xfedcba98); /* CM_R_028BD8_PA_SC_CENTROID_PRIORITY_1 */
+
+	r600_store_context_reg_seq(cb, CM_R_0288E8_SQ_LDS_ALLOC, 2);
+	r600_store_value(cb, 0); /* CM_R_0288E8_SQ_LDS_ALLOC */
+	r600_store_value(cb, 0); /* R_0288EC_SQ_LDS_ALLOC_PS */
+
+	r600_store_context_reg(cb, CM_R_028804_DB_EQAA, 0x110000);
+
+	r600_store_context_reg_seq(cb, R_028380_SQ_VTX_SEMANTIC_0, 32);
+	r600_store_value(cb, 0); /* R_028380_SQ_VTX_SEMANTIC_0 */
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0); /* R_0283FC_SQ_VTX_SEMANTIC_31 */
 }
 
-void evergreen_init_config(struct r600_context *rctx)
+void evergreen_init_atom_start_cs(struct r600_context *rctx)
 {
-	struct r600_pipe_state *rstate = &rctx->config;
+	struct r600_command_buffer *cb = &rctx->atom_start_cs;
 	int ps_prio;
 	int vs_prio;
 	int gs_prio;
@@ -1915,13 +1929,19 @@ void evergreen_init_config(struct r600_context *rctx)
 	enum radeon_family family;
 	unsigned tmp;
 
-	family = rctx->family;
-
 	if (rctx->chip_class == CAYMAN) {
-		cayman_init_config(rctx);
+		cayman_init_atom_start_cs(rctx);
 		return;
 	}
-		
+
+	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+
+	/* This must be first. */
+	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
+	r600_store_value(cb, 0x80000000);
+	r600_store_value(cb, 0x80000000);
+
+	family = rctx->family;
 	ps_prio = 0;
 	vs_prio = 1;
 	gs_prio = 2;
@@ -2145,7 +2165,7 @@ void evergreen_init_config(struct r600_context *rctx)
 		break;
 	}
 
-	tmp = 0x00000000;
+	tmp = 0;
 	switch (family) {
 	case CHIP_CEDAR:
 	case CHIP_PALM:
@@ -2165,150 +2185,145 @@ void evergreen_init_config(struct r600_context *rctx)
 	tmp |= S_008C00_VS_PRIO(vs_prio);
 	tmp |= S_008C00_GS_PRIO(gs_prio);
 	tmp |= S_008C00_ES_PRIO(es_prio);
-	r600_pipe_state_add_reg(rstate, R_008C00_SQ_CONFIG, tmp, NULL, 0);
 
 	/* enable dynamic GPR resource management */
 	if (rctx->screen->info.drm_minor >= 7) {
+		r600_store_config_reg_seq(cb, R_008C00_SQ_CONFIG, 2);
+		r600_store_value(cb, tmp); /* R_008C00_SQ_CONFIG */
 		/* always set temp clauses */
-		r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1,
-					S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs), NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0, NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8), NULL, 0);
-		r600_pipe_state_add_reg(rstate, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
+		r600_store_value(cb, S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs)); /* R_008C04_SQ_GPR_RESOURCE_MGMT_1 */
+		r600_store_config_reg_seq(cb, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 2);
+		r600_store_value(cb, 0); /* R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1 */
+		r600_store_value(cb, 0); /* R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2 */
+		r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8));
+		r600_store_context_reg(cb, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
 					S_028838_PS_GPRS(0x1e) |
 					S_028838_VS_GPRS(0x1e) |
 					S_028838_GS_GPRS(0x1e) |
 					S_028838_ES_GPRS(0x1e) |
 					S_028838_HS_GPRS(0x1e) |
-					S_028838_LS_GPRS(0x1e), NULL, 0); /* workaround for hw issues with dyn gpr - must set all limits to 240 instead of 0, 0x1e == 240 / 8*/
+					S_028838_LS_GPRS(0x1e)); /* workaround for hw issues with dyn gpr - must set all limits to 240 instead of 0, 0x1e == 240 / 8*/
 	} else {
-		tmp = 0;
-		tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
+		r600_store_config_reg_seq(cb, R_008C00_SQ_CONFIG, 4);
+		r600_store_value(cb, tmp); /* R_008C00_SQ_CONFIG */
+
+		tmp = S_008C04_NUM_PS_GPRS(num_ps_gprs);
 		tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
 		tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
-		r600_pipe_state_add_reg(rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp, NULL, 0);
+		r600_store_value(cb, tmp); /* R_008C04_SQ_GPR_RESOURCE_MGMT_1 */
 
-		tmp = 0;
-		tmp |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
+		tmp = S_008C08_NUM_GS_GPRS(num_gs_gprs);
 		tmp |= S_008C08_NUM_ES_GPRS(num_es_gprs);
-		r600_pipe_state_add_reg(rstate, R_008C08_SQ_GPR_RESOURCE_MGMT_2, tmp, NULL, 0);
+		r600_store_value(cb, tmp); /* R_008C08_SQ_GPR_RESOURCE_MGMT_2 */
 
-		tmp = 0;
-		tmp |= S_008C0C_NUM_HS_GPRS(num_hs_gprs);
+		tmp = S_008C0C_NUM_HS_GPRS(num_hs_gprs);
 		tmp |= S_008C0C_NUM_HS_GPRS(num_ls_gprs);
-		r600_pipe_state_add_reg(rstate, R_008C0C_SQ_GPR_RESOURCE_MGMT_3, tmp, NULL, 0);
+		r600_store_value(cb, tmp); /* R_008C0C_SQ_GPR_RESOURCE_MGMT_3 */
 	}
 
-	tmp = 0;
-	tmp |= S_008C18_NUM_PS_THREADS(num_ps_threads);
+	tmp = S_008C18_NUM_PS_THREADS(num_ps_threads);
 	tmp |= S_008C18_NUM_VS_THREADS(num_vs_threads);
 	tmp |= S_008C18_NUM_GS_THREADS(num_gs_threads);
 	tmp |= S_008C18_NUM_ES_THREADS(num_es_threads);
-	r600_pipe_state_add_reg(rstate, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, tmp, NULL, 0);
+	r600_store_config_reg_seq(cb, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 5);
+	r600_store_value(cb, tmp); /* R_008C18_SQ_THREAD_RESOURCE_MGMT_1 */
 
-	tmp = 0;
-	tmp |= S_008C1C_NUM_HS_THREADS(num_hs_threads);
+	tmp = S_008C1C_NUM_HS_THREADS(num_hs_threads);
 	tmp |= S_008C1C_NUM_LS_THREADS(num_ls_threads);
-	r600_pipe_state_add_reg(rstate, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C1C_SQ_THREAD_RESOURCE_MGMT_2 */
 
-	tmp = 0;
-	tmp |= S_008C20_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
+	tmp = S_008C20_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
 	tmp |= S_008C20_NUM_VS_STACK_ENTRIES(num_vs_stack_entries);
-	r600_pipe_state_add_reg(rstate, R_008C20_SQ_STACK_RESOURCE_MGMT_1, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C20_SQ_STACK_RESOURCE_MGMT_1 */
 
-	tmp = 0;
-	tmp |= S_008C24_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
+	tmp = S_008C24_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
 	tmp |= S_008C24_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
-	r600_pipe_state_add_reg(rstate, R_008C24_SQ_STACK_RESOURCE_MGMT_2, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C24_SQ_STACK_RESOURCE_MGMT_2 */
 
-	tmp = 0;
-	tmp |= S_008C28_NUM_HS_STACK_ENTRIES(num_hs_stack_entries);
+	tmp = S_008C28_NUM_HS_STACK_ENTRIES(num_hs_stack_entries);
 	tmp |= S_008C28_NUM_LS_STACK_ENTRIES(num_ls_stack_entries);
-	r600_pipe_state_add_reg(rstate, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp, NULL, 0);
+	r600_store_value(cb, tmp); /* R_008C28_SQ_STACK_RESOURCE_MGMT_3 */
 
-	tmp = 0;
-	tmp |= S_008E2C_NUM_PS_LDS(0x1000);
-	tmp |= S_008E2C_NUM_LS_LDS(0x1000);
-	r600_pipe_state_add_reg(rstate, R_008E2C_SQ_LDS_RESOURCE_MGMT, tmp, NULL, 0);
+	r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
+			      S_008E2C_NUM_PS_LDS(0x1000) | S_008E2C_NUM_LS_LDS(0x1000));
 
-	r600_pipe_state_add_reg(rstate, R_009100_SPI_CONFIG_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4), NULL, 0);
+	r600_store_config_reg(cb, R_009100_SPI_CONFIG_CNTL, 0);
+	r600_store_config_reg(cb, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4));
 
-#if 0
-	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, 0x0, NULL, 0);
+	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
-	r600_pipe_state_add_reg(rstate, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x0, NULL, 0);
-#endif
-	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028900_SQ_ESGS_RING_ITEMSIZE, 6);
+	r600_store_value(cb, 0); /* R_028900_SQ_ESGS_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_028904_SQ_GSVS_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_028908_SQ_ESTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_02890C_SQ_GSTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_028910_SQ_VSTMP_RING_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_028914_SQ_PSTMP_RING_ITEMSIZE */
 
-	r600_pipe_state_add_reg(rstate, R_028900_SQ_ESGS_RING_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028904_SQ_GSVS_RING_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028908_SQ_ESTMP_RING_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02890C_SQ_GSTMP_RING_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028910_SQ_VSTMP_RING_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028914_SQ_PSTMP_RING_ITEMSIZE, 0x0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_02891C_SQ_GS_VERT_ITEMSIZE, 4);
+	r600_store_value(cb, 0); /* R_02891C_SQ_GS_VERT_ITEMSIZE */
+	r600_store_value(cb, 0); /* R_028920_SQ_GS_VERT_ITEMSIZE_1 */
+	r600_store_value(cb, 0); /* R_028924_SQ_GS_VERT_ITEMSIZE_2 */
+	r600_store_value(cb, 0); /* R_028928_SQ_GS_VERT_ITEMSIZE_3 */
 
-	r600_pipe_state_add_reg(rstate, R_02891C_SQ_GS_VERT_ITEMSIZE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028920_SQ_GS_VERT_ITEMSIZE_1, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028924_SQ_GS_VERT_ITEMSIZE_2, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028928_SQ_GS_VERT_ITEMSIZE_3, 0x0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028A10_VGT_OUTPUT_PATH_CNTL, 13);
+	r600_store_value(cb, 0); /* R_028A10_VGT_OUTPUT_PATH_CNTL */
+	r600_store_value(cb, 0); /* R_028A14_VGT_HOS_CNTL */
+	r600_store_value(cb, 0); /* R_028A18_VGT_HOS_MAX_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A1C_VGT_HOS_MIN_TESS_LEVEL */
+	r600_store_value(cb, 0); /* R_028A20_VGT_HOS_REUSE_DEPTH */
+	r600_store_value(cb, 0); /* R_028A24_VGT_GROUP_PRIM_TYPE */
+	r600_store_value(cb, 0); /* R_028A28_VGT_GROUP_FIRST_DECR */
+	r600_store_value(cb, 0); /* R_028A2C_VGT_GROUP_DECR */
+	r600_store_value(cb, 0); /* R_028A30_VGT_GROUP_VECT_0_CNTL */
+	r600_store_value(cb, 0); /* R_028A34_VGT_GROUP_VECT_1_CNTL */
+	r600_store_value(cb, 0); /* R_028A38_VGT_GROUP_VECT_0_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL */
+	r600_store_value(cb, 0); /* R_028A40_VGT_GS_MODE */
 
-	r600_pipe_state_add_reg(rstate, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A14_VGT_HOS_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A2C_VGT_GROUP_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B94_VGT_STRMOUT_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
+	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
+	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 
-	r600_pipe_state_add_reg(rstate, R_028380_SQ_VTX_SEMANTIC_0, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028384_SQ_VTX_SEMANTIC_1, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028388_SQ_VTX_SEMANTIC_2, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02838C_SQ_VTX_SEMANTIC_3, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028390_SQ_VTX_SEMANTIC_4, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028394_SQ_VTX_SEMANTIC_5, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028398_SQ_VTX_SEMANTIC_6, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02839C_SQ_VTX_SEMANTIC_7, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A0_SQ_VTX_SEMANTIC_8, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A4_SQ_VTX_SEMANTIC_9, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283A8_SQ_VTX_SEMANTIC_10, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283AC_SQ_VTX_SEMANTIC_11, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B0_SQ_VTX_SEMANTIC_12, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B4_SQ_VTX_SEMANTIC_13, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283B8_SQ_VTX_SEMANTIC_14, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283BC_SQ_VTX_SEMANTIC_15, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C0_SQ_VTX_SEMANTIC_16, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C4_SQ_VTX_SEMANTIC_17, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283C8_SQ_VTX_SEMANTIC_18, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283CC_SQ_VTX_SEMANTIC_19, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D0_SQ_VTX_SEMANTIC_20, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D4_SQ_VTX_SEMANTIC_21, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283D8_SQ_VTX_SEMANTIC_22, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283DC_SQ_VTX_SEMANTIC_23, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E0_SQ_VTX_SEMANTIC_24, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E4_SQ_VTX_SEMANTIC_25, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283E8_SQ_VTX_SEMANTIC_26, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283EC_SQ_VTX_SEMANTIC_27, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F0_SQ_VTX_SEMANTIC_28, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F4_SQ_VTX_SEMANTIC_29, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283F8_SQ_VTX_SEMANTIC_30, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0283FC_SQ_VTX_SEMANTIC_31, 0x0, NULL, 0);
+	r600_store_context_reg_seq(cb, R_028AB4_VGT_REUSE_OFF, 2);
+	r600_store_value(cb, 0); /* R_028AB4_VGT_REUSE_OFF */
+	r600_store_value(cb, 0); /* R_028AB8_VGT_VTX_CNT_EN */
 
-	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, NULL, 0);
+	r600_store_config_reg(cb, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1);
 
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_store_context_reg_seq(cb, R_028380_SQ_VTX_SEMANTIC_0, 32);
+	r600_store_value(cb, 0); /* R_028380_SQ_VTX_SEMANTIC_0 */
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0); /* R_028380_SQ_VTX_SEMANTIC_31 */
 }
 
 void evergreen_polygon_offset_update(struct r600_context *rctx)
