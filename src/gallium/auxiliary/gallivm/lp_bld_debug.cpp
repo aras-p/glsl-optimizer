@@ -203,7 +203,11 @@ lp_disassemble(const void* func)
    InitializeAllAsmPrinters();
 #endif
 
-   InitializeAllDisassemblers();
+#if LLVM_NATIVE_ARCH == X86
+   LLVMInitializeX86Disassembler();
+#elif LLVM_NATIVE_ARCH == ARM
+   LLVMInitializeARMDisassembler();
+#endif
 
 #if HAVE_LLVM >= 0x0300
    OwningPtr<const MCAsmInfo> AsmInfo(T->createMCAsmInfo(Triple));
