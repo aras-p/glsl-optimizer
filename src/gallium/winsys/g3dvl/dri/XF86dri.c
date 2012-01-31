@@ -589,30 +589,3 @@ PUBLIC Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer,
     TRACE("GetDeviceInfo... return True");
     return True;
 }
-
-PUBLIC Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
-    Display* dpy;
-    int screen;
-    Drawable drawable;
-{
-    /* This function and the underlying X protocol are deprecated.
-     */
-    (void) dpy;
-    (void) screen;
-    (void) drawable;
-    return False;
-}
-
-PUBLIC Bool XF86DRICloseFullScreen(dpy, screen, drawable)
-    Display* dpy;
-    int screen;
-    Drawable drawable;
-{
-    /* This function and the underlying X protocol are deprecated.
-     */
-    (void) dpy;
-    (void) screen;
-    (void) drawable;
-    return True;
-}
-
