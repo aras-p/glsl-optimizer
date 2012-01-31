@@ -1244,7 +1244,6 @@ _mesa_PopAttrib(void)
             }
             break;
          case GL_TEXTURE_BIT:
-            /* Take care of texture object reference counters */
             {
                struct texture_state *texstate
                   = (struct texture_state *) attr->data;
