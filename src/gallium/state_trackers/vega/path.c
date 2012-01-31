@@ -367,6 +367,8 @@ static struct polygon_array * path_get_fill_polygons(struct path *p, struct matr
    void *coords = (VGfloat *)p->control_points->data;
    struct array *array;
 
+   memset(data, 0, sizeof(data));
+
    if (p->fill_polys.polygon_array.array)
    {
       if (memcmp( &p->fill_polys.matrix,
