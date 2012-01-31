@@ -231,7 +231,6 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer *transfer)
 {
     struct r300_context *r300 = r300_context(ctx);
-    struct radeon_winsys *rws = (struct radeon_winsys *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_resource *tex = r300_resource(transfer->resource);
     char *map;
@@ -240,13 +239,11 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
     if (r300transfer->linear_texture) {
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
-        return rws->buffer_map(r300transfer->linear_texture->buf,
-                               r300->cs,
-                               transfer->usage);
+        return r300->rws->buffer_map(r300transfer->linear_texture->buf,
+				     r300->cs, transfer->usage);
     } else {
         /* Tiling is disabled. */
-        map = rws->buffer_map(tex->buf, r300->cs,
-                              transfer->usage);
+        map = r300->rws->buffer_map(tex->buf, r300->cs, transfer->usage);
 
         if (!map) {
             return NULL;
