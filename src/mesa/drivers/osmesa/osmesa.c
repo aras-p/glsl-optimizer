@@ -515,6 +515,7 @@ new_osmesa_renderbuffer(struct gl_context *ctx, GLenum format, GLenum type)
       _mesa_init_renderbuffer(&srb->Base, name);
 
       srb->Base.ClassID = OSMESA_RENDERBUFFER_CLASS;
+      srb->Base.RefCount = 1;
       srb->Base.Delete = osmesa_delete_renderbuffer;
       srb->Base.AllocStorage = osmesa_renderbuffer_storage;
 
