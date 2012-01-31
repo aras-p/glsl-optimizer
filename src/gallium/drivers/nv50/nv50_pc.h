@@ -234,7 +234,7 @@ struct nv_instruction {
    int serial;
    struct nv_value *def[4];
    struct nv_value *flags_def;
-   struct nv_ref *src[5];
+   struct nv_ref *src[6];
    struct nv_ref *flags_src;
    struct nv_basic_block *bb;
    struct nv_basic_block *target; /* target block of control flow insn */

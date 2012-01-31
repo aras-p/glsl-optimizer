@@ -1463,7 +1463,7 @@ MemoryOpt::replaceStFromSt(Instruction *restrict st, Record *rec)
    st->takeExtraSources(0, extra);
 
    if (offR < offS) {
-      Value *vals[4];
+      Value *vals[10];
       int s, n;
       int k = 0;
       // get non-replaced sources of ri
