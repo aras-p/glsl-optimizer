@@ -81,9 +81,9 @@ unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
 	}
 
 	/* Workaround for broken flushing on some R6xx chipsets. */
-	if (rctx->screen->family == CHIP_RV670 ||
-	    rctx->screen->family == CHIP_RS780 ||
-	    rctx->screen->family == CHIP_RS880) {
+	if (rctx->family == CHIP_RV670 ||
+	    rctx->family == CHIP_RS780 ||
+	    rctx->family == CHIP_RS880) {
 		flags |=  S_0085F0_CB1_DEST_BASE_ENA(1) |
 			  S_0085F0_DEST_BASE_0_ENA(1);
 	}

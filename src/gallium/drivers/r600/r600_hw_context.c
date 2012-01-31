@@ -46,7 +46,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		unsigned backend_map = ctx->screen->info.r600_backend_map;
 		unsigned item_width, item_mask;
 
-		if (ctx->screen->chip_class >= EVERGREEN) {
+		if (ctx->chip_class >= EVERGREEN) {
 			item_width = 4;
 			item_mask = 0x7;
 		} else {
@@ -132,7 +132,7 @@ void r600_init_cs(struct r600_context *ctx)
 	struct radeon_winsys_cs *cs = ctx->cs;
 
 	/* R6xx requires this packet at the start of each command buffer */
-	if (ctx->screen->family < CHIP_RV770) {
+	if (ctx->family < CHIP_RV770) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_START_3D_CMDBUF, 0, 0);
 		cs->buf[cs->cdw++] = 0x00000000;
 	}
@@ -193,8 +193,8 @@ static void r600_init_block(struct r600_context *ctx,
 			block->pm4[block->pm4_ndwords++] = 0x00000000;
 			block->reloc[block->nbo].bo_pm4_index = block->pm4_ndwords - 1;
 		}
-		if ((ctx->screen->family > CHIP_R600) &&
-		    (ctx->screen->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
+		if ((ctx->family > CHIP_R600) &&
+		    (ctx->family < CHIP_RV770) && reg[i+j].flags & REG_FLAG_RV6XX_SBU) {
 			block->pm4[block->pm4_ndwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
 			block->pm4[block->pm4_ndwords++] = reg[i+j].sbu_flags;
 		}
@@ -218,7 +218,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		}
 
 		/* ignore regs not on R600 on R600 */
-		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->screen->family == CHIP_R600) {
+		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->family == CHIP_R600) {
 			n = 1;
 			continue;
 		}
@@ -1025,7 +1025,7 @@ static void r600_context_dirty_resource_block(struct r600_context *ctx,
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
 {
 	int dirty;
-	int num_regs = ctx->screen->chip_class >= EVERGREEN ? 8 : 7;
+	int num_regs = ctx->chip_class >= EVERGREEN ? 8 : 7;
 	boolean is_vertex;
 
 	if (state == NULL) {
@@ -1303,7 +1303,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		ndwords = 11;
 	}
 	if (ctx->num_cs_dw_queries_suspend) {
-		if (ctx->screen->family >= CHIP_RV770)
+		if (ctx->family >= CHIP_RV770)
 			ndwords += 3;
 		ndwords += 3;
 	}
@@ -1314,7 +1314,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
 	if (ctx->num_cs_dw_queries_suspend) {
-		if (ctx->screen->family >= CHIP_RV770) {
+		if (ctx->family >= CHIP_RV770) {
 			pm4 = &cs->buf[cs->cdw];
 			pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 			pm4[1] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
@@ -1947,10 +1947,10 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 			   6 + /* enables */
 			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 +
 			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 +
-			   (ctx->screen->family > CHIP_R600 && ctx->screen->family < CHIP_RV770 ? 2 : 0) +
+			   (ctx->family > CHIP_R600 && ctx->family < CHIP_RV770 ? 2 : 0) +
 			   ctx->num_cs_dw_streamout_end, TRUE);
 
-	if (ctx->screen->chip_class >= EVERGREEN) {
+	if (ctx->chip_class >= EVERGREEN) {
 		evergreen_flush_vgt_streamout(ctx);
 		evergreen_set_streamout_enable(ctx, buffer_en);
 	} else {
@@ -2009,7 +2009,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 		}
 	}
 
-	if (ctx->screen->family > CHIP_R600 && ctx->screen->family < CHIP_RV770) {
+	if (ctx->family > CHIP_R600 && ctx->family < CHIP_RV770) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
 		cs->buf[cs->cdw++] = update_flags;
 	}
@@ -2022,7 +2022,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	unsigned i, flush_flags = 0;
 	uint64_t va;
 
-	if (ctx->screen->chip_class >= EVERGREEN) {
+	if (ctx->chip_class >= EVERGREEN) {
 		evergreen_flush_vgt_streamout(ctx);
 	} else {
 		r600_flush_vgt_streamout(ctx);
@@ -2050,13 +2050,13 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		}
 	}
 
-	if (ctx->screen->chip_class >= EVERGREEN) {
+	if (ctx->chip_class >= EVERGREEN) {
 		evergreen_set_streamout_enable(ctx, 0);
 	} else {
 		r600_set_streamout_enable(ctx, 0);
 	}
 
-	if (ctx->screen->chip_class < R700) {
+	if (ctx->chip_class < R700) {
 		r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
 	} else {
 		ctx->atom_surface_sync.flush_flags |= flush_flags;
