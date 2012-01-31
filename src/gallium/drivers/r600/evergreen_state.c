@@ -1531,7 +1531,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		return;
 
 	r600_flush_framebuffer(rctx, false);
-	rctx->num_dest_buffers = state->nr_cbufs;
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
@@ -1546,7 +1545,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		evergreen_db(rctx, rstate, state);
-		rctx->num_dest_buffers++;
 	}
 
 	shader_mask = 0;

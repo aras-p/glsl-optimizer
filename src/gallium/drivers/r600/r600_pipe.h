@@ -301,7 +301,6 @@ struct r600_context {
 
 	unsigned		backend_mask;
 	unsigned                max_db; /* for OQ */
-	unsigned                num_dest_buffers;
 	unsigned		flags;
 	boolean                 predicate_drawing;
 	struct r600_range	ps_resources;
