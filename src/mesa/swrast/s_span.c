@@ -1321,12 +1321,23 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
          if (rb) {
             GLchan rgbaSave[MAX_WIDTH][4];
 
-            if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-               span->array->rgba = span->array->rgba8;
+	    GLenum datatype;
+	    GLuint comps;
+
+	    _mesa_format_to_type_and_comps(rb->Format, &datatype, &comps);
+
+            /* set span->array->rgba to colors for render buffer's datatype */
+            if (datatype != span->array->ChanType) {
+               convert_color_type(span, datatype, 0);
             }
             else {
-               span->array->rgba = (void *)
-                  span->array->attribs[FRAG_ATTRIB_COL0];
+               if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+                  span->array->rgba = span->array->rgba8;
+               }
+               else {
+                  span->array->rgba = (void *)
+                     span->array->attribs[FRAG_ATTRIB_COL0];
+               }
             }
 
             if (!multiFragOutputs && numBuffers > 1) {
