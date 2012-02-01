@@ -1052,7 +1052,7 @@ intel_miptree_map(struct intel_context *intel,
       intel_miptree_map_s8(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
-   } else if (intel->gen >= 6 &&
+   } else if (intel->has_llc &&
 	      !(mode & GL_MAP_WRITE_BIT) &&
 	      !mt->compressed &&
 	      mt->region->tiling == I915_TILING_X) {
