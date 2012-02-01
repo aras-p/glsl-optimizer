@@ -189,6 +189,15 @@ gl_pcedit = sed \
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
 
+osmesa_pcedit = sed \
+	$(pcedit) \
+	-e 's,@OSMESA_LIB@,$(OSMESA_LIB),' \
+	-e 's,@OSMESA_PC_REQ@,$(OSMESA_PC_REQ),' \
+	-e 's,@OSMESA_PC_LIB_PRIV@,$(OSMESA_PC_LIB_PRIV),'
+
+osmesa.pc: osmesa.pc.in
+	$(osmesa_pcedit) $< > $@
+
 install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
@@ -201,8 +210,12 @@ install-libgl: default gl.pc install-headers
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
-install-osmesa: default
-	cd drivers/osmesa && $(MAKE) install
+install-osmesa: default osmesa.pc
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 osmesa.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-dri: default
 	cd drivers/dri && $(MAKE) install

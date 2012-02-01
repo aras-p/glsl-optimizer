@@ -302,8 +302,6 @@ xnono )
     enable_static=yes
     ;;
 esac
-AM_CONDITIONAL(BUILD_STATIC, test "x$enable_static" = xyes)
-AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
 
 dnl
 dnl mklib options
@@ -1336,9 +1334,6 @@ x16|x32)
     AC_MSG_ERROR([OSMesa bits '$osmesa_bits' is not a valid option])
     ;;
 esac
-AM_CONDITIONAL(HAVE_OSMESA8, test "x$osmesa_bits" = x8)
-AM_CONDITIONAL(HAVE_OSMESA16, test "x$osmesa_bits" = x16)
-AM_CONDITIONAL(HAVE_OSMESA32, test "x$osmesa_bits" = x32)
 
 if test "x$enable_osmesa" = xyes; then
     # only link libraries with osmesa if shared
@@ -1347,9 +1342,12 @@ if test "x$enable_osmesa" = xyes; then
     else
         OSMESA_LIB_DEPS=""
     fi
+    OSMESA_MESA_DEPS=""
     OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS $DLOPEN_LIBS"
 fi
 AC_SUBST([OSMESA_LIB_DEPS])
+AC_SUBST([OSMESA_MESA_DEPS])
+AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
 
 dnl
@@ -1934,8 +1932,6 @@ AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
 		src/mesa/drivers/dri/swrast/Makefile
-		src/mesa/drivers/osmesa/osmesa.pc
-		src/mesa/drivers/osmesa/Makefile
 		tests/Makefile
 		tests/glx/Makefile])
 
