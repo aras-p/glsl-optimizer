@@ -208,13 +208,6 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 {
    int ret;
 
-   /* No batch should be emitted that uses a mapped region, because that would
-    * cause the map to be incoherent with GPU rendering done by the
-    * batchbuffer. To ensure that condition, we assert a condition that is
-    * stronger but easier to implement: that *no* region is mapped.
-    */
-   assert(intel->num_mapped_regions == 0);
-
    if (intel->batch.used == 0)
       return 0;
 
