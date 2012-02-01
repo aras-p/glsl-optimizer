@@ -991,7 +991,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
    else if ((datatype == GL_HALF_FLOAT_ARB) && (comps == 3)) {
-      DECLARE_ROW_POINTERS(GLhalfARB, 4);
+      DECLARE_ROW_POINTERS(GLhalfARB, 3);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
@@ -1001,7 +1001,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
    else if ((datatype == GL_HALF_FLOAT_ARB) && (comps == 2)) {
-      DECLARE_ROW_POINTERS(GLhalfARB, 4);
+      DECLARE_ROW_POINTERS(GLhalfARB, 2);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
@@ -1010,7 +1010,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
    else if ((datatype == GL_HALF_FLOAT_ARB) && (comps == 1)) {
-      DECLARE_ROW_POINTERS(GLhalfARB, 4);
+      DECLARE_ROW_POINTERS(GLhalfARB, 1);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
