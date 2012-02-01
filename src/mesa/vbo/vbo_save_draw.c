@@ -191,7 +191,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
          save->inputs[attr] = &arrays[attr];
 
 	 arrays[attr].Ptr = (const GLubyte *) NULL + buffer_offset;
-	 arrays[attr].Size = node->attrsz[src];
+	 arrays[attr].Size = node_attrsz[src];
 	 arrays[attr].StrideB = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
@@ -205,7 +205,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
 	 
 	 assert(arrays[attr].BufferObj->Name);
 
-	 buffer_offset += node->attrsz[src] * sizeof(GLfloat);
+	 buffer_offset += node_attrsz[src] * sizeof(GLfloat);
          varying_inputs |= VERT_BIT(attr);
          ctx->NewState |= _NEW_ARRAY;
       }
