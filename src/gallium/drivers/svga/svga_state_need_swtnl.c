@@ -145,7 +145,8 @@ update_need_pipeline( struct svga_context *svga,
     */
    if (svga->curr.reduced_prim == PIPE_PRIM_POINTS) {
       unsigned sprite_coord_gen = svga->curr.rast->templ.sprite_coord_enable;
-      unsigned generic_inputs = svga->curr.fs->generic_inputs;
+      unsigned generic_inputs =
+         svga->curr.fs ? svga->curr.fs->generic_inputs : 0;
 
       if (sprite_coord_gen &&
           (generic_inputs & ~sprite_coord_gen)) {
