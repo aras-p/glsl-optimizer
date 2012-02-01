@@ -837,6 +837,12 @@ nouveau_screen_get_video_param(struct pipe_screen *pscreen,
       return vl_video_buffer_max_size(pscreen);
    case PIPE_VIDEO_CAP_PREFERED_FORMAT:
       return PIPE_FORMAT_NV12;
+   case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
+      return false;
+   case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
+      return false;
+   case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
+      return true;
    default:
       debug_printf("unknown video param: %d\n", param);
       return 0;
