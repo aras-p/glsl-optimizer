@@ -939,13 +939,10 @@ _mesa_initialize_context(struct gl_context *ctx,
          return GL_FALSE;
    }
 
-   _glthread_LOCK_MUTEX(shared->Mutex);
-   ctx->Shared = shared;
-   shared->RefCount++;
-   _glthread_UNLOCK_MUTEX(shared->Mutex);
+   _mesa_reference_shared_state(ctx, &ctx->Shared, shared);
 
    if (!init_attrib_groups( ctx )) {
-      _mesa_release_shared_state(ctx, ctx->Shared);
+      _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
       return GL_FALSE;
    }
 
@@ -973,7 +970,7 @@ _mesa_initialize_context(struct gl_context *ctx,
    }
 
    if (!ctx->Exec) {
-      _mesa_release_shared_state(ctx, ctx->Shared);
+      _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
       return GL_FALSE;
    }
 #endif
@@ -1002,7 +999,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 #if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {
-	 _mesa_release_shared_state(ctx, ctx->Shared);
+         _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
 	 free(ctx->Exec);
 	 return GL_FALSE;
       }
@@ -1140,7 +1137,7 @@ _mesa_free_context_data( struct gl_context *ctx )
    free(ctx->Save);
 
    /* Shared context state (display lists, textures, etc) */
-   _mesa_release_shared_state( ctx, ctx->Shared );
+   _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
 
    /* needs to be after freeing shared state */
    _mesa_free_display_list_data(ctx);
@@ -1540,17 +1537,18 @@ GLboolean
 _mesa_share_state(struct gl_context *ctx, struct gl_context *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
-      struct gl_shared_state *oldSharedState = ctx->Shared;
+      struct gl_shared_state *oldShared = NULL;
 
-      ctx->Shared = ctxToShare->Shared;
-      
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-      ctx->Shared->RefCount++;
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      /* save ref to old state to prevent it from being deleted immediately */
+      _mesa_reference_shared_state(ctx, &oldShared, ctx->Shared);
+
+      /* update ctx's Shared pointer */
+      _mesa_reference_shared_state(ctx, &ctx->Shared, ctxToShare->Shared);
 
       update_default_objects(ctx);
 
-      _mesa_release_shared_state(ctx, oldSharedState);
+      /* release the old shared state */
+      _mesa_reference_shared_state(ctx, &oldShared, NULL);
 
       return GL_TRUE;
    }

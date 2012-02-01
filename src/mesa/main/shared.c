@@ -388,28 +388,40 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
 
 
 /**
- * Decrement shared state object reference count and potentially free it
- * and all children structures.
- *
- * \param ctx GL context.
- * \param shared shared state pointer.
- *
- * \sa free_shared_state().
+ * gl_shared_state objects are ref counted.
+ * If ptr's refcount goes to zero, free the shared state.
  */
 void
-_mesa_release_shared_state(struct gl_context *ctx,
-                           struct gl_shared_state *shared)
+_mesa_reference_shared_state(struct gl_context *ctx,
+                             struct gl_shared_state **ptr,
+                             struct gl_shared_state *state)
 {
-   GLint RefCount;
+   if (*ptr == state)
+      return;
 
-   _glthread_LOCK_MUTEX(shared->Mutex);
-   RefCount = --shared->RefCount;
-   _glthread_UNLOCK_MUTEX(shared->Mutex);
+   if (*ptr) {
+      /* unref old state */
+      struct gl_shared_state *old = *ptr;
+      GLboolean delete;
 
-   assert(RefCount >= 0);
+      _glthread_LOCK_MUTEX(old->Mutex);
+      assert(old->RefCount >= 1);
+      old->RefCount--;
+      delete = (old->RefCount == 0);
+      _glthread_UNLOCK_MUTEX(old->Mutex);
 
-   if (RefCount == 0) {
-      /* free shared state */
-      free_shared_state( ctx, shared );
+      if (delete) {
+         free_shared_state(ctx, old);
+      }
+
+      *ptr = NULL;
+   }
+
+   if (state) {
+      /* reference new state */
+      _glthread_LOCK_MUTEX(state->Mutex);
+      state->RefCount++;
+      *ptr = state;
+      _glthread_UNLOCK_MUTEX(state->Mutex);
    }
 }
