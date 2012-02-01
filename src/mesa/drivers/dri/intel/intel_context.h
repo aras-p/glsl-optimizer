@@ -213,6 +213,7 @@ struct intel_context
    bool has_separate_stencil;
    bool must_use_separate_stencil;
    bool has_hiz;
+   bool has_llc;
 
    int urb_size;
 

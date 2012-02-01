@@ -628,6 +628,7 @@ intelInitContext(struct intel_context *intel,
    intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
    intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
    intel->has_hiz = intel->intelScreen->hw_has_hiz;
+   intel->has_llc = intel->intelScreen->hw_has_llc;
 
    memset(&ctx->TextureFormatSupported,
 	  0, sizeof(ctx->TextureFormatSupported));
