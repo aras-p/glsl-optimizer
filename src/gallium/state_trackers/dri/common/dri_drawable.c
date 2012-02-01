@@ -53,6 +53,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    unsigned statt_mask, new_mask;
    boolean new_stamp;
    int i;
+   unsigned int lastStamp;
 
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
@@ -66,23 +67,26 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
     * client stamp.  It has the value of the server stamp when last
     * checked.
     */
-   new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
+   do {
+      lastStamp = drawable->dPriv->lastStamp;
+      new_stamp = (drawable->texture_stamp != lastStamp);
 
-   if (new_stamp || new_mask || screen->broken_invalidate) {
-      if (new_stamp && drawable->update_drawable_info)
-         drawable->update_drawable_info(drawable);
+      if (new_stamp || new_mask || screen->broken_invalidate) {
+         if (new_stamp && drawable->update_drawable_info)
+            drawable->update_drawable_info(drawable);
 
-      drawable->allocate_textures(drawable, statts, count);
+         drawable->allocate_textures(drawable, statts, count);
 
-      /* add existing textures */
-      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-         if (drawable->textures[i])
-            statt_mask |= (1 << i);
+         /* add existing textures */
+         for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+            if (drawable->textures[i])
+               statt_mask |= (1 << i);
+         }
+
+         drawable->texture_stamp = lastStamp;
+         drawable->texture_mask = statt_mask;
       }
-
-      drawable->texture_stamp = drawable->dPriv->lastStamp;
-      drawable->texture_mask = statt_mask;
-   }
+   } while (lastStamp != drawable->dPriv->lastStamp);
 
    if (!out)
       return TRUE;
