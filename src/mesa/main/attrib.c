@@ -47,6 +47,7 @@
 #include "multisample.h"
 #include "points.h"
 #include "polygon.h"
+#include "shared.h"
 #include "scissor.h"
 #include "stencil.h"
 #include "texenv.h"
@@ -165,6 +166,13 @@ struct texture_state
     * deleted while saved in the attribute stack).
     */
    struct gl_texture_object *SavedTexRef[MAX_TEXTURE_UNITS][NUM_TEXTURE_TARGETS];
+
+   /* We need to keep a reference to the shared state.  That's where the
+    * default texture objects are kept.  We don't want that state to be
+    * freed while the attribute stack contains pointers to any default
+    * texture objects.
+    */
+   struct gl_shared_state *SharedRef;
 };
 
 
@@ -436,6 +444,8 @@ _mesa_PushAttrib(GLbitfield mask)
                                       ctx->Texture.Unit[u].CurrentTex[tex]);
          }
       }
+
+      _mesa_reference_shared_state(ctx, &texstate->SharedRef, ctx->Shared);
 
       _mesa_unlock_context_textures(ctx);
 
@@ -805,6 +815,8 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
    }
 
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + texstate->Texture.CurrentUnit);
+
+   _mesa_reference_shared_state(ctx, &texstate->SharedRef, NULL);
 
    _mesa_unlock_context_textures(ctx);
 }
@@ -1604,6 +1616,7 @@ _mesa_free_attrib_data(struct gl_context *ctx)
                   _mesa_reference_texobj(&texstate->SavedTexRef[u][tgt], NULL);
                }
             }
+            _mesa_reference_shared_state(ctx, &texstate->SharedRef, NULL);
          }
          else {
             /* any other chunks of state that requires special handling? */
