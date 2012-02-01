@@ -44,6 +44,7 @@ i965_C_FILES = \
 	brw_draw.c \
 	brw_draw_upload.c \
 	brw_eu.c \
+	brw_eu_compact.c \
 	brw_eu_debug.c \
 	brw_eu_emit.c \
 	brw_eu_util.c \

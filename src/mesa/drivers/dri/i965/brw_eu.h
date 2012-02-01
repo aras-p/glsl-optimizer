@@ -1107,6 +1107,19 @@ void brw_set_uip_jip(struct brw_compile *p);
 
 uint32_t brw_swap_cmod(uint32_t cmod);
 
+/* brw_eu_compact.c */
+void brw_compact_instructions(struct brw_compile *p);
+void brw_uncompact_instruction(struct intel_context *intel,
+			       struct brw_instruction *dst,
+			       struct brw_compact_instruction *src);
+bool brw_try_compact_instruction(struct brw_compile *p,
+                                 struct brw_compact_instruction *dst,
+                                 struct brw_instruction *src);
+
+void brw_debug_compact_uncompact(struct intel_context *intel,
+				 struct brw_instruction *orig,
+				 struct brw_instruction *uncompacted);
+
 /* brw_optimize.c */
 void brw_optimize(struct brw_compile *p);
 void brw_remove_duplicate_mrf_moves(struct brw_compile *p);

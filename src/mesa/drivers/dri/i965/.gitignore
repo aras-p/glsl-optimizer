@@ -1,3 +1,4 @@
 Makefile
 i965_symbols_test
 libi965_dri.la
+test_eu_compact

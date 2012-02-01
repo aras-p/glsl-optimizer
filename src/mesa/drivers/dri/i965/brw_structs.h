@@ -1048,6 +1048,8 @@ struct brw_instruction
 	 GLuint dest_subreg_nr:3;
 	 GLuint dest_reg_nr:8;
       } da3src;
+
+      uint32_t ud;
    } bits1;
 
 
@@ -1137,6 +1139,8 @@ struct brw_instruction
 	 GLuint src1_swizzle:8;
 	 GLuint src1_subreg_nr_low:2;
       } da3src;
+
+      uint32_t ud;
    } bits2;
 
    union
@@ -1534,5 +1538,27 @@ struct brw_instruction
    } bits3;
 };
 
+struct brw_compact_instruction {
+   struct {
+      unsigned opcode:7;          /*  0- 6 */
+      unsigned debug_control:1;   /*  7- 7 */
+      unsigned control_index:5;   /*  8-12 */
+      unsigned data_type_index:5; /* 13-17 */
+      unsigned sub_reg_index:5;   /* 18-22 */
+      unsigned acc_wr_control:1;  /* 23-23 */
+      unsigned conditionalmod:4;  /* 24-27 */
+      unsigned flag_reg_nr:1;     /* 28-28 */
+      unsigned cmpt_ctrl:1;       /* 29-29 */
+      unsigned src0_index:2;      /* 30-31 */
+   } dw0;
+
+   struct {
+      unsigned src0_index:3;  /* 32-24 */
+      unsigned src1_index:5;  /* 35-39 */
+      unsigned dst_reg_nr:8;  /* 40-47 */
+      unsigned src0_reg_nr:8; /* 48-55 */
+      unsigned src1_reg_nr:8; /* 56-63 */
+   } dw1;
+};
 
 #endif

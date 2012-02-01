@@ -214,6 +214,11 @@ const GLuint *brw_get_program( struct brw_compile *p,
 {
    GLuint i;
 
+   brw_compact_instructions(p);
+
+   /* We emit a cacheline (8 instructions) of NOPs at the end of the program to
+    * make sure that instruction prefetch doesn't wander off into some other BO.
+    */
    for (i = 0; i < 8; i++)
       brw_NOP(p);
 
@@ -224,19 +229,36 @@ const GLuint *brw_get_program( struct brw_compile *p,
 void
 brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
 {
+   struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    void *store = p->store;
+   bool dump_hex = false;
 
-   for (int offset = start; offset < end; offset += 16) {
+   for (int offset = start; offset < end;) {
       struct brw_instruction *insn = store + offset;
-
+      struct brw_instruction uncompacted;
       printf("0x%08x: ", offset);
 
-      if (0) {
-	 printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		((uint32_t *)insn)[3],
-		((uint32_t *)insn)[2],
-		((uint32_t *)insn)[1],
-		((uint32_t *)insn)[0]);
+      if (insn->header.cmpt_control) {
+	 struct brw_compact_instruction *compacted = (void *)insn;
+	 if (dump_hex) {
+	    printf("0x%08x 0x%08x                       ",
+		   ((uint32_t *)insn)[1],
+		   ((uint32_t *)insn)[0]);
+	 }
+
+	 brw_uncompact_instruction(intel, &uncompacted, compacted);
+	 insn = &uncompacted;
+	 offset += 8;
+      } else {
+	 if (dump_hex) {
+	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		   ((uint32_t *)insn)[3],
+		   ((uint32_t *)insn)[2],
+		   ((uint32_t *)insn)[1],
+		   ((uint32_t *)insn)[0]);
+	 }
+	 offset += 16;
       }
 
       brw_disasm(stdout, insn, p->brw->intel.gen);

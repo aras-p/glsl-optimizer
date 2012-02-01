@@ -1947,6 +1947,12 @@ fs_visitor::run()
    brw_wm_payload_setup(brw, c);
 
    if (c->dispatch_width == 16) {
+      /* We have to do a compaction pass now, or the one at the end of
+       * execution will squash down where our prog_offset start needs
+       * to be.
+       */
+      brw_compact_instructions(p);
+
       /* align to 64 byte boundary. */
       while ((c->func.nr_insn * sizeof(struct brw_instruction)) % 64) {
 	 brw_NOP(p);

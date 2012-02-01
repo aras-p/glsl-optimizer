@@ -51,15 +51,29 @@ libi965_dri_la_SOURCES = \
 	$(i965_C_FILES) \
 	$(i965_CXX_FILES)
 
+# list of libs to be linked against by i965_dri.so and i965 test programs.
 COMMON_LIBS = \
 	libi965_dri.la \
 	$(DRI_LIB_DEPS) \
 	$(INTEL_LIBS) \
 	../common/libdricommon.la
 
+TEST_LIBS = \
+	$(COMMON_LIBS) \
+        -lrt \
+	../common/libdri_test_stubs.la
+
 i965_dri_la_SOURCES =
 i965_dri_la_LIBADD = $(COMMON_LIBS)
 i965_dri_la_LDFLAGS = -module -avoid-version -shared
+
+TESTS = test_eu_compact
+check_PROGRAMS = test_eu_compact
+
+test_eu_compact_SOURCES = \
+	test_eu_compact.c
+nodist_EXTRA_test_eu_compact_SOURCES = dummy.cpp
+test_eu_compact_LDADD = $(TEST_LIBS)
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
