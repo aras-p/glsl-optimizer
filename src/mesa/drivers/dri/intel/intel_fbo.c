@@ -762,6 +762,17 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	 continue;
       }
 
+      if (fb->Attachment[i].Type == GL_TEXTURE) {
+	 const struct gl_texture_image *img =
+	    _mesa_get_attachment_teximage_const(&fb->Attachment[i]);
+
+	 if (img->Border) {
+	    DBG("texture with border\n");
+	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	    continue;
+	 }
+      }
+
       irb = intel_renderbuffer(rb);
       if (irb == NULL) {
 	 DBG("software rendering renderbuffer\n");
