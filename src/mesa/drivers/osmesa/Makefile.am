@@ -36,7 +36,7 @@ AM_CPPFLAGS = \
 LIBADD = \
 	$(top_srcdir)/src/mesa/libmesa.a \
 	$(top_srcdir)/src/mapi/glapi/libglapi.a \
-	$(top_srcdir)/src/glsl/libglsl.la \
+	$(top_srcdir)/src/glsl/libglsl.a \
 	$(OSMESA_LIB_DEPS)
 
 if BUILD_SHARED

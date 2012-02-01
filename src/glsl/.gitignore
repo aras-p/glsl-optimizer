@@ -1,13 +1,5 @@
-.deps
-.libs
-Makefile
-Makefile.in
-libglsl.la
-libglslcore.la
 glsl_compiler
-glsl_lexer.cc
 glsl_lexer.cpp
-glsl_parser.cc
 glsl_parser.cpp
 glsl_parser.h
 glsl_parser.output

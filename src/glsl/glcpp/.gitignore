@@ -1,5 +1,3 @@
-Makefile
-Makefile.in
 glcpp
 glcpp-lex.c
 glcpp-parse.output
@@ -8,7 +6,6 @@ glcpp-parse.h
 *.o
 *.lo
 *.la
-.deps
 .libs
 *~
 tests/*.out

@@ -1921,8 +1921,6 @@ dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
-		src/glsl/Makefile
-		src/glsl/glcpp/Makefile
 		src/egl/wayland/Makefile
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
