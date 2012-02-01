@@ -184,6 +184,12 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    tmpl.chroma_format = context_priv->decoder->chroma_format;
    tmpl.width = context_priv->decoder->width;
    tmpl.height = context_priv->decoder->height;
+   tmpl.interlaced = pipe->screen->get_video_param
+   (
+      pipe->screen,
+      PIPE_VIDEO_PROFILE_MPEG2_MAIN,
+      PIPE_VIDEO_CAP_PREFERS_INTERLACED
+   );
 
    surface_priv->video_buffer = pipe->create_video_buffer(pipe, &tmpl);
    surface_priv->context = context;
