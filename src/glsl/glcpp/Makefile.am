@@ -24,8 +24,6 @@
 noinst_LTLIBRARIES = libglcpp.la
 check_PROGRAMS = glcpp
 
-TESTS = tests/glcpp-test
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/mapi \
