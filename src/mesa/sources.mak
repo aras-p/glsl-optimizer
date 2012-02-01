@@ -368,7 +368,7 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 ### Other archives/libraries
 
 GLSL_LIBS = \
-	$(TOP)/src/glsl/.libs/$(GLSL_LIB_NAME)
+	$(TOP)/src/glsl/libglsl.la
 
 
 ### Include directories
