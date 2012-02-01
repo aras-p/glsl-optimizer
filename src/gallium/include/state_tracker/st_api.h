@@ -176,7 +176,7 @@ struct pipe_fence_handle;
  */
 struct st_context_resource
 {
-   /* these fields are filled by the caller */
+   /* these fields are filled in by the caller */
    enum st_context_resource_type type;
    void *resource;
 
@@ -251,17 +251,17 @@ struct st_context_attribs
  * The framebuffer is implemented by the state tracker manager and
  * used by the state trackers.
  *
- * Instead of the winsys pokeing into the API context to figure
+ * Instead of the winsys poking into the API context to figure
  * out what buffers that might be needed in the future by the API
  * context, it calls into the framebuffer to get the textures.
  *
  * This structure along with the notify_invalid_framebuffer
  * allows framebuffers to be shared between different threads
  * but at the same make the API context free from thread
- * syncronisation primitves, with the exception of a small
+ * synchronization primitves, with the exception of a small
  * atomic flag used for notification of framebuffer dirty status.
  *
- * The thread syncronisation is put inside the framebuffer
+ * The thread synchronization is put inside the framebuffer
  * and only called once the framebuffer has become dirty.
  */
 struct st_framebuffer_iface
@@ -269,7 +269,6 @@ struct st_framebuffer_iface
    /**
     * Atomic stamp which changes when framebuffers need to be updated.
     */
-
    int32_t stamp;
 
    /**
@@ -345,7 +344,8 @@ struct st_context_iface
     *
     * This function is optional.
     */
-   boolean (*teximage)(struct st_context_iface *stctxi, enum st_texture_type target,
+   boolean (*teximage)(struct st_context_iface *stctxi,
+                       enum st_texture_type target,
                        int level, enum pipe_format internal_format,
                        struct pipe_resource *tex, boolean mipmap);
 
