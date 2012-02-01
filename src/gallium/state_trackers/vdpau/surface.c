@@ -85,6 +85,12 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    p_surf->templat.chroma_format = ChromaToPipe(chroma_type);
    p_surf->templat.width = width;
    p_surf->templat.height = height;
+   p_surf->templat.interlaced = pipe->screen->get_video_param
+   (
+      pipe->screen,
+      PIPE_VIDEO_PROFILE_UNKNOWN,
+      PIPE_VIDEO_CAP_PREFERS_INTERLACED
+   );
    p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
 
    *surface = vlAddDataHTAB(p_surf);
