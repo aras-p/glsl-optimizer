@@ -188,12 +188,46 @@ VdpStatus
 vlVdpOutputSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                     VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
 {
-   if (!(is_supported && max_width && max_height))
-      return VDP_STATUS_INVALID_POINTER;
+   vlVdpDevice *dev;
+   struct pipe_screen *pscreen;
+   enum pipe_format format;
 
    VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface capabilities\n");
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pscreen = dev->vscreen->pscreen;
+   if (!pscreen)
+      return VDP_STATUS_RESOURCES;
+
+   format = FormatRGBAToPipe(surface_rgba_format);
+   if (format == PIPE_FORMAT_NONE || format == PIPE_FORMAT_A8_UNORM)
+      return VDP_STATUS_INVALID_RGBA_FORMAT;
+
+   if (!(is_supported && max_width && max_height))
+      return VDP_STATUS_INVALID_POINTER;
+
+   *is_supported = pscreen->is_format_supported
+   (
+      pscreen, format, PIPE_TEXTURE_3D, 1,
+      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET
+   );
+   if (*is_supported) {
+      uint32_t max_2d_texture_level = pscreen->get_param(
+         pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+
+      if (!max_2d_texture_level)
+         return VDP_STATUS_ERROR;
+
+      *max_width = *max_height = pow(2, max_2d_texture_level - 1);
+   } else {
+      *max_width = 0;
+      *max_height = 0;
+   }
+
+   return VDP_STATUS_OK;
 }
 
 /**
