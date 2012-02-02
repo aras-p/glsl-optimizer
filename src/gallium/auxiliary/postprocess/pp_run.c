@@ -42,7 +42,7 @@ void
 pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
        struct pipe_resource *out, struct pipe_resource *indepth)
 {
-
+   struct pipe_resource *refin = NULL, *refout = NULL;
    unsigned int i;
 
    if (in->width0 != ppq->p->framebuffer.width ||
@@ -65,7 +65,6 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    }
 
    // Kept only for this frame.
-   struct pipe_resource *refin = NULL, *refout = NULL;
    pipe_resource_reference(&ppq->depth, indepth);
    pipe_resource_reference(&refin, in);
    pipe_resource_reference(&refout, out);
