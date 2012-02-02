@@ -25,8 +25,6 @@ CORE_MESA = \
 	$(TOP)/src/mapi/glapi/libglapi.a \
 	$(TOP)/src/glsl/libglsl.a
 
-OSMESA_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(OSMESA_LIB_DEPS)
-
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
