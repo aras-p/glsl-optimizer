@@ -44,7 +44,6 @@
 #define R600_RESOURCE_END                      0X0003C000
 #define R600_SAMPLER_OFFSET                    0X0003C000
 #define R600_SAMPLER_END                       0X0003CFF0
-#define R600_CTL_CONST_OFFSET                  0X0003CFF0
 #define R600_CTL_CONST_END                     0X0003E200
 #define R600_LOOP_CONST_OFFSET                 0X0003E200
 #define R600_LOOP_CONST_END                    0X0003E380

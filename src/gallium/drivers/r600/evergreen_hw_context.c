@@ -44,7 +44,6 @@ static const struct r600_reg cayman_config_reg_list[] = {
 };
 
 static const struct r600_reg evergreen_ctl_const_list[] = {
-	{R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0},
 	{R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
 };
 
@@ -104,8 +103,6 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028400_VGT_MAX_VTX_INDX, 0, 0},
-	{R_028404_VGT_MIN_VTX_INDX, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
 	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
@@ -413,8 +410,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_0282D4_PA_SC_VPORT_ZMAX_0, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028400_VGT_MAX_VTX_INDX, 0, 0},
-	{R_028404_VGT_MIN_VTX_INDX, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
 	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},

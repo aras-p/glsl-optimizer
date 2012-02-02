@@ -845,12 +845,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0, NULL, 0);
 		if (rctx->chip_class <= R700)
@@ -862,12 +859,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
-	r600_pipe_state_mod_reg(&rctx->vgt, ~0);
-	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
-	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
 
 	if (prim == V_008958_DI_PT_LINELIST)

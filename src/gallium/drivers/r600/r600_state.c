@@ -2040,6 +2040,12 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028AB8_VGT_VTX_CNT_EN */
 
 	r600_store_context_reg(cb, R_028B20_VGT_STRMOUT_BUFFER_EN, 0);
+
+	r600_store_context_reg_seq(cb, R_028400_VGT_MAX_VTX_INDX, 2);
+	r600_store_value(cb, ~0); /* R_028400_VGT_MAX_VTX_INDX */
+	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
+
+	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
 }
 
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)

@@ -250,7 +250,6 @@ static const struct r600_reg r600_config_reg_list[] = {
 };
 
 static const struct r600_reg r600_ctl_const_list[] = {
-	{R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0},
 	{R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
 };
 
@@ -571,8 +570,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028850_SQ_PGM_RESOURCES_PS, 0, 0},
 	{R_028854_SQ_PGM_EXPORTS_PS, 0, 0},
 	{R_0288CC_SQ_PGM_CF_OFFSET_PS, 0, 0},
-	{R_028400_VGT_MAX_VTX_INDX, 0, 0},
-	{R_028404_VGT_MIN_VTX_INDX, 0, 0},
 	{R_028408_VGT_INDX_OFFSET, 0, 0},
 	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
 	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},

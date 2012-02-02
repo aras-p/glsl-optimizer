@@ -491,9 +491,11 @@ unsigned r600_tex_compare(unsigned compare);
 
 #define PKT3_SET_CONFIG_REG	0x68
 #define PKT3_SET_CONTEXT_REG	0x69
+#define PKT3_SET_CTL_CONST      0x6F
 
-#define R600_CONFIG_REG_OFFSET	0x8000
+#define R600_CONFIG_REG_OFFSET	0x08000
 #define R600_CONTEXT_REG_OFFSET 0x28000
+#define R600_CTL_CONST_OFFSET   0x3CFF0
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
@@ -516,10 +518,18 @@ static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, uns
 
 static INLINE void r600_store_context_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
-	assert(reg >= R600_CONTEXT_REG_OFFSET);
+	assert(reg >= R600_CONTEXT_REG_OFFSET && reg < R600_CTL_CONST_OFFSET);
 	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
 	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0);
 	cb->buf[cb->atom.num_dw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
+}
+
+static INLINE void r600_store_ctl_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
+{
+	assert(reg >= R600_CTL_CONST_OFFSET);
+	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CTL_CONST, num, 0);
+	cb->buf[cb->atom.num_dw++] = (reg - R600_CTL_CONST_OFFSET) >> 2;
 }
 
 static INLINE void r600_store_config_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
@@ -531,6 +541,12 @@ static INLINE void r600_store_config_reg(struct r600_command_buffer *cb, unsigne
 static INLINE void r600_store_context_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
 {
 	r600_store_context_reg_seq(cb, reg, 1);
+	r600_store_value(cb, value);
+}
+
+static INLINE void r600_store_ctl_const(struct r600_command_buffer *cb, unsigned reg, unsigned value)
+{
+	r600_store_ctl_const_seq(cb, reg, 1);
 	r600_store_value(cb, value);
 }
 
