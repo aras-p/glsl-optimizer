@@ -397,8 +397,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028004_DB_DEPTH_VIEW, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028010_DB_DEPTH_INFO, REG_FLAG_NEED_BO, 0},
-	{R_028D0C_DB_RENDER_CONTROL, 0, 0},
-	{R_028D10_DB_RENDER_OVERRIDE, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
 	{R_028D30_DB_PRELOAD_CONTROL, 0, 0},
 	{R_028D34_DB_PREFETCH_LIMIT, 0, 0},
@@ -1233,26 +1231,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	LIST_DELINIT(&block->list);
 }
 
-/* XXX make a proper state object (atom or pipe_state) out of this */
-void r600_context_draw_prepare(struct r600_context *ctx)
-{
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)ctx->states[R600_PIPE_STATE_DSA];
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	/* queries need some special values
-	 * (this is non-zero if any query is active) */
-	if (ctx->num_cs_dw_queries_suspend) {
-		if (ctx->family >= CHIP_RV770) {
-			cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-			cs->buf[cs->cdw++] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
-			cs->buf[cs->cdw++] = dsa->db_render_control | S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
-		}
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028D10_DB_RENDER_OVERRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = dsa->db_render_override | S_028D10_NOOP_CULL_DISABLE(1);
-	}
-}
-
 void r600_inval_shader_cache(struct r600_context *ctx)
 {
 	ctx->atom_surface_sync.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
@@ -1350,6 +1328,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->flags = 0;
 
 	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
+	r600_atom_dirty(ctx, &ctx->atom_db_misc_state.atom);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;

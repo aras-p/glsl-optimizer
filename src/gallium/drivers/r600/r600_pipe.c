@@ -232,6 +232,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
 
+	LIST_INITHEAD(&rctx->dirty_states);
+
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
@@ -292,8 +294,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-
-	LIST_INITHEAD(&rctx->dirty_states);
 
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 

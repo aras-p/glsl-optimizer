@@ -717,7 +717,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
-	unsigned db_render_override, db_render_control;
 	struct r600_pipe_state *rstate;
 
 	if (dsa == NULL) {
@@ -763,12 +762,6 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	}
 	dsa->alpha_ref = alpha_ref;
 
-	/* misc */
-	db_render_control = 0;
-	db_render_override = S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
-		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
-	/* TODO db_render_override depends on query */
 	r600_pipe_state_add_reg(rstate, R_028028_DB_STENCIL_CLEAR, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, NULL, 0);
@@ -776,14 +769,9 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0286E4_SPI_FOG_FUNC_BIAS, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028D0C_DB_RENDER_CONTROL, db_render_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028D10_DB_RENDER_OVERRIDE, db_render_override, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D30_DB_PRELOAD_CONTROL, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028D44_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
-
-	dsa->db_render_override = db_render_override;
-	dsa->db_render_control = db_render_control;
 
 	return rstate;
 }
@@ -1703,8 +1691,38 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
+static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_atom_db_misc_state *a = (struct r600_atom_db_misc_state*)atom;
+	unsigned db_render_control = 0;
+	unsigned db_render_override =
+		S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
+		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
+
+	if (a->occlusion_query_enabled) {
+		if (rctx->chip_class >= R700) {
+			db_render_control |= S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
+		}
+		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
+	}
+	if (a->flush_depthstencil_enabled) {
+		db_render_control |= S_028D0C_DEPTH_COPY_ENABLE(1) |
+				     S_028D0C_STENCIL_COPY_ENABLE(1) |
+				     S_028D0C_COPY_CENTROID(1);
+	}
+
+	r600_write_context_reg_seq(cs, R_028D0C_DB_RENDER_CONTROL, 2);
+	r600_write_value(cs, db_render_control); /* R_028D0C_DB_RENDER_CONTROL */
+	r600_write_value(cs, db_render_override); /* R_028D10_DB_RENDER_OVERRIDE */
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
+	r600_init_atom(&rctx->atom_db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
+	r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
 	rctx->context.create_fs_state = r600_create_shader_state;
@@ -2255,7 +2273,6 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 	struct pipe_depth_stencil_alpha_state dsa;
 	struct r600_pipe_state *rstate;
 	struct r600_pipe_dsa *dsa_state;
-	unsigned db_render_control;
 	boolean quirk = false;
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
@@ -2276,16 +2293,7 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 
 	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
 	dsa_state = (struct r600_pipe_dsa*)rstate;
-
-	db_render_control =
-		S_028D0C_DEPTH_COPY_ENABLE(1) |
-		S_028D0C_STENCIL_COPY_ENABLE(1) |
-		S_028D0C_COPY_CENTROID(1);
-
-	r600_pipe_state_add_reg(rstate, R_028D0C_DB_RENDER_CONTROL, db_render_control, NULL, 0);
-
-	dsa_state->db_render_control = db_render_control;
-
+	dsa_state->is_flush = true;
 	return rstate;
 }
 

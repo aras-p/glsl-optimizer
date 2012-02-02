@@ -49,9 +49,7 @@ static const struct r600_reg evergreen_ctl_const_list[] = {
 
 static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028000_DB_RENDER_CONTROL, 0, 0},
-	{R_028004_DB_COUNT_CONTROL, 0, 0},
 	{R_028008_DB_DEPTH_VIEW, 0, 0},
-	{R_02800C_DB_RENDER_OVERRIDE, 0, 0},
 	{R_028010_DB_RENDER_OVERRIDE2, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028014_DB_HTILE_DATA_BASE, REG_FLAG_NEED_BO, 0},
@@ -356,9 +354,7 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 
 static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028000_DB_RENDER_CONTROL, 0, 0},
-	{R_028004_DB_COUNT_CONTROL, 0, 0},
 	{R_028008_DB_DEPTH_VIEW, 0, 0},
-	{R_02800C_DB_RENDER_OVERRIDE, 0, 0},
 	{R_028010_DB_RENDER_OVERRIDE2, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028014_DB_HTILE_DATA_BASE, REG_FLAG_NEED_BO, 0},
@@ -979,24 +975,6 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 	offset = 0x0003C0D8 + id * 0xc;
 	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
-}
-
-/* XXX make a proper state object (atom or pipe_state) out of this */
-void evergreen_context_draw_prepare(struct r600_context *ctx)
-{
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)ctx->states[R600_PIPE_STATE_DSA];
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	/* queries need some special values
-	 * (this is non-zero if any query is active) */
-	if (ctx->num_cs_dw_queries_suspend) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028004_DB_COUNT_CONTROL - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028004_PERFECT_ZPASS_COUNTS(1);
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_02800C_DB_RENDER_OVERRIDE - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = dsa->db_render_override | S_02800C_NOOP_CULL_DISABLE(1);
-	}
 }
 
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)

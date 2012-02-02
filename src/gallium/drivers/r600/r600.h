@@ -208,7 +208,6 @@ void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r6
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
-void r600_context_draw_prepare(struct r600_context *ctx);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);
@@ -236,7 +235,6 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 
 int evergreen_context_init(struct r600_context *ctx);
-void evergreen_context_draw_prepare(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);

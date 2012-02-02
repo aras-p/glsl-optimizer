@@ -80,10 +80,9 @@ static void r600_emit_r6xx_flush_and_inv(struct r600_context *rctx, struct r600_
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 }
 
-static void r600_init_atom(struct r600_atom *atom,
-			   void (*emit)(struct r600_context *ctx, struct r600_atom *state),
-			   unsigned num_dw,
-			   enum r600_atom_flags flags)
+void r600_init_atom(struct r600_atom *atom,
+		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
+		    unsigned num_dw, enum r600_atom_flags flags)
 {
 	atom->emit = emit;
 	atom->num_dw = num_dw;
@@ -263,6 +262,11 @@ void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	ref.writemask[1] = dsa->writemask[1];
 
 	r600_set_stencil_ref(ctx, &ref);
+
+	if (rctx->atom_db_misc_state.flush_depthstencil_enabled != dsa->is_flush) {
+		rctx->atom_db_misc_state.flush_depthstencil_enabled = dsa->is_flush;
+		r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+	}
 }
 
 void r600_bind_rs_state(struct pipe_context *ctx, void *state)
@@ -883,12 +887,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	if (rctx->streamout_start) {
 		r600_context_streamout_begin(rctx);
 		rctx->streamout_start = FALSE;
-	}
-
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_context_draw_prepare(rctx);
-	} else {
-		r600_context_draw_prepare(rctx);
 	}
 
 	/* draw packet */

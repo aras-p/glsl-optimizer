@@ -37,10 +37,31 @@ static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *quer
 	r600_context_query_destroy(rctx, (struct r600_query *)query);
 }
 
+static void r600_update_occlusion_query_state(struct r600_context *rctx,
+					      unsigned type, int diff)
+{
+	if (type == PIPE_QUERY_OCCLUSION_COUNTER ||
+	    type == PIPE_QUERY_OCCLUSION_PREDICATE) {
+		bool enable;
+
+		rctx->num_occlusion_queries += diff;
+		assert(rctx->num_occlusion_queries >= 0);
+
+		enable = rctx->num_occlusion_queries != 0;
+
+		if (rctx->atom_db_misc_state.occlusion_query_enabled != enable) {
+			rctx->atom_db_misc_state.occlusion_query_enabled = enable;
+			r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+		}
+	}
+}
+
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
+
+	r600_update_occlusion_query_state(rctx, rquery->type, 1);
 
 	memset(&rquery->result, 0, sizeof(rquery->result));
 	rquery->results_start = rquery->results_end;
@@ -55,6 +76,8 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	r600_query_end(rctx, rquery);
 	LIST_DELINIT(&rquery->list);
+
+	r600_update_occlusion_query_state(rctx, rquery->type, -1);
 }
 
 static boolean r600_get_query_result(struct pipe_context *ctx,

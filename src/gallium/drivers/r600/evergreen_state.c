@@ -716,7 +716,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
-	unsigned db_render_override, db_render_control;
+	unsigned db_render_control;
 	struct r600_pipe_state *rstate;
 
 	if (dsa == NULL) {
@@ -764,9 +764,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 
 	/* misc */
 	db_render_control = 0;
-	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
 	/* TODO db_render_override depends on query */
 	r600_pipe_state_add_reg(rstate, R_028028_DB_STENCIL_CLEAR, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, NULL, 0);
@@ -777,13 +774,10 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	 * STENCIL_EXPORT_ENABLE and KILL_ENABLE are controlled by
 	 * evergreen_pipe_shader_ps().*/
 	r600_pipe_state_add_reg(rstate, R_028000_DB_RENDER_CONTROL, db_render_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02800C_DB_RENDER_OVERRIDE, db_render_override, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028AC8_DB_PRELOAD_CONTROL, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
-	dsa->db_render_override = db_render_override;
-
 	return rstate;
 }
 
@@ -1757,8 +1751,29 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
+static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_atom_db_misc_state *a = (struct r600_atom_db_misc_state*)atom;
+	unsigned db_count_control = 0;
+	unsigned db_render_override =
+		S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
+
+	if (a->occlusion_query_enabled) {
+		db_count_control |= S_028004_PERFECT_ZPASS_COUNTS(1);
+		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
+	}
+
+	r600_write_context_reg(cs, R_028004_DB_COUNT_CONTROL, db_count_control);
+	r600_write_context_reg(cs, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
+}
+
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
+	r600_init_atom(&rctx->atom_db_misc_state.atom, evergreen_emit_db_misc_state, 6, 0);
+
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
 	rctx->context.create_fs_state = r600_create_shader_state;
@@ -2631,6 +2646,7 @@ void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 				S_028000_STENCIL_COPY_ENABLE(1) |
 				S_028000_COPY_CENTROID(1),
 				NULL, 0);
+	/* Don't set the 'is_flush' flag in r600_pipe_dsa, evergreen doesn't need it. */
 	return rstate;
 }
 
