@@ -28,11 +28,17 @@ AM_CFLAGS = \
 	$(API_DEFINES) \
 	$(LIBDRM_CFLAGS)
 
-noinst_LTLIBRARIES = libdricommon.la
+noinst_LTLIBRARIES = \
+	libdricommon.la \
+	libdri_test_stubs.la
 
 libdricommon_la_SOURCES = \
 	utils.c \
 	dri_util.c \
 	xmlconfig.c
+
+libdri_test_stubs_la_SOURCES = \
+	dri_test.c
+libdri_test_stubs_la_CFLAGS = $(AM_CFLAGS) -DNO_MAIN
 
 sysconf_DATA = drirc
