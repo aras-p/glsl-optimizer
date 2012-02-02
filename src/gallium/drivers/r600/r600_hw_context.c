@@ -1233,63 +1233,24 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	LIST_DELINIT(&block->list);
 }
 
-void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
+/* XXX make a proper state object (atom or pipe_state) out of this */
+void r600_context_draw_prepare(struct r600_context *ctx)
 {
+	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)ctx->states[R600_PIPE_STATE_DSA];
 	struct radeon_winsys_cs *cs = ctx->cs;
-	unsigned ndwords = 7;
-	uint32_t *pm4;
-
-	if (draw->indices) {
-		ndwords = 11;
-	}
-	if (ctx->num_cs_dw_queries_suspend) {
-		if (ctx->family >= CHIP_RV770)
-			ndwords += 3;
-		ndwords += 3;
-	}
-
-	/* when increasing ndwords, bump the max limit too */
-	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
 	if (ctx->num_cs_dw_queries_suspend) {
 		if (ctx->family >= CHIP_RV770) {
-			pm4 = &cs->buf[cs->cdw];
-			pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-			pm4[1] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
-			pm4[2] = draw->db_render_control | S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
-			cs->cdw += 3;
-			ndwords -= 3;
+			cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+			cs->buf[cs->cdw++] = (R_028D0C_DB_RENDER_CONTROL - R600_CONTEXT_REG_OFFSET) >> 2;
+			cs->buf[cs->cdw++] = dsa->db_render_control | S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
 		}
-		pm4 = &cs->buf[cs->cdw];
-		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		pm4[1] = (R_028D10_DB_RENDER_OVERRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
-		pm4[2] = draw->db_render_override | S_028D10_NOOP_CULL_DISABLE(1);
-		cs->cdw += 3;
-		ndwords -= 3;
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028D10_DB_RENDER_OVERRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = dsa->db_render_override | S_028D10_NOOP_CULL_DISABLE(1);
 	}
-
-	/* draw packet */
-	pm4 = &cs->buf[cs->cdw];
-	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
-	pm4[1] = draw->vgt_index_type;
-	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
-	pm4[3] = draw->vgt_num_instances;
-	if (draw->indices) {
-		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = draw->indices_bo_offset;
-		pm4[6] = 0;
-		pm4[7] = draw->vgt_num_indices;
-		pm4[8] = draw->vgt_draw_initiator;
-		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
-	} else {
-		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
-		pm4[5] = draw->vgt_num_indices;
-		pm4[6] = draw->vgt_draw_initiator;
-	}
-	cs->cdw += ndwords;
 }
 
 void r600_inval_shader_cache(struct r600_context *ctx)

@@ -981,59 +981,22 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
 }
 
-
-void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
+/* XXX make a proper state object (atom or pipe_state) out of this */
+void evergreen_context_draw_prepare(struct r600_context *ctx)
 {
+	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)ctx->states[R600_PIPE_STATE_DSA];
 	struct radeon_winsys_cs *cs = ctx->cs;
-	unsigned ndwords = 7;
-	uint32_t *pm4;
-	uint64_t va;
-
-	if (draw->indices) {
-		ndwords = 11;
-	}
-	if (ctx->num_cs_dw_queries_suspend)
-		ndwords += 6;
-
-	/* when increasing ndwords, bump the max limit too */
-	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
 	if (ctx->num_cs_dw_queries_suspend) {
-		pm4 = &cs->buf[cs->cdw];
-		pm4[0] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		pm4[1] = (R_028004_DB_COUNT_CONTROL - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		pm4[2] = S_028004_PERFECT_ZPASS_COUNTS(1);
-		pm4[3] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		pm4[4] = (R_02800C_DB_RENDER_OVERRIDE - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		pm4[5] = draw->db_render_override | S_02800C_NOOP_CULL_DISABLE(1);
-		cs->cdw += 6;
-		ndwords -= 6;
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_028004_DB_COUNT_CONTROL - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = S_028004_PERFECT_ZPASS_COUNTS(1);
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
+		cs->buf[cs->cdw++] = (R_02800C_DB_RENDER_OVERRIDE - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = dsa->db_render_override | S_02800C_NOOP_CULL_DISABLE(1);
 	}
-
-	/* draw packet */
-	pm4 = &cs->buf[cs->cdw];
-	pm4[0] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
-	pm4[1] = draw->vgt_index_type;
-	pm4[2] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
-	pm4[3] = draw->vgt_num_instances;
-	if (draw->indices) {
-		va = r600_resource_va(&ctx->screen->screen, (void*)draw->indices);
-		va += draw->indices_bo_offset;
-		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = va;
-		pm4[6] = (va >> 32UL) & 0xFF;
-		pm4[7] = draw->vgt_num_indices;
-		pm4[8] = draw->vgt_draw_initiator;
-		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
-	} else {
-		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
-		pm4[5] = draw->vgt_num_indices;
-		pm4[6] = draw->vgt_draw_initiator;
-	}
-	cs->cdw += ndwords;
 }
 
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)

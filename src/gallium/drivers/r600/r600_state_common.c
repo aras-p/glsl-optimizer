@@ -33,6 +33,7 @@
 #include "r600_formats.h"
 #include "r600_pipe.h"
 #include "r600d.h"
+#include "r600_hw_context_priv.h"
 
 static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
 {
@@ -779,13 +780,13 @@ static void r600_update_derived_state(struct r600_context *rctx)
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
 	struct pipe_draw_info info = *dinfo;
-	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
 	unsigned prim, mask, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint64_t va;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
@@ -801,9 +802,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
 	r600_vertex_buffer_update(rctx);
 
-	rdraw.vgt_num_indices = info.count;
-	rdraw.vgt_num_instances = info.instance_count;
-
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
 		pipe_resource_reference(&ib.buffer, rctx->vbuf_mgr->index_buffer.buffer);
@@ -816,24 +814,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		if (u_vbuf_resource(ib.buffer)->user_ptr) {
 			r600_upload_index_buffer(rctx, &ib, info.count);
 		}
-
-		/* Initialize the r600_draw struct with index buffer info. */
-		if (ib.index_size == 4) {
-			rdraw.vgt_index_type = VGT_INDEX_32 |
-				(R600_BIG_ENDIAN ? VGT_DMA_SWAP_32_BIT : 0);
-		} else {
-			rdraw.vgt_index_type = VGT_INDEX_16 |
-				(R600_BIG_ENDIAN ? VGT_DMA_SWAP_16_BIT : 0);
-		}
-		rdraw.indices = (struct r600_resource*)ib.buffer;
-		rdraw.indices_bo_offset = ib.offset;
-		rdraw.vgt_draw_initiator = V_0287F0_DI_SRC_SEL_DMA;
 	} else {
 		info.index_bias = info.start;
-		rdraw.vgt_draw_initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
 		if (info.count_from_stream_output) {
-			rdraw.vgt_draw_initiator |= S_0287F0_USE_OPAQUE(1);
-
 			r600_context_draw_opaque_count(rctx, (struct r600_so_target*)info.count_from_stream_output);
 		}
 	}
@@ -882,10 +865,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
-	rdraw.db_render_override = dsa->db_render_override;
-	rdraw.db_render_control = dsa->db_render_control;
-
-	/* Emit states. */
+	/* Emit states (the function expects that we emit at most 17 dwords here). */
 	r600_need_cs_space(rctx, 0, TRUE);
 
 	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
@@ -906,9 +886,33 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	}
 
 	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_context_draw(rctx, &rdraw);
+		evergreen_context_draw_prepare(rctx);
 	} else {
-		r600_context_draw(rctx, &rdraw);
+		r600_context_draw_prepare(rctx);
+	}
+
+	/* draw packet */
+	cs->buf[cs->cdw++] = PKT3(PKT3_INDEX_TYPE, 0, rctx->predicate_drawing);
+	cs->buf[cs->cdw++] = ib.index_size == 4 ?
+				(VGT_INDEX_32 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_32_BIT : 0)) :
+				(VGT_INDEX_16 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_16_BIT : 0));
+	cs->buf[cs->cdw++] = PKT3(PKT3_NUM_INSTANCES, 0, rctx->predicate_drawing);
+	cs->buf[cs->cdw++] = info.instance_count;
+	if (info.indexed) {
+		va = r600_resource_va(ctx->screen, ib.buffer);
+		va += ib.offset;
+		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX, 3, rctx->predicate_drawing);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		cs->buf[cs->cdw++] = info.count;
+		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_DMA;
+		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->predicate_drawing);
+		cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, (struct r600_resource*)ib.buffer, RADEON_USAGE_READ);
+	} else {
+		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, rctx->predicate_drawing);
+		cs->buf[cs->cdw++] = info.count;
+		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_AUTO_INDEX |
+					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
 	}
 
 	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
