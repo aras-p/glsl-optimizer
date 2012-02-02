@@ -1240,11 +1240,14 @@ if test "x$enable_dri" = xyes; then
 	LIBS="$save_LIBS"
     fi
 
-    # libdrm is required for all except swrast
+    # if we are building any dri driver other than swrast ...
     if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
+        # ... libdrm is required
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
         fi
+        # ... and build dricommon
+        HAVE_COMMON_DRI=yes
     fi
 
     # put all the necessary libs together
@@ -1309,6 +1312,7 @@ AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
 AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
 AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
 AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
+AM_CONDITIONAL(HAVE_COMMON_DRI, test x$HAVE_COMMON_DRI = xyes)
 
 dnl
 dnl OSMesa configuration

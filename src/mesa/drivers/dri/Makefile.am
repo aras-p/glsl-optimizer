@@ -1,4 +1,8 @@
-SUBDIRS = common
+SUBDIRS =
+
+if HAVE_COMMON_DRI
+SUBDIRS+=common
+endif
 
 if HAVE_I915_DRI
 SUBDIRS+=i915
