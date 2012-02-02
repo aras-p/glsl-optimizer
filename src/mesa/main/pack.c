@@ -1175,9 +1175,8 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                   break;
                case GL_RG_INTEGER:
                   for (i=0;i<n;i++) {
-                     dst[i*3+0] = (GLshort) rgba[i][RCOMP];
-                     dst[i*3+1] = (GLshort) rgba[i][GCOMP];
-                     dst[i*3+2] = (GLshort) rgba[i][BCOMP];
+                     dst[i*2+0] = (GLshort) rgba[i][RCOMP];
+                     dst[i*2+1] = (GLshort) rgba[i][GCOMP];
                   }
                   break;
                case GL_RGB_INTEGER_EXT:
