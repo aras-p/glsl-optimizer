@@ -744,7 +744,7 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
 
    /* restore original frag shader */
    draw->suspend_flushing = TRUE;
-   aapoint->driver_bind_fs_state(pipe, aapoint->fs->driver_fs);
+   aapoint->driver_bind_fs_state(pipe, aapoint->fs ? aapoint->fs->driver_fs : NULL);
 
    /* restore original rasterizer state */
    if (draw->rast_handle) {

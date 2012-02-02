@@ -565,7 +565,7 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
 
    /* restore original frag shader, texture, sampler state */
    draw->suspend_flushing = TRUE;
-   pstip->driver_bind_fs_state(pipe, pstip->fs->driver_fs);
+   pstip->driver_bind_fs_state(pipe, pstip->fs ? pstip->fs->driver_fs : NULL);
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
    pstip->driver_set_sampler_views(pipe,
