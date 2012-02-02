@@ -51,7 +51,11 @@ _glapi_set_warning_func(_glapi_proc func)
 {
 }
 
-#ifdef DEBUG
+/*
+ * When GLAPIENTRY is __stdcall (i.e. Windows), the stack is popped by the
+ * callee making the number/type of arguments significant.
+ */
+#if defined(_WIN32) || defined(DEBUG)
 
 /**
  * Called by each of the no-op GL entrypoints.
@@ -59,7 +63,7 @@ _glapi_set_warning_func(_glapi_proc func)
 static int
 Warn(const char *func)
 {
-#if !defined(_WIN32_WCE)
+#if defined(DEBUG) && !defined(_WIN32_WCE)
    if (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG")) {
       fprintf(stderr, "GL User Error: gl%s called without a rendering context\n",
               func);
