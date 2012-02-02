@@ -23,6 +23,8 @@
 
 include Makefile.sources
 
+if HAVE_I965_DRI
+
 # Hack to make some of the non-automake variables work.
 TOP=$(top_builddir)
 
@@ -42,22 +44,27 @@ AM_CXXFLAGS = $(AM_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 
-if HAVE_I965_DRI
+noinst_LTLIBRARIES = libi965_dri.la
 dri_LTLIBRARIES = i965_dri.la
-endif
 
-i965_dri_la_SOURCES = \
+libi965_dri_la_SOURCES = \
 	$(i965_C_FILES) \
 	$(i965_CXX_FILES)
 
-i965_dri_la_LDFLAGS = -module -avoid-version -shared
-i965_dri_la_LIBADD = \
+COMMON_LIBS = \
+	libi965_dri.la \
 	$(DRI_LIB_DEPS) \
 	$(INTEL_LIBS) \
 	../common/libdricommon.la
+
+i965_dri_la_SOURCES =
+i965_dri_la_LIBADD = $(COMMON_LIBS)
+i965_dri_la_LDFLAGS = -module -avoid-version -shared
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 all-local: i965_dri.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/i965_dri.so $(top_builddir)/$(LIB_DIR)/i965_dri.so;
+
+endif
