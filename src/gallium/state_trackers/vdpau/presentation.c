@@ -236,8 +236,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    dst_clip.x = 0;
    dst_clip.y = 0;
-   dst_clip.w = clip_width;
-   dst_clip.h = clip_height;
+   dst_clip.w = clip_width ? clip_width : drawable_surface->width;
+   dst_clip.h = clip_height ? clip_height : drawable_surface->height;
 
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, &src_rect, NULL);
