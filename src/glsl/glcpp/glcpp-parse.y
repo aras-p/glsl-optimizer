@@ -85,7 +85,6 @@ _token_create_ival (void *ctx, int type, int ival);
 static token_list_t *
 _token_list_create (void *ctx);
 
-/* Note: This function calls ralloc_steal on token. */
 static void
 _token_list_append (token_list_t *list, token_t *token);
 
@@ -762,8 +761,6 @@ _token_list_append (token_list_t *list, token_t *token)
 	node = ralloc (list, token_node_t);
 	node->token = token;
 	node->next = NULL;
-
-	ralloc_steal (list, token);
 
 	if (list->head == NULL) {
 		list->head = node;
