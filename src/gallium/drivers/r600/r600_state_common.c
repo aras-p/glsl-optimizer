@@ -815,8 +815,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		}
 	}
 
-	rctx->vs_so_stride_in_dw = rctx->vs_shader->so.stride;
-
 	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
 
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {

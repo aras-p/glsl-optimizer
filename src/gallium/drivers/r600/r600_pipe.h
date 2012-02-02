@@ -314,7 +314,6 @@ struct r600_context {
 	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
 	boolean			streamout_start;
 	unsigned		streamout_append_bitmask;
-	unsigned		*vs_so_stride_in_dw;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

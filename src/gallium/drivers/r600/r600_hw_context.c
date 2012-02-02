@@ -1931,7 +1931,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_so_target **t = ctx->so_targets;
-	unsigned *stride_in_dw = ctx->vs_so_stride_in_dw;
+	unsigned *stride_in_dw = ctx->vs_shader->so.stride;
 	unsigned buffer_en, i, update_flags = 0;
 	uint64_t va;
 
