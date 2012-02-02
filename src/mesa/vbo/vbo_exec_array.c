@@ -1337,7 +1337,9 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawArraysInstanced = vbo_exec_DrawArraysInstanced;
    exec->vtxfmt.DrawElementsInstanced = vbo_exec_DrawElementsInstanced;
    exec->vtxfmt.DrawElementsInstancedBaseVertex = vbo_exec_DrawElementsInstancedBaseVertex;
+#if FEATURE_EXT_transform_feedback
    exec->vtxfmt.DrawTransformFeedback = vbo_exec_DrawTransformFeedback;
+#endif
 }
 
 
