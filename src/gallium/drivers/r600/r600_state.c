@@ -762,17 +762,8 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	}
 	dsa->alpha_ref = alpha_ref;
 
-	r600_pipe_state_add_reg(rstate, R_028028_DB_STENCIL_CLEAR, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0286E0_SPI_FOG_FUNC_SCALE, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0286E4_SPI_FOG_FUNC_BIAS, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028D30_DB_PRELOAD_CONTROL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028D44_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
-
 	return rstate;
 }
 
@@ -831,7 +822,6 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	}
 	r600_pipe_state_add_reg(rstate, R_0286D4_SPI_INTERP_CONTROL_0, tmp, NULL, 0);
 
-	r600_pipe_state_add_reg(rstate, R_028820_PA_CL_NANINF_CNTL, 0x00000000, NULL, 0);
 	/* point size 12.4 fixed point */
 	tmp = (unsigned)(state->point_size * 8.0);
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), NULL, 0);
@@ -861,17 +851,11 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	
 	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL, sc_mode_cntl,
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MPASS_PS_CNTL, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, 0x00000400, NULL, 0);
 
 	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
 				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules),
 				NULL, 0);
 
-	r600_pipe_state_add_reg(rstate, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C10_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C14_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C18_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
@@ -1327,15 +1311,12 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 
 	rctx->viewport = *state;
 	rstate->id = R600_PIPE_STATE_VIEWPORT;
-	r600_pipe_state_add_reg(rstate, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028818_PA_CL_VTE_CNTL, 0x0000043F, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
 	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
@@ -1517,9 +1498,6 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	r600_pipe_state_add_reg(rstate,
 				R_0280C0_CB_COLOR0_TILE + cb * 4,
 				0, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate,
-				R_028100_CB_COLOR0_MASK + cb * 4,
-				0x00000000, NULL, 0);
 }
 
 static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
@@ -1652,35 +1630,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028254_PA_SC_VPORT_SCISSOR_0_BR, br,
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028200_PA_SC_WINDOW_OFFSET, 0x00000000,
-				NULL, 0);
-	if (rctx->chip_class >= R700) {
-		r600_pipe_state_add_reg(rstate,
-					R_028230_PA_SC_EDGERULE, 0xAAAAAAAA,
-					NULL, 0);
-	}
 
 	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
 				shader_control, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
 				shader_mask, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,
-				0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX,
-				0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C20_PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX,
-				0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C30_CB_CLRCMP_CONTROL,
-				0x01000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C34_CB_CLRCMP_SRC,
-				0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C38_CB_CLRCMP_DST,
-				0x000000FF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C3C_CB_CLRCMP_MSK,
-				0xFFFFFFFF, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C48_PA_SC_AA_MASK,
-				0xFFFFFFFF, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
@@ -1827,6 +1781,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	enum radeon_family family;
 	struct r600_command_buffer *cb = &rctx->atom_start_cs;
 	uint32_t tmp;
+	unsigned i;
 
 	r600_init_command_buffer(cb, 256, EMIT_EARLY);
 
@@ -2064,6 +2019,71 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
+
+	r600_store_context_reg_seq(cb, R_028028_DB_STENCIL_CLEAR, 2);
+	r600_store_value(cb, 0); /* R_028028_DB_STENCIL_CLEAR */
+	r600_store_value(cb, 0x3F800000); /* R_02802C_DB_DEPTH_CLEAR */
+
+	r600_store_context_reg_seq(cb, R_0286DC_SPI_FOG_CNTL, 3);
+	r600_store_value(cb, 0); /* R_0286DC_SPI_FOG_CNTL */
+	r600_store_value(cb, 0); /* R_0286E0_SPI_FOG_FUNC_SCALE */
+	r600_store_value(cb, 0); /* R_0286E4_SPI_FOG_FUNC_BIAS */
+
+	r600_store_context_reg_seq(cb, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 2);
+	r600_store_value(cb, 0); /* R_028D2C_DB_SRESULTS_COMPARE_STATE1 */
+	r600_store_value(cb, 0); /* R_028D30_DB_PRELOAD_CONTROL */
+
+	r600_store_context_reg(cb, R_028D44_DB_ALPHA_TO_MASK, 0xAA00);
+
+	r600_store_context_reg(cb, R_028820_PA_CL_NANINF_CNTL, 0);
+	r600_store_context_reg(cb, R_028A48_PA_SC_MPASS_PS_CNTL, 0);
+
+	r600_store_context_reg_seq(cb, R_028C00_PA_SC_LINE_CNTL, 2);
+	r600_store_value(cb, 0x400); /* R_028C00_PA_SC_LINE_CNTL */
+	r600_store_value(cb, 0); /* R_028C04_PA_SC_AA_CONFIG */
+
+	r600_store_context_reg_seq(cb, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 6);
+	r600_store_value(cb, 0x3F800000); /* R_028C0C_PA_CL_GB_VERT_CLIP_ADJ */
+	r600_store_value(cb, 0x3F800000); /* R_028C10_PA_CL_GB_VERT_DISC_ADJ */
+	r600_store_value(cb, 0x3F800000); /* R_028C14_PA_CL_GB_HORZ_CLIP_ADJ */
+	r600_store_value(cb, 0x3F800000); /* R_028C18_PA_CL_GB_HORZ_DISC_ADJ */
+	r600_store_value(cb, 0); /* R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX */
+	r600_store_value(cb, 0); /* R_028C20_PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX */
+
+	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
+	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
+	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
+
+	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x43F);
+
+	r600_store_context_reg_seq(cb, R_028100_CB_COLOR0_MASK, 8);
+	for (i = 0; i < 8; i++) {
+		r600_store_value(cb, 0);
+	}
+
+	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
+
+	if (rctx->chip_class >= R700) {
+		r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
+	}
+
+	r600_store_context_reg_seq(cb, R_028C30_CB_CLRCMP_CONTROL, 4);
+	r600_store_value(cb, 0x1000000);  /* R_028C30_CB_CLRCMP_CONTROL */
+	r600_store_value(cb, 0);          /* R_028C34_CB_CLRCMP_SRC */
+	r600_store_value(cb, 0xFF);       /* R_028C38_CB_CLRCMP_DST */
+	r600_store_value(cb, 0xFFFFFFFF); /* R_028C3C_CB_CLRCMP_MSK */
+
+	r600_store_context_reg(cb, R_028C48_PA_SC_AA_MASK, 0xFFFFFFFF);
+
+	r600_store_context_reg_seq(cb, R_0288CC_SQ_PGM_CF_OFFSET_PS, 2);
+	r600_store_value(cb, 0); /* R_0288CC_SQ_PGM_CF_OFFSET_PS */
+	r600_store_value(cb, 0); /* R_0288D0_SQ_PGM_CF_OFFSET_VS */
+
+	r600_store_context_reg(cb, R_0288A4_SQ_PGM_RESOURCES_FS, 0);
+	r600_store_context_reg(cb, R_0288DC_SQ_PGM_CF_OFFSET_FS, 0);
+
+	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0, 0x1000FFF);
+	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x1000FFF);
 }
 
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -2174,16 +2194,9 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	r600_pipe_state_add_reg(rstate,
 				R_028854_SQ_PGM_EXPORTS_PS,
 				exports_ps, NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_0288CC_SQ_PGM_CF_OFFSET_PS,
-				0x00000000, NULL, 0);
 	/* only set some bits here, the other bits are set in the dsa state */
 	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
 				db_shader_control,
-				NULL, 0);
-
-	r600_pipe_state_add_reg(rstate,
-				R_03E200_SQ_LOOP_CONST_0, 0x01000FFF,
 				NULL, 0);
 
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
@@ -2233,15 +2246,8 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 			S_028868_STACK_SIZE(rshader->bc.nstack),
 			NULL, 0);
 	r600_pipe_state_add_reg(rstate,
-			R_0288D0_SQ_PGM_CF_OFFSET_VS,
-			0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate,
 			R_028858_SQ_PGM_START_VS,
 			0, shader->bo, RADEON_USAGE_READ);
-
-	r600_pipe_state_add_reg(rstate,
-				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
-				NULL, 0);
 
 	shader->pa_cl_vs_out_cntl =
 		S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
@@ -2259,10 +2265,6 @@ void r600_fetch_shader(struct pipe_context *ctx,
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
 	rstate->nregs = 0;
-	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_RESOURCES_FS,
-				0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
-				0x00000000, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
 				0,
 				ve->fetch_shader, RADEON_USAGE_READ);
