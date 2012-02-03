@@ -856,6 +856,27 @@ get_main_function_signature(gl_shader *sh)
 
 
 /**
+ * This class is only used in link_intrastage_shaders() below but declaring
+ * it inside that function leads to compiler warnings with some versions of
+ * gcc.
+ */
+class array_sizing_visitor : public ir_hierarchical_visitor {
+public:
+   virtual ir_visitor_status visit(ir_variable *var)
+   {
+      if (var->type->is_array() && (var->type->length == 0)) {
+         const glsl_type *type =
+            glsl_type::get_array_instance(var->type->fields.array,
+                                          var->max_array_access + 1);
+         assert(type != NULL);
+         var->type = type;
+      }
+      return visit_continue;
+   }
+};
+
+
+/**
  * Combine a group of shaders for a single stage to generate a linked shader
  *
  * \note
@@ -1005,22 +1026,7 @@ link_intrastage_shaders(void *mem_ctx,
     * max_array_access field.
     */
    if (linked != NULL) {
-      class array_sizing_visitor : public ir_hierarchical_visitor {
-      public:
-	 virtual ir_visitor_status visit(ir_variable *var)
-	 {
-	    if (var->type->is_array() && (var->type->length == 0)) {
-	       const glsl_type *type =
-		  glsl_type::get_array_instance(var->type->fields.array,
-						var->max_array_access + 1);
-
-	       assert(type != NULL);
-	       var->type = type;
-	    }
-
-	    return visit_continue;
-	 }
-      } v;
+      array_sizing_visitor v;
 
       v.run(linked->ir);
    }
