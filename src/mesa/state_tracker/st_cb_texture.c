@@ -137,15 +137,7 @@ st_DeleteTextureObject(struct gl_context *ctx,
    if (stObj->pt)
       pipe_resource_reference(&stObj->pt, NULL);
    if (stObj->sampler_view) {
-      if (stObj->sampler_view->context != st->pipe) {
-         /* Take "ownership" of this texture sampler view by setting
-          * its context pointer to this context.  This avoids potential
-          * crashes when the texture object is shared among contexts
-          * and the original/owner context has already been destroyed.
-          */
-         stObj->sampler_view->context = st->pipe;
-      }
-      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+      pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
    }
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -450,7 +442,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    /* The parent texture object does not have space for this image */
 
    pipe_resource_reference(&stObj->pt, NULL);
-   pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+   pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
 
    if (!guess_and_alloc_texture(st, stObj, stImage)) {
       /* Probably out of memory.
@@ -717,7 +709,7 @@ decompress_with_blit(struct gl_context * ctx,
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);
 
-   pipe_sampler_view_reference(&src_view, NULL);
+   pipe_sampler_view_release(pipe, &src_view);
 }
 
 
@@ -1260,7 +1252,7 @@ st_finalize_texture(struct gl_context *ctx,
        firstImage->pt != stObj->pt &&
        (!stObj->pt || firstImage->pt->last_level >= stObj->pt->last_level)) {
       pipe_resource_reference(&stObj->pt, firstImage->pt);
-      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+      pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
    }
 
    /* Find gallium format for the Mesa texture */
@@ -1300,7 +1292,7 @@ st_finalize_texture(struct gl_context *ctx,
           * gallium texture now.  We'll make a new one below.
           */
          pipe_resource_reference(&stObj->pt, NULL);
-         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+         pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
          st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }
