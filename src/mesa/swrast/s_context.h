@@ -176,6 +176,9 @@ struct swrast_renderbuffer
    /** These fields are only valid while buffer is mapped for rendering */
    GLubyte *Map;
    GLint RowStride;    /**< in bytes */
+
+   /** For span rendering */
+   GLenum ColorType;
 };
 
 

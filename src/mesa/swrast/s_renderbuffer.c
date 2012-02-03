@@ -615,8 +615,31 @@ unmap_attachment(struct gl_context *ctx,
 
    srb->Map = NULL;
 }
- 
- 
+
+
+/**
+ * Determine what type to use (ubyte vs. float) for span colors for the
+ * given renderbuffer.
+ * See also _swrast_write_rgba_span().
+ */
+static void
+find_renderbuffer_colortype(struct gl_renderbuffer *rb)
+{
+   struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
+   GLuint rbMaxBits = _mesa_get_format_max_bits(rb->Format);
+   GLenum rbDatatype = _mesa_get_format_datatype(rb->Format);
+
+   if (rbDatatype == GL_UNSIGNED_NORMALIZED && rbMaxBits <= 8) {
+      /* the buffer's values fit in GLubyte values */
+      srb->ColorType = GL_UNSIGNED_BYTE;
+   }
+   else {
+      /* use floats otherwise */
+      srb->ColorType = GL_FLOAT;
+   }
+}
+
+
 /**
  * Map the renderbuffers we'll use for tri/line/point rendering.
  */
@@ -641,6 +664,7 @@ _swrast_map_renderbuffers(struct gl_context *ctx)
 
    for (buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
       map_attachment(ctx, fb, fb->_ColorDrawBufferIndexes[buf]);
+      find_renderbuffer_colortype(fb->_ColorDrawBuffers[buf]);
    }
 }
  
