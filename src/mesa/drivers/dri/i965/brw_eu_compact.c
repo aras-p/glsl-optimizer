@@ -299,6 +299,18 @@ brw_try_compact_instruction(struct brw_compile *p,
 {
    struct brw_compact_instruction temp;
 
+   if (src->header.opcode == BRW_OPCODE_IF ||
+       src->header.opcode == BRW_OPCODE_ELSE ||
+       src->header.opcode == BRW_OPCODE_ENDIF ||
+       src->header.opcode == BRW_OPCODE_HALT ||
+       src->header.opcode == BRW_OPCODE_DO ||
+       src->header.opcode == BRW_OPCODE_WHILE) {
+      /* FINISHME: The fixup code below, and brw_set_uip_jip and friends, needs
+       * to be able to handle compacted flow control instructions..
+       */
+      return false;
+   }
+
    /* FINISHME: immediates */
    if (src->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
        src->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE)
@@ -434,12 +446,45 @@ void brw_debug_compact_uncompact(struct intel_context *intel,
    }
 }
 
+static int
+compacted_between(int old_ip, int old_target_ip, int *compacted_counts)
+{
+   int this_compacted_count = compacted_counts[old_ip];
+   int target_compacted_count = compacted_counts[old_target_ip];
+   return target_compacted_count - this_compacted_count;
+}
+
+static void
+update_uip_jip(struct brw_instruction *insn, int this_old_ip,
+               int *compacted_counts)
+{
+   int target_old_ip;
+
+   target_old_ip = this_old_ip + insn->bits3.break_cont.jip;
+   insn->bits3.break_cont.jip -= compacted_between(this_old_ip,
+                                                   target_old_ip,
+                                                   compacted_counts);
+
+   target_old_ip = this_old_ip + insn->bits3.break_cont.uip;
+   insn->bits3.break_cont.uip -= compacted_between(this_old_ip,
+                                                   target_old_ip,
+                                                   compacted_counts);
+}
+
 void
 brw_compact_instructions(struct brw_compile *p)
 {
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
    void *store = p->store;
+   /* For an instruction at byte offset 8*i before compaction, this is the number
+    * of compacted instructions that preceded it.
+    */
+   int compacted_counts[p->next_insn_offset / 8];
+   /* For an instruction at byte offset 8*i after compaction, this is the
+    * 8-byte offset it was at before compaction.
+    */
+   int old_ip[p->next_insn_offset / 8];
 
    assert(gen6_control_index_table[ARRAY_SIZE(gen6_control_index_table) - 1] != 0);
    assert(gen6_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
@@ -449,40 +494,22 @@ brw_compact_instructions(struct brw_compile *p)
    if (intel->gen != 6)
       return;
 
-   /* FINISHME: If we are going to compress instructions between flow control,
-    * we have to do fixups to flow control offsets to represent the new
-    * distances, since flow control uses (virtual address distance)/2, not a
-    * logical instruction count.  We can at least compress up until an IF
-    * instruction, but there's no instruction indicating the start of a
-    * do/while loop.
-    */
-   bool continue_compressing = true;
-   for (int i = 0; i < p->nr_insn; i++) {
-      if (p->store[i].header.opcode == BRW_OPCODE_WHILE)
-         return;
-   }
-
    int src_offset;
    int offset = 0;
+   int compacted_count = 0;
    for (src_offset = 0; src_offset < p->nr_insn * 16;) {
       struct brw_instruction *src = store + src_offset;
       void *dst = store + offset;
 
-      switch (src->header.opcode) {
-      case BRW_OPCODE_IF:
-      case BRW_OPCODE_HALT:
-      case BRW_OPCODE_JMPI:
-         continue_compressing = false;
-         break;
-      }
+      old_ip[offset / 8] = src_offset / 8;
+      compacted_counts[src_offset / 8] = compacted_count;
 
       struct brw_instruction saved = *src;
 
-      if (continue_compressing &&
-          !src->header.cmpt_control &&
+      if (!src->header.cmpt_control &&
           brw_try_compact_instruction(p, dst, src)) {
+         compacted_count++;
 
-         /* debug */
          if (INTEL_DEBUG) {
             struct brw_instruction uncompacted;
             brw_uncompact_instruction(intel, &uncompacted, dst);
@@ -508,10 +535,11 @@ brw_compact_instructions(struct brw_compile *p)
             align->dw0.opcode = BRW_OPCODE_NOP;
             align->dw0.cmpt_ctrl = 1;
             offset += 8;
+            old_ip[offset / 8] = src_offset / 8;
             dst = store + offset;
          }
 
-         /* If we didn't compact this instruction, we need to move it down into
+         /* If we didn't compact this intruction, we need to move it down into
           * place.
           */
          if (offset != src_offset) {
@@ -522,20 +550,56 @@ brw_compact_instructions(struct brw_compile *p)
       }
    }
 
+   /* Fix up control flow offsets. */
+   p->next_insn_offset = offset;
+   for (offset = 0; offset < p->next_insn_offset;) {
+      struct brw_instruction *insn = store + offset;
+      int this_old_ip = old_ip[offset / 8];
+      int this_compacted_count = compacted_counts[this_old_ip];
+      int target_old_ip, target_compacted_count;
+
+      switch (insn->header.opcode) {
+      case BRW_OPCODE_BREAK:
+      case BRW_OPCODE_CONTINUE:
+      case BRW_OPCODE_HALT:
+         update_uip_jip(insn, this_old_ip, compacted_counts);
+         break;
+
+      case BRW_OPCODE_IF:
+      case BRW_OPCODE_ELSE:
+      case BRW_OPCODE_ENDIF:
+      case BRW_OPCODE_WHILE:
+         if (intel->gen == 6) {
+            target_old_ip = this_old_ip + insn->bits1.branch_gen6.jump_count;
+            target_compacted_count = compacted_counts[target_old_ip];
+            insn->bits1.branch_gen6.jump_count -= (target_compacted_count -
+                                                   this_compacted_count);
+         } else {
+            update_uip_jip(insn, this_old_ip, compacted_counts);
+         }
+         break;
+      }
+
+      if (insn->header.cmpt_control) {
+         offset += 8;
+      } else {
+         offset += 16;
+      }
+   }
+
    /* p->nr_insn is counting the number of uncompacted instructions still, so
     * divide.  We do want to be sure there's a valid instruction in any
     * alignment padding, so that the next compression pass (for the FS 8/16
     * compile passes) parses correctly.
     */
-   if (offset & 8) {
+   if (p->next_insn_offset & 8) {
       struct brw_compact_instruction *align = store + offset;
       memset(align, 0, sizeof(*align));
       align->dw0.opcode = BRW_OPCODE_NOP;
       align->dw0.cmpt_ctrl = 1;
-      offset += 8;
+      p->next_insn_offset += 8;
    }
-   p->next_insn_offset = offset;
-   p->nr_insn = offset / 16;
+   p->nr_insn = p->next_insn_offset / 16;
 
    if (0) {
       fprintf(stdout, "dumping compacted program\n");
