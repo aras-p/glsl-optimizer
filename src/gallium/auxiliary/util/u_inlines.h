@@ -135,6 +135,28 @@ pipe_sampler_view_reference(struct pipe_sampler_view **ptr, struct pipe_sampler_
    *ptr = view;
 }
 
+/**
+ * Similar to pipe_sampler_view_reference() but always set the pointer to
+ * NULL and pass in an explicit context.  Passing an explicit context is a
+ * work-around for fixing a dangling context pointer problem when textures
+ * are shared by multiple contexts.  XXX fix this someday.
+ */
+static INLINE void
+pipe_sampler_view_release(struct pipe_context *ctx,
+                          struct pipe_sampler_view **ptr)
+{
+   struct pipe_sampler_view *old_view = *ptr;
+   if (*ptr && (*ptr)->context != ctx) {
+      debug_printf_once(("context mis-match in pipe_sampler_view_release()\n"));
+   }
+   if (pipe_reference_described(&(*ptr)->reference, NULL,
+                    (debug_reference_descriptor)debug_describe_sampler_view)) {
+      ctx->sampler_view_destroy(ctx, old_view);
+   }
+   *ptr = NULL;
+}
+
+
 static INLINE void
 pipe_so_target_reference(struct pipe_stream_output_target **ptr,
                          struct pipe_stream_output_target *target)
