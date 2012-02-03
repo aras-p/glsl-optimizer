@@ -2476,12 +2476,24 @@ void brw_urb_WRITE(struct brw_compile *p,
 }
 
 static int
+next_ip(struct brw_compile *p, int ip)
+{
+   struct brw_instruction *insn = (void *)p->store + ip;
+
+   if (insn->header.cmpt_control)
+      return ip + 8;
+   else
+      return ip + 16;
+}
+
+static int
 brw_find_next_block_end(struct brw_compile *p, int start)
 {
    int ip;
+   void *store = p->store;
 
-   for (ip = start + 1; ip < p->nr_insn; ip++) {
-      struct brw_instruction *insn = &p->store[ip];
+   for (ip = next_ip(p, start); ip < p->next_insn_offset; ip = next_ip(p, ip)) {
+      struct brw_instruction *insn = store + ip;
 
       switch (insn->header.opcode) {
       case BRW_OPCODE_ENDIF:
@@ -2503,20 +2515,24 @@ brw_find_loop_end(struct brw_compile *p, int start)
 {
    struct intel_context *intel = &p->brw->intel;
    int ip;
-   int br = 2;
+   int scale = 8;
+   void *store = p->store;
 
-   for (ip = start + 1; ip < p->nr_insn; ip++) {
-      struct brw_instruction *insn = &p->store[ip];
+   /* Always start after the instruction (such as a WHILE) we're trying to fix
+    * up.
+    */
+   for (ip = next_ip(p, start); ip < p->next_insn_offset; ip = next_ip(p, ip)) {
+      struct brw_instruction *insn = store + ip;
 
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
 	 int jip = intel->gen == 6 ? insn->bits1.branch_gen6.jump_count
 				   : insn->bits3.break_cont.jip;
-	 if (ip + jip / br <= start)
+	 if (ip + jip * scale <= start)
 	    return ip;
       }
    }
    assert(!"not reached");
-   return start + 1;
+   return start;
 }
 
 /* After program generation, go back and update the UIP and JIP of
@@ -2527,24 +2543,37 @@ brw_set_uip_jip(struct brw_compile *p)
 {
    struct intel_context *intel = &p->brw->intel;
    int ip;
-   int br = 2;
+   int scale = 8;
+   void *store = p->store;
 
    if (intel->gen < 6)
       return;
 
-   for (ip = 0; ip < p->nr_insn; ip++) {
-      struct brw_instruction *insn = &p->store[ip];
+   for (ip = 0; ip < p->next_insn_offset; ip = next_ip(p, ip)) {
+      struct brw_instruction *insn = store + ip;
+
+      if (insn->header.cmpt_control) {
+	 /* Fixups for compacted BREAK/CONTINUE not supported yet. */
+	 assert(insn->header.opcode != BRW_OPCODE_BREAK &&
+		insn->header.opcode != BRW_OPCODE_CONTINUE &&
+		insn->header.opcode != BRW_OPCODE_HALT);
+	 continue;
+      }
 
       switch (insn->header.opcode) {
       case BRW_OPCODE_BREAK:
-	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
+	 insn->bits3.break_cont.jip =
+            (brw_find_next_block_end(p, ip) - ip) / scale;
 	 /* Gen7 UIP points to WHILE; Gen6 points just after it */
 	 insn->bits3.break_cont.uip =
-	    br * (brw_find_loop_end(p, ip) - ip + (intel->gen == 6 ? 1 : 0));
+	    (brw_find_loop_end(p, ip) - ip +
+             (intel->gen == 6 ? 16 : 0)) / scale;
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
-	 insn->bits3.break_cont.uip = br * (brw_find_loop_end(p, ip) - ip);
+	 insn->bits3.break_cont.jip =
+            (brw_find_next_block_end(p, ip) - ip) / scale;
+	 insn->bits3.break_cont.uip =
+            (brw_find_loop_end(p, ip) - ip) / scale;
 
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
