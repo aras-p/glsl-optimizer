@@ -627,11 +627,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
    if (ir->shadow_comparitor && ir->op != ir_txd) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV,
-			      fs_reg(MRF, base_mrf + mlen + i), coordinate);
-	 if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	    inst->saturate = true;
-
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -659,10 +655,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen++;
    } else if (ir->op == ir_tex) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i),
-			      coordinate);
-	 if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	    inst->saturate = true;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
 	 coordinate.reg_offset++;
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
@@ -720,12 +713,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       assert(ir->op == ir_txb || ir->op == ir_txl || ir->op == ir_txf);
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF,
-						     base_mrf + mlen + i * 2,
-						     coordinate.type),
-			      coordinate);
-	 if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	    inst->saturate = true;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * 2, coordinate.type),
+	      coordinate);
 	 coordinate.reg_offset++;
       }
 
@@ -832,12 +821,9 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
 
    for (int i = 0; i < vector_elements; i++) {
-      fs_inst *inst = emit(BRW_OPCODE_MOV,
-			   fs_reg(MRF, base_mrf + mlen + i * reg_width,
-				  coordinate.type),
-			   coordinate);
-      if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	 inst->saturate = true;
+      emit(BRW_OPCODE_MOV,
+	   fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
+	   coordinate);
       coordinate.reg_offset++;
    }
    mlen += vector_elements * reg_width;
@@ -982,10 +968,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
-			      coordinate);
-	 if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	    inst->saturate = true;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate);
 	 coordinate.reg_offset++;
 	 mlen += reg_width;
 
@@ -1027,10 +1010,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* Set up the coordinate (except for cases where it was done above) */
    if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-	 fs_inst *inst = emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen),
-			      coordinate);
-	 if (i < 3 && c->key.tex.gl_clamp_mask[i] & (1 << sampler))
-	    inst->saturate = true;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate);
 	 coordinate.reg_offset++;
 	 mlen += reg_width;
       }
@@ -1145,6 +1125,18 @@ fs_visitor::visit(ir_texture *ir)
       dst.reg_offset++;
       src.reg_offset++;
       emit(BRW_OPCODE_MUL, dst, src, scale_y);
+   }
+
+   if (ir->coordinate) {
+      for (int i = 0; i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	    fs_reg chan = coordinate;
+	    chan.reg_offset += i;
+
+	    fs_inst *inst = emit(BRW_OPCODE_MOV, chan, chan);
+	    inst->saturate = true;
+	 }
+      }
    }
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
