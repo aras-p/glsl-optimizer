@@ -825,7 +825,7 @@ vec4_visitor::run()
 void
 vec4_visitor::generate_code()
 {
-   int last_native_inst = 0;
+   int last_native_insn_offset = 0;
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
@@ -978,19 +978,11 @@ vec4_visitor::generate_code()
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-	 for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
-	    if (0) {
-	       printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		      ((uint32_t *)&p->store[i])[3],
-		      ((uint32_t *)&p->store[i])[2],
-		      ((uint32_t *)&p->store[i])[1],
-		      ((uint32_t *)&p->store[i])[0]);
-	    }
-	    brw_disasm(stdout, &p->store[i], intel->gen);
-	 }
+	 brw_dump_compile(p, stdout,
+			  last_native_insn_offset, p->next_insn_offset);
       }
 
-      last_native_inst = p->nr_insn;
+      last_native_insn_offset = p->next_insn_offset;
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
@@ -1004,17 +996,8 @@ vec4_visitor::generate_code()
     * which is often something we want to debug.  So this is here in
     * case you're doing that.
     */
-   if (0) {
-      if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-	 for (unsigned int i = 0; i < p->nr_insn; i++) {
-	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		   ((uint32_t *)&p->store[i])[3],
-		   ((uint32_t *)&p->store[i])[2],
-		   ((uint32_t *)&p->store[i])[1],
-		   ((uint32_t *)&p->store[i])[0]);
-	    brw_disasm(stdout, &p->store[i], intel->gen);
-	 }
-      }
+   if (0 && unlikely(INTEL_DEBUG & DEBUG_VS)) {
+      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
    }
 }
 

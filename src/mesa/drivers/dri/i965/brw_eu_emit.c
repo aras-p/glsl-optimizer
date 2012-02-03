@@ -711,6 +711,7 @@ brw_next_insn(struct brw_compile *p, GLuint opcode)
          assert(!"realloc eu store memeory failed");
    }
 
+   p->next_insn_offset += 16;
    insn = &p->store[p->nr_insn++];
    memcpy(insn, p->current, sizeof(*insn));
 

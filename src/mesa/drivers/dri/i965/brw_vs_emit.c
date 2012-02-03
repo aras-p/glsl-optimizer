@@ -2162,11 +2162,8 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    brw_optimize(p);
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      int i;
-
       printf("vs-native:\n");
-      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stdout, &p->store[i], intel->gen);
+      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
       printf("\n");
    }
 }

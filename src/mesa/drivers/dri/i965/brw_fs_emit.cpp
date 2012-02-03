@@ -724,7 +724,7 @@ brw_reg_from_fs_reg(fs_reg *reg)
 void
 fs_visitor::generate_code()
 {
-   int last_native_inst = p->nr_insn;
+   int last_native_insn_offset = p->next_insn_offset;
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
@@ -1002,16 +1002,8 @@ fs_visitor::generate_code()
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-	 for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
-	    if (0) {
-	       printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		      ((uint32_t *)&p->store[i])[3],
-		      ((uint32_t *)&p->store[i])[2],
-		      ((uint32_t *)&p->store[i])[1],
-		      ((uint32_t *)&p->store[i])[0]);
-	    }
-	    brw_disasm(stdout, &p->store[i], intel->gen);
-	 }
+	 brw_dump_compile(p, stdout,
+			  last_native_insn_offset, p->next_insn_offset);
 
 	 foreach_list(node, &cfg->block_list) {
 	    fs_bblock_link *link = (fs_bblock_link *)node;
@@ -1030,7 +1022,7 @@ fs_visitor::generate_code()
 	 }
       }
 
-      last_native_inst = p->nr_insn;
+      last_native_insn_offset = p->next_insn_offset;
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
@@ -1045,15 +1037,6 @@ fs_visitor::generate_code()
     * case you're doing that.
     */
    if (0) {
-      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-	 for (unsigned int i = 0; i < p->nr_insn; i++) {
-	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		   ((uint32_t *)&p->store[i])[3],
-		   ((uint32_t *)&p->store[i])[2],
-		   ((uint32_t *)&p->store[i])[1],
-		   ((uint32_t *)&p->store[i])[0]);
-	    brw_disasm(stdout, &p->store[i], intel->gen);
-	 }
-      }
+      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
    }
 }

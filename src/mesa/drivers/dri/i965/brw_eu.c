@@ -217,6 +217,28 @@ const GLuint *brw_get_program( struct brw_compile *p,
    for (i = 0; i < 8; i++)
       brw_NOP(p);
 
-   *sz = p->nr_insn * sizeof(struct brw_instruction);
+   *sz = p->next_insn_offset;
    return (const GLuint *)p->store;
+}
+
+void
+brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
+{
+   void *store = p->store;
+
+   for (int offset = start; offset < end; offset += 16) {
+      struct brw_instruction *insn = store + offset;
+
+      printf("0x%08x: ", offset);
+
+      if (0) {
+	 printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		((uint32_t *)insn)[3],
+		((uint32_t *)insn)[2],
+		((uint32_t *)insn)[1],
+		((uint32_t *)insn)[0]);
+      }
+
+      brw_disasm(stdout, insn, p->brw->intel.gen);
+   }
 }

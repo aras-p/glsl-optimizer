@@ -112,6 +112,7 @@ struct brw_compile {
    struct brw_instruction *store;
    int store_size;
    GLuint nr_insn;
+   unsigned int next_insn_offset;
 
    void *mem_ctx;
 
@@ -813,6 +814,7 @@ void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,
 		      void *mem_ctx);
+void brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end);
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
 
 struct brw_instruction *brw_next_insn(struct brw_compile *p, GLuint opcode);

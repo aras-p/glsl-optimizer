@@ -1919,11 +1919,8 @@ void brw_wm_emit( struct brw_wm_compile *c )
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      int i;
-
-     printf("wm-native:\n");
-     for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stdout, &p->store[i], p->brw->intel.gen);
+      printf("wm-native:\n");
+      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
       printf("\n");
    }
 }
