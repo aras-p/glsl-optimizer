@@ -571,13 +571,15 @@ driswDestroyScreen(struct glx_screen *base)
       dlclose(psc->driver);
 }
 
+#define SWRAST_DRIVER_NAME "swrast"
+
 static void *
 driOpenSwrast(void)
 {
    void *driver = NULL;
 
    if (driver == NULL)
-      driver = driOpenDriver("swrast");
+      driver = driOpenDriver(SWRAST_DRIVER_NAME);
 
    return driver;
 }
@@ -702,7 +704,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    glx_screen_cleanup(&psc->base);
    Xfree(psc);
 
-   ErrorMessageF("reverting to indirect rendering\n");
+   CriticalErrorMessageF("failed to load driver: %s\n", SWRAST_DRIVER_NAME);
 
    return NULL;
 }
