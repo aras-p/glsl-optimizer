@@ -510,7 +510,7 @@ generate_vs(struct draw_llvm *llvm,
                      sampler,
                      &llvm->draw->vs.vertex_shader->info);
 
-   if (clamp_vertex_color) {
+   {
       LLVMValueRef out;
       unsigned chan, attrib;
       struct lp_build_context bld;
@@ -523,9 +523,17 @@ generate_vs(struct draw_llvm *llvm,
                switch (info->output_semantic_name[attrib]) {
                case TGSI_SEMANTIC_COLOR:
                case TGSI_SEMANTIC_BCOLOR:
-                  out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
-                  out = lp_build_clamp(&bld, out, bld.zero, bld.one);
-                  LLVMBuildStore(builder, out, outputs[attrib][chan]);
+                  if (clamp_vertex_color) {
+                     out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+                     out = lp_build_clamp(&bld, out, bld.zero, bld.one);
+                     LLVMBuildStore(builder, out, outputs[attrib][chan]);
+                  }
+                  break;
+               case TGSI_SEMANTIC_FOG:
+                  if (chan == 1 || chan == 2)
+                     LLVMBuildStore(builder, bld.zero, outputs[attrib][chan]);
+                  else if (chan == 3)
+                     LLVMBuildStore(builder, bld.one, outputs[attrib][chan]);
                   break;
                }
             }
