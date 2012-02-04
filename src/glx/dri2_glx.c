@@ -1135,6 +1135,8 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    return &psc->base;
 
 handle_error:
+   CriticalErrorMessageF("failed to load driver: %s\n", driverName);
+
    if (configs)
        glx_config_destroy_list(configs);
    if (visuals)
