@@ -1079,12 +1079,18 @@ fs_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
+   bool needs_gl_clamp = true;
+
+   fs_reg scale_x, scale_y;
+
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
     * tracking to get the scaling factor.
     */
-   if (intel->gen < 6 &&
-       ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
+   if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT &&
+       (intel->gen < 6 ||
+	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
+			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = c->fp->program.Base.Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
@@ -1105,8 +1111,9 @@ fs_visitor::visit(ir_texture *ir)
       c->prog_data.param_convert[c->prog_data.nr_params + 1] =
 	 PARAM_NO_CONVERT;
 
-      fs_reg scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
-      fs_reg scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
+      scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
+      scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
+
       GLuint index = _mesa_add_state_reference(params,
 					       (gl_state_index *)tokens);
 
@@ -1116,7 +1123,14 @@ fs_visitor::visit(ir_texture *ir)
       this->param_index[c->prog_data.nr_params] = index;
       this->param_offset[c->prog_data.nr_params] = 1;
       c->prog_data.nr_params++;
+   }
 
+   /* The 965 requires the EU to do the normalization of GL rectangle
+    * texture coordinates.  We use the program parameter state
+    * tracking to get the scaling factor.
+    */
+   if (intel->gen < 6 &&
+       ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
       fs_reg dst = fs_reg(this, ir->coordinate->type);
       fs_reg src = coordinate;
       coordinate = dst;
@@ -1125,9 +1139,39 @@ fs_visitor::visit(ir_texture *ir)
       dst.reg_offset++;
       src.reg_offset++;
       emit(BRW_OPCODE_MUL, dst, src, scale_y);
+   } else if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
+      /* On gen6+, the sampler handles the rectangle coordinates
+       * natively, without needing rescaling.  But that means we have
+       * to do GL_CLAMP clamping at the [0, width], [0, height] scale,
+       * not [0, 1] like the default case below.
+       */
+      needs_gl_clamp = false;
+
+      for (int i = 0; i < 2; i++) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	    fs_reg chan = coordinate;
+	    chan.reg_offset += i;
+
+	    inst = emit(BRW_OPCODE_SEL, chan, chan, brw_imm_f(0.0));
+	    inst->conditional_mod = BRW_CONDITIONAL_G;
+
+	    /* Our parameter comes in as 1.0/width or 1.0/height,
+	     * because that's what people normally want for doing
+	     * texture rectangle handling.  We need width or height
+	     * for clamping, but we don't care enough to make a new
+	     * parameter type, so just invert back.
+	     */
+	    fs_reg limit = fs_reg(this, glsl_type::float_type);
+	    emit(BRW_OPCODE_MOV, limit, i == 0 ? scale_x : scale_y);
+	    emit(SHADER_OPCODE_RCP, limit, limit);
+
+	    inst = emit(BRW_OPCODE_SEL, chan, chan, limit);
+	    inst->conditional_mod = BRW_CONDITIONAL_L;
+	 }
+      }
    }
 
-   if (ir->coordinate) {
+   if (ir->coordinate && needs_gl_clamp) {
       for (int i = 0; i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
 	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
