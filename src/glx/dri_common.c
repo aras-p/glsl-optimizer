@@ -48,6 +48,10 @@
 #define RTLD_GLOBAL 0
 #endif
 
+/**
+ * Print informational message to stderr if LIBGL_DEBUG is set to
+ * "verbose".
+ */
 _X_HIDDEN void
 InfoMessageF(const char *f, ...)
 {
@@ -63,7 +67,8 @@ InfoMessageF(const char *f, ...)
 }
 
 /**
- * Print error to stderr, unless LIBGL_DEBUG=="quiet".
+ * Print error message to stderr if LIBGL_DEBUG is set to anything but
+ * "quiet", (do nothing if LIBGL_DEBUG is unset).
  */
 _X_HIDDEN void
 ErrorMessageF(const char *f, ...)
