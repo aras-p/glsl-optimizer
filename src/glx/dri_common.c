@@ -84,6 +84,30 @@ ErrorMessageF(const char *f, ...)
    }
 }
 
+/**
+ * Print error message unless LIBGL_DEBUG is set to "quiet".
+ *
+ * The distinction between CriticalErrorMessageF and ErrorMessageF is
+ * that critcial errors will be printed by default, (even when
+ * LIBGL_DEBUG is unset).
+ */
+_X_HIDDEN void
+CriticalErrorMessageF(const char *f, ...)
+{
+   va_list args;
+   const char *env;
+
+   if (!(env = getenv("LIBGL_DEBUG")) || !strstr(env, "quiet")) {
+      fprintf(stderr, "libGL error: ");
+      va_start(args, f);
+      vfprintf(stderr, f, args);
+      va_end(args);
+
+      if (!env || !strstr(env, "verbose"))
+         fprintf(stderr, "libGL error: Try again with LIBGL_DEBUG=verbose for more details.\n");
+   }
+}
+
 #ifndef DEFAULT_DRIVER_DIR
 /* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
 #define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"

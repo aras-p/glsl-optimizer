@@ -65,6 +65,8 @@ extern void InfoMessageF(const char *f, ...);
 
 extern void ErrorMessageF(const char *f, ...);
 
+extern void CriticalErrorMessageF(const char *f, ...);
+
 extern void *driOpenDriver(const char *driverName);
 
 extern bool
