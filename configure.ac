@@ -379,6 +379,7 @@ fi
 AC_SUBST([GL_LIB])
 AC_SUBST([GLU_LIB])
 AC_SUBST([OSMESA_LIB])
+AM_CONDITIONAL(HAVE_MANGLED_GL, test $GL_LIB = MangledGL)
 
 dnl
 dnl potentially-infringing-but-nobody-knows-for-sure stuff
@@ -703,6 +704,7 @@ if test "x$enable_shared_glapi" = xyes; then
     DEFINES="$DEFINES -DIN_DRI_DRIVER"
 fi
 AC_SUBST([SHARED_GLAPI])
+AM_CONDITIONAL(HAVE_SHARED_GLAPI, test $SHARED_GLAPI = 1)
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
@@ -1040,6 +1042,7 @@ esac
 # builds.
 AM_CONDITIONAL(HAVE_XCB_GLX_CREATE_CONTEXT,
     test x$HAVE_XCB_GLX_CREATE_CONTEXT = xyes)
+AM_CONDITIONAL(HAVE_XF86VIDMODE, test "x$HAVE_XF86VIDMODE" = xyes)
 
 GLESv1_CM_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
 GLESv1_CM_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
@@ -1939,6 +1942,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
 		src/egl/wayland/wayland-drm/Makefile
+		src/glx/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile
