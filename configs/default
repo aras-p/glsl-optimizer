@@ -104,9 +104,6 @@ SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 
-# EGL drivers to build
-EGL_DRIVERS_DIRS = glx
-
 # Gallium directories and
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a

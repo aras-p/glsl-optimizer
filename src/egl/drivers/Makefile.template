@@ -13,7 +13,7 @@
 
 EGL_OBJECTS = $(EGL_SOURCES:.c=.o)
 
-default: depend lib$(EGL_DRIVER).a
+all: depend lib$(EGL_DRIVER).a
 
 lib$(EGL_DRIVER).a: $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
 	@$(MKLIB) -o $(EGL_DRIVER) -static $(EGL_OBJECTS)

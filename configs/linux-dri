@@ -54,9 +54,6 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 # Directories
 SRC_DIRS := glx egl $(SRC_DIRS)
 
-# EGL directories
-EGL_DRIVERS_DIRS = glx
-
 DRIVER_DIRS = dri
 GALLIUM_WINSYS_DIRS = sw sw/xlib drm/vmware drm/intel svga/drm
 GALLIUM_TARGET_DIRS = dri-vmwgfx

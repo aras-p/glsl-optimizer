@@ -1,12 +1,12 @@
-prefix=@INSTALL_DIR@
+prefix=@prefix@
 exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: egl
 Description: Mesa EGL library
-Requires.private: @EGL_PC_REQ_PRIV@
-Version: @VERSION@
-Libs: -L${libdir} -l@EGL_LIB@
-Libs.private: @EGL_PC_LIB_PRIV@
-Cflags: -I${includedir} @EGL_PC_CFLAGS@
+Requires.private: @GL_PC_REQ_PRIV@
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lEGL
+Libs.private: @GL_PC_LIB_PRIV@
+Cflags: -I${includedir} @GL_PC_CFLAGS@

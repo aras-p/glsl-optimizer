@@ -14,7 +14,6 @@ DEFINES += -DGLX_DIRECT_RENDERING
 
 # no mesa or egl drivers
 DRIVER_DIRS =
-EGL_DRIVERS_DIRS =
 
 GALLIUM_DRIVERS_DIRS = softpipe
 
