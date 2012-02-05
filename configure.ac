@@ -1682,23 +1682,21 @@ AC_ARG_WITH([egl-platforms],
         [comma delimited native platforms libEGL supports, e.g.
         "x11,drm" @<:@default=auto@:>@])],
     [with_egl_platforms="$withval"],
-    [with_egl_platforms=yes])
+    [if test "x$enable_egl" = xyes; then
+	with_egl_platforms="x11"
+    else
+	with_egl_platforms=""
+    fi])
 
 EGL_PLATFORMS=""
 
-case "$with_egl_platforms" in
-yes)
-    if test "x$enable_egl" = xyes; then
-        EGL_PLATFORMS="x11"
-    fi
-    ;;
-*)
-    if test "x$enable_egl" != xyes; then
-        AC_MSG_ERROR([cannot build egl state tracker without EGL library])
-    fi
-    # verify the requested driver directories exist
-    egl_platforms=`IFS=', '; echo $with_egl_platforms`
-    for plat in $egl_platforms; do
+if test "x$with_egl_platforms" != "x" -a "x$enable_egl" != xyes; then
+    AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+fi
+
+# verify the requested driver directories exist
+egl_platforms=`IFS=', '; echo $with_egl_platforms`
+for plat in $egl_platforms; do
         test -d "$srcdir/src/gallium/state_trackers/egl/$plat" || \
             AC_MSG_ERROR([EGL platform '$plat' does not exist])
         if test "$plat" = "fbdev"; then
@@ -1722,10 +1720,9 @@ yes)
                 waylandno|drmno)
                     AC_MSG_ERROR([cannot build $plat platfrom without udev]) ;;
         esac
-    done
-    EGL_PLATFORMS="$egl_platforms"
-    ;;
-esac
+done
+
+EGL_PLATFORMS="$egl_platforms"
 AC_SUBST([EGL_PLATFORMS])
 
 AC_ARG_WITH([egl-driver-dir],
