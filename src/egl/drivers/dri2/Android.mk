@@ -32,7 +32,6 @@ LOCAL_SRC_FILES := \
 	platform_android.c
 
 LOCAL_CFLAGS := \
-	-D_EGL_MAIN=_eglBuiltInDriverDRI2 \
 	-DDEFAULT_DRIVER_DIR=\"/system/lib/dri\" \
 	-DHAVE_SHARED_GLAPI \
 	-DHAVE_ANDROID_PLATFORM
