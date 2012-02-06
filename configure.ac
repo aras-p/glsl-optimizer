@@ -1952,6 +1952,8 @@ AC_CONFIG_FILES([configs/autoconf
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/egl/drivers/Makefile
+		src/egl/drivers/dri2/Makefile
+		src/egl/drivers/glx/Makefile
 		src/egl/main/Makefile
 		src/egl/main/egl.pc
 		src/egl/wayland/Makefile
