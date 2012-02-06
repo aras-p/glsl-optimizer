@@ -29,7 +29,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -40,10 +40,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_3;
   vec2 tmpvar_4;
-  tmpvar_4 = ((packednormal_2.wy * 2.0) - 1.0);
+  tmpvar_4 = ((packednormal_2.wy * 2.00000) - 1.00000);
   normal_3.xy = tmpvar_4.xy.xy;
   float tmpvar_5;
-  tmpvar_5 = sqrt (((1.0 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
+  tmpvar_5 = sqrt (((1.00000 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
   float tmpvar_6;
   tmpvar_6 = tmpvar_5;
   normal_3.z = vec3(tmpvar_6).z;
@@ -115,19 +115,19 @@ vec4 frag_surf (
   tmpvar_32 = IN_27.hip_pack0.xy;
   surfIN_31.uv_MainTex = tmpvar_32;
   vec3 tmpvar_33;
-  tmpvar_33 = vec3(0.0, 0.0, 0.0);
+  tmpvar_33 = vec3(0.00000, 0.00000, 0.00000);
   o_30.Albedo = tmpvar_33;
   vec3 tmpvar_34;
-  tmpvar_34 = vec3(0.0, 0.0, 0.0);
+  tmpvar_34 = vec3(0.00000, 0.00000, 0.00000);
   o_30.Emission = tmpvar_34;
   float tmpvar_35;
-  tmpvar_35 = 0.0;
+  tmpvar_35 = 0.00000;
   o_30.Specular = tmpvar_35;
   float tmpvar_36;
-  tmpvar_36 = 0.0;
+  tmpvar_36 = 0.00000;
   o_30.Alpha = tmpvar_36;
   float tmpvar_37;
-  tmpvar_37 = 0.0;
+  tmpvar_37 = 0.00000;
   o_30.Gloss = tmpvar_37;
   surf (surfIN_31, o_30);
   xll_clip ((o_30.Alpha - _Cutoff));
@@ -157,7 +157,7 @@ void main ()
   v2f_surf xlt_IN_45;
   vec4 xl_retval_46;
   vec4 tmpvar_47;
-  tmpvar_47 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_47 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_45.pos = tmpvar_47;
   float tmpvar_48;
   tmpvar_48 = xlv_FOG.x;

@@ -9,7 +9,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -25,12 +25,12 @@ vec4 frag (
   tmpvar_5 = tmpvar_4;
   col_3 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = (col_3.xyz * (i_2.color * 2.0));
+  tmpvar_6 = (col_3.xyz * (i_2.color * 2.00000));
   col_3.xyz = tmpvar_6.xyz.xyz;
   float tmpvar_7;
-  tmpvar_7 = (col_3.w * (2.0 * _HalfOverCutoff));
+  tmpvar_7 = (col_3.w * (2.00000 * _HalfOverCutoff));
   col_3.w = vec4(tmpvar_7).w;
-  xll_clip ((col_3.w - 1.0));
+  xll_clip ((col_3.w - 1.00000));
   return col_3;
 }
 
@@ -39,7 +39,7 @@ void main ()
   v2f xlt_i_8;
   vec4 xl_retval_9;
   vec4 tmpvar_10;
-  tmpvar_10 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_10 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_8.pos = tmpvar_10;
   vec2 tmpvar_11;
   tmpvar_11 = gl_TexCoord[0].xy;

@@ -27,8 +27,8 @@ void main ()
   vec4 tmpvar_9;
   tmpvar_9 = texture2D (_MainTex, tmpvar_1.xy);
   vec4 normal_10;
-  normal_10.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
-  normal_10.z = sqrt (((1.0 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
+  normal_10.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
+  normal_10.z = sqrt (((1.00000 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
   vec3 tmpvar_11;
   tmpvar_11 = normal_10.xyz;
   vec3 tmpvar_12;
@@ -40,7 +40,7 @@ void main ()
   vec4 tmpvar_14;
   tmpvar_14 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light_7 = tmpvar_14;
-  light_7.xyz = (tmpvar_14.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_5.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_5.xy).xyz), vec3(clamp (tmpvar_5.z, 0.0, 1.0))));
+  light_7.xyz = (tmpvar_14.xyz + mix ((2.00000 * texture2D (unity_LightmapInd, tmpvar_5.xy).xyz), (2.00000 * texture2D (unity_Lightmap, tmpvar_5.xy).xyz), vec3(clamp (tmpvar_5.z, 0.00000, 1.00000))));
   vec4 c_15;
   c_15.xyz = ((tmpvar_9 * _Color).xyz * light_7.xyz);
   c_15.w = (tmpvar_13.w * _ReflectColor.w);

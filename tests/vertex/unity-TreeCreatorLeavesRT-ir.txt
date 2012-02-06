@@ -25,7 +25,7 @@ float xll_saturate (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  tmpvar_2 = clamp (x_1, 0.00000, 1.00000);
   return tmpvar_2;
 }
 
@@ -35,7 +35,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_4;
   vec4 tmpvar_5;
-  tmpvar_5.w = 1.0;
+  tmpvar_5.w = 1.00000;
   tmpvar_5.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = ((_World2Object * tmpvar_5).xyz * unity_Scale.w);
@@ -56,10 +56,10 @@ void ExpandBillboard (
   float tmpvar_14;
   tmpvar_14 = abs (tangent_10.w);
   float tmpvar_15;
-  tmpvar_15 = (1.0 - tmpvar_14);
+  tmpvar_15 = (1.00000 - tmpvar_14);
   isBillboard_13 = tmpvar_15;
   vec4 tmpvar_16;
-  tmpvar_16.w = 0.0;
+  tmpvar_16.w = 0.00000;
   tmpvar_16.xyz = normal_9.xyz;
   vec4 tmpvar_17;
   tmpvar_17 = normalize ((tmpvar_16 * mat_7));
@@ -69,7 +69,7 @@ void ExpandBillboard (
   tmpvar_19 = tmpvar_18;
   norb_12 = tmpvar_19;
   vec4 tmpvar_20;
-  tmpvar_20.w = 0.0;
+  tmpvar_20.w = 0.00000;
   tmpvar_20.xyz = tangent_10.xyz.xyz;
   vec4 tmpvar_21;
   tmpvar_21 = normalize ((tmpvar_20 * mat_7));
@@ -79,7 +79,7 @@ void ExpandBillboard (
   tmpvar_23 = tmpvar_22;
   tanb_11 = tmpvar_23;
   vec4 tmpvar_24;
-  tmpvar_24.zw = vec2(0.0, 0.0);
+  tmpvar_24.zw = vec2(0.00000, 0.00000);
   tmpvar_24.xy = normal_9.xy.xy;
   vec4 tmpvar_25;
   tmpvar_25 = (pos_8 + ((tmpvar_24 * mat_7) * isBillboard_13));
@@ -92,7 +92,7 @@ void ExpandBillboard (
   tmpvar_28 = tmpvar_27;
   normal_9 = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.w = -1.0;
+  tmpvar_29.w = -1.00000;
   tmpvar_29.xyz = tanb_11.xyz;
   vec4 tmpvar_30;
   tmpvar_30 = vec4(isBillboard_13);
@@ -159,10 +159,10 @@ v2f vert (
     tmpvar_56 = tmpvar_55;
     backContrib_36 = tmpvar_56;
     float tmpvar_57;
-    tmpvar_57 = (backContrib_36 * 2.0);
+    tmpvar_57 = (backContrib_36 * 2.00000);
     o_41.backContrib[j_39] = tmpvar_57;
     float tmpvar_58;
-    tmpvar_58 = max (0.0, ((nl_37 * 0.6) + 0.4));
+    tmpvar_58 = max (0.00000, ((nl_37 * 0.600000) + 0.400000));
     float tmpvar_59;
     tmpvar_59 = tmpvar_58;
     nl_37 = tmpvar_59;
@@ -177,7 +177,7 @@ v2f vert (
     float tmpvar_63;
     tmpvar_63 = dot (v_33.normal, h_35);
     float tmpvar_64;
-    tmpvar_64 = max (0.0, tmpvar_63);
+    tmpvar_64 = max (0.00000, tmpvar_63);
     float tmpvar_65;
     tmpvar_65 = tmpvar_64;
     nh_34 = tmpvar_65;
@@ -243,31 +243,31 @@ void main ()
   tmpvar_88 = tmpvar_87;
   gl_Position = tmpvar_88;
   vec4 tmpvar_89;
-  tmpvar_89.zw = vec2(0.0, 0.0);
+  tmpvar_89.zw = vec2(0.00000, 0.00000);
   tmpvar_89.xy = xl_retval_72.uv.xy;
   vec4 tmpvar_90;
   tmpvar_90 = tmpvar_89;
   gl_TexCoord[0] = tmpvar_90;
   vec4 tmpvar_91;
-  tmpvar_91.w = 0.0;
+  tmpvar_91.w = 0.00000;
   tmpvar_91.xyz = xl_retval_72.color.xyz;
   vec4 tmpvar_92;
   tmpvar_92 = tmpvar_91;
   gl_TexCoord[1] = tmpvar_92;
   vec4 tmpvar_93;
-  tmpvar_93.w = 0.0;
+  tmpvar_93.w = 0.00000;
   tmpvar_93.xyz = xl_retval_72.backContrib.xyz;
   vec4 tmpvar_94;
   tmpvar_94 = tmpvar_93;
   gl_TexCoord[2] = tmpvar_94;
   vec4 tmpvar_95;
-  tmpvar_95.w = 0.0;
+  tmpvar_95.w = 0.00000;
   tmpvar_95.xyz = xl_retval_72.nl.xyz;
   vec4 tmpvar_96;
   tmpvar_96 = tmpvar_95;
   gl_TexCoord[3] = tmpvar_96;
   vec4 tmpvar_97;
-  tmpvar_97.w = 0.0;
+  tmpvar_97.w = 0.00000;
   tmpvar_97.xyz = xl_retval_72.nh.xyz;
   vec4 tmpvar_98;
   tmpvar_98 = tmpvar_97;

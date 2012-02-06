@@ -18,7 +18,7 @@ void main ()
   tmpvar_1.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   vec4 o_4;
   vec4 tmpvar_5;
-  tmpvar_5 = (tmpvar_3 * 0.5);
+  tmpvar_5 = (tmpvar_3 * 0.500000);
   o_4 = tmpvar_5;
   vec2 tmpvar_6;
   tmpvar_6.x = tmpvar_5.x;
@@ -40,21 +40,21 @@ void main ()
   tmpvar_8[2].y = tmpvar_7.z;
   tmpvar_8[2].z = gl_Normal.z;
   vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
+  tmpvar_9.w = 1.00000;
   tmpvar_9.xyz = _WorldSpaceCameraPos;
   gl_Position = tmpvar_3;
   vec4 tmpvar_10;
-  tmpvar_10.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_10.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_10.x = tmpvar_3.z;
   xlv_FOG = tmpvar_10;
   gl_TexCoord[0] = tmpvar_1;
   vec4 tmpvar_11;
-  tmpvar_11.w = 0.0;
+  tmpvar_11.w = 0.00000;
   tmpvar_11.xyz = (tmpvar_8 * (((_World2Object * tmpvar_9).xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[1] = tmpvar_11;
   gl_TexCoord[2] = o_4;
   vec4 tmpvar_12;
-  tmpvar_12.w = 0.0;
+  tmpvar_12.w = 0.00000;
   tmpvar_12.xyz = tmpvar_2;
   gl_TexCoord[3] = tmpvar_12;
 }

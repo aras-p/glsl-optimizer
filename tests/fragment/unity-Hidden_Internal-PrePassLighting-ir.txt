@@ -22,7 +22,7 @@ float xll_saturate (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  tmpvar_2 = clamp (x_1, 0.00000, 1.00000);
   return tmpvar_2;
 }
 
@@ -31,7 +31,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_4;
-  tmpvar_4 = clamp (x_3, 0.0, 1.0);
+  tmpvar_4 = clamp (x_3, 0.00000, 1.00000);
   return tmpvar_4;
 }
 
@@ -40,7 +40,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_6;
-  tmpvar_6 = clamp (x_5, 0.0, 1.0);
+  tmpvar_6 = clamp (x_5, 0.00000, 1.00000);
   return tmpvar_6;
 }
 
@@ -49,7 +49,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_8;
-  tmpvar_8 = clamp (x_7, 0.0, 1.0);
+  tmpvar_8 = clamp (x_7, 0.00000, 1.00000);
   return tmpvar_8;
 }
 
@@ -58,9 +58,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_10;
-  tmpvar_10 = clamp (m_9[0], 0.0, 1.0);
+  tmpvar_10 = clamp (m_9[0], 0.00000, 1.00000);
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_9[1], 0.0, 1.0);
+  tmpvar_11 = clamp (m_9[1], 0.00000, 1.00000);
   mat2 tmpvar_12;
   vec2 tmpvar_13;
   tmpvar_13 = tmpvar_10;
@@ -76,11 +76,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_16;
-  tmpvar_16 = clamp (m_15[0], 0.0, 1.0);
+  tmpvar_16 = clamp (m_15[0], 0.00000, 1.00000);
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_15[1], 0.0, 1.0);
+  tmpvar_17 = clamp (m_15[1], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_15[2], 0.0, 1.0);
+  tmpvar_18 = clamp (m_15[2], 0.00000, 1.00000);
   mat3 tmpvar_19;
   vec3 tmpvar_20;
   tmpvar_20 = tmpvar_16;
@@ -99,13 +99,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_24;
-  tmpvar_24 = clamp (m_23[0], 0.0, 1.0);
+  tmpvar_24 = clamp (m_23[0], 0.00000, 1.00000);
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_23[1], 0.0, 1.0);
+  tmpvar_25 = clamp (m_23[1], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_23[2], 0.0, 1.0);
+  tmpvar_26 = clamp (m_23[2], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_23[3], 0.0, 1.0);
+  tmpvar_27 = clamp (m_23[3], 0.00000, 1.00000);
   mat4 tmpvar_28;
   vec4 tmpvar_29;
   tmpvar_29 = tmpvar_24;
@@ -150,7 +150,7 @@ float Luminance (
 )
 {
   float tmpvar_42;
-  tmpvar_42 = dot (c_41, vec3(0.22, 0.707, 0.071));
+  tmpvar_42 = dot (c_41, vec3(0.220000, 0.707000, 0.0710000));
   return tmpvar_42;
 }
 
@@ -158,7 +158,7 @@ float Linear01Depth (
   in float z_43
 )
 {
-  return (1.0 / ((_ZBufferParams.x * z_43) + _ZBufferParams.y));
+  return (1.00000 / ((_ZBufferParams.x * z_43) + _ZBufferParams.y));
 }
 
 float DecodeFloatRGBA (
@@ -167,7 +167,7 @@ float DecodeFloatRGBA (
 {
   vec4 kDecodeDot_45;
   vec4 tmpvar_46;
-  tmpvar_46 = vec4(1.0, 0.00392157, 1.53787e-05, 0.0);
+  tmpvar_46 = vec4(1.00000, 0.00392157, 1.53787e-05, 6.22737e-09);
   kDecodeDot_45 = tmpvar_46;
   float tmpvar_47;
   tmpvar_47 = dot (enc_44, kDecodeDot_45);
@@ -204,7 +204,7 @@ float unitySampleShadow (
   if ((dist_55 < mydist_54)) {
     tmpvar_58 = _LightShadowData.x;
   } else {
-    tmpvar_58 = 1.0;
+    tmpvar_58 = 1.00000;
   };
   return tmpvar_58;
 }
@@ -235,12 +235,12 @@ float ComputeShadow (
   tmpvar_69 = (tmpvar_68 * _LightPositionRange.w);
   mydist_61 = tmpvar_69;
   float tmpvar_70;
-  tmpvar_70 = (mydist_61 * 0.97);
+  tmpvar_70 = (mydist_61 * 0.970000);
   mydist_61 = tmpvar_70;
   float tmpvar_71;
   tmpvar_71 = unitySampleShadow (vec_59, mydist_61);
   return tmpvar_71;
-  return 1.0;
+  return 1.00000;
 }
 
 vec4 frag (
@@ -273,7 +273,7 @@ vec4 frag (
   tmpvar_90 = tmpvar_89;
   nspec_85 = tmpvar_90;
   vec3 tmpvar_91;
-  tmpvar_91 = ((nspec_85.xyz * 2.0) - 1.0);
+  tmpvar_91 = ((nspec_85.xyz * 2.00000) - 1.00000);
   normal_84 = tmpvar_91;
   vec3 tmpvar_92;
   tmpvar_92 = normalize (normal_84);
@@ -321,7 +321,7 @@ vec4 frag (
   tmpvar_109 = (atten_78 * tmpvar_108);
   atten_78 = tmpvar_109;
   vec4 tmpvar_110;
-  tmpvar_110.w = 1.0;
+  tmpvar_110.w = 1.00000;
   tmpvar_110.xyz = vpos_82.xyz;
   vec4 tmpvar_111;
   tmpvar_111 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_110).xyz);
@@ -331,7 +331,7 @@ vec4 frag (
   float tmpvar_113;
   tmpvar_113 = dot (lightDir_80, normal_84);
   float tmpvar_114;
-  tmpvar_114 = max (0.0, tmpvar_113);
+  tmpvar_114 = max (0.00000, tmpvar_113);
   float tmpvar_115;
   tmpvar_115 = tmpvar_114;
   diff_77 = tmpvar_115;
@@ -345,9 +345,9 @@ vec4 frag (
   float tmpvar_119;
   tmpvar_119 = dot (h_76, normal_84);
   float tmpvar_120;
-  tmpvar_120 = max (0.0, tmpvar_119);
+  tmpvar_120 = max (0.00000, tmpvar_119);
   float tmpvar_121;
-  tmpvar_121 = pow (tmpvar_120, (nspec_85.w * 128.0));
+  tmpvar_121 = pow (tmpvar_120, (nspec_85.w * 128.000));
   float tmpvar_122;
   tmpvar_122 = tmpvar_121;
   spec_75 = tmpvar_122;
@@ -368,7 +368,7 @@ vec4 frag (
   tmpvar_128 = ((vpos_82.z * unity_LightmapFade.z) + unity_LightmapFade.w);
   fade_73 = tmpvar_128;
   float tmpvar_129;
-  tmpvar_129 = xll_saturate ((1.0 - fade_73));
+  tmpvar_129 = xll_saturate ((1.00000 - fade_73));
   vec4 tmpvar_130;
   tmpvar_130 = (res_74 * tmpvar_129);
   res_74 = tmpvar_130;
@@ -382,7 +382,7 @@ void main ()
   v2f xlt_i_132;
   vec4 xl_retval_133;
   vec4 tmpvar_134;
-  tmpvar_134 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_134 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_132.pos = tmpvar_134;
   vec4 tmpvar_135;
   tmpvar_135 = gl_TexCoord[0].xyzw;

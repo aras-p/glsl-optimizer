@@ -35,7 +35,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_7;
   vec4 tmpvar_8;
-  tmpvar_8 = (pos_6 * 0.5);
+  tmpvar_8 = (pos_6 * 0.500000);
   o_7 = tmpvar_8;
   vec2 tmpvar_9;
   tmpvar_9.x = o_7.x;
@@ -113,7 +113,7 @@ void main ()
   tmpvar_35 = tmpvar_34;
   gl_Position = tmpvar_35;
   vec4 tmpvar_36;
-  tmpvar_36.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_36.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_36.x = xl_retval_19.fog;
   vec4 tmpvar_37;
   tmpvar_37 = tmpvar_36;

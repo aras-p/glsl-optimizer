@@ -17,7 +17,7 @@ float xll_mod (
   tmpvar_8 = (tmpvar_7 * y_2);
   f_3 = tmpvar_8;
   float tmpvar_9;
-  if ((d_4 >= 0.0)) {
+  if ((d_4 >= 0.00000)) {
     tmpvar_9 = f_3;
   } else {
     tmpvar_9 = -(f_3);
@@ -43,13 +43,13 @@ vec2 xll_mod (
   tmpvar_17 = (tmpvar_16 * y_11);
   f_12 = tmpvar_17;
   float tmpvar_18;
-  if ((d_13.x >= 0.0)) {
+  if ((d_13.x >= 0.00000)) {
     tmpvar_18 = f_12.x;
   } else {
     tmpvar_18 = -(f_12.x);
   };
   float tmpvar_19;
-  if ((d_13.y >= 0.0)) {
+  if ((d_13.y >= 0.00000)) {
     tmpvar_19 = f_12.y;
   } else {
     tmpvar_19 = -(f_12.y);
@@ -78,19 +78,19 @@ vec3 xll_mod (
   tmpvar_28 = (tmpvar_27 * y_22);
   f_23 = tmpvar_28;
   float tmpvar_29;
-  if ((d_24.x >= 0.0)) {
+  if ((d_24.x >= 0.00000)) {
     tmpvar_29 = f_23.x;
   } else {
     tmpvar_29 = -(f_23.x);
   };
   float tmpvar_30;
-  if ((d_24.y >= 0.0)) {
+  if ((d_24.y >= 0.00000)) {
     tmpvar_30 = f_23.y;
   } else {
     tmpvar_30 = -(f_23.y);
   };
   float tmpvar_31;
-  if ((d_24.z >= 0.0)) {
+  if ((d_24.z >= 0.00000)) {
     tmpvar_31 = f_23.z;
   } else {
     tmpvar_31 = -(f_23.z);
@@ -120,25 +120,25 @@ vec4 xll_mod (
   tmpvar_40 = (tmpvar_39 * y_34);
   f_35 = tmpvar_40;
   float tmpvar_41;
-  if ((d_36.x >= 0.0)) {
+  if ((d_36.x >= 0.00000)) {
     tmpvar_41 = f_35.x;
   } else {
     tmpvar_41 = -(f_35.x);
   };
   float tmpvar_42;
-  if ((d_36.y >= 0.0)) {
+  if ((d_36.y >= 0.00000)) {
     tmpvar_42 = f_35.y;
   } else {
     tmpvar_42 = -(f_35.y);
   };
   float tmpvar_43;
-  if ((d_36.z >= 0.0)) {
+  if ((d_36.z >= 0.00000)) {
     tmpvar_43 = f_35.z;
   } else {
     tmpvar_43 = -(f_35.z);
   };
   float tmpvar_44;
-  if ((d_36.w >= 0.0)) {
+  if ((d_36.w >= 0.00000)) {
     tmpvar_44 = f_35.w;
   } else {
     tmpvar_44 = -(f_35.w);
@@ -286,25 +286,25 @@ vec4 xlat_main (
   vec4 d_91;
   vec4 c_92;
   vec4 tmpvar_93;
-  tmpvar_93 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_93 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   c_92 = tmpvar_93;
   float tmpvar_94;
-  tmpvar_94 = xll_mod (uv_90.x, 2.0);
+  tmpvar_94 = xll_mod (uv_90.x, 2.00000);
   float tmpvar_95;
   tmpvar_95 = (c_92.x + tmpvar_94);
   c_92.x = tmpvar_95;
   vec2 tmpvar_96;
-  tmpvar_96 = xll_mod (uv_90.xy, vec2(2.0, 2.0));
+  tmpvar_96 = xll_mod (uv_90.xy, vec2(2.00000, 2.00000));
   vec2 tmpvar_97;
   tmpvar_97 = (c_92.xy + tmpvar_96);
   c_92.xy = tmpvar_97.xy.xy;
   vec3 tmpvar_98;
-  tmpvar_98 = xll_mod (uv_90.xyz, vec3(2.0, 2.0, 2.0));
+  tmpvar_98 = xll_mod (uv_90.xyz, vec3(2.00000, 2.00000, 2.00000));
   vec3 tmpvar_99;
   tmpvar_99 = (c_92.xyz + tmpvar_98);
   c_92.xyz = tmpvar_99.xyz.xyz;
   vec4 tmpvar_100;
-  tmpvar_100 = xll_mod (uv_90.xyzw, vec4(2.0, 2.0, 2.0, 2.0));
+  tmpvar_100 = xll_mod (uv_90.xyzw, vec4(2.00000, 2.00000, 2.00000, 2.00000));
   vec4 tmpvar_101;
   tmpvar_101 = (c_92.xyzw + tmpvar_100);
   c_92 = tmpvar_101.xyzw.xyzw;

@@ -29,7 +29,7 @@ float xll_saturate (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  tmpvar_2 = clamp (x_1, 0.00000, 1.00000);
   return tmpvar_2;
 }
 
@@ -38,7 +38,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_4;
-  tmpvar_4 = clamp (x_3, 0.0, 1.0);
+  tmpvar_4 = clamp (x_3, 0.00000, 1.00000);
   return tmpvar_4;
 }
 
@@ -47,7 +47,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_6;
-  tmpvar_6 = clamp (x_5, 0.0, 1.0);
+  tmpvar_6 = clamp (x_5, 0.00000, 1.00000);
   return tmpvar_6;
 }
 
@@ -56,7 +56,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_8;
-  tmpvar_8 = clamp (x_7, 0.0, 1.0);
+  tmpvar_8 = clamp (x_7, 0.00000, 1.00000);
   return tmpvar_8;
 }
 
@@ -65,9 +65,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_10;
-  tmpvar_10 = clamp (m_9[0], 0.0, 1.0);
+  tmpvar_10 = clamp (m_9[0], 0.00000, 1.00000);
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_9[1], 0.0, 1.0);
+  tmpvar_11 = clamp (m_9[1], 0.00000, 1.00000);
   mat2 tmpvar_12;
   vec2 tmpvar_13;
   tmpvar_13 = tmpvar_10;
@@ -83,11 +83,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_16;
-  tmpvar_16 = clamp (m_15[0], 0.0, 1.0);
+  tmpvar_16 = clamp (m_15[0], 0.00000, 1.00000);
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_15[1], 0.0, 1.0);
+  tmpvar_17 = clamp (m_15[1], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_15[2], 0.0, 1.0);
+  tmpvar_18 = clamp (m_15[2], 0.00000, 1.00000);
   mat3 tmpvar_19;
   vec3 tmpvar_20;
   tmpvar_20 = tmpvar_16;
@@ -106,13 +106,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_24;
-  tmpvar_24 = clamp (m_23[0], 0.0, 1.0);
+  tmpvar_24 = clamp (m_23[0], 0.00000, 1.00000);
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_23[1], 0.0, 1.0);
+  tmpvar_25 = clamp (m_23[1], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_23[2], 0.0, 1.0);
+  tmpvar_26 = clamp (m_23[2], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_23[3], 0.0, 1.0);
+  tmpvar_27 = clamp (m_23[3], 0.00000, 1.00000);
   mat4 tmpvar_28;
   vec4 tmpvar_29;
   tmpvar_29 = tmpvar_24;
@@ -156,7 +156,7 @@ vec2 EncodeFloatRG (
   float kEncodeBit_42;
   vec2 kEncodeMul_43;
   vec2 tmpvar_44;
-  tmpvar_44 = vec2(1.0, 255.0);
+  tmpvar_44 = vec2(1.00000, 255.000);
   kEncodeMul_43 = tmpvar_44;
   float tmpvar_45;
   tmpvar_45 = 0.00392157;
@@ -190,19 +190,19 @@ vec4 frag_surf (
   Input surfIN_59;
   SurfaceOutput o_60;
   vec3 tmpvar_61;
-  tmpvar_61 = vec3(0.0, 0.0, 0.0);
+  tmpvar_61 = vec3(0.00000, 0.00000, 0.00000);
   o_60.Albedo = tmpvar_61;
   vec3 tmpvar_62;
-  tmpvar_62 = vec3(0.0, 0.0, 0.0);
+  tmpvar_62 = vec3(0.00000, 0.00000, 0.00000);
   o_60.Emission = tmpvar_62;
   float tmpvar_63;
-  tmpvar_63 = 0.0;
+  tmpvar_63 = 0.00000;
   o_60.Specular = tmpvar_63;
   float tmpvar_64;
-  tmpvar_64 = 0.0;
+  tmpvar_64 = 0.00000;
   o_60.Alpha = tmpvar_64;
   float tmpvar_65;
-  tmpvar_65 = 0.0;
+  tmpvar_65 = 0.00000;
   o_60.Gloss = tmpvar_65;
   surf (surfIN_59, o_60);
   vec4 tmpvar_66;
@@ -228,7 +228,7 @@ vec4 frag_surf (
   tmpvar_74 = (near_57 * far_56);
   weights_55 = tmpvar_74;
   vec4 tmpvar_75;
-  tmpvar_75.w = 1.0;
+  tmpvar_75.w = 1.00000;
   tmpvar_75.xyz = ((((IN_50._ShadowCoord0 * weights_55.x) + (IN_50._ShadowCoord1 * weights_55.y)) + (IN_50._ShadowCoord2 * weights_55.z)) + (IN_50._ShadowCoord3 * weights_55.w)).xyz;
   vec4 tmpvar_76;
   tmpvar_76 = tmpvar_75;
@@ -239,7 +239,7 @@ vec4 frag_surf (
   if ((tmpvar_77.x < coord_54.z)) {
     tmpvar_78 = _LightShadowData.x;
   } else {
-    tmpvar_78 = 1.0;
+    tmpvar_78 = 1.00000;
   };
   float tmpvar_79;
   tmpvar_79 = tmpvar_78;
@@ -255,10 +255,10 @@ vec4 frag_surf (
   tmpvar_83 = faded_52;
   res_51.x = tmpvar_83;
   float tmpvar_84;
-  tmpvar_84 = 1.0;
+  tmpvar_84 = 1.00000;
   res_51.y = vec2(tmpvar_84).y;
   vec2 tmpvar_85;
-  tmpvar_85 = EncodeFloatRG ((1.0 - (z_58 * _ProjectionParams.w)).x);
+  tmpvar_85 = EncodeFloatRG ((1.00000 - (z_58 * _ProjectionParams.w)).x);
   vec2 tmpvar_86;
   tmpvar_86 = tmpvar_85;
   res_51.zw = tmpvar_86.xxxy.zw;
@@ -270,7 +270,7 @@ void main ()
   v2f_surf xlt_IN_87;
   vec4 xl_retval_88;
   vec4 tmpvar_89;
-  tmpvar_89 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_89 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_87.pos = tmpvar_89;
   vec3 tmpvar_90;
   tmpvar_90 = gl_TexCoord[0].xyz;

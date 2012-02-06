@@ -10,7 +10,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -34,7 +34,7 @@ void main ()
   v2f xlt_i_6;
   vec4 xl_retval_7;
   vec4 tmpvar_8;
-  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_8 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_6.vertex = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9 = gl_Color.xyzw;

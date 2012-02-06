@@ -8,7 +8,7 @@ float Linear01Depth (
   in float z_1
 )
 {
-  return (1.0 / ((_ZBufferParams.x * z_1) + _ZBufferParams.y));
+  return (1.00000 / ((_ZBufferParams.x * z_1) + _ZBufferParams.y));
 }
 
 vec4 frag (
@@ -20,7 +20,7 @@ vec4 frag (
   float tmpvar_4;
   tmpvar_4 = Linear01Depth (tmpvar_3.x);
   vec4 tmpvar_5;
-  tmpvar_5 = vec4((1.0 - tmpvar_4));
+  tmpvar_5 = vec4((1.00000 - tmpvar_4));
   return tmpvar_5;
 }
 
@@ -29,7 +29,7 @@ void main ()
   v2f xlt_i_6;
   vec4 xl_retval_7;
   vec4 tmpvar_8;
-  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_8 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_6.pos = tmpvar_8;
   vec2 tmpvar_9;
   tmpvar_9 = gl_TexCoord[0].xy;

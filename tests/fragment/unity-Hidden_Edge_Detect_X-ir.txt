@@ -33,7 +33,7 @@ vec4 frag (
   tmpvar_14 = tmpvar_13.xyz;
   p3_4 = tmpvar_14;
   vec3 tmpvar_15;
-  tmpvar_15 = (((p1_6 * 2.0) - p2_5) - p3_4);
+  tmpvar_15 = (((p1_6 * 2.00000) - p2_5) - p3_4);
   diff_3 = tmpvar_15;
   float tmpvar_16;
   tmpvar_16 = dot (diff_3, diff_3);
@@ -42,7 +42,7 @@ vec4 frag (
   len_2 = tmpvar_17;
   if ((len_2 >= _Treshold)) {
     vec3 tmpvar_18;
-    tmpvar_18 = vec3(0.0, 0.0, 0.0);
+    tmpvar_18 = vec3(0.00000, 0.00000, 0.00000);
     original_7.xyz = tmpvar_18.xyz.xyz;
   };
   return original_7;
@@ -53,7 +53,7 @@ void main ()
   v2f xlt_i_19;
   vec4 xl_retval_20;
   vec4 tmpvar_21;
-  tmpvar_21 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_21 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_19.pos = tmpvar_21;
   vec2 tmpvar_22;
   tmpvar_22 = gl_TexCoord[0].xy;

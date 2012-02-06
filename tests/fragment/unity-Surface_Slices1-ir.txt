@@ -25,7 +25,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -36,8 +36,8 @@ void surf (
 )
 {
   float tmpvar_4;
-  tmpvar_4 = fract (((IN_2.worldPos.y + (IN_2.worldPos.z * 0.1)) * 5.0));
-  xll_clip ((tmpvar_4 - 0.5));
+  tmpvar_4 = fract (((IN_2.worldPos.y + (IN_2.worldPos.z * 0.100000)) * 5.00000));
+  xll_clip ((tmpvar_4 - 0.500000));
   vec4 tmpvar_5;
   tmpvar_5 = texture2D (_MainTex, IN_2.uv_MainTex);
   vec3 tmpvar_6;
@@ -75,19 +75,19 @@ vec4 frag_surf (
   tmpvar_18 = IN_12.worldPos;
   surfIN_16.worldPos = tmpvar_18;
   vec3 tmpvar_19;
-  tmpvar_19 = vec3(0.0, 0.0, 0.0);
+  tmpvar_19 = vec3(0.00000, 0.00000, 0.00000);
   o_15.Albedo = tmpvar_19;
   vec3 tmpvar_20;
-  tmpvar_20 = vec3(0.0, 0.0, 0.0);
+  tmpvar_20 = vec3(0.00000, 0.00000, 0.00000);
   o_15.Emission = tmpvar_20;
   float tmpvar_21;
-  tmpvar_21 = 0.0;
+  tmpvar_21 = 0.00000;
   o_15.Specular = tmpvar_21;
   float tmpvar_22;
-  tmpvar_22 = 0.0;
+  tmpvar_22 = 0.00000;
   o_15.Alpha = tmpvar_22;
   float tmpvar_23;
-  tmpvar_23 = 0.0;
+  tmpvar_23 = 0.00000;
   o_15.Gloss = tmpvar_23;
   surf (surfIN_16, o_15);
   vec4 tmpvar_24;
@@ -116,7 +116,7 @@ void main ()
   v2f_surf xlt_IN_31;
   vec4 xl_retval_32;
   vec4 tmpvar_33;
-  tmpvar_33 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_33 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_31.pos = tmpvar_33;
   float tmpvar_34;
   tmpvar_34 = xlv_FOG.x;

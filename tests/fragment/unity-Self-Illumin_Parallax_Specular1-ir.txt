@@ -38,10 +38,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -56,7 +56,7 @@ vec2 ParallaxOffset (
 {
   vec3 v_9;
   float tmpvar_10;
-  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.0));
+  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.00000));
   h_6 = tmpvar_10;
   vec3 tmpvar_11;
   tmpvar_11 = normalize (viewDir_8);
@@ -64,7 +64,7 @@ vec2 ParallaxOffset (
   tmpvar_12 = tmpvar_11;
   v_9 = tmpvar_12;
   float tmpvar_13;
-  tmpvar_13 = (v_9.z + 0.42);
+  tmpvar_13 = (v_9.z + 0.420000);
   v_9.z = vec3(tmpvar_13).z;
   return (h_6 * (v_9.xy / v_9.z));
 }
@@ -153,24 +153,24 @@ vec4 LightingBlinnPhong (
   float tmpvar_51;
   tmpvar_51 = dot (s_40.Normal, lightDir_41);
   float tmpvar_52;
-  tmpvar_52 = max (0.0, tmpvar_51);
+  tmpvar_52 = max (0.00000, tmpvar_51);
   float tmpvar_53;
   tmpvar_53 = tmpvar_52;
   diff_47 = tmpvar_53;
   float tmpvar_54;
   tmpvar_54 = dot (s_40.Normal, h_48);
   float tmpvar_55;
-  tmpvar_55 = max (0.0, tmpvar_54);
+  tmpvar_55 = max (0.00000, tmpvar_54);
   float tmpvar_56;
   tmpvar_56 = tmpvar_55;
   nh_46 = tmpvar_56;
   float tmpvar_57;
-  tmpvar_57 = pow (nh_46, (s_40.Specular * 128.0));
+  tmpvar_57 = pow (nh_46, (s_40.Specular * 128.000));
   float tmpvar_58;
   tmpvar_58 = (tmpvar_57 * s_40.Gloss);
   spec_45 = tmpvar_58;
   vec3 tmpvar_59;
-  tmpvar_59 = ((((s_40.Albedo * _LightColor0.xyz) * diff_47) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_45)) * (atten_43 * 2.0));
+  tmpvar_59 = ((((s_40.Albedo * _LightColor0.xyz) * diff_47) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_45)) * (atten_43 * 2.00000));
   c_44.xyz = tmpvar_59.xyz.xyz;
   float tmpvar_60;
   tmpvar_60 = (s_40.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_45) * atten_43));
@@ -196,19 +196,19 @@ vec4 frag_surf (
   tmpvar_68 = IN_61.viewDir;
   surfIN_65.viewDir = tmpvar_68;
   vec3 tmpvar_69;
-  tmpvar_69 = vec3(0.0, 0.0, 0.0);
+  tmpvar_69 = vec3(0.00000, 0.00000, 0.00000);
   o_64.Albedo = tmpvar_69;
   vec3 tmpvar_70;
-  tmpvar_70 = vec3(0.0, 0.0, 0.0);
+  tmpvar_70 = vec3(0.00000, 0.00000, 0.00000);
   o_64.Emission = tmpvar_70;
   float tmpvar_71;
-  tmpvar_71 = 0.0;
+  tmpvar_71 = 0.00000;
   o_64.Specular = tmpvar_71;
   float tmpvar_72;
-  tmpvar_72 = 0.0;
+  tmpvar_72 = 0.00000;
   o_64.Alpha = tmpvar_72;
   float tmpvar_73;
-  tmpvar_73 = 0.0;
+  tmpvar_73 = 0.00000;
   o_64.Gloss = tmpvar_73;
   surf (surfIN_65, o_64);
   vec3 tmpvar_74;
@@ -239,7 +239,7 @@ vec4 frag_surf (
   tmpvar_85 = tmpvar_84;
   c_62 = tmpvar_85;
   float tmpvar_86;
-  tmpvar_86 = 0.0;
+  tmpvar_86 = 0.00000;
   c_62.w = vec4(tmpvar_86).w;
   return c_62;
 }
@@ -249,7 +249,7 @@ void main ()
   v2f_surf xlt_IN_87;
   vec4 xl_retval_88;
   vec4 tmpvar_89;
-  tmpvar_89 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_89 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_87.pos = tmpvar_89;
   float tmpvar_90;
   tmpvar_90 = xlv_FOG.x;

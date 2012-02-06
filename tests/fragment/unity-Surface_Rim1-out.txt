@@ -13,9 +13,9 @@ void main ()
   light_2.xyz = (tmpvar_3.xyz + unity_Ambient.xyz);
   vec4 c_4;
   c_4.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_2.xyz);
-  c_4.w = 0.0;
+  c_4.w = 0.00000;
   col_1 = c_4;
-  col_1.xyz = (c_4.xyz + (_RimColor.xyz * pow ((1.0 - clamp (dot (normalize (gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0)), _RimPower)));
+  col_1.xyz = (c_4.xyz + (_RimColor.xyz * pow ((1.00000 - clamp (dot (normalize (gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.00000, 1.00000)), _RimPower)));
   gl_FragData[0] = col_1;
 }
 

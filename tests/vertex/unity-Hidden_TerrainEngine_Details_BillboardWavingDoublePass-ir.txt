@@ -78,10 +78,10 @@ void FastSinCos (
   vec4 r6_19;
   vec4 r5_20;
   vec4 tmpvar_21;
-  tmpvar_21 = vec4(1.0, -0.161616, 0.0083333, -0.00019841);
+  tmpvar_21 = vec4(1.00000, -0.161616, 0.00833330, -0.000198410);
   sin7_13 = tmpvar_21;
   vec4 tmpvar_22;
-  tmpvar_22 = vec4(-0.5, 0.0416667, -0.00138889, 2.48016e-05);
+  tmpvar_22 = vec4(-0.500000, 0.0416667, -0.00138889, 2.48016e-05);
   cos8_12 = tmpvar_22;
   vec4 tmpvar_23;
   tmpvar_23 = ((val_9 * 6.40885) - 3.14159);
@@ -111,7 +111,7 @@ void FastSinCos (
   tmpvar_31 = (((val_9 + (r1_16 * sin7_13.y)) + (r2_15 * sin7_13.z)) + (r3_14 * sin7_13.w));
   s_10 = tmpvar_31;
   vec4 tmpvar_32;
-  tmpvar_32 = ((((1.0 + (r5_20 * cos8_12.x)) + (r6_19 * cos8_12.y)) + (r7_18 * cos8_12.z)) + (r8_17 * cos8_12.w));
+  tmpvar_32 = ((((1.00000 + (r5_20 * cos8_12.x)) + (r6_19 * cos8_12.y)) + (r7_18 * cos8_12.z)) + (r8_17 * cos8_12.w));
   c_11 = tmpvar_32;
 }
 
@@ -134,22 +134,22 @@ void TerrainWaveGrass (
   vec4 _waveZSize_46;
   vec4 _waveXSize_47;
   vec4 tmpvar_48;
-  tmpvar_48 = vec4(1.2, 2.0, 1.6, 4.8);
+  tmpvar_48 = vec4(1.20000, 2.00000, 1.60000, 4.80000);
   waveSpeed_45 = tmpvar_48;
   vec4 tmpvar_49;
-  tmpvar_49 = vec4(0.024, 0.04, -0.12, 0.096);
+  tmpvar_49 = vec4(0.0240000, 0.0400000, -0.120000, 0.0960000);
   _waveXmove_44 = tmpvar_49;
   vec4 tmpvar_50;
-  tmpvar_50 = vec4(0.006, 0.02, -0.02, 0.1);
+  tmpvar_50 = vec4(0.00600000, 0.0200000, -0.0200000, 0.100000);
   _waveZmove_43 = tmpvar_50;
   vec3 tmpvar_51;
-  tmpvar_51 = vec3(0.0, 0.0, 0.0);
+  tmpvar_51 = vec3(0.00000, 0.00000, 0.00000);
   waveMove_38 = tmpvar_51;
   vec4 tmpvar_52;
-  tmpvar_52 = (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y);
+  tmpvar_52 = (vec4(0.0120000, 0.0200000, 0.0600000, 0.0240000) * _WaveAndDistance.y);
   _waveXSize_47 = tmpvar_52;
   vec4 tmpvar_53;
-  tmpvar_53 = (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y);
+  tmpvar_53 = (vec4(0.00600000, 0.0200000, 0.0200000, 0.0500000) * _WaveAndDistance.y);
   _waveZSize_46 = tmpvar_53;
   vec4 tmpvar_54;
   tmpvar_54 = (vertex_33.x * _waveXSize_47);
@@ -173,11 +173,11 @@ void TerrainWaveGrass (
   tmpvar_60 = (s_41 * s_41);
   s_41 = tmpvar_60;
   vec4 tmpvar_61;
-  tmpvar_61 = normalize (vec4(1.0, 1.0, 0.4, 0.2));
+  tmpvar_61 = normalize (vec4(1.00000, 1.00000, 0.400000, 0.200000));
   float tmpvar_62;
   tmpvar_62 = dot (s_41, tmpvar_61);
   float tmpvar_63;
-  tmpvar_63 = (tmpvar_62 * 0.7);
+  tmpvar_63 = (tmpvar_62 * 0.700000);
   lighting_39 = tmpvar_63;
   vec4 tmpvar_64;
   tmpvar_64 = (s_41 * waveAmount_34);
@@ -198,15 +198,15 @@ void TerrainWaveGrass (
   vec3 tmpvar_70;
   tmpvar_70 = vec3(lighting_39);
   vec3 tmpvar_71;
-  tmpvar_71 = mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, tmpvar_70);
+  tmpvar_71 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, tmpvar_70);
   vec3 tmpvar_72;
   tmpvar_72 = tmpvar_71;
   waveColor_37 = tmpvar_72;
   vec3 tmpvar_73;
-  tmpvar_73 = ((color_35 * waveColor_37) * 2.0);
+  tmpvar_73 = ((color_35 * waveColor_37) * 2.00000);
   outColor_36.xyz = tmpvar_73.xyz.xyz;
   float tmpvar_74;
-  tmpvar_74 = 1.0;
+  tmpvar_74 = 1.00000;
   outColor_36.w = vec4(tmpvar_74).w;
 }
 
@@ -223,7 +223,7 @@ void TerrainBillboardGrass (
   tmpvar_79 = dot (grasspos_77, grasspos_77);
   if ((tmpvar_79 > _WaveAndDistance.w)) {
     vec2 tmpvar_80;
-    tmpvar_80 = vec2(0.0, 0.0);
+    tmpvar_80 = vec2(0.00000, 0.00000);
     offset_76 = tmpvar_80;
   };
   vec3 tmpvar_81;
@@ -333,7 +333,7 @@ vec3 Shade4PointLights (
   tmpvar_130 = (lightPosZ_111 - pos_117.z);
   toLightZ_125 = tmpvar_130;
   vec4 tmpvar_131;
-  tmpvar_131 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_131 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   lengthSq_124 = tmpvar_131;
   vec4 tmpvar_132;
   tmpvar_132 = (lengthSq_124 + (toLightX_127 * toLightX_127));
@@ -345,7 +345,7 @@ vec3 Shade4PointLights (
   tmpvar_134 = (lengthSq_124 + (toLightZ_125 * toLightZ_125));
   lengthSq_124 = tmpvar_134;
   vec4 tmpvar_135;
-  tmpvar_135 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_135 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   ndotl_123 = tmpvar_135;
   vec4 tmpvar_136;
   tmpvar_136 = (ndotl_123 + (toLightX_127 * normal_118.x));
@@ -362,18 +362,18 @@ vec3 Shade4PointLights (
   tmpvar_140 = tmpvar_139;
   corr_122 = tmpvar_140;
   vec4 tmpvar_141;
-  tmpvar_141 = max (vec4(0.0, 0.0, 0.0, 0.0), (ndotl_123 * corr_122));
+  tmpvar_141 = max (vec4(0.00000, 0.00000, 0.00000, 0.00000), (ndotl_123 * corr_122));
   vec4 tmpvar_142;
   tmpvar_142 = tmpvar_141;
   ndotl_123 = tmpvar_142;
   vec4 tmpvar_143;
-  tmpvar_143 = (1.0 / (1.0 + (lengthSq_124 * lightAttenSq_116)));
+  tmpvar_143 = (1.00000 / (1.00000 + (lengthSq_124 * lightAttenSq_116)));
   atten_121 = tmpvar_143;
   vec4 tmpvar_144;
   tmpvar_144 = (ndotl_123 * atten_121);
   diff_120 = tmpvar_144;
   vec3 tmpvar_145;
-  tmpvar_145 = vec3(0.0, 0.0, 0.0);
+  tmpvar_145 = vec3(0.00000, 0.00000, 0.00000);
   col_119 = tmpvar_145;
   vec3 tmpvar_146;
   tmpvar_146 = (col_119 + (lightColor0_112 * diff_120.x));
@@ -429,7 +429,7 @@ v2f_surf vert_surf (
   tmpvar_164 = worldN_158;
   o_159.normal = tmpvar_164;
   vec4 tmpvar_165;
-  tmpvar_165.w = 1.0;
+  tmpvar_165.w = 1.00000;
   tmpvar_165.xyz = worldN_158.xyz;
   vec3 tmpvar_166;
   tmpvar_166 = ShadeSH9 (tmpvar_165);
@@ -495,13 +495,13 @@ void main ()
   tmpvar_189 = tmpvar_188;
   gl_Position = tmpvar_189;
   vec4 tmpvar_190;
-  tmpvar_190.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_190.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_190.x = xl_retval_173.fog;
   vec4 tmpvar_191;
   tmpvar_191 = tmpvar_190;
   xlv_FOG = tmpvar_191;
   vec4 tmpvar_192;
-  tmpvar_192.zw = vec2(0.0, 0.0);
+  tmpvar_192.zw = vec2(0.00000, 0.00000);
   tmpvar_192.xy = xl_retval_173.hip_pack0.xy;
   vec4 tmpvar_193;
   tmpvar_193 = tmpvar_192;
@@ -512,13 +512,13 @@ void main ()
   tmpvar_195 = tmpvar_194;
   gl_FrontColor = tmpvar_195;
   vec4 tmpvar_196;
-  tmpvar_196.w = 0.0;
+  tmpvar_196.w = 0.00000;
   tmpvar_196.xyz = xl_retval_173.normal.xyz;
   vec4 tmpvar_197;
   tmpvar_197 = tmpvar_196;
   gl_TexCoord[1] = tmpvar_197;
   vec4 tmpvar_198;
-  tmpvar_198.w = 0.0;
+  tmpvar_198.w = 0.00000;
   tmpvar_198.xyz = xl_retval_173.vlight.xyz;
   vec4 tmpvar_199;
   tmpvar_199 = tmpvar_198;

@@ -668,9 +668,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
 static char* print_float (char* buffer, float f)
 {
-	const char* fmt = "%.6g";
-	if (fabsf(fmodf(f,1.0f)) < 0.00001f)
-		fmt = "%.1f";
+	const char* fmt = "%#.6g";
 	ralloc_asprintf_append (&buffer, fmt, f);
 	return buffer;
 }

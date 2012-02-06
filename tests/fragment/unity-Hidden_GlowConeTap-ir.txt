@@ -40,7 +40,7 @@ void main ()
   v2f xlt_i_12;
   vec4 xl_retval_13;
   vec4 tmpvar_14;
-  tmpvar_14 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_14 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_12.pos = tmpvar_14;
   vec4 tmpvar_15;
   tmpvar_15 = gl_TexCoord[0].xyzw;

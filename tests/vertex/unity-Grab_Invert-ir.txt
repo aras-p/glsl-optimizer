@@ -10,7 +10,7 @@ v2f vert (
   float scale_3;
   v2f o_4;
   float tmpvar_5;
-  tmpvar_5 = 1.0;
+  tmpvar_5 = 1.00000;
   scale_3 = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = (gl_ModelViewProjectionMatrix * vertex_1);
@@ -19,7 +19,7 @@ v2f vert (
   tmpvar_7.x = o_4.vertex.x;
   tmpvar_7.y = (o_4.vertex.y * scale_3);
   vec2 tmpvar_8;
-  tmpvar_8 = ((tmpvar_7 + o_4.vertex.w) * 0.5);
+  tmpvar_8 = ((tmpvar_7 + o_4.vertex.w) * 0.500000);
   o_4.uv.xy = tmpvar_8.xy.xy;
   vec2 tmpvar_9;
   tmpvar_9 = o_4.vertex.zw;

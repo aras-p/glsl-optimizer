@@ -35,10 +35,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -53,7 +53,7 @@ vec2 ParallaxOffset (
 {
   vec3 v_9;
   float tmpvar_10;
-  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.0));
+  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.00000));
   h_6 = tmpvar_10;
   vec3 tmpvar_11;
   tmpvar_11 = normalize (viewDir_8);
@@ -61,7 +61,7 @@ vec2 ParallaxOffset (
   tmpvar_12 = tmpvar_11;
   v_9 = tmpvar_12;
   float tmpvar_13;
-  tmpvar_13 = (v_9.z + 0.42);
+  tmpvar_13 = (v_9.z + 0.420000);
   v_9.z = vec3(tmpvar_13).z;
   return (h_6 * (v_9.xy / v_9.z));
 }
@@ -131,12 +131,12 @@ vec4 LightingLambert (
   float tmpvar_41;
   tmpvar_41 = dot (s_36.Normal, lightDir_37);
   float tmpvar_42;
-  tmpvar_42 = max (0.0, tmpvar_41);
+  tmpvar_42 = max (0.00000, tmpvar_41);
   float tmpvar_43;
   tmpvar_43 = tmpvar_42;
   diff_40 = tmpvar_43;
   vec3 tmpvar_44;
-  tmpvar_44 = ((s_36.Albedo * _LightColor0.xyz) * ((diff_40 * atten_38) * 2.0));
+  tmpvar_44 = ((s_36.Albedo * _LightColor0.xyz) * ((diff_40 * atten_38) * 2.00000));
   c_39.xyz = tmpvar_44.xyz.xyz;
   float tmpvar_45;
   tmpvar_45 = s_36.Alpha;
@@ -162,19 +162,19 @@ vec4 frag_surf (
   tmpvar_53 = IN_46.viewDir;
   surfIN_50.viewDir = tmpvar_53;
   vec3 tmpvar_54;
-  tmpvar_54 = vec3(0.0, 0.0, 0.0);
+  tmpvar_54 = vec3(0.00000, 0.00000, 0.00000);
   o_49.Albedo = tmpvar_54;
   vec3 tmpvar_55;
-  tmpvar_55 = vec3(0.0, 0.0, 0.0);
+  tmpvar_55 = vec3(0.00000, 0.00000, 0.00000);
   o_49.Emission = tmpvar_55;
   float tmpvar_56;
-  tmpvar_56 = 0.0;
+  tmpvar_56 = 0.00000;
   o_49.Specular = tmpvar_56;
   float tmpvar_57;
-  tmpvar_57 = 0.0;
+  tmpvar_57 = 0.00000;
   o_49.Alpha = tmpvar_57;
   float tmpvar_58;
-  tmpvar_58 = 0.0;
+  tmpvar_58 = 0.00000;
   o_49.Gloss = tmpvar_58;
   surf (surfIN_50, o_49);
   vec3 tmpvar_59;
@@ -183,12 +183,12 @@ vec4 frag_surf (
   vec4 tmpvar_60;
   tmpvar_60 = texture2D (_LightTexture0, IN_46._LightCoord);
   vec4 tmpvar_61;
-  tmpvar_61 = LightingLambert (o_49, lightDir_48, (tmpvar_60.w * 1.0));
+  tmpvar_61 = LightingLambert (o_49, lightDir_48, (tmpvar_60.w * 1.00000));
   vec4 tmpvar_62;
   tmpvar_62 = tmpvar_61;
   c_47 = tmpvar_62;
   float tmpvar_63;
-  tmpvar_63 = 0.0;
+  tmpvar_63 = 0.00000;
   c_47.w = vec4(tmpvar_63).w;
   return c_47;
 }
@@ -198,7 +198,7 @@ void main ()
   v2f_surf xlt_IN_64;
   vec4 xl_retval_65;
   vec4 tmpvar_66;
-  tmpvar_66 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_66 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_64.pos = tmpvar_66;
   float tmpvar_67;
   tmpvar_67 = xlv_FOG.x;

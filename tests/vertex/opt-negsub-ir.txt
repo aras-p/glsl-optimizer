@@ -31,7 +31,7 @@ void main ()
   tmpvar_11 = (m3c * -((v3c.xyz - gl_Vertex.xyz)));
   rc_1 = tmpvar_11;
   vec4 tmpvar_12;
-  tmpvar_12.w = 1.0;
+  tmpvar_12.w = 1.00000;
   tmpvar_12.xyz = ((ra_4 + rb_2) + rc_1).xyz;
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;

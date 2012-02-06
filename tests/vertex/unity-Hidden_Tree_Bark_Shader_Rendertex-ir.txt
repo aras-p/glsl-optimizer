@@ -45,7 +45,7 @@ v2f vert (
     float tmpvar_12;
     tmpvar_12 = dot (lightDir_3.xyz, v_1.normal);
     float tmpvar_13;
-    tmpvar_13 = max (0.0, tmpvar_12);
+    tmpvar_13 = max (0.00000, tmpvar_12);
     float tmpvar_14;
     tmpvar_14 = tmpvar_13;
     diff_2 = tmpvar_14;
@@ -111,13 +111,13 @@ void main ()
   tmpvar_37 = tmpvar_36;
   gl_Position = tmpvar_37;
   vec4 tmpvar_38;
-  tmpvar_38.zw = vec2(0.0, 0.0);
+  tmpvar_38.zw = vec2(0.00000, 0.00000);
   tmpvar_38.xy = xl_retval_21.uv.xy;
   vec4 tmpvar_39;
   tmpvar_39 = tmpvar_38;
   gl_TexCoord[0] = tmpvar_39;
   vec4 tmpvar_40;
-  tmpvar_40.w = 0.0;
+  tmpvar_40.w = 0.00000;
   tmpvar_40.xyz = xl_retval_21.color.xyz;
   vec4 tmpvar_41;
   tmpvar_41 = tmpvar_40;

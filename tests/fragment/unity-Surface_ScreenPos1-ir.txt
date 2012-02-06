@@ -31,15 +31,15 @@ void surf (
   tmpvar_4 = (IN_1.screenPos.xy / IN_1.screenPos.w);
   uv_3 = tmpvar_4;
   vec2 tmpvar_5;
-  tmpvar_5 = (uv_3 * vec2(2.0, 1.0));
+  tmpvar_5 = (uv_3 * vec2(2.00000, 1.00000));
   uv_3 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = vec3(0.5, 0.5, 0.5);
+  tmpvar_6 = vec3(0.500000, 0.500000, 0.500000);
   o_2.Albedo = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7 = texture2D (_MainTex, uv_3);
   vec3 tmpvar_8;
-  tmpvar_8 = (tmpvar_7.xyz * 0.5);
+  tmpvar_8 = (tmpvar_7.xyz * 0.500000);
   o_2.Emission = tmpvar_8;
 }
 
@@ -54,12 +54,12 @@ vec4 LightingLambert (
   float tmpvar_14;
   tmpvar_14 = dot (s_9.Normal, lightDir_10);
   float tmpvar_15;
-  tmpvar_15 = max (0.0, tmpvar_14);
+  tmpvar_15 = max (0.00000, tmpvar_14);
   float tmpvar_16;
   tmpvar_16 = tmpvar_15;
   diff_13 = tmpvar_16;
   vec3 tmpvar_17;
-  tmpvar_17 = ((s_9.Albedo * _LightColor0.xyz) * ((diff_13 * atten_11) * 2.0));
+  tmpvar_17 = ((s_9.Albedo * _LightColor0.xyz) * ((diff_13 * atten_11) * 2.00000));
   c_12.xyz = tmpvar_17.xyz.xyz;
   float tmpvar_18;
   tmpvar_18 = s_9.Alpha;
@@ -76,19 +76,19 @@ vec4 frag_surf (
   Input surfIN_22;
   SurfaceOutput o_23;
   vec3 tmpvar_24;
-  tmpvar_24 = vec3(0.0, 0.0, 0.0);
+  tmpvar_24 = vec3(0.00000, 0.00000, 0.00000);
   o_23.Albedo = tmpvar_24;
   vec3 tmpvar_25;
-  tmpvar_25 = vec3(0.0, 0.0, 0.0);
+  tmpvar_25 = vec3(0.00000, 0.00000, 0.00000);
   o_23.Emission = tmpvar_25;
   float tmpvar_26;
-  tmpvar_26 = 0.0;
+  tmpvar_26 = 0.00000;
   o_23.Specular = tmpvar_26;
   float tmpvar_27;
-  tmpvar_27 = 0.0;
+  tmpvar_27 = 0.00000;
   o_23.Alpha = tmpvar_27;
   float tmpvar_28;
-  tmpvar_28 = 0.0;
+  tmpvar_28 = 0.00000;
   o_23.Gloss = tmpvar_28;
   vec3 tmpvar_29;
   tmpvar_29 = IN_19.normal;
@@ -118,7 +118,7 @@ vec4 frag_surf (
   tmpvar_39 = tmpvar_38;
   c_20 = tmpvar_39;
   float tmpvar_40;
-  tmpvar_40 = 0.0;
+  tmpvar_40 = 0.00000;
   c_20.w = vec4(tmpvar_40).w;
   return c_20;
 }
@@ -128,7 +128,7 @@ void main ()
   v2f_surf xlt_IN_41;
   vec4 xl_retval_42;
   vec4 tmpvar_43;
-  tmpvar_43 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_43 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_41.pos = tmpvar_43;
   float tmpvar_44;
   tmpvar_44 = xlv_FOG.x;

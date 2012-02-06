@@ -25,7 +25,7 @@ void surf (
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_MainTex, IN_1.uv_MainTex);
   vec3 tmpvar_5;
-  tmpvar_5 = (tmpvar_4.xyz * 0.3);
+  tmpvar_5 = (tmpvar_4.xyz * 0.300000);
   o_2.Albedo = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = texture2D (_SpecMap, IN_1.uv_SpecMap);
@@ -36,7 +36,7 @@ void surf (
   tmpvar_8 = spec_3.xyz;
   o_2.GlossColor = tmpvar_8;
   float tmpvar_9;
-  tmpvar_9 = 0.25;
+  tmpvar_9 = 0.250000;
   o_2.Specular = tmpvar_9;
 }
 
@@ -48,23 +48,23 @@ vec4 frag_surf (
   Input surfIN_12;
   MySurfaceOutput o_13;
   vec3 tmpvar_14;
-  tmpvar_14 = vec3(0.0, 0.0, 0.0);
+  tmpvar_14 = vec3(0.00000, 0.00000, 0.00000);
   o_13.Albedo = tmpvar_14;
   vec3 tmpvar_15;
-  tmpvar_15 = vec3(0.0, 0.0, 0.0);
+  tmpvar_15 = vec3(0.00000, 0.00000, 0.00000);
   o_13.Emission = tmpvar_15;
   float tmpvar_16;
-  tmpvar_16 = 0.0;
+  tmpvar_16 = 0.00000;
   o_13.Specular = tmpvar_16;
   float tmpvar_17;
-  tmpvar_17 = 0.0;
+  tmpvar_17 = 0.00000;
   o_13.Alpha = tmpvar_17;
   vec3 tmpvar_18;
   tmpvar_18 = IN_10.normal;
   o_13.Normal = tmpvar_18;
   surf (surfIN_12, o_13);
   vec3 tmpvar_19;
-  tmpvar_19 = ((o_13.Normal * vec3(0.5, 0.5, -0.5)) + 0.5);
+  tmpvar_19 = ((o_13.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
   res_11.xyz = tmpvar_19.xyz.xyz;
   float tmpvar_20;
   tmpvar_20 = o_13.Specular;
@@ -77,7 +77,7 @@ void main ()
   v2f_surf xlt_IN_21;
   vec4 xl_retval_22;
   vec4 tmpvar_23;
-  tmpvar_23 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_23 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_21.pos = tmpvar_23;
   vec3 tmpvar_24;
   tmpvar_24 = gl_TexCoord[0].xyz;

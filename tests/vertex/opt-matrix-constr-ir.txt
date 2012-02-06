@@ -6,14 +6,14 @@ void main ()
   tmpvar_3 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   gl_Position = tmpvar_3;
   mat3 tmpvar_4;
-  tmpvar_4 = (mat3(0.1, 0.8, 0.1, 0.3, 0.3, 0.5, 0.9, 0.0, 0.1));
+  tmpvar_4 = (mat3(0.100000, 0.800000, 0.100000, 0.300000, 0.300000, 0.500000, 0.900000, 0.00000, 0.100000));
   m_2 = (tmpvar_4);
   vec3 tmpvar_5;
   tmpvar_5 = (m_2 * gl_Normal);
   n_1 = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.w = 1.0;
-  tmpvar_6.xyz = ((n_1 * 0.5) + 0.5).xyz;
+  tmpvar_6.w = 1.00000;
+  tmpvar_6.xyz = ((n_1 * 0.500000) + 0.500000).xyz;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   gl_FrontColor = tmpvar_7;

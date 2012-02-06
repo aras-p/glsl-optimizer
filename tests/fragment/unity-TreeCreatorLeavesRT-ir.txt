@@ -17,7 +17,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -55,7 +55,7 @@ vec4 frag (
   vec4 tmpvar_21;
   tmpvar_21 = texture2D (_BumpSpecMap, i_2.uv);
   float tmpvar_22;
-  tmpvar_22 = (tmpvar_21.x * 128.0);
+  tmpvar_22 = (tmpvar_21.x * 128.000);
   specular_14 = tmpvar_22;
   vec4 tmpvar_23;
   tmpvar_23 = texture2D (_TranslucencyMap, i_2.uv);
@@ -104,10 +104,10 @@ vec4 frag (
     j_9 = tmpvar_37;
   };
   vec3 tmpvar_38;
-  tmpvar_38 = (light_11 * 2.0);
+  tmpvar_38 = (light_11 * 2.00000);
   c_3.xyz = tmpvar_38.xyz.xyz;
   float tmpvar_39;
-  tmpvar_39 = 1.0;
+  tmpvar_39 = 1.00000;
   c_3.w = vec4(tmpvar_39).w;
   return c_3;
 }
@@ -117,7 +117,7 @@ void main ()
   v2f xlt_i_40;
   vec4 xl_retval_41;
   vec4 tmpvar_42;
-  tmpvar_42 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_42 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_40.pos = tmpvar_42;
   vec2 tmpvar_43;
   tmpvar_43 = gl_TexCoord[0].xy;

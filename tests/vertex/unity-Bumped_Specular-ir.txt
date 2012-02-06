@@ -146,7 +146,7 @@ vec3 Shade4PointLights (
   tmpvar_51 = (lightPosZ_32 - pos_38.z);
   toLightZ_46 = tmpvar_51;
   vec4 tmpvar_52;
-  tmpvar_52 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_52 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   lengthSq_45 = tmpvar_52;
   vec4 tmpvar_53;
   tmpvar_53 = (lengthSq_45 + (toLightX_48 * toLightX_48));
@@ -158,7 +158,7 @@ vec3 Shade4PointLights (
   tmpvar_55 = (lengthSq_45 + (toLightZ_46 * toLightZ_46));
   lengthSq_45 = tmpvar_55;
   vec4 tmpvar_56;
-  tmpvar_56 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_56 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   ndotl_44 = tmpvar_56;
   vec4 tmpvar_57;
   tmpvar_57 = (ndotl_44 + (toLightX_48 * normal_39.x));
@@ -175,18 +175,18 @@ vec3 Shade4PointLights (
   tmpvar_61 = tmpvar_60;
   corr_43 = tmpvar_61;
   vec4 tmpvar_62;
-  tmpvar_62 = max (vec4(0.0, 0.0, 0.0, 0.0), (ndotl_44 * corr_43));
+  tmpvar_62 = max (vec4(0.00000, 0.00000, 0.00000, 0.00000), (ndotl_44 * corr_43));
   vec4 tmpvar_63;
   tmpvar_63 = tmpvar_62;
   ndotl_44 = tmpvar_63;
   vec4 tmpvar_64;
-  tmpvar_64 = (1.0 / (1.0 + (lengthSq_45 * lightAttenSq_37)));
+  tmpvar_64 = (1.00000 / (1.00000 + (lengthSq_45 * lightAttenSq_37)));
   atten_42 = tmpvar_64;
   vec4 tmpvar_65;
   tmpvar_65 = (ndotl_44 * atten_42);
   diff_41 = tmpvar_65;
   vec3 tmpvar_66;
-  tmpvar_66 = vec3(0.0, 0.0, 0.0);
+  tmpvar_66 = vec3(0.00000, 0.00000, 0.00000);
   col_40 = tmpvar_66;
   vec3 tmpvar_67;
   tmpvar_67 = (col_40 + (lightColor0_33 * diff_41.x));
@@ -223,7 +223,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_77;
   vec4 tmpvar_78;
-  tmpvar_78.w = 1.0;
+  tmpvar_78.w = 1.00000;
   tmpvar_78.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_79;
   tmpvar_79 = ((_World2Object * tmpvar_78).xyz * unity_Scale.w);
@@ -248,7 +248,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_84;
   vec4 tmpvar_85;
-  tmpvar_85 = (pos_83 * 0.5);
+  tmpvar_85 = (pos_83 * 0.500000);
   o_84 = tmpvar_85;
   vec2 tmpvar_86;
   tmpvar_86.x = o_84.x;
@@ -331,7 +331,7 @@ v2f_surf vert_surf (
   tmpvar_116 = (rotation_92 * tmpvar_115);
   o_95.viewDir = tmpvar_116;
   vec4 tmpvar_117;
-  tmpvar_117.w = 1.0;
+  tmpvar_117.w = 1.00000;
   tmpvar_117.xyz = worldN_94.xyz;
   vec3 tmpvar_118;
   tmpvar_118 = ShadeSH9 (tmpvar_117);
@@ -402,7 +402,7 @@ void main ()
   tmpvar_143 = tmpvar_142;
   gl_Position = tmpvar_143;
   vec4 tmpvar_144;
-  tmpvar_144.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_144.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_144.x = xl_retval_127.fog;
   vec4 tmpvar_145;
   tmpvar_145 = tmpvar_144;
@@ -413,19 +413,19 @@ void main ()
   tmpvar_147 = tmpvar_146;
   gl_TexCoord[0] = tmpvar_147;
   vec4 tmpvar_148;
-  tmpvar_148.w = 0.0;
+  tmpvar_148.w = 0.00000;
   tmpvar_148.xyz = xl_retval_127.viewDir.xyz;
   vec4 tmpvar_149;
   tmpvar_149 = tmpvar_148;
   gl_TexCoord[1] = tmpvar_149;
   vec4 tmpvar_150;
-  tmpvar_150.w = 0.0;
+  tmpvar_150.w = 0.00000;
   tmpvar_150.xyz = xl_retval_127.lightDir.xyz;
   vec4 tmpvar_151;
   tmpvar_151 = tmpvar_150;
   gl_TexCoord[2] = tmpvar_151;
   vec4 tmpvar_152;
-  tmpvar_152.w = 0.0;
+  tmpvar_152.w = 0.00000;
   tmpvar_152.xyz = xl_retval_127.vlight.xyz;
   vec4 tmpvar_153;
   tmpvar_153 = tmpvar_152;

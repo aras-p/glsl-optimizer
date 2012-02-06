@@ -50,7 +50,7 @@ vec3 ShadeMyVertexLights (
   vec3 viewN_17;
   vec3 viewpos_18;
   vec3 tmpvar_19;
-  tmpvar_19 = vec3(0.0, 0.0, 0.0);
+  tmpvar_19 = vec3(0.00000, 0.00000, 0.00000);
   lightColor_16 = tmpvar_19;
   int tmpvar_20;
   tmpvar_20 = 0;
@@ -76,14 +76,14 @@ vec3 ShadeMyVertexLights (
     tmpvar_26 = tmpvar_25;
     lengthSq_13 = tmpvar_26;
     float tmpvar_27;
-    tmpvar_27 = (1.0 / (1.0 + (lengthSq_13 * unity_LightAtten[i_15].z)));
+    tmpvar_27 = (1.00000 / (1.00000 + (lengthSq_13 * unity_LightAtten[i_15].z)));
     atten_12 = tmpvar_27;
     vec3 tmpvar_28;
     tmpvar_28 = normalize (toLight_14);
     float tmpvar_29;
     tmpvar_29 = dot (viewN_17, tmpvar_28);
     float tmpvar_30;
-    tmpvar_30 = max (0.0, tmpvar_29);
+    tmpvar_30 = max (0.00000, tmpvar_29);
     float tmpvar_31;
     tmpvar_31 = tmpvar_30;
     diff_11 = tmpvar_31;
@@ -96,7 +96,7 @@ vec3 ShadeMyVertexLights (
     tmpvar_34 = (i_15 + 1);
     i_15 = tmpvar_34;
   };
-  return (lightColor_16 * 2.0);
+  return (lightColor_16 * 2.00000);
 }
 
 v2f xlat_main (
@@ -110,7 +110,7 @@ v2f xlat_main (
   vec3 tmpvar_38;
   tmpvar_38 = ShadeMyVertexLights (v_35.vertex, v_35.normal);
   vec4 tmpvar_39;
-  tmpvar_39.w = 1.0;
+  tmpvar_39.w = 1.00000;
   tmpvar_39.xyz = tmpvar_38.xyz;
   vec4 tmpvar_40;
   tmpvar_40 = tmpvar_39;

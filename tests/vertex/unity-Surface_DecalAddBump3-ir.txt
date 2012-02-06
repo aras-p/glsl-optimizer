@@ -135,7 +135,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_39;
   vec4 tmpvar_40;
-  tmpvar_40 = (pos_38 * 0.5);
+  tmpvar_40 = (pos_38 * 0.500000);
   o_39 = tmpvar_40;
   vec2 tmpvar_41;
   tmpvar_41.x = o_39.x;
@@ -212,7 +212,7 @@ v2f_surf vert_surf (
   tmpvar_68 = (rotation_46 * tmpvar_67);
   o_49.lightDir = tmpvar_68;
   vec4 tmpvar_69;
-  tmpvar_69.w = 1.0;
+  tmpvar_69.w = 1.00000;
   tmpvar_69.xyz = worldN_48.xyz;
   vec3 tmpvar_70;
   tmpvar_70 = ShadeSH9 (tmpvar_69);
@@ -275,7 +275,7 @@ void main ()
   tmpvar_92 = tmpvar_91;
   gl_Position = tmpvar_92;
   vec4 tmpvar_93;
-  tmpvar_93.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_93.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_93.x = xl_retval_76.fog;
   vec4 tmpvar_94;
   tmpvar_94 = tmpvar_93;
@@ -286,13 +286,13 @@ void main ()
   tmpvar_96 = tmpvar_95;
   gl_TexCoord[0] = tmpvar_96;
   vec4 tmpvar_97;
-  tmpvar_97.w = 0.0;
+  tmpvar_97.w = 0.00000;
   tmpvar_97.xyz = xl_retval_76.lightDir.xyz;
   vec4 tmpvar_98;
   tmpvar_98 = tmpvar_97;
   gl_TexCoord[1] = tmpvar_98;
   vec4 tmpvar_99;
-  tmpvar_99.w = 0.0;
+  tmpvar_99.w = 0.00000;
   tmpvar_99.xyz = xl_retval_76.vlight.xyz;
   vec4 tmpvar_100;
   tmpvar_100 = tmpvar_99;

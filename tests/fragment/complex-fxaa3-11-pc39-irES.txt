@@ -24,7 +24,7 @@ float xll_saturate (
 )
 {
   float tmpvar_5;
-  tmpvar_5 = clamp (x_4, 0.0, 1.0);
+  tmpvar_5 = clamp (x_4, 0.00000, 1.00000);
   return tmpvar_5;
 }
 
@@ -33,7 +33,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_7;
-  tmpvar_7 = clamp (x_6, 0.0, 1.0);
+  tmpvar_7 = clamp (x_6, 0.00000, 1.00000);
   return tmpvar_7;
 }
 
@@ -42,7 +42,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_9;
-  tmpvar_9 = clamp (x_8, 0.0, 1.0);
+  tmpvar_9 = clamp (x_8, 0.00000, 1.00000);
   return tmpvar_9;
 }
 
@@ -51,7 +51,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_11;
-  tmpvar_11 = clamp (x_10, 0.0, 1.0);
+  tmpvar_11 = clamp (x_10, 0.00000, 1.00000);
   return tmpvar_11;
 }
 
@@ -60,9 +60,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_13;
-  tmpvar_13 = clamp (m_12[0], 0.0, 1.0);
+  tmpvar_13 = clamp (m_12[0], 0.00000, 1.00000);
   vec2 tmpvar_14;
-  tmpvar_14 = clamp (m_12[1], 0.0, 1.0);
+  tmpvar_14 = clamp (m_12[1], 0.00000, 1.00000);
   mat2 tmpvar_15;
   vec2 tmpvar_16;
   tmpvar_16 = tmpvar_13;
@@ -78,11 +78,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_19;
-  tmpvar_19 = clamp (m_18[0], 0.0, 1.0);
+  tmpvar_19 = clamp (m_18[0], 0.00000, 1.00000);
   vec3 tmpvar_20;
-  tmpvar_20 = clamp (m_18[1], 0.0, 1.0);
+  tmpvar_20 = clamp (m_18[1], 0.00000, 1.00000);
   vec3 tmpvar_21;
-  tmpvar_21 = clamp (m_18[2], 0.0, 1.0);
+  tmpvar_21 = clamp (m_18[2], 0.00000, 1.00000);
   mat3 tmpvar_22;
   vec3 tmpvar_23;
   tmpvar_23 = tmpvar_19;
@@ -101,13 +101,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_26[0], 0.0, 1.0);
+  tmpvar_27 = clamp (m_26[0], 0.00000, 1.00000);
   vec4 tmpvar_28;
-  tmpvar_28 = clamp (m_26[1], 0.0, 1.0);
+  tmpvar_28 = clamp (m_26[1], 0.00000, 1.00000);
   vec4 tmpvar_29;
-  tmpvar_29 = clamp (m_26[2], 0.0, 1.0);
+  tmpvar_29 = clamp (m_26[2], 0.00000, 1.00000);
   vec4 tmpvar_30;
-  tmpvar_30 = clamp (m_26[3], 0.0, 1.0);
+  tmpvar_30 = clamp (m_26[3], 0.00000, 1.00000);
   mat4 tmpvar_31;
   vec4 tmpvar_32;
   tmpvar_32 = tmpvar_27;
@@ -238,7 +238,7 @@ vec4 FxaaPixelShader (
   tmpvar_135 = pos_37.y;
   posM_133.y = vec2(tmpvar_135).y;
   highp vec4 tmpvar_136;
-  tmpvar_136.zw = vec2(0.0, 0.0);
+  tmpvar_136.zw = vec2(0.00000, 0.00000);
   tmpvar_136.xy = posM_133.xy;
   vec4 tmpvar_137;
   tmpvar_137 = xll_tex2Dlod (tex_39, tmpvar_136);
@@ -246,8 +246,8 @@ vec4 FxaaPixelShader (
   tmpvar_138 = tmpvar_137;
   rgbyM_132 = tmpvar_138;
   highp vec4 tmpvar_139;
-  tmpvar_139.zw = vec2(0.0, 0.0);
-  tmpvar_139.xy = (posM_133 + (vec2(0.0, 1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_139.zw = vec2(0.00000, 0.00000);
+  tmpvar_139.xy = (posM_133 + (vec2(0.00000, 1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_140;
   tmpvar_140 = xll_tex2Dlod (tex_39, tmpvar_139);
   highp float tmpvar_141;
@@ -256,8 +256,8 @@ vec4 FxaaPixelShader (
   tmpvar_142 = tmpvar_141;
   lumaS_131 = tmpvar_142;
   highp vec4 tmpvar_143;
-  tmpvar_143.zw = vec2(0.0, 0.0);
-  tmpvar_143.xy = (posM_133 + (vec2(1.0, 0.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_143.zw = vec2(0.00000, 0.00000);
+  tmpvar_143.xy = (posM_133 + (vec2(1.00000, 0.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_144;
   tmpvar_144 = xll_tex2Dlod (tex_39, tmpvar_143);
   highp float tmpvar_145;
@@ -266,8 +266,8 @@ vec4 FxaaPixelShader (
   tmpvar_146 = tmpvar_145;
   lumaE_130 = tmpvar_146;
   highp vec4 tmpvar_147;
-  tmpvar_147.zw = vec2(0.0, 0.0);
-  tmpvar_147.xy = (posM_133 + (vec2(0.0, -1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_147.zw = vec2(0.00000, 0.00000);
+  tmpvar_147.xy = (posM_133 + (vec2(0.00000, -1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_148;
   tmpvar_148 = xll_tex2Dlod (tex_39, tmpvar_147);
   highp float tmpvar_149;
@@ -276,8 +276,8 @@ vec4 FxaaPixelShader (
   tmpvar_150 = tmpvar_149;
   lumaN_129 = tmpvar_150;
   highp vec4 tmpvar_151;
-  tmpvar_151.zw = vec2(0.0, 0.0);
-  tmpvar_151.xy = (posM_133 + (vec2(-1.0, 0.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_151.zw = vec2(0.00000, 0.00000);
+  tmpvar_151.xy = (posM_133 + (vec2(-1.00000, 0.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_152;
   tmpvar_152 = xll_tex2Dlod (tex_39, tmpvar_151);
   highp float tmpvar_153;
@@ -343,8 +343,8 @@ vec4 FxaaPixelShader (
     return rgbyM_132;
   };
   highp vec4 tmpvar_176;
-  tmpvar_176.zw = vec2(0.0, 0.0);
-  tmpvar_176.xy = (posM_133 + (vec2(-1.0, -1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_176.zw = vec2(0.00000, 0.00000);
+  tmpvar_176.xy = (posM_133 + (vec2(-1.00000, -1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_177;
   tmpvar_177 = xll_tex2Dlod (tex_39, tmpvar_176);
   highp float tmpvar_178;
@@ -353,8 +353,8 @@ vec4 FxaaPixelShader (
   tmpvar_179 = tmpvar_178;
   lumaNW_115 = tmpvar_179;
   highp vec4 tmpvar_180;
-  tmpvar_180.zw = vec2(0.0, 0.0);
-  tmpvar_180.xy = (posM_133 + (vec2(1.0, 1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_180.zw = vec2(0.00000, 0.00000);
+  tmpvar_180.xy = (posM_133 + (vec2(1.00000, 1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_181;
   tmpvar_181 = xll_tex2Dlod (tex_39, tmpvar_180);
   highp float tmpvar_182;
@@ -363,8 +363,8 @@ vec4 FxaaPixelShader (
   tmpvar_183 = tmpvar_182;
   lumaSE_114 = tmpvar_183;
   highp vec4 tmpvar_184;
-  tmpvar_184.zw = vec2(0.0, 0.0);
-  tmpvar_184.xy = (posM_133 + (vec2(1.0, -1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_184.zw = vec2(0.00000, 0.00000);
+  tmpvar_184.xy = (posM_133 + (vec2(1.00000, -1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_185;
   tmpvar_185 = xll_tex2Dlod (tex_39, tmpvar_184);
   highp float tmpvar_186;
@@ -373,8 +373,8 @@ vec4 FxaaPixelShader (
   tmpvar_187 = tmpvar_186;
   lumaNE_113 = tmpvar_187;
   highp vec4 tmpvar_188;
-  tmpvar_188.zw = vec2(0.0, 0.0);
-  tmpvar_188.xy = (posM_133 + (vec2(-1.0, 1.0) * fxaaQualityRcpFrame_42.xy)).xy;
+  tmpvar_188.zw = vec2(0.00000, 0.00000);
+  tmpvar_188.xy = (posM_133 + (vec2(-1.00000, 1.00000) * fxaaQualityRcpFrame_42.xy)).xy;
   vec4 tmpvar_189;
   tmpvar_189 = xll_tex2Dlod (tex_39, tmpvar_188);
   highp float tmpvar_190;
@@ -389,16 +389,16 @@ vec4 FxaaPixelShader (
   tmpvar_193 = (lumaW_128 + lumaE_130);
   lumaWE_110 = tmpvar_193;
   highp float tmpvar_194;
-  tmpvar_194 = (1.0 / range_118);
+  tmpvar_194 = (1.00000 / range_118);
   subpixRcpRange_109 = tmpvar_194;
   highp float tmpvar_195;
   tmpvar_195 = (lumaNS_111 + lumaWE_110);
   subpixNSWE_108 = tmpvar_195;
   highp float tmpvar_196;
-  tmpvar_196 = ((-(2.0) * rgbyM_132.w) + lumaNS_111);
+  tmpvar_196 = ((-(2.00000) * rgbyM_132.w) + lumaNS_111);
   edgeHorz1_107 = tmpvar_196;
   highp float tmpvar_197;
-  tmpvar_197 = ((-(2.0) * rgbyM_132.w) + lumaWE_110);
+  tmpvar_197 = ((-(2.00000) * rgbyM_132.w) + lumaWE_110);
   edgeVert1_106 = tmpvar_197;
   highp float tmpvar_198;
   tmpvar_198 = (lumaNE_113 + lumaSE_114);
@@ -407,10 +407,10 @@ vec4 FxaaPixelShader (
   tmpvar_199 = (lumaNW_115 + lumaNE_113);
   lumaNWNE_104 = tmpvar_199;
   highp float tmpvar_200;
-  tmpvar_200 = ((-(2.0) * lumaE_130) + lumaNESE_105);
+  tmpvar_200 = ((-(2.00000) * lumaE_130) + lumaNESE_105);
   edgeHorz2_103 = tmpvar_200;
   highp float tmpvar_201;
-  tmpvar_201 = ((-(2.0) * lumaN_129) + lumaNWNE_104);
+  tmpvar_201 = ((-(2.00000) * lumaN_129) + lumaNWNE_104);
   edgeVert2_102 = tmpvar_201;
   highp float tmpvar_202;
   tmpvar_202 = (lumaNW_115 + lumaSW_112);
@@ -423,20 +423,20 @@ vec4 FxaaPixelShader (
   highp float tmpvar_205;
   tmpvar_205 = abs (edgeHorz2_103);
   highp float tmpvar_206;
-  tmpvar_206 = ((tmpvar_204 * 2.0) + tmpvar_205);
+  tmpvar_206 = ((tmpvar_204 * 2.00000) + tmpvar_205);
   edgeHorz4_99 = tmpvar_206;
   highp float tmpvar_207;
   tmpvar_207 = abs (edgeVert1_106);
   highp float tmpvar_208;
   tmpvar_208 = abs (edgeVert2_102);
   highp float tmpvar_209;
-  tmpvar_209 = ((tmpvar_207 * 2.0) + tmpvar_208);
+  tmpvar_209 = ((tmpvar_207 * 2.00000) + tmpvar_208);
   edgeVert4_98 = tmpvar_209;
   highp float tmpvar_210;
-  tmpvar_210 = ((-(2.0) * lumaW_128) + lumaNWSW_101);
+  tmpvar_210 = ((-(2.00000) * lumaW_128) + lumaNWSW_101);
   edgeHorz3_97 = tmpvar_210;
   highp float tmpvar_211;
-  tmpvar_211 = ((-(2.0) * lumaS_131) + lumaSWSE_100);
+  tmpvar_211 = ((-(2.00000) * lumaS_131) + lumaSWSE_100);
   edgeVert3_96 = tmpvar_211;
   highp float tmpvar_212;
   tmpvar_212 = abs (edgeHorz3_97);
@@ -458,7 +458,7 @@ vec4 FxaaPixelShader (
   tmpvar_218 = (edgeHorz_95 >= edgeVert_94);
   horzSpan_91 = tmpvar_218;
   highp float tmpvar_219;
-  tmpvar_219 = ((subpixNSWE_108 * 2.0) + subpixNWSWNESE_93);
+  tmpvar_219 = ((subpixNSWE_108 * 2.00000) + subpixNWSWNESE_93);
   subpixA_90 = tmpvar_219;
   if (!(horzSpan_91)) {
     highp float tmpvar_220;
@@ -526,7 +526,7 @@ vec4 FxaaPixelShader (
   posB_81.y = vec2(tmpvar_240).y;
   highp float tmpvar_241;
   if (!(horzSpan_91)) {
-    tmpvar_241 = 0.0;
+    tmpvar_241 = 0.00000;
   } else {
     tmpvar_241 = fxaaQualityRcpFrame_42.x;
   };
@@ -535,7 +535,7 @@ vec4 FxaaPixelShader (
   offNP_80.x = tmpvar_242;
   highp float tmpvar_243;
   if (horzSpan_91) {
-    tmpvar_243 = 0.0;
+    tmpvar_243 = 0.00000;
   } else {
     tmpvar_243 = fxaaQualityRcpFrame_42.y;
   };
@@ -544,31 +544,31 @@ vec4 FxaaPixelShader (
   offNP_80.y = vec2(tmpvar_244).y;
   if (!(horzSpan_91)) {
     highp float tmpvar_245;
-    tmpvar_245 = (posB_81.x + (lengthSign_92 * 0.5));
+    tmpvar_245 = (posB_81.x + (lengthSign_92 * 0.500000));
     posB_81.x = tmpvar_245;
   };
   if (horzSpan_91) {
     highp float tmpvar_246;
-    tmpvar_246 = (posB_81.y + (lengthSign_92 * 0.5));
+    tmpvar_246 = (posB_81.y + (lengthSign_92 * 0.500000));
     posB_81.y = vec2(tmpvar_246).y;
   };
   highp float tmpvar_247;
-  tmpvar_247 = (posB_81.x - (offNP_80.x * 1.0));
+  tmpvar_247 = (posB_81.x - (offNP_80.x * 1.00000));
   posN_79.x = tmpvar_247;
   highp float tmpvar_248;
-  tmpvar_248 = (posB_81.y - (offNP_80.y * 1.0));
+  tmpvar_248 = (posB_81.y - (offNP_80.y * 1.00000));
   posN_79.y = vec2(tmpvar_248).y;
   highp float tmpvar_249;
-  tmpvar_249 = (posB_81.x + (offNP_80.x * 1.0));
+  tmpvar_249 = (posB_81.x + (offNP_80.x * 1.00000));
   posP_78.x = tmpvar_249;
   highp float tmpvar_250;
-  tmpvar_250 = (posB_81.y + (offNP_80.y * 1.0));
+  tmpvar_250 = (posB_81.y + (offNP_80.y * 1.00000));
   posP_78.y = vec2(tmpvar_250).y;
   highp float tmpvar_251;
-  tmpvar_251 = ((-(2.0) * subpixC_82) + 3.0);
+  tmpvar_251 = ((-(2.00000) * subpixC_82) + 3.00000);
   subpixD_77 = tmpvar_251;
   highp vec4 tmpvar_252;
-  tmpvar_252.zw = vec2(0.0, 0.0);
+  tmpvar_252.zw = vec2(0.00000, 0.00000);
   tmpvar_252.xy = posN_79.xy;
   vec4 tmpvar_253;
   tmpvar_253 = xll_tex2Dlod (tex_39, tmpvar_252);
@@ -581,7 +581,7 @@ vec4 FxaaPixelShader (
   tmpvar_256 = (subpixC_82 * subpixC_82);
   subpixE_75 = tmpvar_256;
   highp vec4 tmpvar_257;
-  tmpvar_257.zw = vec2(0.0, 0.0);
+  tmpvar_257.zw = vec2(0.00000, 0.00000);
   tmpvar_257.xy = posP_78.xy;
   vec4 tmpvar_258;
   tmpvar_258 = xll_tex2Dlod (tex_39, tmpvar_257);
@@ -596,22 +596,22 @@ vec4 FxaaPixelShader (
     lumaNN_86 = tmpvar_261;
   };
   highp float tmpvar_262;
-  tmpvar_262 = ((gradient_83 * 1.0) / 4.0);
+  tmpvar_262 = ((gradient_83 * 1.00000) / 4.00000);
   gradientScaled_73 = tmpvar_262;
   highp float tmpvar_263;
-  tmpvar_263 = (rgbyM_132.w - (lumaNN_86 * 0.5));
+  tmpvar_263 = (rgbyM_132.w - (lumaNN_86 * 0.500000));
   lumaMM_72 = tmpvar_263;
   highp float tmpvar_264;
   tmpvar_264 = (subpixD_77 * subpixE_75);
   subpixF_71 = tmpvar_264;
   bool tmpvar_265;
-  tmpvar_265 = (lumaMM_72 < 0.0);
+  tmpvar_265 = (lumaMM_72 < 0.00000);
   lumaMLTZero_70 = tmpvar_265;
   highp float tmpvar_266;
-  tmpvar_266 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+  tmpvar_266 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
   lumaEndN_76 = tmpvar_266;
   highp float tmpvar_267;
-  tmpvar_267 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+  tmpvar_267 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
   lumaEndP_74 = tmpvar_267;
   highp float tmpvar_268;
   tmpvar_268 = abs (lumaEndN_76);
@@ -625,12 +625,12 @@ vec4 FxaaPixelShader (
   doneP_68 = tmpvar_271;
   if (!(doneN_69)) {
     highp float tmpvar_272;
-    tmpvar_272 = (posN_79.x - (offNP_80.x * 1.0));
+    tmpvar_272 = (posN_79.x - (offNP_80.x * 1.00000));
     posN_79.x = tmpvar_272;
   };
   if (!(doneN_69)) {
     highp float tmpvar_273;
-    tmpvar_273 = (posN_79.y - (offNP_80.y * 1.0));
+    tmpvar_273 = (posN_79.y - (offNP_80.y * 1.00000));
     posN_79.y = vec2(tmpvar_273).y;
   };
   bool tmpvar_274;
@@ -644,18 +644,18 @@ vec4 FxaaPixelShader (
   doneNP_67 = tmpvar_275;
   if (!(doneP_68)) {
     highp float tmpvar_276;
-    tmpvar_276 = (posP_78.x + (offNP_80.x * 1.0));
+    tmpvar_276 = (posP_78.x + (offNP_80.x * 1.00000));
     posP_78.x = tmpvar_276;
   };
   if (!(doneP_68)) {
     highp float tmpvar_277;
-    tmpvar_277 = (posP_78.y + (offNP_80.y * 1.0));
+    tmpvar_277 = (posP_78.y + (offNP_80.y * 1.00000));
     posP_78.y = vec2(tmpvar_277).y;
   };
   if (doneNP_67) {
     if (!(doneN_69)) {
       highp vec4 tmpvar_278;
-      tmpvar_278.zw = vec2(0.0, 0.0);
+      tmpvar_278.zw = vec2(0.00000, 0.00000);
       tmpvar_278.xy = posN_79.xy.xy;
       vec4 tmpvar_279;
       tmpvar_279 = xll_tex2Dlod (tex_39, tmpvar_278);
@@ -667,7 +667,7 @@ vec4 FxaaPixelShader (
     };
     if (!(doneP_68)) {
       highp vec4 tmpvar_282;
-      tmpvar_282.zw = vec2(0.0, 0.0);
+      tmpvar_282.zw = vec2(0.00000, 0.00000);
       tmpvar_282.xy = posP_78.xy.xy;
       vec4 tmpvar_283;
       tmpvar_283 = xll_tex2Dlod (tex_39, tmpvar_282);
@@ -679,12 +679,12 @@ vec4 FxaaPixelShader (
     };
     if (!(doneN_69)) {
       highp float tmpvar_286;
-      tmpvar_286 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+      tmpvar_286 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
       lumaEndN_76 = tmpvar_286;
     };
     if (!(doneP_68)) {
       highp float tmpvar_287;
-      tmpvar_287 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+      tmpvar_287 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
       lumaEndP_74 = tmpvar_287;
     };
     highp float tmpvar_288;
@@ -699,12 +699,12 @@ vec4 FxaaPixelShader (
     doneP_68 = tmpvar_291;
     if (!(doneN_69)) {
       highp float tmpvar_292;
-      tmpvar_292 = (posN_79.x - (offNP_80.x * 1.0));
+      tmpvar_292 = (posN_79.x - (offNP_80.x * 1.00000));
       posN_79.x = tmpvar_292;
     };
     if (!(doneN_69)) {
       highp float tmpvar_293;
-      tmpvar_293 = (posN_79.y - (offNP_80.y * 1.0));
+      tmpvar_293 = (posN_79.y - (offNP_80.y * 1.00000));
       posN_79.y = vec2(tmpvar_293).y;
     };
     bool tmpvar_294;
@@ -718,18 +718,18 @@ vec4 FxaaPixelShader (
     doneNP_67 = tmpvar_295;
     if (!(doneP_68)) {
       highp float tmpvar_296;
-      tmpvar_296 = (posP_78.x + (offNP_80.x * 1.0));
+      tmpvar_296 = (posP_78.x + (offNP_80.x * 1.00000));
       posP_78.x = tmpvar_296;
     };
     if (!(doneP_68)) {
       highp float tmpvar_297;
-      tmpvar_297 = (posP_78.y + (offNP_80.y * 1.0));
+      tmpvar_297 = (posP_78.y + (offNP_80.y * 1.00000));
       posP_78.y = vec2(tmpvar_297).y;
     };
     if (doneNP_67) {
       if (!(doneN_69)) {
         highp vec4 tmpvar_298;
-        tmpvar_298.zw = vec2(0.0, 0.0);
+        tmpvar_298.zw = vec2(0.00000, 0.00000);
         tmpvar_298.xy = posN_79.xy.xy;
         vec4 tmpvar_299;
         tmpvar_299 = xll_tex2Dlod (tex_39, tmpvar_298);
@@ -741,7 +741,7 @@ vec4 FxaaPixelShader (
       };
       if (!(doneP_68)) {
         highp vec4 tmpvar_302;
-        tmpvar_302.zw = vec2(0.0, 0.0);
+        tmpvar_302.zw = vec2(0.00000, 0.00000);
         tmpvar_302.xy = posP_78.xy.xy;
         vec4 tmpvar_303;
         tmpvar_303 = xll_tex2Dlod (tex_39, tmpvar_302);
@@ -753,12 +753,12 @@ vec4 FxaaPixelShader (
       };
       if (!(doneN_69)) {
         highp float tmpvar_306;
-        tmpvar_306 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+        tmpvar_306 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
         lumaEndN_76 = tmpvar_306;
       };
       if (!(doneP_68)) {
         highp float tmpvar_307;
-        tmpvar_307 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+        tmpvar_307 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
         lumaEndP_74 = tmpvar_307;
       };
       highp float tmpvar_308;
@@ -773,12 +773,12 @@ vec4 FxaaPixelShader (
       doneP_68 = tmpvar_311;
       if (!(doneN_69)) {
         highp float tmpvar_312;
-        tmpvar_312 = (posN_79.x - (offNP_80.x * 1.0));
+        tmpvar_312 = (posN_79.x - (offNP_80.x * 1.00000));
         posN_79.x = tmpvar_312;
       };
       if (!(doneN_69)) {
         highp float tmpvar_313;
-        tmpvar_313 = (posN_79.y - (offNP_80.y * 1.0));
+        tmpvar_313 = (posN_79.y - (offNP_80.y * 1.00000));
         posN_79.y = vec2(tmpvar_313).y;
       };
       bool tmpvar_314;
@@ -792,18 +792,18 @@ vec4 FxaaPixelShader (
       doneNP_67 = tmpvar_315;
       if (!(doneP_68)) {
         highp float tmpvar_316;
-        tmpvar_316 = (posP_78.x + (offNP_80.x * 1.0));
+        tmpvar_316 = (posP_78.x + (offNP_80.x * 1.00000));
         posP_78.x = tmpvar_316;
       };
       if (!(doneP_68)) {
         highp float tmpvar_317;
-        tmpvar_317 = (posP_78.y + (offNP_80.y * 1.0));
+        tmpvar_317 = (posP_78.y + (offNP_80.y * 1.00000));
         posP_78.y = vec2(tmpvar_317).y;
       };
       if (doneNP_67) {
         if (!(doneN_69)) {
           highp vec4 tmpvar_318;
-          tmpvar_318.zw = vec2(0.0, 0.0);
+          tmpvar_318.zw = vec2(0.00000, 0.00000);
           tmpvar_318.xy = posN_79.xy.xy;
           vec4 tmpvar_319;
           tmpvar_319 = xll_tex2Dlod (tex_39, tmpvar_318);
@@ -815,7 +815,7 @@ vec4 FxaaPixelShader (
         };
         if (!(doneP_68)) {
           highp vec4 tmpvar_322;
-          tmpvar_322.zw = vec2(0.0, 0.0);
+          tmpvar_322.zw = vec2(0.00000, 0.00000);
           tmpvar_322.xy = posP_78.xy.xy;
           vec4 tmpvar_323;
           tmpvar_323 = xll_tex2Dlod (tex_39, tmpvar_322);
@@ -827,12 +827,12 @@ vec4 FxaaPixelShader (
         };
         if (!(doneN_69)) {
           highp float tmpvar_326;
-          tmpvar_326 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+          tmpvar_326 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
           lumaEndN_76 = tmpvar_326;
         };
         if (!(doneP_68)) {
           highp float tmpvar_327;
-          tmpvar_327 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+          tmpvar_327 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
           lumaEndP_74 = tmpvar_327;
         };
         highp float tmpvar_328;
@@ -847,12 +847,12 @@ vec4 FxaaPixelShader (
         doneP_68 = tmpvar_331;
         if (!(doneN_69)) {
           highp float tmpvar_332;
-          tmpvar_332 = (posN_79.x - (offNP_80.x * 1.0));
+          tmpvar_332 = (posN_79.x - (offNP_80.x * 1.00000));
           posN_79.x = tmpvar_332;
         };
         if (!(doneN_69)) {
           highp float tmpvar_333;
-          tmpvar_333 = (posN_79.y - (offNP_80.y * 1.0));
+          tmpvar_333 = (posN_79.y - (offNP_80.y * 1.00000));
           posN_79.y = vec2(tmpvar_333).y;
         };
         bool tmpvar_334;
@@ -866,18 +866,18 @@ vec4 FxaaPixelShader (
         doneNP_67 = tmpvar_335;
         if (!(doneP_68)) {
           highp float tmpvar_336;
-          tmpvar_336 = (posP_78.x + (offNP_80.x * 1.0));
+          tmpvar_336 = (posP_78.x + (offNP_80.x * 1.00000));
           posP_78.x = tmpvar_336;
         };
         if (!(doneP_68)) {
           highp float tmpvar_337;
-          tmpvar_337 = (posP_78.y + (offNP_80.y * 1.0));
+          tmpvar_337 = (posP_78.y + (offNP_80.y * 1.00000));
           posP_78.y = vec2(tmpvar_337).y;
         };
         if (doneNP_67) {
           if (!(doneN_69)) {
             highp vec4 tmpvar_338;
-            tmpvar_338.zw = vec2(0.0, 0.0);
+            tmpvar_338.zw = vec2(0.00000, 0.00000);
             tmpvar_338.xy = posN_79.xy.xy;
             vec4 tmpvar_339;
             tmpvar_339 = xll_tex2Dlod (tex_39, tmpvar_338);
@@ -889,7 +889,7 @@ vec4 FxaaPixelShader (
           };
           if (!(doneP_68)) {
             highp vec4 tmpvar_342;
-            tmpvar_342.zw = vec2(0.0, 0.0);
+            tmpvar_342.zw = vec2(0.00000, 0.00000);
             tmpvar_342.xy = posP_78.xy.xy;
             vec4 tmpvar_343;
             tmpvar_343 = xll_tex2Dlod (tex_39, tmpvar_342);
@@ -901,12 +901,12 @@ vec4 FxaaPixelShader (
           };
           if (!(doneN_69)) {
             highp float tmpvar_346;
-            tmpvar_346 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+            tmpvar_346 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
             lumaEndN_76 = tmpvar_346;
           };
           if (!(doneP_68)) {
             highp float tmpvar_347;
-            tmpvar_347 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+            tmpvar_347 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
             lumaEndP_74 = tmpvar_347;
           };
           highp float tmpvar_348;
@@ -921,12 +921,12 @@ vec4 FxaaPixelShader (
           doneP_68 = tmpvar_351;
           if (!(doneN_69)) {
             highp float tmpvar_352;
-            tmpvar_352 = (posN_79.x - (offNP_80.x * 1.5));
+            tmpvar_352 = (posN_79.x - (offNP_80.x * 1.50000));
             posN_79.x = tmpvar_352;
           };
           if (!(doneN_69)) {
             highp float tmpvar_353;
-            tmpvar_353 = (posN_79.y - (offNP_80.y * 1.5));
+            tmpvar_353 = (posN_79.y - (offNP_80.y * 1.50000));
             posN_79.y = vec2(tmpvar_353).y;
           };
           bool tmpvar_354;
@@ -940,18 +940,18 @@ vec4 FxaaPixelShader (
           doneNP_67 = tmpvar_355;
           if (!(doneP_68)) {
             highp float tmpvar_356;
-            tmpvar_356 = (posP_78.x + (offNP_80.x * 1.5));
+            tmpvar_356 = (posP_78.x + (offNP_80.x * 1.50000));
             posP_78.x = tmpvar_356;
           };
           if (!(doneP_68)) {
             highp float tmpvar_357;
-            tmpvar_357 = (posP_78.y + (offNP_80.y * 1.5));
+            tmpvar_357 = (posP_78.y + (offNP_80.y * 1.50000));
             posP_78.y = vec2(tmpvar_357).y;
           };
           if (doneNP_67) {
             if (!(doneN_69)) {
               highp vec4 tmpvar_358;
-              tmpvar_358.zw = vec2(0.0, 0.0);
+              tmpvar_358.zw = vec2(0.00000, 0.00000);
               tmpvar_358.xy = posN_79.xy.xy;
               vec4 tmpvar_359;
               tmpvar_359 = xll_tex2Dlod (tex_39, tmpvar_358);
@@ -963,7 +963,7 @@ vec4 FxaaPixelShader (
             };
             if (!(doneP_68)) {
               highp vec4 tmpvar_362;
-              tmpvar_362.zw = vec2(0.0, 0.0);
+              tmpvar_362.zw = vec2(0.00000, 0.00000);
               tmpvar_362.xy = posP_78.xy.xy;
               vec4 tmpvar_363;
               tmpvar_363 = xll_tex2Dlod (tex_39, tmpvar_362);
@@ -975,12 +975,12 @@ vec4 FxaaPixelShader (
             };
             if (!(doneN_69)) {
               highp float tmpvar_366;
-              tmpvar_366 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+              tmpvar_366 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
               lumaEndN_76 = tmpvar_366;
             };
             if (!(doneP_68)) {
               highp float tmpvar_367;
-              tmpvar_367 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+              tmpvar_367 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
               lumaEndP_74 = tmpvar_367;
             };
             highp float tmpvar_368;
@@ -995,12 +995,12 @@ vec4 FxaaPixelShader (
             doneP_68 = tmpvar_371;
             if (!(doneN_69)) {
               highp float tmpvar_372;
-              tmpvar_372 = (posN_79.x - (offNP_80.x * 2.0));
+              tmpvar_372 = (posN_79.x - (offNP_80.x * 2.00000));
               posN_79.x = tmpvar_372;
             };
             if (!(doneN_69)) {
               highp float tmpvar_373;
-              tmpvar_373 = (posN_79.y - (offNP_80.y * 2.0));
+              tmpvar_373 = (posN_79.y - (offNP_80.y * 2.00000));
               posN_79.y = vec2(tmpvar_373).y;
             };
             bool tmpvar_374;
@@ -1014,18 +1014,18 @@ vec4 FxaaPixelShader (
             doneNP_67 = tmpvar_375;
             if (!(doneP_68)) {
               highp float tmpvar_376;
-              tmpvar_376 = (posP_78.x + (offNP_80.x * 2.0));
+              tmpvar_376 = (posP_78.x + (offNP_80.x * 2.00000));
               posP_78.x = tmpvar_376;
             };
             if (!(doneP_68)) {
               highp float tmpvar_377;
-              tmpvar_377 = (posP_78.y + (offNP_80.y * 2.0));
+              tmpvar_377 = (posP_78.y + (offNP_80.y * 2.00000));
               posP_78.y = vec2(tmpvar_377).y;
             };
             if (doneNP_67) {
               if (!(doneN_69)) {
                 highp vec4 tmpvar_378;
-                tmpvar_378.zw = vec2(0.0, 0.0);
+                tmpvar_378.zw = vec2(0.00000, 0.00000);
                 tmpvar_378.xy = posN_79.xy.xy;
                 vec4 tmpvar_379;
                 tmpvar_379 = xll_tex2Dlod (tex_39, tmpvar_378);
@@ -1037,7 +1037,7 @@ vec4 FxaaPixelShader (
               };
               if (!(doneP_68)) {
                 highp vec4 tmpvar_382;
-                tmpvar_382.zw = vec2(0.0, 0.0);
+                tmpvar_382.zw = vec2(0.00000, 0.00000);
                 tmpvar_382.xy = posP_78.xy.xy;
                 vec4 tmpvar_383;
                 tmpvar_383 = xll_tex2Dlod (tex_39, tmpvar_382);
@@ -1049,12 +1049,12 @@ vec4 FxaaPixelShader (
               };
               if (!(doneN_69)) {
                 highp float tmpvar_386;
-                tmpvar_386 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+                tmpvar_386 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
                 lumaEndN_76 = tmpvar_386;
               };
               if (!(doneP_68)) {
                 highp float tmpvar_387;
-                tmpvar_387 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+                tmpvar_387 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
                 lumaEndP_74 = tmpvar_387;
               };
               highp float tmpvar_388;
@@ -1069,12 +1069,12 @@ vec4 FxaaPixelShader (
               doneP_68 = tmpvar_391;
               if (!(doneN_69)) {
                 highp float tmpvar_392;
-                tmpvar_392 = (posN_79.x - (offNP_80.x * 2.0));
+                tmpvar_392 = (posN_79.x - (offNP_80.x * 2.00000));
                 posN_79.x = tmpvar_392;
               };
               if (!(doneN_69)) {
                 highp float tmpvar_393;
-                tmpvar_393 = (posN_79.y - (offNP_80.y * 2.0));
+                tmpvar_393 = (posN_79.y - (offNP_80.y * 2.00000));
                 posN_79.y = vec2(tmpvar_393).y;
               };
               bool tmpvar_394;
@@ -1088,18 +1088,18 @@ vec4 FxaaPixelShader (
               doneNP_67 = tmpvar_395;
               if (!(doneP_68)) {
                 highp float tmpvar_396;
-                tmpvar_396 = (posP_78.x + (offNP_80.x * 2.0));
+                tmpvar_396 = (posP_78.x + (offNP_80.x * 2.00000));
                 posP_78.x = tmpvar_396;
               };
               if (!(doneP_68)) {
                 highp float tmpvar_397;
-                tmpvar_397 = (posP_78.y + (offNP_80.y * 2.0));
+                tmpvar_397 = (posP_78.y + (offNP_80.y * 2.00000));
                 posP_78.y = vec2(tmpvar_397).y;
               };
               if (doneNP_67) {
                 if (!(doneN_69)) {
                   highp vec4 tmpvar_398;
-                  tmpvar_398.zw = vec2(0.0, 0.0);
+                  tmpvar_398.zw = vec2(0.00000, 0.00000);
                   tmpvar_398.xy = posN_79.xy.xy;
                   vec4 tmpvar_399;
                   tmpvar_399 = xll_tex2Dlod (tex_39, tmpvar_398);
@@ -1111,7 +1111,7 @@ vec4 FxaaPixelShader (
                 };
                 if (!(doneP_68)) {
                   highp vec4 tmpvar_402;
-                  tmpvar_402.zw = vec2(0.0, 0.0);
+                  tmpvar_402.zw = vec2(0.00000, 0.00000);
                   tmpvar_402.xy = posP_78.xy.xy;
                   vec4 tmpvar_403;
                   tmpvar_403 = xll_tex2Dlod (tex_39, tmpvar_402);
@@ -1123,12 +1123,12 @@ vec4 FxaaPixelShader (
                 };
                 if (!(doneN_69)) {
                   highp float tmpvar_406;
-                  tmpvar_406 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+                  tmpvar_406 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
                   lumaEndN_76 = tmpvar_406;
                 };
                 if (!(doneP_68)) {
                   highp float tmpvar_407;
-                  tmpvar_407 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+                  tmpvar_407 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
                   lumaEndP_74 = tmpvar_407;
                 };
                 highp float tmpvar_408;
@@ -1143,12 +1143,12 @@ vec4 FxaaPixelShader (
                 doneP_68 = tmpvar_411;
                 if (!(doneN_69)) {
                   highp float tmpvar_412;
-                  tmpvar_412 = (posN_79.x - (offNP_80.x * 2.0));
+                  tmpvar_412 = (posN_79.x - (offNP_80.x * 2.00000));
                   posN_79.x = tmpvar_412;
                 };
                 if (!(doneN_69)) {
                   highp float tmpvar_413;
-                  tmpvar_413 = (posN_79.y - (offNP_80.y * 2.0));
+                  tmpvar_413 = (posN_79.y - (offNP_80.y * 2.00000));
                   posN_79.y = vec2(tmpvar_413).y;
                 };
                 bool tmpvar_414;
@@ -1162,18 +1162,18 @@ vec4 FxaaPixelShader (
                 doneNP_67 = tmpvar_415;
                 if (!(doneP_68)) {
                   highp float tmpvar_416;
-                  tmpvar_416 = (posP_78.x + (offNP_80.x * 2.0));
+                  tmpvar_416 = (posP_78.x + (offNP_80.x * 2.00000));
                   posP_78.x = tmpvar_416;
                 };
                 if (!(doneP_68)) {
                   highp float tmpvar_417;
-                  tmpvar_417 = (posP_78.y + (offNP_80.y * 2.0));
+                  tmpvar_417 = (posP_78.y + (offNP_80.y * 2.00000));
                   posP_78.y = vec2(tmpvar_417).y;
                 };
                 if (doneNP_67) {
                   if (!(doneN_69)) {
                     highp vec4 tmpvar_418;
-                    tmpvar_418.zw = vec2(0.0, 0.0);
+                    tmpvar_418.zw = vec2(0.00000, 0.00000);
                     tmpvar_418.xy = posN_79.xy.xy;
                     vec4 tmpvar_419;
                     tmpvar_419 = xll_tex2Dlod (tex_39, tmpvar_418);
@@ -1185,7 +1185,7 @@ vec4 FxaaPixelShader (
                   };
                   if (!(doneP_68)) {
                     highp vec4 tmpvar_422;
-                    tmpvar_422.zw = vec2(0.0, 0.0);
+                    tmpvar_422.zw = vec2(0.00000, 0.00000);
                     tmpvar_422.xy = posP_78.xy.xy;
                     vec4 tmpvar_423;
                     tmpvar_423 = xll_tex2Dlod (tex_39, tmpvar_422);
@@ -1197,12 +1197,12 @@ vec4 FxaaPixelShader (
                   };
                   if (!(doneN_69)) {
                     highp float tmpvar_426;
-                    tmpvar_426 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+                    tmpvar_426 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
                     lumaEndN_76 = tmpvar_426;
                   };
                   if (!(doneP_68)) {
                     highp float tmpvar_427;
-                    tmpvar_427 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+                    tmpvar_427 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
                     lumaEndP_74 = tmpvar_427;
                   };
                   highp float tmpvar_428;
@@ -1217,12 +1217,12 @@ vec4 FxaaPixelShader (
                   doneP_68 = tmpvar_431;
                   if (!(doneN_69)) {
                     highp float tmpvar_432;
-                    tmpvar_432 = (posN_79.x - (offNP_80.x * 2.0));
+                    tmpvar_432 = (posN_79.x - (offNP_80.x * 2.00000));
                     posN_79.x = tmpvar_432;
                   };
                   if (!(doneN_69)) {
                     highp float tmpvar_433;
-                    tmpvar_433 = (posN_79.y - (offNP_80.y * 2.0));
+                    tmpvar_433 = (posN_79.y - (offNP_80.y * 2.00000));
                     posN_79.y = vec2(tmpvar_433).y;
                   };
                   bool tmpvar_434;
@@ -1236,18 +1236,18 @@ vec4 FxaaPixelShader (
                   doneNP_67 = tmpvar_435;
                   if (!(doneP_68)) {
                     highp float tmpvar_436;
-                    tmpvar_436 = (posP_78.x + (offNP_80.x * 2.0));
+                    tmpvar_436 = (posP_78.x + (offNP_80.x * 2.00000));
                     posP_78.x = tmpvar_436;
                   };
                   if (!(doneP_68)) {
                     highp float tmpvar_437;
-                    tmpvar_437 = (posP_78.y + (offNP_80.y * 2.0));
+                    tmpvar_437 = (posP_78.y + (offNP_80.y * 2.00000));
                     posP_78.y = vec2(tmpvar_437).y;
                   };
                   if (doneNP_67) {
                     if (!(doneN_69)) {
                       highp vec4 tmpvar_438;
-                      tmpvar_438.zw = vec2(0.0, 0.0);
+                      tmpvar_438.zw = vec2(0.00000, 0.00000);
                       tmpvar_438.xy = posN_79.xy.xy;
                       vec4 tmpvar_439;
                       tmpvar_439 = xll_tex2Dlod (tex_39, tmpvar_438);
@@ -1259,7 +1259,7 @@ vec4 FxaaPixelShader (
                     };
                     if (!(doneP_68)) {
                       highp vec4 tmpvar_442;
-                      tmpvar_442.zw = vec2(0.0, 0.0);
+                      tmpvar_442.zw = vec2(0.00000, 0.00000);
                       tmpvar_442.xy = posP_78.xy.xy;
                       vec4 tmpvar_443;
                       tmpvar_443 = xll_tex2Dlod (tex_39, tmpvar_442);
@@ -1271,12 +1271,12 @@ vec4 FxaaPixelShader (
                     };
                     if (!(doneN_69)) {
                       highp float tmpvar_446;
-                      tmpvar_446 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+                      tmpvar_446 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
                       lumaEndN_76 = tmpvar_446;
                     };
                     if (!(doneP_68)) {
                       highp float tmpvar_447;
-                      tmpvar_447 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+                      tmpvar_447 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
                       lumaEndP_74 = tmpvar_447;
                     };
                     highp float tmpvar_448;
@@ -1291,12 +1291,12 @@ vec4 FxaaPixelShader (
                     doneP_68 = tmpvar_451;
                     if (!(doneN_69)) {
                       highp float tmpvar_452;
-                      tmpvar_452 = (posN_79.x - (offNP_80.x * 4.0));
+                      tmpvar_452 = (posN_79.x - (offNP_80.x * 4.00000));
                       posN_79.x = tmpvar_452;
                     };
                     if (!(doneN_69)) {
                       highp float tmpvar_453;
-                      tmpvar_453 = (posN_79.y - (offNP_80.y * 4.0));
+                      tmpvar_453 = (posN_79.y - (offNP_80.y * 4.00000));
                       posN_79.y = vec2(tmpvar_453).y;
                     };
                     bool tmpvar_454;
@@ -1310,18 +1310,18 @@ vec4 FxaaPixelShader (
                     doneNP_67 = tmpvar_455;
                     if (!(doneP_68)) {
                       highp float tmpvar_456;
-                      tmpvar_456 = (posP_78.x + (offNP_80.x * 4.0));
+                      tmpvar_456 = (posP_78.x + (offNP_80.x * 4.00000));
                       posP_78.x = tmpvar_456;
                     };
                     if (!(doneP_68)) {
                       highp float tmpvar_457;
-                      tmpvar_457 = (posP_78.y + (offNP_80.y * 4.0));
+                      tmpvar_457 = (posP_78.y + (offNP_80.y * 4.00000));
                       posP_78.y = vec2(tmpvar_457).y;
                     };
                     if (doneNP_67) {
                       if (!(doneN_69)) {
                         highp vec4 tmpvar_458;
-                        tmpvar_458.zw = vec2(0.0, 0.0);
+                        tmpvar_458.zw = vec2(0.00000, 0.00000);
                         tmpvar_458.xy = posN_79.xy.xy;
                         vec4 tmpvar_459;
                         tmpvar_459 = xll_tex2Dlod (tex_39, tmpvar_458);
@@ -1333,7 +1333,7 @@ vec4 FxaaPixelShader (
                       };
                       if (!(doneP_68)) {
                         highp vec4 tmpvar_462;
-                        tmpvar_462.zw = vec2(0.0, 0.0);
+                        tmpvar_462.zw = vec2(0.00000, 0.00000);
                         tmpvar_462.xy = posP_78.xy.xy;
                         vec4 tmpvar_463;
                         tmpvar_463 = xll_tex2Dlod (tex_39, tmpvar_462);
@@ -1345,12 +1345,12 @@ vec4 FxaaPixelShader (
                       };
                       if (!(doneN_69)) {
                         highp float tmpvar_466;
-                        tmpvar_466 = (lumaEndN_76 - (lumaNN_86 * 0.5));
+                        tmpvar_466 = (lumaEndN_76 - (lumaNN_86 * 0.500000));
                         lumaEndN_76 = tmpvar_466;
                       };
                       if (!(doneP_68)) {
                         highp float tmpvar_467;
-                        tmpvar_467 = (lumaEndP_74 - (lumaNN_86 * 0.5));
+                        tmpvar_467 = (lumaEndP_74 - (lumaNN_86 * 0.500000));
                         lumaEndP_74 = tmpvar_467;
                       };
                       highp float tmpvar_468;
@@ -1365,12 +1365,12 @@ vec4 FxaaPixelShader (
                       doneP_68 = tmpvar_471;
                       if (!(doneN_69)) {
                         highp float tmpvar_472;
-                        tmpvar_472 = (posN_79.x - (offNP_80.x * 8.0));
+                        tmpvar_472 = (posN_79.x - (offNP_80.x * 8.00000));
                         posN_79.x = tmpvar_472;
                       };
                       if (!(doneN_69)) {
                         highp float tmpvar_473;
-                        tmpvar_473 = (posN_79.y - (offNP_80.y * 8.0));
+                        tmpvar_473 = (posN_79.y - (offNP_80.y * 8.00000));
                         posN_79.y = vec2(tmpvar_473).y;
                       };
                       bool tmpvar_474;
@@ -1384,12 +1384,12 @@ vec4 FxaaPixelShader (
                       doneNP_67 = tmpvar_475;
                       if (!(doneP_68)) {
                         highp float tmpvar_476;
-                        tmpvar_476 = (posP_78.x + (offNP_80.x * 8.0));
+                        tmpvar_476 = (posP_78.x + (offNP_80.x * 8.00000));
                         posP_78.x = tmpvar_476;
                       };
                       if (!(doneP_68)) {
                         highp float tmpvar_477;
-                        tmpvar_477 = (posP_78.y + (offNP_80.y * 8.0));
+                        tmpvar_477 = (posP_78.y + (offNP_80.y * 8.00000));
                         posP_78.y = vec2(tmpvar_477).y;
                       };
                     };
@@ -1419,16 +1419,16 @@ vec4 FxaaPixelShader (
     dstP_65 = tmpvar_481;
   };
   bool tmpvar_482;
-  tmpvar_482 = ((lumaEndN_76 < 0.0) != lumaMLTZero_70);
+  tmpvar_482 = ((lumaEndN_76 < 0.00000) != lumaMLTZero_70);
   goodSpanN_64 = tmpvar_482;
   highp float tmpvar_483;
   tmpvar_483 = (dstP_65 + dstN_66);
   spanLength_63 = tmpvar_483;
   bool tmpvar_484;
-  tmpvar_484 = ((lumaEndP_74 < 0.0) != lumaMLTZero_70);
+  tmpvar_484 = ((lumaEndP_74 < 0.00000) != lumaMLTZero_70);
   goodSpanP_62 = tmpvar_484;
   highp float tmpvar_485;
-  tmpvar_485 = (1.0 / spanLength_63);
+  tmpvar_485 = (1.00000 / spanLength_63);
   spanLengthRcp_61 = tmpvar_485;
   bool tmpvar_486;
   tmpvar_486 = (dstN_66 < dstP_65);
@@ -1451,7 +1451,7 @@ vec4 FxaaPixelShader (
   tmpvar_491 = (subpixF_71 * subpixF_71);
   subpixG_57 = tmpvar_491;
   highp float tmpvar_492;
-  tmpvar_492 = ((dst_59 * -(spanLengthRcp_61)) + 0.5);
+  tmpvar_492 = ((dst_59 * -(spanLengthRcp_61)) + 0.500000);
   pixelOffset_56 = tmpvar_492;
   highp float tmpvar_493;
   tmpvar_493 = (subpixG_57 * fxaaQualitySubpix_46);
@@ -1460,7 +1460,7 @@ vec4 FxaaPixelShader (
   if (goodSpan_58) {
     tmpvar_494 = pixelOffset_56;
   } else {
-    tmpvar_494 = 0.0;
+    tmpvar_494 = 0.00000;
   };
   highp float tmpvar_495;
   tmpvar_495 = tmpvar_494;
@@ -1481,7 +1481,7 @@ vec4 FxaaPixelShader (
     posM_133.y = vec2(tmpvar_499).y;
   };
   highp vec4 tmpvar_500;
-  tmpvar_500.zw = vec2(0.0, 0.0);
+  tmpvar_500.zw = vec2(0.00000, 0.00000);
   tmpvar_500.xy = posM_133.xy;
   vec4 tmpvar_501;
   tmpvar_501 = xll_tex2Dlod (tex_39, tmpvar_500);
@@ -1497,7 +1497,7 @@ vec4 xlat_main (
 {
   highp float fxaaN_504;
   float tmpvar_505;
-  tmpvar_505 = 0.5;
+  tmpvar_505 = 0.500000;
   fxaaN_504 = tmpvar_505;
   highp vec4 tmpvar_506;
   tmpvar_506.x = -(fxaaN_504);
@@ -1505,7 +1505,7 @@ vec4 xlat_main (
   tmpvar_506.z = fxaaN_504;
   tmpvar_506.w = fxaaN_504;
   highp vec4 tmpvar_507;
-  tmpvar_507 = FxaaPixelShader (i_503.uv, i_503.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_506), (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0)), (_MainTex_TexelSize.xyxy * vec4(8.0, 8.0, -4.0, -4.0)), 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, vec4(1.0, -1.0, 0.25, -0.25));
+  tmpvar_507 = FxaaPixelShader (i_503.uv, i_503.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_506), (_MainTex_TexelSize.xyxy * vec4(-2.00000, -2.00000, 2.00000, 2.00000)), (_MainTex_TexelSize.xyxy * vec4(8.00000, 8.00000, -4.00000, -4.00000)), 0.750000, 0.166000, 0.0833000, 8.00000, 0.125000, 0.0500000, vec4(1.00000, -1.00000, 0.250000, -0.250000));
   return tmpvar_507;
 }
 

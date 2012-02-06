@@ -5,7 +5,7 @@ void main ()
   float result_1;
   float invValue_2;
   float tmpvar_3;
-  tmpvar_3 = (1.0 / value);
+  tmpvar_3 = (1.00000 / value);
   invValue_2 = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (otherValue / invValue_2);

@@ -15,7 +15,7 @@ vec2 MultiplyUV (
 {
   vec4 temp_3;
   vec4 tmpvar_4;
-  tmpvar_4.zw = vec2(0.0, 0.0);
+  tmpvar_4.zw = vec2(0.00000, 0.00000);
   tmpvar_4.x = inUV_2.x;
   tmpvar_4.y = inUV_2.y;
   vec4 tmpvar_5;
@@ -34,7 +34,7 @@ v2f vert (
   float scale_8;
   v2f o_9;
   float tmpvar_10;
-  tmpvar_10 = 1.0;
+  tmpvar_10 = 1.00000;
   scale_8 = tmpvar_10;
   vec4 tmpvar_11;
   tmpvar_11 = (gl_ModelViewProjectionMatrix * v_7.vertex);
@@ -43,7 +43,7 @@ v2f vert (
   tmpvar_12.x = o_9.vertex.x;
   tmpvar_12.y = (o_9.vertex.y * scale_8);
   vec2 tmpvar_13;
-  tmpvar_13 = ((tmpvar_12 + o_9.vertex.w) * 0.5);
+  tmpvar_13 = ((tmpvar_12 + o_9.vertex.w) * 0.500000);
   o_9.uvgrab.xy = tmpvar_13.xy.xy;
   vec2 tmpvar_14;
   tmpvar_14 = o_9.vertex.zw;
@@ -91,13 +91,13 @@ void main ()
   tmpvar_30 = tmpvar_29;
   gl_TexCoord[0] = tmpvar_30;
   vec4 tmpvar_31;
-  tmpvar_31.zw = vec2(0.0, 0.0);
+  tmpvar_31.zw = vec2(0.00000, 0.00000);
   tmpvar_31.xy = xl_retval_20.uvbump.xy;
   vec4 tmpvar_32;
   tmpvar_32 = tmpvar_31;
   gl_TexCoord[1] = tmpvar_32;
   vec4 tmpvar_33;
-  tmpvar_33.zw = vec2(0.0, 0.0);
+  tmpvar_33.zw = vec2(0.00000, 0.00000);
   tmpvar_33.xy = xl_retval_20.uvmain.xy;
   vec4 tmpvar_34;
   tmpvar_34 = tmpvar_33;

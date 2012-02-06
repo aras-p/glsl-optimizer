@@ -9,10 +9,10 @@ void main ()
   vec4 tmpvar_3;
   tmpvar_3 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
   light_2 = tmpvar_3;
-  light_2.xyz = (tmpvar_3.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.0, 1.0))));
+  light_2.xyz = (tmpvar_3.xyz + mix ((2.00000 * texture2D (unity_LightmapInd, tmpvar_1.xy).xyz), (2.00000 * texture2D (unity_Lightmap, tmpvar_1.xy).xyz), vec3(clamp (tmpvar_1.z, 0.00000, 1.00000))));
   vec4 c_4;
   c_4.xyz = (gl_TexCoord[0].xyz * light_2.xyz);
-  c_4.w = 0.0;
+  c_4.w = 0.00000;
   gl_FragData[0] = c_4;
 }
 

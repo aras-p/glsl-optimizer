@@ -45,7 +45,7 @@ void main ()
   tmpvar_14 = tmpvar_13;
   gl_Position = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.w = 0.0;
+  tmpvar_15.w = 0.00000;
   tmpvar_15.xyz = xl_retval_6.texcoord.xyz;
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;

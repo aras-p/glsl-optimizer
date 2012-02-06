@@ -28,10 +28,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -46,7 +46,7 @@ void surf (
   vec4 tmpvar_8;
   tmpvar_8 = texture2D (_Decal, IN_6.uv_Decal);
   vec3 tmpvar_9;
-  tmpvar_9 = (tmpvar_8.xyz * 0.5);
+  tmpvar_9 = (tmpvar_8.xyz * 0.500000);
   o_7.Albedo = tmpvar_9;
   vec4 tmpvar_10;
   tmpvar_10 = texture2D (_DecalBump, IN_6.uv_DecalBump);
@@ -70,12 +70,12 @@ vec4 LightingLambert (
   float tmpvar_19;
   tmpvar_19 = dot (s_14.Normal, lightDir_15);
   float tmpvar_20;
-  tmpvar_20 = max (0.0, tmpvar_19);
+  tmpvar_20 = max (0.00000, tmpvar_19);
   float tmpvar_21;
   tmpvar_21 = tmpvar_20;
   diff_18 = tmpvar_21;
   vec3 tmpvar_22;
-  tmpvar_22 = ((s_14.Albedo * _LightColor0.xyz) * ((diff_18 * atten_16) * 2.0));
+  tmpvar_22 = ((s_14.Albedo * _LightColor0.xyz) * ((diff_18 * atten_16) * 2.00000));
   c_17.xyz = tmpvar_22.xyz.xyz;
   float tmpvar_23;
   tmpvar_23 = s_14.Alpha;
@@ -98,19 +98,19 @@ vec4 frag_surf (
   tmpvar_30 = IN_24.hip_pack0.zw;
   surfIN_28.uv_DecalBump = tmpvar_30;
   vec3 tmpvar_31;
-  tmpvar_31 = vec3(0.0, 0.0, 0.0);
+  tmpvar_31 = vec3(0.00000, 0.00000, 0.00000);
   o_27.Albedo = tmpvar_31;
   vec3 tmpvar_32;
-  tmpvar_32 = vec3(0.0, 0.0, 0.0);
+  tmpvar_32 = vec3(0.00000, 0.00000, 0.00000);
   o_27.Emission = tmpvar_32;
   float tmpvar_33;
-  tmpvar_33 = 0.0;
+  tmpvar_33 = 0.00000;
   o_27.Specular = tmpvar_33;
   float tmpvar_34;
-  tmpvar_34 = 0.0;
+  tmpvar_34 = 0.00000;
   o_27.Alpha = tmpvar_34;
   float tmpvar_35;
-  tmpvar_35 = 0.0;
+  tmpvar_35 = 0.00000;
   o_27.Gloss = tmpvar_35;
   surf (surfIN_28, o_27);
   vec3 tmpvar_36;
@@ -135,7 +135,7 @@ vec4 frag_surf (
   tmpvar_44 = tmpvar_43;
   c_25 = tmpvar_44;
   float tmpvar_45;
-  tmpvar_45 = 0.0;
+  tmpvar_45 = 0.00000;
   c_25.w = vec4(tmpvar_45).w;
   return c_25;
 }
@@ -145,7 +145,7 @@ void main ()
   v2f_surf xlt_IN_46;
   vec4 xl_retval_47;
   vec4 tmpvar_48;
-  tmpvar_48 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_48 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_46.pos = tmpvar_48;
   float tmpvar_49;
   tmpvar_49 = xlv_FOG.x;

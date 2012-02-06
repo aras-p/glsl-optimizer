@@ -5,7 +5,7 @@ void main ()
 {
   SurfaceOutput o_1;
   vec4 tmpvar_2;
-  tmpvar_2 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_2 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   gl_FragColor = tmpvar_2;
 }
 

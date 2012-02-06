@@ -39,7 +39,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_7;
   vec4 tmpvar_8;
-  tmpvar_8 = (pos_6 * 0.5);
+  tmpvar_8 = (pos_6 * 0.500000);
   o_7 = tmpvar_8;
   vec2 tmpvar_9;
   tmpvar_9.x = o_7.x;
@@ -121,13 +121,13 @@ void main ()
   tmpvar_36 = tmpvar_35;
   gl_Position = tmpvar_36;
   vec4 tmpvar_37;
-  tmpvar_37.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_37.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_37.x = xl_retval_20.fog;
   vec4 tmpvar_38;
   tmpvar_38 = tmpvar_37;
   xlv_FOG = tmpvar_38;
   vec4 tmpvar_39;
-  tmpvar_39.zw = vec2(0.0, 0.0);
+  tmpvar_39.zw = vec2(0.00000, 0.00000);
   tmpvar_39.xy = xl_retval_20.hip_pack0.xy;
   vec4 tmpvar_40;
   tmpvar_40 = tmpvar_39;
@@ -138,7 +138,7 @@ void main ()
   tmpvar_42 = tmpvar_41;
   gl_TexCoord[1] = tmpvar_42;
   vec4 tmpvar_43;
-  tmpvar_43.w = 0.0;
+  tmpvar_43.w = 0.00000;
   tmpvar_43.xyz = xl_retval_20.hip_lmapFade.xyz;
   vec4 tmpvar_44;
   tmpvar_44 = tmpvar_43;

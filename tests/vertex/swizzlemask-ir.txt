@@ -2,7 +2,7 @@ varying vec4 texcoord;
 void main ()
 {
   vec2 tmpvar_1;
-  tmpvar_1 = (gl_Vertex.xy * 2.0);
+  tmpvar_1 = (gl_Vertex.xy * 2.00000);
   gl_Position.zw = tmpvar_1.xxxy.zw;
   vec2 tmpvar_2;
   tmpvar_2 = gl_Vertex.xy;

@@ -28,19 +28,19 @@ void main ()
   tmpvar_5[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_6;
-  tmpvar_6.zw = vec2(0.0, 0.0);
+  tmpvar_6.zw = vec2(0.00000, 0.00000);
   tmpvar_6.xy = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   gl_TexCoord[0] = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.w = 0.0;
+  tmpvar_7.w = 0.00000;
   tmpvar_7.xyz = (tmpvar_2 * tmpvar_3[0]);
   gl_TexCoord[1] = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.w = 0.0;
+  tmpvar_8.w = 0.00000;
   tmpvar_8.xyz = (tmpvar_2 * tmpvar_4[1]);
   gl_TexCoord[2] = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
+  tmpvar_9.w = 0.00000;
   tmpvar_9.xyz = (tmpvar_2 * tmpvar_5[2]);
   gl_TexCoord[3] = tmpvar_9;
 }

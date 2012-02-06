@@ -31,7 +31,7 @@ vec4 Squash (
   tmpvar_5 = pos_1.xyz;
   projectedVertex_4 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xz = vec2(0.0, 0.0);
+  tmpvar_6.xz = vec2(0.00000, 0.00000);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -51,7 +51,7 @@ vec4 Squash (
   vec3 tmpvar_13;
   tmpvar_13 = mix (projectedVertex_4, pos_1.xyz, tmpvar_12);
   vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
+  tmpvar_14.w = 1.00000;
   tmpvar_14.xyz = tmpvar_13.xyz;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -69,7 +69,7 @@ void TerrainAnimateTree (
   tmpvar_19 = (pos_16.xyz * _Scale.xyz);
   pos_16.xyz = tmpvar_19.xyz.xyz;
   vec4 tmpvar_20;
-  tmpvar_20.w = 0.0;
+  tmpvar_20.w = 0.00000;
   tmpvar_20.xyz = pos_16.xyz.xyz;
   vec3 tmpvar_21;
   tmpvar_21 = (_TerrainEngineBendTree * tmpvar_20).xyz;
@@ -115,7 +115,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_34;
   vec4 tmpvar_35;
-  tmpvar_35 = (pos_33 * 0.5);
+  tmpvar_35 = (pos_33 * 0.500000);
   o_34 = tmpvar_35;
   vec2 tmpvar_36;
   tmpvar_36.x = o_34.x;
@@ -192,13 +192,13 @@ void main ()
   tmpvar_61 = tmpvar_60;
   gl_Position = tmpvar_61;
   vec4 tmpvar_62;
-  tmpvar_62.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_62.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_62.x = xl_retval_45.fog;
   vec4 tmpvar_63;
   tmpvar_63 = tmpvar_62;
   xlv_FOG = tmpvar_63;
   vec4 tmpvar_64;
-  tmpvar_64.zw = vec2(0.0, 0.0);
+  tmpvar_64.zw = vec2(0.00000, 0.00000);
   tmpvar_64.xy = xl_retval_45.hip_pack0.xy;
   vec4 tmpvar_65;
   tmpvar_65 = tmpvar_64;

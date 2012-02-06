@@ -55,7 +55,7 @@ float xll_mod (
   tmpvar_8 = (tmpvar_7 * y_2);
   f_3 = tmpvar_8;
   float tmpvar_9;
-  if ((d_4 >= 0.0)) {
+  if ((d_4 >= 0.00000)) {
     tmpvar_9 = f_3;
   } else {
     tmpvar_9 = -(f_3);
@@ -81,13 +81,13 @@ vec2 xll_mod (
   tmpvar_17 = (tmpvar_16 * y_11);
   f_12 = tmpvar_17;
   float tmpvar_18;
-  if ((d_13.x >= 0.0)) {
+  if ((d_13.x >= 0.00000)) {
     tmpvar_18 = f_12.x;
   } else {
     tmpvar_18 = -(f_12.x);
   };
   float tmpvar_19;
-  if ((d_13.y >= 0.0)) {
+  if ((d_13.y >= 0.00000)) {
     tmpvar_19 = f_12.y;
   } else {
     tmpvar_19 = -(f_12.y);
@@ -116,19 +116,19 @@ vec3 xll_mod (
   tmpvar_28 = (tmpvar_27 * y_22);
   f_23 = tmpvar_28;
   float tmpvar_29;
-  if ((d_24.x >= 0.0)) {
+  if ((d_24.x >= 0.00000)) {
     tmpvar_29 = f_23.x;
   } else {
     tmpvar_29 = -(f_23.x);
   };
   float tmpvar_30;
-  if ((d_24.y >= 0.0)) {
+  if ((d_24.y >= 0.00000)) {
     tmpvar_30 = f_23.y;
   } else {
     tmpvar_30 = -(f_23.y);
   };
   float tmpvar_31;
-  if ((d_24.z >= 0.0)) {
+  if ((d_24.z >= 0.00000)) {
     tmpvar_31 = f_23.z;
   } else {
     tmpvar_31 = -(f_23.z);
@@ -158,25 +158,25 @@ vec4 xll_mod (
   tmpvar_40 = (tmpvar_39 * y_34);
   f_35 = tmpvar_40;
   float tmpvar_41;
-  if ((d_36.x >= 0.0)) {
+  if ((d_36.x >= 0.00000)) {
     tmpvar_41 = f_35.x;
   } else {
     tmpvar_41 = -(f_35.x);
   };
   float tmpvar_42;
-  if ((d_36.y >= 0.0)) {
+  if ((d_36.y >= 0.00000)) {
     tmpvar_42 = f_35.y;
   } else {
     tmpvar_42 = -(f_35.y);
   };
   float tmpvar_43;
-  if ((d_36.z >= 0.0)) {
+  if ((d_36.z >= 0.00000)) {
     tmpvar_43 = f_35.z;
   } else {
     tmpvar_43 = -(f_35.z);
   };
   float tmpvar_44;
-  if ((d_36.w >= 0.0)) {
+  if ((d_36.w >= 0.00000)) {
     tmpvar_44 = f_35.w;
   } else {
     tmpvar_44 = -(f_35.w);
@@ -194,7 +194,7 @@ float xll_saturate (
 )
 {
   float tmpvar_47;
-  tmpvar_47 = clamp (x_46, 0.0, 1.0);
+  tmpvar_47 = clamp (x_46, 0.00000, 1.00000);
   return tmpvar_47;
 }
 
@@ -203,7 +203,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_49;
-  tmpvar_49 = clamp (x_48, 0.0, 1.0);
+  tmpvar_49 = clamp (x_48, 0.00000, 1.00000);
   return tmpvar_49;
 }
 
@@ -212,7 +212,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_51;
-  tmpvar_51 = clamp (x_50, 0.0, 1.0);
+  tmpvar_51 = clamp (x_50, 0.00000, 1.00000);
   return tmpvar_51;
 }
 
@@ -221,7 +221,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_53;
-  tmpvar_53 = clamp (x_52, 0.0, 1.0);
+  tmpvar_53 = clamp (x_52, 0.00000, 1.00000);
   return tmpvar_53;
 }
 
@@ -230,9 +230,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_55;
-  tmpvar_55 = clamp (m_54[0], 0.0, 1.0);
+  tmpvar_55 = clamp (m_54[0], 0.00000, 1.00000);
   vec2 tmpvar_56;
-  tmpvar_56 = clamp (m_54[1], 0.0, 1.0);
+  tmpvar_56 = clamp (m_54[1], 0.00000, 1.00000);
   mat2 tmpvar_57;
   vec2 tmpvar_58;
   tmpvar_58 = tmpvar_55;
@@ -248,11 +248,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_61;
-  tmpvar_61 = clamp (m_60[0], 0.0, 1.0);
+  tmpvar_61 = clamp (m_60[0], 0.00000, 1.00000);
   vec3 tmpvar_62;
-  tmpvar_62 = clamp (m_60[1], 0.0, 1.0);
+  tmpvar_62 = clamp (m_60[1], 0.00000, 1.00000);
   vec3 tmpvar_63;
-  tmpvar_63 = clamp (m_60[2], 0.0, 1.0);
+  tmpvar_63 = clamp (m_60[2], 0.00000, 1.00000);
   mat3 tmpvar_64;
   vec3 tmpvar_65;
   tmpvar_65 = tmpvar_61;
@@ -271,13 +271,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_69;
-  tmpvar_69 = clamp (m_68[0], 0.0, 1.0);
+  tmpvar_69 = clamp (m_68[0], 0.00000, 1.00000);
   vec4 tmpvar_70;
-  tmpvar_70 = clamp (m_68[1], 0.0, 1.0);
+  tmpvar_70 = clamp (m_68[1], 0.00000, 1.00000);
   vec4 tmpvar_71;
-  tmpvar_71 = clamp (m_68[2], 0.0, 1.0);
+  tmpvar_71 = clamp (m_68[2], 0.00000, 1.00000);
   vec4 tmpvar_72;
-  tmpvar_72 = clamp (m_68[3], 0.0, 1.0);
+  tmpvar_72 = clamp (m_68[3], 0.00000, 1.00000);
   mat4 tmpvar_73;
   vec4 tmpvar_74;
   tmpvar_74 = tmpvar_69;
@@ -303,10 +303,10 @@ void CalcOrthonormalBasis (
   highp float tmpvar_81;
   tmpvar_81 = abs (dir_78.y);
   vec3 tmpvar_82;
-  if ((tmpvar_81 > 0.999)) {
-    tmpvar_82 = vec3(0.0, 0.0, 1.0);
+  if ((tmpvar_81 > 0.999000)) {
+    tmpvar_82 = vec3(0.00000, 0.00000, 1.00000);
   } else {
-    tmpvar_82 = vec3(0.0, 1.0, 0.0);
+    tmpvar_82 = vec3(0.00000, 1.00000, 0.00000);
   };
   vec3 tmpvar_83;
   tmpvar_83 = tmpvar_82;
@@ -337,11 +337,11 @@ float CalcFadeOutFactor (
   tmpvar_93 = tmpvar_92;
   nfadeout_91 = tmpvar_93;
   highp float tmpvar_94;
-  tmpvar_94 = max ((dist_89 - _FadeOutDistFar), 0.0);
+  tmpvar_94 = max ((dist_89 - _FadeOutDistFar), 0.00000);
   float tmpvar_95;
-  tmpvar_95 = xll_saturate ((tmpvar_94 * 0.2));
+  tmpvar_95 = xll_saturate ((tmpvar_94 * 0.200000));
   float tmpvar_96;
-  tmpvar_96 = (1.0 - tmpvar_95);
+  tmpvar_96 = (1.00000 - tmpvar_95);
   ffadeout_90 = tmpvar_96;
   highp float tmpvar_97;
   tmpvar_97 = (ffadeout_90 * ffadeout_90);
@@ -364,9 +364,9 @@ float CalcDistScale (
 {
   highp float distScale_102;
   highp float tmpvar_103;
-  tmpvar_103 = max ((dist_101 - _SizeGrowStartDist), 0.0);
+  tmpvar_103 = max ((dist_101 - _SizeGrowStartDist), 0.00000);
   highp float tmpvar_104;
-  tmpvar_104 = min ((tmpvar_103 / _SizeGrowEndDist), 1.0);
+  tmpvar_104 = min ((tmpvar_103 / _SizeGrowEndDist), 1.00000);
   highp float tmpvar_105;
   tmpvar_105 = tmpvar_104;
   distScale_102 = tmpvar_105;
@@ -395,8 +395,8 @@ v2f xlat_main (
   highp vec3 centerLocal_122;
   highp vec3 centerOffs_123;
   highp vec3 tmpvar_124;
-  tmpvar_124.z = 0.0;
-  tmpvar_124.xy = (vec2(0.5, 0.5) - v_106.color.xy).xy;
+  tmpvar_124.z = 0.00000;
+  tmpvar_124.xy = (vec2(0.500000, 0.500000) - v_106.color.xy).xy;
   highp vec3 tmpvar_125;
   tmpvar_125 = (tmpvar_124 * v_106.texcoord1.xyy);
   centerOffs_123 = tmpvar_125;
@@ -404,7 +404,7 @@ v2f xlat_main (
   tmpvar_126 = (v_106.vertex.xyz + centerOffs_123.xyz);
   centerLocal_122 = tmpvar_126;
   highp vec4 tmpvar_127;
-  tmpvar_127.w = 1.0;
+  tmpvar_127.w = 1.00000;
   tmpvar_127.xyz = _WorldSpaceCameraPos.xyz;
   highp vec3 tmpvar_128;
   tmpvar_128 = (_World2Object * tmpvar_127).xyz;
@@ -415,7 +415,7 @@ v2f xlat_main (
   tmpvar_130 = (viewerLocal_121 - centerLocal_122);
   localDir_120 = tmpvar_130;
   highp float tmpvar_131;
-  tmpvar_131 = mix (0.0, localDir_120.y, _VerticalBillboarding);
+  tmpvar_131 = mix (0.00000, localDir_120.y, _VerticalBillboarding);
   highp float tmpvar_132;
   tmpvar_132 = tmpvar_131;
   localDir_120.y = vec2(tmpvar_132).y;
@@ -445,11 +445,11 @@ v2f xlat_main (
   tmpvar_141 = tmpvar_140;
   fracTime_112 = tmpvar_141;
   highp float tmpvar_142;
-  tmpvar_142 = smoothstep (0.0, (_TimeOnDuration * 0.25), fracTime_112);
+  tmpvar_142 = smoothstep (0.00000, (_TimeOnDuration * 0.250000), fracTime_112);
   highp float tmpvar_143;
-  tmpvar_143 = smoothstep ((_TimeOnDuration * 0.75), _TimeOnDuration, fracTime_112);
+  tmpvar_143 = smoothstep ((_TimeOnDuration * 0.750000), _TimeOnDuration, fracTime_112);
   highp float tmpvar_144;
-  tmpvar_144 = (tmpvar_142 * (1.0 - tmpvar_143));
+  tmpvar_144 = (tmpvar_142 * (1.00000 - tmpvar_143));
   wave_111 = tmpvar_144;
   highp float tmpvar_145;
   tmpvar_145 = (time_113 * (6.28319 / _TimeOnDuration));
@@ -457,15 +457,15 @@ v2f xlat_main (
   highp float tmpvar_146;
   tmpvar_146 = sin (noiseTime_110);
   highp float tmpvar_147;
-  tmpvar_147 = cos (((noiseTime_110 * 0.6366) + 56.7272));
+  tmpvar_147 = cos (((noiseTime_110 * 0.636600) + 56.7272));
   highp float tmpvar_148;
-  tmpvar_148 = (tmpvar_146 * ((0.5 * tmpvar_147) + 0.5));
+  tmpvar_148 = (tmpvar_146 * ((0.500000 * tmpvar_147) + 0.500000));
   noise_109 = tmpvar_148;
   highp float tmpvar_149;
-  tmpvar_149 = ((_NoiseAmount * noise_109) + (1.0 - _NoiseAmount));
+  tmpvar_149 = ((_NoiseAmount * noise_109) + (1.00000 - _NoiseAmount));
   noiseWave_108 = tmpvar_149;
   highp float tmpvar_150;
-  if ((_NoiseAmount < 0.01)) {
+  if ((_NoiseAmount < 0.0100000)) {
     tmpvar_150 = wave_111;
   } else {
     tmpvar_150 = noiseWave_108;
@@ -480,7 +480,7 @@ v2f xlat_main (
   tmpvar_153 = v_106.texcoord.xy;
   o_107.uv = tmpvar_153;
   highp vec4 tmpvar_154;
-  tmpvar_154.w = 1.0;
+  tmpvar_154.w = 1.00000;
   tmpvar_154.xyz = BBLocalPos_114.xyz;
   highp vec4 tmpvar_155;
   tmpvar_155 = (glstate_matrix_mvp * tmpvar_154);

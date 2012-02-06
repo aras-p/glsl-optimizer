@@ -41,7 +41,7 @@ vec4 Squash (
   tmpvar_5 = pos_1.xyz;
   projectedVertex_4 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xz = vec2(0.0, 0.0);
+  tmpvar_6.xz = vec2(0.00000, 0.00000);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -61,7 +61,7 @@ vec4 Squash (
   vec3 tmpvar_13;
   tmpvar_13 = mix (projectedVertex_4, pos_1.xyz, tmpvar_12);
   vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
+  tmpvar_14.w = 1.00000;
   tmpvar_14.xyz = tmpvar_13.xyz;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -82,10 +82,10 @@ void ExpandBillboard (
   float tmpvar_23;
   tmpvar_23 = abs (tangent_19.w);
   float tmpvar_24;
-  tmpvar_24 = (1.0 - tmpvar_23);
+  tmpvar_24 = (1.00000 - tmpvar_23);
   isBillboard_22 = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.w = 0.0;
+  tmpvar_25.w = 0.00000;
   tmpvar_25.xyz = normal_18.xyz;
   vec4 tmpvar_26;
   tmpvar_26 = normalize ((tmpvar_25 * mat_16));
@@ -95,7 +95,7 @@ void ExpandBillboard (
   tmpvar_28 = tmpvar_27;
   norb_21 = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.yw = vec2(0.0, 0.0);
+  tmpvar_29.yw = vec2(0.00000, 0.00000);
   tmpvar_29.x = normal_18.z;
   tmpvar_29.z = -(normal_18.x);
   vec4 tmpvar_30;
@@ -116,7 +116,7 @@ void ExpandBillboard (
   tmpvar_36 = tmpvar_35;
   normal_18 = tmpvar_36;
   vec4 tmpvar_37;
-  tmpvar_37.w = -1.0;
+  tmpvar_37.w = -1.00000;
   tmpvar_37.xyz = tanb_20.xyz;
   vec4 tmpvar_38;
   tmpvar_38 = vec4(isBillboard_22);
@@ -132,9 +132,9 @@ vec4 TriangleWave (
 )
 {
   vec4 tmpvar_42;
-  tmpvar_42 = fract ((x_41 + 0.5));
+  tmpvar_42 = fract ((x_41 + 0.500000));
   vec4 tmpvar_43;
-  tmpvar_43 = abs (((tmpvar_42 * 2.0) - 1.0));
+  tmpvar_43 = abs (((tmpvar_42 * 2.00000) - 1.00000));
   return tmpvar_43;
 }
 
@@ -142,7 +142,7 @@ vec4 SmoothCurve (
   in vec4 x_44
 )
 {
-  return ((x_44 * x_44) * (3.0 - (2.0 * x_44)));
+  return ((x_44 * x_44) * (3.00000 - (2.00000 * x_44)));
 }
 
 vec4 SmoothTriangleWave (
@@ -172,13 +172,13 @@ vec4 AnimateVertex (
   float fBranchAmp_58;
   float fDetailAmp_59;
   float tmpvar_60;
-  tmpvar_60 = 0.1;
+  tmpvar_60 = 0.100000;
   fDetailAmp_59 = tmpvar_60;
   float tmpvar_61;
-  tmpvar_61 = 0.3;
+  tmpvar_61 = 0.300000;
   fBranchAmp_58 = tmpvar_61;
   float tmpvar_62;
-  tmpvar_62 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
+  tmpvar_62 = dot (_Object2World[3].xyz, vec3(1.00000, 1.00000, 1.00000));
   float tmpvar_63;
   tmpvar_63 = tmpvar_62;
   fObjPhase_57 = tmpvar_63;
@@ -199,9 +199,9 @@ vec4 AnimateVertex (
   tmpvar_69 = (_TimeX + tmpvar_68);
   vWavesIn_54 = tmpvar_69;
   vec4 tmpvar_70;
-  tmpvar_70 = fract ((vWavesIn_54.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
+  tmpvar_70 = fract ((vWavesIn_54.xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_71;
-  tmpvar_71 = ((tmpvar_70 * 2.0) - 1.0);
+  tmpvar_71 = ((tmpvar_70 * 2.00000) - 1.00000);
   vWaves_53 = tmpvar_71;
   vec4 tmpvar_72;
   tmpvar_72 = SmoothTriangleWave (vWaves_53);
@@ -285,7 +285,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_98;
   vec4 tmpvar_99;
-  tmpvar_99.w = 1.0;
+  tmpvar_99.w = 1.00000;
   tmpvar_99.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_100;
   tmpvar_100 = ((_World2Object * tmpvar_99).xyz * unity_Scale.w);
@@ -416,13 +416,13 @@ void main ()
   tmpvar_145 = tmpvar_144;
   gl_Position = tmpvar_145;
   vec4 tmpvar_146;
-  tmpvar_146.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_146.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_146.x = xl_retval_129.fog;
   vec4 tmpvar_147;
   tmpvar_147 = tmpvar_146;
   xlv_FOG = tmpvar_147;
   vec4 tmpvar_148;
-  tmpvar_148.zw = vec2(0.0, 0.0);
+  tmpvar_148.zw = vec2(0.00000, 0.00000);
   tmpvar_148.xy = xl_retval_129.hip_pack0.xy;
   vec4 tmpvar_149;
   tmpvar_149 = tmpvar_148;
@@ -433,19 +433,19 @@ void main ()
   tmpvar_151 = tmpvar_150;
   gl_FrontColor = tmpvar_151;
   vec4 tmpvar_152;
-  tmpvar_152.w = 0.0;
+  tmpvar_152.w = 0.00000;
   tmpvar_152.xyz = xl_retval_129.lightDir.xyz;
   vec4 tmpvar_153;
   tmpvar_153 = tmpvar_152;
   gl_TexCoord[1] = tmpvar_153;
   vec4 tmpvar_154;
-  tmpvar_154.w = 0.0;
+  tmpvar_154.w = 0.00000;
   tmpvar_154.xyz = xl_retval_129.viewDir.xyz;
   vec4 tmpvar_155;
   tmpvar_155 = tmpvar_154;
   gl_TexCoord[2] = tmpvar_155;
   vec4 tmpvar_156;
-  tmpvar_156.w = 0.0;
+  tmpvar_156.w = 0.00000;
   tmpvar_156.xyz = xl_retval_129._LightCoord.xyz;
   vec4 tmpvar_157;
   tmpvar_157 = tmpvar_156;

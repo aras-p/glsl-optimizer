@@ -1,6 +1,6 @@
 vec4 xlat_main ()
 {
-  return vec4(1.0, 1.0, 1.0, 1.0);
+  return vec4(1.00000, 1.00000, 1.00000, 1.00000);
 }
 
 void main ()

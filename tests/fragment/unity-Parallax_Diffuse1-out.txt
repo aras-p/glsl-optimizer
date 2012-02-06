@@ -15,13 +15,13 @@ void main ()
   vec3 tmpvar_5;
   tmpvar_5 = normalize (gl_TexCoord[1].xyz);
   v_4 = tmpvar_5;
-  v_4.z = (tmpvar_5.z + 0.42);
-  tmpvar_3 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_5.xy / v_4.z));
+  v_4.z = (tmpvar_5.z + 0.420000);
+  tmpvar_3 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.00000)) * (tmpvar_5.xy / v_4.z));
   vec4 tmpvar_6;
   tmpvar_6 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_3)) * _Color);
   vec4 normal_7;
-  normal_7.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_3)).wy * 2.0) - 1.0);
-  normal_7.z = sqrt (((1.0 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
+  normal_7.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_3)).wy * 2.00000) - 1.00000);
+  normal_7.z = sqrt (((1.00000 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
   vec4 tmpvar_8;
   tmpvar_8 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2])));
   light_2 = tmpvar_8;

@@ -7,7 +7,7 @@ void main ()
   tmpvar_1 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
   float x_2;
   x_2 = (tmpvar_1.w - _Cutoff);
-  if ((x_2 < 0.0)) {
+  if ((x_2 < 0.00000)) {
     discard;
   };
   gl_FragData[0] = tmpvar_1;

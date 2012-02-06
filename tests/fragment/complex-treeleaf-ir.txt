@@ -39,7 +39,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -49,7 +49,7 @@ float xll_saturate (
 )
 {
   float tmpvar_3;
-  tmpvar_3 = clamp (x_2, 0.0, 1.0);
+  tmpvar_3 = clamp (x_2, 0.00000, 1.00000);
   return tmpvar_3;
 }
 
@@ -58,7 +58,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_5;
-  tmpvar_5 = clamp (x_4, 0.0, 1.0);
+  tmpvar_5 = clamp (x_4, 0.00000, 1.00000);
   return tmpvar_5;
 }
 
@@ -67,7 +67,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_7;
-  tmpvar_7 = clamp (x_6, 0.0, 1.0);
+  tmpvar_7 = clamp (x_6, 0.00000, 1.00000);
   return tmpvar_7;
 }
 
@@ -76,7 +76,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_9;
-  tmpvar_9 = clamp (x_8, 0.0, 1.0);
+  tmpvar_9 = clamp (x_8, 0.00000, 1.00000);
   return tmpvar_9;
 }
 
@@ -85,9 +85,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_10[0], 0.0, 1.0);
+  tmpvar_11 = clamp (m_10[0], 0.00000, 1.00000);
   vec2 tmpvar_12;
-  tmpvar_12 = clamp (m_10[1], 0.0, 1.0);
+  tmpvar_12 = clamp (m_10[1], 0.00000, 1.00000);
   mat2 tmpvar_13;
   vec2 tmpvar_14;
   tmpvar_14 = tmpvar_11;
@@ -103,11 +103,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_16[0], 0.0, 1.0);
+  tmpvar_17 = clamp (m_16[0], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_16[1], 0.0, 1.0);
+  tmpvar_18 = clamp (m_16[1], 0.00000, 1.00000);
   vec3 tmpvar_19;
-  tmpvar_19 = clamp (m_16[2], 0.0, 1.0);
+  tmpvar_19 = clamp (m_16[2], 0.00000, 1.00000);
   mat3 tmpvar_20;
   vec3 tmpvar_21;
   tmpvar_21 = tmpvar_17;
@@ -126,13 +126,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_24[0], 0.0, 1.0);
+  tmpvar_25 = clamp (m_24[0], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_24[1], 0.0, 1.0);
+  tmpvar_26 = clamp (m_24[1], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_24[2], 0.0, 1.0);
+  tmpvar_27 = clamp (m_24[2], 0.00000, 1.00000);
   vec4 tmpvar_28;
-  tmpvar_28 = clamp (m_24[3], 0.0, 1.0);
+  tmpvar_28 = clamp (m_24[3], 0.00000, 1.00000);
   mat4 tmpvar_29;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_25;
@@ -155,10 +155,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_35;
   vec2 tmpvar_36;
-  tmpvar_36 = ((packednormal_34.wy * 2.0) - 1.0);
+  tmpvar_36 = ((packednormal_34.wy * 2.00000) - 1.00000);
   normal_35.xy = tmpvar_36.xy.xy;
   float tmpvar_37;
-  tmpvar_37 = sqrt (((1.0 - (normal_35.x * normal_35.x)) - (normal_35.y * normal_35.y)));
+  tmpvar_37 = sqrt (((1.00000 - (normal_35.x * normal_35.x)) - (normal_35.y * normal_35.y)));
   float tmpvar_38;
   tmpvar_38 = tmpvar_37;
   normal_35.z = vec3(tmpvar_38).z;
@@ -242,12 +242,12 @@ vec4 LightingTreeLeaf (
   float tmpvar_74;
   tmpvar_74 = dot (s_59.Normal, h_69);
   float tmpvar_75;
-  tmpvar_75 = max (0.0, tmpvar_74);
+  tmpvar_75 = max (0.00000, tmpvar_74);
   float tmpvar_76;
   tmpvar_76 = tmpvar_75;
   nh_67 = tmpvar_76;
   float tmpvar_77;
-  tmpvar_77 = pow (nh_67, (s_59.Specular * 128.0));
+  tmpvar_77 = pow (nh_67, (s_59.Specular * 128.000));
   float tmpvar_78;
   tmpvar_78 = (tmpvar_77 * s_59.Gloss);
   spec_66 = tmpvar_78;
@@ -269,18 +269,18 @@ vec4 LightingTreeLeaf (
   tmpvar_85 = ((backContrib_65 * s_59.Translucency) * _TranslucencyColor);
   translucencyColor_64 = tmpvar_85;
   float tmpvar_86;
-  tmpvar_86 = max (0.0, ((nl_68 * 0.6) + 0.4));
+  tmpvar_86 = max (0.00000, ((nl_68 * 0.600000) + 0.400000));
   float tmpvar_87;
   tmpvar_87 = tmpvar_86;
   nl_68 = tmpvar_87;
   vec3 tmpvar_88;
-  tmpvar_88 = (s_59.Albedo * ((translucencyColor_64 * 2.0) + nl_68));
+  tmpvar_88 = (s_59.Albedo * ((translucencyColor_64 * 2.00000) + nl_68));
   c_63.xyz = tmpvar_88.xyz.xyz;
   vec3 tmpvar_89;
   tmpvar_89 = ((c_63.xyz * _LightColor0.xyz) + spec_66);
   c_63.xyz = tmpvar_89.xyz.xyz;
   float tmpvar_90;
-  tmpvar_90 = mix (2.0, (atten_62 * 2.0), _ShadowStrength);
+  tmpvar_90 = mix (2.00000, (atten_62 * 2.00000), _ShadowStrength);
   vec3 tmpvar_91;
   tmpvar_91 = (c_63.xyz * tmpvar_90);
   c_63.xyz = tmpvar_91.xyz.xyz;
@@ -302,16 +302,16 @@ vec4 xlat_main (
   tmpvar_98 = IN_92.lop_color;
   surfIN_96.color = tmpvar_98;
   vec3 tmpvar_99;
-  tmpvar_99 = vec3(0.0, 0.0, 0.0);
+  tmpvar_99 = vec3(0.00000, 0.00000, 0.00000);
   o_95.Albedo = tmpvar_99;
   vec3 tmpvar_100;
-  tmpvar_100 = vec3(0.0, 0.0, 0.0);
+  tmpvar_100 = vec3(0.00000, 0.00000, 0.00000);
   o_95.Emission = tmpvar_100;
   float tmpvar_101;
-  tmpvar_101 = 0.0;
+  tmpvar_101 = 0.00000;
   o_95.Specular = tmpvar_101;
   float tmpvar_102;
-  tmpvar_102 = 0.0;
+  tmpvar_102 = 0.00000;
   o_95.Alpha = tmpvar_102;
   surf (surfIN_96, o_95);
   xll_clip ((o_95.Alpha - _Cutoff));
@@ -325,7 +325,7 @@ vec4 xlat_main (
   vec4 tmpvar_106;
   tmpvar_106 = texture2D (_LightTexture0, IN_92._LightCoord);
   vec4 tmpvar_107;
-  tmpvar_107 = LightingTreeLeaf (o_95, lightDir_94, tmpvar_105, (tmpvar_106.w * 1.0));
+  tmpvar_107 = LightingTreeLeaf (o_95, lightDir_94, tmpvar_105, (tmpvar_106.w * 1.00000));
   vec4 tmpvar_108;
   tmpvar_108 = tmpvar_107;
   c_93 = tmpvar_108;
@@ -340,7 +340,7 @@ void main ()
   v2f_surf xlt_IN_110;
   vec4 xl_retval_111;
   vec4 tmpvar_112;
-  tmpvar_112 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_112 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_110.pos = tmpvar_112;
   vec2 tmpvar_113;
   tmpvar_113 = xlv_TEXCOORD0.xy;

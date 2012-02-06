@@ -7,7 +7,7 @@ void main ()
   tmpvar_1 = gl_TexCoord[1].xy;
   vec2 uv_2;
   float tmpvar_3;
-  tmpvar_3 = max (0.0, (1.0 - length ((tmpvar_1 / _CenterRadius.zw))));
+  tmpvar_3 = max (0.00000, (1.00000 - length ((tmpvar_1 / _CenterRadius.zw))));
   float tmpvar_4;
   tmpvar_4 = ((tmpvar_3 * tmpvar_3) * _Angle);
   float tmpvar_5;

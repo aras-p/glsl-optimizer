@@ -17,7 +17,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_2;
   vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
+  tmpvar_3.w = 1.00000;
   tmpvar_3.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_4;
   tmpvar_4 = ((_World2Object * tmpvar_3).xyz * unity_Scale.w);
@@ -47,7 +47,7 @@ v2f vert (
   tmpvar_13 = tmpvar_12;
   o_7.texcoord = tmpvar_13;
   vec4 tmpvar_14;
-  tmpvar_14.w = 0.0;
+  tmpvar_14.w = 0.00000;
   tmpvar_14.xyz = o_7.texcoord.xyz;
   vec3 tmpvar_15;
   tmpvar_15 = (gl_ModelViewMatrix * tmpvar_14).xyz;
@@ -95,7 +95,7 @@ void main ()
   tmpvar_31 = tmpvar_30;
   gl_FrontColor = tmpvar_31;
   vec4 tmpvar_32;
-  tmpvar_32.w = 0.0;
+  tmpvar_32.w = 0.00000;
   tmpvar_32.xyz = xl_retval_19.texcoord.xyz;
   vec4 tmpvar_33;
   tmpvar_33 = tmpvar_32;

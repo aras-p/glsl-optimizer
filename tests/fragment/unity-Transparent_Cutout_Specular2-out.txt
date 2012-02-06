@@ -20,13 +20,13 @@ void main ()
   tmpvar_6 = (tmpvar_4.w * _Color.w);
   float x_7;
   x_7 = (tmpvar_6 - _Cutoff);
-  if ((x_7 < 0.0)) {
+  if ((x_7 < 0.00000)) {
     discard;
   };
   vec4 tmpvar_8;
   tmpvar_8 = -(log2 (texture2DProj (_LightBuffer, tmpvar_1)));
   light_3 = tmpvar_8;
-  light_3.xyz = (tmpvar_8.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_2.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_2.xy).xyz), vec3(clamp (tmpvar_2.z, 0.0, 1.0))));
+  light_3.xyz = (tmpvar_8.xyz + mix ((2.00000 * texture2D (unity_LightmapInd, tmpvar_2.xy).xyz), (2.00000 * texture2D (unity_Lightmap, tmpvar_2.xy).xyz), vec3(clamp (tmpvar_2.z, 0.00000, 1.00000))));
   vec4 c_9;
   float tmpvar_10;
   tmpvar_10 = (tmpvar_8.w * tmpvar_4.w);

@@ -25,7 +25,7 @@ float xll_saturate (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  tmpvar_2 = clamp (x_1, 0.00000, 1.00000);
   return tmpvar_2;
 }
 
@@ -34,7 +34,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_4;
-  tmpvar_4 = clamp (x_3, 0.0, 1.0);
+  tmpvar_4 = clamp (x_3, 0.00000, 1.00000);
   return tmpvar_4;
 }
 
@@ -43,7 +43,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_6;
-  tmpvar_6 = clamp (x_5, 0.0, 1.0);
+  tmpvar_6 = clamp (x_5, 0.00000, 1.00000);
   return tmpvar_6;
 }
 
@@ -52,7 +52,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_8;
-  tmpvar_8 = clamp (x_7, 0.0, 1.0);
+  tmpvar_8 = clamp (x_7, 0.00000, 1.00000);
   return tmpvar_8;
 }
 
@@ -61,9 +61,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_10;
-  tmpvar_10 = clamp (m_9[0], 0.0, 1.0);
+  tmpvar_10 = clamp (m_9[0], 0.00000, 1.00000);
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_9[1], 0.0, 1.0);
+  tmpvar_11 = clamp (m_9[1], 0.00000, 1.00000);
   mat2 tmpvar_12;
   vec2 tmpvar_13;
   tmpvar_13 = tmpvar_10;
@@ -79,11 +79,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_16;
-  tmpvar_16 = clamp (m_15[0], 0.0, 1.0);
+  tmpvar_16 = clamp (m_15[0], 0.00000, 1.00000);
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_15[1], 0.0, 1.0);
+  tmpvar_17 = clamp (m_15[1], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_15[2], 0.0, 1.0);
+  tmpvar_18 = clamp (m_15[2], 0.00000, 1.00000);
   mat3 tmpvar_19;
   vec3 tmpvar_20;
   tmpvar_20 = tmpvar_16;
@@ -102,13 +102,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_24;
-  tmpvar_24 = clamp (m_23[0], 0.0, 1.0);
+  tmpvar_24 = clamp (m_23[0], 0.00000, 1.00000);
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_23[1], 0.0, 1.0);
+  tmpvar_25 = clamp (m_23[1], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_23[2], 0.0, 1.0);
+  tmpvar_26 = clamp (m_23[2], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_23[3], 0.0, 1.0);
+  tmpvar_27 = clamp (m_23[3], 0.00000, 1.00000);
   mat4 tmpvar_28;
   vec4 tmpvar_29;
   tmpvar_29 = tmpvar_24;
@@ -154,7 +154,7 @@ vec3 DecodeLightmap (
   in vec4 color_41
 )
 {
-  return (2.0 * color_41.xyz);
+  return (2.00000 * color_41.xyz);
 }
 
 vec4 frag_surf (
@@ -172,19 +172,19 @@ vec4 frag_surf (
   tmpvar_50 = IN_42.cust_foo;
   surfIN_49.foo = tmpvar_50;
   vec3 tmpvar_51;
-  tmpvar_51 = vec3(0.0, 0.0, 0.0);
+  tmpvar_51 = vec3(0.00000, 0.00000, 0.00000);
   o_48.Albedo = tmpvar_51;
   vec3 tmpvar_52;
-  tmpvar_52 = vec3(0.0, 0.0, 0.0);
+  tmpvar_52 = vec3(0.00000, 0.00000, 0.00000);
   o_48.Emission = tmpvar_52;
   float tmpvar_53;
-  tmpvar_53 = 0.0;
+  tmpvar_53 = 0.00000;
   o_48.Specular = tmpvar_53;
   float tmpvar_54;
-  tmpvar_54 = 0.0;
+  tmpvar_54 = 0.00000;
   o_48.Alpha = tmpvar_54;
   float tmpvar_55;
-  tmpvar_55 = 0.0;
+  tmpvar_55 = 0.00000;
   o_48.Gloss = tmpvar_55;
   surf (surfIN_49, o_48);
   vec4 tmpvar_56;
@@ -236,7 +236,7 @@ void main ()
   v2f_surf xlt_IN_73;
   vec4 xl_retval_74;
   vec4 tmpvar_75;
-  tmpvar_75 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_75 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_73.pos = tmpvar_75;
   float tmpvar_76;
   tmpvar_76 = xlv_FOG.x;

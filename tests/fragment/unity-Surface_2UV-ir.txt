@@ -34,7 +34,7 @@ void surf (
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_Detail, IN_1.uv2_Detail);
   vec3 tmpvar_5;
-  tmpvar_5 = ((tmpvar_3.xyz * tmpvar_4.xyz) * 2.0);
+  tmpvar_5 = ((tmpvar_3.xyz * tmpvar_4.xyz) * 2.00000);
   o_2.Albedo = tmpvar_5;
 }
 
@@ -43,7 +43,7 @@ float UnitySpotCookie (
 )
 {
   vec4 tmpvar_7;
-  tmpvar_7 = texture2D (_LightTexture0, ((LightCoord_6.xy / LightCoord_6.w) + 0.5));
+  tmpvar_7 = texture2D (_LightTexture0, ((LightCoord_6.xy / LightCoord_6.w) + 0.500000));
   return tmpvar_7.w;
 }
 
@@ -73,12 +73,12 @@ vec4 LightingLambert (
   float tmpvar_18;
   tmpvar_18 = dot (s_13.Normal, lightDir_14);
   float tmpvar_19;
-  tmpvar_19 = max (0.0, tmpvar_18);
+  tmpvar_19 = max (0.00000, tmpvar_18);
   float tmpvar_20;
   tmpvar_20 = tmpvar_19;
   diff_17 = tmpvar_20;
   vec3 tmpvar_21;
-  tmpvar_21 = ((s_13.Albedo * _LightColor0.xyz) * ((diff_17 * atten_15) * 2.0));
+  tmpvar_21 = ((s_13.Albedo * _LightColor0.xyz) * ((diff_17 * atten_15) * 2.00000));
   c_16.xyz = tmpvar_21.xyz.xyz;
   float tmpvar_22;
   tmpvar_22 = s_13.Alpha;
@@ -101,19 +101,19 @@ vec4 frag_surf (
   tmpvar_29 = IN_23.hip_pack0.zw;
   surfIN_27.uv2_Detail = tmpvar_29;
   vec3 tmpvar_30;
-  tmpvar_30 = vec3(0.0, 0.0, 0.0);
+  tmpvar_30 = vec3(0.00000, 0.00000, 0.00000);
   o_26.Albedo = tmpvar_30;
   vec3 tmpvar_31;
-  tmpvar_31 = vec3(0.0, 0.0, 0.0);
+  tmpvar_31 = vec3(0.00000, 0.00000, 0.00000);
   o_26.Emission = tmpvar_31;
   float tmpvar_32;
-  tmpvar_32 = 0.0;
+  tmpvar_32 = 0.00000;
   o_26.Specular = tmpvar_32;
   float tmpvar_33;
-  tmpvar_33 = 0.0;
+  tmpvar_33 = 0.00000;
   o_26.Alpha = tmpvar_33;
   float tmpvar_34;
-  tmpvar_34 = 0.0;
+  tmpvar_34 = 0.00000;
   o_26.Gloss = tmpvar_34;
   vec3 tmpvar_35;
   tmpvar_35 = IN_23.normal;
@@ -132,12 +132,12 @@ vec4 frag_surf (
   float tmpvar_40;
   tmpvar_40 = UnitySpotAttenuate (IN_23._LightCoord.xyz);
   vec4 tmpvar_41;
-  tmpvar_41 = LightingLambert (o_26, lightDir_25, ((float((IN_23._LightCoord.z > 0.0)) * tmpvar_39) * tmpvar_40));
+  tmpvar_41 = LightingLambert (o_26, lightDir_25, ((float((IN_23._LightCoord.z > 0.00000)) * tmpvar_39) * tmpvar_40));
   vec4 tmpvar_42;
   tmpvar_42 = tmpvar_41;
   c_24 = tmpvar_42;
   float tmpvar_43;
-  tmpvar_43 = 0.0;
+  tmpvar_43 = 0.00000;
   c_24.w = vec4(tmpvar_43).w;
   return c_24;
 }
@@ -147,7 +147,7 @@ void main ()
   v2f_surf xlt_IN_44;
   vec4 xl_retval_45;
   vec4 tmpvar_46;
-  tmpvar_46 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_46 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_44.pos = tmpvar_46;
   float tmpvar_47;
   tmpvar_47 = xlv_FOG.x;

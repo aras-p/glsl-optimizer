@@ -32,7 +32,7 @@ vec4 Squash (
   tmpvar_5 = pos_1.xyz;
   projectedVertex_4 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xz = vec2(0.0, 0.0);
+  tmpvar_6.xz = vec2(0.00000, 0.00000);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -52,7 +52,7 @@ vec4 Squash (
   vec3 tmpvar_13;
   tmpvar_13 = mix (projectedVertex_4, pos_1.xyz, tmpvar_12);
   vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
+  tmpvar_14.w = 1.00000;
   tmpvar_14.xyz = tmpvar_13.xyz;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -70,7 +70,7 @@ void TerrainAnimateTree (
   tmpvar_19 = (pos_16.xyz * _Scale.xyz);
   pos_16.xyz = tmpvar_19.xyz.xyz;
   vec4 tmpvar_20;
-  tmpvar_20.w = 0.0;
+  tmpvar_20.w = 0.00000;
   tmpvar_20.xyz = pos_16.xyz.xyz;
   vec3 tmpvar_21;
   tmpvar_21 = (_TerrainEngineBendTree * tmpvar_20).xyz;
@@ -104,7 +104,7 @@ v2f vert (
   tmpvar_35 = 0;
   i_30 = tmpvar_35;
   float tmpvar_36;
-  tmpvar_36 = 1.0;
+  tmpvar_36 = 1.00000;
   atten_29 = tmpvar_36;
   TerrainAnimateTree (v_27.vertex, v_27.color.w);
   vec3 tmpvar_37;
@@ -140,7 +140,7 @@ v2f vert (
     tmpvar_46 = tmpvar_45;
     occ_28 = tmpvar_46;
     float tmpvar_47;
-    tmpvar_47 = max (0.0, occ_28);
+    tmpvar_47 = max (0.00000, occ_28);
     float tmpvar_48;
     tmpvar_48 = tmpvar_47;
     occ_28 = tmpvar_48;
@@ -157,13 +157,13 @@ v2f vert (
     i_30 = tmpvar_52;
   };
   float tmpvar_53;
-  tmpvar_53 = 1.0;
+  tmpvar_53 = 1.00000;
   lightColor_31.w = vec4(tmpvar_53).w;
   vec4 tmpvar_54;
   tmpvar_54 = (lightColor_31 * _Color);
   o_33.color = tmpvar_54;
   float tmpvar_55;
-  tmpvar_55 = 1.0;
+  tmpvar_55 = 1.00000;
   o_33.color.w = vec4(tmpvar_55).w;
   return o_33;
 }
@@ -208,7 +208,7 @@ void main ()
   tmpvar_71 = tmpvar_70;
   gl_Position = tmpvar_71;
   vec4 tmpvar_72;
-  tmpvar_72.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_72.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_72.x = xl_retval_57.fog;
   vec4 tmpvar_73;
   tmpvar_73 = tmpvar_72;

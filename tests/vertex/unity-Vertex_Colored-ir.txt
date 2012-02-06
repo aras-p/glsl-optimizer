@@ -80,7 +80,7 @@ void main ()
   tmpvar_24 = tmpvar_23;
   gl_Position = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_25.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_25.x = xl_retval_12.fog;
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;
@@ -91,13 +91,13 @@ void main ()
   tmpvar_28 = tmpvar_27;
   gl_FrontColor = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.zw = vec2(0.0, 0.0);
+  tmpvar_29.zw = vec2(0.00000, 0.00000);
   tmpvar_29.xy = xl_retval_12.texcoord.xy;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_29;
   gl_TexCoord[0] = tmpvar_30;
   vec4 tmpvar_31;
-  tmpvar_31.w = 0.0;
+  tmpvar_31.w = 0.00000;
   tmpvar_31.xyz = xl_retval_12.normal.xyz;
   vec4 tmpvar_32;
   tmpvar_32 = tmpvar_31;

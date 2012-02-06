@@ -16,7 +16,7 @@ vec4 xlat_main (
 )
 {
   vec4 tmpvar_5;
-  tmpvar_5.zw = vec2(0.0, 0.0);
+  tmpvar_5.zw = vec2(0.00000, 0.00000);
   tmpvar_5.xy = uv_4.xy.xy;
   vec4 tmpvar_6;
   tmpvar_6 = xll_tex2Dlod (tex, tmpvar_5);

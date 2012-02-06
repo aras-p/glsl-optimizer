@@ -4,13 +4,13 @@ vec4 xlat_main ()
   vec4 c_2;
   vec2 poisson_3[8];
   vec2 tmpvar_4;
-  tmpvar_4 = vec2(0.0, 0.0);
+  tmpvar_4 = vec2(0.00000, 0.00000);
   poisson_3[0] = tmpvar_4;
   vec2 tmpvar_5;
-  tmpvar_5 = vec2(0.527837, -0.085868);
+  tmpvar_5 = vec2(0.527837, -0.0858680);
   poisson_3[1] = tmpvar_5;
   vec2 tmpvar_6;
-  tmpvar_6 = vec2(-0.040088, 0.536087);
+  tmpvar_6 = vec2(-0.0400880, 0.536087);
   poisson_3[2] = tmpvar_6;
   vec2 tmpvar_7;
   tmpvar_7 = vec2(-0.670445, -0.179949);
@@ -31,7 +31,7 @@ vec4 xlat_main ()
   tmpvar_12 = 0;
   i_1 = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_13 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   c_2 = tmpvar_13;
   while (true) {
     if (!((i_1 < 8))) {

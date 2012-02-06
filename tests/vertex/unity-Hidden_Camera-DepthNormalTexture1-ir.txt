@@ -30,10 +30,10 @@ void FastSinCos (
   vec4 r6_11;
   vec4 r5_12;
   vec4 tmpvar_13;
-  tmpvar_13 = vec4(1.0, -0.161616, 0.0083333, -0.00019841);
+  tmpvar_13 = vec4(1.00000, -0.161616, 0.00833330, -0.000198410);
   sin7_5 = tmpvar_13;
   vec4 tmpvar_14;
-  tmpvar_14 = vec4(-0.5, 0.0416667, -0.00138889, 2.48016e-05);
+  tmpvar_14 = vec4(-0.500000, 0.0416667, -0.00138889, 2.48016e-05);
   cos8_4 = tmpvar_14;
   vec4 tmpvar_15;
   tmpvar_15 = ((val_1 * 6.40885) - 3.14159);
@@ -63,7 +63,7 @@ void FastSinCos (
   tmpvar_23 = (((val_1 + (r1_8 * sin7_5.y)) + (r2_7 * sin7_5.z)) + (r3_6 * sin7_5.w));
   s_2 = tmpvar_23;
   vec4 tmpvar_24;
-  tmpvar_24 = ((((1.0 + (r5_12 * cos8_4.x)) + (r6_11 * cos8_4.y)) + (r7_10 * cos8_4.z)) + (r8_9 * cos8_4.w));
+  tmpvar_24 = ((((1.00000 + (r5_12 * cos8_4.x)) + (r6_11 * cos8_4.y)) + (r7_10 * cos8_4.z)) + (r8_9 * cos8_4.w));
   c_3 = tmpvar_24;
 }
 
@@ -86,22 +86,22 @@ void TerrainWaveGrass (
   vec4 _waveZSize_38;
   vec4 _waveXSize_39;
   vec4 tmpvar_40;
-  tmpvar_40 = vec4(1.2, 2.0, 1.6, 4.8);
+  tmpvar_40 = vec4(1.20000, 2.00000, 1.60000, 4.80000);
   waveSpeed_37 = tmpvar_40;
   vec4 tmpvar_41;
-  tmpvar_41 = vec4(0.024, 0.04, -0.12, 0.096);
+  tmpvar_41 = vec4(0.0240000, 0.0400000, -0.120000, 0.0960000);
   _waveXmove_36 = tmpvar_41;
   vec4 tmpvar_42;
-  tmpvar_42 = vec4(0.006, 0.02, -0.02, 0.1);
+  tmpvar_42 = vec4(0.00600000, 0.0200000, -0.0200000, 0.100000);
   _waveZmove_35 = tmpvar_42;
   vec3 tmpvar_43;
-  tmpvar_43 = vec3(0.0, 0.0, 0.0);
+  tmpvar_43 = vec3(0.00000, 0.00000, 0.00000);
   waveMove_30 = tmpvar_43;
   vec4 tmpvar_44;
-  tmpvar_44 = (vec4(0.012, 0.02, 0.06, 0.024) * _WaveAndDistance.y);
+  tmpvar_44 = (vec4(0.0120000, 0.0200000, 0.0600000, 0.0240000) * _WaveAndDistance.y);
   _waveXSize_39 = tmpvar_44;
   vec4 tmpvar_45;
-  tmpvar_45 = (vec4(0.006, 0.02, 0.02, 0.05) * _WaveAndDistance.y);
+  tmpvar_45 = (vec4(0.00600000, 0.0200000, 0.0200000, 0.0500000) * _WaveAndDistance.y);
   _waveZSize_38 = tmpvar_45;
   vec4 tmpvar_46;
   tmpvar_46 = (vertex_25.x * _waveXSize_39);
@@ -125,11 +125,11 @@ void TerrainWaveGrass (
   tmpvar_52 = (s_33 * s_33);
   s_33 = tmpvar_52;
   vec4 tmpvar_53;
-  tmpvar_53 = normalize (vec4(1.0, 1.0, 0.4, 0.2));
+  tmpvar_53 = normalize (vec4(1.00000, 1.00000, 0.400000, 0.200000));
   float tmpvar_54;
   tmpvar_54 = dot (s_33, tmpvar_53);
   float tmpvar_55;
-  tmpvar_55 = (tmpvar_54 * 0.7);
+  tmpvar_55 = (tmpvar_54 * 0.700000);
   lighting_31 = tmpvar_55;
   vec4 tmpvar_56;
   tmpvar_56 = (s_33 * waveAmount_26);
@@ -150,15 +150,15 @@ void TerrainWaveGrass (
   vec3 tmpvar_62;
   tmpvar_62 = vec3(lighting_31);
   vec3 tmpvar_63;
-  tmpvar_63 = mix (vec3(0.5, 0.5, 0.5), _WavingTint.xyz, tmpvar_62);
+  tmpvar_63 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, tmpvar_62);
   vec3 tmpvar_64;
   tmpvar_64 = tmpvar_63;
   waveColor_29 = tmpvar_64;
   vec3 tmpvar_65;
-  tmpvar_65 = ((color_27 * waveColor_29) * 2.0);
+  tmpvar_65 = ((color_27 * waveColor_29) * 2.00000);
   outColor_28.xyz = tmpvar_65.xyz.xyz;
   float tmpvar_66;
-  tmpvar_66 = 1.0;
+  tmpvar_66 = 1.00000;
   outColor_28.w = vec4(tmpvar_66).w;
 }
 
@@ -173,7 +173,7 @@ v2f vert (
   tmpvar_71 = (v_67.color.w * _WaveAndDistance.z);
   waveAmount_70 = tmpvar_71;
   vec4 tmpvar_72;
-  tmpvar_72 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_72 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   dummyColor_69 = tmpvar_72;
   vec3 tmpvar_73;
   tmpvar_73 = dummyColor_69.xyz;
@@ -187,7 +187,7 @@ v2f vert (
   tmpvar_76 = tmpvar_75;
   o_68.uv = tmpvar_76;
   vec3 tmpvar_77;
-  tmpvar_77 = vec3(0.0, 0.0, 1.0);
+  tmpvar_77 = vec3(0.00000, 0.00000, 1.00000);
   o_68.nz.xyz = tmpvar_77.xyz.xyz;
   float tmpvar_78;
   tmpvar_78 = -(((gl_ModelViewMatrix * v_67.vertex).z * _ProjectionParams.w));
@@ -235,7 +235,7 @@ void main ()
   tmpvar_94 = tmpvar_93;
   gl_Position = tmpvar_94;
   vec4 tmpvar_95;
-  tmpvar_95.zw = vec2(0.0, 0.0);
+  tmpvar_95.zw = vec2(0.00000, 0.00000);
   tmpvar_95.xy = xl_retval_80.uv.xy;
   vec4 tmpvar_96;
   tmpvar_96 = tmpvar_95;

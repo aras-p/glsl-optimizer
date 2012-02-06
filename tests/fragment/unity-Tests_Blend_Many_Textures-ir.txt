@@ -111,7 +111,7 @@ void main ()
   v2f xlt_i_35;
   vec4 xl_retval_36;
   vec4 tmpvar_37;
-  tmpvar_37 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_37 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_35.pos = tmpvar_37;
   vec2 tmpvar_38;
   tmpvar_38 = gl_TexCoord[0].xy;

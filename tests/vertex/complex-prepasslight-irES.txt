@@ -23,7 +23,7 @@ vec4 ComputeScreenPos (
 {
   highp vec4 o_2;
   highp vec4 tmpvar_3;
-  tmpvar_3 = (pos_1 * 0.5);
+  tmpvar_3 = (pos_1 * 0.500000);
   o_2 = tmpvar_3;
   highp vec2 tmpvar_4;
   tmpvar_4.x = o_2.x;
@@ -51,10 +51,10 @@ v2f xlat_main (
   tmpvar_11 = tmpvar_10;
   o_8.uv = tmpvar_11;
   highp vec3 tmpvar_12;
-  tmpvar_12 = ((glstate_matrix_modelview0 * v_7.vertex).xyz * vec3(-1.0, -1.0, 1.0));
+  tmpvar_12 = ((glstate_matrix_modelview0 * v_7.vertex).xyz * vec3(-1.00000, -1.00000, 1.00000));
   o_8.ray = tmpvar_12;
   highp vec3 tmpvar_13;
-  tmpvar_13 = vec3(float((v_7.normal.z != 0.0)));
+  tmpvar_13 = vec3(float((v_7.normal.z != 0.00000)));
   highp vec3 tmpvar_14;
   tmpvar_14 = mix (o_8.ray, v_7.normal, tmpvar_13);
   highp vec3 tmpvar_15;

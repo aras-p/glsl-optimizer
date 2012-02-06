@@ -20,7 +20,7 @@ void main ()
   v2f xlt_i_3;
   lowp vec4 xl_retval_4;
   vec4 tmpvar_5;
-  tmpvar_5 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_5 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_3.vertex = tmpvar_5;
   lowp vec4 tmpvar_6;
   tmpvar_6 = xlv_COLOR.xyzw;

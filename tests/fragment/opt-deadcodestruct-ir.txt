@@ -7,7 +7,7 @@ void main ()
   foo s_1;
   float f_2;
   float tmpvar_3;
-  tmpvar_3 = 1.0;
+  tmpvar_3 = 1.00000;
   f_2 = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = f_2;

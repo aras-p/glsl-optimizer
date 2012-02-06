@@ -29,10 +29,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -94,19 +94,19 @@ vec4 frag_surf (
   tmpvar_28 = IN_23.hip_pack0.xy;
   surfIN_27.uv_BumpMap = tmpvar_28;
   vec3 tmpvar_29;
-  tmpvar_29 = vec3(0.0, 0.0, 0.0);
+  tmpvar_29 = vec3(0.00000, 0.00000, 0.00000);
   o_26.Albedo = tmpvar_29;
   vec3 tmpvar_30;
-  tmpvar_30 = vec3(0.0, 0.0, 0.0);
+  tmpvar_30 = vec3(0.00000, 0.00000, 0.00000);
   o_26.Emission = tmpvar_30;
   float tmpvar_31;
-  tmpvar_31 = 0.0;
+  tmpvar_31 = 0.00000;
   o_26.Specular = tmpvar_31;
   float tmpvar_32;
-  tmpvar_32 = 0.0;
+  tmpvar_32 = 0.00000;
   o_26.Alpha = tmpvar_32;
   float tmpvar_33;
-  tmpvar_33 = 0.0;
+  tmpvar_33 = 0.00000;
   o_26.Gloss = tmpvar_33;
   surf (surfIN_27, o_26);
   float tmpvar_34;
@@ -128,7 +128,7 @@ vec4 frag_surf (
   tmpvar_40 = viewN_25;
   o_26.Normal = tmpvar_40;
   vec3 tmpvar_41;
-  tmpvar_41 = ((o_26.Normal * vec3(0.5, 0.5, -0.5)) + 0.5);
+  tmpvar_41 = ((o_26.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
   res_24.xyz = tmpvar_41.xyz.xyz;
   float tmpvar_42;
   tmpvar_42 = o_26.Specular;
@@ -141,7 +141,7 @@ void main ()
   v2f_surf xlt_IN_43;
   vec4 xl_retval_44;
   vec4 tmpvar_45;
-  tmpvar_45 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_45 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_43.pos = tmpvar_45;
   vec2 tmpvar_46;
   tmpvar_46 = gl_TexCoord[0].xy;

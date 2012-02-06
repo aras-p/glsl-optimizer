@@ -7,7 +7,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -22,8 +22,8 @@ vec4 frag (
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   texcol_3 = tmpvar_5;
-  xll_clip ((texcol_3.w - 0.001));
-  return vec4(0.0, 0.0, 0.0, 0.0);
+  xll_clip ((texcol_3.w - 0.00100000));
+  return vec4(0.00000, 0.00000, 0.00000, 0.00000);
 }
 
 void main ()
@@ -31,7 +31,7 @@ void main ()
   v2f xlt_i_6;
   vec4 xl_retval_7;
   vec4 tmpvar_8;
-  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_8 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_6.pos = tmpvar_8;
   vec2 tmpvar_9;
   tmpvar_9 = gl_TexCoord[0].xy;

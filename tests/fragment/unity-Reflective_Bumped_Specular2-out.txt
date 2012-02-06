@@ -25,8 +25,8 @@ void main ()
   vec4 tmpvar_8;
   tmpvar_8 = texture2D (_MainTex, tmpvar_1.xy);
   vec4 normal_9;
-  normal_9.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
-  normal_9.z = sqrt (((1.0 - (normal_9.x * normal_9.x)) - (normal_9.y * normal_9.y)));
+  normal_9.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
+  normal_9.z = sqrt (((1.00000 - (normal_9.x * normal_9.x)) - (normal_9.y * normal_9.y)));
   vec3 tmpvar_10;
   tmpvar_10 = normal_9.xyz;
   vec3 tmpvar_11;

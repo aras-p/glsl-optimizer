@@ -35,10 +35,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -53,7 +53,7 @@ vec2 ParallaxOffset (
 {
   vec3 v_9;
   float tmpvar_10;
-  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.0));
+  tmpvar_10 = ((h_6 * height_7) - (height_7 / 2.00000));
   h_6 = tmpvar_10;
   vec3 tmpvar_11;
   tmpvar_11 = normalize (viewDir_8);
@@ -61,7 +61,7 @@ vec2 ParallaxOffset (
   tmpvar_12 = tmpvar_11;
   v_9 = tmpvar_12;
   float tmpvar_13;
-  tmpvar_13 = (v_9.z + 0.42);
+  tmpvar_13 = (v_9.z + 0.420000);
   v_9.z = vec3(tmpvar_13).z;
   return (h_6 * (v_9.xy / v_9.z));
 }
@@ -156,19 +156,19 @@ vec4 frag_surf (
   tmpvar_49 = IN_41.viewDir;
   surfIN_45.viewDir = tmpvar_49;
   vec3 tmpvar_50;
-  tmpvar_50 = vec3(0.0, 0.0, 0.0);
+  tmpvar_50 = vec3(0.00000, 0.00000, 0.00000);
   o_44.Albedo = tmpvar_50;
   vec3 tmpvar_51;
-  tmpvar_51 = vec3(0.0, 0.0, 0.0);
+  tmpvar_51 = vec3(0.00000, 0.00000, 0.00000);
   o_44.Emission = tmpvar_51;
   float tmpvar_52;
-  tmpvar_52 = 0.0;
+  tmpvar_52 = 0.00000;
   o_44.Specular = tmpvar_52;
   float tmpvar_53;
-  tmpvar_53 = 0.0;
+  tmpvar_53 = 0.00000;
   o_44.Alpha = tmpvar_53;
   float tmpvar_54;
-  tmpvar_54 = 0.0;
+  tmpvar_54 = 0.00000;
   o_44.Gloss = tmpvar_54;
   surf (surfIN_45, o_44);
   vec4 tmpvar_55;
@@ -200,7 +200,7 @@ void main ()
   v2f_surf xlt_IN_63;
   vec4 xl_retval_64;
   vec4 tmpvar_65;
-  tmpvar_65 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_65 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_63.pos = tmpvar_65;
   float tmpvar_66;
   tmpvar_66 = xlv_FOG.x;

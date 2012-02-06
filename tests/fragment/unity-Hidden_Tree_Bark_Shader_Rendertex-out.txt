@@ -5,8 +5,8 @@ void main ()
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col_1 = tmpvar_2;
-  col_1.xyz = (tmpvar_2.xyz * (gl_TexCoord[1].xyz * 2.0));
-  col_1.w = 1.0;
+  col_1.xyz = (tmpvar_2.xyz * (gl_TexCoord[1].xyz * 2.00000));
+  col_1.w = 1.00000;
   gl_FragData[0] = col_1;
 }
 

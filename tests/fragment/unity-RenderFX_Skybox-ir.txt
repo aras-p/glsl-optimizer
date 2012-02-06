@@ -17,7 +17,7 @@ vec4 skybox_frag (
   tmpvar_6 = tmpvar_5;
   tex_4 = tmpvar_6;
   vec3 tmpvar_7;
-  tmpvar_7 = ((tex_4.xyz + _Tint.xyz) - 0.5);
+  tmpvar_7 = ((tex_4.xyz + _Tint.xyz) - 0.500000);
   col_3.xyz = tmpvar_7.xyz.xyz;
   float tmpvar_8;
   tmpvar_8 = (tex_4.w * _Tint.w);
@@ -39,7 +39,7 @@ void main ()
   v2f xlt_i_11;
   vec4 xl_retval_12;
   vec4 tmpvar_13;
-  tmpvar_13 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_13 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_11.vertex = tmpvar_13;
   vec2 tmpvar_14;
   tmpvar_14 = gl_TexCoord[0].xy;

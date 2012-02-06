@@ -9,7 +9,7 @@ float LinearEyeDepth (
   in float z_1
 )
 {
-  return (1.0 / ((_ZBufferParams.z * z_1) + _ZBufferParams.w));
+  return (1.00000 / ((_ZBufferParams.z * z_1) + _ZBufferParams.w));
 }
 
 vec4 frag (
@@ -33,7 +33,7 @@ vec4 frag (
   float tmpvar_11;
   tmpvar_11 = LinearEyeDepth (depth_5.x);
   float tmpvar_12;
-  tmpvar_12 = (tmpvar_11 * 0.01);
+  tmpvar_12 = (tmpvar_11 * 0.0100000);
   z_4 = tmpvar_12;
   vec4 tmpvar_13;
   tmpvar_13 = tex_6;
@@ -51,7 +51,7 @@ void main ()
   v2f_img xlt_i_16;
   vec4 xl_retval_17;
   vec4 tmpvar_18;
-  tmpvar_18 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_18 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_16.pos = tmpvar_18;
   vec2 tmpvar_19;
   tmpvar_19 = gl_TexCoord[0].xy;

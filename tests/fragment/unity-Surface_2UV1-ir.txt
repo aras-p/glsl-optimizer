@@ -31,7 +31,7 @@ void surf (
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_Detail, IN_1.uv2_Detail);
   vec3 tmpvar_5;
-  tmpvar_5 = ((tmpvar_3.xyz * tmpvar_4.xyz) * 2.0);
+  tmpvar_5 = ((tmpvar_3.xyz * tmpvar_4.xyz) * 2.00000);
   o_2.Albedo = tmpvar_5;
 }
 
@@ -65,19 +65,19 @@ vec4 frag_surf (
   tmpvar_17 = IN_11.hip_pack0.zw;
   surfIN_15.uv2_Detail = tmpvar_17;
   vec3 tmpvar_18;
-  tmpvar_18 = vec3(0.0, 0.0, 0.0);
+  tmpvar_18 = vec3(0.00000, 0.00000, 0.00000);
   o_14.Albedo = tmpvar_18;
   vec3 tmpvar_19;
-  tmpvar_19 = vec3(0.0, 0.0, 0.0);
+  tmpvar_19 = vec3(0.00000, 0.00000, 0.00000);
   o_14.Emission = tmpvar_19;
   float tmpvar_20;
-  tmpvar_20 = 0.0;
+  tmpvar_20 = 0.00000;
   o_14.Specular = tmpvar_20;
   float tmpvar_21;
-  tmpvar_21 = 0.0;
+  tmpvar_21 = 0.00000;
   o_14.Alpha = tmpvar_21;
   float tmpvar_22;
-  tmpvar_22 = 0.0;
+  tmpvar_22 = 0.00000;
   o_14.Gloss = tmpvar_22;
   surf (surfIN_15, o_14);
   vec4 tmpvar_23;
@@ -106,7 +106,7 @@ void main ()
   v2f_surf xlt_IN_30;
   vec4 xl_retval_31;
   vec4 tmpvar_32;
-  tmpvar_32 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_32 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_30.pos = tmpvar_32;
   float tmpvar_33;
   tmpvar_33 = xlv_FOG.x;

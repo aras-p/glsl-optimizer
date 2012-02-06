@@ -16,7 +16,7 @@ vec4 frag (
   tmpvar_5 = tmpvar_4;
   tex_3 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = ((tex_3.xyz * i_1.color.xyz) * 2.0);
+  tmpvar_6 = ((tex_3.xyz * i_1.color.xyz) * 2.00000);
   col_2.xyz = tmpvar_6.xyz.xyz;
   float tmpvar_7;
   tmpvar_7 = (i_1.color.w * tex_3.w);
@@ -24,7 +24,7 @@ vec4 frag (
   vec4 tmpvar_8;
   tmpvar_8 = vec4(col_2.w);
   vec4 tmpvar_9;
-  tmpvar_9 = mix (vec4(0.5, 0.5, 0.5, 0.5), col_2, tmpvar_8);
+  tmpvar_9 = mix (vec4(0.500000, 0.500000, 0.500000, 0.500000), col_2, tmpvar_8);
   return tmpvar_9;
 }
 
@@ -33,7 +33,7 @@ void main ()
   v2f xlt_i_10;
   vec4 xl_retval_11;
   vec4 tmpvar_12;
-  tmpvar_12 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_12 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_10.vertex = tmpvar_12;
   vec4 tmpvar_13;
   tmpvar_13 = gl_Color.xyzw;

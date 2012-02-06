@@ -10,7 +10,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -37,7 +37,7 @@ void main ()
   v2f xlt_xlat_var_input_7;
   vec4 xl_retval_8;
   vec4 tmpvar_9;
-  tmpvar_9 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_9 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_xlat_var_input_7.pos = tmpvar_9;
   float tmpvar_10;
   tmpvar_10 = xlv_FOG.x;

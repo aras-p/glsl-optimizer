@@ -41,7 +41,7 @@ vec4 Squash (
   tmpvar_5 = pos_1.xyz;
   projectedVertex_4 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xz = vec2(0.0, 0.0);
+  tmpvar_6.xz = vec2(0.00000, 0.00000);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -61,7 +61,7 @@ vec4 Squash (
   vec3 tmpvar_13;
   tmpvar_13 = mix (projectedVertex_4, pos_1.xyz, tmpvar_12);
   vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
+  tmpvar_14.w = 1.00000;
   tmpvar_14.xyz = tmpvar_13.xyz;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -82,10 +82,10 @@ void ExpandBillboard (
   float tmpvar_23;
   tmpvar_23 = abs (tangent_19.w);
   float tmpvar_24;
-  tmpvar_24 = (1.0 - tmpvar_23);
+  tmpvar_24 = (1.00000 - tmpvar_23);
   isBillboard_22 = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.w = 0.0;
+  tmpvar_25.w = 0.00000;
   tmpvar_25.xyz = normal_18.xyz;
   vec4 tmpvar_26;
   tmpvar_26 = normalize ((tmpvar_25 * mat_16));
@@ -95,7 +95,7 @@ void ExpandBillboard (
   tmpvar_28 = tmpvar_27;
   norb_21 = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.yw = vec2(0.0, 0.0);
+  tmpvar_29.yw = vec2(0.00000, 0.00000);
   tmpvar_29.x = normal_18.z;
   tmpvar_29.z = -(normal_18.x);
   vec4 tmpvar_30;
@@ -116,7 +116,7 @@ void ExpandBillboard (
   tmpvar_36 = tmpvar_35;
   normal_18 = tmpvar_36;
   vec4 tmpvar_37;
-  tmpvar_37.w = -1.0;
+  tmpvar_37.w = -1.00000;
   tmpvar_37.xyz = tanb_20.xyz;
   vec4 tmpvar_38;
   tmpvar_38 = vec4(isBillboard_22);
@@ -132,9 +132,9 @@ vec4 TriangleWave (
 )
 {
   vec4 tmpvar_42;
-  tmpvar_42 = fract ((x_41 + 0.5));
+  tmpvar_42 = fract ((x_41 + 0.500000));
   vec4 tmpvar_43;
-  tmpvar_43 = abs (((tmpvar_42 * 2.0) - 1.0));
+  tmpvar_43 = abs (((tmpvar_42 * 2.00000) - 1.00000));
   return tmpvar_43;
 }
 
@@ -142,7 +142,7 @@ vec4 SmoothCurve (
   in vec4 x_44
 )
 {
-  return ((x_44 * x_44) * (3.0 - (2.0 * x_44)));
+  return ((x_44 * x_44) * (3.00000 - (2.00000 * x_44)));
 }
 
 vec4 SmoothTriangleWave (
@@ -172,13 +172,13 @@ vec4 AnimateVertex (
   float fBranchAmp_58;
   float fDetailAmp_59;
   float tmpvar_60;
-  tmpvar_60 = 0.1;
+  tmpvar_60 = 0.100000;
   fDetailAmp_59 = tmpvar_60;
   float tmpvar_61;
-  tmpvar_61 = 0.3;
+  tmpvar_61 = 0.300000;
   fBranchAmp_58 = tmpvar_61;
   float tmpvar_62;
-  tmpvar_62 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
+  tmpvar_62 = dot (_Object2World[3].xyz, vec3(1.00000, 1.00000, 1.00000));
   float tmpvar_63;
   tmpvar_63 = tmpvar_62;
   fObjPhase_57 = tmpvar_63;
@@ -199,9 +199,9 @@ vec4 AnimateVertex (
   tmpvar_69 = (_TimeX + tmpvar_68);
   vWavesIn_54 = tmpvar_69;
   vec4 tmpvar_70;
-  tmpvar_70 = fract ((vWavesIn_54.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
+  tmpvar_70 = fract ((vWavesIn_54.xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_71;
-  tmpvar_71 = ((tmpvar_70 * 2.0) - 1.0);
+  tmpvar_71 = ((tmpvar_70 * 2.00000) - 1.00000);
   vWaves_53 = tmpvar_71;
   vec4 tmpvar_72;
   tmpvar_72 = SmoothTriangleWave (vWaves_53);
@@ -354,37 +354,37 @@ void main ()
   tmpvar_124 = tmpvar_123;
   gl_Position = tmpvar_124;
   vec4 tmpvar_125;
-  tmpvar_125.w = 0.0;
+  tmpvar_125.w = 0.00000;
   tmpvar_125.xyz = xl_retval_108._ShadowCoord0.xyz;
   vec4 tmpvar_126;
   tmpvar_126 = tmpvar_125;
   gl_TexCoord[0] = tmpvar_126;
   vec4 tmpvar_127;
-  tmpvar_127.w = 0.0;
+  tmpvar_127.w = 0.00000;
   tmpvar_127.xyz = xl_retval_108._ShadowCoord1.xyz;
   vec4 tmpvar_128;
   tmpvar_128 = tmpvar_127;
   gl_TexCoord[1] = tmpvar_128;
   vec4 tmpvar_129;
-  tmpvar_129.w = 0.0;
+  tmpvar_129.w = 0.00000;
   tmpvar_129.xyz = xl_retval_108._ShadowCoord2.xyz;
   vec4 tmpvar_130;
   tmpvar_130 = tmpvar_129;
   gl_TexCoord[2] = tmpvar_130;
   vec4 tmpvar_131;
-  tmpvar_131.w = 0.0;
+  tmpvar_131.w = 0.00000;
   tmpvar_131.xyz = xl_retval_108._ShadowCoord3.xyz;
   vec4 tmpvar_132;
   tmpvar_132 = tmpvar_131;
   gl_TexCoord[3] = tmpvar_132;
   vec4 tmpvar_133;
-  tmpvar_133.zw = vec2(0.0, 0.0);
+  tmpvar_133.zw = vec2(0.00000, 0.00000);
   tmpvar_133.xy = xl_retval_108._ShadowZFade.xy;
   vec4 tmpvar_134;
   tmpvar_134 = tmpvar_133;
   gl_TexCoord[4] = tmpvar_134;
   vec4 tmpvar_135;
-  tmpvar_135.zw = vec2(0.0, 0.0);
+  tmpvar_135.zw = vec2(0.00000, 0.00000);
   tmpvar_135.xy = xl_retval_108.hip_pack0.xy;
   vec4 tmpvar_136;
   tmpvar_136 = tmpvar_135;

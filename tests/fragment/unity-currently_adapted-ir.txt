@@ -58,7 +58,7 @@ vec4 frag (
   tmpvar_23 = tmpvar_22;
   valNew_2.y = vec2(tmpvar_23).y;
   float tmpvar_24;
-  tmpvar_24 = ((valNew_2.x - valNew_2.y) + 0.01);
+  tmpvar_24 = ((valNew_2.x - valNew_2.y) + 0.0100000);
   valNew_2.z = vec3(tmpvar_24).z;
   float tmpvar_25;
   tmpvar_25 = (valNew_2.y / valNew_2.z);
@@ -71,7 +71,7 @@ void main ()
   v2f_img xlt_i_26;
   vec4 xl_retval_27;
   vec4 tmpvar_28;
-  tmpvar_28 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_28 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_26.pos = tmpvar_28;
   vec2 tmpvar_29;
   tmpvar_29 = gl_TexCoord[0].xy;

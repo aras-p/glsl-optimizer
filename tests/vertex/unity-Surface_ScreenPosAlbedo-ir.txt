@@ -95,7 +95,7 @@ void main ()
   tmpvar_31 = tmpvar_30;
   gl_Position = tmpvar_31;
   vec4 tmpvar_32;
-  tmpvar_32.w = 0.0;
+  tmpvar_32.w = 0.00000;
   tmpvar_32.xyz = xl_retval_15.normal.xyz;
   vec4 tmpvar_33;
   tmpvar_33 = tmpvar_32;

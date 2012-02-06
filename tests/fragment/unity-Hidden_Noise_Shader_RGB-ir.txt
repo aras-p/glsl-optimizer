@@ -23,7 +23,7 @@ vec4 frag (
   vec4 tmpvar_7;
   tmpvar_7 = texture2D (_GrainTex, i_1.uvg);
   vec3 tmpvar_8;
-  tmpvar_8 = ((tmpvar_7.xyz * 2.0) - 1.0);
+  tmpvar_8 = ((tmpvar_7.xyz * 2.00000) - 1.00000);
   grain_3 = tmpvar_8;
   vec3 tmpvar_9;
   tmpvar_9 = (col_4.xyz + (grain_3 * _Intensity.x));
@@ -31,7 +31,7 @@ vec4 frag (
   vec4 tmpvar_10;
   tmpvar_10 = texture2D (_ScratchTex, i_1.uvs);
   vec3 tmpvar_11;
-  tmpvar_11 = ((tmpvar_10.xyz * 2.0) - 1.0);
+  tmpvar_11 = ((tmpvar_10.xyz * 2.00000) - 1.00000);
   scratch_2 = tmpvar_11;
   vec3 tmpvar_12;
   tmpvar_12 = (col_4.xyz + (scratch_2 * _Intensity.y));
@@ -44,7 +44,7 @@ void main ()
   v2f xlt_i_13;
   vec4 xl_retval_14;
   vec4 tmpvar_15;
-  tmpvar_15 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_15 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_13.pos = tmpvar_15;
   vec2 tmpvar_16;
   tmpvar_16 = gl_TexCoord[0].xy;

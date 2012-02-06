@@ -22,15 +22,15 @@ void main ()
   vec3 tmpvar_7;
   tmpvar_7 = normalize (tmpvar_2);
   v_6 = tmpvar_7;
-  v_6.z = (tmpvar_7.z + 0.42);
-  tmpvar_5 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_7.xy / v_6.z));
+  v_6.z = (tmpvar_7.z + 0.420000);
+  tmpvar_5 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.00000)) * (tmpvar_7.xy / v_6.z));
   vec4 tmpvar_8;
   tmpvar_8 = texture2D (_MainTex, (tmpvar_1.xy + tmpvar_5));
   vec4 tmpvar_9;
   tmpvar_9 = (tmpvar_8 * _Color);
   vec4 normal_10;
-  normal_10.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.0) - 1.0);
-  normal_10.z = sqrt (((1.0 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
+  normal_10.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.00000) - 1.00000);
+  normal_10.z = sqrt (((1.00000 - (normal_10.x * normal_10.x)) - (normal_10.y * normal_10.y)));
   vec3 tmpvar_11;
   tmpvar_11 = normal_10.xyz;
   vec3 tmpvar_12;
@@ -39,11 +39,11 @@ void main ()
   atten_13 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_3, tmpvar_3))).w * textureCube (_LightTexture0, tmpvar_3).w);
   vec4 c_14;
   float tmpvar_15;
-  tmpvar_15 = (pow (max (0.0, dot (tmpvar_11, normalize ((tmpvar_12 + normalize (tmpvar_2))))), (_Shininess * 128.0)) * tmpvar_8.w);
-  c_14.xyz = ((((tmpvar_9.xyz * _LightColor0.xyz) * max (0.0, dot (tmpvar_11, tmpvar_12))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_15)) * (atten_13 * 2.0));
+  tmpvar_15 = (pow (max (0.00000, dot (tmpvar_11, normalize ((tmpvar_12 + normalize (tmpvar_2))))), (_Shininess * 128.000)) * tmpvar_8.w);
+  c_14.xyz = ((((tmpvar_9.xyz * _LightColor0.xyz) * max (0.00000, dot (tmpvar_11, tmpvar_12))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_15)) * (atten_13 * 2.00000));
   c_14.w = (tmpvar_9.w + (((_LightColor0.w * _SpecColor.w) * tmpvar_15) * atten_13));
   c_4 = c_14;
-  c_4.w = 0.0;
+  c_4.w = 0.00000;
   gl_FragData[0] = c_4;
 }
 

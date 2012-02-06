@@ -23,7 +23,7 @@ vec4 frag (
   tmpvar_7 = tmpvar_6;
   cube_2 = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.xyz = ((2.0 * cube_2.xyz) * col_3.xyz).xyz;
+  tmpvar_8.xyz = ((2.00000 * cube_2.xyz) * col_3.xyz).xyz;
   tmpvar_8.w = col_3.w;
   return tmpvar_8;
 }
@@ -33,7 +33,7 @@ void main ()
   v2f xlt_i_9;
   vec4 xl_retval_10;
   vec4 tmpvar_11;
-  tmpvar_11 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_11 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_9.pos = tmpvar_11;
   vec2 tmpvar_12;
   tmpvar_12 = gl_TexCoord[0].xy;

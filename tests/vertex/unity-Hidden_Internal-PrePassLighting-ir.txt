@@ -14,7 +14,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_2;
   vec4 tmpvar_3;
-  tmpvar_3 = (pos_1 * 0.5);
+  tmpvar_3 = (pos_1 * 0.500000);
   o_2 = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4.x = o_2.x;
@@ -42,10 +42,10 @@ v2f vert (
   tmpvar_11 = tmpvar_10;
   o_8.uv = tmpvar_11;
   vec3 tmpvar_12;
-  tmpvar_12 = ((gl_ModelViewMatrix * v_7.vertex).xyz * vec3(-1.0, -1.0, 1.0));
+  tmpvar_12 = ((gl_ModelViewMatrix * v_7.vertex).xyz * vec3(-1.00000, -1.00000, 1.00000));
   o_8.ray = tmpvar_12;
   vec3 tmpvar_13;
-  tmpvar_13 = vec3(float((v_7.texcoord.z != 0.0)));
+  tmpvar_13 = vec3(float((v_7.texcoord.z != 0.00000)));
   vec3 tmpvar_14;
   tmpvar_14 = mix (o_8.ray, v_7.texcoord, tmpvar_13);
   vec3 tmpvar_15;
@@ -84,7 +84,7 @@ void main ()
   tmpvar_27 = tmpvar_26;
   gl_TexCoord[0] = tmpvar_27;
   vec4 tmpvar_28;
-  tmpvar_28.w = 0.0;
+  tmpvar_28.w = 0.00000;
   tmpvar_28.xyz = xl_retval_17.ray.xyz;
   vec4 tmpvar_29;
   tmpvar_29 = tmpvar_28;

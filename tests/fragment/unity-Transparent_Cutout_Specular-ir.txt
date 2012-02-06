@@ -28,7 +28,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -78,24 +78,24 @@ vec4 LightingBlinnPhong (
   float tmpvar_22;
   tmpvar_22 = dot (s_11.Normal, lightDir_12);
   float tmpvar_23;
-  tmpvar_23 = max (0.0, tmpvar_22);
+  tmpvar_23 = max (0.00000, tmpvar_22);
   float tmpvar_24;
   tmpvar_24 = tmpvar_23;
   diff_18 = tmpvar_24;
   float tmpvar_25;
   tmpvar_25 = dot (s_11.Normal, h_19);
   float tmpvar_26;
-  tmpvar_26 = max (0.0, tmpvar_25);
+  tmpvar_26 = max (0.00000, tmpvar_25);
   float tmpvar_27;
   tmpvar_27 = tmpvar_26;
   nh_17 = tmpvar_27;
   float tmpvar_28;
-  tmpvar_28 = pow (nh_17, (s_11.Specular * 128.0));
+  tmpvar_28 = pow (nh_17, (s_11.Specular * 128.000));
   float tmpvar_29;
   tmpvar_29 = (tmpvar_28 * s_11.Gloss);
   spec_16 = tmpvar_29;
   vec3 tmpvar_30;
-  tmpvar_30 = ((((s_11.Albedo * _LightColor0.xyz) * diff_18) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_16)) * (atten_14 * 2.0));
+  tmpvar_30 = ((((s_11.Albedo * _LightColor0.xyz) * diff_18) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_16)) * (atten_14 * 2.00000));
   c_15.xyz = tmpvar_30.xyz.xyz;
   float tmpvar_31;
   tmpvar_31 = (s_11.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_16) * atten_14));
@@ -115,19 +115,19 @@ vec4 frag_surf (
   tmpvar_37 = IN_32.hip_pack0.xy;
   surfIN_36.uv_MainTex = tmpvar_37;
   vec3 tmpvar_38;
-  tmpvar_38 = vec3(0.0, 0.0, 0.0);
+  tmpvar_38 = vec3(0.00000, 0.00000, 0.00000);
   o_35.Albedo = tmpvar_38;
   vec3 tmpvar_39;
-  tmpvar_39 = vec3(0.0, 0.0, 0.0);
+  tmpvar_39 = vec3(0.00000, 0.00000, 0.00000);
   o_35.Emission = tmpvar_39;
   float tmpvar_40;
-  tmpvar_40 = 0.0;
+  tmpvar_40 = 0.00000;
   o_35.Specular = tmpvar_40;
   float tmpvar_41;
-  tmpvar_41 = 0.0;
+  tmpvar_41 = 0.00000;
   o_35.Alpha = tmpvar_41;
   float tmpvar_42;
-  tmpvar_42 = 0.0;
+  tmpvar_42 = 0.00000;
   o_35.Gloss = tmpvar_42;
   vec3 tmpvar_43;
   tmpvar_43 = IN_32.normal;
@@ -142,7 +142,7 @@ vec4 frag_surf (
   vec3 tmpvar_46;
   tmpvar_46 = normalize (tmpvar_45);
   vec4 tmpvar_47;
-  tmpvar_47 = LightingBlinnPhong (o_35, lightDir_34, tmpvar_46, 1.0);
+  tmpvar_47 = LightingBlinnPhong (o_35, lightDir_34, tmpvar_46, 1.00000);
   vec4 tmpvar_48;
   tmpvar_48 = tmpvar_47;
   c_33 = tmpvar_48;
@@ -157,7 +157,7 @@ void main ()
   v2f_surf xlt_IN_50;
   vec4 xl_retval_51;
   vec4 tmpvar_52;
-  tmpvar_52 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_52 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_50.pos = tmpvar_52;
   float tmpvar_53;
   tmpvar_53 = xlv_FOG.x;

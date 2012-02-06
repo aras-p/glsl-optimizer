@@ -25,7 +25,7 @@ v2f vert (
   v2f o_5;
   float tex_6;
   vec4 tmpvar_7;
-  tmpvar_7.zw = vec2(0.0, 0.0);
+  tmpvar_7.zw = vec2(0.00000, 0.00000);
   tmpvar_7.xy = v_4.texcoord.xy.xy;
   vec4 tmpvar_8;
   tmpvar_8 = xll_tex2Dlod (_CameraDepthTexture, tmpvar_7);
@@ -33,7 +33,7 @@ v2f vert (
   tmpvar_9 = tmpvar_8.x;
   tex_6 = tmpvar_9;
   float tmpvar_10;
-  tmpvar_10 = (v_4.vertex.y + ((1.0 - tex_6) * 3.0));
+  tmpvar_10 = (v_4.vertex.y + ((1.00000 - tex_6) * 3.00000));
   v_4.vertex.y = vec2(tmpvar_10).y;
   vec4 tmpvar_11;
   tmpvar_11 = (gl_ModelViewProjectionMatrix * v_4.vertex);
@@ -74,7 +74,7 @@ void main ()
   tmpvar_24 = tmpvar_23;
   gl_Position = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.zw = vec2(0.0, 0.0);
+  tmpvar_25.zw = vec2(0.00000, 0.00000);
   tmpvar_25.xy = xl_retval_14.uv.xy;
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;

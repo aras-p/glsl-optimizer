@@ -27,7 +27,7 @@ void vert (
 )
 {
   vec3 tmpvar_3;
-  tmpvar_3 = ((v_1.normal * 0.5) + 0.5);
+  tmpvar_3 = ((v_1.normal * 0.500000) + 0.500000);
   o_2.foo = tmpvar_3;
 }
 
@@ -51,7 +51,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_10;
   vec4 tmpvar_11;
-  tmpvar_11 = (pos_9 * 0.5);
+  tmpvar_11 = (pos_9 * 0.500000);
   o_10 = tmpvar_11;
   vec2 tmpvar_12;
   tmpvar_12.x = o_10.x;
@@ -135,13 +135,13 @@ void main ()
   tmpvar_40 = tmpvar_39;
   gl_Position = tmpvar_40;
   vec4 tmpvar_41;
-  tmpvar_41.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_41.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_41.x = xl_retval_24.fog;
   vec4 tmpvar_42;
   tmpvar_42 = tmpvar_41;
   xlv_FOG = tmpvar_42;
   vec4 tmpvar_43;
-  tmpvar_43.w = 0.0;
+  tmpvar_43.w = 0.00000;
   tmpvar_43.xyz = xl_retval_24.cust_foo.xyz;
   vec4 tmpvar_44;
   tmpvar_44 = tmpvar_43;
@@ -152,7 +152,7 @@ void main ()
   tmpvar_46 = tmpvar_45;
   gl_TexCoord[1] = tmpvar_46;
   vec4 tmpvar_47;
-  tmpvar_47.w = 0.0;
+  tmpvar_47.w = 0.00000;
   tmpvar_47.xyz = xl_retval_24.hip_lmapFade.xyz;
   vec4 tmpvar_48;
   tmpvar_48 = tmpvar_47;

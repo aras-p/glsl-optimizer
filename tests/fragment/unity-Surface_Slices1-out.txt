@@ -11,8 +11,8 @@ void main ()
   vec2 tmpvar_4;
   tmpvar_4 = gl_TexCoord[0].xy;
   float x_5;
-  x_5 = (fract (((tmpvar_1.y + (tmpvar_1.z * 0.1)) * 5.0)) - 0.5);
-  if ((x_5 < 0.0)) {
+  x_5 = (fract (((tmpvar_1.y + (tmpvar_1.z * 0.100000)) * 5.00000)) - 0.500000);
+  if ((x_5 < 0.00000)) {
     discard;
   };
   vec4 tmpvar_6;
@@ -21,7 +21,7 @@ void main ()
   light_3.xyz = (tmpvar_6.xyz + unity_Ambient.xyz);
   vec4 c_7;
   c_7.xyz = (texture2D (_MainTex, tmpvar_4).xyz * light_3.xyz);
-  c_7.w = 0.0;
+  c_7.w = 0.00000;
   gl_FragData[0] = c_7;
 }
 

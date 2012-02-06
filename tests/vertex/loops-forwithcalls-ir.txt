@@ -8,7 +8,7 @@ void main ()
   tmpvar_3 = gl_Vertex;
   gl_Position = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_4 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   col_2 = tmpvar_4;
   int tmpvar_5;
   tmpvar_5 = 0;
@@ -18,7 +18,7 @@ void main ()
       break;
     };
     vec4 tmpvar_6;
-    tmpvar_6 = max (vec4(0.0, 0.0, 0.0, 0.0), uniColors[i_1]);
+    tmpvar_6 = max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[i_1]);
     vec4 tmpvar_7;
     tmpvar_7 = (col_2 + tmpvar_6);
     col_2 = tmpvar_7;

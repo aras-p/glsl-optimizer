@@ -153,7 +153,7 @@ void main ()
   tmpvar_48 = tmpvar_47;
   gl_Position = tmpvar_48;
   vec4 tmpvar_49;
-  tmpvar_49.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_49.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_49.x = xl_retval_32.fog;
   vec4 tmpvar_50;
   tmpvar_50 = tmpvar_49;
@@ -164,7 +164,7 @@ void main ()
   tmpvar_52 = tmpvar_51;
   gl_TexCoord[0] = tmpvar_52;
   vec4 tmpvar_53;
-  tmpvar_53.w = 0.0;
+  tmpvar_53.w = 0.00000;
   tmpvar_53.xyz = xl_retval_32.lightDir.xyz;
   vec4 tmpvar_54;
   tmpvar_54 = tmpvar_53;

@@ -44,7 +44,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_7;
   vec4 tmpvar_8;
-  tmpvar_8.w = 1.0;
+  tmpvar_8.w = 1.00000;
   tmpvar_8.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_9;
   tmpvar_9 = ((_World2Object * tmpvar_8).xyz * unity_Scale.w);
@@ -58,7 +58,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_11;
   vec4 tmpvar_12;
-  tmpvar_12 = (pos_10 * 0.5);
+  tmpvar_12 = (pos_10 * 0.500000);
   o_11 = tmpvar_12;
   vec2 tmpvar_13;
   tmpvar_13.x = o_11.x;
@@ -186,7 +186,7 @@ void main ()
   tmpvar_58 = tmpvar_57;
   gl_Position = tmpvar_58;
   vec4 tmpvar_59;
-  tmpvar_59.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_59.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_59.x = xl_retval_42.fog;
   vec4 tmpvar_60;
   tmpvar_60 = tmpvar_59;
@@ -197,7 +197,7 @@ void main ()
   tmpvar_62 = tmpvar_61;
   gl_TexCoord[0] = tmpvar_62;
   vec4 tmpvar_63;
-  tmpvar_63.w = 0.0;
+  tmpvar_63.w = 0.00000;
   tmpvar_63.xyz = xl_retval_42.viewDir.xyz;
   vec4 tmpvar_64;
   tmpvar_64 = tmpvar_63;
@@ -208,7 +208,7 @@ void main ()
   tmpvar_66 = tmpvar_65;
   gl_TexCoord[2] = tmpvar_66;
   vec4 tmpvar_67;
-  tmpvar_67.w = 0.0;
+  tmpvar_67.w = 0.00000;
   tmpvar_67.xyz = xl_retval_42.hip_lmapFade.xyz;
   vec4 tmpvar_68;
   tmpvar_68 = tmpvar_67;

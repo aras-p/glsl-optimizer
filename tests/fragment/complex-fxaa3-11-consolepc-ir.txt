@@ -76,7 +76,7 @@ vec4 FxaaPixelShader (
   float lumaSw_49;
   float lumaNw_50;
   vec4 tmpvar_51;
-  tmpvar_51.zw = vec2(0.0, 0.0);
+  tmpvar_51.zw = vec2(0.00000, 0.00000);
   tmpvar_51.xy = fxaaConsolePosPos_6.xy.xy;
   vec4 tmpvar_52;
   tmpvar_52 = xll_tex2Dlod (tex_7, tmpvar_51);
@@ -86,7 +86,7 @@ vec4 FxaaPixelShader (
   tmpvar_54 = tmpvar_53;
   lumaNw_50 = tmpvar_54;
   vec4 tmpvar_55;
-  tmpvar_55.zw = vec2(0.0, 0.0);
+  tmpvar_55.zw = vec2(0.00000, 0.00000);
   tmpvar_55.xy = fxaaConsolePosPos_6.xw.xy;
   vec4 tmpvar_56;
   tmpvar_56 = xll_tex2Dlod (tex_7, tmpvar_55);
@@ -96,7 +96,7 @@ vec4 FxaaPixelShader (
   tmpvar_58 = tmpvar_57;
   lumaSw_49 = tmpvar_58;
   vec4 tmpvar_59;
-  tmpvar_59.zw = vec2(0.0, 0.0);
+  tmpvar_59.zw = vec2(0.00000, 0.00000);
   tmpvar_59.xy = fxaaConsolePosPos_6.zy.xy;
   vec4 tmpvar_60;
   tmpvar_60 = xll_tex2Dlod (tex_7, tmpvar_59);
@@ -106,7 +106,7 @@ vec4 FxaaPixelShader (
   tmpvar_62 = tmpvar_61;
   lumaNe_48 = tmpvar_62;
   vec4 tmpvar_63;
-  tmpvar_63.zw = vec2(0.0, 0.0);
+  tmpvar_63.zw = vec2(0.00000, 0.00000);
   tmpvar_63.xy = fxaaConsolePosPos_6.zw.xy;
   vec4 tmpvar_64;
   tmpvar_64 = xll_tex2Dlod (tex_7, tmpvar_63);
@@ -116,7 +116,7 @@ vec4 FxaaPixelShader (
   tmpvar_66 = tmpvar_65;
   lumaSe_47 = tmpvar_66;
   vec4 tmpvar_67;
-  tmpvar_67.zw = vec2(0.0, 0.0);
+  tmpvar_67.zw = vec2(0.00000, 0.00000);
   tmpvar_67.xy = pos_5.xy.xy;
   vec4 tmpvar_68;
   tmpvar_68 = xll_tex2Dlod (tex_7, tmpvar_67);
@@ -201,7 +201,7 @@ vec4 FxaaPixelShader (
   tmpvar_97 = tmpvar_96;
   dir1_30 = tmpvar_97;
   vec4 tmpvar_98;
-  tmpvar_98.zw = vec2(0.0, 0.0);
+  tmpvar_98.zw = vec2(0.00000, 0.00000);
   tmpvar_98.xy = (pos_5.xy - (dir1_30 * fxaaConsoleRcpFrameOpt_11.zw)).xy;
   vec4 tmpvar_99;
   tmpvar_99 = xll_tex2Dlod (tex_7, tmpvar_98);
@@ -209,7 +209,7 @@ vec4 FxaaPixelShader (
   tmpvar_100 = tmpvar_99;
   rgbyN1_29 = tmpvar_100;
   vec4 tmpvar_101;
-  tmpvar_101.zw = vec2(0.0, 0.0);
+  tmpvar_101.zw = vec2(0.00000, 0.00000);
   tmpvar_101.xy = (pos_5.xy + (dir1_30 * fxaaConsoleRcpFrameOpt_11.zw)).xy;
   vec4 tmpvar_102;
   tmpvar_102 = xll_tex2Dlod (tex_7, tmpvar_101);
@@ -226,12 +226,12 @@ vec4 FxaaPixelShader (
   tmpvar_107 = (tmpvar_106 * fxaaConsoleEdgeSharpness_17);
   dirAbsMinTimesC_27 = tmpvar_107;
   vec2 tmpvar_108;
-  tmpvar_108 = clamp ((dir1_30.xy / dirAbsMinTimesC_27), vec2(-2.0, -2.0), vec2(2.0, 2.0));
+  tmpvar_108 = clamp ((dir1_30.xy / dirAbsMinTimesC_27), vec2(-2.00000, -2.00000), vec2(2.00000, 2.00000));
   vec2 tmpvar_109;
   tmpvar_109 = tmpvar_108;
   dir2_26 = tmpvar_109;
   vec4 tmpvar_110;
-  tmpvar_110.zw = vec2(0.0, 0.0);
+  tmpvar_110.zw = vec2(0.00000, 0.00000);
   tmpvar_110.xy = (pos_5.xy - (dir2_26 * fxaaConsoleRcpFrameOpt2_12.zw)).xy;
   vec4 tmpvar_111;
   tmpvar_111 = xll_tex2Dlod (tex_7, tmpvar_110);
@@ -239,7 +239,7 @@ vec4 FxaaPixelShader (
   tmpvar_112 = tmpvar_111;
   rgbyN2_25 = tmpvar_112;
   vec4 tmpvar_113;
-  tmpvar_113.zw = vec2(0.0, 0.0);
+  tmpvar_113.zw = vec2(0.00000, 0.00000);
   tmpvar_113.xy = (pos_5.xy + (dir2_26 * fxaaConsoleRcpFrameOpt2_12.zw)).xy;
   vec4 tmpvar_114;
   tmpvar_114 = xll_tex2Dlod (tex_7, tmpvar_113);
@@ -250,7 +250,7 @@ vec4 FxaaPixelShader (
   tmpvar_116 = (rgbyN1_29 + rgbyP1_28);
   rgbyA_23 = tmpvar_116;
   vec4 tmpvar_117;
-  tmpvar_117 = (((rgbyN2_25 + rgbyP2_24) * 0.25) + (rgbyA_23 * 0.25));
+  tmpvar_117 = (((rgbyN2_25 + rgbyP2_24) * 0.250000) + (rgbyA_23 * 0.250000));
   rgbyB_22 = tmpvar_117;
   bool tmpvar_118;
   if ((rgbyB_22.y < lumaMin_39)) {
@@ -263,7 +263,7 @@ vec4 FxaaPixelShader (
   twoTap_21 = tmpvar_119;
   if (twoTap_21) {
     vec3 tmpvar_120;
-    tmpvar_120 = (rgbyA_23.xyz * 0.5);
+    tmpvar_120 = (rgbyA_23.xyz * 0.500000);
     rgbyB_22.xyz = tmpvar_120.xyz.xyz;
   };
   return rgbyB_22;
@@ -275,7 +275,7 @@ vec4 xlat_main (
 {
   float fxaaN_122;
   float tmpvar_123;
-  tmpvar_123 = 0.5;
+  tmpvar_123 = 0.500000;
   fxaaN_122 = tmpvar_123;
   vec4 tmpvar_124;
   tmpvar_124.x = -(fxaaN_122);
@@ -283,7 +283,7 @@ vec4 xlat_main (
   tmpvar_124.z = fxaaN_122;
   tmpvar_124.w = fxaaN_122;
   vec4 tmpvar_125;
-  tmpvar_125 = FxaaPixelShader (i_121.uv, i_121.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_124), (_MainTex_TexelSize.xyxy * vec4(-2.0, -2.0, 2.0, 2.0)), (_MainTex_TexelSize.xyxy * vec4(8.0, 8.0, -4.0, -4.0)), 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, vec4(1.0, -1.0, 0.25, -0.25));
+  tmpvar_125 = FxaaPixelShader (i_121.uv, i_121.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_124), (_MainTex_TexelSize.xyxy * vec4(-2.00000, -2.00000, 2.00000, 2.00000)), (_MainTex_TexelSize.xyxy * vec4(8.00000, 8.00000, -4.00000, -4.00000)), 0.750000, 0.166000, 0.0833000, 8.00000, 0.125000, 0.0500000, vec4(1.00000, -1.00000, 0.250000, -0.250000));
   return tmpvar_125;
 }
 

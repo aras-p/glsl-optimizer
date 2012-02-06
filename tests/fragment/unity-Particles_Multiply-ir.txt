@@ -17,7 +17,7 @@ vec4 frag (
   vec4 tmpvar_5;
   tmpvar_5 = vec4(prev_2.w);
   vec4 tmpvar_6;
-  tmpvar_6 = mix (vec4(1.0, 1.0, 1.0, 1.0), prev_2, tmpvar_5);
+  tmpvar_6 = mix (vec4(1.00000, 1.00000, 1.00000, 1.00000), prev_2, tmpvar_5);
   return tmpvar_6;
 }
 
@@ -26,7 +26,7 @@ void main ()
   v2f xlt_i_7;
   vec4 xl_retval_8;
   vec4 tmpvar_9;
-  tmpvar_9 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_9 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_7.vertex = tmpvar_9;
   vec4 tmpvar_10;
   tmpvar_10 = gl_Color.xyzw;

@@ -4,7 +4,7 @@ void main ()
   int k_2;
   float a_3;
   float tmpvar_4;
-  tmpvar_4 = 0.0;
+  tmpvar_4 = 0.00000;
   a_3 = tmpvar_4;
   int tmpvar_5;
   tmpvar_5 = 0;
@@ -17,7 +17,7 @@ void main ()
       break;
     };
     float tmpvar_7;
-    tmpvar_7 = (a_3 + 1.0);
+    tmpvar_7 = (a_3 + 1.00000);
     a_3 = tmpvar_7;
     int tmpvar_8;
     tmpvar_8 = (i_1 + 1);
@@ -28,7 +28,7 @@ void main ()
       break;
     };
     float tmpvar_9;
-    tmpvar_9 = (a_3 + 3.0);
+    tmpvar_9 = (a_3 + 3.00000);
     a_3 = tmpvar_9;
     int tmpvar_10;
     tmpvar_10 = (k_2 + 1);

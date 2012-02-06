@@ -27,10 +27,10 @@ void ExpandBillboard (
   float tmpvar_8;
   tmpvar_8 = abs (tangent_4.w);
   float tmpvar_9;
-  tmpvar_9 = (1.0 - tmpvar_8);
+  tmpvar_9 = (1.00000 - tmpvar_8);
   isBillboard_7 = tmpvar_9;
   vec4 tmpvar_10;
-  tmpvar_10.w = 0.0;
+  tmpvar_10.w = 0.00000;
   tmpvar_10.xyz = normal_3.xyz;
   vec4 tmpvar_11;
   tmpvar_11 = normalize ((tmpvar_10 * mat_1));
@@ -40,7 +40,7 @@ void ExpandBillboard (
   tmpvar_13 = tmpvar_12;
   norb_6 = tmpvar_13;
   vec4 tmpvar_14;
-  tmpvar_14.yw = vec2(0.0, 0.0);
+  tmpvar_14.yw = vec2(0.00000, 0.00000);
   tmpvar_14.x = normal_3.z;
   tmpvar_14.z = -(normal_3.x);
   vec4 tmpvar_15;
@@ -61,7 +61,7 @@ void ExpandBillboard (
   tmpvar_21 = tmpvar_20;
   normal_3 = tmpvar_21;
   vec4 tmpvar_22;
-  tmpvar_22.w = -1.0;
+  tmpvar_22.w = -1.00000;
   tmpvar_22.xyz = tanb_5.xyz;
   vec4 tmpvar_23;
   tmpvar_23 = vec4(isBillboard_7);
@@ -104,7 +104,7 @@ v2f vert (
     float tmpvar_37;
     tmpvar_37 = dot (lightDir_28.xyz, v_26.normal);
     float tmpvar_38;
-    tmpvar_38 = max (0.0, ((tmpvar_37 * 0.5) + 0.5));
+    tmpvar_38 = max (0.00000, ((tmpvar_37 * 0.500000) + 0.500000));
     float tmpvar_39;
     tmpvar_39 = tmpvar_38;
     diff_27 = tmpvar_39;
@@ -170,13 +170,13 @@ void main ()
   tmpvar_62 = tmpvar_61;
   gl_Position = tmpvar_62;
   vec4 tmpvar_63;
-  tmpvar_63.zw = vec2(0.0, 0.0);
+  tmpvar_63.zw = vec2(0.00000, 0.00000);
   tmpvar_63.xy = xl_retval_46.uv.xy;
   vec4 tmpvar_64;
   tmpvar_64 = tmpvar_63;
   gl_TexCoord[0] = tmpvar_64;
   vec4 tmpvar_65;
-  tmpvar_65.w = 0.0;
+  tmpvar_65.w = 0.00000;
   tmpvar_65.xyz = xl_retval_46.color.xyz;
   vec4 tmpvar_66;
   tmpvar_66 = tmpvar_65;

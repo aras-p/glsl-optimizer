@@ -74,7 +74,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_18;
   vec4 tmpvar_19;
-  tmpvar_19.w = 1.0;
+  tmpvar_19.w = 1.00000;
   tmpvar_19.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_20;
   tmpvar_20 = ((_World2Object * tmpvar_19).xyz * unity_Scale.w);
@@ -163,25 +163,25 @@ void main ()
   tmpvar_52 = tmpvar_51;
   gl_Position = tmpvar_52;
   vec4 tmpvar_53;
-  tmpvar_53.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_53.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_53.x = xl_retval_36.fog;
   vec4 tmpvar_54;
   tmpvar_54 = tmpvar_53;
   xlv_FOG = tmpvar_54;
   vec4 tmpvar_55;
-  tmpvar_55.w = 0.0;
+  tmpvar_55.w = 0.00000;
   tmpvar_55.xyz = xl_retval_36.worldRefl.xyz;
   vec4 tmpvar_56;
   tmpvar_56 = tmpvar_55;
   gl_TexCoord[0] = tmpvar_56;
   vec4 tmpvar_57;
-  tmpvar_57.w = 0.0;
+  tmpvar_57.w = 0.00000;
   tmpvar_57.xyz = xl_retval_36.normal.xyz;
   vec4 tmpvar_58;
   tmpvar_58 = tmpvar_57;
   gl_TexCoord[1] = tmpvar_58;
   vec4 tmpvar_59;
-  tmpvar_59.w = 0.0;
+  tmpvar_59.w = 0.00000;
   tmpvar_59.xyz = xl_retval_36.lightDir.xyz;
   vec4 tmpvar_60;
   tmpvar_60 = tmpvar_59;

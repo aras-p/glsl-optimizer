@@ -231,10 +231,10 @@ vec4 frag (
   float tmpvar_93;
   tmpvar_93 = length ((offset_91 / _CenterRadius.zw));
   float tmpvar_94;
-  tmpvar_94 = (1.0 - tmpvar_93);
+  tmpvar_94 = (1.00000 - tmpvar_93);
   angle_90 = tmpvar_94;
   float tmpvar_95;
-  tmpvar_95 = max (0.0, angle_90);
+  tmpvar_95 = max (0.00000, angle_90);
   float tmpvar_96;
   tmpvar_96 = tmpvar_95;
   angle_90 = tmpvar_96;
@@ -261,7 +261,7 @@ void main ()
   v2f xlt_i_102;
   vec4 xl_retval_103;
   vec4 tmpvar_104;
-  tmpvar_104 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_104 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_102.pos = tmpvar_104;
   vec2 tmpvar_105;
   tmpvar_105 = gl_TexCoord[0].xy;

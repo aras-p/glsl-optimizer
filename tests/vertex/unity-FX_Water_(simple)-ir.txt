@@ -34,7 +34,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos_7;
   vec4 tmpvar_8;
-  tmpvar_8.w = 1.0;
+  tmpvar_8.w = 1.00000;
   tmpvar_8.xyz = _WorldSpaceCameraPos.xyz.xyz;
   vec3 tmpvar_9;
   tmpvar_9 = ((_World2Object * tmpvar_8).xyz * unity_Scale.w);
@@ -53,7 +53,7 @@ v2f vert (
   tmpvar_13 = ((v_10.vertex.xzxz * _WaveScale) + _WaveOffset);
   temp_11 = tmpvar_13.xyzw.xyzw;
   vec2 tmpvar_14;
-  tmpvar_14 = (temp_11.xy * vec2(0.4, 0.45));
+  tmpvar_14 = (temp_11.xy * vec2(0.400000, 0.450000));
   o_12.bumpuv[0] = tmpvar_14;
   vec2 tmpvar_15;
   tmpvar_15 = temp_11.wz;
@@ -93,25 +93,25 @@ void main ()
   tmpvar_28 = tmpvar_27;
   gl_Position = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_29.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_29.x = xl_retval_20.fog;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_29;
   xlv_FOG = tmpvar_30;
   vec4 tmpvar_31;
-  tmpvar_31.zw = vec2(0.0, 0.0);
+  tmpvar_31.zw = vec2(0.00000, 0.00000);
   tmpvar_31.xy = xl_retval_20.bumpuv[0].xy;
   vec4 tmpvar_32;
   tmpvar_32 = tmpvar_31;
   gl_TexCoord[0] = tmpvar_32;
   vec4 tmpvar_33;
-  tmpvar_33.zw = vec2(0.0, 0.0);
+  tmpvar_33.zw = vec2(0.00000, 0.00000);
   tmpvar_33.xy = xl_retval_20.bumpuv[1].xy;
   vec4 tmpvar_34;
   tmpvar_34 = tmpvar_33;
   gl_TexCoord[1] = tmpvar_34;
   vec4 tmpvar_35;
-  tmpvar_35.w = 0.0;
+  tmpvar_35.w = 0.00000;
   tmpvar_35.xyz = xl_retval_20.viewDir.xyz;
   vec4 tmpvar_36;
   tmpvar_36 = tmpvar_35;

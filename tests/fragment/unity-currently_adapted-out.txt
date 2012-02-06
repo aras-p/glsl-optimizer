@@ -17,7 +17,7 @@ void main ()
   valNew_2.xy = (tmpvar_4.xy + delta_3);
   valNew_2.x = max (valNew_2.x, _AdaptParams.z);
   valNew_2.y = min (valNew_2.y, _AdaptParams.y);
-  valNew_2.z = ((valNew_2.x - valNew_2.y) + 0.01);
+  valNew_2.z = ((valNew_2.x - valNew_2.y) + 0.0100000);
   valNew_2.w = (valNew_2.y / valNew_2.z);
   gl_FragData[0] = valNew_2;
 }

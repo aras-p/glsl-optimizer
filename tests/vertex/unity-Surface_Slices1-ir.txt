@@ -38,7 +38,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o_7;
   vec4 tmpvar_8;
-  tmpvar_8 = (pos_6 * 0.5);
+  tmpvar_8 = (pos_6 * 0.500000);
   o_7 = tmpvar_8;
   vec2 tmpvar_9;
   tmpvar_9.x = o_7.x;
@@ -117,19 +117,19 @@ void main ()
   tmpvar_35 = tmpvar_34;
   gl_Position = tmpvar_35;
   vec4 tmpvar_36;
-  tmpvar_36.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_36.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_36.x = xl_retval_19.fog;
   vec4 tmpvar_37;
   tmpvar_37 = tmpvar_36;
   xlv_FOG = tmpvar_37;
   vec4 tmpvar_38;
-  tmpvar_38.zw = vec2(0.0, 0.0);
+  tmpvar_38.zw = vec2(0.00000, 0.00000);
   tmpvar_38.xy = xl_retval_19.hip_pack0.xy;
   vec4 tmpvar_39;
   tmpvar_39 = tmpvar_38;
   gl_TexCoord[0] = tmpvar_39;
   vec4 tmpvar_40;
-  tmpvar_40.w = 0.0;
+  tmpvar_40.w = 0.00000;
   tmpvar_40.xyz = xl_retval_19.worldPos.xyz;
   vec4 tmpvar_41;
   tmpvar_41 = tmpvar_40;

@@ -9,7 +9,7 @@ void main ()
   tmpvar_1 = (glstate_matrix_mvp * gl_Vertex);
   vec4 o_2;
   vec4 tmpvar_3;
-  tmpvar_3 = (tmpvar_1 * 0.5);
+  tmpvar_3 = (tmpvar_1 * 0.500000);
   o_2 = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4.x = tmpvar_3.x;
@@ -18,6 +18,6 @@ void main ()
   o_2.zw = tmpvar_1.zw;
   gl_Position = tmpvar_1;
   xlv_TEXCOORD0 = o_2;
-  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * gl_Vertex).xyz * vec3(-1.0, -1.0, 1.0)), gl_Normal, vec3(float((gl_Normal.z != 0.0))));
+  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * gl_Vertex).xyz * vec3(-1.00000, -1.00000, 1.00000)), gl_Normal, vec3(float((gl_Normal.z != 0.00000))));
 }
 

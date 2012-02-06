@@ -29,7 +29,7 @@ vec4 Squash (
   tmpvar_5 = pos_1.xyz;
   projectedVertex_4 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xz = vec2(0.0, 0.0);
+  tmpvar_6.xz = vec2(0.00000, 0.00000);
   tmpvar_6.y = _SquashPlaneNormal.w;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
@@ -49,7 +49,7 @@ vec4 Squash (
   vec3 tmpvar_13;
   tmpvar_13 = mix (projectedVertex_4, pos_1.xyz, tmpvar_12);
   vec4 tmpvar_14;
-  tmpvar_14.w = 1.0;
+  tmpvar_14.w = 1.00000;
   tmpvar_14.xyz = tmpvar_13.xyz;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
@@ -62,9 +62,9 @@ vec4 TriangleWave (
 )
 {
   vec4 tmpvar_17;
-  tmpvar_17 = fract ((x_16 + 0.5));
+  tmpvar_17 = fract ((x_16 + 0.500000));
   vec4 tmpvar_18;
-  tmpvar_18 = abs (((tmpvar_17 * 2.0) - 1.0));
+  tmpvar_18 = abs (((tmpvar_17 * 2.00000) - 1.00000));
   return tmpvar_18;
 }
 
@@ -72,7 +72,7 @@ vec4 SmoothCurve (
   in vec4 x_19
 )
 {
-  return ((x_19 * x_19) * (3.0 - (2.0 * x_19)));
+  return ((x_19 * x_19) * (3.00000 - (2.00000 * x_19)));
 }
 
 vec4 SmoothTriangleWave (
@@ -102,13 +102,13 @@ vec4 AnimateVertex (
   float fBranchAmp_33;
   float fDetailAmp_34;
   float tmpvar_35;
-  tmpvar_35 = 0.1;
+  tmpvar_35 = 0.100000;
   fDetailAmp_34 = tmpvar_35;
   float tmpvar_36;
-  tmpvar_36 = 0.3;
+  tmpvar_36 = 0.300000;
   fBranchAmp_33 = tmpvar_36;
   float tmpvar_37;
-  tmpvar_37 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
+  tmpvar_37 = dot (_Object2World[3].xyz, vec3(1.00000, 1.00000, 1.00000));
   float tmpvar_38;
   tmpvar_38 = tmpvar_37;
   fObjPhase_32 = tmpvar_38;
@@ -129,9 +129,9 @@ vec4 AnimateVertex (
   tmpvar_44 = (_TimeX + tmpvar_43);
   vWavesIn_29 = tmpvar_44;
   vec4 tmpvar_45;
-  tmpvar_45 = fract ((vWavesIn_29.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
+  tmpvar_45 = fract ((vWavesIn_29.xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_46;
-  tmpvar_46 = ((tmpvar_45 * 2.0) - 1.0);
+  tmpvar_46 = ((tmpvar_45 * 2.00000) - 1.00000);
   vWaves_28 = tmpvar_46;
   vec4 tmpvar_47;
   tmpvar_47 = SmoothTriangleWave (vWaves_28);

@@ -8,7 +8,7 @@ float xll_saturate (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = clamp (x_1, 0.0, 1.0);
+  tmpvar_2 = clamp (x_1, 0.00000, 1.00000);
   return tmpvar_2;
 }
 
@@ -17,7 +17,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_4;
-  tmpvar_4 = clamp (x_3, 0.0, 1.0);
+  tmpvar_4 = clamp (x_3, 0.00000, 1.00000);
   return tmpvar_4;
 }
 
@@ -39,7 +39,7 @@ lowp vec4 frag (
   tmpvar_12 = tmpvar_11.xyz;
   burn_7 = tmpvar_12;
   float tmpvar_13;
-  tmpvar_13 = xll_saturate (((_EmberFadeStart - 0.05) / (_EmberFadeStart - _EmberFadeEnd)));
+  tmpvar_13 = xll_saturate (((_EmberFadeStart - 0.0500000) / (_EmberFadeStart - _EmberFadeEnd)));
   vec3 tmpvar_14;
   tmpvar_14 = vec3(tmpvar_13);
   vec3 tmpvar_15;
@@ -48,7 +48,7 @@ lowp vec4 frag (
   lowp vec3 tmpvar_16;
   tmpvar_16 = mix (base_8, burn_7, t_6);
   lowp vec4 tmpvar_17;
-  tmpvar_17.w = 1.0;
+  tmpvar_17.w = 1.00000;
   tmpvar_17.xyz = tmpvar_16.xyz;
   return tmpvar_17;
 }

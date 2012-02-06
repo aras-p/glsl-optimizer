@@ -90,7 +90,7 @@ vec3 ObjSpaceViewDir (
 {
   highp vec3 objSpaceCameraPos_21;
   highp vec4 tmpvar_22;
-  tmpvar_22.w = 1.0;
+  tmpvar_22.w = 1.00000;
   tmpvar_22.xyz = _WorldSpaceCameraPos.xyz.xyz;
   highp vec3 tmpvar_23;
   tmpvar_23 = ((_World2Object * tmpvar_22).xyz * unity_Scale.w);

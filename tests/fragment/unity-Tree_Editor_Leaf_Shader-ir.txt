@@ -35,7 +35,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -45,7 +45,7 @@ float xll_saturate (
 )
 {
   float tmpvar_3;
-  tmpvar_3 = clamp (x_2, 0.0, 1.0);
+  tmpvar_3 = clamp (x_2, 0.00000, 1.00000);
   return tmpvar_3;
 }
 
@@ -54,7 +54,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_5;
-  tmpvar_5 = clamp (x_4, 0.0, 1.0);
+  tmpvar_5 = clamp (x_4, 0.00000, 1.00000);
   return tmpvar_5;
 }
 
@@ -63,7 +63,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_7;
-  tmpvar_7 = clamp (x_6, 0.0, 1.0);
+  tmpvar_7 = clamp (x_6, 0.00000, 1.00000);
   return tmpvar_7;
 }
 
@@ -72,7 +72,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_9;
-  tmpvar_9 = clamp (x_8, 0.0, 1.0);
+  tmpvar_9 = clamp (x_8, 0.00000, 1.00000);
   return tmpvar_9;
 }
 
@@ -81,9 +81,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_10[0], 0.0, 1.0);
+  tmpvar_11 = clamp (m_10[0], 0.00000, 1.00000);
   vec2 tmpvar_12;
-  tmpvar_12 = clamp (m_10[1], 0.0, 1.0);
+  tmpvar_12 = clamp (m_10[1], 0.00000, 1.00000);
   mat2 tmpvar_13;
   vec2 tmpvar_14;
   tmpvar_14 = tmpvar_11;
@@ -99,11 +99,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_16[0], 0.0, 1.0);
+  tmpvar_17 = clamp (m_16[0], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_16[1], 0.0, 1.0);
+  tmpvar_18 = clamp (m_16[1], 0.00000, 1.00000);
   vec3 tmpvar_19;
-  tmpvar_19 = clamp (m_16[2], 0.0, 1.0);
+  tmpvar_19 = clamp (m_16[2], 0.00000, 1.00000);
   mat3 tmpvar_20;
   vec3 tmpvar_21;
   tmpvar_21 = tmpvar_17;
@@ -122,13 +122,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_24[0], 0.0, 1.0);
+  tmpvar_25 = clamp (m_24[0], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_24[1], 0.0, 1.0);
+  tmpvar_26 = clamp (m_24[1], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_24[2], 0.0, 1.0);
+  tmpvar_27 = clamp (m_24[2], 0.00000, 1.00000);
   vec4 tmpvar_28;
-  tmpvar_28 = clamp (m_24[3], 0.0, 1.0);
+  tmpvar_28 = clamp (m_24[3], 0.00000, 1.00000);
   mat4 tmpvar_29;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_25;
@@ -151,10 +151,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_35;
   vec2 tmpvar_36;
-  tmpvar_36 = ((packednormal_34.wy * 2.0) - 1.0);
+  tmpvar_36 = ((packednormal_34.wy * 2.00000) - 1.00000);
   normal_35.xy = tmpvar_36.xy.xy;
   float tmpvar_37;
-  tmpvar_37 = sqrt (((1.0 - (normal_35.x * normal_35.x)) - (normal_35.y * normal_35.y)));
+  tmpvar_37 = sqrt (((1.00000 - (normal_35.x * normal_35.x)) - (normal_35.y * normal_35.y)));
   float tmpvar_38;
   tmpvar_38 = tmpvar_37;
   normal_35.z = vec3(tmpvar_38).z;
@@ -232,25 +232,25 @@ vec4 LightingTreeLeaf (
   float tmpvar_72;
   tmpvar_72 = dot (s_56.Normal, h_67);
   float tmpvar_73;
-  tmpvar_73 = max (0.0, tmpvar_72);
+  tmpvar_73 = max (0.00000, tmpvar_72);
   float tmpvar_74;
   tmpvar_74 = tmpvar_73;
   nh_65 = tmpvar_74;
   float tmpvar_75;
-  tmpvar_75 = pow (nh_65, (s_56.Specular * 128.0));
+  tmpvar_75 = pow (nh_65, (s_56.Specular * 128.000));
   float tmpvar_76;
   tmpvar_76 = (tmpvar_75 * s_56.Gloss);
   spec_64 = tmpvar_76;
   float tmpvar_77;
-  tmpvar_77 = max (0.0, -(diff_66));
+  tmpvar_77 = max (0.00000, -(diff_66));
   float tmpvar_78;
   tmpvar_78 = tmpvar_77;
   trans_63 = tmpvar_78;
   vec3 tmpvar_79;
-  tmpvar_79 = ((s_56.Translucency * trans_63) * 2.0);
+  tmpvar_79 = ((s_56.Translucency * trans_63) * 2.00000);
   translucencyColor_62 = tmpvar_79;
   float tmpvar_80;
-  tmpvar_80 = max (0.0, ((diff_66 * 0.5) + 0.5));
+  tmpvar_80 = max (0.00000, ((diff_66 * 0.500000) + 0.500000));
   float tmpvar_81;
   tmpvar_81 = tmpvar_80;
   diff_66 = tmpvar_81;
@@ -262,13 +262,13 @@ vec4 LightingTreeLeaf (
   float tmpvar_84;
   tmpvar_84 = xll_saturate (tmpvar_83);
   vec3 tmpvar_85;
-  tmpvar_85 = (col_61 + (spec_64 * (1.0 - tmpvar_84)));
+  tmpvar_85 = (col_61 + (spec_64 * (1.00000 - tmpvar_84)));
   col_61 = tmpvar_85;
   vec3 tmpvar_86;
   tmpvar_86 = (col_61 * _LightColor0.xyz);
   col_61 = tmpvar_86;
   vec3 tmpvar_87;
-  tmpvar_87 = (col_61 * (atten_59 * 2.0));
+  tmpvar_87 = (col_61 * (atten_59 * 2.00000));
   c_60.xyz = tmpvar_87.xyz.xyz;
   return c_60;
 }
@@ -288,16 +288,16 @@ vec4 frag_surf (
   tmpvar_94 = IN_88.lop_color;
   surfIN_92.color = tmpvar_94;
   vec3 tmpvar_95;
-  tmpvar_95 = vec3(0.0, 0.0, 0.0);
+  tmpvar_95 = vec3(0.00000, 0.00000, 0.00000);
   o_91.Albedo = tmpvar_95;
   vec3 tmpvar_96;
-  tmpvar_96 = vec3(0.0, 0.0, 0.0);
+  tmpvar_96 = vec3(0.00000, 0.00000, 0.00000);
   o_91.Emission = tmpvar_96;
   float tmpvar_97;
-  tmpvar_97 = 0.0;
+  tmpvar_97 = 0.00000;
   o_91.Specular = tmpvar_97;
   float tmpvar_98;
-  tmpvar_98 = 0.0;
+  tmpvar_98 = 0.00000;
   o_91.Alpha = tmpvar_98;
   surf (surfIN_92, o_91);
   xll_clip ((o_91.Alpha - _Cutoff));
@@ -339,7 +339,7 @@ void main ()
   v2f_surf xlt_IN_112;
   vec4 xl_retval_113;
   vec4 tmpvar_114;
-  tmpvar_114 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_114 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_112.pos = tmpvar_114;
   float tmpvar_115;
   tmpvar_115 = xlv_FOG.x;

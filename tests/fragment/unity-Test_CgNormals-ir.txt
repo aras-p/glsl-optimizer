@@ -14,7 +14,7 @@ void main ()
   v2f xlt_i_2;
   vec4 xl_retval_3;
   vec4 tmpvar_4;
-  tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_4 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_2.pos = tmpvar_4;
   vec4 tmpvar_5;
   tmpvar_5 = gl_Color.xyzw;

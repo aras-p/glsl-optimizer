@@ -20,7 +20,7 @@ vec4 FxaaTexOff (
 )
 {
   vec4 tmpvar_8;
-  tmpvar_8.zw = vec2(0.0, 0.0);
+  tmpvar_8.zw = vec2(0.00000, 0.00000);
   tmpvar_8.xy = (pos_5.xy + (off_6 * rcpFrame_7)).xy;
   vec4 tmpvar_9;
   tmpvar_9 = xll_tex2Dlod (tex_4, tmpvar_8);
@@ -33,7 +33,7 @@ vec4 FxaaTexLod0 (
 )
 {
   vec4 tmpvar_12;
-  tmpvar_12.zw = vec2(0.0, 0.0);
+  tmpvar_12.zw = vec2(0.00000, 0.00000);
   tmpvar_12.xy = pos_11.xy.xy;
   vec4 tmpvar_13;
   tmpvar_13 = xll_tex2Dlod (tex_10, tmpvar_12);
@@ -133,27 +133,27 @@ vec3 FxaaPixelShader (
   tmpvar_72 = 0;
   i_30 = tmpvar_72;
   vec4 tmpvar_73;
-  tmpvar_73 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.0, -1.0), rcpFrame_23);
+  tmpvar_73 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.00000, -1.00000), rcpFrame_23);
   vec3 tmpvar_74;
   tmpvar_74 = tmpvar_73.xyz;
   rgbN_69 = tmpvar_74;
   vec4 tmpvar_75;
-  tmpvar_75 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.0, 0.0), rcpFrame_23);
+  tmpvar_75 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.00000, 0.00000), rcpFrame_23);
   vec3 tmpvar_76;
   tmpvar_76 = tmpvar_75.xyz;
   rgbW_68 = tmpvar_76;
   vec4 tmpvar_77;
-  tmpvar_77 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.0, 0.0), rcpFrame_23);
+  tmpvar_77 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.00000, 0.00000), rcpFrame_23);
   vec3 tmpvar_78;
   tmpvar_78 = tmpvar_77.xyz;
   rgbM_67 = tmpvar_78;
   vec4 tmpvar_79;
-  tmpvar_79 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.0, 0.0), rcpFrame_23);
+  tmpvar_79 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.00000, 0.00000), rcpFrame_23);
   vec3 tmpvar_80;
   tmpvar_80 = tmpvar_79.xyz;
   rgbE_66 = tmpvar_80;
   vec4 tmpvar_81;
-  tmpvar_81 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.0, 1.0), rcpFrame_23);
+  tmpvar_81 = FxaaTexOff (tex_22, pos_21.xy, vec2(0.00000, 1.00000), rcpFrame_23);
   vec3 tmpvar_82;
   tmpvar_82 = tmpvar_81.xyz;
   rgbS_65 = tmpvar_82;
@@ -208,7 +208,7 @@ vec3 FxaaPixelShader (
   tmpvar_103 = (rangeMax_58 - rangeMin_59);
   range_57 = tmpvar_103;
   float tmpvar_104;
-  tmpvar_104 = max (0.0416667, (rangeMax_58 * 0.125));
+  tmpvar_104 = max (0.0416667, (rangeMax_58 * 0.125000));
   if ((range_57 < tmpvar_104)) {
     vec3 tmpvar_105;
     tmpvar_105 = FxaaFilterReturn (rgbM_67);
@@ -218,7 +218,7 @@ vec3 FxaaPixelShader (
   tmpvar_106 = ((((rgbN_69 + rgbW_68) + rgbM_67) + rgbE_66) + rgbS_65);
   rgbL_56 = tmpvar_106;
   float tmpvar_107;
-  tmpvar_107 = ((((lumaN_64 + lumaW_63) + lumaE_61) + lumaS_60) * 0.25);
+  tmpvar_107 = ((((lumaN_64 + lumaW_63) + lumaE_61) + lumaS_60) * 0.250000);
   lumaL_55 = tmpvar_107;
   float tmpvar_108;
   tmpvar_108 = abs ((lumaL_55 - lumaM_62));
@@ -226,32 +226,32 @@ vec3 FxaaPixelShader (
   tmpvar_109 = tmpvar_108;
   rangeL_54 = tmpvar_109;
   float tmpvar_110;
-  tmpvar_110 = max (0.0, ((rangeL_54 / range_57) - 0.25));
+  tmpvar_110 = max (0.00000, ((rangeL_54 / range_57) - 0.250000));
   float tmpvar_111;
   tmpvar_111 = (tmpvar_110 * 1.33333);
   blendL_53 = tmpvar_111;
   float tmpvar_112;
-  tmpvar_112 = min (0.75, blendL_53);
+  tmpvar_112 = min (0.750000, blendL_53);
   float tmpvar_113;
   tmpvar_113 = tmpvar_112;
   blendL_53 = tmpvar_113;
   vec4 tmpvar_114;
-  tmpvar_114 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.0, -1.0), rcpFrame_23);
+  tmpvar_114 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.00000, -1.00000), rcpFrame_23);
   vec3 tmpvar_115;
   tmpvar_115 = tmpvar_114.xyz;
   rgbNW_52 = tmpvar_115;
   vec4 tmpvar_116;
-  tmpvar_116 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.0, -1.0), rcpFrame_23);
+  tmpvar_116 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.00000, -1.00000), rcpFrame_23);
   vec3 tmpvar_117;
   tmpvar_117 = tmpvar_116.xyz;
   rgbNE_51 = tmpvar_117;
   vec4 tmpvar_118;
-  tmpvar_118 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.0, 1.0), rcpFrame_23);
+  tmpvar_118 = FxaaTexOff (tex_22, pos_21.xy, vec2(-1.00000, 1.00000), rcpFrame_23);
   vec3 tmpvar_119;
   tmpvar_119 = tmpvar_118.xyz;
   rgbSW_50 = tmpvar_119;
   vec4 tmpvar_120;
-  tmpvar_120 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.0, 1.0), rcpFrame_23);
+  tmpvar_120 = FxaaTexOff (tex_22, pos_21.xy, vec2(1.00000, 1.00000), rcpFrame_23);
   vec3 tmpvar_121;
   tmpvar_121 = tmpvar_120.xyz;
   rgbSE_49 = tmpvar_121;
@@ -282,20 +282,20 @@ vec3 FxaaPixelShader (
   tmpvar_131 = tmpvar_130;
   lumaSE_45 = tmpvar_131;
   float tmpvar_132;
-  tmpvar_132 = abs ((((0.25 * lumaNW_48) + (-(0.5) * lumaN_64)) + (0.25 * lumaNE_47)));
+  tmpvar_132 = abs ((((0.250000 * lumaNW_48) + (-(0.500000) * lumaN_64)) + (0.250000 * lumaNE_47)));
   float tmpvar_133;
-  tmpvar_133 = abs ((((0.5 * lumaW_63) + (-(1.0) * lumaM_62)) + (0.5 * lumaE_61)));
+  tmpvar_133 = abs ((((0.500000 * lumaW_63) + (-(1.00000) * lumaM_62)) + (0.500000 * lumaE_61)));
   float tmpvar_134;
-  tmpvar_134 = abs ((((0.25 * lumaSW_46) + (-(0.5) * lumaS_60)) + (0.25 * lumaSE_45)));
+  tmpvar_134 = abs ((((0.250000 * lumaSW_46) + (-(0.500000) * lumaS_60)) + (0.250000 * lumaSE_45)));
   float tmpvar_135;
   tmpvar_135 = ((tmpvar_132 + tmpvar_133) + tmpvar_134);
   edgeVert_44 = tmpvar_135;
   float tmpvar_136;
-  tmpvar_136 = abs ((((0.25 * lumaNW_48) + (-(0.5) * lumaW_63)) + (0.25 * lumaSW_46)));
+  tmpvar_136 = abs ((((0.250000 * lumaNW_48) + (-(0.500000) * lumaW_63)) + (0.250000 * lumaSW_46)));
   float tmpvar_137;
-  tmpvar_137 = abs ((((0.5 * lumaN_64) + (-(1.0) * lumaM_62)) + (0.5 * lumaS_60)));
+  tmpvar_137 = abs ((((0.500000 * lumaN_64) + (-(1.00000) * lumaM_62)) + (0.500000 * lumaS_60)));
   float tmpvar_138;
-  tmpvar_138 = abs ((((0.25 * lumaNE_47) + (-(0.5) * lumaE_61)) + (0.25 * lumaSE_45)));
+  tmpvar_138 = abs ((((0.250000 * lumaNE_47) + (-(0.500000) * lumaE_61)) + (0.250000 * lumaSE_45)));
   float tmpvar_139;
   tmpvar_139 = ((tmpvar_136 + tmpvar_137) + tmpvar_138);
   edgeHorz_43 = tmpvar_139;
@@ -332,10 +332,10 @@ vec3 FxaaPixelShader (
   tmpvar_148 = tmpvar_147;
   gradientS_39 = tmpvar_148;
   float tmpvar_149;
-  tmpvar_149 = ((lumaN_64 + lumaM_62) * 0.5);
+  tmpvar_149 = ((lumaN_64 + lumaM_62) * 0.500000);
   lumaN_64 = tmpvar_149;
   float tmpvar_150;
-  tmpvar_150 = ((lumaS_60 + lumaM_62) * 0.5);
+  tmpvar_150 = ((lumaS_60 + lumaM_62) * 0.500000);
   lumaS_60 = tmpvar_150;
   bool tmpvar_151;
   tmpvar_151 = (gradientN_40 >= gradientS_39);
@@ -352,29 +352,29 @@ vec3 FxaaPixelShader (
   };
   if (!(pairN_38)) {
     float tmpvar_154;
-    tmpvar_154 = (lengthSign_41 * -(1.0));
+    tmpvar_154 = (lengthSign_41 * -(1.00000));
     lengthSign_41 = tmpvar_154;
   };
   float tmpvar_155;
   if (horzSpan_42) {
-    tmpvar_155 = 0.0;
+    tmpvar_155 = 0.00000;
   } else {
-    tmpvar_155 = (lengthSign_41 * 0.5);
+    tmpvar_155 = (lengthSign_41 * 0.500000);
   };
   float tmpvar_156;
   tmpvar_156 = (pos_21.x + tmpvar_155);
   posN_37.x = tmpvar_156;
   float tmpvar_157;
   if (horzSpan_42) {
-    tmpvar_157 = (lengthSign_41 * 0.5);
+    tmpvar_157 = (lengthSign_41 * 0.500000);
   } else {
-    tmpvar_157 = 0.0;
+    tmpvar_157 = 0.00000;
   };
   float tmpvar_158;
   tmpvar_158 = (pos_21.y + tmpvar_157);
   posN_37.y = vec2(tmpvar_158).y;
   float tmpvar_159;
-  tmpvar_159 = (gradientN_40 * 0.25);
+  tmpvar_159 = (gradientN_40 * 0.250000);
   gradientN_40 = tmpvar_159;
   vec2 tmpvar_160;
   tmpvar_160 = posN_37;
@@ -382,12 +382,12 @@ vec3 FxaaPixelShader (
   vec2 tmpvar_161;
   if (horzSpan_42) {
     vec2 tmpvar_162;
-    tmpvar_162.y = 0.0;
+    tmpvar_162.y = 0.00000;
     tmpvar_162.x = rcpFrame_23.x;
     tmpvar_161 = tmpvar_162;
   } else {
     vec2 tmpvar_163;
-    tmpvar_163.x = 0.0;
+    tmpvar_163.x = 0.00000;
     tmpvar_163.y = rcpFrame_23.y;
     tmpvar_161 = tmpvar_163;
   };
@@ -401,10 +401,10 @@ vec3 FxaaPixelShader (
   tmpvar_166 = lumaN_64;
   lumaEndP_33 = tmpvar_166;
   vec2 tmpvar_167;
-  tmpvar_167 = (posN_37 + (offNP_35 * vec2(-1.0, -1.0)));
+  tmpvar_167 = (posN_37 + (offNP_35 * vec2(-1.00000, -1.00000)));
   posN_37 = tmpvar_167;
   vec2 tmpvar_168;
-  tmpvar_168 = (posP_36 + (offNP_35 * vec2(1.0, 1.0)));
+  tmpvar_168 = (posP_36 + (offNP_35 * vec2(1.00000, 1.00000)));
   posP_36 = tmpvar_168;
   while (true) {
     if (!((i_30 < 16))) {
@@ -505,9 +505,9 @@ vec3 FxaaPixelShader (
   float tmpvar_192;
   tmpvar_192 = tmpvar_191;
   lumaEndN_34 = tmpvar_192;
-  if ((((lumaM_62 - lumaN_64) < 0.0) == ((lumaEndN_34 - lumaN_64) < 0.0))) {
+  if ((((lumaM_62 - lumaN_64) < 0.00000) == ((lumaEndN_34 - lumaN_64) < 0.00000))) {
     float tmpvar_193;
-    tmpvar_193 = 0.0;
+    tmpvar_193 = 0.00000;
     lengthSign_41 = tmpvar_193;
   };
   float tmpvar_194;
@@ -523,11 +523,11 @@ vec3 FxaaPixelShader (
   tmpvar_196 = tmpvar_195;
   dstN_29 = tmpvar_196;
   float tmpvar_197;
-  tmpvar_197 = ((0.5 + (dstN_29 * (-(1.0) / spanLength_26))) * lengthSign_41);
+  tmpvar_197 = ((0.500000 + (dstN_29 * (-(1.00000) / spanLength_26))) * lengthSign_41);
   subPixelOffset_25 = tmpvar_197;
   float tmpvar_198;
   if (horzSpan_42) {
-    tmpvar_198 = 0.0;
+    tmpvar_198 = 0.00000;
   } else {
     tmpvar_198 = subPixelOffset_25;
   };
@@ -535,7 +535,7 @@ vec3 FxaaPixelShader (
   if (horzSpan_42) {
     tmpvar_199 = subPixelOffset_25;
   } else {
-    tmpvar_199 = 0.0;
+    tmpvar_199 = 0.00000;
   };
   vec2 tmpvar_200;
   tmpvar_200.x = (pos_21.x + tmpvar_198);
@@ -559,7 +559,7 @@ vec4 xlat_main (
   vec3 tmpvar_206;
   tmpvar_206 = FxaaPixelShader (uv_205.xy, _MainTex, _MainTex_TexelSize.xy);
   vec4 tmpvar_207;
-  tmpvar_207.w = 0.0;
+  tmpvar_207.w = 0.00000;
   tmpvar_207.xyz = tmpvar_206.xyz.xyz;
   return tmpvar_207;
 }

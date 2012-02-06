@@ -11,7 +11,7 @@ void main ()
   tmpvar_1.zw = ((gl_MultiTexCoord1.xy * _Detail_ST.xy) + _Detail_ST.zw);
   vec4 o_3;
   vec4 tmpvar_4;
-  tmpvar_4 = (tmpvar_2 * 0.5);
+  tmpvar_4 = (tmpvar_2 * 0.500000);
   o_3 = tmpvar_4;
   vec2 tmpvar_5;
   tmpvar_5.x = tmpvar_4.x;
@@ -20,7 +20,7 @@ void main ()
   o_3.zw = tmpvar_2.zw;
   gl_Position = tmpvar_2;
   vec4 tmpvar_6;
-  tmpvar_6.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_6.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_6.x = tmpvar_2.z;
   xlv_FOG = tmpvar_6;
   gl_TexCoord[0] = tmpvar_1;

@@ -33,15 +33,15 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   gl_TexCoord[0] = tmpvar_1;
   vec4 tmpvar_7;
-  tmpvar_7.w = 0.0;
+  tmpvar_7.w = 0.00000;
   tmpvar_7.xyz = (tmpvar_3 * tmpvar_4[0]);
   gl_TexCoord[1] = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.w = 0.0;
+  tmpvar_8.w = 0.00000;
   tmpvar_8.xyz = (tmpvar_3 * tmpvar_5[1]);
   gl_TexCoord[2] = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.w = 0.0;
+  tmpvar_9.w = 0.00000;
   tmpvar_9.xyz = (tmpvar_3 * tmpvar_6[2]);
   gl_TexCoord[3] = tmpvar_9;
 }

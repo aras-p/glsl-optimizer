@@ -15,10 +15,10 @@ vec4 UnpackNormal (
 {
   vec4 normal_2;
   vec2 tmpvar_3;
-  tmpvar_3 = ((packednormal_1.wy * 2.0) - 1.0);
+  tmpvar_3 = ((packednormal_1.wy * 2.00000) - 1.00000);
   normal_2.xy = tmpvar_3.xy.xy;
   float tmpvar_4;
-  tmpvar_4 = sqrt (((1.0 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
+  tmpvar_4 = sqrt (((1.00000 - (normal_2.x * normal_2.x)) - (normal_2.y * normal_2.y)));
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   normal_2.z = vec3(tmpvar_5).z;
@@ -64,7 +64,7 @@ void main ()
   v2f xlt_i_20;
   vec4 xl_retval_21;
   vec4 tmpvar_22;
-  tmpvar_22 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_22 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_i_20.vertex = tmpvar_22;
   vec4 tmpvar_23;
   tmpvar_23 = gl_TexCoord[0].xyzw;

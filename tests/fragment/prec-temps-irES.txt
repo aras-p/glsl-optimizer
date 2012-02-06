@@ -31,19 +31,19 @@ lowp vec4 frag_surf (
   lowp vec4 tmpvar_10;
   tmpvar_10 = texture2D (_BumpMap, IN_1.pack0);
   lowp vec3 tmpvar_11;
-  tmpvar_11 = ((tmpvar_10.xyz * 2.0) - 1.0);
+  tmpvar_11 = ((tmpvar_10.xyz * 2.00000) - 1.00000);
   Normal_6 = tmpvar_11;
   lowp float tmpvar_12;
   tmpvar_12 = dot (Normal_6, IN_1.lightDir);
   lowp float tmpvar_13;
-  tmpvar_13 = max (0.0, tmpvar_12);
+  tmpvar_13 = max (0.00000, tmpvar_12);
   lowp float tmpvar_14;
   tmpvar_14 = tmpvar_13;
   diff_5 = tmpvar_14;
   lowp float tmpvar_15;
   tmpvar_15 = dot (Normal_6, IN_1.halfDir);
   lowp float tmpvar_16;
-  tmpvar_16 = max (0.0, tmpvar_15);
+  tmpvar_16 = max (0.00000, tmpvar_15);
   lowp float tmpvar_17;
   tmpvar_17 = tmpvar_16;
   nh_4 = tmpvar_17;
@@ -58,7 +58,7 @@ lowp vec4 frag_surf (
   tmpvar_21 = ((tmpvar_20 * ((_LightColor0.xyz * diff_5) + IN_1.vlight)) + (_LightColor0.xyz * spec_3));
   c_2.xyz = tmpvar_21.xyz.xyz;
   float tmpvar_22;
-  tmpvar_22 = 0.0;
+  tmpvar_22 = 0.00000;
   c_2.w = vec4(tmpvar_22).w;
   return c_2;
 }
@@ -68,7 +68,7 @@ void main ()
   v2f_surf xlt_IN_23;
   lowp vec4 xl_retval_24;
   vec4 tmpvar_25;
-  tmpvar_25 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_25 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_23.pos = tmpvar_25;
   lowp vec2 tmpvar_26;
   tmpvar_26 = xlv_TEXCOORD0.xy;

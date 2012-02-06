@@ -29,7 +29,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -39,7 +39,7 @@ float xll_saturate (
 )
 {
   float tmpvar_3;
-  tmpvar_3 = clamp (x_2, 0.0, 1.0);
+  tmpvar_3 = clamp (x_2, 0.00000, 1.00000);
   return tmpvar_3;
 }
 
@@ -48,7 +48,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_5;
-  tmpvar_5 = clamp (x_4, 0.0, 1.0);
+  tmpvar_5 = clamp (x_4, 0.00000, 1.00000);
   return tmpvar_5;
 }
 
@@ -57,7 +57,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_7;
-  tmpvar_7 = clamp (x_6, 0.0, 1.0);
+  tmpvar_7 = clamp (x_6, 0.00000, 1.00000);
   return tmpvar_7;
 }
 
@@ -66,7 +66,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_9;
-  tmpvar_9 = clamp (x_8, 0.0, 1.0);
+  tmpvar_9 = clamp (x_8, 0.00000, 1.00000);
   return tmpvar_9;
 }
 
@@ -75,9 +75,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_11;
-  tmpvar_11 = clamp (m_10[0], 0.0, 1.0);
+  tmpvar_11 = clamp (m_10[0], 0.00000, 1.00000);
   vec2 tmpvar_12;
-  tmpvar_12 = clamp (m_10[1], 0.0, 1.0);
+  tmpvar_12 = clamp (m_10[1], 0.00000, 1.00000);
   mat2 tmpvar_13;
   vec2 tmpvar_14;
   tmpvar_14 = tmpvar_11;
@@ -93,11 +93,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_17;
-  tmpvar_17 = clamp (m_16[0], 0.0, 1.0);
+  tmpvar_17 = clamp (m_16[0], 0.00000, 1.00000);
   vec3 tmpvar_18;
-  tmpvar_18 = clamp (m_16[1], 0.0, 1.0);
+  tmpvar_18 = clamp (m_16[1], 0.00000, 1.00000);
   vec3 tmpvar_19;
-  tmpvar_19 = clamp (m_16[2], 0.0, 1.0);
+  tmpvar_19 = clamp (m_16[2], 0.00000, 1.00000);
   mat3 tmpvar_20;
   vec3 tmpvar_21;
   tmpvar_21 = tmpvar_17;
@@ -116,13 +116,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_25;
-  tmpvar_25 = clamp (m_24[0], 0.0, 1.0);
+  tmpvar_25 = clamp (m_24[0], 0.00000, 1.00000);
   vec4 tmpvar_26;
-  tmpvar_26 = clamp (m_24[1], 0.0, 1.0);
+  tmpvar_26 = clamp (m_24[1], 0.00000, 1.00000);
   vec4 tmpvar_27;
-  tmpvar_27 = clamp (m_24[2], 0.0, 1.0);
+  tmpvar_27 = clamp (m_24[2], 0.00000, 1.00000);
   vec4 tmpvar_28;
-  tmpvar_28 = clamp (m_24[3], 0.0, 1.0);
+  tmpvar_28 = clamp (m_24[3], 0.00000, 1.00000);
   mat4 tmpvar_29;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_25;
@@ -187,7 +187,7 @@ vec3 DecodeLightmap (
   in vec4 color_50
 )
 {
-  return (2.0 * color_50.xyz);
+  return (2.00000 * color_50.xyz);
 }
 
 vec4 frag_surf (
@@ -205,19 +205,19 @@ vec4 frag_surf (
   tmpvar_59 = IN_51.hip_pack0.xy;
   surfIN_58.uv_MainTex = tmpvar_59;
   vec3 tmpvar_60;
-  tmpvar_60 = vec3(0.0, 0.0, 0.0);
+  tmpvar_60 = vec3(0.00000, 0.00000, 0.00000);
   o_57.Albedo = tmpvar_60;
   vec3 tmpvar_61;
-  tmpvar_61 = vec3(0.0, 0.0, 0.0);
+  tmpvar_61 = vec3(0.00000, 0.00000, 0.00000);
   o_57.Emission = tmpvar_61;
   float tmpvar_62;
-  tmpvar_62 = 0.0;
+  tmpvar_62 = 0.00000;
   o_57.Specular = tmpvar_62;
   float tmpvar_63;
-  tmpvar_63 = 0.0;
+  tmpvar_63 = 0.00000;
   o_57.Alpha = tmpvar_63;
   float tmpvar_64;
-  tmpvar_64 = 0.0;
+  tmpvar_64 = 0.00000;
   o_57.Gloss = tmpvar_64;
   surf (surfIN_58, o_57);
   xll_clip ((o_57.Alpha - _Cutoff));
@@ -270,7 +270,7 @@ void main ()
   v2f_surf xlt_IN_82;
   vec4 xl_retval_83;
   vec4 tmpvar_84;
-  tmpvar_84 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_84 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_82.pos = tmpvar_84;
   float tmpvar_85;
   tmpvar_85 = xlv_FOG.x;

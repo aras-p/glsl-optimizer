@@ -11,15 +11,15 @@ void main ()
   vec2 tmpvar_3;
   tmpvar_3 = gl_TexCoord[0].xy;
   vec4 normal_4;
-  normal_4.xy = ((texture2D (_BumpMap, tmpvar_3).wy * 2.0) - 1.0);
-  normal_4.z = sqrt (((1.0 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  normal_4.xy = ((texture2D (_BumpMap, tmpvar_3).wy * 2.00000) - 1.00000);
+  normal_4.z = sqrt (((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
   vec3 LightCoord_5;
   LightCoord_5 = tmpvar_1.xyz;
   vec4 c_6;
-  c_6.xyz = ((texture2D (_MainTex, tmpvar_3).xyz * _LightColor0.xyz) * ((max (0.0, dot (normal_4.xyz, normalize (gl_TexCoord[1].xyz))) * ((float((tmpvar_1.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_5, LightCoord_5))).w)) * 2.0));
-  c_6.w = 0.0;
+  c_6.xyz = ((texture2D (_MainTex, tmpvar_3).xyz * _LightColor0.xyz) * ((max (0.00000, dot (normal_4.xyz, normalize (gl_TexCoord[1].xyz))) * ((float((tmpvar_1.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_5, LightCoord_5))).w)) * 2.00000));
+  c_6.w = 0.00000;
   c_2 = c_6;
-  c_2.w = 0.0;
+  c_2.w = 0.00000;
   gl_FragData[0] = c_2;
 }
 

@@ -29,7 +29,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
@@ -64,12 +64,12 @@ vec4 LightingLambert (
   float tmpvar_14;
   tmpvar_14 = dot (s_9.Normal, lightDir_10);
   float tmpvar_15;
-  tmpvar_15 = max (0.0, tmpvar_14);
+  tmpvar_15 = max (0.00000, tmpvar_14);
   float tmpvar_16;
   tmpvar_16 = tmpvar_15;
   diff_13 = tmpvar_16;
   vec3 tmpvar_17;
-  tmpvar_17 = ((s_9.Albedo * _LightColor0.xyz) * ((diff_13 * atten_11) * 2.0));
+  tmpvar_17 = ((s_9.Albedo * _LightColor0.xyz) * ((diff_13 * atten_11) * 2.00000));
   c_12.xyz = tmpvar_17.xyz.xyz;
   float tmpvar_18;
   tmpvar_18 = s_9.Alpha;
@@ -92,19 +92,19 @@ vec4 frag_surf (
   tmpvar_25 = IN_19.lop_color;
   surfIN_23.color = tmpvar_25;
   vec3 tmpvar_26;
-  tmpvar_26 = vec3(0.0, 0.0, 0.0);
+  tmpvar_26 = vec3(0.00000, 0.00000, 0.00000);
   o_22.Albedo = tmpvar_26;
   vec3 tmpvar_27;
-  tmpvar_27 = vec3(0.0, 0.0, 0.0);
+  tmpvar_27 = vec3(0.00000, 0.00000, 0.00000);
   o_22.Emission = tmpvar_27;
   float tmpvar_28;
-  tmpvar_28 = 0.0;
+  tmpvar_28 = 0.00000;
   o_22.Specular = tmpvar_28;
   float tmpvar_29;
-  tmpvar_29 = 0.0;
+  tmpvar_29 = 0.00000;
   o_22.Alpha = tmpvar_29;
   float tmpvar_30;
-  tmpvar_30 = 0.0;
+  tmpvar_30 = 0.00000;
   o_22.Gloss = tmpvar_30;
   vec3 tmpvar_31;
   tmpvar_31 = IN_19.normal;
@@ -145,7 +145,7 @@ void main ()
   v2f_surf xlt_IN_43;
   vec4 xl_retval_44;
   vec4 tmpvar_45;
-  tmpvar_45 = vec4(0.0, 0.0, 0.0, 0.0);
+  tmpvar_45 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
   xlt_IN_43.pos = tmpvar_45;
   float tmpvar_46;
   tmpvar_46 = xlv_FOG.x;
