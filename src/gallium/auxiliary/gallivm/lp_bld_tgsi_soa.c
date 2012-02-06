@@ -502,11 +502,6 @@ get_indirect_index(struct lp_build_tgsi_soa_context *bld,
                         bld->addr[indirect_reg->Index][swizzle],
                         "load addr reg");
 
-   /* for indexing we want integers */
-   rel = LLVMBuildFPToSI(builder,
-                         rel,
-                         uint_bld->vec_type, "");
-
    index = lp_build_add(uint_bld, base, rel);
 
    max_index = lp_build_const_int_vec(bld->bld_base.base.gallivm,
@@ -855,7 +850,6 @@ emit_fetch_predicate(
    }
 }
 
-
 /**
  * Register store.
  */
@@ -875,8 +869,26 @@ emit_store_chan(
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
    struct lp_build_context *bld_store;
+   enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode);
 
-   bld_store = &bld->bld_base.base;
+   switch (dtype) {
+   default:
+   case TGSI_TYPE_FLOAT:
+   case TGSI_TYPE_UNTYPED:
+      bld_store = &bld_base->base;
+      break;
+   case TGSI_TYPE_UNSIGNED:
+      bld_store = &bld_base->uint_bld;
+      break;
+   case TGSI_TYPE_SIGNED:
+      bld_store = &bld_base->int_bld;
+      break;
+   case TGSI_TYPE_DOUBLE:
+   case TGSI_TYPE_VOID:
+      assert(0);
+      bld_store = NULL;
+      break;
+   }
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -986,8 +998,30 @@ emit_store_chan(
                            &bld->exec_mask, pred);
       }
       else {
-         LLVMValueRef temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
-                                              chan_index);
+         LLVMValueRef temp_ptr;
+
+         switch (dtype) {
+         case TGSI_TYPE_UNSIGNED:
+         case TGSI_TYPE_SIGNED: {
+            LLVMTypeRef itype = LLVMVectorType(LLVMInt32TypeInContext(gallivm->context), 4);
+            LLVMTypeRef ivtype = LLVMPointerType(itype, 0);
+            LLVMValueRef tint_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
+                                                        chan_index);
+            LLVMValueRef temp_value_ptr;
+
+            temp_ptr = LLVMBuildBitCast(builder, tint_ptr, ivtype, "");
+            temp_value_ptr = LLVMBuildBitCast(builder, value, itype, "");
+            value = temp_value_ptr;
+            break;
+         }
+         default:
+         case TGSI_TYPE_FLOAT:
+         case TGSI_TYPE_UNTYPED:
+            temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
+                                           chan_index);
+            break;
+         }
+
          lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value, temp_ptr);
       }
       break;
@@ -1345,7 +1379,7 @@ lp_emit_declaration_soa(
       case TGSI_FILE_ADDRESS:
          assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < TGSI_NUM_CHANNELS; i++)
-            bld->addr[idx][i] = lp_build_alloca(gallivm, vec_type, "addr");
+            bld->addr[idx][i] = lp_build_alloca(gallivm, bld_base->base.int_vec_type, "addr");
          break;
 
       case TGSI_FILE_PREDICATE:
