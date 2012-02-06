@@ -45,7 +45,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_scan.h"
-
+#include "tgsi/tgsi_info.h"
 
 #define LP_CHAN_ALL ~0
 
@@ -273,6 +273,7 @@ struct lp_build_tgsi_context;
 
 typedef LLVMValueRef (*lp_build_emit_fetch_fn)(struct lp_build_tgsi_context *,
                                         const struct tgsi_full_src_register *,
+                                        enum tgsi_opcode_type,
                                         unsigned);
 
 struct lp_build_tgsi_context

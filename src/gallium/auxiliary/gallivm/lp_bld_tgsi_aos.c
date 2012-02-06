@@ -101,7 +101,8 @@ static LLVMValueRef
 emit_fetch_constant(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_full_src_register * reg,
-   const unsigned swizzle)
+   enum tgsi_opcode_type stype,
+   unsigned swizzle)
 {
    struct lp_build_tgsi_aos_context * bld = lp_aos_context(bld_base);
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
@@ -171,7 +172,8 @@ static LLVMValueRef
 emit_fetch_immediate(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_full_src_register * reg,
-   const unsigned swizzle)
+   enum tgsi_opcode_type stype,
+   unsigned swizzle)
 {
    struct lp_build_tgsi_aos_context * bld = lp_aos_context(bld_base);
    LLVMValueRef res = bld->immediates[reg->Register.Index];
@@ -183,7 +185,8 @@ static LLVMValueRef
 emit_fetch_input(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_full_src_register * reg,
-   const unsigned swizzle)
+   enum tgsi_opcode_type stype,
+   unsigned swizzle)
 {
    struct lp_build_tgsi_aos_context * bld = lp_aos_context(bld_base);
    LLVMValueRef res = bld->inputs[reg->Register.Index];
@@ -196,7 +199,8 @@ static LLVMValueRef
 emit_fetch_temporary(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_full_src_register * reg,
-   const unsigned swizzle)
+   enum tgsi_opcode_type stype,
+   unsigned swizzle)
 {
    struct lp_build_tgsi_aos_context * bld = lp_aos_context(bld_base);
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
