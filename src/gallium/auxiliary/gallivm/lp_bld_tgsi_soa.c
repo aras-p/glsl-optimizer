@@ -1409,11 +1409,30 @@ void lp_emit_immediate_soa(
    const uint size = imm->Immediate.NrTokens - 1;
    assert(size <= 4);
    assert(bld->num_immediates < LP_MAX_TGSI_IMMEDIATES);
+   switch (imm->Immediate.DataType) {
+   case TGSI_IMM_FLOAT32:
+      for( i = 0; i < size; ++i )
+         bld->immediates[bld->num_immediates][i] =
+            lp_build_const_vec(gallivm, bld_base->base.type, imm->u[i].Float);
 
-   for( i = 0; i < size; ++i )
-      bld->immediates[bld->num_immediates][i] =
-              lp_build_const_vec(gallivm, bld_base->base.type, imm->u[i].Float);
+      break;
+   case TGSI_IMM_UINT32:
+      for( i = 0; i < size; ++i ) {
+         LLVMValueRef tmp = lp_build_const_vec(gallivm, bld_base->uint_bld.type, imm->u[i].Uint);
+         bld->immediates[bld->num_immediates][i] =
+            LLVMConstBitCast(tmp, bld_base->base.vec_type);
+      }
 
+      break;
+   case TGSI_IMM_INT32:
+      for( i = 0; i < size; ++i ) {
+         LLVMValueRef tmp = lp_build_const_vec(gallivm, bld_base->int_bld.type, imm->u[i].Int);
+         bld->immediates[bld->num_immediates][i] =
+            LLVMConstBitCast(tmp, bld_base->base.vec_type);
+      }
+            
+      break;
+   }
    for( i = size; i < 4; ++i )
       bld->immediates[bld->num_immediates][i] = bld_base->base.undef;
 
