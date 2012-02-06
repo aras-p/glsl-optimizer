@@ -182,6 +182,43 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
    return true;
 }
 
+bool
+fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
+{
+   /* 3-src instructions were introduced in gen6. */
+   if (intel->gen < 6)
+      return false;
+
+   /* MAD can only handle floating-point data. */
+   if (ir->type != glsl_type::float_type)
+      return false;
+
+   ir_rvalue *nonmul = ir->operands[1 - mul_arg];
+   ir_expression *mul = ir->operands[mul_arg]->as_expression();
+
+   if (!mul || mul->operation != ir_binop_mul)
+      return false;
+
+   if (nonmul->as_constant() ||
+       mul->operands[0]->as_constant() ||
+       mul->operands[1]->as_constant())
+      return false;
+
+   nonmul->accept(this);
+   fs_reg src0 = this->result;
+
+   mul->operands[0]->accept(this);
+   fs_reg src1 = this->result;
+
+   mul->operands[1]->accept(this);
+   fs_reg src2 = this->result;
+
+   this->result = fs_reg(this, ir->type);
+   emit(BRW_OPCODE_MAD, this->result, src0, src1, src2);
+
+   return true;
+}
+
 void
 fs_visitor::visit(ir_expression *ir)
 {
@@ -193,6 +230,10 @@ fs_visitor::visit(ir_expression *ir)
 
    if (try_emit_saturate(ir))
       return;
+   if (ir->operation == ir_binop_add) {
+      if (try_emit_mad(ir, 0) || try_emit_mad(ir, 1))
+	 return;
+   }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       ir->operands[operand]->accept(this);

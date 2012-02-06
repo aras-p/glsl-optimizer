@@ -725,6 +725,20 @@ fs_visitor::generate_code()
 	 brw_set_acc_write_control(p, 0);
 	 break;
 
+      case BRW_OPCODE_MAD:
+	 brw_set_access_mode(p, BRW_ALIGN_16);
+	 if (c->dispatch_width == 16) {
+	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+	    brw_MAD(p, dst, src[0], src[1], src[2]);
+	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	    brw_MAD(p, sechalf(dst), sechalf(src[0]), sechalf(src[1]), sechalf(src[2]));
+	    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+	 } else {
+	    brw_MAD(p, dst, src[0], src[1], src[2]);
+	 }
+	 brw_set_access_mode(p, BRW_ALIGN_1);
+	 break;
+
       case BRW_OPCODE_FRC:
 	 brw_FRC(p, dst, src[0]);
 	 break;
