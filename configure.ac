@@ -698,6 +698,9 @@ AC_ARG_ENABLE([shared-glapi],
 SHARED_GLAPI="0"
 if test "x$enable_shared_glapi" = xyes; then
     SHARED_GLAPI="1"
+    # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
+    # the remap table)
+    DEFINES="$DEFINES -DIN_DRI_DRIVER"
 fi
 AC_SUBST([SHARED_GLAPI])
 
