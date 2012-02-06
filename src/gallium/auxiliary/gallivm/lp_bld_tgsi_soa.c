@@ -268,6 +268,7 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
  * (0 means don't store this bit, 1 means do store).
  */
 static void lp_exec_mask_store(struct lp_exec_mask *mask,
+                               struct lp_build_context *bld_store,
                                LLVMValueRef pred,
                                LLVMValueRef val,
                                LLVMValueRef dst)
@@ -287,7 +288,7 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
       LLVMValueRef real_val, dst_val;
 
       dst_val = LLVMBuildLoad(builder, dst, "");
-      real_val = lp_build_select(mask->bld,
+      real_val = lp_build_select(bld_store,
                                  pred,
                                  val, dst_val);
 
@@ -821,6 +822,9 @@ emit_store_chan(
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
    struct lp_build_context *uint_bld = &bld->uint_bld;
    LLVMValueRef indirect_index = NULL;
+   struct lp_build_context *bld_store;
+
+   bld_store = &bld->bld_base.base;
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -889,7 +893,7 @@ emit_store_chan(
       else {
          LLVMValueRef out_ptr = lp_get_output_ptr(bld, reg->Register.Index,
                                                chan_index);
-         lp_exec_mask_store(&bld->exec_mask, pred, value, out_ptr);
+         lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value, out_ptr);
       }
       break;
 
@@ -932,17 +936,17 @@ emit_store_chan(
       else {
          LLVMValueRef temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
                                               chan_index);
-         lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+         lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value, temp_ptr);
       }
       break;
 
    case TGSI_FILE_ADDRESS:
-      lp_exec_mask_store(&bld->exec_mask, pred, value,
+      lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value,
                          bld->addr[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
-      lp_exec_mask_store(&bld->exec_mask, pred, value,
+      lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value,
                          bld->preds[reg->Register.Index][chan_index]);
       break;
 
