@@ -991,6 +991,8 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.bld_base.base, gallivm, type);
+   lp_build_context_init(&bld.bld_base.uint_bld, gallivm, lp_uint_type(type));
+   lp_build_context_init(&bld.bld_base.int_bld, gallivm, lp_int_type(type));
    lp_build_context_init(&bld.int_bld, gallivm, lp_int_type(type));
 
    for (chan = 0; chan < 4; ++chan) {

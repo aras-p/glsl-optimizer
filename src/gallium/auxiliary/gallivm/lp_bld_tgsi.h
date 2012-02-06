@@ -279,6 +279,9 @@ struct lp_build_tgsi_context
 {
    struct lp_build_context base;
 
+   struct lp_build_context uint_bld;
+   struct lp_build_context int_bld;
+
    /** This array stores functions that are used to transform TGSI opcodes to
      * LLVM instructions.
      */
@@ -337,9 +340,6 @@ struct lp_build_tgsi_context
 struct lp_build_tgsi_soa_context
 {
    struct lp_build_tgsi_context bld_base;
-
-   /* Builder for vector integer masks and indices */
-   struct lp_build_context uint_bld;
 
    /* Builder for scalar elements of shader's data type (float) */
    struct lp_build_context elem_bld;

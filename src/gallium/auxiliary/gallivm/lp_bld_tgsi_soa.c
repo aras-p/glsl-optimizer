@@ -485,7 +485,7 @@ get_indirect_index(struct lp_build_tgsi_soa_context *bld,
                    const struct tgsi_src_register *indirect_reg)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   struct lp_build_context *uint_bld = &bld->uint_bld;
+   struct lp_build_context *uint_bld = &bld->bld_base.uint_bld;
    /* always use X component of address register */
    unsigned swizzle = indirect_reg->SwizzleX;
    LLVMValueRef base;
@@ -528,7 +528,7 @@ emit_fetch_constant(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    struct gallivm_state *gallivm = bld_base->base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   struct lp_build_context *uint_bld = &bld->uint_bld;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
 
    /* XXX: Handle fetching xyzw components as a vector */
@@ -588,7 +588,7 @@ emit_fetch_input(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   struct lp_build_context *uint_bld = &bld->uint_bld;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
    LLVMValueRef res;
 
@@ -645,7 +645,7 @@ emit_fetch_temporary(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   struct lp_build_context *uint_bld = &bld->uint_bld;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
    LLVMValueRef res;
 
@@ -820,7 +820,7 @@ emit_store_chan(
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
-   struct lp_build_context *uint_bld = &bld->uint_bld;
+   struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
    struct lp_build_context *bld_store;
 
@@ -1758,7 +1758,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.bld_base.base, gallivm, type);
-   lp_build_context_init(&bld.uint_bld, gallivm, lp_uint_type(type));
+   lp_build_context_init(&bld.bld_base.uint_bld, gallivm, lp_uint_type(type));
+   lp_build_context_init(&bld.bld_base.int_bld, gallivm, lp_int_type(type));
    lp_build_context_init(&bld.elem_bld, gallivm, lp_elem_type(type));
    bld.mask = mask;
    bld.pos = pos;
