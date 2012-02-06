@@ -43,6 +43,7 @@
 
 #include "lp_bld_tgsi.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_bitarit.h"
 #include "lp_bld_const.h"
 #include "lp_bld_gather.h"
 #include "lp_bld_logic.h"
@@ -683,6 +684,43 @@ sub_emit(
 				emit_data->args[1], "");
 }
 
+/* TGSI_OPCODE_U2F */
+static void
+u2f_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = LLVMBuildUIToFP(bld_base->base.gallivm->builder,
+							emit_data->args[0],
+							bld_base->uint_bld.vec_type, "");
+}
+
+static void
+umad_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMValueRef tmp;
+   tmp = lp_build_emit_llvm_binary(bld_base, TGSI_OPCODE_UMUL,
+                                   emit_data->args[0],
+                                   emit_data->args[1]);
+   emit_data->output[emit_data->chan] = lp_build_emit_llvm_binary(bld_base,
+                                       TGSI_OPCODE_UADD, tmp, emit_data->args[2]);
+}
+
+/* TGSI_OPCODE_UMUL */
+static void
+umul_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_mul(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
 /* TGSI_OPCODE_XPD */
 
 static void
@@ -776,6 +814,11 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_SFL].emit = sfl_emit;
    bld_base->op_actions[TGSI_OPCODE_STR].emit = str_emit;
    bld_base->op_actions[TGSI_OPCODE_SUB].emit = sub_emit;
+
+   bld_base->op_actions[TGSI_OPCODE_UARL].emit = mov_emit;
+   bld_base->op_actions[TGSI_OPCODE_U2F].emit = u2f_emit;
+   bld_base->op_actions[TGSI_OPCODE_UMAD].emit = umad_emit;
+   bld_base->op_actions[TGSI_OPCODE_UMUL].emit = umul_emit;
 }
 
 /* CPU Only default actions */
@@ -804,6 +847,17 @@ add_emit_cpu(
    struct lp_build_emit_data * emit_data)
 {
    emit_data->output[emit_data->chan] = lp_build_add(&bld_base->base,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_AND (CPU Only) */
+static void
+and_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_and(&bld_base->uint_bld,
                                    emit_data->args[0], emit_data->args[1]);
 }
 
@@ -919,6 +973,17 @@ exp_emit_cpu(
    emit_data->output[TGSI_CHAN_W] = bld_base->base.one;
 }
 
+/* TGSI_OPCODE_F2I (CPU Only) */
+static void
+f2i_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_itrunc(&bld_base->base,
+                                                        emit_data->args[0]);
+}
+
 /* TGSI_OPCODE_FLR (CPU Only) */
 
 static void
@@ -929,6 +994,111 @@ flr_emit_cpu(
 {
    emit_data->output[emit_data->chan] = lp_build_floor(&bld_base->base,
                                                          emit_data->args[0]);
+}
+
+/* TGSI_OPCODE_I2F (CPU Only) */
+static void
+i2f_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_int_to_float(&bld_base->base,
+                                                              emit_data->args[0]);
+}
+
+/* TGSI_OPCODE_IDIV (CPU Only) */
+static void
+idiv_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_div(&bld_base->int_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_INEG (CPU Only) */
+static void
+ineg_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_sub(&bld_base->int_bld,
+                                                     bld_base->int_bld.zero,
+                                                     emit_data->args[0]);
+}
+
+/* TGSI_OPCODE_ISET Helper (CPU Only) */
+static void
+iset_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data,
+   unsigned pipe_func)
+{
+   LLVMValueRef nz = lp_build_const_vec(bld_base->base.gallivm,
+					bld_base->int_bld.type, ~0U);
+   LLVMValueRef cond = lp_build_cmp(&bld_base->int_bld, pipe_func,
+                                    emit_data->args[0], emit_data->args[1]);
+   emit_data->output[emit_data->chan] = lp_build_select(&bld_base->int_bld,
+                                          cond,
+                                          nz,
+                                          bld_base->int_bld.zero);
+}
+
+/* TGSI_OPCODE_IMAX (CPU Only) */
+static void
+imax_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_max(&bld_base->int_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_IMIN (CPU Only) */
+static void
+imin_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_min(&bld_base->int_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_ISGE (CPU Only) */
+static void
+isge_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   iset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_GEQUAL);
+}
+
+/* TGSI_OPCODE_ISHR (CPU Only) */
+static void
+ishr_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_shr(&bld_base->int_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_ISLT (CPU Only) */
+static void
+islt_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   iset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_LESS);
 }
 
 /* TGSI_OPCODE_LG2 (CPU Only) */
@@ -988,6 +1158,39 @@ min_emit_cpu(
    struct lp_build_emit_data * emit_data)
 {
    emit_data->output[emit_data->chan] = lp_build_min(&bld_base->base,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_MOD (CPU Only) */
+static void
+mod_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_mod(&bld_base->int_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_NOT */
+static void
+not_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_not(&bld_base->base,
+                                                     emit_data->args[0]);
+}
+
+/* TGSI_OPCODE_OR (CPU Only) */
+static void
+or_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_or(&bld_base->uint_bld,
                                    emit_data->args[0], emit_data->args[1]);
 }
 
@@ -1089,6 +1292,17 @@ sgt_emit_cpu(
    set_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_GREATER);
 }
 
+/* TGSI_OPCODE_SHL (CPU Only) */
+static void
+shl_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_shl(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
 /* TGSI_OPCODE_SIN (CPU Only) */
 static void
 sin_emit_cpu(
@@ -1111,7 +1325,6 @@ sle_emit_cpu(
 }
 
 /* TGSI_OPCODE_SLT (CPU Only) */
-
 static void
 slt_emit_cpu(
    const struct lp_build_tgsi_action * action,
@@ -1169,6 +1382,144 @@ trunc_emit_cpu(
                                                          emit_data->args[0]);
 }
 
+/* TGSI_OPCODE_UADD (CPU Only) */
+static void
+uadd_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_add(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_UDIV (CPU Only) */
+static void
+udiv_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_div(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_UMAX (CPU Only) */
+static void
+umax_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_max(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_UMIN (CPU Only) */
+static void
+umin_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_min(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_UMOD (CPU Only) */
+static void
+umod_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_mod(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_USET Helper (CPU Only) */
+static void
+uset_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data,
+   unsigned pipe_func)
+{
+   LLVMValueRef nz = lp_build_const_vec(bld_base->base.gallivm,
+					bld_base->uint_bld.type, ~0U);
+   LLVMValueRef cond = lp_build_cmp(&bld_base->uint_bld, pipe_func,
+                                    emit_data->args[0], emit_data->args[1]);
+   emit_data->output[emit_data->chan] = lp_build_select(&bld_base->uint_bld,
+                                          cond,
+					  nz,
+                                          bld_base->uint_bld.zero);
+}
+
+
+/* TGSI_OPCODE_USEQ (CPU Only) */
+static void
+useq_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   uset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_EQUAL);
+}
+
+/* TGSI_OPCODE_ISGE (CPU Only) */
+static void
+usge_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   uset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_GEQUAL);
+}
+
+/* TGSI_OPCODE_USHR (CPU Only) */
+static void
+ushr_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_shr(&bld_base->uint_bld,
+                                   emit_data->args[0], emit_data->args[1]);
+}
+
+/* TGSI_OPCODE_ISLT (CPU Only) */
+static void
+uslt_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   uset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_LESS);
+}
+
+/* TGSI_OPCODE_USNE (CPU Only) */
+
+static void
+usne_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   uset_emit_cpu(action, bld_base, emit_data, PIPE_FUNC_NOTEQUAL);
+}
+
+/* TGSI_OPCODE_XOR */
+static void
+xor_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_xor(&bld_base->uint_bld,
+                                                     emit_data->args[0],
+                                                     emit_data->args[1]);
+}
+
 void
 lp_set_default_actions_cpu(
    struct lp_build_tgsi_context * bld_base)
@@ -1176,6 +1527,7 @@ lp_set_default_actions_cpu(
    lp_set_default_actions(bld_base);
    bld_base->op_actions[TGSI_OPCODE_ABS].emit = abs_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ADD].emit = add_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_AND].emit = and_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ARL].emit = arl_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ARR].emit = arr_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_CEIL].emit = ceil_emit_cpu;
@@ -1185,11 +1537,25 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_DIV].emit = div_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_EX2].emit = ex2_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_EXP].emit = exp_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_F2I].emit = f2i_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FLR].emit = flr_emit_cpu;
+
+   bld_base->op_actions[TGSI_OPCODE_I2F].emit = i2f_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_IDIV].emit = idiv_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_INEG].emit = ineg_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_IMAX].emit = imax_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_IMIN].emit = imin_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_ISGE].emit = isge_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_ISHR].emit = ishr_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_ISLT].emit = islt_emit_cpu;
+
    bld_base->op_actions[TGSI_OPCODE_LG2].emit = lg2_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_LOG].emit = log_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_MAX].emit = max_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_MIN].emit = min_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_MOD].emit = mod_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_NOT].emit = not_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_OR].emit = or_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_POW].emit = pow_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_RCP].emit = rcp_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ROUND].emit = round_emit_cpu;
@@ -1197,6 +1563,7 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_SGE].emit = sge_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_SGT].emit = sgt_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_SIN].emit = sin_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_SHL].emit = shl_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_SLE].emit = sle_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_SLT].emit = slt_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_SNE].emit = sne_emit_cpu;
@@ -1205,4 +1572,18 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_TRUNC].emit = trunc_emit_cpu;
 
    bld_base->rsq_action.emit = recip_sqrt_emit_cpu;
+
+   bld_base->op_actions[TGSI_OPCODE_UADD].emit = uadd_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_UDIV].emit = udiv_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_UMAX].emit = umax_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_UMIN].emit = umin_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_UMOD].emit = umod_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_USEQ].emit = useq_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_USGE].emit = usge_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_USHR].emit = ushr_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_USLT].emit = uslt_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_USNE].emit = usne_emit_cpu;
+
+   bld_base->op_actions[TGSI_OPCODE_XOR].emit = xor_emit_cpu;
+
 }
