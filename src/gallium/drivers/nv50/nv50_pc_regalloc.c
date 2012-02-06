@@ -421,7 +421,7 @@ phi_opnd_for_bb(struct nv_instruction *phi, struct nv_basic_block *b,
    int i, j;
 
    for (j = -1, i = 0; i < 6 && phi->src[i]; ++i) {
-      assert(i < Elements(phi->src[i]));
+      assert(i < Elements(phi->src));
       srci = phi->src[i];
       /* if already replaced, check with original source first */
       if (srci->flags & NV_REF_FLAG_REGALLOC_PRIV)
