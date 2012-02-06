@@ -3252,7 +3252,8 @@ static inline boolean tgsi_tex_src_requires_loading(struct r600_shader_ctx *ctx,
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	return 	(inst->Src[index].Register.File != TGSI_FILE_TEMPORARY &&
-		inst->Src[index].Register.File != TGSI_FILE_INPUT) ||
+		inst->Src[index].Register.File != TGSI_FILE_INPUT &&
+		inst->Src[index].Register.File != TGSI_FILE_OUTPUT) ||
 		ctx->src[index].neg || ctx->src[index].abs;
 }
 
