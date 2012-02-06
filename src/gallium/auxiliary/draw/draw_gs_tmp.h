@@ -9,6 +9,7 @@
    const unsigned prim = input_prims->prim;                       \
    const unsigned prim_flags = input_prims->flags;                \
    const unsigned count = input_prims->count;                     \
+   const boolean quads_flatshade_last = FALSE;                    \
    const boolean last_vertex_last = TRUE;                         \
    do {                                                           \
       debug_assert(input_prims->primitive_count == 1);            \

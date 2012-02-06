@@ -204,6 +204,8 @@ struct draw_context
       boolean guard_band_xy;
    } driver;
 
+   boolean quads_always_flatshade_last;
+
    boolean flushing;         /**< debugging/sanity */
    boolean suspend_flushing; /**< internally set */
 

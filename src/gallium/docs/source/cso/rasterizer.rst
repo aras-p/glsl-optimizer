@@ -59,13 +59,14 @@ flatshade_first
 Whether the first vertex should be the provoking vertex, for most primitives.
 If not set, the last vertex is the provoking vertex.
 
-There are several important exceptions to the specification of this rule.
+There are a few important exceptions to the specification of this rule.
 
 * ``PIPE_PRIMITIVE_POLYGON``: The provoking vertex is always the first
   vertex. If the caller wishes to change the provoking vertex, they merely
   need to rotate the vertices themselves.
-* ``PIPE_PRIMITIVE_QUAD``, ``PIPE_PRIMITIVE_QUAD_STRIP``: This option has no
-  effect; the provoking vertex is always the last vertex.
+* ``PIPE_PRIMITIVE_QUAD``, ``PIPE_PRIMITIVE_QUAD_STRIP``: The option only has
+  an effect if ``PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION`` is true.
+  If it is not, the provoking vertex is always the last vertex.
 * ``PIPE_PRIMITIVE_TRIANGLE_FAN``: When set, the provoking vertex is the
   second vertex, not the first. This permits each segment of the fan to have
   a different color.

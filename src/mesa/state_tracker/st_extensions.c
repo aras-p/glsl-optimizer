@@ -146,8 +146,8 @@ void st_init_limits(struct st_context *st)
       = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
 
-   /* Quads always follow GL provoking rules. */
-   c->QuadsFollowProvokingVertexConvention = GL_FALSE;
+   c->QuadsFollowProvokingVertexConvention = screen->get_param(
+      screen, PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION);
 
    for (sh = 0; sh < MESA_SHADER_TYPES; ++sh) {
       struct gl_shader_compiler_options *options =

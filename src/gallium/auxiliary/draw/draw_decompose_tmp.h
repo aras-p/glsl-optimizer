@@ -193,13 +193,18 @@ FUNC(FUNC_VARS)
             flags = DRAW_PIPE_RESET_STIPPLE |
                     DRAW_PIPE_EDGE_FLAG_0 |
                     DRAW_PIPE_EDGE_FLAG_1;
-            /* XXX should always emit idx[0] first */
-            /* always emit idx[3] first */
-            TRIANGLE(flags, idx[3], idx[0], idx[1]);
+            /* always emit idx[3] / idx[0] first */
+            if (quads_flatshade_last)
+               TRIANGLE(flags, idx[3], idx[0], idx[1]);
+            else
+               TRIANGLE(flags, idx[0], idx[1], idx[2]);
 
             flags = DRAW_PIPE_EDGE_FLAG_1 |
                     DRAW_PIPE_EDGE_FLAG_2;
-            TRIANGLE(flags, idx[3], idx[1], idx[2]);
+            if (quads_flatshade_last)
+               TRIANGLE(flags, idx[3], idx[1], idx[2]);
+            else
+               TRIANGLE(flags, idx[0], idx[2], idx[3]);
          }
       }
       break;
@@ -237,13 +242,18 @@ FUNC(FUNC_VARS)
                flags = DRAW_PIPE_RESET_STIPPLE |
                        DRAW_PIPE_EDGE_FLAG_0 |
                        DRAW_PIPE_EDGE_FLAG_1;
-               /* XXX should always emit idx[0] first */
-               /* always emit idx[3] first */
-               TRIANGLE(flags, idx[3], idx[2], idx[0]);
+               /* always emit idx[3] / idx[0 first */
+               if (quads_flatshade_last)
+                  TRIANGLE(flags, idx[3], idx[2], idx[0]);
+               else
+                  TRIANGLE(flags, idx[0], idx[3], idx[2]);
 
                flags = DRAW_PIPE_EDGE_FLAG_1 |
                        DRAW_PIPE_EDGE_FLAG_2;
-               TRIANGLE(flags, idx[3], idx[0], idx[1]);
+               if (quads_flatshade_last)
+                  TRIANGLE(flags, idx[3], idx[0], idx[1]);
+               else
+                  TRIANGLE(flags, idx[0], idx[1], idx[3]);
             }
          }
       }

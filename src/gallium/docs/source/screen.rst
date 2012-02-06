@@ -96,6 +96,8 @@ The integer capabilities:
   controlled through pipe_rasterizer_state.
 * ``PIPE_CAP_GLSL_FEATURE_LEVEL``: Whether the driver supports features
   equivalent to a specific GLSL version. E.g. for GLSL 1.3, report 130.
+* ``PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION``: Whether quads adhere to
+  the flatshade_first setting in ``pipe_rasterizer_state``.
 
 
 

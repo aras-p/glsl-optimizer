@@ -93,10 +93,10 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm,
    }
 #endif
 
+   draw->pipe = pipe;
+
    if (!draw_init(draw))
       goto err_destroy;
-
-   draw->pipe = pipe;
 
    return draw;
 
@@ -167,6 +167,9 @@ boolean draw_init(struct draw_context *draw)
 
    if (!draw_gs_init( draw ))
       return FALSE;
+
+   draw->quads_always_flatshade_last = !draw->pipe->screen->get_param(
+      draw->pipe->screen, PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION);
 
    return TRUE;
 }
