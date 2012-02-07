@@ -174,6 +174,9 @@ def _pkg_check_modules(env, name, modules):
     if subprocess.call(["pkg-config", "--exists", ' '.join(modules)]) != 0:
         return
 
+    # Strip version expressions from modules
+    modules = [module.split(' ', 1)[0] for module in modules]
+
     # Other flags may affect the compilation of unrelated targets, so store
     # them with a prefix, (e.g., XXX_CFLAGS, XXX_LIBS, etc)
     try:
@@ -189,7 +192,7 @@ def _pkg_check_modules(env, name, modules):
 
 def pkg_check_modules(env, name, modules):
 
-    sys.stdout.write('Checking for %s...' % name)
+    sys.stdout.write('Checking for %s (%s)...' % (name, ' '.join(modules)))
     _pkg_check_modules(env, name, modules)
     result = env['HAVE_' + name]
     sys.stdout.write(' %s\n' % ['no', 'yes'][int(bool(result))])
