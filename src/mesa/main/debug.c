@@ -554,8 +554,35 @@ _mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
    else if (format == GL_LUMINANCE_ALPHA && type == GL_UNSIGNED_BYTE) {
       write_ppm(filename, image, w, h, 2, 1, 0, 0, invert);
    }
+   else if (format == GL_RED && type == GL_UNSIGNED_BYTE) {
+      write_ppm(filename, image, w, h, 1, 0, 0, 0, invert);
+   }
+   else if (format == GL_RGBA && type == GL_FLOAT) {
+      /* convert floats to ubyte */
+      GLubyte *buf = (GLubyte *) malloc(w * h * 4 * sizeof(GLubyte));
+      const GLfloat *f = (const GLfloat *) image;
+      GLuint i;
+      for (i = 0; i < w * h * 4; i++) {
+         UNCLAMPED_FLOAT_TO_UBYTE(buf[i], f[i]);
+      }
+      write_ppm(filename, buf, w, h, 4, 0, 1, 2, invert);
+      free(buf);
+   }
+   else if (format == GL_RED && type == GL_FLOAT) {
+      /* convert floats to ubyte */
+      GLubyte *buf = (GLubyte *) malloc(w * h * sizeof(GLubyte));
+      const GLfloat *f = (const GLfloat *) image;
+      GLuint i;
+      for (i = 0; i < w * h; i++) {
+         UNCLAMPED_FLOAT_TO_UBYTE(buf[i], f[i]);
+      }
+      write_ppm(filename, buf, w, h, 1, 0, 0, 0, invert);
+      free(buf);
+   }
    else {
-      _mesa_problem(NULL, "Unsupported format/type in _mesa_dump_image()");
+      _mesa_problem(NULL,
+                 "Unsupported format 0x%x / type 0x%x in _mesa_dump_image()",
+                 format, type);
    }
 }
 
