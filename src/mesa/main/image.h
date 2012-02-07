@@ -53,9 +53,9 @@ _mesa_components_in_format( GLenum format );
 extern GLint
 _mesa_bytes_per_pixel( GLenum format, GLenum type );
 
-extern GLboolean
-_mesa_is_legal_format_and_type(const struct gl_context *ctx,
-                               GLenum format, GLenum type);
+extern GLenum
+_mesa_error_check_format_and_type(const struct gl_context *ctx,
+                                  GLenum format, GLenum type);
 
 extern GLboolean
 _mesa_is_color_format(GLenum format);
