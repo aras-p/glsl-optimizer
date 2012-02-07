@@ -304,12 +304,18 @@ VdpStatus
 vlVdpVideoMixerQueryFeatureSupport(VdpDevice device, VdpVideoMixerFeature feature,
                                    VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoMixer feature support\n");
-
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   switch (feature) {
+   case VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION:
+      *is_supported = VDP_TRUE;
+      break;
+   default:
+      *is_supported = VDP_FALSE;
+      break;
+   }
+   return VDP_STATUS_OK;
 }
 
 /**

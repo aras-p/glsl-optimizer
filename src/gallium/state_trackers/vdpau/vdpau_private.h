@@ -39,6 +39,7 @@
 #include "util/u_debug.h"
 #include "util/u_rect.h"
 #include "vl/vl_compositor.h"
+#include "vl/vl_median_filter.h"
 
 #include "vl_winsys.h"
 
@@ -306,10 +307,17 @@ typedef struct
 {
    vlVdpDevice *device;
    struct vl_compositor compositor;
+
+   struct {
+      bool supported, enabled;
+      float level;
+      struct vl_median_filter *filter;
+   } noise_reduction;
+
    unsigned video_width, video_height;
    enum pipe_video_chroma_format chroma_format;
    unsigned max_layers, skip_chroma_deint, custom_csc;
-   float luma_key_min, luma_key_max, sharpness, noise_reduction_level;
+   float luma_key_min, luma_key_max, sharpness;
    float csc[16];
 } vlVdpVideoMixer;
 
