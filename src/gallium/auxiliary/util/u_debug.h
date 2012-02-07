@@ -101,7 +101,7 @@ debug_printf(const char *format, ...)
  * ... isn't portable so we need to pass arguments in parentheses.
  *
  * usage:
- *    debug_printf_once(("awnser: %i\n", 42));
+ *    debug_printf_once(("answer: %i\n", 42));
  */
 #define debug_printf_once(args) \
    do { \
