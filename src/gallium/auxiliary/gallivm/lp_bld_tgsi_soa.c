@@ -394,19 +394,19 @@ lp_get_output_ptr(struct lp_build_tgsi_soa_context *bld,
  * with a little work.
  */
 static LLVMValueRef
-build_gather(struct lp_build_tgsi_soa_context *bld,
+build_gather(struct lp_build_context *bld,
              LLVMValueRef base_ptr,
              LLVMValueRef indexes)
 {
-   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   LLVMValueRef res = bld->bld_base.base.undef;
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMValueRef res = bld->undef;
    unsigned i;
 
    /*
     * Loop over elements of index_vec, load scalar value, insert it into 'res'.
     */
-   for (i = 0; i < bld->bld_base.base.type.length; i++) {
-      LLVMValueRef ii = lp_build_const_int32(bld->bld_base.base.gallivm, i);
+   for (i = 0; i < bld->type.length; i++) {
+      LLVMValueRef ii = lp_build_const_int32(bld->gallivm, i);
       LLVMValueRef index = LLVMBuildExtractElement(builder,
                                                    indexes, ii, "");
       LLVMValueRef scalar_ptr = LLVMBuildGEP(builder, base_ptr,
@@ -551,7 +551,7 @@ emit_fetch_constant(
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
 
       /* Gather values from the constant buffer */
-      return build_gather(bld, bld->consts_ptr, index_vec);
+      return build_gather(&bld_base->base, bld->consts_ptr, index_vec);
    }
    else {
       LLVMValueRef index;  /* index into the const buffer */
@@ -619,7 +619,7 @@ emit_fetch_input(
                                          float4_ptr_type, "");
 
       /* Gather values from the temporary register array */
-      res = build_gather(bld, inputs_array, index_vec);
+      res = build_gather(&bld_base->base, inputs_array, index_vec);
    } else {
       if (bld->indirect_files & (1 << TGSI_FILE_INPUT)) {
          LLVMValueRef lindex = lp_build_const_int32(gallivm,
@@ -677,7 +677,7 @@ emit_fetch_temporary(
                                      float4_ptr_type, "");
 
       /* Gather values from the temporary register array */
-      res = build_gather(bld, temps_array, index_vec);
+      res = build_gather(&bld_base->base, temps_array, index_vec);
    }
    else {
       LLVMValueRef temp_ptr;
