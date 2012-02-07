@@ -33,10 +33,6 @@ struct gl_context;
 struct gl_pixelstore_attrib;
 
 
-extern GLboolean
-_mesa_error_check_format_type(struct gl_context *ctx, GLenum format, GLenum type,
-                              GLboolean drawing);
-
 extern void
 _mesa_readpixels(struct gl_context *ctx,
                  GLint x, GLint y, GLsizei width, GLsizei height,
