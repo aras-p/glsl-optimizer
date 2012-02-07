@@ -274,7 +274,6 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 				   struct texture_orig_info *orig)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
-	struct r600_screen *rscreen = (struct r600_screen *)tex->screen;
 	unsigned pixsize = util_format_get_blocksize(rtex->real_format);
 	int new_format;
 	int new_height, new_width;
@@ -309,7 +308,6 @@ static void r600_reset_blittable_to_compressed(struct pipe_resource *tex,
 					       struct texture_orig_info *orig)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
-	struct r600_screen *rscreen = (struct r600_screen *)tex->screen;
 
 	tex->format = orig->format;
 	tex->width0 = orig->width0;
