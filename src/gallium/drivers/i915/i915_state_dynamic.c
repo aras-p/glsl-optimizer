@@ -194,58 +194,6 @@ const struct i915_tracked_state i915_upload_DEPTHSCALE = {
 
 
 /***********************************************************************
- * Polygon stipple
- *
- * The i915 supports a 4x4 stipple natively, GL wants 32x32.
- * Fortunately stipple is usually a repeating pattern.
- *
- * XXX: does stipple pattern need to be adjusted according to
- * the window position?
- *
- * XXX: possibly need workaround for conform paths test.
- */
-static void upload_STIPPLE(struct i915_context *i915)
-{
-   unsigned st[2];
-
-   st[0] = _3DSTATE_STIPPLE;
-   st[1] = 0;
-
-   /* I915_NEW_RASTERIZER
-    */
-   st[1] |= i915->rasterizer->st;
-
-   /* I915_NEW_STIPPLE
-    */
-   {
-      const ubyte *mask = (const ubyte *)i915->poly_stipple.stipple;
-      ubyte p[4];
-
-      p[0] = mask[12] & 0xf;
-      p[1] = mask[8] & 0xf;
-      p[2] = mask[4] & 0xf;
-      p[3] = mask[0] & 0xf;
-
-      /* Not sure what to do about fallbacks, so for now just dont:
-       */
-      st[1] |= ((p[0] << 0) |
-                (p[1] << 4) |
-                (p[2] << 8) |
-                (p[3] << 12));
-   }
-
-   set_dynamic_array(i915, I915_DYNAMIC_STP_0, st, 2);
-}
-
-const struct i915_tracked_state i915_upload_STIPPLE = {
-   "STIPPLE",
-   upload_STIPPLE,
-   I915_NEW_RASTERIZER | I915_NEW_STIPPLE
-};
-
-
-
-/***********************************************************************
  * Scissor enable
  */
 static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
@@ -295,7 +243,6 @@ static const struct i915_tracked_state *atoms[] = {
    &i915_upload_BLENDCOLOR,
    &i915_upload_IAB,
    &i915_upload_DEPTHSCALE,
-   &i915_upload_STIPPLE,
    &i915_upload_SCISSOR_ENABLE,
    &i915_upload_SCISSOR_RECT
 };

@@ -239,7 +239,6 @@ struct i915_context {
    struct pipe_clip_state clip;
    struct pipe_resource *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
-   struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_SAMPLERS];
