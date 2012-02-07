@@ -61,6 +61,7 @@ fs_visitor::assign_regs_trivial()
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[2], reg_width);
    }
 
    if (this->grf_used >= max_grf) {
@@ -271,6 +272,7 @@ fs_visitor::assign_regs()
       assign_reg(hw_reg_mapping, &inst->dst, reg_width);
       assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
       assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[2], reg_width);
    }
 
    ralloc_free(g);
