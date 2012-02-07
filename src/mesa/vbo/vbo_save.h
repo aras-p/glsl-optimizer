@@ -187,6 +187,14 @@ void vbo_save_playback_vertex_list( struct gl_context *ctx, void *data );
 
 void vbo_save_api_init( struct vbo_save_context *save );
 
+GLfloat *
+vbo_save_map_vertex_store(struct gl_context *ctx,
+                          struct vbo_save_vertex_store *vertex_store);
+
+void
+vbo_save_unmap_vertex_store(struct gl_context *ctx,
+                            struct vbo_save_vertex_store *vertex_store);
+
 #else /* FEATURE_dlist */
 
 static inline void

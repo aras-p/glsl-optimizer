@@ -237,9 +237,9 @@ free_vertex_store(struct gl_context *ctx,
 }
 
 
-static GLfloat *
-map_vertex_store(struct gl_context *ctx,
-                 struct vbo_save_vertex_store *vertex_store)
+GLfloat *
+vbo_save_map_vertex_store(struct gl_context *ctx,
+                          struct vbo_save_vertex_store *vertex_store)
 {
    assert(vertex_store->bufferobj);
    assert(!vertex_store->buffer);
@@ -259,9 +259,9 @@ map_vertex_store(struct gl_context *ctx,
 }
 
 
-static void
-unmap_vertex_store(struct gl_context *ctx,
-                   struct vbo_save_vertex_store *vertex_store)
+void
+vbo_save_unmap_vertex_store(struct gl_context *ctx,
+                            struct vbo_save_vertex_store *vertex_store)
 {
    if (vertex_store->bufferobj->Size > 0) {
       ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
@@ -407,7 +407,7 @@ _save_compile_vertex_list(struct gl_context *ctx)
 
       /* Unmap old store:
        */
-      unmap_vertex_store(ctx, save->vertex_store);
+      vbo_save_unmap_vertex_store(ctx, save->vertex_store);
 
       /* Release old reference:
        */
@@ -418,7 +418,7 @@ _save_compile_vertex_list(struct gl_context *ctx)
       /* Allocate and map new store:
        */
       save->vertex_store = alloc_vertex_store(ctx);
-      save->buffer_ptr = map_vertex_store(ctx, save->vertex_store);
+      save->buffer_ptr = vbo_save_map_vertex_store(ctx, save->vertex_store);
       save->out_of_memory = save->buffer_ptr == NULL;
    }
 
@@ -1398,7 +1398,7 @@ vbo_save_NewList(struct gl_context *ctx, GLuint list, GLenum mode)
    if (!save->vertex_store)
       save->vertex_store = alloc_vertex_store(ctx);
 
-   save->buffer_ptr = map_vertex_store(ctx, save->vertex_store);
+   save->buffer_ptr = vbo_save_map_vertex_store(ctx, save->vertex_store);
 
    _save_reset_vertex(ctx);
    _save_reset_counters(ctx);
@@ -1435,7 +1435,7 @@ vbo_save_EndList(struct gl_context *ctx)
       _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
    }
 
-   unmap_vertex_store(ctx, save->vertex_store);
+   vbo_save_unmap_vertex_store(ctx, save->vertex_store);
 
    assert(save->vertex_size == 0);
 }
