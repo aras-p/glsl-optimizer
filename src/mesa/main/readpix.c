@@ -697,6 +697,8 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
 		      GLenum format, GLenum type, GLsizei bufSize,
                       GLvoid *pixels )
 {
+   GLenum err;
+
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -718,8 +720,11 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (_mesa_error_check_format_type(ctx, format, type, GL_FALSE)) {
-      /* found an error */
+   err = _mesa_error_check_format_and_type(ctx, format, type);
+   if (err != GL_NO_ERROR) {
+      _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type));
       return;
    }
 
