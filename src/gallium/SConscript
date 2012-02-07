@@ -25,13 +25,13 @@ if not env['msvc']:
     # These drivers do not build on MSVC compilers
     SConscript([
         'drivers/i915/SConscript',
-        'drivers/r300/SConscript',
     ])
 
 if env['drm']:
     # These drivers depend on drm headers
     if env['drm_radeon']:
         SConscript([
+            'drivers/r300/SConscript',
             'drivers/r600/SConscript',
         ])
     # XXX: nouveau drivers have a tight dependency on libdrm, so to enable
@@ -73,7 +73,43 @@ if not env['embedded']:
 # Winsys
 # 
 
-SConscript('winsys/SConscript')
+SConscript([
+    'winsys/sw/wrapper/SConscript',
+])
+    
+if env['x11']:
+    SConscript([
+        'winsys/sw/xlib/SConscript',
+    ])
+
+if env['platform'] == 'windows':
+    SConscript([
+        'winsys/sw/gdi/SConscript',
+    ])
+
+if not env['msvc']:
+    SConscript([
+        'winsys/i915/sw/SConscript',
+    ])
+
+if env['dri']:
+    SConscript([
+        'winsys/sw/dri/SConscript',
+    ])
+
+    SConscript([
+        'winsys/svga/drm/SConscript',
+    ])
+
+    if env['drm_intel']:
+        SConscript([
+            'winsys/i915/drm/SConscript',
+        ])
+
+    if env['drm_radeon']:
+        SConscript([
+            'winsys/radeon/drm/SConscript',
+        ])
 
 #
 # Targets

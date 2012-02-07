@@ -1,6 +1,9 @@
 Import('*')
 
 env = env.Clone()
+
+env.PkgUseModules('DRM_RADEON')
+
 env.Append(CPPPATH = [
     '#/include', 
     '#/src/mesa',

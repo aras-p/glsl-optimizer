@@ -4,7 +4,7 @@ env = env.Clone()
 
 radeon_sources = env.ParseSourceList('Makefile.sources', 'C_SOURCES')
 
-env.PkgUseModules('DRM')
+env.PkgUseModules('DRM_RADEON')
 
 radeonwinsys = env.ConvenienceLibrary(
     target ='radeonwinsys',
