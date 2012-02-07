@@ -593,23 +593,6 @@ _mesa_error_check_format_type(struct gl_context *ctx, GLenum format,
    /* state validation should have already been done */
    ASSERT(ctx->NewState == 0x0);
 
-   if (ctx->Extensions.EXT_packed_depth_stencil
-       && type == GL_UNSIGNED_INT_24_8_EXT
-       && format != GL_DEPTH_STENCIL_EXT) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "gl%sPixels(format is not GL_DEPTH_STENCIL_EXT)", readDraw);
-      return GL_TRUE;
-   }
-
-   if (ctx->Extensions.ARB_depth_buffer_float
-       && type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV
-       && format != GL_DEPTH_STENCIL_EXT) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "gl%sPixels(format is not GL_DEPTH_STENCIL_EXT)", readDraw);
-      return GL_TRUE;
-   }
-
-   /* basic combinations test */
    err = _mesa_error_check_format_and_type(ctx, format, type);
    if (err != GL_NO_ERROR) {
       _mesa_error(ctx, err, "gl%sPixels(format or type)", readDraw);
@@ -690,24 +673,6 @@ _mesa_error_check_format_type(struct gl_context *ctx, GLenum format,
       }
       break;
    case GL_DEPTH_STENCIL_EXT:
-      /* Check validity of the type first. */
-      switch (type) {
-         case GL_UNSIGNED_INT_24_8_EXT:
-            if (!ctx->Extensions.EXT_packed_depth_stencil) {
-               _mesa_error(ctx, GL_INVALID_ENUM, "gl%sPixels(type)", readDraw);
-               return GL_TRUE;
-            }
-            break;
-         case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
-            if (!ctx->Extensions.ARB_depth_buffer_float) {
-               _mesa_error(ctx, GL_INVALID_ENUM, "gl%sPixels(type)", readDraw);
-               return GL_TRUE;
-            }
-            break;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "gl%sPixels(type)", readDraw);
-            return GL_TRUE;
-      }
       if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
           (reading && !_mesa_source_buffer_exists(ctx, format))) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
