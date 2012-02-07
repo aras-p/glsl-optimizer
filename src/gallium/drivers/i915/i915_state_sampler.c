@@ -46,13 +46,13 @@
  * max_lod =< last_level == true
  *
  *
- * This is all fine and dandy if it where for the fact that max_lod
+ * This is all fine and dandy if it were for the fact that max_lod
  * is set on the map state instead of the sampler state. That is
  * the max_lod we submit on map is:
  * max_lod = MIN2(last_level, max_lod);
  *
  * So we need to update the map state when we change samplers and
- * we need to be change the sampler state when map state is changed.
+ * we need to change the sampler state when map state is changed.
  * The first part is done by calling update_texture in update_samplers
  * and the second part is done else where in code tracking the state
  * changes.
