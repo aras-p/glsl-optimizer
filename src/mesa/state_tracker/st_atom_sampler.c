@@ -201,6 +201,8 @@ update_vertex_samplers(struct st_context *st)
    struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
 
+   if (st->state.num_vertex_samplers == 0 && vprog->Base.SamplersUsed == 0)
+       return;
    st->state.num_vertex_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */

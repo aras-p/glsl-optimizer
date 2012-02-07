@@ -260,6 +260,9 @@ update_vertex_textures(struct st_context *st)
    struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
 
+   if (!vprog->Base.SamplersUsed && st->state.num_vertex_textures == 0)
+      return;
+
    st->state.num_vertex_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
