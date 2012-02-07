@@ -33,7 +33,6 @@
 #include "image.h"
 #include "mfeatures.h"
 #include "pbo.h"
-#include "readpix.h"
 #include "state.h"
 #include "dispatch.h"
 
@@ -48,6 +47,7 @@ static void GLAPIENTRY
 _mesa_DrawPixels( GLsizei width, GLsizei height,
                   GLenum format, GLenum type, const GLvoid *pixels )
 {
+   GLenum err;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -94,8 +94,40 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       goto end;
    }
 
-   if (_mesa_error_check_format_type(ctx, format, type, GL_TRUE)) {
-      goto end;      /* the error code was recorded */
+   err = _mesa_error_check_format_and_type(ctx, format, type);
+   if (err != GL_NO_ERROR) {
+      _mesa_error(ctx, err, "glDrawPixels(invalid format %s and/or type %s)",
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type));
+      goto end;
+   }
+
+   /* do special format-related checks */
+   switch (format) {
+   case GL_STENCIL_INDEX:
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL_EXT:
+      /* these buffers must exist */
+      if (!_mesa_dest_buffer_exists(ctx, format)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glDrawPixels(missing deest buffer)");
+         goto end;
+      }
+      break;
+   case GL_COLOR_INDEX:
+      if (ctx->PixelMaps.ItoR.Size == 0 ||
+          ctx->PixelMaps.ItoG.Size == 0 ||
+          ctx->PixelMaps.ItoB.Size == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                "glDrawPixels(drawing color index pixels into RGB buffer)");
+         goto end;
+      }
+      break;
+   default:
+      /* for color formats it's not an error if the destination color
+       * buffer doesn't exist.
+       */
+      break;
    }
 
    if (ctx->RasterDiscard) {
