@@ -138,6 +138,7 @@ C_SOURCES := \
 	util/u_vbuf.c \
 	vl/vl_csc.c \
 	vl/vl_compositor.c \
+	vl/vl_matrix_filter.c \
 	vl/vl_median_filter.c \
 	vl/vl_decoder.c \
 	vl/vl_mpeg12_decoder.c \
