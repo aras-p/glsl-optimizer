@@ -889,11 +889,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                        start, end, basevertex, count, type, indices,
                        ctx->Array.ArrayObj->_MaxElement - 1);
       }
-
-      /* Just do an ordinary glDrawElementsBaseVertex(). */
-      vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, 0, ~0,
-                                      count, type, indices, basevertex, 1);
-      return;
+      index_bounds_valid = GL_FALSE;
    }
 
    /* NOTE: It's important that 'end' is a reasonable value.
