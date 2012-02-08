@@ -38,6 +38,16 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 
+/* The define of GL_COVERAGE_SAMPLES_NV in gl2ext.h is guarded by a different
+ * extension (GL_NV_coverage_sample) than in glext.h
+ * (GL_NV_multisample_coverage).  Just undefine it to avoid spurious compiler
+ * warnings.
+ */
+#undef GL_COVERAGE_SAMPLES_NV
+
+#include "GLES2/gl2platform.h"
+#include "GLES2/gl2ext.h"
+
 #ifndef GL_OES_fixed_point
 typedef int GLfixed;
 typedef int GLclampx;
