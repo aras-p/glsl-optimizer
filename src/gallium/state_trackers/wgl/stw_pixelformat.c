@@ -210,79 +210,72 @@ stw_pixelformat_add(
    }
 }
 
-void
-stw_pixelformat_init( void )
+
+/**
+ * Add the depth/stencil/accum/ms variants for a particular color format.
+ */
+static void
+add_color_format_variants(const struct stw_pf_color_info *color,
+                          boolean extended)
 {
    struct pipe_screen *screen = stw_dev->screen;
-   unsigned i, j, k, l;
-   
-   assert( !stw_dev->pixelformat_count );
-   assert( !stw_dev->pixelformat_extended_count );
+   unsigned ms, db, ds, acc;
+   unsigned bind_flags = PIPE_BIND_RENDER_TARGET;
 
-   for(i = 0; i < Elements(stw_pf_multisample); ++i) {
-      unsigned samples = stw_pf_multisample[i];
-      
+   if (!extended) {
+      bind_flags |= PIPE_BIND_DISPLAY_TARGET;
+   }
+
+   if (!screen->is_format_supported(screen, color->format,
+                                    PIPE_TEXTURE_2D, 0, bind_flags)) {
+      return;
+   }
+
+   for (ms = 0; ms < Elements(stw_pf_multisample); ms++) {
+      unsigned samples = stw_pf_multisample[ms];
+
       /* FIXME: re-enabled MSAA when we can query it */
-      if(samples)
+      if (samples)
          continue;
 
-      for(j = 0; j < Elements(stw_pf_color); ++j) {
-         const struct stw_pf_color_info *color = &stw_pf_color[j];
-         
-         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D,
-                                         0, PIPE_BIND_RENDER_TARGET |
-                                         PIPE_BIND_DISPLAY_TARGET))
-            continue;
-         
-         for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
-            unsigned doublebuffer = stw_pf_doublebuffer[k];
-            
-            for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
-               const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
-               
-               if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
-                                               0, PIPE_BIND_DEPTH_STENCIL))
-                  continue;
+      for (db = 0; db < Elements(stw_pf_doublebuffer); db++) {
+         unsigned doublebuffer = stw_pf_doublebuffer[db];
 
-               stw_pixelformat_add( stw_dev, FALSE, color, depth,  0, doublebuffer, samples );
-               stw_pixelformat_add( stw_dev, FALSE, color, depth, 16, doublebuffer, samples );
+         for (ds = 0; ds < Elements(stw_pf_depth_stencil); ds++) {
+            const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[ds];
+
+            if (!screen->is_format_supported(screen, depth->format,
+                                             PIPE_TEXTURE_2D, 0,
+                                             PIPE_BIND_DEPTH_STENCIL)) {
+               continue;
+            }
+
+            for (acc = 0; acc < 2; acc++) {
+               stw_pixelformat_add(stw_dev, extended, color, depth,
+                                   acc * 16, doublebuffer, samples);
             }
          }
       }
    }
-   
-   /*
-    * Same as above, but for the extended color formats (e.g, float) and without PIPE_BIND_DISPLAY_TARGET bit.
-    */
-   for(i = 0; i < Elements(stw_pf_multisample); ++i) {
-      unsigned samples = stw_pf_multisample[i];
+}
 
-      /* FIXME: re-enabled MSAA when we can query it */
-      if(samples)
-         continue;
 
-      for(j = 0; j < Elements(stw_pf_color_extended); ++j) {
-         const struct stw_pf_color_info *color = &stw_pf_color_extended[j];
+void
+stw_pixelformat_init( void )
+{
+   unsigned i;
 
-         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D,
-                                         0, PIPE_BIND_RENDER_TARGET))
-            continue;
+   assert( !stw_dev->pixelformat_count );
+   assert( !stw_dev->pixelformat_extended_count );
 
-         for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
-            unsigned doublebuffer = stw_pf_doublebuffer[k];
+   /* normal, displayable formats */
+   for (i = 0; i < Elements(stw_pf_color); i++) {
+      add_color_format_variants(&stw_pf_color[i], FALSE);
+   }
 
-            for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
-               const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
-
-               if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D,
-                                               0, PIPE_BIND_DEPTH_STENCIL))
-                  continue;
-
-               stw_pixelformat_add( stw_dev, TRUE, color, depth,  0, doublebuffer, samples );
-               stw_pixelformat_add( stw_dev, TRUE, color, depth, 16, doublebuffer, samples );
-            }
-         }
-      }
+   /* extended, pbuffer-only formats */
+   for (i = 0; i < Elements(stw_pf_color_extended); i++) {
+      add_color_format_variants(&stw_pf_color_extended[i], TRUE);
    }
 
    assert( stw_dev->pixelformat_count <= stw_dev->pixelformat_extended_count );
