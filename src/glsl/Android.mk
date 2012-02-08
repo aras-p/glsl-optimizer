@@ -39,6 +39,7 @@ LOCAL_SRC_FILES := \
 	$(LIBGLSL_CXX_FILES)
 
 LOCAL_C_INCLUDES := \
+	external/astl/include \
 	$(MESA_TOP)/src/mapi \
 	$(MESA_TOP)/src/mesa
 
