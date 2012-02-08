@@ -308,6 +308,7 @@ vlVdpVideoMixerQueryFeatureSupport(VdpDevice device, VdpVideoMixerFeature featur
       return VDP_STATUS_INVALID_POINTER;
 
    switch (feature) {
+   case VDP_VIDEO_MIXER_FEATURE_SHARPNESS:
    case VDP_VIDEO_MIXER_FEATURE_NOISE_REDUCTION:
       *is_supported = VDP_TRUE;
       break;
