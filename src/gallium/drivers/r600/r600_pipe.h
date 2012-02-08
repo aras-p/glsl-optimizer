@@ -508,6 +508,7 @@ unsigned r600_tex_compare(unsigned compare);
 #define R600_CONTEXT_REG_OFFSET 0x28000
 #define R600_CTL_CONST_OFFSET   0x3CFF0
 #define R600_LOOP_CONST_OFFSET                 0X0003E200
+#define EG_LOOP_CONST_OFFSET               0x0003A200
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
@@ -552,6 +553,14 @@ static INLINE void r600_store_loop_const_seq(struct r600_command_buffer *cb, uns
 	cb->buf[cb->atom.num_dw++] = (reg - R600_LOOP_CONST_OFFSET) >> 2;
 }
 
+static INLINE void eg_store_loop_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
+{
+	assert(reg >= EG_LOOP_CONST_OFFSET);
+	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0);
+	cb->buf[cb->atom.num_dw++] = (reg - EG_LOOP_CONST_OFFSET) >> 2;
+}
+
 static INLINE void r600_store_config_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
 {
 	r600_store_config_reg_seq(cb, reg, 1);
@@ -573,6 +582,12 @@ static INLINE void r600_store_ctl_const(struct r600_command_buffer *cb, unsigned
 static INLINE void r600_store_loop_const(struct r600_command_buffer *cb, unsigned reg, unsigned value)
 {
 	r600_store_loop_const_seq(cb, reg, 1);
+	r600_store_value(cb, value);
+}
+
+static INLINE void eg_store_loop_const(struct r600_command_buffer *cb, unsigned reg, unsigned value)
+{
+	eg_store_loop_const_seq(cb, reg, 1);
 	r600_store_value(cb, value);
 }
 
