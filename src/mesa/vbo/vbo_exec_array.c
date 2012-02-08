@@ -859,6 +859,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				     GLint basevertex)
 {
    static GLuint warnCount = 0;
+   GLboolean index_bounds_valid = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
@@ -911,16 +912,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       end = MIN2(end, 0xffff);
    }
 
-   if (end >= ctx->Array.ArrayObj->_MaxElement) {
-      /* Set 'end' to the max possible legal value */
-      assert(ctx->Array.ArrayObj->_MaxElement >= 1);
-      end = ctx->Array.ArrayObj->_MaxElement - 1;
-
-      if (end < start) {
-         return;
-      }
-   }
-
    if (0) {
       printf("glDraw[Range]Elements{,BaseVertex}"
 	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
@@ -930,13 +921,17 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 	     basevertex);
    }
 
+   if ((int) start + basevertex < 0 ||
+       end + basevertex >= ctx->Array.ArrayObj->_MaxElement)
+      index_bounds_valid = GL_FALSE;
+
 #if 0
    check_draw_elements_data(ctx, count, type, indices);
 #else
    (void) check_draw_elements_data;
 #endif
 
-   vbo_validated_drawrangeelements(ctx, mode, GL_TRUE, start, end,
+   vbo_validated_drawrangeelements(ctx, mode, index_bounds_valid, start, end,
 				   count, type, indices, basevertex, 1);
 }
 
