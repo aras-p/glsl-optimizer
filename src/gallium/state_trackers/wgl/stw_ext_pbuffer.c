@@ -226,7 +226,8 @@ wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
    fb = (struct stw_framebuffer *)hPbuffer;
 
    hDC = GetDC(fb->hWnd);
-   SetPixelFormat(hDC, fb->iPixelFormat, &fb->pfi->pfd);
+
+   assert(hDC == fb->hDC);
 
    return hDC;
 }
