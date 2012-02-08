@@ -55,7 +55,7 @@ uint
 stw_pixelformat_get_extended_count( void );
 
 const struct stw_pixelformat_info *
-stw_pixelformat_get_info( uint index );
+stw_pixelformat_get_info( int iPixelFormat );
 
 int
 stw_pixelformat_choose( HDC hdc,

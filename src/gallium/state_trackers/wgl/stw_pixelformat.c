@@ -262,9 +262,18 @@ stw_pixelformat_get_extended_count( void )
 }
 
 const struct stw_pixelformat_info *
-stw_pixelformat_get_info( uint index )
+stw_pixelformat_get_info( int iPixelFormat )
 {
-   assert( index < stw_dev->pixelformat_extended_count );
+   int index;
+
+   if (iPixelFormat <= 0) {
+      return NULL;
+   }
+
+   index = iPixelFormat - 1;
+   if (index >= stw_dev->pixelformat_extended_count) {
+      return NULL;
+   }
 
    return &stw_dev->pixelformats[index];
 }
@@ -278,7 +287,6 @@ DrvDescribePixelFormat(
    PIXELFORMATDESCRIPTOR *ppfd )
 {
    uint count;
-   uint index;
    const struct stw_pixelformat_info *pfi;
 
    (void) hdc;
@@ -287,14 +295,16 @@ DrvDescribePixelFormat(
       return 0;
 
    count = stw_pixelformat_get_extended_count();
-   index = (uint) iPixelFormat - 1;
 
    if (ppfd == NULL)
       return count;
-   if (index >= count || cjpfd != sizeof( PIXELFORMATDESCRIPTOR ))
+   if (cjpfd != sizeof( PIXELFORMATDESCRIPTOR ))
       return 0;
 
-   pfi = stw_pixelformat_get_info( index );
+   pfi = stw_pixelformat_get_info( iPixelFormat );
+   if (!pfi) {
+      return 0;
+   }
    
    memcpy(ppfd, &pfi->pfd, sizeof( PIXELFORMATDESCRIPTOR ));
 
@@ -361,10 +371,10 @@ int stw_pixelformat_choose( HDC hdc,
    (void) hdc;
 
    count = stw_pixelformat_get_count();
-   bestindex = count;
+   bestindex = 0;
    bestdelta = ~0U;
 
-   for (index = 0; index < count; index++) {
+   for (index = 1; index <= count; index++) {
       uint delta = 0;
       const struct stw_pixelformat_info *pfi = stw_pixelformat_get_info( index );
 
@@ -394,8 +404,5 @@ int stw_pixelformat_choose( HDC hdc,
       }
    }
 
-   if (bestindex == count)
-      return 0;
-
-   return bestindex + 1;
+   return bestindex;
 }

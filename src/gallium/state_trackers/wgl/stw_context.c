@@ -154,7 +154,7 @@ stw_create_context_attribs(
    if(!iPixelFormat)
       return 0;
 
-   pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
+   pfi = stw_pixelformat_get_info( iPixelFormat );
 
    if (hShareContext != 0) {
       pipe_mutex_lock( stw_dev->ctx_mutex );

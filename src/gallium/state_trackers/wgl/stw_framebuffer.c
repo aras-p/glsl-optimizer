@@ -262,7 +262,7 @@ stw_framebuffer_create(
    fb->hWnd = hWnd;
    fb->iPixelFormat = iPixelFormat;
 
-   fb->pfi = pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
+   fb->pfi = pfi = stw_pixelformat_get_info( iPixelFormat );
    fb->stfb = stw_st_create_framebuffer( fb );
    if (!fb->stfb) {
       FREE( fb );
