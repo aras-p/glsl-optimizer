@@ -72,7 +72,6 @@ gen6_hiz_emit_batch_head(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
-   struct brw_hiz_state *hiz = &brw->hiz;
 
    /* To ensure that the batch contains only the resolve, flush the batch
     * before beginning and after finishing emitting the resolve packets.
