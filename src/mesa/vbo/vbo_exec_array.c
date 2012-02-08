@@ -858,6 +858,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				     const GLvoid *indices,
 				     GLint basevertex)
 {
+   static GLuint warnCount = 0;
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
@@ -869,6 +870,30 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices, basevertex ))
       return;
+
+   if ((int) end + basevertex < 0 ||
+       start + basevertex >= ctx->Array.ArrayObj->_MaxElement) {
+      /* The application requested we draw using a range of indices that's
+       * outside the bounds of the current VBO.  This is invalid and appears
+       * to give undefined results.  The safest thing to do is to simply
+       * ignore the range, in case the application botched their range tracking
+       * but did provide valid indices.  Also issue a warning indicating that
+       * the application is broken.
+       */
+      if (warnCount++ < 10) {
+         _mesa_warning(ctx, "glDrawRangeElements(start %u, end %u, "
+                       "basevertex %d, count %d, type 0x%x, indices=%p):\n"
+                       "\trange is outside VBO bounds (max=%u); ignoring.\n"
+                       "\tThis should be fixed in the application.",
+                       start, end, basevertex, count, type, indices,
+                       ctx->Array.ArrayObj->_MaxElement - 1);
+      }
+
+      /* Just do an ordinary glDrawElementsBaseVertex(). */
+      vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, 0, ~0,
+                                      count, type, indices, basevertex, 1);
+      return;
+   }
 
    /* NOTE: It's important that 'end' is a reasonable value.
     * in _tnl_draw_prims(), we use end to determine how many vertices
