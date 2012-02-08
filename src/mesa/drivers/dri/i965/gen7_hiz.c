@@ -175,7 +175,7 @@ gen7_hiz_exec(struct intel_context *intel,
     */
    {
       BEGIN_BATCH(6);
-      OUT_BATCH(_3DSTATE_DS << 16 | (6));
+      OUT_BATCH(_3DSTATE_DS << 16 | (6 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
