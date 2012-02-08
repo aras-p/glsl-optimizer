@@ -85,6 +85,10 @@ stw_pf_color[] = {
    { PIPE_FORMAT_B4G4R4A4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
 };
 
+static const struct stw_pf_color_info
+stw_pf_color_extended[] = {
+    { PIPE_FORMAT_R32G32B32A32_FLOAT, { 32,  32, 32,  32}, { 0,  32, 64, 96} }
+};
 
 static const struct stw_pf_depth_info 
 stw_pf_depth_stencil[] = {
@@ -116,13 +120,13 @@ stw_pf_multisample[] = {
 static void
 stw_pixelformat_add(
    struct stw_device *stw_dev,
+   boolean extended,
    const struct stw_pf_color_info *color,
    const struct stw_pf_depth_info *depth,
    unsigned accum,
    boolean doublebuffer,
    unsigned samples )
 {
-   boolean extended = FALSE;
    struct stw_pixelformat_info *pfi;
    
    assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
@@ -146,7 +150,9 @@ stw_pixelformat_add(
    pfi->pfd.dwFlags = PFD_SUPPORT_OPENGL;
    
    /* TODO: also support non-native pixel formats */
-   pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW;
+   if (!extended) {
+      pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW;
+   }
 
    /* See http://www.opengl.org/pipeline/article/vol003_7/ */
    pfi->pfd.dwFlags |= PFD_SUPPORT_COMPOSITION;
@@ -238,13 +244,47 @@ stw_pixelformat_init( void )
                                                0, PIPE_BIND_DEPTH_STENCIL))
                   continue;
 
-               stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );
-               stw_pixelformat_add( stw_dev, color, depth, 16, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, FALSE, color, depth,  0, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, FALSE, color, depth, 16, doublebuffer, samples );
             }
          }
       }
    }
    
+   /*
+    * Same as above, but for the extended color formats (e.g, float) and without PIPE_BIND_DISPLAY_TARGET bit.
+    */
+   for(i = 0; i < Elements(stw_pf_multisample); ++i) {
+      unsigned samples = stw_pf_multisample[i];
+
+      /* FIXME: re-enabled MSAA when we can query it */
+      if(samples)
+         continue;
+
+      for(j = 0; j < Elements(stw_pf_color_extended); ++j) {
+         const struct stw_pf_color_info *color = &stw_pf_color_extended[j];
+
+         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D,
+                                         0, PIPE_BIND_RENDER_TARGET))
+            continue;
+
+         for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
+            unsigned doublebuffer = stw_pf_doublebuffer[k];
+
+            for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
+               const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
+
+               if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D,
+                                               0, PIPE_BIND_DEPTH_STENCIL))
+                  continue;
+
+               stw_pixelformat_add( stw_dev, TRUE, color, depth,  0, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, TRUE, color, depth, 16, doublebuffer, samples );
+            }
+         }
+      }
+   }
+
    assert( stw_dev->pixelformat_count <= stw_dev->pixelformat_extended_count );
    assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
@@ -294,7 +334,7 @@ DrvDescribePixelFormat(
    if (!stw_dev)
       return 0;
 
-   count = stw_pixelformat_get_extended_count();
+   count = stw_pixelformat_get_count();
 
    if (ppfd == NULL)
       return count;
@@ -370,7 +410,7 @@ int stw_pixelformat_choose( HDC hdc,
 
    (void) hdc;
 
-   count = stw_pixelformat_get_count();
+   count = stw_pixelformat_get_extended_count();
    bestindex = 0;
    bestdelta = ~0U;
 

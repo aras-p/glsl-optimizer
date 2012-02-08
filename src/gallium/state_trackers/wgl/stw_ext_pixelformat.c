@@ -42,6 +42,7 @@
 #include <GL/wglext.h>
 
 #include "pipe/p_compiler.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "stw_device.h"
 #include "stw_pixelformat.h"
@@ -147,7 +148,12 @@ stw_query_attrib(
    case WGL_PIXEL_TYPE_ARB:
       switch (pfi->pfd.iPixelType) {
       case PFD_TYPE_RGBA:
-         *pvalue = WGL_TYPE_RGBA_ARB;
+         if (util_format_is_float(pfi->stvis.color_format)) {
+            *pvalue = WGL_TYPE_RGBA_FLOAT_ARB;
+         }
+         else {
+            *pvalue = WGL_TYPE_RGBA_ARB;
+         }
          break;
       case PFD_TYPE_COLORINDEX:
          *pvalue = WGL_TYPE_COLORINDEX_ARB;

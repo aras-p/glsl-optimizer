@@ -262,6 +262,12 @@ stw_framebuffer_create(
    fb->hWnd = hWnd;
    fb->iPixelFormat = iPixelFormat;
 
+   /*
+    * We often need a displayable pixel format to make GDI happy. Set it here (always 1, i.e.,
+    * out first pixel format) where appropriat.
+    */
+   fb->iDisplayablePixelFormat = iPixelFormat <= stw_dev->pixelformat_count ? iPixelFormat : 1;
+
    fb->pfi = pfi = stw_pixelformat_get_info( iPixelFormat );
    fb->stfb = stw_st_create_framebuffer( fb );
    if (!fb->stfb) {
@@ -445,15 +451,21 @@ DrvSetPixelFormat(
       return FALSE;
 
    index = (uint) iPixelFormat - 1;
-   count = stw_pixelformat_get_extended_count();
+   count = stw_pixelformat_get_count();
    if (index >= count)
       return FALSE;
 
    fb = stw_framebuffer_from_hdc_locked(hdc);
    if(fb) {
-      /* SetPixelFormat must be called only once */
+      /*
+       * SetPixelFormat must be called only once.  However ignore 
+       * pbuffers, for which the framebuffer object is created first.
+       */
+      boolean bPbuffer = fb->bPbuffer;
+
       stw_framebuffer_release( fb );
-      return FALSE;
+
+      return bPbuffer;
    }
 
    fb = stw_framebuffer_create(hdc, iPixelFormat);
@@ -467,7 +479,8 @@ DrvSetPixelFormat(
     * function instead of SetPixelFormat, so we call SetPixelFormat here to 
     * avoid opengl32.dll's wglCreateContext to fail */
    if (GetPixelFormat(hdc) == 0) {
-        SetPixelFormat(hdc, iPixelFormat, NULL);
+      BOOL bRet = SetPixelFormat(hdc, iPixelFormat, NULL);
+      assert(bRet);
    }
    
    return TRUE;

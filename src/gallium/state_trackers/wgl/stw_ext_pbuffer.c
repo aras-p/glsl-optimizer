@@ -65,7 +65,7 @@ WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 HPBUFFERARB WINAPI
-wglCreatePbufferARB(HDC _hDC,
+wglCreatePbufferARB(HDC hCurrentDC,
                     int iPixelFormat,
                     int iWidth,
                     int iHeight,
@@ -81,6 +81,9 @@ wglCreatePbufferARB(HDC _hDC,
    RECT rect;
    HWND hWnd;
    HDC hDC;
+   int iDisplayablePixelFormat;
+   PIXELFORMATDESCRIPTOR pfd;
+   BOOL bRet;
 
    info = stw_pixelformat_get_info(iPixelFormat);
    if (!info) {
@@ -204,14 +207,27 @@ wglCreatePbufferARB(HDC _hDC,
       return 0;
    }
 
-   SetPixelFormat(hDC, iPixelFormat, &info->pfd);
-
+   /*
+    * We can't pass non-displayable pixel formats to GDI, which is why we
+    * create the framebuffer object before calling SetPixelFormat().
+    */
    fb = stw_framebuffer_create(hDC, iPixelFormat);
    if (!fb) {
       SetLastError(ERROR_NO_SYSTEM_RESOURCES);
-   } else {
-      stw_framebuffer_release(fb);
+      return NULL;
    }
+
+   fb->bPbuffer = TRUE;
+   iDisplayablePixelFormat = fb->iDisplayablePixelFormat;
+
+   stw_framebuffer_release(fb);
+
+   /*
+    * We need to set a displayable pixel format on the hidden window DC
+    * so that wglCreateContext and wglMakeCurrent are not overruled by GDI.
+    */
+   bRet = SetPixelFormat(hDC, iDisplayablePixelFormat, &pfd);
+   assert(bRet);
 
    return (HPBUFFERARB)fb;
 }

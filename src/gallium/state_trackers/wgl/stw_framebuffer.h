@@ -64,6 +64,10 @@ struct stw_framebuffer
    int iPixelFormat;
    const struct stw_pixelformat_info *pfi;
 
+   /* A pixel format that can be used by GDI */
+   int iDisplayablePixelFormat;
+   boolean bPbuffer;
+
    struct st_framebuffer_iface *stfb;
 
    /*
