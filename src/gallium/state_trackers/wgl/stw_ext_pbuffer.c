@@ -85,7 +85,7 @@ wglCreatePbufferARB(HDC hCurrentDC,
    PIXELFORMATDESCRIPTOR pfd;
    BOOL bRet;
 
-   info = stw_pixelformat_get_info(iPixelFormat);
+   info = stw_pixelformat_get_info(iPixelFormat - 1);
    if (!info) {
       SetLastError(ERROR_INVALID_PIXEL_FORMAT);
       return 0;
