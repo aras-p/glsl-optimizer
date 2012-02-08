@@ -708,6 +708,7 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
  * Map GL_ELEMENT_ARRAY_BUFFER and print contents.
  * For debugging.
  */
+#if 0
 static void
 dump_element_buffer(struct gl_context *ctx, GLenum type)
 {
@@ -759,6 +760,7 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
 
    ctx->Driver.UnmapBuffer(ctx, ctx->Array.ArrayObj->ElementArrayBufferObj);
 }
+#endif
 
 
 /**
@@ -856,7 +858,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 				     const GLvoid *indices,
 				     GLint basevertex)
 {
-   static GLuint warnCount = 0;
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
@@ -886,52 +887,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
    }
 
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
-      /* the max element is out of bounds of one or more enabled arrays */
-      warnCount++;
-
-      if (warnCount < 10) {
-         _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
-                       "type 0x%x, indices=%p)\n"
-                       "\tend is out of bounds (max=%u)  "
-                       "Element Buffer %u (size %d)\n"
-                       "\tThis should probably be fixed in the application.",
-                       start, end, count, type, indices,
-                       ctx->Array.ArrayObj->_MaxElement - 1,
-                       ctx->Array.ArrayObj->ElementArrayBufferObj->Name,
-                       (int) ctx->Array.ArrayObj->ElementArrayBufferObj->Size);
-      }
-
-      if (0)
-         dump_element_buffer(ctx, type);
-
-      if (0)
-         _mesa_print_arrays(ctx);
-
-      /* 'end' was out of bounds, but now let's check the actual array
-       * indexes to see if any of them are out of bounds.
-       */
-      if (0) {
-         GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
-                                             ctx->Array.ArrayObj->ElementArrayBufferObj);
-         if (max >= ctx->Array.ArrayObj->_MaxElement) {
-            if (warnCount < 10) {
-               _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, "
-                             "count %d, type 0x%x, indices=%p)\n"
-                             "\tindex=%u is out of bounds (max=%u)  "
-                             "Element Buffer %u (size %d)\n"
-                             "\tSkipping the glDrawRangeElements() call",
-                             start, end, count, type, indices, max,
-                             ctx->Array.ArrayObj->_MaxElement - 1,
-                             ctx->Array.ArrayObj->ElementArrayBufferObj->Name,
-                             (int) ctx->Array.ArrayObj->ElementArrayBufferObj->Size);
-            }
-         }
-         /* XXX we could also find the min index and compare to 'start'
-          * to see if start is correct.  But it's more likely to get the
-          * upper bound wrong.
-          */
-      }
-
       /* Set 'end' to the max possible legal value */
       assert(ctx->Array.ArrayObj->_MaxElement >= 1);
       end = ctx->Array.ArrayObj->_MaxElement - 1;
