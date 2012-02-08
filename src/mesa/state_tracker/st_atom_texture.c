@@ -300,24 +300,31 @@ update_fragment_textures(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
+   int old_max = st->state.num_textures;
+   GLbitfield samplers_used = fprog->Base.SamplersUsed;
 
    st->state.num_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++, samplers_used >>= 1) {
       struct pipe_sampler_view *sampler_view = NULL;
-      if (fprog->Base.SamplersUsed & (1 << su)) {
+
+      if (samplers_used & 1) {
          GLboolean retval;
          GLuint texUnit;
 
-	 texUnit = fprog->Base.SamplerUnits[su];
+         texUnit = fprog->Base.SamplerUnits[su];
 
-	 retval = update_single_texture(st, &sampler_view, texUnit);
-	 if (retval == GL_FALSE)
-	    continue;
+         retval = update_single_texture(st, &sampler_view, texUnit);
+         if (retval == GL_FALSE)
+            continue;
 
          st->state.num_textures = su + 1;
+      } else if (samplers_used == 0 && su >= old_max) {
+         /* if we've reset all the old views and we have no more new ones */
+         break;
       }
+
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 

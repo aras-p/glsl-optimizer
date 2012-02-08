@@ -233,29 +233,33 @@ update_fragment_samplers(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
+   GLuint samplers_used = fprog->Base.SamplersUsed;
+   GLuint old_max = st->state.num_samplers;
 
    st->state.num_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++, samplers_used >>= 1) {
       struct pipe_sampler_state *sampler = st->state.samplers + su;
 
-
-      if (fprog->Base.SamplersUsed & (1 << su)) {
+      if (samplers_used & 1) {
          GLuint texUnit;
 
-	 texUnit = fprog->Base.SamplerUnits[su];
+         texUnit = fprog->Base.SamplerUnits[su];
 
-	 convert_sampler(st, sampler, texUnit);
+         convert_sampler(st, sampler, texUnit);
 
          st->state.num_samplers = su + 1;
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, sampler);
       }
-      else {
+      else if (samplers_used != 0 || su < old_max) {
          /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, NULL);
+      } else {
+         /* if we've reset all the old views and we have no more new ones */
+         break;
       }
    }
 
