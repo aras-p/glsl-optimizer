@@ -101,7 +101,7 @@ gen6_hiz_emit_batch_head(struct brw_context *brw)
       int length = intel->gen == 7 ? 4 : 3;
 
       BEGIN_BATCH(length);
-      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (3 - 2));
+      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (length - 2));
       OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
                 MS_NUMSAMPLES_1);
       OUT_BATCH(0);
