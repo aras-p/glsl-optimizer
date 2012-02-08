@@ -148,10 +148,10 @@ void st_validate_state( struct st_context *st )
 
    /*printf("%s %x/%x\n", __FUNCTION__, state->mesa, state->st);*/
 
-#ifdef NDEBUG
-   if (0) {
-#else
+#ifdef DEBUG
    if (1) {
+#else
+   if (0) {
 #endif
       /* Debug version which enforces various sanity checks on the
        * state flags which are generated and checked to help ensure
