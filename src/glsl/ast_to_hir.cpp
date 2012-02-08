@@ -1199,15 +1199,9 @@ ast_expression::hir(exec_list *instructions,
       op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
 					 "RHS", &error_emitted);
 
-      ir_constant *op0_const = op[0]->constant_expression_value();
-      if (op0_const) {
-	 if (op0_const->value.b[0]) {
-	    instructions->append_list(&rhs_instructions);
-	    result = op[1];
-	 } else {
-	    result = op0_const;
-	 }
-	 type = glsl_type::bool_type;
+      if (rhs_instructions.is_empty()) {
+	 result = new(ctx) ir_expression(ir_binop_logic_and, op[0], op[1]);
+	 type = result->type;
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "and_tmp",
@@ -1241,14 +1235,9 @@ ast_expression::hir(exec_list *instructions,
       op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
 					 "RHS", &error_emitted);
 
-      ir_constant *op0_const = op[0]->constant_expression_value();
-      if (op0_const) {
-	 if (op0_const->value.b[0]) {
-	    result = op0_const;
-	 } else {
-	    result = op[1];
-	 }
-	 type = glsl_type::bool_type;
+      if (rhs_instructions.is_empty()) {
+	 result = new(ctx) ir_expression(ir_binop_logic_or, op[0], op[1]);
+	 type = result->type;
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp",
