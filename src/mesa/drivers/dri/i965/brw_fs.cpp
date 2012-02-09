@@ -1844,6 +1844,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
 
+      _mesa_problem(NULL, "Failed to compile fragment shader: %s\n",
+		    v.fail_msg);
+
       return false;
    }
 
