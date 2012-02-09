@@ -322,8 +322,9 @@ gen7_hiz_exec(struct intel_context *intel,
       OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
-      OUT_BATCH((brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT);
-      OUT_BATCH(GEN7_PS_32_DISPATCH_ENABLE);
+      OUT_BATCH(0);
+      OUT_BATCH(((brw->max_wm_threads - 1) << GEN7_PS_MAX_THREADS_SHIFT) |
+		GEN7_PS_32_DISPATCH_ENABLE);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
