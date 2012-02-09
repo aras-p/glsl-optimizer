@@ -146,12 +146,20 @@ public:
       return 0;
    }
 
+#if HAVE_LLVM >= 0x0301
+   uint64_t getExtent()
+#else
    uint64_t getExtent() const
+#endif
    {
       return Length;
    }
 
+#if HAVE_LLVM >= 0x0301
+   int readByte(uint64_t addr, uint8_t *byte)
+#else
    int readByte(uint64_t addr, uint8_t *byte) const
+#endif
    {
       if (addr > getExtent())
          return -1;
