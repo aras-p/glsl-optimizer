@@ -485,52 +485,17 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
    GLboolean memCopy = GL_FALSE;
 
    /*
-    * Check if the src/dst formats are compatible.
-    * Also note that GL's pixel transfer ops don't apply to glGetTexImage()
-    * so we don't have to worry about those.
-    * XXX more format combinations could be supported here.
+    * Check if we can use memcpy to copy from the hardware texture
+    * format to the user's format/type.
+    * Note that GL's pixel transfer ops don't apply to glGetTexImage()
     */
    if (target == GL_TEXTURE_1D ||
        target == GL_TEXTURE_2D ||
        target == GL_TEXTURE_RECTANGLE ||
        _mesa_is_cube_face(target)) {
-      if ((texImage->TexFormat == MESA_FORMAT_ARGB8888 ||
-             texImage->TexFormat == MESA_FORMAT_SARGB8) &&
-          format == GL_BGRA &&
-          (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) &&
-          !ctx->Pack.SwapBytes &&
-          _mesa_little_endian()) {
-         memCopy = GL_TRUE;
-      }
-      else if ((texImage->TexFormat == MESA_FORMAT_AL88 ||
-                  texImage->TexFormat == MESA_FORMAT_SLA8) &&
-               format == GL_LUMINANCE_ALPHA &&
-               type == GL_UNSIGNED_BYTE &&
-               !ctx->Pack.SwapBytes &&
-               _mesa_little_endian()) {
-         memCopy = GL_TRUE;
-      }
-      else if ((texImage->TexFormat == MESA_FORMAT_L8 ||
-                  texImage->TexFormat == MESA_FORMAT_SL8) &&
-               format == GL_LUMINANCE &&
-               type == GL_UNSIGNED_BYTE) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_L16 &&
-               format == GL_LUMINANCE &&
-               type == GL_UNSIGNED_SHORT) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_A8 &&
-               format == GL_ALPHA &&
-               type == GL_UNSIGNED_BYTE) {
-         memCopy = GL_TRUE;
-      }
-      else if (texImage->TexFormat == MESA_FORMAT_A16 &&
-               format == GL_ALPHA &&
-               type == GL_UNSIGNED_SHORT) {
-         memCopy = GL_TRUE;
-      }
+      memCopy = _mesa_format_matches_format_and_type(texImage->TexFormat,
+                                                     format, type,
+                                                     ctx->Pack.SwapBytes);
    }
 
    if (memCopy) {
