@@ -905,6 +905,7 @@ st_validate_varrays(struct gl_context *ctx,
    unsigned num_vbuffers, num_velements;
    GLuint attr;
    unsigned i;
+   unsigned old_num_user_attribs;
 
    /* must get these after state validation! */
    vp = st->vp;
@@ -913,9 +914,7 @@ st_validate_varrays(struct gl_context *ctx,
    memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
 
    /* Unreference any user vertex buffers. */
-   for (i = 0; i < st->num_user_attribs; i++) {
-      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
-   }
+   old_num_user_attribs = st->num_user_attribs;
    st->num_user_attribs = 0;
 
    /*
@@ -952,6 +951,10 @@ st_validate_varrays(struct gl_context *ctx,
    for (attr = 0; attr < num_vbuffers; attr++) {
       pipe_resource_reference(&vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
+   }
+
+   for (i = old_num_user_attribs; i < st->num_user_attribs; i++) {
+      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
    }
 
    return GL_TRUE;
