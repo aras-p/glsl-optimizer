@@ -87,22 +87,24 @@ extern void
 _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *params);
 
 
-/* Lerp between adjacent values in the f(x) lookup table, giving a
- * continuous function, with adequeate overall accuracy.  (Though
- * still pretty good compared to a straight lookup).
- * Result should be a GLfloat.
+/*
+ * Compute dp ^ SpecularExponent.
+ * Lerp between adjacent values in the f(x) lookup table, giving a
+ * continuous function, with adequate overall accuracy.  (Though still
+ * pretty good compared to a straight lookup).
  */
-#define GET_SHINE_TAB_ENTRY( table, dp, result )			\
-do {									\
-   struct gl_shine_tab *_tab = table;					\
-   float f = (dp * (SHINE_TABLE_SIZE-1));				\
-   int k = (int) f;							\
-   if (k < 0 /* gcc may cast an overflow float value to negative int value*/ \
-	|| k > SHINE_TABLE_SIZE-2)					\
-      result = (GLfloat) pow( dp, _tab->shininess );		\
-   else									\
-      result = _tab->tab[k] + (f-k)*(_tab->tab[k+1]-_tab->tab[k]);	\
-} while (0)
+static inline GLfloat
+_mesa_lookup_shininess(const struct gl_context *ctx, GLuint face, GLfloat dp)
+{
+   const struct gl_shine_tab *tab = ctx->_ShineTable[face];
+   float f = dp * (SHINE_TABLE_SIZE - 1);
+   int k = (int) f;
+   if (k < 0 /* gcc may cast an overflow float value to negative int value */
+	|| k > SHINE_TABLE_SIZE - 2)
+      return powf(dp, tab->shininess);
+   else
+      return tab->tab[k] + (f - k) * (tab->tab[k+1] - tab->tab[k]);
+}
 
 
 extern GLuint _mesa_material_bitmask( struct gl_context *ctx,
