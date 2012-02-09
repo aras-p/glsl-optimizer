@@ -788,7 +788,7 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_BATCH(1); /* Indirect object base address */
        OUT_RELOC(brw->cache.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 		 1); /* Instruction base address */
-       OUT_BATCH(1); /* General state upper bound */
+       OUT_BATCH(0xfffff001); /* General state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */
        OUT_BATCH(1); /* Instruction access upper bound */
        ADVANCE_BATCH();
