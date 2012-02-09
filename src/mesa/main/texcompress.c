@@ -465,6 +465,8 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
 /**
  * Decompress a compressed texture image, returning a GL_RGBA/GL_FLOAT image.
+ * \param srcRowStride  stride in bytes between rows of blocks in the
+ *                      compressed source image.
  */
 void
 _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
@@ -475,11 +477,19 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
                  GLint i, GLint j, GLint k, GLfloat *texel);
    struct swrast_texture_image texImage;  /* dummy teximage */
    GLuint i, j;
+   GLuint bytes, bw, bh;
+
+   bytes = _mesa_get_format_bytes(format);
+   _mesa_get_format_block_size(format, &bw, &bh);
 
    /* setup dummy texture image info */
    memset(&texImage, 0, sizeof(texImage));
    texImage.Map = (void *) src;
-   texImage.RowStride = srcRowStride;
+
+   /* XXX This line is a bit of a hack to adapt to the row stride
+    * convention used by the texture decompression functions.
+    */
+   texImage.RowStride = srcRowStride * bh / bytes;
 
    switch (format) {
    /* DXT formats */

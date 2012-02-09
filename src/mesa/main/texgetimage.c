@@ -246,23 +246,12 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
    {
       GLubyte *srcMap;
       GLint srcRowStride;
-      GLuint bytes, bw, bh;
-
-      bytes = _mesa_get_format_bytes(texFormat);
-      _mesa_get_format_block_size(texFormat, &bw, &bh);
 
       ctx->Driver.MapTextureImage(ctx, texImage, 0,
                                   0, 0, width, height,
                                   GL_MAP_READ_BIT,
                                   &srcMap, &srcRowStride);
       if (srcMap) {
-         /* XXX This line is a bit of a hack to work around the
-          * mismatch of compressed row strides as returned by
-          * MapTextureImage() vs. what the texture decompression code
-          * uses.  This will be fixed in the future.
-          */
-         srcRowStride = srcRowStride * bh / bytes;
-
          _mesa_decompress_image(texFormat, width, height,
                                 srcMap, srcRowStride, tempImage);
 
