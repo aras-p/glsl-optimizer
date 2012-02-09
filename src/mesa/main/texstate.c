@@ -682,20 +682,25 @@ _mesa_update_texture( struct gl_context *ctx, GLuint new_state )
 static GLboolean
 alloc_proxy_textures( struct gl_context *ctx )
 {
+   /* NOTE: these values must be in the same order as the TEXTURE_x_INDEX
+    * values!
+    */
    static const GLenum targets[] = {
-      GL_TEXTURE_1D,
-      GL_TEXTURE_2D,
-      GL_TEXTURE_3D,
-      GL_TEXTURE_CUBE_MAP_ARB,
-      GL_TEXTURE_RECTANGLE_NV,
-      GL_TEXTURE_1D_ARRAY_EXT,
-      GL_TEXTURE_2D_ARRAY_EXT,
       GL_TEXTURE_BUFFER,
-      GL_TEXTURE_EXTERNAL_OES
+      GL_TEXTURE_2D_ARRAY_EXT,
+      GL_TEXTURE_1D_ARRAY_EXT,
+      GL_TEXTURE_EXTERNAL_OES,
+      GL_TEXTURE_CUBE_MAP_ARB,
+      GL_TEXTURE_3D,
+      GL_TEXTURE_RECTANGLE_NV,
+      GL_TEXTURE_2D,
+      GL_TEXTURE_1D,
    };
    GLint tgt;
 
    STATIC_ASSERT(Elements(targets) == NUM_TEXTURE_TARGETS);
+   assert(targets[TEXTURE_2D_INDEX] == GL_TEXTURE_2D);
+   assert(targets[TEXTURE_CUBE_INDEX] == GL_TEXTURE_CUBE_MAP);
 
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
       if (!(ctx->Texture.ProxyTex[tgt]
