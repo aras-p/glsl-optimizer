@@ -259,6 +259,8 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
       }
       else {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+         free(tempImage);
+         return;
       }
    }
 
