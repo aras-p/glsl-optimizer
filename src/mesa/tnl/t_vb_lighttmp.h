@@ -147,10 +147,7 @@ static void TAG(light_rgba_spec)( struct gl_context *ctx,
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
-		  GLdouble x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-		  GLint k = (GLint) x;
-		  GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
-				    + (x-k)*light->_SpotExpTable[k][1]);
+                  GLfloat spot = powf(PV_dot_dir, light->SpotExponent);
 		  attenuation *= spot;
 	       }
 	    }
@@ -331,10 +328,7 @@ static void TAG(light_rgba)( struct gl_context *ctx,
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
-		  GLdouble x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-		  GLint k = (GLint) x;
-		  GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
-				  + (x-k)*light->_SpotExpTable[k][1]);
+                  GLfloat spot = powf(PV_dot_dir, light->SpotExponent);
 		  attenuation *= spot;
 	       }
 	    }

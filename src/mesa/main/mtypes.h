@@ -689,7 +689,6 @@ struct gl_light
    GLfloat _NormSpotDirection[4]; /**< normalized spotlight direction */
    GLfloat _VP_inf_spot_attenuation;
 
-   GLfloat _SpotExpTable[EXP_TABLE_SIZE][2];  /**< to replace a pow() call */
    GLfloat _MatAmbient[2][3];	/**< material ambient * light ambient */
    GLfloat _MatDiffuse[2][3];	/**< material diffuse * light diffuse */
    GLfloat _MatSpecular[2][3];	/**< material spec * light specular */

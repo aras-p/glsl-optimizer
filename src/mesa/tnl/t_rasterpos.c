@@ -167,10 +167,7 @@ shade_rastpos(struct gl_context *ctx,
 	       continue;
 	    }
 	    else {
-	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-	       int k = (int) x;
-	       GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
-			       + (x-k)*light->_SpotExpTable[k][1]);
+               GLfloat spot = powf(PV_dot_dir, light->SpotExponent);
 	       attenuation *= spot;
 	    }
 	 }
