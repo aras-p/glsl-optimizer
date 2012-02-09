@@ -3029,7 +3029,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* sanity check */
       status = _mesa_CheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-         abort();
+         _mesa_problem(ctx, "Unexpected incomplete framebuffer in "
+                       "_mesa_meta_GenerateMipmap()");
          break;
       }
 
