@@ -123,8 +123,22 @@ void vbo_rebase_prims( struct gl_context *ctx,
 		       GLuint max_index,
 		       vbo_draw_func draw );
 
-int
-vbo_sizeof_ib_type(GLenum type);
+static inline int
+vbo_sizeof_ib_type(GLenum type)
+{
+   switch (type) {
+   case GL_UNSIGNED_INT:
+      return sizeof(GLuint);
+   case GL_UNSIGNED_SHORT:
+      return sizeof(GLushort);
+   case GL_UNSIGNED_BYTE:
+      return sizeof(GLubyte);
+   default:
+      assert(!"unsupported index data type");
+      /* In case assert is turned off */
+      return 0;
+   }
+}
 
 void
 vbo_get_minmax_indices(struct gl_context *ctx, const struct _mesa_prim *prim,
