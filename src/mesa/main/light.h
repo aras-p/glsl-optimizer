@@ -110,8 +110,6 @@ extern GLuint _mesa_material_bitmask( struct gl_context *ctx,
                                       GLuint legal,
                                       const char * );
 
-extern void _mesa_invalidate_shine_table( struct gl_context *ctx, GLuint i );
-
 extern void _mesa_validate_all_lighting_tables( struct gl_context *ctx );
 
 extern void _mesa_update_lighting( struct gl_context *ctx );

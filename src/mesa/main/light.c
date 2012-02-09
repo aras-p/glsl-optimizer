@@ -623,6 +623,11 @@ _mesa_material_bitmask( struct gl_context *ctx, GLenum face, GLenum pname,
 
 
 
+static void
+invalidate_shine_table( struct gl_context *ctx, GLuint side );
+
+
+
 /* Update derived values following a change in ctx->Light.Material
  */
 void
@@ -696,11 +701,11 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
    }
 
    if (bitmask & MAT_BIT_FRONT_SHININESS) {
-      _mesa_invalidate_shine_table( ctx, 0 );
+      invalidate_shine_table( ctx, 0 );
    }
 
    if (bitmask & MAT_BIT_BACK_SHININESS) {
-      _mesa_invalidate_shine_table( ctx, 1 );
+      invalidate_shine_table( ctx, 1 );
    }
 }
 
@@ -914,8 +919,8 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
  * lighting, and the cost of doing it early may be partially offset
  * by keeping a MRU cache of shine tables for various shine values.
  */
-void
-_mesa_invalidate_shine_table( struct gl_context *ctx, GLuint side )
+static void
+invalidate_shine_table( struct gl_context *ctx, GLuint side )
 {
    ASSERT(side < 2);
    if (ctx->_ShineTable[side])
