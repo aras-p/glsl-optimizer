@@ -1402,6 +1402,10 @@ vec4_visitor::visit(ir_dereference_variable *ir)
 
    this->result = src_reg(*reg);
 
+   /* System values get their swizzle from the dst_reg writemask */
+   if (ir->var->mode == ir_var_system_value)
+      return;
+
    if (type->is_scalar() || type->is_vector() || type->is_matrix())
       this->result.swizzle = swizzle_for_size(type->vector_elements);
 }
