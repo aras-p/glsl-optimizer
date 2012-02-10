@@ -43,8 +43,6 @@ static void i915_flush_pipe( struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   draw_flush(i915->draw);
-
    /* Only shortcut this if we have no fence, otherwise we must flush the
     * empty batchbuffer to get our fence back.
     */

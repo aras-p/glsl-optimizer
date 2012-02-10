@@ -94,9 +94,8 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       i915_cleanup_vertex_sampling(i915);
 
    /*
-    * TODO: Flush only when a user vertex/index buffer is present
-    * (or even better, modify draw module to do this
-    * internally when this condition is seen?)
+    * Instead of flushing on every state change, we flush once here
+    * when we fire the vbo.
     */
    draw_flush(i915->draw);
 }
