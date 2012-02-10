@@ -1174,6 +1174,11 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		bankw = eg_bank_wh(bankw);
 		bankh = eg_bank_wh(bankh);
 	}
+	/* 128 bit formats require tile type = 1 */
+	if (rscreen->chip_class == CAYMAN) {
+		if (util_format_get_blocksize(state->format) >= 16)
+			tile_type = 1;
+	}
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
@@ -1510,6 +1515,11 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 		macro_aspect = eg_macro_tile_aspect(macro_aspect);
 		bankw = eg_bank_wh(bankw);
 		bankh = eg_bank_wh(bankh);
+	}
+	/* 128 bit formats require tile type = 1 */
+	if (rscreen->chip_class == CAYMAN) {
+		if (util_format_get_blocksize(surf->base.format) >= 16)
+			tile_type = 1;
 	}
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 	desc = util_format_description(surf->base.format);
