@@ -33,7 +33,7 @@ struct gl_context;
 
 /* Mesa version */
 #define MESA_MAJOR 8
-#define MESA_MINOR 0
+#define MESA_MINOR 1
 #define MESA_PATCH 0
 #define MESA_VERSION_STRING "8.0-devel"
 
