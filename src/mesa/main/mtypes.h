@@ -1045,7 +1045,6 @@ struct gl_pixelmap
 {
    GLint Size;
    GLfloat Map[MAX_PIXEL_MAP_TABLE];
-   GLubyte Map8[MAX_PIXEL_MAP_TABLE];  /**< converted to 8-bit color */
 };
 
 

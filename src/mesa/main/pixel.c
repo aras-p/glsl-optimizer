@@ -137,7 +137,6 @@ store_pixelmap(struct gl_context *ctx, GLenum map, GLsizei mapsize,
       for (i = 0; i < mapsize; i++) {
          GLfloat val = CLAMP(values[i], 0.0F, 1.0F);
          pm->Map[i] = val;
-         pm->Map8[i] = (GLint) (val * 255.0F);
       }
    }
 }
@@ -683,7 +682,6 @@ init_pixelmap(struct gl_pixelmap *map)
 {
    map->Size = 1;
    map->Map[0] = 0.0;
-   map->Map8[0] = 0;
 }
 
 
