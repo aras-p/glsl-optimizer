@@ -709,6 +709,10 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    struct intel_mipmap_tree *depth_mt = NULL, *stencil_mt = NULL;
    int i;
 
+   DBG("%s() on fb %p (%s)\n", __FUNCTION__,
+       fb, (fb == ctx->DrawBuffer ? "drawbuffer" :
+	    (fb == ctx->ReadBuffer ? "readbuffer" : "other buffer")));
+
    if (depthRb)
       depth_mt = depthRb->mt;
    if (stencilRb) {
@@ -725,13 +729,23 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	  */
 	 if (depthRb->mt_level != stencilRb->mt_level ||
 	     depthRb->mt_layer != stencilRb->mt_layer) {
+	    DBG("depth image level/layer %d/%d != stencil image %d/%d\n",
+		depthRb->mt_level,
+		depthRb->mt_layer,
+		stencilRb->mt_level,
+		stencilRb->mt_layer);
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 }
       } else {
-	 if (!intel->has_separate_stencil)
+	 if (!intel->has_separate_stencil) {
+	    DBG("separate stencil unsupported\n");
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
-	 if (stencil_mt->format != MESA_FORMAT_S8)
+	 }
+	 if (stencil_mt->format != MESA_FORMAT_S8) {
+	    DBG("separate stencil is %s instead of S8\n",
+		_mesa_get_format_name(stencil_mt->format));
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 }
 	 if (intel->gen < 7 && depth_mt->hiz_mt == NULL) {
 	    /* Before Gen7, separate depth and stencil buffers can be used
 	     * only if HiZ is enabled. From the Sandybridge PRM, Volume 2,
@@ -739,6 +753,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	     *     [DevSNB]: This field must be set to the same value (enabled
 	     *     or disabled) as Hierarchical Depth Buffer Enable.
 	     */
+	    DBG("separate stencil without HiZ\n");
 	    fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
 	 }
       }
