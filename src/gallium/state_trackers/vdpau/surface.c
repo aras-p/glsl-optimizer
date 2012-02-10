@@ -239,24 +239,11 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
             sv->texture->width0, sv->texture->height0, 1
          };
 
-         struct pipe_transfer *transfer;
-         void *map;
-
-         transfer = pipe->get_transfer(pipe, sv->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
-         if (!transfer)
-            return VDP_STATUS_RESOURCES;
-
-         map = pipe->transfer_map(pipe, transfer);
-         if (map) {
-            util_copy_rect(map, sv->texture->format, transfer->stride, 0, 0,
-                           dst_box.width, dst_box.height,
-                           source_data[i] + source_pitches[i] * j,
-                           source_pitches[i] * sv->texture->depth0,
-                           0, 0);
-         }
-
-         pipe->transfer_unmap(pipe, transfer);
-         pipe->transfer_destroy(pipe, transfer);
+         pipe->transfer_inline_write(pipe, sv->texture, 0,
+                                     PIPE_TRANSFER_WRITE, &dst_box,
+                                     source_data[i] + source_pitches[i] * j,
+                                     source_pitches[i] * sv->texture->depth0,
+                                     0);
       }
    }
 
