@@ -329,10 +329,11 @@ char *ralloc_vasprintf(const void *ctx, const char *fmt, va_list args);
  * \param fmt   A printf-style formatting string
  *
  * \p str will be updated to the new pointer unless allocation fails.
+ * \p start will be increased by the length of the newly formatted text.
  *
  * \return True unless allocation failed.
  */
-bool ralloc_asprintf_rewrite_tail(char **str, size_t start,
+bool ralloc_asprintf_rewrite_tail(char **str, size_t *start,
 				  const char *fmt, ...);
 
 /**
@@ -352,10 +353,11 @@ bool ralloc_asprintf_rewrite_tail(char **str, size_t start,
  * \param args  A va_list containing the data to be formatted
  *
  * \p str will be updated to the new pointer unless allocation fails.
+ * \p start will be increased by the length of the newly formatted text.
  *
  * \return True unless allocation failed.
  */
-bool ralloc_vasprintf_rewrite_tail(char **str, size_t start, const char *fmt,
+bool ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
 				   va_list args);
 
 /**

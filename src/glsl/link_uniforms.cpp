@@ -67,7 +67,7 @@ uniform_field_visitor::process(ir_variable *var)
 
 void
 uniform_field_visitor::recursion(const glsl_type *t, char **name,
-				 unsigned name_length)
+				 size_t name_length)
 {
    /* Records need to have each field processed individually.
     *
@@ -78,22 +78,21 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
    if (t->is_record()) {
       for (unsigned i = 0; i < t->length; i++) {
 	 const char *field = t->fields.structure[i].name;
+	 size_t new_length = name_length;
 
 	 /* Append '.field' to the current uniform name. */
-	 ralloc_asprintf_rewrite_tail(name, name_length, ".%s", field);
+	 ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
 
-	 recursion(t->fields.structure[i].type, name,
-		   name_length + 1 + strlen(field));
+	 recursion(t->fields.structure[i].type, name, new_length);
       }
    } else if (t->is_array() && t->fields.array->is_record()) {
       for (unsigned i = 0; i < t->length; i++) {
-	 char subscript[13];
+	 size_t new_length = name_length;
 
 	 /* Append the subscript to the current uniform name */
-	 const unsigned subscript_length = snprintf(subscript, 13, "[%u]", i);
-	 ralloc_asprintf_rewrite_tail(name, name_length, "%s", subscript);
+	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
-	 recursion(t->fields.array, name, name_length + subscript_length);
+	 recursion(t->fields.array, name, new_length);
       }
    } else {
       this->visit_field(t, *name);

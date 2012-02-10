@@ -76,7 +76,7 @@ private:
     * \param name_length  Length of the current name \b not including the
     *                     terminating \c NUL character.
     */
-   void recursion(const glsl_type *t, char **name, unsigned name_length);
+   void recursion(const glsl_type *t, char **name, size_t name_length);
 };
 
 #endif /* GLSL_LINKER_H */

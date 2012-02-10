@@ -448,11 +448,11 @@ ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
    size_t existing_length;
    assert(str != NULL);
    existing_length = *str ? strlen(*str) : 0;
-   return ralloc_vasprintf_rewrite_tail(str, existing_length, fmt, args);
+   return ralloc_vasprintf_rewrite_tail(str, &existing_length, fmt, args);
 }
 
 bool
-ralloc_asprintf_rewrite_tail(char **str, size_t start, const char *fmt, ...)
+ralloc_asprintf_rewrite_tail(char **str, size_t *start, const char *fmt, ...)
 {
    bool success;
    va_list args;
@@ -463,7 +463,7 @@ ralloc_asprintf_rewrite_tail(char **str, size_t start, const char *fmt, ...)
 }
 
 bool
-ralloc_vasprintf_rewrite_tail(char **str, size_t start, const char *fmt,
+ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
 			      va_list args)
 {
    size_t new_length;
@@ -479,11 +479,12 @@ ralloc_vasprintf_rewrite_tail(char **str, size_t start, const char *fmt,
 
    new_length = printf_length(fmt, args);
 
-   ptr = resize(*str, start + new_length + 1);
+   ptr = resize(*str, *start + new_length + 1);
    if (unlikely(ptr == NULL))
       return false;
 
-   vsnprintf(ptr + start, new_length + 1, fmt, args);
+   vsnprintf(ptr + *start, new_length + 1, fmt, args);
    *str = ptr;
+   *start += new_length;
    return true;
 }
