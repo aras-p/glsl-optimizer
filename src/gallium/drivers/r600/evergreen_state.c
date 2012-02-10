@@ -1190,8 +1190,11 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	rstate->val[0] = (S_030000_DIM(r600_tex_dim(texture->target)) |
 			  S_030000_PITCH((pitch / 8) - 1) |
-			  S_030000_NON_DISP_TILING_ORDER(tile_type) |
 			  S_030000_TEX_WIDTH(width - 1));
+	if (rscreen->chip_class == CAYMAN)
+		rstate->val[0] |= CM_S_030000_NON_DISP_TILING_ORDER(tile_type);
+	else
+		rstate->val[0] |= S_030000_NON_DISP_TILING_ORDER(tile_type);
 	rstate->val[1] = (S_030004_TEX_HEIGHT(height - 1) |
 			  S_030004_TEX_DEPTH(depth - 1) |
 			  S_030004_ARRAY_MODE(array_mode));

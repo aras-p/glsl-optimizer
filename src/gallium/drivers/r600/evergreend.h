@@ -966,6 +966,9 @@
 #define   S_030000_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 5)
 #define   G_030000_NON_DISP_TILING_ORDER(x)            (((x) >> 5) & 0x1)
 #define   C_030000_NON_DISP_TILING_ORDER               0xFFFFFFDF
+#define   CM_S_030000_NON_DISP_TILING_ORDER(x)         (((x) & 0x3) << 4)
+#define   CM_G_030000_NON_DISP_TILING_ORDER(x)         (((x) >> 4) & 0x3)
+#define   CM_C_030000_NON_DISP_TILING_ORDER            0xFFFFFFCF
 #define   S_030000_PITCH(x)                            (((x) & 0xFFF) << 6)
 #define   G_030000_PITCH(x)                            (((x) >> 6) & 0xFFF)
 #define   C_030000_PITCH                               0xFFFC003F
