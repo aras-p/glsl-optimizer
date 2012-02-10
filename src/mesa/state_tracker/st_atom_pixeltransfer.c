@@ -116,11 +116,12 @@ load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
       for (j = 0; j < texSize; j++) {
          union util_color uc;
          int k = (i * texSize + j);
-         ubyte r = ctx->PixelMaps.RtoR.Map8[j * rSize / texSize];
-         ubyte g = ctx->PixelMaps.GtoG.Map8[i * gSize / texSize];
-         ubyte b = ctx->PixelMaps.BtoB.Map8[j * bSize / texSize];
-         ubyte a = ctx->PixelMaps.AtoA.Map8[i * aSize / texSize];
-         util_pack_color_ub(r, g, b, a, pt->format, &uc);
+         float rgba[4];
+         rgba[0] = ctx->PixelMaps.RtoR.Map[j * rSize / texSize];
+         rgba[1] = ctx->PixelMaps.GtoG.Map[i * gSize / texSize];
+         rgba[2] = ctx->PixelMaps.BtoB.Map[j * bSize / texSize];
+         rgba[3] = ctx->PixelMaps.AtoA.Map[i * aSize / texSize];
+         util_pack_color(rgba, pt->format, &uc);
          *(dest + k) = uc.ui;
       }
    }
