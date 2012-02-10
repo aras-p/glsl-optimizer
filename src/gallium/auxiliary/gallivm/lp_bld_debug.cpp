@@ -207,15 +207,17 @@ lp_disassemble(const void* func)
 
 #if HAVE_LLVM >= 0x0208
    InitializeNativeTargetAsmPrinter();
-#elif LLVM_NATIVE_ARCH == X86Target
+#elif defined(PIPE_ARCH_X86)
    LLVMInitializeX86AsmPrinter();
-#elif LLVM_NATIVE_ARCH == ARMTarget
+#elif defined(PIPE_ARCH_ARM)
    LLVMInitializeARMAsmPrinter();
+#elif defined(PIPE_ARCH_PPC)
+   LLVMInitializePowerPCAsmPrinter();
 #endif
 
-#if (LLVM_NATIVE_ARCH == X86 || LLVM_NATIVE_ARCH == X86Target)
+#if defined(PIPE_ARCH_X86)
    LLVMInitializeX86Disassembler();
-#elif (LLVM_NATIVE_ARCH == ARM || LLVM_NATIVE_ARCH == ARMTarget)
+#elif defined(PIPE_ARCH_ARM)
    LLVMInitializeARMDisassembler();
 #endif
 
