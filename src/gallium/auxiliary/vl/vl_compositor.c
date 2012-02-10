@@ -579,7 +579,8 @@ calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned hei
    layer->src.br = calc_bottomright(size, src);
    layer->dst.tl = calc_topleft(size, dst);
    layer->dst.br = calc_bottomright(size, dst);
-   layer->size = size;
+   layer->zw.x = 0.0f;
+   layer->zw.y = size.y;
 }
 
 static void
@@ -591,25 +592,25 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
    vb[ 0].y = layer->dst.tl.y;
    vb[ 1].x = layer->src.tl.x;
    vb[ 1].y = layer->src.tl.y;
-   vb[ 2] = layer->size;
+   vb[ 2] = layer->zw;
 
    vb[ 3].x = layer->dst.br.x;
    vb[ 3].y = layer->dst.tl.y;
    vb[ 4].x = layer->src.br.x;
    vb[ 4].y = layer->src.tl.y;
-   vb[ 5] = layer->size;
+   vb[ 5] = layer->zw;
 
    vb[ 6].x = layer->dst.br.x;
    vb[ 6].y = layer->dst.br.y;
    vb[ 7].x = layer->src.br.x;
    vb[ 7].y = layer->src.br.y;
-   vb[ 8] = layer->size;
+   vb[ 8] = layer->zw;
 
    vb[ 9].x = layer->dst.tl.x;
    vb[ 9].y = layer->dst.br.y;
    vb[10].x = layer->src.tl.x;
    vb[10].y = layer->src.br.y;
-   vb[11] = layer->size;
+   vb[11] = layer->zw;
 }
 
 static INLINE struct u_rect
@@ -801,7 +802,8 @@ vl_compositor_set_buffer_layer(struct vl_compositor *c,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
                                struct pipe_video_rect *src_rect,
-                               struct pipe_video_rect *dst_rect)
+                               struct pipe_video_rect *dst_rect,
+                               enum vl_compositor_deinterlace deinterlace)
 {
    struct pipe_sampler_view **sampler_views;
    unsigned i;
@@ -811,8 +813,6 @@ vl_compositor_set_buffer_layer(struct vl_compositor *c,
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
-   c->layers[layer].fs = buffer->interlaced ? c->fs_weave : c->fs_video_buffer;
-
    sampler_views = buffer->get_sampler_view_components(buffer);
    for (i = 0; i < 3; ++i) {
       c->layers[layer].samplers[i] = c->sampler_linear;
@@ -822,6 +822,31 @@ vl_compositor_set_buffer_layer(struct vl_compositor *c,
    calc_src_and_dst(&c->layers[layer], buffer->width, buffer->height,
                     src_rect ? *src_rect : default_rect(&c->layers[layer]),
                     dst_rect ? *dst_rect : default_rect(&c->layers[layer]));
+
+   if (buffer->interlaced) {
+      float half_a_line = 0.5f / c->layers[layer].zw.y;
+      switch(deinterlace) {
+      case VL_COMPOSITOR_WEAVE:
+         c->layers[layer].fs = c->fs_weave;
+         break;
+
+      case VL_COMPOSITOR_BOB_TOP:
+         c->layers[layer].zw.x = 0.25f;
+         c->layers[layer].src.tl.y += half_a_line;
+         c->layers[layer].src.br.y += half_a_line;
+         c->layers[layer].fs = c->fs_video_buffer;
+         break;
+
+      case VL_COMPOSITOR_BOB_BOTTOM:
+         c->layers[layer].zw.x = 0.75f;
+         c->layers[layer].src.tl.y -= half_a_line;
+         c->layers[layer].src.br.y -= half_a_line;
+         c->layers[layer].fs = c->fs_video_buffer;
+         break;
+      }
+
+   } else
+      c->layers[layer].fs = c->fs_video_buffer;
 }
 
 void

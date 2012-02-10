@@ -406,7 +406,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    context_priv->decoder->flush(context_priv->decoder);
 
    vl_compositor_clear_layers(compositor);
-   vl_compositor_set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
+   vl_compositor_set_buffer_layer(compositor, 0, surface_priv->video_buffer,
+                                  &src_rect, NULL, VL_COMPOSITOR_WEAVE);
 
    if (subpicture_priv) {
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);

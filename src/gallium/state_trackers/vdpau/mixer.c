@@ -204,6 +204,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 VdpLayer const *layers)
 {
    struct pipe_video_rect src_rect, dst_rect, dst_clip;
+   enum vl_compositor_deinterlace deinterlace;
    unsigned layer = 0;
 
    vlVdpVideoMixer *vmixer;
@@ -242,8 +243,26 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    }
 
    vl_compositor_clear_layers(&vmixer->compositor);
+
+   switch (current_picture_structure) {
+   case VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD:
+      deinterlace = VL_COMPOSITOR_BOB_TOP;
+      break;
+
+   case VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD:
+      deinterlace = VL_COMPOSITOR_BOB_BOTTOM;
+      break;
+
+   case VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME:
+      deinterlace = VL_COMPOSITOR_WEAVE;
+      break;
+
+   default:
+      return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
+   };
    vl_compositor_set_buffer_layer(&vmixer->compositor, layer++, surf->video_buffer,
-                                  RectToPipe(video_source_rect, &src_rect), NULL);
+                                  RectToPipe(video_source_rect, &src_rect), NULL,
+                                  deinterlace);
    vl_compositor_render(&vmixer->compositor, dst->surface,
                         RectToPipe(destination_video_rect, &dst_rect),
                         RectToPipe(destination_rect, &dst_clip),

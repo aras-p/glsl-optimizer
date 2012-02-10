@@ -44,6 +44,14 @@ struct pipe_context;
 
 #define VL_COMPOSITOR_MAX_LAYERS 16
 
+/* deinterlace allgorithem */
+enum vl_compositor_deinterlace
+{
+   VL_COMPOSITOR_WEAVE,
+   VL_COMPOSITOR_BOB_TOP,
+   VL_COMPOSITOR_BOB_BOTTOM
+};
+
 struct vl_compositor_layer
 {
    bool clearing;
@@ -56,7 +64,7 @@ struct vl_compositor_layer
    struct {
       struct vertex2f tl, br;
    } src, dst;
-   struct vertex2f size;
+   struct vertex2f zw;
 };
 
 struct vl_compositor
@@ -148,7 +156,8 @@ vl_compositor_set_buffer_layer(struct vl_compositor *compositor,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
                                struct pipe_video_rect *src_rect,
-                               struct pipe_video_rect *dst_rect);
+                               struct pipe_video_rect *dst_rect,
+                               enum vl_compositor_deinterlace deinterlace);
 
 /**
  * set a paletted sampler as a layer to render
