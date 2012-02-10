@@ -47,8 +47,6 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    vlVdpPresentationQueue *pq = NULL;
    VdpStatus ret;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating PresentationQueue\n");
-
    if (!presentation_queue)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -99,8 +97,6 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
 {
    vlVdpPresentationQueue *pq;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying PresentationQueue\n");
-
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
@@ -122,8 +118,6 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
 {
    vlVdpPresentationQueue *pq;
    union pipe_color_union color;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Setting background color\n");
 
    if (!background_color)
       return VDP_STATUS_INVALID_POINTER;
@@ -152,8 +146,6 @@ vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue
    vlVdpPresentationQueue *pq;
    union pipe_color_union color;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting background color\n");
-
    if (!background_color)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -180,8 +172,6 @@ vlVdpPresentationQueueGetTime(VdpPresentationQueue presentation_queue,
 {
    vlVdpPresentationQueue *pq;
    struct timespec ts;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting queue time\n");
 
    if (!current_time)
       return VDP_STATUS_INVALID_POINTER;
@@ -266,7 +256,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
       sprintf(cmd, "xwd -id %d -out vdpau_frame_%08d.xwd", (int)pq->drawable, ++framenum);
       if (system(cmd) != 0)
-         VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Dumping surface %d failed.\n", surface);
+         VDPAU_MSG(VDPAU_ERR, "[VDPAU] Dumping surface %d failed.\n", surface);
    }
 
    pipe_surface_reference(&drawable_surface, NULL);

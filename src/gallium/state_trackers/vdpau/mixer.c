@@ -52,8 +52,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
    unsigned max_width, max_height, i;
    enum pipe_video_profile prof = PIPE_VIDEO_PROFILE_UNKNOWN;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating VideoMixer\n");
-
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
@@ -128,19 +126,19 @@ vlVdpVideoMixerCreate(VdpDevice device,
    }
    ret = VDP_STATUS_INVALID_VALUE;
    if (vmixer->max_layers > 4) {
-      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Max layers > 4 not supported\n", vmixer->max_layers);
+      VDPAU_MSG(VDPAU_WARN, "[VDPAU] Max layers > 4 not supported\n", vmixer->max_layers);
       goto no_params;
    }
    max_width = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_WIDTH);
    max_height = screen->get_video_param(screen, prof, PIPE_VIDEO_CAP_MAX_HEIGHT);
    if (vmixer->video_width < 48 ||
        vmixer->video_width > max_width) {
-      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] 48 < %u < %u not valid for width\n", vmixer->video_width, max_width);
+      VDPAU_MSG(VDPAU_WARN, "[VDPAU] 48 < %u < %u not valid for width\n", vmixer->video_width, max_width);
       goto no_params;
    }
    if (vmixer->video_height < 48 ||
        vmixer->video_height > max_height) {
-      VDPAU_MSG(VDPAU_TRACE, "[VDPAU] 48 < %u < %u  not valid for height\n", vmixer->video_height, max_height);
+      VDPAU_MSG(VDPAU_WARN, "[VDPAU] 48 < %u < %u  not valid for height\n", vmixer->video_height, max_height);
       goto no_params;
    }
    vmixer->luma_key_min = 0.f;
@@ -163,8 +161,6 @@ VdpStatus
 vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
 {
    vlVdpVideoMixer *vmixer;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying VideoMixer\n");
 
    vmixer = vlGetDataHTAB(mixer);
    if (!vmixer)

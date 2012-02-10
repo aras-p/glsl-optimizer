@@ -72,8 +72,6 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
    struct pipe_screen *pscreen;
    uint32_t max_2d_texture_level;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoSurface capabilities\n");
-
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
 
@@ -111,8 +109,6 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    vlVdpDevice *dev;
    struct pipe_screen *pscreen;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpVideoSurface get/put bits YCbCr capabilities\n");
-
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -145,8 +141,6 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
    vlVdpDevice *dev;
    struct pipe_screen *pscreen;
    enum pipe_video_profile p_profile;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpDecoder capabilities\n");
 
    if (!(is_supported && max_level && max_macroblocks && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
@@ -192,8 +186,6 @@ vlVdpOutputSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba
    struct pipe_screen *pscreen;
    enum pipe_format format;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface capabilities\n");
-
    dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
@@ -238,8 +230,6 @@ VdpStatus
 vlVdpOutputSurfaceQueryGetPutBitsNativeCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                                     VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface get/put bits native capabilities\n");
-
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -257,8 +247,6 @@ vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
                                                   VdpColorTableFormat color_table_format,
                                                   VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface put bits indexed capabilities\n");
-
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -274,8 +262,6 @@ vlVdpOutputSurfaceQueryPutBitsYCbCrCapabilities(VdpDevice device, VdpRGBAFormat 
                                                 VdpYCbCrFormat bits_ycbcr_format,
                                                 VdpBool *is_supported)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpOutputSurface put bits YCbCr capabilities\n");
-
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -289,8 +275,6 @@ VdpStatus
 vlVdpBitmapSurfaceQueryCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                     VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Querying VdpBitmapSurface capabilities\n");
-
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
 

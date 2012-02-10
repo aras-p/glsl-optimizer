@@ -48,8 +48,6 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    vlVdpSurface *p_surf;
    VdpStatus ret;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating a surface\n");
-
    if (!(width && height)) {
       ret = VDP_STATUS_INVALID_SIZE;
       goto inv_size;

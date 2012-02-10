@@ -51,7 +51,6 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    vlVdpOutputSurface *vlsurface = NULL;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating output surface\n");
    if (!(width && height))
       return VDP_STATUS_INVALID_SIZE;
 
@@ -127,8 +126,6 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 {
    vlVdpOutputSurface *vlsurface;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Destroying output surface\n");
-
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
@@ -152,8 +149,6 @@ vlVdpOutputSurfaceGetParameters(VdpOutputSurface surface,
 {
    vlVdpOutputSurface *vlsurface;
 
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Getting output surface parameters\n");
-        
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
@@ -217,8 +212,6 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
 
    struct pipe_box box;
    struct pipe_video_rect dst_rect;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Uploading indexed output surface\n");
 
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
@@ -454,8 +447,6 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    struct pipe_video_rect dst_rect;
 
    void *blend;
-
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Composing output surfaces\n");
 
    dst_vlsurface = vlGetDataHTAB(destination_surface);
    if (!dst_vlsurface)
