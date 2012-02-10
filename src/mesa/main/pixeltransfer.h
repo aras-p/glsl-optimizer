@@ -46,12 +46,6 @@ _mesa_map_ci_to_rgba(const struct gl_context *ctx,
 
 
 extern void
-_mesa_map_ci8_to_rgba8(const struct gl_context *ctx,
-                       GLuint n, const GLubyte index[],
-                       GLubyte rgba[][4]);
-
-
-extern void
 _mesa_scale_and_bias_depth(const struct gl_context *ctx, GLuint n,
                            GLfloat depthValues[]);
 

@@ -125,32 +125,6 @@ _mesa_map_ci_to_rgba( const struct gl_context *ctx, GLuint n,
 }
 
 
-/**
- * Map ubyte color indexes to ubyte/RGBA values.
- */
-void
-_mesa_map_ci8_to_rgba8(const struct gl_context *ctx,
-                       GLuint n, const GLubyte index[],
-                       GLubyte rgba[][4])
-{
-   GLuint rmask = ctx->PixelMaps.ItoR.Size - 1;
-   GLuint gmask = ctx->PixelMaps.ItoG.Size - 1;
-   GLuint bmask = ctx->PixelMaps.ItoB.Size - 1;
-   GLuint amask = ctx->PixelMaps.ItoA.Size - 1;
-   const GLubyte *rMap = ctx->PixelMaps.ItoR.Map8;
-   const GLubyte *gMap = ctx->PixelMaps.ItoG.Map8;
-   const GLubyte *bMap = ctx->PixelMaps.ItoB.Map8;
-   const GLubyte *aMap = ctx->PixelMaps.ItoA.Map8;
-   GLuint i;
-   for (i=0;i<n;i++) {
-      rgba[i][RCOMP] = rMap[index[i] & rmask];
-      rgba[i][GCOMP] = gMap[index[i] & gmask];
-      rgba[i][BCOMP] = bMap[index[i] & bmask];
-      rgba[i][ACOMP] = aMap[index[i] & amask];
-   }
-}
-
-
 void
 _mesa_scale_and_bias_depth(const struct gl_context *ctx, GLuint n,
                            GLfloat depthValues[])
