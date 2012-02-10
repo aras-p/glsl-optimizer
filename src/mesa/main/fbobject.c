@@ -2026,7 +2026,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 	                                      BUFFER_STENCIL);
       } else if (attachment == GL_STENCIL_ATTACHMENT &&
 	         texObj == fb->Attachment[BUFFER_DEPTH].Texture) {
-	 /* As above, but with depth and stencil juxtasposed. */
+	 /* As above, but with depth and stencil juxtaposed. */
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_STENCIL,
 	                                      BUFFER_DEPTH);
       } else {
@@ -2269,7 +2269,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   /* The error differs in GL andd GLES. */
+   /* The error differs in GL and GLES. */
    err = ctx->API == API_OPENGL ? GL_INVALID_OPERATION : GL_INVALID_ENUM;
 
    buffer = get_framebuffer_target(ctx, target);
