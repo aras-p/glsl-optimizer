@@ -2527,8 +2527,6 @@ struct gl_shared_state
 
    /** GL_ARB_sampler_objects */
    struct _mesa_HashTable *SamplerObjects;
-
-   void *DriverData;  /**< Device driver shared state */
 };
 
 
