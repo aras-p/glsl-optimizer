@@ -47,6 +47,9 @@ struct intel_renderbuffer
    struct intel_mipmap_tree *mt; /**< The renderbuffer storage. */
    drm_intel_bo *map_bo;
 
+   /* Current texture image this renderbuffer is attached to. */
+   struct gl_texture_image *tex_image;
+
    /**
     * \name Miptree view
     * \{

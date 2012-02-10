@@ -97,14 +97,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	 /* skip too small size mipmap */
  	 if (intelImage == NULL)
 		 break;
-	 /* Need to import images in main memory or held in other trees.
-	  * If it's a render target, then its data isn't needed to be in
-	  * the object tree (otherwise we'd be FBO incomplete), and we need
-	  * to keep track of the image's MT as needing to be pulled in still,
-	  * or we'll lose the rendering that's done to it.
-          */
-         if (intelObj->mt != intelImage->mt &&
-	     !intelImage->used_as_render_target) {
+
+         if (intelObj->mt != intelImage->mt) {
             intel_miptree_copy_teximage(intel, intelImage, intelObj->mt);
          }
       }

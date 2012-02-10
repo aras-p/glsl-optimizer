@@ -916,11 +916,47 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
-   struct intel_region *region = irb->mt->region;
+   struct intel_region *region;
    uint32_t *surf;
    uint32_t tile_x, tile_y;
    uint32_t format = 0;
    gl_format rb_format = intel_rb_format(irb);
+
+   if (irb->tex_image && !brw->has_surface_tile_offset) {
+      intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
+
+      if (tile_x != 0 || tile_y != 0) {
+	 /* Original gen4 hardware couldn't draw to a non-tile-aligned
+	  * destination in a miptree unless you actually setup your renderbuffer
+	  * as a miptree and used the fragile lod/array_index/etc. controls to
+	  * select the image.  So, instead, we just make a new single-level
+	  * miptree and render into that.
+	  */
+	 struct intel_context *intel = intel_context(ctx);
+	 struct intel_texture_image *intel_image =
+	    intel_texture_image(irb->tex_image);
+	 struct intel_mipmap_tree *new_mt;
+	 int width, height, depth;
+
+	 intel_miptree_get_dimensions_for_image(irb->tex_image, &width, &height, &depth);
+
+	 new_mt = intel_miptree_create(intel, irb->tex_image->TexObject->Target,
+				       intel_image->base.Base.TexFormat,
+				       intel_image->base.Base.Level,
+				       intel_image->base.Base.Level,
+				       width, height, depth,
+				       true);
+
+	 intel_miptree_copy_teximage(intel, intel_image, new_mt);
+	 intel_miptree_reference(&irb->mt, intel_image->mt);
+	 intel_renderbuffer_set_draw_offset(irb);
+	 intel_miptree_release(&new_mt);
+
+	 mt = irb->mt;
+      }
+   }
+
+   region = irb->mt->region;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->bind.surf_offset[unit]);
