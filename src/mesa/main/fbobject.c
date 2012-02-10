@@ -1758,11 +1758,8 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    if (bindDrawBuf) {
       FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-      /* check if old read/draw buffers were render-to-texture */
-      if (!bindReadBuf)
-         check_end_texture_render(ctx, oldReadFb);
-
-      if (oldDrawFb != oldReadFb)
+      /* check if old framebuffer had any texture attachments */
+      if (oldDrawFb)
          check_end_texture_render(ctx, oldDrawFb);
 
       /* check if newly bound framebuffer has any texture attachments */
