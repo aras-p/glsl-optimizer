@@ -219,7 +219,6 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
          }
       }
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nouveau_buffer_adjust_score(&nv50->base, buf, 1);
    }
 }
 
@@ -540,8 +539,6 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
       struct nv04_resource *res = nv04_resource(nv50->idxbuf.buffer);
 
       start += nv50->idxbuf.offset >> (index_size >> 1);
-
-      nouveau_buffer_adjust_score(&nv50->base, res, 1);
 
       while (instance_count--) {
          BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);

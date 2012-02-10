@@ -197,7 +197,6 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
          }
       }
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nouveau_buffer_adjust_score(&nvc0->base, buf, 1);
    }
 }
 
@@ -515,8 +514,6 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       struct nv04_resource *res = nv04_resource(nvc0->idxbuf.buffer);
       unsigned offset = nvc0->idxbuf.offset;
       unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
-
-      nouveau_buffer_adjust_score(&nvc0->base, res, 1);
 
       while (instance_count--) {
          MARK_RING (chan, 11, 4);

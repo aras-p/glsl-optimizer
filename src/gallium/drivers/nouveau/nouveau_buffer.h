@@ -8,10 +8,6 @@ struct pipe_resource;
 struct nouveau_context;
 struct nouveau_bo;
 
-#define NOUVEAU_BUFFER_SCORE_MIN -25000
-#define NOUVEAU_BUFFER_SCORE_MAX  25000
-#define NOUVEAU_BUFFER_SCORE_VRAM_THRESHOLD 20000
-
 /* DIRTY: buffer was (or will be after the next flush) written to by GPU and
  *  resource->data has not been updated to reflect modified VRAM contents
  *
@@ -39,8 +35,6 @@ struct nv04_resource {
    uint8_t status;
    uint8_t domain;
 
-   int16_t score; /* low if mapped very often, if high can move to VRAM */
-
    struct nouveau_fence *fence;
    struct nouveau_fence *fence_wr;
 
@@ -58,23 +52,6 @@ boolean
 nouveau_buffer_migrate(struct nouveau_context *,
                        struct nv04_resource *, unsigned domain);
 
-static INLINE void
-nouveau_buffer_adjust_score(struct nouveau_context *pipe,
-                            struct nv04_resource *res, int16_t score)
-{
-   if (score < 0) {
-      if (res->score > NOUVEAU_BUFFER_SCORE_MIN)
-         res->score += score;
-   } else
-   if (score > 0){
-      if (res->score < NOUVEAU_BUFFER_SCORE_MAX)
-         res->score += score;
-      if (res->domain == NOUVEAU_BO_GART &&
-          res->score > NOUVEAU_BUFFER_SCORE_VRAM_THRESHOLD)
-         nouveau_buffer_migrate(pipe, res, NOUVEAU_BO_VRAM);
-   }
-}
-
 /* XXX: wait for fence (atm only using this for vertex push) */
 static INLINE void *
 nouveau_resource_map_offset(struct nouveau_context *pipe,
@@ -82,8 +59,6 @@ nouveau_resource_map_offset(struct nouveau_context *pipe,
                             uint32_t flags)
 {
    void *map;
-
-   nouveau_buffer_adjust_score(pipe, res, -250);
 
    if ((res->domain == NOUVEAU_BO_VRAM) &&
        (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING))

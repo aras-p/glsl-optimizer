@@ -200,9 +200,6 @@ nouveau_buffer_transfer_destroy(struct pipe_context *pipe,
    struct nouveau_context *nv = nouveau_context(pipe);
 
    if (xfr->base.usage & PIPE_TRANSFER_WRITE) {
-      /* writing is worse */
-      nouveau_buffer_adjust_score(nv, buf, -5000);
-
       if (buf->domain == NOUVEAU_BO_VRAM) {
          nouveau_buffer_upload(nv, buf, transfer->box.x, transfer->box.width);
       }
@@ -256,8 +253,6 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    int ret;
    uint32_t offset = xfr->base.box.x;
    uint32_t flags;
-
-   nouveau_buffer_adjust_score(nouveau_context(pipe), buf, -250);
 
    if (buf->domain != NOUVEAU_BO_GART)
       return buf->data + offset;
