@@ -9,34 +9,78 @@
 <H1>Supported Systems and Drivers</H1>
 
 <p>
-Mesa was originally designed for Unix/X11 systems and is still best
-supported on those systems. All you need is an ANSI C compiler and the
-X development environment to use Mesa.
+Mesa is primarily developed and used on Linux systems.
+But there's also support for Windows, other flavors of Unix and other
+systems such as Haiku.
+We're actively developing and maintaining several hardware and
+software drivers.
 </p>
 
 <p>
-The DRI hardware drivers for the X.org server and XFree86 provide
-hardware accelerated rendering for chips from ATI, Intel, and NVIDIA
-on Linux and FreeBSD.
+The primary API is OpenGL but there's also support for OpenGL ES 1
+and ES 2, OpenVG and the EGL interface.
 </p>
 
 <p>
-Drivers for other assorted platforms include:
-the Apple Macintosh and Windows.
+Hardware drivers include:
 </p>
+<ul>
+<li>Intel i965, i945, i915.
+    See <a href="http://intellinuxgraphics.org/index.html" target="_parent">
+    Intel's website</a>
+<li>AMD Radeon series
+<li>Some NVIDIA GPus.
+<li>VMware virtual GPU
+</ul>
 
 <p>
-Details about particular drivers follows:
+Software drivers include:
+</p>
+<ul>
+<li><a href="llvmpipe.html">llvmpipe</a> - uses LLVM for x86 JIT code
+    generation and is multi-threaded
+<li>softpipe - a reference Gallium driver
+<li>swrast - the legacy/original Mesa software rasterizer
+</ul>
+
+<p>
+Additional driver information:
 </p>
 
 <UL>
 <li><a href="http://dri.freedesktop.org/" target="_parent"> DRI hardware
 drivers</a> for the X Window System
-<LI><a href="xlibdriver.html">Xlib software driver</a> for the X Window System
+<li><a href="xlibdriver.html">Xlib / swrast driver</a> for the X Window System
 and Unix-like operating systems
-<LI>Microsoft Windows <A HREF="README.WIN32">(README.WIN32)</A>
-<LI>DEC VMS <A HREF="README.VMS">(README.VMS)</A>
+<li><a href="README.WIN32">Microsoft Windows</a>
+<li><a href="vmware-guest.html">VMware</a> guest OS driver
 </UL>
+
+
+<h1>
+Deprecated Systems and Drivers
+</h1>
+
+<p>
+In the past there were other drivers for older GPUs and operating
+systems.
+These have been removed from the Mesa source tree and distribution.
+If anyone's interested though, the code can be found in the git repo.
+The list includes:
+</p>
+
+<ul>
+<li>3dfx/glide
+<li>Matrox
+<li>ATI R128
+<li>Savage
+<li>VIA Unichrome
+<li>SIS
+<li>3Dlabs gamma
+<li>DOS
+<li>fbdev
+<li>DEC/VMS
+<ul>
 
 </body>
 </html>
