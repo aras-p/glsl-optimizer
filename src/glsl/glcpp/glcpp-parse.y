@@ -184,11 +184,11 @@ input:
 
 line:
 	control_line {
-		ralloc_strcat (&parser->output, "\n");
+		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 	}
 |	text_line {
 		_glcpp_parser_print_expanded_token_list (parser, $1);
-		ralloc_strcat (&parser->output, "\n");
+		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 		ralloc_free ($1);
 	}
 |	expanded_line
@@ -320,7 +320,7 @@ control_line:
 		if ($2 >= 130 || $2 == 100)
 			add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
 
-		ralloc_asprintf_append (&parser->output, "#version %" PRIiMAX, $2);
+		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#version %" PRIiMAX, $2);
 	}
 |	HASH NEWLINE
 ;
@@ -903,54 +903,54 @@ _token_list_equal_ignoring_space (token_list_t *a, token_list_t *b)
 }
 
 static void
-_token_print (char **out, token_t *token)
+_token_print (char **out, size_t *len, token_t *token)
 {
 	if (token->type < 256) {
-		ralloc_asprintf_append (out, "%c", token->type);
+		ralloc_asprintf_rewrite_tail (out, len, "%c", token->type);
 		return;
 	}
 
 	switch (token->type) {
 	case INTEGER:
-		ralloc_asprintf_append (out, "%" PRIiMAX, token->value.ival);
+		ralloc_asprintf_rewrite_tail (out, len, "%" PRIiMAX, token->value.ival);
 		break;
 	case IDENTIFIER:
 	case INTEGER_STRING:
 	case OTHER:
-		ralloc_strcat (out, token->value.str);
+		ralloc_asprintf_rewrite_tail (out, len, "%s", token->value.str);
 		break;
 	case SPACE:
-		ralloc_strcat (out, " ");
+		ralloc_asprintf_rewrite_tail (out, len, " ");
 		break;
 	case LEFT_SHIFT:
-		ralloc_strcat (out, "<<");
+		ralloc_asprintf_rewrite_tail (out, len, "<<");
 		break;
 	case RIGHT_SHIFT:
-		ralloc_strcat (out, ">>");
+		ralloc_asprintf_rewrite_tail (out, len, ">>");
 		break;
 	case LESS_OR_EQUAL:
-		ralloc_strcat (out, "<=");
+		ralloc_asprintf_rewrite_tail (out, len, "<=");
 		break;
 	case GREATER_OR_EQUAL:
-		ralloc_strcat (out, ">=");
+		ralloc_asprintf_rewrite_tail (out, len, ">=");
 		break;
 	case EQUAL:
-		ralloc_strcat (out, "==");
+		ralloc_asprintf_rewrite_tail (out, len, "==");
 		break;
 	case NOT_EQUAL:
-		ralloc_strcat (out, "!=");
+		ralloc_asprintf_rewrite_tail (out, len, "!=");
 		break;
 	case AND:
-		ralloc_strcat (out, "&&");
+		ralloc_asprintf_rewrite_tail (out, len, "&&");
 		break;
 	case OR:
-		ralloc_strcat (out, "||");
+		ralloc_asprintf_rewrite_tail (out, len, "||");
 		break;
 	case PASTE:
-		ralloc_strcat (out, "##");
+		ralloc_asprintf_rewrite_tail (out, len, "##");
 		break;
 	case COMMA_FINAL:
-		ralloc_strcat (out, ",");
+		ralloc_asprintf_rewrite_tail (out, len, ",");
 		break;
 	case PLACEHOLDER:
 		/* Nothing to print. */
@@ -1040,11 +1040,11 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 	}
 
 	glcpp_error (&token->location, parser, "");
-	ralloc_strcat (&parser->info_log, "Pasting \"");
-	_token_print (&parser->info_log, token);
-	ralloc_strcat (&parser->info_log, "\" and \"");
-	_token_print (&parser->info_log, other);
-	ralloc_strcat (&parser->info_log, "\" does not give a valid preprocessing token.\n");
+	ralloc_asprintf_rewrite_tail (&parser->info_log, &parser->info_log_length, "Pasting \"");
+	_token_print (&parser->info_log, &parser->info_log_length, token);
+	ralloc_asprintf_rewrite_tail (&parser->info_log, &parser->info_log_length, "\" and \"");
+	_token_print (&parser->info_log, &parser->info_log_length, other);
+	ralloc_asprintf_rewrite_tail (&parser->info_log, &parser->info_log_length, "\" does not give a valid preprocessing token.\n");
 
 	return token;
 }
@@ -1058,7 +1058,7 @@ _token_list_print (glcpp_parser_t *parser, token_list_t *list)
 		return;
 
 	for (node = list->head; node; node = node->next)
-		_token_print (&parser->output, node->token);
+		_token_print (&parser->output, &parser->output_length, node->token);
 }
 
 void
@@ -1104,7 +1104,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->lex_from_node = NULL;
 
 	parser->output = ralloc_strdup(parser, "");
+	parser->output_length = 0;
 	parser->info_log = ralloc_strdup(parser, "");
+	parser->info_log_length = 0;
 	parser->error = 0;
 
 	/* Add pre-defined macros. */

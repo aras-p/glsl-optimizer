@@ -174,6 +174,8 @@ struct glcpp_parser {
 	token_node_t *lex_from_node;
 	char *output;
 	char *info_log;
+	size_t output_length;
+	size_t info_log_length;
 	int error;
 };
 
