@@ -34,8 +34,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/glheader.h"
 #include "main/imports.h"
-#include "main/light.h"
 #include "main/mtypes.h"
+#include "main/light.h"
 #include "main/enums.h"
 
 #include "vbo/vbo.h"
