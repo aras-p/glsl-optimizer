@@ -206,6 +206,8 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
    p->loop_stack_array_size = 16;
    p->loop_stack = rzalloc_array(mem_ctx, int, p->loop_stack_array_size);
    p->if_depth_in_loop = rzalloc_array(mem_ctx, int, p->loop_stack_array_size);
+
+   brw_init_compaction_tables(&brw->intel);
 }
 
 

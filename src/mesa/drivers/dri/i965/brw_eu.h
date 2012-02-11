@@ -1108,6 +1108,7 @@ void brw_set_uip_jip(struct brw_compile *p);
 uint32_t brw_swap_cmod(uint32_t cmod);
 
 /* brw_eu_compact.c */
+void brw_init_compaction_tables(struct intel_context *intel);
 void brw_compact_instructions(struct brw_compile *p);
 void brw_uncompact_instruction(struct intel_context *intel,
 			       struct brw_instruction *dst,
