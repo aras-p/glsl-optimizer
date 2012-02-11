@@ -40,7 +40,8 @@ GLboolean
 _swrast_use_fragment_program(struct gl_context *ctx)
 {
    struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
-   return fp && fp != ctx->FragmentProgram._TexEnvProgram;
+   return fp && !(fp == ctx->FragmentProgram._TexEnvProgram
+                  && fp->Base.NumInstructions == 0);
 }
 
 /**
