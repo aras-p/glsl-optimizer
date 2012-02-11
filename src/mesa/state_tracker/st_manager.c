@@ -805,9 +805,7 @@ st_manager_get_egl_image_surface(struct st_context *st,
    if (!smapi->get_egl_image(smapi, eglimg, &stimg))
       return NULL;
 
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = stimg.texture->format;
-   surf_tmpl.usage = usage;
+   u_surface_default_template(&surf_tmpl, stimg.texture, usage);
    surf_tmpl.u.tex.level = stimg.level;
    surf_tmpl.u.tex.first_layer = stimg.layer;
    surf_tmpl.u.tex.last_layer = stimg.layer;
