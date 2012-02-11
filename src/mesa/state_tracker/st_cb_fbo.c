@@ -105,8 +105,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       
       free(strb->data);
 
-      strb->stride = util_format_get_stride(format, width);
-      size = util_format_get_2d_size(format, strb->stride, height);
+      size = _mesa_format_image_size(strb->Base.Format, width, height, 1);
       
       strb->data = malloc(size);
       
@@ -640,12 +639,12 @@ st_MapRenderbuffer(struct gl_context *ctx,
 
    if (strb->software) {
       /* software-allocated renderbuffer (probably an accum buffer) */
-      GLubyte *map = (GLubyte *) strb->data;
       if (strb->data) {
-         map += strb->stride * y;
-         map += _mesa_get_format_bytes(strb->Base.Format) * x;
-         *mapOut = map;
-         *rowStrideOut = strb->stride;
+         GLint bpp = _mesa_get_format_bytes(strb->Base.Format);
+         GLint stride = _mesa_format_row_stride(strb->Base.Format,
+                                                strb->Base.Width);
+         *mapOut = (GLubyte *) strb->data + y * stride + x * bpp;
+         *rowStrideOut = stride;
       }
       else {
          *mapOut = NULL;

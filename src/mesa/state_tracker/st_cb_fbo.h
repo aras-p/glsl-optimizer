@@ -56,7 +56,6 @@ struct st_renderbuffer
     * Used only when hardware accumulation buffers are not supported.
     */
    boolean software;
-   size_t stride;
    void *data;
 
    struct st_texture_object *rtt;  /**< GL render to texture's texture */
