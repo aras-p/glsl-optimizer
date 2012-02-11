@@ -148,7 +148,6 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       if (!strb->texture) 
          return FALSE;
 
-      memset(&surf_tmpl, 0, sizeof(surf_tmpl));
       u_surface_default_template(&surf_tmpl, strb->texture, template.bind);
       strb->surface = pipe->create_surface(pipe,
                                            strb->texture,
