@@ -3244,7 +3244,7 @@ decompress_texture_image(struct gl_context *ctx,
                          struct gl_texture_image *texImage,
                          GLuint slice,
                          GLenum destFormat, GLenum destType,
-                         GLvoid *dest, GLint destRowLength)
+                         GLvoid *dest)
 {
    struct decompress_state *decompress = &ctx->Meta->Decompress;
    struct gl_texture_object *texObj = texImage->TexObject;
@@ -3274,7 +3274,7 @@ decompress_texture_image(struct gl_context *ctx,
    fboDrawSave = ctx->DrawBuffer->Name;
    fboReadSave = ctx->ReadBuffer->Name;
 
-   _mesa_meta_begin(ctx, MESA_META_ALL);
+   _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_PIXEL_STORE);
 
    /* Create/bind FBO/renderbuffer */
    if (decompress->FBO == 0) {
@@ -3409,7 +3409,6 @@ decompress_texture_image(struct gl_context *ctx,
          _mesa_PixelTransferf(GL_BLUE_SCALE, 0.0f);
       }
 
-      ctx->Pack.RowLength = destRowLength;
       _mesa_ReadPixels(0, 0, width, height, destFormat, destType, dest);
    }
 
@@ -3450,8 +3449,7 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
       const GLuint slice = 0; /* only 2D compressed textures for now */
       /* Need to unlock the texture here to prevent deadlock... */
       _mesa_unlock_texture(ctx, texObj);
-      decompress_texture_image(ctx, texImage, slice, format, type, pixels,
-                               ctx->Pack.RowLength);
+      decompress_texture_image(ctx, texImage, slice, format, type, pixels);
       /* ... and relock it */
       _mesa_lock_texture(ctx, texObj);
    }
