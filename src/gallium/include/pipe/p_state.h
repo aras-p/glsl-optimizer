@@ -329,7 +329,7 @@ struct pipe_surface
 {
    struct pipe_reference reference;
    struct pipe_resource *texture; /**< resource into which this is a view  */
-   struct pipe_context *context; /**< context this view belongs to */
+   struct pipe_context *context; /**< context this surface belongs to */
    enum pipe_format format;
 
    /* XXX width/height should be removed */
@@ -463,8 +463,8 @@ struct pipe_vertex_buffer
 struct pipe_stream_output_target
 {
    struct pipe_reference reference;
-   struct pipe_resource *buffer; /**< buffer into which this is a target view */
-   struct pipe_context *context; /**< context this view belongs to */
+   struct pipe_resource *buffer; /**< the output buffer */
+   struct pipe_context *context; /**< context this SO target belongs to */
 
    unsigned buffer_offset;  /**< offset where data should be written, in bytes */
    unsigned buffer_size;    /**< how much data is allowed to be written */
