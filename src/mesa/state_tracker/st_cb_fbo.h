@@ -48,7 +48,6 @@ struct st_renderbuffer
    struct gl_renderbuffer Base;
    struct pipe_resource *texture;
    struct pipe_surface *surface; /* temporary view into texture */
-   enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
    GLboolean defined;        /**< defined contents? */
 
    struct pipe_transfer *transfer; /**< only used when mapping the resource */

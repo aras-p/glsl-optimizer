@@ -842,12 +842,14 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       y = ctx->DrawBuffer->Height - y - height;
    }
 
-   if(format != GL_DEPTH_STENCIL && 
-      util_format_get_component_bits(strb->format,
-                                     UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
+   if (format == GL_STENCIL_INDEX && 
+       _mesa_is_format_packed_depth_stencil(strb->Base.Format)) {
+      /* writing stencil to a combined depth+stencil buffer */
       usage = PIPE_TRANSFER_READ_WRITE;
-   else
+   }
+   else {
       usage = PIPE_TRANSFER_WRITE;
+   }
 
    pt = pipe_get_transfer(pipe, strb->texture,
                           strb->rtt_level, strb->rtt_face + strb->rtt_slice,
@@ -1209,8 +1211,7 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   if (util_format_get_component_bits(rbDraw->format,
-                                     UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
+   if (_mesa_is_format_packed_depth_stencil(rbDraw->Base.Format))
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;

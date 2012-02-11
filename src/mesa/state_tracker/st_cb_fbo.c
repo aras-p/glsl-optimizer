@@ -97,7 +97,6 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    strb->Base.Height = height;
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
    strb->Base._BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
-   strb->format = format;
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 
@@ -106,10 +105,8 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       
       free(strb->data);
 
-      assert(strb->format != PIPE_FORMAT_NONE);
-      
-      strb->stride = util_format_get_stride(strb->format, width);
-      size = util_format_get_2d_size(strb->format, strb->stride, height);
+      strb->stride = util_format_get_stride(format, width);
+      size = util_format_get_2d_size(format, strb->stride, height);
       
       strb->data = malloc(size);
       
@@ -206,7 +203,6 @@ st_new_renderbuffer(struct gl_context *ctx, GLuint name)
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
       strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
-      strb->format = PIPE_FORMAT_NONE;
       return &strb->Base;
    }
    return NULL;
@@ -233,7 +229,6 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->Base.NumSamples = samples;
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
    strb->Base._BaseFormat = _mesa_get_format_base_format(strb->Base.Format);
-   strb->format = format;
    strb->software = sw;
    
    switch (format) {
@@ -400,8 +395,6 @@ st_render_texture(struct gl_context *ctx,
    strb->surface = pipe->create_surface(pipe,
                                         strb->texture,
                                         &surf_tmpl);
-
-   strb->format = pt->format;
 
    strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
 
@@ -650,7 +643,7 @@ st_MapRenderbuffer(struct gl_context *ctx,
       GLubyte *map = (GLubyte *) strb->data;
       if (strb->data) {
          map += strb->stride * y;
-         map += util_format_get_blocksize(strb->format) * x;
+         map += _mesa_get_format_bytes(strb->Base.Format) * x;
          *mapOut = map;
          *rowStrideOut = strb->stride;
       }
