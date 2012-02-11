@@ -138,7 +138,12 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       if (util_format_is_depth_or_stencil(format)) {
          template.bind = PIPE_BIND_DEPTH_STENCIL;
       }
+      else if (strb->Base.Name != 0) {
+         /* this is a user-created renderbuffer */
+         template.bind = PIPE_BIND_RENDER_TARGET;
+      }
       else {
+         /* this is a window-system buffer */
          template.bind = (PIPE_BIND_DISPLAY_TARGET |
                           PIPE_BIND_RENDER_TARGET);
       }
@@ -198,6 +203,7 @@ st_new_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
+      assert(name != 0);
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
       strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
