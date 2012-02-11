@@ -663,7 +663,7 @@ do {							\
    struct intel_context *intel = intel_context(ctx);			\
    GLuint color[n] = { 0, }, spec[n] = { 0, };				\
    GLuint coloroffset = intel->coloroffset;				\
-   bool specoffset = intel->specoffset;				\
+   GLuint specoffset = intel->specoffset;				\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 
