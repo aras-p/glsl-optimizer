@@ -44,10 +44,6 @@ st_finalize_texture(struct gl_context *ctx,
 		    struct gl_texture_object *tObj);
 
 
-extern struct gl_texture_object *
-st_get_default_texture(struct st_context *st);
-
-
 extern void
 st_init_texture_functions(struct dd_function_table *functions);
 

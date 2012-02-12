@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
+#include "main/texobj.h"
 #include "program/prog_instruction.h"
 
 #include "st_context.h"
@@ -201,7 +202,7 @@ update_single_texture(struct st_context *st,
    texObj = ctx->Texture.Unit[texUnit]._Current;
 
    if (!texObj) {
-      texObj = st_get_default_texture(st);
+      texObj = _mesa_get_fallback_texture(ctx, TEXTURE_2D_INDEX);
       samp = &texObj->Sampler;
    }
    stObj = st_texture_object(texObj);

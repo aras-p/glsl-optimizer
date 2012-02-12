@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
+#include "main/texobj.h"
 
 #include "st_context.h"
 #include "st_cb_texture.h"
@@ -132,7 +133,7 @@ convert_sampler(struct st_context *st,
 
    texobj = ctx->Texture.Unit[texUnit]._Current;
    if (!texobj) {
-      texobj = st_get_default_texture(st);
+      texobj = _mesa_get_fallback_texture(ctx, TEXTURE_2D_INDEX);
    }
 
    msamp = _mesa_get_samplerobj(ctx, texUnit);
