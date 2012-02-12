@@ -296,8 +296,6 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
 }
 
 
-
-
 /**
  * Called via ctx->Driver.BindFramebufferEXT().
  */
@@ -305,7 +303,7 @@ static void
 st_bind_framebuffer(struct gl_context *ctx, GLenum target,
                     struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
-
+   /* no-op */
 }
 
 
@@ -366,9 +364,6 @@ st_render_texture(struct gl_context *ctx,
    rb->Height = texImage->Height2;
    rb->_BaseFormat = texImage->_BaseFormat;
    rb->InternalFormat = texImage->InternalFormat;
-   /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
-
-   /*printf("***** pipe texture %d x %d\n", pt->width0, pt->height0);*/
 
    pipe_resource_reference( &strb->texture, pt );
 
@@ -378,7 +373,8 @@ st_render_texture(struct gl_context *ctx,
 
    /* new surface for rendering into the texture */
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = ctx->Color.sRGBEnabled ? strb->texture->format : util_format_linear(strb->texture->format);
+   surf_tmpl.format = ctx->Color.sRGBEnabled
+      ? strb->texture->format : util_format_linear(strb->texture->format);
    surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
    surf_tmpl.u.tex.level = strb->rtt_level;
    surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
@@ -388,11 +384,6 @@ st_render_texture(struct gl_context *ctx,
                                         &surf_tmpl);
 
    strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
-
-   /*
-   printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
-          att->Texture, pt, strb->surface, rb->Width, rb->Height);
-   */
 
    /* Invalidate buffer state so that the pipe's framebuffer state
     * gets updated.
@@ -416,10 +407,6 @@ st_finish_render_texture(struct gl_context *ctx,
       return;
 
    strb->rtt = NULL;
-
-   /*
-   printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
-   */
 
    /* restore previous framebuffer state */
    st_invalidate_state(ctx, _NEW_BUFFERS);
@@ -719,9 +706,6 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->FinishRenderTexture = st_finish_render_texture;
    functions->ValidateFramebuffer = st_validate_framebuffer;
 #endif
-   /* no longer needed by core Mesa, drivers handle resizes...
-   functions->ResizeBuffers = st_resize_buffers;
-   */
 
    functions->DrawBuffers = st_DrawBuffers;
    functions->ReadBuffer = st_ReadBuffer;
