@@ -883,6 +883,9 @@ r300_texture_create_object(struct r300_screen *rscreen,
         return NULL;
     }
 
+    if (base->nr_samples > 1)
+        return NULL;
+
     pipe_reference_init(&tex->b.b.b.reference, 1);
     tex->b.b.b.screen = &rscreen->screen;
     tex->b.b.b.usage = base->usage;
