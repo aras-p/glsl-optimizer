@@ -931,9 +931,6 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
    size_t n;
    const struct extension *i;
 
-   if (index < 0)
-      return NULL;
-
    base = (GLboolean*) &ctx->Extensions;
    n = 0;
    for (i = extension_table; i->name != 0; ++i) {
