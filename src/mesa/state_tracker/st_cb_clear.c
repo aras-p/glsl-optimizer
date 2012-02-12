@@ -388,10 +388,7 @@ check_clear_depth_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuff
    GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   assert(rb->Format == MESA_FORMAT_S8 ||
-          rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24 ||
-          rb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
+   assert(_mesa_get_format_bits(rb->Format, GL_STENCIL_BITS) > 0);
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
@@ -444,10 +441,7 @@ check_clear_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   assert(rb->Format == MESA_FORMAT_S8 ||
-          rb->Format == MESA_FORMAT_Z24_S8 ||
-          rb->Format == MESA_FORMAT_S8_Z24 ||
-          rb->Format == MESA_FORMAT_Z32_FLOAT_X24S8);
+   assert(_mesa_get_format_bits(rb->Format, GL_STENCIL_BITS) > 0);
 
    if (maskStencil) 
       return GL_TRUE;
