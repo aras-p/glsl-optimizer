@@ -308,19 +308,6 @@ st_bind_framebuffer(struct gl_context *ctx, GLenum target,
 
 }
 
-/**
- * Called by ctx->Driver.FramebufferRenderbuffer
- */
-static void
-st_framebuffer_renderbuffer(struct gl_context *ctx, 
-                            struct gl_framebuffer *fb,
-                            GLenum attachment,
-                            struct gl_renderbuffer *rb)
-{
-   /* XXX no need for derivation? */
-   _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
-}
-
 
 /**
  * Called by ctx->Driver.RenderTexture
@@ -727,7 +714,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->NewFramebuffer = st_new_framebuffer;
    functions->NewRenderbuffer = st_new_renderbuffer;
    functions->BindFramebuffer = st_bind_framebuffer;
-   functions->FramebufferRenderbuffer = st_framebuffer_renderbuffer;
+   functions->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
    functions->ValidateFramebuffer = st_validate_framebuffer;
