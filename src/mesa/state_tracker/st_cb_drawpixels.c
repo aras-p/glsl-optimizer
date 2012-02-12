@@ -33,6 +33,7 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/bufferobj.h"
+#include "main/format_pack.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
@@ -1249,48 +1250,7 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       dst = drawMap + y * ptDraw->stride;
       src = buffer + i * width;
 
-      switch (ptDraw->resource->format) {
-      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-         {
-            uint *dst4 = (uint *) dst;
-            int j;
-            assert(usage == PIPE_TRANSFER_READ_WRITE);
-            for (j = 0; j < width; j++) {
-               *dst4 = (*dst4 & 0xffffff) | (src[j] << 24);
-               dst4++;
-            }
-         }
-         break;
-      case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-         {
-            uint *dst4 = (uint *) dst;
-            int j;
-            assert(usage == PIPE_TRANSFER_READ_WRITE);
-            for (j = 0; j < width; j++) {
-               *dst4 = (*dst4 & 0xffffff00) | (src[j] & 0xff);
-               dst4++;
-            }
-         }
-         break;
-      case PIPE_FORMAT_S8_UINT:
-         assert(usage == PIPE_TRANSFER_WRITE);
-         memcpy(dst, src, width);
-         break;
-      case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-         {
-            uint *dst4 = (uint *) dst;
-            int j;
-            dst4++;
-            assert(usage == PIPE_TRANSFER_READ_WRITE);
-            for (j = 0; j < width; j++) {
-               *dst4 = src[j] & 0xff;
-               dst4 += 2;
-            }
-         }
-         break;
-      default:
-         assert(0);
-      }
+      _mesa_pack_ubyte_stencil_row(rbDraw->Base.Format, width, src, dst);
    }
 
    free(buffer);
