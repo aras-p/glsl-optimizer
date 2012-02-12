@@ -1257,6 +1257,8 @@ static void r300_resource_resolve(struct pipe_context *pipe,
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     static const union pipe_color_union color;
 
+    assert(0 && "Resource resolve is unsupported, invalid call.");
+
     memset(&surf_tmpl, 0, sizeof(surf_tmpl));
     surf_tmpl.format = info->src.res->format;
     surf_tmpl.u.tex.first_layer =
@@ -1288,6 +1290,7 @@ static void r300_resource_resolve(struct pipe_context *pipe,
                                       info->dst.y1 - info->dst.y0);
 
     /* Disable AA resolve. */
+    aa->dest = NULL;
     aa->aaresolve_ctl = 0;
     r300->aa_state.size = 4;
     r300_mark_atom_dirty(r300, &r300->aa_state);
