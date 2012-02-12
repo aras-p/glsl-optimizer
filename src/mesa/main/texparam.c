@@ -1233,19 +1233,19 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
          *params = (GLint) obj->Sampler.MagFilter;
-         break;;
+         break;
       case GL_TEXTURE_MIN_FILTER:
          *params = (GLint) obj->Sampler.MinFilter;
-         break;;
+         break;
       case GL_TEXTURE_WRAP_S:
          *params = (GLint) obj->Sampler.WrapS;
-         break;;
+         break;
       case GL_TEXTURE_WRAP_T:
          *params = (GLint) obj->Sampler.WrapT;
-         break;;
+         break;
       case GL_TEXTURE_WRAP_R:
          *params = (GLint) obj->Sampler.WrapR;
-         break;;
+         break;
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat b[4];
@@ -1258,25 +1258,25 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             params[2] = FLOAT_TO_INT(b[2]);
             params[3] = FLOAT_TO_INT(b[3]);
          }
-         break;;
+         break;
       case GL_TEXTURE_RESIDENT:
          *params = 1;
-         break;;
+         break;
       case GL_TEXTURE_PRIORITY:
          *params = FLOAT_TO_INT(obj->Priority);
-         break;;
+         break;
       case GL_TEXTURE_MIN_LOD:
          *params = (GLint) obj->Sampler.MinLod;
-         break;;
+         break;
       case GL_TEXTURE_MAX_LOD:
          *params = (GLint) obj->Sampler.MaxLod;
-         break;;
+         break;
       case GL_TEXTURE_BASE_LEVEL:
          *params = obj->BaseLevel;
-         break;;
+         break;
       case GL_TEXTURE_MAX_LEVEL:
          *params = obj->MaxLevel;
-         break;;
+         break;
       case GL_TEXTURE_MAX_ANISOTROPY_EXT:
          if (!ctx->Extensions.EXT_texture_filter_anisotropic)
             goto invalid_pname;
