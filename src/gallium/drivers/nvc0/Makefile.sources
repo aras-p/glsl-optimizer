@@ -14,7 +14,6 @@ C_SOURCES := \
 	nvc0_program.c \
 	nvc0_shader_state.c \
 	nvc0_push.c \
-	nvc0_push2.c \
 	nvc0_query.c
 
 CPP_SOURCES := \
