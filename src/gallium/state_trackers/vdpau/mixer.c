@@ -178,6 +178,11 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
       FREE(vmixer->noise_reduction.filter);
    }
 
+   if (vmixer->sharpness.filter) {
+      vl_matrix_filter_cleanup(vmixer->sharpness.filter);
+      FREE(vmixer->sharpness.filter);
+   }
+
    FREE(vmixer);
 
    return VDP_STATUS_OK;
