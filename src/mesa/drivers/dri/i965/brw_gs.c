@@ -56,8 +56,7 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   /* The geometry shader needs to access the entire VUE. */
-   brw_compute_vue_map(&c.vue_map, intel, c.key.userclip_active, c.key.attrs);
+   brw_compute_vue_map(&c.vue_map, intel, brw->vs.prog_data);
    c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
@@ -166,7 +165,7 @@ static void populate_key( struct brw_context *brw,
 
    memset(key, 0, sizeof(*key));
 
-   /* CACHE_NEW_VS_PROG */
+   /* CACHE_NEW_VS_PROG (part of VUE map) */
    key->attrs = brw->vs.prog_data->outputs_written;
 
    /* BRW_NEW_PRIMITIVE */
@@ -181,8 +180,8 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = true;
    }
 
-   /* _NEW_TRANSFORM */
-   key->userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
+   /* CACHE_NEW_VS_PROG (part of VUE map)*/
+   key->userclip_active = brw->vs.prog_data->userclip;
 
    if (intel->gen >= 7) {
       /* On Gen7 and later, we don't use GS (yet). */
@@ -267,7 +266,6 @@ brw_upload_gs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_gs_prog = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
-                _NEW_TRANSFORM |
                 _NEW_TRANSFORM_FEEDBACK |
                 _NEW_RASTERIZER_DISCARD),
       .brw   = BRW_NEW_PRIMITIVE,

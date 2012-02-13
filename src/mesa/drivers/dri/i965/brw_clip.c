@@ -69,7 +69,7 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
-   brw_compute_vue_map(&c.vue_map, intel, c.key.nr_userclip > 0, c.key.attrs);
+   brw_compute_vue_map(&c.vue_map, intel, brw->vs.prog_data);
 
    /* nr_regs is the number of registers filled by reading data from the VUE.
     * This program accesses the entire VUE, so nr_regs needs to be the size of
@@ -145,12 +145,12 @@ brw_upload_clip_prog(struct brw_context *brw)
     */
    /* BRW_NEW_REDUCED_PRIMITIVE */
    key.primitive = brw->intel.reduced_primitive;
-   /* CACHE_NEW_VS_PROG */
+   /* CACHE_NEW_VS_PROG (also part of VUE map) */
    key.attrs = brw->vs.prog_data->outputs_written;
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
-   /* _NEW_TRANSFORM */
+   /* _NEW_TRANSFORM (also part of VUE map)*/
    key.nr_userclip = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
 
    if (intel->gen == 5)

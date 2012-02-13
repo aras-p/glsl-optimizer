@@ -35,8 +35,6 @@ upload_sbe_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_vue_map vue_map;
    uint32_t urb_entry_read_length;
-   /* CACHE_NEW_VS_PROG */
-   GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
    /* _NEW_LIGHT */
@@ -44,15 +42,14 @@ upload_sbe_state(struct brw_context *brw)
    uint32_t dw1, dw10, dw11;
    int i;
    int attr = 0, input_index = 0;
-   /* _NEW_TRANSFORM */
    int urb_entry_read_offset = 1;
-   bool userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
    /* _NEW_BUFFERS */
    bool render_to_fbo = ctx->DrawBuffer->Name != 0;
    uint32_t point_sprite_origin;
 
-   brw_compute_vue_map(&vue_map, intel, userclip_active, vs_outputs_written);
+   /* CACHE_NEW_VS_PROG */
+   brw_compute_vue_map(&vue_map, intel, brw->vs.prog_data);
    urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
    if (urb_entry_read_length == 0) {
       /* Setting the URB entry read length to 0 causes undefined behavior, so
@@ -146,8 +143,7 @@ const struct brw_tracked_state gen7_sbe_state = {
    .dirty = {
       .mesa  = (_NEW_LIGHT |
 		_NEW_POINT |
-		_NEW_PROGRAM |
-		_NEW_TRANSFORM),
+		_NEW_PROGRAM),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_VS_PROG

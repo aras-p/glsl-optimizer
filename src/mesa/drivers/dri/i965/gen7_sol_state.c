@@ -241,9 +241,8 @@ upload_sol_state(struct brw_context *brw)
    bool active = xfb_obj->Active && !xfb_obj->Paused;
    struct brw_vue_map vue_map;
 
-   /* _NEW_TRANSFORM, CACHE_NEW_VS_PROG */
-   brw_compute_vue_map(&vue_map, intel, ctx->Transform.ClipPlanesEnabled != 0,
-                       brw->vs.prog_data->outputs_written);
+   /* CACHE_NEW_VS_PROG */
+   brw_compute_vue_map(&vue_map, intel, brw->vs.prog_data);
 
    if (active) {
       upload_3dstate_so_buffers(brw);
@@ -264,8 +263,7 @@ const struct brw_tracked_state gen7_sol_state = {
    .dirty = {
       .mesa  = (_NEW_RASTERIZER_DISCARD |
 		_NEW_LIGHT |
-		_NEW_TRANSFORM_FEEDBACK |
-		_NEW_TRANSFORM),
+		_NEW_TRANSFORM_FEEDBACK),
       .brw   = (BRW_NEW_BATCH |
 		BRW_NEW_VERTEX_PROGRAM),
       .cache = CACHE_NEW_VS_PROG,

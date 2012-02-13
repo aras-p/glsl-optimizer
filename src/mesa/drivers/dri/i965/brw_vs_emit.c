@@ -173,6 +173,7 @@ static inline bool can_use_direct_mrf(int vert_result,
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
+   struct brw_context *brw = c->func.brw;
    struct intel_context *intel = &c->func.brw->intel;
    GLuint i, reg = 0, slot;
    int attributes_in_vue;
@@ -325,8 +326,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
-   brw_compute_vue_map(&c->vue_map, intel, c->key.userclip_active,
-                       c->prog_data.outputs_written);
+   brw_compute_vue_map(&c->vue_map, intel, &c->prog_data);
    c->first_output = reg;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);

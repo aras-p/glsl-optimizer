@@ -114,8 +114,6 @@ upload_sf_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_vue_map vue_map;
    uint32_t urb_entry_read_length;
-   /* CACHE_NEW_VS_PROG */
-   GLbitfield64 vs_outputs_written = brw->vs.prog_data->outputs_written;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
    /* _NEW_LIGHT */
@@ -128,13 +126,10 @@ upload_sf_state(struct brw_context *brw)
    int urb_entry_read_offset = 1;
    float point_size;
    uint16_t attr_overrides[FRAG_ATTRIB_MAX];
-   bool userclip_active;
    uint32_t point_sprite_origin;
 
-   /* _NEW_TRANSFORM */
-   userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
-
-   brw_compute_vue_map(&vue_map, intel, userclip_active, vs_outputs_written);
+   /* CACHE_NEW_VS_PROG */
+   brw_compute_vue_map(&vue_map, intel, brw->vs.prog_data);
    urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
    if (urb_entry_read_length == 0) {
       /* Setting the URB entry read length to 0 causes undefined behavior, so
@@ -342,8 +337,7 @@ const struct brw_tracked_state gen6_sf_state = {
 		_NEW_LINE |
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
-		_NEW_POINT |
-		_NEW_TRANSFORM),
+		_NEW_POINT),
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_VS_PROG

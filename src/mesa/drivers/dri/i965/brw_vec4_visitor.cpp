@@ -2252,8 +2252,7 @@ vec4_visitor::emit_urb_writes()
 
    /* FINISHME: edgeflag */
 
-   brw_compute_vue_map(&c->vue_map, intel, c->key.userclip_active,
-                       c->prog_data.outputs_written);
+   brw_compute_vue_map(&c->vue_map, intel, &c->prog_data);
 
    /* First mrf is the g0-based message header containing URB handles and such,
     * which is implied in VS_OPCODE_URB_WRITE.
