@@ -165,7 +165,7 @@ generate_offsets(enum vl_median_filter_shape shape, unsigned size,
    assert(offsets && num_offsets);
 
    /* size needs to be odd */
-   size = align(size, 2) - 1;
+   size = align(size + 1, 2) - 1;
    half_size = size >> 1;
 
    switch(shape) {
@@ -249,7 +249,7 @@ vl_median_filter_init(struct vl_median_filter *filter, struct pipe_context *pipe
 
    assert(filter && pipe);
    assert(width && height);
-   assert(size > 0 && size < 20);
+   assert(size > 1 && size < 20);
 
    memset(filter, 0, sizeof(*filter));
    filter->pipe = pipe;

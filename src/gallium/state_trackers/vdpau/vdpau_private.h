@@ -311,7 +311,7 @@ typedef struct
 
    struct {
       bool supported, enabled;
-      float level;
+      unsigned level;
       struct vl_median_filter *filter;
    } noise_reduction;
 

@@ -278,12 +278,12 @@ vlVdpVideoMixerUpdateNoiseReductionFilter(vlVdpVideoMixer *vmixer)
    }
 
    /* and create a new filter as needed */
-   if (vmixer->noise_reduction. enabled && vmixer->noise_reduction.level > 0.0f) {
+   if (vmixer->noise_reduction. enabled && vmixer->noise_reduction.level > 0) {
       vmixer->noise_reduction.filter = MALLOC(sizeof(struct vl_median_filter));
       vl_median_filter_init(vmixer->noise_reduction.filter,
                             vmixer->device->context->pipe,
                             vmixer->video_width, vmixer->video_height,
-                            9 * vmixer->noise_reduction.level,
+                            vmixer->noise_reduction.level + 1,
                             VL_MEDIAN_FILTER_CROSS);
    }
 }
@@ -545,7 +545,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          if (val < 0.f || val > 1.f)
             return VDP_STATUS_INVALID_VALUE;
 
-         vmixer->noise_reduction.level = val;
+         vmixer->noise_reduction.level = val * 10;
          vlVdpVideoMixerUpdateNoiseReductionFilter(vmixer);
          break;
 
@@ -658,7 +658,7 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
          break;
 
       case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
-         *(float*)attribute_values[i] = vmixer->noise_reduction.level;
+         *(float*)attribute_values[i] = (float)vmixer->noise_reduction.level / 10.0f;
          break;
 
       case VDP_VIDEO_MIXER_ATTRIBUTE_LUMA_KEY_MIN_LUMA:
