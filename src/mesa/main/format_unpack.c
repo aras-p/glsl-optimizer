@@ -29,6 +29,13 @@
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
 
+/** Helper struct for MESA_FORMAT_Z32_FLOAT_X24S8 */
+struct z32f_x24s8
+{
+   float z;
+   uint32_t x24s8;
+};
+
 
 /* Expand 1, 2, 3, 4, 5, 6-bit values to fill 8 bits */
 
@@ -2825,10 +2832,10 @@ unpack_float_z_Z32F(GLuint n, const void *src, GLfloat *dst)
 static void
 unpack_float_z_Z32X24S8(GLuint n, const void *src, GLfloat *dst)
 {
-   const GLfloat *s = ((const GLfloat *) src);
+   const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i] = s[i * 2];
+      dst[i] = s[i].z;
    }
 }
 
@@ -2929,11 +2936,6 @@ unpack_uint_z_Z32_FLOAT(const void *src, GLuint *dst, GLuint n)
 static void
 unpack_uint_z_Z32_FLOAT_X24S8(const void *src, GLuint *dst, GLuint n)
 {
-   struct z32f_x24s8 {
-      float z;
-      uint32_t x24s8;
-   };
-
    const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
    GLuint i;
 
@@ -3015,10 +3017,10 @@ static void
 unpack_ubyte_s_Z32_FLOAT_X24S8(const void *src, GLubyte *dst, GLuint n)
 {
    GLuint i;
-   const GLuint *src32 = src;
+   const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
 
    for (i = 0; i < n; i++)
-      dst[i] = src32[i * 2 + 1] & 0xff;
+      dst[i] = s[i].x24s8 & 0xff;
 }
 
 void
