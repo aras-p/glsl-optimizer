@@ -2530,6 +2530,19 @@ _mesa_pack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
          }
       }
       break;
+   case MESA_FORMAT_Z32_FLOAT_X24S8:
+      {
+         const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
+         GLuint *destu = (GLuint *) dst;
+         GLfloat *destf = (GLfloat *) dst;
+         GLint i;
+         for (i = 0; i < n; i++) {
+            GLfloat z = (src[i] >> 8) * scale;
+            destf[i * 2 + 0] = z;
+            destu[i * 2 + 1] = src[i] & 0xff;
+         }
+      }
+      break;
    default:
       _mesa_problem(NULL, "bad format %s in _mesa_pack_ubyte_s_row",
                     _mesa_get_format_name(format));
