@@ -45,7 +45,7 @@ struct st_texture_image
 {
    struct gl_texture_image base;
 
-   /** Used to store texture data that doesn't fit in the patent
+   /** Used to store texture data that doesn't fit in the parent
     * object's mipmap buffer.
     */
    GLubyte *TexData;
