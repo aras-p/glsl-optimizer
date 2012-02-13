@@ -123,18 +123,6 @@ st_get_stobj_resource(struct st_texture_object *stObj)
 
 
 static INLINE struct pipe_sampler_view *
-st_create_texture_sampler_view(struct pipe_context *pipe,
-                               struct pipe_resource *texture)
-{
-   struct pipe_sampler_view templ;
-
-   u_sampler_view_default_template(&templ, texture, texture->format);
-
-   return pipe->create_sampler_view(pipe, texture, &templ);
-}
-
-
-static INLINE struct pipe_sampler_view *
 st_create_texture_sampler_view_format(struct pipe_context *pipe,
                                       struct pipe_resource *texture,
                                       enum pipe_format format)
@@ -145,6 +133,15 @@ st_create_texture_sampler_view_format(struct pipe_context *pipe,
 
    return pipe->create_sampler_view(pipe, texture, &templ);
 }
+
+static INLINE struct pipe_sampler_view *
+st_create_texture_sampler_view(struct pipe_context *pipe,
+                               struct pipe_resource *texture)
+{
+   return st_create_texture_sampler_view_format(pipe, texture,
+                                                texture->format);
+}
+
 
 
 extern struct pipe_resource *
