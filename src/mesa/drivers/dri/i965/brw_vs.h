@@ -92,7 +92,6 @@ struct brw_vs_compile {
 
    GLuint nr_inputs;
 
-   struct brw_vue_map vue_map;
    GLuint first_output;
    GLuint last_scratch;
 

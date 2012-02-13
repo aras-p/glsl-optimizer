@@ -173,7 +173,6 @@ static inline bool can_use_direct_mrf(int vert_result,
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
-   struct brw_context *brw = c->func.brw;
    struct intel_context *intel = &c->func.brw->intel;
    GLuint i, reg = 0, slot;
    int attributes_in_vue;
@@ -326,13 +325,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
-   brw_compute_vue_map(&c->vue_map, intel, &c->prog_data);
    c->first_output = reg;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);
 
-   for (slot = 0; slot < c->vue_map.num_slots; slot++) {
-      int vert_result = c->vue_map.slot_to_vert_result[slot];
+   for (slot = 0; slot < c->prog_data.vue_map.num_slots; slot++) {
+      int vert_result = c->prog_data.vue_map.slot_to_vert_result[slot];
       assert(vert_result < Elements(c->regs[PROGRAM_OUTPUT]));
       if (can_use_direct_mrf(vert_result, first_reladdr_output, slot)) {
          c->regs[PROGRAM_OUTPUT][vert_result] = brw_message_reg(slot + 1);
@@ -405,7 +403,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* The VS VUEs are shared by VF (outputting our inputs) and VS, so size
     * them to fit the biggest thing they need to.
     */
-   attributes_in_vue = MAX2(c->vue_map.num_slots, c->nr_inputs);
+   attributes_in_vue = MAX2(c->prog_data.vue_map.num_slots, c->nr_inputs);
 
    if (intel->gen == 6) {
       /* Each attribute is 32 bytes (2 vec4s), so dividing by 8 gives us the
@@ -1678,12 +1676,12 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    }
 
    /* Move variable-addressed, non-overflow outputs to their MRFs. */
-   for (slot = len_vertex_header; slot < c->vue_map.num_slots; ++slot) {
+   for (slot = len_vertex_header; slot < c->prog_data.vue_map.num_slots; ++slot) {
       if (slot >= MAX_SLOTS_IN_FIRST_URB_WRITE)
          break;
 
       int mrf = slot + 1;
-      int vert_result = c->vue_map.slot_to_vert_result[slot];
+      int vert_result = c->prog_data.vue_map.slot_to_vert_result[slot];
       if (c->regs[PROGRAM_OUTPUT][vert_result].file ==
           BRW_GENERAL_REGISTER_FILE) {
          brw_MOV(p, brw_message_reg(mrf),
@@ -1691,7 +1689,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       }
    }
 
-   eot = (slot >= c->vue_map.num_slots);
+   eot = (slot >= c->prog_data.vue_map.num_slots);
 
    /* Message header, plus the (first part of the) VUE. */
    msg_len = 1 + slot;
@@ -1712,14 +1710,14 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
 
-   if (slot < c->vue_map.num_slots) {
+   if (slot < c->prog_data.vue_map.num_slots) {
       /* Not all of the vertex outputs/results fit into the MRF.
        * Move the overflowed attributes from the GRF to the MRF and
        * issue another brw_urb_WRITE().
        */
       GLuint mrf = 1;
-      for (; slot < c->vue_map.num_slots; ++slot) {
-         int vert_result = c->vue_map.slot_to_vert_result[slot];
+      for (; slot < c->prog_data.vue_map.num_slots; ++slot) {
+         int vert_result = c->prog_data.vue_map.slot_to_vert_result[slot];
          /* move from GRF to MRF */
          brw_MOV(p, brw_message_reg(mrf),
                  c->regs[PROGRAM_OUTPUT][vert_result]);

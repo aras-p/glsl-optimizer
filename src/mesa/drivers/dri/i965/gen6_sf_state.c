@@ -112,7 +112,6 @@ upload_sf_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   struct brw_vue_map vue_map;
    uint32_t urb_entry_read_length;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
@@ -129,8 +128,8 @@ upload_sf_state(struct brw_context *brw)
    uint32_t point_sprite_origin;
 
    /* CACHE_NEW_VS_PROG */
-   brw_compute_vue_map(&vue_map, intel, brw->vs.prog_data);
-   urb_entry_read_length = (vue_map.num_slots + 1)/2 - urb_entry_read_offset;
+   urb_entry_read_length = ((brw->vs.prog_data->vue_map.num_slots + 1) / 2 -
+			    urb_entry_read_offset);
    if (urb_entry_read_length == 0) {
       /* Setting the URB entry read length to 0 causes undefined behavior, so
        * if we have no URB data to read, set it to 1.
@@ -301,9 +300,10 @@ upload_sf_state(struct brw_context *brw)
        */
       assert(input_index < 16 || attr == input_index);
 
-      /* _NEW_LIGHT | _NEW_PROGRAM */
+      /* CACHE_NEW_VS_PROG | _NEW_LIGHT | _NEW_PROGRAM */
       attr_overrides[input_index++] =
-         get_attr_override(&vue_map, urb_entry_read_offset, attr,
+         get_attr_override(&brw->vs.prog_data->vue_map,
+			   urb_entry_read_offset, attr,
                            ctx->VertexProgram._TwoSideEnabled);
    }
 

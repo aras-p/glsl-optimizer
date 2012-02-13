@@ -69,7 +69,7 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
-   brw_compute_vue_map(&c.vue_map, intel, brw->vs.prog_data);
+   c.vue_map = brw->vs.prog_data->vue_map;
 
    /* nr_regs is the number of registers filled by reading data from the VUE.
     * This program accesses the entire VUE, so nr_regs needs to be the size of

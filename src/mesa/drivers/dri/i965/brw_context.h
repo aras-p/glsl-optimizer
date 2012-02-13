@@ -381,6 +381,8 @@ struct brw_gs_prog_data {
 };
 
 struct brw_vs_prog_data {
+   struct brw_vue_map vue_map;
+
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
@@ -1045,9 +1047,6 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /* brw_vs.c */
-void brw_compute_vue_map(struct brw_vue_map *vue_map,
-                         const struct intel_context *intel,
-                         const struct brw_vs_prog_data *prog_data);
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 
 /* brw_wm.c */

@@ -56,7 +56,7 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   brw_compute_vue_map(&c.vue_map, intel, brw->vs.prog_data);
+   c.vue_map = brw->vs.prog_data->vue_map;
    c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    mem_ctx = NULL;
