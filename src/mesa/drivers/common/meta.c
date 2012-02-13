@@ -3292,7 +3292,7 @@ decompress_texture_image(struct gl_context *ctx,
    }
 
    /* alloc dest surface */
-   if (width != decompress->Width || height != decompress->Height) {
+   if (width > decompress->Width || height > decompress->Height) {
       _mesa_RenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA,
                                    width, height);
       decompress->Width = width;
