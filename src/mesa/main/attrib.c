@@ -617,8 +617,6 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
                    enable->VertexProgramTwoSide,
                    GL_VERTEX_PROGRAM_TWO_SIDE_ARB);
 
-#undef TEST_AND_UPDATE
-
    /* texture unit enables */
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const GLbitfield enabled = enable->Texture[i];
@@ -1270,6 +1268,23 @@ _mesa_PopAttrib(void)
             {
                const struct gl_multisample_attrib *ms;
                ms = (const struct gl_multisample_attrib *) attr->data;
+
+	       TEST_AND_UPDATE(ctx->Multisample.Enabled,
+			       ms->Enabled,
+			       GL_MULTISAMPLE);
+
+	       TEST_AND_UPDATE(ctx->Multisample.SampleCoverage,
+			       ms->SampleCoverage,
+			       GL_SAMPLE_COVERAGE);
+
+	       TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToCoverage,
+			       ms->SampleAlphaToCoverage,
+			       GL_SAMPLE_ALPHA_TO_COVERAGE);
+
+	       TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToOne,
+			       ms->SampleAlphaToOne,
+			       GL_SAMPLE_ALPHA_TO_ONE);
+
                _mesa_SampleCoverageARB(ms->SampleCoverageValue,
                                        ms->SampleCoverageInvert);
             }
