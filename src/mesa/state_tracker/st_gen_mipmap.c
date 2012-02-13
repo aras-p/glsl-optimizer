@@ -75,10 +75,9 @@ st_render_mipmap(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_sampler_view *psv = st_get_texture_sampler_view(stObj, pipe);
+   struct pipe_sampler_view *psv;
    const uint face = _mesa_tex_target_to_face(target);
 
-   assert(psv->texture == stObj->pt);
 #if 0
    assert(target != GL_TEXTURE_3D); /* implemented but untested */
 #endif
@@ -86,10 +85,13 @@ st_render_mipmap(struct st_context *st,
    /* check if we can render in the texture's format */
    /* XXX should probably kill this and always use util_gen_mipmap
       since this implements a sw fallback as well */
-   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
+   if (!screen->is_format_supported(screen, stObj->pt->format,
+                                    stObj->pt->target,
                                     0, PIPE_BIND_RENDER_TARGET)) {
       return FALSE;
    }
+
+   psv = st_create_texture_sampler_view(pipe, stObj->pt);
 
    /* Disable conditional rendering. */
    if (st->render_condition) {
@@ -102,6 +104,8 @@ st_render_mipmap(struct st_context *st,
    if (st->render_condition) {
       pipe->render_condition(pipe, st->render_condition, st->condition_mode);
    }
+
+   pipe_sampler_view_reference(&psv, NULL);
 
    return TRUE;
 }
