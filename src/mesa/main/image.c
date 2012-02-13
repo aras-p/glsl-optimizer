@@ -428,6 +428,15 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
       }
       return GL_NO_ERROR;
 
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
+      if (!ctx->Extensions.EXT_packed_float) {
+         return GL_INVALID_ENUM;
+      }
+      if (format != GL_RGB) {
+         return GL_INVALID_OPERATION;
+      }
+      return GL_NO_ERROR;
+
    default:
       ; /* fall-through */
    }
