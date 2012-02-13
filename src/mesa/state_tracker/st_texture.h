@@ -147,22 +147,6 @@ st_create_texture_sampler_view_format(struct pipe_context *pipe,
 }
 
 
-static INLINE struct pipe_sampler_view *
-st_get_texture_sampler_view(struct st_texture_object *stObj,
-                            struct pipe_context *pipe)
-{
-   if (!stObj || !stObj->pt) {
-      return NULL;
-   }
-
-   if (!stObj->sampler_view) {
-      stObj->sampler_view = st_create_texture_sampler_view(pipe, stObj->pt);
-   }
-
-   return stObj->sampler_view;
-}
-
-
 extern struct pipe_resource *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
