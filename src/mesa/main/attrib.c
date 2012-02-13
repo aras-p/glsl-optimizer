@@ -122,7 +122,6 @@ struct gl_enable_attrib
    GLboolean SampleAlphaToCoverage;   /* GL_ARB_multisample */
    GLboolean SampleAlphaToOne;        /* GL_ARB_multisample */
    GLboolean SampleCoverage;          /* GL_ARB_multisample */
-   GLboolean SampleCoverageInvert;    /* GL_ARB_multisample */
    GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
 
    GLbitfield Texture[MAX_TEXTURE_UNITS];
@@ -314,7 +313,6 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->SampleAlphaToCoverage = ctx->Multisample.SampleAlphaToCoverage;
       attr->SampleAlphaToOne = ctx->Multisample.SampleAlphaToOne;
       attr->SampleCoverage = ctx->Multisample.SampleCoverage;
-      attr->SampleCoverageInvert = ctx->Multisample.SampleCoverageInvert;
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
@@ -608,9 +606,6 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverage,
                    enable->SampleCoverage,
                    GL_SAMPLE_COVERAGE_ARB);
-   TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
-                   enable->SampleCoverageInvert,
-                   GL_SAMPLE_COVERAGE_INVERT_ARB);
    /* GL_ARB_vertex_program, GL_NV_vertex_program */
    TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
                    enable->VertexProgram,
