@@ -138,7 +138,7 @@ check_sampler_swizzle(struct pipe_sampler_view *sv,
 }
 
 
-static INLINE struct pipe_sampler_view *
+static struct pipe_sampler_view *
 st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 					  struct st_texture_object *stObj,
                                           const struct gl_sampler_object *samp,
@@ -165,7 +165,7 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 }
 
 
-static INLINE struct pipe_sampler_view *
+static struct pipe_sampler_view *
 st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
 				       struct pipe_context *pipe,
                                        const struct gl_sampler_object *samp,
