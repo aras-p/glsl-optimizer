@@ -298,8 +298,52 @@ static void calc_score_deps(struct schedule_instruction * sinst)
 
 #endif
 
-#define NO_READ_TEX_SCORE (1 << 16)
 #define NO_OUTPUT_SCORE (1 << 24)
+
+static void score_no_output(struct schedule_instruction * sinst)
+{
+	assert(sinst->Instruction->Type != RC_INSTRUCTION_NORMAL);
+	if (!sinst->Instruction->U.P.RGB.OutputWriteMask &&
+			!sinst->Instruction->U.P.Alpha.OutputWriteMask) {
+		if (sinst->PairedInst) {
+			if (!sinst->PairedInst->Instruction->U.P.
+							RGB.OutputWriteMask
+					&& !sinst->PairedInst->Instruction->U.P.
+							Alpha.OutputWriteMask) {
+				sinst->Score |= NO_OUTPUT_SCORE;
+			}
+
+		} else {
+			sinst->Score |= NO_OUTPUT_SCORE;
+		}
+	}
+}
+
+#define PAIRED_SCORE (1 << 16)
+
+static void calc_score_r300(struct schedule_instruction * sinst)
+{
+	unsigned src_idx;
+
+	if (sinst->Instruction->Type == RC_INSTRUCTION_NORMAL) {
+		sinst->Score = 0;
+		return;
+	}
+
+	score_no_output(sinst);
+
+	if (sinst->PairedInst) {
+		sinst->Score |= PAIRED_SCORE;
+		return;
+	}
+
+	for (src_idx = 0; src_idx < 4; src_idx++) {
+		sinst->Score += sinst->Instruction->U.P.RGB.Src[src_idx].Used +
+				sinst->Instruction->U.P.Alpha.Src[src_idx].Used;
+	}
+}
+
+#define NO_READ_TEX_SCORE (1 << 16)
 
 static void calc_score_readers(struct schedule_instruction * sinst)
 {
@@ -313,20 +357,7 @@ static void calc_score_readers(struct schedule_instruction * sinst)
 		if (get_tex_read_count(sinst) == 0) {
 			sinst->Score |= NO_READ_TEX_SCORE;
 		}
-		if (!sinst->Instruction->U.P.RGB.OutputWriteMask &&
-			!sinst->Instruction->U.P.Alpha.OutputWriteMask) {
-			if (sinst->PairedInst) {
-				if (!sinst->PairedInst->Instruction->U.P.
-						RGB.OutputWriteMask
-				&& !sinst->PairedInst->Instruction->U.P.
-						Alpha.OutputWriteMask) {
-					sinst->Score |= NO_OUTPUT_SCORE;
-				}
-
-			} else {
-				sinst->Score |= NO_OUTPUT_SCORE;
-			}
-		}
+		score_no_output(sinst);
 	}
 }
 
@@ -1080,7 +1111,8 @@ static void emit_instruction(
 	update_max_score(s, &s->ReadyAlpha, &max_score, &max_inst, &max_list);
 
 	if (tex_count >= s->max_tex_group || max_score == -1
-		|| (s->TEXCount > 0 && tex_count == s->TEXCount)) {
+		|| (s->TEXCount > 0 && tex_count == s->TEXCount)
+		|| (!s->C->is_r500 && tex_count > 0 && max_score == -1)) {
 		emit_all_tex(s, before);
 	} else {
 
@@ -1091,53 +1123,6 @@ static void emit_instruction(
 
 		presub_nop(before->Prev);
 	}
-}
-
-/**
- * Find a good ALU instruction or pair of ALU instruction and emit it.
- *
- * Prefer emitting full ALU instructions, so that when we reach a point
- * where no full ALU instruction can be emitted, we have more candidates
- * for RGB/Alpha pairing.
- */
-static void emit_one_alu(struct schedule_state *s, struct rc_instruction * before)
-{
-	struct schedule_instruction * sinst;
-	int rgb_score = -1, alpha_score = -1;
-
-	/* Try to merge RGB and Alpha instructions together. */
-	pair_instructions(s);
-
-	if (s->ReadyFullALU) {
-		sinst = s->ReadyFullALU;
-		s->ReadyFullALU = s->ReadyFullALU->NextReady;
-		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_alu_instruction(s, sinst);
-	} else {
-		if (s->ReadyRGB) {
-			rgb_score = s->ReadyRGB->Score;
-		}
-		if (s->ReadyAlpha) {
-			alpha_score = s->ReadyAlpha->Score;
-		}
-		if (rgb_score > alpha_score) {
-			sinst = s->ReadyRGB;
-			s->ReadyRGB = s->ReadyRGB->NextReady;
-		} else if (s->ReadyAlpha) {
-			sinst = s->ReadyAlpha;
-			s->ReadyAlpha = s->ReadyAlpha->NextReady;
-		} else {
-			/*XXX Something real bad has happened. */
-			assert(0);
-		}
-
-		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_alu_instruction(s, sinst);
-	}
-	/* If the instruction we just emitted uses a presubtract value, and
-	 * the presubtract sources were written by the previous intstruction,
-	 * the previous instruction needs a nop. */
-	presub_nop(before->Prev);
 }
 
 static void add_tex_reader(
@@ -1317,15 +1302,7 @@ static void schedule_block(struct schedule_state * s,
 	/* Schedule instructions back */
 	while(!s->C->Error &&
 	      (s->ReadyTEX || s->ReadyRGB || s->ReadyAlpha || s->ReadyFullALU)) {
-		if (s->C->is_r500) {
-			emit_instruction(s, end);
-		} else {
-			if (s->ReadyTEX)
-				emit_all_tex(s, end);
-
-			while(!s->C->Error && (s->ReadyFullALU || s->ReadyRGB || s->ReadyAlpha))
-				emit_one_alu(s, end);
-		}
+		emit_instruction(s, end);
 	}
 }
 
@@ -1348,7 +1325,11 @@ void rc_pair_schedule(struct radeon_compiler *cc, void *user)
 	memset(&s, 0, sizeof(s));
 	s.Opt = *opt;
 	s.C = &c->Base;
-	s.CalcScore = calc_score_readers;
+	if (s.C->is_r500) {
+		s.CalcScore = calc_score_readers;
+	} else {
+		s.CalcScore = calc_score_r300;
+	}
 	s.max_tex_group = debug_get_num_option("RADEON_TEX_GROUP", 8);
 	while(inst != &c->Base.Program.Instructions) {
 		struct rc_instruction * first;
