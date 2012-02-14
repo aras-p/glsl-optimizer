@@ -631,8 +631,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	return rtex;
 }
 
-DEBUG_GET_ONCE_BOOL_OPTION(tiling_enabled, "R600_TILING", TRUE);
-
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
