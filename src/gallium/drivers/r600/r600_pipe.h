@@ -204,6 +204,7 @@ struct r600_textures_info {
 struct r600_fence {
 	struct pipe_reference		reference;
 	unsigned			index; /* in the shared bo */
+	struct r600_resource            *sleep_bo;
 	struct list_head		head;
 };
 

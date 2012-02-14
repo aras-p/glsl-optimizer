@@ -47,6 +47,7 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
+#include "r600_hw_context_priv.h"
 
 /*
  * pipe_context
@@ -116,6 +117,14 @@ static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 
 	rscreen->fences.data[fence->index] = 0;
 	r600_context_emit_fence(rctx, rscreen->fences.bo, fence->index, 1);
+
+	/* Create a dummy BO so that fence_finish without a timeout can sleep waiting for completion */
+	fence->sleep_bo = (struct r600_resource*)
+			pipe_buffer_create(&rctx->screen->screen, PIPE_BIND_CUSTOM,
+					   PIPE_USAGE_STAGING, 1);
+	/* Add the fence as a dummy relocation. */
+	r600_context_bo_reloc(rctx, fence->sleep_bo, RADEON_USAGE_READWRITE);
+
 out:
 	pipe_mutex_unlock(rscreen->fences.mutex);
 	return fence;
@@ -584,6 +593,7 @@ static void r600_fence_reference(struct pipe_screen *pscreen,
 	if (pipe_reference(&(*oldf)->reference, &newf->reference)) {
 		struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 		pipe_mutex_lock(rscreen->fences.mutex);
+		pipe_resource_reference((struct pipe_resource**)&(*oldf)->sleep_bo, NULL);
 		LIST_ADDTAIL(&(*oldf)->head, &rscreen->fences.pool);
 		pipe_mutex_unlock(rscreen->fences.mutex);
 	}
@@ -617,6 +627,17 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 	}
 
 	while (rscreen->fences.data[rfence->index] == 0) {
+		/* Special-case infinite timeout - wait for the dummy BO to become idle */
+		if (timeout == PIPE_TIMEOUT_INFINITE) {
+			rscreen->ws->buffer_wait(rfence->sleep_bo->buf, RADEON_USAGE_READWRITE);
+			break;
+		}
+
+		/* The dummy BO will be busy until the CS including the fence has completed, or
+		 * the GPU is reset. Don't bother continuing to spin when the BO is idle. */
+		if (!rscreen->ws->buffer_is_busy(rfence->sleep_bo->buf, RADEON_USAGE_READWRITE))
+			break;
+
 		if (++spins % 256)
 			continue;
 #ifdef PIPE_OS_UNIX
@@ -626,11 +647,11 @@ static boolean r600_fence_finish(struct pipe_screen *pscreen,
 #endif
 		if (timeout != PIPE_TIMEOUT_INFINITE &&
 		    os_time_get() - start_time >= timeout) {
-			return FALSE;
+			break;
 		}
 	}
 
-	return TRUE;
+	return rscreen->fences.data[rfence->index] != 0;
 }
 
 static int r600_interpret_tiling(struct r600_screen *rscreen, uint32_t tiling_config)
