@@ -1165,35 +1165,79 @@ int radeonTransformDeriv(struct radeon_compiler* c,
 }
 
 /**
+ * IF Temp[0].x -> IF Temp[0].x
+ * ...          -> ...
+ * KILP         -> KIL -abs(Temp[0].x)
+ * ...          -> ...
+ * ENDIF        -> ENDIF
+ *
+ * === OR ===
+ *
  * IF Temp[0].x -\
  * KILP         - > KIL -abs(Temp[0].x)
  * ENDIF        -/
  *
- * This needs to be done in its own pass, because it modifies the instructions
- * before and after KILP.
+ * === OR ===
+ *
+ * IF Temp[0].x -> IF Temp[0].x
+ * ...          -> ...
+ * ELSE         -> ELSE
+ * ...	        -> ...
+ * KILP	        -> KIL -abs(Temp[0].x)
+ * ...          -> ...
+ * ENDIF        -> ENDIF
+ *
+ * === OR ===
+ *
+ * KILP         -> KIL -none.1111
+ *
+ * This needs to be done in its own pass, because it might modify the
+ * instructions before and after KILP.
  */
 void rc_transform_KILP(struct radeon_compiler * c, void *user)
 {
 	struct rc_instruction * inst;
 	for (inst = c->Program.Instructions.Next;
 			inst != &c->Program.Instructions; inst = inst->Next) {
+		struct rc_instruction * if_inst;
+		unsigned in_if = 0;
 
 		if (inst->U.I.Opcode != RC_OPCODE_KILP)
 			continue;
 
+		for (if_inst = inst->Prev; if_inst != &c->Program.Instructions;
+						if_inst = if_inst->Prev) {
+
+			if (if_inst->U.I.Opcode == RC_OPCODE_IF) {
+				in_if = 1;
+				break;
+			}
+		}
+
 		inst->U.I.Opcode = RC_OPCODE_KIL;
 
-		if (inst->Prev->U.I.Opcode != RC_OPCODE_IF
-				|| inst->Next->U.I.Opcode != RC_OPCODE_ENDIF) {
+		if (!in_if) {
 			inst->U.I.SrcReg[0] = negate(builtin_one);
 		} else {
-
+			/* This should work even if the KILP is inside the ELSE
+			 * block, because -0.0 is considered negative. */
 			inst->U.I.SrcReg[0] =
-				negate(absolute(inst->Prev->U.I.SrcReg[0]));
-			/* Remove IF */
-			rc_remove_instruction(inst->Prev);
-			/* Remove ENDIF */
-			rc_remove_instruction(inst->Next);
+				negate(absolute(if_inst->U.I.SrcReg[0]));
+
+			if (inst->Prev->U.I.Opcode != RC_OPCODE_IF
+				&& inst->Next->U.I.Opcode != RC_OPCODE_ENDIF) {
+
+				/* Optimize the special case:
+				 * IF Temp[0].x
+				 * KILP
+				 * ENDIF
+				 */
+
+				/* Remove IF */
+				rc_remove_instruction(inst->Prev);
+				/* Remove ENDIF */
+				rc_remove_instruction(inst->Next);
+			}
 		}
 	}
 }
