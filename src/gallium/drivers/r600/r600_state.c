@@ -631,25 +631,6 @@ void r600_polygon_offset_update(struct r600_context *rctx)
 	}
 }
 
-static void r600_set_blend_color(struct pipe_context *ctx,
-					const struct pipe_blend_color *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_BLEND_COLOR;
-	r600_pipe_state_add_reg(rstate, R_028414_CB_BLEND_RED, fui(state->color[0]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028418_CB_BLEND_GREEN, fui(state->color[1]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02841C_CB_BLEND_BLUE, fui(state->color[2]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028420_CB_BLEND_ALPHA, fui(state->color[3]), NULL, 0);
-	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
-	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void *r600_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
 {
