@@ -473,6 +473,10 @@ void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 uint32_t r600_translate_stencil_op(int s_op);
 uint32_t r600_translate_fill(uint32_t func);
+unsigned r600_tex_wrap(unsigned wrap);
+unsigned r600_tex_filter(unsigned filter);
+unsigned r600_tex_mipfilter(unsigned filter);
+unsigned r600_tex_compare(unsigned compare);
 
 /*
  * common helpers

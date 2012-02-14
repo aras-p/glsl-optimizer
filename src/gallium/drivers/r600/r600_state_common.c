@@ -978,3 +978,73 @@ uint32_t r600_translate_fill(uint32_t func)
 		return 0;
 	}
 }
+
+unsigned r600_tex_wrap(unsigned wrap)
+{
+	switch (wrap) {
+	default:
+	case PIPE_TEX_WRAP_REPEAT:
+		return V_03C000_SQ_TEX_WRAP;
+	case PIPE_TEX_WRAP_CLAMP:
+		return V_03C000_SQ_TEX_CLAMP_HALF_BORDER;
+	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+		return V_03C000_SQ_TEX_CLAMP_LAST_TEXEL;
+	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+		return V_03C000_SQ_TEX_CLAMP_BORDER;
+	case PIPE_TEX_WRAP_MIRROR_REPEAT:
+		return V_03C000_SQ_TEX_MIRROR;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP:
+		return V_03C000_SQ_TEX_MIRROR_ONCE_HALF_BORDER;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+		return V_03C000_SQ_TEX_MIRROR_ONCE_LAST_TEXEL;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+		return V_03C000_SQ_TEX_MIRROR_ONCE_BORDER;
+	}
+}
+
+unsigned r600_tex_filter(unsigned filter)
+{
+	switch (filter) {
+	default:
+	case PIPE_TEX_FILTER_NEAREST:
+		return V_03C000_SQ_TEX_XY_FILTER_POINT;
+	case PIPE_TEX_FILTER_LINEAR:
+		return V_03C000_SQ_TEX_XY_FILTER_BILINEAR;
+	}
+}
+
+unsigned r600_tex_mipfilter(unsigned filter)
+{
+	switch (filter) {
+	case PIPE_TEX_MIPFILTER_NEAREST:
+		return V_03C000_SQ_TEX_Z_FILTER_POINT;
+	case PIPE_TEX_MIPFILTER_LINEAR:
+		return V_03C000_SQ_TEX_Z_FILTER_LINEAR;
+	default:
+	case PIPE_TEX_MIPFILTER_NONE:
+		return V_03C000_SQ_TEX_Z_FILTER_NONE;
+	}
+}
+
+unsigned r600_tex_compare(unsigned compare)
+{
+	switch (compare) {
+	default:
+	case PIPE_FUNC_NEVER:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_NEVER;
+	case PIPE_FUNC_LESS:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_LESS;
+	case PIPE_FUNC_EQUAL:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_EQUAL;
+	case PIPE_FUNC_LEQUAL:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_LESSEQUAL;
+	case PIPE_FUNC_GREATER:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_GREATER;
+	case PIPE_FUNC_NOTEQUAL:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_NOTEQUAL;
+	case PIPE_FUNC_GEQUAL:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_GREATEREQUAL;
+	case PIPE_FUNC_ALWAYS:
+		return V_03C000_SQ_TEX_DEPTH_COMPARE_ALWAYS;
+	}
+}
