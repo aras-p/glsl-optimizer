@@ -471,6 +471,8 @@ void r600_set_so_targets(struct pipe_context *ctx,
 void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 			       const struct pipe_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
+uint32_t r600_translate_stencil_op(int s_op);
+uint32_t r600_translate_fill(uint32_t func);
 
 /*
  * common helpers

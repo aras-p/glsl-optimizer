@@ -116,48 +116,6 @@ static uint32_t r600_translate_blend_factor(int blend_fact)
 	return 0;
 }
 
-static uint32_t r600_translate_stencil_op(int s_op)
-{
-	switch (s_op) {
-	case PIPE_STENCIL_OP_KEEP:
-		return V_028800_STENCIL_KEEP;
-	case PIPE_STENCIL_OP_ZERO:
-		return V_028800_STENCIL_ZERO;
-	case PIPE_STENCIL_OP_REPLACE:
-		return V_028800_STENCIL_REPLACE;
-	case PIPE_STENCIL_OP_INCR:
-		return V_028800_STENCIL_INCR;
-	case PIPE_STENCIL_OP_DECR:
-		return V_028800_STENCIL_DECR;
-	case PIPE_STENCIL_OP_INCR_WRAP:
-		return V_028800_STENCIL_INCR_WRAP;
-	case PIPE_STENCIL_OP_DECR_WRAP:
-		return V_028800_STENCIL_DECR_WRAP;
-	case PIPE_STENCIL_OP_INVERT:
-		return V_028800_STENCIL_INVERT;
-	default:
-		R600_ERR("Unknown stencil op %d", s_op);
-		assert(0);
-		break;
-	}
-	return 0;
-}
-
-static uint32_t r600_translate_fill(uint32_t func)
-{
-	switch(func) {
-	case PIPE_POLYGON_MODE_FILL:
-		return 2;
-	case PIPE_POLYGON_MODE_LINE:
-		return 1;
-	case PIPE_POLYGON_MODE_POINT:
-		return 0;
-	default:
-		assert(0);
-		return 0;
-	}
-}
-
 /* translates straight */
 static uint32_t r600_translate_ds_func(int func)
 {
