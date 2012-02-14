@@ -605,6 +605,12 @@ fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
        !src.equals(&last_rhs_inst->dst))
       return false;
 
+   /* If last_rhs_inst wrote a different number of components than our LHS,
+    * we can't safely rewrite it.
+    */
+   if (ir->lhs->type->vector_elements != last_rhs_inst->regs_written())
+      return false;
+
    /* Success!  Rewrite the instruction. */
    last_rhs_inst->dst = dst;
 
