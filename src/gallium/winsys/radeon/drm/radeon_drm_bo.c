@@ -196,32 +196,50 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
     }
 }
 
-static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size)
+static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, uint64_t alignment)
 {
     struct radeon_bo_va_hole *hole, *n;
-    uint64_t offset = 0;
+    uint64_t offset = 0, waste = 0;
 
     pipe_mutex_lock(mgr->bo_va_mutex);
     /* first look for a hole */
     LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
-        if (hole->size == size) {
+        offset = hole->offset;
+        waste = 0;
+        if (alignment) {
+            waste = offset % alignment;
+            waste = waste ? alignment - waste : 0;
+        }
+        offset += waste;
+        if (!waste && hole->size == size) {
             offset = hole->offset;
             list_del(&hole->list);
             FREE(hole);
             pipe_mutex_unlock(mgr->bo_va_mutex);
             return offset;
         }
-        if (hole->size > size) {
-            offset = hole->offset;
-            hole->size -= size;
-            hole->offset += size;
+        if ((hole->size - waste) >= size) {
+            if (waste) {
+                n = CALLOC_STRUCT(radeon_bo_va_hole);
+                n->size = waste;
+                n->offset = hole->offset;
+                list_add(&n->list, &mgr->va_holes);
+            }
+            hole->size -= (size + waste);
+            hole->offset += size + waste;
             pipe_mutex_unlock(mgr->bo_va_mutex);
             return offset;
         }
     }
 
     offset = mgr->va_offset;
-    mgr->va_offset += size;
+    waste = 0;
+    if (alignment) {
+        waste = offset % alignment;
+        waste = waste ? alignment - waste : 0;
+    }
+    offset += waste;
+    mgr->va_offset += size + waste;
     pipe_mutex_unlock(mgr->bo_va_mutex);
     return offset;
 }
@@ -517,7 +535,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
         struct drm_radeon_gem_va va;
 
         bo->va_size = align(size,  4096);
-        bo->va = radeon_bomgr_find_va(mgr, bo->va_size);
+        bo->va = radeon_bomgr_find_va(mgr, bo->va_size, desc->alignment);
 
         va.handle = bo->handle;
         va.vm_id = 0;
@@ -818,7 +836,7 @@ done:
         struct drm_radeon_gem_va va;
 
         bo->va_size = ((bo->base.size + 4095) & ~4095);
-        bo->va = radeon_bomgr_find_va(mgr, bo->va_size);
+        bo->va = radeon_bomgr_find_va(mgr, bo->va_size, 1 << 20);
 
         va.handle = bo->handle;
         va.operation = RADEON_VA_MAP;
