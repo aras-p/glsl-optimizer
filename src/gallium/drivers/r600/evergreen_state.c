@@ -173,12 +173,6 @@ static uint32_t r600_translate_blend_factor(int blend_fact)
 	return 0;
 }
 
-/* translates straight */
-static uint32_t r600_translate_ds_func(int func)
-{
-	return func;
-}
-
 static unsigned r600_tex_wrap(unsigned wrap)
 {
 	switch (wrap) {
@@ -834,14 +828,14 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	/* stencil */
 	if (state->stencil[0].enabled) {
 		db_depth_control |= S_028800_STENCIL_ENABLE(1);
-		db_depth_control |= S_028800_STENCILFUNC(r600_translate_ds_func(state->stencil[0].func));
+		db_depth_control |= S_028800_STENCILFUNC(state->stencil[0].func); /* translates straight */
 		db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
 		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
 		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
 
 		if (state->stencil[1].enabled) {
 			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
-			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
+			db_depth_control |= S_028800_STENCILFUNC_BF(state->stencil[1].func); /* translates straight */
 			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
 			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
 			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
