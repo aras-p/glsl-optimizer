@@ -673,7 +673,9 @@ decompress_with_blit(struct gl_context * ctx,
    pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
 
    /* copy/pack data into user buffer */
-   if (st_equal_formats(stImage->pt->format, format, type)) {
+   if (_mesa_format_matches_format_and_type(stImage->base.TexFormat,
+                                            format, type,
+                                            ctx->Pack.SwapBytes)) {
       /* memcpy */
       const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
       ubyte *map = pipe_transfer_map(pipe, tex_xfer);
