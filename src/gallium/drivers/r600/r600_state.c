@@ -660,10 +660,6 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 	if (!util_format_is_supported(format, usage))
 		return FALSE;
 
-	if (util_format_is_pure_integer(format) &&
-	    screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL) < 130)
-		return FALSE;
-
 	/* Multisample */
 	if (sample_count > 1)
 		return FALSE;
