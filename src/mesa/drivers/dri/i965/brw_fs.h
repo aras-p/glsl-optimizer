@@ -286,6 +286,18 @@ public:
 	      offset == inst->offset);
    }
 
+   int regs_written()
+   {
+      if (is_tex())
+	 return 4;
+
+      /* The SINCOS and INT_DIV_QUOTIENT_AND_REMAINDER math functions return 2,
+       * but we don't currently use them...nor do we have an opcode for them.
+       */
+
+      return 1;
+   }
+
    bool is_tex()
    {
       return (opcode == SHADER_OPCODE_TEX ||
