@@ -939,21 +939,8 @@ _mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
    }
 }
 
-
-/**
- * Record an OpenGL state error.  These usually occur when the user
- * passes invalid parameters to a GL function.
- *
- * If debugging is enabled (either at compile-time via the DEBUG macro, or
- * run-time via the MESA_DEBUG environment variable), report the error with
- * _mesa_debug().
- * 
- * \param ctx the GL context.
- * \param error the error value.
- * \param fmtString printf() style format string, followed by optional args
- */
-void
-_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
+static GLboolean
+should_output(struct gl_context *ctx, GLenum error, const char *fmtString)
 {
    static GLint debug = -1;
 
@@ -975,29 +962,77 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
 #endif
    }
 
-   if (debug) {      
-      if (ctx->ErrorValue == error &&
-          ctx->ErrorDebugFmtString == fmtString) {
-         ctx->ErrorDebugCount++;
-      }
-      else {
-         char s[MAXSTRING], s2[MAXSTRING];
-         va_list args;
-
+   if (debug) {
+      if (ctx->ErrorValue != error ||
+          ctx->ErrorDebugFmtString != fmtString) {
          flush_delayed_errors( ctx );
-         
-         va_start(args, fmtString);
-         _mesa_vsnprintf(s, MAXSTRING, fmtString, args);
-         va_end(args);
-
-         _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
-         output_if_debug("Mesa: User error", s2, GL_TRUE);
-         
          ctx->ErrorDebugFmtString = fmtString;
          ctx->ErrorDebugCount = 0;
+         return GL_TRUE;
+      }
+      ctx->ErrorDebugCount++;
+   }
+   return GL_FALSE;
+}
+
+
+/**
+ * Record an OpenGL state error.  These usually occur when the user
+ * passes invalid parameters to a GL function.
+ *
+ * If debugging is enabled (either at compile-time via the DEBUG macro, or
+ * run-time via the MESA_DEBUG environment variable), report the error with
+ * _mesa_debug().
+ * 
+ * \param ctx the GL context.
+ * \param error the error value.
+ * \param fmtString printf() style format string, followed by optional args
+ */
+void
+_mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
+{
+   GLboolean do_output, do_log;
+
+   do_output = should_output(ctx, error, fmtString);
+   do_log = should_log(ctx, GL_DEBUG_SOURCE_API_ARB, GL_DEBUG_TYPE_ERROR_ARB,
+                       API_ERROR_UNKNOWN, GL_DEBUG_SEVERITY_HIGH_ARB);
+
+   if (do_output || do_log) {
+      char s[MAXSTRING], s2[MAXSTRING];
+      int len;
+      va_list args;
+
+      va_start(args, fmtString);
+      len = _mesa_vsnprintf(s, MAXSTRING, fmtString, args);
+      va_end(args);
+
+      if (len >= MAXSTRING) {
+         /* Too long error message. Whoever calls _mesa_error should use
+          * shorter strings. */
+         ASSERT(0);
+         return;
+      }
+
+      len = _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
+      if (len >= MAXSTRING) {
+         /* Same as above. */
+         ASSERT(0);
+         return;
+      }
+
+      /* Print the error to stderr if needed. */
+      if (do_output) {
+         output_if_debug("Mesa: User error", s2, GL_TRUE);
+      }
+
+      /* Log the error via ARB_debug_output if needed.*/
+      if (do_log) {
+         _mesa_log_msg(ctx, GL_DEBUG_SOURCE_API_ARB, GL_DEBUG_TYPE_ERROR_ARB,
+                       API_ERROR_UNKNOWN, GL_DEBUG_SEVERITY_HIGH_ARB, len, s2);
       }
    }
 
+   /* Set the GL context error state for glGetError. */
    _mesa_record_error(ctx, error);
 }
 
