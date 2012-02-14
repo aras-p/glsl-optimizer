@@ -1639,24 +1639,6 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
 					    format, type, want_renderable);
 }
 
-/**
- * Test if a gallium format is equivalent to a GL format/type.
- */
-GLboolean
-st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type)
-{
-   switch (pFormat) {
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
-      return format == GL_RGBA && type == GL_UNSIGNED_BYTE;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return format == GL_BGRA && type == GL_UNSIGNED_BYTE;
-   case PIPE_FORMAT_B5G6R5_UNORM:
-      return format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5;
-   /* XXX more combos... */
-   default:
-      return GL_FALSE;
-   }
-}
 
 GLboolean
 st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2)

@@ -67,9 +67,6 @@ st_ChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
                        GLenum format, GLenum type);
 
 
-extern GLboolean
-st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
-
 /* can we use a sampler view to translate these formats
    only used to make TFP so far */
 extern GLboolean
