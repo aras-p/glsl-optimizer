@@ -1063,10 +1063,6 @@ brw_update_sol_surface(struct brw_context *brw,
                        uint32_t *out_offset, unsigned num_vector_components,
                        unsigned stride_dwords, unsigned offset_dwords);
 
-/* gen6_clip_state.c */
-bool
-brw_fprog_uses_noperspective(const struct gl_fragment_program *fprog);
-
 /* gen6_sol.c */
 void
 brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
