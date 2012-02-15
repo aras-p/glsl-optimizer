@@ -1582,7 +1582,7 @@ fi
 
 if test "x$enable_xvmc" = xyes; then
     PKG_CHECK_MODULES([XVMC], [xvmc >= 1.0.6])
-    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg/xvmc"
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xvmc"
     HAVE_ST_XVMC="yes"
 fi
 

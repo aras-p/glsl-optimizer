@@ -1,4 +1,4 @@
-TOP = ../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = xvmctracker
@@ -13,4 +13,4 @@ C_SOURCES = block.c \
             subpicture.c \
             attributes.c
 
-include ../../../Makefile.template
+include ../../Makefile.template

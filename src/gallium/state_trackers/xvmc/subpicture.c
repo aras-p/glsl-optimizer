@@ -323,7 +323,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    context_priv = subpicture_priv->context->privData;
    pipe = context_priv->pipe;
    dst = subpicture_priv->sampler;
-   
+
    /* TODO: Assert clear rect is within bounds? Or clip? */
    transfer = pipe->get_transfer(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
    if (!transfer)

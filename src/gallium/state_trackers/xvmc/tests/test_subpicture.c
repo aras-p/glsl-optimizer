@@ -77,12 +77,12 @@ int main(int argc, char **argv)
 		width,
 		height,
 		XVMC_CHROMA_FORMAT_420,
-    		mc_types,
-    		2,
-    		&port_num,
-    		&surface_type_id,
-    		&is_overlay,
-    		&intra_unsigned
+		mc_types,
+		2,
+		&port_num,
+		&surface_type_id,
+		&is_overlay,
+		&intra_unsigned
 	))
 	{
 		XCloseDisplay(display);
@@ -96,10 +96,10 @@ int main(int argc, char **argv)
 	}
 
 	assert(XvMCCreateContext(display, port_num, surface_type_id, width, height, XVMC_DIRECT, &context) == Success);
-	
+
 	subpics = XvMCListSubpictureTypes(display, port_num, surface_type_id, &num_subpics);
 	assert((subpics && num_subpics) > 0 || (!subpics && num_subpics == 0));
-	
+
 	for (i = 0; i < num_subpics; ++i)
 	{
 		printf("Subpicture %d:\n", i);
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 		printf("\tbpp: %u\n", subpics[i].bits_per_pixel);
 		printf("\tformat: %s\n", subpics[i].format == XvPacked ? "XvPacked" : (subpics[i].format == XvPlanar ? "XvPlanar" : "Unknown"));
 		printf("\tnum_planes: %u\n", subpics[i].num_planes);
-		
+
 		if (subpics[i].type == XvRGB)
 		{
 			printf("\tdepth: %u\n", subpics[i].depth);
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 		PrintComponentOrder(subpics[i].component_order);
 		printf("\tscanline_order: %s\n", subpics[i].scanline_order == XvTopToBottom ? "XvTopToBottom" : (subpics[i].scanline_order == XvBottomToTop ? "XvBottomToTop" : "Unknown"));
 	}
-	
+
 	if (num_subpics == 0)
 	{
 		printf("Subpictures not supported, nothing to test.\n");

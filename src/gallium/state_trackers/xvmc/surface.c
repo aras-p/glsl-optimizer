@@ -437,7 +437,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
    vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL, &context_priv->dirty_area);
-                        
+
    pipe->flush(pipe, &surface_priv->fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
@@ -508,7 +508,7 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
 
    surface_priv = surface->privData;
    context_priv = surface_priv->context->privData;
-   
+
    if (surface_priv->picture_structure) {
       struct pipe_mpeg12_picture_desc desc;
       GetPictureDescription(surface_priv, &desc);

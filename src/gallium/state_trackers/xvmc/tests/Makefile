@@ -1,4 +1,4 @@
-TOP = ../../../../../..
+TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBS = -lXvMCW -lXvMC -lXv -lX11
