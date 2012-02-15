@@ -62,7 +62,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
       return VDP_STATUS_RESOURCES;
 
    vmixer->device = dev;
-   vl_compositor_init(&vmixer->compositor, dev->context->pipe);
+   vl_compositor_init(&vmixer->compositor, dev->context);
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, vmixer->csc);
    if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
@@ -300,8 +300,7 @@ vlVdpVideoMixerUpdateNoiseReductionFilter(vlVdpVideoMixer *vmixer)
    /* and create a new filter as needed */
    if (vmixer->noise_reduction. enabled && vmixer->noise_reduction.level > 0) {
       vmixer->noise_reduction.filter = MALLOC(sizeof(struct vl_median_filter));
-      vl_median_filter_init(vmixer->noise_reduction.filter,
-                            vmixer->device->context->pipe,
+      vl_median_filter_init(vmixer->noise_reduction.filter, vmixer->device->context,
                             vmixer->video_width, vmixer->video_height,
                             vmixer->noise_reduction.level + 1,
                             VL_MEDIAN_FILTER_CROSS);
@@ -347,8 +346,7 @@ vlVdpVideoMixerUpdateSharpnessFilter(vlVdpVideoMixer *vmixer)
       }
 
       vmixer->sharpness.filter = MALLOC(sizeof(struct vl_matrix_filter));
-      vl_matrix_filter_init(vmixer->sharpness.filter,
-                            vmixer->device->context->pipe,
+      vl_matrix_filter_init(vmixer->sharpness.filter, vmixer->device->context,
                             vmixer->video_width, vmixer->video_height,
                             3, 3, matrix);
    }

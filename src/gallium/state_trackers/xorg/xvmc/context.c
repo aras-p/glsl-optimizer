@@ -190,7 +190,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    unsigned short subpic_max_h = 0;
    Status ret;
    struct vl_screen *vscreen;
-   struct vl_context *vctx;
+   struct pipe_context *pipe;
    XvMCContextPrivate *context_priv;
    float csc[16];
 
@@ -236,18 +236,17 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   vctx = vl_video_create(vscreen);
-   if (!vctx) {
+   pipe = vscreen->pscreen->context_create(vscreen->pscreen, vscreen);
+   if (!pipe) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL context.\n");
       vl_screen_destroy(vscreen);
       FREE(context_priv);
       return BadAlloc;
    }
 
-   context_priv->decoder = vctx->pipe->create_video_decoder
+   context_priv->decoder = pipe->create_video_decoder
    (
-      vctx->pipe,
-      ProfileToPipe(mc_type),
+      pipe, ProfileToPipe(mc_type),
       (mc_type & XVMC_IDCT) ? PIPE_VIDEO_ENTRYPOINT_IDCT : PIPE_VIDEO_ENTRYPOINT_MC,
       FormatToPipe(chroma_format),
       width, height, 2,
@@ -256,16 +255,16 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 
    if (!context_priv->decoder) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL decoder.\n");
-      vl_video_destroy(vctx);
+      pipe->destroy(pipe);
       vl_screen_destroy(vscreen);
       FREE(context_priv);
       return BadAlloc;
    }
 
-   if (!vl_compositor_init(&context_priv->compositor, vctx->pipe)) {
+   if (!vl_compositor_init(&context_priv->compositor, pipe)) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL compositor.\n");
       context_priv->decoder->destroy(context_priv->decoder);
-      vl_video_destroy(vctx);
+      pipe->destroy(pipe);
       vl_screen_destroy(vscreen);
       FREE(context_priv);
       return BadAlloc;
@@ -283,7 +282,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    );
    vl_compositor_set_csc_matrix(&context_priv->compositor, csc);
 
-   context_priv->vctx = vctx;
+   context_priv->vscreen = vscreen;
+   context_priv->pipe = pipe;
    context_priv->subpicture_max_width = subpic_max_w;
    context_priv->subpicture_max_height = subpic_max_h;
 
@@ -305,8 +305,6 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 PUBLIC
 Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 {
-   struct vl_screen *vscreen;
-   struct vl_context *vctx;
    XvMCContextPrivate *context_priv;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying context %p.\n", context);
@@ -317,13 +315,11 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
       return XvMCBadContext;
 
    context_priv = context->privData;
-   vctx = context_priv->vctx;
-   vscreen = vctx->vscreen;
    pipe_surface_reference(&context_priv->drawable_surface, NULL);
    context_priv->decoder->destroy(context_priv->decoder);
    vl_compositor_cleanup(&context_priv->compositor);
-   vl_video_destroy(vctx);
-   vl_screen_destroy(vscreen);
+   context_priv->pipe->destroy(context_priv->pipe);
+   vl_screen_destroy(context_priv->vscreen);
    FREE(context_priv);
    context->privData = NULL;
 

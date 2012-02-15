@@ -65,7 +65,7 @@ vlVdpDecoderCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe = dev->context->pipe;
+   pipe = dev->context;
    screen = dev->vscreen->pscreen;
    supported = screen->get_video_param
    (

@@ -58,7 +58,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe = dev->context->pipe;
+   pipe = dev->context;
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 
@@ -217,7 +217,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
 
-   context = vlsurface->device->context->pipe;
+   context = vlsurface->device->context;
    compositor = &vlsurface->device->compositor;
 
    index_format = FormatIndexedToPipe(source_indexed_format);
@@ -459,7 +459,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    if (dst_vlsurface->device != src_vlsurface->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 
-   context = dst_vlsurface->device->context->pipe;
+   context = dst_vlsurface->device->context;
    compositor = &dst_vlsurface->device->compositor;
 
    blend = BlenderToPipe(context, blend_state);

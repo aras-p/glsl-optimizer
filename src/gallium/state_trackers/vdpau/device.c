@@ -41,8 +41,9 @@ PUBLIC VdpStatus
 vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
                           VdpGetProcAddress **get_proc_address)
 {
-   VdpStatus ret;
+   struct pipe_screen *pscreen;
    vlVdpDevice *dev = NULL;
+   VdpStatus ret;
 
    if (!(display && device && get_proc_address))
       return VDP_STATUS_INVALID_POINTER;
@@ -64,7 +65,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_vscreen;
    }
 
-   dev->context = vl_video_create(dev->vscreen);
+   pscreen = dev->vscreen->pscreen;
+   dev->context = pscreen->context_create(pscreen, dev->vscreen);
    if (!dev->context) {
       ret = VDP_STATUS_RESOURCES;
       goto no_context;
@@ -76,7 +78,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_handle;
    }
 
-   vl_compositor_init(&dev->compositor, dev->context->pipe);
+   vl_compositor_init(&dev->compositor, dev->context);
 
    *get_proc_address = &vlVdpGetProcAddress;
 
@@ -160,7 +162,7 @@ vlVdpDeviceDestroy(VdpDevice device)
       return VDP_STATUS_INVALID_HANDLE;
       
    vl_compositor_cleanup(&dev->compositor);
-   vl_video_destroy(dev->context);
+   dev->context->destroy(dev->context);
    vl_screen_destroy(dev->vscreen);
 
    FREE(dev);

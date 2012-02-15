@@ -54,69 +54,13 @@ struct vl_dri_screen
    Drawable last_seen_drawable;
 };
 
-static struct pipe_surface*
-vl_dri2_get_front(struct vl_context *vctx, Drawable drawable)
-{
-   int w, h;
-   unsigned int attachments[1] = {DRI2BufferFrontLeft};
-   int count;
-   DRI2Buffer *dri2_front;
-   struct pipe_resource *front_tex;
-   struct pipe_surface *front_surf = NULL;
-
-   assert(vctx);
-
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vctx->vscreen;
-   assert(vl_dri_scrn);
-
-   dri2_front = DRI2GetBuffers(vl_dri_scrn->display, drawable, &w, &h,
-                               attachments, 1, &count);
-
-   assert(count == 1);
-
-   if (dri2_front) {
-      struct winsys_handle dri2_front_handle =
-      {
-         .type = DRM_API_HANDLE_TYPE_SHARED,
-         .handle = dri2_front->name,
-         .stride = dri2_front->pitch
-      };
-      struct pipe_resource template;
-      struct pipe_surface surf_template;
-
-      memset(&template, 0, sizeof(struct pipe_resource));
-      template.target = PIPE_TEXTURE_2D;
-      template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
-      template.last_level = 0;
-      template.width0 = w;
-      template.height0 = h;
-      template.depth0 = 1;
-      template.usage = PIPE_USAGE_STATIC;
-      template.bind = PIPE_BIND_RENDER_TARGET;
-      template.flags = 0;
-
-      front_tex = vl_dri_scrn->base.pscreen->resource_from_handle(vl_dri_scrn->base.pscreen, &template, &dri2_front_handle);
-      if (front_tex) {
-         memset(&surf_template, 0, sizeof(surf_template));
-         surf_template.format = front_tex->format;
-         surf_template.usage = PIPE_BIND_RENDER_TARGET;
-         front_surf = vctx->pipe->create_surface(vctx->pipe, front_tex, &surf_template);
-      }
-      pipe_resource_reference(&front_tex, NULL);
-      Xfree(dri2_front);
-   }
-
-   return front_surf;
-}
-
 static void
 vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           struct pipe_resource *resource,
                           unsigned level, unsigned layer,
                           void *context_private)
 {
-   struct vl_context *vl_dri_ctx = (struct vl_context*)context_private;
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->vscreen;
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)context_private;
    XserverRegion region;
 
    assert(screen);
@@ -129,12 +73,16 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
    XFixesDestroyRegion(vl_dri_scrn->display, region);
 }
 
-struct pipe_surface*
-vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
+struct pipe_resource*
+vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 {
-   assert(vctx);
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
+   unsigned int attachments[1] = {DRI2BufferFrontLeft};
+   struct winsys_handle dri2_front_handle;
+   struct pipe_resource template, *tex;
+   DRI2Buffer *dri2_front;
+   int w, h, count;
 
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vctx->vscreen;
    assert(vl_dri_scrn);
 
    if (vl_dri_scrn->last_seen_drawable != drawable) {
@@ -148,13 +96,39 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
       vl_dri_scrn->last_seen_drawable = drawable;
    }
 
-   return vl_dri2_get_front(vctx, drawable);
+   dri2_front = DRI2GetBuffers(vl_dri_scrn->display, drawable, &w, &h, attachments, 1, &count);
+
+   assert(count == 1);
+
+   if (!dri2_front)
+      return NULL;
+
+   memset(&dri2_front_handle, 0, sizeof(dri2_front_handle));
+   dri2_front_handle.type = DRM_API_HANDLE_TYPE_SHARED;
+   dri2_front_handle.handle = dri2_front->name;
+   dri2_front_handle.stride = dri2_front->pitch;
+
+   memset(&template, 0, sizeof(template));
+   template.target = PIPE_TEXTURE_2D;
+   template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
+   template.last_level = 0;
+   template.width0 = w;
+   template.height0 = h;
+   template.depth0 = 1;
+   template.usage = PIPE_USAGE_STATIC;
+   template.bind = PIPE_BIND_RENDER_TARGET;
+   template.flags = 0;
+
+   tex = vl_dri_scrn->base.pscreen->resource_from_handle(vl_dri_scrn->base.pscreen, &template, &dri2_front_handle);
+   Xfree(dri2_front);
+
+   return tex;
 }
 
 void*
-vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *displaytarget)
+vl_screen_get_private(struct vl_screen *vscreen)
 {
-   return vctx;
+   return vscreen;
 }
 
 static unsigned drawable_hash(void *key)
@@ -236,39 +210,4 @@ void vl_screen_destroy(struct vl_screen *vscreen)
    util_hash_table_destroy(vl_dri_scrn->drawable_table);
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
    FREE(vl_dri_scrn);
-}
-
-struct vl_context*
-vl_video_create(struct vl_screen *vscreen)
-{
-   struct vl_context *vl_dri_ctx;
-
-   vl_dri_ctx = CALLOC_STRUCT(vl_context);
-   if (!vl_dri_ctx)
-      goto no_struct;
-
-   vl_dri_ctx->vscreen = vscreen;
-   vl_dri_ctx->pipe = vscreen->pscreen->context_create(vscreen->pscreen, vl_dri_ctx);
-   if (!vl_dri_ctx->pipe) {
-      debug_printf("[G3DVL] No video support found on %s/%s.\n",
-                   vscreen->pscreen->get_vendor(vscreen->pscreen),
-                   vscreen->pscreen->get_name(vscreen->pscreen));
-      goto no_pipe;
-   }
-
-   return vl_dri_ctx;
-
-no_pipe:
-   FREE(vl_dri_ctx);
-
-no_struct:
-   return NULL;
-}
-
-void vl_video_destroy(struct vl_context *vctx)
-{
-   assert(vctx);
-
-   vctx->pipe->destroy(vctx->pipe);
-   FREE(vctx);
 }

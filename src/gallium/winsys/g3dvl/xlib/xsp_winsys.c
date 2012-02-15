@@ -31,8 +31,6 @@
 #include "util/u_format.h"
 #include "util/u_inlines.h"
 
-#include <X11/Xlibint.h>
-
 #include "state_tracker/xlib_sw_winsys.h"
 #include "softpipe/sp_public.h"
 
@@ -45,21 +43,19 @@ struct vl_xsp_screen
    int screen;
    Visual visual;
    struct xlib_drawable xdraw;
-   struct pipe_surface *drawable_surface;
+   struct pipe_resource *tex;
 };
 
-struct pipe_surface*
-vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
+struct pipe_resource*
+vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 {
-   struct vl_screen *vscreen = vctx->vscreen;
    struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
    Window root;
    int x, y;
    unsigned int width, height;
    unsigned int border_width;
    unsigned int depth;
-   struct pipe_resource templat, *drawable_tex;
-   struct pipe_surface surf_template, *drawable_surface = NULL;
+   struct pipe_resource templat;
 
    assert(vscreen);
    assert(drawable != None);
@@ -69,14 +65,11 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
 
    xsp_screen->xdraw.drawable = drawable;
 
-   if (xsp_screen->drawable_surface) {
-      if (xsp_screen->drawable_surface->width == width &&
-          xsp_screen->drawable_surface->height == height) {
-         pipe_surface_reference(&drawable_surface, xsp_screen->drawable_surface);
-         return drawable_surface;
-      }
+   if (xsp_screen->tex) {
+      if (xsp_screen->tex->width0 == width && xsp_screen->tex->height0 == height)
+         return xsp_screen->tex;
       else
-         pipe_surface_reference(&xsp_screen->drawable_surface, NULL);
+         pipe_resource_reference(&xsp_screen->tex, NULL);
    }
 
    memset(&templat, 0, sizeof(struct pipe_resource));
@@ -91,37 +84,17 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
    templat.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET;
    templat.flags = 0;
 
-   drawable_tex = vscreen->pscreen->resource_create(vscreen->pscreen, &templat);
-   if (!drawable_tex)
-      return NULL;
-
-   memset(&surf_template, 0, sizeof(surf_template));
-   surf_template.format = templat.format;
-   surf_template.usage = PIPE_BIND_RENDER_TARGET;
-   xsp_screen->drawable_surface = vctx->pipe->create_surface(vctx->pipe, drawable_tex,
-                                                             &surf_template);
-   pipe_resource_reference(&drawable_tex, NULL);
-
-   if (!xsp_screen->drawable_surface)
-      return NULL;
-
-   pipe_surface_reference(&drawable_surface, xsp_screen->drawable_surface);
-
    xsp_screen->xdraw.depth = 24/*util_format_get_blocksizebits(templat.format) /
                              util_format_get_blockwidth(templat.format)*/;
 
-   return drawable_surface;
+   xsp_screen->tex = vscreen->pscreen->resource_create(vscreen->pscreen, &templat);
+   return xsp_screen->tex;
 }
 
 void*
-vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface)
+vl_screen_get_private(struct vl_screen *vscreen)
 {
-   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vctx->vscreen;
-
-   assert(vctx);
-   assert(drawable_surface);
-   assert(xsp_screen->drawable_surface == drawable_surface);
-
+   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
    return &xsp_screen->xdraw;
 }
 
@@ -163,39 +136,7 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    assert(vscreen);
 
-   pipe_surface_reference(&xsp_screen->drawable_surface, NULL);
+   pipe_resource_reference(&xsp_screen->tex, NULL);
    vscreen->pscreen->destroy(vscreen->pscreen);
    FREE(vscreen);
-}
-
-struct vl_context*
-vl_video_create(struct vl_screen *vscreen)
-{
-   struct pipe_context *pipe;
-   struct vl_context *vctx;
-
-   assert(vscreen);
-
-   pipe = vscreen->pscreen->context_create(vscreen->pscreen, NULL);
-   if (!pipe)
-      return NULL;
-
-   vctx = CALLOC_STRUCT(vl_context);
-   if (!vctx) {
-      pipe->destroy(pipe);
-      return NULL;
-   }
-
-   vctx->pipe = pipe;
-   vctx->vscreen = vscreen;
-
-   return vctx;
-}
-
-void vl_video_destroy(struct vl_context *vctx)
-{
-   assert(vctx);
-
-   vctx->pipe->destroy(vctx->pipe);
-   FREE(vctx);
 }

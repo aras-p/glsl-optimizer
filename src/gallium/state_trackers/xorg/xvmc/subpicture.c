@@ -210,7 +210,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       return XvMCBadContext;
 
    context_priv = context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
 
    if (!subpicture)
       return XvMCBadSubpicture;
@@ -321,7 +321,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
    dst = subpicture_priv->sampler;
    
    /* TODO: Assert clear rect is within bounds? Or clip? */
@@ -371,7 +371,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
 
    /* clipping should be done by upload_sampler and regardles what the documentation
    says image->pitches[0] doesn't seems to be in bytes, so don't use it */
@@ -421,7 +421,7 @@ Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsign
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
 
    dst_box.width = subpicture->num_palette_entries;
 

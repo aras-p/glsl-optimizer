@@ -168,7 +168,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return XvMCBadSurface;
 
    context_priv = context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
 
    surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
    if (!surface_priv)
@@ -373,17 +373,25 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    assert(srcy + srch - 1 < surface->height);
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
    compositor = &context_priv->compositor;
 
    if (!context_priv->drawable_surface ||
        context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
        context_priv->dst_rect.w != dst_rect.w || context_priv->dst_rect.h != dst_rect.h) {
 
+      struct pipe_surface surf_templ;
+      struct pipe_resource *tex = vl_screen_texture_from_drawable(
+         context_priv->vscreen, drawable);
+
       pipe_surface_reference(&context_priv->drawable_surface, NULL);
-      context_priv->drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
-      context_priv->dst_rect = dst_rect;
+
+      memset(&surf_templ, 0, sizeof(surf_templ));
+      surf_templ.format = tex->format;
+      surf_templ.usage = PIPE_BIND_RENDER_TARGET;
+      context_priv->drawable_surface = pipe->create_surface(pipe, tex, &surf_templ);
       vl_compositor_reset_dirty_area(&context_priv->dirty_area);
+      context_priv->dst_rect = dst_rect;
    }
 
    if (!context_priv->drawable_surface)
@@ -436,10 +444,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    pipe->screen->flush_frontbuffer
    (
-      pipe->screen,
-      context_priv->drawable_surface->texture,
-      0, 0,
-      vl_contextprivate_get(context_priv->vctx, context_priv->drawable_surface)
+      pipe->screen, context_priv->drawable_surface->texture, 0, 0,
+      vl_screen_get_private(context_priv->vscreen)
    );
 
    if(dump_window == -1) {
@@ -476,7 +482,7 @@ Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 
    surface_priv = surface->privData;
    context_priv = surface_priv->context->privData;
-   pipe = context_priv->vctx->pipe;
+   pipe = context_priv->pipe;
 
    *status = 0;
 

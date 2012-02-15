@@ -40,26 +40,15 @@ struct vl_screen
    struct pipe_screen *pscreen;
 };
 
-struct vl_context
-{
-   struct vl_screen *vscreen;
-   struct pipe_context *pipe;
-};
-
 struct vl_screen*
 vl_screen_create(Display *display, int screen);
 
 void vl_screen_destroy(struct vl_screen *vscreen);
 
-struct vl_context*
-vl_video_create(struct vl_screen *vscreen);
-
-void vl_video_destroy(struct vl_context *vctx);
-
-struct pipe_surface*
-vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable);
+struct pipe_resource*
+vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable);
 
 void*
-vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface);
+vl_screen_get_private(struct vl_screen *vscreen);
 
 #endif

@@ -286,7 +286,7 @@ RectToPipe(const VdpRect *src, struct pipe_video_rect *dst)
 typedef struct
 {
    struct vl_screen *vscreen;
-   struct vl_context *context;
+   struct pipe_context *context;
    struct vl_compositor compositor;
 } vlVdpDevice;
 

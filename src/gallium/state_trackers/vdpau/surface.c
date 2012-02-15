@@ -71,7 +71,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    }
 
    p_surf->device = dev;
-   pipe = dev->context->pipe;
+   pipe = dev->context;
 
    memset(&p_surf->templat, 0, sizeof(p_surf->templat));
    p_surf->templat.buffer_format = pipe->screen->get_video_param
@@ -204,7 +204,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   pipe = p_surf->device->context->pipe;
+   pipe = p_surf->device->context;
    if (!pipe)
       return VDP_STATUS_INVALID_HANDLE;
 

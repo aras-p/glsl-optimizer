@@ -68,7 +68,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    pq->device = dev;
    pq->drawable = pqt->drawable;
 
-   if (!vl_compositor_init(&pq->compositor, dev->context->pipe)) {
+   if (!vl_compositor_init(&pq->compositor, dev->context)) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
    }
@@ -202,16 +202,24 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    vlVdpOutputSurface *surf;
 
    struct pipe_context *pipe;
-   struct pipe_surface *drawable_surface;
+   struct pipe_resource *tex;
+   struct pipe_surface surf_templ, *surf_draw;
    struct pipe_video_rect src_rect, dst_clip;
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   drawable_surface = vl_drawable_surface_get(pq->device->context, pq->drawable);
-   if (!drawable_surface)
+   pipe = pq->device->context;
+
+   tex = vl_screen_texture_from_drawable(pq->device->vscreen, pq->drawable);
+   if (!tex)
       return VDP_STATUS_INVALID_HANDLE;
+
+   memset(&surf_templ, 0, sizeof(surf_templ));
+   surf_templ.format = tex->format;
+   surf_templ.usage = PIPE_BIND_RENDER_TARGET;
+   surf_draw = pipe->create_surface(pipe, tex, &surf_templ);
 
    surf = vlGetDataHTAB(surface);
    if (!surf)
@@ -221,26 +229,22 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    src_rect.x = 0;
    src_rect.y = 0;
-   src_rect.w = drawable_surface->width;
-   src_rect.h = drawable_surface->height;
+   src_rect.w = surf_draw->width;
+   src_rect.h = surf_draw->height;
 
    dst_clip.x = 0;
    dst_clip.y = 0;
-   dst_clip.w = clip_width ? clip_width : drawable_surface->width;
-   dst_clip.h = clip_height ? clip_height : drawable_surface->height;
+   dst_clip.w = clip_width ? clip_width : surf_draw->width;
+   dst_clip.h = clip_height ? clip_height : surf_draw->height;
 
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, &src_rect, NULL);
-   vl_compositor_render(&pq->compositor, drawable_surface, NULL, &dst_clip, &pq->dirty_area);
-
-   pipe = pq->device->context->pipe;
+   vl_compositor_render(&pq->compositor, surf_draw, NULL, &dst_clip, &pq->dirty_area);
 
    pipe->screen->flush_frontbuffer
    (
-      pipe->screen,
-      drawable_surface->texture,
-      0, 0,
-      vl_contextprivate_get(pq->device->context, drawable_surface)
+      pipe->screen, tex, 0, 0,
+      vl_screen_get_private(pq->device->vscreen)
    );
 
    pipe->screen->fence_reference(pipe->screen, &surf->fence, NULL);
@@ -259,7 +263,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
          VDPAU_MSG(VDPAU_ERR, "[VDPAU] Dumping surface %d failed.\n", surface);
    }
 
-   pipe_surface_reference(&drawable_surface, NULL);
+   pipe_resource_reference(&tex, NULL);
+   pipe_surface_reference(&surf_draw, NULL);
 
    return VDP_STATUS_OK;
 }
@@ -288,7 +293,7 @@ vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_qu
       return VDP_STATUS_INVALID_HANDLE;
 
    if (surf->fence) {
-      screen = pq->device->context->pipe->screen;
+      screen = pq->device->vscreen->pscreen;
       screen->fence_finish(screen, surf->fence, 0);
    }
 
@@ -327,7 +332,7 @@ vlVdpPresentationQueueQuerySurfaceStatus(VdpPresentationQueue presentation_queue
    if (!surf->fence) {
       *status = VDP_PRESENTATION_QUEUE_STATUS_IDLE;
    } else {
-      screen = pq->device->context->pipe->screen;
+      screen = pq->device->vscreen->pscreen;
       if (screen->fence_signalled(screen, surf->fence)) {
          screen->fence_reference(screen, &surf->fence, NULL);
          *status = VDP_PRESENTATION_QUEUE_STATUS_VISIBLE;
