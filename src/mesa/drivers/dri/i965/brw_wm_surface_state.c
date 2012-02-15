@@ -1097,6 +1097,10 @@ brw_update_texture_surfaces(struct brw_context *brw)
       } else {
          brw->bind.surf_offset[surf] = 0;
       }
+
+      /* For now, just mirror the texture setup to the VS slots. */
+      brw->vs.surf_offset[SURF_INDEX_VS_TEXTURE(i)] =
+	 brw->bind.surf_offset[surf];
    }
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -1128,12 +1132,11 @@ brw_upload_binding_table(struct brw_context *brw)
 			  sizeof(uint32_t) * BRW_MAX_SURFACES,
 			  32, &brw->bind.bo_offset);
 
-   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
+   /* BRW_NEW_SURFACES */
    for (i = 0; i < BRW_MAX_SURFACES; i++) {
       bind[i] = brw->bind.surf_offset[i];
    }
 
-   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
    brw->state.dirty.brw |= BRW_NEW_PS_BINDING_TABLE;
 }
 
@@ -1141,7 +1144,6 @@ const struct brw_tracked_state brw_binding_table = {
    .dirty = {
       .mesa = 0,
       .brw = (BRW_NEW_BATCH |
-	      BRW_NEW_VS_CONSTBUF |
 	      BRW_NEW_SURFACES),
       .cache = 0
    },

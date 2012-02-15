@@ -65,7 +65,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
       if (brw->vs.const_bo) {
 	 drm_intel_bo_unreference(brw->vs.const_bo);
 	 brw->vs.const_bo = NULL;
-	 brw->bind.surf_offset[SURF_INDEX_VERT_CONST_BUFFER] = 0;
+	 brw->vs.surf_offset[SURF_INDEX_VERT_CONST_BUFFER] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
       }
       return;
@@ -97,7 +97,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    const int surf = SURF_INDEX_VERT_CONST_BUFFER;
    intel->vtbl.create_constant_surface(brw, brw->vs.const_bo,
 				       params->NumParameters,
-				       &brw->bind.surf_offset[surf]);
+				       &brw->vs.surf_offset[surf]);
 
    brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
 }
@@ -109,4 +109,51 @@ const struct brw_tracked_state brw_vs_pull_constants = {
       .cache = CACHE_NEW_VS_PROG,
    },
    .emit = brw_upload_vs_pull_constants,
+};
+
+/**
+ * Constructs the binding table for the WM surface state, which maps unit
+ * numbers to surface state objects.
+ */
+static void
+brw_vs_upload_binding_table(struct brw_context *brw)
+{
+   uint32_t *bind;
+   int i;
+
+   /* CACHE_NEW_VS_PROG: Skip making a binding table if we don't use textures or
+    * pull constants.
+    */
+   if (brw->vs.prog_data->num_surfaces == 0) {
+      if (brw->vs.bind_bo_offset != 0) {
+	 brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+	 brw->vs.bind_bo_offset = 0;
+      }
+      return;
+   }
+
+   /* Might want to calculate nr_surfaces first, to avoid taking up so much
+    * space for the binding table.
+    */
+   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+			  sizeof(uint32_t) * BRW_MAX_SURFACES,
+			  32, &brw->vs.bind_bo_offset);
+
+   /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
+   for (i = 0; i < BRW_MAX_VS_SURFACES; i++) {
+      bind[i] = brw->vs.surf_offset[i];
+   }
+
+   brw->state.dirty.brw |= BRW_NEW_VS_BINDING_TABLE;
+}
+
+const struct brw_tracked_state brw_vs_binding_table = {
+   .dirty = {
+      .mesa = 0,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_VS_CONSTBUF |
+	      BRW_NEW_SURFACES),
+      .cache = CACHE_NEW_VS_PROG
+   },
+   .emit = brw_vs_upload_binding_table,
 };

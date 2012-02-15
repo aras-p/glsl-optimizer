@@ -409,6 +409,8 @@ struct brw_vs_prog_data {
    bool uses_new_param_layout;
    bool uses_vertexid;
    bool userclip;
+
+   int num_surfaces;
 };
 
 
@@ -468,7 +470,7 @@ struct brw_vs_ouput_sizes {
  * (VS, HS, DS, GS, PS), we currently share a single binding table for all of
  * them.  This is purely for convenience.
  *
- * Currently our binding tables are (arbitrarily) programmed as follows:
+ * Currently our SOL/WM binding tables are (arbitrarily) programmed as follows:
  *
  *    +-------------------------------+
  *    |   0 | Draw buffer 0           | .
@@ -476,18 +478,28 @@ struct brw_vs_ouput_sizes {
  *    |   : |     :                   |   > Only relevant to the WM.
  *    |   7 | Draw buffer 7           |  /
  *    |-----|-------------------------| `
- *    |   8 | VS Pull Constant Buffer |
- *    |   9 | WM Pull Constant Buffer |
+ *    |   8 | WM Pull Constant Buffer |
  *    |-----|-------------------------|
- *    |  10 | Texture 0               |
+ *    |   9 | Texture 0               |
  *    |   . |     .                   |
  *    |   : |     :                   |
- *    |  25 | Texture 15              |
+ *    |  24 | Texture 15              |
  *    +-----|-------------------------+
- *    |  26 | SOL Binding 0           |
+ *    |  25 | SOL Binding 0           |
  *    |   . |     .                   |
  *    |   : |     :                   |
- *    |  89 | SOL Binding 63          |
+ *    |  88 | SOL Binding 63          |
+ *    +-------------------------------+
+ *
+ * Our VS binding tables are programmed as follows:
+ *
+ *    +-----+-------------------------+ `
+ *    |   0 | VS Pull Constant Buffer |
+ *    +-----+-------------------------+
+ *    |   1 | Texture 0               |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  16 | Texture 15              |
  *    +-------------------------------+
  *
  * Note that nothing actually uses the SURF_INDEX_DRAW macro, so it has to be
@@ -495,13 +507,16 @@ struct brw_vs_ouput_sizes {
  * first so we can use headerless render target writes for RT 0.
  */
 #define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_VERT_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 0)
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
 #define SURF_INDEX_SOL_BINDING(t)    (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + (t))
 
 /** Maximum size of the binding table. */
 #define BRW_MAX_SURFACES SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
+
+#define SURF_INDEX_VERT_CONST_BUFFER (0)
+#define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
+#define BRW_MAX_VS_SURFACES          SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT)
 
 enum brw_cache_id {
    BRW_BLEND_STATE,
@@ -841,6 +856,9 @@ struct brw_context
       */
       uint8_t *ra_reg_to_grf;
       /** @} */
+
+      uint32_t bind_bo_offset;
+      uint32_t surf_offset[BRW_MAX_VS_SURFACES];
    } vs;
 
    struct {

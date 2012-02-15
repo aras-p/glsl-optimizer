@@ -247,6 +247,11 @@ do_vs_prog(struct brw_context *brw,
       brw_old_vs_emit(&c);
    }
 
+   if (c.prog_data.nr_pull_params)
+      c.prog_data.num_surfaces = 1;
+   if (c.vp->program.Base.SamplersUsed)
+      c.prog_data.num_surfaces = BRW_MAX_VS_SURFACES;
+
    /* Scratch space is used for register spilling */
    if (c.last_scratch) {
       c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch);
