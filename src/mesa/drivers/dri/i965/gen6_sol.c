@@ -30,6 +30,7 @@
 #include "brw_context.h"
 #include "intel_batchbuffer.h"
 #include "brw_defines.h"
+#include "brw_state.h"
 
 static void
 gen6_update_sol_surfaces(struct brw_context *brw)
@@ -54,11 +55,11 @@ gen6_update_sol_surfaces(struct brw_context *brw)
             xfb_obj->Offset[buffer] / 4 +
             linked_xfb_info->Outputs[i].DstOffset;
          brw_update_sol_surface(
-            brw, xfb_obj->Buffers[buffer], &brw->bind.surf_offset[surf_index],
+            brw, xfb_obj->Buffers[buffer], &brw->gs.surf_offset[surf_index],
             linked_xfb_info->Outputs[i].NumComponents,
             linked_xfb_info->BufferStride[buffer], buffer_offset);
       } else {
-         brw->bind.surf_offset[surf_index] = 0;
+         brw->gs.surf_offset[surf_index] = 0;
       }
    }
 
@@ -73,6 +74,59 @@ const struct brw_tracked_state gen6_sol_surface = {
       .cache = 0
    },
    .emit = gen6_update_sol_surfaces,
+};
+
+/**
+ * Constructs the binding table for the WM surface state, which maps unit
+ * numbers to surface state objects.
+ */
+static void
+brw_gs_upload_binding_table(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   /* BRW_NEW_VERTEX_PROGRAM */
+   const struct gl_shader_program *shaderprog =
+      ctx->Shader.CurrentVertexProgram;
+   const struct gl_transform_feedback_info *linked_xfb_info =
+      &shaderprog->LinkedTransformFeedback;
+   /* Currently we only ever upload surfaces for SOL. */
+   bool has_surfaces = linked_xfb_info->NumOutputs != 0;
+
+   uint32_t *bind;
+
+   /* CACHE_NEW_GS_PROG: Skip making a binding table if we don't use textures or
+    * pull constants.
+    */
+   if (!has_surfaces) {
+      if (brw->gs.bind_bo_offset != 0) {
+	 brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+	 brw->gs.bind_bo_offset = 0;
+      }
+      return;
+   }
+
+   /* Might want to calculate nr_surfaces first, to avoid taking up so much
+    * space for the binding table.
+    */
+   bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+			  sizeof(uint32_t) * BRW_MAX_SURFACES,
+			  32, &brw->gs.bind_bo_offset);
+
+   /* BRW_NEW_SURFACES */
+   memcpy(bind, brw->gs.surf_offset, BRW_MAX_GS_SURFACES * sizeof(uint32_t));
+
+   brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+}
+
+const struct brw_tracked_state gen6_gs_binding_table = {
+   .dirty = {
+      .mesa = 0,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_VERTEX_PROGRAM |
+	      BRW_NEW_SURFACES),
+      .cache = 0
+   },
+   .emit = brw_gs_upload_binding_table,
 };
 
 static void

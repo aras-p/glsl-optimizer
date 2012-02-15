@@ -148,6 +148,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &brw_texture_surfaces,
    &gen6_sol_surface,
    &brw_vs_binding_table,
+   &gen6_gs_binding_table,
    &brw_binding_table,
 
    &brw_samplers,

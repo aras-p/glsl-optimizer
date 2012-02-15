@@ -484,11 +484,6 @@ struct brw_vs_ouput_sizes {
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  24 | Texture 15              |
- *    +-----|-------------------------+
- *    |  25 | SOL Binding 0           |
- *    |   . |     .                   |
- *    |   : |     :                   |
- *    |  88 | SOL Binding 63          |
  *    +-------------------------------+
  *
  * Our VS binding tables are programmed as follows:
@@ -502,6 +497,15 @@ struct brw_vs_ouput_sizes {
  *    |  16 | Texture 15              |
  *    +-------------------------------+
  *
+ * Our (gen6) GS binding tables are programmed as follows:
+ *
+ *    +-----+-------------------------+
+ *    |  0  | SOL Binding 0           |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  63 | SOL Binding 63          |
+ *    +-----+-------------------------+
+ *
  * Note that nothing actually uses the SURF_INDEX_DRAW macro, so it has to be
  * the identity function or things will break.  We do want to keep draw buffers
  * first so we can use headerless render target writes for RT 0.
@@ -509,14 +513,16 @@ struct brw_vs_ouput_sizes {
 #define SURF_INDEX_DRAW(d)           (d)
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
-#define SURF_INDEX_SOL_BINDING(t)    (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + (t))
 
 /** Maximum size of the binding table. */
-#define BRW_MAX_SURFACES SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
+#define BRW_MAX_SURFACES             SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT)
 
 #define SURF_INDEX_VERT_CONST_BUFFER (0)
 #define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
 #define BRW_MAX_VS_SURFACES          SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT)
+
+#define SURF_INDEX_SOL_BINDING(t)    ((t))
+#define BRW_MAX_GS_SURFACES          SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
 
 enum brw_cache_id {
    BRW_BLEND_STATE,
@@ -868,6 +874,9 @@ struct brw_context
       /** Offset in the program cache to the CLIP program pre-gen6 */
       uint32_t prog_offset;
       uint32_t state_offset;
+
+      uint32_t bind_bo_offset;
+      uint32_t surf_offset[BRW_MAX_VS_SURFACES];
    } gs;
 
    struct {

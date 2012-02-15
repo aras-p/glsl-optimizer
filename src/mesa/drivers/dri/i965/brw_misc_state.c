@@ -116,7 +116,7 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     GEN6_BINDING_TABLE_MODIFY_PS |
 	     (4 - 2));
    OUT_BATCH(brw->vs.bind_bo_offset); /* vs */
-   OUT_BATCH(brw->bind.bo_offset); /* gs */
+   OUT_BATCH(brw->gs.bind_bo_offset); /* gs */
    OUT_BATCH(brw->bind.bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
