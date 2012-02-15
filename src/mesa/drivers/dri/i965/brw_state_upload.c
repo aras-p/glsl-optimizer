@@ -183,7 +183,6 @@ const struct brw_tracked_state *gen7_atoms[] =
 
    &brw_wm_input_sizes,
    &brw_vs_prog,
-   &brw_gs_prog,
    &brw_wm_prog,
 
    /* Command packets: */
