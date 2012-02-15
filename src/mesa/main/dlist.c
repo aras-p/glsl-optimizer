@@ -10425,6 +10425,9 @@ _mesa_create_save_table(void)
    SET_TextureStorage2DEXT(table, _mesa_TextureStorage2DEXT);
    SET_TextureStorage3DEXT(table, _mesa_TextureStorage3DEXT);
 
+   /* GL_ARB_debug_output (no dlist support) */
+   _mesa_init_errors_dispatch(table);
+
    return table;
 }
 
