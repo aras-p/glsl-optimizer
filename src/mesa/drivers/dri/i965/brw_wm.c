@@ -128,7 +128,7 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * Return a bitfield where bit n is set if barycentric interpolation mode n
  * (see enum brw_wm_barycentric_interp_mode) is needed by the fragment shader.
  */
-unsigned
+static unsigned
 brw_compute_barycentric_interp_modes(bool shade_model_flat,
                                      const struct gl_fragment_program *fprog)
 {
@@ -174,9 +174,7 @@ brw_wm_payload_setup(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    bool uses_depth = (c->fp->program.Base.InputsRead &
 		      (1 << FRAG_ATTRIB_WPOS)) != 0;
-   unsigned barycentric_interp_modes =
-      brw_compute_barycentric_interp_modes(c->key.flat_shade,
-                                           &c->fp->program);
+   unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
    int i;
 
    if (intel->gen >= 6) {
@@ -277,6 +275,9 @@ bool do_wm_prog(struct brw_context *brw,
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
    brw_init_compile(brw, &c->func, c);
+
+   c->prog_data.barycentric_interp_modes =
+      brw_compute_barycentric_interp_modes(c->key.flat_shade, &fp->program);
 
    if (prog && prog->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
       if (!brw_wm_fs_emit(brw, c, prog))

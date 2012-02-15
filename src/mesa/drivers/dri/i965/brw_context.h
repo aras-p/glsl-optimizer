@@ -271,6 +271,12 @@ struct brw_wm_prog_data {
    int dispatch_width;
    uint32_t prog_offset_16;
 
+   /**
+    * Mask of which interpolation modes are required by the fragment shader.
+    * Used in hardware setup on gen6+.
+    */
+   uint32_t barycentric_interp_modes;
+
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
     */
@@ -1048,11 +1054,6 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /* brw_vs.c */
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
-
-/* brw_wm.c */
-unsigned
-brw_compute_barycentric_interp_modes(bool shade_model_flat,
-                                     const struct gl_fragment_program *fprog);
 
 /* brw_wm_surface_state.c */
 void brw_init_surface_formats(struct brw_context *brw);
