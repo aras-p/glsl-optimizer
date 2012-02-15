@@ -25,37 +25,40 @@
  *
  **************************************************************************/
 
-#include "vl_winsys.h"
-#include "driclient.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <X11/Xlibint.h>
+#include <X11/extensions/dri2tokens.h>
+#include <xf86drm.h>
+
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "state_tracker/drm_driver.h"
+
 #include "util/u_memory.h"
 #include "util/u_hash.h"
 #include "util/u_hash_table.h"
 #include "util/u_inlines.h"
-#include "state_tracker/drm_driver.h"
-#include <X11/Xlibint.h>
+
+#include "vl_winsys.h"
+#include "dri2.h"
 
 struct vl_dri_screen
 {
    struct vl_screen base;
-   dri_screen_t *dri_screen;
+   Display *display;
    struct util_hash_table *drawable_table;
    Drawable last_seen_drawable;
-};
-
-struct vl_dri_context
-{
-   struct vl_context base;
-   int fd;
 };
 
 static struct pipe_surface*
 vl_dri2_get_front(struct vl_context *vctx, Drawable drawable)
 {
    int w, h;
-   unsigned int attachments[1] = {DRI_BUFFER_FRONT_LEFT};
+   unsigned int attachments[1] = {DRI2BufferFrontLeft};
    int count;
    DRI2Buffer *dri2_front;
    struct pipe_resource *front_tex;
@@ -66,8 +69,8 @@ vl_dri2_get_front(struct vl_context *vctx, Drawable drawable)
    struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vctx->vscreen;
    assert(vl_dri_scrn);
 
-   dri2_front = DRI2GetBuffers(vl_dri_scrn->dri_screen->display,
-                               drawable, &w, &h, attachments, 1, &count);
+   dri2_front = DRI2GetBuffers(vl_dri_scrn->display, drawable, &w, &h,
+                               attachments, 1, &count);
 
    assert(count == 1);
 
@@ -112,15 +115,18 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           unsigned level, unsigned layer,
                           void *context_private)
 {
-   struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)context_private;
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
+   struct vl_context *vl_dri_ctx = (struct vl_context*)context_private;
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->vscreen;
+   XserverRegion region;
 
    assert(screen);
    assert(resource);
    assert(context_private);
 
-   dri2CopyDrawable(vl_dri_scrn->dri_screen, vl_dri_scrn->last_seen_drawable,
-                    DRI_BUFFER_FRONT_LEFT, DRI_BUFFER_FAKE_FRONT_LEFT);
+   region = XFixesCreateRegionFromWindow(vl_dri_scrn->display, vl_dri_scrn->last_seen_drawable, WindowRegionBounding);
+   DRI2CopyRegion(vl_dri_scrn->display, vl_dri_scrn->last_seen_drawable, region,
+                  DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
+   XFixesDestroyRegion(vl_dri_scrn->display, region);
 }
 
 struct pipe_surface*
@@ -136,7 +142,7 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
       assert(None == NULL);
       Drawable lookup_drawable = (Drawable)util_hash_table_get(vl_dri_scrn->drawable_table, (void*)drawable);
       if (lookup_drawable == None) {
-         dri2CreateDrawable(vl_dri_scrn->dri_screen, drawable);
+         DRI2CreateDrawable(vl_dri_scrn->display, drawable);
          util_hash_table_set(vl_dri_scrn->drawable_table, (void*)drawable, (void*)drawable);
       }
       vl_dri_scrn->last_seen_drawable = drawable;
@@ -171,6 +177,10 @@ struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
    struct vl_dri_screen *vl_dri_scrn;
+   drm_magic_t magic;
+   char *drvName;
+   char *devName;
+   int fd;
 
    assert(display);
 
@@ -178,13 +188,27 @@ vl_screen_create(Display *display, int screen)
    if (!vl_dri_scrn)
       goto no_struct;
 
-   if (dri2CreateScreen(display, screen, &vl_dri_scrn->dri_screen))
-      goto no_dri2screen;
+   vl_dri_scrn->display = display;
+   if (!DRI2Connect(display, XRootWindow(display, screen), &drvName, &devName))
+      goto free_screen;
 
-   vl_dri_scrn->base.pscreen = driver_descriptor.create_screen(vl_dri_scrn->dri_screen->fd);
+   fd = open(devName, O_RDWR);
+   Xfree(drvName);
+   Xfree(devName);
+
+   if (fd < 0)
+      goto free_screen;
+
+   if (drmGetMagic(fd, &magic))
+      goto free_screen;
+
+   if (!DRI2Authenticate(display, RootWindow(display, screen), magic))
+      goto free_screen;
+
+   vl_dri_scrn->base.pscreen = driver_descriptor.create_screen(fd);
 
    if (!vl_dri_scrn->base.pscreen)
-      goto no_pscreen;
+      goto free_screen;
 
    vl_dri_scrn->drawable_table = util_hash_table_create(&drawable_hash, &drawable_cmp);
    if (!vl_dri_scrn->drawable_table)
@@ -197,9 +221,7 @@ vl_screen_create(Display *display, int screen)
 
 no_hash:
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
-no_pscreen:
-   dri2DestroyScreen(vl_dri_scrn->dri_screen);
-no_dri2screen:
+free_screen:
    FREE(vl_dri_scrn);
 no_struct:
    return NULL;
@@ -213,32 +235,28 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    util_hash_table_destroy(vl_dri_scrn->drawable_table);
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
-   dri2DestroyScreen(vl_dri_scrn->dri_screen);
    FREE(vl_dri_scrn);
 }
 
 struct vl_context*
 vl_video_create(struct vl_screen *vscreen)
 {
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
-   struct vl_dri_context *vl_dri_ctx;
+   struct vl_context *vl_dri_ctx;
 
-   vl_dri_ctx = CALLOC_STRUCT(vl_dri_context);
+   vl_dri_ctx = CALLOC_STRUCT(vl_context);
    if (!vl_dri_ctx)
       goto no_struct;
 
-   vl_dri_ctx->base.pipe = vscreen->pscreen->context_create(vscreen->pscreen, vl_dri_ctx);
-   if (!vl_dri_ctx->base.pipe) {
+   vl_dri_ctx->vscreen = vscreen;
+   vl_dri_ctx->pipe = vscreen->pscreen->context_create(vscreen->pscreen, vl_dri_ctx);
+   if (!vl_dri_ctx->pipe) {
       debug_printf("[G3DVL] No video support found on %s/%s.\n",
                    vscreen->pscreen->get_vendor(vscreen->pscreen),
                    vscreen->pscreen->get_name(vscreen->pscreen));
       goto no_pipe;
    }
 
-   vl_dri_ctx->base.vscreen = vscreen;
-   vl_dri_ctx->fd = vl_dri_scrn->dri_screen->fd;
-
-   return &vl_dri_ctx->base;
+   return vl_dri_ctx;
 
 no_pipe:
    FREE(vl_dri_ctx);
@@ -249,10 +267,8 @@ no_struct:
 
 void vl_video_destroy(struct vl_context *vctx)
 {
-   struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)vctx;
-
    assert(vctx);
 
-   vl_dri_ctx->base.pipe->destroy(vl_dri_ctx->base.pipe);
-   FREE(vl_dri_ctx);
+   vctx->pipe->destroy(vctx->pipe);
+   FREE(vctx);
 }
