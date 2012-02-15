@@ -4460,7 +4460,7 @@ static const enum_elt all_enums[2340] =
    { 45645, 0x00008519 }, /* GL_TEXTURE_CUBE_MAP_POSITIVE_Z */
    { 45676, 0x00008519 }, /* GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB */
    { 45711, 0x00008519 }, /* GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES */
-   { 45746, 0x000088F4 }, /* GL_TEXTURE_CUBE_MAP_SEAMLESS */
+   { 45746, 0x0000884F }, /* GL_TEXTURE_CUBE_MAP_SEAMLESS */
    { 45775, 0x00008071 }, /* GL_TEXTURE_DEPTH */
    { 45792, 0x0000884A }, /* GL_TEXTURE_DEPTH_SIZE */
    { 45814, 0x0000884A }, /* GL_TEXTURE_DEPTH_SIZE_ARB */
@@ -4723,7 +4723,7 @@ static const enum_elt all_enums[2340] =
    { 52477, 0x00000D17 }, /* GL_ZOOM_Y */
 };
 
-static const unsigned reduced_enums[1571] =
+static const unsigned reduced_enums[1572] =
 {
        556, /* GL_FALSE */
        853, /* GL_LINES */
@@ -5806,6 +5806,7 @@ static const unsigned reduced_enums[1571] =
       2038, /* GL_TEXTURE_COMPARE_MODE */
       2036, /* GL_TEXTURE_COMPARE_FUNC */
        284, /* GL_COMPARE_REF_TO_TEXTURE */
+      2079, /* GL_TEXTURE_CUBE_MAP_SEAMLESS */
       1400, /* GL_POINT_SPRITE */
        347, /* GL_COORD_REPLACE */
       1405, /* GL_POINT_SPRITE_R_MODE_NV */
@@ -5917,7 +5918,7 @@ static const unsigned reduced_enums[1571] =
       1368, /* GL_PIXEL_UNPACK_BUFFER_BINDING */
        400, /* GL_DEPTH24_STENCIL8 */
       2134, /* GL_TEXTURE_STENCIL_SIZE */
-      2079, /* GL_TEXTURE_CUBE_MAP_SEAMLESS */
+      1096, /* GL_MAX_PROGRAM_EXEC_INSTRUCTIONS_NV */
       1094, /* GL_MAX_PROGRAM_CALL_DEPTH_NV */
       1097, /* GL_MAX_PROGRAM_IF_DEPTH_NV */
       1101, /* GL_MAX_PROGRAM_LOOP_DEPTH_NV */
