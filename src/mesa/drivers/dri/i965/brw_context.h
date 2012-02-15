@@ -821,12 +821,6 @@ struct brw_context
       GLuint last_bufsz;
    } curbe;
 
-   struct {
-      /** Binding table of pointers to surf_bo entries */
-      uint32_t bo_offset;
-      uint32_t surf_offset[BRW_MAX_SURFACES];
-   } bind;
-
    /** SAMPLER_STATE count and offset */
    struct {
       GLuint count;
@@ -933,6 +927,10 @@ struct brw_context
        * Pre-gen6, push constants live in the CURBE.
        */
       uint32_t push_const_offset;
+
+      /** Binding table of pointers to surf_bo entries */
+      uint32_t bind_bo_offset;
+      uint32_t surf_offset[BRW_MAX_SURFACES];
 
       /** @{ register allocator */
 
