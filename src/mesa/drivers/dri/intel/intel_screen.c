@@ -361,6 +361,7 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
    int ret;
    struct drm_i915_getparam gp;
 
+   memset(&gp, 0, sizeof(gp));
    gp.param = param;
    gp.value = value;
 
