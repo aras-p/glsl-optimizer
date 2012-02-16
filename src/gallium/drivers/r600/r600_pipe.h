@@ -135,7 +135,6 @@ struct r600_pipe_rasterizer {
 	unsigned			sprite_coord_enable;
 	unsigned                        clip_plane_enable;
 	unsigned			pa_sc_line_stipple;
-	unsigned			pa_su_sc_mode_cntl;
 	unsigned			pa_cl_clip_cntl;
 	float				offset_units;
 	float				offset_scale;
@@ -241,7 +240,6 @@ struct r600_context {
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;
-	unsigned			pa_su_sc_mode_cntl;
 	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;

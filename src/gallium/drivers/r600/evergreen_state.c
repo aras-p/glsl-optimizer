@@ -816,17 +816,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rs->pa_sc_line_stipple = state->line_stipple_enable ?
 				S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
 				S_028A0C_REPEAT_COUNT(state->line_stipple_factor) : 0;
-	rs->pa_su_sc_mode_cntl =
-		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
-		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
-		S_028814_FACE(!state->front_ccw) |
-		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
-		S_028814_POLY_MODE(polygon_dual_mode) |
-		S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
-		S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back));
 	rs->pa_cl_clip_cntl =
 		S_028810_PS_UCP_MODE(3) |
 		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
@@ -903,6 +892,18 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	}
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
+				S_028814_PROVOKING_VTX_LAST(prov_vtx) |
+				S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+				S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+				S_028814_FACE(!state->front_ccw) |
+				S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+				S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+				S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+				S_028814_POLY_MODE(polygon_dual_mode) |
+				S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
+				S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)),
+				NULL, 0);
 	return rstate;
 }
 
