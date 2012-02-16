@@ -62,6 +62,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
       this->language_version = 100;
       this->es_shader = true;
       this->ARB_texture_rectangle_enable = false;
+	  this->OES_standard_derivatives_enable = true;
    }
 
    this->extensions = &ctx->Extensions;
@@ -265,6 +266,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(AMD_conservative_depth,         true,  false, true,  true,  false,     AMD_conservative_depth),
    EXT(AMD_shader_stencil_export,      false, false, true,  true,  false,     ARB_shader_stencil_export),
    EXT(OES_texture_3D,                 true,  false, true,  false, true,      EXT_texture3D),
+   EXT(OES_standard_derivatives,       false, false, true,  false, true,      OES_standard_derivatives),
 };
 
 #undef EXT
