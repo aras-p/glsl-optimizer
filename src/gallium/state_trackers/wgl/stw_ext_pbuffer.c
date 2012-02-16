@@ -239,6 +239,11 @@ wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
    struct stw_framebuffer *fb;
    HDC hDC;
 
+   if (!hPbuffer) {
+      SetLastError(ERROR_INVALID_HANDLE);
+      return NULL;
+   }
+
    fb = (struct stw_framebuffer *)hPbuffer;
 
    hDC = GetDC(fb->hWnd);
@@ -255,6 +260,11 @@ wglReleasePbufferDCARB(HPBUFFERARB hPbuffer,
 {
    struct stw_framebuffer *fb;
 
+   if (!hPbuffer) {
+      SetLastError(ERROR_INVALID_HANDLE);
+      return 0;
+   }
+
    fb = (struct stw_framebuffer *)hPbuffer;
 
    return ReleaseDC(fb->hWnd, hDC);
@@ -265,6 +275,11 @@ BOOL WINAPI
 wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 {
    struct stw_framebuffer *fb;
+
+   if (!hPbuffer) {
+      SetLastError(ERROR_INVALID_HANDLE);
+      return FALSE;
+   }
 
    fb = (struct stw_framebuffer *)hPbuffer;
 
@@ -279,6 +294,11 @@ wglQueryPbufferARB(HPBUFFERARB hPbuffer,
                    int *piValue)
 {
    struct stw_framebuffer *fb;
+
+   if (!hPbuffer) {
+      SetLastError(ERROR_INVALID_HANDLE);
+      return FALSE;
+   }
 
    fb = (struct stw_framebuffer *)hPbuffer;
 
