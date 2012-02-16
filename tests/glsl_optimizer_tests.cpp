@@ -142,6 +142,7 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 	if (gles)
 	{
 		replace_string (src, "GL_EXT_shader_texture_lod", "GL_ARB_shader_texture_lod", 0);
+		replace_string (src, "#extension GL_OES_standard_derivatives : require", "", 0);
 	}
 	const char* sourcePtr = src.c_str();
 

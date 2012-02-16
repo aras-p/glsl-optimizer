@@ -62,7 +62,6 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
       this->language_version = 100;
       this->es_shader = true;
       this->ARB_texture_rectangle_enable = false;
-	  this->OES_standard_derivatives_enable = true;
    }
 
    this->extensions = &ctx->Extensions;
