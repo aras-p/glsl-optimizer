@@ -26,6 +26,12 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
 
+   // Enable opengl es extensions we care about here
+   if (api == API_OPENGLES2)
+   {
+      ctx->Extensions.OES_standard_derivatives = GL_TRUE;
+   }
+
 
    /* 1.10 minimums. */
    ctx->Const.MaxLights = 8;
