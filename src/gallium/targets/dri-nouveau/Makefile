@@ -8,7 +8,6 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
-	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a

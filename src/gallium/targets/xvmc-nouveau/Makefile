@@ -5,7 +5,6 @@ LIBBASENAME = XvMCnouveau
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
-	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \

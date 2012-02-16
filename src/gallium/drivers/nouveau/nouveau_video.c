@@ -27,8 +27,6 @@
 #include "nouveau_context.h"
 #include "nouveau_video.h"
 
-#include "nvfx/nvfx_context.h"
-#include "nvfx/nvfx_resource.h"
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_buffer.h"
 #include "util/u_video.h"
@@ -36,15 +34,6 @@
 #include "util/u_sampler.h"
 #include "nouveau/nouveau_device.h"
 #include "nouveau_winsys.h"
-
-static bool
-nouveau_video_is_nvfx(struct nouveau_decoder *dec) {
-   if (dec->screen->device->chipset < 0x50)
-      return true;
-   if (dec->screen->device->chipset >= 0x60 && dec->screen->device->chipset < 0x70)
-      return true;
-   return false;
-}
 
 static int
 nouveau_vpe_init(struct nouveau_decoder *dec) {
@@ -396,7 +385,8 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
 {
    struct nouveau_video_buffer *buf = (struct nouveau_video_buffer *)buffer;
    struct nouveau_channel *chan = dec->screen->channel;
-   struct nouveau_bo *bo_y, *bo_c;
+   struct nouveau_bo *bo_y = ((struct nv04_resource *)buf->resources[0])->bo;
+   struct nouveau_bo *bo_c = ((struct nv04_resource *)buf->resources[1])->bo;
    unsigned i;
 
    if (!buf)
@@ -409,13 +399,6 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
    dec->surfaces[i] = buf;
    dec->num_surfaces++;
 
-   if (nouveau_video_is_nvfx(dec)) {
-      bo_y = ((struct nvfx_resource *)buf->resources[0])->bo;
-      bo_c = ((struct nvfx_resource *)buf->resources[1])->bo;
-   } else {
-      bo_y = ((struct nv04_resource *)buf->resources[0])->bo;
-      bo_c = ((struct nv04_resource *)buf->resources[1])->bo;
-   }
    MARK_RING(chan, 3, 2);
    BEGIN_RING(chan, dec->mpeg, NV31_MPEG_IMAGE_Y_OFFSET(i), 2);
    OUT_RELOCl(chan, bo_y, 0, NOUVEAU_BO_RDWR);
@@ -854,35 +837,6 @@ nouveau_screen_init_vdec(struct nouveau_screen *screen)
 {
    screen->base.get_video_param = nouveau_screen_get_video_param;
    screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
-}
-
-static struct pipe_video_decoder *
-nvfx_context_create_decoder(struct pipe_context *context,
-                            enum pipe_video_profile profile,
-                            enum pipe_video_entrypoint entrypoint,
-                            enum pipe_video_chroma_format chroma_format,
-                            unsigned width, unsigned height,
-                            unsigned max_references, bool expect_chunked_decode)
-{
-   struct nouveau_screen *screen = &nvfx_context(context)->screen->base;
-   return nouveau_create_decoder(context, screen, profile, entrypoint,
-                                 chroma_format, width, height,
-                                 max_references, expect_chunked_decode);
-}
-
-static struct pipe_video_buffer *
-nvfx_context_video_buffer_create(struct pipe_context *pipe,
-                                 const struct pipe_video_buffer *templat)
-{
-   struct nouveau_screen *screen = &nvfx_context(pipe)->screen->base;
-   return nouveau_video_buffer_create(pipe, screen, templat);
-}
-
-void
-nvfx_context_init_vdec(struct nvfx_context *nv)
-{
-   nv->pipe.create_video_decoder = nvfx_context_create_decoder;
-   nv->pipe.create_video_buffer = nvfx_context_video_buffer_create;
 }
 
 static struct pipe_video_decoder *
