@@ -225,8 +225,12 @@ svga_set_fragment_sampler_views(struct pipe_context *pipe,
    }
 
    for (i = 0; i < num; i++) {
-      pipe_sampler_view_reference(&svga->curr.sampler_views[i],
-                                  views[i]);
+      /* Note: we're using pipe_sampler_view_release() here to work around
+       * a possible crash when the old view belongs to another context that
+       * was already destroyed.
+       */
+      pipe_sampler_view_release(pipe, &svga->curr.sampler_views[i]);
+      pipe_sampler_view_reference(&svga->curr.sampler_views[i], views[i]);
 
       if (!views[i])
          continue;
