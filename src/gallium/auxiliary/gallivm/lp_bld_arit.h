@@ -249,4 +249,9 @@ lp_build_log2_approx(struct lp_build_context *bld,
                      LLVMValueRef *p_floor_log2,
                      LLVMValueRef *p_log2);
 
+LLVMValueRef
+lp_build_mod(struct lp_build_context *bld,
+             LLVMValueRef x,
+             LLVMValueRef y);
+
 #endif /* !LP_BLD_ARIT_H */

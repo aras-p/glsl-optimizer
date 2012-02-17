@@ -2555,3 +2555,23 @@ lp_build_ilog2(struct lp_build_context *bld,
 
    return ipart;
 }
+
+LLVMValueRef
+lp_build_mod(struct lp_build_context *bld,
+             LLVMValueRef x,
+             LLVMValueRef y)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMValueRef res;
+   const struct lp_type type = bld->type;
+
+   assert(type.floating);
+   assert(lp_check_value(type, x));
+   assert(lp_check_value(type, y));
+
+   if (type.sign)
+      res = LLVMBuildSRem(builder, x, y, "");
+   else
+      res = LLVMBuildURem(builder, x, y, "");
+   return res;
+}
