@@ -165,28 +165,6 @@ static boolean delete_rasterizer_state(struct cso_context *ctx, void *state)
    return TRUE;
 }
 
-static boolean delete_fs_state(struct cso_context *ctx, void *state)
-{
-   struct cso_fragment_shader *cso = (struct cso_fragment_shader *)state;
-   if (ctx->fragment_shader == cso->data)
-      return FALSE;
-   if (cso->delete_state)
-      cso->delete_state(cso->context, cso->data);
-   FREE(state);
-   return TRUE;
-}
-
-static boolean delete_vs_state(struct cso_context *ctx, void *state)
-{
-   struct cso_vertex_shader *cso = (struct cso_vertex_shader *)state;
-   if (ctx->vertex_shader == cso->data)
-      return TRUE;
-   if (cso->delete_state)
-      cso->delete_state(cso->context, cso->data);
-   FREE(state);
-   return FALSE;
-}
-
 static boolean delete_vertex_elements(struct cso_context *ctx,
                                       void *state)
 {
@@ -217,12 +195,6 @@ static INLINE boolean delete_cso(struct cso_context *ctx,
       break;
    case CSO_RASTERIZER:
       return delete_rasterizer_state(ctx, state);
-      break;
-   case CSO_FRAGMENT_SHADER:
-      return delete_fs_state(ctx, state);
-      break;
-   case CSO_VERTEX_SHADER:
-      return delete_vs_state(ctx, state);
       break;
    case CSO_VELEMENTS:
       return delete_vertex_elements(ctx, state);
@@ -571,52 +543,6 @@ void cso_delete_fragment_shader(struct cso_context *ctx, void *handle )
    ctx->pipe->delete_fs_state(ctx->pipe, handle);
 }
 
-/* Not really working:
- */
-#if 0
-enum pipe_error cso_set_fragment_shader(struct cso_context *ctx,
-                                        const struct pipe_shader_state *templ)
-{
-   const struct tgsi_token *tokens = templ->tokens;
-   unsigned num_tokens = tgsi_num_tokens(tokens);
-   size_t tokens_size = num_tokens*sizeof(struct tgsi_token);
-   unsigned hash_key = cso_construct_key((void*)tokens, tokens_size);
-   struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, 
-                                                       CSO_FRAGMENT_SHADER,
-                                                       (void*)tokens,
-                                                       sizeof(*templ)); /* XXX correct? tokens_size? */
-   void *handle = NULL;
-
-   if (cso_hash_iter_is_null(iter)) {
-      struct cso_fragment_shader *cso = MALLOC(sizeof(struct cso_fragment_shader) + tokens_size);
-      struct tgsi_token *cso_tokens = (struct tgsi_token *)((char *)cso + sizeof(*cso));
-
-      if (!cso)
-         return PIPE_ERROR_OUT_OF_MEMORY;
-
-      memcpy(cso_tokens, tokens, tokens_size);
-      cso->state.tokens = cso_tokens;
-      cso->data = ctx->pipe->create_fs_state(ctx->pipe, &cso->state);
-      cso->delete_state = (cso_state_callback)ctx->pipe->delete_fs_state;
-      cso->context = ctx->pipe;
-
-      iter = cso_insert_state(ctx->cache, hash_key, CSO_FRAGMENT_SHADER, cso);
-      if (cso_hash_iter_is_null(iter)) {
-         FREE(cso);
-         return PIPE_ERROR_OUT_OF_MEMORY;
-      }
-
-      handle = cso->data;
-   }
-   else {
-      handle = ((struct cso_fragment_shader *)cso_hash_iter_data(iter))->data;
-   }
-
-   return cso_set_fragment_shader_handle( ctx, handle );
-}
-#endif
-
 void cso_save_fragment_shader(struct cso_context *ctx)
 {
    assert(!ctx->fragment_shader_saved);
@@ -652,50 +578,6 @@ void cso_delete_vertex_shader(struct cso_context *ctx, void *handle )
    }
    ctx->pipe->delete_vs_state(ctx->pipe, handle);
 }
-
-
-/* Not really working:
- */
-#if 0
-enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
-                                      const struct pipe_shader_state *templ)
-{
-   unsigned hash_key = cso_construct_key((void*)templ,
-                                         sizeof(struct pipe_shader_state));
-   struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, CSO_VERTEX_SHADER,
-                                                       (void*)templ,
-                                                       sizeof(*templ));
-   void *handle = NULL;
-
-   if (cso_hash_iter_is_null(iter)) {
-      struct cso_vertex_shader *cso = MALLOC(sizeof(struct cso_vertex_shader));
-
-      if (!cso)
-         return PIPE_ERROR_OUT_OF_MEMORY;
-
-      memcpy(cso->state, templ, sizeof(*templ));
-      cso->data = ctx->pipe->create_vs_state(ctx->pipe, &cso->state);
-      cso->delete_state = (cso_state_callback)ctx->pipe->delete_vs_state;
-      cso->context = ctx->pipe;
-
-      iter = cso_insert_state(ctx->cache, hash_key, CSO_VERTEX_SHADER, cso);
-      if (cso_hash_iter_is_null(iter)) {
-         FREE(cso);
-         return PIPE_ERROR_OUT_OF_MEMORY;
-      }
-
-      handle = cso->data;
-   }
-   else {
-      handle = ((struct cso_vertex_shader *)cso_hash_iter_data(iter))->data;
-   }
-
-   return cso_set_vertex_shader_handle( ctx, handle );
-}
-#endif
-
-
 
 void cso_save_vertex_shader(struct cso_context *ctx)
 {

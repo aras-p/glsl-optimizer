@@ -89,8 +89,6 @@ enum cso_cache_type {
    CSO_RASTERIZER,
    CSO_BLEND,
    CSO_DEPTH_STENCIL_ALPHA,
-   CSO_FRAGMENT_SHADER,
-   CSO_VERTEX_SHADER,
    CSO_SAMPLER,
    CSO_VELEMENTS,
    CSO_CACHE_MAX,
@@ -121,20 +119,6 @@ struct cso_depth_stencil_alpha {
 
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
-   void *data;
-   cso_state_callback delete_state;
-   struct pipe_context *context;
-};
-
-struct cso_fragment_shader {
-   struct pipe_shader_state state;
-   void *data;
-   cso_state_callback delete_state;
-   struct pipe_context *context;
-};
-
-struct cso_vertex_shader {
-   struct pipe_shader_state state;
    void *data;
    cso_state_callback delete_state;
    struct pipe_context *context;

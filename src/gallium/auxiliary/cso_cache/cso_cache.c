@@ -119,22 +119,6 @@ static void delete_rasterizer_state(void *state, void *data)
    FREE(state);
 }
 
-static void delete_fs_state(void *state, void *data)
-{
-   struct cso_fragment_shader *cso = (struct cso_fragment_shader *)state;
-   if (cso->delete_state)
-      cso->delete_state(cso->context, cso->data);
-   FREE(state);
-}
-
-static void delete_vs_state(void *state, void *data)
-{
-   struct cso_vertex_shader *cso = (struct cso_vertex_shader *)state;
-   if (cso->delete_state)
-      cso->delete_state(cso->context, cso->data);
-   FREE(state);
-}
-
 static void delete_velements(void *state, void *data)
 {
    struct cso_velements *cso = (struct cso_velements *)state;
@@ -157,12 +141,6 @@ static INLINE void delete_cso(void *state, enum cso_cache_type type)
       break;
    case CSO_RASTERIZER:
       delete_rasterizer_state(state, 0);
-      break;
-   case CSO_FRAGMENT_SHADER:
-      delete_fs_state(state, 0);
-      break;
-   case CSO_VERTEX_SHADER:
-      delete_vs_state(state, 0);
       break;
    case CSO_VELEMENTS:
       delete_velements(state, 0);
@@ -309,8 +287,6 @@ void cso_cache_delete(struct cso_cache *sc)
    /* delete driver data */
    cso_for_each_state(sc, CSO_BLEND, delete_blend_state, 0);
    cso_for_each_state(sc, CSO_DEPTH_STENCIL_ALPHA, delete_depth_stencil_state, 0);
-   cso_for_each_state(sc, CSO_FRAGMENT_SHADER, delete_fs_state, 0);
-   cso_for_each_state(sc, CSO_VERTEX_SHADER, delete_vs_state, 0);
    cso_for_each_state(sc, CSO_RASTERIZER, delete_rasterizer_state, 0);
    cso_for_each_state(sc, CSO_SAMPLER, delete_sampler_state, 0);
    cso_for_each_state(sc, CSO_VELEMENTS, delete_velements, 0);

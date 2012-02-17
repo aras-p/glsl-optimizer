@@ -125,18 +125,9 @@ void cso_save_stream_outputs(struct cso_context *ctx);
 void cso_restore_stream_outputs(struct cso_context *ctx);
 
 
-/* These aren't really sensible -- most of the time the api provides
- * object semantics for shaders anyway, and the cases where it doesn't
- * (eg mesa's internall-generated texenv programs), it will be up to
- * the state tracker to implement their own specialized caching.
- */
 enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
                                                void *handle );
 void cso_delete_fragment_shader(struct cso_context *ctx, void *handle );
-/*
-enum pipe_error cso_set_fragment_shader( struct cso_context *cso,
-                                         const struct pipe_shader_state *shader );
-*/
 void cso_save_fragment_shader(struct cso_context *cso);
 void cso_restore_fragment_shader(struct cso_context *cso);
 
@@ -144,10 +135,6 @@ void cso_restore_fragment_shader(struct cso_context *cso);
 enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
                                              void *handle );
 void cso_delete_vertex_shader(struct cso_context *ctx, void *handle );
-/*
-enum pipe_error cso_set_vertex_shader( struct cso_context *cso,
-                                       const struct pipe_shader_state *shader );
-*/
 void cso_save_vertex_shader(struct cso_context *cso);
 void cso_restore_vertex_shader(struct cso_context *cso);
 
