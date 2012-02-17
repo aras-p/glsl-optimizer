@@ -96,6 +96,25 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
       swImg->ImageOffsets[i] = i * width * height;
    }
 
+   _swrast_init_texture_image(texImage, width, height, depth);
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Code that overrides ctx->Driver.AllocTextureImageBuffer may use this to
+ * initialize the fields of swrast_texture_image without allocating the image
+ * buffer or initializing ImageOffsets or RowStride.
+ *
+ * Returns GL_TRUE on success, GL_FALSE on memory allocation failure.
+ */
+void
+_swrast_init_texture_image(struct gl_texture_image *texImage, GLsizei width,
+                           GLsizei height, GLsizei depth)
+{
+   struct swrast_texture_image *swImg = swrast_texture_image(texImage);
+
    if ((width == 1 || _mesa_is_pow_two(texImage->Width2)) &&
        (height == 1 || _mesa_is_pow_two(texImage->Height2)) &&
        (depth == 1 || _mesa_is_pow_two(texImage->Depth2)))
@@ -115,8 +134,6 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
       swImg->HeightScale = (GLfloat) texImage->Height;
       swImg->DepthScale = (GLfloat) texImage->Depth;
    }
-
-   return GL_TRUE;
 }
 
 

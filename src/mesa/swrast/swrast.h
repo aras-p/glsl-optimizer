@@ -192,6 +192,10 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
                                    GLsizei height, GLsizei depth);
 
 extern void
+_swrast_init_texture_image(struct gl_texture_image *texImage, GLsizei width,
+                           GLsizei height, GLsizei depth);
+
+extern void
 _swrast_free_texture_image_buffer(struct gl_context *ctx,
                                   struct gl_texture_image *texImage);
 

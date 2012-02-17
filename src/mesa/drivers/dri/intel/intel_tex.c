@@ -84,6 +84,8 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    assert(!intel_image->base.ImageOffsets);
    intel_image->base.ImageOffsets = malloc(slices * sizeof(GLuint));
 
+   _swrast_init_texture_image(image, width, height, depth);
+
    if (intel_texobj->mt &&
        intel_miptree_match_image(intel_texobj->mt, image)) {
       intel_miptree_reference(&intel_image->mt, intel_texobj->mt);
