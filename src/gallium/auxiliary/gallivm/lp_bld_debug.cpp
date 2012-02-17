@@ -207,7 +207,7 @@ lp_disassemble(const void* func)
 
 #if HAVE_LLVM >= 0x0208
    InitializeNativeTargetAsmPrinter();
-#elif defined(PIPE_ARCH_X86)
+#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    LLVMInitializeX86AsmPrinter();
 #elif defined(PIPE_ARCH_ARM)
    LLVMInitializeARMAsmPrinter();
@@ -215,7 +215,7 @@ lp_disassemble(const void* func)
    LLVMInitializePowerPCAsmPrinter();
 #endif
 
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    LLVMInitializeX86Disassembler();
 #elif defined(PIPE_ARCH_ARM)
    LLVMInitializeARMDisassembler();
