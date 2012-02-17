@@ -62,6 +62,31 @@ lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    return res;
 }
 
+/* bitwise XOR (a ^ b) */
+LLVMValueRef
+lp_build_xor(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   const struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
+   /* can't do bitwise ops on floating-point values */
+   if (type.floating) {
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, bld->int_vec_type, "");
+   }
+
+   res = LLVMBuildXor(builder, a, b, "");
+
+   if (type.floating) {
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
+   }
+
+   return res;
+}
 
 /**
  * Return (a & b)
@@ -121,6 +146,25 @@ lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    return res;
 }
 
+/* bitwise NOT */
+LLVMValueRef
+lp_build_not(struct lp_build_context *bld, LLVMValueRef a)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   const struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+
+   if (type.floating) {
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+   }
+   res = LLVMBuildNot(builder, a, "");
+   if (type.floating) {
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
+   }
+   return res;
+}
 
 /**
  * Shift left.
