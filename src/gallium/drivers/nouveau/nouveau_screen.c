@@ -20,7 +20,6 @@
 
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
-#include "util/u_simple_screen.h"
 
 #include "nouveau_drmif.h"
 

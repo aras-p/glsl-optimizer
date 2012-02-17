@@ -2,7 +2,6 @@
 #include "pipe/p_state.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
-#include "util/u_simple_screen.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 
