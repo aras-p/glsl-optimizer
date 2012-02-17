@@ -311,8 +311,6 @@ galahad_screen_create(struct pipe_screen *screen)
       return screen;
    }
 
-   glhd_screen->base.winsys = NULL;
-
    glhd_screen->base.destroy = galahad_screen_destroy;
    glhd_screen->base.get_name = galahad_screen_get_name;
    glhd_screen->base.get_vendor = galahad_screen_get_vendor;

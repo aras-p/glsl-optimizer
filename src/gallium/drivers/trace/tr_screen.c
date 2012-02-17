@@ -480,7 +480,6 @@ struct pipe_screen *
 trace_screen_create(struct pipe_screen *screen)
 {
    struct trace_screen *tr_scr;
-   struct pipe_winsys *winsys;
 
    if(!screen)
       goto error1;
@@ -494,14 +493,6 @@ trace_screen_create(struct pipe_screen *screen)
    if(!tr_scr)
       goto error2;
 
-#if 0
-   winsys = trace_winsys_create(screen->winsys);
-   if(!winsys)
-      goto error3;
-#else
-   winsys = screen->winsys;
-#endif
-   tr_scr->base.winsys = winsys;
    tr_scr->base.destroy = trace_screen_destroy;
    tr_scr->base.get_name = trace_screen_get_name;
    tr_scr->base.get_vendor = trace_screen_get_vendor;

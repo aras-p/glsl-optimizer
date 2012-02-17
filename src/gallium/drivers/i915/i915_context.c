@@ -143,7 +143,6 @@ i915_create_context(struct pipe_screen *screen, void *priv)
       return NULL;
 
    i915->iws = i915_screen(screen)->iws;
-   i915->base.winsys = NULL;
    i915->base.screen = screen;
    i915->base.priv = priv;
 

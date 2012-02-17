@@ -338,7 +338,6 @@ softpipe_create_screen(struct sw_winsys *winsys)
 
    screen->winsys = winsys;
 
-   screen->base.winsys = NULL;
    screen->base.destroy = softpipe_destroy_screen;
 
    screen->base.get_name = softpipe_get_name;

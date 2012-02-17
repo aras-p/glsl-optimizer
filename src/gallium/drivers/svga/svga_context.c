@@ -92,7 +92,6 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga == NULL)
       goto no_svga;
 
-   svga->pipe.winsys = screen->winsys;
    svga->pipe.screen = screen;
    svga->pipe.priv = priv;
    svga->pipe.destroy = svga_destroy;

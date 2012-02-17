@@ -973,7 +973,6 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
       return NULL;
    }
 
-   glhd_pipe->base.winsys = NULL;
    glhd_pipe->base.screen = _screen;
    glhd_pipe->base.priv = pipe->priv; /* expose wrapped data */
    glhd_pipe->base.draw = NULL;

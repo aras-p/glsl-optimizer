@@ -286,8 +286,6 @@ rbug_screen_create(struct pipe_screen *screen)
    make_empty_list(&rb_screen->surfaces);
    make_empty_list(&rb_screen->transfers);
 
-   rb_screen->base.winsys = NULL;
-
    rb_screen->base.destroy = rbug_screen_destroy;
    rb_screen->base.get_name = rbug_screen_get_name;
    rb_screen->base.get_vendor = rbug_screen_get_vendor;

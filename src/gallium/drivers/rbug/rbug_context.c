@@ -1174,7 +1174,6 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    pipe_mutex_init(rb_pipe->list_mutex);
    make_empty_list(&rb_pipe->shaders);
 
-   rb_pipe->base.winsys = NULL;
    rb_pipe->base.screen = _screen;
    rb_pipe->base.priv = pipe->priv; /* expose wrapped data */
    rb_pipe->base.draw = NULL;

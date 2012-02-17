@@ -220,7 +220,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	r600_update_num_contexts(rscreen, 1);
 
-	rctx->context.winsys = rscreen->screen.winsys;
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
@@ -808,7 +807,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
-	rscreen->screen.winsys = (struct pipe_winsys*)ws;
 	rscreen->screen.destroy = r600_destroy_screen;
 	rscreen->screen.get_name = r600_get_name;
 	rscreen->screen.get_vendor = r600_get_vendor;

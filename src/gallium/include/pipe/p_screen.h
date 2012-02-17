@@ -54,7 +54,6 @@ extern "C" {
 struct winsys_handle;
 /** Opaque type */
 struct pipe_fence_handle;
-struct pipe_winsys;
 struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;
@@ -66,8 +65,6 @@ struct pipe_transfer;
  * context.
  */
 struct pipe_screen {
-   struct pipe_winsys *winsys;
-
    void (*destroy)( struct pipe_screen * );
 
 

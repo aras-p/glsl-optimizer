@@ -276,7 +276,6 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 
 	if (ctx == NULL)
 		return NULL;
-	ctx->winsys = screen->winsys;
 	ctx->screen = screen;
 	ctx->priv = priv;
 	ctx->destroy = noop_destroy_context;
@@ -380,7 +379,6 @@ struct pipe_screen *noop_screen_create(struct pipe_screen *oscreen)
 	noop_screen->oscreen = oscreen;
 	screen = &noop_screen->pscreen;
 
-	screen->winsys = oscreen->winsys;
 	screen->destroy = noop_destroy_screen;
 	screen->get_name = noop_get_name;
 	screen->get_vendor = noop_get_vendor;

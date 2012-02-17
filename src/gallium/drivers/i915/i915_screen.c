@@ -452,8 +452,6 @@ i915_screen_create(struct i915_winsys *iws)
 
    is->iws = iws;
 
-   is->base.winsys = NULL;
-
    is->base.destroy = i915_destroy_screen;
    is->base.flush_frontbuffer = i915_flush_frontbuffer;
 

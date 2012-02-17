@@ -274,8 +274,6 @@ identity_screen_create(struct pipe_screen *screen)
       return NULL;
    }
 
-   id_screen->base.winsys = NULL;
-
    id_screen->base.destroy = identity_screen_destroy;
    id_screen->base.get_name = identity_screen_get_name;
    id_screen->base.get_vendor = identity_screen_get_vendor;

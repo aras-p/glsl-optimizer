@@ -526,7 +526,6 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
                      UTIL_SLAB_SINGLETHREADED);
 
     r300screen->rws = rws;
-    r300screen->screen.winsys = (struct pipe_winsys*)rws;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;

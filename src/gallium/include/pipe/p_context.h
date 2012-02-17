@@ -72,7 +72,6 @@ union pipe_color_union;
  *  - surface functions
  */
 struct pipe_context {
-   struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 
    void *priv;  /**< context private data (for DRI for example) */

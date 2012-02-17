@@ -1548,7 +1548,6 @@ trace_context_create(struct trace_screen *tr_scr,
    if(!tr_ctx)
       goto error1;
 
-   tr_ctx->base.winsys = NULL;
    tr_ctx->base.priv = pipe->priv; /* expose wrapped priv data */
    tr_ctx->base.screen = &tr_scr->base;
 
