@@ -843,7 +843,7 @@ boolean r300_resource_get_handle(struct pipe_screen* screen,
                                  struct pipe_resource *texture,
                                  struct winsys_handle *whandle)
 {
-    struct radeon_winsys *rws = (struct radeon_winsys *)screen->winsys;
+    struct radeon_winsys *rws = r300_screen(screen)->rws;
     struct r300_resource* tex = (struct r300_resource*)texture;
 
     if (!tex) {
@@ -948,8 +948,8 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
                                                const struct pipe_resource *base,
                                                struct winsys_handle *whandle)
 {
-    struct radeon_winsys *rws = (struct radeon_winsys*)screen->winsys;
     struct r300_screen *rscreen = r300_screen(screen);
+    struct radeon_winsys *rws = rscreen->rws;
     struct pb_buffer *buffer;
     enum radeon_bo_layout microtile, macrotile;
     unsigned stride;
