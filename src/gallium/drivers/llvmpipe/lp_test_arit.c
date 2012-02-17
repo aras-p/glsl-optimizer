@@ -83,6 +83,12 @@ struct unary_test_t
 };
 
 
+static float negf(float x)
+{
+   return -x;
+}
+
+
 const float exp2_values[] = {
    -60,
    -4,
@@ -162,6 +168,7 @@ const float sincos_values[] = {
  */
 
 static const struct unary_test_t unary_tests[] = {
+   {"neg", &lp_build_negate, &negf, exp2_values, Elements(exp2_values)},
    {"exp2", &lp_build_exp2, &exp2f, exp2_values, Elements(exp2_values)},
    {"log2", &lp_build_log2, &log2f, log2_values, Elements(log2_values)},
    {"exp", &lp_build_exp, &expf, exp2_values, Elements(exp2_values)},
