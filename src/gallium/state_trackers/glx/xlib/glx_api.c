@@ -660,7 +660,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    const GLboolean rgbModeDefault = fbConfig;
    const int *parselist;
    XVisualInfo *vis;
-   int min_ci = 0;
    int min_red=0, min_green=0, min_blue=0;
    GLboolean rgb_flag = rgbModeDefault;
    GLboolean alpha_flag = GL_FALSE;
@@ -674,8 +673,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    GLint accumAlphaSize = 0;
    int level = 0;
    int visual_type = DONT_CARE;
-   int trans_type = DONT_CARE;
-   int trans_value = DONT_CARE;
    GLint caveat = DONT_CARE;
    XMesaVisual xmvis = NULL;
    int desiredVisualID = -1;
@@ -700,7 +697,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 	    break;
 	 case GLX_BUFFER_SIZE:
 	    parselist++;
-	    min_ci = *parselist++;
+	    parselist++;
 	    break;
 	 case GLX_LEVEL:
 	    parselist++;
@@ -805,11 +802,11 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             break;
          case GLX_TRANSPARENT_TYPE_EXT:
             parselist++;
-            trans_type = *parselist++;
+            parselist++;
             break;
          case GLX_TRANSPARENT_INDEX_VALUE_EXT:
             parselist++;
-            trans_value = *parselist++;
+            parselist++;
             break;
          case GLX_TRANSPARENT_RED_VALUE_EXT:
          case GLX_TRANSPARENT_GREEN_VALUE_EXT:
