@@ -149,15 +149,6 @@ static struct native_display_buffer drm_display_buffer = {
    drm_display_export_native_buffer
 };
 
-static int
-drm_display_authenticate(void *user_data, uint32_t magic)
-{
-   struct native_display *ndpy = user_data;
-   struct drm_display *drmdpy = drm_display(ndpy);
-
-   return drmAuthMagic(drmdpy->fd, magic);
-}
-
 static char *
 drm_get_device_name(int fd)
 {
@@ -195,6 +186,15 @@ out:
 }
 
 #ifdef HAVE_WAYLAND_BACKEND
+
+static int
+drm_display_authenticate(void *user_data, uint32_t magic)
+{
+   struct native_display *ndpy = user_data;
+   struct drm_display *drmdpy = drm_display(ndpy);
+
+   return drmAuthMagic(drmdpy->fd, magic);
+}
 
 static struct wayland_drm_callbacks wl_drm_callbacks = {
    drm_display_authenticate,
