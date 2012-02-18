@@ -1809,6 +1809,8 @@ fs_visitor::emit_dummy_fs()
    fs_inst *write;
    write = emit(FS_OPCODE_FB_WRITE, fs_reg(0), fs_reg(0));
    write->base_mrf = 2;
+   write->mlen = 4;
+   write->eot = true;
 }
 
 /* The register location here is relative to the start of the URB
