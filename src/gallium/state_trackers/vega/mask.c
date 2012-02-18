@@ -384,10 +384,6 @@ void mask_layer_fill(struct vg_mask_layer *layer,
                      VGint width, VGint height,
                      VGfloat value)
 {
-   VGfloat alpha_color[4] = {0, 0, 0, 0};
-
-   alpha_color[3] = value;
-
    mask_resource_fill(layer->sampler_view->texture,
                       x, y, width, height, value);
 }
