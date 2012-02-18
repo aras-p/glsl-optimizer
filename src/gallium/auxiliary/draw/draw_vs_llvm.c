@@ -103,6 +103,7 @@ draw_create_vs_llvm(struct draw_context *draw,
 	 vs->base.info.file_max[TGSI_FILE_INPUT]+1,
 	 vs->base.info.file_max[TGSI_FILE_SAMPLER]+1);
 
+   vs->base.state.stream_output = state->stream_output;
    vs->base.draw = draw;
    vs->base.prepare = vs_llvm_prepare;
    vs->base.run_linear = vs_llvm_run_linear;
