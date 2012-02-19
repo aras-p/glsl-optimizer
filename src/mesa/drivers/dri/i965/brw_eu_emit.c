@@ -2270,7 +2270,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_type,
 			    msg_length,
 			    header_present,
-			    1, /* last render target write */
+			    eot, /* last render target write */
 			    response_length,
 			    eot,
 			    0 /* send_commit_msg */);
