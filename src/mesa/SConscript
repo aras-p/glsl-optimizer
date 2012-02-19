@@ -384,7 +384,7 @@ if env['gles']:
 #
 # Assembly sources
 #
-if env['gcc'] and env['platform'] != 'windows':
+if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
     if env['machine'] == 'x86':
         env.Append(CPPDEFINES = [
             'USE_X86_ASM',
