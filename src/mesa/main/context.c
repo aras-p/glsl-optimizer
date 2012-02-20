@@ -712,20 +712,15 @@ check_context_limits(struct gl_context *ctx)
    assert(ctx->Const.MaxCubeTextureLevels <= MAX_CUBE_TEXTURE_LEVELS);
    assert(ctx->Const.MaxTextureRectSize <= MAX_TEXTURE_RECT_SIZE);
 
-   /* make sure largest texture image is <= MAX_WIDTH in size */
-   assert((1 << (ctx->Const.MaxTextureLevels - 1)) <= MAX_WIDTH);
-   assert((1 << (ctx->Const.MaxCubeTextureLevels - 1)) <= MAX_WIDTH);
-   assert((1 << (ctx->Const.Max3DTextureLevels - 1)) <= MAX_WIDTH);
-
    /* Texture level checks */
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
 
    /* Max texture size should be <= max viewport size (render to texture) */
-   assert((1 << (MAX_TEXTURE_LEVELS - 1)) <= MAX_WIDTH);
-
-   assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
-   assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
+   assert((1 << (ctx->Const.MaxTextureLevels - 1))
+          <= ctx->Const.MaxViewportWidth);
+   assert((1 << (ctx->Const.MaxTextureLevels - 1))
+          <= ctx->Const.MaxViewportHeight);
 
    assert(ctx->Const.MaxDrawBuffers <= MAX_DRAW_BUFFERS);
 
