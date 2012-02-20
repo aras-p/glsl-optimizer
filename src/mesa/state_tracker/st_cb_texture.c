@@ -684,9 +684,16 @@ decompress_with_blit(struct gl_context * ctx,
       /* format translation via floats */
       GLuint row;
       enum pipe_format pformat = util_format_linear(dst_texture->format);
+      GLfloat *rgba;
+
+      rgba = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
+         goto end;
+      }
+
       for (row = 0; row < height; row++) {
          const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
-         GLfloat rgba[4 * MAX_WIDTH];
          GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
                                               height, format, type, row, 0);
 
@@ -700,8 +707,11 @@ decompress_with_blit(struct gl_context * ctx,
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                     type, dest, &ctx->Pack, transferOps);
       }
+
+      free(rgba);
    }
 
+end:
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
    pipe->transfer_destroy(pipe, tex_xfer);
@@ -763,8 +773,6 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-   assert(width <= MAX_WIDTH);
-
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       srcY = strb->Base.Height - srcY - height;
    }
@@ -793,6 +801,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
       GLint row, yStep;
+      uint *data;
 
       /* determine bottom-to-top vs. top-to-bottom order for src buffer */
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
@@ -804,15 +813,23 @@ fallback_copy_texsubimage(struct gl_context *ctx,
          yStep = 1;
       }
 
-      /* To avoid a large temp memory allocation, do copy row by row */
-      for (row = 0; row < height; row++, srcY += yStep) {
-         uint data[MAX_WIDTH];
-         pipe_get_tile_z(pipe, src_trans, 0, srcY, width, 1, data);
-         if (scaleOrBias) {
-            _mesa_scale_and_bias_depth_uint(ctx, width, data);
+      data = (uint *) malloc(width * sizeof(uint));
+
+      if (data) {
+         /* To avoid a large temp memory allocation, do copy row by row */
+         for (row = 0; row < height; row++, srcY += yStep) {
+            pipe_get_tile_z(pipe, src_trans, 0, srcY, width, 1, data);
+            if (scaleOrBias) {
+               _mesa_scale_and_bias_depth_uint(ctx, width, data);
+            }
+            pipe_put_tile_z(pipe, stImage->transfer, 0, row, width, 1, data);
          }
-         pipe_put_tile_z(pipe, stImage->transfer, 0, row, width, 1, data);
       }
+      else {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage()");
+      }
+
+      free(data);
    }
    else {
       /* RGBA format */
