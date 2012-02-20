@@ -46,9 +46,6 @@
 /** Maximum texture matrix stack depth */
 #define MAX_TEXTURE_STACK_DEPTH 10
 
-/** Maximum color matrix stack depth */
-#define MAX_COLOR_STACK_DEPTH 4
-
 /** Maximum attribute stack depth */
 #define MAX_ATTRIB_STACK_DEPTH 16
 
@@ -74,11 +71,7 @@
 #define MAX_AUX_BUFFERS 1
 
 /** Maximum order (degree) of curves */
-#ifdef AMIGA
-#   define MAX_EVAL_ORDER 12
-#else
-#   define MAX_EVAL_ORDER 30
-#endif
+#define MAX_EVAL_ORDER 30
 
 /** Maximum Name stack depth */
 #define MAX_NAME_STACK_DEPTH 64
@@ -158,14 +151,6 @@
 
 /** Subpixel precision for antialiasing, window coordinate snapping */
 #define SUB_PIXEL_BITS 4
-
-/** Size of histogram tables */
-#define HISTOGRAM_TABLE_SIZE 256
-
-/** Max convolution filter width */
-#define MAX_CONVOLUTION_WIDTH 9
-/** Max convolution filter height */
-#define MAX_CONVOLUTION_HEIGHT 9
 
 /** For GL_ARB_texture_compression */
 #define MAX_COMPRESSED_TEXTURE_FORMATS 25
