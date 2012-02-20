@@ -469,7 +469,7 @@ dri_create_buffer(__DRIscreen * sPriv,
     dPriv->driverPrivate = drawable;
     drawable->dPriv = dPriv;
 
-    drawable->row = malloc(MAX_WIDTH * 4);
+    drawable->row = malloc(SWRAST_MAX_WIDTH * 4);
     if (drawable->row == NULL)
 	goto drawable_fail;
 
