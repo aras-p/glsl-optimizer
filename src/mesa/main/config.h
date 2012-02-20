@@ -115,7 +115,9 @@
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
 #define MAX_TEXTURE_RECT_SIZE 16384
 
-/** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
+/**
+ * Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array
+ */
 #define MAX_ARRAY_TEXTURE_LAYERS 64
 
 /**
@@ -142,13 +144,11 @@
 
 
 /** 
- * Maximum viewport/image width. Must accomodate all texture sizes too. 
+ * Maximum viewport/image size.  Must accomodate all texture sizes too. 
  */
-
 #ifndef MAX_WIDTH
 #   define MAX_WIDTH 16384
 #endif
-/** Maximum viewport/image height */
 #ifndef MAX_HEIGHT
 #   define MAX_HEIGHT 16384
 #endif
