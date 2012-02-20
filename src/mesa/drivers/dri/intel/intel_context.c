@@ -698,11 +698,9 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    if (intel->gen >= 4) {
-      if (MAX_WIDTH > 8192)
-	 ctx->Const.MaxRenderbufferSize = 8192;
+      ctx->Const.MaxRenderbufferSize = 8192;
    } else {
-      if (MAX_WIDTH > 2048)
-	 ctx->Const.MaxRenderbufferSize = 2048;
+      ctx->Const.MaxRenderbufferSize = 2048;
    }
 
    /* Initialize the software rasterizer and helper modules. */
