@@ -246,7 +246,7 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *readRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   GLfloat *p, *tmpImage;
+   GLfloat *p, *tmpImage, *depth;
    GLint sy, dy, stepy;
    GLint j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
@@ -303,8 +303,13 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
+   depth = (GLfloat *) malloc(width * sizeof(GLfloat));
+   if (!depth) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels()");
+      goto end;
+   }
+
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
-      GLfloat depth[MAX_WIDTH];
       /* get depth values */
       if (overlapping) {
          memcpy(depth, p, width * sizeof(GLfloat));
@@ -327,6 +332,9 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
          _swrast_write_rgba_span(ctx, &span);
    }
 
+   free(depth);
+
+end:
    if (overlapping)
       free(tmpImage);
 }
@@ -342,7 +350,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint sy, dy, stepy;
    GLint j;
-   GLubyte *p, *tmpImage;
+   GLubyte *p, *tmpImage, *stencil;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
 
@@ -392,9 +400,13 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
-      GLubyte stencil[MAX_WIDTH];
+   stencil = (GLubyte *) malloc(width * sizeof(GLubyte));
+   if (!stencil) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels()");
+      goto end;
+   }
 
+   for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       /* Get stencil values */
       if (overlapping) {
          memcpy(stencil, p, width * sizeof(GLubyte));
@@ -416,6 +428,9 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   free(stencil);
+
+end:
    if (overlapping)
       free(tmpImage);
 }
