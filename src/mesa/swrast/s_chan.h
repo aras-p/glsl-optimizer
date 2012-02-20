@@ -36,6 +36,14 @@
 
 
 /**
+ * Default bits per color channel:  8, 16 or 32
+ */
+#ifndef CHAN_BITS
+#define CHAN_BITS 8
+#endif
+
+
+/**
  * Color channel data type.
  */
 #if CHAN_BITS == 8

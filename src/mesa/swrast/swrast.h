@@ -37,6 +37,26 @@
 
 
 /**
+ * If non-zero use GLdouble for walking triangle edges, for better accuracy.
+ */
+#define TRIANGLE_WALK_DOUBLE 0
+
+
+/**
+ * Bits per depth buffer value (max is 32).
+ */
+#ifndef DEFAULT_SOFTWARE_DEPTH_BITS
+#define DEFAULT_SOFTWARE_DEPTH_BITS 16
+#endif
+/** Depth buffer data type */
+#if DEFAULT_SOFTWARE_DEPTH_BITS <= 16
+#define DEFAULT_SOFTWARE_DEPTH_TYPE GLushort
+#else
+#define DEFAULT_SOFTWARE_DEPTH_TYPE GLuint
+#endif
+
+
+/**
  * Max image/surface/texture size.
  */
 #define SWRAST_MAX_WIDTH 16384
