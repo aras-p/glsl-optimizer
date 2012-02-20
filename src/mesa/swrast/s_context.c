@@ -736,6 +736,8 @@ _swrast_CreateContext( struct gl_context *ctx )
    assert((1 << (ctx->Const.MaxCubeTextureLevels - 1)) <= SWRAST_MAX_WIDTH);
    assert((1 << (ctx->Const.Max3DTextureLevels - 1)) <= SWRAST_MAX_WIDTH);
 
+   assert(PROG_MAX_WIDTH == SWRAST_MAX_WIDTH);
+
    if (SWRAST_DEBUG) {
       _mesa_debug(ctx, "_swrast_CreateContext\n");
    }

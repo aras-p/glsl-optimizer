@@ -39,6 +39,10 @@ typedef void (*FetchTexelDerivFunc)(struct gl_context *ctx, const GLfloat texcoo
                                     GLuint unit, GLfloat color[4]);
 
 
+/** NOTE: This must match SWRAST_MAX_WIDTH */
+#define PROG_MAX_WIDTH 16384
+
+
 /**
  * Virtual machine state used during execution of vertex/fragment programs.
  */
@@ -47,7 +51,7 @@ struct gl_program_machine
    const struct gl_program *CurProgram;
 
    /** Fragment Input attributes */
-   GLfloat (*Attribs)[MAX_WIDTH][4];
+   GLfloat (*Attribs)[PROG_MAX_WIDTH][4];
    GLfloat (*DerivX)[4];
    GLfloat (*DerivY)[4];
    GLuint NumDeriv; /**< Max index into DerivX/Y arrays */
