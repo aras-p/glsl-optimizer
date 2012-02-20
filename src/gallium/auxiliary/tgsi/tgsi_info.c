@@ -333,6 +333,7 @@ tgsi_opcode_infer_dst_type( uint opcode )
    case TGSI_OPCODE_MOD:
    case TGSI_OPCODE_UARL:
    case TGSI_OPCODE_ARL:
+   case TGSI_OPCODE_ARR:
    case TGSI_OPCODE_IABS:
    case TGSI_OPCODE_ISSG:
       return TGSI_TYPE_SIGNED;

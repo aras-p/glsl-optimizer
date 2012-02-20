@@ -102,8 +102,9 @@ arr_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_emit_llvm_unary(bld_base,
-                                         TGSI_OPCODE_ROUND, emit_data->args[0]);
+   LLVMValueRef tmp = lp_build_emit_llvm_unary(bld_base, TGSI_OPCODE_ROUND, emit_data->args[0]);
+   emit_data->output[emit_data->chan] = LLVMBuildFPToSI(bld_base->base.gallivm->builder, tmp,
+							bld_base->uint_bld.vec_type, "");
 }
 
 /* TGSI_OPCODE_CLAMP */
@@ -820,6 +821,16 @@ arl_emit_cpu(
 							bld_base->uint_bld.vec_type, "");
 }
 
+/* TGSI_OPCODE_ARR (CPU Only) */
+static void
+arr_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_iround(&bld_base->base, emit_data->args[0]);
+}
+
 /* TGSI_OPCODE_CEIL (CPU Only) */
 static void
 ceil_emit_cpu(
@@ -1166,6 +1177,7 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_ABS].emit = abs_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ADD].emit = add_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_ARL].emit = arl_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_ARR].emit = arr_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_CEIL].emit = ceil_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_CND].emit = cnd_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_COS].emit = cos_emit_cpu;

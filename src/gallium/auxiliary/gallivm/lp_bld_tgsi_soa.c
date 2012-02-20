@@ -1027,6 +1027,8 @@ emit_store_chan(
       break;
 
    case TGSI_FILE_ADDRESS:
+      assert(dtype == TGSI_TYPE_SIGNED);
+      assert(LLVMTypeOf(value) == bld_base->base.int_vec_type);
       lp_exec_mask_store(&bld->exec_mask, bld_store, pred, value,
                          bld->addr[reg->Register.Index][chan_index]);
       break;
@@ -1377,6 +1379,11 @@ lp_emit_declaration_soa(
          break;
 
       case TGSI_FILE_ADDRESS:
+	 /* ADDR registers are the only allocated with an integer LLVM IR type,
+	  * as they are guaranteed to always have integers.
+	  * XXX: Not sure if this exception is worthwhile (or the whole idea of
+	  * an ADDR register for that matter).
+	  */
          assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < TGSI_NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(gallivm, bld_base->base.int_vec_type, "addr");
