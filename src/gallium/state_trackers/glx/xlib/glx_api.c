@@ -66,6 +66,9 @@
 #define DEFAULT_DIRECT GL_TRUE
 
 
+/** XXX this could be based on gallium's max texture size */
+#define PBUFFER_MAX_SIZE 16384
+
 
 /**
  * The GLXContext typedef is defined as a pointer to this structure.
@@ -2021,13 +2024,13 @@ glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attribList)
    if (width == 0 || height == 0)
       return 0;
 
-   if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+   if (width > PBUFFER_MAX_SIZE || height > PBUFFER_MAX_SIZE) {
       /* If allocation would have failed and GLX_LARGEST_PBUFFER is set,
        * allocate the largest possible buffer.
        */
       if (useLargest) {
-         width = MAX_WIDTH;
-         height = MAX_HEIGHT;
+         width = PBUFFER_MAX_SIZE;
+         height = PBUFFER_MAX_SIZE;
       }
    }
 
