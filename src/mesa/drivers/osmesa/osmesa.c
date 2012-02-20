@@ -72,7 +72,7 @@ struct osmesa_context
    GLenum format;		/*< User-specified context format */
    GLint userRowLength;		/*< user-specified number of pixels per row */
    GLint rInd, gInd, bInd, aInd;/*< index offsets for RGBA formats */
-   GLvoid *rowaddr[MAX_HEIGHT];	/*< address of first pixel in each image row */
+   GLvoid *rowaddr[SWRAST_MAX_HEIGHT];	/*< address of first pixel in each image row */
    GLboolean yup;		/*< TRUE  -> Y increases upward */
 				/*< FALSE -> Y increases downward */
    GLenum DataType;
@@ -852,7 +852,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
 {
    if (!osmesa || !buffer ||
        width < 1 || height < 1 ||
-       width > MAX_WIDTH || height > MAX_HEIGHT) {
+       width > SWRAST_MAX_WIDTH || height > SWRAST_MAX_HEIGHT) {
       return GL_FALSE;
    }
 
@@ -998,10 +998,10 @@ OSMesaGetIntegerv( GLint pname, GLint *value )
          *value = osmesa->yup;
          return;
       case OSMESA_MAX_WIDTH:
-         *value = MAX_WIDTH;
+         *value = SWRAST_MAX_WIDTH;
          return;
       case OSMESA_MAX_HEIGHT:
-         *value = MAX_HEIGHT;
+         *value = SWRAST_MAX_HEIGHT;
          return;
       default:
          _mesa_error(&osmesa->mesa, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
