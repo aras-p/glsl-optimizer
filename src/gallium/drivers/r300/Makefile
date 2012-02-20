@@ -11,6 +11,8 @@ C_SOURCES += \
 	$(TOP)/src/glsl/ralloc.c \
 	$(TOP)/src/mesa/program/register_allocate.c
 
+#This is for libdrm include path
+CFLAGS+=$(RADEON_CFLAGS)
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
