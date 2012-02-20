@@ -150,7 +150,7 @@ zoom_span( struct gl_context *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
    zoomedWidth = x1 - x0;
    ASSERT(zoomedWidth > 0);
-   ASSERT(zoomedWidth <= MAX_WIDTH);
+   ASSERT(zoomedWidth <= SWRAST_MAX_WIDTH);
 
    /* no pixel arrays! must be horizontal spans. */
    ASSERT((span->arrayMask & SPAN_XY) == 0);
@@ -373,7 +373,7 @@ _swrast_write_zoomed_stencil_span(struct gl_context *ctx, GLint imgX, GLint imgY
 
    zoomedWidth = x1 - x0;
    ASSERT(zoomedWidth > 0);
-   ASSERT(zoomedWidth <= MAX_WIDTH);
+   ASSERT(zoomedWidth <= SWRAST_MAX_WIDTH);
 
    zoomedVals = (GLubyte *) malloc(zoomedWidth * sizeof(GLubyte));
    if (!zoomedVals)
@@ -418,7 +418,7 @@ _swrast_write_zoomed_z_span(struct gl_context *ctx, GLint imgX, GLint imgY,
 
    zoomedWidth = x1 - x0;
    ASSERT(zoomedWidth > 0);
-   ASSERT(zoomedWidth <= MAX_WIDTH);
+   ASSERT(zoomedWidth <= SWRAST_MAX_WIDTH);
 
    zoomedVals = (GLuint *) malloc(zoomedWidth * sizeof(GLuint));
    if (!zoomedVals)

@@ -35,6 +35,14 @@
 #include "main/mtypes.h"
 #include "swrast/s_chan.h"
 
+
+/**
+ * Max image/surface/texture size.
+ */
+#define SWRAST_MAX_WIDTH 16384
+#define SWRAST_MAX_HEIGHT 16384
+
+
 /**
  * \struct SWvertex
  * \brief Data-structure to handle vertices in the software rasterizer.

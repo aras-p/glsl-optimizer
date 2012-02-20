@@ -91,7 +91,7 @@ NAME(plot)(struct gl_context *ctx, struct LineInfo *line, int ix, int iy)
    ATTRIB_LOOP_END
 #endif
 
-   if (line->span.end == MAX_WIDTH) {
+   if (line->span.end == SWRAST_MAX_WIDTH) {
       _swrast_write_rgba_span(ctx, &(line->span));
       line->span.end = 0; /* reset counter */
    }

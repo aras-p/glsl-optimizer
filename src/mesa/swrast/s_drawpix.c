@@ -319,7 +319,7 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
        && ctx->DrawBuffer->Visual.depthBits == 16
        && !scaleOrBias
        && !zoom
-       && width <= MAX_WIDTH
+       && width <= SWRAST_MAX_WIDTH
        && !unpack->SwapBytes) {
       /* Special case: directly write 16-bit depth values */
       GLint row;
@@ -339,7 +339,7 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
    else if (type == GL_UNSIGNED_INT
             && !scaleOrBias
             && !zoom
-            && width <= MAX_WIDTH
+            && width <= SWRAST_MAX_WIDTH
             && !unpack->SwapBytes) {
       /* Special case: shift 32-bit values down to Visual.depthBits */
       const GLint shift = 32 - ctx->DrawBuffer->Visual.depthBits;
@@ -367,11 +367,11 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
       const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
       GLint skipPixels = 0;
 
-      /* in case width > MAX_WIDTH do the copy in chunks */
+      /* in case width > SWRAST_MAX_WIDTH do the copy in chunks */
       while (skipPixels < width) {
-         const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
+         const GLint spanWidth = MIN2(width - skipPixels, SWRAST_MAX_WIDTH);
          GLint row;
-         ASSERT(span.end <= MAX_WIDTH);
+         ASSERT(span.end <= SWRAST_MAX_WIDTH);
          for (row = 0; row < height; row++) {
             const GLvoid *zSrc = _mesa_image_address2d(unpack,
                                                       pixels, width, height,
@@ -453,9 +453,9 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
       /* use span array for temp color storage */
       GLfloat *rgba = (GLfloat *) span.array->attribs[FRAG_ATTRIB_COL0];
 
-      /* if the span is wider than MAX_WIDTH we have to do it in chunks */
+      /* if the span is wider than SWRAST_MAX_WIDTH we have to do it in chunks */
       while (skipPixels < width) {
-         const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
+         const GLint spanWidth = MIN2(width - skipPixels, SWRAST_MAX_WIDTH);
          const GLubyte *source
             = (const GLubyte *) _mesa_image_address2d(unpack, pixels,
                                                       width, height, format,

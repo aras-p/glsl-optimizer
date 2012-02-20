@@ -439,7 +439,7 @@ large_point(struct gl_context *ctx, const SWvertex *vert)
             span.end++;
          }
       }
-      assert(span.end <= MAX_WIDTH);
+      assert(span.end <= SWRAST_MAX_WIDTH);
       _swrast_write_rgba_span(ctx, &span);
    }
 }
@@ -475,7 +475,7 @@ pixel_point(struct gl_context *ctx, const SWvertex *vert)
    span->attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0F;
 
    /* check if we need to flush */
-   if (span->end >= MAX_WIDTH ||
+   if (span->end >= SWRAST_MAX_WIDTH ||
        (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT)) ||
        span->facing != swrast->PointLineFacing) {
       if (span->end > 0) {
@@ -504,7 +504,7 @@ pixel_point(struct gl_context *ctx, const SWvertex *vert)
    span->array->z[count] = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][2] + 0.5F);
 
    span->end = count + 1;
-   ASSERT(span->end <= MAX_WIDTH);
+   ASSERT(span->end <= SWRAST_MAX_WIDTH);
 }
 
 

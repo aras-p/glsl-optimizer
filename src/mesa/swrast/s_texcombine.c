@@ -49,9 +49,9 @@ static inline float4_array
 get_texel_array(SWcontext *swrast, GLuint unit)
 {
 #ifdef _OPENMP
-   return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4 * omp_get_num_threads() + (MAX_WIDTH * 4 * omp_get_thread_num()));
+   return (float4_array) (swrast->TexelBuffer + unit * SWRAST_MAX_WIDTH * 4 * omp_get_num_threads() + (SWRAST_MAX_WIDTH * 4 * omp_get_thread_num()));
 #else
-   return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4);
+   return (float4_array) (swrast->TexelBuffer + unit * SWRAST_MAX_WIDTH * 4);
 #endif
 }
 
@@ -611,7 +611,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
        */
       swrast->TexelBuffer =
 	 (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits * maxThreads *
-			    MAX_WIDTH * 4 * sizeof(GLfloat));
+			    SWRAST_MAX_WIDTH * 4 * sizeof(GLfloat));
       if (!swrast->TexelBuffer) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
 	 return;
@@ -625,7 +625,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       return;
    }
 
-   ASSERT(span->end <= MAX_WIDTH);
+   ASSERT(span->end <= SWRAST_MAX_WIDTH);
 
    /*
     * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)

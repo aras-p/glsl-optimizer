@@ -1164,7 +1164,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
       return;
    }
 
-   ASSERT(span->end <= MAX_WIDTH);
+   ASSERT(span->end <= SWRAST_MAX_WIDTH);
 
    /* Depth bounds test */
    if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {

@@ -123,7 +123,7 @@ _swrast_Bitmap( struct gl_context *ctx, GLint px, GLint py,
             src++;
       }
 
-      if (count + width >= MAX_WIDTH || row + 1 == height) {
+      if (count + width >= SWRAST_MAX_WIDTH || row + 1 == height) {
          /* flush the span */
          span.end = count;
          _swrast_write_rgba_span(ctx, &span);

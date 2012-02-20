@@ -32,6 +32,7 @@
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "swrast/s_chan.h"
+#include "swrast/swrast.h"
 
 
 struct gl_context;
@@ -71,24 +72,24 @@ typedef struct sw_span_arrays
    /* XXX someday look at transposing first two indexes for better memory
     * access pattern.
     */
-   GLfloat attribs[FRAG_ATTRIB_MAX][MAX_WIDTH][4];
+   GLfloat attribs[FRAG_ATTRIB_MAX][SWRAST_MAX_WIDTH][4];
 
    /** This mask indicates which fragments are alive or culled */
-   GLubyte mask[MAX_WIDTH];
+   GLubyte mask[SWRAST_MAX_WIDTH];
 
    GLenum ChanType; /**< Color channel type, GL_UNSIGNED_BYTE, GL_FLOAT */
 
    /** Attribute arrays that don't fit into attribs[] array above */
    /*@{*/
-   GLubyte rgba8[MAX_WIDTH][4];
-   GLushort rgba16[MAX_WIDTH][4];
+   GLubyte rgba8[SWRAST_MAX_WIDTH][4];
+   GLushort rgba16[SWRAST_MAX_WIDTH][4];
    GLchan (*rgba)[4];  /** either == rgba8 or rgba16 */
-   GLint   x[MAX_WIDTH];  /**< fragment X coords */
-   GLint   y[MAX_WIDTH];  /**< fragment Y coords */
-   GLuint  z[MAX_WIDTH];  /**< fragment Z coords */
-   GLuint  index[MAX_WIDTH];  /**< Color indexes */
-   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH]; /**< Texture LOD */
-   GLfloat coverage[MAX_WIDTH];  /**< Fragment coverage for AA/smoothing */
+   GLint   x[SWRAST_MAX_WIDTH];  /**< fragment X coords */
+   GLint   y[SWRAST_MAX_WIDTH];  /**< fragment Y coords */
+   GLuint  z[SWRAST_MAX_WIDTH];  /**< fragment Z coords */
+   GLuint  index[SWRAST_MAX_WIDTH];  /**< Color indexes */
+   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][SWRAST_MAX_WIDTH]; /**< Texture LOD */
+   GLfloat coverage[SWRAST_MAX_WIDTH];  /**< Fragment coverage for AA/smoothing */
    /*@}*/
 } SWspanarrays;
 

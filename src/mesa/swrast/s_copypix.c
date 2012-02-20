@@ -158,7 +158,7 @@ copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   ASSERT(width < MAX_WIDTH);
+   ASSERT(width < SWRAST_MAX_WIDTH);
 
    for (row = 0; row < height; row++, sy += stepy, dy += stepy) {
       GLvoid *rgba = span.array->attribs[FRAG_ATTRIB_COL0];

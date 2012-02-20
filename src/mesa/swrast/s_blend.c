@@ -998,7 +998,7 @@ _swrast_blend_span(struct gl_context *ctx, struct gl_renderbuffer *rb, SWspan *s
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    void *rbPixels;
 
-   ASSERT(span->end <= MAX_WIDTH);
+   ASSERT(span->end <= SWRAST_MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
    ASSERT(!ctx->Color.ColorLogicOpEnabled);
 

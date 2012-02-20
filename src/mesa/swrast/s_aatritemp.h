@@ -196,7 +196,7 @@
          span.array = SWRAST_CONTEXT(ctx)->SpanArrays + omp_get_thread_num();
 #endif
          /* skip over fragments with zero coverage */
-         while (startX < MAX_WIDTH) {
+         while (startX < SWRAST_MAX_WIDTH) {
             coverage = compute_coveragef(pMin, pMid, pMax, startX, iy);
             if (coverage > 0.0F)
                break;

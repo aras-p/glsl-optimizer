@@ -193,7 +193,7 @@ _swrast_logicop_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
 {
    void *rbPixels;
 
-   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->end < SWRAST_MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
 
    rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
