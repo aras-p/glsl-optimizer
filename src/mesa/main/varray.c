@@ -185,6 +185,7 @@ update_array(struct gl_context *ctx,
        (type == GL_UNSIGNED_INT_2_10_10_10_REV ||
         type == GL_INT_2_10_10_10_REV) && size != 4) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=%d)", func, size);
+      return;
    }
 
    ASSERT(size <= 4);
