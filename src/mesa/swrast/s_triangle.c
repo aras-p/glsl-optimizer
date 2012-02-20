@@ -201,6 +201,7 @@ _swrast_culltriangle( struct gl_context *ctx,
 #define RENDER_SPAN( span )						\
    GLuint i;				    				\
    GLubyte (*rgba)[4] = swrast->SpanArrays->rgba8;			\
+   GLubyte *mask = swrast->SpanArrays->mask;                            \
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -215,17 +216,17 @@ _swrast_culltriangle( struct gl_context *ctx,
          rgba[i][BCOMP] = texture[pos+0];				\
          rgba[i][ACOMP] = 0xff;          				\
          zRow[i] = z;							\
-         span.array->mask[i] = 1;					\
+         mask[i] = 1;							\
       }									\
       else {								\
-         span.array->mask[i] = 0;					\
+         mask[i] = 0;							\
       }									\
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
    _swrast_put_row(ctx, rb, GL_UNSIGNED_BYTE,                           \
-                   span.end, span.x, span.y, rgba, span.array->mask);
+                   span.end, span.x, span.y, rgba, mask);
 
 #include "s_tritemp.h"
 
