@@ -142,7 +142,7 @@ _swrast_culltriangle( struct gl_context *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;								\
-   GLubyte rgba[MAX_WIDTH][4];						\
+   GLubyte (*rgba)[4] = swrast->SpanArrays->rgba8;			\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
@@ -200,7 +200,7 @@ _swrast_culltriangle( struct gl_context *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;				    				\
-   GLubyte rgba[MAX_WIDTH][4];						\
+   GLubyte (*rgba)[4] = swrast->SpanArrays->rgba8;			\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    for (i = 0; i < span.end; i++) {					\
