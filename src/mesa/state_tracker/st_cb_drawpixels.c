@@ -824,9 +824,10 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    enum pipe_transfer_usage usage;
    struct pipe_transfer *pt;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
-   GLint skipPixels;
    ubyte *stmap;
    struct gl_pixelstore_attrib clippedUnpack = *unpack;
+   GLubyte *sValues;
+   GLuint *zValues;
 
    if (!zoom) {
       if (!_mesa_clip_drawpixels(ctx, &x, &y, &width, &height,
@@ -862,22 +863,19 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    pixels = _mesa_map_pbo_source(ctx, &clippedUnpack, pixels);
    assert(pixels);
 
-   /* if width > MAX_WIDTH, have to process image in chunks */
-   skipPixels = 0;
-   while (skipPixels < width) {
-      const GLint spanX = skipPixels;
-      const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
+   sValues = (GLubyte *) malloc(width * sizeof(GLubyte));
+   zValues = (GLuint *) malloc(width * sizeof(GLuint));
+
+   if (sValues && zValues) {
       GLint row;
       for (row = 0; row < height; row++) {
-         GLubyte sValues[MAX_WIDTH];
-         GLuint zValues[MAX_WIDTH];
          GLfloat *zValuesFloat = (GLfloat*)zValues;
          GLenum destType = GL_UNSIGNED_BYTE;
          const GLvoid *source = _mesa_image_address2d(&clippedUnpack, pixels,
                                                       width, height,
                                                       format, type,
-                                                      row, skipPixels);
-         _mesa_unpack_stencil_span(ctx, spanWidth, destType, sValues,
+                                                      row, 0);
+         _mesa_unpack_stencil_span(ctx, width, destType, sValues,
                                    type, source, &clippedUnpack,
                                    ctx->_ImageTransferState);
 
@@ -886,7 +884,7 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                pt->resource->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT ?
                GL_FLOAT : GL_UNSIGNED_INT;
 
-            _mesa_unpack_depth_span(ctx, spanWidth, ztype, zValues,
+            _mesa_unpack_depth_span(ctx, width, ztype, zValues,
                                     (1 << 24) - 1, type, source,
                                     &clippedUnpack);
          }
@@ -910,63 +908,63 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
             switch (pt->resource->format) {
             case PIPE_FORMAT_S8_UINT:
                {
-                  ubyte *dest = stmap + spanY * pt->stride + spanX;
+                  ubyte *dest = stmap + spanY * pt->stride;
                   assert(usage == PIPE_TRANSFER_WRITE);
-                  memcpy(dest, sValues, spanWidth);
+                  memcpy(dest, sValues, width);
                }
                break;
             case PIPE_FORMAT_Z24_UNORM_S8_UINT:
                if (format == GL_DEPTH_STENCIL) {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLint k;
                   assert(usage == PIPE_TRANSFER_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      dest[k] = zValues[k] | (sValues[k] << 24);
                   }
                }
                else {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLint k;
                   assert(usage == PIPE_TRANSFER_READ_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      dest[k] = (dest[k] & 0xffffff) | (sValues[k] << 24);
                   }
                }
                break;
             case PIPE_FORMAT_S8_UINT_Z24_UNORM:
                if (format == GL_DEPTH_STENCIL) {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLint k;
                   assert(usage == PIPE_TRANSFER_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      dest[k] = (zValues[k] << 8) | (sValues[k] & 0xff);
                   }
                }
                else {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLint k;
                   assert(usage == PIPE_TRANSFER_READ_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      dest[k] = (dest[k] & 0xffffff00) | (sValues[k] & 0xff);
                   }
                }
                break;
             case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
                if (format == GL_DEPTH_STENCIL) {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLfloat *destf = (GLfloat*)dest;
                   GLint k;
                   assert(usage == PIPE_TRANSFER_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      destf[k*2] = zValuesFloat[k];
                      dest[k*2+1] = sValues[k] & 0xff;
                   }
                }
                else {
-                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  uint *dest = (uint *) (stmap + spanY * pt->stride);
                   GLint k;
                   assert(usage == PIPE_TRANSFER_READ_WRITE);
-                  for (k = 0; k < spanWidth; k++) {
+                  for (k = 0; k < width; k++) {
                      dest[k*2+1] = sValues[k] & 0xff;
                   }
                }
@@ -976,8 +974,13 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
             }
          }
       }
-      skipPixels += spanWidth;
    }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels()");
+   }
+
+   free(sValues);
+   free(zValues);
 
    _mesa_unmap_pbo_source(ctx, &clippedUnpack);
 
