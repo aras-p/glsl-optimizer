@@ -268,7 +268,7 @@ _mesa_initialize_visual( struct gl_config *vis,
    if (depthBits < 0 || depthBits > 32) {
       return GL_FALSE;
    }
-   if (stencilBits < 0 || stencilBits > STENCIL_BITS) {
+   if (stencilBits < 0 || stencilBits > 8) {
       return GL_FALSE;
    }
    assert(accumRedBits >= 0);
