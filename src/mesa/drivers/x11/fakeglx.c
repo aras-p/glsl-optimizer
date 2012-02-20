@@ -2220,13 +2220,13 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
    if (width == 0 || height == 0)
       return 0;
 
-   if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+   if (width > SWRAST_MAX_WIDTH || height > SWRAST_MAX_HEIGHT) {
       /* If allocation would have failed and GLX_LARGEST_PBUFFER is set,
        * allocate the largest possible buffer.
        */
       if (useLargest) {
-         width = MAX_WIDTH;
-         height = MAX_HEIGHT;
+         width = SWRAST_MAX_WIDTH;
+         height = SWRAST_MAX_HEIGHT;
       }
    }
 
