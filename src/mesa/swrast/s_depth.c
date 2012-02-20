@@ -419,8 +419,14 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
    const GLuint count = span->end;
    GLuint i;
    GLboolean anyPass = GL_FALSE;
-   GLuint zBufferTemp[MAX_WIDTH];
+   GLuint *zBufferTemp;
    const GLuint *zBufferVals;
+
+   zBufferTemp = (GLuint *) malloc(count * sizeof(GLuint));
+   if (!zBufferTemp) {
+      /* don't generate a stream of OUT_OF_MEMORY errors here */
+      return GL_FALSE;
+   }
 
    if (span->arrayMask & SPAN_XY)
       zStart = NULL;
@@ -452,6 +458,8 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
             anyPass = GL_TRUE;
       }
    }
+
+   free(zBufferTemp);
 
    return anyPass;
 }
