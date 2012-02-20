@@ -110,6 +110,7 @@ read_depth_pixels( struct gl_context *ctx,
    GLint j;
    GLubyte *dst, *map;
    int dstStride, stride;
+   GLfloat *depthValues;
 
    if (!rb)
       return;
@@ -119,8 +120,6 @@ read_depth_pixels( struct gl_context *ctx,
    ASSERT(y >= 0);
    ASSERT(x + width <= (GLint) rb->Width);
    ASSERT(y + height <= (GLint) rb->Height);
-   /* width should never be > MAX_WIDTH since we did clipping earlier */
-   ASSERT(width <= MAX_WIDTH);
 
    if (fast_read_depth_pixels(ctx, x, y, width, height, type, pixels, packing))
       return;
@@ -136,15 +135,23 @@ read_depth_pixels( struct gl_context *ctx,
       return;
    }
 
-   /* General case (slower) */
-   for (j = 0; j < height; j++, y++) {
-      GLfloat depthValues[MAX_WIDTH];
-      _mesa_unpack_float_z_row(rb->Format, width, map, depthValues);
-      _mesa_pack_depth_span(ctx, width, dst, type, depthValues, packing);
+   depthValues = (GLfloat *) malloc(width * sizeof(GLfloat));
 
-      dst += dstStride;
-      map += stride;
+   if (depthValues) {
+      /* General case (slower) */
+      for (j = 0; j < height; j++, y++) {
+         _mesa_unpack_float_z_row(rb->Format, width, map, depthValues);
+         _mesa_pack_depth_span(ctx, width, dst, type, depthValues, packing);
+
+         dst += dstStride;
+         map += stride;
+      }
    }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+   }
+
+   free(depthValues);
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
@@ -163,14 +170,11 @@ read_stencil_pixels( struct gl_context *ctx,
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint j;
-   GLubyte *map;
+   GLubyte *map, *stencil;
    GLint stride;
 
    if (!rb)
       return;
-
-   /* width should never be > MAX_WIDTH since we did clipping earlier */
-   ASSERT(width <= MAX_WIDTH);
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,
 			       &map, &stride);
@@ -179,19 +183,27 @@ read_stencil_pixels( struct gl_context *ctx,
       return;
    }
 
-   /* process image row by row */
-   for (j = 0; j < height; j++) {
-      GLvoid *dest;
-      GLubyte stencil[MAX_WIDTH];
+   stencil = (GLubyte *) malloc(width * sizeof(GLubyte));
 
-      _mesa_unpack_ubyte_stencil_row(rb->Format, width, map, stencil);
-      dest = _mesa_image_address2d(packing, pixels, width, height,
-                                   GL_STENCIL_INDEX, type, j, 0);
+   if (stencil) {
+      /* process image row by row */
+      for (j = 0; j < height; j++) {
+         GLvoid *dest;
 
-      _mesa_pack_stencil_span(ctx, width, type, dest, stencil, packing);
+         _mesa_unpack_ubyte_stencil_row(rb->Format, width, map, stencil);
+         dest = _mesa_image_address2d(packing, pixels, width, height,
+                                      GL_STENCIL_INDEX, type, j, 0);
 
-      map += stride;
+         _mesa_pack_stencil_span(ctx, width, type, dest, stencil, packing);
+
+         map += stride;
+      }
    }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+   }
+
+   free(stencil);
 
    ctx->Driver.UnmapRenderbuffer(ctx, rb);
 }
@@ -378,7 +390,7 @@ fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *depthRb = fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-   GLubyte *depthMap, *stencilMap;
+   GLubyte *depthMap, *stencilMap, *stencilVals;
    int depthStride, stencilStride, i, j;
 
    if (_mesa_get_format_datatype(depthRb->Format) != GL_UNSIGNED_NORMALIZED)
@@ -399,21 +411,28 @@ fast_read_depth_stencil_pixels_separate(struct gl_context *ctx,
       return GL_TRUE;  /* don't bother trying the slow path */
    }
 
-   for (j = 0; j < height; j++) {
-      GLubyte stencilVals[MAX_WIDTH];
+   stencilVals = (GLubyte *) malloc(width * sizeof(GLubyte));
 
-      _mesa_unpack_uint_z_row(depthRb->Format, width, depthMap, dst);
-      _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
-				     stencilMap, stencilVals);
+   if (stencilVals) {
+      for (j = 0; j < height; j++) {
+         _mesa_unpack_uint_z_row(depthRb->Format, width, depthMap, dst);
+         _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
+                                        stencilMap, stencilVals);
 
-      for (i = 0; i < width; i++) {
-	 dst[i] = (dst[i] & 0xffffff00) | stencilVals[i];
+         for (i = 0; i < width; i++) {
+            dst[i] = (dst[i] & 0xffffff00) | stencilVals[i];
+         }
+
+         depthMap += depthStride;
+         stencilMap += stencilStride;
+         dst += dstStride / 4;
       }
-
-      depthMap += depthStride;
-      stencilMap += stencilStride;
-      dst += dstStride / 4;
    }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+   }
+
+   free(stencilVals);
 
    ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
    ctx->Driver.UnmapRenderbuffer(ctx, stencilRb);
@@ -434,6 +453,9 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
    struct gl_renderbuffer *stencilRb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLubyte *depthMap, *stencilMap;
    int depthStride, stencilStride, j;
+   GLubyte *stencilVals;
+   GLfloat *depthVals;
+
 
    /* The depth and stencil buffers might be separate, or a single buffer.
     * If one buffer, only map it once.
@@ -460,21 +482,29 @@ slow_read_depth_stencil_pixels_separate(struct gl_context *ctx,
       stencilStride = depthStride;
    }
 
-   for (j = 0; j < height; j++) {
-      GLubyte stencilVals[MAX_WIDTH];
-      GLfloat depthVals[MAX_WIDTH];
+   stencilVals = (GLubyte *) malloc(width * sizeof(GLubyte));
+   depthVals = (GLfloat *) malloc(width * sizeof(GLfloat));
 
-      _mesa_unpack_float_z_row(depthRb->Format, width, depthMap, depthVals);
-      _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
-				     stencilMap, stencilVals);
+   if (stencilVals && depthVals) {
+      for (j = 0; j < height; j++) {
+         _mesa_unpack_float_z_row(depthRb->Format, width, depthMap, depthVals);
+         _mesa_unpack_ubyte_stencil_row(stencilRb->Format, width,
+                                        stencilMap, stencilVals);
 
-      _mesa_pack_depth_stencil_span(ctx, width, type, (GLuint *)dst,
-				    depthVals, stencilVals, packing);
+         _mesa_pack_depth_stencil_span(ctx, width, type, (GLuint *)dst,
+                                       depthVals, stencilVals, packing);
 
-      depthMap += depthStride;
-      stencilMap += stencilStride;
-      dst += dstStride;
+         depthMap += depthStride;
+         stencilMap += stencilStride;
+         dst += dstStride;
+      }
    }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+   }
+
+   free(stencilVals);
+   free(depthVals);
 
    ctx->Driver.UnmapRenderbuffer(ctx, depthRb);
    if (stencilRb != depthRb) {
