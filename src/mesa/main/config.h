@@ -136,15 +136,9 @@
 #define MAX_TEXTURE_UNITS ((MAX_TEXTURE_COORD_UNITS > MAX_TEXTURE_IMAGE_UNITS) ? MAX_TEXTURE_COORD_UNITS : MAX_TEXTURE_IMAGE_UNITS)
 
 
-/** 
- * Maximum viewport/image size.  Must accomodate all texture sizes too. 
- */
-#ifndef MAX_WIDTH
-#   define MAX_WIDTH 16384
-#endif
-#ifndef MAX_HEIGHT
-#   define MAX_HEIGHT 16384
-#endif
+/** Maximum viewport size */
+#define MAX_VIEWPORT_WIDTH 16384
+#define MAX_VIEWPORT_HEIGHT 16384
 
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
@@ -248,6 +242,7 @@
 /** For GL_EXT_framebuffer_object */
 /*@{*/
 #define MAX_COLOR_ATTACHMENTS 8
+#define MAX_RENDERBUFFER_SIZE 16384
 /*@}*/
 
 /** For GL_ATI_envmap_bump - support bump mapping on first 8 units */
