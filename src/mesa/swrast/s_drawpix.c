@@ -264,34 +264,35 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
 {
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    const GLenum destType = GL_UNSIGNED_BYTE;
-   GLint skipPixels;
+   GLint row;
+   GLubyte *values;
 
-   /* if width > MAX_WIDTH, have to process image in chunks */
-   skipPixels = 0;
-   while (skipPixels < width) {
-      const GLint spanX = x + skipPixels;
-      const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
-      GLint row;
-      for (row = 0; row < height; row++) {
-         const GLint spanY = y + row;
-         GLubyte values[MAX_WIDTH];
-         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
-                                                      width, height,
-                                                      GL_STENCIL_INDEX, type,
-                                                      row, skipPixels);
-         _mesa_unpack_stencil_span(ctx, spanWidth, destType, values,
-                                   type, source, unpack,
-                                   ctx->_ImageTransferState);
-         if (zoom) {
-            _swrast_write_zoomed_stencil_span(ctx, x, y, spanWidth,
-                                              spanX, spanY, values);
-         }
-         else {
-            _swrast_write_stencil_span(ctx, spanWidth, spanX, spanY, values);
-         }
-      }
-      skipPixels += spanWidth;
+   values = (GLubyte *) malloc(width * sizeof(GLubyte));
+   if (!values) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+      return;
    }
+
+   for (row = 0; row < height; row++) {
+      const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+                                                   width, height,
+                                                   GL_STENCIL_INDEX, type,
+                                                   row, 0);
+      _mesa_unpack_stencil_span(ctx, width, destType, values,
+                                type, source, unpack,
+                                ctx->_ImageTransferState);
+      if (zoom) {
+         _swrast_write_zoomed_stencil_span(ctx, x, y, width,
+                                           x, y, values);
+      }
+      else {
+         _swrast_write_stencil_span(ctx, width, x, y, values);
+      }
+
+      y++;
+   }
+
+   free(values);
 }
 
 
@@ -588,7 +589,14 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
        * Separate depth/stencil buffers, or pixel transfer ops required.
        */
       /* XXX need to handle very wide images (skippixels) */
+      GLuint *zValues;  /* 32-bit Z values */
       GLint i;
+
+      zValues = (GLuint *) malloc(width * sizeof(GLuint));
+      if (!zValues) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+         return;
+      }
 
       for (i = 0; i < height; i++) {
          const GLuint *depthStencilSrc = (const GLuint *)
@@ -596,7 +604,6 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                                   GL_DEPTH_STENCIL_EXT, type, i, 0);
 
          if (ctx->Depth.Mask) {
-            GLuint zValues[MAX_WIDTH];  /* 32-bit Z values */
             _mesa_unpack_depth_span(ctx, width,
                                     GL_UNSIGNED_INT, /* dest type */
                                     zValues,         /* dest addr */
@@ -615,7 +622,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
          }
 
          if (stencilMask != 0x0) {
-            GLubyte stencilValues[MAX_WIDTH];
+            GLubyte *stencilValues = (GLubyte *) zValues; /* re-use buffer */
             /* get stencil values, with shift/offset/mapping */
             _mesa_unpack_stencil_span(ctx, width, stencilType, stencilValues,
                                       type, depthStencilSrc, &clippedUnpack,
@@ -627,6 +634,8 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
                _swrast_write_stencil_span(ctx, width, x, y + i, stencilValues);
          }
       }
+
+      free(zValues);
    }
 }
 
