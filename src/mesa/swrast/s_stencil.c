@@ -210,7 +210,8 @@ static GLboolean
 do_stencil_test(struct gl_context *ctx, GLuint face, GLuint n,
                 GLubyte stencil[], GLubyte mask[], GLint stride)
 {
-   GLubyte fail[MAX_WIDTH];
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLubyte *fail = swrast->stencil_temp.buf2;
    GLboolean allfail = GL_FALSE;
    GLuint i, j;
    const GLuint valueMask = ctx->Stencil.ValueMask[face];
@@ -347,6 +348,7 @@ put_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
 GLboolean
 _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    const GLint stencilOffset = get_stencil_offset(rb->Format);
@@ -354,7 +356,7 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
    const GLuint face = (span->facing == 0) ? 0 : ctx->Stencil._BackFace;
    const GLuint count = span->end;
    GLubyte *mask = span->array->mask;
-   GLubyte stencilTemp[MAX_WIDTH];
+   GLubyte *stencilTemp = swrast->stencil_temp.buf1;
    GLubyte *stencilBuf;
 
    if (span->arrayMask & SPAN_XY) {
@@ -402,7 +404,10 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
       /*
        * Perform depth buffering, then apply zpass or zfail stencil function.
        */
-      GLubyte passMask[MAX_WIDTH], failMask[MAX_WIDTH], origMask[MAX_WIDTH];
+      SWcontext *swrast = SWRAST_CONTEXT(ctx);
+      GLubyte *passMask = swrast->stencil_temp.buf2;
+      GLubyte *failMask = swrast->stencil_temp.buf3;
+      GLubyte *origMask = swrast->stencil_temp.buf4;
 
       /* save the current mask bits */
       memcpy(origMask, mask, count * sizeof(GLubyte));
@@ -488,6 +493,7 @@ void
 _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
                            const GLubyte stencil[] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_renderbuffer *rb = fb->Attachment[BUFFER_STENCIL].Renderbuffer;
    const GLuint stencilMax = (1 << fb->Visual.stencilBits) - 1;
@@ -517,7 +523,8 @@ _swrast_write_stencil_span(struct gl_context *ctx, GLint n, GLint x, GLint y,
 
    if ((stencilMask & stencilMax) != stencilMax) {
       /* need to apply writemask */
-      GLubyte destVals[MAX_WIDTH], newVals[MAX_WIDTH];
+      GLubyte *destVals = swrast->stencil_temp.buf1;
+      GLubyte *newVals = swrast->stencil_temp.buf2;
       GLint i;
 
       _mesa_unpack_ubyte_stencil_row(rb->Format, n, stencilBuf, destVals);

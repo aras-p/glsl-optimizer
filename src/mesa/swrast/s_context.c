@@ -798,6 +798,19 @@ _swrast_CreateContext( struct gl_context *ctx )
 
    ctx->swrast_context = swrast;
 
+   swrast->stencil_temp.buf1 = (GLubyte *) malloc(MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf2 = (GLubyte *) malloc(MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf3 = (GLubyte *) malloc(MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf4 = (GLubyte *) malloc(MAX_WIDTH * sizeof(GLubyte));
+
+   if (!swrast->stencil_temp.buf1 ||
+       !swrast->stencil_temp.buf2 ||
+       !swrast->stencil_temp.buf3 ||
+       !swrast->stencil_temp.buf4) {
+      _swrast_DestroyContext(ctx);
+      return GL_FALSE;
+   }
+
    return GL_TRUE;
 }
 
@@ -814,6 +827,12 @@ _swrast_DestroyContext( struct gl_context *ctx )
    if (swrast->ZoomedArrays)
       FREE( swrast->ZoomedArrays );
    FREE( swrast->TexelBuffer );
+
+   free(swrast->stencil_temp.buf1);
+   free(swrast->stencil_temp.buf2);
+   free(swrast->stencil_temp.buf3);
+   free(swrast->stencil_temp.buf4);
+
    FREE( swrast );
 
    ctx->swrast_context = 0;

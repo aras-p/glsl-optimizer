@@ -306,6 +306,13 @@ typedef struct
    /** State used during execution of fragment programs */
    struct gl_program_machine FragProgMachine;
 
+   /** Temporary arrays for stencil operations.  To avoid large stack
+    * allocations.
+    */
+   struct {
+      GLubyte *buf1, *buf2, *buf3, *buf4;
+   } stencil_temp;
+
 } SWcontext;
 
 
