@@ -1932,6 +1932,7 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		src/gallium/drivers/r300/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/egl/wayland/Makefile

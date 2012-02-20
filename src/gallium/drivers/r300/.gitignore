@@ -1,0 +1,5 @@
+Makefile
+Makefile.in
+r300_compiler_tests
+.libs/
+.deps/
