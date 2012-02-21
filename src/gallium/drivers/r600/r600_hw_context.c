@@ -1059,9 +1059,9 @@ void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r60
 {
 	unsigned offset;
 
-	offset = 0x0003C000 + id * 0xc;
+	offset = R_03C000_SQ_TEX_SAMPLER_WORD0_0 + 12*id;
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
-	offset = 0x0000A400 + id * 0x10;
+	offset = R_00A400_TD_PS_SAMPLER0_BORDER_RED + 16*id;
 	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
@@ -1069,9 +1069,9 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 {
 	unsigned offset;
 
-	offset = 0x0003C0D8 + id * 0xc;
+	offset = R_03C000_SQ_TEX_SAMPLER_WORD0_0 + 12*(id + 18);
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
-	offset = 0x0000A600 + id * 0x10;
+	offset = R_00A600_TD_VS_SAMPLER0_BORDER_RED + 16*id;
 	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 

@@ -820,7 +820,7 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 {
 	unsigned offset;
 
-	offset = 0x0003C000 + id * 0xc;
+	offset = R_03C000_SQ_TEX_SAMPLER_WORD0_0 + 12*id;
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, id);
 }
@@ -829,7 +829,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 {
 	unsigned offset;
 
-	offset = 0x0003C0D8 + id * 0xc;
+	offset = R_03C000_SQ_TEX_SAMPLER_WORD0_0 + 12*(id + 18);
 	r600_context_pipe_state_set_sampler(ctx, state, offset);
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
 }
