@@ -774,33 +774,6 @@ out_err:
 	return r;
 }
 
-static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
-{
-	struct r600_range *range;
-	struct r600_block *block;
-	int i;
-	int dirty;
-
-	range = &ctx->range[CTX_RANGE_ID(offset)];
-	block = range->blocks[CTX_BLOCK_ID(offset)];
-	if (state == NULL) {
-		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		LIST_DELINIT(&block->list);
-		LIST_DELINIT(&block->enable_list);
-		return;
-	}
-	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
-
-	for (i = 0; i < 3; i++) {
-		if (block->reg[i] != state->regs[i].value) {
-			dirty |= R600_BLOCK_STATUS_DIRTY;
-			block->reg[i] = state->regs[i].value;
-		}
-	}
-	if (dirty)
-		r600_context_dirty_block(ctx, block, dirty, 2);
-}
-
 static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
@@ -861,7 +834,7 @@ void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struc
 	unsigned offset;
 
 	offset = 0x0003C000 + id * 0xc;
-	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
+	r600_context_pipe_state_set_sampler(ctx, state, offset);
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX, id);
 }
 
@@ -870,7 +843,7 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 	unsigned offset;
 
 	offset = 0x0003C0D8 + id * 0xc;
-	evergreen_context_pipe_state_set_sampler(ctx, state, offset);
+	r600_context_pipe_state_set_sampler(ctx, state, offset);
 	evergreen_context_pipe_state_set_sampler_border(ctx, state, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX, id);
 }
 

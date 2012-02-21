@@ -992,7 +992,7 @@ void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r6
 	r600_context_pipe_state_set_resource(ctx, state, block);
 }
 
-static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
 	struct r600_range *range;
 	struct r600_block *block;
@@ -1008,6 +1008,7 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 		return;
 	}
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
+
 	for (i = 0; i < 3; i++) {
 		if (block->reg[i] != state->regs[i].value) {
 			block->reg[i] = state->regs[i].value;
@@ -1018,7 +1019,6 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	if (dirty)
 		r600_context_dirty_block(ctx, block, dirty, 2);
 }
-
 
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
