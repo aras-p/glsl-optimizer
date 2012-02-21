@@ -211,6 +211,9 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
             waste = waste ? alignment - waste : 0;
         }
         offset += waste;
+        if (offset >= (hole->offset + hole->size)) {
+            continue;
+        }
         if (!waste && hole->size == size) {
             offset = hole->offset;
             list_del(&hole->list);
