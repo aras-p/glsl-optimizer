@@ -44,6 +44,8 @@
 #define BLOCK_FLAG_RESOURCE 32
 #define REG_FLAG_FLUSH_CHANGE 64
 
+#define GROUP_FORCE_NEW_BLOCK	0
+
 struct r600_reg {
 	unsigned			offset;
 	unsigned			flags;

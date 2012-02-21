@@ -29,8 +29,6 @@
 #include "util/u_memory.h"
 #include <errno.h>
 
-#define GROUP_FORCE_NEW_BLOCK	0
-
 /* Get backends mask */
 void r600_get_backend_mask(struct r600_context *ctx)
 {

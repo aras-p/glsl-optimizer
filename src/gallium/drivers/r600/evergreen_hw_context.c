@@ -30,8 +30,6 @@
 #include "util/u_memory.h"
 #include <errno.h>
 
-#define GROUP_FORCE_NEW_BLOCK	0
-
 static const struct r600_reg evergreen_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0},
 };
