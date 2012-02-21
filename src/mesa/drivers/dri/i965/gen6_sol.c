@@ -87,12 +87,15 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *shaderprog =
       ctx->Shader.CurrentVertexProgram;
-   const struct gl_transform_feedback_info *linked_xfb_info =
-      &shaderprog->LinkedTransformFeedback;
-   /* Currently we only ever upload surfaces for SOL. */
-   bool has_surfaces = linked_xfb_info->NumOutputs != 0;
-
+   bool has_surfaces = false;
    uint32_t *bind;
+
+   if (shaderprog) {
+      const struct gl_transform_feedback_info *linked_xfb_info =
+	 &shaderprog->LinkedTransformFeedback;
+      /* Currently we only ever upload surfaces for SOL. */
+      has_surfaces = linked_xfb_info->NumOutputs != 0;
+   }
 
    /* Skip making a binding table if we don't have anything to put in it. */
    if (!has_surfaces) {
