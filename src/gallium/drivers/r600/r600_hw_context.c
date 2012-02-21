@@ -112,7 +112,7 @@ err:
 	return;
 }
 
-static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
+void r600_context_ps_partial_flush(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 

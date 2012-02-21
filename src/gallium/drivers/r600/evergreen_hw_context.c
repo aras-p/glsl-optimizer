@@ -774,19 +774,6 @@ out_err:
 	return r;
 }
 
-static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
-		return;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-
-	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
-}
-
 static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
 {
 	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
@@ -824,7 +811,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	 * registers, or previous draw commands that haven't completed yet
 	 * will end up using the new border color. */
 	if (dirty & R600_BLOCK_STATUS_DIRTY)
-		evergreen_context_ps_partial_flush(ctx);
+		r600_context_ps_partial_flush(ctx);
 	if (dirty)
 		r600_context_dirty_block(ctx, block, dirty, 4);
 }

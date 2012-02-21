@@ -65,6 +65,7 @@ int r600_setup_block_table(struct r600_context *ctx);
 int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset);
 void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
+void r600_context_ps_partial_flush(struct r600_context *ctx);
 
 /*
  * evergreen_hw_context.c
