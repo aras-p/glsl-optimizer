@@ -191,25 +191,32 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
 
-	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
+	if (rctx->custom_dsa_flush) {
+		rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
+	}
 	util_unreference_framebuffer_state(&rctx->framebuffer);
 
 	r600_context_fini(rctx);
 
-	util_blitter_destroy(rctx->blitter);
-
+	if (rctx->blitter) {
+		util_blitter_destroy(rctx->blitter);
+	}
 	for (int i = 0; i < R600_PIPE_NSTATES; i++) {
 		free(rctx->states[i]);
 	}
 
-	u_vbuf_destroy(rctx->vbuf_mgr);
+	if (rctx->vbuf_mgr) {
+		u_vbuf_destroy(rctx->vbuf_mgr);
+	}
 	util_slab_destroy(&rctx->pool_transfers);
 
 	r600_update_num_contexts(rctx->screen, -1);
 
 	r600_release_command_buffer(&rctx->atom_start_cs);
 
-	rctx->ws->cs_destroy(rctx->cs);
+	if (rctx->cs) {
+		rctx->ws->cs_destroy(rctx->cs);
+	}
 
 	FREE(rctx->range);
 	FREE(rctx);
@@ -222,6 +229,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	if (rctx == NULL)
 		return NULL;
+
+	util_slab_create(&rctx->pool_transfers,
+			 sizeof(struct pipe_transfer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
 
 	r600_update_num_contexts(rscreen, 1);
 
@@ -244,7 +255,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->range = CALLOC(NUM_RANGES, sizeof(struct r600_range));
 	if (!rctx->range) {
-		FREE(rctx);
+		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
 
@@ -289,10 +300,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 	r600_emit_atom(rctx, &rctx->atom_start_cs.atom);
-
-	util_slab_create(&rctx->pool_transfers,
-			 sizeof(struct pipe_transfer), 64,
-			 UTIL_SLAB_SINGLETHREADED);
 
 	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, 1024 * 1024, 256,
 					   PIPE_BIND_VERTEX_BUFFER |

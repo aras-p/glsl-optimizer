@@ -625,6 +625,11 @@ static void r600_free_resource_range(struct r600_context *ctx, struct r600_range
 {
 	struct r600_block *block;
 	int i;
+
+	if (!range->blocks) {
+		return; /* nothing to do */
+	}
+
 	for (i = 0; i < nblocks; i++) {
 		block = range->blocks[i];
 		if (block) {
@@ -634,7 +639,6 @@ static void r600_free_resource_range(struct r600_context *ctx, struct r600_range
 		}
 	}
 	free(range->blocks);
-
 }
 
 /* initialize */
@@ -643,23 +647,25 @@ void r600_context_fini(struct r600_context *ctx)
 	struct r600_block *block;
 	struct r600_range *range;
 
-	for (int i = 0; i < NUM_RANGES; i++) {
-		if (!ctx->range[i].blocks)
-			continue;
-		for (int j = 0; j < (1 << HASH_SHIFT); j++) {
-			block = ctx->range[i].blocks[j];
-			if (block) {
-				for (int k = 0, offset = block->start_offset; k < block->nreg; k++, offset += 4) {
-					range = &ctx->range[CTX_RANGE_ID(offset)];
-					range->blocks[CTX_BLOCK_ID(offset)] = NULL;
+	if (ctx->range) {
+		for (int i = 0; i < NUM_RANGES; i++) {
+			if (!ctx->range[i].blocks)
+				continue;
+			for (int j = 0; j < (1 << HASH_SHIFT); j++) {
+				block = ctx->range[i].blocks[j];
+				if (block) {
+					for (int k = 0, offset = block->start_offset; k < block->nreg; k++, offset += 4) {
+						range = &ctx->range[CTX_RANGE_ID(offset)];
+						range->blocks[CTX_BLOCK_ID(offset)] = NULL;
+					}
+					for (int k = 1; k <= block->nbo; k++) {
+						pipe_resource_reference((struct pipe_resource**)&block->reloc[k].bo, NULL);
+					}
+					free(block);
 				}
-				for (int k = 1; k <= block->nbo; k++) {
-					pipe_resource_reference((struct pipe_resource**)&block->reloc[k].bo, NULL);
-				}
-				free(block);
 			}
+			free(ctx->range[i].blocks);
 		}
-		free(ctx->range[i].blocks);
 	}
 	r600_free_resource_range(ctx, &ctx->ps_resources, ctx->num_ps_resources);
 	r600_free_resource_range(ctx, &ctx->vs_resources, ctx->num_vs_resources);
