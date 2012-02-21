@@ -108,6 +108,14 @@ void st_init_limits(struct st_context *st)
 
    c->MaxTextureUnits = _min(c->MaxTextureImageUnits, c->MaxTextureCoordUnits);
 
+   /* Define max viewport size and max renderbuffer size in terms of
+    * max texture size (note: max tex RECT size = max tex 2D size).
+    * If this isn't true for some hardware we'll need new PIPE_CAP_ queries.
+    */
+   c->MaxViewportWidth =
+   c->MaxViewportHeight =
+   c->MaxRenderbufferSize = c->MaxTextureRectSize;
+
    c->MaxDrawBuffers
       = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
