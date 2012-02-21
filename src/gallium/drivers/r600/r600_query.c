@@ -22,6 +22,7 @@
  */
 #include "r600_pipe.h"
 #include "r600d.h"
+#include "util/u_memory.h"
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
 {
@@ -56,6 +57,30 @@ static void r600_update_occlusion_query_state(struct r600_context *rctx,
 	}
 }
 
+static void r600_query_discard_results(struct r600_context *rctx,
+				       struct r600_query *query)
+{
+	/* Discard the old query buffers. */
+	struct r600_query_buffer *prev = query->buffer.previous;
+
+	while (prev) {
+		struct r600_query_buffer *qbuf = prev;
+		prev = prev->previous;
+		pipe_resource_reference((struct pipe_resource**)&qbuf->buf, NULL);
+		FREE(qbuf);
+	}
+
+	/* Obtain a new buffer if the current one can't be mapped without a stall. */
+	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, query->buffer.buf->cs_buf) ||
+	    rctx->ws->buffer_is_busy(query->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
+		pipe_resource_reference((struct pipe_resource**)&query->buffer.buf, NULL);
+		query->buffer.buf = r600_new_query_buffer(rctx, query->type);
+	}
+
+	query->buffer.results_end = 0;
+	query->buffer.previous = NULL;
+}
+
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -63,9 +88,8 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	r600_update_occlusion_query_state(rctx, rquery->type, 1);
 
-	memset(&rquery->result, 0, sizeof(rquery->result));
-	rquery->results_start = rquery->results_end;
-	r600_query_begin(rctx, (struct r600_query *)query);
+	r600_query_discard_results(rctx, rquery);
+	r600_query_begin(rctx, rquery);
 	LIST_ADDTAIL(&rquery->list, &rctx->active_query_list);
 }
 
@@ -97,14 +121,6 @@ static void r600_render_condition(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 	int wait_flag = 0;
-
-	/* If we already have nonzero result, render unconditionally */
-	if (query != NULL && rquery->result.u64 != 0) {
-		if (rctx->current_render_cond) {
-			r600_render_condition(ctx, NULL, 0);
-		}
-		return;
-	}
 
 	rctx->current_render_cond = query;
 	rctx->current_render_cond_mode = mode;

@@ -157,25 +157,31 @@ struct r600_range {
 	struct r600_block	**blocks;
 };
 
-struct r600_query {
-	union {
-		uint64_t			u64;
-		boolean				b;
-		struct pipe_query_data_so_statistics so;
-	} result;
-	/* The kind of query */
-	unsigned				type;
-	/* Offset of the first result for current query */
-	unsigned				results_start;
+struct r600_query_buffer {
+	/* The buffer where query results are stored. */
+	struct r600_resource			*buf;
 	/* Offset of the next free result after current query data */
 	unsigned				results_end;
+	/* If a query buffer is full, a new buffer is created and the old one
+	 * is put in here. When we calculate the result, we sum up the samples
+	 * from all buffers. */
+	struct r600_query_buffer		*previous;
+};
+
+union r600_query_result {
+	uint64_t			u64;
+	boolean				b;
+	struct pipe_query_data_so_statistics so;
+};
+
+struct r600_query {
+	/* The query buffer and how many results are in it. */
+	struct r600_query_buffer		buffer;
+	/* The type of query */
+	unsigned				type;
 	/* Size of the result in memory for both begin_query and end_query,
 	 * this can be one or two numbers, or it could even be a size of a structure. */
 	unsigned				result_size;
-	/* The buffer where query results are stored. It's used as a ring,
-	 * data blocks for current query are stored sequentially from
-	 * results_start to results_end, with wrapping on the buffer end */
-	struct r600_resource			*buffer;
 	/* The number of dwords for begin_query or end_query. */
 	unsigned				num_cs_dw;
 	/* linked list of queries */
@@ -214,6 +220,7 @@ void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *que
 boolean r600_context_query_result(struct r600_context *ctx,
 				struct r600_query *query,
 				boolean wait, void *vresult);
+struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, unsigned type);
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
 void r600_context_queries_suspend(struct r600_context *ctx);
