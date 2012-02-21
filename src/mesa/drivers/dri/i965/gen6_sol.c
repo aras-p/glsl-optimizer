@@ -94,9 +94,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
 
    uint32_t *bind;
 
-   /* CACHE_NEW_GS_PROG: Skip making a binding table if we don't use textures or
-    * pull constants.
-    */
+   /* Skip making a binding table if we don't have anything to put in it. */
    if (!has_surfaces) {
       if (brw->gs.bind_bo_offset != 0) {
 	 brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
