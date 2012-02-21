@@ -774,27 +774,6 @@ out_err:
 	return r;
 }
 
-void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->ps_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
-void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->vs_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
-void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->fs_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
 static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
 	struct r600_range *range;

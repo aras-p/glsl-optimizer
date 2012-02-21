@@ -381,19 +381,11 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	/* Zero states. */
 	for (i = 0; i < count; i++) {
 		if (!buffers[i].buffer) {
-			if (rctx->chip_class >= EVERGREEN) {
-				evergreen_context_pipe_state_set_fs_resource(rctx, NULL, i);
-			} else {
-				r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
-			}
+			r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
 		}
 	}
 	for (; i < rctx->vbuf_mgr->nr_real_vertex_buffers; i++) {
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_context_pipe_state_set_fs_resource(rctx, NULL, i);
-		} else {
-			r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
-		}
+		r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
 	}
 
 	u_vbuf_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
@@ -561,11 +553,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(ctx, rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-			evergreen_context_pipe_state_set_vs_resource(rctx, rstate, index);
 		} else {
 			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-			r600_context_pipe_state_set_vs_resource(rctx, rstate, index);
 		}
+		r600_context_pipe_state_set_vs_resource(rctx, rstate, index);
 		break;
 	case PIPE_SHADER_FRAGMENT:
 		rctx->ps_const_buffer.nregs = 0;
@@ -588,11 +579,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		}
 		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(ctx, rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-			evergreen_context_pipe_state_set_ps_resource(rctx, rstate, index);
 		} else {
 			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-			r600_context_pipe_state_set_ps_resource(rctx, rstate, index);
 		}
+		r600_context_pipe_state_set_ps_resource(rctx, rstate, index);
 		break;
 	default:
 		R600_ERR("unsupported %d\n", shader);
@@ -715,11 +705,10 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 
 		if (rctx->chip_class >= EVERGREEN) {
 			evergreen_pipe_mod_buffer_resource(&rctx->context, rstate, rbuffer, offset, vertex_buffer->stride, RADEON_USAGE_READ);
-			evergreen_context_pipe_state_set_fs_resource(rctx, rstate, i);
 		} else {
 			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, vertex_buffer->stride, RADEON_USAGE_READ);
-			r600_context_pipe_state_set_fs_resource(rctx, rstate, i);
 		}
+		r600_context_pipe_state_set_fs_resource(rctx, rstate, i);
 	}
 }
 
