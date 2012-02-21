@@ -160,9 +160,11 @@ void util_slab_destroy(struct util_slab_mempool *pool)
 {
    struct util_slab_page *page, *temp;
 
-   foreach_s(page, temp, &pool->list) {
-      remove_from_list(page);
-      FREE(page);
+   if (pool->list.next) {
+      foreach_s(page, temp, &pool->list) {
+         remove_from_list(page);
+         FREE(page);
+      }
    }
 
    pipe_mutex_destroy(pool->mutex);
