@@ -574,8 +574,8 @@ static int r600_resource_range_init(struct r600_context *ctx, struct r600_range 
 	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, R600_RESOURCE_OFFSET);
 }
 
-/* SHADER SAMPLER R600/R700 */
-static int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
+/* SHADER SAMPLER R600/R700/EG/CM */
+int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
 {
 	struct r600_reg r600_shader_sampler[] = {
 		{R_03C000_SQ_TEX_SAMPLER_WORD0_0, 0, 0},

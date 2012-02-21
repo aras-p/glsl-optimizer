@@ -648,22 +648,6 @@ static int evergreen_resource_range_init(struct r600_context *ctx, struct r600_r
 	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, EVERGREEN_RESOURCE_OFFSET);
 }
 
-/* SHADER SAMPLER R600/R700 */
-static int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
-{
-	struct r600_reg r600_shader_sampler[] = {
-		{R_03C000_SQ_TEX_SAMPLER_WORD0_0, 0, 0},
-		{R_03C004_SQ_TEX_SAMPLER_WORD1_0, 0, 0},
-		{R_03C008_SQ_TEX_SAMPLER_WORD2_0, 0, 0},
-	};
-	unsigned nreg = Elements(r600_shader_sampler);
-
-	for (int i = 0; i < nreg; i++) {
-		r600_shader_sampler[i].offset += offset;
-	}
-	return r600_context_add_block(ctx, r600_shader_sampler, nreg, PKT3_SET_SAMPLER, EVERGREEN_SAMPLER_OFFSET);
-}
-
 /* SHADER SAMPLER BORDER EG/CM */
 static int evergreen_state_sampler_border_init(struct r600_context *ctx, uint32_t offset, unsigned id)
 {
