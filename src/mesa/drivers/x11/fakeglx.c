@@ -428,7 +428,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 			      GL_TRUE,   /* double */
 			      GL_FALSE,  /* stereo */
 			      zBits,
-			      STENCIL_BITS,
+			      8,       /* stencil bits */
 			      accBits, /* r */
 			      accBits, /* g */
 			      accBits, /* b */
@@ -1174,7 +1174,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          if (vis->depth <= 8)
 	    return NULL;
          depth_size = default_depth_bits();
-         stencil_size = STENCIL_BITS;
+         stencil_size = 8;
          /* XXX accum??? */
       }
    }
@@ -1215,7 +1215,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
-         stencil_size = STENCIL_BITS;
+         stencil_size = 8;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
          accumRedSize = 
