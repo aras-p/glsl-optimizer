@@ -870,7 +870,7 @@ struct brw_context
       uint32_t state_offset;
 
       uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_VS_SURFACES];
+      uint32_t surf_offset[BRW_MAX_GS_SURFACES];
    } gs;
 
    struct {
