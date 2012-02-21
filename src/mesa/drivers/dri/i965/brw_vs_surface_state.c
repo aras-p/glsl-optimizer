@@ -136,7 +136,7 @@ brw_vs_upload_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_SURFACES,
+			  sizeof(uint32_t) * BRW_MAX_VS_SURFACES,
 			  32, &brw->vs.bind_bo_offset);
 
    /* BRW_NEW_SURFACES and BRW_NEW_VS_CONSTBUF */
