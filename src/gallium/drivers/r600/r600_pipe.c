@@ -254,10 +254,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	LIST_INITHEAD(&rctx->enable_list);
 
 	rctx->range = CALLOC(NUM_RANGES, sizeof(struct r600_range));
-	if (!rctx->range) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
+	if (!rctx->range)
+		goto fail;
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
@@ -275,26 +273,21 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R700:
 		r600_init_state_functions(rctx);
 		r600_init_atom_start_cs(rctx);
-		if (r600_context_init(rctx)) {
-			r600_destroy_context(&rctx->context);
-			return NULL;
-		}
+		if (r600_context_init(rctx))
+			goto fail;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		break;
 	case EVERGREEN:
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
 		evergreen_init_atom_start_cs(rctx);
-		if (evergreen_context_init(rctx)) {
-			r600_destroy_context(&rctx->context);
-			return NULL;
-		}
+		if (evergreen_context_init(rctx))
+			goto fail;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		break;
 	default:
 		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);
-		r600_destroy_context(&rctx->context);
-		return NULL;
+		goto fail;
 	}
 
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
@@ -306,21 +299,21 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 					   PIPE_BIND_INDEX_BUFFER |
 					   PIPE_BIND_CONSTANT_BUFFER,
 					   U_VERTEX_FETCH_DWORD_ALIGNED);
-	if (!rctx->vbuf_mgr) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
+	if (!rctx->vbuf_mgr)
+		goto fail;
 	rctx->vbuf_mgr->caps.format_fixed32 = 0;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
-	if (rctx->blitter == NULL) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
+	if (rctx->blitter == NULL)
+		goto fail;
 
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 
 	return &rctx->context;
+
+fail:
+	r600_destroy_context(&rctx->context);
+	return NULL;
 }
 
 /*
