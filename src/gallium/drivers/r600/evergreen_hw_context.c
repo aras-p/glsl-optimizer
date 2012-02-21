@@ -630,8 +630,8 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028EAC_CB_COLOR11_DIM, 0, 0},
 };
 
-/* SHADER RESOURCE R600/R700 */
-static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
+/* SHADER RESOURCE EG/CM */
+static int evergreen_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
 {
 	struct r600_reg r600_shader_resource[] = {
 		{R_030000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, 0},
@@ -764,13 +764,13 @@ int evergreen_context_init(struct r600_context *ctx)
 	ctx->num_ps_resources = 176;
 	ctx->num_vs_resources = 160;
 	ctx->num_fs_resources = 16;
-	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
+	r = evergreen_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
 	if (r)
 		goto out_err;
-	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
+	r = evergreen_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
 	if (r)
 		goto out_err;
-	r = r600_resource_range_init(ctx, &ctx->fs_resources, 0x7C00, 16, 0x20);
+	r = evergreen_resource_range_init(ctx, &ctx->fs_resources, 0x7C00, 16, 0x20);
 	if (r)
 		goto out_err;
 
