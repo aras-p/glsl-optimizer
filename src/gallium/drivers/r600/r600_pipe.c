@@ -208,6 +208,10 @@ static void r600_destroy_context(struct pipe_context *context)
 	r600_update_num_contexts(rctx->screen, -1);
 
 	r600_release_command_buffer(&rctx->atom_start_cs);
+
+	rctx->ws->cs_destroy(rctx->cs);
+
+	FREE(rctx->range);
 	FREE(rctx);
 }
 
@@ -233,6 +237,16 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->chip_class = rscreen->chip_class;
 
 	LIST_INITHEAD(&rctx->dirty_states);
+	LIST_INITHEAD(&rctx->active_query_list);
+	LIST_INITHEAD(&rctx->dirty);
+	LIST_INITHEAD(&rctx->resource_dirty);
+	LIST_INITHEAD(&rctx->enable_list);
+
+	rctx->range = CALLOC(NUM_RANGES, sizeof(struct r600_range));
+	if (!rctx->range) {
+		FREE(rctx);
+		return NULL;
+	}
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
@@ -272,7 +286,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
+	r600_emit_atom(rctx, &rctx->atom_start_cs.atom);
 
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,

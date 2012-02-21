@@ -713,19 +713,6 @@ int evergreen_context_init(struct r600_context *ctx)
 {
 	int r;
 
-	LIST_INITHEAD(&ctx->active_query_list);
-
-	/* init dirty list */
-	LIST_INITHEAD(&ctx->dirty);
-	LIST_INITHEAD(&ctx->resource_dirty);
-	LIST_INITHEAD(&ctx->enable_list);
-
-	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
-	if (!ctx->range) {
-		r = -ENOMEM;
-		goto out_err;
-	}
-
 	/* add blocks */
 	if (ctx->family == CHIP_CAYMAN)
 		r = r600_context_add_block(ctx, cayman_config_reg_list,
@@ -795,9 +782,6 @@ int evergreen_context_init(struct r600_context *ctx)
 	r = r600_setup_block_table(ctx);
 	if (r)
 		goto out_err;
-
-	ctx->cs = ctx->ws->cs_create(ctx->ws);
-	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
 
 	ctx->max_db = 8;
 	return 0;

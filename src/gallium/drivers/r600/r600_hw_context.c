@@ -664,9 +664,7 @@ void r600_context_fini(struct r600_context *ctx)
 	r600_free_resource_range(ctx, &ctx->ps_resources, ctx->num_ps_resources);
 	r600_free_resource_range(ctx, &ctx->vs_resources, ctx->num_vs_resources);
 	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
-	free(ctx->range);
 	free(ctx->blocks);
-	ctx->ws->cs_destroy(ctx->cs);
 }
 
 static void r600_add_resource_block(struct r600_context *ctx, struct r600_range *range, int num_blocks, int *index)
@@ -719,19 +717,6 @@ int r600_setup_block_table(struct r600_context *ctx)
 int r600_context_init(struct r600_context *ctx)
 {
 	int r;
-
-	LIST_INITHEAD(&ctx->active_query_list);
-
-	/* init dirty list */
-	LIST_INITHEAD(&ctx->dirty);
-	LIST_INITHEAD(&ctx->resource_dirty);
-	LIST_INITHEAD(&ctx->enable_list);
-
-	ctx->range = calloc(NUM_RANGES, sizeof(struct r600_range));
-	if (!ctx->range) {
-		r = -ENOMEM;
-		goto out_err;
-	}
 
 	/* add blocks */
 	r = r600_context_add_block(ctx, r600_config_reg_list,
@@ -794,9 +779,6 @@ int r600_context_init(struct r600_context *ctx)
 	r = r600_setup_block_table(ctx);
 	if (r)
 		goto out_err;
-
-	ctx->cs = ctx->ws->cs_create(ctx->ws);
-	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
 
 	ctx->max_db = 4;
 	return 0;
