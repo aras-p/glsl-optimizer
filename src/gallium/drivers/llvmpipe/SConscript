@@ -89,7 +89,6 @@ if not env['embedded']:
         'blend',
         'conv',
         'printf',
-        'sincos',
     ]
 
     if not env['msvc']:

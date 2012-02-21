@@ -50,8 +50,7 @@ write_tsv_header(FILE *fp)
 
 #ifdef PIPE_ARCH_SSE
 
-#define USE_SSE2
-#include "sse_mathfun.h"
+# include <emmintrin.h>
 
 typedef __m128 (*test_round_t)(__m128);
 
@@ -87,16 +86,16 @@ add_test(struct gallivm_state *gallivm, const char *name, lp_func_t lp_func)
 }
 
 static void
-printv(char* string, v4sf value)
+printv(char* string, __m128 value)
 {
-   v4sf v = value;
+   __m128 v = value;
    float *f = (float *)&v;
    printf("%s: %10f %10f %10f %10f\n", string,
            f[0], f[1], f[2], f[3]);
 }
 
 static boolean
-compare(v4sf x, v4sf y)
+compare(__m128 x, __m128 y)
 {
    boolean success = TRUE;
    float *xp = (float *) &x;
@@ -152,13 +151,13 @@ test_round(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
       /* NOTE: There are several acceptable rules for x.5 rounding: ceiling,
        * nearest even, etc. So we avoid testing such corner cases here.
        */
-      v4sf xvals[3] = {
+      __m128 xvals[3] = {
          {-10.0, -1, 0, 12.0},
          {-1.49, -0.25, 1.25, 2.51},
          {-0.99, -0.01, 0.01, 0.99}
       };
-      v4sf x = xvals[i];
-      v4sf y, ref;
+      __m128 x = xvals[i];
+      __m128 y, ref;
       float *xp = (float *) &x;
       float *refp = (float *) &ref;
 
