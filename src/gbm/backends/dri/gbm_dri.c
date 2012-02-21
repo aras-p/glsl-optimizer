@@ -216,13 +216,15 @@ free_screen:
 
 static int
 gbm_dri_is_format_supported(struct gbm_device *gbm,
-                            enum gbm_bo_format format,
+                            uint32_t format,
                             uint32_t usage)
 {
    switch (format) {
    case GBM_BO_FORMAT_XRGB8888:
+   case GBM_FORMAT_XRGB8888:
       break;
    case GBM_BO_FORMAT_ARGB8888:
+   case GBM_FORMAT_ARGB8888:
       if (usage & GBM_BO_USE_SCANOUT)
          return 0;
       break;
@@ -247,6 +249,32 @@ gbm_dri_bo_destroy(struct gbm_bo *_bo)
    free(bo);
 }
 
+static uint32_t
+gbm_dri_to_gbm_format(uint32_t dri_format)
+{
+   uint32_t ret = 0;
+
+   switch (dri_format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      ret = GBM_FORMAT_RGB565;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      ret = GBM_FORMAT_XRGB8888;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      ret = GBM_FORMAT_ARGB8888;
+      break;
+   case __DRI_IMAGE_FORMAT_ABGR8888:
+      ret = GBM_FORMAT_ABGR8888;
+      break;
+   default:
+      ret = 0;
+      break;
+   }
+
+   return ret;
+}
+
 static struct gbm_bo *
 gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
                                  void *egl_dpy, void *egl_img,
@@ -255,6 +283,7 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
 {
    struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
+   int dri_format;
    unsigned dri_use = 0;
 
    (void) egl_dpy;
@@ -291,6 +320,10 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
                           &bo->base.base.handle.s32);
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE,
                           (int *) &bo->base.base.pitch);
+   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_FORMAT,
+			  &dri_format);
+
+   bo->base.base.format = gbm_dri_to_gbm_format(dri_format);
 
    return &bo->base.base;
 }
@@ -298,7 +331,7 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
 static struct gbm_bo *
 gbm_dri_bo_create(struct gbm_device *gbm,
                   uint32_t width, uint32_t height,
-                  enum gbm_bo_format format, uint32_t usage)
+                  uint32_t format, uint32_t usage)
 {
    struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
@@ -314,11 +347,19 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    bo->base.base.height = height;
 
    switch (format) {
+   case GBM_FORMAT_RGB565:
+      dri_format =__DRI_IMAGE_FORMAT_RGB565;
+      break;
+   case GBM_FORMAT_XRGB8888:
    case GBM_BO_FORMAT_XRGB8888:
       dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
       break;
+   case GBM_FORMAT_ARGB8888:
    case GBM_BO_FORMAT_ARGB8888:
       dri_format = __DRI_IMAGE_FORMAT_ARGB8888;
+      break;
+   case GBM_FORMAT_ABGR8888:
+      dri_format = __DRI_IMAGE_FORMAT_ABGR8888;
       break;
    default:
       return NULL;

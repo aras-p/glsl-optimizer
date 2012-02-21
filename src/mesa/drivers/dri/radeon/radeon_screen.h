@@ -109,6 +109,7 @@ typedef struct radeon_screen {
 struct __DRIimageRec {
    struct radeon_bo *bo;
    GLenum internal_format;
+   uint32_t dri_format;
    GLuint format;
    GLenum data_type;
    int width, height;  /* in pixels */

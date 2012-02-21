@@ -314,6 +314,8 @@ radeon_create_image(__DRIscreen *screen,
    if (image == NULL)
       return NULL;
 
+   image->dri_format = format;
+
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
       image->format = MESA_FORMAT_RGB565;

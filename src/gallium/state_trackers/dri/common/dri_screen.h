@@ -85,6 +85,7 @@ struct __DRIimageRec {
    struct pipe_resource *texture;
    unsigned level;
    unsigned layer;
+   uint32_t dri_format;
 
    void *loader_private;
 };

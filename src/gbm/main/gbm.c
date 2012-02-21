@@ -205,6 +205,19 @@ gbm_bo_get_pitch(struct gbm_bo *bo)
    return bo->pitch;
 }
 
+/** Get the format of the buffer object
+ *
+ * The format of the pixels in the buffer.
+ *
+ * \param bo The buffer object
+ * \return The format of buffer object, on of the GBM_FORMAT_* codes
+ */
+GBM_EXPORT uint32_t
+gbm_bo_get_format(struct gbm_bo *bo)
+{
+   return bo->format;
+}
+
 /** Get the handle of the buffer object
  *
  * This is stored in the platform generic union gbm_bo_handle type. However

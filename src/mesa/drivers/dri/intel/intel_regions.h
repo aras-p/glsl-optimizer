@@ -132,6 +132,7 @@ void _mesa_copy_rect(GLubyte * dst,
 struct __DRIimageRec {
    struct intel_region *region;
    GLenum internal_format;
+   uint32_t dri_format;
    GLuint format;
    GLenum data_type;
    void *data;

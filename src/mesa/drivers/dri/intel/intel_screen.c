@@ -245,6 +245,8 @@ intel_create_image(__DRIscreen *screen,
    if (image == NULL)
       return NULL;
 
+   image->dri_format = format;
+
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
       image->format = MESA_FORMAT_RGB565;
@@ -297,6 +299,8 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       return true;
    case __DRI_IMAGE_ATTRIB_NAME:
       return intel_region_flink(image->region, (uint32_t *) value);
+   case __DRI_IMAGE_ATTRIB_FORMAT:
+      return image->dri_format;
    default:
       return false;
    }
