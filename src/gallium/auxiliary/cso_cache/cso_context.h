@@ -185,6 +185,13 @@ cso_restore_clip(struct cso_context *cso);
 
 /* fragment sampler view state */
 
+/*
+ * We don't provide shader caching in CSO.  Most of the time the api provides
+ * object semantics for shaders anyway, and the cases where it doesn't
+ * (eg mesa's internally-generated texenv programs), it will be up to
+ * the state tracker to implement their own specialized caching.
+ */
+
 void
 cso_set_fragment_sampler_views(struct cso_context *cso,
                                uint count,
