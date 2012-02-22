@@ -341,7 +341,7 @@ intel_validate_usage(__DRIimage *image, unsigned int use)
 }
 
 static struct __DRIimageExtensionRec intelImageExtension = {
-    { __DRI_IMAGE, 2 },
+    { __DRI_IMAGE, 3 },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
