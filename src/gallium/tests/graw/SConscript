@@ -16,15 +16,21 @@ if env['platform'] == 'freebsd8':
 
 progs = [
     'clear',
-    'tri',
-    'tri-instanced',
-    'quad-tex',
+    'fs-fragcoord',
+    'fs-frontface',
     'fs-test',
-    'vs-test',
+    'fs-write-z',
     'gs-test',
-    'shader-leak',
-    'tri-gs',
+    'occlusion-query',
     'quad-sample',
+    'quad-tex',
+    'shader-leak',
+    'tex-srgb',
+    'tex-swizzle',
+    'tri',
+    'tri-gs',
+    'tri-instanced',
+    'vs-test',
 ]
 
 for name in progs:

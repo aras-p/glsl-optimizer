@@ -1,18 +1,18 @@
-/* Display a cleared blue window.  This demo has no dependencies on
- * any utility code, just the graw interface and gallium.
- */
+/* Test texture swizzles */
+
+#include <stdio.h>
 
 #include "graw_util.h"
 
-static const int WIDTH = 300;
-static const int HEIGHT = 300;
 
 static struct graw_info info;
-
 
 static struct pipe_resource *texture = NULL;
 static struct pipe_sampler_view *sv = NULL;
 static void *sampler = NULL;
+
+static const int WIDTH = 300;
+static const int HEIGHT = 300;
 
 struct vertex {
    float position[4];
@@ -35,9 +35,7 @@ static struct vertex vertices[] =
 };
 
 
-
-
-static void set_vertices( void )
+static void set_vertices(void)
 {
    struct pipe_vertex_element ve[2];
    struct pipe_vertex_buffer vbuf;
@@ -54,7 +52,7 @@ static void set_vertices( void )
    info.ctx->bind_vertex_elements_state(info.ctx, handle);
 
 
-   vbuf.stride = sizeof( struct vertex );
+   vbuf.stride = sizeof(struct vertex);
    vbuf.buffer_offset = 0;
    vbuf.buffer = info.screen->user_buffer_create(info.screen,
                                             vertices,
@@ -64,7 +62,7 @@ static void set_vertices( void )
    info.ctx->set_vertex_buffers(info.ctx, 1, &vbuf);
 }
 
-static void set_vertex_shader( void )
+static void set_vertex_shader(void)
 {
    void *handle;
    const char *text =
@@ -81,17 +79,15 @@ static void set_vertex_shader( void )
    info.ctx->bind_vs_state(info.ctx, handle);
 }
 
-static void set_fragment_shader( void )
+static void set_fragment_shader(void)
 {
    void *handle;
    const char *text =
       "FRAG\n"
       "DCL IN[0], GENERIC[0], PERSPECTIVE\n"
       "DCL OUT[0], COLOR\n"
-      "DCL TEMP[0]\n"
       "DCL SAMP[0]\n"
-      "  0: TXP TEMP[0], IN[0], SAMP[0], 2D\n"
-      "  1: MOV OUT[0], TEMP[0]\n"
+      "  0: TXP OUT[0], IN[0], SAMP[0], 2D\n"
       "  2: END\n";
 
    handle = graw_parse_fragment_shader(info.ctx, text);
@@ -99,102 +95,77 @@ static void set_fragment_shader( void )
 }
 
 
-static void draw( void )
+static void draw(void)
 {
-   union pipe_color_union clear_color = { {.5,.5,.5,1} };
+   union pipe_color_union clear_color;
+
+   clear_color.f[0] = 0.5;
+   clear_color.f[1] = 0.5;
+   clear_color.f[2] = 0.5;
+   clear_color.f[3] = 1.0;
 
    info.ctx->clear(info.ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
    util_draw_arrays(info.ctx, PIPE_PRIM_QUADS, 0, 4);
    info.ctx->flush(info.ctx, NULL);
 
-   graw_save_surface_to_file(info.ctx, info.color_surf[0], NULL);
-
    graw_util_flush_front(&info);
 }
 
 
-#define SIZE 16
 
-static void init_tex( void )
+static void
+init_tex(const unsigned swizzle[4])
 { 
+#define SIZE 256
+   struct pipe_sampler_view sv_template;
    ubyte tex2d[SIZE][SIZE][4];
    int s, t;
 
-#if (SIZE != 2)
    for (s = 0; s < SIZE; s++) {
       for (t = 0; t < SIZE; t++) {
-         if (0) {
-            int x = (s ^ t) & 1;
-	    tex2d[t][s][0] = (x) ? 0 : 63;
-	    tex2d[t][s][1] = (x) ? 0 : 128;
-	    tex2d[t][s][2] = 0;
-	    tex2d[t][s][3] = 0xff;
-         }
-         else {
-            int x = ((s ^ t) >> 2) & 1;
-	    tex2d[t][s][0] = s*255/(SIZE-1);
-	    tex2d[t][s][1] = t*255/(SIZE-1);
-	    tex2d[t][s][2] = (x) ? 0 : 128;
-	    tex2d[t][s][3] = 0xff;
-         }
+         tex2d[t][s][0] = 0;  /*B*/
+         tex2d[t][s][1] = t;  /*G*/
+         tex2d[t][s][2] = s;  /*R*/
+         tex2d[t][s][3] = 1;  /*A*/
       }
    }
-#else
-   tex2d[0][0][0] = 0;
-   tex2d[0][0][1] = 255;
-   tex2d[0][0][2] = 255;
-   tex2d[0][0][3] = 0;
-
-   tex2d[0][1][0] = 0;
-   tex2d[0][1][1] = 0;
-   tex2d[0][1][2] = 255;
-   tex2d[0][1][3] = 255;
-
-   tex2d[1][0][0] = 255;
-   tex2d[1][0][1] = 255;
-   tex2d[1][0][2] = 0;
-   tex2d[1][0][3] = 255;
-
-   tex2d[1][1][0] = 255;
-   tex2d[1][1][1] = 0;
-   tex2d[1][1][2] = 0;
-   tex2d[1][1][3] = 255;
-#endif
 
    texture = graw_util_create_tex2d(&info, SIZE, SIZE, 
                                     PIPE_FORMAT_B8G8R8A8_UNORM, tex2d);
 
-   sv = graw_util_create_simple_sampler_view(&info, texture);
+   memset(&sv_template, 0, sizeof sv_template);
+   sv_template.format = texture->format;
+   sv_template.texture = texture;
+   sv_template.swizzle_r = swizzle[0];
+   sv_template.swizzle_g = swizzle[1];
+   sv_template.swizzle_b = swizzle[2];
+   sv_template.swizzle_a = swizzle[3];
+   sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_template);
+   if (sv == NULL)
+      exit(5);
+
    info.ctx->set_fragment_sampler_views(info.ctx, 1, &sv);
 
-   sampler = graw_util_create_simple_sampler(&info, 
+   sampler = graw_util_create_simple_sampler(&info,
                                              PIPE_TEX_WRAP_REPEAT,
                                              PIPE_TEX_FILTER_NEAREST);
+
    info.ctx->bind_fragment_sampler_states(info.ctx, 1, &sampler);
+#undef SIZE
 }
 
 
-static void init( void )
+static void
+init(const unsigned swizzle[4])
 {
    if (!graw_util_create_window(&info, WIDTH, HEIGHT, 1, FALSE))
       exit(1);
 
    graw_util_default_state(&info, FALSE);
+   
+   graw_util_viewport(&info, 0, 0, WIDTH, HEIGHT, 30, 10000);
 
-   {
-      struct pipe_rasterizer_state rasterizer;
-      void *handle;
-      memset(&rasterizer, 0, sizeof rasterizer);
-      rasterizer.cull_face = PIPE_FACE_NONE;
-      rasterizer.gl_rasterization_rules = 1;
-      rasterizer.depth_clip = 1;
-      handle = info.ctx->create_rasterizer_state(info.ctx, &rasterizer);
-      info.ctx->bind_rasterizer_state(info.ctx, handle);
-   }
-
-   graw_util_viewport(&info, 0, 0, WIDTH, HEIGHT, 30, 1000);
-
-   init_tex();
+   init_tex(swizzle);
 
    set_vertices();
    set_vertex_shader();
@@ -202,24 +173,54 @@ static void init( void )
 }
 
 
-static void args(int argc, char *argv[])
+static unsigned
+char_to_swizzle(char c)
 {
-   int i;
-
-   for (i = 1; i < argc;) {
-      if (graw_parse_args(&i, argc, argv)) {
-         continue;
-      }
-      exit(1);
+   switch (c) {
+   case 'r':
+      return PIPE_SWIZZLE_RED;
+   case 'g':
+      return PIPE_SWIZZLE_GREEN;
+   case 'b':
+      return PIPE_SWIZZLE_BLUE;
+   case 'a':
+      return PIPE_SWIZZLE_ALPHA;
+   case '0':
+      return PIPE_SWIZZLE_ZERO;
+   case '1':
+      return PIPE_SWIZZLE_ONE;
+   default:
+      return PIPE_SWIZZLE_RED;
    }
 }
 
-int main( int argc, char *argv[] )
-{
-   args(argc, argv);
-   init();
 
-   graw_set_display_func( draw );
+int main(int argc, char *argv[])
+{
+   const char swizzle_names[] = "rgba01";
+   uint swizzle[4];
+   int i;
+
+   swizzle[0] = PIPE_SWIZZLE_RED;
+   swizzle[1] = PIPE_SWIZZLE_GREEN;
+   swizzle[2] = PIPE_SWIZZLE_BLUE;
+   swizzle[3] = PIPE_SWIZZLE_ALPHA;
+
+   for (i = 1; i < argc; i++) {
+      swizzle[i-1] = char_to_swizzle(argv[i][0]);
+   }
+
+   printf("Example:\n");
+   printf("  tex-swizzle r 0 g 1\n");
+   printf("Current swizzle = ");
+   for (i = 0; i < 4; i++) {
+      printf("%c", swizzle_names[swizzle[i]]);
+   }
+   printf("\n");
+
+   init(swizzle);
+
+   graw_set_display_func(draw);
    graw_main_loop();
    return 0;
 }
