@@ -814,7 +814,8 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in queries_suspend. */
-	num_dw += ctx->num_cs_dw_queries_suspend;
+	num_dw += ctx->num_cs_dw_nontimer_queries_suspend;
+	num_dw += ctx->num_cs_dw_timer_queries_suspend;
 
 	/* Count in streamout_end at the end of CS. */
 	num_dw += ctx->num_cs_dw_streamout_end;
@@ -1243,16 +1244,21 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_block *enable_block = NULL;
-	bool queries_suspended = false;
+	bool timer_queries_suspended = false;
+	bool nontimer_queries_suspended = false;
 	bool streamout_suspended = false;
 
 	if (cs->cdw == ctx->atom_start_cs.atom.num_dw)
 		return;
 
 	/* suspend queries */
-	if (ctx->num_cs_dw_queries_suspend) {
-		r600_suspend_queries(ctx);
-		queries_suspended = true;
+	if (ctx->num_cs_dw_timer_queries_suspend) {
+		r600_suspend_timer_queries(ctx);
+		timer_queries_suspended = true;
+	}
+	if (ctx->num_cs_dw_nontimer_queries_suspend) {
+		r600_suspend_nontimer_queries(ctx);
+		nontimer_queries_suspended = true;
 	}
 
 	if (ctx->num_cs_dw_streamout_end) {
@@ -1284,8 +1290,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 
 	/* resume queries */
-	if (queries_suspended) {
-		r600_resume_queries(ctx);
+	if (timer_queries_suspended) {
+		r600_resume_timer_queries(ctx);
+	}
+	if (nontimer_queries_suspended) {
+		r600_resume_nontimer_queries(ctx);
 	}
 
 	/* set all valid group as dirty so they get reemited on

@@ -45,7 +45,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	r600_suspend_queries(rctx);
+	r600_suspend_nontimer_queries(rctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
 	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);
@@ -95,7 +95,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 					       rctx->saved_render_cond_mode);
 		rctx->saved_render_cond = NULL;
 	}
-	r600_resume_queries(rctx);
+	r600_resume_nontimer_queries(rctx);
 }
 
 static unsigned u_num_layers(struct pipe_resource *r, unsigned level)

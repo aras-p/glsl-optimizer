@@ -248,7 +248,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->chip_class = rscreen->chip_class;
 
 	LIST_INITHEAD(&rctx->dirty_states);
-	LIST_INITHEAD(&rctx->active_query_list);
+	LIST_INITHEAD(&rctx->active_timer_queries);
+	LIST_INITHEAD(&rctx->active_nontimer_queries);
 	LIST_INITHEAD(&rctx->dirty);
 	LIST_INITHEAD(&rctx->resource_dirty);
 	LIST_INITHEAD(&rctx->enable_list);
