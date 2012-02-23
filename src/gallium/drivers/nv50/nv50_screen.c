@@ -206,8 +206,6 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       return 0;
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       return 32;
-   case PIPE_SHADER_CAP_OUTPUT_READ:
-      return 0; /* maybe support this for fragment shaders ? */
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
       return 0;
