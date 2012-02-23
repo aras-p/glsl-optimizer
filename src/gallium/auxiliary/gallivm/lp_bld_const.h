@@ -149,5 +149,8 @@ lp_build_const_int_pointer(struct gallivm_state *gallivm, const void *ptr)
 }
 
 
+LLVMValueRef
+lp_build_const_string(struct gallivm_state *gallivm,
+                      const char *str);
 
 #endif /* !LP_BLD_CONST_H */

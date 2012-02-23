@@ -29,6 +29,7 @@
 #include "util/u_memory.h"
 #include "lp_bld_assert.h"
 #include "lp_bld_init.h"
+#include "lp_bld_const.h"
 #include "lp_bld_printf.h"
 
 
@@ -66,8 +67,7 @@ lp_build_assert(struct gallivm_state *gallivm,
    LLVMTypeRef arg_types[2];
    LLVMValueRef msg_string, assert_func, params[2], r;
 
-   msg_string = lp_build_const_string_variable(module, context,
-                                               msg, strlen(msg) + 1);
+   msg_string = lp_build_const_string(gallivm, msg);
 
    arg_types[0] = LLVMInt32TypeInContext(context);
    arg_types[1] = LLVMPointerType(LLVMInt8TypeInContext(context), 0);
@@ -90,7 +90,7 @@ lp_build_assert(struct gallivm_state *gallivm,
 
    /* build function call param list */
    params[0] = LLVMBuildZExt(builder, condition, arg_types[0], "");
-   params[1] = LLVMBuildBitCast(builder, msg_string, arg_types[1], "");
+   params[1] = msg_string;
 
    /* check arg types */
    assert(LLVMTypeOf(params[0]) == arg_types[0]);

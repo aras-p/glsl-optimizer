@@ -66,19 +66,6 @@ lp_get_printf_arg_count(const char *fmt)
    return count;
 }
 
-LLVMValueRef 
-lp_build_const_string_variable(LLVMModuleRef module,
-                               LLVMContextRef context,
-                               const char *str, int len)
-{
-   LLVMValueRef string = LLVMAddGlobal(module, LLVMArrayType(LLVMInt8TypeInContext(context), len + 1), "");
-   LLVMSetGlobalConstant(string, TRUE);
-   LLVMSetLinkage(string, LLVMInternalLinkage);
-   LLVMSetInitializer(string, LLVMConstStringInContext(context, str, len + 1, TRUE));
-   return string;
-}
- 
-
 /**
  * lp_build_printf.
  *
@@ -96,22 +83,17 @@ lp_build_printf(struct gallivm_state *gallivm, const char *fmt, ...)
    LLVMContextRef context = gallivm->context;
    LLVMModuleRef module = gallivm->module;
    LLVMValueRef params[50];
-   LLVMValueRef fmtarg = lp_build_const_string_variable(module, context,
-                                                        fmt, strlen(fmt) + 1);
-   LLVMValueRef int0 = lp_build_const_int32(gallivm, 0);
-   LLVMValueRef index[2];
+   LLVMValueRef fmtarg = lp_build_const_string(gallivm, fmt);
    LLVMValueRef func_printf = LLVMGetNamedFunction(module, "printf");
 
    assert(Elements(params) >= argcount + 1);
-
-   index[0] = index[1] = int0;
 
    if (!func_printf) {
       LLVMTypeRef printf_type = LLVMFunctionType(LLVMIntTypeInContext(context, 32), NULL, 0, 1);
       func_printf = LLVMAddFunction(module, "printf", printf_type);
    }
 
-   params[0] = LLVMBuildGEP(builder, fmtarg, index, 2, "");
+   params[0] = fmtarg;
 
    va_start(arglist, fmt);
    for (i = 1; i <= argcount; i++) {

@@ -428,3 +428,21 @@ lp_build_const_mask_aos_swizzled(struct gallivm_state *gallivm,
 
    return lp_build_const_mask_aos(gallivm, type, mask);
 }
+
+
+/**
+ * Build a zero-terminated constant string.
+ */
+LLVMValueRef
+lp_build_const_string(struct gallivm_state *gallivm,
+                      const char *str)
+{
+   unsigned len = strlen(str) + 1;
+   LLVMTypeRef i8 = LLVMInt8TypeInContext(gallivm->context);
+   LLVMValueRef string = LLVMAddGlobal(gallivm->module, LLVMArrayType(i8, len), "");
+   LLVMSetGlobalConstant(string, TRUE);
+   LLVMSetLinkage(string, LLVMInternalLinkage);
+   LLVMSetInitializer(string, LLVMConstStringInContext(gallivm->context, str, len, TRUE));
+   string = LLVMConstBitCast(string, LLVMPointerType(i8, 0));
+   return string;
+}
