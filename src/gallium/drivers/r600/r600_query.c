@@ -264,6 +264,15 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_query *rquery = (struct r600_query*)query;
+	struct r600_query_buffer *prev = rquery->buffer.previous;
+
+	/* Release all query buffers. */
+	while (prev) {
+		struct r600_query_buffer *qbuf = prev;
+		prev = prev->previous;
+		pipe_resource_reference((struct pipe_resource**)&qbuf->buf, NULL);
+		FREE(qbuf);
+	}
 
 	pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
 	FREE(query);
