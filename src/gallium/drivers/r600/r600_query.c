@@ -32,6 +32,12 @@ static bool r600_is_timer_query(unsigned type)
 	       type == PIPE_QUERY_TIMESTAMP_DISJOINT;
 }
 
+static bool r600_query_needs_begin(unsigned type)
+{
+	return type != PIPE_QUERY_GPU_FINISHED &&
+	       type != PIPE_QUERY_TIMESTAMP;
+}
+
 static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, unsigned type)
 {
 	unsigned j, i, num_results, buf_size = 4096;
@@ -142,6 +148,11 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
+	/* The queries which need begin already called this in begin_query. */
+	if (!r600_query_needs_begin(query->type)) {
+		r600_need_cs_space(ctx, query->num_cs_dw, FALSE);
+	}
+
 	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer.buf);
 	/* emit end query */
 	switch (query->type) {
@@ -179,10 +190,12 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 
 	query->buffer.results_end += query->result_size;
 
-	if (r600_is_timer_query(query->type)) {
-		ctx->num_cs_dw_timer_queries_suspend -= query->num_cs_dw;
-	} else {
-		ctx->num_cs_dw_nontimer_queries_suspend -= query->num_cs_dw;
+	if (r600_query_needs_begin(query->type)) {
+		if (r600_is_timer_query(query->type)) {
+			ctx->num_cs_dw_timer_queries_suspend -= query->num_cs_dw;
+		} else {
+			ctx->num_cs_dw_nontimer_queries_suspend -= query->num_cs_dw;
+		}
 	}
 }
 
@@ -317,9 +330,14 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
-	/* Discard the old query buffers. */
 	struct r600_query_buffer *prev = rquery->buffer.previous;
 
+	if (!r600_query_needs_begin(rquery->type)) {
+		assert(0);
+		return;
+	}
+
+	/* Discard the old query buffers. */
 	while (prev) {
 		struct r600_query_buffer *qbuf = prev;
 		prev = prev->previous;
@@ -354,7 +372,10 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	r600_emit_query_end(rctx, rquery);
-	LIST_DELINIT(&rquery->list);
+
+	if (r600_query_needs_begin(rquery->type)) {
+		LIST_DELINIT(&rquery->list);
+	}
 
 	r600_update_occlusion_query_state(rctx, rquery->type, -1);
 }
