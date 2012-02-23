@@ -92,7 +92,19 @@ def generate(env):
             'HAVE_STDINT_H',
         ])
         env.Prepend(LIBPATH = [os.path.join(llvm_dir, 'lib')])
-        if llvm_version >= distutils.version.LooseVersion('2.9'):
+        if llvm_version >= distutils.version.LooseVersion('3.0'):
+            # 3.0
+            env.Prepend(LIBS = [
+                'LLVMBitWriter', 'LLVMX86Disassembler', 'LLVMX86AsmParser',
+                'LLVMX86CodeGen', 'LLVMX86Desc', 'LLVMSelectionDAG',
+                'LLVMAsmPrinter', 'LLVMMCParser', 'LLVMX86AsmPrinter',
+                'LLVMX86Utils', 'LLVMX86Info', 'LLVMJIT',
+                'LLVMExecutionEngine', 'LLVMCodeGen', 'LLVMScalarOpts',
+                'LLVMInstCombine', 'LLVMTransformUtils', 'LLVMipa',
+                'LLVMAnalysis', 'LLVMTarget', 'LLVMMC', 'LLVMCore',
+                'LLVMSupport'
+            ])
+        elif llvm_version >= distutils.version.LooseVersion('2.9'):
             # 2.9
             env.Prepend(LIBS = [
                 'LLVMObject', 'LLVMMCJIT', 'LLVMMCDisassembler',
