@@ -170,8 +170,7 @@ _tnl_InvalidateState( struct gl_context *ctx, GLuint new_state )
    if (ctx->RenderMode == GL_FEEDBACK)
       tnl->render_inputs_bitset |= BITFIELD64_BIT(_TNL_ATTRIB_TEX0);
 
-   if (ctx->Point._Attenuated ||
-       (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
+   if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled)
       tnl->render_inputs_bitset |= BITFIELD64_BIT(_TNL_ATTRIB_POINTSIZE);
 
    /* check for varying vars which are written by the vertex program */
