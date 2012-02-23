@@ -1361,6 +1361,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
       EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, S4_VFMT_XYZ, 12);
    }
 
+   /* Handle gl_PointSize builtin var here */
+   if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled)
+      EMIT_ATTR(_TNL_ATTRIB_POINTSIZE, EMIT_1F, S4_VFMT_POINT_WIDTH, 4);
+
    if (inputsRead & FRAG_BIT_COL0) {
       intel->coloroffset = offset / 4;
       EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4);
