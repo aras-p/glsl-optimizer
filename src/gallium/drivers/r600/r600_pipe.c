@@ -421,9 +421,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 4 : 0;
+		return rscreen->info.r600_has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return debug_get_bool_option("R600_STREAMOUT", FALSE) ? 1 : 0;
+		return rscreen->info.r600_has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return 16*4;

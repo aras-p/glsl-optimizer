@@ -278,6 +278,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                                       &ws->info.r600_backend_map))
                 ws->info.r600_backend_map_valid = TRUE;
         }
+
         ws->info.r600_virtual_address = FALSE;
         if (ws->info.drm_minor >= 13) {
             ws->info.r600_virtual_address = TRUE;
@@ -288,6 +289,9 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                                       &ws->info.r600_ib_vm_max_size))
                 ws->info.r600_virtual_address = FALSE;
         }
+
+	/* XXX don't enable this for R700 yet, it's broken on those asics */
+	ws->info.r600_has_streamout = debug_get_bool_option("R600_STREAMOUT", FALSE);
     }
 
     return TRUE;
