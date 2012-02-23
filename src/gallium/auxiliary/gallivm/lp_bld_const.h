@@ -153,4 +153,14 @@ LLVMValueRef
 lp_build_const_string(struct gallivm_state *gallivm,
                       const char *str);
 
+
+LLVMValueRef
+lp_build_const_func_pointer(struct gallivm_state *gallivm,
+                            const void *ptr,
+                            LLVMTypeRef ret_type,
+                            LLVMTypeRef *arg_types,
+                            unsigned num_args,
+                            const char *name);
+
+
 #endif /* !LP_BLD_CONST_H */

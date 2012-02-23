@@ -643,28 +643,18 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
           */
          LLVMTypeRef ret_type;
          LLVMTypeRef arg_types[4];
-         LLVMTypeRef function_type;
 
          ret_type = LLVMVoidTypeInContext(gallivm->context);
          arg_types[0] = pf32t;
          arg_types[1] = pi8t;
          arg_types[2] = i32t;
          arg_types[3] = i32t;
-         function_type = LLVMFunctionType(ret_type, arg_types,
-                                          Elements(arg_types), 0);
 
-         /* Note: we're using this casting here instead of LLVMAddGlobalMapping()
-          * to work around a bug in LLVM 2.6, and for efficiency/simplicity.
-          */
-
-         /* make const pointer for the C fetch_rgba_float function */
-         function = lp_build_const_int_pointer(gallivm,
-            func_to_pointer((func_pointer) format_desc->fetch_rgba_float));
-
-         /* cast the callee pointer to the function's type */
-         function = LLVMBuildBitCast(builder, function,
-                                     LLVMPointerType(function_type, 0),
-                                     "cast callee");
+         function = lp_build_const_func_pointer(gallivm,
+                                                func_to_pointer((func_pointer) format_desc->fetch_rgba_float),
+                                                ret_type,
+                                                arg_types, Elements(arg_types),
+                                                format_desc->short_name);
       }
 
       tmp_ptr = lp_build_alloca(gallivm, f32x4t, "");

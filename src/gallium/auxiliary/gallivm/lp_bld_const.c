@@ -446,3 +446,32 @@ lp_build_const_string(struct gallivm_state *gallivm,
    string = LLVMConstBitCast(string, LLVMPointerType(i8, 0));
    return string;
 }
+
+
+/**
+ * Build a callable function pointer.
+ *
+ * We this casts instead of LLVMAddGlobalMapping()
+ * to work around a bug in LLVM 2.6, and for efficiency/simplicity.
+ */
+LLVMValueRef
+lp_build_const_func_pointer(struct gallivm_state *gallivm,
+                            const void *ptr,
+                            LLVMTypeRef ret_type,
+                            LLVMTypeRef *arg_types,
+                            unsigned num_args,
+                            const char *name)
+{
+   LLVMTypeRef function_type;
+   LLVMValueRef function;
+
+   function_type = LLVMFunctionType(ret_type, arg_types, num_args, 0);
+
+   function = lp_build_const_int_pointer(gallivm, ptr);
+
+   function = LLVMBuildBitCast(gallivm->builder, function,
+                               LLVMPointerType(function_type, 0),
+                               name);
+
+   return function;
+}
