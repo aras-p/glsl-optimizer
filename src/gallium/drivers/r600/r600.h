@@ -215,18 +215,6 @@ void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r60
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
 
-struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
-void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);
-boolean r600_context_query_result(struct r600_context *ctx,
-				struct r600_query *query,
-				boolean wait, void *vresult);
-struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, unsigned type);
-void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
-void r600_query_end(struct r600_context *ctx, struct r600_query *query);
-void r600_context_queries_suspend(struct r600_context *ctx);
-void r600_context_queries_resume(struct r600_context *ctx);
-void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
-			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);
 void r600_inval_shader_cache(struct r600_context *ctx);

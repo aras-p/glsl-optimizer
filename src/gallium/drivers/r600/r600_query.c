@@ -23,19 +23,250 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 #include "util/u_memory.h"
+#include "r600_hw_context_priv.h"
+
+static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, unsigned type)
+{
+	unsigned j, i, num_results, buf_size = 4096;
+	uint32_t *results;
+	/* Queries are normally read by the CPU after
+	 * being written by the gpu, hence staging is probably a good
+	 * usage pattern.
+	 */
+	struct r600_resource *buf = (struct r600_resource*)
+		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM,
+				   PIPE_USAGE_STAGING, buf_size);
+
+	switch (type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		results = ctx->ws->buffer_map(buf->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		memset(results, 0, buf_size);
+
+		/* Set top bits for unused backends. */
+		num_results = buf_size / (16 * ctx->max_db);
+		for (j = 0; j < num_results; j++) {
+			for (i = 0; i < ctx->max_db; i++) {
+				if (!(ctx->backend_mask & (1<<i))) {
+					results[(i * 4)+1] = 0x80000000;
+					results[(i * 4)+3] = 0x80000000;
+				}
+			}
+			results += 4 * ctx->max_db;
+		}
+		ctx->ws->buffer_unmap(buf->buf);
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+	case PIPE_QUERY_SO_STATISTICS:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		results = ctx->ws->buffer_map(buf->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		memset(results, 0, buf_size);
+		ctx->ws->buffer_unmap(buf->buf);
+		break;
+	default:
+		assert(0);
+	}
+	return buf;
+}
+
+static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *query)
+{
+	struct radeon_winsys_cs *cs = ctx->cs;
+	uint64_t va;
+
+	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
+
+	/* Get a new query buffer if needed. */
+	if (query->buffer.results_end + query->result_size > query->buffer.buf->b.b.b.width0) {
+		struct r600_query_buffer *qbuf = MALLOC_STRUCT(r600_query_buffer);
+		*qbuf = query->buffer;
+		query->buffer.buf = r600_new_query_buffer(ctx, query->type);
+		query->buffer.results_end = 0;
+		query->buffer.previous = qbuf;
+	}
+
+	/* emit begin query */
+	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer.buf);
+	va += query->buffer.results_end;
+
+	switch (query->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+	case PIPE_QUERY_SO_STATISTICS:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = 0;
+		break;
+	default:
+		assert(0);
+	}
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer.buf, RADEON_USAGE_WRITE);
+
+	ctx->num_cs_dw_queries_suspend += query->num_cs_dw;
+}
+
+static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *query)
+{
+	struct radeon_winsys_cs *cs = ctx->cs;
+	uint64_t va;
+
+	va = r600_resource_va(&ctx->screen->screen, (void*)query->buffer.buf);
+	/* emit end query */
+	switch (query->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		va += query->buffer.results_end + 8;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+	case PIPE_QUERY_SO_STATISTICS:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
+		cs->buf[cs->cdw++] = query->buffer.results_end + query->result_size/2;
+		cs->buf[cs->cdw++] = 0;
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		va += query->buffer.results_end + query->result_size/2;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = 0;
+		break;
+	default:
+		assert(0);
+	}
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer.buf, RADEON_USAGE_WRITE);
+
+	query->buffer.results_end += query->result_size;
+	ctx->num_cs_dw_queries_suspend -= query->num_cs_dw;
+}
+
+static void r600_emit_query_predication(struct r600_context *ctx, struct r600_query *query,
+					int operation, bool flag_wait)
+{
+	struct radeon_winsys_cs *cs = ctx->cs;
+
+	if (operation == PREDICATION_OP_CLEAR) {
+		r600_need_cs_space(ctx, 3, FALSE);
+
+		cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = PRED_OP(PREDICATION_OP_CLEAR);
+	} else {
+		struct r600_query_buffer *qbuf;
+		unsigned count;
+		uint32_t op;
+
+		/* Find how many results there are. */
+		count = 0;
+		for (qbuf = &query->buffer; qbuf; qbuf = qbuf->previous) {
+			count += qbuf->results_end / query->result_size;
+		}
+
+		r600_need_cs_space(ctx, 5 * count, TRUE);
+
+		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
+				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
+
+		/* emit predicate packets for all data blocks */
+		for (qbuf = &query->buffer; qbuf; qbuf = qbuf->previous) {
+			unsigned results_base = 0;
+			uint64_t va = r600_resource_va(&ctx->screen->screen, &qbuf->buf->b.b.b);
+
+			while (results_base < qbuf->results_end) {
+				cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+				cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
+				cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
+				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+				cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, qbuf->buf, RADEON_USAGE_READ);
+				results_base += query->result_size;
+
+				/* set CONTINUE bit for all packets except the first */
+				op |= PREDICATION_CONTINUE;
+			}
+		} while (qbuf);
+	}
+}
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	return (struct pipe_query*)r600_context_query_create(rctx, query_type);
+	struct r600_query *query;
+
+	query = CALLOC_STRUCT(r600_query);
+	if (query == NULL)
+		return NULL;
+
+	query->type = query_type;
+
+	switch (query_type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		query->result_size = 16 * rctx->max_db;
+		query->num_cs_dw = 6;
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		query->result_size = 16;
+		query->num_cs_dw = 8;
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+	case PIPE_QUERY_SO_STATISTICS:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		/* NumPrimitivesWritten, PrimitiveStorageNeeded. */
+		query->result_size = 32;
+		query->num_cs_dw = 6;
+		break;
+	default:
+		assert(0);
+		FREE(query);
+		return NULL;
+	}
+
+	query->buffer.buf = r600_new_query_buffer(rctx, query_type);
+	if (!query->buffer.buf) {
+		FREE(query);
+		return NULL;
+	}
+	return (struct pipe_query*)query;
 }
 
 static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_query *rquery = (struct r600_query*)query;
 
-	r600_context_query_destroy(rctx, (struct r600_query *)query);
+	pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
+	FREE(query);
 }
 
 static void r600_update_occlusion_query_state(struct r600_context *rctx,
@@ -57,11 +288,12 @@ static void r600_update_occlusion_query_state(struct r600_context *rctx,
 	}
 }
 
-static void r600_query_discard_results(struct r600_context *rctx,
-				       struct r600_query *query)
+static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_query *rquery = (struct r600_query *)query;
 	/* Discard the old query buffers. */
-	struct r600_query_buffer *prev = query->buffer.previous;
+	struct r600_query_buffer *prev = rquery->buffer.previous;
 
 	while (prev) {
 		struct r600_query_buffer *qbuf = prev;
@@ -71,25 +303,18 @@ static void r600_query_discard_results(struct r600_context *rctx,
 	}
 
 	/* Obtain a new buffer if the current one can't be mapped without a stall. */
-	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, query->buffer.buf->cs_buf) ||
-	    rctx->ws->buffer_is_busy(query->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
-		pipe_resource_reference((struct pipe_resource**)&query->buffer.buf, NULL);
-		query->buffer.buf = r600_new_query_buffer(rctx, query->type);
+	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rquery->buffer.buf->cs_buf) ||
+	    rctx->ws->buffer_is_busy(rquery->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
+		pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
+		rquery->buffer.buf = r600_new_query_buffer(rctx, rquery->type);
 	}
 
-	query->buffer.results_end = 0;
-	query->buffer.previous = NULL;
-}
-
-static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_query *rquery = (struct r600_query *)query;
+	rquery->buffer.results_end = 0;
+	rquery->buffer.previous = NULL;
 
 	r600_update_occlusion_query_state(rctx, rquery->type, 1);
 
-	r600_query_discard_results(rctx, rquery);
-	r600_query_begin(rctx, rquery);
+	r600_emit_query_begin(rctx, rquery);
 	LIST_ADDTAIL(&rquery->list, &rctx->active_query_list);
 }
 
@@ -98,10 +323,112 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 
-	r600_query_end(rctx, rquery);
+	r600_emit_query_end(rctx, rquery);
 	LIST_DELINIT(&rquery->list);
 
 	r600_update_occlusion_query_state(rctx, rquery->type, -1);
+}
+
+static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
+				       bool test_status_bit)
+{
+	uint32_t *current_result = (uint32_t*)map;
+	uint64_t start, end;
+
+	start = (uint64_t)current_result[start_index] |
+		(uint64_t)current_result[start_index+1] << 32;
+	end = (uint64_t)current_result[end_index] |
+	      (uint64_t)current_result[end_index+1] << 32;
+
+	if (!test_status_bit ||
+	    ((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))) {
+		return end - start;
+	}
+	return 0;
+}
+
+static boolean r600_get_query_buffer_result(struct r600_context *ctx,
+					    struct r600_query *query,
+					    struct r600_query_buffer *qbuf,
+					    boolean wait,
+					    union r600_query_result *result)
+{
+	unsigned results_base = 0;
+	char *map;
+
+	map = ctx->ws->buffer_map(qbuf->buf->buf, ctx->cs,
+				  PIPE_TRANSFER_READ |
+				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
+	if (!map)
+		return FALSE;
+
+	/* count all results across all data blocks */
+	switch (query->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+		while (results_base != qbuf->results_end) {
+			result->u64 +=
+				r600_query_read_result(map + results_base, 0, 2, true);
+			results_base += 16;
+		}
+		break;
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+		while (results_base != qbuf->results_end) {
+			result->b = result->b ||
+				r600_query_read_result(map + results_base, 0, 2, true) != 0;
+			results_base += 16;
+		}
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		while (results_base != qbuf->results_end) {
+			result->u64 +=
+				r600_query_read_result(map + results_base, 0, 2, false);
+			results_base += query->result_size;
+		}
+		break;
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+		/* SAMPLE_STREAMOUTSTATS stores this structure:
+		 * {
+		 *    u64 NumPrimitivesWritten;
+		 *    u64 PrimitiveStorageNeeded;
+		 * }
+		 * We only need NumPrimitivesWritten here. */
+		while (results_base != qbuf->results_end) {
+			result->u64 +=
+				r600_query_read_result(map + results_base, 2, 6, true);
+			results_base += query->result_size;
+		}
+		break;
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+		/* Here we read PrimitiveStorageNeeded. */
+		while (results_base != qbuf->results_end) {
+			result->u64 +=
+				r600_query_read_result(map + results_base, 0, 4, true);
+			results_base += query->result_size;
+		}
+		break;
+	case PIPE_QUERY_SO_STATISTICS:
+		while (results_base != qbuf->results_end) {
+			result->so.num_primitives_written +=
+				r600_query_read_result(map + results_base, 2, 6, true);
+			result->so.primitives_storage_needed +=
+				r600_query_read_result(map + results_base, 0, 4, true);
+			results_base += query->result_size;
+		}
+		break;
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		while (results_base != qbuf->results_end) {
+			result->b = result->b ||
+				r600_query_read_result(map + results_base, 2, 6, true) !=
+				r600_query_read_result(map + results_base, 0, 4, true);
+			results_base += query->result_size;
+		}
+		break;
+	default:
+		assert(0);
+	}
+
+	ctx->ws->buffer_unmap(qbuf->buf->buf);
+	return TRUE;
 }
 
 static boolean r600_get_query_result(struct pipe_context *ctx,
@@ -110,8 +437,41 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
+	boolean *result_b = (boolean*)vresult;
+	uint64_t *result_u64 = (uint64_t*)vresult;
+	union r600_query_result result;
+	struct pipe_query_data_so_statistics *result_so =
+		(struct pipe_query_data_so_statistics*)vresult;
+	struct r600_query_buffer *qbuf;
 
-	return r600_context_query_result(rctx, rquery, wait, vresult);
+	memset(&result, 0, sizeof(result));
+
+	for (qbuf = &rquery->buffer; qbuf; qbuf = qbuf->previous) {
+		if (!r600_get_query_buffer_result(rctx, rquery, qbuf, wait, &result)) {
+			return FALSE;
+		}
+	}
+
+	switch (rquery->type) {
+	case PIPE_QUERY_OCCLUSION_COUNTER:
+	case PIPE_QUERY_PRIMITIVES_EMITTED:
+	case PIPE_QUERY_PRIMITIVES_GENERATED:
+		*result_u64 = result.u64;
+		break;
+	case PIPE_QUERY_OCCLUSION_PREDICATE:
+	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+		*result_b = result.b;
+		break;
+	case PIPE_QUERY_TIME_ELAPSED:
+		*result_u64 = (1000000 * result.u64) / rctx->screen->info.r600_clock_crystal_freq;
+		break;
+	case PIPE_QUERY_SO_STATISTICS:
+		*result_so = result.so;
+		break;
+	default:
+		assert(0);
+	}
+	return TRUE;
 }
 
 static void r600_render_condition(struct pipe_context *ctx,
@@ -120,7 +480,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
-	int wait_flag = 0;
+	bool wait_flag = false;
 
 	rctx->current_render_cond = query;
 	rctx->current_render_cond_mode = mode;
@@ -128,14 +488,14 @@ static void r600_render_condition(struct pipe_context *ctx,
 	if (query == NULL) {
 		if (rctx->predicate_drawing) {
 			rctx->predicate_drawing = false;
-			r600_query_predication(rctx, NULL, PREDICATION_OP_CLEAR, 1);
+			r600_emit_query_predication(rctx, NULL, PREDICATION_OP_CLEAR, false);
 		}
 		return;
 	}
 
 	if (mode == PIPE_RENDER_COND_WAIT ||
 	    mode == PIPE_RENDER_COND_BY_REGION_WAIT) {
-		wait_flag = 1;
+		wait_flag = true;
 	}
 
 	rctx->predicate_drawing = true;
@@ -143,16 +503,37 @@ static void r600_render_condition(struct pipe_context *ctx,
 	switch (rquery->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		r600_query_predication(rctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
+		r600_emit_query_predication(rctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		r600_query_predication(rctx, rquery, PREDICATION_OP_PRIMCOUNT, wait_flag);
+		r600_emit_query_predication(rctx, rquery, PREDICATION_OP_PRIMCOUNT, wait_flag);
 		break;
 	default:
 		assert(0);
+	}
+}
+
+void r600_suspend_queries(struct r600_context *ctx)
+{
+	struct r600_query *query;
+
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
+		r600_emit_query_end(ctx, query);
+	}
+	assert(ctx->num_cs_dw_queries_suspend == 0);
+}
+
+void r600_resume_queries(struct r600_context *ctx)
+{
+	struct r600_query *query;
+
+	assert(ctx->num_cs_dw_queries_suspend == 0);
+
+	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
+		r600_emit_query_begin(ctx, query);
 	}
 }
 

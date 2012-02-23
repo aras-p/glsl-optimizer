@@ -395,6 +395,8 @@ void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_context *rctx);
+void r600_suspend_queries(struct r600_context *ctx);
+void r600_resume_queries(struct r600_context *ctx);
 
 /* r600_resource.c */
 void r600_init_context_resource_functions(struct r600_context *r600);
