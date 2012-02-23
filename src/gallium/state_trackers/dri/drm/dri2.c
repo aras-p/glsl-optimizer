@@ -440,8 +440,6 @@ dri2_create_image_from_name(__DRIscreen *_screen,
 
    tex_usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
 
-   img->dri_format = format;
-
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
       pf = PIPE_FORMAT_B5G6R5_UNORM;
@@ -489,6 +487,7 @@ dri2_create_image_from_name(__DRIscreen *_screen,
 
    img->level = 0;
    img->layer = 0;
+   img->dri_format = format;
    img->loader_private = loaderPrivate;
 
    return img;
