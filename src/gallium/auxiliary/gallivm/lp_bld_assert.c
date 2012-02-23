@@ -56,47 +56,37 @@ lp_assert(int condition, const char *msg)
  * \param condition should be an 'i1' or 'i32' value
  * \param msg  a string to print if the assertion fails.
  */
-LLVMValueRef
+void
 lp_build_assert(struct gallivm_state *gallivm,
                 LLVMValueRef condition,
                 const char *msg)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMContextRef context = gallivm->context;
-   LLVMModuleRef module = gallivm->module;
    LLVMTypeRef arg_types[2];
-   LLVMValueRef msg_string, assert_func, params[2], r;
+   LLVMTypeRef ret_type;
+   LLVMValueRef function;
+   LLVMValueRef args[2];
+   LLVMValueRef msg_string;
 
    msg_string = lp_build_const_string(gallivm, msg);
 
+   ret_type = LLVMVoidTypeInContext(context);
    arg_types[0] = LLVMInt32TypeInContext(context);
    arg_types[1] = LLVMPointerType(LLVMInt8TypeInContext(context), 0);
 
-   /* lookup the lp_assert function */
-   assert_func = LLVMGetNamedFunction(module, "lp_assert");
-
-   /* Create the assertion function if not found */
-   if (!assert_func) {
-      LLVMTypeRef func_type =
-         LLVMFunctionType(LLVMVoidTypeInContext(context), arg_types, 2, 0);
-
-      assert_func = LLVMAddFunction(module, "lp_assert", func_type);
-      LLVMSetFunctionCallConv(assert_func, LLVMCCallConv);
-      LLVMSetLinkage(assert_func, LLVMExternalLinkage);
-      LLVMAddGlobalMapping(gallivm->engine, assert_func,
-                           func_to_pointer((func_pointer)lp_assert));
-   }
-   assert(assert_func);
+   function = lp_build_const_func_pointer(gallivm,
+                                          func_to_pointer((func_pointer)lp_assert),
+                                          ret_type, arg_types, Elements(arg_types),
+                                          "assert");
 
    /* build function call param list */
-   params[0] = LLVMBuildZExt(builder, condition, arg_types[0], "");
-   params[1] = msg_string;
+   args[0] = LLVMBuildZExt(builder, condition, arg_types[0], "");
+   args[1] = msg_string;
 
    /* check arg types */
-   assert(LLVMTypeOf(params[0]) == arg_types[0]);
-   assert(LLVMTypeOf(params[1]) == arg_types[1]);
+   assert(LLVMTypeOf(args[0]) == arg_types[0]);
+   assert(LLVMTypeOf(args[1]) == arg_types[1]);
 
-   r = LLVMBuildCall(builder, assert_func, params, 2, "");
-
-   return r;
+   LLVMBuildCall(builder, function, args, Elements(args), "");
 }
