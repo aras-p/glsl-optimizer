@@ -50,7 +50,14 @@ struct vl_dri_screen
    struct vl_screen base;
    xcb_connection_t *conn;
    xcb_drawable_t drawable;
+
+   bool flushed;
+   xcb_dri2_swap_buffers_cookie_t swap_cookie;
+   xcb_dri2_wait_sbc_cookie_t wait_cookie;
+   xcb_dri2_get_buffers_cookie_t buffers_cookie;
 };
+
+static const unsigned int attachments[1] = { XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT };
 
 static void
 vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
@@ -59,14 +66,19 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           void *context_private)
 {
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)context_private;
-   xcb_dri2_swap_buffers_cookie_t swap_cookie;
 
    assert(screen);
    assert(resource);
    assert(context_private);
 
-   swap_cookie = xcb_dri2_swap_buffers_unchecked(scrn->conn, scrn->drawable, 0, 0, 0, 0, 0, 0);
-   free(xcb_dri2_swap_buffers_reply(scrn->conn, swap_cookie, NULL));
+   if (scrn->flushed)
+      free(xcb_dri2_swap_buffers_reply(scrn->conn, scrn->swap_cookie, NULL));
+   else
+      scrn->flushed = true;
+
+   scrn->swap_cookie = xcb_dri2_swap_buffers_unchecked(scrn->conn, scrn->drawable, 0, 0, 0, 0, 0, 0);
+   scrn->wait_cookie = xcb_dri2_wait_sbc_unchecked(scrn->conn, scrn->drawable, 0, 0);
+   scrn->buffers_cookie = xcb_dri2_get_buffers_unchecked(scrn->conn, scrn->drawable, 1, 1, attachments);
 }
 
 static void
@@ -83,30 +95,38 @@ vl_dri2_destroy_drawable(struct vl_dri_screen *scrn)
 struct pipe_resource*
 vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 {
-   static const unsigned int attachments[1] = { XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT };
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
 
    struct winsys_handle dri2_front_handle;
    struct pipe_resource template, *tex;
 
-   xcb_dri2_get_buffers_cookie_t cookie;
    xcb_dri2_get_buffers_reply_t *reply;
    xcb_dri2_dri2_buffer_t *buffers;
 
    assert(scrn);
 
+   if (scrn->flushed) {
+      free(xcb_dri2_swap_buffers_reply(scrn->conn, scrn->swap_cookie, NULL));
+      free(xcb_dri2_wait_sbc_reply(scrn->conn, scrn->wait_cookie, NULL));
+   }
+
    if (scrn->drawable != drawable) {
       vl_dri2_destroy_drawable(scrn);
       xcb_dri2_create_drawable(scrn->conn, drawable);
       scrn->drawable = drawable;
-   } else {
-      xcb_dri2_wait_sbc_cookie_t wait_cookie;
-      wait_cookie = xcb_dri2_wait_sbc_unchecked(scrn->conn, scrn->drawable, 0, 0);
-      free(xcb_dri2_wait_sbc_reply(scrn->conn, wait_cookie, NULL));
+
+      if (scrn->flushed) {
+         free(xcb_dri2_get_buffers_reply(scrn->conn, scrn->buffers_cookie, NULL));
+         scrn->flushed = false;
+      }
    }
 
-   cookie = xcb_dri2_get_buffers_unchecked(scrn->conn, drawable, 1, 1, attachments);
-   reply = xcb_dri2_get_buffers_reply(scrn->conn, cookie, NULL);
+   if (!scrn->flushed)
+      scrn->buffers_cookie = xcb_dri2_get_buffers_unchecked(scrn->conn, drawable, 1, 1, attachments);
+   else
+      scrn->flushed = false;
+
+   reply = xcb_dri2_get_buffers_reply(scrn->conn, scrn->buffers_cookie, NULL);
    if (!reply)
       return NULL;
 
@@ -237,6 +257,12 @@ void vl_screen_destroy(struct vl_screen *vscreen)
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
 
    assert(vscreen);
+
+   if (scrn->flushed) {
+      free(xcb_dri2_swap_buffers_reply(scrn->conn, scrn->swap_cookie, NULL));
+      free(xcb_dri2_wait_sbc_reply(scrn->conn, scrn->wait_cookie, NULL));
+      free(xcb_dri2_get_buffers_reply(scrn->conn, scrn->buffers_cookie, NULL));
+   }
 
    vl_dri2_destroy_drawable(scrn);
    scrn->base.pscreen->destroy(scrn->base.pscreen);
