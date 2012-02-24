@@ -5,6 +5,7 @@
 #include "radeon_compiler_util.h"
 #include "radeon_program.h"
 
+#include "r300_compiler_tests.h"
 #include "rc_test_helpers.h"
 #include "unit_test.h"
 
@@ -66,7 +67,7 @@ static void test_runner_rc_inst_can_use_presub(struct test_result * result)
 		"MAD temp[0].xyz, temp[2].xyz_, -temp[3].xxx_, input[5].xyz_;");
 }
 
-int main(int argc, char ** argv)
+void radeon_compiler_util_run_tests()
 {
 	struct test tests[] = {
 		{"rc_inst_can_use_presub()", test_runner_rc_inst_can_use_presub},

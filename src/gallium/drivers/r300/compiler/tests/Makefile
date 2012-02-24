@@ -4,11 +4,12 @@ include $(TOP)/configs/current
 CFLAGS += -Wall -Werror
 
 ### Basic defines ###
-TESTS =	radeon_compiler_util_tests
+TESTS =	r300_compiler_tests
 
 TEST_SOURCES := $(TESTS:=.c)
 
 SHARED_SOURCES =		\
+	radeon_compiler_util_tests.c	\
 	rc_test_helpers.c	\
 	unit_test.c
 
