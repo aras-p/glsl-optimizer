@@ -358,11 +358,9 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 						      length, 64);
 	 if (!(access & GL_MAP_READ_BIT)) {
 	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
-	    intel_obj->mapped_gtt = true;
 	 } else {
 	    drm_intel_bo_map(intel_obj->range_map_bo,
 			     (access & GL_MAP_WRITE_BIT) != 0);
-	    intel_obj->mapped_gtt = false;
 	 }
 	 obj->Pointer = intel_obj->range_map_bo->virtual;
       }
@@ -371,10 +369,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 
    if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
-      intel_obj->mapped_gtt = true;
    } else {
       drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
-      intel_obj->mapped_gtt = false;
    }
 
    obj->Pointer = intel_obj->buffer->virtual + offset;
@@ -440,11 +436,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
       free(intel_obj->range_map_buffer);
       intel_obj->range_map_buffer = NULL;
    } else if (intel_obj->range_map_bo != NULL) {
-      if (intel_obj->mapped_gtt) {
-	 drm_intel_gem_bo_unmap_gtt(intel_obj->range_map_bo);
-      } else {
-	 drm_intel_bo_unmap(intel_obj->range_map_bo);
-      }
+      drm_intel_bo_unmap(intel_obj->range_map_bo);
 
       intel_emit_linear_blit(intel,
 			     intel_obj->buffer, obj->Offset,
@@ -461,11 +453,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
       drm_intel_bo_unreference(intel_obj->range_map_bo);
       intel_obj->range_map_bo = NULL;
    } else if (intel_obj->buffer != NULL) {
-      if (intel_obj->mapped_gtt) {
-	 drm_intel_gem_bo_unmap_gtt(intel_obj->buffer);
-      } else {
-	 drm_intel_bo_unmap(intel_obj->buffer);
-      }
+      drm_intel_bo_unmap(intel_obj->buffer);
    }
    obj->Pointer = NULL;
    obj->Offset = 0;
