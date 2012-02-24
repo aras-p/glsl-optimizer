@@ -33,6 +33,7 @@
 
 #include "main/config.h"
 #include "glapi/glapi.h"
+#include "swrast/swrast.h"
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
 
 /*
