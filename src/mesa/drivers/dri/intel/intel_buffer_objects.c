@@ -367,7 +367,9 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       return obj->Pointer;
    }
 
-   if (!(access & GL_MAP_READ_BIT)) {
+   if (access & GL_MAP_UNSYNCHRONIZED_BIT)
+      drm_intel_gem_bo_map_unsynchronized(intel_obj->buffer);
+   else if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
    } else {
       drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
