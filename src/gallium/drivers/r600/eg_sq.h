@@ -335,7 +335,7 @@
 #define   S_SQ_ALU_WORD1_OP3_ALU_INST(x)                             (((x) & 0x1F) << 13)
 #define   G_SQ_ALU_WORD1_OP3_ALU_INST(x)                             (((x) >> 13) & 0x1F)
 #define   C_SQ_ALU_WORD1_OP3_ALU_INST                                0xFFFC1FFF
-/* TODO ADD OTHER OP3 */
+/* XXX ADD OTHER OP3 */
 /* done */
 #define P_SQ_VTX_WORD0
 #define   S_SQ_VTX_WORD0_VTX_INST(x)                                 (((x) & 0x1F) << 0)

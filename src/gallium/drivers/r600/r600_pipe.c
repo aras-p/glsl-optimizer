@@ -445,7 +445,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
-		/* FIXME some r6xx are buggy and can only do 4 */
+		/* XXX some r6xx are buggy and can only do 4 */
 		return 8;
 
 	/* Timer queries, present when the clock frequency is non zero. */
@@ -497,14 +497,14 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_VERTEX:
 		break;
 	case PIPE_SHADER_GEOMETRY:
-		/* TODO: support and enable geometry programs */
+		/* XXX: support and enable geometry programs */
 		return 0;
 	default:
-		/* TODO: support tessellation on Evergreen */
+		/* XXX: support tessellation on Evergreen */
 		return 0;
 	}
 
-	/* TODO: all these should be fixed, since r600 surely supports much more! */
+	/* XXX: all these should be fixed, since r600 surely supports much more! */
 	switch (param) {
 	case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
 	case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
@@ -512,7 +512,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
 		return 16384;
 	case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
-		return 8; /* FIXME */
+		return 8; /* XXX */
 	case PIPE_SHADER_CAP_MAX_INPUTS:
 		if(shader == PIPE_SHADER_FRAGMENT)
 			return 34;
@@ -521,14 +521,14 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_TEMPS:
 		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_ADDRS:
-		/* FIXME Isn't this equal to TEMPS? */
+		/* XXX Isn't this equal to TEMPS? */
 		return 1; /* Max native address registers */
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return R600_MAX_CONST_BUFFER_SIZE;
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return R600_MAX_CONST_BUFFERS-1;
 	case PIPE_SHADER_CAP_MAX_PREDS:
-		return 0; /* FIXME */
+		return 0; /* nothing uses this */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
 		return 1;
 	case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:

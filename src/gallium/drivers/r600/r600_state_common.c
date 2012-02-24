@@ -435,7 +435,6 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	/* TODO delete old shader */
 	rctx->ps_shader = (struct r600_pipe_shader *)state;
 	if (state) {
 		r600_inval_shader_cache(rctx);
@@ -453,7 +452,6 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	/* TODO delete old shader */
 	rctx->vs_shader = (struct r600_pipe_shader *)state;
 	if (state) {
 		r600_inval_shader_cache(rctx);

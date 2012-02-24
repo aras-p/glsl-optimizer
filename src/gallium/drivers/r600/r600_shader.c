@@ -576,7 +576,7 @@ static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
 
 	ctx->num_interp_gpr += (num_baryc + 1) >> 1;
 
-	/* TODO PULL MODEL and LINE STIPPLE, FIXED PT POS */
+	/* XXX PULL MODEL and LINE STIPPLE, FIXED PT POS */
 	return ctx->num_interp_gpr;
 }
 
@@ -1953,7 +1953,7 @@ static int tgsi_rsq(struct r600_shader_ctx *ctx)
 
 	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
-	/* FIXME:
+	/* XXX:
 	 * For state trackers other than OpenGL, we'll want to use
 	 * _RECIPSQRT_IEEE instead.
 	 */
@@ -4528,7 +4528,7 @@ static int emit_jump_to_offset(struct r600_shader_ctx *ctx, int pops, int offset
 
 	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_JUMP));
 	ctx->bc->cf_last->pop_count = pops;
-	/* TODO work out offset */
+	/* XXX work out offset */
 	return 0;
 }
 
@@ -4640,7 +4640,7 @@ static int tgsi_endloop(struct r600_shader_ctx *ctx)
 	for (i = 0; i < ctx->bc->fc_stack[ctx->bc->fc_sp].num_mid; i++) {
 		ctx->bc->fc_stack[ctx->bc->fc_sp].mid[i]->cf_addr = ctx->bc->cf_last->id;
 	}
-	/* TODO add LOOPRET support */
+	/* XXX add LOOPRET support */
 	fc_poplevel(ctx);
 	callstack_decrease_current(ctx, FC_LOOP);
 	return 0;
@@ -4727,7 +4727,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 
-	/* FIXME:
+	/* XXX:
 	 * For state trackers other than OpenGL, we'll want to use
 	 * _RECIP_IEEE instead.
 	 */

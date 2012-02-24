@@ -664,8 +664,6 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
-	/* XXX no offset */
-/*	offset = r600_texture_get_offset(rtex, level, surf_tmpl->u.tex.first_layer);*/
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);
 	surface->base.context = pipe;
@@ -1075,7 +1073,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		default:
 			break;
 		}
-		goto out_unknown; /* TODO */
+		goto out_unknown; /* XXX */
 
 	case UTIL_FORMAT_COLORSPACE_SRGB:
 		word4 |= S_038010_FORCE_DEGAMMA(1);
@@ -1164,7 +1162,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
-	/* R8G8Bx_SNORM - TODO CxV8U8 */
+	/* R8G8Bx_SNORM - XXX CxV8U8 */
 
 	/* See whether the components are of the same size. */
 	for (i = 1; i < desc->nr_channels; i++) {

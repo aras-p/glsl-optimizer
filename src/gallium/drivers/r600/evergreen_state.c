@@ -21,9 +21,6 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* TODO:
- *	- fix mask for depth control & cull for query
- */
 #include <stdio.h>
 #include <errno.h>
 #include "pipe/p_defines.h"
@@ -636,7 +633,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
 	uint32_t color_control, target_mask;
-	/* FIXME there is more then 8 framebuffer */
+	/* XXX there is more then 8 framebuffer */
 	unsigned blend_cntl[8];
 
 	if (blend == NULL) {
@@ -1407,7 +1404,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	 * - 11-bit or smaller UNORM/SNORM/SRGB
 	 * - 16-bit or smaller FLOAT
 	 */
-	/* FIXME: This should probably be the same for all CBs if we want
+	/* XXX: This should probably be the same for all CBs if we want
 	 * useful alpha tests. */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 	    ((desc->channel[i].size < 12 &&
@@ -1426,7 +1423,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
 
-	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
+	/* XXX handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
@@ -2410,7 +2407,7 @@ void evergreen_polygon_offset_update(struct r600_context *rctx)
 		default:
 			return;
 		}
-		/* FIXME some of those reg can be computed with cso */
+		/* XXX some of those reg can be computed with cso */
 		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 		r600_pipe_state_add_reg(&state,
 				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,

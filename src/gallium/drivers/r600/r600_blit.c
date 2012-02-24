@@ -162,7 +162,7 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 {
 	unsigned int i;
 
-	/* FIXME: This handles fragment shader textures only. */
+	/* XXX: This handles fragment shader textures only. */
 
 	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {
 		struct r600_pipe_sampler_view *view;

@@ -2546,7 +2546,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "ENDIAN:%d ", vtx->endian);
 			fprintf(stderr, "OFFSET:%d\n", vtx->offset);
-			/* TODO */
+			/* XXX */
 			id++;
 			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
 			id++;

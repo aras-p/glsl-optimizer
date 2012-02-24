@@ -21,9 +21,6 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* TODO:
- *	- fix mask for depth control & cull for query
- */
 #include <stdio.h>
 #include <errno.h>
 #include "pipe/p_defines.h"
@@ -610,7 +607,7 @@ void r600_polygon_offset_update(struct r600_context *rctx)
 		default:
 			return;
 		}
-		/* FIXME some of those reg can be computed with cso */
+		/* XXX some of those reg can be computed with cso */
 		offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 		r600_pipe_state_add_reg(&state,
 				R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE,
