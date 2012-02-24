@@ -358,8 +358,8 @@ svga_is_format_supported( struct pipe_screen *screen,
       /* Often unsupported/problematic. This means we end up with the same
        * visuals for all virtual hardware implementations.
        */
-      case PIPE_FORMAT_B4G4R4A4_UNORM:
-      case PIPE_FORMAT_B5G5R5A1_UNORM:
+      case SVGA3D_A4R4G4B4:
+      case SVGA3D_A1R5G5B5:
          return FALSE;
          
       default:
