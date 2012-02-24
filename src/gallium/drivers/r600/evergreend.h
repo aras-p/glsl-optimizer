@@ -1770,6 +1770,8 @@
 #define R_028A38_VGT_GROUP_VECT_0_FMT_CNTL           0x00028A38
 #define R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL           0x00028A3C
 #define R_028A48_PA_SC_MODE_CNTL_0                   0x00028A48
+#define   S_028A48_MSAA_ENABLE(x)                      (((x) & 0x1) << 0)
+#define   S_028A48_VPORT_SCISSOR_ENABLE(x)             (((x) & 0x1) << 1)
 #define   S_028A48_LINE_STIPPLE_ENABLE(x)              (((x) & 0x1) << 2)
 #define R_028A4C_PA_SC_MODE_CNTL_1                   0x00028A4C
 #define R_028A94_VGT_MULTI_PRIM_IB_RESET_EN          0x00028A94

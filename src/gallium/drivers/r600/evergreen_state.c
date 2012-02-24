@@ -768,7 +768,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate;
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
-	unsigned clip_rule;
 	float psize_min, psize_max;
 
 	if (rs == NULL) {
@@ -794,8 +793,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
 		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
 		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
-
-	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
 	/* offset */
 	rs->offset_units = state->offset_units;
@@ -836,6 +833,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0,
+				S_028A48_VPORT_SCISSOR_ENABLE(state->scissor) |
 				S_028A48_LINE_STIPPLE_ENABLE(state->line_stipple_enable),
 				NULL, 0);
 
@@ -849,7 +847,6 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 					NULL, 0);
 	}
 	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
 				S_028814_PROVOKING_VTX_LAST(prov_vtx) |
 				S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
@@ -1181,6 +1178,26 @@ static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample
 {
 }
 
+static void evergreen_get_scissor_rect(struct r600_context *rctx,
+				       unsigned tl_x, unsigned tl_y, unsigned br_x, unsigned br_y,
+				       uint32_t *tl, uint32_t *br)
+{
+	/* EG hw workaround */
+	if (br_x == 0)
+		tl_x = 1;
+	if (br_y == 0)
+		tl_y = 1;
+
+	/* cayman hw workaround */
+	if (rctx->chip_class == CAYMAN) {
+		if (br_x == 1 && br_y == 1)
+			br_x = 2;
+	}
+
+	*tl = S_028240_TL_X(tl_x) | S_028240_TL_Y(tl_y);
+	*br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
+}
+
 static void evergreen_set_scissor_state(struct pipe_context *ctx,
 					const struct pipe_scissor_state *state)
 {
@@ -1191,33 +1208,11 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
+	evergreen_get_scissor_rect(rctx, state->minx, state->miny, state->maxx, state->maxy, &tl, &br);
+
 	rstate->id = R600_PIPE_STATE_SCISSOR;
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
-	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
-	r600_pipe_state_add_reg(rstate,
-				R_028210_PA_SC_CLIPRECT_0_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028214_PA_SC_CLIPRECT_0_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028218_PA_SC_CLIPRECT_1_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_02821C_PA_SC_CLIPRECT_1_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028220_PA_SC_CLIPRECT_2_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028224_PA_SC_CLIPRECT_2_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028228_PA_SC_CLIPRECT_3_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_02822C_PA_SC_CLIPRECT_3_BR, br,
-				NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl, NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028254_PA_SC_VPORT_SCISSOR_0_BR, br, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
 	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
@@ -1616,7 +1611,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t shader_mask, tl, br;
-	int tl_x, tl_y, br_x, br_y;
 
 	if (rstate == NULL)
 		return;
@@ -1642,34 +1636,14 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		shader_mask |= 0xf << (i * 4);
 	}
-	tl_x = 0;
-	tl_y = 0;
-	br_x = state->width;
-	br_y = state->height;
-	/* EG hw workaround */
-	if (br_x == 0)
-		tl_x = 1;
-	if (br_y == 0)
-		tl_y = 1;
-	/* cayman hw workaround */
-	if (rctx->chip_class == CAYMAN) {
-		if (br_x == 1 && br_y == 1)
-			br_x = 2;
-	}
-	tl = S_028240_TL_X(tl_x) | S_028240_TL_Y(tl_y);
-	br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
+
+	evergreen_get_scissor_rect(rctx, 0, 0, state->width, state->height, &tl, &br);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028244_PA_SC_GENERIC_SCISSOR_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028254_PA_SC_VPORT_SCISSOR_0_BR, br,
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
@@ -1877,6 +1851,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028AC8_DB_PRELOAD_CONTROL */
 
 	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
+	r600_store_context_reg(cb, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
 
 	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
 	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
@@ -2340,6 +2315,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0x3F800000); /* R_02802C_DB_DEPTH_CLEAR */
 
 	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
+	r600_store_context_reg(cb, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
 	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 
 	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
