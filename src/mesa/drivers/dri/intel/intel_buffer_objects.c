@@ -314,27 +314,32 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       intel_obj->sys_buffer = NULL;
    }
 
-   /* If the mapping is synchronized with other GL operations, flush
-    * the batchbuffer so that GEM knows about the buffer access for later
-    * syncing.
-    */
-   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
-       drm_intel_bo_references(intel->batch.bo, intel_obj->buffer))
-      intel_flush(ctx);
-
    if (intel_obj->buffer == NULL) {
       obj->Pointer = NULL;
       return NULL;
    }
 
-   /* If the user doesn't care about existing buffer contents and mapping
-    * would cause us to block, then throw out the old buffer.
+   /* If the access is synchronized (like a normal buffer mapping), then get
+    * things flushed out so the later mapping syncs appropriately through GEM.
+    * If the user doesn't care about existing buffer contents and mapping would
+    * cause us to block, then throw out the old buffer.
+    *
+    * If they set INVALIDATE_BUFFER, we can pitch the current contents to
+    * achieve the required synchronization.
     */
-   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
-       (access & GL_MAP_INVALIDATE_BUFFER_BIT) &&
-       drm_intel_bo_busy(intel_obj->buffer)) {
-      drm_intel_bo_unreference(intel_obj->buffer);
-      intel_bufferobj_alloc_buffer(intel, intel_obj);
+   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT)) {
+      if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
+	 if (access & GL_MAP_INVALIDATE_BUFFER_BIT) {
+	    drm_intel_bo_unreference(intel_obj->buffer);
+	    intel_bufferobj_alloc_buffer(intel, intel_obj);
+	 } else {
+	    intel_flush(ctx);
+	 }
+      } else if (drm_intel_bo_busy(intel_obj->buffer) &&
+		 (access & GL_MAP_INVALIDATE_BUFFER_BIT)) {
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_bufferobj_alloc_buffer(intel, intel_obj);
+      }
    }
 
    /* If the user is mapping a range of an active buffer object but
