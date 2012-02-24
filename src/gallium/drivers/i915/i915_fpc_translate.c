@@ -49,7 +49,7 @@
  * Simple pass-through fragment shader to use when we don't have
  * a real shader (or it fails to compile for some reason).
  */
-static unsigned passthrough[] =
+static unsigned passthrough_decl[] =
 {
    _3DSTATE_PIXEL_SHADER_PROGRAM | ((2*3)-1),
 
@@ -61,7 +61,10 @@ static unsigned passthrough[] =
     D0_CHANNEL_ALL),
    0,
    0,
+};
 
+static unsigned passthrough_program[] =
+{
    /* move to output color:
     */
    (A0_MOV |
@@ -125,10 +128,13 @@ negate(int reg, int x, int y, int z, int w)
 static void
 i915_use_passthrough_shader(struct i915_fragment_shader *fs)
 {
-   fs->program = (uint *) MALLOC(sizeof(passthrough));
+   fs->program = (uint *) MALLOC(sizeof(passthrough_program));
+   fs->decl = (uint *) MALLOC(sizeof(passthrough_decl));
    if (fs->program) {
-      memcpy(fs->program, passthrough, sizeof(passthrough));
-      fs->program_len = Elements(passthrough);
+      memcpy(fs->program, passthrough_program, sizeof(passthrough_program));
+      memcpy(fs->decl, passthrough_decl, sizeof(passthrough_decl));
+      fs->program_len = Elements(passthrough_program);
+      fs->decl_len = Elements(passthrough_decl);
    }
    fs->num_constants = 0;
 }
