@@ -948,7 +948,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		format = 0;
 	}
 
-	if (tmp->depth && !tmp->is_flushing_texture) {
+	if (tmp->is_depth && !tmp->is_flushing_texture) {
 		r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
@@ -1078,7 +1078,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
 			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->is_depth)
 					has_depth = 1;
 				r600_context_pipe_state_set_ps_resource(rctx, &resource[i]->state,
 									i + R600_MAX_CONST_BUFFERS);
@@ -1091,7 +1091,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 				views[i]);
 		} else {
 			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
+				if (((struct r600_resource_texture *)resource[i]->base.texture)->is_depth)
 					has_depth = 1;
 			}
 		}
@@ -1269,10 +1269,10 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
-	if (rtex->depth)
+	if (rtex->is_depth)
 		rctx->have_depth_fb = TRUE;
 
-	if (rtex->depth && !rtex->is_flushing_texture) {
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
 	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
 		rtex = rtex->flushed_depth_texture;
 	}

@@ -172,7 +172,7 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 		if (!view) continue;
 
 		tex = (struct r600_resource_texture *)view->base.texture;
-		if (!tex->depth)
+		if (!tex->is_depth)
 			continue;
 
 		if (tex->is_flushing_texture)
@@ -186,7 +186,7 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 		struct r600_resource_texture *tex;
 		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
 
-		if (!tex->depth)
+		if (!tex->is_depth)
 			continue;
 
 		if (tex->is_flushing_texture)
@@ -341,7 +341,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		return;
 	}
 
-	if (rsrc->depth && !rsrc->is_flushing_texture)
+	if (rsrc->is_depth && !rsrc->is_flushing_texture)
 		r600_texture_depth_flush(ctx, src, FALSE);
 
 	restore_orig[0] = restore_orig[1] = FALSE;

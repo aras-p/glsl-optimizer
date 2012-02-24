@@ -950,7 +950,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		format = 0;
 	}
 
-	if (tmp->depth && !tmp->is_flushing_texture) {
+	if (tmp->is_depth && !tmp->is_flushing_texture) {
 	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
@@ -1077,7 +1077,7 @@ static void r600_set_sampler_views(struct r600_context *rctx,
 
 	for (i = 0; i < count; i++) {
 		if (rviews[i]) {
-			if (((struct r600_resource_texture *)rviews[i]->base.texture)->depth)
+			if (((struct r600_resource_texture *)rviews[i]->base.texture)->is_depth)
 				rctx->have_depth_texture = true;
 
 			/* Changing from array to non-arrays textures and vice versa requires updating TEX_ARRAY_OVERRIDE. */
@@ -1341,10 +1341,10 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
-	if (rtex->depth)
+	if (rtex->is_depth)
 		rctx->have_depth_fb = TRUE;
 
-	if (rtex->depth && !rtex->is_flushing_texture) {
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
 		rtex = rtex->flushed_depth_texture;
 	}
 

@@ -576,7 +576,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	/* only mark depth textures the HW can hit as depth textures */
 	if (util_format_is_depth_or_stencil(rtex->real_format) && permit_hardware_blit(screen, base))
-		rtex->depth = 1;
+		rtex->is_depth = true;
 
 	r600_setup_miptree(screen, rtex, array_mode);
 	if (rscreen->use_surface) {
@@ -840,7 +840,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.level = level;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	if (rtex->depth) {
+	if (rtex->is_depth) {
 		/* XXX: only readback the rectangle which is being mapped?
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture
@@ -915,7 +915,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 		pipe_resource_reference(&rtransfer->staging_texture, NULL);
 	}
 
-	if (rtex->depth && !rtex->is_flushing_texture) {
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
 		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture)
 			r600_blit_push_depth(ctx, rtex);
 	}
