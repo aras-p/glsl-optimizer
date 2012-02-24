@@ -25,43 +25,43 @@
  *
  **************************************************************************/
 
-
-#include "util/u_debug.h"
+#include "pipe/p_config.h"
 #include "rtasm_cpu.h"
 
-
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-static boolean rtasm_sse_enabled(void)
+
+#include "util/u_debug.h"
+#include "util/u_cpu_detect.h"
+
+DEBUG_GET_ONCE_BOOL_OPTION(nosse, "GALLIUM_NOSSE", FALSE);
+
+static struct util_cpu_caps *get_cpu_caps(void)
 {
-   static boolean firsttime = 1;
-   static boolean enabled;
-   
-   /* This gets called quite often at the moment:
-    */
-   if (firsttime) {
-      enabled =  !debug_get_bool_option("GALLIUM_NOSSE", FALSE);
-      firsttime = FALSE;
-   }
-   return enabled;
+   util_cpu_detect();
+   return &util_cpu_caps;
 }
-#endif
 
 int rtasm_cpu_has_sse(void)
 {
-   /* FIXME: actually detect this at run-time */
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return rtasm_sse_enabled();
-#else
-   return 0;
-#endif
+   return !debug_get_option_nosse() && get_cpu_caps()->has_sse;
 }
 
 int rtasm_cpu_has_sse2(void) 
 {
-   /* FIXME: actually detect this at run-time */
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   return rtasm_sse_enabled();
-#else
-   return 0;
-#endif
+   return !debug_get_option_nosse() && get_cpu_caps()->has_sse2;
 }
+
+
+#else
+
+int rtasm_cpu_has_sse(void)
+{
+   return 0;
+}
+
+int rtasm_cpu_has_sse2(void)
+{
+   return 0;
+}
+
+#endif
