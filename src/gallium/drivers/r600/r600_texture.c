@@ -792,6 +792,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						unsigned usage,
 						const struct pipe_box *box)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
@@ -815,15 +816,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
 		use_staging_texture = TRUE;
 
-	/* XXX: Use a staging texture for uploads if the underlying BO
-	 * is busy.  No interface for checking that currently? so do
-	 * it eagerly whenever the transfer doesn't require a readback
-	 * and might block.
-	 */
-	if ((usage & PIPE_TRANSFER_WRITE) &&
-			!(usage & (PIPE_TRANSFER_READ |
-					PIPE_TRANSFER_DONTBLOCK |
-					PIPE_TRANSFER_UNSYNCHRONIZED)))
+	/* Use a staging texture for uploads if the underlying BO is busy. */
+	if (!(usage & PIPE_TRANSFER_READ) &&
+	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf) ||
+	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE)))
 		use_staging_texture = TRUE;
 
 	if (!permit_hardware_blit(ctx->screen, texture) ||
