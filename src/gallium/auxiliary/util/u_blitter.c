@@ -241,7 +241,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    }
 
    if (ctx->has_stream_out) {
-      velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[0].src_format = PIPE_FORMAT_R32_UINT;
       ctx->velem_state_readbuf = pipe->create_vertex_elements_state(pipe, 1, &velem[0]);
    }
 
@@ -263,8 +263,8 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
       memset(&so, 0, sizeof(so));
       so.num_outputs = 1;
-      so.output[0].num_components = 4;
-      so.stride[0] = 4;
+      so.output[0].num_components = 1;
+      so.stride[0] = 1;
 
       ctx->vs_pos_only =
          util_make_vertex_passthrough_shader_with_so(pipe, 1, semantic_names,
@@ -1263,7 +1263,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    assert(ctx->has_stream_out);
 
    /* Some alignment is required. */
-   if (srcx % 4 != 0 || dstx % 4 != 0 || size % 16 != 0 ||
+   if (srcx % 4 != 0 || dstx % 4 != 0 || size % 4 != 0 ||
        !ctx->has_stream_out) {
       struct pipe_box box;
       u_box_1d(srcx, size, &box);
@@ -1288,7 +1288,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    so_target = pipe->create_stream_output_target(pipe, dst, dstx, size);
    pipe->set_stream_output_targets(pipe, 1, &so_target, 0);
 
-   util_draw_arrays(pipe, PIPE_PRIM_POINTS, 0, size / 16);
+   util_draw_arrays(pipe, PIPE_PRIM_POINTS, 0, size / 4);
 
    blitter_restore_vertex_states(ctx);
    blitter_unset_running_flag(ctx);
