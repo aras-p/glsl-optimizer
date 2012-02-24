@@ -829,18 +829,16 @@ void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
+	bool enable = buffer_enable_bit != 0;
+
+	if (enable != ctx->atom_eg_strmout_config.stream0_enable) {
+		ctx->atom_eg_strmout_config.stream0_enable = enable;
+		r600_emit_atom(ctx, &ctx->atom_eg_strmout_config.atom);
+	}
 
 	if (buffer_enable_bit) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(1);
-
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 		cs->buf[cs->cdw++] = (R_028B98_VGT_STRMOUT_BUFFER_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
 		cs->buf[cs->cdw++] = S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit);
-	} else {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(0);
 	}
 }

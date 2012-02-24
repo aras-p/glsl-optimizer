@@ -301,6 +301,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 
 	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_polygon_offset_update(rctx);
+		evergreen_set_rasterizer_discard(ctx, rs->rasterizer_discard);
 	} else {
 		r600_polygon_offset_update(rctx);
 	}

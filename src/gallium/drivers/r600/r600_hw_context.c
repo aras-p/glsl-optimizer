@@ -1270,6 +1270,8 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
 	r600_atom_dirty(ctx, &ctx->atom_db_misc_state.atom);
+	if (ctx->chip_class >= EVERGREEN)
+		r600_atom_dirty(ctx, &ctx->atom_eg_strmout_config.atom);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
