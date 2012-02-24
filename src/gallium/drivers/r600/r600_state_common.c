@@ -461,14 +461,18 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->ps_shader = (struct r600_pipe_shader *)state;
-	if (state) {
-		r600_inval_shader_cache(rctx);
-		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
-
-		rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
-		rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->shader.fs_write_all);
+	if (!state) {
+		state = rctx->dummy_pixel_shader;
 	}
+
+	rctx->ps_shader = (struct r600_pipe_shader *)state;
+
+	r600_inval_shader_cache(rctx);
+	r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
+
+	rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
+	rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->shader.fs_write_all);
+
 	if (rctx->ps_shader && rctx->vs_shader) {
 		r600_adjust_gprs(rctx);
 	}
@@ -808,11 +812,14 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
 	    !r600_conv_pipe_prim(info.mode, &prim)) {
+		assert(0);
 		return;
 	}
 
-	if (!rctx->ps_shader || !rctx->vs_shader)
+	if (!rctx->vs_shader) {
+		assert(0);
 		return;
+	}
 
 	r600_update_derived_state(rctx);
 

@@ -350,6 +350,10 @@ struct r600_context {
 	 * These track the current scissor state. */
 	bool			scissor_enable;
 	struct pipe_scissor_state scissor_state;
+
+	/* With rasterizer discard, there doesn't have to be a pixel shader.
+	 * In that case, we bind this one: */
+	void			*dummy_pixel_shader;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
