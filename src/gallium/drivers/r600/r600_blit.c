@@ -27,18 +27,21 @@
 
 enum r600_blitter_op /* bitmask */
 {
-	R600_SAVE_TEXTURES      = 1,
-	R600_SAVE_FRAMEBUFFER   = 2,
-	R600_DISABLE_RENDER_COND = 4,
+	R600_SAVE_FRAGMENT_STATE = 1,
+	R600_SAVE_TEXTURES       = 2,
+	R600_SAVE_FRAMEBUFFER    = 4,
+	R600_DISABLE_RENDER_COND = 8,
 
-	R600_CLEAR         = 0,
+	R600_CLEAR         = R600_SAVE_FRAGMENT_STATE,
 
-	R600_CLEAR_SURFACE = R600_SAVE_FRAMEBUFFER,
+	R600_CLEAR_SURFACE = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER,
 
-	R600_COPY          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
+	R600_COPY_BUFFER   = R600_DISABLE_RENDER_COND,
+
+	R600_COPY_TEXTURE  = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
 			     R600_DISABLE_RENDER_COND,
 
-	R600_DECOMPRESS    = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
+	R600_DECOMPRESS    = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -47,23 +50,26 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 	r600_suspend_nontimer_queries(rctx);
 
-	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
-	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);
-	if (rctx->states[R600_PIPE_STATE_STENCIL_REF]) {
-		util_blitter_save_stencil_ref(rctx->blitter, &rctx->stencil_ref);
-	}
-	util_blitter_save_rasterizer(rctx->blitter, rctx->states[R600_PIPE_STATE_RASTERIZER]);
-	util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
-	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
-	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_elements);
-	if (rctx->states[R600_PIPE_STATE_VIEWPORT]) {
-		util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
-	}
 	util_blitter_save_vertex_buffers(rctx->blitter,
 					 util_last_bit(rctx->vertex_buffer_state.enabled_mask),
 					 rctx->vertex_buffer_state.vb);
+	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_elements);
+	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
 	util_blitter_save_so_targets(rctx->blitter, rctx->num_so_targets,
 				     (struct pipe_stream_output_target**)rctx->so_targets);
+	util_blitter_save_rasterizer(rctx->blitter, rctx->states[R600_PIPE_STATE_RASTERIZER]);
+
+	if (op & R600_SAVE_FRAGMENT_STATE) {
+		if (rctx->states[R600_PIPE_STATE_VIEWPORT]) {
+			util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
+		}
+		util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
+		util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
+		util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);
+		if (rctx->states[R600_PIPE_STATE_STENCIL_REF]) {
+			util_blitter_save_stencil_ref(rctx->blitter, &rctx->stencil_ref);
+		}
+	}
 
 	if (op & R600_SAVE_FRAMEBUFFER)
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
@@ -253,6 +259,25 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
+static void r600_copy_buffer(struct pipe_context *ctx,
+			     struct pipe_resource *dst,
+			     unsigned dstx,
+			     struct pipe_resource *src,
+			     const struct pipe_box *src_box)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+
+	if (rctx->screen->has_streamout &&
+	    /* Require dword alignment. */
+	    dstx % 4 == 0 && src_box->x % 4 == 0 && src_box->width % 4 == 0) {
+		r600_blitter_begin(ctx, R600_COPY_BUFFER);
+		util_blitter_copy_buffer(rctx->blitter, dst, dstx, src, src_box->x, src_box->width);
+		r600_blitter_end(ctx);
+	} else {
+		util_resource_copy_region(ctx, dst, 0, dstx, 0, 0, src, 0, src_box);
+	}
+}
+
 struct texture_orig_info {
 	unsigned format;
 	unsigned width0;
@@ -329,10 +354,9 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	memset(orig_info, 0, sizeof(orig_info));
 
-	/* Fallback for buffers. */
+	/* Handle buffers first. */
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-                                          src, src_level, src_box);
+		r600_copy_buffer(ctx, dst, dstx, src, src_box);
 		return;
 	}
 
@@ -369,7 +393,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
 	}
 
-	r600_blitter_begin(ctx, R600_COPY);
+	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
 				  src, src_level, psbox, TRUE);
 	r600_blitter_end(ctx);
