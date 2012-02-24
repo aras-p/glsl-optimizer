@@ -1247,6 +1247,17 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    struct pipe_vertex_buffer vb;
    struct pipe_stream_output_target *so_target;
 
+   if (srcx >= src->width0 ||
+       dstx >= dst->width0) {
+      return;
+   }
+   if (srcx + size > src->width0) {
+      size = src->width0 - srcx;
+   }
+   if (dstx + size > dst->width0) {
+      size = dst->width0 - dstx;
+   }
+
    /* Drivers not capable of Stream Out should not call this function
     * in the first place. */
    assert(ctx->has_stream_out);
