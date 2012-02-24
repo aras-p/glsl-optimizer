@@ -11,7 +11,7 @@ INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/winsys/g3dvl \
 	   $(DRIVER_INCLUDES)
 DEFINES = -DGALLIUM_TRACE $(DRIVER_DEFINES)
-LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lXv -lX11-xcb -lxcb-dri2 -lxcb-xfixes -lm
+LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lXv -lX11-xcb -lxcb-dri2 -lm
 STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/xvmc/libxvmctracker.a
 
 ifeq ($(MESA_LLVM),1)

@@ -30,7 +30,6 @@
 #include <fcntl.h>
 
 #include <X11/Xlib-xcb.h>
-#include <xcb/xfixes.h>
 #include <xcb/dri2.h>
 #include <xf86drm.h>
 
@@ -51,10 +50,6 @@ struct vl_dri_screen
    struct vl_screen base;
    xcb_connection_t *conn;
    xcb_drawable_t drawable;
-   xcb_xfixes_region_t region;
-
-   bool flushed;
-   xcb_dri2_copy_region_cookie_t flush_cookie;
 };
 
 static void
@@ -64,19 +59,14 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           void *context_private)
 {
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)context_private;
+   xcb_dri2_swap_buffers_cookie_t swap_cookie;
 
    assert(screen);
    assert(resource);
    assert(context_private);
 
-   if (scrn->flushed)
-      free(xcb_dri2_copy_region_reply(scrn->conn, scrn->flush_cookie, NULL));
-   else
-      scrn->flushed = true;
-
-   scrn->flush_cookie = xcb_dri2_copy_region_unchecked(scrn->conn, scrn->drawable, scrn->region,
-                                                       XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT,
-                                                       XCB_DRI2_ATTACHMENT_BUFFER_FAKE_FRONT_LEFT);
+   swap_cookie = xcb_dri2_swap_buffers_unchecked(scrn->conn, scrn->drawable, 0, 0, 0, 0, 0, 0);
+   free(xcb_dri2_swap_buffers_reply(scrn->conn, swap_cookie, NULL));
 }
 
 static void
@@ -93,7 +83,7 @@ vl_dri2_destroy_drawable(struct vl_dri_screen *scrn)
 struct pipe_resource*
 vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 {
-   static const unsigned int attachments[1] = { XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT };
+   static const unsigned int attachments[1] = { XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT };
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
 
    struct winsys_handle dri2_front_handle;
@@ -109,14 +99,11 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
       vl_dri2_destroy_drawable(scrn);
       xcb_dri2_create_drawable(scrn->conn, drawable);
       scrn->drawable = drawable;
+   } else {
+      xcb_dri2_wait_sbc_cookie_t wait_cookie;
+      wait_cookie = xcb_dri2_wait_sbc_unchecked(scrn->conn, scrn->drawable, 0, 0);
+      free(xcb_dri2_wait_sbc_reply(scrn->conn, wait_cookie, NULL));
    }
-
-   if (scrn->region)
-      xcb_xfixes_destroy_region(scrn->conn, scrn->region);
-   else
-      scrn->region = xcb_generate_id(scrn->conn);
-
-   xcb_xfixes_create_region_from_window(scrn->conn, scrn->region, drawable, XCB_SHAPE_SK_BOUNDING);
 
    cookie = xcb_dri2_get_buffers_unchecked(scrn->conn, drawable, 1, 1, attachments);
    reply = xcb_dri2_get_buffers_reply(scrn->conn, cookie, NULL);
@@ -165,8 +152,6 @@ vl_screen_create(Display *display, int screen)
 {
    struct vl_dri_screen *scrn;
    const xcb_query_extension_reply_t *extension;
-   xcb_xfixes_query_version_cookie_t xfixes_query_cookie;
-   xcb_xfixes_query_version_reply_t *xfixes_query = NULL;
    xcb_dri2_query_version_cookie_t dri2_query_cookie;
    xcb_dri2_query_version_reply_t *dri2_query = NULL;
    xcb_dri2_connect_cookie_t connect_cookie;
@@ -190,25 +175,15 @@ vl_screen_create(Display *display, int screen)
    if (!scrn->conn)
       goto free_screen;
 
-   xcb_prefetch_extension_data(scrn->conn, &xcb_xfixes_id);
    xcb_prefetch_extension_data(scrn->conn, &xcb_dri2_id);
-
-   extension = xcb_get_extension_data(scrn->conn, &xcb_xfixes_id);
-   if (!(extension && extension->present))
-      goto free_screen;
 
    extension = xcb_get_extension_data(scrn->conn, &xcb_dri2_id);
    if (!(extension && extension->present))
       goto free_screen;
 
-   xfixes_query_cookie = xcb_xfixes_query_version(scrn->conn, XCB_XFIXES_MAJOR_VERSION, XCB_XFIXES_MINOR_VERSION);
-   xfixes_query = xcb_xfixes_query_version_reply (scrn->conn, xfixes_query_cookie, &error);
-   if (xfixes_query == NULL || error != NULL || xfixes_query->major_version < 2)
-      goto free_screen;
-
    dri2_query_cookie = xcb_dri2_query_version (scrn->conn, XCB_DRI2_MAJOR_VERSION, XCB_DRI2_MINOR_VERSION);
    dri2_query = xcb_dri2_query_version_reply (scrn->conn, dri2_query_cookie, &error);
-   if (dri2_query == NULL || error != NULL)
+   if (dri2_query == NULL || error != NULL || dri2_query->minor_version < 2)
       goto free_screen;
 
    s = xcb_setup_roots_iterator(xcb_get_setup(scrn->conn));
@@ -240,7 +215,6 @@ vl_screen_create(Display *display, int screen)
 
    scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
 
-   free(xfixes_query);
    free(dri2_query);
    free(connect);
    free(authenticate);
@@ -250,7 +224,6 @@ vl_screen_create(Display *display, int screen)
 free_screen:
    FREE(scrn);
 
-   free(xfixes_query);
    free(dri2_query);
    free(connect);
    free(authenticate);
@@ -265,10 +238,6 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    assert(vscreen);
 
-   if (scrn->flushed)
-      free(xcb_dri2_copy_region_reply(scrn->conn, scrn->flush_cookie, NULL));
-   if (scrn->region)
-      xcb_xfixes_destroy_region(scrn->conn, scrn->region);
    vl_dri2_destroy_drawable(scrn);
    scrn->base.pscreen->destroy(scrn->base.pscreen);
    FREE(scrn);
