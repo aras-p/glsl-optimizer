@@ -315,7 +315,6 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
       return XvMCBadContext;
 
    context_priv = context->privData;
-   pipe_surface_reference(&context_priv->drawable_surface, NULL);
    context_priv->decoder->destroy(context_priv->decoder);
    vl_compositor_cleanup(&context_priv->compositor);
    context_priv->pipe->destroy(context_priv->pipe);

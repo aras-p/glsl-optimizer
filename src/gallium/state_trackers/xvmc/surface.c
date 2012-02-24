@@ -357,6 +357,9 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
 
+   struct pipe_resource *tex;
+   struct pipe_surface surf_templ, *surf;
+
    XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
 
    assert(dpy);
@@ -376,25 +379,13 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    pipe = context_priv->pipe;
    compositor = &context_priv->compositor;
 
-   if (!context_priv->drawable_surface ||
-       context_priv->dst_rect.x != dst_rect.x || context_priv->dst_rect.y != dst_rect.y ||
-       context_priv->dst_rect.w != dst_rect.w || context_priv->dst_rect.h != dst_rect.h) {
+   tex = vl_screen_texture_from_drawable(context_priv->vscreen, drawable);
+   memset(&surf_templ, 0, sizeof(surf_templ));
+   surf_templ.format = tex->format;
+   surf_templ.usage = PIPE_BIND_RENDER_TARGET;
+   surf = pipe->create_surface(pipe, tex, &surf_templ);
 
-      struct pipe_surface surf_templ;
-      struct pipe_resource *tex = vl_screen_texture_from_drawable(
-         context_priv->vscreen, drawable);
-
-      pipe_surface_reference(&context_priv->drawable_surface, NULL);
-
-      memset(&surf_templ, 0, sizeof(surf_templ));
-      surf_templ.format = tex->format;
-      surf_templ.usage = PIPE_BIND_RENDER_TARGET;
-      context_priv->drawable_surface = pipe->create_surface(pipe, tex, &surf_templ);
-      vl_compositor_reset_dirty_area(&context_priv->dirty_area);
-      context_priv->dst_rect = dst_rect;
-   }
-
-   if (!context_priv->drawable_surface)
+   if (!surf)
       return BadDrawable;
 
    /*
@@ -436,7 +427,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, context_priv->drawable_surface, &dst_rect, NULL, &context_priv->dirty_area);
+   vl_compositor_render(compositor, surf, &dst_rect, NULL, &context_priv->dirty_area);
 
    pipe->flush(pipe, &surface_priv->fence);
 
@@ -444,7 +435,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    pipe->screen->flush_frontbuffer
    (
-      pipe->screen, context_priv->drawable_surface->texture, 0, 0,
+      pipe->screen, tex, 0, 0,
       vl_screen_get_private(context_priv->vscreen)
    );
 

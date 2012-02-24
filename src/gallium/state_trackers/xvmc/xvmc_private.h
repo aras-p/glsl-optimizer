@@ -62,8 +62,6 @@ typedef struct
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
 
-   struct pipe_video_rect dst_rect;
-   struct pipe_surface *drawable_surface;
    struct u_rect dirty_area;
 
 } XvMCContextPrivate;
