@@ -959,7 +959,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	offset_level = state->u.tex.first_level;
 	last_level = state->u.tex.last_level - offset_level;
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		width = u_minify(texture->width0, offset_level);
 		height = u_minify(texture->height0, offset_level);
 		depth = u_minify(texture->depth0, offset_level);
@@ -1349,7 +1349,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	}
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		offset = r600_texture_get_offset(rtex,
 						 level, state->cbufs[cb]->u.tex.first_layer);
 		pitch = rtex->pitch_in_blocks[level] / 8 - 1;
@@ -1475,7 +1475,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 				S_028060_PITCH_TILE_MAX(pitch) |
 				S_028060_SLICE_TILE_MAX(slice),
 				NULL, 0);
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		r600_pipe_state_add_reg(rstate,
 					R_028080_CB_COLOR0_VIEW + cb * 4,
 					0x00000000, NULL, 0);
@@ -1516,7 +1516,7 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		/* XXX remove this once tiling is properly supported */
 		array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
 			V_0280A0_ARRAY_1D_TILED_THIN1;
@@ -1556,7 +1556,7 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				NULL, 0);
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, 0x00000000, NULL, 0);
 	} else {
 		r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW,

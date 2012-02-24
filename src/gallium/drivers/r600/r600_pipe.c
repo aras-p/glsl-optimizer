@@ -856,5 +856,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	LIST_INITHEAD(&rscreen->fences.blocks);
 	pipe_mutex_init(rscreen->fences.mutex);
 
+	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
+
 	return &rscreen->screen;
 }

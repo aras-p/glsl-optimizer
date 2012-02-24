@@ -494,8 +494,6 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	u_default_transfer_inline_write	/* transfer_inline_write */
 };
 
-DEBUG_GET_ONCE_BOOL_OPTION(use_surface, "R600_SURF", TRUE);
-
 static struct r600_resource_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -510,13 +508,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	struct r600_resource *resource;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	int r;
-
-	/* FIXME ugly temporary hack to allow to switch btw current code
-	 * and common surface allocator code
-	 */
-	if (debug_get_option_use_surface()) {
-		rscreen->use_surface = 1;
-	}
 
 	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (rtex == NULL)
@@ -534,7 +525,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	if (!(base->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    ((struct r600_screen*)screen)->chip_class >= EVERGREEN &&
 	    util_format_is_depth_and_stencil(base->format) &&
-	    !rscreen->use_surface) {
+	    !rscreen->use_surface_alloc) {
 		struct pipe_resource stencil;
 		unsigned stencil_pitch_override = 0;
 
@@ -579,7 +570,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		rtex->is_depth = true;
 
 	r600_setup_miptree(screen, rtex, array_mode);
-	if (rscreen->use_surface) {
+	if (rscreen->use_surface_alloc) {
 		rtex->surface = *surface;
 		r = r600_setup_surface(screen, rtex, array_mode, pitch_in_bytes_override);
 		if (r) {
@@ -606,7 +597,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		struct pipe_resource *ptex = &rtex->resource.b.b.b;
 		unsigned base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
-		if (rscreen->use_surface) {
+		if (rscreen->use_surface_alloc) {
 			base_align = rtex->surface.bo_alignment;
 		} else if (util_format_is_depth_or_stencil(rtex->real_format)) {
 			/* ugly work around depth buffer need stencil room at end of bo */
@@ -641,7 +632,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    !(templ->bind & PIPE_BIND_SCANOUT)) {
-		if (rscreen->use_surface) {
+		if (rscreen->use_surface_alloc) {
 			if (permit_hardware_blit(screen, templ)) {
 				array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 			}

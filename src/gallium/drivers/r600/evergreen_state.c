@@ -955,7 +955,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	endian = r600_colorformat_endian_swap(format);
 
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		height = texture->height0;
 		depth = texture->depth0;
 		width = texture->width0;
@@ -1278,7 +1278,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	}
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		offset = r600_texture_get_offset(rtex,
 				level, state->cbufs[cb]->u.tex.first_layer);
 		pitch = rtex->pitch_in_blocks[level] / 8 - 1;
@@ -1444,7 +1444,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 				R_028C68_CB_COLOR0_SLICE + cb * 0x3C,
 				S_028C68_SLICE_TILE_MAX(slice),
 				NULL, 0);
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		r600_pipe_state_add_reg(rstate,
 					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
 					0x00000000, NULL, 0);
@@ -1488,7 +1488,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 
 	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
 	/* XXX remove this once tiling is properly supported */
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		/* XXX remove this once tiling is properly supported */
 		array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
 				V_028C70_ARRAY_1D_TILED_THIN1;
@@ -1545,7 +1545,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	if (!rscreen->use_surface) {
+	if (!rscreen->use_surface_alloc) {
 		r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
 					0x00000000, NULL, 0);
 	} else {
@@ -1572,7 +1572,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 					1 | S_028044_TILE_SPLIT(stile_split),
 					&rtex->stencil->resource, RADEON_USAGE_READWRITE);
 	} else {
-		if (rscreen->use_surface && rtex->surface.flags & RADEON_SURF_SBUFFER) {
+		if (rscreen->use_surface_alloc && rtex->surface.flags & RADEON_SURF_SBUFFER) {
 			uint64_t stencil_offset = rtex->surface.stencil_offset;
 			unsigned stile_split = rtex->surface.stencil_tile_split;
 
