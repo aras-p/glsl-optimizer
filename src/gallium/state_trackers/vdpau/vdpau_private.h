@@ -301,7 +301,6 @@ typedef struct
    vlVdpDevice *device;
    Drawable drawable;
    struct vl_compositor compositor;
-   struct u_rect dirty_area;
 } vlVdpPresentationQueue;
 
 typedef struct

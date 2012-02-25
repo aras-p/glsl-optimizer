@@ -43,6 +43,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_inlines.h"
 
+#include "vl/vl_compositor.h"
 #include "vl_winsys.h"
 
 struct vl_dri_screen
@@ -50,6 +51,12 @@ struct vl_dri_screen
    struct vl_screen base;
    xcb_connection_t *conn;
    xcb_drawable_t drawable;
+
+   unsigned width, height;
+
+   bool current_buffer;
+   uint32_t buffer_names[2];
+   struct u_rect dirty_areas[2];
 
    bool flushed;
    xcb_dri2_swap_buffers_cookie_t swap_cookie;
@@ -79,6 +86,8 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
    scrn->swap_cookie = xcb_dri2_swap_buffers_unchecked(scrn->conn, scrn->drawable, 0, 0, 0, 0, 0, 0);
    scrn->wait_cookie = xcb_dri2_wait_sbc_unchecked(scrn->conn, scrn->drawable, 0, 0);
    scrn->buffers_cookie = xcb_dri2_get_buffers_unchecked(scrn->conn, scrn->drawable, 1, 1, attachments);
+
+   scrn->current_buffer = !scrn->current_buffer;
 }
 
 static void
@@ -113,6 +122,9 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    if (scrn->drawable != drawable) {
       vl_dri2_destroy_drawable(scrn);
       xcb_dri2_create_drawable(scrn->conn, drawable);
+      scrn->current_buffer = false;
+      vl_compositor_reset_dirty_area(&scrn->dirty_areas[0]);
+      vl_compositor_reset_dirty_area(&scrn->dirty_areas[1]);
       scrn->drawable = drawable;
 
       if (scrn->flushed) {
@@ -138,6 +150,17 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 
    assert(reply->count == 1);
 
+   if (reply->width != scrn->width || reply->height != scrn->height) {
+      vl_compositor_reset_dirty_area(&scrn->dirty_areas[0]);
+      vl_compositor_reset_dirty_area(&scrn->dirty_areas[1]);
+      scrn->width = reply->width;
+      scrn->height = reply->height;
+
+   } else if (buffers[0].name != scrn->buffer_names[scrn->current_buffer]) {
+      vl_compositor_reset_dirty_area(&scrn->dirty_areas[scrn->current_buffer]);
+      scrn->buffer_names[scrn->current_buffer] = buffers[0].name;
+   }
+
    memset(&dri2_front_handle, 0, sizeof(dri2_front_handle));
    dri2_front_handle.type = DRM_API_HANDLE_TYPE_SHARED;
    dri2_front_handle.handle = buffers[0].name;
@@ -159,6 +182,14 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    free(reply);
 
    return tex;
+}
+
+struct u_rect *
+vl_screen_get_dirty_area(struct vl_screen *vscreen)
+{
+   struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
+   assert(scrn);
+   return &scrn->dirty_areas[scrn->current_buffer];
 }
 
 void*
@@ -234,6 +265,8 @@ vl_screen_create(Display *display, int screen)
       goto free_screen;
 
    scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
+   vl_compositor_reset_dirty_area(&scrn->dirty_areas[0]);
+   vl_compositor_reset_dirty_area(&scrn->dirty_areas[1]);
 
    free(dri2_query);
    free(connect);

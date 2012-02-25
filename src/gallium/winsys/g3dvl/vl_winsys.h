@@ -48,6 +48,9 @@ void vl_screen_destroy(struct vl_screen *vscreen);
 struct pipe_resource*
 vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable);
 
+struct u_rect *
+vl_screen_get_dirty_area(struct vl_screen *vscreen);
+
 void*
 vl_screen_get_private(struct vl_screen *vscreen);
 

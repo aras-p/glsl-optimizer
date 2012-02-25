@@ -35,7 +35,6 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
-#include "util/u_rect.h"
 
 #include "vl/vl_csc.h"
 #include "vl/vl_compositor.h"
@@ -61,8 +60,6 @@ typedef struct
 
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
-
-   struct u_rect dirty_area;
 
 } XvMCContextPrivate;
 

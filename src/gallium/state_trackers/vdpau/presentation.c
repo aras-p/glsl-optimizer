@@ -73,8 +73,6 @@ vlVdpPresentationQueueCreate(VdpDevice device,
       goto no_compositor;
    }
 
-   vl_compositor_reset_dirty_area(&pq->dirty_area);
-
    *presentation_queue = vlAddDataHTAB(pq);
    if (*presentation_queue == 0) {
       ret = VDP_STATUS_ERROR;
@@ -205,6 +203,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    struct pipe_resource *tex;
    struct pipe_surface surf_templ, *surf_draw;
    struct pipe_video_rect src_rect, dst_clip;
+   struct u_rect *dirty_area;
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
@@ -215,6 +214,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    tex = vl_screen_texture_from_drawable(pq->device->vscreen, pq->drawable);
    if (!tex)
       return VDP_STATUS_INVALID_HANDLE;
+
+   dirty_area = vl_screen_get_dirty_area(pq->device->vscreen);
 
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = tex->format;
@@ -239,7 +240,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    vl_compositor_clear_layers(&pq->compositor);
    vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, &src_rect, NULL);
-   vl_compositor_render(&pq->compositor, surf_draw, NULL, &dst_clip, &pq->dirty_area);
+   vl_compositor_render(&pq->compositor, surf_draw, NULL, &dst_clip, dirty_area);
 
    pipe->screen->flush_frontbuffer
    (

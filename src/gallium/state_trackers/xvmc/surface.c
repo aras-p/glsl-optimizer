@@ -359,6 +359,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    struct pipe_resource *tex;
    struct pipe_surface surf_templ, *surf;
+   struct u_rect *dirty_area;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
 
@@ -380,6 +381,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    compositor = &context_priv->compositor;
 
    tex = vl_screen_texture_from_drawable(context_priv->vscreen, drawable);
+   dirty_area = vl_screen_get_dirty_area(context_priv->vscreen);
+
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = tex->format;
    surf_templ.usage = PIPE_BIND_RENDER_TARGET;
@@ -427,7 +430,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_render(compositor, surf, &dst_rect, NULL, &context_priv->dirty_area);
+   vl_compositor_render(compositor, surf, &dst_rect, NULL, dirty_area);
 
    pipe->flush(pipe, &surface_priv->fence);
 

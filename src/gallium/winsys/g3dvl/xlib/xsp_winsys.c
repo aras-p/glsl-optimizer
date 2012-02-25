@@ -34,6 +34,7 @@
 #include "state_tracker/xlib_sw_winsys.h"
 #include "softpipe/sp_public.h"
 
+#include "vl/vl_compositor.h"
 #include "vl_winsys.h"
 
 struct vl_xsp_screen
@@ -44,6 +45,7 @@ struct vl_xsp_screen
    Visual visual;
    struct xlib_drawable xdraw;
    struct pipe_resource *tex;
+   struct u_rect dirty_area;
 };
 
 struct pipe_resource*
@@ -68,8 +70,8 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    if (xsp_screen->tex) {
       if (xsp_screen->tex->width0 == width && xsp_screen->tex->height0 == height)
          return xsp_screen->tex;
-      else
-         pipe_resource_reference(&xsp_screen->tex, NULL);
+      pipe_resource_reference(&xsp_screen->tex, NULL);
+      vl_compositor_reset_dirty_area(&xsp_screen->dirty_area);
    }
 
    memset(&templat, 0, sizeof(struct pipe_resource));
@@ -89,6 +91,13 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 
    pipe_resource_reference(&xsp_screen->tex, vscreen->pscreen->resource_create(vscreen->pscreen, &templat));
    return xsp_screen->tex;
+}
+
+struct u_rect *
+vl_screen_get_dirty_area(struct vl_screen *vscreen)
+{
+   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
+   return &xsp_screen->dirty_area;
 }
 
 void*
@@ -126,6 +135,7 @@ vl_screen_create(Display *display, int screen)
    xsp_screen->display = display;
    xsp_screen->screen = screen;
    xsp_screen->xdraw.visual = XDefaultVisual(display, screen);
+   vl_compositor_reset_dirty_area(&xsp_screen->dirty_area);
 
    return &xsp_screen->base;
 }
