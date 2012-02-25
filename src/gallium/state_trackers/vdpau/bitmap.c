@@ -27,6 +27,9 @@
 
 #include <vdpau/vdpau.h>
 
+#include "util/u_memory.h"
+#include "util/u_sampler.h"
+
 #include "vdpau_private.h"
 
 /**
@@ -39,11 +42,67 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
                          VdpBool frequently_accessed,
                          VdpBitmapSurface *surface)
 {
-   VDPAU_MSG(VDPAU_TRACE, "[VDPAU] Creating a bitmap surface\n");
+   struct pipe_context *pipe;
+   struct pipe_resource res_tmpl, *res;
+   struct pipe_sampler_view sv_templ;
+
+   vlVdpBitmapSurface *vlsurface = NULL;
+
+   if (!(width && height))
+      return VDP_STATUS_INVALID_SIZE;
+
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pipe = dev->context;
+   if (!pipe)
+      return VDP_STATUS_INVALID_HANDLE;
+
    if (!surface)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlsurface = CALLOC(1, sizeof(vlVdpBitmapSurface));
+   if (!vlsurface)
+      return VDP_STATUS_RESOURCES;
+
+   vlsurface->device = dev;
+
+   memset(&res_tmpl, 0, sizeof(res_tmpl));
+
+   res_tmpl.target = PIPE_TEXTURE_2D;
+   res_tmpl.format = FormatRGBAToPipe(rgba_format);
+   res_tmpl.width0 = width;
+   res_tmpl.height0 = height;
+   res_tmpl.depth0 = 1;
+   res_tmpl.array_size = 1;
+   res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   res_tmpl.usage = frequently_accessed ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_STATIC;
+   res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
+   if (!res) {
+      FREE(dev);
+      return VDP_STATUS_RESOURCES;
+   }
+
+   memset(&sv_templ, 0, sizeof(sv_templ));
+   u_sampler_view_default_template(&sv_templ, res, res->format);
+   vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
+   if (!vlsurface->sampler_view) {
+      pipe_resource_reference(&res, NULL);
+      FREE(dev);
+      return VDP_STATUS_RESOURCES;
+   }
+
+   *surface = vlAddDataHTAB(vlsurface);
+   if (*surface == 0) {
+      pipe_resource_reference(&res, NULL);
+      FREE(dev);
+      return VDP_STATUS_ERROR;
+   }
+
+   pipe_resource_reference(&res, NULL);
+
+   return VDP_STATUS_OK;
 }
 
 /**
@@ -52,7 +111,20 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
 VdpStatus
 vlVdpBitmapSurfaceDestroy(VdpBitmapSurface surface)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpBitmapSurface *vlsurface;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+
+   vlRemoveDataHTAB(surface);
+   FREE(vlsurface);
+
+   return VDP_STATUS_OK;
 }
 
 /**

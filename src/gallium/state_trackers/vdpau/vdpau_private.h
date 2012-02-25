@@ -342,6 +342,12 @@ typedef struct
    struct pipe_video_buffer templat, *video_buffer;
 } vlVdpSurface;
 
+typedef struct
+{
+   vlVdpDevice *device;
+   struct pipe_sampler_view *sampler_view;
+} vlVdpBitmapSurface;
+
 typedef uint64_t vlVdpTime;
 
 typedef struct
