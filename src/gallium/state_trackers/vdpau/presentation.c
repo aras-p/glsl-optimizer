@@ -68,7 +68,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    pq->device = dev;
    pq->drawable = pqt->drawable;
 
-   if (!vl_compositor_init(&pq->compositor, dev->context)) {
+   if (!vl_compositor_init_state(&pq->cstate, dev->context)) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
    }
@@ -99,7 +99,7 @@ vlVdpPresentationQueueDestroy(VdpPresentationQueue presentation_queue)
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vl_compositor_cleanup(&pq->compositor);
+   vl_compositor_cleanup_state(&pq->cstate);
 
    vlRemoveDataHTAB(presentation_queue);
    FREE(pq);
@@ -129,7 +129,7 @@ vlVdpPresentationQueueSetBackgroundColor(VdpPresentationQueue presentation_queue
    color.f[2] = background_color->blue;
    color.f[3] = background_color->alpha;
 
-   vl_compositor_set_clear_color(&pq->compositor, &color);
+   vl_compositor_set_clear_color(&pq->cstate, &color);
 
    return VDP_STATUS_OK;
 }
@@ -151,7 +151,7 @@ vlVdpPresentationQueueGetBackgroundColor(VdpPresentationQueue presentation_queue
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vl_compositor_get_clear_color(&pq->compositor, &color);
+   vl_compositor_get_clear_color(&pq->cstate, &color);
 
    background_color->red = color.f[0];
    background_color->green = color.f[1];
@@ -205,11 +205,14 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    struct pipe_video_rect src_rect, dst_clip;
    struct u_rect *dirty_area;
 
+   struct vl_compositor *compositor;
+
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
    pipe = pq->device->context;
+   compositor = &pq->device->compositor;
 
    tex = vl_screen_texture_from_drawable(pq->device->vscreen, pq->drawable);
    if (!tex)
@@ -238,9 +241,10 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    dst_clip.w = clip_width ? clip_width : surf_draw->width;
    dst_clip.h = clip_height ? clip_height : surf_draw->height;
 
-   vl_compositor_clear_layers(&pq->compositor);
-   vl_compositor_set_rgba_layer(&pq->compositor, 0, surf->sampler_view, &src_rect, NULL);
-   vl_compositor_render(&pq->compositor, surf_draw, NULL, &dst_clip, dirty_area);
+   vl_compositor_clear_layers(&pq->cstate);
+   vl_compositor_set_rgba_layer(&pq->cstate, compositor, 0, surf->sampler_view, &src_rect, NULL);
+   vl_compositor_set_dst_clip(&pq->cstate, &dst_clip);
+   vl_compositor_render(&pq->cstate, compositor, surf_draw, dirty_area);
 
    pipe->screen->flush_frontbuffer
    (

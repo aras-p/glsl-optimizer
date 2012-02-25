@@ -270,6 +270,17 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
+   if (!vl_compositor_init_state(&context_priv->cstate, pipe)) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL compositor state.\n");
+      vl_compositor_cleanup(&context_priv->compositor);
+      context_priv->decoder->destroy(context_priv->decoder);
+      pipe->destroy(pipe);
+      vl_screen_destroy(vscreen);
+      FREE(context_priv);
+      return BadAlloc;
+   }
+
+
    context_priv->color_standard =
       debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
       VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601;
@@ -280,7 +291,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       context_priv->color_standard,
       &context_priv->procamp, true, csc
    );
-   vl_compositor_set_csc_matrix(&context_priv->compositor, csc);
+   vl_compositor_set_csc_matrix(&context_priv->cstate, csc);
 
    context_priv->vscreen = vscreen;
    context_priv->pipe = pipe;
@@ -316,6 +327,7 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 
    context_priv = context->privData;
    context_priv->decoder->destroy(context_priv->decoder);
+   vl_compositor_cleanup_state(&context_priv->cstate);
    vl_compositor_cleanup(&context_priv->compositor);
    context_priv->pipe->destroy(context_priv->pipe);
    vl_screen_destroy(context_priv->vscreen);

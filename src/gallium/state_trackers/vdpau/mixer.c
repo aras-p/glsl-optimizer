@@ -62,11 +62,11 @@ vlVdpVideoMixerCreate(VdpDevice device,
       return VDP_STATUS_RESOURCES;
 
    vmixer->device = dev;
-   vl_compositor_init(&vmixer->compositor, dev->context);
+   vl_compositor_init_state(&vmixer->cstate, dev->context);
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, vmixer->csc);
    if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
-      vl_compositor_set_csc_matrix(&vmixer->compositor, vmixer->csc);
+      vl_compositor_set_csc_matrix(&vmixer->cstate, vmixer->csc);
 
    *mixer = vlAddDataHTAB(vmixer);
    if (*mixer == 0) {
@@ -148,8 +148,9 @@ vlVdpVideoMixerCreate(VdpDevice device,
 
 no_params:
    vlRemoveDataHTAB(*mixer);
+
 no_handle:
-   vl_compositor_cleanup(&vmixer->compositor);
+   vl_compositor_cleanup_state(&vmixer->cstate);
    FREE(vmixer);
    return ret;
 }
@@ -167,7 +168,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
       return VDP_STATUS_INVALID_HANDLE;
    vlRemoveDataHTAB(mixer);
 
-   vl_compositor_cleanup(&vmixer->compositor);
+   vl_compositor_cleanup_state(&vmixer->cstate);
 
    if (vmixer->noise_reduction.filter) {
       vl_median_filter_cleanup(vmixer->noise_reduction.filter);
@@ -211,9 +212,13 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    vlVdpSurface *surf;
    vlVdpOutputSurface *dst;
 
+   struct vl_compositor *compositor;
+
    vmixer = vlGetDataHTAB(mixer);
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
+
+   compositor = &vmixer->device->compositor;
 
    surf = vlGetDataHTAB(video_surface_current);
    if (!surf)
@@ -238,11 +243,11 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       vlVdpOutputSurface *bg = vlGetDataHTAB(background_surface);
       if (!bg)
          return VDP_STATUS_INVALID_HANDLE;
-      vl_compositor_set_rgba_layer(&vmixer->compositor, layer++, bg->sampler_view,
+      vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
                                    RectToPipe(background_source_rect, &src_rect), NULL);
    }
 
-   vl_compositor_clear_layers(&vmixer->compositor);
+   vl_compositor_clear_layers(&vmixer->cstate);
 
    switch (current_picture_structure) {
    case VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD:
@@ -260,13 +265,11 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    default:
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
-   vl_compositor_set_buffer_layer(&vmixer->compositor, layer++, surf->video_buffer,
-                                  RectToPipe(video_source_rect, &src_rect), NULL,
-                                  deinterlace);
-   vl_compositor_render(&vmixer->compositor, dst->surface,
-                        RectToPipe(destination_video_rect, &dst_rect),
-                        RectToPipe(destination_rect, &dst_clip),
-                        &dst->dirty_area);
+   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer++, surf->video_buffer,
+                                  RectToPipe(video_source_rect, &src_rect), NULL, deinterlace);
+   vl_compositor_set_dst_area(&vmixer->cstate, RectToPipe(destination_video_rect, &dst_rect));
+   vl_compositor_set_dst_clip(&vmixer->cstate, RectToPipe(destination_rect, &dst_clip));
+   vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area);
 
    /* applying the noise reduction after scaling is actually not very
       clever, but currently we should avoid to copy around the image
@@ -544,7 +547,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          color.f[1] = background_color->green;
          color.f[2] = background_color->blue;
          color.f[3] = background_color->alpha;
-         vl_compositor_set_clear_color(&vmixer->compositor, &color);
+         vl_compositor_set_clear_color(&vmixer->cstate, &color);
          break;
       case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
          vdp_csc = attribute_values[i];
@@ -554,7 +557,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          else
             memcpy(vmixer->csc, vdp_csc, sizeof(float)*12);
          if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
-            vl_compositor_set_csc_matrix(&vmixer->compositor, vmixer->csc);
+            vl_compositor_set_csc_matrix(&vmixer->cstate, vmixer->csc);
          break;
 
       case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
@@ -664,7 +667,7 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
    for (i = 0; i < attribute_count; ++i) {
       switch (attributes[i]) {
       case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
-         vl_compositor_get_clear_color(&vmixer->compositor, attribute_values[i]);
+         vl_compositor_get_clear_color(&vmixer->cstate, attribute_values[i]);
          break;
       case VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX:
          vdp_csc = attribute_values[i];

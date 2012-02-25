@@ -113,6 +113,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    
    pipe_resource_reference(&res, NULL);
 
+   vl_compositor_init_state(&vlsurface->cstate, pipe);
    vl_compositor_reset_dirty_area(&vlsurface->dirty_area);
 
    return VDP_STATUS_OK;
@@ -132,6 +133,7 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 
    pipe_surface_reference(&vlsurface->surface, NULL);
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+   vl_compositor_cleanup_state(&vlsurface->cstate);
 
    vlRemoveDataHTAB(surface);
    FREE(vlsurface);
@@ -202,6 +204,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    vlVdpOutputSurface *vlsurface;
    struct pipe_context *context;
    struct vl_compositor *compositor;
+   struct vl_compositor_state *cstate;
 
    enum pipe_format index_format;
    enum pipe_format colortbl_format;
@@ -219,6 +222,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
 
    context = vlsurface->device->context;
    compositor = &vlsurface->device->compositor;
+   cstate = &vlsurface->cstate;
 
    index_format = FormatIndexedToPipe(source_indexed_format);
    if (index_format == PIPE_FORMAT_NONE)
@@ -304,10 +308,10 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    if (!sv_tbl)
       goto error_resource;
 
-   vl_compositor_clear_layers(compositor);
-   vl_compositor_set_palette_layer(compositor, 0, sv_idx, sv_tbl, NULL, NULL, false);
-   vl_compositor_render(compositor, vlsurface->surface,
-                        RectToPipe(destination_rect, &dst_rect), NULL, NULL);
+   vl_compositor_clear_layers(cstate);
+   vl_compositor_set_palette_layer(cstate, compositor, 0, sv_idx, sv_tbl, NULL, NULL, false);
+   vl_compositor_set_dst_area(cstate, RectToPipe(destination_rect, &dst_rect));
+   vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
 
    pipe_sampler_view_reference(&sv_idx, NULL);
    pipe_sampler_view_reference(&sv_tbl, NULL);
@@ -442,6 +446,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
 
    struct pipe_context *context;
    struct vl_compositor *compositor;
+   struct vl_compositor_state *cstate;
 
    struct pipe_video_rect src_rect;
    struct pipe_video_rect dst_rect;
@@ -461,15 +466,16 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
 
    context = dst_vlsurface->device->context;
    compositor = &dst_vlsurface->device->compositor;
+   cstate = &dst_vlsurface->cstate;
 
    blend = BlenderToPipe(context, blend_state);
 
-   vl_compositor_clear_layers(compositor);
-   vl_compositor_set_layer_blend(compositor, 0, blend, false);
-   vl_compositor_set_rgba_layer(compositor, 0, src_vlsurface->sampler_view,
+   vl_compositor_clear_layers(cstate);
+   vl_compositor_set_layer_blend(cstate, 0, blend, false);
+   vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
                                 RectToPipe(source_rect, &src_rect), NULL);
-   vl_compositor_render(compositor, dst_vlsurface->surface,
-                        RectToPipe(destination_rect, &dst_rect), NULL, false);
+   vl_compositor_set_dst_area(cstate, RectToPipe(destination_rect, &dst_rect));
+   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
 
    context->delete_blend_state(context, blend);
 

@@ -67,15 +67,27 @@ struct vl_compositor_layer
    struct vertex2f zw;
 };
 
+struct vl_compositor_state
+{
+   struct pipe_context *pipe;
+
+   bool viewport_valid, scissor_valid;
+   struct pipe_viewport_state viewport;
+   struct pipe_scissor_state scissor;
+   struct pipe_resource *csc_matrix;
+
+   union pipe_color_union clear_color;
+
+   unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
+   struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];
+};
+
 struct vl_compositor
 {
    struct pipe_context *pipe;
 
    struct pipe_framebuffer_state fb_state;
-   struct pipe_viewport_state viewport;
-   struct pipe_scissor_state scissor;
    struct pipe_vertex_buffer vertex_buf;
-   struct pipe_resource *csc_matrix;
 
    void *sampler_linear;
    void *sampler_nearest;
@@ -93,11 +105,6 @@ struct vl_compositor
       void *rgb;
       void *yuv;
    } fs_palette;
-
-   union pipe_color_union clear_color;
-
-   unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
-   struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];
 };
 
 /**
@@ -107,10 +114,16 @@ bool
 vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);
 
 /**
+ * init state bag
+ */
+bool
+vl_compositor_init_state(struct vl_compositor_state *state, struct pipe_context *pipe);
+
+/**
  * set yuv -> rgba conversion matrix
  */
 void
-vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float mat[16]);
+vl_compositor_set_csc_matrix(struct vl_compositor_state *settings, const float mat[16]);
 
 /**
  * reset dirty area, so it's cleared with the clear colour
@@ -122,13 +135,25 @@ vl_compositor_reset_dirty_area(struct u_rect *dirty);
  * set the clear color
  */
 void
-vl_compositor_set_clear_color(struct vl_compositor *compositor, union pipe_color_union *color);
+vl_compositor_set_clear_color(struct vl_compositor_state *settings, union pipe_color_union *color);
 
 /**
  * get the clear color
  */
 void
-vl_compositor_get_clear_color(struct vl_compositor *compositor, union pipe_color_union *color);
+vl_compositor_get_clear_color(struct vl_compositor_state *settings, union pipe_color_union *color);
+
+/**
+ * set the destination area
+ */
+void
+vl_compositor_set_dst_area(struct vl_compositor_state *settings, struct pipe_video_rect *dst_area);
+
+/**
+ * set the destination clipping
+ */
+void
+vl_compositor_set_dst_clip(struct vl_compositor_state *settings, struct pipe_video_rect *dst_clip);
 
 /**
  * set overlay samplers
@@ -139,20 +164,21 @@ vl_compositor_get_clear_color(struct vl_compositor *compositor, union pipe_color
  * reset all currently set layers
  */
 void
-vl_compositor_clear_layers(struct vl_compositor *compositor);
+vl_compositor_clear_layers(struct vl_compositor_state *state);
 
 /**
  * set the blender used to render a layer
  */
 void
-vl_compositor_set_layer_blend(struct vl_compositor *compositor,
+vl_compositor_set_layer_blend(struct vl_compositor_state *state,
                               unsigned layer, void *blend, bool is_clearing);
 
 /**
  * set a video buffer as a layer to render
  */
 void
-vl_compositor_set_buffer_layer(struct vl_compositor *compositor,
+vl_compositor_set_buffer_layer(struct vl_compositor_state *state,
+                               struct vl_compositor *compositor,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
                                struct pipe_video_rect *src_rect,
@@ -163,7 +189,8 @@ vl_compositor_set_buffer_layer(struct vl_compositor *compositor,
  * set a paletted sampler as a layer to render
  */
 void
-vl_compositor_set_palette_layer(struct vl_compositor *compositor,
+vl_compositor_set_palette_layer(struct vl_compositor_state *state,
+                                struct vl_compositor *compositor,
                                 unsigned layer,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
@@ -175,7 +202,8 @@ vl_compositor_set_palette_layer(struct vl_compositor *compositor,
  * set a rgba sampler as a layer to render
  */
 void
-vl_compositor_set_rgba_layer(struct vl_compositor *compositor,
+vl_compositor_set_rgba_layer(struct vl_compositor_state *state,
+                             struct vl_compositor *compositor,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
                              struct pipe_video_rect *src_rect,
@@ -187,16 +215,21 @@ vl_compositor_set_rgba_layer(struct vl_compositor *compositor,
  * render the layers to the frontbuffer
  */
 void
-vl_compositor_render(struct vl_compositor   *compositor,
-                     struct pipe_surface    *dst_surface,
-                     struct pipe_video_rect *dst_area,
-                     struct pipe_video_rect *dst_clip,
-                     struct u_rect          *dirty_area);
+vl_compositor_render(struct vl_compositor_state *state,
+                     struct vl_compositor       *compositor,
+                     struct pipe_surface        *dst_surface,
+                     struct u_rect              *dirty_area);
 
 /**
  * destroy this compositor
  */
 void
 vl_compositor_cleanup(struct vl_compositor *compositor);
+
+/**
+ * destroy this state bag
+ */
+void
+vl_compositor_cleanup_state(struct vl_compositor_state *state);
 
 #endif /* vl_compositor_h */

@@ -300,13 +300,13 @@ typedef struct
 {
    vlVdpDevice *device;
    Drawable drawable;
-   struct vl_compositor compositor;
+   struct vl_compositor_state cstate;
 } vlVdpPresentationQueue;
 
 typedef struct
 {
    vlVdpDevice *device;
-   struct vl_compositor compositor;
+   struct vl_compositor_state cstate;
 
    struct {
       bool supported, enabled;
@@ -342,6 +342,7 @@ typedef struct
    struct pipe_surface *surface;
    struct pipe_sampler_view *sampler_view;
    struct pipe_fence_handle *fence;
+   struct vl_compositor_state cstate;
    struct u_rect dirty_area;
 } vlVdpOutputSurface;
 

@@ -57,6 +57,7 @@ typedef struct
    enum VL_CSC_COLOR_STANDARD color_standard;
    struct vl_procamp procamp;
    struct vl_compositor compositor;
+   struct vl_compositor_state cstate;
 
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
