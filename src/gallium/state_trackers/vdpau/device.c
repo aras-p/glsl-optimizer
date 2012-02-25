@@ -29,6 +29,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_sampler.h"
 
 #include "vl_winsys.h"
 
@@ -236,4 +237,55 @@ vlVdpGetErrorString (VdpStatus status)
    _ERROR_TYPE(VDP_STATUS_ERROR,"A catch-all error, used when no other error code applies.");
    default: return "Unknown Error";
    }
+}
+
+void
+vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, struct u_rect *dirty_area)
+{
+   struct vl_compositor_state *cstate;
+   vlVdpOutputSurface *vlsurface;
+
+   assert(dev);
+
+   cstate = dev->delayed_rendering.cstate;
+   if (!cstate)
+      return;
+
+   vlsurface = vlGetDataHTAB(dev->delayed_rendering.surface);
+   if (!vlsurface)
+      return;
+
+   if (!surface) {
+      surface = vlsurface->surface;
+      dirty_area = &vlsurface->dirty_area;
+   }
+
+   vl_compositor_render(cstate, &dev->compositor, surface, dirty_area);
+
+   dev->delayed_rendering.surface = VDP_INVALID_HANDLE;
+   dev->delayed_rendering.cstate = NULL;
+
+   /* test if we need to create a new sampler for the just filled texture */
+   if (surface->texture != vlsurface->sampler_view->texture) {
+      struct pipe_resource *res = surface->texture;
+      struct pipe_sampler_view sv_templ;
+
+      memset(&sv_templ, 0, sizeof(sv_templ));
+      u_sampler_view_default_template(&sv_templ, res, res->format);
+      pipe_sampler_view_reference(&vlsurface->sampler_view,
+         dev->context->create_sampler_view(dev->context, res, &sv_templ));
+   }
+
+   return;
+}
+
+void
+vlVdpSave4DelayedRendering(vlVdpDevice *dev, VdpOutputSurface surface, struct vl_compositor_state *cstate)
+{
+   assert(dev);
+
+   vlVdpResolveDelayedRendering(dev, NULL, NULL);
+
+   dev->delayed_rendering.surface = surface;
+   dev->delayed_rendering.cstate = cstate;
 }

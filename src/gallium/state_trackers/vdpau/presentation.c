@@ -205,13 +205,16 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    struct u_rect src_rect, dst_clip, *dirty_area;
 
    struct vl_compositor *compositor;
+   struct vl_compositor_state *cstate;
 
    pq = vlGetDataHTAB(presentation_queue);
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
+
    pipe = pq->device->context;
    compositor = &pq->device->compositor;
+   cstate = &pq->cstate;
 
    tex = vl_screen_texture_from_drawable(pq->device->vscreen, pq->drawable);
    if (!tex)
@@ -230,20 +233,32 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    surf->timestamp = (vlVdpTime)earliest_presentation_time;
 
-   src_rect.x0 = 0;
-   src_rect.y0 = 0;
-   src_rect.x1 = surf_draw->width;
-   src_rect.y1 = surf_draw->height;
-
    dst_clip.x0 = 0;
    dst_clip.y0 = 0;
    dst_clip.x1 = clip_width ? clip_width : surf_draw->width;
    dst_clip.y1 = clip_height ? clip_height : surf_draw->height;
 
-   vl_compositor_clear_layers(&pq->cstate);
-   vl_compositor_set_rgba_layer(&pq->cstate, compositor, 0, surf->sampler_view, &src_rect, NULL, NULL);
-   vl_compositor_set_dst_clip(&pq->cstate, &dst_clip);
-   vl_compositor_render(&pq->cstate, compositor, surf_draw, dirty_area);
+   if (pq->device->delayed_rendering.surface == surface &&
+       dst_clip.x1 == surf_draw->width && dst_clip.y1 == surf_draw->height) {
+
+      // TODO: we correctly support the clipping here, but not the pq background color in the clipped area....
+      cstate = pq->device->delayed_rendering.cstate;
+      vl_compositor_set_dst_clip(cstate, &dst_clip);
+      vlVdpResolveDelayedRendering(pq->device, surf_draw, dirty_area);
+
+   } else {
+      vlVdpResolveDelayedRendering(pq->device, NULL, NULL);
+
+      src_rect.x0 = 0;
+      src_rect.y0 = 0;
+      src_rect.x1 = surf_draw->width;
+      src_rect.y1 = surf_draw->height;
+
+      vl_compositor_clear_layers(cstate);
+      vl_compositor_set_rgba_layer(cstate, compositor, 0, surf->sampler_view, &src_rect, NULL, NULL);
+      vl_compositor_set_dst_clip(cstate, &dst_clip);
+      vl_compositor_render(cstate, compositor, surf_draw, dirty_area);
+   }
 
    pipe->screen->flush_frontbuffer
    (

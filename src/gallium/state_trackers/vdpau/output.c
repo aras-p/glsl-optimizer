@@ -131,6 +131,8 @@ vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
 
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
    pipe_surface_reference(&vlsurface->surface, NULL);
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
    vl_compositor_cleanup_state(&vlsurface->cstate);
@@ -219,6 +221,8 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
 
    context = vlsurface->device->context;
    compositor = &vlsurface->device->compositor;
@@ -462,6 +466,8 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
 
    if (dst_vlsurface->device != src_vlsurface->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
+
+   vlVdpResolveDelayedRendering(dst_vlsurface->device, NULL, NULL);
 
    context = dst_vlsurface->device->context;
    compositor = &dst_vlsurface->device->compositor;

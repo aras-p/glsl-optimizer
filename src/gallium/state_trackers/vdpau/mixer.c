@@ -166,6 +166,9 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
    vmixer = vlGetDataHTAB(mixer);
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
+
    vlRemoveDataHTAB(mixer);
 
    vl_compositor_cleanup_state(&vmixer->cstate);
@@ -218,6 +221,8 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
+   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
+
    compositor = &vmixer->device->compositor;
 
    surf = vlGetDataHTAB(video_surface_current);
@@ -269,18 +274,22 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                   RectToPipe(video_source_rect, &src_rect), NULL, deinterlace);
    vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &dst_rect));
    vl_compositor_set_dst_clip(&vmixer->cstate, RectToPipe(destination_rect, &dst_clip));
-   vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area);
+   if (!vmixer->noise_reduction.filter && !vmixer->sharpness.filter)
+      vlVdpSave4DelayedRendering(vmixer->device, destination_surface, &vmixer->cstate);
+   else {
+      vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area);
 
-   /* applying the noise reduction after scaling is actually not very
-      clever, but currently we should avoid to copy around the image
-      data once more. */
-   if (vmixer->noise_reduction.filter)
-      vl_median_filter_render(vmixer->noise_reduction.filter,
-                              dst->sampler_view, dst->surface);
+      /* applying the noise reduction after scaling is actually not very
+         clever, but currently we should avoid to copy around the image
+         data once more. */
+      if (vmixer->noise_reduction.filter)
+         vl_median_filter_render(vmixer->noise_reduction.filter,
+                                 dst->sampler_view, dst->surface);
 
-   if (vmixer->sharpness.filter)
-      vl_matrix_filter_render(vmixer->sharpness.filter,
-                              dst->sampler_view, dst->surface);
+      if (vmixer->sharpness.filter)
+         vl_matrix_filter_render(vmixer->sharpness.filter,
+                                 dst->sampler_view, dst->surface);
+   }
 
    return VDP_STATUS_OK;
 }

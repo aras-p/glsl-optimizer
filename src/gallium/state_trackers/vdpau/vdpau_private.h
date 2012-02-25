@@ -290,6 +290,11 @@ typedef struct
    struct vl_screen *vscreen;
    struct pipe_context *context;
    struct vl_compositor compositor;
+
+   struct {
+      struct vl_compositor_state *cstate;
+      VdpOutputSurface surface;
+   } delayed_rendering;
 } vlVdpDevice;
 
 typedef struct
@@ -369,6 +374,10 @@ boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 /* Public functions */
 VdpDeviceCreateX11 vdp_imp_device_create_x11;
 VdpPresentationQueueTargetCreateX11 vlVdpPresentationQueueTargetCreateX11;
+
+/* Delayed rendering funtionality */
+void vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, struct u_rect *dirty_area);
+void vlVdpSave4DelayedRendering(vlVdpDevice *dev, VdpOutputSurface surface, struct vl_compositor_state *cstate);
 
 /* Internal function pointers */
 VdpGetErrorString vlVdpGetErrorString;
