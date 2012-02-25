@@ -152,8 +152,37 @@ vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
                                 uint32_t const *source_pitches,
                                 VdpRect const *destination_rect)
 {
-   if (!(source_data && source_pitches && destination_rect))
+   vlVdpBitmapSurface *vlsurface;
+   struct pipe_box dst_box;
+   struct pipe_context *pipe;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (!(source_data && source_pitches))
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   pipe = vlsurface->device->context;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   dst_box.x = 0;
+   dst_box.y = 0;
+   dst_box.z = 0;
+   dst_box.width = vlsurface->sampler_view->texture->width0;
+   dst_box.height = vlsurface->sampler_view->texture->height0;
+   dst_box.depth = 1;
+
+   if (destination_rect) {
+      dst_box.x = MIN2(destination_rect->x0, destination_rect->x1);
+      dst_box.y = MIN2(destination_rect->y0, destination_rect->y1);
+      dst_box.width = abs(destination_rect->x1 - destination_rect->x0);
+      dst_box.height = abs(destination_rect->y1 - destination_rect->y0);
+   }
+
+   pipe->transfer_inline_write(pipe, vlsurface->sampler_view->texture, 0,
+                               PIPE_TRANSFER_WRITE, &dst_box, *source_data,
+                               *source_pitches, 0);
+   return VDP_STATUS_OK;
 }
