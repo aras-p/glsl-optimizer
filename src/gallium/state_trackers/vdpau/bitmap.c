@@ -136,10 +136,23 @@ vlVdpBitmapSurfaceGetParameters(VdpBitmapSurface surface,
                                 uint32_t *width, uint32_t *height,
                                 VdpBool *frequently_accessed)
 {
+   vlVdpBitmapSurface *vlsurface;
+   struct pipe_resource *res;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
    if (!(rgba_format && width && height && frequently_accessed))
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   res = vlsurface->sampler_view->texture;
+   *rgba_format = PipeToFormatRGBA(res->format);
+   *width = res->width0;
+   *height = res->height0;
+   *frequently_accessed = res->usage == PIPE_USAGE_DYNAMIC;
+
+   return VDP_STATUS_OK;
 }
 
 /**
