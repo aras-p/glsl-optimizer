@@ -90,8 +90,8 @@ typedef struct
    /* optional palette for this subpicture */
    struct pipe_sampler_view *palette;
 
-   struct pipe_video_rect src_rect;
-   struct pipe_video_rect dst_rect;
+   struct u_rect src_rect;
+   struct u_rect dst_rect;
 
    /* The surface this subpicture is currently associated with, if any. */
    XvMCSurface *surface;

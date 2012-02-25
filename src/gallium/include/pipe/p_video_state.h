@@ -38,11 +38,6 @@
 extern "C" {
 #endif
 
-struct pipe_video_rect
-{
-   unsigned x, y, w, h;
-};
-
 /*
  * see table 6-12 in the spec
  */

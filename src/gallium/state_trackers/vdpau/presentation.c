@@ -202,8 +202,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    struct pipe_context *pipe;
    struct pipe_resource *tex;
    struct pipe_surface surf_templ, *surf_draw;
-   struct pipe_video_rect src_rect, dst_clip;
-   struct u_rect *dirty_area;
+   struct u_rect src_rect, dst_clip, *dirty_area;
 
    struct vl_compositor *compositor;
 
@@ -231,15 +230,15 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
    surf->timestamp = (vlVdpTime)earliest_presentation_time;
 
-   src_rect.x = 0;
-   src_rect.y = 0;
-   src_rect.w = surf_draw->width;
-   src_rect.h = surf_draw->height;
+   src_rect.x0 = 0;
+   src_rect.y0 = 0;
+   src_rect.x1 = surf_draw->width;
+   src_rect.y1 = surf_draw->height;
 
-   dst_clip.x = 0;
-   dst_clip.y = 0;
-   dst_clip.w = clip_width ? clip_width : surf_draw->width;
-   dst_clip.h = clip_height ? clip_height : surf_draw->height;
+   dst_clip.x0 = 0;
+   dst_clip.y0 = 0;
+   dst_clip.x1 = clip_width ? clip_width : surf_draw->width;
+   dst_clip.y1 = clip_height ? clip_height : surf_draw->height;
 
    vl_compositor_clear_layers(&pq->cstate);
    vl_compositor_set_rgba_layer(&pq->cstate, compositor, 0, surf->sampler_view, &src_rect, NULL);

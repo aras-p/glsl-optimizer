@@ -214,7 +214,7 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
    struct pipe_sampler_view *sv_idx = NULL, *sv_tbl = NULL;
 
    struct pipe_box box;
-   struct pipe_video_rect dst_rect;
+   struct u_rect dst_rect;
 
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
@@ -448,8 +448,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    struct vl_compositor *compositor;
    struct vl_compositor_state *cstate;
 
-   struct pipe_video_rect src_rect;
-   struct pipe_video_rect dst_rect;
+   struct u_rect src_rect, dst_rect;
 
    void *blend;
 

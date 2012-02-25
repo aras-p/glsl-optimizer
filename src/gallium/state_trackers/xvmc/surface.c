@@ -355,8 +355,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContext *context;
-   struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
-   struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
+   struct u_rect src_rect = {srcx, srcx + srcw, srcy, srcy + srch};
+   struct u_rect dst_rect = {destx, destx + destw, desty, desty + desth};
 
    struct pipe_resource *tex;
    struct pipe_surface surf_templ, *surf;

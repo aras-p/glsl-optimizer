@@ -270,14 +270,14 @@ PipeToProfile(enum pipe_video_profile p_profile)
    }
 }
 
-static inline struct pipe_video_rect *
-RectToPipe(const VdpRect *src, struct pipe_video_rect *dst)
+static inline struct u_rect *
+RectToPipe(const VdpRect *src, struct u_rect *dst)
 {
    if (src) {
-      dst->x = MIN2(src->x1, src->x0);
-      dst->y = MIN2(src->y1, src->y0);
-      dst->w = abs(src->x1 - src->x0);
-      dst->h = abs(src->y1 - src->y0);
+      dst->x0 = src->x0;
+      dst->y0 = src->y0;
+      dst->x1 = src->x1;
+      dst->y1 = src->y1;
       return dst;
    }
    return NULL;

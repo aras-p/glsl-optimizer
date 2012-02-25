@@ -147,13 +147,13 @@ vl_compositor_get_clear_color(struct vl_compositor_state *settings, union pipe_c
  * set the destination area
  */
 void
-vl_compositor_set_dst_area(struct vl_compositor_state *settings, struct pipe_video_rect *dst_area);
+vl_compositor_set_dst_area(struct vl_compositor_state *settings, struct u_rect *dst_area);
 
 /**
  * set the destination clipping
  */
 void
-vl_compositor_set_dst_clip(struct vl_compositor_state *settings, struct pipe_video_rect *dst_clip);
+vl_compositor_set_dst_clip(struct vl_compositor_state *settings, struct u_rect *dst_clip);
 
 /**
  * set overlay samplers
@@ -181,8 +181,8 @@ vl_compositor_set_buffer_layer(struct vl_compositor_state *state,
                                struct vl_compositor *compositor,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
-                               struct pipe_video_rect *src_rect,
-                               struct pipe_video_rect *dst_rect,
+                               struct u_rect *src_rect,
+                               struct u_rect *dst_rect,
                                enum vl_compositor_deinterlace deinterlace);
 
 /**
@@ -194,8 +194,8 @@ vl_compositor_set_palette_layer(struct vl_compositor_state *state,
                                 unsigned layer,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
-                                struct pipe_video_rect *src_rect,
-                                struct pipe_video_rect *dst_rect,
+                                struct u_rect *src_rect,
+                                struct u_rect *dst_rect,
                                 bool include_color_conversion);
 
 /**
@@ -206,8 +206,8 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *state,
                              struct vl_compositor *compositor,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
-                             struct pipe_video_rect *src_rect,
-                             struct pipe_video_rect *dst_rect);
+                             struct u_rect *src_rect,
+                             struct u_rect *dst_rect);
 
 /*@}*/
 

@@ -437,8 +437,8 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
                            short subx, short suby, unsigned short subw, unsigned short subh,
                            short surfx, short surfy, unsigned short surfw, unsigned short surfh)
 {
-   struct pipe_video_rect src_rect = {subx, suby, subw, subh};
-   struct pipe_video_rect dst_rect = {surfx, surfy, surfw, surfh};
+   struct u_rect src_rect = {subx, subx + subw, suby, suby + subh};
+   struct u_rect dst_rect = {surfx, surfx + surfw, surfy, surfy + surfh};
 
    XvMCSurfacePrivate *surface_priv;
    XvMCSubpicturePrivate *subpicture_priv;

@@ -204,7 +204,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 uint32_t layer_count,
                                 VdpLayer const *layers)
 {
-   struct pipe_video_rect src_rect, dst_rect, dst_clip;
+   struct u_rect src_rect, dst_rect, dst_clip;
    enum vl_compositor_deinterlace deinterlace;
    unsigned layer = 0;
 

@@ -528,31 +528,31 @@ cleanup_buffers(struct vl_compositor *c)
    pipe_resource_reference(&c->vertex_buf.buffer, NULL);
 }
 
-static INLINE struct pipe_video_rect
+static INLINE struct u_rect
 default_rect(struct vl_compositor_layer *layer)
 {
    struct pipe_resource *res = layer->sampler_views[0]->texture;
-   struct pipe_video_rect rect = { 0, 0, res->width0, res->height0 * res->depth0 };
+   struct u_rect rect = { 0, res->width0, 0, res->height0 * res->depth0 };
    return rect;
 }
 
 static INLINE struct vertex2f
-calc_topleft(struct vertex2f size, struct pipe_video_rect rect)
+calc_topleft(struct vertex2f size, struct u_rect rect)
 {
-   struct vertex2f res = { rect.x / size.x, rect.y / size.y };
+   struct vertex2f res = { rect.x0 / size.x, rect.y0 / size.y };
    return res;
 }
 
 static INLINE struct vertex2f
-calc_bottomright(struct vertex2f size, struct pipe_video_rect rect)
+calc_bottomright(struct vertex2f size, struct u_rect rect)
 {
-   struct vertex2f res = { (rect.x + rect.w) / size.x, (rect.y + rect.h) / size.y };
+   struct vertex2f res = { rect.x1 / size.x, rect.y1 / size.y };
    return res;
 }
 
 static INLINE void
 calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned height,
-                 struct pipe_video_rect src, struct pipe_video_rect dst)
+                 struct u_rect src, struct u_rect dst)
 {
    struct vertex2f size =  { width, height };
 
@@ -766,30 +766,30 @@ vl_compositor_set_csc_matrix(struct vl_compositor_state *s, const float matrix[1
 }
 
 void
-vl_compositor_set_dst_area(struct vl_compositor_state *s, struct pipe_video_rect *dst_area)
+vl_compositor_set_dst_area(struct vl_compositor_state *s, struct u_rect *dst_area)
 {
    assert(s);
 
    s->viewport_valid = dst_area != NULL;
    if (dst_area) {
-      s->viewport.scale[0] = dst_area->w;
-      s->viewport.scale[1] = dst_area->h;
-      s->viewport.translate[0] = dst_area->x;
-      s->viewport.translate[1] = dst_area->y;
+      s->viewport.scale[0] = dst_area->x1 - dst_area->x0;
+      s->viewport.scale[1] = dst_area->y1 - dst_area->y0;
+      s->viewport.translate[0] = dst_area->x0;
+      s->viewport.translate[1] = dst_area->y0;
    }
 }
 
 void
-vl_compositor_set_dst_clip(struct vl_compositor_state *s, struct pipe_video_rect *dst_clip)
+vl_compositor_set_dst_clip(struct vl_compositor_state *s, struct u_rect *dst_clip)
 {
    assert(s);
 
    s->scissor_valid = dst_clip != NULL;
    if (dst_clip) {
-      s->scissor.minx = dst_clip->x;
-      s->scissor.miny = dst_clip->y;
-      s->scissor.maxx = dst_clip->x + dst_clip->w;
-      s->scissor.maxy = dst_clip->y + dst_clip->h;
+      s->scissor.minx = dst_clip->x0;
+      s->scissor.miny = dst_clip->y0;
+      s->scissor.maxx = dst_clip->x1;
+      s->scissor.maxy = dst_clip->y1;
    }
 }
 
@@ -811,8 +811,8 @@ vl_compositor_set_buffer_layer(struct vl_compositor_state *s,
                                struct vl_compositor *c,
                                unsigned layer,
                                struct pipe_video_buffer *buffer,
-                               struct pipe_video_rect *src_rect,
-                               struct pipe_video_rect *dst_rect,
+                               struct u_rect *src_rect,
+                               struct u_rect *dst_rect,
                                enum vl_compositor_deinterlace deinterlace)
 {
    struct pipe_sampler_view **sampler_views;
@@ -865,8 +865,8 @@ vl_compositor_set_palette_layer(struct vl_compositor_state *s,
                                 unsigned layer,
                                 struct pipe_sampler_view *indexes,
                                 struct pipe_sampler_view *palette,
-                                struct pipe_video_rect *src_rect,
-                                struct pipe_video_rect *dst_rect,
+                                struct u_rect *src_rect,
+                                struct u_rect *dst_rect,
                                 bool include_color_conversion)
 {
    assert(s && c && indexes && palette);
@@ -894,8 +894,8 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *s,
                              struct vl_compositor *c,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
-                             struct pipe_video_rect *src_rect,
-                             struct pipe_video_rect *dst_rect)
+                             struct u_rect *src_rect,
+                             struct u_rect *dst_rect)
 {
    assert(s && c && rgba);
 
