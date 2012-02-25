@@ -1640,18 +1640,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	evergreen_get_scissor_rect(rctx, 0, 0, state->width, state->height, &tl, &br);
 
 	r600_pipe_state_add_reg(rstate,
-				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028244_PA_SC_GENERIC_SCISSOR_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028034_PA_SC_SCREEN_SCISSOR_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
 				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl,
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
@@ -1871,6 +1859,14 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0x3F800000); /* CM_R_028BEC_PA_CL_GB_VERT_DISC_ADJ */
 	r600_store_value(cb, 0x3F800000); /* CM_R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* CM_R_028BF4_PA_CL_GB_HORZ_DISC_ADJ */
+
+	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */
+	r600_store_value(cb, S_028244_BR_X(16384) | S_028244_BR_Y(16384)); /* R_028244_PA_SC_GENERIC_SCISSOR_BR */
+
+	r600_store_context_reg_seq(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
+	r600_store_value(cb, S_028034_BR_X(16384) | S_028034_BR_Y(16384)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
 
 	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO));
 	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO));
@@ -2345,6 +2341,14 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 */
 
 	r600_store_context_reg(cb, R_028C3C_PA_SC_AA_MASK, ~0);
+
+	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */
+	r600_store_value(cb, S_028244_BR_X(16384) | S_028244_BR_Y(16384)); /* R_028244_PA_SC_GENERIC_SCISSOR_BR */
+
+	r600_store_context_reg_seq(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
+	r600_store_value(cb, S_028034_BR_X(16384) | S_028034_BR_Y(16384)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
 
 	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO));
 	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_TO_ZERO));
