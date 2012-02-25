@@ -948,7 +948,7 @@ vl_compositor_render(struct vl_compositor   *c,
       c->pipe->clear_render_target(c->pipe, dst_surface, &c->clear_color,
                                    0, 0, dst_surface->width, dst_surface->height);
       dirty_area->x0 = dirty_area->y0 = MAX_DIRTY;
-      dirty_area->x0 = dirty_area->y1 = MIN_DIRTY;
+      dirty_area->x1 = dirty_area->y1 = MIN_DIRTY;
    }
 
    c->pipe->set_scissor_state(c->pipe, &c->scissor);
