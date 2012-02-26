@@ -18,8 +18,6 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
 {
    struct pipe_transfer *transfer = NULL;
    uint8_t *map = NULL;
-   const uint8_t *src_data = data;
-   unsigned i;
 
    assert(!(usage & PIPE_TRANSFER_READ));
 
@@ -45,18 +43,29 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
    if (map == NULL)
       goto out;
 
-   for (i = 0; i < box->depth; i++) {
-      util_copy_rect(map,
-                     resource->format,
-                     transfer->stride, /* bytes */
-                     0, 0,
-                     box->width,
-                     box->height,
-                     src_data,
-                     stride,       /* bytes */
-                     0, 0);
-      map += transfer->layer_stride;
-      src_data += layer_stride;
+   if (resource->target == PIPE_BUFFER) {
+      assert(box->height == 1);
+      assert(box->depth == 1);
+
+      memcpy(map, data, box->width);
+   }
+   else {
+      const uint8_t *src_data = data;
+      unsigned i;
+
+      for (i = 0; i < box->depth; i++) {
+         util_copy_rect(map,
+                        resource->format,
+                        transfer->stride, /* bytes */
+                        0, 0,
+                        box->width,
+                        box->height,
+                        src_data,
+                        stride,       /* bytes */
+                        0, 0);
+         map += transfer->layer_stride;
+         src_data += layer_stride;
+      }
    }
 
 out:
