@@ -173,7 +173,42 @@ vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
                                 void *const *destination_data,
                                 uint32_t const *destination_pitches)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *vlsurface;
+   struct pipe_context *pipe;
+   struct pipe_resource *res;
+   struct pipe_box box;
+   struct pipe_transfer *transfer;
+   uint8_t *map;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pipe = vlsurface->device->context;
+   if (!pipe)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   res = vlsurface->sampler_view->texture;
+   box = RectToPipeBox(source_rect, res);
+   transfer = pipe->get_transfer(pipe, res, 0, PIPE_TRANSFER_READ, &box);
+   if (transfer == NULL)
+      return VDP_STATUS_RESOURCES;
+
+   map = pipe_transfer_map(pipe, transfer);
+   if (map == NULL) {
+      pipe_transfer_destroy(pipe, transfer);
+      return VDP_STATUS_RESOURCES;
+   }
+
+   util_copy_rect(*destination_data, res->format, *destination_pitches, 0, 0,
+                  box.width, box.height, map, transfer->stride, 0, 0);
+
+   pipe_transfer_unmap(pipe, transfer);
+   pipe_transfer_destroy(pipe, transfer);
+
+   return VDP_STATUS_OK;
 }
 
 /**
