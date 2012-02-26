@@ -230,10 +230,32 @@ VdpStatus
 vlVdpOutputSurfaceQueryGetPutBitsNativeCapabilities(VdpDevice device, VdpRGBAFormat surface_rgba_format,
                                                     VdpBool *is_supported)
 {
+   vlVdpDevice *dev;
+   struct pipe_screen *pscreen;
+   enum pipe_format format;
+
+   dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pscreen = dev->vscreen->pscreen;
+   if (!pscreen)
+      return VDP_STATUS_ERROR;
+
+   format = FormatRGBAToPipe(surface_rgba_format);
+   if (format == PIPE_FORMAT_NONE || format == PIPE_FORMAT_A8_UNORM)
+      return VDP_STATUS_INVALID_RGBA_FORMAT;
+
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   *is_supported = pscreen->is_format_supported
+   (
+      pscreen, format, PIPE_TEXTURE_2D, 1,
+      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET
+   );
+
+   return VDP_STATUS_OK;
 }
 
 /**
