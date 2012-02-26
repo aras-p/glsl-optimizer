@@ -1915,12 +1915,20 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		r600_set_streamout_enable(ctx, 0);
 	}
 
-	if (ctx->chip_class < R700) {
+	/* This is needed to fix cache flushes on r600. */
+	if (ctx->chip_class == R600) {
+		if (ctx->family == CHIP_RV670 ||
+		    ctx->family == CHIP_RS780 ||
+		    ctx->family == CHIP_RS880) {
+			flush_flags |= S_0085F0_DEST_BASE_0_ENA(1);
+		}
+
 		r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
-	} else {
-		ctx->atom_surface_sync.flush_flags |= flush_flags;
-		r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
 	}
+
+	/* Flush streamout caches. */
+	ctx->atom_surface_sync.flush_flags |= flush_flags;
+	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
 
 	ctx->num_cs_dw_streamout_end = 0;
 
