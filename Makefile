@@ -266,4 +266,6 @@ md5: $(ARCHIVES)
 	@-md5sum $(PACKAGE_NAME).tar.bz2
 	@-md5sum $(PACKAGE_NAME).zip
 
-.PHONY: tarballs md5
+am--refresh:
+
+.PHONY: tarballs md5 am--refresh
