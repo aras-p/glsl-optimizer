@@ -259,11 +259,9 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
-static void r600_copy_buffer(struct pipe_context *ctx,
-			     struct pipe_resource *dst,
-			     unsigned dstx,
-			     struct pipe_resource *src,
-			     const struct pipe_box *src_box)
+void r600_copy_buffer(struct pipe_context *ctx, struct
+		      pipe_resource *dst, unsigned dstx,
+		      struct pipe_resource *src, const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 

@@ -44,20 +44,24 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 					       const struct pipe_box *box)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+	struct r600_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
 
-	transfer->resource = resource;
-	transfer->level = level;
-	transfer->usage = usage;
-	transfer->box = *box;
-	transfer->stride = 0;
-	transfer->layer_stride = 0;
-	transfer->data = NULL;
+	assert(box->x + box->width <= resource->width0);
+
+	transfer->transfer.resource = resource;
+	transfer->transfer.level = level;
+	transfer->transfer.usage = usage;
+	transfer->transfer.box = *box;
+	transfer->transfer.stride = 0;
+	transfer->transfer.layer_stride = 0;
+	transfer->transfer.data = NULL;
+	transfer->staging = NULL;
+	transfer->offset = 0;
 
 	/* Note strides are zero, this is ok for buffers, but not for
 	 * textures 2d & higher at least.
 	 */
-	return transfer;
+	return &transfer->transfer;
 }
 
 static void r600_set_constants_dirty_if_bound(struct r600_context *rctx,
@@ -126,6 +130,25 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 			r600_set_constants_dirty_if_bound(rctx, &rctx->ps_constbuf_state, rbuffer);
 		}
 	}
+	else if ((transfer->usage & PIPE_TRANSFER_DISCARD_RANGE) &&
+		 !(transfer->usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
+		 rctx->screen->has_streamout &&
+		 /* The buffer range must be aligned to 4. */
+		 transfer->box.x % 4 == 0 && transfer->box.width % 4 == 0) {
+		assert(transfer->usage & PIPE_TRANSFER_WRITE);
+
+		/* Check if mapping this buffer would cause waiting for the GPU. */
+		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+			/* Do a wait-free write-only transfer using a temporary buffer. */
+			struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+
+			rtransfer->staging = (struct r600_resource*)
+				pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+						   PIPE_USAGE_STAGING, transfer->box.width);
+			return rctx->ws->buffer_map(rtransfer->staging->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+		}
+	}
 
 	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
@@ -137,7 +160,17 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 					struct pipe_transfer *transfer)
 {
-	/* no-op */
+	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+
+	if (rtransfer->staging) {
+		struct pipe_box box;
+		u_box_1d(0, transfer->box.width, &box);
+
+		/* Copy the staging buffer into the original one. */
+		r600_copy_buffer(pipe, transfer->resource, transfer->box.x,
+				 &rtransfer->staging->b.b, &box);
+		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
+	}
 }
 
 static void r600_transfer_destroy(struct pipe_context *ctx,

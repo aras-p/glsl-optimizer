@@ -197,7 +197,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 
 	util_slab_create(&rctx->pool_transfers,
-			 sizeof(struct pipe_transfer), 64,
+			 sizeof(struct r600_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
 
 	rctx->context.screen = screen;
