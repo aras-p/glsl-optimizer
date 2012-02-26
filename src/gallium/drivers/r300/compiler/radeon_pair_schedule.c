@@ -1104,6 +1104,10 @@ static void emit_instruction(
 #endif
 
 	for (tex_ptr = s->ReadyTEX; tex_ptr; tex_ptr = tex_ptr->NextReady) {
+		if (tex_ptr->Instruction->U.I.Opcode == RC_OPCODE_KIL) {
+			emit_all_tex(s, before);
+			return;
+		}
 		tex_count++;
 	}
 	update_max_score(s, &s->ReadyFullALU, &max_score, &max_inst, &max_list);
