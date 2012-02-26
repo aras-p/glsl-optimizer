@@ -168,18 +168,63 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
                               void *const *destination_data,
                               uint32_t const *destination_pitches)
 {
-   if (!vlCreateHTAB())
-      return VDP_STATUS_RESOURCES;
+   vlVdpSurface *vlsurface;
+   struct pipe_context *pipe;
+   enum pipe_format format;
+   struct pipe_sampler_view **sampler_views;
+   unsigned i, j;
 
-   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
-   if (!p_surf)
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
 
-   //if (!p_surf->psurface)
-   //   return VDP_STATUS_RESOURCES;
+   pipe = vlsurface->device->context;
+   if (!pipe)
+      return VDP_STATUS_INVALID_HANDLE;
 
-   //return VDP_STATUS_OK;
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   format = FormatYCBCRToPipe(destination_ycbcr_format);
+   if (format == PIPE_FORMAT_NONE)
+       return VDP_STATUS_INVALID_Y_CB_CR_FORMAT;
+
+   if (vlsurface->video_buffer == NULL || format != vlsurface->video_buffer->buffer_format)
+      return VDP_STATUS_NO_IMPLEMENTATION; /* TODO We don't support conversion (yet) */
+
+   sampler_views = vlsurface->video_buffer->get_sampler_view_planes(vlsurface->video_buffer);
+   if (!sampler_views)
+      return VDP_STATUS_RESOURCES;
+
+   for (i = 0; i < 3; ++i) {
+      struct pipe_sampler_view *sv = sampler_views[i];
+      if (!sv) continue;
+
+      for (j = 0; j < sv->texture->depth0; ++j) {
+         struct pipe_box box = {
+            0, 0, j,
+            sv->texture->width0, sv->texture->height0, 1
+         };
+         struct pipe_transfer *transfer;
+         uint8_t *map;
+
+         transfer = pipe->get_transfer(pipe, sv->texture, 0, PIPE_TRANSFER_READ, &box);
+         if (transfer == NULL)
+            return VDP_STATUS_RESOURCES;
+
+         map = pipe_transfer_map(pipe, transfer);
+         if (map == NULL) {
+            pipe_transfer_destroy(pipe, transfer);
+            return VDP_STATUS_RESOURCES;
+         }
+
+         util_copy_rect(destination_data[i] + destination_pitches[i] * j, sv->texture->format,
+                        destination_pitches[i] * sv->texture->depth0, 0, 0,
+                        box.width, box.height, map, transfer->stride, 0, 0);
+
+         pipe_transfer_unmap(pipe, transfer);
+         pipe_transfer_destroy(pipe, transfer);
+      }
+   }
+
+   return VDP_STATUS_OK;
 }
 
 /**
