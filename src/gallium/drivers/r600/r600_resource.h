@@ -29,14 +29,10 @@
 /* flag to indicate a resource is to be used as a transfer so should not be tiled */
 #define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
 
-/* Texture transfer. */
 struct r600_transfer {
-	/* Base class. */
 	struct pipe_transfer		transfer;
-	/* Buffer transfer. */
-	struct pipe_transfer		*buffer_transfer;
+	struct r600_resource		*staging;
 	unsigned			offset;
-	struct pipe_resource		*staging_texture;
 };
 
 struct r600_resource_texture {

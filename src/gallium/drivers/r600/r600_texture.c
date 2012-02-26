@@ -43,7 +43,7 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
 
-	ctx->resource_copy_region(ctx, rtransfer->staging_texture,
+	ctx->resource_copy_region(ctx, &rtransfer->staging->b.b.b,
 				0, 0, 0, 0, texture, transfer->level,
 				&transfer->box);
 }
@@ -63,7 +63,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 	sbox.depth = 1;
 	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  rtransfer->staging_texture,
+				  &rtransfer->staging->b.b.b,
 				  0, &sbox);
 }
 
@@ -865,8 +865,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			resource.bind |= PIPE_BIND_SAMPLER_VIEW;
 		}
 		/* Create the temporary texture. */
-		trans->staging_texture = ctx->screen->resource_create(ctx->screen, &resource);
-		if (trans->staging_texture == NULL) {
+		trans->staging = (struct r600_resource*)ctx->screen->resource_create(ctx->screen, &resource);
+		if (trans->staging == NULL) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
@@ -874,7 +874,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-			((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
+			((struct r600_resource_texture *)trans->staging)->pitch_in_bytes[0];
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -895,11 +895,11 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 	struct pipe_resource *texture = transfer->resource;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 
-	if (rtransfer->staging_texture) {
+	if (rtransfer->staging) {
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
 			r600_copy_from_staging_texture(ctx, rtransfer);
 		}
-		pipe_resource_reference(&rtransfer->staging_texture, NULL);
+		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
 	}
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
@@ -921,8 +921,8 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	unsigned offset = 0;
 	char *map;
 
-	if (rtransfer->staging_texture) {
-		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
+	if (rtransfer->staging) {
+		buf = ((struct r600_resource *)rtransfer->staging)->buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
@@ -950,8 +950,8 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pb_buffer *buf;
 
-	if (rtransfer->staging_texture) {
-		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
+	if (rtransfer->staging) {
+		buf = ((struct r600_resource *)rtransfer->staging)->buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
