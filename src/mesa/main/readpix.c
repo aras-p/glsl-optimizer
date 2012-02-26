@@ -225,6 +225,16 @@ fast_read_rgba_pixels_memcpy( struct gl_context *ctx,
                                              ctx->Pack.SwapBytes))
       return GL_FALSE;
 
+   /* If the format is unsigned normalized then we can ignore clamping
+    * because the values are already in the range [0,1] so it won't
+    * have any effect anyway.
+    */
+   if (_mesa_get_format_datatype(rb->Format) == GL_UNSIGNED_NORMALIZED)
+      transferOps &= ~IMAGE_CLAMP_BIT;
+
+   if (transferOps)
+      return GL_FALSE;
+
    dstStride = _mesa_image_row_stride(packing, width, format, type);
    dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
 					   format, type, 0, 0);
@@ -320,13 +330,11 @@ read_rgba_pixels( struct gl_context *ctx,
       transferOps |= IMAGE_CLAMP_BIT;
    }
 
-   if (!transferOps) {
-      /* Try the optimized paths first. */
-      if (fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
-				       format, type, pixels, packing,
-				       transferOps)) {
-	 return;
-      }
+   /* Try the optimized paths first. */
+   if (fast_read_rgba_pixels_memcpy(ctx, x, y, width, height,
+                                    format, type, pixels, packing,
+                                    transferOps)) {
+      return;
    }
 
    slow_read_rgba_pixels(ctx, x, y, width, height,
