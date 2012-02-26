@@ -346,7 +346,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	}
 
 	/* Obtain a new buffer if the current one can't be mapped without a stall. */
-	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rquery->buffer.buf->cs_buf) ||
+	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rquery->buffer.buf->cs_buf, RADEON_USAGE_READWRITE) ||
 	    rctx->ws->buffer_is_busy(rquery->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
 		pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
 		rquery->buffer.buf = r600_new_query_buffer(rctx, rquery->type);

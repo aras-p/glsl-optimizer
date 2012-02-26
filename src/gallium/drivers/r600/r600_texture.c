@@ -796,7 +796,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
-	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf) ||
+	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
 	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE)))
 		use_staging_texture = TRUE;
 

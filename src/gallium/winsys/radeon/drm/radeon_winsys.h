@@ -341,7 +341,8 @@ struct radeon_winsys {
      * \param buf       A winsys buffer.
      */
     boolean (*cs_is_buffer_referenced)(struct radeon_winsys_cs *cs,
-                                       struct radeon_winsys_cs_handle *buf);
+                                       struct radeon_winsys_cs_handle *buf,
+                                       enum radeon_bo_usage usage);
 
     /**
      * Request access to a feature for a command stream.

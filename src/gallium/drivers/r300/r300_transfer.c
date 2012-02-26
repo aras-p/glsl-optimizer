@@ -90,7 +90,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     boolean referenced_cs, referenced_hw;
 
     referenced_cs =
-        r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf);
+        r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf, RADEON_USAGE_READWRITE);
     if (referenced_cs) {
         referenced_hw = TRUE;
     } else {

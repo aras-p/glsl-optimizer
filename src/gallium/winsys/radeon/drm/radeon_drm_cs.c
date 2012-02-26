@@ -512,12 +512,26 @@ static void radeon_drm_cs_set_flush(struct radeon_winsys_cs *rcs,
 }
 
 static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
-                                       struct radeon_winsys_cs_handle *_buf)
+                                       struct radeon_winsys_cs_handle *_buf,
+                                       enum radeon_bo_usage usage)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)_buf;
+    int index;
 
-    return radeon_bo_is_referenced_by_cs(cs, bo);
+    if (!bo->num_cs_references)
+        return FALSE;
+
+    index = radeon_get_reloc(cs->csc, bo);
+    if (index == -1)
+        return FALSE;
+
+    if ((usage & RADEON_USAGE_WRITE) && cs->csc->relocs[index].write_domain)
+        return TRUE;
+    if ((usage & RADEON_USAGE_READ) && cs->csc->relocs[index].read_domains)
+        return TRUE;
+
+    return FALSE;
 }
 
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
