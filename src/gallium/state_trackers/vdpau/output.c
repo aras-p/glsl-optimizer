@@ -500,5 +500,44 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
                                       VdpOutputSurfaceRenderBlendState const *blend_state,
                                       uint32_t flags)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *dst_vlsurface;
+   vlVdpBitmapSurface *src_vlsurface;
+
+   struct pipe_context *context;
+   struct vl_compositor *compositor;
+   struct vl_compositor_state *cstate;
+
+   struct u_rect src_rect, dst_rect;
+
+   void *blend;
+
+   dst_vlsurface = vlGetDataHTAB(destination_surface);
+   if (!dst_vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   src_vlsurface = vlGetDataHTAB(source_surface);
+   if (!src_vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (dst_vlsurface->device != src_vlsurface->device)
+      return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
+
+   vlVdpResolveDelayedRendering(dst_vlsurface->device, NULL, NULL);
+
+   context = dst_vlsurface->device->context;
+   compositor = &dst_vlsurface->device->compositor;
+   cstate = &dst_vlsurface->cstate;
+
+   blend = BlenderToPipe(context, blend_state);
+
+   vl_compositor_clear_layers(cstate);
+   vl_compositor_set_layer_blend(cstate, 0, blend, false);
+   vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
+                                RectToPipe(source_rect, &src_rect), NULL, NULL);
+   vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
+   vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
+
+   context->delete_blend_state(context, blend);
+
+   return VDP_STATUS_OK;
 }
