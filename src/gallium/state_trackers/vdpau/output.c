@@ -186,7 +186,26 @@ vlVdpOutputSurfacePutBitsNative(VdpOutputSurface surface,
                                 uint32_t const *source_pitches,
                                 VdpRect const *destination_rect)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *vlsurface;
+   struct pipe_box dst_box;
+   struct pipe_context *pipe;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pipe = vlsurface->device->context;
+   if (!pipe)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   dst_box = RectToPipeBox(destination_rect, vlsurface->sampler_view->texture);
+   pipe->transfer_inline_write(pipe, vlsurface->sampler_view->texture, 0,
+                               PIPE_TRANSFER_WRITE, &dst_box, *source_data,
+                               *source_pitches, 0);
+
+   return VDP_STATUS_OK;
 }
 
 /**

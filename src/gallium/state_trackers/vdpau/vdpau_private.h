@@ -285,6 +285,28 @@ RectToPipe(const VdpRect *src, struct u_rect *dst)
    return NULL;
 }
 
+static inline struct pipe_box
+RectToPipeBox(const VdpRect *rect, struct pipe_resource *res)
+{
+   struct pipe_box box;
+
+   box.x = 0;
+   box.y = 0;
+   box.z = 0;
+   box.width = res->width0;
+   box.height = res->height0;
+   box.depth = 1;
+
+   if (rect) {
+      box.x = MIN2(rect->x0, rect->x1);
+      box.y = MIN2(rect->y0, rect->y1);
+      box.width = abs(rect->x1 - rect->x0);
+      box.height = abs(rect->y1 - rect->y0);
+   }
+
+   return box;
+}
+
 typedef struct
 {
    struct vl_screen *vscreen;

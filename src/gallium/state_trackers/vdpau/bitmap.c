@@ -179,20 +179,7 @@ vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
 
    vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
 
-   dst_box.x = 0;
-   dst_box.y = 0;
-   dst_box.z = 0;
-   dst_box.width = vlsurface->sampler_view->texture->width0;
-   dst_box.height = vlsurface->sampler_view->texture->height0;
-   dst_box.depth = 1;
-
-   if (destination_rect) {
-      dst_box.x = MIN2(destination_rect->x0, destination_rect->x1);
-      dst_box.y = MIN2(destination_rect->y0, destination_rect->y1);
-      dst_box.width = abs(destination_rect->x1 - destination_rect->x0);
-      dst_box.height = abs(destination_rect->y1 - destination_rect->y0);
-   }
-
+   dst_box = RectToPipeBox(destination_rect, vlsurface->sampler_view->texture);
    pipe->transfer_inline_write(pipe, vlsurface->sampler_view->texture, 0,
                                PIPE_TRANSFER_WRITE, &dst_box, *source_data,
                                *source_pitches, 0);
