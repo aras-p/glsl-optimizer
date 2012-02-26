@@ -98,12 +98,6 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	rctx->ws->buffer_unmap(rbuffer->buf);
 }
 
-static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
-						struct pipe_transfer *transfer,
-						const struct pipe_box *box)
-{
-}
-
 static void r600_transfer_destroy(struct pipe_context *ctx,
 				  struct pipe_transfer *transfer)
 {
@@ -118,7 +112,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 	r600_get_transfer,			/* get_transfer */
 	r600_transfer_destroy,			/* transfer_destroy */
 	r600_buffer_transfer_map,		/* transfer_map */
-	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
+	NULL,					/* transfer_flush_region */
 	r600_buffer_transfer_unmap,		/* transfer_unmap */
 	NULL					/* transfer_inline_write */
 };
