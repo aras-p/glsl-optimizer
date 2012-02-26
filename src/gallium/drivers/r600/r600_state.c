@@ -1605,22 +1605,10 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
 
 	r600_pipe_state_add_reg(rstate,
-				R_028030_PA_SC_SCREEN_SCISSOR_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028034_PA_SC_SCREEN_SCISSOR_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
 				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl,
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028240_PA_SC_GENERIC_SCISSOR_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028244_PA_SC_GENERIC_SCISSOR_BR, br,
 				NULL, 0);
 
 	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
@@ -2067,6 +2055,14 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0xFFFFFFFF); /* R_028C3C_CB_CLRCMP_MSK */
 
 	r600_store_context_reg(cb, R_028C48_PA_SC_AA_MASK, 0xFFFFFFFF);
+
+	r600_store_context_reg_seq(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
+	r600_store_value(cb, S_028034_BR_X(8192) | S_028034_BR_Y(8192)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
+
+	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */
+	r600_store_value(cb, S_028244_BR_X(8192) | S_028244_BR_Y(8192)); /* R_028244_PA_SC_GENERIC_SCISSOR_BR */
 
 	r600_store_context_reg_seq(cb, R_0288CC_SQ_PGM_CF_OFFSET_PS, 2);
 	r600_store_value(cb, 0); /* R_0288CC_SQ_PGM_CF_OFFSET_PS */
