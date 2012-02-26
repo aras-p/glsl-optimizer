@@ -247,10 +247,52 @@ vlVdpOutputSurfaceQueryPutBitsIndexedCapabilities(VdpDevice device,
                                                   VdpColorTableFormat color_table_format,
                                                   VdpBool *is_supported)
 {
+   vlVdpDevice *dev;
+   struct pipe_screen *pscreen;
+   enum pipe_format rgba_format, index_format, colortbl_format;
+
+   dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pscreen = dev->vscreen->pscreen;
+   if (!pscreen)
+      return VDP_STATUS_ERROR;
+
+   rgba_format = FormatRGBAToPipe(surface_rgba_format);
+   if (rgba_format == PIPE_FORMAT_NONE || rgba_format == PIPE_FORMAT_A8_UNORM)
+      return VDP_STATUS_INVALID_RGBA_FORMAT;
+
+   index_format = FormatIndexedToPipe(bits_indexed_format);
+   if (index_format == PIPE_FORMAT_NONE)
+       return VDP_STATUS_INVALID_INDEXED_FORMAT;
+
+   colortbl_format = FormatColorTableToPipe(color_table_format);
+   if (colortbl_format == PIPE_FORMAT_NONE)
+       return VDP_STATUS_INVALID_COLOR_TABLE_FORMAT;
+
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   *is_supported = pscreen->is_format_supported
+   (
+      pscreen, rgba_format, PIPE_TEXTURE_2D, 1,
+      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET
+   );
+
+   *is_supported &= pscreen->is_format_supported
+   (
+      pscreen, index_format, PIPE_TEXTURE_2D, 1,
+      PIPE_BIND_SAMPLER_VIEW
+   );
+
+   *is_supported &= pscreen->is_format_supported
+   (
+      pscreen, colortbl_format, PIPE_TEXTURE_1D, 1,
+      PIPE_BIND_SAMPLER_VIEW
+   );
+
+   return VDP_STATUS_OK;
 }
 
 /**
