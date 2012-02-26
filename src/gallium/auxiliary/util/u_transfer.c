@@ -21,6 +21,18 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
    const uint8_t *src_data = data;
    unsigned i;
 
+   assert(!(usage & PIPE_TRANSFER_READ));
+
+   /* the write flag is implicit by the nature of transfer_inline_write */
+   usage |= PIPE_TRANSFER_WRITE;
+
+   /* transfer_inline_write implicitly discards the rewritten buffer range */
+   if (box->x == 0 && box->width == resource->width0) {
+      usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+   } else {
+      usage |= PIPE_TRANSFER_DISCARD_RANGE;
+   }
+
    transfer = pipe->get_transfer(pipe,
                                  resource,
                                  level,
