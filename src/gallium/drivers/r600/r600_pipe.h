@@ -152,6 +152,7 @@ struct r600_pipe_rasterizer {
 	unsigned			pa_cl_clip_cntl;
 	float				offset_units;
 	float				offset_scale;
+	bool				scissor_enable;
 };
 
 struct r600_pipe_blend {
@@ -336,6 +337,11 @@ struct r600_context {
 	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
 	boolean			streamout_start;
 	unsigned		streamout_append_bitmask;
+
+	/* There is no scissor enable bit on r6xx, so we must use a workaround.
+	 * These track the current scissor state. */
+	bool			scissor_enable;
+	struct pipe_scissor_state scissor_state;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
@@ -420,6 +426,8 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id);
 
 /* r600_state.c */
+void r600_set_scissor_state(struct r600_context *rctx,
+			    const struct pipe_scissor_state *state);
 void r600_update_sampler_states(struct r600_context *rctx);
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
@@ -474,6 +482,7 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state);
 void r600_set_blend_color(struct pipe_context *ctx,
 			  const struct pipe_blend_color *state);
 void r600_bind_dsa_state(struct pipe_context *ctx, void *state);
+void r600_set_max_scissor(struct r600_context *rctx);
 void r600_bind_rs_state(struct pipe_context *ctx, void *state);
 void r600_delete_rs_state(struct pipe_context *ctx, void *state);
 void r600_sampler_view_destroy(struct pipe_context *ctx,

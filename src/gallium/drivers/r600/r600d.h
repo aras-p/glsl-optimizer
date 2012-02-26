@@ -3132,6 +3132,8 @@
 #define   S_028A4C_PS_ITER_SAMPLE(x)                   (((x) & 0x1) << 17)
 #define   G_028A4C_PS_ITER_SAMPLE(x)                   (((x) >> 17) & 0x1)
 #define   C_028A4C_PS_ITER_SAMPLE                      0xFFFDFFFF
+#define   S_028A4C_R700_ZMM_LINE_OFFSET(x)             (((x) & 0x1) << 20)
+#define   S_028A4C_R700_VPORT_SCISSOR_ENABLE(x)        (((x) & 0x1) << 22)
 #define R_028A84_VGT_PRIMITIVEID_EN                  0x028A84
 #define   S_028A84_PRIMITIVEID_EN(x)                   (((x) & 0x1) << 0)
 #define   G_028A84_PRIMITIVEID_EN(x)                   (((x) >> 0) & 0x1)
