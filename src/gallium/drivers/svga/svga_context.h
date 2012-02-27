@@ -41,7 +41,6 @@
 #include "svga3d_shaderdefs.h"
 
 
-#define SVGA_TEX_UNITS 8
 #define SVGA_MAX_POINTSIZE 80.0
 
 struct draw_vertex_shader;
