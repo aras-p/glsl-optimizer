@@ -326,10 +326,42 @@ vlVdpOutputSurfaceQueryPutBitsYCbCrCapabilities(VdpDevice device, VdpRGBAFormat 
                                                 VdpYCbCrFormat bits_ycbcr_format,
                                                 VdpBool *is_supported)
 {
+   vlVdpDevice *dev;
+   struct pipe_screen *pscreen;
+   enum pipe_format rgba_format, ycbcr_format;
+
+   dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pscreen = dev->vscreen->pscreen;
+   if (!pscreen)
+      return VDP_STATUS_ERROR;
+
+   rgba_format = FormatRGBAToPipe(surface_rgba_format);
+   if (rgba_format == PIPE_FORMAT_NONE || rgba_format == PIPE_FORMAT_A8_UNORM)
+      return VDP_STATUS_INVALID_RGBA_FORMAT;
+
+   ycbcr_format = FormatYCBCRToPipe(bits_ycbcr_format);
+   if (ycbcr_format == PIPE_FORMAT_NONE)
+       return VDP_STATUS_INVALID_INDEXED_FORMAT;
+
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   *is_supported = pscreen->is_format_supported
+   (
+      pscreen, rgba_format, PIPE_TEXTURE_2D, 1,
+      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET
+   );
+
+   *is_supported &= pscreen->is_video_format_supported
+   (
+      pscreen, ycbcr_format,
+      PIPE_VIDEO_PROFILE_UNKNOWN
+   );
+
+   return VDP_STATUS_OK;
 }
 
 /**
