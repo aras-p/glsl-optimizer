@@ -405,6 +405,7 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes,	unsigned num_bytes)
 {
 	unsigned bytes_read = 0;
+	unsigned i, byte;
 	while (bytes_read < num_bytes) {
 		char inst_type = bytes[bytes_read++];
 		switch (inst_type) {
@@ -419,6 +420,15 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 		case 2:
 			bytes_read = r600_fc_from_byte_stream(ctx, bytes,
 								bytes_read);
+			break;
+		case 3:
+			r600_bytecode_add_cfinst(ctx->bc, CF_NATIVE);
+			for (i = 0; i < 2; i++) {
+				for (byte = 0 ; byte < 4; byte++) {
+					ctx->bc->cf_last->isa[i] |=
+					(bytes[bytes_read++] << (byte * 8));
+				}
+			}
 			break;
 		default:
 			/* XXX: Error here */
