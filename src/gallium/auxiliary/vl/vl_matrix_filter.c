@@ -82,6 +82,7 @@ create_frag_shader(struct vl_matrix_filter *filter, unsigned num_offsets,
    struct ureg_src i_vtex;
    struct ureg_src sampler;
    struct ureg_dst *t_array = MALLOC(sizeof(struct ureg_dst) * num_offsets);
+   struct ureg_dst t_sum;
    struct ureg_dst o_fragment;
    bool first;
    int i;
@@ -126,16 +127,19 @@ create_frag_shader(struct vl_matrix_filter *filter, unsigned num_offsets,
    for (i = 0, first = true; i < num_offsets; ++i) {
       if (matrix_values[i] != 0.0f) {
          if (first) {
-            ureg_MUL(shader, o_fragment, ureg_src(t_array[i]),
+            t_sum = t_array[i];
+            ureg_MUL(shader, t_sum, ureg_src(t_array[i]),
                      ureg_imm1f(shader, matrix_values[i]));
             first = false;
          } else
-            ureg_MAD(shader, o_fragment, ureg_src(t_array[i]),
-                     ureg_imm1f(shader, matrix_values[i]), ureg_src(o_fragment));
+            ureg_MAD(shader, t_sum, ureg_src(t_array[i]),
+                     ureg_imm1f(shader, matrix_values[i]), ureg_src(t_sum));
       }
    }
    if (first)
       ureg_MOV(shader, o_fragment, ureg_imm1f(shader, 0.0f));
+   else
+      ureg_MOV(shader, o_fragment, ureg_src(t_sum));
 
    ureg_END(shader);
 

@@ -82,6 +82,7 @@ create_frag_shader(struct vl_median_filter *filter,
    struct ureg_src i_vtex;
    struct ureg_src sampler;
    struct ureg_dst *t_array = MALLOC(sizeof(struct ureg_dst) * num_offsets);
+   struct ureg_dst o_fragment;
    const unsigned median = num_offsets >> 1;
    int i, j;
 
@@ -107,12 +108,9 @@ create_frag_shader(struct vl_median_filter *filter,
    i_vtex = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
 
-   for (i = 0; i < num_offsets; ++i) {
-      if (i == median)
-         t_array[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-      else
-         t_array[i] = ureg_DECL_temporary(shader);
-   }
+   for (i = 0; i < num_offsets; ++i)
+      t_array[i] = ureg_DECL_temporary(shader);
+   o_fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
     * t_array[0..*] = vtex + offset[0..*]
@@ -148,6 +146,7 @@ create_frag_shader(struct vl_median_filter *filter,
       else
          ureg_MIN(shader, t_array[j - 1], ureg_src(t_array[j]), ureg_src(t_array[j - 1]));
    }
+   ureg_MOV(shader, o_fragment, ureg_src(t_array[median]));
 
    ureg_END(shader);
 
