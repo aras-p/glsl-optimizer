@@ -133,6 +133,10 @@ int eg_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode_cf *cf)
 					S_SQ_CF_WORD1_COND(cf->cond) |
 					S_SQ_CF_WORD1_POP_COUNT(cf->pop_count);
 		break;
+	case CF_NATIVE:
+		bc->bytecode[id++] = cf->isa[0];
+		bc->bytecode[id++] = cf->isa[1];
+		break;
 	default:
 		R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
 		return -EINVAL;

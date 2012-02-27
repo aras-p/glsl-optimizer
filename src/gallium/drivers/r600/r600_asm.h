@@ -135,6 +135,14 @@ struct r600_bytecode_kcache {
 	unsigned			addr;
 };
 
+/* A value of CF_NATIVE in r600_bytecode_cf::inst means that this instruction
+ * has already been encoded, and the encoding has been stored in
+ * r600_bytecode::isa.  This is used by the LLVM backend to emit CF instructions
+ * e.g. RAT_WRITE_* that can't be properly represented by struct
+ * r600_bytecode_cf.
+ */
+#define CF_NATIVE ~0
+
 struct r600_bytecode_cf {
 	struct list_head		list;
 
@@ -157,6 +165,7 @@ struct r600_bytecode_cf {
 	struct r600_bytecode_alu		*curr_bs_head;
 	struct r600_bytecode_alu		*prev_bs_head;
 	struct r600_bytecode_alu		*prev2_bs_head;
+	unsigned isa[2];
 };
 
 #define FC_NONE				0

@@ -1927,6 +1927,7 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			case CM_V_SQ_CF_WORD1_SQ_CF_INST_END:
+			case CF_NATIVE:
 				break;
 			default:
 				R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -2068,6 +2069,8 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			case CM_V_SQ_CF_WORD1_SQ_CF_INST_END:
+				break;
+			case CF_NATIVE:
 				break;
 			default:
 				R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -2340,6 +2343,10 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 				fprintf(stderr, "INST:0x%x ", EG_G_SQ_CF_WORD1_CF_INST(cf->inst));
 				fprintf(stderr, "COND:%X ", cf->cond);
 				fprintf(stderr, "POP_COUNT:%X\n", cf->pop_count);
+				break;
+			case CF_NATIVE:
+				fprintf(stderr, "%04d %08X CF NATIVE\n", id, bc->bytecode[id]);
+				fprintf(stderr, "%04d %08X CF NATIVE\n", id + 1, bc->bytecode[id + 1]);
 				break;
 			default:
 				R600_ERR("Unknown instruction %0x\n", cf->inst);
