@@ -87,7 +87,7 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    xsp_screen->xdraw.depth = 24/*util_format_get_blocksizebits(templat.format) /
                              util_format_get_blockwidth(templat.format)*/;
 
-   xsp_screen->tex = vscreen->pscreen->resource_create(vscreen->pscreen, &templat);
+   pipe_resource_reference(&xsp_screen->tex, vscreen->pscreen->resource_create(vscreen->pscreen, &templat));
    return xsp_screen->tex;
 }
 
