@@ -296,6 +296,12 @@ typedef enum
    BRW_VERT_RESULT_NDC = VERT_RESULT_MAX,
    BRW_VERT_RESULT_HPOS_DUPLICATE,
    BRW_VERT_RESULT_PAD,
+   /*
+    * It's actually not a vert_result but just a _mark_ to let sf aware that
+    * he need do something special to handle gl_PointCoord builtin variable
+    * correctly. see compile_sf_prog() for more info.
+    */
+   BRW_VERT_RESULT_PNTC,
    BRW_VERT_RESULT_MAX
 } brw_vert_result;
 

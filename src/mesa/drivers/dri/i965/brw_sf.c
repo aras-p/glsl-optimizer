@@ -64,6 +64,16 @@ static void compile_sf_prog( struct brw_context *brw,
 
    c.key = *key;
    c.vue_map = brw->vs.prog_data->vue_map;
+   if (c.key.do_point_coord) {
+      /*
+       * gl_PointCoord is a FS instead of VS builtin variable, thus it's
+       * not included in c.vue_map generated in VS stage. Here we add
+       * it manually to let SF shader generate the needed interpolation
+       * coefficient for FS shader.
+       */
+      c.vue_map.vert_result_to_slot[BRW_VERT_RESULT_PNTC] = c.vue_map.num_slots;
+      c.vue_map.slot_to_vert_result[c.vue_map.num_slots++] = BRW_VERT_RESULT_PNTC;
+   }
    c.urb_entry_read_offset = brw_sf_compute_urb_entry_read_offset(intel);
    c.nr_attr_regs = (c.vue_map.num_slots + 1)/2 - c.urb_entry_read_offset;
    c.nr_setup_regs = c.nr_attr_regs;
@@ -125,6 +135,8 @@ brw_upload_sf_prog(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_sf_prog_key key;
+   /* _NEW_BUFFERS */
+   bool render_to_fbo = ctx->DrawBuffer->Name != 0;
 
    memset(&key, 0, sizeof(key));
 
@@ -167,7 +179,15 @@ brw_upload_sf_prog(struct brw_context *brw)
 	    key.point_sprite_coord_replace |= (1 << i);
       }
    }
-   key.sprite_origin_lower_left = (ctx->Point.SpriteOrigin == GL_LOWER_LEFT);
+   if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(FRAG_ATTRIB_PNTC))
+      key.do_point_coord = 1;
+   /*
+    * Window coordinates in a FBO are inverted, which means point
+    * sprite origin must be inverted, too.
+    */
+   if ((ctx->Point.SpriteOrigin == GL_LOWER_LEFT) != render_to_fbo)
+      key.sprite_origin_lower_left = true;
+
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
@@ -176,10 +196,9 @@ brw_upload_sf_prog(struct brw_context *brw)
    if (key.do_twoside_color) {
       /* If we're rendering to a FBO, we have to invert the polygon
        * face orientation, just as we invert the viewport in
-       * sf_unit_create_from_key().  ctx->DrawBuffer->Name will be
-       * nonzero if we're rendering to such an FBO.
+       * sf_unit_create_from_key().
        */
-      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW) ^ (ctx->DrawBuffer->Name != 0);
+      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW) != render_to_fbo;
    }
 
    if (!brw_search_cache(&brw->cache, BRW_SF_PROG,
@@ -192,7 +211,8 @@ brw_upload_sf_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT | _NEW_TRANSFORM),
+      .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT |
+                _NEW_TRANSFORM | _NEW_BUFFERS),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },

@@ -386,6 +386,8 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
       if (c->key.point_sprite_coord_replace & (1 << (vert_result1 - VERT_RESULT_TEX0)))
 	 pc |= 0x0f;
    }
+   if (vert_result1 == BRW_VERT_RESULT_PNTC)
+      pc |= 0x0f;
 
    vert_result2 = vert_reg_to_vert_result(c, reg, 1);
    if (vert_result2 >= VERT_RESULT_TEX0 && vert_result2 <= VERT_RESULT_TEX7) {
@@ -393,6 +395,8 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
                                                      VERT_RESULT_TEX0)))
          pc |= 0xf0;
    }
+   if (vert_result2 == BRW_VERT_RESULT_PNTC)
+      pc |= 0xf0;
 
    return pc;
 }
