@@ -46,27 +46,6 @@
                            * sizeof(float))
 /** \} */
 
-/**
- * \brief Initialize data needed for the HiZ op.
- *
- * This called when executing the first HiZ op.
- * \see brw_context::hiz
- */
-void
-gen6_hiz_init(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
-   struct brw_hiz_state *hiz = &brw->hiz;
-
-   hiz->vertex_bo = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
-                                       GEN6_HIZ_VBO_SIZE, /* size */
-                                       64); /* alignment */
-
-   if (!hiz->vertex_bo)
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "failed to allocate internal VBO");
-}
-
 void
 gen6_hiz_emit_batch_head(struct brw_context *brw)
 {
@@ -156,7 +135,7 @@ gen6_hiz_emit_vertices(struct brw_context *brw,
                        unsigned int layer)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_hiz_state *hiz = &brw->hiz;
+   uint32_t vertex_offset;
 
    /* Setup VBO for the rectangle primitive..
     *
@@ -190,6 +169,7 @@ gen6_hiz_emit_vertices(struct brw_context *brw,
    {
       const int width = mt->level[level].width;
       const int height = mt->level[level].height;
+      float *vertex_data;
 
       const float vertices[GEN6_HIZ_VBO_SIZE] = {
          /* v0 */ 0, 0, 0, 0,         0, height, 0, 1,
@@ -197,7 +177,9 @@ gen6_hiz_emit_vertices(struct brw_context *brw,
          /* v2 */ 0, 0, 0, 0,         0,      0, 0, 1,
       };
 
-      drm_intel_bo_subdata(hiz->vertex_bo, 0, GEN6_HIZ_VBO_SIZE, vertices);
+      vertex_data = brw_state_batch(brw, AUB_TRACE_NO_TYPE,
+				    GEN6_HIZ_VBO_SIZE, 32, &vertex_offset);
+      memcpy(vertex_data, vertices, GEN6_HIZ_VBO_SIZE);
    }
 
    /* 3DSTATE_VERTEX_BUFFERS */
@@ -215,10 +197,11 @@ gen6_hiz_emit_vertices(struct brw_context *brw,
       OUT_BATCH((_3DSTATE_VERTEX_BUFFERS << 16) | (batch_length - 2));
       OUT_BATCH(dw0);
       /* start address */
-      OUT_RELOC(hiz->vertex_bo, I915_GEM_DOMAIN_VERTEX, 0, 0);
+      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
+		vertex_offset);
       /* end address */
-      OUT_RELOC(hiz->vertex_bo, I915_GEM_DOMAIN_VERTEX,
-                0, hiz->vertex_bo->size - 1);
+      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_VERTEX, 0,
+		vertex_offset + GEN6_HIZ_VBO_SIZE - 1);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
@@ -278,19 +261,10 @@ gen6_hiz_exec(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
-   struct brw_hiz_state *hiz = &brw->hiz;
 
    assert(op != GEN6_HIZ_OP_DEPTH_CLEAR); /* Not implemented yet. */
    assert(mt->hiz_mt != NULL);
    intel_miptree_check_level_layer(mt, level, layer);
-
-   if (hiz->vertex_bo == NULL)
-      gen6_hiz_init(brw);
-
-   if (hiz->vertex_bo == NULL) {
-      /* Ouch. Give up. */
-      return;
-   }
 
    gen6_hiz_emit_batch_head(brw);
    gen6_hiz_emit_vertices(brw, mt, level, layer);

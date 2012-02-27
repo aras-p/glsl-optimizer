@@ -985,21 +985,6 @@ struct brw_context
    } *state_batch_list;
    int state_batch_count;
 
-   /**
-    * \brief State needed to execute HiZ ops.
-    *
-    * \see gen6_hiz_init()
-    * \see gen6_hiz_exec()
-    */
-   struct brw_hiz_state {
-      /** \brief VBO for rectangle primitive.
-       *
-       * Rather than using glGenBuffers(), we allocate the VBO directly
-       * through drm.
-       */
-      drm_intel_bo *vertex_bo;
-   } hiz;
-
    struct brw_sol_state {
       uint32_t svbi_0_starting_index;
       uint32_t svbi_0_max_index;

@@ -46,19 +46,10 @@ gen7_hiz_exec(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
-   struct brw_hiz_state *hiz = &brw->hiz;
 
    assert(op != GEN6_HIZ_OP_DEPTH_CLEAR); /* Not implemented yet. */
    assert(mt->hiz_mt != NULL);
    intel_miptree_check_level_layer(mt, level, layer);
-
-   if (hiz->vertex_bo == NULL)
-      gen6_hiz_init(brw);
-
-   if (hiz->vertex_bo == NULL) {
-      /* Ouch. Give up. */
-      return;
-   }
 
    uint32_t depth_format;
    switch (mt->format) {

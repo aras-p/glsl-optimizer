@@ -75,7 +75,6 @@ static void brw_destroy_context( struct intel_context *intel )
    ralloc_free(brw->wm.compile_data);
 
    dri_bo_release(&brw->curbe.curbe_bo);
-   dri_bo_release(&brw->hiz.vertex_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->wm.const_bo);
 
