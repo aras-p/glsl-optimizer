@@ -49,6 +49,8 @@ struct svga_screen
 
    SVGA3dHardwareVersion hw_version;
 
+   float maxPointSize;
+
    struct {
       boolean force_level_surface_view;
       boolean force_surface_view;

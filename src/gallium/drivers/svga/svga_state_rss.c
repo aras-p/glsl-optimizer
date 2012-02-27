@@ -29,6 +29,7 @@
 #include "util/u_math.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 #include "svga_state.h"
 #include "svga_cmd.h"
 
@@ -77,6 +78,7 @@ svga_queue_rs( struct rs_queue *q,
 static int emit_rss( struct svga_context *svga,
                      unsigned dirty )
 {
+   struct svga_screen *screen = svga_screen(svga->pipe.screen);
    struct rs_queue queue;
    float point_size_min;
 
@@ -221,7 +223,7 @@ static int emit_rss( struct svga_context *svga,
       EMIT_RS( svga, curr->linepattern, LINEPATTERN, fail );
       EMIT_RS_FLOAT( svga, curr->pointsize, POINTSIZE, fail );
       EMIT_RS_FLOAT( svga, point_size_min, POINTSIZEMIN, fail );
-      EMIT_RS_FLOAT( svga, SVGA_MAX_POINTSIZE, POINTSIZEMAX, fail );
+      EMIT_RS_FLOAT( svga, screen->maxPointSize, POINTSIZEMAX, fail );
       EMIT_RS( svga, curr->pointsprite, POINTSPRITEENABLE, fail);
    }
 
