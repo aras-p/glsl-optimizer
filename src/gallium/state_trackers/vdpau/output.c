@@ -33,6 +33,8 @@
 #include "util/u_sampler.h"
 #include "util/u_format.h"
 
+#include "vl/vl_csc.h"
+
 #include "vdpau_private.h"
 
 /**
@@ -393,7 +395,86 @@ vlVdpOutputSurfacePutBitsYCbCr(VdpOutputSurface surface,
                                VdpRect const *destination_rect,
                                VdpCSCMatrix const *csc_matrix)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpOutputSurface *vlsurface;
+   struct vl_compositor *compositor;
+   struct vl_compositor_state *cstate;
+
+   struct pipe_context *pipe;
+   enum pipe_format format;
+   struct pipe_video_buffer vtmpl, *vbuffer;
+   struct u_rect dst_rect;
+   struct pipe_sampler_view **sampler_views;
+
+   unsigned i;
+
+   vlsurface = vlGetDataHTAB(surface);
+   if (!vlsurface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   pipe = vlsurface->device->context;
+   compositor = &vlsurface->device->compositor;
+   cstate = &vlsurface->cstate;
+
+   format = FormatYCBCRToPipe(source_ycbcr_format);
+   if (format == PIPE_FORMAT_NONE)
+       return VDP_STATUS_INVALID_Y_CB_CR_FORMAT;
+
+   if (!source_data || !source_pitches)
+       return VDP_STATUS_INVALID_POINTER;
+
+   memset(&vtmpl, 0, sizeof(vtmpl));
+   vtmpl.buffer_format = format;
+   vtmpl.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+
+   if (destination_rect) {
+      vtmpl.width = abs(destination_rect->x0-destination_rect->x1);
+      vtmpl.height = abs(destination_rect->y0-destination_rect->y1);
+   } else {
+      vtmpl.width = vlsurface->surface->texture->width0;
+      vtmpl.height = vlsurface->surface->texture->height0;
+   }
+
+   vbuffer = pipe->create_video_buffer(pipe, &vtmpl);
+   if (!vbuffer)
+      return VDP_STATUS_RESOURCES;
+
+   sampler_views = vbuffer->get_sampler_view_planes(vbuffer);
+   if (!sampler_views) {
+      vbuffer->destroy(vbuffer);
+      return VDP_STATUS_RESOURCES;
+   }
+
+   for (i = 0; i < 3; ++i) {
+      struct pipe_sampler_view *sv = sampler_views[i];
+      if (!sv) continue;
+
+      struct pipe_box dst_box = {
+         0, 0, 0,
+         sv->texture->width0, sv->texture->height0, 1
+      };
+
+      pipe->transfer_inline_write(pipe, sv->texture, 0, PIPE_TRANSFER_WRITE, &dst_box,
+                                  source_data[i], source_pitches[i], 0);
+   }
+
+   if (!csc_matrix) {
+      vl_csc_matrix csc;
+      vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, 1, &csc);
+      vl_compositor_set_csc_matrix(cstate, (const vl_csc_matrix*)&csc);
+   } else {
+      vl_compositor_set_csc_matrix(cstate, csc_matrix);
+   }
+
+   vl_compositor_clear_layers(cstate);
+   vl_compositor_set_buffer_layer(cstate, compositor, 0, vbuffer, NULL, NULL, VL_COMPOSITOR_WEAVE);
+   vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
+   vl_compositor_render(cstate, compositor, vlsurface->surface, NULL);
+
+   vbuffer->destroy(vbuffer);
+
+   return VDP_STATUS_OK;
 }
 
 static unsigned
