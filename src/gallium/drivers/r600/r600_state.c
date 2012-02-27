@@ -2140,6 +2140,9 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg(cb, R_0288A4_SQ_PGM_RESOURCES_FS, 0);
 	r600_store_context_reg(cb, R_0288DC_SQ_PGM_CF_OFFSET_FS, 0);
 
+	if (rctx->chip_class == R700)
+		r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
+
 	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0, 0x1000FFF);
 	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x1000FFF);
 }

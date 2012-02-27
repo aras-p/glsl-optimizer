@@ -2740,6 +2740,8 @@
 #define   S_028350_MULTIPASS(x)                        (((x) & 0x1) << 0)
 #define   G_028350_MULTIPASS(x)                        (((x) >> 0) & 0x1)
 #define   C_028350_MULTIPASS                           0xFFFFFFFE
+#define R_028354_SX_SURFACE_SYNC                     0x028354
+#define   S_028354_SURFACE_SYNC_MASK(x)                (((x) & 0x1FF) << 0)
 #define R_028380_SQ_VTX_SEMANTIC_0                   0x028380
 #define   S_028380_SEMANTIC_ID(x)                      (((x) & 0xFF) << 0)
 #define   G_028380_SEMANTIC_ID(x)                      (((x) >> 0) & 0xFF)

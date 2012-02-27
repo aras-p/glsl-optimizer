@@ -1585,6 +1585,8 @@
 #define R_028238_CB_TARGET_MASK                      0x00028238
 #define R_02823C_CB_SHADER_MASK                      0x0002823C
 #define R_028350_SX_MISC                             0x00028350
+#define R_028354_SX_SURFACE_SYNC                     0x00028354
+#define   S_028354_SURFACE_SYNC_MASK(x)                (((x) & 0x1FF) << 0)
 #define R_028380_SQ_VTX_SEMANTIC_0                   0x00028380
 #define R_028384_SQ_VTX_SEMANTIC_1                   0x00028384
 #define R_028388_SQ_VTX_SEMANTIC_2                   0x00028388
