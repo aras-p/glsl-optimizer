@@ -798,6 +798,29 @@ static void r600_update_derived_state(struct r600_context *rctx)
 
 }
 
+static unsigned r600_conv_prim_to_gs_out(unsigned mode)
+{
+	static const int prim_conv[] = {
+		V_028A6C_OUTPRIM_TYPE_POINTLIST,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP
+	};
+	assert(mode < Elements(prim_conv));
+
+	return prim_conv[mode];
+}
+
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -851,6 +874,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, NULL, 0);
@@ -865,6 +889,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
+	r600_pipe_state_mod_reg(&rctx->vgt, r600_conv_prim_to_gs_out(info.mode));
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
