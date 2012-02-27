@@ -702,15 +702,20 @@ intel_miptree_map_gtt(struct intel_context *intel,
    y /= bh;
 
    base = intel_region_map(intel, mt->region, map->mode);
-   /* Note that in the case of cube maps, the caller must have passed the slice
-    * number referencing the face.
-    */
-   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
-   x += image_x;
-   y += image_y;
 
-   map->stride = mt->region->pitch * mt->cpp;
-   map->ptr = base + y * map->stride + x * mt->cpp;
+   if (base == NULL)
+      map->ptr = NULL;
+   else {
+      /* Note that in the case of cube maps, the caller must have passed the
+       * slice number referencing the face.
+      */
+      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+      x += image_x;
+      y += image_y;
+
+      map->stride = mt->region->pitch * mt->cpp;
+      map->ptr = base + y * map->stride + x * mt->cpp;
+   }
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
        map->x, map->y, map->w, map->h,
@@ -1067,6 +1072,11 @@ intel_miptree_map(struct intel_context *intel,
 
    *out_ptr = map->ptr;
    *out_stride = map->stride;
+
+   if (map->ptr == NULL) {
+      mt->level[level].slice[slice].map = NULL;
+      free(map);
+   }
 }
 
 void
