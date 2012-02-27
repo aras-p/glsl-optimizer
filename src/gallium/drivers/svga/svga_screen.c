@@ -238,7 +238,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_TEMPS:
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_FRAGMENT_SHADER_TEMPS, &result))
             return 32;
-         return result.u;
+         return MIN2(result.u, SVGA3D_TEMPREG_MAX);
       case PIPE_SHADER_CAP_MAX_ADDRS:
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
 	 /* 
@@ -287,7 +287,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_MAX_TEMPS:
          if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_TEMPS, &result))
             return 32;
-         return result.u;
+         return MIN2(result.u, SVGA3D_TEMPREG_MAX);
       case PIPE_SHADER_CAP_MAX_ADDRS:
          return 1;
       case PIPE_SHADER_CAP_MAX_PREDS:
