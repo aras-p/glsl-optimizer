@@ -381,6 +381,8 @@ boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 VdpDeviceCreateX11 vdp_imp_device_create_x11;
 VdpPresentationQueueTargetCreateX11 vlVdpPresentationQueueTargetCreateX11;
 
+void vlVdpDefaultSamplerViewTemplate(struct pipe_sampler_view *templ, struct pipe_resource *res);
+
 /* Delayed rendering funtionality */
 void vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, struct u_rect *dirty_area);
 void vlVdpSave4DelayedRendering(vlVdpDevice *dev, VdpOutputSurface surface, struct vl_compositor_state *cstate);

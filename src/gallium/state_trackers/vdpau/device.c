@@ -240,6 +240,25 @@ vlVdpGetErrorString (VdpStatus status)
 }
 
 void
+vlVdpDefaultSamplerViewTemplate(struct pipe_sampler_view *templ, struct pipe_resource *res)
+{
+   const struct util_format_description *desc;
+
+   memset(templ, 0, sizeof(*templ));
+   u_sampler_view_default_template(templ, res, res->format);
+
+   desc = util_format_description(res->format);
+   if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_0)
+      templ->swizzle_r = PIPE_SWIZZLE_ONE;
+   if (desc->swizzle[1] == UTIL_FORMAT_SWIZZLE_0)
+      templ->swizzle_g = PIPE_SWIZZLE_ONE;
+   if (desc->swizzle[2] == UTIL_FORMAT_SWIZZLE_0)
+      templ->swizzle_b = PIPE_SWIZZLE_ONE;
+   if (desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_0)
+      templ->swizzle_a = PIPE_SWIZZLE_ONE;
+}
+
+void
 vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, struct u_rect *dirty_area)
 {
    struct vl_compositor_state *cstate;
@@ -270,8 +289,7 @@ vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, str
       struct pipe_resource *res = surface->texture;
       struct pipe_sampler_view sv_templ;
 
-      memset(&sv_templ, 0, sizeof(sv_templ));
-      u_sampler_view_default_template(&sv_templ, res, res->format);
+      vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
       pipe_sampler_view_reference(&vlsurface->sampler_view,
          dev->context->create_sampler_view(dev->context, res, &sv_templ));
    }

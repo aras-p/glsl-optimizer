@@ -85,8 +85,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
       return VDP_STATUS_ERROR;
    }
 
-   memset(&sv_templ, 0, sizeof(sv_templ));
-   u_sampler_view_default_template(&sv_templ, res, res->format);
+   vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
    vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
    if (!vlsurface->sampler_view) {
       pipe_resource_reference(&res, NULL);
