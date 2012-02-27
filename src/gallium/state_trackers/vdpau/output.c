@@ -432,6 +432,28 @@ BlenderToPipe(struct pipe_context *context,
    return context->create_blend_state(context, &blend);
 }
 
+static struct vertex4f *
+ColorsToPipe(VdpColor const *colors, uint32_t flags, struct vertex4f result[4])
+{
+   unsigned i;
+   struct vertex4f *dst = result;
+
+   if (!colors)
+      return NULL;
+
+   for (i = 0; i < 4; ++i) {
+      dst->x = colors->red;
+      dst->y = colors->green;
+      dst->z = colors->blue;
+      dst->w = colors->alpha;
+
+      ++dst;
+      if (flags & VDP_OUTPUT_SURFACE_RENDER_COLOR_PER_VERTEX)
+         ++colors;
+   }
+   return result;
+}
+
 /**
  * Composite a sub-rectangle of a VdpOutputSurface into a sub-rectangle of
  * another VdpOutputSurface; Output Surface object VdpOutputSurface.
@@ -454,6 +476,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
 
    struct u_rect src_rect, dst_rect;
 
+   struct vertex4f vlcolors[4];
    void *blend;
 
    dst_vlsurface = vlGetDataHTAB(destination_surface);
@@ -478,7 +501,8 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    vl_compositor_clear_layers(cstate);
    vl_compositor_set_layer_blend(cstate, 0, blend, false);
    vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
-                                RectToPipe(source_rect, &src_rect), NULL, NULL);
+                                RectToPipe(source_rect, &src_rect), NULL,
+                                ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
 
@@ -509,6 +533,7 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
 
    struct u_rect src_rect, dst_rect;
 
+   struct vertex4f vlcolors[4];
    void *blend;
 
    dst_vlsurface = vlGetDataHTAB(destination_surface);
@@ -533,7 +558,8 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
    vl_compositor_clear_layers(cstate);
    vl_compositor_set_layer_blend(cstate, 0, blend, false);
    vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
-                                RectToPipe(source_rect, &src_rect), NULL, NULL);
+                                RectToPipe(source_rect, &src_rect), NULL,
+                                ColorsToPipe(colors, flags, vlcolors));
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
 
