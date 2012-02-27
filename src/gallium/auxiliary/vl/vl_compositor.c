@@ -47,6 +47,7 @@ enum VS_OUTPUT
 {
    VS_O_VPOS,
    VS_O_VTEX,
+   VS_O_COLOR,
    VS_O_VTOP,
    VS_O_VBOTTOM,
 };
@@ -57,9 +58,9 @@ static void *
 create_vert_shader(struct vl_compositor *c)
 {
    struct ureg_program *shader;
-   struct ureg_src vpos, vtex;
+   struct ureg_src vpos, vtex, color;
    struct ureg_dst tmp;
-   struct ureg_dst o_vpos, o_vtex;
+   struct ureg_dst o_vpos, o_vtex, o_color;
    struct ureg_dst o_vtop, o_vbottom;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -68,19 +69,37 @@ create_vert_shader(struct vl_compositor *c)
 
    vpos = ureg_DECL_vs_input(shader, 0);
    vtex = ureg_DECL_vs_input(shader, 1);
+   color = ureg_DECL_vs_input(shader, 2);
    tmp = ureg_DECL_temporary(shader);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX);
+   o_color = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, VS_O_COLOR);
    o_vtop = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
    o_vbottom = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
 
    /*
     * o_vpos = vpos
     * o_vtex = vtex
+    * o_color = color
     */
    ureg_MOV(shader, o_vpos, vpos);
    ureg_MOV(shader, o_vtex, vtex);
+   ureg_MOV(shader, o_color, color);
 
+   /*
+    * tmp.x = vtex.w / 2
+    * tmp.y = vtex.w / 4
+    *
+    * o_vtop.x = vtex.x
+    * o_vtop.y = vtex.y * tmp.x + 0.25f
+    * o_vtop.z = vtex.y * tmp.y + 0.25f
+    * o_vtop.w = 1 / tmp.x
+    *
+    * o_vbottom.x = vtex.x
+    * o_vbottom.y = vtex.y * tmp.x - 0.25f
+    * o_vbottom.z = vtex.y * tmp.y - 0.25f
+    * o_vbottom.w = 1 / tmp.y
+    */
    ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X),
             ureg_scalar(vtex, TGSI_SWIZZLE_W), ureg_imm1f(shader, 0.5f));
    ureg_MUL(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y),
@@ -295,22 +314,24 @@ static void *
 create_frag_shader_rgba(struct vl_compositor *c)
 {
    struct ureg_program *shader;
-   struct ureg_src tc;
-   struct ureg_src sampler;
-   struct ureg_dst fragment;
+   struct ureg_src tc, color, sampler;
+   struct ureg_dst texel, fragment;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return false;
 
    tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX, TGSI_INTERPOLATE_LINEAR);
+   color = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_COLOR, VS_O_COLOR, TGSI_INTERPOLATE_LINEAR);
    sampler = ureg_DECL_sampler(shader, 0);
+   texel = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
     * fragment = tex(tc, sampler)
     */
-   ureg_TEX(shader, fragment, TGSI_TEXTURE_2D, tc, sampler);
+   ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
+   ureg_MUL(shader, fragment, ureg_src(texel), color);
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, c->pipe);
@@ -422,7 +443,7 @@ init_pipe_state(struct vl_compositor *c)
    c->blend_add = c->pipe->create_blend_state(c->pipe, &blend);
 
    memset(&rast, 0, sizeof rast);
-   rast.flatshade = 1;
+   rast.flatshade = 0;
    rast.front_ccw = 1;
    rast.cull_face = PIPE_FACE_NONE;
    rast.fill_back = PIPE_POLYGON_MODE_FILL;
@@ -495,14 +516,14 @@ create_vertex_buffer(struct vl_compositor *c)
 static bool
 init_buffers(struct vl_compositor *c)
 {
-   struct pipe_vertex_element vertex_elems[2];
+   struct pipe_vertex_element vertex_elems[3];
 
    assert(c);
 
    /*
     * Create our vertex buffer and vertex buffer elements
     */
-   c->vertex_buf.stride = sizeof(struct vertex2f) + sizeof(struct vertex4f);
+   c->vertex_buf.stride = sizeof(struct vertex2f) + sizeof(struct vertex4f) * 2;
    c->vertex_buf.buffer_offset = 0;
    create_vertex_buffer(c);
 
@@ -514,7 +535,11 @@ init_buffers(struct vl_compositor *c)
    vertex_elems[1].instance_divisor = 0;
    vertex_elems[1].vertex_buffer_index = 0;
    vertex_elems[1].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   c->vertex_elems_state = c->pipe->create_vertex_elements_state(c->pipe, 2, vertex_elems);
+   vertex_elems[2].src_offset = sizeof(struct vertex2f) + sizeof(struct vertex4f);
+   vertex_elems[2].instance_divisor = 0;
+   vertex_elems[2].vertex_buffer_index = 0;
+   vertex_elems[2].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   c->vertex_elems_state = c->pipe->create_vertex_elements_state(c->pipe, 3, vertex_elems);
 
    return true;
 }
@@ -574,24 +599,40 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
    vb[ 1].x = layer->src.tl.x;
    vb[ 1].y = layer->src.tl.y;
    vb[ 2] = layer->zw;
+   vb[ 3].x = layer->colors[0].x;
+   vb[ 3].y = layer->colors[0].y;
+   vb[ 4].x = layer->colors[0].z;
+   vb[ 4].y = layer->colors[0].w;
 
-   vb[ 3].x = layer->dst.br.x;
-   vb[ 3].y = layer->dst.tl.y;
-   vb[ 4].x = layer->src.br.x;
-   vb[ 4].y = layer->src.tl.y;
-   vb[ 5] = layer->zw;
+   vb[ 5].x = layer->dst.br.x;
+   vb[ 5].y = layer->dst.tl.y;
+   vb[ 6].x = layer->src.br.x;
+   vb[ 6].y = layer->src.tl.y;
+   vb[ 7] = layer->zw;
+   vb[ 8].x = layer->colors[1].x;
+   vb[ 8].y = layer->colors[1].y;
+   vb[ 9].x = layer->colors[1].z;
+   vb[ 9].y = layer->colors[1].w;
 
-   vb[ 6].x = layer->dst.br.x;
-   vb[ 6].y = layer->dst.br.y;
-   vb[ 7].x = layer->src.br.x;
-   vb[ 7].y = layer->src.br.y;
-   vb[ 8] = layer->zw;
+   vb[10].x = layer->dst.br.x;
+   vb[10].y = layer->dst.br.y;
+   vb[11].x = layer->src.br.x;
+   vb[11].y = layer->src.br.y;
+   vb[12] = layer->zw;
+   vb[13].x = layer->colors[2].x;
+   vb[13].y = layer->colors[2].y;
+   vb[14].x = layer->colors[2].z;
+   vb[14].y = layer->colors[2].w;
 
-   vb[ 9].x = layer->dst.tl.x;
-   vb[ 9].y = layer->dst.br.y;
-   vb[10].x = layer->src.tl.x;
-   vb[10].y = layer->src.br.y;
-   vb[11] = layer->zw;
+   vb[15].x = layer->dst.tl.x;
+   vb[15].y = layer->dst.br.y;
+   vb[16].x = layer->src.tl.x;
+   vb[16].y = layer->src.br.y;
+   vb[17] = layer->zw;
+   vb[18].x = layer->colors[3].x;
+   vb[18].y = layer->colors[3].y;
+   vb[19].x = layer->colors[3].z;
+   vb[19].y = layer->colors[3].w;
 }
 
 static INLINE struct u_rect
@@ -638,7 +679,7 @@ gen_vertex_data(struct vl_compositor *c, struct vl_compositor_state *s, struct u
       if (s->used_layers & (1 << i)) {
          struct vl_compositor_layer *layer = &s->layers[i];
          gen_rect_verts(vb, layer);
-         vb += 12;
+         vb += 20;
 
          if (dirty && layer->clearing) {
             struct u_rect drawn = calc_drawn_area(s, layer);
@@ -728,11 +769,14 @@ vl_compositor_clear_layers(struct vl_compositor_state *s)
 
    s->used_layers = 0;
    for ( i = 0; i < VL_COMPOSITOR_MAX_LAYERS; ++i) {
+      struct vertex4f v_one = { 1.0f, 1.0f, 1.0f, 1.0f };
       s->layers[i].clearing = i ? false : true;
       s->layers[i].blend = NULL;
       s->layers[i].fs = NULL;
       for ( j = 0; j < 3; j++)
          pipe_sampler_view_reference(&s->layers[i].sampler_views[j], NULL);
+      for ( j = 0; j < 4; ++j)
+         s->layers[i].colors[j] = v_one;
    }
 }
 
@@ -895,8 +939,11 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *s,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
                              struct u_rect *src_rect,
-                             struct u_rect *dst_rect)
+                             struct u_rect *dst_rect,
+                             struct vertex4f *colors)
 {
+   unsigned i;
+
    assert(s && c && rgba);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
@@ -912,6 +959,10 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *s,
    calc_src_and_dst(&s->layers[layer], rgba->texture->width0, rgba->texture->height0,
                     src_rect ? *src_rect : default_rect(&s->layers[layer]),
                     dst_rect ? *dst_rect : default_rect(&s->layers[layer]));
+
+   if (colors)
+      for (i = 0; i < 4; ++i)
+         s->layers[layer].colors[i] = colors[i];
 }
 
 void

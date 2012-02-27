@@ -472,7 +472,7 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    vl_compositor_clear_layers(cstate);
    vl_compositor_set_layer_blend(cstate, 0, blend, false);
    vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
-                                RectToPipe(source_rect, &src_rect), NULL);
+                                RectToPipe(source_rect, &src_rect), NULL, NULL);
    vl_compositor_set_dst_area(cstate, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, NULL);
 

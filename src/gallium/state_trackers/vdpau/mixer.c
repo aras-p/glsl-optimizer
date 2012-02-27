@@ -244,7 +244,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       if (!bg)
          return VDP_STATUS_INVALID_HANDLE;
       vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
-                                   RectToPipe(background_source_rect, &src_rect), NULL);
+                                   RectToPipe(background_source_rect, &src_rect), NULL, NULL);
    }
 
    vl_compositor_clear_layers(&vmixer->cstate);

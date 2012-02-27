@@ -65,6 +65,7 @@ struct vl_compositor_layer
       struct vertex2f tl, br;
    } src, dst;
    struct vertex2f zw;
+   struct vertex4f colors[4];
 };
 
 struct vl_compositor_state
@@ -207,7 +208,8 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *state,
                              unsigned layer,
                              struct pipe_sampler_view *rgba,
                              struct u_rect *src_rect,
-                             struct u_rect *dst_rect);
+                             struct u_rect *dst_rect,
+                             struct vertex4f *colors);
 
 /*@}*/
 

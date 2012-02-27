@@ -423,7 +423,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
                                          &subpicture_priv->src_rect, &subpicture_priv->dst_rect, true);
       else
          vl_compositor_set_rgba_layer(cstate, compositor, 1, subpicture_priv->sampler,
-                                      &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
+                                      &subpicture_priv->src_rect, &subpicture_priv->dst_rect, NULL);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;

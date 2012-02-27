@@ -241,7 +241,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    dst_clip.y1 = clip_height ? clip_height : surf_draw->height;
 
    vl_compositor_clear_layers(&pq->cstate);
-   vl_compositor_set_rgba_layer(&pq->cstate, compositor, 0, surf->sampler_view, &src_rect, NULL);
+   vl_compositor_set_rgba_layer(&pq->cstate, compositor, 0, surf->sampler_view, &src_rect, NULL, NULL);
    vl_compositor_set_dst_clip(&pq->cstate, &dst_clip);
    vl_compositor_render(&pq->cstate, compositor, surf_draw, dirty_area);
 
