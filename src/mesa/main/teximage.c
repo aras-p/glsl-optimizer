@@ -1844,23 +1844,25 @@ subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
    if (dimensions > 1) {
-      if (yoffset < -((GLint)destTex->Border)) {
+      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : destTex->Border;
+      if (yoffset < -yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset)",
                      dimensions);
          return GL_TRUE;
       }
-      if (yoffset + height > (GLint) (destTex->Height + destTex->Border)) {
+      if (yoffset + height > (GLint) destTex->Height + yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset+height)",
                      dimensions);
          return GL_TRUE;
       }
    }
    if (dimensions > 2) {
-      if (zoffset < -((GLint)destTex->Border)) {
+      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : destTex->Border;
+      if (zoffset < -zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset)");
          return GL_TRUE;
       }
-      if (zoffset + depth  > (GLint) (destTex->Depth + destTex->Border)) {
+      if (zoffset + depth  > (GLint) destTex->Depth + zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset+depth)");
          return GL_TRUE;
       }
@@ -2163,13 +2165,14 @@ copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
    if (dimensions > 1) {
-      if (yoffset < -((GLint)teximage->Border)) {
+      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : teximage->Border;
+      if (yoffset < -yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%dD(yoffset=%d)", dimensions, yoffset);
          return GL_TRUE;
       }
       /* NOTE: we're adding the border here, not subtracting! */
-      if (yoffset + height > (GLint) (teximage->Height + teximage->Border)) {
+      if (yoffset + height > (GLint) teximage->Height + yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%dD(yoffset+height)", dimensions);
          return GL_TRUE;
@@ -2178,12 +2181,13 @@ copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
 
    /* check z offset */
    if (dimensions > 2) {
-      if (zoffset < -((GLint)teximage->Border)) {
+      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : teximage->Border;
+      if (zoffset < -zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%dD(zoffset)", dimensions);
          return GL_TRUE;
       }
-      if (zoffset > (GLint) (teximage->Depth + teximage->Border)) {
+      if (zoffset > (GLint) teximage->Depth + zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyTexSubImage%dD(zoffset+depth)", dimensions);
          return GL_TRUE;
@@ -2759,10 +2763,12 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
          /* If we have a border, offset=-1 is legal.  Bias by border width. */
          switch (dims) {
          case 3:
-            zoffset += texImage->Border;
+            if (target != GL_TEXTURE_2D_ARRAY)
+               zoffset += texImage->Border;
             /* fall-through */
          case 2:
-            yoffset += texImage->Border;
+            if (target != GL_TEXTURE_1D_ARRAY)
+               yoffset += texImage->Border;
             /* fall-through */
          case 1:
             xoffset += texImage->Border;
@@ -3034,10 +3040,12 @@ copytexsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
          /* If we have a border, offset=-1 is legal.  Bias by border width. */
          switch (dims) {
          case 3:
-            zoffset += texImage->Border;
+            if (target != GL_TEXTURE_2D_ARRAY)
+               zoffset += texImage->Border;
             /* fall-through */
          case 2:
-            yoffset += texImage->Border;
+            if (target != GL_TEXTURE_1D_ARRAY)
+               yoffset += texImage->Border;
             /* fall-through */
          case 1:
             xoffset += texImage->Border;
