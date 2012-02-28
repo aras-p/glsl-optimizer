@@ -214,14 +214,6 @@ lp_build_tgsi_inst_llvm(
    case TGSI_OPCODE_DIV:
    case TGSI_OPCODE_PUSHA:
    case TGSI_OPCODE_POPA:
-   case TGSI_OPCODE_I2F:
-   case TGSI_OPCODE_NOT:
-   case TGSI_OPCODE_SHL:
-   case TGSI_OPCODE_ISHR:
-   case TGSI_OPCODE_AND:
-   case TGSI_OPCODE_OR:
-   case TGSI_OPCODE_MOD:
-   case TGSI_OPCODE_XOR:
    case TGSI_OPCODE_SAD:
    case TGSI_OPCODE_TXF:
    case TGSI_OPCODE_TXQ:
