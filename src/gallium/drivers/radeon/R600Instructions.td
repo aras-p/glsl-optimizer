@@ -918,6 +918,19 @@ def LOCAL_SIZE_Z : R600PreloadInst <"LOCAL_SIZE_Z",
 
 
 
+let isPseudo = 1 in {
+
+def LOAD_VTX : AMDGPUShaderInst <
+    (outs R600_Reg32:$dst),
+    (ins MEMri:$mem),
+    "LOAD_VTX",
+    [(set (i32 R600_Reg32:$dst), (load_param ADDRParam:$mem))]
+>;
+
+
+} //End isPseudo
+
+
 include "R600ShaderPatterns.td"
 
 // We need this pattern to avoid having real registers in PHI nodes.
