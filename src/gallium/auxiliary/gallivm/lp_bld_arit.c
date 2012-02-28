@@ -2565,10 +2565,11 @@ lp_build_mod(struct lp_build_context *bld,
    LLVMValueRef res;
    const struct lp_type type = bld->type;
 
-   assert(type.floating);
    assert(lp_check_value(type, x));
    assert(lp_check_value(type, y));
 
+   if (type.floating)
+      res = LLVMBuildFRem(builder, x, y, "");
    if (type.sign)
       res = LLVMBuildSRem(builder, x, y, "");
    else
