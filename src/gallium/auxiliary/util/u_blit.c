@@ -321,6 +321,26 @@ regions_overlap(int srcX0, int srcY0,
 
 
 /**
+ * Can we blit from src format to dest format with a simple copy?
+ */
+static boolean
+formats_compatible(enum pipe_format src_format,
+                   enum pipe_format dst_format)
+{
+   if (src_format == dst_format) {
+      return TRUE;
+   }
+   else {
+      const struct util_format_description *src_desc =
+         util_format_description(src_format);
+      const struct util_format_description *dst_desc =
+         util_format_description(dst_format);
+      return util_is_format_compatible(src_desc, dst_desc);
+   }
+}
+
+
+/**
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * Flipping and stretching are supported.
@@ -377,7 +397,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (dst_format == src_format &&
+   if (formats_compatible(src_format, dst_format) &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
