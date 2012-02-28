@@ -351,12 +351,12 @@ static void blitter_unset_running_flag(struct blitter_context_priv *ctx)
 
 static void blitter_check_saved_vertex_states(struct blitter_context_priv *ctx)
 {
-   assert(ctx->base.saved_num_vertex_buffers != ~0 &&
-          ctx->base.saved_velem_state != INVALID_PTR &&
-          ctx->base.saved_vs != INVALID_PTR &&
-          (!ctx->has_geometry_shader || ctx->base.saved_gs != INVALID_PTR) &&
-          (!ctx->has_stream_out || ctx->base.saved_num_so_targets != ~0) &&
-          ctx->base.saved_rs_state != INVALID_PTR);
+   assert(ctx->base.saved_num_vertex_buffers != ~0);
+   assert(ctx->base.saved_velem_state != INVALID_PTR);
+   assert(ctx->base.saved_vs != INVALID_PTR);
+   assert(!ctx->has_geometry_shader || ctx->base.saved_gs != INVALID_PTR);
+   assert(!ctx->has_stream_out || ctx->base.saved_num_so_targets != ~0);
+   assert(ctx->base.saved_rs_state != INVALID_PTR);
 }
 
 static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
@@ -410,9 +410,9 @@ static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
 
 static void blitter_check_saved_fragment_states(struct blitter_context_priv *ctx)
 {
-   assert(ctx->base.saved_fs != INVALID_PTR &&
-          ctx->base.saved_dsa_state != INVALID_PTR &&
-          ctx->base.saved_blend_state != INVALID_PTR);
+   assert(ctx->base.saved_fs != INVALID_PTR);
+   assert(ctx->base.saved_dsa_state != INVALID_PTR);
+   assert(ctx->base.saved_blend_state != INVALID_PTR);
 }
 
 static void blitter_restore_fragment_states(struct blitter_context_priv *ctx)
@@ -453,8 +453,8 @@ static void blitter_restore_fb_state(struct blitter_context_priv *ctx)
 
 static void blitter_check_saved_textures(struct blitter_context_priv *ctx)
 {
-   assert(ctx->base.saved_num_sampler_states != ~0 &&
-          ctx->base.saved_num_sampler_views != ~0);
+   assert(ctx->base.saved_num_sampler_states != ~0);
+   assert(ctx->base.saved_num_sampler_views != ~0);
 }
 
 static void blitter_restore_textures(struct blitter_context_priv *ctx)
