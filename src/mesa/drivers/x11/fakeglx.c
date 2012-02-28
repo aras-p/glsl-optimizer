@@ -1153,6 +1153,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       return NULL;
 
    (void) caveat;
+   (void) min_ci;
 
    /*
     * Since we're only simulating the GLX extension this function will never
