@@ -612,7 +612,8 @@ lp_build_div(struct lp_build_context *bld,
          return LLVMConstUDiv(a, b);
    }
 
-   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4 &&
+      type.floating)
       return lp_build_mul(bld, a, lp_build_rcp(bld, b));
 
    if (type.floating)
