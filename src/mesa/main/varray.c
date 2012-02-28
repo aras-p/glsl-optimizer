@@ -1117,8 +1117,9 @@ _mesa_PrimitiveRestartIndex(GLuint index)
 void GLAPIENTRY
 _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
 {
+   struct gl_client_array *array;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ARB_instanced_arrays) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glVertexAttribDivisor()");
@@ -1133,7 +1134,12 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
 
    ASSERT(VERT_ATTRIB_GENERIC(index) < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
-   ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)].InstanceDivisor = divisor;
+   array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(index)];
+   if (array->InstanceDivisor != divisor) {
+      FLUSH_VERTICES(ctx, _NEW_ARRAY);
+      array->InstanceDivisor = divisor;
+      ctx->Array.NewState |= VERT_BIT(VERT_ATTRIB_GENERIC(index));
+   }
 }
 
 
