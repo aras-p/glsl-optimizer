@@ -69,8 +69,6 @@
  *
  * This is the format which is used during texture application (i.e. the
  * texture format and env mode determine the arithmetic used.
- *
- * XXX this could be static
  */
 GLint
 _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
@@ -830,7 +828,7 @@ _mesa_get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
    struct gl_texture_image *texImage;
    GLuint texIndex;
 
-   if (level < 0 )
+   if (level < 0)
       return NULL;
 
    switch (target) {
