@@ -41,7 +41,7 @@
 #if FEATURE_beginend
 
 /**
- * Use the per-vertex functions found in <vfmt> to initialoze the given
+ * Use the per-vertex functions found in <vfmt> to initialize the given
  * API dispatch table.
  */
 static void
