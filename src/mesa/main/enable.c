@@ -118,7 +118,7 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(ctx->Array.ArrayObj->VertexAttrib));
+            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(arrayObj->VertexAttrib));
             var = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled;
             flag = VERT_BIT_GENERIC(n);
          }
@@ -149,9 +149,9 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    *var = state;
 
    if (state)
-      ctx->Array.ArrayObj->_Enabled |= flag;
+      arrayObj->_Enabled |= flag;
    else
-      ctx->Array.ArrayObj->_Enabled &= ~flag;
+      arrayObj->_Enabled &= ~flag;
 
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
