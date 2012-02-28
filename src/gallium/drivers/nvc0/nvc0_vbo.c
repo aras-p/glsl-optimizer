@@ -267,7 +267,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       }
       offset = vb->buffer_offset + ve->src_offset;
 
-      BEGIN_1IC0(push, NVC0_3D(VERTEX_ARRAY_SELECT), 5);
+      BEGIN_1IC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_SELECT), 5);
       PUSH_DATA (push, i);
       PUSH_DATAh(push, buf->address + base + size - 1);
       PUSH_DATA (push, buf->address + base + size - 1);

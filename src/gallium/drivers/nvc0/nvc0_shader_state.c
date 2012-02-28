@@ -165,14 +165,14 @@ nvc0_tevlprog_validate(struct nvc0_context *nvc0)
          BEGIN_NVC0(push, NVC0_3D(TESS_MODE), 1);
          PUSH_DATA (push, tp->tp.tess_mode);
       }
-      BEGIN_NVC0(push, NVC0_3D(TEP_SELECT), 1);
+      BEGIN_NVC0(push, NVC0_3D(MACRO_TEP_SELECT), 1);
       PUSH_DATA (push, 0x31);
       BEGIN_NVC0(push, NVC0_3D(SP_START_ID(3)), 1);
       PUSH_DATA (push, tp->code_base);
       BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(3)), 1);
       PUSH_DATA (push, tp->max_gpr);
    } else {
-      BEGIN_NVC0(push, NVC0_3D(TEP_SELECT), 1);
+      BEGIN_NVC0(push, NVC0_3D(MACRO_TEP_SELECT), 1);
       PUSH_DATA (push, 0x30);
    }
    nvc0_program_update_context_state(nvc0, tp, 2);
@@ -191,7 +191,7 @@ nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
    if (gp && gp->code_size) {
       const boolean gp_selects_layer = gp->hdr[13] & (1 << 9);
 
-      BEGIN_NVC0(push, NVC0_3D(GP_SELECT), 1);
+      BEGIN_NVC0(push, NVC0_3D(MACRO_GP_SELECT), 1);
       PUSH_DATA (push, 0x41);
       BEGIN_NVC0(push, NVC0_3D(SP_START_ID(4)), 1);
       PUSH_DATA (push, gp->code_base);
@@ -201,7 +201,7 @@ nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
       PUSH_DATA (push, gp_selects_layer ? NVC0_3D_LAYER_USE_GP : 0);
    } else {
       IMMED_NVC0(push, NVC0_3D(LAYER), 0);
-      BEGIN_NVC0(push, NVC0_3D(GP_SELECT), 1);
+      BEGIN_NVC0(push, NVC0_3D(MACRO_GP_SELECT), 1);
       PUSH_DATA (push, 0x40);
    }
    nvc0_program_update_context_state(nvc0, gp, 3);

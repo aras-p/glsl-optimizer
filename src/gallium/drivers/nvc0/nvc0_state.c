@@ -102,10 +102,11 @@ nvc0_blend_state_create(struct pipe_context *pipe,
        SB_DATA    (so, 1);
        SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
 
-       SB_IMMED_3D(so, BLEND_ENABLES, 0);
+       SB_IMMED_3D(so, MACRO_BLEND_ENABLES, 0);
     } else
     if (!cso->independent_blend_enable) {
-        SB_IMMED_3D(so, BLEND_ENABLES, cso->rt[0].blend_enable ? 0xff : 0);
+        SB_IMMED_3D(so,
+                    MACRO_BLEND_ENABLES, cso->rt[0].blend_enable ? 0xff : 0);
 
         if (cso->rt[0].blend_enable) {
             SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
@@ -137,7 +138,7 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_src_factor));
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_dst_factor));
         }
-        SB_IMMED_3D(so, BLEND_ENABLES, en);
+        SB_IMMED_3D(so, MACRO_BLEND_ENABLES, en);
 
         SB_IMMED_3D(so, COLOR_MASK_COMMON, 0);
         SB_BEGIN_3D(so, COLOR_MASK(0), 8);
@@ -232,9 +233,9 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_IMMED_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
     SB_IMMED_3D(so, POINT_SMOOTH_ENABLE, cso->point_smooth);
 
-    SB_BEGIN_3D(so, POLYGON_MODE_FRONT, 1);
+    SB_BEGIN_3D(so, MACRO_POLYGON_MODE_FRONT, 1);
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_front));
-    SB_BEGIN_3D(so, POLYGON_MODE_BACK, 1);
+    SB_BEGIN_3D(so, MACRO_POLYGON_MODE_BACK, 1);
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_back));
     SB_IMMED_3D(so, POLYGON_SMOOTH_ENABLE, cso->poly_smooth);
 

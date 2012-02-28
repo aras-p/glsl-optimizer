@@ -624,22 +624,22 @@ nvc0_screen_create(struct nouveau_device *dev)
 
    i = 0;
    MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_PER_INSTANCE, nvc0_9097_per_instance_bf);
-   MK_MACRO(NVC0_3D_BLEND_ENABLES, nvc0_9097_blend_enables);
-   MK_MACRO(NVC0_3D_VERTEX_ARRAY_SELECT, nvc0_9097_vertex_array_select);
-   MK_MACRO(NVC0_3D_TEP_SELECT, nvc0_9097_tep_select);
-   MK_MACRO(NVC0_3D_GP_SELECT, nvc0_9097_gp_select);
-   MK_MACRO(NVC0_3D_POLYGON_MODE_FRONT, nvc0_9097_poly_mode_front);
-   MK_MACRO(NVC0_3D_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
+   MK_MACRO(NVC0_3D_MACRO_BLEND_ENABLES, nvc0_9097_blend_enables);
+   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_SELECT, nvc0_9097_vertex_array_select);
+   MK_MACRO(NVC0_3D_MACRO_TEP_SELECT, nvc0_9097_tep_select);
+   MK_MACRO(NVC0_3D_MACRO_GP_SELECT, nvc0_9097_gp_select);
+   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_FRONT, nvc0_9097_poly_mode_front);
+   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
 
    BEGIN_NVC0(push, NVC0_3D(RASTERIZE_ENABLE), 1);
    PUSH_DATA (push, 1);
    BEGIN_NVC0(push, NVC0_3D(RT_SEPARATE_FRAG_DATA), 1);
    PUSH_DATA (push, 1);
-   BEGIN_NVC0(push, NVC0_3D(GP_SELECT), 1);
+   BEGIN_NVC0(push, NVC0_3D(MACRO_GP_SELECT), 1);
    PUSH_DATA (push, 0x40);
    BEGIN_NVC0(push, NVC0_3D(LAYER), 1);
    PUSH_DATA (push, 0);
-   BEGIN_NVC0(push, NVC0_3D(TEP_SELECT), 1);
+   BEGIN_NVC0(push, NVC0_3D(MACRO_TEP_SELECT), 1);
    PUSH_DATA (push, 0x30);
    BEGIN_NVC0(push, NVC0_3D(PATCH_VERTICES), 1);
    PUSH_DATA (push, 3);
