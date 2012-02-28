@@ -383,6 +383,12 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
       return GL_FALSE;
    }
 
+   if (first < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+		  "glDrawArraysInstanced(start=%d)", first);
+      return GL_FALSE;
+   }
+
    if (!_mesa_valid_prim_mode(ctx, mode)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawArraysInstanced(mode=0x%x)", mode);
