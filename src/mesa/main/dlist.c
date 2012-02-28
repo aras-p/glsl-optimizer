@@ -1300,6 +1300,30 @@ save_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA)
 }
 
 
+/* GL_ARB_draw_instanced. */
+static void GLAPIENTRY
+save_DrawArraysInstancedARB(GLenum mode,
+			    GLint first,
+			    GLsizei count,
+			    GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+	       "glDrawArraysInstanced() during display list compile");
+}
+
+static void GLAPIENTRY
+save_DrawElementsInstancedARB(GLenum mode,
+			      GLsizei count,
+			      GLenum type,
+			      const GLvoid *indices,
+			      GLsizei primcount)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+	       "glDrawElementsInstanced() during display list compile");
+}
+
 static void invalidate_saved_current_state( struct gl_context *ctx )
 {
    GLint i;
@@ -10750,6 +10774,10 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
 
    vfmt->Rectf = save_Rectf;
+
+   /* GL_ARB_draw_instanced */
+   vfmt->DrawArraysInstanced = save_DrawArraysInstancedARB;
+   vfmt->DrawElementsInstanced = save_DrawElementsInstancedARB;
 
    /* The driver is required to implement these as
     * 1) They can probably do a better job.

@@ -399,12 +399,6 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
    if (!check_valid_to_render(ctx, "glDrawArraysInstanced(invalid to render)"))
       return GL_FALSE;
 
-   if (ctx->CompileFlag) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glDrawArraysInstanced(display list");
-      return GL_FALSE;
-   }
-
    if (ctx->Const.CheckArrayBounds) {
       if (first + count > (GLint) ctx->Array.ArrayObj->_MaxElement)
          return GL_FALSE;
