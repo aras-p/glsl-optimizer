@@ -77,6 +77,8 @@ struct gl_texture_object;
 struct gl_context;
 struct st_context;
 struct gl_uniform_storage;
+struct prog_instruction;
+struct gl_program_parameter_list;
 /*@}*/
 
 
@@ -84,19 +86,6 @@ struct gl_uniform_storage;
 #define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
 #define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
 #define PRIM_UNKNOWN             (GL_POLYGON+3)
-
-
-/**
- * Shader stages. Note that these will become 5 with tessellation.
- * These MUST have the same values as gallium's PIPE_SHADER_*
- */
-typedef enum
-{
-   MESA_SHADER_VERTEX = 0,
-   MESA_SHADER_FRAGMENT = 1,
-   MESA_SHADER_GEOMETRY = 2,
-   MESA_SHADER_TYPES = 3
-} gl_shader_type;
 
 
 
@@ -913,23 +902,6 @@ struct gl_fog_attrib
    GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
    GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
    GLenum FogDistanceMode;     /**< GL_NV_fog_distance */
-};
-
-
-/**
- * \brief Layout qualifiers for gl_FragDepth.
- *
- * Extension AMD_conservative_depth allows gl_FragDepth to be redeclared with
- * a layout qualifier.
- *
- * \see enum ir_depth_layout
- */
-enum gl_frag_depth_layout {
-    FRAG_DEPTH_LAYOUT_NONE, /**< No layout is specified. */
-    FRAG_DEPTH_LAYOUT_ANY,
-    FRAG_DEPTH_LAYOUT_GREATER,
-    FRAG_DEPTH_LAYOUT_LESS,
-    FRAG_DEPTH_LAYOUT_UNCHANGED
 };
 
 
@@ -1773,6 +1745,107 @@ struct gl_evaluators
 };
 
 
+struct gl_transform_feedback_varying_info
+{
+   char *Name;
+   GLenum Type;
+   GLint Size;
+};
+
+
+/**
+ * Per-output info vertex shaders for transform feedback.
+ */
+struct gl_transform_feedback_output
+{
+   unsigned OutputRegister;
+   unsigned OutputBuffer;
+   unsigned NumComponents;
+
+   /** offset (in DWORDs) of this output within the interleaved structure */
+   unsigned DstOffset;
+
+   /**
+    * Offset into the output register of the data to output.  For example,
+    * if NumComponents is 2 and ComponentOffset is 1, then the data to
+    * offset is in the y and z components of the output register.
+    */
+   unsigned ComponentOffset;
+};
+
+
+/** Post-link transform feedback info. */
+struct gl_transform_feedback_info
+{
+   unsigned NumOutputs;
+
+   /**
+    * Number of transform feedback buffers in use by this program.
+    */
+   unsigned NumBuffers;
+
+   struct gl_transform_feedback_output *Outputs;
+
+   /** Transform feedback varyings used for the linking of this shader program.
+    *
+    * Use for glGetTransformFeedbackVarying().
+    */
+   struct gl_transform_feedback_varying_info *Varyings;
+   GLint NumVarying;
+
+   /**
+    * Total number of components stored in each buffer.  This may be used by
+    * hardware back-ends to determine the correct stride when interleaving
+    * multiple transform feedback outputs in the same buffer.
+    */
+   unsigned BufferStride[MAX_FEEDBACK_ATTRIBS];
+};
+
+
+/**
+ * Transform feedback object state
+ */
+struct gl_transform_feedback_object
+{
+   GLuint Name;  /**< AKA the object ID */
+   GLint RefCount;
+   GLboolean Active;  /**< Is transform feedback enabled? */
+   GLboolean Paused;  /**< Is transform feedback paused? */
+   GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
+                                at least once? */
+
+   /** The feedback buffers */
+   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+
+   /** Start of feedback data in dest buffer */
+   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
+   /** Max data to put into dest buffer (in bytes) */
+   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+};
+
+
+/**
+ * Context state for transform feedback.
+ */
+struct gl_transform_feedback_state
+{
+   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+
+   /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
+   struct gl_buffer_object *CurrentBuffer;
+
+   /** The table of all transform feedback objects */
+   struct _mesa_HashTable *Objects;
+
+   /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
+   struct gl_transform_feedback_object *CurrentObject;
+
+   /** The default xform-fb object (Name==0) */
+   struct gl_transform_feedback_object *DefaultObject;
+};
+
+
 /**
  * Names of the various vertex/fragment program register files, etc.
  *
@@ -1834,58 +1907,23 @@ enum glsl_interp_qualifier
 };
 
 
-/** Vertex and fragment instructions */
-struct prog_instruction;
-struct gl_program_parameter_list;
-struct gl_uniform_list;
-
-struct gl_transform_feedback_varying_info {
-   char *Name;
-   GLenum Type;
-   GLint Size;
+/**
+ * \brief Layout qualifiers for gl_FragDepth.
+ *
+ * Extension AMD_conservative_depth allows gl_FragDepth to be redeclared with
+ * a layout qualifier.
+ *
+ * \see enum ir_depth_layout
+ */
+enum gl_frag_depth_layout
+{
+   FRAG_DEPTH_LAYOUT_NONE, /**< No layout is specified. */
+   FRAG_DEPTH_LAYOUT_ANY,
+   FRAG_DEPTH_LAYOUT_GREATER,
+   FRAG_DEPTH_LAYOUT_LESS,
+   FRAG_DEPTH_LAYOUT_UNCHANGED
 };
 
-struct gl_transform_feedback_output {
-   unsigned OutputRegister;
-   unsigned OutputBuffer;
-   unsigned NumComponents;
-
-   /** offset (in DWORDs) of this output within the interleaved structure */
-   unsigned DstOffset;
-
-   /**
-    * Offset into the output register of the data to output.  For example,
-    * if NumComponents is 2 and ComponentOffset is 1, then the data to
-    * offset is in the y and z components of the output register.
-    */
-   unsigned ComponentOffset;
-};
-
-/** Post-link transform feedback info. */
-struct gl_transform_feedback_info {
-   unsigned NumOutputs;
-
-   /**
-    * Number of transform feedback buffers in use by this program.
-    */
-   unsigned NumBuffers;
-
-   struct gl_transform_feedback_output *Outputs;
-
-   /** Transform feedback varyings used for the linking of this shader program.
-    *
-    * Use for glGetTransformFeedbackVarying().
-    */
-   struct gl_transform_feedback_varying_info *Varyings;
-   GLint NumVarying;
-
-   /**
-    * Total number of components stored in each buffer.  This may be used by
-    * hardware back-ends to determine the correct stride when interleaving
-    * multiple transform feedback outputs in the same buffer.
-    */
-   unsigned BufferStride[MAX_FEEDBACK_ATTRIBS];
-};
 
 /**
  * Base class for any kind of program object
@@ -2128,57 +2166,6 @@ struct gl_ati_fragment_shader_state
 };
 
 
-/**
- * Occlusion/timer query object.
- */
-struct gl_query_object
-{
-   GLenum Target;      /**< The query target, when active */
-   GLuint Id;          /**< hash table ID/name */
-   GLuint64EXT Result; /**< the counter */
-   GLboolean Active;   /**< inside Begin/EndQuery */
-   GLboolean Ready;    /**< result is ready? */
-};
-
-
-/**
- * Context state for query objects.
- */
-struct gl_query_state
-{
-   struct _mesa_HashTable *QueryObjects;
-   struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
-   struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
-
-   /** GL_NV_conditional_render */
-   struct gl_query_object *CondRenderQuery;
-
-   /** GL_EXT_transform_feedback */
-   struct gl_query_object *PrimitivesGenerated;
-   struct gl_query_object *PrimitivesWritten;
-
-   /** GL_ARB_timer_query */
-   struct gl_query_object *TimeElapsed;
-
-   GLenum CondRenderMode;
-};
-
-
-/** Sync object state */
-struct gl_sync_object {
-   struct simple_node link;
-   GLenum Type;               /**< GL_SYNC_FENCE */
-   GLuint Name;               /**< Fence name */
-   GLint RefCount;            /**< Reference count */
-   GLboolean DeletePending;   /**< Object was deleted while there were still
-			       * live references (e.g., sync not yet finished)
-			       */
-   GLenum SyncCondition;
-   GLbitfield Flags;          /**< Flags passed to glFenceSync */
-   GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
-};
-
-
 /** Set by #pragma directives */
 struct gl_sl_pragmas
 {
@@ -2232,6 +2219,19 @@ struct gl_shader
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
 };
+
+
+/**
+ * Shader stages. Note that these will become 5 with tessellation.
+ * These MUST have the same values as gallium's PIPE_SHADER_*
+ */
+typedef enum
+{
+   MESA_SHADER_VERTEX = 0,
+   MESA_SHADER_FRAGMENT = 1,
+   MESA_SHADER_GEOMETRY = 2,
+   MESA_SHADER_TYPES = 3
+} gl_shader_type;
 
 
 /**
@@ -2392,6 +2392,7 @@ struct gl_shader_state
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
+
 /**
  * Compiler options for a single GLSL shaders type
  */
@@ -2424,49 +2425,57 @@ struct gl_shader_compiler_options
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
 
+
 /**
- * Transform feedback object state
+ * Occlusion/timer query object.
  */
-struct gl_transform_feedback_object
+struct gl_query_object
 {
-   GLuint Name;  /**< AKA the object ID */
-   GLint RefCount;
-   GLboolean Active;  /**< Is transform feedback enabled? */
-   GLboolean Paused;  /**< Is transform feedback paused? */
-   GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
-                                at least once? */
-
-   /** The feedback buffers */
-   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
-   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
-
-   /** Start of feedback data in dest buffer */
-   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
-   /** Max data to put into dest buffer (in bytes) */
-   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+   GLenum Target;      /**< The query target, when active */
+   GLuint Id;          /**< hash table ID/name */
+   GLuint64EXT Result; /**< the counter */
+   GLboolean Active;   /**< inside Begin/EndQuery */
+   GLboolean Ready;    /**< result is ready? */
 };
 
 
 /**
- * Context state for transform feedback.
+ * Context state for query objects.
  */
-struct gl_transform_feedback
+struct gl_query_state
 {
-   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+   struct _mesa_HashTable *QueryObjects;
+   struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
+   struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
 
-   /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
-   struct gl_buffer_object *CurrentBuffer;
+   /** GL_NV_conditional_render */
+   struct gl_query_object *CondRenderQuery;
 
-   /** The table of all transform feedback objects */
-   struct _mesa_HashTable *Objects;
+   /** GL_EXT_transform_feedback */
+   struct gl_query_object *PrimitivesGenerated;
+   struct gl_query_object *PrimitivesWritten;
 
-   /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
-   struct gl_transform_feedback_object *CurrentObject;
+   /** GL_ARB_timer_query */
+   struct gl_query_object *TimeElapsed;
 
-   /** The default xform-fb object (Name==0) */
-   struct gl_transform_feedback_object *DefaultObject;
+   GLenum CondRenderMode;
 };
 
+
+/** Sync object state */
+struct gl_sync_object
+{
+   struct simple_node link;
+   GLenum Type;               /**< GL_SYNC_FENCE */
+   GLuint Name;               /**< Fence name */
+   GLint RefCount;            /**< Reference count */
+   GLboolean DeletePending;   /**< Object was deleted while there were still
+			       * live references (e.g., sync not yet finished)
+			       */
+   GLenum SyncCondition;
+   GLbitfield Flags;          /**< Flags passed to glFenceSync */
+   GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
+};
 
 
 /**
@@ -3337,7 +3346,7 @@ struct gl_context
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
 
-   struct gl_transform_feedback TransformFeedback;
+   struct gl_transform_feedback_state TransformFeedback;
 
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
