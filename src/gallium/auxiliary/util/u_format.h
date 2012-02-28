@@ -578,8 +578,9 @@ boolean
 util_format_is_pure_uint(enum pipe_format format);
 
 /**
- * Whether the src format can be blitted to destation format with a simple
- * memcpy.
+ * Check if the src format can be blitted to the destination format with
+ * a simple memcpy.  For example, blitting from RGBA to RGBx is OK, but not
+ * the reverse.
  */
 boolean
 util_is_format_compatible(const struct util_format_description *src_desc,
