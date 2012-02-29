@@ -265,9 +265,9 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    default:
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
-   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer++, surf->video_buffer,
+   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer,
                                   RectToPipe(video_source_rect, &src_rect), NULL, deinterlace);
-   vl_compositor_set_dst_area(&vmixer->cstate, RectToPipe(destination_video_rect, &dst_rect));
+   vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &dst_rect));
    vl_compositor_set_dst_clip(&vmixer->cstate, RectToPipe(destination_rect, &dst_clip));
    vl_compositor_render(&vmixer->cstate, compositor, dst->surface, &dst->dirty_area);
 

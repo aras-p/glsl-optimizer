@@ -432,7 +432,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    // Workaround for r600g, there seems to be a bug in the fence refcounting code
    pipe->screen->fence_reference(pipe->screen, &surface_priv->fence, NULL);
 
-   vl_compositor_set_dst_area(cstate, &dst_rect);
+   vl_compositor_set_layer_dst_area(cstate, 0, &dst_rect);
+   vl_compositor_set_layer_dst_area(cstate, 1, &dst_rect);
    vl_compositor_render(cstate, compositor, surf, dirty_area);
 
    pipe->flush(pipe, &surface_priv->fence);

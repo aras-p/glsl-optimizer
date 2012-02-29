@@ -56,6 +56,9 @@ struct vl_compositor_layer
 {
    bool clearing;
 
+   bool viewport_valid;
+   struct pipe_viewport_state viewport;
+
    void *fs;
    void *samplers[3];
    void *blend;
@@ -72,8 +75,7 @@ struct vl_compositor_state
 {
    struct pipe_context *pipe;
 
-   bool viewport_valid, scissor_valid;
-   struct pipe_viewport_state viewport;
+   bool scissor_valid;
    struct pipe_scissor_state scissor;
    struct pipe_resource *csc_matrix;
 
@@ -145,12 +147,6 @@ void
 vl_compositor_get_clear_color(struct vl_compositor_state *settings, union pipe_color_union *color);
 
 /**
- * set the destination area
- */
-void
-vl_compositor_set_dst_area(struct vl_compositor_state *settings, struct u_rect *dst_area);
-
-/**
  * set the destination clipping
  */
 void
@@ -173,6 +169,13 @@ vl_compositor_clear_layers(struct vl_compositor_state *state);
 void
 vl_compositor_set_layer_blend(struct vl_compositor_state *state,
                               unsigned layer, void *blend, bool is_clearing);
+
+/**
+ * set the layer destination area
+ */
+void
+vl_compositor_set_layer_dst_area(struct vl_compositor_state *settings,
+                                 unsigned layer, struct u_rect *dst_area);
 
 /**
  * set a video buffer as a layer to render
