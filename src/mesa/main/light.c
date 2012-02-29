@@ -1003,23 +1003,23 @@ _mesa_validate_all_lighting_tables( struct gl_context *ctx )
 void
 _mesa_update_lighting( struct gl_context *ctx )
 {
+   GLbitfield flags = 0;
    struct gl_light *light;
    ctx->Light._NeedEyeCoords = GL_FALSE;
-   ctx->Light._Flags = 0;
 
    if (!ctx->Light.Enabled)
       return;
 
    foreach(light, &ctx->Light.EnabledList) {
-      ctx->Light._Flags |= light->_Flags;
+      flags |= light->_Flags;
    }
 
    ctx->Light._NeedVertices =
-      ((ctx->Light._Flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
+      ((flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
        ctx->Light.Model.LocalViewer);
 
-   ctx->Light._NeedEyeCoords = ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
+   ctx->Light._NeedEyeCoords = ((flags & LIGHT_POSITIONAL) ||
 				ctx->Light.Model.LocalViewer);
 
    /* XXX: This test is overkill & needs to be fixed both for software and

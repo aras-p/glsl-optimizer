@@ -966,7 +966,6 @@ struct gl_light_attrib
    /*@{*/
    GLboolean _NeedEyeCoords;		
    GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLbitfield _Flags;		        /**< LIGHT_* flags, see above */
    GLfloat _BaseColor[2][3];
    /*@}*/
 };

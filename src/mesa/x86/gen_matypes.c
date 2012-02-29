@@ -103,7 +103,6 @@ int main( int argc, char **argv )
    OFFSET( "CTX_LIGHT_COLOR_MAT_ENABLED ", struct gl_context, Light.ColorMaterialEnabled );
    OFFSET( "CTX_LIGHT_ENABLED_LIST      ", struct gl_context, Light.EnabledList );
    OFFSET( "CTX_LIGHT_NEED_VERTS        ", struct gl_context, Light._NeedVertices );
-   OFFSET( "CTX_LIGHT_FLAGS             ", struct gl_context, Light._Flags );
    OFFSET( "CTX_LIGHT_BASE_COLOR        ", struct gl_context, Light._BaseColor );
 
 
