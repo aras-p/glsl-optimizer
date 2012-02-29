@@ -870,10 +870,22 @@ generate_ARB_draw_instanced_variables(exec_list *instructions,
    /* gl_InstanceIDARB is only available in the vertex shader.
     */
    if (target == vertex_shader) {
-      ir_variable *const inst =
+      ir_variable *inst =
          add_variable(instructions, state->symbols,
 		      "gl_InstanceIDARB", glsl_type::int_type,
 		      ir_var_system_value, SYSTEM_VALUE_INSTANCE_ID);
+
+      if (warn)
+         inst->warn_extension = "GL_ARB_draw_instanced";
+
+      /* Originally ARB_draw_instanced only specified that ARB decorated name.
+       * Since no vendor actually implemented that behavior and some apps use
+       * the undecorated name, the extension now specifies that both names are
+       * available.
+       */
+      inst = add_variable(instructions, state->symbols,
+			  "gl_InstanceID", glsl_type::int_type,
+			  ir_var_system_value, SYSTEM_VALUE_INSTANCE_ID);
 
       if (warn)
          inst->warn_extension = "GL_ARB_draw_instanced";
