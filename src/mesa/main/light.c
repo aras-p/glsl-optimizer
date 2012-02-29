@@ -1052,9 +1052,6 @@ compute_light_positions( struct gl_context *ctx )
       TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelviewMatrixStack.Top->m );
    }
 
-   /* Make sure all the light tables are updated before the computation */
-   _mesa_validate_all_lighting_tables(ctx);
-
    foreach (light, &ctx->Light.EnabledList) {
 
       if (ctx->_NeedEyeCoords) {
