@@ -87,8 +87,8 @@ update_tss_binding(struct svga_context *svga,
       /* get min max lod */
       if (sv) {
          min_lod = MAX2(0, (s->view_min_lod + sv->u.tex.first_level));
-         max_lod = MIN2(s->view_max_lod, sv->texture->last_level);
-         max_lod += sv->u.tex.first_level;
+         max_lod = MIN2(s->view_max_lod + sv->u.tex.first_level,
+                        sv->texture->last_level);
          texture = sv->texture;
       } else {
          min_lod = 0;
