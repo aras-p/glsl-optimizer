@@ -52,8 +52,6 @@ enum VS_OUTPUT
    VS_O_VBOTTOM,
 };
 
-typedef float csc_matrix[16];
-
 static void *
 create_vert_shader(struct vl_compositor *c)
 {
@@ -804,7 +802,7 @@ vl_compositor_cleanup(struct vl_compositor *c)
 }
 
 void
-vl_compositor_set_csc_matrix(struct vl_compositor_state *s, const float matrix[16])
+vl_compositor_set_csc_matrix(struct vl_compositor_state *s, vl_csc_matrix const *matrix)
 {
    struct pipe_transfer *buf_transfer;
 
@@ -816,7 +814,7 @@ vl_compositor_set_csc_matrix(struct vl_compositor_state *s, const float matrix[1
                       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
                       &buf_transfer),
       matrix,
-      sizeof(csc_matrix)
+      sizeof(vl_csc_matrix)
    );
 
    pipe_buffer_unmap(s->pipe, buf_transfer);
@@ -1052,7 +1050,7 @@ vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
 bool
 vl_compositor_init_state(struct vl_compositor_state *s, struct pipe_context *pipe)
 {
-   csc_matrix csc_matrix;
+   vl_csc_matrix csc_matrix;
 
    assert(s);
 
@@ -1078,8 +1076,8 @@ vl_compositor_init_state(struct vl_compositor_state *s, struct pipe_context *pip
 
    vl_compositor_clear_layers(s);
 
-   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, csc_matrix);
-   vl_compositor_set_csc_matrix(s, csc_matrix);
+   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_IDENTITY, NULL, true, &csc_matrix);
+   vl_compositor_set_csc_matrix(s, (const vl_csc_matrix *)&csc_matrix);
 
    return true;
 }

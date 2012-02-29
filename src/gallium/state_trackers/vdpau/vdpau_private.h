@@ -38,7 +38,9 @@
 
 #include "util/u_debug.h"
 #include "util/u_rect.h"
+
 #include "vl/vl_compositor.h"
+#include "vl/vl_csc.h"
 #include "vl/vl_matrix_filter.h"
 #include "vl/vl_median_filter.h"
 
@@ -322,9 +324,11 @@ typedef struct
 
    unsigned video_width, video_height;
    enum pipe_video_chroma_format chroma_format;
-   unsigned max_layers, skip_chroma_deint, custom_csc;
+   unsigned max_layers, skip_chroma_deint;
    float luma_key_min, luma_key_max;
-   float csc[16];
+
+   bool custom_csc;
+   vl_csc_matrix csc;
 } vlVdpVideoMixer;
 
 typedef struct

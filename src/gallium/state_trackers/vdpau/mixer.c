@@ -64,9 +64,9 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vmixer->device = dev;
    vl_compositor_init_state(&vmixer->cstate, dev->context);
 
-   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, vmixer->csc);
+   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, &vmixer->csc);
    if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
-      vl_compositor_set_csc_matrix(&vmixer->cstate, vmixer->csc);
+      vl_compositor_set_csc_matrix(&vmixer->cstate, (const vl_csc_matrix *)&vmixer->csc);
 
    *mixer = vlAddDataHTAB(vmixer);
    if (*mixer == 0) {
@@ -553,11 +553,11 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          vdp_csc = attribute_values[i];
          vmixer->custom_csc = !!vdp_csc;
          if (!vdp_csc)
-            vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, 1, vmixer->csc);
+            vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, 1, &vmixer->csc);
          else
-            memcpy(vmixer->csc, vdp_csc, sizeof(float)*12);
+            memcpy(vmixer->csc, vdp_csc, sizeof(vl_csc_matrix));
          if (!debug_get_bool_option("G3DVL_NO_CSC", FALSE))
-            vl_compositor_set_csc_matrix(&vmixer->cstate, vmixer->csc);
+            vl_compositor_set_csc_matrix(&vmixer->cstate, (const vl_csc_matrix *)&vmixer->csc);
          break;
 
       case VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL:
@@ -709,7 +709,6 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
                        VdpColorStandard standard,
                        VdpCSCMatrix *csc_matrix)
 {
-   float matrix[16];
    enum VL_CSC_COLOR_STANDARD vl_std;
    struct vl_procamp camp;
 
@@ -729,7 +728,6 @@ vlVdpGenerateCSCMatrix(VdpProcamp *procamp,
    camp.contrast = procamp->contrast;
    camp.saturation = procamp->saturation;
    camp.hue = procamp->hue;
-   vl_csc_get_matrix(vl_std, &camp, 1, matrix);
-   memcpy(csc_matrix, matrix, sizeof(float)*12);
+   vl_csc_get_matrix(vl_std, &camp, true, csc_matrix);
    return VDP_STATUS_OK;
 }

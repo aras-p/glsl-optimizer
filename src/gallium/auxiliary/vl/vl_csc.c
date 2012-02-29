@@ -100,12 +100,11 @@
  * Y is in [16,235], Cb and Cr are in [16,240]
  * R, G, and B are in [16,235]
  */
-static const float bt_601[16] =
+static const vl_csc_matrix bt_601 =
 {
-   1.0f,  0.0f,    1.371f, 0.0f,
-   1.0f, -0.336f, -0.698f, 0.0f,
-   1.0f,  1.732f,  0.0f,   0.0f,
-   0.0f,  0.0f,    0.0f,   1.0f
+   { 1.0f,  0.0f,    1.371f, 0.0f, },
+   { 1.0f, -0.336f, -0.698f, 0.0f, },
+   { 1.0f,  1.732f,  0.0f,   0.0f, }
 };
 
 /*
@@ -113,12 +112,11 @@ static const float bt_601[16] =
  * Y is in [16,235], Cb and Cr are in [16,240]
  * R, G, and B are in [0,255]
  */
-static const float bt_601_full[16] =
+static const vl_csc_matrix bt_601_full =
 {
-   1.164f,  0.0f,    1.596f, 0.0f,
-   1.164f, -0.391f, -0.813f, 0.0f,
-   1.164f,  2.018f,  0.0f,   0.0f,
-   0.0f,    0.0f,    0.0f,   1.0f
+   { 1.164f,  0.0f,    1.596f, 0.0f, },
+   { 1.164f, -0.391f, -0.813f, 0.0f, },
+   { 1.164f,  2.018f,  0.0f,   0.0f, }
 };
 
 /*
@@ -126,12 +124,11 @@ static const float bt_601_full[16] =
  * Y is in [16,235], Cb and Cr are in [16,240]
  * R, G, and B are in [16,235]
  */
-static const float bt_709[16] =
+static const vl_csc_matrix bt_709 =
 {
-   1.0f,  0.0f,    1.540f, 0.0f,
-   1.0f, -0.183f, -0.459f, 0.0f,
-   1.0f,  1.816f,  0.0f,   0.0f,
-   0.0f,  0.0f,    0.0f,   1.0f
+   { 1.0f,  0.0f,    1.540f, 0.0f, },
+   { 1.0f, -0.183f, -0.459f, 0.0f, },
+   { 1.0f,  1.816f,  0.0f,   0.0f, }
 };
 
 /*
@@ -139,36 +136,32 @@ static const float bt_709[16] =
  * Y is in [16,235], Cb and Cr are in [16,240]
  * R, G, and B are in [0,255]
  */
-static const float bt_709_full[16] =
+static const vl_csc_matrix bt_709_full =
 {
-   1.164f,  0.0f,    1.793f, 0.0f,
-   1.164f, -0.213f, -0.534f, 0.0f,
-   1.164f,  2.115f,  0.0f,   0.0f,
-   0.0f,    0.0f,    0.0f,   1.0f
+   { 1.164f,  0.0f,    1.793f, 0.0f, },
+   { 1.164f, -0.213f, -0.534f, 0.0f, },
+   { 1.164f,  2.115f,  0.0f,   0.0f, }
 };
 
-static const float smpte240m[16] =
+static const vl_csc_matrix smpte240m =
 {
-   1.0f,  0.0f,    1.582f, 0.0f,
-   1.0f, -0.228f, -0.478f, 0.0f,
-   1.0f,  1.833f,  0.0f,   0.0f,
-   0.0f,  0.0f,    0.0f,   1.0f
+   { 1.0f,  0.0f,    1.582f, 0.0f, },
+   { 1.0f, -0.228f, -0.478f, 0.0f, },
+   { 1.0f,  1.833f,  0.0f,   0.0f, }
 };
 
-static const float smpte240m_full[16] =
+static const vl_csc_matrix smpte240m_full =
 {
-   1.164f,  0.0f,    1.794f, 0.0f,
-   1.164f, -0.258f, -0.543f, 0.0f,
-   1.164f,  2.079f,  0.0f,   0.0f,
-   0.0f,    0.0f,    0.0f,   1.0f
+   { 1.164f,  0.0f,    1.794f, 0.0f, },
+   { 1.164f, -0.258f, -0.543f, 0.0f, },
+   { 1.164f,  2.079f,  0.0f,   0.0f, }
 };
 
-static const float identity[16] =
+static const vl_csc_matrix identity =
 {
-   1.0f, 0.0f, 0.0f, 0.0f,
-   0.0f, 1.0f, 0.0f, 0.0f,
-   0.0f, 0.0f, 1.0f, 0.0f,
-   0.0f, 0.0f, 0.0f, 1.0f
+   { 1.0f, 0.0f, 0.0f, 0.0f, },
+   { 0.0f, 1.0f, 0.0f, 0.0f, },
+   { 0.0f, 0.0f, 1.0f, 0.0f, }
 };
 
 const struct vl_procamp vl_default_procamp = {
@@ -181,7 +174,7 @@ const struct vl_procamp vl_default_procamp = {
 void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
                        struct vl_procamp *procamp,
                        bool full_range,
-                       float *matrix)
+                       vl_csc_matrix *matrix)
 {
    float ybias = full_range ? -16.0f/255.0f : 0.0f;
    float cbbias = -128.0f/255.0f;
@@ -193,44 +186,45 @@ void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
    float b = p->brightness;
    float h = p->hue;
 
-   const float *cstd;
+   const vl_csc_matrix *cstd;
 
    assert(matrix);
 
    switch (cs) {
       case VL_CSC_COLOR_STANDARD_BT_601:
-         cstd = full_range ? &bt_601_full[0] : &bt_601[0];
+         cstd = full_range ? &bt_601_full : &bt_601;
          break;
       case VL_CSC_COLOR_STANDARD_BT_709:
-         cstd = full_range ? &bt_709_full[0] : &bt_709[0];
+         cstd = full_range ? &bt_709_full : &bt_709;
          break;
       case VL_CSC_COLOR_STANDARD_SMPTE_240M:
-         cstd = full_range ? &smpte240m_full[0] : &smpte240m[0];
+         cstd = full_range ? &smpte240m_full : &smpte240m;
          break;
       case VL_CSC_COLOR_STANDARD_IDENTITY:
       default:
          assert(cs == VL_CSC_COLOR_STANDARD_IDENTITY);
-         memcpy(matrix, &identity[0], sizeof(float) * 16);
+         memcpy(matrix, identity, sizeof(vl_csc_matrix));
          return;
    }
 
-   matrix[ 0] = c*cstd[ 0];
-   matrix[ 1] = c*cstd[ 1]*s*cosf(h) - c*cstd[ 2]*s*sinf(h);
-   matrix[ 2] = c*cstd[ 2]*s*cosf(h) + c*cstd[ 1]*s*sinf(h);
-   matrix[ 3] = cstd[ 3] + cstd[ 0]*(b + c*ybias) + cstd[ 1]*(c*cbbias*s*cosf(h) + c*crbias*s*sinf(h)) + cstd[ 2]*(c*crbias*s*cosf(h) - c*cbbias*s*sinf(h));
+   (*matrix)[0][0] = c * (*cstd)[0][0];
+   (*matrix)[0][1] = c * (*cstd)[0][1] * s * cosf(h) - c * (*cstd)[0][2] * s * sinf(h);
+   (*matrix)[0][2] = c * (*cstd)[0][2] * s * cosf(h) + c * (*cstd)[0][1] * s * sinf(h);
+   (*matrix)[0][3] = (*cstd)[0][3] + (*cstd)[0][0] * (b + c * ybias) +
+                     (*cstd)[0][1] * (c * cbbias * s * cosf(h) + c * crbias * s * sinf(h)) +
+                     (*cstd)[0][2] * (c * crbias * s * cosf(h) - c * cbbias * s * sinf(h));
 
-   matrix[ 4] = c*cstd[ 4];
-   matrix[ 5] = c*cstd[ 5]*s*cosf(h) - c*cstd[ 6]*s*sinf(h);
-   matrix[ 6] = c*cstd[ 6]*s*cosf(h) + c*cstd[ 5]*s*sinf(h);
-   matrix[ 7] = cstd[ 7] + cstd[ 4]*(b + c*ybias) + cstd[ 5]*(c*cbbias*s*cosf(h) + c*crbias*s*sinf(h)) + cstd[ 6]*(c*crbias*s*cosf(h) - c*cbbias*s*sinf(h));
+   (*matrix)[1][0] = c * (*cstd)[1][0];
+   (*matrix)[1][1] = c * (*cstd)[1][1] * s * cosf(h) - c * (*cstd)[1][2] * s * sinf(h);
+   (*matrix)[1][2] = c * (*cstd)[1][2] * s * cosf(h) + c * (*cstd)[1][1] * s * sinf(h);
+   (*matrix)[1][3] = (*cstd)[1][3] + (*cstd)[1][0] * (b + c * ybias) +
+                     (*cstd)[1][1] * (c * cbbias * s * cosf(h) + c * crbias * s * sinf(h)) +
+                     (*cstd)[1][2] * (c * crbias * s * cosf(h) - c * cbbias * s * sinf(h));
 
-   matrix[ 8] = c*cstd[ 8];
-   matrix[ 9] = c*cstd[ 9]*s*cosf(h) - c*cstd[10]*s*sinf(h);
-   matrix[10] = c*cstd[10]*s*cosf(h) + c*cstd[ 9]*s*sinf(h);
-   matrix[11] = cstd[11] + cstd[ 8]*(b + c*ybias) + cstd[ 9]*(c*cbbias*s*cosf(h) + c*crbias*s*sinf(h)) + cstd[10]*(c*crbias*s*cosf(h) - c*cbbias*s*sinf(h));
-
-   matrix[12] = c*cstd[12];
-   matrix[13] = c*cstd[13]*s*cos(h) - c*cstd[14]*s*sin(h);
-   matrix[14] = c*cstd[14]*s*cos(h) + c*cstd[13]*s*sin(h);
-   matrix[15] = cstd[15] + cstd[12]*(b + c*ybias) + cstd[13]*(c*cbbias*s*cos(h) + c*crbias*s*sin(h)) + cstd[14]*(c*crbias*s*cos(h) - c*cbbias*s*sin(h));
+   (*matrix)[2][0] = c * (*cstd)[2][0];
+   (*matrix)[2][1] = c * (*cstd)[2][1] * s * cosf(h) - c * (*cstd)[2][2] * s * sinf(h);
+   (*matrix)[2][2] = c * (*cstd)[2][2] * s * cosf(h) + c * (*cstd)[2][1] * s * sinf(h);
+   (*matrix)[2][3] = (*cstd)[2][3] + (*cstd)[2][0] * (b + c * ybias) +
+                     (*cstd)[2][1] * (c * cbbias * s * cosf(h) + c * crbias * s * sinf(h)) +
+                     (*cstd)[2][2] * (c * crbias * s * cosf(h) - c * cbbias * s * sinf(h));
 }

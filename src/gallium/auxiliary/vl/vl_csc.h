@@ -30,6 +30,8 @@
 
 #include "pipe/p_compiler.h"
 
+typedef float vl_csc_matrix[3][4];
+
 struct vl_procamp
 {
    float brightness;
@@ -51,6 +53,6 @@ extern const struct vl_procamp vl_default_procamp;
 void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
                        struct vl_procamp *procamp,
                        bool full_range,
-                       float *matrix);
+                       vl_csc_matrix *matrix);
 
 #endif /* vl_csc_h */
