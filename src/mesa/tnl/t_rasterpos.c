@@ -123,8 +123,6 @@ shade_rastpos(struct gl_context *ctx,
    const struct gl_light *light;
    GLfloat diffuseColor[4], specularColor[4];  /* for RGB mode only */
 
-   _mesa_validate_all_lighting_tables( ctx );
-
    COPY_3V(diffuseColor, base[0]);
    diffuseColor[3] = CLAMP( 
       ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3], 0.0F, 1.0F );
