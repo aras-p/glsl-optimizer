@@ -659,7 +659,6 @@ struct gl_light
    GLfloat SpotDirection[4];	/**< spotlight direction in eye coordinates */
    GLfloat SpotExponent;
    GLfloat SpotCutoff;		/**< in degrees */
-   GLfloat _CosCutoffNeg;	/**< = cos(SpotCutoff) */
    GLfloat _CosCutoff;		/**< = MAX(0, cos(SpotCutoff)) */
    GLfloat ConstantAttenuation;
    GLfloat LinearAttenuation;

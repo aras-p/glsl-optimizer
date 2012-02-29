@@ -161,11 +161,9 @@ _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *pa
          return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->SpotCutoff = params[0];
-      light->_CosCutoffNeg = (GLfloat) (cos(light->SpotCutoff * DEG2RAD));
-      if (light->_CosCutoffNeg < 0)
+      light->_CosCutoff = (GLfloat) (cos(light->SpotCutoff * DEG2RAD));
+      if (light->_CosCutoff < 0)
          light->_CosCutoff = 0;
-      else
-         light->_CosCutoff = light->_CosCutoffNeg;
       if (light->SpotCutoff != 180.0F)
          light->_Flags |= LIGHT_SPOT;
       else
@@ -1260,7 +1258,6 @@ init_light( struct gl_light *l, GLuint n )
    ASSIGN_3V( l->SpotDirection, 0.0, 0.0, -1.0 );
    l->SpotExponent = 0.0;
    l->SpotCutoff = 180.0;
-   l->_CosCutoffNeg = -1.0f;
    l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
    l->ConstantAttenuation = 1.0;
    l->LinearAttenuation = 0.0;
