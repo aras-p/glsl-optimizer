@@ -401,6 +401,38 @@ static unsigned r600_tex_from_byte_stream(struct r600_shader_ctx *ctx,
 	return bytes_read;
 }
 
+static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
+	unsigned char * bytes, unsigned bytes_read)
+{
+	struct r600_bytecode_vtx vtx;
+	memset(&vtx, 0, sizeof(vtx));
+	vtx.inst = bytes[bytes_read++];
+	vtx.fetch_type = bytes[bytes_read++];
+	vtx.buffer_id = bytes[bytes_read++];
+	vtx.src_gpr = bytes[bytes_read++];
+	vtx.src_sel_x = bytes[bytes_read++];
+	vtx.mega_fetch_count = bytes[bytes_read++];
+	vtx.dst_gpr = bytes[bytes_read++];
+	vtx.dst_sel_x = bytes[bytes_read++];
+	vtx.dst_sel_y = bytes[bytes_read++];
+	vtx.dst_sel_z = bytes[bytes_read++];
+	vtx.dst_sel_w = bytes[bytes_read++];
+	vtx.use_const_fields = bytes[bytes_read++];
+	vtx.data_format = bytes[bytes_read++];
+	vtx.num_format_all = bytes[bytes_read++];
+	vtx.format_comp_all = bytes[bytes_read++];
+	vtx.srf_mode_all = bytes[bytes_read++];
+	vtx.offset = bytes[bytes_read++];
+	vtx.endian = bytes[bytes_read++];
+
+	if (r600_bytecode_add_vtx(ctx->bc, &vtx)) {
+		fprintf(stderr, "Error adding vtx\n");
+	}
+	/* Use the Texture Cache */
+	ctx->bc->cf_last->inst = EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX;
+	return bytes_read;
+}
+
 static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes,	unsigned num_bytes)
 {
@@ -429,6 +461,11 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 					(bytes[bytes_read++] << (byte * 8));
 				}
 			}
+			break;
+
+		case 4:
+			bytes_read = r600_vtx_from_byte_stream(ctx, bytes,
+								bytes_read);
 			break;
 		default:
 			/* XXX: Error here */
