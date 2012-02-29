@@ -214,7 +214,11 @@ shade_rastpos(struct gl_context *ctx,
 	 n_dot_h = DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
-	    GLfloat spec_coef = _mesa_lookup_shininess(ctx, 0, n_dot_h);
+	    GLfloat shine;
+	    GLfloat spec_coef;
+
+	    shine = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS][0];
+	    spec_coef = powf(n_dot_h, shine);
 
 	    if (spec_coef > 1.0e-10) {
                if (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
