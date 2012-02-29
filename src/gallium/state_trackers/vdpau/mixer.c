@@ -207,9 +207,9 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 uint32_t layer_count,
                                 VdpLayer const *layers)
 {
-   struct u_rect src_rect, dst_rect, dst_clip;
    enum vl_compositor_deinterlace deinterlace;
-   unsigned layer = 0;
+   struct u_rect rect, clip;
+   unsigned i, layer = 0;
 
    vlVdpVideoMixer *vmixer;
    vlVdpSurface *surf;
@@ -249,7 +249,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       if (!bg)
          return VDP_STATUS_INVALID_HANDLE;
       vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
-                                   RectToPipe(background_source_rect, &src_rect), NULL, NULL);
+                                   RectToPipe(background_source_rect, &rect), NULL, NULL);
    }
 
    vl_compositor_clear_layers(&vmixer->cstate);
@@ -271,9 +271,24 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
    vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer,
-                                  RectToPipe(video_source_rect, &src_rect), NULL, deinterlace);
-   vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &dst_rect));
-   vl_compositor_set_dst_clip(&vmixer->cstate, RectToPipe(destination_rect, &dst_clip));
+                                  RectToPipe(video_source_rect, &rect), NULL, deinterlace);
+   vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &rect));
+
+   for (i = 0; i < layer_count; ++i) {
+      vlVdpOutputSurface *src = vlGetDataHTAB(layers->source_surface);
+      if (!src)
+         return VDP_STATUS_INVALID_HANDLE;
+
+      assert(layers->struct_version == VDP_LAYER_VERSION);
+
+      vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer, src->sampler_view,
+                                   RectToPipe(layers->source_rect, &rect), NULL, NULL);
+      vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(layers->destination_rect, &rect));
+
+      ++layers;
+   }
+
+   vl_compositor_set_dst_clip(&vmixer->cstate, RectToPipe(destination_rect, &clip));
    if (!vmixer->noise_reduction.filter && !vmixer->sharpness.filter)
       vlVdpSave4DelayedRendering(vmixer->device, destination_surface, &vmixer->cstate);
    else {
