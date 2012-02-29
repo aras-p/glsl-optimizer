@@ -87,32 +87,10 @@ extern void
 _mesa_light(struct gl_context *ctx, GLuint lnum, GLenum pname, const GLfloat *params);
 
 
-/*
- * Compute dp ^ SpecularExponent.
- * Lerp between adjacent values in the f(x) lookup table, giving a
- * continuous function, with adequate overall accuracy.  (Though still
- * pretty good compared to a straight lookup).
- */
-static inline GLfloat
-_mesa_lookup_shininess(const struct gl_context *ctx, GLuint face, GLfloat dp)
-{
-   const struct gl_shine_tab *tab = ctx->_ShineTable[face];
-   float f = dp * (SHINE_TABLE_SIZE - 1);
-   int k = (int) f;
-   if (k < 0 /* gcc may cast an overflow float value to negative int value */
-	|| k > SHINE_TABLE_SIZE - 2)
-      return powf(dp, tab->shininess);
-   else
-      return tab->tab[k] + (f - k) * (tab->tab[k+1] - tab->tab[k]);
-}
-
-
 extern GLuint _mesa_material_bitmask( struct gl_context *ctx,
                                       GLenum face, GLenum pname,
                                       GLuint legal,
                                       const char * );
-
-extern void _mesa_validate_all_lighting_tables( struct gl_context *ctx );
 
 extern void _mesa_update_lighting( struct gl_context *ctx );
 
@@ -132,7 +110,6 @@ extern void _mesa_allow_light_in_model( struct gl_context *ctx, GLboolean flag )
 
 #else
 #define _mesa_update_color_material( c, r ) ((void)0)
-#define _mesa_validate_all_lighting_tables( c ) ((void)0)
 #define _mesa_material_bitmask( c, f, p, l, s ) 0
 #define _mesa_init_lighting( c ) ((void)0)
 #define _mesa_free_lighting_data( c ) ((void)0)

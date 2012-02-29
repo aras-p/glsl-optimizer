@@ -861,112 +861,6 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
 
 
 
-/**********************************************************************/
-/*****                  Lighting computation                      *****/
-/**********************************************************************/
-
-
-/*
- * Notes:
- *   When two-sided lighting is enabled we compute the color (or index)
- *   for both the front and back side of the primitive.  Then, when the
- *   orientation of the facet is later learned, we can determine which
- *   color (or index) to use for rendering.
- *
- *   KW: We now know orientation in advance and only shade for
- *       the side or sides which are actually required.
- *
- * Variables:
- *   n = normal vector
- *   V = vertex position
- *   P = light source position
- *   Pe = (0,0,0,1)
- *
- * Precomputed:
- *   IF P[3]==0 THEN
- *       // light at infinity
- *       IF local_viewer THEN
- *           _VP_inf_norm = unit vector from V to P      // Precompute
- *       ELSE
- *           // eye at infinity
- *           _h_inf_norm = Normalize( VP + <0,0,1> )     // Precompute
- *       ENDIF
- *   ENDIF
- *
- * Functions:
- *   Normalize( v ) = normalized vector v
- *   Magnitude( v ) = length of vector v
- */
-
-
-
-static void
-validate_shine_table( struct gl_context *ctx, GLuint side, GLfloat shininess )
-{
-   struct gl_shine_tab *list = ctx->_ShineTabList;
-   struct gl_shine_tab *s;
-
-   ASSERT(side < 2);
-
-   foreach(s, list)
-      if ( s->shininess == shininess )
-	 break;
-
-   if (s == list) {
-      GLint j;
-      GLfloat *m;
-
-      foreach(s, list)
-	 if (s->refcount == 0)
-	    break;
-
-      m = s->tab;
-      m[0] = 0.0;
-      if (shininess == 0.0) {
-	 for (j = 1 ; j <= SHINE_TABLE_SIZE ; j++)
-	    m[j] = 1.0;
-      }
-      else {
-	 for (j = 1 ; j < SHINE_TABLE_SIZE ; j++) {
-            GLdouble t, x = j / (GLfloat) (SHINE_TABLE_SIZE - 1);
-            if (x < 0.005) /* underflow check */
-               x = 0.005;
-            t = pow(x, shininess);
-	    if (t > 1e-20)
-	       m[j] = (GLfloat) t;
-	    else
-	       m[j] = 0.0;
-	 }
-	 m[SHINE_TABLE_SIZE] = 1.0;
-      }
-
-      s->shininess = shininess;
-   }
-
-   if (ctx->_ShineTable[side])
-      ctx->_ShineTable[side]->refcount--;
-
-   ctx->_ShineTable[side] = s;
-   move_to_tail( list, s );
-   s->refcount++;
-}
-
-
-void
-_mesa_validate_all_lighting_tables( struct gl_context *ctx )
-{
-   GLfloat shininess;
-   
-   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS][0];
-   if (!ctx->_ShineTable[0] || ctx->_ShineTable[0]->shininess != shininess)
-      validate_shine_table( ctx, 0, shininess );
-
-   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_SHININESS][0];
-   if (!ctx->_ShineTable[1] || ctx->_ShineTable[1]->shininess != shininess)
-      validate_shine_table( ctx, 1, shininess );
-}
-
-
 /**
  * Examine current lighting parameters to determine if the optimized lighting
  * function can be used.
@@ -1304,17 +1198,6 @@ _mesa_init_lighting( struct gl_context *ctx )
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
    ctx->Light.ClampVertexColor = GL_TRUE;
 
-   /* Lighting miscellaneous */
-   ctx->_ShineTabList = MALLOC_STRUCT( gl_shine_tab );
-   make_empty_list( ctx->_ShineTabList );
-   /* Allocate 10 (arbitrary) shininess lookup tables */
-   for (i = 0 ; i < 10 ; i++) {
-      struct gl_shine_tab *s = MALLOC_STRUCT( gl_shine_tab );
-      s->shininess = -1;
-      s->refcount = 0;
-      insert_at_tail( ctx->_ShineTabList, s );
-   }
-
    /* Miscellaneous */
    ctx->Light._NeedEyeCoords = GL_FALSE;
    ctx->_NeedEyeCoords = GL_FALSE;
@@ -1329,11 +1212,4 @@ _mesa_init_lighting( struct gl_context *ctx )
 void
 _mesa_free_lighting_data( struct gl_context *ctx )
 {
-   struct gl_shine_tab *s, *tmps;
-
-   /* Free lighting shininess exponentiation table */
-   foreach_s( s, tmps, ctx->_ShineTabList ) {
-      free( s );
-   }
-   free( ctx->_ShineTabList );
 }

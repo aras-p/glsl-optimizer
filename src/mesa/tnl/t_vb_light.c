@@ -36,6 +36,7 @@
 
 #include "t_context.h"
 #include "t_pipeline.h"
+#include "tnl.h"
 
 #define LIGHT_TWOSIDE       0x1
 #define LIGHT_MATERIAL      0x2
@@ -76,6 +77,114 @@ struct light_stage_data {
 
 
 
+/**********************************************************************/
+/*****                  Lighting computation                      *****/
+/**********************************************************************/
+
+
+/*
+ * Notes:
+ *   When two-sided lighting is enabled we compute the color (or index)
+ *   for both the front and back side of the primitive.  Then, when the
+ *   orientation of the facet is later learned, we can determine which
+ *   color (or index) to use for rendering.
+ *
+ *   KW: We now know orientation in advance and only shade for
+ *       the side or sides which are actually required.
+ *
+ * Variables:
+ *   n = normal vector
+ *   V = vertex position
+ *   P = light source position
+ *   Pe = (0,0,0,1)
+ *
+ * Precomputed:
+ *   IF P[3]==0 THEN
+ *       // light at infinity
+ *       IF local_viewer THEN
+ *           _VP_inf_norm = unit vector from V to P      // Precompute
+ *       ELSE
+ *           // eye at infinity
+ *           _h_inf_norm = Normalize( VP + <0,0,1> )     // Precompute
+ *       ENDIF
+ *   ENDIF
+ *
+ * Functions:
+ *   Normalize( v ) = normalized vector v
+ *   Magnitude( v ) = length of vector v
+ */
+
+
+
+static void
+validate_shine_table( struct gl_context *ctx, GLuint side, GLfloat shininess )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct tnl_shine_tab *list = tnl->_ShineTabList;
+   struct tnl_shine_tab *s;
+
+   ASSERT(side < 2);
+
+   foreach(s, list)
+      if ( s->shininess == shininess )
+	 break;
+
+   if (s == list) {
+      GLint j;
+      GLfloat *m;
+
+      foreach(s, list)
+	 if (s->refcount == 0)
+	    break;
+
+      m = s->tab;
+      m[0] = 0.0;
+      if (shininess == 0.0) {
+	 for (j = 1 ; j <= SHINE_TABLE_SIZE ; j++)
+	    m[j] = 1.0;
+      }
+      else {
+	 for (j = 1 ; j < SHINE_TABLE_SIZE ; j++) {
+            GLdouble t, x = j / (GLfloat) (SHINE_TABLE_SIZE - 1);
+            if (x < 0.005) /* underflow check */
+               x = 0.005;
+            t = pow(x, shininess);
+	    if (t > 1e-20)
+	       m[j] = (GLfloat) t;
+	    else
+	       m[j] = 0.0;
+	 }
+	 m[SHINE_TABLE_SIZE] = 1.0;
+      }
+
+      s->shininess = shininess;
+   }
+
+   if (tnl->_ShineTable[side])
+      tnl->_ShineTable[side]->refcount--;
+
+   tnl->_ShineTable[side] = s;
+   move_to_tail( list, s );
+   s->refcount++;
+}
+
+
+void
+_tnl_validate_shine_tables( struct gl_context *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLfloat shininess;
+   
+   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS][0];
+   if (!tnl->_ShineTable[0] || tnl->_ShineTable[0]->shininess != shininess)
+      validate_shine_table( ctx, 0, shininess );
+
+   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_SHININESS][0];
+   if (!tnl->_ShineTable[1] || tnl->_ShineTable[1]->shininess != shininess)
+      validate_shine_table( ctx, 1, shininess );
+}
+
+
 /**
  * In the case of colormaterial, the effected material attributes
  * should already have been bound to point to the incoming color data,
@@ -101,7 +210,7 @@ update_materials(struct gl_context *ctx, struct light_stage_data *store)
    /* XXX we should only call this if we're tracking/changing the specular
     * exponent.
     */
-   _mesa_validate_all_lighting_tables( ctx );
+   _tnl_validate_shine_tables( ctx );
 }
 
 
@@ -149,9 +258,30 @@ prepare_materials(struct gl_context *ctx,
    /* FIXME: Is this already done?
     */
    _mesa_update_material( ctx, ~0 );
-   _mesa_validate_all_lighting_tables( ctx );
+
+   _tnl_validate_shine_tables( ctx );
 
    return store->mat_count;
+}
+
+/*
+ * Compute dp ^ SpecularExponent.
+ * Lerp between adjacent values in the f(x) lookup table, giving a
+ * continuous function, with adequate overall accuracy.  (Though still
+ * pretty good compared to a straight lookup).
+ */
+static inline GLfloat
+lookup_shininess(const struct gl_context *ctx, GLuint face, GLfloat dp)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   const struct tnl_shine_tab *tab = tnl->_ShineTable[face];
+   float f = dp * (SHINE_TABLE_SIZE - 1);
+   int k = (int) f;
+   if (k < 0 /* gcc may cast an overflow float value to negative int value */
+	|| k > SHINE_TABLE_SIZE - 2)
+      return powf(dp, tab->shininess);
+   else
+      return tab->tab[k] + (f - k) * (tab->tab[k+1] - tab->tab[k]);
 }
 
 /* Tables for all the shading functions.

@@ -101,4 +101,7 @@ _mesa_load_tracked_matrices(struct gl_context *ctx);
 extern void
 _tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4]);
 
+extern void
+_tnl_validate_shine_tables( struct gl_context *ctx );
+
 #endif

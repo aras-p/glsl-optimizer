@@ -461,10 +461,10 @@ static void transition_to_swtnl( struct gl_context *ctx )
    radeonChooseVertexState( ctx );
    radeonChooseRenderState( ctx );
 
-   _mesa_validate_all_lighting_tables( ctx ); 
+   _tnl_validate_shine_tables( ctx ); 
 
    tnl->Driver.NotifyMaterialChange = 
-      _mesa_validate_all_lighting_tables;
+      _tnl_validate_shine_tables;
 
    radeonReleaseArrays( ctx, ~0 );
 

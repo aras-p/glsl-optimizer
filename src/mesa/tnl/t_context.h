@@ -384,6 +384,20 @@ struct tnl_clipspace
 };
 
 
+#define SHINE_TABLE_SIZE 256	/**< Material shininess lookup table sizes */
+
+/**
+ * Material shininess lookup table.
+ */
+struct tnl_shine_tab
+{
+   struct tnl_shine_tab *next, *prev;
+   GLfloat tab[SHINE_TABLE_SIZE+1];
+   GLfloat shininess;
+   GLuint refcount;
+};
+
+
 struct tnl_device_driver
 {
    /***
@@ -518,6 +532,10 @@ typedef struct
    GLuint nr_blocks;
 
    GLuint CurInstance;
+
+   struct tnl_shine_tab *_ShineTable[2]; /**< Active shine tables */
+   struct tnl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
+   /**@}*/
 } TNLcontext;
 
 

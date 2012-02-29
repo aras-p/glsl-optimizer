@@ -46,6 +46,7 @@ GLboolean
 _tnl_CreateContext( struct gl_context *ctx )
 {
    TNLcontext *tnl;
+   GLuint i;
 
    /* Create the TNLcontext structure
     */
@@ -76,9 +77,20 @@ _tnl_CreateContext( struct gl_context *ctx )
     */
    tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
    tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
-   tnl->Driver.NotifyMaterialChange = _mesa_validate_all_lighting_tables;
+   tnl->Driver.NotifyMaterialChange = _tnl_validate_shine_tables;
 
    tnl->nr_blocks = 0;
+
+   /* Lighting miscellaneous */
+   tnl->_ShineTabList = MALLOC_STRUCT( tnl_shine_tab );
+   make_empty_list( tnl->_ShineTabList );
+   /* Allocate 10 (arbitrary) shininess lookup tables */
+   for (i = 0 ; i < 10 ; i++) {
+      struct tnl_shine_tab *s = MALLOC_STRUCT( tnl_shine_tab );
+      s->shininess = -1;
+      s->refcount = 0;
+      insert_at_tail( tnl->_ShineTabList, s );
+   }
 
    /* plug in the VBO drawing function */
    vbo_set_draw_func(ctx, _tnl_vbo_draw_prims);
@@ -93,7 +105,14 @@ _tnl_CreateContext( struct gl_context *ctx )
 void
 _tnl_DestroyContext( struct gl_context *ctx )
 {
+   struct tnl_shine_tab *s, *tmps;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+
+   /* Free lighting shininess exponentiation table */
+   foreach_s( s, tmps, tnl->_ShineTabList ) {
+      free( s );
+   }
+   free( tnl->_ShineTabList );
 
    _tnl_destroy_pipeline( ctx );
 

@@ -629,21 +629,6 @@ struct gl_config
 /*@}*/
 
 
-#define EXP_TABLE_SIZE 512	/**< Specular exponent lookup table sizes */
-#define SHINE_TABLE_SIZE 256	/**< Material shininess lookup table sizes */
-
-/**
- * Material shininess lookup table.
- */
-struct gl_shine_tab
-{
-   struct gl_shine_tab *next, *prev;
-   GLfloat tab[SHINE_TABLE_SIZE+1];
-   GLfloat shininess;
-   GLuint refcount;
-};
-
-
 /**
  * Light source state.
  */
@@ -3386,10 +3371,6 @@ struct gl_context
    GLboolean _ForceEyeCoords; 
 
    GLuint TextureStateTimestamp; /**< detect changes to shared state */
-
-   struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
-   struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
-   /**@}*/
 
    struct gl_list_extensions *ListExt; /**< driver dlist extensions */
 

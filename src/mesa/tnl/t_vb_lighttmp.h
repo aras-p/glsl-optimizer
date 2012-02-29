@@ -204,7 +204,7 @@ static void TAG(light_rgba_spec)( struct gl_context *ctx,
 	 n_dot_h = correction * DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
-	    GLfloat spec_coef = _mesa_lookup_shininess(ctx, side, n_dot_h);
+	    GLfloat spec_coef = lookup_shininess(ctx, side, n_dot_h);
 	    if (spec_coef > 1.0e-10) {
 	       spec_coef *= attenuation;
 	       ACC_SCALE_SCALAR_3V( spec[side], spec_coef,
@@ -383,7 +383,7 @@ static void TAG(light_rgba)( struct gl_context *ctx,
 	    n_dot_h = correction * DOT3(normal, h);
 
 	    if (n_dot_h > 0.0F) {
-	       GLfloat spec_coef = _mesa_lookup_shininess(ctx, side, n_dot_h);
+	       GLfloat spec_coef = lookup_shininess(ctx, side, n_dot_h);
 	       ACC_SCALE_SCALAR_3V( contrib, spec_coef,
 				    light->_MatSpecular[side]);
 	    }
@@ -483,7 +483,7 @@ static void TAG(light_fast_rgba_single)( struct gl_context *ctx,
          COPY_3V(sum, base[1]);
          ACC_SCALE_SCALAR_3V(sum, -n_dot_VP, light->_MatDiffuse[1]);
          if (n_dot_h > 0.0F) {
-            GLfloat spec = _mesa_lookup_shininess(ctx, 1, n_dot_h);
+            GLfloat spec = lookup_shininess(ctx, 1, n_dot_h);
             ACC_SCALE_SCALAR_3V(sum, spec, light->_MatSpecular[1]);
          }
          COPY_3V(Bcolor[j], sum );
@@ -497,7 +497,7 @@ static void TAG(light_fast_rgba_single)( struct gl_context *ctx,
 	 COPY_3V(sum, base[0]);
 	 ACC_SCALE_SCALAR_3V(sum, n_dot_VP, light->_MatDiffuse[0]);
 	 if (n_dot_h > 0.0F) {
-            GLfloat spec = _mesa_lookup_shininess(ctx, 0, n_dot_h);
+            GLfloat spec = lookup_shininess(ctx, 0, n_dot_h);
 	    ACC_SCALE_SCALAR_3V(sum, spec, light->_MatSpecular[0]);
 	 }
 	 COPY_3V(Fcolor[j], sum );
@@ -589,7 +589,7 @@ static void TAG(light_fast_rgba)( struct gl_context *ctx,
 	    ACC_SCALE_SCALAR_3V(sum[0], n_dot_VP, light->_MatDiffuse[0]);
 	    n_dot_h = DOT3(normal, light->_h_inf_norm);
 	    if (n_dot_h > 0.0F) {
-               spec = _mesa_lookup_shininess(ctx, 0, n_dot_h);
+               spec = lookup_shininess(ctx, 0, n_dot_h);
 	       ACC_SCALE_SCALAR_3V( sum[0], spec, light->_MatSpecular[0]);
 	    }
 	 }
@@ -598,7 +598,7 @@ static void TAG(light_fast_rgba)( struct gl_context *ctx,
 	    ACC_SCALE_SCALAR_3V(sum[1], -n_dot_VP, light->_MatDiffuse[1]);
 	    n_dot_h = -DOT3(normal, light->_h_inf_norm);
 	    if (n_dot_h > 0.0F) {
-               spec = _mesa_lookup_shininess(ctx, 1, n_dot_h);
+               spec = lookup_shininess(ctx, 1, n_dot_h);
 	       ACC_SCALE_SCALAR_3V( sum[1], spec, light->_MatSpecular[1]);
 	    }
 	 }
