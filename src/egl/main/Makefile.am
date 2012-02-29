@@ -122,6 +122,7 @@ endif
 all-local: libEGL.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/libEGL.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libEGL.so.1
+	ln -sf libEGL.so.1 $(top_builddir)/$(LIB_DIR)/libEGL.so
 
 pkgconfigdir = $(libdir)/pkgconfig
 
