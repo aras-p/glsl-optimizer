@@ -319,6 +319,28 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
            ((wt != GL_CLAMP) && (wt != GL_CLAMP_TO_EDGE))))
           return false;
 
+      /*
+       * According to 3DSTATE_MAP_STATE at page of 104 in Bspec
+       * Vol3d 3D Instructions:
+       *   [DevGDG and DevAlv]: Must be a power of 2 for cube maps.
+       *   [DevLPT, DevCST and DevBLB]: If not a power of 2, cube maps
+       *      must have all faces enabled.
+       *
+       * But, as I tested on pineview(DevBLB derived), the rendering is
+       * bad(you will find the color isn't samplered right in some
+       * fragments). After checking, it seems that the texture layout is
+       * wrong: making the width and height align of 4(although this
+       * doesn't make much sense) will fix this issue and also broke some
+       * others. Well, Bspec mentioned nothing about the layout alignment
+       * and layout for NPOT cube map.  I guess the Bspec just assume it's
+       * a POT cube map.
+       *
+       * Thus, I guess we need do this for other platforms as well.
+       */
+      if (tObj->Target == GL_TEXTURE_CUBE_MAP_ARB &&
+          !is_power_of_two(firstImage->Height))
+         return false;
+
       state[I915_TEXREG_SS3] = ss3;     /* SS3_NORMALIZED_COORDS */
 
       state[I915_TEXREG_SS3] |=
