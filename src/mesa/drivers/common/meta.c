@@ -184,7 +184,9 @@ struct save_state
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
    GLboolean RasterDiscard;
+#if FEATURE_EXT_transform_feedback
    GLboolean TransformFeedbackNeedsResume;
+#endif
 };
 
 /**
@@ -427,6 +429,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    memset(save, 0, sizeof(*save));
    save->SavedState = state;
 
+#if FEATURE_EXT_transform_feedback
    /* Pausing transform feedback needs to be done early, or else we won't be
     * able to change other state.
     */
@@ -435,6 +438,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       !ctx->TransformFeedback.CurrentObject->Paused;
    if (save->TransformFeedbackNeedsResume)
       _mesa_PauseTransformFeedback();
+#endif
 
    if (state & MESA_META_ALPHA_TEST) {
       save->AlphaEnabled = ctx->Color.AlphaEnabled;
@@ -1007,8 +1011,10 @@ _mesa_meta_end(struct gl_context *ctx)
    if (save->RasterDiscard) {
       _mesa_set_enable(ctx, GL_RASTERIZER_DISCARD, GL_TRUE);
    }
+#if FEATURE_EXT_transform_feedback
    if (save->TransformFeedbackNeedsResume)
       _mesa_ResumeTransformFeedback();
+#endif
 }
 
 
