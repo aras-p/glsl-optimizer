@@ -67,18 +67,25 @@ vlVdpDecoderCreate(VdpDevice device,
 
    pipe = dev->context;
    screen = dev->vscreen->pscreen;
+
+   pipe_mutex_lock(dev->mutex);
+
    supported = screen->get_video_param
    (
       screen,
       p_profile,
       PIPE_VIDEO_CAP_SUPPORTED
    );
-   if (!supported)
+   if (!supported) {
+      pipe_mutex_unlock(dev->mutex);
       return VDP_STATUS_INVALID_DECODER_PROFILE;
+   }
 
    vldecoder = CALLOC(1,sizeof(vlVdpDecoder));
-   if (!vldecoder)
+   if (!vldecoder) {
+      pipe_mutex_unlock(dev->mutex);
       return VDP_STATUS_RESOURCES;
+   }
 
    vldecoder->device = dev;
 
@@ -101,14 +108,15 @@ vlVdpDecoderCreate(VdpDevice device,
       ret = VDP_STATUS_ERROR;
       goto error_handle;
    }
+   pipe_mutex_unlock(dev->mutex);
 
    return VDP_STATUS_OK;
 
 error_handle:
-
    vldecoder->decoder->destroy(vldecoder->decoder);
 
 error_decoder:
+   pipe_mutex_unlock(dev->mutex);
    FREE(vldecoder);
    return ret;
 }
@@ -125,7 +133,9 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    if (!vldecoder)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vldecoder->device->mutex);
    vldecoder->decoder->destroy(vldecoder->decoder);
+   pipe_mutex_unlock(vldecoder->device->mutex);
 
    FREE(vldecoder);
 
@@ -415,6 +425,8 @@ vlVdpDecoderRender(VdpDecoder decoder,
       // TODO: Recreate decoder with correct chroma
       return VDP_STATUS_INVALID_CHROMA_TYPE;
 
+   pipe_mutex_lock(vlsurf->device->mutex);
+
    buffer_support[0] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE);
    buffer_support[1] = screen->get_video_param(screen, dec->profile, PIPE_VIDEO_CAP_SUPPORTS_INTERLACED);
 
@@ -436,8 +448,10 @@ vlVdpDecoderRender(VdpDecoder decoder,
       vlsurf->video_buffer = dec->context->create_video_buffer(dec->context, &vlsurf->templat);
 
       /* still no luck? get me out of here... */
-      if (!vlsurf->video_buffer)
+      if (!vlsurf->video_buffer) {
+         pipe_mutex_unlock(vlsurf->device->mutex);
          return VDP_STATUS_NO_IMPLEMENTATION;
+      }
    }
 
    memset(&desc, 0, sizeof(desc));
@@ -456,10 +470,13 @@ vlVdpDecoderRender(VdpDecoder decoder,
       ret = vlVdpDecoderRenderH264(&desc.h264, (VdpPictureInfoH264 *)picture_info);
       break;
    default:
+      pipe_mutex_unlock(vlsurf->device->mutex);
       return VDP_STATUS_INVALID_DECODER_PROFILE;
    }
-   if (ret != VDP_STATUS_OK)
+   if (ret != VDP_STATUS_OK) {
+      pipe_mutex_unlock(vlsurf->device->mutex);
       return ret;
+   }
 
    for (i = 0; i < bitstream_buffer_count; ++i) {
       buffers[i] = bitstream_buffers[i].bitstream;
@@ -469,5 +486,6 @@ vlVdpDecoderRender(VdpDecoder decoder,
    dec->begin_frame(dec, vlsurf->video_buffer, &desc.base);
    dec->decode_bitstream(dec, vlsurf->video_buffer, &desc.base, bitstream_buffer_count, buffers, sizes);
    dec->end_frame(dec, vlsurf->video_buffer, &desc.base);
+   pipe_mutex_unlock(vlsurf->device->mutex);
    return ret;
 }

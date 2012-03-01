@@ -80,6 +80,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
    }
 
    vl_compositor_init(&dev->compositor, dev->context);
+   pipe_mutex_init(dev->mutex);
 
    *get_proc_address = &vlVdpGetProcAddress;
 
@@ -161,7 +162,8 @@ vlVdpDeviceDestroy(VdpDevice device)
    vlVdpDevice *dev = vlGetDataHTAB(device);
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
-      
+
+   pipe_mutex_destroy(dev->mutex);
    vl_compositor_cleanup(&dev->compositor);
    dev->context->destroy(dev->context);
    vl_screen_destroy(dev->vscreen);

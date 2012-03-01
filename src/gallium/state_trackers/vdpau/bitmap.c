@@ -69,7 +69,6 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    vlsurface->device = dev;
 
    memset(&res_tmpl, 0, sizeof(res_tmpl));
-
    res_tmpl.target = PIPE_TEXTURE_2D;
    res_tmpl.format = FormatRGBAToPipe(rgba_format);
    res_tmpl.width0 = width;
@@ -78,28 +77,31 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    res_tmpl.array_size = 1;
    res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    res_tmpl.usage = frequently_accessed ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_STATIC;
+
+   pipe_mutex_lock(dev->mutex);
    res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!res) {
+      pipe_mutex_unlock(dev->mutex);
       FREE(dev);
       return VDP_STATUS_RESOURCES;
    }
 
    vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
    vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
+
+   pipe_resource_reference(&res, NULL);
+   pipe_mutex_unlock(dev->mutex);
+
    if (!vlsurface->sampler_view) {
-      pipe_resource_reference(&res, NULL);
       FREE(dev);
       return VDP_STATUS_RESOURCES;
    }
 
    *surface = vlAddDataHTAB(vlsurface);
    if (*surface == 0) {
-      pipe_resource_reference(&res, NULL);
       FREE(dev);
       return VDP_STATUS_ERROR;
    }
-
-   pipe_resource_reference(&res, NULL);
 
    return VDP_STATUS_OK;
 }
@@ -116,9 +118,9 @@ vlVdpBitmapSurfaceDestroy(VdpBitmapSurface surface)
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
-
+   pipe_mutex_lock(vlsurface->device->mutex);
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+   pipe_mutex_unlock(vlsurface->device->mutex);
 
    vlRemoveDataHTAB(surface);
    FREE(vlsurface);
@@ -177,11 +179,16 @@ vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
 
    pipe = vlsurface->device->context;
 
+   pipe_mutex_lock(vlsurface->device->mutex);
+
    vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
 
    dst_box = RectToPipeBox(destination_rect, vlsurface->sampler_view->texture);
    pipe->transfer_inline_write(pipe, vlsurface->sampler_view->texture, 0,
                                PIPE_TRANSFER_WRITE, &dst_box, *source_data,
                                *source_pitches, 0);
+
+   pipe_mutex_unlock(vlsurface->device->mutex);
+
    return VDP_STATUS_OK;
 }

@@ -38,6 +38,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_rect.h"
+#include "os/os_thread.h"
 
 #include "vl/vl_compositor.h"
 #include "vl/vl_csc.h"
@@ -312,6 +313,7 @@ typedef struct
    struct vl_screen *vscreen;
    struct pipe_context *context;
    struct vl_compositor compositor;
+   pipe_mutex mutex;
 
    struct {
       struct vl_compositor_state *cstate;

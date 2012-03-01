@@ -62,6 +62,9 @@ vlVdpVideoMixerCreate(VdpDevice device,
       return VDP_STATUS_RESOURCES;
 
    vmixer->device = dev;
+
+   pipe_mutex_lock(dev->mutex);
+
    vl_compositor_init_state(&vmixer->cstate, dev->context);
 
    vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, &vmixer->csc);
@@ -143,6 +146,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    }
    vmixer->luma_key_min = 0.f;
    vmixer->luma_key_max = 1.f;
+   pipe_mutex_unlock(dev->mutex);
 
    return VDP_STATUS_OK;
 
@@ -151,6 +155,7 @@ no_params:
 
 no_handle:
    vl_compositor_cleanup_state(&vmixer->cstate);
+   pipe_mutex_unlock(dev->mutex);
    FREE(vmixer);
    return ret;
 }
@@ -167,6 +172,8 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vmixer->device->mutex);
+
    vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
 
    vlRemoveDataHTAB(mixer);
@@ -182,6 +189,7 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
       vl_matrix_filter_cleanup(vmixer->sharpness.filter);
       FREE(vmixer->sharpness.filter);
    }
+   pipe_mutex_unlock(vmixer->device->mutex);
 
    FREE(vmixer);
 
@@ -221,8 +229,6 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
-   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
-
    compositor = &vmixer->device->compositor;
 
    surf = vlGetDataHTAB(video_surface_current);
@@ -244,10 +250,14 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    if (!dst)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vmixer->device->mutex);
+   vlVdpResolveDelayedRendering(vmixer->device, NULL, NULL);
    if (background_surface != VDP_INVALID_HANDLE) {
       vlVdpOutputSurface *bg = vlGetDataHTAB(background_surface);
-      if (!bg)
+      if (!bg) {
+         pipe_mutex_unlock(vmixer->device->mutex);
          return VDP_STATUS_INVALID_HANDLE;
+      }
       vl_compositor_set_rgba_layer(&vmixer->cstate, compositor, layer++, bg->sampler_view,
                                    RectToPipe(background_source_rect, &rect), NULL, NULL);
    }
@@ -268,6 +278,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       break;
 
    default:
+      pipe_mutex_unlock(vmixer->device->mutex);
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
    vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer,
@@ -276,8 +287,10 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
 
    for (i = 0; i < layer_count; ++i) {
       vlVdpOutputSurface *src = vlGetDataHTAB(layers->source_surface);
-      if (!src)
+      if (!src) {
+         pipe_mutex_unlock(vmixer->device->mutex);
          return VDP_STATUS_INVALID_HANDLE;
+      }
 
       assert(layers->struct_version == VDP_LAYER_VERSION);
 
@@ -305,6 +318,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
          vl_matrix_filter_render(vmixer->sharpness.filter,
                                  dst->sampler_view, dst->surface);
    }
+   pipe_mutex_unlock(vmixer->device->mutex);
 
    return VDP_STATUS_OK;
 }
@@ -452,6 +466,7 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vmixer->device->mutex);
    for (i = 0; i < feature_count; ++i) {
       switch (features[i]) {
       /* they are valid, but we doesn't support them */
@@ -481,9 +496,11 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
          break;
 
       default:
+         pipe_mutex_unlock(vmixer->device->mutex);
          return VDP_STATUS_INVALID_VIDEO_MIXER_FEATURE;
       }
    }
+   pipe_mutex_unlock(vmixer->device->mutex);
 
    return VDP_STATUS_OK;
 }
@@ -563,6 +580,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vmixer->device->mutex);
    for (i = 0; i < attribute_count; ++i) {
       switch (attributes[i]) {
       case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
@@ -623,9 +641,11 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          vmixer->skip_chroma_deint = *(uint8_t*)attribute_values[i];
          break;
       default:
+         pipe_mutex_unlock(vmixer->device->mutex);
          return VDP_STATUS_INVALID_VIDEO_MIXER_ATTRIBUTE;
       }
    }
+   pipe_mutex_unlock(vmixer->device->mutex);
 
    return VDP_STATUS_OK;
 }
@@ -688,6 +708,7 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
    if (!vmixer)
       return VDP_STATUS_INVALID_HANDLE;
 
+   pipe_mutex_lock(vmixer->device->mutex);
    for (i = 0; i < attribute_count; ++i) {
       switch (attributes[i]) {
       case VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR:
@@ -719,9 +740,11 @@ vlVdpVideoMixerGetAttributeValues(VdpVideoMixer mixer,
          *(uint8_t*)attribute_values[i] = vmixer->skip_chroma_deint;
          break;
       default:
+         pipe_mutex_unlock(vmixer->device->mutex);
          return VDP_STATUS_INVALID_VIDEO_MIXER_ATTRIBUTE;
       }
    }
+   pipe_mutex_unlock(vmixer->device->mutex);
    return VDP_STATUS_OK;
 }
 
