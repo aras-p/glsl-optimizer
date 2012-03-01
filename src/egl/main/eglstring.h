@@ -38,6 +38,7 @@
 #define _eglstrcasecmp _stricmp
 #define _eglsnprintf _snprintf
 #else
+#include <strings.h> // for strcasecmp
 #define _eglstrcasecmp strcasecmp
 #define _eglsnprintf snprintf
 #endif
