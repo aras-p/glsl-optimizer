@@ -1016,9 +1016,6 @@ st_draw_vbo(struct gl_context *ctx,
    if (st->dirty.st) {
       GLboolean vertDataEdgeFlags;
 
-      /* sanity check for pointer arithmetic below */
-      assert(sizeof(arrays[0]->Ptr[0]) == 1);
-
       vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
                           arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
       if (vertDataEdgeFlags != st->vertdata_edgeflags) {
