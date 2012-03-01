@@ -167,6 +167,8 @@ nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
 static void
 nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 {
+   const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
+   struct nouveau_bo *bo;
    struct pipe_vertex_buffer *vb;
    struct nv04_resource *buf;
    int i;
@@ -182,21 +184,23 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
          continue;
       buf = nv04_resource(vb->buffer);
 
-      /* NOTE: user buffers with temporary storage count as mapped by GPU */
       if (!nouveau_resource_mapped_by_gpu(vb->buffer)) {
          if (nvc0->vbo_push_hint) {
             nvc0->vbo_fifo = ~0;
+            return;
+         }
+         nvc0->base.vbo_dirty = TRUE;
+
+         if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
+            assert(vb->stride > vb->buffer_offset);
+            nvc0->vbo_user |= 1 << i;
+            nvc0_vbuf_range(nvc0, i, &base, &size);
+            bo = nouveau_scratch_data(&nvc0->base, buf, base, size);
+            if (bo)
+               BCTX_REFN_bo(nvc0->bufctx_3d, VTX_TMP, bo_flags, bo);
             continue;
          } else {
-            if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
-               nvc0->vbo_user |= 1 << i;
-               assert(vb->stride > vb->buffer_offset);
-               nvc0_vbuf_range(nvc0, i, &base, &size);
-               nouveau_user_buffer_upload(&nvc0->base, buf, base, size);
-            } else {
-               nouveau_buffer_migrate(&nvc0->base, buf, NOUVEAU_BO_GART);
-            }
-            nvc0->base.vbo_dirty = TRUE;
+            nouveau_buffer_migrate(&nvc0->base, buf, NOUVEAU_BO_GART);
          }
       }
       BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
@@ -206,14 +210,12 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 static void
 nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 {
+   const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
+   struct nouveau_bo *bo;
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    uint32_t base, offset, size;
    int i;
    uint32_t written = 0;
-
-   /* TODO: use separate bufctx bin for user buffers
-    */
-   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 
    PUSH_SPACE(push, nvc0->vertex->num_elements * 8);
 
@@ -223,10 +225,8 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[b];
       struct nv04_resource *buf = nv04_resource(vb->buffer);
 
-      if (!(nvc0->vbo_user & (1 << b))) {
-         BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
+      if (!(nvc0->vbo_user & (1 << b)))
          continue;
-      }
 
       if (!vb->stride) {
          nvc0_emit_vtxattr(nvc0, vb, ve, i);
@@ -236,7 +236,9 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
-         nouveau_user_buffer_upload(&nvc0->base, buf, base, size);
+         bo = nouveau_scratch_data(&nvc0->base, buf, base, size);
+         if (bo)
+            BCTX_REFN_bo(nvc0->bufctx_3d, VTX_TMP, bo_flags, bo);
       }
       offset = vb->buffer_offset + ve->src_offset;
 
@@ -246,8 +248,6 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       PUSH_DATA (push, buf->address + base + size - 1);
       PUSH_DATAh(push, buf->address + offset);
       PUSH_DATA (push, buf->address + offset);
-
-      BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
    }
    nvc0->base.vbo_dirty = TRUE;
 }
@@ -255,13 +255,9 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 static INLINE void
 nvc0_release_user_vbufs(struct nvc0_context *nvc0)
 {
-   uint32_t vbo_user = nvc0->vbo_user;
-
-   while (vbo_user) {
-      int i = ffs(vbo_user) - 1;
-      vbo_user &= ~(1 << i);
-
-      nouveau_buffer_release_gpu_storage(nv04_resource(nvc0->vtxbuf[i].buffer));
+   if (nvc0->vbo_user) {
+      nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX_TMP);
+      nouveau_scratch_done(&nvc0->base);
    }
 }
 

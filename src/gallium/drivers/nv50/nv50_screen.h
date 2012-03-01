@@ -16,9 +16,6 @@ struct nv50_context;
 
 #define NV50_CODE_BO_SIZE_LOG2 19
 
-#define NV50_SCRATCH_SIZE (2 << 20)
-#define NV50_SCRATCH_NR_BUFFERS 2
-
 #define NV50_SCREEN_RESIDENT_BO_COUNT 5
 
 struct nv50_blitctx;

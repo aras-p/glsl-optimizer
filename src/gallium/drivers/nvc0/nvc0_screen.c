@@ -431,13 +431,6 @@ nvc0_screen_create(struct nouveau_device *dev)
    screen->base.fence.emit = nvc0_screen_fence_emit;
    screen->base.fence.update = nvc0_screen_fence_update;
 
-   for (i = 0; i < NVC0_SCRATCH_NR_BUFFERS; ++i) {
-      ret = nouveau_bo_new(dev, NOUVEAU_BO_GART, 0, NVC0_SCRATCH_SIZE, NULL,
-                           &screen->scratch.bo[i]);
-      if (ret)
-         goto fail;
-   }
-
    ret = nouveau_object_new(chan, 0xbeef9039, NVC0_M2MF_CLASS, NULL, 0,
                             &screen->m2mf);
    if (ret)

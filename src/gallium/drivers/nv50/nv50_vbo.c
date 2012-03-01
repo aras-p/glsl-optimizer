@@ -186,6 +186,8 @@ nv50_vbuf_range(struct nv50_context *nv50, int vbi,
 static void
 nv50_prevalidate_vbufs(struct nv50_context *nv50)
 {
+   const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
+   struct nouveau_bo *bo;
    struct pipe_vertex_buffer *vb;
    struct nv04_resource *buf;
    int i;
@@ -201,36 +203,39 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
          continue;
       buf = nv04_resource(vb->buffer);
 
-      /* NOTE: user buffers with temporary storage count as mapped by GPU */
-      if (!nouveau_resource_mapped_by_gpu(vb->buffer)) {
+      if (nouveau_resource_mapped_by_gpu(vb->buffer)) {
+         BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
+      } else {
          if (nv50->vbo_push_hint) {
             nv50->vbo_fifo = ~0;
-            continue;
+            return;
+         }
+         nv50->base.vbo_dirty = TRUE;
+
+         if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
+            assert(vb->stride > vb->buffer_offset);
+            nv50->vbo_user |= 1 << i;
+            nv50_vbuf_range(nv50, i, &base, &size);
+            bo = nouveau_scratch_data(&nv50->base, buf, base, size);
+            if (bo)
+               BCTX_REFN_bo(nv50->bufctx_3d, VERTEX_TMP, bo_flags, bo);
          } else {
-            if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
-               nv50->vbo_user |= 1 << i;
-               assert(vb->stride > vb->buffer_offset);
-               nv50_vbuf_range(nv50, i, &base, &size);
-               nouveau_user_buffer_upload(&nv50->base, buf, base, size);
-            } else {
-               nouveau_buffer_migrate(&nv50->base, buf, NOUVEAU_BO_GART);
-            }
-            nv50->base.vbo_dirty = TRUE;
+            if (nouveau_buffer_migrate(&nv50->base, buf, NOUVEAU_BO_GART))
+               BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
          }
       }
-      BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
    }
 }
 
 static void
 nv50_update_user_vbufs(struct nv50_context *nv50)
 {
+   const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
+   struct nouveau_bo *bo;
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    uint32_t base, offset, size;
    int i;
    uint32_t written = 0;
-
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_VERTEX);
 
    for (i = 0; i < nv50->vertex->num_elements; ++i) {
       struct pipe_vertex_element *ve = &nv50->vertex->element[i].pipe;
@@ -238,10 +243,8 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
       struct pipe_vertex_buffer *vb = &nv50->vtxbuf[b];
       struct nv04_resource *buf = nv04_resource(vb->buffer);
 
-      if (!(nv50->vbo_user & (1 << b))) {
-         BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
+      if (!(nv50->vbo_user & (1 << b)))
          continue;
-      }
 
       if (!vb->stride) {
          nv50_emit_vtxattr(nv50, vb, ve, i);
@@ -251,7 +254,9 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
-         nouveau_user_buffer_upload(&nv50->base, buf, base, size);
+         bo = nouveau_scratch_data(&nv50->base, buf, base, size);
+         if (bo)
+            BCTX_REFN_bo(nv50->bufctx_3d, VERTEX_TMP, bo_flags, bo);
       }
       offset = vb->buffer_offset + ve->src_offset;
 
@@ -261,8 +266,6 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_START_HIGH(i)), 2);
       PUSH_DATAh(push, buf->address + offset);
       PUSH_DATA (push, buf->address + offset);
-
-      BCTX_REFN(nv50->bufctx_3d, VERTEX, buf, RD);
    }
    nv50->base.vbo_dirty = TRUE;
 }
@@ -270,13 +273,9 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
 static INLINE void
 nv50_release_user_vbufs(struct nv50_context *nv50)
 {
-   uint32_t vbo_user = nv50->vbo_user;
-
-   while (vbo_user) {
-      int i = ffs(vbo_user) - 1;
-      vbo_user &= ~(1 << i);
-
-      nouveau_buffer_release_gpu_storage(nv04_resource(nv50->vtxbuf[i].buffer));
+   if (nv50->vbo_user) {
+      nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_VERTEX_TMP);
+      nouveau_scratch_done(&nv50->base);
    }
 }
 

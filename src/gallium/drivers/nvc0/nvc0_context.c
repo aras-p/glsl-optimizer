@@ -182,6 +182,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->fence.bo);
    BCTX_REFN_bo(nvc0->bufctx, FENCE, flags, screen->fence.bo);
 
+   nvc0->base.scratch.bo_size = 2 << 20;
+
    return pipe;
 
 out_err:

@@ -14,11 +14,6 @@
 
 struct nvc0_context;
 
-#define NVC0_SCRATCH_SIZE (2 << 20)
-#define NVC0_SCRATCH_NR_BUFFERS 2
-
-#define NVC0_SCREEN_RESIDENT_BO_COUNT 5
-
 struct nvc0_blitctx;
 
 struct nvc0_screen {
@@ -40,13 +35,6 @@ struct nvc0_screen {
    struct nouveau_heap *lib_code; /* allocated from text_heap */
 
    struct nvc0_blitctx *blitctx;
-
-   struct {
-      struct nouveau_bo *bo[NVC0_SCRATCH_NR_BUFFERS];
-      uint8_t *buf;
-      int index;
-      uint32_t offset;
-   } scratch;
 
    struct {
       void **entries;

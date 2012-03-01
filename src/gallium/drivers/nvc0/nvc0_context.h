@@ -54,13 +54,14 @@
 
 #define NVC0_BIND_FB          0
 #define NVC0_BIND_VTX         1
-#define NVC0_BIND_IDX         2
-#define NVC0_BIND_TEX         3
-#define NVC0_BIND_CB(s, i)   (4 + 16 * (s) + (i))
-#define NVC0_BIND_TFB         84
-#define NVC0_BIND_SCREEN      85
-#define NVC0_BIND_TLS         86
-#define NVC0_BIND_COUNT       87
+#define NVC0_BIND_VTX_TMP     2
+#define NVC0_BIND_IDX         3
+#define NVC0_BIND_TEX         4
+#define NVC0_BIND_CB(s, i)   (5 + 16 * (s) + (i))
+#define NVC0_BIND_TFB         85
+#define NVC0_BIND_SCREEN      86
+#define NVC0_BIND_TLS         87
+#define NVC0_BIND_COUNT       88
 #define NVC0_BIND_2D          0
 #define NVC0_BIND_M2MF        0
 #define NVC0_BIND_FENCE       1
