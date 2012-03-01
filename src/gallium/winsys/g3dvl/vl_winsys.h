@@ -51,6 +51,12 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable);
 struct u_rect *
 vl_screen_get_dirty_area(struct vl_screen *vscreen);
 
+uint64_t
+vl_screen_get_timestamp(struct vl_screen *vscreen, Drawable drawable);
+
+void
+vl_screen_set_next_timestamp(struct vl_screen *vscreen, uint64_t stamp);
+
 void*
 vl_screen_get_private(struct vl_screen *vscreen);
 

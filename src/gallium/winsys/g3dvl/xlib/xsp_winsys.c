@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+#include <sys/time.h>
+
 #include "pipe/p_state.h"
 
 #include "util/u_memory.h"
@@ -98,6 +100,20 @@ vl_screen_get_dirty_area(struct vl_screen *vscreen)
 {
    struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
    return &xsp_screen->dirty_area;
+}
+
+uint64_t
+vl_screen_get_timestamp(struct vl_screen *vscreen, Drawable drawable)
+{
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   return (uint64_t)tv.tv_sec * 1000000000LL + (uint64_t)tv.tv_usec * 1000LL;
+}
+
+void
+vl_screen_set_next_timestamp(struct vl_screen *vscreen, uint64_t stamp)
+{
+   /* not supported on softpipe and so only a dummy */
 }
 
 void*

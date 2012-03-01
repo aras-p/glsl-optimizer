@@ -26,9 +26,6 @@
  **************************************************************************/
 
 #include <stdio.h>
-#include <time.h>
-#include <sys/timeb.h>
-
 #include <vdpau/vdpau.h>
 
 #include "util/u_debug.h"
@@ -169,7 +166,6 @@ vlVdpPresentationQueueGetTime(VdpPresentationQueue presentation_queue,
                               VdpTime *current_time)
 {
    vlVdpPresentationQueue *pq;
-   struct timespec ts;
 
    if (!current_time)
       return VDP_STATUS_INVALID_POINTER;
@@ -178,8 +174,7 @@ vlVdpPresentationQueueGetTime(VdpPresentationQueue presentation_queue,
    if (!pq)
       return VDP_STATUS_INVALID_HANDLE;
 
-   clock_gettime(CLOCK_REALTIME, &ts);
-   *current_time = (uint64_t)ts.tv_sec * 1000000000LL + (uint64_t)ts.tv_nsec;
+   *current_time = vl_screen_get_timestamp(pq->device->vscreen, pq->drawable);
 
    return VDP_STATUS_OK;
 }
@@ -260,6 +255,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       vl_compositor_render(cstate, compositor, surf_draw, dirty_area);
    }
 
+   vl_screen_set_next_timestamp(pq->device->vscreen, earliest_presentation_time);
    pipe->screen->flush_frontbuffer
    (
       pipe->screen, tex, 0, 0,
@@ -316,10 +312,7 @@ vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_qu
       screen->fence_finish(screen, surf->fence, 0);
    }
 
-   // We actually need to query the timestamp of the last VSYNC event from the hardware
-   vlVdpPresentationQueueGetTime(presentation_queue, first_presentation_time);
-
-   return VDP_STATUS_OK;
+   return vlVdpPresentationQueueGetTime(presentation_queue, first_presentation_time);
 }
 
 /**
