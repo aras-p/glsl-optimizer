@@ -442,15 +442,7 @@ static void
 nvc0_validate_derived_1(struct nvc0_context *nvc0)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   boolean early_z;
    boolean rasterizer_discard;
-
-   early_z = nvc0->fragprog->fp.early_z && !nvc0->zsa->pipe.alpha.enabled;
-
-   if (early_z != nvc0->state.early_z) {
-      nvc0->state.early_z = early_z;
-      IMMED_NVC0(push, NVC0_3D(EARLY_FRAGMENT_TESTS), early_z);
-   }
 
    rasterizer_discard = (!nvc0->fragprog || !nvc0->fragprog->hdr[18]) &&
       !nvc0->zsa->pipe.depth.enabled && !nvc0->zsa->pipe.stencil[0].enabled;

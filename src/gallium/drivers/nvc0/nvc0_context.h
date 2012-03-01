@@ -78,7 +78,7 @@ struct nvc0_context {
    struct {
       boolean flushed;
       boolean rasterizer_discard;
-      boolean early_z;
+      boolean early_z_forced;
       boolean prim_restart;
       uint32_t instance_elts; /* bitmask of per-instance elements */
       uint32_t instance_base;

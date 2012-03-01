@@ -479,10 +479,6 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
    }
 
    fp->fp.early_z = info->prop.fp.earlyFragTests;
-   if (fp->fp.early_z == FALSE && fp->code_size >= 0x400)
-      fp->fp.early_z = !(info->prop.fp.writesDepth ||
-                         info->prop.fp.usesDiscard ||
-                         (info->io.globalAccess & 2));
 
    return 0;
 }

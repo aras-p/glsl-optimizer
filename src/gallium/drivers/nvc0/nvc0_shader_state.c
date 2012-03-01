@@ -110,6 +110,11 @@ nvc0_fragprog_validate(struct nvc0_context *nvc0)
          return;
    nvc0_program_update_context_state(nvc0, fp, 4);
 
+   if (fp->fp.early_z != nvc0->state.early_z_forced) {
+      nvc0->state.early_z_forced = fp->fp.early_z;
+      IMMED_NVC0(push, NVC0_3D(FORCE_EARLY_FRAGMENT_TESTS), fp->fp.early_z);
+   }
+
    BEGIN_NVC0(push, NVC0_3D(SP_SELECT(5)), 2);
    PUSH_DATA (push, 0x51);
    PUSH_DATA (push, fp->code_base);
