@@ -700,7 +700,7 @@ static int peephole_mul_omod(
 	struct rc_instruction * inst_mul,
 	struct rc_list * var_list)
 {
-	unsigned int chan, swz, i;
+	unsigned int chan = 0, swz, i;
 	int const_index = -1;
 	int temp_index = -1;
 	float const_value;
