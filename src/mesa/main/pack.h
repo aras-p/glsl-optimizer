@@ -149,4 +149,11 @@ _mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
                          GLenum dstFormat, GLenum dstType,
                          GLvoid *dstAddr);
 
+
+extern void
+_mesa_rebase_rgba_float(GLuint n, GLfloat rgba[][4], GLenum baseFormat);
+
+extern void
+_mesa_rebase_rgba_uint(GLuint n, GLuint rgba[][4], GLenum baseFormat);
+
 #endif

@@ -5250,3 +5250,94 @@ _mesa_unpack_image( GLuint dimensions,
    }
 }
 
+
+
+/**
+ * If we unpack colors from a luminance surface, we'll get pixel colors
+ * such as (l, l, l, a).
+ * When we call _mesa_pack_rgba_span_float(format=GL_LUMINANCE), that
+ * function will compute L=R+G+B before packing.  The net effect is we'll
+ * accidentally store luminance values = 3*l.
+ * This function compensates for that by converting (aka rebasing) (l,l,l,a)
+ * to be (l,0,0,a).
+ * It's a similar story for other formats such as LUMINANCE_ALPHA, ALPHA
+ * and INTENSITY.
+ *
+ * Finally, we also need to do this when the actual surface format does
+ * not match the logical surface format.  For example, suppose the user
+ * requests a GL_LUMINANCE texture but the driver stores it as RGBA.
+ * Again, we'll get pixel values like (l,l,l,a).
+ */
+void
+_mesa_rebase_rgba_float(GLuint n, GLfloat rgba[][4], GLenum baseFormat)
+{
+   GLuint i;
+
+   switch (baseFormat) {
+   case GL_ALPHA:
+      for (i = 0; i < n; i++) {
+         rgba[i][RCOMP] = 0.0F;
+         rgba[i][GCOMP] = 0.0F;
+         rgba[i][BCOMP] = 0.0F;
+      }
+      break;
+   case GL_INTENSITY:
+      /* fall-through */
+   case GL_LUMINANCE:
+      for (i = 0; i < n; i++) {
+         rgba[i][GCOMP] = 0.0F;
+         rgba[i][BCOMP] = 0.0F;
+         rgba[i][ACOMP] = 1.0F;
+      }
+      break;
+   case GL_LUMINANCE_ALPHA:
+      for (i = 0; i < n; i++) {
+         rgba[i][GCOMP] = 0.0F;
+         rgba[i][BCOMP] = 0.0F;
+      }
+      break;
+   default:
+      /* no-op */
+      ;
+   }
+}
+
+
+/**
+ * As above, but GLuint components.
+ */
+void
+_mesa_rebase_rgba_uint(GLuint n, GLuint rgba[][4], GLenum baseFormat)
+{
+   GLuint i;
+
+   switch (baseFormat) {
+   case GL_ALPHA:
+      for (i = 0; i < n; i++) {
+         rgba[i][RCOMP] = 0;
+         rgba[i][GCOMP] = 0;
+         rgba[i][BCOMP] = 0;
+      }
+      break;
+   case GL_INTENSITY:
+      /* fall-through */
+   case GL_LUMINANCE:
+      for (i = 0; i < n; i++) {
+         rgba[i][GCOMP] = 0;
+         rgba[i][BCOMP] = 0;
+         rgba[i][ACOMP] = 1;
+      }
+      break;
+   case GL_LUMINANCE_ALPHA:
+      for (i = 0; i < n; i++) {
+         rgba[i][GCOMP] = 0;
+         rgba[i][BCOMP] = 0;
+      }
+      break;
+   default:
+      /* no-op */
+      ;
+   }
+}
+
+
