@@ -436,7 +436,10 @@ i830DepthMask(struct gl_context * ctx, GLboolean flag)
    struct i830_context *i830 = i830_context(ctx);
 
    DBG("%s flag (%d)\n", __FUNCTION__, flag);
-   
+
+   if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.depthBits)
+      flag = false;
+
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
    i830->state.Ctx[I830_CTXREG_ENABLES_2] &= ~ENABLE_DIS_DEPTH_WRITE_MASK;
@@ -794,6 +797,9 @@ i830Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
    case GL_DEPTH_TEST:
       I830_STATECHANGE(i830, I830_UPLOAD_CTX);
       i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~ENABLE_DIS_DEPTH_TEST_MASK;
+
+      if (!ctx->DrawBuffer || !ctx->DrawBuffer->Visual.depthBits)
+	 state = false;
 
       if (state)
          i830->state.Ctx[I830_CTXREG_ENABLES_1] |= ENABLE_DEPTH_TEST;

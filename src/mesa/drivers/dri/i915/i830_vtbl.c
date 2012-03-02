@@ -826,8 +826,7 @@ i830_update_draw_buffer(struct intel_context *intel)
    /*
     * Update depth and stencil test state
     */
-   ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
-		      (ctx->Depth.Test && fb->Visual.depthBits > 0));
+   ctx->Driver.Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
    ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
 		      (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
 
