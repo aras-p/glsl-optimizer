@@ -65,7 +65,7 @@
  *    mesa: Fix return type of  _mesa_get_format_bytes() (#37351)
  */
 intptr_t
-intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
+intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
 {
    uint32_t tile_size = 4096;
    uint32_t tile_width = 64;
@@ -90,22 +90,16 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y)
                +   2 * (byte_y % 2)
                +   1 * (byte_x % 2);
 
-   /*
-    * Errata for Gen5:
-    *
-    * An additional offset is needed which is not documented in the PRM.
-    *
-    * if ((byte_x / 8) % 2 == 1) {
-    *    if ((byte_y / 8) % 2) == 0) {
-    *       u += 64;
-    *    } else {
-    *       u -= 64;
-    *    }
-    * }
-    *
-    * The offset is expressed more tersely as
-    * u += ((int) x & 0x8) * (8 - (((int) y & 0x8) << 1));
-    */
+   if (swizzled) {
+      /* adjust for bit6 swizzling */
+      if (((byte_x / 8) % 2) == 1) {
+	 if (((byte_y / 8) % 2) == 0) {
+	    u += 64;
+	 } else {
+	    u -= 64;
+	 }
+      }
+   }
 
    return u;
 }

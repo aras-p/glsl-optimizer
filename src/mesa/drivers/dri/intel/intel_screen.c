@@ -667,6 +667,30 @@ intel_override_separate_stencil(struct intel_screen *screen)
    }
 }
 
+static bool
+intel_detect_swizzling(struct intel_screen *screen)
+{
+   drm_intel_bo *buffer;
+   unsigned long flags = 0;
+   unsigned long aligned_pitch;
+   uint32_t tiling = I915_TILING_X;
+   uint32_t swizzle_mode = 0;
+
+   buffer = drm_intel_bo_alloc_tiled(screen->bufmgr, "swizzle test",
+				     64, 64, 4,
+				     &tiling, &aligned_pitch, flags);
+   if (buffer == NULL)
+      return false;
+
+   drm_intel_bo_get_tiling(buffer, &tiling, &swizzle_mode);
+   drm_intel_bo_unreference(buffer);
+
+   if (swizzle_mode == I915_BIT_6_SWIZZLE_NONE)
+      return false;
+   else
+      return true;
+}
+
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.
@@ -764,6 +788,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    if (!intel_init_bufmgr(intelScreen))
        return false;
+
+   intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
 
    psp->extensions = intelScreenExtensions;
 
