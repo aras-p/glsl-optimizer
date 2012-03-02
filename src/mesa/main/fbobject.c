@@ -1994,7 +1994,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       }
 
       if ((level < 0) ||
-          (level >= _mesa_max_texture_levels(ctx, texObj->Target))) {
+          (level >= _mesa_max_texture_levels(ctx, textarget))) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glFramebufferTexture%sEXT(level)", caller);
          return;
