@@ -145,6 +145,8 @@ PIPE_FORMAT_YUYV                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz
 # same subsampling but with rgb channels
 PIPE_FORMAT_R8G8_B8G8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_G8R8_G8B8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, rgb
+PIPE_FORMAT_G8R8_B8R8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , yxz1, rgb
+PIPE_FORMAT_R8G8_R8B8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , yxz1, rgb
 
 # some special formats not fitting anywhere else
 PIPE_FORMAT_R11G11B10_FLOAT       , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb

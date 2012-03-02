@@ -311,6 +311,9 @@ enum pipe_format {
 
    PIPE_FORMAT_ETC1_RGB8               = 226,
 
+   PIPE_FORMAT_R8G8_R8B8_UNORM         = 227,
+   PIPE_FORMAT_G8R8_B8R8_UNORM         = 228,
+
    PIPE_FORMAT_COUNT
 };
 
