@@ -45,9 +45,9 @@
 
 enum VS_OUTPUT
 {
-   VS_O_VPOS,
-   VS_O_VTEX,
-   VS_O_COLOR,
+   VS_O_VPOS = 0,
+   VS_O_COLOR = 0,
+   VS_O_VTEX = 0,
    VS_O_VTOP,
    VS_O_VBOTTOM,
 };
@@ -70,8 +70,8 @@ create_vert_shader(struct vl_compositor *c)
    color = ureg_DECL_vs_input(shader, 2);
    tmp = ureg_DECL_temporary(shader);
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX);
    o_color = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, VS_O_COLOR);
+   o_vtex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX);
    o_vtop = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
    o_vbottom = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
 
@@ -139,7 +139,7 @@ create_frag_shader_video_buffer(struct vl_compositor *c)
    if (!shader)
       return false;
 
-   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
+   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTEX, TGSI_INTERPOLATE_LINEAR);
    for (i = 0; i < 3; ++i) {
       csc[i] = ureg_DECL_constant(shader, i);
       sampler[i] = ureg_DECL_sampler(shader, i);
