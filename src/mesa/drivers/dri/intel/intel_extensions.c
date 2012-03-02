@@ -43,7 +43,6 @@ intelInitExtensions(struct gl_context *ctx)
    struct intel_context *intel = intel_context(ctx);
 
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
-   ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_framebuffer_object = true;
    ctx->Extensions.ARB_half_float_pixel = true;
@@ -108,6 +107,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_color_buffer_float = true;
       ctx->Extensions.ARB_depth_buffer_float = true;
       ctx->Extensions.ARB_depth_clamp = true;
+      ctx->Extensions.ARB_draw_instanced = true;
       ctx->Extensions.ARB_fragment_coord_conventions = true;
       ctx->Extensions.ARB_fragment_program_shadow = true;
       ctx->Extensions.ARB_fragment_shader = true;
