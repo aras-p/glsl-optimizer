@@ -102,10 +102,10 @@ FormatYCBCRToPipe(VdpYCbCrFormat vdpau_format)
          return PIPE_FORMAT_UYVY;
       case VDP_YCBCR_FORMAT_YUYV:
          return PIPE_FORMAT_YUYV;
-      case VDP_YCBCR_FORMAT_Y8U8V8A8: /* Not defined in p_format.h */
-         return PIPE_FORMAT_NONE;
+      case VDP_YCBCR_FORMAT_Y8U8V8A8:
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
       case VDP_YCBCR_FORMAT_V8U8Y8A8:
-	     return PIPE_FORMAT_VUYA;
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
       default:
          assert(0);
    }
@@ -125,9 +125,9 @@ PipeToFormatYCBCR(enum pipe_format p_format)
          return VDP_YCBCR_FORMAT_UYVY;
       case PIPE_FORMAT_YUYV:
          return VDP_YCBCR_FORMAT_YUYV;
-      //case PIPE_FORMAT_YUVA:
-        // return VDP_YCBCR_FORMAT_Y8U8V8A8;
-      case PIPE_FORMAT_VUYA:
+      case PIPE_FORMAT_R8G8B8A8_UNORM:
+        return VDP_YCBCR_FORMAT_Y8U8V8A8;
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
          return VDP_YCBCR_FORMAT_V8U8Y8A8;
       default:
          assert(0);
