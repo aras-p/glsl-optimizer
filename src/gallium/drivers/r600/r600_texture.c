@@ -1135,6 +1135,21 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
+	if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+		switch (format) {
+		case PIPE_FORMAT_R8G8_B8G8_UNORM:
+		case PIPE_FORMAT_G8R8_B8R8_UNORM:
+			result = FMT_GB_GR;
+			goto out_word4;
+		case PIPE_FORMAT_G8R8_G8B8_UNORM:
+		case PIPE_FORMAT_R8G8_R8B8_UNORM:
+			result = FMT_BG_RG;
+			goto out_word4;
+		default:
+			goto out_unknown;
+		}
+	}
+
 	if (format == PIPE_FORMAT_R9G9B9E5_FLOAT) {
 		result = FMT_5_9_9_9_SHAREDEXP;
 		goto out_word4;
