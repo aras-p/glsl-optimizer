@@ -237,11 +237,11 @@ static void svga_bind_rasterizer_state( struct pipe_context *pipe,
    struct svga_context *svga = svga_context(pipe);
    struct svga_rasterizer_state *raster = (struct svga_rasterizer_state *)state;
 
-   svga->curr.rast = raster;
 
    draw_set_rasterizer_state(svga->swtnl.draw, raster ? &raster->templ : NULL,
                              state);
-   
+   svga->curr.rast = raster;
+
    svga->dirty |= SVGA_NEW_RAST;
 }
 
