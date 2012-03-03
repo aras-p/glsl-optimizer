@@ -62,6 +62,18 @@ const enum pipe_format const_resource_formats_VUYA[3] = {
    PIPE_FORMAT_NONE
 };
 
+const enum pipe_format const_resource_formats_YUYV[3] = {
+   PIPE_FORMAT_R8G8_R8B8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
+const enum pipe_format const_resource_formats_UYVY[3] = {
+   PIPE_FORMAT_G8R8_B8R8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
 const unsigned const_resource_plane_order_YUV[3] = {
    0,
    1,
@@ -90,6 +102,12 @@ vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return const_resource_formats_VUYA;
 
+   case PIPE_FORMAT_YUYV:
+      return const_resource_formats_YUYV;
+
+   case PIPE_FORMAT_UYVY:
+      return const_resource_formats_UYVY;
+
    default:
       return NULL;
    }
@@ -98,18 +116,32 @@ vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
 const unsigned *
 vl_video_buffer_plane_order(enum pipe_format format)
 {
-    switch(format) {
+   switch(format) {
    case PIPE_FORMAT_YV12:
       return const_resource_plane_order_YVU;
 
    case PIPE_FORMAT_NV12:
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_YUYV:
+   case PIPE_FORMAT_UYVY:
       return const_resource_plane_order_YUV;
 
    default:
       return NULL;
    }
+}
+
+static enum pipe_format
+vl_video_buffer_surface_format(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   /* a subsampled formats can't work as surface use RGBA instead */
+   if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
+      return PIPE_FORMAT_R8G8B8A8_UNORM;
+
+   return format;
 }
 
 boolean
@@ -125,10 +157,17 @@ vl_video_buffer_is_format_supported(struct pipe_screen *screen,
       return false;
 
    for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
-      if (!resource_formats[i])
+      enum pipe_format format = resource_formats[i];
+
+      if (format == PIPE_FORMAT_NONE)
          continue;
 
-      if (!screen->is_format_supported(screen, resource_formats[i], PIPE_TEXTURE_2D, 0, PIPE_USAGE_STATIC))
+      /* we at least need to sample from it */
+      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW))
+         return false;
+
+      format = vl_video_buffer_surface_format(format);
+      if (!screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET))
          return false;
    }
 
@@ -262,6 +301,7 @@ vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
    struct vl_video_buffer *buf = (struct vl_video_buffer *)buffer;
    struct pipe_sampler_view sv_templ;
    struct pipe_context *pipe;
+   const enum pipe_format *sampler_format;
    const unsigned *plane_order;
    unsigned i, j, component;
 
@@ -269,26 +309,30 @@ vl_video_buffer_sampler_view_components(struct pipe_video_buffer *buffer)
 
    pipe = buf->base.context;
 
+   sampler_format = vl_video_buffer_formats(pipe->screen, buf->base.buffer_format);
    plane_order = vl_video_buffer_plane_order(buf->base.buffer_format);
 
    for (component = 0, i = 0; i < buf->num_planes; ++i ) {
       struct pipe_resource *res = buf->resources[plane_order[i]];
+      const struct util_format_description *desc = util_format_description(res->format);
       unsigned nr_components = util_format_get_nr_components(res->format);
+      if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
+         nr_components = 3;
 
-      for (j = 0; j < nr_components; ++j, ++component) {
-         assert(component < VL_NUM_COMPONENTS);
+      for (j = 0; j < nr_components && component < VL_NUM_COMPONENTS; ++j, ++component) {
+         if (buf->sampler_view_components[component])
+            continue;
 
-         if (!buf->sampler_view_components[component]) {
-            memset(&sv_templ, 0, sizeof(sv_templ));
-            u_sampler_view_default_template(&sv_templ, res, res->format);
-            sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
-            sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
-            buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, res, &sv_templ);
-            if (!buf->sampler_view_components[component])
-               goto error;
-         }
+         memset(&sv_templ, 0, sizeof(sv_templ));
+         u_sampler_view_default_template(&sv_templ, res, sampler_format[plane_order[i]]);
+         sv_templ.swizzle_r = sv_templ.swizzle_g = sv_templ.swizzle_b = PIPE_SWIZZLE_RED + j;
+         sv_templ.swizzle_a = PIPE_SWIZZLE_ONE;
+         buf->sampler_view_components[component] = pipe->create_sampler_view(pipe, res, &sv_templ);
+         if (!buf->sampler_view_components[component])
+            goto error;
       }
    }
+   assert(component == VL_NUM_COMPONENTS);
 
    return buf->sampler_view_components;
 
@@ -323,7 +367,7 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
 
          if (!buf->surfaces[surf]) {
             memset(&surf_templ, 0, sizeof(surf_templ));
-            surf_templ.format = buf->resources[j]->format;
+            surf_templ.format = vl_video_buffer_surface_format(buf->resources[j]->format);
             surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
             surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = i;
             buf->surfaces[surf] = pipe->create_surface(pipe, buf->resources[j], &surf_templ);
@@ -406,7 +450,6 @@ vl_video_buffer_create_ex(struct pipe_context *pipe,
       goto error;
 
    if (resource_formats[1] == PIPE_FORMAT_NONE) {
-      assert(tmpl->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
       assert(resource_formats[2] == PIPE_FORMAT_NONE);
       return vl_video_buffer_create_ex2(pipe, tmpl, resources);
    }
