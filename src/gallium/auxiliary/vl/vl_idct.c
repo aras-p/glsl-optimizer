@@ -43,8 +43,8 @@
 
 enum VS_OUTPUT
 {
-   VS_O_VPOS,
-   VS_O_L_ADDR0,
+   VS_O_VPOS = 0,
+   VS_O_L_ADDR0 = 0,
    VS_O_L_ADDR1,
    VS_O_R_ADDR0,
    VS_O_R_ADDR1

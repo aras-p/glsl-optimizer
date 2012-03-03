@@ -45,8 +45,8 @@
 
 enum VS_OUTPUT
 {
-   VS_O_VPOS,
-   VS_O_VTEX
+   VS_O_VPOS = 0,
+   VS_O_VTEX = 0
 };
 
 const int vl_zscan_linear[] =

@@ -41,8 +41,8 @@
 
 enum VS_OUTPUT
 {
-   VS_O_VPOS,
-   VS_O_VTOP,
+   VS_O_VPOS = 0,
+   VS_O_VTOP = 0,
    VS_O_VBOTTOM,
 
    VS_O_FLAGS = VS_O_VTOP,
