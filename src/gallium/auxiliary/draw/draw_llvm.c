@@ -1041,7 +1041,7 @@ generate_viewport(struct draw_llvm *llvm,
  * Returns clipmask as 4xi32 bitmask for the 4 vertices
  */
 static LLVMValueRef 
-generate_clipmask(struct gallivm_state *gallivm,
+generate_clipmask(struct draw_llvm *llvm,
                   LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                   boolean clip_xy,
                   boolean clip_z,
@@ -1050,24 +1050,43 @@ generate_clipmask(struct gallivm_state *gallivm,
                   unsigned ucp_enable,
                   LLVMValueRef context_ptr)
 {
+   struct gallivm_state *gallivm = llvm->gallivm;
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef mask; /* stores the <4xi32> clipmasks */     
    LLVMValueRef test, temp; 
    LLVMValueRef zero, shift;
    LLVMValueRef pos_x, pos_y, pos_z, pos_w;
+   LLVMValueRef cv_x, cv_y, cv_z, cv_w;
    LLVMValueRef plane1, planes, plane_ptr, sum;
    struct lp_type f32_type = lp_type_float_vec(32); 
+   const unsigned pos = draw_current_shader_position_output(llvm->draw);
+   const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
 
    mask = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 0);
    temp = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 0);
    zero = lp_build_const_vec(gallivm, f32_type, 0);                    /* 0.0f 0.0f 0.0f 0.0f */
    shift = lp_build_const_int_vec(gallivm, lp_type_int_vec(32), 1);    /* 1 1 1 1 */
 
-   /* Assuming position stored at output[0] */
-   pos_x = LLVMBuildLoad(builder, outputs[0][0], ""); /*x0 x1 x2 x3*/
-   pos_y = LLVMBuildLoad(builder, outputs[0][1], ""); /*y0 y1 y2 y3*/
-   pos_z = LLVMBuildLoad(builder, outputs[0][2], ""); /*z0 z1 z2 z3*/
-   pos_w = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/   
+   /*
+    * load clipvertex and position from correct locations.
+    * if they are the same just load them once.
+    */
+   pos_x = LLVMBuildLoad(builder, outputs[pos][0], ""); /*x0 x1 x2 x3*/
+   pos_y = LLVMBuildLoad(builder, outputs[pos][1], ""); /*y0 y1 y2 y3*/
+   pos_z = LLVMBuildLoad(builder, outputs[pos][2], ""); /*z0 z1 z2 z3*/
+   pos_w = LLVMBuildLoad(builder, outputs[pos][3], ""); /*w0 w1 w2 w3*/
+
+   if (clip_user && cv != pos) {
+      cv_x = LLVMBuildLoad(builder, outputs[cv][0], ""); /*x0 x1 x2 x3*/
+      cv_y = LLVMBuildLoad(builder, outputs[cv][1], ""); /*y0 y1 y2 y3*/
+      cv_z = LLVMBuildLoad(builder, outputs[cv][2], ""); /*z0 z1 z2 z3*/
+      cv_w = LLVMBuildLoad(builder, outputs[cv][3], ""); /*w0 w1 w2 w3*/
+   } else {
+      cv_x = pos_x;
+      cv_y = pos_y;
+      cv_z = pos_z;
+      cv_w = pos_w;
+   }
 
    /* Cliptest, for hardwired planes */
    if (clip_xy) {
@@ -1137,27 +1156,27 @@ generate_clipmask(struct gallivm_state *gallivm,
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_x");
          planes = vec4f_from_scalar(gallivm, plane1, "plane4_x");
-         sum = LLVMBuildFMul(builder, planes, pos_x, "");
+         sum = LLVMBuildFMul(builder, planes, cv_x, "");
 
          indices[2] = lp_build_const_int32(gallivm, 1);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_y"); 
          planes = vec4f_from_scalar(gallivm, plane1, "plane4_y");
-         test = LLVMBuildFMul(builder, planes, pos_y, "");
+         test = LLVMBuildFMul(builder, planes, cv_y, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
          
          indices[2] = lp_build_const_int32(gallivm, 2);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_z"); 
          planes = vec4f_from_scalar(gallivm, plane1, "plane4_z");
-         test = LLVMBuildFMul(builder, planes, pos_z, "");
+         test = LLVMBuildFMul(builder, planes, cv_z, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
          indices[2] = lp_build_const_int32(gallivm, 3);
          plane_ptr = LLVMBuildGEP(builder, planes_ptr, indices, 3, "");
          plane1 = LLVMBuildLoad(builder, plane_ptr, "plane_w"); 
          planes = vec4f_from_scalar(gallivm, plane1, "plane4_w");
-         test = LLVMBuildFMul(builder, planes, pos_w, "");
+         test = LLVMBuildFMul(builder, planes, cv_w, "");
          sum = LLVMBuildFAdd(builder, sum, test, "");
 
          test = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GREATER, zero, sum);
@@ -1389,7 +1408,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       /* do cliptest */
       if (enable_cliptest) {
          /* allocate clipmask, assign it integer type */
-         clipmask = generate_clipmask(gallivm, outputs,
+         clipmask = generate_clipmask(llvm, outputs,
                                       variant->key.clip_xy,
                                       variant->key.clip_z, 
                                       variant->key.clip_user,
