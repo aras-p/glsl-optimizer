@@ -476,7 +476,7 @@ static void
 i830PolygonStipple(struct gl_context * ctx, const GLubyte * mask)
 {
    struct i830_context *i830 = i830_context(ctx);
-   const GLubyte *m = mask;
+   const GLubyte *m;
    GLubyte p[4];
    int i, j, k;
    int active = (ctx->Polygon.StippleFlag &&
@@ -487,6 +487,12 @@ i830PolygonStipple(struct gl_context * ctx, const GLubyte * mask)
       I830_STATECHANGE(i830, I830_UPLOAD_STIPPLE);
       i830->state.Stipple[I830_STPREG_ST1] &= ~ST1_ENABLE;
    }
+
+   /* Use the already unpacked stipple data from the context rather than the
+    * uninterpreted mask passed in.
+    */
+   mask = (const GLubyte *)ctx->PolygonStipple;
+   m = mask;
 
    p[0] = mask[12] & 0xf;
    p[0] |= p[0] << 4;
