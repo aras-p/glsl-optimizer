@@ -116,6 +116,7 @@ if !HAVE_MANGLED_GL
 all-local: $(NORMAL_GL_LIB) $(MANGLED_GL_LIB)
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/libGL.so.1.2.0 $(top_builddir)/$(LIB_DIR)/libGL.so.1
+	ln -sf libGL.so.1 $(top_builddir)/$(LIB_DIR)/libGL.so
 endif
 
 $(GLAPI_LIB):
