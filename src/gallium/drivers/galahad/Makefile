@@ -9,3 +9,6 @@ C_SOURCES = \
 	glhd_screen.c
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default

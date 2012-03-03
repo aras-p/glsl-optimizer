@@ -11,3 +11,6 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers/nouveau/include
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default

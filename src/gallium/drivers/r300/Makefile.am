@@ -32,7 +32,3 @@ r300_compiler_tests_SOURCES = \
 	$(testdir)/radeon_compiler_util_tests.c \
 	$(testdir)/rc_test_helpers.c \
 	$(testdir)/unit_test.c
-
-# FIXME: remove this when the rest of the gallium
-# build system is converted to automake.
-default: libr300.a

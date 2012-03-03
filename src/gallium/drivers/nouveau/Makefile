@@ -14,3 +14,6 @@ LIBRARY_DEFINES += $(shell $(PKG_CONFIG) libdrm libdrm_nouveau --cflags-only-oth
 include Makefile.sources
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default

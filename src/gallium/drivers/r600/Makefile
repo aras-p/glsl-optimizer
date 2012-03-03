@@ -12,3 +12,6 @@ LIBRARY_INCLUDES = -I$(TOP)/include
 include Makefile.sources
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default

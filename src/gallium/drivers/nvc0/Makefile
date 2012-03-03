@@ -10,3 +10,6 @@ LIBRARY_INCLUDES = \
 	$(LIBDRM_CFLAGS)
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default

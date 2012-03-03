@@ -11,3 +11,6 @@ C_SOURCES = \
 	noop_state.c
 
 include ../../Makefile.template
+
+# FIXME: Remove when this driver is converted to automake.
+all: default
