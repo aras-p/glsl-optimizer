@@ -894,12 +894,14 @@ convert_to_aos(struct gallivm_state *gallivm,
  * Stores original vertex positions in clip coordinates
  * There is probably a more efficient way to do this, 4 floats at once
  * rather than extracting each element one by one.
+ * idx is the output to store things too, if pre_clip_pos is set
+ * we store the pos to the idx, if not we store the clipvertex to it.
  */
 static void
 store_clip(struct gallivm_state *gallivm,
            LLVMValueRef io_ptr,           
            LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
-           boolean pre_clip_pos)
+           boolean pre_clip_pos, int idx)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef out[4];
@@ -918,17 +920,16 @@ store_clip(struct gallivm_state *gallivm,
    indices[0] =
    indices[1] = lp_build_const_int32(gallivm, 0);
    
-   out[0] = LLVMBuildLoad(builder, outputs[0][0], ""); /*x0 x1 x2 x3*/
-   out[1] = LLVMBuildLoad(builder, outputs[0][1], ""); /*y0 y1 y2 y3*/
-   out[2] = LLVMBuildLoad(builder, outputs[0][2], ""); /*z0 z1 z2 z3*/
-   out[3] = LLVMBuildLoad(builder, outputs[0][3], ""); /*w0 w1 w2 w3*/  
+   out[0] = LLVMBuildLoad(builder, outputs[idx][0], ""); /*x0 x1 x2 x3*/
+   out[1] = LLVMBuildLoad(builder, outputs[idx][1], ""); /*y0 y1 y2 y3*/
+   out[2] = LLVMBuildLoad(builder, outputs[idx][2], ""); /*z0 z1 z2 z3*/
+   out[3] = LLVMBuildLoad(builder, outputs[idx][3], ""); /*w0 w1 w2 w3*/
 
    io0_ptr = LLVMBuildGEP(builder, io_ptr, &ind0, 1, "");
    io1_ptr = LLVMBuildGEP(builder, io_ptr, &ind1, 1, "");
    io2_ptr = LLVMBuildGEP(builder, io_ptr, &ind2, 1, "");
    io3_ptr = LLVMBuildGEP(builder, io_ptr, &ind3, 1, "");
 
-   /* FIXME: this needs updating for clip vertex support */
    if (!pre_clip_pos) {
       clip_ptr0 = draw_jit_header_clip(gallivm, io0_ptr);
       clip_ptr1 = draw_jit_header_clip(gallivm, io1_ptr);
@@ -1249,6 +1250,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                                    variant->key.clip_z  ||
                                    variant->key.clip_user;
    LLVMValueRef variant_func;
+   const unsigned pos = draw_current_shader_position_output(llvm->draw);
+   const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
 
    arg_types[0] = get_context_ptr_type(llvm);       /* context */
    arg_types[1] = get_vertex_header_ptr_type(llvm); /* vertex_header */
@@ -1402,8 +1405,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
-      store_clip(gallivm, io, outputs, 0);
-      store_clip(gallivm, io, outputs, 1);
+      store_clip(gallivm, io, outputs, 0, cv);
+      store_clip(gallivm, io, outputs, 1, pos);
 
       /* do cliptest */
       if (enable_cliptest) {
