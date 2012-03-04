@@ -74,7 +74,7 @@ libEGL_la_SOURCES = \
 
 libEGL_la_LIBADD = \
 	$(EGL_LIB_DEPS)
-libEGL_la_LDFLAGS = -version-number 1:0
+libEGL_la_LDFLAGS = -version-number 1:0 -no-undefined
 
 if HAVE_EGL_PLATFORM_X11
 AM_CFLAGS += -DHAVE_X11_PLATFORM
