@@ -50,6 +50,18 @@ const enum pipe_format const_resource_formats_NV12[3] = {
    PIPE_FORMAT_NONE
 };
 
+const enum pipe_format const_resource_formats_YUVA[3] = {
+   PIPE_FORMAT_R8G8B8A8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
+const enum pipe_format const_resource_formats_VUYA[3] = {
+   PIPE_FORMAT_B8G8R8A8_UNORM,
+   PIPE_FORMAT_NONE,
+   PIPE_FORMAT_NONE
+};
+
 const unsigned const_resource_plane_order_YUV[3] = {
    0,
    1,
@@ -72,6 +84,12 @@ vl_video_buffer_formats(struct pipe_screen *screen, enum pipe_format format)
    case PIPE_FORMAT_NV12:
       return const_resource_formats_NV12;
 
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      return const_resource_formats_YUVA;
+
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return const_resource_formats_VUYA;
+
    default:
       return NULL;
    }
@@ -85,6 +103,8 @@ vl_video_buffer_plane_order(enum pipe_format format)
       return const_resource_plane_order_YVU;
 
    case PIPE_FORMAT_NV12:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return const_resource_plane_order_YUV;
 
    default:
