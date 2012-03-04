@@ -1941,6 +1941,9 @@ for driver in $GALLIUM_DRIVERS_DIRS; do
         xgalahad)
             HAVE_GALAHAD_GALLIUM=yes;
 	    ;;
+	xidentity)
+	    HAVE_IDENTITY_GALLIUM=yes;
+	    ;;
         *)
             GALLIUM_MAKE_DIRS="$GALLIUM_MAKE_DIRS $driver"
 	    ;;
@@ -1948,6 +1951,7 @@ for driver in $GALLIUM_DRIVERS_DIRS; do
 done
 
 AM_CONDITIONAL(HAVE_GALAHAD_GALLIUM, test x$HAVE_GALAHAD_GALLIUM = xyes)
+AM_CONDITIONAL(HAVE_IDENTITY_GALLIUM, test x$HAVE_IDENTITY_GALLIUM = xyes)
 AC_SUBST([GALLIUM_MAKE_DIRS])
 
 dnl prepend CORE_DIRS to SRC_DIRS

@@ -25,7 +25,21 @@ endif
 
 ################################################################################
 
+if HAVE_IDENTITY_GALLIUM
+
+noinst_LIBRARIES+= identity/libidentity.a
+
+identity_libidentity_a_SOURCES = \
+	identity/id_objects.c \
+	identity/id_context.c \
+	identity/id_screen.c
+
+endif
+
+################################################################################
+
 SUBDIRS = $(GALLIUM_MAKE_DIRS)
 
 # FIXME: Remove when the rest of Gallium is converted to automake.
 default: all
+
