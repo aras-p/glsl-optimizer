@@ -38,6 +38,20 @@ endif
 
 ################################################################################
 
+if HAVE_NOOP_GALLIUM
+
+# Meta-driver which combines whichever software rasterizers have been
+# built into a single convenience library.
+
+noinst_LIBRARIES+= noop/libnoop.a
+
+noop_libnoop_a_SOURCES = \
+	noop/noop_pipe.c \
+	noop/noop_state.c
+
+endif
+
+################################################################################
 SUBDIRS = $(GALLIUM_MAKE_DIRS)
 
 # FIXME: Remove when the rest of Gallium is converted to automake.
