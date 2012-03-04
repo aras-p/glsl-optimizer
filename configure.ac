@@ -1935,6 +1935,21 @@ if test "x$NEED_G3DVL_DRI" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
 fi
 
+dnl Tell Automake which drivers to build
+for driver in $GALLIUM_DRIVERS_DIRS; do
+    case "x$driver" in
+        xgalahad)
+            HAVE_GALAHAD_GALLIUM=yes;
+	    ;;
+        *)
+            GALLIUM_MAKE_DIRS="$GALLIUM_MAKE_DIRS $driver"
+	    ;;
+    esac
+done
+
+AM_CONDITIONAL(HAVE_GALAHAD_GALLIUM, test x$HAVE_GALAHAD_GALLIUM = xyes)
+AC_SUBST([GALLIUM_MAKE_DIRS])
+
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
@@ -1986,6 +2001,7 @@ dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 GALLIUM_WINSYS_DIRS=`echo $GALLIUM_WINSYS_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 GALLIUM_DRIVERS_DIRS=`echo $GALLIUM_DRIVERS_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
+GALLIUM_MAKE_DIRS=`echo $GALLIUM_MAKE_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 GALLIUM_STATE_TRACKERS_DIRS=`echo $GALLIUM_STATE_TRACKERS_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 
 AC_OUTPUT

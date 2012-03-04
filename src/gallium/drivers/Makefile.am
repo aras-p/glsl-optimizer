@@ -1,4 +1,31 @@
-SUBDIRS = $(GALLIUM_DRIVERS_DIRS)
+AUTOMAKE_OPTIONS = subdir-objects
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	-I$(top_srcdir)/src/gallium/drivers \
+	$(DEFINES) \
+	$(ASM_FLAGS) \
+	$(PIC_FLAGS)
+
+noinst_LIBRARIES =
+
+################################################################################
+
+if HAVE_GALAHAD_GALLIUM
+
+noinst_LIBRARIES+= galahad/libgalahad.a
+
+galahad_libgalahad_a_SOURCES = \
+	galahad/glhd_objects.c \
+	galahad/glhd_context.c \
+	galahad/glhd_screen.c
+
+endif
+
+################################################################################
+
+SUBDIRS = $(GALLIUM_MAKE_DIRS)
 
 # FIXME: Remove when the rest of Gallium is converted to automake.
 default: all
