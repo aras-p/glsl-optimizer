@@ -32,9 +32,6 @@
 
 #define R600_MAX_DRAW_CS_DWORDS 11
 
-#define PKT_COUNT_C                     0xC000FFFF
-#define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
-
 /* these flags are used in register flags and added into block flags */
 #define REG_FLAG_NEED_BO 1
 #define REG_FLAG_DIRTY_ALWAYS 2

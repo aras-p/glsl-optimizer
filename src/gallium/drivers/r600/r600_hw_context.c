@@ -1094,8 +1094,6 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 	}
 
 	if (nbo) {
-		ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
-
 		for (int j = 0; j < block->nreg; j++) {
 			if (block->pm4_bo_index[j]) {
 				/* find relocation */
@@ -1112,7 +1110,6 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 
 			}
 		}
-		ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 	}
 
 	optional &= (block->nreg_dirty != block->nreg);
@@ -1144,8 +1141,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	int cp_dwords = block->pm4_ndwords;
 	int nbo = block->nbo;
 
-	ctx->flags |= R600_CONTEXT_CHECK_EVENT_FLUSH;
-
 	if (block->status & R600_BLOCK_STATUS_RESOURCE_VERTEX) {
 		nbo = 1;
 		cp_dwords -= 2; /* don't copy the second NOP */
@@ -1159,7 +1154,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 				r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
 		}
 	}
-	ctx->flags &= ~R600_CONTEXT_CHECK_EVENT_FLUSH;
 
 	memcpy(&cs->buf[cs->cdw], block->pm4, cp_dwords * 4);
 	cs->cdw += cp_dwords;

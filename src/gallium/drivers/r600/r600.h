@@ -88,8 +88,6 @@ struct r600_resource {
 	unsigned			domains;
 };
 
-/* R600/R700 STATES */
-#define R600_GROUP_MAX			16
 #define R600_BLOCK_MAX_BO		32
 #define R600_BLOCK_MAX_REG		128
 
@@ -199,7 +197,6 @@ struct r600_so_target {
 
 #define R600_CONTEXT_DRAW_PENDING	(1 << 0)
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
-#define R600_CONTEXT_CHECK_EVENT_FLUSH	(1 << 2)
 
 struct r600_context;
 struct r600_screen;
