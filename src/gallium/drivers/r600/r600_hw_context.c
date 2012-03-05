@@ -1065,22 +1065,6 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
-struct r600_resource *r600_context_reg_bo(struct r600_context *ctx, unsigned offset)
-{
-	struct r600_range *range;
-	struct r600_block *block;
-	unsigned id;
-
-	range = &ctx->range[CTX_RANGE_ID(offset)];
-	block = range->blocks[CTX_BLOCK_ID(offset)];
-	offset -= block->start_offset;
-	id = block->pm4_bo_index[offset >> 2];
-	if (block->reloc[id].bo) {
-		return block->reloc[id].bo;
-	}
-	return NULL;
-}
-
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
