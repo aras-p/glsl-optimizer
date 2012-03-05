@@ -623,12 +623,13 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	unsigned array_mode = 0;
 	int r;
 
-	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    !(templ->bind & PIPE_BIND_SCANOUT)) {
-		if (rscreen->use_surface_alloc) {
-			if (permit_hardware_blit(screen, templ)) {
-				array_mode = V_038000_ARRAY_2D_TILED_THIN1;
-			}
+	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER)) {
+		if (rscreen->use_surface_alloc &&
+		    !(templ->bind & PIPE_BIND_SCANOUT) &&
+		    templ->usage != PIPE_USAGE_STAGING &&
+		    templ->usage != PIPE_USAGE_STREAM &&
+		    permit_hardware_blit(screen, templ)) {
+			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		} else if (util_format_is_compressed(templ->format)) {
 			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 		}
