@@ -67,18 +67,18 @@ struct r600_command_buffer {
 	unsigned max_num_dw;
 };
 
-struct r600_atom_surface_sync {
+struct r600_surface_sync_cmd {
 	struct r600_atom atom;
 	unsigned flush_flags; /* CP_COHER_CNTL */
 };
 
-struct r600_atom_db_misc_state {
+struct r600_db_misc_state {
 	struct r600_atom atom;
 	bool occlusion_query_enabled;
 	bool flush_depthstencil_enabled;
 };
 
-struct r600_atom_eg_strmout_config {
+struct r600_eg_streamout_state {
 	struct r600_atom atom;
 	bool rasterizer_discard;
 	bool stream0_enable;
@@ -287,13 +287,13 @@ struct r600_context {
 
 	unsigned default_ps_gprs, default_vs_gprs;
 
-	/* States based on r600_state. */
+	/* States based on r600_atom. */
 	struct list_head		dirty_states;
-	struct r600_command_buffer	atom_start_cs; /* invariant state mostly */
-	struct r600_atom_surface_sync	atom_surface_sync;
-	struct r600_atom		atom_r6xx_flush_and_inv;
-	struct r600_atom_db_misc_state	atom_db_misc_state;
-	struct r600_atom_eg_strmout_config atom_eg_strmout_config;
+	struct r600_command_buffer	start_cs_cmd; /* invariant state mostly */
+	struct r600_surface_sync_cmd	surface_sync_cmd;
+	struct r600_atom		r6xx_flush_and_inv_cmd;
+	struct r600_db_misc_state	db_misc_state;
+	struct r600_eg_streamout_state	eg_streamout_state;
 
 	/* Below are variables from the old r600_context.
 	 */

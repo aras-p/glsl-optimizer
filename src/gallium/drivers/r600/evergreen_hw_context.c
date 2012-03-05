@@ -830,9 +830,9 @@ void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_en
 	struct radeon_winsys_cs *cs = ctx->cs;
 	bool enable = buffer_enable_bit != 0;
 
-	if (enable != ctx->atom_eg_strmout_config.stream0_enable) {
-		ctx->atom_eg_strmout_config.stream0_enable = enable;
-		r600_emit_atom(ctx, &ctx->atom_eg_strmout_config.atom);
+	if (enable != ctx->eg_streamout_state.stream0_enable) {
+		ctx->eg_streamout_state.stream0_enable = enable;
+		r600_emit_atom(ctx, &ctx->eg_streamout_state.atom);
 	}
 
 	if (buffer_enable_bit) {

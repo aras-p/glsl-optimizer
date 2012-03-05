@@ -911,9 +911,9 @@ void evergreen_set_rasterizer_discard(struct pipe_context *ctx, boolean discard)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	if (discard != rctx->atom_eg_strmout_config.rasterizer_discard) {
-		rctx->atom_eg_strmout_config.rasterizer_discard = discard;
-		r600_atom_dirty(rctx, &rctx->atom_eg_strmout_config.atom);
+	if (discard != rctx->eg_streamout_state.rasterizer_discard) {
+		rctx->eg_streamout_state.rasterizer_discard = discard;
+		r600_atom_dirty(rctx, &rctx->eg_streamout_state.atom);
 	}
 }
 
@@ -1715,7 +1715,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_atom_db_misc_state *a = (struct r600_atom_db_misc_state*)atom;
+	struct r600_db_misc_state *a = (struct r600_db_misc_state*)atom;
 	unsigned db_count_control = 0;
 	unsigned db_render_override =
 		S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
@@ -1734,7 +1734,7 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 static void evergreen_emit_streamout_config(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_atom_eg_strmout_config *a = (struct r600_atom_eg_strmout_config*)atom;
+	struct r600_eg_streamout_state *a = (struct r600_eg_streamout_state*)atom;
 
 	r600_write_context_reg(cs, R_028B94_VGT_STRMOUT_CONFIG,
 			       S_028B94_STREAMOUT_0_EN(a->stream0_enable) |
@@ -1743,10 +1743,10 @@ static void evergreen_emit_streamout_config(struct r600_context *rctx, struct r6
 
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->atom_db_misc_state.atom, evergreen_emit_db_misc_state, 6, 0);
-	r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
-	r600_init_atom(&rctx->atom_eg_strmout_config.atom, evergreen_emit_streamout_config, 6, 0);
-	r600_atom_dirty(rctx, &rctx->atom_eg_strmout_config.atom);
+	r600_init_atom(&rctx->db_misc_state.atom, evergreen_emit_db_misc_state, 6, 0);
+	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	r600_init_atom(&rctx->eg_streamout_state.atom, evergreen_emit_streamout_config, 6, 0);
+	r600_atom_dirty(rctx, &rctx->eg_streamout_state.atom);
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
@@ -1794,7 +1794,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 
 static void cayman_init_atom_start_cs(struct r600_context *rctx)
 {
-	struct r600_command_buffer *cb = &rctx->atom_start_cs;
+	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 
 	r600_init_command_buffer(cb, 256, EMIT_EARLY);
 
@@ -1947,7 +1947,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 
 void evergreen_init_atom_start_cs(struct r600_context *rctx)
 {
-	struct r600_command_buffer *cb = &rctx->atom_start_cs;
+	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	int ps_prio;
 	int vs_prio;
 	int gs_prio;

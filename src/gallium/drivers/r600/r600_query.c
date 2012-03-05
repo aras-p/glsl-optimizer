@@ -318,9 +318,9 @@ static void r600_update_occlusion_query_state(struct r600_context *rctx,
 
 		enable = rctx->num_occlusion_queries != 0;
 
-		if (rctx->atom_db_misc_state.occlusion_query_enabled != enable) {
-			rctx->atom_db_misc_state.occlusion_query_enabled = enable;
-			r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+		if (rctx->db_misc_state.occlusion_query_enabled != enable) {
+			rctx->db_misc_state.occlusion_query_enabled = enable;
+			r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 		}
 	}
 }

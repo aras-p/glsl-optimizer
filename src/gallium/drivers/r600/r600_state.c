@@ -1684,7 +1684,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_atom_db_misc_state *a = (struct r600_atom_db_misc_state*)atom;
+	struct r600_db_misc_state *a = (struct r600_db_misc_state*)atom;
 	unsigned db_render_control = 0;
 	unsigned db_render_override =
 		S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
@@ -1710,8 +1710,8 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 
 void r600_init_state_functions(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->atom_db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
-	r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
+	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -1815,7 +1815,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	int num_gs_stack_entries;
 	int num_es_stack_entries;
 	enum radeon_family family;
-	struct r600_command_buffer *cb = &rctx->atom_start_cs;
+	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	uint32_t tmp;
 	unsigned i;
 

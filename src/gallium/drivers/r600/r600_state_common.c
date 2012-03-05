@@ -57,7 +57,7 @@ void r600_release_command_buffer(struct r600_command_buffer *cb)
 static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_atom_surface_sync *a = (struct r600_atom_surface_sync*)atom;
+	struct r600_surface_sync_cmd *a = (struct r600_surface_sync_cmd*)atom;
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 	cs->buf[cs->cdw++] = a->flush_flags;  /* CP_COHER_CNTL */
@@ -86,8 +86,8 @@ void r600_init_atom(struct r600_atom *atom,
 
 void r600_init_common_atoms(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->atom_surface_sync.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
-	r600_init_atom(&rctx->atom_r6xx_flush_and_inv,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
+	r600_init_atom(&rctx->surface_sync_cmd.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
+	r600_init_atom(&rctx->r6xx_flush_and_inv_cmd,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
 }
 
 unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
@@ -113,8 +113,8 @@ void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1) | r600_get_cb_flush_flags(rctx);
-	r600_atom_dirty(rctx, &rctx->atom_surface_sync.atom);
+	rctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1) | r600_get_cb_flush_flags(rctx);
+	r600_atom_dirty(rctx, &rctx->surface_sync_cmd.atom);
 }
 
 static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
@@ -258,9 +258,9 @@ void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 
 	r600_set_stencil_ref(ctx, &ref);
 
-	if (rctx->atom_db_misc_state.flush_depthstencil_enabled != dsa->is_flush) {
-		rctx->atom_db_misc_state.flush_depthstencil_enabled = dsa->is_flush;
-		r600_atom_dirty(rctx, &rctx->atom_db_misc_state.atom);
+	if (rctx->db_misc_state.flush_depthstencil_enabled != dsa->is_flush) {
+		rctx->db_misc_state.flush_depthstencil_enabled = dsa->is_flush;
+		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	}
 }
 

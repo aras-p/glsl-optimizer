@@ -198,7 +198,7 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	r600_update_num_contexts(rctx->screen, -1);
 
-	r600_release_command_buffer(&rctx->atom_start_cs);
+	r600_release_command_buffer(&rctx->start_cs_cmd);
 
 	if (rctx->cs) {
 		rctx->ws->cs_destroy(rctx->cs);
@@ -279,7 +279,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
-	r600_emit_atom(rctx, &rctx->atom_start_cs.atom);
+	r600_emit_atom(rctx, &rctx->start_cs_cmd.atom);
 
 	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, 1024 * 1024, 256,
 					   PIPE_BIND_VERTEX_BUFFER |

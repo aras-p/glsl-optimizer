@@ -1148,14 +1148,14 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 
 void r600_inval_shader_cache(struct r600_context *ctx)
 {
-	ctx->atom_surface_sync.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
-	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+	ctx->surface_sync_cmd.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
+	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 }
 
 void r600_inval_texture_cache(struct r600_context *ctx)
 {
-	ctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
-	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+	ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
+	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 }
 
 void r600_inval_vertex_cache(struct r600_context *ctx)
@@ -1172,11 +1172,11 @@ void r600_inval_vertex_cache(struct r600_context *ctx)
 	    ctx->family == CHIP_CAICOS ||
 	    ctx->family == CHIP_CAYMAN) {
 		/* Some GPUs don't have the vertex cache and must use the texture cache instead. */
-		ctx->atom_surface_sync.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
+		ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
 	} else {
-		ctx->atom_surface_sync.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
+		ctx->surface_sync_cmd.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
 	}
-	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 }
 
 void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
@@ -1184,22 +1184,22 @@ void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;
 
-	ctx->atom_surface_sync.flush_flags |=
+	ctx->surface_sync_cmd.flush_flags |=
 		r600_get_cb_flush_flags(ctx) |
 		(ctx->framebuffer.zsbuf ? S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1) : 0);
 
 	if (flush_now) {
-		r600_emit_atom(ctx, &ctx->atom_surface_sync.atom);
+		r600_emit_atom(ctx, &ctx->surface_sync_cmd.atom);
 	} else {
-		r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+		r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 	}
 
 	/* Also add a complete cache flush to work around broken flushing on R6xx. */
 	if (ctx->chip_class == R600) {
 		if (flush_now) {
-			r600_emit_atom(ctx, &ctx->atom_r6xx_flush_and_inv);
+			r600_emit_atom(ctx, &ctx->r6xx_flush_and_inv_cmd);
 		} else {
-			r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
+			r600_atom_dirty(ctx, &ctx->r6xx_flush_and_inv_cmd);
 		}
 	}
 
@@ -1214,7 +1214,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	bool nontimer_queries_suspended = false;
 	bool streamout_suspended = false;
 
-	if (cs->cdw == ctx->atom_start_cs.atom.num_dw)
+	if (cs->cdw == ctx->start_cs_cmd.atom.num_dw)
 		return;
 
 	/* suspend queries */
@@ -1247,10 +1247,10 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
-	r600_emit_atom(ctx, &ctx->atom_start_cs.atom);
-	r600_atom_dirty(ctx, &ctx->atom_db_misc_state.atom);
+	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
+	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	if (ctx->chip_class >= EVERGREEN)
-		r600_atom_dirty(ctx, &ctx->atom_eg_strmout_config.atom);
+		r600_atom_dirty(ctx, &ctx->eg_streamout_state.atom);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
@@ -1487,12 +1487,12 @@ void r600_context_streamout_end(struct r600_context *ctx)
 			flush_flags |= S_0085F0_DEST_BASE_0_ENA(1);
 		}
 
-		r600_atom_dirty(ctx, &ctx->atom_r6xx_flush_and_inv);
+		r600_atom_dirty(ctx, &ctx->r6xx_flush_and_inv_cmd);
 	}
 
 	/* Flush streamout caches. */
-	ctx->atom_surface_sync.flush_flags |= flush_flags;
-	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
+	ctx->surface_sync_cmd.flush_flags |= flush_flags;
+	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 
 	ctx->num_cs_dw_streamout_end = 0;
 
