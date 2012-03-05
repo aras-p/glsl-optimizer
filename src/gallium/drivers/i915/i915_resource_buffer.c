@@ -68,13 +68,8 @@ i915_get_transfer(struct pipe_context *pipe,
                   const struct pipe_box *box)
 {
    struct i915_context *i915 = i915_context(pipe);
-   struct pipe_transfer *transfer;
+   struct pipe_transfer *transfer = util_slab_alloc(&i915->transfer_pool);
 
-   if (usage & PIPE_TRANSFER_MAP_PERMANENTLY) {
-      return NULL;
-   }
-
-   transfer = util_slab_alloc(&i915->transfer_pool);
    if (transfer == NULL)
       return NULL;
 
