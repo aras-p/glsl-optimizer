@@ -48,7 +48,7 @@ struct dump_ctx
    
    uint indentation;
 
-   void (*printf)(struct dump_ctx *ctx, const char *format, ...);
+   void (*dump_printf)(struct dump_ctx *ctx, const char *format, ...);
 };
 
 static void 
@@ -69,19 +69,19 @@ dump_enum(
    uint enum_count )
 {
    if (e >= enum_count)
-      ctx->printf( ctx, "%u", e );
+      ctx->dump_printf( ctx, "%u", e );
    else
-      ctx->printf( ctx, "%s", enums[e] );
+      ctx->dump_printf( ctx, "%s", enums[e] );
 }
 
-#define EOL()           ctx->printf( ctx, "\n" )
-#define TXT(S)          ctx->printf( ctx, "%s", S )
-#define CHR(C)          ctx->printf( ctx, "%c", C )
-#define UIX(I)          ctx->printf( ctx, "0x%x", I )
-#define UID(I)          ctx->printf( ctx, "%u", I )
-#define INSTID(I)          ctx->printf( ctx, "% 3u", I )
-#define SID(I)          ctx->printf( ctx, "%d", I )
-#define FLT(F)          ctx->printf( ctx, "%10.4f", F )
+#define EOL()           ctx->dump_printf( ctx, "\n" )
+#define TXT(S)          ctx->dump_printf( ctx, "%s", S )
+#define CHR(C)          ctx->dump_printf( ctx, "%c", C )
+#define UIX(I)          ctx->dump_printf( ctx, "0x%x", I )
+#define UID(I)          ctx->dump_printf( ctx, "%u", I )
+#define INSTID(I)       ctx->dump_printf( ctx, "% 3u", I )
+#define SID(I)          ctx->dump_printf( ctx, "%d", I )
+#define FLT(F)          ctx->dump_printf( ctx, "%10.4f", F )
 #define ENM(E,ENUMS)    dump_enum( ctx, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
 const char *
@@ -381,7 +381,7 @@ tgsi_dump_declaration(
 {
    struct dump_ctx ctx;
 
-   ctx.printf = dump_ctx_printf;
+   ctx.dump_printf = dump_ctx_printf;
 
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
 }
@@ -429,7 +429,7 @@ void tgsi_dump_property(
 {
    struct dump_ctx ctx;
 
-   ctx.printf = dump_ctx_printf;
+   ctx.dump_printf = dump_ctx_printf;
 
    iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
@@ -458,7 +458,7 @@ tgsi_dump_immediate(
 {
    struct dump_ctx ctx;
 
-   ctx.printf = dump_ctx_printf;
+   ctx.dump_printf = dump_ctx_printf;
 
    iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
 }
@@ -613,7 +613,7 @@ tgsi_dump_instruction(
 
    ctx.instno = instno;
    ctx.indent = 0;
-   ctx.printf = dump_ctx_printf;
+   ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
 
    iter_instruction( &ctx.iter, (struct tgsi_full_instruction *)inst );
@@ -645,7 +645,7 @@ tgsi_dump(
 
    ctx.instno = 0;
    ctx.indent = 0;
-   ctx.printf = dump_ctx_printf;
+   ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
 
    tgsi_iterate_shader( tokens, &ctx.iter );
@@ -700,7 +700,7 @@ tgsi_dump_str(
 
    ctx.base.instno = 0;
    ctx.base.indent = 0;
-   ctx.base.printf = &str_dump_ctx_printf;
+   ctx.base.dump_printf = &str_dump_ctx_printf;
    ctx.base.indentation = 0;
 
    ctx.str = str;
