@@ -2571,7 +2571,7 @@ lp_build_mod(struct lp_build_context *bld,
 
    if (type.floating)
       res = LLVMBuildFRem(builder, x, y, "");
-   if (type.sign)
+   else if (type.sign)
       res = LLVMBuildSRem(builder, x, y, "");
    else
       res = LLVMBuildURem(builder, x, y, "");
