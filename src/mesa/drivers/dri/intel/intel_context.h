@@ -289,12 +289,6 @@ struct intel_context
    bool always_flush_batch;
    bool always_flush_cache;
 
-   /* 0 - nonconformant, best performance;
-    * 1 - fallback to sw for known conformance bugs
-    * 2 - always fallback to sw
-    */
-   GLuint conformance_mode;
-
    /* State for intelvb.c and inteltris.c.
     */
    GLuint RenderIndex;

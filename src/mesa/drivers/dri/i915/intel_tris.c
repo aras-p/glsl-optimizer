@@ -944,7 +944,7 @@ intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint 
 
 
 
-#define ANY_FALLBACK_FLAGS (DD_LINE_STIPPLE | DD_TRI_STIPPLE | DD_POINT_ATTEN | DD_POINT_SMOOTH | DD_TRI_SMOOTH)
+#define ANY_FALLBACK_FLAGS (DD_LINE_STIPPLE | DD_TRI_STIPPLE | DD_POINT_ATTEN)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET | DD_TRI_UNFILLED)
 
 void
@@ -995,20 +995,10 @@ intelChooseRenderState(struct gl_context * ctx)
          if ((flags & DD_TRI_STIPPLE) && !intel->hw_stipple)
             intel->draw_tri = intel_fallback_tri;
 
-         if (flags & DD_TRI_SMOOTH) {
-	    if (intel->conformance_mode > 0)
-	       intel->draw_tri = intel_fallback_tri;
-	 }
-
          if (flags & DD_POINT_ATTEN) {
 	    if (0)
 	       intel->draw_point = intel_atten_point;
 	    else
-	       intel->draw_point = intel_fallback_point;
-	 }
-
-	 if (flags & DD_POINT_SMOOTH) {
-	    if (intel->conformance_mode > 0)
 	       intel->draw_point = intel_fallback_point;
 	 }
 

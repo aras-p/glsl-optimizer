@@ -652,33 +652,11 @@ intelInitContext(struct intel_context *intel,
       break;
    }
 
-   /* This doesn't yet catch all non-conformant rendering, but it's a
-    * start.
-    */
-   if (getenv("INTEL_STRICT_CONFORMANCE")) {
-      unsigned int value = atoi(getenv("INTEL_STRICT_CONFORMANCE"));
-      if (value > 0) {
-         intel->conformance_mode = value;
-      }
-      else {
-         intel->conformance_mode = 1;
-      }
-   }
-
-   if (intel->conformance_mode > 0) {
-      ctx->Const.MinLineWidth = 1.0;
-      ctx->Const.MinLineWidthAA = 1.0;
-      ctx->Const.MaxLineWidth = 1.0;
-      ctx->Const.MaxLineWidthAA = 1.0;
-      ctx->Const.LineWidthGranularity = 1.0;
-   }
-   else {
-      ctx->Const.MinLineWidth = 1.0;
-      ctx->Const.MinLineWidthAA = 1.0;
-      ctx->Const.MaxLineWidth = 5.0;
-      ctx->Const.MaxLineWidthAA = 5.0;
-      ctx->Const.LineWidthGranularity = 0.5;
-   }
+   ctx->Const.MinLineWidth = 1.0;
+   ctx->Const.MinLineWidthAA = 1.0;
+   ctx->Const.MaxLineWidth = 5.0;
+   ctx->Const.MaxLineWidthAA = 5.0;
+   ctx->Const.LineWidthGranularity = 0.5;
 
    ctx->Const.MinPointSize = 1.0;
    ctx->Const.MinPointSizeAA = 1.0;
