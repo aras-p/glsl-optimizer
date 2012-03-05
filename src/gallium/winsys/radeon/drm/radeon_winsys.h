@@ -40,9 +40,7 @@
  * - R16F/RG16F
  */
 
-#include "pipebuffer/pb_bufmgr.h"
-#include "pipe/p_defines.h"
-#include "pipe/p_state.h"
+#include "pipebuffer/pb_buffer.h"
 #include "libdrm/radeon_surface.h"
 
 #define RADEON_MAX_CMDBUF_DWORDS (16 * 1024)
