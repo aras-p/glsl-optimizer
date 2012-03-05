@@ -66,7 +66,7 @@ wayland_shm_display_destroy(struct native_display *ndpy)
    if (shmdpy->base.configs)
       FREE(shmdpy->base.configs);
    if (shmdpy->base.own_dpy)
-      wl_display_destroy(shmdpy->base.dpy);
+      wl_display_disconnect(shmdpy->base.dpy);
 
    ndpy_uninit(ndpy);
 

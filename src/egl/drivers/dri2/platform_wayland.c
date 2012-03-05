@@ -731,7 +731,7 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    free(dri2_dpy->device_name);
    wl_drm_destroy(dri2_dpy->wl_drm);
    if (dri2_dpy->own_device)
-      wl_display_destroy(dri2_dpy->wl_dpy);
+      wl_display_disconnect(dri2_dpy->wl_dpy);
    free(dri2_dpy);
    disp->DriverData = NULL;
 
