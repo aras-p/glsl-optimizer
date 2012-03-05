@@ -87,9 +87,6 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
 
    /* XXX: Current limits */
    *is_supported = true;
-   if (surface_chroma_type != VDP_CHROMA_TYPE_420)
-      *is_supported = false;
-
    max_2d_texture_level = pscreen->get_param(pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
    pipe_mutex_unlock(dev->mutex);
    if (!max_2d_texture_level)
@@ -124,7 +121,24 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
       return VDP_STATUS_RESOURCES;
 
    pipe_mutex_lock(dev->mutex);
-   *is_supported = pscreen->is_video_format_supported
+
+   switch(bits_ycbcr_format) {
+   case VDP_YCBCR_FORMAT_UYVY:
+   case VDP_YCBCR_FORMAT_YUYV:
+      *is_supported = surface_chroma_type == VDP_CHROMA_TYPE_422;
+      break;
+
+   case VDP_YCBCR_FORMAT_Y8U8V8A8:
+   case VDP_YCBCR_FORMAT_V8U8Y8A8:
+      *is_supported = surface_chroma_type == VDP_CHROMA_TYPE_444;
+      break;
+
+   default:
+      *is_supported = true;
+      break;
+   }
+
+   *is_supported &= pscreen->is_video_format_supported
    (
       pscreen,
       FormatYCBCRToPipe(bits_ycbcr_format),
