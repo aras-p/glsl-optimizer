@@ -337,9 +337,5 @@ intelBitmap(struct gl_context * ctx,
                           unpack, pixels))
       return;
 
-   /* FIXME */
-   if (intel->gen == 6)
-       return _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
-
    _mesa_meta_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }
