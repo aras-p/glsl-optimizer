@@ -292,7 +292,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
 
    for (i = 0; i < 3; ++i) {
       struct pipe_sampler_view *sv = sampler_views[i];
-      if (!sv) continue;
+      if (!sv || !source_pitches[i]) continue;
 
       for (j = 0; j < sv->texture->depth0; ++j) {
          struct pipe_box dst_box = {
