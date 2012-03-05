@@ -23,8 +23,7 @@
 #ifndef R600_RESOURCE_H
 #define R600_RESOURCE_H
 
-#include "util/u_transfer.h"
-#include "util/u_vbuf.h"
+#include "r600.h"
 
 /* flag to indicate a resource is to be used as a transfer so should not be tiled */
 #define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV

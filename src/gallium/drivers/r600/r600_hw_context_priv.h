@@ -27,8 +27,6 @@
 #define R600_PRIV_H
 
 #include "r600_pipe.h"
-#include "util/u_hash_table.h"
-#include "os/os_thread.h"
 
 #define R600_MAX_DRAW_CS_DWORDS 11
 

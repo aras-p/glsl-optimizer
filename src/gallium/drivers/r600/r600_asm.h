@@ -23,6 +23,8 @@
 #ifndef R600_ASM_H
 #define R600_ASM_H
 
+#include "r600.h"
+
 struct r600_vertex_element;
 struct r600_context;
 

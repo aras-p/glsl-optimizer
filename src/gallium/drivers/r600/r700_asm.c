@@ -20,9 +20,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <stdio.h>
-#include "util/u_memory.h"
-#include "r600_pipe.h"
 #include "r600_asm.h"
 #include "r700_sq.h"
 

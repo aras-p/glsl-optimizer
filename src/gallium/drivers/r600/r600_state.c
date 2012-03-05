@@ -20,28 +20,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "r600_formats.h"
+#include "r600d.h"
 
-#include <stdio.h>
-#include <errno.h>
-#include "pipe/p_defines.h"
-#include "pipe/p_state.h"
-#include "pipe/p_context.h"
-#include "tgsi/tgsi_scan.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_util.h"
-#include "util/u_double_list.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_pack_color.h"
 #include "util/u_memory.h"
-#include "util/u_inlines.h"
 #include "util/u_framebuffer.h"
-#include "util/u_transfer.h"
-#include "pipebuffer/pb_buffer.h"
-#include "r600.h"
-#include "r600d.h"
-#include "r600_resource.h"
-#include "r600_shader.h"
-#include "r600_pipe.h"
-#include "r600_formats.h"
 
 static uint32_t r600_translate_blend_function(int blend_func)
 {

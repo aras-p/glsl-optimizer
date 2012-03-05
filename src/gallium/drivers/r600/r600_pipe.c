@@ -20,34 +20,17 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <stdio.h>
+#include "r600_pipe.h"
+#include "r600_public.h"
+
 #include <errno.h>
-#include "pipe/p_defines.h"
-#include "pipe/p_state.h"
-#include "pipe/p_context.h"
-#include "tgsi/tgsi_scan.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_util.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_blitter.h"
-#include "util/u_double_list.h"
-#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
-#include "util/u_transfer.h"
-#include "util/u_surface.h"
-#include "util/u_pack_color.h"
-#include "util/u_memory.h"
-#include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
-#include "util/u_upload_mgr.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "os/os_time.h"
-#include "pipebuffer/pb_buffer.h"
-#include "r600.h"
-#include "r600d.h"
-#include "r600_resource.h"
-#include "r600_shader.h"
-#include "r600_pipe.h"
 
 /*
  * pipe_context

@@ -26,16 +26,8 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
-#include "../../winsys/radeon/drm/radeon_winsys.h"
-
-#include "pipe/p_state.h"
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
-#include "util/u_math.h"
 #include "util/u_slab.h"
-#include "util/u_vbuf.h"
 #include "r600.h"
-#include "r600_public.h"
 #include "r600_shader.h"
 #include "r600_resource.h"
 

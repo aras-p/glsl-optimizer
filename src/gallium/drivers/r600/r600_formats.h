@@ -1,6 +1,7 @@
 #ifndef R600_FORMATS_H
 #define R600_FORMATS_H
 
+#include "util/u_format.h"
 #include "r600_pipe.h"
 
 /* list of formats from R700 ISA document - apply across GPUs in different registers */

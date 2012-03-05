@@ -20,19 +20,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "pipe/p_shader_tokens.h"
-#include "tgsi/tgsi_info.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_scan.h"
-#include "tgsi/tgsi_dump.h"
-#include "util/u_format.h"
-#include "r600_pipe.h"
-#include "r600_asm.h"
 #include "r600_sq.h"
 #include "r600_formats.h"
 #include "r600_opcodes.h"
 #include "r600d.h"
-#include <stdio.h>
+
+#include "tgsi/tgsi_info.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_dump.h"
 #include <errno.h>
 #include <byteswap.h>
 

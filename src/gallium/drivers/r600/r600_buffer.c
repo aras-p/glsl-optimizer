@@ -24,17 +24,9 @@
  *      Jerome Glisse
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
-#include <byteswap.h>
-
-#include "pipe/p_screen.h"
-#include "util/u_format.h"
-#include "util/u_math.h"
-#include "util/u_inlines.h"
-#include "util/u_memory.h"
-#include "util/u_upload_mgr.h"
-
-#include "r600.h"
 #include "r600_pipe.h"
+#include <byteswap.h>
+#include "util/u_upload_mgr.h"
 
 static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)

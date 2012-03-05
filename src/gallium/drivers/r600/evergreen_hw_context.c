@@ -23,12 +23,9 @@
  * Authors:
  *      Jerome Glisse
  */
-#include "r600.h"
 #include "r600_hw_context_priv.h"
-#include "r600_pipe.h"
 #include "evergreend.h"
 #include "util/u_memory.h"
-#include <errno.h>
 
 static const struct r600_reg evergreen_config_reg_list[] = {
 	{R_008958_VGT_PRIMITIVE_TYPE, 0},

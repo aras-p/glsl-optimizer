@@ -24,18 +24,12 @@
  *      Jerome Glisse
  *      Corbin Simpson
  */
-#include <errno.h>
-#include "pipe/p_screen.h"
-#include "util/u_format.h"
-#include "util/u_format_s3tc.h"
-#include "util/u_math.h"
-#include "util/u_inlines.h"
-#include "util/u_memory.h"
-#include "pipebuffer/pb_buffer.h"
-#include "r600_pipe.h"
-#include "r600_resource.h"
-#include "r600d.h"
 #include "r600_formats.h"
+#include "r600d.h"
+
+#include <errno.h>
+#include "util/u_format_s3tc.h"
+#include "util/u_memory.h"
 
 /* Copy from a full GPU texture to a transfer's staging one. */
 static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)

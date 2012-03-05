@@ -24,15 +24,11 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  *          Jerome Glisse <jglisse@redhat.com>
  */
-#include "util/u_blitter.h"
-#include "util/u_memory.h"
-#include "util/u_format.h"
-#include "pipebuffer/pb_buffer.h"
-#include "pipe/p_shader_tokens.h"
-#include "tgsi/tgsi_parse.h"
 #include "r600_formats.h"
-#include "r600_pipe.h"
 #include "r600d.h"
+
+#include "util/u_blitter.h"
+#include "tgsi/tgsi_parse.h"
 
 static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
 {
