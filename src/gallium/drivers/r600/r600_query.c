@@ -23,7 +23,6 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 #include "util/u_memory.h"
-#include "r600_hw_context_priv.h"
 
 static bool r600_is_timer_query(unsigned type)
 {

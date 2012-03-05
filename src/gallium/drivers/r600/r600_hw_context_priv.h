@@ -69,12 +69,4 @@ void r600_context_ps_partial_flush(struct r600_context *ctx);
 void evergreen_flush_vgt_streamout(struct r600_context *ctx);
 void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit);
 
-
-static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
-					     enum radeon_bo_usage usage)
-{
-	assert(usage);
-	return ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains) * 4;
-}
-
 #endif

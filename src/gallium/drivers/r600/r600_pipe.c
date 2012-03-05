@@ -48,7 +48,6 @@
 #include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
-#include "r600_hw_context_priv.h"
 
 /*
  * pipe_context

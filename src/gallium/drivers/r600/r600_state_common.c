@@ -33,7 +33,6 @@
 #include "r600_formats.h"
 #include "r600_pipe.h"
 #include "r600d.h"
-#include "r600_hw_context_priv.h"
 
 static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
 {

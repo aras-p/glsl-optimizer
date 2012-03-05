@@ -634,6 +634,13 @@ void r600_release_command_buffer(struct r600_command_buffer *cb);
  * Helpers for emitting state into a command stream directly.
  */
 
+static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
+					     enum radeon_bo_usage usage)
+{
+	assert(usage);
+	return ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains) * 4;
+}
+
 static INLINE void r600_write_value(struct radeon_winsys_cs *cs, unsigned value)
 {
 	cs->buf[cs->cdw++] = value;
