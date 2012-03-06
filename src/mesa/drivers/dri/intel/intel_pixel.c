@@ -159,11 +159,9 @@ void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
    functions->Accum = _mesa_accum;
-   if (!getenv("INTEL_NO_BLIT")) {
-      functions->Bitmap = intelBitmap;
-      functions->CopyPixels = intelCopyPixels;
-      functions->DrawPixels = intelDrawPixels;
-   }
+   functions->Bitmap = intelBitmap;
+   functions->CopyPixels = intelCopyPixels;
+   functions->DrawPixels = intelDrawPixels;
    functions->ReadPixels = intelReadPixels;
 }
 
