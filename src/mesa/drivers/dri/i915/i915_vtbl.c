@@ -665,12 +665,11 @@ i915_set_draw_region(struct intel_context *intel,
 
    draw_offset = (draw_y << 16) | draw_x;
 
+   FALLBACK(intel, I915_FALLBACK_DRAW_OFFSET,
+            (ctx->DrawBuffer->Width + draw_x > 2048) ||
+            (ctx->DrawBuffer->Height + draw_y > 2048));
    /* When changing drawing rectangle offset, an MI_FLUSH is first required. */
    if (draw_offset != i915->last_draw_offset) {
-      FALLBACK(intel, I915_FALLBACK_DRAW_OFFSET,
-               (ctx->DrawBuffer->Width + draw_x > 2048) ||
-               (ctx->DrawBuffer->Height + draw_y > 2048));
-
       state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE;
       i915->last_draw_offset = draw_offset;
    } else
