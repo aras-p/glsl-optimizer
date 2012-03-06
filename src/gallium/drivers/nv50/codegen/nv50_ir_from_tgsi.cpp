@@ -334,6 +334,10 @@ static nv50_ir::SVSemantic translateSysVal(uint sysval)
    case TGSI_SEMANTIC_PRIMID:     return nv50_ir::SV_PRIMITIVE_ID;
    case TGSI_SEMANTIC_INSTANCEID: return nv50_ir::SV_INSTANCE_ID;
    case TGSI_SEMANTIC_VERTEXID:   return nv50_ir::SV_VERTEX_ID;
+   case TGSI_SEMANTIC_GRID_SIZE:  return nv50_ir::SV_NCTAID;
+   case TGSI_SEMANTIC_BLOCK_ID:   return nv50_ir::SV_CTAID;
+   case TGSI_SEMANTIC_BLOCK_SIZE: return nv50_ir::SV_NTID;
+   case TGSI_SEMANTIC_THREAD_ID:  return nv50_ir::SV_TID;
    default:
       assert(0);
       return nv50_ir::SV_CLOCK;
