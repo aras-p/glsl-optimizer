@@ -627,7 +627,7 @@ intelInitContext(struct intel_context *intel,
 
    intel->has_separate_stencil = intel->intelScreen->hw_has_separate_stencil;
    intel->must_use_separate_stencil = intel->intelScreen->hw_must_use_separate_stencil;
-   intel->has_hiz = intel->intelScreen->hw_has_hiz;
+   intel->has_hiz = intel->gen >= 6;
    intel->has_llc = intel->intelScreen->hw_has_llc;
    intel->has_swizzling = intel->intelScreen->hw_has_swizzling;
 
@@ -739,6 +739,13 @@ intelInitContext(struct intel_context *intel,
    intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
 					       "texture_tiling");
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
+
+   if (!driQueryOptionb(&intel->optionCache, "hiz")) {
+       intel->has_hiz = false;
+       /* On gen6, you can only do separate stencil with HIZ. */
+       if (intel->gen == 6)
+	  intel->has_separate_stencil = false;
+   }
 
    intel->prim.primitive = ~0;
 

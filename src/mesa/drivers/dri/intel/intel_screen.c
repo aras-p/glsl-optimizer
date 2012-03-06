@@ -57,6 +57,10 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Enable texture tiling")
       DRI_CONF_OPT_END
 
+      DRI_CONF_OPT_BEGIN(hiz, bool, true)
+	 DRI_CONF_DESC(en, "Enable Hierarchical Z on gen6+")
+      DRI_CONF_OPT_END
+
       DRI_CONF_OPT_BEGIN(early_z, bool, false)
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
       DRI_CONF_OPT_END
@@ -86,7 +90,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 13;
+const GLuint __driNConfigOptions = 14;
 
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
@@ -620,29 +624,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
 }
 
 /**
- * Override intel_screen.hw_has_hiz with environment variable INTEL_HIZ.
- *
- * Valid values for INTEL_HIZ are "0" and "1". If an invalid valid value is
- * encountered, a warning is emitted and INTEL_HIZ is ignored.
- */
-static void
-intel_override_hiz(struct intel_screen *intel)
-{
-   const char *s = getenv("INTEL_HIZ");
-   if (!s) {
-      return;
-   } else if (!strncmp("0", s, 2)) {
-      intel->hw_has_hiz = false;
-   } else if (!strncmp("1", s, 2)) {
-      intel->hw_has_hiz = true;
-   } else {
-      fprintf(stderr,
-	      "warning: env variable INTEL_HIZ=\"%s\" has invalid value "
-	      "and is ignored", s);
-   }
-}
-
-/**
  * Override intel_screen.hw_has_separate_stencil with environment variable
  * INTEL_SEPARATE_STENCIL.
  *
@@ -761,7 +742,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-   intelScreen->hw_has_hiz = intelScreen->gen >= 6;
    intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
 
 #if defined(I915_PARAM_HAS_LLC)
@@ -772,7 +752,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->hw_has_llc = intelScreen->gen >= 6;
 #endif
 
-   intel_override_hiz(intelScreen);
    intel_override_separate_stencil(intelScreen);
 
    api_mask = (1 << __DRI_API_OPENGL);
