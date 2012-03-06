@@ -1999,6 +1999,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-drm/Makefile
 		src/glx/Makefile
 		src/mapi/shared-glapi/Makefile
+		src/gtest/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile
