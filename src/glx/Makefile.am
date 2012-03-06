@@ -55,7 +55,9 @@ lib_LTLIBRARIES = \
 	$(NORMAL_GL_LIB) \
 	$(MANGLED_GL_LIB)
 
-GL_FILES = \
+noinst_LTLIBRARIES = libglx.la
+
+libglx_la_SOURCES = \
 	  clientattrib.c \
 	  clientinfo.c \
 	  compsize.c \
@@ -96,6 +98,7 @@ GL_FILES = \
 	  applegl_glx.c
 
 GL_LIBS = \
+	libglx.la \
 	$(SHARED_GLAPI_LIBS) \
 	$(GLAPI_LIB) \
 	$(GL_LIB_DEPS)
@@ -104,8 +107,8 @@ GL_LDFLAGS = \
 	-Wl,-Bsymbolic \
 	-version-number 1:2 -no-undefined
 
-libGL_la_SOURCES = $(GL_FILES)
-libMangledGL_la_SOURCES = $(GL_FILES)
+libGL_la_SOURCES =
+libMangledGL_la_SOURCES =
 libGL_la_LIBADD = $(GL_LIBS)
 libMangledGL_la_LIBADD = $(GL_LIBS)
 libGL_la_LDFLAGS = $(GL_LDFLAGS)

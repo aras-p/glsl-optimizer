@@ -1,1 +1,4 @@
 Makefile
+Makefile.in
+libGL.la
+libglx.la

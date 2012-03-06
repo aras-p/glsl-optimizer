@@ -82,18 +82,6 @@ solaris*)
     ;;
 esac
 
-AC_PATH_PROG([GTESTCONFIG], [gtest-config])
-if test "x$GTESTCONFIG" != "x"; then
-    GTEST_CFLAGS=`gtest-config --cppflags --cxxflags`
-    GTEST_LIBS=`gtest-config --ldflags --libs`
-    AC_SUBST([GTEST_CFLAGS])
-    AC_SUBST([GTEST_LIBS])
-    HAVE_GTEST=yes
-else
-    HAVE_GTEST=no
-fi
-AM_CONDITIONAL(HAVE_GTEST, test x$HAVE_GTEST = xyes)
-
 dnl clang is mostly GCC-compatible, but its version is much lower,
 dnl so we have to check for it.
 AC_MSG_CHECKING([if compiling with clang])
@@ -794,7 +782,7 @@ dnl
 dnl this variable will be prepended to SRC_DIRS and is not exported
 CORE_DIRS=""
 
-SRC_DIRS=""
+SRC_DIRS="gtest"
 GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
