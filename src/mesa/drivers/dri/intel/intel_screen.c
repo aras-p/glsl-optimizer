@@ -129,6 +129,38 @@ intelDRI2Flush(__DRIdrawable *drawable)
 
    if (intel->batch.used)
       intel_batchbuffer_flush(intel);
+
+   if (INTEL_DEBUG & DEBUG_AUB) {
+      struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+      for (int i = 0; i < fb->_NumColorDrawBuffers; i++) {
+	 struct intel_renderbuffer *irb =
+	    intel_renderbuffer(fb->_ColorDrawBuffers[i]);
+
+	 if (irb && irb->mt) {
+	    enum aub_dump_bmp_format format;
+
+	    switch (irb->Base.Base.Format) {
+	    case MESA_FORMAT_ARGB8888:
+	    case MESA_FORMAT_XRGB8888:
+	       format = AUB_DUMP_BMP_FORMAT_ARGB_8888;
+	       break;
+	    default:
+	       continue;
+	    }
+
+	    drm_intel_gem_bo_aub_dump_bmp(irb->mt->region->bo,
+					  irb->draw_x,
+					  irb->draw_y,
+					  irb->Base.Base.Width,
+					  irb->Base.Base.Height,
+					  format,
+					  irb->mt->region->pitch *
+					  irb->mt->region->cpp,
+					  0);
+	 }
+      }
+   }
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {

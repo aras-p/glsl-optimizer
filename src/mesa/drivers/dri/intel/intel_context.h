@@ -466,6 +466,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_URB       0x800000
 #define DEBUG_VS        0x1000000
 #define DEBUG_CLIP      0x2000000
+#define DEBUG_AUB       0x4000000
 
 #define DBG(...) do {						\
 	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
