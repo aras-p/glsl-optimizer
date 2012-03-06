@@ -243,7 +243,18 @@ lp_disassemble(const void* func)
    int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
 #endif
 
-#if HAVE_LLVM >= 0x0300
+#if HAVE_LLVM >= 0x0301
+   OwningPtr<const MCRegisterInfo> MRI(T->createMCRegInfo(Triple));
+   if (!MRI) {
+      debug_printf("error: no register info for target %s\n", Triple.c_str());
+      return;
+   }
+#endif
+
+#if HAVE_LLVM >= 0x0301
+   OwningPtr<MCInstPrinter> Printer(
+         T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *MRI, *STI));
+#elif HAVE_LLVM == 0x0300
    OwningPtr<MCInstPrinter> Printer(
          T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *STI));
 #elif HAVE_LLVM >= 0x0208
