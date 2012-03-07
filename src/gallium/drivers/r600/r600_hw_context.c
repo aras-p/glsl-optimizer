@@ -423,6 +423,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028E74_PA_CL_UCP5_Y, 0, 0},
 	{R_028E78_PA_CL_UCP5_Z, 0, 0},
 	{R_028E7C_PA_CL_UCP5_W, 0, 0},
+	{R_028350_SX_MISC, 0, 0},
 	{R_028380_SQ_VTX_SEMANTIC_0, 0, 0},
 	{R_028384_SQ_VTX_SEMANTIC_1, 0, 0},
 	{R_028388_SQ_VTX_SEMANTIC_2, 0, 0},
@@ -1236,6 +1237,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* partial flush is needed to avoid lockups on some chips with user fences */
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+
+	/* old kernels and userspace don't set SX_MISC, so we must reset it to 0 here */
+	if (ctx->chip_class <= R700) {
+		r600_write_context_reg(cs, R_028350_SX_MISC, 0);
+	}
 
 	/* force to keep tiling flags */
 	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;

@@ -903,6 +903,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 				S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 				S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)),
 				NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, S_028350_MULTIPASS(state->rasterizer_discard), NULL, 0);
 	return rstate;
 }
 

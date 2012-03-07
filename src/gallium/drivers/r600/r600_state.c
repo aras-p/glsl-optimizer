@@ -908,8 +908,8 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,
 				S_028814_PROVOKING_VTX_LAST(prov_vtx) |
-				S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-				S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+				S_028814_CULL_FRONT(state->cull_face & PIPE_FACE_FRONT ? 1 : 0) |
+				S_028814_CULL_BACK(state->cull_face & PIPE_FACE_BACK ? 1 : 0) |
 				S_028814_FACE(!state->front_ccw) |
 				S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 				S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
@@ -918,6 +918,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 				S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 				S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)),
 				NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028350_SX_MISC, S_028350_MULTIPASS(state->rasterizer_discard), NULL, 0);
 	return rstate;
 }
 
@@ -1989,8 +1990,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, tmp); /* R_008C14_SQ_STACK_RESOURCE_MGMT_2 */
 
 	r600_store_config_reg(cb, R_009714_VC_ENHANCE, 0);
-
-	r600_store_context_reg(cb, R_028350_SX_MISC, 0);
 
 	if (rctx->chip_class >= R700) {
 		r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0x00004000);
