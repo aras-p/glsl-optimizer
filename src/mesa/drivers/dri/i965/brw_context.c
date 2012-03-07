@@ -305,6 +305,12 @@ brwCreateContext(int api,
 	 brw->urb.size = 256;
 	 brw->urb.max_vs_entries = 1664;
 	 brw->urb.max_gs_entries = 640;
+      } else if (intel->gt == 3) {
+	 brw->max_wm_threads = 408;
+	 brw->max_vs_threads = 280;
+	 brw->urb.size = 512;
+	 brw->urb.max_vs_entries = 1664;
+	 brw->urb.max_gs_entries = 640;
       }
    } else if (intel->gen == 7) {
       if (intel->gt == 1) {
