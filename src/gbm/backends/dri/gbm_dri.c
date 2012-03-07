@@ -54,11 +54,11 @@ dri_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
    return dri->lookup_image(screen, image, dri->lookup_user_data);
 }
 
-const __DRIuseInvalidateExtension use_invalidate = {
+static const __DRIuseInvalidateExtension use_invalidate = {
    { __DRI_USE_INVALIDATE, 1 }
 };
 
-const __DRIimageLookupExtension image_lookup_extension = {
+static const __DRIimageLookupExtension image_lookup_extension = {
    { __DRI_IMAGE_LOOKUP, 1 },
    dri_lookup_egl_image
 };
