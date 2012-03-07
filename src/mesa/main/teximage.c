@@ -2421,7 +2421,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
 
 /**
  * Adjust pixel unpack params and image dimensions to strip off the
- * texture border.
+ * one-pixel texture border.
  *
  * Gallium and intel don't support texture borders.  They've seldem been used
  * and seldom been implemented correctly anyway.
@@ -2429,34 +2429,37 @@ _mesa_choose_texture_format(struct gl_context *ctx,
  * \param unpackNew returns the new pixel unpack parameters
  */
 static void
-strip_texture_border(GLint *border,
+strip_texture_border(GLenum target,
                      GLint *width, GLint *height, GLint *depth,
                      const struct gl_pixelstore_attrib *unpack,
                      struct gl_pixelstore_attrib *unpackNew)
 {
-   assert(*border > 0);  /* sanity check */
+   assert(width);
+   assert(height);
+   assert(depth);
 
    *unpackNew = *unpack;
 
    if (unpackNew->RowLength == 0)
       unpackNew->RowLength = *width;
 
-   if (depth && unpackNew->ImageHeight == 0)
+   if (unpackNew->ImageHeight == 0)
       unpackNew->ImageHeight = *height;
 
-   unpackNew->SkipPixels += *border;
-   if (height)
-      unpackNew->SkipRows += *border;
-   if (depth)
-      unpackNew->SkipImages += *border;
-
    assert(*width >= 3);
-   *width = *width - 2 * *border;
-   if (height && *height >= 3)
-      *height = *height - 2 * *border;
-   if (depth && *depth >= 3)
-      *depth = *depth - 2 * *border;
-   *border = 0;
+   unpackNew->SkipPixels++;  /* skip the border */
+   *width = *width - 2;      /* reduce the width by two border pixels */
+
+   /* The min height of a texture with a border is 3 */
+   if (*height >= 3 && target != GL_TEXTURE_1D_ARRAY) {
+      unpackNew->SkipRows++;  /* skip the border */
+      *height = *height - 2;  /* reduce the height by two border pixels */
+   }
+
+   if (*depth >= 3 && target != GL_TEXTURE_2D_ARRAY) {
+      unpackNew->SkipImages++;  /* skip the border */
+      *depth = *depth - 2;      /* reduce the depth by two border pixels */
+   }
 }
 
 /**
@@ -2541,8 +2544,9 @@ teximage(struct gl_context *ctx, GLuint dims,
        * rarely-tested software fallback rendering.
        */
       if (border && ctx->Const.StripTextureBorder) {
-	 strip_texture_border(&border, &width, &height, &depth, unpack,
+	 strip_texture_border(target, &width, &height, &depth, unpack,
 			      &unpack_no_border);
+         border = 0;
 	 unpack = &unpack_no_border;
       }
 
