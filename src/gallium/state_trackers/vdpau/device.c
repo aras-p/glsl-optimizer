@@ -292,8 +292,8 @@ vlVdpResolveDelayedRendering(vlVdpDevice *dev, struct pipe_surface *surface, str
       struct pipe_sampler_view sv_templ;
 
       vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
-      pipe_sampler_view_reference(&vlsurface->sampler_view,
-         dev->context->create_sampler_view(dev->context, res, &sv_templ));
+      pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+      vlsurface->sampler_view = dev->context->create_sampler_view(dev->context, res, &sv_templ);
    }
 
    return;

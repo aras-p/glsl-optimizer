@@ -133,16 +133,20 @@ VdpStatus
 vlVdpOutputSurfaceDestroy(VdpOutputSurface surface)
 {
    vlVdpOutputSurface *vlsurface;
+   struct pipe_context *pipe;
 
    vlsurface = vlGetDataHTAB(surface);
    if (!vlsurface)
       return VDP_STATUS_INVALID_HANDLE;
+
+   pipe = vlsurface->device->context;
 
    pipe_mutex_lock(vlsurface->device->mutex);
    vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
 
    pipe_surface_reference(&vlsurface->surface, NULL);
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+   pipe->screen->fence_reference(pipe->screen, &vlsurface->fence, NULL);
    vl_compositor_cleanup_state(&vlsurface->cstate);
    pipe_mutex_unlock(vlsurface->device->mutex);
 
