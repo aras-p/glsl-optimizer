@@ -22,6 +22,7 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_framebuffer.h"
 
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
@@ -56,6 +57,8 @@ nvc0_context_unreference_resources(struct nvc0_context *nvc0)
 
    nouveau_bufctx_del(&nvc0->bufctx_3d);
    nouveau_bufctx_del(&nvc0->bufctx);
+
+   util_unreference_framebuffer_state(&nvc0->framebuffer);
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i)
       pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);

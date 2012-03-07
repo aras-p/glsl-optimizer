@@ -22,6 +22,7 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_framebuffer.h"
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
@@ -70,6 +71,8 @@ nv50_context_unreference_resources(struct nv50_context *nv50)
 
    nouveau_bufctx_del(&nv50->bufctx_3d);
    nouveau_bufctx_del(&nv50->bufctx);
+
+   util_unreference_framebuffer_state(&nv50->framebuffer);
 
    for (i = 0; i < nv50->num_vtxbufs; ++i)
       pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
