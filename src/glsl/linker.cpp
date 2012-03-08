@@ -2175,7 +2175,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * of all shaders must match.
     */
    assert(min_version >= 100);
-   assert(max_version <= 130);
+   assert(max_version <= 140);
    if ((max_version >= 130 || min_version == 100)
        && min_version != max_version) {
       linker_error(prog, "all shaders must use same shading "

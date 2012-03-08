@@ -257,6 +257,9 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    case 130:
       glsl_type::generate_130_types(state->symbols);
       break;
+   case 140:
+      glsl_type::generate_130_types(state->symbols);
+      break;
    default:
       /* error */
       break;

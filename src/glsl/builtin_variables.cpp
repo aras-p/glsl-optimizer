@@ -759,6 +759,9 @@ initialize_vs_variables(exec_list *instructions,
    case 130:
       generate_130_vs_variables(instructions, state);
       break;
+   case 140:
+      generate_130_vs_variables(instructions, state);
+      break;
    }
 
    if (state->ARB_draw_instanced_enable)
@@ -983,6 +986,9 @@ initialize_fs_variables(exec_list *instructions,
       generate_120_fs_variables(instructions, state);
       break;
    case 130:
+      generate_130_fs_variables(instructions, state);
+      break;
+   case 140:
       generate_130_fs_variables(instructions, state);
       break;
    }
