@@ -171,11 +171,13 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
 {
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
 
-   struct winsys_handle dri2_front_handle;
+   struct winsys_handle dri2_handle;
    struct pipe_resource template, *tex;
 
    xcb_dri2_get_buffers_reply_t *reply;
-   xcb_dri2_dri2_buffer_t *buffers;
+   xcb_dri2_dri2_buffer_t *buffers, *back_left;
+
+   unsigned i;
 
    assert(scrn);
 
@@ -189,9 +191,20 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    if (!reply)
       return NULL;
 
-   assert(reply->count == 1);
    buffers = xcb_dri2_get_buffers_buffers(reply);
    if (!buffers)  {
+      free(reply);
+      return NULL;
+   }
+
+   for (i = 0; i < reply->count; ++i) {
+      if (buffers[i].attachment == XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT) {
+         back_left = &buffers[i];
+         break;
+      }
+   }
+
+   if (i == reply->count) {
       free(reply);
       return NULL;
    }
@@ -202,15 +215,15 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
       scrn->width = reply->width;
       scrn->height = reply->height;
 
-   } else if (buffers[0].name != scrn->buffer_names[scrn->current_buffer]) {
+   } else if (back_left->name != scrn->buffer_names[scrn->current_buffer]) {
       vl_compositor_reset_dirty_area(&scrn->dirty_areas[scrn->current_buffer]);
-      scrn->buffer_names[scrn->current_buffer] = buffers[0].name;
+      scrn->buffer_names[scrn->current_buffer] = back_left->name;
    }
 
-   memset(&dri2_front_handle, 0, sizeof(dri2_front_handle));
-   dri2_front_handle.type = DRM_API_HANDLE_TYPE_SHARED;
-   dri2_front_handle.handle = buffers[0].name;
-   dri2_front_handle.stride = buffers[0].pitch;
+   memset(&dri2_handle, 0, sizeof(dri2_handle));
+   dri2_handle.type = DRM_API_HANDLE_TYPE_SHARED;
+   dri2_handle.handle = back_left->name;
+   dri2_handle.stride = back_left->pitch;
 
    memset(&template, 0, sizeof(template));
    template.target = PIPE_TEXTURE_2D;
@@ -224,7 +237,7 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    template.bind = PIPE_BIND_RENDER_TARGET;
    template.flags = 0;
 
-   tex = scrn->base.pscreen->resource_from_handle(scrn->base.pscreen, &template, &dri2_front_handle);
+   tex = scrn->base.pscreen->resource_from_handle(scrn->base.pscreen, &template, &dri2_handle);
    free(reply);
 
    return tex;
