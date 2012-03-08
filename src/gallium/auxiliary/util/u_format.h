@@ -54,7 +54,7 @@ enum util_format_layout {
    /**
     * Formats with sub-sampled channels.
     *
-    * This is for formats like YV12 where there is less than one sample per
+    * This is for formats like YVYU where there is less than one sample per
     * pixel.
     */
    UTIL_FORMAT_LAYOUT_SUBSAMPLED = 3,
