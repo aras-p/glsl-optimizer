@@ -62,12 +62,15 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     so->instance_bufs = 0;
     so->need_conversion = FALSE;
 
+    memset(so->vb_access_size, 0, sizeof(so->vb_access_size));
+
     transkey.nr_elements = 0;
     transkey.output_stride = 0;
 
     for (i = 0; i < num_elements; ++i) {
         const struct pipe_vertex_element *ve = &elements[i];
         const unsigned vbi = ve->vertex_buffer_index;
+        unsigned size;
         enum pipe_format fmt = ve->src_format;
 
         so->element[i].pipe = elements[i];
@@ -86,6 +89,10 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
             so->element[i].state = nvc0_format_table[fmt].vtx;
             so->need_conversion = TRUE;
         }
+        size = util_format_get_blocksize(fmt);
+
+        if (so->vb_access_size[vbi] < (ve->src_offset + size))
+           so->vb_access_size[vbi] = ve->src_offset + size;
 
         if (unlikely(ve->instance_divisor)) {
            so->instance_elts |= 1 << i;
@@ -109,7 +116,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
             transkey.output_stride = align(transkey.output_stride, ca);
             transkey.element[j].output_format = fmt;
             transkey.element[j].output_offset = transkey.output_stride;
-            transkey.output_stride += util_format_get_blocksize(fmt);
+            transkey.output_stride += size;
 
             so->element[i].state_alt = so->element[i].state;
             so->element[i].state_alt |= transkey.element[j].output_offset << 7;
@@ -185,10 +192,11 @@ nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
       *base = 0;
       *size = nvc0->vtxbuf[vbi].buffer->width0;
    } else {
-      assert(nvc0->vbo_max_index != ~0);
-      *base = nvc0->vbo_min_index * nvc0->vtxbuf[vbi].stride;
-      *size = (nvc0->vbo_max_index -
-               nvc0->vbo_min_index + 1) * nvc0->vtxbuf[vbi].stride;
+      /* NOTE: if there are user buffers, we *must* have index bounds */
+      assert(nvc0->vb_elt_limit != ~0);
+      *base = nvc0->vb_elt_first * nvc0->vtxbuf[vbi].stride;
+      *size = nvc0->vb_elt_limit * nvc0->vtxbuf[vbi].stride +
+         nvc0->vertex->vb_access_size[vbi];
    }
 }
 
@@ -196,7 +204,7 @@ nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
  * and validate vertex buffers and upload user arrays (if normal mode).
  */
 static uint8_t
-nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
+nvc0_prevalidate_vbufs(struct nvc0_context *nvc0, unsigned limits[])
 {
    const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
    struct nouveau_bo *bo;
@@ -211,6 +219,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       vb = &nvc0->vtxbuf[i];
+      limits[i] = 0;
       if (!vb->stride)
          continue;
       buf = nv04_resource(vb->buffer);
@@ -224,6 +233,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
             assert(vb->stride > vb->buffer_offset);
             nvc0->vbo_user |= 1 << i;
             nvc0_vbuf_range(nvc0, i, &base, &size);
+            limits[i] = base + size - 1;
             bo = nouveau_scratch_data(&nvc0->base, buf, base, size);
             if (bo)
                BCTX_REFN_bo(nvc0->bufctx_3d, VTX_TMP, bo_flags, bo);
@@ -295,6 +305,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_element *ve;
    uint32_t const_vbos;
    unsigned i;
+   unsigned limits[PIPE_MAX_ATTRIBS];
    uint8_t vbo_mode;
    boolean update_vertex;
 
@@ -303,7 +314,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       nvc0->vbo_user = 0;
       vbo_mode = 3;
    } else {
-      vbo_mode = nvc0_prevalidate_vbufs(nvc0);
+      vbo_mode = nvc0_prevalidate_vbufs(nvc0, limits);
    }
    const_vbos = vbo_mode ? 0 : nvc0->constant_vbos;
 
@@ -378,7 +389,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    PUSH_SPACE(push, vertex->num_elements * 8);
    for (i = 0; i < vertex->num_elements; ++i) {
       struct nv04_resource *res;
-      unsigned size, offset;
+      unsigned limit, offset;
 
       if (nvc0->state.constant_elts & (1 << i))
          continue;
@@ -387,7 +398,9 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 
       res = nv04_resource(vb->buffer);
       offset = ve->pipe.src_offset + vb->buffer_offset;
-      size = vb->buffer->width0;
+      limit = limits[ve->pipe.vertex_buffer_index];
+      if (!limit)
+         limit = vb->buffer->width0 - 1;
 
       if (unlikely(ve->pipe.instance_divisor)) {
          BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 4);
@@ -402,8 +415,8 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
          PUSH_DATA (push, res->address + offset);
       }
       BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_LIMIT_HIGH(i)), 2);
-      PUSH_DATAh(push, res->address + size - 1);
-      PUSH_DATA (push, res->address + size - 1);
+      PUSH_DATAh(push, res->address + limit);
+      PUSH_DATA (push, res->address + limit);
    }
 }
 
@@ -699,15 +712,15 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
 
+   /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
+   nvc0->vb_elt_first = info->min_index + info->index_bias;
+   nvc0->vb_elt_limit = info->max_index - info->min_index;
+
    /* For picking only a few vertices from a large user buffer, push is better,
     * if index count is larger and we expect repeated vertices, suggest upload.
     */
    nvc0->vbo_push_hint =
-      info->indexed &&
-      (info->max_index - info->min_index) >= (info->count * 2);
-
-   nvc0->vbo_min_index = info->min_index;
-   nvc0->vbo_max_index = info->max_index;
+      info->indexed && (nvc0->vb_elt_limit >= (info->count * 2));
 
    /* Check whether we want to switch vertex-submission mode,
     * and if not, update user vbufs.

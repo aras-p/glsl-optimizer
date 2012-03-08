@@ -44,6 +44,7 @@ struct nv50_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
+   uint16_t vb_access_size[PIPE_MAX_ATTRIBS];
    boolean need_conversion;
    unsigned vertex_size;
    unsigned packet_vertex_limit;

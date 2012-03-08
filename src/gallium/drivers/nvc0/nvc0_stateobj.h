@@ -43,6 +43,7 @@ struct nvc0_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
+   uint16_t vb_access_size[PIPE_MAX_ATTRIBS];
    boolean need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
    unsigned size; /* size of vertex in bytes (when packed) */
    struct nvc0_vertex_element element[0];

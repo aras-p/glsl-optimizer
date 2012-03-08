@@ -60,12 +60,15 @@ nv50_vertex_state_create(struct pipe_context *pipe,
     so->instance_bufs = 0;
     so->need_conversion = FALSE;
 
+    memset(so->vb_access_size, 0, sizeof(so->vb_access_size));
+
     transkey.nr_elements = 0;
     transkey.output_stride = 0;
 
     for (i = 0; i < num_elements; ++i) {
         const struct pipe_vertex_element *ve = &elements[i];
         const unsigned vbi = ve->vertex_buffer_index;
+        unsigned size;
         enum pipe_format fmt = ve->src_format;
 
         so->element[i].pipe = elements[i];
@@ -85,6 +88,10 @@ nv50_vertex_state_create(struct pipe_context *pipe,
             so->need_conversion = TRUE;
         }
         so->element[i].state |= i;
+
+        size = util_format_get_blocksize(fmt);
+        if (so->vb_access_size[vbi] < (ve->src_offset + size))
+           so->vb_access_size[vbi] = ve->src_offset + size;
 
         if (1) {
             unsigned j = transkey.nr_elements++;
@@ -176,15 +183,16 @@ nv50_vbuf_range(struct nv50_context *nv50, int vbi,
       *base = 0;
       *size = nv50->vtxbuf[vbi].buffer->width0;
    } else {
-      assert(nv50->vbo_max_index != ~0);
-      *base = nv50->vbo_min_index * nv50->vtxbuf[vbi].stride;
-      *size = (nv50->vbo_max_index -
-               nv50->vbo_min_index + 1) * nv50->vtxbuf[vbi].stride;
+      /* NOTE: if there are user buffers, we *must* have index bounds */
+      assert(nv50->vb_elt_limit != ~0);
+      *base = nv50->vb_elt_first * nv50->vtxbuf[vbi].stride;
+      *size = nv50->vb_elt_limit * nv50->vtxbuf[vbi].stride +
+         nv50->vertex->vb_access_size[vbi];
    }
 }
 
 static void
-nv50_prevalidate_vbufs(struct nv50_context *nv50)
+nv50_prevalidate_vbufs(struct nv50_context *nv50, unsigned limits[])
 {
    const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
    struct nouveau_bo *bo;
@@ -199,6 +207,7 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
 
    for (i = 0; i < nv50->num_vtxbufs; ++i) {
       vb = &nv50->vtxbuf[i];
+      limits[i] = 0;
       if (!vb->stride)
          continue;
       buf = nv04_resource(vb->buffer);
@@ -216,6 +225,7 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
             assert(vb->stride > vb->buffer_offset);
             nv50->vbo_user |= 1 << i;
             nv50_vbuf_range(nv50, i, &base, &size);
+            limits[i] = base + size - 1;
             bo = nouveau_scratch_data(&nv50->base, buf, base, size);
             if (bo)
                BCTX_REFN_bo(nv50->bufctx_3d, VERTEX_TMP, bo_flags, bo);
@@ -287,12 +297,13 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
    struct pipe_vertex_buffer *vb;
    struct nv50_vertex_element *ve;
    unsigned i;
+   unsigned limits[PIPE_MAX_ATTRIBS]; /* user vertex buffer limits */
 
    if (unlikely(vertex->need_conversion)) {
       nv50->vbo_fifo = ~0;
       nv50->vbo_user = 0;
    } else {
-      nv50_prevalidate_vbufs(nv50);
+      nv50_prevalidate_vbufs(nv50, limits);
    }
 
    BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_ATTRIB(0)), vertex->num_elements);
@@ -310,7 +321,7 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
 
    for (i = 0; i < vertex->num_elements; ++i) {
       struct nv04_resource *res;
-      unsigned size, offset;
+      unsigned limit, offset;
       
       ve = &vertex->element[i];
       vb = &nv50->vtxbuf[ve->pipe.vertex_buffer_index];
@@ -338,14 +349,16 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
          continue;
       }
 
-      size = vb->buffer->width0;
       offset = ve->pipe.src_offset + vb->buffer_offset;
+      limit = limits[ve->pipe.vertex_buffer_index];
+      if (!limit)
+         limit = vb->buffer->width0 - 1;
 
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_FETCH(i)), 1);
       PUSH_DATA (push, NV50_3D_VERTEX_ARRAY_FETCH_ENABLE | vb->stride);
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_LIMIT_HIGH(i)), 2);
-      PUSH_DATAh(push, res->address + size - 1);
-      PUSH_DATA (push, res->address + size - 1);
+      PUSH_DATAh(push, res->address + limit);
+      PUSH_DATA (push, res->address + limit);
       BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_START_HIGH(i)), 2);
       PUSH_DATAh(push, res->address + offset);
       PUSH_DATA (push, res->address + offset);
@@ -626,15 +639,15 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
 
+   /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
+   nv50->vb_elt_first = info->min_index + info->index_bias;
+   nv50->vb_elt_limit = info->max_index - info->min_index;
+
    /* For picking only a few vertices from a large user buffer, push is better,
     * if index count is larger and we expect repeated vertices, suggest upload.
     */
    nv50->vbo_push_hint = /* the 64 is heuristic */
-      !(info->indexed &&
-        ((info->max_index - info->min_index + 64) < info->count));
-
-   nv50->vbo_min_index = info->min_index;
-   nv50->vbo_max_index = info->max_index;
+      !(info->indexed && ((nv50->vb_elt_limit + 64) < info->count));
 
    if (nv50->vbo_push_hint != !!nv50->vbo_fifo)
       nv50->dirty |= NV50_NEW_ARRAYS;

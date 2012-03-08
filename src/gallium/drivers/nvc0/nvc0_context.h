@@ -120,8 +120,8 @@ struct nvc0_context {
    struct pipe_index_buffer idxbuf;
    uint32_t constant_vbos;
    uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
-   unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
-   unsigned vbo_max_index;
+   uint32_t vb_elt_first; /* from pipe_draw_info, for vertex upload */
+   uint32_t vb_elt_limit; /* max - min element (count - 1) */
 
    struct pipe_sampler_view *textures[5][PIPE_MAX_SAMPLERS];
    unsigned num_textures[5];
