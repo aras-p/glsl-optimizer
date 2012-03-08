@@ -264,6 +264,9 @@ version_statement:
 	   case 130:
 	      supported = state->Const.GLSL_130;
 	      break;
+	   case 140:
+	      supported = state->Const.GLSL_140;
+	      break;
 	   default:
 	      supported = false;
 	      break;

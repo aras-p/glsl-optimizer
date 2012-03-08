@@ -94,6 +94,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
       && (ctx->Const.GLSLVersion >= 120);
    this->Const.GLSL_130 = (ctx->API == API_OPENGL)
       && (ctx->Const.GLSLVersion >= 130);
+   this->Const.GLSL_140 = (ctx->API == API_OPENGL)
+      && (ctx->Const.GLSLVersion >= 140);
 
    const unsigned lowest_version =
       (ctx->API == API_OPENGLES2) || ctx->Extensions.ARB_ES2_compatibility

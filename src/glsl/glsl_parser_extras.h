@@ -132,6 +132,7 @@ struct _mesa_glsl_parse_state {
       unsigned GLSL_110:1;
       unsigned GLSL_120:1;
       unsigned GLSL_130:1;
+      unsigned GLSL_140:1;
       /*@}*/
    } Const;
 
