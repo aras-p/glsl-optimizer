@@ -6,5 +6,11 @@
         <application executable="Tropics">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
+        <application executable="heaven_x86">
+            <option name="force_glsl_extensions_warn" value="true" />
+	</application>
+        <application executable="heaven_x64">
+            <option name="force_glsl_extensions_warn" value="true" />
+	</application>
     </device>
 </driconf>
