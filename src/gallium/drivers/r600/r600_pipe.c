@@ -389,6 +389,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_BARRIER:
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
+	case PIPE_CAP_TGSI_INSTANCEID:
 		return 1;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
@@ -405,7 +406,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
-	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 	case PIPE_CAP_SCALED_RESOLVE:
