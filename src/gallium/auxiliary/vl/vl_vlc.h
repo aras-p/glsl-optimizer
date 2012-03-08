@@ -271,7 +271,6 @@ vl_vlc_get_vlclbf(struct vl_vlc *vlc, const struct vl_vlc_entry *tbl, unsigned n
 {
    tbl += vl_vlc_peekbits(vlc, num_bits);
    vl_vlc_eatbits(vlc, tbl->length);
-   assert(tbl->length);
    return tbl->value;
 }
 

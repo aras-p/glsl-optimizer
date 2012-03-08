@@ -825,6 +825,8 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
       }
       inc += vl_vlc_get_vlclbf(&bs->vlc, tbl_B1, 11);
       if (x != -1) {
+         if (!inc)
+            return;
          mb.num_skipped_macroblocks = inc - 1;
          bs->decoder->decode_macroblock(bs->decoder, target, &bs->desc->base, &mb.base, 1);
       }
