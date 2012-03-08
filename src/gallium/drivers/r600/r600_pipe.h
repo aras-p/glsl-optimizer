@@ -78,12 +78,6 @@ struct r600_db_misc_state {
 	bool flush_depthstencil_enabled;
 };
 
-struct r600_eg_streamout_state {
-	struct r600_atom atom;
-	bool rasterizer_discard;
-	bool stream0_enable;
-};
-
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -151,7 +145,6 @@ struct r600_pipe_rasterizer {
 	float				offset_units;
 	float				offset_scale;
 	bool				scissor_enable;
-	bool				rasterizer_discard;
 };
 
 struct r600_pipe_blend {
@@ -293,7 +286,6 @@ struct r600_context {
 	struct r600_surface_sync_cmd	surface_sync_cmd;
 	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_db_misc_state	db_misc_state;
-	struct r600_eg_streamout_state	eg_streamout_state;
 
 	/* Below are variables from the old r600_context.
 	 */
@@ -388,7 +380,6 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_texture_target target,
 				      unsigned sample_count,
 				      unsigned usage);
-void evergreen_set_rasterizer_discard(struct pipe_context *ctx, boolean discard);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);
