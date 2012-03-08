@@ -459,11 +459,17 @@ static void
 nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
 {
    struct nvc0_context *ctx_from = ctx_to->screen->cur_ctx;
+   unsigned s;
 
    if (ctx_from)
       ctx_to->state = ctx_from->state;
 
    ctx_to->dirty = ~0;
+
+   for (s = 0; s < 5; ++s) {
+      ctx_to->samplers_dirty[s] = ~0;
+      ctx_to->textures_dirty[s] = ~0;
+   }
 
    if (!ctx_to->vertex)
       ctx_to->dirty &= ~(NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);

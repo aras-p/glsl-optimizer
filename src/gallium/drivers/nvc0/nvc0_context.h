@@ -52,19 +52,20 @@
 #define NVC0_NEW_TFB_TARGETS  (1 << 21)
 #define NVC0_NEW_IDXBUF       (1 << 22)
 
-#define NVC0_BIND_FB          0
-#define NVC0_BIND_VTX         1
-#define NVC0_BIND_VTX_TMP     2
-#define NVC0_BIND_IDX         3
-#define NVC0_BIND_TEX         4
-#define NVC0_BIND_CB(s, i)   (5 + 16 * (s) + (i))
-#define NVC0_BIND_TFB         85
-#define NVC0_BIND_SCREEN      86
-#define NVC0_BIND_TLS         87
-#define NVC0_BIND_COUNT       88
-#define NVC0_BIND_2D          0
-#define NVC0_BIND_M2MF        0
-#define NVC0_BIND_FENCE       1
+#define NVC0_BIND_FB            0
+#define NVC0_BIND_VTX           1
+#define NVC0_BIND_VTX_TMP       2
+#define NVC0_BIND_IDX           3
+#define NVC0_BIND_TEX(s, i)  (  4 + 32 * (s) + (i))
+#define NVC0_BIND_CB(s, i)   (164 + 16 * (s) + (i))
+#define NVC0_BIND_TFB         244
+#define NVC0_BIND_SCREEN      245
+#define NVC0_BIND_TLS         246
+#define NVC0_BIND_COUNT       247
+
+#define NVC0_BIND_2D            0
+#define NVC0_BIND_M2MF          0
+#define NVC0_BIND_FENCE         1
 
 struct nvc0_context {
    struct nouveau_context base;
@@ -121,8 +122,10 @@ struct nvc0_context {
 
    struct pipe_sampler_view *textures[5][PIPE_MAX_SAMPLERS];
    unsigned num_textures[5];
+   uint32_t textures_dirty[5];
    struct nv50_tsc_entry *samplers[5][PIPE_MAX_SAMPLERS];
    unsigned num_samplers[5];
+   uint16_t samplers_dirty[5];
 
    struct pipe_framebuffer_state framebuffer;
    struct pipe_blend_color blend_colour;

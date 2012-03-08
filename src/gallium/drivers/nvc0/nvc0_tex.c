@@ -206,18 +206,21 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 static boolean
 nvc0_validate_tic(struct nvc0_context *nvc0, int s)
 {
+   uint32_t commands[32];
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nouveau_bo *txc = nvc0->screen->txc;
    unsigned i;
+   unsigned n = 0;
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_textures[s]; ++i) {
       struct nv50_tic_entry *tic = nv50_tic_entry(nvc0->textures[s][i]);
       struct nv04_resource *res;
+      const boolean dirty = !!(nvc0->textures_dirty[s] & (1 << i));
 
       if (!tic) {
-         BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
-         PUSH_DATA (push, (i << 1) | 0);
+         if (dirty)
+            commands[n++] = (i << 1) | 0;
          continue;
       }
       res = nv04_resource(tic->pipe.texture);
@@ -248,16 +251,22 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       res->status |=  NOUVEAU_BUFFER_STATUS_GPU_READING;
 
-      BCTX_REFN(nvc0->bufctx_3d, TEX, res, RD);
+      if (!dirty)
+         continue;
+      commands[n++] = (tic->id << 9) | (i << 1) | 1;
 
-      BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
-      PUSH_DATA (push, (tic->id << 9) | (i << 1) | 1);
+      BCTX_REFN(nvc0->bufctx_3d, TEX(s, i), res, RD);
    }
-   for (; i < nvc0->state.num_textures[s]; ++i) {
-      BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
-      PUSH_DATA (push, (i << 1) | 0);
-   }
+   for (; i < nvc0->state.num_textures[s]; ++i)
+      commands[n++] = (i << 1) | 0;
+
    nvc0->state.num_textures[s] = nvc0->num_textures[s];
+
+   if (n) {
+      BEGIN_NIC0(push, NVC0_3D(BIND_TIC(s)), n);
+      PUSH_DATAp(push, commands, n);
+   }
+   nvc0->textures_dirty[s] = 0;
 
    return need_flush;
 }
@@ -279,16 +288,19 @@ void nvc0_validate_textures(struct nvc0_context *nvc0)
 static boolean
 nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
 {
+   uint32_t commands[16];
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    unsigned i;
+   unsigned n = 0;
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_samplers[s]; ++i) {
       struct nv50_tsc_entry *tsc = nv50_tsc_entry(nvc0->samplers[s][i]);
 
+      if (!(nvc0->samplers_dirty[s] & (1 << i)))
+         continue;
       if (!tsc) {
-         BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
-         PUSH_DATA (push, (i << 4) | 0);
+         commands[n++] = (i << 4) | 0;
          continue;
       }
       if (tsc->id < 0) {
@@ -301,14 +313,18 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
       }
       nvc0->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);
 
-      BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
-      PUSH_DATA (push, (tsc->id << 12) | (i << 4) | 1);
+      commands[n++] = (tsc->id << 12) | (i << 4) | 1;
    }
-   for (; i < nvc0->state.num_samplers[s]; ++i) {
-      BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
-      PUSH_DATA (push, (i << 4) | 0);
-   }
+   for (; i < nvc0->state.num_samplers[s]; ++i)
+      commands[n++] = (i << 4) | 0;
+
    nvc0->state.num_samplers[s] = nvc0->num_samplers[s];
+
+   if (n) {
+      BEGIN_NIC0(push, NVC0_3D(BIND_TSC(s)), n);
+      PUSH_DATAp(push, commands, n);
+   }
+   nvc0->samplers_dirty[s] = 0;
 
    return need_flush;
 }

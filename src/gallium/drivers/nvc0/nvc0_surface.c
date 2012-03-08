@@ -769,6 +769,8 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *blit, struct nvc0_context *nvc0)
    for (s = 0; s <= 4; ++s) {
       blit->saved.num_textures[s] = nvc0->num_textures[s];
       blit->saved.num_samplers[s] = nvc0->num_samplers[s];
+      nvc0->textures_dirty[s] = ~0;
+      nvc0->samplers_dirty[s] = ~0;
    }
    blit->saved.texture = nvc0->textures[4][0];
    blit->saved.sampler = nvc0->samplers[4][0];
@@ -811,6 +813,8 @@ nvc0_blitctx_post_blit(struct nvc0_context *nvc0, struct nvc0_blitctx *blit)
    for (s = 0; s <= 4; ++s) {
       nvc0->num_textures[s] = blit->saved.num_textures[s];
       nvc0->num_samplers[s] = blit->saved.num_samplers[s];
+      nvc0->textures_dirty[s] = ~0;
+      nvc0->samplers_dirty[s] = ~0;
    }
    nvc0->textures[4][0] = blit->saved.texture;
    nvc0->samplers[4][0] = blit->saved.sampler;

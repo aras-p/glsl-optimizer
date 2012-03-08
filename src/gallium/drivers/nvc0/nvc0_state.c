@@ -420,13 +420,20 @@ nvc0_stage_sampler_states_bind(struct nvc0_context *nvc0, int s,
    for (i = 0; i < nr; ++i) {
       struct nv50_tsc_entry *old = nvc0->samplers[s][i];
 
+      if (hwcso[i] == old)
+         continue;
+      nvc0->samplers_dirty[s] |= 1 << i;
+
       nvc0->samplers[s][i] = nv50_tsc_entry(hwcso[i]);
       if (old)
          nvc0_screen_tsc_unlock(nvc0->screen, old);
    }
-   for (; i < nvc0->num_samplers[s]; ++i)
-      if (nvc0->samplers[s][i])
+   for (; i < nvc0->num_samplers[s]; ++i) {
+      if (nvc0->samplers[s][i]) {
          nvc0_screen_tsc_unlock(nvc0->screen, nvc0->samplers[s][i]);
+         nvc0->samplers[s][i] = NULL;
+      }
+   }
 
    nvc0->num_samplers[s] = nr;
 
@@ -472,24 +479,29 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
 
    for (i = 0; i < nr; ++i) {
       struct nv50_tic_entry *old = nv50_tic_entry(nvc0->textures[s][i]);
-      if (old)
+
+      if (views[i] == nvc0->textures[s][i])
+         continue;
+      nvc0->textures_dirty[s] |= 1 << i;
+
+      if (old) {
+         nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX(s, i));
          nvc0_screen_tic_unlock(nvc0->screen, old);
+      }
 
       pipe_sampler_view_reference(&nvc0->textures[s][i], views[i]);
    }
 
    for (i = nr; i < nvc0->num_textures[s]; ++i) {
       struct nv50_tic_entry *old = nv50_tic_entry(nvc0->textures[s][i]);
-      if (!old)
-         continue;
-      nvc0_screen_tic_unlock(nvc0->screen, old);
-
-      pipe_sampler_view_reference(&nvc0->textures[s][i], NULL);
+      if (old) {
+         nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX(s, i));
+         nvc0_screen_tic_unlock(nvc0->screen, old);
+         pipe_sampler_view_reference(&nvc0->textures[s][i], NULL);
+      }
    }
 
    nvc0->num_textures[s] = nr;
-
-   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX);
 
    nvc0->dirty |= NVC0_NEW_TEXTURES;
 }
