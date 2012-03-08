@@ -864,15 +864,10 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0286D4_SPI_INTERP_CONTROL_0, tmp, NULL, 0);
 
 	/* point size 12.4 fixed point */
-	/* For rasterizer discard, disable point rendering by forcing the point size to be 0. */
-	tmp = state->rasterizer_discard ? 0 : r600_pack_float_12p4(state->point_size/2);
+	tmp = r600_pack_float_12p4(state->line_width/2);
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), NULL, 0);
 
-	if (state->rasterizer_discard) {
-		/* For rasterizer discard, disable point rendering by forcing the point size to be 0. */
-		psize_min = 0;
-		psize_max = 0;
-	} else if (state->point_size_per_vertex) {
+	if (state->point_size_per_vertex) {
 		psize_min = util_get_min_point_size(state);
 		psize_max = 8192;
 	} else {
@@ -886,8 +881,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 				S_028A04_MAX_SIZE(r600_pack_float_12p4(psize_max/2)),
 				NULL, 0);
 
-	/* For rasterizer discard, disable line rendering by forcing the line width to be 0. */
-	tmp = state->rasterizer_discard ? 0 : r600_pack_float_12p4(state->line_width/2);
+	tmp = r600_pack_float_12p4(state->line_width/2);
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), NULL, 0);
 
 	if (rctx->chip_class >= R700) {
@@ -923,10 +917,6 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 				S_028814_POLY_MODE(polygon_dual_mode) |
 				S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
 				S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)),
-				NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028034_PA_SC_SCREEN_SCISSOR_BR,
-				state->rasterizer_discard ? 0 : (S_028034_BR_X(8192) | S_028034_BR_Y(8192)),
 				NULL, 0);
 	return rstate;
 }
@@ -2112,7 +2102,9 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_context_reg(cb, R_028C48_PA_SC_AA_MASK, 0xFFFFFFFF);
 
-	r600_store_context_reg(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 0);
+	r600_store_context_reg_seq(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 2);
+	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
+	r600_store_value(cb, S_028034_BR_X(8192) | S_028034_BR_Y(8192)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
 
 	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
 	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */
