@@ -298,6 +298,8 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    const gl_format texFormat =
       _mesa_get_srgb_format_linear(texImage->TexFormat);
    const GLuint width = texImage->Width;
+   const GLenum destBaseFormat = _mesa_base_tex_format(ctx, format);
+   GLenum rebaseFormat = GL_NONE;
    GLuint height = texImage->Height;
    GLuint depth = texImage->Depth;
    GLuint img, row;
@@ -318,6 +320,28 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
       height = 1;
    }
 
+   if (texImage->_BaseFormat == GL_LUMINANCE ||
+       texImage->_BaseFormat == GL_INTENSITY ||
+       texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+      /* If a luminance (or intensity) texture is read back as RGB(A), the
+       * returned value should be (L,0,0,1), not (L,L,L,1).  Set rebaseFormat
+       * here to get G=B=0.
+       */
+      rebaseFormat = texImage->_BaseFormat;
+   }
+   else if ((texImage->_BaseFormat == GL_RGBA ||
+             texImage->_BaseFormat == GL_RGB) &&
+            (destBaseFormat == GL_LUMINANCE ||
+             destBaseFormat == GL_LUMINANCE_ALPHA ||
+             destBaseFormat == GL_LUMINANCE_INTEGER_EXT ||
+             destBaseFormat == GL_LUMINANCE_ALPHA_INTEGER_EXT)) {
+      /* If we're reading back an RGB(A) texture as luminance then we need
+       * to return L=tex(R).  Note, that's different from glReadPixels which
+       * returns L=R+G+B.
+       */
+      rebaseFormat = GL_LUMINANCE_ALPHA; /* this covers GL_LUMINANCE too */
+   }
+
    for (img = 0; img < depth; img++) {
       GLubyte *srcMap;
       GLint rowstride;
@@ -335,12 +359,14 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 
 	    if (is_integer) {
 	       _mesa_unpack_uint_rgba_row(texFormat, width, src, rgba_uint);
-               _mesa_rebase_rgba_uint(width, rgba_uint, texImage->_BaseFormat);
+               if (rebaseFormat)
+                  _mesa_rebase_rgba_uint(width, rgba_uint, rebaseFormat);
 	       _mesa_pack_rgba_span_int(ctx, width, rgba_uint,
 					format, type, dest);
 	    } else {
 	       _mesa_unpack_rgba_row(texFormat, width, src, rgba);
-               _mesa_rebase_rgba_float(width, rgba, texImage->_BaseFormat);
+               if (rebaseFormat)
+                  _mesa_rebase_rgba_float(width, rgba, rebaseFormat);
 	       _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
 					  format, type, dest,
 					  &ctx->Pack, transferOps);
