@@ -20,16 +20,23 @@
  * SOFTWARE.
  */
 
-#include "nv50_screen.h"
+#if NOUVEAU_DRIVER == 0xc0
+# include "nvc0_screen.h"
+# include "nvc0_3d.xml.h"
+#else
+# include "nv50_screen.h"
+# include "nv50_3d.xml.h"
+#endif
 #include "nv50_texture.xml.h"
 #include "nv50_defs.xml.h"
-#include "nv50_3d.xml.h"
+
 #include "pipe/p_defines.h"
 
 /* Abbreviated usage masks:
  * T: texturing
  * R: render target
  * B: render target, blendable
+ * C: render target (color), blendable only on nvc0
  * D: scanout/display target, blendable
  * Z: depth/stencil
  * V: vertex fetch
@@ -44,6 +51,13 @@
 #define U_TRV U_V | U_TR
 #define U_TBV U_V | U_TB
 #define U_TDV U_V | U_TD
+#if NOUVEAU_DRIVER == 0xc0
+# define U_TC  U_TB
+# define U_TCV U_TBV
+#else
+# define U_TC  U_TR
+# define U_TCV U_TRV
+#endif
 
 #define NV50_SURFACE_FORMAT_NONE 0
 
@@ -51,6 +65,14 @@
 #define NV50_TIC_0_FMT_8_8_8    NV50_TIC_0_FMT_8_8_8_8
 #define NV50_TIC_0_FMT_16_16_16 NV50_TIC_0_FMT_16_16_16_16
 #define NV50_TIC_0_FMT_32_32_32 NV50_TIC_0_FMT_32_32_32_32
+
+#if NOUVEAU_DRIVER == 0xc0
+# define NVXX_3D_VAF_SIZE(s) NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_##s
+# define NVXX_3D_VAF_TYPE(t) NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_##t
+#else
+# define NVXX_3D_VAF_SIZE(s) NV50_3D_VERTEX_ARRAY_ATTRIB_FORMAT_##s
+# define NVXX_3D_VAF_TYPE(t) NV50_3D_VERTEX_ARRAY_ATTRIB_TYPE_##t
+#endif
 
 #define TBLENT_A_(pf, sf, r, g, b, a, t0, t1, t2, t3, sz, u, br)        \
    [PIPE_FORMAT_##pf] = {                                               \
@@ -64,8 +86,8 @@
       (NV50_TIC_TYPE_##t2 << NV50_TIC_0_TYPE2__SHIFT) |                 \
       (NV50_TIC_TYPE_##t3 << NV50_TIC_0_TYPE3__SHIFT) |                 \
       NV50_TIC_0_FMT_##sz,                                              \
-      NV50_3D_VERTEX_ARRAY_ATTRIB_FORMAT_##sz |                         \
-      NV50_3D_VERTEX_ARRAY_ATTRIB_TYPE_##t0 | (br << 31),               \
+      NVXX_3D_VAF_SIZE(sz) |                                            \
+      NVXX_3D_VAF_TYPE(t0) | (br << 31),                                \
       U_##u                                                             \
    }
 
@@ -128,7 +150,11 @@
 #define A1B(p, n, r, g, b, a, t, s, u)          \
    C4B(p, n, ZERO, ZERO, ZERO, a, t, s, u)
 
+#if NOUVEAU_DRIVER == 0xc0
+const struct nvc0_format nvc0_format_table[PIPE_FORMAT_COUNT] =
+#else
 const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
+#endif
 {
    C4A(B8G8R8A8_UNORM, BGRA8_UNORM, C2, C1, C0, C3, UNORM, 8_8_8_8, TDV, 1),
    F3A(B8G8R8X8_UNORM, BGRX8_UNORM, C2, C1, C0, xx, UNORM, 8_8_8_8, TD),
@@ -164,11 +190,11 @@ const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
 
    F3B(L8_UNORM, R8_UNORM, C0, C0, C0, xx, UNORM, 8, TB),
    F3B(L8_SRGB, R8_UNORM, C0, C0, C0, xx, UNORM, 8, TB),
-   F3B(L8_SNORM, R8_SNORM, C0, C0, C0, xx, SNORM, 8, TR),
+   F3B(L8_SNORM, R8_SNORM, C0, C0, C0, xx, SNORM, 8, TC),
    F3B(L8_SINT, R8_SINT, C0, C0, C0, xx, SINT, 8, TR),
    F3B(L8_UINT, R8_UINT, C0, C0, C0, xx, UINT, 8, TR),
-   F3B(L16_UNORM, R16_UNORM, C0, C0, C0, xx, UNORM, 16, TR),
-   F3B(L16_SNORM, R16_SNORM, C0, C0, C0, xx, SNORM, 16, TR),
+   F3B(L16_UNORM, R16_UNORM, C0, C0, C0, xx, UNORM, 16, TC),
+   F3B(L16_SNORM, R16_SNORM, C0, C0, C0, xx, SNORM, 16, TC),
    F3B(L16_FLOAT, R16_FLOAT, C0, C0, C0, xx, FLOAT, 16, TB),
    F3B(L16_SINT, R16_SINT, C0, C0, C0, xx, SINT, 16, TR),
    F3B(L16_UINT, R16_UINT, C0, C0, C0, xx, UINT, 16, TR),
@@ -259,37 +285,37 @@ const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
    C4A(R16G16B16A16_FLOAT, RGBA16_FLOAT, C0, C1, C2, C3, FLOAT, 16_16_16_16,
        TBV, 0),
    C4A(R16G16B16A16_UNORM, RGBA16_UNORM, C0, C1, C2, C3, UNORM, 16_16_16_16,
-       TRV, 0),
+       TCV, 0),
    C4A(R16G16B16A16_SNORM, RGBA16_SNORM, C0, C1, C2, C3, SNORM, 16_16_16_16,
-       TRV, 0),
+       TCV, 0),
    C4A(R16G16B16A16_SINT, RGBA16_SINT, C0, C1, C2, C3, SINT, 16_16_16_16,
        TRV, 0),
    C4A(R16G16B16A16_UINT, RGBA16_UINT, C0, C1, C2, C3, UINT, 16_16_16_16,
        TRV, 0),
 
    F2A(R16G16_FLOAT, RG16_FLOAT, C0, C1, xx, xx, FLOAT, 16_16, TBV),
-   F2A(R16G16_UNORM, RG16_UNORM, C0, C1, xx, xx, UNORM, 16_16, TRV),
-   F2A(R16G16_SNORM, RG16_SNORM, C0, C1, xx, xx, SNORM, 16_16, TRV),
+   F2A(R16G16_UNORM, RG16_UNORM, C0, C1, xx, xx, UNORM, 16_16, TCV),
+   F2A(R16G16_SNORM, RG16_SNORM, C0, C1, xx, xx, SNORM, 16_16, TCV),
    I2A(R16G16_SINT, RG16_SINT, C0, C1, xx, xx, SINT, 16_16, TRV),
    I2A(R16G16_UINT, RG16_UINT, C0, C1, xx, xx, UINT, 16_16, TRV),
 
    F1A(R16_FLOAT, R16_FLOAT, C0, xx, xx, xx, FLOAT, 16, TBV),
-   F1A(R16_UNORM, R16_UNORM, C0, xx, xx, xx, UNORM, 16, TRV),
-   F1A(R16_SNORM, R16_SNORM, C0, xx, xx, xx, SNORM, 16, TRV),
+   F1A(R16_UNORM, R16_UNORM, C0, xx, xx, xx, UNORM, 16, TCV),
+   F1A(R16_SNORM, R16_SNORM, C0, xx, xx, xx, SNORM, 16, TCV),
    I1A(R16_SINT, R16_SINT, C0, xx, xx, xx, SINT, 16, TRV),
    I1A(R16_UINT, R16_UINT, C0, xx, xx, xx, UINT, 16, TRV),
 
-   C4A(R8G8B8A8_SNORM, RGBA8_SNORM, C0, C1, C2, C3, SNORM, 8_8_8_8, TRV, 0),
+   C4A(R8G8B8A8_SNORM, RGBA8_SNORM, C0, C1, C2, C3, SNORM, 8_8_8_8, TCV, 0),
    C4A(R8G8B8A8_SINT, RGBA8_SINT, C0, C1, C2, C3, SINT, 8_8_8_8, TRV, 0),
    C4A(R8G8B8A8_UINT, RGBA8_UINT, C0, C1, C2, C3, UINT, 8_8_8_8, TRV, 0),
 
    F2A(R8G8_UNORM, RG8_UNORM, C0, C1, xx, xx, UNORM, 8_8, TBV),
-   F2A(R8G8_SNORM, RG8_SNORM, C0, C1, xx, xx, SNORM, 8_8, TRV),
+   F2A(R8G8_SNORM, RG8_SNORM, C0, C1, xx, xx, SNORM, 8_8, TCV),
    I2A(R8G8_SINT, RG8_SINT, C0, C1, xx, xx, SINT, 8_8, TRV),
    I2A(R8G8_UINT, RG8_UINT, C0, C1, xx, xx, UINT, 8_8, TRV),
 
    F1A(R8_UNORM, R8_UNORM, C0, xx, xx, xx, UNORM, 8, TBV),
-   F1A(R8_SNORM, R8_SNORM, C0, xx, xx, xx, SNORM, 8, TRV),
+   F1A(R8_SNORM, R8_SNORM, C0, xx, xx, xx, SNORM, 8, TCV),
    I1A(R8_SINT, R8_SINT, C0, xx, xx, xx, SINT, 8, TRV),
    I1A(R8_UINT, R8_UINT, C0, xx, xx, xx, UINT, 8, TRV),
 
