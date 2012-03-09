@@ -320,7 +320,9 @@ const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
    I1A(R8_UINT, R8_UINT, C0, xx, xx, xx, UINT, 8, TRV),
 
    F3B(R8G8_B8G8_UNORM, NONE, C0, C1, C2, xx, UNORM, U8_YA8_V8_YB8, T),
+   F3B(G8R8_B8R8_UNORM, NONE, C1, C0, C2, xx, UNORM, U8_YA8_V8_YB8, T),
    F3B(G8R8_G8B8_UNORM, NONE, C0, C1, C2, xx, UNORM, YA8_U8_YB8_V8, T),
+   F3B(R8G8_R8B8_UNORM, NONE, C1, C0, C2, xx, UNORM, YA8_U8_YB8_V8, T),
 
    F1B(R1_UNORM, BITMAP, C0, xx, xx, xx, UNORM, BITMAP, T),
 
