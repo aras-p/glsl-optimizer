@@ -136,7 +136,7 @@ update_need_pipeline( struct svga_context *svga,
 
    /* EDGEFLAGS
     */
-    if (vs->base.info.writes_edgeflag) {
+    if (vs && vs->base.info.writes_edgeflag) {
       SVGA_DBG(DEBUG_SWTNL, "%s: edgeflags\n", __FUNCTION__);
       need_pipeline = TRUE;
    }
