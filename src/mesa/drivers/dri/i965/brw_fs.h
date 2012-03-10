@@ -487,6 +487,9 @@ public:
    }
 
    int type_size(const struct glsl_type *type);
+   fs_inst *get_instruction_generating_reg(fs_inst *start,
+					   fs_inst *end,
+					   fs_reg reg);
 
    bool run();
    void setup_paramvalues_refs();

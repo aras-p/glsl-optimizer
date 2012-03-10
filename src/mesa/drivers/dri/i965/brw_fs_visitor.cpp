@@ -172,12 +172,25 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
    if (!sat_val)
       return false;
 
+   fs_inst *pre_inst = (fs_inst *) this->instructions.get_tail();
+
    sat_val->accept(this);
    fs_reg src = this->result;
 
-   this->result = fs_reg(this, ir->type);
-   fs_inst *inst = emit(BRW_OPCODE_MOV, this->result, src);
-   inst->saturate = true;
+   fs_inst *last_inst = (fs_inst *) this->instructions.get_tail();
+
+   /* If the last instruction from our accept() didn't generate our
+    * src, generate a saturated MOV
+    */
+   fs_inst *modify = get_instruction_generating_reg(pre_inst, last_inst, src);
+   if (!modify || modify->regs_written() != 1) {
+      fs_inst *inst = emit(BRW_OPCODE_MOV, this->result, src);
+      inst->saturate = true;
+   } else {
+      modify->saturate = true;
+      this->result = src;
+   }
+
 
    return true;
 }
@@ -591,9 +604,6 @@ fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
                                    fs_inst *pre_rhs_inst,
                                    fs_inst *last_rhs_inst)
 {
-   if (pre_rhs_inst == last_rhs_inst)
-      return false; /* No instructions generated to work with. */
-
    /* Only attempt if we're doing a direct assignment. */
    if (ir->condition ||
        !(ir->lhs->type->is_scalar() ||
@@ -602,20 +612,20 @@ fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
       return false;
 
    /* Make sure the last instruction generated our source reg. */
-   if (last_rhs_inst->predicated ||
-       last_rhs_inst->force_uncompressed ||
-       last_rhs_inst->force_sechalf ||
-       !src.equals(&last_rhs_inst->dst))
+   fs_inst *modify = get_instruction_generating_reg(pre_rhs_inst,
+						    last_rhs_inst,
+						    src);
+   if (!modify)
       return false;
 
    /* If last_rhs_inst wrote a different number of components than our LHS,
     * we can't safely rewrite it.
     */
-   if (ir->lhs->type->vector_elements != last_rhs_inst->regs_written())
+   if (ir->lhs->type->vector_elements != modify->regs_written())
       return false;
 
    /* Success!  Rewrite the instruction. */
-   last_rhs_inst->dst = dst;
+   modify->dst = dst;
 
    return true;
 }

@@ -1717,6 +1717,35 @@ fs_visitor::virtual_grf_interferes(int a, int b)
    return start < end;
 }
 
+/**
+ * Possibly returns an instruction that set up @param reg.
+ *
+ * Sometimes we want to take the result of some expression/variable
+ * dereference tree and rewrite the instruction generating the result
+ * of the tree.  When processing the tree, we know that the
+ * instructions generated are all writing temporaries that are dead
+ * outside of this tree.  So, if we have some instructions that write
+ * a temporary, we're free to point that temp write somewhere else.
+ *
+ * Note that this doesn't guarantee that the instruction generated
+ * only reg -- it might be the size=4 destination of a texture instruction.
+ */
+fs_inst *
+fs_visitor::get_instruction_generating_reg(fs_inst *start,
+					   fs_inst *end,
+					   fs_reg reg)
+{
+   if (end == start ||
+       end->predicated ||
+       end->force_uncompressed ||
+       end->force_sechalf ||
+       !reg.equals(&end->dst)) {
+      return NULL;
+   } else {
+      return end;
+   }
+}
+
 bool
 fs_visitor::run()
 {
