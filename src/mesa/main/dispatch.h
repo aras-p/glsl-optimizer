@@ -9508,14 +9508,14 @@ static inline void SET_ShaderBinary(struct _glapi_table *disp, void (GLAPIENTRYP
    SET_by_offset(disp, _gloffset_ShaderBinary, fn);
 }
 
-typedef void (GLAPIENTRYP _glptr_DebugMessageCallbackARB)(GLvoid *, GLvoid *);
+typedef void (GLAPIENTRYP _glptr_DebugMessageCallbackARB)(GLDEBUGPROCARB, GLvoid *);
 #define CALL_DebugMessageCallbackARB(disp, parameters) \
     (* GET_DebugMessageCallbackARB(disp)) parameters
 static inline _glptr_DebugMessageCallbackARB GET_DebugMessageCallbackARB(struct _glapi_table *disp) {
    return (_glptr_DebugMessageCallbackARB) (GET_by_offset(disp, _gloffset_DebugMessageCallbackARB));
 }
 
-static inline void SET_DebugMessageCallbackARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLvoid *, GLvoid *)) {
+static inline void SET_DebugMessageCallbackARB(struct _glapi_table *disp, void (GLAPIENTRYP fn)(GLDEBUGPROCARB, GLvoid *)) {
    SET_by_offset(disp, _gloffset_DebugMessageCallbackARB, fn);
 }
 

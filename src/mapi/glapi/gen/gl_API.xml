@@ -1106,6 +1106,8 @@
     
     <type name="void"    size="1"/>
 
+    <type name="DEBUGPROCARB" size="4" pointer="true"/>
+
     <function name="NewList" offset="0">
         <param name="list" type="GLuint"/>
         <param name="mode" type="GLenum"/>

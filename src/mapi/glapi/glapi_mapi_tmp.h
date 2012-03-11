@@ -880,7 +880,7 @@ GLAPI void APIENTRY GLAPI_PREFIX(ShaderBinary)(GLsizei n, const GLuint *shaders,
 void APIENTRY GLAPI_PREFIX(_dispatch_stub_665)(GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary);
 void APIENTRY GLAPI_PREFIX(_dispatch_stub_666)(GLuint program, GLenum binaryFormat, const GLvoid *binary, GLsizei length);
 void APIENTRY GLAPI_PREFIX(_dispatch_stub_667)(GLuint program, GLenum pname, GLint value);
-GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageCallbackARB)(GLvoid *callback, GLvoid *userParam);
+GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageCallbackARB)(GLDEBUGPROCARB callback, GLvoid *userParam);
 GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageControlARB)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
 GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageInsertARB)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLcharARB *buf);
 GLAPI GLuint APIENTRY GLAPI_PREFIX(GetDebugMessageLogARB)(GLuint count, GLsizei bufsize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLcharARB *messageLog);
@@ -7327,11 +7327,11 @@ GLAPI void APIENTRY GLAPI_PREFIX(ShaderBinary)(GLsizei n, const GLuint *shaders,
    ((void (APIENTRY *)(GLsizei n, const GLuint *shaders, GLenum binaryformat, const GLvoid *binary, GLsizei length)) _func)(n, shaders, binaryformat, binary, length);
 }
 
-GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageCallbackARB)(GLvoid *callback, GLvoid *userParam)
+GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageCallbackARB)(GLDEBUGPROCARB callback, GLvoid *userParam)
 {
    const struct mapi_table *_tbl = entry_current_get();
    mapi_func _func = ((const mapi_func *) _tbl)[668];
-   ((void (APIENTRY *)(GLvoid *callback, GLvoid *userParam)) _func)(callback, userParam);
+   ((void (APIENTRY *)(GLDEBUGPROCARB callback, GLvoid *userParam)) _func)(callback, userParam);
 }
 
 GLAPI void APIENTRY GLAPI_PREFIX(DebugMessageControlARB)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled)

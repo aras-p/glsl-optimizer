@@ -5253,7 +5253,7 @@ KEYWORD1 void KEYWORD2 NAME(ShaderBinary)(GLsizei n, const GLuint * shaders, GLe
    DISPATCH(ShaderBinary, (n, shaders, binaryformat, binary, length), (F, "glShaderBinary(%d, %p, 0x%x, %p, %d);\n", n, (const void *) shaders, binaryformat, (const void *) binary, length));
 }
 
-KEYWORD1 void KEYWORD2 NAME(DebugMessageCallbackARB)(GLvoid * callback, GLvoid * userParam)
+KEYWORD1 void KEYWORD2 NAME(DebugMessageCallbackARB)(GLDEBUGPROCARB callback, GLvoid * userParam)
 {
     (void) callback; (void) userParam;
    DISPATCH(DebugMessageCallbackARB, (callback, userParam), (F, "glDebugMessageCallbackARB(%p, %p);\n", (const void *) callback, (const void *) userParam));
