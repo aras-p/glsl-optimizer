@@ -55,6 +55,9 @@ static char out_of_memory[] = "Debugging error: out of memory";
 #define source_is(s, kind) enum_is(s, SOURCE, kind)
 #define type_is(t, kind) enum_is(t, TYPE, kind)
 
+/* Prevent define collision on Windows */
+#undef ERROR
+
 enum {
    SOURCE_APPLICATION,
    SOURCE_THIRD_PARTY,
