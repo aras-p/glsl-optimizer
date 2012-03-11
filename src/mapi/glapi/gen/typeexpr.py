@@ -252,7 +252,7 @@ class type_expression:
 
 
 	def get_stack_size(self):
-		tn = self.expr[ len(self.expr) - 1 ]
+		tn = self.expr[ -1 ]
 
 		if tn.elements or tn.pointer:
 			return 4
@@ -263,12 +263,12 @@ class type_expression:
 
 
 	def is_pointer(self):
-		tn = self.expr[ len(self.expr) - 1 ]
+		tn = self.expr[ -1 ]
 		return tn.pointer
 
 
 	def format_string(self):
-		tn = self.expr[ len(self.expr) - 1 ]
+		tn = self.expr[ -1 ]
 		if tn.pointer:
 			return "%p"
 		elif not tn.integer:

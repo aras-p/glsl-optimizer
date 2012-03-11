@@ -26,6 +26,7 @@
                    size                NMTOKEN #REQUIRED
 		   float               (true | false) "false"
 		   unsigned            (true | false) "false"
+		   pointer             (true | false) "false"
                    glx_name            NMTOKEN #IMPLIED>
 <!ATTLIST enum     name                NMTOKEN #REQUIRED
                    count               CDATA   #IMPLIED

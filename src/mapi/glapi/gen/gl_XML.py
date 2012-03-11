@@ -340,6 +340,7 @@ class gl_type( gl_item ):
 		tn.size = int( element.nsProp( "size", None ), 0 )
 		tn.integer = not is_attr_true( element, "float" )
 		tn.unsigned = is_attr_true( element, "unsigned" )
+		tn.pointer = is_attr_true( element, "pointer" )
 		tn.name = "GL" + self.name
 		te.set_base_type_node( tn )
 
