@@ -191,6 +191,9 @@ VA_LIB_INSTALL_DIR=@VA_LIB_INSTALL_DIR@
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = @XORG_DRIVER_INSTALL_DIR@
 
+# Path to OpenCL C library libclc
+LIBCLC_PATH = @LIBCLC_PATH@
+
 # pkg-config substitutions
 GL_PC_REQ_PRIV = @GL_PC_REQ_PRIV@
 GL_PC_LIB_PRIV = @GL_PC_LIB_PRIV@

@@ -1620,6 +1620,14 @@ dnl
 dnl OpenCL configuration
 dnl
 
+AC_ARG_WITH([libclc-path],
+   [AS_HELP_STRING([--with-libclc-path],
+         [Path to libclc builtins library.  Example: --with-libclc-path=\$HOME/libclc/])],
+   [LIBCLC_PATH="$withval"],
+   [LIBCLC_PATH=""])
+
+AC_SUBST([LIBCLC_PATH])
+
 if test "x$enable_opencl" = xyes; then
     if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable OpenCL without Gallium])
