@@ -98,16 +98,6 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
    if ( !flags )
       return;
 
-   if (rmesa->using_hyperz) {
-      flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200)
-	 flags |= RADEON_USE_HIERZ; */
-      if (!((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
-	    ((rmesa->radeon.state.stencil.clear & R200_STENCIL_WRITE_MASK) == R200_STENCIL_WRITE_MASK))) {
-	  flags |= RADEON_CLEAR_FASTZ;
-      }
-   }
-
    radeonUserClear(ctx, orig_mask);
 }
 
