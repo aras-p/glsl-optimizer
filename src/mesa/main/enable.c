@@ -822,10 +822,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Stencil.TestTwoSide = state;
          if (state) {
             ctx->Stencil._BackFace = 2;
-            ctx->_TriangleCaps |= DD_TRI_TWOSTENCIL;
          } else {
             ctx->Stencil._BackFace = 1;
-            ctx->_TriangleCaps &= ~DD_TRI_TWOSTENCIL;
          }
          break;
 

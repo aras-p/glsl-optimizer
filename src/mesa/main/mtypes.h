@@ -3083,7 +3083,6 @@ struct gl_matrix_stack
 #define DD_LINE_STIPPLE             0x200
 #define DD_POINT_SMOOTH             0x400
 #define DD_POINT_ATTEN              0x800
-#define DD_TRI_TWOSTENCIL           0x1000
 /*@}*/
 
 

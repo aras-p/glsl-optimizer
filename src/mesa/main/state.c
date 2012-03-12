@@ -449,12 +449,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
       ctx->_TriangleCaps |= DD_FLATSHADE;
    if (_mesa_need_secondary_color(ctx))
       ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-
-   /*
-    * Stencil
-    */
-   if (ctx->Stencil._TestTwoSide)
-      ctx->_TriangleCaps |= DD_TRI_TWOSTENCIL;
 }
 #endif
 
