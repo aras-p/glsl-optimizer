@@ -265,7 +265,7 @@ void radeonTclPrimitive( struct gl_context *ctx,
    se_cntl = rmesa->hw.set.cmd[SET_SE_CNTL];
    se_cntl &= ~RADEON_FLAT_SHADE_VTX_LAST;
 
-   if (prim == GL_POLYGON && (ctx->_TriangleCaps & DD_FLATSHADE)) 
+   if (prim == GL_POLYGON && ctx->Light.ShadeModel == GL_FLAT) 
       se_cntl |= RADEON_FLAT_SHADE_VTX_0;
    else
       se_cntl |= RADEON_FLAT_SHADE_VTX_LAST;
