@@ -1458,23 +1458,6 @@ void radeonUpdateViewportOffset( struct gl_context *ctx )
  * Miscellaneous
  */
 
-static void radeonClearColor( struct gl_context *ctx,
-                              const union gl_color_union color )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLubyte c[4];
-   struct radeon_renderbuffer *rrb;
-
-   rrb = radeon_get_colorbuffer(&rmesa->radeon);
-   if (!rrb)
-     return;
-     
-   _mesa_unclamped_float_rgba_to_ubyte(c, color.f);
-   rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
-					       c[0], c[1], c[2], c[3] );
-}
-
-
 static void radeonRenderMode( struct gl_context *ctx, GLenum mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -2208,7 +2191,6 @@ void radeonInitStateFuncs( struct gl_context *ctx )
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
-   ctx->Driver.ClearColor		= radeonClearColor;
    ctx->Driver.ClipPlane		= radeonClipPlane;
    ctx->Driver.ColorMask		= radeonColorMask;
    ctx->Driver.CullFace			= radeonCullFace;

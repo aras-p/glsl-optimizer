@@ -620,8 +620,6 @@ void r200InitState( r200ContextPtr rmesa )
    struct gl_context *ctx = rmesa->radeon.glCtx;
    GLuint i;
 
-   rmesa->radeon.state.color.clear = 0x00000000;
-
    rmesa->radeon.Fallback = 0;
 
    rmesa->radeon.hw.max_state_size = 0;

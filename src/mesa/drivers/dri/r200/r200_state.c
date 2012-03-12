@@ -1676,23 +1676,6 @@ void r200UpdateViewportOffset( struct gl_context *ctx )
  * Miscellaneous
  */
 
-static void r200ClearColor( struct gl_context *ctx,
-                            const union gl_color_union c )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLubyte color[4];
-   struct radeon_renderbuffer *rrb;
-
-   rrb = radeon_get_colorbuffer(&rmesa->radeon);
-   if (!rrb)
-     return;
-   _mesa_unclamped_float_rgba_to_ubyte(color, c.f);
-   rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
-                                             color[0], color[1],
-                                             color[2], color[3] );
-}
-
-
 static void r200RenderMode( struct gl_context *ctx, GLenum mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -2452,7 +2435,6 @@ void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *func
    functions->BlendColor		= r200BlendColor;
    functions->BlendEquationSeparate	= r200BlendEquationSeparate;
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
-   functions->ClearColor		= r200ClearColor;
    functions->ClipPlane			= r200ClipPlane;
    functions->ColorMask			= r200ColorMask;
    functions->CullFace			= r200CullFace;

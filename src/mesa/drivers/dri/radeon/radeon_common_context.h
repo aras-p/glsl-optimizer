@@ -110,7 +110,6 @@ struct radeon_framebuffer
 
 
 struct radeon_colorbuffer_state {
-	GLuint clear;
 	int roundEnable;
 	struct gl_renderbuffer *rb;
 	uint32_t draw_offset; /* offset into color renderbuffer - FBOs */

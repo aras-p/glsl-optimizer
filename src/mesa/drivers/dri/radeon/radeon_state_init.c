@@ -506,8 +506,6 @@ void radeonInitState( r100ContextPtr rmesa )
    struct gl_context *ctx = rmesa->radeon.glCtx;
    GLuint i;
 
-   rmesa->radeon.state.color.clear = 0x00000000;
-
    rmesa->radeon.Fallback = 0;
 
 
