@@ -71,7 +71,7 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
         print "\n       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
     if tex_inst == "txl":
         print "\n       (declare (in) float lod)",
-    elif tex_inst == "txf" or tex_inst == "txs":
+    elif tex_inst == "txf" or (tex_inst == "txs" and "Rect" not in sampler_type):
         print "\n       (declare (in) int lod)",
     elif tex_inst == "txd":
         grad_type = vec_type("", coord_dim)
@@ -115,7 +115,12 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     # Bias/explicit LOD/gradient:
     if tex_inst == "txb":
         print "(var_ref bias)",
-    elif tex_inst == "txl" or tex_inst == "txf" or tex_inst == "txs":
+    elif tex_inst == "txs":
+        if "Rect" not in sampler_type:
+            print "(var_ref lod)",
+        else:
+            print "(constant int (0))"
+    elif tex_inst == "txl" or tex_inst == "txf":
         print "(var_ref lod)",
     elif tex_inst == "txd":
         print "((var_ref dPdx) (var_ref dPdy))",
@@ -153,6 +158,8 @@ def generate_texture_functions(fs):
     generate_sigs("", "txs", "CubeShadow")
     generate_sigs("", "txs", "1DArrayShadow")
     generate_sigs("", "txs", "2DArrayShadow")
+    generate_fiu_sigs("txs", "2DRect")
+    generate_sigs("", "txs", "2DRectShadow")
     end_function(fs, "textureSize")
 
     start_function("texture")
