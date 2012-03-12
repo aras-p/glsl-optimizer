@@ -557,9 +557,6 @@ struct dd_function_table {
    void (*BlendFuncSeparatei)(struct gl_context *ctx, GLuint buffer,
                               GLenum sfactorRGB, GLenum dfactorRGB,
                               GLenum sfactorA, GLenum dfactorA);
-   /** Specify clear values for the color buffers */
-   void (*ClearColor)(struct gl_context *ctx,
-                      const union gl_color_union color);
    /** Specify a plane against which all geometry is clipped */
    void (*ClipPlane)(struct gl_context *ctx, GLenum plane, const GLfloat *equation );
    /** Enable and disable writing of frame buffer color components */

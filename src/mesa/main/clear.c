@@ -88,14 +88,6 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4V(ctx->Color.ClearColor.f, tmp);
-
-   if (ctx->Driver.ClearColor) {
-      /* it's OK to call glClearColor in CI mode but it should be a NOP */
-      /* we pass the clamped color, since all drivers that need this don't
-       * support GL_ARB_color_buffer_float
-       */
-      (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
-   }
 }
 
 
@@ -119,11 +111,6 @@ _mesa_ClearColorIiEXT(GLint r, GLint g, GLint b, GLint a)
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4V(ctx->Color.ClearColor.i, tmp);
-
-   /* these should be NOP calls for drivers supporting EXT_texture_integer */
-   if (ctx->Driver.ClearColor) {
-      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
-   }
 }
 
 
@@ -147,11 +134,6 @@ _mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4V(ctx->Color.ClearColor.ui, tmp);
-
-   /* these should be NOP calls for drivers supporting EXT_texture_integer */
-   if (ctx->Driver.ClearColor) {
-      ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
-   }
 }
 
 
@@ -365,14 +347,10 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
             clearSave = ctx->Color.ClearColor;
             /* set color */
             COPY_4V(ctx->Color.ClearColor.i, value);
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
             ctx->Color.ClearColor = clearSave;
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, clearSave);
          }
       }
       break;
@@ -435,14 +413,10 @@ _mesa_ClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint *value)
             clearSave = ctx->Color.ClearColor;
             /* set color */
             COPY_4V(ctx->Color.ClearColor.ui, value);
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
             ctx->Color.ClearColor = clearSave;
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, clearSave);
          }
       }
       break;
@@ -537,14 +511,10 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
             clearSave = ctx->Color.ClearColor;
             /* set color */
             COPY_4V_CAST(ctx->Color.ClearColor.f, value, GLclampf);
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, ctx->Color.ClearColor);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
             ctx->Color.ClearColor = clearSave;
-            if (ctx->Driver.ClearColor)
-               ctx->Driver.ClearColor(ctx, clearSave);
          }
       }
       break;
