@@ -534,7 +534,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & _NEW_PIXEL)
       _mesa_update_pixel( ctx, new_state );
 
-   if (new_state & _DD_NEW_SEPARATE_SPECULAR)
+   if (new_state & _MESA_NEW_SEPARATE_SPECULAR)
       update_separate_specular( ctx );
 
    if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
@@ -551,7 +551,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
 #if 0
    if (new_state & (_NEW_POINT | _NEW_LINE | _NEW_POLYGON | _NEW_LIGHT
-                    | _NEW_STENCIL | _DD_NEW_SEPARATE_SPECULAR))
+                    | _NEW_STENCIL | _MESA_NEW_SEPARATE_SPECULAR))
       update_tricaps( ctx, new_state );
 #endif
 

@@ -3117,6 +3117,12 @@ struct gl_matrix_stack
                                            _NEW_POINT |		\
                                            _NEW_PROGRAM |	\
                                            _NEW_MODELVIEW)
+
+#define _MESA_NEW_SEPARATE_SPECULAR        (_NEW_LIGHT | \
+                                            _NEW_FOG | \
+                                            _NEW_PROGRAM)
+
+
 /*@}*/
 
 
