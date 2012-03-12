@@ -328,8 +328,6 @@ vec2  normalize(vec2  x);
 vec3  normalize(vec3  x);
 vec4  normalize(vec4  x);
 
-vec4 ftransform();
-
 float faceforward(float N, float I, float Nref);
 vec2  faceforward(vec2  N, vec2  I, vec2  Nref);
 vec3  faceforward(vec3  N, vec3  I, vec3  Nref);
