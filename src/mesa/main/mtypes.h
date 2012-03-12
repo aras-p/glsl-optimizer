@@ -3088,27 +3088,6 @@ struct gl_matrix_stack
 
 
 /**
- * \name Define the state changes under which each of these bits might change
- */
-/*@{*/
-#define _DD_NEW_FLATSHADE                _NEW_LIGHT
-#define _DD_NEW_SEPARATE_SPECULAR        (_NEW_LIGHT | _NEW_FOG | _NEW_PROGRAM)
-#define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
-#define _DD_NEW_TRI_LIGHT_TWOSIDE        _NEW_LIGHT
-#define _DD_NEW_TRI_UNFILLED             _NEW_POLYGON
-#define _DD_NEW_TRI_SMOOTH               _NEW_POLYGON
-#define _DD_NEW_TRI_STIPPLE              _NEW_POLYGON
-#define _DD_NEW_TRI_OFFSET               _NEW_POLYGON
-#define _DD_NEW_LINE_SMOOTH              _NEW_LINE
-#define _DD_NEW_LINE_STIPPLE             _NEW_LINE
-#define _DD_NEW_LINE_WIDTH               _NEW_LINE
-#define _DD_NEW_POINT_SMOOTH             _NEW_POINT
-#define _DD_NEW_POINT_SIZE               _NEW_POINT
-#define _DD_NEW_POINT_ATTEN              _NEW_POINT
-/*@}*/
-
-
-/**
  * Composite state flags
  */
 /*@{*/
