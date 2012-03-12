@@ -354,22 +354,6 @@ static void r200DepthFunc( struct gl_context *ctx, GLenum func )
    }
 }
 
-static void r200ClearDepth( struct gl_context *ctx, GLclampd d )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint format = (rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] &
-		    R200_DEPTH_FORMAT_MASK);
-
-   switch ( format ) {
-   case R200_DEPTH_FORMAT_16BIT_INT_Z:
-      rmesa->radeon.state.depth.clear = d * 0x0000ffff;
-      break;
-   case R200_DEPTH_FORMAT_24BIT_INT_Z:
-      rmesa->radeon.state.depth.clear = d * 0x00ffffff;
-      break;
-   }
-}
-
 static void r200DepthMask( struct gl_context *ctx, GLboolean flag )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -1547,16 +1531,6 @@ r200StencilOpSeparate( struct gl_context *ctx, GLenum face, GLenum fail,
    }
 }
 
-static void r200ClearStencil( struct gl_context *ctx, GLint s )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-   rmesa->radeon.state.stencil.clear =
-      ((GLuint) (ctx->Stencil.Clear & 0xff) |
-       (0xff << R200_STENCIL_MASK_SHIFT) |
-       ((ctx->Stencil.WriteMask[0] & 0xff) << R200_STENCIL_WRITEMASK_SHIFT));
-}
-
 
 /* =============================================================
  * Window position and viewport transformation
@@ -2479,8 +2453,6 @@ void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *func
    functions->BlendEquationSeparate	= r200BlendEquationSeparate;
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
-   functions->ClearDepth		= r200ClearDepth;
-   functions->ClearStencil		= r200ClearStencil;
    functions->ClipPlane			= r200ClipPlane;
    functions->ColorMask			= r200ColorMask;
    functions->CullFace			= r200CullFace;

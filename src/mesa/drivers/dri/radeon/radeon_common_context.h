@@ -117,7 +117,6 @@ struct radeon_colorbuffer_state {
 };
 
 struct radeon_depthbuffer_state {
-	GLuint clear;
 	struct gl_renderbuffer *rb;
 };
 
@@ -128,10 +127,6 @@ struct radeon_scissor_state {
 	GLuint numClipRects;	/* Cliprects active */
 	GLuint numAllocedClipRects;	/* Cliprects available */
 	drm_clip_rect_t *pClipRects;
-};
-
-struct radeon_stencilbuffer_state {
-	GLuint clear;		/* rb3d_stencilrefmask value */
 };
 
 struct radeon_state_atom {
@@ -377,7 +372,6 @@ struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
-	struct radeon_stencilbuffer_state stencil;
 };
 
 /**

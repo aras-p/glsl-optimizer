@@ -508,19 +508,6 @@ void radeonInitState( r100ContextPtr rmesa )
 
    rmesa->radeon.state.color.clear = 0x00000000;
 
-   switch ( ctx->Visual.depthBits ) {
-   case 16:
-      rmesa->radeon.state.depth.clear = 0x0000ffff;
-      rmesa->radeon.state.stencil.clear = 0x00000000;
-      break;
-   case 24:
-      rmesa->radeon.state.depth.clear = 0x00ffffff;
-      rmesa->radeon.state.stencil.clear = 0xffff0000;
-      break;
-   default:
-      break;
-   }
-
    rmesa->radeon.Fallback = 0;
 
 

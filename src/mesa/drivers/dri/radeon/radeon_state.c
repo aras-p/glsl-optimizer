@@ -305,22 +305,6 @@ static void radeonDepthMask( struct gl_context *ctx, GLboolean flag )
    }
 }
 
-static void radeonClearDepth( struct gl_context *ctx, GLclampd d )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLuint format = (rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] &
-		    RADEON_DEPTH_FORMAT_MASK);
-
-   switch ( format ) {
-   case RADEON_DEPTH_FORMAT_16BIT_INT_Z:
-      rmesa->radeon.state.depth.clear = d * 0x0000ffff;
-      break;
-   case RADEON_DEPTH_FORMAT_24BIT_INT_Z:
-      rmesa->radeon.state.depth.clear = d * 0x00ffffff;
-      break;
-   }
-}
-
 
 /* =============================================================
  * Fog
@@ -1346,15 +1330,6 @@ static void radeonStencilOpSeparate( struct gl_context *ctx, GLenum face, GLenum
    }
 }
 
-static void radeonClearStencil( struct gl_context *ctx, GLint s )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
-   rmesa->radeon.state.stencil.clear =
-      ((GLuint) (ctx->Stencil.Clear & 0xff) |
-       (0xff << RADEON_STENCIL_MASK_SHIFT) |
-       ((ctx->Stencil.WriteMask[0] & 0xff) << RADEON_STENCIL_WRITEMASK_SHIFT));
-}
 
 
 /* =============================================================
@@ -2234,8 +2209,6 @@ void radeonInitStateFuncs( struct gl_context *ctx )
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
    ctx->Driver.ClearColor		= radeonClearColor;
-   ctx->Driver.ClearDepth		= radeonClearDepth;
-   ctx->Driver.ClearStencil		= radeonClearStencil;
    ctx->Driver.ClipPlane		= radeonClipPlane;
    ctx->Driver.ColorMask		= radeonColorMask;
    ctx->Driver.CullFace			= radeonCullFace;
