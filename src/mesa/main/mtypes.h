@@ -3072,7 +3072,6 @@ struct gl_matrix_stack
  */
 /*@{*/
 #define DD_SEPARATE_SPECULAR        0x2
-#define DD_TRI_CULL_FRONT_BACK      0x4 /* special case on some hw */
 #define DD_TRI_LIGHT_TWOSIDE        0x8
 #define DD_TRI_UNFILLED             0x10
 #define DD_TRI_SMOOTH               0x20

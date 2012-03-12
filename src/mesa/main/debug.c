@@ -100,7 +100,7 @@ void
 _mesa_print_tri_caps( const char *name, GLuint flags )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
 	   (flags & DD_SEPARATE_SPECULAR)   ? "separate-specular, " : "",
@@ -112,8 +112,7 @@ _mesa_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_LINE_SMOOTH)         ? "line-smooth, " : "",
 	   (flags & DD_LINE_STIPPLE)        ? "line-stipple, " : "",
 	   (flags & DD_POINT_SMOOTH)        ? "point-smooth, " : "",
-	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : "",
-	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : ""
+	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : ""
       );
 }
 

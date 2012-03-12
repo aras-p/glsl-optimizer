@@ -370,16 +370,13 @@ update_twoside(struct gl_context *ctx)
 
 
 /*
- * Check polygon state and set DD_TRI_CULL_FRONT_BACK and/or DD_TRI_OFFSET
+ * Check polygon state and set DD_TRI_OFFSET
  * in ctx->_TriangleCaps if needed.
  */
 static void
 update_polygon(struct gl_context *ctx)
 {
-   ctx->_TriangleCaps &= ~(DD_TRI_CULL_FRONT_BACK | DD_TRI_OFFSET);
-
-   if (ctx->Polygon.CullFlag && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-      ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
+   ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
 
    if (   ctx->Polygon.OffsetPoint
        || ctx->Polygon.OffsetLine
@@ -431,9 +428,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
       if (ctx->Polygon.FrontMode != GL_FILL
           || ctx->Polygon.BackMode != GL_FILL)
          ctx->_TriangleCaps |= DD_TRI_UNFILLED;
-      if (ctx->Polygon.CullFlag
-          && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-         ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
       if (ctx->Polygon.OffsetPoint ||
           ctx->Polygon.OffsetLine ||
           ctx->Polygon.OffsetFill)
