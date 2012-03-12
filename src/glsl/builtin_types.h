@@ -259,6 +259,18 @@ const glsl_type *const glsl_type::uvec3_type = & builtin_130_types[2];
 const glsl_type *const glsl_type::uvec4_type = & builtin_130_types[3];
 /*@}*/
 
+
+/** \name Types added in GLSL 1.30
+ */
+/*@{*/
+const glsl_type glsl_type::builtin_140_types[] = {
+   glsl_type(GL_INT_SAMPLER_2D_RECT,
+	     GLSL_SAMPLER_DIM_RECT, 0, 0, GLSL_TYPE_INT, "isampler2DRect"),
+   glsl_type(GL_UNSIGNED_INT_SAMPLER_2D_RECT,
+	     GLSL_SAMPLER_DIM_RECT, 0, 0, GLSL_TYPE_UINT, "usampler2DRect"),
+};
+/*@}*/
+
 /** \name Sampler types added by GL_ARB_texture_rectangle
  */
 /*@{*/

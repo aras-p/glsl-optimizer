@@ -205,6 +205,16 @@ glsl_type::generate_130_types(glsl_symbol_table *symtab)
 
 
 void
+glsl_type::generate_140_types(glsl_symbol_table *symtab)
+{
+   generate_130_types(symtab);
+
+   add_types_to_symbol_table(symtab, builtin_140_types,
+			     Elements(builtin_140_types), false);
+}
+
+
+void
 glsl_type::generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab,
 						bool warn)
 {
@@ -258,14 +268,15 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       glsl_type::generate_130_types(state->symbols);
       break;
    case 140:
-      glsl_type::generate_130_types(state->symbols);
+      glsl_type::generate_140_types(state->symbols);
       break;
    default:
       /* error */
       break;
    }
 
-   if (state->ARB_texture_rectangle_enable) {
+   if (state->ARB_texture_rectangle_enable ||
+       state->language_version >= 140) {
       glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
    }
