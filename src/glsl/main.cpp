@@ -35,10 +35,10 @@ initialize_context(struct gl_context *ctx, gl_api api)
 {
    initialize_context_to_defaults(ctx, api);
 
-   /* GLSL 1.30 isn't fully supported, but we need to advertise 1.30 so that
-    * the built-in functions for 1.30 can be built.
+   /* The standalone compiler needs to claim support for almost
+    * everything in order to compile the built-in functions.
     */
-   ctx->Const.GLSLVersion = 130;
+   ctx->Const.GLSLVersion = 140;
 
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxDrawBuffers = 2;
