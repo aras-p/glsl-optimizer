@@ -59,30 +59,6 @@ finish_or_flush( struct gl_context *ctx )
 }
 
 
-static void
-clear_color( struct gl_context *ctx,
-             const union gl_color_union color )
-{
-   if (ctx->DrawBuffer->Name == 0) {
-      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-
-      _mesa_unclamped_float_rgba_to_ubyte(xmesa->clearcolor, color.f);
-      xmesa->clearpixel = xmesa_color_to_pixel( ctx,
-                                                xmesa->clearcolor[0],
-                                                xmesa->clearcolor[1],
-                                                xmesa->clearcolor[2],
-                                                xmesa->clearcolor[3],
-                                                xmesa->xm_visual->undithered_pf );
-      _glthread_LOCK_MUTEX(_xmesa_lock);
-      XMesaSetForeground( xmesa->display, xmbuf->cleargc,
-                          xmesa->clearpixel );
-      _glthread_UNLOCK_MUTEX(_xmesa_lock);
-   }
-}
-
-
-
 /* Implements glColorMask() */
 static void
 color_mask(struct gl_context *ctx,
@@ -267,11 +243,22 @@ clear_buffers(struct gl_context *ctx, GLbitfield buffers)
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
       const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask[0];
+      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
       XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
       const GLint x = ctx->DrawBuffer->_Xmin;
       const GLint y = ctx->DrawBuffer->_Ymin;
       const GLint width = ctx->DrawBuffer->_Xmax - x;
       const GLint height = ctx->DrawBuffer->_Ymax - y;
+
+      _mesa_unclamped_float_rgba_to_ubyte(xmesa->clearcolor,
+                                          ctx->Color.ClearColor.f);
+      xmesa->clearpixel = xmesa_color_to_pixel(ctx,
+                                               xmesa->clearcolor[0],
+                                               xmesa->clearcolor[1],
+                                               xmesa->clearcolor[2],
+                                               xmesa->clearcolor[3],
+                                               xmesa->xm_visual->undithered_pf);
+      XMesaSetForeground(xmesa->display, b->cleargc, xmesa->clearpixel);
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
@@ -877,7 +864,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->GetBufferSize = NULL; /* OBSOLETE */
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
-   driver->ClearColor = clear_color;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
    driver->Viewport = xmesa_viewport;
