@@ -243,39 +243,9 @@ static void wmesa_flush(struct gl_context *ctx)
 /*****                   CLEAR Functions                          *****/
 /**********************************************************************/
 
-/* If we do not implement these, Mesa clears the buffers via the pixel
- * span writing interface, which is very slow for a clear operation.
- */
-
-/*
- * Set the color used to clear the color buffer.
- */
-static void clear_color(struct gl_context *ctx,
-                        const union gl_color_union color)
-{
-    WMesaContext pwc = wmesa_context(ctx);
-    GLubyte col[3];
-
-    UNCLAMPED_FLOAT_TO_UBYTE(col[0], color.f[0]);
-    UNCLAMPED_FLOAT_TO_UBYTE(col[1], color.f[1]);
-    UNCLAMPED_FLOAT_TO_UBYTE(col[2], color.f[2]);
-    pwc->clearColorRef = RGB(col[0], col[1], col[2]);
-    DeleteObject(pwc->clearPen);
-    DeleteObject(pwc->clearBrush);
-    pwc->clearPen = CreatePen(PS_SOLID, 1, pwc->clearColorRef); 
-    pwc->clearBrush = CreateSolidBrush(pwc->clearColorRef); 
-}
-
-
 /* 
- * Clear the specified region of the color buffer using the clear color 
- * or index as specified by one of the two functions above. 
- * 
- * This procedure clears either the front and/or the back COLOR buffers. 
- * Only the "left" buffer is cleared since we are not stereo. 
- * Clearing of the other non-color buffers is left to the swrast. 
+ * Clear the color/depth/stencil buffers.
  */ 
-
 static void clear(struct gl_context *ctx, GLbitfield mask)
 {
 #define FLIP(Y)  (ctx->DrawBuffer->Height - (Y) - 1)
@@ -296,6 +266,20 @@ static void clear(struct gl_context *ctx, GLbitfield mask)
 	!ctx->Color.ColorMask[0][3]) {
 	_swrast_Clear(ctx, mask);
 	return;
+    }
+
+    if (mask & BUFFER_BITS_COLOR) {
+       /* setup the clearing color */
+       const union gl_color_union color = ctx->Color.ClearColor;
+       GLubyte col[3];
+       UNCLAMPED_FLOAT_TO_UBYTE(col[0], color.f[0]);
+       UNCLAMPED_FLOAT_TO_UBYTE(col[1], color.f[1]);
+       UNCLAMPED_FLOAT_TO_UBYTE(col[2], color.f[2]);
+       pwc->clearColorRef = RGB(col[0], col[1], col[2]);
+       DeleteObject(pwc->clearPen);
+       DeleteObject(pwc->clearBrush);
+       pwc->clearPen = CreatePen(PS_SOLID, 1, pwc->clearColorRef); 
+       pwc->clearBrush = CreateSolidBrush(pwc->clearColorRef); 
     }
 
     /* Back buffer */
@@ -1095,7 +1079,6 @@ WMesaContext WMesaCreateContext(HDC hDC,
     functions.GetBufferSize = wmesa_get_buffer_size;
     functions.Flush = wmesa_flush;
     functions.Clear = clear;
-    functions.ClearColor = clear_color;
     functions.ResizeBuffers = wmesa_resize_buffers;
     functions.Viewport = wmesa_viewport;
 
