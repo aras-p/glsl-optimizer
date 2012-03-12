@@ -54,8 +54,6 @@ _mesa_ClearDepth( GLclampd depth )
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
    ctx->Depth.Clear = depth;
-   if (ctx->Driver.ClearDepth)
-      (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
 }
 
 

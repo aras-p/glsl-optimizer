@@ -115,10 +115,6 @@ _mesa_ClearStencil( GLint s )
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
    ctx->Stencil.Clear = (GLuint) s;
-
-   if (ctx->Driver.ClearStencil) {
-      ctx->Driver.ClearStencil( ctx, s );
-   }
 }
 
 

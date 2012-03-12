@@ -560,10 +560,6 @@ struct dd_function_table {
    /** Specify clear values for the color buffers */
    void (*ClearColor)(struct gl_context *ctx,
                       const union gl_color_union color);
-   /** Specify the clear value for the depth buffer */
-   void (*ClearDepth)(struct gl_context *ctx, GLclampd d);
-   /** Specify the clear value for the stencil buffer */
-   void (*ClearStencil)(struct gl_context *ctx, GLint s);
    /** Specify a plane against which all geometry is clipped */
    void (*ClipPlane)(struct gl_context *ctx, GLenum plane, const GLfloat *equation );
    /** Enable and disable writing of frame buffer color components */

@@ -132,8 +132,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BlendEquationSeparate = NULL;
    driver->BlendFuncSeparate = NULL;
    driver->ClearColor = NULL;
-   driver->ClearDepth = NULL;
-   driver->ClearStencil = NULL;
    driver->ClipPlane = NULL;
    driver->ColorMask = NULL;
    driver->ColorMaterial = NULL;
