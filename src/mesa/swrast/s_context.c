@@ -312,7 +312,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
                               _SWRAST_NEW_RASTERMASK|		\
                               _NEW_LIGHT|			\
                               _NEW_FOG |			\
-			      _DD_NEW_SEPARATE_SPECULAR)
+			      _MESA_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_LINE (_SWRAST_NEW_DERIVED |		\
 			  _NEW_RENDERMODE|		\
@@ -321,7 +321,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
                           _NEW_LIGHT|			\
                           _NEW_FOG|			\
                           _NEW_DEPTH |			\
-                          _DD_NEW_SEPARATE_SPECULAR)
+                          _MESA_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_POINT (_SWRAST_NEW_DERIVED |	\
 			   _NEW_RENDERMODE |		\
@@ -329,7 +329,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
 			   _NEW_TEXTURE |		\
 			   _NEW_LIGHT |			\
 			   _NEW_FOG |			\
-                           _DD_NEW_SEPARATE_SPECULAR)
+                           _MESA_NEW_SEPARATE_SPECULAR)
 
 #define _SWRAST_NEW_TEXTURE_SAMPLE_FUNC _NEW_TEXTURE
 
