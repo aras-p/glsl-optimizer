@@ -445,8 +445,6 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
     */
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
       ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
-   if (ctx->Light.ShadeModel == GL_FLAT)
-      ctx->_TriangleCaps |= DD_FLATSHADE;
    if (_mesa_need_secondary_color(ctx))
       ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
 }

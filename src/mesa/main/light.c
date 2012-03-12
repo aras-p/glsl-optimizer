@@ -54,10 +54,6 @@ _mesa_ShadeModel( GLenum mode )
 
    FLUSH_VERTICES(ctx, _NEW_LIGHT);
    ctx->Light.ShadeModel = mode;
-   if (mode == GL_FLAT)
-      ctx->_TriangleCaps |= DD_FLATSHADE;
-   else
-      ctx->_TriangleCaps &= ~DD_FLATSHADE;
 
    if (ctx->Driver.ShadeModel)
       ctx->Driver.ShadeModel( ctx, mode );
