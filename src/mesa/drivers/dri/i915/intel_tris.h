@@ -34,13 +34,11 @@
 /** 3 dwords of state_immediate and 2 of 3dprim, in intel_flush_prim */
 #define INTEL_PRIM_EMIT_SIZE	(5 * 4)
 
-#define _INTEL_NEW_RENDERSTATE (_DD_NEW_LINE_STIPPLE |		\
-			       _DD_NEW_TRI_UNFILLED |		\
-			       _DD_NEW_TRI_LIGHT_TWOSIDE |	\
-			       _DD_NEW_TRI_OFFSET |		\
-			       _DD_NEW_TRI_STIPPLE |		\
-			       _NEW_PROGRAM |		\
-			       _NEW_POLYGONSTIPPLE)
+#define _INTEL_NEW_RENDERSTATE (_NEW_LINE | \
+                                _NEW_POLYGON | \
+                                _NEW_LIGHT | \
+                                _NEW_PROGRAM | \
+                                _NEW_POLYGONSTIPPLE)
 
 extern void intelInitTriFuncs(struct gl_context * ctx);
 
