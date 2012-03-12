@@ -63,6 +63,14 @@ def run_compiler(args):
     p = Popen(command, 1, stdout=PIPE, shell=False)
     output = p.communicate()[0]
 
+    if (p.returncode):
+        sys.stderr.write("Failed to compile builtins with command:\n")
+        for arg in command:
+            sys.stderr.write(arg + " ")
+        sys.stderr.write("\n")
+        sys.stderr.write("Result:\n")
+        sys.stderr.write(output)
+
     # Clean up output a bit by killing whitespace before a closing paren.
     kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE)
     output = kill_paren_whitespace.sub(')', output)
