@@ -397,7 +397,6 @@ fs_visitor::visit(ir_expression *ir)
 
       inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
       inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
-      emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1));
       break;
 
    case ir_binop_logic_xor:
@@ -443,11 +442,19 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_i2f:
    case ir_unop_u2f:
-   case ir_unop_b2f:
-   case ir_unop_b2i:
    case ir_unop_f2i:
       emit(BRW_OPCODE_MOV, this->result, op[0]);
       break;
+
+   case ir_unop_b2i:
+      inst = emit(BRW_OPCODE_AND, this->result, op[0], fs_reg(1));
+      break;
+   case ir_unop_b2f:
+      temp = fs_reg(this, glsl_type::int_type);
+      emit(BRW_OPCODE_AND, temp, op[0], fs_reg(1));
+      emit(BRW_OPCODE_MOV, this->result, temp);
+      break;
+
    case ir_unop_f2b:
    case ir_unop_i2b:
       temp = this->result;
@@ -459,7 +466,6 @@ fs_visitor::visit(ir_expression *ir)
 
       inst = emit(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
-      inst = emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(1));
       break;
 
    case ir_unop_trunc:
@@ -1491,19 +1497,9 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 break;
 
       case ir_binop_logic_xor:
-	 inst = emit(BRW_OPCODE_XOR, reg_null_d, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 break;
-
       case ir_binop_logic_or:
-	 inst = emit(BRW_OPCODE_OR, reg_null_d, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 break;
-
       case ir_binop_logic_and:
-	 inst = emit(BRW_OPCODE_AND, reg_null_d, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 break;
+	 goto out;
 
       case ir_unop_f2b:
 	 if (intel->gen >= 6) {
@@ -1544,15 +1540,11 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       return;
    }
 
+out:
    ir->accept(this);
 
-   if (intel->gen >= 6) {
-      fs_inst *inst = emit(BRW_OPCODE_AND, reg_null_d, this->result, fs_reg(1));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
-   } else {
-      fs_inst *inst = emit(BRW_OPCODE_MOV, reg_null_d, this->result);
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
-   }
+   fs_inst *inst = emit(BRW_OPCODE_AND, reg_null_d, this->result, fs_reg(1));
+   inst->conditional_mod = BRW_CONDITIONAL_NZ;
 }
 
 /**
