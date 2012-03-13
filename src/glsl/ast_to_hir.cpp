@@ -1692,14 +1692,14 @@ ast_expression::hir(exec_list *instructions,
       ir_variable *var = 
 	 state->symbols->get_variable(this->primary_expression.identifier);
 
-      result = new(ctx) ir_dereference_variable(var);
-
       if (var != NULL) {
 	 var->used = true;
+	 result = new(ctx) ir_dereference_variable(var);
       } else {
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
 
+	 result = ir_call::get_error_instruction(ctx);
 	 error_emitted = true;
       }
       break;
