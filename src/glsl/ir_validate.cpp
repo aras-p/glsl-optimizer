@@ -455,7 +455,7 @@ ir_validate::visit_leave(ir_expression *ir)
 ir_visitor_status
 ir_validate::visit_leave(ir_swizzle *ir)
 {
-   int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
+   unsigned int chans[4] = {ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w};
 
    for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
       if (chans[i] >= ir->val->type->vector_elements) {
