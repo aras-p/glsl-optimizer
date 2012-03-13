@@ -102,7 +102,7 @@ GL_LIBS = \
 
 GL_LDFLAGS = \
 	-Wl,-Bsymbolic \
-	-version-number 1:2
+	-version-number 1:2 -no-undefined
 
 libGL_la_SOURCES = $(GL_FILES)
 libMangledGL_la_SOURCES = $(GL_FILES)
