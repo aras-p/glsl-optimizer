@@ -1055,19 +1055,18 @@ ir_dereference_array::ir_dereference_array(ir_variable *var,
 void
 ir_dereference_array::set_array(ir_rvalue *value)
 {
+   assert(value != NULL);
+
    this->array = value;
-   this->type = glsl_type::error_type;
 
-   if (this->array != NULL) {
-      const glsl_type *const vt = this->array->type;
+   const glsl_type *const vt = this->array->type;
 
-      if (vt->is_array()) {
-	 type = vt->element_type();
-      } else if (vt->is_matrix()) {
-	 type = vt->column_type();
-      } else if (vt->is_vector()) {
-	 type = vt->get_base_type();
-      }
+   if (vt->is_array()) {
+      type = vt->element_type();
+   } else if (vt->is_matrix()) {
+      type = vt->column_type();
+   } else if (vt->is_vector()) {
+      type = vt->get_base_type();
    }
 }
 
