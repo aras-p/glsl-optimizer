@@ -1074,11 +1074,12 @@ ir_dereference_array::set_array(ir_rvalue *value)
 ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 					     const char *field)
 {
+   assert(value != NULL);
+
    this->ir_type = ir_type_dereference_record;
    this->record = value;
    this->field = ralloc_strdup(this, field);
-   this->type = (this->record != NULL)
-      ? this->record->type->field_type(field) : glsl_type::error_type;
+   this->type = this->record->type->field_type(field);
 }
 
 
@@ -1090,8 +1091,7 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
    this->ir_type = ir_type_dereference_record;
    this->record = new(ctx) ir_dereference_variable(var);
    this->field = ralloc_strdup(this, field);
-   this->type = (this->record != NULL)
-      ? this->record->type->field_type(field) : glsl_type::error_type;
+   this->type = this->record->type->field_type(field);
 }
 
 bool
