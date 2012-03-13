@@ -1026,9 +1026,11 @@ ir_loop::ir_loop()
 
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {
+   assert(var != NULL);
+
    this->ir_type = ir_type_dereference_variable;
    this->var = var;
-   this->type = (var != NULL) ? var->type : glsl_type::error_type;
+   this->type = var->type;
 }
 
 
