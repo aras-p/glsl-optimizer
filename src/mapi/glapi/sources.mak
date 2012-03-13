@@ -12,7 +12,7 @@ GLAPI_SOURCES = \
 X86_API =			\
 	glapi_x86.S
 
-X86-64_API =			\
+X86_64_API =			\
 	glapi_x86-64.S
 
 SPARC_API =			\

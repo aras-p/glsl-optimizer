@@ -509,7 +509,7 @@ if test "x$enable_asm" = xyes; then
     x86_64)
         DEFINES="$DEFINES -DUSE_X86_64_ASM"
         MESA_ASM_FILES='$(X86_64_FILES)'
-        GLAPI_ASM_SOURCES='$(X86-64_API)'
+        GLAPI_ASM_SOURCES='$(X86_64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     sparc)
