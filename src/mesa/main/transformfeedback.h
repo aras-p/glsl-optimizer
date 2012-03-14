@@ -42,9 +42,6 @@ _mesa_free_transform_feedback(struct gl_context *ctx);
 #if FEATURE_EXT_transform_feedback
 
 extern GLboolean
-_mesa_validate_primitive_mode(struct gl_context *ctx, GLenum mode);
-
-extern GLboolean
 _mesa_validate_transform_feedback_buffers(struct gl_context *ctx);
 
 

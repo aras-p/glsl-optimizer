@@ -89,33 +89,6 @@ reference_transform_feedback_object(struct gl_transform_feedback_object **ptr,
 
 
 /**
- * Check if the given primitive mode (as in glBegin(mode)) is compatible
- * with the current transform feedback mode (if it's enabled).
- * This is to be called from glBegin(), glDrawArrays(), glDrawElements(), etc.
- *
- * \return GL_TRUE if the mode is OK, GL_FALSE otherwise.
- */
-GLboolean
-_mesa_validate_primitive_mode(struct gl_context *ctx, GLenum mode)
-{
-   if (ctx->TransformFeedback.CurrentObject->Active &&
-       !ctx->TransformFeedback.CurrentObject->Paused) {
-      switch (mode) {
-      case GL_POINTS:
-         return ctx->TransformFeedback.Mode == GL_POINTS;
-      case GL_LINES:
-      case GL_LINE_STRIP:
-      case GL_LINE_LOOP:
-         return ctx->TransformFeedback.Mode == GL_LINES;
-      default:
-         return ctx->TransformFeedback.Mode == GL_TRIANGLES;
-      }
-   }
-   return GL_TRUE;
-}
-
-
-/**
  * Check that all the buffer objects currently bound for transform
  * feedback actually exist.  Raise a GL_INVALID_OPERATION error if
  * any buffers are missing.
