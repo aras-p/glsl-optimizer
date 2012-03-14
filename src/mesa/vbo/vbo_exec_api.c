@@ -696,8 +696,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
       struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
       int i;
 
-      if (!_mesa_valid_prim_mode(ctx, mode)) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBegin");
+      if (!_mesa_valid_prim_mode(ctx, mode, "glBegin")) {
          return;
       }
 

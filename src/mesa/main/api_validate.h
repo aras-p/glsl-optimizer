@@ -43,7 +43,7 @@ _mesa_max_buffer_index(struct gl_context *ctx, GLuint count, GLenum type,
 
 
 extern GLboolean
-_mesa_valid_prim_mode(const struct gl_context *ctx, GLenum mode);
+_mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name);
 
 
 extern GLboolean

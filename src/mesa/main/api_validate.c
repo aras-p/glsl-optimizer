@@ -204,13 +204,15 @@ check_index_bounds(struct gl_context *ctx, GLsizei count, GLenum type,
  * are supported.
  */
 GLboolean
-_mesa_valid_prim_mode(const struct gl_context *ctx, GLenum mode)
+_mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
 {
    if (ctx->Extensions.ARB_geometry_shader4 &&
        mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(mode=%x)", name, mode);
       return GL_FALSE;
    }
    else if (mode > GL_POLYGON) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(mode=%x)", name, mode);
       return GL_FALSE;
    }
    else {
@@ -237,8 +239,7 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)" );
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawElements")) {
       return GL_FALSE;
    }
 
@@ -294,8 +295,7 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)" );
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawRangeElements")) {
       return GL_FALSE;
    }
 
@@ -353,8 +353,7 @@ _mesa_validate_DrawArrays(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawArrays")) {
       return GL_FALSE;
    }
 
@@ -389,9 +388,7 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
       return GL_FALSE;
    }
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glDrawArraysInstanced(mode=0x%x)", mode);
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawArraysInstanced")) {
       return GL_FALSE;
    }
 
@@ -429,9 +426,7 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glDrawElementsInstanced(mode = 0x%x)", mode);
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawElementsInstanced")) {
       return GL_FALSE;
    }
 
@@ -485,8 +480,7 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
 {
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (!_mesa_valid_prim_mode(ctx, mode)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawTransformFeedback(mode)");
+   if (!_mesa_valid_prim_mode(ctx, mode, "glDrawTransformFeedback")) {
       return GL_FALSE;
    }
 
