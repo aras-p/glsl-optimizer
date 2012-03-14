@@ -62,7 +62,11 @@
 extern "C" void
 lp_register_oprofile_jit_event_listener(LLVMExecutionEngineRef EE)
 {
+#if HAVE_LLVM >= 0x0301
+   llvm::unwrap(EE)->RegisterJITEventListener(llvm::JITEventListener::createOProfileJITEventListener());
+#else
    llvm::unwrap(EE)->RegisterJITEventListener(llvm::createOProfileJITEventListener());
+#endif
 }
 
 
