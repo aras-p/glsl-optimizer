@@ -1,6 +1,2 @@
-.deps/
-.libs/
 Makefile
 Makefile.in
-libgbm.la
-libgbm_dri.la

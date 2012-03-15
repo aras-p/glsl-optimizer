@@ -2,6 +2,7 @@
 *.dll
 *.exe
 *.ilk
+*.la
 *.lo
 *.o
 *.obj
@@ -36,3 +37,5 @@ build
 libtool
 manifest.txt
 .dir-locals.el
+.deps/
+.libs/

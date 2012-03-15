@@ -1,5 +1,2 @@
-.deps
-.libs
 Makefile
 Makefile.in
-i915_dri.la
