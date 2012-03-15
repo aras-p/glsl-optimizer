@@ -169,7 +169,7 @@ glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 }
 
 void
-glsl_type::generate_110_types(glsl_symbol_table *symtab)
+glsl_type::generate_110_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
    generate_100ES_types(symtab);
 
@@ -177,16 +177,18 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
 			     Elements(builtin_110_types),
 			     false);
    add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false);
-   add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
-			     Elements(builtin_110_deprecated_structure_types),
-			     false);
+   if (add_deprecated) {
+      add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
+				Elements(builtin_110_deprecated_structure_types),
+				false);
+   }
 }
 
 
 void
-glsl_type::generate_120_types(glsl_symbol_table *symtab)
+glsl_type::generate_120_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
-   generate_110_types(symtab);
+   generate_110_types(symtab, add_deprecated);
 
    add_types_to_symbol_table(symtab, builtin_120_types,
 			     Elements(builtin_120_types), false);
@@ -194,9 +196,9 @@ glsl_type::generate_120_types(glsl_symbol_table *symtab)
 
 
 void
-glsl_type::generate_130_types(glsl_symbol_table *symtab)
+glsl_type::generate_130_types(glsl_symbol_table *symtab, bool add_deprecated)
 {
-   generate_120_types(symtab);
+   generate_120_types(symtab, add_deprecated);
 
    add_types_to_symbol_table(symtab, builtin_130_types,
 			     Elements(builtin_130_types), false);
@@ -207,7 +209,7 @@ glsl_type::generate_130_types(glsl_symbol_table *symtab)
 void
 glsl_type::generate_140_types(glsl_symbol_table *symtab)
 {
-   generate_130_types(symtab);
+   generate_130_types(symtab, false);
 
    add_types_to_symbol_table(symtab, builtin_140_types,
 			     Elements(builtin_140_types), false);
@@ -259,13 +261,13 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       glsl_type::generate_100ES_types(state->symbols);
       break;
    case 110:
-      glsl_type::generate_110_types(state->symbols);
+      glsl_type::generate_110_types(state->symbols, true);
       break;
    case 120:
-      glsl_type::generate_120_types(state->symbols);
+      glsl_type::generate_120_types(state->symbols, true);
       break;
    case 130:
-      glsl_type::generate_130_types(state->symbols);
+      glsl_type::generate_130_types(state->symbols, true);
       break;
    case 140:
       glsl_type::generate_140_types(state->symbols);
