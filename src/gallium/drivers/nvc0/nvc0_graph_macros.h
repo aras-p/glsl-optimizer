@@ -8,6 +8,20 @@
  * bra(n)z annul: no delay slot
  */
 
+/* Bitfield version of NVC0_3D_VERTEX_ARRAY_PER_INSTANCE[].
+ * Args: size, bitfield
+ */
+static const uint32_t nvc0_9097_per_instance_bf[] =
+{
+   0x00000301, /* parm $r3 (the bitfield) */
+   0x00000211, /* mov $r2 0 */
+   0x05880021, /* maddr [NVC0_3D_VERTEX_ARRAY_PER_INSTANCE(0), increment = 4] */
+   0xffffc911, /* mov $r1 (add $r1 -0x1) */
+   0x0040d043, /* send (extrshl $r3 $r2 0x1 0) */
+   0xffff8897, /* exit branz $r1 0x3 */
+   0x00005211  /* mov $r2 (add $r2 0x1) */
+};
+
 /* The comments above the macros describe what they *should* be doing,
  * but we use less functionality for now.
  */

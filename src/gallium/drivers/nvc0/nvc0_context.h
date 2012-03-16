@@ -84,6 +84,8 @@ struct nvc0_context {
       boolean prim_restart;
       uint32_t instance_elts; /* bitmask of per-instance elements */
       uint32_t instance_base;
+      uint32_t constant_vbos;
+      uint32_t constant_elts;
       int32_t index_bias;
       uint16_t scissor;
       uint8_t num_vtxbufs;
@@ -115,6 +117,7 @@ struct nvc0_context {
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
    unsigned num_vtxbufs;
    struct pipe_index_buffer idxbuf;
+   uint32_t constant_vbos;
    uint32_t vbo_fifo; /* bitmask of vertex elements to be pushed to FIFO */
    uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
    unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
@@ -240,7 +243,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
 void
 nvc0_vertex_state_delete(struct pipe_context *pipe, void *hwcso);
 
-void nvc0_vertex_arrays_validate(struct nvc0_context *nvc0);
+void nvc0_vertex_arrays_validate(struct nvc0_context *);
 
 void nvc0_idxbuf_validate(struct nvc0_context *);
 

@@ -126,26 +126,44 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     ((c) << NVC0_3D_VTX_ATTR_DEFINE_COMP__SHIFT))
 
 static void
-nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
-                  struct pipe_vertex_element *ve, unsigned attr)
+nvc0_update_constant_vertex_attribs(struct nvc0_context *nvc0)
 {
-   const void *data;
-   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   struct nv04_resource *res = nv04_resource(vb->buffer);
-   float v[4];
-   int i;
-   const unsigned nc = util_format_get_nr_components(ve->src_format);
+   uint32_t mask = nvc0->state.constant_elts;
 
-   data = nouveau_resource_map_offset(&nvc0->base, res, vb->buffer_offset +
-                                      ve->src_offset, NOUVEAU_BO_RD);
+   while (unlikely(mask)) {
+      const int i = ffs(mask) - 1;
+      uint32_t mode;
+      struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+      struct pipe_vertex_element *ve = &nvc0->vertex->element[i].pipe;
+      struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[ve->vertex_buffer_index];
+      const struct util_format_description *desc;
+      void *dst;
+      const void *src = nouveau_resource_map_offset(&nvc0->base,
+         nv04_resource(vb->buffer),
+         vb->buffer_offset + ve->src_offset, NOUVEAU_BO_RD);
 
-   util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
+      mask &= ~(1 << i);
 
-   PUSH_SPACE(push, 6);
-   BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), nc + 1);
-   PUSH_DATA (push, VTX_ATTR(attr, nc, FLOAT, 32));
-   for (i = 0; i < nc; ++i)
-      PUSH_DATAf(push, v[i]);
+      desc = util_format_description(ve->src_format);
+
+      PUSH_SPACE(push, 6);
+      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 5);
+      dst = push->cur + 1;
+      if (desc->channel[0].pure_integer) {
+         if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+            mode = VTX_ATTR(i, 4, SINT, 32);
+            desc->unpack_rgba_sint(dst, 0, src, 0, 1, 1);
+         } else {
+            mode = VTX_ATTR(i, 4, UINT, 32);
+            desc->unpack_rgba_uint(dst, 0, src, 0, 1, 1);
+         }
+      } else {
+         mode = VTX_ATTR(i, 4, FLOAT, 32);
+         desc->unpack_rgba_float(dst, 0, src, 0, 1, 1);
+      }
+      *push->cur = mode;
+      push->cur += 5;
+   }
 }
 
 static INLINE void
@@ -225,13 +243,8 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[b];
       struct nv04_resource *buf = nv04_resource(vb->buffer);
 
-      if (!(nvc0->vbo_user & (1 << b)))
+      if (!(nvc0->vbo_user & (1 << b)) || !vb->stride)
          continue;
-
-      if (!vb->stride) {
-         nvc0_emit_vtxattr(nvc0, vb, ve, i);
-         continue;
-      }
       nvc0_vbuf_range(nvc0, b, &base, &size);
 
       if (!(written & (1 << b))) {
@@ -268,83 +281,88 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_stateobj *vertex = nvc0->vertex;
    struct pipe_vertex_buffer *vb;
    struct nvc0_vertex_element *ve;
+   uint32_t const_vbos;
    unsigned i;
+   boolean update_vertex;
 
    if (unlikely(vertex->need_conversion) ||
        unlikely(nvc0->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)) {
-      nvc0->vbo_fifo = ~0;
       nvc0->vbo_user = 0;
+      nvc0->vbo_fifo = ~nvc0->constant_vbos;
    } else {
       nvc0_prevalidate_vbufs(nvc0);
+      nvc0->vbo_fifo &= ~nvc0->constant_vbos;
    }
+   const_vbos = nvc0->vbo_fifo ? 0 : nvc0->constant_vbos;
 
-   PUSH_SPACE(push, vertex->num_elements + 1);
-   BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), vertex->num_elements);
-   for (i = 0; i < vertex->num_elements; ++i) {
-      ve = &vertex->element[i];
-      vb = &nvc0->vtxbuf[ve->pipe.vertex_buffer_index];
+   update_vertex = (nvc0->dirty & NVC0_NEW_VERTEX) ||
+      (const_vbos != nvc0->state.constant_vbos);
+   if (update_vertex) {
+      uint32_t *restrict data;
+      const unsigned n = MAX2(vertex->num_elements, nvc0->state.num_vtxelts);
 
-      if (likely(vb->stride) || nvc0->vbo_fifo) {
-         PUSH_DATA(push, ve->state);
-      } else {
-         PUSH_DATA(push, ve->state | NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST);
-         nvc0->vbo_fifo &= ~(1 << i);
+      if (unlikely(vertex->instance_elts != nvc0->state.instance_elts)) {
+         nvc0->state.instance_elts = vertex->instance_elts;
+         assert(n); /* if (n == 0), both masks should be 0 */
+         PUSH_SPACE(push, 3);
+         BEGIN_NVC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_PER_INSTANCE), 2);
+         PUSH_DATA (push, n);
+         PUSH_DATA (push, vertex->instance_elts);
+      }
+
+      nvc0->state.num_vtxelts = vertex->num_elements;
+      nvc0->state.constant_vbos = const_vbos;
+      nvc0->state.constant_elts = 0;
+
+      PUSH_SPACE(push, n * 2 + 1);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), n);
+      data = push->cur;
+      push->cur += n;
+      for (i = 0; i < vertex->num_elements; ++data, ++i) {
+         ve = &vertex->element[i];
+         *data = ve->state;
+         if (unlikely(const_vbos & (1 << ve->pipe.vertex_buffer_index))) {
+            *data |= NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST;
+            nvc0->state.constant_elts |= 1 << i;
+            IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
+         }
+      }
+      for (; i < n; ++data, ++i) {
+         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
+         *data = NVC0_3D_VERTEX_ATTRIB_INACTIVE;
       }
    }
 
-   PUSH_SPACE(push, vertex->num_elements * 16);
+   PUSH_SPACE(push, vertex->num_elements * 8);
    for (i = 0; i < vertex->num_elements; ++i) {
       struct nv04_resource *res;
       unsigned size, offset;
-      
+
+      if (nvc0->state.constant_elts & (1 << i))
+         continue;
       ve = &vertex->element[i];
       vb = &nvc0->vtxbuf[ve->pipe.vertex_buffer_index];
 
-      if (unlikely(ve->pipe.instance_divisor)) {
-         if (!(nvc0->state.instance_elts & (1 << i))) {
-            IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
-         }
-         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
-         PUSH_DATA (push, ve->pipe.instance_divisor);
-      } else
-      if (unlikely(nvc0->state.instance_elts & (1 << i))) {
-         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
-      }
-
       res = nv04_resource(vb->buffer);
-
-      if (nvc0->vbo_fifo || unlikely(vb->stride == 0)) {
-         if (!nvc0->vbo_fifo)
-            nvc0_emit_vtxattr(nvc0, vb, &ve->pipe, i);
-         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
-         PUSH_DATA (push, 0);
-         continue;
-      }
-
-      size = vb->buffer->width0;
       offset = ve->pipe.src_offset + vb->buffer_offset;
+      size = vb->buffer->width0;
 
-      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
-      PUSH_DATA (push, (1 << 12) | vb->stride);
-      BEGIN_1IC0(push, NVC0_3D(VERTEX_ARRAY_SELECT), 5);
-      PUSH_DATA (push, i);
+      if (unlikely(ve->pipe.instance_divisor)) {
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 4);
+         PUSH_DATA (push, (1 << 12) | vb->stride);
+         PUSH_DATAh(push, res->address + offset);
+         PUSH_DATA (push, res->address + offset);
+         PUSH_DATA (push, ve->pipe.instance_divisor);
+      } else {
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 3);
+         PUSH_DATA (push, (1 << 12) | vb->stride);
+         PUSH_DATAh(push, res->address + offset);
+         PUSH_DATA (push, res->address + offset);
+      }
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_LIMIT_HIGH(i)), 2);
       PUSH_DATAh(push, res->address + size - 1);
       PUSH_DATA (push, res->address + size - 1);
-      PUSH_DATAh(push, res->address + offset);
-      PUSH_DATA (push, res->address + offset);
    }
-   for (; i < nvc0->state.num_vtxelts; ++i) {
-      PUSH_SPACE(push, 5);
-      BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(i)), 1);
-      PUSH_DATA (push, NVC0_3D_VERTEX_ATTRIB_INACTIVE);
-      if (unlikely(nvc0->state.instance_elts & (1 << i)))
-         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
-      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
-      PUSH_DATA (push, 0);
-   }
-
-   nvc0->state.num_vtxelts = vertex->num_elements;
-   nvc0->state.instance_elts = vertex->instance_elts;
 }
 
 void
@@ -393,7 +411,6 @@ nvc0_prim_gl(unsigned prim)
    NVC0_PRIM_GL_CASE(PATCHES); */
    default:
       return NVC0_3D_VERTEX_BEGIN_GL_PRIMITIVE_POINTS;
-      break;
    }
 }
 
@@ -666,6 +683,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       push->kick_notify = nvc0_default_kick_notify;
       return;
    }
+   nvc0_update_constant_vertex_attribs(nvc0);
 
    /* space for base instance, flush, and prim restart */
    PUSH_SPACE(push, 8);
@@ -678,19 +696,11 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    if (nvc0->base.vbo_dirty) {
-      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 1);
-      PUSH_DATA (push, 0);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);
       nvc0->base.vbo_dirty = FALSE;
    }
 
-   if (unlikely(info->count_from_stream_output)) {
-      nvc0_draw_stream_output(nvc0, info);
-   } else
-   if (!info->indexed) {
-      nvc0_draw_arrays(nvc0,
-                       info->mode, info->start, info->count,
-                       info->instance_count);
-   } else {
+   if (info->indexed) {
       boolean shorten = info->max_index <= 65535;
 
       assert(nvc0->idxbuf.buffer);
@@ -719,6 +729,13 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       nvc0_draw_elements(nvc0, shorten,
                          info->mode, info->start, info->count,
                          info->instance_count, info->index_bias);
+   } else
+   if (unlikely(info->count_from_stream_output)) {
+      nvc0_draw_stream_output(nvc0, info);
+   } else {
+      nvc0_draw_arrays(nvc0,
+                       info->mode, info->start, info->count,
+                       info->instance_count);
    }
    push->kick_notify = nvc0_default_kick_notify;
 

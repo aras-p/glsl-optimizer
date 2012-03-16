@@ -623,6 +623,7 @@ nvc0_screen_create(struct nouveau_device *dev)
 #define MK_MACRO(m, n) i = nvc0_graph_set_macro(screen, m, i, sizeof(n), n);
 
    i = 0;
+   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_PER_INSTANCE, nvc0_9097_per_instance_bf);
    MK_MACRO(NVC0_3D_BLEND_ENABLES, nvc0_9097_blend_enables);
    MK_MACRO(NVC0_3D_VERTEX_ARRAY_SELECT, nvc0_9097_vertex_array_select);
    MK_MACRO(NVC0_3D_TEP_SELECT, nvc0_9097_tep_select);
