@@ -93,7 +93,6 @@ endif
 if HAVE_EGL_PLATFORM_DRM
 AM_CFLAGS += -DHAVE_DRM_PLATFORM
 libEGL_la_LIBADD += ../../gbm/libgbm.la
-libEGL_la_LIBADD += ../../gbm/libgbm.la
 endif
 
 if HAVE_EGL_PLATFORM_FBDEV

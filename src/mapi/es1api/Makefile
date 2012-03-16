@@ -41,8 +41,8 @@ esapi_CPPFLAGS := \
 	-DMAPI_ABI_HEADER=\"$(ESAPI)/glapi_mapi_tmp.h\"
 
 include $(MAPI)/sources.mak
-esapi_SOURCES := $(addprefix $(MAPI)/, $(MAPI_BRIDGE_SOURCES))
-esapi_OBJECTS := $(MAPI_BRIDGE_SOURCES:.c=.o)
+esapi_SOURCES := $(MAPI_BRIDGE_FILES)
+esapi_OBJECTS := $(notdir $(MAPI_BRIDGE_FILES:.c=.o))
 esapi_CPPFLAGS += -DMAPI_MODE_BRIDGE
 
 esapi_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(esapi_LIB_DEPS)

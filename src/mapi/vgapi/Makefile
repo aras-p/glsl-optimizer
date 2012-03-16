@@ -10,8 +10,8 @@ VG_LIB_PATCH = 0
 MAPI := $(TOP)/src/mapi/mapi
 
 include $(MAPI)/sources.mak
-VGAPI_SOURCES := $(addprefix $(MAPI)/, $(MAPI_SOURCES))
-VGAPI_OBJECTS := $(MAPI_SOURCES:.c=.o)
+VGAPI_SOURCES := $(MAPI_FILES)
+VGAPI_OBJECTS := $(notdir $(MAPI_FILES:.c=.o))
 
 VGAPI_CPPFLAGS := -DMAPI_ABI_HEADER=\"vgapi/vgapi_tmp.h\"
 

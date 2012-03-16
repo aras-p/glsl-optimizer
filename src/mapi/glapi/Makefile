@@ -19,18 +19,18 @@ ifeq ($(SHARED_GLAPI),1)
 glapi_CPPFLAGS += \
 	-DMAPI_MODE_BRIDGE \
 	-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
-glapi_SOURCES := $(addprefix $(MAPI)/, $(MAPI_BRIDGE_SOURCES))
+glapi_SOURCES := $(MAPI_BRIDGE_FILES)
 
 glapi_GLAPI_OBJECTS :=
 glapi_ASM_OBJECTS :=
-glapi_MAPI_OBJECTS := $(MAPI_BRIDGE_SOURCES:.c=.o)
+glapi_MAPI_OBJECTS := $(notdir $(MAPI_BRIDGE_FILES:.c=.o))
 else
 glapi_CPPFLAGS += -DMAPI_MODE_UTIL
-glapi_SOURCES := $(GLAPI_SOURCES) $(addprefix $(MAPI)/, $(MAPI_UTIL_SOURCES))
+glapi_SOURCES := $(GLAPI_SOURCES) $(MAPI_UTIL_FILES)
 
 glapi_GLAPI_OBJECTS := $(GLAPI_SOURCES:.c=.o)
 glapi_ASM_OBJECTS := $(GLAPI_ASM_SOURCES:.S=.o)
-glapi_MAPI_OBJECTS := $(MAPI_UTIL_SOURCES:.c=.o)
+glapi_MAPI_OBJECTS := $(notdir $(MAPI_UTIL_FILES:.c=.o))
 endif # SHARED_GLAPI
 
 glapi_OBJECTS := \

@@ -31,8 +31,8 @@ libgbm_dri_la_CFLAGS = \
 	-DDEFAULT_DRIVER_DIR='"$(DRI_DRIVER_SEARCH_DIR)"' \
 	$(LIBDRM_CFLAGS)
 
-libgbm_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR)
-libgbm_la_LIBADD += libgbm_dri.la -lglapi
+libgbm_la_LIBADD += \
+	libgbm_dri.la $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
 all-local: libgbm.la

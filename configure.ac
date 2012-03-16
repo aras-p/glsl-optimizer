@@ -702,6 +702,7 @@ if test "x$enable_shared_glapi" = xyes; then
     # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
     # the remap table)
     DEFINES="$DEFINES -DIN_DRI_DRIVER"
+    SRC_DIRS="$SRC_DIRS mapi/shared-glapi"
 fi
 AC_SUBST([SHARED_GLAPI])
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test $SHARED_GLAPI = 1)
@@ -1985,6 +1986,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-egl/wayland-egl.pc
 		src/egl/wayland/wayland-drm/Makefile
 		src/glx/Makefile
+		src/mapi/shared-glapi/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile

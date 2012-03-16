@@ -25,7 +25,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# get MAPI_GLAPI_SOURCES
+# get MAPI_GLAPI_FILES
 include $(LOCAL_PATH)/mapi/sources.mak
 
 mapi_abi_headers :=
@@ -38,7 +38,7 @@ include $(CLEAR_VARS)
 
 abi_header := shared-glapi/glapi_mapi_tmp.h
 
-LOCAL_SRC_FILES := $(addprefix mapi/, $(MAPI_GLAPI_SOURCES))
+LOCAL_SRC_FILES := $(MAPI_GLAPI_FILES)
 
 LOCAL_CFLAGS := \
 	-DMAPI_MODE_GLAPI \
