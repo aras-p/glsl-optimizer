@@ -222,6 +222,9 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
+   if (!stImage->pt)
+      return NULL;
+
    if (stObj->pt != stImage->pt)
       level = 0;
    else
