@@ -438,6 +438,12 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       return;
    }
 
+   if (t->MaxLevel < baseLevel) {
+      incomplete(t, "MAX_LEVEL (%d) < BASE_LEVEL (%d)",
+		 t->MaxLevel, baseLevel);
+      return;
+   }
+
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       incomplete(t, "Image[baseLevel=%d] == NULL", baseLevel);
@@ -491,18 +497,12 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    ASSERT(maxLevels > 0);
 
-   if (t->MaxLevel < t->BaseLevel) {
-      incomplete(t, "MAX_LEVEL (%d) < BASE_LEVEL (%d)",
-		 t->MaxLevel, t->BaseLevel);
-      return;
-   }
-
    t->_MaxLevel = baseLevel + maxLog2;
    t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
    t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1);
 
    /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
-   t->_MaxLambda = (GLfloat) (t->_MaxLevel - t->BaseLevel);
+   t->_MaxLambda = (GLfloat) (t->_MaxLevel - baseLevel);
 
    if (t->Immutable) {
       /* This texture object was created with glTexStorage1/2/3D() so we
