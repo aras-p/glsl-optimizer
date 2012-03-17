@@ -27,6 +27,7 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/imports.h"
+#include "main/texobj.h"
 
 #include "s_context.h"
 #include "s_texfilter.h"
@@ -3612,9 +3613,10 @@ null_sample_func( struct gl_context *ctx,
  */
 texture_sample_func
 _swrast_choose_texture_sample_func( struct gl_context *ctx,
-				    const struct gl_texture_object *t )
+				    const struct gl_texture_object *t,
+                                    const struct gl_sampler_object *sampler)
 {
-   if (!t || !t->_Complete) {
+   if (!t || !_mesa_is_texture_complete(t, sampler)) {
       return &null_sample_func;
    }
    else {

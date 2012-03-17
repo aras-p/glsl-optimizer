@@ -1243,7 +1243,7 @@ st_finalize_texture(struct gl_context *ctx,
    enum pipe_format firstImageFormat;
    GLuint ptWidth, ptHeight, ptDepth, ptLayers;
 
-   if (stObj->base._Complete) {
+   if (_mesa_is_texture_complete(tObj, &tObj->Sampler)) {
       /* The texture is complete and we know exactly how many mipmap levels
        * are present/needed.  This is conditional because we may be called
        * from the st_generate_mipmap() function when the texture object is

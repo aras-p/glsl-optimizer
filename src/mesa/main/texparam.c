@@ -212,8 +212,7 @@ flush(struct gl_context *ctx)
 
 /**
  * This is called just prior to changing any texture object state which
- * can effect texture completeness (texture base level, max level,
- * minification filter).
+ * can effect texture completeness (texture base level, max level).
  * Any pending rendering will be flushed out, we'll set the _NEW_TEXTURE
  * state flag and then mark the texture object as 'incomplete' so that any
  * per-texture derived state gets recomputed.
@@ -242,7 +241,7 @@ set_tex_parameteri(struct gl_context *ctx,
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
-         incomplete(ctx, texObj);
+         flush(ctx);
          texObj->Sampler.MinFilter = params[0];
          return GL_TRUE;
       case GL_NEAREST_MIPMAP_NEAREST:
@@ -251,7 +250,7 @@ set_tex_parameteri(struct gl_context *ctx,
       case GL_LINEAR_MIPMAP_LINEAR:
          if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
              texObj->Target != GL_TEXTURE_EXTERNAL_OES) {
-            incomplete(ctx, texObj);
+            flush(ctx);
             texObj->Sampler.MinFilter = params[0];
             return GL_TRUE;
          }

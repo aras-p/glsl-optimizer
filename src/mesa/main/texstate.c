@@ -569,10 +569,13 @@ update_texture_state( struct gl_context *ctx )
       for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
          if (enabledTargets & (1 << texIndex)) {
             struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
-            if (!texObj->_Complete) {
+            struct gl_sampler_object *sampler = texUnit->Sampler ?
+               texUnit->Sampler : &texObj->Sampler;
+
+            if (!_mesa_is_texture_complete(texObj, sampler)) {
                _mesa_test_texobj_completeness(ctx, texObj);
             }
-            if (texObj->_Complete) {
+            if (_mesa_is_texture_complete(texObj, sampler)) {
                texUnit->_ReallyEnabled = 1 << texIndex;
                _mesa_reference_texobj(&texUnit->_Current, texObj);
                break;

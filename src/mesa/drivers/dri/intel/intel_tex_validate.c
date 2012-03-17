@@ -45,7 +45,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* We know/require this is true by now: 
     */
-   assert(intelObj->base._Complete);
+   assert(intelObj->base._BaseComplete);
 
    /* What levels must the tree include at a minimum?
     */

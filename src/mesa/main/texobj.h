@@ -35,6 +35,7 @@
 #include "compiler.h"
 #include "glheader.h"
 #include "mtypes.h"
+#include "samplerobj.h"
 
 
 /**
@@ -74,6 +75,18 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 {
    if (*ptr != tex)
       _mesa_reference_texobj_(ptr, tex);
+}
+
+
+/** Is the texture "complete" with respect to the given sampler state? */
+static inline GLboolean
+_mesa_is_texture_complete(const struct gl_texture_object *texObj,
+                          const struct gl_sampler_object *sampler)
+{
+   if (_mesa_is_mipmap_filter(sampler))
+      return texObj->_MipmapComplete;
+   else
+      return texObj->_BaseComplete;
 }
 
 
