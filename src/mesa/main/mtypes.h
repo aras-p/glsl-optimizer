@@ -1318,6 +1318,7 @@ struct gl_texture_object
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _BaseComplete;     /**< Is the base texture level valid? */
    GLboolean _MipmapComplete;   /**< Is the whole mipmap valid? */
+   GLboolean _IsIntegerFormat;  /**< Does the texture store integer values? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
    GLboolean Immutable;         /**< GL_ARB_texture_storage */

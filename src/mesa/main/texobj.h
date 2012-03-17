@@ -83,6 +83,14 @@ static inline GLboolean
 _mesa_is_texture_complete(const struct gl_texture_object *texObj,
                           const struct gl_sampler_object *sampler)
 {
+   if (texObj->_IsIntegerFormat &&
+       (sampler->MagFilter != GL_NEAREST ||
+        (sampler->MinFilter != GL_NEAREST &&
+         sampler->MinFilter != GL_NEAREST_MIPMAP_NEAREST))) {
+      /* If the format is integer, only nearest filtering is allowed */
+      return GL_FALSE;
+   }
+
    if (_mesa_is_mipmap_filter(sampler))
       return texObj->_MipmapComplete;
    else

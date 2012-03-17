@@ -478,6 +478,12 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       return;
    }
 
+   /* Check if the texture values are integer */
+   {
+      GLenum datatype = _mesa_get_format_datatype(baseImage->TexFormat);
+      t->_IsIntegerFormat = datatype == GL_INT || datatype == GL_UNSIGNED_INT;
+   }
+
    /* Compute _MaxLevel (the maximum mipmap level we'll sample from given the
     * mipmap image sizes and GL_TEXTURE_MAX_LEVEL state).
     */
