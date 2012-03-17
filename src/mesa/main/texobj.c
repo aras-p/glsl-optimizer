@@ -531,179 +531,86 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       }
    }
 
-   /* extra checking for mipmaps */
+   /*
+    * Do mipmap consistency checking
+    */
    if (t->Sampler.MinFilter != GL_NEAREST && t->Sampler.MinFilter != GL_LINEAR) {
       /*
        * Mipmapping: determine if we have a complete set of mipmaps
        */
       GLint i;
-      GLint minLevel = baseLevel;
-      GLint maxLevel = t->_MaxLevel;
+      const GLint minLevel = baseLevel;
+      const GLint maxLevel = t->_MaxLevel;
+      GLuint width, height, depth, face, numFaces = 1;
 
       if (minLevel > maxLevel) {
          incomplete(t, "minLevel > maxLevel");
          return;
       }
 
-      /* Test dimension-independent attributes */
-      for (i = minLevel; i <= maxLevel; i++) {
-         if (t->Image[0][i]) {
-            if (t->Image[0][i]->TexFormat != baseImage->TexFormat) {
-               incomplete(t, "Format[i] != Format[baseLevel]");
-               return;
-            }
-            if (t->Image[0][i]->Border != baseImage->Border) {
-               incomplete(t, "Border[i] != Border[baseLevel]");
-               return;
-            }
-         }
-      }
+      /* Get the base image's dimensions */
+      width = baseImage->Width2;
+      height = baseImage->Height2;
+      depth = baseImage->Depth2;
 
-      /* Test things which depend on number of texture image dimensions */
-      if ((t->Target == GL_TEXTURE_1D) ||
-          (t->Target == GL_TEXTURE_1D_ARRAY_EXT)) {
-         /* Test 1-D mipmaps */
-         GLuint width = baseImage->Width2;
-         for (i = baseLevel + 1; i < maxLevels; i++) {
-            if (width > 1) {
-               width /= 2;
-            }
-            if (i >= minLevel && i <= maxLevel) {
-               const struct gl_texture_image *img = t->Image[0][i];
-               if (!img) {
-                  incomplete(t, "1D Image[%d] is missing", i);
-                  return;
-               }
-               if (img->Width2 != width ) {
-                  incomplete(t, "1D Image[%d] bad width %u", i, img->Width2);
-                  return;
-               }
-            }
-            if (width == 1) {
-               return;  /* found smallest needed mipmap, all done! */
-            }
+      /* Note: this loop will be a no-op for RECT, BUFFER, EXTERNAL textures */
+      for (i = baseLevel + 1; i < maxLevels; i++) {
+         /* Compute the expected size of image at level[i] */
+         if (width > 1) {
+            width /= 2;
          }
-      }
-      else if ((t->Target == GL_TEXTURE_2D) ||
-               (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
-         /* Test 2-D mipmaps */
-         GLuint width = baseImage->Width2;
-         GLuint height = baseImage->Height2;
-         for (i = baseLevel + 1; i < maxLevels; i++) {
-            if (width > 1) {
-               width /= 2;
-            }
-            if (height > 1) {
-               height /= 2;
-            }
+         if (height > 1 && t->Target != GL_TEXTURE_1D_ARRAY) {
+            height /= 2;
+         }
+         if (depth > 1 && t->Target != GL_TEXTURE_2D_ARRAY) {
+            depth /= 2;
+         }
+
+         /* loop over cube faces (or single face otherwise) */
+         for (face = 0; face < numFaces; face++) {
             if (i >= minLevel && i <= maxLevel) {
-               const struct gl_texture_image *img = t->Image[0][i];
+               const struct gl_texture_image *img = t->Image[face][i];
+
                if (!img) {
-                  incomplete(t, "2D Image[%d of %d] is missing", i, maxLevel);
+                  incomplete(t, "TexImage[%d] is missing", i);
+                  return;
+               }
+               if (img->TexFormat != baseImage->TexFormat) {
+                  incomplete(t, "Format[i] != Format[baseLevel]");
+                  return;
+               }
+               if (img->Border != baseImage->Border) {
+                  incomplete(t, "Border[i] != Border[baseLevel]");
                   return;
                }
                if (img->Width2 != width) {
-                  incomplete(t, "2D Image[%d] bad width %u", i, img->Width2);
+                  incomplete(t, "TexImage[%d] bad width %u", i, img->Width2);
                   return;
                }
                if (img->Height2 != height) {
-                  incomplete(t, "2D Image[i] bad height %u", i, img->Height2);
-                  return;
-               }
-               if (width==1 && height==1) {
-                  return;  /* found smallest needed mipmap, all done! */
-               }
-            }
-         }
-      }
-      else if (t->Target == GL_TEXTURE_3D) {
-         /* Test 3-D mipmaps */
-         GLuint width = baseImage->Width2;
-         GLuint height = baseImage->Height2;
-         GLuint depth = baseImage->Depth2;
-         for (i = baseLevel + 1; i < maxLevels; i++) {
-            if (width > 1) {
-               width /= 2;
-            }
-            if (height > 1) {
-               height /= 2;
-            }
-            if (depth > 1) {
-               depth /= 2;
-            }
-            if (i >= minLevel && i <= maxLevel) {
-               const struct gl_texture_image *img = t->Image[0][i];
-               if (!img) {
-                  incomplete(t, "3D Image[%d] is missing", i);
-                  return;
-               }
-               if (img->_BaseFormat == GL_DEPTH_COMPONENT) {
-                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
-                  return;
-               }
-               if (img->Width2 != width) {
-                  incomplete(t, "3D Image[%d] bad width %u", i, img->Width2);
-                  return;
-               }
-               if (img->Height2 != height) {
-                  incomplete(t, "3D Image[%d] bad height %u", i, img->Height2);
+                  incomplete(t, "TexImage[%d] bad height %u", i, img->Height2);
                   return;
                }
                if (img->Depth2 != depth) {
-                  incomplete(t, "3D Image[%d] bad depth %u", i, img->Depth2);
+                  incomplete(t, "TexImage[%d] bad depth %u", i, img->Depth2);
                   return;
                }
-            }
-            if (width == 1 && height == 1 && depth == 1) {
-               return;  /* found smallest needed mipmap, all done! */
-            }
-         }
-      }
-      else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
-         /* make sure 6 cube faces are consistant */
-         GLuint width = baseImage->Width2;
-         GLuint height = baseImage->Height2;
-         for (i = baseLevel + 1; i < maxLevels; i++) {
-            if (width > 1) {
-               width /= 2;
-            }
-            if (height > 1) {
-               height /= 2;
-            }
-            if (i >= minLevel && i <= maxLevel) {
-	       GLuint face;
-	       for (face = 0; face < 6; face++) {
-		  /* check that we have images defined */
-		  if (!t->Image[face][i]) {
-		     incomplete(t, "CubeMap Image[n][i] == NULL");
-		     return;
-		  }
-		  /* Don't support GL_DEPTH_COMPONENT for cube maps */
-                  if (ctx->VersionMajor < 3 && !ctx->Extensions.EXT_gpu_shader4) {
-                     if (t->Image[face][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
-                        incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
-                        return;
-                     }
-		  }
-		  /* check that all six images have same size */
-                  if (t->Image[face][i]->Width2 != width || 
-                      t->Image[face][i]->Height2 != height) {
+
+               /* Extra checks for cube textures */
+               if (face > 0) {
+                  /* check that cube faces are the same size */
+                  if (img->Width2 != t->Image[0][i]->Width2 || 
+                      img->Height2 != t->Image[0][i]->Height2) {
 		     incomplete(t, "CubeMap Image[n][i] bad size");
 		     return;
 		  }
-	       }
-	    }
-	    if (width == 1 && height == 1) {
-	       return;  /* found smallest needed mipmap, all done! */
+               }
             }
          }
-      }
-      else if (t->Target == GL_TEXTURE_RECTANGLE_NV) {
-         /* XXX special checking? */
-      }
-      else {
-         /* Target = ??? */
-         _mesa_problem(ctx, "Bug in gl_test_texture_object_completeness\n");
+         
+         if (width == 1 && height == 1 && depth == 1) {
+            return;  /* found smallest needed mipmap, all done! */
+         }
       }
    }
 }
