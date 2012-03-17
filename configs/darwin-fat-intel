@@ -1,0 +1,7 @@
+# Configuration for Darwin / MacOS X, making 32bit and 64bit fat dynamic libs for intel
+
+RC_CFLAGS=-arch i386 -arch x86_64
+
+include $(TOP)/configs/darwin
+
+CONFIG_NAME = darwin-fat-intel
