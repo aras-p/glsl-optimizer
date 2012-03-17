@@ -452,35 +452,39 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       return;
    }
 
-   /* Compute _MaxLevel */
-   if ((t->Target == GL_TEXTURE_1D) ||
-       (t->Target == GL_TEXTURE_1D_ARRAY_EXT)) {
+   /* Compute _MaxLevel (the maximum mipmap level we'll sample from given the
+    * mipmap image sizes and GL_TEXTURE_MAX_LEVEL state).
+    */
+   switch (t->Target) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_1D_ARRAY_EXT:
       maxLog2 = t->Image[0][baseLevel]->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
-   }
-   else if ((t->Target == GL_TEXTURE_2D) ||
-            (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
+      break;
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_2D_ARRAY_EXT:
       maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
                      t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
-   }
-   else if (t->Target == GL_TEXTURE_3D) {
+      break;
+   case GL_TEXTURE_3D:
       maxLog2 = MAX3(t->Image[0][baseLevel]->WidthLog2,
                      t->Image[0][baseLevel]->HeightLog2,
                      t->Image[0][baseLevel]->DepthLog2);
       maxLevels = ctx->Const.Max3DTextureLevels;
-   }
-   else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
+      break;
+   case GL_TEXTURE_CUBE_MAP_ARB:
       maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
                      t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxCubeTextureLevels;
-   }
-   else if (t->Target == GL_TEXTURE_RECTANGLE_NV ||
-            t->Target == GL_TEXTURE_EXTERNAL_OES) {
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_TEXTURE_BUFFER:
+   case GL_TEXTURE_EXTERNAL_OES:
       maxLog2 = 0;  /* not applicable */
       maxLevels = 1;  /* no mipmapping */
-   }
-   else {
+      break;
+   default:
       _mesa_problem(ctx, "Bad t->Target in _mesa_test_texobj_completeness");
       return;
    }
