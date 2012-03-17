@@ -80,8 +80,13 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 					       &dummy_err);
    }
 
-   if (gc == NULL)
+   if (gc == NULL) {
+#ifdef GLX_USE_APPLEGL
+      gc = applegl_create_context(psc, cfg, share, 0);
+#else
       gc = indirect_create_context(psc, cfg, share, 0);
+#endif
+   }
 
    gc->xid = xcb_generate_id(c);
    gc->share_xid = (share != NULL) ? share->xid : 0;

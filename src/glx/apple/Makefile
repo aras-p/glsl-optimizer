@@ -35,6 +35,7 @@ SOURCES = \
 	apple_xgl_api_stereo.c \
 	apple_xgl_api_viewport.c \
 	appledri.c \
+	../create_context.c \
 	../clientattrib.c \
 	../compsize.c \
 	../glxconfig.c \
