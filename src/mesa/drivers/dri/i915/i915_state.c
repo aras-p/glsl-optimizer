@@ -652,6 +652,48 @@ i915PointParameterfv(struct gl_context * ctx, GLenum pname, const GLfloat *param
    }
 }
 
+void
+i915_update_sprite_point_enable(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   /* _NEW_PROGRAM */
+   struct i915_fragment_program *p =
+      (struct i915_fragment_program *) ctx->FragmentProgram._Current;
+   const GLbitfield64 inputsRead = p->FragProg.Base.InputsRead;
+   struct i915_context *i915 = i915_context(ctx);
+   GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;
+   int i;
+   GLuint coord_replace_bits = 0x0;
+   GLuint tex_coord_unit_bits = 0x0;
+
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      /* _NEW_POINT */
+      if (ctx->Point.CoordReplace[i] && ctx->Point.PointSprite)
+         coord_replace_bits |= (1 << i);
+      if (inputsRead & FRAG_BIT_TEX(i))
+         tex_coord_unit_bits |= (1 << i);
+   }
+
+   /*
+    * Here we can't enable the SPRITE_POINT_ENABLE bit when the mis-match
+    * of tex_coord_unit_bits and coord_replace_bits, or this will make all
+    * the other non-point-sprite coords(like varying inputs, as we now use
+    * tex coord to implement varying inputs) be replaced to value (0, 0)-(1, 1).
+    *
+    * Thus, do fallback when needed.
+    */
+   FALLBACK(intel, I915_FALLBACK_COORD_REPLACE,
+            coord_replace_bits && coord_replace_bits != tex_coord_unit_bits);
+
+   s4 &= ~S4_SPRITE_POINT_ENABLE;
+   s4 |= (coord_replace_bits && coord_replace_bits == tex_coord_unit_bits) ?
+         S4_SPRITE_POINT_ENABLE : 0;
+   if (s4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
+      i915->state.Ctx[I915_CTXREG_LIS4] = s4;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   }
+}
+
 
 /* =============================================================
  * Color masks
@@ -869,18 +911,7 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_POINT_SPRITE:
-      /* This state change is handled in i915_reduced_primitive_state because
-       * the hardware bit should only be set when rendering points.
-       */
-	 dw = i915->state.Ctx[I915_CTXREG_LIS4];
-      if (state)
-	 dw |= S4_SPRITE_POINT_ENABLE;
-      else
-	 dw &= ~S4_SPRITE_POINT_ENABLE;
-      if (dw != i915->state.Ctx[I915_CTXREG_LIS4]) {
-	 i915->state.Ctx[I915_CTXREG_LIS4] = dw;
-	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-      }
+      /* Handle it at i915_update_sprite_point_enable () */
       break;
 
    case GL_POINT_SMOOTH:

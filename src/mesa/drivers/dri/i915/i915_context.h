@@ -40,6 +40,7 @@
 #define I915_FALLBACK_POINT_SMOOTH	 0x80000
 #define I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN	 0x100000
 #define I915_FALLBACK_DRAW_OFFSET	 0x200000
+#define I915_FALLBACK_COORD_REPLACE	 0x400000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -338,6 +339,7 @@ extern void i915InitStateFunctions(struct dd_function_table *functions);
 extern void i915InitState(struct i915_context *i915);
 extern void i915_update_stencil(struct gl_context * ctx);
 extern void i915_update_provoking_vertex(struct gl_context *ctx);
+extern void i915_update_sprite_point_enable(struct gl_context *ctx);
 
 
 /*======================================================================

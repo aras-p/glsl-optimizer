@@ -76,6 +76,8 @@ i915InvalidateState(struct gl_context * ctx, GLuint new_state)
        i915_update_provoking_vertex(ctx);
    if (new_state & (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS))
        i915_update_program(ctx);
+   if (new_state & (_NEW_PROGRAM | _NEW_POINT))
+       i915_update_sprite_point_enable(ctx);
 }
 
 
