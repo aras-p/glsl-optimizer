@@ -43,6 +43,7 @@
 #include "state.h"
 #include "texcompress.h"
 #include "teximage.h"
+#include "texobj.h"
 #include "texstate.h"
 #include "texpal.h"
 #include "mtypes.h"
@@ -2602,9 +2603,7 @@ teximage(struct gl_context *ctx, GLuint dims,
 
                _mesa_update_fbo_texture(ctx, texObj, face, level);
 
-               /* state update */
-               texObj->_Complete = GL_FALSE;
-               ctx->NewState |= _NEW_TEXTURE;
+               _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
             }
             else {
                _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
@@ -2702,9 +2701,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       ctx->Driver.EGLImageTargetTexture2D(ctx, target,
 					  texObj, texImage, image);
 
-      /* state update */
-      texObj->_Complete = GL_FALSE;
-      ctx->NewState |= _NEW_TEXTURE;
+      _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
    }
    _mesa_unlock_texture(ctx, texObj);
 
@@ -2965,9 +2962,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
             _mesa_update_fbo_texture(ctx, texObj, face, level);
 
-            /* state update */
-            texObj->_Complete = GL_FALSE;
-            ctx->NewState |= _NEW_TEXTURE;
+            _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
          }
          else {
             /* probably too large of image */
@@ -3598,9 +3593,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
 
                check_gen_mipmap(ctx, target, texObj, level);
 
-               /* state update */
-               texObj->_Complete = GL_FALSE;
-               ctx->NewState |= _NEW_TEXTURE;
+               _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
             }
             else {
                _mesa_error(ctx, GL_OUT_OF_MEMORY,
