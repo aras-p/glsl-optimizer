@@ -426,6 +426,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
                                 struct gl_texture_object *t )
 {
    const GLint baseLevel = t->BaseLevel;
+   const struct gl_texture_image *baseImage;
    GLint maxLog2 = 0, maxLevels = 0;
 
    t->_Complete = GL_TRUE;  /* be optimistic */
@@ -444,16 +445,18 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       return;
    }
 
+   baseImage = t->Image[0][baseLevel];
+
    /* Always need the base level image */
-   if (!t->Image[0][baseLevel]) {
+   if (!baseImage) {
       incomplete(t, "Image[baseLevel=%d] == NULL", baseLevel);
       return;
    }
 
    /* Check width/height/depth for zero */
-   if (t->Image[0][baseLevel]->Width == 0 ||
-       t->Image[0][baseLevel]->Height == 0 ||
-       t->Image[0][baseLevel]->Depth == 0) {
+   if (baseImage->Width == 0 ||
+       baseImage->Height == 0 ||
+       baseImage->Depth == 0) {
       incomplete(t, "texture width or height or depth = 0");
       return;
    }
@@ -464,24 +467,24 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    switch (t->Target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY_EXT:
-      maxLog2 = t->Image[0][baseLevel]->WidthLog2;
+      maxLog2 = baseImage->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_2D_ARRAY_EXT:
-      maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
-                     t->Image[0][baseLevel]->HeightLog2);
+      maxLog2 = MAX2(baseImage->WidthLog2,
+                     baseImage->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case GL_TEXTURE_3D:
-      maxLog2 = MAX3(t->Image[0][baseLevel]->WidthLog2,
-                     t->Image[0][baseLevel]->HeightLog2,
-                     t->Image[0][baseLevel]->DepthLog2);
+      maxLog2 = MAX3(baseImage->WidthLog2,
+                     baseImage->HeightLog2,
+                     baseImage->DepthLog2);
       maxLevels = ctx->Const.Max3DTextureLevels;
       break;
    case GL_TEXTURE_CUBE_MAP_ARB:
-      maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
-                     t->Image[0][baseLevel]->HeightLog2);
+      maxLog2 = MAX2(baseImage->WidthLog2,
+                     baseImage->HeightLog2);
       maxLevels = ctx->Const.MaxCubeTextureLevels;
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -515,8 +518,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
       /* make sure that all six cube map level 0 images are the same size */
-      const GLuint w = t->Image[0][baseLevel]->Width2;
-      const GLuint h = t->Image[0][baseLevel]->Height2;
+      const GLuint w = baseImage->Width2;
+      const GLuint h = baseImage->Height2;
       GLuint face;
       for (face = 1; face < 6; face++) {
          if (t->Image[face][baseLevel] == NULL ||
@@ -545,11 +548,11 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       /* Test dimension-independent attributes */
       for (i = minLevel; i <= maxLevel; i++) {
          if (t->Image[0][i]) {
-            if (t->Image[0][i]->TexFormat != t->Image[0][baseLevel]->TexFormat) {
+            if (t->Image[0][i]->TexFormat != baseImage->TexFormat) {
                incomplete(t, "Format[i] != Format[baseLevel]");
                return;
             }
-            if (t->Image[0][i]->Border != t->Image[0][baseLevel]->Border) {
+            if (t->Image[0][i]->Border != baseImage->Border) {
                incomplete(t, "Border[i] != Border[baseLevel]");
                return;
             }
@@ -560,7 +563,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       if ((t->Target == GL_TEXTURE_1D) ||
           (t->Target == GL_TEXTURE_1D_ARRAY_EXT)) {
          /* Test 1-D mipmaps */
-         GLuint width = t->Image[0][baseLevel]->Width2;
+         GLuint width = baseImage->Width2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -584,8 +587,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       else if ((t->Target == GL_TEXTURE_2D) ||
                (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
          /* Test 2-D mipmaps */
-         GLuint width = t->Image[0][baseLevel]->Width2;
-         GLuint height = t->Image[0][baseLevel]->Height2;
+         GLuint width = baseImage->Width2;
+         GLuint height = baseImage->Height2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -615,9 +618,9 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       }
       else if (t->Target == GL_TEXTURE_3D) {
          /* Test 3-D mipmaps */
-         GLuint width = t->Image[0][baseLevel]->Width2;
-         GLuint height = t->Image[0][baseLevel]->Height2;
-         GLuint depth = t->Image[0][baseLevel]->Depth2;
+         GLuint width = baseImage->Width2;
+         GLuint height = baseImage->Height2;
+         GLuint depth = baseImage->Depth2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
@@ -658,8 +661,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       }
       else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
          /* make sure 6 cube faces are consistant */
-         GLuint width = t->Image[0][baseLevel]->Width2;
-         GLuint height = t->Image[0][baseLevel]->Height2;
+         GLuint width = baseImage->Width2;
+         GLuint height = baseImage->Height2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
