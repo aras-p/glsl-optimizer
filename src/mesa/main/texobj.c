@@ -454,7 +454,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    if (t->Image[0][baseLevel]->Width == 0 ||
        t->Image[0][baseLevel]->Height == 0 ||
        t->Image[0][baseLevel]->Depth == 0) {
-      incomplete(t, "texture width = 0");
+      incomplete(t, "texture width or height or depth = 0");
       return;
    }
 
