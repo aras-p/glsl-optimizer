@@ -41,6 +41,7 @@
 #include "main/mtypes.h"
 #include "main/state.h"
 #include "main/texcompress.h"
+#include "main/texobj.h"
 #include "main/texparam.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
@@ -221,7 +222,7 @@ static inline void
 incomplete(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-   texObj->_Complete = GL_FALSE;
+   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
 }
 
 
