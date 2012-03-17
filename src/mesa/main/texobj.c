@@ -465,9 +465,9 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_3D) {
-      GLint max = MAX2(t->Image[0][baseLevel]->WidthLog2,
-                       t->Image[0][baseLevel]->HeightLog2);
-      maxLog2 = MAX2(max, (GLint)(t->Image[0][baseLevel]->DepthLog2));
+      maxLog2 = MAX3(t->Image[0][baseLevel]->WidthLog2,
+                     t->Image[0][baseLevel]->HeightLog2,
+                     t->Image[0][baseLevel]->DepthLog2);
       maxLevels = ctx->Const.Max3DTextureLevels;
    }
    else if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
