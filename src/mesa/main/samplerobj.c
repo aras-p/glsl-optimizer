@@ -55,12 +55,11 @@ _mesa_lookup_samplerobj(struct gl_context *ctx, GLuint name)
  * Handle reference counting.
  */
 void
-_mesa_reference_sampler_object(struct gl_context *ctx,
-                               struct gl_sampler_object **ptr,
-                               struct gl_sampler_object *samp)
+_mesa_reference_sampler_object_(struct gl_context *ctx,
+                                struct gl_sampler_object **ptr,
+                                struct gl_sampler_object *samp)
 {
-   if (*ptr == samp)
-      return;
+   assert(*ptr != samp); /* The inline wrapper should prevent no-op calls */
 
    if (*ptr) {
       /* Unreference the old sampler */
