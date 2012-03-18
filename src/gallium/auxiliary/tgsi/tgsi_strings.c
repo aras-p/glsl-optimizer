@@ -74,7 +74,11 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "VERTEXID",
    "STENCIL",
    "CLIPDIST",
-   "CLIPVERTEX"
+   "CLIPVERTEX",
+   "GRID_SIZE",
+   "BLOCK_ID",
+   "BLOCK_SIZE",
+   "THREAD_ID"
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =

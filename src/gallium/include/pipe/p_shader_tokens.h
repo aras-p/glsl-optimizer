@@ -158,7 +158,11 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_STENCIL    12
 #define TGSI_SEMANTIC_CLIPDIST   13
 #define TGSI_SEMANTIC_CLIPVERTEX 14
-#define TGSI_SEMANTIC_COUNT      15 /**< number of semantic values */
+#define TGSI_SEMANTIC_GRID_SIZE  15 /**< grid size in blocks */
+#define TGSI_SEMANTIC_BLOCK_ID   16 /**< id of the current block */
+#define TGSI_SEMANTIC_BLOCK_SIZE 17 /**< block size in threads */
+#define TGSI_SEMANTIC_THREAD_ID  18 /**< block-relative id of the current thread */
+#define TGSI_SEMANTIC_COUNT      19 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
