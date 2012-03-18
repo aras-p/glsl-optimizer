@@ -238,6 +238,8 @@ static boolean parse_header( struct translate_ctx *ctx )
       processor = TGSI_PROCESSOR_VERTEX;
    else if (str_match_no_case( &ctx->cur, "GEOM" ))
       processor = TGSI_PROCESSOR_GEOMETRY;
+   else if (str_match_no_case( &ctx->cur, "COMP" ))
+      processor = TGSI_PROCESSOR_COMPUTE;
    else {
       report_error( ctx, "Unknown header" );
       return FALSE;

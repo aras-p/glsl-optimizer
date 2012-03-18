@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 
-extern const char *tgsi_processor_type_names[3];
+extern const char *tgsi_processor_type_names[4];
 
 extern const char *tgsi_file_names[TGSI_FILE_COUNT];
 

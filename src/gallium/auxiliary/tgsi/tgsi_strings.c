@@ -32,11 +32,12 @@
 #include "tgsi_strings.h"
 
 
-const char *tgsi_processor_type_names[3] =
+const char *tgsi_processor_type_names[4] =
 {
    "FRAG",
    "VERT",
-   "GEOM"
+   "GEOM",
+   "COMP"
 };
 
 const char *tgsi_file_names[TGSI_FILE_COUNT] =

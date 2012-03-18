@@ -43,6 +43,7 @@ struct tgsi_header
 #define TGSI_PROCESSOR_FRAGMENT  0
 #define TGSI_PROCESSOR_VERTEX    1
 #define TGSI_PROCESSOR_GEOMETRY  2
+#define TGSI_PROCESSOR_COMPUTE   3
 
 struct tgsi_processor
 {

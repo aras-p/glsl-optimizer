@@ -68,7 +68,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
    procType = parse.FullHeader.Processor.Processor;
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX ||
-          procType == TGSI_PROCESSOR_GEOMETRY);
+          procType == TGSI_PROCESSOR_GEOMETRY ||
+          procType == TGSI_PROCESSOR_COMPUTE);
 
 
    /**
