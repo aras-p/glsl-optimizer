@@ -120,7 +120,8 @@ struct tgsi_declaration
    unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
    unsigned Interpolate : 1;  /**< any interpolation info? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
-   unsigned Padding     : 8;
+   unsigned Local       : 1;  /**< optimize as subroutine local variable? */
+   unsigned Padding     : 7;
 };
 
 struct tgsi_declaration_range

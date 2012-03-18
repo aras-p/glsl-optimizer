@@ -108,6 +108,7 @@ tgsi_default_declaration( void )
    declaration.Dimension = 0;
    declaration.Semantic = 0;
    declaration.Invariant = 0;
+   declaration.Local = 0;
 
    return declaration;
 }
@@ -120,6 +121,7 @@ tgsi_build_declaration(
    unsigned dimension,
    unsigned semantic,
    unsigned invariant,
+   unsigned local,
    struct tgsi_header *header )
 {
    struct tgsi_declaration declaration;
@@ -134,6 +136,7 @@ tgsi_build_declaration(
    declaration.Dimension = dimension;
    declaration.Semantic = semantic;
    declaration.Invariant = invariant;
+   declaration.Local = local;
 
    header_bodysize_grow( header );
 
@@ -359,6 +362,7 @@ tgsi_build_full_declaration(
       full_decl->Declaration.Dimension,
       full_decl->Declaration.Semantic,
       full_decl->Declaration.Invariant,
+      full_decl->Declaration.Local,
       header );
 
    if (maxsize <= size)

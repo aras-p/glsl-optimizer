@@ -1161,38 +1161,51 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          }
          ctx->cur = cur;
       } else {
-         for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
-            if (str_match_no_case( &cur, tgsi_semantic_names[i] )) {
-               const char *cur2 = cur;
-               uint index;
+         if (str_match_no_case(&cur, "LOCAL") &&
+             !is_digit_alpha_underscore(cur)) {
+            decl.Declaration.Local = 1;
+            ctx->cur = cur;
+         }
 
-               if (is_digit_alpha_underscore( cur ))
-                  continue;
-               eat_opt_white( &cur2 );
-               if (*cur2 == '[') {
-                  cur2++;
+         cur = ctx->cur;
+         eat_opt_white( &cur );
+         if (*cur == ',') {
+            cur++;
+            eat_opt_white( &cur );
+
+            for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
+               if (str_match_no_case( &cur, tgsi_semantic_names[i] )) {
+                  uint index;
+
+                  if (is_digit_alpha_underscore( cur ))
+                     continue;
+                  cur2 = cur;
                   eat_opt_white( &cur2 );
-                  if (!parse_uint( &cur2, &index )) {
-                     report_error( ctx, "Expected literal integer" );
-                     return FALSE;
-                  }
-                  eat_opt_white( &cur2 );
-                  if (*cur2 != ']') {
-                     report_error( ctx, "Expected `]'" );
-                     return FALSE;
-                  }
-                  cur2++;
+                  if (*cur2 == '[') {
+                     cur2++;
+                     eat_opt_white( &cur2 );
+                     if (!parse_uint( &cur2, &index )) {
+                        report_error( ctx, "Expected literal integer" );
+                        return FALSE;
+                     }
+                     eat_opt_white( &cur2 );
+                     if (*cur2 != ']') {
+                        report_error( ctx, "Expected `]'" );
+                        return FALSE;
+                     }
+                     cur2++;
 
-                  decl.Semantic.Index = index;
+                     decl.Semantic.Index = index;
 
-                  cur = cur2;
+                     cur = cur2;
+                  }
+
+                  decl.Declaration.Semantic = 1;
+                  decl.Semantic.Name = i;
+
+                  ctx->cur = cur;
+                  break;
                }
-
-               decl.Declaration.Semantic = 1;
-               decl.Semantic.Name = i;
-
-               ctx->cur = cur;
-               break;
             }
          }
       }

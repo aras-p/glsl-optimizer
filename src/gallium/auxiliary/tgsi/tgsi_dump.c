@@ -271,6 +271,9 @@ iter_declaration(
       ctx,
       decl->Declaration.UsageMask );
 
+   if (decl->Declaration.Local)
+      TXT( ", LOCAL" );
+
    if (decl->Declaration.Semantic) {
       TXT( ", " );
       ENM( decl->Semantic.Name, tgsi_semantic_names );

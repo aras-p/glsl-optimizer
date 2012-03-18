@@ -1795,6 +1795,12 @@ of TGSI_FILE.
 UsageMask field specifies which of the register components can be accessed
 and is one of TGSI_WRITEMASK.
 
+The Local flag specifies that a given value isn't intended for
+subroutine parameter passing and, as a result, the implementation
+isn't required to give any guarantees of it being preserved across
+subroutine boundaries.  As it's merely a compiler hint, the
+implementation is free to ignore it.
+
 If Dimension flag is set to 1, a Declaration Dimension token follows.
 
 If Semantic flag is set to 1, a Declaration Semantic token follows.
