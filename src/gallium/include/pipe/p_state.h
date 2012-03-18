@@ -584,7 +584,7 @@ struct pipe_resolve_info
 
 struct pipe_compute_state
 {
-   const struct tgsi_token *tokens; /**< Compute program to be executed. */
+   const void *prog; /**< Compute program to be executed. */
    unsigned req_local_mem; /**< Required size of the LOCAL resource. */
    unsigned req_private_mem; /**< Required size of the PRIVATE resource. */
    unsigned req_input_mem; /**< Required size of the INPUT resource. */

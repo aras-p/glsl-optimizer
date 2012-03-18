@@ -524,7 +524,16 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_INDIRECT_CONST_ADDR = 15,
    PIPE_SHADER_CAP_SUBROUTINES = 16, /* BGNSUB, ENDSUB, CAL, RET */
    PIPE_SHADER_CAP_INTEGERS = 17,
-   PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS = 18
+   PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS = 18,
+   PIPE_SHADER_CAP_PREFERRED_IR = 19
+};
+
+/**
+ * Shader intermediate representation.
+ */
+enum pipe_shader_ir
+{
+   PIPE_SHADER_IR_TGSI
 };
 
 /**

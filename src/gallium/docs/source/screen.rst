@@ -185,6 +185,8 @@ to be 0.
   If unsupported, only float opcodes are supported.
 * ``PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS``: THe maximum number of texture
   samplers.
+* ``PIPE_SHADER_CAP_PREFERRED_IR``: Preferred representation of the
+  program.  It should be one of the ``pipe_shader_ir`` enum values.
 
 
 .. _pipe_compute_cap:
