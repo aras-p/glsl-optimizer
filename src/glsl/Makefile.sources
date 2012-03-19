@@ -26,6 +26,7 @@ LIBGLSL_CXX_FILES := \
 	glsl_symbol_table.cpp \
 	hir_field_selection.cpp \
 	ir_basic_block.cpp \
+	ir_builder.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
 	ir.cpp \

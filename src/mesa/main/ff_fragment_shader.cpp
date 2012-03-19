@@ -45,11 +45,14 @@ extern "C" {
 #include "main/uniforms.h"
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir.h"
+#include "../glsl/ir_builder.h"
 #include "../glsl/glsl_symbol_table.h"
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 #include "../program/ir_to_mesa.h"
+
+using namespace ir_builder;
 
 /*
  * Note on texture units:
@@ -621,9 +624,7 @@ emit_combine_source(struct texenv_fragment_program *p,
 
    switch (operand) {
    case OPR_ONE_MINUS_SRC_COLOR: 
-      return new(p->mem_ctx) ir_expression(ir_binop_sub,
-					   new(p->mem_ctx) ir_constant(1.0f),
-					   src);
+      return sub(new(p->mem_ctx) ir_constant(1.0f), src);
 
    case OPR_SRC_ALPHA:
       return src->type->is_scalar()
@@ -633,9 +634,7 @@ emit_combine_source(struct texenv_fragment_program *p,
       ir_rvalue *const scalar = (src->type->is_scalar())
 	 ? src : (ir_rvalue *) new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
 
-      return new(p->mem_ctx) ir_expression(ir_binop_sub,
-					   new(p->mem_ctx) ir_constant(1.0f),
-					   scalar);
+      return sub(new(p->mem_ctx) ir_constant(1.0f), scalar);
    }
 
    case OPR_ZERO:
@@ -720,73 +719,54 @@ emit_combine(struct texenv_fragment_program *p,
       return src[0];
 
    case MODE_MODULATE: 
-      return new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[1]);
+      return mul(src[0], src[1]);
 
    case MODE_ADD: 
-      return new(p->mem_ctx) ir_expression(ir_binop_add, src[0], src[1]);
+      return add(src[0], src[1]);
 
    case MODE_ADD_SIGNED:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_add, src[0], src[1]);
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0,
-					   new(p->mem_ctx) ir_constant(-0.5f));
+      return add(add(src[0], src[1]), new(p->mem_ctx) ir_constant(-0.5f));
 
    case MODE_INTERPOLATE: 
       /* Arg0 * (Arg2) + Arg1 * (1-Arg2) */
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[2]);
-
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_sub,
-					   new(p->mem_ctx) ir_constant(1.0f),
-					   src[2]->clone(p->mem_ctx, NULL));
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[1], tmp1);
-
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, tmp1);
+      tmp0 = mul(src[0], src[2]);
+      tmp1 = mul(src[1], sub(new(p->mem_ctx) ir_constant(1.0f),
+			     src[2]->clone(p->mem_ctx, NULL)));
+      return add(tmp0, tmp1);
 
    case MODE_SUBTRACT: 
-      return new(p->mem_ctx) ir_expression(ir_binop_sub, src[0], src[1]);
+      return sub(src[0], src[1]);
 
    case MODE_DOT3_RGBA:
    case MODE_DOT3_RGBA_EXT: 
    case MODE_DOT3_RGB_EXT:
    case MODE_DOT3_RGB: {
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0],
-					   new(p->mem_ctx) ir_constant(2.0f));
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_add, tmp0,
-					   new(p->mem_ctx) ir_constant(-1.0f));
+      tmp0 = mul(src[0], new(p->mem_ctx) ir_constant(2.0f));
+      tmp0 = add(tmp0, new(p->mem_ctx) ir_constant(-1.0f));
       tmp0 = new(p->mem_ctx) ir_swizzle(smear(p, tmp0), 0, 1, 2, 3, 3);
 
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[1],
-					   new(p->mem_ctx) ir_constant(2.0f));
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_add, tmp1,
-					   new(p->mem_ctx) ir_constant(-1.0f));
+      tmp1 = mul(src[1], new(p->mem_ctx) ir_constant(2.0f));
+      tmp1 = add(tmp1, new(p->mem_ctx) ir_constant(-1.0f));
       tmp1 = new(p->mem_ctx) ir_swizzle(smear(p, tmp1), 0, 1, 2, 3, 3);
 
-      return new(p->mem_ctx) ir_expression(ir_binop_dot, tmp0, tmp1);
+      return dot(tmp0, tmp1);
    }
    case MODE_MODULATE_ADD_ATI:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[2]);
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, src[1]);
+      return add(mul(src[0], src[2]), src[1]);
 
    case MODE_MODULATE_SIGNED_ADD_ATI:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[2]);
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, src[1]);
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0,
-					   new(p->mem_ctx) ir_constant(-0.5f));
+      return add(add(mul(src[0], src[2]), src[1]),
+		 new(p->mem_ctx) ir_constant(-0.5f));
 
    case MODE_MODULATE_SUBTRACT_ATI:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[2]);
-      return new(p->mem_ctx) ir_expression(ir_binop_sub, tmp0, src[1]);
+      return sub(mul(src[0], src[2]), src[1]);
 
    case MODE_ADD_PRODUCTS:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[1]);
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[2], src[3]);
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, tmp1);
+      return add(mul(src[0], src[1]), mul(src[2], src[3]));
 
    case MODE_ADD_PRODUCTS_SIGNED:
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[0], src[1]);
-      tmp1 = new(p->mem_ctx) ir_expression(ir_binop_mul, src[2], src[3]);
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, tmp1);
-      return new(p->mem_ctx) ir_expression(ir_binop_add, tmp0,
-					   new(p->mem_ctx) ir_constant(-0.5f));
+      return add(add(mul(src[0], src[1]), mul(src[2], src[3])),
+		 new(p->mem_ctx) ir_constant(-0.5f));
 
    case MODE_BUMP_ENVMAP_ATI:
       /* special - not handled here */
@@ -796,15 +776,6 @@ emit_combine(struct texenv_fragment_program *p,
       assert(0);
       return src[0];
    }
-}
-
-static ir_rvalue *
-saturate(struct texenv_fragment_program *p, ir_rvalue *val)
-{
-   val = new(p->mem_ctx) ir_expression(ir_binop_min, val,
-				       new(p->mem_ctx) ir_constant(1.0f));
-   return new(p->mem_ctx) ir_expression(ir_binop_max, val,
-					new(p->mem_ctx) ir_constant(0.0f));
 }
 
 /**
@@ -876,7 +847,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 			 key->unit[unit].OptRGB);
       val = smear(p, val);
       if (rgb_saturate)
-	 val = saturate(p, val);
+	 val = saturate(val);
 
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
       assign = new(p->mem_ctx) ir_assignment(deref, val);
@@ -890,7 +861,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 				    key->unit[unit].OptRGB);
       val = smear(p, val);
       if (rgb_saturate)
-	 val = saturate(p, val);
+	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
       assign = new(p->mem_ctx) ir_assignment(deref, val);
       p->instructions->push_tail(assign);
@@ -906,7 +877,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       val = smear(p, val);
       val = new(p->mem_ctx) ir_swizzle(val, 0, 1, 2, 3, 3);
       if (rgb_saturate)
-	 val = saturate(p, val);
+	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
       assign = new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_XYZ);
       p->instructions->push_tail(assign);
@@ -918,7 +889,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       val = smear(p, val);
       val = new(p->mem_ctx) ir_swizzle(val, 3, 3, 3, 3, 1);
       if (alpha_saturate)
-	 val = saturate(p, val);
+	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
       assign = new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_W);
       p->instructions->push_tail(assign);
@@ -945,8 +916,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 					     (ir_constant_data *)const_data);
       }
 
-      return saturate(p, new(p->mem_ctx) ir_expression(ir_binop_mul,
-						       deref, shift));
+      return saturate(mul(deref, shift));
    }
    else
       return deref;
@@ -1185,18 +1155,16 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    bump = bump->clone(p->mem_ctx, NULL);
    bump_y = new(p->mem_ctx) ir_swizzle(bump, 1, 0, 0, 0, 1);
 
-   bump_x = new(p->mem_ctx) ir_expression(ir_binop_mul, bump_x, rot_mat_0);
-   bump_y = new(p->mem_ctx) ir_expression(ir_binop_mul, bump_y, rot_mat_1);
+   bump_x = mul(bump_x, rot_mat_0);
+   bump_y = mul(bump_y, rot_mat_1);
 
    ir_expression *expr;
-   expr = new(p->mem_ctx) ir_expression(ir_binop_add, bump_x, bump_y);
 
    deref = new(p->mem_ctx) ir_dereference_variable(bumped);
-   expr = new(p->mem_ctx) ir_expression(ir_binop_add,
-					new(p->mem_ctx) ir_swizzle(deref,
-								   0, 1, 1, 1,
-								   2),
-					expr);
+   expr = add(new(p->mem_ctx) ir_swizzle(deref,
+					 0, 1, 1, 1,
+					 2),
+	      add(bump_x, bump_y));
 
    deref = new(p->mem_ctx) ir_dereference_variable(bumped);
    assign = new(p->mem_ctx) ir_assignment(deref, expr, NULL, WRITEMASK_XY);
@@ -1255,11 +1223,11 @@ emit_fog_instructions(struct texenv_fragment_program *p,
        */
       temp = new(p->mem_ctx) ir_dereference_variable(oparams);
       temp = new(p->mem_ctx) ir_swizzle(temp, 0, 0, 0, 0, 1);
-      f = new(p->mem_ctx) ir_expression(ir_binop_mul, f, temp);
+      f = mul(f, temp);
 
       temp = new(p->mem_ctx) ir_dereference_variable(oparams);
       temp = new(p->mem_ctx) ir_swizzle(temp, 1, 0, 0, 0, 1);
-      f = new(p->mem_ctx) ir_expression(ir_binop_add, f, temp);
+      f = add(f, temp);
       break;
    case FOG_EXP:
       /* f = e^(-(density * fogcoord))
@@ -1270,7 +1238,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
        */
       temp = new(p->mem_ctx) ir_dereference_variable(oparams);
       temp = new(p->mem_ctx) ir_swizzle(temp, 2, 0, 0, 0, 1);
-      f = new(p->mem_ctx) ir_expression(ir_binop_mul, f, temp);
+      f = mul(f, temp);
       f = new(p->mem_ctx) ir_expression(ir_unop_neg, f);
       f = new(p->mem_ctx) ir_expression(ir_unop_exp2, f);
       break;
@@ -1288,8 +1256,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
 
       temp = new(p->mem_ctx) ir_dereference_variable(oparams);
       temp = new(p->mem_ctx) ir_swizzle(temp, 3, 0, 0, 0, 1);
-      f = new(p->mem_ctx) ir_expression(ir_binop_mul,
-					f, temp);
+      f = mul(f, temp);
 
       temp = new(p->mem_ctx) ir_dereference_variable(temp_var);
       ir_assignment *assign = new(p->mem_ctx) ir_assignment(temp, f);
@@ -1297,30 +1264,27 @@ emit_fog_instructions(struct texenv_fragment_program *p,
 
       f = new(p->mem_ctx) ir_dereference_variable(temp_var);
       temp = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      f = new(p->mem_ctx) ir_expression(ir_binop_mul, f, temp);
+      f = mul(f, temp);
       f = new(p->mem_ctx) ir_expression(ir_unop_neg, f);
       f = new(p->mem_ctx) ir_expression(ir_unop_exp2, f);
       break;
    }
 
-   f = saturate(p, f);
+   f = saturate(f);
 
    temp = new(p->mem_ctx) ir_dereference_variable(f_var);
    assign = new(p->mem_ctx) ir_assignment(temp, f);
    p->instructions->push_tail(assign);
 
    f = new(p->mem_ctx) ir_dereference_variable(f_var);
-   f = new(p->mem_ctx) ir_expression(ir_binop_sub,
-				     new(p->mem_ctx) ir_constant(1.0f),
-				     f);
+   f = sub(new(p->mem_ctx) ir_constant(1.0f), f);
    temp = new(p->mem_ctx) ir_dereference_variable(params);
    temp = new(p->mem_ctx) ir_dereference_record(temp, "color");
    temp = new(p->mem_ctx) ir_swizzle(temp, 0, 1, 2, 3, 3);
-   temp = new(p->mem_ctx) ir_expression(ir_binop_mul, temp, f);
+   temp = mul(temp, f);
 
    f = new(p->mem_ctx) ir_dereference_variable(f_var);
-   f = new(p->mem_ctx) ir_expression(ir_binop_mul, fragcolor, f);
-   f = new(p->mem_ctx) ir_expression(ir_binop_add, temp, f);
+   f = add(temp, mul(fragcolor, f));
 
    ir_dereference *deref = new(p->mem_ctx) ir_dereference_variable(fog_result);
    assign = new(p->mem_ctx) ir_assignment(deref, f, NULL, WRITEMASK_XYZ);
@@ -1392,7 +1356,7 @@ emit_instructions(struct texenv_fragment_program *p)
       }
       secondary = new(p->mem_ctx) ir_swizzle(secondary, 0, 1, 2, 3, 3);
 
-      tmp0 = new(p->mem_ctx) ir_expression(ir_binop_add, tmp0, secondary);
+      tmp0 = add(tmp0, secondary);
 
       deref = new(p->mem_ctx) ir_dereference_variable(spec_result);
       assign = new(p->mem_ctx) ir_assignment(deref, tmp0, NULL, WRITEMASK_XYZ);
