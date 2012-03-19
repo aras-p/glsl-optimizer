@@ -50,6 +50,14 @@ public:
    ir_rvalue *val;
 };
 
+class ir_factory {
+public:
+   void emit(ir_instruction *ir);
+
+   exec_list *instructions;
+   void *mem_ctx;
+};
+
 ir_expression *expr(ir_expression_operation op, operand a, operand b);
 ir_expression *add(operand a, operand b);
 ir_expression *sub(operand a, operand b);

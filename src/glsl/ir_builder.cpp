@@ -28,6 +28,12 @@ using namespace ir_builder;
 
 namespace ir_builder {
 
+void
+ir_factory::emit(ir_instruction *ir)
+{
+   instructions->push_tail(ir);
+}
+
 ir_swizzle *
 swizzle(operand a, int swizzle, int components)
 {

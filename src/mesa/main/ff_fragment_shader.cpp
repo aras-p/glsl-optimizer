@@ -511,12 +511,11 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
 
 /** State used to build the fragment program:
  */
-struct texenv_fragment_program {
+class texenv_fragment_program : public ir_factory {
+public:
    struct gl_shader_program *shader_program;
    struct gl_shader *shader;
-   exec_list *instructions;
    exec_list *top_instructions;
-   void *mem_ctx;
    struct state_key *state;
 
    ir_variable *src_texture[MAX_TEXTURE_COORD_UNITS];
@@ -827,10 +826,9 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    ir_variable *temp_var = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
 						       "texenv_combine",
 						       ir_var_temporary);
-   p->instructions->push_tail(temp_var);
+   p->emit(temp_var);
 
    ir_dereference *deref;
-   ir_assignment *assign;
    ir_rvalue *val;
 
    /* Emit the RGB and A combine ops
@@ -846,8 +844,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 	 val = saturate(val);
 
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      assign = new(p->mem_ctx) ir_assignment(deref, val);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, val));
    }
    else if (key->unit[unit].ModeRGB == MODE_DOT3_RGBA_EXT ||
 	    key->unit[unit].ModeRGB == MODE_DOT3_RGBA) {
@@ -859,8 +856,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       if (rgb_saturate)
 	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      assign = new(p->mem_ctx) ir_assignment(deref, val);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, val));
    }
    else {
       /* Need to do something to stop from re-emitting identical
@@ -874,8 +870,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       if (rgb_saturate)
 	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      assign = new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_XYZ);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_XYZ));
 
       val = emit_combine(p, unit,
 			 key->unit[unit].NumArgsA,
@@ -885,8 +880,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       if (alpha_saturate)
 	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      assign = new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_W);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, val, NULL, WRITEMASK_W));
    }
 
    deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
@@ -923,7 +917,6 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    ir_dereference *deref;
-   ir_assignment *assign;
 
    if (p->src_texture[unit])
       return;
@@ -948,12 +941,11 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
       p->src_texture[unit] = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
 							 "dummy_tex",
 							 ir_var_temporary);
-      p->instructions->push_tail(p->src_texture[unit]);
+      p->emit(p->src_texture[unit]);
 
       deref = new(p->mem_ctx) ir_dereference_variable(p->src_texture[unit]);
-      assign = new(p->mem_ctx) ir_assignment(deref,
-					     new(p->mem_ctx) ir_constant(0.0f));
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref,
+					    new(p->mem_ctx) ir_constant(0.0f)));
       return ;
    }
 
@@ -1018,7 +1010,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
    p->src_texture[unit] = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
 						      "tex",
 						      ir_var_temporary);
-   p->instructions->push_tail(p->src_texture[unit]);
+   p->emit(p->src_texture[unit]);
 
    ir_texture *tex = new(p->mem_ctx) ir_texture(ir_tex);
 
@@ -1045,8 +1037,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
    tex->projector = swizzle_w(texcoord);
 
    deref = new(p->mem_ctx) ir_dereference_variable(p->src_texture[unit]);
-   assign = new(p->mem_ctx) ir_assignment(deref, tex);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(deref, tex));
 }
 
 static void
@@ -1125,7 +1116,6 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
     * note only 2 coords are affected the rest are left unchanged (mul by 0)
     */
    ir_dereference *deref;
-   ir_assignment *assign;
    ir_rvalue *bump_x, *bump_y;
 
    texcoord = smear(p, texcoord);
@@ -1134,11 +1124,10 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    ir_variable *bumped = new(p->mem_ctx) ir_variable(texcoord->type,
 						     "bump_texcoord",
 						     ir_var_temporary);
-   p->instructions->push_tail(bumped);
+   p->emit(bumped);
 
    deref = new(p->mem_ctx) ir_dereference_variable(bumped);
-   assign = new(p->mem_ctx) ir_assignment(deref, texcoord);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(deref, texcoord));
 
    /* bump_texcoord.xy += arg0.x * rotmat0 + arg0.y * rotmat1 */
    bump = get_source(p, key->unit[unit].OptRGB[0].Source, unit);
@@ -1150,8 +1139,7 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    expr = add(swizzle_xy(bumped), add(bump_x, bump_y));
 
    deref = new(p->mem_ctx) ir_dereference_variable(bumped);
-   assign = new(p->mem_ctx) ir_assignment(deref, expr, NULL, WRITEMASK_XY);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(deref, expr, NULL, WRITEMASK_XY));
 
    p->texcoord_tex[bumpedUnitNr] = bumped;
 }
@@ -1171,7 +1159,6 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    ir_rvalue *f, *temp;
    ir_variable *params, *oparams;
    ir_variable *fogcoord;
-   ir_assignment *assign;
 
    /* Temporary storage for the whole fog result.  Fog calculations
     * only affect rgb so we're hanging on to the .a value of fragcolor
@@ -1180,10 +1167,9 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    ir_variable *fog_result = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
 							 "fog_result",
 							 ir_var_auto);
-   p->instructions->push_tail(fog_result);
+   p->emit(fog_result);
    temp = new(p->mem_ctx) ir_dereference_variable(fog_result);
-   assign = new(p->mem_ctx) ir_assignment(temp, fragcolor);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(temp, fragcolor));
 
    fragcolor = swizzle_xyz(fog_result);
 
@@ -1194,7 +1180,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
 
    ir_variable *f_var = new(p->mem_ctx) ir_variable(glsl_type::float_type,
 						    "fog_factor", ir_var_auto);
-   p->instructions->push_tail(f_var);
+   p->emit(f_var);
 
    switch (key->fog_mode) {
    case FOG_LINEAR:
@@ -1226,13 +1212,12 @@ emit_fog_instructions(struct texenv_fragment_program *p,
       ir_variable *temp_var = new(p->mem_ctx) ir_variable(glsl_type::float_type,
 							  "fog_temp",
 							  ir_var_auto);
-      p->instructions->push_tail(temp_var);
+      p->emit(temp_var);
 
       f = mul(f, swizzle_w(oparams));
 
       temp = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      ir_assignment *assign = new(p->mem_ctx) ir_assignment(temp, f);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(temp, f));
 
       f = mul(temp_var, temp_var);
       f = new(p->mem_ctx) ir_expression(ir_unop_neg, f);
@@ -1243,8 +1228,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    f = saturate(f);
 
    temp = new(p->mem_ctx) ir_dereference_variable(f_var);
-   assign = new(p->mem_ctx) ir_assignment(temp, f);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(temp, f));
 
    f = sub(new(p->mem_ctx) ir_constant(1.0f), f_var);
    temp = new(p->mem_ctx) ir_dereference_variable(params);
@@ -1254,8 +1238,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    f = add(temp, mul(fragcolor, f_var));
 
    ir_dereference *deref = new(p->mem_ctx) ir_dereference_variable(fog_result);
-   assign = new(p->mem_ctx) ir_assignment(deref, f, NULL, WRITEMASK_XYZ);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(deref, f, NULL, WRITEMASK_XYZ));
 
    return new(p->mem_ctx) ir_dereference_variable(fog_result);
 }
@@ -1295,7 +1278,6 @@ emit_instructions(struct texenv_fragment_program *p)
 
    ir_rvalue *cf = get_source(p, SRC_PREVIOUS, 0);
    ir_dereference_variable *deref;
-   ir_assignment *assign;
 
    if (key->separate_specular) {
       ir_rvalue *tmp0;
@@ -1303,11 +1285,10 @@ emit_instructions(struct texenv_fragment_program *p)
 							    "specular_add",
 							    ir_var_temporary);
 
-      p->instructions->push_tail(spec_result);
+      p->emit(spec_result);
 
       deref = new(p->mem_ctx) ir_dereference_variable(spec_result);
-      assign = new(p->mem_ctx) ir_assignment(deref, cf);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, cf));
 
       ir_rvalue *secondary;
       if (p->state->inputs_available & FRAG_BIT_COL1) {
@@ -1322,8 +1303,7 @@ emit_instructions(struct texenv_fragment_program *p)
       tmp0 = add(swizzle_xyz(spec_result), secondary);
 
       deref = new(p->mem_ctx) ir_dereference_variable(spec_result);
-      assign = new(p->mem_ctx) ir_assignment(deref, tmp0, NULL, WRITEMASK_XYZ);
-      p->instructions->push_tail(assign);
+      p->emit(new(p->mem_ctx) ir_assignment(deref, tmp0, NULL, WRITEMASK_XYZ));
 
       cf = new(p->mem_ctx) ir_dereference_variable(spec_result);
    }
@@ -1335,8 +1315,7 @@ emit_instructions(struct texenv_fragment_program *p)
    ir_variable *frag_color = p->shader->symbols->get_variable("gl_FragColor");
    assert(frag_color);
    deref = new(p->mem_ctx) ir_dereference_variable(frag_color);
-   assign = new(p->mem_ctx) ir_assignment(deref, cf);
-   p->instructions->push_tail(assign);
+   p->emit(new(p->mem_ctx) ir_assignment(deref, cf));
 }
 
 /**
@@ -1346,11 +1325,10 @@ emit_instructions(struct texenv_fragment_program *p)
 static struct gl_shader_program *
 create_new_program(struct gl_context *ctx, struct state_key *key)
 {
-   struct texenv_fragment_program p;
+   texenv_fragment_program p;
    unsigned int unit;
    _mesa_glsl_parse_state *state;
 
-   memset(&p, 0, sizeof(p));
    p.mem_ctx = ralloc_context(NULL);
    p.shader = ctx->Driver.NewShader(ctx, 0, GL_FRAGMENT_SHADER);
    p.shader->ir = new(p.shader) exec_list;
@@ -1384,7 +1362,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    p.src_previous = NULL;
 
    ir_function *main_f = new(p.mem_ctx) ir_function("main");
-   p.instructions->push_tail(main_f);
+   p.emit(main_f);
    state->symbols->add_function(main_f);
 
    ir_function_signature *main_sig =
