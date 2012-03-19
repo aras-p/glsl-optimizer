@@ -511,16 +511,10 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
 struct texenv_fragment_program {
    struct gl_shader_program *shader_program;
    struct gl_shader *shader;
-   struct gl_fragment_program *program;
    exec_list *instructions;
    exec_list *top_instructions;
    void *mem_ctx;
    struct state_key *state;
-
-   GLbitfield alu_temps;	/**< Track texture indirections, see spec. */
-   GLbitfield temps_output;	/**< Track texture indirections, see spec. */
-   GLbitfield temp_in_use;	/**< Tracks temporary regs which are in use. */
-   GLboolean error;
 
    ir_variable *src_texture[MAX_TEXTURE_COORD_UNITS];
    /* Reg containing each texture unit's sampled texture color,
@@ -537,8 +531,6 @@ struct texenv_fragment_program {
    ir_rvalue *src_previous;	/**< Reg containing color from previous
 				 * stage.  May need to be decl'd.
 				 */
-
-   GLuint last_tex_stage;	/**< Number of last enabled texture unit */
 };
 
 static ir_rvalue *
@@ -1359,7 +1351,6 @@ emit_instructions(struct texenv_fragment_program *p)
       for (unit = 0; unit < key->nr_enabled_units; unit++)
 	 if (key->unit[unit].enabled) {
 	    load_texunit_sources(p, unit);
-	    p->last_tex_stage = unit;
 	 }
 
       /* Second pass - emit combine instructions to build final color:
@@ -1464,8 +1455,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    }
 
    p.src_previous = NULL;
-
-   p.last_tex_stage = 0;
 
    ir_function *main_f = new(p.mem_ctx) ir_function("main");
    p.instructions->push_tail(main_f);
