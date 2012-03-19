@@ -823,11 +823,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    else
       alpha_saturate = GL_FALSE;
 
-   ir_variable *temp_var = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
-						       "texenv_combine",
-						       ir_var_temporary);
-   p->emit(temp_var);
-
+   ir_variable *temp_var = p->make_temp(glsl_type::vec4_type, "texenv_combine");
    ir_dereference *deref;
    ir_rvalue *val;
 
@@ -934,9 +930,8 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
    }
 
    if (!p->state->unit[unit].enabled) {
-      p->src_texture[unit] = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
-							 "dummy_tex",
-							 ir_var_temporary);
+      p->src_texture[unit] = p->make_temp(glsl_type::vec4_type,
+					  "dummy_tex");
       p->emit(p->src_texture[unit]);
 
       p->emit(assign(p->src_texture[unit], new(p->mem_ctx) ir_constant(0.0f)));
@@ -1001,10 +996,8 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
       break;
    }
 
-   p->src_texture[unit] = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
-						      "tex",
-						      ir_var_temporary);
-   p->emit(p->src_texture[unit]);
+   p->src_texture[unit] = p->make_temp(glsl_type::vec4_type,
+				       "tex");
 
    ir_texture *tex = new(p->mem_ctx) ir_texture(ir_tex);
 
@@ -1113,9 +1106,7 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    texcoord = smear(p, texcoord);
 
    /* bump_texcoord = texcoord */
-   ir_variable *bumped = new(p->mem_ctx) ir_variable(texcoord->type,
-						     "bump_texcoord",
-						     ir_var_temporary);
+   ir_variable *bumped = p->make_temp(texcoord->type, "bump_texcoord");
    p->emit(bumped);
    p->emit(assign(bumped, texcoord));
 
@@ -1150,10 +1141,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
     * only affect rgb so we're hanging on to the .a value of fragcolor
     * this way.
     */
-   ir_variable *fog_result = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
-							 "fog_result",
-							 ir_var_auto);
-   p->emit(fog_result);
+   ir_variable *fog_result = p->make_temp(glsl_type::vec4_type, "fog_result");
    p->emit(assign(fog_result, fragcolor));
 
    fragcolor = swizzle_xyz(fog_result);
@@ -1163,9 +1151,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    params = p->shader->symbols->get_variable("gl_Fog");
    f = new(p->mem_ctx) ir_dereference_variable(fogcoord);
 
-   ir_variable *f_var = new(p->mem_ctx) ir_variable(glsl_type::float_type,
-						    "fog_factor", ir_var_auto);
-   p->emit(f_var);
+   ir_variable *f_var = p->make_temp(glsl_type::float_type, "fog_factor");
 
    switch (key->fog_mode) {
    case FOG_LINEAR:
@@ -1194,10 +1180,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
        * can do this like FOG_EXP but with a squaring after the
        * multiply by density.
        */
-      ir_variable *temp_var = new(p->mem_ctx) ir_variable(glsl_type::float_type,
-							  "fog_temp",
-							  ir_var_auto);
-      p->emit(temp_var);
+      ir_variable *temp_var = p->make_temp(glsl_type::float_type, "fog_temp");
       p->emit(assign(temp_var, mul(f, swizzle_w(oparams))));
 
       f = mul(temp_var, temp_var);
@@ -1254,11 +1237,8 @@ emit_instructions(struct texenv_fragment_program *p)
    ir_rvalue *cf = get_source(p, SRC_PREVIOUS, 0);
 
    if (key->separate_specular) {
-      ir_variable *spec_result = new(p->mem_ctx) ir_variable(glsl_type::vec4_type,
-							    "specular_add",
-							    ir_var_temporary);
-
-      p->emit(spec_result);
+      ir_variable *spec_result = p->make_temp(glsl_type::vec4_type,
+					      "specular_add");
       p->emit(assign(spec_result, cf));
 
       ir_rvalue *secondary;

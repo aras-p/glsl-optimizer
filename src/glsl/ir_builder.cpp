@@ -34,6 +34,17 @@ ir_factory::emit(ir_instruction *ir)
    instructions->push_tail(ir);
 }
 
+ir_variable *
+ir_factory::make_temp(const glsl_type *type, const char *name)
+{
+   ir_variable *var;
+
+   var = new(mem_ctx) ir_variable(type, name, ir_var_temporary);
+   emit(var);
+
+   return var;
+}
+
 ir_assignment *
 assign(deref lhs, operand rhs, int writemask)
 {

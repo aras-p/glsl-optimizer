@@ -74,6 +74,7 @@ public:
 class ir_factory {
 public:
    void emit(ir_instruction *ir);
+   ir_variable *make_temp(const glsl_type *type, const char *name);
 
    exec_list *instructions;
    void *mem_ctx;
