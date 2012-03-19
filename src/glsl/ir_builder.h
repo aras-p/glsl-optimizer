@@ -50,6 +50,27 @@ public:
    ir_rvalue *val;
 };
 
+/** Automatic generator for ir_dereference_variable on assignment LHS.
+ *
+ * \sa operand
+ */
+class deref {
+public:
+   deref(ir_dereference *val)
+      : val(val)
+   {
+   }
+
+   deref(ir_variable *var)
+   {
+      void *mem_ctx = ralloc_parent(var);
+      val = new(mem_ctx) ir_dereference_variable(var);
+   }
+
+
+   ir_dereference *val;
+};
+
 class ir_factory {
 public:
    void emit(ir_instruction *ir);
@@ -57,6 +78,9 @@ public:
    exec_list *instructions;
    void *mem_ctx;
 };
+
+ir_assignment *assign(deref lhs, operand rhs);
+ir_assignment *assign(deref lhs, operand rhs, int writemask);
 
 ir_expression *expr(ir_expression_operation op, operand a, operand b);
 ir_expression *add(operand a, operand b);

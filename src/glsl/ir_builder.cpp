@@ -34,6 +34,24 @@ ir_factory::emit(ir_instruction *ir)
    instructions->push_tail(ir);
 }
 
+ir_assignment *
+assign(deref lhs, operand rhs, int writemask)
+{
+   void *mem_ctx = ralloc_parent(lhs.val);
+
+   ir_assignment *assign = new(mem_ctx) ir_assignment(lhs.val,
+						      rhs.val,
+						      NULL, writemask);
+
+   return assign;
+}
+
+ir_assignment *
+assign(deref lhs, operand rhs)
+{
+   return assign(lhs, rhs, (1 << lhs.val->type->vector_elements) - 1);
+}
+
 ir_swizzle *
 swizzle(operand a, int swizzle, int components)
 {
