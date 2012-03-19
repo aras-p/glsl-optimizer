@@ -1112,13 +1112,10 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
    GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
    ir_rvalue *bump;
    ir_rvalue *texcoord;
-   ir_variable *rot_mat_0_var, *rot_mat_1_var;
-   ir_dereference_variable *rot_mat_0, *rot_mat_1;
+   ir_variable *rot_mat_0, *rot_mat_1;
 
-   rot_mat_0_var = p->shader->symbols->get_variable("gl_BumpRotMatrix0MESA");
-   rot_mat_1_var = p->shader->symbols->get_variable("gl_BumpRotMatrix1MESA");
-   rot_mat_0 = new(p->mem_ctx) ir_dereference_variable(rot_mat_0_var);
-   rot_mat_1 = new(p->mem_ctx) ir_dereference_variable(rot_mat_1_var);
+   rot_mat_0 = p->shader->symbols->get_variable("gl_BumpRotMatrix0MESA");
+   rot_mat_1 = p->shader->symbols->get_variable("gl_BumpRotMatrix1MESA");
 
    ir_variable *tc_array = p->shader->symbols->get_variable("gl_TexCoord");
    assert(tc_array);
@@ -1262,9 +1259,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
       ir_assignment *assign = new(p->mem_ctx) ir_assignment(temp, f);
       p->instructions->push_tail(assign);
 
-      f = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      temp = new(p->mem_ctx) ir_dereference_variable(temp_var);
-      f = mul(f, temp);
+      f = mul(temp_var, temp_var);
       f = new(p->mem_ctx) ir_expression(ir_unop_neg, f);
       f = new(p->mem_ctx) ir_expression(ir_unop_exp2, f);
       break;
@@ -1276,15 +1271,13 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    assign = new(p->mem_ctx) ir_assignment(temp, f);
    p->instructions->push_tail(assign);
 
-   f = new(p->mem_ctx) ir_dereference_variable(f_var);
-   f = sub(new(p->mem_ctx) ir_constant(1.0f), f);
+   f = sub(new(p->mem_ctx) ir_constant(1.0f), f_var);
    temp = new(p->mem_ctx) ir_dereference_variable(params);
    temp = new(p->mem_ctx) ir_dereference_record(temp, "color");
    temp = new(p->mem_ctx) ir_swizzle(temp, 0, 1, 2, 3, 3);
    temp = mul(temp, f);
 
-   f = new(p->mem_ctx) ir_dereference_variable(f_var);
-   f = add(temp, mul(fragcolor, f));
+   f = add(temp, mul(fragcolor, f_var));
 
    ir_dereference *deref = new(p->mem_ctx) ir_dereference_variable(fog_result);
    assign = new(p->mem_ctx) ir_assignment(deref, f, NULL, WRITEMASK_XYZ);

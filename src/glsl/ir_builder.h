@@ -25,11 +25,36 @@
 
 namespace ir_builder {
 
-ir_expression *expr(ir_expression_operation op, ir_rvalue *a, ir_rvalue *b);
-ir_expression *add(ir_rvalue *a, ir_rvalue *b);
-ir_expression *sub(ir_rvalue *a, ir_rvalue *b);
-ir_expression *mul(ir_rvalue *a, ir_rvalue *b);
-ir_expression *dot(ir_rvalue *a, ir_rvalue *b);
-ir_expression *saturate(ir_rvalue *a);
+/**
+ * This little class exists to let the helper expression generators
+ * take either an ir_rvalue * or an ir_variable * to be automatically
+ * dereferenced, while still providing compile-time type checking.
+ *
+ * You don't have to explicitly call the constructor -- C++ will see
+ * that you passed an ir_variable, and silently call the
+ * operand(ir_variable *var) constructor behind your back.
+ */
+class operand {
+public:
+   operand(ir_rvalue *val)
+      : val(val)
+   {
+   }
+
+   operand(ir_variable *var)
+   {
+      void *mem_ctx = ralloc_parent(var);
+      val = new(mem_ctx) ir_dereference_variable(var);
+   }
+
+   ir_rvalue *val;
+};
+
+ir_expression *expr(ir_expression_operation op, operand a, operand b);
+ir_expression *add(operand a, operand b);
+ir_expression *sub(operand a, operand b);
+ir_expression *mul(operand a, operand b);
+ir_expression *dot(operand a, operand b);
+ir_expression *saturate(operand a);
 
 } /* namespace ir_builder */

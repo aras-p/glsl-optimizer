@@ -28,38 +28,37 @@ using namespace ir_builder;
 namespace ir_builder {
 
 ir_expression *
-expr(ir_expression_operation op,
-     ir_rvalue *a, ir_rvalue *b)
+expr(ir_expression_operation op, operand a, operand b)
 {
-   void *mem_ctx = ralloc_parent(a);
+   void *mem_ctx = ralloc_parent(a.val);
 
-   return new(mem_ctx) ir_expression(op, a, b);
+   return new(mem_ctx) ir_expression(op, a.val, b.val);
 }
 
-ir_expression *add(ir_rvalue *a, ir_rvalue *b)
+ir_expression *add(operand a, operand b)
 {
    return expr(ir_binop_add, a, b);
 }
 
-ir_expression *sub(ir_rvalue *a, ir_rvalue *b)
+ir_expression *sub(operand a, operand b)
 {
    return expr(ir_binop_sub, a, b);
 }
 
-ir_expression *mul(ir_rvalue *a, ir_rvalue *b)
+ir_expression *mul(operand a, operand b)
 {
    return expr(ir_binop_mul, a, b);
 }
 
-ir_expression *dot(ir_rvalue *a, ir_rvalue *b)
+ir_expression *dot(operand a, operand b)
 {
    return expr(ir_binop_dot, a, b);
 }
 
 ir_expression *
-saturate(ir_rvalue *a)
+saturate(operand a)
 {
-   void *mem_ctx = ralloc_parent(a);
+   void *mem_ctx = ralloc_parent(a.val);
 
    return expr(ir_binop_max,
 	       expr(ir_binop_min, a, new(mem_ctx) ir_constant(1.0f)),
