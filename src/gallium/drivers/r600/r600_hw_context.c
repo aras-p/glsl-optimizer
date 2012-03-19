@@ -36,6 +36,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	uint32_t *results;
 	unsigned num_backends = ctx->screen->info.r600_num_backends;
 	unsigned i, mask = 0;
+	uint64_t va;
 
 	/* if backend_map query is supported by the kernel */
 	if (ctx->screen->info.r600_backend_map_valid) {
@@ -71,6 +72,8 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	if (!buffer)
 		goto err;
 
+	va = r600_resource_va(&ctx->screen->screen, (void*)buffer);
+
 	/* initialize buffer with zeroes */
 	results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
@@ -80,8 +83,8 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		cs->buf[cs->cdw++] = 0;
-		cs->buf[cs->cdw++] = 0;
+		cs->buf[cs->cdw++] = va;
+		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
 
 		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
