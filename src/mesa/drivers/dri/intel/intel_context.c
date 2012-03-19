@@ -185,6 +185,15 @@ intelGetString(struct gl_context * ctx, GLenum name)
       case PCI_CHIP_IVYBRIDGE_S_GT1:
 	 chipset = "Intel(R) Ivybridge Server";
 	 break;
+      case PCI_CHIP_HASWELL_GT1:
+      case PCI_CHIP_HASWELL_GT2:
+	 chipset = "Intel(R) Haswell Desktop";
+	 break;
+      case PCI_CHIP_HASWELL_M_GT1:
+      case PCI_CHIP_HASWELL_M_GT2:
+      case PCI_CHIP_HASWELL_M_ULT_GT2:
+	 chipset = "Intel(R) Haswell Mobile";
+	 break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
