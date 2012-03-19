@@ -864,7 +864,7 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_0286D4_SPI_INTERP_CONTROL_0, tmp, NULL, 0);
 
 	/* point size 12.4 fixed point */
-	tmp = r600_pack_float_12p4(state->line_width/2);
+	tmp = r600_pack_float_12p4(state->point_size/2);
 	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), NULL, 0);
 
 	if (state->point_size_per_vertex) {
