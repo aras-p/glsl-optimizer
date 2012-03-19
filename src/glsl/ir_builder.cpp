@@ -22,10 +22,90 @@
  */
 
 #include "ir_builder.h"
+#include "program/prog_instruction.h"
 
 using namespace ir_builder;
 
 namespace ir_builder {
+
+ir_swizzle *
+swizzle(operand a, int swizzle, int components)
+{
+   void *mem_ctx = ralloc_parent(a.val);
+
+   return new(mem_ctx) ir_swizzle(a.val,
+				  GET_SWZ(swizzle, 0),
+				  GET_SWZ(swizzle, 1),
+				  GET_SWZ(swizzle, 2),
+				  GET_SWZ(swizzle, 3),
+				  components);
+}
+
+ir_swizzle *
+swizzle_xxxx(operand a)
+{
+   return swizzle(a, SWIZZLE_XXXX, 4);
+}
+
+ir_swizzle *
+swizzle_yyyy(operand a)
+{
+   return swizzle(a, SWIZZLE_YYYY, 4);
+}
+
+ir_swizzle *
+swizzle_zzzz(operand a)
+{
+   return swizzle(a, SWIZZLE_ZZZZ, 4);
+}
+
+ir_swizzle *
+swizzle_wwww(operand a)
+{
+   return swizzle(a, SWIZZLE_WWWW, 4);
+}
+
+ir_swizzle *
+swizzle_x(operand a)
+{
+   return swizzle(a, SWIZZLE_XXXX, 1);
+}
+
+ir_swizzle *
+swizzle_y(operand a)
+{
+   return swizzle(a, SWIZZLE_YYYY, 1);
+}
+
+ir_swizzle *
+swizzle_z(operand a)
+{
+   return swizzle(a, SWIZZLE_ZZZZ, 1);
+}
+
+ir_swizzle *
+swizzle_w(operand a)
+{
+   return swizzle(a, SWIZZLE_WWWW, 1);
+}
+
+ir_swizzle *
+swizzle_xy(operand a)
+{
+   return swizzle(a, SWIZZLE_XYZW, 2);
+}
+
+ir_swizzle *
+swizzle_xyz(operand a)
+{
+   return swizzle(a, SWIZZLE_XYZW, 3);
+}
+
+ir_swizzle *
+swizzle_xyzw(operand a)
+{
+   return swizzle(a, SWIZZLE_XYZW, 4);
+}
 
 ir_expression *
 expr(ir_expression_operation op, operand a, operand b)

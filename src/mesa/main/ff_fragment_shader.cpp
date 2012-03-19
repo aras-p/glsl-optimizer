@@ -627,12 +627,10 @@ emit_combine_source(struct texenv_fragment_program *p,
       return sub(new(p->mem_ctx) ir_constant(1.0f), src);
 
    case OPR_SRC_ALPHA:
-      return src->type->is_scalar()
-	 ? src : (ir_rvalue *) new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
+      return src->type->is_scalar() ? src : swizzle_w(src);
 
    case OPR_ONE_MINUS_SRC_ALPHA: {
-      ir_rvalue *const scalar = (src->type->is_scalar())
-	 ? src : (ir_rvalue *) new(p->mem_ctx) ir_swizzle(src, 3, 3, 3, 3, 1);
+      ir_rvalue *const scalar = src->type->is_scalar() ? src : swizzle_w(src);
 
       return sub(new(p->mem_ctx) ir_constant(1.0f), scalar);
    }
@@ -695,7 +693,7 @@ smear(struct texenv_fragment_program *p, ir_rvalue *val)
    if (!val->type->is_scalar())
       return val;
 
-   return new(p->mem_ctx) ir_swizzle(val, 0, 0, 0, 0, 4);
+   return swizzle_xxxx(val);
 }
 
 static ir_rvalue *
@@ -743,13 +741,11 @@ emit_combine(struct texenv_fragment_program *p,
    case MODE_DOT3_RGB: {
       tmp0 = mul(src[0], new(p->mem_ctx) ir_constant(2.0f));
       tmp0 = add(tmp0, new(p->mem_ctx) ir_constant(-1.0f));
-      tmp0 = new(p->mem_ctx) ir_swizzle(smear(p, tmp0), 0, 1, 2, 3, 3);
 
       tmp1 = mul(src[1], new(p->mem_ctx) ir_constant(2.0f));
       tmp1 = add(tmp1, new(p->mem_ctx) ir_constant(-1.0f));
-      tmp1 = new(p->mem_ctx) ir_swizzle(smear(p, tmp1), 0, 1, 2, 3, 3);
 
-      return dot(tmp0, tmp1);
+      return dot(swizzle_xyz(smear(p, tmp0)), swizzle_xyz(smear(p, tmp1)));
    }
    case MODE_MODULATE_ADD_ATI:
       return add(mul(src[0], src[2]), src[1]);
@@ -874,8 +870,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 			 key->unit[unit].NumArgsRGB,
 			 key->unit[unit].ModeRGB,
 			 key->unit[unit].OptRGB);
-      val = smear(p, val);
-      val = new(p->mem_ctx) ir_swizzle(val, 0, 1, 2, 3, 3);
+      val = swizzle_xyz(smear(p, val));
       if (rgb_saturate)
 	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
@@ -886,8 +881,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 			 key->unit[unit].NumArgsA,
 			 key->unit[unit].ModeA,
 			 key->unit[unit].OptA);
-      val = smear(p, val);
-      val = new(p->mem_ctx) ir_swizzle(val, 3, 3, 3, 3, 1);
+      val = swizzle_w(smear(p, val));
       if (alpha_saturate)
 	 val = saturate(val);
       deref = new(p->mem_ctx) ir_dereference_variable(temp_var);
@@ -1048,7 +1042,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
    }
 
    texcoord = texcoord->clone(p->mem_ctx, NULL);
-   tex->projector = new(p->mem_ctx) ir_swizzle(texcoord, 3, 0, 0, 0, 1);
+   tex->projector = swizzle_w(texcoord);
 
    deref = new(p->mem_ctx) ir_dereference_variable(p->src_texture[unit]);
    assign = new(p->mem_ctx) ir_assignment(deref, tex);
@@ -1148,20 +1142,12 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
 
    /* bump_texcoord.xy += arg0.x * rotmat0 + arg0.y * rotmat1 */
    bump = get_source(p, key->unit[unit].OptRGB[0].Source, unit);
-   bump_x = new(p->mem_ctx) ir_swizzle(bump, 0, 0, 0, 0, 1);
-   bump = bump->clone(p->mem_ctx, NULL);
-   bump_y = new(p->mem_ctx) ir_swizzle(bump, 1, 0, 0, 0, 1);
-
-   bump_x = mul(bump_x, rot_mat_0);
-   bump_y = mul(bump_y, rot_mat_1);
+   bump_x = mul(swizzle_x(bump), rot_mat_0);
+   bump_y = mul(swizzle_y(bump->clone(p->mem_ctx, NULL)), rot_mat_1);
 
    ir_expression *expr;
 
-   deref = new(p->mem_ctx) ir_dereference_variable(bumped);
-   expr = add(new(p->mem_ctx) ir_swizzle(deref,
-					 0, 1, 1, 1,
-					 2),
-	      add(bump_x, bump_y));
+   expr = add(swizzle_xy(bumped), add(bump_x, bump_y));
 
    deref = new(p->mem_ctx) ir_dereference_variable(bumped);
    assign = new(p->mem_ctx) ir_assignment(deref, expr, NULL, WRITEMASK_XY);
@@ -1199,8 +1185,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    assign = new(p->mem_ctx) ir_assignment(temp, fragcolor);
    p->instructions->push_tail(assign);
 
-   temp = new(p->mem_ctx) ir_dereference_variable(fog_result);
-   fragcolor = new(p->mem_ctx) ir_swizzle(temp, 0, 1, 2, 3, 3);
+   fragcolor = swizzle_xyz(fog_result);
 
    oparams = p->shader->symbols->get_variable("gl_FogParamsOptimizedMESA");
    fogcoord = p->shader->symbols->get_variable("gl_FogFragCoord");
@@ -1218,13 +1203,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
        * gl_MesaFogParamsOptimized gives us (-1 / (end - start)) and
        * (end / (end - start)) so we can generate a single MAD.
        */
-      temp = new(p->mem_ctx) ir_dereference_variable(oparams);
-      temp = new(p->mem_ctx) ir_swizzle(temp, 0, 0, 0, 0, 1);
-      f = mul(f, temp);
-
-      temp = new(p->mem_ctx) ir_dereference_variable(oparams);
-      temp = new(p->mem_ctx) ir_swizzle(temp, 1, 0, 0, 0, 1);
-      f = add(f, temp);
+      f = add(mul(f, swizzle_x(oparams)), swizzle_y(oparams));
       break;
    case FOG_EXP:
       /* f = e^(-(density * fogcoord))
@@ -1233,9 +1212,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
        * use EXP2 which is generally the native instruction without
        * having to do any further math on the fog density uniform.
        */
-      temp = new(p->mem_ctx) ir_dereference_variable(oparams);
-      temp = new(p->mem_ctx) ir_swizzle(temp, 2, 0, 0, 0, 1);
-      f = mul(f, temp);
+      f = mul(f, swizzle_z(oparams));
       f = new(p->mem_ctx) ir_expression(ir_unop_neg, f);
       f = new(p->mem_ctx) ir_expression(ir_unop_exp2, f);
       break;
@@ -1251,9 +1228,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
 							  ir_var_auto);
       p->instructions->push_tail(temp_var);
 
-      temp = new(p->mem_ctx) ir_dereference_variable(oparams);
-      temp = new(p->mem_ctx) ir_swizzle(temp, 3, 0, 0, 0, 1);
-      f = mul(f, temp);
+      f = mul(f, swizzle_w(oparams));
 
       temp = new(p->mem_ctx) ir_dereference_variable(temp_var);
       ir_assignment *assign = new(p->mem_ctx) ir_assignment(temp, f);
@@ -1274,8 +1249,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
    f = sub(new(p->mem_ctx) ir_constant(1.0f), f_var);
    temp = new(p->mem_ctx) ir_dereference_variable(params);
    temp = new(p->mem_ctx) ir_dereference_record(temp, "color");
-   temp = new(p->mem_ctx) ir_swizzle(temp, 0, 1, 2, 3, 3);
-   temp = mul(temp, f);
+   temp = mul(swizzle_xyz(temp), f);
 
    f = add(temp, mul(fragcolor, f_var));
 
@@ -1335,21 +1309,17 @@ emit_instructions(struct texenv_fragment_program *p)
       assign = new(p->mem_ctx) ir_assignment(deref, cf);
       p->instructions->push_tail(assign);
 
-      deref = new(p->mem_ctx) ir_dereference_variable(spec_result);
-      tmp0 = new(p->mem_ctx) ir_swizzle(deref, 0, 1, 2, 3, 3);
-
       ir_rvalue *secondary;
       if (p->state->inputs_available & FRAG_BIT_COL1) {
 	 ir_variable *var =
 	    p->shader->symbols->get_variable("gl_SecondaryColor");
 	 assert(var);
-	 secondary = new(p->mem_ctx) ir_dereference_variable(var);
+	 secondary = swizzle_xyz(var);
       } else {
-	 secondary = get_current_attrib(p, VERT_ATTRIB_COLOR1);
+	 secondary = swizzle_xyz(get_current_attrib(p, VERT_ATTRIB_COLOR1));
       }
-      secondary = new(p->mem_ctx) ir_swizzle(secondary, 0, 1, 2, 3, 3);
 
-      tmp0 = add(tmp0, secondary);
+      tmp0 = add(swizzle_xyz(spec_result), secondary);
 
       deref = new(p->mem_ctx) ir_dereference_variable(spec_result);
       assign = new(p->mem_ctx) ir_assignment(deref, tmp0, NULL, WRITEMASK_XYZ);

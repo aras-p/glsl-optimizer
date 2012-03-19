@@ -57,4 +57,16 @@ ir_expression *mul(operand a, operand b);
 ir_expression *dot(operand a, operand b);
 ir_expression *saturate(operand a);
 
+ir_swizzle *swizzle_xxxx(operand a);
+ir_swizzle *swizzle_yyyy(operand a);
+ir_swizzle *swizzle_zzzz(operand a);
+ir_swizzle *swizzle_wwww(operand a);
+ir_swizzle *swizzle_x(operand a);
+ir_swizzle *swizzle_y(operand a);
+ir_swizzle *swizzle_z(operand a);
+ir_swizzle *swizzle_w(operand a);
+ir_swizzle *swizzle_xy(operand a);
+ir_swizzle *swizzle_xyz(operand a);
+ir_swizzle *swizzle_xyzw(operand a);
+
 } /* namespace ir_builder */
