@@ -466,24 +466,10 @@ parse_register_bracket(
          eat_opt_white(&ctx->cur);
       }
 
-      if (*ctx->cur == '+' || *ctx->cur == '-') {
-         boolean negate;
-
-         negate = *ctx->cur == '-';
-         ctx->cur++;
-         eat_opt_white( &ctx->cur );
-         if (!parse_uint( &ctx->cur, &uindex )) {
-            report_error( ctx, "Expected literal unsigned integer" );
-            return FALSE;
-         }
-         if (negate)
-            brackets->index = -(int) uindex;
-         else
-            brackets->index = (int) uindex;
-      }
-      else {
+      if (*ctx->cur == '+' || *ctx->cur == '-')
+         parse_int( &ctx->cur, &brackets->index );
+      else
          brackets->index = 0;
-      }
    }
    else {
       if (!parse_uint( &ctx->cur, &uindex )) {
