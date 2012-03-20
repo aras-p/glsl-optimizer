@@ -101,6 +101,7 @@ GL_LIBS = \
 	$(GL_LIB_DEPS)
 
 GL_LDFLAGS = \
+	-Wl,-Bsymbolic \
 	-version-number 1:2
 
 libGL_la_SOURCES = $(GL_FILES)
