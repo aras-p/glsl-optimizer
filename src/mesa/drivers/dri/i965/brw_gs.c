@@ -231,11 +231,6 @@ static void populate_key( struct brw_context *brw,
                            brw->primitive == _3DPRIM_QUADSTRIP ||
                            brw->primitive == _3DPRIM_LINELOOP);
    }
-   /* For testing, the environment variable INTEL_FORCE_GS can be used to
-    * force a GS program to be used, even if it's not necessary.
-    */
-   if (getenv("INTEL_FORCE_GS"))
-      key->need_gs_prog = true;
 }
 
 /* Calculate interpolants for triangle and line rasterization.
