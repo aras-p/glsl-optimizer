@@ -36,6 +36,7 @@ config.py
 build
 libtool
 manifest.txt
+Makefile.in
 .dir-locals.el
 .deps/
 .libs/
