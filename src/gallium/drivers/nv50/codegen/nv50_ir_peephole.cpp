@@ -853,7 +853,7 @@ ModifierFolding::visit(BasicBlock *bb)
          }
          if ((mod = Modifier(mi->op)) == Modifier(0))
             continue;
-         mod = mod * mi->src(0).mod;
+         mod *= mi->src(0).mod;
 
          if ((i->op == OP_ABS) || i->src(s).mod.abs()) {
             // abs neg [abs] = abs
@@ -872,7 +872,7 @@ ModifierFolding::visit(BasicBlock *bb)
 
          if (target->isModSupported(i, s, mod)) {
             i->setSrc(s, mi->getSrc(0));
-            i->src(s).mod = i->src(s).mod * mod;
+            i->src(s).mod *= mod;
          }
       }
 
@@ -972,12 +972,12 @@ AlgebraicOpt::handleMINMAX(Instruction *minmax)
    if (src0 != src1 || src0->reg.file != FILE_GPR)
       return;
    if (minmax->src(0).mod == minmax->src(1).mod) {
-      if (minmax->src(0).mod) {
+      if (minmax->def(0).mayReplace(minmax->src(0))) {
+         minmax->def(0).replace(minmax->src(0), false);
+         minmax->bb->remove(minmax);
+      } else {
          minmax->op = OP_CVT;
          minmax->setSrc(1, NULL);
-      } else {
-         minmax->def(0).replace(minmax->getSrc(0), false);
-         minmax->bb->remove(minmax);
       }
    } else {
       // TODO:
@@ -1027,11 +1027,9 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
       return;
 
    if (src0 == src1) {
-      if (logop->src(0).mod != Modifier(0) ||
-          logop->src(1).mod != Modifier(0))
-         return;
-      if (logop->op == OP_AND || logop->op == OP_OR) {
-         logop->def(0).replace(logop->getSrc(0), false);
+      if ((logop->op == OP_AND || logop->op == OP_OR) &&
+          logop->def(0).mayReplace(logop->src(0))) {
+         logop->def(0).replace(logop->src(0), false);
          delete_Instruction(prog, logop);
       }
    } else {
@@ -1457,7 +1455,7 @@ MemoryOpt::replaceLdFromSt(Instruction *ld, Record *rec)
          return false;
       if (st->getSrc(s)->reg.file != FILE_GPR)
          return false;
-      ld->def(d).replace(st->getSrc(s), false);
+      ld->def(d).replace(st->src(s), false);
    }
    ld->bb->remove(ld);
    return true;

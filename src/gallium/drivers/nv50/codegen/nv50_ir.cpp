@@ -58,11 +58,12 @@ Modifier Modifier::operator*(const Modifier m) const
    return Modifier(a | c);
 }
 
-ValueRef::ValueRef() : value(NULL), insn(NULL)
+ValueRef::ValueRef(Value *v) : value(NULL), insn(NULL)
 {
    indirect[0] = -1;
    indirect[1] = -1;
    usedAsPtr = false;
+   set(v);
 }
 
 ValueRef::ValueRef(const ValueRef& ref) : value(NULL), insn(ref.insn)
@@ -91,9 +92,9 @@ ImmediateValue *ValueRef::getImmediate() const
    return NULL;
 }
 
-ValueDef::ValueDef() : value(NULL), insn(NULL)
+ValueDef::ValueDef(Value *v) : value(NULL), insn(NULL)
 {
-   // nothing to do
+   set(v);
 }
 
 ValueDef::ValueDef(const ValueDef& def) : value(NULL), insn(NULL)
@@ -141,17 +142,58 @@ ValueDef::set(Value *defVal)
    value = defVal;
 }
 
-void
-ValueDef::replace(Value *repVal, bool doSet)
+// Check if we can replace this definition's value by the value in @rep,
+// including the source modifiers, i.e. make sure that all uses support
+// @rep.mod.
+bool
+ValueDef::mayReplace(const ValueRef &rep)
 {
-   if (value == repVal)
+   if (!rep.mod)
+      return true;
+
+   if (!insn || !insn->bb) // Unbound instruction ?
+      return false;
+
+   const Target *target = insn->bb->getProgram()->getTarget();
+
+   for (Value::UseIterator it = value->uses.begin(); it != value->uses.end();
+        ++it) {
+      Instruction *insn = (*it)->getInsn();
+      int s = -1;
+
+      for (int i = 0; insn->srcExists(i); ++i) {
+         if (insn->src(i).get() == value) {
+            // If there are multiple references to us we'd have to check if the
+            // combination of mods is still supported, but just bail for now.
+            if (&insn->src(i) != (*it))
+               return false;
+            s = i;
+         }
+      }
+      assert(s >= 0); // integrity of uses list
+
+      if (!target->isModSupported(insn, s, rep.mod))
+         return false;
+   }
+   return true;
+}
+
+void
+ValueDef::replace(const ValueRef &repVal, bool doSet)
+{
+   assert(mayReplace(repVal));
+
+   if (value == repVal.get())
       return;
 
-   while (value->refCount())
-      value->uses.front()->set(repVal);
+   while (!value->uses.empty()) {
+      ValueRef *ref = value->uses.front();
+      ref->set(repVal.get());
+      ref->mod *= repVal.mod;
+   }
 
    if (doSet)
-      set(repVal);
+      set(repVal.get());
 }
 
 Value::Value()
