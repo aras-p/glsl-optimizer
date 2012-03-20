@@ -10319,6 +10319,9 @@ _mesa_create_save_table(void)
    SET_FlushMappedBufferRange(table, _mesa_FlushMappedBufferRange); /* no dl */
 #endif
 
+   /* ARB 51. GL_ARB_texture_buffer_object */
+   SET_TexBufferARB(table, _mesa_TexBuffer); /* no dlist save */
+
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
 
