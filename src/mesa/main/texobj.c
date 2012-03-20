@@ -540,14 +540,17 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    }
 
    if (t->Target == GL_TEXTURE_CUBE_MAP_ARB) {
-      /* make sure that all six cube map level 0 images are the same size */
-      const GLuint w = baseImage->Width2;
-      const GLuint h = baseImage->Height2;
+      /* Make sure that all six cube map level 0 images are the same size.
+       * Note:  we know that the image's width==height (we enforce that
+       * at glTexImage time) so we only need to test the width here.
+       */
       GLuint face;
+      assert(baseImage->Width2 == baseImage->Height);
       for (face = 1; face < 6; face++) {
+         assert(t->Image[face][baseLevel]->Width2 ==
+                t->Image[face][baseLevel]->Height2);
          if (t->Image[face][baseLevel] == NULL ||
-             t->Image[face][baseLevel]->Width2 != w ||
-             t->Image[face][baseLevel]->Height2 != h) {
+             t->Image[face][baseLevel]->Width2 != baseImage->Width2) {
             incomplete(t, BASE, "Cube face missing or mismatched size");
             return;
          }
