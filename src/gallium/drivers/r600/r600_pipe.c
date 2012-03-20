@@ -347,6 +347,7 @@ static const char *r600_get_family_name(enum radeon_family family)
 	case CHIP_TURKS: return "AMD TURKS";
 	case CHIP_CAICOS: return "AMD CAICOS";
 	case CHIP_CAYMAN: return "AMD CAYMAN";
+	case CHIP_ARUBA: return "AMD ARUBA";
 	default: return "AMD unknown";
 	}
 }
@@ -803,7 +804,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	}
 
 	/* setup class */
-	if (rscreen->family == CHIP_CAYMAN) {
+	if (rscreen->family >= CHIP_CAYMAN) {
 		rscreen->chip_class = CAYMAN;
 	} else if (rscreen->family >= CHIP_CEDAR) {
 		rscreen->chip_class = EVERGREEN;

@@ -1173,7 +1173,8 @@ void r600_inval_vertex_cache(struct r600_context *ctx)
 	    ctx->family == CHIP_SUMO ||
 	    ctx->family == CHIP_SUMO2 ||
 	    ctx->family == CHIP_CAICOS ||
-	    ctx->family == CHIP_CAYMAN) {
+	    ctx->family == CHIP_CAYMAN ||
+	    ctx->family == CHIP_ARUBA) {
 		/* Some GPUs don't have the vertex cache and must use the texture cache instead. */
 		ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
 	} else {

@@ -61,6 +61,7 @@ enum radeon_family {
 	CHIP_TURKS,
 	CHIP_CAICOS,
 	CHIP_CAYMAN,
+	CHIP_ARUBA,
 	CHIP_LAST,
 };
 
