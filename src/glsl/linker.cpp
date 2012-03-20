@@ -258,11 +258,36 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
    if (shader == NULL)
       return true;
 
-   find_assignment_visitor find("gl_Position");
-   find.run(shader->ir);
-   if (!find.variable_found()) {
-      linker_error(prog, "vertex shader does not write to `gl_Position'\n");
-      return false;
+   /* From the GLSL 1.10 spec, page 48:
+    *
+    *     "The variable gl_Position is available only in the vertex
+    *      language and is intended for writing the homogeneous vertex
+    *      position. All executions of a well-formed vertex shader
+    *      executable must write a value into this variable. [...] The
+    *      variable gl_Position is available only in the vertex
+    *      language and is intended for writing the homogeneous vertex
+    *      position. All executions of a well-formed vertex shader
+    *      executable must write a value into this variable."
+    *
+    * while in GLSL 1.40 this text is changed to:
+    *
+    *     "The variable gl_Position is available only in the vertex
+    *      language and is intended for writing the homogeneous vertex
+    *      position. It can be written at any time during shader
+    *      execution. It may also be read back by a vertex shader
+    *      after being written. This value will be used by primitive
+    *      assembly, clipping, culling, and other fixed functionality
+    *      operations, if present, that operate on primitives after
+    *      vertex processing has occurred. Its value is undefined if
+    *      the vertex shader executable does not write gl_Position."
+    */
+   if (prog->Version < 140) {
+      find_assignment_visitor find("gl_Position");
+      find.run(shader->ir);
+      if (!find.variable_found()) {
+	 linker_error(prog, "vertex shader does not write to `gl_Position'\n");
+	 return false;
+      }
    }
 
    prog->Vert.ClipDistanceArraySize = 0;
