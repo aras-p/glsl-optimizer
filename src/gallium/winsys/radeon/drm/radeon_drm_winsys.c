@@ -81,6 +81,10 @@
 #define RADEON_INFO_IB_VM_MAX_SIZE  0x0f
 #endif
 
+#ifndef RADEON_INFO_MAX_PIPES
+#define RADEON_INFO_MAX_PIPES 0x10
+#endif
+
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -298,6 +302,12 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 
 	ws->info.r600_has_streamout = ws->info.drm_minor >= 13;
     }
+
+    /* Get max pipes, this is only needed for compute shaders.  All evergreen+
+     * chips have at least 2 pipes, so we use 2 as a default. */
+    ws->info.r600_max_pipes = 2;
+    radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_PIPES, NULL,
+                         &ws->info.r600_max_pipes);
 
     return TRUE;
 }
