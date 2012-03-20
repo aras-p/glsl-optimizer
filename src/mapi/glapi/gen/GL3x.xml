@@ -521,7 +521,7 @@
     <param name="primcount" type="GLsizei"/>
   </function>
 
-  <function name="TexBuffer" offset="assign">
+  <function name="TexBuffer" offset="assign" alias="TexBufferARB">
     <param name="target" type="GLenum"/>
     <param name="internalFormat" type="GLenum"/>
     <param name="buffer" type="GLuint"/>
