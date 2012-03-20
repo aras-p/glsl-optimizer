@@ -403,6 +403,12 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
                                           glxDrawable, gc->config);
+
+   if (pdraw == NULL) {
+      ErrorMessageF("failed to create drawable\n");
+      return NULL;
+   }
+
    if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return NULL;
