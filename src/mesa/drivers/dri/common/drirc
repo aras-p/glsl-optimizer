@@ -1,15 +1,15 @@
 <driconf>
     <device screen="0" driver="i965">
-        <application executable="Sanctuary">
+        <application name="Unigine Sanctuary" executable="Sanctuary">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
-        <application executable="Tropics">
+        <application name="Unigine Tropics" executable="Tropics">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
-        <application executable="heaven_x86">
+        <application name="Unigine Heaven (32-bit)" executable="heaven_x86">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
-        <application executable="heaven_x64">
+        <application name="Unigine Heaven (64-bit)" executable="heaven_x64">
             <option name="force_glsl_extensions_warn" value="true" />
 	</application>
     </device>
