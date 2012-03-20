@@ -132,6 +132,23 @@ static boolean parse_uint( const char **pcur, uint *val )
    return FALSE;
 }
 
+static boolean parse_int( const char **pcur, int *val )
+{
+   const char *cur = *pcur;
+   int sign = (*cur == '-' ? -1 : 1);
+
+   if (*cur == '+' || *cur == '-')
+      cur++;
+
+   if (parse_uint(&cur, (uint *)val)) {
+      *val *= sign;
+      *pcur = cur;
+      return TRUE;
+   }
+
+   return FALSE;
+}
+
 static boolean parse_identifier( const char **pcur, char *ret )
 {
    const char *cur = *pcur;
@@ -971,10 +988,11 @@ parse_instruction(
 
 /* parses a 4-touple of the form {x, y, z, w}
  * where x, y, z, w are numbers */
-static boolean parse_immediate_data(struct translate_ctx *ctx,
-                                    float *values)
+static boolean parse_immediate_data(struct translate_ctx *ctx, unsigned type,
+                                    union tgsi_immediate_data *values)
 {
    unsigned i;
+   int ret;
 
    eat_opt_white( &ctx->cur );
    if (*ctx->cur != '{') {
@@ -992,8 +1010,21 @@ static boolean parse_immediate_data(struct translate_ctx *ctx,
          ctx->cur++;
          eat_opt_white( &ctx->cur );
       }
-      if (!parse_float( &ctx->cur, &values[i] )) {
-         report_error( ctx, "Expected literal floating point" );
+
+      switch (type) {
+      case TGSI_IMM_FLOAT32:
+         ret = parse_float(&ctx->cur, &values[i].Float);
+         break;
+      case TGSI_IMM_UINT32:
+         ret = parse_uint(&ctx->cur, &values[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         ret = parse_int(&ctx->cur, &values[i].Int);
+         break;
+      }
+
+      if (!ret) {
+         report_error( ctx, "Expected immediate constant" );
          return FALSE;
       }
    }
@@ -1210,7 +1241,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       }
    } else if (is_imm_array) {
       unsigned i;
-      float *vals_itr;
+      union tgsi_immediate_data *vals_itr;
       /* we have our immediate data */
       if (*cur != '{') {
          report_error( ctx, "Immediate array without data" );
@@ -1222,9 +1253,9 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       decl.ImmediateData.u =
          MALLOC(sizeof(union tgsi_immediate_data) * 4 *
                 (decl.Range.Last + 1));
-      vals_itr = (float*)decl.ImmediateData.u;
+      vals_itr = decl.ImmediateData.u;
       for (i = 0; i <= decl.Range.Last; ++i) {
-         if (!parse_immediate_data(ctx, vals_itr)) {
+         if (!parse_immediate_data(ctx, TGSI_IMM_FLOAT32, vals_itr)) {
             FREE(decl.ImmediateData.u);
             return FALSE;
          }
@@ -1291,28 +1322,27 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 static boolean parse_immediate( struct translate_ctx *ctx )
 {
    struct tgsi_full_immediate imm;
-   float values[4];
    uint advance;
+   int type;
 
    if (!eat_white( &ctx->cur )) {
       report_error( ctx, "Syntax error" );
       return FALSE;
    }
-   if (!str_match_no_case( &ctx->cur, "FLT32" ) ||
-       is_digit_alpha_underscore( ctx->cur )) {
-      report_error( ctx, "Expected `FLT32'" );
+   for (type = 0; type < Elements(tgsi_immediate_type_names); ++type) {
+      if (str_match_no_case(&ctx->cur, tgsi_immediate_type_names[type]) &&
+          !is_digit_alpha_underscore(ctx->cur))
+         break;
+   }
+   if (type == Elements(tgsi_immediate_type_names)) {
+      report_error( ctx, "Expected immediate type" );
       return FALSE;
    }
 
-   parse_immediate_data(ctx, values);
-
    imm = tgsi_default_full_immediate();
    imm.Immediate.NrTokens += 4;
-   imm.Immediate.DataType = TGSI_IMM_FLOAT32;
-   imm.u[0].Float = values[0];
-   imm.u[1].Float = values[1];
-   imm.u[2].Float = values[2];
-   imm.u[3].Float = values[3];
+   imm.Immediate.DataType = type;
+   parse_immediate_data(ctx, type, imm.u);
 
    advance = tgsi_build_full_immediate(
       &imm,
