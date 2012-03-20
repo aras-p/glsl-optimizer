@@ -6,6 +6,7 @@ include $(top_srcdir)/src/mapi/mapi/sources.mak
 
 lib_LTLIBRARIES = libglapi.la
 libglapi_la_SOURCES = $(MAPI_GLAPI_FILES)
+libglapi_la_LDFLAGS = -no-undefined
 
 include $(GLAPI)/gen/glapi_gen.mk
 glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
