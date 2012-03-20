@@ -496,11 +496,13 @@ tgsi_default_immediate( void )
 
 static struct tgsi_immediate
 tgsi_build_immediate(
-   struct tgsi_header *header )
+   struct tgsi_header *header,
+   unsigned type )
 {
    struct tgsi_immediate immediate;
 
    immediate = tgsi_default_immediate();
+   immediate.DataType = type;
 
    header_bodysize_grow( header );
 
@@ -533,21 +535,6 @@ immediate_grow(
    header_bodysize_grow( header );
 }
 
-static union tgsi_immediate_data
-tgsi_build_immediate_float32(
-   float value,
-   struct tgsi_immediate *immediate,
-   struct tgsi_header *header )
-{
-   union tgsi_immediate_data immediate_data;
-
-   immediate_data.Float = value;
-
-   immediate_grow( immediate, header );
-
-   return immediate_data;
-}
-
 unsigned
 tgsi_build_full_immediate(
    const struct tgsi_full_immediate *full_imm,
@@ -563,7 +550,7 @@ tgsi_build_full_immediate(
    immediate = (struct tgsi_immediate *) &tokens[size];
    size++;
 
-   *immediate = tgsi_build_immediate( header );
+   *immediate = tgsi_build_immediate( header, full_imm->Immediate.DataType );
 
    assert( full_imm->Immediate.NrTokens <= 4 + 1 );
 
@@ -572,13 +559,12 @@ tgsi_build_full_immediate(
 
       if( maxsize <= size )
          return  0;
-      data = (union tgsi_immediate_data *) &tokens[size];
-      size++;
 
-      *data = tgsi_build_immediate_float32(
-         full_imm->u[i].Float,
-         immediate,
-         header );
+      data = (union tgsi_immediate_data *) &tokens[size];
+      *data = full_imm->u[i];
+
+      immediate_grow( immediate, header );
+      size++;
    }
 
    return size;
