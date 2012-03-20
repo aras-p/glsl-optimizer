@@ -1024,9 +1024,6 @@ ir_constant::constant_expression_value()
 ir_constant *
 ir_call::constant_expression_value()
 {
-   if (this->type == glsl_type::error_type)
-      return NULL;
-
    return this->callee->constant_expression_value(&this->actual_parameters);
 }
 

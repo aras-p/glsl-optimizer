@@ -51,11 +51,11 @@ private:
    ir_variable *read_declaration(s_expression *);
    ir_if *read_if(s_expression *, ir_loop *);
    ir_loop *read_loop(s_expression *);
+   ir_call *read_call(s_expression *);
    ir_return *read_return(s_expression *);
    ir_rvalue *read_rvalue(s_expression *);
    ir_assignment *read_assignment(s_expression *);
    ir_expression *read_expression(s_expression *);
-   ir_call *read_call(s_expression *);
    ir_swizzle *read_swizzle(s_expression *);
    ir_constant *read_constant(s_expression *);
    ir_texture *read_texture(s_expression *);
@@ -349,6 +349,8 @@ ir_reader::read_instruction(s_expression *expr, ir_loop *loop_ctx)
       inst = read_if(list, loop_ctx);
    } else if (strcmp(tag->value(), "loop") == 0) {
       inst = read_loop(list);
+   } else if (strcmp(tag->value(), "call") == 0) {
+      inst = read_call(list);
    } else if (strcmp(tag->value(), "return") == 0) {
       inst = read_return(list);
    } else if (strcmp(tag->value(), "function") == 0) {
@@ -522,8 +524,6 @@ ir_reader::read_rvalue(s_expression *expr)
       rvalue = read_swizzle(list);
    } else if (strcmp(tag->value(), "expression") == 0) {
       rvalue = read_expression(list);
-   } else if (strcmp(tag->value(), "call") == 0) {
-      rvalue = read_call(list);
    } else if (strcmp(tag->value(), "constant") == 0) {
       rvalue = read_constant(list);
    } else {
@@ -611,10 +611,20 @@ ir_reader::read_call(s_expression *expr)
 {
    s_symbol *name;
    s_list *params;
+   s_list *s_return = NULL;
 
-   s_pattern pat[] = { "call", name, params };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(expr, "expected (call <name> (<param> ...))");
+   ir_dereference_variable *return_deref = NULL;
+
+   s_pattern void_pat[] = { "call", name, params };
+   s_pattern non_void_pat[] = { "call", name, s_return, params };
+   if (MATCH(expr, non_void_pat)) {
+      return_deref = read_var_ref(s_return);
+      if (return_deref == NULL) {
+	 ir_read_error(s_return, "when reading a call's return storage");
+	 return NULL;
+      }
+   } else if (!MATCH(expr, void_pat)) {
+      ir_read_error(expr, "expected (call <name> [<deref>] (<param> ...))");
       return NULL;
    }
 
@@ -644,7 +654,15 @@ ir_reader::read_call(s_expression *expr)
       return NULL;
    }
 
-   return new(mem_ctx) ir_call(callee, &parameters);
+   if (callee->return_type == glsl_type::void_type && return_deref) {
+      ir_read_error(expr, "call has return value storage but void type");
+      return NULL;
+   } else if (callee->return_type != glsl_type::void_type && !return_deref) {
+      ir_read_error(expr, "call has non-void type but no return value storage");
+      return NULL;
+   }
+
+   return new(mem_ctx) ir_call(callee, return_deref, &parameters);
 }
 
 ir_expression *

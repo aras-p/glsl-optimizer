@@ -149,12 +149,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
       }
    }
 
-   /* Add this instruction to the assignment list available to be removed.
-    * But not if the assignment has other side effects.
-    */
-   if (ir_has_call(ir))
-      return progress;
-
+   /* Add this instruction to the assignment list available to be removed. */
    assignment_entry *entry = new(ctx) assignment_entry(var, ir);
    assignments->push_tail(entry);
 

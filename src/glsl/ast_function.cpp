@@ -269,29 +269,21 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       formal_iter.next();
    }
 
-   /* Always insert the call in the instruction stream, and return a deref
-    * of its return val if it returns a value, since we don't know if
-    * the rvalue is going to be assigned to anything or not.
+   /* If the function call is a constant expression, don't generate any
+    * instructions; just generate an ir_constant.
     *
-    * Also insert any out parameter conversions after the call.
+    * Function calls were first allowed to be constant expressions in GLSL 1.20.
     */
-   ir_call *call = new(ctx) ir_call(sig, actual_parameters);
-   ir_dereference_variable *deref;
-   if (!sig->return_type->is_void()) {
-      /* If the function call is a constant expression, don't
-       * generate the instructions to call it; just generate an
-       * ir_constant representing the constant value.
-       *
-       * Function calls can only be constant expressions starting
-       * in GLSL 1.20.
-       */
-      if (state->language_version >= 120) {
-	 ir_constant *const_val = call->constant_expression_value();
-	 if (const_val) {
-	    return const_val;
-	 }
+   if (state->language_version >= 120) {
+      ir_constant *value = sig->constant_expression_value(actual_parameters);
+      if (value != NULL) {
+	 return value;
       }
+   }
 
+   ir_dereference_variable *deref = NULL;
+   if (!sig->return_type->is_void()) {
+      /* Create a new temporary to hold the return value. */
       ir_variable *var;
 
       var = new(ctx) ir_variable(sig->return_type,
@@ -301,18 +293,14 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       instructions->push_tail(var);
 
       deref = new(ctx) ir_dereference_variable(var);
-      ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);
-      instructions->push_tail(assign);
-      *call_ir = call;
-
-      deref = new(ctx) ir_dereference_variable(var);
-   } else {
-      instructions->push_tail(call);
-      *call_ir = call;
-      deref = NULL;
    }
+   ir_call *call = new(ctx) ir_call(sig, deref, actual_parameters);
+   instructions->push_tail(call);
+
+   /* Also emit any necessary out-parameter conversions. */
    instructions->append_list(&post_call_conversions);
-   return deref;
+
+   return deref ? deref->clone(ctx, NULL) : NULL;
 }
 
 /**

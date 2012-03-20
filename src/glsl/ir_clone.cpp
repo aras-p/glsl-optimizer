@@ -167,6 +167,10 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 ir_call *
 ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 {
+   ir_dereference_variable *new_return_ref = NULL;
+   if (this->return_deref != NULL)
+      new_return_ref = this->return_deref->clone(mem_ctx, ht);
+
    exec_list new_parameters;
 
    foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
@@ -174,7 +178,7 @@ ir_call::clone(void *mem_ctx, struct hash_table *ht) const
       new_parameters.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   return new(mem_ctx) ir_call(this->callee, &new_parameters);
+   return new(mem_ctx) ir_call(this->callee, new_return_ref, &new_parameters);
 }
 
 ir_expression *

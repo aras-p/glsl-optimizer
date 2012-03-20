@@ -117,6 +117,7 @@ ir_constant_folding_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_constant_folding_visitor::visit_enter(ir_call *ir)
 {
+   /* Attempt to constant fold parameters */
    exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
@@ -131,6 +132,15 @@ ir_constant_folding_visitor::visit_enter(ir_call *ir)
 	 }
       }
       sig_iter.next();
+   }
+
+   /* Next, see if the call can be replaced with an assignment of a constant */
+   ir_constant *const_val = ir->constant_expression_value();
+
+   if (const_val != NULL) {
+      ir_assignment *assignment =
+	 new(ralloc_parent(ir)) ir_assignment(ir->return_deref, const_val);
+      ir->replace_with(assignment);
    }
 
    return visit_continue_with_parent;

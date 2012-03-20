@@ -222,6 +222,9 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
       sig_iter.next();
    }
 
+   if (ir->return_deref && check_graft(ir, ir->return_deref->var) == visit_stop)
+      return visit_stop;
+
    return visit_continue;
 }
 

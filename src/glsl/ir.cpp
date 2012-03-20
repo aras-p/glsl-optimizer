@@ -1470,8 +1470,6 @@ ir_rvalue::error_value(void *mem_ctx)
 void
 ir_call::set_callee(ir_function_signature *sig)
 {
-   assert((this->type == NULL) || (this->type == sig->return_type));
-
    this->callee = sig;
 }
 

@@ -29,11 +29,6 @@
  *
  * This is used for breaking down matrix operations, where it's easier to
  * create a temporary and work on each of its vector components individually.
- *
- * It is also used for automatic function inlining, where we want to take
- * an expression containing a call and move the call out to its own
- * assignment so that we can inline it at the appropriate place in the
- * instruction stream.
  */
 
 #include "ir.h"

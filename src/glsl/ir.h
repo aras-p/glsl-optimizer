@@ -1023,16 +1023,18 @@ public:
 
 
 /**
- * IR instruction representing a function call
+ * HIR instruction representing a high-level function call, containing a list
+ * of parameters and returning a value in the supplied temporary.
  */
-class ir_call : public ir_rvalue {
+class ir_call : public ir_instruction {
 public:
-   ir_call(ir_function_signature *callee, exec_list *actual_parameters)
-      : callee(callee)
+   ir_call(ir_function_signature *callee,
+	   ir_dereference_variable *return_deref,
+	   exec_list *actual_parameters)
+      : return_deref(return_deref), callee(callee)
    {
       ir_type = ir_type_call;
       assert(callee->return_type != NULL);
-      type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
       this->use_builtin = callee->is_builtin;
    }
@@ -1084,9 +1086,15 @@ public:
 
    /**
     * Generates an inline version of the function before @ir,
-    * returning the return value of the function.
+    * storing the return value in return_deref.
     */
-   ir_rvalue *generate_inline(ir_instruction *ir);
+   void generate_inline(ir_instruction *ir);
+
+   /**
+    * Storage for the function's return value.
+    * This must be NULL if the return type is void.
+    */
+   ir_dereference_variable *return_deref;
 
    /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;

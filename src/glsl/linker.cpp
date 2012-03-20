@@ -117,6 +117,15 @@ public:
 	 sig_iter.next();
       }
 
+      if (ir->return_deref != NULL) {
+	 ir_variable *const var = ir->return_deref->variable_referenced();
+
+	 if (strcmp(name, var->name) == 0) {
+	    found = true;
+	    return visit_stop;
+	 }
+      }
+
       return visit_continue_with_parent;
    }
 
@@ -830,6 +839,7 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 	 continue;
 
       assert(inst->as_assignment()
+             || inst->as_call()
 	     || ((var != NULL) && (var->mode == ir_var_temporary)));
 
       if (make_copies) {

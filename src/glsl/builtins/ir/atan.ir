@@ -2,50 +2,62 @@
    (signature float
      (parameters
        (declare (in) float y_over_x))
-     ((return (call asin ((expression float *
+     ((declare () float s)
+      (call asin (var_ref s)
+			  ((expression float *
 			   (var_ref y_over_x)
 			   (expression float rsq
 			    (expression float +
 			     (expression float *
 			      (var_ref y_over_x)
 			      (var_ref y_over_x))
-			     (constant float (1.0))))))))))
+			     (constant float (1.0)))))))
+      (return (var_ref s))))
 
    (signature vec2
      (parameters
        (declare (in) vec2 y_over_x))
-     ((return (call asin ((expression vec2 *
+     ((declare () vec2 s)
+      (call asin (var_ref s)
+			  ((expression vec2 *
 			   (var_ref y_over_x)
 			   (expression vec2 rsq
 			    (expression vec2 +
 			     (expression vec2 *
 			      (var_ref y_over_x)
 			      (var_ref y_over_x))
-			     (constant float (1.0))))))))))
+			     (constant float (1.0)))))))
+      (return (var_ref s))))
 
    (signature vec3
      (parameters
        (declare (in) vec3 y_over_x))
-     ((return (call asin ((expression vec3 *
+     ((declare () vec3 s)
+      (call asin (var_ref s)
+			  ((expression vec3 *
 			   (var_ref y_over_x)
 			   (expression vec3 rsq
 			    (expression vec3 +
 			     (expression vec3 *
 			      (var_ref y_over_x)
 			      (var_ref y_over_x))
-			     (constant float (1.0))))))))))
+			     (constant float (1.0)))))))
+      (return (var_ref s))))
 
    (signature vec4
      (parameters
        (declare (in) vec4 y_over_x))
-     ((return (call asin ((expression vec4 *
+     ((declare () vec4 s)
+      (call asin (var_ref s)
+			  ((expression vec4 *
 			   (var_ref y_over_x)
 			   (expression vec4 rsq
 			    (expression vec4 +
 			     (expression vec4 *
 			      (var_ref y_over_x)
 			      (var_ref y_over_x))
-			     (constant float (1.0))))))))))
+			     (constant float (1.0)))))))
+      (return (var_ref s))))
 
   (signature float
     (parameters
@@ -57,7 +69,7 @@
       (if (expression bool >
            (expression float abs (var_ref x))
            (expression float * (constant float (1.0e-8)) (expression float abs (var_ref y)))) (
-        (assign (x) (var_ref r) (call atan ((expression float / (var_ref y) (var_ref x)))))
+        (call atan (var_ref r) ((expression float / (var_ref y) (var_ref x))))
         (if (expression bool < (var_ref x) (constant float (0.000000)) ) (
           (if (expression bool >= (var_ref y) (constant float (0.000000)) )
               ((assign (x) (var_ref r) (expression float + (var_ref r) (constant float (3.141593)))))
@@ -82,12 +94,11 @@
        (declare (in) vec2 y)
        (declare (in) vec2 x))
      ((declare () vec2 r)
-      (assign (x) (var_ref r)
-	      (call atan ((swiz x (var_ref y))
-			  (swiz x (var_ref x)))))
-      (assign (y) (var_ref r)
-	      (call atan ((swiz y (var_ref y))
-			  (swiz y (var_ref x)))))
+      (declare () float temp)
+      (call atan (var_ref temp) ((swiz x (var_ref y)) (swiz x (var_ref x))))
+      (assign (x) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz y (var_ref y)) (swiz y (var_ref x))))
+      (assign (y) (var_ref r) (var_ref temp))
       (return (var_ref r))))
 
    (signature vec3
@@ -95,15 +106,13 @@
        (declare (in) vec3 y)
        (declare (in) vec3 x))
      ((declare () vec3 r)
-      (assign (x) (var_ref r)
-	      (call atan ((swiz x (var_ref y))
-			  (swiz x (var_ref x)))))
-      (assign (y) (var_ref r)
-	      (call atan ((swiz y (var_ref y))
-			  (swiz y (var_ref x)))))
-      (assign (z) (var_ref r)
-	      (call atan ((swiz z (var_ref y))
-			  (swiz z (var_ref x)))))
+      (declare () float temp)
+      (call atan (var_ref temp) ((swiz x (var_ref y)) (swiz x (var_ref x))))
+      (assign (x) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz y (var_ref y)) (swiz y (var_ref x))))
+      (assign (y) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz z (var_ref y)) (swiz z (var_ref x))))
+      (assign (z) (var_ref r) (var_ref temp))
       (return (var_ref r))))
 
    (signature vec4
@@ -111,18 +120,15 @@
        (declare (in) vec4 y)
        (declare (in) vec4 x))
      ((declare () vec4 r)
-      (assign (x) (var_ref r)
-	      (call atan ((swiz x (var_ref y))
-			  (swiz x (var_ref x)))))
-      (assign (y) (var_ref r)
-	      (call atan ((swiz y (var_ref y))
-			  (swiz y (var_ref x)))))
-      (assign (z) (var_ref r)
-	      (call atan ((swiz z (var_ref y))
-			  (swiz z (var_ref x)))))
-      (assign (w) (var_ref r)
-	      (call atan ((swiz w (var_ref y))
-			  (swiz w (var_ref x)))))
-      (return (var_ref r)))))
+      (declare () float temp)
+      (call atan (var_ref temp) ((swiz x (var_ref y)) (swiz x (var_ref x))))
+      (assign (x) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz y (var_ref y)) (swiz y (var_ref x))))
+      (assign (y) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz z (var_ref y)) (swiz z (var_ref x))))
+      (assign (z) (var_ref r) (var_ref temp))
+      (call atan (var_ref temp) ((swiz w (var_ref y)) (swiz w (var_ref x))))
+      (assign (w) (var_ref r) (var_ref temp))
+      (return (var_ref r))))
 
 ))

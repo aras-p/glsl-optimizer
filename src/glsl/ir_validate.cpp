@@ -548,6 +548,17 @@ ir_validate::visit_enter(ir_call *ir)
       abort();
    }
 
+   if (ir->return_deref) {
+      if (ir->return_deref->type != callee->return_type) {
+	 printf("callee type %s does not match return storage type %s\n",
+	        callee->return_type->name, ir->return_deref->type->name);
+	 abort();
+      }
+   } else if (callee->return_type != glsl_type::void_type) {
+      printf("ir_call has non-void callee but no return storage\n");
+      abort();
+   }
+
    const exec_node *formal_param_node = callee->parameters.head;
    const exec_node *actual_param_node = ir->actual_parameters.head;
    while (true) {

@@ -408,7 +408,10 @@ void ir_print_visitor::visit(ir_constant *ir)
 void
 ir_print_visitor::visit(ir_call *ir)
 {
-   printf("(call %s (", ir->callee_name());
+   printf("(call %s ", ir->callee_name());
+   if (ir->return_deref)
+      ir->return_deref->accept(this);
+   printf(" (");
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 

@@ -333,6 +333,14 @@ ir_call::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
+   if (this->return_deref != NULL) {
+      v->in_assignee = true;
+      s = this->return_deref->accept(v);
+      v->in_assignee = false;
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
    s = visit_list_elements(v, &this->actual_parameters, false);
    if (s == visit_stop)
       return s;
