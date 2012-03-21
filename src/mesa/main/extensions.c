@@ -213,6 +213,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_type_2_10_10_10_REV",         o(dummy_true),                                         ES2, 2008 },
    { "GL_EXT_timer_query",                         o(EXT_timer_query),                         GL,             2006 },
    { "GL_EXT_transform_feedback",                  o(EXT_transform_feedback),                  GL,             2011 },
+   { "GL_EXT_unpack_subimage",                     o(dummy_true),                                         ES2, 2011 },
    { "GL_EXT_vertex_array_bgra",                   o(EXT_vertex_array_bgra),                   GL,             2008 },
    { "GL_EXT_vertex_array",                        o(dummy_true),                              GL,             1995 },
 

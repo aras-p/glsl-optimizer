@@ -1174,15 +1174,30 @@
 
 	<desc name="pname">
 		<value name="GL_PACK_ALIGNMENT"/>
-		<value name="GL_UNPACK_ALIGNMENT"/>
+		<desc name="param" error="GL_INVALID_VALUE">
+			<value name="1"/>
+			<value name="2"/>
+			<value name="4"/>
+			<value name="8"/>
+		</desc>
 	</desc>
 
-	<desc name="param" error="GL_INVALID_VALUE">
-		<value name="1"/>
-		<value name="2"/>
-		<value name="4"/>
-		<value name="8"/>
+	<desc name="pname">
+		<value name="GL_UNPACK_ALIGNMENT"/>
+		<desc name="param" error="GL_INVALID_VALUE">
+			<value name="1"/>
+			<value name="2"/>
+			<value name="4"/>
+			<value name="8"/>
+		</desc>
 	</desc>
+
+	<desc name="pname" category="EXT_unpack_subimage">
+		<value name="GL_UNPACK_ROW_LENGTH"/>
+		<value name="GL_UNPACK_SKIP_PIXELS"/>
+		<value name="GL_UNPACK_SKIP_ROWS"/>
+	</desc>
+
 </template>
 
 <template name="ReadPixels" direction="get">
@@ -4132,6 +4147,7 @@
 	<category name="EXT_multi_draw_arrays"/>
 	<category name="OES_EGL_image"/>
 	<category name="OES_EGL_image_external"/>
+        <category name="EXT_unpack_subimage"/>
 
 	<category name="NV_draw_buffers"/>
 	<function name="DrawBuffersNV" template="DrawBuffers"/>
