@@ -415,6 +415,16 @@ Function::orderInstructions(ArrayList &result)
    return result.getSize();
 }
 
+void
+Function::buildDefSets()
+{
+   for (unsigned i = 0; i <= loopNestingBound; ++i)
+      buildDefSetsPreSSA(BasicBlock::get(cfgExit), cfg.nextSequence());
+
+   for (ArrayList::Iterator bi = allBBlocks.iterator(); !bi.end(); bi.next())
+      BasicBlock::get(bi)->liveSet.marker = false;
+}
+
 bool
 Pass::run(Program *prog, bool ordered, bool skipPhi)
 {

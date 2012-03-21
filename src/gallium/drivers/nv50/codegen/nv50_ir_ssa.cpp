@@ -256,6 +256,27 @@ Function::buildLiveSetsPreSSA(BasicBlock *bb, const int seq)
    bb->liveSet |= usedBeforeAssigned;
 }
 
+void
+Function::buildDefSetsPreSSA(BasicBlock *bb, const int seq)
+{
+   bb->defSet.allocate(allLValues.getSize(), !bb->liveSet.marker);
+   bb->liveSet.marker = true;
+
+   for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
+      BasicBlock *in = BasicBlock::get(ei.getNode());
+
+      if (in->cfg.visit(seq))
+         buildDefSetsPreSSA(in, seq);
+
+      bb->defSet |= in->defSet;
+   }
+
+   for (Instruction *i = bb->getEntry(); i; i = i->next) {
+      for (int d = 0; i->defExists(d); ++d)
+         bb->defSet.set(i->getDef(d)->id);
+   }
+}
+
 class RenamePass
 {
 public:
