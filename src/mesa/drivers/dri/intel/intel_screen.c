@@ -770,9 +770,13 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
    intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
 
-   intelScreen->hw_has_llc =
-      intel_get_boolean(intelScreen->driScrnPriv,
-              I915_PARAM_HAS_LLC);
+   int has_llc = 0;
+   bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
+				  &has_llc);
+   if (success && has_llc)
+      intelScreen->hw_has_llc = true;
+   else if (!success && intelScreen->gen >= 6)
+      intelScreen->hw_has_llc = true;
 
    intel_override_separate_stencil(intelScreen);
 
