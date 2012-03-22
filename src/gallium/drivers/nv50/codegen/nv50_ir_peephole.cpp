@@ -2096,7 +2096,7 @@ LocalCSE::visit(BasicBlock *bb)
             for (Value::UseIterator it = src->uses.begin();
                  it != src->uses.end(); ++it) {
                Instruction *ik = (*it)->getInsn();
-               if (ik && ik->serial < ir->serial && ik->bb == ir->bb)
+               if (ik && ik->bb == ir->bb && ik->serial < ir->serial)
                   if (tryReplace(&ir, ik))
                      break;
             }
