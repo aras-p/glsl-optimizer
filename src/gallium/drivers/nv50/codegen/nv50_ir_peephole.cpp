@@ -1737,9 +1737,9 @@ FlatteningPass::removeFlow(Instruction *insn)
    if (term->op != OP_JOIN)
       return;
 
-   delete_Instruction(prog, term);
-
    Value *pred = term->getPredicate();
+
+   delete_Instruction(prog, term);
 
    if (pred && pred->refCount() == 0) {
       Instruction *pSet = pred->getUniqueInsn();
