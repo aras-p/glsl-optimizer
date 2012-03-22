@@ -53,9 +53,14 @@ public:
       this->declaration = false;
       this->components = NULL;
       this->mem_ctx = NULL;
+      if (var->type->is_array())
+	 this->size = var->type->length;
+      else
+	 this->size = var->type->matrix_columns;
    }
 
    ir_variable *var; /* The key: the variable's pointer. */
+   unsigned size; /* array length or matrix columns */
 
    /** Number of times the variable is referenced, including assignments. */
    unsigned whole_array_access;
@@ -112,13 +117,13 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
        var->mode != ir_var_temporary)
       return NULL;
 
-   if (!var->type->is_array())
+   if (!(var->type->is_array() || var->type->is_matrix()))
       return NULL;
 
    /* If the array hasn't been sized yet, we can't split it.  After
     * linking, this should be resolved.
     */
-   if (var->type->length == 0)
+   if (var->type->is_array() && var->type->length == 0)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
@@ -239,9 +244,6 @@ ir_array_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
 
-   if (!var->type->is_array())
-      return NULL;
-
    foreach_iter(exec_list_iterator, iter, *this->variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
       if (entry->var == var) {
@@ -271,7 +273,7 @@ ir_array_splitting_visitor::split_deref(ir_dereference **deref)
    ir_constant *constant = deref_array->array_index->as_constant();
    assert(constant);
 
-   if (constant->value.i[0] < (int)var->type->length) {
+   if (constant->value.i[0] < (int)entry->size) {
       *deref = new(entry->mem_ctx)
 	 ir_dereference_variable(entry->components[constant->value.i[0]]);
    } else {
@@ -343,21 +345,26 @@ optimize_split_arrays(exec_list *instructions, bool linked)
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
       const struct glsl_type *type = entry->var->type;
+      const struct glsl_type *subtype;
+
+      if (type->is_matrix())
+	 subtype = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					   type->vector_elements, 1);
+      else
+	 subtype = type->fields.array;
 
       entry->mem_ctx = ralloc_parent(entry->var);
 
       entry->components = ralloc_array(mem_ctx,
 				       ir_variable *,
-				       type->length);
+				       entry->size);
 
-      for (unsigned int i = 0; i < type->length; i++) {
+      for (unsigned int i = 0; i < entry->size; i++) {
 	 const char *name = ralloc_asprintf(mem_ctx, "%s_%d",
 					    entry->var->name, i);
 
 	 entry->components[i] =
-	    new(entry->mem_ctx) ir_variable(type->fields.array,
-					    name,
-					    ir_var_temporary);
+	    new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary);
 	 entry->var->insert_before(entry->components[i]);
       }
 
