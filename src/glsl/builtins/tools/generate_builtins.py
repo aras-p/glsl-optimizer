@@ -59,7 +59,7 @@ def write_function_definitions():
         print stringify(v), ';'
 
 def run_compiler(args):
-    command = [compiler, '--dump-lir'] + args
+    command = [compiler, '--dump-hir'] + args
     p = Popen(command, 1, stdout=PIPE, shell=False)
     output = p.communicate()[0]
 
