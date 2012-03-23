@@ -233,10 +233,22 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
          = _mesa_get_tex_image(ctx, texObj, target, srcLevel);
       struct gl_texture_image *dstImage;
       struct st_texture_image *stImage;
-      uint dstWidth = u_minify(pt->width0, dstLevel);
-      uint dstHeight = u_minify(pt->height0, dstLevel);
-      uint dstDepth = u_minify(pt->depth0, dstLevel); 
       uint border = srcImage->Border;
+      uint dstWidth, dstHeight, dstDepth;
+
+      dstWidth = u_minify(pt->width0, dstLevel);
+      if (texObj->Target == GL_TEXTURE_1D_ARRAY) {
+         dstHeight = pt->array_size;
+      }
+      else {
+         dstHeight = u_minify(pt->height0, dstLevel);
+      }
+      if (texObj->Target == GL_TEXTURE_2D_ARRAY) {
+         dstDepth = pt->array_size;
+      }
+      else {
+         dstDepth = u_minify(pt->depth0, dstLevel);
+      }
 
       dstImage = _mesa_get_tex_image(ctx, texObj, target, dstLevel);
       if (!dstImage) {
