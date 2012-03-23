@@ -91,6 +91,9 @@ XCreateDrawable(struct drisw_drawable * pdp,
    visMask = VisualIDMask;
    pdp->visinfo = XGetVisualInfo(dpy, visMask, &visTemp, &num_visuals);
 
+   if (!pdp->visinfo || num_visuals == 0)
+      return False;
+
    /* create XImage */
    pdp->ximage = XCreateImage(dpy,
                               pdp->visinfo->visual,
@@ -513,7 +516,7 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
    struct drisw_drawable *pdp;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    struct drisw_screen *psc = (struct drisw_screen *) base;
-
+   Bool ret;
    const __DRIswrastExtension *swrast = psc->swrast;
 
    pdp = Xmalloc(sizeof(*pdp));
@@ -525,7 +528,11 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
    pdp->base.drawable = drawable;
    pdp->base.psc = &psc->base;
 
-   XCreateDrawable(pdp, psc->base.dpy, xDrawable, modes->visualID);
+   ret = XCreateDrawable(pdp, psc->base.dpy, xDrawable, modes->visualID);
+   if (!ret) {
+      Xfree(pdp);
+      return NULL;
+   }
 
    /* Create a new drawable */
    pdp->driDrawable =
