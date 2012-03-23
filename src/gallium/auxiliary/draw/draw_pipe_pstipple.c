@@ -165,11 +165,16 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
 }
 
 
+/**
+ * TGSI immediate declaration transform callback.
+ * We're just counting the number of immediates here.
+ */
 static void
 pstip_transform_immed(struct tgsi_transform_context *ctx,
                       struct tgsi_full_immediate *immed)
 {
    struct pstip_transform_context *pctx = (struct pstip_transform_context *) ctx;
+   ctx->emit_immediate(ctx, immed); /* emit to output shader */
    pctx->numImmed++;
 }
 
