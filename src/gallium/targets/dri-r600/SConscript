@@ -2,6 +2,9 @@ Import('*')
 
 env = drienv.Clone()
 
+env.PkgUseModules('DRM')
+env.PkgUseModules('DRM_RADEON')
+
 env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
 
 env.Prepend(LIBS = [
