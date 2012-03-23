@@ -567,7 +567,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       GLint i;
       const GLint minLevel = baseLevel;
       const GLint maxLevel = t->_MaxLevel;
-      GLuint width, height, depth, face, numFaces = 1;
+      const GLuint numFaces = t->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+      GLuint width, height, depth, face;
 
       if (minLevel > maxLevel) {
          incomplete(t, BASE, "minLevel > maxLevel");
