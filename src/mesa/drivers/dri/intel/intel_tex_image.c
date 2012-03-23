@@ -341,13 +341,18 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!rb || !rb->mt)
       return;
 
-   if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
+   if (rb->mt->cpp == 4) {
+      if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
+         internalFormat = GL_RGB;
+         texFormat = MESA_FORMAT_XRGB8888;
+      }
+      else {
+         internalFormat = GL_RGBA;
+         texFormat = MESA_FORMAT_ARGB8888;
+      }
+   } else if (rb->mt->cpp == 2) {
       internalFormat = GL_RGB;
-      texFormat = MESA_FORMAT_XRGB8888;
-   }
-   else {
-      internalFormat = GL_RGBA;
-      texFormat = MESA_FORMAT_ARGB8888;
+      texFormat = MESA_FORMAT_RGB565;
    }
 
    _mesa_lock_texture(&intel->ctx, texObj);
