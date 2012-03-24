@@ -80,7 +80,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return PIPE_MAX_COLOR_BUFS;
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
-      return 0;
+      return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_TIMER_QUERY:
