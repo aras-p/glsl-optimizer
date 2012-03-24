@@ -464,7 +464,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
 
    if (vlsurf->video_buffer == NULL ||
        !screen->is_video_format_supported(screen, vlsurf->video_buffer->buffer_format, dec->profile) ||
-       buffer_support[vlsurf->video_buffer->interlaced]) {
+       !buffer_support[vlsurf->video_buffer->interlaced]) {
 
       /* destroy the old one */
       if (vlsurf->video_buffer)
