@@ -2128,6 +2128,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
                                       dstWidth, dstHeight, dstDepth,
                                       border, srcImage->InternalFormat,
                                       srcImage->TexFormat)) {
+         free(temp_dst);
          return;
       }
 
