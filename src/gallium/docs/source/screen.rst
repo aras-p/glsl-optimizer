@@ -26,7 +26,7 @@ The integer capabilities:
   normalized coordinates, and mipmaps.
 * ``PIPE_CAP_TWO_SIDED_STENCIL``: Whether the stencil test can also affect back-facing
   polygons.
-* ``PIPE_CAP_DUAL_SOURCE_BLEND``: Whether dual-source blend factors are supported. See
+* ``PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS``: How many dual-source blend RTs are support.
   :ref:`Blend` for more information.
 * ``PIPE_CAP_ANISOTROPIC_FILTER``: Whether textures can be filtered anisotropically.
 * ``PIPE_CAP_POINT_SPRITE``: Whether point sprites are available.

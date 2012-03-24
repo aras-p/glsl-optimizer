@@ -120,7 +120,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
         /* Unsupported features. */
         case PIPE_CAP_TIMER_QUERY:
-        case PIPE_CAP_DUAL_SOURCE_BLEND:
+        case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
         case PIPE_CAP_INDEP_BLEND_FUNC:
         case PIPE_CAP_DEPTH_CLIP_DISABLE:

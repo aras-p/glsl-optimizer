@@ -380,7 +380,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Supported features (boolean caps). */
 	case PIPE_CAP_NPOT_TEXTURES:
 	case PIPE_CAP_TWO_SIDED_STENCIL:
-	case PIPE_CAP_DUAL_SOURCE_BLEND:
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 	case PIPE_CAP_POINT_SPRITE:
 	case PIPE_CAP_OCCLUSION_QUERY:
@@ -465,6 +464,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
+
+	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
+		return 0;
 	}
 	return 0;
 }
