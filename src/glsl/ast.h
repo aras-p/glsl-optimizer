@@ -363,6 +363,11 @@ struct ast_type_qualifier {
 	  * qualifier is used.
 	  */
 	 unsigned explicit_location:1;
+	 /**
+	  * Flag set if GL_ARB_explicit_attrib_location "index" layout
+	  * qualifier is used.
+	  */
+	 unsigned explicit_index:1;
 
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
@@ -386,6 +391,13 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_location is set.
     */
    int location;
+   /**
+    * Index specified via GL_ARB_explicit_attrib_location layout
+    *
+    * \note
+    * This field is only valid if \c explicit_index is set.
+    */
+   int index;
 
    /**
     * Return true if and only if an interpolation qualifier is present.

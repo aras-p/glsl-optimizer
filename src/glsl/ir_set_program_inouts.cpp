@@ -81,12 +81,12 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
     */
 
    for (int i = 0; i < len; i++) {
-      GLbitfield64 bitfield = BITFIELD64_BIT(var->location + offset + i);
+      GLbitfield64 bitfield = BITFIELD64_BIT(var->location + var->index + offset + i);
       if (var->mode == ir_var_in) {
 	 prog->InputsRead |= bitfield;
          if (is_fragment_shader) {
             gl_fragment_program *fprog = (gl_fragment_program *) prog;
-            fprog->InterpQualifier[var->location + offset + i] =
+            fprog->InterpQualifier[var->location + var->index + offset + i] =
                (glsl_interp_qualifier) var->interpolation;
          }
       } else if (var->mode == ir_var_system_value) {

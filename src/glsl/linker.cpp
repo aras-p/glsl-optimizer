@@ -1274,10 +1274,15 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 }
       } else if (target_index == MESA_SHADER_FRAGMENT) {
 	 unsigned binding;
+	 unsigned index;
 
 	 if (prog->FragDataBindings->get(binding, var->name)) {
 	    assert(binding >= FRAG_RESULT_DATA0);
 	    var->location = binding;
+
+	    if (prog->FragDataIndexBindings->get(index, var->name)) {
+	       var->index = index;
+	    }
 	 }
       }
 
@@ -1288,7 +1293,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
        */
       const unsigned slots = count_attribute_slots(var->type);
       if (var->location != -1) {
-	 if (var->location >= generic_base) {
+	 if (var->location >= generic_base && var->index < 1) {
 	    /* From page 61 of the OpenGL 4.0 spec:
 	     *
 	     *     "LinkProgram will fail if the attribute bindings assigned
@@ -1333,8 +1338,8 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 		  ? "vertex shader input" : "fragment shader output";
 	       linker_error(prog,
 			    "insufficient contiguous locations "
-			    "available for %s `%s'", string,
-			    var->name);
+			    "available for %s `%s' %d %d %d", string,
+			    var->name, used_locations, use_mask, attr);
 	       return false;
 	    }
 
@@ -2321,7 +2326,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
 
-   if (!assign_attribute_or_color_locations(prog, MESA_SHADER_FRAGMENT, ctx->Const.MaxDrawBuffers)) {
+   if (!assign_attribute_or_color_locations(prog, MESA_SHADER_FRAGMENT, MAX2(ctx->Const.MaxDrawBuffers, ctx->Const.MaxDualSourceDrawBuffers))) {
       goto done;
    }
 

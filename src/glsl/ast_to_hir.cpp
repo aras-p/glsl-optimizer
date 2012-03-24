@@ -2092,14 +2092,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 } else {
 	    var->location = qual->location;
 	 }
+	 if (qual->flags.q.explicit_index) {
+	    var->explicit_index = true;
+	    var->index = qual->index;
+	 }
       }
+   } else if (qual->flags.q.explicit_index) {
+	 _mesa_glsl_error(loc, state,
+			  "explicit index requires explicit location\n");
    }
 
    /* Does the declaration use the 'layout' keyword?
     */
    const bool uses_layout = qual->flags.q.pixel_center_integer
       || qual->flags.q.origin_upper_left
-      || qual->flags.q.explicit_location;
+      || qual->flags.q.explicit_location; /* no need for index since it relies on location */
 
    /* Does the declaration use the deprecated 'attribute' or 'varying'
     * keywords?

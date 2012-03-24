@@ -1103,8 +1103,14 @@ layout_qualifier_id_list:
 	   if ($1.flags.q.explicit_location)
 	      $$.location = $1.location;
 
+	   if ($1.flags.q.explicit_index)
+	      $$.index = $1.index;
+
 	   if ($3.flags.q.explicit_location)
 	      $$.location = $3.location;
+
+	   if ($3.flags.q.explicit_index)
+	      $$.index = $3.index;
 	}
 	;
 
@@ -1191,6 +1197,20 @@ layout_qualifier_id:
 		    YYERROR;
 		 }
 	      }
+
+	      if (strcmp("index", $1) == 0) {
+	      	 got_one = true;
+
+		 $$.flags.q.explicit_index = 1;
+
+		 if ($3 >= 0) {
+		    $$.index = $3;
+		 } else {
+		    _mesa_glsl_error(& @3, state,
+		                     "invalid index %d specified\n", $3);
+                    YYERROR;
+                 }
+              }
 	   }
 
 	   /* If the identifier didn't match any known layout identifiers,

@@ -386,6 +386,7 @@ public:
     * no effect).
     */
    unsigned explicit_location:1;
+   unsigned explicit_index:1;
 
    /**
     * Does this variable have an initializer?
