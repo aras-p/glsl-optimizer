@@ -3829,6 +3829,7 @@
 	<category name="OES_element_index_uint"/>
 	<category name="OES_mapbuffer"/>
 	<category name="EXT_texture_filter_anisotropic"/>
+	<category name="EXT_texture_format_BGRA8888"/>
 
 	<category name="ARB_texture_non_power_of_two"/>
 	<!-- disabled due to missing enums
