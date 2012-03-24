@@ -3830,6 +3830,7 @@
 	<category name="OES_mapbuffer"/>
 	<category name="EXT_texture_filter_anisotropic"/>
 	<category name="EXT_texture_format_BGRA8888"/>
+	<category name="EXT_read_format_bgra"/>
 
 	<category name="ARB_texture_non_power_of_two"/>
 	<!-- disabled due to missing enums
@@ -4124,6 +4125,7 @@
 	<category name="OES_packed_depth_stencil"/>
 	<category name="OES_standard_derivatives"/>
 	<category name="EXT_texture_format_BGRA8888"/>
+	<category name="EXT_read_format_bgra"/>
 
 	<category name="EXT_texture_compression_dxt1"/>
 	<category name="EXT_blend_minmax"/>
