@@ -1925,7 +1925,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
          assert(var->location != -1);
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_OUTPUT,
-                                               var->location);
+                                               var->location + var->index);
          break;
       case ir_var_system_value:
          entry = new(mem_ctx) variable_storage(var,

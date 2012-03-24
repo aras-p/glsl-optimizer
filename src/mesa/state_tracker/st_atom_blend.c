@@ -78,10 +78,10 @@ translate_blend(GLenum blend)
       return PIPE_BLENDFACTOR_CONST_COLOR;
    case GL_CONSTANT_ALPHA:
       return PIPE_BLENDFACTOR_CONST_ALPHA;
-      /*
+   case GL_SRC1_COLOR:
       return PIPE_BLENDFACTOR_SRC1_COLOR;
+   case GL_SRC1_ALPHA:
       return PIPE_BLENDFACTOR_SRC1_ALPHA;
-      */
    case GL_ZERO:
       return PIPE_BLENDFACTOR_ZERO;
    case GL_ONE_MINUS_SRC_COLOR:
@@ -96,10 +96,10 @@ translate_blend(GLenum blend)
       return PIPE_BLENDFACTOR_INV_CONST_COLOR;
    case GL_ONE_MINUS_CONSTANT_ALPHA:
       return PIPE_BLENDFACTOR_INV_CONST_ALPHA;
-      /*
+   case GL_ONE_MINUS_SRC1_COLOR:
       return PIPE_BLENDFACTOR_INV_SRC1_COLOR;
+   case GL_ONE_MINUS_SRC1_ALPHA:
       return PIPE_BLENDFACTOR_INV_SRC1_ALPHA;
-      */
    default:
       assert("invalid GL token in translate_blend()" == NULL);
       return 0;

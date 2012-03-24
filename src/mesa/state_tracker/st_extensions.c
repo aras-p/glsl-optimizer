@@ -120,6 +120,10 @@ void st_init_limits(struct st_context *st)
       = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
 
+   c->MaxDualSourceDrawBuffers
+      = _clamp(screen->get_param(screen, PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS),
+              0, MAX_DRAW_BUFFERS);
+
    c->MaxLineWidth
       = _maxf(1.0f, screen->get_paramf(screen,
                                        PIPE_CAPF_MAX_LINE_WIDTH));
@@ -629,4 +633,7 @@ void st_init_extensions(struct st_context *st)
          break;
       }
    }
+
+   if (ctx->Const.MaxDualSourceDrawBuffers > 0)
+      ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
 }
