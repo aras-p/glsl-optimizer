@@ -2263,6 +2263,7 @@ struct gl_shader_program
     * and they are \b not the values returned by \c glGetFragDataLocation.
     */
    struct string_to_uint_map *FragDataBindings;
+   struct string_to_uint_map *FragDataIndexBindings;
 
    /**
     * Transform feedback varyings last specified by
@@ -2813,6 +2814,9 @@ struct gl_constants
 
    /* GL_ARB_robustness */
    GLenum ResetStrategy;
+
+   /* GL_ARB_blend_func_extended */
+   GLuint MaxDualSourceDrawBuffers;
 
    /**
     * Whether the implementation strips out and ignores texture borders.

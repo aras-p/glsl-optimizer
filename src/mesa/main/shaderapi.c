@@ -1748,6 +1748,9 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_ReleaseShaderCompiler(exec, _mesa_ReleaseShaderCompiler);
    SET_GetShaderPrecisionFormat(exec, _mesa_GetShaderPrecisionFormat);
 
+   /* GL_ARB_blend_func_extended */
+   SET_BindFragDataLocationIndexed(exec, _mesa_BindFragDataLocationIndexed);
+   SET_GetFragDataIndex(exec, _mesa_GetFragDataIndex);
 #endif /* FEATURE_GL */
 }
 

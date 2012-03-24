@@ -63,6 +63,11 @@ legal_src_factor(const struct gl_context *ctx, GLenum factor)
    case GL_CONSTANT_ALPHA:
    case GL_ONE_MINUS_CONSTANT_ALPHA:
       return GL_TRUE;
+   case GL_SRC1_COLOR:
+   case GL_SRC1_ALPHA:
+   case GL_ONE_MINUS_SRC1_COLOR:
+   case GL_ONE_MINUS_SRC1_ALPHA:
+      return ctx->Extensions.ARB_blend_func_extended;
    default:
       return GL_FALSE;
    }
@@ -93,6 +98,12 @@ legal_dst_factor(const struct gl_context *ctx, GLenum factor)
    case GL_CONSTANT_ALPHA:
    case GL_ONE_MINUS_CONSTANT_ALPHA:
       return GL_TRUE;
+   case GL_SRC_ALPHA_SATURATE:
+   case GL_SRC1_COLOR:
+   case GL_SRC1_ALPHA:
+   case GL_ONE_MINUS_SRC1_COLOR:
+   case GL_ONE_MINUS_SRC1_ALPHA:
+      return ctx->Extensions.ARB_blend_func_extended;
    default:
       return GL_FALSE;
    }

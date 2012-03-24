@@ -421,6 +421,11 @@ public:
    int location;
 
    /**
+    * output index for dual source blending.
+    */
+   int index;
+
+   /**
     * Built-in state that backs this uniform
     *
     * Once set at variable creation, \c state_slots must remain invariant.

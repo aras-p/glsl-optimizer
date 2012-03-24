@@ -333,6 +333,7 @@ EXTRA_EXT(ARB_copy_buffer);
 EXTRA_EXT(EXT_framebuffer_sRGB);
 EXTRA_EXT(ARB_texture_buffer_object);
 EXTRA_EXT(OES_EGL_image_external);
+EXTRA_EXT(ARB_blend_func_extended);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -1303,6 +1304,8 @@ static const struct value_desc values[] = {
    { GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB, CONTEXT_INT(Debug.NextMsgLength), NO_EXTRA },
    { GL_MAX_DEBUG_LOGGED_MESSAGES_ARB, CONST(MAX_DEBUG_LOGGED_MESSAGES), NO_EXTRA },
    { GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, CONST(MAX_DEBUG_MESSAGE_LENGTH), NO_EXTRA },
+
+   { GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, CONTEXT_INT(Const.MaxDualSourceDrawBuffers), extra_ARB_blend_func_extended },
 
 #endif /* FEATURE_GL */
 };
