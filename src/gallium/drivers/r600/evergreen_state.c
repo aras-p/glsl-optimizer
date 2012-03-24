@@ -27,6 +27,7 @@
 #include "util/u_pack_color.h"
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
+#include "util/u_dual_blend.h"
 
 static uint32_t eg_num_banks(uint32_t nbanks)
 {
@@ -709,7 +710,8 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
 				color_control, NULL, 0);
-
+	/* only have dual source on MRT0 */
+	blend->dual_src_blend = util_blend_state_is_dual(state, 0);
 	for (int i = 0; i < 8; i++) {
 		/* state->rt entries > 0 only written if independent blending */
 		const int j = state->independent_blend_enable ? i : 0;
@@ -1459,6 +1461,8 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	}
 	rctx->alpha_ref_dirty = true;
 
+	if (cb == 0)
+	    rctx->color0_format = color_info;
 
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
@@ -1655,7 +1659,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	uint32_t shader_mask, tl, br;
+	uint32_t tl, br;
 
 	if (rstate == NULL)
 		return;
@@ -1677,9 +1681,9 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		evergreen_db(rctx, rstate, state);
 	}
 
-	shader_mask = 0;
+	rctx->fb_cb_shader_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
-		shader_mask |= 0xf << (i * 4);
+		rctx->fb_cb_shader_mask |= 0xf << (i * 4);
 	}
 
 	evergreen_get_scissor_rect(rctx, 0, 0, state->width, state->height, &tl, &br);
@@ -1690,8 +1694,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br,
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
-				shader_mask, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
@@ -2657,7 +2659,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		/* always at least export 1 component per pixel */
 		exports_ps = 2;
 	}
-
+	shader->ps_cb_shader_mask = (1ULL << ((unsigned)num_cout * 4)) - 1;
 	if (ninterp == 0) {
 		ninterp = 1;
 		have_perspective = TRUE;

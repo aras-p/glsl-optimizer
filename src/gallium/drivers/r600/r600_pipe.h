@@ -151,6 +151,7 @@ struct r600_pipe_blend {
 	struct r600_pipe_state		rstate;
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
+	bool				dual_src_blend;
 };
 
 struct r600_pipe_dsa {
@@ -181,6 +182,7 @@ struct r600_pipe_shader {
 	unsigned	sprite_coord_enable;
 	unsigned	flatshade;
 	unsigned	pa_cl_vs_out_cntl;
+	unsigned        ps_cb_shader_mask;
 	struct pipe_stream_output_info	so;
 };
 
@@ -254,6 +256,8 @@ struct r600_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			cb_target_mask;
+	unsigned			fb_cb_shader_mask;
+	unsigned			cb_shader_mask;
 	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
@@ -346,6 +350,8 @@ struct r600_context {
 	void			*dummy_pixel_shader;
 
 	bool			vertex_buffers_dirty;
+	boolean			dual_src_blend;
+	unsigned color0_format;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

@@ -466,7 +466,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 7;
 
 	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
-		return 0;
+		return 1;
 	}
 	return 0;
 }

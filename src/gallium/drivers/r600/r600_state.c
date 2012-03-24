@@ -27,6 +27,7 @@
 #include "util/u_pack_color.h"
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
+#include "util/u_dual_blend.h"
 
 static uint32_t r600_translate_blend_function(int blend_func)
 {
@@ -717,7 +718,8 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 	}
 	blend->cb_target_mask = target_mask;
 	blend->cb_color_control = color_control;
-
+	/* only MRT0 has dual src blend */
+	blend->dual_src_blend = util_blend_state_is_dual(state, 0);
 	for (int i = 0; i < 8; i++) {
 		/* state->rt entries > 0 only written if independent blending */
 		const int j = state->independent_blend_enable ? i : 0;
@@ -1509,6 +1511,9 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
 	}
 
+	if (cb == 0)
+		rctx->color0_format = color_info;
+
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
 				offset >> 8, &rtex->resource, RADEON_USAGE_READWRITE);
@@ -1621,7 +1626,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	uint32_t shader_mask, tl, br, shader_control;
+	uint32_t tl, br, shader_control;
 
 	if (rstate == NULL)
 		return;
@@ -1642,11 +1647,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_db(rctx, rstate, state);
 	}
 
-	shader_mask = 0;
 	shader_control = 0;
+	rctx->fb_cb_shader_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
-		shader_mask |= 0xf << (i * 4);
 		shader_control |= 1 << i;
+		rctx->fb_cb_shader_mask |= 0xf << (i * 4);
 	}
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
@@ -1660,8 +1665,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
 				shader_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02823C_CB_SHADER_MASK,
-				shader_mask, NULL, 0);
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
@@ -2293,6 +2296,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 		/* always at least export 1 component per pixel */
 		exports_ps = 2;
 	}
+
+	shader->ps_cb_shader_mask = (1ULL << ((unsigned)num_cout * 4)) - 1;
 
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
 				S_0286CC_PERSP_GRADIENT_ENA(1)|

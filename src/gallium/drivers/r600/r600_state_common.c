@@ -158,11 +158,10 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	rstate = &blend->rstate;
 	rctx->states[rstate->id] = rstate;
 	rctx->cb_target_mask = blend->cb_target_mask;
-
 	/* Replace every bit except MULTIWRITE_ENABLE. */
 	rctx->cb_color_control &= ~C_028808_MULTIWRITE_ENABLE;
 	rctx->cb_color_control |= blend->cb_color_control & C_028808_MULTIWRITE_ENABLE;
-
+	rctx->dual_src_blend = blend->dual_src_blend;
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
@@ -709,6 +708,10 @@ static void r600_update_derived_state(struct r600_context *rctx)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
 	}
 
+	if (rctx->dual_src_blend)
+		rctx->cb_shader_mask = rctx->ps_shader->ps_cb_shader_mask | rctx->fb_cb_shader_mask;
+	else
+		rctx->cb_shader_mask = rctx->fb_cb_shader_mask;
 }
 
 static unsigned r600_conv_prim_to_gs_out(unsigned mode)
@@ -799,6 +802,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_02823C_CB_SHADER_MASK, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, NULL, 0);
@@ -808,12 +812,18 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0, NULL, 0);
+
+		if (rctx->chip_class <= R700)
+			r600_pipe_state_add_reg(&rctx->vgt, R_0280A4_CB_COLOR1_INFO, 0, NULL, 0);	
+		else
+			r600_pipe_state_add_reg(&rctx->vgt, 0x28CAC, 0, NULL, 0);	
 	}
 
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
 	r600_pipe_state_mod_reg(&rctx->vgt, r600_conv_prim_to_gs_out(info.mode));
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
+	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_shader_mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
@@ -834,6 +844,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 				(rctx->vs_shader->shader.clip_dist_write ||
 				 rctx->vs_shader->shader.vs_prohibit_ucps ?
 				 0 : rctx->rasterizer->clip_plane_enable & 0x3F));
+
+	if (rctx->dual_src_blend) {
+		r600_pipe_state_mod_reg(&rctx->vgt, 
+					rctx->color0_format);
+	}
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
