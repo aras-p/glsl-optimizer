@@ -33,6 +33,7 @@
 #include "util/u_memory.h"
 #include "util/u_debug.h"
 #include "util/u_rect.h"
+#include "vl/vl_defines.h"
 
 #include "vdpau_private.h"
 
@@ -91,6 +92,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
       PIPE_VIDEO_CAP_PREFERS_INTERLACED
    );
    p_surf->video_buffer = pipe->create_video_buffer(pipe, &p_surf->templat);
+   vlVdpVideoSurfaceClear(p_surf);
    pipe_mutex_unlock(dev->mutex);
 
    *surface = vlAddDataHTAB(p_surf);
@@ -282,6 +284,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
          pipe_mutex_unlock(p_surf->device->mutex);
          return VDP_STATUS_NO_IMPLEMENTATION;
       }
+      vlVdpVideoSurfaceClear(p_surf);
    }
 
    sampler_views = p_surf->video_buffer->get_sampler_view_planes(p_surf->video_buffer);
@@ -310,4 +313,30 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    pipe_mutex_unlock(p_surf->device->mutex);
 
    return VDP_STATUS_OK;
+}
+
+/**
+ * Helper function to initially clear the VideoSurface after (re-)creation
+ */
+void
+vlVdpVideoSurfaceClear(vlVdpSurface *vlsurf)
+{
+   struct pipe_context *pipe = vlsurf->device->context;
+   struct pipe_surface **surfaces;
+   unsigned i;
+
+   if (!vlsurf->video_buffer)
+      return;
+
+   surfaces = vlsurf->video_buffer->get_surfaces(vlsurf->video_buffer);
+   for (i = 0; i < VL_MAX_SURFACES; ++i) {
+      union pipe_color_union black = {};
+
+      if (!surfaces[i])
+         continue;
+
+      pipe->clear_render_target(pipe, surfaces[i], &black, 0, 0,
+                                surfaces[i]->width, surfaces[i]->height);
+   }
+   pipe->flush(pipe, NULL);
 }

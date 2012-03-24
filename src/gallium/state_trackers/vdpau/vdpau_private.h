@@ -435,6 +435,7 @@ VdpVideoSurfaceDestroy vlVdpVideoSurfaceDestroy;
 VdpVideoSurfaceGetParameters vlVdpVideoSurfaceGetParameters;
 VdpVideoSurfaceGetBitsYCbCr vlVdpVideoSurfaceGetBitsYCbCr;
 VdpVideoSurfacePutBitsYCbCr vlVdpVideoSurfacePutBitsYCbCr;
+void vlVdpVideoSurfaceClear(vlVdpSurface *vlsurf);
 VdpDecoderCreate vlVdpDecoderCreate;
 VdpDecoderDestroy vlVdpDecoderDestroy;
 VdpDecoderGetParameters vlVdpDecoderGetParameters;

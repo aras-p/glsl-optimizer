@@ -484,6 +484,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
          pipe_mutex_unlock(vlsurf->device->mutex);
          return VDP_STATUS_NO_IMPLEMENTATION;
       }
+      vlVdpVideoSurfaceClear(vlsurf);
    }
 
    for (i = 0; i < bitstream_buffer_count; ++i) {
