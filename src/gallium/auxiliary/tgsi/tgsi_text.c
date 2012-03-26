@@ -821,6 +821,7 @@ parse_instruction(
    uint saturate = TGSI_SAT_NONE;
    const struct tgsi_opcode_info *info;
    struct tgsi_full_instruction inst;
+   const char *cur;
    uint advance;
 
    inst = tgsi_default_full_instruction();
@@ -866,7 +867,7 @@ parse_instruction(
     */
    eat_opt_white( &ctx->cur );
    for (i = 0; i < TGSI_OPCODE_LAST; i++) {
-      const char *cur = ctx->cur;
+      cur = ctx->cur;
 
       info = tgsi_get_opcode_info( i );
       if (match_inst_mnemonic(&cur, info)) {
@@ -940,22 +941,20 @@ parse_instruction(
       }
    }
 
-   if (info->is_branch) {
+   cur = ctx->cur;
+   eat_opt_white( &cur );
+   if (info->is_branch && *cur == ':') {
       uint target;
 
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != ':') {
-         report_error( ctx, "Expected `:'" );
-         return FALSE;
-      }
-      ctx->cur++;
-      eat_opt_white( &ctx->cur );
-      if (!parse_uint( &ctx->cur, &target )) {
+      cur++;
+      eat_opt_white( &cur );
+      if (!parse_uint( &cur, &target )) {
          report_error( ctx, "Expected a label" );
          return FALSE;
       }
       inst.Instruction.Label = 1;
       inst.Label.Label = target;
+      ctx->cur = cur;
    }
 
    advance = tgsi_build_full_instruction(
