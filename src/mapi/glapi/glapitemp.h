@@ -7045,16 +7045,16 @@ KEYWORD1 void KEYWORD2 NAME(ProgramNamedParameter4fvNV)(GLuint id, GLsizei len, 
    DISPATCH(ProgramNamedParameter4fvNV, (id, len, name, v), (F, "glProgramNamedParameter4fvNV(%d, %d, %p, %p);\n", id, len, (const void *) name, (const void *) v));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PrimitiveRestartIndexNV)(GLuint index)
-{
-    (void) index;
-   DISPATCH(PrimitiveRestartIndexNV, (index), (F, "glPrimitiveRestartIndexNV(%d);\n", index));
-}
-
 KEYWORD1 void KEYWORD2 NAME(PrimitiveRestartIndex)(GLuint index)
 {
     (void) index;
    DISPATCH(PrimitiveRestartIndexNV, (index), (F, "glPrimitiveRestartIndex(%d);\n", index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PrimitiveRestartIndexNV)(GLuint index)
+{
+    (void) index;
+   DISPATCH(PrimitiveRestartIndexNV, (index), (F, "glPrimitiveRestartIndexNV(%d);\n", index));
 }
 
 KEYWORD1 void KEYWORD2 NAME(PrimitiveRestartNV)(void)
@@ -7876,21 +7876,16 @@ KEYWORD1 void KEYWORD2 NAME(TexParameterIuiv)(GLenum target, GLenum pname, const
    DISPATCH(TexParameterIuivEXT, (target, pname, params), (F, "glTexParameterIuiv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BeginConditionalRenderNV)(GLuint query, GLenum mode)
-{
-    (void) query; (void) mode;
-   DISPATCH(BeginConditionalRenderNV, (query, mode), (F, "glBeginConditionalRenderNV(%d, 0x%x);\n", query, mode));
-}
-
 KEYWORD1 void KEYWORD2 NAME(BeginConditionalRender)(GLuint query, GLenum mode)
 {
     (void) query; (void) mode;
    DISPATCH(BeginConditionalRenderNV, (query, mode), (F, "glBeginConditionalRender(%d, 0x%x);\n", query, mode));
 }
 
-KEYWORD1 void KEYWORD2 NAME(EndConditionalRenderNV)(void)
+KEYWORD1 void KEYWORD2 NAME(BeginConditionalRenderNV)(GLuint query, GLenum mode)
 {
-   DISPATCH(EndConditionalRenderNV, (), (F, "glEndConditionalRenderNV();\n"));
+    (void) query; (void) mode;
+   DISPATCH(BeginConditionalRenderNV, (query, mode), (F, "glBeginConditionalRenderNV(%d, 0x%x);\n", query, mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(EndConditionalRender)(void)
@@ -7898,10 +7893,9 @@ KEYWORD1 void KEYWORD2 NAME(EndConditionalRender)(void)
    DISPATCH(EndConditionalRenderNV, (), (F, "glEndConditionalRender();\n"));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BeginTransformFeedbackEXT)(GLenum mode)
+KEYWORD1 void KEYWORD2 NAME(EndConditionalRenderNV)(void)
 {
-    (void) mode;
-   DISPATCH(BeginTransformFeedbackEXT, (mode), (F, "glBeginTransformFeedbackEXT(0x%x);\n", mode));
+   DISPATCH(EndConditionalRenderNV, (), (F, "glEndConditionalRenderNV();\n"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(BeginTransformFeedback)(GLenum mode)
@@ -7910,10 +7904,10 @@ KEYWORD1 void KEYWORD2 NAME(BeginTransformFeedback)(GLenum mode)
    DISPATCH(BeginTransformFeedbackEXT, (mode), (F, "glBeginTransformFeedback(0x%x);\n", mode));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BindBufferBaseEXT)(GLenum target, GLuint index, GLuint buffer)
+KEYWORD1 void KEYWORD2 NAME(BeginTransformFeedbackEXT)(GLenum mode)
 {
-    (void) target; (void) index; (void) buffer;
-   DISPATCH(BindBufferBaseEXT, (target, index, buffer), (F, "glBindBufferBaseEXT(0x%x, %d, %d);\n", target, index, buffer));
+    (void) mode;
+   DISPATCH(BeginTransformFeedbackEXT, (mode), (F, "glBeginTransformFeedbackEXT(0x%x);\n", mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(BindBufferBase)(GLenum target, GLuint index, GLuint buffer)
@@ -7922,16 +7916,16 @@ KEYWORD1 void KEYWORD2 NAME(BindBufferBase)(GLenum target, GLuint index, GLuint 
    DISPATCH(BindBufferBaseEXT, (target, index, buffer), (F, "glBindBufferBase(0x%x, %d, %d);\n", target, index, buffer));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BindBufferBaseEXT)(GLenum target, GLuint index, GLuint buffer)
+{
+    (void) target; (void) index; (void) buffer;
+   DISPATCH(BindBufferBaseEXT, (target, index, buffer), (F, "glBindBufferBaseEXT(0x%x, %d, %d);\n", target, index, buffer));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BindBufferOffsetEXT)(GLenum target, GLuint index, GLuint buffer, GLintptr offset)
 {
     (void) target; (void) index; (void) buffer; (void) offset;
    DISPATCH(BindBufferOffsetEXT, (target, index, buffer, offset), (F, "glBindBufferOffsetEXT(0x%x, %d, %d, %d);\n", target, index, buffer, offset));
-}
-
-KEYWORD1 void KEYWORD2 NAME(BindBufferRangeEXT)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
-{
-    (void) target; (void) index; (void) buffer; (void) offset; (void) size;
-   DISPATCH(BindBufferRangeEXT, (target, index, buffer, offset, size), (F, "glBindBufferRangeEXT(0x%x, %d, %d, %d, %d);\n", target, index, buffer, offset, size));
 }
 
 KEYWORD1 void KEYWORD2 NAME(BindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
@@ -7940,9 +7934,10 @@ KEYWORD1 void KEYWORD2 NAME(BindBufferRange)(GLenum target, GLuint index, GLuint
    DISPATCH(BindBufferRangeEXT, (target, index, buffer, offset, size), (F, "glBindBufferRange(0x%x, %d, %d, %d, %d);\n", target, index, buffer, offset, size));
 }
 
-KEYWORD1 void KEYWORD2 NAME(EndTransformFeedbackEXT)(void)
+KEYWORD1 void KEYWORD2 NAME(BindBufferRangeEXT)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 {
-   DISPATCH(EndTransformFeedbackEXT, (), (F, "glEndTransformFeedbackEXT();\n"));
+    (void) target; (void) index; (void) buffer; (void) offset; (void) size;
+   DISPATCH(BindBufferRangeEXT, (target, index, buffer, offset, size), (F, "glBindBufferRangeEXT(0x%x, %d, %d, %d, %d);\n", target, index, buffer, offset, size));
 }
 
 KEYWORD1 void KEYWORD2 NAME(EndTransformFeedback)(void)
@@ -7950,10 +7945,9 @@ KEYWORD1 void KEYWORD2 NAME(EndTransformFeedback)(void)
    DISPATCH(EndTransformFeedbackEXT, (), (F, "glEndTransformFeedback();\n"));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetTransformFeedbackVaryingEXT)(GLuint program, GLuint index, GLsizei bufSize, GLsizei * length, GLsizei * size, GLenum * type, GLchar * name)
+KEYWORD1 void KEYWORD2 NAME(EndTransformFeedbackEXT)(void)
 {
-    (void) program; (void) index; (void) bufSize; (void) length; (void) size; (void) type; (void) name;
-   DISPATCH(GetTransformFeedbackVaryingEXT, (program, index, bufSize, length, size, type, name), (F, "glGetTransformFeedbackVaryingEXT(%d, %d, %d, %p, %p, %p, %p);\n", program, index, bufSize, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
+   DISPATCH(EndTransformFeedbackEXT, (), (F, "glEndTransformFeedbackEXT();\n"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetTransformFeedbackVarying)(GLuint program, GLuint index, GLsizei bufSize, GLsizei * length, GLsizei * size, GLenum * type, GLchar * name)
@@ -7962,16 +7956,22 @@ KEYWORD1 void KEYWORD2 NAME(GetTransformFeedbackVarying)(GLuint program, GLuint 
    DISPATCH(GetTransformFeedbackVaryingEXT, (program, index, bufSize, length, size, type, name), (F, "glGetTransformFeedbackVarying(%d, %d, %d, %p, %p, %p, %p);\n", program, index, bufSize, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
 }
 
-KEYWORD1 void KEYWORD2 NAME(TransformFeedbackVaryingsEXT)(GLuint program, GLsizei count, const char ** varyings, GLenum bufferMode)
+KEYWORD1 void KEYWORD2 NAME(GetTransformFeedbackVaryingEXT)(GLuint program, GLuint index, GLsizei bufSize, GLsizei * length, GLsizei * size, GLenum * type, GLchar * name)
 {
-    (void) program; (void) count; (void) varyings; (void) bufferMode;
-   DISPATCH(TransformFeedbackVaryingsEXT, (program, count, varyings, bufferMode), (F, "glTransformFeedbackVaryingsEXT(%d, %d, %p, 0x%x);\n", program, count, (const void *) varyings, bufferMode));
+    (void) program; (void) index; (void) bufSize; (void) length; (void) size; (void) type; (void) name;
+   DISPATCH(GetTransformFeedbackVaryingEXT, (program, index, bufSize, length, size, type, name), (F, "glGetTransformFeedbackVaryingEXT(%d, %d, %d, %p, %p, %p, %p);\n", program, index, bufSize, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
 }
 
 KEYWORD1 void KEYWORD2 NAME(TransformFeedbackVaryings)(GLuint program, GLsizei count, const GLchar* * varyings, GLenum bufferMode)
 {
     (void) program; (void) count; (void) varyings; (void) bufferMode;
    DISPATCH(TransformFeedbackVaryingsEXT, (program, count, varyings, bufferMode), (F, "glTransformFeedbackVaryings(%d, %d, %p, 0x%x);\n", program, count, (const void *) varyings, bufferMode));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TransformFeedbackVaryingsEXT)(GLuint program, GLsizei count, const char ** varyings, GLenum bufferMode)
+{
+    (void) program; (void) count; (void) varyings; (void) bufferMode;
+   DISPATCH(TransformFeedbackVaryingsEXT, (program, count, varyings, bufferMode), (F, "glTransformFeedbackVaryingsEXT(%d, %d, %p, 0x%x);\n", program, count, (const void *) varyings, bufferMode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ProvokingVertexEXT)(GLenum mode)

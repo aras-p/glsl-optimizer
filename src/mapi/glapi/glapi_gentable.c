@@ -8314,14 +8314,14 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 
     if(!disp->PrimitiveRestartIndexNV) {
         void ** procp = (void **) &disp->PrimitiveRestartIndexNV;
-        snprintf(symboln, sizeof(symboln), "%sPrimitiveRestartIndexNV", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sPrimitiveRestartIndex", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
 
     if(!disp->PrimitiveRestartIndexNV) {
         void ** procp = (void **) &disp->PrimitiveRestartIndexNV;
-        snprintf(symboln, sizeof(symboln), "%sPrimitiveRestartIndex", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sPrimitiveRestartIndexNV", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9280,21 +9280,14 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 
     if(!disp->BeginConditionalRenderNV) {
         void ** procp = (void **) &disp->BeginConditionalRenderNV;
-        snprintf(symboln, sizeof(symboln), "%sBeginConditionalRenderNV", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sBeginConditionalRender", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
 
     if(!disp->BeginConditionalRenderNV) {
         void ** procp = (void **) &disp->BeginConditionalRenderNV;
-        snprintf(symboln, sizeof(symboln), "%sBeginConditionalRender", symbol_prefix);
-        *procp = dlsym(handle, symboln);
-    }
-
-
-    if(!disp->EndConditionalRenderNV) {
-        void ** procp = (void **) &disp->EndConditionalRenderNV;
-        snprintf(symboln, sizeof(symboln), "%sEndConditionalRenderNV", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sBeginConditionalRenderNV", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9306,9 +9299,9 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
-    if(!disp->BeginTransformFeedbackEXT) {
-        void ** procp = (void **) &disp->BeginTransformFeedbackEXT;
-        snprintf(symboln, sizeof(symboln), "%sBeginTransformFeedbackEXT", symbol_prefix);
+    if(!disp->EndConditionalRenderNV) {
+        void ** procp = (void **) &disp->EndConditionalRenderNV;
+        snprintf(symboln, sizeof(symboln), "%sEndConditionalRenderNV", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9320,9 +9313,9 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
-    if(!disp->BindBufferBaseEXT) {
-        void ** procp = (void **) &disp->BindBufferBaseEXT;
-        snprintf(symboln, sizeof(symboln), "%sBindBufferBaseEXT", symbol_prefix);
+    if(!disp->BeginTransformFeedbackEXT) {
+        void ** procp = (void **) &disp->BeginTransformFeedbackEXT;
+        snprintf(symboln, sizeof(symboln), "%sBeginTransformFeedbackEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9330,6 +9323,13 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     if(!disp->BindBufferBaseEXT) {
         void ** procp = (void **) &disp->BindBufferBaseEXT;
         snprintf(symboln, sizeof(symboln), "%sBindBufferBase", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->BindBufferBaseEXT) {
+        void ** procp = (void **) &disp->BindBufferBaseEXT;
+        snprintf(symboln, sizeof(symboln), "%sBindBufferBaseEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9343,21 +9343,14 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
 
     if(!disp->BindBufferRangeEXT) {
         void ** procp = (void **) &disp->BindBufferRangeEXT;
-        snprintf(symboln, sizeof(symboln), "%sBindBufferRangeEXT", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sBindBufferRange", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
 
     if(!disp->BindBufferRangeEXT) {
         void ** procp = (void **) &disp->BindBufferRangeEXT;
-        snprintf(symboln, sizeof(symboln), "%sBindBufferRange", symbol_prefix);
-        *procp = dlsym(handle, symboln);
-    }
-
-
-    if(!disp->EndTransformFeedbackEXT) {
-        void ** procp = (void **) &disp->EndTransformFeedbackEXT;
-        snprintf(symboln, sizeof(symboln), "%sEndTransformFeedbackEXT", symbol_prefix);
+        snprintf(symboln, sizeof(symboln), "%sBindBufferRangeEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9369,9 +9362,9 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
-    if(!disp->GetTransformFeedbackVaryingEXT) {
-        void ** procp = (void **) &disp->GetTransformFeedbackVaryingEXT;
-        snprintf(symboln, sizeof(symboln), "%sGetTransformFeedbackVaryingEXT", symbol_prefix);
+    if(!disp->EndTransformFeedbackEXT) {
+        void ** procp = (void **) &disp->EndTransformFeedbackEXT;
+        snprintf(symboln, sizeof(symboln), "%sEndTransformFeedbackEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9383,9 +9376,9 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
-    if(!disp->TransformFeedbackVaryingsEXT) {
-        void ** procp = (void **) &disp->TransformFeedbackVaryingsEXT;
-        snprintf(symboln, sizeof(symboln), "%sTransformFeedbackVaryingsEXT", symbol_prefix);
+    if(!disp->GetTransformFeedbackVaryingEXT) {
+        void ** procp = (void **) &disp->GetTransformFeedbackVaryingEXT;
+        snprintf(symboln, sizeof(symboln), "%sGetTransformFeedbackVaryingEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
@@ -9393,6 +9386,13 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     if(!disp->TransformFeedbackVaryingsEXT) {
         void ** procp = (void **) &disp->TransformFeedbackVaryingsEXT;
         snprintf(symboln, sizeof(symboln), "%sTransformFeedbackVaryings", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TransformFeedbackVaryingsEXT) {
+        void ** procp = (void **) &disp->TransformFeedbackVaryingsEXT;
+        snprintf(symboln, sizeof(symboln), "%sTransformFeedbackVaryingsEXT", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
