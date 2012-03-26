@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+/* directly referenced from target Makefile, because of X dependencies */
+
 #include <sys/time.h>
 
 #include "pipe/p_state.h"
@@ -37,7 +39,7 @@
 #include "softpipe/sp_public.h"
 
 #include "vl/vl_compositor.h"
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 struct vl_xsp_screen
 {

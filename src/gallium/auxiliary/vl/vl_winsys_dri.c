@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+/* directly referenced from target Makefile, because of X dependencies */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -44,7 +46,7 @@
 #include "util/u_inlines.h"
 
 #include "vl/vl_compositor.h"
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 struct vl_dri_screen
 {
@@ -305,7 +307,7 @@ vl_screen_create(Display *display, int screen)
    xcb_screen_iterator_t s;
    xcb_generic_error_t *error = NULL;
    char *device_name;
-   int fd;
+   int fd, device_name_length;
 
    drm_magic_t magic;
 
@@ -336,8 +338,10 @@ vl_screen_create(Display *display, int screen)
    if (connect == NULL || connect->driver_name_length + connect->device_name_length == 0)
       goto free_screen;
 
-   device_name = xcb_dri2_connect_device_name(connect);
-   device_name = strndup(device_name, xcb_dri2_connect_device_name_length(connect));
+   device_name_length = xcb_dri2_connect_device_name_length(connect);
+   device_name = CALLOC(1, device_name_length);
+   memcpy(device_name, xcb_dri2_connect_device_name(connect), device_name_length);
+   device_name[device_name_length] = 0;
    fd = open(device_name, O_RDWR);
    free(device_name);
 

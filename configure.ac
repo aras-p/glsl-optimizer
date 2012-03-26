@@ -1844,15 +1844,12 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
-         NEED_G3DVL_DRI="yes"
     fi
     if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
-         NEED_G3DVL_DRI="yes"
     fi
     if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
-         NEED_G3DVL_DRI="yes"
     fi
 }
 
@@ -1930,10 +1927,6 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         esac
     done
-fi
-
-if test "x$NEED_G3DVL_DRI" = xyes; then
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
 fi
 
 dnl Tell Automake which drivers to build

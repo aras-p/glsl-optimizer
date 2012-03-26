@@ -12,7 +12,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/auxiliary/libgallium.a
 
 C_SOURCES = \
-	$(TOP)/src/gallium/winsys/g3dvl/xlib/xsp_winsys.c
+	$(TOP)/src/gallium/auxiliary/vl/vl_winsys_xsp.c
 
 DRIVER_LIBS =
 

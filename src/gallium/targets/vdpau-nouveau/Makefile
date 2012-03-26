@@ -3,8 +3,9 @@ include $(TOP)/configs/current
 
 LIBBASENAME = vdpau_nouveau
 
+DRIVER_INCLUDES = $(shell $(PKG_CONFIG) libdrm --cflags-only-I)
+
 PIPE_DRIVERS = \
-	$(TOP)/src/gallium/winsys/g3dvl/dri/libvldri.a \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
@@ -16,6 +17,7 @@ PIPE_DRIVERS = \
 
 C_SOURCES = \
 	target.c \
+	$(TOP)/src/gallium/auxiliary/vl/vl_winsys_dri.c \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 

@@ -38,7 +38,7 @@
 #include "util/u_memory.h"
 
 #include "vl/vl_csc.h"
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 #include "xvmc_private.h"
 

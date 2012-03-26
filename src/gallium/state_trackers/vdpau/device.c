@@ -31,8 +31,6 @@
 #include "util/u_debug.h"
 #include "util/u_sampler.h"
 
-#include "vl_winsys.h"
-
 #include "vdpau_private.h"
 
 /**

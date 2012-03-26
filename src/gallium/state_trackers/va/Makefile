@@ -7,9 +7,7 @@ VA_MAJOR = 0
 VA_MINOR = 3
 LIBRARY_DEFINES = -DVER_MAJOR=$(VA_MAJOR) -DVER_MINOR=$(VA_MINOR) $(STATE_TRACKER_DEFINES)
 
-LIBRARY_INCLUDES = \
-	$(shell $(PKG_CONFIG) --cflags-only-I libva) \
-	-I$(TOP)/src/gallium/winsys/g3dvl
+LIBRARY_INCLUDES = $(shell $(PKG_CONFIG) --cflags-only-I libva)
 
 C_SOURCES = htab.c \
 	    ftab.c \

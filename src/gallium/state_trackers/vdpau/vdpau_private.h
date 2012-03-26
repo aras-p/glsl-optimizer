@@ -44,8 +44,7 @@
 #include "vl/vl_csc.h"
 #include "vl/vl_matrix_filter.h"
 #include "vl/vl_median_filter.h"
-
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 /* Full VDPAU API documentation available at :
  * ftp://download.nvidia.com/XFree86/vdpau/doxygen/html/index.html */

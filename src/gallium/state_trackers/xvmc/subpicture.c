@@ -39,8 +39,7 @@
 #include "util/u_format.h"
 #include "util/u_sampler.h"
 #include "util/u_rect.h"
-
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 #include "xvmc_private.h"
 

@@ -34,8 +34,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
-
-#include "vl_winsys.h"
+#include "vl/vl_winsys.h"
 
 #include "va_private.h"
 

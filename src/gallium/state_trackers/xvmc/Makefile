@@ -3,9 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = xvmctracker
 
-LIBRARY_INCLUDES = \
-	$(shell $(PKG_CONFIG) --cflags-only-I xvmc) \
-	-I$(TOP)/src/gallium/winsys/g3dvl
+LIBRARY_INCLUDES = $(shell $(PKG_CONFIG) --cflags-only-I xvmc)
 
 C_SOURCES = block.c \
             surface.c \
