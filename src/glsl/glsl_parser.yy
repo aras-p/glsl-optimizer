@@ -1405,6 +1405,7 @@ basic_type_specifier_nonarray:
 	| SAMPLER2DARRAY	{ $$ = "sampler2DArray"; }
 	| SAMPLER1DARRAYSHADOW	{ $$ = "sampler1DArrayShadow"; }
 	| SAMPLER2DARRAYSHADOW	{ $$ = "sampler2DArrayShadow"; }
+	| SAMPLERBUFFER		{ $$ = "samplerBuffer"; }
 	| ISAMPLER1D		{ $$ = "isampler1D"; }
 	| ISAMPLER2D		{ $$ = "isampler2D"; }
 	| ISAMPLER3D		{ $$ = "isampler3D"; }

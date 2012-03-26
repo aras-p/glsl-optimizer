@@ -146,7 +146,6 @@ glsl_type::sampler_index() const
    case GLSL_SAMPLER_DIM_RECT:
       return TEXTURE_RECT_INDEX;
    case GLSL_SAMPLER_DIM_BUF:
-      assert(!"FINISHME: Implement ARB_texture_buffer_object");
       return TEXTURE_BUFFER_INDEX;
    case GLSL_SAMPLER_DIM_EXTERNAL:
       return TEXTURE_EXTERNAL_INDEX;
@@ -213,6 +212,10 @@ glsl_type::generate_140_types(glsl_symbol_table *symtab)
 
    add_types_to_symbol_table(symtab, builtin_140_types,
 			     Elements(builtin_140_types), false);
+
+   add_types_to_symbol_table(symtab, builtin_EXT_texture_buffer_object_types,
+			     Elements(builtin_EXT_texture_buffer_object_types),
+			     false);
 }
 
 
