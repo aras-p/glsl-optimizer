@@ -756,6 +756,9 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
          target = GL_TEXTURE_1D;
          break;
       case TEXTURE_BUFFER_INDEX:
+         dims = 0;
+         target = GL_TEXTURE_BUFFER;
+         break;
       case TEXTURE_EXTERNAL_INDEX:
       default:
          /* no-op */
@@ -794,6 +797,8 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
                                     GL_RGBA, texFormat);
 
          switch (dims) {
+	 case 0:
+	    break;
          case 1:
             ctx->Driver.TexImage1D(ctx, texImage, GL_RGBA,
                                    width, 0,
