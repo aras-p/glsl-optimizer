@@ -635,6 +635,10 @@ uvec4 texelFetch(usampler1DArray sampler, ivec2 P, int lod);
 ivec4 texelFetch(isampler2DArray sampler, ivec3 P, int lod);
 uvec4 texelFetch(usampler2DArray sampler, ivec3 P, int lod);
 
+ vec4 texelFetch( samplerBuffer sampler, int P);
+ivec4 texelFetch(isamplerBuffer sampler, int P);
+uvec4 texelFetch(usamplerBuffer sampler, int P);
+
 /* texelFetchOffset */
  vec4 texelFetchOffset( sampler1D sampler, int P, int lod, int offset);
 ivec4 texelFetchOffset(isampler1D sampler, int P, int lod, int offset);
