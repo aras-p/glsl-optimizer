@@ -152,6 +152,7 @@ struct ureg_program
    unsigned nr_sampler_views;
 
    struct util_bitmask *free_temps;
+   struct util_bitmask *local_temps;
    unsigned nr_temps;
 
    struct const_decl const_decls;
@@ -530,11 +531,19 @@ out:
    return ureg_src_register(TGSI_FILE_CONSTANT, index);
 }
 
-struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
+static struct ureg_dst alloc_temporary( struct ureg_program *ureg,
+                                        boolean local )
 {
+   unsigned i;
+
    /* Look for a released temporary.
     */
-   unsigned i = util_bitmask_get_first_index(ureg->free_temps);
+   for (i = util_bitmask_get_first_index(ureg->free_temps);
+        i != UTIL_BITMASK_INVALID_INDEX;
+        i = util_bitmask_get_next_index(ureg->free_temps, i + 1)) {
+      if (util_bitmask_get(ureg->local_temps, i) == local)
+         break;
+   }
 
    /* Or allocate a new one.
     */
@@ -543,7 +552,20 @@ struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
 
    util_bitmask_clear(ureg->free_temps, i);
 
+   if (local)
+      util_bitmask_set(ureg->local_temps, i);
+
    return ureg_dst_register( TGSI_FILE_TEMPORARY, i );
+}
+
+struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
+{
+   return alloc_temporary(ureg, FALSE);
+}
+
+struct ureg_dst ureg_DECL_local_temporary( struct ureg_program *ureg )
+{
+   return alloc_temporary(ureg, TRUE);
 }
 
 void ureg_release_temporary( struct ureg_program *ureg,
@@ -1239,6 +1261,25 @@ emit_decl_fs(struct ureg_program *ureg,
 }
 
 
+static void emit_decl( struct ureg_program *ureg,
+                       unsigned file,
+                       unsigned index,
+                       boolean local )
+{
+   union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 2 );
+
+   out[0].value = 0;
+   out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
+   out[0].decl.NrTokens = 2;
+   out[0].decl.File = file;
+   out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
+   out[0].decl.Local = local;
+
+   out[1].value = 0;
+   out[1].decl_range.First = index;
+   out[1].decl_range.Last = index;
+}
+
 static void emit_decl_range( struct ureg_program *ureg,
                              unsigned file,
                              unsigned first,
@@ -1493,10 +1534,9 @@ static void emit_decls( struct ureg_program *ureg )
       }
    }
 
-   if (ureg->nr_temps) {
-      emit_decl_range( ureg,
-                       TGSI_FILE_TEMPORARY,
-                       0, ureg->nr_temps );
+   for (i = 0; i < ureg->nr_temps; i++) {
+      emit_decl( ureg, TGSI_FILE_TEMPORARY, i,
+                 util_bitmask_get(ureg->local_temps, i) );
    }
 
    if (ureg->nr_addrs) {
@@ -1658,9 +1698,14 @@ struct ureg_program *ureg_create( unsigned processor )
    if (ureg->free_temps == NULL)
       goto fail;
 
+   ureg->local_temps = util_bitmask_create();
+   if (ureg->local_temps == NULL)
+      goto fail;
+
    return ureg;
 
 fail:
+   FREE(ureg->free_temps);
    FREE(ureg);
    return NULL;
 }
@@ -1677,6 +1722,7 @@ void ureg_destroy( struct ureg_program *ureg )
    }
 
    util_bitmask_destroy(ureg->free_temps);
+   util_bitmask_destroy(ureg->local_temps);
 
    FREE(ureg);
 }
