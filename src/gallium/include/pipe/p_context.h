@@ -64,6 +64,7 @@ struct pipe_video_buffer;
 struct pipe_video_decoder;
 struct pipe_viewport_state;
 union pipe_color_union;
+union pipe_query_result;
 
 /**
  * Gallium rendering context.  Basically:
@@ -117,7 +118,7 @@ struct pipe_context {
    boolean (*get_query_result)(struct pipe_context *pipe,
                                struct pipe_query *q,
                                boolean wait,
-                               void *result);
+                               union pipe_query_result *result);
    /*@}*/
 
    /**
