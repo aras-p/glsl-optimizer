@@ -328,7 +328,7 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 {
    const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
 
-   if (unit->_ReallyEnabled) {
+   if (unit->_ReallyEnabled && unit->_Current->Target != GL_TEXTURE_BUFFER) {
       const struct gl_texture_object *t = unit->_Current;
       const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
       struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, i);

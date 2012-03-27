@@ -28,6 +28,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
 #include "intel_fbo.h"
+#include "intel_buffer_objects.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -54,6 +55,62 @@ gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling)
 }
 
 static void
+gen7_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
+   const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
+   struct gen7_surface_state *surf;
+   struct intel_buffer_object *intel_obj =
+      intel_buffer_object(tObj->BufferObject);
+   drm_intel_bo *bo = intel_obj ? intel_obj->buffer : NULL;
+   gl_format format = tObj->_BufferObjectFormat;
+   int texel_size = _mesa_get_format_bytes(format);
+
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  sizeof(*surf), 32, &brw->wm.surf_offset[surf_index]);
+   memset(surf, 0, sizeof(*surf));
+
+   surf->ss0.surface_type = BRW_SURFACE_BUFFER;
+   surf->ss0.surface_format = brw_format_for_mesa_format(format);
+
+   surf->ss0.render_cache_read_write = 1;
+
+   if (surf->ss0.surface_format == 0 && format != MESA_FORMAT_RGBA_FLOAT32) {
+      _mesa_problem(NULL, "bad format %s for texture buffer\n",
+		    _mesa_get_format_name(format));
+   }
+
+   if (bo) {
+      surf->ss1.base_addr = bo->offset; /* reloc */
+
+      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
+       * bspec ("Data Cache") says that the data cache does not exist as
+       * a separate cache and is just the sampler cache.
+       */
+      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+			      (brw->wm.surf_offset[surf_index] +
+			       offsetof(struct gen7_surface_state, ss1)),
+			      bo, 0,
+			      I915_GEM_DOMAIN_SAMPLER, 0);
+
+      int w = intel_obj->Base.Size / texel_size;
+      surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
+      surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
+      surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
+      surf->ss3.pitch = texel_size - 1;
+} else {
+      surf->ss1.base_addr = 0;
+      surf->ss2.width = 0;
+      surf->ss2.height = 0;
+      surf->ss3.depth = 0;
+      surf->ss3.pitch = 0;
+   }
+
+   gen7_set_surface_tiling(surf, I915_TILING_NONE);
+}
+
+static void
 gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -65,6 +122,11 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct gen7_surface_state *surf;
    int width, height, depth;
+
+   if (tObj->Target == GL_TEXTURE_BUFFER) {
+      gen7_update_buffer_texture_surface(ctx, unit);
+      return;
+   }
 
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
