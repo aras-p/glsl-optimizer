@@ -68,7 +68,8 @@ static void noop_end_query(struct pipe_context *ctx, struct pipe_query *query)
 
 static boolean noop_get_query_result(struct pipe_context *ctx,
 					struct pipe_query *query,
-					boolean wait, void *vresult)
+					boolean wait,
+					union pipe_query_result *vresult)
 {
 	uint64_t *result = (uint64_t*)vresult;
 

@@ -135,7 +135,7 @@ static void r300_end_query(struct pipe_context* pipe,
 static boolean r300_get_query_result(struct pipe_context* pipe,
                                      struct pipe_query* query,
                                      boolean wait,
-                                     void* vresult)
+                                     union pipe_query_result *vresult)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query *q = r300_query(query);
@@ -191,7 +191,7 @@ static void r300_render_condition(struct pipe_context *pipe,
         wait = mode == PIPE_RENDER_COND_WAIT ||
                mode == PIPE_RENDER_COND_BY_REGION_WAIT;
 
-        if (r300_get_query_result(pipe, query, wait, &result)) {
+        if (r300_get_query_result(pipe, query, wait, (void*)&result)) {
             r300->skip_rendering = result == 0;
         }
     }

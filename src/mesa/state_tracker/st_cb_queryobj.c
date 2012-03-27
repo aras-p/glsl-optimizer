@@ -150,7 +150,7 @@ st_WaitQuery(struct gl_context *ctx, struct gl_query_object *q)
 	  !pipe->get_query_result(pipe, 
 				  stq->pq,
 				  TRUE,
-				  &q->Result))
+				  (void*)&q->Result))
    {
       /* nothing */
    }
@@ -165,7 +165,7 @@ st_CheckQuery(struct gl_context *ctx, struct gl_query_object *q)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
    assert(!q->Ready);   /* we should not get called if Ready is TRUE */
-   q->Ready = pipe->get_query_result(pipe, stq->pq, FALSE, &q->Result);
+   q->Ready = pipe->get_query_result(pipe, stq->pq, FALSE, (void*)&q->Result);
 }
 
 

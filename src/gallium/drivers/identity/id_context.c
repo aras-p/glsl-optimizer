@@ -103,7 +103,7 @@ static boolean
 identity_get_query_result(struct pipe_context *_pipe,
                           struct pipe_query *query,
                           boolean wait,
-                          void *result)
+                          union pipe_query_result *result)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;

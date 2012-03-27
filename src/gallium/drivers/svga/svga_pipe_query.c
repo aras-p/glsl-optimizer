@@ -63,7 +63,7 @@ svga_query( struct pipe_query *q )
 static boolean svga_get_query_result(struct pipe_context *pipe, 
                                      struct pipe_query *q,
                                      boolean wait,
-                                     void *result);
+                                     union pipe_query_result *result);
 
 static struct pipe_query *svga_create_query( struct pipe_context *pipe,
                                              unsigned query_type )
@@ -156,7 +156,7 @@ static void svga_begin_query(struct pipe_context *pipe,
        */
       uint64_t result;
 
-      svga_get_query_result(pipe, q, TRUE, &result);
+      svga_get_query_result(pipe, q, TRUE, (void*)&result);
       
       assert(sq->queryResult->state != SVGA3D_QUERYSTATE_PENDING);
    }
@@ -207,7 +207,7 @@ static void svga_end_query(struct pipe_context *pipe,
 static boolean svga_get_query_result(struct pipe_context *pipe, 
                                      struct pipe_query *q,
                                      boolean wait,
-                                     void *vresult)
+                                     union pipe_query_result *vresult)
 {
    struct svga_context *svga = svga_context( pipe );
    struct svga_screen *svgascreen = svga_screen( pipe->screen );

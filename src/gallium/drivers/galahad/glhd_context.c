@@ -119,7 +119,7 @@ static boolean
 galahad_get_query_result(struct pipe_context *_pipe,
                           struct pipe_query *query,
                           boolean wait,
-                          void *result)
+                          union pipe_query_result *result)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;

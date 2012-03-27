@@ -243,11 +243,11 @@ nv50_query_wait(struct nv50_query *q)
 
 static boolean
 nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-                  boolean wait, void *result)
+                  boolean wait, union pipe_query_result *result)
 {
    struct nv50_query *q = nv50_query(pq);
-   uint64_t *res64 = result;
-   boolean *res8 = result;
+   uint64_t *res64 = (uint64_t*)result;
+   boolean *res8 = (boolean*)result;
    uint64_t *data64 = (uint64_t *)q->data;
 
    if (q->type == PIPE_QUERY_GPU_FINISHED) {

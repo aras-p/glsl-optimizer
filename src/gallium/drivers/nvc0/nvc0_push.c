@@ -344,7 +344,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
          struct pipe_context *pipe = &nvc0->base.pipe;
          struct nvc0_so_target *targ;
          targ = nvc0_so_target(info->count_from_stream_output);
-         pipe->get_query_result(pipe, targ->pq, TRUE, &vert_count);
+         pipe->get_query_result(pipe, targ->pq, TRUE, (void*)&vert_count);
          vert_count /= targ->stride;
       }
    }

@@ -59,14 +59,14 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	 * the existing query to notify completion, but it could be better.
 	 */
 	if (q->object)
-		pipe->get_query_result(pipe, pq, 1, &tmp);
+		pipe->get_query_result(pipe, pq, 1, (void*)&tmp);
 
 	while (nouveau_resource_alloc(nvfx->screen->query_heap, 1, NULL, &q->object))
 	{
 		struct nvfx_query* oldestq;
 		assert(!LIST_IS_EMPTY(&nvfx->screen->query_list));
 		oldestq = LIST_ENTRY(struct nvfx_query, nvfx->screen->query_list.next, list);
-		pipe->get_query_result(pipe, (struct pipe_query*)oldestq, 1, &tmp);
+		pipe->get_query_result(pipe, (struct pipe_query*)oldestq, 1, (void*)&tmp);
 	}
 
 	LIST_ADDTAIL(&q->list, &nvfx->screen->query_list);
@@ -105,7 +105,7 @@ nvfx_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nvfx_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, void *vresult)
+		  boolean wait, union pipe_query_result *vresult)
 {
 	uint64_t *result = (uint64_t *)vresult;
 	struct nvfx_context *nvfx = nvfx_context(pipe);

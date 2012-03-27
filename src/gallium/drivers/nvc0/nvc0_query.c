@@ -338,12 +338,12 @@ nvc0_query_wait(struct nvc0_query *q)
 
 static boolean
 nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-                  boolean wait, void *result)
+                  boolean wait, union pipe_query_result *result)
 {
    struct nvc0_query *q = nvc0_query(pq);
-   uint64_t *res64 = result;
-   uint32_t *res32 = result;
-   boolean *res8 = result;
+   uint64_t *res64 = (uint64_t*)result;
+   uint32_t *res32 = (uint32_t*)result;
+   boolean *res8 = (boolean*)result;
    uint64_t *data64 = (uint64_t *)q->data;
    unsigned i;
 

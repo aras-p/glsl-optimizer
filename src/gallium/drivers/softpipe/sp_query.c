@@ -157,7 +157,7 @@ static boolean
 softpipe_get_query_result(struct pipe_context *pipe, 
 			  struct pipe_query *q,
 			  boolean wait,
-			  void *vresult)
+			  union pipe_query_result *vresult)
 {
    struct softpipe_query *sq = softpipe_query(q);
    uint64_t *result = (uint64_t*)vresult;
@@ -211,7 +211,8 @@ softpipe_check_render_cond(struct softpipe_context *sp)
    wait = (sp->render_cond_mode == PIPE_RENDER_COND_WAIT ||
            sp->render_cond_mode == PIPE_RENDER_COND_BY_REGION_WAIT);
 
-   b = pipe->get_query_result(pipe, sp->render_cond_query, wait, &result);
+   b = pipe->get_query_result(pipe, sp->render_cond_query, wait,
+                              (void*)&result);
    if (b)
       return result > 0;
    else

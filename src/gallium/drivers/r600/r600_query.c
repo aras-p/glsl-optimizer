@@ -483,7 +483,7 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 
 static boolean r600_get_query_result(struct pipe_context *ctx,
 					struct pipe_query *query,
-					boolean wait, void *vresult)
+					boolean wait, union pipe_query_result *vresult)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;

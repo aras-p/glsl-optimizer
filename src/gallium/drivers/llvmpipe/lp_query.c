@@ -85,7 +85,7 @@ static boolean
 llvmpipe_get_query_result(struct pipe_context *pipe, 
                           struct pipe_query *q,
                           boolean wait,
-                          void *vresult)
+                          union pipe_query_result *vresult)
 {
    struct llvmpipe_query *pq = llvmpipe_query(q);
    uint64_t *result = (uint64_t *)vresult;
@@ -166,7 +166,7 @@ llvmpipe_check_render_cond(struct llvmpipe_context *lp)
    wait = (lp->render_cond_mode == PIPE_RENDER_COND_WAIT ||
            lp->render_cond_mode == PIPE_RENDER_COND_BY_REGION_WAIT);
 
-   b = pipe->get_query_result(pipe, lp->render_cond_query, wait, &result);
+   b = pipe->get_query_result(pipe, lp->render_cond_query, wait, (void*)&result);
    if (b)
       return result > 0;
    else
