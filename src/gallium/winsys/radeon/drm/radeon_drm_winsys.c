@@ -290,8 +290,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                 ws->info.r600_virtual_address = FALSE;
         }
 
-	/* XXX don't enable this for R700 yet, it's broken on those asics */
-	ws->info.r600_has_streamout = debug_get_bool_option("R600_STREAMOUT", FALSE);
+	ws->info.r600_has_streamout = ws->info.drm_minor >= 13;
     }
 
     return TRUE;

@@ -814,6 +814,12 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->chip_class = R600;
 	}
 
+	/* XXX streamout is broken on r700 */
+	if (rscreen->chip_class == R700 &&
+	    !debug_get_bool_option("R700_STREAMOUT", FALSE)) {
+		rscreen->info.r600_has_streamout = false;
+	}
+
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
 		return NULL;
