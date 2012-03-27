@@ -3850,6 +3850,49 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       return MESA_FORMAT_RGBA_UINT16;
    case GL_RGBA32UI_EXT:
       return MESA_FORMAT_RGBA_UINT32;
+
+   case GL_RG8:
+      return MESA_FORMAT_GR88;
+   case GL_RG16:
+      return MESA_FORMAT_RG1616;
+   case GL_RG16F:
+      return MESA_FORMAT_RG_FLOAT16;
+   case GL_RG32F:
+      return MESA_FORMAT_RG_FLOAT32;
+   case GL_RG8I:
+      return MESA_FORMAT_RG_INT8;
+   case GL_RG16I:
+      return MESA_FORMAT_RG_INT16;
+   case GL_RG32I:
+      return MESA_FORMAT_RG_INT32;
+   case GL_RG8UI:
+      return MESA_FORMAT_RG_UINT8;
+   case GL_RG16UI:
+      return MESA_FORMAT_RG_UINT16;
+   case GL_RG32UI:
+      return MESA_FORMAT_RG_UINT32;
+
+   case GL_R8:
+      return MESA_FORMAT_R8;
+   case GL_R16:
+      return MESA_FORMAT_R16;
+   case GL_R16F:
+      return MESA_FORMAT_R_FLOAT16;
+   case GL_R32F:
+      return MESA_FORMAT_R_FLOAT32;
+   case GL_R8I:
+      return MESA_FORMAT_R_INT8;
+   case GL_R16I:
+      return MESA_FORMAT_R_INT16;
+   case GL_R32I:
+      return MESA_FORMAT_R_INT32;
+   case GL_R8UI:
+      return MESA_FORMAT_R_UINT8;
+   case GL_R16UI:
+      return MESA_FORMAT_R_UINT16;
+   case GL_R32UI:
+      return MESA_FORMAT_R_UINT32;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -3871,6 +3914,17 @@ validate_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    if (datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
       return MESA_FORMAT_NONE;
 
+   /* The GL_ARB_texture_rg and GL_ARB_texture_buffer_object specs don't make
+    * any mention of R/RG formats, but they appear in the GL 3.1 core
+    * specification.
+    */
+   if (ctx->VersionMajor < 3 ||
+       (ctx->VersionMajor == 3 && ctx->VersionMinor == 0)) {
+      GLenum base_format = _mesa_get_format_base_format(format);
+
+      if (base_format == GL_R || base_format == GL_RG)
+	 return MESA_FORMAT_NONE;
+   }
    return format;
 }
 
