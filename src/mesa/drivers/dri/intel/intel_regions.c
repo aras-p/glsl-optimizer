@@ -133,10 +133,10 @@ intel_region_map(struct intel_context *intel, struct intel_region *region,
 	 drm_intel_bo_map(region->bo, true);
 
       region->map = region->bo->virtual;
-      if (region->map) {
-         intel->num_mapped_regions++;
-         region->map_refcount++;
-      }
+   }
+   if (region->map) {
+      intel->num_mapped_regions++;
+      region->map_refcount++;
    }
 
    return region->map;
