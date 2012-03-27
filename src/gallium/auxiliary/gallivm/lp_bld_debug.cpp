@@ -207,7 +207,9 @@ lp_disassemble(const void* func)
    LLVMInitializePowerPCAsmPrinter();
 #endif
 
-#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+#if HAVE_LLVM >= 0x0301
+   InitializeNativeTargetDisassembler();
+#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    LLVMInitializeX86Disassembler();
 #elif defined(PIPE_ARCH_ARM)
    LLVMInitializeARMDisassembler();
