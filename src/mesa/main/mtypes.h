@@ -1329,6 +1329,8 @@ struct gl_texture_object
    /** GL_ARB_texture_buffer_object */
    struct gl_buffer_object *BufferObject;
    GLenum BufferObjectFormat;
+   /** Equivalent Mesa format for BufferObjectFormat. */
+   gl_format _BufferObjectFormat;
 
    /** GL_OES_EGL_image_external */
    GLint RequiredTextureImageUnits;

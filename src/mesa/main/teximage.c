@@ -3746,228 +3746,132 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                             width, height, depth, format, imageSize, data);
 }
 
-
-/**
- * Helper for glTexBuffer().  Check if internalFormat is legal.  If so,
- * return the basic data type and number of components for the format.
- * \param return  GL_TRUE if internalFormat is legal, GL_FALSE otherwise
- */
-static GLboolean
-get_sized_format_info(const struct gl_context *ctx, GLenum internalFormat,
-                      GLenum *datatype, GLuint *components)
+static gl_format
+get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
    case GL_ALPHA8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_A8;
    case GL_ALPHA16:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_A16;
    case GL_ALPHA16F_ARB:
-      *datatype = GL_HALF_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_FLOAT16;
    case GL_ALPHA32F_ARB:
-      *datatype = GL_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_FLOAT32;
    case GL_ALPHA8I_EXT:
-      *datatype = GL_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_INT8;
    case GL_ALPHA16I_EXT:
-      *datatype = GL_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_INT16;
    case GL_ALPHA32I_EXT:
-      *datatype = GL_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_INT32;
    case GL_ALPHA8UI_EXT:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_UINT8;
    case GL_ALPHA16UI_EXT:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_UINT16;
    case GL_ALPHA32UI_EXT:
-      *datatype = GL_UNSIGNED_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_ALPHA_UINT32;
    case GL_LUMINANCE8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_L8;
    case GL_LUMINANCE16:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_L16;
    case GL_LUMINANCE16F_ARB:
-      *datatype = GL_HALF_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_FLOAT16;
    case GL_LUMINANCE32F_ARB:
-      *datatype = GL_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_FLOAT32;
    case GL_LUMINANCE8I_EXT:
-      *datatype = GL_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_INT8;
    case GL_LUMINANCE16I_EXT:
-      *datatype = GL_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_INT16;
    case GL_LUMINANCE32I_EXT:
-      *datatype = GL_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_INT32;
    case GL_LUMINANCE8UI_EXT:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_UINT8;
    case GL_LUMINANCE16UI_EXT:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_UINT16;
    case GL_LUMINANCE32UI_EXT:
-      *datatype = GL_UNSIGNED_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_LUMINANCE_UINT32;
    case GL_LUMINANCE8_ALPHA8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 2;
-      break;
+      return MESA_FORMAT_AL88;
    case GL_LUMINANCE16_ALPHA16:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_AL1616;
    case GL_LUMINANCE_ALPHA16F_ARB:
-      *datatype = GL_HALF_FLOAT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16;
    case GL_LUMINANCE_ALPHA32F_ARB:
-      *datatype = GL_FLOAT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32;
    case GL_LUMINANCE_ALPHA8I_EXT:
-      *datatype = GL_BYTE;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_INT8;
    case GL_LUMINANCE_ALPHA16I_EXT:
-      *datatype = GL_SHORT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_INT8;
    case GL_LUMINANCE_ALPHA32I_EXT:
-      *datatype = GL_INT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_INT16;
    case GL_LUMINANCE_ALPHA8UI_EXT:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_UINT8;
    case GL_LUMINANCE_ALPHA16UI_EXT:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_UINT16;
    case GL_LUMINANCE_ALPHA32UI_EXT:
-      *datatype = GL_UNSIGNED_INT;
-      *components = 2;
-      break;
+      return MESA_FORMAT_LUMINANCE_ALPHA_UINT32;
    case GL_INTENSITY8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_I8;
    case GL_INTENSITY16:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_I16;
    case GL_INTENSITY16F_ARB:
-      *datatype = GL_HALF_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_FLOAT16;
    case GL_INTENSITY32F_ARB:
-      *datatype = GL_FLOAT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_FLOAT32;
    case GL_INTENSITY8I_EXT:
-      *datatype = GL_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_INT8;
    case GL_INTENSITY16I_EXT:
-      *datatype = GL_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_INT16;
    case GL_INTENSITY32I_EXT:
-      *datatype = GL_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_INT32;
    case GL_INTENSITY8UI_EXT:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_UINT8;
    case GL_INTENSITY16UI_EXT:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_UINT16;
    case GL_INTENSITY32UI_EXT:
-      *datatype = GL_UNSIGNED_INT;
-      *components = 1;
-      break;
+      return MESA_FORMAT_INTENSITY_UINT32;
    case GL_RGBA8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA8888_REV;
    case GL_RGBA16:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_16;
    case GL_RGBA16F_ARB:
-      *datatype = GL_HALF_FLOAT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_FLOAT16;
    case GL_RGBA32F_ARB:
-      *datatype = GL_FLOAT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_FLOAT32;
    case GL_RGBA8I_EXT:
-      *datatype = GL_BYTE;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_INT8;
    case GL_RGBA16I_EXT:
-      *datatype = GL_SHORT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_INT16;
    case GL_RGBA32I_EXT:
-      *datatype = GL_INT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_INT32;
    case GL_RGBA8UI_EXT:
-      *datatype = GL_UNSIGNED_BYTE;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_UINT8;
    case GL_RGBA16UI_EXT:
-      *datatype = GL_UNSIGNED_SHORT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_UINT16;
    case GL_RGBA32UI_EXT:
-      *datatype = GL_UNSIGNED_INT;
-      *components = 4;
-      break;
+      return MESA_FORMAT_RGBA_UINT32;
    default:
-      return GL_FALSE;
+      return MESA_FORMAT_NONE;
    }
+}
 
-   if (*datatype == GL_FLOAT && !ctx->Extensions.ARB_texture_float)
-      return GL_FALSE;
+static gl_format
+validate_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
+{
+   gl_format format = get_texbuffer_format(ctx, internalFormat);
+   GLenum datatype;
 
-   if (*datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
-      return GL_FALSE;
+   if (format == MESA_FORMAT_NONE)
+      return MESA_FORMAT_NONE;
 
-   return GL_TRUE;
+   datatype = _mesa_get_format_datatype(format);
+   if (datatype == GL_FLOAT && !ctx->Extensions.ARB_texture_float)
+      return MESA_FORMAT_NONE;
+
+   if (datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
+      return MESA_FORMAT_NONE;
+
+   return format;
 }
 
 
@@ -3977,8 +3881,7 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
 {
    struct gl_texture_object *texObj;
    struct gl_buffer_object *bufObj;
-   GLenum dataType;
-   GLuint comps;
+   gl_format format;
 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -3993,7 +3896,8 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
       return;
    }
 
-   if (!get_sized_format_info(ctx, internalFormat, &dataType, &comps)) {
+   format = validate_texbuffer_format(ctx, internalFormat);
+   if (format == MESA_FORMAT_NONE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexBuffer(internalFormat 0x%x)",
                   internalFormat);
       return;
@@ -4011,6 +3915,7 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
    {
       _mesa_reference_buffer_object(ctx, &texObj->BufferObject, bufObj);
       texObj->BufferObjectFormat = internalFormat;
+      texObj->_BufferObjectFormat = format;
    }
    _mesa_unlock_texture(ctx, texObj);
 }
