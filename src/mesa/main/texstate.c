@@ -390,6 +390,10 @@ update_tex_combine(struct gl_context *ctx, struct gl_texture_unit *texUnit)
 {
    struct gl_tex_env_combine_state *combine;
 
+   /* No combiners will apply to this. */
+   if (texUnit->_Current->Target == GL_TEXTURE_BUFFER)
+      return;
+
    /* Set the texUnit->_CurrentCombine field to point to the user's combiner
     * state, or the combiner state which is derived from traditional texenv
     * mode.

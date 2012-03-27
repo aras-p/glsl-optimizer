@@ -449,6 +449,14 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    t->_BaseComplete = GL_TRUE;
    t->_MipmapComplete = GL_TRUE;
 
+   if (t->Target == GL_TEXTURE_BUFFER) {
+      /* Buffer textures are always considered complete.  The obvious case where
+       * they would be incomplete (no BO attached) is actually specced to be
+       * undefined rendering results.
+       */
+      return;
+   }
+
    /* Detect cases where the application set the base level to an invalid
     * value.
     */
