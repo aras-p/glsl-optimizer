@@ -1029,6 +1029,7 @@ public:
 
 private:
    Value *getVertexBase(int s);
+   DataArray *getArrayForFile(unsigned file, int idx);
    Value *fetchSrc(int s, int c);
    Value *acquireDst(int d, int c);
    void storeDst(int d, int c, Value *);
@@ -1078,8 +1079,10 @@ private:
    DataArray aData; // TGSI_FILE_ADDRESS
    DataArray pData; // TGSI_FILE_PREDICATE
    DataArray oData; // TGSI_FILE_OUTPUT (if outputs in registers)
-   DataArray *lData; // TGSI_FILE_TEMPORARY_ARRAY
-   DataArray *iData; // TGSI_FILE_IMMEDIATE_ARRAY
+   std::vector<DataArray> lData; // TGSI_FILE_TEMPORARY_ARRAY
+   std::vector<DataArray> iData; // TGSI_FILE_IMMEDIATE_ARRAY
+
+   ValueMap values;
 
    Value *zero;
    Value *fragCoord[4];
@@ -1252,34 +1255,44 @@ Converter::fetchSrc(int s, int c)
    return applySrcMod(res, s, c);
 }
 
+Converter::DataArray *
+Converter::getArrayForFile(unsigned file, int idx)
+{
+   switch (file) {
+   case TGSI_FILE_TEMPORARY:
+      return &tData;
+   case TGSI_FILE_PREDICATE:
+      return &pData;
+   case TGSI_FILE_ADDRESS:
+      return &aData;
+   case TGSI_FILE_TEMPORARY_ARRAY:
+      assert(idx < code->tempArrayCount);
+      return &lData[idx];
+   case TGSI_FILE_IMMEDIATE_ARRAY:
+      assert(idx < code->immdArrayCount);
+      return &iData[idx];
+   case TGSI_FILE_OUTPUT:
+      assert(prog->getType() == Program::TYPE_FRAGMENT);
+      return &oData;
+   default:
+      assert(!"invalid/unhandled TGSI source file");
+      return NULL;
+   }
+}
+
 Value *
 Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
 {
+   const int idx2d = src.is2D() ? src.getIndex(1) : 0;
    const int idx = src.getIndex(0);
    const int swz = src.getSwizzle(c);
 
    switch (src.getFile()) {
-   case TGSI_FILE_TEMPORARY:
-      return tData.load(idx, swz, ptr);
-   case TGSI_FILE_PREDICATE:
-      return pData.load(idx, swz, ptr);
-   case TGSI_FILE_ADDRESS:
-      return aData.load(idx, swz, ptr);
-
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      assert(src.is2D() && src.getIndex(1) < code->tempArrayCount);
-      return lData[src.getIndex(1)].load(idx, swz, ptr);
-   case TGSI_FILE_IMMEDIATE_ARRAY:
-      assert(src.is2D() && src.getIndex(1) < code->immdArrayCount);
-      return iData[src.getIndex(1)].load(idx, swz, ptr);
-
    case TGSI_FILE_IMMEDIATE:
       assert(!ptr);
       return loadImm(NULL, info->immd.data[idx * 4 + swz]);
-
    case TGSI_FILE_CONSTANT:
       return mkLoad(TYPE_U32, srcToSym(src, c), ptr);
-
    case TGSI_FILE_INPUT:
       if (prog->getType() == Program::TYPE_FRAGMENT) {
          // don't load masked inputs, won't be assigned a slot
@@ -1290,18 +1303,14 @@ Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
          return interpolate(src, c, ptr);
       }
       return mkLoad(TYPE_U32, srcToSym(src, c), ptr);
-
+   case TGSI_FILE_OUTPUT:
+      assert(!"load from output file");
+      return NULL;
    case TGSI_FILE_SYSTEM_VALUE:
       assert(!ptr);
       return mkOp1v(OP_RDSV, TYPE_U32, getSSA(), srcToSym(src, c));
-
-   case TGSI_FILE_OUTPUT:
-   case TGSI_FILE_RESOURCE:
-   case TGSI_FILE_SAMPLER:
-   case TGSI_FILE_NULL:
    default:
-      assert(!"invalid/unhandled TGSI source file");
-      return NULL;
+      return getArrayForFile(src.getFile(), idx2d)->load(values, idx, swz, ptr);
    }
 }
 
@@ -1309,35 +1318,20 @@ Value *
 Converter::acquireDst(int d, int c)
 {
    const tgsi::Instruction::DstRegister dst = tgsi.getDst(d);
-
-   if (dst.isMasked(c))
-      return NULL;
-   if (dst.isIndirect(0))
-      return getScratch();
-
+   const unsigned f = dst.getFile();
    const int idx = dst.getIndex(0);
+   const int idx2d = dst.is2D() ? dst.getIndex(1) : 0;
 
-   switch (dst.getFile()) {
-   case TGSI_FILE_TEMPORARY:
-      return tData.acquire(idx, c);
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      return getScratch();
-   case TGSI_FILE_PREDICATE:
-      return pData.acquire(idx, c);
-   case TGSI_FILE_ADDRESS:
-      return aData.acquire(idx, c);
-
-   case TGSI_FILE_OUTPUT:
-      if (prog->getType() == Program::TYPE_FRAGMENT)
-         return oData.acquire(idx, c);
-      // fall through
-   case TGSI_FILE_SYSTEM_VALUE:
-      return getScratch();
-
-   default:
-      assert(!"invalid dst file");
+   if (dst.isMasked(c) || f == TGSI_FILE_RESOURCE)
       return NULL;
-   }
+
+   if (dst.isIndirect(0) ||
+       f == TGSI_FILE_TEMPORARY_ARRAY ||
+       f == TGSI_FILE_SYSTEM_VALUE ||
+       (f == TGSI_FILE_OUTPUT && prog->getType() != Program::TYPE_FRAGMENT))
+      return getScratch();
+
+   return getArrayForFile(f, idx2d)-> acquire(values, idx, c);
 }
 
 void
@@ -1377,38 +1371,25 @@ void
 Converter::storeDst(const tgsi::Instruction::DstRegister dst, int c,
                     Value *val, Value *ptr)
 {
+   const unsigned f = dst.getFile();
    const int idx = dst.getIndex(0);
+   const int idx2d = dst.is2D() ? dst.getIndex(1) : 0;
 
-   switch (dst.getFile()) {
-   case TGSI_FILE_TEMPORARY:
-      tData.store(idx, c, ptr, val);
-      break;
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      assert(dst.is2D() && dst.getIndex(1) < code->tempArrayCount);
-      lData[dst.getIndex(1)].store(idx, c, ptr, val);
-      break;
-   case TGSI_FILE_PREDICATE:
-      pData.store(idx, c, ptr, val);
-      break;
-   case TGSI_FILE_ADDRESS:
-      aData.store(idx, c, ptr, val);
-      break;
-
-   case TGSI_FILE_OUTPUT:
-      if (prog->getType() == Program::TYPE_FRAGMENT)
-         oData.store(idx, c, ptr, val);
-      else
-         mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
-      break;
-
-   case TGSI_FILE_SYSTEM_VALUE:
+   if (f == TGSI_FILE_SYSTEM_VALUE) {
       assert(!ptr);
       mkOp2(OP_WRSV, TYPE_U32, NULL, dstToSym(dst, c), val);
-      break;
-
-   default:
+   } else
+   if (f == TGSI_FILE_OUTPUT && prog->getType() != Program::TYPE_FRAGMENT) {
+      mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
+   } else
+   if (f == TGSI_FILE_TEMPORARY ||
+       f == TGSI_FILE_TEMPORARY_ARRAY ||
+       f == TGSI_FILE_PREDICATE ||
+       f == TGSI_FILE_ADDRESS ||
+       f == TGSI_FILE_OUTPUT) {
+      getArrayForFile(f, idx2d)->store(values, idx, c, ptr, val);
+   } else {
       assert(!"invalid dst file");
-      break;
    }
 }
 
@@ -2237,34 +2218,57 @@ Converter::exportOutputs()
 {
    for (unsigned int i = 0; i < info->numOutputs; ++i) {
       for (unsigned int c = 0; c < 4; ++c) {
-         if (!oData.exists(i, c))
+         if (!oData.exists(values, i, c))
             continue;
          Symbol *sym = mkSymbol(FILE_SHADER_OUTPUT, 0, TYPE_F32,
                                 info->out[i].slot[c] * 4);
-         Value *val = oData.load(i, c, NULL);
+         Value *val = oData.load(values, i, c, NULL);
          if (val)
             mkStore(OP_EXPORT, TYPE_F32, sym, NULL, val);
       }
    }
 }
 
-Converter::Converter(Program *ir, const tgsi::Source *src)
-   : code(src),
+Converter::Converter(Program *ir, const tgsi::Source *code) : BuildUtil(ir),
+     code(code),
      tgsi(NULL),
      tData(this), aData(this), pData(this), oData(this)
 {
-   prog = ir;
    info = code->info;
 
-   DataFile tFile = code->mainTempsInLMem ? FILE_MEMORY_LOCAL : FILE_GPR;
+   const DataFile tFile = code->mainTempsInLMem ? FILE_MEMORY_LOCAL : FILE_GPR;
 
-   tData.setup(0, code->fileSize(TGSI_FILE_TEMPORARY), 4, 4, tFile);
-   pData.setup(0, code->fileSize(TGSI_FILE_PREDICATE), 4, 4, FILE_PREDICATE);
-   aData.setup(0, code->fileSize(TGSI_FILE_ADDRESS), 4, 4, FILE_ADDRESS);
-   oData.setup(0, code->fileSize(TGSI_FILE_OUTPUT), 4, 4, FILE_GPR);
+   const unsigned tSize = code->fileSize(TGSI_FILE_TEMPORARY);
+   const unsigned pSize = code->fileSize(TGSI_FILE_PREDICATE);
+   const unsigned aSize = code->fileSize(TGSI_FILE_ADDRESS);
+   const unsigned oSize = code->fileSize(TGSI_FILE_OUTPUT);
 
-   lData = NULL;
-   iData = NULL;
+   tData.setup(TGSI_FILE_TEMPORARY, 0, 0, tSize, 4, 4, tFile, 0);
+   pData.setup(TGSI_FILE_PREDICATE, 0, 0, pSize, 4, 4, FILE_PREDICATE, 0);
+   aData.setup(TGSI_FILE_ADDRESS, 0, 0, aSize, 4, 4, FILE_ADDRESS, 0);
+   oData.setup(TGSI_FILE_OUTPUT, 0, 0, oSize, 4, 4, FILE_GPR, 0);
+
+   for (int vol = 0, i = 0; i < code->tempArrayCount; ++i) {
+      int len = code->tempArrays[i].u32 >> 2;
+      int dim = code->tempArrays[i].u32 & 3;
+
+      lData.push_back(DataArray(this));
+      lData.back().setup(TGSI_FILE_TEMPORARY_ARRAY, i, vol, len, dim, 4,
+                         FILE_MEMORY_LOCAL, 0);
+
+      vol += (len * dim * 4 + 0xf) & ~0xf;
+   }
+
+   for (int vol = 0, i = 0; i < code->immdArrayCount; ++i) {
+      int len = code->immdArrays[i].u32 >> 2;
+      int dim = code->immdArrays[i].u32 & 3;
+
+      lData.push_back(DataArray(this));
+      lData.back().setup(TGSI_FILE_IMMEDIATE_ARRAY, i, vol, len, dim, 4,
+                         FILE_MEMORY_CONST, 14);
+
+      vol += (len * dim * 4 + 0xf) & ~0xf;
+   }
 
    zero = mkImm((uint32_t)0);
 
@@ -2273,10 +2277,6 @@ Converter::Converter(Program *ir, const tgsi::Source *src)
 
 Converter::~Converter()
 {
-   if (lData)
-      delete[] lData;
-   if (iData)
-      delete[] iData;
 }
 
 bool
@@ -2284,33 +2284,6 @@ Converter::run()
 {
    BasicBlock *entry = new BasicBlock(prog->main);
    BasicBlock *leave = new BasicBlock(prog->main);
-
-   if (code->tempArrayCount && !lData) {
-      uint32_t volume = 0;
-      lData = new DataArray[code->tempArrayCount];
-      if (!lData)
-         return false;
-      for (int i = 0; i < code->tempArrayCount; ++i) {
-         int len = code->tempArrays[i].u32 >> 2;
-         int dim = code->tempArrays[i].u32 & 3;
-         lData[i].setParent(this);
-         lData[i].setup(volume, len, dim, 4, FILE_MEMORY_LOCAL);
-         volume += (len * dim * 4 + 0xf) & ~0xf;
-      }
-   }
-   if (code->immdArrayCount && !iData) {
-      uint32_t volume = 0;
-      iData = new DataArray[code->immdArrayCount];
-      if (!iData)
-         return false;
-      for (int i = 0; i < code->immdArrayCount; ++i) {
-         int len = code->immdArrays[i].u32 >> 2;
-         int dim = code->immdArrays[i].u32 & 3;
-         iData[i].setParent(this);
-         iData[i].setup(volume, len, dim, 4, FILE_MEMORY_CONST, 14);
-         volume += (len * dim * 4 + 0xf) & ~0xf;
-      }
-   }
 
    prog->main->setEntry(entry);
    prog->main->setExit(leave);
