@@ -818,7 +818,7 @@ public:
 class FlowInstruction : public Instruction
 {
 public:
-   FlowInstruction(Function *, operation, BasicBlock *target);
+   FlowInstruction(Function *, operation, void *target);
 
    virtual FlowInstruction *clone(ClonePolicy<Function>&,
                                   Instruction * = NULL) const;

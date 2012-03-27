@@ -282,7 +282,7 @@ BuildUtil::mkSelect(Value *pred, Value *dst, Value *trSrc, Value *flSrc)
 }
 
 FlowInstruction *
-BuildUtil::mkFlow(operation op, BasicBlock *targ, CondCode cc, Value *pred)
+BuildUtil::mkFlow(operation op, void *targ, CondCode cc, Value *pred)
 {
    FlowInstruction *insn = new_FlowInstruction(func, op, targ);
 

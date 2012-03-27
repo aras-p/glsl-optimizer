@@ -919,11 +919,13 @@ CmpInstruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
    return cmp;
 }
 
-FlowInstruction::FlowInstruction(Function *fn, operation op,
-                                 BasicBlock *targ)
+FlowInstruction::FlowInstruction(Function *fn, operation op, void *targ)
    : Instruction(fn, op, TYPE_NONE)
 {
-   target.bb = targ;
+   if (op == OP_CALL)
+      target.fn = reinterpret_cast<Function *>(targ);
+   else
+      target.bb = reinterpret_cast<BasicBlock *>(targ);
 
    if (op == OP_BRA ||
        op == OP_CONT || op == OP_BREAK ||

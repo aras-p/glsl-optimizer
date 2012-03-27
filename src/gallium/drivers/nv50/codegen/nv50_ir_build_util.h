@@ -76,8 +76,7 @@ public:
                       Value **def, Value **src);
    Instruction *mkQuadop(uint8_t qop, Value *, uint8_t l, Value *, Value *);
 
-   FlowInstruction *mkFlow(operation, BasicBlock *target,
-                           CondCode, Value *pred);
+   FlowInstruction *mkFlow(operation, void *target, CondCode, Value *pred);
 
    Instruction *mkSelect(Value *pred, Value *dst, Value *trSrc, Value *flSrc);
 
