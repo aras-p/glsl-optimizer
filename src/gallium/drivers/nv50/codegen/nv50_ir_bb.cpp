@@ -405,6 +405,8 @@ Function::setExit(BasicBlock *bb)
 unsigned int
 Function::orderInstructions(ArrayList &result)
 {
+   result.clear();
+
    for (IteratorRef it = cfg.iteratorCFG(); !it->end(); it->next()) {
       BasicBlock *bb =
          BasicBlock::get(reinterpret_cast<Graph::Node *>(it->get()));

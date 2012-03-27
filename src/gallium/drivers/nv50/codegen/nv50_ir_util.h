@@ -337,6 +337,13 @@ public:
       data = (Item *)REALLOC(data, oldSize, size * sizeof(Item));
    }
 
+   void clear()
+   {
+      FREE(data);
+      data = NULL;
+      size = 0;
+   }
+
 private:
    Item *data;
    unsigned int size;
@@ -391,6 +398,13 @@ public:
    };
 
    Iterator iterator() const { return Iterator(this); }
+
+   void clear()
+   {
+      data.clear();
+      ids.clear(true);
+      size = 0;
+   }
 
 private:
    DynArray data;
