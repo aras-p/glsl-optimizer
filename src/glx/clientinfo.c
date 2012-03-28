@@ -39,6 +39,7 @@ __glX_send_client_info(struct glx_display *glx_dpy)
    Bool any_screen_has_ARB_create_context = False;
    Bool any_screen_has_ARB_create_context_profile = False;
    unsigned i;
+#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    static const uint32_t gl_versions[] = {
       1, 4,
    };
@@ -47,6 +48,7 @@ __glX_send_client_info(struct glx_display *glx_dpy)
    };
    static const char glx_extensions[] =
       "GLX_ARB_create_context GLX_ARB_create_context_profile";
+#endif
 
    /* There are three possible flavors of the client info structure that the
     * client could send to the server.  The version sent depends on the
