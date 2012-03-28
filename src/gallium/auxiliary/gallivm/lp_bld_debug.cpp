@@ -83,12 +83,12 @@ class raw_debug_ostream :
    uint64_t pos;
 
    void write_impl(const char *Ptr, size_t Size);
-   uint64_t current_pos() { return pos; }
-   uint64_t current_pos() const { return pos; }
 
 #if HAVE_LLVM >= 0x207
-   uint64_t preferred_buffer_size() { return 512; }
+   uint64_t current_pos() const { return pos; }
+   size_t preferred_buffer_size() const { return 512; }
 #else
+   uint64_t current_pos() { return pos; }
    size_t preferred_buffer_size() { return 512; }
 #endif
 };
