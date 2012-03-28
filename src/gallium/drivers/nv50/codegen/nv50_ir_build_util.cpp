@@ -221,6 +221,9 @@ BuildUtil::mkCmp(operation op, CondCode cc, DataType ty, Value *dst,
    if (src2)
       insn->setSrc(2, src2);
 
+   if (dst->reg.file == FILE_FLAGS)
+      insn->flagsDef = 0;
+
    insert(insn);
    return insn;
 }

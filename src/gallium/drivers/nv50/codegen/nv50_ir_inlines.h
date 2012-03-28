@@ -215,6 +215,26 @@ Value *Instruction::getPredicate() const
    return (predSrc >= 0) ? getSrc(predSrc) : NULL;
 }
 
+void Instruction::setFlagsDef(int d, Value *val)
+{
+   if (val) {
+      if (flagsDef < 0)
+         flagsDef = d;
+      setDef(flagsDef, val);
+   } else {
+      if (flagsDef >= 0) {
+         setDef(flagsDef, NULL);
+         flagsDef = -1;
+      }
+   }
+}
+
+void Instruction::setFlagsSrc(int s, Value *val)
+{
+   flagsSrc = s;
+   setSrc(flagsSrc, val);
+}
+
 Value *TexInstruction::getIndirectR() const
 {
    return tex.rIndirectSrc >= 0 ? getSrc(tex.rIndirectSrc) : NULL;
