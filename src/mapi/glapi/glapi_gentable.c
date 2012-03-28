@@ -3811,13 +3811,6 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     }
 
 
-    if(!disp->TexBuffer) {
-        void ** procp = (void **) &disp->TexBuffer;
-        snprintf(symboln, sizeof(symboln), "%sTexBuffer", symbol_prefix);
-        *procp = dlsym(handle, symboln);
-    }
-
-
     if(!disp->FramebufferTexture) {
         void ** procp = (void **) &disp->FramebufferTexture;
         snprintf(symboln, sizeof(symboln), "%sFramebufferTexture", symbol_prefix);
@@ -5655,6 +5648,13 @@ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
     if(!disp->TexBufferARB) {
         void ** procp = (void **) &disp->TexBufferARB;
         snprintf(symboln, sizeof(symboln), "%sTexBufferARB", symbol_prefix);
+        *procp = dlsym(handle, symboln);
+    }
+
+
+    if(!disp->TexBufferARB) {
+        void ** procp = (void **) &disp->TexBufferARB;
+        snprintf(symboln, sizeof(symboln), "%sTexBuffer", symbol_prefix);
         *procp = dlsym(handle, symboln);
     }
 
