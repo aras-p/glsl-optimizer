@@ -288,7 +288,7 @@ brw_format_for_mesa_format(gl_format mesa_format)
    static const uint32_t table[MESA_FORMAT_COUNT] =
    {
       [MESA_FORMAT_RGBA8888] = 0,
-      [MESA_FORMAT_RGBA8888_REV] = 0,
+      [MESA_FORMAT_RGBA8888_REV] = BRW_SURFACEFORMAT_R8G8B8A8_UNORM,
       [MESA_FORMAT_ARGB8888] = BRW_SURFACEFORMAT_B8G8R8A8_UNORM,
       [MESA_FORMAT_ARGB8888_REV] = 0,
       [MESA_FORMAT_XRGB8888] = BRW_SURFACEFORMAT_B8G8R8X8_UNORM,
@@ -605,10 +605,6 @@ translate_tex_format(gl_format mesa_format,
 	 return brw_format_for_mesa_format(mesa_format);
       else if (srgb_decode == GL_SKIP_DECODE_EXT)
 	 return brw_format_for_mesa_format(_mesa_get_srgb_format_linear(mesa_format));
-
-   case MESA_FORMAT_RGBA8888_REV:
-      /* This format is not renderable? */
-      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
 
    case MESA_FORMAT_RGBA_FLOAT32:
       /* The value of this BRW_SURFACEFORMAT is 0, which tricks the
