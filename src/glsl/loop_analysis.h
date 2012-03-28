@@ -122,10 +122,16 @@ public:
     */
    unsigned num_loop_jumps;
 
+   /**
+    * Whether this loop contains any function calls.
+    */
+   bool contains_calls;
+
    loop_variable_state()
    {
       this->max_iterations = -1;
       this->num_loop_jumps = 0;
+      this->contains_calls = false;
       this->var_hash = hash_table_ctor(0, hash_table_pointer_hash,
 				       hash_table_pointer_compare);
    }
