@@ -80,10 +80,18 @@ public:
    class EdgeIterator : public Iterator
    {
    public:
-      EdgeIterator() : e(0), t(0), d(0) { }
-      EdgeIterator(Graph::Edge *first, int dir) : e(first), t(first), d(dir) { }
+      EdgeIterator() : e(0), t(0), d(0), rev(false) { }
+      EdgeIterator(Graph::Edge *first, int dir, bool reverse)
+         : d(dir), rev(reverse)
+      {
+         t = e = ((rev && first) ? first->prev[d] : first);
+      }
 
-      virtual void next() { e = (e->next[d] == t) ? 0 : e->next[d]; }
+      virtual void next()
+      {
+         Graph::Edge *n = (rev ? e->prev[d] : e->next[d]);
+         e = (n == t ? NULL : n);
+      }
       virtual bool end() const { return !e; }
       virtual void *get() const { return e; }
 
@@ -96,6 +104,7 @@ public:
       Graph::Edge *e;
       Graph::Edge *t;
       int d;
+      bool rev;
    };
 
    class Node
@@ -108,8 +117,8 @@ public:
       bool detach(Node *);
       void cut();
 
-      inline EdgeIterator outgoing() const;
-      inline EdgeIterator incident() const;
+      inline EdgeIterator outgoing(bool reverse = false) const;
+      inline EdgeIterator incident(bool reverse = false) const;
 
       inline Node *parent() const; // returns NULL if count(incident edges) != 1
 
@@ -204,14 +213,14 @@ void Graph::putIterator(Iterator *iter)
    delete reinterpret_cast<GraphIterator *>(iter);
 }
 
-Graph::EdgeIterator Graph::Node::outgoing() const
+Graph::EdgeIterator Graph::Node::outgoing(bool reverse) const
 {
-   return EdgeIterator(out, 0);
+   return EdgeIterator(out, 0, reverse);
 }
 
-Graph::EdgeIterator Graph::Node::incident() const
+Graph::EdgeIterator Graph::Node::incident(bool reverse) const
 {
-   return EdgeIterator(in, 1);
+   return EdgeIterator(in, 1, reverse);
 }
 
 int Graph::Node::incidentCountFwd() const

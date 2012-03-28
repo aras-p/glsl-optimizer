@@ -258,6 +258,60 @@ void BasicBlock::permuteAdjacent(Instruction *a, Instruction *b)
       a->next->prev = a;
 }
 
+void
+BasicBlock::splitCommon(Instruction *insn, BasicBlock *bb, bool attach)
+{
+   bb->entry = insn;
+
+   if (insn) {
+      exit = insn->prev;
+      insn->prev = NULL;
+   }
+
+   if (exit)
+      exit->next = NULL;
+   else
+      entry = NULL;
+
+   while (!cfg.outgoing(true).end()) {
+      Graph::Edge *e = cfg.outgoing(true).getEdge();
+      bb->cfg.attach(e->getTarget(), e->getType());
+      this->cfg.detach(e->getTarget());
+   }
+
+   for (; insn; insn = insn->next) {
+      this->numInsns--;
+      bb->numInsns++;
+      insn->bb = bb;
+      bb->exit = insn;
+   }
+   if (attach)
+      this->cfg.attach(&bb->cfg, Graph::Edge::TREE);
+}
+
+BasicBlock *
+BasicBlock::splitBefore(Instruction *insn, bool attach)
+{
+   BasicBlock *bb = new BasicBlock(func);
+   assert(!insn || insn->op != OP_PHI);
+
+   splitCommon(insn, bb, attach);
+   return bb;
+}
+
+BasicBlock *
+BasicBlock::splitAfter(Instruction *insn, bool attach)
+{
+   BasicBlock *bb = new BasicBlock(func);
+   assert(!insn || insn->op != OP_PHI);
+
+   bb->joinAt = joinAt;
+   joinAt = NULL;
+
+   splitCommon(insn ? insn->next : NULL, bb, attach);
+   return bb;
+}
+
 bool
 BasicBlock::dominatedBy(BasicBlock *that)
 {

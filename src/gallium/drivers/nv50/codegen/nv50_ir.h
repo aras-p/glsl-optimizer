@@ -882,6 +882,10 @@ public:
 
    BasicBlock *idom() const;
 
+   // NOTE: currently does not rebuild the dominator tree
+   BasicBlock *splitBefore(Instruction *, bool attach = true);
+   BasicBlock *splitAfter(Instruction *, bool attach = true);
+
    DLList& getDF() { return df; }
    DLList::Iterator iterDF() { return df.iterator(); }
 
@@ -914,6 +918,8 @@ private:
 private:
    Function *func;
    Program *program;
+
+   void splitCommon(Instruction *, BasicBlock *, bool attach);
 };
 
 class Function
