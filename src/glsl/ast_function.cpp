@@ -94,6 +94,87 @@ prototype_string(const glsl_type *return_type, const char *name,
 }
 
 /**
+ * Verify that 'out' and 'inout' actual parameters are lvalues.  Also, verify
+ * that 'const_in' formal parameters (an extension in our IR) correspond to
+ * ir_constant actual parameters.
+ */
+static bool
+verify_parameter_modes(_mesa_glsl_parse_state *state,
+		       ir_function_signature *sig,
+		       exec_list &actual_ir_parameters,
+		       exec_list &actual_ast_parameters)
+{
+   exec_node *actual_ir_node  = actual_ir_parameters.head;
+   exec_node *actual_ast_node = actual_ast_parameters.head;
+
+   foreach_list(formal_node, &sig->parameters) {
+      /* The lists must be the same length. */
+      assert(!actual_ir_node->is_tail_sentinel());
+      assert(!actual_ast_node->is_tail_sentinel());
+
+      const ir_variable *const formal = (ir_variable *) formal_node;
+      const ir_rvalue *const actual = (ir_rvalue *) actual_ir_node;
+      const ast_expression *const actual_ast =
+	 exec_node_data(ast_expression, actual_ast_node, link);
+
+      /* FIXME: 'loc' is incorrect (as of 2011-01-21). It is always
+       * FIXME: 0:0(0).
+       */
+      YYLTYPE loc = actual_ast->get_location();
+
+      /* Verify that 'const_in' parameters are ir_constants. */
+      if (formal->mode == ir_var_const_in &&
+	  actual->ir_type != ir_type_constant) {
+	 _mesa_glsl_error(&loc, state,
+			  "parameter `in %s' must be a constant expression",
+			  formal->name);
+	 return false;
+      }
+
+      /* Verify that 'out' and 'inout' actual parameters are lvalues. */
+      if (formal->mode == ir_var_out || formal->mode == ir_var_inout) {
+	 const char *mode = NULL;
+	 switch (formal->mode) {
+	 case ir_var_out:   mode = "out";   break;
+	 case ir_var_inout: mode = "inout"; break;
+	 default:           assert(false);  break;
+	 }
+
+	 /* This AST-based check catches errors like f(i++).  The IR-based
+	  * is_lvalue() is insufficient because the actual parameter at the
+	  * IR-level is just a temporary value, which is an l-value.
+	  */
+	 if (actual_ast->non_lvalue_description != NULL) {
+	    _mesa_glsl_error(&loc, state,
+			     "function parameter '%s %s' references a %s",
+			     mode, formal->name,
+			     actual_ast->non_lvalue_description);
+	    return false;
+	 }
+
+	 if (actual->variable_referenced()
+	     && actual->variable_referenced()->read_only) {
+	    _mesa_glsl_error(&loc, state,
+			     "function parameter '%s %s' references the "
+			     "read-only variable '%s'",
+			     mode, formal->name,
+			     actual->variable_referenced()->name);
+	    return false;
+	 } else if (!actual->is_lvalue()) {
+	    _mesa_glsl_error(&loc, state,
+			     "function parameter '%s %s' is not an lvalue",
+			     mode, formal->name);
+	    return false;
+	 }
+      }
+
+      actual_ir_node  = actual_ir_node->next;
+      actual_ast_node = actual_ast_node->next;
+   }
+   return true;
+}
+
+/**
  * If a function call is generated, \c call_ir will point to it on exit.
  * Otherwise \c call_ir will be set to \c NULL.
  */
@@ -108,18 +189,10 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 
    *call_ir = NULL;
 
-   /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
-    * isn't done in ir_function::matching_signature because that function
-    * cannot generate the necessary diagnostics.
-    *
-    * Also, validate that 'const_in' formal parameters (an extension of our
-    * IR) correspond to ir_constant actual parameters.
-    *
-    * Also, perform implicit conversion of arguments.  Note: to implicitly
-    * convert out parameters, we need to place them in a temporary
-    * variable, and do the conversion after the call takes place.  Since we
-    * haven't emitted the call yet, we'll place the post-call conversions
-    * in a temporary exec_list, and emit them later.
+   /* Perform implicit conversion of arguments.  For out parameters, we need
+    * to place them in a temporary variable and do the conversion after the
+    * call takes place.  Since we haven't emitted the call yet, we'll place
+    * the post-call conversions in a temporary exec_list, and emit them later.
     */
    exec_list_iterator actual_iter = actual_parameters->iterator();
    exec_list_iterator formal_iter = sig->parameters.iterator();
@@ -130,39 +203,6 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 
       assert(actual != NULL);
       assert(formal != NULL);
-
-      if (formal->mode == ir_var_const_in && !actual->as_constant()) {
-	 _mesa_glsl_error(loc, state,
-			  "parameter `%s' must be a constant expression",
-			  formal->name);
-	 return ir_call::get_error_instruction(ctx);
-      }
-
-      if ((formal->mode == ir_var_out)
-	  || (formal->mode == ir_var_inout)) {
-	 const char *mode = NULL;
-	 switch (formal->mode) {
-	 case ir_var_out:   mode = "out";   break;
-	 case ir_var_inout: mode = "inout"; break;
-	 default:           assert(false);  break;
-	 }
-	 /* FIXME: 'loc' is incorrect (as of 2011-01-21). It is always
-	  * FIXME: 0:0(0).
-	  */
-	 if (actual->variable_referenced()
-	     && actual->variable_referenced()->read_only) {
-	    _mesa_glsl_error(loc, state,
-			     "function parameter '%s %s' references the "
-			     "read-only variable '%s'",
-			     mode, formal->name,
-			     actual->variable_referenced()->name);
-
-	 } else if (!actual->is_lvalue()) {
-	    _mesa_glsl_error(loc, state,
-			     "function parameter '%s %s' is not an lvalue",
-			     mode, formal->name);
-	 }
-      }
 
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
 	 switch (formal->mode) {
@@ -1466,49 +1506,12 @@ ast_function_expression::hir(exec_list *instructions,
       if (sig == NULL) {
 	 no_matching_function_error(func_name, &loc, &actual_parameters, state);
 	 value = ir_call::get_error_instruction(ctx);
+      } else if (!verify_parameter_modes(state, sig, actual_parameters, this->expressions)) {
+	 /* an error has already been emitted */
+	 value = ir_call::get_error_instruction(ctx);
       } else {
 	 value = generate_call(instructions, sig, &loc, &actual_parameters,
 			       &call, state);
-      }
-
-      if (call != NULL) {
-	 /* If a function was found, make sure that none of the 'out' or 'inout'
-	  * parameters violate the extra l-value rules.
-	  */
-	 ir_function_signature *f = call->get_callee();
-	 assert(f != NULL);
-
-	 exec_node *formal_node = f->parameters.head;
-
-	 foreach_list (actual_node, &this->expressions) {
-	    /* Both parameter lists had better be the same length!
-	     */
-	    assert(!actual_node->is_tail_sentinel());
-
-	    const ir_variable *const formal_parameter =
-	       (ir_variable *) formal_node;
-	    const ast_expression *const actual_parameter =
-	       exec_node_data(ast_expression, actual_node, link);
-
-	    if ((formal_parameter->mode == ir_var_out
-		 || formal_parameter->mode == ir_var_inout)
-		&& actual_parameter->non_lvalue_description != NULL) {
-	       YYLTYPE loc = actual_parameter->get_location();
-
-	       _mesa_glsl_error(&loc, state,
-				"function parameter '%s %s' references a %s",
-				(formal_parameter->mode == ir_var_out)
-				? "out" : "inout",
-				formal_parameter->name,
-				actual_parameter->non_lvalue_description);
-	       return ir_call::get_error_instruction(ctx);
-	    }
-
-	    /* Only advance the formal_node pointer here because the
-	     * foreach_list business already advances actual_node.
-	     */
-	    formal_node = formal_node->next;
-	 }
       }
 
       return value;
