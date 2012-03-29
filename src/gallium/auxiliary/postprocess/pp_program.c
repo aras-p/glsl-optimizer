@@ -53,6 +53,10 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_screen *pscreen)
 
    p->screen = pscreen;
    p->pipe = pscreen->context_create(pscreen, NULL);
+
+   /* XXX this doesn't use the cso_context of the state tracker, but creates
+    * its own. Having 2 existing cso_contexts use 1 pipe_context may cause
+    * undefined behavior! */
    p->cso = cso_create_context(p->pipe);
 
    {
