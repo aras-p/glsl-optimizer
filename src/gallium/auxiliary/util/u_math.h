@@ -477,6 +477,20 @@ unsigned ffs( unsigned u )
 
 #endif /* FFS_DEFINED */
 
+/**
+ * Find last bit set in a word.  The least significant bit is 1.
+ * Return 0 if no bits are set.
+ */
+static INLINE unsigned util_last_bit(unsigned u)
+{
+   unsigned r = 0;
+   while (u) {
+       r++;
+       u >>= 1;
+   }
+   return r;
+}
+
 
 /* Destructively loop over all of the bits in a mask as in:
  *
