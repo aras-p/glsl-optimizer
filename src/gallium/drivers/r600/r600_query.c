@@ -401,7 +401,7 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 					    struct r600_query *query,
 					    struct r600_query_buffer *qbuf,
 					    boolean wait,
-					    union r600_query_result *result)
+					    union pipe_query_result *result)
 {
 	unsigned results_base = 0;
 	char *map;
@@ -458,9 +458,9 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 		break;
 	case PIPE_QUERY_SO_STATISTICS:
 		while (results_base != qbuf->results_end) {
-			result->so.num_primitives_written +=
+			result->so_statistics.num_primitives_written +=
 				r600_query_read_result(map + results_base, 2, 6, true);
-			result->so.primitives_storage_needed +=
+			result->so_statistics.primitives_storage_needed +=
 				r600_query_read_result(map + results_base, 0, 4, true);
 			results_base += query->result_size;
 		}
@@ -483,43 +483,23 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 
 static boolean r600_get_query_result(struct pipe_context *ctx,
 					struct pipe_query *query,
-					boolean wait, union pipe_query_result *vresult)
+					boolean wait, union pipe_query_result *result)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
-	boolean *result_b = (boolean*)vresult;
-	uint64_t *result_u64 = (uint64_t*)vresult;
-	union r600_query_result result;
-	struct pipe_query_data_so_statistics *result_so =
-		(struct pipe_query_data_so_statistics*)vresult;
 	struct r600_query_buffer *qbuf;
 
-	memset(&result, 0, sizeof(result));
+	util_query_clear_result(result, rquery->type);
 
 	for (qbuf = &rquery->buffer; qbuf; qbuf = qbuf->previous) {
-		if (!r600_get_query_buffer_result(rctx, rquery, qbuf, wait, &result)) {
+		if (!r600_get_query_buffer_result(rctx, rquery, qbuf, wait, result)) {
 			return FALSE;
 		}
 	}
 
-	switch (rquery->type) {
-	case PIPE_QUERY_OCCLUSION_COUNTER:
-	case PIPE_QUERY_PRIMITIVES_EMITTED:
-	case PIPE_QUERY_PRIMITIVES_GENERATED:
-		*result_u64 = result.u64;
-		break;
-	case PIPE_QUERY_OCCLUSION_PREDICATE:
-	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		*result_b = result.b;
-		break;
-	case PIPE_QUERY_TIME_ELAPSED:
-		*result_u64 = (1000000 * result.u64) / rctx->screen->info.r600_clock_crystal_freq;
-		break;
-	case PIPE_QUERY_SO_STATISTICS:
-		*result_so = result.so;
-		break;
-	default:
-		assert(0);
+	/* Convert the time to expected units. */
+	if (rquery->type == PIPE_QUERY_TIME_ELAPSED) {
+		result->u64 = (1000000 * result->u64) / rctx->screen->info.r600_clock_crystal_freq;
 	}
 	return TRUE;
 }

@@ -167,12 +167,6 @@ struct r600_query_buffer {
 	struct r600_query_buffer		*previous;
 };
 
-union r600_query_result {
-	uint64_t			u64;
-	boolean				b;
-	struct pipe_query_data_so_statistics so;
-};
-
 struct r600_query {
 	/* The query buffer and how many results are in it. */
 	struct r600_query_buffer		buffer;
