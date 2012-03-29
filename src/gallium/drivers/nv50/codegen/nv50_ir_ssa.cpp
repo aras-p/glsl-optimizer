@@ -322,7 +322,7 @@ Function::convertToSSA()
       if (!allLValues.get(var))
          continue;
       lval = reinterpret_cast<Value *>(allLValues.get(var))->asLValue();
-      if (!lval || !lval->defs)
+      if (!lval || lval->defs.empty())
          continue;
       ++iterCount;
 
@@ -330,8 +330,9 @@ Function::convertToSSA()
       //  the BB they're defined in
 
       // gather blocks with assignments to lval in workList
-      for (ValueDef::Iterator d = lval->defs->iterator(); !d.end(); d.next()) {
-         bb = d.get()->getInsn()->bb;
+      for (Value::DefIterator d = lval->defs.begin();
+           d != lval->defs.end(); ++d) {
+         bb = (*d)->getInsn()->bb;
          if (!bb)
             continue; // instruction likely been removed but not XXX deleted
 
@@ -358,9 +359,6 @@ Function::convertToSSA()
             // pruned SSA: don't need a phi if the value is not live-in
             if (!dfBB->liveSet.test(lval->id))
                continue;
-
-            // TODO: use dedicated PhiInstruction to lift this limit
-            assert(dfBB->cfg.incidentCount() <= NV50_IR_MAX_SRCS);
 
             phi = new_Instruction(this, OP_PHI, typeOfSize(lval->reg.size));
             dfBB->insertTail(phi);
@@ -412,13 +410,6 @@ bool RenamePass::run()
    if (!stack)
       return false;
    search(BasicBlock::get(func->domTree->getRoot()));
-
-   ArrayList::Iterator iter = func->allInsns.iterator();
-   for (; !iter.end(); iter.next()) {
-      Instruction *insn = reinterpret_cast<Instruction *>(iter.get());
-      for (int d = 0; insn->defExists(d); ++d)
-         insn->def[d].restoreDefList();
-   }
 
    return true;
 }

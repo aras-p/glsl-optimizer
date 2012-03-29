@@ -152,57 +152,44 @@ unsigned int ValueDef::getSize() const
 
 void ValueDef::setSSA(LValue *lval)
 {
-   Value *save = value;
-
-   this->set(NULL);
-   prev = reinterpret_cast<ValueDef *>(save);
-   value = lval;
-   lval->defs = this;
-}
-
-void ValueDef::restoreDefList()
-{
-   if (next == this)
-      prev = this;
+   origin = value->asLValue();
+   set(lval);
 }
 
 const LValue *ValueDef::preSSA() const
 {
-   return reinterpret_cast<LValue *>(prev);
+   return origin;
 }
 
 Instruction *Value::getInsn() const
 {
-   assert(!defs || getUniqueInsn());
-   return defs ? defs->getInsn() : NULL;
+   return defs.empty() ? NULL : defs.front()->getInsn();
 }
 
 Instruction *Value::getUniqueInsn() const
 {
-   if (defs) {
-      if (join != this) {
-         ValueDef::Iterator it = defs->iterator();
-         while (!it.end() && it.get()->get() != this)
-            it.next();
-         assert(it.get()->get() == this);
-         return it.get()->getInsn();
-      }
+   if (defs.empty())
+      return NULL;
 
-      // after regalloc, the definitions of coalesced values are linked
-      if (reg.data.id < 0) {
-         ValueDef::Iterator it = defs->iterator();
-         int nDef;
-         for (nDef = 0; !it.end() && nDef < 2; it.next())
-            if (it.get()->get() == this) // don't count joined values
-               ++nDef;
-         if (nDef > 1)
-            WARN("value %%%i not uniquely defined\n", id); // return NULL ?
-      }
-
-      assert(defs->get() == this);
-      return defs->getInsn();
+   // after regalloc, the definitions of coalesced values are linked
+   if (join != this) {
+      for (DefCIterator it = defs.begin(); it != defs.end(); ++it)
+         if ((*it)->get() == this)
+            return (*it)->getInsn();
+      // should be unreachable and trigger assertion at the end
    }
-   return NULL;
+#ifdef DEBUG
+   if (reg.data.id < 0) {
+      int n = 0;
+      for (DefCIterator it = defs.begin(); n < 2 && it != defs.end(); ++it)
+         if ((*it)->get() == this) // don't count joined values
+            ++n;
+      if (n > 1)
+         WARN("value %%%i not uniquely defined\n", id); // return NULL ?
+   }
+#endif
+   assert(defs.front()->get() == this);
+   return defs.front()->getInsn();
 }
 
 Value *Instruction::getIndirect(int s, int dim) const

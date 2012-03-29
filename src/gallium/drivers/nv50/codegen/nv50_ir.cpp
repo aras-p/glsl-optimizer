@@ -58,11 +58,17 @@ Modifier Modifier::operator*(const Modifier m) const
    return Modifier(a | c);
 }
 
-ValueRef::ValueRef() : value(0), insn(0), next(this), prev(this)
+ValueRef::ValueRef() : value(NULL), insn(NULL)
 {
    indirect[0] = -1;
    indirect[1] = -1;
    usedAsPtr = false;
+}
+
+ValueRef::ValueRef(const ValueRef& ref) : value(NULL), insn(ref.insn)
+{
+   set(ref);
+   usedAsPtr = ref.usedAsPtr;
 }
 
 ValueRef::~ValueRef()
@@ -85,9 +91,14 @@ ImmediateValue *ValueRef::getImmediate() const
    return NULL;
 }
 
-ValueDef::ValueDef() : value(0), insn(0), next(this), prev(this)
+ValueDef::ValueDef() : value(NULL), insn(NULL)
 {
    // nothing to do
+}
+
+ValueDef::ValueDef(const ValueDef& def) : value(NULL), insn(NULL)
+{
+   set(def.get());
 }
 
 ValueDef::~ValueDef()
@@ -109,83 +120,43 @@ ValueRef::set(Value *refVal)
 {
    if (value == refVal)
       return;
-   if (value) {
-      if (value->uses == this)
-         value->uses = (next == this) ? NULL : next;
-      value->unref();
-      DLLIST_DEL(this);
-   }
+   if (value)
+      value->uses.remove(this);
+   if (refVal)
+      refVal->uses.push_back(this);
 
-   if (refVal) {
-      if (refVal->uses)
-         DLLIST_ADDTAIL(refVal->uses, this);
-      else
-         refVal->uses = this;
-      refVal->ref();
-   }
    value = refVal;
 }
 
 void
 ValueDef::set(Value *defVal)
 {
-   assert(next != this || prev == this); // check that SSA hack isn't active
-
    if (value == defVal)
       return;
-   if (value) {
-      if (value->defs == this)
-         value->defs = (next == this) ? NULL : next;
-      DLLIST_DEL(this);
-   }
+   if (value)
+      value->defs.remove(this);
+   if (defVal)
+      defVal->defs.push_back(this);
 
-   if (defVal) {
-      if (defVal->defs)
-         DLLIST_ADDTAIL(defVal->defs, this);
-      else
-         defVal->defs = this;
-   }
    value = defVal;
 }
 
-// TODO: make me faster by using a safe iterator
 void
 ValueDef::replace(Value *repVal, bool doSet)
 {
-   ValueRef **refs = new ValueRef * [value->refCount()];
-   int n = 0;
+   if (value == repVal)
+      return;
 
-   if (!refs && value->refCount())
-      FATAL("memory allocation failed");
-
-   for (ValueRef::Iterator iter = value->uses->iterator(); !iter.end();
-        iter.next()) {
-      assert(n < value->refCount());
-      refs[n++] = iter.get();
-   }
-   while (n)
-      refs[--n]->set(repVal);
+   while (value->refCount())
+      value->uses.front()->set(repVal);
 
    if (doSet)
-      this->set(repVal);
-
-   if (refs)
-      delete[] refs;
-}
-
-void
-ValueDef::mergeDefs(ValueDef *join)
-{
-   DLLIST_MERGE(this, join, ValueDef *);
+      set(repVal);
 }
 
 Value::Value()
 {
-  refCnt = 0;
-  uses = NULL;
-  defs = NULL;
   join = this;
-
   memset(&reg, 0, sizeof(reg));
   reg.size = 4;
 }
@@ -213,7 +184,7 @@ Value::coalesce(Value *jval, bool force)
       }
 
       // need to check all fixed register values of the program for overlap
-      Function *func = defs->getInsn()->bb->getFunction();
+      Function *func = defs.front()->getInsn()->bb->getFunction();
 
       // TODO: put values in by register-id bins per function
       ArrayList::Iterator iter = func->allLValues.iterator();
@@ -232,11 +203,11 @@ Value::coalesce(Value *jval, bool force)
       INFO("NOTE: forced coalescing with live range overlap\n");
    }
 
-   ValueDef::Iterator iter = jrep->defs->iterator();
-   for (; !iter.end(); iter.next())
-      iter.get()->get()->join = repr;
+   for (DefIterator it = jrep->defs.begin(); it != jrep->defs.end(); ++it)
+      (*it)->get()->join = repr;
 
-   repr->defs->mergeDefs(jrep->defs);
+   repr->defs.insert(repr->defs.end(),
+                     jrep->defs.begin(), jrep->defs.end());
    repr->livei.unify(jrep->livei);
 
    assert(repr->join == repr && jval->join == repr);
@@ -540,11 +511,6 @@ void Instruction::init()
 
    postFactor = 0;
 
-   for (int p = 0; p < NV50_IR_MAX_DEFS; ++p)
-      def[p].setInsn(this);
-   for (int p = 0; p < NV50_IR_MAX_SRCS; ++p)
-      src[p].setInsn(this);
-
    predSrc = -1;
    flagsDef = -1;
    flagsSrc = -1;
@@ -587,7 +553,31 @@ Instruction::~Instruction()
 }
 
 void
-Instruction::setSrc(int s, ValueRef& ref)
+Instruction::setDef(int i, Value *val)
+{
+   int size = def.size();
+   if (i >= size) {
+      def.resize(i + 1);
+      while (size <= i)
+         def[size++].setInsn(this);
+   }
+   def[i].set(val);
+}
+
+void
+Instruction::setSrc(int s, Value *val)
+{
+   int size = src.size();
+   if (s >= size) {
+      src.resize(s + 1);
+      while (size <= s)
+         src[size++].setInsn(this);
+   }
+   src[s].set(val);
+}
+
+void
+Instruction::setSrc(int s, const ValueRef& ref)
 {
    setSrc(s, ref.get());
    src[s].mod = ref.mod;
@@ -673,7 +663,7 @@ Instruction::cloneBase(Instruction *insn, bool deep) const
    }
 
    for (int s = 0; this->srcExists(s); ++s)
-      insn->src[s].set(this->src[s]);
+      insn->setSrc(s, this->src[s]);
 
    insn->predSrc = this->predSrc;
    insn->flagsDef = this->flagsDef;
@@ -703,17 +693,15 @@ Instruction::srcCount(unsigned int mask) const
 bool
 Instruction::setIndirect(int s, int dim, Value *value)
 {
-   int p = src[s].indirect[dim];
-
    assert(this->srcExists(s));
+
+   int p = src[s].indirect[dim];
    if (p < 0) {
       if (!value)
          return true;
-      for (p = s + 1; this->srcExists(p); ++p);
+      p = src.size();
    }
-   assert(p < NV50_IR_MAX_SRCS);
-
-   src[p] = value;
+   setSrc(p, value);
    src[p].usedAsPtr = (value != 0);
    src[s].indirect[dim] = value ? p : -1;
    return true;
@@ -732,22 +720,18 @@ Instruction::setPredicate(CondCode ccode, Value *value)
       return true;
    }
 
-   if (predSrc < 0) {
-      int s;
-      for (s = 0; this->srcExists(s); ++s)
-      assert(s < NV50_IR_MAX_SRCS);
-      predSrc = s;
-   }
-   src[predSrc] = value;
+   if (predSrc < 0)
+      predSrc = src.size();
+
+   setSrc(predSrc, value);
    return true;
 }
 
 bool
 Instruction::writesPredicate() const
 {
-   for (int d = 0; d < 2 && def[d].exists(); ++d)
-      if (def[d].exists() &&
-          (getDef(d)->inFile(FILE_PREDICATE) || getDef(d)->inFile(FILE_FLAGS)))
+   for (int d = 0; defExists(d); ++d)
+      if (getDef(d)->inFile(FILE_PREDICATE) || getDef(d)->inFile(FILE_FLAGS))
          return true;
    return false;
 }

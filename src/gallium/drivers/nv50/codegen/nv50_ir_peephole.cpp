@@ -40,7 +40,7 @@ Instruction::isNop() const
    if (!fixed && op == OP_NOP)
       return true;
 
-   if (def[0].exists() && def[0].rep()->reg.data.id < 0) {
+   if (defExists(0) && def[0].rep()->reg.data.id < 0) {
       for (int d = 1; defExists(d); ++d)
          if (def[d].rep()->reg.data.id >= 0)
             WARN("part of vector result is unused !\n");
@@ -249,8 +249,8 @@ ConstantFolding::visit(BasicBlock *bb)
       if (i->op == OP_MOV) // continue early, MOV appears frequently
          continue;
 
-      ImmediateValue *src0 = i->src[0].getImmediate();
-      ImmediateValue *src1 = i->src[1].getImmediate();
+      ImmediateValue *src0 = i->srcExists(0) ? i->src[0].getImmediate() : NULL;
+      ImmediateValue *src1 = i->srcExists(1) ? i->src[1].getImmediate() : NULL;
 
       if (src0 && src1)
          expr(i, src0, src1);
@@ -577,7 +577,7 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
       // b = mul a, imm
       // d = mul b, c   -> d = mul_x_imm a, c
       int s2, t2;
-      insn = mul2->getDef(0)->uses->getInsn();
+      insn = mul2->getDef(0)->uses.front()->getInsn();
       if (!insn)
          return;
       mul1 = mul2;
@@ -2090,10 +2090,10 @@ LocalCSE::visit(BasicBlock *bb)
                   src = ir->getSrc(s);
 
          if (src) {
-            for (ValueRef::Iterator refs = src->uses->iterator(); !refs.end();
-                 refs.next()) {
-               Instruction *ik = refs.get()->getInsn();
-               if (ik->serial < ir->serial && ik->bb == ir->bb)
+            for (Value::UseIterator it = src->uses.begin();
+                 it != src->uses.end(); ++it) {
+               Instruction *ik = (*it)->getInsn();
+               if (ik && ik->serial < ir->serial && ik->bb == ir->bb)
                   if (tryReplace(&ir, ik))
                      break;
             }

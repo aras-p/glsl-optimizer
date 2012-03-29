@@ -442,7 +442,7 @@ RegAlloc::BuildIntervalsPass::visit(BasicBlock *bb)
       for (Instruction *i = out->getPhi(); i && i->op == OP_PHI; i = i->next) {
          bb->liveSet.clr(i->getDef(0)->id);
 
-         for (int s = 0; s < NV50_IR_MAX_SRCS && i->src[s].exists(); ++s) {
+         for (int s = 0; i->srcExists(s); ++s) {
             assert(i->src[s].getInsn());
             if (i->getSrc(s)->getUniqueInsn()->bb == bb) // XXX: reachableBy ?
                bb->liveSet.set(i->getSrc(s)->id);
@@ -513,7 +513,9 @@ RegAlloc::coalesceValues(unsigned int mask)
       case OP_MOV:
          if (!(mask & JOIN_MASK_MOV))
             break;
-         i = insn->getDef(0)->uses ? insn->getDef(0)->uses->getInsn() : NULL;
+         i = NULL;
+         if (!insn->getDef(0)->uses.empty())
+            i = insn->getDef(0)->uses.front()->getInsn();
          // if this is a contraint-move there will only be a single use
          if (i && i->op == OP_CONSTRAINT)
             break;
@@ -851,20 +853,21 @@ RegAlloc::InsertConstraintsPass::textureMask(TexInstruction *tex)
 bool
 RegAlloc::InsertConstraintsPass::detectConflict(Instruction *cst, int s)
 {
+   Value *v = cst->getSrc(s);
+
    // current register allocation can't handle it if a value participates in
    // multiple constraints
-   for (ValueRef::Iterator it = cst->src[s].iterator(); !it.end(); it.next()) {
-      Instruction *insn = it.get()->getInsn();
-      if (insn != cst)
+   for (Value::UseIterator it = v->uses.begin(); it != v->uses.end(); ++it) {
+      if (cst != (*it)->getInsn())
          return true;
    }
 
    // can start at s + 1 because detectConflict is called on all sources
    for (int c = s + 1; cst->srcExists(c); ++c)
-      if (cst->getSrc(c) == cst->getSrc(s))
+      if (v == cst->getSrc(c))
          return true;
 
-   Instruction *defi = cst->getSrc(s)->getInsn();
+   Instruction *defi = v->getInsn();
 
    return (!defi || defi->constrainedDefs());
 }

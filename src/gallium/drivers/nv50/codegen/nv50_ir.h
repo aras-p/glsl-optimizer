@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <deque>
+#include <list>
+#include <vector>
 
 #include "nv50_ir_util.h"
 #include "nv50_ir_graph.h"
@@ -379,6 +382,7 @@ class ValueRef
 {
 public:
    ValueRef();
+   ValueRef(const ValueRef&);
    ~ValueRef();
 
    inline ValueRef& operator=(Value *val) { this->set(val); return *this; }
@@ -402,21 +406,6 @@ public:
    // SSA: return eventual (traverse MOVs) literal value, if it exists
    ImmediateValue *getImmediate() const;
 
-   class Iterator
-   {
-   public:
-      Iterator(ValueRef *ref) : pos(ref), ini(ref) { }
-
-      inline ValueRef *get() const { return pos; }
-      inline bool end() const { return pos == NULL; }
-      inline void next() { pos = (pos->next != ini) ? pos->next : 0; }
-
-   private:
-      ValueRef *pos, *ini;
-   };
-
-   inline Iterator iterator() { return Iterator(this); }
-
 public:
    Modifier mod;
    int8_t indirect[2]; // >= 0 if relative to lvalue in insn->src[indirect[i]]
@@ -427,14 +416,13 @@ public:
 private:
    Value *value;
    Instruction *insn;
-   ValueRef *next; // to link uses of the value
-   ValueRef *prev;
 };
 
 class ValueDef
 {
 public:
    ValueDef();
+   ValueDef(const ValueDef&);
    ~ValueDef();
 
    inline ValueDef& operator=(Value *val) { this->set(val); return *this; }
@@ -452,33 +440,13 @@ public:
    inline DataFile getFile() const;
    inline unsigned getSize() const;
 
-   // HACK: save the pre-SSA value in 'prev', in SSA we don't need the def list
-   //  but we'll use it again for coalescing in register allocation
    inline void setSSA(LValue *);
    inline const LValue *preSSA() const;
-   inline void restoreDefList(); // after having been abused for SSA hack
-   void mergeDefs(ValueDef *);
-
-   class Iterator
-   {
-   public:
-      Iterator(ValueDef *def) : pos(def), ini(def) { }
-
-      inline ValueDef *get() const { return pos; }
-      inline bool end() const { return pos == NULL; }
-      inline void next() { pos = (pos->next != ini) ? pos->next : NULL; }
-
-   private:
-      ValueDef *pos, *ini;
-   };
-
-   inline Iterator iterator() { return Iterator(this); }
 
 private:
    Value *value;   // should make this LValue * ...
+   LValue *origin; // pre SSA value
    Instruction *insn;
-   ValueDef *next; // circular list of all definitions of the same value
-   ValueDef *prev;
 };
 
 class Value
@@ -496,9 +464,7 @@ public:
    inline Instruction *getUniqueInsn() const;
    inline Instruction *getInsn() const; // use when uniqueness is certain
 
-   inline int refCount() { return refCnt; }
-   inline int ref() { return ++refCnt; }
-   inline int unref() { --refCnt; assert(refCnt >= 0); return refCnt; }
+   inline int refCount() { return uses.size(); }
 
    inline LValue *asLValue();
    inline Symbol *asSym();
@@ -512,16 +478,14 @@ public:
 
    static inline Value *get(Iterator&);
 
-protected:
-   int refCnt;
+   std::list<ValueRef *> uses;
+   std::list<ValueDef *> defs;
+   typedef std::list<ValueRef *>::iterator UseIterator;
+   typedef std::list<ValueRef *>::const_iterator UseCIterator;
+   typedef std::list<ValueDef *>::iterator DefIterator;
+   typedef std::list<ValueDef *>::const_iterator DefCIterator;
 
-   friend class ValueDef;
-   friend class ValueRef;
-
-public:
    int id;
-   ValueRef *uses;
-   ValueDef *defs;
    Storage reg;
 
    // TODO: these should be in LValue:
@@ -605,10 +569,6 @@ public:
    virtual int print(char *, size_t, DataType ty = TYPE_NONE) const;
 };
 
-
-#define NV50_IR_MAX_DEFS 4
-#define NV50_IR_MAX_SRCS 8
-
 class Instruction
 {
 public:
@@ -618,9 +578,9 @@ public:
 
    virtual Instruction *clone(bool deep) const;
 
-   inline void setDef(int i, Value *val) { def[i].set(val); }
-   inline void setSrc(int s, Value *val) { src[s].set(val); }
-   void setSrc(int s, ValueRef&);
+   void setDef(int i, Value *);
+   void setSrc(int s, Value *);
+   void setSrc(int s, const ValueRef&);
    void swapSources(int a, int b);
    bool setIndirect(int s, int dim, Value *);
 
@@ -628,10 +588,16 @@ public:
    inline Value *getSrc(int s) const { return src[s].get(); }
    inline Value *getIndirect(int s, int dim) const;
 
-   inline bool defExists(int d) const { return d < 4 && def[d].exists(); }
-   inline bool srcExists(int s) const { return s < 8 && src[s].exists(); }
+   inline bool defExists(unsigned d) const
+   {
+      return d < def.size() && def[d].exists();
+   }
+   inline bool srcExists(unsigned s) const
+   {
+      return s < src.size() && src[s].exists();
+   }
 
-   inline bool constrainedDefs() const { return def[1].exists(); }
+   inline bool constrainedDefs() const { return defExists(1); }
 
    bool setPredicate(CondCode ccode, Value *);
    inline Value *getPredicate() const;
@@ -705,9 +671,8 @@ public:
    int8_t flagsDef;
    int8_t flagsSrc;
 
-   // NOTE: should make these pointers, saves space and work on shuffling
-   ValueDef def[NV50_IR_MAX_DEFS]; // no gaps !
-   ValueRef src[NV50_IR_MAX_SRCS]; // no gaps !
+   std::deque<ValueDef> def; // no gaps !
+   std::deque<ValueRef> src; // no gaps !
 
    BasicBlock *bb;
 

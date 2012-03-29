@@ -451,7 +451,7 @@ void Instruction::print() const
    if (rnd != ROUND_N)
       PRINT(" %s", RoundModeStr[rnd]);
 
-   if (def[1].exists())
+   if (defExists(1))
       PRINT(" {");
    for (d = 0; defExists(d); ++d) {
       SPACE();
