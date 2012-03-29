@@ -842,7 +842,7 @@ struct dxgi_blitter
 		pipe->bind_depth_stencil_alpha_state(pipe, zsa);
 		pipe->bind_blend_state(pipe, blend);
 		pipe->bind_vertex_elements_state(pipe, elements);
-		pipe->set_vertex_buffers(pipe, 1, &vbuf);
+		pipe->set_vertex_buffers(pipe, 0, 1, &vbuf);
 		pipe->bind_fs_state(pipe, fs);
 		pipe->bind_vs_state(pipe, vs);
 		if(pipe->bind_gs_state)

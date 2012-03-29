@@ -783,7 +783,7 @@ rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
 
 static void
 rbug_set_vertex_buffers(struct pipe_context *_pipe,
-                        unsigned num_buffers,
+                        unsigned start_slot, unsigned num_buffers,
                         const struct pipe_vertex_buffer *_buffers)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
@@ -801,7 +801,7 @@ rbug_set_vertex_buffers(struct pipe_context *_pipe,
       buffers = unwrapped_buffers;
    }
 
-   pipe->set_vertex_buffers(pipe,
+   pipe->set_vertex_buffers(pipe, start_slot,
                             num_buffers,
                             buffers);
 

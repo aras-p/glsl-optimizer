@@ -457,7 +457,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
-   cso_save_vertex_buffers(cso);
+   cso_save_aux_vertex_buffer_slot(cso);
 
    /* rasterizer state: just scissor */
    st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
@@ -526,7 +526,9 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 			    x, y, width, height, z, color, &vbuf, &offset);
 
    if (vbuf) {
-      util_draw_vertex_buffer(pipe, st->cso_context, vbuf, offset,
+      util_draw_vertex_buffer(pipe, st->cso_context, vbuf,
+                              cso_get_aux_vertex_buffer_slot(st->cso_context),
+                              offset,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
                               3); /* attribs/vert */
@@ -541,7 +543,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_vertex_shader(cso);
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
-   cso_restore_vertex_buffers(cso);
+   cso_restore_aux_vertex_buffer_slot(cso);
    cso_restore_stream_outputs(cso);
 
    pipe_resource_reference(&vbuf, NULL);

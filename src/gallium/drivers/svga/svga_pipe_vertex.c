@@ -23,6 +23,7 @@
  *
  **********************************************************/
 
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
@@ -36,32 +37,14 @@
 
 
 static void svga_set_vertex_buffers(struct pipe_context *pipe,
-                                    unsigned count,
+                                    unsigned start_slot, unsigned count,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct svga_context *svga = svga_context(pipe);
-   unsigned i;
-   boolean any_user_buffer = FALSE;
 
-   /* Check for no change */
-   if (count == svga->curr.num_vertex_buffers &&
-       memcmp(svga->curr.vb, buffers, count * sizeof buffers[0]) == 0)
-      return;
-
-   /* Adjust refcounts */
-   for (i = 0; i < count; i++) {
-      pipe_resource_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
-      if (svga_buffer_is_user_buffer(buffers[i].buffer))
-         any_user_buffer = TRUE;
-   }
-
-   for ( ; i < svga->curr.num_vertex_buffers; i++)
-      pipe_resource_reference(&svga->curr.vb[i].buffer, NULL);
-
-   /* Copy remaining data */
-   memcpy(svga->curr.vb, buffers, count * sizeof buffers[0]);
-   svga->curr.num_vertex_buffers = count;
-   svga->curr.any_user_vertex_buffers = any_user_buffer;
+   util_set_vertex_buffers_count(svga->curr.vb,
+                                 &svga->curr.num_vertex_buffers,
+                                 buffers, start_slot, count);
 
    svga->dirty |= SVGA_NEW_VBUFFER;
 }

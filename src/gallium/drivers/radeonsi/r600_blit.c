@@ -61,9 +61,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	if (rctx->queued.named.viewport) {
 		util_blitter_save_viewport(rctx->blitter, &rctx->queued.named.viewport->viewport);
 	}
-	util_blitter_save_vertex_buffers(rctx->blitter,
-					 rctx->nr_vertex_buffers,
-					 rctx->vertex_buffer);
+	util_blitter_save_vertex_buffer_slot(rctx->blitter, rctx->vertex_buffer);
 	util_blitter_save_so_targets(rctx->blitter, rctx->num_so_targets,
 				     (struct pipe_stream_output_target**)rctx->so_targets);
 

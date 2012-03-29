@@ -249,6 +249,7 @@ struct pipe_context {
                                 struct pipe_surface **resources);
 
    void (*set_vertex_buffers)( struct pipe_context *,
+                               unsigned start_slot,
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
 

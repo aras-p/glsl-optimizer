@@ -211,6 +211,10 @@ nv30_push_vbo(struct nv30_context *nv30, const struct pipe_draw_info *info)
       struct pipe_vertex_buffer *vb = &nv30->vtxbuf[i];
       struct nv04_resource *res = nv04_resource(vb->buffer);
 
+      if (!vb->buffer && !vb->user_buffer) {
+         continue;
+      }
+
       data = nouveau_resource_map_offset(&nv30->base, res,
                                          vb->buffer_offset, NOUVEAU_BO_RD);
 
@@ -276,8 +280,11 @@ nv30_push_vbo(struct nv30_context *nv30, const struct pipe_draw_info *info)
    if (info->indexed)
       nouveau_resource_unmap(nv04_resource(nv30->idxbuf.buffer));
 
-   for (i = 0; i < nv30->num_vtxbufs; ++i)
-      nouveau_resource_unmap(nv04_resource(nv30->vtxbuf[i].buffer));
+   for (i = 0; i < nv30->num_vtxbufs; ++i) {
+      if (nv30->vtxbuf[i].buffer) {
+         nouveau_resource_unmap(nv04_resource(nv30->vtxbuf[i].buffer));
+      }
+   }
 
    nv30_state_release(nv30);
 }

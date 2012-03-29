@@ -150,7 +150,7 @@ static void set_vertices( void )
                                                  sizeof(inst_data),
                                                  inst_data);
 
-   ctx->set_vertex_buffers(ctx, 2, vbuf);
+   ctx->set_vertex_buffers(ctx, 0, 2, vbuf);
 
    /* index data */
    ibuf.buffer = pipe_buffer_create_with_data(ctx,

@@ -266,7 +266,7 @@ static void set_vertices( void )
                                                  vertices);
    }
 
-   ctx->set_vertex_buffers(ctx, 1, &vbuf);
+   ctx->set_vertex_buffers(ctx, 0, 1, &vbuf);
 }
 
 static void set_vertex_shader( void )

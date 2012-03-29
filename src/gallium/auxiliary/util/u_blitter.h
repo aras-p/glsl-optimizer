@@ -104,8 +104,8 @@ struct blitter_context
    unsigned saved_num_sampler_views;
    struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
 
-   unsigned saved_num_vertex_buffers;
-   struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
+   unsigned vb_slot;
+   struct pipe_vertex_buffer saved_vertex_buffer;
 
    unsigned saved_num_so_targets;
    struct pipe_stream_output_target *saved_so_targets[PIPE_MAX_SO_BUFFERS];
@@ -466,17 +466,13 @@ util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
 }
 
 static INLINE void
-util_blitter_save_vertex_buffers(struct blitter_context *blitter,
-                                 unsigned num_vertex_buffers,
-                                 struct pipe_vertex_buffer *vertex_buffers)
+util_blitter_save_vertex_buffer_slot(struct blitter_context *blitter,
+                                     struct pipe_vertex_buffer *vertex_buffers)
 {
-   assert(num_vertex_buffers <= Elements(blitter->saved_vertex_buffers));
-
-   blitter->saved_num_vertex_buffers = 0;
-   util_copy_vertex_buffers(blitter->saved_vertex_buffers,
-                            (unsigned*)&blitter->saved_num_vertex_buffers,
-                            vertex_buffers,
-                            num_vertex_buffers);
+   pipe_resource_reference(&blitter->saved_vertex_buffer.buffer,
+                           vertex_buffers[blitter->vb_slot].buffer);
+   memcpy(&blitter->saved_vertex_buffer, &vertex_buffers[blitter->vb_slot],
+          sizeof(struct pipe_vertex_buffer));
 }
 
 static INLINE void

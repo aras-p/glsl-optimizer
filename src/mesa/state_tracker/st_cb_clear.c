@@ -176,7 +176,9 @@ draw_quad(struct st_context *st,
    /* draw */
    util_draw_vertex_buffer(pipe,
                            st->cso_context,
-                           vbuf, offset,
+                           vbuf,
+                           cso_get_aux_vertex_buffer_slot(st->cso_context),
+                           offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */
@@ -225,7 +227,7 @@ clear_with_quad(struct gl_context *ctx,
    cso_save_vertex_shader(st->cso_context);
    cso_save_geometry_shader(st->cso_context);
    cso_save_vertex_elements(st->cso_context);
-   cso_save_vertex_buffers(st->cso_context);
+   cso_save_aux_vertex_buffer_slot(st->cso_context);
 
    /* blend state: RGBA masking */
    {
@@ -325,7 +327,7 @@ clear_with_quad(struct gl_context *ctx,
    cso_restore_vertex_shader(st->cso_context);
    cso_restore_geometry_shader(st->cso_context);
    cso_restore_vertex_elements(st->cso_context);
-   cso_restore_vertex_buffers(st->cso_context);
+   cso_restore_aux_vertex_buffer_slot(st->cso_context);
    cso_restore_stream_outputs(st->cso_context);
 }
 

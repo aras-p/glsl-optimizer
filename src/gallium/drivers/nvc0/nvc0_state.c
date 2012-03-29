@@ -21,6 +21,7 @@
  */
 
 #include "pipe/p_defines.h"
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 
@@ -778,59 +779,38 @@ nvc0_set_viewport_state(struct pipe_context *pipe,
 
 static void
 nvc0_set_vertex_buffers(struct pipe_context *pipe,
-                        unsigned count,
+                        unsigned start_slot, unsigned count,
                         const struct pipe_vertex_buffer *vb)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
-    uint32_t constant_vbos = 0;
     unsigned i;
 
-    nvc0->vbo_user = 0;
+    util_set_vertex_buffers_count(nvc0->vtxbuf, &nvc0->num_vtxbufs, vb,
+                                  start_slot, count);
 
-    if (count != nvc0->num_vtxbufs) {
-       for (i = 0; i < count; ++i) {
-          pipe_resource_reference(&nvc0->vtxbuf[i].buffer, vb[i].buffer);
-          if (vb[i].user_buffer) {
-             nvc0->vbo_user |= 1 << i;
-             nvc0->vtxbuf[i].user_buffer = vb[i].user_buffer;
-             if (!vb[i].stride)
-                constant_vbos |= 1 << i;
-          } else {
-             nvc0->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
-          }
-          nvc0->vtxbuf[i].stride = vb[i].stride;
-       }
-       for (; i < nvc0->num_vtxbufs; ++i)
-          pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);
-
-       nvc0->num_vtxbufs = count;
-       nvc0->dirty |= NVC0_NEW_ARRAYS;
-    } else {
-       for (i = 0; i < count; ++i) {
-          if (vb[i].user_buffer) {
-             nvc0->vtxbuf[i].user_buffer = vb[i].user_buffer;
-             nvc0->vbo_user |= 1 << i;
-             if (!vb[i].stride)
-                constant_vbos |= 1 << i;
-             assert(!vb[i].buffer);
-          }
-          if (nvc0->vtxbuf[i].buffer == vb[i].buffer &&
-              nvc0->vtxbuf[i].buffer_offset == vb[i].buffer_offset &&
-              nvc0->vtxbuf[i].stride == vb[i].stride)
-             continue;
-          pipe_resource_reference(&nvc0->vtxbuf[i].buffer, vb[i].buffer);
-          nvc0->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
-          nvc0->vtxbuf[i].stride = vb[i].stride;
-          nvc0->dirty |= NVC0_NEW_ARRAYS;
-       }
-    }
-    if (constant_vbos != nvc0->constant_vbos) {
-       nvc0->constant_vbos = constant_vbos;
-       nvc0->dirty |= NVC0_NEW_ARRAYS;
+    if (!vb) {
+       nvc0->vbo_user &= ~(((1ull << count) - 1) << start_slot);
+       nvc0->constant_vbos &= ~(((1ull << count) - 1) << start_slot);
+       return;
     }
 
-    if (nvc0->dirty & NVC0_NEW_ARRAYS)
-       nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
+    for (i = 0; i < count; ++i) {
+       unsigned dst_index = start_slot + i;
+
+       if (vb[i].user_buffer) {
+          nvc0->vbo_user |= 1 << dst_index;
+          if (!vb[i].stride)
+             nvc0->constant_vbos |= 1 << dst_index;
+          else
+             nvc0->constant_vbos &= ~(1 << dst_index);
+       } else {
+          nvc0->vbo_user &= ~(1 << dst_index);
+          nvc0->constant_vbos &= ~(1 << dst_index);
+       }
+    }
+
+    nvc0->dirty |= NVC0_NEW_ARRAYS;
+    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 }
 
 static void

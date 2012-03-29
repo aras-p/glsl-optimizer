@@ -193,9 +193,7 @@ nv30_blit(struct pipe_context *pipe,
 
    /* XXX turn off occlusion queries */
 
-   util_blitter_save_vertex_buffers(nv30->blitter,
-                                    nv30->num_vtxbufs,
-                                    nv30->vtxbuf);
+   util_blitter_save_vertex_buffer_slot(nv30->blitter, nv30->vtxbuf);
    util_blitter_save_vertex_elements(nv30->blitter, nv30->vertex);
    util_blitter_save_vertex_shader(nv30->blitter, nv30->vertprog.program);
    util_blitter_save_rasterizer(nv30->blitter, nv30->rast);

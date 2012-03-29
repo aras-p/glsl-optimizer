@@ -158,7 +158,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->base.saved_fb_state.nr_cbufs = ~0;
    ctx->base.saved_num_sampler_views = ~0;
    ctx->base.saved_num_sampler_states = ~0;
-   ctx->base.saved_num_vertex_buffers = ~0;
    ctx->base.saved_num_so_targets = ~0;
 
    ctx->has_geometry_shader =
@@ -241,11 +240,14 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       ctx->rs_discard_state = pipe->create_rasterizer_state(pipe, &rs_state);
    }
 
+   ctx->base.vb_slot = 0; /* 0 for now */
+
    /* vertex elements states */
    memset(&velem[0], 0, sizeof(velem[0]) * 2);
    for (i = 0; i < 2; i++) {
       velem[i].src_offset = i * 4 * sizeof(float);
       velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[i].vertex_buffer_index = ctx->base.vb_slot;
    }
    ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
@@ -253,20 +255,25 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       memset(&velem[0], 0, sizeof(velem[0]) * 2);
       velem[0].src_offset = 0;
       velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[0].vertex_buffer_index = ctx->base.vb_slot;
       velem[1].src_offset = 4 * sizeof(float);
       velem[1].src_format = PIPE_FORMAT_R32G32B32A32_SINT;
+      velem[1].vertex_buffer_index = ctx->base.vb_slot;
       ctx->velem_sint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
       memset(&velem[0], 0, sizeof(velem[0]) * 2);
       velem[0].src_offset = 0;
       velem[0].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velem[0].vertex_buffer_index = ctx->base.vb_slot;
       velem[1].src_offset = 4 * sizeof(float);
       velem[1].src_format = PIPE_FORMAT_R32G32B32A32_UINT;
+      velem[1].vertex_buffer_index = ctx->base.vb_slot;
       ctx->velem_uint_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
    }
 
    if (ctx->has_stream_out) {
       velem[0].src_format = PIPE_FORMAT_R32_UINT;
+      velem[0].vertex_buffer_index = ctx->base.vb_slot;
       ctx->velem_state_readbuf = pipe->create_vertex_elements_state(pipe, 1, &velem[0]);
    }
 
@@ -387,7 +394,6 @@ static void blitter_unset_running_flag(struct blitter_context_priv *ctx)
 
 static void blitter_check_saved_vertex_states(struct blitter_context_priv *ctx)
 {
-   assert(ctx->base.saved_num_vertex_buffers != ~0);
    assert(ctx->base.saved_velem_state != INVALID_PTR);
    assert(ctx->base.saved_vs != INVALID_PTR);
    assert(!ctx->has_geometry_shader || ctx->base.saved_gs != INVALID_PTR);
@@ -400,18 +406,10 @@ static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
    struct pipe_context *pipe = ctx->base.pipe;
    unsigned i;
 
-   /* Vertex buffers. */
-   pipe->set_vertex_buffers(pipe,
-                            ctx->base.saved_num_vertex_buffers,
-                            ctx->base.saved_vertex_buffers);
-
-   for (i = 0; i < ctx->base.saved_num_vertex_buffers; i++) {
-      if (ctx->base.saved_vertex_buffers[i].buffer) {
-         pipe_resource_reference(&ctx->base.saved_vertex_buffers[i].buffer,
-                                 NULL);
-      }
-   }
-   ctx->base.saved_num_vertex_buffers = ~0;
+   /* Vertex buffer. */
+   pipe->set_vertex_buffers(pipe, ctx->base.vb_slot, 1,
+                            &ctx->base.saved_vertex_buffer);
+   pipe_resource_reference(&ctx->base.saved_vertex_buffer.buffer, NULL);
 
    /* Vertex elements. */
    pipe->bind_vertex_elements_state(pipe, ctx->base.saved_velem_state);
@@ -935,8 +933,8 @@ static void blitter_draw(struct blitter_context_priv *ctx,
    u_upload_data(ctx->upload, 0, sizeof(ctx->vertices), ctx->vertices,
                  &offset, &buf);
    u_upload_unmap(ctx->upload);
-   util_draw_vertex_buffer(ctx->base.pipe, NULL, buf, offset,
-                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+   util_draw_vertex_buffer(ctx->base.pipe, NULL, buf, ctx->base.vb_slot,
+                           offset, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
    pipe_resource_reference(&buf, NULL);
 }
 
@@ -1687,7 +1685,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    vb.buffer_offset = srcx;
    vb.stride = 4;
 
-   pipe->set_vertex_buffers(pipe, 1, &vb);
+   pipe->set_vertex_buffers(pipe, ctx->base.vb_slot, 1, &vb);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state_readbuf);
    pipe->bind_vs_state(pipe, ctx->vs_pos_only);
    if (ctx->has_geometry_shader)

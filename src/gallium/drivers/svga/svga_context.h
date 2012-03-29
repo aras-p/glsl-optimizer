@@ -234,8 +234,6 @@ struct svga_state
       unsigned flag_1d;
       unsigned flag_srgb;
    } tex_flags;
-
-   boolean any_user_vertex_buffers;
 };
 
 struct svga_prescale {

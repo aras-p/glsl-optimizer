@@ -495,41 +495,42 @@ void r600_vertex_buffers_dirty(struct r600_context *rctx)
 	}
 }
 
-static void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-			     const struct pipe_vertex_buffer *input)
+static void r600_set_vertex_buffers(struct pipe_context *ctx,
+				    unsigned start_slot, unsigned count,
+				    const struct pipe_vertex_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertexbuf_state *state = &rctx->vertex_buffer_state;
-	struct pipe_vertex_buffer *vb = state->vb;
+	struct pipe_vertex_buffer *vb = state->vb + start_slot;
 	unsigned i;
-	/* This sets 1-bit for buffers with index >= count. */
-	uint32_t disable_mask = ~((1ull << count) - 1);
+	uint32_t disable_mask = 0;
 	/* These are the new buffers set by this function. */
 	uint32_t new_buffer_mask = 0;
 
-	/* Set buffers with index >= count to NULL. */
-	uint32_t remaining_buffers_mask =
-		rctx->vertex_buffer_state.enabled_mask & disable_mask;
-
-	while (remaining_buffers_mask) {
-		i = u_bit_scan(&remaining_buffers_mask);
-		pipe_resource_reference(&vb[i].buffer, NULL);
-	}
-
 	/* Set vertex buffers. */
-	for (i = 0; i < count; i++) {
-		if (memcmp(&input[i], &vb[i], sizeof(struct pipe_vertex_buffer))) {
-			if (input[i].buffer) {
-				vb[i].stride = input[i].stride;
-				vb[i].buffer_offset = input[i].buffer_offset;
-				pipe_resource_reference(&vb[i].buffer, input[i].buffer);
-				new_buffer_mask |= 1 << i;
-			} else {
-				pipe_resource_reference(&vb[i].buffer, NULL);
-				disable_mask |= 1 << i;
+	if (input) {
+		for (i = 0; i < count; i++) {
+			if (memcmp(&input[i], &vb[i], sizeof(struct pipe_vertex_buffer))) {
+				if (input[i].buffer) {
+					vb[i].stride = input[i].stride;
+					vb[i].buffer_offset = input[i].buffer_offset;
+					pipe_resource_reference(&vb[i].buffer, input[i].buffer);
+					new_buffer_mask |= 1 << i;
+				} else {
+					pipe_resource_reference(&vb[i].buffer, NULL);
+					disable_mask |= 1 << i;
+				}
 			}
 		}
-        }
+	} else {
+		for (i = 0; i < count; i++) {
+			pipe_resource_reference(&vb[i].buffer, NULL);
+		}
+		disable_mask = ((1ull << count) - 1);
+	}
+
+	disable_mask <<= start_slot;
+	new_buffer_mask <<= start_slot;
 
 	rctx->vertex_buffer_state.enabled_mask &= ~disable_mask;
 	rctx->vertex_buffer_state.dirty_mask &= rctx->vertex_buffer_state.enabled_mask;
@@ -1371,7 +1372,7 @@ void r600_draw_rectangle(struct blitter_context *blitter,
 	}
 
 	/* draw */
-	util_draw_vertex_buffer(&rctx->context, NULL, buf, offset,
+	util_draw_vertex_buffer(&rctx->context, NULL, buf, rctx->blitter->vb_slot, offset,
 				R600_PRIM_RECTANGLE_LIST, 3, 2);
 	pipe_resource_reference(&buf, NULL);
 }

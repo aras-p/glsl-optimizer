@@ -23,6 +23,7 @@
  *
  */
 
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 
 #include "nouveau/nouveau_gldefs.h"
@@ -393,21 +394,15 @@ nv30_set_viewport_state(struct pipe_context *pipe,
 
 static void
 nv30_set_vertex_buffers(struct pipe_context *pipe,
-                        unsigned count,
+                        unsigned start_slot, unsigned count,
                         const struct pipe_vertex_buffer *vb)
 {
     struct nv30_context *nv30 = nv30_context(pipe);
-    unsigned i;
 
     nouveau_bufctx_reset(nv30->bufctx, BUFCTX_VTXBUF);
 
-    for (i = 0; i < count; ++i)
-       pipe_resource_reference(&nv30->vtxbuf[i].buffer, vb[i].buffer);
-    for (; i < nv30->num_vtxbufs; ++i)
-       pipe_resource_reference(&nv30->vtxbuf[i].buffer, NULL);
-
-    memcpy(nv30->vtxbuf, vb, sizeof(*vb) * count);
-    nv30->num_vtxbufs = count;
+    util_set_vertex_buffers_count(nv30->vtxbuf, &nv30->num_vtxbufs,
+                                  vb, start_slot, count);
 
     nv30->dirty |= NV30_NEW_ARRAYS;
 }

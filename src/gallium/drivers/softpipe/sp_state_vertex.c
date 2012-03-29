@@ -33,6 +33,7 @@
 #include "sp_state.h"
 
 #include "util/u_memory.h"
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 #include "draw/draw_context.h"
@@ -79,20 +80,20 @@ softpipe_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
 
 static void
 softpipe_set_vertex_buffers(struct pipe_context *pipe,
-                            unsigned count,
+                            unsigned start_slot, unsigned count,
                             const struct pipe_vertex_buffer *buffers)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   util_copy_vertex_buffers(softpipe->vertex_buffer,
-                            &softpipe->num_vertex_buffers,
-                            buffers, count);
+   util_set_vertex_buffers_count(softpipe->vertex_buffer,
+                                 &softpipe->num_vertex_buffers,
+                                 buffers, start_slot, count);
 
    softpipe->dirty |= SP_NEW_VERTEX;
 
-   draw_set_vertex_buffers(softpipe->draw, count, buffers);
+   draw_set_vertex_buffers(softpipe->draw, start_slot, count, buffers);
 }
 
 

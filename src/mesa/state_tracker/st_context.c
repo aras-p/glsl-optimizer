@@ -173,7 +173,8 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
       memset(&st->velems_util_draw[i], 0, sizeof(struct pipe_vertex_element));
       st->velems_util_draw[i].src_offset = i * 4 * sizeof(float);
       st->velems_util_draw[i].instance_divisor = 0;
-      st->velems_util_draw[i].vertex_buffer_index = 0;
+      st->velems_util_draw[i].vertex_buffer_index =
+            cso_get_aux_vertex_buffer_slot(st->cso_context);
       st->velems_util_draw[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
 

@@ -79,7 +79,7 @@ set_vertices(struct vertex *verts, unsigned num_verts)
                                               num_verts * sizeof(struct vertex),
                                               verts);
 
-   info.ctx->set_vertex_buffers(info.ctx, 1, &vbuf);
+   info.ctx->set_vertex_buffers(info.ctx, 0, 1, &vbuf);
 }
 
 static void set_vertex_shader( void )

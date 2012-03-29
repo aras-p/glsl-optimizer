@@ -621,7 +621,7 @@ galahad_context_set_fragment_sampler_views(struct pipe_context *_pipe,
 
 static void
 galahad_context_set_vertex_buffers(struct pipe_context *_pipe,
-                            unsigned num_buffers,
+                            unsigned start_slot, unsigned num_buffers,
                             const struct pipe_vertex_buffer *_buffers)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
@@ -638,7 +638,7 @@ galahad_context_set_vertex_buffers(struct pipe_context *_pipe,
    }
 
    pipe->set_vertex_buffers(pipe,
-                            num_buffers,
+                            start_slot, num_buffers,
                             buffers);
 }
 

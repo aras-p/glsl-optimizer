@@ -311,7 +311,7 @@ vl_matrix_filter_render(struct vl_matrix_filter *filter,
    filter->pipe->bind_fs_state(filter->pipe, filter->fs);
    filter->pipe->set_framebuffer_state(filter->pipe, &fb_state);
    filter->pipe->set_viewport_state(filter->pipe, &viewport);
-   filter->pipe->set_vertex_buffers(filter->pipe, 1, &filter->quad);
+   filter->pipe->set_vertex_buffers(filter->pipe, 0, 1, &filter->quad);
    filter->pipe->bind_vertex_elements_state(filter->pipe, filter->ves);
 
    util_draw_arrays(filter->pipe, PIPE_PRIM_QUADS, 0, 4);

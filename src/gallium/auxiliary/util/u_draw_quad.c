@@ -42,6 +42,7 @@ void
 util_draw_vertex_buffer(struct pipe_context *pipe,
                         struct cso_context *cso,
                         struct pipe_resource *vbuf,
+                        uint vbuf_slot,
                         uint offset,
                         uint prim_type,
                         uint num_verts,
@@ -60,10 +61,10 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    /* note: vertex elements already set by caller */
 
    if (cso) {
-      cso_set_vertex_buffers(cso, 1, &vbuffer);
+      cso_set_vertex_buffers(cso, vbuf_slot, 1, &vbuffer);
       cso_draw_arrays(cso, prim_type, 0, num_verts);
    } else {
-      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+      pipe->set_vertex_buffers(pipe, vbuf_slot, 1, &vbuffer);
       util_draw_arrays(pipe, prim_type, 0, num_verts);
    }
 }
@@ -86,7 +87,7 @@ util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
 
    /* note: vertex elements already set by caller */
 
-   cso_set_vertex_buffers(cso, 1, &vbuffer);
+   cso_set_vertex_buffers(cso, 0, 1, &vbuffer);
    cso_draw_arrays(cso, prim_type, 0, num_verts);
 }
 
@@ -97,6 +98,7 @@ util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
  */
 void 
 util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
+                  uint vbuf_slot,
                   float x0, float y0, float x1, float y1, float z)
 {
    uint numAttribs = 2, i, j;
@@ -145,7 +147,8 @@ util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
       goto out;
    pipe_buffer_write(pipe, vbuf, 0, vertexBytes, v);
 
-   util_draw_vertex_buffer(pipe, cso, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+   util_draw_vertex_buffer(pipe, cso, vbuf, vbuf_slot, 0,
+                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 
 out:
    if (vbuf)

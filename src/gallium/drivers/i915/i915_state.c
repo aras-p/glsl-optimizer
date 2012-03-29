@@ -30,6 +30,7 @@
 
 
 #include "draw/draw_context.h"
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -926,19 +927,18 @@ static void i915_delete_rasterizer_state(struct pipe_context *pipe,
 }
 
 static void i915_set_vertex_buffers(struct pipe_context *pipe,
-                                    unsigned count,
+                                    unsigned start_slot, unsigned count,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct i915_context *i915 = i915_context(pipe);
    struct draw_context *draw = i915->draw;
 
-   util_copy_vertex_buffers(i915->vertex_buffers,
-                            &i915->nr_vertex_buffers,
-                            buffers, count);
+   util_set_vertex_buffers_count(i915->vertex_buffers,
+                                 &i915->nr_vertex_buffers,
+                                 buffers, start_slot, count);
 
    /* pass-through to draw module */
-   draw_set_vertex_buffers(draw, count, buffers);
-
+   draw_set_vertex_buffers(draw, start_slot, count, buffers);
 }
 
 static void *

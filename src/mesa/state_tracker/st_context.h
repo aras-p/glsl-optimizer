@@ -188,6 +188,9 @@ struct st_context
    int force_msaa;
    void *winsys_drawable_handle;
 
+   /* The number of vertex buffers from the last call of validate_arrays. */
+   unsigned last_num_vbuffers;
+
    /* Active render condition. */
    struct pipe_query *render_condition;
    unsigned condition_mode;

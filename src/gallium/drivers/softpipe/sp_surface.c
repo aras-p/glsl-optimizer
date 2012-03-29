@@ -56,8 +56,7 @@ static void sp_blit(struct pipe_context *pipe,
 
    /* XXX turn off occlusion and streamout queries */
 
-   util_blitter_save_vertex_buffers(sp->blitter, sp->num_vertex_buffers,
-                                    sp->vertex_buffer);
+   util_blitter_save_vertex_buffer_slot(sp->blitter, sp->vertex_buffer);
    util_blitter_save_vertex_elements(sp->blitter, sp->velems);
    util_blitter_save_vertex_shader(sp->blitter, sp->vs);
    util_blitter_save_geometry_shader(sp->blitter, sp->gs);

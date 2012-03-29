@@ -1191,8 +1191,6 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     if (r300->skip_rendering)
         return;
 
-    r300->context.set_vertex_buffers(&r300->context, 0, NULL);
-
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
         r300->sprite_coord_enable = 1;
 

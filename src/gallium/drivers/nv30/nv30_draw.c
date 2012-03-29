@@ -379,7 +379,7 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (nv30->draw_dirty & NV30_NEW_CLIP)
       draw_set_clip_state(draw, &nv30->clip);
    if (nv30->draw_dirty & NV30_NEW_ARRAYS) {
-      draw_set_vertex_buffers(draw, nv30->num_vtxbufs, nv30->vtxbuf);
+      draw_set_vertex_buffers(draw, 0, nv30->num_vtxbufs, nv30->vtxbuf);
       draw_set_vertex_elements(draw, nv30->vertex->num_elements, nv30->vertex->pipe);
    }
    if (nv30->draw_dirty & NV30_NEW_FRAGPROG) {
@@ -404,10 +404,14 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    for (i = 0; i < nv30->num_vtxbufs; i++) {
       const void *map = nv30->vtxbuf[i].user_buffer;
-      if (!map)
+      if (!map) {
+         if (!nv30->vtxbuf[i].buffer) {
+            continue;
+         }
          map = pipe_buffer_map(pipe, nv30->vtxbuf[i].buffer,
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transfer[i]);
+      }
       draw_set_mapped_vertex_buffer(draw, i, map);
    }
 

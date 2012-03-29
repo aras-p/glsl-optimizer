@@ -27,6 +27,7 @@
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_blitter.h"
+#include "util/u_helpers.h"
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
 #include "tgsi/tgsi_parse.h"
@@ -2488,12 +2489,12 @@ static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
 	FREE(state);
 }
 
-static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
+static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned start_slot, unsigned count,
 				  const struct pipe_vertex_buffer *buffers)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
+	util_set_vertex_buffers_count(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, start_slot, count);
 }
 
 static void si_set_index_buffer(struct pipe_context *ctx,

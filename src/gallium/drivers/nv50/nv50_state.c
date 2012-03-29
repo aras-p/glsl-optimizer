@@ -21,6 +21,7 @@
  */
 
 #include "pipe/p_defines.h"
+#include "util/u_helpers.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 
@@ -883,30 +884,35 @@ nv50_set_viewport_state(struct pipe_context *pipe,
 
 static void
 nv50_set_vertex_buffers(struct pipe_context *pipe,
-                        unsigned count,
+                        unsigned start_slot, unsigned count,
                         const struct pipe_vertex_buffer *vb)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    unsigned i;
 
-   nv50->vbo_user = nv50->vbo_constant = 0;
+   util_set_vertex_buffers_count(nv50->vtxbuf, &nv50->num_vtxbufs, vb,
+                                 start_slot, count);
+
+   if (!vb) {
+      nv50->vbo_user &= ~(((1ull << count) - 1) << start_slot);
+      nv50->vbo_constant &= ~(((1ull << count) - 1) << start_slot);
+      return;
+   }
 
    for (i = 0; i < count; ++i) {
-      nv50->vtxbuf[i].stride = vb[i].stride;
-      pipe_resource_reference(&nv50->vtxbuf[i].buffer, vb[i].buffer);
+      unsigned dst_index = start_slot + i;
+
       if (!vb[i].buffer && vb[i].user_buffer) {
-         nv50->vtxbuf[i].user_buffer = vb[i].user_buffer;
-         nv50->vbo_user |= 1 << i;
+         nv50->vbo_user |= 1 << dst_index;
          if (!vb[i].stride)
-            nv50->vbo_constant |= 1 << i;
+            nv50->vbo_constant |= 1 << dst_index;
+         else
+            nv50->vbo_constant &= ~(1 << dst_index);
       } else {
-         nv50->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
+         nv50->vbo_user &= ~(1 << dst_index);
+         nv50->vbo_constant &= ~(1 << dst_index);
       }
    }
-   for (; i < nv50->num_vtxbufs; ++i)
-      pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
-
-   nv50->num_vtxbufs = count;
 
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_VERTEX);
 

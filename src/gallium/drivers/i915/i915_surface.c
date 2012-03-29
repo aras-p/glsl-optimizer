@@ -55,7 +55,7 @@ i915_util_blitter_save_states(struct i915_context *i915)
    util_blitter_save_viewport(i915->blitter, &i915->viewport);
    util_blitter_save_scissor(i915->blitter, &i915->scissor);
    util_blitter_save_vertex_elements(i915->blitter, i915->velems);
-   util_blitter_save_vertex_buffers(i915->blitter, i915->nr_vertex_buffers,
+   util_blitter_save_vertex_buffer_slot(i915->blitter,
                                     i915->vertex_buffers);
 
    util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);

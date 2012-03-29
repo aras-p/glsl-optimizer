@@ -1060,7 +1060,7 @@ trace_context_set_vertex_sampler_views(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_set_vertex_buffers(struct pipe_context *_pipe,
-                                 unsigned num_buffers,
+                                 unsigned start_slot, unsigned num_buffers,
                                  const struct pipe_vertex_buffer *buffers)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
@@ -1070,6 +1070,7 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "set_vertex_buffers");
 
    trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, start_slot);
    trace_dump_arg(uint, num_buffers);
 
    trace_dump_arg_begin("buffers");
@@ -1081,10 +1082,10 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
       memcpy(_buffers, buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)
          _buffers[i].buffer = trace_resource_unwrap(tr_ctx, buffers[i].buffer);
-      pipe->set_vertex_buffers(pipe, num_buffers, _buffers);
+      pipe->set_vertex_buffers(pipe, start_slot, num_buffers, _buffers);
       FREE(_buffers);
    } else {
-      pipe->set_vertex_buffers(pipe, num_buffers, NULL);
+      pipe->set_vertex_buffers(pipe, start_slot, num_buffers, NULL);
    }
 
    trace_dump_call_end();

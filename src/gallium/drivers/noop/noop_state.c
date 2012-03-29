@@ -215,8 +215,9 @@ static void noop_set_index_buffer(struct pipe_context *ctx,
 {
 }
 
-static void noop_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-					const struct pipe_vertex_buffer *buffers)
+static void noop_set_vertex_buffers(struct pipe_context *ctx,
+				    unsigned start_slot, unsigned count,
+				    const struct pipe_vertex_buffer *buffers)
 {
 }
 

@@ -36,6 +36,7 @@
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
 #include "util/u_inlines.h"
+#include "util/u_helpers.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
@@ -318,14 +319,14 @@ void draw_set_viewport_state( struct draw_context *draw,
 
 void
 draw_set_vertex_buffers(struct draw_context *draw,
-                        unsigned count,
+                        unsigned start_slot, unsigned count,
                         const struct pipe_vertex_buffer *buffers)
 {
-   assert(count <= PIPE_MAX_ATTRIBS);
+   assert(start_slot + count <= PIPE_MAX_ATTRIBS);
 
-   util_copy_vertex_buffers(draw->pt.vertex_buffer,
-                            &draw->pt.nr_vertex_buffers,
-                            buffers, count);
+   util_set_vertex_buffers_count(draw->pt.vertex_buffer,
+                                 &draw->pt.nr_vertex_buffers,
+                                 buffers, start_slot, count);
 }
 
 

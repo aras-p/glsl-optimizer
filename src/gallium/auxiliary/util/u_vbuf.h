@@ -64,14 +64,15 @@ void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps);
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
-              struct u_vbuf_caps *caps);
+              struct u_vbuf_caps *caps, unsigned aux_vertex_buffer_index);
 
 void u_vbuf_destroy(struct u_vbuf *mgr);
 
 /* State and draw functions. */
 void u_vbuf_set_vertex_elements(struct u_vbuf *mgr, unsigned count,
                                 const struct pipe_vertex_element *states);
-void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
+void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr,
+                               unsigned start_slot, unsigned count,
                                const struct pipe_vertex_buffer *bufs);
 void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
                              const struct pipe_index_buffer *ib);
@@ -80,7 +81,7 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info);
 /* Save/restore functionality. */
 void u_vbuf_save_vertex_elements(struct u_vbuf *mgr);
 void u_vbuf_restore_vertex_elements(struct u_vbuf *mgr);
-void u_vbuf_save_vertex_buffers(struct u_vbuf *mgr);
-void u_vbuf_restore_vertex_buffers(struct u_vbuf *mgr);
+void u_vbuf_save_aux_vertex_buffer_slot(struct u_vbuf *mgr);
+void u_vbuf_restore_aux_vertex_buffer_slot(struct u_vbuf *mgr);
 
 #endif

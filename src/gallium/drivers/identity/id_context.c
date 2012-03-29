@@ -565,7 +565,7 @@ identity_set_vertex_sampler_views(struct pipe_context *_pipe,
 
 static void
 identity_set_vertex_buffers(struct pipe_context *_pipe,
-                            unsigned num_buffers,
+                            unsigned start_slot, unsigned num_buffers,
                             const struct pipe_vertex_buffer *_buffers)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
@@ -582,7 +582,7 @@ identity_set_vertex_buffers(struct pipe_context *_pipe,
    }
 
    pipe->set_vertex_buffers(pipe,
-                            num_buffers,
+                            start_slot, num_buffers,
                             buffers);
 }
 

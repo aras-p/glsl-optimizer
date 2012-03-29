@@ -1040,7 +1040,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 {
    assert(renderer->state == RENDERER_STATE_POLYGON_STENCIL);
 
-   cso_set_vertex_buffers(renderer->cso, 1, vbuf);
+   cso_set_vertex_buffers(renderer->cso, 0, 1, vbuf);
 
    if (!renderer->u.polygon_stencil.manual_two_sides) {
       cso_draw_arrays(renderer->cso, mode, start, count);

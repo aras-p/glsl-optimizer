@@ -25,6 +25,7 @@
 
 #include "util/u_framebuffer.h"
 #include "util/u_half.h"
+#include "util/u_helpers.h"
 #include "util/u_math.h"
 #include "util/u_mm.h"
 #include "util/u_memory.h"
@@ -1626,7 +1627,7 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 }
 
 static void r300_set_vertex_buffers_hwtcl(struct pipe_context* pipe,
-                                    unsigned count,
+                                    unsigned start_slot, unsigned count,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
@@ -1637,31 +1638,31 @@ static void r300_set_vertex_buffers_hwtcl(struct pipe_context* pipe,
         count = 1;
     }
 
-    util_copy_vertex_buffers(r300->vertex_buffer,
-                             &r300->nr_vertex_buffers,
-                             buffers, count);
+    util_set_vertex_buffers_count(r300->vertex_buffer,
+                                  &r300->nr_vertex_buffers,
+                                  buffers, start_slot, count);
 
     r300->vertex_arrays_dirty = TRUE;
 }
 
 static void r300_set_vertex_buffers_swtcl(struct pipe_context* pipe,
-                                    unsigned count,
+                                    unsigned start_slot, unsigned count,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
     unsigned i;
 
-    util_copy_vertex_buffers(r300->vertex_buffer,
-                             &r300->nr_vertex_buffers,
-                             buffers, count);
-    draw_set_vertex_buffers(r300->draw, count, buffers);
+    util_set_vertex_buffers_count(r300->vertex_buffer,
+                                  &r300->nr_vertex_buffers,
+                                  buffers, start_slot, count);
+    draw_set_vertex_buffers(r300->draw, start_slot, count, buffers);
 
     for (i = 0; i < count; i++) {
         if (buffers[i].user_buffer) {
-            draw_set_mapped_vertex_buffer(r300->draw, i,
+            draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
                                           buffers[i].user_buffer);
         } else if (buffers[i].buffer) {
-            draw_set_mapped_vertex_buffer(r300->draw, i,
+            draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
                 r300_resource(buffers[i].buffer)->malloced_buffer);
         }
     }

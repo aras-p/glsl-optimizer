@@ -637,7 +637,9 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    }
 
    u_upload_unmap(st->uploader);
-   util_draw_vertex_buffer(pipe, st->cso_context, buf, offset,
+   util_draw_vertex_buffer(pipe, st->cso_context, buf,
+                           cso_get_aux_vertex_buffer_slot(st->cso_context),
+                           offset,
 			   PIPE_PRIM_QUADS,
 			   4,  /* verts */
 			   3); /* attribs/vert */
@@ -683,7 +685,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
-   cso_save_vertex_buffers(cso);
+   cso_save_aux_vertex_buffer_slot(cso);
    if (write_stencil) {
       cso_save_depth_stencil_alpha(cso);
       cso_save_blend(cso);
@@ -808,7 +810,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_vertex_shader(cso);
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
-   cso_restore_vertex_buffers(cso);
+   cso_restore_aux_vertex_buffer_slot(cso);
    cso_restore_stream_outputs(cso);
    if (write_stencil) {
       cso_restore_depth_stencil_alpha(cso);

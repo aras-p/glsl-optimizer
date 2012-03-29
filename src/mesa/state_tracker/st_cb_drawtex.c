@@ -228,7 +228,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    cso_save_vertex_shader(cso);
    cso_save_geometry_shader(cso);
    cso_save_vertex_elements(cso);
-   cso_save_vertex_buffers(cso);
+   cso_save_aux_vertex_buffer_slot(cso);
 
    {
       void *vs = lookup_shader(pipe, numAttribs,
@@ -266,6 +266,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
 
    util_draw_vertex_buffer(pipe, cso, vbuffer,
+			   cso_get_aux_vertex_buffer_slot(cso),
                            offset,  /* offset */
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
@@ -279,7 +280,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    cso_restore_vertex_shader(cso);
    cso_restore_geometry_shader(cso);
    cso_restore_vertex_elements(cso);
-   cso_restore_vertex_buffers(cso);
+   cso_restore_aux_vertex_buffer_slot(cso);
    cso_restore_stream_outputs(cso);
 }
 
