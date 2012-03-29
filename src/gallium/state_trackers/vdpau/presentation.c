@@ -368,14 +368,15 @@ vlVdpPresentationQueueQuerySurfaceStatus(VdpPresentationQueue presentation_queue
       if (screen->fence_signalled(screen, surf->fence)) {
          screen->fence_reference(screen, &surf->fence, NULL);
          *status = VDP_PRESENTATION_QUEUE_STATUS_VISIBLE;
+         pipe_mutex_unlock(pq->device->mutex);
 
          // We actually need to query the timestamp of the last VSYNC event from the hardware
          vlVdpPresentationQueueGetTime(presentation_queue, first_presentation_time);
          *first_presentation_time += 1;
       } else {
          *status = VDP_PRESENTATION_QUEUE_STATUS_QUEUED;
+         pipe_mutex_unlock(pq->device->mutex);
       }
-      pipe_mutex_unlock(pq->device->mutex);
    }
 
    return VDP_STATUS_OK;
