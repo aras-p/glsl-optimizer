@@ -43,7 +43,7 @@ public:
 
    bool assign(Value **, int nr);
    void release(const Value *);
-   void occupy(const Value *);
+   bool occupy(const Value *);
 
    int getMaxAssigned(DataFile f) const { return fill[f]; }
 
@@ -148,15 +148,16 @@ RegisterSet::assign(Value **def, int nr)
    return true;
 }
 
-void
+bool
 RegisterSet::occupy(const Value *val)
 {
    int id = val->reg.data.id;
-   if (id < 0)
-      return;
    unsigned int f = val->reg.file;
 
    uint32_t m = (1 << (val->reg.size >> unit[f])) - 1;
+
+   if (id < 0 || bits[f][id / 32] & m << (id % 32))
+      return false;
 
    INFO_DBG(0, REG_ALLOC, "reg occupy: %u[%i] %x\n", f, id, m);
 
@@ -164,6 +165,8 @@ RegisterSet::occupy(const Value *val)
 
    if (fill[f] < id)
       fill[f] = id;
+
+   return true;
 }
 
 void
@@ -205,6 +208,11 @@ private:
    private:
       virtual bool visit(BasicBlock *);
       inline bool needNewElseBlock(BasicBlock *b, BasicBlock *p);
+   };
+
+   class ArgumentMovesPass : public Pass {
+   private:
+      virtual bool visit(BasicBlock *);
    };
 
    class BuildIntervalsPass : public Pass {
@@ -339,6 +347,70 @@ RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
          pb->insertBefore(pb->getExit(), mov);
       }
       ++j;
+   }
+
+   return true;
+}
+
+bool
+RegAlloc::ArgumentMovesPass::visit(BasicBlock *bb)
+{
+   // Bind function call inputs/outputs to the same physical register
+   // the callee uses, inserting moves as appropriate for the case a
+   // conflict arises.
+   for (Instruction *i = bb->getEntry(); i; i = i->next) {
+      FlowInstruction *cal = i->asFlow();
+      if (!cal || cal->op != OP_CALL || cal->builtin)
+         continue;
+      RegisterSet clobberSet(prog->getTarget());
+
+      // Bind input values.
+      for (int s = 0; cal->srcExists(s); ++s) {
+         LValue *tmp = new_LValue(func, cal->getSrc(s)->asLValue());
+         tmp->reg.data.id = cal->target.fn->ins[s].rep()->reg.data.id;
+
+         Instruction *mov =
+            new_Instruction(func, OP_MOV, typeOfSize(tmp->reg.size));
+         mov->setDef(0, tmp);
+         mov->setSrc(0, cal->getSrc(s));
+         cal->setSrc(s, tmp);
+
+         bb->insertBefore(cal, mov);
+      }
+
+      // Bind output values.
+      for (int d = 0; cal->defExists(d); ++d) {
+         LValue *tmp = new_LValue(func, cal->getDef(d)->asLValue());
+         tmp->reg.data.id = cal->target.fn->outs[d].rep()->reg.data.id;
+
+         Instruction *mov =
+            new_Instruction(func, OP_MOV, typeOfSize(tmp->reg.size));
+         mov->setSrc(0, tmp);
+         mov->setDef(0, cal->getDef(d));
+         cal->setDef(d, tmp);
+
+         bb->insertAfter(cal, mov);
+         clobberSet.occupy(tmp);
+      }
+
+      // Bind clobbered values.
+      for (std::deque<Value *>::iterator it = cal->target.fn->clobbers.begin();
+           it != cal->target.fn->clobbers.end();
+           ++it) {
+         if (clobberSet.occupy(*it)) {
+            Value *tmp = new_LValue(func, (*it)->asLValue());
+            tmp->reg.data.id = (*it)->reg.data.id;
+            cal->setDef(cal->defCount(), tmp);
+         }
+      }
+   }
+
+   // Update the clobber set of the function.
+   if (BasicBlock::get(func->cfgExit) == bb) {
+      func->buildDefSets();
+      for (unsigned int i = 0; i < bb->defSet.getSize(); ++i)
+         if (bb->defSet.test(i))
+            func->clobbers.push_back(func->getLValue(i));
    }
 
    return true;
@@ -737,7 +809,8 @@ bool
 RegAlloc::execFunc()
 {
    InsertConstraintsPass insertConstr;
-   PhiMovesPass insertMoves;
+   PhiMovesPass insertPhiMoves;
+   ArgumentMovesPass insertArgMoves;
    BuildIntervalsPass buildIntervals;
 
    unsigned int i;
@@ -747,7 +820,11 @@ RegAlloc::execFunc()
    if (!ret)
       goto out;
 
-   ret = insertMoves.run(func);
+   ret = insertPhiMoves.run(func);
+   if (!ret)
+      goto out;
+
+   ret = insertArgMoves.run(func, true);
    if (!ret)
       goto out;
 
