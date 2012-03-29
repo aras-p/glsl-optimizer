@@ -19,7 +19,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-AM_CFLAGS = $(DEFINES)
+AM_CFLAGS = $(DEFINES) -I$(top_builddir)/src/gtest/include
+AM_CXXFLAGS = $(DEFINES) -I$(top_builddir)/src/gtest/include
 
 lib_LTLIBRARIES = libgtest.la
 
