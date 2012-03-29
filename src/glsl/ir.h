@@ -1027,7 +1027,7 @@ enum ir_expression_operation {
    /**
     * A sentinel marking the last of all operations.
     */
-   ir_last_opcode = ir_last_binop
+   ir_last_opcode = ir_quadop_vector
 };
 
 class ir_expression : public ir_rvalue {
