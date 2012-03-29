@@ -145,7 +145,6 @@ util_draw_range_elements(struct pipe_context *pipe,
 unsigned
 util_draw_max_index(
       const struct pipe_vertex_buffer *vertex_buffers,
-      unsigned nr_vertex_buffers,
       const struct pipe_vertex_element *vertex_elements,
       unsigned nr_vertex_elements,
       const struct pipe_draw_info *info);

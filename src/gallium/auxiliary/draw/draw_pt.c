@@ -505,7 +505,6 @@ draw_vbo(struct draw_context *draw,
       draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
 
    index_limit = util_draw_max_index(draw->pt.vertex_buffer,
-                                     draw->pt.nr_vertex_buffers,
                                      draw->pt.vertex_element,
                                      draw->pt.nr_vertex_elements,
                                      info);
