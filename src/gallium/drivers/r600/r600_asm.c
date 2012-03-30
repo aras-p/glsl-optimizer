@@ -2712,18 +2712,6 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 	uint32_t *bytecode;
 	int i, r;
 
-	/* Vertex element offsets need special handling. If the offset is
-	 * bigger than what we can put in the fetch instruction we need to
-	 * alter the vertex resource offset. In order to simplify code we
-	 * will bind one resource per element in such cases. It's a worst
-	 * case scenario. */
-	for (i = 0; i < ve->count; i++) {
-		ve->vbuffer_offset[i] = C_SQ_VTX_WORD2_OFFSET & elements[i].src_offset;
-		if (ve->vbuffer_offset[i]) {
-			ve->vbuffer_need_offset = 1;
-		}
-	}
-
 	memset(&bc, 0, sizeof(bc));
 	r600_bytecode_init(&bc, rctx->chip_class, rctx->family);
 
@@ -2752,9 +2740,9 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 	}
 
 	for (i = 0; i < ve->count; i++) {
-		unsigned vbuffer_index;
 		r600_vertex_data_type(ve->elements[i].src_format,
 				      &format, &num_format, &format_comp, &endian);
+
 		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
 			r600_bytecode_clear(&bc);
@@ -2762,10 +2750,14 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 			return -EINVAL;
 		}
 
-		/* see above for vbuffer_need_offset explanation */
-		vbuffer_index = elements[i].vertex_buffer_index;
+		if (elements[i].src_offset > 65535) {
+			r600_bytecode_clear(&bc);
+			R600_ERR("too big src_offset: %u\n", elements[i].src_offset);
+			return -EINVAL;
+		}
+
 		memset(&vtx, 0, sizeof(vtx));
-		vtx.buffer_id = (ve->vbuffer_need_offset ? i : vbuffer_index) + fetch_resource_start;
+		vtx.buffer_id = elements[i].vertex_buffer_index + fetch_resource_start;
 		vtx.fetch_type = elements[i].instance_divisor ? 1 : 0;
 		vtx.src_gpr = elements[i].instance_divisor > 1 ? i + 1 : 0;
 		vtx.src_sel_x = elements[i].instance_divisor ? 3 : 0;

@@ -682,40 +682,19 @@ void r600_set_so_targets(struct pipe_context *ctx,
 
 static void r600_vertex_buffer_update(struct r600_context *rctx)
 {
-	struct r600_pipe_resource_state *rstate;
-	struct r600_resource *rbuffer;
-	struct pipe_vertex_buffer *vertex_buffer;
-	unsigned i, count, offset;
+	unsigned i, count;
 
 	r600_inval_vertex_cache(rctx);
 
-	if (rctx->vertex_elements->vbuffer_need_offset) {
-		/* one resource per vertex elements */
-		count = rctx->vertex_elements->count;
-	} else {
-		/* bind vertex buffer once */
-		count = rctx->vbuf_mgr->nr_real_vertex_buffers;
-	}
+	count = rctx->vbuf_mgr->nr_real_vertex_buffers;
 
 	for (i = 0 ; i < count; i++) {
-		rstate = &rctx->fs_resource[i];
+		struct r600_pipe_resource_state *rstate = &rctx->fs_resource[i];
+		struct pipe_vertex_buffer *vb = &rctx->vbuf_mgr->real_vertex_buffer[i];
 
-		if (rctx->vertex_elements->vbuffer_need_offset) {
-			/* one resource per vertex elements */
-			unsigned vbuffer_index;
-			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i];
-		} else {
-			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[i];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = 0;
-		}
-		if (vertex_buffer == NULL || rbuffer == NULL)
+		if (!vb->buffer) {
 			continue;
-		offset += vertex_buffer->buffer_offset;
+		}
 
 		if (!rstate->id) {
 			if (rctx->chip_class >= EVERGREEN) {
@@ -726,9 +705,9 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 		}
 
 		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(&rctx->context, rstate, rbuffer, offset, vertex_buffer->stride, RADEON_USAGE_READ);
+			evergreen_pipe_mod_buffer_resource(&rctx->context, rstate, (struct r600_resource*)vb->buffer, vb->buffer_offset, vb->stride, RADEON_USAGE_READ);
 		} else {
-			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, vertex_buffer->stride, RADEON_USAGE_READ);
+			r600_pipe_mod_buffer_resource(rstate, (struct r600_resource*)vb->buffer, vb->buffer_offset, vb->stride, RADEON_USAGE_READ);
 		}
 		r600_context_pipe_state_set_fs_resource(rctx, rstate, i);
 	}
