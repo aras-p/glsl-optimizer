@@ -1699,10 +1699,45 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 	r600_write_value(cs, db_render_override); /* R_028D10_DB_RENDER_OVERRIDE */
 }
 
+static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_vertex_buffer *vb = rctx->vbuf_mgr->real_vertex_buffer;
+	unsigned count = rctx->vbuf_mgr->nr_real_vertex_buffers;
+	unsigned i, offset;
+
+	for (i = 0; i < count; i++) {
+		struct r600_resource *rbuffer = (struct r600_resource*)vb[i].buffer;
+
+		if (!rbuffer) {
+			continue;
+		}
+
+		offset = vb[i].buffer_offset;
+
+		/* fetch resources start at index 320 */
+		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 7, 0));
+		r600_write_value(cs, (320 + i) * 7);
+		r600_write_value(cs, offset); /* RESOURCEi_WORD0 */
+		r600_write_value(cs, rbuffer->buf->size - offset - 1); /* RESOURCEi_WORD1 */
+		r600_write_value(cs, /* RESOURCEi_WORD2 */
+				 S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
+				 S_038008_STRIDE(vb[i].stride));
+		r600_write_value(cs, 0); /* RESOURCEi_WORD3 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD4 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD5 */
+		r600_write_value(cs, 0xc0000000); /* RESOURCEi_WORD6 */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ));
+	}
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	r600_init_atom(&rctx->vertex_buffer_state, r600_emit_vertex_buffers, 0, 0);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

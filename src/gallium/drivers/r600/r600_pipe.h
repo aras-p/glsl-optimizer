@@ -237,7 +237,6 @@ struct r600_context {
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
-	struct r600_pipe_resource_state	fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
@@ -282,6 +281,7 @@ struct r600_context {
 	struct r600_surface_sync_cmd	surface_sync_cmd;
 	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_db_misc_state	db_misc_state;
+	struct r600_atom		vertex_buffer_state;
 
 	/* Below are variables from the old r600_context.
 	 */
@@ -318,8 +318,7 @@ struct r600_context {
 	boolean                 predicate_drawing;
 	struct r600_range	ps_resources;
 	struct r600_range	vs_resources;
-	struct r600_range	fs_resources;
-	int			num_ps_resources, num_vs_resources, num_fs_resources;
+	int			num_ps_resources, num_vs_resources;
 
 	unsigned		num_so_targets;
 	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
@@ -334,6 +333,8 @@ struct r600_context {
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
 	void			*dummy_pixel_shader;
+
+	bool			vertex_buffers_dirty;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

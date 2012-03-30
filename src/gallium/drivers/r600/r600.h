@@ -202,7 +202,6 @@ void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
-void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);

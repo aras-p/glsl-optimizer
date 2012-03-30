@@ -718,14 +718,10 @@ int evergreen_context_init(struct r600_context *ctx)
 
 	ctx->num_ps_resources = 176;
 	ctx->num_vs_resources = 160;
-	ctx->num_fs_resources = 16;
 	r = evergreen_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
 	if (r)
 		goto out_err;
 	r = evergreen_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
-	if (r)
-		goto out_err;
-	r = evergreen_resource_range_init(ctx, &ctx->fs_resources, 0x7C00, 16, 0x20);
 	if (r)
 		goto out_err;
 

@@ -660,7 +660,6 @@ void r600_context_fini(struct r600_context *ctx)
 	}
 	r600_free_resource_range(ctx, &ctx->ps_resources, ctx->num_ps_resources);
 	r600_free_resource_range(ctx, &ctx->vs_resources, ctx->num_vs_resources);
-	r600_free_resource_range(ctx, &ctx->fs_resources, ctx->num_fs_resources);
 	free(ctx->blocks);
 }
 
@@ -707,7 +706,6 @@ int r600_setup_block_table(struct r600_context *ctx)
 
 	r600_add_resource_block(ctx, &ctx->ps_resources, ctx->num_ps_resources, &c);
 	r600_add_resource_block(ctx, &ctx->vs_resources, ctx->num_vs_resources, &c);
-	r600_add_resource_block(ctx, &ctx->fs_resources, ctx->num_fs_resources, &c);
 	return 0;
 }
 
@@ -757,14 +755,10 @@ int r600_context_init(struct r600_context *ctx)
 
 	ctx->num_ps_resources = 160;
 	ctx->num_vs_resources = 160;
-	ctx->num_fs_resources = 16;
 	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 160, 0x1c);
 	if (r)
 		goto out_err;
 	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1180, 160, 0x1c);
-	if (r)
-		goto out_err;
-	r = r600_resource_range_init(ctx, &ctx->fs_resources, 0x2300, 16, 0x1c);
 	if (r)
 		goto out_err;
 
@@ -973,13 +967,6 @@ void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r6
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
 {
 	struct r600_block *block = ctx->vs_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
-void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->fs_resources.blocks[rid];
 
 	r600_context_pipe_state_set_resource(ctx, state, block);
 }
@@ -1246,6 +1233,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
+	r600_atom_dirty(ctx, &ctx->vertex_buffer_state);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;

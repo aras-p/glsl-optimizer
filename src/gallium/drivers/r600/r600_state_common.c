@@ -396,19 +396,9 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *buffers)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	int i;
-
-	/* Zero states. */
-	for (i = 0; i < count; i++) {
-		if (!buffers[i].buffer) {
-			r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
-		}
-	}
-	for (; i < rctx->vbuf_mgr->nr_real_vertex_buffers; i++) {
-		r600_context_pipe_state_set_fs_resource(rctx, NULL, i);
-	}
 
 	u_vbuf_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
+	rctx->vertex_buffers_dirty = true;
 }
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,
@@ -680,39 +670,6 @@ void r600_set_so_targets(struct pipe_context *ctx,
 	rctx->streamout_append_bitmask = append_bitmask;
 }
 
-static void r600_vertex_buffer_update(struct r600_context *rctx)
-{
-	unsigned i, count;
-
-	r600_inval_vertex_cache(rctx);
-
-	count = rctx->vbuf_mgr->nr_real_vertex_buffers;
-
-	for (i = 0 ; i < count; i++) {
-		struct r600_pipe_resource_state *rstate = &rctx->fs_resource[i];
-		struct pipe_vertex_buffer *vb = &rctx->vbuf_mgr->real_vertex_buffer[i];
-
-		if (!vb->buffer) {
-			continue;
-		}
-
-		if (!rstate->id) {
-			if (rctx->chip_class >= EVERGREEN) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate);
-			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate);
-			}
-		}
-
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(&rctx->context, rstate, (struct r600_resource*)vb->buffer, vb->buffer_offset, vb->stride, RADEON_USAGE_READ);
-		} else {
-			r600_pipe_mod_buffer_resource(rstate, (struct r600_resource*)vb->buffer, vb->buffer_offset, vb->stride, RADEON_USAGE_READ);
-		}
-		r600_context_pipe_state_set_fs_resource(rctx, rstate, i);
-	}
-}
-
 static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shader * shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -813,8 +770,15 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_update_derived_state(rctx);
 
-	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
-	r600_vertex_buffer_update(rctx);
+	/* Update vertex buffers. */
+	if ((u_vbuf_draw_begin(rctx->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) ||
+	    rctx->vertex_buffers_dirty) {
+		r600_inval_vertex_cache(rctx);
+		rctx->vertex_buffer_state.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 10) *
+						   rctx->vbuf_mgr->nr_real_vertex_buffers;
+		r600_atom_dirty(rctx, &rctx->vertex_buffer_state);
+		rctx->vertex_buffers_dirty = FALSE;
+	}
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */

@@ -1721,10 +1721,53 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 	r600_write_context_reg(cs, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
 }
 
+static void evergreen_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_vertex_buffer *vb = rctx->vbuf_mgr->real_vertex_buffer;
+	unsigned count = rctx->vbuf_mgr->nr_real_vertex_buffers;
+	unsigned i;
+	uint64_t va;
+
+	for (i = 0; i < count; i++) {
+		struct r600_resource *rbuffer = (struct r600_resource*)vb[i].buffer;
+
+		if (!rbuffer) {
+			continue;
+		}
+
+		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b.b);
+		va += vb[i].buffer_offset;
+
+		/* fetch resources start at index 992 */
+		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 8, 0));
+		r600_write_value(cs, (992 + i) * 8);
+		r600_write_value(cs, va); /* RESOURCEi_WORD0 */
+		r600_write_value(cs, rbuffer->buf->size - vb[i].buffer_offset - 1); /* RESOURCEi_WORD1 */
+		r600_write_value(cs, /* RESOURCEi_WORD2 */
+				 S_030008_ENDIAN_SWAP(r600_endian_swap(32)) |
+				 S_030008_STRIDE(vb[i].stride) |
+				 S_030008_BASE_ADDRESS_HI(va >> 32UL));
+		r600_write_value(cs, /* RESOURCEi_WORD3 */
+				 S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
+				 S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
+				 S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
+				 S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W));
+		r600_write_value(cs, 0); /* RESOURCEi_WORD4 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD5 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD6 */
+		r600_write_value(cs, 0xc0000000); /* RESOURCEi_WORD7 */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ));
+	}
+}
+
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->db_misc_state.atom, evergreen_emit_db_misc_state, 6, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	r600_init_atom(&rctx->vertex_buffer_state, evergreen_emit_vertex_buffers, 0, 0);
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
