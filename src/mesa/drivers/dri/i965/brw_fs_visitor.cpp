@@ -337,6 +337,9 @@ fs_visitor::visit(ir_expression *ir)
 	  * FINISHME: Emit just the MUL if we know an operand is small
 	  * enough.
 	  */
+	 if (intel->gen >= 7 && c->dispatch_width == 16)
+	    fail("16-wide explicit accumulator operands unsupported\n");
+
 	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
 
 	 emit(BRW_OPCODE_MUL, acc, op[0], op[1]);
