@@ -1424,12 +1424,12 @@ instructions. If in doubt double check Direct3D documentation.
 
 .. opcode:: GATHER4 - Gathers the four texels to be used in a bi-linear
                filtering operation and packs them into a single register.
-               Only woth with 2D, 2D array, cubemaps, and cubemaps arrays.
+               Only works with 2D, 2D array, cubemaps, and cubemaps arrays.
                For 2D textures, only the addressing modes of the sampler and
                the top level of any mip pyramid are used. Set W to zero.
                It behaves like the SAMPLE instruction, but a filtered
                sample is not generated. The four samples that contribute
-               to filtering are places into xyzw in cunter-clockwise order,
+               to filtering are placed into xyzw in counter-clockwise order,
                starting with the (u,v) texture coordinate delta at the
                following locations (-, +), (+, +), (+, -), (-, -), where
                the magnitude of the deltas are half a texel.
