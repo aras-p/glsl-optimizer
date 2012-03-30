@@ -139,4 +139,6 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
                  __DRIdrawable * driDrawPriv,
                  __DRIdrawable * driReadPriv);
 
+void aub_dump_bmp(struct gl_context *ctx);
+
 #endif
