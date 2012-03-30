@@ -255,7 +255,7 @@ struct radeon_winsys {
      * \param buf       A winsys buffer object
      * \return          virtual address
      */
-    uint64_t (*buffer_get_virtual_address)(struct pb_buffer *buf);
+    uint64_t (*buffer_get_virtual_address)(struct radeon_winsys_cs_handle *buf);
 
     /**************************************************************************
      * Command submission.

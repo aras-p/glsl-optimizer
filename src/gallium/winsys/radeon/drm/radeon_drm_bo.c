@@ -898,11 +898,9 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
     return TRUE;
 }
 
-static uint64_t radeon_winsys_bo_va(struct pb_buffer *buffer)
+static uint64_t radeon_winsys_bo_va(struct radeon_winsys_cs_handle *buf)
 {
-    struct radeon_bo *bo = get_radeon_bo(buffer);
-
-    return bo->va;
+    return ((struct radeon_bo*)buf)->va;
 }
 
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)

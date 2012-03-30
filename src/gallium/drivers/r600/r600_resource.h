@@ -98,6 +98,4 @@ struct r600_context;
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer, uint32_t *offset);
 
-uint64_t r600_resource_va(struct pipe_screen *screen, struct pipe_resource *resource);
-
 #endif
