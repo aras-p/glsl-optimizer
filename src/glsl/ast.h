@@ -206,7 +206,7 @@ public:
       subexpressions[0] = NULL;
       subexpressions[1] = NULL;
       subexpressions[2] = NULL;
-      primary_expression.identifier = (char *) identifier;
+      primary_expression.identifier = identifier;
       this->non_lvalue_description = NULL;
    }
 
@@ -222,7 +222,7 @@ public:
    ast_expression *subexpressions[3];
 
    union {
-      char *identifier;
+      const char *identifier;
       int int_constant;
       float float_constant;
       unsigned uint_constant;
@@ -317,11 +317,11 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(char *identifier, int is_array, ast_expression *array_size,
+   ast_declaration(const char *identifier, int is_array, ast_expression *array_size,
 		   ast_expression *initializer);
    virtual void print(void) const;
 
-   char *identifier;
+   const char *identifier;
    
    int is_array;
    ast_expression *array_size;
@@ -407,13 +407,13 @@ struct ast_type_qualifier {
 
 class ast_struct_specifier : public ast_node {
 public:
-   ast_struct_specifier(char *identifier, ast_node *declarator_list);
+   ast_struct_specifier(const char *identifier, ast_node *declarator_list);
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state);
 
-   char *name;
+   const char *name;
    exec_list declarations;
 };
 
@@ -568,7 +568,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
-   char *identifier;
+   const char *identifier;
    int is_array;
    ast_expression *array_size;
 
@@ -599,7 +599,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *return_type;
-   char *identifier;
+   const char *identifier;
 
    exec_list parameters;
 

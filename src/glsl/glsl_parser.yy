@@ -58,7 +58,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %union {
    int n;
    float real;
-   char *identifier;
+   const char *identifier;
 
    struct ast_type_qualifier type_qualifier;
 
