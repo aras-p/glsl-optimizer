@@ -494,6 +494,36 @@ util_get_min_point_size(const struct pipe_rasterizer_state *state)
           !state->multisample ? 1.0f : 0.0f;
 }
 
+static INLINE void
+util_query_clear_result(union pipe_query_result *result, unsigned type)
+{
+   switch (type) {
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_GPU_FINISHED:
+      result->b = FALSE;
+      break;
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      result->u64 = 0;
+      break;
+   case PIPE_QUERY_SO_STATISTICS:
+      memset(&result->so_statistics, 0, sizeof(result->so_statistics));
+      break;
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
+      memset(&result->timestamp_disjoint, 0, sizeof(result->timestamp_disjoint));
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      memset(&result->pipeline_statistics, 0, sizeof(result->pipeline_statistics));
+      break;
+   default:
+      assert(0);
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif
