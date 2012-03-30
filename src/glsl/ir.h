@@ -353,8 +353,21 @@ public:
     * Several GLSL semantic checks require knowledge of whether or not a
     * variable has been used.  For example, it is an error to redeclare a
     * variable as invariant after it has been used.
+    *
+    * This is only maintained in the ast_to_hir.cpp path, not in
+    * Mesa's fixed function or ARB program paths.
     */
    unsigned used:1;
+
+   /**
+    * Has this variable been statically assigned?
+    *
+    * This answers whether the variable was assigned in any path of
+    * the shader during ast_to_hir.  This doesn't answer whether it is
+    * still written after dead code removal, nor is it maintained in
+    * non-ast_to_hir.cpp (GLSL parsing) paths.
+    */
+   unsigned assigned:1;
 
    /**
     * Storage class of the variable.

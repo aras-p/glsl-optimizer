@@ -672,6 +672,10 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    void *ctx = state;
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
+   ir_variable *lhs_var = lhs->variable_referenced();
+   if (lhs_var)
+      lhs_var->assigned = true;
+
    if (!error_emitted) {
       if (non_lvalue_description != NULL) {
          _mesa_glsl_error(&lhs_loc, state,

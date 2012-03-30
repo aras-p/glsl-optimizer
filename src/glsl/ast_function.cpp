@@ -152,19 +152,22 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
 	    return false;
 	 }
 
-	 if (actual->variable_referenced()
-	     && actual->variable_referenced()->read_only) {
-	    _mesa_glsl_error(&loc, state,
-			     "function parameter '%s %s' references the "
-			     "read-only variable '%s'",
-			     mode, formal->name,
-			     actual->variable_referenced()->name);
-	    return false;
-	 } else if (!actual->is_lvalue()) {
-	    _mesa_glsl_error(&loc, state,
-			     "function parameter '%s %s' is not an lvalue",
-			     mode, formal->name);
-	    return false;
+	 ir_variable *var = actual->variable_referenced();
+	 if (var) {
+	    if (var->read_only) {
+	       _mesa_glsl_error(&loc, state,
+				"function parameter '%s %s' references the "
+				"read-only variable '%s'",
+				mode, formal->name,
+				actual->variable_referenced()->name);
+	       return false;
+	    } else if (!actual->is_lvalue()) {
+	       _mesa_glsl_error(&loc, state,
+				"function parameter '%s %s' is not an lvalue",
+				mode, formal->name);
+	       return false;
+	    }
+	    var->assigned = true;
 	 }
       }
 
