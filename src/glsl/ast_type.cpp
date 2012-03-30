@@ -29,7 +29,7 @@ extern "C" {
 void
 ast_type_specifier::print(void) const
 {
-   if (type_specifier == ast_struct) {
+   if (structure) {
       structure->print();
    } else {
       printf("%s ", type_name);
@@ -44,72 +44,6 @@ ast_type_specifier::print(void) const
 
       printf("] ");
    }
-}
-
-ast_type_specifier::ast_type_specifier(int specifier)
-      : type_specifier(ast_types(specifier)), type_name(NULL), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none),
-	is_precision_statement(false)
-{
-   static const char *const names[] = {
-      "void",
-      "float",
-      "int",
-      "uint",
-      "bool",
-      "vec2",
-      "vec3",
-      "vec4",
-      "bvec2",
-      "bvec3",
-      "bvec4",
-      "ivec2",
-      "ivec3",
-      "ivec4",
-      "uvec2",
-      "uvec3",
-      "uvec4",
-      "mat2",
-      "mat2x3",
-      "mat2x4",
-      "mat3x2",
-      "mat3",
-      "mat3x4",
-      "mat4x2",
-      "mat4x3",
-      "mat4",
-      "sampler1D",
-      "sampler2D",
-      "sampler2DRect",
-      "sampler3D",
-      "samplerCube",
-      "samplerExternalOES",
-      "sampler1DShadow",
-      "sampler2DShadow",
-      "sampler2DRectShadow",
-      "samplerCubeShadow",
-      "sampler1DArray",
-      "sampler2DArray",
-      "sampler1DArrayShadow",
-      "sampler2DArrayShadow",
-      "isampler1D",
-      "isampler2D",
-      "isampler3D",
-      "isamplerCube",
-      "isampler1DArray",
-      "isampler2DArray",
-      "usampler1D",
-      "usampler2D",
-      "usampler3D",
-      "usamplerCube",
-      "usampler1DArray",
-      "usampler2DArray",
-
-      NULL, /* ast_struct */
-      NULL  /* ast_type_name */
-   };
-
-   type_name = names[specifier];
 }
 
 bool

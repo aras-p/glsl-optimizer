@@ -3904,8 +3904,8 @@ ast_type_specifier::hir(exec_list *instructions,
                           "arrays");
          return NULL;
       }
-      if (this->type_specifier != ast_float
-          && this->type_specifier != ast_int) {
+      if (strcmp(this->type_name, "float") != 0 &&
+	  strcmp(this->type_name, "int") != 0) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements apply only to types "
                           "float and int");
