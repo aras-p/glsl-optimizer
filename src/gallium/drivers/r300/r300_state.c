@@ -1618,15 +1618,14 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (r300->screen->caps.has_tcl) {
-        u_vbuf_set_index_buffer(r300->vbuf_mgr, ib);
+    if (ib) {
+        pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
+        memcpy(&r300->index_buffer, ib, sizeof(*ib));
     } else {
-        if (ib) {
-            pipe_resource_reference(&r300->swtcl_index_buffer.buffer, ib->buffer);
-            memcpy(&r300->swtcl_index_buffer, ib, sizeof(*ib));
-        } else {
-            pipe_resource_reference(&r300->swtcl_index_buffer.buffer, NULL);
-        }
+        pipe_resource_reference(&r300->index_buffer.buffer, NULL);
+    }
+
+    if (!r300->screen->caps.has_tcl) {
         draw_set_index_buffer(r300->draw, ib);
     }
 }

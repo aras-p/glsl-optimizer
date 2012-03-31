@@ -353,6 +353,8 @@ struct r600_context {
 	bool			vertex_buffers_dirty;
 	boolean			dual_src_blend;
 	unsigned color0_format;
+
+	struct pipe_index_buffer index_buffer;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

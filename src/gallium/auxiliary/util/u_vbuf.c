@@ -70,6 +70,9 @@ struct u_vbuf_priv {
    struct translate_cache *translate_cache;
    struct cso_cache *cso_cache;
 
+   /* The index buffer. */
+   struct pipe_index_buffer index_buffer;
+
    /* Vertex element state bound by the state tracker. */
    void *saved_ve;
    /* and its associated helper structure for this module. */
@@ -93,6 +96,9 @@ struct u_vbuf_priv {
    boolean incompatible_vb_layout;
    /* Per-buffer flags. */
    boolean incompatible_vb[PIPE_MAX_ATTRIBS];
+
+   void (*driver_set_index_buffer)(struct pipe_context *pipe,
+				   const struct pipe_index_buffer *);
 };
 
 static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
@@ -124,6 +130,8 @@ static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
                                   0, PIPE_BIND_VERTEX_BUFFER);
 }
 
+static void u_vbuf_install(struct u_vbuf_priv *mgr);
+
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
               unsigned upload_buffer_size,
@@ -146,7 +154,7 @@ u_vbuf_create(struct pipe_context *pipe,
          fetch_alignment == U_VERTEX_FETCH_BYTE_ALIGNED;
 
    u_vbuf_init_format_caps(mgr);
-
+   u_vbuf_install(mgr);
    return &mgr->b;
 }
 
@@ -194,6 +202,9 @@ void u_vbuf_destroy(struct u_vbuf *mgrb)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    unsigned i;
+
+   assert(mgr->pipe->draw);
+   mgr->pipe->draw = NULL;
 
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, NULL);
@@ -256,7 +267,7 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
 
    /* Translate. */
    if (unroll_indices) {
-      struct pipe_index_buffer *ib = &mgr->b.index_buffer;
+      struct pipe_index_buffer *ib = &mgr->index_buffer;
       struct pipe_transfer *transfer = NULL;
       unsigned offset = ib->offset + start_index * ib->index_size;
       uint8_t *map;
@@ -732,9 +743,11 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgrb,
    mgr->b.nr_real_vertex_buffers = count;
 }
 
-void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
-                             const struct pipe_index_buffer *ib)
+static void u_vbuf_set_index_buffer(struct pipe_context *pipe,
+                                    const struct pipe_index_buffer *ib)
 {
+   struct u_vbuf_priv *mgr = pipe->draw;
+
    if (ib && ib->buffer) {
       assert(ib->offset % ib->index_size == 0);
       pipe_resource_reference(&mgr->index_buffer.buffer, ib->buffer);
@@ -743,6 +756,8 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
    } else {
       pipe_resource_reference(&mgr->index_buffer.buffer, NULL);
    }
+
+   mgr->driver_set_index_buffer(pipe, ib);
 }
 
 static void
@@ -1068,7 +1083,7 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
          max_index = info->max_index;
          index_bounds_valid = true;
       } else if (u_vbuf_need_minmax_index(mgr)) {
-         u_vbuf_get_minmax_index(mgr->pipe, &mgr->b.index_buffer, info,
+         u_vbuf_get_minmax_index(mgr->pipe, &mgr->index_buffer, info,
                                  &min_index, &max_index);
          index_bounds_valid = true;
       }
@@ -1160,4 +1175,14 @@ void u_vbuf_draw_end(struct u_vbuf *mgrb)
    if (mgr->fallback_ve) {
       u_vbuf_translate_end(mgr);
    }
+}
+
+static void u_vbuf_install(struct u_vbuf_priv *mgr)
+{
+   struct pipe_context *pipe = mgr->pipe;
+   assert(!pipe->draw);
+
+   pipe->draw = mgr;
+   mgr->driver_set_index_buffer = pipe->set_index_buffer;
+   pipe->set_index_buffer = u_vbuf_set_index_buffer;
 }

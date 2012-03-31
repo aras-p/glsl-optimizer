@@ -579,7 +579,7 @@ struct r300_context {
     void *dsa_decompress_zmask;
 
     struct u_vbuf *vbuf_mgr;
-    struct pipe_index_buffer swtcl_index_buffer;
+    struct pipe_index_buffer index_buffer;
     struct pipe_vertex_buffer swtcl_vertex_buffer[PIPE_MAX_ATTRIBS];
     unsigned swtcl_nr_vertex_buffers;
 

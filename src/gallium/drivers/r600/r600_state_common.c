@@ -382,13 +382,17 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	FREE(state);
 }
 
-
 void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	u_vbuf_set_index_buffer(rctx->vbuf_mgr, ib);
+	if (ib) {
+		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
+	        memcpy(&rctx->index_buffer, ib, sizeof(*ib));
+	} else {
+		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
+	}
 }
 
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
@@ -748,7 +752,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	uint8_t *ptr;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
-	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
+	    (info.indexed && !rctx->index_buffer.buffer) ||
 	    !r600_conv_pipe_prim(info.mode, &prim)) {
 		assert(0);
 		return;
@@ -773,9 +777,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
-		pipe_resource_reference(&ib.buffer, rctx->vbuf_mgr->index_buffer.buffer);
-		ib.index_size = rctx->vbuf_mgr->index_buffer.index_size;
-		ib.offset = rctx->vbuf_mgr->index_buffer.offset + info.start * ib.index_size;
+		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
+		ib.index_size = rctx->index_buffer.index_size;
+		ib.offset = rctx->index_buffer.offset + info.start * ib.index_size;
 
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
