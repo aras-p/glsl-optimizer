@@ -1593,22 +1593,20 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_vertex_buffer dummy_vb = {0};
 
     /* There must be at least one vertex buffer set, otherwise it locks up. */
     if (!count) {
-        dummy_vb.buffer = r300->dummy_vb;
-        buffers = &dummy_vb;
+        buffers = &r300->dummy_vb;
         count = 1;
     }
 
+    util_copy_vertex_buffers(r300->vertex_buffer,
+                             &r300->nr_vertex_buffers,
+                             buffers, count);
+
     if (r300->screen->caps.has_tcl) {
-        u_vbuf_set_vertex_buffers(r300->vbuf_mgr, count, buffers);
         r300->vertex_arrays_dirty = TRUE;
     } else {
-        util_copy_vertex_buffers(r300->swtcl_vertex_buffer,
-                                 &r300->swtcl_nr_vertex_buffers,
-                                 buffers, count);
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 }

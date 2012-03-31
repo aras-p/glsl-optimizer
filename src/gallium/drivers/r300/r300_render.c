@@ -148,7 +148,7 @@ static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
 static void r300_split_index_bias(struct r300_context *r300, int index_bias,
                                   int *buffer_offset, int *index_offset)
 {
-    struct pipe_vertex_buffer *vb, *vbufs = r300->vbuf_mgr->real_vertex_buffer;
+    struct pipe_vertex_buffer *vb, *vbufs = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     unsigned i, size;
     int max_neg_bias;
@@ -367,7 +367,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         velem = &r300->velems->velem[i];
         size[i] = r300->velems->format_size[i] / 4;
         vbi = velem->vertex_buffer_index;
-        vbuf = &r300->vbuf_mgr->real_vertex_buffer[vbi];
+        vbuf = &r300->vertex_buffer[vbi];
         stride[i] = vbuf->stride / 4;
 
         /* Map the buffer. */
@@ -401,7 +401,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (map[vbi]) {
-            r300->rws->buffer_unmap(r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi].buffer)->buf);
+            r300->rws->buffer_unmap(r300_resource(r300->vertex_buffer[vbi].buffer)->buf);
             map[vbi] = NULL;
         }
     }
@@ -754,11 +754,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     }
 
     r300_update_derived_state(r300);
-
-    /* Start the vbuf manager and update buffers if needed. */
-    if (u_vbuf_draw_begin(r300->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) {
-        r300->vertex_arrays_dirty = TRUE;
-    }
+    u_vbuf_draw_begin(r300->vbuf_mgr, &info);
 
     /* Draw. */
     if (info.indexed) {
@@ -831,10 +827,10 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
 
-    for (i = 0; i < r300->swtcl_nr_vertex_buffers; i++) {
-        if (r300->swtcl_vertex_buffer[i].buffer) {
+    for (i = 0; i < r300->nr_vertex_buffers; i++) {
+        if (r300->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
-                                  r300->swtcl_vertex_buffer[i].buffer,
+                                  r300->vertex_buffer[i].buffer,
                                   PIPE_TRANSFER_READ |
                                   PIPE_TRANSFER_UNSYNCHRONIZED,
                                   &vb_transfer[i]);
@@ -856,8 +852,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     draw_flush(r300->draw);
     r300->draw_vbo_locked = FALSE;
 
-    for (i = 0; i < r300->swtcl_nr_vertex_buffers; i++) {
-        if (r300->swtcl_vertex_buffer[i].buffer) {
+    for (i = 0; i < r300->nr_vertex_buffers; i++) {
+        if (r300->vertex_buffer[i].buffer) {
             pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
         }

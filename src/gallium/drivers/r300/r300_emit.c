@@ -823,7 +823,7 @@ void r300_emit_textures_state(struct r300_context *r300,
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
                              boolean indexed, int instance_id)
 {
-    struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->real_vertex_buffer;
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_resource *buf;
     int i;
@@ -1223,10 +1223,11 @@ validate:
                                 r300_resource(r300->vbo)->domain);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
-        struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->real_vertex_buffer;
-        struct pipe_vertex_buffer *last = r300->vbuf_mgr->real_vertex_buffer +
-                                      r300->vbuf_mgr->nr_real_vertex_buffers;
+        struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+        struct pipe_vertex_buffer *last = r300->vertex_buffer +
+                                      r300->nr_vertex_buffers;
         struct pipe_resource *buf;
+
         for (; vbuf != last; vbuf++) {
             buf = vbuf->buffer;
             if (!buf)

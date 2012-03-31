@@ -470,7 +470,7 @@ struct r300_context {
 
     /* When no vertex buffer is set, this one is used instead to prevent
      * hardlocks. */
-    struct pipe_resource *dummy_vb;
+    struct pipe_vertex_buffer dummy_vb;
 
     /* The currently active query. */
     struct r300_query *query_current;
@@ -580,8 +580,8 @@ struct r300_context {
 
     struct u_vbuf *vbuf_mgr;
     struct pipe_index_buffer index_buffer;
-    struct pipe_vertex_buffer swtcl_vertex_buffer[PIPE_MAX_ATTRIBS];
-    unsigned swtcl_nr_vertex_buffers;
+    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+    unsigned nr_vertex_buffers;
 
     struct util_slab_mempool pool_transfers;
 

@@ -400,7 +400,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	u_vbuf_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
+	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
 	rctx->vertex_buffers_dirty = true;
 }
 
@@ -766,11 +766,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_update_derived_state(rctx);
 
 	/* Update vertex buffers. */
-	if ((u_vbuf_draw_begin(rctx->vbuf_mgr, &info) & U_VBUF_BUFFERS_UPDATED) ||
-	    rctx->vertex_buffers_dirty) {
+	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
+	if (rctx->vertex_buffers_dirty) {
 		r600_inval_vertex_cache(rctx);
 		rctx->vertex_buffer_state.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 10) *
-						   rctx->vbuf_mgr->nr_real_vertex_buffers;
+						   rctx->nr_vertex_buffers;
 		r600_atom_dirty(rctx, &rctx->vertex_buffer_state);
 		rctx->vertex_buffers_dirty = FALSE;
 	}

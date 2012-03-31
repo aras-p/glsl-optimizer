@@ -355,6 +355,8 @@ struct r600_context {
 	unsigned color0_format;
 
 	struct pipe_index_buffer index_buffer;
+	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+	unsigned		nr_vertex_buffers;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

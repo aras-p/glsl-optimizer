@@ -70,6 +70,11 @@ struct u_vbuf_priv {
    struct translate_cache *translate_cache;
    struct cso_cache *cso_cache;
 
+   /* Vertex buffers for the driver.
+    * There are no user buffers. */
+   struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
+   int nr_real_vertex_buffers;
+
    /* The index buffer. */
    struct pipe_index_buffer index_buffer;
 
@@ -99,6 +104,9 @@ struct u_vbuf_priv {
 
    void (*driver_set_index_buffer)(struct pipe_context *pipe,
 				   const struct pipe_index_buffer *);
+   void (*driver_set_vertex_buffers)(struct pipe_context *,
+				     unsigned num_buffers,
+				     const struct pipe_vertex_buffer *);
 };
 
 static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
@@ -209,8 +217,8 @@ void u_vbuf_destroy(struct u_vbuf *mgrb)
    for (i = 0; i < mgr->b.nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, NULL);
    }
-   for (i = 0; i < mgr->b.nr_real_vertex_buffers; i++) {
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+   for (i = 0; i < mgr->nr_real_vertex_buffers; i++) {
+      pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
    }
 
    translate_cache_destroy(mgr->translate_cache);
@@ -324,13 +332,13 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
    }
 
    /* Setup the new vertex buffer. */
-   mgr->b.real_vertex_buffer[out_vb].buffer_offset = out_offset;
-   mgr->b.real_vertex_buffer[out_vb].stride = key->output_stride;
+   mgr->real_vertex_buffer[out_vb].buffer_offset = out_offset;
+   mgr->real_vertex_buffer[out_vb].stride = key->output_stride;
 
    /* Move the buffer reference. */
    pipe_resource_reference(
-      &mgr->b.real_vertex_buffer[out_vb].buffer, NULL);
-   mgr->b.real_vertex_buffer[out_vb].buffer = out_buffer;
+      &mgr->real_vertex_buffer[out_vb].buffer, NULL);
+   mgr->real_vertex_buffer[out_vb].buffer = out_buffer;
 }
 
 static boolean
@@ -364,15 +372,15 @@ u_vbuf_translate_find_free_vb_slots(struct u_vbuf_priv *mgr,
                /*printf("found slot=%i for type=%i\n", i, type);*/
                fallback_vbs[type] = i;
                i++;
-               if (i > mgr->b.nr_real_vertex_buffers) {
-                  mgr->b.nr_real_vertex_buffers = i;
+               if (i > mgr->nr_real_vertex_buffers) {
+                  mgr->nr_real_vertex_buffers = i;
                }
                break;
             }
          }
          if (i == PIPE_MAX_ATTRIBS) {
             /* fail, reset the number to its original value */
-            mgr->b.nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
+            mgr->nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
             return FALSE;
          }
       }
@@ -495,7 +503,7 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
 
          /* Fixup the stride for constant attribs. */
          if (type == VB_CONST) {
-            mgr->b.real_vertex_buffer[mgr->fallback_vbs[VB_CONST]].stride = 0;
+            mgr->real_vertex_buffer[mgr->fallback_vbs[VB_CONST]].stride = 0;
          }
       }
    }
@@ -544,11 +552,11 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
    for (i = 0; i < VB_NUM; i++) {
       unsigned vb = mgr->fallback_vbs[i];
       if (vb != ~0) {
-         pipe_resource_reference(&mgr->b.real_vertex_buffer[vb].buffer, NULL);
+         pipe_resource_reference(&mgr->real_vertex_buffer[vb].buffer, NULL);
          mgr->fallback_vbs[i] = ~0;
       }
    }
-   mgr->b.nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
+   mgr->nr_real_vertex_buffers = mgr->b.nr_vertex_buffers;
 }
 
 #define FORMAT_REPLACE(what, withwhat) \
@@ -682,11 +690,11 @@ void u_vbuf_destroy_vertex_elements(struct u_vbuf *mgr,
    FREE(ve);
 }
 
-void u_vbuf_set_vertex_buffers(struct u_vbuf *mgrb,
-                               unsigned count,
-                               const struct pipe_vertex_buffer *bufs)
+static void u_vbuf_set_vertex_buffers(struct pipe_context *pipe,
+                                      unsigned count,
+                                      const struct pipe_vertex_buffer *bufs)
 {
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)pipe->draw;
    unsigned i;
 
    mgr->any_user_vbs = FALSE;
@@ -711,36 +719,41 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgrb,
 
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, vb->buffer);
 
-      mgr->b.real_vertex_buffer[i].buffer_offset =
+      mgr->real_vertex_buffer[i].buffer_offset =
       mgr->b.vertex_buffer[i].buffer_offset = vb->buffer_offset;
 
-      mgr->b.real_vertex_buffer[i].stride =
+      mgr->real_vertex_buffer[i].stride =
       mgr->b.vertex_buffer[i].stride = vb->stride;
 
       if (!vb->buffer ||
           mgr->incompatible_vb[i]) {
-         pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+         pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
          continue;
       }
 
       if (u_vbuf_resource(vb->buffer)->user_ptr) {
-         pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+         pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
          mgr->any_user_vbs = TRUE;
          continue;
       }
 
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, vb->buffer);
+      pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, vb->buffer);
    }
 
    for (i = count; i < mgr->b.nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->b.vertex_buffer[i].buffer, NULL);
    }
-   for (i = count; i < mgr->b.nr_real_vertex_buffers; i++) {
-      pipe_resource_reference(&mgr->b.real_vertex_buffer[i].buffer, NULL);
+   for (i = count; i < mgr->nr_real_vertex_buffers; i++) {
+      pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
    }
 
    mgr->b.nr_vertex_buffers = count;
-   mgr->b.nr_real_vertex_buffers = count;
+   mgr->nr_real_vertex_buffers = count;
+
+   if (!mgr->any_user_vbs && !mgr->incompatible_vb_layout) {
+      mgr->driver_set_vertex_buffers(pipe, mgr->nr_real_vertex_buffers,
+                                     mgr->real_vertex_buffer);
+   }
 }
 
 static void u_vbuf_set_index_buffer(struct pipe_context *pipe,
@@ -835,7 +848,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
       start = start_offset[i];
       assert(start < end);
 
-      real_vb = &mgr->b.real_vertex_buffer[i];
+      real_vb = &mgr->real_vertex_buffer[i];
       ptr = u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr;
 
       u_upload_data(mgr->b.uploader, start, end - start, ptr + start,
@@ -855,7 +868,7 @@ unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgrb)
 
    for (i = 0; i < nr; i++) {
       struct pipe_vertex_buffer *vb =
-            &mgr->b.real_vertex_buffer[velems[i].vertex_buffer_index];
+            &mgr->real_vertex_buffer[velems[i].vertex_buffer_index];
       unsigned size, max_count, value;
 
       /* We're not interested in constant and per-instance attribs. */
@@ -1059,9 +1072,8 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    }
 }
 
-enum u_vbuf_return_flags
-u_vbuf_draw_begin(struct u_vbuf *mgrb,
-                  struct pipe_draw_info *info)
+void u_vbuf_draw_begin(struct u_vbuf *mgrb,
+                       struct pipe_draw_info *info)
 {
    struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
    int start_vertex, min_index;
@@ -1071,7 +1083,7 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
        !mgr->any_user_vbs) {
-      return 0;
+      return;
    }
 
    if (info->indexed) {
@@ -1150,9 +1162,9 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
       util_dump_vertex_buffer(stdout, mgr->b.vertex_buffer+i);
       printf("\n");
    }
-   for (i = 0; i < mgr->b.nr_real_vertex_buffers; i++) {
+   for (i = 0; i < mgr->nr_real_vertex_buffers; i++) {
       printf("real %i: ", i);
-      util_dump_vertex_buffer(stdout, mgr->b.real_vertex_buffer+i);
+      util_dump_vertex_buffer(stdout, mgr->real_vertex_buffer+i);
       printf("\n");
    }
    */
@@ -1165,7 +1177,8 @@ u_vbuf_draw_begin(struct u_vbuf *mgrb,
       info->start = 0;
    }
 
-   return U_VBUF_BUFFERS_UPDATED;
+   mgr->driver_set_vertex_buffers(mgr->pipe, mgr->nr_real_vertex_buffers,
+                                  mgr->real_vertex_buffer);
 }
 
 void u_vbuf_draw_end(struct u_vbuf *mgrb)
@@ -1184,5 +1197,7 @@ static void u_vbuf_install(struct u_vbuf_priv *mgr)
 
    pipe->draw = mgr;
    mgr->driver_set_index_buffer = pipe->set_index_buffer;
+   mgr->driver_set_vertex_buffers = pipe->set_vertex_buffers;
    pipe->set_index_buffer = u_vbuf_set_index_buffer;
+   pipe->set_vertex_buffers = u_vbuf_set_vertex_buffers;
 }

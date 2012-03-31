@@ -1692,8 +1692,8 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct pipe_vertex_buffer *vb = rctx->vbuf_mgr->real_vertex_buffer;
-	unsigned count = rctx->vbuf_mgr->nr_real_vertex_buffers;
+	struct pipe_vertex_buffer *vb = rctx->vertex_buffer;
+	unsigned count = rctx->nr_vertex_buffers;
 	unsigned i, offset;
 
 	for (i = 0; i < count; i++) {

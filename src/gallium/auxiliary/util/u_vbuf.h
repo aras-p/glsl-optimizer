@@ -61,12 +61,6 @@ struct u_vbuf {
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    unsigned nr_vertex_buffers;
 
-   /* Contains only real vertex buffers.
-    * Hardware drivers should use real_vertex_buffers[i]
-    * instead of vertex_buffers[i].buffer. */
-   struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
-   int nr_real_vertex_buffers;
-
    /* This uploader can optionally be used by the driver.
     *
     * Allowed functions:
@@ -92,10 +86,6 @@ enum u_fetch_alignment {
    U_VERTEX_FETCH_DWORD_ALIGNED
 };
 
-enum u_vbuf_return_flags {
-   U_VBUF_BUFFERS_UPDATED = 1
-};
-
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
@@ -119,12 +109,8 @@ void u_vbuf_bind_vertex_elements(struct u_vbuf *mgr,
 void u_vbuf_destroy_vertex_elements(struct u_vbuf *mgr,
                                     struct u_vbuf_elements *ve);
 
-void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr,
-                               unsigned count,
-                               const struct pipe_vertex_buffer *bufs);
-
-enum u_vbuf_return_flags u_vbuf_draw_begin(struct u_vbuf *mgr,
-                                           struct pipe_draw_info *info);
+void u_vbuf_draw_begin(struct u_vbuf *mgr,
+                       struct pipe_draw_info *info);
 
 unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgr);
 
