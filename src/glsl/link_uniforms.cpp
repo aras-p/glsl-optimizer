@@ -173,8 +173,7 @@ private:
       if (this->map->get(id, name))
 	 return;
 
-      char *key = strdup(name);
-      this->map->put(this->num_active_uniforms, key);
+      this->map->put(this->num_active_uniforms, name);
 
       /* Each leaf uniform occupies one entry in the list of active
        * uniforms.
