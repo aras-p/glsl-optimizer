@@ -235,6 +235,7 @@ struct r600_context {
 	struct blitter_context		*blitter;
 	enum radeon_family		family;
 	enum chip_class			chip_class;
+	boolean				has_vertex_cache;
 	unsigned			r6xx_num_clause_temp_gprs;
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;

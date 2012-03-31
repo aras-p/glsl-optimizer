@@ -1163,22 +1163,11 @@ void r600_inval_texture_cache(struct r600_context *ctx)
 
 void r600_inval_vertex_cache(struct r600_context *ctx)
 {
-	if (ctx->family == CHIP_RV610 ||
-	    ctx->family == CHIP_RV620 ||
-	    ctx->family == CHIP_RS780 ||
-	    ctx->family == CHIP_RS880 ||
-	    ctx->family == CHIP_RV710 ||
-	    ctx->family == CHIP_CEDAR ||
-	    ctx->family == CHIP_PALM ||
-	    ctx->family == CHIP_SUMO ||
-	    ctx->family == CHIP_SUMO2 ||
-	    ctx->family == CHIP_CAICOS ||
-	    ctx->family == CHIP_CAYMAN ||
-	    ctx->family == CHIP_ARUBA) {
+	if (ctx->has_vertex_cache) {
+		ctx->surface_sync_cmd.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
+	} else {
 		/* Some GPUs don't have the vertex cache and must use the texture cache instead. */
 		ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
-	} else {
-		ctx->surface_sync_cmd.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
 	}
 	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 }

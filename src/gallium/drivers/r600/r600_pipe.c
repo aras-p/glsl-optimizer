@@ -263,6 +263,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		if (r600_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
+		rctx->has_vertex_cache = !(rctx->family == CHIP_RV610 ||
+					   rctx->family == CHIP_RV620 ||
+					   rctx->family == CHIP_RS780 ||
+					   rctx->family == CHIP_RS880 ||
+					   rctx->family == CHIP_RV710);
 		break;
 	case EVERGREEN:
 	case CAYMAN:
@@ -271,6 +276,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		if (evergreen_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
+		rctx->has_vertex_cache = !(rctx->family == CHIP_CEDAR ||
+					   rctx->family == CHIP_PALM ||
+					   rctx->family == CHIP_SUMO ||
+					   rctx->family == CHIP_SUMO2 ||
+					   rctx->family == CHIP_CAICOS ||
+					   rctx->family == CHIP_CAYMAN ||
+					   rctx->family == CHIP_ARUBA);
 		break;
 	default:
 		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);
