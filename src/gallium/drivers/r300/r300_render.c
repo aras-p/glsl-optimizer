@@ -818,7 +818,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     struct pipe_transfer *ib_transfer = NULL;
     int i;
     void *indices = NULL;
-    boolean indexed = info->indexed && r300->vbuf_mgr->index_buffer.buffer;
+    boolean indexed = info->indexed && r300->swtcl_index_buffer.buffer;
 
     if (r300->skip_rendering) {
         return;
@@ -831,10 +831,10 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
 
-    for (i = 0; i < r300->vbuf_mgr->nr_vertex_buffers; i++) {
-        if (r300->vbuf_mgr->vertex_buffer[i].buffer) {
+    for (i = 0; i < r300->swtcl_nr_vertex_buffers; i++) {
+        if (r300->swtcl_vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
-                                  r300->vbuf_mgr->vertex_buffer[i].buffer,
+                                  r300->swtcl_vertex_buffer[i].buffer,
                                   PIPE_TRANSFER_READ |
                                   PIPE_TRANSFER_UNSYNCHRONIZED,
                                   &vb_transfer[i]);
@@ -843,7 +843,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     }
 
     if (indexed) {
-        indices = pipe_buffer_map(pipe, r300->vbuf_mgr->index_buffer.buffer,
+        indices = pipe_buffer_map(pipe, r300->swtcl_index_buffer.buffer,
                                   PIPE_TRANSFER_READ |
                                   PIPE_TRANSFER_UNSYNCHRONIZED, &ib_transfer);
     }
@@ -856,8 +856,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     draw_flush(r300->draw);
     r300->draw_vbo_locked = FALSE;
 
-    for (i = 0; i < r300->vbuf_mgr->nr_vertex_buffers; i++) {
-        if (r300->vbuf_mgr->vertex_buffer[i].buffer) {
+    for (i = 0; i < r300->swtcl_nr_vertex_buffers; i++) {
+        if (r300->swtcl_vertex_buffer[i].buffer) {
             pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
         }

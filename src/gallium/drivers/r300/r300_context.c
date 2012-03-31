@@ -418,17 +418,19 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_query_functions(r300);
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
-    
+
     r300->context.create_video_decoder = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
-    r300->vbuf_mgr = u_vbuf_create(&r300->context, 1024 * 1024, 16,
+    if (r300->screen->caps.has_tcl) {
+        r300->vbuf_mgr = u_vbuf_create(&r300->context, 1024 * 1024, 16,
                                        PIPE_BIND_VERTEX_BUFFER |
                                        PIPE_BIND_INDEX_BUFFER,
                                        U_VERTEX_FETCH_DWORD_ALIGNED);
-    if (!r300->vbuf_mgr)
-        goto fail;
-    r300->vbuf_mgr->caps.format_fixed32 = 0;
+        if (!r300->vbuf_mgr)
+            goto fail;
+        r300->vbuf_mgr->caps.format_fixed32 = 0;
+    }
 
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
