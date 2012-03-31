@@ -71,15 +71,17 @@ struct u_vbuf {
    struct u_upload_mgr *uploader;
 
    struct u_vbuf_caps caps;
+
+   /* Vertex elements state as created by u_vbuf.
+    * This is used when saving the state into u_blitter, there's no other
+    * usage. */
+   void *vertex_elements;
 };
 
 struct u_vbuf_resource {
    struct u_resource b;
    uint8_t *user_ptr;
 };
-
-/* Opaque type containing information about vertex elements for the manager. */
-struct u_vbuf_elements;
 
 enum u_fetch_alignment {
    U_VERTEX_FETCH_BYTE_ALIGNED,
@@ -95,19 +97,6 @@ u_vbuf_create(struct pipe_context *pipe,
               enum u_fetch_alignment fetch_alignment);
 
 void u_vbuf_destroy(struct u_vbuf *mgr);
-
-struct u_vbuf_elements *
-u_vbuf_create_vertex_elements(struct u_vbuf *mgr,
-                              unsigned count,
-                              const struct pipe_vertex_element *attrs,
-                              struct pipe_vertex_element *native_attrs);
-
-void u_vbuf_bind_vertex_elements(struct u_vbuf *mgr,
-                                 void *cso,
-                                 struct u_vbuf_elements *ve);
-
-void u_vbuf_destroy_vertex_elements(struct u_vbuf *mgr,
-                                    struct u_vbuf_elements *ve);
 
 void u_vbuf_draw_begin(struct u_vbuf *mgr,
                        struct pipe_draw_info *info);

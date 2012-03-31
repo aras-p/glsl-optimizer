@@ -55,6 +55,8 @@ struct u_vbuf_elements {
    boolean incompatible_layout;
    /* Per-element flags. */
    boolean incompatible_layout_elem[PIPE_MAX_ATTRIBS];
+
+   void *driver_cso;
 };
 
 enum {
@@ -78,8 +80,6 @@ struct u_vbuf_priv {
    /* The index buffer. */
    struct pipe_index_buffer index_buffer;
 
-   /* Vertex element state bound by the state tracker. */
-   void *saved_ve;
    /* and its associated helper structure for this module. */
    struct u_vbuf_elements *ve;
 
@@ -91,9 +91,6 @@ struct u_vbuf_priv {
    /* The vertex buffer slot index where translated vertices have been
     * stored in. */
    unsigned fallback_vbs[VB_NUM];
-   /* When binding the fallback vertex element state, we don't want to
-    * change saved_ve and ve. This is set to TRUE in such cases. */
-   boolean ve_binding_lock;
 
    /* Whether there is any user buffer. */
    boolean any_user_vbs;
@@ -107,6 +104,11 @@ struct u_vbuf_priv {
    void (*driver_set_vertex_buffers)(struct pipe_context *,
 				     unsigned num_buffers,
 				     const struct pipe_vertex_buffer *);
+   void *(*driver_create_vertex_elements_state)(struct pipe_context *,
+                                          unsigned num_elements,
+                                          const struct pipe_vertex_element *);
+   void (*driver_bind_vertex_elements_state)(struct pipe_context *, void *);
+   void (*driver_delete_vertex_elements_state)(struct pipe_context *, void *);
 };
 
 static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
@@ -168,7 +170,7 @@ u_vbuf_create(struct pipe_context *pipe,
 
 /* XXX I had to fork this off of cso_context. */
 static void *
-u_vbuf_pipe_set_vertex_elements(struct u_vbuf_priv *mgr,
+u_vbuf_cache_set_vertex_elements(struct u_vbuf_priv *mgr,
                                 unsigned count,
                                 const struct pipe_vertex_element *states)
 {
@@ -190,10 +192,10 @@ u_vbuf_pipe_set_vertex_elements(struct u_vbuf_priv *mgr,
       struct cso_velements *cso = MALLOC_STRUCT(cso_velements);
       memcpy(&cso->state, &velems_state, key_size);
       cso->data =
-            mgr->pipe->create_vertex_elements_state(mgr->pipe, count,
-                                                    &cso->state.velems[0]);
+            mgr->driver_create_vertex_elements_state(mgr->pipe, count,
+                                                     &cso->state.velems[0]);
       cso->delete_state =
-            (cso_state_callback)mgr->pipe->delete_vertex_elements_state;
+            (cso_state_callback)mgr->driver_delete_vertex_elements_state;
       cso->context = mgr->pipe;
 
       iter = cso_insert_state(mgr->cso_cache, hash_key, CSO_VELEMENTS, cso);
@@ -202,7 +204,7 @@ u_vbuf_pipe_set_vertex_elements(struct u_vbuf_priv *mgr,
       handle = ((struct cso_velements *)cso_hash_iter_data(iter))->data;
    }
 
-   mgr->pipe->bind_vertex_elements_state(mgr->pipe, handle);
+   mgr->driver_bind_vertex_elements_state(mgr->pipe, handle);
    return handle;
 }
 
@@ -531,11 +533,8 @@ u_vbuf_translate_begin(struct u_vbuf_priv *mgr,
       }
    }
 
-   /* Preserve saved_ve. */
-   mgr->ve_binding_lock = TRUE;
-   mgr->fallback_ve = u_vbuf_pipe_set_vertex_elements(mgr, mgr->ve->count,
-                                                      mgr->fallback_velems);
-   mgr->ve_binding_lock = FALSE;
+   mgr->fallback_ve = u_vbuf_cache_set_vertex_elements(mgr, mgr->ve->count,
+                                                       mgr->fallback_velems);
    return TRUE;
 }
 
@@ -544,8 +543,7 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
    unsigned i;
 
    /* Restore vertex elements. */
-   /* Note that saved_ve will be overwritten in bind_vertex_elements_state. */
-   mgr->pipe->bind_vertex_elements_state(mgr->pipe, mgr->saved_ve);
+   mgr->driver_bind_vertex_elements_state(mgr->pipe, mgr->ve->driver_cso);
    mgr->fallback_ve = NULL;
 
    /* Unreference the now-unused VBOs. */
@@ -562,21 +560,17 @@ static void u_vbuf_translate_end(struct u_vbuf_priv *mgr)
 #define FORMAT_REPLACE(what, withwhat) \
     case PIPE_FORMAT_##what: format = PIPE_FORMAT_##withwhat; break
 
-struct u_vbuf_elements *
-u_vbuf_create_vertex_elements(struct u_vbuf *mgrb,
+static void *
+u_vbuf_create_vertex_elements(struct pipe_context *pipe,
                               unsigned count,
-                              const struct pipe_vertex_element *attribs,
-                              struct pipe_vertex_element *native_attribs)
+                              const struct pipe_vertex_element *attribs)
 {
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)pipe->draw;
    unsigned i;
+   struct pipe_vertex_element native_attribs[PIPE_MAX_ATTRIBS];
    struct u_vbuf_elements *ve = CALLOC_STRUCT(u_vbuf_elements);
 
    ve->count = count;
-
-   if (!count) {
-      return ve;
-   }
 
    memcpy(ve->ve, attribs, sizeof(struct pipe_vertex_element) * count);
    memcpy(native_attribs, attribs, sizeof(struct pipe_vertex_element) * count);
@@ -665,28 +659,29 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgrb,
       }
    }
 
+   ve->driver_cso =
+      mgr->driver_create_vertex_elements_state(pipe, count, native_attribs);
    return ve;
 }
 
-void u_vbuf_bind_vertex_elements(struct u_vbuf *mgrb,
-                                 void *cso,
-                                 struct u_vbuf_elements *ve)
+static void u_vbuf_bind_vertex_elements(struct pipe_context *pipe,
+                                        void *cso)
 {
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)pipe->draw;
+   struct u_vbuf_elements *ve = cso;
 
-   if (!cso) {
-      return;
-   }
-
-   if (!mgr->ve_binding_lock) {
-      mgr->saved_ve = cso;
-      mgr->ve = ve;
-   }
+   mgr->ve = ve;
+   mgr->b.vertex_elements = ve;
+   mgr->driver_bind_vertex_elements_state(pipe, ve ? ve->driver_cso : NULL);
 }
 
-void u_vbuf_destroy_vertex_elements(struct u_vbuf *mgr,
-                                    struct u_vbuf_elements *ve)
+static void u_vbuf_delete_vertex_elements(struct pipe_context *pipe,
+                                          void *cso)
 {
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)pipe->draw;
+   struct u_vbuf_elements *ve = cso;
+
+   mgr->driver_delete_vertex_elements_state(pipe, ve->driver_cso);
    FREE(ve);
 }
 
@@ -1198,6 +1193,14 @@ static void u_vbuf_install(struct u_vbuf_priv *mgr)
    pipe->draw = mgr;
    mgr->driver_set_index_buffer = pipe->set_index_buffer;
    mgr->driver_set_vertex_buffers = pipe->set_vertex_buffers;
+   mgr->driver_create_vertex_elements_state =
+      pipe->create_vertex_elements_state;
+   mgr->driver_bind_vertex_elements_state = pipe->bind_vertex_elements_state;
+   mgr->driver_delete_vertex_elements_state =
+      pipe->delete_vertex_elements_state;
    pipe->set_index_buffer = u_vbuf_set_index_buffer;
    pipe->set_vertex_buffers = u_vbuf_set_vertex_buffers;
+   pipe->create_vertex_elements_state = u_vbuf_create_vertex_elements;
+   pipe->bind_vertex_elements_state = u_vbuf_bind_vertex_elements;
+   pipe->delete_vertex_elements_state = u_vbuf_delete_vertex_elements;
 }

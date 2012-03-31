@@ -167,7 +167,6 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	struct u_vbuf_elements		*vmgr_elements;
 	struct r600_resource		*fetch_shader;
 	unsigned			fs_size;
 	struct r600_pipe_state		rstate;

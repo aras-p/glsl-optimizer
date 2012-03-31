@@ -358,8 +358,6 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	rctx->vertex_elements = v;
 	if (v) {
 		r600_inval_shader_cache(rctx);
-		u_vbuf_bind_vertex_elements(rctx->vbuf_mgr, state,
-						v->vmgr_elements);
 
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(rctx, &v->rstate);
@@ -378,7 +376,6 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 		rctx->vertex_elements = NULL;
 
 	pipe_resource_reference((struct pipe_resource**)&v->fetch_shader, NULL);
-	u_vbuf_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }
 
@@ -416,9 +413,7 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 		return NULL;
 
 	v->count = count;
-	v->vmgr_elements =
-		u_vbuf_create_vertex_elements(rctx->vbuf_mgr, count,
-						  elements, v->elements);
+	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
 
 	if (r600_vertex_elements_build_fetch_shader(rctx, v)) {
 		FREE(v);

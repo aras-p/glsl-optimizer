@@ -55,7 +55,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_rasterizer(rctx->blitter, rctx->states[R600_PIPE_STATE_RASTERIZER]);
 	util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
 	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
-	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_elements);
+	util_blitter_save_vertex_elements(rctx->blitter, rctx->vbuf_mgr->vertex_elements);
 	if (rctx->states[R600_PIPE_STATE_VIEWPORT]) {
 		util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
 	}

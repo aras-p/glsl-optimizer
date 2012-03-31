@@ -1676,7 +1676,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
-    struct r300_context *r300 = r300_context(pipe);
     struct r300_vertex_element_state *velems;
     unsigned i;
     struct pipe_vertex_element dummy_attrib = {0};
@@ -1697,11 +1696,9 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         return NULL;
 
     velems->count = count;
+    memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
 
     if (r300_screen(pipe->screen)->caps.has_tcl) {
-        velems->vmgr_elements =
-            u_vbuf_create_vertex_elements(r300->vbuf_mgr, count, attribs,
-                                          velems->velem);
         /* Setup PSC.
          * The unused components will be replaced by (..., 0, 1). */
         r300_vertex_psc(velems);
@@ -1711,8 +1708,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                 align(util_format_get_blocksize(velems->velem[i].src_format), 4);
             velems->vertex_size_dwords += velems->format_size[i] / 4;
         }
-    } else {
-        memcpy(velems->velem, attribs, count * sizeof(struct pipe_vertex_element));
     }
 
     return velems;
@@ -1730,9 +1725,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
     r300->velems = velems;
 
-    if (r300->screen->caps.has_tcl) {
-        u_vbuf_bind_vertex_elements(r300->vbuf_mgr, state, velems->vmgr_elements);
-    } else {
+    if (r300->draw) {
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
         return;
     }
@@ -1744,12 +1737,6 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
 static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
 {
-    struct r300_context *r300 = r300_context(pipe);
-    struct r300_vertex_element_state *velems = state;
-
-    if (r300->screen->caps.has_tcl) {
-        u_vbuf_destroy_vertex_elements(r300->vbuf_mgr, velems->vmgr_elements);
-    }
     FREE(state);
 }
 
