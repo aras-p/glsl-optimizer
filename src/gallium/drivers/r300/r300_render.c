@@ -754,7 +754,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     }
 
     r300_update_derived_state(r300);
-    u_vbuf_draw_begin(r300->vbuf_mgr, &info);
 
     /* Draw. */
     if (info.indexed) {
@@ -763,7 +762,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         if (!max_count) {
            fprintf(stderr, "r300: Skipping a draw command. There is a buffer "
                    " which is too small to be used for rendering.\n");
-           goto done;
+           return;
         }
 
         if (max_count == ~0) {
@@ -795,9 +794,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
             r300_draw_arrays_instanced(r300, &info);
         }
     }
-
-done:
-    u_vbuf_draw_end(r300->vbuf_mgr);
 }
 
 /****************************************************************************

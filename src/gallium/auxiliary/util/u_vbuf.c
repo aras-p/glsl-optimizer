@@ -76,6 +76,7 @@ struct u_vbuf_priv {
     * There are no user buffers. */
    struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
    int nr_real_vertex_buffers;
+   boolean vertex_buffers_dirty;
 
    /* The index buffer. */
    struct pipe_index_buffer index_buffer;
@@ -109,6 +110,8 @@ struct u_vbuf_priv {
                                           const struct pipe_vertex_element *);
    void (*driver_bind_vertex_elements_state)(struct pipe_context *, void *);
    void (*driver_delete_vertex_elements_state)(struct pipe_context *, void *);
+   void (*driver_draw_vbo)(struct pipe_context *pipe,
+                           const struct pipe_draw_info *info);
 };
 
 static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
@@ -744,11 +747,7 @@ static void u_vbuf_set_vertex_buffers(struct pipe_context *pipe,
 
    mgr->b.nr_vertex_buffers = count;
    mgr->nr_real_vertex_buffers = count;
-
-   if (!mgr->any_user_vbs && !mgr->incompatible_vb_layout) {
-      mgr->driver_set_vertex_buffers(pipe, mgr->nr_real_vertex_buffers,
-                                     mgr->real_vertex_buffer);
-   }
+   mgr->vertex_buffers_dirty = TRUE;
 }
 
 static void u_vbuf_set_index_buffer(struct pipe_context *pipe,
@@ -1067,17 +1066,26 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    }
 }
 
-void u_vbuf_draw_begin(struct u_vbuf *mgrb,
-                       struct pipe_draw_info *info)
+static void u_vbuf_draw_vbo(struct pipe_context *pipe,
+                            const struct pipe_draw_info *info)
 {
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
+   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)pipe->draw;
    int start_vertex, min_index;
    unsigned num_vertices;
    bool unroll_indices = false;
 
+   /* Normal draw. No fallback and no user buffers. */
    if (!mgr->incompatible_vb_layout &&
        !mgr->ve->incompatible_layout &&
        !mgr->any_user_vbs) {
+      /* Set vertex buffers if needed. */
+      if (mgr->vertex_buffers_dirty) {
+         mgr->driver_set_vertex_buffers(pipe, mgr->nr_real_vertex_buffers,
+                                        mgr->real_vertex_buffer);
+         mgr->vertex_buffers_dirty = FALSE;
+      }
+
+      mgr->driver_draw_vbo(pipe, info);
       return;
    }
 
@@ -1164,25 +1172,26 @@ void u_vbuf_draw_begin(struct u_vbuf *mgrb,
    }
    */
 
-   if (unroll_indices) {
-      info->indexed = FALSE;
-      info->index_bias = 0;
-      info->min_index = 0;
-      info->max_index = info->count - 1;
-      info->start = 0;
-   }
-
    mgr->driver_set_vertex_buffers(mgr->pipe, mgr->nr_real_vertex_buffers,
                                   mgr->real_vertex_buffer);
-}
 
-void u_vbuf_draw_end(struct u_vbuf *mgrb)
-{
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
+   if (unlikely(unroll_indices)) {
+      struct pipe_draw_info new_info = *info;
+      new_info.indexed = FALSE;
+      new_info.index_bias = 0;
+      new_info.min_index = 0;
+      new_info.max_index = info->count - 1;
+      new_info.start = 0;
+
+      mgr->driver_draw_vbo(pipe, &new_info);
+   } else {
+      mgr->driver_draw_vbo(pipe, info);
+   }
 
    if (mgr->fallback_ve) {
       u_vbuf_translate_end(mgr);
    }
+   mgr->vertex_buffers_dirty = TRUE;
 }
 
 static void u_vbuf_install(struct u_vbuf_priv *mgr)
@@ -1198,9 +1207,12 @@ static void u_vbuf_install(struct u_vbuf_priv *mgr)
    mgr->driver_bind_vertex_elements_state = pipe->bind_vertex_elements_state;
    mgr->driver_delete_vertex_elements_state =
       pipe->delete_vertex_elements_state;
+   mgr->driver_draw_vbo = pipe->draw_vbo;
+
    pipe->set_index_buffer = u_vbuf_set_index_buffer;
    pipe->set_vertex_buffers = u_vbuf_set_vertex_buffers;
    pipe->create_vertex_elements_state = u_vbuf_create_vertex_elements;
    pipe->bind_vertex_elements_state = u_vbuf_bind_vertex_elements;
    pipe->delete_vertex_elements_state = u_vbuf_delete_vertex_elements;
+   pipe->draw_vbo = u_vbuf_draw_vbo;
 }

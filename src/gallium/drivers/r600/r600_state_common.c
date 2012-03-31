@@ -761,7 +761,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_update_derived_state(rctx);
 
 	/* Update vertex buffers. */
-	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
 	if (rctx->vertex_buffers_dirty) {
 		r600_inval_vertex_cache(rctx);
 		rctx->vertex_buffer_state.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 10) *
@@ -902,7 +901,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
-	u_vbuf_draw_end(rctx->vbuf_mgr);
 }
 
 void _r600_pipe_state_add_reg_bo(struct r600_context *ctx,
