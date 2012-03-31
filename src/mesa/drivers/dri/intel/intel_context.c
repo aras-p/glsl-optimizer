@@ -183,6 +183,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
 	 chipset = "Intel(R) Ivybridge Mobile";
 	 break;
       case PCI_CHIP_IVYBRIDGE_S_GT1:
+      case PCI_CHIP_IVYBRIDGE_S_GT2:
 	 chipset = "Intel(R) Ivybridge Server";
 	 break;
       case PCI_CHIP_HASWELL_GT1:
