@@ -327,7 +327,7 @@ brw_format_for_mesa_format(gl_format mesa_format)
       [MESA_FORMAT_S8_Z24] = 0,
       [MESA_FORMAT_Z16] = 0,
       [MESA_FORMAT_X8_Z24] = 0,
-      [MESA_FORMAT_Z24_S8] = 0,
+      [MESA_FORMAT_Z24_X8] = 0,
       [MESA_FORMAT_Z32] = 0,
       [MESA_FORMAT_S8] = 0,
 
