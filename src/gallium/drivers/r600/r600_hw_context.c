@@ -1228,8 +1228,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_flush_framebuffer(ctx, true);
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	r600_context_ps_partial_flush(ctx);
 
 	/* old kernels and userspace don't set SX_MISC, so we must reset it to 0 here */
 	if (ctx->chip_class <= R700) {
@@ -1291,8 +1290,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
 
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	r600_context_ps_partial_flush(ctx);
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
