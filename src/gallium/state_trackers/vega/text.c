@@ -73,8 +73,8 @@ static void add_glyph(struct vg_font *font,
    glyph = CALLOC_STRUCT(vg_glyph);
    glyph->object = obj;
    glyph->is_hinted = isHinted;
-   memcpy(glyph->glyph_origin, glyphOrigin, sizeof(glyphOrigin));
-   memcpy(glyph->escapement, escapement, sizeof(escapement));
+   memcpy(glyph->glyph_origin, glyphOrigin, sizeof(glyph->glyph_origin));
+   memcpy(glyph->escapement, escapement, sizeof(glyph->glyph_origin));
 
    cso_hash_insert(font->glyphs, (unsigned) glyphIndex, glyph);
 }
