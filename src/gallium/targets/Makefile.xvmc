@@ -63,7 +63,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o *~ *.so $(SYMLINKS)
+	-rm -f $(OBJECTS) *~ *.so $(SYMLINKS)
 	-rm -f depend depend.bak
 
 install: default
