@@ -349,10 +349,11 @@ struct r600_context {
 	 * In that case, we bind this one: */
 	void			*dummy_pixel_shader;
 
-	bool			vertex_buffers_dirty;
 	boolean			dual_src_blend;
 	unsigned color0_format;
 
+	/* Vertex and index buffers. */
+	bool			vertex_buffers_dirty;
 	struct pipe_index_buffer index_buffer;
 	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 	unsigned		nr_vertex_buffers;
