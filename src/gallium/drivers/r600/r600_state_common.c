@@ -519,87 +519,54 @@ static void r600_update_alpha_ref(struct r600_context *rctx)
 	rctx->alpha_ref_dirty = false;
 }
 
+void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
+{
+	state->atom.num_dw = rctx->chip_class >= EVERGREEN ? util_bitcount(state->dirty_mask)*20
+							   : util_bitcount(state->dirty_mask)*19;
+	r600_atom_dirty(rctx, &state->atom);
+}
+
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_resource *rbuffer = r600_resource(buffer);
-	struct r600_pipe_resource_state *rstate;
-	uint64_t va_offset;
+	struct r600_constbuf_state *state;
+	struct r600_constant_buffer *cb;
 	uint32_t offset;
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		state = &rctx->vs_constbuf_state;
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		state = &rctx->ps_constbuf_state;
+		break;
+	default:
+		return;
+	}
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
 	if (buffer == NULL) {
+		state->enabled_mask &= ~(1 << index);
+		state->dirty_mask &= ~(1 << index);
+		pipe_resource_reference(&state->cb[index].buffer, NULL);
 		return;
 	}
 
 	r600_inval_shader_cache(rctx);
-
 	r600_upload_const_buffer(rctx, &rbuffer, &offset);
-	va_offset = r600_resource_va(ctx->screen, (void*)rbuffer);
-	va_offset += offset;
-	va_offset >>= 8;
 
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		rctx->vs_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028180_ALU_CONST_BUFFER_SIZE_VS_0 + index * 4,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028980_ALU_CONST_CACHE_VS_0 + index * 4,
-					va_offset, rbuffer, RADEON_USAGE_READ);
-		r600_context_pipe_state_set(rctx, &rctx->vs_const_buffer);
+	cb = &state->cb[index];
+	pipe_resource_reference(&cb->buffer, &rbuffer->b.b.b);
+	cb->buffer_offset = offset;
+	cb->buffer_size = buffer->width0;
 
-		rstate = &rctx->vs_const_buffer_resource[index];
-		if (!rstate->id) {
-			if (rctx->chip_class >= EVERGREEN) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate);
-			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate);
-			}
-		}
-
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(ctx, rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-		} else {
-			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-		}
-		r600_context_pipe_state_set_vs_resource(rctx, rstate, index);
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		rctx->ps_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					NULL, 0);
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028940_ALU_CONST_CACHE_PS_0,
-					va_offset, rbuffer, RADEON_USAGE_READ);
-		r600_context_pipe_state_set(rctx, &rctx->ps_const_buffer);
-
-		rstate = &rctx->ps_const_buffer_resource[index];
-		if (!rstate->id) {
-			if (rctx->chip_class >= EVERGREEN) {
-				evergreen_pipe_init_buffer_resource(rctx, rstate);
-			} else {
-				r600_pipe_init_buffer_resource(rctx, rstate);
-			}
-		}
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_mod_buffer_resource(ctx, rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-		} else {
-			r600_pipe_mod_buffer_resource(rstate, rbuffer, offset, 16, RADEON_USAGE_READ);
-		}
-		r600_context_pipe_state_set_ps_resource(rctx, rstate, index);
-		break;
-	default:
-		R600_ERR("unsupported %d\n", shader);
-		return;
-	}
+	state->enabled_mask |= 1 << index;
+	state->dirty_mask |= 1 << index;
+	r600_constant_buffers_dirty(rctx, state);
 
 	if (buffer != &rbuffer->b.b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);

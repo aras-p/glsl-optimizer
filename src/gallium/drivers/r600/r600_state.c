@@ -1733,11 +1733,75 @@ static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom
 	}
 }
 
+static void r600_emit_constant_buffers(struct r600_context *rctx,
+				       struct r600_constbuf_state *state,
+				       unsigned buffer_id_base,
+				       unsigned reg_alu_constbuf_size,
+				       unsigned reg_alu_const_cache)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint32_t dirty_mask = state->dirty_mask;
+
+	while (dirty_mask) {
+		struct r600_constant_buffer *cb;
+		struct r600_resource *rbuffer;
+		unsigned offset;
+		unsigned buffer_index = ffs(dirty_mask) - 1;
+
+		cb = &state->cb[buffer_index];
+		rbuffer = (struct r600_resource*)cb->buffer;
+		assert(rbuffer);
+
+		offset = cb->buffer_offset;
+
+		r600_write_context_reg(cs, reg_alu_constbuf_size + buffer_index * 4,
+				       ALIGN_DIVUP(cb->buffer_size >> 4, 16));
+		r600_write_context_reg(cs, reg_alu_const_cache + buffer_index * 4, offset >> 8);
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ));
+
+		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 7, 0));
+		r600_write_value(cs, (buffer_id_base + buffer_index) * 7);
+		r600_write_value(cs, offset); /* RESOURCEi_WORD0 */
+		r600_write_value(cs, rbuffer->buf->size - offset - 1); /* RESOURCEi_WORD1 */
+		r600_write_value(cs, /* RESOURCEi_WORD2 */
+				 S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
+				 S_038008_STRIDE(16));
+		r600_write_value(cs, 0); /* RESOURCEi_WORD3 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD4 */
+		r600_write_value(cs, 0); /* RESOURCEi_WORD5 */
+		r600_write_value(cs, 0xc0000000); /* RESOURCEi_WORD6 */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ));
+
+		dirty_mask &= ~(1 << buffer_index);
+	}
+	state->dirty_mask = 0;
+}
+
+static void r600_emit_vs_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_constant_buffers(rctx, &rctx->vs_constbuf_state, 160,
+				   R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
+				   R_028980_ALU_CONST_CACHE_VS_0);
+}
+
+static void r600_emit_ps_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_constant_buffers(rctx, &rctx->ps_constbuf_state, 0,
+				   R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
+				   R_028940_ALU_CONST_CACHE_PS_0);
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	r600_init_atom(&rctx->vertex_buffer_state, r600_emit_vertex_buffers, 0, 0);
+	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffer, 0, 0);
+	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffer, 0, 0);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

@@ -335,14 +335,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028124_CB_CLEAR_GREEN, 0, 0},
 	{R_028128_CB_CLEAR_BLUE, 0, 0},
 	{R_02812C_CB_CLEAR_ALPHA, 0, 0},
-	{R_028140_ALU_CONST_BUFFER_SIZE_PS_0, REG_FLAG_DIRTY_ALWAYS, 0},
-	{R_028144_ALU_CONST_BUFFER_SIZE_PS_1, REG_FLAG_DIRTY_ALWAYS, 0},
-	{R_028180_ALU_CONST_BUFFER_SIZE_VS_0, REG_FLAG_DIRTY_ALWAYS, 0},
-	{R_028184_ALU_CONST_BUFFER_SIZE_VS_1, REG_FLAG_DIRTY_ALWAYS, 0},
-	{R_028940_ALU_CONST_CACHE_PS_0, REG_FLAG_NEED_BO, 0},
-	{R_028944_ALU_CONST_CACHE_PS_1, REG_FLAG_NEED_BO, 0},
-	{R_028980_ALU_CONST_CACHE_VS_0, REG_FLAG_NEED_BO, 0},
-	{R_028984_ALU_CONST_CACHE_VS_1, REG_FLAG_NEED_BO, 0},
 	{R_02823C_CB_SHADER_MASK, 0, 0},
 	{R_028238_CB_TARGET_MASK, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0},
@@ -1234,6 +1226,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->vertex_buffer_state);
+
+	ctx->vs_constbuf_state.dirty_mask = ctx->vs_constbuf_state.enabled_mask;
+	ctx->ps_constbuf_state.dirty_mask = ctx->ps_constbuf_state.enabled_mask;
+	r600_constant_buffers_dirty(ctx, &ctx->vs_constbuf_state);
+	r600_constant_buffers_dirty(ctx, &ctx->ps_constbuf_state);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;

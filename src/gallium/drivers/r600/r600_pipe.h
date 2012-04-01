@@ -225,6 +225,21 @@ struct r600_stencil_ref
 	ubyte writemask[2];
 };
 
+struct r600_constant_buffer
+{
+	struct pipe_resource		*buffer;
+	unsigned			buffer_offset;
+	unsigned			buffer_size;
+};
+
+struct r600_constbuf_state
+{
+	struct r600_atom		atom;
+	struct r600_constant_buffer	cb[PIPE_MAX_CONSTANT_BUFFERS];
+	uint32_t			enabled_mask;
+	uint32_t			dirty_mask;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -248,10 +263,6 @@ struct r600_context {
 	struct pipe_clip_state		clip;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
-	struct r600_pipe_state		vs_const_buffer;
-	struct r600_pipe_resource_state		vs_const_buffer_resource[R600_MAX_CONST_BUFFERS];
-	struct r600_pipe_state		ps_const_buffer;
-	struct r600_pipe_resource_state		ps_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
@@ -282,9 +293,9 @@ struct r600_context {
 	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_atom		vertex_buffer_state;
+	struct r600_constbuf_state	vs_constbuf_state;
+	struct r600_constbuf_state	ps_constbuf_state;
 
-	/* Below are variables from the old r600_context.
-	 */
 	struct radeon_winsys_cs	*cs;
 
 	struct r600_range	*range;
@@ -488,6 +499,7 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer);
 struct pipe_stream_output_target *
