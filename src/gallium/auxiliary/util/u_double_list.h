@@ -105,6 +105,11 @@ static INLINE void list_delinit(struct list_head *item)
 #define LIST_IS_EMPTY(__list)                   \
     ((__list)->next == (__list))
 
+/**
+ * Cast from a pointer to a member of a struct back to the containing struct.
+ *
+ * 'sample' MUST be initialized, or else the result is undefined!
+ */
 #ifndef container_of
 #define container_of(ptr, sample, member)				\
     (void *)((char *)(ptr)						\
@@ -112,29 +117,29 @@ static INLINE void list_delinit(struct list_head *item)
 #endif
 
 #define LIST_FOR_EACH_ENTRY(pos, head, member)				\
-   for (pos = container_of((head)->next, pos, member);			\
+   for (pos = NULL, pos = container_of((head)->next, pos, member);	\
 	&pos->member != (head);						\
 	pos = container_of(pos->member.next, pos, member))
 
 #define LIST_FOR_EACH_ENTRY_SAFE(pos, storage, head, member)	\
-   for (pos = container_of((head)->next, pos, member),			\
+   for (pos = NULL, pos = container_of((head)->next, pos, member),	\
 	storage = container_of(pos->member.next, pos, member);	\
 	&pos->member != (head);						\
 	pos = storage, storage = container_of(storage->member.next, storage, member))
 
 #define LIST_FOR_EACH_ENTRY_SAFE_REV(pos, storage, head, member)	\
-   for (pos = container_of((head)->prev, pos, member),			\
+   for (pos = NULL, pos = container_of((head)->prev, pos, member),	\
 	storage = container_of(pos->member.prev, pos, member);		\
 	&pos->member != (head);						\
 	pos = storage, storage = container_of(storage->member.prev, storage, member))
 
 #define LIST_FOR_EACH_ENTRY_FROM(pos, start, head, member)		\
-   for (pos = container_of((start), pos, member);			\
+   for (pos = NULL, pos = container_of((start), pos, member);		\
 	&pos->member != (head);						\
 	pos = container_of(pos->member.next, pos, member))
 
 #define LIST_FOR_EACH_ENTRY_FROM_REV(pos, start, head, member)		\
-   for (pos = container_of((start), pos, member);			\
+   for (pos = NULL, pos = container_of((start), pos, member);		\
 	&pos->member != (head);						\
 	pos = container_of(pos->member.prev, pos, member))
 
