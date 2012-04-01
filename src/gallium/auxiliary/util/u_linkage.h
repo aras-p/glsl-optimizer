@@ -49,15 +49,16 @@ unsigned util_semantic_set_from_program_file(struct util_semantic_set *set, cons
  *
  * num_slots is the size of the layout array and hardware limit instead.
  *
- * efficient_slots == 0 or efficient_solts == num_slots are typical settings.
+ * efficient_slots == 0 or efficient_slots == num_slots are typical settings.
  */
 void util_semantic_layout_from_set(unsigned char *layout, const struct util_semantic_set *set, unsigned efficient_slots, unsigned num_slots);
 
 static INLINE void
-util_semantic_table_from_layout(unsigned char *table, unsigned char *layout, unsigned char first_slot_value, unsigned char num_slots)
+util_semantic_table_from_layout(unsigned char *table, size_t table_size, unsigned char *layout,
+                                unsigned char first_slot_value, unsigned char num_slots)
 {
-   int i;
-   memset(table, 0xff, sizeof(table));
+   unsigned char i;
+   memset(table, 0xff, table_size);
 
    for(i = 0; i < num_slots; ++i)
       table[layout[i]] = first_slot_value + i;

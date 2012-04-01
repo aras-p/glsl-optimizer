@@ -977,7 +977,8 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	if(fpc->fp->num_slots > num_texcoords)
 		return FALSE;
 	util_semantic_layout_from_set(fpc->fp->slot_to_generic, &set, 0, num_texcoords);
-	util_semantic_table_from_layout(fpc->generic_to_slot, fpc->fp->slot_to_generic, 0, num_texcoords);
+	util_semantic_table_from_layout(fpc->generic_to_slot, sizeof fpc->generic_to_slot,
+                                        fpc->fp->slot_to_generic, 0, num_texcoords);
 
 	memset(fpc->fp->slot_to_fp_input, 0xff, sizeof(fpc->fp->slot_to_fp_input));
 
