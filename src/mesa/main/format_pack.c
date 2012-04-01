@@ -2605,7 +2605,7 @@ _mesa_pack_colormask(gl_format format, const GLubyte colorMask[4], void *dst)
          if (bits == 8) {
             GLubyte *d = (GLubyte *) dst;
             for (i = 0; i < bytes; i++) {
-               d[i] = d[i] ? 0xffff : 0x0;
+               d[i] = d[i] ? 0xff : 0x0;
             }
          }
          else if (bits == 16) {
