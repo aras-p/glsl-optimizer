@@ -2435,31 +2435,3 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 	dsa_state->is_flush = true;
 	return rstate;
 }
-
-void r600_pipe_init_buffer_resource(struct r600_context *rctx,
-				    struct r600_pipe_resource_state *rstate)
-{
-	rstate->id = R600_PIPE_STATE_RESOURCE;
-
-	rstate->bo[0] = NULL;
-	rstate->val[0] = 0;
-	rstate->val[1] = 0;
-	rstate->val[2] = 0;
-	rstate->val[3] = 0;
-	rstate->val[4] = 0;
-	rstate->val[5] = 0;
-	rstate->val[6] = 0xc0000000;
-}
-
-void r600_pipe_mod_buffer_resource(struct r600_pipe_resource_state *rstate,
-				   struct r600_resource *rbuffer,
-				   unsigned offset, unsigned stride,
-				   enum radeon_bo_usage usage)
-{
-	rstate->val[0] = offset;
-	rstate->bo[0] = rbuffer;
-	rstate->bo_usage[0] = usage;
-	rstate->val[1] = rbuffer->buf->size - offset - 1;
-	rstate->val[2] = S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
-	                 S_038008_STRIDE(stride);
-}

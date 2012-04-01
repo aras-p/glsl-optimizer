@@ -890,7 +890,6 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 {
 	int dirty;
 	int num_regs = ctx->chip_class >= EVERGREEN ? 8 : 7;
-	boolean is_vertex;
 
 	if (state == NULL) {
 		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
@@ -901,7 +900,6 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		return;
 	}
 
-	is_vertex = ((state->val[num_regs-1] & 0xc0000000) == 0xc0000000);
 	dirty = block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY;
 
 	if (memcmp(block->reg, state->val, num_regs*4)) {
@@ -914,37 +912,18 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 		dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 
 	if (!dirty) {
-		if (is_vertex) {
-			if (block->reloc[1].bo->buf != state->bo[0]->buf)
-				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-		} else {
-			if ((block->reloc[1].bo->buf != state->bo[0]->buf) ||
-			    (block->reloc[2].bo->buf != state->bo[1]->buf))
-				dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-		}
+		if ((block->reloc[1].bo->buf != state->bo[0]->buf) ||
+		    (block->reloc[2].bo->buf != state->bo[1]->buf))
+			dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
 	}
 
 	if (dirty) {
-		if (is_vertex) {
-			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
-			 * we have single case btw VERTEX & TEXTURE resource
-			 */
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
-			block->reloc[1].bo_usage = state->bo_usage[0];
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, NULL);
-		} else {
-			/* TEXTURE RESOURCE */
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
-			block->reloc[1].bo_usage = state->bo_usage[0];
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b.b);
-			block->reloc[2].bo_usage = state->bo_usage[1];
-		}
+		/* TEXTURE RESOURCE */
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
+		block->reloc[1].bo_usage = state->bo_usage[0];
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b.b);
+		block->reloc[2].bo_usage = state->bo_usage[1];
 
-		if (is_vertex)
-			block->status |= R600_BLOCK_STATUS_RESOURCE_VERTEX;
-		else
-			block->status &= ~R600_BLOCK_STATUS_RESOURCE_VERTEX;
-	
 		r600_context_dirty_resource_block(ctx, block, dirty, num_regs - 1);
 	}
 }
@@ -1105,11 +1084,6 @@ void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r60
 	struct radeon_winsys_cs *cs = ctx->cs;
 	int cp_dwords = block->pm4_ndwords;
 	int nbo = block->nbo;
-
-	if (block->status & R600_BLOCK_STATUS_RESOURCE_VERTEX) {
-		nbo = 1;
-		cp_dwords -= 2; /* don't copy the second NOP */
-	}
 
 	for (int j = 0; j < nbo; j++) {
 		if (block->pm4_bo_index[j]) {

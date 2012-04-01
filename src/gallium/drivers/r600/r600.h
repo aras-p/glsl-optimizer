@@ -128,8 +128,6 @@ struct r600_pipe_resource_state {
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
 #define R600_BLOCK_STATUS_RESOURCE_DIRTY	(1 << 2)
 
-#define R600_BLOCK_STATUS_RESOURCE_VERTEX	(1 << 3)
-
 struct r600_block_reloc {
 	struct r600_resource	*bo;
 	enum radeon_bo_usage	bo_usage;
@@ -242,16 +240,6 @@ static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
 					   uint32_t value)
 {
 	state->regs[state->nregs].value = value;
-	state->nregs++;
-}
-
-static inline void r600_pipe_state_mod_reg_bo(struct r600_pipe_state *state,
-					      uint32_t value, struct r600_resource *bo,
-					      enum radeon_bo_usage usage)
-{
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].bo = bo;
-	state->regs[state->nregs].bo_usage = usage;
 	state->nregs++;
 }
 
