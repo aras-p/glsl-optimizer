@@ -940,7 +940,7 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
    n = 0;
    for (i = extension_table; i->name != 0; ++i) {
       if (n == index && base[i->offset]) {
-	 return (GLubyte*) i->name;
+	 return (const GLubyte*) i->name;
       } else if (base[i->offset]) {
 	 ++n;
       }
