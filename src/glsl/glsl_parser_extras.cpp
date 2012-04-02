@@ -36,8 +36,9 @@ extern "C" {
 #include "ir_optimization.h"
 #include "loop_analysis.h"
 
-_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
+_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       GLenum target, void *mem_ctx)
+ : ctx(_ctx)
 {
    switch (target) {
    case GL_VERTEX_SHADER:   this->target = vertex_shader; break;

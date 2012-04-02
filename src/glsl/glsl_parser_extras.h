@@ -57,7 +57,7 @@ struct glsl_switch_state {
 };
 
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct gl_context *ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);
 
    /* Callers of this ralloc-based new need not call delete. It's
@@ -77,6 +77,7 @@ struct _mesa_glsl_parse_state {
       ralloc_free(mem);
    }
 
+   struct gl_context *const ctx;
    void *scanner;
    exec_list translation_unit;
    glsl_symbol_table *symbols;
