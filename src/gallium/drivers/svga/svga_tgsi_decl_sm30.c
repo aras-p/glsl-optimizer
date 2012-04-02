@@ -72,6 +72,13 @@ translate_vs_ps_semantic(struct svga_shader_emitter *emit,
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_NORMAL;
       break;
+   case TGSI_SEMANTIC_CLIPDIST:
+   case TGSI_SEMANTIC_CLIPVERTEX:
+      /* XXX at this time we don't support clip distance or clip vertices */
+      debug_warn_once("unsupported clip distance/vertex attribute\n");
+      *usage = SVGA3D_DECLUSAGE_TEXCOORD;
+      *idx = 0;
+      return TRUE;
    default:
       assert(0);
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
