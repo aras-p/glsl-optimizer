@@ -64,17 +64,7 @@ extern void _mesa_x86_64_transform_points4_2d( XFORM_ARGS );
 #ifdef USE_X86_64_ASM
 static void message( const char *msg )
 {
-   GLboolean debug;
-#ifdef DEBUG
-   debug = GL_TRUE;
-#else
-   if ( _mesa_getenv( "MESA_DEBUG" ) ) {
-      debug = GL_TRUE;
-   } else {
-      debug = GL_FALSE;
-   }
-#endif
-   if ( debug ) {
+   if (_mesa_getenv("MESA_DEBUG")) {
       _mesa_debug( NULL, "%s", msg );
    }
 }
