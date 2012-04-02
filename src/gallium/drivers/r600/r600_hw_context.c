@@ -1197,7 +1197,16 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
+	/* Begin a new CS. */
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
+
+	/* Invalidate caches. */
+	r600_inval_vertex_cache(ctx);
+	r600_inval_texture_cache(ctx);
+	r600_inval_shader_cache(ctx);
+	r600_flush_framebuffer(ctx, false);
+
+	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->vertex_buffer_state);
 
