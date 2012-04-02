@@ -28,7 +28,9 @@
 #include "r600d.h"
 
 #include "util/u_blitter.h"
+#include "util/u_upload_mgr.h"
 #include "tgsi/tgsi_parse.h"
+#include <byteswap.h>
 
 static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
 {
@@ -531,10 +533,9 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource *rbuffer = r600_resource(buffer);
 	struct r600_constbuf_state *state;
 	struct r600_constant_buffer *cb;
-	uint32_t offset;
+	uint8_t *ptr;
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -550,26 +551,47 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (buffer == NULL) {
+	if (unlikely(!buffer)) {
 		state->enabled_mask &= ~(1 << index);
 		state->dirty_mask &= ~(1 << index);
 		pipe_resource_reference(&state->cb[index].buffer, NULL);
 		return;
 	}
 
-	r600_upload_const_buffer(rctx, &rbuffer, &offset);
-
 	cb = &state->cb[index];
-	pipe_resource_reference(&cb->buffer, &rbuffer->b.b.b);
-	cb->buffer_offset = offset;
 	cb->buffer_size = buffer->width0;
+
+	ptr = u_vbuf_resource(buffer)->user_ptr;
+
+	if (ptr) {
+		/* Upload the user buffer. */
+		if (R600_BIG_ENDIAN) {
+			uint32_t *tmpPtr;
+			unsigned i, size = buffer->width0;
+
+			if (!(tmpPtr = malloc(size))) {
+				R600_ERR("Failed to allocate BE swap buffer.\n");
+				return;
+			}
+
+			for (i = 0; i < size / 4; ++i) {
+				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+			}
+
+			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
+			free(tmpPtr);
+		} else {
+			u_upload_data(rctx->vbuf_mgr->uploader, 0, buffer->width0, ptr, &cb->buffer_offset, &cb->buffer);
+		}
+	} else {
+		/* Setup the hw buffer. */
+		cb->buffer_offset = 0;
+		pipe_resource_reference(&cb->buffer, buffer);
+	}
 
 	state->enabled_mask |= 1 << index;
 	state->dirty_mask |= 1 << index;
 	r600_constant_buffers_dirty(rctx, state);
-
-	if (buffer != &rbuffer->b.b.b)
-		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
 struct pipe_stream_output_target *
