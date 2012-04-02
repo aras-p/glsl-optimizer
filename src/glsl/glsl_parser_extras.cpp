@@ -134,24 +134,38 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
    return "unknown";
 }
 
+/* This helper function will append the given message to the shader's
+   info log and report it via GL_ARB_debug_output. Per that extension,
+   'type' is one of the enum values classifying the message, and
+   'id' is the implementation-defined ID of the given message. */
+static void
+_mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
+               GLenum type, GLuint id, const char *fmt, va_list ap)
+{
+   bool error = (type == GL_DEBUG_TYPE_ERROR_ARB);
+
+   assert(state->info_log != NULL);
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): %s: ",
+					    locp->source,
+					    locp->first_line,
+					    locp->first_column,
+					    error ? "error" : "warning");
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+   ralloc_strcat(&state->info_log, "\n");
+}
 
 void
 _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		 const char *fmt, ...)
 {
    va_list ap;
+   GLenum type = GL_DEBUG_TYPE_ERROR_ARB;
 
    state->error = true;
 
-   assert(state->info_log != NULL);
-   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): error: ",
-					    locp->source,
-					    locp->first_line,
-					    locp->first_column);
    va_start(ap, fmt);
-   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+   _mesa_glsl_msg(locp, state, type, SHADER_ERROR_UNKNOWN, fmt, ap);
    va_end(ap);
-   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -160,16 +174,11 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
    va_list ap;
+   GLenum type = GL_DEBUG_TYPE_OTHER_ARB;
 
-   assert(state->info_log != NULL);
-   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): warning: ",
-					    locp->source,
-					    locp->first_line,
-					    locp->first_column);
    va_start(ap, fmt);
-   ralloc_vasprintf_append(&state->info_log, fmt, ap);
+   _mesa_glsl_msg(locp, state, type, 0, fmt, ap);
    va_end(ap);
-   ralloc_strcat(&state->info_log, "\n");
 }
 
 
