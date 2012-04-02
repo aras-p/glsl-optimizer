@@ -66,6 +66,9 @@
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
 {
+   LLVMTypeRef int_type = LLVMInt32TypeInContext(bld->gallivm->context);
+   LLVMBuilderRef builder = bld->gallivm->builder;
+
    mask->bld = bld;
    mask->has_mask = FALSE;
    mask->cond_stack_size = 0;
@@ -75,6 +78,16 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->int_vec_type = lp_build_int_vec_type(bld->gallivm, mask->bld->type);
    mask->exec_mask = mask->ret_mask = mask->break_mask = mask->cont_mask = mask->cond_mask =
          LLVMConstAllOnes(mask->int_vec_type);
+
+   mask->loop_limiter = LLVMBuildAlloca(
+      builder,
+      int_type,
+      "looplimiter");
+
+   LLVMBuildStore(
+      builder,
+      LLVMConstInt(int_type, LP_MAX_TGSI_LOOP_ITERATIONS, false),
+      mask->loop_limiter);
 }
 
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
@@ -176,6 +189,7 @@ static void lp_exec_bgnloop(struct lp_exec_mask *mask)
    LLVMBuildStore(builder, mask->break_mask, mask->break_var);
 
    mask->loop_block = lp_build_insert_new_block(mask->bld->gallivm, "bgnloop");
+
    LLVMBuildBr(builder, mask->loop_block);
    LLVMPositionBuilderAtEnd(builder, mask->loop_block);
 
@@ -218,10 +232,11 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
 {
    LLVMBuilderRef builder = mask->bld->gallivm->builder;
    LLVMBasicBlockRef endloop;
+   LLVMTypeRef int_type = LLVMInt32TypeInContext(mask->bld->gallivm->context);
    LLVMTypeRef reg_type = LLVMIntTypeInContext(gallivm->context,
                                                mask->bld->type.width *
                                                mask->bld->type.length);
-   LLVMValueRef i1cond;
+   LLVMValueRef i1cond, i2cond, icond, limiter;
 
    assert(mask->break_mask);
 
@@ -238,17 +253,38 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
     */
    LLVMBuildStore(builder, mask->break_mask, mask->break_var);
 
-   /* i1cond = (mask == 0) */
+   /* Decrement the loop limiter */
+   limiter = LLVMBuildLoad(builder, mask->loop_limiter, "");
+
+   limiter = LLVMBuildSub(
+      builder,
+      limiter,
+      LLVMConstInt(int_type, 1, false),
+      "");
+
+   LLVMBuildStore(builder, limiter, mask->loop_limiter);
+
+   /* i1cond = (mask != 0) */
    i1cond = LLVMBuildICmp(
       builder,
       LLVMIntNE,
       LLVMBuildBitCast(builder, mask->exec_mask, reg_type, ""),
       LLVMConstNull(reg_type), "");
 
+   /* i2cond = (looplimiter > 0) */
+   i2cond = LLVMBuildICmp(
+      builder,
+      LLVMIntSGT,
+      limiter,
+      LLVMConstNull(int_type), "");
+
+   /* if( i1cond && i2cond ) */
+   icond = LLVMBuildAnd(builder, i1cond, i2cond, "");
+
    endloop = lp_build_insert_new_block(mask->bld->gallivm, "endloop");
 
    LLVMBuildCondBr(builder,
-                   i1cond, mask->loop_block, endloop);
+                   icond, mask->loop_block, endloop);
 
    LLVMPositionBuilderAtEnd(builder, endloop);
 

@@ -51,5 +51,10 @@
  */
 #define LP_MAX_TGSI_NESTING 32
 
+/**
+ * Maximum iterations before loop termination
+ * Shared between every loop in a TGSI shader
+ */
+#define LP_MAX_TGSI_LOOP_ITERATIONS 65535
 
 #endif /* LP_BLD_LIMITS_H_ */

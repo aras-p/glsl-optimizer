@@ -251,6 +251,7 @@ struct lp_exec_mask {
    int call_stack_size;
 
    LLVMValueRef exec_mask;
+   LLVMValueRef loop_limiter;
 };
 
 struct lp_build_tgsi_inst_list
