@@ -744,6 +744,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct r600_atom *state = NULL, *next_state = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
+	uint8_t *ptr;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
@@ -778,8 +779,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		if (u_vbuf_resource(ib.buffer)->user_ptr) {
-			r600_upload_index_buffer(rctx, &ib, info.count);
+		ptr = u_vbuf_resource(ib.buffer)->user_ptr;
+		if (ptr) {
+			u_upload_data(rctx->vbuf_mgr->uploader, 0, info.count * ib.index_size,
+				      ptr, &ib.offset, &ib.buffer);
 		}
 	} else {
 		info.index_bias = info.start;

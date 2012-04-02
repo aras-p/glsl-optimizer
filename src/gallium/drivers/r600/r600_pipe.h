@@ -398,9 +398,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-void r600_upload_index_buffer(struct r600_context *rctx,
-			      struct pipe_index_buffer *ib, unsigned count);
-
 
 /* r600_pipe.c */
 void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
