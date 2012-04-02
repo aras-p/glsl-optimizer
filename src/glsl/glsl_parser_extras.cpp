@@ -146,12 +146,23 @@ _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    bool error = (type == GL_DEBUG_TYPE_ERROR_ARB);
 
    assert(state->info_log != NULL);
+
+   /* Get the offset that the new message will be written to. */
+   int msg_offset = strlen(state->info_log);
+
    ralloc_asprintf_append(&state->info_log, "%u:%u(%u): %s: ",
 					    locp->source,
 					    locp->first_line,
 					    locp->first_column,
 					    error ? "error" : "warning");
    ralloc_vasprintf_append(&state->info_log, fmt, ap);
+
+   const char *const msg = &state->info_log[msg_offset];
+   struct gl_context *ctx = state->ctx;
+   /* Report the error via GL_ARB_debug_output. */
+   if (error)
+      _mesa_shader_debug(ctx, type, id, msg, strlen(msg));
+
    ralloc_strcat(&state->info_log, "\n");
 }
 
