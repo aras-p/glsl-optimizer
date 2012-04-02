@@ -68,6 +68,9 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... ) 
 extern void
 _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
 
+extern void
+_mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id, const char *msg, int len );
+
 #ifdef __cplusplus
 }
 #endif

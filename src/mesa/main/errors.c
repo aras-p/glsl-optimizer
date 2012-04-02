@@ -1062,4 +1062,47 @@ _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... )
    (void) fmtString;
 }
 
+
+/**
+ * Report debug information from the shader compiler via GL_ARB_debug_output.
+ *
+ * \param ctx GL context.
+ * \param type The namespace to which this message belongs.
+ * \param id The message ID within the given namespace.
+ * \param msg The message to output. Need not be null-terminated.
+ * \param len The length of 'msg'. If negative, 'msg' must be null-terminated.
+ */
+void
+_mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id,
+                    const char *msg, int len )
+{
+   GLenum source = GL_DEBUG_SOURCE_SHADER_COMPILER_ARB,
+          severity;
+
+   switch (type) {
+   case GL_DEBUG_TYPE_ERROR_ARB:
+      assert(id < SHADER_ERROR_COUNT);
+      severity = GL_DEBUG_SEVERITY_HIGH_ARB;
+      break;
+   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+   case GL_DEBUG_TYPE_PORTABILITY_ARB:
+   case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+   case GL_DEBUG_TYPE_OTHER_ARB:
+      assert(0 && "other categories not implemented yet");
+   default:
+      _mesa_problem(ctx, "bad enum in _mesa_shader_debug()");
+      return;
+   }
+
+   if (len < 0)
+      len = strlen(msg);
+
+   /* Truncate the message if necessary. */
+   if (len >= MAX_DEBUG_MESSAGE_LENGTH)
+      len = MAX_DEBUG_MESSAGE_LENGTH - 1;
+
+   _mesa_log_msg(ctx, source, type, id, severity, len, msg);
+}
+
 /*@}*/
