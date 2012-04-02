@@ -521,6 +521,7 @@ static void r600_update_alpha_ref(struct r600_context *rctx)
 
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
 {
+	r600_inval_shader_cache(rctx);
 	state->atom.num_dw = rctx->chip_class >= EVERGREEN ? util_bitcount(state->dirty_mask)*20
 							   : util_bitcount(state->dirty_mask)*19;
 	r600_atom_dirty(rctx, &state->atom);
@@ -556,7 +557,6 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		return;
 	}
 
-	r600_inval_shader_cache(rctx);
 	r600_upload_const_buffer(rctx, &rbuffer, &offset);
 
 	cb = &state->cb[index];

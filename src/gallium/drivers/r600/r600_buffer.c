@@ -61,12 +61,71 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 	return transfer;
 }
 
+static void r600_set_constants_dirty_if_bound(struct r600_context *rctx,
+					      struct r600_constbuf_state *state,
+					      struct r600_resource *rbuffer)
+{
+	bool found = false;
+	uint32_t mask = state->enabled_mask;
+
+	while (mask) {
+		unsigned i = u_bit_scan(&mask);
+		if (state->cb[i].buffer == &rbuffer->b.b.b) {
+			found = true;
+			state->dirty_mask |= 1 << i;
+		}
+	}
+	if (found) {
+		r600_constant_buffers_dirty(rctx, state);
+	}
+}
+
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
 	struct r600_resource *rbuffer = r600_resource(transfer->resource);
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
+
+	if (transfer->usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+		/* When mapping for read, we only need to check if the GPU is writing to it. */
+		enum radeon_bo_usage rusage = transfer->usage & PIPE_TRANSFER_WRITE ?
+			RADEON_USAGE_READWRITE : RADEON_USAGE_WRITE;
+
+		/* Check if mapping this buffer would cause waiting for the GPU. */
+		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, rusage) ||
+		    rctx->ws->buffer_is_busy(rbuffer->buf, rusage)) {
+			unsigned i;
+
+			/* Discard the buffer. */
+			pb_reference(&rbuffer->buf, NULL);
+
+			/* Create a new one in the same pipe_resource. */
+			/* XXX We probably want a different alignment for buffers and textures. */
+			r600_init_resource(rctx->screen, rbuffer, rbuffer->b.b.b.width0, 4096,
+					   rbuffer->b.b.b.bind, rbuffer->b.b.b.usage);
+
+			/* We changed the buffer, now we need to bind it where the old one was bound. */
+			/* Vertex buffers. */
+			for (i = 0; i < rctx->vbuf_mgr->nr_vertex_buffers; i++) {
+				if (rctx->vbuf_mgr->vertex_buffer[i].buffer == &rbuffer->b.b.b) {
+					r600_inval_vertex_cache(rctx);
+					r600_atom_dirty(rctx, &rctx->vertex_buffer_state);
+				}
+			}
+			/* Streamout buffers. */
+			for (i = 0; i < rctx->num_so_targets; i++) {
+				if (rctx->so_targets[i]->b.buffer == &rbuffer->b.b.b) {
+					r600_context_streamout_end(rctx);
+					rctx->streamout_start = TRUE;
+					rctx->streamout_append_bitmask = ~0;
+				}
+			}
+			/* Constant buffers. */
+			r600_set_constants_dirty_if_bound(rctx, &rctx->vs_constbuf_state, rbuffer);
+			r600_set_constants_dirty_if_bound(rctx, &rctx->ps_constbuf_state, rbuffer);
+		}
+	}
 
 	if (rbuffer->b.user_ptr)
 		return (uint8_t*)rbuffer->b.user_ptr + transfer->box.x;
