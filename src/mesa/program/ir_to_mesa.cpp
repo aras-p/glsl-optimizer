@@ -172,8 +172,6 @@ public:
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
-
-   class function_entry *function; /* Set on OPCODE_CAL or OPCODE_BGNSUB */
 };
 
 class variable_storage : public exec_node {
@@ -237,8 +235,6 @@ public:
    int next_temp;
 
    variable_storage *find_variable_storage(ir_variable *var);
-
-   function_entry *get_function_signature(ir_function_signature *sig);
 
    src_reg get_temp(const glsl_type *type);
    void reladdr_to_temp(ir_instruction *ir, src_reg *reg, int *num_reladdr);
@@ -382,8 +378,6 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
    inst->src[1] = src1;
    inst->src[2] = src2;
    inst->ir = ir;
-
-   inst->function = NULL;
 
    this->instructions.push_tail(inst);
 
@@ -1956,126 +1950,10 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 						   &this->result.swizzle);
 }
 
-function_entry *
-ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
-{
-   function_entry *entry;
-
-   foreach_iter(exec_list_iterator, iter, this->function_signatures) {
-      entry = (function_entry *)iter.get();
-
-      if (entry->sig == sig)
-	 return entry;
-   }
-
-   entry = ralloc(mem_ctx, function_entry);
-   entry->sig = sig;
-   entry->sig_id = this->next_signature_id++;
-   entry->bgn_inst = NULL;
-
-   /* Allocate storage for all the parameters. */
-   foreach_iter(exec_list_iterator, iter, sig->parameters) {
-      ir_variable *param = (ir_variable *)iter.get();
-      variable_storage *storage;
-
-      storage = find_variable_storage(param);
-      assert(!storage);
-
-      storage = new(mem_ctx) variable_storage(param, PROGRAM_TEMPORARY,
-					      this->next_temp);
-      this->variables.push_tail(storage);
-
-      this->next_temp += type_size(param->type);
-   }
-
-   if (!sig->return_type->is_void()) {
-      entry->return_reg = get_temp(sig->return_type);
-   } else {
-      entry->return_reg = undef_src;
-   }
-
-   this->function_signatures.push_tail(entry);
-   return entry;
-}
-
 void
 ir_to_mesa_visitor::visit(ir_call *ir)
 {
-   ir_to_mesa_instruction *call_inst;
-   ir_function_signature *sig = ir->callee;
-   function_entry *entry = get_function_signature(sig);
-   int i;
-
-   /* Process in parameters. */
-   exec_list_iterator sig_iter = sig->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
-
-      if (param->mode == ir_var_in ||
-	  param->mode == ir_var_inout) {
-	 variable_storage *storage = find_variable_storage(param);
-	 assert(storage);
-
-	 param_rval->accept(this);
-	 src_reg r = this->result;
-
-	 dst_reg l;
-	 l.file = storage->file;
-	 l.index = storage->index;
-	 l.reladdr = NULL;
-	 l.writemask = WRITEMASK_XYZW;
-	 l.cond_mask = COND_TR;
-
-	 for (i = 0; i < type_size(param->type); i++) {
-	    emit(ir, OPCODE_MOV, l, r);
-	    l.index++;
-	    r.index++;
-	 }
-      }
-
-      sig_iter.next();
-   }
-   assert(!sig_iter.has_next());
-
-   /* Emit call instruction */
-   call_inst = emit(ir, OPCODE_CAL);
-   call_inst->function = entry;
-
-   /* Process out parameters. */
-   sig_iter = sig->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
-
-      if (param->mode == ir_var_out ||
-	  param->mode == ir_var_inout) {
-	 variable_storage *storage = find_variable_storage(param);
-	 assert(storage);
-
-	 src_reg r;
-	 r.file = storage->file;
-	 r.index = storage->index;
-	 r.reladdr = NULL;
-	 r.swizzle = SWIZZLE_NOOP;
-	 r.negate = 0;
-
-	 param_rval->accept(this);
-	 dst_reg l = dst_reg(this->result);
-
-	 for (i = 0; i < type_size(param->type); i++) {
-	    emit(ir, OPCODE_MOV, l, r);
-	    l.index++;
-	    r.index++;
-	 }
-      }
-
-      sig_iter.next();
-   }
-   assert(!sig_iter.has_next());
-
-   /* Process return value. */
-   this->result = entry->return_reg;
+   assert(!"ir_to_mesa: All function calls should have been inlined by now.");
 }
 
 void
@@ -2263,24 +2141,10 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 void
 ir_to_mesa_visitor::visit(ir_return *ir)
 {
-   if (ir->get_value()) {
-      dst_reg l;
-      int i;
-
-      assert(current_function);
-
-      ir->get_value()->accept(this);
-      src_reg r = this->result;
-
-      l = dst_reg(current_function->return_reg);
-
-      for (i = 0; i < type_size(current_function->sig->return_type); i++) {
-	 emit(ir, OPCODE_MOV, l, r);
-	 l.index++;
-	 r.index++;
-      }
-   }
-
+   /* Non-void functions should have been inlined.  We may still emit RETs
+    * from main() unless the EmitNoMainReturn option is set.
+    */
+   assert(!ir->get_value());
    emit(ir, OPCODE_RET);
 }
 
@@ -2975,7 +2839,6 @@ get_mesa_program(struct gl_context *ctx,
    struct gl_program *prog;
    GLenum target;
    const char *target_string;
-   GLboolean progress;
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
 
@@ -3014,35 +2877,6 @@ get_mesa_program(struct gl_context *ctx,
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
    v.emit(NULL, OPCODE_END);
-
-   /* Now emit bodies for any functions that were used. */
-   do {
-      progress = GL_FALSE;
-
-      foreach_iter(exec_list_iterator, iter, v.function_signatures) {
-	 function_entry *entry = (function_entry *)iter.get();
-
-	 if (!entry->bgn_inst) {
-	    v.current_function = entry;
-
-	    entry->bgn_inst = v.emit(NULL, OPCODE_BGNSUB);
-	    entry->bgn_inst->function = entry;
-
-	    visit_exec_list(&entry->sig->body, &v);
-
-	    ir_to_mesa_instruction *last;
-	    last = (ir_to_mesa_instruction *)v.instructions.get_tail();
-	    if (last->op != OPCODE_RET)
-	       v.emit(NULL, OPCODE_RET);
-
-	    ir_to_mesa_instruction *end;
-	    end = v.emit(NULL, OPCODE_ENDSUB);
-	    end->function = entry;
-
-	    progress = GL_TRUE;
-	 }
-      }
-   } while (progress);
 
    prog->NumTemporaries = v.next_temp;
 
@@ -3116,16 +2950,6 @@ get_mesa_program(struct gl_context *ctx,
 			   "This will likely result in software "
 			   "rasterization.\n");
 	 }
-	 break;
-      case OPCODE_BGNSUB:
-	 inst->function->inst = i;
-	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
-	 break;
-      case OPCODE_ENDSUB:
-	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
-	 break;
-      case OPCODE_CAL:
-	 mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
 	 break;
       case OPCODE_ARL:
 	 prog->NumAddressRegs = 1;
