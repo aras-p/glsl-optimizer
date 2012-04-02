@@ -102,7 +102,6 @@ struct brw_vs_compile {
    struct brw_reg r1;
    struct brw_reg regs[PROGRAM_ADDRESS+1][128];
    struct brw_reg tmp;
-   struct brw_reg stack;
 
    struct {	
        bool used_in_src;
@@ -116,8 +115,6 @@ struct brw_vs_compile {
       GLint index;
       struct brw_reg reg;
    } current_const[3];
-
-   bool needs_stack;
 };
 
 bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);

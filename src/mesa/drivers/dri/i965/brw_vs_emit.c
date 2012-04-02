@@ -378,11 +378,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       }
    }
 
-   if (c->needs_stack) {
-      c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
-      reg += 2;
-   }
-
    /* Some opcodes need an internal temporary:
     */
    c->first_tmp = reg;
@@ -1842,7 +1837,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn;
-   const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
 
@@ -1872,15 +1866,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
 	       c->output_regs[index].used_in_src = true;
        }
-
-       switch (inst->Opcode) {
-       case OPCODE_CAL:
-       case OPCODE_RET:
-	  c->needs_stack = true;
-	  break;
-       default:
-	  break;
-       }
    }
 
    /* Static register allocation
@@ -1888,9 +1873,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    brw_vs_alloc_regs(c);
 
    brw_vs_rescale_gl_fixed(c);
-
-   if (c->needs_stack)
-      brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
    for (insn = 0; insn < nr_insns; insn++) {
 
@@ -2115,32 +2097,10 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
-      case OPCODE_CAL:
-	 brw_set_access_mode(p, BRW_ALIGN_1);
-	 brw_ADD(p, deref_1d(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
-	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 brw_ADD(p, get_addr_reg(stack_index),
-			 get_addr_reg(stack_index), brw_imm_d(4));
-         brw_save_call(p, inst->Comment, p->nr_insn);
-	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         break;
-      case OPCODE_RET:
-	 brw_ADD(p, get_addr_reg(stack_index),
-			 get_addr_reg(stack_index), brw_imm_d(-4));
-	 brw_set_access_mode(p, BRW_ALIGN_1);
-         brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
-	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 break;
       case OPCODE_END:
 	 emit_vertex_write(c);
          break;
       case OPCODE_PRINT:
-         /* no-op */
-         break;
-      case OPCODE_BGNSUB:
-         brw_save_label(p, inst->Comment, p->nr_insn);
-         break;
-      case OPCODE_ENDSUB:
          /* no-op */
          break;
       default:
@@ -2200,7 +2160,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
       release_tmps(c);
    }
 
-   brw_resolve_cals(p);
    brw_set_uip_jip(p);
 
    brw_optimize(p);
