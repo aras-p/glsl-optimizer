@@ -1316,7 +1316,7 @@ MemoryOpt::combineSt(Record *rec, Instruction *st)
       }
       // set record's values as low sources of @st
       for (j = 1; sizeRc; ++j) {
-         sizeRc -= st->getSrc(j)->reg.size;
+         sizeRc -= rec->insn->getSrc(j)->reg.size;
          st->setSrc(j, rec->insn->getSrc(j));
       }
       // set saved values as high sources of @st
