@@ -217,6 +217,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         switch (param)
         {
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+        case PIPE_SHADER_CAP_SUBROUTINES:
             return 0;
         default:;
         }
