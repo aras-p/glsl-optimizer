@@ -1048,6 +1048,10 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* Override some states for Draw. */
     rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
+    rs->rs_draw.offset_point = 0;
+    rs->rs_draw.offset_line = 0;
+    rs->rs_draw.offset_tri = 0;
+    rs->rs_draw.offset_clamp = 0;
 
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
     vap_control_status = R300_VC_NO_SWAP;
