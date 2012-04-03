@@ -251,11 +251,17 @@ lp_disassemble(const void* func)
       debug_printf("error: no register info for target %s\n", Triple.c_str());
       return;
    }
+
+   OwningPtr<const MCInstrInfo> MII(T->createMCInstrInfo());
+   if (!MII) {
+      debug_printf("error: no instruction info for target %s\n", Triple.c_str());
+      return;
+   }
 #endif
 
 #if HAVE_LLVM >= 0x0301
    OwningPtr<MCInstPrinter> Printer(
-         T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *MRI, *STI));
+         T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
 #elif HAVE_LLVM == 0x0300
    OwningPtr<MCInstPrinter> Printer(
          T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *STI));
