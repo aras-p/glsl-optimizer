@@ -36,6 +36,7 @@
 
 /* Convert info about VS output semantics into r300_shader_semantics. */
 static void r300_shader_read_vs_outputs(
+    struct r300_context *r300,
     struct tgsi_shader_info* info,
     struct r300_shader_semantics* vs_outputs)
 {
@@ -81,6 +82,14 @@ static void r300_shader_read_vs_outputs(
             case TGSI_SEMANTIC_EDGEFLAG:
                 assert(index == 0);
                 fprintf(stderr, "r300 VP: cannot handle edgeflag output.\n");
+                break;
+
+            case TGSI_SEMANTIC_CLIPVERTEX:
+                assert(index == 0);
+                /* Draw does clip vertex for us. */
+                if (r300->screen->caps.has_tcl) {
+                    fprintf(stderr, "r300 VP: cannot handle clip vertex output.\n");
+                }
                 break;
 
             default:
@@ -160,10 +169,11 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     c->code->outputs[outputs->wpos] = reg++;
 }
 
-void r300_init_vs_outputs(struct r300_vertex_shader *vs)
+void r300_init_vs_outputs(struct r300_context *r300,
+                          struct r300_vertex_shader *vs)
 {
     tgsi_scan_shader(vs->state.tokens, &vs->info);
-    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
+    r300_shader_read_vs_outputs(r300, &vs->info, &vs->outputs);
 }
 
 static void r300_dummy_vertex_shader(
@@ -187,7 +197,7 @@ static void r300_dummy_vertex_shader(
     ureg_destroy(ureg);
 
     shader->dummy = TRUE;
-    r300_init_vs_outputs(shader);
+    r300_init_vs_outputs(r300, shader);
     r300_translate_vertex_shader(r300, shader);
 }
 

@@ -309,9 +309,10 @@ static void transform_inst(struct tgsi_transform_context *ctx,
     ctx->emit_instruction(ctx, inst);
 }
 
-void r300_draw_init_vertex_shader(struct draw_context *draw,
+void r300_draw_init_vertex_shader(struct r300_context *r300,
                                   struct r300_vertex_shader *vs)
 {
+    struct draw_context *draw = r300->draw;
     struct pipe_shader_state new_vs;
     struct vs_transform_context transform;
     const uint newLen = tgsi_num_tokens(vs->state.tokens) + 100 /* XXX */;
@@ -350,7 +351,7 @@ void r300_draw_init_vertex_shader(struct draw_context *draw,
     vs->state.tokens = new_vs.tokens;
 
     /* Init the VS output table for the rasterizer. */
-    r300_init_vs_outputs(vs);
+    r300_init_vs_outputs(r300, vs);
 
     /* Make the last generic be WPOS. */
     vs->outputs.wpos = vs->outputs.generic[transform.last_generic + 1];
