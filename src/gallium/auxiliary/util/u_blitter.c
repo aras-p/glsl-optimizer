@@ -47,6 +47,7 @@
 #include "util/u_simple_shaders.h"
 #include "util/u_surface.h"
 #include "util/u_texture.h"
+#include "util/u_upload_mgr.h"
 
 #define INVALID_PTR ((void*)~0)
 
@@ -54,7 +55,7 @@ struct blitter_context_priv
 {
    struct blitter_context base;
 
-   struct pipe_resource *vbuf;  /**< quad */
+   struct u_upload_mgr *upload;
 
    float vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
 
@@ -275,11 +276,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    for (i = 0; i < 4; i++)
       ctx->vertices[i][0][3] = 1; /*v.w*/
 
-   /* create the vertex buffer */
-   ctx->vbuf = pipe_user_buffer_create(ctx->base.pipe->screen,
-                                       ctx->vertices,
-                                       sizeof(ctx->vertices),
-                                       PIPE_BIND_VERTEX_BUFFER);
+   ctx->upload = u_upload_create(pipe, 65536, 128, PIPE_BIND_VERTEX_BUFFER);
 
    return &ctx->base;
 }
@@ -327,7 +324,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
    }
 
    pipe->delete_sampler_state(pipe, ctx->sampler_state);
-   pipe_resource_reference(&ctx->vbuf, NULL);
+   u_upload_destroy(ctx->upload);
    FREE(ctx);
 }
 
@@ -721,6 +718,23 @@ void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
    return ctx->fs_texfetch_depth[tex_target];
 }
 
+static void blitter_draw(struct blitter_context_priv *ctx,
+                         unsigned x1, unsigned y1,
+                         unsigned x2, unsigned y2,
+                         float depth)
+{
+   struct pipe_resource *buf = NULL;
+   unsigned offset = 0;
+
+   blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
+
+   u_upload_data(ctx->upload, 0, sizeof(ctx->vertices), ctx->vertices,
+                 &offset, &buf);
+   u_upload_unmap(ctx->upload);
+   util_draw_vertex_buffer(ctx->base.pipe, NULL, buf, offset,
+                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+}
+
 static void blitter_draw_rectangle(struct blitter_context *blitter,
                                    unsigned x1, unsigned y1,
                                    unsigned x2, unsigned y2,
@@ -742,11 +756,7 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
       default:;
    }
 
-   blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
-   ctx->base.pipe->redefine_user_buffer(ctx->base.pipe, ctx->vbuf,
-                                        0, ctx->vbuf->width0);
-   util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
-                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+   blitter_draw(ctx, x1, y1, x2, y2, depth);
 }
 
 static void util_blitter_clear_custom(struct blitter_context *blitter,
@@ -1047,12 +1057,7 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
             assert(0);
          }
 
-         /* Draw. */
-         blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-         ctx->base.pipe->redefine_user_buffer(ctx->base.pipe, ctx->vbuf,
-                                              0, ctx->vbuf->width0);
-         util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
-                                 PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+         blitter_draw(ctx, dstx, dsty, dstx+width, dsty+height, 0);
          break;
    }
 
