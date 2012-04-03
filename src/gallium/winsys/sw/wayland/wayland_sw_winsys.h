@@ -32,6 +32,7 @@ struct wl_display;
 struct winsys_handle {
    int fd;
    unsigned stride;
+   unsigned size;
 };
 
 struct sw_winsys *

@@ -243,6 +243,7 @@ wayland_displaytarget_get_handle(struct sw_winsys *ws,
 
    whandle->fd = wldt->fd;
    whandle->stride = wldt->stride;
+   whandle->size = wldt->size;
 
    return TRUE;
 }
