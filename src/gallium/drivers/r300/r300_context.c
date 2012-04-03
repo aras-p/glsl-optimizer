@@ -418,6 +418,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_query_functions(r300);
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
+    r300_init_render_functions(r300);
+    r300_init_states(&r300->context);
 
     r300->context.create_video_decoder = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
@@ -435,10 +437,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
         goto fail;
-
-    /* Render functions must be initialized after blitter. */
-    r300_init_render_functions(r300);
-    r300_init_states(&r300->context);
+    r300->blitter->draw_rectangle = r300_blitter_draw_rectangle;
 
     rws->cs_set_flush_callback(r300->cs, r300_flush_callback, r300);
 

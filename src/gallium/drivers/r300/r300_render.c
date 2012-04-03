@@ -1165,12 +1165,12 @@ void r300_draw_flush_vbuf(struct r300_context *r300)
  * If we rendered a quad, the pixels on the main diagonal
  * would be computed and stored twice, which makes the clear/copy codepaths
  * somewhat inefficient. Instead we use a rectangular point sprite. */
-static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
-                                        unsigned x1, unsigned y1,
-                                        unsigned x2, unsigned y2,
-                                        float depth,
-                                        enum blitter_attrib_type type,
-                                        const union pipe_color_union *attrib)
+void r300_blitter_draw_rectangle(struct blitter_context *blitter,
+                                 unsigned x1, unsigned y1,
+                                 unsigned x2, unsigned y2,
+                                 float depth,
+                                 enum blitter_attrib_type type,
+                                 const union pipe_color_union *attrib)
 {
     struct r300_context *r300 = r300_context(util_blitter_get_pipe(blitter));
     unsigned last_sprite_coord_enable = r300->sprite_coord_enable;
@@ -1309,7 +1309,6 @@ void r300_init_render_functions(struct r300_context *r300)
     }
 
     r300->context.resource_resolve = r300_resource_resolve;
-    r300->blitter->draw_rectangle = r300_blitter_draw_rectangle;
 
     /* Plug in the two-sided stencil reference value fallback if needed. */
     if (!r300->screen->caps.is_r500)
