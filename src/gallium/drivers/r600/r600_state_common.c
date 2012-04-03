@@ -752,12 +752,6 @@ static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shade
 static void r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	struct r600_pipe_state rstate;
-
-	rstate.nregs = 0;
-
-	if (rstate.nregs)
-		r600_context_pipe_state_set(rctx, &rstate);
 
 	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
