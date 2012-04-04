@@ -408,6 +408,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         /* Disable converting points/lines to triangles. */
         draw_wide_line_threshold(r300->draw, 10000000.f);
         draw_wide_point_threshold(r300->draw, 10000000.f);
+        draw_wide_point_sprites(r300->draw, FALSE);
+        draw_enable_line_stipple(r300->draw, TRUE);
+        draw_enable_point_sprites(r300->draw, FALSE);
     }
 
     if (!r300_setup_atoms(r300))
