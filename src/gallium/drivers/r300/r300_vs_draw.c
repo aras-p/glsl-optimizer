@@ -29,7 +29,7 @@
  *
  * Transformations:
  * 1) If the secondary color output is present, the primary color must be
- *    inserted before it.
+ *    present too.
  * 2) If any back-face color output is present, there must be all 4 color
  *    outputs and missing ones must be inserted.
  * 3) Insert a trailing texcoord output containing a copy of POS, for WPOS.
@@ -52,7 +52,6 @@ struct vs_transform_context {
 
     boolean color_used[2];
     boolean bcolor_used[2];
-    boolean temp_used[128];
 
     /* Index of the pos output, typically 0. */
     unsigned pos_output;
@@ -72,6 +71,8 @@ struct vs_transform_context {
     boolean first_instruction;
     /* End instruction processed? */
     boolean end_instruction;
+
+    boolean temp_used[1024];
 };
 
 static void emit_temp(struct tgsi_transform_context *ctx, unsigned reg)
@@ -102,9 +103,9 @@ static void emit_output(struct tgsi_transform_context *ctx,
     ++vsctx->num_outputs;
 }
 
-static void insert_output(struct tgsi_transform_context *ctx,
-                          struct tgsi_full_declaration *before,
-                          unsigned name, unsigned index, unsigned interp)
+static void insert_output_before(struct tgsi_transform_context *ctx,
+                                 struct tgsi_full_declaration *before,
+                                 unsigned name, unsigned index, unsigned interp)
 {
     struct vs_transform_context *vsctx = (struct vs_transform_context *)ctx;
     unsigned i;
@@ -115,28 +116,29 @@ static void insert_output(struct tgsi_transform_context *ctx,
     }
 
     /* Insert the new output. */
-    emit_output(ctx, name, index, interp, before->Range.First);
+    emit_output(ctx, name, index, interp,
+                before->Range.First + vsctx->decl_shift);
 
     ++vsctx->decl_shift;
 }
 
-static void insert_trailing_bcolor(struct tgsi_transform_context *ctx,
-                                   struct tgsi_full_declaration *before)
+static void insert_output_after(struct tgsi_transform_context *ctx,
+                                struct tgsi_full_declaration *after,
+                                unsigned name, unsigned index, unsigned interp)
 {
     struct vs_transform_context *vsctx = (struct vs_transform_context *)ctx;
+    unsigned i;
 
-    /* If BCOLOR0 is used, make sure BCOLOR1 is present too. Otherwise
-     * the rasterizer doesn't do the color selection correctly. */
-    if (vsctx->bcolor_used[0] && !vsctx->bcolor_used[1]) {
-        if (before) {
-            insert_output(ctx, before, TGSI_SEMANTIC_BCOLOR, 1,
-                          TGSI_INTERPOLATE_LINEAR);
-        } else {
-            emit_output(ctx, TGSI_SEMANTIC_BCOLOR, 1,
-                        TGSI_INTERPOLATE_LINEAR, vsctx->num_outputs);
-        }
-        vsctx->bcolor_used[1] = TRUE;
+    /* Make a place for the new output. */
+    for (i = after->Range.First+1; i < Elements(vsctx->out_remap); i++) {
+        ++vsctx->out_remap[i];
     }
+
+    /* Insert the new output. */
+    emit_output(ctx, name, index, interp,
+                after->Range.First + 1);
+
+    ++vsctx->decl_shift;
 }
 
 static void transform_decl(struct tgsi_transform_context *ctx,
@@ -153,51 +155,43 @@ static void transform_decl(struct tgsi_transform_context *ctx,
 
             case TGSI_SEMANTIC_COLOR:
                 assert(decl->Semantic.Index < 2);
-                vsctx->color_used[decl->Semantic.Index] = TRUE;
 
                 /* We must rasterize the first color if the second one is
                  * used, otherwise the rasterizer doesn't do the color
                  * selection correctly. Declare it, but don't write to it. */
                 if (decl->Semantic.Index == 1 && !vsctx->color_used[0]) {
-                    insert_output(ctx, decl, TGSI_SEMANTIC_COLOR, 0,
-                                  TGSI_INTERPOLATE_LINEAR);
+                    insert_output_before(ctx, decl, TGSI_SEMANTIC_COLOR, 0,
+                                         TGSI_INTERPOLATE_LINEAR);
                     vsctx->color_used[0] = TRUE;
                 }
                 break;
 
             case TGSI_SEMANTIC_BCOLOR:
                 assert(decl->Semantic.Index < 2);
-                vsctx->bcolor_used[decl->Semantic.Index] = TRUE;
 
                 /* We must rasterize all 4 colors if back-face colors are
                  * used, otherwise the rasterizer doesn't do the color
                  * selection correctly. Declare it, but don't write to it. */
                 if (!vsctx->color_used[0]) {
-                    insert_output(ctx, decl, TGSI_SEMANTIC_COLOR, 0,
-                                  TGSI_INTERPOLATE_LINEAR);
+                    insert_output_before(ctx, decl, TGSI_SEMANTIC_COLOR, 0,
+                                         TGSI_INTERPOLATE_LINEAR);
                     vsctx->color_used[0] = TRUE;
                 }
                 if (!vsctx->color_used[1]) {
-                    insert_output(ctx, decl, TGSI_SEMANTIC_COLOR, 1,
-                                  TGSI_INTERPOLATE_LINEAR);
+                    insert_output_before(ctx, decl, TGSI_SEMANTIC_COLOR, 1,
+                                         TGSI_INTERPOLATE_LINEAR);
                     vsctx->color_used[1] = TRUE;
                 }
                 if (decl->Semantic.Index == 1 && !vsctx->bcolor_used[0]) {
-                    insert_output(ctx, decl, TGSI_SEMANTIC_BCOLOR, 0,
-                                  TGSI_INTERPOLATE_LINEAR);
+                    insert_output_before(ctx, decl, TGSI_SEMANTIC_BCOLOR, 0,
+                                         TGSI_INTERPOLATE_LINEAR);
                     vsctx->bcolor_used[0] = TRUE;
                 }
-                /* One more case is handled in insert_trailing_bcolor. */
                 break;
 
             case TGSI_SEMANTIC_GENERIC:
                 vsctx->last_generic = MAX2(vsctx->last_generic, decl->Semantic.Index);
                 break;
-        }
-
-        if (decl->Semantic.Name != TGSI_SEMANTIC_BCOLOR) {
-            /* Insert it as soon as possible. */
-            insert_trailing_bcolor(ctx, decl);
         }
 
         /* Since we're inserting new outputs in between, the following outputs
@@ -214,6 +208,14 @@ static void transform_decl(struct tgsi_transform_context *ctx,
     }
 
     ctx->emit_declaration(ctx, decl);
+
+    /* Insert BCOLOR1 if needed. */
+    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
+        decl->Semantic.Name == TGSI_SEMANTIC_BCOLOR &&
+        !vsctx->bcolor_used[1]) {
+        insert_output_after(ctx, decl, TGSI_SEMANTIC_BCOLOR, 1,
+                            TGSI_INTERPOLATE_LINEAR);
+    }
 }
 
 static void transform_inst(struct tgsi_transform_context *ctx,
@@ -225,10 +227,6 @@ static void transform_inst(struct tgsi_transform_context *ctx,
 
     if (!vsctx->first_instruction) {
         vsctx->first_instruction = TRUE;
-
-        /* The trailing BCOLOR should be inserted before the code
-         * if it hasn't already been done so. */
-        insert_trailing_bcolor(ctx, NULL);
 
         /* Insert the generic output for WPOS. */
         emit_output(ctx, TGSI_SEMANTIC_GENERIC, vsctx->last_generic + 1,
@@ -314,9 +312,12 @@ void r300_draw_init_vertex_shader(struct r300_context *r300,
 {
     struct draw_context *draw = r300->draw;
     struct pipe_shader_state new_vs;
+    struct tgsi_shader_info info;
     struct vs_transform_context transform;
     const uint newLen = tgsi_num_tokens(vs->state.tokens) + 100 /* XXX */;
     unsigned i;
+
+    tgsi_scan_shader(vs->state.tokens, &info);
 
     new_vs.tokens = tgsi_alloc_tokens(newLen);
     if (new_vs.tokens == NULL)
@@ -329,6 +330,22 @@ void r300_draw_init_vertex_shader(struct r300_context *r300,
     transform.last_generic = -1;
     transform.base.transform_instruction = transform_inst;
     transform.base.transform_declaration = transform_decl;
+
+    for (i = 0; i < info.num_outputs; i++) {
+        unsigned index = info.output_semantic_index[i];
+
+        switch (info.output_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                assert(index < 2);
+                transform.color_used[index] = TRUE;
+                break;
+
+            case TGSI_SEMANTIC_BCOLOR:
+                assert(index < 2);
+                transform.bcolor_used[index] = TRUE;
+                break;
+        }
+    }
 
     tgsi_transform_shader(vs->state.tokens,
                           (struct tgsi_token*)new_vs.tokens,
