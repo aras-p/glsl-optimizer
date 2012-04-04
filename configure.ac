@@ -1816,6 +1816,14 @@ else
     MESA_LLVM=0
 fi
 
+dnl Directory for XVMC libs
+AC_ARG_WITH([xvmc-libdir],
+    [AS_HELP_STRING([--with-xvmc-libdir=DIR],
+        [directory for the XVMC libraries @<:@default=${libdir}@:>@])],
+    [XVMC_LIB_INSTALL_DIR="$withval"],
+    [XVMC_LIB_INSTALL_DIR='${libdir}'])
+AC_SUBST([XVMC_LIB_INSTALL_DIR])
+
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],
     [AS_HELP_STRING([--with-vdpau-libdir=DIR],

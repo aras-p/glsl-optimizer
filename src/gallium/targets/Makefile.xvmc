@@ -1,7 +1,7 @@
-# This makefile template is used to build libXvMCg3dvl.so
+# This makefile template is used to build libXvMC*.so
 
 LIBNAME = lib$(LIBBASENAME).so
-LIB_GLOB=lib$(LIBBASENAME).*so*
+XVMC_LIB_GLOB=lib$(LIBBASENAME).*so*
 XVMC_MAJOR = 1
 XVMC_MINOR = 0
 INCLUDES = -I$(TOP)/src/gallium/include \
@@ -67,7 +67,7 @@ clean:
 	-rm -f depend depend.bak
 
 install: default
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(LIB_GLOB) $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(XVMC_LIB_INSTALL_DIR)
+	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(XVMC_LIB_GLOB) $(DESTDIR)$(XVMC_LIB_INSTALL_DIR)
 
 include depend
