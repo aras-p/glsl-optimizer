@@ -203,6 +203,13 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
       return 0;
 
+   case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
+      return 1; /* The color outputs of vertex shaders are not clamped */
+   case PIPE_CAP_VERTEX_COLOR_CLAMPED:
+      return 0; /* The driver can't clamp vertex colors */
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
+      return 0; /* The driver can't clamp fragment colors */
+
    default:
       return 0;
    }
