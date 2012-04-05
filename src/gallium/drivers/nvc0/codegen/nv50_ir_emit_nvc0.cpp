@@ -873,6 +873,9 @@ CodeEmitterNVC0::emitSET(const CmpInstruction *i)
    }
    emitForm_A(i, (static_cast<uint64_t>(hi) << 32) | lo);
 
+   if (i->op != OP_SET)
+      srcId(i->src(2), 32 + 17);
+
    if (i->def(0).getFile() == FILE_PREDICATE) {
       if (i->sType == TYPE_F32)
          code[1] += 0x10000000;
