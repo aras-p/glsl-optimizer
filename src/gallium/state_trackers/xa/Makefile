@@ -39,7 +39,7 @@ default: $(XA_LIB_NAME)
 
 # Make the library
 $(XA_LIB_NAME): depend $(OBJECTS)
-	$(CC) -r -nostdlib -o $(XA_LIB_NAME) $(OBJECTS)
+	$(CC) -r -nostdlib -o $(XA_LIB_NAME) $(OBJECTS) $(CFLAGS)
 
 install: FORCE
 
