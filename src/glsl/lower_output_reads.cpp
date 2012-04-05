@@ -54,11 +54,27 @@ public:
    virtual ir_visitor_status visit_leave(class ir_function_signature *);
 };
 
+/**
+ * Hash function for the output variables - computes the hash of the name.
+ * NOTE: We're using the name string to ensure that the hash doesn't depend
+ * on any random factors, otherwise the output_read_remover could produce
+ * the random order of the assignments.
+ *
+ * NOTE: If you want to reuse this function please take into account that
+ * generally the names of the variables are non-unique.
+ */
+static unsigned
+hash_table_var_hash(const void *key)
+{
+   const ir_variable * var = static_cast<const ir_variable *>(key);
+   return hash_table_string_hash(var->name);
+}
+
 output_read_remover::output_read_remover()
 {
    mem_ctx = ralloc_context(NULL);
    replacements =
-      hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+      hash_table_ctor(0, hash_table_var_hash, hash_table_pointer_compare);
 }
 
 output_read_remover::~output_read_remover()
