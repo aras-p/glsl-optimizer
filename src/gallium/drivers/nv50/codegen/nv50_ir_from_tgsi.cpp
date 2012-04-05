@@ -946,6 +946,9 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
          else
             info->out[dst.getIndex(0)].mask |= dst.getMask();
 
+         if (info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PSIZE)
+            info->out[dst.getIndex(0)].mask &= 1;
+
          if (isEdgeFlagPassthrough(insn))
             info->io.edgeFlagIn = insn.getSrc(0).getIndex(0);
       } else
@@ -1393,7 +1396,8 @@ Converter::storeDst(const tgsi::Instruction::DstRegister dst, int c,
       mkOp2(OP_WRSV, TYPE_U32, NULL, dstToSym(dst, c), val);
    } else
    if (f == TGSI_FILE_OUTPUT && prog->getType() != Program::TYPE_FRAGMENT) {
-      mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
+      if (ptr || (info->out[idx].mask & (1 << c)))
+         mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
    } else
    if (f == TGSI_FILE_TEMPORARY ||
        f == TGSI_FILE_TEMPORARY_ARRAY ||
