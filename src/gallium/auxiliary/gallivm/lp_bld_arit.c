@@ -63,7 +63,7 @@
 
 #define EXP_POLY_DEGREE 5
 
-#define LOG_POLY_DEGREE 5
+#define LOG_POLY_DEGREE 4
 
 
 /**
@@ -2388,41 +2388,38 @@ lp_build_extract_mantissa(struct lp_build_context *bld,
 
 
 /**
- * Minimax polynomial fit of log2(x)/(x - 1), for x in range [1, 2[
+ * Minimax polynomial fit of log2((1.0 + sqrt(x))/(1.0 - sqrt(x)))/sqrt(x) ,for x in range of [0, 1/9[
  * These coefficients can be generate with
  * http://www.boost.org/doc/libs/1_36_0/libs/math/doc/sf_and_dist/html/math_toolkit/toolkit/internals2/minimax.html
  */
 const double lp_build_log2_polynomial[] = {
-#if LOG_POLY_DEGREE == 6
-   3.11578814719469302614,
-   -3.32419399085241980044,
-   2.59883907202499966007,
-   -1.23152682416275988241,
-   0.318212422185251071475,
-   -0.0344359067839062357313
-#elif LOG_POLY_DEGREE == 5
-   2.8882704548164776201,
-   -2.52074962577807006663,
-   1.48116647521213171641,
-   -0.465725644288844778798,
-   0.0596515482674574969533
+#if LOG_POLY_DEGREE == 5
+   2.88539008148777786488L,
+   0.961796878841293367824L,
+   0.577058946784739859012L,
+   0.412914355135828735411L,
+   0.308591899232910175289L,
+   0.352376952300281371868L,
 #elif LOG_POLY_DEGREE == 4
-   2.61761038894603480148,
-   -1.75647175389045657003,
-   0.688243882994381274313,
-   -0.107254423828329604454
+   2.88539009343309178325L,
+   0.961791550404184197881L,
+   0.577440339438736392009L,
+   0.403343858251329912514L,
+   0.406718052498846252698L,
 #elif LOG_POLY_DEGREE == 3
-   2.28330284476918490682,
-   -1.04913055217340124191,
-   0.204446009836232697516
+   2.88538959748872753838L,
+   0.961932915889597772928L,
+   0.571118517972136195241L,
+   0.493997535084709500285L,
 #else
 #error
 #endif
 };
 
-
 /**
  * See http://www.devmaster.net/forums/showthread.php?p=43580
+ * http://en.wikipedia.org/wiki/Logarithm#Calculation
+ * http://www.nezumi.demon.co.uk/consult/logx.htm
  */
 void
 lp_build_log2_approx(struct lp_build_context *bld,
@@ -2441,6 +2438,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
 
    LLVMValueRef i = NULL;
+   LLVMValueRef y = NULL;
+   LLVMValueRef z = NULL;
    LLVMValueRef exp = NULL;
    LLVMValueRef mant = NULL;
    LLVMValueRef logexp = NULL;
@@ -2478,18 +2477,28 @@ lp_build_log2_approx(struct lp_build_context *bld,
    }
 
    if(p_log2) {
-      /* mant = (float) mantissa(x) */
+      /* mant = 1 + (float) mantissa(x) */
       mant = LLVMBuildAnd(builder, i, mantmask, "");
       mant = LLVMBuildOr(builder, mant, one, "");
       mant = LLVMBuildBitCast(builder, mant, vec_type, "");
 
-      logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
+      /* y = (mant - 1) / (mant + 1) */
+      y = lp_build_div(bld,
+         lp_build_sub(bld, mant, bld->one),
+         lp_build_add(bld, mant, bld->one)
+      );
+
+      /* z = y^2 */
+      z = lp_build_mul(bld, y, y);
+
+      /* compute P(z) */
+      logmant = lp_build_polynomial(bld, z, lp_build_log2_polynomial,
                                     Elements(lp_build_log2_polynomial));
 
-      /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
-      logmant = LLVMBuildFMul(builder, logmant, LLVMBuildFSub(builder, mant, bld->one, ""), "");
+      /* logmant = y * P(z) */
+      logmant = lp_build_mul(bld, y, logmant);
 
-      res = LLVMBuildFAdd(builder, logmant, logexp, "");
+      res = lp_build_add(bld, logmant, logexp);
    }
 
    if(p_exp) {

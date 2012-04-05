@@ -41,11 +41,11 @@
  *
  *  and take the coefficients from the P = { ... } array.
  *
- * - To compute log2 5th order polynomial between [1, 2] do:
+ * - To compute log2 4th order polynomial between [0, 1/9] do:
  *
  *    variant 1
- *    range 1 2
- *    order 5 0
+ *    range 0 0.111111112
+ *    order 4 0
  *    step 200
  *    info
  *
@@ -77,7 +77,7 @@ boost::math::ntl::RR f(const boost::math::ntl::RR& x, int variant)
       return exp2(x);
 
    case 1:
-      return log2(x)/(x - 1.0);
+      return log2((1.0 + sqrt(x))/(1.0 - sqrt(x)))/sqrt(x);
    }
 
    return 0;
