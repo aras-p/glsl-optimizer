@@ -2163,7 +2163,8 @@ lp_build_polynomial(struct lp_build_context *bld,
                     unsigned num_coeffs)
 {
    const struct lp_type type = bld->type;
-   LLVMValueRef res = NULL;
+   LLVMValueRef even = NULL, odd = NULL;
+   LLVMValueRef x2;
    unsigned i;
 
    assert(lp_check_value(bld->type, x));
@@ -2175,19 +2176,36 @@ lp_build_polynomial(struct lp_build_context *bld,
                    __FUNCTION__);
    }
 
+   /*
+    * Calculate odd and even terms seperately to decrease data dependency
+    * Ex:
+    *     c[0] + x^2 * c[2] + x^4 * c[4] ...
+    *     + x * (c[1] + x^2 * c[3] + x^4 * c[5]) ...
+    */
+   x2 = lp_build_mul(bld, x, x);
+
    for (i = num_coeffs; i--; ) {
       LLVMValueRef coeff;
 
       coeff = lp_build_const_vec(bld->gallivm, type, coeffs[i]);
 
-      if(res)
-         res = lp_build_add(bld, coeff, lp_build_mul(bld, x, res));
-      else
-         res = coeff;
+      if (i % 2 == 0) {
+         if (even)
+            even = lp_build_add(bld, coeff, lp_build_mul(bld, x2, even));
+         else
+            even = coeff;
+      } else {
+         if (odd)
+            odd = lp_build_add(bld, coeff, lp_build_mul(bld, x2, odd));
+         else
+            odd = coeff;
+      }
    }
 
-   if(res)
-      return res;
+   if (odd)
+      return lp_build_add(bld, lp_build_mul(bld, odd, x), even);
+   else if (even)
+      return even;
    else
       return bld->undef;
 }
