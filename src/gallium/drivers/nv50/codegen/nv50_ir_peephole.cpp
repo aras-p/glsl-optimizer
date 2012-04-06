@@ -1212,8 +1212,8 @@ MemoryOpt::combineLd(Record *rec, Instruction *ld)
    int size = sizeRc + sizeLd;
    int d, j;
 
-   // only VFETCH can do a 96 byte load
-   if (ld->op != OP_VFETCH && size == 12)
+   if (!prog->getTarget()->
+       isAccessSupported(ld->getSrc(0)->reg.file, typeOfSize(size)))
       return false;
    // no unaligned loads
    if (((size == 0x8) && (MIN2(offLd, offRc) & 0x7)) ||
@@ -1267,7 +1267,8 @@ MemoryOpt::combineSt(Record *rec, Instruction *st)
    Value *src[4]; // no modifiers in ValueRef allowed for st
    Value *extra[3];
 
-   if (size == 12) // XXX: check if EXPORT a[] can do this after all
+   if (!prog->getTarget()->
+       isAccessSupported(st->getSrc(0)->reg.file, typeOfSize(size)))
       return false;
    if (size == 8 && MIN2(offRc, offSt) & 0x7)
       return false;

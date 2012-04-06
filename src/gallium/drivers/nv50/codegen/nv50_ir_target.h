@@ -138,6 +138,7 @@ public:
    virtual bool insnCanLoad(const Instruction *insn, int s,
                             const Instruction *ld) const = 0;
    virtual bool isOpSupported(operation, DataType) const = 0;
+   virtual bool isAccessSupported(DataFile, DataType) const = 0;
    virtual bool isModSupported(const Instruction *,
                                int s, Modifier) const = 0;
    virtual bool isSatSupported(const Instruction *) const = 0;

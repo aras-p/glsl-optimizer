@@ -82,8 +82,9 @@ static inline DataType typeOfSize(unsigned int size,
    case 12: return TYPE_B96;
    case 16: return TYPE_B128;
    case 4:
-   default:
       return flt ? TYPE_F32 : (sgn ? TYPE_S32 : TYPE_U32);
+   default:
+      return TYPE_NONE;
    }
 }
 

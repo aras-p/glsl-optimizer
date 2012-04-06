@@ -1190,7 +1190,7 @@ CodeEmitterNVC0::emitEXPORT(const Instruction *i)
    code[0] = 0x00000006 | ((size / 4 - 1) << 5);
    code[1] = 0x0a000000 | i->src[0].get()->reg.data.offset;
 
-   assert(size != 12 && !(code[1] & (size - 1)));
+   assert(!(code[1] & ((size == 12) ? 15 : (size - 1))));
 
    if (i->perPatch)
       code[0] |= 0x100;
