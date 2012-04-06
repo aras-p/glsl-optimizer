@@ -37,6 +37,9 @@ link_invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
 extern void
 link_assign_uniform_locations(struct gl_shader_program *prog);
 
+extern void
+link_set_uniform_initializers(struct gl_shader_program *prog);
+
 /**
  * Class for processing all of the leaf fields of an uniform
  *

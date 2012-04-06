@@ -46,6 +46,7 @@ LIBGLSL_CXX_FILES := \
 	linker.cpp \
 	link_functions.cpp \
 	link_uniforms.cpp \
+	link_uniform_initializers.cpp \
 	loop_analysis.cpp \
 	loop_controls.cpp \
 	loop_unroll.cpp \

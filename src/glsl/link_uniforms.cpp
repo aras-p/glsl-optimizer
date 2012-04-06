@@ -426,5 +426,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->NumUserUniformStorage = num_user_uniforms;
    prog->UniformStorage = uniforms;
 
+   link_set_uniform_initializers(prog);
+
    return;
 }
