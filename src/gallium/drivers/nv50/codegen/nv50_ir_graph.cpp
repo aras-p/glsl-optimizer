@@ -33,12 +33,8 @@ Graph::Graph()
 
 Graph::~Graph()
 {
-   Iterator *iter = this->safeIteratorDFS();
-
-   for (; !iter->end(); iter->next())
-      reinterpret_cast<Node *>(iter->get())->cut();
-
-   putIterator(iter);
+   for (IteratorRef it = safeIteratorDFS(); !it->end(); it->next())
+      reinterpret_cast<Node *>(it->get())->cut();
 }
 
 void Graph::insert(Node *node)
@@ -192,7 +188,7 @@ Graph::Node::reachableBy(Node *node, Node *term)
    return pos == this;
 }
 
-class DFSIterator : public Graph::GraphIterator
+class DFSIterator : public Iterator
 {
 public:
    DFSIterator(Graph *graph, const bool preorder)
@@ -241,17 +237,17 @@ protected:
    int pos;
 };
 
-Graph::GraphIterator *Graph::iteratorDFS(bool preorder)
+IteratorRef Graph::iteratorDFS(bool preorder)
 {
-   return new DFSIterator(this, preorder);
+   return IteratorRef(new DFSIterator(this, preorder));
 }
 
-Graph::GraphIterator *Graph::safeIteratorDFS(bool preorder)
+IteratorRef Graph::safeIteratorDFS(bool preorder)
 {
    return this->iteratorDFS(preorder);
 }
 
-class CFGIterator : public Graph::GraphIterator
+class CFGIterator : public Iterator
 {
 public:
    CFGIterator(Graph *graph)
@@ -262,10 +258,8 @@ public:
       nodes[graph->getSize()] = 0;
 
       // TODO: argh, use graph->sequence instead of tag and just raise it by > 1
-      Iterator *iter;
-      for (iter = graph->iteratorDFS(); !iter->end(); iter->next())
-         reinterpret_cast<Graph::Node *>(iter->get())->tag = 0;
-      graph->putIterator(iter);
+      for (IteratorRef it = graph->iteratorDFS(); !it->end(); it->next())
+         reinterpret_cast<Graph::Node *>(it->get())->tag = 0;
 
       if (graph->getRoot())
          search(graph->getRoot(), graph->nextSequence());
@@ -327,27 +321,25 @@ private:
    int pos;
 };
 
-Graph::GraphIterator *Graph::iteratorCFG()
+IteratorRef Graph::iteratorCFG()
 {
-   return new CFGIterator(this);
+   return IteratorRef(new CFGIterator(this));
 }
 
-Graph::GraphIterator *Graph::safeIteratorCFG()
+IteratorRef Graph::safeIteratorCFG()
 {
    return this->iteratorCFG();
 }
 
 void Graph::classifyEdges()
 {
-   DFSIterator *iter;
    int seq;
 
-   for (iter = new DFSIterator(this, true); !iter->end(); iter->next()) {
-      Node *node = reinterpret_cast<Node *>(iter->get());
+   for (IteratorRef it = iteratorDFS(true); !it->end(); it->next()) {
+      Node *node = reinterpret_cast<Node *>(it->get());
       node->visit(0);
       node->tag = 0;
    }
-   putIterator(iter);
 
    classifyDFS(root, (seq = 0));
 

@@ -76,19 +76,17 @@ void DominatorTree::debugPrint()
 DominatorTree::DominatorTree(Graph *cfgraph) : cfg(cfgraph),
                                                count(cfg->getSize())
 {
-   Iterator *iter;
-   int i;
+   int i = 0;
 
    vert = new Node * [count];
    data = new int[5 * count];
 
-   for (i = 0, iter = cfg->iteratorDFS(true); !iter->end(); iter->next(), ++i) {
-      vert[i] = reinterpret_cast<Node *>(iter->get());
+   for (IteratorRef it = cfg->iteratorDFS(true); !it->end(); it->next(), ++i) {
+      vert[i] = reinterpret_cast<Node *>(it->get());
       vert[i]->tag = i;
       LABEL(i) = i;
       SEMI(i) = ANCESTOR(i) = -1;
    }
-   cfg->putIterator(iter);
 
    build();
 
@@ -190,33 +188,31 @@ void DominatorTree::build()
 
 void DominatorTree::findDominanceFrontiers()
 {
-   Iterator *dtIter;
    BasicBlock *bb;
 
-   for (dtIter = this->iteratorDFS(false); !dtIter->end(); dtIter->next()) {
-      EdgeIterator succIter, chldIter;
+   for (IteratorRef dtIt = iteratorDFS(false); !dtIt->end(); dtIt->next()) {
+      EdgeIterator succIt, chldIt;
 
-      bb = BasicBlock::get(reinterpret_cast<Node *>(dtIter->get()));
+      bb = BasicBlock::get(reinterpret_cast<Node *>(dtIt->get()));
       bb->getDF().clear();
 
-      for (succIter = bb->cfg.outgoing(); !succIter.end(); succIter.next()) {
-         BasicBlock *dfLocal = BasicBlock::get(succIter.getNode());
+      for (succIt = bb->cfg.outgoing(); !succIt.end(); succIt.next()) {
+         BasicBlock *dfLocal = BasicBlock::get(succIt.getNode());
          if (dfLocal->idom() != bb)
             bb->getDF().insert(dfLocal);
       }
 
-      for (chldIter = bb->dom.outgoing(); !chldIter.end(); chldIter.next()) {
-         BasicBlock *cb = BasicBlock::get(chldIter.getNode());
+      for (chldIt = bb->dom.outgoing(); !chldIt.end(); chldIt.next()) {
+         BasicBlock *cb = BasicBlock::get(chldIt.getNode());
 
-         DLList::Iterator dfIter = cb->getDF().iterator();
-         for (; !dfIter.end(); dfIter.next()) {
-            BasicBlock *dfUp = BasicBlock::get(dfIter);
+         DLList::Iterator dfIt = cb->getDF().iterator();
+         for (; !dfIt.end(); dfIt.next()) {
+            BasicBlock *dfUp = BasicBlock::get(dfIt);
             if (dfUp->idom() != bb)
                bb->getDF().insert(dfUp);
          }
       }
    }
-   this->putIterator(dtIter);
 }
 
 // liveIn(bb) = usedBeforeAssigned(bb) U (liveOut(bb) - assigned(bb))

@@ -402,16 +402,14 @@ Function::setExit(BasicBlock *bb)
 unsigned int
 Function::orderInstructions(ArrayList &result)
 {
-   Iterator *iter;
-   for (iter = cfg.iteratorCFG(); !iter->end(); iter->next()) {
+   for (IteratorRef it = cfg.iteratorCFG(); !it->end(); it->next()) {
       BasicBlock *bb =
-         BasicBlock::get(reinterpret_cast<Graph::Node *>(iter->get()));
+         BasicBlock::get(reinterpret_cast<Graph::Node *>(it->get()));
 
       for (Instruction *insn = bb->getFirst(); insn; insn = insn->next)
          result.insert(insn, insn->serial);
    }
 
-   cfg.putIterator(iter);
    return result.getSize();
 }
 
@@ -466,7 +464,7 @@ Pass::run(Function *func, bool ordered, bool skipPhi)
 bool
 Pass::doRun(Function *func, bool ordered, bool skipPhi)
 {
-   Iterator *bbIter;
+   IteratorRef bbIter;
    BasicBlock *bb;
    Instruction *insn, *next;
 
@@ -487,7 +485,7 @@ Pass::doRun(Function *func, bool ordered, bool skipPhi)
             break;
       }
    }
-   func->cfg.putIterator(bbIter);
+
    return !err;
 }
 
@@ -503,10 +501,9 @@ Function::printCFGraph(const char *filePath)
 
    fprintf(out, "digraph G {\n");
 
-   Iterator *iter;
-   for (iter = cfg.iteratorDFS(); !iter->end(); iter->next()) {
+   for (IteratorRef it = cfg.iteratorDFS(); !it->end(); it->next()) {
       BasicBlock *bb = BasicBlock::get(
-         reinterpret_cast<Graph::Node *>(iter->get()));
+         reinterpret_cast<Graph::Node *>(it->get()));
       int idA = bb->getId();
       for (Graph::EdgeIterator ei = bb->cfg.outgoing(); !ei.end(); ei.next()) {
          int idB = BasicBlock::get(ei.getNode())->getId();
@@ -532,7 +529,6 @@ Function::printCFGraph(const char *filePath)
          }
       }
    }
-   cfg.putIterator(iter);
 
    fprintf(out, "}\n");
    fclose(out);

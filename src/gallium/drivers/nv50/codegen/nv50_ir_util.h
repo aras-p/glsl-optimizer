@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <map>
+#include <memory>
 
 #ifndef NDEBUG
 # include <typeinfo>
@@ -86,10 +87,13 @@ namespace nv50_ir {
 class Iterator
 {
 public:
+   virtual ~Iterator() { };
    virtual void next() = 0;
    virtual void *get() const = 0;
    virtual bool end() const = 0; // if true, get will return 0
 };
+
+typedef std::auto_ptr<Iterator> IteratorRef;
 
 class ManipIterator : public Iterator
 {
