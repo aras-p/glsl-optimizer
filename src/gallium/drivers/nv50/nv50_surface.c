@@ -70,14 +70,13 @@ nv50_2d_format(enum pipe_format format)
 }
 
 static int
-nv50_2d_texture_set(struct nouveau_channel *chan, int dst,
+nv50_2d_texture_set(struct nouveau_pushbuf *push, int dst,
                     struct nv50_miptree *mt, unsigned level, unsigned layer)
 {
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t width, height, depth;
    uint32_t format;
    uint32_t mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
-   uint32_t flags = mt->base.domain | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
    uint32_t offset = mt->level[level].offset;
 
    format = nv50_2d_format(mt->base.base.format);
@@ -99,44 +98,44 @@ nv50_2d_texture_set(struct nouveau_channel *chan, int dst,
       depth = u_minify(mt->base.base.depth0, level);
    }
 
-   if (!(bo->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK)) {
-      BEGIN_RING(chan, RING_2D_(mthd), 2);
-      OUT_RING  (chan, format);
-      OUT_RING  (chan, 1);
-      BEGIN_RING(chan, RING_2D_(mthd + 0x14), 5);
-      OUT_RING  (chan, mt->level[level].pitch);
-      OUT_RING  (chan, width);
-      OUT_RING  (chan, height);
-      OUT_RELOCh(chan, bo, offset, flags);
-      OUT_RELOCl(chan, bo, offset, flags);
+   if (!nouveau_bo_memtype(bo)) {
+      BEGIN_NV04(push, SUBC_2D(mthd), 2);
+      PUSH_DATA (push, format);
+      PUSH_DATA (push, 1);
+      BEGIN_NV04(push, SUBC_2D(mthd + 0x14), 5);
+      PUSH_DATA (push, mt->level[level].pitch);
+      PUSH_DATA (push, width);
+      PUSH_DATA (push, height);
+      PUSH_DATAh(push, bo->offset + offset);
+      PUSH_DATA (push, bo->offset + offset);
    } else {
-      BEGIN_RING(chan, RING_2D_(mthd), 5);
-      OUT_RING  (chan, format);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, mt->level[level].tile_mode << 4);
-      OUT_RING  (chan, depth);
-      OUT_RING  (chan, layer);
-      BEGIN_RING(chan, RING_2D_(mthd + 0x18), 4);
-      OUT_RING  (chan, width);
-      OUT_RING  (chan, height);
-      OUT_RELOCh(chan, bo, offset, flags);
-      OUT_RELOCl(chan, bo, offset, flags);
+      BEGIN_NV04(push, SUBC_2D(mthd), 5);
+      PUSH_DATA (push, format);
+      PUSH_DATA (push, 0);
+      PUSH_DATA (push, mt->level[level].tile_mode);
+      PUSH_DATA (push, depth);
+      PUSH_DATA (push, layer);
+      BEGIN_NV04(push, SUBC_2D(mthd + 0x18), 4);
+      PUSH_DATA (push, width);
+      PUSH_DATA (push, height);
+      PUSH_DATAh(push, bo->offset + offset);
+      PUSH_DATA (push, bo->offset + offset);
    }
 
 #if 0
    if (dst) {
-      BEGIN_RING(chan, RING_2D_(NV50_2D_CLIP_X), 4);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, width);
-      OUT_RING  (chan, height);
+      BEGIN_NV04(push, SUBC_2D(NV50_2D_CLIP_X), 4);
+      PUSH_DATA (push, 0);
+      PUSH_DATA (push, 0);
+      PUSH_DATA (push, width);
+      PUSH_DATA (push, height);
    }
 #endif
    return 0;
 }
 
 static int
-nv50_2d_texture_do_copy(struct nouveau_channel *chan,
+nv50_2d_texture_do_copy(struct nouveau_pushbuf *push,
                         struct nv50_miptree *dst, unsigned dst_level,
                         unsigned dx, unsigned dy, unsigned dz,
                         struct nv50_miptree *src, unsigned src_level,
@@ -150,16 +149,16 @@ nv50_2d_texture_do_copy(struct nouveau_channel *chan,
 
    int ret;
    uint32_t ctrl;
-
+#if 0
    ret = MARK_RING(chan, 2 * 16 + 32, 4);
    if (ret)
       return ret;
-
-   ret = nv50_2d_texture_set(chan, 1, dst, dst_level, dz);
+#endif
+   ret = nv50_2d_texture_set(push, 1, dst, dst_level, dz);
    if (ret)
       return ret;
 
-   ret = nv50_2d_texture_set(chan, 0, src, src_level, sz);
+   ret = nv50_2d_texture_set(push, 0, src, src_level, sz);
    if (ret)
       return ret;
 
@@ -168,23 +167,23 @@ nv50_2d_texture_do_copy(struct nouveau_channel *chan,
       ctrl = 0x11;
 
    /* 0/1 = CENTER/CORNER, 00/10 = POINT/BILINEAR */
-   BEGIN_RING(chan, RING_2D(BLIT_CONTROL), 1);
-   OUT_RING  (chan, ctrl);
-   BEGIN_RING(chan, RING_2D(BLIT_DST_X), 4);
-   OUT_RING  (chan, dx << dst->ms_x);
-   OUT_RING  (chan, dy << dst->ms_y);
-   OUT_RING  (chan, w << dst->ms_x);
-   OUT_RING  (chan, h << dst->ms_y);
-   BEGIN_RING(chan, RING_2D(BLIT_DU_DX_FRACT), 4);
-   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0xf0000000);
-   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0x0000000f);
-   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0xf0000000);
-   OUT_RING  (chan, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0x0000000f);
-   BEGIN_RING(chan, RING_2D(BLIT_SRC_X_FRACT), 4);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, sx << src->ms_x);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, sy << src->ms_y);
+   BEGIN_NV04(push, NV50_2D(BLIT_CONTROL), 1);
+   PUSH_DATA (push, ctrl);
+   BEGIN_NV04(push, NV50_2D(BLIT_DST_X), 4);
+   PUSH_DATA (push, dx << dst->ms_x);
+   PUSH_DATA (push, dy << dst->ms_y);
+   PUSH_DATA (push, w << dst->ms_x);
+   PUSH_DATA (push, h << dst->ms_y);
+   BEGIN_NV04(push, NV50_2D(BLIT_DU_DX_FRACT), 4);
+   PUSH_DATA (push, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0xf0000000);
+   PUSH_DATA (push, duvdxy[2 + ((int)src->ms_x - (int)dst->ms_x)] & 0x0000000f);
+   PUSH_DATA (push, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0xf0000000);
+   PUSH_DATA (push, duvdxy[2 + ((int)src->ms_y - (int)dst->ms_y)] & 0x0000000f);
+   BEGIN_NV04(push, NV50_2D(BLIT_SRC_X_FRACT), 4);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, sx << src->ms_x);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, sy << src->ms_y);
 
    return 0;
 }
@@ -196,7 +195,7 @@ nv50_resource_copy_region(struct pipe_context *pipe,
                           struct pipe_resource *src, unsigned src_level,
                           const struct pipe_box *src_box)
 {
-   struct nv50_screen *screen = nv50_context(pipe)->screen;
+   struct nv50_context *nv50 = nv50_context(pipe);
    int ret;
    boolean m2mf;
    unsigned dst_layer = dstz, src_layer = src_box->z;
@@ -227,7 +226,7 @@ nv50_resource_copy_region(struct pipe_context *pipe,
                            src_box->x, src_box->y, src_box->z);
 
       for (i = 0; i < src_box->depth; ++i) {
-         nv50_m2mf_transfer_rect(&screen->base.base, &drect, &srect, nx, ny);
+         nv50_m2mf_transfer_rect(nv50, &drect, &srect, nx, ny);
 
          if (nv50_miptree(dst)->layout_3d)
             drect.z++;
@@ -246,16 +245,22 @@ nv50_resource_copy_region(struct pipe_context *pipe,
           (nv50_2d_format_faithful(src->format) &&
            nv50_2d_format_faithful(dst->format)));
 
+   BCTX_REFN(nv50->bufctx, 2D, nv04_resource(src), RD);
+   BCTX_REFN(nv50->bufctx, 2D, nv04_resource(dst), WR);
+   nouveau_pushbuf_bufctx(nv50->base.pushbuf, nv50->bufctx);
+   nouveau_pushbuf_validate(nv50->base.pushbuf);
+
    for (; dst_layer < dstz + src_box->depth; ++dst_layer, ++src_layer) {
-      ret = nv50_2d_texture_do_copy(screen->base.channel,
+      ret = nv50_2d_texture_do_copy(nv50->base.pushbuf,
                                     nv50_miptree(dst), dst_level,
                                     dstx, dsty, dst_layer,
                                     nv50_miptree(src), src_level,
                                     src_box->x, src_box->y, src_layer,
                                     src_box->width, src_box->height);
       if (ret)
-         return;
+         break;
    }
+   nouveau_bufctx_reset(nv50->bufctx, NV50_BIND_2D);
 }
 
 static void
@@ -266,51 +271,50 @@ nv50_clear_render_target(struct pipe_context *pipe,
                          unsigned width, unsigned height)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nv50_screen *screen = nv50->screen;
-   struct nouveau_channel *chan = screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_miptree *mt = nv50_miptree(dst->texture);
    struct nv50_surface *sf = nv50_surface(dst);
    struct nouveau_bo *bo = mt->base.bo;
 
-   BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
-   OUT_RINGf (chan, color->f[0]);
-   OUT_RINGf (chan, color->f[1]);
-   OUT_RINGf (chan, color->f[2]);
-   OUT_RINGf (chan, color->f[3]);
-
+   BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
+   PUSH_DATAf(push, color->f[0]);
+   PUSH_DATAf(push, color->f[1]);
+   PUSH_DATAf(push, color->f[2]);
+   PUSH_DATAf(push, color->f[3]);
+#if 0
    if (MARK_RING(chan, 18, 2))
       return;
-
-   BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 5);
-   OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-   OUT_RING  (chan, nv50_format_table[dst->format].rt);
-   OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(RT_HORIZ(0)), 2);
-   if (nouveau_bo_tile_layout(bo))
-      OUT_RING(chan, sf->width);
+#endif
+   BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
+   PUSH_DATAh(push, bo->offset + sf->offset);
+   PUSH_DATA (push, bo->offset + sf->offset);
+   PUSH_DATA (push, nv50_format_table[dst->format].rt);
+   PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
+   if (nouveau_bo_memtype(bo))
+      PUSH_DATA(push, sf->width);
    else
-      OUT_RING(chan, NV50_3D_RT_HORIZ_LINEAR | mt->level[0].pitch);
-   OUT_RING  (chan, sf->height);
-   BEGIN_RING(chan, RING_3D(RT_ARRAY_MODE), 1);
-   OUT_RING  (chan, 1);
+      PUSH_DATA(push, NV50_3D_RT_HORIZ_LINEAR | mt->level[0].pitch);
+   PUSH_DATA (push, sf->height);
+   BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
+   PUSH_DATA (push, 1);
 
-   if (!nouveau_bo_tile_layout(bo)) {
-      BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
-      OUT_RING  (chan, 0);
+   if (!nouveau_bo_memtype(bo)) {
+      BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
+      PUSH_DATA (push, 0);
    }
 
    /* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-   OUT_RING  (chan, (width << 16) | dstx);
-   OUT_RING  (chan, (height << 16) | dsty);
+   BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
+   PUSH_DATA (push, (width << 16) | dstx);
+   PUSH_DATA (push, (height << 16) | dsty);
 
-   BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-   OUT_RING  (chan, 0x3c);
+   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+   PUSH_DATA (push, 0x3c);
 
    nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
@@ -325,49 +329,48 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
                          unsigned width, unsigned height)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nv50_screen *screen = nv50->screen;
-   struct nouveau_channel *chan = screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_miptree *mt = nv50_miptree(dst->texture);
    struct nv50_surface *sf = nv50_surface(dst);
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t mode = 0;
 
-   assert(nouveau_bo_tile_layout(bo)); /* ZETA cannot be linear */
+   assert(nouveau_bo_memtype(bo)); /* ZETA cannot be linear */
 
    if (clear_flags & PIPE_CLEAR_DEPTH) {
-      BEGIN_RING(chan, RING_3D(CLEAR_DEPTH), 1);
-      OUT_RINGf (chan, depth);
+      BEGIN_NV04(push, NV50_3D(CLEAR_DEPTH), 1);
+      PUSH_DATAf(push, depth);
       mode |= NV50_3D_CLEAR_BUFFERS_Z;
    }
 
    if (clear_flags & PIPE_CLEAR_STENCIL) {
-      BEGIN_RING(chan, RING_3D(CLEAR_STENCIL), 1);
-      OUT_RING  (chan, stencil & 0xff);
+      BEGIN_NV04(push, NV50_3D(CLEAR_STENCIL), 1);
+      PUSH_DATA (push, stencil & 0xff);
       mode |= NV50_3D_CLEAR_BUFFERS_S;
    }
-
+#if 0
    if (MARK_RING(chan, 17, 2))
       return;
+#endif
+   BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
+   PUSH_DATAh(push, bo->offset + sf->offset);
+   PUSH_DATA (push, bo->offset + sf->offset);
+   PUSH_DATA (push, nv50_format_table[dst->format].rt);
+   PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_3D(ZETA_HORIZ), 3);
+   PUSH_DATA (push, sf->width);
+   PUSH_DATA (push, sf->height);
+   PUSH_DATA (push, (1 << 16) | 1);
 
-   BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
-   OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-   OUT_RING  (chan, nv50_format_table[dst->format].rt);
-   OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode << 4);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
-   OUT_RING  (chan, sf->width);
-   OUT_RING  (chan, sf->height);
-   OUT_RING  (chan, (1 << 16) | 1);
+   BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
+   PUSH_DATA (push, (width << 16) | dstx);
+   PUSH_DATA (push, (height << 16) | dsty);
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-   OUT_RING  (chan, (width << 16) | dstx);
-   OUT_RING  (chan, (height << 16) | dsty);
-
-   BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-   OUT_RING  (chan, mode);
+   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+   PUSH_DATA (push, mode);
 
    nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
@@ -378,7 +381,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
            double depth, unsigned stencil)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct pipe_framebuffer_state *fb = &nv50->framebuffer;
    unsigned i;
    uint32_t mode = 0;
@@ -388,34 +391,34 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
       return;
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
-      BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
-      OUT_RINGf (chan, color->f[0]);
-      OUT_RINGf (chan, color->f[1]);
-      OUT_RINGf (chan, color->f[2]);
-      OUT_RINGf (chan, color->f[3]);
+      BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
+      PUSH_DATAf(push, color->f[0]);
+      PUSH_DATAf(push, color->f[1]);
+      PUSH_DATAf(push, color->f[2]);
+      PUSH_DATAf(push, color->f[3]);
       mode =
          NV50_3D_CLEAR_BUFFERS_R | NV50_3D_CLEAR_BUFFERS_G |
          NV50_3D_CLEAR_BUFFERS_B | NV50_3D_CLEAR_BUFFERS_A;
    }
 
    if (buffers & PIPE_CLEAR_DEPTH) {
-      BEGIN_RING(chan, RING_3D(CLEAR_DEPTH), 1);
-      OUT_RING  (chan, fui(depth));
+      BEGIN_NV04(push, NV50_3D(CLEAR_DEPTH), 1);
+      PUSH_DATA (push, fui(depth));
       mode |= NV50_3D_CLEAR_BUFFERS_Z;
    }
 
    if (buffers & PIPE_CLEAR_STENCIL) {
-      BEGIN_RING(chan, RING_3D(CLEAR_STENCIL), 1);
-      OUT_RING  (chan, stencil & 0xff);
+      BEGIN_NV04(push, NV50_3D(CLEAR_STENCIL), 1);
+      PUSH_DATA (push, stencil & 0xff);
       mode |= NV50_3D_CLEAR_BUFFERS_S;
    }
 
-   BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-   OUT_RING  (chan, mode);
+   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+   PUSH_DATA (push, mode);
 
    for (i = 1; i < fb->nr_cbufs; i++) {
-      BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
-      OUT_RING  (chan, (i << 6) | 0x3c);
+      BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+      PUSH_DATA (push, (i << 6) | 0x3c);
    }
 }
 
@@ -709,50 +712,50 @@ nv50_blit_set_src(struct nv50_context *nv50,
 static void
 nv50_blitctx_prepare_state(struct nv50_blitctx *blit)
 {
-   struct nouveau_channel *chan = blit->screen->base.channel;
+   struct nouveau_pushbuf *push = blit->screen->base.pushbuf;
 
    /* blend state */
-   BEGIN_RING(chan, RING_3D(COLOR_MASK(0)), 1);
-   OUT_RING  (chan, blit->color_mask);
-   BEGIN_RING(chan, RING_3D(BLEND_ENABLE(0)), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(LOGIC_OP_ENABLE), 1);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_3D(COLOR_MASK(0)), 1);
+   PUSH_DATA (push, blit->color_mask);
+   BEGIN_NV04(push, NV50_3D(BLEND_ENABLE(0)), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(LOGIC_OP_ENABLE), 1);
+   PUSH_DATA (push, 0);
 
    /* rasterizer state */
 #ifndef NV50_SCISSORS_CLIPPING
-   BEGIN_RING(chan, RING_3D(SCISSOR_ENABLE(0)), 1);
-   OUT_RING  (chan, 1);
+   BEGIN_NV04(push, NV50_3D(SCISSOR_ENABLE(0)), 1);
+   PUSH_DATA (push, 1);
 #endif
-   BEGIN_RING(chan, RING_3D(VERTEX_TWO_SIDE_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(FRAG_COLOR_CLAMP_EN), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(MULTISAMPLE_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(MSAA_MASK(0)), 4);
-   OUT_RING  (chan, 0xffff);
-   OUT_RING  (chan, 0xffff);
-   OUT_RING  (chan, 0xffff);
-   OUT_RING  (chan, 0xffff);
-   BEGIN_RING(chan, RING_3D(POLYGON_MODE_FRONT), 3);
-   OUT_RING  (chan, NV50_3D_POLYGON_MODE_FRONT_FILL);
-   OUT_RING  (chan, NV50_3D_POLYGON_MODE_BACK_FILL);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(CULL_FACE_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(POLYGON_STIPPLE_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(POLYGON_OFFSET_FILL_ENABLE), 1);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_3D(VERTEX_TWO_SIDE_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(FRAG_COLOR_CLAMP_EN), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(MULTISAMPLE_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(MSAA_MASK(0)), 4);
+   PUSH_DATA (push, 0xffff);
+   PUSH_DATA (push, 0xffff);
+   PUSH_DATA (push, 0xffff);
+   PUSH_DATA (push, 0xffff);
+   BEGIN_NV04(push, NV50_3D(POLYGON_MODE_FRONT), 3);
+   PUSH_DATA (push, NV50_3D_POLYGON_MODE_FRONT_FILL);
+   PUSH_DATA (push, NV50_3D_POLYGON_MODE_BACK_FILL);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(CULL_FACE_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(POLYGON_STIPPLE_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(POLYGON_OFFSET_FILL_ENABLE), 1);
+   PUSH_DATA (push, 0);
 
    /* zsa state */
-   BEGIN_RING(chan, RING_3D(DEPTH_TEST_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(STENCIL_ENABLE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(ALPHA_TEST_ENABLE), 1);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_3D(DEPTH_TEST_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(STENCIL_ENABLE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(ALPHA_TEST_ENABLE), 1);
+   PUSH_DATA (push, 0);
 }
 
 static void
@@ -834,7 +837,7 @@ nv50_resource_resolve(struct pipe_context *pipe,
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nv50_screen *screen = nv50->screen;
    struct nv50_blitctx *blit = screen->blitctx;
-   struct nouveau_channel *chan = screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct pipe_resource *src = info->src.res;
    struct pipe_resource *dst = info->dst.res;
    float x0, x1, y0, y1, z;
@@ -873,12 +876,12 @@ nv50_resource_resolve(struct pipe_context *pipe,
 
    z = (float)info->src.layer;
 
-   BEGIN_RING(chan, RING_3D(FP_START_ID), 1);
-   OUT_RING  (chan,
+   BEGIN_NV04(push, NV50_3D(FP_START_ID), 1);
+   PUSH_DATA (push,
               blit->fp.code_base + blit->fp_offset);
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSFORM_EN), 1);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSFORM_EN), 1);
+   PUSH_DATA (push, 0);
 
    /* Draw a large triangle in screen coordinates covering the whole
     * render target, with scissors defining the destination region.
@@ -886,40 +889,40 @@ nv50_resource_resolve(struct pipe_context *pipe,
     * arranged in a way to yield the desired offset and scale.
     */
 
-   BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
-   OUT_RING  (chan, (info->dst.x1 << 16) | info->dst.x0);
-   OUT_RING  (chan, (info->dst.y1 << 16) | info->dst.y0);
+   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
+   PUSH_DATA (push, (info->dst.x1 << 16) | info->dst.x0);
+   PUSH_DATA (push, (info->dst.y1 << 16) | info->dst.y0);
 
-   BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-   OUT_RING  (chan, NV50_3D_VERTEX_BEGIN_GL_PRIMITIVE_TRIANGLES);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_3F_X(1)), 3);
-   OUT_RINGf (chan, x0);
-   OUT_RINGf (chan, y0);
-   OUT_RINGf (chan, z);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_2F_X(0)), 2);
-   OUT_RINGf (chan, 0.0f);
-   OUT_RINGf (chan, 0.0f);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_3F_X(1)), 3);
-   OUT_RINGf (chan, x1);
-   OUT_RINGf (chan, y0);
-   OUT_RINGf (chan, z);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_2F_X(0)), 2);
-   OUT_RINGf (chan, 16384 << nv50_miptree(dst)->ms_x);
-   OUT_RINGf (chan, 0.0f);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_3F_X(1)), 3);
-   OUT_RINGf (chan, x0);
-   OUT_RINGf (chan, y1);
-   OUT_RINGf (chan, z);
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_2F_X(0)), 2);
-   OUT_RINGf (chan, 0.0f);
-   OUT_RINGf (chan, 16384 << nv50_miptree(dst)->ms_y);
-   BEGIN_RING(chan, RING_3D(VERTEX_END_GL), 1);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_3D(VERTEX_BEGIN_GL), 1);
+   PUSH_DATA (push, NV50_3D_VERTEX_BEGIN_GL_PRIMITIVE_TRIANGLES);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_3F_X(1)), 3);
+   PUSH_DATAf(push, x0);
+   PUSH_DATAf(push, y0);
+   PUSH_DATAf(push, z);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_2F_X(0)), 2);
+   PUSH_DATAf(push, 0.0f);
+   PUSH_DATAf(push, 0.0f);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_3F_X(1)), 3);
+   PUSH_DATAf(push, x1);
+   PUSH_DATAf(push, y0);
+   PUSH_DATAf(push, z);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_2F_X(0)), 2);
+   PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_x);
+   PUSH_DATAf(push, 0.0f);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_3F_X(1)), 3);
+   PUSH_DATAf(push, x0);
+   PUSH_DATAf(push, y1);
+   PUSH_DATAf(push, z);
+   BEGIN_NV04(push, NV50_3D(VTX_ATTR_2F_X(0)), 2);
+   PUSH_DATAf(push, 0.0f);
+   PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_y);
+   BEGIN_NV04(push, NV50_3D(VERTEX_END_GL), 1);
+   PUSH_DATA (push, 0);
 
    /* re-enable normally constant state */
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSFORM_EN), 1);
-   OUT_RING  (chan, 1);
+   BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSFORM_EN), 1);
+   PUSH_DATA (push, 1);
 
    nv50_blitctx_post_blit(nv50, blit);
 }

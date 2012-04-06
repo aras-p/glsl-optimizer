@@ -22,6 +22,8 @@
  * Authors: Christoph Bumiller
  */
 
+#define NVC0_PUSH_EXPLICIT_SPACE_CHECKING
+
 #include "nvc0_context.h"
 #include "nouveau/nv_object.xml.h"
 
@@ -71,14 +73,12 @@ nvc0_query_allocate(struct nvc0_context *nvc0, struct nvc0_query *q, int size)
          return FALSE;
       q->offset = q->base;
 
-      ret = nouveau_bo_map_range(q->bo, q->base, size, NOUVEAU_BO_RD |
-                                 NOUVEAU_BO_NOSYNC);
+      ret = nouveau_bo_map(q->bo, 0, screen->base.client);
       if (ret) {
          nvc0_query_allocate(nvc0, q, 0);
          return FALSE;
       }
-      q->data = q->bo->map;
-      nouveau_bo_unmap(q->bo);
+      q->data = (uint32_t *)((uint8_t *)q->bo->map + q->base);
    }
    return TRUE;
 }
@@ -150,17 +150,18 @@ nvc0_query_create(struct pipe_context *pipe, unsigned type)
 }
 
 static void
-nvc0_query_get(struct nouveau_channel *chan, struct nvc0_query *q,
+nvc0_query_get(struct nouveau_pushbuf *push, struct nvc0_query *q,
                unsigned offset, uint32_t get)
 {
    offset += q->offset;
 
-   MARK_RING (chan, 5, 2);
-   BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
-   OUT_RELOCh(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RING  (chan, q->sequence);
-   OUT_RING  (chan, get);
+   PUSH_SPACE(push, 5);
+   PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
+   BEGIN_NVC0(push, NVC0_3D(QUERY_ADDRESS_HIGH), 4);
+   PUSH_DATAh(push, q->bo->offset + offset);
+   PUSH_DATA (push, q->bo->offset + offset);
+   PUSH_DATA (push, q->sequence);
+   PUSH_DATA (push, get);
 }
 
 static void
@@ -176,7 +177,7 @@ static void
 nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_query *q = nvc0_query(pq);
 
    /* For occlusion queries we have to change the storage, because a previous
@@ -201,41 +202,42 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
    case PIPE_QUERY_OCCLUSION_PREDICATE:
       q->nesting = nvc0->screen->num_occlusion_queries_active++;
       if (q->nesting) {
-         nvc0_query_get(chan, q, 0x10, 0x0100f002);
+         nvc0_query_get(push, q, 0x10, 0x0100f002);
       } else {
-         BEGIN_RING(chan, RING_3D(COUNTER_RESET), 1);
-         OUT_RING  (chan, NVC0_3D_COUNTER_RESET_SAMPLECNT);
-         IMMED_RING(chan, RING_3D(SAMPLECNT_ENABLE), 1);
+         PUSH_SPACE(push, 3);
+         BEGIN_NVC0(push, NVC0_3D(COUNTER_RESET), 1);
+         PUSH_DATA (push, NVC0_3D_COUNTER_RESET_SAMPLECNT);
+         IMMED_NVC0(push, NVC0_3D(SAMPLECNT_ENABLE), 1);
       }
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(chan, q, 0x10, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x10, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      nvc0_query_get(chan, q, 0x10, 0x05805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x10, 0x05805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      nvc0_query_get(chan, q, 0x20, 0x05805002 | (q->index << 5));
-      nvc0_query_get(chan, q, 0x30, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x20, 0x05805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x30, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      nvc0_query_get(chan, q, 0x10, 0x03005002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x10, 0x03005002 | (q->index << 5));
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      nvc0_query_get(chan, q, 0x10, 0x00005002);
+      nvc0_query_get(push, q, 0x10, 0x00005002);
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      nvc0_query_get(chan, q, 0xc0 + 0x00, 0x00801002); /* VFETCH, VERTICES */
-      nvc0_query_get(chan, q, 0xc0 + 0x10, 0x01801002); /* VFETCH, PRIMS */
-      nvc0_query_get(chan, q, 0xc0 + 0x20, 0x02802002); /* VP, LAUNCHES */
-      nvc0_query_get(chan, q, 0xc0 + 0x30, 0x03806002); /* GP, LAUNCHES */
-      nvc0_query_get(chan, q, 0xc0 + 0x40, 0x04806002); /* GP, PRIMS_OUT */
-      nvc0_query_get(chan, q, 0xc0 + 0x50, 0x07804002); /* RAST, PRIMS_IN */
-      nvc0_query_get(chan, q, 0xc0 + 0x60, 0x08804002); /* RAST, PRIMS_OUT */
-      nvc0_query_get(chan, q, 0xc0 + 0x70, 0x0980a002); /* ROP, PIXELS */
-      nvc0_query_get(chan, q, 0xc0 + 0x80, 0x0d808002); /* TCP, LAUNCHES */
-      nvc0_query_get(chan, q, 0xc0 + 0x90, 0x0e809002); /* TEP, LAUNCHES */
+      nvc0_query_get(push, q, 0xc0 + 0x00, 0x00801002); /* VFETCH, VERTICES */
+      nvc0_query_get(push, q, 0xc0 + 0x10, 0x01801002); /* VFETCH, PRIMS */
+      nvc0_query_get(push, q, 0xc0 + 0x20, 0x02802002); /* VP, LAUNCHES */
+      nvc0_query_get(push, q, 0xc0 + 0x30, 0x03806002); /* GP, LAUNCHES */
+      nvc0_query_get(push, q, 0xc0 + 0x40, 0x04806002); /* GP, PRIMS_OUT */
+      nvc0_query_get(push, q, 0xc0 + 0x50, 0x07804002); /* RAST, PRIMS_IN */
+      nvc0_query_get(push, q, 0xc0 + 0x60, 0x08804002); /* RAST, PRIMS_OUT */
+      nvc0_query_get(push, q, 0xc0 + 0x70, 0x0980a002); /* ROP, PIXELS */
+      nvc0_query_get(push, q, 0xc0 + 0x80, 0x0d808002); /* TCP, LAUNCHES */
+      nvc0_query_get(push, q, 0xc0 + 0x90, 0x0e809002); /* TEP, LAUNCHES */
       break;
    default:
       break;
@@ -248,7 +250,7 @@ static void
 nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_query *q = nvc0_query(pq);
 
    if (!q->active) {
@@ -263,49 +265,51 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      nvc0_query_get(chan, q, 0, 0x0100f002);
-      if (--nvc0->screen->num_occlusion_queries_active == 0)
-         IMMED_RING(chan, RING_3D(SAMPLECNT_ENABLE), 0);
+      nvc0_query_get(push, q, 0, 0x0100f002);
+      if (--nvc0->screen->num_occlusion_queries_active == 0) {
+         PUSH_SPACE(push, 1);
+         IMMED_NVC0(push, NVC0_3D(SAMPLECNT_ENABLE), 0);
+      }
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nvc0_query_get(chan, q, 0, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      nvc0_query_get(chan, q, 0, 0x05805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0, 0x05805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      nvc0_query_get(chan, q, 0x00, 0x05805002 | (q->index << 5));
-      nvc0_query_get(chan, q, 0x10, 0x06805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x00, 0x05805002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x10, 0x06805002 | (q->index << 5));
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
       /* TODO: How do we sum over all streams for render condition ? */
       /* PRIMS_DROPPED doesn't write sequence, use a ZERO query to sync on */
-      nvc0_query_get(chan, q, 0x00, 0x03005002 | (q->index << 5));
-      nvc0_query_get(chan, q, 0x20, 0x00005002);
+      nvc0_query_get(push, q, 0x00, 0x03005002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x20, 0x00005002);
       break;
    case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      nvc0_query_get(chan, q, 0, 0x00005002);
+      nvc0_query_get(push, q, 0, 0x00005002);
       break;
    case PIPE_QUERY_GPU_FINISHED:
-      nvc0_query_get(chan, q, 0, 0x1000f010);
+      nvc0_query_get(push, q, 0, 0x1000f010);
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
-      nvc0_query_get(chan, q, 0x00, 0x00801002); /* VFETCH, VERTICES */
-      nvc0_query_get(chan, q, 0x10, 0x01801002); /* VFETCH, PRIMS */
-      nvc0_query_get(chan, q, 0x20, 0x02802002); /* VP, LAUNCHES */
-      nvc0_query_get(chan, q, 0x30, 0x03806002); /* GP, LAUNCHES */
-      nvc0_query_get(chan, q, 0x40, 0x04806002); /* GP, PRIMS_OUT */
-      nvc0_query_get(chan, q, 0x50, 0x07804002); /* RAST, PRIMS_IN */
-      nvc0_query_get(chan, q, 0x60, 0x08804002); /* RAST, PRIMS_OUT */
-      nvc0_query_get(chan, q, 0x70, 0x0980a002); /* ROP, PIXELS */
-      nvc0_query_get(chan, q, 0x80, 0x0d808002); /* TCP, LAUNCHES */
-      nvc0_query_get(chan, q, 0x90, 0x0e809002); /* TEP, LAUNCHES */
+      nvc0_query_get(push, q, 0x00, 0x00801002); /* VFETCH, VERTICES */
+      nvc0_query_get(push, q, 0x10, 0x01801002); /* VFETCH, PRIMS */
+      nvc0_query_get(push, q, 0x20, 0x02802002); /* VP, LAUNCHES */
+      nvc0_query_get(push, q, 0x30, 0x03806002); /* GP, LAUNCHES */
+      nvc0_query_get(push, q, 0x40, 0x04806002); /* GP, PRIMS_OUT */
+      nvc0_query_get(push, q, 0x50, 0x07804002); /* RAST, PRIMS_IN */
+      nvc0_query_get(push, q, 0x60, 0x08804002); /* RAST, PRIMS_OUT */
+      nvc0_query_get(push, q, 0x70, 0x0980a002); /* ROP, PIXELS */
+      nvc0_query_get(push, q, 0x80, 0x0d808002); /* TCP, LAUNCHES */
+      nvc0_query_get(push, q, 0x90, 0x0e809002); /* TEP, LAUNCHES */
       break;
    case NVC0_QUERY_TFB_BUFFER_OFFSET:
       /* indexed by TFB buffer instead of by vertex stream */
-      nvc0_query_get(chan, q, 0x00, 0x0d005002 | (q->index << 5));
+      nvc0_query_get(push, q, 0x00, 0x0d005002 | (q->index << 5));
       break;
    default:
       assert(0);
@@ -314,32 +318,20 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 }
 
 static INLINE boolean
-nvc0_query_ready(struct nvc0_query *q)
+nvc0_query_ready(struct nouveau_client *cli, struct nvc0_query *q)
 {
    if (q->is64bit) {
-      if (nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOWAIT))
-         return FALSE;
-      nouveau_bo_unmap(q->bo);
-      return TRUE;
+      return !nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOBLOCK, cli);
    } else {
       return q->data[0] == q->sequence;
    }
-}
-
-static INLINE boolean
-nvc0_query_wait(struct nvc0_query *q)
-{
-   int ret = nouveau_bo_map(q->bo, NOUVEAU_BO_RD);
-   if (ret)
-      return FALSE;
-   nouveau_bo_unmap(q->bo);
-   return TRUE;
 }
 
 static boolean
 nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
                   boolean wait, union pipe_query_result *result)
 {
+   struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nvc0_query *q = nvc0_query(pq);
    uint64_t *res64 = (uint64_t*)result;
    uint32_t *res32 = (uint32_t*)result;
@@ -348,15 +340,15 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    unsigned i;
 
    if (!q->ready) /* update ? */
-      q->ready = nvc0_query_ready(q);
+      q->ready = nvc0_query_ready(nvc0->screen->base.client, q);
    if (!q->ready) {
-      struct nouveau_channel *chan = nvc0_context(pipe)->screen->base.channel;
       if (!wait) {
-         if (nouveau_bo_pending(q->bo) & NOUVEAU_BO_WR) /* for daft apps */
-            FIRE_RING(chan);
+         /* flush for silly apps that spin on GL_QUERY_RESULT_AVAILABLE */
+         if (nouveau_pushbuf_refd(nvc0->base.pushbuf, q->bo) & NOUVEAU_BO_WR)
+            PUSH_KICK(nvc0->base.pushbuf);
          return FALSE;
       }
-      if (!nvc0_query_wait(q))
+      if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->screen->base.client))
          return FALSE;
    }
    q->ready = TRUE;
@@ -407,19 +399,20 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 }
 
 void
-nvc0_query_fifo_wait(struct nouveau_channel *chan, struct pipe_query *pq)
+nvc0_query_fifo_wait(struct nouveau_pushbuf *push, struct pipe_query *pq)
 {
    struct nvc0_query *q = nvc0_query(pq);
    unsigned offset = q->offset;
 
    if (q->type == PIPE_QUERY_SO_OVERFLOW_PREDICATE) offset += 0x20;
 
-   MARK_RING (chan, 5, 2);
-   BEGIN_RING(chan, RING_3D_(NV84_SUBCHAN_SEMAPHORE_ADDRESS_HIGH), 4);
-   OUT_RELOCh(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RING  (chan, q->sequence);
-   OUT_RING  (chan, (1 << 12) |
+   PUSH_SPACE(push, 5);
+   PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+   BEGIN_NVC0(push, SUBC_3D(NV84_SUBCHAN_SEMAPHORE_ADDRESS_HIGH), 4);
+   PUSH_DATAh(push, q->bo->offset + offset);
+   PUSH_DATA (push, q->bo->offset + offset);
+   PUSH_DATA (push, q->sequence);
+   PUSH_DATA (push, (1 << 12) |
               NV84_SUBCHAN_SEMAPHORE_TRIGGER_ACQUIRE_EQUAL);
 }
 
@@ -428,7 +421,7 @@ nvc0_render_condition(struct pipe_context *pipe,
                       struct pipe_query *pq, uint mode)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_query *q;
    uint32_t cond;
    boolean negated = FALSE;
@@ -437,7 +430,8 @@ nvc0_render_condition(struct pipe_context *pipe,
       mode != PIPE_RENDER_COND_BY_REGION_NO_WAIT;
 
    if (!pq) {
-      IMMED_RING(chan, RING_3D(COND_MODE), NVC0_3D_COND_MODE_ALWAYS);
+      PUSH_SPACE(push, 1);
+      IMMED_NVC0(push, NVC0_3D(COND_MODE), NVC0_3D_COND_MODE_ALWAYS);
       return;
    }
    q = nvc0_query(pq);
@@ -468,25 +462,27 @@ nvc0_render_condition(struct pipe_context *pipe,
    }
 
    if (wait)
-      nvc0_query_fifo_wait(chan, pq);
+      nvc0_query_fifo_wait(push, pq);
 
-   MARK_RING (chan, 4, 2);
-   BEGIN_RING(chan, RING_3D(COND_ADDRESS_HIGH), 3);
-   OUT_RELOCh(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RING  (chan, cond);
+   PUSH_SPACE(push, 4);
+   PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+   BEGIN_NVC0(push, NVC0_3D(COND_ADDRESS_HIGH), 3);
+   PUSH_DATAh(push, q->bo->offset + q->offset);
+   PUSH_DATA (push, q->bo->offset + q->offset);
+   PUSH_DATA (push, cond);
 }
 
 void
-nvc0_query_pushbuf_submit(struct nouveau_channel *chan,
+nvc0_query_pushbuf_submit(struct nouveau_pushbuf *push,
                           struct pipe_query *pq, unsigned result_offset)
 {
    struct nvc0_query *q = nvc0_query(pq);
 
 #define NVC0_IB_ENTRY_1_NO_PREFETCH (1 << (31 - 8))
 
-   nouveau_pushbuf_submit(chan, q->bo, q->offset + result_offset, 4 |
-                          NVC0_IB_ENTRY_1_NO_PREFETCH);
+   nouveau_pushbuf_space(push, 0, 0, 1);
+   nouveau_pushbuf_data(push, q->bo, q->offset + result_offset, 4 |
+                        NVC0_IB_ENTRY_1_NO_PREFETCH);
 }
 
 void
@@ -497,9 +493,9 @@ nvc0_so_target_save_offset(struct pipe_context *pipe,
    struct nvc0_so_target *targ = nvc0_so_target(ptarg);
 
    if (*serialize) {
-      struct nouveau_channel *chan = nvc0_context(pipe)->screen->base.channel;
       *serialize = FALSE;
-      IMMED_RING(chan, RING_3D(SERIALIZE), 0);
+      PUSH_SPACE(nvc0_context(pipe)->base.pushbuf, 1);
+      IMMED_NVC0(nvc0_context(pipe)->base.pushbuf, NVC0_3D(SERIALIZE), 0);
    }
 
    nvc0_query(targ->pq)->index = index;

@@ -50,12 +50,13 @@ nv50_m2mf_rect_setup(struct nv50_m2mf_rect *rect,
 }
 
 void
-nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
+nv50_m2mf_transfer_rect(struct nv50_context *nv50,
                         const struct nv50_m2mf_rect *dst,
                         const struct nv50_m2mf_rect *src,
                         uint32_t nblocksx, uint32_t nblocksy)
 {
-   struct nouveau_channel *chan = nouveau_screen(pscreen)->channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nouveau_bufctx *bctx = nv50->bufctx;
    const int cpp = dst->cpp;
    uint32_t src_ofst = src->base;
    uint32_t dst_ofst = dst->base;
@@ -65,76 +66,81 @@ nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
 
    assert(dst->cpp == src->cpp);
 
-   if (nouveau_bo_tile_layout(src->bo)) {
-      BEGIN_RING(chan, RING_MF(LINEAR_IN), 6);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, src->tile_mode << 4);
-      OUT_RING  (chan, src->width * cpp);
-      OUT_RING  (chan, src->height);
-      OUT_RING  (chan, src->depth);
-      OUT_RING  (chan, src->z);
+   nouveau_bufctx_refn(bctx, 0, src->bo, src->domain | NOUVEAU_BO_RD);
+   nouveau_bufctx_refn(bctx, 0, dst->bo, dst->domain | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, bctx);
+   nouveau_pushbuf_validate(push);
+
+   if (nouveau_bo_memtype(src->bo)) {
+      BEGIN_NV04(push, NV50_M2MF(LINEAR_IN), 6);
+      PUSH_DATA (push, 0);
+      PUSH_DATA (push, src->tile_mode);
+      PUSH_DATA (push, src->width * cpp);
+      PUSH_DATA (push, src->height);
+      PUSH_DATA (push, src->depth);
+      PUSH_DATA (push, src->z);
    } else {
       src_ofst += src->y * src->pitch + src->x * cpp;
 
-      BEGIN_RING(chan, RING_MF(LINEAR_IN), 1);
-      OUT_RING  (chan, 1);
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_PITCH_IN), 1);
-      OUT_RING  (chan, src->pitch);
+      BEGIN_NV04(push, NV50_M2MF(LINEAR_IN), 1);
+      PUSH_DATA (push, 1);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_PITCH_IN), 1);
+      PUSH_DATA (push, src->pitch);
    }
 
-   if (nouveau_bo_tile_layout(dst->bo)) {
-      BEGIN_RING(chan, RING_MF(LINEAR_OUT), 6);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, dst->tile_mode << 4);
-      OUT_RING  (chan, dst->width * cpp);
-      OUT_RING  (chan, dst->height);
-      OUT_RING  (chan, dst->depth);
-      OUT_RING  (chan, dst->z);
+   if (nouveau_bo_memtype(dst->bo)) {
+      BEGIN_NV04(push, NV50_M2MF(LINEAR_OUT), 6);
+      PUSH_DATA (push, 0);
+      PUSH_DATA (push, dst->tile_mode);
+      PUSH_DATA (push, dst->width * cpp);
+      PUSH_DATA (push, dst->height);
+      PUSH_DATA (push, dst->depth);
+      PUSH_DATA (push, dst->z);
    } else {
       dst_ofst += dst->y * dst->pitch + dst->x * cpp;
 
-      BEGIN_RING(chan, RING_MF(LINEAR_OUT), 1);
-      OUT_RING  (chan, 1);
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_PITCH_OUT), 1);
-      OUT_RING  (chan, dst->pitch);
+      BEGIN_NV04(push, NV50_M2MF(LINEAR_OUT), 1);
+      PUSH_DATA (push, 1);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_PITCH_OUT), 1);
+      PUSH_DATA (push, dst->pitch);
    }
 
    while (height) {
       int line_count = height > 2047 ? 2047 : height;
 
-      MARK_RING (chan, 17, 4);
+      BEGIN_NV04(push, NV50_M2MF(OFFSET_IN_HIGH), 2);
+      PUSH_DATAh(push, src->bo->offset + src_ofst);
+      PUSH_DATAh(push, dst->bo->offset + dst_ofst);
 
-      BEGIN_RING(chan, RING_MF(OFFSET_IN_HIGH), 2);
-      OUT_RELOCh(chan, src->bo, src_ofst, src->domain | NOUVEAU_BO_RD);
-      OUT_RELOCh(chan, dst->bo, dst_ofst, dst->domain | NOUVEAU_BO_WR);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_OFFSET_IN), 2);
+      PUSH_DATA (push, src->bo->offset + src_ofst);
+      PUSH_DATA (push, dst->bo->offset + dst_ofst);
 
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_OFFSET_IN), 2);
-      OUT_RELOCl(chan, src->bo, src_ofst, src->domain | NOUVEAU_BO_RD);
-      OUT_RELOCl(chan, dst->bo, dst_ofst, dst->domain | NOUVEAU_BO_WR);
-
-      if (nouveau_bo_tile_layout(src->bo)) {
-         BEGIN_RING(chan, RING_MF(TILING_POSITION_IN), 1);
-         OUT_RING  (chan, (sy << 16) | (src->x * cpp));
+      if (nouveau_bo_memtype(src->bo)) {
+         BEGIN_NV04(push, NV50_M2MF(TILING_POSITION_IN), 1);
+         PUSH_DATA (push, (sy << 16) | (src->x * cpp));
       } else {
          src_ofst += line_count * src->pitch;
       }
-      if (nouveau_bo_tile_layout(dst->bo)) {
-         BEGIN_RING(chan, RING_MF(TILING_POSITION_OUT), 1);
-         OUT_RING  (chan, (dy << 16) | (dst->x * cpp));
+      if (nouveau_bo_memtype(dst->bo)) {
+         BEGIN_NV04(push, NV50_M2MF(TILING_POSITION_OUT), 1);
+         PUSH_DATA (push, (dy << 16) | (dst->x * cpp));
       } else {
          dst_ofst += line_count * dst->pitch;
       }
 
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_LINE_LENGTH_IN), 4);
-      OUT_RING  (chan, nblocksx * cpp);
-      OUT_RING  (chan, line_count);
-      OUT_RING  (chan, (1 << 8) | (1 << 0));
-      OUT_RING  (chan, 0);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_LINE_LENGTH_IN), 4);
+      PUSH_DATA (push, nblocksx * cpp);
+      PUSH_DATA (push, line_count);
+      PUSH_DATA (push, (1 << 8) | (1 << 0));
+      PUSH_DATA (push, 0);
 
       height -= line_count;
       sy += line_count;
       dy += line_count;
    }
+
+   nouveau_bufctx_reset(bctx, 0);
 }
 
 void
@@ -142,55 +148,60 @@ nv50_sifc_linear_u8(struct nouveau_context *nv,
                     struct nouveau_bo *dst, unsigned offset, unsigned domain,
                     unsigned size, const void *data)
 {
-   struct nouveau_channel *chan = nv->screen->channel;
+   struct nv50_context *nv50 = nv50_context(&nv->pipe);
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    uint32_t *src = (uint32_t *)data;
    unsigned count = (size + 3) / 4;
    unsigned xcoord = offset & 0xff;
 
+   nouveau_bufctx_refn(nv50->bufctx, 0, dst, domain | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, nv50->bufctx);
+   nouveau_pushbuf_validate(push);
+
    offset &= ~0xff;
 
-   MARK_RING (chan, 23, 4);
-   BEGIN_RING(chan, RING_2D(DST_FORMAT), 2);
-   OUT_RING  (chan, NV50_SURFACE_FORMAT_R8_UNORM);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_2D(DST_PITCH), 5);
-   OUT_RING  (chan, 262144);
-   OUT_RING  (chan, 65536);
-   OUT_RING  (chan, 1);
-   OUT_RELOCh(chan, dst, offset, domain | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, dst, offset, domain | NOUVEAU_BO_WR);
-   BEGIN_RING(chan, RING_2D(SIFC_BITMAP_ENABLE), 2);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, NV50_SURFACE_FORMAT_R8_UNORM);
-   BEGIN_RING(chan, RING_2D(SIFC_WIDTH), 10);
-   OUT_RING  (chan, size);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, xcoord);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 0);
+   BEGIN_NV04(push, NV50_2D(DST_FORMAT), 2);
+   PUSH_DATA (push, NV50_SURFACE_FORMAT_R8_UNORM);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_2D(DST_PITCH), 5);
+   PUSH_DATA (push, 262144);
+   PUSH_DATA (push, 65536);
+   PUSH_DATA (push, 1);
+   PUSH_DATAh(push, dst->offset + offset);
+   PUSH_DATA (push, dst->offset + offset);
+   BEGIN_NV04(push, NV50_2D(SIFC_BITMAP_ENABLE), 2);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, NV50_SURFACE_FORMAT_R8_UNORM);
+   BEGIN_NV04(push, NV50_2D(SIFC_WIDTH), 10);
+   PUSH_DATA (push, size);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 1);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, xcoord);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 0);
 
    while (count) {
-      unsigned nr = AVAIL_RING(chan);
+      unsigned nr;
 
-      if (nr < 9) {
-         FIRE_RING(chan);
-         nouveau_bo_validate(chan, dst, NOUVEAU_BO_WR);
-         continue;
-      }
+      if (!PUSH_SPACE(push, 16))
+         break;
+      nr = PUSH_AVAIL(push);
+      assert(nr >= 16);
       nr = MIN2(count, nr - 1);
       nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN);
 
-      BEGIN_RING_NI(chan, RING_2D(SIFC_DATA), nr);
-      OUT_RINGp (chan, src, nr);
+      BEGIN_NI04(push, NV50_2D(SIFC_DATA), nr);
+      PUSH_DATAp(push, src, nr);
 
       src += nr;
       count -= nr;
    }
+
+   nouveau_bufctx_reset(nv50->bufctx, 0);
 }
 
 void
@@ -199,33 +210,40 @@ nv50_m2mf_copy_linear(struct nouveau_context *nv,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
                       unsigned size)
 {
-   struct nouveau_channel *chan = nv->screen->channel;
+   struct nouveau_pushbuf *push = nv->pushbuf;
+   struct nouveau_bufctx *bctx = nv50_context(&nv->pipe)->bufctx;
 
-   BEGIN_RING(chan, RING_MF(LINEAR_IN), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_MF(LINEAR_OUT), 1);
-   OUT_RING  (chan, 1);
+   nouveau_bufctx_refn(bctx, 0, src, srcdom | NOUVEAU_BO_RD);
+   nouveau_bufctx_refn(bctx, 0, dst, dstdom | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, bctx);
+   nouveau_pushbuf_validate(push);
+
+   BEGIN_NV04(push, NV50_M2MF(LINEAR_IN), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_M2MF(LINEAR_OUT), 1);
+   PUSH_DATA (push, 1);
 
    while (size) {
       unsigned bytes = MIN2(size, 1 << 17);
 
-      MARK_RING (chan, 11, 4);
-      BEGIN_RING(chan, RING_MF(OFFSET_IN_HIGH), 2);
-      OUT_RELOCh(chan, src, srcoff, srcdom | NOUVEAU_BO_RD);
-      OUT_RELOCh(chan, dst, dstoff, dstdom | NOUVEAU_BO_WR);
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_OFFSET_IN), 2);
-      OUT_RELOCl(chan, src, srcoff, srcdom | NOUVEAU_BO_RD);
-      OUT_RELOCl(chan, dst, dstoff, dstdom | NOUVEAU_BO_WR);
-      BEGIN_RING(chan, RING_MF_(NV04_M2MF_LINE_LENGTH_IN), 4);
-      OUT_RING  (chan, bytes);
-      OUT_RING  (chan, 1);
-      OUT_RING  (chan, (1 << 8) | (1 << 0));
-      OUT_RING  (chan, 0);
+      BEGIN_NV04(push, NV50_M2MF(OFFSET_IN_HIGH), 2);
+      PUSH_DATAh(push, src->offset + srcoff);
+      PUSH_DATAh(push, dst->offset + dstoff);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_OFFSET_IN), 2);
+      PUSH_DATA (push, src->offset + srcoff);
+      PUSH_DATA (push, dst->offset + dstoff);
+      BEGIN_NV04(push, SUBC_M2MF(NV03_M2MF_LINE_LENGTH_IN), 4);
+      PUSH_DATA (push, bytes);
+      PUSH_DATA (push, 1);
+      PUSH_DATA (push, (1 << 8) | (1 << 0));
+      PUSH_DATA (push, 0);
 
       srcoff += bytes;
       dstoff += bytes;
       size -= bytes;
    }
+
+   nouveau_bufctx_reset(bctx, 0);
 }
 
 struct pipe_transfer *
@@ -236,7 +254,6 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
                           const struct pipe_box *box)
 {
    struct nv50_context *nv50 = nv50_context(pctx);
-   struct pipe_screen *pscreen = pctx->screen;
    struct nouveau_device *dev = nv50->screen->base.device;
    const struct nv50_miptree *mt = nv50_miptree(res);
    struct nv50_transfer *tx;
@@ -272,7 +289,7 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
    size = tx->base.layer_stride;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-                        size * tx->base.box.depth, &tx->rect[1].bo);
+                        size * tx->base.box.depth, NULL, &tx->rect[1].bo);
    if (ret) {
       FREE(tx);
       return NULL;
@@ -290,7 +307,7 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
       unsigned z = tx->rect[0].z;
       unsigned i;
       for (i = 0; i < box->depth; ++i) {
-         nv50_m2mf_transfer_rect(pscreen, &tx->rect[1], &tx->rect[0],
+         nv50_m2mf_transfer_rect(nv50, &tx->rect[1], &tx->rect[0],
                                  tx->nblocksx, tx->nblocksy);
          if (mt->layout_3d)
             tx->rect[0].z++;
@@ -310,14 +327,14 @@ void
 nv50_miptree_transfer_del(struct pipe_context *pctx,
                           struct pipe_transfer *transfer)
 {
-   struct pipe_screen *pscreen = pctx->screen;
+   struct nv50_context *nv50 = nv50_context(pctx);
    struct nv50_transfer *tx = (struct nv50_transfer *)transfer;
    struct nv50_miptree *mt = nv50_miptree(tx->base.resource);
    unsigned i;
 
    if (tx->base.usage & PIPE_TRANSFER_WRITE) {
       for (i = 0; i < tx->base.box.depth; ++i) {
-         nv50_m2mf_transfer_rect(pscreen, &tx->rect[0], &tx->rect[1],
+         nv50_m2mf_transfer_rect(nv50, &tx->rect[0], &tx->rect[1],
                                  tx->nblocksx, tx->nblocksy);
          if (mt->layout_3d)
             tx->rect[0].z++;
@@ -337,6 +354,7 @@ void *
 nv50_miptree_transfer_map(struct pipe_context *pctx,
                           struct pipe_transfer *transfer)
 {
+   struct nv50_screen *screen = nv50_screen(pctx->screen);
    struct nv50_transfer *tx = (struct nv50_transfer *)transfer;
    int ret;
    unsigned flags = 0;
@@ -349,7 +367,7 @@ nv50_miptree_transfer_map(struct pipe_context *pctx,
    if (transfer->usage & PIPE_TRANSFER_WRITE)
       flags |= NOUVEAU_BO_WR;
 
-   ret = nouveau_bo_map(tx->rect[1].bo, flags);
+   ret = nouveau_bo_map(tx->rect[1].bo, flags, screen->base.client);
    if (ret)
       return NULL;
    return tx->rect[1].bo->map;
@@ -359,9 +377,7 @@ void
 nv50_miptree_transfer_unmap(struct pipe_context *pctx,
                             struct pipe_transfer *transfer)
 {
-   struct nv50_transfer *tx = (struct nv50_transfer *)transfer;
-
-   nouveau_bo_unmap(tx->rect[1].bo);
+   /* nothing to do */
 }
 
 void
@@ -370,30 +386,36 @@ nv50_cb_push(struct nouveau_context *nv,
              unsigned base, unsigned size,
              unsigned offset, unsigned words, const uint32_t *data)
 {
-   struct nouveau_channel *chan = nv->screen->channel;
+   struct nouveau_pushbuf *push = nv->pushbuf;
+   struct nouveau_bufctx *bctx = nv50_context(&nv->pipe)->bufctx;
 
    assert(!(offset & 3));
    size = align(size, 0x100);
 
+   nouveau_bufctx_refn(bctx, 0, bo, NOUVEAU_BO_WR | domain);
+   nouveau_pushbuf_bufctx(push, bctx);
+   nouveau_pushbuf_validate(push);
+
    while (words) {
       unsigned nr;
 
-      MARK_RING(chan, 24, 2);
-      nr = AVAIL_RING(chan);
+      nr = PUSH_AVAIL(push);
       nr = MIN2(nr - 7, words);
       nr = MIN2(nr, NV04_PFIFO_MAX_PACKET_LEN - 1);
 
-      BEGIN_RING(chan, RING_3D(CB_DEF_ADDRESS_HIGH), 3);
-      OUT_RELOCh(chan, bo, base, domain | NOUVEAU_BO_WR);
-      OUT_RELOCl(chan, bo, base, domain | NOUVEAU_BO_WR);
-      OUT_RING  (chan, (NV50_CB_TMP << 16) | (size & 0xffff));
-      BEGIN_RING(chan, RING_3D(CB_ADDR), 1);
-      OUT_RING  (chan, (offset << 6) | NV50_CB_TMP);
-      BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), nr);
-      OUT_RINGp (chan, data, nr);
+      BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
+      PUSH_DATAh(push, bo->offset + base);
+      PUSH_DATA (push, bo->offset + base);
+      PUSH_DATA (push, (NV50_CB_TMP << 16) | (size & 0xffff));
+      BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+      PUSH_DATA (push, (offset << 6) | NV50_CB_TMP);
+      BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
+      PUSH_DATAp(push, data, nr);
 
       words -= nr;
       data += nr;
       offset += nr * 4;
    }
+
+   nouveau_bufctx_reset(bctx, 0);
 }

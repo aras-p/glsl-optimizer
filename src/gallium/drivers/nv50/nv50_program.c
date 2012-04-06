@@ -489,7 +489,8 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
       ++nintp;
    }
 
-   p->fp.colors = 4 << NV50_3D_MAP_SEMANTIC_0_FFC0_ID__SHIFT; /* after HPOS */
+   /* after HPOS */
+   p->fp.colors = 4 << NV50_3D_SEMANTIC_COLOR_FFC0_ID__SHIFT;
 
    for (i = 0; i < p->in_nr; ++i) {
       int j = p->in[i].id;
@@ -680,8 +681,8 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
    const struct pipe_shader_state pipe = p->pipe;
    const ubyte type = p->type;
 
-   if (p->res)
-      nouveau_resource_free(&p->res);
+   if (p->mem)
+      nouveau_heap_free(&p->mem);
 
    if (p->code)
       FREE(p->code);

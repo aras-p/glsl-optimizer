@@ -4,10 +4,9 @@
 
 #include "util/u_transfer.h"
 #include "util/u_double_list.h"
-#define NOUVEAU_NVC0
+
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_buffer.h"
-#undef NOUVEAU_NVC0
 
 #ifndef __NVC0_RESOURCE_H__ /* make sure we don't use these in nvc0: */
 
@@ -19,12 +18,12 @@ nv50_screen_init_resource_functions(struct pipe_screen *pscreen);
 
 
 #define NV50_TILE_SHIFT_X(m) 6
-#define NV50_TILE_SHIFT_Y(m) ((((m) >> 0) & 0xf) + 2)
-#define NV50_TILE_SHIFT_Z(m) ((((m) >> 4) & 0xf) + 0)
+#define NV50_TILE_SHIFT_Y(m) ((((m) >> 4) & 0xf) + 2)
+#define NV50_TILE_SHIFT_Z(m) ((((m) >> 8) & 0xf) + 0)
 
 #define NV50_TILE_SIZE_X(m) 64
-#define NV50_TILE_SIZE_Y(m) ( 4 << (((m) >> 0) & 0xf))
-#define NV50_TILE_SIZE_Z(m) ( 1 << (((m) >> 4) & 0xf))
+#define NV50_TILE_SIZE_Y(m) ( 4 << (((m) >> 4) & 0xf))
+#define NV50_TILE_SIZE_Z(m) ( 1 << (((m) >> 8) & 0xf))
 
 #define NV50_TILE_SIZE_2D(m) (NV50_TILE_SIZE_X(m) << NV50_TILE_SHIFT_Y(m))
 

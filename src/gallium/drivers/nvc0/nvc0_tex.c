@@ -56,6 +56,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
                          const struct pipe_sampler_view *templ)
 {
    const struct util_format_description *desc;
+   uint64_t address;
    uint32_t *tic;
    uint32_t swz[4];
    uint32_t depth;
@@ -66,6 +67,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    view = MALLOC_STRUCT(nv50_tic_entry);
    if (!view)
       return NULL;
+   mt = nv50_miptree(texture);
 
    view->pipe = *templ;
    view->pipe.reference.count = 1;
@@ -79,8 +81,6 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    tic = &view->tic[0];
 
    desc = util_format_description(view->pipe.format);
-
-   /* TIC[0] */
 
    tic[0] = nvc0_format_table[view->pipe.format].tic;
 
@@ -96,26 +96,24 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       (swz[2] << NV50_TIC_0_MAPB__SHIFT) |
       (swz[3] << NV50_TIC_0_MAPA__SHIFT);
 
-   tic[1] = /* mt->base.bo->offset; */ 0;
-   tic[2] = /* mt->base.bo->offset >> 32 */ 0;
+   address = mt->base.address;
 
-   tic[2] |= 0x10001000 | NV50_TIC_2_NO_BORDER;
+   tic[2] = 0x10001000 | NV50_TIC_2_NO_BORDER;
 
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
       tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
 
    /* check for linear storage type */
-   if (unlikely(!nouveau_bo_tile_layout(nv04_resource(texture)->bo))) {
+   if (unlikely(!nouveau_bo_memtype(nv04_resource(texture)->bo))) {
       if (texture->target == PIPE_BUFFER) {
-         tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
-         tic[1] = /* address offset */
+         address +=
             view->pipe.u.buf.first_element * desc->block.bits / 8;
+         tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
          tic[3] = 0;
          tic[4] = /* width */
             view->pipe.u.buf.last_element - view->pipe.u.buf.first_element + 1;
-	 tic[5] = 0;
+         tic[5] = 0;
       } else {
-         mt = nv50_miptree(texture);
          /* must be 2D texture without mip maps */
          tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
          if (texture->target != PIPE_TEXTURE_RECT)
@@ -126,24 +124,27 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       }
       tic[6] =
       tic[7] = 0;
+      tic[1] = address;
+      tic[2] |= address >> 32;
       return &view->pipe;
    }
-   mt = nv50_miptree(texture);
 
    if (mt->base.base.target != PIPE_TEXTURE_RECT)
       tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
 
    tic[2] |=
-      ((mt->base.bo->tile_mode & 0x0f0) << (22 - 4)) |
-      ((mt->base.bo->tile_mode & 0xf00) << (25 - 8));
+      ((mt->level[0].tile_mode & 0x0f0) << (22 - 4)) |
+      ((mt->level[0].tile_mode & 0xf00) << (25 - 8));
 
    depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
 
    if (mt->base.base.array_size > 1) {
       /* there doesn't seem to be a base layer field in TIC */
-      tic[1] = view->pipe.u.tex.first_layer * mt->layer_stride;
+      address += view->pipe.u.tex.first_layer * mt->layer_stride;
       depth = view->pipe.u.tex.last_layer - view->pipe.u.tex.first_layer + 1;
    }
+   tic[1] = address;
+   tic[2] |= address >> 32;
 
    switch (mt->base.base.target) {
    case PIPE_TEXTURE_1D:
@@ -205,7 +206,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 static boolean
 nvc0_validate_tic(struct nvc0_context *nvc0, int s)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nouveau_bo *txc = nvc0->screen->txc;
    unsigned i;
    boolean need_flush = FALSE;
@@ -215,53 +216,46 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       struct nv04_resource *res;
 
       if (!tic) {
-         BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
-         OUT_RING  (chan, (i << 1) | 0);
+         BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
+         PUSH_DATA (push, (i << 1) | 0);
          continue;
       }
       res = nv04_resource(tic->pipe.texture);
 
       if (tic->id < 0) {
-         uint32_t offset = res->offset + tic->tic[1];
-
          tic->id = nvc0_screen_tic_alloc(nvc0->screen, tic);
 
-         MARK_RING (chan, 9 + 8, 4);
-         BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
-         OUT_RELOCh(chan, txc, tic->id * 32, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-         OUT_RELOCl(chan, txc, tic->id * 32, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-         BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
-         OUT_RING  (chan, 32);
-         OUT_RING  (chan, 1);
-         BEGIN_RING(chan, RING_MF(EXEC), 1);
-         OUT_RING  (chan, 0x100111);
-         BEGIN_RING_NI(chan, RING_MF(DATA), 8);
-         OUT_RING  (chan, tic->tic[0]);
-         OUT_RELOCl(chan, res->bo, offset, res->domain | NOUVEAU_BO_RD);
-         OUT_RELOC (chan, res->bo, offset, res->domain | NOUVEAU_BO_RD |
-                    NOUVEAU_BO_HIGH | NOUVEAU_BO_OR, tic->tic[2], tic->tic[2]);
-         OUT_RINGp (chan, &tic->tic[3], 5);
+         PUSH_SPACE(push, 17);
+         BEGIN_NVC0(push, NVC0_M2MF(OFFSET_OUT_HIGH), 2);
+         PUSH_DATAh(push, txc->offset + (tic->id * 32));
+         PUSH_DATA (push, txc->offset + (tic->id * 32));
+         BEGIN_NVC0(push, NVC0_M2MF(LINE_LENGTH_IN), 2);
+         PUSH_DATA (push, 32);
+         PUSH_DATA (push, 1);
+         BEGIN_NVC0(push, NVC0_M2MF(EXEC), 1);
+         PUSH_DATA (push, 0x100111);
+         BEGIN_NIC0(push, NVC0_M2MF(DATA), 8);
+         PUSH_DATAp(push, &tic->tic[0], 8);
 
          need_flush = TRUE;
       } else
       if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
-         BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-         OUT_RING  (chan, (tic->id << 4) | 1);
+         BEGIN_NVC0(push, NVC0_3D(TEX_CACHE_CTL), 1);
+         PUSH_DATA (push, (tic->id << 4) | 1);
       }
       nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 
       res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       res->status |=  NOUVEAU_BUFFER_STATUS_GPU_READING;
 
-      nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_TEXTURES, res,
-                               res->domain | NOUVEAU_BO_RD);
+      BCTX_REFN(nvc0->bufctx_3d, TEX, res, RD);
 
-      BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
-      OUT_RING  (chan, (tic->id << 9) | (i << 1) | 1);
+      BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
+      PUSH_DATA (push, (tic->id << 9) | (i << 1) | 1);
    }
    for (; i < nvc0->state.num_textures[s]; ++i) {
-      BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
-      OUT_RING  (chan, (i << 1) | 0);
+      BEGIN_NVC0(push, NVC0_3D(BIND_TIC(s)), 1);
+      PUSH_DATA (push, (i << 1) | 0);
    }
    nvc0->state.num_textures[s] = nvc0->num_textures[s];
 
@@ -277,15 +271,15 @@ void nvc0_validate_textures(struct nvc0_context *nvc0)
    need_flush |= nvc0_validate_tic(nvc0, 4);
 
    if (need_flush) {
-      BEGIN_RING(nvc0->screen->base.channel, RING_3D(TIC_FLUSH), 1);
-      OUT_RING  (nvc0->screen->base.channel, 0);
+      BEGIN_NVC0(nvc0->base.pushbuf, NVC0_3D(TIC_FLUSH), 1);
+      PUSH_DATA (nvc0->base.pushbuf, 0);
    }
 }
 
 static boolean
 nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    unsigned i;
    boolean need_flush = FALSE;
 
@@ -293,8 +287,8 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
       struct nv50_tsc_entry *tsc = nv50_tsc_entry(nvc0->samplers[s][i]);
 
       if (!tsc) {
-         BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
-         OUT_RING  (chan, (i << 4) | 0);
+         BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
+         PUSH_DATA (push, (i << 4) | 0);
          continue;
       }
       if (tsc->id < 0) {
@@ -307,12 +301,12 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
       }
       nvc0->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);
 
-      BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
-      OUT_RING  (chan, (tsc->id << 12) | (i << 4) | 1);
+      BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
+      PUSH_DATA (push, (tsc->id << 12) | (i << 4) | 1);
    }
    for (; i < nvc0->state.num_samplers[s]; ++i) {
-      BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
-      OUT_RING  (chan, (i << 4) | 0);
+      BEGIN_NVC0(push, NVC0_3D(BIND_TSC(s)), 1);
+      PUSH_DATA (push, (i << 4) | 0);
    }
    nvc0->state.num_samplers[s] = nvc0->num_samplers[s];
 
@@ -328,7 +322,7 @@ void nvc0_validate_samplers(struct nvc0_context *nvc0)
    need_flush |= nvc0_validate_tsc(nvc0, 4);
 
    if (need_flush) {
-      BEGIN_RING(nvc0->screen->base.channel, RING_3D(TSC_FLUSH), 1);
-      OUT_RING  (nvc0->screen->base.channel, 0);
+      BEGIN_NVC0(nvc0->base.pushbuf, NVC0_3D(TSC_FLUSH), 1);
+      PUSH_DATA (nvc0->base.pushbuf, 0);
    }
 }

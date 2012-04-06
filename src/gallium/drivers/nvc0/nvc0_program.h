@@ -21,6 +21,7 @@ struct nvc0_program {
 
    ubyte type;
    boolean translated;
+   boolean need_tls;
    uint8_t max_gpr;
 
    uint32_t *code;
@@ -54,7 +55,7 @@ struct nvc0_program {
 
    struct nvc0_transform_feedback_state *tfb;
 
-   struct nouveau_resource *res;
+   struct nouveau_heap *mem;
 };
 
 #endif

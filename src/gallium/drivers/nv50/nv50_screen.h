@@ -1,11 +1,11 @@
 #ifndef __NV50_SCREEN_H__
 #define __NV50_SCREEN_H__
 
-#define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_fence.h"
 #include "nouveau/nouveau_mm.h"
-#undef NOUVEAU_NVC0
+#include "nouveau/nouveau_heap.h"
+
 #include "nv50_winsys.h"
 #include "nv50_stateobj.h"
 
@@ -36,9 +36,9 @@ struct nv50_screen {
 
    uint64_t tls_size;
 
-   struct nouveau_resource *vp_code_heap;
-   struct nouveau_resource *gp_code_heap;
-   struct nouveau_resource *fp_code_heap;
+   struct nouveau_heap *vp_code_heap;
+   struct nouveau_heap *gp_code_heap;
+   struct nouveau_heap *fp_code_heap;
 
    struct nv50_blitctx *blitctx;
 
@@ -59,13 +59,11 @@ struct nv50_screen {
       struct nouveau_bo *bo;
    } fence;
 
-   struct nouveau_notifier *sync;
+   struct nouveau_object *sync;
 
-   struct nouveau_mman *mm_VRAM_fe0;
-
-   struct nouveau_grobj *tesla;
-   struct nouveau_grobj *eng2d;
-   struct nouveau_grobj *m2mf;
+   struct nouveau_object *tesla;
+   struct nouveau_object *eng2d;
+   struct nouveau_object *m2mf;
 };
 
 static INLINE struct nv50_screen *
@@ -75,8 +73,6 @@ nv50_screen(struct pipe_screen *screen)
 }
 
 boolean nv50_blitctx_create(struct nv50_screen *);
-
-void nv50_screen_make_buffers_resident(struct nv50_screen *);
 
 int nv50_screen_tic_alloc(struct nv50_screen *, void *);
 int nv50_screen_tsc_alloc(struct nv50_screen *, void *);
@@ -88,7 +84,6 @@ nv50_resource_fence(struct nv04_resource *res, uint32_t flags)
 
    if (res->mm) {
       nouveau_fence_ref(screen->base.fence.current, &res->fence);
-
       if (flags & NOUVEAU_BO_WR)
          nouveau_fence_ref(screen->base.fence.current, &res->fence_wr);
    }
@@ -97,11 +92,7 @@ nv50_resource_fence(struct nv04_resource *res, uint32_t flags)
 static INLINE void
 nv50_resource_validate(struct nv04_resource *res, uint32_t flags)
 {
-   struct nv50_screen *screen = nv50_screen(res->base.screen);
-
    if (likely(res->bo)) {
-      nouveau_bo_validate(screen->base.channel, res->bo, flags);
-
       if (flags & NOUVEAU_BO_WR)
          res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       if (flags & NOUVEAU_BO_RD)

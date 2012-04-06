@@ -1,11 +1,11 @@
 #ifndef __NVC0_SCREEN_H__
 #define __NVC0_SCREEN_H__
 
-#define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_mm.h"
 #include "nouveau/nouveau_fence.h"
-#undef NOUVEAU_NVC0
+#include "nouveau/nouveau_heap.h"
+
 #include "nvc0_winsys.h"
 #include "nvc0_stateobj.h"
 
@@ -36,8 +36,8 @@ struct nvc0_screen {
 
    uint64_t tls_size;
 
-   struct nouveau_resource *text_heap;
-   struct nouveau_resource *lib_code; /* allocated from text_heap */
+   struct nouveau_heap *text_heap;
+   struct nouveau_heap *lib_code; /* allocated from text_heap */
 
    struct nvc0_blitctx *blitctx;
 
@@ -67,9 +67,10 @@ struct nvc0_screen {
 
    struct nouveau_mman *mm_VRAM_fe0;
 
-   struct nouveau_grobj *fermi;
-   struct nouveau_grobj *eng2d;
-   struct nouveau_grobj *m2mf;
+   struct nouveau_object *fermi;
+   struct nouveau_object *eng2d;
+   struct nouveau_object *m2mf;
+   struct nouveau_object *dijkstra;
 };
 
 static INLINE struct nvc0_screen *
@@ -92,7 +93,6 @@ nvc0_resource_fence(struct nv04_resource *res, uint32_t flags)
 
    if (res->mm) {
       nouveau_fence_ref(screen->base.fence.current, &res->fence);
-
       if (flags & NOUVEAU_BO_WR)
          nouveau_fence_ref(screen->base.fence.current, &res->fence_wr);
    }
@@ -101,11 +101,7 @@ nvc0_resource_fence(struct nv04_resource *res, uint32_t flags)
 static INLINE void
 nvc0_resource_validate(struct nv04_resource *res, uint32_t flags)
 {
-   struct nvc0_screen *screen = nvc0_screen(res->base.screen);
-
    if (likely(res->bo)) {
-      nouveau_bo_validate(screen->base.channel, res->bo, flags);
-
       if (flags & NOUVEAU_BO_WR)
          res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       if (flags & NOUVEAU_BO_RD)

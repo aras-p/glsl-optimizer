@@ -31,29 +31,33 @@ static INLINE void
 nvc0_program_update_context_state(struct nvc0_context *nvc0,
                                   struct nvc0_program *prog, int stage)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
 
-   if (prog->hdr[1])
+   if (prog && prog->need_tls) {
+      const uint32_t flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR;
+      if (!nvc0->state.tls_required)
+         BCTX_REFN_bo(nvc0->bufctx_3d, TLS, flags, nvc0->screen->tls);
       nvc0->state.tls_required |= 1 << stage;
-   else
+   } else {
+      if (nvc0->state.tls_required == (1 << stage))
+         nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TLS);
       nvc0->state.tls_required &= ~(1 << stage);
+   }
 
-   if (prog->immd_size) {
-      const unsigned rl = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
-
-      BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+   if (prog && prog->immd_size) {
+      BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
       /* NOTE: may overlap code of a different shader */
-      OUT_RING  (chan, align(prog->immd_size, 0x100));
-      OUT_RELOCh(chan, nvc0->screen->text, prog->immd_base, rl);
-      OUT_RELOCl(chan, nvc0->screen->text, prog->immd_base, rl);
-      BEGIN_RING(chan, RING_3D(CB_BIND(stage)), 1);
-      OUT_RING  (chan, (14 << 4) | 1);
+      PUSH_DATA (push, align(prog->immd_size, 0x100));
+      PUSH_DATAh(push, nvc0->screen->text->offset + prog->immd_base);
+      PUSH_DATA (push, nvc0->screen->text->offset + prog->immd_base);
+      BEGIN_NVC0(push, NVC0_3D(CB_BIND(stage)), 1);
+      PUSH_DATA (push, (14 << 4) | 1);
 
       nvc0->state.c14_bound |= 1 << stage;
    } else
    if (nvc0->state.c14_bound & (1 << stage)) {
-      BEGIN_RING(chan, RING_3D(CB_BIND(stage)), 1);
-      OUT_RING  (chan, (14 << 4) | 0);
+      BEGIN_NVC0(push, NVC0_3D(CB_BIND(stage)), 1);
+      PUSH_DATA (push, (14 << 4) | 0);
 
       nvc0->state.c14_bound &= ~(1 << stage);
    }
@@ -62,7 +66,7 @@ nvc0_program_update_context_state(struct nvc0_context *nvc0,
 static INLINE boolean
 nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
-   if (prog->res)
+   if (prog->mem)
       return TRUE;
 
    if (!prog->translated) {
@@ -79,133 +83,129 @@ nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 void
 nvc0_vertprog_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *vp = nvc0->vertprog;
 
    if (!nvc0_program_validate(nvc0, vp))
          return;
    nvc0_program_update_context_state(nvc0, vp, 0);
 
-   BEGIN_RING(chan, RING_3D(SP_SELECT(1)), 2);
-   OUT_RING  (chan, 0x11);
-   OUT_RING  (chan, vp->code_base);
-   BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(1)), 1);
-   OUT_RING  (chan, vp->max_gpr);
+   BEGIN_NVC0(push, NVC0_3D(SP_SELECT(1)), 2);
+   PUSH_DATA (push, 0x11);
+   PUSH_DATA (push, vp->code_base);
+   BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(1)), 1);
+   PUSH_DATA (push, vp->max_gpr);
 
-   // BEGIN_RING(chan, RING_3D_(0x163c), 1);
-   // OUT_RING  (chan, 0);
+   // BEGIN_NVC0(push, NVC0_3D_(0x163c), 1);
+   // PUSH_DATA (push, 0);
 }
 
 void
 nvc0_fragprog_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *fp = nvc0->fragprog;
 
    if (!nvc0_program_validate(nvc0, fp))
          return;
    nvc0_program_update_context_state(nvc0, fp, 4);
 
-   BEGIN_RING(chan, RING_3D(SP_SELECT(5)), 2);
-   OUT_RING  (chan, 0x51);
-   OUT_RING  (chan, fp->code_base);
-   BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(5)), 1);
-   OUT_RING  (chan, fp->max_gpr);
+   BEGIN_NVC0(push, NVC0_3D(SP_SELECT(5)), 2);
+   PUSH_DATA (push, 0x51);
+   PUSH_DATA (push, fp->code_base);
+   BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(5)), 1);
+   PUSH_DATA (push, fp->max_gpr);
 
-   BEGIN_RING(chan, RING_3D_(0x0360), 2);
-   OUT_RING  (chan, 0x20164010);
-   OUT_RING  (chan, 0x20);
-   BEGIN_RING(chan, RING_3D_(0x196c), 1);
-   OUT_RING  (chan, fp->flags[0]);
+   BEGIN_NVC0(push, SUBC_3D(0x0360), 2);
+   PUSH_DATA (push, 0x20164010);
+   PUSH_DATA (push, 0x20);
+   BEGIN_NVC0(push, NVC0_3D(ZCULL_TEST_MASK), 1);
+   PUSH_DATA (push, fp->flags[0]);
 }
 
 void
 nvc0_tctlprog_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *tp = nvc0->tctlprog;
 
-   if (!tp) {
-      BEGIN_RING(chan, RING_3D(SP_SELECT(2)), 1);
-      OUT_RING  (chan, 0x20);
-      return;
+   if (tp && nvc0_program_validate(nvc0, tp)) {
+      if (tp->tp.tess_mode != ~0) {
+         BEGIN_NVC0(push, NVC0_3D(TESS_MODE), 1);
+         PUSH_DATA (push, tp->tp.tess_mode);
+      }
+      BEGIN_NVC0(push, NVC0_3D(SP_SELECT(2)), 2);
+      PUSH_DATA (push, 0x21);
+      PUSH_DATA (push, tp->code_base);
+      BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(2)), 1);
+      PUSH_DATA (push, tp->max_gpr);
+
+      if (tp->tp.input_patch_size <= 32)
+         IMMED_NVC0(push, NVC0_3D(PATCH_VERTICES), tp->tp.input_patch_size);
+   } else {
+      BEGIN_NVC0(push, NVC0_3D(SP_SELECT(2)), 1);
+      PUSH_DATA (push, 0x20);
    }
-   if (!nvc0_program_validate(nvc0, tp))
-         return;
    nvc0_program_update_context_state(nvc0, tp, 1);
-
-   if (tp->tp.tess_mode != ~0) {
-      BEGIN_RING(chan, RING_3D(TESS_MODE), 1);
-      OUT_RING  (chan, tp->tp.tess_mode);
-   }
-   BEGIN_RING(chan, RING_3D(SP_SELECT(2)), 2);
-   OUT_RING  (chan, 0x21);
-   OUT_RING  (chan, tp->code_base);
-   BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(2)), 1);
-   OUT_RING  (chan, tp->max_gpr);
-
-   if (tp->tp.input_patch_size <= 32)
-      IMMED_RING(chan, RING_3D(PATCH_VERTICES), tp->tp.input_patch_size);
 }
 
 void
 nvc0_tevlprog_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *tp = nvc0->tevlprog;
 
-   if (!tp) {
-      BEGIN_RING(chan, RING_3D(TEP_SELECT), 1);
-      OUT_RING  (chan, 0x30);
-      return;
+   if (tp && nvc0_program_validate(nvc0, tp)) {
+      if (tp->tp.tess_mode != ~0) {
+         BEGIN_NVC0(push, NVC0_3D(TESS_MODE), 1);
+         PUSH_DATA (push, tp->tp.tess_mode);
+      }
+      BEGIN_NVC0(push, NVC0_3D(TEP_SELECT), 1);
+      PUSH_DATA (push, 0x31);
+      BEGIN_NVC0(push, NVC0_3D(SP_START_ID(3)), 1);
+      PUSH_DATA (push, tp->code_base);
+      BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(3)), 1);
+      PUSH_DATA (push, tp->max_gpr);
+   } else {
+      BEGIN_NVC0(push, NVC0_3D(TEP_SELECT), 1);
+      PUSH_DATA (push, 0x30);
    }
-   if (!nvc0_program_validate(nvc0, tp))
-         return;
    nvc0_program_update_context_state(nvc0, tp, 2);
-
-   if (tp->tp.tess_mode != ~0) {
-      BEGIN_RING(chan, RING_3D(TESS_MODE), 1);
-      OUT_RING  (chan, tp->tp.tess_mode);
-   }
-   BEGIN_RING(chan, RING_3D(TEP_SELECT), 1);
-   OUT_RING  (chan, 0x31);
-   BEGIN_RING(chan, RING_3D(SP_START_ID(3)), 1);
-   OUT_RING  (chan, tp->code_base);
-   BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(3)), 1);
-   OUT_RING  (chan, tp->max_gpr);
 }
 
 void
 nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *gp = nvc0->gmtyprog;
 
    if (gp)
       nvc0_program_validate(nvc0, gp);
+
    /* we allow GPs with no code for specifying stream output state only */
-   if (!gp || !gp->code_size) {
-      BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
-      OUT_RING  (chan, 0x40);
-      IMMED_RING(chan, RING_3D(LAYER), 0);
-      return;
+   if (gp && gp->code_size) {
+      const boolean gp_selects_layer = gp->hdr[13] & (1 << 9);
+
+      BEGIN_NVC0(push, NVC0_3D(GP_SELECT), 1);
+      PUSH_DATA (push, 0x41);
+      BEGIN_NVC0(push, NVC0_3D(SP_START_ID(4)), 1);
+      PUSH_DATA (push, gp->code_base);
+      BEGIN_NVC0(push, NVC0_3D(SP_GPR_ALLOC(4)), 1);
+      PUSH_DATA (push, gp->max_gpr);
+      BEGIN_NVC0(push, NVC0_3D(LAYER), 1);
+      PUSH_DATA (push, gp_selects_layer ? NVC0_3D_LAYER_USE_GP : 0);
+   } else {
+      IMMED_NVC0(push, NVC0_3D(LAYER), 0);
+      BEGIN_NVC0(push, NVC0_3D(GP_SELECT), 1);
+      PUSH_DATA (push, 0x40);
    }
    nvc0_program_update_context_state(nvc0, gp, 3);
-
-   BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
-   OUT_RING  (chan, 0x41);
-   BEGIN_RING(chan, RING_3D(SP_START_ID(4)), 1);
-   OUT_RING  (chan, gp->code_base);
-   BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(4)), 1);
-   OUT_RING  (chan, gp->max_gpr);
-   BEGIN_RING(chan, RING_3D(LAYER), 1);
-   OUT_RING  (chan, (gp->hdr[13] & (1 << 9)) ? NVC0_3D_LAYER_USE_GP : 0);
 }
 
 void
 nvc0_tfb_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_transform_feedback_state *tfb;
    unsigned b;
 
@@ -215,24 +215,24 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
    else
       tfb = nvc0->vertprog->tfb;
 
-   IMMED_RING(chan, RING_3D(TFB_ENABLE), (tfb && nvc0->num_tfbbufs) ? 1 : 0);
+   IMMED_NVC0(push, NVC0_3D(TFB_ENABLE), (tfb && nvc0->num_tfbbufs) ? 1 : 0);
 
    if (tfb && tfb != nvc0->state.tfb) {
       for (b = 0; b < 4; ++b) {
          if (tfb->varying_count[b]) {
             unsigned n = (tfb->varying_count[b] + 3) / 4;
 
-            BEGIN_RING(chan, RING_3D(TFB_STREAM(b)), 3);
-            OUT_RING  (chan, 0);
-            OUT_RING  (chan, tfb->varying_count[b]);
-            OUT_RING  (chan, tfb->stride[b]);
-            BEGIN_RING(chan, RING_3D(TFB_VARYING_LOCS(b, 0)), n);
-            OUT_RINGp (chan, tfb->varying_index[b], n);
+            BEGIN_NVC0(push, NVC0_3D(TFB_STREAM(b)), 3);
+            PUSH_DATA (push, 0);
+            PUSH_DATA (push, tfb->varying_count[b]);
+            PUSH_DATA (push, tfb->stride[b]);
+            BEGIN_NVC0(push, NVC0_3D(TFB_VARYING_LOCS(b, 0)), n);
+            PUSH_DATAp(push, tfb->varying_index[b], n);
 
             if (nvc0->tfbbuf[b])
                nvc0_so_target(nvc0->tfbbuf[b])->stride = tfb->stride[b];
          } else {
-            IMMED_RING(chan, RING_3D(TFB_VARYING_COUNT(b)), 0);
+            IMMED_NVC0(push, NVC0_3D(TFB_VARYING_COUNT(b)), 0);
          }
       }
    }
@@ -240,7 +240,7 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
 
    if (!(nvc0->dirty & NVC0_NEW_TFB_TARGETS))
       return;
-   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_TFB);
+   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TFB);
 
    for (b = 0; b < nvc0->num_tfbbufs; ++b) {
       struct nvc0_so_target *targ = nvc0_so_target(nvc0->tfbbuf[b]);
@@ -253,20 +253,20 @@ nvc0_tfb_validate(struct nvc0_context *nvc0)
          continue;
 
       if (!targ->clean)
-         nvc0_query_fifo_wait(chan, targ->pq);
-      BEGIN_RING(chan, RING_3D(TFB_BUFFER_ENABLE(b)), 5);
-      OUT_RING  (chan, 1);
-      OUT_RESRCh(chan, buf, targ->pipe.buffer_offset, NOUVEAU_BO_WR);
-      OUT_RESRCl(chan, buf, targ->pipe.buffer_offset, NOUVEAU_BO_WR);
-      OUT_RING  (chan, targ->pipe.buffer_size);
+         nvc0_query_fifo_wait(push, targ->pq);
+      BEGIN_NVC0(push, NVC0_3D(TFB_BUFFER_ENABLE(b)), 5);
+      PUSH_DATA (push, 1);
+      PUSH_DATAh(push, buf->address + targ->pipe.buffer_offset);
+      PUSH_DATA (push, buf->address + targ->pipe.buffer_offset);
+      PUSH_DATA (push, targ->pipe.buffer_size);
       if (!targ->clean) {
-         nvc0_query_pushbuf_submit(chan, targ->pq, 0x4);
+         nvc0_query_pushbuf_submit(push, targ->pq, 0x4);
       } else {
-         OUT_RING(chan, 0); /* TFB_BUFFER_OFFSET */
+         PUSH_DATA(push, 0); /* TFB_BUFFER_OFFSET */
          targ->clean = FALSE;
       }
-      nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_TFB, buf, NOUVEAU_BO_WR);
+      BCTX_REFN(nvc0->bufctx_3d, TFB, buf, WR);
    }
    for (; b < 4; ++b)
-      IMMED_RING(chan, RING_3D(TFB_BUFFER_ENABLE(b)), 0);
+      IMMED_NVC0(push, NVC0_3D(TFB_BUFFER_ENABLE(b)), 0);
 }

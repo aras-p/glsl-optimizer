@@ -6,10 +6,6 @@
 
 #include "nouveau_drm_public.h"
 
-#include "nouveau_drmif.h"
-#include "nouveau_channel.h"
-#include "nouveau_bo.h"
-
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
 
@@ -20,7 +16,7 @@ nouveau_drm_screen_create(int fd)
 	struct pipe_screen *(*init)(struct nouveau_device *);
 	int ret;
 
-	ret = nouveau_device_open_existing(&dev, 0, fd, 0);
+	ret = nouveau_device_wrap(fd, 0, &dev);
 	if (ret)
 		return NULL;
 

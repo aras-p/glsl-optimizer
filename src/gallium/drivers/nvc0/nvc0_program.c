@@ -618,7 +618,17 @@ nvc0_program_translate(struct nvc0_program *prog)
       assert(info->bin.tlsSpace < (1 << 24));
       prog->hdr[0] |= 1 << 26;
       prog->hdr[1] |= info->bin.tlsSpace; /* l[] size */
+      prog->need_tls = TRUE;
    }
+   /* TODO: factor 2 only needed where joinat/precont is used,
+    *       and we only have to count non-uniform branches
+    */
+   /*
+   if ((info->maxCFDepth * 2) > 16) {
+      prog->hdr[2] |= (((info->maxCFDepth * 2) + 47) / 48) * 0x200;
+      prog->need_tls = TRUE;
+   }
+   */
    if (info->io.globalAccess)
       prog->hdr[0] |= 1 << 16;
 
@@ -649,15 +659,15 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
    }
    size = align(size, 0x40); /* required by SP_START_ID */
 
-   ret = nouveau_resource_alloc(screen->text_heap, size, prog, &prog->res);
+   ret = nouveau_heap_alloc(screen->text_heap, size, prog, &prog->mem);
    if (ret) {
       NOUVEAU_ERR("out of code space\n");
       return FALSE;
    }
-   prog->code_base = prog->res->start;
-   prog->immd_base = align(prog->res->start + prog->immd_base, 0x100);
+   prog->code_base = prog->mem->start;
+   prog->immd_base = align(prog->mem->start + prog->immd_base, 0x100);
    assert((prog->immd_size == 0) || (prog->immd_base + prog->immd_size <=
-                                     prog->res->start + prog->res->size));
+                                     prog->mem->start + prog->mem->size));
 
    code_pos = prog->code_base + NVC0_SHADER_HEADER_SIZE;
 
@@ -679,8 +689,8 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
                             screen->text, prog->immd_base, NOUVEAU_BO_VRAM,
                             prog->immd_size, prog->immd_data);
 
-   BEGIN_RING(screen->base.channel, RING_3D(MEM_BARRIER), 1);
-   OUT_RING  (screen->base.channel, 0x1111);
+   BEGIN_NVC0(nvc0->base.pushbuf, NVC0_3D(MEM_BARRIER), 1);
+   PUSH_DATA (nvc0->base.pushbuf, 0x1111);
 
    return TRUE;
 }
@@ -701,8 +711,8 @@ nvc0_program_library_upload(struct nvc0_context *nvc0)
    if (!size)
       return;
 
-   ret = nouveau_resource_alloc(screen->text_heap, align(size, 0x100), NULL,
-                                &screen->lib_code);
+   ret = nouveau_heap_alloc(screen->text_heap, align(size, 0x100), NULL,
+                            &screen->lib_code);
    if (ret)
       return;
 
@@ -718,8 +728,8 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
    const struct pipe_shader_state pipe = prog->pipe;
    const ubyte type = prog->type;
 
-   if (prog->res)
-      nouveau_resource_free(&prog->res);
+   if (prog->mem)
+      nouveau_heap_free(&prog->mem);
 
    if (prog->code)
       FREE(prog->code);

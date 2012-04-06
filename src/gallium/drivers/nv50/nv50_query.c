@@ -22,6 +22,8 @@
  * Authors: Christoph Bumiller
  */
 
+#define NV50_PUSH_EXPLICIT_SPACE_CHECKING
+
 #include "nv50_context.h"
 #include "nouveau/nv_object.xml.h"
 
@@ -64,7 +66,8 @@ nv50_query_allocate(struct nv50_context *nv50, struct nv50_query *q, int size)
          if (q->ready)
             nouveau_mm_free(q->mm);
          else
-            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free_work, q->mm);
+            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free_work,
+                               q->mm);
       }
    }
    if (size) {
@@ -73,14 +76,12 @@ nv50_query_allocate(struct nv50_context *nv50, struct nv50_query *q, int size)
          return FALSE;
       q->offset = q->base;
 
-      ret = nouveau_bo_map_range(q->bo, q->base, size, NOUVEAU_BO_RD |
-                                 NOUVEAU_BO_NOSYNC);
+      ret = nouveau_bo_map(q->bo, 0, screen->base.client);
       if (ret) {
          nv50_query_allocate(nv50, q, 0);
          return FALSE;
       }
-      q->data = q->bo->map;
-      nouveau_bo_unmap(q->bo);
+      q->data = (uint32_t *)((uint8_t *)q->bo->map + q->base);
    }
    return TRUE;
 }
@@ -121,24 +122,25 @@ nv50_query_create(struct pipe_context *pipe, unsigned type)
 }
 
 static void
-nv50_query_get(struct nouveau_channel *chan, struct nv50_query *q,
+nv50_query_get(struct nouveau_pushbuf *push, struct nv50_query *q,
                unsigned offset, uint32_t get)
 {
    offset += q->offset;
 
-   MARK_RING (chan, 5, 2);
-   BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
-   OUT_RELOCh(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, q->bo, offset, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RING  (chan, q->sequence);
-   OUT_RING  (chan, get);
+   PUSH_SPACE(push, 5);
+   PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
+   BEGIN_NV04(push, NV50_3D(QUERY_ADDRESS_HIGH), 4);
+   PUSH_DATAh(push, q->bo->offset + offset);
+   PUSH_DATA (push, q->bo->offset + offset);
+   PUSH_DATA (push, q->sequence);
+   PUSH_DATA (push, get);
 }
 
 static void
 nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_query *q = nv50_query(pq);
 
    /* For occlusion queries we have to change the storage, because a previous
@@ -161,27 +163,31 @@ nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      BEGIN_RING(chan, RING_3D(COUNTER_RESET), 1);
-      OUT_RING  (chan, NV50_3D_COUNTER_RESET_SAMPLECNT);
-      BEGIN_RING(chan, RING_3D(SAMPLECNT_ENABLE), 1);
-      OUT_RING  (chan, 1);
+      PUSH_SPACE(push, 4);
+      BEGIN_NV04(push, NV50_3D(COUNTER_RESET), 1);
+      PUSH_DATA (push, NV50_3D_COUNTER_RESET_SAMPLECNT);
+      BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
+      PUSH_DATA (push, 1);
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED: /* store before & after instead ? */
-      BEGIN_RING(chan, RING_3D(COUNTER_RESET), 1);
-      OUT_RING  (chan, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
+      PUSH_SPACE(push, 2);
+      BEGIN_NV04(push, NV50_3D(COUNTER_RESET), 1);
+      PUSH_DATA (push, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      BEGIN_RING(chan, RING_3D(COUNTER_RESET), 1);
-      OUT_RING  (chan, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
+      PUSH_SPACE(push, 2);
+      BEGIN_NV04(push, NV50_3D(COUNTER_RESET), 1);
+      PUSH_DATA (push, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      BEGIN_RING_NI(chan, RING_3D(COUNTER_RESET), 2);
-      OUT_RING  (chan, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
-      OUT_RING  (chan, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
+      PUSH_SPACE(push, 3);
+      BEGIN_NI04(push, NV50_3D(COUNTER_RESET), 2);
+      PUSH_DATA (push, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
+      PUSH_DATA (push, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      nv50_query_get(chan, q, 0x10, 0x00005002);
+      nv50_query_get(push, q, 0x10, 0x00005002);
       break;
    default:
       break;
@@ -193,31 +199,32 @@ static void
 nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_query *q = nv50_query(pq);
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      nv50_query_get(chan, q, 0, 0x0100f002);
-      BEGIN_RING(chan, RING_3D(SAMPLECNT_ENABLE), 1);
-      OUT_RING  (chan, 0);
+      nv50_query_get(push, q, 0, 0x0100f002);
+      PUSH_SPACE(push, 2);
+      BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
+      PUSH_DATA (push, 0);
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
-      nv50_query_get(chan, q, 0, 0x06805002);
+      nv50_query_get(push, q, 0, 0x06805002);
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      nv50_query_get(chan, q, 0, 0x05805002);
+      nv50_query_get(push, q, 0, 0x05805002);
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      nv50_query_get(chan, q, 0x00, 0x05805002);
-      nv50_query_get(chan, q, 0x10, 0x06805002);
+      nv50_query_get(push, q, 0x00, 0x05805002);
+      nv50_query_get(push, q, 0x10, 0x06805002);
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      nv50_query_get(chan, q, 0, 0x00005002);
+      nv50_query_get(push, q, 0, 0x00005002);
       break;
    case PIPE_QUERY_GPU_FINISHED:
-      nv50_query_get(chan, q, 0, 0x1000f010);
+      nv50_query_get(push, q, 0, 0x1000f010);
       break;
    default:
       assert(0);
@@ -231,45 +238,33 @@ nv50_query_ready(struct nv50_query *q)
    return q->ready || (!q->is64bit && (q->data[0] == q->sequence));
 }
 
-static INLINE boolean
-nv50_query_wait(struct nv50_query *q)
-{
-   int ret = nouveau_bo_map(q->bo, NOUVEAU_BO_RD);
-   if (ret)
-      return FALSE;
-   nouveau_bo_unmap(q->bo);
-   return TRUE;
-}
-
 static boolean
 nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
                   boolean wait, union pipe_query_result *result)
 {
+   struct nv50_context *nv50 = nv50_context(pipe);
    struct nv50_query *q = nv50_query(pq);
-   uint64_t *res64 = (uint64_t*)result;
-   boolean *res8 = (boolean*)result;
+   uint64_t *res64 = (uint64_t *)result;
+   boolean *res8 = (boolean *)result;
    uint64_t *data64 = (uint64_t *)q->data;
-
-   if (q->type == PIPE_QUERY_GPU_FINISHED) {
-      res8[0] = nv50_query_ready(q);
-      return TRUE;
-   }
 
    if (!q->ready) /* update ? */
       q->ready = nv50_query_ready(q);
    if (!q->ready) {
-      struct nouveau_channel *chan = nv50_context(pipe)->screen->base.channel;
       if (!wait) {
-         if (nouveau_bo_pending(q->bo) & NOUVEAU_BO_WR) /* for daft apps */
-            FIRE_RING(chan);
+         /* for broken apps that spin on GL_QUERY_RESULT_AVAILABLE */
+         PUSH_KICK(nv50->base.pushbuf);
          return FALSE;
       }
-      if (!nv50_query_wait(q))
+      if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nv50->screen->base.client))
          return FALSE;
    }
    q->ready = TRUE;
 
    switch (q->type) {
+   case PIPE_QUERY_GPU_FINISHED:
+      res8[0] = TRUE;
+      break;
    case PIPE_QUERY_OCCLUSION_COUNTER: /* u32 sequence, u32 count, u64 time */
       res64[0] = q->data[1];
       break;
@@ -300,27 +295,28 @@ nv50_render_condition(struct pipe_context *pipe,
                       struct pipe_query *pq, uint mode)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_query *q;
 
+   PUSH_SPACE(push, 6);
+
    if (!pq) {
-      BEGIN_RING(chan, RING_3D(COND_MODE), 1);
-      OUT_RING  (chan, NV50_3D_COND_MODE_ALWAYS);
+      BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
+      PUSH_DATA (push, NV50_3D_COND_MODE_ALWAYS);
       return;
    }
    q = nv50_query(pq);
 
    if (mode == PIPE_RENDER_COND_WAIT ||
        mode == PIPE_RENDER_COND_BY_REGION_WAIT) {
-      BEGIN_RING(chan, RING_3D_(NV50_GRAPH_WAIT_FOR_IDLE), 1);
-      OUT_RING  (chan, 0);
+      BEGIN_NV04(push, SUBC_3D(NV50_GRAPH_SERIALIZE), 1);
+      PUSH_DATA (push, 0);
    }
 
-   MARK_RING (chan, 4, 2);
-   BEGIN_RING(chan, RING_3D(COND_ADDRESS_HIGH), 3);
-   OUT_RELOCh(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-   OUT_RING  (chan, NV50_3D_COND_MODE_RES_NON_ZERO);
+   BEGIN_NV04(push, NV50_3D(COND_ADDRESS_HIGH), 3);
+   PUSH_DATAh(push, q->bo->offset + q->offset);
+   PUSH_DATA (push, q->bo->offset + q->offset);
+   PUSH_DATA (push, NV50_3D_COND_MODE_RES_NON_ZERO);
 }
 
 void

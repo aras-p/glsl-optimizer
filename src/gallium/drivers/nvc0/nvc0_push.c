@@ -11,7 +11,7 @@
 #include "nvc0_3d.xml.h"
 
 struct push_context {
-   struct nouveau_channel *chan;
+   struct nouveau_pushbuf *push;
 
    void *idxbuf;
 
@@ -40,7 +40,7 @@ init_push_context(struct nvc0_context *nvc0, struct push_context *ctx)
 {
    struct pipe_vertex_element *ve;
 
-   ctx->chan = nvc0->screen->base.channel;
+   ctx->push = nvc0->base.pushbuf;
    ctx->translate = nvc0->vertex->translate;
 
    if (likely(nvc0->vertex->num_elements < 32))
@@ -72,7 +72,7 @@ set_edgeflag(struct push_context *ctx, unsigned vtx_id)
 
    if (ctx->edgeflag.value != f) {
       ctx->edgeflag.value = f;
-      IMMED_RING(ctx->chan, RING_3D(EDGEFLAG_ENABLE), f ? 1 : 0);
+      IMMED_NVC0(ctx->push, NVC0_3D(EDGEFLAG), f ? 1 : 0);
    }
 }
 
@@ -80,11 +80,11 @@ static INLINE void
 set_vertexid(struct push_context *ctx, uint32_t vtx_id)
 {
 #if 0
-   BEGIN_RING(ctx->chan, RING_3D(VERTEX_ID), 1); /* broken on nvc0 */
+   BEGIN_NVC0(ctx->push, NVC0_3D(VERTEX_ID), 1); /* broken on nvc0 */
 #else
-   BEGIN_RING(ctx->chan, RING_3D(VERTEX_DATA), 1); /* as last attribute */
+   BEGIN_NVC0(ctx->push, NVC0_3D(VERTEX_DATA), 1); /* as last attribute */
 #endif
-   OUT_RING  (ctx->chan, vtx_id);
+   PUSH_DATA (ctx->push, vtx_id);
 }
 
 static INLINE unsigned
@@ -135,11 +135,11 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
       size = ctx->vertex_words * nr;
 
-      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+      BEGIN_NIC0(ctx->push, NVC0_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts8(ctx->translate, elts, nr, ctx->instance_id,
-                                ctx->chan->cur);
-      ctx->chan->cur += size;
+                                ctx->push->cur);
+      ctx->push->cur += size;
 
       if (unlikely(ctx->need_vertex_id) && likely(size))
          set_vertexid(ctx, elts[0]);
@@ -150,9 +150,9 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+         BEGIN_NVC0(ctx->push, NVC0_3D(VERTEX_END_GL), 2);
+         PUSH_DATA (ctx->push, 0);
+         PUSH_DATA (ctx->push, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
                     (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
@@ -176,11 +176,11 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
       size = ctx->vertex_words * nr;
 
-      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+      BEGIN_NIC0(ctx->push, NVC0_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts16(ctx->translate, elts, nr, ctx->instance_id,
-                                 ctx->chan->cur);
-      ctx->chan->cur += size;
+                                 ctx->push->cur);
+      ctx->push->cur += size;
 
       if (unlikely(ctx->need_vertex_id))
          set_vertexid(ctx, elts[0]);
@@ -191,9 +191,9 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+         BEGIN_NVC0(ctx->push, NVC0_3D(VERTEX_END_GL), 2);
+         PUSH_DATA (ctx->push, 0);
+         PUSH_DATA (ctx->push, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
                     (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
@@ -217,11 +217,11 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
       size = ctx->vertex_words * nr;
 
-      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+      BEGIN_NIC0(ctx->push, NVC0_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts(ctx->translate, elts, nr, ctx->instance_id,
-                               ctx->chan->cur);
-      ctx->chan->cur += size;
+                               ctx->push->cur);
+      ctx->push->cur += size;
 
       if (unlikely(ctx->need_vertex_id))
          set_vertexid(ctx, elts[0]);
@@ -232,9 +232,9 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+         BEGIN_NVC0(ctx->push, NVC0_3D(VERTEX_END_GL), 2);
+         PUSH_DATA (ctx->push, 0);
+         PUSH_DATA (ctx->push, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
                     (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
@@ -250,11 +250,11 @@ emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
       if (unlikely(ctx->edgeflag.buffer >= 0))
          set_edgeflag(ctx, start);
 
-      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+      BEGIN_NIC0(ctx->push, NVC0_3D(VERTEX_DATA), size);
 
       ctx->translate->run(ctx->translate, start, push, ctx->instance_id,
-                          ctx->chan->cur);
-      ctx->chan->cur += size;
+                          ctx->push->cur);
+      ctx->push->cur += size;
 
       if (unlikely(ctx->need_vertex_id))
          set_vertexid(ctx, start);
@@ -354,17 +354,17 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 
    if (unlikely(ctx.need_vertex_id)) {
       const unsigned a = nvc0->vertex->num_elements;
-      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
-      OUT_RING  (ctx.chan, (a << NVC0_3D_VERTEX_ATTRIB_FORMAT_BUFFER__SHIFT) |
+      BEGIN_NVC0(ctx.push, NVC0_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
+      PUSH_DATA (ctx.push, (a << NVC0_3D_VERTEX_ATTRIB_FORMAT_BUFFER__SHIFT) |
                  NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
                  NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32);
-      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ID_REPLACE), 1);
-      OUT_RING  (ctx.chan, (((0x80 + a * 0x10) / 4) << 4) | 1);
+      BEGIN_NVC0(ctx.push, NVC0_3D(VERTEX_ID_REPLACE), 1);
+      PUSH_DATA (ctx.push, (((0x80 + a * 0x10) / 4) << 4) | 1);
    }
 
    while (inst_count--) {
-      BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
-      OUT_RING  (ctx.chan, ctx.prim);
+      BEGIN_NVC0(ctx.push, NVC0_3D(VERTEX_BEGIN_GL), 1);
+      PUSH_DATA (ctx.push, ctx.prim);
       switch (index_size) {
       case 0:
          emit_vertices_seq(&ctx, info->start, vert_count);
@@ -382,20 +382,20 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
          assert(0);
          break;
       }
-      IMMED_RING(ctx.chan, RING_3D(VERTEX_END_GL), 0);
+      IMMED_NVC0(ctx.push, NVC0_3D(VERTEX_END_GL), 0);
 
       ctx.instance_id++;
       ctx.prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 
    if (unlikely(ctx.edgeflag.value == 0.0f))
-      IMMED_RING(ctx.chan, RING_3D(EDGEFLAG_ENABLE), 1);
+      IMMED_NVC0(ctx.push, NVC0_3D(EDGEFLAG), 1);
 
    if (unlikely(ctx.need_vertex_id)) {
       const unsigned a = nvc0->vertex->num_elements;
-      IMMED_RING(ctx.chan, RING_3D(VERTEX_ID_REPLACE), 0);
-      BEGIN_RING(ctx.chan, RING_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
-      OUT_RING  (ctx.chan,
+      IMMED_NVC0(ctx.push, NVC0_3D(VERTEX_ID_REPLACE), 0);
+      BEGIN_NVC0(ctx.push, NVC0_3D(VERTEX_ATTRIB_FORMAT(a)), 1);
+      PUSH_DATA (ctx.push,
                  NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST |
                  NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
                  NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32);

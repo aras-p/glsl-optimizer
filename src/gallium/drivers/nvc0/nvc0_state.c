@@ -489,7 +489,7 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
 
    nvc0->num_textures[s] = nr;
 
-   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_TEXTURES);
+   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX);
 
    nvc0->dirty |= NVC0_NEW_TEXTURES;
 }
@@ -621,8 +621,7 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    }
 
    if (nvc0->constbuf[shader][index])
-      nvc0_bufctx_del_resident(nvc0, NVC0_BUFCTX_CONSTANT,
-			       nv04_resource(nvc0->constbuf[shader][index]));
+      nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_CB(shader, index));
 
    pipe_resource_reference(&nvc0->constbuf[shader][index], res);
 
@@ -681,6 +680,8 @@ nvc0_set_framebuffer_state(struct pipe_context *pipe,
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
+    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_FB);
+
     nvc0->framebuffer = *fb;
     nvc0->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
@@ -731,7 +732,7 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
     memcpy(nvc0->vtxbuf, vb, sizeof(*vb) * count);
     nvc0->num_vtxbufs = count;
 
-    nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_VERTEX);
+    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 
     nvc0->dirty |= NVC0_NEW_ARRAYS;
 }
@@ -742,11 +743,16 @@ nvc0_set_index_buffer(struct pipe_context *pipe,
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
-    if (ib) {
-       pipe_resource_reference(&nvc0->idxbuf.buffer, ib->buffer);
+    if (nvc0->idxbuf.buffer)
+       nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_IDX);
 
-       memcpy(&nvc0->idxbuf, ib, sizeof(nvc0->idxbuf));
+    if (ib && ib->buffer) {
+       nvc0->dirty |= NVC0_NEW_IDXBUF;
+       pipe_resource_reference(&nvc0->idxbuf.buffer, ib->buffer);
+       nvc0->idxbuf.offset = ib->offset;
+       nvc0->idxbuf.index_size = ib->index_size;
     } else {
+       nvc0->dirty &= ~NVC0_NEW_IDXBUF;
        pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);
     }
 }

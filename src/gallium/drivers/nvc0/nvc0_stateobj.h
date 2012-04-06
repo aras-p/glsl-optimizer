@@ -5,12 +5,10 @@
 #include "pipe/p_state.h"
 
 #define SB_BEGIN_3D(so, m, s)                                                  \
-   (so)->state[(so)->size++] =                                                 \
-      (0x2 << 28) | ((s) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
+   (so)->state[(so)->size++] = NVC0_FIFO_PKHDR_SQ(NVC0_3D(m), s)
 
 #define SB_IMMED_3D(so, m, d)                                                  \
-   (so)->state[(so)->size++] =                                                 \
-      (0x8 << 28) | ((d) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
+   (so)->state[(so)->size++] = NVC0_FIFO_PKHDR_IL(NVC0_3D(m), d)
 
 #define SB_DATA(so, u) (so)->state[(so)->size++] = (u)
 

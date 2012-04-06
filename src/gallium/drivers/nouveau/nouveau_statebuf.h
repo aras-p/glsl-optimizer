@@ -20,8 +20,13 @@ struct nouveau_statebuf_builder
 #define sb_data(sb, v) *(sb).p++ = (v)
 #endif
 
-#define sb_method(sb, v, n)  sb_data(sb, RING_3D(v, n));
+static INLINE uint32_t sb_header(unsigned subc, unsigned mthd, unsigned size)
+{
+	return (size << 18) | (subc << 13) | mthd;
+}
+
+#define sb_method(sb, v, n)  sb_data(sb, sb_header(SUBC_3D(v), n));
 
 #define sb_len(sb, var) ((sb).p - (var))
-#define sb_emit(chan, sb_buf, sb_len) do {WAIT_RING((chan), (sb_len)); OUT_RINGp((chan), (sb_buf), (sb_len)); } while(0)
+#define sb_emit(push, sb_buf, sb_len) do {PUSH_SPACE((push), (sb_len)); PUSH_DATAp((push), (sb_buf), (sb_len)); } while(0)
 #endif

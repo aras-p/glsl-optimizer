@@ -46,12 +46,20 @@
 #define NV50_NEW_CONSTBUF     (1 << 18)
 #define NV50_NEW_TEXTURES     (1 << 19)
 #define NV50_NEW_SAMPLERS     (1 << 20)
+#define NV50_NEW_CONTEXT      (1 << 31)
 
-#define NV50_BUFCTX_CONSTANT 0
-#define NV50_BUFCTX_FRAME    1
-#define NV50_BUFCTX_VERTEX   2
-#define NV50_BUFCTX_TEXTURES 3
-#define NV50_BUFCTX_COUNT    4
+#define NV50_BIND_FB          0
+#define NV50_BIND_VERTEX      1
+#define NV50_BIND_VERTEX_TMP  2
+#define NV50_BIND_INDEX       3
+#define NV50_BIND_TEXTURES    4
+#define NV50_BIND_CB(s, i)   (5 + 16 * (s) + (i))
+#define NV50_BIND_SCREEN     53
+#define NV50_BIND_TLS        54
+#define NV50_BIND_COUNT      55
+#define NV50_BIND_2D          0
+#define NV50_BIND_M2MF        0
+#define NV50_BIND_FENCE       1
 
 #define NV50_CB_TMP 123
 /* fixed constant buffer binding points - low indices for user's constbufs */
@@ -60,13 +68,14 @@
 #define NV50_CB_PFP 125
 #define NV50_CB_AUX 127
 
+
 struct nv50_context {
    struct nouveau_context base;
 
    struct nv50_screen *screen;
 
-   struct util_dynarray residents[NV50_BUFCTX_COUNT];
-   unsigned residents_size;
+   struct nouveau_bufctx *bufctx_3d;
+   struct nouveau_bufctx *bufctx;
 
    uint32_t dirty;
 
@@ -79,6 +88,9 @@ struct nv50_context {
       int32_t index_bias;
       boolean prim_restart;
       boolean point_sprite;
+      boolean rt_serialize;
+      boolean flushed;
+      uint8_t tls_required;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[3];
@@ -97,6 +109,7 @@ struct nv50_context {
 
    struct pipe_resource *constbuf[3][16];
    uint16_t constbuf_dirty[3];
+   uint16_t constbuf_valid[3];
 
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
    unsigned num_vtxbufs;
@@ -132,22 +145,19 @@ nv50_context(struct pipe_context *pipe)
    return (struct nv50_context *)pipe;
 }
 
+static INLINE struct nv50_screen *
+nv50_context_screen(struct nv50_context *nv50)
+{
+   return nv50_screen(&nv50->base.screen->base);
+}
+
+
 /* nv50_context.c */
 struct pipe_context *nv50_create(struct pipe_screen *, void *);
 
-void nv50_default_flush_notify(struct nouveau_channel *);
+void nv50_bufctx_fence(struct nouveau_bufctx *, boolean on_flush);
 
-void nv50_bufctx_emit_relocs(struct nv50_context *);
-void nv50_bufctx_add_resident(struct nv50_context *, int ctx,
-                              struct nv04_resource *, uint32_t flags);
-void nv50_bufctx_del_resident(struct nv50_context *, int ctx,
-                              struct nv04_resource *);
-static INLINE void
-nv50_bufctx_reset(struct nv50_context *nv50, int ctx)
-{
-   nv50->residents_size -= nv50->residents[ctx].size;
-   util_dynarray_resize(&nv50->residents[ctx], 0);
-}
+void nv50_default_kick_notify(struct nouveau_pushbuf *);
 
 /* nv50_draw.c */
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *);
@@ -194,7 +204,7 @@ nv50_create_sampler_view(struct pipe_context *,
 
 /* nv50_transfer.c */
 void
-nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
+nv50_m2mf_transfer_rect(struct nv50_context *,
                         const struct nv50_m2mf_rect *dst,
                         const struct nv50_m2mf_rect *src,
                         uint32_t nblocksx, uint32_t nblocksy);

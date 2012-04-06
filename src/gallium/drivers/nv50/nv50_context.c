@@ -33,40 +33,36 @@ static void
 nv50_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
-   struct nouveau_screen *screen = &nv50_context(pipe)->screen->base;
+   struct nouveau_screen *screen = nouveau_screen(pipe->screen);
 
    if (fence)
       nouveau_fence_ref(screen->fence.current, (struct nouveau_fence **)fence);
 
-   /* Try to emit before firing to avoid having to flush again right after
-    * in case we have to wait on this fence.
-    */
-   nouveau_fence_emit(screen->fence.current);
-
-   FIRE_RING(screen->channel);
+   PUSH_KICK(screen->pushbuf);
 }
 
 static void
 nv50_texture_barrier(struct pipe_context *pipe)
 {
-   struct nouveau_channel *chan = nv50_context(pipe)->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50_context(pipe)->base.pushbuf;
 
-   BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-   OUT_RING  (chan, 0x20);
+   BEGIN_NV04(push, SUBC_3D(NV50_GRAPH_SERIALIZE), 1);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(TEX_CACHE_CTL), 1);
+   PUSH_DATA (push, 0x20);
 }
 
 void
-nv50_default_flush_notify(struct nouveau_channel *chan)
+nv50_default_kick_notify(struct nouveau_pushbuf *push)
 {
-   struct nv50_screen *screen = chan->user_private;
+   struct nv50_screen *screen = push->user_priv;
 
-   if (!screen)
-      return;
-
-   nouveau_fence_update(&screen->base, TRUE);
-   nouveau_fence_next(&screen->base);
+   if (screen) {
+      nouveau_fence_next(&screen->base);
+      nouveau_fence_update(&screen->base, TRUE);
+      if (screen->cur_ctx)
+         screen->cur_ctx->state.flushed = TRUE;
+   }
 }
 
 static void
@@ -74,8 +70,8 @@ nv50_context_unreference_resources(struct nv50_context *nv50)
 {
    unsigned s, i;
 
-   for (i = 0; i < NV50_BUFCTX_COUNT; ++i)
-      nv50_bufctx_reset(nv50, i);
+   nouveau_bufctx_del(&nv50->bufctx_3d);
+   nouveau_bufctx_del(&nv50->bufctx);
 
    for (i = 0; i < nv50->num_vtxbufs; ++i)
       pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
@@ -96,12 +92,17 @@ nv50_destroy(struct pipe_context *pipe)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
 
+   if (nv50_context_screen(nv50)->cur_ctx == nv50) {
+      nv50->base.pushbuf->kick_notify = NULL;
+      nv50_context_screen(nv50)->cur_ctx = NULL;
+      nouveau_pushbuf_bufctx(nv50->base.pushbuf, NULL);
+   }
+   /* need to flush before destroying the bufctx */
+   nouveau_pushbuf_kick(nv50->base.pushbuf, nv50->base.pushbuf->channel);
+
    nv50_context_unreference_resources(nv50);
 
    draw_destroy(nv50->draw);
-
-   if (nv50->screen->cur_ctx == nv50)
-      nv50->screen->cur_ctx = NULL;
 
    FREE(nv50);
 }
@@ -112,17 +113,28 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    struct nv50_screen *screen = nv50_screen(pscreen);
    struct nv50_context *nv50;
    struct pipe_context *pipe;
+   int ret;
+   uint32_t flags;
 
    nv50 = CALLOC_STRUCT(nv50_context);
    if (!nv50)
       return NULL;
    pipe = &nv50->base.pipe;
 
-   nv50->screen = screen;
+   nv50->base.pushbuf = screen->base.pushbuf;
+
+   ret = nouveau_bufctx_new(screen->base.client, NV50_BIND_COUNT,
+                            &nv50->bufctx_3d);
+   if (!ret)
+      ret = nouveau_bufctx_new(screen->base.client, 2, &nv50->bufctx);
+   if (ret)
+      goto out_err;
+
    nv50->base.screen    = &screen->base;
    nv50->base.copy_data = nv50_m2mf_copy_linear;
    nv50->base.push_data = nv50_sifc_linear_u8;
 
+   nv50->screen = screen;
    pipe->screen = pscreen;
    pipe->priv = priv;
 
@@ -134,9 +146,10 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    pipe->flush = nv50_flush;
    pipe->texture_barrier = nv50_texture_barrier;
 
-   if (!screen->cur_ctx)
+   if (!screen->cur_ctx) {
       screen->cur_ctx = nv50;
-   screen->base.channel->flush_notify = nv50_default_flush_notify;
+      nouveau_pushbuf_bufctx(screen->base.pushbuf, nv50->bufctx);
+   }
 
    nv50_init_query_functions(nv50);
    nv50_init_surface_functions(nv50);
@@ -149,72 +162,41 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
    nouveau_context_init_vdec(&nv50->base);
 
+   flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
+
+   BCTX_REFN_bo(nv50->bufctx_3d, SCREEN, flags, screen->code);
+   BCTX_REFN_bo(nv50->bufctx_3d, SCREEN, flags, screen->uniforms);
+   BCTX_REFN_bo(nv50->bufctx_3d, SCREEN, flags, screen->txc);
+   BCTX_REFN_bo(nv50->bufctx_3d, SCREEN, flags, screen->stack_bo);
+
+   flags = NOUVEAU_BO_GART | NOUVEAU_BO_WR;
+
+   BCTX_REFN_bo(nv50->bufctx_3d, SCREEN, flags, screen->fence.bo);
+   BCTX_REFN_bo(nv50->bufctx, FENCE, flags, screen->fence.bo);
+
    return pipe;
-}
 
-struct resident {
-   struct nv04_resource *res;
-   uint32_t flags;
-};
-
-void
-nv50_bufctx_add_resident(struct nv50_context *nv50, int ctx,
-                         struct nv04_resource *resource, uint32_t flags)
-{
-   struct resident rsd = { resource, flags };
-
-   if (!resource->bo)
-      return;
-   nv50->residents_size += sizeof(struct resident);
-
-   /* We don't need to reference the resource here, it will be referenced
-    * in the context/state, and bufctx will be reset when state changes.
-    */
-   util_dynarray_append(&nv50->residents[ctx], struct resident, rsd);
-}
-
-void
-nv50_bufctx_del_resident(struct nv50_context *nv50, int ctx,
-                         struct nv04_resource *resource)
-{
-   struct resident *rsd, *top;
-   unsigned i;
-
-   for (i = 0; i < nv50->residents[ctx].size / sizeof(struct resident); ++i) {
-      rsd = util_dynarray_element(&nv50->residents[ctx], struct resident, i);
-
-      if (rsd->res == resource) {
-         top = util_dynarray_pop_ptr(&nv50->residents[ctx], struct resident);
-         if (rsd != top)
-            *rsd = *top;
-         nv50->residents_size -= sizeof(struct resident);
-         break;
-      }
+out_err:
+   if (nv50) {
+      if (nv50->bufctx_3d)
+         nouveau_bufctx_del(&nv50->bufctx_3d);
+      if (nv50->bufctx)
+         nouveau_bufctx_del(&nv50->bufctx);
+      FREE(nv50);
    }
+   return NULL;
 }
 
 void
-nv50_bufctx_emit_relocs(struct nv50_context *nv50)
+nv50_bufctx_fence(struct nouveau_bufctx *bufctx, boolean on_flush)
 {
-   struct resident *rsd;
-   struct util_dynarray *array;
-   unsigned ctx, i, n;
+   struct nouveau_list *list = on_flush ? &bufctx->current : &bufctx->pending;
+   struct nouveau_list *it;
 
-   n  = nv50->residents_size / sizeof(struct resident);
-   n += NV50_SCREEN_RESIDENT_BO_COUNT;
-
-   MARK_RING(nv50->screen->base.channel, 0, n);
-
-   for (ctx = 0; ctx < NV50_BUFCTX_COUNT; ++ctx) {
-      array = &nv50->residents[ctx];
-
-      n = array->size / sizeof(struct resident);
-      for (i = 0; i < n; ++i) {
-         rsd = util_dynarray_element(array, struct resident, i);
-
-         nv50_resource_validate(rsd->res, rsd->flags);
-      }
+   for (it = list->next; it != list; it = it->next) {
+      struct nouveau_bufref *ref = (struct nouveau_bufref *)it;
+      struct nv04_resource *res = ref->priv;
+      if (res)
+         nv50_resource_validate(res, (unsigned)ref->priv_data);
    }
-
-   nv50_screen_make_buffers_resident(nv50->screen);
 }

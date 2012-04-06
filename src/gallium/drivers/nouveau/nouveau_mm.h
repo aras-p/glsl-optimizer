@@ -1,6 +1,7 @@
 #ifndef __NOUVEAU_MM_H__
 #define __NOUVEAU_MM_H__
 
+union nouveau_bo_config;
 struct nouveau_mman;
 
 /* Since a resource can be migrated, we need to decouple allocations from
@@ -14,7 +15,7 @@ struct nouveau_mm_allocation {
 
 extern struct nouveau_mman *
 nouveau_mm_create(struct nouveau_device *, uint32_t domain,
-                  uint32_t storage_type);
+                  union nouveau_bo_config *);
 
 extern void
 nouveau_mm_destroy(struct nouveau_mman *);

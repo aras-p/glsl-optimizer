@@ -27,27 +27,23 @@
 #include "nouveau_context.h"
 #include "nouveau_video.h"
 
-#include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_buffer.h"
 #include "util/u_video.h"
 #include "util/u_format.h"
 #include "util/u_sampler.h"
-#include "nouveau/nouveau_device.h"
-#include "nouveau_winsys.h"
 
 static int
 nouveau_vpe_init(struct nouveau_decoder *dec) {
    int ret;
    if (dec->cmds)
       return 0;
-   ret = nouveau_bo_map(dec->cmd_bo, NOUVEAU_BO_RDWR);
+   ret = nouveau_bo_map(dec->cmd_bo, NOUVEAU_BO_RDWR, dec->client);
    if (ret) {
       debug_printf("Mapping cmd bo: %s\n", strerror(-ret));
       return ret;
    }
-   ret = nouveau_bo_map(dec->data_bo, NOUVEAU_BO_RDWR);
+   ret = nouveau_bo_map(dec->data_bo, NOUVEAU_BO_RDWR, dec->client);
    if (ret) {
-      nouveau_bo_unmap(dec->cmd_bo);
       debug_printf("Mapping data bo: %s\n", strerror(-ret));
       return ret;
    }
@@ -58,39 +54,45 @@ nouveau_vpe_init(struct nouveau_decoder *dec) {
 
 static void
 nouveau_vpe_synch(struct nouveau_decoder *dec) {
-   struct nouveau_channel *chan = dec->screen->channel;
+   struct nouveau_pushbuf *push = dec->push;
 #if 0
    if (dec->fence_map) {
-      BEGIN_RING(chan, dec->mpeg, NV84_MPEG_QUERY_COUNTER, 1);
-      OUT_RING(chan, ++dec->fence_seq);
-      FIRE_RING(chan);
+      BEGIN_NV04(push, NV84_MPEG(QUERY_COUNTER), 1);
+      PUSH_DATA (push, ++dec->fence_seq);
+      PUSH_KICK (push);
       while (dec->fence_map[0] != dec->fence_seq)
          usleep(1000);
    } else
 #endif
-      FIRE_RING(chan);
+      PUSH_KICK(push);
 }
 
 static void
 nouveau_vpe_fini(struct nouveau_decoder *dec) {
-   struct nouveau_channel *chan = dec->screen->channel;
+   struct nouveau_pushbuf *push = dec->push;
    if (!dec->cmds)
       return;
 
-   nouveau_bo_unmap(dec->data_bo);
-   nouveau_bo_unmap(dec->cmd_bo);
+   nouveau_pushbuf_space(push, 8, 2, 0);
+   nouveau_bufctx_reset(dec->bufctx, NV31_VIDEO_BIND_CMD);
 
-   MARK_RING(chan, 8, 2);
-   BEGIN_RING(chan, dec->mpeg, NV31_MPEG_CMD_OFFSET, 2);
-   OUT_RELOCl(chan, dec->cmd_bo, 0, NOUVEAU_BO_RD|NOUVEAU_BO_GART);
-   OUT_RING(chan, dec->ofs * 4);
+#define BCTX_ARGS dec->bufctx, NV31_VIDEO_BIND_CMD, NOUVEAU_BO_RD
 
-   BEGIN_RING(chan, dec->mpeg, NV31_MPEG_DATA_OFFSET, 2);
-   OUT_RELOCl(chan, dec->data_bo, 0, NOUVEAU_BO_RD|NOUVEAU_BO_GART);
-   OUT_RING(chan, dec->data_pos * 4);
+   BEGIN_NV04(push, NV31_MPEG(CMD_OFFSET), 2);
+   PUSH_MTHDl(push, NV31_MPEG(CMD_OFFSET), dec->cmd_bo, 0, BCTX_ARGS);
+   PUSH_DATA (push, dec->ofs * 4);
 
-   BEGIN_RING(chan, dec->mpeg, NV31_MPEG_EXEC, 1);
-   OUT_RING(chan, 1);
+   BEGIN_NV04(push, NV31_MPEG(DATA_OFFSET), 2);
+   PUSH_MTHDl(push, NV31_MPEG(DATA_OFFSET), dec->data_bo, 0, BCTX_ARGS);
+   PUSH_DATA (push, dec->data_pos * 4);
+
+#undef BCTX_ARGS
+
+   if (unlikely(nouveau_pushbuf_validate(dec->push)))
+      return;
+
+   BEGIN_NV04(push, NV31_MPEG(EXEC), 1);
+   PUSH_DATA (push, 1);
 
    nouveau_vpe_synch(dec);
    dec->ofs = dec->data_pos = dec->num_surfaces = 0;
@@ -384,9 +386,10 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
                               struct pipe_video_buffer *buffer)
 {
    struct nouveau_video_buffer *buf = (struct nouveau_video_buffer *)buffer;
-   struct nouveau_channel *chan = dec->screen->channel;
-   struct nouveau_bo *bo_y = ((struct nv04_resource *)buf->resources[0])->bo;
-   struct nouveau_bo *bo_c = ((struct nv04_resource *)buf->resources[1])->bo;
+   struct nouveau_pushbuf *push = dec->push;
+   struct nouveau_bo *bo_y = nv04_resource(buf->resources[0])->bo;
+   struct nouveau_bo *bo_c = nv04_resource(buf->resources[1])->bo;
+
    unsigned i;
 
    if (!buf)
@@ -399,10 +402,14 @@ nouveau_decoder_surface_index(struct nouveau_decoder *dec,
    dec->surfaces[i] = buf;
    dec->num_surfaces++;
 
-   MARK_RING(chan, 3, 2);
-   BEGIN_RING(chan, dec->mpeg, NV31_MPEG_IMAGE_Y_OFFSET(i), 2);
-   OUT_RELOCl(chan, bo_y, 0, NOUVEAU_BO_RDWR);
-   OUT_RELOCl(chan, bo_c, 0, NOUVEAU_BO_RDWR);
+   nouveau_bufctx_reset(dec->bufctx, NV31_VIDEO_BIND_IMG(i));
+
+#define BCTX_ARGS dec->bufctx, NV31_VIDEO_BIND_IMG(i), NOUVEAU_BO_RDWR
+   BEGIN_NV04(push, NV31_MPEG(IMAGE_Y_OFFSET(i)), 2);
+   PUSH_MTHDl(push, NV31_MPEG(IMAGE_Y_OFFSET(i)), bo_y, 0, BCTX_ARGS);
+   PUSH_MTHDl(push, NV31_MPEG(IMAGE_C_OFFSET(i)), bo_c, 0, BCTX_ARGS);
+#undef BCTX_ARGS
+
    return i;
 }
 
@@ -475,18 +482,24 @@ nouveau_decoder_destroy(struct pipe_video_decoder *decoder)
 {
    struct nouveau_decoder *dec = (struct nouveau_decoder*)decoder;
 
-   if (dec->cmds) {
-      nouveau_bo_unmap(dec->data_bo);
-      nouveau_bo_unmap(dec->cmd_bo);
-   }
-
    if (dec->data_bo)
       nouveau_bo_ref(NULL, &dec->data_bo);
    if (dec->cmd_bo)
       nouveau_bo_ref(NULL, &dec->cmd_bo);
    if (dec->fence_bo)
       nouveau_bo_ref(NULL, &dec->fence_bo);
-   nouveau_grobj_free(&dec->mpeg);
+
+   nouveau_object_del(&dec->mpeg);
+
+   if (dec->bufctx)
+      nouveau_bufctx_del(&dec->bufctx);
+   if (dec->push)
+      nouveau_pushbuf_del(&dec->push);
+   if (dec->client)
+      nouveau_client_del(&dec->client);
+   if (dec->chan)
+      nouveau_object_del(&dec->chan);
+
    FREE(dec);
 }
 
@@ -499,9 +512,10 @@ nouveau_create_decoder(struct pipe_context *context,
                        unsigned width, unsigned height,
                        unsigned max_references, bool expect_chunked_decode)
 {
-   struct nouveau_channel *chan = screen->channel;
-   struct nouveau_grobj *mpeg = NULL;
+   struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
+   struct nouveau_object *mpeg = NULL;
    struct nouveau_decoder *dec;
+   struct nouveau_pushbuf *push;
    int ret;
    bool is8274 = screen->device->chipset > 0x80;
 
@@ -515,23 +529,40 @@ nouveau_create_decoder(struct pipe_context *context,
    if (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0)
       goto vl;
 
+   dec = CALLOC_STRUCT(nouveau_decoder);
+   if (!dec)
+      return NULL;
+
+   ret = nouveau_object_new(&screen->device->object, 0,
+                            NOUVEAU_FIFO_CHANNEL_CLASS,
+                            &nv04_data, sizeof(nv04_data), &dec->chan);
+   if (ret)
+      goto fail;
+   ret = nouveau_client_new(screen->device, &dec->client);
+   if (ret)
+      goto fail;
+   ret = nouveau_pushbuf_new(dec->client, dec->chan, 2, 4096, 1, &dec->push);
+   if (ret)
+      goto fail;
+   ret = nouveau_bufctx_new(dec->client, NV31_VIDEO_BIND_COUNT, &dec->bufctx);
+   if (ret)
+      goto fail;
+   push = dec->push;
+
    width = align(width, 64);
    height = align(height, 64);
 
    if (is8274)
-       ret = nouveau_grobj_alloc(chan, 0xbeef8274, 0x8274, &mpeg);
+      ret = nouveau_object_new(dec->chan, 0xbeef8274, NV84_MPEG_CLASS, NULL, 0,
+                               &mpeg);
    else
-       ret = nouveau_grobj_alloc(chan, 0xbeef8274, 0x3174, &mpeg);
+      ret = nouveau_object_new(dec->chan, 0xbeef3174, NV31_MPEG_CLASS, NULL, 0,
+                               &mpeg);
    if (ret < 0) {
       debug_printf("Creation failed: %s (%i)\n", strerror(-ret), ret);
       return NULL;
    }
 
-   dec = CALLOC_STRUCT(nouveau_decoder);
-   if (!dec) {
-      nouveau_grobj_free(&mpeg);
-      goto fail;
-   }
    dec->mpeg = mpeg;
    dec->base.context = context;
    dec->base.profile = profile;
@@ -543,61 +574,67 @@ nouveau_create_decoder(struct pipe_context *context,
    dec->base.destroy = nouveau_decoder_destroy;
    dec->base.begin_frame = nouveau_decoder_begin_frame;
    dec->base.decode_macroblock = nouveau_decoder_decode_macroblock;
-   dec->base.begin_frame = nouveau_decoder_end_frame;
+   dec->base.end_frame = nouveau_decoder_end_frame;
    dec->base.flush = nouveau_decoder_flush;
    dec->screen = screen;
 
-   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART, 0, 1024 * 1024, &dec->cmd_bo);
+   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+                        0, 1024 * 1024, NULL, &dec->cmd_bo);
    if (ret)
       goto fail;
 
-   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART, 0, width * height * 6, &dec->data_bo);
+   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+                        0, width * height * 6, NULL, &dec->data_bo);
    if (ret)
       goto fail;
 
-   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART|NOUVEAU_BO_MAP, 0, 4096,
-                        &dec->fence_bo);
+   /* we don't need the fence, the kernel sync's for us */
+#if 0
+   ret = nouveau_bo_new(dec->screen->device, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+                        0, 4096, NULL, &dec->fence_bo);
    if (ret)
       goto fail;
-   nouveau_bo_map(dec->fence_bo, NOUVEAU_BO_RDWR);
+   nouveau_bo_map(dec->fence_bo, NOUVEAU_BO_RDWR, NULL);
    dec->fence_map = dec->fence_bo->map;
-   nouveau_bo_unmap(dec->fence_bo);
    dec->fence_map[0] = 0;
+#endif
 
-   if (is8274)
-      MARK_RING(chan, 25, 3);
-   else
-      MARK_RING(chan, 20, 2);
+   nouveau_pushbuf_bufctx(dec->push, dec->bufctx);
+   nouveau_pushbuf_space(push, 32, 4, 0);
 
-   BEGIN_RING(chan, mpeg, NV31_MPEG_DMA_CMD, 1);
-   OUT_RING(chan, chan->vram->handle);
+   BEGIN_NV04(push, SUBC_MPEG(NV01_SUBCHAN_OBJECT), 1);
+   PUSH_DATA (push, dec->mpeg->handle);
 
-   BEGIN_RING(chan, mpeg, NV31_MPEG_DMA_DATA, 1);
-   OUT_RING(chan, chan->vram->handle);
+   BEGIN_NV04(push, NV31_MPEG(DMA_CMD), 1);
+   PUSH_DATA (push, nv04_data.gart);
 
-   BEGIN_RING(chan, mpeg, NV31_MPEG_DMA_IMAGE, 1);
-   OUT_RING(chan, chan->vram->handle);
+   BEGIN_NV04(push, NV31_MPEG(DMA_DATA), 1);
+   PUSH_DATA (push, nv04_data.gart);
 
-   BEGIN_RING(chan, mpeg, NV31_MPEG_PITCH, 2);
-   OUT_RING(chan, width | NV31_MPEG_PITCH_UNK);
-   OUT_RING(chan, (height << NV31_MPEG_SIZE_H__SHIFT) | width);
+   BEGIN_NV04(push, NV31_MPEG(DMA_IMAGE), 1);
+   PUSH_DATA (push, nv04_data.vram);
 
-   BEGIN_RING(chan, mpeg, NV31_MPEG_FORMAT, 2);
-   OUT_RING(chan, 0);
+   BEGIN_NV04(push, NV31_MPEG(PITCH), 2);
+   PUSH_DATA (push, width | NV31_MPEG_PITCH_UNK);
+   PUSH_DATA (push, (height << NV31_MPEG_SIZE_H__SHIFT) | width);
+
+   BEGIN_NV04(push, NV31_MPEG(FORMAT), 2);
+   PUSH_DATA (push, 0);
    switch (entrypoint) {
-      case PIPE_VIDEO_ENTRYPOINT_BITSTREAM: OUT_RING(chan, 0x100); break;
-      case PIPE_VIDEO_ENTRYPOINT_IDCT: OUT_RING(chan, 1); break;
-      case PIPE_VIDEO_ENTRYPOINT_MC: OUT_RING(chan, 0); break;
+      case PIPE_VIDEO_ENTRYPOINT_BITSTREAM: PUSH_DATA (push, 0x100); break;
+      case PIPE_VIDEO_ENTRYPOINT_IDCT: PUSH_DATA (push, 1); break;
+      case PIPE_VIDEO_ENTRYPOINT_MC: PUSH_DATA (push, 0); break;
       default: assert(0);
    }
 
    if (is8274) {
-      BEGIN_RING(chan, mpeg, NV84_MPEG_DMA_QUERY, 1);
-      OUT_RING(chan, chan->vram->handle);
-
-      BEGIN_RING(chan, mpeg, NV84_MPEG_QUERY_OFFSET, 2);
-      OUT_RELOCl(chan, dec->fence_bo, 0, NOUVEAU_BO_WR|NOUVEAU_BO_GART);
-      OUT_RING(chan, dec->fence_seq);
+      BEGIN_NV04(push, NV84_MPEG(DMA_QUERY), 1);
+      PUSH_DATA (push, nv04_data.vram);
+#if 0
+      BEGIN_NV04(push, NV84_MPEG(QUERY_OFFSET), 2);
+      PUSH_DATA (push, dec->fence_bo->offset);
+      PUSH_DATA (push, dec->fence_seq);
+#endif
    }
 
    ret = nouveau_vpe_init(dec);

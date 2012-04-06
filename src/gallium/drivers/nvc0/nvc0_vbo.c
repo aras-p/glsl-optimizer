@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#define NVC0_PUSH_EXPLICIT_SPACE_CHECKING
+
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
@@ -128,7 +130,7 @@ nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
                   struct pipe_vertex_element *ve, unsigned attr)
 {
    const void *data;
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nv04_resource *res = nv04_resource(vb->buffer);
    float v[4];
    int i;
@@ -139,10 +141,11 @@ nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
 
    util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
 
-   BEGIN_RING(chan, RING_3D(VTX_ATTR_DEFINE), nc + 1);
-   OUT_RING  (chan, VTX_ATTR(attr, nc, FLOAT, 32));
+   PUSH_SPACE(push, 6);
+   BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), nc + 1);
+   PUSH_DATA (push, VTX_ATTR(attr, nc, FLOAT, 32));
    for (i = 0; i < nc; ++i)
-      OUT_RINGf(chan, v[i]);
+      PUSH_DATAf(push, v[i]);
 }
 
 static INLINE void
@@ -171,7 +174,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 
    nvc0->vbo_fifo = nvc0->vbo_user = 0;
 
-   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_VERTEX);
+   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       vb = &nvc0->vtxbuf[i];
@@ -189,24 +192,30 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
                nvc0->vbo_user |= 1 << i;
                assert(vb->stride > vb->buffer_offset);
                nvc0_vbuf_range(nvc0, i, &base, &size);
-               nouveau_user_buffer_upload(buf, base, size);
+               nouveau_user_buffer_upload(&nvc0->base, buf, base, size);
             } else {
                nouveau_buffer_migrate(&nvc0->base, buf, NOUVEAU_BO_GART);
             }
             nvc0->base.vbo_dirty = TRUE;
          }
       }
-      nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
+      BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
    }
 }
 
 static void
 nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    uint32_t base, offset, size;
    int i;
    uint32_t written = 0;
+
+   /* TODO: use separate bufctx bin for user buffers
+    */
+   nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
+
+   PUSH_SPACE(push, nvc0->vertex->num_elements * 8);
 
    for (i = 0; i < nvc0->vertex->num_elements; ++i) {
       struct pipe_vertex_element *ve = &nvc0->vertex->element[i].pipe;
@@ -214,8 +223,10 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[b];
       struct nv04_resource *buf = nv04_resource(vb->buffer);
 
-      if (!(nvc0->vbo_user & (1 << b)))
+      if (!(nvc0->vbo_user & (1 << b))) {
+         BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
          continue;
+      }
 
       if (!vb->stride) {
          nvc0_emit_vtxattr(nvc0, vb, ve, i);
@@ -225,17 +236,18 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
-         nouveau_user_buffer_upload(buf, base, size);
+         nouveau_user_buffer_upload(&nvc0->base, buf, base, size);
       }
       offset = vb->buffer_offset + ve->src_offset;
 
-      MARK_RING (chan, 6, 4);
-      BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
-      OUT_RING  (chan, i);
-      OUT_RESRCh(chan, buf, base + size - 1, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, buf, base + size - 1, NOUVEAU_BO_RD);
-      OUT_RESRCh(chan, buf, offset, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, buf, offset, NOUVEAU_BO_RD);
+      BEGIN_1IC0(push, NVC0_3D(VERTEX_ARRAY_SELECT), 5);
+      PUSH_DATA (push, i);
+      PUSH_DATAh(push, buf->address + base + size - 1);
+      PUSH_DATA (push, buf->address + base + size - 1);
+      PUSH_DATAh(push, buf->address + offset);
+      PUSH_DATA (push, buf->address + offset);
+
+      BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
    }
    nvc0->base.vbo_dirty = TRUE;
 }
@@ -256,7 +268,7 @@ nvc0_release_user_vbufs(struct nvc0_context *nvc0)
 void
 nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_vertex_stateobj *vertex = nvc0->vertex;
    struct pipe_vertex_buffer *vb;
    struct nvc0_vertex_element *ve;
@@ -270,19 +282,21 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       nvc0_prevalidate_vbufs(nvc0);
    }
 
-   BEGIN_RING(chan, RING_3D(VERTEX_ATTRIB_FORMAT(0)), vertex->num_elements);
+   PUSH_SPACE(push, vertex->num_elements + 1);
+   BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), vertex->num_elements);
    for (i = 0; i < vertex->num_elements; ++i) {
       ve = &vertex->element[i];
       vb = &nvc0->vtxbuf[ve->pipe.vertex_buffer_index];
 
       if (likely(vb->stride) || nvc0->vbo_fifo) {
-         OUT_RING(chan, ve->state);
+         PUSH_DATA(push, ve->state);
       } else {
-         OUT_RING(chan, ve->state | NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST);
+         PUSH_DATA(push, ve->state | NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST);
          nvc0->vbo_fifo &= ~(1 << i);
       }
    }
 
+   PUSH_SPACE(push, vertex->num_elements * 16);
    for (i = 0; i < vertex->num_elements; ++i) {
       struct nv04_resource *res;
       unsigned size, offset;
@@ -292,13 +306,13 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 
       if (unlikely(ve->pipe.instance_divisor)) {
          if (!(nvc0->state.instance_elts & (1 << i))) {
-            IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
+            IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
          }
-         BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
-         OUT_RING  (chan, ve->pipe.instance_divisor);
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
+         PUSH_DATA (push, ve->pipe.instance_divisor);
       } else
       if (unlikely(nvc0->state.instance_elts & (1 << i))) {
-         IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
+         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
       }
 
       res = nv04_resource(vb->buffer);
@@ -306,35 +320,56 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       if (nvc0->vbo_fifo || unlikely(vb->stride == 0)) {
          if (!nvc0->vbo_fifo)
             nvc0_emit_vtxattr(nvc0, vb, &ve->pipe, i);
-         BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FETCH(i)), 1);
-         OUT_RING  (chan, 0);
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
+         PUSH_DATA (push, 0);
          continue;
       }
 
       size = vb->buffer->width0;
       offset = ve->pipe.src_offset + vb->buffer_offset;
 
-      MARK_RING (chan, 8, 4);
-      BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FETCH(i)), 1);
-      OUT_RING  (chan, (1 << 12) | vb->stride);
-      BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
-      OUT_RING  (chan, i);
-      OUT_RESRCh(chan, res, size - 1, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, res, size - 1, NOUVEAU_BO_RD);
-      OUT_RESRCh(chan, res, offset, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, res, offset, NOUVEAU_BO_RD);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
+      PUSH_DATA (push, (1 << 12) | vb->stride);
+      BEGIN_1IC0(push, NVC0_3D(VERTEX_ARRAY_SELECT), 5);
+      PUSH_DATA (push, i);
+      PUSH_DATAh(push, res->address + size - 1);
+      PUSH_DATA (push, res->address + size - 1);
+      PUSH_DATAh(push, res->address + offset);
+      PUSH_DATA (push, res->address + offset);
    }
    for (; i < nvc0->state.num_vtxelts; ++i) {
-      BEGIN_RING(chan, RING_3D(VERTEX_ATTRIB_FORMAT(i)), 1);
-      OUT_RING  (chan, NVC0_3D_VERTEX_ATTRIB_INACTIVE);
+      PUSH_SPACE(push, 5);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(i)), 1);
+      PUSH_DATA (push, NVC0_3D_VERTEX_ATTRIB_INACTIVE);
       if (unlikely(nvc0->state.instance_elts & (1 << i)))
-         IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
-      BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FETCH(i)), 1);
-      OUT_RING  (chan, 0);
+         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 1);
+      PUSH_DATA (push, 0);
    }
 
    nvc0->state.num_vtxelts = vertex->num_elements;
    nvc0->state.instance_elts = vertex->instance_elts;
+}
+
+void
+nvc0_idxbuf_validate(struct nvc0_context *nvc0)
+{
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   struct nv04_resource *buf = nv04_resource(nvc0->idxbuf.buffer);
+
+   assert(buf);
+   if (!nouveau_resource_mapped_by_gpu(&buf->base))
+      return;
+
+   PUSH_SPACE(push, 6);
+   BEGIN_NVC0(push, NVC0_3D(INDEX_ARRAY_START_HIGH), 5);
+   PUSH_DATAh(push, buf->address + nvc0->idxbuf.offset);
+   PUSH_DATA (push, buf->address + nvc0->idxbuf.offset);
+   PUSH_DATAh(push, buf->address + buf->base.width0 - 1);
+   PUSH_DATA (push, buf->address + buf->base.width0 - 1);
+   PUSH_DATA (push, nvc0->idxbuf.index_size >> 1);
+
+   BCTX_REFN(nvc0->bufctx_3d, IDX, buf, RD);
 }
 
 #define NVC0_PRIM_GL_CASE(n) \
@@ -367,13 +402,11 @@ nvc0_prim_gl(unsigned prim)
 }
 
 static void
-nvc0_draw_vbo_flush_notify(struct nouveau_channel *chan)
+nvc0_draw_vbo_kick_notify(struct nouveau_pushbuf *push)
 {
-   struct nvc0_screen *screen = chan->user_private;
+   struct nvc0_screen *screen = push->user_priv;
 
    nouveau_fence_update(&screen->base, TRUE);
-
-   nvc0_bufctx_emit_relocs(screen->cur_ctx);
 }
 
 static void
@@ -381,47 +414,51 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
                  unsigned mode, unsigned start, unsigned count,
                  unsigned instance_count)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    unsigned prim;
 
    if (nvc0->state.index_bias) {
-      IMMED_RING(chan, RING_3D(VB_ELEMENT_BASE), 0);
+      PUSH_SPACE(push, 1);
+      IMMED_NVC0(push, NVC0_3D(VB_ELEMENT_BASE), 0);
       nvc0->state.index_bias = 0;
    }
 
    prim = nvc0_prim_gl(mode);
 
    while (instance_count--) {
-      BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-      OUT_RING  (chan, prim);
-      BEGIN_RING(chan, RING_3D(VERTEX_BUFFER_FIRST), 2);
-      OUT_RING  (chan, start);
-      OUT_RING  (chan, count);
-      IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
+      PUSH_SPACE(push, 6);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL), 1);
+      PUSH_DATA (push, prim);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_BUFFER_FIRST), 2);
+      PUSH_DATA (push, start);
+      PUSH_DATA (push, count);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
 
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 }
 
 static void
-nvc0_draw_elements_inline_u08(struct nouveau_channel *chan, uint8_t *map,
+nvc0_draw_elements_inline_u08(struct nouveau_pushbuf *push, uint8_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
 
    if (count & 3) {
       unsigned i;
-      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U32), count & 3);
+      PUSH_SPACE(push, 4);
+      BEGIN_NIC0(push, NVC0_3D(VB_ELEMENT_U32), count & 3);
       for (i = 0; i < (count & 3); ++i)
-         OUT_RING(chan, *map++);
+         PUSH_DATA(push, *map++);
       count &= ~3;
    }
    while (count) {
       unsigned i, nr = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN * 4) / 4;
 
-      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U8), nr);
+      PUSH_SPACE(push, nr + 1);
+      BEGIN_NIC0(push, NVC0_3D(VB_ELEMENT_U8), nr);
       for (i = 0; i < nr; ++i) {
-         OUT_RING(chan,
+         PUSH_DATA(push,
                   (map[3] << 24) | (map[2] << 16) | (map[1] << 8) | map[0]);
          map += 4;
       }
@@ -430,22 +467,24 @@ nvc0_draw_elements_inline_u08(struct nouveau_channel *chan, uint8_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u16(struct nouveau_channel *chan, uint16_t *map,
+nvc0_draw_elements_inline_u16(struct nouveau_pushbuf *push, uint16_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
 
    if (count & 1) {
       count &= ~1;
-      BEGIN_RING(chan, RING_3D(VB_ELEMENT_U32), 1);
-      OUT_RING  (chan, *map++);
+      PUSH_SPACE(push, 2);
+      BEGIN_NVC0(push, NVC0_3D(VB_ELEMENT_U32), 1);
+      PUSH_DATA (push, *map++);
    }
    while (count) {
       unsigned i, nr = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN * 2) / 2;
 
-      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U16), nr);
+      PUSH_SPACE(push, nr + 1);
+      BEGIN_NIC0(push, NVC0_3D(VB_ELEMENT_U16), nr);
       for (i = 0; i < nr; ++i) {
-         OUT_RING(chan, (map[1] << 16) | map[0]);
+         PUSH_DATA(push, (map[1] << 16) | map[0]);
          map += 2;
       }
       count -= nr * 2;
@@ -453,7 +492,7 @@ nvc0_draw_elements_inline_u16(struct nouveau_channel *chan, uint16_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u32(struct nouveau_channel *chan, uint32_t *map,
+nvc0_draw_elements_inline_u32(struct nouveau_pushbuf *push, uint32_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -461,8 +500,9 @@ nvc0_draw_elements_inline_u32(struct nouveau_channel *chan, uint32_t *map,
    while (count) {
       const unsigned nr = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN);
 
-      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U32), nr);
-      OUT_RINGp    (chan, map, nr);
+      PUSH_SPACE(push, nr + 1);
+      BEGIN_NIC0(push, NVC0_3D(VB_ELEMENT_U32), nr);
+      PUSH_DATAp(push, map, nr);
 
       map += nr;
       count -= nr;
@@ -470,22 +510,24 @@ nvc0_draw_elements_inline_u32(struct nouveau_channel *chan, uint32_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u32_short(struct nouveau_channel *chan, uint32_t *map,
+nvc0_draw_elements_inline_u32_short(struct nouveau_pushbuf *push, uint32_t *map,
                                     unsigned start, unsigned count)
 {
    map += start;
 
    if (count & 1) {
       count--;
-      BEGIN_RING(chan, RING_3D(VB_ELEMENT_U32), 1);
-      OUT_RING  (chan, *map++);
+      PUSH_SPACE(push, 1);
+      BEGIN_NVC0(push, NVC0_3D(VB_ELEMENT_U32), 1);
+      PUSH_DATA (push, *map++);
    }
    while (count) {
       unsigned i, nr = MIN2(count, NV04_PFIFO_MAX_PACKET_LEN * 2) / 2;
 
-      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U16), nr);
+      PUSH_SPACE(push, nr + 1);
+      BEGIN_NIC0(push, NVC0_3D(VB_ELEMENT_U16), nr);
       for (i = 0; i < nr; ++i) {
-         OUT_RING(chan, (map[1] << 16) | map[0]);
+         PUSH_DATA(push, (map[1] << 16) | map[0]);
          map += 2;
       }
       count -= nr * 2;
@@ -497,7 +539,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
                    unsigned mode, unsigned start, unsigned count,
                    unsigned instance_count, int32_t index_bias)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    void *data;
    unsigned prim;
    const unsigned index_size = nvc0->idxbuf.index_size;
@@ -505,34 +547,27 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
    prim = nvc0_prim_gl(mode);
 
    if (index_bias != nvc0->state.index_bias) {
-      BEGIN_RING(chan, RING_3D(VB_ELEMENT_BASE), 1);
-      OUT_RING  (chan, index_bias);
+      PUSH_SPACE(push, 2);
+      BEGIN_NVC0(push, NVC0_3D(VB_ELEMENT_BASE), 1);
+      PUSH_DATA (push, index_bias);
       nvc0->state.index_bias = index_bias;
    }
 
    if (nouveau_resource_mapped_by_gpu(nvc0->idxbuf.buffer)) {
-      struct nv04_resource *res = nv04_resource(nvc0->idxbuf.buffer);
-      unsigned offset = nvc0->idxbuf.offset;
-      unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
-
-      while (instance_count--) {
-         MARK_RING (chan, 11, 4);
-         BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-         OUT_RING  (chan, mode);
-         BEGIN_RING(chan, RING_3D(INDEX_ARRAY_START_HIGH), 7);
-         OUT_RESRCh(chan, res, offset, NOUVEAU_BO_RD);
-         OUT_RESRCl(chan, res, offset, NOUVEAU_BO_RD);
-         OUT_RESRCh(chan, res, limit, NOUVEAU_BO_RD);
-         OUT_RESRCl(chan, res, limit, NOUVEAU_BO_RD);
-         OUT_RING  (chan, index_size >> 1);
-         OUT_RING  (chan, start);
-         OUT_RING  (chan, count);
-         IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
-
-         nvc0_resource_fence(res, NOUVEAU_BO_RD);
-
-         mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
-      }
+      PUSH_SPACE(push, 1);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL), prim);
+      do {
+         PUSH_SPACE(push, 7);
+         BEGIN_NVC0(push, NVC0_3D(INDEX_BATCH_FIRST), 2);
+         PUSH_DATA (push, start);
+         PUSH_DATA (push, count);
+         if (--instance_count) {
+            BEGIN_NVC0(push, NVC0_3D(VERTEX_END_GL), 2);
+            PUSH_DATA (push, 0);
+            PUSH_DATA (push, prim | NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT);
+         }
+      } while (instance_count);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
    } else {
       data = nouveau_resource_map_offset(&nvc0->base,
                                          nv04_resource(nvc0->idxbuf.buffer),
@@ -541,26 +576,28 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          return;
 
       while (instance_count--) {
-         BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-         OUT_RING  (chan, prim);
+         PUSH_SPACE(push, 2);
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL), 1);
+         PUSH_DATA (push, prim);
          switch (index_size) {
          case 1:
-            nvc0_draw_elements_inline_u08(chan, data, start, count);
+            nvc0_draw_elements_inline_u08(push, data, start, count);
             break;
          case 2:
-            nvc0_draw_elements_inline_u16(chan, data, start, count);
+            nvc0_draw_elements_inline_u16(push, data, start, count);
             break;
          case 4:
             if (shorten)
-               nvc0_draw_elements_inline_u32_short(chan, data, start, count);
+               nvc0_draw_elements_inline_u32_short(push, data, start, count);
             else
-               nvc0_draw_elements_inline_u32(chan, data, start, count);
+               nvc0_draw_elements_inline_u32(push, data, start, count);
             break;
          default:
             assert(0);
             return;
          }
-         IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
+         PUSH_SPACE(push, 1);
+         IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
 
          prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
@@ -571,7 +608,7 @@ static void
 nvc0_draw_stream_output(struct nvc0_context *nvc0,
                         const struct pipe_draw_info *info)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_so_target *so = nvc0_so_target(info->count_from_stream_output);
    struct nv04_resource *res = nv04_resource(so->pipe.buffer);
    unsigned mode = nvc0_prim_gl(info->mode);
@@ -579,21 +616,23 @@ nvc0_draw_stream_output(struct nvc0_context *nvc0,
 
    if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
       res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
-      IMMED_RING(chan, RING_3D(SERIALIZE), 0);
-      nvc0_query_fifo_wait(chan, so->pq);
-      IMMED_RING(chan, RING_3D(VERTEX_ARRAY_FLUSH), 0);
+      PUSH_SPACE(push, 2);
+      IMMED_NVC0(push, NVC0_3D(SERIALIZE), 0);
+      nvc0_query_fifo_wait(push, so->pq);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);
    }
 
    while (num_instances--) {
-      BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-      OUT_RING  (chan, mode);
-      BEGIN_RING(chan, RING_3D(DRAW_TFB_BASE), 1);
-      OUT_RING  (chan, 0);
-      BEGIN_RING(chan, RING_3D(DRAW_TFB_STRIDE), 1);
-      OUT_RING  (chan, so->stride);
-      BEGIN_RING(chan, RING_3D(DRAW_TFB_BYTES), 1);
-      nvc0_query_pushbuf_submit(chan, so->pq, 0x4);
-      IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
+      PUSH_SPACE(push, 8);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL), 1);
+      PUSH_DATA (push, mode);
+      BEGIN_NVC0(push, NVC0_3D(DRAW_TFB_BASE), 1);
+      PUSH_DATA (push, 0);
+      BEGIN_NVC0(push, NVC0_3D(DRAW_TFB_STRIDE), 1);
+      PUSH_DATA (push, so->stride);
+      BEGIN_NVC0(push, NVC0_3D(DRAW_TFB_BYTES), 1);
+      nvc0_query_pushbuf_submit(push, so->pq, 0x4);
+      IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
 
       mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
@@ -603,7 +642,7 @@ void
 nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
 
    /* For picking only a few vertices from a large user buffer, push is better,
     * if index count is larger and we expect repeated vertices, suggest upload.
@@ -624,24 +663,27 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    /* 8 as minimum to avoid immediate double validation of new buffers */
    nvc0_state_validate(nvc0, ~0, 8);
 
-   chan->flush_notify = nvc0_draw_vbo_flush_notify;
+   push->kick_notify = nvc0_draw_vbo_kick_notify;
 
    if (nvc0->vbo_fifo) {
       nvc0_push_vbo(nvc0, info);
-      chan->flush_notify = nvc0_default_flush_notify;
+      push->kick_notify = nvc0_default_kick_notify;
       return;
    }
+
+   /* space for base instance, flush, and prim restart */
+   PUSH_SPACE(push, 8);
 
    if (nvc0->state.instance_base != info->start_instance) {
       nvc0->state.instance_base = info->start_instance;
       /* NOTE: this does not affect the shader input, should it ? */
-      BEGIN_RING(chan, RING_3D(VB_INSTANCE_BASE), 1);
-      OUT_RING  (chan, info->start_instance);
+      BEGIN_NVC0(push, NVC0_3D(VB_INSTANCE_BASE), 1);
+      PUSH_DATA (push, info->start_instance);
    }
 
    if (nvc0->base.vbo_dirty) {
-      BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FLUSH), 1);
-      OUT_RING  (chan, 0);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 1);
+      PUSH_DATA (push, 0);
       nvc0->base.vbo_dirty = FALSE;
    }
 
@@ -659,20 +701,20 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
       if (info->primitive_restart != nvc0->state.prim_restart) {
          if (info->primitive_restart) {
-            BEGIN_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 2);
-            OUT_RING  (chan, 1);
-            OUT_RING  (chan, info->restart_index);
+            BEGIN_NVC0(push, NVC0_3D(PRIM_RESTART_ENABLE), 2);
+            PUSH_DATA (push, 1);
+            PUSH_DATA (push, info->restart_index);
 
             if (info->restart_index > 65535)
                shorten = FALSE;
          } else {
-            IMMED_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 0);
+            IMMED_NVC0(push, NVC0_3D(PRIM_RESTART_ENABLE), 0);
          }
          nvc0->state.prim_restart = info->primitive_restart;
       } else
       if (info->primitive_restart) {
-         BEGIN_RING(chan, RING_3D(PRIM_RESTART_INDEX), 1);
-         OUT_RING  (chan, info->restart_index);
+         BEGIN_NVC0(push, NVC0_3D(PRIM_RESTART_INDEX), 1);
+         PUSH_DATA (push, info->restart_index);
 
          if (info->restart_index > 65535)
             shorten = FALSE;
@@ -682,7 +724,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                          info->mode, info->start, info->count,
                          info->instance_count, info->index_bias);
    }
-   chan->flush_notify = nvc0_default_flush_notify;
+   push->kick_notify = nvc0_default_kick_notify;
 
    nvc0_release_user_vbufs(nvc0);
 }

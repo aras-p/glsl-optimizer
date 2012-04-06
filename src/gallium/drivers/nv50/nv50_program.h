@@ -87,7 +87,7 @@ struct nv50_program {
    void *fixups;
    unsigned num_fixups;
 
-   struct nouveau_resource *res;
+   struct nouveau_heap *mem;
 };
 
 #define NV50_INTERP_LINEAR   (1 << 0)

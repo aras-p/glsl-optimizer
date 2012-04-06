@@ -23,9 +23,8 @@
 #include "util/u_double_list.h"
 
 #include "nouveau_screen.h"
+#include "nouveau_winsys.h"
 #include "nouveau_fence.h"
-
-#include "nouveau/nouveau_pushbuf.h"
 
 #ifdef PIPE_OS_UNIX
 #include <sched.h>
@@ -197,7 +196,7 @@ nouveau_fence_wait(struct nouveau_fence *fence)
          nouveau_fence_new(screen, &screen->fence.current, FALSE);
    }
    if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED)
-      FIRE_RING(screen->channel);
+      nouveau_pushbuf_kick(screen->pushbuf, screen->pushbuf->channel);
 
    do {
       nouveau_fence_update(screen, FALSE);

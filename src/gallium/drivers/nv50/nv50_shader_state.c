@@ -31,7 +31,7 @@
 void
 nv50_constbufs_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    unsigned s;
 
    for (s = 0; s < 3; ++s) {
@@ -58,8 +58,8 @@ nv50_constbufs_validate(struct nv50_context *nv50)
          res = nv04_resource(nv50->constbuf[s][i]);
          if (!res) {
             if (i != 0) {
-               BEGIN_RING(chan, RING_3D(SET_PROGRAM_CB), 1);
-               OUT_RING  (chan, (i << 8) | p | 0);
+               BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
+               PUSH_DATA (push, (i << 8) | p | 0);
             }
             continue;
          }
@@ -78,43 +78,35 @@ nv50_constbufs_validate(struct nv50_context *nv50)
             if (!nouveau_resource_mapped_by_gpu(&res->base)) {
                nouveau_buffer_migrate(&nv50->base, res, NOUVEAU_BO_VRAM);
 
-               BEGIN_RING(chan, RING_3D(CODE_CB_FLUSH), 1);
-               OUT_RING  (chan, 0);
+               BEGIN_NV04(push, NV50_3D(CODE_CB_FLUSH), 1);
+               PUSH_DATA (push, 0);
             }
-            MARK_RING (chan, 6, 2);
-            BEGIN_RING(chan, RING_3D(CB_DEF_ADDRESS_HIGH), 3);
-            OUT_RESRCh(chan, res, 0, NOUVEAU_BO_RD);
-            OUT_RESRCl(chan, res, 0, NOUVEAU_BO_RD);
-            OUT_RING  (chan, (b << 16) | (res->base.width0 & 0xffff));
-            BEGIN_RING(chan, RING_3D(SET_PROGRAM_CB), 1);
-            OUT_RING  (chan, (b << 12) | (i << 8) | p | 1);
+            BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
+            PUSH_DATAh(push, res->address);
+            PUSH_DATA (push, res->address);
+            PUSH_DATA (push, (b << 16) | (res->base.width0 & 0xffff));
+            BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
+            PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
 
             bo = res->bo;
-
-            nv50_bufctx_add_resident(nv50, NV50_BUFCTX_CONSTANT, res,
-                                     res->domain | NOUVEAU_BO_RD);
          }
 
-         if (words) {
-            MARK_RING(chan, 8, 1);
-
-            nouveau_bo_validate(chan, bo, res->domain | NOUVEAU_BO_WR);
-         }
+         if (bo != nv50->screen->uniforms)
+            BCTX_REFN(nv50->bufctx_3d, CB(s, i), res, RD);
 
          while (words) {
-            unsigned nr = AVAIL_RING(chan);
+            unsigned nr;
 
-            if (nr < 16) {
-               FIRE_RING(chan);
-               nouveau_bo_validate(chan, bo, res->domain | NOUVEAU_BO_WR);
-               continue;
-            }
+            if (!PUSH_SPACE(push, 16))
+               break;
+            nr = PUSH_AVAIL(push);
+            assert(nr >= 16);
             nr = MIN2(MIN2(nr - 3, words), NV04_PFIFO_MAX_PACKET_LEN);
 
-            BEGIN_RING(chan, RING_3D(CB_ADDR), 1);
-            OUT_RING  (chan, (start << 8) | b);
-            BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), nr);
-            OUT_RINGp (chan, &res->data[start * 4], nr);
+            BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+            PUSH_DATA (push, (start << 8) | b);
+            BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
+            PUSH_DATAp(push, &res->data[start * 4], nr);
 
             start += nr;
             words -= nr;
@@ -126,7 +118,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
 static boolean
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
 {
-   struct nouveau_resource *heap;
+   struct nouveau_heap *heap;
    int ret;
    unsigned size;
 
@@ -135,7 +127,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
       if (!prog->translated)
          return FALSE;
    } else
-   if (prog->res)
+   if (prog->mem)
       return TRUE;
 
    if (prog->type == PIPE_SHADER_FRAGMENT) heap = nv50->screen->fp_code_heap;
@@ -146,12 +138,12 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
 
    size = align(prog->code_size, 0x100);
 
-   ret = nouveau_resource_alloc(heap, size, prog, &prog->res);
+   ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
    if (ret) {
       NOUVEAU_ERR("out of code space for shader type %i\n", prog->type);
       return FALSE;
    }
-   prog->code_base = prog->res->start;
+   prog->code_base = prog->mem->start;
 
    nv50_relocate_program(prog, prog->code_base, 0);
 
@@ -159,80 +151,99 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
                        (prog->type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
                        NOUVEAU_BO_VRAM, prog->code_size, prog->code);
 
-   BEGIN_RING(nv50->screen->base.channel, RING_3D(CODE_CB_FLUSH), 1);
-   OUT_RING  (nv50->screen->base.channel, 0);
+   BEGIN_NV04(nv50->base.pushbuf, NV50_3D(CODE_CB_FLUSH), 1);
+   PUSH_DATA (nv50->base.pushbuf, 0);
 
    return TRUE;
+}
+
+static INLINE void
+nv50_program_update_context_state(struct nv50_context *nv50,
+                                  struct nv50_program *prog, int stage)
+{
+   const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR;
+
+   if (prog && prog->uses_lmem) {
+      if (!nv50->state.tls_required)
+         BCTX_REFN_bo(nv50->bufctx_3d, TLS, flags, nv50->screen->tls_bo);
+      nv50->state.tls_required |= 1 << stage;
+   } else {
+      if (nv50->state.tls_required == (1 << stage))
+         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TLS);
+      nv50->state.tls_required &= ~(1 << stage);
+   }
 }
 
 void
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *vp = nv50->vertprog;
 
    if (!nv50_program_validate(nv50, vp))
          return;
+   nv50_program_update_context_state(nv50, vp, 0);
 
-   BEGIN_RING(chan, RING_3D(VP_ATTR_EN(0)), 2);
-   OUT_RING  (chan, vp->vp.attrs[0]);
-   OUT_RING  (chan, vp->vp.attrs[1]);
-   BEGIN_RING(chan, RING_3D(VP_REG_ALLOC_RESULT), 1);
-   OUT_RING  (chan, vp->max_out);
-   BEGIN_RING(chan, RING_3D(VP_REG_ALLOC_TEMP), 1);
-   OUT_RING  (chan, vp->max_gpr);
-   BEGIN_RING(chan, RING_3D(VP_START_ID), 1);
-   OUT_RING  (chan, vp->code_base);
+   BEGIN_NV04(push, NV50_3D(VP_ATTR_EN(0)), 2);
+   PUSH_DATA (push, vp->vp.attrs[0]);
+   PUSH_DATA (push, vp->vp.attrs[1]);
+   BEGIN_NV04(push, NV50_3D(VP_REG_ALLOC_RESULT), 1);
+   PUSH_DATA (push, vp->max_out);
+   BEGIN_NV04(push, NV50_3D(VP_REG_ALLOC_TEMP), 1);
+   PUSH_DATA (push, vp->max_gpr);
+   BEGIN_NV04(push, NV50_3D(VP_START_ID), 1);
+   PUSH_DATA (push, vp->code_base);
 }
 
 void
 nv50_fragprog_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *fp = nv50->fragprog;
 
    if (!nv50_program_validate(nv50, fp))
          return;
+   nv50_program_update_context_state(nv50, fp, 1);
 
-   BEGIN_RING(chan, RING_3D(FP_REG_ALLOC_TEMP), 1);
-   OUT_RING  (chan, fp->max_gpr);
-   BEGIN_RING(chan, RING_3D(FP_RESULT_COUNT), 1);
-   OUT_RING  (chan, fp->max_out);
-   BEGIN_RING(chan, RING_3D(FP_CONTROL), 1);
-   OUT_RING  (chan, fp->fp.flags[0]);
-   BEGIN_RING(chan, RING_3D(FP_CTRL_UNK196C), 1);
-   OUT_RING  (chan, fp->fp.flags[1]);
-   BEGIN_RING(chan, RING_3D(FP_START_ID), 1);
-   OUT_RING  (chan, fp->code_base);
+   BEGIN_NV04(push, NV50_3D(FP_REG_ALLOC_TEMP), 1);
+   PUSH_DATA (push, fp->max_gpr);
+   BEGIN_NV04(push, NV50_3D(FP_RESULT_COUNT), 1);
+   PUSH_DATA (push, fp->max_out);
+   BEGIN_NV04(push, NV50_3D(FP_CONTROL), 1);
+   PUSH_DATA (push, fp->fp.flags[0]);
+   BEGIN_NV04(push, NV50_3D(FP_CTRL_UNK196C), 1);
+   PUSH_DATA (push, fp->fp.flags[1]);
+   BEGIN_NV04(push, NV50_3D(FP_START_ID), 1);
+   PUSH_DATA (push, fp->code_base);
 }
 
 void
 nv50_gmtyprog_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *gp = nv50->gmtyprog;
 
-   if (!gp) /* GP_ENABLE is updated in linkage validation */
-      return;
-   if (!nv50_program_validate(nv50, gp))
-      return;
+   if (gp) {
+      BEGIN_NV04(push, NV50_3D(GP_REG_ALLOC_TEMP), 1);
+      PUSH_DATA (push, gp->max_gpr);
+      BEGIN_NV04(push, NV50_3D(GP_REG_ALLOC_RESULT), 1);
+      PUSH_DATA (push, gp->max_out);
+      BEGIN_NV04(push, NV50_3D(GP_OUTPUT_PRIMITIVE_TYPE), 1);
+      PUSH_DATA (push, gp->gp.prim_type);
+      BEGIN_NV04(push, NV50_3D(GP_VERTEX_OUTPUT_COUNT), 1);
+      PUSH_DATA (push, gp->gp.vert_count);
+      BEGIN_NV04(push, NV50_3D(GP_START_ID), 1);
+      PUSH_DATA (push, gp->code_base);
+   }
+   nv50_program_update_context_state(nv50, gp, 2);
 
-   BEGIN_RING(chan, RING_3D(GP_REG_ALLOC_TEMP), 1);
-   OUT_RING  (chan, gp->max_gpr);
-   BEGIN_RING(chan, RING_3D(GP_REG_ALLOC_RESULT), 1);
-   OUT_RING  (chan, gp->max_out);
-   BEGIN_RING(chan, RING_3D(GP_OUTPUT_PRIMITIVE_TYPE), 1);
-   OUT_RING  (chan, gp->gp.prim_type);
-   BEGIN_RING(chan, RING_3D(GP_VERTEX_OUTPUT_COUNT), 1);
-   OUT_RING  (chan, gp->gp.vert_count);
-   BEGIN_RING(chan, RING_3D(GP_START_ID), 1);
-   OUT_RING  (chan, gp->code_base);
+   /* GP_ENABLE is updated in linkage validation */
 }
 
 static void
 nv50_sprite_coords_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    uint32_t pntc[8], mode;
    struct nv50_program *fp = nv50->fragprog;
    unsigned i, c;
@@ -240,9 +251,9 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
 
    if (!nv50->rast->pipe.point_quad_rasterization) {
       if (nv50->state.point_sprite) {
-         BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
+         BEGIN_NV04(push, NV50_3D(POINT_COORD_REPLACE_MAP(0)), 8);
          for (i = 0; i < 8; ++i)
-            OUT_RING(chan, 0);
+            PUSH_DATA(push, 0);
 
          nv50->state.point_sprite = FALSE;
       }
@@ -278,43 +289,43 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
    else
       mode = 0x10;
 
-   BEGIN_RING(chan, RING_3D(POINT_SPRITE_CTRL), 1);
-   OUT_RING  (chan, mode);
+   BEGIN_NV04(push, NV50_3D(POINT_SPRITE_CTRL), 1);
+   PUSH_DATA (push, mode);
 
-   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
-   OUT_RINGp (chan, pntc, 8);
+   BEGIN_NV04(push, NV50_3D(POINT_COORD_REPLACE_MAP(0)), 8);
+   PUSH_DATAp(push, pntc, 8);
 }
 
 /* Validate state derived from shaders and the rasterizer cso. */
 void
 nv50_validate_derived_rs(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    uint32_t color, psize;
 
    nv50_sprite_coords_validate(nv50);
 
    if (nv50->dirty & NV50_NEW_FRAGPROG)
       return;
-   psize = nv50->state.semantic_psize & ~NV50_3D_MAP_SEMANTIC_3_PTSZ_EN__MASK;
-   color = nv50->state.semantic_color & ~NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+   psize = nv50->state.semantic_psize & ~NV50_3D_SEMANTIC_PTSZ_PTSZ_EN__MASK;
+   color = nv50->state.semantic_color & ~NV50_3D_SEMANTIC_COLOR_CLMP_EN;
 
    if (nv50->rast->pipe.clamp_vertex_color)
-      color |= NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+      color |= NV50_3D_SEMANTIC_COLOR_CLMP_EN;
 
    if (color != nv50->state.semantic_color) {
       nv50->state.semantic_color = color;
-      BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_0), 1);
-      OUT_RING  (chan, color);
+      BEGIN_NV04(push, NV50_3D(SEMANTIC_COLOR), 1);
+      PUSH_DATA (push, color);
    }
 
    if (nv50->rast->pipe.point_size_per_vertex)
-      psize |= NV50_3D_MAP_SEMANTIC_3_PTSZ_EN__MASK;
+      psize |= NV50_3D_SEMANTIC_PTSZ_PTSZ_EN__MASK;
 
    if (psize != nv50->state.semantic_psize) {
       nv50->state.semantic_psize = psize;
-      BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_3), 1);
-      OUT_RING  (chan, psize);
+      BEGIN_NV04(push, NV50_3D(SEMANTIC_PTSZ), 1);
+      PUSH_DATA (push, psize);
    }
 }
 
@@ -348,7 +359,7 @@ nv50_vec4_map(uint8_t *map, int mid, uint32_t lin[4],
 void
 nv50_fp_linkage_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *vp = nv50->gmtyprog ? nv50->gmtyprog : nv50->vertprog;
    struct nv50_program *fp = nv50->fragprog;
    struct nv50_varying dummy;
@@ -409,48 +420,48 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    }
 
    if (nv50->rast->pipe.clamp_vertex_color)
-      colors |= NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+      colors |= NV50_3D_SEMANTIC_COLOR_CLMP_EN;
 
    n = (m + 3) / 4;
    assert(m <= 64);
 
    if (unlikely(nv50->gmtyprog)) {
-      BEGIN_RING(chan, RING_3D(GP_RESULT_MAP_SIZE), 1);
-      OUT_RING  (chan, m);
-      BEGIN_RING(chan, RING_3D(GP_RESULT_MAP(0)), n);
-      OUT_RINGp (chan, map, n);
+      BEGIN_NV04(push, NV50_3D(GP_RESULT_MAP_SIZE), 1);
+      PUSH_DATA (push, m);
+      BEGIN_NV04(push, NV50_3D(GP_RESULT_MAP(0)), n);
+      PUSH_DATAp(push, map, n);
    } else {
-      BEGIN_RING(chan, RING_3D(VP_GP_BUILTIN_ATTR_EN), 1);
-      OUT_RING  (chan, vp->vp.attrs[2]);
+      BEGIN_NV04(push, NV50_3D(VP_GP_BUILTIN_ATTR_EN), 1);
+      PUSH_DATA (push, vp->vp.attrs[2]);
 
-      BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_4), 1);
-      OUT_RING  (chan, primid);
+      BEGIN_NV04(push, NV50_3D(SEMANTIC_PRIM_ID), 1);
+      PUSH_DATA (push, primid);
 
-      BEGIN_RING(chan, RING_3D(VP_RESULT_MAP_SIZE), 1);
-      OUT_RING  (chan, m);
-      BEGIN_RING(chan, RING_3D(VP_RESULT_MAP(0)), n);
-      OUT_RINGp (chan, map, n);
+      BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP_SIZE), 1);
+      PUSH_DATA (push, m);
+      BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), n);
+      PUSH_DATAp(push, map, n);
    }
 
-   BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_0), 4);
-   OUT_RING  (chan, colors);
-   OUT_RING  (chan, (vp->vp.clpd_nr << 8) | 4);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, psiz);
+   BEGIN_NV04(push, NV50_3D(SEMANTIC_COLOR), 4);
+   PUSH_DATA (push, colors);
+   PUSH_DATA (push, (vp->vp.clpd_nr << 8) | 4);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, psiz);
 
-   BEGIN_RING(chan, RING_3D(FP_INTERPOLANT_CTRL), 1);
-   OUT_RING  (chan, interp);
+   BEGIN_NV04(push, NV50_3D(FP_INTERPOLANT_CTRL), 1);
+   PUSH_DATA (push, interp);
 
    nv50->state.interpolant_ctrl = interp;
 
    nv50->state.semantic_color = colors;
    nv50->state.semantic_psize = psiz;
 
-   BEGIN_RING(chan, RING_3D(NOPERSPECTIVE_BITMAP(0)), 4);
-   OUT_RINGp (chan, lin, 4);
+   BEGIN_NV04(push, NV50_3D(NOPERSPECTIVE_BITMAP(0)), 4);
+   PUSH_DATAp(push, lin, 4);
 
-   BEGIN_RING(chan, RING_3D(GP_ENABLE), 1);
-   OUT_RING  (chan, nv50->gmtyprog ? 1 : 0);
+   BEGIN_NV04(push, NV50_3D(GP_ENABLE), 1);
+   PUSH_DATA (push, nv50->gmtyprog ? 1 : 0);
 }
 
 static int
@@ -486,7 +497,7 @@ nv50_vp_gp_mapping(uint8_t *map, int m,
 void
 nv50_gp_linkage_validate(struct nv50_context *nv50)
 {
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *vp = nv50->vertprog;
    struct nv50_program *gp = nv50->gmtyprog;
    int m = 0;
@@ -501,11 +512,11 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 
    n = (m + 3) / 4;
 
-   BEGIN_RING(chan, RING_3D(VP_GP_BUILTIN_ATTR_EN), 1);
-   OUT_RING  (chan, vp->vp.attrs[2] | gp->vp.attrs[2]);
+   BEGIN_NV04(push, NV50_3D(VP_GP_BUILTIN_ATTR_EN), 1);
+   PUSH_DATA (push, vp->vp.attrs[2] | gp->vp.attrs[2]);
 
-   BEGIN_RING(chan, RING_3D(VP_RESULT_MAP_SIZE), 1);
-   OUT_RING  (chan, m);
-   BEGIN_RING(chan, RING_3D(VP_RESULT_MAP(0)), n);
-   OUT_RINGp (chan, map, n);
+   BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP_SIZE), 1);
+   PUSH_DATA (push, m);
+   BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), n);
+   PUSH_DATAp(push, map, n);
 }

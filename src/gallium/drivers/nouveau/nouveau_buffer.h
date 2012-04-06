@@ -28,6 +28,8 @@ struct nv04_resource {
    struct pipe_resource base;
    const struct u_resource_vtbl *vtbl;
 
+   uint64_t address; /* virtual address (nv50+) */
+
    uint8_t *data;
    struct nouveau_bo *bo;
    uint32_t offset;
@@ -52,33 +54,9 @@ boolean
 nouveau_buffer_migrate(struct nouveau_context *,
                        struct nv04_resource *, unsigned domain);
 
-/* XXX: wait for fence (atm only using this for vertex push) */
-static INLINE void *
-nouveau_resource_map_offset(struct nouveau_context *pipe,
-                            struct nv04_resource *res, uint32_t offset,
-                            uint32_t flags)
-{
-   void *map;
-
-   if ((res->domain == NOUVEAU_BO_VRAM) &&
-       (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING))
-      nouveau_buffer_download(pipe, res, 0, res->base.width0);
-
-   if ((res->domain != NOUVEAU_BO_GART) ||
-       (res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY))
-      return res->data + offset;
-
-   if (res->mm)
-      flags |= NOUVEAU_BO_NOSYNC;
-
-   if (nouveau_bo_map_range(res->bo, res->offset + offset,
-                            res->base.width0, flags))
-      return NULL;
-
-   map = res->bo->map;
-   nouveau_bo_unmap(res->bo);
-   return map;
-}
+void *
+nouveau_resource_map_offset(struct nouveau_context *, struct nv04_resource *,
+                            uint32_t offset, uint32_t flags);
 
 static INLINE void
 nouveau_resource_unmap(struct nv04_resource *res)
@@ -108,7 +86,7 @@ nouveau_user_buffer_create(struct pipe_screen *screen, void *ptr,
                            unsigned bytes, unsigned usage);
 
 boolean
-nouveau_user_buffer_upload(struct nv04_resource *, unsigned base,
-                           unsigned size);
+nouveau_user_buffer_upload(struct nouveau_context *, struct nv04_resource *,
+                           unsigned base, unsigned size);
 
 #endif

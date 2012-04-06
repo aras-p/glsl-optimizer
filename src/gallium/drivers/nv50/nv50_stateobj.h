@@ -6,13 +6,11 @@
 
 #define NV50_SCISSORS_CLIPPING
 
-#define SB_BEGIN_3D(so, m, s)                                                  \
-   (so)->state[(so)->size++] =                                                 \
-      ((s) << 18) | (NV50_SUBCH_3D << 13) | NV50_3D_##m
+#define SB_BEGIN_3D(so, m, s) \
+   (so)->state[(so)->size++] = NV50_FIFO_PKHDR(NV50_3D(m), s)
 
-#define SB_BEGIN_3D_(so, m, s)                                                 \
-   (so)->state[(so)->size++] =                                                 \
-      ((s) << 18) | (NV50_SUBCH_3D << 13) | m
+#define SB_BEGIN_3D_(so, m, s) \
+   (so)->state[(so)->size++] = NV50_FIFO_PKHDR(SUBC_3D(m), s)
 
 #define SB_DATA(so, u) (so)->state[(so)->size++] = (u)
 
