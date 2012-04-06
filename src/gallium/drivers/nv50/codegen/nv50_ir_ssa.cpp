@@ -293,11 +293,12 @@ public:
 
    inline LValue *getStackTop(Value *);
 
+   LValue *mkUndefined(Value *);
+
 private:
    Stack *stack;
    Function *func;
    Program *prog;
-   Instruction *undef;
 };
 
 bool
@@ -402,12 +403,6 @@ Function::convertToSSA()
 
 RenamePass::RenamePass(Function *fn) : func(fn), prog(fn->getProgram())
 {
-   BasicBlock *root = BasicBlock::get(func->cfg.getRoot());
-
-   undef = new_Instruction(func, OP_NOP, TYPE_U32);
-   undef->setDef(0, new_LValue(func, FILE_GPR));
-   root->insertHead(undef);
-
    stack = new Stack[func->allLValues.getSize()];
 }
 
@@ -423,6 +418,18 @@ RenamePass::getStackTop(Value *val)
    if (!stack[val->id].getSize())
       return 0;
    return reinterpret_cast<LValue *>(stack[val->id].peek().u.p);
+}
+
+LValue *
+RenamePass::mkUndefined(Value *val)
+{
+   LValue *lval = val->asLValue();
+   assert(lval);
+   LValue *ud = new_LValue(func, lval);
+   Instruction *nop = new_Instruction(func, OP_NOP, typeOfSize(lval->reg.size));
+   nop->setDef(0, ud);
+   BasicBlock::get(func->cfg.getRoot())->insertHead(nop);
+   return ud;
 }
 
 bool RenamePass::run()
@@ -463,7 +470,7 @@ void RenamePass::search(BasicBlock *bb)
                continue;
             lval = getStackTop(lval);
             if (!lval)
-               lval = static_cast<LValue *>(undef->getDef(0));
+               lval = mkUndefined(stmt->getSrc(s));
             stmt->setSrc(s, lval);
          }
       }
@@ -494,7 +501,7 @@ void RenamePass::search(BasicBlock *bb)
       for (phi = sb->getPhi(); phi && phi->op == OP_PHI; phi = phi->next) {
          lval = getStackTop(phi->getSrc(p));
          if (!lval)
-            lval = undef->getDef(0)->asLValue();
+            lval = mkUndefined(phi->getSrc(p));
          phi->setSrc(p, lval);
       }
    }
@@ -510,12 +517,14 @@ void RenamePass::search(BasicBlock *bb)
             continue;
          lval = getStackTop(lval);
          if (!lval)
-            lval = static_cast<LValue *>(undef->getDef(0));
+            lval = mkUndefined(it->get());
          it->set(lval);
       }
    }
 
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
+      if (stmt->op == OP_NOP)
+         continue;
       for (d = 0; stmt->defExists(d); ++d)
          stack[stmt->def(d).preSSA()->id].pop();
    }
