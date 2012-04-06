@@ -268,7 +268,8 @@ RegAlloc::BuildIntervalsPass::addLiveRange(Value *val,
    Instruction *insn = val->getUniqueInsn();
 
    if (!insn)
-      return;
+      insn = bb->getFirst();
+
    assert(bb->getFirst()->serial <= bb->getExit()->serial);
    assert(bb->getExit()->serial + 1 >= end);
 
@@ -420,6 +421,7 @@ RegAlloc::ArgumentMovesPass::visit(BasicBlock *bb)
 bool
 RegAlloc::buildLiveSets(BasicBlock *bb)
 {
+   Function *f = bb->getFunction();
    BasicBlock *bn;
    Instruction *i;
    unsigned int s, d;
@@ -453,6 +455,14 @@ RegAlloc::buildLiveSets(BasicBlock *bb)
    // if (!bb->getEntry())
    //   return true;
 
+   if (bb == BasicBlock::get(f->cfgExit)) {
+      for (std::deque<ValueRef>::iterator it = f->outs.begin();
+           it != f->outs.end(); ++it) {
+         assert(it->get()->asLValue());
+         bb->liveSet.set(it->get()->id);
+      }
+   }
+
    for (i = bb->getExit(); i && i != bb->getEntry()->prev; i = i->prev) {
       for (d = 0; i->defExists(d); ++d)
          bb->liveSet.clr(i->getDef(d)->id);
@@ -475,8 +485,6 @@ void
 RegAlloc::BuildIntervalsPass::collectLiveValues(BasicBlock *bb)
 {
    BasicBlock *bbA = NULL, *bbB = NULL;
-
-   assert(bb->cfg.incidentCount() || bb->liveSet.popCount() == 0);
 
    if (bb->cfg.outgoingCount()) {
       // trickery to save a loop of OR'ing liveSets
@@ -545,6 +553,14 @@ RegAlloc::BuildIntervalsPass::visit(BasicBlock *bb)
             bb->liveSet.set(i->getSrc(s)->id);
             addLiveRange(i->getSrc(s), bb, i->serial);
          }
+      }
+   }
+
+   if (bb == BasicBlock::get(func->cfg.getRoot())) {
+      for (std::deque<ValueDef>::iterator it = func->ins.begin();
+           it != func->ins.end(); ++it) {
+         if (it->get()->reg.data.id >= 0) // add hazard for fixed regs
+            it->get()->livei.extend(0, 1);
       }
    }
 

@@ -219,6 +219,7 @@ void DominatorTree::findDominanceFrontiers()
 void
 Function::buildLiveSetsPreSSA(BasicBlock *bb, const int seq)
 {
+   Function *f = bb->getFunction();
    BitSet usedBeforeAssigned(allLValues.getSize(), true);
    BitSet assigned(allLValues.getSize(), true);
 
@@ -246,6 +247,14 @@ Function::buildLiveSetsPreSSA(BasicBlock *bb, const int seq)
             usedBeforeAssigned.set(i->getSrc(s)->id);
       for (int d = 0; i->defExists(d); ++d)
          assigned.set(i->getDef(d)->id);
+   }
+
+   if (bb == BasicBlock::get(f->cfgExit)) {
+      for (std::deque<ValueRef>::iterator it = f->outs.begin();
+           it != f->outs.end(); ++it) {
+         if (!assigned.test(it->get()->id))
+            usedBeforeAssigned.set(it->get()->id);
+      }
    }
 
    bb->liveSet.andNot(assigned);
