@@ -947,6 +947,10 @@ public:
    bool convertToSSA();
 
 public:
+   std::deque<ValueDef> ins;
+   std::deque<ValueRef> outs;
+   std::deque<Value *> clobbers;
+
    Graph cfg;
    Graph::Node *cfgExit;
    Graph *domTree;
