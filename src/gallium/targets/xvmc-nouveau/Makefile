@@ -20,6 +20,8 @@ C_SOURCES = \
 
 DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm_nouveau --libs) -lXfixes
 
+DRIVER_INCLUDES = -I/usr/include/libdrm/
+
 LINK_WITH_CXX=1
 
 include ../Makefile.xvmc
