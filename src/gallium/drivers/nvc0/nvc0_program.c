@@ -568,6 +568,8 @@ nvc0_program_translate(struct nvc0_program *prog)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
+   if (info->bin.syms) /* we don't need them yet */
+      FREE(info->bin.syms);
 
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;

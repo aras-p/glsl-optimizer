@@ -87,6 +87,12 @@ struct nv50_ir_varying
 
 #define NV50_PRIM_PATCHES PIPE_PRIM_MAX
 
+struct nv50_ir_prog_symbol
+{
+   uint32_t label;
+   uint32_t offset;
+};
+
 struct nv50_ir_prog_info
 {
    uint16_t target; /* chipset (0x50, 0x84, 0xc0, ...) */
@@ -105,6 +111,8 @@ struct nv50_ir_prog_info
       uint8_t sourceRep;  /* NV50_PROGRAM_IR */
       const void *source;
       void *relocData;
+      struct nv50_ir_prog_symbol *syms;
+      uint16_t numSyms;
    } bin;
 
    struct nv50_ir_varying sv[PIPE_MAX_SHADER_INPUTS];

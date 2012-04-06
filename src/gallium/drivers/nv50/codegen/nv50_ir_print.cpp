@@ -431,7 +431,9 @@ void Instruction::print() const
          PRINT(" %sBUILTIN:%i", colour[TXT_BRA], asFlow()->target.builtin);
       } else
       if (op == OP_CALL && asFlow()->target.fn) {
-         PRINT(" %s%s", colour[TXT_BRA], asFlow()->target.fn->getName());
+         PRINT(" %s%s:%i", colour[TXT_BRA],
+               asFlow()->target.fn->getName(),
+               asFlow()->target.fn->getLabel());
       } else
       if (asFlow()->target.bb)
          PRINT(" %sBB:%i", colour[TXT_BRA], asFlow()->target.bb->getId());
@@ -508,7 +510,7 @@ private:
 bool
 PrintPass::visit(Function *fn)
 {
-   INFO("\n%s:\n", fn->getName());
+   INFO("\n%s:%i\n", fn->getName(), fn->getLabel());
 
    return true;
 }

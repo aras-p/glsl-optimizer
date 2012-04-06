@@ -976,7 +976,7 @@ Program::Program(Type type, Target *arch)
 
    maxGPR = -1;
 
-   main = new Function(this, "MAIN");
+   main = new Function(this, "MAIN", ~0);
    calls.insert(&main->call);
 
    dbgFlags = 0;

@@ -24,8 +24,9 @@
 
 namespace nv50_ir {
 
-Function::Function(Program *p, const char *fnName)
+Function::Function(Program *p, const char *fnName, uint32_t label)
    : call(this),
+     label(label),
      name(fnName),
      prog(p)
 {
