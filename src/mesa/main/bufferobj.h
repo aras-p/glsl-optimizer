@@ -89,6 +89,8 @@ _mesa_reference_buffer_object(struct gl_context *ctx,
       _mesa_reference_buffer_object_(ctx, ptr, bufObj);
 }
 
+extern GLuint
+_mesa_total_buffer_object_memory(struct gl_context *ctx);
 
 extern void
 _mesa_init_buffer_object_functions(struct dd_function_table *driver);

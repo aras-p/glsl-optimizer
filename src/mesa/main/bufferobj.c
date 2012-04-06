@@ -347,6 +347,36 @@ _mesa_initialize_buffer_object( struct gl_context *ctx,
 }
 
 
+
+/**
+ * Callback called from _mesa_HashWalk()
+ */
+static void
+count_buffer_size(GLuint key, void *data, void *userData)
+{
+   const struct gl_buffer_object *bufObj =
+      (const struct gl_buffer_object *) data;
+   GLuint *total = (GLuint *) userData;
+
+   *total = *total + bufObj->Size;
+}
+
+
+/**
+ * Compute total size (in bytes) of all buffer objects for the given context.
+ * For debugging purposes.
+ */
+GLuint
+_mesa_total_buffer_object_memory(struct gl_context *ctx)
+{
+   GLuint total = 0;
+
+   _mesa_HashWalk(ctx->Shared->BufferObjects, count_buffer_size, &total);
+
+   return total;
+}
+
+
 /**
  * Allocate space for and store data in a buffer object.  Any data that was
  * previously stored in the buffer object is lost.  If \c data is \c NULL,
