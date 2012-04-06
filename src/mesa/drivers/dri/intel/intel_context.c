@@ -1251,17 +1251,35 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 
    int buffer_width;
    int buffer_height;
+   int buffer_cpp = buffer->cpp;
+   int buffer_pitch = buffer->pitch;
    if (buffer->attachment == __DRI_BUFFER_STENCIL) {
-      /* The stencil buffer has quirky pitch requirements.  From Section
-       * 2.11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
+      /* Stencil buffers use W tiling, a tiling format that the DRM functions
+       * don't properly account for.  Therefore, when we allocate a stencil
+       * buffer that is private to Mesa (see intel_miptree_create), we round
+       * the height and width up to the next multiple of the tile size (64x64)
+       * and then ask DRM to allocate an untiled buffer.  Consequently, the
+       * height and the width stored in the stencil buffer's region structure
+       * are always multiples of 64, even if the stencil buffer itself is
+       * smaller.
        *
-       * To satisfy the pitch requirement, the X driver allocated the region
-       * with the following dimensions.
+       * To avoid inconsistencies between how we represent private buffers and
+       * buffers shared with the window system, round up the height and width
+       * for window system buffers too.
        */
        buffer_width = ALIGN(drawable->w, 64);
-       buffer_height = ALIGN(ALIGN(drawable->h, 2) / 2, 64);
+       buffer_height = ALIGN(drawable->h, 64);
+
+       /* Versions 2.17.0 and earlier of xf86-video-intel (a.k.a. the DDX) lie
+        * and send cpp and pitch values that are two times too large for
+        * stencil buffers.  Hopefully this will be fixed in a future version
+        * of xf86-video-intel, but for now detect the bug by checking if cpp
+        * is 2, and fixing cpp and pitch if it is.
+        */
+       if (buffer_cpp == 2) {
+          buffer_cpp = 1;
+          buffer_pitch /= 2;
+       }
    } else {
        buffer_width = drawable->w;
        buffer_height = drawable->h;
@@ -1279,10 +1297,10 @@ intel_process_dri2_buffer_with_separate_stencil(struct intel_context *intel,
 
    struct intel_region *region =
       intel_region_alloc_for_handle(intel->intelScreen,
-				    buffer->cpp,
+				    buffer_cpp,
 				    buffer_width,
 				    buffer_height,
-				    buffer->pitch / buffer->cpp,
+				    buffer_pitch / buffer_cpp,
 				    buffer->name,
 				    buffer_name);
    if (!region)

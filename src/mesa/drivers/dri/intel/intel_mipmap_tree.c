@@ -102,16 +102,6 @@ intel_miptree_create_internal(struct intel_context *intel,
       mt->depth0 = depth0;
    }
 
-   if (format == MESA_FORMAT_S8) {
-      /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
-       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
-       */
-      assert(intel->has_separate_stencil);
-      mt->cpp = 2;
-   }
-
    if (!for_region &&
        _mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
        (intel->must_use_separate_stencil ||
@@ -188,20 +178,12 @@ intel_miptree_create(struct intel_context *intel,
 
    if (format == MESA_FORMAT_S8) {
       /* The stencil buffer is W tiled. However, we request from the kernel a
-       * non-tiled buffer because the GTT is incapable of W fencing.
-       *
-       * The stencil buffer has quirky pitch requirements.  From Vol 2a,
-       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
-       * To accomplish this, we resort to the nasty hack of doubling the drm
-       * region's cpp and halving its height.
-       *
-       * If we neglect to double the pitch, then render corruption occurs.
+       * non-tiled buffer because the GTT is incapable of W fencing.  So round
+       * up the width and height to match the size of W tiles (64x64).
        */
       tiling = I915_TILING_NONE;
       width0 = ALIGN(width0, 64);
-      height0 = ALIGN((height0 + 1) / 2, 64);
+      height0 = ALIGN(height0, 64);
    }
 
    mt = intel_miptree_create_internal(intel, target, format,

@@ -326,10 +326,6 @@ static void emit_depthbuffer(struct brw_context *brw)
        * 3DSTATE_DEPTH_BUFFER: namely the tile walk, surface type, width, and
        * height.
        *
-       * Since the stencil buffer has quirky pitch requirements, its region
-       * was allocated with half height and double cpp. So we need
-       * a multiplier of 2 to obtain the surface's real height.
-       *
        * Enable the hiz bit because it and the separate stencil bit must have
        * the same value. From Section 2.11.5.6.1.1 3DSTATE_DEPTH_BUFFER, Bit
        * 1.21 "Separate Stencil Enable":
@@ -435,7 +431,12 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 struct intel_region *region = stencil_mt->region;
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
-	 OUT_BATCH(region->pitch * region->cpp - 1);
+         /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
+          * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
+          *    The pitch must be set to 2x the value computed based on width, as
+          *    the stencil buffer is stored with two rows interleaved.
+          */
+	 OUT_BATCH(2 * region->pitch * region->cpp - 1);
 	 OUT_RELOC(region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   0);

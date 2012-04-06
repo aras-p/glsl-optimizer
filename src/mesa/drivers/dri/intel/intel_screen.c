@@ -956,21 +956,27 @@ intelAllocateBuffer(__DRIscreen *screen,
       return NULL;
 
    if (attachment == __DRI_BUFFER_STENCIL) {
-      /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
-       * 11.5.6.2.1 3DSTATE_STENCIL_BUFFER, field "Surface Pitch":
-       *    The pitch must be set to 2x the value computed based on width, as
-       *    the stencil buffer is stored with two rows interleaved.
-       * To accomplish this, we resort to the nasty hack of doubling the
-       * region's cpp and halving its height.
+      /* Stencil buffers use W tiling, a tiling format that the DRM functions
+       * don't properly account for.  Therefore, when we allocate a stencil
+       * buffer that is private to Mesa (see intel_miptree_create), we round
+       * the height and width up to the next multiple of the tile size (64x64)
+       * and then ask DRM to allocate an untiled buffer.  Consequently, the
+       * height and the width stored in the stencil buffer's region structure
+       * are always multiples of 64, even if the stencil buffer itself is
+       * smaller.
+       *
+       * To avoid inconsistencies between how we represent private buffers and
+       * buffers shared with the window system, round up the height and width
+       * for window system buffers too.
        */
       region_width = ALIGN(width, 64);
-      region_height = ALIGN(ALIGN(height, 2) / 2, 64);
-      region_cpp = format / 4;
+      region_height = ALIGN(height, 64);
    } else {
       region_width = width;
       region_height = height;
-      region_cpp = format / 8;
    }
+
+   region_cpp = format / 8;
 
    intelBuffer->region = intel_region_alloc(intelScreen,
                                             tiling,
