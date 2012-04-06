@@ -446,6 +446,7 @@ void RenamePass::search(BasicBlock *bb)
          assert(lval);
          stmt->def[d].setSSA(
             new_LValue(func, targ->nativeFile(lval->reg.file)));
+         stmt->def[d].get()->reg.size = lval->reg.size;
          stmt->def[d].get()->reg.data.id = lval->reg.data.id;
          stack[lval->id].push(stmt->def[d].get());
       }
