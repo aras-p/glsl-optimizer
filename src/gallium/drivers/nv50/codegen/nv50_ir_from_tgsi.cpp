@@ -700,8 +700,17 @@ bool Source::scanSource()
    if (mainTempsInLMem)
       info->bin.tlsSpace += (scan.file_max[TGSI_FILE_TEMPORARY] + 1) * 16;
 
-   if (info->io.genUserClip > 0)
+   if (info->io.genUserClip > 0) {
       info->io.clipDistanceMask = (1 << info->io.genUserClip) - 1;
+
+      for (unsigned int n = 0; n < ((info->io.genUserClip + 3) / 4); ++n) {
+         unsigned int i = info->numOutputs++;
+         info->out[i].id = i;
+         info->out[i].sn = TGSI_SEMANTIC_CLIPDIST;
+         info->out[i].si = n;
+         info->out[i].mask = info->io.clipDistanceMask >> (n * 4);
+      }
+   }
 
    return info->assignSlots(info) == 0;
 }
@@ -2234,7 +2243,7 @@ void
 Converter::handleUserClipPlanes()
 {
    Value *res[8];
-   int i, c;
+   int n, i, c;
 
    for (c = 0; c < 4; ++c) {
       for (i = 0; i < info->io.genUserClip; ++i) {
@@ -2248,8 +2257,15 @@ Converter::handleUserClipPlanes()
       }
    }
 
-   for (i = 0; i < info->io.genUserClip; ++i)
-      mkOp2(OP_WRSV, TYPE_F32, NULL, mkSysVal(SV_CLIP_DISTANCE, i), res[i]);
+   const int first = info->numOutputs - (info->io.genUserClip + 3) / 4;
+
+   for (i = 0; i < info->io.genUserClip; ++i) {
+      n = i / 4 + first;
+      c = i % 4;
+      Symbol *sym =
+         mkSymbol(FILE_SHADER_OUTPUT, 0, TYPE_F32, info->out[n].slot[c] * 4);
+      mkStore(OP_EXPORT, TYPE_F32, sym, NULL, res[i]);
+   }
 }
 
 void
