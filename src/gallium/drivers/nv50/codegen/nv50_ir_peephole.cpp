@@ -1042,6 +1042,10 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
          if (set1->op != OP_SET)
             return;
       }
+      operation redOp = (logop->op == OP_AND ? OP_SET_AND :
+                         logop->op == OP_XOR ? OP_SET_XOR : OP_SET_OR);
+      if (!prog->getTarget()->isOpSupported(redOp, set1->sType))
+         return;
       if (set0->op != OP_SET &&
           set0->op != OP_SET_AND &&
           set0->op != OP_SET_OR &&
@@ -1067,14 +1071,7 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
       set0->getDef(0)->reg.file = FILE_PREDICATE;
       set0->getDef(0)->reg.size = 1;
       set1->setSrc(2, set0->getDef(0));
-      switch (logop->op) {
-      case OP_AND: set1->op = OP_SET_AND; break;
-      case OP_OR:  set1->op = OP_SET_OR; break;
-      case OP_XOR: set1->op = OP_SET_XOR; break;
-      default:
-         assert(0);
-         break;
-      }
+      set1->op = redOp;
       set1->setDef(0, logop->getDef(0));
       delete_Instruction(prog, logop);
    }
