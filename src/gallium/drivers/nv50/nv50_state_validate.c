@@ -351,7 +351,7 @@ static struct state_validate {
     { nv50_gmtyprog_validate,      NV50_NEW_GMTYPROG },
     { nv50_fragprog_validate,      NV50_NEW_FRAGPROG },
     { nv50_fp_linkage_validate,    NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
-                                   NV50_NEW_GMTYPROG },
+                                   NV50_NEW_GMTYPROG | NV50_NEW_RASTERIZER },
     { nv50_gp_linkage_validate,    NV50_NEW_GMTYPROG | NV50_NEW_VERTPROG },
     { nv50_validate_derived_rs,    NV50_NEW_FRAGPROG | NV50_NEW_RASTERIZER |
                                    NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },

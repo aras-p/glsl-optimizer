@@ -344,6 +344,17 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    uint32_t lin[4];
    uint8_t map[64];
 
+   if (!(nv50->dirty & (NV50_NEW_VERTPROG |
+                        NV50_NEW_FRAGPROG |
+                        NV50_NEW_GMTYPROG))) {
+      uint8_t bfc, ffc;
+      ffc = (nv50->state.semantic_color & NV50_3D_SEMANTIC_COLOR_FFC0_ID__MASK);
+      bfc = (nv50->state.semantic_color & NV50_3D_SEMANTIC_COLOR_BFC0_ID__MASK)
+         >> 8;
+      if (nv50->rast->pipe.light_twoside == ((ffc == bfc) ? 0 : 1))
+         return;
+   }
+
    memset(lin, 0x00, sizeof(lin));
 
    /* XXX: in buggy-endian mode, is the first element of map (u32)0x000000xx
