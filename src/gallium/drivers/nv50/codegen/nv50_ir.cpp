@@ -815,7 +815,7 @@ Instruction::writesPredicate() const
 }
 
 static bool
-insnCheckCommutation(const Instruction *a, const Instruction *b)
+insnCheckCommutationDefSrc(const Instruction *a, const Instruction *b)
 {
    for (int d = 0; a->defExists(d); ++d)
       for (int s = 0; b->srcExists(s); ++s)
@@ -824,12 +824,22 @@ insnCheckCommutation(const Instruction *a, const Instruction *b)
    return true;
 }
 
+static bool
+insnCheckCommutationDefDef(const Instruction *a, const Instruction *b)
+{
+   for (int d = 0; a->defExists(d); ++d)
+      for (int c = 0; b->defExists(c); ++c)
+         if (a->getDef(d)->interfers(b->getDef(c)))
+            return false;
+   return true;
+}
+
 bool
 Instruction::isCommutationLegal(const Instruction *i) const
 {
-   bool ret = true;
-   ret = ret && insnCheckCommutation(this, i);
-   ret = ret && insnCheckCommutation(i, this);
+   bool ret = insnCheckCommutationDefDef(this, i);
+   ret = ret && insnCheckCommutationDefSrc(this, i);
+   ret = ret && insnCheckCommutationDefSrc(i, this);
    return ret;
 }
 
