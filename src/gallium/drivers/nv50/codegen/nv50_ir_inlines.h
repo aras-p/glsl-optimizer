@@ -115,7 +115,7 @@ static inline bool isSignedType(DataType ty)
 
 const ValueRef *ValueRef::getIndirect(int dim) const
 {
-   return isIndirect(dim) ? &insn->src[indirect[dim]] : NULL;
+   return isIndirect(dim) ? &insn->src(indirect[dim]) : NULL;
 }
 
 DataFile ValueRef::getFile() const
@@ -194,7 +194,7 @@ Instruction *Value::getUniqueInsn() const
 
 Value *Instruction::getIndirect(int s, int dim) const
 {
-   return src[s].isIndirect(dim) ? getSrc(src[s].indirect[dim]) : NULL;
+   return srcs[s].isIndirect(dim) ? getSrc(srcs[s].indirect[dim]) : NULL;
 }
 
 Value *Instruction::getPredicate() const

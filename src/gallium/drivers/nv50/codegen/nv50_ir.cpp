@@ -555,44 +555,44 @@ Instruction::~Instruction()
 void
 Instruction::setDef(int i, Value *val)
 {
-   int size = def.size();
+   int size = defs.size();
    if (i >= size) {
-      def.resize(i + 1);
+      defs.resize(i + 1);
       while (size <= i)
-         def[size++].setInsn(this);
+         defs[size++].setInsn(this);
    }
-   def[i].set(val);
+   defs[i].set(val);
 }
 
 void
 Instruction::setSrc(int s, Value *val)
 {
-   int size = src.size();
+   int size = srcs.size();
    if (s >= size) {
-      src.resize(s + 1);
+      srcs.resize(s + 1);
       while (size <= s)
-         src[size++].setInsn(this);
+         srcs[size++].setInsn(this);
    }
-   src[s].set(val);
+   srcs[s].set(val);
 }
 
 void
 Instruction::setSrc(int s, const ValueRef& ref)
 {
    setSrc(s, ref.get());
-   src[s].mod = ref.mod;
+   srcs[s].mod = ref.mod;
 }
 
 void
 Instruction::swapSources(int a, int b)
 {
-   Value *value = src[a].get();
-   Modifier m = src[a].mod;
+   Value *value = srcs[a].get();
+   Modifier m = srcs[a].mod;
 
-   setSrc(a, src[b]);
+   setSrc(a, srcs[b]);
 
-   src[b].set(value);
-   src[b].mod = m;
+   srcs[b].set(value);
+   srcs[b].mod = m;
 }
 
 void
@@ -663,7 +663,7 @@ Instruction::cloneBase(Instruction *insn, bool deep) const
    }
 
    for (int s = 0; this->srcExists(s); ++s)
-      insn->setSrc(s, this->src[s]);
+      insn->setSrc(s, this->srcs[s]);
 
    insn->predSrc = this->predSrc;
    insn->flagsDef = this->flagsDef;
@@ -695,15 +695,17 @@ Instruction::setIndirect(int s, int dim, Value *value)
 {
    assert(this->srcExists(s));
 
-   int p = src[s].indirect[dim];
+   int p = srcs[s].indirect[dim];
    if (p < 0) {
       if (!value)
          return true;
-      p = src.size();
+      p = srcs.size();
+      while (p > 0 && !srcExists(p - 1))
+         --p;
    }
    setSrc(p, value);
-   src[p].usedAsPtr = (value != 0);
-   src[s].indirect[dim] = value ? p : -1;
+   srcs[p].usedAsPtr = (value != 0);
+   srcs[s].indirect[dim] = value ? p : -1;
    return true;
 }
 
@@ -714,14 +716,17 @@ Instruction::setPredicate(CondCode ccode, Value *value)
 
    if (!value) {
       if (predSrc >= 0) {
-         src[predSrc] = 0;
+         srcs[predSrc].set(NULL);
          predSrc = -1;
       }
       return true;
    }
 
-   if (predSrc < 0)
-      predSrc = src.size();
+   if (predSrc < 0) {
+      predSrc = srcs.size();
+      while (predSrc > 0 && !srcExists(predSrc - 1))
+         --predSrc;
+   }
 
    setSrc(predSrc, value);
    return true;

@@ -113,10 +113,10 @@ private:
 
    inline void defId(const ValueDef&, const int pos);
    inline void srcId(const ValueRef&, const int pos);
+   inline void srcId(const ValueRef *, const int pos);
+   inline void srcId(const Instruction *, int s, const int pos);
 
    inline void srcAddr32(const ValueRef&, const int pos); // address / 4
-
-   inline void srcId(const ValueRef *, const int pos);
 
    inline bool isLIMM(const ValueRef&, DataType ty);
 };
@@ -135,6 +135,12 @@ void CodeEmitterNVC0::srcId(const ValueRef& src, const int pos)
 void CodeEmitterNVC0::srcId(const ValueRef *src, const int pos)
 {
    code[pos / 32] |= (src ? SDATA(*src).id : 63) << (pos % 32);
+}
+
+void CodeEmitterNVC0::srcId(const Instruction *insn, int s, int pos)
+{
+   int r = insn->srcExists(s) ? SDATA(insn->src(s)).id : 63;
+   code[pos / 32] |= r << (pos % 32);
 }
 
 void CodeEmitterNVC0::srcAddr32(const ValueRef& src, const int pos)
@@ -170,10 +176,10 @@ CodeEmitterNVC0::roundMode_A(const Instruction *insn)
 void
 CodeEmitterNVC0::emitNegAbs12(const Instruction *i)
 {
-   if (i->src[1].mod.abs()) code[0] |= 1 << 6;
-   if (i->src[0].mod.abs()) code[0] |= 1 << 7;
-   if (i->src[1].mod.neg()) code[0] |= 1 << 8;
-   if (i->src[0].mod.neg()) code[0] |= 1 << 9;
+   if (i->src(1).mod.abs()) code[0] |= 1 << 6;
+   if (i->src(0).mod.abs()) code[0] |= 1 << 7;
+   if (i->src(1).mod.neg()) code[0] |= 1 << 8;
+   if (i->src(0).mod.neg()) code[0] |= 1 << 9;
 }
 
 void CodeEmitterNVC0::emitCondCode(CondCode cc, int pos)
@@ -218,7 +224,7 @@ CodeEmitterNVC0::emitPredicate(const Instruction *i)
 {
    if (i->predSrc >= 0) {
       assert(i->getPredicate()->reg.file == FILE_PREDICATE);
-      srcId(i->src[i->predSrc], 10);
+      srcId(i->src(i->predSrc), 10);
       if (i->cc == CC_NOT_P)
          code[0] |= 0x2000; // negate
    } else {
@@ -240,7 +246,7 @@ CodeEmitterNVC0::setAddress16(const ValueRef& src)
 void
 CodeEmitterNVC0::setImmediate(const Instruction *i, const int s)
 {
-   const ImmediateValue *imm = i->src[s].get()->asImm();
+   const ImmediateValue *imm = i->src(s).get()->asImm();
    uint32_t u32;
 
    assert(imm);
@@ -287,7 +293,7 @@ CodeEmitterNVC0::emitForm_A(const Instruction *i, uint64_t opc)
 
    emitPredicate(i);
 
-   defId(i->def[0], 14);
+   defId(i->def(0), 14);
 
    int s1 = 26;
    if (i->srcExists(2) && i->getSrc(2)->reg.file == FILE_MEMORY_CONST)
@@ -299,7 +305,7 @@ CodeEmitterNVC0::emitForm_A(const Instruction *i, uint64_t opc)
          assert(!(code[1] & 0xc000));
          code[1] |= (s == 2) ? 0x8000 : 0x4000;
          code[1] |= i->getSrc(s)->reg.fileIndex << 10;
-         setAddress16(i->src[s]);
+         setAddress16(i->src(s));
          break;
       case FILE_IMMEDIATE:
          assert(s == 1 ||
@@ -310,7 +316,7 @@ CodeEmitterNVC0::emitForm_A(const Instruction *i, uint64_t opc)
       case FILE_GPR:
          if ((s == 2) && ((code[0] & 0x7) == 2)) // LIMM: 3rd src == dst
             break;
-         srcId(i->src[s], s ? ((s == 2) ? 49 : s1) : 20);
+         srcId(i->src(s), s ? ((s == 2) ? 49 : s1) : 20);
          break;
       default:
          // ignore here, can be predicate or flags, but must not be address
@@ -327,20 +333,20 @@ CodeEmitterNVC0::emitForm_B(const Instruction *i, uint64_t opc)
 
    emitPredicate(i);
 
-   defId(i->def[0], 14);
+   defId(i->def(0), 14);
 
-   switch (i->src[0].getFile()) {
+   switch (i->src(0).getFile()) {
    case FILE_MEMORY_CONST:
       assert(!(code[1] & 0xc000));
-      code[1] |= 0x4000 | (i->src[0].get()->reg.fileIndex << 10);
-      setAddress16(i->src[0]);
+      code[1] |= 0x4000 | (i->src(0).get()->reg.fileIndex << 10);
+      setAddress16(i->src(0));
       break;
    case FILE_IMMEDIATE:
       assert(!(code[1] & 0xc000));
       setImmediate(i, 0);
       break;
    case FILE_GPR:
-      srcId(i->src[0], 26);
+      srcId(i->src(0), 26);
       break;
    default:
       // ignore here, can be predicate or flags, but must not be address
@@ -357,17 +363,17 @@ CodeEmitterNVC0::emitForm_S(const Instruction *i, uint32_t opc, bool pred)
    if (opc == 0x0d || opc == 0x0e)
       ss2a = 2;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0], 20);
+   defId(i->def(0), 14);
+   srcId(i->src(0), 20);
 
    assert(pred || (i->predSrc < 0));
    if (pred)
       emitPredicate(i);
 
    for (int s = 1; s < 3 && i->srcExists(s); ++s) {
-      if (i->src[s].get()->reg.file == FILE_MEMORY_CONST) {
+      if (i->src(s).get()->reg.file == FILE_MEMORY_CONST) {
          assert(!(code[0] & (0x300 >> ss2a)));
-         switch (i->src[s].get()->reg.fileIndex) {
+         switch (i->src(s).get()->reg.fileIndex) {
          case 0:  code[0] |= 0x100 >> ss2a; break;
          case 1:  code[0] |= 0x200 >> ss2a; break;
          case 16: code[0] |= 0x300 >> ss2a; break;
@@ -380,12 +386,12 @@ CodeEmitterNVC0::emitForm_S(const Instruction *i, uint32_t opc, bool pred)
          else
             code[0] |= i->getSrc(s)->reg.data.offset << 6;
       } else
-      if (i->src[s].getFile() == FILE_IMMEDIATE) {
+      if (i->src(s).getFile() == FILE_IMMEDIATE) {
          assert(s == 1);
-         setImmediateS8(i->src[s]);
+         setImmediateS8(i->src(s));
       } else
-      if (i->src[s].getFile() == FILE_GPR) {
-         srcId(i->src[s], (s == 1) ? 26 : 8);
+      if (i->src(s).getFile() == FILE_GPR) {
+         srcId(i->src(s), (s == 1) ? 26 : 8);
       }
    }
 }
@@ -420,15 +426,15 @@ CodeEmitterNVC0::emitNOP(const Instruction *i)
 void
 CodeEmitterNVC0::emitFMAD(const Instruction *i)
 {
-   bool neg1 = (i->src[0].mod ^ i->src[1].mod).neg();
+   bool neg1 = (i->src(0).mod ^ i->src(1).mod).neg();
 
    if (i->encSize == 8) {
-      if (isLIMM(i->src[1], TYPE_F32)) {
+      if (isLIMM(i->src(1), TYPE_F32)) {
          emitForm_A(i, HEX64(20000000, 00000002));
       } else {
          emitForm_A(i, HEX64(30000000, 00000000));
 
-         if (i->src[2].mod.neg())
+         if (i->src(2).mod.neg())
             code[0] |= 1 << 8;
       }
       roundMode_A(i);
@@ -441,8 +447,8 @@ CodeEmitterNVC0::emitFMAD(const Instruction *i)
       if (i->ftz)
          code[0] |= 1 << 6;
    } else {
-      assert(!i->saturate && !i->src[2].mod.neg());
-      emitForm_S(i, (i->src[2].getFile() == FILE_MEMORY_CONST) ? 0x2e : 0x0e,
+      assert(!i->saturate && !i->src(2).mod.neg());
+      emitForm_S(i, (i->src(2).getFile() == FILE_MEMORY_CONST) ? 0x2e : 0x0e,
                  false);
       if (neg1)
          code[0] |= 1 << 4;
@@ -452,12 +458,12 @@ CodeEmitterNVC0::emitFMAD(const Instruction *i)
 void
 CodeEmitterNVC0::emitFMUL(const Instruction *i)
 {
-   bool neg = (i->src[0].mod ^ i->src[1].mod).neg();
+   bool neg = (i->src(0).mod ^ i->src(1).mod).neg();
 
    assert(i->postFactor >= -3 && i->postFactor <= 3);
 
    if (i->encSize == 8) {
-      if (isLIMM(i->src[1], TYPE_F32)) {
+      if (isLIMM(i->src(1), TYPE_F32)) {
          assert(i->postFactor == 0); // constant folded, hopefully
          emitForm_A(i, HEX64(30000000, 00000002));
       } else {
@@ -487,7 +493,7 @@ void
 CodeEmitterNVC0::emitUMUL(const Instruction *i)
 {
    if (i->encSize == 8) {
-      if (i->src[1].getFile() == FILE_IMMEDIATE) {
+      if (i->src(1).getFile() == FILE_IMMEDIATE) {
          emitForm_A(i, HEX64(10000000, 00000002));
       } else {
          emitForm_A(i, HEX64(50000000, 00000003));
@@ -499,7 +505,7 @@ CodeEmitterNVC0::emitUMUL(const Instruction *i)
       if (i->dType == TYPE_S32)
          code[0] |= 1 << 7;
    } else {
-      emitForm_S(i, i->src[1].getFile() == FILE_IMMEDIATE ? 0xaa : 0x2a, true);
+      emitForm_S(i, i->src(1).getFile() == FILE_IMMEDIATE ? 0xaa : 0x2a, true);
 
       if (i->sType == TYPE_S32)
          code[0] |= 1 << 6;
@@ -510,16 +516,16 @@ void
 CodeEmitterNVC0::emitFADD(const Instruction *i)
 {
    if (i->encSize == 8) {
-      if (isLIMM(i->src[1], TYPE_F32)) {
+      if (isLIMM(i->src(1), TYPE_F32)) {
          assert(!i->saturate);
          emitForm_A(i, HEX64(28000000, 00000002));
 
-         code[0] |= i->src[0].mod.abs() << 7;
-         code[0] |= i->src[0].mod.neg() << 9;
+         code[0] |= i->src(0).mod.abs() << 7;
+         code[0] |= i->src(0).mod.neg() << 9;
 
-         if (i->src[1].mod.abs())
+         if (i->src(1).mod.abs())
             code[1] &= 0xfdffffff;
-         if ((i->op == OP_SUB) != static_cast<bool>(i->src[1].mod.neg()))
+         if ((i->op == OP_SUB) != static_cast<bool>(i->src(1).mod.neg()))
             code[1] ^= 0x02000000;
       } else {
          emitForm_A(i, HEX64(50000000, 00000000));
@@ -535,12 +541,12 @@ CodeEmitterNVC0::emitFADD(const Instruction *i)
          code[0] |= 1 << 5;
    } else {
       assert(!i->saturate && i->op != OP_SUB &&
-             !i->src[0].mod.abs() &&
-             !i->src[1].mod.neg() && !i->src[1].mod.abs());
+             !i->src(0).mod.abs() &&
+             !i->src(1).mod.neg() && !i->src(1).mod.abs());
 
       emitForm_S(i, 0x49, true);
 
-      if (i->src[0].mod.neg())
+      if (i->src(0).mod.neg())
          code[0] |= 1 << 7;
    }
 }
@@ -550,12 +556,12 @@ CodeEmitterNVC0::emitUADD(const Instruction *i)
 {
    uint32_t addOp = 0;
 
-   assert(!i->src[0].mod.abs() && !i->src[1].mod.abs());
-   assert(!i->src[0].mod.neg() || !i->src[1].mod.neg());
+   assert(!i->src(0).mod.abs() && !i->src(1).mod.abs());
+   assert(!i->src(0).mod.neg() || !i->src(1).mod.neg());
 
-   if (i->src[0].mod.neg())
+   if (i->src(0).mod.neg())
       addOp |= 0x200;
-   if (i->src[1].mod.neg())
+   if (i->src(1).mod.neg())
       addOp |= 0x100;
    if (i->op == OP_SUB) {
       addOp ^= 0x100;
@@ -563,13 +569,13 @@ CodeEmitterNVC0::emitUADD(const Instruction *i)
    }
 
    if (i->encSize == 8) {
-      if (isLIMM(i->src[1], TYPE_U32)) {
+      if (isLIMM(i->src(1), TYPE_U32)) {
          emitForm_A(i, HEX64(08000000, 00000002));
-         if (i->def[1].exists())
+         if (i->defExists(1))
             code[1] |= 1 << 26; // write carry
       } else {
          emitForm_A(i, HEX64(48000000, 00000003));
-         if (i->def[1].exists())
+         if (i->defExists(1))
             code[1] |= 1 << 16; // write carry
       }
       code[0] |= addOp;
@@ -581,7 +587,7 @@ CodeEmitterNVC0::emitUADD(const Instruction *i)
    } else {
       assert(!(addOp & 0x100));
       emitForm_S(i, (addOp >> 3) |
-                 ((i->src[1].getFile() == FILE_IMMEDIATE) ? 0xac : 0x2c), true);
+                 ((i->src(1).getFile() == FILE_IMMEDIATE) ? 0xac : 0x2c), true);
    }
 }
 
@@ -602,9 +608,9 @@ CodeEmitterNVC0::emitIMAD(const Instruction *i)
    if (i->flagsDef >= 0) code[1] |= 1 << 16;
    if (i->flagsSrc >= 0) code[1] |= 1 << 23;
 
-   if (i->src[2].mod.neg()) code[0] |= 0x10;
-   if (i->src[1].mod.neg() ^
-       i->src[0].mod.neg()) code[0] |= 0x20;
+   if (i->src(2).mod.neg()) code[0] |= 0x10;
+   if (i->src(1).mod.neg() ^
+       i->src(0).mod.neg()) code[0] |= 0x20;
 
    if (i->subOp == NV50_IR_SUBOP_MUL_HIGH)
       code[0] |= 1 << 6;
@@ -614,7 +620,7 @@ void
 CodeEmitterNVC0::emitNOT(Instruction *i)
 {
    assert(i->encSize == 8);
-   i->src[1].set(i->src[0]);
+   i->setSrc(1, i->src(0));
    emitForm_A(i, HEX64(68000000, 000001c3));
 }
 
@@ -622,27 +628,27 @@ void
 CodeEmitterNVC0::emitLogicOp(const Instruction *i, uint8_t subOp)
 {
    if (i->encSize == 8) {
-      if (isLIMM(i->src[1], TYPE_U32)) {
+      if (isLIMM(i->src(1), TYPE_U32)) {
          emitForm_A(i, HEX64(38000000, 00000002));
 
-         if (i->src[2].exists())
+         if (i->srcExists(2))
             code[1] |= 1 << 26;
       } else {
          emitForm_A(i, HEX64(68000000, 00000003));
 
-         if (i->src[2].exists())
+         if (i->srcExists(2))
             code[1] |= 1 << 16;
       }
       code[0] |= subOp << 6;
 
-      if (i->src[2].exists()) // carry
+      if (i->srcExists(2)) // carry
          code[0] |= 1 << 5;
 
-      if (i->src[0].mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 9;
-      if (i->src[1].mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 8;
+      if (i->src(0).mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 9;
+      if (i->src(1).mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 8;
    } else {
       emitForm_S(i, (subOp << 5) |
-                 ((i->src[1].getFile() == FILE_IMMEDIATE) ? 0x1d : 0x8d), true);
+                 ((i->src(1).getFile() == FILE_IMMEDIATE) ? 0x1d : 0x8d), true);
    }
 }
 
@@ -651,8 +657,8 @@ CodeEmitterNVC0::emitPOPC(const Instruction *i)
 {
    emitForm_A(i, HEX64(54000000, 00000004));
 
-   if (i->src[0].mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 9;
-   if (i->src[1].mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 8;
+   if (i->src(0).mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 9;
+   if (i->src(1).mod & Modifier(NV50_IR_MOD_NOT)) code[0] |= 1 << 8;
 }
 
 void
@@ -684,8 +690,8 @@ CodeEmitterNVC0::emitPreOp(const Instruction *i)
       if (i->op == OP_PREEX2)
          code[0] |= 0x20;
 
-      if (i->src[0].mod.abs()) code[0] |= 1 << 6;
-      if (i->src[0].mod.neg()) code[0] |= 1 << 8;
+      if (i->src(0).mod.abs()) code[0] |= 1 << 6;
+      if (i->src(0).mod.neg()) code[0] |= 1 << 8;
    } else {
       emitForm_S(i, i->op == OP_PREEX2 ? 0x74000008 : 0x70000008, true);
    }
@@ -700,20 +706,20 @@ CodeEmitterNVC0::emitSFnOp(const Instruction *i, uint8_t subOp)
 
       emitPredicate(i);
 
-      defId(i->def[0], 14);
-      srcId(i->src[0], 20);
+      defId(i->def(0), 14);
+      srcId(i->src(0), 20);
 
-      assert(i->src[0].getFile() == FILE_GPR);
+      assert(i->src(0).getFile() == FILE_GPR);
 
       if (i->saturate) code[0] |= 1 << 5;
 
-      if (i->src[0].mod.abs()) code[0] |= 1 << 7;
-      if (i->src[0].mod.neg()) code[0] |= 1 << 9;
+      if (i->src(0).mod.abs()) code[0] |= 1 << 7;
+      if (i->src(0).mod.neg()) code[0] |= 1 << 9;
    } else {
       emitForm_S(i, 0x80000008 | (subOp << 26), true);
 
-      assert(!i->src[0].mod.neg());
-      if (i->src[0].mod.abs()) code[0] |= 1 << 30;
+      assert(!i->src(0).mod.neg());
+      if (i->src(0).mod.abs()) code[0] |= 1 << 30;
    }
 }
 
@@ -783,8 +789,8 @@ CodeEmitterNVC0::emitCVT(Instruction *i)
    }
 
    const bool sat = (i->op == OP_SAT) || i->saturate;
-   const bool abs = (i->op == OP_ABS) || i->src[0].mod.abs();
-   const bool neg = (i->op == OP_NEG) || i->src[0].mod.neg();
+   const bool abs = (i->op == OP_ABS) || i->src(0).mod.abs();
+   const bool neg = (i->op == OP_NEG) || i->src(0).mod.neg();
 
    if (i->encSize == 8) {
       emitForm_B(i, HEX64(10000000, 00000004));
@@ -867,16 +873,16 @@ CodeEmitterNVC0::emitSET(const CmpInstruction *i)
    }
    emitForm_A(i, (static_cast<uint64_t>(hi) << 32) | lo);
 
-   if (i->def[0].getFile() == FILE_PREDICATE) {
+   if (i->def(0).getFile() == FILE_PREDICATE) {
       if (i->sType == TYPE_F32)
          code[1] += 0x10000000;
       else
          code[1] += 0x08000000;
 
       code[0] &= ~0xfc000;
-      defId(i->def[0], 17);
+      defId(i->def(0), 17);
       if (i->defExists(1))
-         defId(i->def[1], 14);
+         defId(i->def(1), 14);
       else
          code[0] |= 0x1c000;
    }
@@ -912,7 +918,7 @@ CodeEmitterNVC0::emitSLCT(const CmpInstruction *i)
 
    CondCode cc = i->setCond;
 
-   if (i->src[2].mod.neg())
+   if (i->src(2).mod.neg())
       cc = reverseCondCode(cc);
 
    emitCondCode(cc, 32 + 23);
@@ -925,7 +931,7 @@ void CodeEmitterNVC0::emitSELP(const Instruction *i)
 {
    emitForm_A(i, HEX64(20000000, 00000004));
 
-   if (i->cc == CC_NOT_P || i->src[2].mod & Modifier(NV50_IR_MOD_NOT))
+   if (i->cc == CC_NOT_P || i->src(2).mod & Modifier(NV50_IR_MOD_NOT))
       code[1] |= 1 << 20;
 }
 
@@ -940,8 +946,8 @@ void CodeEmitterNVC0::emitTEXCSAA(const TexInstruction *i)
    if (i->tex.liveOnly)
       code[0] |= 1 << 9;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0], 20);
+   defId(i->def(0), 14);
+   srcId(i->src(0), 20);
 }
 
 void
@@ -977,8 +983,8 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    if (i->tex.derivAll)
       code[1] |= 1 << 13;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0], 20);
+   defId(i->def(0), 14);
+   srcId(i->src(0), 20);
 
    emitPredicate(i);
 
@@ -1004,7 +1010,8 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    if (i->op == OP_TXD && i->tex.useOffsets)
       ++src1;
 
-   if (i->src[src1].getFile() == FILE_IMMEDIATE) { // lzero
+   if (i->srcExists(src1) && i->src(src1).getFile() == FILE_IMMEDIATE) {
+      // lzero
       if (i->op == OP_TXL)
          code[1] &= ~(1 << 26);
       else
@@ -1018,7 +1025,7 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    if (i->tex.useOffsets) // in vecSrc0.w
       code[1] |= 1 << 22;
 
-   srcId(i->src[src1], 26);
+   srcId(i, src1, 26);
 }
 
 void
@@ -1046,9 +1053,9 @@ CodeEmitterNVC0::emitTXQ(const TexInstruction *i)
    if (i->tex.sIndirectSrc >= 0 || i->tex.rIndirectSrc >= 0)
       code[1] |= 1 << 18;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0], 20);
-   srcId(i->src[1], 26);
+   defId(i->def(0), 14);
+   srcId(i->src(0), 20);
+   srcId(i->src(1), 26);
 
    emitPredicate(i);
 }
@@ -1059,9 +1066,9 @@ CodeEmitterNVC0::emitQUADOP(const Instruction *i, uint8_t qOp, uint8_t laneMask)
    code[0] = 0x00000000 | (laneMask << 6);
    code[1] = 0x48000000 | qOp;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0], 20);
-   srcId(i->srcExists(1) ? i->src[1] : i->src[0], 26);
+   defId(i->def(0), 14);
+   srcId(i->src(0), 20);
+   srcId(i->srcExists(1) ? i->src(1) : i->src(0), 26);
 
    if (i->op == OP_QUADOP && progType != Program::TYPE_FRAGMENT)
       code[0] |= 1 << 9; // dall
@@ -1081,15 +1088,14 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
    switch (i->op) {
    case OP_BRA:
       code[1] = f->absolute ? 0x00000000 : 0x40000000;
-      if (i->src[0].getFile() == FILE_MEMORY_CONST ||
-          i->src[1].getFile() == FILE_MEMORY_CONST)
-         code[1] |= 0x4000;
+      if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
+         code[0] |= 0x4000;
       mask = 3;
       break;
    case OP_CALL:
       code[1] = f->absolute ? 0x10000000 : 0x50000000;
-      if (i->src[0].getFile() == FILE_MEMORY_CONST)
-         code[1] |= 0x4000;
+      if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
+         code[0] |= 0x4000;
       mask = 2;
       break;
 
@@ -1151,22 +1157,22 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
 void
 CodeEmitterNVC0::emitPFETCH(const Instruction *i)
 {
-   uint32_t prim = i->src[0].get()->reg.data.u32;
+   uint32_t prim = i->src(0).get()->reg.data.u32;
 
    code[0] = 0x00000006 | ((prim & 0x3f) << 26);
    code[1] = 0x00000000 | (prim >> 6);
 
    emitPredicate(i);
 
-   defId(i->def[0], 14);
-   srcId(i->src[1], 20);
+   defId(i->def(0), 14);
+   srcId(i->src(1), 20);
 }
 
 void
 CodeEmitterNVC0::emitVFETCH(const Instruction *i)
 {
    code[0] = 0x00000006;
-   code[1] = 0x06000000 | i->src[0].get()->reg.data.offset;
+   code[1] = 0x06000000 | i->src(0).get()->reg.data.offset;
 
    if (i->perPatch)
       code[0] |= 0x100;
@@ -1177,9 +1183,9 @@ CodeEmitterNVC0::emitVFETCH(const Instruction *i)
 
    code[0] |= (i->defCount(0xf) - 1) << 5;
 
-   defId(i->def[0], 14);
-   srcId(i->src[0].getIndirect(0), 20);
-   srcId(i->src[0].getIndirect(1), 26); // vertex address
+   defId(i->def(0), 14);
+   srcId(i->src(0).getIndirect(0), 20);
+   srcId(i->src(0).getIndirect(1), 26); // vertex address
 }
 
 void
@@ -1188,7 +1194,7 @@ CodeEmitterNVC0::emitEXPORT(const Instruction *i)
    unsigned int size = typeSizeof(i->dType);
 
    code[0] = 0x00000006 | ((size / 4 - 1) << 5);
-   code[1] = 0x0a000000 | i->src[0].get()->reg.data.offset;
+   code[1] = 0x0a000000 | i->src(0).get()->reg.data.offset;
 
    assert(!(code[1] & ((size == 12) ? 15 : (size - 1))));
 
@@ -1197,11 +1203,11 @@ CodeEmitterNVC0::emitEXPORT(const Instruction *i)
 
    emitPredicate(i);
 
-   assert(i->src[1].getFile() == FILE_GPR);
+   assert(i->src(1).getFile() == FILE_GPR);
 
-   srcId(i->src[0].getIndirect(0), 20);
-   srcId(i->src[0].getIndirect(1), 32 + 17); // vertex base address
-   srcId(i->src[1], 26);
+   srcId(i->src(0).getIndirect(0), 20);
+   srcId(i->src(0).getIndirect(1), 32 + 17); // vertex base address
+   srcId(i->src(1), 26);
 }
 
 void
@@ -1212,10 +1218,10 @@ CodeEmitterNVC0::emitOUT(const Instruction *i)
 
    emitPredicate(i);
 
-   defId(i->def[0], 14); // new secret address
-   srcId(i->src[0], 20); // old secret address, should be 0 initially
+   defId(i->def(0), 14); // new secret address
+   srcId(i->src(0), 20); // old secret address, should be 0 initially
 
-   assert(i->src[0].getFile() == FILE_GPR);
+   assert(i->src(0).getFile() == FILE_GPR);
 
    if (i->op == OP_EMIT)
       code[0] |= 1 << 5;
@@ -1223,11 +1229,11 @@ CodeEmitterNVC0::emitOUT(const Instruction *i)
       code[0] |= 1 << 6;
 
    // vertex stream
-   if (i->src[1].getFile() == FILE_IMMEDIATE) {
+   if (i->src(1).getFile() == FILE_IMMEDIATE) {
       code[1] |= 0xc000;
-      code[0] |= SDATA(i->src[1]).u32 << 26;
+      code[0] |= SDATA(i->src(1)).u32 << 26;
    } else {
-      srcId(i->src[1], 26);
+      srcId(i->src(1), 26);
    }
 }
 
@@ -1256,23 +1262,23 @@ CodeEmitterNVC0::emitINTERP(const Instruction *i)
          code[0] |= 1 << 5;
 
       if (i->op == OP_PINTERP)
-         srcId(i->src[1], 26);
+         srcId(i->src(1), 26);
       else
          code[0] |= 0x3f << 26;
 
-      srcId(i->src[0].getIndirect(0), 20);
+      srcId(i->src(0).getIndirect(0), 20);
    } else {
       assert(i->op == OP_PINTERP);
       code[0] = 0x00000009 | ((base & 0xc) << 6) | ((base >> 4) << 26);
-      srcId(i->src[1], 20);
+      srcId(i->src(1), 20);
    }
    emitInterpMode(i);
 
    emitPredicate(i);
-   defId(i->def[0], 14);
+   defId(i->def(0), 14);
 
    if (i->getSampleMode() == NV50_IR_INTERP_OFFSET)
-      srcId(i->src[i->op == OP_PINTERP ? 2 : 1], 17);
+      srcId(i->src(i->op == OP_PINTERP ? 2 : 1), 17);
    else
       code[1] |= 0x3f << 17;
 }
@@ -1350,7 +1356,7 @@ CodeEmitterNVC0::emitSTORE(const Instruction *i)
 {
    uint32_t opc;
 
-   switch (i->src[0].getFile()) {
+   switch (i->src(0).getFile()) {
    case FILE_MEMORY_GLOBAL: opc = 0x90000000; break;
    case FILE_MEMORY_LOCAL:  opc = 0xc8000000; break;
    case FILE_MEMORY_SHARED: opc = 0xc9000000; break;
@@ -1362,9 +1368,9 @@ CodeEmitterNVC0::emitSTORE(const Instruction *i)
    code[0] = 0x00000005;
    code[1] = opc;
 
-   setAddress16(i->src[0]);
-   srcId(i->src[1], 14);
-   srcId(i->src[0].getIndirect(0), 20);
+   setAddress16(i->src(0));
+   srcId(i->src(1), 14);
+   srcId(i->src(0).getIndirect(0), 20);
 
    emitPredicate(i);
 
@@ -1379,16 +1385,16 @@ CodeEmitterNVC0::emitLOAD(const Instruction *i)
 
    code[0] = 0x00000005;
 
-   switch (i->src[0].getFile()) {
+   switch (i->src(0).getFile()) {
    case FILE_MEMORY_GLOBAL: opc = 0x80000000; break;
    case FILE_MEMORY_LOCAL:  opc = 0xc0000000; break;
    case FILE_MEMORY_SHARED: opc = 0xc1000000; break;
    case FILE_MEMORY_CONST:
-      if (!i->src[0].isIndirect(0) && typeSizeof(i->dType) == 4) {
+      if (!i->src(0).isIndirect(0) && typeSizeof(i->dType) == 4) {
          emitMOV(i); // not sure if this is any better
          return;
       }
-      opc = 0x14000000 | (i->src[0].get()->reg.fileIndex << 10);
+      opc = 0x14000000 | (i->src(0).get()->reg.fileIndex << 10);
       code[0] = 0x00000006 | (i->subOp << 8);
       break;
    default:
@@ -1398,10 +1404,10 @@ CodeEmitterNVC0::emitLOAD(const Instruction *i)
    }
    code[1] = opc;
 
-   defId(i->def[0], 14);
+   defId(i->def(0), 14);
 
-   setAddress16(i->src[0]);
-   srcId(i->src[0].getIndirect(0), 20);
+   setAddress16(i->src(0));
+   srcId(i->src(0).getIndirect(0), 20);
 
    emitPredicate(i);
 
@@ -1435,8 +1441,8 @@ CodeEmitterNVC0::getSRegEncoding(const ValueRef& ref)
 void
 CodeEmitterNVC0::emitMOV(const Instruction *i)
 {
-   if (i->src[0].getFile() == FILE_SYSTEM_VALUE) {
-      uint8_t sr = getSRegEncoding(i->src[0]);
+   if (i->src(0).getFile() == FILE_SYSTEM_VALUE) {
+      uint8_t sr = getSRegEncoding(i->src(0));
 
       if (i->encSize == 8) {
          code[0] = 0x00000004 | (sr << 26);
@@ -1444,17 +1450,17 @@ CodeEmitterNVC0::emitMOV(const Instruction *i)
       } else {
          code[0] = 0x40000008 | (sr << 20);
       }
-      defId(i->def[0], 14);
+      defId(i->def(0), 14);
 
       emitPredicate(i);
    } else
    if (i->encSize == 8) {
       uint64_t opc;
 
-      if (i->src[0].getFile() == FILE_IMMEDIATE)
+      if (i->src(0).getFile() == FILE_IMMEDIATE)
          opc = HEX64(18000000, 000001e2);
       else
-      if (i->src[0].getFile() == FILE_PREDICATE)
+      if (i->src(0).getFile() == FILE_PREDICATE)
          opc = HEX64(080e0000, 1c000004);
       else
          opc = HEX64(28000000, 00000004);
@@ -1465,8 +1471,8 @@ CodeEmitterNVC0::emitMOV(const Instruction *i)
    } else {
       uint32_t imm;
 
-      if (i->src[0].getFile() == FILE_IMMEDIATE) {
-         imm = SDATA(i->src[0]).u32;
+      if (i->src(0).getFile() == FILE_IMMEDIATE) {
+         imm = SDATA(i->src(0)).u32;
          if (imm & 0xfff00000) {
             assert(!(imm & 0x000fffff));
             code[0] = 0x00000318 | imm;
@@ -1476,9 +1482,9 @@ CodeEmitterNVC0::emitMOV(const Instruction *i)
          }
       } else {
          code[0] = 0x0028;
-         emitShortSrc2(i->src[0]);
+         emitShortSrc2(i->src(0));
       }
-      defId(i->def[0], 14);
+      defId(i->def(0), 14);
 
       emitPredicate(i);
    }
@@ -1498,7 +1504,7 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
 
    // assert that instructions with multiple defs don't corrupt registers
    for (int d = 0; insn->defExists(d); ++d)
-      assert(insn->asTex() || insn->def[d].rep()->reg.data.id >= 0);
+      assert(insn->asTex() || insn->def(d).rep()->reg.data.id >= 0);
 
    switch (insn->op) {
    case OP_MOV:
@@ -1643,10 +1649,10 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       emitQUADOP(insn, insn->subOp, insn->lanes);
       break;
    case OP_DFDX:
-      emitQUADOP(insn, insn->src[0].mod.neg() ? 0x66 : 0x99, 0x4);
+      emitQUADOP(insn, insn->src(0).mod.neg() ? 0x66 : 0x99, 0x4);
       break;
    case OP_DFDY:
-      emitQUADOP(insn, insn->src[0].mod.neg() ? 0x5a : 0xa5, 0x5);
+      emitQUADOP(insn, insn->src(0).mod.neg() ? 0x5a : 0xa5, 0x5);
       break;
    case OP_POPCNT:
       emitPOPC(insn);
@@ -1705,33 +1711,33 @@ CodeEmitterNVC0::getMinEncodingSize(const Instruction *i) const
    }
 
    for (int s = 0; i->srcExists(s); ++s) {
-      if (i->src[s].isIndirect(0))
+      if (i->src(s).isIndirect(0))
          return 8;
 
-      if (i->src[s].getFile() == FILE_MEMORY_CONST) {
-         if (SDATA(i->src[s]).offset >= 0x100)
+      if (i->src(s).getFile() == FILE_MEMORY_CONST) {
+         if (SDATA(i->src(s)).offset >= 0x100)
             return 8;
          if (i->getSrc(s)->reg.fileIndex > 1 &&
              i->getSrc(s)->reg.fileIndex != 16)
              return 8;
       } else
-      if (i->src[s].getFile() == FILE_IMMEDIATE) {
+      if (i->src(s).getFile() == FILE_IMMEDIATE) {
          if (i->dType == TYPE_F32) {
-            if (SDATA(i->src[s]).u32 >= 0x100)
+            if (SDATA(i->src(s)).u32 >= 0x100)
                return 8;
          } else {
-            if (SDATA(i->src[s]).u32 > 0xff)
+            if (SDATA(i->src(s)).u32 > 0xff)
                return 8;
          }
       }
 
       if (i->op == OP_CVT)
          continue;
-      if (i->src[s].mod != Modifier(0)) {
-         if (i->src[s].mod == Modifier(NV50_IR_MOD_ABS))
+      if (i->src(s).mod != Modifier(0)) {
+         if (i->src(s).mod == Modifier(NV50_IR_MOD_ABS))
             if (i->op != OP_RSQ)
                return 8;
-         if (i->src[s].mod == Modifier(NV50_IR_MOD_NEG))
+         if (i->src(s).mod == Modifier(NV50_IR_MOD_NEG))
             if (i->op != OP_ADD || s != 0)
                return 8;
       }

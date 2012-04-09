@@ -385,8 +385,6 @@ public:
    ValueRef(const ValueRef&);
    ~ValueRef();
 
-   inline ValueRef& operator=(Value *val) { this->set(val); return *this; }
-
    inline bool exists() const { return value != NULL; }
 
    void set(Value *);
@@ -408,7 +406,7 @@ public:
 
 public:
    Modifier mod;
-   int8_t indirect[2]; // >= 0 if relative to lvalue in insn->src[indirect[i]]
+   int8_t indirect[2]; // >= 0 if relative to lvalue in insn->src(indirect[i])
    uint8_t swizzle;
 
    bool usedAsPtr; // for printing
@@ -424,8 +422,6 @@ public:
    ValueDef();
    ValueDef(const ValueDef&);
    ~ValueDef();
-
-   inline ValueDef& operator=(Value *val) { this->set(val); return *this; }
 
    inline bool exists() const { return value != NULL; }
 
@@ -460,6 +456,8 @@ public:
 
    virtual bool equals(const Value *, bool strict = false) const;
    virtual bool interfers(const Value *) const;
+
+   inline Value *rep() const { return join; }
 
    inline Instruction *getUniqueInsn() const;
    inline Instruction *getInsn() const; // use when uniqueness is certain
@@ -584,17 +582,22 @@ public:
    void swapSources(int a, int b);
    bool setIndirect(int s, int dim, Value *);
 
-   inline Value *getDef(int d) const { return def[d].get(); }
-   inline Value *getSrc(int s) const { return src[s].get(); }
+   inline ValueRef& src(int s) { return srcs[s]; }
+   inline ValueDef& def(int s) { return defs[s]; }
+   inline const ValueRef& src(int s) const { return srcs[s]; }
+   inline const ValueDef& def(int s) const { return defs[s]; }
+
+   inline Value *getDef(int d) const { return defs[d].get(); }
+   inline Value *getSrc(int s) const { return srcs[s].get(); }
    inline Value *getIndirect(int s, int dim) const;
 
    inline bool defExists(unsigned d) const
    {
-      return d < def.size() && def[d].exists();
+      return d < defs.size() && defs[d].exists();
    }
    inline bool srcExists(unsigned s) const
    {
-      return s < src.size() && src[s].exists();
+      return s < srcs.size() && srcs[s].exists();
    }
 
    inline bool constrainedDefs() const { return defExists(1); }
@@ -606,7 +609,9 @@ public:
    inline void setFlagsSrc(int s, Value *);
    inline void setFlagsDef(int d, Value *);
 
+   unsigned int defCount() const { return defs.size(); };
    unsigned int defCount(unsigned int mask) const;
+   unsigned int srcCount() const { return srcs.size(); };
    unsigned int srcCount(unsigned int mask) const;
 
    // save & remove / set indirect[0,1] and predicate source
@@ -671,10 +676,11 @@ public:
    int8_t flagsDef;
    int8_t flagsSrc;
 
-   std::deque<ValueDef> def; // no gaps !
-   std::deque<ValueRef> src; // no gaps !
-
    BasicBlock *bb;
+
+protected:
+   std::deque<ValueDef> defs; // no gaps !
+   std::deque<ValueRef> srcs; // no gaps !
 
    // instruction specific methods:
    // (don't want to subclass, would need more constructors and memory pools)

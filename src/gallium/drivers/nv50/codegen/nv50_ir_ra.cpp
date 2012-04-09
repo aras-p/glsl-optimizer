@@ -322,7 +322,7 @@ RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
       }
    }
 
-   // insert MOVs (phi->src[j] should stem from j-th in-BB)
+   // insert MOVs (phi->src(j) should stem from j-th in-BB)
    int j = 0;
    for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
       pb = BasicBlock::get(ei.getNode());
@@ -443,7 +443,7 @@ RegAlloc::BuildIntervalsPass::visit(BasicBlock *bb)
          bb->liveSet.clr(i->getDef(0)->id);
 
          for (int s = 0; i->srcExists(s); ++s) {
-            assert(i->src[s].getInsn());
+            assert(i->src(s).getInsn());
             if (i->getSrc(s)->getUniqueInsn()->bb == bb) // XXX: reachableBy ?
                bb->liveSet.set(i->getSrc(s)->id);
             else
@@ -610,7 +610,7 @@ RegAlloc::allocateConstrainedValues()
       assert(vecSize <= 4);
 
       for (int c = 0; c < vecSize; ++c)
-         defs[c] = i->def[c].rep();
+         defs[c] = i->def(c).rep();
 
       if (defs[0]->reg.data.id >= 0) {
          for (int c = 1; c < vecSize; ++c) {
@@ -960,8 +960,8 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
             addConstraint(i, 1, s - 1);
       } else
       if (i->op == OP_LOAD) {
-         if (i->src[0].isIndirect(0) && typeSizeof(i->dType) >= 8)
-            addHazard(i, i->src[0].getIndirect(0));
+         if (i->src(0).isIndirect(0) && typeSizeof(i->dType) >= 8)
+            addHazard(i, i->src(0).getIndirect(0));
       }
    }
    return true;
@@ -979,7 +979,7 @@ RegAlloc::InsertConstraintsPass::insertConstraintMoves()
          if (!detectConflict(cst, s))
              continue;
          Instruction *mov = new_Instruction(func, OP_MOV,
-                                            typeOfSize(cst->src[s].getSize()));
+                                            typeOfSize(cst->src(s).getSize()));
          mov->setSrc(0, cst->getSrc(s));
          mov->setDef(0, new_LValue(func, FILE_GPR));
          cst->setSrc(s, mov->getDef(0));

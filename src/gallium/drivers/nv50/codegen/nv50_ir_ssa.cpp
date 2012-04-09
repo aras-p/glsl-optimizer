@@ -433,13 +433,13 @@ void RenamePass::search(BasicBlock *bb)
          }
       }
       for (d = 0; stmt->defExists(d); ++d) {
-         lval = stmt->def[d].get()->asLValue();
+         lval = stmt->def(d).get()->asLValue();
          assert(lval);
-         stmt->def[d].setSSA(
+         stmt->def(d).setSSA(
             new_LValue(func, targ->nativeFile(lval->reg.file)));
-         stmt->def[d].get()->reg.size = lval->reg.size;
-         stmt->def[d].get()->reg.data.id = lval->reg.data.id;
-         stack[lval->id].push(stmt->def[d].get());
+         stmt->def(d).get()->reg.size = lval->reg.size;
+         stmt->def(d).get()->reg.data.id = lval->reg.data.id;
+         stack[lval->id].push(stmt->def(d).get());
       }
    }
 
@@ -469,7 +469,7 @@ void RenamePass::search(BasicBlock *bb)
 
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
       for (d = 0; stmt->defExists(d); ++d)
-         stack[stmt->def[d].preSSA()->id].pop();
+         stack[stmt->def(d).preSSA()->id].pop();
    }
 }
 

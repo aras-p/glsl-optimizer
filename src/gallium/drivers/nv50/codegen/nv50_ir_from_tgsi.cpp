@@ -1553,8 +1553,8 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
 
    if (texi->op == OP_TXD) {
       for (c = 0; c < tgt.getDim(); ++c) {
-         texi->dPdx[c] = fetchSrc(Dx >> 4, (Dx & 3) + c);
-         texi->dPdy[c] = fetchSrc(Dy >> 4, (Dy & 3) + c);
+         texi->dPdx[c].set(fetchSrc(Dx >> 4, (Dx & 3) + c));
+         texi->dPdy[c].set(fetchSrc(Dy >> 4, (Dy & 3) + c));
       }
    }
 

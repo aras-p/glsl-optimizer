@@ -388,7 +388,7 @@ bool
 TargetNVC0::insnCanLoad(const Instruction *i, int s,
                         const Instruction *ld) const
 {
-   DataFile sf = ld->src[0].getFile();
+   DataFile sf = ld->src(0).getFile();
 
    // immediate 0 can be represented by GPR $r63
    if (sf == FILE_IMMEDIATE && ld->getSrc(0)->reg.data.u64 == 0)
@@ -400,16 +400,16 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
       return false;
 
    // indirect loads can only be done by OP_LOAD/VFETCH/INTERP on nvc0
-   if (ld->src[0].isIndirect(0))
+   if (ld->src(0).isIndirect(0))
       return false;
 
    for (int k = 0; i->srcExists(k); ++k) {
-      if (i->src[k].getFile() == FILE_IMMEDIATE) {
+      if (i->src(k).getFile() == FILE_IMMEDIATE) {
          if (i->getSrc(k)->reg.data.u64 != 0)
             return false;
       } else
-      if (i->src[k].getFile() != FILE_GPR &&
-          i->src[k].getFile() != FILE_PREDICATE) {
+      if (i->src(k).getFile() != FILE_GPR &&
+          i->src(k).getFile() != FILE_PREDICATE) {
          return false;
       }
    }
@@ -478,12 +478,12 @@ TargetNVC0::isModSupported(const Instruction *insn, int s, Modifier mod) const
       case OP_XOR:
          break;
       case OP_ADD:
-         if (insn->src[s ? 0 : 1].mod.neg())
+         if (insn->src(s ? 0 : 1).mod.neg())
             return false;
          break;
       case OP_SUB:
          if (s == 0)
-            return insn->src[1].mod.neg() ? false : true;
+            return insn->src(1).mod.neg() ? false : true;
          break;
       default:
          return false;

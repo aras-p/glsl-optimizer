@@ -220,7 +220,7 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
       if (i->op == OP_EMIT || i->op == OP_RESTART) {
          if (!i->getDef(0)->refCount())
             i->setDef(0, NULL);
-         if (i->src[0].getFile() == FILE_IMMEDIATE)
+         if (i->src(0).getFile() == FILE_IMMEDIATE)
             i->setSrc(0, r63); // initial value must be 0
       } else
       if (i->isNop()) {
@@ -421,7 +421,7 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
    int arg = txd->tex.target.getDim() + txd->tex.target.isArray();
 
    handleTEX(txd);
-   while (txd->src[arg].exists())
+   while (txd->src(arg).exists())
       ++arg;
 
    txd->tex.derivAll = true;
@@ -431,10 +431,10 @@ NVC0LoweringPass::handleTXD(TexInstruction *txd)
    assert(arg <= 4); // at most s/t/array, x, y, offset
 
    for (int c = 0; c < dim; ++c) {
-      txd->src[arg + c * 2 + 0].set(txd->dPdx[c]);
-      txd->src[arg + c * 2 + 1].set(txd->dPdy[c]);
-      txd->dPdx[c] = NULL;
-      txd->dPdy[c] = NULL;
+      txd->src(arg + c * 2 + 0).set(txd->dPdx[c]);
+      txd->src(arg + c * 2 + 1).set(txd->dPdy[c]);
+      txd->dPdx[c].set(NULL);
+      txd->dPdy[c].set(NULL);
    }
    return true;
 }
@@ -600,10 +600,10 @@ NVC0LoweringPass::handleEXPORT(Instruction *i)
    if (prog->getType() == Program::TYPE_FRAGMENT) {
       int id = i->getSrc(0)->reg.data.offset / 4;
 
-      if (i->src[0].isIndirect(0)) // TODO, ugly
+      if (i->src(0).isIndirect(0)) // TODO, ugly
          return false;
       i->op = OP_MOV;
-      i->src[0].set(i->src[1]);
+      i->src(0).set(i->src(1));
       i->setSrc(1, NULL);
       i->setDef(0, new_LValue(func, FILE_GPR));
       i->getDef(0)->reg.data.id = id;
@@ -698,7 +698,7 @@ NVC0LoweringPass::visit(Instruction *i)
    case OP_WRSV:
       return handleWRSV(i);
    case OP_LOAD:
-      if (i->src[0].getFile() == FILE_SHADER_INPUT) {
+      if (i->src(0).getFile() == FILE_SHADER_INPUT) {
          i->op = OP_VFETCH;
          assert(prog->getType() != Program::TYPE_FRAGMENT);
       }

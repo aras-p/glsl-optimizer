@@ -418,7 +418,7 @@ void Instruction::print() const
       }
       if (pos > pre + 1)
          SPACE();
-      pos += src[predSrc].get()->print(&buf[pos], BUFSZ - pos);
+      pos += getSrc(predSrc)->print(&buf[pos], BUFSZ - pos);
       PRINT(" %s", colour[TXT_INSN]);
    }
 
@@ -455,7 +455,7 @@ void Instruction::print() const
       PRINT(" {");
    for (d = 0; defExists(d); ++d) {
       SPACE();
-      pos += def[d].get()->print(&buf[pos], size - pos);
+      pos += getDef(d)->print(&buf[pos], size - pos);
    }
    if (d > 1)
       PRINT(" %s}", colour[TXT_INSN]);
@@ -470,19 +470,19 @@ void Instruction::print() const
       PRINT(" %s%s", colour[TXT_INSN], DataTypeStr[sType]);
 
    for (s = 0; srcExists(s); ++s) {
-      if (s == predSrc || src[s].usedAsPtr)
+      if (s == predSrc || src(s).usedAsPtr)
          continue;
       const size_t pre = pos;
       SPACE();
-      pos += src[s].mod.print(&buf[pos], BUFSZ - pos);
+      pos += src(s).mod.print(&buf[pos], BUFSZ - pos);
       if (pos > pre + 1)
          SPACE();
-      if (src[s].isIndirect(0) || src[s].isIndirect(1))
-         pos += src[s].get()->asSym()->print(&buf[pos], BUFSZ - pos,
-                                             getIndirect(s, 0),
-                                             getIndirect(s, 1));
+      if (src(s).isIndirect(0) || src(s).isIndirect(1))
+         pos += getSrc(s)->asSym()->print(&buf[pos], BUFSZ - pos,
+                                          getIndirect(s, 0),
+                                          getIndirect(s, 1));
       else
-         pos += src[s].get()->print(&buf[pos], BUFSZ - pos, sType);
+         pos += getSrc(s)->print(&buf[pos], BUFSZ - pos, sType);
    }
 
    PRINT("%s", colour[TXT_DEFAULT]);

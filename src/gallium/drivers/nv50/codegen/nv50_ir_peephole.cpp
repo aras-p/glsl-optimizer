@@ -40,18 +40,18 @@ Instruction::isNop() const
    if (!fixed && op == OP_NOP)
       return true;
 
-   if (defExists(0) && def[0].rep()->reg.data.id < 0) {
+   if (defExists(0) && def(0).rep()->reg.data.id < 0) {
       for (int d = 1; defExists(d); ++d)
-         if (def[d].rep()->reg.data.id >= 0)
+         if (def(d).rep()->reg.data.id >= 0)
             WARN("part of vector result is unused !\n");
       return true;
    }
 
    if (op == OP_MOV || op == OP_UNION) {
-      if (!def[0].rep()->equals(getSrc(0)))
+      if (!def(0).rep()->equals(getSrc(0)))
          return false;
       if (op == OP_UNION)
-         if (!def[0].rep()->equals(getSrc(1)))
+         if (!def(0).rep()->equals(getSrc(1)))
             return false;
       return true;
    }
@@ -100,7 +100,7 @@ CopyPropagation::visit(BasicBlock *bb)
       si = mov->getSrc(0)->getInsn();
       if (mov->getDef(0)->reg.data.id < 0 && si && si->op != OP_PHI) {
          // propagate
-         mov->def[0].replace(mov->getSrc(0), false);
+         mov->def(0).replace(mov->getSrc(0), false);
          delete_Instruction(prog, mov);
       }
    }
@@ -123,7 +123,7 @@ private:
 bool
 LoadPropagation::isCSpaceLoad(Instruction *ld)
 {
-   return ld && ld->op == OP_LOAD && ld->src[0].getFile() == FILE_MEMORY_CONST;
+   return ld && ld->op == OP_LOAD && ld->src(0).getFile() == FILE_MEMORY_CONST;
 }
 
 bool
@@ -131,7 +131,7 @@ LoadPropagation::isImmd32Load(Instruction *ld)
 {
    if (!ld || (ld->op != OP_MOV) || (typeSizeof(ld->dType) != 4))
       return false;
-   return ld->src[0].getFile() == FILE_IMMEDIATE;
+   return ld->src(0).getFile() == FILE_IMMEDIATE;
 }
 
 void
@@ -140,7 +140,7 @@ LoadPropagation::checkSwapSrc01(Instruction *insn)
    if (!prog->getTarget()->getOpInfo(insn).commutative)
       if (insn->op != OP_SET && insn->op != OP_SLCT)
          return;
-   if (insn->src[1].getFile() != FILE_GPR)
+   if (insn->src(1).getFile() != FILE_GPR)
       return;
 
    Instruction *i0 = insn->getSrc(0)->getInsn();
@@ -190,7 +190,7 @@ LoadPropagation::visit(BasicBlock *bb)
 
          // propagate !
          i->setSrc(s, ld->getSrc(0));
-         if (ld->src[0].isIndirect(0))
+         if (ld->src(0).isIndirect(0))
             i->setIndirect(s, 0, ld->getIndirect(0, 0));
 
          if (ld->getDef(0)->refCount() == 0)
@@ -249,8 +249,8 @@ ConstantFolding::visit(BasicBlock *bb)
       if (i->op == OP_MOV) // continue early, MOV appears frequently
          continue;
 
-      ImmediateValue *src0 = i->srcExists(0) ? i->src[0].getImmediate() : NULL;
-      ImmediateValue *src1 = i->srcExists(1) ? i->src[1].getImmediate() : NULL;
+      ImmediateValue *src0 = i->srcExists(0) ? i->src(0).getImmediate() : NULL;
+      ImmediateValue *src1 = i->srcExists(1) ? i->src(1).getImmediate() : NULL;
 
       if (src0 && src1)
          expr(i, src0, src1);
@@ -372,8 +372,8 @@ ConstantFolding::expr(Instruction *i,
    struct Storage res;
    struct Storage *const a = &imm0.reg, *const b = &imm1.reg;
 
-   i->src[0].mod.applyTo(imm0);
-   i->src[1].mod.applyTo(imm1);
+   i->src(0).mod.applyTo(imm0);
+   i->src(1).mod.applyTo(imm1);
 
    switch (i->op) {
    case OP_MAD:
@@ -474,8 +474,8 @@ ConstantFolding::expr(Instruction *i,
    }
    ++foldCount;
 
-   i->src[0].mod = Modifier(0);
-   i->src[1].mod = Modifier(0);
+   i->src(0).mod = Modifier(0);
+   i->src(1).mod = Modifier(0);
 
    i->setSrc(0, new_ImmediateValue(i->bb->getProgram(), res.data.u32));
    i->setSrc(1, NULL);
@@ -486,12 +486,11 @@ ConstantFolding::expr(Instruction *i,
       i->op = OP_ADD;
 
       i->setSrc(1, i->getSrc(0));
+      i->src(1).mod = i->src(2).mod;
       i->setSrc(0, i->getSrc(2));
       i->setSrc(2, NULL);
 
-      i->src[1].mod = i->src[2].mod;
-
-      src0 = i->src[0].getImmediate();
+      src0 = i->src(0).getImmediate();
       if (src0)
          expr(i, src0, i->getSrc(1)->asImm());
    } else {
@@ -526,7 +525,7 @@ ConstantFolding::unary(Instruction *i, const ImmediateValue &imm)
    }
    i->op = OP_MOV;
    i->setSrc(0, new_ImmediateValue(i->bb->getProgram(), res.data.f32));
-   i->src[0].mod = Modifier(0);
+   i->src(0).mod = Modifier(0);
 }
 
 void
@@ -547,28 +546,28 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
          mul1 = insn;
       if (mul1) {
          int s1 = 0;
-         ImmediateValue *imm = mul1->src[s1].getImmediate();
+         ImmediateValue *imm = mul1->src(s1).getImmediate();
          if (!imm) {
             s1 = 1;
-            imm = mul1->src[s1].getImmediate();
+            imm = mul1->src(s1).getImmediate();
          }
          if (imm) {
             bld.setPosition(mul1, false);
             // a = mul r, imm1
             // d = mul a, imm2 -> d = mul r, (imm1 * imm2)
-            ImmediateValue imm1(mul1->src[s1].getImmediate(), TYPE_F32);
-            mul1->src[s1].mod.applyTo(imm1);
-            mul1->src[s1].mod = Modifier(0);
+            ImmediateValue imm1(mul1->src(s1).getImmediate(), TYPE_F32);
+            mul1->src(s1).mod.applyTo(imm1);
+            mul1->src(s1).mod = Modifier(0);
             mul1->setSrc(s1, bld.loadImm(NULL, f * imm1.reg.data.f32));
-            mul2->def[0].replace(mul1->getDef(0), false);
+            mul2->def(0).replace(mul1->getDef(0), false);
          } else
          if (prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
             // c = mul a, b
             // d = mul c, imm   -> d = mul_x_imm a, b
             mul1->postFactor = e;
-            mul2->def[0].replace(mul1->getDef(0), false);
+            mul2->def(0).replace(mul1->getDef(0), false);
             if (f < 0)
-               mul1->src[0].mod = mul1->src[0].mod ^ Modifier(NV50_IR_MOD_NEG);
+               mul1->src(0).mod = mul1->src(0).mod ^ Modifier(NV50_IR_MOD_NEG);
          }
          return;
       }
@@ -585,13 +584,13 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
       s2 = insn->getSrc(0) == mul1->getDef(0) ? 0 : 1;
       t2 = s2 ? 0 : 1;
       if (insn->op == OP_MUL && insn->dType == TYPE_F32)
-         if (!insn->src[t2].getImmediate())
+         if (!insn->src(t2).getImmediate())
             mul2 = insn;
       if (mul2 && prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
          mul2->postFactor = e;
-         mul2->setSrc(s2, mul1->src[t]);
+         mul2->setSrc(s2, mul1->src(t));
          if (f < 0)
-            mul2->src[s2].mod = mul2->src[s2].mod ^ Modifier(NV50_IR_MOD_NEG);
+            mul2->src(s2).mod = mul2->src(s2).mod ^ Modifier(NV50_IR_MOD_NEG);
       }
    }
 }
@@ -604,7 +603,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
 
    ImmediateValue imm(src, i->sType);
 
-   i->src[s].mod.applyTo(imm);
+   i->src(s).mod.applyTo(imm);
 
    switch (i->op) {
    case OP_MUL:
@@ -618,23 +617,23 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       } else
       if (imm.isInteger(1) || imm.isInteger(-1)) {
          if (imm.isNegative())
-            i->src[t].mod = i->src[t].mod ^ Modifier(NV50_IR_MOD_NEG);
-         i->op = i->src[t].mod.getOp();
+            i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
+         i->op = i->src(t).mod.getOp();
          if (s == 0) {
             i->setSrc(0, i->getSrc(1));
-            i->src[0].mod = i->src[1].mod;
-            i->src[1].mod = 0;
+            i->src(0).mod = i->src(1).mod;
+            i->src(1).mod = 0;
          }
          if (i->op != OP_CVT)
-            i->src[0].mod = 0;
+            i->src(0).mod = 0;
          i->setSrc(1, NULL);
       } else
       if (imm.isInteger(2) || imm.isInteger(-2)) {
          if (imm.isNegative())
-            i->src[t].mod = i->src[t].mod ^ Modifier(NV50_IR_MOD_NEG);
+            i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = OP_ADD;
          i->setSrc(s, i->getSrc(t));
-         i->src[s].mod = i->src[t].mod;
+         i->src(s).mod = i->src(t).mod;
       } else
       if (!isFloatType(i->sType) && !imm.isNegative() && imm.isPow2()) {
          i->op = OP_SHL;
@@ -646,12 +645,12 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       if (imm.isInteger(0)) {
          if (s == 0) {
             i->setSrc(0, i->getSrc(1));
-            i->src[0].mod = i->src[1].mod;
+            i->src(0).mod = i->src(1).mod;
          }
          i->setSrc(1, NULL);
-         i->op = i->src[0].mod.getOp();
+         i->op = i->src(0).mod.getOp();
          if (i->op != OP_CVT)
-            i->src[0].mod = Modifier(0);
+            i->src(0).mod = Modifier(0);
       }
       break;
 
@@ -747,7 +746,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
    {
       CmpInstruction *si = findOriginForTestWithZero(i->getSrc(t));
       CondCode cc, ccZ;
-      if (i->src[t].mod != Modifier(0))
+      if (i->src(t).mod != Modifier(0))
          return;
       if (imm.reg.data.u32 != 0 || !si || si->op != OP_SET)
          return;
@@ -766,22 +765,22 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
          return;
       }
       i->asCmp()->setCond = cc;
-      i->setSrc(0, si->src[0]);
-      i->setSrc(1, si->src[1]);
+      i->setSrc(0, si->src(0));
+      i->setSrc(1, si->src(1));
       i->sType = si->sType;
    }
       break;
 
    case OP_SHL:
    {
-      if (s != 1 || i->src[0].mod != Modifier(0))
+      if (s != 1 || i->src(0).mod != Modifier(0))
          break;
       // try to concatenate shifts
       Instruction *si = i->getSrc(0)->getInsn();
       if (!si ||
-          si->op != OP_SHL || si->src[1].mod != Modifier(0))
+          si->op != OP_SHL || si->src(1).mod != Modifier(0))
          break;
-      ImmediateValue *siImm = si->src[1].getImmediate();
+      ImmediateValue *siImm = si->src(1).getImmediate();
       if (siImm) {
          bld.setPosition(i, false);
          i->setSrc(0, si->getSrc(0));
@@ -834,7 +833,7 @@ ModifierFolding::visit(BasicBlock *bb)
       if (0 && i->op == OP_SUB) {
          // turn "sub" into "add neg" (do we really want this ?)
          i->op = OP_ADD;
-         i->src[0].mod = i->src[0].mod ^ Modifier(NV50_IR_MOD_NEG);
+         i->src(0).mod = i->src(0).mod ^ Modifier(NV50_IR_MOD_NEG);
       }
 
       for (int s = 0; s < 3 && i->srcExists(s); ++s) {
@@ -854,9 +853,9 @@ ModifierFolding::visit(BasicBlock *bb)
          }
          if ((mod = Modifier(mi->op)) == Modifier(0))
             continue;
-         mod = mod * mi->src[0].mod;
+         mod = mod * mi->src(0).mod;
 
-         if ((i->op == OP_ABS) || i->src[s].mod.abs()) {
+         if ((i->op == OP_ABS) || i->src(s).mod.abs()) {
             // abs neg [abs] = abs
             mod = mod & Modifier(~(NV50_IR_MOD_NEG | NV50_IR_MOD_ABS));
          } else
@@ -873,7 +872,7 @@ ModifierFolding::visit(BasicBlock *bb)
 
          if (target->isModSupported(i, s, mod)) {
             i->setSrc(s, mi->getSrc(0));
-            i->src[s].mod = i->src[s].mod * mod;
+            i->src(s).mod = i->src(s).mod * mod;
          }
       }
 
@@ -945,10 +944,10 @@ AlgebraicOpt::handleADD(Instruction *add)
    if (src->getInsn()->postFactor)
       return;
 
-   mod[0] = add->src[0].mod;
-   mod[1] = add->src[1].mod;
-   mod[2] = src->getUniqueInsn()->src[0].mod;
-   mod[3] = src->getUniqueInsn()->src[1].mod;
+   mod[0] = add->src(0).mod;
+   mod[1] = add->src(1).mod;
+   mod[2] = src->getUniqueInsn()->src(0).mod;
+   mod[3] = src->getUniqueInsn()->src(1).mod;
 
    if (((mod[0] | mod[1]) | (mod[2] | mod[3])) & Modifier(~NV50_IR_MOD_NEG))
       return;
@@ -956,12 +955,12 @@ AlgebraicOpt::handleADD(Instruction *add)
    add->op = OP_MAD;
    add->subOp = src->getInsn()->subOp; // potentially mul-high
 
-   add->setSrc(2, add->src[s ? 0 : 1]);
+   add->setSrc(2, add->src(s ? 0 : 1));
 
    add->setSrc(0, src->getInsn()->getSrc(0));
-   add->src[0].mod = mod[2] ^ mod[s];
+   add->src(0).mod = mod[2] ^ mod[s];
    add->setSrc(1, src->getInsn()->getSrc(1));
-   add->src[1].mod = mod[3];
+   add->src(1).mod = mod[3];
 }
 
 void
@@ -972,12 +971,12 @@ AlgebraicOpt::handleMINMAX(Instruction *minmax)
 
    if (src0 != src1 || src0->reg.file != FILE_GPR)
       return;
-   if (minmax->src[0].mod == minmax->src[1].mod) {
-      if (minmax->src[0].mod) {
+   if (minmax->src(0).mod == minmax->src(1).mod) {
+      if (minmax->src(0).mod) {
          minmax->op = OP_CVT;
          minmax->setSrc(1, NULL);
       } else {
-         minmax->def[0].replace(minmax->getSrc(0), false);
+         minmax->def(0).replace(minmax->getSrc(0), false);
          minmax->bb->remove(minmax);
       }
    } else {
@@ -997,7 +996,7 @@ AlgebraicOpt::handleRCP(Instruction *rcp)
    Instruction *si = rcp->getSrc(0)->getUniqueInsn();
 
    if (si && si->op == OP_RCP) {
-      Modifier mod = rcp->src[0].mod * si->src[0].mod;
+      Modifier mod = rcp->src(0).mod * si->src(0).mod;
       rcp->op = mod.getOp();
       rcp->setSrc(0, si->getSrc(0));
    }
@@ -1028,11 +1027,11 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
       return;
 
    if (src0 == src1) {
-      if (logop->src[0].mod != Modifier(0) ||
-          logop->src[1].mod != Modifier(0))
+      if (logop->src(0).mod != Modifier(0) ||
+          logop->src(1).mod != Modifier(0))
          return;
       if (logop->op == OP_AND || logop->op == OP_OR) {
-         logop->def[0].replace(logop->getSrc(0), false);
+         logop->def(0).replace(logop->getSrc(0), false);
          delete_Instruction(prog, logop);
       }
    } else {
@@ -1092,12 +1091,12 @@ void
 AlgebraicOpt::handleCVT(Instruction *cvt)
 {
    if (cvt->sType != TYPE_F32 ||
-       cvt->dType != TYPE_S32 || cvt->src[0].mod != Modifier(0))
+       cvt->dType != TYPE_S32 || cvt->src(0).mod != Modifier(0))
       return;
    Instruction *insn = cvt->getSrc(0)->getInsn();
    if (!insn || insn->op != OP_NEG || insn->dType != TYPE_F32)
       return;
-   if (insn->src[0].mod != Modifier(0))
+   if (insn->src(0).mod != Modifier(0))
       return;
    insn = insn->getSrc(0)->getInsn();
    if (!insn || insn->op != OP_SET || insn->dType != TYPE_F32)
@@ -1386,8 +1385,8 @@ MemoryOpt::Record **
 MemoryOpt::getList(const Instruction *insn)
 {
    if (insn->op == OP_LOAD || insn->op == OP_VFETCH)
-      return &loads[insn->src[0].getFile()];
-   return &stores[insn->src[0].getFile()];
+      return &loads[insn->src(0).getFile()];
+   return &stores[insn->src(0).getFile()];
 }
 
 void
@@ -1458,7 +1457,7 @@ MemoryOpt::replaceLdFromSt(Instruction *ld, Record *rec)
          return false;
       if (st->getSrc(s)->reg.file != FILE_GPR)
          return false;
-      ld->def[d].replace(st->getSrc(s), false);
+      ld->def(d).replace(st->getSrc(s), false);
    }
    ld->bb->remove(ld);
    return true;
@@ -1481,7 +1480,7 @@ MemoryOpt::replaceLdFromLd(Instruction *ldE, Record *rec)
    for (dE = 0; ldE->defExists(dE) && ldR->defExists(dR); ++dE, ++dR) {
       if (ldE->getDef(dE)->reg.size != ldR->getDef(dR)->reg.size)
          return false;
-      ldE->def[dE].replace(ldR->getDef(dR), false);
+      ldE->def(dE).replace(ldR->getDef(dR), false);
    }
 
    delete_Instruction(prog, ldE);
@@ -1567,7 +1566,7 @@ MemoryOpt::Record::overlaps(const Instruction *ldst) const
 void
 MemoryOpt::lockStores(Instruction *const ld)
 {
-   for (Record *r = stores[ld->src[0].getFile()]; r; r = r->next)
+   for (Record *r = stores[ld->src(0).getFile()]; r; r = r->next)
       if (!r->locked && r->overlaps(ld))
          r->locked = true;
 }
@@ -1579,7 +1578,7 @@ void
 MemoryOpt::purgeRecords(Instruction *const st, DataFile f)
 {
    if (st)
-      f = st->src[0].getFile();
+      f = st->src(0).getFile();
 
    for (Record *r = loads[f]; r; r = r->next)
       if (!st || r->overlaps(st))
@@ -1639,7 +1638,7 @@ MemoryOpt::runOpt(BasicBlock *bb)
          continue;
 
       if (isLoad) {
-         DataFile file = ldst->src[0].getFile();
+         DataFile file = ldst->src(0).getFile();
 
          // if ld l[]/g[] look for previous store to eliminate the reload
          if (file == FILE_MEMORY_GLOBAL || file == FILE_MEMORY_LOCAL) {
@@ -1712,11 +1711,11 @@ FlatteningPass::isConstantCondition(Value *pred)
       if (ld) {
          if (ld->op != OP_MOV && ld->op != OP_LOAD)
             return false;
-         if (ld->src[0].isIndirect(0))
+         if (ld->src(0).isIndirect(0))
             return false;
-         file = ld->src[0].getFile();
+         file = ld->src(0).getFile();
       } else {
-         file = insn->src[s].getFile();
+         file = insn->src(s).getFile();
          // catch $r63 on NVC0
          if (file == FILE_GPR && insn->getSrc(s)->reg.data.id > prog->maxGPR)
             file = FILE_IMMEDIATE;
@@ -1991,7 +1990,7 @@ Instruction::isResultEqual(const Instruction *that) const
    for (s = 0; this->srcExists(s); ++s) {
       if (!that->srcExists(s))
          return false;
-      if (this->src[s].mod != that->src[s].mod)
+      if (this->src(s).mod != that->src(s).mod)
          return false;
       if (!this->getSrc(s)->equals(that->getSrc(s), true))
          return false;
@@ -2000,7 +1999,7 @@ Instruction::isResultEqual(const Instruction *that) const
       return false;
 
    if (op == OP_LOAD || op == OP_VFETCH) {
-      switch (src[0].getFile()) {
+      switch (src(0).getFile()) {
       case FILE_MEMORY_CONST:
       case FILE_SHADER_INPUT:
          return true;
@@ -2052,7 +2051,7 @@ LocalCSE::tryReplace(Instruction **ptr, Instruction *i)
    if (!old->isResultEqual(i))
       return false;
    for (int d = 0; old->defExists(d); ++d)
-      old->def[d].replace(i->getDef(d), false);
+      old->def(d).replace(i->getDef(d), false);
    delete_Instruction(prog, old);
    *ptr = NULL;
    return true;
