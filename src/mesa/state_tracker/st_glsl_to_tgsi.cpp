@@ -2815,6 +2815,10 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    indirect_addr_temps = false;
    indirect_addr_consts = false;
    mem_ctx = ralloc_context(NULL);
+   ctx = NULL;
+   prog = NULL;
+   shader_program = NULL;
+   options = NULL;
 }
 
 glsl_to_tgsi_visitor::~glsl_to_tgsi_visitor()
