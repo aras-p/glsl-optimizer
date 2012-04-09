@@ -283,6 +283,9 @@ int LValue::print(char *buf, size_t size, DataType ty) const
       else
       if (reg.size == 16)
          postFix = "q";
+      else
+      if (reg.size == 12)
+         postFix = "t";
       break;
    case FILE_PREDICATE:
       r = 'p'; col = TXT_REGISTER;

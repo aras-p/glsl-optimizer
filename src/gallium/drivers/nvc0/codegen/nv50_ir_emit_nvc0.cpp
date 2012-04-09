@@ -1009,9 +1009,7 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    if (i->tex.target.isShadow())
       code[1] |= 1 << 24;
 
-   int src1 = i->tex.target.getArgCount();
-   if (i->op == OP_TXD && i->tex.useOffsets)
-      ++src1;
+   const int src1 = MAX2(i->predSrc + 1, 1); // if predSrc == 1, no 2nd src
 
    if (i->srcExists(src1) && i->src(src1).getFile() == FILE_IMMEDIATE) {
       // lzero
@@ -1184,7 +1182,7 @@ CodeEmitterNVC0::emitVFETCH(const Instruction *i)
 
    emitPredicate(i);
 
-   code[0] |= (i->defCount(0xf) - 1) << 5;
+   code[0] |= ((i->getDef(0)->reg.size / 4) - 1) << 5;
 
    defId(i->def(0), 14);
    srcId(i->src(0).getIndirect(0), 20);

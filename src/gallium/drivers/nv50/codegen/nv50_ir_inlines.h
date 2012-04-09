@@ -192,6 +192,11 @@ Instruction *Value::getUniqueInsn() const
    return defs.front()->getInsn();
 }
 
+inline bool Instruction::constrainedDefs() const
+{
+   return defExists(1) || op == OP_UNION;
+}
+
 Value *Instruction::getIndirect(int s, int dim) const
 {
    return srcs[s].isIndirect(dim) ? getSrc(srcs[s].indirect[dim]) : NULL;

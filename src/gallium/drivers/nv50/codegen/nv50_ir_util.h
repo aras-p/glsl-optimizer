@@ -137,6 +137,8 @@ public:
       (__listA)->prev = prevB;                  \
    } while(0)
 
+#define DLLIST_EMPTY(__list) ((__list)->next == (__list))
+
 #define DLLIST_FOR_EACH(list, it) \
    for (DLList::Iterator (it) = (list)->iterator(); !(it).end(); (it).next())
 
@@ -416,17 +418,22 @@ class Interval
 {
 public:
    Interval() : head(0), tail(0) { }
+   Interval(const Interval&);
    ~Interval();
 
    bool extend(int, int);
+   void insert(const Interval&);
    void unify(Interval&); // clears source interval
    void clear();
 
-   inline int begin() { return head ? head->bgn : -1; }
-   inline int end() { checkTail(); return tail ? tail->end : -1; }
+   inline int begin() const { return head ? head->bgn : -1; }
+   inline int end() const { checkTail(); return tail ? tail->end : -1; }
    inline bool isEmpty() const { return !head; }
    bool overlaps(const Interval&) const;
-   bool contains(int pos);
+   bool contains(int pos) const;
+
+   inline int extent() const { return end() - begin(); }
+   int length() const;
 
    void print() const;
 
@@ -477,6 +484,7 @@ public:
    }
 
    bool allocate(unsigned int nBits, bool zero);
+   bool resize(unsigned int nBits); // keep old data, zero additional bits
 
    inline unsigned int getSize() const { return size; }
 
@@ -489,11 +497,28 @@ public:
       assert(i < size);
       data[i / 32] |= 1 << (i % 32);
    }
+   // NOTE: range may not cross 32 bit boundary (implies n <= 32)
+   inline void setRange(unsigned int i, unsigned int n)
+   {
+      assert((i + n) <= size && (((i % 32) + n) <= 32));
+      data[i / 32] |= ((1 << n) - 1) << (i % 32);
+   }
+   inline void setMask(unsigned int i, uint32_t m)
+   {
+      assert(i < size);
+      data[i / 32] |= m;
+   }
 
    inline void clr(unsigned int i)
    {
       assert(i < size);
       data[i / 32] &= ~(1 << (i % 32));
+   }
+   // NOTE: range may not cross 32 bit boundary (implies n <= 32)
+   inline void clrRange(unsigned int i, unsigned int n)
+   {
+      assert((i + n) <= size && (((i % 32) + n) <= 32));
+      data[i / 32] &= ~(((1 << n) - 1) << (i % 32));
    }
 
    inline bool test(unsigned int i) const
@@ -501,6 +526,15 @@ public:
       assert(i < size);
       return data[i / 32] & (1 << (i % 32));
    }
+   // NOTE: range may not cross 32 bit boundary (implies n <= 32)
+   inline bool testRange(unsigned int i, unsigned int n)
+   {
+      assert((i + n) <= size && (((i % 32) + n) <= 32));
+      return data[i / 32] & (((1 << n) - 1) << (i % 32));
+   }
+
+   // Find a range of size (<= 32) clear bits aligned to roundup_pow2(size).
+   int findFreeRange(unsigned int size) const;
 
    BitSet& operator|=(const BitSet&);
 
@@ -513,6 +547,13 @@ public:
    }
 
    void andNot(const BitSet&);
+
+   // bits = (bits | setMask) & ~clrMask
+   inline void periodicMask32(uint32_t setMask, uint32_t clrMask)
+   {
+      for (unsigned int i = 0; i < (size + 31) / 32; ++i)
+         data[i] = (data[i] | setMask) & ~clrMask;
+   }
 
    unsigned int popCount() const;
 

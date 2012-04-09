@@ -2420,6 +2420,7 @@ Program::makeFromTGSI(struct nv50_ir_prog_info *info)
    tgsi::Source src(info);
    if (!src.scanSource())
       return false;
+   tlsSize = info->bin.tlsSpace;
 
    Converter builder(this, &src);
    return builder.run();

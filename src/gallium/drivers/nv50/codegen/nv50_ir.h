@@ -219,6 +219,7 @@ enum DataFile
    FILE_PREDICATE,       // boolean predicate
    FILE_FLAGS,           // zero/sign/carry/overflow bits
    FILE_ADDRESS,
+   LAST_REGISTER_FILE = FILE_ADDRESS,
    FILE_IMMEDIATE,
    FILE_MEMORY_CONST,
    FILE_SHADER_INPUT,
@@ -320,7 +321,7 @@ struct Storage
       float f32;
       double f64;
       int32_t offset; // offset from 0 (base of address space)
-      int32_t id;     // register id (< 0 if virtual/unassigned)
+      int32_t id;     // register id (< 0 if virtual/unassigned, in units <= 4)
       struct {
          SVSemantic sv;
          int index;
@@ -473,8 +474,6 @@ public:
    inline const Symbol *asSym() const;
    inline const ImmediateValue *asImm() const;
 
-   bool coalesce(Value *, bool force = false);
-
    inline bool inFile(DataFile f) { return reg.file == f; }
 
    static inline Value *get(Iterator&);
@@ -506,9 +505,11 @@ public:
    virtual int print(char *, size_t, DataType ty = TYPE_NONE) const;
 
 public:
-   unsigned ssa : 1;
-
-   int affinity;
+   unsigned compMask : 8; // compound/component mask
+   unsigned compound : 1; // used by RA, value involved in split/merge
+   unsigned ssa      : 1;
+   unsigned fixedReg : 1; // set & used by RA, earlier just use (id < 0)
+   unsigned noSpill  : 1; // do not spill (e.g. if spill temporary already)
 };
 
 class Symbol : public Value
@@ -611,7 +612,7 @@ public:
       return s < srcs.size() && srcs[s].exists();
    }
 
-   inline bool constrainedDefs() const { return defExists(1); }
+   inline bool constrainedDefs() const;
 
    bool setPredicate(CondCode ccode, Value *);
    inline Value *getPredicate() const;
@@ -622,9 +623,9 @@ public:
    inline void setFlagsDef(int d, Value *);
 
    unsigned int defCount() const { return defs.size(); };
-   unsigned int defCount(unsigned int mask) const;
+   unsigned int defCount(unsigned int mask, bool singleFile = false) const;
    unsigned int srcCount() const { return srcs.size(); };
-   unsigned int srcCount(unsigned int mask) const;
+   unsigned int srcCount(unsigned int mask, bool singleFile = false) const;
 
    // save & remove / set indirect[0,1] and predicate source
    void takeExtraSources(int s, Value *[3]);
@@ -965,6 +966,11 @@ public:
    uint32_t binPos;
    uint32_t binSize;
 
+   Value *stackPtr;
+
+   uint32_t tlsBase; // base address for l[] space (if no stack pointer is used)
+   uint32_t tlsSize;
+
    ArrayList allBBlocks;
    ArrayList allInsns;
    ArrayList allLValues;
@@ -1036,6 +1042,7 @@ public:
 
    uint32_t *code;
    uint32_t binSize;
+   uint32_t tlsSize; // size required for FILE_MEMORY_LOCAL
 
    int maxGPR;
 

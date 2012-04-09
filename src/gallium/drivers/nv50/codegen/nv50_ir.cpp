@@ -222,66 +222,17 @@ Value::Value()
   reg.size = 4;
 }
 
-bool
-Value::coalesce(Value *jval, bool force)
-{
-   Value *repr = this->join; // new representative
-   Value *jrep = jval->join;
-
-   if (reg.file != jval->reg.file || reg.size != jval->reg.size) {
-      if (!force)
-         return false;
-      ERROR("forced coalescing of values of different sizes/files");
-   }
-
-   if (!force && (repr->reg.data.id != jrep->reg.data.id)) {
-      if (repr->reg.data.id >= 0 &&
-          jrep->reg.data.id >= 0)
-            return false;
-      if (jrep->reg.data.id >= 0) {
-         repr = jval->join;
-         jrep = this->join;
-         jval = this;
-      }
-
-      // need to check all fixed register values of the program for overlap
-      Function *func = defs.front()->getInsn()->bb->getFunction();
-
-      // TODO: put values in by register-id bins per function
-      ArrayList::Iterator iter = func->allLValues.iterator();
-      for (; !iter.end(); iter.next()) {
-         Value *fixed = reinterpret_cast<Value *>(iter.get());
-         assert(fixed);
-         if (fixed->reg.data.id == repr->reg.data.id)
-            if (fixed->livei.overlaps(jrep->livei))
-               return false;
-      }
-   }
-   if (repr->livei.overlaps(jrep->livei)) {
-      if (!force)
-         return false;
-      // do we really want this ? if at all, only for constraint ops
-      INFO("NOTE: forced coalescing with live range overlap\n");
-   }
-
-   for (DefIterator it = jrep->defs.begin(); it != jrep->defs.end(); ++it)
-      (*it)->get()->join = repr;
-
-   repr->defs.insert(repr->defs.end(),
-                     jrep->defs.begin(), jrep->defs.end());
-   repr->livei.unify(jrep->livei);
-
-   assert(repr->join == repr && jval->join == repr);
-   return true;
-}
-
 LValue::LValue(Function *fn, DataFile file)
 {
    reg.file = file;
    reg.size = (file != FILE_PREDICATE) ? 4 : 1;
    reg.data.id = -1;
 
-   affinity = -1;
+   compMask = 0;
+   compound = 0;
+   ssa = 0;
+   fixedReg = 0;
+   noSpill = 0;
 
    fn->add(this, this->id);
 }
@@ -294,7 +245,11 @@ LValue::LValue(Function *fn, LValue *lval)
    reg.size = lval->reg.size;
    reg.data.id = -1;
 
-   affinity = -1;
+   compMask = 0;
+   compound = 0;
+   ssa = 0;
+   fixedReg = 0;
+   noSpill = 0;
 
    fn->add(this, this->id);
 }
@@ -523,8 +478,8 @@ Value::interfers(const Value *that) const
       idA = this->join->reg.data.offset;
       idB = that->join->reg.data.offset;
    } else {
-      idA = this->join->reg.data.id * this->reg.size;
-      idB = that->join->reg.data.id * that->reg.size;
+      idA = this->join->reg.data.id * MIN2(this->reg.size, 4);
+      idB = that->join->reg.data.id * MIN2(that->reg.size, 4);
    }
 
    if (idA < idB)
@@ -539,8 +494,6 @@ Value::interfers(const Value *that) const
 bool
 Value::equals(const Value *that, bool strict) const
 {
-   that = that->join;
-
    if (strict)
       return this == that;
 
@@ -754,9 +707,18 @@ Instruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
 }
 
 unsigned int
-Instruction::defCount(unsigned int mask) const
+Instruction::defCount(unsigned int mask, bool singleFile) const
 {
    unsigned int i, n;
+
+   if (singleFile) {
+      unsigned int d = ffs(mask);
+      if (!d)
+         return 0;
+      for (i = d--; defExists(i); ++i)
+         if (getDef(i)->reg.file != getDef(d)->reg.file)
+            mask &= ~(1 << i);
+   }
 
    for (n = 0, i = 0; this->defExists(i); ++i, mask >>= 1)
       n += mask & 1;
@@ -764,9 +726,18 @@ Instruction::defCount(unsigned int mask) const
 }
 
 unsigned int
-Instruction::srcCount(unsigned int mask) const
+Instruction::srcCount(unsigned int mask, bool singleFile) const
 {
    unsigned int i, n;
+
+   if (singleFile) {
+      unsigned int s = ffs(mask);
+      if (!s)
+         return 0;
+      for (i = s--; srcExists(i); ++i)
+         if (getSrc(i)->reg.file != getSrc(s)->reg.file)
+            mask &= ~(1 << i);
+   }
 
    for (n = 0, i = 0; this->srcExists(i); ++i, mask >>= 1)
       n += mask & 1;
@@ -1137,6 +1108,7 @@ out:
    info->bin.maxGPR = prog->maxGPR;
    info->bin.code = prog->code;
    info->bin.codeSize = prog->binSize;
+   info->bin.tlsSpace = prog->tlsSize;
 
    delete prog;
    nv50_ir::Target::destroy(targ);

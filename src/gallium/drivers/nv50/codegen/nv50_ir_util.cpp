@@ -88,6 +88,11 @@ Stack::moveTo(Stack& that)
    this->size = 0;
 }
 
+Interval::Interval(const Interval& that) : head(NULL), tail(NULL)
+{
+   this->insert(that);
+}
+
 Interval::~Interval()
 {
    clear();
@@ -148,7 +153,7 @@ Interval::extend(int a, int b)
    return true;
 }
 
-bool Interval::contains(int pos)
+bool Interval::contains(int pos) const
 {
    for (Range *r = head; r && r->bgn <= pos; r = r->next)
       if (r->end > pos)
@@ -156,14 +161,35 @@ bool Interval::contains(int pos)
    return false;
 }
 
-bool Interval::overlaps(const Interval &iv) const
+bool Interval::overlaps(const Interval &that) const
 {
+#if 1
+   Range *a = this->head;
+   Range *b = that.head;
+
+   while (a && b) {
+      if (b->bgn < a->end &&
+          b->end > a->bgn)
+         return true;
+      if (a->end <= b->bgn)
+         a = a->next;
+      else
+         b = b->next;
+   }
+#else
    for (Range *rA = this->head; rA; rA = rA->next)
       for (Range *rB = iv.head; rB; rB = rB->next)
          if (rB->bgn < rA->end &&
              rB->end > rA->bgn)
             return true;
+#endif
    return false;
+}
+
+void Interval::insert(const Interval &that)
+{
+   for (Range *r = that.head; r; r = r->next)
+      this->extend(r->bgn, r->end);
 }
 
 void Interval::unify(Interval &that)
@@ -175,6 +201,14 @@ void Interval::unify(Interval &that)
       delete r;
    }
    that.head = NULL;
+}
+
+int Interval::length() const
+{
+   int len = 0;
+   for (Range *r = head; r; r = r->next)
+      len += r->bgn - r->end;
+   return len;
 }
 
 void Interval::print() const
@@ -203,6 +237,27 @@ BitSet& BitSet::operator|=(const BitSet &set)
    for (unsigned int i = 0; i < (set.size + 31) / 32; ++i)
       data[i] |= set.data[i];
    return *this;
+}
+
+bool BitSet::resize(unsigned int nBits)
+{
+   if (!data || !nBits)
+      return allocate(nBits, true);
+   const unsigned int p = (size + 31) / 32;
+   const unsigned int n = (nBits + 31) / 32;
+   if (n == p)
+      return true;
+
+   data = (uint32_t *)REALLOC(data, 4 * p, 4 * n);
+   if (!data) {
+      size = 0;
+      return false;
+   }
+   if (n > p)
+      memset(&data[4 * p + 4], 0, (n - p) * 4);
+
+   size = nBits;
+   return true;
 }
 
 bool BitSet::allocate(unsigned int nBits, bool zero)
@@ -252,6 +307,65 @@ void BitSet::setOr(BitSet *pA, BitSet *pB)
       for (unsigned int i = 0; i < (size + 31) / 32; ++i)
          data[i] = pA->data[i] | pB->data[i];
    }
+}
+
+int BitSet::findFreeRange(unsigned int count) const
+{
+   const uint32_t m = (1 << count) - 1;
+   int pos = size;
+   unsigned int i;
+   const unsigned int end = (size + 31) / 32;
+
+   if (count == 1) {
+      for (i = 0; i < end; ++i) {
+         pos = ffs(~data[i]) - 1;
+         if (pos >= 0)
+            break;
+      }
+   } else
+   if (count == 2) {
+      for (i = 0; i < end; ++i) {
+         if (data[i] != 0xffffffff) {
+            uint32_t b = data[i] | (data[i] >> 1) | 0xaaaaaaaa;
+            pos = ffs(~b) - 1;
+            if (pos >= 0)
+               break;
+         }
+      }
+   } else
+   if (count == 4 || count == 3) {
+      for (i = 0; i < end; ++i) {
+         if (data[i] != 0xffffffff) {
+            uint32_t b =
+               (data[i] >> 0) | (data[i] >> 1) |
+               (data[i] >> 2) | (data[i] >> 3) | 0xeeeeeeee;
+            pos = ffs(~b) - 1;
+            if (pos >= 0)
+               break;
+         }
+      }
+   } else {
+      if (count <= 8)
+         count = 8;
+      else
+      if (count <= 16)
+         count = 16;
+      else
+         count = 32;
+
+      for (i = 0; i < end; ++i) {
+         if (data[i] != 0xffffffff) {
+            for (pos = 0; pos < 32; pos += count)
+               if (!(data[i] & (m << pos)))
+                  break;
+            if (pos < 32)
+               break;
+         }
+      }
+   }
+   pos += i * 32;
+
+   return ((pos + count) <= size) ? pos : -1;
 }
 
 void BitSet::print() const
