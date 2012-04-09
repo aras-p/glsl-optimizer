@@ -2540,106 +2540,6 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
    }
 }
 
-static void
-set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
-			struct gl_shader_program *shader_program,
-			const char *name, const glsl_type *type,
-			ir_constant *val)
-{
-   if (type->is_record()) {
-      ir_constant *field_constant;
-
-      field_constant = (ir_constant *)val->components.get_head();
-
-      for (unsigned int i = 0; i < type->length; i++) {
-	 const glsl_type *field_type = type->fields.structure[i].type;
-	 const char *field_name = ralloc_asprintf(mem_ctx, "%s.%s", name,
-					    type->fields.structure[i].name);
-	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
-				 field_type, field_constant);
-	 field_constant = (ir_constant *)field_constant->next;
-      }
-      return;
-   }
-
-   int loc = _mesa_get_uniform_location(ctx, shader_program, name);
-
-   if (loc == -1) {
-      linker_error(shader_program,
-		   "Couldn't find uniform for initializer %s\n", name);
-      return;
-   }
-
-   for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
-      ir_constant *element;
-      const glsl_type *element_type;
-      if (type->is_array()) {
-	 element = val->array_elements[i];
-	 element_type = type->fields.array;
-      } else {
-	 element = val;
-	 element_type = type;
-      }
-
-      void *values;
-
-      if (element_type->base_type == GLSL_TYPE_BOOL) {
-	 int *conv = ralloc_array(mem_ctx, int, element_type->components());
-	 for (unsigned int j = 0; j < element_type->components(); j++) {
-	    conv[j] = element->value.b[j];
-	 }
-	 values = (void *)conv;
-	 element_type = glsl_type::get_instance(GLSL_TYPE_INT,
-						element_type->vector_elements,
-						1);
-      } else {
-	 values = &element->value;
-      }
-
-      if (element_type->is_matrix()) {
-	 _mesa_uniform_matrix(ctx, shader_program,
-			      element_type->matrix_columns,
-			      element_type->vector_elements,
-			      loc, 1, GL_FALSE, (GLfloat *)values);
-      } else {
-	 _mesa_uniform(ctx, shader_program, loc, element_type->matrix_columns,
-		       values, element_type->gl_type);
-      }
-
-      loc++;
-   }
-}
-
-static void
-set_uniform_initializers(struct gl_context *ctx,
-			 struct gl_shader_program *shader_program)
-{
-   void *mem_ctx = NULL;
-
-   for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
-      struct gl_shader *shader = shader_program->_LinkedShaders[i];
-
-      if (shader == NULL)
-	 continue;
-
-      foreach_iter(exec_list_iterator, iter, *shader->ir) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
-	 ir_variable *var = ir->as_variable();
-
-	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
-	    continue;
-
-	 if (!mem_ctx)
-	    mem_ctx = ralloc_context(NULL);
-
-	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
-				 var->type, var->constant_value);
-      }
-   }
-
-   ralloc_free(mem_ctx);
-}
-
 /*
  * On a basic block basis, tracks available PROGRAM_TEMPORARY register
  * channels for copy propagation and updates following instructions to
@@ -3247,10 +3147,6 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!ctx->Driver.LinkShader(ctx, prog)) {
 	 prog->LinkStatus = GL_FALSE;
       }
-   }
-
-   if (prog->LinkStatus) {
-      set_uniform_initializers(ctx, prog);
    }
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
