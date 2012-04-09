@@ -268,17 +268,13 @@ BuildUtil::mkQuadop(uint8_t q, Value *def, uint8_t l, Value *src0, Value *src1)
 Instruction *
 BuildUtil::mkSelect(Value *pred, Value *dst, Value *trSrc, Value *flSrc)
 {
-   Instruction *insn;
    LValue *def0 = getSSA();
    LValue *def1 = getSSA();
 
    mkMov(def0, trSrc)->setPredicate(CC_P, pred);
    mkMov(def1, flSrc)->setPredicate(CC_NOT_P, pred);
 
-   insn = mkOp2(OP_UNION, typeOfSize(dst->reg.size), dst, def0, def1);
-
-   insert(insn);
-   return insn;
+   return mkOp2(OP_UNION, typeOfSize(dst->reg.size), dst, def0, def1);
 }
 
 FlowInstruction *
@@ -299,7 +295,7 @@ BuildUtil::mkClobber(DataFile f, uint32_t rMask, int unit)
    static const uint16_t baseSize2[16] =
    {
       0x0000, 0x0010, 0x0011, 0x0020, 0x0012, 0x1210, 0x1211, 0x1220,
-      0x0013, 0x1310, 0x1311, 0x0020, 0x1320, 0x0022, 0x2210, 0x0040,
+      0x0013, 0x1310, 0x1311, 0x1320, 0x0022, 0x2210, 0x2211, 0x0040,
    };
 
    int base = 0;
