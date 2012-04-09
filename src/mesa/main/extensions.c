@@ -750,6 +750,8 @@ get_extension_override( struct gl_context *ctx )
       }
    }
 
+   free(env);
+
    /* Remove trailing space. */
    len = strlen(extra_exts);
    if (extra_exts[len - 1] == ' ')
