@@ -444,10 +444,10 @@ Pass::run(Program *prog, bool ordered, bool skipPhi)
 bool
 Pass::doRun(Program *prog, bool ordered, bool skipPhi)
 {
-   for (ArrayList::Iterator fi = prog->allFuncs.iterator();
-        !fi.end(); fi.next()) {
-      Function *fn = reinterpret_cast<Function *>(fi.get());
-      if (!doRun(fn, ordered, skipPhi))
+   for (IteratorRef it = prog->calls.iteratorDFS(false);
+        !it->end(); it->next()) {
+      Graph::Node *n = reinterpret_cast<Graph::Node *>(it->get());
+      if (!doRun(Function::get(n), ordered, skipPhi))
          return false;
    }
    return !err;

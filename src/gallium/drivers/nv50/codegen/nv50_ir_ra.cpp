@@ -724,9 +724,9 @@ RegAlloc::linearScan()
 bool
 RegAlloc::exec()
 {
-   for (ArrayList::Iterator fi = prog->allFuncs.iterator();
-        !fi.end(); fi.next()) {
-      func = reinterpret_cast<Function *>(fi.get());
+   for (IteratorRef it = prog->calls.iteratorDFS(false);
+        !it->end(); it->next()) {
+      func = Function::get(reinterpret_cast<Graph::Node *>(it->get()));
       if (!execFunc())
          return false;
    }

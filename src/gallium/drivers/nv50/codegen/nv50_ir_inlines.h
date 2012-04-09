@@ -358,6 +358,12 @@ BasicBlock *BasicBlock::get(Graph::Node *node)
    return reinterpret_cast<BasicBlock *>(node->data);
 }
 
+Function *Function::get(Graph::Node *node)
+{
+   assert(node);
+   return reinterpret_cast<Function *>(node->data);
+}
+
 LValue *Function::getLValue(int id)
 {
    assert((unsigned int)id < (unsigned int)allLValues.getSize());

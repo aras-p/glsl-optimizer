@@ -919,6 +919,8 @@ public:
    Function(Program *, const char *name);
    ~Function();
 
+   static inline Function *get(Graph::Node *node);
+
    inline Program *getProgram() const { return prog; }
    inline const char *getName() const { return name; }
    inline int getId() const { return id; }
