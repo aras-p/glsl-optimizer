@@ -142,6 +142,8 @@ public:
    virtual bool isModSupported(const Instruction *,
                                int s, Modifier) const = 0;
    virtual bool isSatSupported(const Instruction *) const = 0;
+   virtual bool isPostMultiplySupported(operation op, float f,
+                                        int& e) const { return false; }
    virtual bool mayPredicate(const Instruction *,
                              const Value *) const = 0;
 

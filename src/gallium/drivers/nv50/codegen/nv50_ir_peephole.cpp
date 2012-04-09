@@ -216,6 +216,8 @@ private:
 
    void unary(Instruction *, const ImmediateValue&);
 
+   void tryCollapseChainedMULs(Instruction *, const int s, ImmediateValue&);
+
    // TGSI 'true' is converted to -1 by F2I(NEG(SET)), track back to SET
    CmpInstruction *findOriginForTestWithZero(Value *);
 
@@ -528,6 +530,73 @@ ConstantFolding::unary(Instruction *i, const ImmediateValue &imm)
 }
 
 void
+ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
+                                        const int s, ImmediateValue& imm2)
+{
+   const int t = s ? 0 : 1;
+   Instruction *insn;
+   Instruction *mul1 = NULL; // mul1 before mul2
+   int e = 0;
+   float f = imm2.reg.data.f32;
+
+   assert(mul2->op == OP_MUL && mul2->dType == TYPE_F32);
+
+   if (mul2->getSrc(t)->refCount() == 1) {
+      insn = mul2->getSrc(t)->getInsn();
+      if (insn->op == OP_MUL && insn->dType == TYPE_F32)
+         mul1 = insn;
+      if (mul1) {
+         int s1 = 0;
+         ImmediateValue *imm = mul1->src[s1].getImmediate();
+         if (!imm) {
+            s1 = 1;
+            imm = mul1->src[s1].getImmediate();
+         }
+         if (imm) {
+            bld.setPosition(mul1, false);
+            // a = mul r, imm1
+            // d = mul a, imm2 -> d = mul r, (imm1 * imm2)
+            ImmediateValue imm1(mul1->src[s1].getImmediate(), TYPE_F32);
+            mul1->src[s1].mod.applyTo(imm1);
+            mul1->src[s1].mod = Modifier(0);
+            mul1->setSrc(s1, bld.loadImm(NULL, f * imm1.reg.data.f32));
+            mul2->def[0].replace(mul1->getDef(0), false);
+         } else
+         if (prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
+            // c = mul a, b
+            // d = mul c, imm   -> d = mul_x_imm a, b
+            mul1->postFactor = e;
+            mul2->def[0].replace(mul1->getDef(0), false);
+            if (f < 0)
+               mul1->src[0].mod = mul1->src[0].mod ^ Modifier(NV50_IR_MOD_NEG);
+         }
+         return;
+      }
+   }
+   if (mul2->getDef(0)->refCount() == 1) {
+      // b = mul a, imm
+      // d = mul b, c   -> d = mul_x_imm a, c
+      int s2, t2;
+      insn = mul2->getDef(0)->uses->getInsn();
+      if (!insn)
+         return;
+      mul1 = mul2;
+      mul2 = NULL;
+      s2 = insn->getSrc(0) == mul1->getDef(0) ? 0 : 1;
+      t2 = s2 ? 0 : 1;
+      if (insn->op == OP_MUL && insn->dType == TYPE_F32)
+         if (!insn->src[t2].getImmediate())
+            mul2 = insn;
+      if (mul2 && prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
+         mul2->postFactor = e;
+         mul2->setSrc(s2, mul1->src[t]);
+         if (f < 0)
+            mul2->src[s2].mod = mul2->src[s2].mod ^ Modifier(NV50_IR_MOD_NEG);
+      }
+   }
+}
+
+void
 ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
 {
    const int t = !s;
@@ -539,41 +608,9 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
 
    switch (i->op) {
    case OP_MUL:
-      if (i->dType == TYPE_F32 && i->getSrc(t)->refCount() == 1) {
-         Instruction *si = i->getSrc(t)->getUniqueInsn();
+      if (i->dType == TYPE_F32)
+         tryCollapseChainedMULs(i, s, imm);
 
-         if (si && si->op == OP_MUL) {
-            float f = imm.reg.data.f32;
-
-            if (si->src[1].getImmediate()) {
-               f *= si->src[1].getImmediate()->reg.data.f32;
-               si->setSrc(1, new_ImmediateValue(prog, f));
-               i->def[0].replace(i->getSrc(t), false);
-               break;
-            } else {
-               int fac;
-               if (f == 0.125f) fac = -3;
-               else
-               if (f == 0.250f) fac = -2;
-               else
-               if (f == 0.500f) fac = -1;
-               else
-               if (f == 2.000f) fac = +1;
-               else
-               if (f == 4.000f) fac = +2;
-               else
-               if (f == 8.000f) fac = +3;
-               else
-                  fac = 0;
-               if (fac) {
-                  // FIXME: allowed & modifier
-                  si->postFactor = fac;
-                  i->def[0].replace(i->getSrc(t), false);
-                  break;
-               }
-            }
-         }
-      }
       if (imm.isInteger(0)) {
          i->op = OP_MOV;
          i->setSrc(0, i->getSrc(s));
@@ -904,6 +941,9 @@ AlgebraicOpt::handleADD(Instruction *add)
       return;
 
    src = add->getSrc(s);
+
+   if (src->getInsn()->postFactor)
+      return;
 
    mod[0] = add->src[0].mod;
    mod[1] = add->src[1].mod;

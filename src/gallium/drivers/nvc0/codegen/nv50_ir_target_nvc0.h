@@ -48,6 +48,7 @@ public:
    virtual bool isAccessSupported(DataFile, DataType) const;
    virtual bool isModSupported(const Instruction *, int s, Modifier) const;
    virtual bool isSatSupported(const Instruction *) const;
+   virtual bool isPostMultiplySupported(operation, float, int& e) const;
    virtual bool mayPredicate(const Instruction *, const Value *) const;
 
    virtual int getLatency(const Instruction *) const;
