@@ -194,6 +194,7 @@ struct r600_shader_ctx {
 	boolean                 clip_vertex_write;
 	unsigned                cv_output;
 	int					fragcoord_input;
+	int					native_integers;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -500,20 +501,22 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 
 	case TGSI_FILE_SYSTEM_VALUE:
 		if (d->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
-			struct r600_bytecode_alu alu;
-			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			if (!ctx->native_integers) {
+				struct r600_bytecode_alu alu;
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
-			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
-			alu.src[0].sel = 0;
-			alu.src[0].chan = 3;
+				alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+				alu.src[0].sel = 0;
+				alu.src[0].chan = 3;
 
-			alu.dst.sel = 0;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
+				alu.dst.sel = 0;
+				alu.dst.chan = 3;
+				alu.dst.write = 1;
+				alu.last = 1;
 
-			if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
-				return r;
+				if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+					return r;
+			}
 			break;
 		} else if (d->Semantic.Name == TGSI_SEMANTIC_VERTEXID)
 			break;
@@ -818,6 +821,8 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
+	ctx.native_integers = (rctx->screen->glsl_feature_level >= 130);
+
 	r600_bytecode_init(ctx.bc, rctx->chip_class, rctx->family);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
