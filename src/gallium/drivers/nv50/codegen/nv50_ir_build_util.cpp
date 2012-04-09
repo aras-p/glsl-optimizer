@@ -225,7 +225,8 @@ BuildUtil::mkCmp(operation op, CondCode cc, DataType ty, Value *dst,
 {
    CmpInstruction *insn = new_CmpInstruction(func, op);
 
-   insn->setType(dst->reg.file == FILE_PREDICATE ? TYPE_U8 : ty, ty);
+   insn->setType((dst->reg.file == FILE_PREDICATE ||
+                  dst->reg.file == FILE_FLAGS) ? TYPE_U8 : ty, ty);
    insn->setCondition(cc);
    insn->setDef(0, dst);
    insn->setSrc(0, src0);
