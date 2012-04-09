@@ -45,7 +45,7 @@ enum operation
    OP_SPLIT, // $r0d -> { $r0, $r1 } ($r0d and $r0/$r1 will be coalesced)
    OP_MERGE, // opposite of split, e.g. combine 2 32 bit into a 64 bit value
    OP_CONSTRAINT, // copy values into consecutive registers
-   OP_MOV,
+   OP_MOV, // simple copy, no modifiers allowed
    OP_LOAD,
    OP_STORE,
    OP_ADD,
@@ -403,7 +403,7 @@ public:
    inline unsigned getSize() const;
 
    // SSA: return eventual (traverse MOVs) literal value, if it exists
-   ImmediateValue *getImmediate() const;
+   bool getImmediate(ImmediateValue&) const;
 
 public:
    Modifier mod;
@@ -545,6 +545,7 @@ private:
 class ImmediateValue : public Value
 {
 public:
+   ImmediateValue() { }
    ImmediateValue(Program *, uint32_t);
    ImmediateValue(Program *, float);
    ImmediateValue(Program *, double);
@@ -568,6 +569,8 @@ public:
    ImmediateValue operator-(const ImmediateValue&) const;
    ImmediateValue operator*(const ImmediateValue&) const;
    ImmediateValue operator/(const ImmediateValue&) const;
+
+   ImmediateValue& operator=(const ImmediateValue&); // only sets value !
 
    bool compare(CondCode cc, float fval) const;
 

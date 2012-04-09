@@ -211,8 +211,8 @@ public:
 private:
    virtual bool visit(BasicBlock *);
 
-   void expr(Instruction *, ImmediateValue *, ImmediateValue *);
-   void opnd(Instruction *, ImmediateValue *, int s);
+   void expr(Instruction *, ImmediateValue&, ImmediateValue&);
+   void opnd(Instruction *, ImmediateValue&, int s);
 
    void unary(Instruction *, const ImmediateValue&);
 
@@ -249,16 +249,16 @@ ConstantFolding::visit(BasicBlock *bb)
       if (i->op == OP_MOV) // continue early, MOV appears frequently
          continue;
 
-      ImmediateValue *src0 = i->srcExists(0) ? i->src(0).getImmediate() : NULL;
-      ImmediateValue *src1 = i->srcExists(1) ? i->src(1).getImmediate() : NULL;
+      ImmediateValue src0, src1;
 
-      if (src0 && src1)
+      if (i->srcExists(1) &&
+          i->src(0).getImmediate(src0) && i->src(1).getImmediate(src1))
          expr(i, src0, src1);
       else
-      if (src0)
+      if (i->srcExists(0) && i->src(0).getImmediate(src0))
          opnd(i, src0, 0);
       else
-      if (src1)
+      if (i->srcExists(1) && i->src(1).getImmediate(src1))
          opnd(i, src1, 1);
    }
    return true;
@@ -365,15 +365,12 @@ Modifier::getOp() const
 
 void
 ConstantFolding::expr(Instruction *i,
-                      ImmediateValue *src0, ImmediateValue *src1)
+                      ImmediateValue &imm0, ImmediateValue &imm1)
 {
-   ImmediateValue imm0(src0, i->sType);
-   ImmediateValue imm1(src1, i->sType);
-   struct Storage res;
    struct Storage *const a = &imm0.reg, *const b = &imm1.reg;
+   struct Storage res;
 
-   i->src(0).mod.applyTo(imm0);
-   i->src(1).mod.applyTo(imm1);
+   memset(&res.data, 0, sizeof(res.data));
 
    switch (i->op) {
    case OP_MAD:
@@ -490,9 +487,9 @@ ConstantFolding::expr(Instruction *i,
       i->setSrc(0, i->getSrc(2));
       i->setSrc(2, NULL);
 
-      src0 = i->src(0).getImmediate();
-      if (src0)
-         expr(i, src0, i->getSrc(1)->asImm());
+      ImmediateValue src0;
+      if (i->src(0).getImmediate(src0))
+         expr(i, src0, *i->getSrc(1)->asImm());
    } else {
       i->op = OP_MOV;
    }
@@ -537,28 +534,24 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
    Instruction *mul1 = NULL; // mul1 before mul2
    int e = 0;
    float f = imm2.reg.data.f32;
+   ImmediateValue imm1;
 
    assert(mul2->op == OP_MUL && mul2->dType == TYPE_F32);
 
    if (mul2->getSrc(t)->refCount() == 1) {
       insn = mul2->getSrc(t)->getInsn();
-      if (insn->op == OP_MUL && insn->dType == TYPE_F32)
+      if (!mul2->src(t).mod && insn->op == OP_MUL && insn->dType == TYPE_F32)
          mul1 = insn;
       if (mul1) {
-         int s1 = 0;
-         ImmediateValue *imm = mul1->src(s1).getImmediate();
-         if (!imm) {
-            s1 = 1;
-            imm = mul1->src(s1).getImmediate();
-         }
-         if (imm) {
+         int s1;
+
+         if (mul1->src(s1 = 0).getImmediate(imm1) ||
+             mul1->src(s1 = 1).getImmediate(imm1)) {
             bld.setPosition(mul1, false);
             // a = mul r, imm1
             // d = mul a, imm2 -> d = mul r, (imm1 * imm2)
-            ImmediateValue imm1(mul1->src(s1).getImmediate(), TYPE_F32);
-            mul1->src(s1).mod.applyTo(imm1);
-            mul1->src(s1).mod = Modifier(0);
             mul1->setSrc(s1, bld.loadImm(NULL, f * imm1.reg.data.f32));
+            mul1->src(s1).mod = Modifier(0);
             mul2->def(0).replace(mul1->getDef(0), false);
          } else
          if (prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
@@ -567,7 +560,7 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
             mul1->postFactor = e;
             mul2->def(0).replace(mul1->getDef(0), false);
             if (f < 0)
-               mul1->src(0).mod = mul1->src(0).mod ^ Modifier(NV50_IR_MOD_NEG);
+               mul1->src(0).mod *= Modifier(NV50_IR_MOD_NEG);
          }
          return;
       }
@@ -584,39 +577,36 @@ ConstantFolding::tryCollapseChainedMULs(Instruction *mul2,
       s2 = insn->getSrc(0) == mul1->getDef(0) ? 0 : 1;
       t2 = s2 ? 0 : 1;
       if (insn->op == OP_MUL && insn->dType == TYPE_F32)
-         if (!insn->src(t2).getImmediate())
+         if (!insn->src(s2).mod && !insn->src(t2).getImmediate(imm1))
             mul2 = insn;
       if (mul2 && prog->getTarget()->isPostMultiplySupported(OP_MUL, f, e)) {
          mul2->postFactor = e;
          mul2->setSrc(s2, mul1->src(t));
          if (f < 0)
-            mul2->src(s2).mod = mul2->src(s2).mod ^ Modifier(NV50_IR_MOD_NEG);
+            mul2->src(s2).mod *= Modifier(NV50_IR_MOD_NEG);
       }
    }
 }
 
 void
-ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
+ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
 {
    const int t = !s;
    const operation op = i->op;
 
-   ImmediateValue imm(src, i->sType);
-
-   i->src(s).mod.applyTo(imm);
-
    switch (i->op) {
    case OP_MUL:
       if (i->dType == TYPE_F32)
-         tryCollapseChainedMULs(i, s, imm);
+         tryCollapseChainedMULs(i, s, imm0);
 
-      if (imm.isInteger(0)) {
+      if (imm0.isInteger(0)) {
          i->op = OP_MOV;
-         i->setSrc(0, i->getSrc(s));
+         i->setSrc(0, new_ImmediateValue(prog, 0u));
+         i->src(0).mod = Modifier(0);
          i->setSrc(1, NULL);
       } else
-      if (imm.isInteger(1) || imm.isInteger(-1)) {
-         if (imm.isNegative())
+      if (imm0.isInteger(1) || imm0.isInteger(-1)) {
+         if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = i->src(t).mod.getOp();
          if (s == 0) {
@@ -628,21 +618,24 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
             i->src(0).mod = 0;
          i->setSrc(1, NULL);
       } else
-      if (imm.isInteger(2) || imm.isInteger(-2)) {
-         if (imm.isNegative())
+      if (imm0.isInteger(2) || imm0.isInteger(-2)) {
+         if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = OP_ADD;
          i->setSrc(s, i->getSrc(t));
          i->src(s).mod = i->src(t).mod;
       } else
-      if (!isFloatType(i->sType) && !imm.isNegative() && imm.isPow2()) {
+      if (!isFloatType(i->sType) && !imm0.isNegative() && imm0.isPow2()) {
          i->op = OP_SHL;
-         imm.applyLog2();
-         i->setSrc(1, new_ImmediateValue(prog, imm.reg.data.u32));
+         imm0.applyLog2();
+         i->setSrc(0, i->getSrc(t));
+         i->src(0).mod = i->src(t).mod;
+         i->setSrc(1, new_ImmediateValue(prog, imm0.reg.data.u32));
+         i->src(1).mod = 0;
       }
       break;
    case OP_ADD:
-      if (imm.isInteger(0)) {
+      if (imm0.isInteger(0)) {
          if (s == 0) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
@@ -658,21 +651,21 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       if (s != 1 || (i->dType != TYPE_S32 && i->dType != TYPE_U32))
          break;
       bld.setPosition(i, false);
-      if (imm.reg.data.u32 == 0) {
+      if (imm0.reg.data.u32 == 0) {
          break;
       } else
-      if (imm.reg.data.u32 == 1) {
+      if (imm0.reg.data.u32 == 1) {
          i->op = OP_MOV;
          i->setSrc(1, NULL);
       } else
-      if (i->dType == TYPE_U32 && imm.isPow2()) {
+      if (i->dType == TYPE_U32 && imm0.isPow2()) {
          i->op = OP_SHR;
-         i->setSrc(1, bld.mkImm(util_logbase2(imm.reg.data.u32)));
+         i->setSrc(1, bld.mkImm(util_logbase2(imm0.reg.data.u32)));
       } else
       if (i->dType == TYPE_U32) {
          Instruction *mul;
          Value *tA, *tB;
-         const uint32_t d = imm.reg.data.u32;
+         const uint32_t d = imm0.reg.data.u32;
          uint32_t m;
          int r, s;
          uint32_t l = util_logbase2(d);
@@ -700,13 +693,13 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
 
          delete_Instruction(prog, i);
       } else
-      if (imm.reg.data.s32 == -1) {
+      if (imm0.reg.data.s32 == -1) {
          i->op = OP_NEG;
          i->setSrc(1, NULL);
       } else {
          LValue *tA, *tB;
          LValue *tD;
-         const int32_t d = imm.reg.data.s32;
+         const int32_t d = imm0.reg.data.s32;
          int32_t m;
          int32_t l = util_logbase2(static_cast<unsigned>(abs(d)));
          if ((1 << l) < abs(d))
@@ -735,10 +728,10 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       break;
 
    case OP_MOD:
-      if (i->sType == TYPE_U32 && imm.isPow2()) {
+      if (i->sType == TYPE_U32 && imm0.isPow2()) {
          bld.setPosition(i, false);
          i->op = OP_AND;
-         i->setSrc(1, bld.loadImm(NULL, imm.reg.data.u32 - 1));
+         i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 - 1));
       }
       break;
 
@@ -748,7 +741,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
       CondCode cc, ccZ;
       if (i->src(t).mod != Modifier(0))
          return;
-      if (imm.reg.data.u32 != 0 || !si || si->op != OP_SET)
+      if (imm0.reg.data.u32 != 0 || !si || si->op != OP_SET)
          return;
       cc = si->setCond;
       ccZ = (CondCode)((unsigned int)i->asCmp()->setCond & ~CC_U);
@@ -777,15 +770,13 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
          break;
       // try to concatenate shifts
       Instruction *si = i->getSrc(0)->getInsn();
-      if (!si ||
-          si->op != OP_SHL || si->src(1).mod != Modifier(0))
+      if (!si || si->op != OP_SHL)
          break;
-      ImmediateValue *siImm = si->src(1).getImmediate();
-      if (siImm) {
+      ImmediateValue imm1;
+      if (si->src(1).getImmediate(imm1)) {
          bld.setPosition(i, false);
          i->setSrc(0, si->getSrc(0));
-         i->setSrc(1, bld.loadImm(NULL,
-                                  imm.reg.data.u32 + siImm->reg.data.u32));
+         i->setSrc(1, bld.loadImm(NULL, imm0.reg.data.u32 + imm1.reg.data.u32));
       }
    }
       break;
@@ -801,7 +792,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue *src, int s)
    case OP_COS:
    case OP_PREEX2:
    case OP_EX2:
-      unary(i, imm);
+      unary(i, imm0);
       break;
    default:
       return;

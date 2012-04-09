@@ -77,19 +77,38 @@ ValueRef::~ValueRef()
    this->set(NULL);
 }
 
-ImmediateValue *ValueRef::getImmediate() const
+bool ValueRef::getImmediate(ImmediateValue &imm) const
 {
-   Value *src = value;
+   const ValueRef *src = this;
+   Modifier m;
+   DataType type = src->insn->sType;
 
    while (src) {
-      if (src->reg.file == FILE_IMMEDIATE)
-         return src->asImm();
+      if (src->mod) {
+         if (src->insn->sType != type)
+            break;
+         m *= src->mod;
+      }
+      if (src->getFile() == FILE_IMMEDIATE) {
+         imm = *(src->value->asImm());
+         // The immediate's type isn't required to match its use, it's
+         // more of a hint; applying a modifier makes use of that hint.
+         imm.reg.type = type;
+         m.applyTo(imm);
+         return true;
+      }
 
-      Instruction *insn = src->getUniqueInsn();
+      Instruction *insn = src->value->getUniqueInsn();
 
-      src = (insn && insn->op == OP_MOV) ? insn->getSrc(0) : NULL;
+      if (insn && insn->op == OP_MOV) {
+         src = &insn->src(0);
+         if (src->mod)
+            WARN("OP_MOV with modifier encountered !\n");
+      } else {
+         src = NULL;
+      }
    }
-   return NULL;
+   return false;
 }
 
 ValueDef::ValueDef(Value *v) : value(NULL), insn(NULL)
@@ -481,6 +500,13 @@ ImmediateValue::compare(CondCode cc, float fval) const
       assert(0);
       return false;
    }
+}
+
+ImmediateValue&
+ImmediateValue::operator=(const ImmediateValue &that)
+{
+   this->reg = that.reg;
+   return (*this);
 }
 
 bool
