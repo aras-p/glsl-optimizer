@@ -1007,6 +1007,15 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 						      sampler_name,
 						      ir_var_uniform);
    p->top_instructions->push_head(sampler);
+
+   /* Set the texture unit for this sampler.  The linker will pick this value
+    * up and do-the-right-thing.
+    *
+    * NOTE: The cast to int is important.  Without it, the constant will have
+    * type uint, and things later on may get confused.
+    */
+   sampler->constant_value = new(p->mem_ctx) ir_constant(int(unit));
+
    deref = new(p->mem_ctx) ir_dereference_variable(sampler);
    tex->set_sampler(deref, glsl_type::vec4_type);
 
@@ -1350,38 +1359,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
 
    _mesa_associate_uniform_storage(ctx, p.shader_program, fp->Parameters);
 
-   for (unsigned int i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      /* Enough space for 'sampler_999\0'.
-       */
-      char name[12];
-
-      snprintf(name, sizeof(name), "sampler_%d", i);
-
-      int loc = _mesa_get_uniform_location(ctx, p.shader_program, name);
-      if (loc != -1) {
-	 unsigned base;
-	 unsigned idx;
-
-	 /* Avoid using _mesa_uniform() because it flags state
-	  * updates, so if we're generating this shader_program in a
-	  * state update, we end up recursing.  Instead, just set the
-	  * value, which is picked up at re-link.
-	  */
-	 _mesa_uniform_split_location_offset(loc, &base, &idx);
-	 assert(idx == 0);
-
-	 struct gl_uniform_storage *const storage =
-	    &p.shader_program->UniformStorage[base];
-
-	 /* Update the storage, the SamplerUnits in the shader program, and
-	  * the SamplerUnits in the assembly shader.
-	  */
-	 storage->storage[idx].i = i;
-	 fp->SamplerUnits[storage->sampler] = i;
-	 p.shader_program->SamplerUnits[storage->sampler] = i;
-	 _mesa_propagate_uniforms_to_driver_storage(storage, 0, 1);
-      }
-   }
    _mesa_update_shader_textures_used(p.shader_program, fp);
    (void) ctx->Driver.ProgramStringNotify(ctx, fp->Target, fp);
 
