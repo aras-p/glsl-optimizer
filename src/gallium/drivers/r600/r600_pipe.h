@@ -124,6 +124,7 @@ struct r600_screen {
 
 	unsigned			num_contexts;
 	bool				use_surface_alloc;
+	int 				glsl_feature_level;
 
 	/* for thread-safe write accessing to num_contexts */
 	pipe_mutex			mutex_num_contexts;
