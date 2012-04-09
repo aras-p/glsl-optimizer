@@ -2526,6 +2526,15 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 					     4 * sizeof(float),
 					     format,
 					     &params->ParameterValues[i]);
+
+	 /* After attaching the driver's storage to the uniform, propagate any
+	  * data from the linker's backing store.  This will cause values from
+	  * initializers in the source code to be copied over.
+	  */
+	 _mesa_propagate_uniforms_to_driver_storage(storage,
+						    0,
+						    MAX2(1, storage->array_elements));
+
 	 last_location = location;
       }
    }
