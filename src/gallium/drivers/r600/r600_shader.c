@@ -1266,6 +1266,14 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 	if (ctx.bc->chip_class == CAYMAN)
 		cm_bytecode_add_cf_end(ctx.bc);
 
+	/* check GPR limit - we have 124 = 128 - 4
+	 * (4 are reserved as alu clause temporary registers) */
+	if (ctx.bc->ngpr > 124) {
+		R600_ERR("GPR limit exceeded - shader requires %d registers\n", ctx.bc->ngpr);
+		r = -ENOMEM;
+		goto out_err;
+	}
+
 	free(ctx.literals);
 	tgsi_parse_free(&ctx.parse);
 	return 0;
