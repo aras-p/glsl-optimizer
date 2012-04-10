@@ -114,6 +114,7 @@ i965_C_FILES := \
 i965_CXX_FILES := \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
+	brw_fs_cfg.cpp \
 	brw_fs_emit.cpp \
 	brw_fs_visitor.cpp \
 	brw_fs_channel_expressions.cpp \

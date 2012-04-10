@@ -25,6 +25,8 @@
  *
  */
 
+#pragma once
+
 #include "brw_shader.h"
 
 extern "C" {
@@ -649,6 +651,8 @@ public:
 
    int force_uncompressed_stack;
    int force_sechalf_stack;
+
+   class fs_bblock *bblock;
 };
 
 bool brw_do_channel_expressions(struct exec_list *instructions);

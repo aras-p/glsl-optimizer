@@ -34,6 +34,7 @@ extern "C" {
 } /* extern "C" */
 
 #include "brw_fs.h"
+#include "brw_fs_cfg.h"
 #include "glsl/ir_print_visitor.h"
 
 void
@@ -716,11 +717,31 @@ fs_visitor::generate_code()
 	     prog->Name, c->dispatch_width);
    }
 
+   fs_cfg *cfg = NULL;
+   if (unlikely(INTEL_DEBUG & DEBUG_WM))
+      cfg = new(mem_ctx) fs_cfg(this);
+
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
       struct brw_reg src[3], dst;
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+	 foreach_list(node, &cfg->block_list) {
+	    fs_bblock_link *link = (fs_bblock_link *)node;
+	    fs_bblock *block = link->block;
+
+	    if (block->start == inst) {
+	       printf("   START B%d", block->block_num);
+	       foreach_list(predecessor_node, &block->parents) {
+		  fs_bblock_link *predecessor_link =
+		     (fs_bblock_link *)predecessor_node;
+		  fs_bblock *predecessor_block = predecessor_link->block;
+		  printf(" <-B%d", predecessor_block->block_num);
+	       }
+	       printf("\n");
+	    }
+	 }
+
 	 if (last_annotation_ir != inst->ir) {
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
@@ -965,6 +986,22 @@ fs_visitor::generate_code()
 		      ((uint32_t *)&p->store[i])[0]);
 	    }
 	    brw_disasm(stdout, &p->store[i], intel->gen);
+	 }
+
+	 foreach_list(node, &cfg->block_list) {
+	    fs_bblock_link *link = (fs_bblock_link *)node;
+	    fs_bblock *block = link->block;
+
+	    if (block->end == inst) {
+	       printf("   END B%d", block->block_num);
+	       foreach_list(successor_node, &block->children) {
+		  fs_bblock_link *successor_link =
+		     (fs_bblock_link *)successor_node;
+		  fs_bblock *successor_block = successor_link->block;
+		  printf(" ->B%d", successor_block->block_num);
+	       }
+	       printf("\n");
+	    }
 	 }
       }
 
