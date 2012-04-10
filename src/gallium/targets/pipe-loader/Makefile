@@ -149,9 +149,9 @@ $(PIPE_OBJECTS): %.o: %.c
 	$(CC) -c -o $@ $< $(PIPE_CPPFLAGS) $(PIPE_CFLAGS) $(CFLAGS)
 
 install: $(PIPE_TARGETS)
-	$(INSTALL) -d $(PIPE_INSTALL_DIR)
+	$(INSTALL) -d $(DESTDIR)/$(PIPE_INSTALL_DIR)
 	for tgt in $(PIPE_TARGETS); do \
-		$(MINSTALL) "$$tgt" $(PIPE_INSTALL_DIR); \
+		$(MINSTALL) "$$tgt" $(DESTDIR)/$(PIPE_INSTALL_DIR); \
 	done
 
 clean:
