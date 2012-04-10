@@ -428,13 +428,16 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.create_video_buffer = vl_video_buffer_create;
 
     if (r300->screen->caps.has_tcl) {
-        r300->vbuf_mgr = u_vbuf_create(&r300->context, 1024 * 1024, 4,
+        struct u_vbuf_caps caps;
+
+        u_vbuf_get_caps(screen, &caps);
+        caps.format_fixed32 = 0;
+
+        r300->vbuf_mgr = u_vbuf_create(&r300->context, &caps, 1024 * 1024, 4,
                                        PIPE_BIND_VERTEX_BUFFER |
-                                       PIPE_BIND_INDEX_BUFFER,
-                                       U_VERTEX_FETCH_DWORD_ALIGNED);
+                                       PIPE_BIND_INDEX_BUFFER);
         if (!r300->vbuf_mgr)
             goto fail;
-        r300->vbuf_mgr->caps.format_fixed32 = 0;
     }
 
     r300->blitter = util_blitter_create(&r300->context);

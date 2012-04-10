@@ -49,6 +49,9 @@ struct u_vbuf_caps {
    /* Whether vertex fetches don't have to be dword-aligned. */
    /* TRUE if hardware supports it. */
    unsigned fetch_dword_unaligned:1;
+
+   /* Whether the driver supports user vertex buffers. */
+   unsigned user_vertex_buffers:1;
 };
 
 /* The manager.
@@ -69,26 +72,21 @@ struct u_vbuf {
     * - u_upload_flush */
    struct u_upload_mgr *uploader;
 
-   struct u_vbuf_caps caps;
-
    /* Vertex elements state as created by u_vbuf.
     * This is used when saving the state into u_blitter, there's no other
     * usage. */
    void *vertex_elements;
 };
 
-enum u_fetch_alignment {
-   U_VERTEX_FETCH_BYTE_ALIGNED,
-   U_VERTEX_FETCH_DWORD_ALIGNED
-};
 
+void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps);
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
+              struct u_vbuf_caps *caps,
               unsigned upload_buffer_size,
               unsigned upload_buffer_alignment,
-              unsigned upload_buffer_bind,
-              enum u_fetch_alignment fetch_alignment);
+              unsigned upload_buffer_bind);
 
 void u_vbuf_destroy(struct u_vbuf *mgr);
 

@@ -68,6 +68,7 @@ enum {
 
 struct u_vbuf_priv {
    struct u_vbuf b;
+   struct u_vbuf_caps caps;
    struct pipe_context *pipe;
    struct translate_cache *translate_cache;
    struct cso_cache *cso_cache;
@@ -114,46 +115,56 @@ struct u_vbuf_priv {
                            const struct pipe_draw_info *info);
 };
 
-static void u_vbuf_init_format_caps(struct u_vbuf_priv *mgr)
+void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps)
 {
-   struct pipe_screen *screen = mgr->pipe->screen;
-
-   mgr->b.caps.format_fixed32 =
+   caps->format_fixed32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_FIXED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->b.caps.format_float16 =
+   caps->format_float16 =
       screen->is_format_supported(screen, PIPE_FORMAT_R16_FLOAT, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->b.caps.format_float64 =
+   caps->format_float64 =
       screen->is_format_supported(screen, PIPE_FORMAT_R64_FLOAT, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->b.caps.format_norm32 =
+   caps->format_norm32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_UNORM, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SNORM, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   mgr->b.caps.format_scaled32 =
+   caps->format_scaled32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_USCALED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SSCALED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
+
+   caps->fetch_dword_unaligned =
+      !screen->get_param(screen,
+                        PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY) &&
+      !screen->get_param(screen,
+                        PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY) &&
+      !screen->get_param(screen,
+                        PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY);
+
+   caps->user_vertex_buffers =
+      screen->get_param(screen, PIPE_CAP_USER_VERTEX_BUFFERS);
 }
 
 static void u_vbuf_install(struct u_vbuf_priv *mgr);
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
+              struct u_vbuf_caps *caps,
               unsigned upload_buffer_size,
               unsigned upload_buffer_alignment,
-              unsigned upload_buffer_bind,
-              enum u_fetch_alignment fetch_alignment)
+              unsigned upload_buffer_bind)
 {
    struct u_vbuf_priv *mgr = CALLOC_STRUCT(u_vbuf_priv);
 
+   mgr->caps = *caps;
    mgr->pipe = pipe;
    mgr->cso_cache = cso_cache_create();
    mgr->translate_cache = translate_cache_create();
@@ -163,10 +174,6 @@ u_vbuf_create(struct pipe_context *pipe,
                                      upload_buffer_alignment,
                                      upload_buffer_bind);
 
-   mgr->b.caps.fetch_dword_unaligned =
-         fetch_alignment == U_VERTEX_FETCH_BYTE_ALIGNED;
-
-   u_vbuf_init_format_caps(mgr);
    u_vbuf_install(mgr);
    return &mgr->b;
 }
@@ -588,7 +595,7 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
       /* Choose a native format.
        * For now we don't care about the alignment, that's going to
        * be sorted out later. */
-      if (!mgr->b.caps.format_fixed32) {
+      if (!mgr->caps.format_fixed32) {
          switch (format) {
             FORMAT_REPLACE(R32_FIXED,           R32_FLOAT);
             FORMAT_REPLACE(R32G32_FIXED,        R32G32_FLOAT);
@@ -597,7 +604,7 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
             default:;
          }
       }
-      if (!mgr->b.caps.format_float16) {
+      if (!mgr->caps.format_float16) {
          switch (format) {
             FORMAT_REPLACE(R16_FLOAT,           R32_FLOAT);
             FORMAT_REPLACE(R16G16_FLOAT,        R32G32_FLOAT);
@@ -606,7 +613,7 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
             default:;
          }
       }
-      if (!mgr->b.caps.format_float64) {
+      if (!mgr->caps.format_float64) {
          switch (format) {
             FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
             FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
@@ -615,7 +622,7 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
             default:;
          }
       }
-      if (!mgr->b.caps.format_norm32) {
+      if (!mgr->caps.format_norm32) {
          switch (format) {
             FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
             FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
@@ -628,7 +635,7 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
             default:;
          }
       }
-      if (!mgr->b.caps.format_scaled32) {
+      if (!mgr->caps.format_scaled32) {
          switch (format) {
             FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
             FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
@@ -649,14 +656,14 @@ u_vbuf_create_vertex_elements(struct pipe_context *pipe,
 
       ve->incompatible_layout_elem[i] =
             ve->ve[i].src_format != ve->native_format[i] ||
-            (!mgr->b.caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
+            (!mgr->caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
       ve->incompatible_layout =
             ve->incompatible_layout ||
             ve->incompatible_layout_elem[i];
    }
 
    /* Align the formats to the size of DWORD if needed. */
-   if (!mgr->b.caps.fetch_dword_unaligned) {
+   if (!mgr->caps.fetch_dword_unaligned) {
       for (i = 0; i < count; i++) {
          ve->native_format_size[i] = align(ve->native_format_size[i], 4);
       }
@@ -699,7 +706,7 @@ static void u_vbuf_set_vertex_buffers(struct pipe_context *pipe,
    mgr->incompatible_vb_layout = FALSE;
    memset(mgr->incompatible_vb, 0, sizeof(mgr->incompatible_vb));
 
-   if (!mgr->b.caps.fetch_dword_unaligned) {
+   if (!mgr->caps.fetch_dword_unaligned) {
       /* Check if the strides and offsets are aligned to the size of DWORD. */
       for (i = 0; i < count; i++) {
          if (bufs[i].buffer) {

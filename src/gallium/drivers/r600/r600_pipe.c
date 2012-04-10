@@ -212,6 +212,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	struct u_vbuf_caps vbuf_caps;
 
 	if (rctx == NULL)
 		return NULL;
@@ -293,14 +294,15 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 	r600_emit_atom(rctx, &rctx->start_cs_cmd.atom);
 
-	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, 1024 * 1024, 256,
-					   PIPE_BIND_VERTEX_BUFFER |
-					   PIPE_BIND_INDEX_BUFFER |
-					   PIPE_BIND_CONSTANT_BUFFER,
-					   U_VERTEX_FETCH_DWORD_ALIGNED);
+	u_vbuf_get_caps(screen, &vbuf_caps);
+	vbuf_caps.format_fixed32 = 0;
+	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, &vbuf_caps,
+				       1024 * 1024, 256,
+				       PIPE_BIND_VERTEX_BUFFER |
+				       PIPE_BIND_INDEX_BUFFER |
+				       PIPE_BIND_CONSTANT_BUFFER);
 	if (!rctx->vbuf_mgr)
 		goto fail;
-	rctx->vbuf_mgr->caps.format_fixed32 = 0;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL)
@@ -402,6 +404,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
 	case PIPE_CAP_TGSI_INSTANCEID:
+	case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
+	case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
+	case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
 		return 1;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
@@ -425,6 +430,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
+	case PIPE_CAP_USER_VERTEX_BUFFERS:
 		return 0;
 
 	/* Stream output. */
