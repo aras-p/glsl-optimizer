@@ -284,7 +284,6 @@ struct r600_context {
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
 
-	struct u_vbuf			*vbuf_mgr;
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
 	boolean				have_depth_texture, have_depth_fb;

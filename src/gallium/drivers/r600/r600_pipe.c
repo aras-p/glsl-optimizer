@@ -192,9 +192,6 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	if (rctx->vbuf_mgr) {
-		u_vbuf_destroy(rctx->vbuf_mgr);
-	}
 	if (rctx->uploader) {
 		u_upload_destroy(rctx->uploader);
 	}
@@ -216,7 +213,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
-	struct u_vbuf_caps vbuf_caps;
 
 	if (rctx == NULL)
 		return NULL;
@@ -297,16 +293,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 	r600_emit_atom(rctx, &rctx->start_cs_cmd.atom);
-
-	u_vbuf_get_caps(screen, &vbuf_caps);
-	vbuf_caps.format_fixed32 = 0;
-	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, &vbuf_caps,
-				       1024 * 1024, 256,
-				       PIPE_BIND_VERTEX_BUFFER |
-				       PIPE_BIND_INDEX_BUFFER |
-				       PIPE_BIND_CONSTANT_BUFFER);
-	if (!rctx->vbuf_mgr)
-		goto fail;
 
         rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
                                          PIPE_BIND_INDEX_BUFFER |

@@ -100,9 +100,6 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->draw)
         draw_destroy(r300->draw);
 
-    if (r300->vbuf_mgr)
-        u_vbuf_destroy(r300->vbuf_mgr);
-
     u_upload_destroy(r300->uploader);
 
     /* XXX: This function assumes r300->query_list was initialized */
@@ -429,20 +426,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.create_video_decoder = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
-    if (r300->screen->caps.has_tcl) {
-        struct u_vbuf_caps caps;
-
-        u_vbuf_get_caps(screen, &caps);
-        caps.format_fixed32 = 0;
-
-        r300->vbuf_mgr = u_vbuf_create(&r300->context, &caps, 1024 * 1024, 4,
-                                       PIPE_BIND_VERTEX_BUFFER |
-                                       PIPE_BIND_INDEX_BUFFER);
-        if (!r300->vbuf_mgr)
-            goto fail;
-    }
-
-    r300->uploader = u_upload_create(&r300->context, 256 * 1024, 16,
+    r300->uploader = u_upload_create(&r300->context, 256 * 1024, 4,
                                      PIPE_BIND_INDEX_BUFFER);
 
     r300->blitter = util_blitter_create(&r300->context);

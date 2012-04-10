@@ -41,6 +41,7 @@ struct gen_mipmap_state;
 struct st_context;
 struct st_fragment_program;
 struct u_upload_mgr;
+struct u_vbuf;
 
 
 #define ST_NEW_MESA                    (1 << 0) /* Mesa state has changed */
@@ -73,6 +74,8 @@ struct st_context
    struct pipe_context *pipe;
 
    struct u_upload_mgr *uploader;
+   struct u_vbuf *vbuf;
+
    struct draw_context *draw;  /**< For selection/feedback/rastpos only */
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */

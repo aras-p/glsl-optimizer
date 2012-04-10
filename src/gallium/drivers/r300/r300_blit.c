@@ -62,15 +62,9 @@ static void r300_blitter_begin(struct r300_context* r300, enum r300_blitter_op o
     util_blitter_save_fragment_shader(r300->blitter, r300->fs.state);
     util_blitter_save_vertex_shader(r300->blitter, r300->vs_state.state);
     util_blitter_save_viewport(r300->blitter, &r300->viewport);
-    if (r300->vbuf_mgr) {
-        util_blitter_save_vertex_buffers(r300->blitter, r300->vbuf_mgr->nr_vertex_buffers,
-                                         r300->vbuf_mgr->vertex_buffer);
-        util_blitter_save_vertex_elements(r300->blitter, r300->vbuf_mgr->vertex_elements);
-    } else {
-        util_blitter_save_vertex_buffers(r300->blitter, r300->nr_vertex_buffers,
-                                         r300->vertex_buffer);
-        util_blitter_save_vertex_elements(r300->blitter, r300->velems);
-    }
+    util_blitter_save_vertex_buffers(r300->blitter, r300->nr_vertex_buffers,
+                                     r300->vertex_buffer);
+    util_blitter_save_vertex_elements(r300->blitter, r300->velems);
 
     if (op & R300_SAVE_FRAMEBUFFER) {
         util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);

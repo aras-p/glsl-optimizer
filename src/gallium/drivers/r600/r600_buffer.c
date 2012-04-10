@@ -106,8 +106,8 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 
 			/* We changed the buffer, now we need to bind it where the old one was bound. */
 			/* Vertex buffers. */
-			for (i = 0; i < rctx->vbuf_mgr->nr_vertex_buffers; i++) {
-				if (rctx->vbuf_mgr->vertex_buffer[i].buffer == &rbuffer->b.b) {
+			for (i = 0; i < rctx->nr_vertex_buffers; i++) {
+				if (rctx->vertex_buffer[i].buffer == &rbuffer->b.b) {
 					r600_inval_vertex_cache(rctx);
 					r600_atom_dirty(rctx, &rctx->vertex_buffer_state);
 				}

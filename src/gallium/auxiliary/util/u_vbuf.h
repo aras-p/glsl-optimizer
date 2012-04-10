@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef U_VBUF_MGR_H
-#define U_VBUF_MGR_H
+#ifndef U_VBUF_H
+#define U_VBUF_H
 
 /* This module builds upon u_upload_mgr and translate_cache and takes care of
  * user buffer uploads and vertex format fallbacks. It's designed
@@ -35,6 +35,9 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+
+struct cso_context;
+struct u_vbuf;
 
 /* Hardware vertex fetcher limitations can be described by this structure. */
 struct u_vbuf_caps {
@@ -54,41 +57,28 @@ struct u_vbuf_caps {
    unsigned user_vertex_buffers:1;
 };
 
-/* The manager.
- * This structure should also be used to access vertex buffers
- * from a driver. */
-struct u_vbuf {
-   /* This is what was set in set_vertex_buffers.
-    * May contain user buffers. */
-   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   unsigned nr_vertex_buffers;
-
-   /* This uploader can optionally be used by the driver.
-    *
-    * Allowed functions:
-    * - u_upload_alloc
-    * - u_upload_data
-    * - u_upload_buffer
-    * - u_upload_flush */
-   struct u_upload_mgr *uploader;
-
-   /* Vertex elements state as created by u_vbuf.
-    * This is used when saving the state into u_blitter, there's no other
-    * usage. */
-   void *vertex_elements;
-};
-
 
 void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps);
 
 struct u_vbuf *
 u_vbuf_create(struct pipe_context *pipe,
-              struct u_vbuf_caps *caps,
-              unsigned upload_buffer_size,
-              unsigned upload_buffer_alignment,
-              unsigned upload_buffer_bind);
+              struct u_vbuf_caps *caps);
 
 void u_vbuf_destroy(struct u_vbuf *mgr);
 
+/* State and draw functions. */
+void u_vbuf_set_vertex_elements(struct u_vbuf *mgr, unsigned count,
+                                const struct pipe_vertex_element *states);
+void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
+                               const struct pipe_vertex_buffer *bufs);
+void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
+                             const struct pipe_index_buffer *ib);
+void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info);
+
+/* Save/restore functionality. */
+void u_vbuf_save_vertex_elements(struct u_vbuf *mgr);
+void u_vbuf_restore_vertex_elements(struct u_vbuf *mgr);
+void u_vbuf_save_vertex_buffers(struct u_vbuf *mgr);
+void u_vbuf_restore_vertex_buffers(struct u_vbuf *mgr);
 
 #endif

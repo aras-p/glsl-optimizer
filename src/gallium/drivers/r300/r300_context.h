@@ -30,7 +30,6 @@
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
-#include "util/u_vbuf.h"
 
 #include "r300_defines.h"
 #include "r300_screen.h"
@@ -576,7 +575,6 @@ struct r300_context {
 
     void *dsa_decompress_zmask;
 
-    struct u_vbuf *vbuf_mgr;
     struct pipe_index_buffer index_buffer;
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     unsigned nr_vertex_buffers;
