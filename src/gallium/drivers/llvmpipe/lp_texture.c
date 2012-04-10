@@ -770,6 +770,7 @@ llvmpipe_user_buffer_create(struct pipe_screen *screen,
    buffer->base.height0 = 1;
    buffer->base.depth0 = 1;
    buffer->base.array_size = 1;
+   buffer->base.user_ptr = ptr;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
 

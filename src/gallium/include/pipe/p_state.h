@@ -415,6 +415,9 @@ struct pipe_resource
 
    unsigned bind;            /**< bitmask of PIPE_BIND_x */
    unsigned flags;           /**< bitmask of PIPE_RESOURCE_FLAG_x */
+
+   /* XXX this is only temporary and will be removed once it's not needed */
+   uint8_t *user_ptr;        /**< user buffer pointer */
 };
 
 

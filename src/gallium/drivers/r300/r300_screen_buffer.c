@@ -193,6 +193,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.vtbl = &r300_buffer_vtbl;
     pipe_reference_init(&rbuf->b.b.b.reference, 1);
     rbuf->b.b.b.screen = screen;
+    rbuf->b.b.b.user_ptr = NULL;
     rbuf->b.user_ptr = NULL;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
@@ -239,6 +240,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.b.depth0 = 1;
     rbuf->b.b.b.array_size = 1;
     rbuf->b.b.b.flags = 0;
+    rbuf->b.b.b.user_ptr = ptr;
     rbuf->b.b.vtbl = &r300_buffer_vtbl;
     rbuf->b.user_ptr = ptr;
     rbuf->domain = RADEON_DOMAIN_GTT;

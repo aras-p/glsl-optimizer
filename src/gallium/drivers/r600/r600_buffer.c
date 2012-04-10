@@ -222,6 +222,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.b = *templ;
 	pipe_reference_init(&rbuffer->b.b.b.reference, 1);
 	rbuffer->b.b.b.screen = screen;
+	rbuffer->b.b.b.user_ptr = NULL;
 	rbuffer->b.b.vtbl = &r600_buffer_vtbl;
 	rbuffer->b.user_ptr = NULL;
 
@@ -253,6 +254,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.b.depth0 = 1;
 	rbuffer->b.b.b.array_size = 1;
 	rbuffer->b.b.b.flags = 0;
+	rbuffer->b.b.b.user_ptr = ptr;
 	rbuffer->b.user_ptr = ptr;
 	rbuffer->buf = NULL;
 	return &rbuffer->b.b.b;

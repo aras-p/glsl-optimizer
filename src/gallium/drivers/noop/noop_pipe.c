@@ -156,6 +156,7 @@ static struct pipe_resource *noop_user_buffer_create(struct pipe_screen *screen,
 	templ.height0 = 1;
 	templ.depth0 = 1;
 	templ.flags = 0;
+	templ.user_ptr = ptr;
 	return noop_resource_create(screen, &templ);
 }
 

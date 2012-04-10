@@ -232,6 +232,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.b.depth0 = 1;
 	rbuffer->b.b.b.array_size = 1;
 	rbuffer->b.b.b.flags = 0;
+	rbuffer->b.b.b.user_ptr = ptr;
 	rbuffer->b.user_ptr = ptr;
 	rbuffer->buf = NULL;
 	return &rbuffer->b.b.b;
