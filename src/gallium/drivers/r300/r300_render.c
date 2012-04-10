@@ -529,7 +529,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
 
     switch (index_size) {
     case 1:
-        ptr1 = r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr1 = r300->index_buffer.buffer->user_ptr;
         ptr1 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -553,7 +553,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 2:
-        ptr2 = (uint16_t*)r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr2 = (uint16_t*)r300->index_buffer.buffer->user_ptr;
         ptr2 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -572,7 +572,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 4:
-        ptr4 = (uint32_t*)r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr4 = (uint32_t*)r300->index_buffer.buffer->user_ptr;
         ptr4 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -614,7 +614,7 @@ static void r300_draw_elements(struct r300_context *r300,
 
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) &&
-        !r300_resource(indexBuffer)->b.user_ptr) {
+        !indexBuffer->user_ptr) {
         /* If we got here, then orgIndexBuffer == indexBuffer. */
         uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->buf,
                                               r300->cs,
@@ -632,10 +632,10 @@ static void r300_draw_elements(struct r300_context *r300,
         }
         r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->buf);
     } else {
-        if (r300_resource(indexBuffer)->b.user_ptr)
+        if (indexBuffer->user_ptr)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
                                      &start, count,
-                                     r300_resource(indexBuffer)->b.user_ptr);
+                                     indexBuffer->user_ptr);
     }
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
@@ -775,7 +775,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 
         if (info.instance_count <= 1) {
             if (info.count <= 8 &&
-                r300_resource(r300->index_buffer.buffer)->b.user_ptr) {
+                r300->index_buffer.buffer->user_ptr) {
                 r300_draw_elements_immediate(r300, &info);
             } else {
                 r300_draw_elements(r300, &info, -1);

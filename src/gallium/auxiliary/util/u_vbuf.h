@@ -35,7 +35,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "util/u_transfer.h"
 
 /* Hardware vertex fetcher limitations can be described by this structure. */
 struct u_vbuf_caps {
@@ -78,12 +77,6 @@ struct u_vbuf {
    void *vertex_elements;
 };
 
-/* XXX this is no longer needed and can be removed */
-struct u_vbuf_resource {
-   struct u_resource b;
-   uint8_t *user_ptr;
-};
-
 enum u_fetch_alignment {
    U_VERTEX_FETCH_BYTE_ALIGNED,
    U_VERTEX_FETCH_DWORD_ALIGNED
@@ -100,11 +93,5 @@ u_vbuf_create(struct pipe_context *pipe,
 void u_vbuf_destroy(struct u_vbuf *mgr);
 
 unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgr);
-
-
-static INLINE struct u_vbuf_resource *u_vbuf_resource(struct pipe_resource *r)
-{
-   return (struct u_vbuf_resource*)r;
-}
 
 #endif

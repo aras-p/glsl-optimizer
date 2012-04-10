@@ -858,7 +858,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b.b);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b);
 			block->reloc[reloc_id].bo_usage = reg->bo_usage;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
@@ -919,9 +919,9 @@ void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_
 
 	if (dirty) {
 		/* TEXTURE RESOURCE */
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b.b);
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b);
 		block->reloc[1].bo_usage = state->bo_usage[0];
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b.b);
+		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b);
 		block->reloc[2].bo_usage = state->bo_usage[1];
 
 		r600_context_dirty_resource_block(ctx, block, dirty, num_regs - 1);

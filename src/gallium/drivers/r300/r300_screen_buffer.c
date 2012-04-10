@@ -108,8 +108,8 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     uint8_t *map;
     enum pipe_transfer_usage usage;
 
-    if (rbuf->b.user_ptr)
-        return (uint8_t *) rbuf->b.user_ptr + transfer->box.x;
+    if (rbuf->b.b.user_ptr)
+        return rbuf->b.b.user_ptr + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
@@ -158,7 +158,7 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
         memcpy(rbuf->constant_buffer + box->x, data, box->width);
         return;
     }
-    assert(rbuf->b.user_ptr == NULL);
+    assert(rbuf->b.b.user_ptr == NULL);
 
     map = rws->buffer_map(rbuf->buf, r300->cs,
                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
@@ -189,12 +189,11 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf = util_slab_alloc(&r300screen->pool_buffers);
 
-    rbuf->b.b.b = *templ;
-    rbuf->b.b.vtbl = &r300_buffer_vtbl;
-    pipe_reference_init(&rbuf->b.b.b.reference, 1);
-    rbuf->b.b.b.screen = screen;
-    rbuf->b.b.b.user_ptr = NULL;
-    rbuf->b.user_ptr = NULL;
+    rbuf->b.b = *templ;
+    rbuf->b.vtbl = &r300_buffer_vtbl;
+    pipe_reference_init(&rbuf->b.b.reference, 1);
+    rbuf->b.b.screen = screen;
+    rbuf->b.b.user_ptr = NULL;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
@@ -202,13 +201,13 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     /* Alloc constant buffers in RAM. */
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER) {
         rbuf->constant_buffer = MALLOC(templ->width0);
-        return &rbuf->b.b.b;
+        return &rbuf->b.b;
     }
 
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
-                                       rbuf->b.b.b.width0, alignment,
-                                       rbuf->b.b.b.bind, rbuf->domain);
+                                       rbuf->b.b.width0, alignment,
+                                       rbuf->b.b.bind, rbuf->domain);
     if (!rbuf->buf) {
         util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;
@@ -217,7 +216,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->cs_buf =
         r300screen->rws->buffer_get_cs_handle(rbuf->buf);
 
-    return &rbuf->b.b.b;
+    return &rbuf->b.b;
 }
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
@@ -229,22 +228,21 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 
     rbuf = util_slab_alloc(&r300screen->pool_buffers);
 
-    pipe_reference_init(&rbuf->b.b.b.reference, 1);
-    rbuf->b.b.b.screen = screen;
-    rbuf->b.b.b.target = PIPE_BUFFER;
-    rbuf->b.b.b.format = PIPE_FORMAT_R8_UNORM;
-    rbuf->b.b.b.usage = PIPE_USAGE_IMMUTABLE;
-    rbuf->b.b.b.bind = bind;
-    rbuf->b.b.b.width0 = ~0;
-    rbuf->b.b.b.height0 = 1;
-    rbuf->b.b.b.depth0 = 1;
-    rbuf->b.b.b.array_size = 1;
-    rbuf->b.b.b.flags = 0;
-    rbuf->b.b.b.user_ptr = ptr;
-    rbuf->b.b.vtbl = &r300_buffer_vtbl;
-    rbuf->b.user_ptr = ptr;
+    pipe_reference_init(&rbuf->b.b.reference, 1);
+    rbuf->b.b.screen = screen;
+    rbuf->b.b.target = PIPE_BUFFER;
+    rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
+    rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
+    rbuf->b.b.bind = bind;
+    rbuf->b.b.width0 = ~0;
+    rbuf->b.b.height0 = 1;
+    rbuf->b.b.depth0 = 1;
+    rbuf->b.b.array_size = 1;
+    rbuf->b.b.flags = 0;
+    rbuf->b.b.user_ptr = ptr;
+    rbuf->b.vtbl = &r300_buffer_vtbl;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
-    return &rbuf->b.b.b;
+    return &rbuf->b.b;
 }

@@ -1408,7 +1408,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
-	if (rtex->resource.b.b.b.usage == PIPE_USAGE_STAGING) {
+	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
 		endian = r600_colorformat_endian_swap(format);
@@ -1725,7 +1725,7 @@ static void evergreen_emit_vertex_buffers(struct r600_context *rctx, struct r600
 			continue;
 		}
 
-		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b.b);
+		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b);
 		va += vb[i].buffer_offset;
 
 		/* fetch resources start at index 992 */
@@ -1771,7 +1771,7 @@ static void evergreen_emit_constant_buffer(struct r600_context *rctx,
 		rbuffer = (struct r600_resource*)cb->buffer;
 		assert(rbuffer);
 
-		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b.b);
+		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b);
 		va += cb->buffer_offset;
 
 		r600_write_context_reg(cs, reg_alu_constbuf_size + buffer_index * 4,

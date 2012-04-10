@@ -54,7 +54,7 @@ static void r300_copy_from_tiled_texture(struct pipe_context *ctx,
     struct pipe_transfer *transfer = (struct pipe_transfer*)r300transfer;
     struct pipe_resource *tex = transfer->resource;
 
-    ctx->resource_copy_region(ctx, &r300transfer->linear_texture->b.b.b, 0,
+    ctx->resource_copy_region(ctx, &r300transfer->linear_texture->b.b, 0,
                               0, 0, 0,
                               tex, transfer->level, &transfer->box);
 }
@@ -70,7 +70,7 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
 
     ctx->resource_copy_region(ctx, tex, transfer->level,
                               transfer->box.x, transfer->box.y, transfer->box.z,
-                              &r300transfer->linear_texture->b.b.b, 0, &src_box);
+                              &r300transfer->linear_texture->b.b, 0, &src_box);
 
     /* XXX remove this. */
     r300_flush(ctx, 0, NULL);
@@ -230,7 +230,7 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_resource *tex = r300_resource(transfer->resource);
     char *map;
-    enum pipe_format format = tex->b.b.b.format;
+    enum pipe_format format = tex->b.b.format;
 
     if (r300transfer->linear_texture) {
         /* The detiled texture is of the same size as the region being mapped

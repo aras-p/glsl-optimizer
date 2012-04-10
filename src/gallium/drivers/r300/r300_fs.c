@@ -212,7 +212,7 @@ static void get_external_state(
                 state->unit[i].wrap_mode = RC_WRAP_NONE;
             }
 
-            if (t->b.b.b.target == PIPE_TEXTURE_3D)
+            if (t->b.b.target == PIPE_TEXTURE_3D)
                 state->unit[i].clamp_and_scale_before_fetch = TRUE;
         }
     }

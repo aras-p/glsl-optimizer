@@ -557,7 +557,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	cb = &state->cb[index];
 	cb->buffer_size = buffer->width0;
 
-	ptr = u_vbuf_resource(buffer)->user_ptr;
+	ptr = buffer->user_ptr;
 
 	if (ptr) {
 		/* Upload the user buffer. */
@@ -778,7 +778,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		ptr = u_vbuf_resource(ib.buffer)->user_ptr;
+		ptr = ib.buffer->user_ptr;
 		if (ptr) {
 			u_upload_data(rctx->vbuf_mgr->uploader, 0, info.count * ib.index_size,
 				      ptr, &ib.offset, &ib.buffer);

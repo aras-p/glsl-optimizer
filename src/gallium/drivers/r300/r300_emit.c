@@ -120,9 +120,9 @@ static void get_rc_constant_state(
         case RC_STATE_R300_TEXSCALE_FACTOR:
             tex = r300_resource(texstate->sampler_views[constant->u.State[1]]->base.texture);
             /* Add a small number to the texture size to work around rounding errors in hw. */
-            vec[0] = tex->b.b.b.width0  / (tex->tex.width0  + 0.001f);
-            vec[1] = tex->b.b.b.height0 / (tex->tex.height0 + 0.001f);
-            vec[2] = tex->b.b.b.depth0  / (tex->tex.depth0  + 0.001f);
+            vec[0] = tex->b.b.width0  / (tex->tex.width0  + 0.001f);
+            vec[1] = tex->b.b.height0 / (tex->tex.height0 + 0.001f);
+            vec[2] = tex->b.b.depth0  / (tex->tex.depth0  + 0.001f);
             vec[3] = 1;
             break;
 

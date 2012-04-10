@@ -1451,7 +1451,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
-	if(rtex->resource.b.b.b.usage == PIPE_USAGE_STAGING) {
+	if(rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
 		endian = r600_colorformat_endian_swap(format);

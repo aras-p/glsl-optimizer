@@ -28,6 +28,7 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "util/u_double_list.h"
+#include "util/u_transfer.h"
 #include "util/u_vbuf.h"
 
 #define R600_ERR(fmt, args...) \
@@ -79,7 +80,7 @@ struct r600_tiling_info {
 };
 
 struct r600_resource {
-	struct u_vbuf_resource		b;
+	struct u_resource		b;
 
 	/* Winsys objects. */
 	struct pb_buffer		*buf;

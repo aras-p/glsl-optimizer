@@ -92,7 +92,7 @@ static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *q
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
 	/* Get a new query buffer if needed. */
-	if (query->buffer.results_end + query->result_size > query->buffer.buf->b.b.b.width0) {
+	if (query->buffer.results_end + query->result_size > query->buffer.buf->b.b.width0) {
 		struct r600_query_buffer *qbuf = MALLOC_STRUCT(r600_query_buffer);
 		*qbuf = query->buffer;
 		query->buffer.buf = r600_new_query_buffer(ctx, query->type);
@@ -228,7 +228,7 @@ static void r600_emit_query_predication(struct r600_context *ctx, struct r600_qu
 		/* emit predicate packets for all data blocks */
 		for (qbuf = &query->buffer; qbuf; qbuf = qbuf->previous) {
 			unsigned results_base = 0;
-			uint64_t va = r600_resource_va(&ctx->screen->screen, &qbuf->buf->b.b.b);
+			uint64_t va = r600_resource_va(&ctx->screen->screen, &qbuf->buf->b.b);
 
 			while (results_base < qbuf->results_end) {
 				cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
