@@ -54,12 +54,6 @@ struct wl_drm_buffer {
 };
 
 static void
-buffer_damage(struct wl_client *client, struct wl_resource *buffer,
-	      int32_t x, int32_t y, int32_t width, int32_t height)
-{
-}
-
-static void
 destroy_buffer(struct wl_resource *resource)
 {
 	struct wl_drm_buffer *buffer = resource->data;
@@ -77,7 +71,6 @@ buffer_destroy(struct wl_client *client, struct wl_resource *resource)
 }
 
 const static struct wl_buffer_interface drm_buffer_interface = {
-	buffer_damage,
 	buffer_destroy
 };
 
