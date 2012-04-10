@@ -132,11 +132,20 @@ set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 
 	 idx += elements;
       }
+
+      if (base_type == GLSL_TYPE_SAMPLER) {
+	 for (unsigned int i = 0; i < storage->array_elements; i++) {
+	    prog->SamplerUnits[storage->sampler + i] = storage->storage[i].i;
+	 }
+      }
    } else {
       copy_constant_to_storage(storage->storage,
 			       val,
 			       val->type->base_type,
 			       val->type->components());
+
+      if (storage->type->is_sampler())
+	 prog->SamplerUnits[storage->sampler] = storage->storage[0].i;
    }
 
    storage->initialized = true;
