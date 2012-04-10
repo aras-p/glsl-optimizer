@@ -329,9 +329,16 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       prog->UniformHash = new string_to_uint_map;
    }
 
-   for (unsigned i = 0; i < Elements(prog->SamplerUnits); i++) {
-      prog->SamplerUnits[i] = i;
-   }
+   /* Uniforms that lack an initializer in the shader code have an initial
+    * value of zero.  This includes sampler uniforms.
+    *
+    * Page 24 (page 30 of the PDF) of the GLSL 1.20 spec says:
+    *
+    *     "The link time initial value is either the value of the variable's
+    *     initializer, if present, or 0 if no initializer is present. Sampler
+    *     types cannot have initializers."
+    */
+   memset(prog->SamplerUnits, 0, sizeof(prog->SamplerUnits));
 
    /* First pass: Count the uniform resources used by the user-defined
     * uniforms.  While this happens, each active uniform will have an index

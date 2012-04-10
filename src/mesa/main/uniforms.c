@@ -65,6 +65,7 @@ _mesa_update_shader_textures_used(struct gl_shader_program *shProg,
 {
    GLuint s;
 
+   memcpy(prog->SamplerUnits, shProg->SamplerUnits, sizeof(prog->SamplerUnits));
    memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
 
    for (s = 0; s < MAX_SAMPLERS; s++) {
