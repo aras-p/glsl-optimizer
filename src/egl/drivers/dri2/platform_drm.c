@@ -220,16 +220,15 @@ get_aux_bo(struct dri2_egl_surface *dri2_surf,
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   __DRIbuffer *b;
+   __DRIbuffer *b = dri2_surf->dri_buffers[attachment];
 
-   b = NULL;
-   if (dri2_surf->dri_buffers[attachment])
-      b = dri2_surf->dri_buffers[attachment];
-   if (b == NULL)
+   if (b == NULL) {
       b = dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
 					 attachment, format,
 					 dri2_surf->base.Width,
 					 dri2_surf->base.Height);
+      dri2_surf->dri_buffers[attachment] = b;
+   }
    if (b == NULL)
       return -1;
 
