@@ -863,10 +863,18 @@ void cso_save_vertex_buffers(struct cso_context *ctx)
 
 void cso_restore_vertex_buffers(struct cso_context *ctx)
 {
+   unsigned i;
+
    util_copy_vertex_buffers(ctx->vertex_buffers,
                             &ctx->nr_vertex_buffers,
                             ctx->vertex_buffers_saved,
                             ctx->nr_vertex_buffers_saved);
+
+   for (i = 0; i < ctx->nr_vertex_buffers_saved; i++) {
+      pipe_resource_reference(&ctx->vertex_buffers_saved[i].buffer, NULL);
+   }
+   ctx->nr_vertex_buffers_saved = 0;
+
    ctx->pipe->set_vertex_buffers(ctx->pipe, ctx->nr_vertex_buffers,
                                  ctx->vertex_buffers);
 }
