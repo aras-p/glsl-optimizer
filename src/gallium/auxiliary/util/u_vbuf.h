@@ -78,6 +78,7 @@ struct u_vbuf {
    void *vertex_elements;
 };
 
+/* XXX this is no longer needed and can be removed */
 struct u_vbuf_resource {
    struct u_resource b;
    uint8_t *user_ptr;

@@ -255,8 +255,8 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
          unsigned offset = vb->buffer_offset + vb->stride * start_vertex;
          uint8_t *map;
 
-         if (u_vbuf_resource(vb->buffer)->user_ptr) {
-            map = u_vbuf_resource(vb->buffer)->user_ptr + offset;
+         if (vb->buffer->user_ptr) {
+            map = vb->buffer->user_ptr + offset;
          } else {
             unsigned size = vb->stride ? num_vertices * vb->stride
                                        : sizeof(double)*4;
@@ -287,8 +287,8 @@ u_vbuf_translate_buffers(struct u_vbuf_priv *mgr, struct translate_key *key,
 
       assert(ib->buffer && ib->index_size);
 
-      if (u_vbuf_resource(ib->buffer)->user_ptr) {
-         map = u_vbuf_resource(ib->buffer)->user_ptr + offset;
+      if (ib->buffer->user_ptr) {
+         map = ib->buffer->user_ptr + offset;
       } else {
          map = pipe_buffer_map_range(mgr->pipe, ib->buffer, offset,
                                      num_indices * ib->index_size,
@@ -729,7 +729,7 @@ static void u_vbuf_set_vertex_buffers(struct pipe_context *pipe,
          continue;
       }
 
-      if (u_vbuf_resource(vb->buffer)->user_ptr) {
+      if (vb->buffer->user_ptr) {
          pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
          mgr->any_user_vbs = TRUE;
          continue;
@@ -796,7 +796,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
 
       assert(vb->buffer);
 
-      if (!u_vbuf_resource(vb->buffer)->user_ptr) {
+      if (!vb->buffer->user_ptr) {
          continue;
       }
 
@@ -843,7 +843,7 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
       assert(start < end);
 
       real_vb = &mgr->real_vertex_buffer[i];
-      ptr = u_vbuf_resource(mgr->b.vertex_buffer[i].buffer)->user_ptr;
+      ptr = mgr->b.vertex_buffer[i].buffer->user_ptr;
 
       u_upload_data(mgr->b.uploader, start, end - start, ptr + start,
                     &real_vb->buffer_offset, &real_vb->buffer);
@@ -924,7 +924,7 @@ static boolean u_vbuf_need_minmax_index(struct u_vbuf_priv *mgr)
       }
 
       /* Per-vertex attribs need min/max_index. */
-      if (u_vbuf_resource(vb->buffer)->user_ptr ||
+      if (vb->buffer->user_ptr ||
           mgr->ve->incompatible_layout_elem[i] ||
           mgr->incompatible_vb[index]) {
          return TRUE;
@@ -957,7 +957,7 @@ static boolean u_vbuf_mapping_vertex_buffer_blocks(struct u_vbuf_priv *mgr)
 
       /* Return true for the hw buffers which don't need to be translated. */
       /* XXX we could use some kind of a is-busy query. */
-      if (!u_vbuf_resource(vb->buffer)->user_ptr &&
+      if (!vb->buffer->user_ptr &&
           !mgr->ve->incompatible_layout_elem[i] &&
           !mgr->incompatible_vb[index]) {
          return TRUE;
@@ -978,8 +978,8 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    unsigned i;
    unsigned restart_index = info->restart_index;
 
-   if (u_vbuf_resource(ib->buffer)->user_ptr) {
-      indices = u_vbuf_resource(ib->buffer)->user_ptr +
+   if (ib->buffer->user_ptr) {
+      indices = ib->buffer->user_ptr +
                 ib->offset + info->start * ib->index_size;
    } else {
       indices = pipe_buffer_map_range(pipe, ib->buffer,
