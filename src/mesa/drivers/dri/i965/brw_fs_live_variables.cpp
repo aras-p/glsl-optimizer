@@ -165,8 +165,6 @@ fs_visitor::calculate_live_intervals()
    int num_vars = this->virtual_grf_next;
    int *def = ralloc_array(mem_ctx, int, num_vars);
    int *use = ralloc_array(mem_ctx, int, num_vars);
-   int loop_depth = 0;
-   int loop_start = 0;
 
    if (this->live_intervals_valid)
       return;
@@ -176,56 +174,45 @@ fs_visitor::calculate_live_intervals()
       use[i] = -1;
    }
 
+   /* Start by setting up the intervals with no knowledge of control
+    * flow.
+    */
    int ip = 0;
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      if (inst->opcode == BRW_OPCODE_DO) {
-	 if (loop_depth++ == 0)
-	    loop_start = ip;
-      } else if (inst->opcode == BRW_OPCODE_WHILE) {
-	 loop_depth--;
+      for (unsigned int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF) {
+	    int reg = inst->src[i].reg;
 
-	 if (loop_depth == 0) {
-	    /* Patches up the use of vars marked for being live across
-	     * the whole loop.
-	     */
-	    for (int i = 0; i < num_vars; i++) {
-	       if (use[i] == loop_start) {
-		  use[i] = ip;
-	       }
-	    }
-	 }
-      } else {
-	 for (unsigned int i = 0; i < 3; i++) {
-	    if (inst->src[i].file == GRF) {
-	       int reg = inst->src[i].reg;
-
-	       if (!loop_depth) {
-		  use[reg] = ip;
-	       } else {
-		  def[reg] = MIN2(loop_start, def[reg]);
-		  use[reg] = loop_start;
-
-		  /* Nobody else is going to go smash our start to
-		   * later in the loop now, because def[reg] now
-		   * points before the bb header.
-		   */
-	       }
-	    }
+	    use[reg] = ip;
 	 }
 	 if (inst->dst.file == GRF) {
 	    int reg = inst->dst.reg;
 
-	    if (!loop_depth) {
-	       def[reg] = MIN2(def[reg], ip);
-	    } else {
-	       def[reg] = MIN2(def[reg], loop_start);
-	    }
+	    def[reg] = MIN2(def[reg], ip);
 	 }
       }
 
       ip++;
+   }
+
+   /* Now, extend those intervals using our analysis of control flow. */
+   fs_cfg cfg(this);
+   fs_live_variables livevars(this, &cfg);
+
+   for (int b = 0; b < cfg.num_blocks; b++) {
+      for (int i = 0; i < num_vars; i++) {
+	 if (livevars.bd[b].livein[i]) {
+	    def[i] = MIN2(def[i], cfg.blocks[b]->start_ip);
+	    use[i] = MAX2(use[i], cfg.blocks[b]->start_ip);
+	 }
+
+	 if (livevars.bd[b].liveout[i]) {
+	    def[i] = MIN2(def[i], cfg.blocks[b]->end_ip);
+	    use[i] = MAX2(use[i], cfg.blocks[b]->end_ip);
+	 }
+      }
    }
 
    ralloc_free(this->virtual_grf_def);
