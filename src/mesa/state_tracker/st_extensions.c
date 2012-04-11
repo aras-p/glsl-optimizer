@@ -462,9 +462,6 @@ void st_init_extensions(struct st_context *st)
       { { o(ARB_ES2_compatibility) },
         { PIPE_FORMAT_R32G32B32A32_FIXED } },
 
-      { { o(ARB_half_float_vertex) },
-        { PIPE_FORMAT_R16G16B16A16_FLOAT } },
-
       { { o(ARB_vertex_type_2_10_10_10_rev) },
         { PIPE_FORMAT_R10G10B10A2_UNORM,
           PIPE_FORMAT_B10G10R10A2_UNORM,
@@ -486,6 +483,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
+   ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_sampler_objects = GL_TRUE;
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
