@@ -1698,6 +1698,7 @@ fs_visitor::visit(ir_loop *ir)
       }
    }
 
+   this->base_ir = NULL;
    emit(BRW_OPCODE_DO);
 
    if (ir->to) {
@@ -1724,6 +1725,7 @@ fs_visitor::visit(ir_loop *ir)
       emit(BRW_OPCODE_ADD, counter, counter, this->result);
    }
 
+   this->base_ir = NULL;
    emit(BRW_OPCODE_WHILE);
 }
 
