@@ -337,8 +337,10 @@ i915_is_format_supported(struct pipe_screen *screen,
       list = depth_supported;
    else if (tex_usage & PIPE_BIND_RENDER_TARGET)
       list = render_supported;
-   else
+   else if (tex_usage & PIPE_BIND_SAMPLER_VIEW)
       list = tex_supported;
+   else
+      return TRUE; /* PIPE_BIND_{VERTEX,INDEX}_BUFFER */
 
    for (i = 0; list[i] != PIPE_FORMAT_NONE; i++) {
       if (list[i] == format)
