@@ -67,7 +67,7 @@ Subsequent drawing calls become no-ops and the rendering is incorrect.
 
 
 
-<h2>sw-02 tests 1, 2, 4</h2>
+<h2>sw-02 tests 1, 2, 4, 6</h2>
 
 <p>
 These tests depend on the
@@ -79,6 +79,19 @@ target="_main">GL_NV_primitive_restart</a> extension.
 If the Mesa driver doesn't support this extension the rendering will
 be incorrect and the test will fail.
 </p>
+
+
+
+<h2>sw-02 test 6</h2>
+
+<p>
+The lines drawn in this test appear in a random color.
+That's because texture mapping is enabled when the lines are drawn, but no
+texture image is defined (glTexImage2D() is called with pixels=NULL).
+Since GL says the contents of the texture image are undefined in that
+situation, we get a random color.
+</p>
+
 
 
 <h2>Lightwave-01 test 3</h2>
