@@ -57,16 +57,15 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = offset;
 
-   if (cso) {
-      cso_set_vertex_buffers(cso, 1, &vbuffer);
-   } else {
-      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
-   }
-
    /* note: vertex elements already set by caller */
 
-   /* draw */
-   util_draw_arrays(pipe, prim_type, 0, num_verts);
+   if (cso) {
+      cso_set_vertex_buffers(cso, 1, &vbuffer);
+      cso_draw_arrays(cso, prim_type, 0, num_verts);
+   } else {
+      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+      util_draw_arrays(pipe, prim_type, 0, num_verts);
+   }
 }
 
 
