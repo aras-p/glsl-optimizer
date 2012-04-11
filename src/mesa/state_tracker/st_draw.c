@@ -795,7 +795,8 @@ find_sub_primitives(const void *elements, unsigned element_size,
  * sub-primitives.
  */
 static void
-handle_fallback_primitive_restart(struct pipe_context *pipe,
+handle_fallback_primitive_restart(struct cso_context *cso,
+                                  struct pipe_context *pipe,
                                   const struct _mesa_index_buffer *ib,
                                   struct pipe_index_buffer *ibuffer,
                                   struct pipe_draw_info *orig_info)
@@ -851,7 +852,7 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
          info.start = sub_prims[i].start;
          info.count = sub_prims[i].count;
          if (u_trim_pipe_prim(info.mode, &info.count)) {
-            pipe->draw_vbo(pipe, &info);
+            cso_draw_vbo(cso, &info);
          }
       }
    }
@@ -1075,7 +1076,7 @@ st_draw_vbo(struct gl_context *ctx,
    }
 
    setup_index_buffer(ctx, ib, &ibuffer);
-   pipe->set_index_buffer(pipe, &ibuffer);
+   cso_set_index_buffer(st->cso_context, &ibuffer);
 
    util_draw_init_info(&info);
    if (ib) {
@@ -1110,20 +1111,21 @@ st_draw_vbo(struct gl_context *ctx,
       }
 
       if (info.count_from_stream_output) {
-         pipe->draw_vbo(pipe, &info);
+         cso_draw_vbo(st->cso_context, &info);
       }
       else if (info.primitive_restart) {
          if (st->sw_primitive_restart) {
             /* Handle primitive restart for drivers that doesn't support it */
-            handle_fallback_primitive_restart(pipe, ib, &ibuffer, &info);
+            handle_fallback_primitive_restart(st->cso_context, pipe, ib,
+                                              &ibuffer, &info);
          }
          else {
             /* don't trim, restarts might be inside index list */
-            pipe->draw_vbo(pipe, &info);
+            cso_draw_vbo(st->cso_context, &info);
          }
       }
       else if (u_trim_pipe_prim(info.mode, &info.count))
-         pipe->draw_vbo(pipe, &info);
+         cso_draw_vbo(st->cso_context, &info);
    }
 
    pipe_resource_reference(&ibuffer.buffer, NULL);
