@@ -103,6 +103,8 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->vbuf_mgr)
         u_vbuf_destroy(r300->vbuf_mgr);
 
+    u_upload_destroy(r300->uploader);
+
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
 
@@ -439,6 +441,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         if (!r300->vbuf_mgr)
             goto fail;
     }
+
+    r300->uploader = u_upload_create(&r300->context, 256 * 1024, 16,
+                                     PIPE_BIND_INDEX_BUFFER);
 
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)

@@ -580,6 +580,7 @@ struct r300_context {
     struct pipe_index_buffer index_buffer;
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     unsigned nr_vertex_buffers;
+    struct u_upload_mgr *uploader;
 
     struct util_slab_mempool pool_transfers;
 
