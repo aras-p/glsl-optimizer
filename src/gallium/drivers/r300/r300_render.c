@@ -740,6 +740,55 @@ static void r300_draw_elements_instanced(struct r300_context *r300,
         r300_draw_elements(r300, info, i);
 }
 
+static unsigned r300_max_vertex_count(struct r300_context *r300)
+{
+   unsigned i, nr = r300->velems->count;
+   struct pipe_vertex_element *velems = r300->velems->velem;
+   unsigned result = ~0;
+
+   for (i = 0; i < nr; i++) {
+      struct pipe_vertex_buffer *vb =
+            &r300->vertex_buffer[velems[i].vertex_buffer_index];
+      unsigned size, max_count, value;
+
+      /* We're not interested in constant and per-instance attribs. */
+      if (!vb->buffer ||
+          !vb->stride ||
+          velems[i].instance_divisor) {
+         continue;
+      }
+
+      size = vb->buffer->width0;
+
+      /* Subtract buffer_offset. */
+      value = vb->buffer_offset;
+      if (value >= size) {
+         return 0;
+      }
+      size -= value;
+
+      /* Subtract src_offset. */
+      value = velems[i].src_offset;
+      if (value >= size) {
+         return 0;
+      }
+      size -= value;
+
+      /* Subtract format_size. */
+      value = r300->velems->format_size[i];
+      if (value >= size) {
+         return 0;
+      }
+      size -= value;
+
+      /* Compute the max count. */
+      max_count = 1 + size / vb->stride;
+      result = MIN2(result, max_count);
+   }
+   return result;
+}
+
+
 static void r300_draw_vbo(struct pipe_context* pipe,
                           const struct pipe_draw_info *dinfo)
 {
@@ -757,7 +806,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 
     /* Draw. */
     if (info.indexed) {
-        unsigned max_count = u_vbuf_draw_max_vertex_count(r300->vbuf_mgr);
+        unsigned max_count = r300_max_vertex_count(r300);
 
         if (!max_count) {
            fprintf(stderr, "r300: Skipping a draw command. There is a buffer "

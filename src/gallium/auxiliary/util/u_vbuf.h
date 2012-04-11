@@ -90,6 +90,5 @@ u_vbuf_create(struct pipe_context *pipe,
 
 void u_vbuf_destroy(struct u_vbuf *mgr);
 
-unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgr);
 
 #endif

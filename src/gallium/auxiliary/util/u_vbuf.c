@@ -859,56 +859,6 @@ u_vbuf_upload_buffers(struct u_vbuf_priv *mgr,
    }
 }
 
-unsigned u_vbuf_draw_max_vertex_count(struct u_vbuf *mgrb)
-{
-   struct u_vbuf_priv *mgr = (struct u_vbuf_priv*)mgrb;
-   unsigned i, nr = mgr->ve->count;
-   struct pipe_vertex_element *velems =
-         mgr->fallback_ve ? mgr->fallback_velems : mgr->ve->ve;
-   unsigned result = ~0;
-
-   for (i = 0; i < nr; i++) {
-      struct pipe_vertex_buffer *vb =
-            &mgr->real_vertex_buffer[velems[i].vertex_buffer_index];
-      unsigned size, max_count, value;
-
-      /* We're not interested in constant and per-instance attribs. */
-      if (!vb->buffer ||
-          !vb->stride ||
-          velems[i].instance_divisor) {
-         continue;
-      }
-
-      size = vb->buffer->width0;
-
-      /* Subtract buffer_offset. */
-      value = vb->buffer_offset;
-      if (value >= size) {
-         return 0;
-      }
-      size -= value;
-
-      /* Subtract src_offset. */
-      value = velems[i].src_offset;
-      if (value >= size) {
-         return 0;
-      }
-      size -= value;
-
-      /* Subtract format_size. */
-      value = mgr->ve->native_format_size[i];
-      if (value >= size) {
-         return 0;
-      }
-      size -= value;
-
-      /* Compute the max count. */
-      max_count = 1 + size / vb->stride;
-      result = MIN2(result, max_count);
-   }
-   return result;
-}
-
 static boolean u_vbuf_need_minmax_index(struct u_vbuf_priv *mgr)
 {
    unsigned i, nr = mgr->ve->count;
