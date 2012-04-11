@@ -36,6 +36,7 @@
   */
 
 #include "pipe/p_state.h"
+#include "util/u_draw.h"
 #include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
@@ -1289,4 +1290,38 @@ cso_restore_stream_outputs(struct cso_context *ctx)
 
    ctx->nr_so_targets = ctx->nr_so_targets_saved;
    ctx->nr_so_targets_saved = 0;
+}
+
+/* drawing */
+
+void
+cso_set_index_buffer(struct cso_context *cso,
+                     const struct pipe_index_buffer *ib)
+{
+   struct pipe_context *pipe = cso->pipe;
+   pipe->set_index_buffer(pipe, ib);
+}
+
+void
+cso_draw_vbo(struct cso_context *cso,
+             const struct pipe_draw_info *info)
+{
+   struct pipe_context *pipe = cso->pipe;
+   pipe->draw_vbo(pipe, info);
+}
+
+void
+cso_draw_arrays(struct cso_context *cso, uint mode, uint start, uint count)
+{
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.min_index = start;
+   info.max_index = start + count - 1;
+
+   cso_draw_vbo(cso, &info);
 }
