@@ -138,6 +138,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 130;
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
       return 0;
+   case PIPE_CAP_USER_VERTEX_BUFFERS:
+      return 1;
    default:
       return 0;
    }
