@@ -459,9 +459,6 @@ void st_init_extensions(struct st_context *st)
 
    /* Required: vertex fetch support. */
    static const struct st_extension_format_mapping vertex_mapping[] = {
-      { { o(ARB_ES2_compatibility) },
-        { PIPE_FORMAT_R32G32B32A32_FIXED } },
-
       { { o(ARB_vertex_type_2_10_10_10_rev) },
         { PIPE_FORMAT_R10G10B10A2_UNORM,
           PIPE_FORMAT_B10G10R10A2_UNORM,
@@ -476,6 +473,7 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
+   ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
    ctx->Extensions.ARB_copy_buffer = GL_TRUE;
    ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;
    ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
