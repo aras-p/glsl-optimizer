@@ -49,8 +49,6 @@ extern "C" {
 #include "glsl/glsl_types.h"
 #include "glsl/ir_print_visitor.h"
 
-#define MAX_INSTRUCTION (1 << 30)
-
 int
 fs_visitor::type_size(const struct glsl_type *type)
 {
@@ -988,83 +986,6 @@ fs_visitor::setup_pull_constants()
    c->prog_data.nr_pull_params = pull_uniform_count;
 }
 
-void
-fs_visitor::calculate_live_intervals()
-{
-   int num_vars = this->virtual_grf_next;
-   int *def = ralloc_array(mem_ctx, int, num_vars);
-   int *use = ralloc_array(mem_ctx, int, num_vars);
-   int loop_depth = 0;
-   int loop_start = 0;
-
-   if (this->live_intervals_valid)
-      return;
-
-   for (int i = 0; i < num_vars; i++) {
-      def[i] = MAX_INSTRUCTION;
-      use[i] = -1;
-   }
-
-   int ip = 0;
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
-      if (inst->opcode == BRW_OPCODE_DO) {
-	 if (loop_depth++ == 0)
-	    loop_start = ip;
-      } else if (inst->opcode == BRW_OPCODE_WHILE) {
-	 loop_depth--;
-
-	 if (loop_depth == 0) {
-	    /* Patches up the use of vars marked for being live across
-	     * the whole loop.
-	     */
-	    for (int i = 0; i < num_vars; i++) {
-	       if (use[i] == loop_start) {
-		  use[i] = ip;
-	       }
-	    }
-	 }
-      } else {
-	 for (unsigned int i = 0; i < 3; i++) {
-	    if (inst->src[i].file == GRF) {
-	       int reg = inst->src[i].reg;
-
-	       if (!loop_depth) {
-		  use[reg] = ip;
-	       } else {
-		  def[reg] = MIN2(loop_start, def[reg]);
-		  use[reg] = loop_start;
-
-		  /* Nobody else is going to go smash our start to
-		   * later in the loop now, because def[reg] now
-		   * points before the bb header.
-		   */
-	       }
-	    }
-	 }
-	 if (inst->dst.file == GRF) {
-	    int reg = inst->dst.reg;
-
-	    if (!loop_depth) {
-	       def[reg] = MIN2(def[reg], ip);
-	    } else {
-	       def[reg] = MIN2(def[reg], loop_start);
-	    }
-	 }
-      }
-
-      ip++;
-   }
-
-   ralloc_free(this->virtual_grf_def);
-   ralloc_free(this->virtual_grf_use);
-   this->virtual_grf_def = def;
-   this->virtual_grf_use = use;
-
-   this->live_intervals_valid = true;
-}
-
 /**
  * Attempts to move immediate constants into the immediate
  * constant slot of following instructions.
@@ -1672,49 +1593,6 @@ fs_visitor::remove_duplicate_mrf_writes()
    }
 
    return progress;
-}
-
-bool
-fs_visitor::virtual_grf_interferes(int a, int b)
-{
-   int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
-   int end = MIN2(this->virtual_grf_use[a], this->virtual_grf_use[b]);
-
-   /* We can't handle dead register writes here, without iterating
-    * over the whole instruction stream to find every single dead
-    * write to that register to compare to the live interval of the
-    * other register.  Just assert that dead_code_eliminate() has been
-    * called.
-    */
-   assert((this->virtual_grf_use[a] != -1 ||
-	   this->virtual_grf_def[a] == MAX_INSTRUCTION) &&
-	  (this->virtual_grf_use[b] != -1 ||
-	   this->virtual_grf_def[b] == MAX_INSTRUCTION));
-
-   /* If the register is used to store 16 values of less than float
-    * size (only the case for pixel_[xy]), then we can't allocate
-    * another dword-sized thing to that register that would be used in
-    * the same instruction.  This is because when the GPU decodes (for
-    * example):
-    *
-    * (declare (in ) vec4 gl_FragCoord@0x97766a0)
-    * add(16)         g6<1>F          g6<8,8,1>UW     0.5F { align1 compr };
-    *
-    * it's actually processed as:
-    * add(8)         g6<1>F          g6<8,8,1>UW     0.5F { align1 };
-    * add(8)         g7<1>F          g6.8<8,8,1>UW   0.5F { align1 sechalf };
-    *
-    * so our second half values in g6 got overwritten in the first
-    * half.
-    */
-   if (c->dispatch_width == 16 && (this->pixel_x.reg == a ||
-				   this->pixel_x.reg == b ||
-				   this->pixel_y.reg == a ||
-				   this->pixel_y.reg == b)) {
-      return start <= end;
-   }
-
-   return start < end;
 }
 
 /**
