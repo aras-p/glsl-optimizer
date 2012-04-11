@@ -574,10 +574,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
 			}
 
-			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
+			u_upload_data(rctx->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
 			free(tmpPtr);
 		} else {
-			u_upload_data(rctx->vbuf_mgr->uploader, 0, buffer->width0, ptr, &cb->buffer_offset, &cb->buffer);
+			u_upload_data(rctx->uploader, 0, buffer->width0, ptr, &cb->buffer_offset, &cb->buffer);
 		}
 	} else {
 		/* Setup the hw buffer. */
@@ -780,7 +780,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 		ptr = ib.buffer->user_ptr;
 		if (ptr) {
-			u_upload_data(rctx->vbuf_mgr->uploader, 0, info.count * ib.index_size,
+			u_upload_data(rctx->uploader, 0, info.count * ib.index_size,
 				      ptr, &ib.offset, &ib.buffer);
 		}
 	} else {

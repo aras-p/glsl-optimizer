@@ -28,6 +28,7 @@
 #include "util/u_blitter.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_upload_mgr.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "os/os_time.h"
@@ -194,6 +195,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->vbuf_mgr) {
 		u_vbuf_destroy(rctx->vbuf_mgr);
 	}
+	if (rctx->uploader) {
+		u_upload_destroy(rctx->uploader);
+	}
 	util_slab_destroy(&rctx->pool_transfers);
 
 	r600_update_num_contexts(rctx->screen, -1);
@@ -303,6 +307,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 				       PIPE_BIND_CONSTANT_BUFFER);
 	if (!rctx->vbuf_mgr)
 		goto fail;
+
+        rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
+                                         PIPE_BIND_INDEX_BUFFER |
+                                         PIPE_BIND_CONSTANT_BUFFER);
+        if (!rctx->uploader)
+                goto fail;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL)
