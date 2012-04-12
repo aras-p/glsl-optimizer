@@ -34,6 +34,7 @@
 #include "dri_screen.h"
 #include "dri_drawable.h"
 #include "dri_context.h"
+#include "state_tracker/drm_driver.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
@@ -104,7 +105,7 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    ctx->sPriv = sPriv;
 
    driParseConfigFiles(&ctx->optionCache,
-		       &screen->optionCache, sPriv->myNum, "dri");
+		       &screen->optionCache, sPriv->myNum, driver_descriptor.name);
 
    dri_fill_st_visual(&attribs.visual, screen, visual);
    ctx->st = stapi->create_context(stapi, &screen->base, &attribs, &ctx_err,
