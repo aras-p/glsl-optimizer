@@ -43,6 +43,8 @@
 
 #define MSAA_VISUAL_MAX_SAMPLES 8
 
+#undef false
+
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
       DRI_CONF_SECTION_PERFORMANCE
@@ -60,9 +62,16 @@ PUBLIC const char __driConfigOptions[] =
          DRI_CONF_PP_JIMENEZMLAA(0, 0, 32)
          DRI_CONF_PP_JIMENEZMLAA_COLOR(0, 0, 32)
       DRI_CONF_SECTION_END
+
+      DRI_CONF_SECTION_DEBUG
+         DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(false)
+      DRI_CONF_SECTION_END
+
    DRI_CONF_END;
 
-static const uint __driNConfigOptions = 9;
+#define false 0
+
+static const uint __driNConfigOptions = 10;
 
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
