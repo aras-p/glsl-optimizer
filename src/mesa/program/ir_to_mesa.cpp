@@ -2358,7 +2358,7 @@ class add_uniform_to_shader : public uniform_field_visitor {
 public:
    add_uniform_to_shader(struct gl_shader_program *shader_program,
 			 struct gl_program_parameter_list *params)
-      : shader_program(shader_program), params(params)
+      : shader_program(shader_program), params(params), idx(-1)
    {
       /* empty */
    }
