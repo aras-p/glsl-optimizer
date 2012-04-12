@@ -232,6 +232,15 @@ struct st_visual
    enum st_attachment_type render_buffer;
 };
 
+
+/**
+ * Configuration options from driconf
+ */
+struct st_config_options
+{
+	boolean force_glsl_extensions_warn;
+};
+
 /**
  * Represent the attributes of a context.
  */
@@ -254,6 +263,11 @@ struct st_context_attribs
     * The visual of the framebuffers the context will be bound to.
     */
    struct st_visual visual;
+
+   /**
+    * Configuration options.
+    */
+   struct st_config_options options;
 };
 
 /**

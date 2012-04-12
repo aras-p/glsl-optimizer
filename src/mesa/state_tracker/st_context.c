@@ -114,12 +114,15 @@ st_get_msaa(void)
 
 
 static struct st_context *
-st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
+st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
+		const struct st_config_options *options)
 {
    struct pipe_screen *screen = pipe->screen;
    uint i;
    struct st_context *st = ST_CALLOC_STRUCT( st_context );
    
+   st->options = *options;
+
    ctx->st = st;
 
    st->ctx = ctx;
@@ -207,7 +210,8 @@ static void st_init_driver_flags(struct gl_driver_flags *f)
 
 struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
                                      const struct gl_config *visual,
-                                     struct st_context *share)
+                                     struct st_context *share,
+                                     const struct st_config_options *options)
 {
    struct gl_context *ctx;
    struct gl_context *shareCtx = share ? share->ctx : NULL;
@@ -234,7 +238,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    if (debug_get_option_mesa_mvp_dp4())
       _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
-   return st_create_context_priv(ctx, pipe);
+   return st_create_context_priv(ctx, pipe, options);
 }
 
 

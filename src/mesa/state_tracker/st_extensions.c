@@ -646,4 +646,6 @@ void st_init_extensions(struct st_context *st)
        ctx->Extensions.ARB_draw_instanced) {
       ctx->Extensions.ARB_transform_feedback_instanced = GL_TRUE;
    }
+   if (st->options.force_glsl_extensions_warn)
+	   ctx->Const.ForceGLSLExtensionsWarn = 1;
 }
