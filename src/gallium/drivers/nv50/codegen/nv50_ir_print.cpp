@@ -227,6 +227,26 @@ static const char *SemanticStr[SV_LAST + 1] =
    "(INVALID)"
 };
 
+static const char *interpStr[16] =
+{
+   "pass",
+   "mul",
+   "flat",
+   "sc",
+   "cent pass",
+   "cent mul",
+   "cent flat",
+   "cent sc",
+   "off pass",
+   "off mul",
+   "off flat",
+   "off sc",
+   "samp pass",
+   "samp mul",
+   "samp flat",
+   "samp sc"
+};
+
 #define PRINT(args...)                                \
    do {                                               \
       pos += snprintf(&buf[pos], size - pos, args);   \
@@ -451,6 +471,8 @@ void Instruction::print() const
          PRINT(" %sBB:%i", colour[TXT_BRA], asFlow()->target.bb->getId());
    } else {
       PRINT("%s ", operationStr[op]);
+      if (op == OP_LINTERP || op == OP_PINTERP)
+         PRINT("%s ", interpStr[ipa]);
       if (subOp)
          PRINT("(SUBOP:%u) ", subOp);
       if (perPatch)
