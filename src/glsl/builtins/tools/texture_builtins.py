@@ -162,6 +162,7 @@ def generate_texture_functions(fs):
     generate_sigs("", "txs", "2DArrayShadow")
     generate_fiu_sigs("txs", "2DRect")
     generate_sigs("", "txs", "2DRectShadow")
+    generate_fiu_sigs("txs", "Buffer")
     end_function(fs, "textureSize")
 
     start_function("texture")

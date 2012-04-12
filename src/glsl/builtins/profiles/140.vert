@@ -504,6 +504,10 @@ ivec2 textureSize(isampler2DRect sampler);
 ivec2 textureSize(usampler2DRect sampler);
 ivec2 textureSize(sampler2DRectShadow sampler);
 
+int  textureSize( samplerBuffer sampler);
+int  textureSize(isamplerBuffer sampler);
+int  textureSize(usamplerBuffer sampler);
+
 /* texture */
  vec4 texture( sampler1D sampler, float P);
 ivec4 texture(isampler1D sampler, float P);
