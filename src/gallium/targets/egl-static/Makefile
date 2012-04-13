@@ -101,7 +101,7 @@ ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
 egl_CPPFLAGS += -D_EGL_PIPE_NOUVEAU=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
-	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
+	$(TOP)/src/gallium/drivers/nv30/libnv30.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
