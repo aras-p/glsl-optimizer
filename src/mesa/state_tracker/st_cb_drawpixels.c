@@ -66,6 +66,7 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_tile.h"
+#include "util/u_upload_mgr.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -619,16 +620,16 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    }
 
    {
-      struct pipe_resource *buf;
+      struct pipe_resource *buf = NULL;
+      unsigned offset;
 
-      /* allocate/load buffer object with vertex data */
-      buf = pipe_buffer_create(pipe->screen,
-			       PIPE_BIND_VERTEX_BUFFER,
-			       PIPE_USAGE_STATIC,
-                               sizeof(verts));
-      pipe_buffer_write(st->pipe, buf, 0, sizeof(verts), verts);
+      u_upload_data(st->uploader, 0, sizeof(verts), verts, &offset, &buf);
+      if (!buf) {
+         return;
+      }
 
-      util_draw_vertex_buffer(pipe, st->cso_context, buf, 0,
+      u_upload_unmap(st->uploader);
+      util_draw_vertex_buffer(pipe, st->cso_context, buf, offset,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
