@@ -555,7 +555,15 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
+   GLfloat (*verts)[3][4]; /* four verts, three attribs, XYZW */
+   struct pipe_resource *buf = NULL;
+   unsigned offset;
+
+   u_upload_alloc(st->uploader, 0, 4 * sizeof(verts[0]), &offset, &buf,
+		  (void**)&verts);
+   if (!buf) {
+      return;
+   }
 
    /* setup vertex data */
    {
@@ -619,22 +627,12 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       }
    }
 
-   {
-      struct pipe_resource *buf = NULL;
-      unsigned offset;
-
-      u_upload_data(st->uploader, 0, sizeof(verts), verts, &offset, &buf);
-      if (!buf) {
-         return;
-      }
-
-      u_upload_unmap(st->uploader);
-      util_draw_vertex_buffer(pipe, st->cso_context, buf, offset,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              3); /* attribs/vert */
-      pipe_resource_reference(&buf, NULL);
-   }
+   u_upload_unmap(st->uploader);
+   util_draw_vertex_buffer(pipe, st->cso_context, buf, offset,
+			   PIPE_PRIM_QUADS,
+			   4,  /* verts */
+			   3); /* attribs/vert */
+   pipe_resource_reference(&buf, NULL);
 }
 
 
