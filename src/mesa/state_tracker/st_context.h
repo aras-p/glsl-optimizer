@@ -155,7 +155,6 @@ struct st_context
       struct pipe_sampler_state samplers[2];
       enum pipe_format tex_format;
       void *vs;
-      float vertices[4][3][4];  /**< vertex pos + color + texcoord */
       struct bitmap_cache *cache;
    } bitmap;
 

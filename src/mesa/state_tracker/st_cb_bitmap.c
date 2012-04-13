@@ -349,6 +349,7 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
    const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
    GLuint i;
+   float (*vertices)[3][4];  /**< vertex pos + color + texcoord */
 
    if(!normalized)
    {
@@ -356,45 +357,47 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
       tBot = (GLfloat) height;
    }
 
+   u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]), vbuf_offset, vbuf,
+		  (void**)&vertices);
+   if (!vbuf) {
+      return;
+   }
+
    /* Positions are in clip coords since we need to do clipping in case
     * the bitmap quad goes beyond the window bounds.
     */
-   st->bitmap.vertices[0][0][0] = clip_x0;
-   st->bitmap.vertices[0][0][1] = clip_y0;
-   st->bitmap.vertices[0][2][0] = sLeft;
-   st->bitmap.vertices[0][2][1] = tTop;
+   vertices[0][0][0] = clip_x0;
+   vertices[0][0][1] = clip_y0;
+   vertices[0][2][0] = sLeft;
+   vertices[0][2][1] = tTop;
 
-   st->bitmap.vertices[1][0][0] = clip_x1;
-   st->bitmap.vertices[1][0][1] = clip_y0;
-   st->bitmap.vertices[1][2][0] = sRight;
-   st->bitmap.vertices[1][2][1] = tTop;
+   vertices[1][0][0] = clip_x1;
+   vertices[1][0][1] = clip_y0;
+   vertices[1][2][0] = sRight;
+   vertices[1][2][1] = tTop;
    
-   st->bitmap.vertices[2][0][0] = clip_x1;
-   st->bitmap.vertices[2][0][1] = clip_y1;
-   st->bitmap.vertices[2][2][0] = sRight;
-   st->bitmap.vertices[2][2][1] = tBot;
+   vertices[2][0][0] = clip_x1;
+   vertices[2][0][1] = clip_y1;
+   vertices[2][2][0] = sRight;
+   vertices[2][2][1] = tBot;
    
-   st->bitmap.vertices[3][0][0] = clip_x0;
-   st->bitmap.vertices[3][0][1] = clip_y1;
-   st->bitmap.vertices[3][2][0] = sLeft;
-   st->bitmap.vertices[3][2][1] = tBot;
+   vertices[3][0][0] = clip_x0;
+   vertices[3][0][1] = clip_y1;
+   vertices[3][2][0] = sLeft;
+   vertices[3][2][1] = tBot;
    
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
-      st->bitmap.vertices[i][0][2] = z;
-      st->bitmap.vertices[i][0][3] = 1.0f;
-      st->bitmap.vertices[i][1][0] = color[0];
-      st->bitmap.vertices[i][1][1] = color[1];
-      st->bitmap.vertices[i][1][2] = color[2];
-      st->bitmap.vertices[i][1][3] = color[3];
-      st->bitmap.vertices[i][2][2] = 0.0; /*R*/
-      st->bitmap.vertices[i][2][3] = 1.0; /*Q*/
+      vertices[i][0][2] = z;
+      vertices[i][0][3] = 1.0f;
+      vertices[i][1][0] = color[0];
+      vertices[i][1][1] = color[1];
+      vertices[i][1][2] = color[2];
+      vertices[i][1][3] = color[3];
+      vertices[i][2][2] = 0.0; /*R*/
+      vertices[i][2][3] = 1.0; /*Q*/
    }
 
-   /* Note: *vbuf will be NULL if there's a failure. */
-   u_upload_data(st->uploader, 0,
-		 sizeof(st->bitmap.vertices), st->bitmap.vertices,
-		 vbuf_offset, vbuf);
    u_upload_unmap(st->uploader);
 }
 
