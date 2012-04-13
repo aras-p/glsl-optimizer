@@ -152,7 +152,38 @@ If the fallback texture created in _mesa_get_fallback_texture() is
 initialized to be full white instead of full black the rendering appears
 correct.
 However, we have no plans to implement this work-around in Mesa.
+</p>
 
+
+<h2>Maya-03 test 2</h2>
+
+<p>
+This test makes some unusual calls to glRotate.  For example:
+</p>
+<pre>
+glRotate(50, 50, 50, 1);
+glRotate(100, 100, 100, 1);
+glRotate(52, 52, 52, 1);
+</pre>
+<p>
+These unusual values lead to invalid modelview matrices.
+For example, the last glRotate command above produces this matrix with Mesa:
+<pre>
+1.08536e+24 2.55321e-23 -0.000160389 0 
+5.96937e-25 1.08536e+24 103408 0 
+103408 -0.000160389 1.74755e+09 0 
+0 0 0 nan 
+</pre>
+and with NVIDIA's OpenGL:
+<pre>
+1.4013e-45 0 -nan 0 
+0 1.4013e-45 1.4013e-45 0 
+1.4013e-45 -nan 1.4013e-45 0 
+0 0 0 1.4013e-45 
+</pre>
+<p>
+This causes the object in question to be drawn in a strange orientation
+and with a semi-random color (between white and black) since GL_FOG is enabled.
 </p>
 
 
