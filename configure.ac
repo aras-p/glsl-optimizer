@@ -1993,6 +1993,7 @@ dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
 		src/gallium/drivers/Makefile
 		src/gallium/drivers/r300/Makefile
+		src/gallium/drivers/r600/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/egl/drivers/Makefile
