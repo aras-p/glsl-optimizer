@@ -260,7 +260,7 @@ const glsl_type *const glsl_type::uvec4_type = & builtin_130_types[3];
 /*@}*/
 
 
-/** \name Types added in GLSL 1.30
+/** \name Types added in GLSL 1.40
  */
 /*@{*/
 const glsl_type glsl_type::builtin_140_types[] = {
