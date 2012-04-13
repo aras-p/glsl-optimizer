@@ -540,6 +540,12 @@ uvec4 texture(usampler2DArray sampler, vec3 P);
 float texture(sampler1DArrayShadow sampler, vec3 P);
 float texture(sampler2DArrayShadow sampler, vec4 P);
 
+ vec4 texture( sampler2DRect sampler, vec2 P);
+ivec4 texture(isampler2DRect sampler, vec2 P);
+uvec4 texture(usampler2DRect sampler, vec2 P);
+
+float texture(sampler2DRectShadow sampler, vec3 P);
+
 /* textureProj */
  vec4 textureProj( sampler1D sampler, vec2 P);
 ivec4 textureProj(isampler1D sampler, vec2 P);
@@ -561,6 +567,15 @@ uvec4 textureProj(usampler3D sampler, vec4 P);
 
 float textureProj(sampler1DShadow sampler, vec4 P);
 float textureProj(sampler2DShadow sampler, vec4 P);
+
+ vec4 textureProj( sampler2DRect sampler, vec3 P);
+ivec4 textureProj(isampler2DRect sampler, vec3 P);
+uvec4 textureProj(usampler2DRect sampler, vec3 P);
+ vec4 textureProj( sampler2DRect sampler, vec4 P);
+ivec4 textureProj(isampler2DRect sampler, vec4 P);
+uvec4 textureProj(usampler2DRect sampler, vec4 P);
+
+float textureProj(sampler2DRectShadow sampler, vec4 P);
 
 /* textureLod */
  vec4 textureLod( sampler1D sampler, float P, float lod);
@@ -605,6 +620,12 @@ uvec4 textureOffset(usampler2D sampler, vec2 P, ivec2 offset);
 ivec4 textureOffset(isampler3D sampler, vec3 P, ivec3 offset);
 uvec4 textureOffset(usampler3D sampler, vec3 P, ivec3 offset);
 
+ vec4 textureOffset( sampler2DRect sampler, vec2 P, ivec2 offset);
+ivec4 textureOffset(isampler2DRect sampler, vec2 P, ivec2 offset);
+uvec4 textureOffset(usampler2DRect sampler, vec2 P, ivec2 offset);
+
+float textureOffset(sampler2DRectShadow sampler, vec3 P, ivec2 offset);
+
 float textureOffset(sampler1DShadow sampler, vec3 P, int offset);
 float textureOffset(sampler2DShadow sampler, vec3 P, ivec2 offset);
 
@@ -631,6 +652,10 @@ uvec4 texelFetch(usampler2D sampler, ivec2 P, int lod);
 ivec4 texelFetch(isampler3D sampler, ivec3 P, int lod);
 uvec4 texelFetch(usampler3D sampler, ivec3 P, int lod);
 
+ vec4 texelFetch( sampler2DRect sampler, ivec2 P);
+ivec4 texelFetch(isampler2DRect sampler, ivec2 P);
+uvec4 texelFetch(usampler2DRect sampler, ivec2 P);
+
  vec4 texelFetch( sampler1DArray sampler, ivec2 P, int lod);
 ivec4 texelFetch(isampler1DArray sampler, ivec2 P, int lod);
 uvec4 texelFetch(usampler1DArray sampler, ivec2 P, int lod);
@@ -655,6 +680,10 @@ uvec4 texelFetchOffset(usampler2D sampler, ivec2 P, int lod, ivec2 offset);
  vec4 texelFetchOffset( sampler3D sampler, ivec3 P, int lod, ivec3 offset);
 ivec4 texelFetchOffset(isampler3D sampler, ivec3 P, int lod, ivec3 offset);
 uvec4 texelFetchOffset(usampler3D sampler, ivec3 P, int lod, ivec3 offset);
+
+ vec4 texelFetchOffset( sampler2DRect sampler, ivec2 P, ivec2 offset);
+ivec4 texelFetchOffset(isampler2DRect sampler, ivec2 P, ivec2 offset);
+uvec4 texelFetchOffset(usampler2DRect sampler, ivec2 P, ivec2 offset);
 
  vec4 texelFetchOffset( sampler1DArray sampler, ivec2 P, int lod, int offset);
 ivec4 texelFetchOffset(isampler1DArray sampler, ivec2 P, int lod, int offset);
@@ -682,6 +711,15 @@ uvec4 textureProjOffset(usampler2D sampler, vec4 P, ivec2 offset);
  vec4 textureProjOffset( sampler3D sampler, vec4 P, ivec3 offset);
 ivec4 textureProjOffset(isampler3D sampler, vec4 P, ivec3 offset);
 uvec4 textureProjOffset(usampler3D sampler, vec4 P, ivec3 offset);
+
+ vec4 textureProjOffset( sampler2DRect sampler, vec3 P, ivec2 offset);
+ivec4 textureProjOffset(isampler2DRect sampler, vec3 P, ivec2 offset);
+uvec4 textureProjOffset(usampler2DRect sampler, vec3 P, ivec2 offset);
+ vec4 textureProjOffset( sampler2DRect sampler, vec4 P, ivec2 offset);
+ivec4 textureProjOffset(isampler2DRect sampler, vec4 P, ivec2 offset);
+uvec4 textureProjOffset(usampler2DRect sampler, vec4 P, ivec2 offset);
+
+float textureProjOffset(sampler2DRectShadow sampler, vec4 P, ivec2 offset);
 
 float textureProjOffset(sampler1DShadow sampler, vec4 P, int offset);
 float textureProjOffset(sampler2DShadow sampler, vec4 P, ivec2 offset);
@@ -773,6 +811,12 @@ uvec4 textureGrad(usampler3D sampler, vec3 P, vec3 dPdx, vec3 dPdy);
 ivec4 textureGrad(isamplerCube sampler, vec3 P, vec3 dPdx, vec3 dPdy);
 uvec4 textureGrad(usamplerCube sampler, vec3 P, vec3 dPdx, vec3 dPdy);
 
+ vec4 textureGrad( sampler2DRect sampler, vec2 P, vec2 dPdx, vec2 dPdy);
+ivec4 textureGrad(isampler2DRect sampler, vec2 P, vec2 dPdx, vec2 dPdy);
+uvec4 textureGrad(usampler2DRect sampler, vec2 P, vec2 dPdx, vec2 dPdy);
+
+float textureGrad(sampler2DRectShadow   sampler, vec3 P, vec2  dPdx, vec2  dPdy);
+
 float textureGrad(sampler1DShadow   sampler, vec3 P, float dPdx, float dPdy);
 float textureGrad(sampler2DShadow   sampler, vec3 P, vec2  dPdx, vec2  dPdy);
 float textureGrad(samplerCubeShadow sampler, vec4 P, vec3  dPdx, vec3  dPdy);
@@ -800,6 +844,12 @@ uvec4 textureGradOffset(usampler2D s, vec2 P, vec2 dx, vec2 dy, ivec2 offset);
  vec4 textureGradOffset( sampler3D s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
 ivec4 textureGradOffset(isampler3D s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
 uvec4 textureGradOffset(usampler3D s, vec3 P, vec3 dx, vec3 dy, ivec3 offset);
+
+ vec4 textureGradOffset( sampler2DRect s, vec2 P, vec2 dx, vec2 dy, ivec2 offset);
+ivec4 textureGradOffset(isampler2DRect s, vec2 P, vec2 dx, vec2 dy, ivec2 offset);
+uvec4 textureGradOffset(usampler2DRect s, vec2 P, vec2 dx, vec2 dy, ivec2 offset);
+
+float textureGradOffset(sampler2DRectShadow s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
 
 float textureGradOffset(sampler1DShadow s, vec3 P, float dx, float dy, int off);
 float textureGradOffset(sampler2DShadow s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
@@ -834,6 +884,15 @@ uvec4 textureProjGrad(usampler2D sampler, vec4 P, vec2 dPdx, vec2 dPdy);
 ivec4 textureProjGrad(isampler3D sampler, vec4 P, vec3 dPdx, vec3 dPdy);
 uvec4 textureProjGrad(usampler3D sampler, vec4 P, vec3 dPdx, vec3 dPdy);
 
+ vec4 textureProjGrad( sampler2DRect sampler, vec3 P, vec2 dPdx, vec2 dPdy);
+ivec4 textureProjGrad(isampler2DRect sampler, vec3 P, vec2 dPdx, vec2 dPdy);
+uvec4 textureProjGrad(usampler2DRect sampler, vec3 P, vec2 dPdx, vec2 dPdy);
+ vec4 textureProjGrad( sampler2DRect sampler, vec4 P, vec2 dPdx, vec2 dPdy);
+ivec4 textureProjGrad(isampler2DRect sampler, vec4 P, vec2 dPdx, vec2 dPdy);
+uvec4 textureProjGrad(usampler2DRect sampler, vec4 P, vec2 dPdx, vec2 dPdy);
+
+float textureProjGrad(sampler2DRectShadow sampler, vec4 P, vec2  dPdx, vec2  dPdy);
+
 float textureProjGrad(sampler1DShadow sampler, vec4 P, float dPdx, float dPdy);
 float textureProjGrad(sampler2DShadow sampler, vec4 P, vec2  dPdx, vec2  dPdy);
 
@@ -851,6 +910,15 @@ uvec4 textureProjGradOffset(usampler2D s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
  vec4 textureProjGradOffset( sampler2D s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
 ivec4 textureProjGradOffset(isampler2D s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
 uvec4 textureProjGradOffset(usampler2D s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
+
+ vec4 textureProjGradOffset( sampler2DRect s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
+ivec4 textureProjGradOffset(isampler2DRect s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
+uvec4 textureProjGradOffset(usampler2DRect s, vec3 P, vec2 dx, vec2 dy, ivec2 off);
+ vec4 textureProjGradOffset( sampler2DRect s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
+ivec4 textureProjGradOffset(isampler2DRect s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
+uvec4 textureProjGradOffset(usampler2DRect s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
+
+float textureProjGradOffset(sampler2DRectShadow s, vec4 P, vec2 dx, vec2 dy, vec2 o);
 
  vec4 textureProjGradOffset( sampler3D s, vec4 P, vec3 dx, vec3 dy, ivec3 off);
 ivec4 textureProjGradOffset(isampler3D s, vec4 P, vec3 dx, vec3 dy, ivec3 off);
