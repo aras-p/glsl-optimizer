@@ -85,7 +85,6 @@ void st_flush( struct st_context *st,
     * successive frames:
     */
    st_flush_bitmap(st);
-   util_blit_flush(st->blit);
    util_gen_mipmap_flush(st->gen_mipmap);
 
    st->pipe->flush( st->pipe, fence );

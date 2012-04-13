@@ -232,8 +232,10 @@ get_next_slot( struct blit_state *ctx )
 {
    const unsigned max_slots = 4096 / sizeof ctx->vertices;
 
-   if (ctx->vbuf_slot >= max_slots) 
-      util_blit_flush( ctx );
+   if (ctx->vbuf_slot >= max_slots) {
+      pipe_resource_reference(&ctx->vbuf, NULL);
+      ctx->vbuf_slot = 0;
+   }
 
    if (!ctx->vbuf) {
       ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
@@ -672,17 +674,6 @@ util_blit_pixels(struct blit_state *ctx,
                                z, filter,
                                TGSI_WRITEMASK_XYZW );
 }
-
-
-/* Release vertex buffer at end of frame to avoid synchronous
- * rendering.
- */
-void util_blit_flush( struct blit_state *ctx )
-{
-   pipe_resource_reference(&ctx->vbuf, NULL);
-   ctx->vbuf_slot = 0;
-} 
-
 
 
 /**
