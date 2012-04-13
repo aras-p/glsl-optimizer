@@ -1501,7 +1501,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		else if(map_type == D3D11_MAP_WRITE_DISCARD)
 			usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD;
 		else if(map_type == D3D11_MAP_WRITE_NO_OVERWRITE)
-			usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_NOOVERWRITE;
+			usage = PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED;
 		else
 			return E_INVALIDARG;
 		if(map_type & D3D10_MAP_FLAG_DO_NOT_WAIT)

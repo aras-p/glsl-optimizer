@@ -370,7 +370,7 @@ pipe_buffer_write_nooverlap(struct pipe_context *pipe,
                                buf,
                                0,
                                (PIPE_TRANSFER_WRITE |
-                                PIPE_TRANSFER_NOOVERWRITE),
+                                PIPE_TRANSFER_UNSYNCHRONIZED),
                                &box,
                                data,
                                0, 0);

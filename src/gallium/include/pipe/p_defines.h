@@ -256,7 +256,6 @@ enum pipe_transfer_usage {
     * - WDDM's D3DDDICB_LOCKFLAGS.IgnoreSync flag.
     */
    PIPE_TRANSFER_UNSYNCHRONIZED = (1 << 10),
-   PIPE_TRANSFER_NOOVERWRITE = (1 << 10), /* are these really the same?? */
 
    /**
     * Written ranges will be notified later with
