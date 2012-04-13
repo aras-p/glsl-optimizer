@@ -47,7 +47,7 @@ Instanced drawing (GL_ARB_draw_instanced)             DONE (gallium, swrast)
 Buffer copying (GL_ARB_copy_buffer)                   DONE (i965, r300, r600, swrast)
 Primitive restart (GL_NV_primitive_restart)           DONE (r600)
 16 vertex texture image units                         DONE
-Texture buffer objs (GL_ARB_texture_buffer_object)    not started
+Texture buffer objs (GL_ARB_texture_buffer_object)    needs GL3.1 enabling (i965)
 Rectangular textures (GL_ARB_texture_rectangle)       DONE (i965, r300, r600, swrast)
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
 Signed normalized textures (GL_EXT_texture_snorm)     DONE (i965, r300, r600)
