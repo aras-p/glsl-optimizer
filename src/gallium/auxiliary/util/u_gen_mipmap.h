@@ -50,12 +50,6 @@ util_create_gen_mipmap(struct pipe_context *pipe, struct cso_context *cso);
 extern void
 util_destroy_gen_mipmap(struct gen_mipmap_state *ctx);
 
-/* Release vertex buffer at end of frame to avoid synchronous
- * rendering.
- */
-extern void 
-util_gen_mipmap_flush( struct gen_mipmap_state *ctx );
-
 
 extern void
 util_gen_mipmap(struct gen_mipmap_state *ctx,

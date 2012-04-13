@@ -1361,8 +1361,10 @@ get_next_slot(struct gen_mipmap_state *ctx)
 {
    const unsigned max_slots = 4096 / sizeof ctx->vertices;
 
-   if (ctx->vbuf_slot >= max_slots) 
-      util_gen_mipmap_flush( ctx );
+   if (ctx->vbuf_slot >= max_slots) {
+      pipe_resource_reference(&ctx->vbuf, NULL);
+      ctx->vbuf_slot = 0;
+   }
 
    if (!ctx->vbuf) {
       ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
@@ -1473,17 +1475,6 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 
    FREE(ctx);
 }
-
-
-
-/* Release vertex buffer at end of frame to avoid synchronous
- * rendering.
- */
-void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
-{
-   pipe_resource_reference(&ctx->vbuf, NULL);
-   ctx->vbuf_slot = 0;
-} 
 
 
 /**

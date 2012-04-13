@@ -81,11 +81,7 @@ void st_flush( struct st_context *st,
 {
    FLUSH_CURRENT(st->ctx, 0);
 
-   /* Release any vertex buffers that might potentially be accessed in
-    * successive frames:
-    */
    st_flush_bitmap(st);
-   util_gen_mipmap_flush(st->gen_mipmap);
 
    st->pipe->flush( st->pipe, fence );
 }
