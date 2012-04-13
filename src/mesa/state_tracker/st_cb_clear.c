@@ -53,6 +53,7 @@
 #include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
+#include "util/u_upload_mgr.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -86,10 +87,6 @@ st_destroy_clear(struct st_context *st)
    if (st->clear.vs) {
       cso_delete_vertex_shader(st->cso_context, st->clear.vs);
       st->clear.vs = NULL;
-   }
-   if (st->clear.vbuf) {
-      pipe_resource_reference(&st->clear.vbuf, NULL);
-      st->clear.vbuf = NULL;
    }
 }
 
@@ -140,36 +137,8 @@ draw_quad(struct st_context *st,
           const union pipe_color_union *color)
 {
    struct pipe_context *pipe = st->pipe;
-
-   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
-    * no_flush) updates to buffers where we know there is no conflict
-    * with previous data.  Currently using max_slots > 1 will cause
-    * synchronous rendering if the driver flushes its command buffers
-    * between one bitmap and the next.  Our flush hook below isn't
-    * sufficient to catch this as the driver doesn't tell us when it
-    * flushes its own command buffers.  Until this gets fixed, pay the
-    * price of allocating a new buffer for each bitmap cache-flush to
-    * avoid synchronous rendering.
-    */
-   const GLuint max_slots = 1; /* 1024 / sizeof(st->clear.vertices); */
-   GLuint i;
-
-   if (st->clear.vbuf_slot >= max_slots) {
-      pipe_resource_reference(&st->clear.vbuf, NULL);
-      st->clear.vbuf_slot = 0;
-   }
-
-   if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe_buffer_create(pipe->screen,
-                                          PIPE_BIND_VERTEX_BUFFER,
-                                          PIPE_USAGE_STREAM,
-                                          max_slots * sizeof(st->clear.vertices));
-   }
-
-   if (!st->clear.vbuf) {
-      /* ran out of memory */
-      return;
-   }
+   struct pipe_resource *vbuf = NULL;
+   GLuint i, offset;
 
    /* positions */
    st->clear.vertices[0][0][0] = x0;
@@ -194,24 +163,22 @@ draw_quad(struct st_context *st,
       st->clear.vertices[i][1][3] = color->f[3];
    }
 
-   /* put vertex data into vbuf */
-   pipe_buffer_write_nooverlap(st->pipe, st->clear.vbuf,
-                                           st->clear.vbuf_slot
-                                             * sizeof(st->clear.vertices),
-                                           sizeof(st->clear.vertices),
-                                           st->clear.vertices);
+   u_upload_data(st->uploader, 0, sizeof(st->clear.vertices),
+		 st->clear.vertices, &offset, &vbuf);
+   if (!vbuf) {
+      return;
+   }
+   u_upload_unmap(st->uploader);
 
    /* draw */
    util_draw_vertex_buffer(pipe,
                            st->cso_context,
-                           st->clear.vbuf, 
-                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                           vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */
 
-   /* Increment slot */
-   st->clear.vbuf_slot++;
+   pipe_resource_reference(&vbuf, NULL);
 }
 
 
@@ -463,22 +430,6 @@ check_clear_stencil_with_quad(struct gl_context *ctx, struct gl_renderbuffer *rb
 
    return GL_FALSE;
 }
-
-
-
-/**
- * Called when we need to flush.
- */
-void
-st_flush_clear(struct st_context *st)
-{
-   /* Release vertex buffer to avoid synchronous rendering if we were
-    * to map it in the next frame.
-    */
-   pipe_resource_reference(&st->clear.vbuf, NULL);
-   st->clear.vbuf_slot = 0;
-}
- 
 
 
 /**

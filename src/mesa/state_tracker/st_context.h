@@ -171,8 +171,6 @@ struct st_context
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
-      struct pipe_resource *vbuf;
-      unsigned vbuf_slot;
       boolean enable_ds_separate;
    } clear;
 
