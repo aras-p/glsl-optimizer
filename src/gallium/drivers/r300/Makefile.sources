@@ -1,4 +1,4 @@
-C_SOURCES := \
+C_SOURCES = \
 	r300_blit.c \
 	r300_chipset.c \
 	r300_context.c \

@@ -16,7 +16,7 @@ AC_INIT([Mesa],[mesa_version],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign -Wall])
 
 dnl http://people.gnome.org/~walters/docs/build-api.txt
 dnl We don't support srcdir != builddir.

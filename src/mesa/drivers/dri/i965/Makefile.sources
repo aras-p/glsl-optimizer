@@ -1,8 +1,8 @@
-i965_INCLUDES := \
+i965_INCLUDES = \
 	$(MESA_TOP)/src \
 	$(MESA_TOP)/src/mesa/drivers/dri/intel
 
-i965_C_FILES := \
+i965_C_FILES = \
 	intel_batchbuffer.c \
 	intel_blit.c \
 	intel_buffer_objects.c \
@@ -111,7 +111,7 @@ i965_C_FILES := \
 	gen7_wm_state.c \
 	gen7_wm_surface_state.c
 
-i965_CXX_FILES := \
+i965_CXX_FILES = \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
 	brw_fs_cfg.cpp \
@@ -129,4 +129,4 @@ i965_CXX_FILES := \
 	brw_vec4_reg_allocate.cpp \
 	brw_vec4_visitor.cpp
 
-i965_ASM_FILES :=
+i965_ASM_FILES =
