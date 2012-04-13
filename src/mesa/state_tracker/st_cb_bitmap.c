@@ -52,6 +52,7 @@
 #include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_upload_mgr.h"
 #include "program/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -327,12 +328,13 @@ make_bitmap_texture(struct gl_context *ctx, GLsizei width, GLsizei height,
    return pt;
 }
 
-static GLuint
+static void
 setup_bitmap_vertex_data(struct st_context *st, bool normalized,
                          int x, int y, int width, int height,
-                         float z, const float color[4])
+                         float z, const float color[4],
+			 struct pipe_resource **vbuf,
+			 unsigned *vbuf_offset)
 {
-   struct pipe_context *pipe = st->pipe;
    const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    const GLfloat fb_width = (GLfloat)fb->Width;
    const GLfloat fb_height = (GLfloat)fb->Height;
@@ -346,40 +348,12 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    const GLfloat clip_y0 = (GLfloat)(y0 / fb_height * 2.0 - 1.0);
    const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
    const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
-   const GLuint max_slots = 1; /* 4096 / sizeof(st->bitmap.vertices); */
    GLuint i;
 
    if(!normalized)
    {
       sRight = (GLfloat) width;
       tBot = (GLfloat) height;
-   }
-
-   /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
-    * no_flush) updates to buffers where we know there is no conflict
-    * with previous data.  Currently using max_slots > 1 will cause
-    * synchronous rendering if the driver flushes its command buffers
-    * between one bitmap and the next.  Our flush hook below isn't
-    * sufficient to catch this as the driver doesn't tell us when it
-    * flushes its own command buffers.  Until this gets fixed, pay the
-    * price of allocating a new buffer for each bitmap cache-flush to
-    * avoid synchronous rendering.
-    */
-   if (st->bitmap.vbuf_slot >= max_slots) {
-      pipe_resource_reference(&st->bitmap.vbuf, NULL);
-      st->bitmap.vbuf_slot = 0;
-   }
-
-   if (!st->bitmap.vbuf) {
-      st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 
-                                           PIPE_BIND_VERTEX_BUFFER,
-                                           PIPE_USAGE_STREAM,
-                                           max_slots *
-                                           sizeof(st->bitmap.vertices));
-      if (!st->bitmap.vbuf) {
-         /* out of memory */
-         return 0;
-      }
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -417,15 +391,11 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
       st->bitmap.vertices[i][2][3] = 1.0; /*Q*/
    }
 
-   /* put vertex data into vbuf */
-   pipe_buffer_write_nooverlap(st->pipe,
-                               st->bitmap.vbuf,
-                               st->bitmap.vbuf_slot
-                               * sizeof(st->bitmap.vertices),
-                               sizeof st->bitmap.vertices,
-                               st->bitmap.vertices);
-
-   return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
+   /* Note: *vbuf will be NULL if there's a failure. */
+   u_upload_data(st->uploader, 0,
+		 sizeof(st->bitmap.vertices), st->bitmap.vertices,
+		 vbuf_offset, vbuf);
+   u_upload_unmap(st->uploader);
 }
 
 
@@ -446,6 +416,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    struct st_fp_variant_key key;
    GLuint maxSize;
    GLuint offset;
+   struct pipe_resource *vbuf = NULL;
 
    memset(&key, 0, sizeof(key));
    key.st = st;
@@ -551,12 +522,11 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0f - 1.0f;
 
    /* draw textured quad */
-   offset = setup_bitmap_vertex_data(st,
-                                     sv->texture->target != PIPE_TEXTURE_RECT,
-                                     x, y, width, height, z, color);
+   setup_bitmap_vertex_data(st, sv->texture->target != PIPE_TEXTURE_RECT,
+			    x, y, width, height, z, color, &vbuf, &offset);
 
-   if (st->bitmap.vbuf) {
-      util_draw_vertex_buffer(pipe, st->cso_context, st->bitmap.vbuf, offset,
+   if (vbuf) {
+      util_draw_vertex_buffer(pipe, st->cso_context, vbuf, offset,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
                               3); /* attribs/vert */
@@ -573,6 +543,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_vertex_elements(cso);
    cso_restore_vertex_buffers(cso);
    cso_restore_stream_outputs(cso);
+
+   pipe_resource_reference(&vbuf, NULL);
 }
 
 
@@ -709,18 +681,12 @@ st_flush_bitmap_cache(struct st_context *st)
 
 
 /**
- * Flush bitmap cache and release vertex buffer.
+ * Flush bitmap cache.
  */
 void
 st_flush_bitmap( struct st_context *st )
 {
    st_flush_bitmap_cache(st);
-
-   /* Release vertex buffer to avoid synchronous rendering if we were
-    * to map it in the next frame.
-    */
-   pipe_resource_reference(&st->bitmap.vbuf, NULL);
-   st->bitmap.vbuf_slot = 0;
 }
 
 
@@ -912,11 +878,6 @@ st_destroy_bitmap(struct st_context *st)
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
-   }
-
-   if (st->bitmap.vbuf) {
-      pipe_resource_reference(&st->bitmap.vbuf, NULL);
-      st->bitmap.vbuf = NULL;
    }
 
    if (cache) {

@@ -63,6 +63,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_upload_mgr.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -130,6 +131,7 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
 
+   st->uploader = u_upload_create(st->pipe, 65536, 4, PIPE_BIND_VERTEX_BUFFER);
    st->cso_context = cso_create_context(pipe);
 
    st_init_atoms( st );
@@ -235,6 +237,7 @@ static void st_destroy_context_priv( struct st_context *st )
       st->default_texture = NULL;
    }
 
+   u_upload_destroy(st->uploader);
    free( st );
 }
 

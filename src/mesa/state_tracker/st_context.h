@@ -40,6 +40,7 @@ struct draw_stage;
 struct gen_mipmap_state;
 struct st_context;
 struct st_fragment_program;
+struct u_upload_mgr;
 
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
@@ -71,6 +72,7 @@ struct st_context
 
    struct pipe_context *pipe;
 
+   struct u_upload_mgr *uploader;
    struct draw_context *draw;  /**< For selection/feedback/rastpos only */
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
@@ -154,8 +156,6 @@ struct st_context
       enum pipe_format tex_format;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
-      struct pipe_resource *vbuf;
-      unsigned vbuf_slot;       /* next free slot in vbuf */
       struct bitmap_cache *cache;
    } bitmap;
 
