@@ -29,7 +29,7 @@
  */
 
 #include "../../state_trackers/xorg/xorg_winsys.h"
-#include <nouveau_drmif.h>
+#include <nouveau.h>
 #include <xorg/dri.h>
 #include <xf86drmMode.h>
 
@@ -139,7 +139,7 @@ nouveau_xorg_pci_probe(DriverPtr driver,
     }
     busid = DRICreatePCIBusID(device);
 
-    ret = nouveau_device_open(&dev, busid);
+    ret = nouveau_device_open(busid, &dev);
     if (ret) {
 	xf86DrvMsg(-1, X_ERROR, "[drm] failed to open device\n");
 	free(busid);
@@ -147,7 +147,7 @@ nouveau_xorg_pci_probe(DriverPtr driver,
     }
 
     chipset = dev->chipset;
-    nouveau_device_close(&dev);
+    nouveau_device_del(&dev);
 
     ret = drmCheckModesettingSupported(busid);
     free(busid);
