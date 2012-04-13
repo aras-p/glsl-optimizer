@@ -12,7 +12,11 @@ Blend Factors
 The blend factors largely follow the same pattern as their counterparts
 in other modern and legacy drawing APIs.
 
-XXX blurb about dual-source blends
+Dual source blend factors are supported for up to 1 MRT, although
+you can advertise > 1 MRT, the stack cannot handle them for a few reasons.
+There is no definition on how the 1D array of shader outputs should be mapped
+to something that would be a 2D array (location, index). No current hardware
+exposes > 1 MRT, and we should revisit this issue if anyone ever does.
 
 Logical Operations
 ------------------
