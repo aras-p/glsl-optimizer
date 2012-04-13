@@ -139,35 +139,37 @@ draw_quad(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    struct pipe_resource *vbuf = NULL;
    GLuint i, offset;
+   float (*vertices)[2][4];  /**< vertex pos + color */
 
-   /* positions */
-   st->clear.vertices[0][0][0] = x0;
-   st->clear.vertices[0][0][1] = y0;
-
-   st->clear.vertices[1][0][0] = x1;
-   st->clear.vertices[1][0][1] = y0;
-
-   st->clear.vertices[2][0][0] = x1;
-   st->clear.vertices[2][0][1] = y1;
-
-   st->clear.vertices[3][0][0] = x0;
-   st->clear.vertices[3][0][1] = y1;
-
-   /* same for all verts: */
-   for (i = 0; i < 4; i++) {
-      st->clear.vertices[i][0][2] = z;
-      st->clear.vertices[i][0][3] = 1.0;
-      st->clear.vertices[i][1][0] = color->f[0];
-      st->clear.vertices[i][1][1] = color->f[1];
-      st->clear.vertices[i][1][2] = color->f[2];
-      st->clear.vertices[i][1][3] = color->f[3];
-   }
-
-   u_upload_data(st->uploader, 0, sizeof(st->clear.vertices),
-		 st->clear.vertices, &offset, &vbuf);
+   u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]), &offset, &vbuf,
+		  (void**)&vertices);
    if (!vbuf) {
       return;
    }
+
+   /* positions */
+   vertices[0][0][0] = x0;
+   vertices[0][0][1] = y0;
+
+   vertices[1][0][0] = x1;
+   vertices[1][0][1] = y0;
+
+   vertices[2][0][0] = x1;
+   vertices[2][0][1] = y1;
+
+   vertices[3][0][0] = x0;
+   vertices[3][0][1] = y1;
+
+   /* same for all verts: */
+   for (i = 0; i < 4; i++) {
+      vertices[i][0][2] = z;
+      vertices[i][0][3] = 1.0;
+      vertices[i][1][0] = color->f[0];
+      vertices[i][1][1] = color->f[1];
+      vertices[i][1][2] = color->f[2];
+      vertices[i][1][3] = color->f[3];
+   }
+
    u_upload_unmap(st->uploader);
 
    /* draw */

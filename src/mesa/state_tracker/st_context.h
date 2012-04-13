@@ -170,7 +170,6 @@ struct st_context
       struct pipe_viewport_state viewport;
       void *vs;
       void *fs;
-      float vertices[4][2][4];  /**< vertex pos + color */
       boolean enable_ds_separate;
    } clear;
 
