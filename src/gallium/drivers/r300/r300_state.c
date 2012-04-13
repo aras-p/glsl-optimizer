@@ -1796,9 +1796,8 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     if (r300->screen->caps.has_tcl) {
         unsigned fc_op_dwords = r300->screen->caps.is_r500 ? 3 : 2;
         r300_mark_atom_dirty(r300, &r300->vs_state);
-        r300->vs_state.size =
-                vs->code.length + 9 +
-        (vs->code.num_fc_ops ? vs->code.num_fc_ops * fc_op_dwords + 4 : 0);
+        r300->vs_state.size = vs->code.length + 9 +
+			(R300_VS_MAX_FC_OPS * fc_op_dwords + 4);
 
         r300_mark_atom_dirty(r300, &r300->vs_constants);
         r300->vs_constants.size =
