@@ -23,7 +23,7 @@ GL_EXT_texture_shared_exponent                        DONE (i965, r600, swrast)
 Float depth buffers (GL_ARB_depth_buffer_float)       DONE (i965, r600)
 Framebuffer objects (GL_ARB_framebuffer_object)       DONE (i965, r300, r600, swrast)
 Half-float                                            DONE
-Non-normalized Integer texture/framebuffer formats    ~50% done
+Non-normalized Integer texture/framebuffer formats    DONE (i965)
 1D/2D Texture arrays                                  DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE (i965, r600, swrast)
 GL_EXT_texture_compression_rgtc                       DONE (i965, r300, r600, swrast)
