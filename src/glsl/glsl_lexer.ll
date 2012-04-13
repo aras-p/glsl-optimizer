@@ -470,6 +470,12 @@ iimageBuffer	KEYWORD(130, 999, IIMAGEBUFFER);
 uimageBuffer	KEYWORD(130, 999, UIMAGEBUFFER);
 row_major	KEYWORD(130, 999, ROW_MAJOR);
 
+    /* Additional reserved words in GLSL 1.40 */
+isampler2DRect	KEYWORD(140, 140, ISAMPLER2DRECT);
+usampler2DRect	KEYWORD(140, 140, USAMPLER2DRECT);
+isamplerBuffer	KEYWORD(140, 140, ISAMPLERBUFFER);
+usamplerBuffer	KEYWORD(140, 140, USAMPLERBUFFER);
+
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
 			    void *ctx = state;	
