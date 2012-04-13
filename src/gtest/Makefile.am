@@ -22,7 +22,7 @@
 AM_CFLAGS = $(DEFINES) -I$(top_builddir)/src/gtest/include
 AM_CXXFLAGS = $(DEFINES) -I$(top_builddir)/src/gtest/include
 
-lib_LTLIBRARIES = libgtest.la
+noinst_LTLIBRARIES = libgtest.la
 
 libgtest_la_SOURCES = \
 	src/gtest-all.cc \
