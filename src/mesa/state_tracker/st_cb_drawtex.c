@@ -29,6 +29,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_upload_mgr.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -107,13 +108,13 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = ctx->st->cso_context;
-   struct pipe_resource *vbuffer;
-   struct pipe_transfer *vbuffer_transfer;
+   struct pipe_resource *vbuffer = NULL;
    GLuint i, numTexCoords, numAttribs;
    GLboolean emitColor;
    uint semantic_names[2 + MAX_TEXTURE_UNITS];
    uint semantic_indexes[2 + MAX_TEXTURE_UNITS];
    struct pipe_vertex_element velements[2 + MAX_TEXTURE_UNITS];
+   unsigned offset;
 
    st_validate_state(st);
 
@@ -134,12 +135,6 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    /* total number of attributes per vertex */
    numAttribs = 1 + emitColor + numTexCoords;
 
-
-   /* create the vertex buffer */
-   vbuffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
-                                PIPE_USAGE_STREAM,
-                                numAttribs * 4 * 4 * sizeof(GLfloat));
-
    /* load vertex buffer */
    {
 #define SET_ATTRIB(VERT, ATTR, X, Y, Z, W)                              \
@@ -153,10 +148,15 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
       } while (0)
 
       const GLfloat x0 = x, y0 = y, x1 = x + width, y1 = y + height;
-      GLfloat *vbuf = (GLfloat *) pipe_buffer_map(pipe, vbuffer,
-                                                  PIPE_TRANSFER_WRITE,
-                                                  &vbuffer_transfer);
+      GLfloat *vbuf = NULL;
       GLuint attr;
+
+      u_upload_alloc(st->uploader, 0,
+		     numAttribs * 4 * 4 * sizeof(GLfloat),
+		     &offset, &vbuffer, (void**)&vbuf);
+      if (!vbuffer) {
+         return;
+      }
       
       z = CLAMP(z, 0.0f, 1.0f);
 
@@ -220,7 +220,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
          }
       }
 
-      pipe_buffer_unmap(pipe, vbuffer_transfer);
+      u_upload_unmap(st->uploader);
 
 #undef SET_ATTRIB
    }
@@ -269,7 +269,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
 
    util_draw_vertex_buffer(pipe, cso, vbuffer,
-                           0,  /* offset */
+                           offset,  /* offset */
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            numAttribs); /* attribs/vert */
