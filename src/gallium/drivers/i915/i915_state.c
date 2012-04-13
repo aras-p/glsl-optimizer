@@ -553,7 +553,7 @@ static void i915_set_scissor_state( struct pipe_context *pipe,
 
 
 static void i915_set_polygon_stipple( struct pipe_context *pipe,
-                                      const struct pipe_poly_stipple *stipple )
+                                   const struct pipe_poly_stipple *stipple )
 {
 }
 
