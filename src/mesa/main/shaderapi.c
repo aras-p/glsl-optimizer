@@ -132,66 +132,6 @@ _mesa_free_shader_state(struct gl_context *ctx)
 
 
 /**
- * Return the size of the given GLSL datatype, in floats (components).
- */
-GLint
-_mesa_sizeof_glsl_type(GLenum type)
-{
-   switch (type) {
-   case GL_FLOAT:
-   case GL_INT:
-   case GL_UNSIGNED_INT:
-   case GL_BOOL:
-   case GL_SAMPLER_1D:
-   case GL_SAMPLER_2D:
-   case GL_SAMPLER_3D:
-   case GL_SAMPLER_CUBE:
-   case GL_SAMPLER_1D_SHADOW:
-   case GL_SAMPLER_2D_SHADOW:
-   case GL_SAMPLER_2D_RECT_ARB:
-   case GL_SAMPLER_2D_RECT_SHADOW_ARB:
-   case GL_SAMPLER_1D_ARRAY_EXT:
-   case GL_SAMPLER_2D_ARRAY_EXT:
-   case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
-   case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
-   case GL_SAMPLER_CUBE_SHADOW_EXT:
-   case GL_SAMPLER_EXTERNAL_OES:
-      return 1;
-   case GL_FLOAT_VEC2:
-   case GL_INT_VEC2:
-   case GL_UNSIGNED_INT_VEC2:
-   case GL_BOOL_VEC2:
-      return 2;
-   case GL_FLOAT_VEC3:
-   case GL_INT_VEC3:
-   case GL_UNSIGNED_INT_VEC3:
-   case GL_BOOL_VEC3:
-      return 3;
-   case GL_FLOAT_VEC4:
-   case GL_INT_VEC4:
-   case GL_UNSIGNED_INT_VEC4:
-   case GL_BOOL_VEC4:
-      return 4;
-   case GL_FLOAT_MAT2:
-   case GL_FLOAT_MAT2x3:
-   case GL_FLOAT_MAT2x4:
-      return 8; /* two float[4] vectors */
-   case GL_FLOAT_MAT3:
-   case GL_FLOAT_MAT3x2:
-   case GL_FLOAT_MAT3x4:
-      return 12; /* three float[4] vectors */
-   case GL_FLOAT_MAT4:
-   case GL_FLOAT_MAT4x2:
-   case GL_FLOAT_MAT4x3:
-      return 16;  /* four float[4] vectors */
-   default:
-      _mesa_problem(NULL, "Invalid type in _mesa_sizeof_glsl_type()");
-      return 1;
-   }
-}
-
-
-/**
  * Copy string from <src> to <dst>, up to maxLength characters, returning
  * length of <dst> in <length>.
  * \param src  the strings source

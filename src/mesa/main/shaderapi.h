@@ -39,9 +39,6 @@ struct _glapi_table;
 struct gl_context;
 struct gl_shader_program;
 
-extern GLint
-_mesa_sizeof_glsl_type(GLenum type);
-
 extern void
 _mesa_copy_string(GLchar *dst, GLsizei maxLength,
                   GLsizei *length, const GLchar *src);
