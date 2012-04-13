@@ -59,17 +59,10 @@ get_tex_format(struct gl_texture_image *ti)
 void
 nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 {
+	struct nv04_context *nv04 = to_nv04_context(ctx);
 	const int i = emit - NOUVEAU_STATE_TEX_OBJ0;
-	struct nouveau_pushbuf *push = context_push(ctx);
-	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
-	const int bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART | NOUVEAU_BO_VRAM;
 	struct nouveau_surface *s;
 	uint32_t format = 0xa0, filter = 0x1010;
-
-	PUSH_RESET(push, BUFCTX_TEX(i));
-
-	if (i && !nv04_mtex_engine(fahrenheit))
-		return;
 
 	if (ctx->Texture.Unit[i]._ReallyEnabled) {
 		struct gl_texture_object *t = ctx->Texture.Unit[i]._Current;
@@ -115,35 +108,7 @@ nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 			NV04_TEXTURED_TRIANGLE_FILTER_MAGNIFY_NEAREST;
 	}
 
-	if (nv04_mtex_engine(fahrenheit)) {
-		BEGIN_NV04(push, NV04_MTRI(OFFSET(i)), 1);
-		PUSH_MTHDl(push, NV04_MTRI(OFFSET(i)), BUFCTX_TEX(i),
-				 s->bo, s->offset, bo_flags);
-
-		BEGIN_NV04(push, NV04_MTRI(FORMAT(i)), 1);
-		PUSH_MTHD (push, NV04_MTRI(FORMAT(i)), BUFCTX_TEX(i),
-				 s->bo, format, bo_flags | NOUVEAU_BO_OR,
-				 NV04_MULTITEX_TRIANGLE_FORMAT_DMA_A,
-				 NV04_MULTITEX_TRIANGLE_FORMAT_DMA_B);
-
-		BEGIN_NV04(push, NV04_MTRI(FILTER(i)), 1);
-		PUSH_DATA (push, filter);
-
-	} else {
-		BEGIN_NV04(push, NV04_TTRI(OFFSET), 1);
-		PUSH_MTHDl(push, NV04_TTRI(OFFSET), BUFCTX_TEX(0),
-				 s->bo, s->offset, bo_flags);
-
-		BEGIN_NV04(push, NV04_TTRI(FORMAT), 1);
-		PUSH_MTHD (push, NV04_TTRI(FORMAT), BUFCTX_TEX(0),
-				 s->bo, format, bo_flags | NOUVEAU_BO_OR,
-				 NV04_TEXTURED_TRIANGLE_FORMAT_DMA_A,
-				 NV04_TEXTURED_TRIANGLE_FORMAT_DMA_B);
-
-		BEGIN_NV04(push, NV04_TTRI(COLORKEY), 1);
-		PUSH_DATA (push, 0);
-
-		BEGIN_NV04(push, NV04_TTRI(FILTER), 1);
-		PUSH_DATA (push, filter);
-	}
+	nv04->texture[i] = s;
+	nv04->format[i] = format;
+	nv04->filter[i] = filter;
 }

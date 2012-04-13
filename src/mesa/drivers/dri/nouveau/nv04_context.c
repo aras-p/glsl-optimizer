@@ -66,26 +66,9 @@ nv04_context_engine(struct gl_context *ctx)
 		fahrenheit = hw->eng3d;
 
 	if (fahrenheit != nctx->eng3d) {
-		nctx->eng3d = fahrenheit;
-
 		BEGIN_NV04(push, NV01_SUBC(3D, OBJECT), 1);
 		PUSH_DATA (push, fahrenheit->handle);
-
-		if (nv04_mtex_engine(fahrenheit)) {
-			context_dirty_i(ctx, TEX_ENV, 0);
-			context_dirty_i(ctx, TEX_ENV, 1);
-			context_dirty_i(ctx, TEX_OBJ, 0);
-			context_dirty_i(ctx, TEX_OBJ, 1);
-			context_dirty(ctx, CONTROL);
-			context_dirty(ctx, BLEND);
-		} else {
-			nouveau_bufctx_reset(to_nouveau_context(ctx)->hw.
-					     bufctx, BUFCTX_TEX(1));
-			context_dirty_i(ctx, TEX_ENV, 0);
-			context_dirty_i(ctx, TEX_OBJ, 0);
-			context_dirty(ctx, CONTROL);
-			context_dirty(ctx, BLEND);
-		}
+		nctx->eng3d = fahrenheit;
 	}
 
 	return fahrenheit;

@@ -234,18 +234,27 @@ setup_combiner(struct combiner_state *rc)
 	}
 }
 
+static unsigned
+get_texenv_mode(unsigned mode)
+{
+	switch (mode) {
+	case GL_REPLACE:
+		return 0x1;
+	case GL_DECAL:
+		return 0x3;
+	case GL_MODULATE:
+		return 0x4;
+	default:
+		assert(0);
+	}
+}
+
 void
 nv04_emit_tex_env(struct gl_context *ctx, int emit)
 {
+	struct nv04_context *nv04 = to_nv04_context(ctx);
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
-	struct nouveau_pushbuf *push = context_push(ctx);
-	struct nouveau_object *fahrenheit = nv04_context_engine(ctx);
 	struct combiner_state rc_a = {}, rc_c = {};
-
-	if (!nv04_mtex_engine(fahrenheit)) {
-		context_dirty(ctx, BLEND);
-		return;
-	}
 
 	/* Compute the new combiner state. */
 	if (ctx->Texture.Unit[i]._ReallyEnabled) {
@@ -275,12 +284,16 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 		UNSIGNED_OP(&rc_c);
 	}
 
-	/* Write the register combiner state out to the hardware. */
-	BEGIN_NV04(push, NV04_MTRI(COMBINE_ALPHA(i)), 2);
-	PUSH_DATA (push, rc_a.hw);
-	PUSH_DATA (push, rc_c.hw);
+	/* calculate non-multitex state */
+	nv04->blend &= ~NV04_TEXTURED_TRIANGLE_BLEND_TEXTURE_MAP__MASK;
+	if (ctx->Texture._EnabledUnits)
+		nv04->blend |= get_texenv_mode(ctx->Texture.Unit[0].EnvMode);
+	else
+		nv04->blend |= get_texenv_mode(GL_MODULATE);
 
-	BEGIN_NV04(push, NV04_MTRI(COMBINE_FACTOR), 1);
-	PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_ARGB8888,
-				     ctx->Texture.Unit[0].EnvColor));
+	/* update calculated multitex state */
+	nv04->alpha[i] = rc_a.hw;
+	nv04->color[i] = rc_c.hw;
+	nv04->factor   = pack_rgba_f(MESA_FORMAT_ARGB8888,
+				     ctx->Texture.Unit[0].EnvColor);
 }

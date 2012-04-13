@@ -267,7 +267,6 @@ nv04_surface_copy_swizzle(struct gl_context *ctx,
 	if (context_chipset(ctx) < 0x10) {
 		BEGIN_NV04(push, NV01_SUBC(SURF, OBJECT), 1);
 		PUSH_DATA (push, hw->surf3d->handle);
-		PUSH_KICK(push);
 	}
 }
 
@@ -312,9 +311,6 @@ nv04_surface_copy_m2mf(struct gl_context *ctx,
 		dst_offset += dst->pitch * count;
 		h -= count;
 	}
-
-	if (context_chipset(ctx) < 0x10)
-		PUSH_KICK(push);
 }
 
 typedef unsigned (*get_offset_t)(struct nouveau_surface *s,
@@ -453,9 +449,6 @@ nv04_surface_fill(struct gl_context *ctx,
 	BEGIN_NV04(push, NV04_GDI(UNCLIPPED_RECTANGLE_POINT(0)), 2);
 	PUSH_DATA (push, (dx << 16) | dy);
 	PUSH_DATA (push, ( w << 16) |  h);
-
-	if (context_chipset(ctx) < 0x10)
-		PUSH_KICK(push);
 }
 
 void

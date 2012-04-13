@@ -35,6 +35,17 @@ struct nv04_context {
 	struct nouveau_object *eng3d;
 	struct nouveau_surface dummy_texture;
 	float viewport[16];
+
+	uint32_t colorkey;
+	struct nouveau_surface *texture[2];
+	uint32_t format[2];
+	uint32_t filter[2];
+	uint32_t alpha[2];
+	uint32_t color[2];
+	uint32_t factor;
+	uint32_t blend;
+	uint32_t ctrl[3];
+	uint32_t fog;
 };
 #define to_nv04_context(ctx) ((struct nv04_context *)(ctx))
 

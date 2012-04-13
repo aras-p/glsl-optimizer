@@ -106,12 +106,4 @@ nv04_emit_scissor(struct gl_context *ctx, int emit)
 	BEGIN_NV04(push, NV04_SF3D(CLIP_HORIZONTAL), 2);
 	PUSH_DATA (push, w << 16 | x);
 	PUSH_DATA (push, h << 16 | y);
-
-	/* Messing with surf3d invalidates the engine state. */
-	context_dirty_i(ctx, TEX_ENV, 0);
-	context_dirty_i(ctx, TEX_ENV, 1);
-	context_dirty_i(ctx, TEX_OBJ, 0);
-	context_dirty_i(ctx, TEX_OBJ, 1);
-	context_dirty(ctx, CONTROL);
-	context_dirty(ctx, BLEND);
 }
