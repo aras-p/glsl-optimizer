@@ -873,8 +873,11 @@ Program::Program(Type type, Target *arch)
 
 Program::~Program()
 {
-   if (main)
-      delete main;
+   for (ArrayList::Iterator it = allFuncs.iterator(); !it.end(); it.next())
+      delete reinterpret_cast<Function *>(it.get());
+
+   for (ArrayList::Iterator it = allRValues.iterator(); !it.end(); it.next())
+      releaseValue(reinterpret_cast<Value *>(it.get()));
 }
 
 void Program::releaseInstruction(Instruction *insn)
@@ -897,6 +900,8 @@ void Program::releaseInstruction(Instruction *insn)
 
 void Program::releaseValue(Value *value)
 {
+   value->~Value();
+
    if (value->asLValue())
       mem_LValue.release(value);
    else

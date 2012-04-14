@@ -449,6 +449,7 @@ class Value
 {
 public:
    Value();
+   virtual ~Value() { }
 
    virtual Value *clone(Function *) const { return NULL; }
 
@@ -496,6 +497,7 @@ class LValue : public Value
 public:
    LValue(Function *, DataFile file);
    LValue(Function *, LValue *);
+   ~LValue() { }
 
    virtual Value *clone(Function *) const;
 
@@ -511,6 +513,7 @@ class Symbol : public Value
 {
 public:
    Symbol(Program *, DataFile file = FILE_MEMORY_CONST, ubyte fileIdx = 0);
+   ~Symbol() { }
 
    virtual Value *clone(Function *) const;
 
@@ -543,9 +546,9 @@ public:
    ImmediateValue(Program *, uint32_t);
    ImmediateValue(Program *, float);
    ImmediateValue(Program *, double);
-
    // NOTE: not added to program with
    ImmediateValue(const ImmediateValue *, DataType ty);
+   ~ImmediateValue() { };
 
    virtual bool equals(const Value *that, bool strict) const;
 

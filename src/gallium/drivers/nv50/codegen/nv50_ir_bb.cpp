@@ -50,6 +50,12 @@ Function::~Function()
    if (bbArray)
       delete[] bbArray;
 
+   for (ArrayList::Iterator it = allInsns.iterator(); !it.end(); it.next())
+      delete_Instruction(prog, reinterpret_cast<Instruction *>(it.get()));
+
+   for (ArrayList::Iterator it = allLValues.iterator(); !it.end(); it.next())
+      delete_Value(prog, reinterpret_cast<LValue *>(it.get()));
+
    for (ArrayList::Iterator BBs = allBBlocks.iterator(); !BBs.end(); BBs.next())
       delete reinterpret_cast<BasicBlock *>(BBs.get());
 }
