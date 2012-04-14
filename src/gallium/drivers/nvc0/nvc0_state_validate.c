@@ -250,17 +250,17 @@ nvc0_validate_viewport(struct nvc0_context *nvc0)
 }
 
 static INLINE void
-nvc0_upload_uclip_planes(struct nvc0_context *nvc0)
+nvc0_upload_uclip_planes(struct nvc0_context *nvc0, unsigned s)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   struct nouveau_bo *bo = nvc0->screen->uniforms;
+   struct nouveau_bo *bo = nvc0->screen->uniform_bo;
 
    BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
-   PUSH_DATA (push, 256);
-   PUSH_DATAh(push, bo->offset + (5 << 16));
-   PUSH_DATA (push, bo->offset + (5 << 16));
+   PUSH_DATA (push, 512);
+   PUSH_DATAh(push, bo->offset + (5 << 16) + (s << 9));
+   PUSH_DATA (push, bo->offset + (5 << 16) + (s << 9));
    BEGIN_1IC0(push, NVC0_3D(CB_POS), PIPE_MAX_CLIP_PLANES * 4 + 1);
-   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 256);
    PUSH_DATAp(push, &nvc0->clip.ucp[0][0], PIPE_MAX_CLIP_PLANES * 4);
 }
 
@@ -289,20 +289,27 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *vp;
+   unsigned stage;
    uint8_t clip_enable = nvc0->rast->pipe.clip_plane_enable;
 
-   if (nvc0->dirty & NVC0_NEW_CLIP)
-      nvc0_upload_uclip_planes(nvc0);
-
-   vp = nvc0->gmtyprog;
-   if (!vp) {
+   if (nvc0->gmtyprog) {
+      stage = 3;
+      vp = nvc0->gmtyprog;
+   } else
+   if (nvc0->tevlprog) {
+      stage = 2;
       vp = nvc0->tevlprog;
-      if (!vp)
-         vp = nvc0->vertprog;
+   } else {
+      stage = 0;
+      vp = nvc0->vertprog;
    }
 
    if (clip_enable && vp->vp.num_ucps < PIPE_MAX_CLIP_PLANES)
       nvc0_check_program_ucps(nvc0, vp, clip_enable);
+
+   if (nvc0->dirty & (NVC0_NEW_CLIP | (NVC0_NEW_VERTPROG << stage)))
+      if (vp->vp.num_ucps <= PIPE_MAX_CLIP_PLANES)
+         nvc0_upload_uclip_planes(nvc0, stage);
 
    clip_enable &= vp->vp.clip_enable;
 
@@ -375,7 +382,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
          if (!nouveau_resource_mapped_by_gpu(&res->base)) {
             if (i == 0 && (res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY)) {
                base = s << 16;
-               bo = nvc0->screen->uniforms;
+               bo = nvc0->screen->uniform_bo;
 
                if (nvc0->state.uniform_buffer_bound[s] >= res->base.width0)
                   rebind = FALSE;
@@ -396,7 +403,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                nvc0->state.uniform_buffer_bound[s] = 0;
          }
 
-         if (bo != nvc0->screen->uniforms)
+         if (bo != nvc0->screen->uniform_bo)
             BCTX_REFN(nvc0->bufctx_3d, CB(s, i), res, RD);
 
          if (rebind) {
@@ -517,6 +524,7 @@ static struct state_validate {
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
+    { nve4_set_tex_handles,        NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS },
     { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
     { nvc0_idxbuf_validate,        NVC0_NEW_IDXBUF },
     { nvc0_tfb_validate,           NVC0_NEW_TFB_TARGETS | NVC0_NEW_GMTYPROG }

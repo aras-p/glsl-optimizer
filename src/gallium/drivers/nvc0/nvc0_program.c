@@ -152,7 +152,7 @@ nvc0_sp_assign_input_slots(struct nv50_ir_prog_info *info)
 static int
 nvc0_fp_assign_output_slots(struct nv50_ir_prog_info *info)
 {
-   unsigned last = info->prop.fp.numColourResults * 4;
+   unsigned count = info->prop.fp.numColourResults * 4;
    unsigned i, c;
 
    for (i = 0; i < info->numOutputs; ++i)
@@ -161,10 +161,13 @@ nvc0_fp_assign_output_slots(struct nv50_ir_prog_info *info)
             info->out[i].slot[c] = info->out[i].si * 4 + c;
 
    if (info->io.sampleMask < PIPE_MAX_SHADER_OUTPUTS)
-      info->out[info->io.sampleMask].slot[0] = last++;
+      info->out[info->io.sampleMask].slot[0] = count++;
+   else
+   if (info->target >= 0xe0)
+      count++; /* on Kepler, depth is always last colour reg + 2 */
 
    if (info->io.fragDepth < PIPE_MAX_SHADER_OUTPUTS)
-      info->out[info->io.fragDepth].slot[2] = last;
+      info->out[info->io.fragDepth].slot[2] = count;
 
    return 0;
 }
@@ -278,7 +281,7 @@ nvc0_vtgp_gen_header(struct nvc0_program *vp, struct nv50_ir_prog_info *info)
          vp->vp.clip_mode |= 1 << (i * 4);
 
    if (info->io.genUserClip < 0)
-      vp->vp.num_ucps = PIPE_MAX_CLIP_PLANES; /* prevent rebuilding */
+      vp->vp.num_ucps = PIPE_MAX_CLIP_PLANES + 1; /* prevent rebuilding */
 
    return 0;
 }
@@ -434,6 +437,7 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nv50_ir_prog_info *info)
 {
    unsigned i, c, a, m;
 
+   /* just 00062 on Kepler */
    fp->hdr[0] = 0x20062 | (5 << 10);
    fp->hdr[5] = 0x80000000; /* getting a trap if FRAG_COORD_UMASK.w = 0 */
 
@@ -538,7 +542,7 @@ nvc0_program_dump(struct nvc0_program *prog)
 #endif
 
 boolean
-nvc0_program_translate(struct nvc0_program *prog)
+nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
 {
    struct nv50_ir_prog_info *info;
    int ret;
@@ -548,11 +552,13 @@ nvc0_program_translate(struct nvc0_program *prog)
       return FALSE;
 
    info->type = prog->type;
-   info->target = 0xc0;
+   info->target = chipset;
    info->bin.sourceRep = NV50_PROGRAM_IR_TGSI;
    info->bin.source = (void *)prog->pipe.tokens;
 
    info->io.genUserClip = prog->vp.num_ucps;
+   info->io.ucpBase = 256;
+   info->io.ucpBinding = 15;
 
    info->assignSlots = nvc0_program_assign_varying_slots;
 
@@ -655,7 +661,13 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
       size = align(size, 0x40);
       size += prog->immd_size + 0xc0; /* add 0xc0 for align 0x40 -> 0x100 */
    }
-   size = align(size, 0x40); /* required by SP_START_ID */
+   /* On Fermi, SP_START_ID must be aligned to 0x40.
+    * On Kepler, the first instruction must be aligned to 0x80 because
+    * latency information is expected only at certain positions.
+    */
+   if (screen->base.class_3d >= NVE4_3D_CLASS)
+      size = size + 0x70;
+   size = align(size, 0x40);
 
    ret = nouveau_heap_alloc(screen->text_heap, size, prog, &prog->mem);
    if (ret) {
@@ -667,6 +679,17 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
    assert((prog->immd_size == 0) || (prog->immd_base + prog->immd_size <=
                                      prog->mem->start + prog->mem->size));
 
+   if (screen->base.class_3d >= NVE4_3D_CLASS) {
+      switch (prog->mem->start & 0xff) {
+      case 0x40: prog->code_base += 0x70; break;
+      case 0x80: prog->code_base += 0x30; break;
+      case 0xc0: prog->code_base += 0x70; break;
+      default:
+         prog->code_base += 0x30;
+         assert((prog->mem->start & 0xff) == 0x00);
+         break;
+      }
+   }
    code_pos = prog->code_base + NVC0_SHADER_HEADER_SIZE;
 
    if (prog->relocs)
@@ -677,18 +700,18 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
       nvc0_program_dump(prog);
 #endif
 
-   nvc0_m2mf_push_linear(&nvc0->base, screen->text, prog->code_base,
-                         NOUVEAU_BO_VRAM, NVC0_SHADER_HEADER_SIZE, prog->hdr);
-   nvc0_m2mf_push_linear(&nvc0->base, screen->text,
-                         prog->code_base + NVC0_SHADER_HEADER_SIZE,
-                         NOUVEAU_BO_VRAM, prog->code_size, prog->code);
+   nvc0->base.push_data(&nvc0->base, screen->text, prog->code_base,
+                        NOUVEAU_BO_VRAM, NVC0_SHADER_HEADER_SIZE, prog->hdr);
+   nvc0->base.push_data(&nvc0->base, screen->text,
+                        prog->code_base + NVC0_SHADER_HEADER_SIZE,
+                        NOUVEAU_BO_VRAM, prog->code_size, prog->code);
    if (prog->immd_size)
-      nvc0_m2mf_push_linear(&nvc0->base,
-                            screen->text, prog->immd_base, NOUVEAU_BO_VRAM,
-                            prog->immd_size, prog->immd_data);
+      nvc0->base.push_data(&nvc0->base,
+                           screen->text, prog->immd_base, NOUVEAU_BO_VRAM,
+                           prog->immd_size, prog->immd_data);
 
    BEGIN_NVC0(nvc0->base.pushbuf, NVC0_3D(MEM_BARRIER), 1);
-   PUSH_DATA (nvc0->base.pushbuf, 0x1111);
+   PUSH_DATA (nvc0->base.pushbuf, 0x1011);
 
    return TRUE;
 }
@@ -714,9 +737,9 @@ nvc0_program_library_upload(struct nvc0_context *nvc0)
    if (ret)
       return;
 
-   nvc0_m2mf_push_linear(&nvc0->base,
-                         screen->text, screen->lib_code->start, NOUVEAU_BO_VRAM,
-                         size, code);
+   nvc0->base.push_data(&nvc0->base,
+                        screen->text, screen->lib_code->start, NOUVEAU_BO_VRAM,
+                        size, code);
    /* no need for a memory barrier, will be emitted with first program */
 }
 

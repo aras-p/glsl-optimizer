@@ -594,6 +594,7 @@ nv50_screen_create(struct nouveau_device *dev)
       FAIL_SCREEN_INIT("Not a known NV50 chipset: NV%02x\n", dev->chipset);
       break;
    }
+   screen->base.class_3d = tesla_class;
 
    ret = nouveau_object_new(chan, 0xbeef5097, tesla_class,
                             NULL, 0, &screen->tesla);

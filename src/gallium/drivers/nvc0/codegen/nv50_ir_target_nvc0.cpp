@@ -42,6 +42,7 @@ TargetNVC0::TargetNVC0(unsigned int card)
 // Will probably make this nicer once we support subroutines properly,
 // i.e. when we have an input IR that provides function declarations.
 
+// TODO: separate version for nve4+ which doesn't like the 4-byte insn formats
 static const uint32_t nvc0_builtin_code[] =
 {
 // DIV U32: slow unsigned integer division
@@ -57,11 +58,11 @@ static const uint32_t nvc0_builtin_code[] =
 //
 #if 1
    0x04009c03, 0x78000000,
-   0x7c209cdd,
-   0x0010dd18,
+   0x7c209c82, 0x38000000, // 0x7c209cdd,
+   0x0400dde2, 0x18000000, // 0x0010dd18,
    0x08309c03, 0x60000000,
-   0x05605c18,
-   0x0810dc2a,
+   0x05205d04, 0x1c000000, // 0x05605c18,
+   0x0810dc03, 0x50000000, // 0x0810dc2a,
    0x0c209c43, 0x20040000,
    0x0810dc03, 0x50000000,
    0x0c209c43, 0x20040000,
@@ -73,15 +74,15 @@ static const uint32_t nvc0_builtin_code[] =
    0x0c209c43, 0x20040000,
    0x0000dde4, 0x28000000,
    0x08001c43, 0x50000000,
-   0x05609c18,
-   0x0010430d,
+   0x05209d04, 0x1c000000, // 0x05609c18,
+   0x00105c03, 0x20060000, // 0x0010430d,
    0x0811dc03, 0x1b0e0000,
    0x08104103, 0x48000000,
    0x04000002, 0x08000000,
    0x0811c003, 0x1b0e0000,
    0x08104103, 0x48000000,
-   0x040000ac,
-   0x90001dff,
+   0x04000002, 0x08000000, // 0x040000ac,
+   0x00001de7, 0x90000000, // 0x90001dff,
 #else
    0x0401dc03, 0x1b0e0000,
    0x00008003, 0x78000000,
@@ -111,27 +112,27 @@ static const uint32_t nvc0_builtin_code[] =
 //
    0xfc05dc23, 0x188e0000,
    0xfc17dc23, 0x18c40000,
-   0x03301e18,
-   0x07305e18,
+   0x01201ec4, 0x1c000000, // 0x03301e18,
+   0x05205ec4, 0x1c000000, // 0x07305e18,
    0x0401dc03, 0x1b0e0000,
    0x00008003, 0x78000000,
    0x0400c003, 0x78000000,
    0x0c20c103, 0x48000000,
    0x0c108003, 0x60000000,
-   0x00005c28,
-   0x00001d18,
+   0x00005de4, 0x28000000, // 0x00005c28,
+   0x00001de2, 0x18000000, // 0x00001d18,
    0x0031c023, 0x1b0ec000,
-   0xb000a1e7, 0x40000000,
+   0xe000a1e7, 0x40000000, // 0xb000a1e7, 0x40000000,
    0x04000003, 0x6000c000,
    0x0813dc03, 0x1b000000,
-   0x0420446c,
-   0x040004bd,
+   0x04204603, 0x48000000, // 0x0420446c,
+   0x04000442, 0x38000000, // 0x040004bd,
    0x04208003, 0x5800c000,
    0x0430c103, 0x4800c000,
-   0x0ffc5dff,
-   0x01700e18,
-   0x05704a18,
-   0x90001dff,
+   0xe0001de7, 0x4003fffe, // 0x0ffc5dff,
+   0x01200f84, 0x1c000000, // 0x01700e18,
+   0x05204b84, 0x1c000000, // 0x05704a18,
+   0x00001de7, 0x90000000, // 0x90001dff,
 
 // RCP F64: Newton Raphson reciprocal(x): r_{i+1} = r_i * (2.0 - x * r_i)
 //
@@ -180,9 +181,9 @@ static const uint32_t nvc0_builtin_code[] =
 static const uint16_t nvc0_builtin_offsets[NVC0_BUILTIN_COUNT] =
 {
    0,
-   8 * (22),
-   8 * (22 + 18),
-   8 * (22 + 18 + 9)
+   8 * (26),
+   8 * (26 + 23),
+   8 * (26 + 23 + 9)
 };
 
 void
@@ -270,7 +271,7 @@ void TargetNVC0::initOpInfo()
       OP_STORE, OP_WRSV, OP_EXPORT, OP_BRA, OP_CALL, OP_RET, OP_EXIT,
       OP_DISCARD, OP_CONT, OP_BREAK, OP_PRECONT, OP_PREBREAK, OP_PRERET,
       OP_JOIN, OP_JOINAT, OP_BRKPT, OP_MEMBAR, OP_EMIT, OP_RESTART,
-      OP_QUADON, OP_QUADPOP
+      OP_QUADON, OP_QUADPOP, OP_TEXBAR
    };
 
    joinAnterior = false;
@@ -445,6 +446,8 @@ TargetNVC0::isAccessSupported(DataFile file, DataType ty) const
 {
    if (ty == TYPE_NONE)
       return false;
+   if (file == FILE_MEMORY_CONST && getChipset() >= 0xe0) // wrong encoding ?
+      return typeSizeof(ty) <= 4;
    if (ty == TYPE_B96)
       return (file == FILE_SHADER_INPUT) || (file == FILE_SHADER_OUTPUT);
    return true;

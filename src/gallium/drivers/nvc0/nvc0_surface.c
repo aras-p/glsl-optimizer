@@ -233,7 +233,7 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
                            src_box->x, src_box->y, src_box->z);
 
       for (i = 0; i < src_box->depth; ++i) {
-         nvc0_m2mf_transfer_rect(nvc0, &drect, &srect, nx, ny);
+         nvc0->m2mf_copy_rect(nvc0, &drect, &srect, nx, ny);
 
          if (nv50_miptree(dst)->layout_3d)
             drect.z++;

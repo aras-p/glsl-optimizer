@@ -102,6 +102,7 @@ private:
    void emitSLCT(const CmpInstruction *);
    void emitSELP(const Instruction *);
 
+   void emitTEXBAR(const Instruction *);
    void emitTEX(const TexInstruction *);
    void emitTEXCSAA(const TexInstruction *);
    void emitTXQ(const TexInstruction *);
@@ -938,6 +939,14 @@ void CodeEmitterNVC0::emitSELP(const Instruction *i)
       code[1] |= 1 << 20;
 }
 
+void CodeEmitterNVC0::emitTEXBAR(const Instruction *i)
+{
+   code[0] = 0x00000006 | (i->subOp << 26);
+   code[1] = 0xf0000000;
+   emitPredicate(i);
+   emitCondCode(i->predSrc >= 0 ? i->cc : CC_ALWAYS, 5);
+}
+
 void CodeEmitterNVC0::emitTEXCSAA(const TexInstruction *i)
 {
    code[0] = 0x00000086;
@@ -1629,6 +1638,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       break;
    case OP_TXQ:
       emitTXQ(insn->asTex());
+      break;
+   case OP_TEXBAR:
+      emitTEXBAR(insn);
       break;
    case OP_BRA:
    case OP_CALL:

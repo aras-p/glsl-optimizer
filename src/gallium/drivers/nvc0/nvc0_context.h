@@ -27,7 +27,9 @@
 #include "nvc0_3d.xml.h"
 #include "nvc0_2d.xml.h"
 #include "nvc0_m2mf.xml.h"
+#include "nve4_p2mf.xml.h"
 
+/* NOTE: must keep NVC0_NEW_...PROG in consecutive bits in this order */
 #define NVC0_NEW_BLEND        (1 << 0)
 #define NVC0_NEW_RASTERIZER   (1 << 1)
 #define NVC0_NEW_ZSA          (1 << 2)
@@ -74,6 +76,11 @@ struct nvc0_context {
    struct nouveau_bufctx *bufctx;
 
    struct nvc0_screen *screen;
+
+   void (*m2mf_copy_rect)(struct nvc0_context *,
+                          const struct nv50_m2mf_rect *dst,
+                          const struct nv50_m2mf_rect *src,
+                          uint32_t nblocksx, uint32_t nblocksy);
 
    uint32_t dirty;
 
@@ -130,6 +137,8 @@ struct nvc0_context {
    unsigned num_samplers[5];
    uint16_t samplers_dirty[5];
 
+   uint32_t tex_handles[5][PIPE_MAX_SAMPLERS]; /* for nve4 */
+
    struct pipe_framebuffer_state framebuffer;
    struct pipe_blend_color blend_colour;
    struct pipe_stencil_ref stencil_ref;
@@ -165,7 +174,7 @@ void nvc0_default_kick_notify(struct nouveau_pushbuf *);
 extern struct draw_stage *nvc0_draw_render_stage(struct nvc0_context *);
 
 /* nvc0_program.c */
-boolean nvc0_program_translate(struct nvc0_program *);
+boolean nvc0_program_translate(struct nvc0_program *, uint16_t chipset);
 boolean nvc0_program_upload_code(struct nvc0_context *, struct nvc0_program *);
 void nvc0_program_destroy(struct nvc0_context *, struct nvc0_program *);
 void nvc0_program_library_upload(struct nvc0_context *);
@@ -206,6 +215,7 @@ extern void nvc0_init_surface_functions(struct nvc0_context *);
 /* nvc0_tex.c */
 void nvc0_validate_textures(struct nvc0_context *);
 void nvc0_validate_samplers(struct nvc0_context *);
+void nve4_set_tex_handles(struct nvc0_context *);
 
 struct pipe_sampler_view *
 nvc0_create_sampler_view(struct pipe_context *,
@@ -214,19 +224,16 @@ nvc0_create_sampler_view(struct pipe_context *,
 
 /* nvc0_transfer.c */
 void
-nvc0_m2mf_transfer_rect(struct nvc0_context *,
-                        const struct nv50_m2mf_rect *dst,
-                        const struct nv50_m2mf_rect *src,
-                        uint32_t nblocksx, uint32_t nblocksy);
+nvc0_init_transfer_functions(struct nvc0_context *);
+
 void
 nvc0_m2mf_push_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned offset, unsigned domain,
                       unsigned size, const void *data);
 void
-nvc0_m2mf_copy_linear(struct nouveau_context *nv,
-		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
-		      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
-		      unsigned size);
+nve4_p2mf_push_linear(struct nouveau_context *nv,
+                      struct nouveau_bo *dst, unsigned offset, unsigned domain,
+                      unsigned size, const void *data);
 void
 nvc0_cb_push(struct nouveau_context *,
              struct nouveau_bo *bo, unsigned domain,

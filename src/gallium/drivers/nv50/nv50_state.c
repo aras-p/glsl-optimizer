@@ -465,6 +465,13 @@ nv50_sampler_state_create(struct pipe_context *pipe,
                  (nv50_tsc_wrap_mode(cso->wrap_t) << 3) |
                  (nv50_tsc_wrap_mode(cso->wrap_r) << 6));
 
+   if (nouveau_screen(pipe->screen)->class_3d >= NVE4_3D_CLASS) {
+      if (cso->seamless_cube_map)
+         so->tsc[1] |= NVE4_TSC_1_CUBE_SEAMLESS;
+      if (!cso->normalized_coords)
+         so->tsc[1] |= NVE4_TSC_1_FORCE_NONNORMALIZED_COORDS;
+   }
+
    switch (cso->mag_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
       so->tsc[1] |= NV50_TSC_1_MAGF_LINEAR;

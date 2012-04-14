@@ -70,7 +70,8 @@ nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
       return TRUE;
 
    if (!prog->translated) {
-      prog->translated = nvc0_program_translate(prog);
+      prog->translated = nvc0_program_translate(
+         prog, nvc0->screen->base.device->chipset);
       if (!prog->translated)
          return FALSE;
    }

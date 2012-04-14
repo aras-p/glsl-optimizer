@@ -30,7 +30,6 @@
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
 
-#include "nouveau/nv_object.xml.h"
 #include "nvc0_graph_macros.h"
 
 static boolean
@@ -67,6 +66,8 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
 static int
 nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
+   const uint16_t class_3d = nouveau_screen(pscreen)->class_3d;
+
    switch (param) {
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 16 * PIPE_SHADER_TYPES; /* NOTE: should not count COMPUTE */
@@ -89,7 +90,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
-      return 0;
+      return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
@@ -247,10 +248,11 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
       FREE(screen->blitctx);
 
    nouveau_bo_ref(NULL, &screen->text);
+   nouveau_bo_ref(NULL, &screen->uniform_bo);
    nouveau_bo_ref(NULL, &screen->tls);
    nouveau_bo_ref(NULL, &screen->txc);
    nouveau_bo_ref(NULL, &screen->fence.bo);
-   nouveau_bo_ref(NULL, &screen->vfetch_cache);
+   nouveau_bo_ref(NULL, &screen->poly_cache);
 
    nouveau_heap_destroy(&screen->lib_code);
    nouveau_heap_destroy(&screen->text_heap);
@@ -260,7 +262,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 
    nouveau_mm_destroy(screen->mm_VRAM_fe0);
 
-   nouveau_object_del(&screen->fermi);
+   nouveau_object_del(&screen->eng3d);
    nouveau_object_del(&screen->eng2d);
    nouveau_object_del(&screen->m2mf);
 
@@ -288,16 +290,16 @@ nvc0_graph_set_macro(struct nvc0_screen *screen, uint32_t m, unsigned pos,
 }
 
 static void
-nvc0_magic_3d_init(struct nouveau_pushbuf *push)
+nvc0_magic_3d_init(struct nouveau_pushbuf *push, uint16_t obj_class)
 {
    BEGIN_NVC0(push, SUBC_3D(0x10cc), 1);
    PUSH_DATA (push, 0xff);
    BEGIN_NVC0(push, SUBC_3D(0x10e0), 2);
-   PUSH_DATA(push, 0xff);
-   PUSH_DATA(push, 0xff);
+   PUSH_DATA (push, 0xff);
+   PUSH_DATA (push, 0xff);
    BEGIN_NVC0(push, SUBC_3D(0x10ec), 2);
-   PUSH_DATA(push, 0xff);
-   PUSH_DATA(push, 0xff);
+   PUSH_DATA (push, 0xff);
+   PUSH_DATA (push, 0xff);
    BEGIN_NVC0(push, SUBC_3D(0x074c), 1);
    PUSH_DATA (push, 0x3f);
 
@@ -307,11 +309,6 @@ nvc0_magic_3d_init(struct nouveau_pushbuf *push)
    PUSH_DATA (push, (2 << 16) | 2);
    BEGIN_NVC0(push, SUBC_3D(0x0de8), 1);
    PUSH_DATA (push, 1);
-
-#if 0 /* software method */
-   BEGIN_NVC0(push, SUBC_3D(0x1528), 1); /* MP poke */
-   PUSH_DATA (push, 0);
-#endif
 
    BEGIN_NVC0(push, SUBC_3D(0x12ac), 1);
    PUSH_DATA (push, 0);
@@ -324,8 +321,6 @@ nvc0_magic_3d_init(struct nouveau_pushbuf *push)
    BEGIN_NVC0(push, SUBC_3D(0x12d8), 2);
    PUSH_DATA (push, 0x10);
    PUSH_DATA (push, 0x10);
-   BEGIN_NVC0(push, SUBC_3D(0x06d4), 1);
-   PUSH_DATA (push, 8);
    BEGIN_NVC0(push, SUBC_3D(0x1140), 1);
    PUSH_DATA (push, 0x10);
    BEGIN_NVC0(push, SUBC_3D(0x1610), 1);
@@ -333,24 +328,27 @@ nvc0_magic_3d_init(struct nouveau_pushbuf *push)
 
    BEGIN_NVC0(push, SUBC_3D(0x164c), 1);
    PUSH_DATA (push, 1 << 12);
-   BEGIN_NVC0(push, SUBC_3D(0x151c), 1);
-   PUSH_DATA (push, 1);
    BEGIN_NVC0(push, SUBC_3D(0x030c), 1);
    PUSH_DATA (push, 0);
    BEGIN_NVC0(push, SUBC_3D(0x0300), 1);
    PUSH_DATA (push, 3);
-#if 0 /* software method */
-   BEGIN_NVC0(push, SUBC_3D(0x1280), 1); /* PGRAPH poke */
-   PUSH_DATA (push, 0);
-#endif
+
    BEGIN_NVC0(push, SUBC_3D(0x02d0), 1);
-   PUSH_DATA (push, 0x1f40);
+   PUSH_DATA (push, 0x3fffff);
    BEGIN_NVC0(push, SUBC_3D(0x0fdc), 1);
    PUSH_DATA (push, 1);
    BEGIN_NVC0(push, SUBC_3D(0x19c0), 1);
    PUSH_DATA (push, 1);
    BEGIN_NVC0(push, SUBC_3D(0x075c), 1);
    PUSH_DATA (push, 3);
+
+   if (obj_class >= NVE4_3D_CLASS) {
+      BEGIN_NVC0(push, SUBC_3D(0x07fc), 1);
+      PUSH_DATA (push, 1);
+   }
+
+   /* TODO: find out what software methods 0x1528, 0x1280 and (on nve4) 0x02dc
+    * are supposed to do */
 }
 
 static void
@@ -391,9 +389,19 @@ nvc0_screen_create(struct nouveau_device *dev)
    struct pipe_screen *pscreen;
    struct nouveau_object *chan;
    struct nouveau_pushbuf *push;
+   uint32_t obj_class;
    int ret;
    unsigned i;
    union nouveau_bo_config mm_config;
+
+   switch (dev->chipset & ~0xf) {
+   case 0xc0:
+   case 0xd0:
+   case 0xe0:
+      break;
+   default:
+      return NULL;
+   }
 
    screen = CALLOC_STRUCT(nvc0_screen);
    if (!screen)
@@ -431,17 +439,25 @@ nvc0_screen_create(struct nouveau_device *dev)
    screen->base.fence.emit = nvc0_screen_fence_emit;
    screen->base.fence.update = nvc0_screen_fence_update;
 
-   ret = nouveau_object_new(chan, 0xbeef9039, NVC0_M2MF_CLASS, NULL, 0,
+   switch (dev->chipset & 0xf0) {
+   case 0xe0:
+      obj_class = NVE4_P2MF_CLASS;
+      break;
+   default:
+      obj_class = NVC0_M2MF_CLASS;
+      break;
+   }
+   ret = nouveau_object_new(chan, 0xbeef323f, obj_class, NULL, 0,
                             &screen->m2mf);
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for M2MF: %d\n", ret);
 
    BEGIN_NVC0(push, SUBC_M2MF(NV01_SUBCHAN_OBJECT), 1);
    PUSH_DATA (push, screen->m2mf->oclass);
-   BEGIN_NVC0(push, NVC0_M2MF(NOTIFY_ADDRESS_HIGH), 3);
-   PUSH_DATAh(push, screen->fence.bo->offset + 16);
-   PUSH_DATA (push, screen->fence.bo->offset + 16);
-   PUSH_DATA (push, 0);
+   if (screen->m2mf->oclass == NVE4_P2MF_CLASS) {
+      BEGIN_NVC0(push, SUBC_COPY(NV01_SUBCHAN_OBJECT), 1);
+      PUSH_DATA (push, 0xa0b5);
+   }
 
    ret = nouveau_object_new(chan, 0xbeef902d, NVC0_2D_CLASS, NULL, 0,
                             &screen->eng2d);
@@ -461,17 +477,39 @@ nvc0_screen_create(struct nouveau_device *dev)
    BEGIN_NVC0(push, SUBC_2D(0x0888), 1);
    PUSH_DATA (push, 1);
 
-   ret = nouveau_object_new(chan, 0xbeef9097, NVC0_3D_CLASS, NULL, 0,
-                            &screen->fermi);
+   BEGIN_NVC0(push, SUBC_2D(NVC0_GRAPH_NOTIFY_ADDRESS_HIGH), 2);
+   PUSH_DATAh(push, screen->fence.bo->offset + 16);
+   PUSH_DATA (push, screen->fence.bo->offset + 16);
+
+   switch (dev->chipset & 0xf0) {
+   case 0xe0:
+      obj_class = NVE4_3D_CLASS;
+      break;
+   case 0xd0:
+   case 0xc0:
+   default:
+      switch (dev->chipset) {
+      case 0xd9:
+      case 0xc8:
+         obj_class = NVC8_3D_CLASS;
+         break;
+      case 0xc1:
+         obj_class = NVC1_3D_CLASS;
+         break;
+      default:
+         obj_class = NVC0_3D_CLASS;
+         break;
+      }
+      break;
+   }
+   ret = nouveau_object_new(chan, 0xbeef003d, obj_class, NULL, 0,
+                            &screen->eng3d);
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for 3D: %d\n", ret);
+   screen->base.class_3d = obj_class;
 
    BEGIN_NVC0(push, SUBC_3D(NV01_SUBCHAN_OBJECT), 1);
-   PUSH_DATA (push, screen->fermi->oclass);
-   BEGIN_NVC0(push, NVC0_3D(NOTIFY_ADDRESS_HIGH), 3);
-   PUSH_DATAh(push, screen->fence.bo->offset + 32);
-   PUSH_DATA (push, screen->fence.bo->offset + 32);
-   PUSH_DATA (push, 0);
+   PUSH_DATA (push, screen->eng3d->oclass);
 
    BEGIN_NVC0(push, NVC0_3D(COND_MODE), 1);
    PUSH_DATA (push, NVC0_3D_COND_MODE_ALWAYS);
@@ -501,10 +539,23 @@ nvc0_screen_create(struct nouveau_device *dev)
    PUSH_DATA (push, 1);
    BEGIN_NVC0(push, NVC0_3D(BLEND_ENABLE_COMMON), 1);
    PUSH_DATA (push, 0);
-   BEGIN_NVC0(push, NVC0_3D(TEX_MISC), 1);
-   PUSH_DATA (push, NVC0_3D_TEX_MISC_SEAMLESS_CUBE_MAP);
+   if (screen->eng3d->oclass < NVE4_3D_CLASS) {
+      BEGIN_NVC0(push, NVC0_3D(TEX_MISC), 1);
+      PUSH_DATA (push, NVC0_3D_TEX_MISC_SEAMLESS_CUBE_MAP);
+   } else {
+      BEGIN_NVC0(push, NVE4_3D(TEX_CB_INDEX), 1);
+      PUSH_DATA (push, 15);
+   }
+   BEGIN_NVC0(push, NVC0_3D(CALL_LIMIT_LOG), 1);
+   PUSH_DATA (push, 8); /* 128 */
+   BEGIN_NVC0(push, NVC0_3D(ZCULL_STATCTRS_ENABLE), 1);
+   PUSH_DATA (push, 1);
+   if (screen->eng3d->oclass >= NVC1_3D_CLASS) {
+      BEGIN_NVC0(push, NVC0_3D(CACHE_SPLIT), 1);
+      PUSH_DATA (push, NVC0_3D_CACHE_SPLIT_48K_SHARED_16K_L1);
+   }
 
-   nvc0_magic_3d_init(push);
+   nvc0_magic_3d_init(push, screen->eng3d->oclass);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20, NULL,
                         &screen->text);
@@ -517,21 +568,41 @@ nvc0_screen_create(struct nouveau_device *dev)
    nouveau_heap_init(&screen->text_heap, 0, (1 << 20) - 0x100);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 12, 6 << 16, NULL,
-                        &screen->uniforms);
+                        &screen->uniform_bo);
    if (ret)
       goto fail;
 
-   /* auxiliary constants (6 user clip planes, base instance id) */
-   BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
-   PUSH_DATA (push, 256);
-   PUSH_DATAh(push, screen->uniforms->offset + (5 << 16));
-   PUSH_DATA (push, screen->uniforms->offset + (5 << 16));
    for (i = 0; i < 5; ++i) {
+      /* TIC and TSC entries for each unit (nve4+ only) */
+      /* auxiliary constants (6 user clip planes, base instance id */
+      BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
+      PUSH_DATA (push, 512);
+      PUSH_DATAh(push, screen->uniform_bo->offset + (5 << 16) + (i << 9));
+      PUSH_DATA (push, screen->uniform_bo->offset + (5 << 16) + (i << 9));
       BEGIN_NVC0(push, NVC0_3D(CB_BIND(i)), 1);
       PUSH_DATA (push, (15 << 4) | 1);
+      if (screen->eng3d->oclass >= NVE4_3D_CLASS) {
+         unsigned j;
+         BEGIN_1IC0(push, NVC0_3D(CB_POS), 9);
+         PUSH_DATA (push, 0);
+         for (j = 0; j < 8; ++j)
+            PUSH_DATA(push, j);
+      } else {
+         BEGIN_NVC0(push, NVC0_3D(TEX_LIMITS(i)), 1);
+         PUSH_DATA (push, 0x54);
+      }
    }
+   BEGIN_NVC0(push, NVC0_3D(LINKED_TSC), 1);
+   PUSH_DATA (push, 0);
 
-   screen->tls_size = (16 * 32) * (NVC0_CAP_MAX_PROGRAM_TEMPS * 16);
+   /* max MPs * max warps per MP (TODO: ask kernel) */
+   if (screen->eng3d->oclass >= NVE4_3D_CLASS)
+      screen->tls_size = 8 * 64;
+   else
+      screen->tls_size = 16 * 48;
+   screen->tls_size *= NVC0_CAP_MAX_PROGRAM_TEMPS * 16;
+   screen->tls_size = align(screen->tls_size, 1 << 17);
+
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17,
                         screen->tls_size, NULL, &screen->tls);
    if (ret)
@@ -550,21 +621,14 @@ nvc0_screen_create(struct nouveau_device *dev)
    BEGIN_NVC0(push, NVC0_3D(LOCAL_BASE), 1);
    PUSH_DATA (push, 0);
 
-   for (i = 0; i < 5; ++i) {
-      BEGIN_NVC0(push, NVC0_3D(TEX_LIMITS(i)), 1);
-      PUSH_DATA (push, 0x54);
-   }
-   BEGIN_NVC0(push, NVC0_3D(LINKED_TSC), 1);
-   PUSH_DATA (push, 0);
-
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20, NULL,
-                        &screen->vfetch_cache);
+                        &screen->poly_cache);
    if (ret)
       goto fail;
 
    BEGIN_NVC0(push, NVC0_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
-   PUSH_DATAh(push, screen->vfetch_cache->offset);
-   PUSH_DATA (push, screen->vfetch_cache->offset);
+   PUSH_DATAh(push, screen->poly_cache->offset);
+   PUSH_DATA (push, screen->poly_cache->offset);
    PUSH_DATA (push, 3);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, NULL,

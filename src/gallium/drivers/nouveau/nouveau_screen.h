@@ -19,6 +19,8 @@ struct nouveau_screen {
 
 	unsigned sysmem_bindings;
 
+	uint16_t class_3d;
+
 	struct {
 		struct nouveau_fence *head;
 		struct nouveau_fence *tail;

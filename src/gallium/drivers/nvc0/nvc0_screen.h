@@ -6,6 +6,8 @@
 #include "nouveau/nouveau_fence.h"
 #include "nouveau/nouveau_heap.h"
 
+#include "nouveau/nv_object.xml.h"
+
 #include "nvc0_winsys.h"
 #include "nvc0_stateobj.h"
 
@@ -24,10 +26,10 @@ struct nvc0_screen {
    int num_occlusion_queries_active;
 
    struct nouveau_bo *text;
-   struct nouveau_bo *uniforms;
+   struct nouveau_bo *uniform_bo;
    struct nouveau_bo *tls;
    struct nouveau_bo *txc; /* TIC (offset 0) and TSC (65536) */
-   struct nouveau_bo *vfetch_cache;
+   struct nouveau_bo *poly_cache;
 
    uint64_t tls_size;
 
@@ -55,7 +57,7 @@ struct nvc0_screen {
 
    struct nouveau_mman *mm_VRAM_fe0;
 
-   struct nouveau_object *fermi;
+   struct nouveau_object *eng3d; /* sqrt(1/2)|kepler> + sqrt(1/2)|fermi> */
    struct nouveau_object *eng2d;
    struct nouveau_object *m2mf;
    struct nouveau_object *dijkstra;

@@ -147,6 +147,7 @@ const char *operationStr[OP_LAST + 1] =
    "popcnt",
    "insbf",
    "extbf",
+   "texbar",
    "(invalid)"
 };
 

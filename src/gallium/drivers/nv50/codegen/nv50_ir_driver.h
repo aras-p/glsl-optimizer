@@ -163,6 +163,8 @@ struct nv50_ir_prog_info
       uint8_t clipDistanceMask;  /* mask of clip distances defined */
       uint8_t cullDistanceMask;  /* clip distance mode (1 bit per output) */
       int8_t genUserClip;        /* request user clip planes for ClipVertex */
+      uint16_t ucpBase;          /* base address for UCPs */
+      uint8_t ucpBinding;        /* constant buffer index of UCP data */
       uint8_t pointSize;         /* output index for PointSize */
       uint8_t instanceId;        /* system value index of InstanceID */
       uint8_t vertexId;          /* system value index of VertexID */

@@ -48,7 +48,7 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
    1, 2,                   // SULD, SUST
    1, 1,                   // DFDX, DFDY
    1, 2, 2, 2, 0, 0,       // RDSV, WRSV, PIXLD, QUADOP, QUADON, QUADPOP
-   2, 3, 2,                // POPCNT, INSBF, EXTBF
+   2, 3, 2, 0,             // POPCNT, INSBF, EXTBF, TEXBAR
    0
 };
 
@@ -61,6 +61,7 @@ Target *Target::create(unsigned int chipset)
    switch (chipset & 0xf0) {
    case 0xc0:
    case 0xd0:
+   case 0xe0:
       return getTargetNVC0(chipset);
    case 0x50:
    case 0x80:

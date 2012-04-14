@@ -13,7 +13,7 @@ struct nvc0_transfer {
    uint16_t nlayers;
 };
 
-void
+static void
 nvc0_m2mf_transfer_rect(struct nvc0_context *nvc0,
                         const struct nv50_m2mf_rect *dst,
                         const struct nv50_m2mf_rect *src,
@@ -108,6 +108,71 @@ nvc0_m2mf_transfer_rect(struct nvc0_context *nvc0,
    nouveau_bufctx_reset(bctx, 0);
 }
 
+static void
+nve4_m2mf_transfer_rect(struct nvc0_context *nvc0,
+                        const struct nv50_m2mf_rect *dst,
+                        const struct nv50_m2mf_rect *src,
+                        uint32_t nblocksx, uint32_t nblocksy)
+{
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   struct nouveau_bufctx *bctx = nvc0->bufctx;
+   uint32_t exec;
+   uint32_t src_base = src->base;
+   uint32_t dst_base = dst->base;
+   const int cpp = dst->cpp;
+
+   assert(dst->cpp == src->cpp);
+
+   nouveau_bufctx_refn(bctx, 0, dst->bo, dst->domain | NOUVEAU_BO_WR);
+   nouveau_bufctx_refn(bctx, 0, src->bo, src->domain | NOUVEAU_BO_RD);
+   nouveau_pushbuf_bufctx(push, bctx);
+   nouveau_pushbuf_validate(push);
+
+   exec = 0x200 /* 2D_ENABLE */ | 0x6 /* UNK */;
+
+   if (!nouveau_bo_memtype(dst->bo)) {
+      assert(!dst->z);
+      dst_base += dst->y * dst->pitch + dst->x * cpp;
+      exec |= 0x100; /* DST_MODE_2D_LINEAR */
+   }
+   if (!nouveau_bo_memtype(src->bo)) {
+      assert(!src->z);
+      src_base += src->y * src->pitch + src->x * cpp;
+      exec |= 0x080; /* SRC_MODE_2D_LINEAR */
+   }
+
+   BEGIN_NVC0(push, SUBC_COPY(0x070c), 6);
+   PUSH_DATA (push, 0x1000 | dst->tile_mode);
+   PUSH_DATA (push, dst->pitch);
+   PUSH_DATA (push, dst->height);
+   PUSH_DATA (push, dst->depth);
+   PUSH_DATA (push, dst->z);
+   PUSH_DATA (push, (dst->y << 16) | (dst->x * cpp));
+
+   BEGIN_NVC0(push, SUBC_COPY(0x0728), 6);
+   PUSH_DATA (push, 0x1000 | src->tile_mode);
+   PUSH_DATA (push, src->pitch);
+   PUSH_DATA (push, src->height);
+   PUSH_DATA (push, src->depth);
+   PUSH_DATA (push, src->z);
+   PUSH_DATA (push, (src->y << 16) | (src->x * cpp));
+
+   BEGIN_NVC0(push, SUBC_COPY(0x0400), 8);
+   PUSH_DATAh(push, src->bo->offset + src_base);
+   PUSH_DATA (push, src->bo->offset + src_base);
+   PUSH_DATAh(push, dst->bo->offset + dst_base);
+   PUSH_DATA (push, dst->bo->offset + dst_base);
+   PUSH_DATA (push, src->pitch);
+   PUSH_DATA (push, dst->pitch);
+   PUSH_DATA (push, nblocksx * cpp);
+   PUSH_DATA (push, nblocksy);
+
+   BEGIN_NVC0(push, SUBC_COPY(0x0300), 1);
+   PUSH_DATA (push, exec);
+
+   nouveau_bufctx_reset(bctx, 0);
+}
+
 void
 nvc0_m2mf_push_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned offset, unsigned domain,
@@ -154,6 +219,49 @@ nvc0_m2mf_push_linear(struct nouveau_context *nv,
 }
 
 void
+nve4_p2mf_push_linear(struct nouveau_context *nv,
+                      struct nouveau_bo *dst, unsigned offset, unsigned domain,
+                      unsigned size, const void *data)
+{
+   struct nvc0_context *nvc0 = nvc0_context(&nv->pipe);
+   struct nouveau_pushbuf *push = nv->pushbuf;
+   uint32_t *src = (uint32_t *)data;
+   unsigned count = (size + 3) / 4;
+
+   nouveau_bufctx_refn(nvc0->bufctx, 0, dst, domain | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, nvc0->bufctx);
+   nouveau_pushbuf_validate(push);
+
+   while (count) {
+      unsigned nr;
+
+      if (!PUSH_SPACE(push, 16))
+         break;
+      nr = PUSH_AVAIL(push);
+      assert(nr >= 16);
+      nr = MIN2(count, nr - 8);
+      nr = MIN2(nr, (NV04_PFIFO_MAX_PACKET_LEN - 1));
+
+      BEGIN_NVC0(push, NVE4_P2MF(DST_ADDRESS_HIGH), 2);
+      PUSH_DATAh(push, dst->offset + offset);
+      PUSH_DATA (push, dst->offset + offset);
+      BEGIN_NVC0(push, NVE4_P2MF(LINE_LENGTH_IN), 2);
+      PUSH_DATA (push, nr * 4);
+      PUSH_DATA (push, 1);
+      /* must not be interrupted (trap on QUERY fence, 0x50 works however) */
+      BEGIN_1IC0(push, NVE4_P2MF(EXEC), nr + 1);
+      PUSH_DATA (push, 0x1001);
+      PUSH_DATAp(push, src, nr);
+
+      count -= nr;
+      src += nr;
+      offset += nr * 4;
+   }
+
+   nouveau_bufctx_reset(nvc0->bufctx, 0);
+}
+
+static void
 nvc0_m2mf_copy_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
@@ -187,6 +295,32 @@ nvc0_m2mf_copy_linear(struct nouveau_context *nv,
       dstoff += bytes;
       size -= bytes;
    }
+
+   nouveau_bufctx_reset(bctx, 0);
+}
+
+static void
+nve4_m2mf_copy_linear(struct nouveau_context *nv,
+                      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
+                      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
+                      unsigned size)
+{
+   struct nouveau_pushbuf *push = nv->pushbuf;
+   struct nouveau_bufctx *bctx = nvc0_context(&nv->pipe)->bufctx;
+
+   nouveau_bufctx_refn(bctx, 0, src, srcdom | NOUVEAU_BO_RD);
+   nouveau_bufctx_refn(bctx, 0, dst, dstdom | NOUVEAU_BO_WR);
+   nouveau_pushbuf_bufctx(push, bctx);
+   nouveau_pushbuf_validate(push);
+
+   BEGIN_NVC0(push, SUBC_COPY(0x0400), 4);
+   PUSH_DATAh(push, src->offset + srcoff);
+   PUSH_DATA (push, src->offset + srcoff);
+   PUSH_DATAh(push, dst->offset + dstoff);
+   PUSH_DATA (push, dst->offset + dstoff);
+   BEGIN_NVC0(push, SUBC_COPY(0x0418), 1);
+   PUSH_DATA (push, size);
+   IMMED_NVC0(push, SUBC_COPY(0x0300), 0x6);
 
    nouveau_bufctx_reset(bctx, 0);
 }
@@ -253,8 +387,8 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
       unsigned z = tx->rect[0].z;
       unsigned i;
       for (i = 0; i < tx->nlayers; ++i) {
-         nvc0_m2mf_transfer_rect(nvc0, &tx->rect[1], &tx->rect[0],
-                                 tx->nblocksx, tx->nblocksy);
+         nvc0->m2mf_copy_rect(nvc0, &tx->rect[1], &tx->rect[0],
+                              tx->nblocksx, tx->nblocksy);
          if (mt->layout_3d)
             tx->rect[0].z++;
          else
@@ -280,8 +414,8 @@ nvc0_miptree_transfer_del(struct pipe_context *pctx,
 
    if (tx->base.usage & PIPE_TRANSFER_WRITE) {
       for (i = 0; i < tx->nlayers; ++i) {
-         nvc0_m2mf_transfer_rect(nvc0, &tx->rect[0], &tx->rect[1],
-                                 tx->nblocksx, tx->nblocksy);
+         nvc0->m2mf_copy_rect(nvc0, &tx->rect[0], &tx->rect[1],
+                              tx->nblocksx, tx->nblocksy);
          if (mt->layout_3d)
             tx->rect[0].z++;
          else
@@ -361,4 +495,19 @@ nvc0_cb_push(struct nouveau_context *nv,
    }
 
    nouveau_bufctx_reset(bctx, 0);
+}
+
+void
+nvc0_init_transfer_functions(struct nvc0_context *nvc0)
+{
+   if (nvc0->screen->base.class_3d >= NVE4_3D_CLASS) {
+      nvc0->m2mf_copy_rect = nve4_m2mf_transfer_rect;
+      nvc0->base.copy_data = nve4_m2mf_copy_linear;
+      nvc0->base.push_data = nve4_p2mf_push_linear;
+   } else {
+      nvc0->m2mf_copy_rect = nvc0_m2mf_transfer_rect;
+      nvc0->base.copy_data = nvc0_m2mf_copy_linear;
+      nvc0->base.push_data = nvc0_m2mf_push_linear;
+   }
+   nvc0->base.push_cb = nvc0_cb_push;
 }

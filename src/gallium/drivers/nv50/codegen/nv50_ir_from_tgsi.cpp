@@ -2250,9 +2250,9 @@ Converter::handleUserClipPlanes()
 
    for (c = 0; c < 4; ++c) {
       for (i = 0; i < info->io.genUserClip; ++i) {
-         Value *ucp;
-         ucp = mkLoad(TYPE_F32, mkSymbol(FILE_MEMORY_CONST, 15, TYPE_F32,
-                                         i * 16 + c * 4), NULL);
+         Symbol *sym = mkSymbol(FILE_MEMORY_CONST, info->io.ucpBinding,
+                                TYPE_F32, info->io.ucpBase + i * 16 + c * 4);
+         Value *ucp = mkLoad(TYPE_F32, sym, NULL);
          if (c == 0)
             res[i] = mkOp2v(OP_MUL, TYPE_F32, getScratch(), clipVtx[c], ucp);
          else

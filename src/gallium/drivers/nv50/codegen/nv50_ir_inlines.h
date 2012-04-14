@@ -40,6 +40,7 @@ static inline bool isMemoryFile(DataFile f)
    return (f >= FILE_MEMORY_CONST && f <= FILE_MEMORY_LOCAL);
 }
 
+// contrary to asTex(), this will never include SULD/SUST
 static inline bool isTextureOp(operation op)
 {
    return (op >= OP_TEX && op <= OP_TEXCSAA);

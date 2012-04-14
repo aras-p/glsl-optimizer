@@ -117,6 +117,9 @@ NVC0LegalizeSSA::visit(BasicBlock *bb)
 
 class NVC0LegalizePostRA : public Pass
 {
+public:
+   NVC0LegalizePostRA(const Program *);
+
 private:
    virtual bool visit(Function *);
    virtual bool visit(BasicBlock *);
@@ -127,7 +130,14 @@ private:
    void propagateJoin(BasicBlock *);
 
    LValue *r63;
+
+   const bool needTexBar;
 };
+
+NVC0LegalizePostRA::NVC0LegalizePostRA(const Program *prog)
+   : needTexBar(prog->getTarget()->getChipset() >= 0xe0)
+{
+}
 
 bool
 NVC0LegalizePostRA::visit(Function *fn)
@@ -225,6 +235,12 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
       } else
       if (i->isNop()) {
          bb->remove(i);
+      } else
+      if (needTexBar && isTextureOp(i->op)) {
+         Instruction *bar = new_Instruction(func, OP_TEXBAR, TYPE_NONE);
+         bar->fixed = 1;
+         bar->subOp = 0;
+         bb->insertAfter(i, bar);
       } else {
          if (i->op != OP_MOV && i->op != OP_PFETCH)
             replaceZero(i);
@@ -310,7 +326,61 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    const int dim = i->tex.target.getDim() + i->tex.target.isCube();
    const int arg = i->tex.target.getArgCount();
 
-   // generate and move the tsc/tic/array source to the front
+   if (prog->getTarget()->getChipset() >= 0xe0) {
+      if (i->tex.r == i->tex.s) {
+         i->tex.r += 8; // NOTE: offset should probably be a driver option
+         i->tex.s  = 0; // only a single cX[] value possible here
+      } else {
+         // TODO: extract handles and use register to select TIC/TSC entries
+      }
+      if (i->tex.target.isArray()) {
+         LValue *layer = new_LValue(func, FILE_GPR);
+         Value *src = i->getSrc(arg - 1);
+         const int sat = (i->op == OP_TXF) ? 1 : 0;
+         DataType sTy = (i->op == OP_TXF) ? TYPE_U32 : TYPE_F32;
+         bld.mkCvt(OP_CVT, TYPE_U16, layer, sTy, src)->saturate = sat;
+         for (int s = dim; s >= 1; --s)
+            i->setSrc(s, i->getSrc(s - 1));
+         i->setSrc(0, layer);
+      }
+      if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
+         Value *tmp[2];
+         Symbol *bind;
+         Value *rRel = i->getIndirectR();
+         Value *sRel = i->getIndirectS();
+         Value *shCnt = bld.loadImm(NULL, 2);
+
+         if (rRel) {
+            tmp[0] = bld.getScratch();
+            bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.r * 4);
+            bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], rRel, shCnt);
+            tmp[1] = bld.mkLoad(TYPE_U32, bind, tmp[0]);
+            bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
+                      bld.loadImm(tmp[0], 0x00ffffffu));
+            rRel = tmp[0];
+            i->setSrc(i->tex.rIndirectSrc, NULL);
+         }
+         if (sRel) {
+            tmp[0] = bld.getScratch();
+            bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.s * 4);
+            bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], sRel, shCnt);
+            tmp[1] = bld.mkLoad(TYPE_U32, bind, tmp[0]);
+            bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
+                      bld.loadImm(tmp[0], 0xff000000u));
+            sRel = tmp[0];
+            i->setSrc(i->tex.sIndirectSrc, NULL);
+         }
+         bld.mkOp2(OP_OR, TYPE_U32, rRel, rRel, sRel);
+
+         int min = i->tex.rIndirectSrc;
+         if (min < 0 || min > i->tex.sIndirectSrc)
+            min = i->tex.sIndirectSrc;
+         for (int s = min; s >= 1; --s)
+            i->setSrc(s, i->getSrc(s - 1));
+         i->setSrc(0, rRel);
+      }
+   } else
+   // (nvc0) generate and move the tsc/tic/array source to the front
    if (dim != arg || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
       LValue *src = new_LValue(func, FILE_GPR); // 0xttxsaaaa
 
@@ -717,7 +787,7 @@ TargetNVC0::runLegalizePass(Program *prog, CGStage stage) const
       return pass.run(prog, false, true);
    } else
    if (stage == CG_STAGE_POST_RA) {
-      NVC0LegalizePostRA pass;
+      NVC0LegalizePostRA pass(prog);
       return pass.run(prog, false, true);
    } else
    if (stage == CG_STAGE_SSA) {

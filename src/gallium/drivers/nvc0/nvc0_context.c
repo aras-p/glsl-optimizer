@@ -133,10 +133,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
       goto out_err;
 
    nvc0->screen = screen;
-   nvc0->base.screen    = &screen->base;
-   nvc0->base.copy_data = nvc0_m2mf_copy_linear;
-   nvc0->base.push_data = nvc0_m2mf_push_linear;
-   nvc0->base.push_cb = nvc0_cb_push;
+   nvc0->base.screen = &screen->base;
 
    pipe->screen = pscreen;
    pipe->priv = priv;
@@ -158,6 +155,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0_init_query_functions(nvc0);
    nvc0_init_surface_functions(nvc0);
    nvc0_init_state_functions(nvc0);
+   nvc0_init_transfer_functions(nvc0);
    nvc0_init_resource_functions(pipe);
 
    nvc0->draw = draw_create(pipe);
@@ -174,7 +172,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->text);
-   BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->uniforms);
+   BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->uniform_bo);
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->txc);
 
    flags = NOUVEAU_BO_GART | NOUVEAU_BO_WR;
