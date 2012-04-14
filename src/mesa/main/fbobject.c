@@ -2023,7 +2023,11 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    _glthread_LOCK_MUTEX(fb->Mutex);
    if (texObj) {
       if (attachment == GL_DEPTH_ATTACHMENT &&
-	   texObj == fb->Attachment[BUFFER_STENCIL].Texture) {
+          texObj == fb->Attachment[BUFFER_STENCIL].Texture &&
+          level == fb->Attachment[BUFFER_STENCIL].TextureLevel &&
+          _mesa_tex_target_to_face(textarget) ==
+          fb->Attachment[BUFFER_STENCIL].CubeMapFace &&
+          zoffset == fb->Attachment[BUFFER_STENCIL].Zoffset) {
 	 /* The texture object is already attached to the stencil attachment
 	  * point. Don't create a new renderbuffer; just reuse the stencil
 	  * attachment's. This is required to prevent a GL error in
@@ -2032,8 +2036,12 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_DEPTH,
 	                                      BUFFER_STENCIL);
       } else if (attachment == GL_STENCIL_ATTACHMENT &&
-	         texObj == fb->Attachment[BUFFER_DEPTH].Texture) {
-	 /* As above, but with depth and stencil juxtaposed. */
+	         texObj == fb->Attachment[BUFFER_DEPTH].Texture &&
+                 level == fb->Attachment[BUFFER_DEPTH].TextureLevel &&
+                 _mesa_tex_target_to_face(textarget) ==
+                 fb->Attachment[BUFFER_DEPTH].CubeMapFace &&
+                 zoffset == fb->Attachment[BUFFER_DEPTH].Zoffset) {
+	 /* As above, but with depth and stencil transposed. */
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_STENCIL,
 	                                      BUFFER_DEPTH);
       } else {
