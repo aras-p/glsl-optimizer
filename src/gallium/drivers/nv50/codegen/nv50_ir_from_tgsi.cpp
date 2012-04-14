@@ -1495,7 +1495,7 @@ Converter::loadProjTexCoords(Value *dst[4], Value *src[4], unsigned int mask)
    int c;
 
    if (insn->op == OP_PINTERP) {
-      bb->insertTail(insn = insn->clone(true));
+      bb->insertTail(insn = cloneForward(func, insn));
       insn->op = OP_LINTERP;
       insn->setInterpolate(NV50_IR_INTERP_LINEAR | insn->getSampleMode());
       insn->setSrc(1, NULL);
@@ -1510,7 +1510,7 @@ Converter::loadProjTexCoords(Value *dst[4], Value *src[4], unsigned int mask)
          continue;
       mask &= ~(1 << c);
 
-      bb->insertTail(insn = insn->clone(true));
+      bb->insertTail(insn = cloneForward(func, insn));
       insn->setInterpolate(NV50_IR_INTERP_PERSPECTIVE | insn->getSampleMode());
       insn->setSrc(1, proj);
       dst[c] = insn->getDef(0);

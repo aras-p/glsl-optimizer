@@ -238,9 +238,12 @@ LValue::LValue(Function *fn, LValue *lval)
    fn->add(this, this->id);
 }
 
-Value *LValue::clone(Function *func) const
+LValue *
+LValue::clone(ClonePolicy<Function>& pol) const
 {
-   LValue *that = new_LValue(func, reg.file);
+   LValue *that = new_LValue(pol.context(), reg.file);
+
+   pol.set<Value>(this, that);
 
    that->reg.size = this->reg.size;
    that->reg.type = this->reg.type;
@@ -260,12 +263,14 @@ Symbol::Symbol(Program *prog, DataFile f, ubyte fidx)
    prog->add(this, this->id);
 }
 
-Value *
-Symbol::clone(Function *func) const
+Symbol *
+Symbol::clone(ClonePolicy<Function>& pol) const
 {
-   Program *prog = func->getProgram();
+   Program *prog = pol.context()->getProgram();
 
    Symbol *that = new_Symbol(prog, reg.file, reg.fileIndex);
+
+   pol.set<Value>(this, that);
 
    that->reg.size = this->reg.size;
    that->reg.type = this->reg.type;
@@ -623,51 +628,46 @@ Instruction::putExtraSources(int s, Value *values[3])
 }
 
 Instruction *
-Instruction::clone(bool deep) const
+Instruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
 {
-   Instruction *insn = new_Instruction(bb->getFunction(), op, dType);
-   assert(!asCmp() && !asFlow());
-   cloneBase(insn, deep);
-   return insn;
-}
+   if (!i)
+      i = new_Instruction(pol.context(), op, dType);
+   assert(typeid(*i) == typeid(*this));
 
-void
-Instruction::cloneBase(Instruction *insn, bool deep) const
-{
-   insn->sType = this->sType;
+   pol.set<Instruction>(this, i);
 
-   insn->cc = this->cc;
-   insn->rnd = this->rnd;
-   insn->cache = this->cache;
-   insn->subOp = this->subOp;
+   i->sType = sType;
 
-   insn->saturate = this->saturate;
-   insn->atomic = this->atomic;
-   insn->ftz = this->ftz;
-   insn->dnz = this->dnz;
-   insn->ipa = this->ipa;
-   insn->lanes = this->lanes;
-   insn->perPatch = this->perPatch;
+   i->rnd = rnd;
+   i->cache = cache;
+   i->subOp = subOp;
 
-   insn->postFactor = this->postFactor;
+   i->saturate = saturate;
+   i->join = join;
+   i->exit = exit;
+   i->atomic = atomic;
+   i->ftz = ftz;
+   i->dnz = dnz;
+   i->ipa = ipa;
+   i->lanes = lanes;
+   i->perPatch = perPatch;
 
-   if (deep) {
-      if (!bb)
-         return;
-      Function *fn = bb->getFunction();
-      for (int d = 0; this->defExists(d); ++d)
-         insn->setDef(d, this->getDef(d)->clone(fn));
-   } else {
-      for (int d = 0; this->defExists(d); ++d)
-         insn->setDef(d, this->getDef(d));
+   i->postFactor = postFactor;
+
+   for (int d = 0; defExists(d); ++d)
+      i->setDef(d, pol.get(getDef(d)));
+
+   for (int s = 0; srcExists(s); ++s) {
+      i->setSrc(s, pol.get(getSrc(s)));
+      i->src(s).mod = src(s).mod;
    }
 
-   for (int s = 0; this->srcExists(s); ++s)
-      insn->setSrc(s, this->srcs[s]);
+   i->cc = cc;
+   i->predSrc = predSrc;
+   i->flagsDef = flagsDef;
+   i->flagsSrc = flagsSrc;
 
-   insn->predSrc = this->predSrc;
-   insn->flagsDef = this->flagsDef;
-   insn->flagsSrc = this->flagsSrc;
+   return i;
 }
 
 unsigned int
@@ -777,11 +777,13 @@ TexInstruction::~TexInstruction()
    }
 }
 
-Instruction *
-TexInstruction::clone(bool deep) const
+TexInstruction *
+TexInstruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
 {
-   TexInstruction *tex = new_TexInstruction(bb->getFunction(), op);
-   cloneBase(tex, deep);
+   TexInstruction *tex = (i ? static_cast<TexInstruction *>(i) :
+                          new_TexInstruction(pol.context(), op));
+
+   Instruction::clone(pol, tex);
 
    tex->tex = this->tex;
 
@@ -823,13 +825,14 @@ CmpInstruction::CmpInstruction(Function *fn, operation op)
    setCond = CC_ALWAYS;
 }
 
-Instruction *
-CmpInstruction::clone(bool deep) const
+CmpInstruction *
+CmpInstruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
 {
-   CmpInstruction *cmp = new_CmpInstruction(bb->getFunction(), op);
-   cloneBase(cmp, deep);
-   cmp->setCond = setCond;
+   CmpInstruction *cmp = (i ? static_cast<CmpInstruction *>(i) :
+                          new_CmpInstruction(pol.context(), op));
    cmp->dType = dType;
+   Instruction::clone(pol, cmp);
+   cmp->setCond = setCond;
    return cmp;
 }
 

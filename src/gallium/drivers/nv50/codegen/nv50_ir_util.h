@@ -26,6 +26,11 @@
 #include <new>
 #include <assert.h>
 #include <stdio.h>
+#include <map>
+
+#ifndef NDEBUG
+# include <typeinfo>
+#endif
 
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
@@ -599,6 +604,100 @@ private:
 
    const unsigned int objSize;
    const unsigned int objStepLog2;
+};
+
+/**
+ *  Composite object cloning policy.
+ *
+ *  Encapsulates how sub-objects are to be handled (if at all) when a
+ *  composite object is being cloned.
+ */
+template<typename C>
+class ClonePolicy
+{
+protected:
+   C *c;
+
+public:
+   ClonePolicy(C *c) : c(c) {}
+
+   C *context() { return c; }
+
+   template<typename T> T *get(T *obj)
+   {
+      void *clone = lookup(obj);
+      if (!clone)
+         clone = obj->clone(*this);
+      return reinterpret_cast<T *>(clone);
+   }
+
+   template<typename T> void set(const T *obj, T *clone)
+   {
+      insert(obj, clone);
+   }
+
+protected:
+   virtual void *lookup(void *obj) = 0;
+   virtual void insert(const void *obj, void *clone) = 0;
+};
+
+/**
+ *  Shallow non-recursive cloning policy.
+ *
+ *  Objects cloned with the "shallow" policy don't clone their
+ *  children recursively, instead, the new copy shares its children
+ *  with the original object.
+ */
+template<typename C>
+class ShallowClonePolicy : public ClonePolicy<C>
+{
+public:
+   ShallowClonePolicy(C *c) : ClonePolicy<C>(c) {}
+
+protected:
+   virtual void *lookup(void *obj)
+   {
+      return obj;
+   }
+
+   virtual void insert(const void *obj, void *clone)
+   {
+   }
+};
+
+template<typename C, typename T>
+inline T *cloneShallow(C *c, T *obj)
+{
+   ShallowClonePolicy<C> pol(c);
+   return obj->clone(pol);
+}
+
+/**
+ *  Recursive cloning policy.
+ *
+ *  Objects cloned with the "deep" policy clone their children
+ *  recursively, keeping track of what has already been cloned to
+ *  avoid making several new copies of the same object.
+ */
+template<typename C>
+class DeepClonePolicy : public ClonePolicy<C>
+{
+public:
+   DeepClonePolicy(C *c) : ClonePolicy<C>(c) {}
+
+private:
+   std::map<const void *, void *> map;
+
+protected:
+   virtual void *lookup(void *obj)
+   {
+      return map[obj];
+   }
+
+   virtual void insert(const void *obj, void *clone)
+   {
+      map[obj] = clone;
+   }
 };
 
 } // namespace nv50_ir

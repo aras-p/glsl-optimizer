@@ -1064,8 +1064,8 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
              set1->getSrc(s) == set0->getDef(0))
             return;
 
-      set0 = set0->clone(true);
-      set1 = set1->clone(false);
+      set0 = cloneForward(func, set0);
+      set1 = cloneShallow(func, set1);
       logop->bb->insertAfter(logop, set1);
       logop->bb->insertAfter(logop, set0);
 
@@ -1102,7 +1102,7 @@ AlgebraicOpt::handleCVT(Instruction *cvt)
    if (!insn || insn->op != OP_SET || insn->dType != TYPE_F32)
       return;
 
-   Instruction *bset = insn->clone(false);
+   Instruction *bset = cloneShallow(func, insn);
    bset->dType = TYPE_U32;
    bset->setDef(0, cvt->getDef(0));
    cvt->bb->insertAfter(cvt, bset);
@@ -1152,7 +1152,7 @@ updateLdStOffset(Instruction *ldst, int32_t offset, Function *fn)
 {
    if (offset != ldst->getSrc(0)->reg.data.offset) {
       if (ldst->getSrc(0)->refCount() > 1)
-         ldst->setSrc(0, ldst->getSrc(0)->clone(fn));
+         ldst->setSrc(0, cloneShallow(fn, ldst->getSrc(0)));
       ldst->getSrc(0)->reg.data.offset = offset;
    }
 }
@@ -1272,7 +1272,7 @@ MemoryOpt::combineLd(Record *rec, Instruction *ld)
          rec->insn->setDef(d, rec->insn->getDef(j - 1));
 
       if (rec->insn->getSrc(0)->refCount() > 1)
-         rec->insn->setSrc(0, rec->insn->getSrc(0)->clone(func));
+         rec->insn->setSrc(0, cloneShallow(func, rec->insn->getSrc(0)));
       rec->offset = rec->insn->getSrc(0)->reg.data.offset = offLd;
 
       d = 0;
@@ -2215,7 +2215,7 @@ DeadCodeElim::checkSplitLoad(Instruction *ld1)
    if (!n2)
       return;
 
-   ld2 = ld1->clone(false);
+   ld2 = cloneShallow(func, ld1);
    updateLdStOffset(ld2, addr2, func);
    ld2->setType(typeOfSize(size2));
    for (d = 0; d < 4; ++d)
