@@ -1747,7 +1747,7 @@ CodeEmitterNVC0::getMinEncodingSize(const Instruction *i) const
    return 4;
 }
 
-CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target) : targ(target)
+CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target) : CodeEmitter(target)
 {
    code = NULL;
    codeSize = codeSizeLimit = 0;

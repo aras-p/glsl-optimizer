@@ -54,6 +54,7 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
 
 
 extern Target *getTargetNVC0(unsigned int chipset);
+extern Target *getTargetNV50(unsigned int chipset);
 
 Target *Target::create(unsigned int chipset)
 {
@@ -65,6 +66,7 @@ Target *Target::create(unsigned int chipset)
    case 0x80:
    case 0x90:
    case 0xa0:
+      return getTargetNV50(chipset);
    default:
       ERROR("unsupported target: NV%x\n", chipset);
       return 0;
@@ -74,6 +76,10 @@ Target *Target::create(unsigned int chipset)
 void Target::destroy(Target *targ)
 {
    delete targ;
+}
+
+CodeEmitter::CodeEmitter(const Target *target) : targ(target)
+{
 }
 
 void
@@ -260,6 +266,10 @@ Program::emitBinary(struct nv50_ir_prog_info *info)
    info->bin.relocData = emit->getRelocInfo();
 
    emitSymbolTable(info);
+
+   // the nvc0 driver will print the binary iself together with the header
+   if ((dbgFlags & NV50_IR_DEBUG_BASIC) && getTarget()->getChipset() < 0xc0)
+      emit->printBinary();
 
    delete emit;
    return true;

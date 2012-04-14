@@ -46,7 +46,8 @@ public:
    inline void remove(Instruction *i) { assert(i->bb == bb); bb->remove(i); }
 
    inline LValue *getScratch(int size = 4, DataFile = FILE_GPR);
-   inline LValue *getSSA(int size = 4); // scratch value for a single assignment
+   // scratch value for a single assignment:
+   inline LValue *getSSA(int size = 4, DataFile = FILE_GPR);
 
    inline Instruction *mkOp(operation, DataType, Value *);
    Instruction *mkOp1(operation, DataType, Value *, Value *);
@@ -215,18 +216,16 @@ LValue *
 BuildUtil::getScratch(int size, DataFile f)
 {
    LValue *lval = new_LValue(func, f);
-   if (size != 4)
-      lval->reg.size = size;
+   lval->reg.size = size;
    return lval;
 }
 
 LValue *
-BuildUtil::getSSA(int size)
+BuildUtil::getSSA(int size, DataFile f)
 {
-   LValue *lval = new_LValue(func, FILE_GPR);
+   LValue *lval = new_LValue(func, f);
    lval->ssa = 1;
-   if (size != 4)
-      lval->reg.size = size;
+   lval->reg.size = size;
    return lval;
 }
 

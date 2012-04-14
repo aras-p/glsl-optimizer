@@ -265,7 +265,7 @@ int Modifier::print(char *buf, size_t size) const
 
    return pos;
 }
-   
+
 int LValue::print(char *buf, size_t size, DataType ty) const
 {
    const char *postFix = "";
@@ -278,14 +278,23 @@ int LValue::print(char *buf, size_t size, DataType ty) const
    switch (reg.file) {
    case FILE_GPR:
       r = 'r'; col = TXT_GPR;
-      if (reg.size == 8)
+      if (reg.size == 2) {
+         if (p == '$') {
+            postFix = (idx & 1) ? "h" : "l";
+            idx /= 2;
+         } else {
+            postFix = "s";
+         }
+      } else
+      if (reg.size == 8) {
          postFix = "d";
-      else
-      if (reg.size == 16)
+      } else
+      if (reg.size == 16) {
          postFix = "q";
-      else
-      if (reg.size == 12)
+      } else
+      if (reg.size == 12) {
          postFix = "t";
+      }
       break;
    case FILE_PREDICATE:
       r = 'p'; col = TXT_REGISTER;
@@ -419,7 +428,7 @@ void Instruction::print() const
       } else {
          PRINT("%s", CondCodeStr[cc]);
       }
-      if (pos > pre + 1)
+      if (pos > pre)
          SPACE();
       pos += getSrc(predSrc)->print(&buf[pos], BUFSZ - pos);
       PRINT(" %s", colour[TXT_INSN]);
@@ -489,6 +498,8 @@ void Instruction::print() const
       else
          pos += getSrc(s)->print(&buf[pos], BUFSZ - pos, sType);
    }
+   if (exit)
+      PRINT("%s exit", colour[TXT_INSN]);
 
    PRINT("%s", colour[TXT_DEFAULT]);
 

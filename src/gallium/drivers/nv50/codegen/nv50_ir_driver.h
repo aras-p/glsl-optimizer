@@ -175,6 +175,8 @@ struct nv50_ir_prog_info
 
    /* driver callback to assign input/output locations */
    int (*assignSlots)(struct nv50_ir_prog_info *);
+
+   void *driverPriv;
 };
 
 #ifdef __cplusplus

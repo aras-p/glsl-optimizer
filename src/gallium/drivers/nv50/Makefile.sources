@@ -26,11 +26,14 @@ CPP_SOURCES := \
 	codegen/nv50_ir.cpp \
 	codegen/nv50_ir_bb.cpp \
 	codegen/nv50_ir_build_util.cpp \
+	codegen/nv50_ir_emit_nv50.cpp \
 	codegen/nv50_ir_from_tgsi.cpp \
 	codegen/nv50_ir_graph.cpp \
+	codegen/nv50_ir_lowering_nv50.cpp \
 	codegen/nv50_ir_peephole.cpp \
 	codegen/nv50_ir_print.cpp \
 	codegen/nv50_ir_ra.cpp \
 	codegen/nv50_ir_ssa.cpp \
 	codegen/nv50_ir_target.cpp \
+	codegen/nv50_ir_target_nv50.cpp \
 	codegen/nv50_ir_util.cpp
