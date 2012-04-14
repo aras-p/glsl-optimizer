@@ -101,6 +101,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 150;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
+   case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
+      return 1;
    case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
    case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
    case PIPE_CAP_VERTEX_COLOR_CLAMPED:
