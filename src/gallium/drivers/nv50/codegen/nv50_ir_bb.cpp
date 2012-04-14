@@ -81,6 +81,26 @@ BasicBlock::~BasicBlock()
 }
 
 BasicBlock *
+BasicBlock::clone(ClonePolicy<Function>& pol) const
+{
+   BasicBlock *bb = new BasicBlock(pol.context());
+
+   pol.set(this, bb);
+
+   for (Instruction *i = getFirst(); i; i = i->next)
+      bb->insertTail(i->clone(pol));
+
+   pol.context()->cfg.insert(&bb->cfg);
+
+   for (Graph::EdgeIterator it = cfg.outgoing(); !it.end(); it.next()) {
+      BasicBlock *obb = BasicBlock::get(it.getNode());
+      bb->cfg.attach(&pol.get(obb)->cfg, it.getType());
+   }
+
+   return bb;
+}
+
+BasicBlock *
 BasicBlock::idom() const
 {
    Graph::Node *dn = dom.parent();

@@ -550,6 +550,8 @@ public:
    ImmediateValue(const ImmediateValue *, DataType ty);
    ~ImmediateValue() { };
 
+   virtual ImmediateValue *clone(ClonePolicy<Function>&) const;
+
    virtual bool equals(const Value *that, bool strict) const;
 
    // these only work if 'type' is valid (we mostly use untyped literals):
@@ -812,6 +814,9 @@ class FlowInstruction : public Instruction
 public:
    FlowInstruction(Function *, operation, BasicBlock *target);
 
+   virtual FlowInstruction *clone(ClonePolicy<Function>&,
+                                  Instruction * = NULL) const;
+
 public:
    unsigned allWarp  : 1;
    unsigned absolute : 1;
@@ -830,6 +835,8 @@ class BasicBlock
 public:
    BasicBlock(Function *);
    ~BasicBlock();
+
+   BasicBlock *clone(ClonePolicy<Function>&) const;
 
    inline int getId() const { return id; }
    inline unsigned int getInsnCount() const { return numInsns; }

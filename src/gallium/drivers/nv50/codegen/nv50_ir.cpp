@@ -328,6 +328,21 @@ ImmediateValue::ImmediateValue(const ImmediateValue *proto, DataType ty)
    reg.size = typeSizeof(ty);
 }
 
+ImmediateValue *
+ImmediateValue::clone(ClonePolicy<Function>& pol) const
+{
+   Program *prog = pol.context()->getProgram();
+   ImmediateValue *that = new_ImmediateValue(prog, 0u);
+
+   pol.set<Value>(this, that);
+
+   that->reg.size = this->reg.size;
+   that->reg.type = this->reg.type;
+   that->reg.data = this->reg.data;
+
+   return that;
+}
+
 bool
 ImmediateValue::isInteger(const int i) const
 {
@@ -851,6 +866,30 @@ FlowInstruction::FlowInstruction(Function *fn, operation op,
       terminator = targ ? 1 : 0;
 
    allWarp = absolute = limit = 0;
+}
+
+FlowInstruction *
+FlowInstruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
+{
+   FlowInstruction *flow = (i ? static_cast<FlowInstruction *>(i) :
+                            new_FlowInstruction(pol.context(), op, NULL));
+
+   Instruction::clone(pol, flow);
+   flow->allWarp = allWarp;
+   flow->absolute = absolute;
+   flow->limit = limit;
+   flow->builtin = builtin;
+
+   if (builtin)
+      flow->target.builtin = target.builtin;
+   else
+   if (op == OP_CALL)
+      flow->target.fn = target.fn;
+   else
+   if (target.bb)
+      flow->target.bb = pol.get<BasicBlock>(target.bb);
+
+   return flow;
 }
 
 Program::Program(Type type, Target *arch)
