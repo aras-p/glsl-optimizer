@@ -1078,6 +1078,8 @@ AlgebraicOpt::handleLOGOP(Instruction *logop)
 }
 
 // F2I(NEG(SET with result 1.0f/0.0f)) -> SET with result -1/0
+// nv50:
+//  F2I(NEG(I2F(ABS(SET))))
 void
 AlgebraicOpt::handleCVT(Instruction *cvt)
 {
@@ -1090,8 +1092,22 @@ AlgebraicOpt::handleCVT(Instruction *cvt)
    if (insn->src(0).mod != Modifier(0))
       return;
    insn = insn->getSrc(0)->getInsn();
-   if (!insn || insn->op != OP_SET || insn->dType != TYPE_F32)
+
+   // check for nv50 SET(-1,0) -> SET(1.0f/0.0f) chain and nvc0's f32 SET
+   if (insn && insn->op == OP_CVT &&
+       insn->dType == TYPE_F32 &&
+       insn->sType == TYPE_S32) {
+      insn = insn->getSrc(0)->getInsn();
+      if (!insn || insn->op != OP_ABS || insn->sType != TYPE_S32 ||
+          insn->src(0).mod)
+         return;
+      insn = insn->getSrc(0)->getInsn();
+      if (!insn || insn->op != OP_SET || insn->dType != TYPE_U32)
+         return;
+   } else
+   if (!insn || insn->op != OP_SET || insn->dType != TYPE_F32) {
       return;
+   }
 
    Instruction *bset = cloneShallow(func, insn);
    bset->dType = TYPE_U32;
