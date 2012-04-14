@@ -27,8 +27,6 @@
 #include "nvc0_screen.h"
 #include "nvc0_resource.h"
 
-#include "nouveau/nouveau_reloc.h"
-
 static void
 nvc0_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
