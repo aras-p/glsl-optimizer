@@ -87,7 +87,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_PRIMITIVE_RESTART:
       return (eng3d->oclass >= NV40_3D_CLASS) ? 1 : 0;
    /* unsupported */
-   case PIPE_CAP_DUAL_SOURCE_BLEND:
+   case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
    case PIPE_CAP_SM3:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
