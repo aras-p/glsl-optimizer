@@ -506,3 +506,144 @@ nouveau_user_buffer_upload(struct nouveau_context *nv,
 
    return TRUE;
 }
+
+
+/* Scratch data allocation. */
+
+static INLINE int
+nouveau_scratch_bo_alloc(struct nouveau_context *nv, struct nouveau_bo **pbo,
+                         unsigned size)
+{
+   return nouveau_bo_new(nv->screen->device, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+                         4096, size, NULL, pbo);
+}
+
+void
+nouveau_scratch_runout_release(struct nouveau_context *nv)
+{
+   if (!nv->scratch.nr_runout)
+      return;
+   while (nv->scratch.nr_runout--)
+      nouveau_bo_ref(NULL, &nv->scratch.runout[nv->scratch.nr_runout]);
+
+   FREE(nv->scratch.runout);
+   nv->scratch.end = 0;
+   nv->scratch.runout = NULL;
+}
+
+/* Allocate an extra bo if we can't fit everything we need simultaneously.
+ * (Could happen for very large user arrays.)
+ */
+static INLINE boolean
+nouveau_scratch_runout(struct nouveau_context *nv, unsigned size)
+{
+   int ret;
+   const unsigned n = nv->scratch.nr_runout++;
+
+   nv->scratch.runout = REALLOC(nv->scratch.runout,
+                                (n + 0) * sizeof(*nv->scratch.runout),
+                                (n + 1) * sizeof(*nv->scratch.runout));
+   nv->scratch.runout[n] = NULL;
+
+   ret = nouveau_scratch_bo_alloc(nv, &nv->scratch.runout[n], size);
+   if (!ret) {
+      ret = nouveau_bo_map(nv->scratch.runout[n], 0, NULL);
+      if (ret)
+         nouveau_bo_ref(NULL, &nv->scratch.runout[--nv->scratch.nr_runout]);
+   }
+   if (!ret) {
+      nv->scratch.current = nv->scratch.runout[n];
+      nv->scratch.offset = 0;
+      nv->scratch.end = size;
+      nv->scratch.map = nv->scratch.current->map;
+   }
+   return !ret;
+}
+
+/* Continue to next scratch buffer, if available (no wrapping, large enough).
+ * Allocate it if it has not yet been created.
+ */
+static INLINE boolean
+nouveau_scratch_next(struct nouveau_context *nv, unsigned size)
+{
+   struct nouveau_bo *bo;
+   int ret;
+   const unsigned i = (nv->scratch.id + 1) % NOUVEAU_MAX_SCRATCH_BUFS;
+
+   if ((size > nv->scratch.bo_size) || (i == nv->scratch.wrap))
+      return FALSE;
+   nv->scratch.id = i;
+
+   bo = nv->scratch.bo[i];
+   if (!bo) {
+      ret = nouveau_scratch_bo_alloc(nv, &bo, nv->scratch.bo_size);
+      if (ret)
+         return FALSE;
+      nv->scratch.bo[i] = bo;
+   }
+   nv->scratch.current = bo;
+   nv->scratch.offset = 0;
+   nv->scratch.end = nv->scratch.bo_size;
+
+   ret = nouveau_bo_map(bo, NOUVEAU_BO_WR, nv->screen->client);
+   if (!ret)
+      nv->scratch.map = bo->map;
+   return !ret;
+}
+
+static boolean
+nouveau_scratch_more(struct nouveau_context *nv, unsigned min_size)
+{
+   boolean ret;
+
+   ret = nouveau_scratch_next(nv, min_size);
+   if (!ret)
+      ret = nouveau_scratch_runout(nv, min_size);
+   return ret;
+}
+
+/* Upload data to scratch memory and update buffer address.
+ * Returns the bo the data resides in, if successful.
+ */
+struct nouveau_bo *
+nouveau_scratch_data(struct nouveau_context *nv,
+                     struct nv04_resource *buf, unsigned base, unsigned size)
+{
+   struct nouveau_bo *bo;
+   unsigned bgn = MAX2(base, nv->scratch.offset);
+   unsigned end = bgn + size;
+
+   if (end >= nv->scratch.end) {
+      end = base + size;
+      if (!nouveau_scratch_more(nv, end))
+         return NULL;
+      bgn = base;
+   }
+   nv->scratch.offset = align(end, 4);
+
+   memcpy(nv->scratch.map + bgn, buf->data + base, size);
+
+   bo = nv->scratch.current;
+   buf->address = bo->offset + (bgn - base);
+   return bo;
+}
+
+void *
+nouveau_scratch_get(struct nouveau_context *nv,
+                    unsigned size, uint64_t *gpu_addr, struct nouveau_bo **pbo)
+{
+   unsigned bgn = nv->scratch.offset;
+   unsigned end = nv->scratch.offset + size;
+
+   if (end >= nv->scratch.end) {
+      end = size;
+      if (!nouveau_scratch_more(nv, end))
+         return NULL;
+      bgn = 0;
+   }
+   nv->scratch.offset = align(end, 4);
+
+   *pbo = nv->scratch.current;
+   *gpu_addr = nv->scratch.current->offset + bgn;
+   return nv->scratch.map + bgn;
+}
