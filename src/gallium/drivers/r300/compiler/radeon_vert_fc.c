@@ -270,5 +270,9 @@ void rc_vert_fc(struct radeon_compiler *c, void *user)
 			}
 			break;
 		}
+
+		if (c->Error) {
+			return;
+		}
 	}
 }
