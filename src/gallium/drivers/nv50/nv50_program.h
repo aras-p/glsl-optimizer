@@ -23,8 +23,10 @@
 #ifndef __NV50_PROG_H__
 #define __NV50_PROG_H__
 
+struct nv50_context;
+
 #include "pipe/p_state.h"
-#include "tgsi/tgsi_scan.h"
+#include "pipe/p_shader_tokens.h"
 
 #define NV50_CAP_MAX_PROGRAM_TEMPS 64
 
@@ -64,10 +66,10 @@ struct nv50_program {
 
    struct {
       uint32_t attrs[3]; /* VP_ATTR_EN_0,1 and VP_GP_BUILTIN_ATTR_EN */
-      ubyte psiz;
-      ubyte bfc[2];
+      ubyte psiz;        /* output slot of point size */
+      ubyte bfc[2];      /* indices into varying for FFC (FP) or BFC (VP) */
       ubyte edgeflag;
-      ubyte clpd;
+      ubyte clpd[2];     /* output slot of clip distance[i]'s 1st component */
       ubyte clpd_nr;
    } vp;
 
@@ -83,55 +85,13 @@ struct nv50_program {
       uint8_t prim_type; /* point, line strip or tri strip */
    } gp;
 
-   /* relocation records */
-   void *fixups;
-   unsigned num_fixups;
+   void *fixups; /* relocation records */
 
    struct nouveau_heap *mem;
 };
 
-#define NV50_INTERP_LINEAR   (1 << 0)
-#define NV50_INTERP_FLAT     (1 << 1)
-#define NV50_INTERP_CENTROID (1 << 2)
-
-/* analyze TGSI and see which TEMP[] are used as subroutine inputs/outputs */
-struct nv50_subroutine {
-   unsigned id;
-   unsigned pos;
-   /* function inputs and outputs */
-   uint32_t argv[NV50_CAP_MAX_PROGRAM_TEMPS][4];
-   uint32_t retv[NV50_CAP_MAX_PROGRAM_TEMPS][4];
-};
-
-struct nv50_translation_info {
-   struct nv50_program *p;
-   unsigned inst_nr;
-   struct tgsi_full_instruction *insns;
-   ubyte input_file;
-   ubyte output_file;
-   ubyte input_map[PIPE_MAX_SHADER_INPUTS][4];
-   ubyte output_map[PIPE_MAX_SHADER_OUTPUTS][4];
-   ubyte sysval_map[TGSI_SEMANTIC_COUNT];
-   ubyte interp_mode[PIPE_MAX_SHADER_INPUTS];
-   int input_access[PIPE_MAX_SHADER_INPUTS][4];
-   int output_access[PIPE_MAX_SHADER_OUTPUTS][4];
-   boolean indirect_inputs;
-   boolean indirect_outputs;
-   boolean store_to_memory;
-   struct tgsi_shader_info scan;
-   uint32_t *immd32;
-   unsigned immd32_nr;
-   ubyte *immd32_ty;
-   ubyte edgeflag_out;
-   struct nv50_subroutine *subr;
-   unsigned subr_nr;
-};
-
-int nv50_generate_code(struct nv50_translation_info *ti);
-
-void nv50_relocate_program(struct nv50_program *p,
-                           uint32_t code_base, uint32_t data_base);
-
-boolean nv50_program_tx(struct nv50_program *p);
+boolean nv50_program_translate(struct nv50_program *, uint16_t chipset);
+boolean nv50_program_upload_code(struct nv50_context *, struct nv50_program *);
+void nv50_program_destroy(struct nv50_context *, struct nv50_program *);
 
 #endif /* __NV50_PROG_H__ */

@@ -13,12 +13,6 @@ C_SOURCES := \
 	nv50_vbo.c \
 	nv50_program.c \
 	nv50_shader_state.c \
-	nv50_pc.c \
-	nv50_pc_print.c \
-	nv50_pc_emit.c \
-	nv50_tgsi_to_nc.c \
-	nv50_pc_optimize.c \
-	nv50_pc_regalloc.c \
 	nv50_push.c \
 	nv50_query.c
 

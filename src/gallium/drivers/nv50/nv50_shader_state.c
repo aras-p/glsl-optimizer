@@ -118,43 +118,16 @@ nv50_constbufs_validate(struct nv50_context *nv50)
 static boolean
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
 {
-   struct nouveau_heap *heap;
-   int ret;
-   unsigned size;
-
    if (!prog->translated) {
-      prog->translated = nv50_program_translate(prog);
+      prog->translated = nv50_program_translate(
+         prog, nv50->screen->base.device->chipset);
       if (!prog->translated)
          return FALSE;
    } else
    if (prog->mem)
       return TRUE;
 
-   if (prog->type == PIPE_SHADER_FRAGMENT) heap = nv50->screen->fp_code_heap;
-   else
-   if (prog->type == PIPE_SHADER_GEOMETRY) heap = nv50->screen->gp_code_heap;
-   else
-      heap = nv50->screen->vp_code_heap;
-
-   size = align(prog->code_size, 0x100);
-
-   ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
-   if (ret) {
-      NOUVEAU_ERR("out of code space for shader type %i\n", prog->type);
-      return FALSE;
-   }
-   prog->code_base = prog->mem->start;
-
-   nv50_relocate_program(prog, prog->code_base, 0);
-
-   nv50_sifc_linear_u8(&nv50->base, nv50->screen->code,
-                       (prog->type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
-                       NOUVEAU_BO_VRAM, prog->code_size, prog->code);
-
-   BEGIN_NV04(nv50->base.pushbuf, NV50_3D(CODE_CB_FLUSH), 1);
-   PUSH_DATA (nv50->base.pushbuf, 0);
-
-   return TRUE;
+   return nv50_program_upload_code(nv50, prog);
 }
 
 static INLINE void
@@ -383,20 +356,25 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    m = nv50_vec4_map(map, 0, lin, &dummy, &vp->out[0]);
 
    for (c = 0; c < vp->vp.clpd_nr; ++c)
-      map[m++] = vp->vp.clpd + c;
+      map[m++] = vp->vp.clpd[c / 4] + (c % 4);
 
    colors |= m << 8; /* adjust BFC0 id */
 
+   dummy.mask = 0x0;
+
    /* if light_twoside is active, FFC0_ID == BFC0_ID is invalid */
    if (nv50->rast->pipe.light_twoside) {
-      for (i = 0; i < 2; ++i)
-         m = nv50_vec4_map(map, m, lin,
-                           &fp->in[fp->vp.bfc[i]], &vp->out[vp->vp.bfc[i]]);
+      for (i = 0; i < 2; ++i) {
+         n = vp->vp.bfc[i];
+         if (fp->vp.bfc[i] >= fp->in_nr)
+            continue;
+         m = nv50_vec4_map(map, m, lin, &fp->in[fp->vp.bfc[i]],
+                           (n < vp->out_nr) ? &vp->out[n] : &dummy);
+      }
    }
    colors += m - 4; /* adjust FFC0 id */
    interp |= m << 8; /* set map id where 'normal' FP inputs start */
 
-   dummy.mask = 0x0;
    for (i = 0; i < fp->in_nr; ++i) {
       for (n = 0; n < vp->out_nr; ++n)
          if (vp->out[n].sn == fp->in[i].sn &&
@@ -409,7 +387,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    /* PrimitiveID either is replaced by the system value, or
     * written by the geometry shader into an output register
     */
-   if (fp->gp.primid < 0x40) {
+   if (fp->gp.primid < 0x80) {
       primid = m;
       map[m++] = vp->gp.primid;
    }

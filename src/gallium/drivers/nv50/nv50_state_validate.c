@@ -211,10 +211,13 @@ nv50_check_program_ucps(struct nv50_context *nv50,
    nv50_program_destroy(nv50, vp);
 
    vp->vp.clpd_nr = n;
-   if (likely(vp == nv50->vertprog))
+   if (likely(vp == nv50->vertprog)) {
+      nv50->dirty |= NV50_NEW_VERTPROG;
       nv50_vertprog_validate(nv50);
-   else
+   } else {
+      nv50->dirty |= NV50_NEW_GMTYPROG;
       nv50_gmtyprog_validate(nv50);
+   }
    nv50_fp_linkage_validate(nv50);
 }
 

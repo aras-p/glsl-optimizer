@@ -85,9 +85,9 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS: /* shader support missing */
       return 0;
    case PIPE_CAP_MIN_TEXEL_OFFSET:
-      return 0 /* -8, TODO */;
+      return -8;
    case PIPE_CAP_MAX_TEXEL_OFFSET:
-      return 0 /* +7, TODO */;
+      return 7;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
@@ -108,7 +108,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return 1;
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
-      return 120;
+      return 130;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
@@ -202,7 +202,7 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_SUBROUTINES:
       return 0; /* please inline, or provide function declarations */
    case PIPE_SHADER_CAP_INTEGERS:
-      return 0;
+      return 1;
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       return 32;
    default:

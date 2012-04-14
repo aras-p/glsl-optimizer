@@ -21,658 +21,321 @@
  */
 
 #include "nv50_program.h"
-#include "nv50_pc.h"
 #include "nv50_context.h"
-
-#include "pipe/p_shader_tokens.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_util.h"
-#include "tgsi/tgsi_dump.h"
 
 #include "codegen/nv50_ir_driver.h"
 
 static INLINE unsigned
 bitcount4(const uint32_t val)
 {
-   static const unsigned cnt[16]
+   static const uint8_t cnt[16]
    = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
    return cnt[val & 0xf];
 }
 
-static unsigned
-nv50_tgsi_src_mask(const struct tgsi_full_instruction *inst, int c)
+static int
+nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
 {
-   unsigned mask = inst->Dst[0].Register.WriteMask;
+   struct nv50_program *prog = (struct nv50_program *)info->driverPriv;
+   unsigned i, n, c;
 
-   switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_COS:
-   case TGSI_OPCODE_SIN:
-      return (mask & 0x8) | ((mask & 0x7) ? 0x1 : 0x0);
-   case TGSI_OPCODE_DP3:
-      return 0x7;
-   case TGSI_OPCODE_DP4:
-   case TGSI_OPCODE_DPH:
-   case TGSI_OPCODE_KIL: /* WriteMask ignored */
-      return 0xf;
-   case TGSI_OPCODE_DST:
-      return mask & (c ? 0xa : 0x6);
-   case TGSI_OPCODE_EX2:
-   case TGSI_OPCODE_EXP:
-   case TGSI_OPCODE_LG2:
-   case TGSI_OPCODE_LOG:
-   case TGSI_OPCODE_POW:
-   case TGSI_OPCODE_RCP:
-   case TGSI_OPCODE_RSQ:
-   case TGSI_OPCODE_SCS:
-      return 0x1;
-   case TGSI_OPCODE_IF:
-      return 0x1;
-   case TGSI_OPCODE_LIT:
-      return 0xb;
-   case TGSI_OPCODE_TEX:
-   case TGSI_OPCODE_TXB:
-   case TGSI_OPCODE_TXL:
-   case TGSI_OPCODE_TXP:
-   {
-      const struct tgsi_instruction_texture *tex;
+   n = 0;
+   for (i = 0; i < info->numInputs; ++i) {
+      prog->in[i].id = i;
+      prog->in[i].sn = info->in[i].sn;
+      prog->in[i].si = info->in[i].si;
+      prog->in[i].hw = n;
+      prog->in[i].mask = info->in[i].mask;
 
-      assert(inst->Instruction.Texture);
-      tex = &inst->Texture;
+      prog->vp.attrs[(4 * i) / 32] |= info->in[i].mask << ((4 * i) % 32);
 
-      mask = 0x7;
-      if (inst->Instruction.Opcode != TGSI_OPCODE_TEX &&
-          inst->Instruction.Opcode != TGSI_OPCODE_TXD)
-         mask |= 0x8; /* bias, lod or proj */
+      for (c = 0; c < 4; ++c)
+         if (info->in[i].mask & (1 << c))
+            info->in[i].slot[c] = n++;
+   }
+   prog->in_nr = info->numInputs;
 
-      switch (tex->Texture) {
-      case TGSI_TEXTURE_1D:
-         mask &= 0x9;
-         break;
-      case TGSI_TEXTURE_SHADOW1D:
-         mask &= 0x5;
-         break;
-      case TGSI_TEXTURE_2D:
-         mask &= 0xb;
-         break;
+   for (i = 0; i < info->numSysVals; ++i) {
+      switch (info->sv[i].sn) {
+      case TGSI_SEMANTIC_INSTANCEID:
+         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_INSTANCE_ID;
+         continue;
+      case TGSI_SEMANTIC_VERTEXID:
+         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_VERTEX_ID;
+         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_UNK12;
+         continue;
       default:
          break;
       }
    }
-  	   return mask;
-   case TGSI_OPCODE_XPD:
-   {
-      unsigned x = 0;
-      if (mask & 1) x |= 0x6;
-      if (mask & 2) x |= 0x5;
-      if (mask & 4) x |= 0x3;
-      return x;
-   }
-   default:
-      break;
-   }
+   /* VertexID before InstanceID */
+   if (info->io.vertexId < info->numSysVals)
+      info->sv[info->io.vertexId].slot[0] = n++;
+   if (info->io.instanceId < info->numSysVals)
+      info->sv[info->io.instanceId].slot[0] = n++;
 
-   return mask;
-}
-
-static void
-nv50_indirect_inputs(struct nv50_translation_info *ti, int id)
-{
-   int i, c;
-
-   for (i = 0; i < PIPE_MAX_SHADER_INPUTS; ++i)
-      for (c = 0; c < 4; ++c)
-         ti->input_access[i][c] = id;
-
-   ti->indirect_inputs = TRUE;
-}
-
-static void
-nv50_indirect_outputs(struct nv50_translation_info *ti, int id)
-{
-   int i, c;
-
-   for (i = 0; i < PIPE_MAX_SHADER_OUTPUTS; ++i)
-      for (c = 0; c < 4; ++c)
-         ti->output_access[i][c] = id;
-
-   ti->indirect_outputs = TRUE;
-}
-
-static void
-prog_inst(struct nv50_translation_info *ti,
-          const struct tgsi_full_instruction *inst, int id)
-{
-   const struct tgsi_dst_register *dst;
-   const struct tgsi_src_register *src;
-   int s, c, k;
-   unsigned mask;
-
-   if (inst->Instruction.Opcode == TGSI_OPCODE_BGNSUB) {
-      ti->subr[ti->subr_nr].pos = id - 1;
-      ti->subr[ti->subr_nr].id = ti->subr_nr + 1; /* id 0 is main program */
-      ++ti->subr_nr;
-   }
-
-   if (inst->Dst[0].Register.File == TGSI_FILE_OUTPUT) {
-      dst = &inst->Dst[0].Register;
-
-      for (c = 0; c < 4; ++c) {
-         if (dst->Indirect)
-            nv50_indirect_outputs(ti, id);
-         if (!(dst->WriteMask & (1 << c)))
-            continue;
-         ti->output_access[dst->Index][c] = id;
-      }
-
-      if (inst->Instruction.Opcode == TGSI_OPCODE_MOV &&
-          inst->Src[0].Register.File == TGSI_FILE_INPUT &&
-          dst->Index == ti->edgeflag_out)
-         ti->p->vp.edgeflag = inst->Src[0].Register.Index;
-   } else
-   if (inst->Dst[0].Register.File == TGSI_FILE_TEMPORARY) {
-      if (inst->Dst[0].Register.Indirect)
-         ti->store_to_memory = TRUE;
-   }
-
-   for (s = 0; s < inst->Instruction.NumSrcRegs; ++s) {
-      src = &inst->Src[s].Register;
-      if (src->File == TGSI_FILE_TEMPORARY)
-         if (inst->Src[s].Register.Indirect)
-            ti->store_to_memory = TRUE;
-      if (src->File != TGSI_FILE_INPUT)
-         continue;
-      mask = nv50_tgsi_src_mask(inst, s);
-
-      if (inst->Src[s].Register.Indirect)
-         nv50_indirect_inputs(ti, id);
-
-      for (c = 0; c < 4; ++c) {
-         if (!(mask & (1 << c)))
-            continue;
-         k = tgsi_util_get_full_src_register_swizzle(&inst->Src[s], c);
-         if (k <= TGSI_SWIZZLE_W)
-            ti->input_access[src->Index][k] = id;
-      }
-   }
-}
-
-/* Probably should introduce something like struct tgsi_function_declaration
- * instead of trying to guess inputs/outputs.
- */
-static void
-prog_subroutine_inst(struct nv50_subroutine *subr,
-                     const struct tgsi_full_instruction *inst)
-{
-   const struct tgsi_dst_register *dst;
-   const struct tgsi_src_register *src;
-   int s, c, k;
-   unsigned mask;
-
-   for (s = 0; s < inst->Instruction.NumSrcRegs; ++s) {
-      src = &inst->Src[s].Register;
-      if (src->File != TGSI_FILE_TEMPORARY)
-         continue;
-      mask = nv50_tgsi_src_mask(inst, s);
-
-      assert(!inst->Src[s].Register.Indirect);
-
-      for (c = 0; c < 4; ++c) {
-         k = tgsi_util_get_full_src_register_swizzle(&inst->Src[s], c);
-
-         if ((mask & (1 << c)) && k < TGSI_SWIZZLE_W)
-            if (!(subr->retv[src->Index / 32][k] & (1 << (src->Index % 32))))
-               subr->argv[src->Index / 32][k] |= 1 << (src->Index % 32);
-      }
-   }
-
-   if (inst->Dst[0].Register.File == TGSI_FILE_TEMPORARY) {
-      dst = &inst->Dst[0].Register;
-
-      for (c = 0; c < 4; ++c)
-         if (dst->WriteMask & (1 << c))
-            subr->retv[dst->Index / 32][c] |= 1 << (dst->Index % 32);
-   }
-}
-
-static void
-prog_immediate(struct nv50_translation_info *ti,
-               const struct tgsi_full_immediate *imm)
-{
-   int c;
-   unsigned n = ti->immd32_nr++;
-
-   assert(ti->immd32_nr <= ti->scan.immediate_count);
-
-   for (c = 0; c < 4; ++c)
-      ti->immd32[n * 4 + c] = imm->u[c].Uint;
-
-   ti->immd32_ty[n] = imm->Immediate.DataType;
-}
-
-static INLINE unsigned
-translate_interpolate(const struct tgsi_full_declaration *decl)
-{
-   unsigned mode;
-
-   if (decl->Declaration.Interpolate == TGSI_INTERPOLATE_CONSTANT)
-      mode = NV50_INTERP_FLAT;
-   else
-   if (decl->Declaration.Interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
-      mode = 0;
-   else
-      mode = NV50_INTERP_LINEAR;
-
-   if (decl->Declaration.Centroid)
-      mode |= NV50_INTERP_CENTROID;
-
-   return mode;
-}
-
-static void
-prog_decl(struct nv50_translation_info *ti,
-          const struct tgsi_full_declaration *decl)
-{
-   unsigned i, first, last, sn = 0, si = 0;
-
-   first = decl->Range.First;
-   last = decl->Range.Last;
-
-   if (decl->Declaration.Semantic) {
-      sn = decl->Semantic.Name;
-      si = decl->Semantic.Index;
-   }
-
-   switch (decl->Declaration.File) {
-   case TGSI_FILE_INPUT:
-      for (i = first; i <= last; ++i)
-         ti->interp_mode[i] = translate_interpolate(decl);
-
-      if (!decl->Declaration.Semantic)
-         break;
-
-      for (i = first; i <= last; ++i) {
-         ti->p->in[i].sn = sn;
-         ti->p->in[i].si = si;
-      }
-
-      switch (sn) {
-      case TGSI_SEMANTIC_FACE:
-         break;
-      case TGSI_SEMANTIC_COLOR:
-         if (ti->p->type == PIPE_SHADER_FRAGMENT)
-            ti->p->vp.bfc[si] = first;
-         break;
-      }
-      break;
-   case TGSI_FILE_OUTPUT:
-      if (!decl->Declaration.Semantic)
-         break;
-
-      for (i = first; i <= last; ++i) {
-         ti->p->out[i].sn = sn;
-         ti->p->out[i].si = si;
-      }
-
-      switch (sn) {
-      case TGSI_SEMANTIC_BCOLOR:
-         ti->p->vp.bfc[si] = first;
-         break;
+   n = 0;
+   for (i = 0; i < info->numOutputs; ++i) {
+      switch (info->out[i].sn) {
       case TGSI_SEMANTIC_PSIZE:
-         ti->p->vp.psiz = first;
+         prog->vp.psiz = i;
+         break;
+      case TGSI_SEMANTIC_CLIPDIST:
+         prog->vp.clpd[info->out[i].si] = n;
          break;
       case TGSI_SEMANTIC_EDGEFLAG:
-         ti->edgeflag_out = first;
+         prog->vp.edgeflag = i;
+         break;
+      case TGSI_SEMANTIC_BCOLOR:
+         prog->vp.bfc[info->out[i].si] = i;
          break;
       default:
          break;
       }
-      break;
-   case TGSI_FILE_SYSTEM_VALUE:
-      /* For VP/GP inputs, they are put in s[] after the last normal input.
-       * Let sysval_map reflect the order of the sysvals in s[] and fixup later.
-       */
-      switch (decl->Semantic.Name) {
-      case TGSI_SEMANTIC_FACE:
-         break;
-      case TGSI_SEMANTIC_INSTANCEID:
-         ti->p->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_INSTANCE_ID;
-         ti->sysval_map[first] = 2;
-         break;
-      case TGSI_SEMANTIC_PRIMID:
-         break;
-         /*
-      case TGSI_SEMANTIC_PRIMIDIN:
-         break;
-      case TGSI_SEMANTIC_VERTEXID:
-         break;
-         */
-      default:
-         break;
-      }
-      break;
-   case TGSI_FILE_CONSTANT:
-      ti->p->parm_size = MAX2(ti->p->parm_size, (last + 1) * 16);
-      break;
-   case TGSI_FILE_ADDRESS:
-   case TGSI_FILE_SAMPLER:
-   case TGSI_FILE_TEMPORARY:
-      break;
-   default:
-      assert(0);
-      break;
+      prog->out[i].id = i;
+      prog->out[i].sn = info->out[i].sn;
+      prog->out[i].si = info->out[i].si;
+      prog->out[i].hw = n;
+      prog->out[i].mask = info->out[i].mask;
+
+      for (c = 0; c < 4; ++c)
+         if (info->out[i].mask & (1 << c))
+            info->out[i].slot[c] = n++;
    }
-}
+   prog->out_nr = info->numOutputs;
+   prog->max_out = n;
 
-static int
-nv50_vertprog_prepare(struct nv50_translation_info *ti)
-{
-   struct nv50_program *p = ti->p;
-   int i, c;
-   unsigned num_inputs = 0;
-
-   ti->input_file = NV_FILE_MEM_S;
-   ti->output_file = NV_FILE_OUT;
-
-   for (i = 0; i <= ti->scan.file_max[TGSI_FILE_INPUT]; ++i) {
-      p->in[i].id = i;
-      p->in[i].hw = num_inputs;
-
-      for (c = 0; c < 4; ++c) {
-         if (!ti->input_access[i][c])
-            continue;
-         ti->input_map[i][c] = num_inputs++;
-         p->vp.attrs[(4 * i + c) / 32] |= 1 << ((i * 4 + c) % 32);
-      }
-   }
-
-   for (i = 0; i <= ti->scan.file_max[TGSI_FILE_OUTPUT]; ++i) {
-      p->out[i].id = i;
-      p->out[i].hw = p->max_out;
-
-      for (c = 0; c < 4; ++c) {
-         if (!ti->output_access[i][c])
-            continue;
-         ti->output_map[i][c] = p->max_out++;
-         p->out[i].mask |= 1 << c;
-      }
-   }
-
-   p->vp.clpd = p->max_out;
-   p->max_out += p->vp.clpd_nr;
-
-   for (i = 0; i < TGSI_SEMANTIC_COUNT; ++i) {
-      switch (ti->sysval_map[i]) {
-      case 2:
-         if (!(ti->p->vp.attrs[2] & NV50_3D_VP_GP_BUILTIN_ATTR_EN_VERTEX_ID))
-            ti->sysval_map[i] = 1;
-         ti->sysval_map[i] = (ti->sysval_map[i] - 1) + num_inputs;
-         break;
-      default:
-         break;
-      }
-   }
-
-   if (p->vp.psiz < 0x40)
-      p->vp.psiz = p->out[p->vp.psiz].hw;
+   if (prog->vp.psiz < info->numOutputs)
+      prog->vp.psiz = prog->out[prog->vp.psiz].hw;
 
    return 0;
 }
 
 static int
-nv50_fragprog_prepare(struct nv50_translation_info *ti)
+nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
 {
-   struct nv50_program *p = ti->p;
-   int i, j, c;
-   unsigned nvary, nintp, depr;
-   unsigned n = 0, m = 0, skip = 0;
-   ubyte sn[16], si[16];
+   struct nv50_program *prog = (struct nv50_program *)info->driverPriv;
+   unsigned i, n, m, c;
+   unsigned nvary;
+   unsigned nflat;
+   unsigned nintp = 0;
 
-   /* FP flags */
-
-   if (ti->scan.writes_z) {
-      p->fp.flags[1] = 0x11;
-      p->fp.flags[0] |= NV50_3D_FP_CONTROL_EXPORTS_Z;
+   /* count recorded non-flat inputs */
+   for (m = 0, i = 0; i < info->numInputs; ++i) {
+      switch (info->in[i].sn) {
+      case TGSI_SEMANTIC_POSITION:
+      case TGSI_SEMANTIC_FACE:
+         continue;
+      default:
+         m += info->in[i].flat ? 0 : 1;
+         break;
+      }
    }
+   /* careful: id may be != i in info->in[prog->in[i].id] */
 
-   if (ti->scan.uses_kill)
-      p->fp.flags[0] |= NV50_3D_FP_CONTROL_USES_KIL;
-
-   /* FP inputs */
-
-   ti->input_file = NV_FILE_MEM_V;
-   ti->output_file = NV_FILE_GPR;
-
-   /* count non-flat inputs, save semantic info */
-   for (i = 0; i < p->in_nr; ++i) {
-      m += (ti->interp_mode[i] & NV50_INTERP_FLAT) ? 0 : 1;
-      sn[i] = p->in[i].sn;
-      si[i] = p->in[i].si;
-   }
-
-   /* reorder p->in[] so that non-flat inputs are first and
-    * kick out special inputs that don't use VP/GP_RESULT_MAP
+   /* Fill prog->in[] so that non-flat inputs are first and
+    * kick out special inputs that don't use the RESULT_MAP.
     */
-   nintp = 0;
-   for (i = 0; i < p->in_nr; ++i) {
-      if (sn[i] == TGSI_SEMANTIC_POSITION) {
-         for (c = 0; c < 4; ++c) {
-            ti->input_map[i][c] = nintp;
-            if (ti->input_access[i][c]) {
-               p->fp.interp |= 1 << (24 + c);
-               ++nintp;
-            }
-         }
-         skip++;
-         continue;
+   for (n = 0, i = 0; i < info->numInputs; ++i) {
+      if (info->in[i].sn == TGSI_SEMANTIC_POSITION) {
+         prog->fp.interp |= info->in[i].mask << 24;
+         for (c = 0; c < 4; ++c)
+            if (info->in[i].mask & (1 << c))
+               info->in[i].slot[c] = nintp++;
       } else
-      if (sn[i] == TGSI_SEMANTIC_FACE) {
-         ti->input_map[i][0] = 255;
-         skip++;
-         continue;
+      if (info->in[i].sn == TGSI_SEMANTIC_FACE) {
+         info->in[i].slot[0] = 255;
+      } else {
+         unsigned j = info->in[i].flat ? m++ : n++;
+
+         if (info->in[i].sn == TGSI_SEMANTIC_COLOR)
+            prog->vp.bfc[info->in[i].si] = j;
+
+         prog->in[j].id = i;
+         prog->in[j].mask = info->in[i].mask;
+         prog->in[j].sn = info->in[i].sn;
+         prog->in[j].si = info->in[i].si;
+         prog->in[j].linear = info->in[i].linear;
+
+         prog->in_nr++;
       }
-
-      j = (ti->interp_mode[i] & NV50_INTERP_FLAT) ? m++ : n++;
-
-      if (sn[i] == TGSI_SEMANTIC_COLOR)
-         p->vp.bfc[si[i]] = j;
-	   
-      p->in[j].linear = (ti->interp_mode[i] & NV50_INTERP_LINEAR) ? 1 : 0;
-      p->in[j].id = i;
-      p->in[j].sn = sn[i];
-      p->in[j].si = si[i];
    }
-   assert(n <= m);
-   p->in_nr -= skip;
-
-   if (!(p->fp.interp & (8 << 24))) {
-      p->fp.interp |= (8 << 24);
+   if (!(prog->fp.interp & (8 << 24))) {
       ++nintp;
+      prog->fp.interp |= 8 << 24;
    }
 
-   /* after HPOS */
-   p->fp.colors = 4 << NV50_3D_SEMANTIC_COLOR_FFC0_ID__SHIFT;
+   for (i = 0; i < prog->in_nr; ++i) {
+      int j = prog->in[i].id;
 
-   for (i = 0; i < p->in_nr; ++i) {
-      int j = p->in[i].id;
-      p->in[i].hw = nintp;
-
-      for (c = 0; c < 4; ++c) {
-         if (!ti->input_access[j][c])
-            continue;
-         p->in[i].mask |= 1 << c;
-         ti->input_map[j][c] = nintp++;
-      }
-      /* count color inputs */
-      if (i == p->vp.bfc[0] || i == p->vp.bfc[1])
-         p->fp.colors += bitcount4(p->in[i].mask) << 16;
+      prog->in[i].hw = nintp;
+      for (c = 0; c < 4; ++c)
+         if (info->in[i].mask & (1 << c))
+            info->in[j].slot[c] = nintp++;
    }
-   nintp -= bitcount4(p->fp.interp >> 24); /* subtract position inputs */
-   nvary = nintp;
-   if (n < m)
-      nvary -= p->in[n].hw;
+   /* (n == m) if m never increased, i.e. no flat inputs */
+   nflat = (n < m) ? (nintp - prog->in[n].hw) : 0;
+   nintp -= bitcount4(prog->fp.interp >> 24); /* subtract position inputs */
+   nvary = nintp - nflat;
 
-   p->fp.interp |= nvary << NV50_3D_FP_INTERPOLANT_CTRL_COUNT_NONFLAT__SHIFT;
-   p->fp.interp |= nintp << NV50_3D_FP_INTERPOLANT_CTRL_COUNT__SHIFT;
+   prog->fp.interp |= nvary << NV50_3D_FP_INTERPOLANT_CTRL_COUNT_NONFLAT__SHIFT;
+   prog->fp.interp |= nintp << NV50_3D_FP_INTERPOLANT_CTRL_COUNT__SHIFT;
+
+   /* put front/back colors right after HPOS */
+   prog->fp.colors = 4 << NV50_3D_SEMANTIC_COLOR_FFC0_ID__SHIFT;
+   for (i = 0; i < 2; ++i)
+      if (prog->vp.bfc[i] < 0x80)
+         prog->fp.colors += bitcount4(prog->in[prog->vp.bfc[i]].mask) << 16;
 
    /* FP outputs */
 
-   if (p->out_nr > (1 + (ti->scan.writes_z ? 1 : 0)))
-      p->fp.flags[0] |= NV50_3D_FP_CONTROL_MULTIPLE_RESULTS;
+   if (info->prop.fp.numColourResults > 1)
+      prog->fp.flags[0] |= NV50_3D_FP_CONTROL_MULTIPLE_RESULTS;
 
-   depr = p->out_nr;
-   for (i = 0; i < p->out_nr; ++i) {
-      p->out[i].id = i;
-      if (p->out[i].sn == TGSI_SEMANTIC_POSITION) {
-         depr = i;
+   for (i = 0; i < info->numOutputs; ++i) {
+      prog->out[i].id = i;
+      prog->out[i].sn = info->out[i].sn;
+      prog->out[i].si = info->out[i].si;
+      prog->out[i].mask = info->out[i].mask;
+
+      if (i == info->io.fragDepth || i == info->io.sampleMask)
          continue;
-      }
-      p->out[i].hw = p->max_out;
-      p->out[i].mask = 0xf;
+      prog->out[i].hw = info->out[i].si * 4;
 
       for (c = 0; c < 4; ++c)
-         ti->output_map[i][c] = p->max_out++;
+         info->out[i].slot[c] = prog->out[i].hw + c;
+
+      prog->max_out = MAX2(prog->max_out, prog->out[i].hw + 4);
    }
-   if (depr < p->out_nr) {
-      p->out[depr].mask = 0x4;
-      p->out[depr].hw = ti->output_map[depr][2] = p->max_out++;
-   } else {
-      /* allowed values are 1, 4, 5, 8, 9, ... */
-      p->max_out = MAX2(4, p->max_out);
-   }
+
+   if (info->io.sampleMask < PIPE_MAX_SHADER_OUTPUTS)
+      info->out[info->io.sampleMask].slot[0] = prog->max_out++;
+
+   if (info->io.fragDepth < PIPE_MAX_SHADER_OUTPUTS)
+      info->out[info->io.fragDepth].slot[2] = prog->max_out++;
+
+   if (!prog->max_out)
+      prog->max_out = 4;
 
    return 0;
 }
 
 static int
-nv50_geomprog_prepare(struct nv50_translation_info *ti)
+nv50_program_assign_varying_slots(struct nv50_ir_prog_info *info)
 {
-   ti->input_file = NV_FILE_MEM_S;
-   ti->output_file = NV_FILE_OUT;
-
-   assert(0);
-   return 1;
-}
-
-static int
-nv50_prog_scan(struct nv50_translation_info *ti)
-{
-   struct nv50_program *p = ti->p;
-   struct tgsi_parse_context parse;
-   int ret, i;
-
-   p->vp.edgeflag = 0x40;
-   p->vp.psiz = 0x40;
-   p->vp.bfc[0] = 0x40;
-   p->vp.bfc[1] = 0x40;
-   p->gp.primid = 0x80;
-
-   tgsi_scan_shader(p->pipe.tokens, &ti->scan);
-
-#if NV50_DEBUG & NV50_DEBUG_SHADER
-   tgsi_dump(p->pipe.tokens, 0);
-#endif
-
-   ti->subr =
-      CALLOC(ti->scan.opcode_count[TGSI_OPCODE_BGNSUB], sizeof(ti->subr[0]));
-
-   ti->immd32 = (uint32_t *)MALLOC(ti->scan.immediate_count * 16);
-   ti->immd32_ty = (ubyte *)MALLOC(ti->scan.immediate_count * sizeof(ubyte));
-
-   ti->insns = MALLOC(ti->scan.num_instructions * sizeof(ti->insns[0]));
-
-   tgsi_parse_init(&parse, p->pipe.tokens);
-   while (!tgsi_parse_end_of_tokens(&parse)) {
-      tgsi_parse_token(&parse);
-
-      switch (parse.FullToken.Token.Type) {
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         prog_immediate(ti, &parse.FullToken.FullImmediate);
-         break;
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         prog_decl(ti, &parse.FullToken.FullDeclaration);
-         break;
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         ti->insns[ti->inst_nr] = parse.FullToken.FullInstruction;
-         prog_inst(ti, &parse.FullToken.FullInstruction, ++ti->inst_nr);
-         break;
-      }
-   }
-
-   /* Scan to determine which registers are inputs/outputs of a subroutine. */
-   for (i = 0; i < ti->subr_nr; ++i) {
-      int pc = ti->subr[i].id;
-      while (ti->insns[pc].Instruction.Opcode != TGSI_OPCODE_ENDSUB)
-         prog_subroutine_inst(&ti->subr[i], &ti->insns[pc++]);
-   }
-
-   p->in_nr = ti->scan.file_max[TGSI_FILE_INPUT] + 1;
-   p->out_nr = ti->scan.file_max[TGSI_FILE_OUTPUT] + 1;
-
-   switch (p->type) {
+   switch (info->type) {
    case PIPE_SHADER_VERTEX:
-      ret = nv50_vertprog_prepare(ti);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      ret = nv50_fragprog_prepare(ti);
-      break;
+      return nv50_vertprog_assign_slots(info);
    case PIPE_SHADER_GEOMETRY:
-      ret = nv50_geomprog_prepare(ti);
-      break;
+      return nv50_vertprog_assign_slots(info);
+   case PIPE_SHADER_FRAGMENT:
+      return nv50_fragprog_assign_slots(info);
    default:
-      assert(!"unsupported program type");
-      ret = -1;
-      break;
+      return -1;
    }
-
-   assert(!ret);
-   return ret;
-}
-
-/* Temporary, need a reference to nv50_ir_generate_code in libnv50 or
- * it "gets disappeared" and cannot be used in libnvc0 ...
- */
-boolean
-nv50_program_translate_new(struct nv50_program *p)
-{
-   struct nv50_ir_prog_info info;
-
-   return nv50_ir_generate_code(&info);
 }
 
 boolean
-nv50_program_translate(struct nv50_program *p)
+nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
 {
-   struct nv50_translation_info *ti;
+   struct nv50_ir_prog_info *info;
    int ret;
 
-   ti = CALLOC_STRUCT(nv50_translation_info);
-   ti->p = p;
+   info = CALLOC_STRUCT(nv50_ir_prog_info);
+   if (!info)
+      return FALSE;
 
-   ti->edgeflag_out = PIPE_MAX_SHADER_OUTPUTS;
+   info->type = prog->type;
+   info->target = chipset;
+   info->bin.sourceRep = NV50_PROGRAM_IR_TGSI;
+   info->bin.source = (void *)prog->pipe.tokens;
 
-   ret = nv50_prog_scan(ti);
+   info->io.genUserClip = prog->vp.clpd_nr;
+
+   info->assignSlots = nv50_program_assign_varying_slots;
+
+   prog->vp.bfc[0] = 0x80;
+   prog->vp.bfc[1] = 0x80;
+   prog->vp.clpd[0] = 0x80;
+   prog->vp.clpd[1] = 0x80;
+   prog->vp.psiz = 0x80;
+   prog->vp.edgeflag = 0x80;
+   prog->gp.primid = 0x80;
+
+   info->driverPriv = prog;
+
+#ifdef DEBUG
+   info->optLevel = debug_get_num_option("NV50_PROG_OPTIMIZE", 3);
+   info->dbgFlags = debug_get_num_option("NV50_PROG_DEBUG", 0);
+#else
+   info->optLevel = 3;
+#endif
+
+   ret = nv50_ir_generate_code(info);
    if (ret) {
-      NOUVEAU_ERR("unsupported shader program\n");
+      NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
+   prog->code = info->bin.code;
+   prog->code_size = info->bin.codeSize;
+   prog->fixups = info->bin.relocData;
+   prog->max_gpr = MAX2(4, (info->bin.maxGPR >> 1) + 1);
 
-   ret = nv50_generate_code(ti);
-   if (ret) {
-      NOUVEAU_ERR("error during shader translation\n");
-      goto out;
+   if (prog->type == PIPE_SHADER_FRAGMENT) {
+      if (info->prop.fp.writesDepth) {
+         prog->fp.flags[0] |= NV50_3D_FP_CONTROL_EXPORTS_Z;
+         prog->fp.flags[1] = 0x11;
+      }
+      if (info->prop.fp.usesDiscard)
+         prog->fp.flags[0] |= NV50_3D_FP_CONTROL_USES_KIL;
    }
 
 out:
-   if (ti->immd32)
-      FREE(ti->immd32);
-   if (ti->immd32_ty)
-      FREE(ti->immd32_ty);
-   if (ti->insns)
-      FREE(ti->insns);
-   if (ti->subr)
-      FREE(ti->subr);
-   FREE(ti);
-   return ret ? FALSE : TRUE;
+   FREE(info);
+   return !ret;
+}
+
+boolean
+nv50_program_upload_code(struct nv50_context *nv50, struct nv50_program *prog)
+{
+   struct nouveau_heap *heap;
+   int ret;
+   uint32_t size = align(prog->code_size, 0x40);
+
+   switch (prog->type) {
+   case PIPE_SHADER_VERTEX:   heap = nv50->screen->vp_code_heap; break;
+   case PIPE_SHADER_GEOMETRY: heap = nv50->screen->fp_code_heap; break;
+   case PIPE_SHADER_FRAGMENT: heap = nv50->screen->gp_code_heap; break;
+   default:
+      assert(!"invalid program type");
+      return FALSE;
+   }
+
+   ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
+   if (ret) {
+      /* Out of space: evict everything to compactify the code segment, hoping
+       * the working set is much smaller and drifts slowly. Improve me !
+       */
+      while (heap->next) {
+         struct nv50_program *evict = heap->next->priv;
+         if (evict)
+            nouveau_heap_free(&evict->mem);
+      }
+      debug_printf("WARNING: out of code space, evicting all shaders.\n");
+   }
+   prog->code_base = prog->mem->start;
+
+   if (prog->fixups)
+      nv50_ir_relocate_code(prog->fixups, prog->code, prog->code_base, 0, 0);
+
+   nv50_sifc_linear_u8(&nv50->base, nv50->screen->code,
+                       (prog->type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
+                       NOUVEAU_BO_VRAM, prog->code_size, prog->code);
+
+   BEGIN_NV04(nv50->base.pushbuf, NV50_3D(CODE_CB_FLUSH), 1);
+   PUSH_DATA (nv50->base.pushbuf, 0);
+
+   return TRUE;
 }
 
 void

@@ -164,6 +164,7 @@ struct nv50_ir_prog_info
       uint8_t cullDistanceMask;  /* clip distance mode (1 bit per output) */
       int8_t genUserClip;        /* request user clip planes for ClipVertex */
       uint8_t pointSize;         /* output index for PointSize */
+      uint8_t instanceId;        /* system value index of InstanceID */
       uint8_t vertexId;          /* system value index of VertexID */
       uint8_t edgeFlagIn;
       uint8_t edgeFlagOut;

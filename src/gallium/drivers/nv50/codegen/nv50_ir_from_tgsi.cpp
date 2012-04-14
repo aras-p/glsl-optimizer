@@ -859,6 +859,9 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
       break;
    case TGSI_FILE_SYSTEM_VALUE:
       switch (sn) {
+      case TGSI_SEMANTIC_INSTANCEID:
+         info->io.instanceId = first;
+         break;
       case TGSI_SEMANTIC_VERTEXID:
          info->io.vertexId = first;
          break;
