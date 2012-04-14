@@ -2073,7 +2073,7 @@ LocalCSE::visit(BasicBlock *bb)
 
       // will need to know the order of instructions
       int serial = 0;
-      for (ir = bb->getEntry(); ir; ir = ir->next)
+      for (ir = bb->getFirst(); ir; ir = ir->next)
          ir->serial = serial++;
 
       for (ir = bb->getEntry(); ir; ir = next) {
