@@ -88,6 +88,7 @@ struct nvc0_context {
       uint32_t constant_elts;
       int32_t index_bias;
       uint16_t scissor;
+      uint8_t vbo_mode; /* 0 = normal, 1 = translate, 3 = translate, forced */
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
@@ -118,7 +119,6 @@ struct nvc0_context {
    unsigned num_vtxbufs;
    struct pipe_index_buffer idxbuf;
    uint32_t constant_vbos;
-   uint32_t vbo_fifo; /* bitmask of vertex elements to be pushed to FIFO */
    uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
    unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
    unsigned vbo_max_index;

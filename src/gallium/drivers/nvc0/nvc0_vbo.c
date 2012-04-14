@@ -86,10 +86,19 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
             so->element[i].state = nvc0_format_table[fmt].vtx;
             so->need_conversion = TRUE;
         }
-        so->element[i].state |= i;
+
+        if (unlikely(ve->instance_divisor)) {
+           so->instance_elts |= 1 << i;
+           so->instance_bufs |= 1 << vbi;
+        }
 
         if (1) {
+            unsigned ca;
             unsigned j = transkey.nr_elements++;
+
+            ca = util_format_description(fmt)->channel[0].size / 8;
+            if (ca != 1 && ca != 2)
+               ca = 4;
 
             transkey.element[j].type = TRANSLATE_ELEMENT_NORMAL;
             transkey.element[j].input_format = ve->src_format;
@@ -97,20 +106,21 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
             transkey.element[j].input_offset = ve->src_offset;
             transkey.element[j].instance_divisor = ve->instance_divisor;
 
+            transkey.output_stride = align(transkey.output_stride, ca);
             transkey.element[j].output_format = fmt;
             transkey.element[j].output_offset = transkey.output_stride;
-            transkey.output_stride += (util_format_get_stride(fmt, 1) + 3) & ~3;
+            transkey.output_stride += util_format_get_blocksize(fmt);
 
-            if (unlikely(ve->instance_divisor)) {
-               so->instance_elts |= 1 << i;
-               so->instance_bufs |= 1 << vbi;
-            }
+            so->element[i].state_alt = so->element[i].state;
+            so->element[i].state_alt |= transkey.element[j].output_offset << 7;
         }
-    }
 
+        so->element[i].state |= i << NVC0_3D_VERTEX_ATTRIB_FORMAT_BUFFER__SHIFT;
+    }
+    transkey.output_stride = align(transkey.output_stride, 4);
+
+    so->size = transkey.output_stride;
     so->translate = translate_create(&transkey);
-    so->vtx_size = transkey.output_stride / 4;
-    so->vtx_per_packet_max = NV04_PFIFO_MAX_PACKET_LEN / MAX2(so->vtx_size, 1);
 
     return so;
 }
@@ -182,7 +192,10 @@ nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
    }
 }
 
-static void
+/* Return whether to use alternative vertex submission mode (translate),
+ * and validate vertex buffers and upload user arrays (if normal mode).
+ */
+static uint8_t
 nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 {
    const uint32_t bo_flags = NOUVEAU_BO_RD | NOUVEAU_BO_GART;
@@ -192,7 +205,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
    int i;
    uint32_t base, size;
 
-   nvc0->vbo_fifo = nvc0->vbo_user = 0;
+   nvc0->vbo_user = 0;
 
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_VTX);
 
@@ -203,10 +216,8 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
       buf = nv04_resource(vb->buffer);
 
       if (!nouveau_resource_mapped_by_gpu(vb->buffer)) {
-         if (nvc0->vbo_push_hint) {
-            nvc0->vbo_fifo = ~0;
-            return;
-         }
+         if (nvc0->vbo_push_hint)
+            return 1;
          nvc0->base.vbo_dirty = TRUE;
 
          if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
@@ -223,6 +234,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
       }
       BCTX_REFN(nvc0->bufctx_3d, VTX, buf, RD);
    }
+   return 0;
 }
 
 static void
@@ -283,55 +295,85 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_element *ve;
    uint32_t const_vbos;
    unsigned i;
+   uint8_t vbo_mode;
    boolean update_vertex;
 
    if (unlikely(vertex->need_conversion) ||
        unlikely(nvc0->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)) {
       nvc0->vbo_user = 0;
-      nvc0->vbo_fifo = ~nvc0->constant_vbos;
+      vbo_mode = 3;
    } else {
-      nvc0_prevalidate_vbufs(nvc0);
-      nvc0->vbo_fifo &= ~nvc0->constant_vbos;
+      vbo_mode = nvc0_prevalidate_vbufs(nvc0);
    }
-   const_vbos = nvc0->vbo_fifo ? 0 : nvc0->constant_vbos;
+   const_vbos = vbo_mode ? 0 : nvc0->constant_vbos;
 
    update_vertex = (nvc0->dirty & NVC0_NEW_VERTEX) ||
-      (const_vbos != nvc0->state.constant_vbos);
+      (const_vbos != nvc0->state.constant_vbos) ||
+      (vbo_mode != nvc0->state.vbo_mode);
+
    if (update_vertex) {
-      uint32_t *restrict data;
       const unsigned n = MAX2(vertex->num_elements, nvc0->state.num_vtxelts);
 
-      if (unlikely(vertex->instance_elts != nvc0->state.instance_elts)) {
-         nvc0->state.instance_elts = vertex->instance_elts;
-         assert(n); /* if (n == 0), both masks should be 0 */
-         PUSH_SPACE(push, 3);
-         BEGIN_NVC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_PER_INSTANCE), 2);
-         PUSH_DATA (push, n);
-         PUSH_DATA (push, vertex->instance_elts);
-      }
-
-      nvc0->state.num_vtxelts = vertex->num_elements;
       nvc0->state.constant_vbos = const_vbos;
       nvc0->state.constant_elts = 0;
+      nvc0->state.num_vtxelts = vertex->num_elements;
+      nvc0->state.vbo_mode = vbo_mode;
 
-      PUSH_SPACE(push, n * 2 + 1);
-      BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), n);
-      data = push->cur;
-      push->cur += n;
-      for (i = 0; i < vertex->num_elements; ++data, ++i) {
-         ve = &vertex->element[i];
-         *data = ve->state;
-         if (unlikely(const_vbos & (1 << ve->pipe.vertex_buffer_index))) {
-            *data |= NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST;
-            nvc0->state.constant_elts |= 1 << i;
+      if (unlikely(vbo_mode)) {
+         if (unlikely(nvc0->state.instance_elts & 3)) {
+            /* translate mode uses only 2 vertex buffers */
+            nvc0->state.instance_elts &= ~3;
+            PUSH_SPACE(push, 3);
+            BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_PER_INSTANCE(0)), 2);
+            PUSH_DATA (push, 0);
+            PUSH_DATA (push, 0);
+         }
+
+         PUSH_SPACE(push, n * 2 + 4);
+
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), n);
+         for (i = 0; i < vertex->num_elements; ++i)
+            PUSH_DATA(push, vertex->element[i].state_alt);
+         for (; i < n; ++i)
+            PUSH_DATA(push, NVC0_3D_VERTEX_ATTRIB_INACTIVE);
+
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(0)), 1);
+         PUSH_DATA (push, (1 << 12) | vertex->size);
+         for (i = 1; i < n; ++i)
+            IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
+      } else {
+         uint32_t *restrict data;
+
+         if (unlikely(vertex->instance_elts != nvc0->state.instance_elts)) {
+            nvc0->state.instance_elts = vertex->instance_elts;
+            assert(n); /* if (n == 0), both masks should be 0 */
+            PUSH_SPACE(push, 3);
+            BEGIN_NVC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_PER_INSTANCE), 2);
+            PUSH_DATA (push, n);
+            PUSH_DATA (push, vertex->instance_elts);
+         }
+
+         PUSH_SPACE(push, n * 2 + 1);
+         BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), n);
+         data = push->cur;
+         push->cur += n;
+         for (i = 0; i < vertex->num_elements; ++i) {
+            ve = &vertex->element[i];
+            data[i] = ve->state;
+            if (unlikely(const_vbos & (1 << ve->pipe.vertex_buffer_index))) {
+               nvc0->state.constant_elts |= 1 << i;
+               data[i] |= NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST;
+               IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
+            }
+         }
+         for (; i < n; ++i) {
+            data[i] = NVC0_3D_VERTEX_ATTRIB_INACTIVE;
             IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
          }
       }
-      for (; i < n; ++data, ++i) {
-         IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(i)), 0);
-         *data = NVC0_3D_VERTEX_ATTRIB_INACTIVE;
-      }
    }
+   if (nvc0->state.vbo_mode) /* using translate, don't set up arrays here */
+      return;
 
    PUSH_SPACE(push, vertex->num_elements * 8);
    for (i = 0; i < vertex->num_elements; ++i) {
@@ -660,25 +702,35 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    /* For picking only a few vertices from a large user buffer, push is better,
     * if index count is larger and we expect repeated vertices, suggest upload.
     */
-   nvc0->vbo_push_hint = /* the 64 is heuristic */
-      !(info->indexed &&
-        ((info->max_index - info->min_index + 64) < info->count));
+   nvc0->vbo_push_hint =
+      info->indexed &&
+      (info->max_index - info->min_index) >= (info->count * 2);
 
    nvc0->vbo_min_index = info->min_index;
    nvc0->vbo_max_index = info->max_index;
 
-   if (nvc0->vbo_push_hint != !!nvc0->vbo_fifo)
-      nvc0->dirty |= NVC0_NEW_ARRAYS;
-
-   if (nvc0->vbo_user && !(nvc0->dirty & (NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS)))
-      nvc0_update_user_vbufs(nvc0);
+   /* Check whether we want to switch vertex-submission mode,
+    * and if not, update user vbufs.
+    */
+   if (!(nvc0->dirty & NVC0_NEW_ARRAYS)) {
+      if (nvc0->vbo_push_hint) {
+         if (nvc0->vbo_user)
+            nvc0->dirty |= NVC0_NEW_ARRAYS; /* switch to translate mode */
+      } else
+      if (nvc0->state.vbo_mode == 1) {
+         nvc0->dirty |= NVC0_NEW_ARRAYS; /* back to normal mode */
+      }
+      if (nvc0->vbo_user &&
+          !(nvc0->dirty & (NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS)))
+         nvc0_update_user_vbufs(nvc0);
+   }
 
    /* 8 as minimum to avoid immediate double validation of new buffers */
    nvc0_state_validate(nvc0, ~0, 8);
 
    push->kick_notify = nvc0_draw_vbo_kick_notify;
 
-   if (nvc0->vbo_fifo) {
+   if (nvc0->state.vbo_mode) {
       nvc0_push_vbo(nvc0, info);
       push->kick_notify = nvc0_default_kick_notify;
       return;

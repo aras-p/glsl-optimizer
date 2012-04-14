@@ -11,9 +11,9 @@ C_SOURCES := \
 	nvc0_tex.c \
 	nvc0_transfer.c \
 	nvc0_vbo.c \
+	nvc0_vbo_translate.c \
 	nvc0_program.c \
 	nvc0_shader_state.c \
-	nvc0_push.c \
 	nvc0_query.c
 
 CPP_SOURCES := \

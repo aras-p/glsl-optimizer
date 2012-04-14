@@ -35,6 +35,7 @@ struct nvc0_zsa_stateobj {
 struct nvc0_vertex_element {
    struct pipe_vertex_element pipe;
    uint32_t state;
+   uint32_t state_alt; /* buffer 0 and with source offset (for translate) */
 };
 
 struct nvc0_vertex_stateobj {
@@ -43,8 +44,7 @@ struct nvc0_vertex_stateobj {
    uint32_t instance_elts;
    uint32_t instance_bufs;
    boolean need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
-   unsigned vtx_size;
-   unsigned vtx_per_packet_max;
+   unsigned size; /* size of vertex in bytes (when packed) */
    struct nvc0_vertex_element element[0];
 };
 
