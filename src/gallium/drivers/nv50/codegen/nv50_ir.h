@@ -460,6 +460,7 @@ public:
 
    virtual bool equals(const Value *, bool strict = false) const;
    virtual bool interfers(const Value *) const;
+   virtual bool isUniform() const { return true; }
 
    inline Value *rep() const { return join; }
 
@@ -500,6 +501,8 @@ public:
    LValue(Function *, LValue *);
    ~LValue() { }
 
+   virtual bool isUniform() const;
+
    virtual LValue *clone(ClonePolicy<Function>&) const;
 
    virtual int print(char *, size_t, DataType ty = TYPE_NONE) const;
@@ -521,6 +524,8 @@ public:
    virtual Symbol *clone(ClonePolicy<Function>&) const;
 
    virtual bool equals(const Value *that, bool strict) const;
+
+   virtual bool isUniform() const;
 
    virtual int print(char *, size_t, DataType ty = TYPE_NONE) const;
 

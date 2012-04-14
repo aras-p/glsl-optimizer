@@ -268,6 +268,16 @@ LValue::clone(ClonePolicy<Function>& pol) const
    return that;
 }
 
+bool
+LValue::isUniform() const
+{
+   if (defs.size() > 1)
+      return false;
+   Instruction *insn = getInsn();
+   // let's not try too hard here for now ...
+   return !insn->srcExists(1) && insn->getSrc(0)->isUniform();
+}
+
 Symbol::Symbol(Program *prog, DataFile f, ubyte fidx)
 {
    baseSym = NULL;
@@ -295,6 +305,15 @@ Symbol::clone(ClonePolicy<Function>& pol) const
    that->baseSym = this->baseSym;
 
    return that;
+}
+
+bool
+Symbol::isUniform() const
+{
+   return
+      reg.file != FILE_SYSTEM_VALUE &&
+      reg.file != FILE_MEMORY_LOCAL &&
+      reg.file != FILE_SHADER_INPUT;
 }
 
 ImmediateValue::ImmediateValue(Program *prog, uint32_t uval)
