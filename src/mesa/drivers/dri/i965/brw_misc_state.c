@@ -266,10 +266,45 @@ static void emit_depthbuffer(struct brw_context *brw)
    unsigned int len;
    bool separate_stencil = false;
 
+   /* Amount by which drawing should be offset in order to draw to the
+    * appropriate miplevel/zoffset/cubeface.  We will extract these values
+    * from depth_irb or stencil_irb once we determine which is present.
+    */
+   uint32_t draw_x = 0, draw_y = 0;
+
+   /* Masks used to determine how much of the draw_x and draw_y offsets should
+    * be performed using the fine adjustment of "depth coordinate offset X/Y"
+    * (dw5 of 3DSTATE_DEPTH_BUFFER).  Any remaining coarse adjustment will be
+    * performed by changing the base addresses of the buffers.
+    *
+    * Since the HiZ, depth, and stencil buffers all use the same "depth
+    * coordinate offset X/Y" values, we need to make sure that the coarse
+    * adjustment will be possible to apply to all three buffers.  Since coarse
+    * adjustment can only be applied in multiples of the tile size, we will OR
+    * together the tile masks of all the buffers to determine which offsets to
+    * perform as fine adjustments.
+    */
+   uint32_t tile_mask_x = 0, tile_mask_y = 0;
+
+   if (depth_irb) {
+      intel_region_get_tile_masks(depth_irb->mt->region,
+                                  &tile_mask_x, &tile_mask_y);
+   }
+
    if (depth_irb &&
        depth_irb->mt &&
        depth_irb->mt->hiz_mt) {
       hiz_region = depth_irb->mt->hiz_mt->region;
+
+      uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
+      intel_region_get_tile_masks(hiz_region,
+                                  &hiz_tile_mask_x, &hiz_tile_mask_y);
+
+      /* Each HiZ row represents 2 rows of pixels */
+      hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
+
+      tile_mask_x |= hiz_tile_mask_x;
+      tile_mask_y |= hiz_tile_mask_y;
    }
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
@@ -286,8 +321,21 @@ static void emit_depthbuffer(struct brw_context *brw)
       if (stencil_mt->stencil_mt)
 	 stencil_mt = stencil_mt->stencil_mt;
 
-      if (stencil_mt->format == MESA_FORMAT_S8)
+      if (stencil_mt->format == MESA_FORMAT_S8) {
 	 separate_stencil = true;
+
+         /* Separate stencil buffer uses 64x64 tiles. */
+         tile_mask_x |= 63;
+         tile_mask_y |= 63;
+      } else {
+         uint32_t stencil_tile_mask_x, stencil_tile_mask_y;
+         intel_region_get_tile_masks(stencil_mt->region,
+                                     &stencil_tile_mask_x,
+                                     &stencil_tile_mask_y);
+
+         tile_mask_x |= stencil_tile_mask_x;
+         tile_mask_y |= stencil_tile_mask_y;
+      }
    }
 
    /* If there's a packed depth/stencil bound to stencil only, we need to
@@ -321,6 +369,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
 
    } else if (!depth_irb && separate_stencil) {
+      uint32_t tile_x, tile_y;
+
       /*
        * There exists a separate stencil buffer but no depth buffer.
        *
@@ -343,6 +393,11 @@ static void emit_depthbuffer(struct brw_context *brw)
        */
       assert(intel->has_separate_stencil);
 
+      draw_x = stencil_irb->draw_x;
+      draw_y = stencil_irb->draw_y;
+      tile_x = draw_x & tile_mask_x;
+      tile_y = draw_y & tile_mask_y;
+
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
@@ -352,10 +407,14 @@ static void emit_depthbuffer(struct brw_context *brw)
 	        (1 << 27) | /* tiled surface */
 	        (BRW_SURFACE_2D << 29));
       OUT_BATCH(0);
-      OUT_BATCH(((stencil_irb->Base.Base.Width - 1) << 6) |
-	         (stencil_irb->Base.Base.Height - 1) << 19);
+      OUT_BATCH(((stencil_irb->Base.Base.Width + tile_x - 1) << 6) |
+	         (stencil_irb->Base.Base.Height + tile_y - 1) << 19);
       OUT_BATCH(0);
-      OUT_BATCH(0);
+
+      if (intel->is_g4x || intel->gen >= 5)
+         OUT_BATCH(tile_x | (tile_y << 16));
+      else
+	 assert(tile_x == 0 && tile_y == 0);
 
       if (intel->gen >= 6)
 	 OUT_BATCH(0);
@@ -369,10 +428,17 @@ static void emit_depthbuffer(struct brw_context *brw)
       /* If using separate stencil, hiz must be enabled. */
       assert(!separate_stencil || hiz_region);
 
-      offset = intel_renderbuffer_tile_offsets(depth_irb, &tile_x, &tile_y);
-
       assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
       assert(!hiz_region || region->tiling == I915_TILING_Y);
+
+      draw_x = depth_irb->draw_x;
+      draw_y = depth_irb->draw_y;
+      tile_x = draw_x & tile_mask_x;
+      tile_y = draw_y & tile_mask_y;
+
+      offset = intel_region_get_aligned_offset(region,
+                                               draw_x & ~tile_mask_x,
+                                               draw_y & ~tile_mask_y);
 
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
@@ -413,12 +479,17 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       /* Emit hiz buffer. */
       if (hiz_region) {
+         uint32_t hiz_offset =
+            intel_region_get_aligned_offset(hiz_region,
+                                            draw_x & ~tile_mask_x,
+                                            (draw_y & ~tile_mask_y) / 2);
+
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
 	 OUT_RELOC(hiz_region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
+		   hiz_offset);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);
@@ -431,6 +502,15 @@ static void emit_depthbuffer(struct brw_context *brw)
       /* Emit stencil buffer. */
       if (separate_stencil) {
 	 struct intel_region *region = stencil_mt->region;
+
+         /* Note: we can't compute the stencil offset using
+          * intel_region_get_aligned_offset(), because stencil_region claims
+          * that the region is untiled; in fact it's W tiled.
+          */
+         uint32_t stencil_offset =
+            (draw_y & ~tile_mask_y) * region->pitch +
+            (draw_x & ~tile_mask_x) * 64;
+
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
          /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
@@ -441,7 +521,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 OUT_BATCH(2 * region->pitch * region->cpp - 1);
 	 OUT_RELOC(region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
+		   stencil_offset);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);

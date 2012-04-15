@@ -153,6 +153,11 @@ intel_flip_renderbuffers(struct gl_framebuffer *fb);
 void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
+void
+intel_renderbuffer_fine_offset_masks(struct intel_renderbuffer *irb,
+                                     uint32_t *fine_offset_mask_x,
+                                     uint32_t *fine_offset_mask_y);
+
 uint32_t
 intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_x,

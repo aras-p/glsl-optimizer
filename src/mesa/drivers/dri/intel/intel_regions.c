@@ -390,3 +390,59 @@ intel_region_copy(struct intel_context *intel,
 			    srcx, srcy, dstx, dsty, width, height,
 			    logicop);
 }
+
+/**
+ * This function computes masks that may be used to select the bits of the X
+ * and Y coordinates that indicate the offset within a tile.  If the region is
+ * untiled, the masks are set to 0.
+ */
+void
+intel_region_get_tile_masks(struct intel_region *region,
+                            uint32_t *mask_x, uint32_t *mask_y)
+{
+   int cpp = region->cpp;
+
+   switch (region->tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      *mask_x = *mask_y = 0;
+      break;
+   case I915_TILING_X:
+      *mask_x = 512 / cpp - 1;
+      *mask_y = 7;
+      break;
+   case I915_TILING_Y:
+      *mask_x = 128 / cpp - 1;
+      *mask_y = 31;
+      break;
+   }
+}
+
+/**
+ * Compute the offset (in bytes) from the start of the region to the given x
+ * and y coordinate.  For tiled regions, caller must ensure that x and y are
+ * multiples of the tile size.
+ */
+uint32_t
+intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
+                                uint32_t y)
+{
+   int cpp = region->cpp;
+   uint32_t pitch = region->pitch * cpp;
+
+   switch (region->tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      return y * pitch + x * cpp;
+   case I915_TILING_X:
+      assert((x % (512 / cpp)) == 0);
+      assert((y % 8) == 0);
+      return y * pitch + x / (512 / cpp) * 4096;
+   case I915_TILING_Y:
+      assert((x % (128 / cpp)) == 0);
+      assert((y % 32) == 0);
+      return y * pitch + x / (128 / cpp) * 4096;
+   }
+}

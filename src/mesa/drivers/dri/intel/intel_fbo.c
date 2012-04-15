@@ -535,25 +535,14 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_y)
 {
    struct intel_region *region = irb->mt->region;
-   int cpp = region->cpp;
-   uint32_t pitch = region->pitch * cpp;
+   uint32_t mask_x, mask_y;
 
-   if (region->tiling == I915_TILING_NONE) {
-      *tile_x = 0;
-      *tile_y = 0;
-      return irb->draw_x * cpp + irb->draw_y * pitch;
-   } else if (region->tiling == I915_TILING_X) {
-      *tile_x = irb->draw_x % (512 / cpp);
-      *tile_y = irb->draw_y % 8;
-      return ((irb->draw_y / 8) * (8 * pitch) +
-	      (irb->draw_x - *tile_x) / (512 / cpp) * 4096);
-   } else {
-      assert(region->tiling == I915_TILING_Y);
-      *tile_x = irb->draw_x % (128 / cpp);
-      *tile_y = irb->draw_y % 32;
-      return ((irb->draw_y / 32) * (32 * pitch) +
-	      (irb->draw_x - *tile_x) / (128 / cpp) * 4096);
-   }
+   intel_region_get_tile_masks(region, &mask_x, &mask_y);
+
+   *tile_x = irb->draw_x & mask_x;
+   *tile_y = irb->draw_y & mask_y;
+   return intel_region_get_aligned_offset(region, irb->draw_x & ~mask_x,
+                                          irb->draw_y & ~mask_y);
 }
 
 /**

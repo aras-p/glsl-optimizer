@@ -261,10 +261,41 @@ gen6_hiz_exec(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
+   uint32_t draw_x, draw_y;
+   uint32_t tile_mask_x, tile_mask_y;
 
    assert(op != GEN6_HIZ_OP_DEPTH_CLEAR); /* Not implemented yet. */
    assert(mt->hiz_mt != NULL);
    intel_miptree_check_level_layer(mt, level, layer);
+
+   {
+      /* Construct a dummy renderbuffer just to extract tile offsets. */
+      struct intel_renderbuffer rb;
+      rb.mt = mt;
+      rb.mt_level = level;
+      rb.mt_layer = layer;
+      intel_renderbuffer_set_draw_offset(&rb);
+      draw_x = rb.draw_x;
+      draw_y = rb.draw_y;
+   }
+
+   /* Compute masks to determine how much of draw_x and draw_y should be
+    * performed using the fine adjustment of "depth coordinate offset X/Y"
+    * (dw5 of 3DSTATE_DEPTH_BUFFER).  See the emit_depthbuffer() function for
+    * details.
+    */
+   {
+      uint32_t depth_mask_x, depth_mask_y, hiz_mask_x, hiz_mask_y;
+      intel_region_get_tile_masks(mt->region, &depth_mask_x, &depth_mask_y);
+      intel_region_get_tile_masks(mt->hiz_mt->region,
+                                  &hiz_mask_x, &hiz_mask_y);
+
+      /* Each HiZ row represents 2 rows of pixels */
+      hiz_mask_y = hiz_mask_y << 1 | 1;
+
+      tile_mask_x = depth_mask_x | hiz_mask_x;
+      tile_mask_y = depth_mask_y | hiz_mask_y;
+   }
 
    gen6_hiz_emit_batch_head(brw);
    gen6_hiz_emit_vertices(brw, mt, level, layer);
@@ -450,18 +481,11 @@ gen6_hiz_exec(struct intel_context *intel,
       uint32_t width = mt->level[level].width;
       uint32_t height = mt->level[level].height;
 
-      uint32_t tile_x;
-      uint32_t tile_y;
-      uint32_t offset;
-      {
-         /* Construct a dummy renderbuffer just to extract tile offsets. */
-         struct intel_renderbuffer rb;
-         rb.mt = mt;
-         rb.mt_level = level;
-         rb.mt_layer = layer;
-         intel_renderbuffer_set_draw_offset(&rb);
-         offset = intel_renderbuffer_tile_offsets(&rb, &tile_x, &tile_y);
-      }
+      uint32_t tile_x = draw_x & tile_mask_x;
+      uint32_t tile_y = draw_y & tile_mask_y;
+      uint32_t offset = intel_region_get_aligned_offset(mt->region,
+                                                        draw_x & ~tile_mask_x,
+                                                        draw_y & ~tile_mask_y);
 
       uint32_t format;
       switch (mt->format) {
@@ -499,13 +523,17 @@ gen6_hiz_exec(struct intel_context *intel,
    /* 3DSTATE_HIER_DEPTH_BUFFER */
    {
       struct intel_region *hiz_region = mt->hiz_mt->region;
+      uint32_t hiz_offset =
+         intel_region_get_aligned_offset(hiz_region,
+                                         draw_x & ~tile_mask_x,
+                                         (draw_y & ~tile_mask_y) / 2);
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
       OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
       OUT_RELOC(hiz_region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                0);
+                hiz_offset);
       ADVANCE_BATCH();
    }
 
