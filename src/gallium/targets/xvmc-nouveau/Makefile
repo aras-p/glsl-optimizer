@@ -20,7 +20,7 @@ C_SOURCES = \
 
 DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm_nouveau --libs) -lXfixes
 
-DRIVER_INCLUDES = -I/usr/include/libdrm/
+DRIVER_INCLUDES = $(shell $(PKG_CONFIG) libdrm --cflags-only-I)
 
 LINK_WITH_CXX=1
 
