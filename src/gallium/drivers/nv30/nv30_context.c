@@ -158,6 +158,7 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
    nv30->use_nv4x = (screen->eng3d->oclass >= NV40_3D_CLASS) ? ~0 : 0;
    nv30->render_mode = HW;
 
+   nv30->sample_mask = 0xffff;
    nv30_vbo_init(pipe);
    nv30_query_init(pipe);
    nv30_state_init(pipe);
