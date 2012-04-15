@@ -43,12 +43,12 @@ struct st_fragment_program;
 struct u_upload_mgr;
 
 
-#define ST_NEW_MESA                    0x1 /* Mesa state has changed */
-#define ST_NEW_FRAGMENT_PROGRAM        0x2
-#define ST_NEW_VERTEX_PROGRAM          0x4
-#define ST_NEW_FRAMEBUFFER             0x8
-#define ST_NEW_EDGEFLAGS_DATA          0x10
-#define ST_NEW_GEOMETRY_PROGRAM        0x20
+#define ST_NEW_MESA                    (1 << 0) /* Mesa state has changed */
+#define ST_NEW_FRAGMENT_PROGRAM        (1 << 1)
+#define ST_NEW_VERTEX_PROGRAM          (1 << 2)
+#define ST_NEW_FRAMEBUFFER             (1 << 3)
+#define ST_NEW_EDGEFLAGS_DATA          (1 << 4)
+#define ST_NEW_GEOMETRY_PROGRAM        (1 << 5)
 
 
 struct st_state_flags {
