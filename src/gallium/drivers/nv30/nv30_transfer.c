@@ -468,11 +468,10 @@ nv30_transfer_rect_sifm(XFER_ARGS)
    PUSH_DATA (push, ((src->x1 - src->x0) << 20) / (dst->x1 - dst->x0));
    PUSH_DATA (push, ((src->y1 - src->y0) << 20) / (dst->y1 - dst->y0));
    BEGIN_NV04(push, NV03_SIFM(SIZE), 4);
-   PUSH_DATA (push, align((src->y1 - src->y0), 2) << 16 |
-                    align((src->x1 - src->x0), 2));
+   PUSH_DATA (push, align(src->h, 2) << 16 | align(src->w, 2));
    PUSH_DATA (push, src->pitch | si_arg);
    PUSH_RELOC(push, src->bo, src->offset, NOUVEAU_BO_LOW, 0, 0);
-   PUSH_DATA (push, (src->y0 << 16) | src->x0);
+   PUSH_DATA (push, (src->y0 << 20) | src->x0 << 4);
 }
 
 /* The NOP+OFFSET_OUT stuff after each M2MF transfer *is* actually required
