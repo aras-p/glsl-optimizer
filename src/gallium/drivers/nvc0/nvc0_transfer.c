@@ -320,7 +320,8 @@ nve4_m2mf_copy_linear(struct nouveau_context *nv,
    PUSH_DATA (push, dst->offset + dstoff);
    BEGIN_NVC0(push, SUBC_COPY(0x0418), 1);
    PUSH_DATA (push, size);
-   IMMED_NVC0(push, SUBC_COPY(0x0300), 0x6);
+   BEGIN_NVC0(push, SUBC_COPY(0x0300), 1);
+   PUSH_DATA (push, 0x186);
 
    nouveau_bufctx_reset(bctx, 0);
 }
