@@ -184,7 +184,7 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
    /* put front/back colors right after HPOS */
    prog->fp.colors = 4 << NV50_3D_SEMANTIC_COLOR_FFC0_ID__SHIFT;
    for (i = 0; i < 2; ++i)
-      if (prog->vp.bfc[i] < 0x80)
+      if (prog->vp.bfc[i] < 0xff)
          prog->fp.colors += bitcount4(prog->in[prog->vp.bfc[i]].mask) << 16;
 
    /* FP outputs */
@@ -240,6 +240,7 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
 {
    struct nv50_ir_prog_info *info;
    int ret;
+   const uint8_t map_undef = (prog->type == PIPE_SHADER_VERTEX) ? 0x40 : 0x80;
 
    info = CALLOC_STRUCT(nv50_ir_prog_info);
    if (!info)
@@ -254,12 +255,12 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
 
    info->assignSlots = nv50_program_assign_varying_slots;
 
-   prog->vp.bfc[0] = 0x80;
-   prog->vp.bfc[1] = 0x80;
-   prog->vp.clpd[0] = 0x80;
-   prog->vp.clpd[1] = 0x80;
-   prog->vp.psiz = 0x80;
-   prog->vp.edgeflag = 0x80;
+   prog->vp.bfc[0] = 0xff;
+   prog->vp.bfc[1] = 0xff;
+   prog->vp.edgeflag = 0xff;
+   prog->vp.clpd[0] = map_undef;
+   prog->vp.clpd[1] = map_undef;
+   prog->vp.psiz = map_undef;
    prog->gp.primid = 0x80;
 
    info->driverPriv = prog;
