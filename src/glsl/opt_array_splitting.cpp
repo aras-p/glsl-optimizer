@@ -347,8 +347,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
       const struct glsl_type *subtype;
 
       if (type->is_matrix())
-	 subtype = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-					   type->vector_elements, 1);
+	 subtype = type->column_type();
       else
 	 subtype = type->fields.array;
 
