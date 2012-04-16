@@ -1,10 +1,8 @@
-INC = \
+AM_CPPFLAGS = \
 	-I$(top_builddir)/src/gtest/include \
 	-I$(top_builddir)/src/mapi \
-	-I$(top_builddir)/src/glx
-
-AM_CFLAGS = $(INC) $(X11_CFLAGS)
-AM_CXXFLAGS = $(INC) $(X11_CFLAGS)
+	-I$(top_builddir)/src/glx \
+	$(X11_CFLAGS)
 
 if HAVE_XCB_GLX_CREATE_CONTEXT
 TESTS = glx_unittest
