@@ -388,7 +388,7 @@ vbo_exec_vtx_flush(struct vbo_exec_context *exec, GLboolean keepUnmapped)
       if (exec->vtx.copied.nr != exec->vtx.vert_count) {
 	 struct gl_context *ctx = exec->ctx;
 	 
-	 /* Before the update_state() as this may raise _NEW_ARRAY
+	 /* Before the update_state() as this may raise _NEW_VARYING_VP_INPUTS
           * from _mesa_set_varying_vp_inputs().
 	  */
 	 vbo_exec_bind_arrays( ctx );

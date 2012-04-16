@@ -473,12 +473,13 @@ _mesa_update_state_locked( struct gl_context *ctx )
    /* Determine which state flags effect vertex/fragment program state */
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       prog_flags |= (_NEW_BUFFERS | _NEW_TEXTURE | _NEW_FOG |
-		     _NEW_ARRAY | _NEW_LIGHT | _NEW_POINT | _NEW_RENDERMODE |
-		     _NEW_PROGRAM | _NEW_FRAG_CLAMP | _NEW_COLOR);
+		     _NEW_VARYING_VP_INPUTS | _NEW_LIGHT | _NEW_POINT |
+		     _NEW_RENDERMODE | _NEW_PROGRAM | _NEW_FRAG_CLAMP |
+		     _NEW_COLOR);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
-                     _NEW_TRANSFORM | _NEW_POINT |
+      prog_flags |= (_NEW_VARYING_VP_INPUTS | _NEW_TEXTURE |
+                     _NEW_TEXTURE_MATRIX | _NEW_TRANSFORM | _NEW_POINT |
                      _NEW_FOG | _NEW_LIGHT |
                      _MESA_NEW_NEED_EYE_COORDS);
    }
@@ -626,7 +627,7 @@ _mesa_set_varying_vp_inputs( struct gl_context *ctx,
 {
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;
-      ctx->NewState |= _NEW_ARRAY;
+      ctx->NewState |= _NEW_VARYING_VP_INPUTS;
       /*printf("%s %x\n", __FUNCTION__, varying_inputs);*/
    }
 }

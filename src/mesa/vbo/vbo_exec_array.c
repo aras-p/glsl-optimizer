@@ -523,8 +523,8 @@ recalculate_input_bindings(struct gl_context *ctx)
  * Examine the enabled vertex arrays to set the exec->array.inputs[] values.
  * These will point to the arrays to actually use for drawing.  Some will
  * be user-provided arrays, other will be zero-stride const-valued arrays.
- * Note that this might set the _NEW_ARRAY dirty flag so state validation
- * must be done after this call.
+ * Note that this might set the _NEW_VARYING_VP_INPUTS dirty flag so state
+ * validation must be done after this call.
  */
 void
 vbo_bind_arrays(struct gl_context *ctx)

@@ -337,7 +337,7 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
    }
    else if (!(vertexProgram || vertexShader)) {
       /* Fixed function vertex logic */
-      /* _NEW_ARRAY */
+      /* _NEW_VARYING_VP_INPUTS */
       GLbitfield64 varying_inputs = ctx->varying_vp_inputs;
 
       /* These get generated in the setup routine regardless of the
