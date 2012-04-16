@@ -65,7 +65,11 @@ public:
    /** Whether this array should be split or not. */
    bool split;
 
-   bool declaration; /* If the variable had a decl in the instruction stream */
+   /* If the variable had a decl we can work with in the instruction
+    * stream.  We can't do splitting on function arguments, which
+    * don't get this variable set.
+    */
+   bool declaration;
 
    ir_variable **components;
 
@@ -99,6 +103,7 @@ public:
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
+   virtual ir_visitor_status visit_enter(ir_function_signature *);
 
    variable_entry *get_variable_entry(ir_variable *var);
 
@@ -180,6 +185,17 @@ ir_array_reference_visitor::visit_enter(ir_dereference_array *ir)
    if (entry && !ir->array_index->as_constant())
       entry->split = false;
 
+   return visit_continue_with_parent;
+}
+
+ir_visitor_status
+ir_array_reference_visitor::visit_enter(ir_function_signature *ir)
+{
+   /* We don't have logic for array-splitting function arguments,
+    * so just look at the body instructions and not the parameter
+    * declarations.
+    */
+   visit_list_elements(this, &ir->body);
    return visit_continue_with_parent;
 }
 
