@@ -178,7 +178,8 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
          ASSERT(VERT_ATTRIB_GENERIC(attr) < Elements(exec->vtx.inputs));
-         exec->vtx.inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->mat_currval[attr];
+         exec->vtx.inputs[VERT_ATTRIB_GENERIC(attr)] =
+            &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT+attr];
       }
       map = vbo->map_vp_none;
       break;

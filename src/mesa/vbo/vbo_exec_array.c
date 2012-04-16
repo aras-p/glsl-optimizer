@@ -426,7 +426,8 @@ recalculate_input_bindings(struct gl_context *ctx)
       }
 
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->mat_currval[i];
+	 inputs[VERT_ATTRIB_GENERIC(i)] =
+	    &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT+i];
          const_inputs |= VERT_BIT_GENERIC(i);
       }
 

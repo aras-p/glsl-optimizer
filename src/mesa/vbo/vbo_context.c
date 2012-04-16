@@ -104,7 +104,8 @@ static void init_generic_currval(struct gl_context *ctx)
 static void init_mat_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
-   struct gl_client_array *arrays = vbo->mat_currval;
+   struct gl_client_array *arrays =
+      &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT];
    GLuint i;
 
    ASSERT(NR_MAT_ATTRIBS == MAT_ATTRIB_MAX);
@@ -159,10 +160,6 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
        !_ae_create_context( ctx )) {
       return GL_FALSE;
    }
-
-   /* TODO: remove these pointers.
-    */
-   vbo->mat_currval = &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT];
 
    init_legacy_currval( ctx );
    init_generic_currval( ctx );
