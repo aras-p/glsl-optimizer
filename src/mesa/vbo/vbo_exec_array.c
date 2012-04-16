@@ -644,10 +644,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {
-      return;
-   }
-
    if (0)
       check_draw_arrays_data(ctx, start, count);
 
@@ -676,10 +672,6 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
       return;
 
    FLUSH_CURRENT( ctx, 0 );
-
-   if (!_mesa_valid_to_render(ctx, "glDrawArraysInstanced")) {
-      return;
-   }
 
    if (0)
       check_draw_arrays_data(ctx, start, count);
@@ -769,10 +761,6 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    struct _mesa_prim prim[1];
 
    FLUSH_CURRENT( ctx, 0 );
-
-   if (!_mesa_valid_to_render(ctx, "glDraw[Range]Elements")) {
-      return;
-   }
 
    vbo_bind_arrays(ctx);
 
@@ -1050,10 +1038,6 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (!_mesa_valid_to_render(ctx, "glMultiDrawElements")) {
-      return;
-   }
-
    prim = calloc(1, primcount * sizeof(*prim));
    if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
@@ -1246,10 +1230,6 @@ vbo_exec_DrawTransformFeedback(GLenum mode, GLuint name)
    }
 
    FLUSH_CURRENT(ctx, 0);
-
-   if (!_mesa_valid_to_render(ctx, "glDrawTransformFeedback")) {
-      return;
-   }
 
    vbo_draw_transform_feedback(ctx, mode, obj, 1);
 }
