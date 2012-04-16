@@ -49,7 +49,7 @@ public:
    variable_entry(ir_variable *var)
    {
       this->var = var;
-      this->whole_array_access = 0;
+      this->split = true;
       this->declaration = false;
       this->components = NULL;
       this->mem_ctx = NULL;
@@ -62,8 +62,8 @@ public:
    ir_variable *var; /* The key: the variable's pointer. */
    unsigned size; /* array length or matrix columns */
 
-   /** Number of times the variable is referenced, including assignments. */
-   unsigned whole_array_access;
+   /** Whether this array should be split or not. */
+   bool split;
 
    bool declaration; /* If the variable had a decl in the instruction stream */
 
@@ -154,12 +154,13 @@ ir_array_reference_visitor::visit(ir_dereference_variable *ir)
 {
    variable_entry *entry = this->get_variable_entry(ir->var);
 
-   /* If we made it to here, then the dereference of this array didn't
-    * have a constant index (see the visit_continue_with_parent
-    * below), so we can't split the variable.
+   /* If we made it to here without seeing an ir_dereference_array,
+    * then the dereference of this array didn't have a constant index
+    * (see the visit_continue_with_parent below), so we can't split
+    * the variable.
     */
    if (entry)
-      entry->whole_array_access++;
+      entry->split = false;
 
    return visit_continue;
 }
@@ -173,8 +174,11 @@ ir_array_reference_visitor::visit_enter(ir_dereference_array *ir)
 
    variable_entry *entry = this->get_variable_entry(deref->var);
 
+   /* If the access to the array has a variable index, we wouldn't
+    * know which split variable this dereference should go to.
+    */
    if (entry && !ir->array_index->as_constant())
-      entry->whole_array_access++;
+      entry->split = false;
 
    return visit_continue_with_parent;
 }
@@ -204,12 +208,12 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
       variable_entry *entry = (variable_entry *)iter.get();
 
       if (debug) {
-	 printf("array %s@%p: decl %d, whole_access %d\n",
+	 printf("array %s@%p: decl %d, split %d\n",
 		entry->var->name, (void *) entry->var, entry->declaration,
-		entry->whole_array_access);
+		entry->split);
       }
 
-      if (!entry->declaration || entry->whole_array_access) {
+      if (!(entry->declaration && entry->split)) {
 	 entry->remove();
       }
    }
