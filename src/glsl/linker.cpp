@@ -2225,20 +2225,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
 
-   if (max_version >= 140) {
-      /* Note that this will change with GL_ARB_separate_shader_objects */
-      if (num_vert_shaders == 0) {
-	 linker_error(prog,
-		      "GLSL %.02f without GL_ARB_compatibility requires a "
-		      "vertex shader", max_version / 100.0);
-      }
-      if (num_frag_shaders == 0) {
-	 linker_error(prog,
-		      "GLSL %.02f without GL_ARB_compatibility requires a "
-		      "fragment shader", max_version / 100.0);
-      }
-   }
-
    prog->Version = max_version;
 
    for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
