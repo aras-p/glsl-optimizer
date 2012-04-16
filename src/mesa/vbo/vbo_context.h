@@ -61,9 +61,8 @@
 struct vbo_context {
    struct gl_client_array currval[VBO_ATTRIB_MAX];
    
-   /* These point into the above.  TODO: remove. 
+   /* These point into the above.  TODO: remove.
     */
-   struct gl_client_array *legacy_currval;
    struct gl_client_array *generic_currval;
    struct gl_client_array *mat_currval;
 

@@ -420,7 +420,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
 	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
-	    inputs[i] = &vbo->legacy_currval[i];
+	    inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
             const_inputs |= VERT_BIT(i);
          }
       }
@@ -459,7 +459,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 else if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
 	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
-	    inputs[i] = &vbo->legacy_currval[i];
+	    inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
             const_inputs |= VERT_BIT_FF(i);
          }
       }
@@ -488,7 +488,7 @@ recalculate_input_bindings(struct gl_context *ctx)
       else if (vertexAttrib[VERT_ATTRIB_POS].Enabled)
 	 inputs[0] = &vertexAttrib[VERT_ATTRIB_POS];
       else {
-	 inputs[0] = &vbo->legacy_currval[0];
+	 inputs[0] = &vbo->currval[VBO_ATTRIB_POS];
          const_inputs |= VERT_BIT_POS;
       }
 
@@ -496,7 +496,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
 	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
 	 else {
-	    inputs[i] = &vbo->legacy_currval[i];
+	    inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
             const_inputs |= VERT_BIT_FF(i);
          }
       }

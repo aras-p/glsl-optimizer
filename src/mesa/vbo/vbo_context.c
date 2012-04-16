@@ -47,7 +47,7 @@ static GLuint check_size( const GLfloat *attr )
 static void init_legacy_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
-   struct gl_client_array *arrays = vbo->legacy_currval;
+   struct gl_client_array *arrays = &vbo->currval[VBO_ATTRIB_POS];
    GLuint i;
 
    memset(arrays, 0, sizeof(*arrays) * VERT_ATTRIB_FF_MAX);
@@ -162,7 +162,6 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
 
    /* TODO: remove these pointers.
     */
-   vbo->legacy_currval = &vbo->currval[VBO_ATTRIB_POS];
    vbo->generic_currval = &vbo->currval[VBO_ATTRIB_GENERIC0];
    vbo->mat_currval = &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT];
 

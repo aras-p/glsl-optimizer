@@ -147,7 +147,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
    switch (get_program_mode(ctx)) {
    case VP_NONE:
       for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
-         save->inputs[attr] = &vbo->legacy_currval[attr];
+         save->inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
          save->inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->mat_currval[attr];
@@ -161,7 +161,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
        * nor attributes greater than VERT_ATTRIB_TEX7.  
        */
       for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
-         save->inputs[attr] = &vbo->legacy_currval[attr];
+         save->inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
       for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
          save->inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->generic_currval[attr];

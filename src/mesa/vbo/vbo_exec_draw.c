@@ -174,7 +174,7 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
    switch (get_program_mode(exec->ctx)) {
    case VP_NONE:
       for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
-         exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
+         exec->vtx.inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
          ASSERT(VERT_ATTRIB_GENERIC(attr) < Elements(exec->vtx.inputs));
@@ -189,7 +189,7 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
        * nor attributes greater than VERT_ATTRIB_TEX7.  
        */
       for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
-         exec->vtx.inputs[attr] = &vbo->legacy_currval[attr];
+         exec->vtx.inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
       for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
          ASSERT(VERT_ATTRIB_GENERIC(attr) < Elements(exec->vtx.inputs));
