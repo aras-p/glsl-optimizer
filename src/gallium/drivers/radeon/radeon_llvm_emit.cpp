@@ -68,12 +68,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
                  unsigned * byte_count, const char * gpu_family,
                  unsigned dump) {
 
-#if HAVE_LLVM > 0x0300
    Triple AMDGPUTriple(sys::getDefaultTargetTriple());
-#else
-   Triple AMDGPUTriple(sys::getHostTriple());
-#endif
-
 
 #ifdef EXTERNAL_LLVM
    /* XXX: Can we just initialize the AMDGPU target here? */
@@ -100,9 +95,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
 
    Module * mod = unwrap(M);
    std::string FS = gpu_family;
-#if HAVE_LLVM > 0x0300
    TargetOptions TO;
-#endif
 
    std::auto_ptr<TargetMachine> tm(AMDGPUTarget->createTargetMachine(
                      AMDGPUTriple.getTriple(), gpu_family, "" /* Features */,
@@ -125,9 +118,6 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
 
    /* Optional extra paramater true / false to disable verify */
    if (AMDGPUTargetMachine.addPassesToEmitFile(PM, out, TargetMachine::CGFT_AssemblyFile,
-#if HAVE_LLVM <= 0x300
-                                               CodeGenOpt::Default,
-#endif
                                                true)){
       fprintf(stderr, "AddingPasses failed.\n");
       return 1;
