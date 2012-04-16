@@ -23,7 +23,7 @@
  * Authors: Tom Stellard <thomas.stellard@amd.com>
  *
  */
-#include "radeon_llvm.h"
+#include "radeon_llvm_emit.h"
 
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>

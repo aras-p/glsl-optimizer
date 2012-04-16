@@ -1,5 +1,5 @@
 
-#include "radeon_llvm.h"
+#include "radeon_llvm_emit.h"
 
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/IRReader.h>

@@ -4,6 +4,7 @@
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "radeon_llvm.h"
+#include "radeon_llvm_emit.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LLVM_GPU_H
-#define LLVM_GPU_H
+#ifndef RADEON_LLVM_H
+#define RADEON_LLVM_H
 
 #include <llvm-c/Core.h>
 #include "gallivm/lp_bld_init.h"
@@ -35,10 +35,6 @@
 #define RADEON_LLVM_MAX_OUTPUTS 16 * 4
 #define RADEON_LLVM_MAX_BRANCH_DEPTH 16
 #define RADEON_LLVM_MAX_LOOP_DEPTH 16
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct radeon_llvm_branch {
 	LLVMBasicBlockRef endif_block;
@@ -109,13 +105,6 @@ struct radeon_llvm_context {
 	struct gallivm_state gallivm;
 };
 
-unsigned  radeon_llvm_compile(
-	LLVMModuleRef M,
-	unsigned char ** bytes,
-	unsigned * byte_count,
-	const char * gpu_family,
-	unsigned dump);
-
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx);
 
 void radeon_llvm_dispose(struct radeon_llvm_context * ctx);
@@ -130,7 +119,4 @@ unsigned radeon_llvm_reg_index_soa(unsigned index, unsigned chan);
 
 void radeon_llvm_finalize_module(struct radeon_llvm_context * ctx);
 
-#ifdef __cplusplus
-}
-#endif
-#endif /* LLVM_GPU_H */
+#endif /* RADEON_LLVM_H */
