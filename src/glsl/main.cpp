@@ -238,7 +238,7 @@ main(int argc, char **argv)
 	 usage_fail(argv[0]);
 
       const char *const ext = & argv[optind][len - 5];
-      if (strncmp(".vert", ext, 5) == 0)
+      if (strncmp(".vert", ext, 5) == 0 || strncmp(".glsl", ext, 5) == 0)
 	 shader->Type = GL_VERTEX_SHADER;
       else if (strncmp(".geom", ext, 5) == 0)
 	 shader->Type = GL_GEOMETRY_SHADER;
