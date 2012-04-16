@@ -217,7 +217,10 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
    return !variable_list.is_empty();
 }
 
-/** This is the class that does the actual work of splitting. */
+/**
+ * This class rewrites the dereferences of arrays that have been split
+ * to use the newly created ir_variables for each component.
+ */
 class ir_array_splitting_visitor : public ir_rvalue_visitor {
 public:
    ir_array_splitting_visitor(exec_list *vars)
