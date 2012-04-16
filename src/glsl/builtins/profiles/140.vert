@@ -918,14 +918,14 @@ uvec4 textureProjGradOffset(usampler2DRect s, vec3 P, vec2 dx, vec2 dy, ivec2 of
 ivec4 textureProjGradOffset(isampler2DRect s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
 uvec4 textureProjGradOffset(usampler2DRect s, vec4 P, vec2 dx, vec2 dy, ivec2 off);
 
-float textureProjGradOffset(sampler2DRectShadow s, vec4 P, vec2 dx, vec2 dy, vec2 o);
+float textureProjGradOffset(sampler2DRectShadow s, vec4 P, vec2 dx, vec2 dy, ivec2 o);
 
  vec4 textureProjGradOffset( sampler3D s, vec4 P, vec3 dx, vec3 dy, ivec3 off);
 ivec4 textureProjGradOffset(isampler3D s, vec4 P, vec3 dx, vec3 dy, ivec3 off);
 uvec4 textureProjGradOffset(usampler3D s, vec4 P, vec3 dx, vec3 dy, ivec3 off);
 
 float textureProjGradOffset(sampler1DShadow s, vec4 P, float dx, float dy, int o);
-float textureProjGradOffset(sampler2DShadow s, vec4 P, vec2 dx, vec2 dy, vec2 o);
+float textureProjGradOffset(sampler2DShadow s, vec4 P, vec2 dx, vec2 dy, ivec2 o);
 
 /*
  * The following texture functions are deprecated:
