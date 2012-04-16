@@ -164,7 +164,8 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
          save->inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
       for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
-         save->inputs[VERT_ATTRIB_GENERIC(attr)] = &vbo->generic_currval[attr];
+         save->inputs[VERT_ATTRIB_GENERIC(attr)] =
+            &vbo->currval[VBO_ATTRIB_GENERIC0+attr];
       }
       map = vbo->map_vp_arb;
 

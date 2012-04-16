@@ -77,7 +77,7 @@ static void init_legacy_currval(struct gl_context *ctx)
 static void init_generic_currval(struct gl_context *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
-   struct gl_client_array *arrays = vbo->generic_currval;
+   struct gl_client_array *arrays = &vbo->currval[VBO_ATTRIB_GENERIC0];
    GLuint i;
 
    memset(arrays, 0, sizeof(*arrays) * VERT_ATTRIB_GENERIC_MAX);
@@ -162,7 +162,6 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
 
    /* TODO: remove these pointers.
     */
-   vbo->generic_currval = &vbo->currval[VBO_ATTRIB_GENERIC0];
    vbo->mat_currval = &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT];
 
    init_legacy_currval( ctx );

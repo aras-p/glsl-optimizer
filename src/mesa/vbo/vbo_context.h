@@ -63,7 +63,6 @@ struct vbo_context {
    
    /* These point into the above.  TODO: remove.
     */
-   struct gl_client_array *generic_currval;
    struct gl_client_array *mat_currval;
 
    /** Map VERT_ATTRIB_x to VBO_ATTRIB_y */

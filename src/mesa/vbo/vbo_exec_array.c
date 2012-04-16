@@ -434,7 +434,7 @@ recalculate_input_bindings(struct gl_context *ctx)
        * slots:
        */
       for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
          const_inputs |= VERT_BIT_GENERIC(i);
       }
 
@@ -468,7 +468,7 @@ recalculate_input_bindings(struct gl_context *ctx)
        * slots:
        */
       for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
          const_inputs |= VERT_BIT_GENERIC(i);
       }
 
@@ -505,7 +505,7 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 if (vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
 	    inputs[VERT_ATTRIB_GENERIC(i)] = &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
 	 else {
-	    inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->generic_currval[i];
+	    inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
             const_inputs |= VERT_BIT_GENERIC(i);
          }
       }
