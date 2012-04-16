@@ -529,12 +529,25 @@ recalculate_input_bindings(struct gl_context *ctx)
 void
 vbo_bind_arrays(struct gl_context *ctx)
 {
-   if (!ctx->Array.RebindArrays) {
-      return;
-   }
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
 
-   recalculate_input_bindings(ctx);
-   ctx->Array.RebindArrays = GL_FALSE;
+   vbo_draw_method(exec, DRAW_ARRAYS);
+
+   if (exec->array.recalculate_inputs) {
+      recalculate_input_bindings(ctx);
+
+      /* Again... because we may have changed the bitmask of per-vertex varying
+       * attributes.  If we regenerate the fixed-function vertex program now
+       * we may be able to prune down the number of vertex attributes which we
+       * need in the shader.
+       */
+      if (ctx->NewState) {
+         _mesa_update_state(ctx);
+      }
+
+      exec->array.recalculate_inputs = GL_FALSE;
+   }
 }
 
 
@@ -553,16 +566,6 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    struct _mesa_prim prim[2];
 
    vbo_bind_arrays(ctx);
-
-   vbo_draw_method(exec, DRAW_ARRAYS);
-
-   /* Again... because we may have changed the bitmask of per-vertex varying
-    * attributes.  If we regenerate the fixed-function vertex program now
-    * we may be able to prune down the number of vertex attributes which we
-    * need in the shader.
-    */
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    /* init most fields to zero */
    memset(prim, 0, sizeof(prim));
@@ -771,13 +774,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
       return;
    }
 
-   vbo_bind_arrays( ctx );
-
-   vbo_draw_method(exec, DRAW_ARRAYS);
-
-   /* check for dirty state again */
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
+   vbo_bind_arrays(ctx);
 
    ib.count = count;
    ib.type = type;
@@ -1063,15 +1060,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
       return;
    }
 
-   /* Decide if we can do this all as one set of primitives sharing the
-    * same index buffer, or if we have to reset the index pointer per
-    * primitive.
-    */
-   vbo_bind_arrays( ctx );
-
-   /* check for dirty state again */
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
+   vbo_bind_arrays(ctx);
 
    min_index_ptr = (uintptr_t)indices[0];
    max_index_ptr = 0;
@@ -1216,14 +1205,6 @@ vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct _mesa_prim prim[2];
 
    vbo_bind_arrays(ctx);
-
-   /* Again... because we may have changed the bitmask of per-vertex varying
-    * attributes.  If we regenerate the fixed-function vertex program now
-    * we may be able to prune down the number of vertex attributes which we
-    * need in the shader.
-    */
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    /* init most fields to zero */
    memset(prim, 0, sizeof(prim));

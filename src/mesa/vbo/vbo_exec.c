@@ -85,6 +85,10 @@ void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
+   if (new_state & (_NEW_PROGRAM|_NEW_ARRAY)) {
+      exec->array.recalculate_inputs = GL_TRUE;
+   }
+
    if (new_state & (_NEW_PROGRAM|_NEW_EVAL))
       exec->eval.recalculate_maps = 1;
 

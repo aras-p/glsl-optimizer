@@ -141,6 +141,7 @@ struct vbo_exec_context
        * programs:
        */
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
+      GLboolean recalculate_inputs;
    } array;
 
    /* Which flags to set in vbo_exec_BeginVertices() */
