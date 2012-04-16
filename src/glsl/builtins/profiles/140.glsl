@@ -508,7 +508,7 @@ int  textureSize( samplerBuffer sampler);
 int  textureSize(isamplerBuffer sampler);
 int  textureSize(usamplerBuffer sampler);
 
-/* texture */
+/* texture - no bias */
  vec4 texture( sampler1D sampler, float P);
 ivec4 texture(isampler1D sampler, float P);
 uvec4 texture(usampler1D sampler, float P);
@@ -546,7 +546,7 @@ uvec4 texture(usampler2DRect sampler, vec2 P);
 
 float texture(sampler2DRectShadow sampler, vec3 P);
 
-/* textureProj */
+/* textureProj - no bias */
  vec4 textureProj( sampler1D sampler, vec2 P);
 ivec4 textureProj(isampler1D sampler, vec2 P);
 uvec4 textureProj(usampler1D sampler, vec2 P);
@@ -607,7 +607,7 @@ uvec4 textureLod(usampler2DArray sampler, vec3 P, float lod);
 
 float textureLod(sampler1DArrayShadow sampler, vec3 P, float lod);
 
-/* textureOffset */
+/* textureOffset - no bias */
  vec4 textureOffset( sampler1D sampler, float P, int offset);
 ivec4 textureOffset(isampler1D sampler, float P, int offset);
 uvec4 textureOffset(usampler1D sampler, float P, int offset);
@@ -693,7 +693,7 @@ uvec4 texelFetchOffset(usampler1DArray sampler, ivec2 P, int lod, int offset);
 ivec4 texelFetchOffset(isampler2DArray sampler, ivec3 P, int lod, ivec2 offset);
 uvec4 texelFetchOffset(usampler2DArray sampler, ivec3 P, int lod, ivec2 offset);
 
-/* textureProjOffset */
+/* textureProjOffset - no bias */
  vec4 textureProjOffset( sampler1D sampler, vec2 P, int offset);
 ivec4 textureProjOffset(isampler1D sampler, vec2 P, int offset);
 uvec4 textureProjOffset(usampler1D sampler, vec2 P, int offset);
@@ -960,10 +960,6 @@ vec4 shadow1DLod    (sampler1DShadow sampler, vec3 coord, float lod);
 vec4 shadow2DLod    (sampler2DShadow sampler, vec3 coord, float lod);
 vec4 shadow1DProjLod(sampler1DShadow sampler, vec4 coord, float lod);
 vec4 shadow2DProjLod(sampler2DShadow sampler, vec4 coord, float lod);
-
-/*
- * 8.8 - Fragment Processing Functions (none in vertex shader)
- */
 
 /*
  * 8.9 - Noise Functions
