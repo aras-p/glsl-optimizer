@@ -3257,6 +3257,17 @@ typedef enum
    API_OPENGLES2
 } gl_api;
 
+/**
+ * Driver-specific state flags.
+ *
+ * These are or'd with gl_context::NewDriverState to notify a driver about
+ * a state change. The driver sets the flags at context creation and
+ * the meaning of the bits set is opaque to core Mesa.
+ */
+struct gl_driver_flags
+{
+   GLbitfield NewArray;             /**< Vertex array state */
+};
 
 /**
  * Mesa rendering context.
@@ -3416,6 +3427,9 @@ struct gl_context
 
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
+   GLbitfield NewDriverState;/**< bitwise-or of flags from DriverFlags */
+
+   struct gl_driver_flags DriverFlags;
 
    GLboolean ViewportInitialized;  /**< has viewport size been initialized? */
 

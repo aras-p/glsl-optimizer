@@ -50,6 +50,7 @@ struct u_vbuf;
 #define ST_NEW_FRAMEBUFFER             (1 << 3)
 #define ST_NEW_EDGEFLAGS_DATA          (1 << 4)
 #define ST_NEW_GEOMETRY_PROGRAM        (1 << 5)
+#define ST_NEW_VERTEX_ARRAYS           (1 << 6)
 
 
 struct st_state_flags {

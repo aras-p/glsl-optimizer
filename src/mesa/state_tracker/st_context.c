@@ -203,6 +203,10 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    return st;
 }
 
+static void st_init_driver_flags(struct gl_driver_flags *f)
+{
+   f->NewArray = ST_NEW_VERTEX_ARRAYS;
+}
 
 struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
                                      const struct gl_config *visual,
@@ -224,6 +228,8 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    if (!ctx) {
       return NULL;
    }
+
+   st_init_driver_flags(&ctx->DriverFlags);
 
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.

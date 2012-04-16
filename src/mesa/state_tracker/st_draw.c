@@ -981,12 +981,18 @@ st_draw_vbo(struct gl_context *ctx,
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    unsigned i, num_instances = 1;
    unsigned max_index_plus_base;
-   GLboolean new_array =
-      st->dirty.st &&
-      (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
+   GLboolean new_array;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
+
+   /* Get Mesa driver state. */
+   st->dirty.st |= ctx->NewDriverState;
+   ctx->NewDriverState = 0;
+
+   new_array =
+      (st->dirty.st & (ST_NEW_VERTEX_ARRAYS | ST_NEW_VERTEX_PROGRAM)) ||
+      (st->dirty.mesa & (_NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
 
    if (ib) {
       int max_base_vertex = 0;

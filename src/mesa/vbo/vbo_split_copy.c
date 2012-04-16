@@ -192,6 +192,7 @@ flush( struct copy_context *copy )
 #endif
 
    ctx->Array._DrawArrays = copy->dstarray_ptr;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
    copy->draw( ctx,
 	       copy->dstprim,
@@ -203,6 +204,7 @@ flush( struct copy_context *copy )
 	       NULL );
 
    ctx->Array._DrawArrays = saved_arrays;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
    /* Reset all pointers: 
     */

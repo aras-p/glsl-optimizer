@@ -228,6 +228,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
    /* Re-issue the draw call.
     */
    ctx->Array._DrawArrays = tmp_array_pointers;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
    draw( ctx, 
 	 prim,
@@ -239,6 +240,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
 	 NULL );
 
    ctx->Array._DrawArrays = saved_arrays;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
    
    if (tmp_indices)
       free(tmp_indices);

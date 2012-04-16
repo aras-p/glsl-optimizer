@@ -506,7 +506,7 @@ recalculate_input_bindings(struct gl_context *ctx)
    }
 
    _mesa_set_varying_vp_inputs( ctx, VERT_BIT_ALL & (~const_inputs) );
-   ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 }
 
 

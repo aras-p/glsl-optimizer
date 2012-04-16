@@ -146,7 +146,7 @@ vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
          ASSERT(0);
       }
 
-      ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
+      ctx->NewDriverState |= ctx->DriverFlags.NewArray;
       vbo->last_draw_method = method;
    }
 }

@@ -85,6 +85,7 @@ static void flush_vertex( struct split_context *split )
    assert(split->max_index >= split->min_index);
 
    ctx->Array._DrawArrays = split->array;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
    split->draw(ctx,
 	       split->dstprim,
@@ -96,6 +97,7 @@ static void flush_vertex( struct split_context *split )
 	       NULL);
 
    ctx->Array._DrawArrays = saved_arrays;
+   ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
    split->dstprim_nr = 0;
    split->min_index = ~0;
