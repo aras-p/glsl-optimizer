@@ -22,7 +22,7 @@ doxygen:
 	cd doxygen && $(MAKE)
 
 check:
-	cd src/glsl/tests/ && ./optimization-test
+	make -C src/glsl/tests check
 	make -C tests check
 
 clean:

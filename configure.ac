@@ -2005,6 +2005,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
 		src/egl/wayland/wayland-drm/Makefile
+		src/glsl/tests/Makefile
 		src/glx/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/gtest/Makefile
