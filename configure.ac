@@ -1805,7 +1805,7 @@ if test "x$enable_gallium_llvm" = xyes; then
 	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags`
 	LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
-	DEFINES="$DEFINES -D__STDC_CONSTANT_MACROS"
+	DEFINES="${DEFINES} -DHAVE_LLVM=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/0x0\10\2/g'`"
 	MESA_LLVM=1
     else
 	MESA_LLVM=0
