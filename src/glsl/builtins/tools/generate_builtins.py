@@ -113,7 +113,7 @@ def write_profiles():
 
 def get_profile_list():
     profile_files = []
-    for extension in ['frag', 'vert']:
+    for extension in ['glsl', 'frag', 'vert']:
         path_glob = path.join(
             path.join(builtins_dir, 'profiles'), '*.' + extension)
         profile_files.extend(glob(path_glob))
@@ -260,8 +260,10 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
             check = 'state->target == vertex_shader && '
         elif profile.endswith('_frag'):
             check = 'state->target == fragment_shader && '
+        else:
+            check = ''
 
-        version = re.sub(r'_(vert|frag)$', '', profile)
+        version = re.sub(r'_(glsl|vert|frag)$', '', profile)
         if version.isdigit():
             check += 'state->language_version == ' + version
         else: # an extension name
