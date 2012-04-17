@@ -2026,13 +2026,12 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 				}
 				break;
 			case EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX:
-				if (bc->chip_class == CAYMAN) {
-					LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
-						r = r600_bytecode_vtx_build(bc, vtx, addr);
-						if (r)
-							return r;
-						addr += 4;
-					}
+				LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+					assert(bc->chip_class >= EVERGREEN);
+					r = r600_bytecode_vtx_build(bc, vtx, addr);
+					if (r)
+						return r;
+					addr += 4;
 				}
 				LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
 					r = r600_bytecode_tex_build(bc, tex, addr);
