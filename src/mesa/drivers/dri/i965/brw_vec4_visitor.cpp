@@ -1838,7 +1838,7 @@ vec4_visitor::visit(ir_texture *ir)
    inst->dst = dst_reg(this, ir->type);
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 
-   if (ir->offset != NULL)
+   if (ir->offset != NULL && !(intel->gen >= 7 && ir->op == ir_txf))
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
    /* MRF for the first parameter */
@@ -1859,8 +1859,28 @@ vec4_visitor::visit(ir_texture *ir)
 	 zero_mask |= (1 << i);
 
       ir->coordinate->accept(this);
-      emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
-	       this->result));
+      if (ir->offset && intel->gen >= 7 && ir->op == ir_txf) {
+	 /* It appears that the ld instruction used for txf does its
+	  * address bounds check before adding in the offset.  To work
+	  * around this, just add the integer offset to the integer
+	  * texel coordinate, and don't put the offset in the header.
+	  */
+	 ir_constant *offset = ir->offset->as_constant();
+	 assert(offset);
+
+	 for (int j = 0; j < ir->coordinate->type->vector_elements; j++) {
+	    src_reg src = this->result;
+	    src.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(src.swizzle, j),
+				       BRW_GET_SWZ(src.swizzle, j),
+				       BRW_GET_SWZ(src.swizzle, j),
+				       BRW_GET_SWZ(src.swizzle, j));
+	    emit(ADD(dst_reg(MRF, param_base, ir->coordinate->type, 1 << j),
+		     src, offset->value.i[j]));
+	 }
+      } else {
+	 emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
+		  this->result));
+      }
       emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
 	       src_reg(0)));
       /* Load the shadow comparitor */
