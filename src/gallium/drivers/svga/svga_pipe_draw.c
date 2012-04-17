@@ -309,7 +309,7 @@ retry_draw_arrays( struct svga_context *svga,
    if (ret != PIPE_OK)
       goto retry;
 
-   return 0;
+   return PIPE_OK;
 
 retry:
    if (ret == PIPE_ERROR_OUT_OF_MEMORY && do_retry) 
