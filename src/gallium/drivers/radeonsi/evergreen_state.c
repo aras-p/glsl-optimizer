@@ -1246,8 +1246,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	height = texture->height0;
 	depth = texture->depth0;
 
-	pitch = align(tmp->pitch_in_blocks[0] *
-		      util_format_get_blockwidth(state->format), 8);
+	pitch = tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
@@ -1273,8 +1272,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
 			  S_008F1C_TILING_INDEX(8) | /* XXX */
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
-	view->state[4] = (S_008F20_DEPTH(depth - 1) |
-			  S_008F20_PITCH((pitch / 8) - 1));
+	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));
 	view->state[5] = (S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
 			  S_008F24_LAST_ARRAY(state->u.tex.last_layer));
 	view->state[6] = 0;
