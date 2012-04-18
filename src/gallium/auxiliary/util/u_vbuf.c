@@ -52,9 +52,21 @@ struct u_vbuf_elements {
    /* This might mean two things:
     * - src_format != native_format, as discussed above.
     * - src_offset % 4 != 0 (if the caps don't allow such an offset). */
-   boolean incompatible_layout;
-   /* Per-element flags. */
-   boolean incompatible_layout_elem[PIPE_MAX_ATTRIBS];
+   uint32_t incompatible_elem_mask; /* each bit describes a corresp. attrib  */
+   /* Which buffer has at least one vertex element referencing it
+    * incompatible. */
+   uint32_t incompatible_vb_mask_any;
+   /* Which buffer has all vertex elements referencing it incompatible. */
+   uint32_t incompatible_vb_mask_all;
+   /* Which buffer has at least one vertex element referencing it
+    * compatible. */
+   uint32_t compatible_vb_mask_any;
+   /* Which buffer has all vertex elements referencing it compatible. */
+   uint32_t compatible_vb_mask_all;
+
+   /* Which buffer has at least one vertex element referencing it
+    * non-instanced. */
+   uint32_t noninstance_vb_mask_any;
 
    void *driver_cso;
 };
@@ -104,12 +116,12 @@ struct u_vbuf {
     * stored in. */
    unsigned fallback_vbs[VB_NUM];
 
-   /* Whether there is any user buffer. */
-   boolean any_user_vbs;
-   /* Whether there is a buffer with a non-native layout. */
-   boolean incompatible_vb_layout;
-   /* Per-buffer flags. */
-   boolean incompatible_vb[PIPE_MAX_ATTRIBS];
+   /* Which buffer is a user buffer. */
+   uint32_t user_vb_mask; /* each bit describes a corresp. buffer */
+   /* Which buffer is incompatible (unaligned). */
+   uint32_t incompatible_vb_mask; /* each bit describes a corresp. buffer */
+   /* Which buffer has a non-zero stride. */
+   uint32_t nonzero_stride_vb_mask; /* each bit describes a corresp. buffer */
 };
 
 static void *
@@ -367,10 +379,10 @@ u_vbuf_translate_find_free_vb_slots(struct u_vbuf *mgr,
 
    /* Mark used vertex buffers as... used. */
    for (i = 0; i < nr; i++) {
-      if (!mgr->ve->incompatible_layout_elem[i]) {
+      if (!(mgr->ve->incompatible_elem_mask & (1 << i))) {
          unsigned index = mgr->ve->ve[i].vertex_buffer_index;
 
-         if (!mgr->incompatible_vb[index]) {
+         if (!(mgr->incompatible_vb_mask & (1 << index))) {
             used_vb[index] = TRUE;
          }
       }
@@ -436,21 +448,21 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
       unsigned vb_index = mgr->ve->ve[i].vertex_buffer_index;
 
       if (!mgr->vertex_buffer[vb_index].stride) {
-         if (!mgr->ve->incompatible_layout_elem[i] &&
-             !mgr->incompatible_vb[vb_index]) {
+         if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
+             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_CONST] |= 1 << vb_index;
       } else if (mgr->ve->ve[i].instance_divisor) {
-         if (!mgr->ve->incompatible_layout_elem[i] &&
-             !mgr->incompatible_vb[vb_index]) {
+         if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
+             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_INSTANCE] |= 1 << vb_index;
       } else {
          if (!unroll_indices &&
-             !mgr->ve->incompatible_layout_elem[i] &&
-             !mgr->incompatible_vb[vb_index]) {
+             !(mgr->ve->incompatible_elem_mask & (1 << i)) &&
+             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_VERTEX] |= 1 << vb_index;
@@ -471,8 +483,8 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
       unsigned bit, vb_index = mgr->ve->ve[i].vertex_buffer_index;
       bit = 1 << vb_index;
 
-      if (!mgr->ve->incompatible_layout_elem[i] &&
-          !mgr->incompatible_vb[vb_index] &&
+      if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
+          !(mgr->incompatible_vb_mask & (1 << vb_index)) &&
           (!unroll_indices || !(mask[VB_VERTEX] & bit))) {
          continue;
       }
@@ -580,6 +592,7 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
    unsigned i;
    struct pipe_vertex_element driver_attribs[PIPE_MAX_ATTRIBS];
    struct u_vbuf_elements *ve = CALLOC_STRUCT(u_vbuf_elements);
+   uint32_t used_buffers = 0;
 
    ve->count = count;
 
@@ -592,6 +605,12 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
       enum pipe_format format = ve->ve[i].src_format;
 
       ve->src_format_size[i] = util_format_get_blocksize(format);
+
+      used_buffers |= 1 << ve->ve[i].vertex_buffer_index;
+
+      if (!ve->ve[i].instance_divisor) {
+         ve->noninstance_vb_mask_any |= 1 << ve->ve[i].vertex_buffer_index;
+      }
 
       /* Choose a native format.
        * For now we don't care about the alignment, that's going to
@@ -655,14 +674,18 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
       ve->native_format_size[i] =
             util_format_get_blocksize(ve->native_format[i]);
 
-      ve->incompatible_layout_elem[i] =
-            ve->ve[i].src_format != format ||
-            (!mgr->caps.velem_src_offset_unaligned &&
-             ve->ve[i].src_offset % 4 != 0);
-      ve->incompatible_layout =
-            ve->incompatible_layout ||
-            ve->incompatible_layout_elem[i];
+      if (ve->ve[i].src_format != format ||
+          (!mgr->caps.velem_src_offset_unaligned &&
+           ve->ve[i].src_offset % 4 != 0)) {
+         ve->incompatible_elem_mask |= 1 << i;
+         ve->incompatible_vb_mask_any |= 1 << ve->ve[i].vertex_buffer_index;
+      } else {
+         ve->compatible_vb_mask_any |= 1 << ve->ve[i].vertex_buffer_index;
+      }
    }
+
+   ve->compatible_vb_mask_all = ~ve->incompatible_vb_mask_any & used_buffers;
+   ve->incompatible_vb_mask_all = ~ve->compatible_vb_mask_any & used_buffers;
 
    /* Align the formats to the size of DWORD if needed. */
    if (!mgr->caps.velem_src_offset_unaligned) {
@@ -690,9 +713,9 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
 {
    unsigned i;
 
-   mgr->any_user_vbs = FALSE;
-   mgr->incompatible_vb_layout = FALSE;
-   memset(mgr->incompatible_vb, 0, sizeof(mgr->incompatible_vb));
+   mgr->user_vb_mask = 0;
+   mgr->incompatible_vb_mask = 0;
+   mgr->nonzero_stride_vb_mask = 0;
 
    for (i = 0; i < count; i++) {
       const struct pipe_vertex_buffer *vb = &bufs[i];
@@ -704,6 +727,10 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
       real_vb->buffer_offset = orig_vb->buffer_offset = vb->buffer_offset;
       real_vb->stride = orig_vb->stride = vb->stride;
 
+      if (vb->stride) {
+         mgr->nonzero_stride_vb_mask |= 1 << i;
+      }
+
       if (!vb->buffer) {
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
@@ -711,14 +738,13 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
 
       if ((!mgr->caps.buffer_offset_unaligned && vb->buffer_offset % 4 != 0) ||
           (!mgr->caps.buffer_stride_unaligned && vb->stride % 4 != 0)) {
-         mgr->incompatible_vb[i] = TRUE;
-         mgr->incompatible_vb_layout = TRUE;
+         mgr->incompatible_vb_mask |= 1 << i;
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
 
       if (vb->buffer->user_ptr) {
-         mgr->any_user_vbs = TRUE;
+         mgr->user_vb_mask |= 1 << i;
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
@@ -842,67 +868,23 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
 
 static boolean u_vbuf_need_minmax_index(struct u_vbuf *mgr)
 {
-   unsigned i, nr = mgr->ve->count;
-
-   for (i = 0; i < nr; i++) {
-      struct pipe_vertex_buffer *vb;
-      unsigned index;
-
-      /* Per-instance attribs don't need min/max_index. */
-      if (mgr->ve->ve[i].instance_divisor) {
-         continue;
-      }
-
-      index = mgr->ve->ve[i].vertex_buffer_index;
-      vb = &mgr->vertex_buffer[index];
-
-      /* Constant attribs don't need min/max_index. */
-      if (!vb->stride) {
-         continue;
-      }
-
-      /* Per-vertex attribs need min/max_index. */
-      if (vb->buffer->user_ptr ||
-          mgr->ve->incompatible_layout_elem[i] ||
-          mgr->incompatible_vb[index]) {
-         return TRUE;
-      }
-   }
-
-   return FALSE;
+   /* See if there are any per-vertex attribs which will be uploaded or
+    * translated. Use bitmasks to get the info instead of looping over vertex
+    * elements. */
+   return ((mgr->user_vb_mask | mgr->incompatible_vb_mask |
+            mgr->ve->incompatible_vb_mask_any) &
+           mgr->ve->noninstance_vb_mask_any & mgr->nonzero_stride_vb_mask) != 0;
 }
 
 static boolean u_vbuf_mapping_vertex_buffer_blocks(struct u_vbuf *mgr)
 {
-   unsigned i, nr = mgr->ve->count;
-
-   for (i = 0; i < nr; i++) {
-      struct pipe_vertex_buffer *vb;
-      unsigned index;
-
-      /* Per-instance attribs are not per-vertex data. */
-      if (mgr->ve->ve[i].instance_divisor) {
-         continue;
-      }
-
-      index = mgr->ve->ve[i].vertex_buffer_index;
-      vb = &mgr->vertex_buffer[index];
-
-      /* Constant attribs are not per-vertex data. */
-      if (!vb->stride) {
-         continue;
-      }
-
-      /* Return true for the hw buffers which don't need to be translated. */
-      /* XXX we could use some kind of a is-busy query. */
-      if (!vb->buffer->user_ptr &&
-          !mgr->ve->incompatible_layout_elem[i] &&
-          !mgr->incompatible_vb[index]) {
-         return TRUE;
-      }
-   }
-
-   return FALSE;
+   /* Return true if there are hw buffers which don't need to be translated.
+    *
+    * We could query whether each buffer is busy, but that would
+    * be way more costly than this. */
+   return (~mgr->user_vb_mask & ~mgr->incompatible_vb_mask &
+           mgr->ve->compatible_vb_mask_all & mgr->ve->noninstance_vb_mask_any &
+           mgr->nonzero_stride_vb_mask) != 0;
 }
 
 static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
@@ -1012,9 +994,9 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
    boolean unroll_indices = FALSE;
 
    /* Normal draw. No fallback and no user buffers. */
-   if (!mgr->incompatible_vb_layout &&
-       !mgr->ve->incompatible_layout &&
-       !mgr->any_user_vbs) {
+   if (!mgr->incompatible_vb_mask &&
+       !mgr->ve->incompatible_elem_mask &&
+       !mgr->user_vb_mask) {
       /* Set vertex buffers if needed. */
       if (mgr->vertex_buffers_dirty) {
          pipe->set_vertex_buffers(pipe, mgr->nr_real_vertex_buffers,
@@ -1027,22 +1009,18 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      int max_index;
-      boolean index_bounds_valid = FALSE;
+      /* See if anything needs to be done for per-vertex attribs. */
+      if (u_vbuf_need_minmax_index(mgr)) {
+         int max_index;
 
-      if (info->max_index != ~0) {
-         min_index = info->min_index;
-         max_index = info->max_index;
-         index_bounds_valid = TRUE;
-      } else if (u_vbuf_need_minmax_index(mgr)) {
-         u_vbuf_get_minmax_index(mgr->pipe, &mgr->index_buffer, info,
-                                 &min_index, &max_index);
-         index_bounds_valid = TRUE;
-      }
+         if (info->max_index != ~0) {
+            min_index = info->min_index;
+            max_index = info->max_index;
+         } else {
+            u_vbuf_get_minmax_index(mgr->pipe, &mgr->index_buffer, info,
+                                    &min_index, &max_index);
+         }
 
-      /* If the index bounds are valid, it means some upload or translation
-       * of per-vertex attribs will be performed. */
-      if (index_bounds_valid) {
          assert(min_index <= max_index);
 
          start_vertex = min_index + info->index_bias;
@@ -1073,8 +1051,8 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
 
    /* Translate vertices with non-native layouts or formats. */
    if (unroll_indices ||
-       mgr->incompatible_vb_layout ||
-       mgr->ve->incompatible_layout) {
+       mgr->incompatible_vb_mask ||
+       mgr->ve->incompatible_elem_mask) {
       /* XXX check the return value */
       u_vbuf_translate_begin(mgr, start_vertex, num_vertices,
                              info->start_instance, info->instance_count,
@@ -1083,7 +1061,7 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
    }
 
    /* Upload user buffers. */
-   if (mgr->any_user_vbs) {
+   if (mgr->user_vb_mask) {
       u_vbuf_upload_buffers(mgr, start_vertex, num_vertices,
                             info->start_instance, info->instance_count);
    }
