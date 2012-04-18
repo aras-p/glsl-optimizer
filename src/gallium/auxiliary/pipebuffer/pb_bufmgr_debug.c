@@ -210,7 +210,8 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
       if(underflow || overflow)
          debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
 
-      debug_assert(!underflow && !overflow);
+      debug_assert(!underflow);
+      debug_assert(!overflow);
 
       /* re-fill if not aborted */
       if(underflow)
