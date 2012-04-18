@@ -407,6 +407,8 @@ ir_reader::read_declaration(s_expression *expr)
 	 var->mode = ir_var_out;
       } else if (strcmp(qualifier->value(), "inout") == 0) {
 	 var->mode = ir_var_inout;
+      } else if (strcmp(qualifier->value(), "temporary") == 0) {
+	 var->mode = ir_var_temporary;
       } else if (strcmp(qualifier->value(), "smooth") == 0) {
 	 var->interpolation = INTERP_QUALIFIER_SMOOTH;
       } else if (strcmp(qualifier->value(), "flat") == 0) {
