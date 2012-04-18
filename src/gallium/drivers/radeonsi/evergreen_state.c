@@ -1127,7 +1127,7 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 		border_color_type = 1;
 		break;
 	case 0xFFFFFFFF: /* white */
-		border_color_type = 1;
+		border_color_type = 2;
 		break;
 	default: /* Use border color pointer */
 		border_color_type = 3;
