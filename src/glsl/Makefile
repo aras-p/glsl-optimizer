@@ -165,7 +165,7 @@ glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
 	$(APP_CXX) $(INCLUDES) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
 
-builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
+builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/glsl/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
 	@echo Regenerating builtin_function.cpp...
 	$(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py ./builtin_compiler > builtin_function.cpp || rm -f builtin_function.cpp
 
