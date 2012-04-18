@@ -144,11 +144,15 @@ void u_vbuf_get_caps(struct pipe_screen *screen, struct u_vbuf_caps *caps)
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SSCALED, PIPE_BUFFER,
                                   0, PIPE_BIND_VERTEX_BUFFER);
 
-   caps->fetch_dword_unaligned =
+   caps->buffer_offset_unaligned =
       !screen->get_param(screen,
-                        PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY) &&
+                        PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY);
+
+   caps->buffer_stride_unaligned =
       !screen->get_param(screen,
-                        PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY) &&
+                        PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY);
+
+   caps->velem_src_offset_unaligned =
       !screen->get_param(screen,
                         PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY);
 
@@ -653,14 +657,15 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
 
       ve->incompatible_layout_elem[i] =
             ve->ve[i].src_format != format ||
-            (!mgr->caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
+            (!mgr->caps.velem_src_offset_unaligned &&
+             ve->ve[i].src_offset % 4 != 0);
       ve->incompatible_layout =
             ve->incompatible_layout ||
             ve->incompatible_layout_elem[i];
    }
 
    /* Align the formats to the size of DWORD if needed. */
-   if (!mgr->caps.fetch_dword_unaligned) {
+   if (!mgr->caps.velem_src_offset_unaligned) {
       for (i = 0; i < count; i++) {
          ve->native_format_size[i] = align(ve->native_format_size[i], 4);
       }
@@ -704,8 +709,8 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
          continue;
       }
 
-      if (!mgr->caps.fetch_dword_unaligned &&
-          (vb->stride % 4 != 0 || vb->buffer_offset % 4 != 0)) {
+      if ((!mgr->caps.buffer_offset_unaligned && vb->buffer_offset % 4 != 0) ||
+          (!mgr->caps.buffer_stride_unaligned && vb->stride % 4 != 0)) {
          mgr->incompatible_vb[i] = TRUE;
          mgr->incompatible_vb_layout = TRUE;
          pipe_resource_reference(&real_vb->buffer, NULL);

@@ -119,7 +119,9 @@ static void st_init_vbuf(struct st_context *st)
    u_vbuf_get_caps(st->pipe->screen, &caps);
 
    /* Create u_vbuf if there is anything unsupported. */
-   if (!caps.fetch_dword_unaligned ||
+   if (!caps.buffer_offset_unaligned ||
+       !caps.buffer_stride_unaligned ||
+       !caps.velem_src_offset_unaligned ||
        !caps.format_fixed32 ||
        !caps.format_float16 ||
        !caps.format_float64 ||

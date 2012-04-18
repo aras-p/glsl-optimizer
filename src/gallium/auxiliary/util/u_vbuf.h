@@ -49,9 +49,11 @@ struct u_vbuf_caps {
    unsigned format_norm32:1;     /* PIPE_FORMAT_*32*NORM */
    unsigned format_scaled32:1;   /* PIPE_FORMAT_*32*SCALED */
 
-   /* Whether vertex fetches don't have to be dword-aligned. */
+   /* Whether vertex fetches don't have to be 4-byte-aligned. */
    /* TRUE if hardware supports it. */
-   unsigned fetch_dword_unaligned:1;
+   unsigned buffer_offset_unaligned:1;
+   unsigned buffer_stride_unaligned:1;
+   unsigned velem_src_offset_unaligned:1;
 
    /* Whether the driver supports user vertex buffers. */
    unsigned user_vertex_buffers:1;
