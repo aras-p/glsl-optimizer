@@ -22,6 +22,15 @@
  */
 #include <getopt.h>
 
+/** @file main.cpp
+ *
+ * This file is the main() routine and scaffolding for producing
+ * builtin_compiler (which doesn't include builtins itself and is used
+ * to generate the profile information for builtin_function.cpp), and
+ * for glsl_compiler (which does include builtins and can be used to
+ * offline compile GLSL code and examine the resulting GLSL IR.
+ */
+
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "ir_optimization.h"
