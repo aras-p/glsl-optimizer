@@ -689,43 +689,36 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
    mgr->incompatible_vb_layout = FALSE;
    memset(mgr->incompatible_vb, 0, sizeof(mgr->incompatible_vb));
 
-   if (!mgr->caps.fetch_dword_unaligned) {
-      /* Check if the strides and offsets are aligned to the size of DWORD. */
-      for (i = 0; i < count; i++) {
-         if (bufs[i].buffer) {
-            if (bufs[i].stride % 4 != 0 ||
-                bufs[i].buffer_offset % 4 != 0) {
-               mgr->incompatible_vb_layout = TRUE;
-               mgr->incompatible_vb[i] = TRUE;
-            }
-         }
-      }
-   }
-
    for (i = 0; i < count; i++) {
       const struct pipe_vertex_buffer *vb = &bufs[i];
+      struct pipe_vertex_buffer *orig_vb = &mgr->vertex_buffer[i];
+      struct pipe_vertex_buffer *real_vb = &mgr->real_vertex_buffer[i];
 
-      pipe_resource_reference(&mgr->vertex_buffer[i].buffer, vb->buffer);
+      pipe_resource_reference(&orig_vb->buffer, vb->buffer);
 
-      mgr->real_vertex_buffer[i].buffer_offset =
-      mgr->vertex_buffer[i].buffer_offset = vb->buffer_offset;
+      real_vb->buffer_offset = orig_vb->buffer_offset = vb->buffer_offset;
+      real_vb->stride = orig_vb->stride = vb->stride;
 
-      mgr->real_vertex_buffer[i].stride =
-      mgr->vertex_buffer[i].stride = vb->stride;
+      if (!vb->buffer) {
+         pipe_resource_reference(&real_vb->buffer, NULL);
+         continue;
+      }
 
-      if (!vb->buffer ||
-          mgr->incompatible_vb[i]) {
-         pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
+      if (!mgr->caps.fetch_dword_unaligned &&
+          (vb->stride % 4 != 0 || vb->buffer_offset % 4 != 0)) {
+         mgr->incompatible_vb[i] = TRUE;
+         mgr->incompatible_vb_layout = TRUE;
+         pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
 
       if (vb->buffer->user_ptr) {
-         pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, NULL);
          mgr->any_user_vbs = TRUE;
+         pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
 
-      pipe_resource_reference(&mgr->real_vertex_buffer[i].buffer, vb->buffer);
+      pipe_resource_reference(&real_vb->buffer, vb->buffer);
    }
 
    for (i = count; i < mgr->nr_vertex_buffers; i++) {
