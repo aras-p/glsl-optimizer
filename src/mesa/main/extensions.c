@@ -200,6 +200,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_env_dot3",                    o(EXT_texture_env_dot3),                    GL,             2000 },
    { "GL_EXT_texture_filter_anisotropic",          o(EXT_texture_filter_anisotropic),          GL | ES1 | ES2, 1999 },
    { "GL_EXT_texture_format_BGRA8888",             o(dummy_true),                                   ES1 | ES2, 2005 },
+   { "GL_EXT_texture_rg",                          o(ARB_texture_rg),                                     ES2, 2011 },
    { "GL_EXT_read_format_bgra",                    o(dummy_true),                                   ES1 | ES2, 2009 },
    { "GL_EXT_texture_integer",                     o(EXT_texture_integer),                     GL,             2006 },
    { "GL_EXT_texture_lod_bias",                    o(dummy_true),                              GL | ES1,       1999 },

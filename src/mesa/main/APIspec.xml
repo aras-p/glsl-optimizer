@@ -4150,6 +4150,7 @@
 	<category name="OES_packed_depth_stencil"/>
 	<category name="OES_standard_derivatives"/>
 	<category name="EXT_texture_format_BGRA8888"/>
+	<category name="EXT_texture_rg"/>
 	<category name="EXT_read_format_bgra"/>
 
 	<category name="EXT_texture_compression_dxt1"/>
