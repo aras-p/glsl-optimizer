@@ -179,7 +179,9 @@ add_blend_test(struct gallivm_state *gallivm,
    LLVMValueRef res_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
+   const enum pipe_format format = PIPE_FORMAT_R8G8B8A8_UNORM;
    const unsigned rt = 0;
+   const unsigned char swizzle[4] = { 0, 1, 2, 3 };
 
    vec_type = lp_build_vec_type(gallivm, type);
 
@@ -205,7 +207,7 @@ add_blend_test(struct gallivm_state *gallivm,
       dst = LLVMBuildLoad(builder, dst_ptr, "dst");
       con = LLVMBuildLoad(builder, const_ptr, "const");
 
-      res = lp_build_blend_aos(gallivm, blend, type, rt, src, dst, con, 3);
+      res = lp_build_blend_aos(gallivm, blend, &format, type, rt, src, dst, con, swizzle);
 
       lp_build_name(res, "res");
 

@@ -549,6 +549,19 @@ util_format_colormask(const struct util_format_description *desc)
 }
 
 
+/**
+ * Checks if color mask covers every channel for the specified format
+ *
+ * @param desc       a format description to check colormask with
+ * @param colormask  a bit mask for channels, matches format of PIPE_MASK_RGBA
+ */
+static INLINE boolean
+util_format_colormask_full(const struct util_format_description *desc, unsigned colormask)
+{
+   return (~colormask & util_format_colormask(desc)) == 0;
+}
+
+
 boolean
 util_format_is_float(enum pipe_format format);
 

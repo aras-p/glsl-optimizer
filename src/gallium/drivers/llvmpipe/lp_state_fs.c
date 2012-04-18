@@ -924,6 +924,7 @@ generate_variant(struct llvmpipe_context *lp,
                  const struct lp_fragment_shader_variant_key *key)
 {
    struct lp_fragment_shader_variant *variant;
+   const struct util_format_description *cbuf0_format_desc;
    boolean fullcolormask;
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
@@ -942,12 +943,8 @@ generate_variant(struct llvmpipe_context *lp,
     */
    fullcolormask = FALSE;
    if (key->nr_cbufs == 1) {
-      const struct util_format_description *format_desc;
-      format_desc = util_format_description(key->cbuf_format[0]);
-      if ((~key->blend.rt[0].colormask &
-           util_format_colormask(format_desc)) == 0) {
-         fullcolormask = TRUE;
-      }
+      cbuf0_format_desc = util_format_description(key->cbuf_format[0]);
+      fullcolormask = util_format_colormask_full(cbuf0_format_desc, key->blend.rt[0].colormask);
    }
 
    variant->opaque =
