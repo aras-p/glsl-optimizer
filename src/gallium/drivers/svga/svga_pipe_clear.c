@@ -115,6 +115,9 @@ svga_clear(struct pipe_context *pipe, unsigned buffers,
       SVGA_DBG(DEBUG_DMA, "clear sid %p\n",
                svga_surface(svga->curr.framebuffer.cbufs[0])->handle);
 
+   /* flush any queued prims (don't want them to appear after the clear!) */
+   svga_hwtnl_flush_retry(svga);
+
    ret = try_clear( svga, buffers, color, depth, stencil );
 
    if (ret == PIPE_ERROR_OUT_OF_MEMORY) {
