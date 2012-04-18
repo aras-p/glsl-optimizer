@@ -155,6 +155,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <type_qualifier> interpolation_qualifier
 %type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
+%type <type_qualifier> uniform_block_layout_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_no_prec
 %type <type_specifier> type_specifier_nonarray
@@ -213,11 +214,14 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> declaration
 %type <node> declaration_statement
 %type <node> jump_statement
+%type <node> uniform_block
 %type <struct_specifier> struct_specifier
 %type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
 %type <declaration> struct_declarator
 %type <declaration> struct_declarator_list
+%type <declarator_list> member_list
+%type <declarator_list> member_declaration
 %type <node> selection_statement
 %type <selection_rest_statement> selection_rest_statement
 %type <node> switch_statement
@@ -800,6 +804,10 @@ declaration:
 	   $3->is_precision_statement = true;
 	   $$ = $3;
 	}
+	| uniform_block
+	{
+	   $$ = $1;
+	}
 	;
 
 function_prototype:
@@ -1157,6 +1165,23 @@ layout_qualifier_id:
 	      }
 	   }
 
+	   /* See also uniform_block_layout_qualifier. */
+	   if (!$$.flags.i && state->ARB_uniform_buffer_object_enable) {
+	      if (strcmp($1, "std140") == 0) {
+	         $$.flags.q.std140 = 1;
+	      } else if (strcmp($1, "shared") == 0) {
+	         $$.flags.q.shared = 1;
+	      } else if (strcmp($1, "column_major") == 0) {
+	         $$.flags.q.column_major = 1;
+	      }
+
+	      if ($$.flags.i && state->ARB_uniform_buffer_object_warn) {
+	         _mesa_glsl_warning(& @1, state,
+	                            "#version 140 / GL_ARB_uniform_buffer_object "
+	                            "layout qualifier `%s' is used\n", $1);
+	      }
+	   }
+
 	   if (!$$.flags.i) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
@@ -1208,6 +1233,38 @@ layout_qualifier_id:
 				 "GL_ARB_explicit_attrib_location layout "
 				 "identifier `%s' used\n", $1);
 	   }
+	}
+	| uniform_block_layout_qualifier
+	{
+	   $$ = $1;
+	   /* Layout qualifiers for ARB_uniform_buffer_object. */
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "layout qualifier `%s' is used\n", $1);
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "layout qualifier `%s' is used\n", $1);
+	   }
+	}
+	;
+
+/* This is a separate language rule because we parse these as tokens
+ * (due to them being reserved keywords) instead of identifiers like
+ * most qualifiers.  See the any_identifier path of
+ * layout_qualifier_id for the others.
+ */
+uniform_block_layout_qualifier:
+	ROW_MAJOR
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.row_major = 1;
+	}
+	| PACKED_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.packed = 1;
 	}
 	;
 
@@ -1860,5 +1917,70 @@ function_definition:
 	   $$->body = $2;
 
 	   state->symbols->pop_scope();
+	}
+	;
+
+/* layout_qualifieropt is packed into this rule */
+uniform_block:
+	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	{
+	   void *ctx = state;
+	   ast_type_qualifier no_qual;
+	   memset(&no_qual, 0, sizeof(no_qual));
+	   $$ = new(ctx) ast_uniform_block(no_qual, $2, $4);
+	}
+	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	{
+	   void *ctx = state;
+	   $$ = new(ctx) ast_uniform_block($1, $3, $5);
+	}
+	;
+
+member_list:
+	member_declaration
+	{
+	   $$ = $1;
+	   $1->link.self_link();
+	}
+	| member_declaration member_list
+	{
+	   $$ = $1;
+	   $2->link.insert_before(& $$->link);
+	}
+	;
+
+/* Specifying "uniform" inside of a uniform block is redundant. */
+uniformopt:
+	/* nothing */
+	| UNIFORM
+	;
+
+member_declaration:
+	layout_qualifier uniformopt type_specifier struct_declarator_list ';'
+	{
+	   void *ctx = state;
+	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+	   type->set_location(yylloc);
+
+	   type->qualifier = $1;
+	   type->qualifier.flags.q.uniform = true;
+	   type->specifier = $3;
+	   $$ = new(ctx) ast_declarator_list(type);
+	   $$->set_location(yylloc);
+
+	   $$->declarations.push_degenerate_list_at_head(& $4->link);
+	}
+	| uniformopt type_specifier struct_declarator_list ';'
+	{
+	   void *ctx = state;
+	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+	   type->set_location(yylloc);
+
+	   type->qualifier.flags.q.uniform = true;
+	   type->specifier = $2;
+	   $$ = new(ctx) ast_declarator_list(type);
+	   $$->set_location(yylloc);
+
+	   $$->declarations.push_degenerate_list_at_head(& $3->link);
 	}
 	;

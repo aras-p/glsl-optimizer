@@ -312,6 +312,7 @@ layout		{
 		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
+		      || yyextra->ARB_uniform_buffer_object_enable
 		      || yyextra->ARB_fragment_coord_conventions_enable) {
 		      return LAYOUT_TOK;
 		   } else {
@@ -392,7 +393,7 @@ enum		KEYWORD(110 || ES, 999, ENUM);
 typedef		KEYWORD(110 || ES, 999, TYPEDEF);
 template	KEYWORD(110 || ES, 999, TEMPLATE);
 this		KEYWORD(110 || ES, 999, THIS);
-packed		KEYWORD(110 || ES, 999, PACKED_TOK);
+packed		KEYWORD(110 || ES, 140 || yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
 goto		KEYWORD(110 || ES, 999, GOTO);
 switch		KEYWORD(110 || ES, 130, SWITCH);
 default		KEYWORD(110 || ES, 130, DEFAULT);
@@ -468,7 +469,7 @@ image2DArrayShadow KEYWORD(130, 999, IMAGE2DARRAYSHADOW);
 imageBuffer	KEYWORD(130, 999, IMAGEBUFFER);
 iimageBuffer	KEYWORD(130, 999, IIMAGEBUFFER);
 uimageBuffer	KEYWORD(130, 999, UIMAGEBUFFER);
-row_major	KEYWORD(130, 999, ROW_MAJOR);
+row_major	KEYWORD(130, 140 || yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
 
     /* Additional reserved words in GLSL 1.40 */
 isampler2DRect	KEYWORD(140, 140, ISAMPLER2DRECT);

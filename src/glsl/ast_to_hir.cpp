@@ -3989,6 +3989,17 @@ ast_struct_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
+ir_rvalue *
+ast_uniform_block::hir(exec_list *instructions,
+		       struct _mesa_glsl_parse_state *state)
+{
+   /* The ast_uniform_block has a list of ast_declarator_lists.  We
+    * need to turn those into ir_variables with an association
+    * with this uniform block.
+    */
+   return NULL;
+}
+
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
 			       exec_list *instructions)

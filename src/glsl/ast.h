@@ -376,6 +376,15 @@ struct ast_type_qualifier {
          unsigned depth_less:1;
          unsigned depth_unchanged:1;
          /** \} */
+
+	 /** \name Layout qualifiers for GL_ARB_uniform_buffer_object */
+	 /** \{ */
+         unsigned std140:1;
+         unsigned shared:1;
+         unsigned packed:1;
+         unsigned column_major:1;
+         unsigned row_major:1;
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -761,6 +770,25 @@ public:
 
    ast_function *prototype;
    ast_compound_statement *body;
+};
+
+class ast_uniform_block : public ast_node {
+public:
+   ast_uniform_block(ast_type_qualifier layout,
+		     const char *block_name,
+		     ast_declarator_list *member_list)
+   : layout(layout), block_name(block_name)
+   {
+      declarations.push_degenerate_list_at_head(&member_list->link);
+   }
+
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
+   ast_type_qualifier layout;
+   const char *block_name;
+   /** List of ast_declarator_list * */
+   exec_list declarations;
 };
 /*@}*/
 
