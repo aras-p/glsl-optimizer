@@ -574,13 +574,13 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
 {
    struct pipe_context *pipe = mgr->pipe;
    unsigned i;
-   struct pipe_vertex_element native_attribs[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element driver_attribs[PIPE_MAX_ATTRIBS];
    struct u_vbuf_elements *ve = CALLOC_STRUCT(u_vbuf_elements);
 
    ve->count = count;
 
    memcpy(ve->ve, attribs, sizeof(struct pipe_vertex_element) * count);
-   memcpy(native_attribs, attribs, sizeof(struct pipe_vertex_element) * count);
+   memcpy(driver_attribs, attribs, sizeof(struct pipe_vertex_element) * count);
 
    /* Set the best native format in case the original format is not
     * supported. */
@@ -646,13 +646,13 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
          }
       }
 
-      native_attribs[i].src_format = format;
+      driver_attribs[i].src_format = format;
       ve->native_format[i] = format;
       ve->native_format_size[i] =
             util_format_get_blocksize(ve->native_format[i]);
 
       ve->incompatible_layout_elem[i] =
-            ve->ve[i].src_format != ve->native_format[i] ||
+            ve->ve[i].src_format != format ||
             (!mgr->caps.fetch_dword_unaligned && ve->ve[i].src_offset % 4 != 0);
       ve->incompatible_layout =
             ve->incompatible_layout ||
@@ -667,7 +667,7 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
    }
 
    ve->driver_cso =
-      pipe->create_vertex_elements_state(pipe, count, native_attribs);
+      pipe->create_vertex_elements_state(pipe, count, driver_attribs);
    return ve;
 }
 
