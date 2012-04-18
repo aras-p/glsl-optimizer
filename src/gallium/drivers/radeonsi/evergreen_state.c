@@ -1922,21 +1922,13 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < rshader->ninput; i++) {
-		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
-		   POSITION goes via GPRs from the SC so isn't counted */
-		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
-			pos_index = i;
-		else if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
-			face_index = i;
-		else {
-			ninterp++;
-			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
-				have_linear = TRUE;
-			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
-				have_perspective = TRUE;
-			if (rshader->input[i].centroid)
-				have_centroid = TRUE;
-		}
+		ninterp++;
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+			have_linear = TRUE;
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
+			have_perspective = TRUE;
+		if (rshader->input[i].centroid)
+			have_centroid = TRUE;
 	}
 
 	for (i = 0; i < rshader->noutput; i++) {
@@ -1965,14 +1957,6 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 		/* always at least export 1 component per pixel */
 		exports_ps = 2;
 	}
-
-	if (ninterp == 0) {
-		ninterp = 1;
-		have_perspective = TRUE;
-	}
-
-	if (!have_perspective && !have_linear)
-		have_perspective = TRUE;
 
 	spi_ps_in_control = S_0286D8_NUM_INTERP(ninterp);
 
