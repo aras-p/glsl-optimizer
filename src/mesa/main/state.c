@@ -580,7 +580,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    new_state = ctx->NewState | new_prog_state;
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
-   ctx->Array.NewState = 0;
+   ctx->Array.ArrayObj->NewArrays = 0x0;
 }
 
 

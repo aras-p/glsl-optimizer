@@ -142,7 +142,6 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.NewState |= flag;
 
    _ae_invalidate_state(ctx, _NEW_ARRAY);
 
@@ -152,6 +151,8 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
       arrayObj->_Enabled |= flag;
    else
       arrayObj->_Enabled &= ~flag;
+
+   arrayObj->NewArrays |= flag;
 
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );

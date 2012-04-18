@@ -1447,13 +1447,6 @@ restore_array_attrib(struct gl_context *ctx,
        || _mesa_IsBufferARB(src->ArrayObj->ElementArrayBufferObj->Name))
       _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,
 			  src->ArrayObj->ElementArrayBufferObj->Name);
-
-   /* FIXME: Should some bits in ctx->Array->NewState also be set
-    * FIXME: here?  It seems like it should be set to inclusive-or
-    * FIXME: of the old ArrayObj->_Enabled and the new _Enabled.
-    * ... just do it.
-    */
-   dest->NewState |= src->ArrayObj->_Enabled | dest->ArrayObj->_Enabled;
 }
 
 /**

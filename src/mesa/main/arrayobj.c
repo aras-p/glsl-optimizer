@@ -389,7 +389,6 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
    }
 
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= VERT_BIT_ALL;
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, newObj);
 
    /* Pass BindVertexArray call to device driver */
