@@ -1271,6 +1271,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
 			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
 			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
+			  S_008F1C_TILING_INDEX(8) | /* XXX */
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) |
 			  S_008F20_PITCH((pitch / 8) - 1));
