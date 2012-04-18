@@ -123,6 +123,7 @@ private:
 
    bool isCSpaceLoad(Instruction *);
    bool isImmd32Load(Instruction *);
+   bool isAttribOrSharedLoad(Instruction *);
 };
 
 bool
@@ -137,6 +138,16 @@ LoadPropagation::isImmd32Load(Instruction *ld)
    if (!ld || (ld->op != OP_MOV) || (typeSizeof(ld->dType) != 4))
       return false;
    return ld->src(0).getFile() == FILE_IMMEDIATE;
+}
+
+bool
+LoadPropagation::isAttribOrSharedLoad(Instruction *ld)
+{
+   return ld &&
+      (ld->op == OP_VFETCH ||
+       (ld->op == OP_LOAD &&
+        (ld->src(0).getFile() == FILE_SHADER_INPUT ||
+         ld->src(0).getFile() == FILE_MEMORY_SHARED)));
 }
 
 void
@@ -159,6 +170,12 @@ LoadPropagation::checkSwapSrc01(Instruction *insn)
    } else
    if (isImmd32Load(i0)) {
       if (!isCSpaceLoad(i1) && !isImmd32Load(i1))
+         insn->swapSources(0, 1);
+      else
+         return;
+   } else
+   if (isAttribOrSharedLoad(i1)) {
+      if (!isAttribOrSharedLoad(i0))
          insn->swapSources(0, 1);
       else
          return;
