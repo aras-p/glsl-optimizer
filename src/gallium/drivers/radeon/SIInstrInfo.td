@@ -116,6 +116,8 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let EncodingType = 2; //SIInstrEncodingType::MIMG
 
+  let NeedWait = 1;
+  let usesCustomInserter = 1;
 }
 
 class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
