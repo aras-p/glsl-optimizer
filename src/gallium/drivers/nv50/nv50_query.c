@@ -42,6 +42,7 @@ struct nv50_query {
    uint32_t base;
    uint32_t offset; /* base + i * 16 */
    boolean ready;
+   boolean flushed;
    boolean is64bit;
    struct nouveau_mm_allocation *mm;
 };
@@ -230,6 +231,7 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
       assert(0);
       break;
    }
+   q->flushed = FALSE;
 }
 
 static INLINE boolean
@@ -253,7 +255,10 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    if (!q->ready) {
       if (!wait) {
          /* for broken apps that spin on GL_QUERY_RESULT_AVAILABLE */
-         PUSH_KICK(nv50->base.pushbuf);
+         if (!q->flushed) {
+            q->flushed = TRUE;
+            PUSH_KICK(nv50->base.pushbuf);
+         }
          return FALSE;
       }
       if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nv50->screen->base.client))

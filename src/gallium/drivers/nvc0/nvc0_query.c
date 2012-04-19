@@ -27,6 +27,11 @@
 #include "nvc0_context.h"
 #include "nouveau/nv_object.xml.h"
 
+#define NVC0_QUERY_STATE_READY   0
+#define NVC0_QUERY_STATE_ACTIVE  1
+#define NVC0_QUERY_STATE_ENDED   2
+#define NVC0_QUERY_STATE_FLUSHED 3
+
 struct nvc0_query {
    uint32_t *data;
    uint16_t type;
@@ -35,8 +40,7 @@ struct nvc0_query {
    struct nouveau_bo *bo;
    uint32_t base;
    uint32_t offset; /* base + i * rotate */
-   boolean ready;
-   boolean active;
+   uint8_t state;
    boolean is64bit;
    uint8_t rotate;
    int nesting; /* only used for occlusion queries */
@@ -60,7 +64,7 @@ nvc0_query_allocate(struct nvc0_context *nvc0, struct nvc0_query *q, int size)
    if (q->bo) {
       nouveau_bo_ref(NULL, &q->bo);
       if (q->mm) {
-         if (q->ready)
+         if (q->state == NVC0_QUERY_STATE_READY)
             nouveau_mm_free(q->mm);
          else
             nouveau_fence_work(screen->base.fence.current,
@@ -242,8 +246,7 @@ nvc0_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
    default:
       break;
    }
-   q->ready = FALSE;
-   q->active = TRUE;
+   q->state = NVC0_QUERY_STATE_ACTIVE;
 }
 
 static void
@@ -253,14 +256,13 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_query *q = nvc0_query(pq);
 
-   if (!q->active) {
+   if (q->state != NVC0_QUERY_STATE_ACTIVE) {
       /* some queries don't require 'begin' to be called (e.g. GPU_FINISHED) */
       if (q->rotate)
          nvc0_query_rotate(nvc0, q);
       q->sequence++;
    }
-   q->ready = FALSE;
-   q->active = FALSE;
+   q->state = NVC0_QUERY_STATE_ENDED;
 
    switch (q->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -317,13 +319,15 @@ nvc0_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    }
 }
 
-static INLINE boolean
-nvc0_query_ready(struct nouveau_client *cli, struct nvc0_query *q)
+static INLINE void
+nvc0_query_update(struct nouveau_client *cli, struct nvc0_query *q)
 {
    if (q->is64bit) {
-      return !nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOBLOCK, cli);
+      if (!nouveau_bo_map(q->bo, NOUVEAU_BO_RD | NOUVEAU_BO_NOBLOCK, cli))
+         q->state = NVC0_QUERY_STATE_READY;
    } else {
-      return q->data[0] == q->sequence;
+      if (q->data[0] == q->sequence)
+         q->state = NVC0_QUERY_STATE_READY;
    }
 }
 
@@ -339,19 +343,22 @@ nvc0_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    uint64_t *data64 = (uint64_t *)q->data;
    unsigned i;
 
-   if (!q->ready) /* update ? */
-      q->ready = nvc0_query_ready(nvc0->screen->base.client, q);
-   if (!q->ready) {
+   if (q->state != NVC0_QUERY_STATE_READY)
+      nvc0_query_update(nvc0->screen->base.client, q);
+
+   if (q->state != NVC0_QUERY_STATE_READY) {
       if (!wait) {
-         /* flush for silly apps that spin on GL_QUERY_RESULT_AVAILABLE */
-         if (nouveau_pushbuf_refd(nvc0->base.pushbuf, q->bo) & NOUVEAU_BO_WR)
+         if (q->state != NVC0_QUERY_STATE_FLUSHED) {
+            q->state = NVC0_QUERY_STATE_FLUSHED;
+            /* flush for silly apps that spin on GL_QUERY_RESULT_AVAILABLE */
             PUSH_KICK(nvc0->base.pushbuf);
+         }
          return FALSE;
       }
       if (nouveau_bo_wait(q->bo, NOUVEAU_BO_RD, nvc0->screen->base.client))
          return FALSE;
    }
-   q->ready = TRUE;
+   q->state = NVC0_QUERY_STATE_READY;
 
    switch (q->type) {
    case PIPE_QUERY_GPU_FINISHED:
