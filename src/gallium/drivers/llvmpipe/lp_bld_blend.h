@@ -69,6 +69,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    unsigned rt,
                    LLVMValueRef src,
                    LLVMValueRef dst,
+                   LLVMValueRef mask,
                    LLVMValueRef const_,
                    const unsigned char swizzle[4]);
 

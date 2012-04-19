@@ -52,6 +52,7 @@
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_swizzle.h"
+#include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_debug.h"
 
 #include "lp_bld_blend.h"
@@ -301,6 +302,21 @@ lp_build_blend_func(struct lp_build_context *bld,
 }
 
 
+/**
+ * Performs blending of src and dst pixels
+ *
+ * @param blend         the blend state of the shader variant
+ * @param cbuf_format   format of the colour buffer
+ * @param type          data type of the pixel vector
+ * @param rt            rt number
+ * @param src           blend src
+ * @param dst           blend dst
+ * @param mask          optional mask to apply to the blending result
+ * @param const_        const blend color
+ * @param swizzle       swizzle values for RGBA
+ *
+ * @return the result of blending src and dst
+ */
 LLVMValueRef
 lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
@@ -309,6 +325,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    unsigned rt,
                    LLVMValueRef src,
                    LLVMValueRef dst,
+                   LLVMValueRef mask,
                    LLVMValueRef const_,
                    const unsigned char swizzle[4])
 {
@@ -358,22 +375,33 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
       }
    }
 
-   /* Apply color masking if necessary */
+   /* Check if color mask is necessary */
    fullcolormask = util_format_colormask_full(util_format_description(cbuf_format[rt]), blend->rt[rt].colormask);
 
    if (!fullcolormask) {
-      LLVMValueRef mask;
-      unsigned mask_swizzle;
+      LLVMValueRef color_mask;
+      unsigned color_mask_swizzle;
 
       /* Swizzle the color mask to ensure it matches target format */
-      mask_swizzle =
+      color_mask_swizzle =
                ((blend->rt[rt].colormask & (1 << swizzle[0])) >> swizzle[0])
             | (((blend->rt[rt].colormask & (1 << swizzle[1])) >> swizzle[1]) << 1)
             | (((blend->rt[rt].colormask & (1 << swizzle[2])) >> swizzle[2]) << 2)
             | (((blend->rt[rt].colormask & (1 << swizzle[3])) >> swizzle[3]) << 3);
 
-      mask = lp_build_const_mask_aos(gallivm, bld.base.type, mask_swizzle);
+      color_mask = lp_build_const_mask_aos(gallivm, bld.base.type, color_mask_swizzle);
+      lp_build_name(color_mask, "color_mask");
 
+      /* Combine with input mask if necessary */
+      if (mask) {
+         mask = lp_build_and(&bld.base, color_mask, mask);
+      } else {
+         mask = color_mask;
+      }
+   }
+
+   /* Apply mask, if one exists */
+   if (mask) {
       result = lp_build_select(&bld.base, mask, result, dst);
    }
 
