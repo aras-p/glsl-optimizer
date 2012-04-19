@@ -624,12 +624,16 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 
 		/* Fill in T# buffer resource description */
 		ptr[0] = va & 0xFFFFFFFF;
-		ptr[1] = ((va >> 32) & 0xFFFF) |
-			 (vertex_buffer->stride & 0x3FFF) << 16;
+		ptr[1] = (S_008F04_BASE_ADDRESS_HI(va >> 32) |
+			  S_008F04_STRIDE(vertex_buffer->stride));
 		ptr[2] = (vertex_buffer->buffer->width0 - offset) / vertex_buffer->stride;
 		/* XXX: Hardcoding RGBA */
-		ptr[3] = 4 | 5 << 3 | 6 << 6 | 7 << 9 |
-			num_format << 12 | data_format << 15;
+		ptr[3] = (S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
+			  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
+			  S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
+			  S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
+			  S_008F0C_NUM_FORMAT(num_format) |
+			  S_008F0C_DATA_FORMAT(data_format));
 
 		r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ);
 	}
