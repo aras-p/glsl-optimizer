@@ -265,6 +265,73 @@ lp_build_loop_end(struct lp_build_loop_state *state,
    lp_build_loop_end_cond(state, end, step, LLVMIntNE);
 }
 
+/**
+ * Creates a c-style for loop,
+ * contrasts lp_build_loop as this checks condition on entry
+ * e.g. for(i = start; i cmp_op end; i += step)
+ * \param state      the for loop state, initialized here
+ * \param gallivm    the gallivm state
+ * \param start      starting value of iterator
+ * \param cmp_op     comparison operator used for comparing current value with end value
+ * \param end        value used to compare against iterator
+ * \param step       value added to iterator at end of each loop
+ */
+void
+lp_build_for_loop_begin(struct lp_build_for_loop_state *state,
+                        struct gallivm_state *gallivm,
+                        LLVMValueRef start,
+                        LLVMIntPredicate cmp_op,
+                        LLVMValueRef end,
+                        LLVMValueRef step)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+
+   assert(LLVMTypeOf(start) == LLVMTypeOf(end));
+   assert(LLVMTypeOf(start) == LLVMTypeOf(step));
+
+   state->begin = lp_build_insert_new_block(gallivm, "loop_begin");
+   state->step  = step;
+   state->counter_var = lp_build_alloca(gallivm, LLVMTypeOf(start), "loop_counter");
+   state->gallivm = gallivm;
+   state->cond = cmp_op;
+   state->end = end;
+
+   LLVMBuildStore(builder, start, state->counter_var);
+   LLVMBuildBr(builder, state->begin);
+
+   LLVMPositionBuilderAtEnd(builder, state->begin);
+   state->counter = LLVMBuildLoad(builder, state->counter_var, "");
+
+   state->body = lp_build_insert_new_block(gallivm, "loop_body");
+   LLVMPositionBuilderAtEnd(builder, state->body);
+}
+
+/**
+ * End the for loop.
+ */
+void
+lp_build_for_loop_end(struct lp_build_for_loop_state *state)
+{
+   LLVMValueRef next, cond;
+   LLVMBuilderRef builder = state->gallivm->builder;
+
+   next = LLVMBuildAdd(builder, state->counter, state->step, "");
+   LLVMBuildStore(builder, next, state->counter_var);
+   LLVMBuildBr(builder, state->begin);
+
+   state->exit = lp_build_insert_new_block(state->gallivm, "loop_exit");
+
+   /*
+    * We build the comparison for the begin block here,
+    * if we build it earlier the output llvm ir is not human readable
+    * as the code produced is not in the standard begin -> body -> end order.
+    */
+   LLVMPositionBuilderAtEnd(builder, state->begin);
+   cond = LLVMBuildICmp(builder, state->cond, state->counter, state->end, "");
+   LLVMBuildCondBr(builder, cond, state->body, state->exit);
+
+   LLVMPositionBuilderAtEnd(builder, state->exit);
+}
 
 
 /*

@@ -131,6 +131,33 @@ lp_build_loop_end_cond(struct lp_build_loop_state *state,
                        LLVMIntPredicate cond);
 
 
+/**
+ * Implementation of simple C-style for loops
+ */
+struct lp_build_for_loop_state
+{
+   LLVMBasicBlockRef begin;
+   LLVMBasicBlockRef body;
+   LLVMBasicBlockRef exit;
+   LLVMValueRef counter_var;
+   LLVMValueRef counter;
+   LLVMValueRef step;
+   LLVMIntPredicate cond;
+   LLVMValueRef end;
+   struct gallivm_state *gallivm;
+};
+
+void
+lp_build_for_loop_begin(struct lp_build_for_loop_state *state,
+                        struct gallivm_state *gallivm,
+                        LLVMValueRef start,
+                        LLVMIntPredicate llvm_cond,
+                        LLVMValueRef end,
+                        LLVMValueRef step);
+
+void
+lp_build_for_loop_end(struct lp_build_for_loop_state *state);
+
 
 /**
  * if/else/endif.
