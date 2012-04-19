@@ -1140,13 +1140,13 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 			  S_008F30_DEPTH_COMPARE_FUNC(si_tex_compare(state->compare_func)) |
 			  S_008F30_FORCE_UNNORMALIZED(!state->normalized_coords) |
 			  aniso_flag_offset << 16 | /* XXX */
-			  S_008F30_DISABLE_CUBE_WRAP(!state->seamless_cube_map) |
-			  S_008F30_FILTER_MODE(si_tex_mipfilter(state->min_mip_filter)));
+			  S_008F30_DISABLE_CUBE_WRAP(!state->seamless_cube_map));
 	rstate->val[1] = (S_008F34_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 8)) |
 			  S_008F34_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 8)));
 	rstate->val[2] = (S_008F38_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
 			  S_008F38_XY_MAG_FILTER(si_tex_filter(state->mag_img_filter)) |
-			  S_008F38_XY_MIN_FILTER(si_tex_filter(state->min_img_filter)));
+			  S_008F38_XY_MIN_FILTER(si_tex_filter(state->min_img_filter)) |
+			  S_008F38_MIP_FILTER(si_tex_mipfilter(state->min_mip_filter)));
 	rstate->val[3] = S_008F3C_BORDER_COLOR_TYPE(border_color_type);
 
 #if 0
