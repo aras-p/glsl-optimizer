@@ -27,7 +27,6 @@ namespace llvm {
     FunctionPass *createR600LowerInstructionsPass(TargetMachine &tm);
 
     FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
-    FunctionPass *createSIConvertToISAPass(TargetMachine &tm);
     FunctionPass *createSIInitMachineFunctionInfoPass(TargetMachine &tm);
     FunctionPass *createSILowerShaderInstructionsPass(TargetMachine &tm);
     FunctionPass *createSIPropagateImmReadsPass(TargetMachine &tm);
@@ -35,6 +34,7 @@ namespace llvm {
 
     FunctionPass *createAMDGPUReorderPreloadInstructionsPass(TargetMachine &tm);
 
+    FunctionPass *createAMDGPULowerInstructionsPass(TargetMachine &tm);
     FunctionPass *createAMDGPULowerShaderInstructionsPass(TargetMachine &tm);
 
     FunctionPass *createAMDGPUDelimitInstGroupsPass(TargetMachine &tm);

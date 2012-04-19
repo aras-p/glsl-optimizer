@@ -1,4 +1,4 @@
-//===-- SIConvertToISA.cpp - TODO: Add brief description -------===//
+//===-- AMDGPULowerInstructions.cpp - TODO: Add brief description -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,16 +22,16 @@
 using namespace llvm;
 
 namespace {
-  class SIConvertToISAPass : public MachineFunctionPass {
+  class AMDGPULowerInstructionsPass : public MachineFunctionPass {
 
   private:
     static char ID;
     TargetMachine &TM;
-    void convertVCREATE_v4f32(MachineInstr &MI, MachineBasicBlock::iterator I,
+    void lowerVCREATE_v4f32(MachineInstr &MI, MachineBasicBlock::iterator I,
                               MachineBasicBlock &MBB, MachineFunction &MF);
 
   public:
-    SIConvertToISAPass(TargetMachine &tm) :
+    AMDGPULowerInstructionsPass(TargetMachine &tm) :
       MachineFunctionPass(ID), TM(tm) { }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -39,13 +39,13 @@ namespace {
   };
 } /* End anonymous namespace */
 
-char SIConvertToISAPass::ID = 0;
+char AMDGPULowerInstructionsPass::ID = 0;
 
-FunctionPass *llvm::createSIConvertToISAPass(TargetMachine &tm) {
-  return new SIConvertToISAPass(tm);
+FunctionPass *llvm::createAMDGPULowerInstructionsPass(TargetMachine &tm) {
+  return new AMDGPULowerInstructionsPass(tm);
 }
 
-bool SIConvertToISAPass::runOnMachineFunction(MachineFunction &MF)
+bool AMDGPULowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 {
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
@@ -56,34 +56,27 @@ bool SIConvertToISAPass::runOnMachineFunction(MachineFunction &MF)
 
       switch (MI.getOpcode()) {
       default: continue;
-      case AMDIL::VCREATE_v4f32: convertVCREATE_v4f32(MI, I, MBB, MF);
+      case AMDIL::VCREATE_v4f32: lowerVCREATE_v4f32(MI, I, MBB, MF); break;
 
       }
-      MI.removeFromParent();
+      MI.eraseFromParent();
     }
   }
   return false;
 }
 
-void SIConvertToISAPass::convertVCREATE_v4f32(MachineInstr &MI,
+void AMDGPULowerInstructionsPass::lowerVCREATE_v4f32(MachineInstr &MI,
     MachineBasicBlock::iterator I, MachineBasicBlock &MBB, MachineFunction &MF)
 {
-  MachineInstrBuilder implicitDef;
-  MachineInstrBuilder insertSubreg;
   MachineRegisterInfo & MRI = MF.getRegInfo();
-  unsigned tmp = MRI.createVirtualRegister(&AMDIL::VReg_128RegClass);
+  unsigned tmp = MRI.createVirtualRegister(
+                  MRI.getRegClass(MI.getOperand(0).getReg()));
 
-  implicitDef = BuildMI(MF, MBB.findDebugLoc(I),
-                        TM.getInstrInfo()->get(AMDIL::IMPLICIT_DEF), tmp);
+  BuildMI(MBB, I, DebugLoc(), TM.getInstrInfo()->get(AMDIL::IMPLICIT_DEF), tmp);
 
-  MRI.setRegClass(MI.getOperand(1).getReg(), &AMDIL::VReg_32RegClass);
-  insertSubreg = BuildMI(MF, MBB.findDebugLoc(I),
-                        TM.getInstrInfo()->get(AMDIL::INSERT_SUBREG))
-                        .addOperand(MI.getOperand(0))
-                        .addReg(tmp)
-                        .addOperand(MI.getOperand(1))
-                        .addImm(AMDIL::sel_x);
-
-  MBB.insert(I, implicitDef);
-  MBB.insert(I, insertSubreg);
+  BuildMI(MBB, I, DebugLoc(), TM.getInstrInfo()->get(AMDIL::INSERT_SUBREG))
+          .addOperand(MI.getOperand(0))
+          .addReg(tmp)
+          .addOperand(MI.getOperand(1))
+          .addImm(AMDIL::sel_x);
 }

@@ -400,11 +400,8 @@ void R600CodeEmitter::emitDst(const MachineOperand & MO)
     emitByte(getHWReg(MO.getReg()));
 
     /* Emit the element of the destination register (1 byte)*/
-    const MachineInstr * parent = MO.getParent();
     if (isReduction) {
       emitByte(reductionElement);
-    } else if (parent->getOpcode() == AMDIL::VCREATE_v4f32) {
-      emitByte(ELEMENT_X);
     } else {
       emitByte(TRI->getHWRegChan(MO.getReg()));
     }
@@ -631,7 +628,6 @@ unsigned int R600CodeEmitter::getHWInst(const MachineInstr &MI)
   switch (MI.getOpcode()) {
     case AMDIL::STORE_OUTPUT:
     case AMDIL::VCREATE_v4i32:
-    case AMDIL::VCREATE_v4f32:
     case AMDIL::LOADCONST_i32:
     case AMDIL::LOADCONST_f32:
     case AMDIL::MOVE_v4i32:

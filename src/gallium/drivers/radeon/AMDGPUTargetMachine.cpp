@@ -152,8 +152,8 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
   } else {
     PM.add(createSILowerShaderInstructionsPass(*TM));
     PM.add(createSIAssignInterpRegsPass(*TM));
-    PM.add(createSIConvertToISAPass(*TM));
   }
+  PM.add(createAMDGPULowerInstructionsPass(*TM));
   PM.add(createAMDGPUConvertToISAPass(*TM));
   return false;
 }
