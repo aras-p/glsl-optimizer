@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #define LITERAL_REG 255
-#define VGPR_BIT(src_idx) (1 << (8 * (src_idx)))
+#define VGPR_BIT(src_idx) (1ULL << (9 * src_idx - 1))
 using namespace llvm;
 
 namespace {
