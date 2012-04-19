@@ -980,11 +980,12 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
    int start_vertex, min_index;
    unsigned num_vertices;
    boolean unroll_indices = FALSE;
+   uint32_t user_vb_mask = mgr->user_vb_mask;
 
    /* Normal draw. No fallback and no user buffers. */
    if (!mgr->incompatible_vb_mask &&
        !mgr->ve->incompatible_elem_mask &&
-       !mgr->user_vb_mask) {
+       !user_vb_mask) {
       /* Set vertex buffers if needed. */
       if (mgr->vertex_buffers_dirty) {
          pipe->set_vertex_buffers(pipe, mgr->nr_real_vertex_buffers,
@@ -1024,6 +1025,8 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
              !u_vbuf_mapping_vertex_buffer_blocks(mgr)) {
             /*printf("num_vertices=%i count=%i\n", num_vertices, info->count);*/
             unroll_indices = TRUE;
+            user_vb_mask &= ~(mgr->nonzero_stride_vb_mask &
+                              mgr->ve->noninstance_vb_mask_any);
          }
       } else {
          /* Nothing to do for per-vertex attribs. */
@@ -1046,10 +1049,13 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
                              info->start_instance, info->instance_count,
                              info->start, info->count, min_index,
                              unroll_indices);
+
+      user_vb_mask &= ~(mgr->incompatible_vb_mask |
+                        mgr->ve->incompatible_vb_mask_all);
    }
 
    /* Upload user buffers. */
-   if (mgr->user_vb_mask) {
+   if (user_vb_mask) {
       u_vbuf_upload_buffers(mgr, start_vertex, num_vertices,
                             info->start_instance, info->instance_count);
    }
