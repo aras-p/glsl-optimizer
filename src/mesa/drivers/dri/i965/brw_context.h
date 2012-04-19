@@ -517,7 +517,7 @@ struct brw_vs_ouput_sizes {
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
 
 /** Maximum size of the binding table. */
-#define BRW_MAX_SURFACES             SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT)
+#define BRW_MAX_WM_SURFACES          SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT)
 
 #define SURF_INDEX_VERT_CONST_BUFFER (0)
 #define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
@@ -932,7 +932,7 @@ struct brw_context
 
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;
-      uint32_t surf_offset[BRW_MAX_SURFACES];
+      uint32_t surf_offset[BRW_MAX_WM_SURFACES];
 
       /** @{ register allocator */
 

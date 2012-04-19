@@ -1125,11 +1125,11 @@ brw_upload_wm_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-			  sizeof(uint32_t) * BRW_MAX_SURFACES,
+			  sizeof(uint32_t) * BRW_MAX_WM_SURFACES,
 			  32, &brw->wm.bind_bo_offset);
 
    /* BRW_NEW_SURFACES */
-   for (i = 0; i < BRW_MAX_SURFACES; i++) {
+   for (i = 0; i < BRW_MAX_WM_SURFACES; i++) {
       bind[i] = brw->wm.surf_offset[i];
    }
 
