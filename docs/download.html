@@ -20,25 +20,11 @@ When a new release is coming, release candidates (betas) may be found
 </p>
 
 
-<p>
-The Mesa package is named MesaLib-x.y.z.{tar.bz2, tar.gz, zip} where x.y.z
-is the version.  There are three types of compressed archives.
-</p>
-<p>
-In the past, there was also MesaGLUT-x.y.z.{tar.bz2, tar.gz, zip} packages which
-contained Mark Kilgard's GLUT library.
-Most Linux distributions include an implementation of GLUT (such as freeglut).
-</p>
-<p>
-In the past, the Mesa demos collection was distributed as
-MesaDemos-x.y.z.{tar.bz2, tar.gz, zip}.
-Now, the
-<a href="ftp://ftp.freedesktop.org/pub/mesa/demos/" target="_parent">
-Mesa demos</a> are distributed separately.
-</p>
-
-
 <H1>Unpacking</H1>
+
+<p>
+Mesa releases are available in three formats: .tar.bz2, .tar.gz, and .zip
+</p>
 
 <p>
 To unpack .tar.gz files:
@@ -86,14 +72,29 @@ src/glu		- libGLU source code
 src/glx		- sources for building libGL with full GLX and DRI support
 </pre>
 
-If you downloaded and unpacked the MesaGLUT.x.y.z package:
-<pre>
-src/glut	- GLUT library source code
-</pre>
 
 <p>
 Proceed to the <a href="install.html">compilation and installation
 instructions</a>.
+</p>
+
+
+<H1>Demos and GLUT</H2>
+
+<p>
+A package of Mark Kilgard's GLUT library is available
+<a href="ftp://ftp.freedesktop.org/pub/mesa/glut/" target="_parent">here</a>
+</p>
+
+<p>
+The Mesa demos collection is available
+<a href="ftp://ftp.freedesktop.org/pub/mesa/demos/" target="_parent">here</a>
+</p>
+
+<p>
+In the past, GLUT and the Mesa demos were released in conjunction with
+Mesa releases.  But since GLUT and the demos change infrequently, they
+were split off some time ago.
 </p>
 
 
