@@ -317,10 +317,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         break;
       }
 
-      case AMDIL::VEXTRACT_v4f32:
-        MI.getOperand(2).setImm(MI.getOperand(2).getImm() - 1);
-        continue;
-
       case AMDIL::NEGATE_i32:
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT))
                 .addOperand(MI.getOperand(0))
@@ -346,43 +342,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                   .addOperand(MI.getOperand(0))
                   .addOperand(MI.getOperand(1))
                   .addOperand(MI.getOperand(2));
-          break;
-        }
-
-      case AMDIL::VINSERT_v4f32:
-        {
-
-          int64_t swz = MI.getOperand(4).getImm();
-          int64_t chan;
-          switch (swz) {
-          case (1 << 0):
-            chan = 0;
-            break;
-          case (1 << 8):
-            chan = 1;
-            break;
-          case (1 << 16):
-            chan = 2;
-            break;
-          case (1 << 24):
-            chan = 3;
-            break;
-          default:
-            chan = 0;
-            fprintf(stderr, "swizzle: %ld\n", swz);
-            abort();
-            break;
-          }
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TM.getInstrInfo()->get(AMDIL::SET_CHAN))
-                  .addOperand(MI.getOperand(1))
-                  .addOperand(MI.getOperand(2))
-                  .addImm(chan);
-
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                                      TM.getInstrInfo()->get(AMDIL::COPY))
-                  .addOperand(MI.getOperand(0))
-                  .addOperand(MI.getOperand(1));
           break;
         }
 

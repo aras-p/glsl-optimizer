@@ -297,15 +297,6 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
   switch (MI.getOpcode()) {
     default: break;
 
-    /* Custom swizzle instructions, ignore the last two operands */
-    case AMDIL::SET_CHAN:
-      numOperands = 2;
-      break;
-
-    case AMDIL::VEXTRACT_v4f32:
-      numOperands = 2;
-      break;
-
     /* XXX: Temp Hack */
     case AMDIL::STORE_OUTPUT:
       numOperands = 2;
@@ -369,13 +360,7 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO)
   if (isReduction) {
     emitByte(reductionElement);
   } else if (MO.isReg()) {
-    const MachineInstr * parent = MO.getParent();
-    /* The source channel for EXTRACT is stored in operand 2. */
-    if (parent->getOpcode() == AMDIL::VEXTRACT_v4f32) {
-      emitByte(parent->getOperand(2).getImm());
-    } else {
-      emitByte(TRI->getHWRegChan(MO.getReg()));
-    }
+    emitByte(TRI->getHWRegChan(MO.getReg()));
   } else {
     emitByte(0);
   }
@@ -418,10 +403,6 @@ void R600CodeEmitter::emitDst(const MachineOperand & MO)
     const MachineInstr * parent = MO.getParent();
     if (isReduction) {
       emitByte(reductionElement);
-
-    /* The destination element for SET_CHAN is stored in the 3rd operand. */
-    } else if (parent->getOpcode() == AMDIL::SET_CHAN) {
-      emitByte(parent->getOperand(2).getImm());
     } else if (parent->getOpcode() == AMDIL::VCREATE_v4f32) {
       emitByte(ELEMENT_X);
     } else {
@@ -651,12 +632,9 @@ unsigned int R600CodeEmitter::getHWInst(const MachineInstr &MI)
     case AMDIL::STORE_OUTPUT:
     case AMDIL::VCREATE_v4i32:
     case AMDIL::VCREATE_v4f32:
-    case AMDIL::VEXTRACT_v4f32:
-    case AMDIL::VINSERT_v4f32:
     case AMDIL::LOADCONST_i32:
     case AMDIL::LOADCONST_f32:
     case AMDIL::MOVE_v4i32:
-    case AMDIL::SET_CHAN:
     /* Instructons to reinterpret bits as ... */
     case AMDIL::IL_ASINT_f32:
     case AMDIL::IL_ASINT_i32:

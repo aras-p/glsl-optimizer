@@ -907,27 +907,10 @@ def : Pat <
 >;
 
 
-/* Extract element pattern */
-class Extract_Element <ValueType sub_type, ValueType vec_type,
-                     RegisterClass vec_class, int sub_idx, 
-                     SubRegIndex sub_reg>: Pat<
-  (sub_type (vector_extract (vec_type vec_class:$src), sub_idx)),
-  (EXTRACT_SUBREG vec_class:$src, sub_reg)
->;
-
 def : Extract_Element <f32, v4f32, VReg_128, 0, sel_x>;
 def : Extract_Element <f32, v4f32, VReg_128, 1, sel_y>;
 def : Extract_Element <f32, v4f32, VReg_128, 2, sel_z>;
 def : Extract_Element <f32, v4f32, VReg_128, 3, sel_w>;
-
-class Insert_Element <ValueType elem_type, ValueType vec_type,
-                      RegisterClass elem_class, RegisterClass vec_class,
-                      int sub_idx, SubRegIndex sub_reg> : Pat <
-
-  (vec_type (vector_insert (vec_type vec_class:$vec),
-                           (elem_type elem_class:$elem), sub_idx)),
-  (INSERT_SUBREG vec_class:$vec, elem_class:$elem, sub_reg)
->;
 
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 4, sel_x>;
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sel_y>;

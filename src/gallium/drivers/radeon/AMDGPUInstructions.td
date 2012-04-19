@@ -84,6 +84,27 @@ class POW_Common <AMDGPUInst log_ieee, AMDGPUInst exp_ieee, AMDGPUInst mul,
   (exp_ieee (mul rc:$src1, (log_ieee rc:$src0)))
 >;
 
+/* Other helper patterns */
+/* --------------------- */
+
+/* Extract element pattern */
+class Extract_Element <ValueType sub_type, ValueType vec_type,
+                     RegisterClass vec_class, int sub_idx, 
+                     SubRegIndex sub_reg>: Pat<
+  (sub_type (vector_extract (vec_type vec_class:$src), sub_idx)),
+  (EXTRACT_SUBREG vec_class:$src, sub_reg)
+>;
+
+/* Insert element pattern */
+class Insert_Element <ValueType elem_type, ValueType vec_type,
+                      RegisterClass elem_class, RegisterClass vec_class,
+                      int sub_idx, SubRegIndex sub_reg> : Pat <
+
+  (vec_type (vector_insert (vec_type vec_class:$vec),
+                           (elem_type elem_class:$elem), sub_idx)),
+  (INSERT_SUBREG vec_class:$vec, elem_class:$elem, sub_reg)
+>;
+
 include "R600Instructions.td"
 
 include "SIInstrInfo.td"

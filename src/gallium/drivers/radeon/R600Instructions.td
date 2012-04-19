@@ -863,13 +863,6 @@ let isCodeGenOnly = 1 in {
     []
   >;
 
-  def SET_CHAN : AMDGPUShaderInst <
-    (outs R600_Reg128:$dst),
-    (ins R600_Reg32:$src0, i32imm:$src1),
-    "SET_CHAN $dst, $src0, $src1",
-    []
-  >;
-
   def MULLIT : AMDGPUShaderInst <
     (outs R600_Reg128:$dst),
     (ins R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
@@ -929,6 +922,16 @@ def LOAD_VTX : AMDGPUShaderInst <
 
 
 } //End isPseudo
+
+def : Extract_Element <f32, v4f32, R600_Reg128, 0, sel_x>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 1, sel_y>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 2, sel_z>;
+def : Extract_Element <f32, v4f32, R600_Reg128, 3, sel_w>;
+
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 4, sel_x>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 5, sel_y>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 6, sel_z>;
+def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 7, sel_w>;
 
 
 include "R600ShaderPatterns.td"

@@ -23,6 +23,11 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 {
   setOperationAction(ISD::MUL, MVT::i64, Expand);
 //  setSchedulingPreference(Sched::VLIW);
+  addRegisterClass(MVT::v4f32, &AMDIL::R600_Reg128RegClass);
+  addRegisterClass(MVT::f32, &AMDIL::R600_Reg32RegClass);
+
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Legal);
 }
 
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
