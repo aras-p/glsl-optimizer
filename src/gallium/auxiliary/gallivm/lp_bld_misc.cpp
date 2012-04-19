@@ -165,3 +165,18 @@ lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
    return llvm::wrap(llvm::unwrap(B)->CreateLoad(llvm::unwrap(PointerVal), true, Name));
 }
 
+extern "C"
+void
+lp_set_load_alignment(LLVMValueRef Inst,
+                       unsigned Align)
+{
+   llvm::unwrap<llvm::LoadInst>(Inst)->setAlignment(Align);
+}
+
+extern "C"
+void
+lp_set_store_alignment(LLVMValueRef Inst,
+		       unsigned Align)
+{
+   llvm::unwrap<llvm::StoreInst>(Inst)->setAlignment(Align);
+}

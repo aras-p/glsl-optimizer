@@ -105,6 +105,18 @@ lp_build_pointer_get(LLVMBuilderRef builder,
                    LLVMValueRef index);
 
 /**
+ * Get the value of an array element, with explicit alignment.
+ *
+ * If the element size is different from the alignment this will
+ * cause llvm to emit an unaligned load
+ */
+LLVMValueRef
+lp_build_pointer_get_unaligned(LLVMBuilderRef builder,
+                               LLVMValueRef ptr,
+                               LLVMValueRef index,
+                               unsigned alignment);
+
+/**
  * Set the value of an array element.
  */
 void
@@ -112,5 +124,18 @@ lp_build_pointer_set(LLVMBuilderRef builder,
                      LLVMValueRef ptr,
                      LLVMValueRef index,
                      LLVMValueRef value);
+
+/**
+ * Set the value of an array element, with explicit alignment.
+ *
+ * If the element size is different from the alignment this will
+ * cause llvm to emit an unaligned store
+ */
+void
+lp_build_pointer_set_unaligned(LLVMBuilderRef builder,
+                               LLVMValueRef ptr,
+                               LLVMValueRef index,
+                               LLVMValueRef value,
+                               unsigned alignment);
 
 #endif /* !LP_BLD_STRUCT_H */

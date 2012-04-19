@@ -81,5 +81,12 @@ extern LLVMValueRef
 lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
                        const char *Name);
 
+void
+lp_set_load_alignment(LLVMValueRef Inst,
+                       unsigned Align);
+
+void
+lp_set_store_alignment(LLVMValueRef Inst,
+		       unsigned Align);
 
 #endif /* !LP_BLD_INIT_H */
