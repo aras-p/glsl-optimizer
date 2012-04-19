@@ -731,7 +731,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
          continue;
       }
 
-      if (vb->buffer->user_ptr) {
+      if (!mgr->caps.user_vertex_buffers && vb->buffer->user_ptr) {
          mgr->user_vb_mask |= 1 << i;
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
