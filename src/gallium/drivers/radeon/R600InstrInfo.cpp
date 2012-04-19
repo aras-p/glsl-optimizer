@@ -39,10 +39,6 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const
 {
-  if (!TargetRegisterInfo::isVirtualRegister(SrcReg)
-      && AMDIL::GPRI32RegClass.contains(SrcReg)) {
-    SrcReg = AMDIL::T0_X;
-  }
   BuildMI(MBB, MI, DL, get(AMDIL::MOV), DestReg)
     .addReg(SrcReg, getKillRegState(KillSrc));
 }
