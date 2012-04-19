@@ -170,3 +170,28 @@ lp_build_print_ivec4(struct gallivm_state *gallivm,
    util_snprintf(format, sizeof(format), "%s %%i %%i %%i %%i\n", msg);
    return lp_build_printf(gallivm, format, x, y, z, w);
 }
+
+
+/**
+ * Print a uint8[16] vector.
+ */
+LLVMValueRef
+lp_build_print_uvec16(struct gallivm_state *gallivm,
+                    const char *msg, LLVMValueRef vec)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   char format[1000];
+   LLVMValueRef args[16];
+
+   for(int i = 0; i < 16; ++i)
+      args[i] = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, i), "");
+
+   util_snprintf(format, sizeof(format), "%s %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u\n", msg);
+
+   return lp_build_printf(
+            gallivm, format,
+            args[ 0], args[ 1], args[ 2], args[ 3],
+            args[ 4], args[ 5], args[ 6], args[ 7],
+            args[ 8], args[ 9], args[10], args[11],
+            args[12], args[13], args[14], args[15]);
+}
