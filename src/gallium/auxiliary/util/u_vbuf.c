@@ -370,44 +370,32 @@ static boolean
 u_vbuf_translate_find_free_vb_slots(struct u_vbuf *mgr,
                                     unsigned mask[VB_NUM])
 {
-   unsigned i, type;
-   unsigned nr = mgr->ve->count;
-   boolean used_vb[PIPE_MAX_ATTRIBS] = {0};
+   unsigned type;
    unsigned fallback_vbs[VB_NUM];
+   /* Set the bit for each buffer which is incompatible, or isn't set. */
+   uint32_t unused_vb_mask =
+      mgr->ve->incompatible_vb_mask_all | mgr->incompatible_vb_mask |
+      ~((1 << mgr->nr_vertex_buffers) - 1);
 
    memset(fallback_vbs, ~0, sizeof(fallback_vbs));
 
-   /* Mark used vertex buffers as... used. */
-   for (i = 0; i < nr; i++) {
-      if (!(mgr->ve->incompatible_elem_mask & (1 << i))) {
-         unsigned index = mgr->ve->ve[i].vertex_buffer_index;
-
-         if (!(mgr->incompatible_vb_mask & (1 << index))) {
-            used_vb[index] = TRUE;
-         }
-      }
-   }
-
    /* Find free slots for each type if needed. */
-   i = 0;
    for (type = 0; type < VB_NUM; type++) {
       if (mask[type]) {
-         for (; i < PIPE_MAX_ATTRIBS; i++) {
-            if (!used_vb[i]) {
-               /*printf("found slot=%i for type=%i\n", i, type);*/
-               fallback_vbs[type] = i;
-               i++;
-               if (i > mgr->nr_real_vertex_buffers) {
-                  mgr->nr_real_vertex_buffers = i;
-               }
-               break;
-            }
-         }
-         if (i == PIPE_MAX_ATTRIBS) {
+         uint32_t index;
+
+         if (!unused_vb_mask) {
             /* fail, reset the number to its original value */
             mgr->nr_real_vertex_buffers = mgr->nr_vertex_buffers;
             return FALSE;
          }
+
+         index = ffs(unused_vb_mask) - 1;
+         fallback_vbs[type] = index;
+         if (index >= mgr->nr_real_vertex_buffers) {
+            mgr->nr_real_vertex_buffers = index + 1;
+         }
+         /*printf("found slot=%i for type=%i\n", index, type);*/
       }
    }
 
