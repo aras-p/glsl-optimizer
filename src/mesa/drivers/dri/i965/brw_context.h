@@ -472,18 +472,14 @@ struct brw_vs_ouput_sizes {
  * For example, a shader might ask to sample from "surface 7."  In this case,
  * bind[7] would contain a pointer to a texture.
  *
- * Although the hardware supports separate binding tables per pipeline stage
- * (VS, HS, DS, GS, PS), we currently share a single binding table for all of
- * them.  This is purely for convenience.
- *
- * Currently our SOL/WM binding tables are (arbitrarily) programmed as follows:
+ * Currently, our WM binding tables are (arbitrarily) programmed as follows:
  *
  *    +-------------------------------+
- *    |   0 | Draw buffer 0           | .
- *    |   . |     .                   |  \
- *    |   : |     :                   |   > Only relevant to the WM.
- *    |   7 | Draw buffer 7           |  /
- *    |-----|-------------------------| `
+ *    |   0 | Draw buffer 0           |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |   7 | Draw buffer 7           |
+ *    |-----|-------------------------|
  *    |   8 | WM Pull Constant Buffer |
  *    |-----|-------------------------|
  *    |   9 | Texture 0               |
@@ -494,7 +490,7 @@ struct brw_vs_ouput_sizes {
  *
  * Our VS binding tables are programmed as follows:
  *
- *    +-----+-------------------------+ `
+ *    +-----+-------------------------+
  *    |   0 | VS Pull Constant Buffer |
  *    +-----+-------------------------+
  *    |   1 | Texture 0               |
@@ -506,7 +502,7 @@ struct brw_vs_ouput_sizes {
  * Our (gen6) GS binding tables are programmed as follows:
  *
  *    +-----+-------------------------+
- *    |  0  | SOL Binding 0           |
+ *    |   0 | SOL Binding 0           |
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  63 | SOL Binding 63          |
