@@ -450,12 +450,12 @@ static void tex_fetch_args(
 	/* Resource */
 	emit_data->args[2] = use_sgpr(bld_base->base.gallivm, SGPR_I64, 2);
 	emit_data->args[3] = lp_build_const_int32(bld_base->base.gallivm,
-						  32 * emit_data->inst->Src[2].Register.Index);
+						  8 * emit_data->inst->Src[1].Register.Index);
 
 	/* Sampler */
 	emit_data->args[4] = use_sgpr(bld_base->base.gallivm, SGPR_I64, 1);
 	emit_data->args[5] = lp_build_const_int32(bld_base->base.gallivm,
-						  16 * emit_data->inst->Src[2].Register.Index);
+						  4 * emit_data->inst->Src[1].Register.Index);
 
 	/* Dimensions */
 	/* XXX: We might want to pass this information to the shader at some. */
