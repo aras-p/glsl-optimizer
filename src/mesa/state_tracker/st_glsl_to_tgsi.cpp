@@ -2810,8 +2810,12 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    num_immediates = 0;
    current_function = NULL;
    num_address_regs = 0;
+   samplers_used = 0;
    indirect_addr_temps = false;
    indirect_addr_consts = false;
+   num_clip_distances = 0;
+   glsl_version = 0;
+   native_integers = false;
    mem_ctx = ralloc_context(NULL);
    ctx = NULL;
    prog = NULL;
