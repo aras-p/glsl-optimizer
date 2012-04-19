@@ -1606,12 +1606,13 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 				&rtex->resource, RADEON_USAGE_READWRITE);
 }
 
-static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			 const struct pipe_framebuffer_state *state)
+static void si_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
+		  const struct pipe_framebuffer_state *state)
 {
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
-	unsigned level, first_layer, pitch, slice, format, array_mode;
+	unsigned level, first_layer, pitch, slice, format;
+	uint32_t db_z_info, stencil_info;
 	uint64_t offset;
 
 	if (state->zsbuf == NULL) {
@@ -1623,10 +1624,6 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	surf = (struct r600_surface *)state->zsbuf;
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_resource_texture*)surf->base.texture;
-
-	/* XXX remove this once tiling is properly supported */
-	array_mode = 0;/*rtex->array_mode[level] ? rtex->array_mode[level] :
-			 V_028C70_ARRAY_1D_TILED_THIN1;*/
 
 	first_layer = surf->base.u.tex.first_layer;
 	offset = r600_texture_get_offset(rtex, level, first_layer);
@@ -1643,6 +1640,24 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, NULL, 0);
 
+	db_z_info = S_028040_FORMAT(format);
+	stencil_info = S_028044_FORMAT(rtex->stencil != 0);
+
+	switch (format) {
+	case V_028040_Z_16:
+		db_z_info |= S_028040_TILE_MODE_INDEX(5);
+		stencil_info |= S_028044_TILE_MODE_INDEX(5);
+		break;
+	case V_028040_Z_24:
+	case V_028040_Z_32_FLOAT:
+		db_z_info |= S_028040_TILE_MODE_INDEX(6);
+		stencil_info |= S_028044_TILE_MODE_INDEX(6);
+		break;
+	default:
+		db_z_info |= S_028040_TILE_MODE_INDEX(7);
+		stencil_info |= S_028044_TILE_MODE_INDEX(7);
+	}
+
 	if (rtex->stencil) {
 		uint64_t stencil_offset =
 			r600_texture_get_offset(rtex->stencil, level, first_layer);
@@ -1655,22 +1670,25 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
 					stencil_offset, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
-					1, NULL, 0);
+					stencil_info, NULL, 0);
 	} else {
 		r600_pipe_state_add_reg(rstate, R_028044_DB_STENCIL_INFO,
 					0, NULL, 0);
 	}
 
-	r600_pipe_state_add_reg(rstate, R_02803C_DB_DEPTH_INFO, 0x1, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO,
-				/*S_028040_ARRAY_MODE(array_mode) |*/ S_028040_FORMAT(format),
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
-				S_028058_PITCH_TILE_MAX(pitch),
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02805C_DB_DEPTH_SLICE,
-				S_02805C_SLICE_TILE_MAX(slice),
-				NULL, 0);
+	if (format != ~0U) {
+		r600_pipe_state_add_reg(rstate, R_02803C_DB_DEPTH_INFO, 0x1, NULL, 0);
+		r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO, db_z_info, NULL, 0);
+		r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
+					S_028058_PITCH_TILE_MAX(pitch),
+					NULL, 0);
+		r600_pipe_state_add_reg(rstate, R_02805C_DB_DEPTH_SLICE,
+					S_02805C_SLICE_TILE_MAX(slice),
+					NULL, 0);
+
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028040_DB_Z_INFO, 0, NULL, 0);
+	}
 }
 
 static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
@@ -1697,7 +1715,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
-	evergreen_db(rctx, rstate, state);
+	si_db(rctx, rstate, state);
 
 	shader_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
