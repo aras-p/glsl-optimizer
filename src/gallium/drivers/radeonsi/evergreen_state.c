@@ -1120,17 +1120,17 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 
 	util_pack_color(state->border_color.f, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 	switch (uc.ui) {
-	case 0x000000FF: /* opaque black */
-		border_color_type = 0;
+	case 0x000000FF:
+		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_OPAQUE_BLACK;
 		break;
-	case 0x00000000: /* transparent black */
-		border_color_type = 1;
+	case 0x00000000:
+		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_TRANS_BLACK;
 		break;
-	case 0xFFFFFFFF: /* white */
-		border_color_type = 2;
+	case 0xFFFFFFFF:
+		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_OPAQUE_WHITE;
 		break;
 	default: /* Use border color pointer */
-		border_color_type = 3;
+		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_REGISTER;
 	}
 
 	rstate->val[0] = (S_008F30_CLAMP_X(si_tex_wrap(state->wrap_s)) |
