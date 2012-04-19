@@ -186,7 +186,9 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
               emitALUInstr(MI);
             }
             isReduction = false;
-          } else if (MI.getOpcode() == AMDIL::RETURN) {
+          } else if (MI.getOpcode() == AMDIL::RETURN ||
+                     MI.getOpcode() == AMDIL::BUNDLE ||
+                     MI.getOpcode() == AMDIL::KILL) {
             continue;
           } else {
             switch(MI.getOpcode()) {
