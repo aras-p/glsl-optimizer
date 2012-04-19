@@ -138,9 +138,9 @@ static void declare_input_vs(
 	unsigned chan;
 
 	/* XXX: Communicate with the rest of the driver about which SGPR the T#
- 	 * list pointer is going to be stored in.  Hard code to SGPR[0-1] for
+	 * list pointer is going to be stored in.  Hard code to SGPR[6:7] for
  	 * now */
-	t_list_ptr = use_sgpr(base->gallivm, SGPR_I64, 0);
+	t_list_ptr = use_sgpr(base->gallivm, SGPR_I64, 3);
 
 	t_offset = lp_build_const_int32(base->gallivm,
 					4 * velem->vertex_buffer_index);
@@ -187,6 +187,9 @@ static void declare_input_fs(
 	 *                     to be unset)
 	 * [32:16] ParamOffset
 	 *
+	 */
+	/* XXX: This register number must be identical to the S_00B02C_USER_SGPR
+	 * register field value
 	 */
 	LLVMValueRef params = use_sgpr(base->gallivm, SGPR_I32, 6);
 
@@ -256,8 +259,8 @@ static LLVMValueRef fetch_constant(
 	LLVMValueRef offset;
 
 	/* XXX: Assume the pointer to the constant buffer is being stored in
-	 * SGPR[2:3] */
-	const_ptr = use_sgpr(base->gallivm, SGPR_I64, 1);
+	 * SGPR[0:1] */
+	const_ptr = use_sgpr(base->gallivm, SGPR_I64, 0);
 
 	/* XXX: This assumes that the constant buffer is not packed, so
 	 * CONST[0].x will have an offset of 0 and CONST[1].x will have an

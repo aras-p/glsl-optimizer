@@ -452,10 +452,10 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		rstate = &rctx->vs_const_buffer;
 		rstate->nregs = 0;
 		r600_pipe_state_add_reg(rstate,
-					R_00B138_SPI_SHADER_USER_DATA_VS_2,
+					R_00B130_SPI_SHADER_USER_DATA_VS_0,
 					va_offset, rbuffer, RADEON_USAGE_READ);
 		r600_pipe_state_add_reg(rstate,
-					R_00B13C_SPI_SHADER_USER_DATA_VS_3,
+					R_00B134_SPI_SHADER_USER_DATA_VS_1,
 					va_offset >> 32, NULL, 0);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -638,10 +638,10 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 
 	va = r600_resource_va(ctx->screen, (void*)t_list_buffer);
 	r600_pipe_state_add_reg(rstate,
-				R_00B130_SPI_SHADER_USER_DATA_VS_0,
+				R_00B148_SPI_SHADER_USER_DATA_VS_6,
 				va, t_list_buffer, RADEON_USAGE_READ);
 	r600_pipe_state_add_reg(rstate,
-				R_00B134_SPI_SHADER_USER_DATA_VS_1,
+				R_00B14C_SPI_SHADER_USER_DATA_VS_7,
 				va >> 32,
 				NULL, 0);
 

@@ -1927,6 +1927,7 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control, db_shader_control;
+	unsigned num_sgprs, num_user_sgprs;
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
@@ -2028,16 +2029,22 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 				va >> 40,
 				shader->bo, RADEON_USAGE_READ);
 
+	num_user_sgprs = 6;
+	num_sgprs = shader->num_sgprs;
+	if (num_user_sgprs > num_sgprs)
+		num_sgprs = num_user_sgprs;
 	/* Last 2 reserved SGPRs are used for VCC */
-	/* XXX: Hard-coding 2 SGPRs for constant buffer */
+	num_sgprs += 2;
+	assert(num_sgprs <= 104);
+
 	r600_pipe_state_add_reg(rstate,
 				R_00B028_SPI_SHADER_PGM_RSRC1_PS,
-				S_00B028_VGPRS(shader->num_vgprs / 4) |
-				S_00B028_SGPRS((shader->num_sgprs + 2 + 2 + 1) / 8),
+				S_00B028_VGPRS((shader->num_vgprs - 1) / 4) |
+				S_00B028_SGPRS((num_sgprs - 1) / 8),
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
-				S_00B02C_USER_SGPR(6),
+				S_00B02C_USER_SGPR(num_user_sgprs),
 				NULL, 0);
 
 	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
@@ -2052,6 +2059,7 @@ void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
+	unsigned num_sgprs, num_user_sgprs;
 	unsigned nparams, i;
 	uint64_t va;
 
@@ -2095,16 +2103,22 @@ void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
 				va >> 40,
 				shader->bo, RADEON_USAGE_READ);
 
+	num_user_sgprs = 8;
+	num_sgprs = shader->num_sgprs;
+	if (num_user_sgprs > num_sgprs)
+		num_sgprs = num_user_sgprs;
 	/* Last 2 reserved SGPRs are used for VCC */
-	/* XXX: Hard-coding 2 SGPRs for constant buffer */
+	num_sgprs += 2;
+	assert(num_sgprs <= 104);
+
 	r600_pipe_state_add_reg(rstate,
 				R_00B128_SPI_SHADER_PGM_RSRC1_VS,
-				S_00B128_VGPRS(shader->num_vgprs / 4) |
-				S_00B128_SGPRS((shader->num_sgprs + 2 + 2 + 2) / 8),
+				S_00B128_VGPRS((shader->num_vgprs - 1) / 4) |
+				S_00B128_SGPRS((num_sgprs - 1) / 8),
 				NULL, 0);
 	r600_pipe_state_add_reg(rstate,
 				R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
-				S_00B12C_USER_SGPR(2 + 2),
+				S_00B12C_USER_SGPR(num_user_sgprs),
 				NULL, 0);
 }
 
