@@ -285,7 +285,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
 {
 
-  unsigned numOperands = MI.getNumOperands();
+  unsigned numOperands = MI.getNumExplicitOperands();
 
    /* Some instructions are just place holder instructions that represent
     * operations that the GPU does automatically.  They should be ignored. */
@@ -351,7 +351,7 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO)
     emitTwoBytes(getHWReg(reg));
     if (reg == AMDIL::ALU_LITERAL_X) {
       const MachineInstr * parent = MO.getParent();
-      unsigned immOpIndex = parent->getNumOperands() - 1;
+      unsigned immOpIndex = parent->getNumExplicitOperands() - 1;
       MachineOperand immOp = parent->getOperand(immOpIndex);
       if (immOp.isFPImm()) {
         value = immOp.getFPImm()->getValueAPF().bitcastToAPInt().getZExtValue();
