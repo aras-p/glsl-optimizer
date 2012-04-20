@@ -24,7 +24,7 @@ Using the SWC
 
 TBD
 
-Using the standlaone tool
+Using the standalone tool
 -------------------------
 
 TBD
@@ -59,4 +59,6 @@ The proscenium example displays a spinning teapot that can be rendered using a u
 Starling Example
 ----------------
 
-TBD
+The Starling example uses the BunnyMark demo but replaces the agal shader used to render the background element with an embedded GLSL shader that is compiled at runtime using the glsl2agal swc.
+
+Take a look in Background.as to see how you invoke the compiler on some GLSL source and then how you inspect the resulting json dictionary to figure out where to map the uniform values using the standard stage3D APIs.
