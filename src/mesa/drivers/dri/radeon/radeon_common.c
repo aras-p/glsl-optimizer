@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "drivers/common/meta.h"
@@ -168,7 +169,7 @@ void radeonUpdateScissor( struct gl_context *ctx )
 	max_x = ctx->DrawBuffer->Width - 1;
 	max_y = ctx->DrawBuffer->Height - 1;
 
-	if ( !ctx->DrawBuffer->Name ) {
+	if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
 		x1 = x;
 		y1 = ctx->DrawBuffer->Height - (y + h);
 		x2 = x + w - 1;
@@ -407,7 +408,7 @@ void radeonDrawBuffer( struct gl_context *ctx, GLenum mode )
 		fprintf(stderr, "%s %s\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr( mode ));
 
-	if (ctx->DrawBuffer->Name == 0) {
+	if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
 		radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 
 		const GLboolean was_front_buffer_rendering =
@@ -430,7 +431,7 @@ void radeonDrawBuffer( struct gl_context *ctx, GLenum mode )
 
 void radeonReadBuffer( struct gl_context *ctx, GLenum mode )
 {
-	if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+	if (ctx->DrawBuffer && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
 		struct radeon_context *const rmesa = RADEON_CONTEXT(ctx);
 		const GLboolean was_front_buffer_reading = rmesa->is_front_buffer_reading;
 		rmesa->is_front_buffer_reading = (mode == GL_FRONT_LEFT)
@@ -465,7 +466,7 @@ void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GL
 	void (*old_viewport)(struct gl_context *ctx, GLint x, GLint y,
 			     GLsizei w, GLsizei h);
 
-	if (ctx->DrawBuffer->Name == 0) {
+	if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
 		if (radeon->is_front_buffer_rendering) {
 			ctx->Driver.Flush(ctx);
 		}
@@ -656,7 +657,7 @@ void radeonFlush(struct gl_context *ctx)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
 flush_front:
-	if ((ctx->DrawBuffer->Name == 0) && radeon->front_buffer_dirty) {
+	if (_mesa_is_winsys_fbo(ctx->DrawBuffer) && radeon->front_buffer_dirty) {
 		__DRIscreen *const screen = radeon->radeonScreen->driScreen;
 
 		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)

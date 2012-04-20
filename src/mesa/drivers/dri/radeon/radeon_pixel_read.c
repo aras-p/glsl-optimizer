@@ -28,6 +28,7 @@
 #include "stdint.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/image.h"
 #include "main/readpix.h"
 #include "main/state.h"
@@ -148,7 +149,7 @@ do_blit_readpixels(struct gl_context * ctx,
     }
 
     /* Disable source Y flipping for FBOs */
-    flip_y = (ctx->ReadBuffer->Name == 0);
+    flip_y = _mesa_is_winsys_fbo(ctx->ReadBuffer);
     if (pack->Invert) {
         y = rrb->base.Base.Height - height - y;
         flip_y = !flip_y;

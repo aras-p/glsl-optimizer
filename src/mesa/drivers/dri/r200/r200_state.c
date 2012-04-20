@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "main/light.h"
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
@@ -536,7 +537,7 @@ static void r200FrontFace( struct gl_context *ctx, GLenum mode )
    rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~R200_CULL_FRONT_IS_CCW;
 
    /* Winding is inverted when rendering to FBO */
-   if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+   if (ctx->DrawBuffer && _mesa_is_user_fbo(ctx->DrawBuffer))
       mode = (mode == GL_CW) ? GL_CCW : GL_CW;
 
    switch ( mode ) {
@@ -1547,7 +1548,7 @@ void r200UpdateWindow( struct gl_context *ctx )
    GLfloat xoffset = 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
-   const GLboolean render_to_fbo = (ctx->DrawBuffer ? (ctx->DrawBuffer->Name != 0) : 0);
+   const GLboolean render_to_fbo = (ctx->DrawBuffer ? _mesa_is_user_fbo(ctx->DrawBuffer) : 0);
    const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
 
