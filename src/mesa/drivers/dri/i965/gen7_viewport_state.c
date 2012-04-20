@@ -25,6 +25,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
+#include "main/fbobject.h"
 
 static void
 gen7_upload_sf_clip_viewport(struct brw_context *brw)
@@ -33,7 +34,7 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
-   const bool render_to_fbo = (ctx->DrawBuffer->Name != 0);
+   const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
    struct gen7_sf_clip_viewport *vp;
 

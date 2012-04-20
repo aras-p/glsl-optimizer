@@ -29,6 +29,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
+#include "main/fbobject.h"
 
 /* The clip VP defines the guardband region where expensive clipping is skipped
  * and fragments are allowed to be generated and clipped out cheaply by the SF.
@@ -70,7 +71,7 @@ gen6_upload_sf_vp(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;
-   const bool render_to_fbo = (ctx->DrawBuffer->Name != 0);
+   const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    sfv = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,

@@ -33,6 +33,7 @@
 #include "brw_wm.h"
 #include "brw_state.h"
 #include "main/formats.h"
+#include "main/fbobject.h"
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
 
@@ -516,7 +517,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
     */
    if (fp->program.Base.InputsRead & FRAG_BIT_WPOS) {
       key->drawable_height = ctx->DrawBuffer->Height;
-      key->render_to_fbo = ctx->DrawBuffer->Name != 0;
+      key->render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    }
 
    /* _NEW_BUFFERS */

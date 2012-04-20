@@ -31,10 +31,12 @@
    
 
 
+#include "main/mtypes.h"
+#include "main/macros.h"
+#include "main/fbobject.h"
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "main/macros.h"
 #include "brw_sf.h"
 
 static void upload_sf_vp(struct brw_context *brw)
@@ -44,7 +46,7 @@ static void upload_sf_vp(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;
-   const bool render_to_fbo = (ctx->DrawBuffer->Name != 0);
+   const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    sfv = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
@@ -142,7 +144,7 @@ static void upload_sf_unit( struct brw_context *brw )
    struct brw_sf_unit_state *sf;
    drm_intel_bo *bo = intel->batch.bo;
    int chipset_max_threads;
-   bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
 
    sf = brw_state_batch(brw, AUB_TRACE_SF_STATE,
 			sizeof(*sf), 64, &brw->sf.state_offset);

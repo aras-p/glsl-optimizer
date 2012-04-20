@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/dd.h"
 #include "main/state.h"
 
@@ -545,7 +546,7 @@ i830Scissor(struct gl_context * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
    DBG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
-   if (ctx->DrawBuffer->Name == 0) {
+   if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       x1 = x;
       y1 = ctx->DrawBuffer->Height - (y + h);
       x2 = x + w - 1;

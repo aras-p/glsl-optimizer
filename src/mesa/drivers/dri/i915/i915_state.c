@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/dd.h"
 #include "main/state.h"
 #include "tnl/tnl.h"
@@ -400,7 +401,7 @@ intelCalcViewport(struct gl_context * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   if (ctx->DrawBuffer->Name == 0) {
+   if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       _math_matrix_viewport(&intel->ViewportMatrix,
 			    ctx->Viewport.X,
 			    ctx->DrawBuffer->Height - ctx->Viewport.Y,
@@ -518,7 +519,7 @@ i915Scissor(struct gl_context * ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 
    DBG("%s %d,%d %dx%d\n", __FUNCTION__, x, y, w, h);
 
-   if (ctx->DrawBuffer->Name == 0) {
+   if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       x1 = x;
       y1 = ctx->DrawBuffer->Height - (y + h);
       x2 = x + w - 1;
@@ -577,7 +578,7 @@ i915CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
    else if (ctx->Polygon.CullFaceMode != GL_FRONT_AND_BACK) {
       mode = S4_CULLMODE_CW;
 
-      if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
+      if (ctx->DrawBuffer && _mesa_is_user_fbo(ctx->DrawBuffer))
          mode ^= (S4_CULLMODE_CW ^ S4_CULLMODE_CCW);
       if (ctx->Polygon.CullFaceMode == GL_FRONT)
          mode ^= (S4_CULLMODE_CW ^ S4_CULLMODE_CCW);

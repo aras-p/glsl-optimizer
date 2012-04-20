@@ -30,6 +30,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "main/macros.h"
+#include "main/fbobject.h"
 #include "intel_batchbuffer.h"
 
 /**
@@ -120,7 +121,7 @@ upload_sf_state(struct brw_context *brw)
    uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
    int i;
    /* _NEW_BUFFER */
-   bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
    int attr = 0, input_index = 0;
    int urb_entry_read_offset = 1;
    float point_size;

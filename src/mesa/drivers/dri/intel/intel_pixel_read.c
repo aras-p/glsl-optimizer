@@ -29,6 +29,7 @@
 #include "main/enums.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/fbobject.h"
 #include "main/image.h"
 #include "main/bufferobj.h"
 #include "main/readpix.h"
@@ -116,7 +117,7 @@ do_blit_readpixels(struct gl_context * ctx,
       return false;
    }
    else {
-      if (ctx->ReadBuffer->Name == 0)
+      if (_mesa_is_winsys_fbo(ctx->ReadBuffer))
 	 rowLength = -rowLength;
    }
 
@@ -145,7 +146,7 @@ do_blit_readpixels(struct gl_context * ctx,
 				       all ? INTEL_WRITE_FULL :
 				       INTEL_WRITE_PART);
 
-   if (ctx->ReadBuffer->Name == 0)
+   if (_mesa_is_winsys_fbo(ctx->ReadBuffer))
       y = ctx->ReadBuffer->Height - (y + height);
 
    if (!intelEmitCopyBlit(intel,

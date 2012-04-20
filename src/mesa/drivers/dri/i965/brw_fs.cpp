@@ -35,6 +35,7 @@ extern "C" {
 #include "main/macros.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
+#include "main/fbobject.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/register_allocate.h"
@@ -1828,7 +1829,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (fp->Base.InputsRead & FRAG_BIT_WPOS) {
       key.drawable_height = ctx->DrawBuffer->Height;
-      key.render_to_fbo = ctx->DrawBuffer->Name != 0;
+      key.render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    }
 
    key.nr_color_regions = 1;
