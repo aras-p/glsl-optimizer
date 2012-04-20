@@ -81,9 +81,8 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
 #endif
    std::string err;
    const Target * AMDGPUTarget = TargetRegistry::lookupTarget("r600", err);
-   fprintf(stderr, "%s\n", err.c_str());
    if(!AMDGPUTarget) {
-      fprintf(stderr, "Can't find target\n");
+      fprintf(stderr, "Can't find target: %s\n", err.c_str());
       return 1;
    }
    
