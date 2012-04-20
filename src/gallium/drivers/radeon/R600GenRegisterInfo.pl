@@ -85,6 +85,7 @@ def R600_Reg128 : RegisterClass<"AMDIL", [v4f32], 128, (add
     $t128_string)>
 {
   let SubRegClasses = [(R600_TReg32 sel_x, sel_y, sel_z, sel_w)];
+  let CopyCost = -1;
 }
 
 STRING

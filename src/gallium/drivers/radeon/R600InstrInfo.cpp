@@ -39,8 +39,26 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const
 {
-  BuildMI(MBB, MI, DL, get(AMDIL::MOV), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+
+  unsigned subRegMap[4] = {AMDIL::sel_x, AMDIL::sel_y, AMDIL::sel_z, AMDIL::sel_w};
+
+  if (AMDIL::R600_Reg128RegClass.contains(DestReg)
+      && AMDIL::R600_Reg128RegClass.contains(SrcReg)) {
+    for (unsigned i = 0; i < 4; i++) {
+      BuildMI(MBB, MI, DL, get(AMDIL::MOV))
+              .addReg(RI.getSubReg(DestReg, subRegMap[i]), RegState::Define)
+              .addReg(RI.getSubReg(SrcReg, subRegMap[i]))
+              .addReg(DestReg, RegState::Define | RegState::Implicit);
+    }
+  } else {
+
+    /* We can't copy vec4 registers */
+    assert(!AMDIL::R600_Reg128RegClass.contains(DestReg)
+           && !AMDIL::R600_Reg128RegClass.contains(SrcReg));
+
+    BuildMI(MBB, MI, DL, get(AMDIL::MOV), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  }
 }
 
 unsigned R600InstrInfo::getISAOpcode(unsigned opcode) const
