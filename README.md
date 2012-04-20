@@ -1,50 +1,62 @@
-GLSL optimizer
-==============
+GLSL To AGAL Compiler
+=====================
 
-A C++ library that takes GLSL shaders, does some GPU-independent optimizations on them
-and outputs GLSL back. Optimizations are function inlining, dead code removal, copy propagation,
-constant folding, constant propagation, arithmetic optimizations and so on.
+This project provides a library and standalone tool for converting GLSL vertex and fragment shaders into AGAL shaders that can be used with the Stage3D API in the Adobe Flash runtime.
 
-Apparently quite a few mobile platforms are pretty bad at optimizing GLSL shaders; and
-unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
-before can make the shader run much faster on a platform like that. See performance numbers
-in [this blog post](http://aras-p.info/blog/2010/09/29/glsl-optimizer/).
+GLSL To AGAL Compiler Is licensed according to the MIT License and the Adobe Open Source License. See individual files for exact licensing.
 
-Almost all actual code is [Mesa 3D's GLSL2](http://cgit.freedesktop.org/mesa/mesa/log/?h=glsl2)
-compiler; all this library does is spits out optimized GLSL back.
+How does it work
+----------------
 
-This GLSL optimizer is made for [Unity's](http://unity3d.com/) purposes and is built-in
-in [Unity 3.0](http://unity3d.com/unity/whats-new/unity-3).
+The tool is based off the Mesa codebase and has full support for GLSL 1.3 syntax. After parsing the GLSL shader various optimizations are run on the code in order to generate efficient AGAL that fits within all of the constraints of the basic profile of the Stage3D API.
 
-GLSL Optimizer is licensed according to the terms of the MIT license.
+The general philosophy in the conversion process is that if it is possible to represent a given GLSL shader as AGAL then this tool should be able to perform the conversion without any problem. Conversly this tool cannot create AGAL shaders that you couldn't write by hand, so it cannot work around any inherrant limitations in the Stage3D API (texture reads in vertex shaders, for example).
+
+Some things that are not available in AGAL, such as function calls and loops *will* work in cases where they are largely just syntactic sugar that the compiler can remove during optimization e.g. Function calls can all be inlined, and static loops can all be unrolled.
+
+Some examples of conversion errors
+- texture access in vertex shaders
+- data-dependent loops (ones that can't be statically unrolled at compile time)
+- functions that can't be implemented without gpu support (e.g. screen-space differentials)
+
+Using the SWC
+-------------
+
+TBD
+
+Using the standlaone tool
+-------------------------
+
+TBD
+
+Handling the output
+-------------------
+
+The output from the tool is a JSON object containing several fields:
+
+infolog - If there were any conversion errors or syntactic errors in the source glsl then this will contain the errors or warnings that were generated.
+
+varnames - this dictionary maps from GLSL variable name to AGAL register name
+
+storage - This dictionary maps from AGAL register name to glsl storage type (uniform, in/out, temp etc)
+
+types - this maps from AGAL register name to the glsl type of the variable stored in that register (vec4, sampler2D etc)
+
+consts - This maps from AGAL register name to an array of 4 floating point values that should be stored in that register before executing the shader.
+
+agalasm (optional) - Contains the AGAL asm suitable for assembly by the AGALMiniAssembler
+
+agalbin (optional) - Contains the binary AGAL shader code that can be uploaded directly to stage3D
+
+The information in this JSON object should be sufficient to be able to hook up the necessary vertex attribute streams and set all of the required uniforms into the right register. Exactly how this integration is done will depend on the engine you are using.
+
+Proscenium Example
+------------------
+
+The proscenium example displays a spinning teapot that can be rendered using a user supplied GLSL vertex/fragment shader pair. The HTML ui allows you to modify the shader at runtime and an overlaid flex UI allows you to interactively modify any uniform variables exposed by the programs.
 
 
-Usage
------
+Starling Example
+----------------
 
-Visual Studio 2008 (Windows, x86) and Xcode 3.2 (Mac, i386) project files for a static
-library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
-respectively.
-
-For Linux you can use cmake. Just type "cmake . && make" in the root directory.
-This will build the optimizer library and some executable binaries.
-
-Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
- 
-	ctx = glslopt_initialize();
-	for (lots of shaders) {
-		shader = glslopt_optimize (ctx, shaderType, shaderSource, options);
-		if (glslopt_get_status (shader)) {
-			newSource = glslopt_get_output (shader);
-		} else {
-			errorLog = glslopt_get_log (shader);
-		}
-		glslopt_shader_delete (shader);
-	}
-	glslopt_cleanup (ctx);
-
-Notes
------
-
-* I haven't checked if/how it works with higher GLSL versions than the
-  default (1.10?).
+TBD
