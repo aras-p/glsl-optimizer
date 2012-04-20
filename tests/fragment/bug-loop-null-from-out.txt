@@ -1,5 +1,0 @@
-void main ()
-{
-  gl_FragColor = vec4(12.0, 12.0, 12.0, 12.0);
-}
-
