@@ -1483,6 +1483,7 @@ if test "x$enable_gallium_gbm" = xyes; then
     GALLIUM_STATE_TRACKERS_DIRS="gbm $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS gbm"
     HAVE_ST_GBM="yes"
+    enable_gallium_loader=yes
 fi
 
 dnl

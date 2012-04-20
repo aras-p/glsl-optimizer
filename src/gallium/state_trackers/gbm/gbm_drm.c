@@ -190,10 +190,7 @@ gbm_gallium_drm_destroy(struct gbm_device *gbm)
 {
    struct gbm_gallium_drm_device *gdrm = gbm_gallium_drm_device(gbm);
 
-   gdrm->screen->destroy(gdrm->screen);
-
-   FREE(gdrm->base.driver_name);
-
+   gallium_screen_destroy(gdrm);
    FREE(gdrm);
 }
 

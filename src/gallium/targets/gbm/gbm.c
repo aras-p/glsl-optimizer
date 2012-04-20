@@ -25,34 +25,54 @@
  *    Benjamin Franzke <benjaminfranzke@googlemail.com>
  */
 
-#include "util/u_inlines.h"
-
 #include "gbm_gallium_drmint.h"
-#include "pipe_loader.h"
 
-static struct pipe_screen *
-create_drm_screen(const char *name, int fd)
+#include "util/u_memory.h"
+#include "util/u_inlines.h"
+#include "pipe-loader/pipe_loader.h"
+
+static const char *
+get_library_search_path(void)
 {
-   struct pipe_module *pmod = get_pipe_module(name);
- 
-   return (pmod && pmod->drmdd && pmod->drmdd->create_screen) ?
-      pmod->drmdd->create_screen(fd) : NULL;
+   const char *search_path = NULL;
+
+   /* don't allow setuid apps to use GBM_BACKENDS_PATH */
+   if (geteuid() == getuid())
+      search_path = getenv("GBM_BACKENDS_PATH");
+   if (search_path == NULL)
+      search_path = PIPE_SEARCH_DIR;
+
+   return search_path;
 }
 
 int
 gallium_screen_create(struct gbm_gallium_drm_device *gdrm)
 {
-   gdrm->base.driver_name = drm_fd_get_screen_name(gdrm->base.base.fd);
-   if (gdrm->base.driver_name == NULL)
+   struct pipe_loader_device *dev;
+   int ret;
+
+   ret = pipe_loader_drm_probe_fd(&dev, gdrm->base.base.fd);
+   if (!ret)
       return -1;
 
-   gdrm->screen = create_drm_screen(gdrm->base.driver_name, gdrm->base.base.fd);
+   gdrm->screen = pipe_loader_create_screen(dev, get_library_search_path());
    if (gdrm->screen == NULL) {
       debug_printf("failed to load driver: %s\n", gdrm->base.driver_name);
+      pipe_loader_release(&dev, 1);
       return -1;
    };
 
+   gdrm->driver = dev;
+   gdrm->base.driver_name = strdup(dev->driver_name);
    return 0;
+}
+
+void
+gallium_screen_destroy(struct gbm_gallium_drm_device *gdrm)
+{
+   FREE(gdrm->base.driver_name);
+   gdrm->screen->destroy(gdrm->screen);
+   pipe_loader_release((struct pipe_loader_device **)&gdrm->driver, 1);
 }
 
 GBM_EXPORT struct gbm_backend gbm_backend = {
