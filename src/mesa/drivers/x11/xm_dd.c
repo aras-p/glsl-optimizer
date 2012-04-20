@@ -32,6 +32,7 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/colormac.h"
+#include "main/fbobject.h"
 #include "main/macros.h"
 #include "main/image.h"
 #include "main/imports.h"
@@ -69,7 +70,7 @@ color_mask(struct gl_context *ctx,
    const int xclass = xmesa->xm_visual->visualType;
    (void) amask;
 
-   if (ctx->DrawBuffer->Name != 0)
+   if (_mesa_is_user_fbo(ctx->DrawBuffer))
       return;
 
    xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
@@ -240,7 +241,7 @@ clear_nbit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
 static void
 clear_buffers(struct gl_context *ctx, GLbitfield buffers)
 {
-   if (ctx->DrawBuffer->Name == 0) {
+   if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       /* this is a window system framebuffer */
       const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask[0];
       const XMesaContext xmesa = XMESA_CONTEXT(ctx);
@@ -304,7 +305,7 @@ can_do_DrawPixels_8R8G8B(struct gl_context *ctx, GLenum format, GLenum type)
    if (format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
        ctx->DrawBuffer &&
-       ctx->DrawBuffer->Name == 0 &&
+       _mesa_is_winsys_fbo(ctx->DrawBuffer) &&
        ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
        ctx->Pixel.ZoomY == 1.0 &&
        ctx->_ImageTransferState == 0 /* no color tables, scale/bias, etc */) {
@@ -437,7 +438,7 @@ can_do_DrawPixels_5R6G5B(struct gl_context *ctx, GLenum format, GLenum type)
        type == GL_UNSIGNED_SHORT_5_6_5 &&
        !ctx->Color.DitherFlag &&  /* no dithering */
        ctx->DrawBuffer &&
-       ctx->DrawBuffer->Name == 0 &&
+       _mesa_is_winsys_fbo(ctx->DrawBuffer) &&
        ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
        ctx->Pixel.ZoomY == 1.0 &&
        ctx->_ImageTransferState == 0 /* no color tables, scale/bias, etc */) {
@@ -693,7 +694,7 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
    _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
 
-   if (ctx->DrawBuffer->Name != 0)
+   if (_mesa_is_user_fbo(ctx->DrawBuffer))
       return;
 
    /*
