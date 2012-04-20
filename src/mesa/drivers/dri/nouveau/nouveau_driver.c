@@ -25,6 +25,8 @@
  */
 
 #include "main/mfeatures.h"
+#include "main/mtypes.h"
+#include "main/fbobject.h"
 
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
@@ -61,7 +63,7 @@ nouveau_flush(struct gl_context *ctx)
 
 	PUSH_KICK(push);
 
-	if (ctx->DrawBuffer->Name == 0 &&
+	if (_mesa_is_winsys_fbo(ctx->DrawBuffer) &&
 	    ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 		__DRIscreen *screen = nctx->screen->dri_screen;
 		__DRIdri2LoaderExtension *dri2 = screen->dri2.loader;

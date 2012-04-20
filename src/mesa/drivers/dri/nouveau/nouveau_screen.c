@@ -33,6 +33,7 @@
 #include "nv20_driver.h"
 
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 #include "main/renderbuffer.h"
 #include "swrast/s_renderbuffer.h"
 
