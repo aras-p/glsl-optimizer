@@ -109,11 +109,11 @@ if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
 
     GCC_VERSION=`$CC -dumpversion`
     if test $? -eq 0; then
-        major=`echo $GCC_VERSION | cut -d. -f1`
-        minor=`echo $GCC_VERSION | cut -d. -f2`
+        GCC_VERSION_MAJOR=`echo $GCC_VERSION | cut -d. -f1`
+        GCC_VERSION_MINOR=`echo $GCC_VERSION | cut -d. -f2`
     fi
 
-    if test $major -lt 3 -o $major -eq 3 -a $minor -lt 3 ; then
+    if test $GCC_VERSION_MAJOR -lt 3 -o $GCC_VERSION_MAJOR -eq 3 -a $GCC_VERSION_MINOR -lt 3 ; then
         AC_MSG_RESULT([no])
         AC_MSG_ERROR([If using GCC, version 3.3.0 or later is required.])
     else
@@ -1616,8 +1616,14 @@ if test "x$enable_opencl" = xyes; then
     if test "x$with_gallium_drivers" = x; then
         AC_MSG_ERROR([cannot enable OpenCL without Gallium])
     fi
+
+    if test $GCC_VERSION_MAJOR -lt 4 -o $GCC_VERSION_MAJOR -eq 4 -a $GCC_VERSION_MINOR -lt 6; then
+        AC_MSG_ERROR([gcc >= 4.6 is required to build clover])
+    fi
+
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS clover"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS opencl"
+    enable_gallium_loader=yes
 fi
 
 dnl
@@ -1852,6 +1858,14 @@ AC_ARG_WITH([xvmc-libdir],
     [XVMC_LIB_INSTALL_DIR='${libdir}'])
 AC_SUBST([XVMC_LIB_INSTALL_DIR])
 
+dnl
+dnl Gallium Tests
+dnl
+if test "x$enable_gallium_tests" = xyes; then
+    SRC_DIRS="$SRC_DIRS gallium/tests/trivial"
+    enable_gallium_loader=yes
+fi
+
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],
     [AS_HELP_STRING([--with-vdpau-libdir=DIR],
@@ -1916,6 +1930,17 @@ gallium_require_llvm() {
     fi
 }
 
+gallium_require_drm_loader() {
+    if test "x$enable_gallium_loader" = xyes; then
+        PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
+                          AC_MSG_ERROR([Gallium drm loader requrires libudev]))
+        if test "x$have_libdrm" != xyes; then
+            AC_MSG_ERROR([Gallium drm loader requires libdrm >= $LIBDRM_REQUIRED])
+        fi
+        enable_gallium_drm_loader=yes
+    fi
+}
+
 dnl Gallium drivers
 dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
 if test "x$with_gallium_drivers" != x; then
@@ -1943,6 +1968,7 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         xr600)
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             if test "x$enable_r600_llvm" = xyes; then
                 if test "x$LLVM_VERSION" != "x3.1"; then
@@ -1963,6 +1989,7 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         xnouveau)
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
+            gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv30 nv50 nvc0"
             gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "" "xvmc-nouveau" "vdpau-nouveau"
             ;;
@@ -1997,11 +2024,6 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         esac
     done
-fi
-
-if test "x$enable_gallium_tests" = xyes; then
-    SRC_DIRS="$SRC_DIRS gallium/tests/trivial"
-    enable_gallium_loader=yes
 fi
 
 if test "x$enable_gallium_loader" = xyes; then
