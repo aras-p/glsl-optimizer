@@ -1509,7 +1509,15 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    readY = srcy;
    readW = width;
    readH = height;
-   _mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &pack);
+   if (!_mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &pack)) {
+      /* The source region is completely out of bounds.  Do nothing.
+       * The GL spec says "Results of copies from outside the window,
+       * or from regions of the window that are not exposed, are
+       * hardware dependent and undefined."
+       */
+      return;
+   }
+
    readW = MAX2(0, readW);
    readH = MAX2(0, readH);
 
