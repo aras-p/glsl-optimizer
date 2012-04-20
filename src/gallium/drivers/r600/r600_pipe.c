@@ -803,6 +803,7 @@ static unsigned radeon_family_from_device(unsigned device)
 struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
+	boolean glsl130_default;
 	if (rscreen == NULL) {
 		return NULL;
 	}
@@ -875,7 +876,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	pipe_mutex_init(rscreen->fences.mutex);
 
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
-	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", FALSE) ? 130 : 120;
+	glsl130_default = rscreen->chip_class == EVERGREEN ? TRUE : FALSE;
+	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", glsl130_default) ? 130 : 120;
 
 	return &rscreen->screen;
 }
