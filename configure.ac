@@ -616,7 +616,11 @@ AC_ARG_ENABLE([va],
          [enable va library @<:@default=auto@:>@])],
    [enable_va="$enableval"],
    [enable_va=auto])
-
+AC_ARG_ENABLE([opencl],
+   [AS_HELP_STRING([--enable-opencl],
+         [enable OpenCL library @<:@default=no@:>@])],
+   [enable_opencl="$enableval"],
+   [enable_opencl=no])
 AC_ARG_ENABLE([xlib_glx],
     [AS_HELP_STRING([--enable-xlib-glx],
         [make GLX library Xlib-based instead of DRI-based @<:@default=disable@:>@])],
@@ -676,7 +680,8 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_d3d1x" = xno -a \
         "x$enable_xvmc" = xno -a \
         "x$enable_vdpau" = xno -a \
-        "x$enable_va" = xno; then
+        "x$enable_va" = xno -a \
+        "x$enable_opencl" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
@@ -1604,6 +1609,18 @@ if test "x$enable_va" = xyes; then
 fi
 
 dnl
+dnl OpenCL configuration
+dnl
+
+if test "x$enable_opencl" = xyes; then
+    if test "x$with_gallium_drivers" = x; then
+        AC_MSG_ERROR([cannot enable OpenCL without Gallium])
+    fi
+    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS clover"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS opencl"
+fi
+
+dnl
 dnl GLU configuration
 dnl
 AC_ARG_ENABLE([glu],
@@ -1851,6 +1868,14 @@ AC_ARG_WITH([va-libdir],
     [VA_LIB_INSTALL_DIR='${libdir}/va'])
 AC_SUBST([VA_LIB_INSTALL_DIR])
 
+dnl Directory for OpenCL libs
+AC_ARG_WITH([opencl-libdir],
+    [AS_HELP_STRING([--with-opencl-libdir=DIR],
+        [directory for the OpenCL libraries @<:@default=${libdir}/opencl@:>@])],
+    [OPENCL_LIB_INSTALL_DIR="$withval"],
+    [OPENCL_LIB_INSTALL_DIR='${libdir}/opencl'])
+AC_SUBST([OPENCL_LIB_INSTALL_DIR])
+
 dnl
 dnl Gallium helper functions
 dnl
@@ -2039,9 +2064,11 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
 		src/gallium/auxiliary/pipe-loader/Makefile
+		src/gallium/state_trackers/clover/Makefile
 		src/gallium/drivers/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
+		src/gallium/targets/opencl/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/egl/drivers/Makefile

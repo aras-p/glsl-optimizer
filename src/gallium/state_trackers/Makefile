@@ -17,7 +17,7 @@ subdirs:
 
 
 clean:
-	rm -f `find . -name \*.[oa]`
+	rm -f `find . -regex '.*\.l?[oa]'`
 	rm -f `find . -name depend`
 
 
