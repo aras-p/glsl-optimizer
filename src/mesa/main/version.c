@@ -124,6 +124,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_texture_sRGB);
    const GLboolean ver_3_0 = (ver_2_1 &&
                               ctx->Const.GLSLVersion >= 130 &&
+                              ctx->Const.MaxSamples >= 4 &&
                               ctx->Extensions.ARB_color_buffer_float &&
                               ctx->Extensions.ARB_depth_buffer_float &&
                               ctx->Extensions.ARB_half_float_pixel &&
