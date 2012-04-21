@@ -877,7 +877,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	pipe_mutex_init(rscreen->fences.mutex);
 
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
-	glsl130_default = rscreen->chip_class == EVERGREEN ? TRUE : FALSE;
+	glsl130_default = (rscreen->chip_class == EVERGREEN || rscreen->chip_class == R700) ? TRUE : FALSE;
 	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", glsl130_default) ? 130 : 120;
 
 	return &rscreen->screen;
