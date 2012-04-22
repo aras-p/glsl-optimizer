@@ -161,6 +161,7 @@ struct r600_pipe_dsa {
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
 	bool				is_flush;
+	unsigned                        sx_alpha_test_control;
 };
 
 struct r600_vertex_element
@@ -257,6 +258,7 @@ struct r600_context {
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			cb_target_mask;
 	unsigned			fb_cb_shader_mask;
+	unsigned			sx_alpha_test_control;
 	unsigned			cb_shader_mask;
 	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;

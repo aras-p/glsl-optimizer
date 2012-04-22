@@ -796,11 +796,11 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
+	dsa->sx_alpha_test_control = alpha_test_control & 0xff;
 	dsa->alpha_ref = alpha_ref;
 
 	/* misc */
 	db_render_control = 0;
-	r600_pipe_state_add_reg(rstate, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_RENDER_CONTROL, db_render_control);
 	return rstate;
@@ -1427,6 +1427,11 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 		blend_clamp = 0;
 		blend_bypass = 1;
 	}
+
+	if (ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT)
+		rctx->sx_alpha_test_control |= S_028410_ALPHA_TEST_BYPASS(1);
+	else
+		rctx->sx_alpha_test_control &= C_028410_ALPHA_TEST_BYPASS;
 
 	color_info |= S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |

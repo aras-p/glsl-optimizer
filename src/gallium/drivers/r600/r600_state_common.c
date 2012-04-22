@@ -244,6 +244,8 @@ void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 		return;
 	rstate = &dsa->rstate;
 	rctx->states[rstate->id] = rstate;
+	rctx->sx_alpha_test_control &= ~0xff;
+	rctx->sx_alpha_test_control |= dsa->sx_alpha_test_control;
 	rctx->alpha_ref = dsa->alpha_ref;
 	rctx->alpha_ref_dirty = true;
 	r600_context_pipe_state_set(rctx, rstate);
@@ -796,6 +798,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_02823C_CB_SHADER_MASK, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028410_SX_ALPHA_TEST_CONTROL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0);
@@ -817,6 +820,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_shader_mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
+	r600_pipe_state_mod_reg(&rctx->vgt, rctx->sx_alpha_test_control);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
 
