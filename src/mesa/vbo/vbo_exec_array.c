@@ -438,14 +438,6 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
          const_inputs |= VERT_BIT_GENERIC(i);
       }
-
-      /* There is no need to make _NEW_ARRAY dirty here for the TnL program,
-       * because it already takes care of invalidating the state necessary
-       * to revalidate vertex arrays. Not marking the state as dirty also
-       * improves performance (quite significantly in some apps).
-       */
-      if (!ctx->VertexProgram._MaintainTnlProgram)
-         ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_NV:
@@ -472,8 +464,6 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
          const_inputs |= VERT_BIT_GENERIC(i);
       }
-
-      ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_ARB:
@@ -512,11 +502,11 @@ recalculate_input_bindings(struct gl_context *ctx)
       }
 
       inputs[VERT_ATTRIB_GENERIC0] = inputs[0];
-      ctx->NewState |= _NEW_ARRAY;
       break;
    }
 
    _mesa_set_varying_vp_inputs( ctx, VERT_BIT_ALL & (~const_inputs) );
+   ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
 }
 
 

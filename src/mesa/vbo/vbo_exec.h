@@ -189,7 +189,8 @@ static inline void
 vbo_draw_method(struct vbo_exec_context *exec, enum draw_method method)
 {
    if (exec->last_draw_method != method) {
-      exec->ctx->NewState |= _NEW_ARRAY;
+      struct gl_context *ctx = exec->ctx;
+      ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
       exec->last_draw_method = method;
    }
 }

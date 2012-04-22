@@ -253,11 +253,11 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 	 arrays[attr]._MaxElement = count; /* ??? */
 
          varying_inputs |= VERT_BIT(attr);
-         ctx->NewState |= _NEW_ARRAY;
       }
    }
 
    _mesa_set_varying_vp_inputs( ctx, varying_inputs );
+   ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
 }
 
 

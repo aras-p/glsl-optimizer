@@ -209,11 +209,11 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
 
 	 buffer_offset += node_attrsz[src] * sizeof(GLfloat);
          varying_inputs |= VERT_BIT(attr);
-         ctx->NewState |= _NEW_ARRAY;
       }
    }
 
    _mesa_set_varying_vp_inputs( ctx, varying_inputs );
+   ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
 }
 
 
