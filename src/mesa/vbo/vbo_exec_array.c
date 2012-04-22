@@ -640,10 +640,10 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
       _mesa_debug(ctx, "glDrawArrays(%s, %d, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), start, count);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
-
-   FLUSH_CURRENT( ctx, 0 );
 
    if (0)
       check_draw_arrays_data(ctx, start, count);
@@ -669,10 +669,10 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
       _mesa_debug(ctx, "glDrawArraysInstanced(%s, %d, %d, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), start, count, numInstances);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (!_mesa_validate_DrawArraysInstanced(ctx, mode, start, count, numInstances))
       return;
-
-   FLUSH_CURRENT( ctx, 0 );
 
    if (0)
       check_draw_arrays_data(ctx, start, count);
@@ -761,8 +761,6 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    struct _mesa_index_buffer ib;
    struct _mesa_prim prim[1];
 
-   FLUSH_CURRENT( ctx, 0 );
-
    vbo_bind_arrays(ctx);
 
    ib.count = count;
@@ -837,6 +835,8 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                 "glDrawRangeElementsBaseVertex(%s, %u, %u, %d, %s, %p, %d)\n",
                 _mesa_lookup_enum_by_nr(mode), start, end, count,
                 _mesa_lookup_enum_by_nr(type), indices, basevertex);
+
+   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices, basevertex ))
@@ -936,6 +936,8 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices, 0 ))
       return;
 
@@ -957,6 +959,8 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
       _mesa_debug(ctx, "glDrawElementsBaseVertex(%s, %d, %s, %p, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices, basevertex);
+
+   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices,
 				     basevertex ))
@@ -981,6 +985,8 @@ vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices, numInstances);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
                                              numInstances, 0))
       return;
@@ -1004,6 +1010,8 @@ vbo_exec_DrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices,
                   numInstances, basevertex);
+
+   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
                                              numInstances, basevertex))
@@ -1036,8 +1044,6 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 
    if (primcount == 0)
       return;
-
-   FLUSH_CURRENT( ctx, 0 );
 
    prim = calloc(1, primcount * sizeof(*prim));
    if (prim == NULL) {
@@ -1226,11 +1232,11 @@ vbo_exec_DrawTransformFeedback(GLenum mode, GLuint name)
       _mesa_debug(ctx, "glDrawTransformFeedback(%s, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), name);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (!_mesa_validate_DrawTransformFeedback(ctx, mode, obj)) {
       return;
    }
-
-   FLUSH_CURRENT(ctx, 0);
 
    vbo_draw_transform_feedback(ctx, mode, obj, 1);
 }
