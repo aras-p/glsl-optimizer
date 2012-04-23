@@ -395,6 +395,9 @@ fs_visitor::visit(ir_expression *ir)
       resolve_ud_negate(&op[0]);
       resolve_ud_negate(&op[1]);
 
+      resolve_bool_comparison(ir->operands[0], &op[0]);
+      resolve_bool_comparison(ir->operands[1], &op[1]);
+
       inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
       inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
       break;
@@ -1542,6 +1545,9 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
+	 resolve_bool_comparison(expr->operands[0], &op[0]);
+	 resolve_bool_comparison(expr->operands[1], &op[1]);
+
 	 inst = emit(BRW_OPCODE_CMP, reg_null_cmp, op[0], op[1]);
 	 inst->conditional_mod =
 	    brw_conditional_for_comparison(expr->operation);
@@ -2127,5 +2133,16 @@ fs_visitor::resolve_ud_negate(fs_reg *reg)
 
    fs_reg temp = fs_reg(this, glsl_type::uint_type);
    emit(BRW_OPCODE_MOV, temp, *reg);
+   *reg = temp;
+}
+
+void
+fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
+{
+   if (rvalue->type != glsl_type::bool_type)
+      return;
+
+   fs_reg temp = fs_reg(this, glsl_type::bool_type);
+   emit(BRW_OPCODE_AND, temp, *reg, fs_reg(1));
    *reg = temp;
 }

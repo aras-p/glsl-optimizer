@@ -582,6 +582,7 @@ public:
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);
    void resolve_ud_negate(fs_reg *reg);
+   void resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg);
 
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
