@@ -334,7 +334,9 @@ case $ARCH in
 	    # environment.  If so, pass -m32 flag to linker.
 	    set ${OBJECTS}
 	    ABI32=`file $1 | grep 32-bit`
-	    if [ "${ABI32}" -a `uname -m` = "x86_64" ] ; then
+	    ARM=`file $1 | grep ARM`
+	    # Do not add "-m32" option for arm.
+            if [ -z "$ARM" -a "${ABI32}" -a `uname -m` = "x86_64" ] ; then
 		OPTS="-m32 ${OPTS}"
 	    fi
 
@@ -391,7 +393,9 @@ case $ARCH in
 	    # environment.  If so, pass -m32 flag to linker.
 	    set ${OBJECTS}
 	    ABI32=`file $1 | grep 32-bit`
-	    if [ "${ABI32}" -a `uname -m` = "x86_64" ] ; then
+            ARM=`file $1 | grep ARM`
+	    # Do not add "-m32" option for arm.
+            if [ -z "$ARM" -a "${ABI32}" -a `uname -m` = "x86_64" ] ; then
 		OPTS="-m32 ${OPTS}"
 	    fi
             if [ "${ALTOPTS}" ] ; then
