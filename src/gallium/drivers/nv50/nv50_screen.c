@@ -351,6 +351,11 @@ nv50_screen_init_hwctx(struct nv50_screen *screen, unsigned tls_space)
    BEGIN_NV04(push, NV50_3D(UNK1400_LANES), 1);
    PUSH_DATA (push, 0xf);
 
+   if (debug_get_bool_option("NOUVEAU_SHADER_WATCHDOG", TRUE)) {
+      BEGIN_NV04(push, NV50_3D(WATCHDOG_TIMER), 1);
+      PUSH_DATA (push, 0x18);
+   }
+
    BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
    PUSH_DATA (push, 1);
 
