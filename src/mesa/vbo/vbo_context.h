@@ -58,6 +58,18 @@
 #include "vbo_save.h"
 
 
+/** Used to signal when transitioning from one kind of drawing method
+ * to another.
+ */
+enum draw_method
+{
+   DRAW_NONE,          /**< Initial value only */
+   DRAW_BEGIN_END,
+   DRAW_DISPLAY_LIST,
+   DRAW_ARRAYS
+};
+
+
 struct vbo_context {
    struct gl_client_array currval[VBO_ATTRIB_MAX];
    
@@ -74,6 +86,8 @@ struct vbo_context {
     * is responsible for initiating any fallback actions required:
     */
    vbo_draw_func draw_prims;
+
+   enum draw_method last_draw_method;
 };
 
 
@@ -100,5 +114,26 @@ get_program_mode( struct gl_context *ctx )
       return VP_ARB;
 }
 
+
+/**
+ * This is called by glBegin, glDrawArrays and glDrawElements (and
+ * variations of those calls).  When we transition from immediate mode
+ * drawing to array drawing we need to invalidate the array state.
+ *
+ * glBegin/End builds vertex arrays.  Those arrays may look identical
+ * to glDrawArrays arrays except that the position of the elements may
+ * be different.  For example, arrays of (position3v, normal3f) vs. arrays
+ * of (normal3f, position3f).  So we need to make sure we notify drivers
+ * that arrays may be changing.
+ */
+static inline void
+vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
+{
+   if (vbo->last_draw_method != method) {
+      struct gl_context *ctx = vbo->exec.ctx;
+      ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
+      vbo->last_draw_method = method;
+   }
+}
 
 #endif
