@@ -160,16 +160,18 @@ _cl_device_id::vendor_name() const {
    return pipe->get_vendor(pipe);
 }
 
+enum pipe_shader_ir
+_cl_device_id::ir_format() const {
+   return (enum pipe_shader_ir) pipe->get_shader_param(pipe,
+                                                  PIPE_SHADER_COMPUTE,
+                                                  PIPE_SHADER_CAP_PREFERRED_IR);
+}
+
 std::string
 _cl_device_id::ir_target() const {
-   switch (pipe->get_shader_param(pipe, PIPE_SHADER_COMPUTE,
-                                  PIPE_SHADER_CAP_PREFERRED_IR)) {
-   case PIPE_SHADER_IR_TGSI:
-      return "tgsi";
-   default:
-      assert(0);
-      return "";
-   }
+   std::vector<char> target = get_compute_param<char>(pipe,
+                                                    PIPE_COMPUTE_CAP_IR_TARGET);
+   return { target.data() };
 }
 
 device_registry::device_registry() {
