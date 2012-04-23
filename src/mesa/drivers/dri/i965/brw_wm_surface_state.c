@@ -961,8 +961,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    switch (rb_format) {
    case MESA_FORMAT_SARGB8:
-      /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
-	 surfaces to the blend/update as sRGB */
+      /* _NEW_BUFFERS
+       *
+       * Without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB surfaces to the
+       * blend/update as sRGB.
+       */
       if (ctx->Color.sRGBEnabled)
 	 format = brw_format_for_mesa_format(rb_format);
       else
