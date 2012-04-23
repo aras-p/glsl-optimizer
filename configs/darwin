@@ -52,10 +52,10 @@ OSMESA_LIB_DEPS = $(EXTRA_LDFLAGS)
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LDFLAGS)
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXt $(EXTRA_LDFLAGS)
 
-SRC_DIRS = glsl mapi/glapi mapi/vgapi glx/apple mesa gallium glu
+SRC_DIRS = glsl mapi/glapi mapi/vgapi glx/apple mesa glu
 GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri
 DRI_DIRS = swrast
-GALLIUM_DRIVERS_DIRS = softpipe trace rbug noop identity galahad
+#GALLIUM_DRIVERS_DIRS = softpipe trace rbug noop identity galahad
 #GALLIUM_DRIVERS_DIRS += llvmpipe
