@@ -1042,8 +1042,8 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 	int next_pixel_base = 0, next_pos_base = 60, next_param_base = 0;
 	/* Declarations used by llvm code */
 	bool use_llvm = false;
-	unsigned char * inst_bytes;
-	unsigned inst_byte_count;
+	unsigned char * inst_bytes = NULL;
+	unsigned inst_byte_count = 0;
 
 #ifdef R600_USE_LLVM
 	use_llvm = debug_get_bool_option("R600_LLVM", TRUE);
