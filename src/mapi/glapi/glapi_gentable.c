@@ -105,7 +105,7 @@ __glapi_gentable_set_remaining_noop(struct _glapi_table *disp) {
 
 struct _glapi_table *
 _glapi_create_table_from_handle(void *handle, const char *symbol_prefix) {
-    struct _glapi_table *disp = calloc(1, sizeof(struct _glapi_table));
+    struct _glapi_table *disp = calloc(_glapi_get_dispatch_table_size(), sizeof(void *));
     char symboln[512];
 
     if(!disp)
