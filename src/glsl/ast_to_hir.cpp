@@ -4039,13 +4039,13 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
    foreach_list(node, instructions) {
       ir_variable *var = ((ir_instruction *)node)->as_variable();
 
-      if (!var)
+      if (!var || !var->assigned)
 	 continue;
 
       if (strcmp(var->name, "gl_FragColor") == 0)
-	 gl_FragColor_assigned = var->assigned;
+	 gl_FragColor_assigned = true;
       else if (strcmp(var->name, "gl_FragData") == 0)
-	 gl_FragData_assigned = var->assigned;
+	 gl_FragData_assigned = true;
       else if (strncmp(var->name, "gl_", 3) != 0) {
 	 if (state->target == fragment_shader &&
 	     (var->mode == ir_var_out || var->mode == ir_var_inout)) {
