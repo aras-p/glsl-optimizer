@@ -237,6 +237,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        _mesa_lookup_enum_by_nr(internalFormat),
        _mesa_get_format_name(rb->Format), width, height);
 
+   if (width == 0 || height == 0)
+      return true;
+
    irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
 						   width, height);
    if (!irb->mt)
