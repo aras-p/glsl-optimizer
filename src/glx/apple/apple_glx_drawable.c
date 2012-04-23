@@ -135,6 +135,7 @@ release_drawable(struct apple_glx_drawable *d)
 static bool
 destroy_drawable(struct apple_glx_drawable *d)
 {
+   int err;
 
    d->lock(d);
 
@@ -172,6 +173,12 @@ destroy_drawable(struct apple_glx_drawable *d)
 
    apple_glx_diagnostic("%s: freeing %p\n", __func__, (void *) d);
 
+   err = pthread_mutex_destroy(&d->mutex);
+   if (err) {
+      fprintf(stderr, "pthread_mutex_destroy error: %s\n", strerror(err));
+      abort();
+   }
+   
    free(d);
 
    /* So that the locks are balanced and the caller correctly unlocks. */
