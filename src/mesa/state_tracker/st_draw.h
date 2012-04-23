@@ -49,7 +49,6 @@ void st_destroy_draw( struct st_context *st );
 
 extern void
 st_draw_vbo(struct gl_context *ctx,
-            const struct gl_client_array **arrays,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
             const struct _mesa_index_buffer *ib,
@@ -60,7 +59,6 @@ st_draw_vbo(struct gl_context *ctx,
 
 extern void
 st_feedback_draw_vbo(struct gl_context *ctx,
-                     const struct gl_client_array **arrays,
                      const struct _mesa_prim *prims,
                      GLuint nr_prims,
                      const struct _mesa_index_buffer *ib,

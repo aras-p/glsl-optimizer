@@ -131,6 +131,21 @@ vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
 {
    if (vbo->last_draw_method != method) {
       struct gl_context *ctx = vbo->exec.ctx;
+
+      switch (method) {
+      case DRAW_ARRAYS:
+         ctx->Array._DrawArrays = vbo->exec.array.inputs;
+         break;
+      case DRAW_BEGIN_END:
+         ctx->Array._DrawArrays = vbo->exec.vtx.inputs;
+         break;
+      case DRAW_DISPLAY_LIST:
+         ctx->Array._DrawArrays = vbo->save.inputs;
+         break;
+      default:
+         ASSERT(0);
+      }
+
       ctx->Driver.UpdateState(ctx, _NEW_ARRAY);
       vbo->last_draw_method = method;
    }

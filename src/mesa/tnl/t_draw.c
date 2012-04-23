@@ -408,7 +408,6 @@ static void unmap_vbos( struct gl_context *ctx,
 
 
 void _tnl_vbo_draw_prims(struct gl_context *ctx,
-			 const struct gl_client_array *arrays[],
 			 const struct _mesa_prim *prim,
 			 GLuint nr_prims,
 			 const struct _mesa_index_buffer *ib,
@@ -417,6 +416,8 @@ void _tnl_vbo_draw_prims(struct gl_context *ctx,
 			 GLuint max_index,
 			 struct gl_transform_feedback_object *tfb_vertcount)
 {
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
+
    if (!index_bounds_valid)
       vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
 

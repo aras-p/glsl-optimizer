@@ -312,8 +312,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
       if (node->count > 0) {
          vbo_context(ctx)->draw_prims(ctx, 
-                                      save->inputs, 
-                                      node->prim, 
+                                      node->prim,
                                       node->prim_count,
                                       NULL,
                                       GL_TRUE,

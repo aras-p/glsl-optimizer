@@ -407,8 +407,7 @@ vbo_exec_vtx_flush(struct vbo_exec_context *exec, GLboolean keepUnmapped)
 		   exec->vtx.vert_count);
 
 	 vbo_context(ctx)->draw_prims( ctx, 
-				       exec->vtx.inputs, 
-				       exec->vtx.prim, 
+				       exec->vtx.prim,
 				       exec->vtx.prim_count,
 				       NULL,
 				       GL_TRUE,

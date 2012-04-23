@@ -531,7 +531,6 @@ retry:
 }
 
 void brw_draw_prims( struct gl_context *ctx,
-		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,
@@ -540,6 +539,7 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLuint max_index,
 		     struct gl_transform_feedback_object *tfb_vertcount )
 {
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    bool retval;
 
    if (!_mesa_check_conditional_render(ctx))

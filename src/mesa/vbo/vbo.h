@@ -72,7 +72,6 @@ void _vbo_InvalidateState( struct gl_context *ctx, GLuint new_state );
 
 
 typedef void (*vbo_draw_func)( struct gl_context *ctx,
-			       const struct gl_client_array **arrays,
 			       const struct _mesa_prim *prims,
 			       GLuint nr_prims,
 			       const struct _mesa_index_buffer *ib,

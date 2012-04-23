@@ -171,6 +171,8 @@ dump_draw_info(struct gl_context *ctx,
 static void
 flush( struct copy_context *copy )
 {
+   struct gl_context *ctx = copy->ctx;
+   const struct gl_client_array **saved_arrays = ctx->Array._DrawArrays;
    GLuint i;
 
    /* Set some counters: 
@@ -189,8 +191,9 @@ flush( struct copy_context *copy )
    (void) dump_draw_info;
 #endif
 
-   copy->draw( copy->ctx,
-	       copy->dstarray_ptr,
+   ctx->Array._DrawArrays = copy->dstarray_ptr;
+
+   copy->draw( ctx,
 	       copy->dstprim,
 	       copy->dstprim_nr,
 	       &copy->dstib,
@@ -198,6 +201,8 @@ flush( struct copy_context *copy )
 	       0,
 	       copy->dstbuf_nr - 1,
 	       NULL );
+
+   ctx->Array._DrawArrays = saved_arrays;
 
    /* Reset all pointers: 
     */

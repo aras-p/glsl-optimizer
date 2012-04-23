@@ -62,6 +62,8 @@ struct split_context {
 
 static void flush_vertex( struct split_context *split )
 {
+   struct gl_context *ctx = split->ctx;
+   const struct gl_client_array **saved_arrays = ctx->Array._DrawArrays;
    struct _mesa_index_buffer ib;
    GLuint i;
 
@@ -82,8 +84,9 @@ static void flush_vertex( struct split_context *split )
 
    assert(split->max_index >= split->min_index);
 
-   split->draw(split->ctx,
-	       split->array,
+   ctx->Array._DrawArrays = split->array;
+
+   split->draw(ctx,
 	       split->dstprim,
 	       split->dstprim_nr,
 	       split->ib ? &ib : NULL,
@@ -91,6 +94,8 @@ static void flush_vertex( struct split_context *split )
 	       split->min_index,
 	       split->max_index,
 	       NULL);
+
+   ctx->Array._DrawArrays = saved_arrays;
 
    split->dstprim_nr = 0;
    split->min_index = ~0;

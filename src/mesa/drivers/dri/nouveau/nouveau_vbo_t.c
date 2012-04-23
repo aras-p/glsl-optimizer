@@ -216,7 +216,7 @@ get_max_client_stride(struct gl_context *ctx, const struct gl_client_array **arr
 }
 
 static void
-TAG(vbo_render_prims)(struct gl_context *ctx, const struct gl_client_array **arrays,
+TAG(vbo_render_prims)(struct gl_context *ctx,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLboolean index_bounds_valid,
@@ -448,7 +448,6 @@ vbo_draw_imm(struct gl_context *ctx, const struct gl_client_array **arrays,
 
 static void
 TAG(vbo_render_prims)(struct gl_context *ctx,
-		      const struct gl_client_array **arrays,
 		      const struct _mesa_prim *prims, GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLboolean index_bounds_valid,
@@ -456,6 +455,7 @@ TAG(vbo_render_prims)(struct gl_context *ctx,
 		      struct gl_transform_feedback_object *tfb_vertcount)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
+	const struct gl_client_array **arrays = ctx->Array._DrawArrays;
 
 	if (!index_bounds_valid)
 		vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
@@ -484,7 +484,6 @@ TAG(vbo_render_prims)(struct gl_context *ctx,
 
 static void
 TAG(vbo_check_render_prims)(struct gl_context *ctx,
-			    const struct gl_client_array **arrays,
 			    const struct _mesa_prim *prims, GLuint nr_prims,
 			    const struct _mesa_index_buffer *ib,
 			    GLboolean index_bounds_valid,
@@ -496,12 +495,12 @@ TAG(vbo_check_render_prims)(struct gl_context *ctx,
 	nouveau_validate_framebuffer(ctx);
 
 	if (nctx->fallback == HWTNL)
-		TAG(vbo_render_prims)(ctx, arrays, prims, nr_prims, ib,
+		TAG(vbo_render_prims)(ctx, prims, nr_prims, ib,
 				      index_bounds_valid, min_index, max_index,
 				      tfb_vertcount);
 
 	if (nctx->fallback == SWTNL)
-		_tnl_vbo_draw_prims(ctx, arrays, prims, nr_prims, ib,
+		_tnl_vbo_draw_prims(ctx, prims, nr_prims, ib,
 				    index_bounds_valid, min_index, max_index,
 				    tfb_vertcount);
 }

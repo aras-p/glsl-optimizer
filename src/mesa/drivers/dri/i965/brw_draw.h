@@ -35,7 +35,6 @@ struct brw_context;
 
 
 void brw_draw_prims( struct gl_context *ctx,
-		     const struct gl_client_array *arrays[],
 		     const struct _mesa_prim *prims,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,

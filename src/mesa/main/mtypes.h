@@ -1636,6 +1636,11 @@ struct gl_array_attrib
 
    /* GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *ArrayBufferObj;
+
+   /**
+    * Vertex arrays as consumed by a driver.
+    * The array pointer is set up only by the VBO module. */
+   const struct gl_client_array **_DrawArrays; /**< 0..VERT_ATTRIB_MAX-1 */
 };
 
 

@@ -966,7 +966,6 @@ st_validate_varrays(struct gl_context *ctx,
  */
 void
 st_draw_vbo(struct gl_context *ctx,
-            const struct gl_client_array **arrays,
             const struct _mesa_prim *prims,
             GLuint nr_prims,
             const struct _mesa_index_buffer *ib,
@@ -979,6 +978,7 @@ st_draw_vbo(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_index_buffer ibuffer;
    struct pipe_draw_info info;
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    unsigned i, num_instances = 1;
    unsigned max_index_plus_base;
    GLboolean new_array =

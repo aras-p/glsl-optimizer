@@ -91,7 +91,6 @@ set_feedback_vertex_format(struct gl_context *ctx)
  */
 void
 st_feedback_draw_vbo(struct gl_context *ctx,
-                     const struct gl_client_array **arrays,
                      const struct _mesa_prim *prims,
                      GLuint nr_prims,
                      const struct _mesa_index_buffer *ib,
@@ -110,6 +109,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    struct pipe_index_buffer ibuffer;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
    struct pipe_transfer *ib_transfer = NULL;
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    GLuint attr, i;
    const GLubyte *low_addr = NULL;
    const void *mapped_indices = NULL;
