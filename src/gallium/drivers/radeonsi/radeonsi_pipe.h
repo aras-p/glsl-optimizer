@@ -34,7 +34,6 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_slab.h"
-#include "util/u_vbuf.h"
 #include "r600.h"
 #include "radeonsi_public.h"
 #include "r600_resource.h"
@@ -161,7 +160,6 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	struct u_vbuf_elements		*vmgr_elements;
 	unsigned			fs_size;
 	struct r600_pipe_state		rstate;
 	/* if offset is to big for fetch instructio we need to alterate
@@ -286,7 +284,7 @@ struct r600_context {
 	struct r600_textures_info	ps_samplers;
 	boolean				shader_dirty;
 
-	struct u_vbuf			*vbuf_mgr;
+	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
 	boolean				have_depth_texture, have_depth_fb;
 
@@ -326,6 +324,12 @@ struct r600_context {
 	unsigned		streamout_append_bitmask;
 	unsigned		*vs_so_stride_in_dw;
 	unsigned		*vs_shader_so_strides;
+
+	/* Vertex and index buffers. */
+	bool			vertex_buffers_dirty;
+	struct pipe_index_buffer index_buffer;
+	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+	unsigned		nr_vertex_buffers;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

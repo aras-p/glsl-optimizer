@@ -71,7 +71,7 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 {
 	unsigned offset = rtex->offset[level];
 
-	switch (rtex->resource.b.b.b.target) {
+	switch (rtex->resource.b.b.target) {
 	case PIPE_TEXTURE_3D:
 	case PIPE_TEXTURE_CUBE:
 	default:
@@ -174,7 +174,7 @@ static unsigned r600_texture_get_nblocksx(struct pipe_screen *screen,
 					  struct r600_resource_texture *rtex,
 					  unsigned level)
 {
-	struct pipe_resource *ptex = &rtex->resource.b.b.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b;
 	unsigned nblocksx, block_align, width;
 	unsigned blocksize = util_format_get_blocksize(rtex->real_format);
 
@@ -194,7 +194,7 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 					  struct r600_resource_texture *rtex,
 					  unsigned level)
 {
-	struct pipe_resource *ptex = &rtex->resource.b.b.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b;
 	unsigned height, tile_height;
 
 	height = mip_minify(ptex->height0, level);
@@ -219,7 +219,7 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level, unsigned array_mode)
 {
-	struct pipe_resource *ptex = &rtex->resource.b.b.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b;
 
 	switch (array_mode) {
 #if 0
@@ -254,7 +254,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			       struct r600_resource_texture *rtex,
 			       unsigned array_mode)
 {
-	struct pipe_resource *ptex = &rtex->resource.b.b.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b;
 	enum chip_class chipc = ((struct r600_screen*)screen)->chip_class;
 	unsigned size, layer_size, i, offset;
 	unsigned nblocksx, nblocksy;
@@ -394,10 +394,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 
 	resource = &rtex->resource;
-	resource->b.b.b = *base;
-	resource->b.b.vtbl = &r600_texture_vtbl;
-	pipe_reference_init(&resource->b.b.b.reference, 1);
-	resource->b.b.b.screen = screen;
+	resource->b.b = *base;
+	resource->b.vtbl = &r600_texture_vtbl;
+	pipe_reference_init(&resource->b.b.reference, 1);
+	resource->b.b.screen = screen;
 	rtex->pitch_override = pitch_in_bytes_override;
 	rtex->real_format = base->format;
 
@@ -457,7 +457,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		stencil_align = r600_get_base_alignment(screen, rtex->stencil->real_format, array_mode);
 		stencil_offset = align(rtex->size, stencil_align);
 
-		for (unsigned i = 0; i <= rtex->stencil->resource.b.b.b.last_level; i++)
+		for (unsigned i = 0; i <= rtex->stencil->resource.b.b.last_level; i++)
 			rtex->stencil->offset[i] += stencil_offset;
 
 		rtex->size = stencil_offset + rtex->stencil->size;
@@ -465,7 +465,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	/* Now create the backing buffer. */
 	if (!buf && alloc_bo) {
-		struct pipe_resource *ptex = &rtex->resource.b.b.b;
+		struct pipe_resource *ptex = &rtex->resource.b.b;
 		unsigned base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
 		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, base->bind, base->usage)) {

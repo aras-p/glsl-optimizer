@@ -76,8 +76,8 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
 
-	if (rbuffer->b.user_ptr)
-		return (uint8_t*)rbuffer->b.user_ptr + transfer->box.x;
+	if (rbuffer->b.b.user_ptr)
+		return (uint8_t*)rbuffer->b.b.user_ptr + transfer->box.x;
 
 	data = rctx->ws->buffer_map(rbuffer->buf, rctx->cs, transfer->usage);
 	if (!data)
@@ -92,7 +92,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	struct r600_resource *rbuffer = r600_resource(transfer->resource);
 	struct r600_context *rctx = (struct r600_context*)pipe;
 
-	if (rbuffer->b.user_ptr)
+	if (rbuffer->b.b.user_ptr)
 		return;
 
 	rctx->ws->buffer_unmap(rbuffer->buf);
@@ -124,7 +124,7 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 	struct r600_resource *rbuffer = r600_resource(resource);
 	uint8_t *map = NULL;
 
-	assert(rbuffer->b.user_ptr == NULL);
+	assert(rbuffer->b.b.user_ptr == NULL);
 
 	map = rctx->ws->buffer_map(rbuffer->buf, rctx->cs,
 				   PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
@@ -198,17 +198,17 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 
 	rbuffer = util_slab_alloc(&rscreen->pool_buffers);
 
-	rbuffer->b.b.b = *templ;
-	pipe_reference_init(&rbuffer->b.b.b.reference, 1);
-	rbuffer->b.b.b.screen = screen;
-	rbuffer->b.b.vtbl = &r600_buffer_vtbl;
-	rbuffer->b.user_ptr = NULL;
+	rbuffer->b.b = *templ;
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
+	rbuffer->b.b.screen = screen;
+	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	rbuffer->b.b.user_ptr = NULL;
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
 		util_slab_free(&rscreen->pool_buffers, rbuffer);
 		return NULL;
 	}
-	return &rbuffer->b.b.b;
+	return &rbuffer->b.b;
 }
 
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
@@ -220,22 +220,21 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 
 	rbuffer = util_slab_alloc(&rscreen->pool_buffers);
 
-	pipe_reference_init(&rbuffer->b.b.b.reference, 1);
-	rbuffer->b.b.vtbl = &r600_buffer_vtbl;
-	rbuffer->b.b.b.screen = screen;
-	rbuffer->b.b.b.target = PIPE_BUFFER;
-	rbuffer->b.b.b.format = PIPE_FORMAT_R8_UNORM;
-	rbuffer->b.b.b.usage = PIPE_USAGE_IMMUTABLE;
-	rbuffer->b.b.b.bind = bind;
-	rbuffer->b.b.b.width0 = bytes;
-	rbuffer->b.b.b.height0 = 1;
-	rbuffer->b.b.b.depth0 = 1;
-	rbuffer->b.b.b.array_size = 1;
-	rbuffer->b.b.b.flags = 0;
-	rbuffer->b.b.b.user_ptr = ptr;
-	rbuffer->b.user_ptr = ptr;
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
+	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	rbuffer->b.b.screen = screen;
+	rbuffer->b.b.target = PIPE_BUFFER;
+	rbuffer->b.b.format = PIPE_FORMAT_R8_UNORM;
+	rbuffer->b.b.usage = PIPE_USAGE_IMMUTABLE;
+	rbuffer->b.b.bind = bind;
+	rbuffer->b.b.width0 = bytes;
+	rbuffer->b.b.height0 = 1;
+	rbuffer->b.b.depth0 = 1;
+	rbuffer->b.b.array_size = 1;
+	rbuffer->b.b.flags = 0;
+	rbuffer->b.b.user_ptr = ptr;
 	rbuffer->buf = NULL;
-	return &rbuffer->b.b.b;
+	return &rbuffer->b.b;
 }
 
 void r600_upload_index_buffer(struct r600_context *rctx,
@@ -243,16 +242,16 @@ void r600_upload_index_buffer(struct r600_context *rctx,
 {
 	struct r600_resource *rbuffer = r600_resource(ib->buffer);
 
-	u_upload_data(rctx->vbuf_mgr->uploader, 0, count * ib->index_size,
-		      rbuffer->b.user_ptr, &ib->offset, &ib->buffer);
+	u_upload_data(rctx->uploader, 0, count * ib->index_size,
+		      rbuffer->b.b.user_ptr, &ib->offset, &ib->buffer);
 }
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
 			     uint32_t *const_offset)
 {
-	if ((*rbuffer)->b.user_ptr) {
-		uint8_t *ptr = (*rbuffer)->b.user_ptr;
-		unsigned size = (*rbuffer)->b.b.b.width0;
+	if ((*rbuffer)->b.b.user_ptr) {
+		uint8_t *ptr = (*rbuffer)->b.b.user_ptr;
+		unsigned size = (*rbuffer)->b.b.width0;
 
 		*rbuffer = NULL;
 
@@ -269,12 +268,12 @@ void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **
 				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
 			}
 
-			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, const_offset,
+			u_upload_data(rctx->uploader, 0, size, tmpPtr, const_offset,
 				      (struct pipe_resource**)rbuffer);
 
 			free(tmpPtr);
 		} else {
-			u_upload_data(rctx->vbuf_mgr->uploader, 0, size, ptr, const_offset,
+			u_upload_data(rctx->uploader, 0, size, ptr, const_offset,
 				      (struct pipe_resource**)rbuffer);
 		}
 	} else {

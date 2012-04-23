@@ -279,8 +279,6 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	rctx->vertex_elements = v;
 	if (v) {
 		r600_inval_shader_cache(rctx);
-		u_vbuf_bind_vertex_elements(rctx->vbuf_mgr, state,
-						v->vmgr_elements);
 
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(rctx, &v->rstate);
@@ -297,8 +295,6 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	}
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
-
-	u_vbuf_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }
 
@@ -308,7 +304,12 @@ void r600_set_index_buffer(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	u_vbuf_set_index_buffer(rctx->vbuf_mgr, ib);
+	if (ib) {
+		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
+	        memcpy(&rctx->index_buffer, ib, sizeof(*ib));
+	} else {
+		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
+	}
 }
 
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
@@ -316,7 +317,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	u_vbuf_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
+	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
 }
 
 void *si_create_vertex_elements(struct pipe_context *ctx,
@@ -331,9 +332,7 @@ void *si_create_vertex_elements(struct pipe_context *ctx,
 		return NULL;
 
 	v->count = count;
-	v->vmgr_elements =
-		u_vbuf_create_vertex_elements(rctx->vbuf_mgr, count,
-						  elements, v->elements);
+	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
 
 	return v;
 }
@@ -475,7 +474,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 	r600_context_pipe_state_set(rctx, rstate);
 
-	if (buffer != &rbuffer->b.b.b)
+	if (buffer != &rbuffer->b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
@@ -561,7 +560,7 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 		count = rctx->vertex_elements->count;
 	} else {
 		/* bind vertex buffer once */
-		count = rctx->vbuf_mgr->nr_real_vertex_buffers;
+		count = rctx->nr_vertex_buffers;
 	}
 	assert(count <= 256 / 4);
 
@@ -585,12 +584,12 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 			/* one resource per vertex elements */
 			unsigned vbuffer_index;
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[vbuffer_index];
+			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vbuf_mgr->real_vertex_buffer[i];
+			vertex_buffer = &rctx->vertex_buffer[i];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 			offset = 0;
 		}
@@ -708,7 +707,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	int i;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
-	    (info.indexed && !rctx->vbuf_mgr->index_buffer.buffer) ||
+	    (info.indexed && !rctx->index_buffer.buffer) ||
 	    !r600_conv_pipe_prim(info.mode, &prim)) {
 		return;
 	}
@@ -718,7 +717,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	si_update_derived_state(rctx);
 
-	u_vbuf_draw_begin(rctx->vbuf_mgr, &info);
 	r600_vertex_buffer_update(rctx);
 
 	rdraw.vgt_num_indices = info.count;
@@ -726,14 +724,14 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
-		pipe_resource_reference(&ib.buffer, rctx->vbuf_mgr->index_buffer.buffer);
-		ib.index_size = rctx->vbuf_mgr->index_buffer.index_size;
-		ib.offset = rctx->vbuf_mgr->index_buffer.offset + info.start * ib.index_size;
+		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
+		ib.index_size = rctx->index_buffer.index_size;
+		ib.offset = rctx->index_buffer.offset + info.start * ib.index_size;
 
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		if (u_vbuf_resource(ib.buffer)->user_ptr) {
+		if (ib.buffer->user_ptr) {
 			r600_upload_index_buffer(rctx, &ib, info.count);
 		}
 
@@ -857,7 +855,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
-	u_vbuf_draw_end(rctx->vbuf_mgr);
 }
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,

@@ -201,7 +201,9 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	u_vbuf_destroy(rctx->vbuf_mgr);
+	if (rctx->uploader) {
+		u_upload_destroy(rctx->uploader);
+	}
 	util_slab_destroy(&rctx->pool_transfers);
 
 	r600_update_num_contexts(rctx->screen, -1);
@@ -263,16 +265,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 			 sizeof(struct pipe_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
 
-	rctx->vbuf_mgr = u_vbuf_create(&rctx->context, 1024 * 1024, 256,
-					   PIPE_BIND_VERTEX_BUFFER |
-					   PIPE_BIND_INDEX_BUFFER |
-					   PIPE_BIND_CONSTANT_BUFFER,
-					   U_VERTEX_FETCH_DWORD_ALIGNED);
-	if (!rctx->vbuf_mgr) {
+        rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
+                                         PIPE_BIND_INDEX_BUFFER |
+                                         PIPE_BIND_CONSTANT_BUFFER);
+        if (!rctx->uploader) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-	rctx->vbuf_mgr->caps.format_fixed32 = 0;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
@@ -343,6 +342,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_INDEP_BLEND_FUNC:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
+	case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
+	case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
+	case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
 		return 1;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
@@ -358,6 +360,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
+	case PIPE_CAP_USER_VERTEX_BUFFERS:
 		return 0;
 
 	/* Stream output. */

@@ -1546,7 +1546,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 
 	format = si_translate_colorformat(surf->base.format);
 	swap = si_translate_colorswap(surf->base.format);
-	if (rtex->resource.b.b.b.usage == PIPE_USAGE_STAGING) {
+	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = V_028C70_ENDIAN_NONE;
 	} else {
 		endian = si_colorformat_endian_swap(format);

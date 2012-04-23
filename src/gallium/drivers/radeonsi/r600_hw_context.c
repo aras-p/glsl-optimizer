@@ -387,7 +387,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
 			reloc_id = block->pm4_bo_index[id];
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b.b);
+			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b);
 			block->reloc[reloc_id].bo_usage = reg->bo_usage;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
@@ -620,21 +620,21 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 		while (results_base != query->results_end) {
 			query->result.u64 +=
 				r600_query_read_result(map + results_base, 0, 2, true);
-			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
+			results_base = (results_base + 16) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		while (results_base != query->results_end) {
 			query->result.b = query->result.b ||
 				r600_query_read_result(map + results_base, 0, 2, true) != 0;
-			results_base = (results_base + 16) % query->buffer->b.b.b.width0;
+			results_base = (results_base + 16) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		while (results_base != query->results_end) {
 			query->result.u64 +=
 				r600_query_read_result(map + results_base, 0, 2, false);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
@@ -647,7 +647,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 		while (results_base != query->results_end) {
 			query->result.u64 +=
 				r600_query_read_result(map + results_base, 2, 6, true);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
@@ -655,7 +655,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 		while (results_base != query->results_end) {
 			query->result.u64 +=
 				r600_query_read_result(map + results_base, 0, 4, true);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_SO_STATISTICS:
@@ -664,7 +664,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 				r600_query_read_result(map + results_base, 2, 6, true);
 			query->result.so.primitives_storage_needed +=
 				r600_query_read_result(map + results_base, 0, 4, true);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 		}
 		break;
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
@@ -672,7 +672,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 			query->result.b = query->result.b ||
 				r600_query_read_result(map + results_base, 2, 6, true) !=
 				r600_query_read_result(map + results_base, 0, 4, true);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 		}
 		break;
 	default:
@@ -693,7 +693,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
-	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
+	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
 
 	/* collect current results if query buffer is full */
 	if (new_results_end == query->results_start) {
@@ -811,7 +811,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer, RADEON_USAGE_WRITE);
 
-	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.b.width0;
+	query->results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
 	ctx->num_cs_dw_queries_suspend -= query->num_cs_dw;
 }
 
@@ -833,7 +833,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		uint32_t op;
 
 		/* find count of the query data blocks */
-		count = (query->buffer->b.b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.b.width0;
+		count = (query->buffer->b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.width0;
 		count /= query->result_size;
 
 		r600_need_cs_space(ctx, 5 * count, TRUE);
@@ -850,7 +850,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 			cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer,
 									     RADEON_USAGE_READ);
-			results_base = (results_base + query->result_size) % query->buffer->b.b.b.width0;
+			results_base = (results_base + query->result_size) % query->buffer->b.b.width0;
 
 			/* set CONTINUE bit for all packets except the first */
 			op |= PREDICATION_CONTINUE;
