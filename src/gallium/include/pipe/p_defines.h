@@ -536,7 +536,8 @@ enum pipe_shader_cap
  */
 enum pipe_shader_ir
 {
-   PIPE_SHADER_IR_TGSI
+   PIPE_SHADER_IR_TGSI,
+   PIPE_SHADER_IR_LLVM
 };
 
 /**
