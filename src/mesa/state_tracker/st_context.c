@@ -163,6 +163,14 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
                                               PIPE_BIND_INDEX_BUFFER);
    }
 
+   if (!screen->get_param(screen, PIPE_CAP_USER_CONSTANT_BUFFERS)) {
+      unsigned alignment =
+         screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
+
+      st->constbuf_uploader = u_upload_create(pipe, 128 * 1024, alignment,
+                                              PIPE_BIND_CONSTANT_BUFFER);
+   }
+
    st->cso_context = cso_create_context(pipe);
 
    st_init_vbuf(st);
@@ -272,6 +280,9 @@ static void st_destroy_context_priv( struct st_context *st )
    u_upload_destroy(st->uploader);
    if (st->indexbuf_uploader) {
       u_upload_destroy(st->indexbuf_uploader);
+   }
+   if (st->constbuf_uploader) {
+      u_upload_destroy(st->constbuf_uploader);
    }
    free( st );
 }

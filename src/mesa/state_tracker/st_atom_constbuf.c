@@ -38,6 +38,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_upload_mgr.h"
 
 #include "st_debug.h"
 #include "st_context.h"
@@ -77,15 +78,21 @@ void st_upload_constants( struct st_context *st,
        * avoid gratuitous rendering synchronization.
        * Let's use a user buffer to avoid an unnecessary copy.
        */
-      cb.buffer = pipe_user_buffer_create(pipe->screen,
-                                          params->ParameterValues,
-                                          paramBytes,
-                                          PIPE_BIND_CONSTANT_BUFFER);
-      cb.buffer_offset = 0;
+      if (st->constbuf_uploader) {
+         cb.buffer = NULL;
+         u_upload_data(st->constbuf_uploader, 0, paramBytes,
+                       params->ParameterValues, &cb.buffer_offset, &cb.buffer);
+      } else {
+         cb.buffer = pipe_user_buffer_create(pipe->screen,
+                                             params->ParameterValues,
+                                             paramBytes,
+                                             PIPE_BIND_CONSTANT_BUFFER);
+         cb.buffer_offset = 0;
+      }
       cb.buffer_size = paramBytes;
 
       if (ST_DEBUG & DEBUG_CONSTANTS) {
-	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
+         debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n",
                       __FUNCTION__, shader_type, params->NumParameters,
                       params->StateFlags);
          _mesa_print_parameter_list(params);
