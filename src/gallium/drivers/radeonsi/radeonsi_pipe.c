@@ -349,6 +349,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_USER_CONSTANT_BUFFERS:
 		return 1;
 
+	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
+		return 256;
+
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
 		return debug_get_bool_option("R600_GLSL130", FALSE) ? 130 : 120;
 

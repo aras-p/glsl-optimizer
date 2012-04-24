@@ -116,6 +116,8 @@ The integer capabilities:
 * ``PIPE_CAP_USER_CONSTANT_BUFFERS``: Whether user constant buffers are
   supported. If not, the state tracker must upload constants which are not in hw
   resources.
+* ``PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT``: Describes the required
+  alignment of pipe_constant_buffer::buffer_offset.
 
 
 

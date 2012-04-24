@@ -208,6 +208,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
       return 0;
 
+   case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
+      return 16;
+
    /* Features we can lie about (boolean caps). */
    case PIPE_CAP_OCCLUSION_QUERY:
       return is->debug.lie ? 1 : 0;
