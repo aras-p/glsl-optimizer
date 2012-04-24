@@ -10,7 +10,9 @@
 #include "util/u_inlines.h"
 #include "util/u_dynarray.h"
 
+#ifdef NV50_WITH_DRAW_MODULE
 #include "draw/draw_vertex.h"
+#endif
 
 #include "nv50_debug.h"
 #include "nv50_winsys.h"
@@ -136,7 +138,9 @@ struct nv50_context {
 
    boolean vbo_push_hint;
 
+#ifdef NV50_WITH_DRAW_MODULE
    struct draw_context *draw;
+#endif
 };
 
 static INLINE struct nv50_context *

@@ -1,6 +1,5 @@
 C_SOURCES := \
 	nv50_context.c \
-	nv50_draw.c \
 	nv50_formats.c \
 	nv50_miptree.c \
 	nv50_resource.c \

@@ -1,6 +1,5 @@
 C_SOURCES := \
 	nvc0_context.c \
-	nvc0_draw.c \
 	nvc0_formats.c \
 	nvc0_miptree.c \
 	nvc0_resource.c \

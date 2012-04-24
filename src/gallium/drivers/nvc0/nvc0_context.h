@@ -10,7 +10,9 @@
 #include "util/u_inlines.h"
 #include "util/u_dynarray.h"
 
+#ifdef NVC0_WITH_DRAW_MODULE
 #include "draw/draw_vertex.h"
+#endif
 
 #include "nv50/nv50_debug.h"
 #include "nvc0_winsys.h"
@@ -155,7 +157,9 @@ struct nvc0_context {
    struct pipe_stream_output_target *tfbbuf[4];
    unsigned num_tfbbufs;
 
+#ifdef NVC0_WITH_DRAW_MODULE
    struct draw_context *draw;
+#endif
 };
 
 static INLINE struct nvc0_context *

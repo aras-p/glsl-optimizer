@@ -20,9 +20,12 @@
  * SOFTWARE.
  */
 
-#include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_framebuffer.h"
+
+#ifdef NVC0_WITH_DRAW_MODULE
+#include "draw/draw_context.h"
+#endif
 
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
@@ -91,7 +94,9 @@ nvc0_destroy(struct pipe_context *pipe)
 
    nvc0_context_unreference_resources(nvc0);
 
+#ifdef NVC0_WITH_DRAW_MODULE
    draw_destroy(nvc0->draw);
+#endif
 
    FREE(nvc0);
 }
@@ -158,9 +163,12 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0_init_transfer_functions(nvc0);
    nvc0_init_resource_functions(pipe);
 
+#ifdef NVC0_WITH_DRAW_MODULE
+   /* no software fallbacks implemented */
    nvc0->draw = draw_create(pipe);
    assert(nvc0->draw);
    draw_set_rasterize_stage(nvc0->draw, nvc0_draw_render_stage(nvc0));
+#endif
 
    nouveau_context_init_vdec(&nvc0->base);
 
