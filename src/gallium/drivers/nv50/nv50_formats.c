@@ -385,6 +385,11 @@ const struct nv50_format nv50_format_table[PIPE_FORMAT_COUNT] =
    F3B(R32G32B32_FIXED, NONE, C0, C1, C2, xx, FLOAT, 32_32_32, V),
    F2B(R32G32_FIXED, NONE, C0, C1, xx, xx, FLOAT, 32_32, V),
    F1B(R32_FIXED, NONE, C0, xx, xx, xx, FLOAT, 32, V),
+
+   C4B(R64G64B64A64_FLOAT, NONE, C0, C1, C2, C3, FLOAT, 32_32_32_32, V),
+   F3B(R64G64B64_FLOAT, NONE, C0, C1, C2, xx, FLOAT, 32_32_32, V),
+   F2B(R64G64_FLOAT, NONE, C0, C1, xx, xx, FLOAT, 32_32, V),
+   F1B(R64_FLOAT, NONE, C0, xx, xx, xx, FLOAT, 32, V),
 };
 
 #if 0
