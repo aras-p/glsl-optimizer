@@ -18,6 +18,8 @@ CXXFLAGS := $(filter-out -DDEBUG, $(CXXFLAGS))
 
 tablegen = $(TBLGEN) -I $(LLVM_INCLUDEDIR) $1 $2 -o $3
 
+HAVE_LLVM_INTRINSICS = $(shell grep IntrinsicsR600.td $(LLVM_INCLUDEDIR)/llvm/Intrinsics.td)
+
 gen: $(GENERATED_SOURCES)
 
 SIRegisterInfo.td: SIGenRegisterInfo.pl
@@ -25,6 +27,13 @@ SIRegisterInfo.td: SIGenRegisterInfo.pl
 
 SIRegisterGetHWRegNum.inc: SIGenRegisterInfo.pl
 	$(PERL) $^ $@ > /dev/null
+
+R600Intrinsics.td: R600IntrinsicsNoOpenCL.td R600IntrinsicsOpenCL.td
+ifeq ($(HAVE_LLVM_INTRINSICS),)
+	cp R600IntrinsicsNoOpenCL.td R600Intrinsics.td
+else
+	cp R600IntrinsicsOpenCL.td R600Intrinsics.td
+endif
 
 R600ShaderPatterns.td: AMDGPUGenShaderPatterns.pl
 	$(PERL) $^ C > $@
