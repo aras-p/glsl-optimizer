@@ -170,7 +170,7 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
 
       prog->in[i].hw = nintp;
       for (c = 0; c < 4; ++c)
-         if (info->in[i].mask & (1 << c))
+         if (prog->in[i].mask & (1 << c))
             info->in[j].slot[c] = nintp++;
    }
    /* (n == m) if m never increased, i.e. no flat inputs */
