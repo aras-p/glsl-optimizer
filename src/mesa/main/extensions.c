@@ -754,7 +754,7 @@ get_extension_override( struct gl_context *ctx )
 
    /* Remove trailing space. */
    len = strlen(extra_exts);
-   if (extra_exts[len - 1] == ' ')
+   if (len > 0 && extra_exts[len - 1] == ' ')
       extra_exts[len - 1] = '\0';
 
    return extra_exts;
