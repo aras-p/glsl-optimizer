@@ -44,6 +44,11 @@ namespace clover {
             data_private
          };
 
+         section(resource_id id, enum type type, size_t size,
+                 const clover::compat::vector<char> &data) :
+                 id(id), type(type), size(size), data(data) { }
+         section() : id(0), type(text), size(0), data() { }
+
          resource_id id;
          type type;
          size_t size;
@@ -63,11 +68,19 @@ namespace clover {
             sampler
          };
 
+         argument(enum type type, size_t size) : type(type), size(size) { }
+         argument() : type(scalar), size(0) { }
+
          type type;
          size_t size;
       };
 
       struct symbol {
+         symbol(const clover::compat::vector<char> &name, resource_id section,
+                size_t offset, const clover::compat::vector<argument> &args) :
+                name(name), section(section), offset(offset), args(args) { }
+         symbol() : name(), section(0), offset(0), args() { }
+
          clover::compat::vector<char> name;
          resource_id section;
          size_t offset;
