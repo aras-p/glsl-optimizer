@@ -43,8 +43,6 @@ public:
     getIOExpansion(TargetMachine& AMDIL_OPT_LEVEL_DECL) const;
   AsmPrinter* 
     getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const;
-  FunctionPass*
-    getPointerManager(TargetMachine& AMDIL_OPT_LEVEL_DECL) const;
 
 protected:
   virtual void setCaps();

@@ -44,8 +44,6 @@ public:
     getIOExpansion(TargetMachine& AMDIL_OPT_LEVEL_DECL) const;
   virtual AsmPrinter*
     getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const;
-  virtual FunctionPass*
-    getPointerManager(TargetMachine& AMDIL_OPT_LEVEL_DECL) const;
 protected:
   virtual void setCaps();
 }; // AMDILEvergreenDevice

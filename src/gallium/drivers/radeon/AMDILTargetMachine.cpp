@@ -173,7 +173,6 @@ bool AMDILPassConfig::addPreRegAlloc()
   }
 
   PM.add(createAMDILMachinePeephole(*TM));
-  PM.add(createAMDILPointerManager(*TM));
   return false;
 }
 

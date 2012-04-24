@@ -11,7 +11,6 @@
 #include "AMDILEGAsmPrinter.h"
 #endif
 #include "AMDILIOExpansion.h"
-#include "AMDILPointerManager.h"
 
 using namespace llvm;
 
@@ -152,13 +151,6 @@ AMDILEvergreenDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) con
 #else
   return NULL;
 #endif
-}
-
-FunctionPass*
-AMDILEvergreenDevice::getPointerManager(
-    TargetMachine& TM AMDIL_OPT_LEVEL_DECL) const
-{
-  return new AMDILEGPointerManager(TM AMDIL_OPT_LEVEL_VAR);
 }
 
 AMDILCypressDevice::AMDILCypressDevice(AMDILSubtarget *ST)

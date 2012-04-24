@@ -103,8 +103,6 @@ FunctionPass*
 
 /// Pre regalloc passes.
 FunctionPass*
-  createAMDILPointerManager(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
-FunctionPass*
   createAMDILMachinePeephole(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 
 /// Pre emit passes.

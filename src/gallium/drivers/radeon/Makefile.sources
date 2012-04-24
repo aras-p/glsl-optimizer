@@ -46,7 +46,6 @@ CPP_SOURCES := \
 	AMDILModuleInfo.cpp		\
 	AMDILNIDevice.cpp		\
 	AMDILPeepholeOptimizer.cpp	\
-	AMDILPointerManager.cpp		\
 	AMDILPrintfConvert.cpp		\
 	AMDILRegisterInfo.cpp		\
 	AMDILSIDevice.cpp		\

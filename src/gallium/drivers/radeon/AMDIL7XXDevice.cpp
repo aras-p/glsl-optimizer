@@ -12,7 +12,6 @@
 #endif
 #include "AMDILDevice.h"
 #include "AMDILIOExpansion.h"
-#include "AMDILPointerManager.h"
 
 using namespace llvm;
 
@@ -108,13 +107,6 @@ AMDIL7XXDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
 #else
   return NULL;
 #endif
-}
-
-FunctionPass*
-AMDIL7XXDevice::getPointerManager(
-    TargetMachine& TM AMDIL_OPT_LEVEL_DECL) const
-{
-  return new AMDILPointerManager(TM  AMDIL_OPT_LEVEL_VAR);
 }
 
 AMDIL770Device::AMDIL770Device(AMDILSubtarget *ST): AMDIL7XXDevice(ST)

@@ -93,11 +93,6 @@ public:
   virtual AsmPrinter*
     getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const = 0;
 
-  // Interface to get the Pointer manager pass for each device.
-  virtual FunctionPass* 
-    getPointerManager(TargetMachine& AMDIL_OPT_LEVEL_DECL) const = 0;
-
-
   // API utilizing more detailed capabilities of each family of
   // cards. If a capability is supported, then either usesHardware or
   // usesSoftware returned true.  If usesHardware returned true, then
