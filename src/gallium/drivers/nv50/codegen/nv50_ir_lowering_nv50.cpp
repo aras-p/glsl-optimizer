@@ -587,7 +587,8 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
    if (i->tex.target.isArray()) {
       Value *layer = i->getSrc(arg - 1);
       LValue *src = new_LValue(func, FILE_GPR);
-      bld.mkCvt(OP_CVT, TYPE_U16, src, TYPE_F32, layer);
+      bld.mkCvt(OP_CVT, TYPE_U32, src, TYPE_F32, layer);
+      bld.mkOp2(OP_MIN, TYPE_U32, src, src, bld.loadImm(NULL, 511));
       i->setSrc(arg - 1, src);
 
       if (i->tex.target.isCube()) {

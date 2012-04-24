@@ -82,8 +82,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 12;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 14;
-   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS: /* shader support missing */
-      return 0;
+   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+      return 512;
    case PIPE_CAP_MIN_TEXEL_OFFSET:
       return -8;
    case PIPE_CAP_MAX_TEXEL_OFFSET:
