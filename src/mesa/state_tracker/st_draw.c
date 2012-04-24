@@ -581,7 +581,6 @@ setup_index_buffer(struct st_context *st,
                    const struct _mesa_index_buffer *ib,
                    struct pipe_index_buffer *ibuffer)
 {
-   struct pipe_context *pipe = st->pipe;
    struct gl_buffer_object *bufobj = ib->obj;
 
    ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
@@ -589,8 +588,7 @@ setup_index_buffer(struct st_context *st,
    /* get/create the index buffer object */
    if (_mesa_is_bufferobj(bufobj)) {
       /* indices are in a real VBO */
-      struct st_buffer_object *stobj = st_buffer_object(bufobj);
-      pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
+      ibuffer->buffer = st_buffer_object(bufobj)->buffer;
       ibuffer->offset = pointer_to_offset(ib->ptr);
    }
    else if (st->indexbuf_uploader) {
@@ -599,10 +597,7 @@ setup_index_buffer(struct st_context *st,
    }
    else {
       /* indices are in user space memory */
-      ibuffer->buffer =
-         pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                 ib->count * ibuffer->index_size,
-                                 PIPE_BIND_INDEX_BUFFER);
+      ibuffer->user_buffer = ib->ptr;
    }
 
    cso_set_index_buffer(st->cso_context, ibuffer);
@@ -760,10 +755,10 @@ handle_fallback_primitive_restart(struct cso_context *cso,
    unsigned num_sub_prims;
 
    assert(info.indexed);
-   assert(ibuffer->buffer);
+   assert(ibuffer->buffer || ibuffer->user_buffer);
    assert(ib);
 
-   if (!ibuffer->buffer || !ib)
+   if (!ibuffer->buffer || !ibuffer->user_buffer || !ib)
       return;
 
    info.primitive_restart = FALSE;
@@ -1021,7 +1016,9 @@ st_draw_vbo(struct gl_context *ctx,
          cso_draw_vbo(st->cso_context, &info);
    }
 
-   pipe_resource_reference(&ibuffer.buffer, NULL);
+   if (ib && st->indexbuf_uploader && !_mesa_is_bufferobj(ib->obj)) {
+      pipe_resource_reference(&ibuffer.buffer, NULL);
+   }
 }
 
 

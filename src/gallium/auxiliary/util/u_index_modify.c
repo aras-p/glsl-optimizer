@@ -27,21 +27,25 @@
 /* Ubyte indices. */
 
 void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
-					struct pipe_resource *elts,
+					struct pipe_index_buffer *ib,
 					int index_bias,
 					unsigned start,
 					unsigned count,
 					void *out)
 {
-    struct pipe_transfer *src_transfer;
-    unsigned char *in_map;
+    struct pipe_transfer *src_transfer = NULL;
+    const unsigned char *in_map;
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts,
-                             PIPE_TRANSFER_READ |
-                             PIPE_TRANSFER_UNSYNCHRONIZED,
-                             &src_transfer);
+    if (ib->user_buffer) {
+       in_map = ib->user_buffer;
+    } else {
+       in_map = pipe_buffer_map(context, ib->buffer,
+                                PIPE_TRANSFER_READ |
+                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                &src_transfer);
+    }
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -50,11 +54,13 @@ void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, src_transfer);
+    if (src_transfer)
+       pipe_buffer_unmap(context, src_transfer);
 }
 
 void util_shorten_ubyte_elts(struct pipe_context *context,
-			     struct pipe_resource **elts,
+			     struct pipe_index_buffer *ib,
+			     struct pipe_resource **out_buf,
 			     int index_bias,
 			     unsigned start,
 			     unsigned count)
@@ -70,31 +76,36 @@ void util_shorten_ubyte_elts(struct pipe_context *context,
 
     out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE,
                               &dst_transfer);
-    util_shorten_ubyte_elts_to_userptr(context, *elts, index_bias,
+    util_shorten_ubyte_elts_to_userptr(context, ib, index_bias,
                                        start, count, out_map);
     pipe_buffer_unmap(context, dst_transfer);
 
-    *elts = new_elts;
+    pipe_resource_reference(out_buf, NULL);
+    *out_buf = new_elts;
 }
 
 
 /* Ushort indices. */
 
 void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
-					 struct pipe_resource *elts,
+					 struct pipe_index_buffer *ib,
 					 int index_bias,
 					 unsigned start, unsigned count,
 					 void *out)
 {
     struct pipe_transfer *in_transfer = NULL;
-    unsigned short *in_map;
+    const unsigned short *in_map;
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts,
-                             PIPE_TRANSFER_READ |
-                             PIPE_TRANSFER_UNSYNCHRONIZED,
-                             &in_transfer);
+    if (ib->user_buffer) {
+       in_map = ib->user_buffer;
+    } else {
+       in_map = pipe_buffer_map(context, ib->buffer,
+                                PIPE_TRANSFER_READ |
+                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                &in_transfer);
+    }
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -103,11 +114,13 @@ void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, in_transfer);
+    if (in_transfer)
+       pipe_buffer_unmap(context, in_transfer);
 }
 
 void util_rebuild_ushort_elts(struct pipe_context *context,
-			      struct pipe_resource **elts,
+			      struct pipe_index_buffer *ib,
+			      struct pipe_resource **out_buf,
 			      int index_bias,
 			      unsigned start, unsigned count)
 {
@@ -122,31 +135,36 @@ void util_rebuild_ushort_elts(struct pipe_context *context,
 
     out_map = pipe_buffer_map(context, new_elts,
                               PIPE_TRANSFER_WRITE, &out_transfer);
-    util_rebuild_ushort_elts_to_userptr(context, *elts, index_bias,
+    util_rebuild_ushort_elts_to_userptr(context, ib, index_bias,
                                         start, count, out_map);
     pipe_buffer_unmap(context, out_transfer);
 
-    *elts = new_elts;
+    pipe_resource_reference(out_buf, NULL);
+    *out_buf = new_elts;
 }
 
 
 /* Uint indices. */
 
 void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
-				       struct pipe_resource *elts,
+				       struct pipe_index_buffer *ib,
 				       int index_bias,
 				       unsigned start, unsigned count,
 				       void *out)
 {
     struct pipe_transfer *in_transfer = NULL;
-    unsigned int *in_map;
+    const unsigned int *in_map;
     unsigned int *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts,
-                             PIPE_TRANSFER_READ |
-                             PIPE_TRANSFER_UNSYNCHRONIZED,
-                             &in_transfer);
+    if (ib->user_buffer) {
+       in_map = ib->user_buffer;
+    } else {
+       in_map = pipe_buffer_map(context, ib->buffer,
+                                PIPE_TRANSFER_READ |
+                                PIPE_TRANSFER_UNSYNCHRONIZED,
+                                &in_transfer);
+    }
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -155,11 +173,13 @@ void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, in_transfer);
+    if (in_transfer)
+       pipe_buffer_unmap(context, in_transfer);
 }
 
 void util_rebuild_uint_elts(struct pipe_context *context,
-			    struct pipe_resource **elts,
+			    struct pipe_index_buffer *ib,
+			    struct pipe_resource **out_buf,
 			    int index_bias,
 			    unsigned start, unsigned count)
 {
@@ -174,9 +194,10 @@ void util_rebuild_uint_elts(struct pipe_context *context,
 
     out_map = pipe_buffer_map(context, new_elts,
                               PIPE_TRANSFER_WRITE, &out_transfer);
-    util_rebuild_uint_elts_to_userptr(context, *elts, index_bias,
+    util_rebuild_uint_elts_to_userptr(context, ib, index_bias,
                                       start, count, out_map);
     pipe_buffer_unmap(context, out_transfer);
 
-    *elts = new_elts;
+    pipe_resource_reference(out_buf, NULL);
+    *out_buf = new_elts;
 }

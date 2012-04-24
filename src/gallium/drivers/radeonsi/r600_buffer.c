@@ -211,10 +211,8 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count)
 {
-	struct r600_resource *rbuffer = r600_resource(ib->buffer);
-
 	u_upload_data(rctx->uploader, 0, count * ib->index_size,
-		      rbuffer->b.b.user_ptr, &ib->offset, &ib->buffer);
+		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,

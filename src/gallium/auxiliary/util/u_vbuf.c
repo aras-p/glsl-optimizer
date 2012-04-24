@@ -307,10 +307,10 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
       unsigned offset = ib->offset + start_index * ib->index_size;
       uint8_t *map;
 
-      assert(ib->buffer && ib->index_size);
+      assert((ib->buffer || ib->user_buffer) && ib->index_size);
 
-      if (ib->buffer->user_ptr) {
-         map = ib->buffer->user_ptr + offset;
+      if (ib->user_buffer) {
+         map = (uint8_t*)ib->user_buffer + offset;
       } else {
          map = pipe_buffer_map_range(mgr->pipe, ib->buffer, offset,
                                      num_indices * ib->index_size,
@@ -760,11 +760,10 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
 {
    struct pipe_context *pipe = mgr->pipe;
 
-   if (ib && ib->buffer) {
+   if (ib) {
       assert(ib->offset % ib->index_size == 0);
       pipe_resource_reference(&mgr->index_buffer.buffer, ib->buffer);
-      mgr->index_buffer.offset = ib->offset;
-      mgr->index_buffer.index_size = ib->index_size;
+      memcpy(&mgr->index_buffer, ib, sizeof(*ib));
    } else {
       pipe_resource_reference(&mgr->index_buffer.buffer, NULL);
    }
@@ -887,8 +886,8 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    unsigned i;
    unsigned restart_index = info->restart_index;
 
-   if (ib->buffer->user_ptr) {
-      indices = ib->buffer->user_ptr +
+   if (ib->user_buffer) {
+      indices = (uint8_t*)ib->user_buffer +
                 ib->offset + info->start * ib->index_size;
    } else {
       indices = pipe_buffer_map_range(pipe, ib->buffer,

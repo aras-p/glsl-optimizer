@@ -517,6 +517,7 @@ struct pipe_index_buffer
    unsigned index_size;  /**< size of an index, in bytes */
    unsigned offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_resource *buffer; /**< the actual buffer */
+   const void *user_buffer;  /**< pointer to a user buffer if buffer == NULL */
 };
 
 

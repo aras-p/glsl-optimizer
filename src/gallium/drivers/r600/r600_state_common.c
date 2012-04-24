@@ -751,7 +751,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	uint8_t *ptr;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
-	    (info.indexed && !rctx->index_buffer.buffer) ||
 	    !r600_conv_pipe_prim(info.mode, &prim)) {
 		assert(0);
 		return;
@@ -767,14 +766,15 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
 		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
+		ib.user_buffer = rctx->index_buffer.user_buffer;
 		ib.index_size = rctx->index_buffer.index_size;
 		ib.offset = rctx->index_buffer.offset + info.start * ib.index_size;
 
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		ptr = ib.buffer->user_ptr;
-		if (ptr) {
+		ptr = (uint8_t*)ib.user_buffer;
+		if (!ib.buffer && ptr) {
 			u_upload_data(rctx->uploader, 0, info.count * ib.index_size,
 				      ptr, &ib.offset, &ib.buffer);
 		}

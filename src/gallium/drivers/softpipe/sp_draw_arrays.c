@@ -61,7 +61,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
-   void *mapped_indices = NULL;
+   const void *mapped_indices = NULL;
    unsigned i;
 
    if (!softpipe_check_render_cond(sp))
@@ -84,8 +84,11 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    }
 
    /* Map index buffer, if present */
-   if (info->indexed && sp->index_buffer.buffer)
-      mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
+   if (info->indexed) {
+      mapped_indices = sp->index_buffer.user_buffer;
+      if (!mapped_indices)
+         mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
+   }
 
    draw_set_mapped_index_buffer(draw, mapped_indices);
 

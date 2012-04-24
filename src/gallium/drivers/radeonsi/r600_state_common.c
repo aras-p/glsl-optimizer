@@ -731,7 +731,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		if (ib.buffer->user_ptr) {
+		if (ib.user_buffer) {
 			r600_upload_index_buffer(rctx, &ib, info.count);
 		}
 

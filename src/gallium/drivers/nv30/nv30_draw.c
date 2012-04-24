@@ -412,7 +412,9 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      void *map = pipe_buffer_map(pipe, nv30->idxbuf.buffer,
+      const void *map = nv30->idxbuf.user_buffer;
+      if (!map)
+         pipe_buffer_map(pipe, nv30->idxbuf.buffer,
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transferi);
       draw_set_index_buffer(draw, &nv30->idxbuf);
@@ -424,7 +426,7 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_vbo(draw, info);
    draw_flush(draw);
 
-   if (info->indexed)
+   if (info->indexed && transferi)
       pipe_buffer_unmap(pipe, transferi);
    for (i = 0; i < nv30->num_vtxbufs; i++)
       if (transfer[i])
