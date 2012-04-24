@@ -110,6 +110,12 @@ The integer capabilities:
 * ``PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY``: This CAP describes
   a hw limitation.  If true, pipe_vertex_element::src_offset must always be
   aligned to 4.  If false, there are no restrictions on src_offset.
+* ``PIPE_CAP_USER_INDEX_BUFFERS``: Whether user index buffers are supported.
+  If not, the state tracker must upload all indices which are not in hw
+  resources.
+* ``PIPE_CAP_USER_CONSTANT_BUFFERS``: Whether user constant buffers are
+  supported. If not, the state tracker must upload constants which are not in hw
+  resources.
 
 
 
