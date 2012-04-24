@@ -110,7 +110,7 @@ static void init_fs_constbuf( void )
                               sizeof constants);
 
 
-   ctx->set_constant_buffer(ctx,
+   pipe_set_constant_buffer(ctx,
                             PIPE_SHADER_FRAGMENT, 0,
                             constbuf);
 }

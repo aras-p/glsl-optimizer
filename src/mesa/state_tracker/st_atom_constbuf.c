@@ -63,7 +63,7 @@ void st_upload_constants( struct st_context *st,
 
    /* update constants */
    if (params && params->NumParameters) {
-      struct pipe_resource *cbuf;
+      struct pipe_constant_buffer cb;
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
 
       /* Update the constants which come from fixed-function state, such as
@@ -77,10 +77,12 @@ void st_upload_constants( struct st_context *st,
        * avoid gratuitous rendering synchronization.
        * Let's use a user buffer to avoid an unnecessary copy.
        */
-      cbuf = pipe_user_buffer_create(pipe->screen,
-                                     params->ParameterValues,
-                                     paramBytes,
-                                     PIPE_BIND_CONSTANT_BUFFER);
+      cb.buffer = pipe_user_buffer_create(pipe->screen,
+                                          params->ParameterValues,
+                                          paramBytes,
+                                          PIPE_BIND_CONSTANT_BUFFER);
+      cb.buffer_offset = 0;
+      cb.buffer_size = paramBytes;
 
       if (ST_DEBUG & DEBUG_CONSTANTS) {
 	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
@@ -89,8 +91,8 @@ void st_upload_constants( struct st_context *st,
          _mesa_print_parameter_list(params);
       }
 
-      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
-      pipe_resource_reference(&cbuf, NULL);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, &cb);
+      pipe_resource_reference(&cb.buffer, NULL);
 
       st->state.constants[shader_type].ptr = params->ParameterValues;
       st->state.constants[shader_type].size = paramBytes;

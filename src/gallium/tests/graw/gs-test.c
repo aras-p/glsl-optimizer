@@ -181,7 +181,7 @@ static void init_fs_constbuf( void )
                                  sizeof constants1);
 
 
-      ctx->set_constant_buffer(ctx,
+      pipe_set_constant_buffer(ctx,
                                PIPE_SHADER_GEOMETRY, 0,
                                constbuf1);
    }
@@ -198,7 +198,7 @@ static void init_fs_constbuf( void )
                                  sizeof constants2);
 
 
-      ctx->set_constant_buffer(ctx,
+      pipe_set_constant_buffer(ctx,
                                PIPE_SHADER_GEOMETRY, 1,
                                constbuf2);
    }

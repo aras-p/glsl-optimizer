@@ -317,9 +317,10 @@ nv30_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
 
 static void
 nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_resource *buf)
+                         struct pipe_constant_buffer *cb)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
+   struct pipe_resource *buf = cb ? cb->buffer : NULL;
    unsigned size;
 
    size = 0;

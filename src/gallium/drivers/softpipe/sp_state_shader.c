@@ -342,9 +342,10 @@ softpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
 static void
 softpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             struct pipe_resource *constants)
+                             struct pipe_constant_buffer *cb)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct pipe_resource *constants = cb ? cb->buffer : NULL;
    unsigned size = constants ? constants->width0 : 0;
    const void *data = constants ? softpipe_resource(constants)->data : NULL;
 

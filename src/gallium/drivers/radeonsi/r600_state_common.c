@@ -424,10 +424,10 @@ static void r600_update_alpha_ref(struct r600_context *rctx)
 }
 
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_resource *buffer)
+			      struct pipe_constant_buffer *cb)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource *rbuffer = r600_resource(buffer);
+	struct r600_resource *rbuffer = cb ? r600_resource(cb->buffer) : NULL;
 	struct r600_pipe_state *rstate;
 	uint64_t va_offset;
 	uint32_t offset;
@@ -435,7 +435,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (buffer == NULL) {
+	if (cb == NULL) {
 		return;
 	}
 
@@ -474,7 +474,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 	r600_context_pipe_state_set(rctx, rstate);
 
-	if (buffer != &rbuffer->b.b)
+	if (cb->buffer != &rbuffer->b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 

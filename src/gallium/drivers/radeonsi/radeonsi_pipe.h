@@ -442,7 +442,7 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_resource *buffer);
+			      struct pipe_constant_buffer *cb);
 struct pipe_stream_output_target *
 r600_create_so_target(struct pipe_context *ctx,
 		      struct pipe_resource *buffer,

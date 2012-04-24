@@ -1169,9 +1169,10 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 static void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             struct pipe_resource *constants)
+                             struct pipe_constant_buffer *cb)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   struct pipe_resource *constants = cb ? cb->buffer : NULL;
    unsigned size = constants ? constants->width0 : 0;
    const void *data = constants ? llvmpipe_resource_data(constants) : NULL;
 

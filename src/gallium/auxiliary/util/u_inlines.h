@@ -437,6 +437,21 @@ pipe_transfer_destroy( struct pipe_context *context,
    context->transfer_destroy(context, transfer);
 }
 
+static INLINE void
+pipe_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
+                         struct pipe_resource *buf)
+{
+   if (buf) {
+      struct pipe_constant_buffer cb;
+      cb.buffer = buf;
+      cb.buffer_offset = 0;
+      cb.buffer_size = buf->width0;
+      pipe->set_constant_buffer(pipe, shader, index, &cb);
+   } else {
+      pipe->set_constant_buffer(pipe, shader, index, NULL);
+   }
+}
+
 
 static INLINE boolean util_get_offset( 
    const struct pipe_rasterizer_state *templ,

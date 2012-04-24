@@ -411,23 +411,22 @@ static void
 identity_set_constant_buffer(struct pipe_context *_pipe,
                              uint shader,
                              uint index,
-                             struct pipe_resource *_resource)
+                             struct pipe_constant_buffer *_cb)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *unwrapped_resource;
-   struct pipe_resource *resource = NULL;
+   struct pipe_constant_buffer cb;
 
    /* XXX hmm? unwrap the input state */
-   if (_resource) {
-      unwrapped_resource = identity_resource_unwrap(_resource);
-      resource = unwrapped_resource;
+   if (_cb) {
+      cb = *_cb;
+      cb.buffer = identity_resource_unwrap(_cb->buffer);
    }
 
    pipe->set_constant_buffer(pipe,
                              shader,
                              index,
-                             resource);
+                             _cb ? &cb : NULL);
 }
 
 static void

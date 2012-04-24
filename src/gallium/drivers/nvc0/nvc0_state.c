@@ -616,9 +616,10 @@ nvc0_gp_state_bind(struct pipe_context *pipe, void *hwcso)
 
 static void
 nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_resource *res)
+                         struct pipe_constant_buffer *cb)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
+   struct pipe_resource *res = cb ? cb->buffer : NULL;
 
    switch (shader) {
    case PIPE_SHADER_VERTEX: shader = 0; break;

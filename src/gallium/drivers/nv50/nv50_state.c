@@ -744,9 +744,10 @@ nv50_gp_state_bind(struct pipe_context *pipe, void *hwcso)
 
 static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_resource *res)
+                         struct pipe_constant_buffer *cb)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
+   struct pipe_resource *res = cb ? cb->buffer : NULL;
 
    pipe_resource_reference(&nv50->constbuf[shader][index], res);
 

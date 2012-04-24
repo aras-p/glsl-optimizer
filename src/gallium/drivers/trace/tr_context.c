@@ -721,13 +721,15 @@ trace_context_set_sample_mask(struct pipe_context *_pipe,
 static INLINE void
 trace_context_set_constant_buffer(struct pipe_context *_pipe,
                                   uint shader, uint index,
-                                  struct pipe_resource *buffer)
+                                  struct pipe_constant_buffer *constant_buffer)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_constant_buffer cb;
 
-   if (buffer) {
-      buffer = trace_resource_unwrap(tr_ctx, buffer);
+   if (constant_buffer) {
+      cb = *constant_buffer;
+      cb.buffer = trace_resource_unwrap(tr_ctx, constant_buffer->buffer);
    }
 
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
@@ -735,9 +737,18 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, shader);
    trace_dump_arg(uint, index);
-   trace_dump_arg(ptr, buffer);
+   if (constant_buffer) {
+      trace_dump_struct_begin("pipe_constant_buffer");
+      trace_dump_member(ptr, constant_buffer, buffer);
+      trace_dump_member(uint, constant_buffer, buffer_offset);
+      trace_dump_member(uint, constant_buffer, buffer_size);
+      trace_dump_struct_end();
+   } else {
+      trace_dump_arg(ptr, constant_buffer);
+   }
 
-   pipe->set_constant_buffer(pipe, shader, index, buffer);
+   pipe->set_constant_buffer(pipe, shader, index,
+                             constant_buffer ? &cb : NULL);
 
    trace_dump_call_end();
 }

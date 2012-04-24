@@ -1177,7 +1177,7 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	struct pipe_resource *cbuf;
+	struct pipe_constant_buffer cb;
 
 	if (rstate == NULL)
 		return;
@@ -1203,12 +1203,14 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
 	r600_context_pipe_state_set(rctx, rstate);
 
-	cbuf = pipe_user_buffer_create(ctx->screen,
-                                   state->ucp,
-                                   4*4*8, /* 8*4 floats */
-                                   PIPE_BIND_CONSTANT_BUFFER);
-	r600_set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, cbuf);
-	pipe_resource_reference(&cbuf, NULL);
+	cb.buffer = pipe_user_buffer_create(ctx->screen,
+					    state->ucp,
+					    4*4*8, /* 8*4 floats */
+					    PIPE_BIND_CONSTANT_BUFFER);
+	cb.buffer_offset = 0;
+	cb.buffer_size = 4*4*8;
+	r600_set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, &cb);
+	pipe_resource_reference(&cb.buffer, NULL);
 }
 
 static void evergreen_set_polygon_stipple(struct pipe_context *ctx,
@@ -1762,7 +1764,7 @@ static void evergreen_emit_constant_buffer(struct r600_context *rctx,
 	uint32_t dirty_mask = state->dirty_mask;
 
 	while (dirty_mask) {
-		struct r600_constant_buffer *cb;
+		struct pipe_constant_buffer *cb;
 		struct r600_resource *rbuffer;
 		uint64_t va;
 		unsigned buffer_index = ffs(dirty_mask) - 1;

@@ -530,11 +530,11 @@ void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf
 }
 
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_resource *buffer)
+			      struct pipe_constant_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_constbuf_state *state;
-	struct r600_constant_buffer *cb;
+	struct pipe_constant_buffer *cb;
 	uint8_t *ptr;
 
 	switch (shader) {
@@ -551,7 +551,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (unlikely(!buffer)) {
+	if (unlikely(!input)) {
 		state->enabled_mask &= ~(1 << index);
 		state->dirty_mask &= ~(1 << index);
 		pipe_resource_reference(&state->cb[index].buffer, NULL);
@@ -559,15 +559,15 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	}
 
 	cb = &state->cb[index];
-	cb->buffer_size = buffer->width0;
+	cb->buffer_size = input->buffer_size;
 
-	ptr = buffer->user_ptr;
+	ptr = input->buffer->user_ptr;
 
 	if (ptr) {
 		/* Upload the user buffer. */
 		if (R600_BIG_ENDIAN) {
 			uint32_t *tmpPtr;
-			unsigned i, size = buffer->width0;
+			unsigned i, size = input->buffer_size;
 
 			if (!(tmpPtr = malloc(size))) {
 				R600_ERR("Failed to allocate BE swap buffer.\n");
@@ -581,12 +581,12 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			u_upload_data(rctx->uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
 			free(tmpPtr);
 		} else {
-			u_upload_data(rctx->uploader, 0, buffer->width0, ptr, &cb->buffer_offset, &cb->buffer);
+			u_upload_data(rctx->uploader, 0, input->buffer_size, ptr, &cb->buffer_offset, &cb->buffer);
 		}
 	} else {
 		/* Setup the hw buffer. */
-		cb->buffer_offset = 0;
-		pipe_resource_reference(&cb->buffer, buffer);
+		cb->buffer_offset = input->buffer_offset;
+		pipe_resource_reference(&cb->buffer, input->buffer);
 	}
 
 	state->enabled_mask |= 1 << index;

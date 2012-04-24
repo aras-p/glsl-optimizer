@@ -665,9 +665,10 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_resource *buf)
+                                     struct pipe_constant_buffer *cb)
 {
    struct i915_context *i915 = i915_context(pipe);
+   struct pipe_resource *buf = cb ? cb->buffer : NULL;
    unsigned new_num = 0;
    boolean diff = TRUE;
 

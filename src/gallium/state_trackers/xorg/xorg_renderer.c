@@ -437,7 +437,7 @@ void renderer_set_constants(struct xorg_renderer *r,
       pipe_buffer_write(r->pipe, *cbuf,
                         0, param_bytes, params);
    }
-   r->pipe->set_constant_buffer(r->pipe, shader_type, 0, *cbuf);
+   pipe_set_constant_buffer(r->pipe, shader_type, 0, *cbuf);
 }
 
 

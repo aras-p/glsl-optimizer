@@ -179,7 +179,7 @@ static void renderer_set_mvp(struct renderer *renderer,
       pipe_buffer_write(renderer->pipe, cbuf,
             0, sizeof(consts), consts);
    }
-   renderer->pipe->set_constant_buffer(renderer->pipe,
+   pipe_set_constant_buffer(renderer->pipe,
          PIPE_SHADER_VERTEX, 0, cbuf);
 
    memcpy(cur, mvp, sizeof(*mvp));
@@ -478,7 +478,7 @@ static void renderer_set_custom_fs(struct renderer *renderer,
                const_buffer_len);
          pipe_buffer_write(renderer->pipe, cbuf, 0,
                const_buffer_len, const_buffer);
-         renderer->pipe->set_constant_buffer(renderer->pipe,
+         pipe_set_constant_buffer(renderer->pipe,
                PIPE_SHADER_FRAGMENT, 0, cbuf);
 
          renderer->fs_cbuf = cbuf;

@@ -451,6 +451,17 @@ struct pipe_vertex_buffer
 
 
 /**
+ * A constant buffer.  A subrange of an existing buffer can be set
+ * as a constant buffer.
+ */
+struct pipe_constant_buffer {
+   struct pipe_resource *buffer; /**< the actual buffer */
+   unsigned buffer_offset; /**< offset to start of data in buffer, in bytes */
+   unsigned buffer_size;   /**< how much data can be read in shader */
+};
+
+
+/**
  * A stream output target. The structure specifies the range vertices can
  * be written to.
  *
