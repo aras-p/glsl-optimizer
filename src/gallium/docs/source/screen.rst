@@ -98,6 +98,18 @@ The integer capabilities:
   equivalent to a specific GLSL version. E.g. for GLSL 1.3, report 130.
 * ``PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION``: Whether quads adhere to
   the flatshade_first setting in ``pipe_rasterizer_state``.
+* ``PIPE_CAP_USER_VERTEX_BUFFERS``: Whether the driver supports user vertex
+  buffers.  If not, the state tracker must upload all data which is not in hw
+  resources.
+* ``PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY``: This CAP describes a hw
+  limitation.  If true, pipe_vertex_buffer::buffer_offset must always be aligned
+  to 4.  If false, there are no restrictions on the offset.
+* ``PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY``: This CAP describes a hw
+  limitation.  If true, pipe_vertex_buffer::stride must always be aligned to 4.
+  If false, there are no restrictions on the stride.
+* ``PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY``: This CAP describes
+  a hw limitation.  If true, pipe_vertex_element::src_offset must always be
+  aligned to 4.  If false, there are no restrictions on src_offset.
 
 
 
