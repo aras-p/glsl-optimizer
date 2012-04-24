@@ -629,34 +629,31 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
 
 static void
-setup_index_buffer(struct gl_context *ctx,
+setup_index_buffer(struct st_context *st,
                    const struct _mesa_index_buffer *ib,
                    struct pipe_index_buffer *ibuffer)
 {
-   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
+   struct gl_buffer_object *bufobj = ib->obj;
 
-   memset(ibuffer, 0, sizeof(*ibuffer));
-   if (ib) {
-      struct gl_buffer_object *bufobj = ib->obj;
+   ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
 
-      ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
-
-      /* get/create the index buffer object */
-      if (_mesa_is_bufferobj(bufobj)) {
-         /* elements/indexes are in a real VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
-         ibuffer->offset = pointer_to_offset(ib->ptr);
-      }
-      else {
-         /* element/indicies are in user space memory */
-         ibuffer->buffer =
-            pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                    ib->count * ibuffer->index_size,
-                                    PIPE_BIND_INDEX_BUFFER);
-      }
+   /* get/create the index buffer object */
+   if (_mesa_is_bufferobj(bufobj)) {
+      /* indices are in a real VBO */
+      struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
+      ibuffer->offset = pointer_to_offset(ib->ptr);
    }
+   else {
+      /* indices are in user space memory */
+      ibuffer->buffer =
+         pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
+                                 ib->count * ibuffer->index_size,
+                                 PIPE_BIND_INDEX_BUFFER);
+   }
+
+   cso_set_index_buffer(st->cso_context, ibuffer);
 }
 
 
@@ -977,7 +974,7 @@ st_draw_vbo(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_index_buffer ibuffer;
+   struct pipe_index_buffer ibuffer = {0};
    struct pipe_draw_info info;
    unsigned i, num_instances = 1;
    unsigned max_index_plus_base;
@@ -1075,11 +1072,10 @@ st_draw_vbo(struct gl_context *ctx,
       }
    }
 
-   setup_index_buffer(ctx, ib, &ibuffer);
-   cso_set_index_buffer(st->cso_context, &ibuffer);
-
    util_draw_init_info(&info);
    if (ib) {
+      setup_index_buffer(st, ib, &ibuffer);
+
       info.indexed = TRUE;
       if (min_index != ~0 && max_index != ~0) {
          info.min_index = min_index;
