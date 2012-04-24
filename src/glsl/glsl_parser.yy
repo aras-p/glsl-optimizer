@@ -1100,13 +1100,8 @@ layout_qualifier_id_list:
 	      YYERROR;
 	   }
 
-	   $$.flags.i = $1.flags.i | $3.flags.i;
-
-	   if ($1.flags.q.explicit_location)
-	      $$.location = $1.location;
-
-	   if ($1.flags.q.explicit_index)
-	      $$.index = $1.index;
+	   $$ = $1;
+	   $$.flags.i |= $3.flags.i;
 
 	   if ($3.flags.q.explicit_location)
 	      $$.location = $3.location;
