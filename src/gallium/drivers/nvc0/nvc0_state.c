@@ -621,6 +621,12 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct pipe_resource *res = cb ? cb->buffer : NULL;
 
+   if (cb && cb->user_buffer) {
+      res = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+                                       cb->buffer_size,
+                                       PIPE_BIND_CONSTANT_BUFFER);
+   }
+
    switch (shader) {
    case PIPE_SHADER_VERTEX: shader = 0; break;
       /*
@@ -642,6 +648,10 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    nvc0->constbuf_dirty[shader] |= 1 << index;
 
    nvc0->dirty |= NVC0_NEW_CONSTBUF;
+
+   if (cb->user_buffer) {
+      pipe_resource_reference(&res, NULL);
+   }
 }
 
 /* =============================================================================

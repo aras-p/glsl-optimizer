@@ -323,6 +323,12 @@ nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    struct pipe_resource *buf = cb ? cb->buffer : NULL;
    unsigned size;
 
+   if (cb && cb->user_buffer) {
+      buf = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+                                       cb->buffer_size,
+                                       PIPE_BIND_CONSTANT_BUFFER);
+   }
+
    size = 0;
    if (buf)
       size = buf->width0 / (4 * sizeof(float));
@@ -336,6 +342,10 @@ nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
       pipe_resource_reference(&nv30->fragprog.constbuf, buf);
       nv30->fragprog.constbuf_nr = size;
       nv30->dirty |= NV30_NEW_FRAGCONST;
+   }
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&buf, NULL);
    }
 }
 

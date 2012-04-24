@@ -454,7 +454,7 @@ softpipe_transfer_unmap(struct pipe_context *pipe,
 /**
  * Create buffer which wraps user-space data.
  */
-static struct pipe_resource *
+struct pipe_resource *
 softpipe_user_buffer_create(struct pipe_screen *screen,
                             void *ptr,
                             unsigned bytes,

@@ -459,6 +459,7 @@ struct pipe_constant_buffer {
    struct pipe_resource *buffer; /**< the actual buffer */
    unsigned buffer_offset; /**< offset to start of data in buffer, in bytes */
    unsigned buffer_size;   /**< how much data can be read in shader */
+   const void *user_buffer;  /**< pointer to a user buffer if buffer == NULL */
 };
 
 

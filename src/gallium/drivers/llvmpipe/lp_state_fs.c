@@ -1173,8 +1173,17 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    struct pipe_resource *constants = cb ? cb->buffer : NULL;
-   unsigned size = constants ? constants->width0 : 0;
-   const void *data = constants ? llvmpipe_resource_data(constants) : NULL;
+   unsigned size;
+   const void *data;
+
+   if (cb && cb->user_buffer) {
+      constants = llvmpipe_user_buffer_create(pipe->screen, cb->user_buffer,
+                                              cb->buffer_size,
+                                              PIPE_BIND_CONSTANT_BUFFER);
+   }
+
+   size = constants ? constants->width0 : 0;
+   data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index < PIPE_MAX_CONSTANT_BUFFERS);
@@ -1194,6 +1203,10 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    }
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&constants, NULL);
+   }
 }
 
 

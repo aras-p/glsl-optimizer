@@ -56,8 +56,6 @@ void st_upload_constants( struct st_context *st,
                           struct gl_program_parameter_list *params,
                           unsigned shader_type)
 {
-   struct pipe_context *pipe = st->pipe;
-
    assert(shader_type == PIPE_SHADER_VERTEX ||
           shader_type == PIPE_SHADER_FRAGMENT ||
           shader_type == PIPE_SHADER_GEOMETRY);
@@ -80,13 +78,12 @@ void st_upload_constants( struct st_context *st,
        */
       if (st->constbuf_uploader) {
          cb.buffer = NULL;
+         cb.user_buffer = NULL;
          u_upload_data(st->constbuf_uploader, 0, paramBytes,
                        params->ParameterValues, &cb.buffer_offset, &cb.buffer);
       } else {
-         cb.buffer = pipe_user_buffer_create(pipe->screen,
-                                             params->ParameterValues,
-                                             paramBytes,
-                                             PIPE_BIND_CONSTANT_BUFFER);
+         cb.buffer = NULL;
+         cb.user_buffer = params->ParameterValues;
          cb.buffer_offset = 0;
       }
       cb.buffer_size = paramBytes;

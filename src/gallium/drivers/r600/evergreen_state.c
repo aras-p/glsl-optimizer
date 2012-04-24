@@ -1203,10 +1203,8 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
 	r600_context_pipe_state_set(rctx, rstate);
 
-	cb.buffer = pipe_user_buffer_create(ctx->screen,
-					    state->ucp,
-					    4*4*8, /* 8*4 floats */
-					    PIPE_BIND_CONSTANT_BUFFER);
+	cb.buffer = NULL;
+	cb.user_buffer = state->ucp;
 	cb.buffer_offset = 0;
 	cb.buffer_size = 4*4*8;
 	r600_set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, &cb);

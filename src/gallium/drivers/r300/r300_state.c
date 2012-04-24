@@ -1841,8 +1841,8 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     if (buf == NULL || buf->width0 == 0)
         return;
 
-    if (rbuf->b.b.user_ptr)
-        mapped = (uint32_t*)rbuf->b.b.user_ptr;
+    if (cb->user_buffer)
+        mapped = (uint32_t*)cb->user_buffer;
     else if (rbuf->constant_buffer)
         mapped = (uint32_t*)rbuf->constant_buffer;
     else

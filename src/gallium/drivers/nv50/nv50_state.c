@@ -749,6 +749,12 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    struct nv50_context *nv50 = nv50_context(pipe);
    struct pipe_resource *res = cb ? cb->buffer : NULL;
 
+   if (cb && cb->user_buffer) {
+      res = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+                                       cb->buffer_size,
+                                       PIPE_BIND_CONSTANT_BUFFER);
+   }
+
    pipe_resource_reference(&nv50->constbuf[shader][index], res);
 
    nv50->constbuf_dirty[shader] |= 1 << index;
@@ -760,6 +766,10 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_CB(shader, index));
 
    nv50->dirty |= NV50_NEW_CONSTBUF;
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&res, NULL);
+   }
 }
 
 /* =============================================================================

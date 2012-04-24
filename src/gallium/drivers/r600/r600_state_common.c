@@ -535,7 +535,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_constbuf_state *state;
 	struct pipe_constant_buffer *cb;
-	uint8_t *ptr;
+	const uint8_t *ptr;
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -561,7 +561,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	cb = &state->cb[index];
 	cb->buffer_size = input->buffer_size;
 
-	ptr = input->buffer->user_ptr;
+	ptr = input->user_buffer;
 
 	if (ptr) {
 		/* Upload the user buffer. */
