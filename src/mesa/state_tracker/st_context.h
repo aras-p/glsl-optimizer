@@ -73,7 +73,7 @@ struct st_context
 
    struct pipe_context *pipe;
 
-   struct u_upload_mgr *uploader;
+   struct u_upload_mgr *uploader, *indexbuf_uploader;
    struct u_vbuf *vbuf;
 
    struct draw_context *draw;  /**< For selection/feedback/rastpos only */

@@ -61,6 +61,7 @@
 #include "util/u_format.h"
 #include "util/u_prim.h"
 #include "util/u_draw_quad.h"
+#include "util/u_upload_mgr.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -644,6 +645,10 @@ setup_index_buffer(struct st_context *st,
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
       pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
       ibuffer->offset = pointer_to_offset(ib->ptr);
+   }
+   else if (st->indexbuf_uploader) {
+      u_upload_data(st->indexbuf_uploader, 0, ib->count * ibuffer->index_size,
+                    ib->ptr, &ibuffer->offset, &ibuffer->buffer);
    }
    else {
       /* indices are in user space memory */

@@ -138,6 +138,7 @@ static void st_init_vbuf(struct st_context *st)
 static struct st_context *
 st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
 {
+   struct pipe_screen *screen = pipe->screen;
    uint i;
    struct st_context *st = ST_CALLOC_STRUCT( st_context );
    
@@ -156,6 +157,12 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    st->dirty.st = ~0;
 
    st->uploader = u_upload_create(st->pipe, 65536, 4, PIPE_BIND_VERTEX_BUFFER);
+
+   if (!screen->get_param(screen, PIPE_CAP_USER_INDEX_BUFFERS)) {
+      st->indexbuf_uploader = u_upload_create(st->pipe, 128 * 1024, 4,
+                                              PIPE_BIND_INDEX_BUFFER);
+   }
+
    st->cso_context = cso_create_context(pipe);
 
    st_init_vbuf(st);
@@ -263,6 +270,9 @@ static void st_destroy_context_priv( struct st_context *st )
    }
 
    u_upload_destroy(st->uploader);
+   if (st->indexbuf_uploader) {
+      u_upload_destroy(st->indexbuf_uploader);
+   }
    free( st );
 }
 
