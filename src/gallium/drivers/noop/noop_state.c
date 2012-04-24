@@ -320,7 +320,6 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->sampler_view_destroy = noop_sampler_view_destroy;
 	ctx->surface_destroy = noop_surface_destroy;
 	ctx->draw_vbo = noop_draw_vbo;
-	ctx->redefine_user_buffer = u_default_redefine_user_buffer;
 	ctx->create_stream_output_target = noop_create_stream_output_target;
 	ctx->stream_output_target_destroy = noop_stream_output_target_destroy;
 	ctx->set_stream_output_targets = noop_set_stream_output_targets;

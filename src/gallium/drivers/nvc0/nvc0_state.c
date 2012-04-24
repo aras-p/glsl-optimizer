@@ -947,7 +947,5 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->create_stream_output_target = nvc0_so_target_create;
    pipe->stream_output_target_destroy = nvc0_so_target_destroy;
    pipe->set_stream_output_targets = nvc0_set_transform_feedback_targets;
-
-   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

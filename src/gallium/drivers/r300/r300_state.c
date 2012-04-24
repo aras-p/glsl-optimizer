@@ -1934,7 +1934,6 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
     r300->context.set_index_buffer = r300_set_index_buffer;
-    r300->context.redefine_user_buffer = u_default_redefine_user_buffer;
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
     r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;

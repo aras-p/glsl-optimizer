@@ -644,21 +644,3 @@ svga_context_flush_buffers(struct svga_context *svga)
       next = curr->next;
    }
 }
-
-
-void
-svga_redefine_user_buffer(struct pipe_context *pipe,
-                          struct pipe_resource *resource,
-                          unsigned offset,
-                          unsigned size)
-{
-   struct svga_buffer *sbuf = svga_buffer(resource);
-
-   assert(sbuf->user);
-   assert(!sbuf->dma.pending);
-   assert(!sbuf->handle);
-   assert(!sbuf->hwbuf);
-
-   /* use the default action of simply resizing the user buffer's size */
-   u_default_redefine_user_buffer(pipe, resource, offset, size);
-}

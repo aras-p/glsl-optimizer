@@ -443,6 +443,4 @@ nv30_state_init(struct pipe_context *pipe)
 
    pipe->set_vertex_buffers = nv30_set_vertex_buffers;
    pipe->set_index_buffer = nv30_set_index_buffer;
-
-   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
