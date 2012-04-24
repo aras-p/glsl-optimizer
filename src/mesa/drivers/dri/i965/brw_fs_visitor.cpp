@@ -2024,7 +2024,10 @@ fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
    bool header_present = true;
-   int base_mrf = 2;
+   /* We can potentially have a message length of up to 15, so we have to set
+    * base_mrf to either 0 or 1 in order to fit in m0..m15.
+    */
+   int base_mrf = 1;
    int nr = base_mrf;
    int reg_width = c->dispatch_width / 8;
 
