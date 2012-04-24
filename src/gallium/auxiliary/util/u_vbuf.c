@@ -277,8 +277,8 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
          unsigned offset = vb->buffer_offset + vb->stride * start_vertex;
          uint8_t *map;
 
-         if (vb->buffer->user_ptr) {
-            map = vb->buffer->user_ptr + offset;
+         if (vb->user_buffer) {
+            map = (uint8_t*)vb->user_buffer + offset;
          } else {
             unsigned size = vb->stride ? num_vertices * vb->stride
                                        : sizeof(double)*4;
@@ -713,6 +713,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
       struct pipe_vertex_buffer *real_vb = &mgr->real_vertex_buffer[i];
 
       pipe_resource_reference(&orig_vb->buffer, vb->buffer);
+      orig_vb->user_buffer = vb->user_buffer;
 
       real_vb->buffer_offset = orig_vb->buffer_offset = vb->buffer_offset;
       real_vb->stride = orig_vb->stride = vb->stride;
@@ -721,7 +722,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
          mgr->nonzero_stride_vb_mask |= 1 << i;
       }
 
-      if (!vb->buffer) {
+      if (!vb->buffer && !vb->user_buffer) {
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
@@ -733,7 +734,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
          continue;
       }
 
-      if (!mgr->caps.user_vertex_buffers && vb->buffer->user_ptr) {
+      if (!mgr->caps.user_vertex_buffers && vb->user_buffer) {
          mgr->user_vb_mask |= 1 << i;
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
@@ -798,9 +799,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
          continue;
       }
 
-      assert(vb->buffer);
-
-      if (!vb->buffer->user_ptr) {
+      if (!vb->user_buffer) {
          continue;
       }
 
@@ -837,7 +836,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
    for (i = 0; i < nr_vbufs; i++) {
       unsigned start, end = end_offset[i];
       struct pipe_vertex_buffer *real_vb;
-      uint8_t *ptr;
+      const uint8_t *ptr;
 
       if (!end) {
          continue;
@@ -847,7 +846,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
       assert(start < end);
 
       real_vb = &mgr->real_vertex_buffer[i];
-      ptr = mgr->vertex_buffer[i].buffer->user_ptr;
+      ptr = mgr->vertex_buffer[i].user_buffer;
 
       u_upload_data(mgr->uploader, start, end - start, ptr + start,
                     &real_vb->buffer_offset, &real_vb->buffer);

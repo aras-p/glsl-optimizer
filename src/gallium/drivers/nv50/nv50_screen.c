@@ -149,8 +149,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
    case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
-      return 0; /* state trackers will know better */
    case PIPE_CAP_USER_VERTEX_BUFFERS:
+      return 0; /* state trackers will know better */
    case PIPE_CAP_USER_INDEX_BUFFERS:
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return 1;

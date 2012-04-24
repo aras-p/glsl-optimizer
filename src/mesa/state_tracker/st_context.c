@@ -263,11 +263,6 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawpix(st);
    st_destroy_drawtex(st);
 
-   /* Unreference any user vertex buffers. */
-   for (i = 0; i < st->num_user_attribs; i++) {
-      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
-   }
-
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
       pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
    }

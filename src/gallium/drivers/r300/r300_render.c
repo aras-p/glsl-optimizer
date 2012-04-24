@@ -873,7 +873,10 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             indexed ? 256 : 6);
 
     for (i = 0; i < r300->nr_vertex_buffers; i++) {
-        if (r300->vertex_buffer[i].buffer) {
+        if (r300->vertex_buffer[i].user_buffer) {
+            draw_set_mapped_vertex_buffer(r300->draw, i,
+                                          r300->vertex_buffer[i].user_buffer);
+        } else if (r300->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
                                   r300->vertex_buffer[i].buffer,
                                   PIPE_TRANSFER_READ |
@@ -899,7 +902,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     for (i = 0; i < r300->nr_vertex_buffers; i++) {
         if (r300->vertex_buffer[i].buffer) {
-            pipe_buffer_unmap(pipe, vb_transfer[i]);
+            if (vb_transfer[i])
+                pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
         }
     }

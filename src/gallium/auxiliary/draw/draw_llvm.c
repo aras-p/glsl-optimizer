@@ -236,12 +236,13 @@ static LLVMTypeRef
 create_jit_vertex_buffer_type(struct gallivm_state *gallivm, const char *struct_name)
 {
    LLVMTargetDataRef target = gallivm->target;
-   LLVMTypeRef elem_types[3];
+   LLVMTypeRef elem_types[4];
    LLVMTypeRef vb_type;
 
    elem_types[0] =
    elem_types[1] = LLVMInt32TypeInContext(gallivm->context);
-   elem_types[2] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
+   elem_types[2] =
+   elem_types[3] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
 
 #if HAVE_LLVM >= 0x0300
    vb_type = LLVMStructCreateNamed(gallivm->context, struct_name);

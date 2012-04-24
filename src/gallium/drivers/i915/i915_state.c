@@ -983,7 +983,9 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
 
    /* map new */
    for (i = 0; i < count; i++) {
-      void *buf = i915_buffer(buffers[i].buffer)->data;
+      const void *buf = buffers[i].user_buffer;
+      if (!buf)
+            buf = i915_buffer(buffers[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 }

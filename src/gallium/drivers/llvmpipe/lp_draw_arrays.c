@@ -67,7 +67,9 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
     * Map vertex buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
-      void *buf = llvmpipe_resource_data(lp->vertex_buffer[i].buffer);
+      const void *buf = lp->vertex_buffer[i].user_buffer;
+      if (!buf)
+         buf = llvmpipe_resource_data(lp->vertex_buffer[i].buffer);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 

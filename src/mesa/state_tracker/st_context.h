@@ -190,18 +190,6 @@ struct st_context
    int force_msaa;
    void *winsys_drawable_handle;
 
-   /* User vertex buffers. */
-   struct {
-      struct pipe_resource *buffer;
-
-      /** Element size */
-      GLuint element_size;
-
-      /** Attribute stride */
-      GLsizei stride;
-   } user_attrib[PIPE_MAX_ATTRIBS];
-   unsigned num_user_attribs;
-
    /* Active render condition. */
    struct pipe_query *render_condition;
    unsigned condition_mode;

@@ -62,6 +62,10 @@ util_draw_max_index(
       const struct util_format_description *format_desc;
       unsigned format_size;
 
+      if (!buffer->buffer) {
+         continue;
+      }
+
       assert(buffer->buffer->height0 == 1);
       assert(buffer->buffer->depth0 == 1);
       buffer_size = buffer->buffer->width0;
