@@ -25,6 +25,7 @@
 
 #include "core/compat.hpp"
 #include "core/module.hpp"
+#include "pipe/p_defines.h"
 
 namespace clover {
    class build_error {
@@ -44,6 +45,7 @@ namespace clover {
    };
 
    module compile_program_llvm(const compat::string &source,
+                               enum pipe_shader_ir ir,
                                const compat::string &target);
 
    module compile_program_tgsi(const compat::string &source);
