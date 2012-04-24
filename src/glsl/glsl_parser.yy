@@ -1119,21 +1119,17 @@ layout_qualifier_id_list:
 layout_qualifier_id:
 	any_identifier
 	{
-	   bool got_one = false;
-
 	   memset(& $$, 0, sizeof($$));
 
 	   /* Layout qualifiers for ARB_fragment_coord_conventions. */
-	   if (!got_one && state->ARB_fragment_coord_conventions_enable) {
+	   if (!$$.flags.i && state->ARB_fragment_coord_conventions_enable) {
 	      if (strcmp($1, "origin_upper_left") == 0) {
-		 got_one = true;
 		 $$.flags.q.origin_upper_left = 1;
 	      } else if (strcmp($1, "pixel_center_integer") == 0) {
-		 got_one = true;
 		 $$.flags.q.pixel_center_integer = 1;
 	      }
 
-	      if (got_one && state->ARB_fragment_coord_conventions_warn) {
+	      if ($$.flags.i && state->ARB_fragment_coord_conventions_warn) {
 		 _mesa_glsl_warning(& @1, state,
 				    "GL_ARB_fragment_coord_conventions layout "
 				    "identifier `%s' used\n", $1);
@@ -1141,36 +1137,32 @@ layout_qualifier_id:
 	   }
 
 	   /* Layout qualifiers for AMD/ARB_conservative_depth. */
-	   if (!got_one &&
+	   if (!$$.flags.i &&
 	       (state->AMD_conservative_depth_enable ||
 	        state->ARB_conservative_depth_enable)) {
 	      if (strcmp($1, "depth_any") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_any = 1;
 	      } else if (strcmp($1, "depth_greater") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_greater = 1;
 	      } else if (strcmp($1, "depth_less") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_less = 1;
 	      } else if (strcmp($1, "depth_unchanged") == 0) {
-	         got_one = true;
 	         $$.flags.q.depth_unchanged = 1;
 	      }
 	
-	      if (got_one && state->AMD_conservative_depth_warn) {
+	      if ($$.flags.i && state->AMD_conservative_depth_warn) {
 	         _mesa_glsl_warning(& @1, state,
 	                            "GL_AMD_conservative_depth "
 	                            "layout qualifier `%s' is used\n", $1);
 	      }
-	      if (got_one && state->ARB_conservative_depth_warn) {
+	      if ($$.flags.i && state->ARB_conservative_depth_warn) {
 	         _mesa_glsl_warning(& @1, state,
 	                            "GL_ARB_conservative_depth "
 	                            "layout qualifier `%s' is used\n", $1);
 	      }
 	   }
 
-	   if (!got_one) {
+	   if (!$$.flags.i) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
 	      YYERROR;
@@ -1178,8 +1170,6 @@ layout_qualifier_id:
 	}
 	| any_identifier '=' INTCONSTANT
 	{
-	   bool got_one = false;
-
 	   memset(& $$, 0, sizeof($$));
 
 	   if (state->ARB_explicit_attrib_location_enable) {
@@ -1187,8 +1177,6 @@ layout_qualifier_id:
 	       * FINISHME: GLSL 1.30 (or later) are supported.
 	       */
 	      if (strcmp("location", $1) == 0) {
-		 got_one = true;
-
 		 $$.flags.q.explicit_location = 1;
 
 		 if ($3 >= 0) {
@@ -1201,8 +1189,6 @@ layout_qualifier_id:
 	      }
 
 	      if (strcmp("index", $1) == 0) {
-	      	 got_one = true;
-
 		 $$.flags.q.explicit_index = 1;
 
 		 if ($3 >= 0) {
@@ -1218,7 +1204,7 @@ layout_qualifier_id:
 	   /* If the identifier didn't match any known layout identifiers,
 	    * emit an error.
 	    */
-	   if (!got_one) {
+	   if (!$$.flags.i) {
 	      _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
 			       "`%s'\n", $1);
 	      YYERROR;
