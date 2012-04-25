@@ -184,7 +184,6 @@ bool AMDILPassConfig::addPreEmitPass()
 {
   PM.add(createAMDILCFGPreparationPass(*TM));
   PM.add(createAMDILCFGStructurizerPass(*TM));
-  PM.add(createAMDILLiteralManager(*TM));
   return true;
 }
 

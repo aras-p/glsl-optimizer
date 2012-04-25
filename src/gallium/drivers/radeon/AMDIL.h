@@ -104,8 +104,6 @@ FunctionPass*
   createAMDILCFGPreparationPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
   createAMDILCFGStructurizerPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
-FunctionPass*
-  createAMDILLiteralManager(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 
 extern Target TheAMDILTarget;
 extern Target TheAMDGPUTarget;

@@ -29,7 +29,6 @@ CPP_SOURCES := \
 	AMDILIntrinsicInfo.cpp		\
 	AMDILISelDAGToDAG.cpp		\
 	AMDILISelLowering.cpp		\
-	AMDILLiteralManager.cpp		\
 	AMDILMachineFunctionInfo.cpp	\
 	AMDILMachinePeephole.cpp	\
 	AMDILMCCodeEmitter.cpp		\
