@@ -18,6 +18,14 @@ endif
 
 include ../Makefile.template
 
+default install clean: %: subdirs-%
+
+subdirs-%:
+	@for dir in $(SUBDIRS) ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) $*) || exit 1; \
+		fi \
+	done
 
 indices/u_indices_gen.c: indices/u_indices_gen.py
 	$(PYTHON2) $< > $@

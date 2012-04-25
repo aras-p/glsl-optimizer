@@ -1,3 +1,5 @@
+SUBDIRS := pipe-loader
+
 C_SOURCES := \
 	cso_cache/cso_cache.c \
 	cso_cache/cso_context.c \
