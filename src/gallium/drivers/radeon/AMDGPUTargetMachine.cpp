@@ -130,6 +130,10 @@ AMDGPUPassConfig::addPreISel()
 }
 
 bool AMDGPUPassConfig::addInstSelector() {
+  const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
+  if (ST.device()->getGeneration() == AMDILDeviceInfo::HD7XXX) {
+    PM.add(createSIInitMachineFunctionInfoPass(*TM));
+  }
   PM.add(createAMDILBarrierDetect(*TM));
   PM.add(createAMDILPrintfConvert(*TM));
   PM.add(createAMDILInlinePass(*TM));
@@ -140,10 +144,6 @@ bool AMDGPUPassConfig::addInstSelector() {
 
 bool AMDGPUPassConfig::addPreRegAlloc() {
   const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
-
-  if (ST.device()->getGeneration() == AMDILDeviceInfo::HD7XXX) {
-    PM.add(createSIInitMachineFunctionInfoPass(*TM));
-  }
 
   PM.add(createAMDGPUReorderPreloadInstructionsPass(*TM));
   if (ST.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
