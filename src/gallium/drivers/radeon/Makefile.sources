@@ -19,7 +19,6 @@ GENERATED_SOURCES := \
 
 CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\
-	AMDILBarrierDetect.cpp		\
 	AMDILCFGStructurizer.cpp	\
 	AMDILDevice.cpp			\
 	AMDILDeviceInfo.cpp		\

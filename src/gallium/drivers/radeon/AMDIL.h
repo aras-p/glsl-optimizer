@@ -93,8 +93,6 @@ class TargetMachine;
 FunctionPass*
   createAMDILISelDag(AMDILTargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
-  createAMDILBarrierDetect(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
-FunctionPass*
   createAMDILInlinePass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
   createAMDILPeepholeOpt(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
