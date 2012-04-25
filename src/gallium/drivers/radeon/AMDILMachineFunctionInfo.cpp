@@ -8,7 +8,6 @@
 //==-----------------------------------------------------------------------===//
 #include "AMDILMachineFunctionInfo.h"
 #include "AMDILCompilerErrors.h"
-#include "AMDILModuleInfo.h"
 #include "AMDILSubtarget.h"
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
@@ -84,15 +83,10 @@ AMDILMachineFunctionInfo::AMDILMachineFunctionInfo(MachineFunction& MF)
   for (uint32_t x = 0; x < AMDILDevice::MAX_IDS; ++x) {
     mUsedMem[x] = false;
   }
-  const Function *F = MF.getFunction();
   mMF = &MF;
-  MachineModuleInfo &mmi = MF.getMMI();
   const AMDILTargetMachine *TM = 
       reinterpret_cast<const AMDILTargetMachine*>(&MF.getTarget());
-  AMDILModuleInfo *AMI = &(mmi.getObjFileInfo<AMDILModuleInfo>());
-  AMI->processModule(mmi.getModule(), TM);
   mSTM = TM->getSubtargetImpl();
-  mKernel = AMI->getKernel(F->getName());
 
   mScratchSize = -1;
   mArgSize = -1;

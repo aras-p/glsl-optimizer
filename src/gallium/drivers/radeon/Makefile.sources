@@ -31,7 +31,6 @@ CPP_SOURCES := \
 	AMDILMachineFunctionInfo.cpp	\
 	AMDILMachinePeephole.cpp	\
 	AMDILMCCodeEmitter.cpp		\
-	AMDILModuleInfo.cpp		\
 	AMDILNIDevice.cpp		\
 	AMDILPeepholeOptimizer.cpp	\
 	AMDILRegisterInfo.cpp		\
