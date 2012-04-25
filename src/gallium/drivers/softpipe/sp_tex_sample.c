@@ -2468,6 +2468,19 @@ get_linear_wrap(unsigned mode)
 }
 
 
+/**
+ * Is swizzling needed for the given state key?
+ */
+static INLINE bool
+any_swizzle(union sp_sampler_key key)
+{
+   return (key.bits.swizzle_r != PIPE_SWIZZLE_RED ||
+           key.bits.swizzle_g != PIPE_SWIZZLE_GREEN ||
+           key.bits.swizzle_b != PIPE_SWIZZLE_BLUE ||
+           key.bits.swizzle_a != PIPE_SWIZZLE_ALPHA);
+}
+
+
 static compute_lambda_func
 get_lambda_func(const union sp_sampler_key key)
 {
@@ -2655,10 +2668,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    const struct pipe_resource *texture = samp->view->texture;
    int j, c;
    const float *tx;
-   bool need_swizzle = (samp->key.bits.swizzle_r != PIPE_SWIZZLE_RED ||
-                        samp->key.bits.swizzle_g != PIPE_SWIZZLE_GREEN ||
-                        samp->key.bits.swizzle_b != PIPE_SWIZZLE_BLUE ||
-                        samp->key.bits.swizzle_a != PIPE_SWIZZLE_ALPHA);
+   const bool need_swizzle = any_swizzle(samp->key);
    int width, height, depth, layers;
 
    addr.value = 0;
@@ -2853,10 +2863,7 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
       samp->sample_target = samp->compare;
    }
 
-   if (key.bits.swizzle_r != PIPE_SWIZZLE_RED ||
-       key.bits.swizzle_g != PIPE_SWIZZLE_GREEN ||
-       key.bits.swizzle_b != PIPE_SWIZZLE_BLUE ||
-       key.bits.swizzle_a != PIPE_SWIZZLE_ALPHA) {
+   if (any_swizzle(key)) {
       samp->base.get_samples = sample_swizzle;
    }
    else {
