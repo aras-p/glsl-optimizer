@@ -23,7 +23,6 @@ CPP_SOURCES := \
 	AMDILDevice.cpp			\
 	AMDILDeviceInfo.cpp		\
 	AMDILEvergreenDevice.cpp	\
-	AMDILELFWriterInfo.cpp		\
 	AMDILFrameLowering.cpp		\
 	AMDILInstrInfo.cpp		\
 	AMDILIntrinsicInfo.cpp		\

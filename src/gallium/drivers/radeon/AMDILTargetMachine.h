@@ -14,7 +14,6 @@
 #ifndef AMDILTARGETMACHINE_H_
 #define AMDILTARGETMACHINE_H_
 
-#include "AMDILELFWriterInfo.h"
 #include "AMDILFrameLowering.h"
 #include "AMDILISelLowering.h"
 #include "AMDILInstrInfo.h"
@@ -36,7 +35,6 @@ namespace llvm
         AMDILInstrInfo InstrInfo;
         AMDILTargetLowering TLInfo;
         AMDILIntrinsicInfo IntrinsicInfo;
-        AMDILELFWriterInfo ELFWriterInfo;
         bool mDebugMode;
         CodeGenOpt::Level mOptLevel;
 
@@ -57,7 +55,6 @@ namespace llvm
         virtual const AMDILRegisterInfo* getRegisterInfo() const;
         virtual const TargetData* getTargetData() const;
         virtual const AMDILIntrinsicInfo *getIntrinsicInfo() const;
-        virtual const AMDILELFWriterInfo *getELFWriterInfo() const;
 
         // Pass Pipeline Configuration
         virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);

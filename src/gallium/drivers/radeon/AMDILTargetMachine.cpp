@@ -52,8 +52,7 @@ AMDILTargetMachine::AMDILTargetMachine(const Target &T,
       Subtarget.device()->getStackAlignment(), 0),
   InstrInfo(*this), //JITInfo(*this),
   TLInfo(*this), 
-  IntrinsicInfo(this),
-  ELFWriterInfo(false, true)
+  IntrinsicInfo(this)
 {
   setAsmVerbosityDefault(true);
   setMCUseLoc(false);
@@ -92,12 +91,6 @@ const TargetData*
 AMDILTargetMachine::getTargetData() const
 {
   return &DataLayout;
-}
-
-const AMDILELFWriterInfo*
-AMDILTargetMachine::getELFWriterInfo() const
-{
-  return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
 }
 
 const AMDILIntrinsicInfo*
