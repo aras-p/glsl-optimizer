@@ -14,7 +14,6 @@
 #include "AMDGPUUtil.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDIL.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"

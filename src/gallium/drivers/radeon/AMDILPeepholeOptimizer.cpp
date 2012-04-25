@@ -16,7 +16,6 @@
 
 #include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -240,20 +239,6 @@ AMDILPeepholeOpt::doAtomicConversionIfNeeded(Function &F)
   mChanged = true;
   if (mConvertAtomics) {
     return;
-  }
-  // If we did not convert all of the atomics, then we need to make sure that
-  // the atomics that were not converted have their base pointers set to use the
-  // arena path.
-  Function::arg_iterator argB = F.arg_begin();
-  Function::arg_iterator argE = F.arg_end();
-  AMDILMachineFunctionInfo *mMFI = getAnalysis<MachineFunctionAnalysis>().getMF()
-    .getInfo<AMDILMachineFunctionInfo>();
-  for (; argB != argE; ++argB) {
-    if (mSTM->device()->isSupported(AMDILDeviceInfo::ArenaUAV)) {
-      mMFI->uav_insert(mSTM->device()->getResourceID(AMDILDevice::ARENA_UAV_ID));
-    } else {
-      mMFI->uav_insert(mSTM->device()->getResourceID(AMDILDevice::GLOBAL_ID));
-    }
   }
 }
 

@@ -15,7 +15,6 @@
 #include "AMDGPUUtil.h"
 #include "AMDILCodeEmitter.h"
 #include "AMDILInstrInfo.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -42,7 +41,6 @@ namespace {
   formatted_raw_ostream &_OS;
   const TargetMachine * TM;
   const MachineRegisterInfo * MRI;
-  AMDILMachineFunctionInfo * MFI;
   const R600RegisterInfo * TRI;
   bool evergreenEncoding;
 
@@ -149,7 +147,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 
   TM = &MF.getTarget();
   MRI = &MF.getRegInfo();
-  MFI = MF.getInfo<AMDILMachineFunctionInfo>();
   TRI = static_cast<const R600RegisterInfo *>(TM->getRegisterInfo());
   const AMDILSubtarget &STM = TM->getSubtarget<AMDILSubtarget>();
   std::string gpu = STM.getDeviceName();

@@ -119,10 +119,6 @@ AMDGPUPassConfig::addPreISel()
 }
 
 bool AMDGPUPassConfig::addInstSelector() {
-  const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
-  if (ST.device()->getGeneration() == AMDILDeviceInfo::HD7XXX) {
-    PM.add(createSIInitMachineFunctionInfoPass(*TM));
-  }
   PM.add(createAMDILPeepholeOpt(*TM));
   PM.add(createAMDILISelDag(getAMDGPUTargetMachine()));
   return false;

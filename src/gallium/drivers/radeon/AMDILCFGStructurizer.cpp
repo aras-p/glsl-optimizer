@@ -14,8 +14,6 @@
 #define DEBUGME 0
 #endif
 
-#include "AMDILCompilerErrors.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -111,8 +109,6 @@ void ReverseVector(SmallVector<NodeT *, DEFAULT_VEC_SLOTS> &Src) {
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDILCompilerErrors.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -709,10 +705,7 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass) {
   }
 
   if (!finish) {
-    MachineFunction *MF = &func;
-    AMDILMachineFunctionInfo *mMFI =
-      MF->getInfo<AMDILMachineFunctionInfo>();
-    mMFI->addErrorMsg(amd::CompilerErrorMessage[IRREDUCIBLE_CF]);
+    assert(!"IRREDUCIBL_CF");
   }
 
   return true;

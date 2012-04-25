@@ -15,17 +15,16 @@
 #ifndef _SIMACHINEFUNCTIONINFO_H_
 #define _SIMACHINEFUNCTIONINFO_H_
 
-#include "AMDILMachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
 
-class SIMachineFunctionInfo : public AMDILMachineFunctionInfo {
+class SIMachineFunctionInfo : public MachineFunctionInfo {
 
   private:
 
   public:
-    SIMachineFunctionInfo();
-    SIMachineFunctionInfo(MachineFunction &MF);
+    SIMachineFunctionInfo(const MachineFunction &MF);
     unsigned spi_ps_input_addr;
 
 };

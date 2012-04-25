@@ -13,7 +13,6 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUUtil.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "SIInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
@@ -42,7 +41,6 @@ FunctionPass *llvm::createSIPropagateImmReadsPass(TargetMachine &tm) {
 
 bool SIPropagateImmReadsPass::runOnMachineFunction(MachineFunction &MF)
 {
-  AMDILMachineFunctionInfo * MFI = MF.getInfo<AMDILMachineFunctionInfo>();
   const SIInstrInfo * TII = static_cast<const SIInstrInfo*>(TM.getInstrInfo());
 
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();

@@ -15,7 +15,6 @@
 #include "AMDILISelLowering.h"
 #include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILSubtarget.h"
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
@@ -2206,8 +2205,6 @@ const
 {
 
   MachineFunction &MF = DAG.getMachineFunction();
-  AMDILMachineFunctionInfo *FuncInfo
-    = MF.getInfo<AMDILMachineFunctionInfo>();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   //const Function *Fn = MF.getFunction();
   //MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -2284,14 +2281,12 @@ const
   // See MipsISelLowering.cpp for ideas on how to implement
   }*/
 
-  unsigned int StackSize = CCInfo.getNextStackOffset();
   if (isVarArg) {
     assert(0 && "Variable arguments are not yet supported");
     // See X86/PPC/CellSPU ISelLowering.cpp for ideas on how to implement
   }
   // This needs to be changed to non-zero if the return function needs
   // to pop bytes
-  FuncInfo->setBytesToPopOnReturn(StackSize);
   return Chain;
 }
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified

@@ -15,7 +15,6 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUUtil.h"
 #include "AMDIL.h"
-#include "AMDILMachineFunctionInfo.h"
 #include "AMDILRegisterInfo.h"
 #include "R600InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -34,7 +33,6 @@ namespace {
   private:
     static char ID;
     TargetMachine &TM;
-    AMDILMachineFunctionInfo * MFI;
     const R600InstrInfo * TII;
     MachineRegisterInfo * MRI;
 
@@ -73,7 +71,6 @@ FunctionPass *llvm::createR600LowerInstructionsPass(TargetMachine &tm) {
 bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 {
   MRI = &MF.getRegInfo();
-  MFI = MF.getInfo<AMDILMachineFunctionInfo>();
 
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
