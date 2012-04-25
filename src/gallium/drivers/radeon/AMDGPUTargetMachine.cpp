@@ -13,8 +13,6 @@
 
 #include "AMDGPUTargetMachine.h"
 #include "AMDGPU.h"
-#include "AMDILGlobalManager.h"
-#include "AMDILKernelManager.h"
 #include "AMDILTargetMachine.h"
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
@@ -44,16 +42,9 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
 :
   AMDILTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
   Subtarget(TT, CPU, FS),
-  mGM(new AMDILGlobalManager(0 /* Debug mode */)),
-  mKM(new AMDILKernelManager(this, mGM)),
   mDump(false)
 
 {
-  /* XXX: Add these two initializations to fix a segfault, not sure if this
-   * is correct.  These are normally initialized in the AsmPrinter, but AMDGPU
-   * does not use the asm printer */
-  Subtarget.setGlobalManager(mGM);
-  Subtarget.setKernelManager(mKM);
   /* TLInfo uses InstrInfo so it must be initialized after. */
   if (Subtarget.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
     InstrInfo = new R600InstrInfo(*this);
@@ -66,8 +57,6 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine()
 {
-    delete mGM;
-    delete mKM;
 }
 
 bool AMDGPUTargetMachine::addPassesToEmitFile(PassManagerBase &PM,

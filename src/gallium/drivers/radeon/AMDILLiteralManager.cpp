@@ -12,7 +12,6 @@
 #include "AMDIL.h"
 
 #include "AMDILAlgorithms.tpp"
-#include "AMDILKernelManager.h"
 #include "AMDILMachineFunctionInfo.h"
 #include "AMDILSubtarget.h"
 #include "AMDILTargetMachine.h"
@@ -43,7 +42,6 @@ namespace {
     bool trackLiterals(MachineBasicBlock::iterator *bbb);
     TargetMachine &TM;
     const AMDILSubtarget *mSTM;
-    AMDILKernelManager *mKM;
     AMDILMachineFunctionInfo *mMFI;
     int32_t mLitIdx;
     bool mChanged;
@@ -71,7 +69,6 @@ bool AMDILLiteralManager::runOnMachineFunction(MachineFunction &MF) {
   const AMDILTargetMachine *amdtm =
     reinterpret_cast<const AMDILTargetMachine *>(&TM);
   mSTM = dynamic_cast<const AMDILSubtarget *>(amdtm->getSubtargetImpl());
-  mKM = const_cast<AMDILKernelManager *>(mSTM->getKernelManager());
   safeNestedForEach(MF.begin(), MF.end(), MF.begin()->begin(),
       std::bind1st(std::mem_fun(&AMDILLiteralManager::trackLiterals), this));
   return mChanged;

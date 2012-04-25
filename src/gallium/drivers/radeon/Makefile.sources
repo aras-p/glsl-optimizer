@@ -26,13 +26,11 @@ CPP_SOURCES := \
 	AMDILEvergreenDevice.cpp	\
 	AMDILELFWriterInfo.cpp		\
 	AMDILFrameLowering.cpp		\
-	AMDILGlobalManager.cpp		\
 	AMDILInliner.cpp		\
 	AMDILInstrInfo.cpp		\
 	AMDILIntrinsicInfo.cpp		\
 	AMDILISelDAGToDAG.cpp		\
 	AMDILISelLowering.cpp		\
-	AMDILKernelManager.cpp		\
 	AMDILLiteralManager.cpp		\
 	AMDILMachineFunctionInfo.cpp	\
 	AMDILMachinePeephole.cpp	\

@@ -14,8 +14,6 @@
 #include "AMDILSubtarget.h"
 #include "AMDIL.h"
 #include "AMDILDevices.h"
-#include "AMDILGlobalManager.h"
-#include "AMDILKernelManager.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"

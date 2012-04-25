@@ -16,8 +16,6 @@
 
 #include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
-#include "AMDILGlobalManager.h"
-#include "AMDILKernelManager.h"
 #include "AMDILMachineFunctionInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/Statistic.h"
@@ -39,7 +37,6 @@ STATISTIC(PointerAssignments, "Number of dynamic pointer "
     "assigments discovered");
 STATISTIC(PointerSubtract, "Number of pointer subtractions discovered");
 #endif
-STATISTIC(LocalFuncs, "Number of get_local_size(N) functions removed");
 
 using namespace llvm;
 // The Peephole optimization pass is used to do simple last minute optimizations
@@ -76,7 +73,6 @@ private:
   void doIsConstCallConversionIfNeeded();
   bool mChanged;
   bool mDebug;
-  bool mRWGOpt;
   bool mConvertAtomics;
   CodeGenOpt::Level optLevel;
   // Run a series of tests to see if we can optimize a CALL instruction.
@@ -104,7 +100,6 @@ private:
   // specified then the result of get_local_size is known at compile time and
   // can be returned accordingly.
   bool isRWGLocalOpt(CallInst *CI);
-  void expandRWGLocalOpt(CallInst *CI);
   // On northern island cards, the division is slightly less accurate than on
   // previous generations, so we need to utilize a more accurate division. So we
   // can translate the accurate divide to a normal divide on all other cards.
@@ -251,15 +246,12 @@ AMDILPeepholeOpt::doAtomicConversionIfNeeded(Function &F)
   // arena path.
   Function::arg_iterator argB = F.arg_begin();
   Function::arg_iterator argE = F.arg_end();
-  AMDILKernelManager *KM = mSTM->getKernelManager();
   AMDILMachineFunctionInfo *mMFI = getAnalysis<MachineFunctionAnalysis>().getMF()
     .getInfo<AMDILMachineFunctionInfo>();
   for (; argB != argE; ++argB) {
     if (mSTM->device()->isSupported(AMDILDeviceInfo::ArenaUAV)) {
-      KM->setUAVID(argB,mSTM->device()->getResourceID(AMDILDevice::ARENA_UAV_ID));
       mMFI->uav_insert(mSTM->device()->getResourceID(AMDILDevice::ARENA_UAV_ID));
     } else {
-      KM->setUAVID(argB,mSTM->device()->getResourceID(AMDILDevice::GLOBAL_ID));
       mMFI->uav_insert(mSTM->device()->getResourceID(AMDILDevice::GLOBAL_ID));
     }
   }
@@ -276,16 +268,6 @@ AMDILPeepholeOpt::runOnFunction(Function &MF)
   }
   mCTX = &MF.getType()->getContext();
   mConvertAtomics = true;
-  if (dumpAllIntoArena(MF)) {
-    for (Function::const_arg_iterator cab = MF.arg_begin(),
-         cae = MF.arg_end(); cab != cae; ++cab) {
-      const Argument *arg = cab;
-      AMDILKernelManager *KM = mSTM->getKernelManager();
-      KM->setUAVID(getBasePointerValue(arg),
-          mSTM->device()->getResourceID(AMDILDevice::GLOBAL_ID));
-    }
-  }
-  mRWGOpt = mSTM->getGlobalManager()->hasRWG(MF.getName());
   safeNestedForEach(MF.begin(), MF.end(), MF.begin()->begin(),
      std::bind1st(std::mem_fun(&AMDILPeepholeOpt::instLevelOptimizations),
                   this));
@@ -312,10 +294,6 @@ AMDILPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb)
     ++(*bbb);
     CI->eraseFromParent();
     return true;
-  }
-  if (isRWGLocalOpt(CI)) {
-    expandRWGLocalOpt(CI);
-    return false;
   }
   if (propagateSamplerInst(CI)) {
     return false;
@@ -390,26 +368,7 @@ AMDILPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb)
   }
   StringRef name = F->getName();
   if (name.startswith("__atom") && name.find("_g") != StringRef::npos) {
-    Value *ptr = CI->getOperand(0);
-    const Value *basePtr = getBasePointerValue(ptr);
-    const Argument *Arg = dyn_cast<Argument>(basePtr);
-    if (Arg) {
-      AMDILGlobalManager *GM = mSTM->getGlobalManager();
-      int32_t id = GM->getArgID(Arg);
-      if (id >= 0) {
-        std::stringstream ss;
-        ss << name.data() << "_" << id << '\n';
-        std::string val;
-        ss >> val;
-        F = dyn_cast<Function>(
-              F->getParent() ->getOrInsertFunction(val, F->getFunctionType()));
-        atomicFuncs.push_back(std::make_pair <CallInst*, Function*>(CI, F));
-      } else {
-        mConvertAtomics = false;
-      }
-    } else {
-      mConvertAtomics = false;
-    }
+    mConvertAtomics = false;
   }
   return false;
 }
@@ -1088,26 +1047,9 @@ AMDILPeepholeOpt::expandSigned24BitOps(CallInst *CI)
 bool 
 AMDILPeepholeOpt::isRWGLocalOpt(CallInst *CI) 
 {
-  return (CI != NULL && mRWGOpt
+  return (CI != NULL
           && CI->getOperand(CI->getNumOperands() - 1)->getName() 
           == "__amdil_get_local_size_int");
-}
-
-void 
-AMDILPeepholeOpt::expandRWGLocalOpt(CallInst *CI) 
-{
-  assert(isRWGLocalOpt(CI) &&
-         "This optmization only works when the call inst is get_local_size!");
-  std::vector<Constant *> consts;
-  for (uint32_t x = 0; x < 3; ++x) {
-    uint32_t val = mSTM->getGlobalManager()->getLocal(mF->getName(), x);
-    consts.push_back(ConstantInt::get(Type::getInt32Ty(*mCTX), val));
-  }
-  consts.push_back(ConstantInt::get(Type::getInt32Ty(*mCTX), 0));
-  Value *cVec = ConstantVector::get(consts);
-  CI->replaceAllUsesWith(cVec);
-  ++LocalFuncs;
-  return;
 }
 
 bool 

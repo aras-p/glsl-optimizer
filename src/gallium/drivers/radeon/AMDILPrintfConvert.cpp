@@ -15,7 +15,6 @@
 #endif
 
 #include "AMDILAlgorithms.tpp"
-#include "AMDILKernelManager.h"
 #include "AMDILMachineFunctionInfo.h"
 #include "AMDILModuleInfo.h"
 #include "AMDILTargetMachine.h"
@@ -50,7 +49,6 @@ namespace
         private:
             bool expandPrintf(BasicBlock::iterator *bbb);
             AMDILMachineFunctionInfo *mMFI;
-            AMDILKernelManager *mKM;
             bool mChanged;
             SmallVector<int64_t, DEFAULT_VEC_SLOTS> bVecMap;
     };
@@ -256,7 +254,6 @@ AMDILPrintfConvert::expandPrintf(BasicBlock::iterator *bbb)
 AMDILPrintfConvert::runOnFunction(Function &MF)
 {
     mChanged = false;
-    mKM = TM.getSubtarget<AMDILSubtarget>().getKernelManager();
     mMFI = getAnalysis<MachineFunctionAnalysis>().getMF()
           .getInfo<AMDILMachineFunctionInfo>();
     bVecMap.clear();

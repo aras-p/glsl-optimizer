@@ -14,9 +14,7 @@
 
 #include "AMDILISelLowering.h"
 #include "AMDILDevices.h"
-#include "AMDILGlobalManager.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDILKernelManager.h"
 #include "AMDILMachineFunctionInfo.h"
 #include "AMDILSubtarget.h"
 #include "AMDILTargetMachine.h"
@@ -31,6 +29,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
@@ -1905,11 +1904,6 @@ AMDILTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
              isRet = false;
              IntNo = AMDILISD::APPEND_CONSUME_NORET; break;
   };
-  const AMDILSubtarget *stm = &this->getTargetMachine()
-    .getSubtarget<AMDILSubtarget>();
-  AMDILKernelManager *KM = const_cast<AMDILKernelManager*>(
-      stm->getKernelManager());
-  KM->setOutputInst();
 
   Info.opc = IntNo;
   Info.memVT = (bitCastToInt) ? MVT::f32 : MVT::i32;
@@ -2134,58 +2128,33 @@ AMDILTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
   SDValue DST = Op;
   const GlobalAddressSDNode *GADN = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *G = GADN->getGlobal();
-  const AMDILSubtarget *stm = &this->getTargetMachine()
-    .getSubtarget<AMDILSubtarget>();
-  const AMDILGlobalManager *GM = stm->getGlobalManager();
   DebugLoc DL = Op.getDebugLoc();
-  int64_t base_offset = GADN->getOffset();
-  int32_t arrayoffset = GM->getArrayOffset(G->getName());
-  int32_t constoffset = GM->getConstOffset(G->getName());
-  if (arrayoffset != -1) {
-    DST = DAG.getConstant(arrayoffset, MVT::i32);
-    DST = DAG.getNode(ISD::ADD, DL, MVT::i32,
-        DST, DAG.getConstant(base_offset, MVT::i32));
-  } else if (constoffset != -1) {
-    if (GM->getConstHWBit(G->getName())) {
-      DST = DAG.getConstant(constoffset, MVT::i32);
-      DST = DAG.getNode(ISD::ADD, DL, MVT::i32,
-          DST, DAG.getConstant(base_offset, MVT::i32));
-    } else {
-      SDValue addr = DAG.getTargetGlobalAddress(G, DL, MVT::i32);
-      SDValue DPReg = DAG.getRegister(AMDIL::SDP, MVT::i32);
-      DPReg = DAG.getNode(ISD::ADD, DL, MVT::i32, DPReg,
-          DAG.getConstant(base_offset, MVT::i32));
-      DST = DAG.getNode(AMDILISD::ADDADDR, DL, MVT::i32, addr, DPReg);
-    }
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(G);
+  if (!GV) {
+    DST = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
   } else {
-    const GlobalVariable *GV = dyn_cast<GlobalVariable>(G);
-    if (!GV) {
-      DST = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
-    } else {
-      if (GV->hasInitializer()) {
-        const Constant *C = dyn_cast<Constant>(GV->getInitializer());
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-          DST = DAG.getConstant(CI->getValue(), Op.getValueType());
-
-        } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(C)) {
-          DST = DAG.getConstantFP(CF->getValueAPF(),
-              Op.getValueType());
-        } else if (dyn_cast<ConstantAggregateZero>(C)) {
-          EVT VT = Op.getValueType();
-          if (VT.isInteger()) {
-            DST = DAG.getConstant(0, VT);
-          } else {
-            DST = DAG.getConstantFP(0, VT);
-          }
+    if (GV->hasInitializer()) {
+      const Constant *C = dyn_cast<Constant>(GV->getInitializer());
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+        DST = DAG.getConstant(CI->getValue(), Op.getValueType());
+      } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(C)) {
+        DST = DAG.getConstantFP(CF->getValueAPF(),
+            Op.getValueType());
+      } else if (dyn_cast<ConstantAggregateZero>(C)) {
+        EVT VT = Op.getValueType();
+        if (VT.isInteger()) {
+          DST = DAG.getConstant(0, VT);
         } else {
-          assert(!"lowering this type of Global Address "
-              "not implemented yet!");
-          C->dump();
-          DST = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
+          DST = DAG.getConstantFP(0, VT);
         }
       } else {
+        assert(!"lowering this type of Global Address "
+            "not implemented yet!");
+        C->dump();
         DST = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
       }
+    } else {
+      DST = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
     }
   }
   return DST;
