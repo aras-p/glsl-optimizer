@@ -123,7 +123,6 @@ bool AMDGPUPassConfig::addInstSelector() {
   if (ST.device()->getGeneration() == AMDILDeviceInfo::HD7XXX) {
     PM.add(createSIInitMachineFunctionInfoPass(*TM));
   }
-  PM.add(createAMDILInlinePass(*TM));
   PM.add(createAMDILPeepholeOpt(*TM));
   PM.add(createAMDILISelDag(getAMDGPUTargetMachine()));
   return false;

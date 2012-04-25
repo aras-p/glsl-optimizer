@@ -157,7 +157,6 @@ bool AMDILPassConfig::addPreISel()
 
 bool AMDILPassConfig::addInstSelector()
 {
-  PM.add(createAMDILInlinePass(*TM));
   PM.add(createAMDILPeepholeOpt(*TM));
   PM.add(createAMDILISelDag(getAMDILTargetMachine()));
   return false;
