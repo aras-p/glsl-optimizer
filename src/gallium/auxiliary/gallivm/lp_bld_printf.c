@@ -182,9 +182,11 @@ lp_build_print_uvec16(struct gallivm_state *gallivm,
    LLVMBuilderRef builder = gallivm->builder;
    char format[1000];
    LLVMValueRef args[16];
+   int i;
 
-   for(int i = 0; i < 16; ++i)
+   for (i = 0; i < 16; ++i) {
       args[i] = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, i), "");
+   }
 
    util_snprintf(format, sizeof(format), "%s %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u\n", msg);
 
