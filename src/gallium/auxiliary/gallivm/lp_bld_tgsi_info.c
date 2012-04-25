@@ -442,8 +442,12 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
             assert(size <= 4);
             if (ctx.num_imms < Elements(ctx.imm)) {
                for (chan = 0; chan < size; ++chan) {
-                  ctx.imm[ctx.num_imms][chan] =
-                        parse.FullToken.FullImmediate.u[chan].Float;
+                  float value = parse.FullToken.FullImmediate.u[chan].Float;
+                  ctx.imm[ctx.num_imms][chan] = value;
+
+                  if (value < 0.0f || value > 1.0f) {
+                     info->unclamped_immediates = TRUE;
+                  }
                }
                ++ctx.num_imms;
             }

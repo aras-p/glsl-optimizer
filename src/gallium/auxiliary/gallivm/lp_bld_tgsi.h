@@ -122,6 +122,11 @@ struct lp_tgsi_info
    unsigned indirect_textures:1;
 
    /*
+    * Whether any immediate values are outside the range of 0 and 1
+    */
+   unsigned unclamped_immediates:1;
+
+   /*
     * Texture opcode description. Aimed at detecting and described direct
     * texture opcodes.
     */
