@@ -66,4 +66,5 @@ bool SIPropagateImmReadsPass::runOnMachineFunction(MachineFunction &MF)
       MI.eraseFromParent();
     }
   }
+  return false;
 }
