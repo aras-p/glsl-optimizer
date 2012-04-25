@@ -799,7 +799,8 @@ get_texel_2d_array(const struct sp_sampler_variant *samp,
    const struct pipe_resource *texture = samp->view->texture;
    unsigned level = addr.bits.level;
 
-   assert(layer < texture->array_size);
+   assert(layer < (int) texture->array_size);
+   assert(layer >= 0);
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level)) {
@@ -2630,8 +2631,12 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
     }
 }
 
-/* this function is only used for unfiltered texel gets
-   via the TGSI TXF opcode. */
+/**
+ * This function is only used for getting unfiltered texels via the
+ * TXF opcode.  The GL spec says that out-of-bounds texel fetches
+ * produce undefined results.  Instead of crashing, lets just clamp
+ * coords to the texture image size.
+ */
 static void
 sample_get_texels(struct tgsi_sampler *tgsi_sampler,
 	   const int v_i[TGSI_QUAD_SIZE],
@@ -2650,15 +2655,22 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
                         samp->key.bits.swizzle_g != PIPE_SWIZZLE_GREEN ||
                         samp->key.bits.swizzle_b != PIPE_SWIZZLE_BLUE ||
                         samp->key.bits.swizzle_a != PIPE_SWIZZLE_ALPHA);
+   int width, height, depth, layers;
 
    addr.value = 0;
    /* TODO write a better test for LOD */
    addr.bits.level = lod[0];
 
+   width = u_minify(texture->width0, addr.bits.level);
+   height = u_minify(texture->height0, addr.bits.level);
+   depth = u_minify(texture->depth0, addr.bits.level);
+   layers = texture->array_size;
+
    switch(texture->target) {
    case PIPE_TEXTURE_1D:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0], 0);
+         int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
+	 tx = get_texel_2d(samp, addr, x, 0);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2666,8 +2678,9 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_1D_ARRAY:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-	 tx = get_texel_1d_array(samp, addr, v_i[j] + offset[0],
-				 v_j[j] + offset[1]);
+         int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
+         int y = CLAMP(v_j[j] + offset[1], 0, layers - 1);
+	 tx = get_texel_1d_array(samp, addr, x, y);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2676,8 +2689,9 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-	 tx = get_texel_2d(samp, addr, v_i[j] + offset[0],
-			   v_j[j] + offset[1]);
+         int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
+         int y = CLAMP(v_j[j] + offset[1], 0, height - 1);
+	 tx = get_texel_2d(samp, addr, x, y);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2685,9 +2699,10 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_2D_ARRAY:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-	 tx = get_texel_2d_array(samp, addr, v_i[j] + offset[0],
-				 v_j[j] + offset[1],
-				 v_k[j] + offset[2]);
+         int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
+         int y = CLAMP(v_j[j] + offset[1], 0, height - 1);
+         int layer = CLAMP(v_k[j] + offset[2], 0, layers - 1);
+	 tx = get_texel_2d_array(samp, addr, x, y, layer);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
@@ -2695,9 +2710,11 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       break;
    case PIPE_TEXTURE_3D:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-	 tx = get_texel_3d(samp, addr, v_i[j] + offset[0], 
-			   v_j[j] + offset[1],
-			   v_k[j] + offset[2]);
+         int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
+         int y = CLAMP(v_j[j] + offset[1], 0, height - 1);
+         int z = CLAMP(v_k[j] + offset[2], 0, depth - 1);
+
+	 tx = get_texel_3d(samp, addr, x, y, z);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
 	 }
