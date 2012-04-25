@@ -10,7 +10,6 @@
 #ifdef UPSTREAM_LLVM
 #include "AMDILEGAsmPrinter.h"
 #endif
-#include "AMDILIOExpansion.h"
 
 using namespace llvm;
 
@@ -135,12 +134,6 @@ void AMDILEvergreenDevice::setCaps() {
     mSWBits.reset(AMDILDeviceInfo::LongOps);
   }
   mHWBits.set(AMDILDeviceInfo::TmrReg);
-}
-FunctionPass* 
-AMDILEvergreenDevice::getIOExpansion(
-    TargetMachine& TM AMDIL_OPT_LEVEL_DECL) const
-{
-  return new AMDILEGIOExpansion(TM AMDIL_OPT_LEVEL_VAR);
 }
 
 AsmPrinter*

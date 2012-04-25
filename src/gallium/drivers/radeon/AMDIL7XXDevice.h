@@ -39,8 +39,6 @@ public:
   virtual uint32_t getGeneration() const;
   virtual uint32_t getResourceID(uint32_t DeviceID) const;
   virtual uint32_t getMaxNumUAVs() const;
-  FunctionPass*
-    getIOExpansion(TargetMachine& AMDIL_OPT_LEVEL_DECL) const;
   AsmPrinter* 
     getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const;
 

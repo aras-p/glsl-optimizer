@@ -11,7 +11,6 @@
 #include "AMDIL7XXAsmPrinter.h"
 #endif
 #include "AMDILDevice.h"
-#include "AMDILIOExpansion.h"
 
 using namespace llvm;
 
@@ -90,13 +89,6 @@ uint32_t AMDIL7XXDevice::getResourceID(uint32_t DeviceID) const
 uint32_t AMDIL7XXDevice::getMaxNumUAVs() const
 {
   return 1;
-}
-
-FunctionPass* 
-AMDIL7XXDevice::getIOExpansion(
-    TargetMachine& TM AMDIL_OPT_LEVEL_DECL) const
-{
-  return new AMDIL7XXIOExpansion(TM  AMDIL_OPT_LEVEL_VAR);
 }
 
 AsmPrinter*

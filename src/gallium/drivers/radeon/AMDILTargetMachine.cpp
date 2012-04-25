@@ -188,7 +188,6 @@ bool AMDILPassConfig::addPreEmitPass()
   PM.add(createAMDILCFGPreparationPass(*TM));
   PM.add(createAMDILCFGStructurizerPass(*TM));
   PM.add(createAMDILLiteralManager(*TM));
-  PM.add(createAMDILIOExpansion(*TM));
   return true;
 }
 

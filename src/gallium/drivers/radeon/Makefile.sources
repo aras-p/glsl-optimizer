@@ -19,23 +19,18 @@ GENERATED_SOURCES := \
 
 CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\
-	AMDIL7XXIOExpansion.cpp		\
-	AMDIL789IOExpansion.cpp		\
 	AMDILAsmBackend.cpp		\
 	AMDILBarrierDetect.cpp		\
 	AMDILCFGStructurizer.cpp	\
 	AMDILDevice.cpp			\
 	AMDILDeviceInfo.cpp		\
-	AMDILEGIOExpansion.cpp		\
 	AMDILEvergreenDevice.cpp	\
 	AMDILELFWriterInfo.cpp		\
 	AMDILFrameLowering.cpp		\
 	AMDILGlobalManager.cpp		\
-	AMDILImageExpansion.cpp		\
 	AMDILInliner.cpp		\
 	AMDILInstrInfo.cpp		\
 	AMDILIntrinsicInfo.cpp		\
-	AMDILIOExpansion.cpp		\
 	AMDILISelDAGToDAG.cpp		\
 	AMDILISelLowering.cpp		\
 	AMDILKernelManager.cpp		\

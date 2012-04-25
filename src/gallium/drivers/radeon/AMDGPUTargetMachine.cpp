@@ -174,7 +174,6 @@ bool AMDGPUPassConfig::addPreEmitPass() {
     PM.add(createSIPropagateImmReadsPass(*TM));
   }
 
-  PM.add(createAMDILIOExpansion(*TM));
   return false;
 }
 

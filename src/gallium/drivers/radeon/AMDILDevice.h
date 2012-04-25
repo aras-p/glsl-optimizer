@@ -22,7 +22,6 @@
 namespace llvm {
   class AMDILSubtarget;
   class AMDILAsmPrinter;
-  class AMDILIOExpansion;
   class AMDILPointerManager;
   class AsmPrinter;
   class MCStreamer;
@@ -84,10 +83,6 @@ public:
 
   // Get the max number of UAV's for this device.
   virtual uint32_t getMaxNumUAVs() const = 0;
-
-  // Interface to get the IO Expansion pass for each device.
-  virtual FunctionPass* 
-    getIOExpansion(TargetMachine& AMDIL_OPT_LEVEL_DECL) const = 0;
 
   // Interface to get the Asm printer for each device.
   virtual AsmPrinter*
