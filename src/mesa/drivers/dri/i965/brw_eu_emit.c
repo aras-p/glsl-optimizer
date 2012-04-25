@@ -2220,6 +2220,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
                   GLuint msg_reg_nr,
                   struct brw_reg src0,
+                  GLuint msg_control,
                   GLuint binding_table_index,
                   GLuint msg_length,
                   GLuint response_length,
@@ -2228,7 +2229,7 @@ void brw_fb_WRITE(struct brw_compile *p,
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
-   GLuint msg_control, msg_type;
+   GLuint msg_type;
    struct brw_reg dest;
 
    if (dispatch_width == 16)
@@ -2255,11 +2256,6 @@ void brw_fb_WRITE(struct brw_compile *p,
 
       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    }
-
-   if (dispatch_width == 16)
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
-   else
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
 
    brw_set_dest(p, insn, dest);
    brw_set_src0(p, insn, src0);

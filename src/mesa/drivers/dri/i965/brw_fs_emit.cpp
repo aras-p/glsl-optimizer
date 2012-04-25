@@ -42,6 +42,7 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 {
    bool eot = inst->eot;
    struct brw_reg implied_header;
+   uint32_t msg_control;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -78,12 +79,20 @@ fs_visitor::generate_fb_write(fs_inst *inst)
       implied_header = brw_null_reg();
    }
 
+   if (this->dual_src_output.file != BAD_FILE)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
+   else if (c->dispatch_width == 16)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+   else
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
+
    brw_pop_insn_state(p);
 
    brw_fb_WRITE(p,
 		c->dispatch_width,
 		inst->base_mrf,
 		implied_header,
+		msg_control,
 		inst->target,
 		inst->mlen,
 		0,

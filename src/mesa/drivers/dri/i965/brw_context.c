@@ -108,6 +108,7 @@ brwCreateContext(int api,
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
+   ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */

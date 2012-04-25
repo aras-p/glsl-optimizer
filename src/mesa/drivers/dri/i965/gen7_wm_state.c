@@ -109,6 +109,7 @@ static void
 upload_ps_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    uint32_t dw2, dw4, dw5;
    const int max_threads_shift = brw->intel.is_haswell ?
       HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
@@ -176,6 +177,17 @@ upload_ps_state(struct brw_context *brw)
    if (brw->wm.prog_data->nr_params > 0)
       dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
 
+   /* CACHE_NEW_WM_PROG | _NEW_COLOR
+    *
+    * The hardware wedges if you have this bit set but don't turn on any dual
+    * source blend factors.
+    */
+   if (brw->wm.prog_data->dual_src_blend &&
+       (ctx->Color.BlendEnabled & 1) &&
+       ctx->Color.Blend[0]._UsesDualSrc) {
+      dw4 |= GEN7_PS_DUAL_SOURCE_BLEND_ENABLE;
+   }
+
    /* BRW_NEW_FRAGMENT_PROGRAM */
    if (brw->fragment_program->Base.InputsRead != 0)
       dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
@@ -213,7 +225,8 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM_CONSTANTS,
+      .mesa  = (_NEW_PROGRAM_CONSTANTS |
+		_NEW_COLOR),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_PS_BINDING_TABLE |
 		BRW_NEW_BATCH),

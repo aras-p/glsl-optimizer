@@ -162,6 +162,13 @@ upload_wm_state(struct brw_context *brw)
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
    }
 
+   /* CACHE_NEW_WM_PROG | _NEW_COLOR */
+   if (brw->wm.prog_data->dual_src_blend &&
+       (ctx->Color.BlendEnabled & 1) &&
+       ctx->Color.Blend[0]._UsesDualSrc) {
+      dw5 |= GEN6_WM_DUAL_SOURCE_BLEND_ENABLE;
+   }
+
    /* _NEW_LINE */
    if (ctx->Line.StippleFlag)
       dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;

@@ -1331,6 +1331,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
+   uint32_t msg_control;
 
    /* Pass through control information:
     * 
@@ -1348,12 +1349,18 @@ static void fire_fb_write( struct brw_wm_compile *c,
       brw_pop_insn_state(p);
    }
 
+   if (c->dispatch_width == 16)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+   else
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
+
    /* Send framebuffer write message: */
 /*  send (16) null.0<1>:uw m0               r0.0<8;8,1>:uw   0x85a04000:ud    { Align1 EOT } */
    brw_fb_WRITE(p,
 		c->dispatch_width,
 		base_reg,
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
+		msg_control,
 		target,		
 		nr,
 		0, 

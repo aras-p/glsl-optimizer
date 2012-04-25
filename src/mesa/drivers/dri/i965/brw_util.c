@@ -89,6 +89,16 @@ GLuint brw_translate_blend_factor( GLenum factor )
       return BRW_BLENDFACTOR_CONST_ALPHA; 
    case GL_ONE_MINUS_CONSTANT_ALPHA:
       return BRW_BLENDFACTOR_INV_CONST_ALPHA;
+
+   case GL_SRC1_COLOR:
+      return BRW_BLENDFACTOR_SRC1_COLOR;
+   case GL_SRC1_ALPHA:
+      return BRW_BLENDFACTOR_SRC1_ALPHA;
+   case GL_ONE_MINUS_SRC1_COLOR:
+      return BRW_BLENDFACTOR_INV_SRC1_COLOR;
+   case GL_ONE_MINUS_SRC1_ALPHA:
+      return BRW_BLENDFACTOR_INV_SRC1_ALPHA;
+
    default:
       assert(0);
       return BRW_BLENDFACTOR_ZERO;
