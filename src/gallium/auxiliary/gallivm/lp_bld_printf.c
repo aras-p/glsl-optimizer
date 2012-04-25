@@ -81,17 +81,20 @@ lp_build_printf(struct gallivm_state *gallivm, const char *fmt, ...)
    int argcount = lp_get_printf_arg_count(fmt);
    LLVMBuilderRef builder = gallivm->builder;
    LLVMContextRef context = gallivm->context;
-   LLVMModuleRef module = gallivm->module;
    LLVMValueRef params[50];
    LLVMValueRef fmtarg = lp_build_const_string(gallivm, fmt);
-   LLVMValueRef func_printf = LLVMGetNamedFunction(module, "printf");
+   LLVMTypeRef printf_type;
+   LLVMValueRef func_printf;
 
    assert(Elements(params) >= argcount + 1);
 
-   if (!func_printf) {
-      LLVMTypeRef printf_type = LLVMFunctionType(LLVMIntTypeInContext(context, 32), NULL, 0, 1);
-      func_printf = LLVMAddFunction(module, "printf", printf_type);
-   }
+   printf_type = LLVMFunctionType(LLVMIntTypeInContext(context, 32), NULL, 0, 1);
+
+   func_printf = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)debug_printf));
+
+   func_printf = LLVMBuildBitCast(gallivm->builder, func_printf,
+                                  LLVMPointerType(printf_type, 0),
+                                  "debug_printf");
 
    params[0] = fmtarg;
 
