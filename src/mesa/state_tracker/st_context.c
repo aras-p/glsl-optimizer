@@ -270,6 +270,7 @@ static void st_destroy_context_priv( struct st_context *st )
 void st_destroy_context( struct st_context *st )
 {
    struct pipe_context *pipe = st->pipe;
+   struct u_vbuf *vbuf = st->vbuf;
    struct cso_context *cso = st->cso_context;
    struct gl_context *ctx = st->ctx;
    GLuint i;
@@ -300,10 +301,13 @@ void st_destroy_context( struct st_context *st )
 
    _mesa_free_context_data(ctx);
 
+   /* This will free the st_context too, so 'st' must not be accessed
+    * afterwards. */
    st_destroy_context_priv(st);
+   st = NULL;
 
-   if (st->vbuf)
-      u_vbuf_destroy(st->vbuf);
+   if (vbuf)
+      u_vbuf_destroy(vbuf);
 
    cso_destroy_context(cso);
 
