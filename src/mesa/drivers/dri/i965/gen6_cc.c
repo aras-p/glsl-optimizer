@@ -92,12 +92,12 @@ gen6_upload_blend_state(struct brw_context *brw)
 	       intel_translate_logic_op(ctx->Color.LogicOp);
 	 }
       } else if (ctx->Color.BlendEnabled & (1 << b) && !integer) {
-	 GLenum eqRGB = ctx->Color.Blend[0].EquationRGB;
-	 GLenum eqA = ctx->Color.Blend[0].EquationA;
-	 GLenum srcRGB = ctx->Color.Blend[0].SrcRGB;
-	 GLenum dstRGB = ctx->Color.Blend[0].DstRGB;
-	 GLenum srcA = ctx->Color.Blend[0].SrcA;
-	 GLenum dstA = ctx->Color.Blend[0].DstA;
+	 GLenum eqRGB = ctx->Color.Blend[b].EquationRGB;
+	 GLenum eqA = ctx->Color.Blend[b].EquationA;
+	 GLenum srcRGB = ctx->Color.Blend[b].SrcRGB;
+	 GLenum dstRGB = ctx->Color.Blend[b].DstRGB;
+	 GLenum srcA = ctx->Color.Blend[b].SrcA;
+	 GLenum dstA = ctx->Color.Blend[b].DstA;
 
 	 if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
 	    srcRGB = dstRGB = GL_ONE;

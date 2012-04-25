@@ -100,6 +100,10 @@ intelInitExtensions(struct gl_context *ctx)
        (intel->gen == 7 && intel->intelScreen->kernel_has_gen7_sol_reset))
       ctx->Extensions.EXT_transform_feedback = true;
 
+   if (intel->gen >= 6) {
+      ctx->Extensions.ARB_draw_buffers_blend = true;
+   }
+
    if (intel->gen >= 5)
       ctx->Extensions.EXT_timer_query = true;
 
