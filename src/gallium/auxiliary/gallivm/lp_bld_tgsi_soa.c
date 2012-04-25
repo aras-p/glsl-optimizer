@@ -79,10 +79,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->exec_mask = mask->ret_mask = mask->break_mask = mask->cont_mask = mask->cond_mask =
          LLVMConstAllOnes(mask->int_vec_type);
 
-   mask->loop_limiter = LLVMBuildAlloca(
-      builder,
-      int_type,
-      "looplimiter");
+   mask->loop_limiter = lp_build_alloca(bld->gallivm, int_type, "looplimiter");
 
    LLVMBuildStore(
       builder,
