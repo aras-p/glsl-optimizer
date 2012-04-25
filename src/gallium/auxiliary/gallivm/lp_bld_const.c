@@ -409,3 +409,22 @@ lp_build_const_mask_aos(struct gallivm_state *gallivm,
 
    return LLVMConstVector(masks, type.length);
 }
+
+
+/**
+ * Performs lp_build_const_mask_aos, but first swizzles the mask
+ */
+LLVMValueRef
+lp_build_const_mask_aos_swizzled(struct gallivm_state *gallivm,
+                        struct lp_type type,
+                        unsigned mask,
+                        const unsigned char *swizzle)
+{
+   mask =
+           ((mask & (1 << swizzle[0])) >> swizzle[0])
+        | (((mask & (1 << swizzle[1])) >> swizzle[1]) << 1)
+        | (((mask & (1 << swizzle[2])) >> swizzle[2]) << 2)
+        | (((mask & (1 << swizzle[3])) >> swizzle[3]) << 3);
+
+   return lp_build_const_mask_aos(gallivm, type, mask);
+}

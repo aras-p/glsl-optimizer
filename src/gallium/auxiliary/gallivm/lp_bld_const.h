@@ -111,6 +111,13 @@ lp_build_const_mask_aos(struct gallivm_state *gallivm,
                         unsigned mask);
 
 
+LLVMValueRef
+lp_build_const_mask_aos_swizzled(struct gallivm_state *gallivm,
+                        struct lp_type type,
+                        unsigned mask,
+                        const unsigned char *swizzle);
+
+
 static INLINE LLVMValueRef
 lp_build_const_int32(struct gallivm_state *gallivm, int i)
 {

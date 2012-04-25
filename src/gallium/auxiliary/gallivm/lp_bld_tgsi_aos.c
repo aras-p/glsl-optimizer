@@ -325,8 +325,10 @@ lp_emit_store_aos(
    if (reg->Register.WriteMask != TGSI_WRITEMASK_XYZW) {
       LLVMValueRef writemask;
 
-      writemask = lp_build_const_mask_aos(bld->bld_base.base.gallivm, bld->bld_base.base.type,
-                                          reg->Register.WriteMask);
+      writemask = lp_build_const_mask_aos_swizzled(bld->bld_base.base.gallivm,
+                                                   bld->bld_base.base.type,
+                                                   reg->Register.WriteMask,
+                                                   bld->swizzles);
 
       if (mask) {
          mask = LLVMBuildAnd(builder, mask, writemask, "");

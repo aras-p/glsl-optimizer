@@ -380,16 +380,8 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
 
    if (!fullcolormask) {
       LLVMValueRef color_mask;
-      unsigned color_mask_swizzle;
 
-      /* Swizzle the color mask to ensure it matches target format */
-      color_mask_swizzle =
-               ((blend->rt[rt].colormask & (1 << swizzle[0])) >> swizzle[0])
-            | (((blend->rt[rt].colormask & (1 << swizzle[1])) >> swizzle[1]) << 1)
-            | (((blend->rt[rt].colormask & (1 << swizzle[2])) >> swizzle[2]) << 2)
-            | (((blend->rt[rt].colormask & (1 << swizzle[3])) >> swizzle[3]) << 3);
-
-      color_mask = lp_build_const_mask_aos(gallivm, bld.base.type, color_mask_swizzle);
+      color_mask = lp_build_const_mask_aos_swizzled(gallivm, bld.base.type, blend->rt[rt].colormask, swizzle);
       lp_build_name(color_mask, "color_mask");
 
       /* Combine with input mask if necessary */
