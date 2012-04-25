@@ -643,6 +643,12 @@ AC_ARG_ENABLE([r600-llvm-compiler],
     [enable_r600_llvm="$enableval"],
     [enable_r600_llvm=no])
 
+AC_ARG_ENABLE([gallium_tests],
+    [AS_HELP_STRING([--enable-gallium-tests],
+        [Enable optional Gallium tests) @<:@default=disable@:>@])],
+    [enable_gallium_tests="$enableval"],
+    [enable_gallium_tests=no])
+
 # Option for Gallium drivers
 GALLIUM_DRIVERS_DEFAULT="r300,r600,svga,swrast"
 
@@ -1965,6 +1971,11 @@ if test "x$with_gallium_drivers" != x; then
             ;;
         esac
     done
+fi
+
+if test "x$enable_gallium_tests" = xyes; then
+    SRC_DIRS="$SRC_DIRS gallium/tests/trivial"
+    enable_gallium_loader=yes
 fi
 
 if test "x$enable_gallium_loader" = xyes; then
