@@ -63,6 +63,7 @@ struct pipe_vertex_element;
 struct pipe_video_buffer;
 struct pipe_video_decoder;
 struct pipe_viewport_state;
+struct pipe_compute_state;
 union pipe_color_union;
 union pipe_query_result;
 
@@ -141,6 +142,10 @@ struct pipe_context {
    void   (*bind_geometry_sampler_states)(struct pipe_context *,
                                           unsigned num_samplers,
                                           void **samplers);
+   void   (*bind_compute_sampler_states)(struct pipe_context *,
+                                         unsigned start_slot,
+                                         unsigned num_samplers,
+                                         void **samplers);
    void   (*delete_sampler_state)(struct pipe_context *, void *);
 
    void * (*create_rasterizer_state)(struct pipe_context *,
@@ -219,6 +224,10 @@ struct pipe_context {
    void (*set_geometry_sampler_views)(struct pipe_context *,
                                       unsigned num_views,
                                       struct pipe_sampler_view **);
+
+   void (*set_compute_sampler_views)(struct pipe_context *,
+                                     unsigned start_slot, unsigned num_views,
+                                     struct pipe_sampler_view **);
 
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
@@ -418,6 +427,70 @@ struct pipe_context {
     */
    struct pipe_video_buffer *(*create_video_buffer)( struct pipe_context *context,
                                                      const struct pipe_video_buffer *templat );
+
+   /**
+    * Compute kernel execution
+    */
+   /*@{*/
+   /**
+    * Define the compute program and parameters to be used by
+    * pipe_context::launch_grid.
+    */
+   void *(*create_compute_state)(struct pipe_context *context,
+				 const struct pipe_compute_state *);
+   void (*bind_compute_state)(struct pipe_context *, void *);
+   void (*delete_compute_state)(struct pipe_context *, void *);
+
+   /**
+    * Bind an array of buffers to be mapped into the address space of
+    * the GLOBAL resource.  Any buffers that were previously bound
+    * between [first, first + count - 1] are unbound after this call.
+    *
+    * \param first      first buffer to map.
+    * \param count      number of consecutive buffers to map.
+    * \param resources  array of pointers to the buffers to map, it
+    *                   should contain at least \a count elements
+    *                   unless it's NULL, in which case no new
+    *                   resources will be bound.
+    * \param handles    array of pointers to the memory locations that
+    *                   will be filled with the respective base
+    *                   addresses each buffer will be mapped to.  It
+    *                   should contain at least \a count elements,
+    *                   unless \a resources is NULL in which case \a
+    *                   handles should be NULL as well.
+    *
+    * Note that the driver isn't required to make any guarantees about
+    * the contents of the \a handles array being valid anytime except
+    * during the subsequent calls to pipe_context::launch_grid.  This
+    * means that the only sensible location handles[i] may point to is
+    * somewhere within the INPUT buffer itself.  This is so to
+    * accommodate implementations that lack virtual memory but
+    * nevertheless migrate buffers on the fly, leading to resource
+    * base addresses that change on each kernel invocation or are
+    * unknown to the pipe driver.
+    */
+   void (*set_global_binding)(struct pipe_context *context,
+                              unsigned first, unsigned count,
+                              struct pipe_resource **resources,
+                              uint32_t **handles);
+
+   /**
+    * Launch the compute kernel starting from instruction \a pc of the
+    * currently bound compute program.
+    *
+    * \a grid_layout and \a block_layout are arrays of size \a
+    * PIPE_COMPUTE_CAP_GRID_DIMENSION that determine the layout of the
+    * grid (in block units) and working block (in thread units) to be
+    * used, respectively.
+    *
+    * \a input will be used to initialize the INPUT resource, and it
+    * should point to a buffer of at least
+    * pipe_compute_state::req_input_mem bytes.
+    */
+   void (*launch_grid)(struct pipe_context *context,
+                       const uint *block_layout, const uint *grid_layout,
+                       uint32_t pc, const void *input);
+   /*@}*/
 };
 
 

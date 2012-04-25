@@ -580,6 +580,13 @@ struct pipe_resolve_info
    unsigned mask; /**< PIPE_MASK_RGBA, Z, S or ZS */
 };
 
+struct pipe_compute_state
+{
+   const struct tgsi_token *tokens; /**< Compute program to be executed. */
+   unsigned req_local_mem; /**< Required size of the LOCAL resource. */
+   unsigned req_private_mem; /**< Required size of the PRIVATE resource. */
+   unsigned req_input_mem; /**< Required size of the INPUT resource. */
+};
 
 #ifdef __cplusplus
 }

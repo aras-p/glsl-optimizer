@@ -110,7 +110,8 @@ The integer capabilities:
 * ``PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY``: This CAP describes
   a hw limitation.  If true, pipe_vertex_element::src_offset must always be
   aligned to 4.  If false, there are no restrictions on src_offset.
-
+* ``PIPE_CAP_COMPUTE``: Whether the implementation supports the
+  compute entry points defined in pipe_context and pipe_screen.
 
 
 .. _pipe_capf:
@@ -186,6 +187,29 @@ to be 0.
   samplers.
 
 
+.. _pipe_compute_cap:
+
+PIPE_COMPUTE_CAP_*
+^^^^^^^^^^^^^^^^^^
+
+Compute-specific capabilities. They can be queried using
+pipe_screen::get_compute_param.
+
+* ``PIPE_COMPUTE_CAP_GRID_DIMENSION``: Number of supported dimensions
+  for grid and block coordinates.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_GRID_SIZE``: Maximum grid size in block
+  units.  Value type: ``uint64_t []``.
+* ``PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE``: Maximum block size in thread
+  units.  Value type: ``uint64_t []``.
+* ``PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE``: Maximum size of the GLOBAL
+  resource.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE``: Maximum size of the LOCAL
+  resource.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE``: Maximum size of the PRIVATE
+  resource.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_INPUT_SIZE``: Maximum size of the INPUT
+  resource.  Value type: ``uint64_t``.
+
 .. _pipe_bind:
 
 PIPE_BIND_*
@@ -223,6 +247,8 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_SCANOUT``: A front color buffer or scanout buffer.
 * ``PIPE_BIND_SHARED``: A sharable buffer that can be given to another
   process.
+* ``PIPE_BIND_GLOBAL``: A buffer that can be mapped into the global
+  address space of a compute program.
 
 .. _pipe_usage:
 

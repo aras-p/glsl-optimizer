@@ -98,6 +98,18 @@ struct pipe_screen {
 			   enum pipe_video_profile profile,
 			   enum pipe_video_cap param );
 
+   /**
+    * Query a compute-specific capability/parameter/limit.
+    * \param param  one of PIPE_COMPUTE_CAP_x
+    * \param ret    pointer to a preallocated buffer that will be
+    *               initialized to the parameter value, or NULL.
+    * \return       size in bytes of the parameter value that would be
+    *               returned.
+    */
+   int (*get_compute_param)(struct pipe_screen *,
+			    enum pipe_compute_cap param,
+			    void *ret);
+
    struct pipe_context * (*context_create)( struct pipe_screen *,
 					    void *priv );
 

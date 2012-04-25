@@ -542,3 +542,42 @@ These flags control the behavior of a transfer object.
 ``PIPE_TRANSFER_FLUSH_EXPLICIT``
   Written ranges will be notified later with :ref:`transfer_flush_region`.
   Cannot be used with ``PIPE_TRANSFER_READ``.
+
+
+Compute kernel execution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+A compute program can be defined, bound or destroyed using
+``create_compute_state``, ``bind_compute_state`` or
+``destroy_compute_state`` respectively.
+
+Any of the subroutines contained within the compute program can be
+executed on the device using the ``launch_grid`` method.  This method
+will execute as many instances of the program as elements in the
+specified N-dimensional grid, hopefully in parallel.
+
+The compute program has access to four special resources:
+
+* ``GLOBAL`` represents a memory space shared among all the threads
+  running on the device.  An arbitrary buffer created with the
+  ``PIPE_BIND_GLOBAL`` flag can be mapped into it using the
+  ``set_global_binding`` method.
+
+* ``LOCAL`` represents a memory space shared among all the threads
+  running in the same working group.  The initial contents of this
+  resource are undefined.
+
+* ``PRIVATE`` represents a memory space local to a single thread.
+  The initial contents of this resource are undefined.
+
+* ``INPUT`` represents a read-only memory space that can be
+  initialized at ``launch_grid`` time.
+
+These resources use a byte-based addressing scheme, and they can be
+accessed from the compute program by means of the LOAD/STORE TGSI
+opcodes.
+
+In addition, normal texture sampling is allowed from the compute
+program: ``bind_compute_sampler_states`` may be used to set up texture
+samplers for the compute stage and ``set_compute_sampler_views`` may
+be used to bind a number of sampler views to it.

@@ -304,6 +304,7 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_STREAM_OUTPUT        (1 << 11) /* set_stream_output_buffers */
 #define PIPE_BIND_CURSOR               (1 << 16) /* mouse cursor */
 #define PIPE_BIND_CUSTOM               (1 << 17) /* state-tracker/winsys usages */
+#define PIPE_BIND_GLOBAL               (1 << 18) /* set_global_binding */
 
 /* The first two flags above were previously part of the amorphous
  * TEXTURE_USAGE, most of which are now descriptions of the ways a
@@ -346,7 +347,8 @@ enum pipe_transfer_usage {
 #define PIPE_SHADER_VERTEX   0
 #define PIPE_SHADER_FRAGMENT 1
 #define PIPE_SHADER_GEOMETRY 2
-#define PIPE_SHADER_TYPES    3
+#define PIPE_SHADER_COMPUTE  3
+#define PIPE_SHADER_TYPES    4
 
 
 /**
@@ -477,6 +479,7 @@ enum pipe_cap {
    PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY = 65,
    PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY = 66,
    PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY = 67,
+   PIPE_CAP_COMPUTE = 68
 };
 
 /**
@@ -522,6 +525,20 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS = 18
 };
 
+/**
+ * Compute-specific implementation capability.  They can be queried
+ * using pipe_screen::get_compute_param.
+ */
+enum pipe_compute_cap
+{
+   PIPE_COMPUTE_CAP_GRID_DIMENSION,
+   PIPE_COMPUTE_CAP_MAX_GRID_SIZE,
+   PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE,
+   PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE,
+   PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE,
+   PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE,
+   PIPE_COMPUTE_CAP_MAX_INPUT_SIZE
+};
 
 /**
  * Composite query types
