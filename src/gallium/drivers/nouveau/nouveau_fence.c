@@ -195,8 +195,10 @@ nouveau_fence_wait(struct nouveau_fence *fence)
       if (fence == screen->fence.current)
          nouveau_fence_new(screen, &screen->fence.current, FALSE);
    }
-   if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED)
-      nouveau_pushbuf_kick(screen->pushbuf, screen->pushbuf->channel);
+   if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED) {
+      if (nouveau_pushbuf_kick(screen->pushbuf, screen->pushbuf->channel))
+         return FALSE;
+   }
 
    do {
       nouveau_fence_update(screen, FALSE);
