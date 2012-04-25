@@ -1788,9 +1788,9 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
    float weight_buffer[TGSI_QUAD_SIZE];
    unsigned buffer_next;
    int j;
-   float den;// = 0.0F;
+   float den; /* = 0.0F; */
    float ddq;
-   float U;// = u0 - tex_u;
+   float U; /* = u0 - tex_u; */
    int v;
 
    /* Scale ellipse formula to directly index the Filter Lookup Table.
@@ -1806,8 +1806,8 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
     * also the same. Note that texel/image access can only be performed using
     * a quad, i.e. it is not possible to get the pixel value for a single
     * tex coord. In order to have a better performance, the access is buffered
-    * using the s_buffer/t_buffer and weight_buffer. Only when the buffer is full,
-    * then the pixel values are read from the image.
+    * using the s_buffer/t_buffer and weight_buffer. Only when the buffer is
+    * full, then the pixel values are read from the image.
     */
    ddq = 2 * A;
    
@@ -1835,7 +1835,9 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
 
          int u;
          for (u = u0; u <= u1; ++u) {
-            /* Note that the ellipse has been pre-scaled so F = WEIGHT_LUT_SIZE - 1 */
+            /* Note that the ellipse has been pre-scaled so F =
+             * WEIGHT_LUT_SIZE - 1
+             */
             if (q < WEIGHT_LUT_SIZE) {
                /* as a LUT is used, q must never be negative;
                 * should not happen, though
@@ -1874,10 +1876,11 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
          }
       }
 
-      /* if the tex coord buffer contains unread values, we will read them now.
-       * Note that in most cases we have to read more pixel values than required,
-       * however, as the img_filter_2d_nearest function(s) does not have a count
-       * parameter, we need to read the whole quad and ignore the unused values
+      /* if the tex coord buffer contains unread values, we will read
+       * them now.  Note that in most cases we have to read more pixel
+       * values than required, however, as the img_filter_2d_nearest
+       * function(s) does not have a count parameter, we need to read
+       * the whole quad and ignore the unused values
        */
       if (buffer_next > 0) {
          unsigned jj;
@@ -1896,11 +1899,9 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
       }
 
       if (den <= 0.0F) {
-         /* Reaching this place would mean
-          * that no pixels intersected the ellipse.
-          * This should never happen because
-          * the filter we use always
-          * intersects at least one pixel.
+         /* Reaching this place would mean that no pixels intersected
+          * the ellipse.  This should never happen because the filter
+          * we use always intersects at least one pixel.
           */
 
          /*rgba[0]=0;
@@ -1908,7 +1909,8 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
          rgba[2]=0;
          rgba[3]=0;*/
          /* not enough pixels in resampling, resort to direct interpolation */
-         samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba_temp);
+         samp->min_img_filter(tgsi_sampler, s, t, p, NULL,
+                              tgsi_sampler_lod_bias, rgba_temp);
          den = 1;
          num[0] = rgba_temp[0][j];
          num[1] = rgba_temp[1][j];
@@ -2021,7 +2023,6 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
 }
 
 
-
 /**
  * Specialized version of mip_filter_linear with hard-wired calls to
  * 2d lambda calculation and 2d_linear_repeat_POT img filters.
@@ -2089,7 +2090,6 @@ mip_filter_linear_2d_linear_repeat_POT(
       print_sample(__FUNCTION__, rgba);
    }
 }
-
 
 
 /**
@@ -2288,9 +2288,11 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
    samp->compare(tgsi_sampler, ssss, tttt, NULL, c0, control, rgba);
 }
 
-static void do_swizzling(const struct sp_sampler_variant *samp,
-                         float in[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE],
-                         float out[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
+
+static void
+do_swizzling(const struct sp_sampler_variant *samp,
+             float in[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE],
+             float out[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    int j;
    const unsigned swizzle_r = samp->key.bits.swizzle_r;
@@ -2358,6 +2360,7 @@ static void do_swizzling(const struct sp_sampler_variant *samp,
          out[3][j] = in[swizzle_a][j];
    }
 }
+
 
 static void
 sample_swizzle(struct tgsi_sampler *tgsi_sampler,
@@ -2591,6 +2594,7 @@ sp_sampler_variant_destroy( struct sp_sampler_variant *samp )
    FREE(samp);
 }
 
+
 static void
 sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
 		int dims[4])
@@ -2639,12 +2643,12 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
  */
 static void
 sample_get_texels(struct tgsi_sampler *tgsi_sampler,
-	   const int v_i[TGSI_QUAD_SIZE],
-	   const int v_j[TGSI_QUAD_SIZE],
-	   const int v_k[TGSI_QUAD_SIZE],
-	   const int lod[TGSI_QUAD_SIZE],
-	   const int8_t offset[3],
-	   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
+                  const int v_i[TGSI_QUAD_SIZE],
+                  const int v_j[TGSI_QUAD_SIZE],
+                  const int v_k[TGSI_QUAD_SIZE],
+                  const int lod[TGSI_QUAD_SIZE],
+                  const int8_t offset[3],
+                  float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    union tex_tile_address addr;
@@ -2732,6 +2736,8 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       do_swizzling(samp, rgba_temp, rgba);
    }
 }
+
+
 /**
  * Create a sampler variant for a given set of non-orthogonal state.
  */
