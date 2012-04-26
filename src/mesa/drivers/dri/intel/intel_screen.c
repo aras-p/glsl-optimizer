@@ -342,7 +342,8 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
    case __DRI_IMAGE_ATTRIB_NAME:
       return intel_region_flink(image->region, (uint32_t *) value);
    case __DRI_IMAGE_ATTRIB_FORMAT:
-      return image->dri_format;
+      *value = image->dri_format;
+      return true;
    default:
       return false;
    }
