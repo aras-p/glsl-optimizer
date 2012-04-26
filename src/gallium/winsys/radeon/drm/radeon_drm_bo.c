@@ -226,7 +226,7 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
                 n = CALLOC_STRUCT(radeon_bo_va_hole);
                 n->size = waste;
                 n->offset = hole->offset;
-                list_add(&n->list, &mgr->va_holes);
+                list_add(&n->list, &hole->list);
             }
             hole->size -= (size + waste);
             hole->offset += size + waste;
@@ -286,18 +286,49 @@ static void radeon_bomgr_free_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t
     if ((va + size) == mgr->va_offset) {
         mgr->va_offset = va;
     } else {
-        struct radeon_bo_va_hole *hole;
+        struct radeon_bo_va_hole *hole, *next;
+
+        hole = container_of(&mgr->va_holes, hole, list);
+        LIST_FOR_EACH_ENTRY(next, &mgr->va_holes, list) {
+	    if (next->offset < va)
+	        break;
+            hole = next;
+        }
+
+        if (&hole->list != &mgr->va_holes) {
+            /* Grow upper hole if it's adjacent */
+            if (hole->offset == (va + size)) {
+                hole->offset = va;
+                hole->size += size;
+                /* Merge lower hole if it's adjacent */
+                if (next != hole && &next->list != &mgr->va_holes &&
+                    (next->offset + next->size) == va) {
+                    next->size += hole->size;
+                    list_del(&hole->list);
+                    FREE(hole);
+                }
+                goto out;
+            }
+        }
+
+        /* Grow lower hole if it's adjacent */
+        if (next != hole && &next->list != &mgr->va_holes &&
+            (next->offset + next->size) == va) {
+            next->size += size;
+            goto out;
+        }
 
         /* FIXME on allocation failure we just lose virtual address space
          * maybe print a warning
          */
-        hole = CALLOC_STRUCT(radeon_bo_va_hole);
-        if (hole) {
-            hole->size = size;
-            hole->offset = va;
-            list_add(&hole->list, &mgr->va_holes);
+        next = CALLOC_STRUCT(radeon_bo_va_hole);
+        if (next) {
+            next->size = size;
+            next->offset = va;
+            list_add(&next->list, &hole->list);
         }
     }
+out:
     pipe_mutex_unlock(mgr->bo_va_mutex);
 }
 
