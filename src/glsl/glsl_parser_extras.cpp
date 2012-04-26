@@ -1003,7 +1003,7 @@ ast_struct_specifier::print(void) const
 
 
 ast_struct_specifier::ast_struct_specifier(const char *identifier,
-					   ast_node *declarator_list)
+					   ast_declarator_list *declarator_list)
 {
    if (identifier == NULL) {
       static unsigned anon_count = 1;

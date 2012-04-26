@@ -214,7 +214,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> declaration_statement
 %type <node> jump_statement
 %type <struct_specifier> struct_specifier
-%type <node> struct_declaration_list
+%type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
 %type <declaration> struct_declarator
 %type <declaration> struct_declarator_list
@@ -1479,12 +1479,12 @@ struct_specifier:
 struct_declaration_list:
 	struct_declaration
 	{
-	   $$ = (ast_node *) $1;
+	   $$ = $1;
 	   $1->link.self_link();
 	}
 	| struct_declaration_list struct_declaration
 	{
-	   $$ = (ast_node *) $1;
+	   $$ = $1;
 	   $$->link.insert_before(& $2->link);
 	}
 	;
