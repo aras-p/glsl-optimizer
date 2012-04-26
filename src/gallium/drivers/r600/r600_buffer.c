@@ -139,13 +139,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 					struct pipe_transfer *transfer)
 {
-	struct r600_resource *rbuffer = r600_resource(transfer->resource);
-	struct r600_context *rctx = (struct r600_context*)pipe;
-
-	if (rbuffer->b.b.user_ptr)
-		return;
-
-	rctx->ws->buffer_unmap(rbuffer->cs_buf);
+	/* no-op */
 }
 
 static void r600_transfer_destroy(struct pipe_context *ctx,
