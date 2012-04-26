@@ -373,7 +373,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         /* Map the buffer. */
         if (!map[vbi]) {
             map[vbi] = (uint32_t*)r300->rws->buffer_map(
-                r300_resource(vbuf->buffer)->buf,
+                r300_resource(vbuf->buffer)->cs_buf,
                 r300->cs, PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * info->start;
         }
@@ -401,7 +401,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (map[vbi]) {
-            r300->rws->buffer_unmap(r300_resource(r300->vertex_buffer[vbi].buffer)->buf);
+            r300->rws->buffer_unmap(r300_resource(r300->vertex_buffer[vbi].buffer)->cs_buf);
             map[vbi] = NULL;
         }
     }
@@ -616,7 +616,7 @@ static void r300_draw_elements(struct r300_context *r300,
     if (indexSize == 2 && (start & 1) &&
         !indexBuffer->user_ptr) {
         /* If we got here, then orgIndexBuffer == indexBuffer. */
-        uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->buf,
+        uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->cs_buf,
                                               r300->cs,
                                               PIPE_TRANSFER_READ |
                                               PIPE_TRANSFER_UNSYNCHRONIZED);
@@ -630,7 +630,7 @@ static void r300_draw_elements(struct r300_context *r300,
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start,
                                      count, (uint8_t*)ptr);
         }
-        r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->buf);
+        r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->cs_buf);
     } else {
         if (indexBuffer->user_ptr)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,

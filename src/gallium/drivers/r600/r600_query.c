@@ -52,7 +52,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	switch (type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		results = ctx->ws->buffer_map(buf->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->ws->buffer_map(buf->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
 
 		/* Set top bits for unused backends. */
@@ -66,7 +66,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 			}
 			results += 4 * ctx->max_db;
 		}
-		ctx->ws->buffer_unmap(buf->buf);
+		ctx->ws->buffer_unmap(buf->cs_buf);
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		break;
@@ -74,9 +74,9 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		results = ctx->ws->buffer_map(buf->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->ws->buffer_map(buf->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
-		ctx->ws->buffer_unmap(buf->buf);
+		ctx->ws->buffer_unmap(buf->cs_buf);
 		break;
 	default:
 		assert(0);
@@ -406,7 +406,7 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 	unsigned results_base = 0;
 	char *map;
 
-	map = ctx->ws->buffer_map(qbuf->buf->buf, ctx->cs,
+	map = ctx->ws->buffer_map(qbuf->buf->cs_buf, ctx->cs,
 				  PIPE_TRANSFER_READ |
 				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
@@ -477,7 +477,7 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 		assert(0);
 	}
 
-	ctx->ws->buffer_unmap(qbuf->buf->buf);
+	ctx->ws->buffer_unmap(qbuf->buf->cs_buf);
 	return TRUE;
 }
 

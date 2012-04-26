@@ -545,7 +545,7 @@ int si_pipe_shader_create(
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 		if (0 /*R600_BIG_ENDIAN*/) {
 			for (i = 0; i < (inst_byte_count-12)/4; ++i) {
 				ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
@@ -553,7 +553,7 @@ int si_pipe_shader_create(
 		} else {
 			memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
 		}
-		rctx->ws->buffer_unmap(shader->bo->buf);
+		rctx->ws->buffer_unmap(shader->bo->cs_buf);
 	}
 
 	free(inst_bytes);

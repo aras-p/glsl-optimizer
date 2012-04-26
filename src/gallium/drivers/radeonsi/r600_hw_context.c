@@ -72,12 +72,12 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		goto err;
 
 	/* initialize buffer with zeroes */
-	results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+	results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		uint64_t va = 0;
 
 		memset(results, 0, ctx->max_db * 4 * 4);
-		ctx->ws->buffer_unmap(buffer->buf);
+		ctx->ws->buffer_unmap(buffer->cs_buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		va = r600_resource_va(&ctx->screen->screen, (void *)buffer);
@@ -90,14 +90,14 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
-		results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
 				if (results[i*4 + 1])
 					mask |= (1<<i);
 			}
-			ctx->ws->buffer_unmap(buffer->buf);
+			ctx->ws->buffer_unmap(buffer->cs_buf);
 		}
 	}
 
@@ -608,7 +608,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	unsigned results_base = query->results_start;
 	char *map;
 
-	map = ctx->ws->buffer_map(query->buffer->buf, ctx->cs,
+	map = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs,
 				  PIPE_TRANSFER_READ |
 				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
@@ -680,7 +680,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	}
 
 	query->results_start = query->results_end;
-	ctx->ws->buffer_unmap(query->buffer->buf);
+	ctx->ws->buffer_unmap(query->buffer->cs_buf);
 	return TRUE;
 }
 
@@ -703,7 +703,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		if (results) {
 			results = (uint32_t*)((char*)results + query->results_end);
 			memset(results, 0, query->result_size);
@@ -715,7 +715,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 					results[(i * 4)+3] = 0x80000000;
 				}
 			}
-			ctx->ws->buffer_unmap(query->buffer->buf);
+			ctx->ws->buffer_unmap(query->buffer->cs_buf);
 		}
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
@@ -724,10 +724,10 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		results = ctx->ws->buffer_map(query->buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = ctx->ws->buffer_map(query->buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 		results = (uint32_t*)((char*)results + query->results_end);
 		memset(results, 0, query->result_size);
-		ctx->ws->buffer_unmap(query->buffer->buf);
+		ctx->ws->buffer_unmap(query->buffer->cs_buf);
 		break;
 	default:
 		assert(0);
@@ -1089,9 +1089,9 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		if (!t[i])
 			continue;
 
-		uint32_t *ptr = ctx->ws->buffer_map(t[i]->filled_size->buf, ctx->cs, RADEON_USAGE_READ);
+		uint32_t *ptr = ctx->ws->buffer_map(t[i]->filled_size->cs_buf, ctx->cs, RADEON_USAGE_READ);
 		printf("FILLED_SIZE%i: %u\n", i, *ptr);
-		ctx->ws->buffer_unmap(t[i]->filled_size->buf);
+		ctx->ws->buffer_unmap(t[i]->filled_size->cs_buf);
 	}
 }
 

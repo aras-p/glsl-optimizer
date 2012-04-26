@@ -501,9 +501,9 @@ r600_create_so_target(struct pipe_context *ctx,
 
 	t->filled_size = (struct r600_resource*)
 		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, 4);
-	ptr = rctx->ws->buffer_map(t->filled_size->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	ptr = rctx->ws->buffer_map(t->filled_size->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	memset(ptr, 0, t->filled_size->buf->size);
-	rctx->ws->buffer_unmap(t->filled_size->buf);
+	rctx->ws->buffer_unmap(t->filled_size->cs_buf);
 
 	return &t->b;
 }
@@ -570,7 +570,7 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 	if (t_list_buffer == NULL)
 		return;
 
-	ptr = (uint32_t*)rctx->ws->buffer_map(t_list_buffer->buf,
+	ptr = (uint32_t*)rctx->ws->buffer_map(t_list_buffer->cs_buf,
 					      rctx->cs,
 					      PIPE_TRANSFER_WRITE);
 

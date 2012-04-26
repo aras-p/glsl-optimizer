@@ -152,7 +152,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         return vresult->b;
     }
 
-    map = r300->rws->buffer_map(q->buf, r300->cs,
+    map = r300->rws->buffer_map(q->cs_buf, r300->cs,
                                 PIPE_TRANSFER_READ |
                                 (!wait ? PIPE_TRANSFER_DONTBLOCK : 0));
     if (!map)
@@ -166,7 +166,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         map++;
     }
 
-    r300->rws->buffer_unmap(q->buf);
+    r300->rws->buffer_unmap(q->cs_buf);
 
     if (q->type == PIPE_QUERY_OCCLUSION_PREDICATE) {
         vresult->b = temp != 0;

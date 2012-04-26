@@ -79,7 +79,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (rbuffer->b.b.user_ptr)
 		return (uint8_t*)rbuffer->b.b.user_ptr + transfer->box.x;
 
-	data = rctx->ws->buffer_map(rbuffer->buf, rctx->cs, transfer->usage);
+	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
 		return NULL;
 
@@ -95,7 +95,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	if (rbuffer->b.b.user_ptr)
 		return;
 
-	rctx->ws->buffer_unmap(rbuffer->buf);
+	rctx->ws->buffer_unmap(rbuffer->cs_buf);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
@@ -126,12 +126,12 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 
 	assert(rbuffer->b.b.user_ptr == NULL);
 
-	map = rctx->ws->buffer_map(rbuffer->buf, rctx->cs,
+	map = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs,
 				   PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
 
 	memcpy(map + box->x, data, box->width);
 
-	rctx->ws->buffer_unmap(rbuffer->buf);
+	rctx->ws->buffer_unmap(rbuffer->cs_buf);
 }
 
 static const struct u_resource_vtbl r600_buffer_vtbl =

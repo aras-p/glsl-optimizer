@@ -235,11 +235,11 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
     if (r300transfer->linear_texture) {
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
-        return r300->rws->buffer_map(r300transfer->linear_texture->buf,
+        return r300->rws->buffer_map(r300transfer->linear_texture->cs_buf,
 				     r300->cs, transfer->usage);
     } else {
         /* Tiling is disabled. */
-        map = r300->rws->buffer_map(tex->buf, r300->cs, transfer->usage);
+        map = r300->rws->buffer_map(tex->cs_buf, r300->cs, transfer->usage);
 
         if (!map) {
             return NULL;
@@ -259,8 +259,8 @@ void r300_texture_transfer_unmap(struct pipe_context *ctx,
     struct r300_resource *tex = r300_resource(transfer->resource);
 
     if (r300transfer->linear_texture) {
-        rws->buffer_unmap(r300transfer->linear_texture->buf);
+        rws->buffer_unmap(r300transfer->linear_texture->cs_buf);
     } else {
-        rws->buffer_unmap(tex->buf);
+        rws->buffer_unmap(tex->cs_buf);
     }
 }

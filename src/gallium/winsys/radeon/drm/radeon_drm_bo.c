@@ -330,37 +330,20 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     FREE(bo);
 }
 
-static unsigned get_pb_usage_from_transfer_flags(enum pipe_transfer_usage usage)
+static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
+                           struct radeon_winsys_cs *rcs,
+                           enum pipe_transfer_usage usage)
 {
-    unsigned res = 0;
-
-    if (usage & PIPE_TRANSFER_WRITE)
-        res |= PB_USAGE_CPU_WRITE;
-
-    if (usage & PIPE_TRANSFER_DONTBLOCK)
-        res |= PB_USAGE_DONTBLOCK;
-
-    if (usage & PIPE_TRANSFER_UNSYNCHRONIZED)
-        res |= PB_USAGE_UNSYNCHRONIZED;
-
-    return res;
-}
-
-static void *radeon_bo_map_internal(struct pb_buffer *_buf,
-                                    unsigned flags, void *flush_ctx)
-{
-    struct radeon_bo *bo = radeon_bo(_buf);
-    struct radeon_drm_cs *cs = flush_ctx;
-    struct drm_radeon_gem_mmap args;
+    struct radeon_bo *bo = (struct radeon_bo*)buf;
+    struct radeon_drm_cs *cs = (struct radeon_drm_cs*)rcs;
+    struct drm_radeon_gem_mmap args = {0};
     void *ptr;
 
-    memset(&args, 0, sizeof(args));
-
     /* If it's not unsynchronized bo_map, flush CS if needed and then wait. */
-    if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
+    if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
         /* DONTBLOCK doesn't make sense with UNSYNCHRONIZED. */
-        if (flags & PB_USAGE_DONTBLOCK) {
-            if (!(flags & PB_USAGE_CPU_WRITE)) {
+        if (usage & PIPE_TRANSFER_DONTBLOCK) {
+            if (!(usage & PIPE_TRANSFER_WRITE)) {
                 /* Mapping for read.
                  *
                  * Since we are mapping for read, we don't need to wait
@@ -389,7 +372,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                 }
             }
         } else {
-            if (!(flags & PB_USAGE_CPU_WRITE)) {
+            if (!(usage & PIPE_TRANSFER_WRITE)) {
                 /* Mapping for read.
                  *
                  * Since we are mapping for read, we don't need to wait
@@ -454,7 +437,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     return bo->ptr;
 }
 
-static void radeon_bo_unmap_internal(struct pb_buffer *_buf)
+static void radeon_bo_unmap(struct radeon_winsys_cs_handle *_buf)
 {
     /* NOP */
 }
@@ -482,8 +465,8 @@ static void radeon_bo_fence(struct pb_buffer *buf,
 
 const struct pb_vtbl radeon_bo_vtbl = {
     radeon_bo_destroy,
-    radeon_bo_map_internal,
-    radeon_bo_unmap_internal,
+    NULL, /* never called */
+    NULL, /* never called */
     radeon_bo_validate,
     radeon_bo_fence,
     radeon_bo_get_base_buffer,
@@ -632,13 +615,6 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
     list_inithead(&mgr->va_holes);
 
     return &mgr->base;
-}
-
-static void *radeon_bo_map(struct pb_buffer *buf,
-                           struct radeon_winsys_cs *cs,
-                           enum pipe_transfer_usage usage)
-{
-    return pb_map(buf, get_pb_usage_from_transfer_flags(usage), cs);
 }
 
 static unsigned eg_tile_split(unsigned tile_split)
@@ -909,7 +885,7 @@ void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
     ws->base.buffer_set_tiling = radeon_bo_set_tiling;
     ws->base.buffer_get_tiling = radeon_bo_get_tiling;
     ws->base.buffer_map = radeon_bo_map;
-    ws->base.buffer_unmap = pb_unmap;
+    ws->base.buffer_unmap = radeon_bo_unmap;
     ws->base.buffer_wait = radeon_bo_wait;
     ws->base.buffer_is_busy = radeon_bo_is_busy;
     ws->base.buffer_create = radeon_winsys_bo_create;

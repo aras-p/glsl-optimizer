@@ -52,7 +52,7 @@ static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			goto out;
 		}
-		rscreen->fences.data = rctx->ws->buffer_map(rscreen->fences.bo->buf,
+		rscreen->fences.data = rctx->ws->buffer_map(rscreen->fences.bo->cs_buf,
 							   rctx->cs,
 							   PIPE_TRANSFER_READ_WRITE);
 	}
@@ -599,7 +599,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 			FREE(entry);
 		}
 
-		rscreen->ws->buffer_unmap(rscreen->fences.bo->buf);
+		rscreen->ws->buffer_unmap(rscreen->fences.bo->cs_buf);
 		pipe_resource_reference((struct pipe_resource**)&rscreen->fences.bo, NULL);
 	}
 	pipe_mutex_destroy(rscreen->fences.mutex);

@@ -120,7 +120,7 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
        usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
     }
 
-    map = rws->buffer_map(rbuf->buf, r300->cs, usage);
+    map = rws->buffer_map(rbuf->cs_buf, r300->cs, usage);
 
     if (map == NULL)
         return NULL;
@@ -135,8 +135,8 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
     struct radeon_winsys *rws = r300screen->rws;
     struct r300_resource *rbuf = r300_resource(transfer->resource);
 
-    if (rbuf->buf) {
-        rws->buffer_unmap(rbuf->buf);
+    if (rbuf->cs_buf) {
+        rws->buffer_unmap(rbuf->cs_buf);
     }
 }
 
@@ -160,12 +160,12 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
     }
     assert(rbuf->b.b.user_ptr == NULL);
 
-    map = rws->buffer_map(rbuf->buf, r300->cs,
+    map = rws->buffer_map(rbuf->cs_buf, r300->cs,
                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
 
     memcpy(map + box->x, data, box->width);
 
-    rws->buffer_unmap(rbuf->buf);
+    rws->buffer_unmap(rbuf->cs_buf);
 }
 
 static const struct u_resource_vtbl r300_buffer_vtbl =

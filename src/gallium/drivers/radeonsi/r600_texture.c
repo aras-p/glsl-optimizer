@@ -770,20 +770,20 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct pb_buffer *buf;
+	struct radeon_winsys_cs_handle *buf;
 	enum pipe_format format = transfer->resource->format;
 	unsigned offset = 0;
 	char *map;
 
 	if (rtransfer->staging_texture) {
-		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
+		buf = ((struct r600_resource *)rtransfer->staging_texture)->cs_buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 		if (rtex->flushed_depth_texture)
-			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->buf;
+			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->cs_buf;
 		else
-			buf = ((struct r600_resource *)transfer->resource)->buf;
+			buf = ((struct r600_resource *)transfer->resource)->cs_buf;
 
 		offset = rtransfer->offset +
 			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
@@ -802,17 +802,17 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct pb_buffer *buf;
+	struct radeon_winsys_cs_handle *buf;
 
 	if (rtransfer->staging_texture) {
-		buf = ((struct r600_resource *)rtransfer->staging_texture)->buf;
+		buf = ((struct r600_resource *)rtransfer->staging_texture)->cs_buf;
 	} else {
 		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 		if (rtex->flushed_depth_texture) {
-			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->buf;
+			buf = ((struct r600_resource *)rtex->flushed_depth_texture)->cs_buf;
 		} else {
-			buf = ((struct r600_resource *)transfer->resource)->buf;
+			buf = ((struct r600_resource *)transfer->resource)->cs_buf;
 		}
 	}
 	rctx->ws->buffer_unmap(buf);

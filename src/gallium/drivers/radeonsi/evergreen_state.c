@@ -1306,7 +1306,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	bo = (struct r600_resource*)
 		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
 				   count * sizeof(resource[0]->state));
-	ptr = rctx->ws->buffer_map(bo->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 
 	for (i = 0; i < count; i++, ptr += sizeof(resource[0]->state)) {
 		pipe_sampler_view_reference(
@@ -1322,7 +1322,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 			memset(ptr, 0, sizeof(resource[0]->state));
 	}
 
-	rctx->ws->buffer_unmap(bo->buf);
+	rctx->ws->buffer_unmap(bo->cs_buf);
 
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i])
@@ -1357,13 +1357,13 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	bo = (struct r600_resource*)
 		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
 				   count * sizeof(rstates[0]->val));
-	ptr = rctx->ws->buffer_map(bo->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 
 	for (i = 0; i < count; i++, ptr += sizeof(rstates[0]->val)) {
 		memcpy(ptr, rstates[i]->val, sizeof(rstates[0]->val));
 	}
 
-	rctx->ws->buffer_unmap(bo->buf);
+	rctx->ws->buffer_unmap(bo->cs_buf);
 
 	va = r600_resource_va(ctx->screen, (void *)bo);
 	r600_pipe_state_add_reg(rstate, R_00B038_SPI_SHADER_USER_DATA_PS_2, va, bo, RADEON_USAGE_READ);

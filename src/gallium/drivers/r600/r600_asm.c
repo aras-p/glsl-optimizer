@@ -2810,7 +2810,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 		return -ENOMEM;
 	}
 
-	bytecode = rctx->ws->buffer_map(ve->fetch_shader->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	bytecode = rctx->ws->buffer_map(ve->fetch_shader->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	if (bytecode == NULL) {
 		r600_bytecode_clear(&bc);
 		pipe_resource_reference((struct pipe_resource**)&ve->fetch_shader, NULL);
@@ -2825,7 +2825,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 		memcpy(bytecode, bc.bytecode, ve->fs_size);
 	}
 
-	rctx->ws->buffer_unmap(ve->fetch_shader->buf);
+	rctx->ws->buffer_unmap(ve->fetch_shader->cs_buf);
 	r600_bytecode_clear(&bc);
 
 	if (rctx->chip_class >= EVERGREEN)

@@ -75,10 +75,10 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	va = r600_resource_va(&ctx->screen->screen, (void*)buffer);
 
 	/* initialize buffer with zeroes */
-	results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_WRITE);
+	results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	if (results) {
 		memset(results, 0, ctx->max_db * 4 * 4);
-		ctx->ws->buffer_unmap(buffer->buf);
+		ctx->ws->buffer_unmap(buffer->cs_buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
@@ -90,14 +90,14 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
-		results = ctx->ws->buffer_map(buffer->buf, ctx->cs, PIPE_TRANSFER_READ);
+		results = ctx->ws->buffer_map(buffer->cs_buf, ctx->cs, PIPE_TRANSFER_READ);
 		if (results) {
 			for(i = 0; i < ctx->max_db; i++) {
 				/* at least highest bit will be set if backend is used */
 				if (results[i*4 + 1])
 					mask |= (1<<i);
 			}
-			ctx->ws->buffer_unmap(buffer->buf);
+			ctx->ws->buffer_unmap(buffer->cs_buf);
 		}
 	}
 

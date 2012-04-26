@@ -129,7 +129,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (rbuffer->b.b.user_ptr)
 		return rbuffer->b.b.user_ptr + transfer->box.x;
 
-	data = rctx->ws->buffer_map(rbuffer->buf, rctx->cs, transfer->usage);
+	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
 		return NULL;
 
@@ -145,7 +145,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	if (rbuffer->b.b.user_ptr)
 		return;
 
-	rctx->ws->buffer_unmap(rbuffer->buf);
+	rctx->ws->buffer_unmap(rbuffer->cs_buf);
 }
 
 static void r600_transfer_destroy(struct pipe_context *ctx,

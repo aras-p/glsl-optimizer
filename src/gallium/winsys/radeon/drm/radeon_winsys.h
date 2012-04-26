@@ -158,7 +158,7 @@ struct radeon_winsys {
      * \param usage     A bitmask of the PIPE_TRANSFER_* flags.
      * \return          The pointer at the beginning of the buffer.
      */
-    void *(*buffer_map)(struct pb_buffer *buf,
+    void *(*buffer_map)(struct radeon_winsys_cs_handle *buf,
                         struct radeon_winsys_cs *cs,
                         enum pipe_transfer_usage usage);
 
@@ -167,7 +167,7 @@ struct radeon_winsys {
      *
      * \param buf       A winsys buffer object to unmap.
      */
-    void (*buffer_unmap)(struct pb_buffer *buf);
+    void (*buffer_unmap)(struct radeon_winsys_cs_handle *buf);
 
     /**
      * Return TRUE if a buffer object is being used by the GPU.

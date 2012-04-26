@@ -617,9 +617,9 @@ r600_create_so_target(struct pipe_context *ctx,
 
 	t->filled_size = (struct r600_resource*)
 		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, 4);
-	ptr = rctx->ws->buffer_map(t->filled_size->buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	ptr = rctx->ws->buffer_map(t->filled_size->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	memset(ptr, 0, t->filled_size->buf->size);
-	rctx->ws->buffer_unmap(t->filled_size->buf);
+	rctx->ws->buffer_unmap(t->filled_size->cs_buf);
 
 	return &t->b;
 }
