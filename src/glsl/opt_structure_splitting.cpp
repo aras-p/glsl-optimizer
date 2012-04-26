@@ -201,7 +201,6 @@ public:
    variable_entry2 *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
-   void *mem_ctx;
 };
 
 variable_entry2 *
