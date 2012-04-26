@@ -110,8 +110,11 @@ nv30_validate_fb(struct nv30_context *nv30)
    BEGIN_NV04(push, NV30_3D(VIEWPORT_HORIZ), 2);
    PUSH_DATA (push, w << 16);
    PUSH_DATA (push, h << 16);
-   BEGIN_NV04(push, NV30_3D(VIEWPORT_TX_ORIGIN), 1);
+   BEGIN_NV04(push, NV30_3D(VIEWPORT_TX_ORIGIN), 4);
    PUSH_DATA (push, (y << 16) | x);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, ((w - 1) << 16) | 0);
+   PUSH_DATA (push, ((h - 1) << 16) | 0);
 
    if ((nv30->state.rt_enable & NV30_3D_RT_ENABLE_COLOR0) || fb->zsbuf) {
       struct nv30_surface *rsf = nv30_surface(fb->cbufs[0]);

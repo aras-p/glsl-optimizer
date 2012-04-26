@@ -454,8 +454,6 @@ nv30_screen_create(struct nouveau_device *dev)
    PUSH_DATA (push, screen->query->handle);  /* QUERY - intr 0x80 if nullobj */
    PUSH_DATA (push, screen->null->handle);  /* UNK1AC */
    PUSH_DATA (push, screen->null->handle);  /* UNK1B0 */
-   BEGIN_NV04(push, NV30_3D(VIEWPORT_CLIP_MODE), 1);
-   PUSH_DATA (push, 0);
    if (screen->eng3d->oclass < NV40_3D_CLASS) {
       BEGIN_NV04(push, SUBC_3D(0x03b0), 1);
       PUSH_DATA (push, 0x00100000);
