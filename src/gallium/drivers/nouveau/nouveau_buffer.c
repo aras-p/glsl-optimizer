@@ -398,7 +398,6 @@ nouveau_user_buffer_create(struct pipe_screen *pscreen, void *ptr,
    buffer->base.width0 = bytes;
    buffer->base.height0 = 1;
    buffer->base.depth0 = 1;
-   buffer->base.user_ptr = ptr;
 
    buffer->data = ptr;
    buffer->status = NOUVEAU_BUFFER_STATUS_USER_MEMORY;

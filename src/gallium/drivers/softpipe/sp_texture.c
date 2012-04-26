@@ -476,7 +476,6 @@ softpipe_user_buffer_create(struct pipe_screen *screen,
    spr->base.height0 = 1;
    spr->base.depth0 = 1;
    spr->base.array_size = 1;
-   spr->base.user_ptr = ptr;
    spr->userBuffer = TRUE;
    spr->data = ptr;
 

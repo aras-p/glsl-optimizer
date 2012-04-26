@@ -108,8 +108,6 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     uint8_t *map;
     enum pipe_transfer_usage usage;
 
-    if (rbuf->b.b.user_ptr)
-        return rbuf->b.b.user_ptr + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
@@ -159,7 +157,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.vtbl = &r300_buffer_vtbl;
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
-    rbuf->b.b.user_ptr = NULL;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
@@ -205,7 +202,6 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.depth0 = 1;
     rbuf->b.b.array_size = 1;
     rbuf->b.b.flags = 0;
-    rbuf->b.b.user_ptr = ptr;
     rbuf->b.vtbl = &r300_buffer_vtbl;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
