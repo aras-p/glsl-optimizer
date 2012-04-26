@@ -373,7 +373,7 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	r600_texture_transfer_map,	/* transfer_map */
 	u_default_transfer_flush_region,/* transfer_flush_region */
 	r600_texture_transfer_unmap,	/* transfer_unmap */
-	u_default_transfer_inline_write	/* transfer_inline_write */
+	NULL	/* transfer_inline_write */
 };
 
 static struct r600_resource_texture *

@@ -60,5 +60,5 @@ void r600_init_context_resource_functions(struct r600_context *r600)
 	r600->context.transfer_flush_region = u_transfer_flush_region_vtbl;
 	r600->context.transfer_unmap = u_transfer_unmap_vtbl;
 	r600->context.transfer_destroy = u_transfer_destroy_vtbl;
-	r600->context.transfer_inline_write = u_transfer_inline_write_vtbl;
+	r600->context.transfer_inline_write = u_default_transfer_inline_write;
 }
