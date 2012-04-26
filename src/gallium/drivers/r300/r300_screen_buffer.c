@@ -131,13 +131,7 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
 			    struct pipe_transfer *transfer )
 {
-    struct r300_screen *r300screen = r300_screen(pipe->screen);
-    struct radeon_winsys *rws = r300screen->rws;
-    struct r300_resource *rbuf = r300_resource(transfer->resource);
-
-    if (rbuf->cs_buf) {
-        rws->buffer_unmap(rbuf->cs_buf);
-    }
+    /* no-op */
 }
 
 static const struct u_resource_vtbl r300_buffer_vtbl =
