@@ -863,7 +863,7 @@ static const struct u_resource_vtbl r300_texture_vtbl =
     r300_texture_transfer_map,      /* transfer_map */
     NULL,                           /* transfer_flush_region */
     r300_texture_transfer_unmap,    /* transfer_unmap */
-    u_default_transfer_inline_write /* transfer_inline_write */
+    NULL /* transfer_inline_write */
 };
 
 /* The common texture constructor. */

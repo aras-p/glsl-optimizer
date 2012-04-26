@@ -140,34 +140,6 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
     }
 }
 
-static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
-                                              struct pipe_resource *resource,
-                                              unsigned level,
-                                              unsigned usage,
-                                              const struct pipe_box *box,
-                                              const void *data,
-                                              unsigned stride,
-                                              unsigned layer_stride)
-{
-    struct r300_context *r300 = r300_context(pipe);
-    struct radeon_winsys *rws = r300->screen->rws;
-    struct r300_resource *rbuf = r300_resource(resource);
-    uint8_t *map = NULL;
-
-    if (rbuf->constant_buffer) {
-        memcpy(rbuf->constant_buffer + box->x, data, box->width);
-        return;
-    }
-    assert(rbuf->b.b.user_ptr == NULL);
-
-    map = rws->buffer_map(rbuf->cs_buf, r300->cs,
-                          PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | usage);
-
-    memcpy(map + box->x, data, box->width);
-
-    rws->buffer_unmap(rbuf->cs_buf);
-}
-
 static const struct u_resource_vtbl r300_buffer_vtbl =
 {
    NULL,                               /* get_handle */
@@ -177,7 +149,7 @@ static const struct u_resource_vtbl r300_buffer_vtbl =
    r300_buffer_transfer_map,           /* transfer_map */
    NULL,                               /* transfer_flush_region */
    r300_buffer_transfer_unmap,         /* transfer_unmap */
-   r300_buffer_transfer_inline_write   /* transfer_inline_write */
+   NULL   /* transfer_inline_write */
 };
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,

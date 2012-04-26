@@ -45,7 +45,7 @@ void r300_init_resource_functions(struct r300_context *r300)
    r300->context.transfer_flush_region = u_default_transfer_flush_region;
    r300->context.transfer_unmap = u_transfer_unmap_vtbl;
    r300->context.transfer_destroy = u_transfer_destroy_vtbl;
-   r300->context.transfer_inline_write = u_transfer_inline_write_vtbl;
+   r300->context.transfer_inline_write = u_default_transfer_inline_write;
    r300->context.create_surface = r300_create_surface;
    r300->context.surface_destroy = r300_surface_destroy;
 }
