@@ -221,7 +221,7 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
             pipe_mutex_unlock(mgr->bo_va_mutex);
             return offset;
         }
-        if ((hole->size - waste) >= size) {
+        if ((hole->size - waste) > size) {
             if (waste) {
                 n = CALLOC_STRUCT(radeon_bo_va_hole);
                 n->size = waste;
@@ -230,6 +230,11 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
             }
             hole->size -= (size + waste);
             hole->offset += size + waste;
+            pipe_mutex_unlock(mgr->bo_va_mutex);
+            return offset;
+        }
+        if ((hole->size - waste) == size) {
+            hole->size = waste;
             pipe_mutex_unlock(mgr->bo_va_mutex);
             return offset;
         }
