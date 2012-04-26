@@ -268,18 +268,25 @@ static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_
         mgr->va_offset = va + size;
     } else {
         struct radeon_bo_va_hole *hole, *n;
-        uint64_t stmp, etmp;
+        uint64_t hole_end, va_end;
 
-        /* free all holes that fall into the range
-         * NOTE that we might lose virtual address space
+        /* Prune/free all holes that fall into the range
          */
         LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
-            stmp = hole->offset;
-            etmp = stmp + hole->size;
-            if (va >= stmp && va < etmp) {
+            hole_end = hole->offset + hole->size;
+            va_end = va + size;
+            if (hole->offset >= va_end || hole_end <= va)
+                continue;
+            if (hole->offset >= va && hole_end <= va_end) {
                 list_del(&hole->list);
                 FREE(hole);
+                continue;
             }
+            if (hole->offset >= va)
+                hole->offset = va_end;
+            else
+                hole_end = va;
+            hole->size = hole_end - hole->offset;
         }
     }
     pipe_mutex_unlock(mgr->bo_va_mutex);
