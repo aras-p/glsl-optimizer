@@ -439,15 +439,12 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		return;
 	}
 
-        if (cb->user_buffer) {
-           rbuffer = pipe_user_buffer_create(ctx->screen, cb->user_buffer,
-                                         cb->buffer_size,
-                                         PIPE_BIND_CONSTANT_BUFFER);
-        }
-
 	r600_inval_shader_cache(rctx);
 
-	r600_upload_const_buffer(rctx, &rbuffer, &offset);
+	if (cb->user_buffer)
+		r600_upload_const_buffer(rctx, &rbuffer, cb->user_buffer, cb->buffer_size, &offset);
+	else
+		offset = 0;
 	va_offset = r600_resource_va(ctx->screen, (void*)rbuffer);
 	va_offset += offset;
 	//va_offset >>= 8;

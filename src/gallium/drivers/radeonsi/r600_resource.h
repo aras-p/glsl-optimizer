@@ -99,6 +99,8 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 
 struct r600_context;
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer, uint32_t *offset);
+void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
+			      const uint8_t *ptr, unsigned size,
+			      uint32_t *const_offset);
 
 #endif
