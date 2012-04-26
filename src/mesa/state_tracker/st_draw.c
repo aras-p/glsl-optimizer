@@ -912,14 +912,6 @@ st_draw_vbo(struct gl_context *ctx,
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
 
-   if (ib) {
-      /* Gallium probably doesn't want this in some cases. */
-      if (!index_bounds_valid)
-         if (!all_varyings_in_vbos(arrays))
-            vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
-                                   nr_prims);
-   }
-
    /* Validate state. */
    if (st->dirty.st) {
       GLboolean vertDataEdgeFlags;
@@ -951,6 +943,12 @@ st_draw_vbo(struct gl_context *ctx,
 
    util_draw_init_info(&info);
    if (ib) {
+      /* Get index bounds for user buffers. */
+      if (!index_bounds_valid)
+         if (!all_varyings_in_vbos(arrays))
+            vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
+                                   nr_prims);
+
       setup_index_buffer(st, ib, &ibuffer);
 
       info.indexed = TRUE;
@@ -965,10 +963,12 @@ st_draw_vbo(struct gl_context *ctx,
       info.primitive_restart = ctx->Array.PrimitiveRestart;
       info.restart_index = ctx->Array.RestartIndex;
    }
-
-   /* Set info.count_from_stream_output. */
-   if (tfb_vertcount) {
-      st_transform_feedback_draw_init(tfb_vertcount, &info);
+   else {
+      /* Transform feedback drawing is always non-indexed. */
+      /* Set info.count_from_stream_output. */
+      if (tfb_vertcount) {
+         st_transform_feedback_draw_init(tfb_vertcount, &info);
+      }
    }
 
    /* do actual drawing */
