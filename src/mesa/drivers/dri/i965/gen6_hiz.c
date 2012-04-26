@@ -487,6 +487,24 @@ gen6_hiz_exec(struct intel_context *intel,
                                                         draw_x & ~tile_mask_x,
                                                         draw_y & ~tile_mask_y);
 
+      /* According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
+       * (3DSTATE_DEPTH_BUFFER dw5), in the documentation for "Depth
+       * Coordinate Offset X/Y":
+       *
+       *   "The 3 LSBs of both offsets must be zero to ensure correct
+       *   alignment"
+       *
+       * We have no guarantee that tile_x and tile_y are correctly aligned,
+       * since they are determined by the mipmap layout, which is only aligned
+       * to multiples of 4.
+       *
+       * So, to avoid hanging the GPU, just smash the low order 3 bits of
+       * tile_x and tile_y to 0.  This is a temporary workaround until we come
+       * up with a better solution.
+       */
+      tile_x &= ~7;
+      tile_y &= ~7;
+
       uint32_t format;
       switch (mt->format) {
       case MESA_FORMAT_Z16:       format = BRW_DEPTHFORMAT_D16_UNORM; break;
