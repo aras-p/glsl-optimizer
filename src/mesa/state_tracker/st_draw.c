@@ -904,7 +904,7 @@ st_draw_vbo(struct gl_context *ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_index_buffer ibuffer = {0};
    struct pipe_draw_info info;
-   unsigned i, num_instances = 1;
+   unsigned i;
    GLboolean new_array =
       st->dirty.st &&
       (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
@@ -918,21 +918,6 @@ st_draw_vbo(struct gl_context *ctx,
          if (!all_varyings_in_vbos(arrays))
             vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
                                    nr_prims);
-
-      for (i = 0; i < nr_prims; i++) {
-         num_instances = MAX2(num_instances, prims[i].num_instances);
-      }
-   }
-   else {
-      /* Get min/max index for non-indexed drawing. */
-      min_index = ~0;
-      max_index = 0;
-
-      for (i = 0; i < nr_prims; i++) {
-         min_index = MIN2(min_index, prims[i].start);
-         max_index = MAX2(max_index, prims[i].start + prims[i].count - 1);
-         num_instances = MAX2(num_instances, prims[i].num_instances);
-      }
    }
 
    /* Validate state. */
