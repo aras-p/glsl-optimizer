@@ -287,11 +287,22 @@ static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_
 
 static void radeon_bomgr_free_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
 {
+    struct radeon_bo_va_hole *hole;
+
     pipe_mutex_lock(mgr->bo_va_mutex);
     if ((va + size) == mgr->va_offset) {
         mgr->va_offset = va;
+        /* Delete uppermost hole if it reaches the new top */
+        if (!LIST_IS_EMPTY(&mgr->va_holes)) {
+            hole = container_of(mgr->va_holes.next, hole, list);
+            if ((hole->offset + hole->size) == va) {
+                mgr->va_offset = hole->offset;
+                list_del(&hole->list);
+                FREE(hole);
+            }
+        }
     } else {
-        struct radeon_bo_va_hole *hole, *next;
+        struct radeon_bo_va_hole *next;
 
         hole = container_of(&mgr->va_holes, hole, list);
         LIST_FOR_EACH_ENTRY(next, &mgr->va_holes, list) {
