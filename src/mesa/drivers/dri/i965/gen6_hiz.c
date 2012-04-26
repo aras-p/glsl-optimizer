@@ -177,8 +177,9 @@ gen6_hiz_emit_vertices(struct brw_context *brw,
          /* v2 */ 0, 0, 0, 0,         0,      0, 0, 1,
       };
 
-      vertex_data = brw_state_batch(brw, AUB_TRACE_NO_TYPE,
-				    GEN6_HIZ_VBO_SIZE, 32, &vertex_offset);
+      vertex_data = (float *) brw_state_batch(brw, AUB_TRACE_NO_TYPE,
+                                              GEN6_HIZ_VBO_SIZE, 32,
+                                              &vertex_offset);
       memcpy(vertex_data, vertices, GEN6_HIZ_VBO_SIZE);
    }
 
@@ -622,9 +623,10 @@ gen6_hiz_emit_depth_stencil_state(struct brw_context *brw,
                                   uint32_t *out_offset)
 {
    struct gen6_depth_stencil_state *state;
-   state = brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
-                              sizeof(*state), 64,
-                              out_offset);
+   state = (struct gen6_depth_stencil_state *)
+      brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
+                      sizeof(*state), 64,
+                      out_offset);
    memset(state, 0, sizeof(*state));
 
    /* See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
