@@ -118,10 +118,11 @@ util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
    v[28] = 0.0;
    v[29] = 1.0;
 	 
-   vbuf = pipe_user_buffer_create(pipe->screen, v, vertexBytes,
-				  PIPE_BIND_VERTEX_BUFFER);
+   vbuf = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+                             PIPE_USAGE_STAGING, vertexBytes);
    if (!vbuf)
       goto out;
+   pipe_buffer_write(pipe, vbuf, 0, vertexBytes, v);
 
    util_draw_vertex_buffer(pipe, cso, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 
