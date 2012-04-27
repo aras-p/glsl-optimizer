@@ -2484,7 +2484,8 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			if (alu->last) {
 				for (i = 0; i < nliteral; i++, id++) {
 					float *f = (float*)(bc->bytecode + id);
-					fprintf(stderr, "%04d %08X\t%f\n", id, bc->bytecode[id], *f);
+					fprintf(stderr, "%04d %08X\t%f (%d)\n", id, bc->bytecode[id], *f,
+							*(bc->bytecode + id));
 				}
 				id += nliteral & 1;
 				nliteral = 0;
