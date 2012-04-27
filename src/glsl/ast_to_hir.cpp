@@ -1917,7 +1917,8 @@ static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
-				 YYLTYPE *loc)
+				 YYLTYPE *loc,
+				 bool ubo_qualifiers_valid)
 {
    if (qual->flags.q.invariant) {
       if (var->used) {
@@ -2177,6 +2178,23 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        var->depth_layout = ir_depth_layout_unchanged;
    else
        var->depth_layout = ir_depth_layout_none;
+
+   if (qual->flags.q.std140 ||
+       qual->flags.q.packed ||
+       qual->flags.q.shared) {
+      _mesa_glsl_error(loc, state,
+                       "uniform block layout qualifiers std140, packed, and "
+		       "shared can only be applied to uniform blocks, not "
+		       "members");
+   }
+
+   if (!ubo_qualifiers_valid &&
+       (qual->flags.q.row_major || qual->flags.q.column_major)) {
+      _mesa_glsl_error(loc, state,
+                       "uniform block layout qualifiers row_major and "
+		       "column_major can only be applied to uniform block "
+		       "members");
+   }
 }
 
 /**
@@ -2597,7 +2615,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
-				       & loc);
+				       & loc, this->ubo_qualifiers_valid);
 
       if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
@@ -3014,7 +3032,8 @@ ast_parameter_declarator::hir(exec_list *instructions,
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
     */
-   apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc);
+   apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc,
+				    false);
 
    /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
     *
@@ -3983,6 +4002,14 @@ ast_uniform_block::hir(exec_list *instructions,
     * need to turn those into ir_variables with an association
     * with this uniform block.
     */
+   foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
+      exec_list declared_variables;
+
+      decl_list->hir(&declared_variables, state);
+
+      instructions->append_list(&declared_variables);
+   }
+
    return NULL;
 }
 

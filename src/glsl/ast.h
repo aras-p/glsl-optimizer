@@ -513,6 +513,12 @@ public:
     * is used to note these cases when no type is specified.
     */
    int invariant;
+
+   /**
+    * Flag indicating that these declarators are in a uniform block,
+    * allowing UBO type qualifiers.
+    */
+   bool ubo_qualifiers_valid;
 };
 
 

@@ -1967,6 +1967,7 @@ member_declaration:
 	   type->specifier = $3;
 	   $$ = new(ctx) ast_declarator_list(type);
 	   $$->set_location(yylloc);
+	   $$->ubo_qualifiers_valid = true;
 
 	   $$->declarations.push_degenerate_list_at_head(& $4->link);
 	}
@@ -1980,6 +1981,7 @@ member_declaration:
 	   type->specifier = $2;
 	   $$ = new(ctx) ast_declarator_list(type);
 	   $$->set_location(yylloc);
+	   $$->ubo_qualifiers_valid = true;
 
 	   $$->declarations.push_degenerate_list_at_head(& $3->link);
 	}

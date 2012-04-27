@@ -773,6 +773,7 @@ ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
    this->type = type;
    this->invariant = false;
+   this->ubo_qualifiers_valid = false;
 }
 
 void
