@@ -965,13 +965,25 @@ void CodeEmitterNVC0::emitTEXCSAA(const TexInstruction *i)
    srcId(i->src(0), 20);
 }
 
+static inline bool
+isNextIndependentTex(const TexInstruction *i)
+{
+   if (!i->next || !isTextureOp(i->next->op))
+      return false;
+   if (i->getDef(0)->interfers(i->next->getSrc(0)))
+      return false;
+   return !i->next->srcExists(1) || !i->getDef(0)->interfers(i->next->getSrc(1));
+}
+
 void
 CodeEmitterNVC0::emitTEX(const TexInstruction *i)
 {
    code[0] = 0x00000006;
 
-   if (1)
-      code[0] |= 0x80; // normal/t/p mode = t, XXX: what is this ?
+   if (isNextIndependentTex(i))
+      code[0] |= 0x080; // t mode
+   else
+      code[0] |= 0x100; // p mode
 
    if (i->tex.liveOnly)
       code[0] |= 1 << 9;
@@ -1021,7 +1033,7 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    if (i->tex.target.isShadow())
       code[1] |= 1 << 24;
 
-   const int src1 = MAX2(i->predSrc + 1, 1); // if predSrc == 1, no 2nd src
+   const int src1 = (i->predSrc == 1) ? 2 : 1; // if predSrc == 1, !srcExists(2)
 
    if (i->srcExists(src1) && i->src(src1).getFile() == FILE_IMMEDIATE) {
       // lzero
