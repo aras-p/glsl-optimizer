@@ -150,6 +150,13 @@ _mesa_GetActiveUniformARB(GLhandleARB, GLuint, GLsizei, GLsizei *,
                           GLint *, GLenum *, GLcharARB *);
 
 extern void GLAPIENTRY
+_mesa_GetActiveUniformsiv(GLuint program,
+			  GLsizei uniformCount,
+			  const GLuint *uniformIndices,
+			  GLenum pname,
+			  GLint *params);
+
+extern void GLAPIENTRY
 _mesa_GetUniformfvARB(GLhandleARB, GLint, GLfloat *);
 
 extern void GLAPIENTRY

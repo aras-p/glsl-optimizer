@@ -616,6 +616,7 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
 
    /* GL_ARB_uniform_buffer_object / GL 3.1 */
    SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
+   SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
 
 #endif /* FEATURE_GL */
 }

@@ -74,6 +74,68 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
    }
 }
 
+extern "C" void GLAPIENTRY
+_mesa_GetActiveUniformsiv(GLuint program,
+			  GLsizei uniformCount,
+			  const GLuint *uniformIndices,
+			  GLenum pname,
+			  GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+   GLsizei i;
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
+   if (!shProg)
+      return;
+
+   if (uniformCount < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+		  "glGetUniformIndices(uniformCount < 0)");
+      return;
+   }
+
+   for (i = 0; i < uniformCount; i++) {
+      GLuint index = uniformIndices[i];
+      const struct gl_uniform_storage *uni = &shProg->UniformStorage[index];
+
+      if (index >= shProg->NumUserUniformStorage) {
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniformsiv(index)");
+	 return;
+      }
+
+      switch (pname) {
+      case GL_UNIFORM_TYPE:
+	 params[i] = uni->type->gl_type;
+	 break;
+
+      case GL_UNIFORM_SIZE:
+	 /* array_elements is zero for non-arrays, but the API requires that 1 be
+	  * returned.
+	  */
+	 params[i] = MAX2(1, uni->array_elements);
+	 break;
+
+      case GL_UNIFORM_NAME_LENGTH:
+	 params[i] = strlen(uni->name) + 1;
+	 break;
+
+      case GL_UNIFORM_BLOCK_INDEX:
+      case GL_UNIFORM_OFFSET:
+      case GL_UNIFORM_ARRAY_STRIDE:
+      case GL_UNIFORM_MATRIX_STRIDE:
+      case GL_UNIFORM_IS_ROW_MAJOR:
+	 _mesa_problem(ctx, "FINISHME: glGetActiveUniformsiv(pname)");
+	 params[i] = -1;
+	 break;
+
+      default:
+	 _mesa_error(ctx, GL_INVALID_ENUM, "glGetActiveUniformsiv(pname)");
+	 return;
+      }
+   }
+}
+
 static bool
 validate_uniform_parameters(struct gl_context *ctx,
 			    struct gl_shader_program *shProg,
