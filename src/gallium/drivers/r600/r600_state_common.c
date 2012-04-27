@@ -806,11 +806,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0);
-
-		if (rctx->chip_class <= R700)
-			r600_pipe_state_add_reg(&rctx->vgt, R_0280A4_CB_COLOR1_INFO, 0);	
-		else
-			r600_pipe_state_add_reg(&rctx->vgt, 0x28CAC, 0);	
 	}
 
 	rctx->vgt.nregs = 0;
@@ -839,11 +834,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 				(rctx->vs_shader->shader.clip_dist_write ||
 				 rctx->vs_shader->shader.vs_prohibit_ucps ?
 				 0 : rctx->rasterizer->clip_plane_enable & 0x3F));
-
-	if (rctx->dual_src_blend) {
-		r600_pipe_state_mod_reg(&rctx->vgt, 
-					rctx->color0_format);
-	}
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 

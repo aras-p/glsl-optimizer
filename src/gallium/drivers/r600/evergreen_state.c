@@ -1461,8 +1461,12 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	}
 	rctx->alpha_ref_dirty = true;
 
-	if (cb == 0)
-	    rctx->color0_format = color_info;
+	/* for possible dual-src MRT */
+	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1) {
+		r600_pipe_state_add_reg_bo(rstate,
+				R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
+				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
+	}
 
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
 	offset >>= 8;

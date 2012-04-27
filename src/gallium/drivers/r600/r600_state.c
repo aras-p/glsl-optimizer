@@ -1509,8 +1509,12 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
 	}
 
-	if (cb == 0)
-		rctx->color0_format = color_info;
+	/* for possible dual-src MRT write color info 1 */
+	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1) {
+		r600_pipe_state_add_reg_bo(rstate,
+				R_0280A0_CB_COLOR0_INFO + 1 * 4,
+				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
+	}
 
 	r600_pipe_state_add_reg_bo(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,

@@ -345,7 +345,6 @@ struct r600_context {
 	void			*dummy_pixel_shader;
 
 	boolean			dual_src_blend;
-	unsigned color0_format;
 
 	/* Vertex and index buffers. */
 	bool			vertex_buffers_dirty;
