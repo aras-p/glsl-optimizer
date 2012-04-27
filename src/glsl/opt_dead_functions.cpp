@@ -62,8 +62,6 @@ public:
 
    signature_entry *get_signature_entry(ir_function_signature *var);
 
-   bool (*predicate)(ir_instruction *ir);
-
    /* List of signature_entry */
    exec_list signature_list;
    void *mem_ctx;
