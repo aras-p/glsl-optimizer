@@ -343,6 +343,13 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           break;
         }
 
+      case AMDIL::ULT:
+        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_UINT))
+                .addOperand(MI.getOperand(0))
+                .addOperand(MI.getOperand(2))
+                .addOperand(MI.getOperand(1));
+        break;
+
       default:
         continue;
       }
