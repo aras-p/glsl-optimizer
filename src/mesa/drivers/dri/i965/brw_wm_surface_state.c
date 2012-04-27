@@ -620,7 +620,7 @@ translate_tex_format(gl_format mesa_format,
    }
 }
 
-static uint32_t
+uint32_t
 brw_get_surface_tiling_bits(uint32_t tiling)
 {
    switch (tiling) {

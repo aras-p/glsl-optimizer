@@ -35,7 +35,7 @@
 #include "brw_defines.h"
 #include "brw_wm.h"
 
-static void
+void
 gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling)
 {
    switch (tiling) {
