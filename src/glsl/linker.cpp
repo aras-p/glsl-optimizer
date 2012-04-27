@@ -581,6 +581,48 @@ cross_validate_uniforms(struct gl_shader_program *prog)
 				 MESA_SHADER_TYPES, true);
 }
 
+/**
+ * Accumulates the array of prog->UniformBlocks and checks that all
+ * definitons of blocks agree on their contents.
+ */
+static bool
+interstage_cross_validate_uniform_blocks(struct gl_shader_program *prog)
+{
+   unsigned max_num_uniform_blocks = 0;
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i])
+	 max_num_uniform_blocks += prog->_LinkedShaders[i]->NumUniformBlocks;
+   }
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      prog->UniformBlockStageIndex[i] = ralloc_array(prog, int,
+						     max_num_uniform_blocks);
+      for (unsigned int j = 0; j < max_num_uniform_blocks; j++)
+	 prog->UniformBlockStageIndex[i][j] = -1;
+
+      if (sh == NULL)
+	 continue;
+
+      for (unsigned int j = 0; j < sh->NumUniformBlocks; j++) {
+	 int index = link_cross_validate_uniform_block(prog,
+						       &prog->UniformBlocks,
+						       &prog->NumUniformBlocks,
+						       &sh->UniformBlocks[j]);
+
+	 if (index == -1) {
+	    linker_error(prog, "uniform block `%s' has mismatching definitions",
+			 sh->UniformBlocks[j].Name);
+	    return false;
+	 }
+
+	 prog->UniformBlockStageIndex[i][index] = j;
+      }
+   }
+
+   return true;
+}
 
 /**
  * Validate that outputs from one stage match inputs of another
@@ -910,7 +952,6 @@ public:
    }
 };
 
-
 /**
  * Combine a group of shaders for a single stage to generate a linked shader
  *
@@ -925,10 +966,30 @@ link_intrastage_shaders(void *mem_ctx,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
 {
+   struct gl_uniform_block *uniform_blocks = NULL;
+   unsigned num_uniform_blocks = 0;
+
    /* Check that global variables defined in multiple shaders are consistent.
     */
    if (!cross_validate_globals(prog, shader_list, num_shaders, false))
       return NULL;
+
+   /* Check that uniform blocks between shaders for a stage agree. */
+   for (unsigned i = 0; i < num_shaders; i++) {
+      struct gl_shader *sh = shader_list[i];
+
+      for (unsigned j = 0; j < shader_list[i]->NumUniformBlocks; j++) {
+	 int index = link_cross_validate_uniform_block(mem_ctx,
+						       &uniform_blocks,
+						       &num_uniform_blocks,
+						       &sh->UniformBlocks[j]);
+	 if (index == -1) {
+	    linker_error(prog, "uniform block `%s' has mismatching definitions",
+			 sh->UniformBlocks[j].Name);
+	    return NULL;
+	 }
+      }
+   }
 
    /* Check that there is only a single definition of each function signature
     * across all shaders.
@@ -996,6 +1057,10 @@ link_intrastage_shaders(void *mem_ctx,
    gl_shader *linked = ctx->Driver.NewShader(NULL, 0, main->Type);
    linked->ir = new(linked) exec_list;
    clone_ir_list(mem_ctx, linked->ir, main->ir);
+
+   linked->UniformBlocks = uniform_blocks;
+   linked->NumUniformBlocks = num_uniform_blocks;
+   ralloc_steal(linked, linked->UniformBlocks);
 
    populate_symbol_table(linked);
 
@@ -2289,10 +2354,16 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    prog->Validated = false;
    prog->_Used = false;
 
-   if (prog->InfoLog != NULL)
-      ralloc_free(prog->InfoLog);
-
+   ralloc_free(prog->InfoLog);
    prog->InfoLog = ralloc_strdup(NULL, "");
+
+   ralloc_free(prog->UniformBlocks);
+   prog->UniformBlocks = NULL;
+   prog->NumUniformBlocks = 0;
+   for (int i = 0; i < MESA_SHADER_TYPES; i++) {
+      ralloc_free(prog->UniformBlockStageIndex[i]);
+      prog->UniformBlockStageIndex[i] = NULL;
+   }
 
    /* Separate the shaders into groups based on their type.
     */
@@ -2421,6 +2492,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 lower_discard_flow(sh->ir);
       }
    }
+
+   if (!interstage_cross_validate_uniform_blocks(prog))
+      goto done;
 
    /* Do common optimization before assigning storage for attributes,
     * uniforms, and varyings.  Later optimization could possibly make

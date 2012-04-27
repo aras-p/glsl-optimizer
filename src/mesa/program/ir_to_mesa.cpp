@@ -3115,6 +3115,12 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
       }
    }
 
+   if (shader->UniformBlocks)
+      ralloc_free(shader->UniformBlocks);
+   shader->NumUniformBlocks = state->num_uniform_blocks;
+   shader->UniformBlocks = state->uniform_blocks;
+   ralloc_steal(shader, shader->UniformBlocks);
+
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader->ir);
 

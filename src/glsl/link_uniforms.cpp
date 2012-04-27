@@ -316,6 +316,67 @@ public:
    unsigned shader_shadow_samplers;
 };
 
+/**
+ * Merges a uniform block into an array of uniform blocks that may or
+ * may not already contain a copy of it.
+ *
+ * Returns the index of the new block in the array.
+ */
+int
+link_cross_validate_uniform_block(void *mem_ctx,
+				  struct gl_uniform_block **linked_blocks,
+				  unsigned int *num_linked_blocks,
+				  struct gl_uniform_block *new_block)
+{
+   for (unsigned int i = 0; i < *num_linked_blocks; i++) {
+      struct gl_uniform_block *old_block = &(*linked_blocks)[i];
+      if (strcmp(old_block->Name, new_block->Name) == 0) {
+	 if (old_block->NumUniforms != new_block->NumUniforms) {
+	    return -1;
+	 }
+
+	 for (unsigned j = 0; j < old_block->NumUniforms; j++) {
+	    if (strcmp(old_block->Uniforms[j].Name,
+		       new_block->Uniforms[j].Name) != 0)
+	       return -1;
+
+	    if (old_block->Uniforms[j].Offset !=
+		new_block->Uniforms[j].Offset)
+	       return -1;
+
+	    if (old_block->Uniforms[j].RowMajor !=
+		new_block->Uniforms[j].RowMajor)
+	       return -1;
+	 }
+	 return i;
+      }
+   }
+
+   *linked_blocks = reralloc(mem_ctx, *linked_blocks,
+			     struct gl_uniform_block,
+			     *num_linked_blocks + 1);
+   int linked_block_index = (*num_linked_blocks)++;
+   struct gl_uniform_block *linked_block = &(*linked_blocks)[linked_block_index];
+
+   memcpy(linked_block, new_block, sizeof(*new_block));
+   linked_block->Uniforms = ralloc_array(*linked_blocks,
+					 struct gl_uniform_buffer_variable,
+					 linked_block->NumUniforms);
+
+   memcpy(linked_block->Uniforms,
+	  new_block->Uniforms,
+	  sizeof(*linked_block->Uniforms) * linked_block->NumUniforms);
+
+   for (unsigned int i = 0; i < linked_block->NumUniforms; i++) {
+      struct gl_uniform_buffer_variable *ubo_var =
+	 &linked_block->Uniforms[i];
+
+      ubo_var->Name = ralloc_strdup(*linked_blocks, ubo_var->Name);
+   }
+
+   return linked_block_index;
+}
+
 void
 link_assign_uniform_locations(struct gl_shader_program *prog)
 {
