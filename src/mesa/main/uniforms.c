@@ -524,6 +524,38 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
    return _mesa_uniform_merge_location_offset(index, offset);
 }
 
+static void GLAPIENTRY
+_mesa_GetUniformIndices(GLuint program,
+			GLsizei uniformCount,
+			const GLchar * const *uniformNames,
+			GLuint *uniformIndices)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLsizei i;
+   struct gl_shader_program *shProg;
+
+   if (!ctx->Extensions.ARB_uniform_buffer_object) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformIndices");
+      return;
+   }
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+					    "glGetUniformIndices");
+   if (!shProg)
+      return;
+
+   if (uniformCount < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+		  "glGetUniformIndices(uniformCount < 0)");
+      return;
+   }
+
+   for (i = 0; i < uniformCount; i++) {
+      unsigned offset;
+      uniformIndices[i] = _mesa_get_uniform_location(ctx, shProg,
+						     uniformNames[i], &offset);
+   }
+}
 
 /**
  * Plug in shader uniform-related functions into API dispatch table.
@@ -581,6 +613,9 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
    SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
    SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
+
+   /* GL_ARB_uniform_buffer_object / GL 3.1 */
+   SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
 
 #endif /* FEATURE_GL */
 }
