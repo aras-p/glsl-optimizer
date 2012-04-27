@@ -362,6 +362,10 @@ static unsigned r600_fc_from_byte_stream(struct r600_shader_ctx *ctx,
 			tgsi_loop_brk_cont(ctx);
 		}
 		break;
+	case 8:
+		r600_break_from_byte_stream(ctx, &alu,
+			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT));
+		break;
 	}
 
 	return bytes_read;
