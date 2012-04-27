@@ -3994,6 +3994,25 @@ ast_struct_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
+static struct gl_uniform_block *
+get_next_uniform_block(struct _mesa_glsl_parse_state *state)
+{
+   if (state->num_uniform_blocks >= state->uniform_block_array_size) {
+      state->uniform_block_array_size *= 2;
+      if (state->uniform_block_array_size <= 4)
+	 state->uniform_block_array_size = 4;
+
+      state->uniform_blocks = reralloc(state,
+				       state->uniform_blocks,
+				       struct gl_uniform_block,
+				       state->uniform_block_array_size);
+   }
+
+   memset(&state->uniform_blocks[state->num_uniform_blocks],
+	  0, sizeof(*state->uniform_blocks));
+   return &state->uniform_blocks[state->num_uniform_blocks++];
+}
+
 ir_rvalue *
 ast_uniform_block::hir(exec_list *instructions,
 		       struct _mesa_glsl_parse_state *state)
@@ -4002,10 +4021,58 @@ ast_uniform_block::hir(exec_list *instructions,
     * need to turn those into ir_variables with an association
     * with this uniform block.
     */
+   struct gl_uniform_block *ubo = get_next_uniform_block(state);
+   ubo->Name = ralloc_strdup(state->uniform_blocks, this->block_name);
+
+   unsigned int num_variables = 0;
+   foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
+      foreach_list_const(node, &decl_list->declarations) {
+	 num_variables++;
+      }
+   }
+
+   bool block_row_major = this->layout.flags.q.row_major;
+
+   ubo->Uniforms = rzalloc_array(state->uniform_blocks,
+				 struct gl_uniform_buffer_variable,
+				 num_variables);
+
    foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
       exec_list declared_variables;
 
       decl_list->hir(&declared_variables, state);
+
+      foreach_list_const(node, &declared_variables) {
+	 struct ir_variable *var = (ir_variable *)node;
+
+	 struct gl_uniform_buffer_variable *ubo_var =
+	    &ubo->Uniforms[ubo->NumUniforms++];
+
+	 var->uniform_block = ubo - state->uniform_blocks;
+
+	 ubo_var->Name = ralloc_strdup(state->uniform_blocks, var->name);
+	 ubo_var->Type = var->type;
+	 ubo_var->Buffer = ubo - state->uniform_blocks;
+	 ubo_var->Offset = 0; /* Assigned at link time. */
+	 ubo_var->RowMajor = block_row_major;
+	 if (decl_list->type->qualifier.flags.q.row_major)
+	    ubo_var->RowMajor = true;
+	 else if (decl_list->type->qualifier.flags.q.column_major)
+	    ubo_var->RowMajor = false;
+
+	 /* From the GL_ARB_uniform_buffer_object spec:
+	  *
+	  *     "Sampler types are not allowed inside of uniform
+	  *      blocks. All other types, arrays, and structures
+	  *      allowed for uniforms are allowed within a uniform
+	  *      block."
+	  */
+	 if (var->type->contains_sampler()) {
+	    YYLTYPE loc = decl_list->get_location();
+	    _mesa_glsl_error(&loc, state,
+			     "Uniform in non-default uniform block contains sampler\n");
+	 }
+      }
 
       instructions->append_list(&declared_variables);
    }

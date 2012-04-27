@@ -1491,6 +1491,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->explicit_location = false;
    this->has_initializer = false;
    this->location = -1;
+   this->uniform_block = -1;
    this->warn_extension = NULL;
    this->constant_value = NULL;
    this->constant_initializer = NULL;

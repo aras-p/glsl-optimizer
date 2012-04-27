@@ -2237,6 +2237,24 @@ typedef enum
    MESA_SHADER_TYPES = 3
 } gl_shader_type;
 
+struct gl_uniform_buffer_variable
+{
+   char *Name;
+   const struct glsl_type *Type;
+   unsigned int Buffer;
+   unsigned int Offset;
+   GLboolean RowMajor;
+};
+
+struct gl_uniform_block
+{
+   /** Declared name of the uniform block */
+   char *Name;
+
+   /** Array of supplemental information about UBO ir_variables. */
+   struct gl_uniform_buffer_variable *Uniforms;
+   GLuint NumUniforms;
+};
 
 /**
  * A GLSL program object.
