@@ -33,6 +33,10 @@
 #include "intel_regions.h"
 #include "intel_resolve_map.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* A layer on top of the intel_regions code which adds:
  *
  * - Code to size and layout a region to hold a set of mipmaps.
@@ -412,5 +416,9 @@ intel_miptree_unmap(struct intel_context *intel,
 		    struct intel_mipmap_tree *mt,
 		    unsigned int level,
 		    unsigned int slice);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

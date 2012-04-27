@@ -35,6 +35,9 @@
 #include "mtypes.h"
 #include "formats.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Is the given value one of the 6 cube faces? */
 static inline GLboolean
@@ -286,5 +289,9 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
 
 
 /*@}*/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

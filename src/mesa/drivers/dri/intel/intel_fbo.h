@@ -34,6 +34,10 @@
 #include "intel_context.h"
 #include "intel_screen.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct intel_context;
 struct intel_mipmap_tree;
 struct intel_texture_image;
@@ -196,5 +200,9 @@ intel_renderbuffer_resolve_hiz(struct intel_context *intel,
 bool
 intel_renderbuffer_resolve_depth(struct intel_context *intel,
 				 struct intel_renderbuffer *irb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INTEL_FBO_H */

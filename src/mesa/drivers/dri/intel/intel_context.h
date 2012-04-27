@@ -49,7 +49,6 @@ extern "C" {
 
 #ifdef __cplusplus
 	#undef virtual
-}
 #endif
 
 #include "tnl/t_vertex.h"
@@ -606,5 +605,9 @@ is_power_of_two(uint32_t value)
 {
    return (value & (value - 1)) == 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

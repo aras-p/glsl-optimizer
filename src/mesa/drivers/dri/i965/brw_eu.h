@@ -38,6 +38,10 @@
 #include "brw_defines.h"
 #include "program/prog_instruction.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
 
@@ -1106,5 +1110,9 @@ uint32_t brw_swap_cmod(uint32_t cmod);
 void brw_optimize(struct brw_compile *p);
 void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
 void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

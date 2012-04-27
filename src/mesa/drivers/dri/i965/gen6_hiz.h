@@ -25,6 +25,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct intel_context;
 struct intel_mipmap_tree;
 
@@ -77,3 +81,7 @@ gen6_resolve_depth_slice(struct intel_context *intel,
                          struct intel_mipmap_tree *mt,
                          uint32_t level,
                          uint32_t layer);
+
+#ifdef __cplusplus
+}
+#endif

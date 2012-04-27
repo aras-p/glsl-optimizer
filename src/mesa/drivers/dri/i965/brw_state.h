@@ -35,6 +35,10 @@
 
 #include "brw_context.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct brw_tracked_state brw_blend_constant_color;
 extern const struct brw_tracked_state brw_cc_vp;
 extern const struct brw_tracked_state brw_cc_unit;
@@ -207,5 +211,9 @@ void upload_default_color(struct brw_context *brw,
 uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

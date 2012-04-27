@@ -7,6 +7,10 @@
 #include "intel_bufmgr.h"
 #include "intel_reg.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BATCH_RESERVED 16
 
 void intel_batchbuffer_init(struct intel_context *intel);
@@ -151,5 +155,9 @@ void intel_batchbuffer_cached_advance(struct intel_context *intel);
 
 #define ADVANCE_BATCH() intel_batchbuffer_advance(intel);
 #define CACHED_BATCH() intel_batchbuffer_cached_advance(intel);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
