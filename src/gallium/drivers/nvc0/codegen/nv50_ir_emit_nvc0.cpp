@@ -1063,9 +1063,11 @@ CodeEmitterNVC0::emitTXQ(const TexInstruction *i)
    if (i->tex.sIndirectSrc >= 0 || i->tex.rIndirectSrc >= 0)
       code[1] |= 1 << 18;
 
+   const int src1 = (i->predSrc == 1) ? 2 : 1; // if predSrc == 1, !srcExists(2)
+
    defId(i->def(0), 14);
    srcId(i->src(0), 20);
-   srcId(i->src(1), 26);
+   srcId(i, src1, 26);
 
    emitPredicate(i);
 }
