@@ -481,6 +481,8 @@ TargetNVC0::isModSupported(const Instruction *insn, int s, Modifier mod) const
       case OP_XOR:
          break;
       case OP_ADD:
+         if (mod.abs())
+            return false;
          if (insn->src(s ? 0 : 1).mod.neg())
             return false;
          break;
