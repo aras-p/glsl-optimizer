@@ -87,6 +87,7 @@ private:
    void emitUMUL(const Instruction *);
    void emitFMUL(const Instruction *);
    void emitIMAD(const Instruction *);
+   void emitISAD(const Instruction *);
    void emitFMAD(const Instruction *);
 
    void emitNOT(Instruction *);
@@ -618,6 +619,18 @@ CodeEmitterNVC0::emitIMAD(const Instruction *i)
 
    if (i->subOp == NV50_IR_SUBOP_MUL_HIGH)
       code[0] |= 1 << 6;
+}
+
+void
+CodeEmitterNVC0::emitISAD(const Instruction *i)
+{
+   assert(i->dType == TYPE_S32 || i->dType == TYPE_U32);
+   assert(i->encSize == 8);
+
+   emitForm_A(i, HEX64(38000000, 00000003));
+
+   if (i->dType == TYPE_S32)
+      code[0] |= 1 << 5;
 }
 
 void
@@ -1607,6 +1620,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
          emitFMAD(insn);
       else
          emitIMAD(insn);
+      break;
+   case OP_SAD:
+      emitISAD(insn);
       break;
    case OP_NOT:
       emitNOT(insn);

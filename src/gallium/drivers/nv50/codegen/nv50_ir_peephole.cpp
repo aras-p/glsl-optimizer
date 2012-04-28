@@ -915,57 +915,129 @@ class AlgebraicOpt : public Pass
 private:
    virtual bool visit(BasicBlock *);
 
-   void handleADD(Instruction *);
+   void handleABS(Instruction *);
+   bool handleADD(Instruction *);
+   bool tryADDToMADOrSAD(Instruction *, operation toOp);
    void handleMINMAX(Instruction *);
    void handleRCP(Instruction *);
    void handleSLCT(Instruction *);
    void handleLOGOP(Instruction *);
    void handleCVT(Instruction *);
+
+   BuildUtil bld;
 };
 
 void
+AlgebraicOpt::handleABS(Instruction *abs)
+{
+   Instruction *sub = abs->getSrc(0)->getInsn();
+   DataType ty;
+   if (!sub ||
+       !prog->getTarget()->isOpSupported(OP_SAD, abs->dType))
+      return;
+   // expect not to have mods yet, if we do, bail
+   if (sub->src(0).mod || sub->src(1).mod)
+      return;
+   // hidden conversion ?
+   ty = intTypeToSigned(sub->dType);
+   if (abs->dType != abs->sType || ty != abs->sType)
+      return;
+
+   if ((sub->op != OP_ADD && sub->op != OP_SUB) ||
+       sub->src(0).getFile() != FILE_GPR || sub->src(0).mod ||
+       sub->src(1).getFile() != FILE_GPR || sub->src(1).mod)
+         return;
+
+   Value *src0 = sub->getSrc(0);
+   Value *src1 = sub->getSrc(1);
+
+   if (sub->op == OP_ADD) {
+      Instruction *neg = sub->getSrc(1)->getInsn();
+      if (neg && neg->op != OP_NEG) {
+         neg = sub->getSrc(0)->getInsn();
+         src0 = sub->getSrc(1);
+      }
+      if (!neg || neg->op != OP_NEG ||
+          neg->dType != neg->sType || neg->sType != ty)
+         return;
+      src1 = neg->getSrc(0);
+   }
+
+   // found ABS(SUB))
+   abs->moveSources(1, 2); // move sources >=1 up by 2
+   abs->op = OP_SAD;
+   abs->setType(sub->dType);
+   abs->setSrc(0, src0);
+   abs->setSrc(1, src1);
+   bld.setPosition(abs, false);
+   abs->setSrc(2, bld.loadImm(bld.getSSA(typeSizeof(ty)), 0));
+}
+
+bool
 AlgebraicOpt::handleADD(Instruction *add)
+{
+   Value *src0 = add->getSrc(0);
+   Value *src1 = add->getSrc(1);
+
+   if (src0->reg.file != FILE_GPR || src1->reg.file != FILE_GPR)
+      return false;
+
+   bool changed = false;
+   if (!changed && prog->getTarget()->isOpSupported(OP_MAD, add->dType))
+      changed = tryADDToMADOrSAD(add, OP_MAD);
+   if (!changed && prog->getTarget()->isOpSupported(OP_SAD, add->dType))
+      changed = tryADDToMADOrSAD(add, OP_SAD);
+   return changed;
+}
+
+// ADD(SAD(a,b,0), c) -> SAD(a,b,c)
+// ADD(MUL(a,b), c) -> MAD(a,b,c)
+bool
+AlgebraicOpt::tryADDToMADOrSAD(Instruction *add, operation toOp)
 {
    Value *src0 = add->getSrc(0);
    Value *src1 = add->getSrc(1);
    Value *src;
    int s;
+   const operation srcOp = toOp == OP_SAD ? OP_SAD : OP_MUL;
+   const Modifier modBad = Modifier(~((toOp == OP_MAD) ? NV50_IR_MOD_NEG : 0));
    Modifier mod[4];
 
-   if (!prog->getTarget()->isOpSupported(OP_MAD, add->dType))
-      return;
-
-   if (src0->reg.file != FILE_GPR || src1->reg.file != FILE_GPR)
-      return;
-
    if (src0->refCount() == 1 &&
-       src0->getUniqueInsn() && src0->getUniqueInsn()->op == OP_MUL)
+       src0->getUniqueInsn() && src0->getUniqueInsn()->op == srcOp)
       s = 0;
    else
    if (src1->refCount() == 1 &&
-       src1->getUniqueInsn() && src1->getUniqueInsn()->op == OP_MUL)
+       src1->getUniqueInsn() && src1->getUniqueInsn()->op == srcOp)
       s = 1;
    else
-      return;
+      return false;
 
    if ((src0->getUniqueInsn() && src0->getUniqueInsn()->bb != add->bb) ||
        (src1->getUniqueInsn() && src1->getUniqueInsn()->bb != add->bb))
-      return;
+      return false;
 
    src = add->getSrc(s);
 
    if (src->getInsn()->postFactor)
-      return;
+      return false;
+   if (toOp == OP_SAD) {
+      ImmediateValue imm;
+      if (!src->getInsn()->src(2).getImmediate(imm))
+         return false;
+      if (!imm.isInteger(0))
+         return false;
+   }
 
    mod[0] = add->src(0).mod;
    mod[1] = add->src(1).mod;
    mod[2] = src->getUniqueInsn()->src(0).mod;
    mod[3] = src->getUniqueInsn()->src(1).mod;
 
-   if (((mod[0] | mod[1]) | (mod[2] | mod[3])) & Modifier(~NV50_IR_MOD_NEG))
-      return;
+   if (((mod[0] | mod[1]) | (mod[2] | mod[3])) & modBad)
+      return false;
 
-   add->op = OP_MAD;
+   add->op = toOp;
    add->subOp = src->getInsn()->subOp; // potentially mul-high
 
    add->setSrc(2, add->src(s ? 0 : 1));
@@ -974,6 +1046,8 @@ AlgebraicOpt::handleADD(Instruction *add)
    add->src(0).mod = mod[2] ^ mod[s];
    add->setSrc(1, src->getInsn()->getSrc(1));
    add->src(1).mod = mod[3];
+
+   return true;
 }
 
 void
@@ -1140,6 +1214,9 @@ AlgebraicOpt::visit(BasicBlock *bb)
    for (Instruction *i = bb->getEntry(); i; i = next) {
       next = i->next;
       switch (i->op) {
+      case OP_ABS:
+         handleABS(i);
+         break;
       case OP_ADD:
          handleADD(i);
          break;

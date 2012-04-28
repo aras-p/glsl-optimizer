@@ -658,6 +658,31 @@ Instruction::swapSources(int a, int b)
    srcs[b].mod = m;
 }
 
+// TODO: extend for delta < 0
+void
+Instruction::moveSources(int s, int delta)
+{
+   if (delta == 0)
+      return;
+   assert(delta > 0);
+
+   int k;
+   for (k = 0; srcExists(k); ++k) {
+      for (int i = 0; i < 2; ++i) {
+         if (src(k).indirect[i] >= s)
+            src(k).indirect[i] += delta;
+      }
+   }
+   if (predSrc >= s)
+      predSrc += delta;
+   if (flagsSrc >= s)
+      flagsSrc += delta;
+
+   --k;
+   for (int p = k + delta; k >= s; --k, --p)
+      setSrc(p, src(k));
+}
+
 void
 Instruction::takeExtraSources(int s, Value *values[3])
 {

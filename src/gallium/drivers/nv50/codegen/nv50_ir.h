@@ -603,6 +603,7 @@ public:
    void setSrc(int s, Value *);
    void setSrc(int s, const ValueRef&);
    void swapSources(int a, int b);
+   void moveSources(int s, int delta); // NOTE: only delta > 0 implemented
    bool setIndirect(int s, int dim, Value *);
 
    inline ValueRef& src(int s) { return srcs[s]; }

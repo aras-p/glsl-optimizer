@@ -99,6 +99,7 @@ private:
    void emitFMUL(const Instruction *);
    void emitFMAD(const Instruction *);
    void emitIMAD(const Instruction *);
+   void emitISAD(const Instruction *);
 
    void emitMINMAX(const Instruction *);
 
@@ -1023,6 +1024,35 @@ CodeEmitterNV50::emitIMAD(const Instruction *i)
 }
 
 void
+CodeEmitterNV50::emitISAD(const Instruction *i)
+{
+   if (i->encSize == 8) {
+      code[0] = 0x50000000;
+      switch (i->sType) {
+      case TYPE_U32: code[1] = 0x04000000; break;
+      case TYPE_S32: code[1] = 0x0c000000; break;
+      case TYPE_U16: code[1] = 0x00000000; break;
+      case TYPE_S16: code[1] = 0x08000000; break;
+      default:
+         assert(0);
+         break;
+      }
+      emitForm_MAD(i);
+   } else {
+      switch (i->sType) {
+      case TYPE_U32: code[0] = 0x50008000; break;
+      case TYPE_S32: code[0] = 0x50008100; break;
+      case TYPE_U16: code[0] = 0x50000000; break;
+      case TYPE_S16: code[0] = 0x50000100; break;
+      default:
+         assert(0);
+         break;
+      }
+      emitForm_MUL(i);
+   }
+}
+
+void
 CodeEmitterNV50::emitSET(const Instruction *i)
 {
    code[0] = 0x30000000;
@@ -1542,6 +1572,9 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
          emitFMAD(insn);
       else
          emitIMAD(insn);
+      break;
+   case OP_SAD:
+      emitISAD(insn);
       break;
    case OP_NOT:
       emitNOT(insn);
