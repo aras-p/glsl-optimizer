@@ -3191,7 +3191,7 @@ AMDILTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const
     amdtm = reinterpret_cast<const AMDILTargetMachine*>
     (&this->getTargetMachine());
   const AMDILSubtarget*
-    stm = dynamic_cast<const AMDILSubtarget*>(
+    stm = static_cast<const AMDILSubtarget*>(
         amdtm->getSubtargetImpl());
   if (RST == MVT::f64 && RHSVT.isVector()
       && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
@@ -3248,7 +3248,7 @@ AMDILTargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const
     amdtm = reinterpret_cast<const AMDILTargetMachine*>
     (&this->getTargetMachine());
   const AMDILSubtarget*
-    stm = dynamic_cast<const AMDILSubtarget*>(
+    stm = static_cast<const AMDILSubtarget*>(
         amdtm->getSubtargetImpl());
   if (RST == MVT::f64 && RHSVT.isVector()
       && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
@@ -3314,7 +3314,7 @@ AMDILTargetLowering::genu32tof64(SDValue RHS, EVT LHSVT,
     amdtm = reinterpret_cast<const AMDILTargetMachine*>
     (&this->getTargetMachine());
   const AMDILSubtarget*
-    stm = dynamic_cast<const AMDILSubtarget*>(
+    stm = static_cast<const AMDILSubtarget*>(
         amdtm->getSubtargetImpl());
   if (stm->calVersion() >= CAL_VERSION_SC_135) {
     // unsigned x = RHS;
@@ -3489,7 +3489,7 @@ AMDILTargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
     amdtm = reinterpret_cast<const AMDILTargetMachine*>
     (&this->getTargetMachine());
   const AMDILSubtarget*
-    stm = dynamic_cast<const AMDILSubtarget*>(
+    stm = static_cast<const AMDILSubtarget*>(
         amdtm->getSubtargetImpl());
   if (LST == MVT::f64 && LHSVT.isVector()
       && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
@@ -3543,7 +3543,7 @@ AMDILTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
     amdtm = reinterpret_cast<const AMDILTargetMachine*>
     (&this->getTargetMachine());
   const AMDILSubtarget*
-    stm = dynamic_cast<const AMDILSubtarget*>(
+    stm = static_cast<const AMDILSubtarget*>(
         amdtm->getSubtargetImpl());
   if (LST == MVT::f64 && LHSVT.isVector()
       && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
