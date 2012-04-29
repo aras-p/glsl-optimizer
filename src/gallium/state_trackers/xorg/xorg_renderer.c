@@ -42,44 +42,19 @@ static INLINE void map_point(float *mat, float x, float y,
    }
 }
 
-static INLINE struct pipe_resource *
-renderer_buffer_create(struct xorg_renderer *r)
-{
-   struct pipe_resource *buf =
-      pipe_user_buffer_create(r->pipe->screen,
-                              r->buffer,
-                              sizeof(float)*
-                              r->buffer_size,
-/* XXX was: PIPE_BUFFER_USAGE_PIXEL/PIPE_BUFFER_USAGE_GPU_WRITE even though this is a vertex buffer??? */
-			      PIPE_BIND_VERTEX_BUFFER);
-   r->buffer_size = 0;
-
-   return buf;
-}
-
 static INLINE void
 renderer_draw(struct xorg_renderer *r)
 {
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_resource *buf = 0;
    int num_verts = r->buffer_size/(r->attrs_per_vertex * NUM_COMPONENTS);
 
    if (!r->buffer_size)
       return;
 
-   buf = renderer_buffer_create(r);
+   cso_set_vertex_elements(r->cso, r->attrs_per_vertex, r->velems);
+   util_draw_user_vertex_buffer(r->cso, r->buffer, PIPE_PRIM_QUADS,
+                                num_verts, r->attrs_per_vertex);
 
-
-   if (buf) {
-      cso_set_vertex_elements(r->cso, r->attrs_per_vertex, r->velems);
-
-      util_draw_vertex_buffer(pipe, r->cso, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              num_verts,  /* verts */
-                              r->attrs_per_vertex); /* attribs/vert */
-
-      pipe_resource_reference(&buf, NULL);
-   }
+   r->buffer_size = 0;
 }
 
 static INLINE void
@@ -287,7 +262,7 @@ add_vertex_data2(struct xorg_renderer *r,
                    src_s0, src_t1, mask_s0, mask_t1);
 }
 
-static struct pipe_resource *
+static void
 setup_vertex_data_yuv(struct xorg_renderer *r,
                       float srcX, float srcY, float srcW, float srcH,
                       float dstX, float dstY, float dstW, float dstH,
@@ -317,8 +292,6 @@ setup_vertex_data_yuv(struct xorg_renderer *r,
    /* 4th vertex */
    add_vertex_1tex(r, dstX, dstY + dstH,
                    s0, t1);
-
-   return renderer_buffer_create(r);
 }
 
 
@@ -592,34 +565,26 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
    add_vertex_1tex(r, x0, y1, s0, t1);
 }
 
-
-
-
 void renderer_draw_yuv(struct xorg_renderer *r,
                        float src_x, float src_y, float src_w, float src_h,
                        int dst_x, int dst_y, int dst_w, int dst_h,
                        struct pipe_resource **textures)
 {
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_resource *buf = 0;
+   const int num_attribs = 2; /*pos + tex coord*/
 
-   buf = setup_vertex_data_yuv(r,
-                               src_x, src_y, src_w, src_h,
-                               dst_x, dst_y, dst_w, dst_h,
-                               textures);
+   setup_vertex_data_yuv(r,
+                         src_x, src_y, src_w, src_h,
+                         dst_x, dst_y, dst_w, dst_h,
+                         textures);
 
-   if (buf) {
-      const int num_attribs = 2; /*pos + tex coord*/
+   cso_set_vertex_elements(r->cso, num_attribs, r->velems);
 
-      cso_set_vertex_elements(r->cso, num_attribs, r->velems);
+   util_draw_user_vertex_buffer(r->cso, r->buffer,
+                                PIPE_PRIM_QUADS,
+                                4,  /* verts */
+                                num_attribs); /* attribs/vert */
 
-      util_draw_vertex_buffer(pipe, r->cso, buf, 0,
-                              PIPE_PRIM_QUADS,
-                              4,  /* verts */
-                              num_attribs); /* attribs/vert */
-
-      pipe_resource_reference(&buf, NULL);
-   }
+   r->buffer_size = 0;
 }
 
 void renderer_begin_solid(struct xorg_renderer *r)
