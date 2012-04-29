@@ -96,6 +96,18 @@ nv50_surface(struct pipe_surface *ps)
    return (struct nv50_surface *)ps;
 }
 
+static INLINE enum pipe_format
+nv50_zs_to_s_format(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT: return PIPE_FORMAT_X24S8_UINT;
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM: return PIPE_FORMAT_S8X24_UINT;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT: return PIPE_FORMAT_X32_S8X24_UINT;
+   default:
+      return format;
+   }
+}
+
 #ifndef __NVC0_RESOURCE_H__
 
 unsigned

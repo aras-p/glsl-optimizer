@@ -214,7 +214,8 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
       return;
    }
 
-   assert(src->nr_samples == dst->nr_samples);
+   /* 0 and 1 are equal, only supporting 0/1, 2, 4 and 8 */
+   assert((src->nr_samples | 1) == (dst->nr_samples | 1));
 
    m2mf = (src->format == dst->format) ||
       (util_format_get_blocksizebits(src->format) ==
@@ -454,8 +455,8 @@ struct nvc0_blitctx
       struct nvc0_program *fp;
       unsigned num_textures[5];
       unsigned num_samplers[5];
-      struct pipe_sampler_view *texture;
-      struct nv50_tsc_entry *sampler;
+      struct pipe_sampler_view *texture[2];
+      struct nv50_tsc_entry *sampler[2];
       unsigned dirty;
    } saved;
    struct nvc0_program vp;
@@ -494,7 +495,7 @@ nvc0_blitctx_make_vp(struct nvc0_blitctx *blit)
 static void
 nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
 {
-   static const uint32_t code[] = /* use nvc0dis */
+   static const uint32_t code_nvc0[] = /* use nvc0dis */
    {
       /* 2 coords RGBA in, RGBA out, also for Z32_FLOAT(_S8X24_UINT)
        * NOTE:
@@ -503,7 +504,7 @@ nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
        */
       0xfff01c00, 0xc07e0080,
       0xfff05c00, 0xc07e0084,
-      0x00001c86, 0x8013c000,
+      0x00001e86, 0x8013c000,
       0x00001de7, 0x80000000,
       /* size: 0x70 + padding  */
       0, 0, 0, 0,
@@ -517,9 +518,10 @@ nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
       0x80000000, 0x0000000f, 0x00000000, 0x00000000, 0x00000000,
       0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
       0x00000000, 0x00000000, 0x00000000, 0x0000000f, 0x00000000,
-      0xfff01c00, 0xc07e0080,
-      0xfff05c00, 0xc07e0084,
-      0x00001c86, 0x8010c000,
+      0xfff09c00, 0xc07e0080,
+      0xfff0dc00, 0xc07e0084,
+      0x00201e86, 0x80104000,
+      0x00205f06, 0x80104101,
       0xfc009c02, 0x312dffff,
       0x05001c88,
       0x09009e88,
@@ -534,19 +536,20 @@ nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
       0x0430dc02, 0x30ce0202,
       0x04209c02, 0x30de0202,
       0x00001de7, 0x80000000,
-      /* size: 0xc8 + padding */
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      /* size: 0xd0 + padding */
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
       /* 2 coords ZS in, Z encoded in RGB, S encoded in A (U8_UNORM) */
       0x00021462, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
       0x80000000, 0x0000000f, 0x00000000, 0x00000000, 0x00000000,
       0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
       0x00000000, 0x00000000, 0x00000000, 0x0000000f, 0x00000000,
-      0xfff01c00, 0xc07e0080,
-      0xfff05c00, 0xc07e0084,
-      0x00001c86, 0x8010c000,
+      0xfff09c00, 0xc07e0080,
+      0xfff0dc00, 0xc07e0084,
+      0x00201e86, 0x80104000,
+      0x00205f06, 0x80104101,
       0xfc009c02, 0x312dffff,
-      0x05081c88,
+      0x0500dc88,
       0x09009e88,
       0x0430dc02, 0x30ee0202,
       0xfc201c02, 0x38000003,
@@ -560,11 +563,92 @@ nvc0_blitctx_make_fp(struct nvc0_blitctx *blit)
       0x04209c02, 0x30ce0202,
       0x00001de7, 0x80000000,
    };
+   static const uint32_t code_nve4[] = /* use nvc0dis */
+   {
+      /* 2 coords RGBA in, RGBA out, also for Z32_FLOAT(_S8X24_UINT)
+       * NOTE:
+       * NVC0 doesn't like tex 3d on non-3d textures, but there should
+       * only be 2d and 2d-array MS resources anyway.
+       */
+      0x2202e237, 0x200002ec,
+      0xfff01c00, 0xc07e0080,
+      0xfff05c00, 0xc07e0084,
+      0x00001e86, 0x8013c000,
+      0x00001de6, 0xf0000000,
+      0x00001de7, 0x80000000,
+      /* size: 0x80 */
+
+      /* 2 coords ZS in, S encoded in R, Z encoded in GBA (8_UNORM)
+       * Setup float outputs in a way that conversion to UNORM yields the
+       * desired byte value.
+       */
+      /* NOTE: need to repeat header */
+      0x00021462, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      0x80000000, 0x0000000f, 0x00000000, 0x00000000, 0x00000000,
+      0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      0x00000000, 0x00000000, 0x00000000, 0x0000000f, 0x00000000,
+      0x0202e237, 0x22804c22,
+      0xfff09c00, 0xc07e0080,
+      0xfff0dc00, 0xc07e0084,
+      0x00201e86, 0x80104008,
+      0x00205f06, 0x80104009,
+      0x00001de6, 0xf0000000,
+      0xfc009c02, 0x312dffff,
+      0x05201e04, 0x18000000,
+      0x00428047, 0x22020272,
+      0x09209c84, 0x14000000,
+      0x04001c02, 0x30ee0202,
+      0xfc205c02, 0x38000003,
+      0x0020dc02, 0x3803fc00,
+      0x00209c02, 0x380003fc,
+      0x05205e04, 0x18000000,
+      0x0d20de04, 0x18000000,
+      0x42004277, 0x200002e0,
+      0x09209e04, 0x18000000,
+      0x04105c02, 0x30ee0202,
+      0x0430dc02, 0x30ce0202,
+      0x04209c02, 0x30de0202,
+      0x00001de7, 0x80000000,
+      /* size: 0x100 */
+
+      /* 2 coords ZS in, Z encoded in RGB, S encoded in A (U8_UNORM) */
+      0x00021462, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      0x80000000, 0x0000000f, 0x00000000, 0x00000000, 0x00000000,
+      0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      0x00000000, 0x00000000, 0x00000000, 0x0000000f, 0x00000000,
+      0x0202e237, 0x22804c22,
+      0xfff09c00, 0xc07e0080,
+      0xfff0dc00, 0xc07e0084,
+      0x00201e86, 0x80104008,
+      0x00205f06, 0x80104009,
+      0x00001de6, 0xf0000000,
+      0xfc009c02, 0x312dffff,
+      0x0520de04, 0x18000000,
+      0x00428047, 0x22020272,
+      0x09209c84, 0x14000000,
+      0x0430dc02, 0x30ee0202,
+      0xfc201c02, 0x38000003,
+      0x00205c02, 0x380003fc,
+      0x00209c02, 0x3803fc00,
+      0x01201e04, 0x18000000,
+      0x05205e04, 0x18000000,
+      0x42004277, 0x200002e0,
+      0x09209e04, 0x18000000,
+      0x04001c02, 0x30ee0202,
+      0x04105c02, 0x30de0202,
+      0x04209c02, 0x30ce0202,
+      0x00001de7, 0x80000000,
+   };
 
    blit->fp.type = PIPE_SHADER_FRAGMENT;
    blit->fp.translated = TRUE;
-   blit->fp.code = (uint32_t *)code; /* const_cast */
-   blit->fp.code_size = sizeof(code);
+   if (blit->screen->base.class_3d >= NVE4_3D_CLASS) {
+      blit->fp.code = (uint32_t *)code_nve4; /* const_cast */
+      blit->fp.code_size = sizeof(code_nve4);
+   } else {
+      blit->fp.code = (uint32_t *)code_nvc0; /* const_cast */
+      blit->fp.code_size = sizeof(code_nvc0);
+   }
    blit->fp.max_gpr = 4;
 
    blit->fp.hdr[0]  = 0x00021462; /* fragprog magic */
@@ -666,7 +750,7 @@ nvc0_blit_set_dst(struct nvc0_context *nvc0,
 }
 
 static INLINE void
-nvc0_blit_fixup_tic_entry(struct pipe_sampler_view *view)
+nvc0_blit_fixup_tic_entry(struct pipe_sampler_view *view, const boolean filter)
 {
    struct nv50_tic_entry *ent = nv50_tic_entry(view);
 
@@ -674,12 +758,19 @@ nvc0_blit_fixup_tic_entry(struct pipe_sampler_view *view)
 
    /* magic: */
 
-   ent->tic[3] = 0x20000000; /* affects quality of near vertical edges in MS8 */
+   if (filter) {
+      /* affects quality of near vertical edges in MS8: */
+      ent->tic[3] = 0x20000000;
+   } else {
+      ent->tic[3] = 0;
+      ent->tic[6] = 0;
+   }
 }
 
 static void
 nvc0_blit_set_src(struct nvc0_context *nvc0,
-                  struct pipe_resource *res, unsigned level, unsigned layer)
+                  struct pipe_resource *res, unsigned level, unsigned layer,
+                  const boolean filter)
 {
    struct pipe_context *pipe = &nvc0->base.pipe;
    struct pipe_sampler_view templ;
@@ -694,12 +785,20 @@ nvc0_blit_set_src(struct nvc0_context *nvc0,
    templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
 
    nvc0->textures[4][0] = nvc0_create_sampler_view(pipe, res, &templ);
+   nvc0->textures[4][1] = NULL;
 
-   nvc0_blit_fixup_tic_entry(nvc0->textures[4][0]);
+   nvc0_blit_fixup_tic_entry(nvc0->textures[4][0], filter);
 
    for (s = 0; s <= 3; ++s)
       nvc0->num_textures[s] = 0;
    nvc0->num_textures[4] = 1;
+
+   templ.format = nv50_zs_to_s_format(res->format);
+   if (templ.format != res->format) {
+      nvc0->textures[4][1] = nvc0_create_sampler_view(pipe, res, &templ);
+      nvc0_blit_fixup_tic_entry(nvc0->textures[4][1], filter);
+      nvc0->num_textures[4] = 2;
+   }
 }
 
 static void
@@ -769,19 +868,25 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *blit, struct nvc0_context *nvc0)
    for (s = 0; s <= 4; ++s) {
       blit->saved.num_textures[s] = nvc0->num_textures[s];
       blit->saved.num_samplers[s] = nvc0->num_samplers[s];
-      nvc0->textures_dirty[s] = ~0;
-      nvc0->samplers_dirty[s] = ~0;
+      nvc0->textures_dirty[s] = (1 << nvc0->num_textures[s]) - 1;
+      nvc0->samplers_dirty[s] = (1 << nvc0->num_samplers[s]) - 1;
    }
-   blit->saved.texture = nvc0->textures[4][0];
-   blit->saved.sampler = nvc0->samplers[4][0];
+   blit->saved.texture[0] = nvc0->textures[4][0];
+   blit->saved.texture[1] = nvc0->textures[4][1];
+   blit->saved.sampler[0] = nvc0->samplers[4][0];
+   blit->saved.sampler[1] = nvc0->samplers[4][1];
 
    nvc0->samplers[4][0] = &blit->sampler[blit->filter];
+   nvc0->samplers[4][1] = &blit->sampler[blit->filter];
 
    for (s = 0; s <= 3; ++s)
       nvc0->num_samplers[s] = 0;
-   nvc0->num_samplers[4] = 1;
+   nvc0->num_samplers[4] = 2;
 
    blit->saved.dirty = nvc0->dirty;
+
+   nvc0->textures_dirty[4] |= 3;
+   nvc0->samplers_dirty[4] |= 3;
 
    nvc0->dirty = NVC0_NEW_FRAMEBUFFER |
       NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
@@ -809,15 +914,21 @@ nvc0_blitctx_post_blit(struct nvc0_context *nvc0, struct nvc0_blitctx *blit)
    nvc0->fragprog = blit->saved.fp;
 
    pipe_sampler_view_reference(&nvc0->textures[4][0], NULL);
+   pipe_sampler_view_reference(&nvc0->textures[4][1], NULL);
 
    for (s = 0; s <= 4; ++s) {
       nvc0->num_textures[s] = blit->saved.num_textures[s];
       nvc0->num_samplers[s] = blit->saved.num_samplers[s];
-      nvc0->textures_dirty[s] = ~0;
-      nvc0->samplers_dirty[s] = ~0;
+      nvc0->textures_dirty[s] = (1 << nvc0->num_textures[s]) - 1;
+      nvc0->samplers_dirty[s] = (1 << nvc0->num_samplers[s]) - 1;
    }
-   nvc0->textures[4][0] = blit->saved.texture;
-   nvc0->samplers[4][0] = blit->saved.sampler;
+   nvc0->textures[4][0] = blit->saved.texture[0];
+   nvc0->textures[4][1] = blit->saved.texture[1];
+   nvc0->samplers[4][0] = blit->saved.sampler[0];
+   nvc0->samplers[4][1] = blit->saved.sampler[1];
+
+   nvc0->textures_dirty[4] |= 3;
+   nvc0->samplers_dirty[4] |= 3;
 
    nvc0->dirty = blit->saved.dirty |
       (NVC0_NEW_FRAMEBUFFER | NVC0_NEW_SCISSOR | NVC0_NEW_SAMPLE_MASK |
@@ -854,7 +965,7 @@ nvc0_resource_resolve(struct pipe_context *pipe,
    nvc0_blitctx_pre_blit(blit, nvc0);
 
    nvc0_blit_set_dst(nvc0, dst, info->dst.level, info->dst.layer);
-   nvc0_blit_set_src(nvc0, src, 0,               info->src.layer);
+   nvc0_blit_set_src(nvc0, src, 0,               info->src.layer, blit->filter);
 
    nvc0_blitctx_prepare_state(blit);
 

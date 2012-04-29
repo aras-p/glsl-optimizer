@@ -207,7 +207,8 @@ nv50_resource_copy_region(struct pipe_context *pipe,
       return;
    }
 
-   assert(src->nr_samples == dst->nr_samples);
+   /* 0 and 1 are equal, only supporting 0/1, 2, 4 and 8 */
+   assert((src->nr_samples | 1) == (dst->nr_samples | 1));
 
    m2mf = (src->format == dst->format) ||
       (util_format_get_blocksizebits(src->format) ==
@@ -433,8 +434,8 @@ struct nv50_blitctx
       struct nv50_program *fp;
       unsigned num_textures[3];
       unsigned num_samplers[3];
-      struct pipe_sampler_view *texture;
-      struct nv50_tsc_entry *sampler;
+      struct pipe_sampler_view *texture[2];
+      struct nv50_tsc_entry *sampler[2];
       unsigned dirty;
    } saved;
    struct nv50_program vp;
@@ -495,17 +496,21 @@ nv50_blitctx_make_fp(struct nv50_blitctx *blit)
       /* 3 coords ZS in, S encoded in R, Z encoded in GBA (8_UNORM) */
       0x80000000, /* interp $r0 v[0x00] */
       0x80010004, /* interp $r1 v[0x04] */
-      0x80020009, /* interp $r2 flat v[0x8] */
-      0x00040780,
-      0xf6800001, /* texauto live { $r0,1,#,# } $t0 $s0 { $r0,1,2 } */
+      0x80020108, /* interp $r2 flat v[0x8] */
+      0x10008010, /* mov b32 $r4 $r0 */
+      0xf2820201, /* texauto live { $r0,#,#,# } $t1 $s1 { $r0,1,2 } */
+      0x00000784,
+      0xa000000d, /* cvt f32 $r3 s32 $r0 */
+      0x44014780,
+      0x10000801, /* mov b32 $r0 $r4 */
+      0x0403c780,
+      0xf2800001, /* texauto live { $r0,#,#,# } $t0 $s0 { $r0,1,2 } */
       0x00000784,
       0xc03f0009, /* mul f32 $r2 $r0 (2^24 - 1) */
       0x04b7ffff,
-      0xa0000201, /* cvt f32 $r0 s32 $r1 */
-      0x44014780,
       0xa0000409, /* cvt rni s32 $r2 f32 $r2 */
       0x8c004780,
-      0xc0010001, /* mul f32 $r0 $r0 1/0xff */
+      0xc0010601, /* mul f32 $r0 $r3 1/0xff */
       0x03b8080b,
       0xd03f0405, /* and b32 $r1 $r2 0x0000ff */
       0x0000000f,
@@ -531,14 +536,18 @@ nv50_blitctx_make_fp(struct nv50_blitctx *blit)
       /* 3 coords ZS in, Z encoded in RGB, S encoded in A (U8_UNORM) */
       0x80000000, /* interp $r0 v[0x00] */
       0x80010004, /* interp $r1 v[0x04] */
-      0x80020009, /* interp $r2 flat v[0x8] */
-      0x00040780,
-      0xf6800001, /* texauto live { $r0,1,#,# } $t0 $s0 { $r0,1,2 } */
+      0x80020108, /* interp $r2 flat v[0x8] */
+      0x10008010, /* mov b32 $r4 $r0 */
+      0xf2820201, /* texauto live { $r0,#,#,# } $t1 $s1 { $r0,1,2 } */
+      0x00000784,
+      0xa000000d, /* cvt f32 $r3 s32 $r0 */
+      0x44014780,
+      0x10000801, /* mov b32 $r0 $r4 */
+      0x0403c780,
+      0xf2800001, /* texauto live { $r0,#,#,# } $t0 $s0 { $r0,1,2 } */
       0x00000784,
       0xc03f0009, /* mul f32 $r2 $r0 (2^24 - 1) */
       0x04b7ffff,
-      0xa0000281, /* cvt f32 $r3 s32 $r1 */
-      0x44014780,
       0xa0000409, /* cvt rni s32 $r2 f32 $r2 */
       0x8c004780,
       0xc001060d, /* mul f32 $r3 $r3 1/0xff */
@@ -569,7 +578,7 @@ nv50_blitctx_make_fp(struct nv50_blitctx *blit)
    blit->fp.translated = TRUE;
    blit->fp.code = (uint32_t *)code; /* const_cast */
    blit->fp.code_size = sizeof(code);
-   blit->fp.max_gpr = 4;
+   blit->fp.max_gpr = 5;
    blit->fp.max_out = 4;
    blit->fp.in_nr = 1;
    blit->fp.in[0].mask = 0x7; /* last component flat */
@@ -702,11 +711,19 @@ nv50_blit_set_src(struct nv50_context *nv50,
    templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
 
    nv50->textures[2][0] = nv50_create_sampler_view(pipe, res, &templ);
+   nv50->textures[2][0] = NULL;
 
    nv50_blit_fixup_tic_entry(nv50->textures[2][0]);
 
    nv50->num_textures[0] = nv50->num_textures[1] = 0;
    nv50->num_textures[2] = 1;
+
+   templ.format = nv50_zs_to_s_format(res->format);
+   if (templ.format != res->format) {
+      nv50->textures[2][1] = nv50_create_sampler_view(pipe, res, &templ);
+      nv50_blit_fixup_tic_entry(nv50->textures[2][1]);
+      nv50->num_textures[2] = 2;
+   }
 }
 
 static void
@@ -781,13 +798,16 @@ nv50_blitctx_pre_blit(struct nv50_blitctx *blit, struct nv50_context *nv50)
       blit->saved.num_textures[s] = nv50->num_textures[s];
       blit->saved.num_samplers[s] = nv50->num_samplers[s];
    }
-   blit->saved.texture = nv50->textures[2][0];
-   blit->saved.sampler = nv50->samplers[2][0];
+   blit->saved.texture[0] = nv50->textures[2][0];
+   blit->saved.texture[1] = nv50->textures[2][1];
+   blit->saved.sampler[0] = nv50->samplers[2][0];
+   blit->saved.sampler[1] = nv50->samplers[2][1];
 
    nv50->samplers[2][0] = &blit->sampler[blit->filter];
+   nv50->samplers[2][1] = &blit->sampler[blit->filter];
 
    nv50->num_samplers[0] = nv50->num_samplers[1] = 0;
-   nv50->num_samplers[2] = 1;
+   nv50->num_samplers[2] = 2;
 
    blit->saved.dirty = nv50->dirty;
 
@@ -815,13 +835,16 @@ nv50_blitctx_post_blit(struct nv50_context *nv50, struct nv50_blitctx *blit)
    nv50->fragprog = blit->saved.fp;
 
    pipe_sampler_view_reference(&nv50->textures[2][0], NULL);
+   pipe_sampler_view_reference(&nv50->textures[2][1], NULL);
 
    for (s = 0; s < 3; ++s) {
       nv50->num_textures[s] = blit->saved.num_textures[s];
       nv50->num_samplers[s] = blit->saved.num_samplers[s];
    }
-   nv50->textures[2][0] = blit->saved.texture;
-   nv50->samplers[2][0] = blit->saved.sampler;
+   nv50->textures[2][0] = blit->saved.texture[0];
+   nv50->textures[2][1] = blit->saved.texture[1];
+   nv50->samplers[2][0] = blit->saved.sampler[0];
+   nv50->samplers[2][1] = blit->saved.sampler[1];
 
    nv50->dirty = blit->saved.dirty |
       (NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR | NV50_NEW_SAMPLE_MASK |
