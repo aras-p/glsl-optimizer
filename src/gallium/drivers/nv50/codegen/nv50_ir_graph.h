@@ -24,6 +24,7 @@
 #define __NV50_IR_GRAPH_H__
 
 #include "nv50_ir_util.h"
+#include <vector>
 
 namespace nv50_ir {
 
@@ -164,6 +165,9 @@ public:
    IteratorRef safeIteratorCFG();
 
    void classifyEdges();
+
+   // @weights: indexed by Node::tag
+   int findLightestPathWeight(Node *, Node *, const std::vector<int>& weights);
 
 private:
    void classifyDFS(Node *, int&);

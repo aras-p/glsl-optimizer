@@ -33,7 +33,7 @@ namespace nv50_ir {
 bool
 Instruction::isNop() const
 {
-   if (op == OP_CONSTRAINT || op == OP_PHI)
+   if (op == OP_PHI || op == OP_SPLIT || op == OP_MERGE || op == OP_CONSTRAINT)
       return true;
    if (terminator || join) // XXX: should terminator imply flow ?
       return false;
@@ -1855,7 +1855,10 @@ FlatteningPass::visit(BasicBlock *bb)
    Instruction *insn = bb->getExit();
    if (insn && insn->op == OP_JOIN && !insn->getPredicate()) {
       insn = insn->prev;
-      if (insn && !insn->getPredicate() && !insn->asFlow() && !insn->isNop()) {
+      if (insn && !insn->getPredicate() &&
+          !insn->asFlow() &&
+          insn->op != OP_TEXBAR &&
+          !insn->isNop()) {
          insn->join = 1;
          bb->remove(bb->getExit());
          return true;

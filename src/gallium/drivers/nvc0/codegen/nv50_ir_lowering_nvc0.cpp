@@ -25,6 +25,8 @@
 
 #include "nv50_ir_target_nvc0.h"
 
+#include <limits>
+
 namespace nv50_ir {
 
 #define QOP_ADD  0
@@ -129,8 +131,26 @@ private:
    bool tryReplaceContWithBra(BasicBlock *);
    void propagateJoin(BasicBlock *);
 
-   LValue *r63;
+   struct TexUse
+   {
+      TexUse(Instruction *use, const Instruction *tex)
+         : insn(use), tex(tex), level(-1) { }
+      Instruction *insn;
+      const Instruction *tex; // or split / mov
+      int level;
+   };
+   struct Limits
+   {
+      Limits() { }
+      Limits(int min, int max) : min(min), max(max) { }
+      int min, max;
+   };
+   bool insertTextureBarriers(Function *);
+   inline bool insnDominatedBy(const Instruction *, const Instruction *) const;
+   void findFirstUses(const Instruction *, std::list<TexUse>&);
 
+private:
+   LValue *r63;
    const bool needTexBar;
 };
 
@@ -140,8 +160,255 @@ NVC0LegalizePostRA::NVC0LegalizePostRA(const Program *prog)
 }
 
 bool
+NVC0LegalizePostRA::insnDominatedBy(const Instruction *later,
+                                    const Instruction *early) const
+{
+   if (early->bb == later->bb)
+      return early->serial < later->serial;
+   return later->bb->dominatedBy(early->bb);
+}
+
+void
+NVC0LegalizePostRA::findFirstUses(const Instruction *insn,
+                                  std::list<TexUse> &uses)
+{
+   for (int d = 0; insn->defExists(d); ++d) {
+      Value *v = insn->getDef(d);
+      for (Value::UseIterator u = v->uses.begin(); u != v->uses.end(); ++u) {
+         Instruction *usei = (*u)->getInsn();
+         if (usei->op == OP_SPLIT ||
+             usei->op == OP_PHI ||
+             usei->op == OP_UNION) {
+            // these uses don't manifest in the machine code
+            findFirstUses(usei, uses);
+         } else
+         if (usei->op == OP_MOV && usei->getDef(0)->equals(usei->getSrc(0)) &&
+             usei->subOp != NV50_IR_SUBOP_MOV_FINAL) {
+            findFirstUses(usei, uses);
+         } else {
+            bool add = true;
+            for (std::list<TexUse>::iterator it = uses.begin();
+                 it != uses.end();) {
+               if (insnDominatedBy(usei, it->insn)) {
+                  add = false;
+                  break;
+               }
+               if (insnDominatedBy(it->insn, usei))
+                  it = uses.erase(it);
+               else
+                  ++it;
+            }
+            if (add)
+               uses.push_back(TexUse(usei, insn));
+         }
+      }
+   }
+}
+
+// Texture barriers:
+// This pass is a bit long and ugly and can probably be optimized.
+//
+// 1. obtain a list of TEXes and their outputs' first use(s)
+// 2. calculate the barrier level of each first use (minimal number of TEXes,
+//    over all paths, between the TEX and the use in question)
+// 3. for each barrier, if all paths from the source TEX to that barrier
+//    contain a barrier of lesser level, it can be culled
+bool
+NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
+{
+   std::list<TexUse> *uses;
+   std::vector<Instruction *> texes;
+   std::vector<int> bbFirstTex;
+   std::vector<int> bbFirstUse;
+   std::vector<int> texCounts;
+   std::vector<TexUse> useVec;
+   ArrayList insns;
+
+   fn->orderInstructions(insns);
+
+   texCounts.resize(fn->allBBlocks.getSize(), 0);
+   bbFirstTex.resize(fn->allBBlocks.getSize(), insns.getSize());
+   bbFirstUse.resize(fn->allBBlocks.getSize(), insns.getSize());
+
+   // tag BB CFG nodes by their id for later
+   for (ArrayList::Iterator i = fn->allBBlocks.iterator(); !i.end(); i.next()) {
+      BasicBlock *bb = reinterpret_cast<BasicBlock *>(i.get());
+      if (bb)
+         bb->cfg.tag = bb->getId();
+   }
+
+   // gather the first uses for each TEX
+   for (int i = 0; i < insns.getSize(); ++i) {
+      Instruction *tex = reinterpret_cast<Instruction *>(insns.get(i));
+      if (isTextureOp(tex->op)) {
+         texes.push_back(tex);
+         if (!texCounts.at(tex->bb->getId()))
+            bbFirstTex[tex->bb->getId()] = texes.size() - 1;
+         texCounts[tex->bb->getId()]++;
+      }
+   }
+   insns.clear();
+   if (texes.empty())
+      return false;
+   uses = new std::list<TexUse>[texes.size()];
+   if (!uses)
+      return false;
+   for (size_t i = 0; i < texes.size(); ++i)
+      findFirstUses(texes[i], uses[i]);
+
+   // determine the barrier level at each use
+   for (size_t i = 0; i < texes.size(); ++i) {
+      for (std::list<TexUse>::iterator u = uses[i].begin(); u != uses[i].end();
+           ++u) {
+         BasicBlock *tb = texes[i]->bb;
+         BasicBlock *ub = u->insn->bb;
+         if (tb == ub) {
+            u->level = 0;
+            for (size_t j = i + 1; j < texes.size() &&
+                    texes[j]->bb == tb && texes[j]->serial < u->insn->serial;
+                 ++j)
+               u->level++;
+         } else {
+            u->level = fn->cfg.findLightestPathWeight(&tb->cfg,
+                                                      &ub->cfg, texCounts);
+            if (u->level < 0) {
+               WARN("Failed to find path TEX -> TEXBAR\n");
+               u->level = 0;
+               continue;
+            }
+            // this counted all TEXes in the origin block, correct that
+            u->level -= i - bbFirstTex.at(tb->getId()) + 1 /* this TEX */;
+            // and did not count the TEXes in the destination block, add those
+            for (size_t j = bbFirstTex.at(ub->getId()); j < texes.size() &&
+                    texes[j]->bb == ub && texes[j]->serial < u->insn->serial;
+                 ++j)
+               u->level++;
+         }
+         assert(u->level >= 0);
+         useVec.push_back(*u);
+      }
+   }
+   delete[] uses;
+   uses = NULL;
+
+   // insert the barriers
+   for (size_t i = 0; i < useVec.size(); ++i) {
+      Instruction *prev = useVec[i].insn->prev;
+      if (useVec[i].level < 0)
+         continue;
+      if (prev && prev->op == OP_TEXBAR) {
+         if (prev->subOp > useVec[i].level)
+            prev->subOp = useVec[i].level;
+         prev->setSrc(prev->srcCount(), useVec[i].tex->getDef(0));
+      } else {
+         Instruction *bar = new_Instruction(func, OP_TEXBAR, TYPE_NONE);
+         bar->fixed = 1;
+         bar->subOp = useVec[i].level;
+         // make use explicit to ease latency calculation
+         bar->setSrc(bar->srcCount(), useVec[i].tex->getDef(0));
+         useVec[i].insn->bb->insertBefore(useVec[i].insn, bar);
+      }
+   }
+
+   if (fn->getProgram()->optLevel < 3) {
+      if (uses)
+         delete[] uses;
+      return true;
+   }
+
+   std::vector<Limits> limitT, limitB, limitS; // entry, exit, single
+
+   limitT.resize(fn->allBBlocks.getSize(), Limits(0, 0));
+   limitB.resize(fn->allBBlocks.getSize(), Limits(0, 0));
+   limitS.resize(fn->allBBlocks.getSize());
+
+   // cull unneeded barriers (should do that earlier, but for simplicity)
+   IteratorRef bi = fn->cfg.iteratorDFS(true);
+   // first calculate min/max outstanding TEXes for each BB
+   for (bi->reset(); !bi->end(); bi->next()) {
+      Graph::Node *n = reinterpret_cast<Graph::Node *>(bi->get());
+      BasicBlock *bb = BasicBlock::get(n);
+      int min = 0;
+      int max = std::numeric_limits<int>::max();
+      for (Instruction *i = bb->getFirst(); i; i = i->next) {
+         if (isTextureOp(i->op)) {
+            min++;
+            if (max < std::numeric_limits<int>::max())
+               max++;
+         } else
+         if (i->op == OP_TEXBAR) {
+            min = MIN2(min, i->subOp);
+            max = MIN2(max, i->subOp);
+         }
+      }
+      // limits when looking at an isolated block
+      limitS[bb->getId()].min = min;
+      limitS[bb->getId()].max = max;
+   }
+   // propagate the min/max values
+   for (unsigned int l = 0; l <= fn->loopNestingBound; ++l) {
+      for (bi->reset(); !bi->end(); bi->next()) {
+         Graph::Node *n = reinterpret_cast<Graph::Node *>(bi->get());
+         BasicBlock *bb = BasicBlock::get(n);
+         const int bbId = bb->getId();
+         for (Graph::EdgeIterator ei = n->incident(); !ei.end(); ei.next()) {
+            BasicBlock *in = BasicBlock::get(ei.getNode());
+            const int inId = in->getId();
+            limitT[bbId].min = MAX2(limitT[bbId].min, limitB[inId].min);
+            limitT[bbId].max = MAX2(limitT[bbId].max, limitB[inId].max);
+         }
+         // I just hope this is correct ...
+         if (limitS[bbId].max == std::numeric_limits<int>::max()) {
+            // no barrier
+            limitB[bbId].min = limitT[bbId].min + limitS[bbId].min;
+            limitB[bbId].max = limitT[bbId].max + limitS[bbId].min;
+         } else {
+            // block contained a barrier
+            limitB[bbId].min = MIN2(limitS[bbId].max,
+                                    limitT[bbId].min + limitS[bbId].min);
+            limitB[bbId].max = MIN2(limitS[bbId].max,
+                                    limitT[bbId].max + limitS[bbId].min);
+         }
+      }
+   }
+   // finally delete unnecessary barriers
+   for (bi->reset(); !bi->end(); bi->next()) {
+      Graph::Node *n = reinterpret_cast<Graph::Node *>(bi->get());
+      BasicBlock *bb = BasicBlock::get(n);
+      Instruction *prev = NULL;
+      Instruction *next;
+      int max = limitT[bb->getId()].max;
+      for (Instruction *i = bb->getFirst(); i; i = next) {
+         next = i->next;
+         if (i->op == OP_TEXBAR) {
+            if (i->subOp >= max) {
+               delete_Instruction(prog, i);
+            } else {
+               max = i->subOp;
+               if (prev && prev->op == OP_TEXBAR && prev->subOp >= max) {
+                  delete_Instruction(prog, prev);
+                  prev = NULL;
+               }
+            }
+         } else
+         if (isTextureOp(i->op)) {
+            max++;
+         }
+         if (!i->isNop())
+            prev = i;
+      }
+   }
+   if (uses)
+      delete[] uses;
+   return true;
+}
+
+bool
 NVC0LegalizePostRA::visit(Function *fn)
 {
+   if (needTexBar)
+      insertTextureBarriers(fn);
+
    r63 = new_LValue(fn, FILE_GPR);
    r63->reg.data.id = 63;
    return true;
@@ -235,12 +502,6 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
       } else
       if (i->isNop()) {
          bb->remove(i);
-      } else
-      if (needTexBar && isTextureOp(i->op)) {
-         Instruction *bar = new_Instruction(func, OP_TEXBAR, TYPE_NONE);
-         bar->fixed = 1;
-         bar->subOp = 0;
-         bb->insertAfter(i, bar);
       } else {
          if (i->op != OP_MOV && i->op != OP_PFETCH)
             replaceZero(i);
@@ -673,6 +934,7 @@ NVC0LoweringPass::handleEXPORT(Instruction *i)
       if (i->src(0).isIndirect(0)) // TODO, ugly
          return false;
       i->op = OP_MOV;
+      i->subOp = NV50_IR_SUBOP_MOV_FINAL;
       i->src(0).set(i->src(1));
       i->setSrc(1, NULL);
       i->setDef(0, new_LValue(func, FILE_GPR));

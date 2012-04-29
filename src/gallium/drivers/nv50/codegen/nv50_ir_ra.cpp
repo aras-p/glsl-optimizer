@@ -1615,7 +1615,6 @@ GCRA::resolveSplitsAndMerges()
          v->join = v;
          reg += v->reg.size;
       }
-      delete_Instruction(prog, split);
    }
    splits.clear();
 
@@ -1630,7 +1629,6 @@ GCRA::resolveSplitsAndMerges()
          v->join = v;
          reg += v->reg.size;
       }
-      delete_Instruction(prog, merge);
    }
    merges.clear();
 }

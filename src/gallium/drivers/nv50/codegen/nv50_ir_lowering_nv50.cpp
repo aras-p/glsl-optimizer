@@ -998,6 +998,7 @@ NV50LoweringPreSSA::handleEXPORT(Instruction *i)
          int id = i->getSrc(0)->reg.data.offset / 4; // in 32 bit reg units
 
          i->op = OP_MOV;
+         i->subOp = NV50_IR_SUBOP_MOV_FINAL;
          i->src(0).set(i->src(1));
          i->setSrc(1, NULL);
          i->setDef(0, new_LValue(func, FILE_GPR));

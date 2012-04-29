@@ -21,6 +21,9 @@
  */
 
 #include "nv50_ir_graph.h"
+#include <limits>
+#include <list>
+#include "nv50_ir.h"
 
 namespace nv50_ir {
 
@@ -228,8 +231,7 @@ public:
    virtual bool end() const { return pos >= count; }
    virtual void next() { if (pos < count) ++pos; }
    virtual void *get() const { return nodes[pos]; }
-
-   void reset() { pos = 0; }
+   virtual void reset() { pos = 0; }
 
 protected:
    Graph::Node **nodes;
@@ -274,6 +276,7 @@ public:
    virtual void *get() const { return nodes[pos]; }
    virtual bool end() const { return pos >= count; }
    virtual void next() { if (pos < count) ++pos; }
+   virtual void reset() { pos = 0; }
 
 private:
    void search(Graph::Node *node, const int sequence)
@@ -387,6 +390,45 @@ void Graph::classifyDFS(Node *curr, int& seq)
    }
 
    curr->tag = 0;
+}
+
+// @dist is indexed by Node::tag, returns -1 if no path found
+int
+Graph::findLightestPathWeight(Node *a, Node *b, const std::vector<int> &weight)
+{
+   std::vector<int> path(weight.size(), std::numeric_limits<int>::max());
+   std::list<Node *> nodeList;
+   const int seq = nextSequence();
+
+   path[a->tag] = 0;
+   for (Node *c = a; c && c != b;) {
+      const int p = path[c->tag] + weight[c->tag];
+      for (EdgeIterator ei = c->outgoing(); !ei.end(); ei.next()) {
+         Node *t = ei.getNode();
+         if (t->getSequence() < seq) {
+            if (path[t->tag] == std::numeric_limits<int>::max())
+               nodeList.push_front(t);
+            if (p < path[t->tag])
+               path[t->tag] = p;
+         }
+      }
+      c->visit(seq);
+      Node *next = NULL;
+      for (std::list<Node *>::iterator n = nodeList.begin();
+           n != nodeList.end(); ++n) {
+         if (!next || path[(*n)->tag] < path[next->tag])
+            next = *n;
+         if ((*n) == c) {
+            // erase visited
+            n = nodeList.erase(n);
+            --n;
+         }
+      }
+      c = next;
+   }
+   if (path[b->tag] == std::numeric_limits<int>::max())
+      return -1;
+   return path[b->tag];
 }
 
 } // namespace nv50_ir

@@ -91,6 +91,7 @@ public:
    virtual void next() = 0;
    virtual void *get() const = 0;
    virtual bool end() const = 0; // if true, get will return 0
+   virtual void reset() { assert(0); } // only for graph iterators
 };
 
 typedef std::auto_ptr<Iterator> IteratorRef;

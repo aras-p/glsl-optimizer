@@ -135,6 +135,8 @@ enum operation
    OP_LAST
 };
 
+// various instruction-specific modifier definitions Instruction::subOp
+// MOV_FINAL marks a MOV originating from an EXPORT (used for placing TEXBARs)
 #define NV50_IR_SUBOP_MUL_HIGH     1
 #define NV50_IR_SUBOP_EMIT_RESTART 1
 #define NV50_IR_SUBOP_LDC_IL       1
@@ -143,6 +145,7 @@ enum operation
 #define NV50_IR_SUBOP_SHIFT_WRAP   1
 #define NV50_IR_SUBOP_EMU_PRERET   1
 #define NV50_IR_SUBOP_TEXBAR(n)    n
+#define NV50_IR_SUBOP_MOV_FINAL    1
 
 enum DataType
 {
