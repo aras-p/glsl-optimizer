@@ -566,20 +566,9 @@ static void renderer_quad_texcoord(struct renderer *r,
  */
 static void renderer_quad_draw(struct renderer *r)
 {
-   struct pipe_resource *buf;
-
-   buf = pipe_user_buffer_create(r->pipe->screen,
-                                 r->vertices,
-                                 sizeof(r->vertices),
-                                 PIPE_BIND_VERTEX_BUFFER);
-   if (buf) {
-      util_draw_vertex_buffer(r->pipe, r->cso, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              Elements(r->vertices),     /* verts */
-                              Elements(r->vertices[0])); /* attribs/vert */
-
-      pipe_resource_reference(&buf, NULL);
-   }
+   util_draw_user_vertex_buffer(r->cso, r->vertices, PIPE_PRIM_TRIANGLE_FAN,
+                                Elements(r->vertices),     /* verts */
+                                Elements(r->vertices[0])); /* attribs/vert */
 }
 
 /**
