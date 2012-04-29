@@ -59,7 +59,7 @@
 #include "xorg_winsys.h"
 
 #ifdef HAVE_LIBKMS
-#include "libkms.h"
+#include "libkms/libkms.h"
 #endif
 
 /*
