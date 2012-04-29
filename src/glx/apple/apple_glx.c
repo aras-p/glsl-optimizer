@@ -33,6 +33,8 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <dlfcn.h>
+#include <pthread.h>
+#include <inttypes.h>
 #include "appledri.h"
 #include "apple_glx.h"
 #include "apple_glx_context.h"
@@ -42,22 +44,6 @@ static bool initialized = false;
 static int dri_event_base = 0;
 
 const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-
-static bool diagnostic = false;
-
-void
-apple_glx_diagnostic(const char *fmt, ...)
-{
-   va_list vl;
-
-   if (diagnostic) {
-      fprintf(stderr, "DIAG: ");
-
-      va_start(vl, fmt);
-      vfprintf(stderr, fmt, vl);
-      va_end(vl);
-   }
-}
 
 int
 apple_get_dri_event_base(void)
@@ -125,10 +111,9 @@ apple_init_glx(Display * dpy)
    if (initialized)
       return false;
 
-   if (getenv("LIBGL_DIAGNOSTIC")) {
-      printf("initializing libGL in %s\n", __func__);
-      diagnostic = true;
-   }
+   apple_glx_log_init();
+
+   apple_glx_log(ASL_LEVEL_INFO, "Initializing libGL.");
 
    apple_cgl_init();
    (void) apple_glx_get_client_id();

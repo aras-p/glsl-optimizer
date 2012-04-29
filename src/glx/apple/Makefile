@@ -26,6 +26,7 @@ SOURCES = \
 	apple_glx.c \
 	apple_glx_context.c \
 	apple_glx_drawable.c \
+	apple_glx_log.c \
 	apple_glx_pbuffer.c \
 	apple_glx_pixmap.c \
 	apple_glx_surface.c \
