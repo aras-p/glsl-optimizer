@@ -29,7 +29,7 @@ Target *getTargetNV50(unsigned int chipset)
    return new TargetNV50(chipset);
 }
 
-TargetNV50::TargetNV50(unsigned int card)
+TargetNV50::TargetNV50(unsigned int card) : Target(true, false)
 {
    chipset = card;
 
@@ -131,8 +131,6 @@ void TargetNV50::initOpInfo()
    {
       OP_CALL, OP_PREBREAK, OP_PRERET, OP_QUADON, OP_QUADPOP, OP_JOINAT
    };
-
-   joinAnterior = true;
 
    for (i = 0; i < DATA_FILE_COUNT; ++i)
       nativeFileMap[i] = (DataFile)i;

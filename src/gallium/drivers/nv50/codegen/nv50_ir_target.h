@@ -93,9 +93,31 @@ protected:
    RelocInfo *relocInfo;
 };
 
+
+enum OpClass
+{
+   OPCLASS_MOVE          = 0,
+   OPCLASS_LOAD          = 1,
+   OPCLASS_STORE         = 2,
+   OPCLASS_ARITH         = 3,
+   OPCLASS_SHIFT         = 4,
+   OPCLASS_SFU           = 5,
+   OPCLASS_LOGIC         = 6,
+   OPCLASS_COMPARE       = 7,
+   OPCLASS_CONVERT       = 8,
+   OPCLASS_ATOMIC        = 9,
+   OPCLASS_TEXTURE       = 10,
+   OPCLASS_SURFACE       = 11,
+   OPCLASS_FLOW          = 12,
+   OPCLASS_PSEUDO        = 14,
+   OPCLASS_OTHER         = 15
+};
+
 class Target
 {
 public:
+   Target(bool j, bool s) : joinAnterior(j), hasSWSched(s) { }
+
    static Target *create(uint32_t chipset);
    static void destroy(Target *);
 
@@ -153,6 +175,9 @@ public:
    virtual bool mayPredicate(const Instruction *,
                              const Value *) const = 0;
 
+   // whether @insn can be issued together with @next (order matters)
+   virtual bool canDualIssue(const Instruction *insn,
+                             const Instruction *next) const { return false; }
    virtual int getLatency(const Instruction *) const { return 1; }
    virtual int getThroughput(const Instruction *) const { return 1; }
 
@@ -162,9 +187,20 @@ public:
    virtual uint32_t getSVAddress(DataFile, const Symbol *) const = 0;
 
 public:
-   bool joinAnterior; // true if join is executed before the op
+   const bool joinAnterior; // true if join is executed before the op
+   const bool hasSWSched;   // true if code should provide scheduling data
 
    static const uint8_t operationSrcNr[OP_LAST + 1];
+   static const OpClass operationClass[OP_LAST + 1];
+
+   static inline uint8_t getOpSrcNr(operation op)
+   {
+      return operationSrcNr[op];
+   }
+   static inline OpClass getOpClass(operation op)
+   {
+      return operationClass[op];
+   }
 
 protected:
    uint32_t chipset;

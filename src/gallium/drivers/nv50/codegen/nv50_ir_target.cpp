@@ -52,6 +52,65 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
    0
 };
 
+const OpClass Target::operationClass[OP_LAST + 1] =
+{
+   // NOP; PHI; UNION, SPLIT, MERGE, CONSTRAINT
+   OPCLASS_OTHER,
+   OPCLASS_PSEUDO,
+   OPCLASS_PSEUDO, OPCLASS_PSEUDO, OPCLASS_PSEUDO, OPCLASS_PSEUDO,
+   // MOV; LOAD; STORE
+   OPCLASS_MOVE,
+   OPCLASS_LOAD,
+   OPCLASS_STORE,
+   // ADD, SUB, MUL; DIV, MOD; MAD, FMA, SAD
+   OPCLASS_ARITH, OPCLASS_ARITH, OPCLASS_ARITH,
+   OPCLASS_ARITH, OPCLASS_ARITH,
+   OPCLASS_ARITH, OPCLASS_ARITH, OPCLASS_ARITH,
+   // ABS, NEG; NOT, AND, OR, XOR; SHL, SHR
+   OPCLASS_CONVERT, OPCLASS_CONVERT,
+   OPCLASS_LOGIC, OPCLASS_LOGIC, OPCLASS_LOGIC, OPCLASS_LOGIC,
+   OPCLASS_SHIFT, OPCLASS_SHIFT,
+   // MAX, MIN
+   OPCLASS_COMPARE, OPCLASS_COMPARE,
+   // SAT, CEIL, FLOOR, TRUNC; CVT
+   OPCLASS_CONVERT, OPCLASS_CONVERT, OPCLASS_CONVERT, OPCLASS_CONVERT,
+   OPCLASS_CONVERT,
+   // SET(AND,OR,XOR); SELP, SLCT
+   OPCLASS_COMPARE, OPCLASS_COMPARE, OPCLASS_COMPARE, OPCLASS_COMPARE,
+   OPCLASS_COMPARE, OPCLASS_COMPARE,
+   // RCP, RSQ, LG2, SIN, COS; EX2, EXP, LOG, PRESIN, PREEX2; SQRT, POW
+   OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU,
+   OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU, OPCLASS_SFU,
+   OPCLASS_SFU, OPCLASS_SFU,
+   // BRA, CALL, RET; CONT, BREAK, PRE(RET,CONT,BREAK); BRKPT, JOINAT, JOIN
+   OPCLASS_FLOW, OPCLASS_FLOW, OPCLASS_FLOW,
+   OPCLASS_FLOW, OPCLASS_FLOW, OPCLASS_FLOW, OPCLASS_FLOW, OPCLASS_FLOW,
+   OPCLASS_FLOW, OPCLASS_FLOW, OPCLASS_FLOW,
+   // DISCARD, EXIT
+   OPCLASS_FLOW, OPCLASS_FLOW,
+   // MEMBAR
+   OPCLASS_OTHER,
+   // VFETCH, PFETCH, EXPORT
+   OPCLASS_LOAD, OPCLASS_OTHER, OPCLASS_STORE,
+   // LINTERP, PINTERP
+   OPCLASS_SFU, OPCLASS_SFU,
+   // EMIT, RESTART
+   OPCLASS_OTHER, OPCLASS_OTHER,
+   // TEX, TXB, TXL, TXF; TXQ, TXD, TXG, TEXCSAA
+   OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE,
+   OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE,
+   // SULD, SUST
+   OPCLASS_SURFACE, OPCLASS_SURFACE,
+   // DFDX, DFDY, RDSV, WRSV; PIXLD, QUADOP, QUADON, QUADPOP
+   OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER,
+   OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER,
+   // POPCNT, INSBF, EXTBF
+   OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER,
+   // TEXBAR
+   OPCLASS_OTHER,
+   OPCLASS_PSEUDO // LAST
+};
+
 
 extern Target *getTargetNVC0(unsigned int chipset);
 extern Target *getTargetNV50(unsigned int chipset);
@@ -104,6 +163,11 @@ CodeEmitter::printBinary() const
    INFO("\n");
 }
 
+static inline uint32_t sizeToBundlesNVE4(uint32_t size)
+{
+   return (size + 55) / 56;
+}
+
 void
 CodeEmitter::prepareEmission(Program *prog)
 {
@@ -112,6 +176,23 @@ CodeEmitter::prepareEmission(Program *prog)
       Function *func = reinterpret_cast<Function *>(fi.get());
       func->binPos = prog->binSize;
       prepareEmission(func);
+
+      // adjust sizes & positions for schedulding info:
+      if (prog->getTarget()->hasSWSched) {
+         BasicBlock *bb = NULL;
+         for (int i = 0; i < func->bbCount; ++i) {
+            bb = func->bbArray[i];
+            const uint32_t oldPos = bb->binPos;
+            const uint32_t oldEnd = bb->binPos + bb->binSize;
+            uint32_t adjPos = oldPos + sizeToBundlesNVE4(oldPos) * 8;
+            uint32_t adjEnd = oldEnd + sizeToBundlesNVE4(oldEnd) * 8;
+            bb->binPos = adjPos;
+            bb->binSize = adjEnd - adjPos;
+         }
+         if (bb)
+            func->binSize = bb->binPos + bb->binSize;
+      }
+
       prog->binSize += func->binSize;
    }
 }

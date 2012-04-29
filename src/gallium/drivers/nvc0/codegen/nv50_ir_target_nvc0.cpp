@@ -29,7 +29,7 @@ Target *getTargetNVC0(unsigned int chipset)
    return new TargetNVC0(chipset);
 }
 
-TargetNVC0::TargetNVC0(unsigned int card)
+TargetNVC0::TargetNVC0(unsigned int card) : Target(false, card >= 0xe4)
 {
    chipset = card;
    initOpInfo();
@@ -273,8 +273,6 @@ void TargetNVC0::initOpInfo()
       OP_JOIN, OP_JOINAT, OP_BRKPT, OP_MEMBAR, OP_EMIT, OP_RESTART,
       OP_QUADON, OP_QUADPOP, OP_TEXBAR
    };
-
-   joinAnterior = false;
 
    for (i = 0; i < DATA_FILE_COUNT; ++i)
       nativeFileMap[i] = (DataFile)i;
@@ -534,14 +532,39 @@ TargetNVC0::isPostMultiplySupported(operation op, float f, int& e) const
 }
 
 // TODO: better values
+// this could be more precise, e.g. depending on the issue-to-read/write delay
+// of the depending instruction, but it's good enough
 int TargetNVC0::getLatency(const Instruction *i) const
 {
-   if (i->op == OP_LOAD) {
-      if (i->cache == CACHE_CV)
-         return 700;
-      return 48;
+   if (chipset >= 0xe4) {
+      if (i->dType == TYPE_F64 || i->sType == TYPE_F64)
+         return 20;
+      switch (i->op) {
+      case OP_LINTERP:
+      case OP_PINTERP:
+         return 15;
+      case OP_LOAD:
+         if (i->src(0).getFile() == FILE_MEMORY_CONST)
+            return 9;
+         // fall through
+      case OP_VFETCH:
+         return 24;
+      default:
+         if (Target::getOpClass(i->op) == OPCLASS_TEXTURE)
+            return 17;
+         if (i->op == OP_MUL && i->dType != TYPE_F32)
+            return 15;
+         return 9;
+      }
+   } else {
+      if (i->op == OP_LOAD) {
+         if (i->cache == CACHE_CV)
+            return 700;
+         return 48;
+      }
+      return 24;
    }
-   return 24;
+   return 32;
 }
 
 // These are "inverse" throughput values, i.e. the number of cycles required
@@ -610,6 +633,44 @@ int TargetNVC0::getThroughput(const Instruction *i) const
       return 2;
    } else {
       return 1;
+   }
+}
+
+bool TargetNVC0::canDualIssue(const Instruction *a, const Instruction *b) const
+{
+   const OpClass clA = operationClass[a->op];
+   const OpClass clB = operationClass[b->op];
+
+   if (getChipset() >= 0xe4) {
+      // not texturing
+      // not if the 2nd instruction isn't necessarily executed
+      if (clA == OPCLASS_TEXTURE || clA == OPCLASS_FLOW)
+         return false;
+      // anything with MOV
+      if (a->op == OP_MOV || b->op == OP_MOV)
+         return true;
+      if (clA == clB) {
+         // only F32 arith or integer additions
+         if (clA != OPCLASS_ARITH)
+            return false;
+         return (a->dType == TYPE_F32 || a->op == OP_ADD ||
+                 b->dType == TYPE_F32 || b->op == OP_ADD);
+      }
+      // nothing with TEXBAR
+      if (a->op == OP_TEXBAR || b->op == OP_TEXBAR)
+         return false;
+      // no loads and stores accessing the the same space
+      if ((clA == OPCLASS_LOAD && clB == OPCLASS_STORE) ||
+          (clB == OPCLASS_LOAD && clA == OPCLASS_STORE))
+         if (a->src(0).getFile() == b->src(0).getFile())
+            return false;
+      // no > 32-bit ops
+      if (typeSizeof(a->dType) > 4 || typeSizeof(b->dType) > 4 ||
+          typeSizeof(a->sType) > 4 || typeSizeof(b->sType) > 4)
+         return false;
+      return true;
+   } else {
+      return false; // info not needed (yet)
    }
 }
 

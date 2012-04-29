@@ -33,6 +33,7 @@ public:
 
    virtual bool emitInstruction(Instruction *);
    virtual uint32_t getMinEncodingSize(const Instruction *) const;
+   virtual void prepareEmission(Function *);
 
    inline void setProgramType(Program::Type pType) { progType = pType; }
 
@@ -40,6 +41,8 @@ private:
    const TargetNVC0 *targ;
 
    Program::Type progType;
+
+   const bool writeIssueDelays;
 
 private:
    void emitForm_A(const Instruction *, uint64_t);
@@ -1505,13 +1508,38 @@ CodeEmitterNVC0::emitMOV(const Instruction *i)
 bool
 CodeEmitterNVC0::emitInstruction(Instruction *insn)
 {
+   unsigned int size = insn->encSize;
+
+   if (writeIssueDelays && !(codeSize & 0x3f))
+      size += 8;
+
    if (!insn->encSize) {
       ERROR("skipping unencodable instruction: "); insn->print();
       return false;
    } else
-   if (codeSize + insn->encSize > codeSizeLimit) {
+   if (codeSize + size > codeSizeLimit) {
       ERROR("code emitter output buffer too small\n");
       return false;
+   }
+
+   if (writeIssueDelays) {
+      if (!(codeSize & 0x3f)) {
+         code[0] = 0x00000007; // cf issue delay "instruction"
+         code[1] = 0x20000000;
+         code += 2;
+         codeSize += 8;
+      }
+      const unsigned int id = (codeSize & 0x3f) / 8 - 1;
+      uint32_t *data = code - (id * 2 + 2);
+      if (id <= 2) {
+         data[0] |= insn->sched << (id * 8 + 4);
+      } else
+      if (id == 3) {
+         data[0] |= insn->sched << 28;
+         data[1] |= insn->sched >> 4;
+      } else {
+         data[1] |= insn->sched << ((id - 4) * 8 + 4);
+      }
    }
 
    // assert that instructions with multiple defs don't corrupt registers
@@ -1707,7 +1735,7 @@ CodeEmitterNVC0::getMinEncodingSize(const Instruction *i) const
 {
    const Target::OpInfo &info = targ->getOpInfo(i);
 
-   if (info.minEncSize == 8 || 1)
+   if (writeIssueDelays || info.minEncSize == 8 || 1)
       return 8;
 
    if (i->ftz || i->saturate || i->join)
@@ -1761,7 +1789,503 @@ CodeEmitterNVC0::getMinEncodingSize(const Instruction *i) const
    return 4;
 }
 
-CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target) : CodeEmitter(target)
+// Simplified, erring on safe side.
+class SchedDataCalculator : public Pass
+{
+public:
+   SchedDataCalculator(const Target *targ) : targ(targ) { }
+
+private:
+   struct RegScores
+   {
+      struct Resource {
+         int st[DATA_FILE_COUNT]; // LD to LD delay 3
+         int ld[DATA_FILE_COUNT]; // ST to ST delay 3
+         int tex; // TEX to non-TEX delay 17 (0x11)
+         int sfu; // SFU to SFU delay 3 (except PRE-ops)
+         int imul; // integer MUL to MUL delay 3
+      } res;
+      struct ScoreData {
+         int r[64];
+         int p[8];
+         int c;
+      } rd, wr;
+      int base;
+
+      void rebase(const int base)
+      {
+         const int delta = this->base - base;
+         if (!delta)
+            return;
+         this->base = 0;
+
+         for (int i = 0; i < 64; ++i) {
+            rd.r[i] += delta;
+            wr.r[i] += delta;
+         }
+         for (int i = 0; i < 8; ++i) {
+            rd.p[i] += delta;
+            wr.p[i] += delta;
+         }
+         rd.c += delta;
+         wr.c += delta;
+
+         for (unsigned int f = 0; f < DATA_FILE_COUNT; ++f) {
+            res.ld[f] += delta;
+            res.st[f] += delta;
+         }
+         res.sfu += delta;
+         res.imul += delta;
+         res.tex += delta;
+      }
+      void wipe()
+      {
+         memset(&rd, 0, sizeof(rd));
+         memset(&wr, 0, sizeof(wr));
+         memset(&res, 0, sizeof(res));
+      }
+      int getLatest(const ScoreData& d) const
+      {
+         int max = 0;
+         for (int i = 0; i < 64; ++i)
+            if (d.r[i] > max)
+               max = d.r[i];
+         for (int i = 0; i < 8; ++i)
+            if (d.p[i] > max)
+               max = d.p[i];
+         if (d.c > max)
+            max = d.c;
+         return max;
+      }
+      inline int getLatestRd() const
+      {
+         return getLatest(rd);
+      }
+      inline int getLatestWr() const
+      {
+         return getLatest(wr);
+      }
+      inline int getLatest() const
+      {
+         const int a = getLatestRd();
+         const int b = getLatestWr();
+
+         int max = MAX2(a, b);
+         for (unsigned int f = 0; f < DATA_FILE_COUNT; ++f) {
+            max = MAX2(res.ld[f], max);
+            max = MAX2(res.st[f], max);
+         }
+         max = MAX2(res.sfu, max);
+         max = MAX2(res.imul, max);
+         max = MAX2(res.tex, max);
+         return max;
+      }
+      void setMax(const RegScores *that)
+      {
+         for (int i = 0; i < 64; ++i) {
+            rd.r[i] = MAX2(rd.r[i], that->rd.r[i]);
+            wr.r[i] = MAX2(wr.r[i], that->wr.r[i]);
+         }
+         for (int i = 0; i < 8; ++i) {
+            rd.p[i] = MAX2(rd.p[i], that->rd.p[i]);
+            wr.p[i] = MAX2(wr.p[i], that->wr.p[i]);
+         }
+         rd.c = MAX2(rd.c, that->rd.c);
+         wr.c = MAX2(wr.c, that->wr.c);
+
+         for (unsigned int f = 0; f < DATA_FILE_COUNT; ++f) {
+            res.ld[f] = MAX2(res.ld[f], that->res.ld[f]);
+            res.st[f] = MAX2(res.st[f], that->res.st[f]);
+         }
+         res.sfu = MAX2(res.sfu, that->res.sfu);
+         res.imul = MAX2(res.imul, that->res.imul);
+         res.tex = MAX2(res.tex, that->res.tex);
+      }
+      void print(int cycle)
+      {
+         for (int i = 0; i < 64; ++i) {
+            if (rd.r[i] > cycle)
+               INFO("rd $r%i @ %i\n", i, rd.r[i]);
+            if (wr.r[i] > cycle)
+               INFO("wr $r%i @ %i\n", i, wr.r[i]);
+         }
+         for (int i = 0; i < 8; ++i) {
+            if (rd.p[i] > cycle)
+               INFO("rd $p%i @ %i\n", i, rd.p[i]);
+            if (wr.p[i] > cycle)
+               INFO("wr $p%i @ %i\n", i, wr.p[i]);
+         }
+         if (rd.c > cycle)
+            INFO("rd $c @ %i\n", rd.c);
+         if (wr.c > cycle)
+            INFO("wr $c @ %i\n", wr.c);
+         if (res.sfu > cycle)
+            INFO("sfu @ %i\n", res.sfu);
+         if (res.imul > cycle)
+            INFO("imul @ %i\n", res.imul);
+         if (res.tex > cycle)
+            INFO("tex @ %i\n", res.tex);
+      }
+   };
+
+   RegScores *score; // for current BB
+   std::vector<RegScores> scoreBoards;
+   int cycle;
+   int prevData;
+   operation prevOp;
+
+   const Target *targ;
+
+   bool visit(Function *);
+   bool visit(BasicBlock *);
+
+   void commitInsn(const Instruction *, int cycle);
+   int calcDelay(const Instruction *, int cycle) const;
+   void setDelay(Instruction *, int delay, Instruction *next);
+
+   void recordRd(const Value *, const int ready);
+   void recordWr(const Value *, const int ready);
+   void checkRd(const Value *, int cycle, int& delay) const;
+   void checkWr(const Value *, int cycle, int& delay) const;
+
+   int getCycles(const Instruction *, int origDelay) const;
+};
+
+void
+SchedDataCalculator::setDelay(Instruction *insn, int delay, Instruction *next)
+{
+   if (insn->op == OP_EXIT)
+      delay = MAX2(delay, 14);
+
+   if (insn->op == OP_TEXBAR) {
+      // TODO: except if results not used before EXIT
+      insn->sched = 0xc2;
+   } else
+   if (insn->op == OP_JOIN || insn->join) {
+      insn->sched = 0x00;
+   } else
+   if (delay >= 0 || prevData == 0x04 ||
+       !next || !targ->canDualIssue(insn, next)) {
+      insn->sched = static_cast<uint8_t>(MAX2(delay, 0));
+      if (prevOp == OP_EXPORT)
+         insn->sched |= 0x40;
+      else
+         insn->sched |= 0x20;
+   } else {
+      insn->sched = 0x04; // dual-issue
+   }
+
+   if (prevData != 0x04 || prevOp != OP_EXPORT)
+      if (insn->sched != 0x04 || insn->op == OP_EXPORT)
+         prevOp = insn->op;
+
+   prevData = insn->sched;
+}
+
+int
+SchedDataCalculator::getCycles(const Instruction *insn, int origDelay) const
+{
+   if (insn->sched & 0x80) {
+      int c = (insn->sched & 0x0f) * 2 + 1;
+      if (insn->op == OP_TEXBAR && origDelay > 0)
+         c += origDelay;
+      return c;
+   }
+   if (insn->sched & 0x60)
+      return (insn->sched & 0x1f) + 1;
+   return (insn->sched == 0x04) ? 0 : 32;
+}
+
+bool
+SchedDataCalculator::visit(Function *func)
+{
+   scoreBoards.resize(func->cfg.getSize());
+   for (size_t i = 0; i < scoreBoards.size(); ++i)
+      scoreBoards[i].wipe();
+   return true;
+}
+
+bool
+SchedDataCalculator::visit(BasicBlock *bb)
+{
+   Instruction *insn;
+   Instruction *next = NULL;
+
+   int cycle = 0;
+
+   prevData = 0x00;
+   prevOp = OP_NOP;
+   score = &scoreBoards.at(bb->getId());
+
+   for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
+      BasicBlock *in = BasicBlock::get(ei.getNode());
+      if (in->getExit()) {
+         if (prevData != 0x04)
+            prevData = in->getExit()->sched;
+         prevOp = in->getExit()->op;
+      }
+      if (ei.getType() != Graph::Edge::BACK)
+         score->setMax(&scoreBoards.at(in->getId()));
+      // back branches will wait until all target dependencies are satisfied
+   }
+   if (bb->cfg.incidentCount() > 1)
+      prevOp = OP_NOP;
+
+#ifdef NVC0_DEBUG_SCHED_DATA
+   INFO("=== BB:%i initial scores\n", bb->getId());
+   score->print(cycle);
+#endif
+
+   for (insn = bb->getEntry(); insn && insn->next; insn = insn->next) {
+      next = insn->next;
+
+      commitInsn(insn, cycle);
+      int delay = calcDelay(next, cycle);
+      setDelay(insn, delay, next);
+      cycle += getCycles(insn, delay);
+
+#ifdef NVC0_DEBUG_SCHED_DATA
+      INFO("cycle %i, sched %02x\n", cycle, insn->sched);
+      insn->print();
+      next->print();
+#endif
+   }
+   if (!insn)
+      return true;
+   commitInsn(insn, cycle);
+
+   int bbDelay = -1;
+
+   for (Graph::EdgeIterator ei = bb->cfg.outgoing(); !ei.end(); ei.next()) {
+      BasicBlock *out = BasicBlock::get(ei.getNode());
+
+      if (ei.getType() != Graph::Edge::BACK) {
+         // only test the first instruction of the outgoing block
+         next = out->getEntry();
+         if (next)
+            bbDelay = MAX2(bbDelay, calcDelay(next, cycle));
+      } else {
+         // wait until all dependencies are satisfied
+         const int regsFree = score->getLatest();
+         next = out->getFirst();
+         for (int c = cycle; next && c < regsFree; next = next->next) {
+            bbDelay = MAX2(bbDelay, calcDelay(next, c));
+            c += getCycles(next, bbDelay);
+         }
+         next = NULL;
+      }
+   }
+   if (bb->cfg.outgoingCount() != 1)
+      next = NULL;
+   setDelay(insn, bbDelay, next);
+   cycle += getCycles(insn, bbDelay);
+
+   score->rebase(cycle); // common base for initializing out blocks' scores
+   return true;
+}
+
+#define NVE4_MAX_ISSUE_DELAY 0x1f
+int
+SchedDataCalculator::calcDelay(const Instruction *insn, int cycle) const
+{
+   int delay = 0, ready = cycle;
+
+   for (int s = 0; insn->srcExists(s); ++s)
+      checkRd(insn->getSrc(s), cycle, delay);
+   // WAR & WAW don't seem to matter
+   // for (int s = 0; insn->srcExists(s); ++s)
+   //   recordRd(insn->getSrc(s), cycle);
+
+   switch (Target::getOpClass(insn->op)) {
+   case OPCLASS_SFU:
+      ready = score->res.sfu;
+      break;
+   case OPCLASS_ARITH:
+      if (insn->op == OP_MUL && !isFloatType(insn->dType))
+         ready = score->res.imul;
+      break;
+   case OPCLASS_TEXTURE:
+      ready = score->res.tex;
+      break;
+   case OPCLASS_LOAD:
+      ready = score->res.ld[insn->src(0).getFile()];
+      break;
+   case OPCLASS_STORE:
+      ready = score->res.st[insn->src(0).getFile()];
+      break;
+   default:
+      break;
+   }
+   if (Target::getOpClass(insn->op) != OPCLASS_TEXTURE)
+      ready = MAX2(ready, score->res.tex);
+
+   delay = MAX2(delay, ready - cycle);
+
+   // if can issue next cycle, delay is 0, not 1
+   return MIN2(delay - 1, NVE4_MAX_ISSUE_DELAY);
+}
+
+void
+SchedDataCalculator::commitInsn(const Instruction *insn, int cycle)
+{
+   const int ready = cycle + targ->getLatency(insn);
+
+   for (int d = 0; insn->defExists(d); ++d)
+      recordWr(insn->getDef(d), ready);
+   // WAR & WAW don't seem to matter
+   // for (int s = 0; insn->srcExists(s); ++s)
+   //   recordRd(insn->getSrc(s), cycle);
+
+   switch (Target::getOpClass(insn->op)) {
+   case OPCLASS_SFU:
+      score->res.sfu = cycle + 4;
+      break;
+   case OPCLASS_ARITH:
+      if (insn->op == OP_MUL && !isFloatType(insn->dType))
+         score->res.imul = cycle + 4;
+      break;
+   case OPCLASS_TEXTURE:
+      score->res.tex = cycle + 18;
+      break;
+   case OPCLASS_LOAD:
+      if (insn->src(0).getFile() == FILE_MEMORY_CONST)
+         break;
+      score->res.ld[insn->src(0).getFile()] = cycle + 4;
+      score->res.st[insn->src(0).getFile()] = ready;
+      break;
+   case OPCLASS_STORE:
+      score->res.st[insn->src(0).getFile()] = cycle + 4;
+      score->res.ld[insn->src(0).getFile()] = ready;
+      break;
+   case OPCLASS_OTHER:
+      if (insn->op == OP_TEXBAR)
+         score->res.tex = cycle;
+      break;
+   default:
+      break;
+   }
+
+#ifdef NVC0_DEBUG_SCHED_DATA
+   score->print(cycle);
+#endif
+}
+
+void
+SchedDataCalculator::checkRd(const Value *v, int cycle, int& delay) const
+{
+   int ready = cycle;
+   int a, b;
+
+   switch (v->reg.file) {
+   case FILE_GPR:
+      a = v->reg.data.id;
+      b = a + v->reg.size / 4;
+      for (int r = a; r < b; ++r)
+         ready = MAX2(ready, score->rd.r[r]);
+      break;
+   case FILE_PREDICATE:
+      ready = MAX2(ready, score->rd.p[v->reg.data.id]);
+      break;
+   case FILE_FLAGS:
+      ready = MAX2(ready, score->rd.c);
+      break;
+   case FILE_SHADER_INPUT:
+   case FILE_SHADER_OUTPUT: // yes, TCPs can read outputs
+   case FILE_MEMORY_LOCAL:
+   case FILE_MEMORY_CONST:
+   case FILE_MEMORY_SHARED:
+   case FILE_MEMORY_GLOBAL:
+   case FILE_SYSTEM_VALUE:
+      // TODO: any restrictions here ?
+      break;
+   case FILE_IMMEDIATE:
+      break;
+   default:
+      assert(0);
+      break;
+   }
+   if (cycle < ready)
+      delay = MAX2(delay, ready - cycle);
+}
+
+void
+SchedDataCalculator::checkWr(const Value *v, int cycle, int& delay) const
+{
+   int ready = cycle;
+   int a, b;
+
+   switch (v->reg.file) {
+   case FILE_GPR:
+      a = v->reg.data.id;
+      b = a + v->reg.size / 4;
+      for (int r = a; r < b; ++r)
+         ready = MAX2(ready, score->wr.r[r]);
+      break;
+   case FILE_PREDICATE:
+      ready = MAX2(ready, score->wr.p[v->reg.data.id]);
+      break;
+   default:
+      assert(v->reg.file == FILE_FLAGS);
+      ready = MAX2(ready, score->wr.c);
+      break;
+   }
+   if (cycle < ready)
+      delay = MAX2(delay, ready - cycle);
+}
+
+void
+SchedDataCalculator::recordWr(const Value *v, const int ready)
+{
+   int a = v->reg.data.id;
+
+   if (v->reg.file == FILE_GPR) {
+      int b = a + v->reg.size / 4;
+      for (int r = a; r < b; ++r)
+         score->rd.r[r] = ready;
+   } else
+   // $c, $pX: shorter issue-to-read delay (at least as exec pred and carry)
+   if (v->reg.file == FILE_PREDICATE) {
+      score->rd.p[a] = ready + 4;
+   } else {
+      assert(v->reg.file == FILE_FLAGS);
+      score->rd.c = ready + 4;
+   }
+}
+
+void
+SchedDataCalculator::recordRd(const Value *v, const int ready)
+{
+   int a = v->reg.data.id;
+
+   if (v->reg.file == FILE_GPR) {
+      int b = a + v->reg.size / 4;
+      for (int r = a; r < b; ++r)
+         score->wr.r[r] = ready;
+   } else
+   if (v->reg.file == FILE_PREDICATE) {
+      score->wr.p[a] = ready;
+   } else
+   if (v->reg.file == FILE_FLAGS) {
+      score->wr.c = ready;
+   }
+}
+
+void
+CodeEmitterNVC0::prepareEmission(Function *func)
+{
+   const Target *targ = func->getProgram()->getTarget();
+
+   CodeEmitter::prepareEmission(func);
+
+   if (targ->hasSWSched) {
+      SchedDataCalculator sched(targ);
+      sched.run(func, true, true);
+   }
+}
+
+CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target)
+   : CodeEmitter(target),
+     writeIssueDelays(target->hasSWSched)
 {
    code = NULL;
    codeSize = codeSizeLimit = 0;

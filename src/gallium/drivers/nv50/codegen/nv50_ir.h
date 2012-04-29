@@ -681,6 +681,8 @@ public:
 
    uint8_t subOp; // quadop, 1 for mul-high, etc.
 
+   uint8_t sched; // scheduling data (NOTE: maybe move to separate storage)
+
    unsigned encSize    : 4; // encoding size in bytes
    unsigned saturate   : 1; // to [0.0f, 1.0f]
    unsigned join       : 1; // converge control flow (use OP_JOIN until end)
