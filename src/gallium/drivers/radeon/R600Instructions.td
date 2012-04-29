@@ -434,6 +434,11 @@ def KILP : Pat <
   (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO)))
 >;
 
+def KIL : Pat <
+  (int_AMDGPU_kill R600_Reg32:$src0),
+  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0)))
+>;
+
 /* Helper classes for common instructions */
 
 class MUL_LIT_Common <bits<32> inst> : R600_3OP <
