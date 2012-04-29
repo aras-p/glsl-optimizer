@@ -2692,6 +2692,13 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    texObj = _mesa_get_current_tex_object(ctx, target);
    _mesa_lock_texture(ctx, texObj);
 
+   if (texObj->Immutable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glEGLImageTargetTexture2D(texture is immutable)");
+      _mesa_unlock_texture(ctx, texObj);
+      return;
+   }
+
    texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
    if (!texImage) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glEGLImageTargetTexture2D");
