@@ -3,7 +3,7 @@
 The syntax of a source list file is a very small subset of GNU Make.  These
 features are supported
 
- operators: +=, :=
+ operators: =, +=, :=
  line continuation
  non-nested variable expansion
  comment
@@ -62,17 +62,18 @@ class SourceListParser(object):
         if op_pos < 0:
             self._error('not a variable definition')
 
-        if op_pos > 0 and line[op_pos - 1] in [':', '+']:
-            op_pos -= 1
+        if op_pos > 0:
+            if line[op_pos - 1] in [':', '+']:
+                op_pos -= 1
         else:
-            self._error('only := and += are supported')
+            self._error('only =, :=, and += are supported')
 
         # set op, sym, and val
         op = line[op_pos:op_end]
         sym = line[:op_pos].strip()
         val = self._expand_value(line[op_end:].lstrip())
 
-        if op == ':=':
+        if op in ('=', ':='):
             self.symbol_table[sym] = val
         elif op == '+=':
             self.symbol_table[sym] += ' ' + val
