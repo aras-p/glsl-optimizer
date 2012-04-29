@@ -421,7 +421,7 @@ apple_glx_make_current_context(Display * dpy, void *oldptr, void *ptr,
     */
 
    if (same_drawable && ac->is_current) {
-      apple_glx_diagnostic("%s: same_drawable and ac->is_current\n");
+      apple_glx_diagnostic("same_drawable and ac->is_current\n");
       return false;
    }
 
