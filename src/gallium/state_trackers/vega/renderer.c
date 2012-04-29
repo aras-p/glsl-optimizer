@@ -1054,7 +1054,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
    cso_set_vertex_buffers(renderer->cso, 1, vbuf);
 
    if (!renderer->u.polygon_stencil.manual_two_sides) {
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
    }
    else {
       struct pipe_rasterizer_state raster;
@@ -1069,7 +1069,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 
       cso_set_rasterizer(renderer->cso, &raster);
       cso_set_depth_stencil_alpha(renderer->cso, &dsa);
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
 
       /* back */
       raster.cull_face = PIPE_FACE_FRONT;
@@ -1077,7 +1077,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 
       cso_set_rasterizer(renderer->cso, &raster);
       cso_set_depth_stencil_alpha(renderer->cso, &dsa);
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
    }
 }
 
