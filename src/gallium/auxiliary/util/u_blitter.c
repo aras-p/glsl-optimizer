@@ -733,6 +733,7 @@ static void blitter_draw(struct blitter_context_priv *ctx,
    u_upload_unmap(ctx->upload);
    util_draw_vertex_buffer(ctx->base.pipe, NULL, buf, offset,
                            PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+   pipe_resource_reference(&buf, NULL);
 }
 
 static void blitter_draw_rectangle(struct blitter_context *blitter,
