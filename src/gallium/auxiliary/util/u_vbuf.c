@@ -239,6 +239,8 @@ void u_vbuf_destroy(struct u_vbuf *mgr)
 {
    unsigned i;
 
+   mgr->pipe->set_vertex_buffers(mgr->pipe, 0, NULL);
+
    for (i = 0; i < mgr->nr_vertex_buffers; i++) {
       pipe_resource_reference(&mgr->vertex_buffer[i].buffer, NULL);
    }
