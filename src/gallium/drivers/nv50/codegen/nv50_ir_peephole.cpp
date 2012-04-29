@@ -1935,6 +1935,8 @@ FlatteningPass::visit(BasicBlock *bb)
       if (insn && !insn->getPredicate() &&
           !insn->asFlow() &&
           insn->op != OP_TEXBAR &&
+          insn->op != OP_LINTERP && // probably just nve4
+          insn->op != OP_PINTERP && // probably just nve4
           !insn->isNop()) {
          insn->join = 1;
          bb->remove(bb->getExit());
