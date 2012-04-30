@@ -717,6 +717,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
 
       real_vb->buffer_offset = orig_vb->buffer_offset = vb->buffer_offset;
       real_vb->stride = orig_vb->stride = vb->stride;
+      real_vb->user_buffer = NULL;
 
       if (vb->stride) {
          mgr->nonzero_stride_vb_mask |= 1 << i;
@@ -741,6 +742,7 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
       }
 
       pipe_resource_reference(&real_vb->buffer, vb->buffer);
+      real_vb->user_buffer = vb->user_buffer;
    }
 
    for (i = count; i < mgr->nr_vertex_buffers; i++) {
