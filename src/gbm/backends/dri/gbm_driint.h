@@ -77,9 +77,6 @@ struct gbm_dri_bo {
 struct gbm_dri_surface {
    struct gbm_surface base;
 
-   __DRIbuffer *(*get_front_buffer)(struct gbm_dri_surface *, void *);
-   void (*release_buffer)(struct gbm_dri_surface *, __DRIbuffer *, void *);
-   int (*has_free_buffers)(void *);
    void *dri_private;
 };
 
