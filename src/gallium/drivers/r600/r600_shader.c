@@ -287,6 +287,7 @@ static void llvm_if(struct r600_shader_ctx *ctx, struct r600_bytecode_alu * alu,
 {
 	alu->inst = pred_inst; 
 	alu->predicate = 1;
+	alu->dst.write = 0;
 	alu->src[1].sel = V_SQ_ALU_SRC_0;
 	alu->src[1].chan = 0;
 	alu->last = 1;
