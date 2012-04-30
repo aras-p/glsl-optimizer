@@ -157,7 +157,7 @@ RegisterSet::assign(int32_t& reg, DataFile f, unsigned int size)
 bool
 RegisterSet::occupy(const Value *v)
 {
-   return occupy(v->reg.file, v->reg.data.id, v->reg.size >> unit[v->reg.file]);
+   return occupy(v->reg.file, idToUnits(v), v->reg.size >> unit[v->reg.file]);
 }
 
 void
