@@ -93,6 +93,7 @@ public:
    ir_copy_propagation_elements_visitor()
    {
       this->progress = false;
+      this->killed_all = false;
       this->mem_ctx = ralloc_context(NULL);
       this->shader_mem_ctx = NULL;
       this->acp = new(mem_ctx) exec_list;
