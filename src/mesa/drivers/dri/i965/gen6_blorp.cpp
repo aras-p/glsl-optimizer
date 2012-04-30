@@ -31,7 +31,7 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 
-#include "gen6_hiz.h"
+#include "gen6_blorp.h"
 
 /**
  * \name Constants for HiZ VBO

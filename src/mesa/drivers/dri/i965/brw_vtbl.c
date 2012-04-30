@@ -49,8 +49,8 @@
 #include "brw_vs.h"
 #include "brw_wm.h"
 
-#include "gen6_hiz.h"
-#include "gen7_hiz.h"
+#include "gen6_blorp.h"
+#include "gen7_blorp.h"
 
 #include "glsl/ralloc.h"
 

@@ -31,8 +31,8 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 
-#include "gen6_hiz.h"
-#include "gen7_hiz.h"
+#include "gen6_blorp.h"
+#include "gen7_blorp.h"
 
 /**
  * \copydoc gen6_hiz_exec()
