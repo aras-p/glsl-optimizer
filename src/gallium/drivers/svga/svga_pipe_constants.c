@@ -52,7 +52,8 @@ static void svga_set_constant_buffer(struct pipe_context *pipe,
    struct pipe_resource *buf = cb ? cb->buffer : NULL;
 
    if (cb && cb->user_buffer) {
-      buf = svga_user_buffer_create(pipe->screen, cb->user_buffer,
+      buf = svga_user_buffer_create(pipe->screen,
+                                    (void *) cb->user_buffer,
                                     cb->buffer_size,
                                     PIPE_BIND_CONSTANT_BUFFER);
    }
