@@ -1338,7 +1338,7 @@ GCRA::allocateRegisters(ArrayList& insns)
       if (prog->dbgFlags & NV50_IR_DEBUG_REG_ALLOC)
          func->print();
    } else {
-      prog->maxGPR = regs.getMaxAssigned(FILE_GPR);
+      prog->maxGPR = std::max(prog->maxGPR, regs.getMaxAssigned(FILE_GPR));
    }
 
 out:
