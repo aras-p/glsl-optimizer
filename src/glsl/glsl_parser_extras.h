@@ -205,6 +205,8 @@ struct _mesa_glsl_parse_state {
    bool OES_texture_3D_warn;
    bool OES_EGL_image_external_enable;
    bool OES_EGL_image_external_warn;
+   bool ARB_shader_bit_encoding_enable;
+   bool ARB_shader_bit_encoding_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

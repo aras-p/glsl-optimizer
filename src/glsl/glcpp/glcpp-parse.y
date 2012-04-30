@@ -1141,6 +1141,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	   if (extensions->OES_EGL_image_external)
 	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
+
+	   if (extensions->ARB_shader_bit_encoding)
+	      add_builtin_define(parser, "GL_ARB_shader_bit_encoding", 1);
 	}
 
 	language_version = 110;
