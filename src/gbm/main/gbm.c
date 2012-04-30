@@ -389,10 +389,11 @@ gbm_surface_destroy(struct gbm_surface *surf)
  *
  * \param surf The surface
  *
- * \return A newly allocated buffer object that should be released
- * with gbm_surface_release_buffer() when no longer needed.  This bo
- * should not be destroyed using gbm_bo_destroy().  If an error occurs
- * this function returns %NULL.
+ * \return A buffer object that should be released with
+ * gbm_surface_release_buffer() when no longer needed.  The implementation
+ * is free to reuse buffers released with gbm_surface_release_buffer() so
+ * this bo should not be destroyed using gbm_bo_destroy().  If an error
+ * occurs this function returns %NULL.
  */
 GBM_EXPORT struct gbm_bo *
 gbm_surface_lock_front_buffer(struct gbm_surface *surf)
@@ -403,10 +404,11 @@ gbm_surface_lock_front_buffer(struct gbm_surface *surf)
 /**
  * Release a locked buffer obtained with gbm_surface_lock_front_buffer()
  *
- * The bo is destroyed after a call to this function and returns the
- * underlying buffer to the gbm surface.  Releasing a bo will
- * typically make gbm_surface_has_free_buffer() return 1 and thus
- * allow rendering the next frame, but not always.
+ * Returns the underlying buffer to the gbm surface.  Releasing a bo
+ * will typically make gbm_surface_has_free_buffer() return 1 and thus
+ * allow rendering the next frame, but not always. The implementation
+ * may choose to destroy the bo immediately or reuse it, in which case
+ * the user data associated with it is unchanged.
  *
  * \param surf The surface
  * \param bo The buffer object
