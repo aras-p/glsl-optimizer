@@ -1170,7 +1170,7 @@ emit_declaration(
       for( i = first; i <= last; i++ ) {
          for( j = 0; j < NUM_CHANNELS; j++ ) {
             if( mask & (1 << j) ) {
-               switch( decl->Declaration.Interpolate ) {
+               switch( decl->Interp.Interpolate ) {
                case TGSI_INTERPOLATE_CONSTANT:
                   emit_coef_a0( func, 0, i, j );
                   emit_inputs( func, 0, i, j );

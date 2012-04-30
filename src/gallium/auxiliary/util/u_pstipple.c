@@ -298,12 +298,13 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          /* declare new position input reg */
          decl = tgsi_default_full_declaration();
          decl.Declaration.File = TGSI_FILE_INPUT;
-         decl.Declaration.Interpolate = TGSI_INTERPOLATE_LINEAR;
+         decl.Declaration.Interpolate = 1;
          decl.Declaration.Semantic = 1;
          decl.Semantic.Name = TGSI_SEMANTIC_POSITION;
          decl.Semantic.Index = 0;
          decl.Range.First = 
             decl.Range.Last = wincoordInput;
+         decl.Interp.Interpolate = TGSI_INTERPOLATE_LINEAR;
          ctx->emit_declaration(ctx, &decl);
       }
 

@@ -104,12 +104,10 @@ tgsi_default_declaration( void )
    declaration.NrTokens = 1;
    declaration.File = TGSI_FILE_NULL;
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
-   declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+   declaration.Interpolate = 0;
    declaration.Dimension = 0;
    declaration.Semantic = 0;
-   declaration.Centroid = 0;
    declaration.Invariant = 0;
-   declaration.CylindricalWrap = 0;
 
    return declaration;
 }
@@ -121,9 +119,7 @@ tgsi_build_declaration(
    unsigned interpolate,
    unsigned dimension,
    unsigned semantic,
-   unsigned centroid,
    unsigned invariant,
-   unsigned cylindrical_wrap,
    struct tgsi_header *header )
 {
    struct tgsi_declaration declaration;
@@ -137,9 +133,7 @@ tgsi_build_declaration(
    declaration.Interpolate = interpolate;
    declaration.Dimension = dimension;
    declaration.Semantic = semantic;
-   declaration.Centroid = centroid;
    declaration.Invariant = invariant;
-   declaration.CylindricalWrap = cylindrical_wrap;
 
    header_bodysize_grow( header );
 
@@ -192,6 +186,36 @@ tgsi_build_declaration_dimension(unsigned index_2d,
    declaration_grow(declaration, header);
 
    return dd;
+}
+
+static struct tgsi_declaration_interp
+tgsi_default_declaration_interp( void )
+{
+   struct tgsi_declaration_interp di;
+
+   di.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+   di.Centroid = 0;
+   di.CylindricalWrap = 0;
+
+   return di;
+}
+
+static struct tgsi_declaration_interp
+tgsi_build_declaration_interp(unsigned interpolate,
+                              unsigned centroid,
+                              unsigned cylindrical_wrap,
+                              struct tgsi_declaration *declaration,
+                              struct tgsi_header *header)
+{
+   struct tgsi_declaration_interp di;
+
+   di.Interpolate = interpolate;
+   di.Centroid = centroid;
+   di.CylindricalWrap = cylindrical_wrap;
+
+   declaration_grow(declaration, header);
+
+   return di;
 }
 
 static struct tgsi_declaration_semantic
@@ -298,6 +322,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Declaration  = tgsi_default_declaration();
    full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
+   full_declaration.Interp = tgsi_default_declaration_interp();
    full_declaration.ImmediateData.u = NULL;
    full_declaration.Resource = tgsi_default_declaration_resource();
    full_declaration.SamplerView = tgsi_default_declaration_sampler_view();
@@ -327,9 +352,7 @@ tgsi_build_full_declaration(
       full_decl->Declaration.Interpolate,
       full_decl->Declaration.Dimension,
       full_decl->Declaration.Semantic,
-      full_decl->Declaration.Centroid,
       full_decl->Declaration.Invariant,
-      full_decl->Declaration.CylindricalWrap,
       header );
 
    if (maxsize <= size)
@@ -355,6 +378,22 @@ tgsi_build_full_declaration(
       *dd = tgsi_build_declaration_dimension(full_decl->Dim.Index2D,
                                              declaration,
                                              header);
+   }
+
+   if (full_decl->Declaration.Interpolate) {
+      struct tgsi_declaration_interp *di;
+
+      if (maxsize <= size) {
+         return 0;
+      }
+      di = (struct tgsi_declaration_interp *)&tokens[size];
+      size++;
+
+      *di = tgsi_build_declaration_interp(full_decl->Interp.Interpolate,
+                                          full_decl->Interp.Centroid,
+                                          full_decl->Interp.CylindricalWrap,
+                                          declaration,
+                                          header);
    }
 
    if( full_decl->Declaration.Semantic ) {

@@ -199,7 +199,7 @@ static void declare_input_fs(
 	LLVMValueRef attr_number = lp_build_const_int32(gallivm, input_index);
 
 	/* XXX: Handle all possible interpolation modes */
-	switch (decl->Declaration.Interpolate) {
+	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
 		if (si_shader_ctx->rctx->rasterizer->flatshade)
 			intr_name = "llvm.SI.fs.interp.constant";
@@ -331,14 +331,14 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			i = shader->ninput++;
 			shader->input[i].name = d->Semantic.Name;
 			shader->input[i].sid = d->Semantic.Index;
-			shader->input[i].interpolate = d->Declaration.Interpolate;
-			shader->input[i].centroid = d->Declaration.Centroid;
+			shader->input[i].interpolate = d->Interp.Interpolate;
+			shader->input[i].centroid = d->Interp.Centroid;
 			break;
 		case TGSI_FILE_OUTPUT:
 			i = shader->noutput++;
 			shader->output[i].name = d->Semantic.Name;
 			shader->output[i].sid = d->Semantic.Index;
-			shader->output[i].interpolate = d->Declaration.Interpolate;
+			shader->output[i].interpolate = d->Interp.Interpolate;
 			break;
 		}
 

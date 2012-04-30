@@ -306,36 +306,39 @@ iter_declaration(
       }
    }
 
-   if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
-       decl->Declaration.File == TGSI_FILE_INPUT)
-   {
-      TXT( ", " );
-      ENM( decl->Declaration.Interpolate, tgsi_interpolate_names );
-   }
+   if (decl->Declaration.Interpolate) {
+      if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
+          decl->Declaration.File == TGSI_FILE_INPUT)
+      {
+         TXT( ", " );
+         ENM( decl->Interp.Interpolate, tgsi_interpolate_names );
+      }
 
-   if (decl->Declaration.Centroid) {
-      TXT( ", CENTROID" );
+      if (decl->Interp.Centroid) {
+         TXT( ", CENTROID" );
+      }
+
+      if (decl->Interp.CylindricalWrap) {
+         TXT(", CYLWRAP_");
+         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_X) {
+            CHR('X');
+         }
+         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Y) {
+            CHR('Y');
+         }
+         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Z) {
+            CHR('Z');
+         }
+         if (decl->Interp.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_W) {
+            CHR('W');
+         }
+      }
    }
 
    if (decl->Declaration.Invariant) {
       TXT( ", INVARIANT" );
    }
 
-   if (decl->Declaration.CylindricalWrap) {
-      TXT(", CYLWRAP_");
-      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_X) {
-         CHR('X');
-      }
-      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Y) {
-         CHR('Y');
-      }
-      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Z) {
-         CHR('Z');
-      }
-      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_W) {
-         CHR('W');
-      }
-   }
 
    if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
       unsigned i;

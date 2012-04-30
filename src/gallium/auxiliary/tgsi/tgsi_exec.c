@@ -2371,7 +2371,7 @@ exec_declaration(struct tgsi_exec_machine *mach,
             eval_coef_func eval;
             uint i, j;
 
-            switch (decl->Declaration.Interpolate) {
+            switch (decl->Interp.Interpolate) {
             case TGSI_INTERPOLATE_CONSTANT:
                eval = eval_constant_coef;
                break;

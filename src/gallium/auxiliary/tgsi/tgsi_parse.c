@@ -113,6 +113,10 @@ tgsi_parse_token(
          next_token(ctx, &decl->Dim);
       }
 
+      if( decl->Declaration.Interpolate ) {
+         next_token( ctx, &decl->Interp );
+      }
+
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );
       }

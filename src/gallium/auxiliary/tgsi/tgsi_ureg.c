@@ -46,6 +46,7 @@ union tgsi_any_token {
    struct tgsi_declaration decl;
    struct tgsi_declaration_range decl_range;
    struct tgsi_declaration_dimension decl_dim;
+   struct tgsi_declaration_interp decl_interp;
    struct tgsi_declaration_semantic decl_semantic;
    struct tgsi_declaration_sampler_view decl_sampler_view;
    struct tgsi_immediate imm;
@@ -1229,25 +1230,28 @@ emit_decl_fs(struct ureg_program *ureg,
              unsigned cylindrical_wrap,
              unsigned centroid)
 {
-   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 4);
 
    out[0].value = 0;
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
-   out[0].decl.NrTokens = 3;
+   out[0].decl.NrTokens = 4;
    out[0].decl.File = file;
    out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW; /* FIXME! */
-   out[0].decl.Interpolate = interpolate;
+   out[0].decl.Interpolate = 1;
    out[0].decl.Semantic = 1;
-   out[0].decl.CylindricalWrap = cylindrical_wrap;
-   out[0].decl.Centroid = centroid;
 
    out[1].value = 0;
    out[1].decl_range.First = index;
    out[1].decl_range.Last = index;
 
    out[2].value = 0;
-   out[2].decl_semantic.Name = semantic_name;
-   out[2].decl_semantic.Index = semantic_index;
+   out[2].decl_interp.Interpolate = interpolate;
+   out[2].decl_interp.CylindricalWrap = cylindrical_wrap;
+   out[2].decl_interp.Centroid = centroid;
+
+   out[3].value = 0;
+   out[3].decl_semantic.Name = semantic_name;
+   out[3].decl_semantic.Index = semantic_index;
 }
 
 
@@ -1263,7 +1267,6 @@ static void emit_decl_range( struct ureg_program *ureg,
    out[0].decl.NrTokens = 2;
    out[0].decl.File = file;
    out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
-   out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    out[0].decl.Semantic = 0;
 
    out[1].value = 0;
@@ -1285,7 +1288,6 @@ emit_decl_range2D(struct ureg_program *ureg,
    out[0].decl.NrTokens = 3;
    out[0].decl.File = file;
    out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
-   out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    out[0].decl.Dimension = 1;
 
    out[1].value = 0;
@@ -1312,7 +1314,6 @@ emit_decl_sampler_view(struct ureg_program *ureg,
    out[0].decl.NrTokens = 3;
    out[0].decl.File = TGSI_FILE_SAMPLER_VIEW;
    out[0].decl.UsageMask = 0xf;
-   out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
 
    out[1].value = 0;
    out[1].decl_range.First = index;

@@ -1559,19 +1559,11 @@ of TGSI_FILE.
 UsageMask field specifies which of the register components can be accessed
 and is one of TGSI_WRITEMASK.
 
-Interpolate field is only valid for fragment shader INPUT register files.
-It specifes the way input is being interpolated by the rasteriser and is one
-of TGSI_INTERPOLATE.
-
 If Dimension flag is set to 1, a Declaration Dimension token follows.
 
 If Semantic flag is set to 1, a Declaration Semantic token follows.
 
-CylindricalWrap bitfield is only valid for fragment shader INPUT register
-files. It specifies which register components should be subject to cylindrical
-wrapping when interpolating by the rasteriser. If TGSI_CYLINDRICAL_WRAP_X
-is set to 1, the X component should be interpolated according to cylindrical
-wrapping rules.
+If Interpolate flag is set to 1, a Declaration Interpolate token follows.
 
 If file is TGSI_FILE_RESOURCE, a Declaration Resource token follows.
 
@@ -1716,6 +1708,20 @@ TGSI_SEMANTIC_STENCIL
 For fragment shaders, this semantic label indicates than an output
 is a writable stencil reference value. Only the Y component is writable.
 This allows the fragment shader to change the fragments stencilref value.
+
+
+Declaration Interpolate
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This token is only valid for fragment shader INPUT declarations.
+
+The Interpolate field specifes the way input is being interpolated by
+the rasteriser and is one of TGSI_INTERPOLATE_*.
+
+The CylindricalWrap bitfield specifies which register components
+should be subject to cylindrical wrapping when interpolating by the
+rasteriser. If TGSI_CYLINDRICAL_WRAP_X is set to 1, the X component
+should be interpolated according to cylindrical wrapping rules.
 
 
 Declaration Sampler View

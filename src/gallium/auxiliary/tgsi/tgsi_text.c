@@ -1225,7 +1225,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          if (str_match_no_case( &cur, tgsi_interpolate_names[i] )) {
             if (is_digit_alpha_underscore( cur ))
                continue;
-            decl.Declaration.Interpolate = i;
+            decl.Declaration.Interpolate = 1;
+            decl.Interp.Interpolate = i;
 
             ctx->cur = cur;
             break;

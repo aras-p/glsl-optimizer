@@ -722,8 +722,8 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
 		ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
-		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
-		ctx->shader->input[i].centroid = d->Declaration.Centroid;
+		ctx->shader->input[i].interpolate = d->Interp.Interpolate;
+		ctx->shader->input[i].centroid = d->Interp.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
 			switch (ctx->shader->input[i].name) {
@@ -749,7 +749,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->output[i].sid = d->Semantic.Index;
 		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
-		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
+		ctx->shader->output[i].interpolate = d->Interp.Interpolate;
 		ctx->shader->output[i].write_mask = d->Declaration.UsageMask;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 			switch (d->Semantic.Name) {

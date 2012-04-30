@@ -94,11 +94,12 @@ static void emit_output(struct tgsi_transform_context *ctx,
 
     decl = tgsi_default_full_declaration();
     decl.Declaration.File = TGSI_FILE_OUTPUT;
-    decl.Declaration.Interpolate = interp;
+    decl.Declaration.Interpolate = 1;
     decl.Declaration.Semantic = TRUE;
     decl.Semantic.Name = name;
     decl.Semantic.Index = index;
     decl.Range.First = decl.Range.Last = reg;
+    decl.Interp.Interpolate = interp;
     ctx->emit_declaration(ctx, &decl);
     ++vsctx->num_outputs;
 }
