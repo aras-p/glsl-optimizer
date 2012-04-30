@@ -57,6 +57,10 @@ Function::~Function()
    if (bbArray)
       delete[] bbArray;
 
+   // clear value refs and defs
+   ins.clear();
+   outs.clear();
+
    for (ArrayList::Iterator it = allInsns.iterator(); !it.end(); it.next())
       delete_Instruction(prog, reinterpret_cast<Instruction *>(it.get()));
 
