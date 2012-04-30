@@ -98,6 +98,11 @@ upload_wm_state(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
+   bool multisampled = false;
+
+   /* _NEW_BUFFERS */
+   if (ctx->DrawBuffer->_ColorDrawBuffers[0])
+      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
 
     /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
@@ -185,6 +190,13 @@ upload_wm_state(struct brw_context *brw)
 
    dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
+   if (multisampled) {
+      dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
+      dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
+   } else {
+      dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
+      dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
+   }
 
    BEGIN_BATCH(9);
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));

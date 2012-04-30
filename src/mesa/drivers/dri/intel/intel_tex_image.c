@@ -99,7 +99,8 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       width,
 			       height,
 			       depth,
-			       expect_accelerated_upload);
+			       expect_accelerated_upload,
+                               0 /* num_samples */);
 }
 
 /* There are actually quite a few combinations this will work for,

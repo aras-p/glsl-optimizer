@@ -39,9 +39,14 @@ upload_wm_state(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    bool writes_depth = false;
-   uint32_t dw1;
+   bool multisampled = false;
+   uint32_t dw1, dw2;
 
-   dw1 = 0;
+   /* _NEW_BUFFERS */
+   if (ctx->DrawBuffer->_ColorDrawBuffers[0])
+      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
+
+   dw1 = dw2 = 0;
    dw1 |= GEN7_WM_STATISTICS_ENABLE;
    dw1 |= GEN7_WM_LINE_AA_WIDTH_1_0;
    dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_0_5;
@@ -74,11 +79,18 @@ upload_wm_state(struct brw_context *brw)
        dw1 & GEN7_WM_KILL_ENABLE) {
       dw1 |= GEN7_WM_DISPATCH_ENABLE;
    }
+   if (multisampled) {
+      dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
+      dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
+   } else {
+      dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
+      dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
+   }
 
    BEGIN_BATCH(3);
    OUT_BATCH(_3DSTATE_WM << 16 | (3 - 2));
    OUT_BATCH(dw1);
-   OUT_BATCH(0);
+   OUT_BATCH(dw2);
    ADVANCE_BATCH();
 }
 

@@ -161,6 +161,9 @@ upload_sf_state(struct brw_context *brw)
    float point_size;
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
+   bool multisampled = false;
+   if (ctx->DrawBuffer->_ColorDrawBuffers[0])
+      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
 
    dw1 = GEN6_SF_STATISTICS_ENABLE |
          GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
@@ -243,8 +246,13 @@ upload_sf_state(struct brw_context *brw)
       dw2 |= GEN6_SF_SCISSOR_ENABLE;
 
    /* _NEW_LINE */
-   dw2 |= U_FIXED(CLAMP(ctx->Line.Width, 0.0, 7.99), 7) <<
-      GEN6_SF_LINE_WIDTH_SHIFT;
+   {
+      uint32_t line_width_u3_7 = U_FIXED(CLAMP(ctx->Line.Width, 0.0, 7.99), 7);
+      /* TODO: line width of 0 is not allowed when MSAA enabled */
+      if (line_width_u3_7 == 0)
+         line_width_u3_7 = 1;
+      dw2 |= line_width_u3_7 << GEN6_SF_LINE_WIDTH_SHIFT;
+   }
    if (ctx->Line.SmoothFlag) {
       dw2 |= GEN6_SF_LINE_AA_ENABLE;
       dw2 |= GEN6_SF_LINE_AA_MODE_TRUE;
@@ -253,6 +261,8 @@ upload_sf_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag && intel->is_haswell) {
       dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
    }
+   if (multisampled)
+      dw2 |= GEN6_SF_MSRAST_ON_PATTERN;
 
    /* FINISHME: Last Pixel Enable?  Vertex Sub Pixel Precision Select?
     * FINISHME: AA Line Distance Mode?

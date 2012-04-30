@@ -97,6 +97,8 @@ public:
     * width and height of the buffer.
     */
    bool map_stencil_as_y_tiled;
+
+   unsigned num_samples;
 };
 
 
@@ -151,6 +153,7 @@ public:
    brw_blorp_surface_info src;
    brw_blorp_surface_info dst;
    enum gen6_hiz_op hiz_op;
+   unsigned num_samples;
    bool use_wm_prog;
    brw_blorp_wm_push_constants wm_push_consts;
 };
@@ -177,15 +180,38 @@ public:
 
 struct brw_blorp_blit_prog_key
 {
+   /* Number of samples per pixel that have been configured in the surface
+    * state for texturing from.
+    */
+   unsigned tex_samples;
+
+   /* Actual number of samples per pixel in the source image. */
+   unsigned src_samples;
+
+   /* Number of samples per pixel that have been configured in the render
+    * target.
+    */
+   unsigned rt_samples;
+
+   /* Actual number of samples per pixel in the destination image. */
+   unsigned dst_samples;
+
    /* True if the source image is W tiled.  If true, the surface state for the
-    * source image must be configured as Y tiled.
+    * source image must be configured as Y tiled, and tex_samples must be 0.
     */
    bool src_tiled_w;
 
    /* True if the destination image is W tiled.  If true, the surface state
-    * for the render target must be configured as Y tiled.
+    * for the render target must be configured as Y tiled, and rt_samples must
+    * be 0.
     */
    bool dst_tiled_w;
+
+   /* True if all source samples should be blended together to produce each
+    * destination pixel.  If true, src_tiled_w must be false, tex_samples must
+    * equal src_samples, and tex_samples must be nonzero.
+    */
+   bool blend;
 
    /* True if the rectangle being sent through the rendering pipeline might be
     * larger than the destination rectangle, so the WM program should kill any

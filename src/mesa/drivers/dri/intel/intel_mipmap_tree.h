@@ -169,6 +169,7 @@ struct intel_mipmap_tree
 
    GLuint width0, height0, depth0; /**< Level zero image dimensions */
    GLuint cpp;
+   GLuint num_samples;
    bool compressed;
 
    /* Derived from the above:
@@ -231,7 +232,8 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint width0,
                                                GLuint height0,
                                                GLuint depth0,
-					       bool expect_accelerated_upload);
+					       bool expect_accelerated_upload,
+                                               GLuint num_samples);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
@@ -250,7 +252,8 @@ struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
-                                      uint32_t height);
+                                      uint32_t height,
+                                      uint32_t num_samples);
 
 /** \brief Assert that the level and layer are valid for the miptree. */
 static inline void
@@ -341,7 +344,8 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
 
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt);
+			struct intel_mipmap_tree *mt,
+                        GLuint num_samples);
 
 void
 intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,

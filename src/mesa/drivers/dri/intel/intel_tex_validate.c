@@ -86,7 +86,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           width,
                                           height,
                                           depth,
-					  true);
+					  true,
+                                          0 /* num_samples */);
       if (!intelObj->mt)
          return false;
    }

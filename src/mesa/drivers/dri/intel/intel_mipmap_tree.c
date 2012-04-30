@@ -72,7 +72,8 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint width0,
 			      GLuint height0,
 			      GLuint depth0,
-			      bool for_region)
+			      bool for_region,
+                              GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
@@ -92,6 +93,7 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->width0 = width0;
    mt->height0 = height0;
    mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
+   mt->num_samples = num_samples;
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
@@ -115,7 +117,8 @@ intel_miptree_create_internal(struct intel_context *intel,
                                             mt->width0,
                                             mt->height0,
                                             mt->depth0,
-                                            true);
+                                            true,
+                                            num_samples);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -161,7 +164,8 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint width0,
 		     GLuint height0,
 		     GLuint depth0,
-		     bool expect_accelerated_upload)
+		     bool expect_accelerated_upload,
+                     GLuint num_samples)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
@@ -172,7 +176,21 @@ intel_miptree_create(struct intel_context *intel,
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
-      else if (width0 >= 64)
+      else if (num_samples > 0) {
+         /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
+          * Surface"):
+          *
+          *   [DevSNB+]: For multi-sample render targets, this field must be
+          *   1. MSRTs can only be tiled.
+          *
+          * Our usual reason for preferring X tiling (fast blits using the
+          * blitting engine) doesn't apply to MSAA, since we'll generally be
+          * downsampling or upsampling when blitting between the MSAA buffer
+          * and another buffer, and the blitting engine doesn't support that.
+          * So use Y tiling, since it makes better use of the cache.
+          */
+         tiling = I915_TILING_Y;
+      } else if (width0 >= 64)
 	 tiling = I915_TILING_X;
    }
 
@@ -189,7 +207,7 @@ intel_miptree_create(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
-				      false);
+				      false, num_samples);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -225,7 +243,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
-				      true);
+				      true, 0 /* num_samples */);
    if (!mt)
       return mt;
 
@@ -238,12 +256,24 @@ struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
                                       uint32_t width,
-                                      uint32_t height)
+                                      uint32_t height,
+                                      uint32_t num_samples)
 {
    struct intel_mipmap_tree *mt;
 
+   /* Adjust width/height for MSAA */
+   if (num_samples > 4) {
+      num_samples = 8;
+      width *= 4;
+      height *= 2;
+   } else if (num_samples > 0) {
+      num_samples = 4;
+      width *= 2;
+      height *= 2;
+   }
+
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
-			     width, height, 1, true);
+			     width, height, 1, true, num_samples);
 
    return mt;
 }
@@ -513,7 +543,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 
 bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
-			struct intel_mipmap_tree *mt)
+			struct intel_mipmap_tree *mt,
+                        GLuint num_samples)
 {
    assert(mt->hiz_mt == NULL);
    mt->hiz_mt = intel_miptree_create(intel,
@@ -524,7 +555,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->width0,
                                      mt->height0,
                                      mt->depth0,
-                                     true);
+                                     true,
+                                     num_samples);
 
    if (!mt->hiz_mt)
       return false;

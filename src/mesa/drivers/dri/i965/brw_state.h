@@ -95,6 +95,7 @@ extern const struct brw_tracked_state gen6_color_calc_state;
 extern const struct brw_tracked_state gen6_depth_stencil_state;
 extern const struct brw_tracked_state gen6_gs_state;
 extern const struct brw_tracked_state gen6_gs_binding_table;
+extern const struct brw_tracked_state gen6_multisample_state;
 extern const struct brw_tracked_state gen6_renderbuffer_surfaces;
 extern const struct brw_tracked_state gen6_sampler_state;
 extern const struct brw_tracked_state gen6_scissor_state;
@@ -181,6 +182,7 @@ void *brw_state_batch(struct brw_context *brw,
 /* brw_wm_surface_state.c */
 void gen4_init_vtable_surface_functions(struct brw_context *brw);
 uint32_t brw_get_surface_tiling_bits(uint32_t tiling);
+uint32_t brw_get_surface_num_multisamples(unsigned num_samples);
 void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
 				 int width,
@@ -197,6 +199,8 @@ GLuint translate_tex_format(gl_format mesa_format,
 
 /* gen7_wm_surface_state.c */
 void gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling);
+void gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
+                                       unsigned num_samples);
 void gen7_init_vtable_surface_functions(struct brw_context *brw);
 void gen7_create_constant_surface(struct brw_context *brw,
 				  drm_intel_bo *bo,

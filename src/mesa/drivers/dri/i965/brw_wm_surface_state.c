@@ -633,6 +633,17 @@ brw_get_surface_tiling_bits(uint32_t tiling)
    }
 }
 
+
+uint32_t
+brw_get_surface_num_multisamples(unsigned num_samples)
+{
+   if (num_samples > 0)
+      return BRW_SURFACE_MULTISAMPLECOUNT_4;
+   else
+      return BRW_SURFACE_MULTISAMPLECOUNT_1;
+}
+
+
 static void
 brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 {
@@ -943,7 +954,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				       intel_image->base.Base.Level,
 				       intel_image->base.Base.Level,
 				       width, height, depth,
-				       true);
+				       true,
+                                       0 /* num_samples */);
 
 	 intel_miptree_copy_teximage(intel, intel_image, new_mt);
 	 intel_miptree_reference(&irb->mt, intel_image->mt);
@@ -993,7 +1005,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    surf[3] = (brw_get_surface_tiling_bits(region->tiling) |
 	      ((region->pitch * region->cpp) - 1) << BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = 0;
+   surf[4] = brw_get_surface_num_multisamples(mt->num_samples);
 
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so

@@ -782,33 +782,16 @@ static void upload_invariant_state( struct brw_context *brw )
       ADVANCE_BATCH();
    }
 
-   if (intel->gen >= 6) {
+   if (intel->gen == 6) {
       int i;
-      int len = intel->gen >= 7 ? 4 : 3;
 
-      BEGIN_BATCH(len);
-      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (len - 2));
-      OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
-		MS_NUMSAMPLES_1);
-      OUT_BATCH(0); /* positions for 4/8-sample */
-      if (intel->gen >= 7)
-	 OUT_BATCH(0);
-      ADVANCE_BATCH();
-
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-      OUT_BATCH(1);
-      ADVANCE_BATCH();
-
-      if (intel->gen < 7) {
-	 for (i = 0; i < 4; i++) {
-	    BEGIN_BATCH(4);
-	    OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
-	    OUT_BATCH(i << SVB_INDEX_SHIFT);
-	    OUT_BATCH(0);
-	    OUT_BATCH(0xffffffff);
-	    ADVANCE_BATCH();
-	 }
+      for (i = 0; i < 4; i++) {
+         BEGIN_BATCH(4);
+         OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
+         OUT_BATCH(i << SVB_INDEX_SHIFT);
+         OUT_BATCH(0);
+         OUT_BATCH(0xffffffff);
+         ADVANCE_BATCH();
       }
    }
 

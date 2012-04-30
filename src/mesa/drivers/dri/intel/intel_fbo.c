@@ -189,6 +189,29 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
 
 
 /**
+ * Round up the requested multisample count to the next supported sample size.
+ */
+static unsigned
+quantize_num_samples(struct intel_context *intel, unsigned num_samples)
+{
+   switch (intel->gen) {
+   case 6:
+      /* Gen6 supports only 4x multisampling. */
+      if (num_samples > 0)
+         return 4;
+      else
+         return 0;
+   case 7:
+      /* TODO: MSAA only implemented on Gen6 */
+      return 0;
+   default:
+      /* MSAA unsupported */
+      return 0;
+   }
+}
+
+
+/**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
  */
@@ -199,6 +222,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   rb->NumSamples = quantize_num_samples(intel, rb->NumSamples);
 
    ASSERT(rb->Name != 0);
 
@@ -241,12 +265,13 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       return true;
 
    irb->mt = intel_miptree_create_for_renderbuffer(intel, rb->Format,
-						   width, height);
+						   width, height,
+                                                   rb->NumSamples);
    if (!irb->mt)
       return false;
 
    if (intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-      bool ok = intel_miptree_alloc_hiz(intel, irb->mt);
+      bool ok = intel_miptree_alloc_hiz(intel, irb->mt, rb->NumSamples);
       if (!ok) {
 	 intel_miptree_release(&irb->mt);
 	 return false;
@@ -495,7 +520,7 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
 
    if (mt->hiz_mt == NULL &&
        intel->vtbl.is_hiz_depth_format(intel, rb->Format)) {
-      intel_miptree_alloc_hiz(intel, mt);
+      intel_miptree_alloc_hiz(intel, mt, 0 /* num_samples */);
       if (!mt->hiz_mt)
 	 return false;
    }

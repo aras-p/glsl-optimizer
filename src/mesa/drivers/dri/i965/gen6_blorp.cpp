@@ -100,28 +100,8 @@ gen6_blorp_emit_batch_head(struct brw_context *brw,
       ADVANCE_BATCH();
    }
 
-   /* 3DSTATE_MULTISAMPLE */
-   {
-      int length = intel->gen == 7 ? 4 : 3;
-
-      BEGIN_BATCH(length);
-      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (length - 2));
-      OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
-                MS_NUMSAMPLES_1);
-      OUT_BATCH(0);
-      if (length >= 4)
-         OUT_BATCH(0);
-      ADVANCE_BATCH();
-
-   }
-
-   /* 3DSTATE_SAMPLE_MASK */
-   {
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-      OUT_BATCH(1);
-      ADVANCE_BATCH();
-   }
+   gen6_emit_3dstate_multisample(brw, params->num_samples);
+   gen6_emit_3dstate_sample_mask(brw, params->num_samples);
 
    /* CMD_STATE_BASE_ADDRESS
     *
@@ -426,6 +406,10 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t wm_surf_offset;
    uint32_t width, height;
    surface->get_miplevel_dims(&width, &height);
+   if (surface->num_samples > 0) { /* TODO: seems clumsy */
+      width /= 2;
+      height /= 2;
+   }
    if (surface->map_stencil_as_y_tiled) {
       width *= 2;
       height /= 2;
@@ -462,7 +446,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
               0 << BRW_SURFACE_DEPTH_SHIFT |
               (pitch_bytes - 1) << BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = 0;
+   surf[4] = brw_get_surface_num_multisamples(surface->num_samples);
 
    surf[5] = (0 << BRW_SURFACE_X_OFFSET_SHIFT |
               0 << BRW_SURFACE_Y_OFFSET_SHIFT |
@@ -695,7 +679,9 @@ gen6_blorp_emit_sf_config(struct brw_context *brw,
    OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | /* only position */
              1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
              0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
-   for (int i = 0; i < 18; ++i)
+   OUT_BATCH(0); /* dw2 */
+   OUT_BATCH(params->num_samples > 0 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
+   for (int i = 0; i < 16; ++i)
       OUT_BATCH(0);
    ADVANCE_BATCH();
 }
@@ -754,6 +740,14 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
       dw5 |= GEN6_WM_DISPATCH_ENABLE; /* We are rendering */
    }
 
+   if (params->num_samples > 0) {
+      dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
+      dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
+   } else {
+      dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
+      dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
+   }
+
    BEGIN_BATCH(9);
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
    OUT_BATCH(params->use_wm_prog ? prog_offset : 0);
@@ -761,7 +755,7 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
    OUT_BATCH(0); /* No scratch needed */
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
-   OUT_BATCH(dw6); /* only position */
+   OUT_BATCH(dw6);
    OUT_BATCH(0); /* No other programs */
    OUT_BATCH(0); /* No other programs */
    ADVANCE_BATCH();

@@ -1099,6 +1099,14 @@ brw_blorp_framebuffer(struct intel_context *intel,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter);
 
+/* gen6_multisample_state.c */
+void
+gen6_emit_3dstate_multisample(struct brw_context *brw,
+                              unsigned num_samples);
+void
+gen6_emit_3dstate_sample_mask(struct brw_context *brw,
+                              unsigned num_samples);
+
 
 
 /*======================================================================

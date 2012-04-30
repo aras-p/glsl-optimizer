@@ -215,11 +215,29 @@ brw_blorp_framebuffer(struct intel_context *intel,
  *
  * The bulk of the work done by the WM program is to wrap and unwrap the
  * coordinate transformations used by the hardware to store surfaces in
- * memory.  The hardware transforms a pixel location (X, Y) to a memory offset
- * by the following formulas:
+ * memory.  The hardware transforms a pixel location (X, Y, S) (where S is the
+ * sample index for a multisampled surface) to a memory offset by the
+ * following formulas:
  *
- *   offset = tile(tiling_format, X, Y)
- *   (X, Y) = detile(tiling_format, offset)
+ *   offset = tile(tiling_format, encode_msaa(num_samples, X, Y, S))
+ *   (X, Y, S) = decode_msaa(num_samples, detile(tiling_format, offset))
+ *
+ * For a single-sampled surface, encode_msaa() and decode_msaa are the
+ * identity function:
+ *
+ *   encode_msaa(1, X, Y, 0) = (X, Y)
+ *   decode_msaa(1, X, Y) = (X, Y, 0)
+ *
+ * For a 4x multisampled surface, encode_msaa() embeds the sample number into
+ * bit 1 of the X and Y coordinates:
+ *
+ *   encode_msaa(4, X, Y, S) = (X', Y')
+ *     where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
+ *           Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
+ *   decode_msaa(4, X, Y) = (X', Y', S)
+ *     where X' = (X & ~0b11) >> 1 | (X & 0b1)
+ *           Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
+ *           S = (Y & 0b10) | (X & 0b10) >> 1
  *
  * For X tiling, tile() combines together the low-order bits of the X and Y
  * coordinates in the pattern 0byyyxxxxxxxxx, creating 4k tiles that are 512
@@ -239,7 +257,7 @@ brw_blorp_framebuffer(struct intel_context *intel,
  *                | (A & 0b111111111)
  *
  * (In all tiling formulas, cpp is the number of bytes occupied by a single
- * pixel ("chars per pixel"), and tile_pitch is the number of 4k tiles
+ * sample ("chars per pixel"), and tile_pitch is the number of 4k tiles
  * required to fill the width of the surface).
  *
  * For Y tiling, tile() combines together the low-order bits of the X and Y
@@ -301,7 +319,7 @@ brw_blorp_framebuffer(struct intel_context *intel,
  *           X' = A % pitch
  *
  * (In these formulas, pitch is the number of bytes occupied by a single row
- * of pixels).
+ * of samples).
  */
 class brw_blorp_blit_program
 {
@@ -319,8 +337,12 @@ private:
    void alloc_push_const_regs(int base_reg);
    void compute_frag_coords();
    void translate_tiling(bool old_tiled_w, bool new_tiled_w);
+   void encode_msaa(unsigned num_samples);
+   void decode_msaa(unsigned num_samples);
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
+   void single_to_blend();
+   void sample();
    void texel_fetch();
    void texture_lookup(GLuint msg_type,
                        struct brw_reg mrf_u, struct brw_reg mrf_v);
@@ -364,6 +386,14 @@ private:
     */
    int xy_coord_index;
 
+   /* True if, at the point in the program currently being compiled, the
+    * sample index is known to be zero.
+    */
+   bool s_is_zero;
+
+   /* Register storing the sample index when s_is_zero is false. */
+   struct brw_reg sample_index;
+
    /* Temporaries */
    struct brw_reg t1;
    struct brw_reg t2;
@@ -395,6 +425,37 @@ const GLuint *
 brw_blorp_blit_program::compile(struct brw_context *brw,
                                 GLuint *program_size)
 {
+   /* Sanity checks */
+   if (key->src_tiled_w) {
+      /* If the source image is W tiled, then tex_samples must be 0.
+       * Otherwise, after conversion between W and Y tiling, there's no
+       * guarantee that the sample index will be 0.
+       */
+      assert(key->tex_samples == 0);
+   }
+
+   if (key->dst_tiled_w) {
+      /* If the destination image is W tiled, then dst_samples must be 0.
+       * Otherwise, after conversion between W and Y tiling, there's no
+       * guarantee that all samples corresponding to a single pixel will still
+       * be together.
+       */
+      assert(key->rt_samples == 0);
+   }
+
+   if (key->blend) {
+      /* We are blending, which means we'll be using a SAMPLE message, which
+       * causes the hardware to pick up the all of the samples corresponding
+       * to this pixel and average them together.  Since we'll be relying on
+       * the hardware to find all of the samples and combine them together,
+       * the surface state for the texture must be configured with the correct
+       * tiling and sample count.
+       */
+      assert(!key->src_tiled_w);
+      assert(key->tex_samples == key->src_samples);
+      assert(key->tex_samples > 0);
+   }
+
    brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 
    alloc_regs();
@@ -405,22 +466,29 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    const bool tex_tiled_w = false;
 
    /* The address that data will be written to is determined by the
-    * coordinates supplied to the WM thread and the tiling of the render
-    * target, according to the formula:
+    * coordinates supplied to the WM thread and the tiling and sample count of
+    * the render target, according to the formula:
     *
-    * (X, Y) = detile(rt_tiling, offset)
+    * (X, Y, S) = decode_msaa(rt_samples, detile(rt_tiling, offset))
     *
-    * If the actual tiling of the destination surface is not the same as the
-    * configuration of the render target, then these coordinates are wrong and
-    * we have to adjust them to compensate for the difference.
+    * If the actual tiling and sample count of the destination surface are not
+    * the same as the configuration of the render target, then these
+    * coordinates are wrong and we have to adjust them to compensate for the
+    * difference.
     */
-   if (rt_tiled_w != key->dst_tiled_w)
+   if (rt_tiled_w != key->dst_tiled_w ||
+       key->rt_samples != key->dst_samples) {
+      encode_msaa(key->rt_samples);
+      /* Now (X, Y) = detile(rt_tiling, offset) */
       translate_tiling(rt_tiled_w, key->dst_tiled_w);
+      /* Now (X, Y) = detile(dst_tiling, offset) */
+      decode_msaa(key->dst_samples);
+   }
 
-   /* Now (X, Y) = detile(dst_tiling, offset).
+   /* Now (X, Y, S) = decode_msaa(dst_samples, detile(dst_tiling, offset)).
     *
-    * That is: X and Y now contain the true coordinates of the data that the
-    * WM thread should output.
+    * That is: X, Y and S now contain the true coordinates and sample index of
+    * the data that the WM thread should output.
     *
     * If we need to kill pixels that are outside the destination rectangle,
     * now is the time to do it.
@@ -432,31 +500,50 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    /* Next, apply a translation to obtain coordinates in the source image. */
    translate_dst_to_src();
 
-   /* X and Y are now the coordinates of the pixel in the source image that we
-    * want to texture from.
-    *
-    * The address that we want to fetch from is
-    * related to the X and Y values according to the formula:
-    *
-    * (X, Y) = detile(src_tiling, offset).
-    *
-    * If the actual tiling of the source surface is not the same as the
-    * configuration of the texture, then we need to adjust the coordinates to
-    * compensate for the difference.
+   /* If the source image is not multisampled, then we want to fetch sample
+    * number 0, because that's the only sample there is.
     */
-   if (tex_tiled_w != key->src_tiled_w)
-      translate_tiling(key->src_tiled_w, tex_tiled_w);
+   if (key->src_samples == 0)
+      s_is_zero = true;
 
-   /* Now (X, Y) = detile(tex_tiling, offset).
-    *
-    * In other words: X and Y now contain values which, when passed to
-    * the texturing unit, will cause data to be read from the correct
-    * memory location.  So we can fetch the texel now.
+   /* X, Y, and S are now the coordinates of the pixel in the source image
+    * that we want to texture from.  Exception: if we are blending, then S is
+    * irrelevant, because we are going to fetch all samples.
     */
-   texel_fetch();
+   if (key->blend) {
+      single_to_blend();
+      sample();
+   } else {
+      /* We aren't blending, which means we just want to fetch a single sample
+       * from the source surface.  The address that we want to fetch from is
+       * related to the X, Y and S values according to the formula:
+       *
+       * (X, Y, S) = decode_msaa(src_samples, detile(src_tiling, offset)).
+       *
+       * If the actual tiling and sample count of the source surface are not
+       * the same as the configuration of the texture, then we need to adjust
+       * the coordinates to compensate for the difference.
+       */
+      if (tex_tiled_w != key->src_tiled_w ||
+          key->tex_samples != key->src_samples) {
+         encode_msaa(key->src_samples);
+         /* Now (X, Y) = detile(src_tiling, offset) */
+         translate_tiling(key->src_tiled_w, tex_tiled_w);
+         /* Now (X, Y) = detile(tex_tiling, offset) */
+         decode_msaa(key->tex_samples);
+      }
 
-   /* Finally, write the fetched value to the render target and terminate the
-    * thread.
+      /* Now (X, Y, S) = decode_msaa(tex_samples, detile(tex_tiling, offset)).
+       *
+       * In other words: X, Y, and S now contain values which, when passed to
+       * the texturing unit, will cause data to be read from the correct
+       * memory location.  So we can fetch the texel now.
+       */
+      texel_fetch();
+   }
+
+   /* Finally, write the fetched (or blended) value to the render target and
+    * terminate the thread.
     */
    render_target_write();
    return brw_get_program(&func, program_size);
@@ -499,6 +586,8 @@ brw_blorp_blit_program::alloc_regs()
          = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
    }
    this->xy_coord_index = 0;
+   this->sample_index
+      = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
    this->t1 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
    this->t2 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
 
@@ -511,11 +600,14 @@ brw_blorp_blit_program::alloc_regs()
 /* In the code that follows, X and Y can be used to quickly refer to the
  * active elements of x_coords and y_coords, and Xp and Yp ("X prime" and "Y
  * prime") to the inactive elements.
+ *
+ * S can be used to quickly refer to sample_index.
  */
 #define X x_coords[xy_coord_index]
 #define Y y_coords[xy_coord_index]
 #define Xp x_coords[!xy_coord_index]
 #define Yp y_coords[!xy_coord_index]
+#define S sample_index
 
 /* Quickly swap the roles of (X, Y) and (Xp, Yp).  Saves us from having to do
  * MOVs to transfor (Xp, Yp) to (X, Y) after a coordinate transformation.
@@ -564,6 +656,12 @@ brw_blorp_blit_program::compute_frag_coords()
     * pixels n+2 and n+3 are in the bottom half of the subspan.
     */
    brw_ADD(&func, Y, stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
+
+   /* Since we always run the WM in a mode that causes a single fragment
+    * dispatch per pixel, it's not meaningful to compute a sample value.  Just
+    * set it to 0.
+    */
+   s_is_zero = true;
 }
 
 /**
@@ -656,6 +754,86 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
 }
 
 /**
+ * Emit code to compensate for the difference between MSAA and non-MSAA
+ * surfaces.
+ *
+ * This code modifies the X and Y coordinates according to the formula:
+ *
+ *   (X', Y') = encode_msaa_4x(X, Y, S)
+ *
+ * (See brw_blorp_blit_program).
+ */
+void
+brw_blorp_blit_program::encode_msaa(unsigned num_samples)
+{
+   if (num_samples == 0) {
+      /* No translation necessary. */
+   } else {
+      /* encode_msaa_4x(X, Y, S) = (X', Y')
+       *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
+       *         Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
+       */
+      brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
+      if (!s_is_zero) {
+         brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
+         brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
+      }
+      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
+                                                | (S & 0b1) << 1 */
+      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+      brw_OR(&func, Xp, t1, t2);
+      brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+      if (!s_is_zero) {
+         brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
+         brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
+      }
+      brw_AND(&func, t2, Y, brw_imm_uw(1));
+      brw_OR(&func, Yp, t1, t2);
+      SWAP_XY_AND_XPYP();
+   }
+}
+
+/**
+ * Emit code to compensate for the difference between MSAA and non-MSAA
+ * surfaces.
+ *
+ * This code modifies the X and Y coordinates according to the formula:
+ *
+ *   (X', Y', S) = decode_msaa(num_samples, X, Y)
+ *
+ * (See brw_blorp_blit_program).
+ */
+void
+brw_blorp_blit_program::decode_msaa(unsigned num_samples)
+{
+   if (num_samples == 0) {
+      /* No translation necessary. */
+      s_is_zero = true;
+   } else {
+      /* decode_msaa_4x(X, Y) = (X', Y', S)
+       *   where X' = (X & ~0b11) >> 1 | (X & 0b1)
+       *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
+       *         S = (Y & 0b10) | (X & 0b10) >> 1
+       */
+      brw_AND(&func, t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
+      brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
+      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+      brw_OR(&func, Xp, t1, t2);
+      brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+      brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
+      brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+      brw_OR(&func, Yp, t1, t2);
+      brw_AND(&func, t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
+      brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+      brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
+      brw_OR(&func, S, t1, t2);
+      s_is_zero = false;
+      SWAP_XY_AND_XPYP();
+   }
+}
+
+/**
  * Emit code that kills pixels whose X and Y coordinates are outside the
  * boundary of the rectangle defined by the push constants (dst_x0, dst_y0,
  * dst_x1, dst_y1).
@@ -694,12 +872,43 @@ brw_blorp_blit_program::translate_dst_to_src()
 }
 
 /**
+ * Emit code to transform the X and Y coordinates as needed for blending
+ * together the different samples in an MSAA texture.
+ */
+void
+brw_blorp_blit_program::single_to_blend()
+{
+   /* When looking up samples in an MSAA texture using the SAMPLE message,
+    * Gen6 requires the texture coordinates to be odd integers (so that they
+    * correspond to the center of a 2x2 block representing the four samples
+    * that maxe up a pixel).  So we need to multiply our X and Y coordinates
+    * each by 2 and then add 1.
+    */
+   brw_SHL(&func, t1, X, brw_imm_w(1));
+   brw_SHL(&func, t2, Y, brw_imm_w(1));
+   brw_ADD(&func, Xp, t1, brw_imm_w(1));
+   brw_ADD(&func, Yp, t2, brw_imm_w(1));
+   SWAP_XY_AND_XPYP();
+}
+
+/**
+ * Emit code to look up a value in the texture using the SAMPLE message (which
+ * does blending of MSAA surfaces).
+ */
+void
+brw_blorp_blit_program::sample()
+{
+   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE, mrf_u_float, mrf_v_float);
+}
+
+/**
  * Emit code to look up a value in the texture using the SAMPLE_LD message
  * (which does a simple texel fetch).
  */
 void
 brw_blorp_blit_program::texel_fetch()
 {
+   assert(s_is_zero);
    texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
                   retype(mrf_u_float, BRW_REGISTER_TYPE_UD),
                   retype(mrf_v_float, BRW_REGISTER_TYPE_UD));
@@ -816,6 +1025,39 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
 
+   if (src_mt->num_samples > 0 && dst_mt->num_samples > 0) {
+      /* We are blitting from a multisample buffer to a multisample buffer, so
+       * we must preserve samples within a pixel.  This means we have to
+       * configure the render target and texture surface states as
+       * single-sampled, so that the WM program can access each sample
+       * individually.
+       */
+      src.num_samples = dst.num_samples = 0;
+   }
+
+   /* The render path must be configured to use the same number of samples as
+    * the destination buffer.
+    */
+   num_samples = dst.num_samples;
+
+   GLenum base_format = _mesa_get_format_base_format(src_mt->format);
+   if (base_format != GL_DEPTH_COMPONENT && /* TODO: what about depth/stencil? */
+       base_format != GL_STENCIL_INDEX &&
+       src_mt->num_samples > 0 && dst_mt->num_samples == 0) {
+      /* We are downsampling a color buffer, so blend. */
+      wm_prog_key.blend = true;
+   }
+
+   /* src_samples and dst_samples are the true sample counts */
+   wm_prog_key.src_samples = src_mt->num_samples;
+   wm_prog_key.dst_samples = dst_mt->num_samples;
+
+   /* tex_samples and rt_samples are the sample counts that are set up in
+    * SURFACE_STATE.
+    */
+   wm_prog_key.tex_samples = src.num_samples;
+   wm_prog_key.rt_samples  = dst.num_samples;
+
    wm_prog_key.src_tiled_w = src.map_stencil_as_y_tiled;
    wm_prog_key.dst_tiled_w = dst.map_stencil_as_y_tiled;
    x0 = wm_push_consts.dst_x0 = dst_x0;
@@ -824,6 +1066,22 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
    y1 = wm_push_consts.dst_y1 = dst_y1;
    wm_push_consts.x_transform.setup(src_x0, dst_x0, dst_x1, mirror_x);
    wm_push_consts.y_transform.setup(src_y0, dst_y0, dst_y1, mirror_y);
+
+   if (dst.num_samples == 0 && dst_mt->num_samples > 0) {
+      /* We must expand the rectangle we send through the rendering pipeline,
+       * to account for the fact that we are mapping the destination region as
+       * single-sampled when it is in fact multisampled.  We must also align
+       * it to a multiple of the multisampling pattern, because the
+       * differences between multisampled and single-sampled surface formats
+       * will mean that pixels are scrambled within the multisampling pattern.
+       * TODO: what if this makes the coordinates too large?
+       */
+      x0 = (x0 * 2) & ~3;
+      y0 = (y0 * 2) & ~3;
+      x1 = ALIGN(x1 * 2, 4);
+      y1 = ALIGN(y1 * 2, 4);
+      wm_prog_key.use_kill = true;
+   }
 
    if (dst.map_stencil_as_y_tiled) {
       /* We must modify the rectangle we send through the rendering pipeline,
