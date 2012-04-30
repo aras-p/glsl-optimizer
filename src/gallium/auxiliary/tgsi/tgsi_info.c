@@ -201,6 +201,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, 0, 0, COMP, "ISSG", TGSI_OPCODE_ISSG },
    { 1, 2, 0, 0, 0, 0, OTHR, "LOAD", TGSI_OPCODE_LOAD },
    { 1, 2, 0, 0, 0, 0, OTHR, "STORE", TGSI_OPCODE_STORE },
+   { 1, 0, 0, 0, 0, 0, OTHR, "MFENCE", TGSI_OPCODE_MFENCE },
+   { 1, 0, 0, 0, 0, 0, OTHR, "LFENCE", TGSI_OPCODE_LFENCE },
+   { 1, 0, 0, 0, 0, 0, OTHR, "SFENCE", TGSI_OPCODE_SFENCE },
+   { 0, 0, 0, 0, 0, 0, OTHR, "BARRIER", TGSI_OPCODE_BARRIER }
 };
 
 const struct tgsi_opcode_info *

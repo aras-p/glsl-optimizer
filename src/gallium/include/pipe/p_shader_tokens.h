@@ -413,7 +413,12 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_LOAD                161
 #define TGSI_OPCODE_STORE               162
 
-#define TGSI_OPCODE_LAST                163
+#define TGSI_OPCODE_MFENCE              163
+#define TGSI_OPCODE_LFENCE              164
+#define TGSI_OPCODE_SFENCE              165
+#define TGSI_OPCODE_BARRIER             166
+
+#define TGSI_OPCODE_LAST                167
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
