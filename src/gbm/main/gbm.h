@@ -246,6 +246,13 @@ union gbm_bo_handle
 gbm_bo_get_handle(struct gbm_bo *bo);
 
 void
+gbm_bo_set_user_data(struct gbm_bo *bo, void *data,
+		     void (*destroy_user_data)(struct gbm_bo *, void *));
+
+void *
+gbm_bo_get_user_data(struct gbm_bo *bo);
+
+void
 gbm_bo_destroy(struct gbm_bo *bo);
 
 struct gbm_surface *

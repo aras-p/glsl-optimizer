@@ -231,6 +231,35 @@ gbm_bo_get_handle(struct gbm_bo *bo)
    return bo->handle;
 }
 
+/** Set the user data associated with a buffer object
+ *
+ * \param bo The buffer object
+ * \param data The data to associate to the buffer object
+ * \param destroy_user_data A callback (which may be %NULL) that will be
+ * called prior to the buffer destruction
+ */
+GBM_EXPORT void
+gbm_bo_set_user_data(struct gbm_bo *bo, void *data,
+		     void (*destroy_user_data)(struct gbm_bo *, void *))
+{
+   bo->user_data = data;
+   bo->destroy_user_data = destroy_user_data;
+}
+
+/** Get the user data associated with a buffer object
+ *
+ * \param bo The buffer object
+ * \return Returns the user data associated with the buffer object or %NULL
+ * if no data was associated with it
+ *
+ * \sa gbm_bo_set_user_data()
+ */
+GBM_EXPORT void *
+gbm_bo_get_user_data(struct gbm_bo *bo)
+{
+   return bo->user_data;
+}
+
 /**
  * Destroys the given buffer object and frees all resources associated with
  * it.
@@ -240,6 +269,9 @@ gbm_bo_get_handle(struct gbm_bo *bo)
 GBM_EXPORT void
 gbm_bo_destroy(struct gbm_bo *bo)
 {
+   if (bo->destroy_user_data)
+      bo->destroy_user_data(bo, bo->user_data);
+
    bo->gbm->bo_destroy(bo);
 }
 

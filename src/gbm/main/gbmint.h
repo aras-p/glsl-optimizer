@@ -94,6 +94,8 @@ struct gbm_bo {
    uint32_t pitch;
    uint32_t format;
    union gbm_bo_handle  handle;
+   void *user_data;
+   void (*destroy_user_data)(struct gbm_bo *, void *);
 };
 
 struct gbm_surface {
