@@ -311,7 +311,8 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         MachineInstr * defInstr = MRI->getVRegDef(maskedRegister);
         MachineOperand * def = defInstr->findRegisterDefOperand(maskedRegister);
         def->addTargetFlag(MO_FLAG_MASK);
-        break;
+        /* Continue so the instruction is not erased */
+        continue;
       }
 
       case AMDIL::NEGATE_i32:

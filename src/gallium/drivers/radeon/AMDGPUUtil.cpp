@@ -34,6 +34,7 @@ bool llvm::isPlaceHolderOpcode(unsigned opcode)
   case AMDIL::RETURN:
   case AMDIL::LOAD_INPUT:
   case AMDIL::LAST:
+  case AMDIL::MASK_WRITE:
   case AMDIL::RESERVE_REG:
     return true;
   }
