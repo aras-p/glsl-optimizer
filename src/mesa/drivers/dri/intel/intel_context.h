@@ -116,6 +116,32 @@ struct intel_sync_object {
 
 struct brw_context;
 
+struct intel_batchbuffer {
+   /** Current batchbuffer being queued up. */
+   drm_intel_bo *bo;
+   /** Last BO submitted to the hardware.  Used for glFinish(). */
+   drm_intel_bo *last_bo;
+   /** BO for post-sync nonzero writes for gen6 workaround. */
+   drm_intel_bo *workaround_bo;
+   bool need_workaround_flush;
+
+   struct cached_batch_item *cached_items;
+
+   uint16_t emit, total;
+   uint16_t used, reserved_space;
+   uint32_t map[8192];
+#define BATCH_SZ (8192*sizeof(uint32_t))
+
+   uint32_t state_batch_offset;
+   bool is_blit;
+   bool needs_sol_reset;
+
+   struct {
+      uint16_t used;
+      int reloc_count;
+   } saved;
+};
+
 /**
  * intel_context is derived from Mesa's context class: struct gl_context.
  */
@@ -218,31 +244,7 @@ struct intel_context
 
    int urb_size;
 
-   struct intel_batchbuffer {
-      /** Current batchbuffer being queued up. */
-      drm_intel_bo *bo;
-      /** Last BO submitted to the hardware.  Used for glFinish(). */
-      drm_intel_bo *last_bo;
-      /** BO for post-sync nonzero writes for gen6 workaround. */
-      drm_intel_bo *workaround_bo;
-      bool need_workaround_flush;
-
-      struct cached_batch_item *cached_items;
-
-      uint16_t emit, total;
-      uint16_t used, reserved_space;
-      uint32_t map[8192];
-#define BATCH_SZ (8192*sizeof(uint32_t))
-
-      uint32_t state_batch_offset;
-      bool is_blit;
-      bool needs_sol_reset;
-
-      struct {
-	 uint16_t used;
-	 int reloc_count;
-      } saved;
-   } batch;
+   struct intel_batchbuffer batch;
 
    drm_intel_bo *first_post_swapbuffers_batch;
    bool need_throttle;
