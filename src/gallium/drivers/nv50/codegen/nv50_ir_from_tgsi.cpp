@@ -347,8 +347,8 @@ static nv50_ir::TexTarget translateTexture(uint tex)
    NV50_IR_TEX_TARG_CASE(SHADOW2D_ARRAY, 2D_ARRAY_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOWCUBE, CUBE_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOWRECT, RECT_SHADOW);
-
-   case TGSI_TEXTURE_UNKNOWN:
+   case TGSI_BUFFER:
+      return nv50_ir::TEX_TARGET_BUFFER;
    default:
       assert(!"invalid texture target");
       return nv50_ir::TEX_TARGET_2D;

@@ -466,7 +466,7 @@ struct tgsi_instruction_label
    unsigned Padding  : 8;
 };
 
-#define TGSI_TEXTURE_UNKNOWN        0
+#define TGSI_BUFFER                 0
 #define TGSI_TEXTURE_1D             1
 #define TGSI_TEXTURE_2D             2
 #define TGSI_TEXTURE_3D             3

@@ -79,7 +79,7 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
 {
-   "UNKNOWN",
+   "BUFFER",
    "1D",
    "2D",
    "3D",

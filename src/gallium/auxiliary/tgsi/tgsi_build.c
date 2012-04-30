@@ -709,7 +709,7 @@ tgsi_default_instruction_texture( void )
 {
    struct tgsi_instruction_texture instruction_texture;
 
-   instruction_texture.Texture = TGSI_TEXTURE_UNKNOWN;
+   instruction_texture.Texture = TGSI_BUFFER;
    instruction_texture.NumOffsets = 0;
    instruction_texture.Padding = 0;
 
