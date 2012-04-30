@@ -61,11 +61,11 @@ public:
       return size >> unit[f];
    }
    // for regs of size >= 4, id is counted in 4-byte words (like nv50/c0 binary)
-   inline unsigned int idToBytes(Value *v) const
+   inline unsigned int idToBytes(const Value *v) const
    {
       return v->reg.data.id * MIN2(v->reg.size, 4);
    }
-   inline unsigned int idToUnits(Value *v) const
+   inline unsigned int idToUnits(const Value *v) const
    {
       return units(v->reg.file, idToBytes(v));
    }
