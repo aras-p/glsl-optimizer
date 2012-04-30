@@ -44,13 +44,24 @@ enum gen6_hiz_op {
    GEN6_HIZ_OP_NONE,
 };
 
+
+/**
+ * Binding table indices used by BLORP.
+ */
+enum {
+   BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
+   BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX,
+   BRW_BLORP_NUM_BINDING_TABLE_ENTRIES
+};
+
+
 class brw_blorp_mip_info
 {
 public:
    brw_blorp_mip_info();
 
-   void set(struct intel_mipmap_tree *mt,
-            unsigned int level, unsigned int layer);
+   virtual void set(struct intel_mipmap_tree *mt,
+                    unsigned int level, unsigned int layer);
    void get_draw_offsets(uint32_t *draw_x, uint32_t *draw_y) const;
 
    void get_miplevel_dims(uint32_t *width, uint32_t *height) const
@@ -64,10 +75,70 @@ public:
    unsigned int layer;
 };
 
+class brw_blorp_surface_info : public brw_blorp_mip_info
+{
+public:
+   brw_blorp_surface_info();
+
+   virtual void set(struct intel_mipmap_tree *mt,
+                    unsigned int level, unsigned int layer);
+
+   /* Setting this flag indicates that the buffer's contents are W-tiled
+    * stencil data, but the surface state should be set up for Y tiled
+    * MESA_FORMAT_R8 data (this is necessary because surface states don't
+    * support W tiling).
+    *
+    * Since W tiles are 64 pixels wide by 64 pixels high, whereas Y tiles of
+    * MESA_FORMAT_R8 data are 128 pixels wide by 32 pixels high, the width and
+    * pitch stored in the surface state will be multiplied by 2, and the
+    * height will be halved.  Also, since W and Y tiles store their data in a
+    * different order, the width and height will be rounded up to a multiple
+    * of the tile size, to ensure that the WM program can access the full
+    * width and height of the buffer.
+    */
+   bool map_stencil_as_y_tiled;
+};
+
+
+struct brw_blorp_coord_transform_params
+{
+   void setup(GLuint src0, GLuint dst0, GLuint dst1,
+              bool mirror);
+
+   int16_t multiplier;
+   int16_t offset;
+};
+
+
+struct brw_blorp_wm_push_constants
+{
+   uint16_t dst_x0;
+   uint16_t dst_x1;
+   uint16_t dst_y0;
+   uint16_t dst_y1;
+   brw_blorp_coord_transform_params x_transform;
+   brw_blorp_coord_transform_params y_transform;
+
+   /* Pad out to an integral number of registers */
+   uint16_t pad[8];
+};
+
+/* Every 32 bytes of push constant data constitutes one GEN register. */
+const unsigned int BRW_BLORP_NUM_PUSH_CONST_REGS =
+   sizeof(brw_blorp_wm_push_constants) / 32;
+
+struct brw_blorp_prog_data
+{
+   unsigned int first_curbe_grf;
+};
+
 class brw_blorp_params
 {
 public:
    brw_blorp_params();
+
+   virtual uint32_t get_wm_prog(struct brw_context *brw,
+                                brw_blorp_prog_data **prog_data) const = 0;
 
    void exec(struct intel_context *intel) const;
 
@@ -77,7 +148,11 @@ public:
    uint32_t y1;
    brw_blorp_mip_info depth;
    uint32_t depth_format;
+   brw_blorp_surface_info src;
+   brw_blorp_surface_info dst;
    enum gen6_hiz_op hiz_op;
+   bool use_wm_prog;
+   brw_blorp_wm_push_constants wm_push_consts;
 };
 
 /**
@@ -95,6 +170,45 @@ public:
    brw_hiz_op_params(struct intel_mipmap_tree *mt,
                      unsigned int level, unsigned int layer,
                      gen6_hiz_op op);
+
+   virtual uint32_t get_wm_prog(struct brw_context *brw,
+                                brw_blorp_prog_data **prog_data) const;
+};
+
+struct brw_blorp_blit_prog_key
+{
+   /* True if the source image is W tiled.  If true, the surface state for the
+    * source image must be configured as Y tiled.
+    */
+   bool src_tiled_w;
+
+   /* True if the destination image is W tiled.  If true, the surface state
+    * for the render target must be configured as Y tiled.
+    */
+   bool dst_tiled_w;
+
+   /* True if the rectangle being sent through the rendering pipeline might be
+    * larger than the destination rectangle, so the WM program should kill any
+    * pixels that are outside the destination rectangle.
+    */
+   bool use_kill;
+};
+
+class brw_blorp_blit_params : public brw_blorp_params
+{
+public:
+   brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
+                         struct intel_mipmap_tree *dst_mt,
+                         GLuint src_x0, GLuint src_y0,
+                         GLuint dst_x0, GLuint dst_y0,
+                         GLuint width, GLuint height,
+                         bool mirror_x, bool mirror_y);
+
+   virtual uint32_t get_wm_prog(struct brw_context *brw,
+                                brw_blorp_prog_data **prog_data) const;
+
+private:
+   brw_blorp_blit_prog_key wm_prog_key;
 };
 
 /**
@@ -119,9 +233,27 @@ void
 gen6_blorp_emit_vertices(struct brw_context *brw,
                          const brw_blorp_params *params);
 
+uint32_t
+gen6_blorp_emit_blend_state(struct brw_context *brw,
+                            const brw_blorp_params *params);
+
+uint32_t
+gen6_blorp_emit_cc_state(struct brw_context *brw,
+                         const brw_blorp_params *params);
+
+uint32_t
+gen6_blorp_emit_wm_constants(struct brw_context *brw,
+                             const brw_blorp_params *params);
+
 void
 gen6_blorp_emit_vs_disable(struct brw_context *brw,
                            const brw_blorp_params *params);
+
+uint32_t
+gen6_blorp_emit_binding_table(struct brw_context *brw,
+                              const brw_blorp_params *params,
+                              uint32_t wm_surf_offset_renderbuffer,
+                              uint32_t wm_surf_offset_texture);
 
 uint32_t
 gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,

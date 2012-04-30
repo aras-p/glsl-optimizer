@@ -35,6 +35,11 @@ brw_blorp_mip_info::brw_blorp_mip_info()
 {
 }
 
+brw_blorp_surface_info::brw_blorp_surface_info()
+   : map_stencil_as_y_tiled(false)
+{
+}
+
 void
 brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
                         unsigned int level, unsigned int layer)
@@ -44,6 +49,23 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    this->mt = mt;
    this->level = level;
    this->layer = layer;
+}
+
+void
+brw_blorp_surface_info::set(struct intel_mipmap_tree *mt,
+                            unsigned int level, unsigned int layer)
+{
+   brw_blorp_mip_info::set(mt, level, layer);
+
+   if (mt->format == MESA_FORMAT_S8) {
+      /* The miptree is a W-tiled stencil buffer.  Surface states can't be set
+       * up for W tiling, so we'll need to use Y tiling and have the WM
+       * program swizzle the coordinates.
+       */
+      this->map_stencil_as_y_tiled = true;
+   } else {
+      this->map_stencil_as_y_tiled = false;
+   }
 }
 
 void
@@ -65,7 +87,8 @@ brw_blorp_params::brw_blorp_params()
      x1(0),
      y1(0),
      depth_format(0),
-     hiz_op(GEN6_HIZ_OP_NONE)
+     hiz_op(GEN6_HIZ_OP_NONE),
+     use_wm_prog(false)
 {
 }
 
@@ -105,4 +128,11 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    case MESA_FORMAT_X8_Z24:    depth_format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT; break;
    default:                    assert(0); break;
    }
+}
+
+uint32_t
+brw_hiz_op_params::get_wm_prog(struct brw_context *brw,
+                               brw_blorp_prog_data **prog_data) const
+{
+   return 0;
 }

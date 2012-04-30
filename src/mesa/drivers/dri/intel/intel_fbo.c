@@ -823,6 +823,15 @@ intel_blit_framebuffer(struct gl_context *ctx,
    if (mask == 0x0)
       return;
 
+#ifndef I915
+   mask = brw_blorp_framebuffer(intel_context(ctx),
+                                srcX0, srcY0, srcX1, srcY1,
+                                dstX0, dstY0, dstX1, dstY1,
+                                mask, filter);
+   if (mask == 0x0)
+      return;
+#endif
+
    _mesa_meta_BlitFramebuffer(ctx,
                               srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1,

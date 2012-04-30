@@ -536,6 +536,7 @@ enum brw_cache_id {
    BRW_CC_VP,
    BRW_CC_UNIT,
    BRW_WM_PROG,
+   BRW_BLORP_BLIT_PROG,
    BRW_SAMPLER,
    BRW_WM_UNIT,
    BRW_SF_PROG,
@@ -1090,6 +1091,13 @@ brw_end_transform_feedback(struct gl_context *ctx,
 void
 gen7_end_transform_feedback(struct gl_context *ctx,
 			    struct gl_transform_feedback_object *obj);
+
+/* brw_blorp_blit.cpp */
+GLbitfield
+brw_blorp_framebuffer(struct intel_context *intel,
+                      GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                      GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                      GLbitfield mask, GLenum filter);
 
 
 
