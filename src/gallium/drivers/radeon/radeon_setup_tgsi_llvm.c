@@ -29,6 +29,7 @@
 #include "gallivm/lp_bld_gather.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_swizzle.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
@@ -463,6 +464,20 @@ static void if_emit(
 	ctx->branch[ctx->branch_depth - 1].has_else = 0;
 }
 
+static void kil_emit(
+	const struct lp_build_tgsi_action * action,
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	unsigned i;
+	for (i = 0; i < emit_data->arg_count; i++) {
+		emit_data->output[i] = lp_build_intrinsic_unary(
+			bld_base->base.gallivm->builder,
+			action->intr_name,
+			emit_data->dst_type, emit_data->args[i]);
+	}
+}
+
 static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
@@ -574,7 +589,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_FRC].emit = lp_build_tgsi_intrinsic;
 	bld_base->op_actions[TGSI_OPCODE_FRC].intr_name = "llvm.AMDIL.fraction.";
 	bld_base->op_actions[TGSI_OPCODE_IF].emit = if_emit;
-	bld_base->op_actions[TGSI_OPCODE_KIL].emit = lp_build_tgsi_intrinsic;
+	bld_base->op_actions[TGSI_OPCODE_KIL].emit = kil_emit;
 	bld_base->op_actions[TGSI_OPCODE_KIL].intr_name = "llvm.AMDGPU.kill";
 	bld_base->op_actions[TGSI_OPCODE_KILP].emit = lp_build_tgsi_intrinsic;
 	bld_base->op_actions[TGSI_OPCODE_KILP].intr_name = "llvm.AMDGPU.kilp";
