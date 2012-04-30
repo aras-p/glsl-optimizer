@@ -594,6 +594,7 @@ setup_index_buffer(struct st_context *st,
    else if (st->indexbuf_uploader) {
       u_upload_data(st->indexbuf_uploader, 0, ib->count * ibuffer->index_size,
                     ib->ptr, &ibuffer->offset, &ibuffer->buffer);
+      u_upload_unmap(st->indexbuf_uploader);
    }
    else {
       /* indices are in user space memory */
