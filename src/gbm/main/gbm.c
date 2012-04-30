@@ -231,6 +231,17 @@ gbm_bo_get_handle(struct gbm_bo *bo)
    return bo->handle;
 }
 
+/** Get the gbm device used to create the buffer object
+ *
+ * \param bo The buffer object
+ * \return Returns the gbm device with which the buffer object was created
+ */
+GBM_EXPORT struct gbm_device *
+gbm_bo_get_device(struct gbm_bo *bo)
+{
+	return bo->gbm;
+}
+
 /** Set the user data associated with a buffer object
  *
  * \param bo The buffer object

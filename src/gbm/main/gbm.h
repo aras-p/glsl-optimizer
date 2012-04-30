@@ -242,6 +242,9 @@ gbm_bo_get_pitch(struct gbm_bo *bo);
 uint32_t
 gbm_bo_get_format(struct gbm_bo *bo);
 
+struct gbm_device *
+gbm_bo_get_device(struct gbm_bo *bo);
+
 union gbm_bo_handle
 gbm_bo_get_handle(struct gbm_bo *bo);
 
