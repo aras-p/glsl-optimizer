@@ -1563,6 +1563,170 @@ programs.
   threads terminates or never reaches an executed BARRIER instruction.
 
 
+.. _atomopcodes:
+
+Atomic opcodes
+^^^^^^^^^^^^^^
+
+These opcodes provide atomic variants of some common arithmetic and
+logical operations.  In this context atomicity means that another
+concurrent memory access operation that affects the same memory
+location is guaranteed to be performed strictly before or after the
+entire execution of the atomic operation.
+
+For the moment they're only valid in compute programs.
+
+.. opcode:: ATOMUADD - Atomic integer addition
+
+  Syntax: ``ATOMUADD dst, resource, offset, src``
+
+  Example: ``ATOMUADD TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = dst_i + src_i
+
+
+.. opcode:: ATOMXCHG - Atomic exchange
+
+  Syntax: ``ATOMXCHG dst, resource, offset, src``
+
+  Example: ``ATOMXCHG TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = src_i
+
+
+.. opcode:: ATOMCAS - Atomic compare-and-exchange
+
+  Syntax: ``ATOMCAS dst, resource, offset, cmp, src``
+
+  Example: ``ATOMCAS TEMP[0], RES[0], TEMP[1], TEMP[2], TEMP[3]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = (dst_i == cmp_i ? src_i : dst_i)
+
+
+.. opcode:: ATOMAND - Atomic bitwise And
+
+  Syntax: ``ATOMAND dst, resource, offset, src``
+
+  Example: ``ATOMAND TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = dst_i \& src_i
+
+
+.. opcode:: ATOMOR - Atomic bitwise Or
+
+  Syntax: ``ATOMOR dst, resource, offset, src``
+
+  Example: ``ATOMOR TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = dst_i | src_i
+
+
+.. opcode:: ATOMXOR - Atomic bitwise Xor
+
+  Syntax: ``ATOMXOR dst, resource, offset, src``
+
+  Example: ``ATOMXOR TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = dst_i \oplus src_i
+
+
+.. opcode:: ATOMUMIN - Atomic unsigned minimum
+
+  Syntax: ``ATOMUMIN dst, resource, offset, src``
+
+  Example: ``ATOMUMIN TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = (dst_i < src_i ? dst_i : src_i)
+
+
+.. opcode:: ATOMUMAX - Atomic unsigned maximum
+
+  Syntax: ``ATOMUMAX dst, resource, offset, src``
+
+  Example: ``ATOMUMAX TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = (dst_i > src_i ? dst_i : src_i)
+
+
+.. opcode:: ATOMIMIN - Atomic signed minimum
+
+  Syntax: ``ATOMIMIN dst, resource, offset, src``
+
+  Example: ``ATOMIMIN TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = (dst_i < src_i ? dst_i : src_i)
+
+
+.. opcode:: ATOMIMAX - Atomic signed maximum
+
+  Syntax: ``ATOMIMAX dst, resource, offset, src``
+
+  Example: ``ATOMIMAX TEMP[0], RES[0], TEMP[1], TEMP[2]``
+
+  The following operation is performed atomically on each component:
+
+.. math::
+
+  dst_i = resource[offset]_i
+
+  resource[offset]_i = (dst_i > src_i ? dst_i : src_i)
+
+
+
 Explanation of symbols used
 ------------------------------
 

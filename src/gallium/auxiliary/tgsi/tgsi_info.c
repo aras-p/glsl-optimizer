@@ -204,7 +204,18 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 0, 0, 0, 0, 0, OTHR, "MFENCE", TGSI_OPCODE_MFENCE },
    { 1, 0, 0, 0, 0, 0, OTHR, "LFENCE", TGSI_OPCODE_LFENCE },
    { 1, 0, 0, 0, 0, 0, OTHR, "SFENCE", TGSI_OPCODE_SFENCE },
-   { 0, 0, 0, 0, 0, 0, OTHR, "BARRIER", TGSI_OPCODE_BARRIER }
+   { 0, 0, 0, 0, 0, 0, OTHR, "BARRIER", TGSI_OPCODE_BARRIER },
+
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMUADD", TGSI_OPCODE_ATOMUADD },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMXCHG", TGSI_OPCODE_ATOMXCHG },
+   { 1, 4, 0, 0, 0, 0, OTHR, "ATOMCAS", TGSI_OPCODE_ATOMCAS },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMAND", TGSI_OPCODE_ATOMAND },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMOR", TGSI_OPCODE_ATOMOR },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMXOR", TGSI_OPCODE_ATOMXOR },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMUMIN", TGSI_OPCODE_ATOMUMIN },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMUMAX", TGSI_OPCODE_ATOMUMAX },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMIMIN", TGSI_OPCODE_ATOMIMIN },
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMIMAX", TGSI_OPCODE_ATOMIMAX }
 };
 
 const struct tgsi_opcode_info *

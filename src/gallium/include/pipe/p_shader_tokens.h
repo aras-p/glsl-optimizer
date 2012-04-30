@@ -418,7 +418,18 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_SFENCE              165
 #define TGSI_OPCODE_BARRIER             166
 
-#define TGSI_OPCODE_LAST                167
+#define TGSI_OPCODE_ATOMUADD            167
+#define TGSI_OPCODE_ATOMXCHG            168
+#define TGSI_OPCODE_ATOMCAS             169
+#define TGSI_OPCODE_ATOMAND             170
+#define TGSI_OPCODE_ATOMOR              171
+#define TGSI_OPCODE_ATOMXOR             172
+#define TGSI_OPCODE_ATOMUMIN            173
+#define TGSI_OPCODE_ATOMUMAX            174
+#define TGSI_OPCODE_ATOMIMIN            175
+#define TGSI_OPCODE_ATOMIMAX            176
+
+#define TGSI_OPCODE_LAST                177
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
