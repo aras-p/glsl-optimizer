@@ -45,6 +45,31 @@
                              * sizeof(float))
 /** \} */
 
+
+/**
+ * Compute masks to determine how much of draw_x and draw_y should be
+ * performed using the fine adjustment of "depth coordinate offset X/Y"
+ * (dw5 of 3DSTATE_DEPTH_BUFFER).  See the emit_depthbuffer() function for
+ * details.
+ */
+void
+gen6_blorp_compute_tile_masks(const brw_blorp_params *params,
+                              uint32_t *tile_mask_x, uint32_t *tile_mask_y)
+{
+   uint32_t depth_mask_x, depth_mask_y, hiz_mask_x, hiz_mask_y;
+   intel_region_get_tile_masks(params->depth.mt->region,
+                               &depth_mask_x, &depth_mask_y);
+   intel_region_get_tile_masks(params->depth.mt->hiz_mt->region,
+                               &hiz_mask_x, &hiz_mask_y);
+
+   /* Each HiZ row represents 2 rows of pixels */
+   hiz_mask_y = hiz_mask_y << 1 | 1;
+
+   *tile_mask_x = depth_mask_x | hiz_mask_x;
+   *tile_mask_y = depth_mask_y | hiz_mask_y;
+}
+
+
 void
 gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params)
@@ -234,223 +259,267 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
    }
 }
 
+
+/* 3DSTATE_URB
+ *
+ * Assign the entire URB to the VS. Even though the VS disabled, URB space
+ * is still needed because the clipper loads the VUE's from the URB. From
+ * the Sandybridge PRM, Volume 2, Part 1, Section 3DSTATE,
+ * Dword 1.15:0 "VS Number of URB Entries":
+ *     This field is always used (even if VS Function Enable is DISABLED).
+ *
+ * The warning below appears in the PRM (Section 3DSTATE_URB), but we can
+ * safely ignore it because this batch contains only one draw call.
+ *     Because of URB corruption caused by allocating a previous GS unit
+ *     URB entry to the VS unit, software is required to send a “GS NULL
+ *     Fence” (Send URB fence with VS URB size == 1 and GS URB size == 0)
+ *     plus a dummy DRAW call before any case where VS will be taking over
+ *     GS URB space.
+ */
+static void
+gen6_blorp_emit_urb_config(struct brw_context *brw,
+                           const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(3);
+   OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
+   OUT_BATCH(brw->urb.max_vs_entries << GEN6_URB_VS_ENTRIES_SHIFT);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
 /**
- * \brief Execute a blit or render pass operation.
+ * \param out_offset is relative to
+ *        CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
+ */
+uint32_t
+gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,
+                                    const brw_blorp_params *params)
+{
+   uint32_t depthstencil_offset;
+
+   struct gen6_depth_stencil_state *state;
+   state = (struct gen6_depth_stencil_state *)
+      brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
+                      sizeof(*state), 64,
+                      &depthstencil_offset);
+   memset(state, 0, sizeof(*state));
+
+   /* See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
+    *   - 7.5.3.1 Depth Buffer Clear
+    *   - 7.5.3.2 Depth Buffer Resolve
+    *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
+    */
+   state->ds2.depth_write_enable = 1;
+   if (params->hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE) {
+      state->ds2.depth_test_enable = 1;
+      state->ds2.depth_test_func = COMPAREFUNC_NEVER;
+   }
+
+   return depthstencil_offset;
+}
+
+
+/* 3DSTATE_CC_STATE_POINTERS
  *
- * To execute the operation, this function manually constructs and emits a
- * batch to draw a rectangle primitive. The batchbuffer is flushed before
- * constructing and after emitting the batch.
+ * The pointer offsets are relative to
+ * CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
  *
- * This function alters no GL state.
+ * The HiZ op doesn't use BLEND_STATE or COLOR_CALC_STATE.
+ */
+static void
+gen6_blorp_emit_cc_state_pointers(struct brw_context *brw,
+                                  const brw_blorp_params *params,
+                                  uint32_t depthstencil_offset)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
+   OUT_BATCH(1); /* BLEND_STATE offset */
+   OUT_BATCH(depthstencil_offset | 1); /* DEPTH_STENCIL_STATE offset */
+   OUT_BATCH(1); /* COLOR_CALC_STATE offset */
+   ADVANCE_BATCH();
+}
+
+
+/* 3DSTATE_VS
+ *
+ * Disable vertex shader.
  */
 void
-gen6_blorp_exec(struct intel_context *intel,
-                const brw_blorp_params *params)
+gen6_blorp_emit_vs_disable(struct brw_context *brw,
+                           const brw_blorp_params *params)
 {
-   struct gl_context *ctx = &intel->ctx;
-   struct brw_context *brw = brw_context(ctx);
-   uint32_t draw_x, draw_y;
-   uint32_t tile_mask_x, tile_mask_y;
+   struct intel_context *intel = &brw->intel;
 
-   params->depth.get_draw_offsets(&draw_x, &draw_y);
-
-   /* Compute masks to determine how much of draw_x and draw_y should be
-    * performed using the fine adjustment of "depth coordinate offset X/Y"
-    * (dw5 of 3DSTATE_DEPTH_BUFFER).  See the emit_depthbuffer() function for
-    * details.
-    */
-   {
-      uint32_t depth_mask_x, depth_mask_y, hiz_mask_x, hiz_mask_y;
-      intel_region_get_tile_masks(params->depth.mt->region,
-                                  &depth_mask_x, &depth_mask_y);
-      intel_region_get_tile_masks(params->depth.mt->hiz_mt->region,
-                                  &hiz_mask_x, &hiz_mask_y);
-
-      /* Each HiZ row represents 2 rows of pixels */
-      hiz_mask_y = hiz_mask_y << 1 | 1;
-
-      tile_mask_x = depth_mask_x | hiz_mask_x;
-      tile_mask_y = depth_mask_y | hiz_mask_y;
-   }
-
-   gen6_blorp_emit_batch_head(brw, params);
-   gen6_blorp_emit_vertices(brw, params);
-
-   /* 3DSTATE_URB
-    *
-    * Assign the entire URB to the VS. Even though the VS disabled, URB space
-    * is still needed because the clipper loads the VUE's from the URB. From
-    * the Sandybridge PRM, Volume 2, Part 1, Section 3DSTATE,
-    * Dword 1.15:0 "VS Number of URB Entries":
-    *     This field is always used (even if VS Function Enable is DISABLED).
-    *
-    * The warning below appears in the PRM (Section 3DSTATE_URB), but we can
-    * safely ignore it because this batch contains only one draw call.
-    *     Because of URB corruption caused by allocating a previous GS unit
-    *     URB entry to the VS unit, software is required to send a “GS NULL
-    *     Fence” (Send URB fence with VS URB size == 1 and GS URB size == 0)
-    *     plus a dummy DRAW call before any case where VS will be taking over
-    *     GS URB space.
-    */
-   {
-      BEGIN_BATCH(3);
-      OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
-      OUT_BATCH(brw->urb.max_vs_entries << GEN6_URB_VS_ENTRIES_SHIFT);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
-
-   /* 3DSTATE_CC_STATE_POINTERS
-    *
-    * The pointer offsets are relative to
-    * CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
-    *
-    * The HiZ op doesn't use BLEND_STATE or COLOR_CALC_STATE.
-    */
-   {
-      uint32_t depthstencil_offset;
-      gen6_blorp_emit_depth_stencil_state(brw, params, &depthstencil_offset);
-
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
-      OUT_BATCH(1); /* BLEND_STATE offset */
-      OUT_BATCH(depthstencil_offset | 1); /* DEPTH_STENCIL_STATE offset */
-      OUT_BATCH(1); /* COLOR_CALC_STATE offset */
-      ADVANCE_BATCH();
-   }
-
-   /* 3DSTATE_VS
-    *
-    * Disable vertex shader.
-    */
-   {
+   if (intel->gen == 6) {
       /* From the BSpec, Volume 2a, Part 3 "Vertex Shader", Section
        * 3DSTATE_VS, Dword 5.0 "VS Function Enable":
-       *   [DevSNB] A pipeline flush must be programmed prior to a 3DSTATE_VS
-       *   command that causes the VS Function Enable to toggle. Pipeline
-       *   flush can be executed by sending a PIPE_CONTROL command with CS
-       *   stall bit set and a post sync operation.
+       *
+       *   [DevSNB] A pipeline flush must be programmed prior to a
+       *   3DSTATE_VS command that causes the VS Function Enable to
+       *   toggle. Pipeline flush can be executed by sending a PIPE_CONTROL
+       *   command with CS stall bit set and a post sync operation.
        */
       intel_emit_post_sync_nonzero_flush(intel);
-
-      BEGIN_BATCH(6);
-      OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
    }
 
-   /* 3DSTATE_GS
-    *
-    * Disable the geometry shader.
-    */
-   {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(6);
+   OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
 
-   /* 3DSTATE_CLIP
-    *
-    * Disable the clipper.
-    *
-    * The BLORP op emits a rectangle primitive, which requires clipping to
-    * be disabled. From page 10 of the Sandy Bridge PRM Volume 2 Part 1
-    * Section 1.3 "3D Primitives Overview":
-    *    RECTLIST:
-    *    Either the CLIP unit should be DISABLED, or the CLIP unit's Clip
-    *    Mode should be set to a value other than CLIPMODE_NORMAL.
-    *
-    * Also disable perspective divide. This doesn't change the clipper's
-    * output, but does spare a few electrons.
-    */
-   {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(GEN6_CLIP_PERSPECTIVE_DIVIDE_DISABLE);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_SF
-    *
-    * Disable ViewportTransformEnable (dw2.1)
-    *
-    * From the SandyBridge PRM, Volume 2, Part 1, Section 1.3, "3D
-    * Primitives Overview":
-    *     RECTLIST: Viewport Mapping must be DISABLED (as is typical with the
-    *     use of screen- space coordinates).
-    *
-    * A solid rectangle must be rendered, so set FrontFaceFillMode (dw2.4:3)
-    * and BackFaceFillMode (dw2.5:6) to SOLID(0).
-    *
-    * From the Sandy Bridge PRM, Volume 2, Part 1, Section
-    * 6.4.1.1 3DSTATE_SF, Field FrontFaceFillMode:
-    *     SOLID: Any triangle or rectangle object found to be front-facing
-    *     is rendered as a solid object. This setting is required when
-    *     (rendering rectangle (RECTLIST) objects.
-    */
-   {
-      BEGIN_BATCH(20);
-      OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
-      OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | /* only position */
-                1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
-                0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
-      for (int i = 0; i < 18; ++i)
-         OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+/* 3DSTATE_GS
+ *
+ * Disable the geometry shader.
+ */
+void
+gen6_blorp_emit_gs_disable(struct brw_context *brw,
+                           const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-   /* 3DSTATE_WM
-    *
-    * Disable thread dispatch (dw5.19) and enable the HiZ op.
-    *
-    * Even though thread dispatch is disabled, max threads (dw5.25:31) must be
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/* 3DSTATE_CLIP
+ *
+ * Disable the clipper.
+ *
+ * The BLORP op emits a rectangle primitive, which requires clipping to
+ * be disabled. From page 10 of the Sandy Bridge PRM Volume 2 Part 1
+ * Section 1.3 "3D Primitives Overview":
+ *    RECTLIST:
+ *    Either the CLIP unit should be DISABLED, or the CLIP unit's Clip
+ *    Mode should be set to a value other than CLIPMODE_NORMAL.
+ *
+ * Also disable perspective divide. This doesn't change the clipper's
+ * output, but does spare a few electrons.
+ */
+void
+gen6_blorp_emit_clip_disable(struct brw_context *brw,
+                             const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(GEN6_CLIP_PERSPECTIVE_DIVIDE_DISABLE);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/* 3DSTATE_SF
+ *
+ * Disable ViewportTransformEnable (dw2.1)
+ *
+ * From the SandyBridge PRM, Volume 2, Part 1, Section 1.3, "3D
+ * Primitives Overview":
+ *     RECTLIST: Viewport Mapping must be DISABLED (as is typical with the
+ *     use of screen- space coordinates).
+ *
+ * A solid rectangle must be rendered, so set FrontFaceFillMode (dw2.4:3)
+ * and BackFaceFillMode (dw2.5:6) to SOLID(0).
+ *
+ * From the Sandy Bridge PRM, Volume 2, Part 1, Section
+ * 6.4.1.1 3DSTATE_SF, Field FrontFaceFillMode:
+ *     SOLID: Any triangle or rectangle object found to be front-facing
+ *     is rendered as a solid object. This setting is required when
+ *     (rendering rectangle (RECTLIST) objects.
+ */
+static void
+gen6_blorp_emit_sf_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(20);
+   OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
+   OUT_BATCH((1 - 1) << GEN6_SF_NUM_OUTPUTS_SHIFT | /* only position */
+             1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
+             0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
+   for (int i = 0; i < 18; ++i)
+      OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/**
+ * Disable thread dispatch (dw5.19) and enable the HiZ op.
+ */
+static void
+gen6_blorp_emit_wm_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   /* Even though thread dispatch is disabled, max threads (dw5.25:31) must be
     * nonzero to prevent the GPU from hanging. See the valid ranges in the
     * BSpec, Volume 2a.11 Windower, Section 3DSTATE_WM, Dword 5.25:31
     * "Maximum Number Of Threads".
     */
-   {
-      uint32_t dw4 = 0;
+   uint32_t dw4 = 0;
 
-      switch (params->hiz_op) {
-      case GEN6_HIZ_OP_DEPTH_CLEAR:
-         assert(!"not implemented");
-         dw4 |= GEN6_WM_DEPTH_CLEAR;
-         break;
-      case GEN6_HIZ_OP_DEPTH_RESOLVE:
-         dw4 |= GEN6_WM_DEPTH_RESOLVE;
-         break;
-      case GEN6_HIZ_OP_HIZ_RESOLVE:
-         dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
-         break;
-      default:
-         assert(0);
-         break;
-      }
-
-      BEGIN_BATCH(9);
-      OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(dw4);
-      OUT_BATCH((brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT);
-      OUT_BATCH((1 - 1) << GEN6_WM_NUM_SF_OUTPUTS_SHIFT); /* only position */
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+   switch (params->hiz_op) {
+   case GEN6_HIZ_OP_DEPTH_CLEAR:
+      assert(!"not implemented");
+      dw4 |= GEN6_WM_DEPTH_CLEAR;
+      break;
+   case GEN6_HIZ_OP_DEPTH_RESOLVE:
+      dw4 |= GEN6_WM_DEPTH_RESOLVE;
+      break;
+   case GEN6_HIZ_OP_HIZ_RESOLVE:
+      dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      break;
+   default:
+      assert(0);
+      break;
    }
+
+   BEGIN_BATCH(9);
+   OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(dw4);
+   OUT_BATCH((brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT);
+   OUT_BATCH((1 - 1) << GEN6_WM_NUM_SF_OUTPUTS_SHIFT); /* only position */
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+static void
+gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
+                                     const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+   uint32_t draw_x, draw_y;
+   uint32_t tile_mask_x, tile_mask_y;
+
+   gen6_blorp_compute_tile_masks(params, &tile_mask_x, &tile_mask_y);
+   params->depth.get_draw_offsets(&draw_x, &draw_y);
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
@@ -534,44 +603,97 @@ gen6_blorp_exec(struct intel_context *intel,
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
+}
 
-   /* 3DSTATE_CLEAR_PARAMS
-    *
-    * From the Sandybridge PRM, Volume 2, Part 1, Section 3DSTATE_CLEAR_PARAMS:
-    *   [DevSNB] 3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE
-    *   packet when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
-    */
-   {
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 | (2 - 2));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_DRAWING_RECTANGLE */
-   {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(((params->x1 - 1) & 0xffff) |
-                ((params->y1 - 1) << 16));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+/* 3DSTATE_CLEAR_PARAMS
+ *
+ * From the Sandybridge PRM, Volume 2, Part 1, Section 3DSTATE_CLEAR_PARAMS:
+ *   [DevSNB] 3DSTATE_CLEAR_PARAMS packet must follow the DEPTH_BUFFER_STATE
+ *   packet when HiZ is enabled and the DEPTH_BUFFER_STATE changes.
+ */
+static void
+gen6_blorp_emit_clear_params(struct brw_context *brw,
+                             const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-   /* 3DPRIMITIVE */
-   {
-     BEGIN_BATCH(6);
-     OUT_BATCH(CMD_3D_PRIM << 16 | (6 - 2) |
-               _3DPRIM_RECTLIST << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
-               GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL);
-     OUT_BATCH(3); /* vertex count per instance */
-     OUT_BATCH(0);
-     OUT_BATCH(1); /* instance count */
-     OUT_BATCH(0);
-     OUT_BATCH(0);
-     ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/* 3DSTATE_DRAWING_RECTANGLE */
+void
+gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
+                                  const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(((params->x1 - 1) & 0xffff) |
+             ((params->y1 - 1) << 16));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/* 3DPRIMITIVE */
+static void
+gen6_blorp_emit_primitive(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(6);
+   OUT_BATCH(CMD_3D_PRIM << 16 | (6 - 2) |
+             _3DPRIM_RECTLIST << GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT |
+             GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL);
+   OUT_BATCH(3); /* vertex count per instance */
+   OUT_BATCH(0);
+   OUT_BATCH(1); /* instance count */
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/**
+ * \brief Execute a blit or render pass operation.
+ *
+ * To execute the operation, this function manually constructs and emits a
+ * batch to draw a rectangle primitive. The batchbuffer is flushed before
+ * constructing and after emitting the batch.
+ *
+ * This function alters no GL state.
+ */
+void
+gen6_blorp_exec(struct intel_context *intel,
+                const brw_blorp_params *params)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct brw_context *brw = brw_context(ctx);
+   uint32_t depthstencil_offset;
+
+   gen6_blorp_emit_batch_head(brw, params);
+   gen6_blorp_emit_vertices(brw, params);
+   gen6_blorp_emit_urb_config(brw, params);
+   depthstencil_offset = gen6_blorp_emit_depth_stencil_state(brw, params);
+   gen6_blorp_emit_cc_state_pointers(brw, params, depthstencil_offset);
+   gen6_blorp_emit_vs_disable(brw, params);
+   gen6_blorp_emit_gs_disable(brw, params);
+   gen6_blorp_emit_clip_disable(brw, params);
+   gen6_blorp_emit_sf_config(brw, params);
+   gen6_blorp_emit_wm_config(brw, params);
+
+   gen6_blorp_emit_depth_stencil_config(brw, params);
+   gen6_blorp_emit_clear_params(brw, params);
+   gen6_blorp_emit_drawing_rectangle(brw, params);
+   gen6_blorp_emit_primitive(brw, params);
 
    /* See comments above at first invocation of intel_flush() in
     * gen6_blorp_emit_batch_head().
@@ -581,34 +703,6 @@ gen6_blorp_exec(struct intel_context *intel,
    /* Be safe. */
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
-}
-
-/**
- * \param out_offset is relative to
- *        CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
- */
-void
-gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,
-                                    const brw_blorp_params *params,
-                                    uint32_t *out_offset)
-{
-   struct gen6_depth_stencil_state *state;
-   state = (struct gen6_depth_stencil_state *)
-      brw_state_batch(brw, AUB_TRACE_DEPTH_STENCIL_STATE,
-                      sizeof(*state), 64,
-                      out_offset);
-   memset(state, 0, sizeof(*state));
-
-   /* See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
-    *   - 7.5.3.1 Depth Buffer Clear
-    *   - 7.5.3.2 Depth Buffer Resolve
-    *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
-    */
-   state->ds2.depth_write_enable = 1;
-   if (params->hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE) {
-      state->ds2.depth_test_enable = 1;
-      state->ds2.depth_test_func = COMPAREFUNC_NEVER;
-   }
 }
 
 /** \see intel_context::vtbl::resolve_hiz_slice */

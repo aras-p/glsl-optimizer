@@ -108,6 +108,10 @@ void
 gen6_blorp_init(struct brw_context *brw);
 
 void
+gen6_blorp_compute_tile_masks(const brw_blorp_params *params,
+                              uint32_t *tile_mask_x, uint32_t *tile_mask_y);
+
+void
 gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params);
 
@@ -116,7 +120,22 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
                          const brw_blorp_params *params);
 
 void
+gen6_blorp_emit_vs_disable(struct brw_context *brw,
+                           const brw_blorp_params *params);
+
+uint32_t
 gen6_blorp_emit_depth_stencil_state(struct brw_context *brw,
-                                    const brw_blorp_params *params,
-                                    uint32_t *out_offset);
+                                    const brw_blorp_params *params);
+
+void
+gen6_blorp_emit_gs_disable(struct brw_context *brw,
+                           const brw_blorp_params *params);
+
+void
+gen6_blorp_emit_clip_disable(struct brw_context *brw,
+                             const brw_blorp_params *params);
+
+void
+gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
+                                  const brw_blorp_params *params);
 /** \} */

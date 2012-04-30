@@ -34,205 +34,156 @@
 #include "brw_blorp.h"
 #include "gen7_blorp.h"
 
-/**
- * \copydoc gen6_blorp_exec()
+
+/* 3DSTATE_URB_VS
+ * 3DSTATE_URB_HS
+ * 3DSTATE_URB_DS
+ * 3DSTATE_URB_GS
+ *
+ * If the 3DSTATE_URB_VS is emitted, than the others must be also. From the
+ * BSpec, Volume 2a "3D Pipeline Overview", Section 1.7.1 3DSTATE_URB_VS:
+ *     3DSTATE_URB_HS, 3DSTATE_URB_DS, and 3DSTATE_URB_GS must also be
+ *     programmed in order for the programming of this state to be
+ *     valid.
  */
-void
-gen7_blorp_exec(struct intel_context *intel,
-                const brw_blorp_params *params)
+static void
+gen7_blorp_emit_urb_config(struct brw_context *brw,
+                           const brw_blorp_params *params)
 {
-   struct gl_context *ctx = &intel->ctx;
-   struct brw_context *brw = brw_context(ctx);
-   uint32_t draw_x, draw_y;
-   uint32_t tile_mask_x, tile_mask_y;
+   struct intel_context *intel = &brw->intel;
 
-   params->depth.get_draw_offsets(&draw_x, &draw_y);
-
-   /* Compute masks to determine how much of draw_x and draw_y should be
-    * performed using the fine adjustment of "depth coordinate offset X/Y"
-    * (dw5 of 3DSTATE_DEPTH_BUFFER).  See the emit_depthbuffer() function for
-    * details.
+   /* The minimum valid value is 32. See 3DSTATE_URB_VS,
+    * Dword 1.15:0 "VS Number of URB Entries".
     */
-   {
-      uint32_t depth_mask_x, depth_mask_y, hiz_mask_x, hiz_mask_y;
-      intel_region_get_tile_masks(params->depth.mt->region,
-                                  &depth_mask_x, &depth_mask_y);
-      intel_region_get_tile_masks(params->depth.mt->hiz_mt->region,
-                                  &hiz_mask_x, &hiz_mask_y);
+   int num_vs_entries = 32;
 
-      /* Each HiZ row represents 2 rows of pixels */
-      hiz_mask_y = hiz_mask_y << 1 | 1;
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
+   OUT_BATCH(1 << GEN7_URB_ENTRY_SIZE_SHIFT |
+             0 << GEN7_URB_STARTING_ADDRESS_SHIFT |
+             num_vs_entries);
+   ADVANCE_BATCH();
 
-      tile_mask_x = depth_mask_x | hiz_mask_x;
-      tile_mask_y = depth_mask_y | hiz_mask_y;
-   }
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_URB_GS << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 
-   gen6_blorp_emit_batch_head(brw, params);
-   gen6_blorp_emit_vertices(brw, params);
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 
-   /* 3DSTATE_URB_VS
-    * 3DSTATE_URB_HS
-    * 3DSTATE_URB_DS
-    * 3DSTATE_URB_GS
-    *
-    * If the 3DSTATE_URB_VS is emitted, than the others must be also. From the
-    * BSpec, Volume 2a "3D Pipeline Overview", Section 1.7.1 3DSTATE_URB_VS:
-    *     3DSTATE_URB_HS, 3DSTATE_URB_DS, and 3DSTATE_URB_GS must also be
-    *     programmed in order for the programming of this state to be
-    *     valid.
-    */
-   {
-      /* The minimum valid value is 32. See 3DSTATE_URB_VS,
-       * Dword 1.15:0 "VS Number of URB Entries".
-       */
-      int num_vs_entries = 32;
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
-      OUT_BATCH(1 << GEN7_URB_ENTRY_SIZE_SHIFT |
-                0 << GEN7_URB_STARTING_ADDRESS_SHIFT |
-                num_vs_entries);
-      ADVANCE_BATCH();
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_URB_GS << 16 | (2 - 2));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+/* 3DSTATE_DEPTH_STENCIL_STATE_POINTERS
+ *
+ * The offset is relative to CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
+ */
+static void
+gen7_blorp_emit_depth_stencil_state_pointers(struct brw_context *brw,
+                                             const brw_blorp_params *params,
+                                             uint32_t depthstencil_offset)
+{
+   struct intel_context *intel = &brw->intel;
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_DEPTH_STENCIL_STATE_POINTERS << 16 | (2 - 2));
+   OUT_BATCH(depthstencil_offset | 1);
+   ADVANCE_BATCH();
+}
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_DEPTH_STENCIL_STATE_POINTERS
-    *
-    * The offset is relative to CMD_STATE_BASE_ADDRESS.DynamicStateBaseAddress.
-    */
-   {
-      uint32_t depthstencil_offset;
-      gen6_blorp_emit_depth_stencil_state(brw, params, &depthstencil_offset);
+/* 3DSTATE_HS
+ *
+ * Disable the hull shader.
+ */
+static void
+gen7_blorp_emit_hs_disable(struct brw_context *brw,
+                           const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-      BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_DEPTH_STENCIL_STATE_POINTERS << 16 | (2 - 2));
-      OUT_BATCH(depthstencil_offset | 1);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_HS << 16 | (7 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
 
-   /* 3DSTATE_VS
-    *
-    * Disable vertex shader.
-    */
-   {
-      BEGIN_BATCH(6);
-      OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_HS
-    *
-    * Disable the hull shader.
-    */
-   {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_HS << 16 | (7 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+/* 3DSTATE_TE
+ *
+ * Disable the tesselation engine.
+ */
+static void
+gen7_blorp_emit_te_disable(struct brw_context *brw,
+                           const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-   /* 3DSTATE_TE
-    *
-    * Disable the tesselation engine.
-    */
-   {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_TE << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_TE << 16 | (4 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
 
-   /* 3DSTATE_DS
-    *
-    * Disable the domain shader.
-    */
-   {
-      BEGIN_BATCH(6);
-      OUT_BATCH(_3DSTATE_DS << 16 | (6 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_GS
-    *
-    * Disable the geometry shader.
-    */
-   {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+/* 3DSTATE_DS
+ *
+ * Disable the domain shader.
+ */
+static void
+gen7_blorp_emit_ds_disable(struct brw_context *brw,
+                           const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-   /* 3DSTATE_STREAMOUT
-    *
-    * Disable streamout.
-    */
-   {
-      BEGIN_BATCH(3);
-      OUT_BATCH(_3DSTATE_STREAMOUT << 16 | (3 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(6);
+   OUT_BATCH(_3DSTATE_DS << 16 | (6 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
 
-   /* 3DSTATE_CLIP
-    *
-    * Disable the clipper.
-    *
-    * The BLORP op emits a rectangle primitive, which requires clipping to
-    * be disabled. From page 10 of the Sandy Bridge PRM Volume 2 Part 1
-    * Section 1.3 "3D Primitives Overview":
-    *    RECTLIST:
-    *    Either the CLIP unit should be DISABLED, or the CLIP unit's Clip
-    *    Mode should be set to a value other than CLIPMODE_NORMAL.
-    *
-    * Also disable perspective divide. This doesn't change the clipper's
-    * output, but does spare a few electrons.
-    */
-   {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(GEN6_CLIP_PERSPECTIVE_DIVIDE_DISABLE);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+
+/* 3DSTATE_STREAMOUT
+ *
+ * Disable streamout.
+ */
+static void
+gen7_blorp_emit_streamout_disable(struct brw_context *brw,
+                                  const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(3);
+   OUT_BATCH(_3DSTATE_STREAMOUT << 16 | (3 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+static void
+gen7_blorp_emit_sf_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
    /* 3DSTATE_SF
     *
@@ -276,60 +227,85 @@ gen7_blorp_exec(struct intel_context *intel,
          OUT_BATCH(0);
       ADVANCE_BATCH();
    }
+}
 
-   /* 3DSTATE_WM
-    *
-    * Disable PS thread dispatch (dw1.29) and enable the HiZ op.
-    */
-   {
-      uint32_t dw1 = 0;
 
-      switch (params->hiz_op) {
-      case GEN6_HIZ_OP_DEPTH_CLEAR:
-         assert(!"not implemented");
-         dw1 |= GEN7_WM_DEPTH_CLEAR;
-         break;
-      case GEN6_HIZ_OP_DEPTH_RESOLVE:
-         dw1 |= GEN7_WM_DEPTH_RESOLVE;
-         break;
-      case GEN6_HIZ_OP_HIZ_RESOLVE:
-         dw1 |= GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
-         break;
-      default:
-         assert(0);
-         break;
-      }
+/**
+ * Disable thread dispatch (dw5.19) and enable the HiZ op.
+ */
+static void
+gen7_blorp_emit_wm_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-      BEGIN_BATCH(3);
-      OUT_BATCH(_3DSTATE_WM << 16 | (3 - 2));
-      OUT_BATCH(dw1);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+   uint32_t dw1 = 0;
+
+   switch (params->hiz_op) {
+   case GEN6_HIZ_OP_DEPTH_CLEAR:
+      assert(!"not implemented");
+      dw1 |= GEN7_WM_DEPTH_CLEAR;
+      break;
+   case GEN6_HIZ_OP_DEPTH_RESOLVE:
+      dw1 |= GEN7_WM_DEPTH_RESOLVE;
+      break;
+   case GEN6_HIZ_OP_HIZ_RESOLVE:
+      dw1 |= GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      break;
+   default:
+      assert(0);
+      break;
    }
 
-   /* 3DSTATE_PS
-    *
-    * Pixel shader dispatch is disabled above in 3DSTATE_WM, dw1.29. Despite
-    * that, thread dispatch info must still be specified.
-    *     - Maximum Number of Threads (dw4.24:31) must be nonzero, as the BSpec
-    *       states that the valid range for this field is [0x3, 0x2f].
-    *     - A dispatch mode must be given; that is, at least one of the
-    *       "N Pixel Dispatch Enable" (N=8,16,32) fields must be set. This was
-    *       discovered through simulator error messages.
-    */
-   {
-      BEGIN_BATCH(8);
-      OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(((brw->max_wm_threads - 1) << IVB_PS_MAX_THREADS_SHIFT) |
-		GEN7_PS_32_DISPATCH_ENABLE);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(3);
+   OUT_BATCH(_3DSTATE_WM << 16 | (3 - 2));
+   OUT_BATCH(dw1);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/**
+ * 3DSTATE_PS
+ *
+ * Pixel shader dispatch is disabled above in 3DSTATE_WM, dw1.29. Despite
+ * that, thread dispatch info must still be specified.
+ *     - Maximum Number of Threads (dw4.24:31) must be nonzero, as the BSpec
+ *       states that the valid range for this field is [0x3, 0x2f].
+ *     - A dispatch mode must be given; that is, at least one of the
+ *       "N Pixel Dispatch Enable" (N=8,16,32) fields must be set. This was
+ *       discovered through simulator error messages.
+ */
+static void
+gen7_blorp_emit_ps_config(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(8);
+   OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(((brw->max_wm_threads - 1) << IVB_PS_MAX_THREADS_SHIFT) |
+             GEN7_PS_32_DISPATCH_ENABLE);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+static void
+gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
+                                     const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+   uint32_t draw_x, draw_y;
+   uint32_t tile_mask_x, tile_mask_y;
+
+   params->depth.get_draw_offsets(&draw_x, &draw_y);
+   gen6_blorp_compute_tile_masks(params, &tile_mask_x, &tile_mask_y);
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
@@ -409,47 +385,83 @@ gen7_blorp_exec(struct intel_context *intel,
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
+}
 
-   /* 3DSTATE_CLEAR_PARAMS
-    *
-    * From the BSpec, Volume 2a.11 Windower, Section 1.5.6.3.2
-    * 3DSTATE_CLEAR_PARAMS:
-    *    [DevIVB] 3DSTATE_CLEAR_PARAMS must always be programmed in the along
-    *    with the other Depth/Stencil state commands(i.e.  3DSTATE_DEPTH_BUFFER,
-    *    3DSTATE_STENCIL_BUFFER, or 3DSTATE_HIER_DEPTH_BUFFER).
-    */
-   {
-      BEGIN_BATCH(3);
-      OUT_BATCH(GEN7_3DSTATE_CLEAR_PARAMS << 16 | (3 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
 
-   /* 3DSTATE_DRAWING_RECTANGLE */
-   {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(((params->x1 - 1) & 0xffff) |
-                ((params->y1 - 1) << 16));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+/* 3DSTATE_CLEAR_PARAMS
+ *
+ * From the BSpec, Volume 2a.11 Windower, Section 1.5.6.3.2
+ * 3DSTATE_CLEAR_PARAMS:
+ *    [DevIVB] 3DSTATE_CLEAR_PARAMS must always be programmed in the along
+ *    with the other Depth/Stencil state commands(i.e.  3DSTATE_DEPTH_BUFFER,
+ *    3DSTATE_STENCIL_BUFFER, or 3DSTATE_HIER_DEPTH_BUFFER).
+ */
+static void
+gen7_blorp_emit_clear_params(struct brw_context *brw,
+                             const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
 
-   /* 3DPRIMITIVE */
-   {
-     BEGIN_BATCH(7);
-     OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
-     OUT_BATCH(GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL |
-               _3DPRIM_RECTLIST);
-     OUT_BATCH(3); /* vertex count per instance */
-     OUT_BATCH(0);
-     OUT_BATCH(1); /* instance count */
-     OUT_BATCH(0);
-     OUT_BATCH(0);
-     ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(3);
+   OUT_BATCH(GEN7_3DSTATE_CLEAR_PARAMS << 16 | (3 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/* 3DPRIMITIVE */
+static void
+gen7_blorp_emit_primitive(struct brw_context *brw,
+                          const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+
+   BEGIN_BATCH(7);
+   OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
+   OUT_BATCH(GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL |
+             _3DPRIM_RECTLIST);
+   OUT_BATCH(3); /* vertex count per instance */
+   OUT_BATCH(0);
+   OUT_BATCH(1); /* instance count */
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
+/**
+ * \copydoc gen6_blorp_exec()
+ */
+void
+gen7_blorp_exec(struct intel_context *intel,
+                const brw_blorp_params *params)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct brw_context *brw = brw_context(ctx);
+   uint32_t depthstencil_offset;
+
+   gen6_blorp_emit_batch_head(brw, params);
+   gen6_blorp_emit_vertices(brw, params);
+   gen7_blorp_emit_urb_config(brw, params);
+   depthstencil_offset = gen6_blorp_emit_depth_stencil_state(brw, params);
+   gen7_blorp_emit_depth_stencil_state_pointers(brw, params,
+                                                depthstencil_offset);
+   gen6_blorp_emit_vs_disable(brw, params);
+   gen7_blorp_emit_hs_disable(brw, params);
+   gen7_blorp_emit_te_disable(brw, params);
+   gen7_blorp_emit_ds_disable(brw, params);
+   gen6_blorp_emit_gs_disable(brw, params);
+   gen7_blorp_emit_streamout_disable(brw, params);
+   gen6_blorp_emit_clip_disable(brw, params);
+   gen7_blorp_emit_sf_config(brw, params);
+   gen7_blorp_emit_wm_config(brw, params);
+   gen7_blorp_emit_ps_config(brw, params);
+
+   gen7_blorp_emit_depth_stencil_config(brw, params);
+   gen7_blorp_emit_clear_params(brw, params);
+   gen6_blorp_emit_drawing_rectangle(brw, params);
+   gen7_blorp_emit_primitive(brw, params);
 
    /* See comments above at first invocation of intel_flush() in
     * gen6_blorp_emit_batch_head().
