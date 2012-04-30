@@ -1061,16 +1061,15 @@ GCRA::buildRIG(ArrayList& insns)
       RIG_Node *cur = values.front();
 
       for (std::list<RIG_Node *>::iterator it = active.begin();
-           it != active.end();
-           ++it) {
+           it != active.end();) {
          RIG_Node *node = *it;
 
          if (node->livei.end() <= cur->livei.begin()) {
             it = active.erase(it);
-            --it;
-         } else
-         if (node->f == cur->f && node->livei.overlaps(cur->livei)) {
-            cur->addInterference(node);
+         } else {
+            if (node->f == cur->f && node->livei.overlaps(cur->livei))
+               cur->addInterference(node);
+            ++it;
          }
       }
       values.pop_front();
