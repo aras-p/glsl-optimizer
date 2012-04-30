@@ -48,4 +48,9 @@ gen7_resolve_depth_slice(struct intel_context *intel,
 
 #ifdef __cplusplus
 }
+
+void
+gen7_blorp_exec(struct intel_context *intel,
+                const brw_blorp_params *params);
+
 #endif

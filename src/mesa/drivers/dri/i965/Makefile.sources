@@ -110,6 +110,7 @@ i965_C_FILES = \
 	gen7_wm_surface_state.c
 
 i965_CXX_FILES = \
+	brw_blorp.cpp \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
 	brw_fs_cfg.cpp \
