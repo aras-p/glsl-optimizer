@@ -1015,7 +1015,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    struct parsed_dcl_bracket brackets[2];
    int num_brackets;
    uint writemask;
-   const char *cur;
+   const char *cur, *cur2;
    uint advance;
    boolean is_vs_input;
    boolean is_imm_array;
@@ -1067,6 +1067,22 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          if (i == TGSI_TEXTURE_COUNT) {
             report_error(ctx, "Expected texture target");
             return FALSE;
+         }
+
+         cur2 = cur;
+         eat_opt_white(&cur2);
+         while (*cur2 == ',') {
+            cur2++;
+            eat_opt_white(&cur2);
+            if (str_match_no_case(&cur2, "RAW") &&
+                !is_digit_alpha_underscore(cur2)) {
+               decl.Resource.Raw = 1;
+
+            } else {
+               break;
+            }
+            cur = cur2;
+            eat_opt_white(&cur2);
          }
 
          ctx->cur = cur;
@@ -1122,7 +1138,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                }
                break;
             } else {
-               const char *cur2 = cur;
+               cur2 = cur;
                eat_opt_white( &cur2 );
                if (*cur2 == ',') {
                   cur2++;

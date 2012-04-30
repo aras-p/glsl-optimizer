@@ -257,12 +257,14 @@ tgsi_default_declaration_resource(void)
    struct tgsi_declaration_resource dr;
 
    dr.Resource = TGSI_BUFFER;
+   dr.Raw = 0;
 
    return dr;
 }
 
 static struct tgsi_declaration_resource
 tgsi_build_declaration_resource(unsigned texture,
+                                unsigned raw,
                                 struct tgsi_declaration *declaration,
                                 struct tgsi_header *header)
 {
@@ -270,6 +272,7 @@ tgsi_build_declaration_resource(unsigned texture,
 
    dr = tgsi_default_declaration_resource();
    dr.Resource = texture;
+   dr.Raw = raw;
 
    declaration_grow(declaration, header);
 
@@ -439,6 +442,7 @@ tgsi_build_full_declaration(
       size++;
 
       *dr = tgsi_build_declaration_resource(full_decl->Resource.Resource,
+                                            full_decl->Resource.Raw,
                                             declaration,
                                             header);
    }

@@ -169,7 +169,8 @@ struct tgsi_declaration_semantic
 
 struct tgsi_declaration_resource {
    unsigned Resource    : 8; /**< one of TGSI_TEXTURE_ */
-   unsigned Padding     : 24;
+   unsigned Raw         : 1;
+   unsigned Padding     : 23;
 };
 
 struct tgsi_declaration_sampler_view {

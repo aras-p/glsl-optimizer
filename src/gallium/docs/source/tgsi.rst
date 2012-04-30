@@ -1745,13 +1745,26 @@ Declaration Resource
 
    Follows Declaration token if file is TGSI_FILE_RESOURCE.
 
-   DCL RES[#], resource
+   DCL RES[#], resource [, RAW]
 
    Declares a shader input resource and assigns it to a RES[#]
    register.
 
    resource can be one of BUFFER, 1D, 2D, 3D, CUBE, 1DArray and
    2DArray.
+
+   If the RAW keyword is not specified, the texture data will be
+   subject to conversion, swizzling and scaling as required to yield
+   the specified data type from the physical data format of the bound
+   resource.
+
+   If the RAW keyword is specified, no channel conversion will be
+   performed: the values read for each of the channels (X,Y,Z,W) will
+   correspond to consecutive words in the same order and format
+   they're found in memory.  No element-to-address conversion will be
+   performed either: the value of the provided X coordinate will be
+   interpreted in byte units instead of texel units.  The result of
+   accessing a misaligned address is undefined.
 
 
 Properties
