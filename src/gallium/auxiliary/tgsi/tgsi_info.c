@@ -200,6 +200,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, 0, 0, COMP, "IABS", TGSI_OPCODE_IABS },
    { 1, 1, 0, 0, 0, 0, COMP, "ISSG", TGSI_OPCODE_ISSG },
    { 1, 2, 0, 0, 0, 0, OTHR, "LOAD", TGSI_OPCODE_LOAD },
+   { 1, 2, 0, 0, 0, 0, OTHR, "STORE", TGSI_OPCODE_STORE },
 };
 
 const struct tgsi_opcode_info *

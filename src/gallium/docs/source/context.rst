@@ -134,7 +134,8 @@ the ``level``, ``first_layer`` and ``last_layer`` pipe_surface fields
 specify the mipmap level and the range of layers the texture will be
 constrained to.  In the case of buffers, ``first_element`` and
 ``last_element`` specify the range within the buffer that will be used
-by the shader resource.
+by the shader resource.  Writes to a shader resource are only allowed
+when the ``writable`` flag is set.
 
 Surfaces
 ^^^^^^^^

@@ -1490,6 +1490,29 @@ Resource Access Opcodes
                texture arrays and 2D textures.  address.w is always
                ignored.
 
+.. opcode:: STORE - Write data to a shader resource
+
+               Syntax: ``STORE resource, address, src``
+
+               Example: ``STORE RES[0], TEMP[0], TEMP[1]``
+
+               Using the provided integer address, STORE writes data
+               to the specified buffer or texture.
+
+               The 'address' is specified as a vector of unsigned
+               integers.  If the 'address' is out of range the result
+               is unspecified.
+
+               Only the first mipmap level of a resource can be
+               written to using this instruction.
+
+               For 1D or 2D texture arrays, the array index is
+               provided as an unsigned integer in address.y or
+               address.z, respectively.  address.yz are ignored for
+               buffers and 1D textures.  address.z is ignored for 1D
+               texture arrays and 2D textures.  address.w is always
+               ignored.
+
 
 Explanation of symbols used
 ------------------------------
@@ -1745,7 +1768,7 @@ Declaration Resource
 
    Follows Declaration token if file is TGSI_FILE_RESOURCE.
 
-   DCL RES[#], resource [, RAW]
+   DCL RES[#], resource [, WR] [, RAW]
 
    Declares a shader input resource and assigns it to a RES[#]
    register.
@@ -1765,6 +1788,9 @@ Declaration Resource
    performed either: the value of the provided X coordinate will be
    interpreted in byte units instead of texel units.  The result of
    accessing a misaligned address is undefined.
+
+   Usage of the STORE opcode is only allowed if the WR (writable) flag
+   is set.
 
 
 Properties

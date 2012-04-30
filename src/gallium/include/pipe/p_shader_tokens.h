@@ -170,7 +170,8 @@ struct tgsi_declaration_semantic
 struct tgsi_declaration_resource {
    unsigned Resource    : 8; /**< one of TGSI_TEXTURE_ */
    unsigned Raw         : 1;
-   unsigned Padding     : 23;
+   unsigned Writable    : 1;
+   unsigned Padding     : 22;
 };
 
 struct tgsi_declaration_sampler_view {
@@ -406,8 +407,9 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_ISSG                160
 
 #define TGSI_OPCODE_LOAD                161
+#define TGSI_OPCODE_STORE               162
 
-#define TGSI_OPCODE_LAST                162
+#define TGSI_OPCODE_LAST                163
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

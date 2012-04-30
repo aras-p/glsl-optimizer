@@ -338,6 +338,7 @@ struct pipe_surface
    unsigned height;              /**< logical height in pixels */
 
    unsigned usage;               /**< bitmask of PIPE_BIND_x */
+   unsigned writable:1;          /**< writable shader resource */
 
    union {
       struct {

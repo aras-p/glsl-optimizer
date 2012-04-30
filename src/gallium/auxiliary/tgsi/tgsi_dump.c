@@ -285,6 +285,8 @@ iter_declaration(
    if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
       TXT(", ");
       ENM(decl->Resource.Resource, tgsi_texture_names);
+      if (decl->Resource.Writable)
+         TXT(", WR");
       if (decl->Resource.Raw)
          TXT(", RAW");
    }

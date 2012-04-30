@@ -1078,6 +1078,10 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                 !is_digit_alpha_underscore(cur2)) {
                decl.Resource.Raw = 1;
 
+            } else if (str_match_no_case(&cur2, "WR") &&
+                !is_digit_alpha_underscore(cur2)) {
+               decl.Resource.Writable = 1;
+
             } else {
                break;
             }
