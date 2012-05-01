@@ -108,6 +108,16 @@ get_tex_format_pot(struct gl_texture_image *ti)
 	case MESA_FORMAT_L8:
 		return NV20_3D_TEX_FORMAT_FORMAT_L8;
 
+	case MESA_FORMAT_RGB_DXT1:
+	case MESA_FORMAT_RGBA_DXT1:
+		return NV20_3D_TEX_FORMAT_FORMAT_DXT1;
+
+	case MESA_FORMAT_RGBA_DXT3:
+		return NV20_3D_TEX_FORMAT_FORMAT_DXT3;
+
+	case MESA_FORMAT_RGBA_DXT5:
+		return NV20_3D_TEX_FORMAT_FORMAT_DXT5;
+
 	default:
 		assert(0);
 	}

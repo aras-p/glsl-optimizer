@@ -460,6 +460,10 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	ctx->Extensions.ARB_texture_env_dot3 = true;
 	ctx->Extensions.NV_fog_distance = true;
 	ctx->Extensions.NV_texture_rectangle = true;
+	if (ctx->Mesa_DXTn) {
+		ctx->Extensions.EXT_texture_compression_s3tc = true;
+		ctx->Extensions.S3_s3tc = true;
+	}
 
 	/* GL constants. */
 	ctx->Const.MaxTextureCoordUnits = NV20_TEXTURE_UNITS;
