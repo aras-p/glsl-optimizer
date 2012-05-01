@@ -2121,7 +2121,7 @@ exec_sample(struct tgsi_exec_machine *mach,
       control = tgsi_sampler_lod_bias;
    }
 
-   switch (mach->Resources[resource_unit].Resource) {
+   switch (mach->SamplerViews[resource_unit].Resource) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
       FETCH(&r[0], 0, TGSI_CHAN_X);
@@ -2215,7 +2215,7 @@ exec_sample_d(struct tgsi_exec_machine *mach,
     * XXX: This is fake SAMPLE_D -- the derivatives are not taken into account, yet.
     */
 
-   switch (mach->Resources[resource_unit].Resource) {
+   switch (mach->SamplerViews[resource_unit].Resource) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
 
@@ -2338,8 +2338,8 @@ static void
 exec_declaration(struct tgsi_exec_machine *mach,
                  const struct tgsi_full_declaration *decl)
 {
-   if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
-      mach->Resources[decl->Range.First] = decl->Resource;
+   if (decl->Declaration.File == TGSI_FILE_SAMPLER_VIEW) {
+      mach->SamplerViews[decl->Range.First] = decl->SamplerView;
       return;
    }
 
@@ -4154,11 +4154,11 @@ exec_instruction(
       exec_endswitch(mach);
       break;
 
-   case TGSI_OPCODE_LOAD:
+   case TGSI_OPCODE_SAMPLE_I:
       assert(0);
       break;
 
-   case TGSI_OPCODE_LOAD_MS:
+   case TGSI_OPCODE_SAMPLE_I_MS:
       assert(0);
       break;
 
@@ -4190,7 +4190,7 @@ exec_instruction(
       assert(0);
       break;
 
-   case TGSI_OPCODE_RESINFO:
+   case TGSI_OPCODE_SVIEWINFO:
       assert(0);
       break;
 

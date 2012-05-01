@@ -183,22 +183,23 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 0, 0, 0, 0, 0, NONE, "DEFAULT", TGSI_OPCODE_DEFAULT },
    { 0, 0, 0, 0, 0, 0, NONE, "ENDSWITCH", TGSI_OPCODE_ENDSWITCH },
 
-   { 1, 2, 0, 0, 0, 0, OTHR, "LOAD",        TGSI_OPCODE_LOAD },
-   { 1, 2, 0, 0, 0, 0, OTHR, "LOAD_MS",     TGSI_OPCODE_LOAD_MS },
    { 1, 3, 0, 0, 0, 0, OTHR, "SAMPLE",      TGSI_OPCODE_SAMPLE },
+   { 1, 2, 0, 0, 0, 0, OTHR, "SAMPLE_I",    TGSI_OPCODE_SAMPLE_I },
+   { 1, 2, 0, 0, 0, 0, OTHR, "SAMPLE_I_MS", TGSI_OPCODE_SAMPLE_I_MS },
    { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_B",    TGSI_OPCODE_SAMPLE_B },
    { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_C",    TGSI_OPCODE_SAMPLE_C },
    { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_C_LZ", TGSI_OPCODE_SAMPLE_C_LZ },
    { 1, 5, 0, 0, 0, 0, OTHR, "SAMPLE_D",    TGSI_OPCODE_SAMPLE_D },
    { 1, 3, 0, 0, 0, 0, OTHR, "SAMPLE_L",    TGSI_OPCODE_SAMPLE_L },
    { 1, 3, 0, 0, 0, 0, OTHR, "GATHER4",     TGSI_OPCODE_GATHER4 },
-   { 1, 2, 0, 0, 0, 0, OTHR, "RESINFO",     TGSI_OPCODE_RESINFO },
+   { 1, 2, 0, 0, 0, 0, OTHR, "SVIEWINFO",   TGSI_OPCODE_SVIEWINFO },
    { 1, 2, 0, 0, 0, 0, OTHR, "SAMPLE_POS",  TGSI_OPCODE_SAMPLE_POS },
    { 1, 2, 0, 0, 0, 0, OTHR, "SAMPLE_INFO", TGSI_OPCODE_SAMPLE_INFO },
    { 1, 1, 0, 0, 0, 0, COMP, "UARL", TGSI_OPCODE_UARL },
    { 1, 3, 0, 0, 0, 0, COMP, "UCMP", TGSI_OPCODE_UCMP },
    { 1, 1, 0, 0, 0, 0, COMP, "IABS", TGSI_OPCODE_IABS },
    { 1, 1, 0, 0, 0, 0, COMP, "ISSG", TGSI_OPCODE_ISSG },
+   { 1, 2, 0, 0, 0, 0, OTHR, "LOAD", TGSI_OPCODE_LOAD },
 };
 
 const struct tgsi_opcode_info *

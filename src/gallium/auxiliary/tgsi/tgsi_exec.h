@@ -331,7 +331,8 @@ struct tgsi_exec_machine
    struct tgsi_full_declaration *Declarations;
    uint NumDeclarations;
 
-   struct tgsi_declaration_resource Resources[PIPE_MAX_SHADER_RESOURCES];
+   struct tgsi_declaration_sampler_view
+      SamplerViews[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    boolean UsedGeometryShader;
 };

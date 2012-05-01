@@ -53,7 +53,8 @@ const char *tgsi_file_names[TGSI_FILE_COUNT] =
    "SV",
    "IMMX",
    "TEMPX",
-   "RES"
+   "RES",
+   "SVIEW"
 };
 
 const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =

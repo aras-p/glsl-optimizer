@@ -1312,28 +1312,36 @@ This opcode is the inverse of :opcode:`DFRACEXP`.
    dst.zw = \sqrt{src.zw}
 
 
-.. _resourceopcodes:
+.. _samplingopcodes:
 
-Resource Access Opcodes
-^^^^^^^^^^^^^^^^^^^^^^^^
+Resource Sampling Opcodes
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Those opcodes follow very closely semantics of the respective Direct3D
 instructions. If in doubt double check Direct3D documentation.
 
-.. opcode:: LOAD - Simplified alternative to the "SAMPLE" instruction.
-               Using the provided integer address, LOAD fetches data
-               from the specified buffer/texture without any filtering.
+.. opcode:: SAMPLE - Using provided address, sample data from the
+               specified texture using the filtering mode identified
+               by the gven sampler. The source data may come from
+               any resource type other than buffers.
+               SAMPLE dst, address, sampler_view, sampler
+               e.g.
+               SAMPLE TEMP[0], TEMP[1], SVIEW[0], SAMP[0]
+
+.. opcode:: SAMPLE_I - Simplified alternative to the SAMPLE instruction.
+               Using the provided integer address, SAMPLE_I fetches data
+               from the specified sampler view without any filtering.
                The source data may come from any resource type other
                than CUBE.
-               LOAD dst, address, resource
+               SAMPLE_I dst, address, sampler_view
                e.g.
-               LOAD TEMP[0], TEMP[1], RES[0]
+               SAMPLE_I TEMP[0], TEMP[1], SVIEW[0]
                The 'address' is specified as unsigned integers. If the
                'address' is out of range [0...(# texels - 1)] the
                result of the fetch is always 0 in all components.
                As such the instruction doesn't honor address wrap
                modes, in cases where that behavior is desirable
-               'sample' instruction should be used.
+               'SAMPLE' instruction should be used.
                address.w always provides an unsigned integer mipmap
                level. If the value is out of the range then the
                instruction always returns 0 in all components.
@@ -1348,7 +1356,7 @@ instructions. If in doubt double check Direct3D documentation.
                For 2D texture arrays address.z provides the array
                index, otherwise it exhibits the same behavior as in
                the case for 1D texture arrays.
-               The exeact semantics of the source address are presented
+               The exact semantics of the source address are presented
                in the table below:
                resource type         X     Y     Z       W
                -------------         ------------------------
@@ -1364,25 +1372,16 @@ instructions. If in doubt double check Direct3D documentation.
                Where 'mpl' is a mipmap level and 'idx' is the
                array index.
 
-
-.. opcode:: LOAD_MS - Just like LOAD but allows fetch data from
+.. opcode:: SAMPLE_I_MS - Just like SAMPLE_I but allows fetch data from
                multi-sampled surfaces.
-
-.. opcode:: SAMPLE - Using provided address, sample data from the
-               specified texture using the filtering mode identified
-               by the gven sampler. The source data may come from
-               any resource type other than buffers.
-               SAMPLE dst, address, resource, sampler
-               e.g.
-               SAMPLE TEMP[0], TEMP[1], RES[0], SAMP[0]
 
 .. opcode:: SAMPLE_B - Just like the SAMPLE instruction with the
                exception that an additiona bias is applied to the
                level of detail computed as part of the instruction
                execution.
-               SAMPLE_B dst, address, resource, sampler, lod_bias
+               SAMPLE_B dst, address, sampler_view, sampler, lod_bias
                e.g.
-               SAMPLE_B TEMP[0], TEMP[1], RES[0], SAMP[0], TEMP[2].x
+               SAMPLE_B TEMP[0], TEMP[1], SVIEW[0], SAMP[0], TEMP[2].x
 
 .. opcode:: SAMPLE_C - Similar to the SAMPLE instruction but it
                performs a comparison filter. The operands to SAMPLE_C
@@ -1394,33 +1393,32 @@ instructions. If in doubt double check Direct3D documentation.
                reference value against the red component value for the
                surce resource at each texel that the currently configured
                texture filter covers based on the provided coordinates.
-               SAMPLE_C dst, address, resource.r, sampler, ref_value
+               SAMPLE_C dst, address, sampler_view.r, sampler, ref_value
                e.g.
-               SAMPLE_C TEMP[0], TEMP[1], RES[0].r, SAMP[0], TEMP[2].x
+               SAMPLE_C TEMP[0], TEMP[1], SVIEW[0].r, SAMP[0], TEMP[2].x
 
 .. opcode:: SAMPLE_C_LZ - Same as SAMPLE_C, but LOD is 0 and derivatives
                are ignored. The LZ stands for level-zero.
-               SAMPLE_C_LZ dst, address, resource.r, sampler, ref_value
+               SAMPLE_C_LZ dst, address, sampler_view.r, sampler, ref_value
                e.g.
-               SAMPLE_C_LZ TEMP[0], TEMP[1], RES[0].r, SAMP[0], TEMP[2].x
+               SAMPLE_C_LZ TEMP[0], TEMP[1], SVIEW[0].r, SAMP[0], TEMP[2].x
 
 
 .. opcode:: SAMPLE_D - SAMPLE_D is identical to the SAMPLE opcode except
                that the derivatives for the source address in the x
                direction and the y direction are provided by extra
                parameters.
-               SAMPLE_D dst, address, resource, sampler, der_x, der_y
+               SAMPLE_D dst, address, sampler_view, sampler, der_x, der_y
                e.g.
-               SAMPLE_D TEMP[0], TEMP[1], RES[0], SAMP[0], TEMP[2], TEMP[3]
+               SAMPLE_D TEMP[0], TEMP[1], SVIEW[0], SAMP[0], TEMP[2], TEMP[3]
 
 .. opcode:: SAMPLE_L - SAMPLE_L is identical to the SAMPLE opcode except
                that the LOD is provided directly as a scalar value,
                representing no anisotropy. Source addresses A channel
                is used as the LOD.
-               SAMPLE_L dst, address, resource, sampler
+               SAMPLE_L dst, address, sampler_view, sampler
                e.g.
-               SAMPLE_L TEMP[0], TEMP[1], RES[0], SAMP[0]
-
+               SAMPLE_L TEMP[0], TEMP[1], SVIEW[0], SAMP[0]
 
 .. opcode:: GATHER4 - Gathers the four texels to be used in a bi-linear
                filtering operation and packs them into a single register.
@@ -1435,18 +1433,18 @@ instructions. If in doubt double check Direct3D documentation.
                the magnitude of the deltas are half a texel.
 
 
-.. opcode:: RESINFO - query the dimensions of a given input buffer.
+.. opcode:: SVIEWINFO - query the dimensions of a given sampler view.
                dst receives width, height, depth or array size and
                number of mipmap levels. The dst can have a writemask
                which will specify what info is the caller interested
                in.
-               RESINFO dst, src_mip_level, resource
+               SVIEWINFO dst, src_mip_level, sampler_view
                e.g.
-               RESINFO TEMP[0], TEMP[1].x, RES[0]
+               SVIEWINFO TEMP[0], TEMP[1].x, SVIEW[0]
                src_mip_level is an unsigned integer scalar. If it's
                out of range then returns 0 for width, height and
                depth/array size but the total number of mipmap is
-               still returned correctly for the given resource.
+               still returned correctly for the given sampler view.
                The returned width, height and depth values are for
                the mipmap level selected by the src_mip_level and
                are in the number of texels.
@@ -1461,6 +1459,36 @@ instructions. If in doubt double check Direct3D documentation.
 .. opcode:: SAMPLE_INFO - dst receives number of samples in x.
                If the resource is not a multi-sample resource and
                not a render target, the result is 0.
+
+
+.. _resourceopcodes:
+
+Resource Access Opcodes
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. opcode:: LOAD - Fetch data from a shader resource
+
+               Syntax: ``LOAD dst, resource, address``
+
+               Example: ``LOAD TEMP[0], RES[0], TEMP[1]``
+
+               Using the provided integer address, LOAD fetches data
+               from the specified buffer or texture without any
+               filtering.
+
+               The 'address' is specified as a vector of unsigned
+               integers.  If the 'address' is out of range the result
+               is unspecified.
+
+               Only the first mipmap level of a resource can be read
+               from using this instruction.
+
+               For 1D or 2D texture arrays, the array index is
+               provided as an unsigned integer in address.y or
+               address.z, respectively.  address.yz are ignored for
+               buffers and 1D textures.  address.z is ignored for 1D
+               texture arrays and 2D textures.  address.w is always
+               ignored.
 
 
 Explanation of symbols used
@@ -1690,21 +1718,34 @@ is a writable stencil reference value. Only the Y component is writable.
 This allows the fragment shader to change the fragments stencilref value.
 
 
-Declaration Resource
+Declaration Sampler View
 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Follows Declaration token if file is TGSI_FILE_SAMPLER_VIEW.
+
+   DCL SVIEW[#], resource, type(s)
+
+   Declares a shader input sampler view and assigns it to a SVIEW[#]
+   register.
+
+   resource can be one of BUFFER, 1D, 2D, 3D, 1DArray and 2DArray.
+
+   type must be 1 or 4 entries (if specifying on a per-component
+   level) out of UNORM, SNORM, SINT, UINT and FLOAT.
+
+
+Declaration Resource
+^^^^^^^^^^^^^^^^^^^^
 
    Follows Declaration token if file is TGSI_FILE_RESOURCE.
 
-   DCL RES[#], resource, type(s)
+   DCL RES[#], resource
 
    Declares a shader input resource and assigns it to a RES[#]
    register.
 
    resource can be one of BUFFER, 1D, 2D, 3D, CUBE, 1DArray and
    2DArray.
-
-   type must be 1 or 4 entries (if specifying on a per-component
-   level) out of UNORM, SNORM, SINT, UINT and FLOAT.
 
 
 Properties

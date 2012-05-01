@@ -132,6 +132,10 @@ tgsi_parse_token(
          next_token(ctx, &decl->Resource);
       }
 
+      if (decl->Declaration.File == TGSI_FILE_SAMPLER_VIEW) {
+         next_token(ctx, &decl->SamplerView);
+      }
+
       break;
    }
 

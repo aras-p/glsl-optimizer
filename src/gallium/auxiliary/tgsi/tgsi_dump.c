@@ -285,21 +285,25 @@ iter_declaration(
    if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
       TXT(", ");
       ENM(decl->Resource.Resource, tgsi_texture_names);
-      TXT(", ");
-      if ((decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeY) &&
-          (decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeZ) &&
-          (decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeW)) {
-         ENM(decl->Resource.ReturnTypeX, tgsi_type_names);
-      } else {
-         ENM(decl->Resource.ReturnTypeX, tgsi_type_names);
-         TXT(", ");
-         ENM(decl->Resource.ReturnTypeY, tgsi_type_names);
-         TXT(", ");
-         ENM(decl->Resource.ReturnTypeZ, tgsi_type_names);
-         TXT(", ");
-         ENM(decl->Resource.ReturnTypeW, tgsi_type_names);
-      }
+   }
 
+   if (decl->Declaration.File == TGSI_FILE_SAMPLER_VIEW) {
+      TXT(", ");
+      ENM(decl->SamplerView.Resource, tgsi_texture_names);
+      TXT(", ");
+      if ((decl->SamplerView.ReturnTypeX == decl->SamplerView.ReturnTypeY) &&
+          (decl->SamplerView.ReturnTypeX == decl->SamplerView.ReturnTypeZ) &&
+          (decl->SamplerView.ReturnTypeX == decl->SamplerView.ReturnTypeW)) {
+         ENM(decl->SamplerView.ReturnTypeX, tgsi_type_names);
+      } else {
+         ENM(decl->SamplerView.ReturnTypeX, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->SamplerView.ReturnTypeY, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->SamplerView.ReturnTypeZ, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->SamplerView.ReturnTypeW, tgsi_type_names);
+      }
    }
 
    if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&

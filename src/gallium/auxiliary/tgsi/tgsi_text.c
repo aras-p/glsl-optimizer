@@ -1066,6 +1066,22 @@ static boolean parse_declaration( struct translate_ctx *ctx )
             report_error(ctx, "Expected texture target");
             return FALSE;
          }
+
+         ctx->cur = cur;
+
+      } else if (file == TGSI_FILE_SAMPLER_VIEW) {
+         for (i = 0; i < TGSI_TEXTURE_COUNT; i++) {
+            if (str_match_no_case(&cur, tgsi_texture_names[i])) {
+               if (!is_digit_alpha_underscore(cur)) {
+                  decl.SamplerView.Resource = i;
+                  break;
+               }
+            }
+         }
+         if (i == TGSI_TEXTURE_COUNT) {
+            report_error(ctx, "Expected texture target");
+            return FALSE;
+         }
          eat_opt_white( &cur );
          if (*cur != ',') {
             report_error( ctx, "Expected `,'" );
@@ -1079,16 +1095,16 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                   if (!is_digit_alpha_underscore(cur)) {
                      switch (j) {
                      case 0:
-                        decl.Resource.ReturnTypeX = i;
+                        decl.SamplerView.ReturnTypeX = i;
                         break;
                      case 1:
-                        decl.Resource.ReturnTypeY = i;
+                        decl.SamplerView.ReturnTypeY = i;
                         break;
                      case 2:
-                        decl.Resource.ReturnTypeZ = i;
+                        decl.SamplerView.ReturnTypeZ = i;
                         break;
                      case 3:
-                        decl.Resource.ReturnTypeW = i;
+                        decl.SamplerView.ReturnTypeW = i;
                         break;
                      default:
                         assert(0);
@@ -1116,10 +1132,10 @@ static boolean parse_declaration( struct translate_ctx *ctx )
             }
          }
          if (j < 4) {
-            decl.Resource.ReturnTypeY =
-               decl.Resource.ReturnTypeZ =
-               decl.Resource.ReturnTypeW =
-               decl.Resource.ReturnTypeX;
+            decl.SamplerView.ReturnTypeY =
+               decl.SamplerView.ReturnTypeZ =
+               decl.SamplerView.ReturnTypeW =
+               decl.SamplerView.ReturnTypeX;
          }
          ctx->cur = cur;
       } else {

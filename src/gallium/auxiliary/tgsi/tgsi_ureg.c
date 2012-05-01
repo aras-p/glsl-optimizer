@@ -47,7 +47,7 @@ union tgsi_any_token {
    struct tgsi_declaration_range decl_range;
    struct tgsi_declaration_dimension decl_dim;
    struct tgsi_declaration_semantic decl_semantic;
-   struct tgsi_declaration_resource decl_resource;
+   struct tgsi_declaration_sampler_view decl_sampler_view;
    struct tgsi_immediate imm;
    union  tgsi_immediate_data imm_data;
    struct tgsi_instruction insn;
@@ -147,8 +147,8 @@ struct ureg_program
       unsigned return_type_y;
       unsigned return_type_z;
       unsigned return_type_w;
-   } resource[PIPE_MAX_SHADER_RESOURCES];
-   unsigned nr_resources;
+   } sampler_view[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   unsigned nr_sampler_views;
 
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
@@ -615,34 +615,34 @@ struct ureg_src ureg_DECL_sampler( struct ureg_program *ureg,
 }
 
 /*
- * Allocate a new shader resource.
+ * Allocate a new shader sampler view.
  */
 struct ureg_src
-ureg_DECL_resource(struct ureg_program *ureg,
-                   unsigned index,
-                   unsigned target,
-                   unsigned return_type_x,
-                   unsigned return_type_y,
-                   unsigned return_type_z,
-                   unsigned return_type_w)
+ureg_DECL_sampler_view(struct ureg_program *ureg,
+                       unsigned index,
+                       unsigned target,
+                       unsigned return_type_x,
+                       unsigned return_type_y,
+                       unsigned return_type_z,
+                       unsigned return_type_w)
 {
-   struct ureg_src reg = ureg_src_register(TGSI_FILE_RESOURCE, index);
+   struct ureg_src reg = ureg_src_register(TGSI_FILE_SAMPLER_VIEW, index);
    uint i;
 
-   for (i = 0; i < ureg->nr_resources; i++) {
-      if (ureg->resource[i].index == index) {
+   for (i = 0; i < ureg->nr_sampler_views; i++) {
+      if (ureg->sampler_view[i].index == index) {
          return reg;
       }
    }
 
-   if (i < PIPE_MAX_SHADER_RESOURCES) {
-      ureg->resource[i].index = index;
-      ureg->resource[i].target = target;
-      ureg->resource[i].return_type_x = return_type_x;
-      ureg->resource[i].return_type_y = return_type_y;
-      ureg->resource[i].return_type_z = return_type_z;
-      ureg->resource[i].return_type_w = return_type_w;
-      ureg->nr_resources++;
+   if (i < PIPE_MAX_SHADER_SAMPLER_VIEWS) {
+      ureg->sampler_view[i].index = index;
+      ureg->sampler_view[i].target = target;
+      ureg->sampler_view[i].return_type_x = return_type_x;
+      ureg->sampler_view[i].return_type_y = return_type_y;
+      ureg->sampler_view[i].return_type_z = return_type_z;
+      ureg->sampler_view[i].return_type_w = return_type_w;
+      ureg->nr_sampler_views++;
       return reg;
    }
 
@@ -891,7 +891,7 @@ ureg_emit_dst( struct ureg_program *ureg,
    assert(dst.File != TGSI_FILE_CONSTANT);
    assert(dst.File != TGSI_FILE_INPUT);
    assert(dst.File != TGSI_FILE_SAMPLER);
-   assert(dst.File != TGSI_FILE_RESOURCE);
+   assert(dst.File != TGSI_FILE_SAMPLER_VIEW);
    assert(dst.File != TGSI_FILE_IMMEDIATE);
    assert(dst.File < TGSI_FILE_COUNT);
 
@@ -1297,20 +1297,20 @@ emit_decl_range2D(struct ureg_program *ureg,
 }
 
 static void
-emit_decl_resource(struct ureg_program *ureg,
-                   unsigned index,
-                   unsigned target,
-                   unsigned return_type_x,
-                   unsigned return_type_y,
-                   unsigned return_type_z,
-                   unsigned return_type_w )
+emit_decl_sampler_view(struct ureg_program *ureg,
+                       unsigned index,
+                       unsigned target,
+                       unsigned return_type_x,
+                       unsigned return_type_y,
+                       unsigned return_type_z,
+                       unsigned return_type_w )
 {
    union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
 
    out[0].value = 0;
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
    out[0].decl.NrTokens = 3;
-   out[0].decl.File = TGSI_FILE_RESOURCE;
+   out[0].decl.File = TGSI_FILE_SAMPLER_VIEW;
    out[0].decl.UsageMask = 0xf;
    out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
 
@@ -1319,11 +1319,11 @@ emit_decl_resource(struct ureg_program *ureg,
    out[1].decl_range.Last = index;
 
    out[2].value = 0;
-   out[2].decl_resource.Resource    = target;
-   out[2].decl_resource.ReturnTypeX = return_type_x;
-   out[2].decl_resource.ReturnTypeY = return_type_y;
-   out[2].decl_resource.ReturnTypeZ = return_type_z;
-   out[2].decl_resource.ReturnTypeW = return_type_w;
+   out[2].decl_sampler_view.Resource    = target;
+   out[2].decl_sampler_view.ReturnTypeX = return_type_x;
+   out[2].decl_sampler_view.ReturnTypeY = return_type_y;
+   out[2].decl_sampler_view.ReturnTypeZ = return_type_z;
+   out[2].decl_sampler_view.ReturnTypeW = return_type_w;
 }
 
 static void
@@ -1473,14 +1473,14 @@ static void emit_decls( struct ureg_program *ureg )
                        ureg->sampler[i].Index, 1 );
    }
 
-   for (i = 0; i < ureg->nr_resources; i++) {
-      emit_decl_resource(ureg,
-                         ureg->resource[i].index,
-                         ureg->resource[i].target,
-                         ureg->resource[i].return_type_x,
-                         ureg->resource[i].return_type_y,
-                         ureg->resource[i].return_type_z,
-                         ureg->resource[i].return_type_w);
+   for (i = 0; i < ureg->nr_sampler_views; i++) {
+      emit_decl_sampler_view(ureg,
+                             ureg->sampler_view[i].index,
+                             ureg->sampler_view[i].target,
+                             ureg->sampler_view[i].return_type_x,
+                             ureg->sampler_view[i].return_type_y,
+                             ureg->sampler_view[i].return_type_z,
+                             ureg->sampler_view[i].return_type_w);
    }
 
    if (ureg->const_decls.nr_constant_ranges) {

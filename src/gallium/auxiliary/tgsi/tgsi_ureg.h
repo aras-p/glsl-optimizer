@@ -292,13 +292,13 @@ ureg_DECL_sampler( struct ureg_program *,
                    unsigned index );
 
 struct ureg_src
-ureg_DECL_resource(struct ureg_program *,
-                   unsigned index,
-                   unsigned target,
-                   unsigned return_type_x,
-                   unsigned return_type_y,
-                   unsigned return_type_z,
-                   unsigned return_type_w );
+ureg_DECL_sampler_view(struct ureg_program *,
+                       unsigned index,
+                       unsigned target,
+                       unsigned return_type_x,
+                       unsigned return_type_y,
+                       unsigned return_type_z,
+                       unsigned return_type_w );
 
 
 static INLINE struct ureg_src

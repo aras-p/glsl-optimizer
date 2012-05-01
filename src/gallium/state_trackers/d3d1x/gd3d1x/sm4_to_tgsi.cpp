@@ -446,7 +446,7 @@ struct sm4_to_tgsi_converter
 				break;
 			case SM4_OPCODE_RESINFO:
 				// TODO: return type
-				ureg_RESINFO(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)]);
+				ureg_SVIEWINFO(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)]);
 				break;
 			// TODO: sample index, texture offset
 			case SM4_OPCODE_LD: // dst, coord_int, res; mipmap level in last coord_int arg
@@ -750,11 +750,12 @@ next:;
 				}
 				if(resources.size() <= (unsigned)idx)
 					resources.resize(idx + 1);
-				resources[idx] = ureg_DECL_resource(ureg, idx, targets[idx].first,
-								    res_return_type(dcl.rrt.x),
-								    res_return_type(dcl.rrt.y),
-								    res_return_type(dcl.rrt.z),
-								    res_return_type(dcl.rrt.w));
+				resources[idx] = ureg_DECL_sampler_view(
+                                   ureg, idx, targets[idx].first,
+                                   res_return_type(dcl.rrt.x),
+                                   res_return_type(dcl.rrt.y),
+                                   res_return_type(dcl.rrt.z),
+                                   res_return_type(dcl.rrt.w));
 				break;
 			case SM4_OPCODE_DCL_SAMPLER:
 				check(idx >= 0);

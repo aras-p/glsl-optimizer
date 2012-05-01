@@ -227,42 +227,66 @@ tgsi_build_declaration_semantic(
    return ds;
 }
 
-
 static struct tgsi_declaration_resource
 tgsi_default_declaration_resource(void)
 {
-   struct tgsi_declaration_resource declaration_resource;
+   struct tgsi_declaration_resource dr;
 
-   declaration_resource.Resource = TGSI_TEXTURE_UNKNOWN;
-   declaration_resource.ReturnTypeX = PIPE_TYPE_UNORM;
-   declaration_resource.ReturnTypeY = PIPE_TYPE_UNORM;
-   declaration_resource.ReturnTypeZ = PIPE_TYPE_UNORM;
-   declaration_resource.ReturnTypeW = PIPE_TYPE_UNORM;
+   dr.Resource = TGSI_BUFFER;
 
-   return declaration_resource;
+   return dr;
 }
 
 static struct tgsi_declaration_resource
 tgsi_build_declaration_resource(unsigned texture,
-                                unsigned return_type_x,
-                                unsigned return_type_y,
-                                unsigned return_type_z,
-                                unsigned return_type_w,
                                 struct tgsi_declaration *declaration,
                                 struct tgsi_header *header)
 {
-   struct tgsi_declaration_resource declaration_resource;
+   struct tgsi_declaration_resource dr;
 
-   declaration_resource = tgsi_default_declaration_resource();
-   declaration_resource.Resource = texture;
-   declaration_resource.ReturnTypeX = return_type_x;
-   declaration_resource.ReturnTypeY = return_type_y;
-   declaration_resource.ReturnTypeZ = return_type_z;
-   declaration_resource.ReturnTypeW = return_type_w;
+   dr = tgsi_default_declaration_resource();
+   dr.Resource = texture;
 
    declaration_grow(declaration, header);
 
-   return declaration_resource;
+   return dr;
+}
+
+static struct tgsi_declaration_sampler_view
+tgsi_default_declaration_sampler_view(void)
+{
+   struct tgsi_declaration_sampler_view dsv;
+
+   dsv.Resource = TGSI_BUFFER;
+   dsv.ReturnTypeX = PIPE_TYPE_UNORM;
+   dsv.ReturnTypeY = PIPE_TYPE_UNORM;
+   dsv.ReturnTypeZ = PIPE_TYPE_UNORM;
+   dsv.ReturnTypeW = PIPE_TYPE_UNORM;
+
+   return dsv;
+}
+
+static struct tgsi_declaration_sampler_view
+tgsi_build_declaration_sampler_view(unsigned texture,
+                                    unsigned return_type_x,
+                                    unsigned return_type_y,
+                                    unsigned return_type_z,
+                                    unsigned return_type_w,
+                                    struct tgsi_declaration *declaration,
+                                    struct tgsi_header *header)
+{
+   struct tgsi_declaration_sampler_view dsv;
+
+   dsv = tgsi_default_declaration_sampler_view();
+   dsv.Resource = texture;
+   dsv.ReturnTypeX = return_type_x;
+   dsv.ReturnTypeY = return_type_y;
+   dsv.ReturnTypeZ = return_type_z;
+   dsv.ReturnTypeW = return_type_w;
+
+   declaration_grow(declaration, header);
+
+   return dsv;
 }
 
 
@@ -276,6 +300,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Semantic = tgsi_default_declaration_semantic();
    full_declaration.ImmediateData.u = NULL;
    full_declaration.Resource = tgsi_default_declaration_resource();
+   full_declaration.SamplerView = tgsi_default_declaration_sampler_view();
 
    return full_declaration;
 }
@@ -375,12 +400,27 @@ tgsi_build_full_declaration(
       size++;
 
       *dr = tgsi_build_declaration_resource(full_decl->Resource.Resource,
-                                            full_decl->Resource.ReturnTypeX,
-                                            full_decl->Resource.ReturnTypeY,
-                                            full_decl->Resource.ReturnTypeZ,
-                                            full_decl->Resource.ReturnTypeW,
                                             declaration,
                                             header);
+   }
+
+   if (full_decl->Declaration.File == TGSI_FILE_SAMPLER_VIEW) {
+      struct tgsi_declaration_sampler_view *dsv;
+
+      if (maxsize <= size) {
+         return  0;
+      }
+      dsv = (struct tgsi_declaration_sampler_view *)&tokens[size];
+      size++;
+
+      *dsv = tgsi_build_declaration_sampler_view(
+         full_decl->SamplerView.Resource,
+         full_decl->SamplerView.ReturnTypeX,
+         full_decl->SamplerView.ReturnTypeY,
+         full_decl->SamplerView.ReturnTypeZ,
+         full_decl->SamplerView.ReturnTypeW,
+         declaration,
+         header);
    }
 
    return size;
