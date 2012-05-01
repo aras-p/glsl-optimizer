@@ -121,12 +121,23 @@ _mesa_GetActiveUniformsiv(GLuint program,
 	 break;
 
       case GL_UNIFORM_BLOCK_INDEX:
+	 params[i] = uni->block_index;
+	 break;
+
       case GL_UNIFORM_OFFSET:
+	 params[i] = uni->offset;
+	 break;
+
       case GL_UNIFORM_ARRAY_STRIDE:
+	 params[i] = uni->array_stride;
+	 break;
+
       case GL_UNIFORM_MATRIX_STRIDE:
+	 params[i] = uni->matrix_stride;
+	 break;
+
       case GL_UNIFORM_IS_ROW_MAJOR:
-	 _mesa_problem(ctx, "FINISHME: glGetActiveUniformsiv(pname)");
-	 params[i] = -1;
+	 params[i] = uni->row_major;
 	 break;
 
       default:
