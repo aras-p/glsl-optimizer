@@ -524,6 +524,32 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
    return _mesa_uniform_merge_location_offset(index, offset);
 }
 
+static GLuint GLAPIENTRY
+_mesa_GetUniformBlockIndex(GLuint program,
+			   const GLchar *uniformBlockName)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint i;
+   struct gl_shader_program *shProg;
+
+   if (!ctx->Extensions.ARB_uniform_buffer_object) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformBlockIndex");
+      return GL_INVALID_INDEX;
+   }
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+					    "glGetUniformBlockIndex");
+   if (!shProg)
+      return GL_INVALID_INDEX;
+
+   for (i = 0; i < shProg->NumUniformBlocks; i++) {
+      if (!strcmp(shProg->UniformBlocks[i].Name, uniformBlockName))
+	 return i;
+   }
+
+   return GL_INVALID_INDEX;
+}
+
 static void GLAPIENTRY
 _mesa_GetUniformIndices(GLuint program,
 			GLsizei uniformCount,
@@ -615,6 +641,7 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
 
    /* GL_ARB_uniform_buffer_object / GL 3.1 */
+   SET_GetUniformBlockIndex(exec, _mesa_GetUniformBlockIndex);
    SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
    SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
 
