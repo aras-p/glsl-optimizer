@@ -1089,6 +1089,7 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
       debug_printf("2222222222222222222222222222 \n");
    }
    tgsi_parse_free(&parse);
+   FREE(bld.bld_base.instructions);
 
    if (0) {
       LLVMModuleRef module = LLVMGetGlobalParent(
