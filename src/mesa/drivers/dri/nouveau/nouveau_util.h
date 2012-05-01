@@ -207,4 +207,24 @@ get_texgen_coeff(struct gl_texgen *c)
 		return NULL;
 }
 
+static inline unsigned
+get_format_blocksx(gl_format format,
+		       unsigned x)
+{
+	GLuint blockwidth;
+	GLuint blockheight;
+	_mesa_get_format_block_size(format, &blockwidth, &blockheight);
+	return (x + blockwidth - 1) / blockwidth;
+}
+
+static inline unsigned
+get_format_blocksy(gl_format format,
+		       unsigned y)
+{
+	GLuint blockwidth;
+	GLuint blockheight;
+	_mesa_get_format_block_size(format, &blockwidth, &blockheight);
+	return (y + blockheight - 1) / blockheight;
+}
+
 #endif

@@ -393,6 +393,15 @@ nv04_surface_copy(struct gl_context *ctx,
 		  int dx, int dy, int sx, int sy,
 		  int w, int h)
 {
+	if (_mesa_is_format_compressed(src->format)) {
+		sx = get_format_blocksx(src->format, sx);
+		sy = get_format_blocksy(src->format, sy);
+		dx = get_format_blocksx(dst->format, dx);
+		dy = get_format_blocksy(dst->format, dy);
+		w = get_format_blocksx(src->format, w);
+		h = get_format_blocksy(src->format, h);
+	}
+
 	/* Linear texture copy. */
 	if ((src->layout == LINEAR && dst->layout == LINEAR) ||
 	    dst->width <= 2 || dst->height <= 1) {

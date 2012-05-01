@@ -28,6 +28,8 @@
 #include "nouveau_context.h"
 #include "nouveau_util.h"
 
+#include "main/formats.h"
+
 void
 nouveau_surface_alloc(struct gl_context *ctx, struct nouveau_surface *s,
 		      enum nouveau_surface_layout layout,
@@ -45,7 +47,7 @@ nouveau_surface_alloc(struct gl_context *ctx, struct nouveau_surface *s,
 		.width = width,
 		.height = height,
 		.cpp = cpp,
-		.pitch = width * cpp,
+		.pitch = _mesa_format_row_stride(format, width),
 	};
 
 	if (layout == TILED) {
@@ -64,7 +66,8 @@ nouveau_surface_alloc(struct gl_context *ctx, struct nouveau_surface *s,
 		s->pitch = align(s->pitch, 64);
 	}
 
-	ret = nouveau_bo_new(context_dev(ctx), flags, 0, s->pitch * height,
+	ret = nouveau_bo_new(context_dev(ctx), flags, 0,
+			     get_format_blocksy(format, height) * s->pitch,
 			     &config, &s->bo);
 	assert(!ret);
 }
