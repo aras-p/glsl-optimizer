@@ -119,6 +119,40 @@ struct gl_uniform_storage {
     * uniform if the \c ::driver_storage interface is not used.
     */
    union gl_constant_value *storage;
+
+   /** Fields for GL_ARB_uniform_buffer_object
+    * @{
+    */
+
+   /**
+    * GL_UNIFORM_BLOCK_INDEX: index of the uniform block containing
+    * the uniform, or -1 for the default uniform block.  Note that the
+    * index is into the linked program's UniformBlocks[] array, not
+    * the linked shader's.
+    */
+   int block_index;
+
+   /** GL_UNIFORM_OFFSET: byte offset within the uniform block, or -1. */
+   int offset;
+
+   /**
+    * GL_UNIFORM_MATRIX_STRIDE: byte stride between columns or rows of
+    * a matrix.  Set to 0 for non-matrices in UBOs, or -1 for uniforms
+    * in the default uniform block.
+    */
+   int matrix_stride;
+
+   /**
+    * GL_UNIFORM_ARRAY_STRIDE: byte stride between elements of the
+    * array.  Set to zero for non-arrays in UBOs, or -1 for uniforms
+    * in the default uniform block.
+    */
+   int array_stride;
+
+   /** GL_UNIFORM_ROW_MAJOR: true iff it's a row-major matrix in a UBO */
+   bool row_major;
+
+   /** @} */
 };
 
 #ifdef __cplusplus

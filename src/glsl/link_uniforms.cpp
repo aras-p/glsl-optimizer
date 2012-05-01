@@ -217,6 +217,28 @@ public:
       this->shader_shadow_samplers = 0;
    }
 
+   void set_and_process(struct gl_shader_program *prog,
+			ir_variable *var)
+   {
+      ubo_var = NULL;
+      if (var->uniform_block != -1) {
+	 struct gl_uniform_block *block =
+	    &prog->UniformBlocks[var->uniform_block];
+
+	 ubo_block_index = var->uniform_block;
+	 ubo_var_index = var->location;
+	 ubo_var = &block->Uniforms[var->location];
+	 ubo_byte_offset = ubo_var->Offset;
+      }
+
+      process(var);
+   }
+
+   struct gl_uniform_buffer_variable *ubo_var;
+   int ubo_block_index;
+   int ubo_var_index;
+   int ubo_byte_offset;
+
 private:
    virtual void visit_field(const glsl_type *type, const char *name)
    {
@@ -292,6 +314,23 @@ private:
       this->uniforms[id].num_driver_storage = 0;
       this->uniforms[id].driver_storage = NULL;
       this->uniforms[id].storage = this->values;
+      if (this->ubo_var) {
+	 this->uniforms[id].block_index = this->ubo_block_index;
+
+	 /* FINISHME: Actual std140 offset assignment. */
+	 this->uniforms[id].offset = this->ubo_byte_offset;
+	 this->ubo_byte_offset += 4 * type->components();
+	 this->uniforms[id].array_stride = 0;
+	 this->uniforms[id].matrix_stride = 0;
+	 this->uniforms[id].row_major = base_type->is_matrix() &&
+	    ubo_var->RowMajor;
+      } else {
+	 this->uniforms[id].block_index = -1;
+	 this->uniforms[id].offset = -1;
+	 this->uniforms[id].array_stride = -1;
+	 this->uniforms[id].matrix_stride = -1;
+	 this->uniforms[id].row_major = false;
+      }
 
       this->values += values_for_type(type);
    }
@@ -518,7 +557,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 if (strncmp("gl_", var->name, 3) == 0)
 	    continue;
 
-	 parcel.process(var);
+	 parcel.set_and_process(prog, var);
       }
 
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
