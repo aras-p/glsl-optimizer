@@ -155,10 +155,8 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   } else {
     evergreenEncoding = true;
   }
-  const AMDGPUTargetMachine *amdtm =
-    static_cast<const AMDGPUTargetMachine *>(&MF.getTarget());
 
-  if (amdtm->shouldDumpCode()) {
+  if (STM.dumpCode()) {
     MF.dump();
   }
 

@@ -105,6 +105,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    /* XXX: Use TargetMachine.Options in 3.0 */
    if (dump) {
       mod->dump();
+      FS += ",DumpCode";
    }
    PassManager PM;
    PM.add(new TargetData(*AMDGPUTargetMachine.getTargetData()));

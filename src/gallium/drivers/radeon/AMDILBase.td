@@ -60,6 +60,11 @@ def FeatureDebug : SubtargetFeature<"debug",
         "CapsOverride[AMDILDeviceInfo::Debug]",
         "true",
         "Debug mode is enabled, so disable hardware accelerated address spaces.">;
+def FeatureDumpCode : SubtargetFeature <"DumpCode",
+        "mDumpCode",
+        "true",
+        "Dump MachineInstrs in the CodeEmitter">;
+
 
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions

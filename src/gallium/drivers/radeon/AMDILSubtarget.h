@@ -42,6 +42,7 @@ namespace llvm {
       uint32_t mVersion;
       bool mIs64bit;
       bool mIs32on64bit;
+      bool mDumpCode;
     public:
       AMDILSubtarget(llvm::StringRef TT, llvm::StringRef CPU, llvm::StringRef FS);
       virtual ~AMDILSubtarget();
@@ -67,6 +68,7 @@ namespace llvm {
         ParseSubtargetFeatures(
             llvm::StringRef CPU,
             llvm::StringRef FS);
+      bool dumpCode() const { return mDumpCode; }
 
   };
 

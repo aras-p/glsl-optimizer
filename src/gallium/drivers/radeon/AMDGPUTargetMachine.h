@@ -52,9 +52,6 @@ public:
                                               formatted_raw_ostream &Out,
                                               CodeGenFileType FileType,
                                               bool DisableVerify);
-public:
-   void dumpCode() { mDump = true; }
-   bool shouldDumpCode() const { return mDump; }
 };
 
 } /* End namespace llvm */
