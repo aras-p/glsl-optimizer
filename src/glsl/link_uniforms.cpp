@@ -29,6 +29,12 @@
 #include "program/hash_table.h"
 #include "program.h"
 
+static inline unsigned int
+align(unsigned int a, unsigned int align)
+{
+   return (a + align - 1) / align * align;
+}
+
 /**
  * \file link_uniforms.cpp
  * Assign locations for GLSL uniforms.
@@ -317,9 +323,11 @@ private:
       if (this->ubo_var) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
-	 /* FINISHME: Actual std140 offset assignment. */
+	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
+	 this->ubo_byte_offset = align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
-	 this->ubo_byte_offset += 4 * type->components();
+	 this->ubo_byte_offset += type->std140_size(ubo_var->RowMajor);
+
 	 this->uniforms[id].array_stride = 0;
 	 this->uniforms[id].matrix_stride = 0;
 	 this->uniforms[id].row_major = base_type->is_matrix() &&
@@ -451,6 +459,28 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
    }
 
    return true;
+}
+
+void
+link_assign_uniform_block_offsets(struct gl_shader *shader)
+{
+   for (unsigned b = 0; b < shader->NumUniformBlocks; b++) {
+      struct gl_uniform_block *block = &shader->UniformBlocks[b];
+
+      unsigned offset = 0;
+      for (unsigned int i = 0; i < block->NumUniforms; i++) {
+	 struct gl_uniform_buffer_variable *ubo_var = &block->Uniforms[i];
+	 const struct glsl_type *type = ubo_var->Type;
+
+	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
+	 unsigned size = type->std140_size(ubo_var->RowMajor);
+
+	 offset = align(offset, alignment);
+	 ubo_var->Offset = offset;
+	 offset += size;
+      }
+      block->UniformBufferSize = offset;
+   }
 }
 
 void

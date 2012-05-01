@@ -979,6 +979,8 @@ link_intrastage_shaders(void *mem_ctx,
       struct gl_shader *sh = shader_list[i];
 
       for (unsigned j = 0; j < shader_list[i]->NumUniformBlocks; j++) {
+	 link_assign_uniform_block_offsets(shader_list[i]);
+
 	 int index = link_cross_validate_uniform_block(mem_ctx,
 						       &uniform_blocks,
 						       &num_uniform_blocks,

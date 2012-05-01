@@ -243,6 +243,19 @@ struct glsl_type {
    unsigned component_slots() const;
 
    /**
+    * Alignment in bytes of the start of this type in a std140 uniform
+    * block.
+    */
+   unsigned std140_base_alignment(bool row_major) const;
+
+   /** Size in bytes of this type in a std140 uniform block.
+    *
+    * Note that this is not GL_UNIFORM_SIZE (which is the number of
+    * elements in the array)
+    */
+   unsigned std140_size(bool row_major) const;
+
+   /**
     * \brief Can this type be implicitly converted to another?
     *
     * \return True if the types are identical or if this type can be converted
