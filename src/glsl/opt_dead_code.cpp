@@ -95,9 +95,15 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	 /* uniform initializers are precious, and could get used by another
 	  * stage.  Also, once uniform locations have been assigned, the
 	  * declaration cannot be deleted.
+	  *
+	  * Also, GL_ARB_uniform_buffer_object says that std140
+	  * uniforms will not be eliminated.  Since we always do
+	  * std140, just don't eliminate uniforms in UBOs.
 	  */
 	 if (entry->var->mode == ir_var_uniform &&
-	     (uniform_locations_assigned || entry->var->constant_value))
+	     (uniform_locations_assigned ||
+	      entry->var->constant_value ||
+	      entry->var->uniform_block != -1))
 	    continue;
 
 	 entry->var->remove();
