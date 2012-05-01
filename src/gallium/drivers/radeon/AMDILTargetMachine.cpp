@@ -150,8 +150,8 @@ bool AMDILPassConfig::addPreISel()
 
 bool AMDILPassConfig::addInstSelector()
 {
-  PM.add(createAMDILPeepholeOpt(*TM));
-  PM.add(createAMDILISelDag(getAMDILTargetMachine()));
+  PM->add(createAMDILPeepholeOpt(*TM));
+  PM->add(createAMDILISelDag(getAMDILTargetMachine()));
   return false;
 }
 
@@ -162,7 +162,7 @@ bool AMDILPassConfig::addPreRegAlloc()
     llvm::RegisterScheduler::setDefault(&llvm::createSourceListDAGScheduler);
   }
 
-  PM.add(createAMDILMachinePeephole(*TM));
+  PM->add(createAMDILMachinePeephole(*TM));
   return false;
 }
 
@@ -175,8 +175,8 @@ bool AMDILPassConfig::addPostRegAlloc() {
 /// true if -print-machineinstrs should print out the code after the passes.
 bool AMDILPassConfig::addPreEmitPass()
 {
-  PM.add(createAMDILCFGPreparationPass(*TM));
-  PM.add(createAMDILCFGStructurizerPass(*TM));
+  PM->add(createAMDILCFGPreparationPass(*TM));
+  PM->add(createAMDILCFGStructurizerPass(*TM));
   return true;
 }
 

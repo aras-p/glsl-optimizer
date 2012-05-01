@@ -112,31 +112,31 @@ AMDGPUPassConfig::addPreISel()
 {
   const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
   if (ST.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
-    PM.add(createR600KernelParametersPass(
+    PM->add(createR600KernelParametersPass(
                      getAMDGPUTargetMachine().getTargetData()));
   }
   return false;
 }
 
 bool AMDGPUPassConfig::addInstSelector() {
-  PM.add(createAMDILPeepholeOpt(*TM));
-  PM.add(createAMDILISelDag(getAMDGPUTargetMachine()));
+  PM->add(createAMDILPeepholeOpt(*TM));
+  PM->add(createAMDILISelDag(getAMDGPUTargetMachine()));
   return false;
 }
 
 bool AMDGPUPassConfig::addPreRegAlloc() {
   const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
 
-  PM.add(createAMDGPUReorderPreloadInstructionsPass(*TM));
+  PM->add(createAMDGPUReorderPreloadInstructionsPass(*TM));
   if (ST.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
-    PM.add(createR600LowerShaderInstructionsPass(*TM));
-    PM.add(createR600LowerInstructionsPass(*TM));
+    PM->add(createR600LowerShaderInstructionsPass(*TM));
+    PM->add(createR600LowerInstructionsPass(*TM));
   } else {
-    PM.add(createSILowerShaderInstructionsPass(*TM));
-    PM.add(createSIAssignInterpRegsPass(*TM));
+    PM->add(createSILowerShaderInstructionsPass(*TM));
+    PM->add(createSIAssignInterpRegsPass(*TM));
   }
-  PM.add(createAMDGPULowerInstructionsPass(*TM));
-  PM.add(createAMDGPUConvertToISAPass(*TM));
+  PM->add(createAMDGPULowerInstructionsPass(*TM));
+  PM->add(createAMDGPUConvertToISAPass(*TM));
   return false;
 }
 
@@ -150,10 +150,10 @@ bool AMDGPUPassConfig::addPreSched2() {
 
 bool AMDGPUPassConfig::addPreEmitPass() {
   const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
-  PM.add(createAMDILCFGPreparationPass(*TM));
-  PM.add(createAMDILCFGStructurizerPass(*TM));
+  PM->add(createAMDILCFGPreparationPass(*TM));
+  PM->add(createAMDILCFGStructurizerPass(*TM));
   if (ST.device()->getGeneration() == AMDILDeviceInfo::HD7XXX) {
-    PM.add(createSIPropagateImmReadsPass(*TM));
+    PM->add(createSIPropagateImmReadsPass(*TM));
   }
 
   return false;
