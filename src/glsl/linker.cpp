@@ -1165,6 +1165,13 @@ update_array_sizes(struct gl_shader_program *prog)
 	     !var->type->is_array())
 	    continue;
 
+	 /* GL_ARB_uniform_buffer_object says that std140 uniforms
+	  * will not be eliminated.  Since we always do std140, just
+	  * don't resize arrays in UBOs.
+	  */
+	 if (var->uniform_block != -1)
+	    continue;
+
 	 unsigned int size = var->max_array_access;
 	 for (unsigned j = 0; j < MESA_SHADER_TYPES; j++) {
 	       if (prog->_LinkedShaders[j] == NULL)
