@@ -27,6 +27,7 @@
 #include "ir_uniform.h"
 #include "glsl_symbol_table.h"
 #include "program/hash_table.h"
+#include "program.h"
 
 /**
  * \file link_uniforms.cpp
@@ -377,6 +378,42 @@ link_cross_validate_uniform_block(void *mem_ctx,
    return linked_block_index;
 }
 
+/**
+ * Walks the IR and update the references to uniform blocks in the
+ * ir_variables to point at linked shader's list (previously, they
+ * would point at the uniform block list in one of the pre-linked
+ * shaders).
+ */
+static bool
+link_update_uniform_buffer_variables(struct gl_shader *shader)
+{
+   foreach_list(node, shader->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->uniform_block == -1))
+	 continue;
+
+      assert(var->mode == ir_var_uniform);
+
+      bool found = false;
+      for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
+	 for (unsigned j = 0; j < shader->UniformBlocks[i].NumUniforms; j++) {
+	    if (!strcmp(var->name, shader->UniformBlocks[i].Uniforms[j].Name)) {
+	       found = true;
+	       var->uniform_block = i;
+	       var->location = j;
+	       break;
+	    }
+	 }
+	 if (found)
+	    break;
+      }
+      assert(found);
+   }
+
+   return true;
+}
+
 void
 link_assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -400,6 +437,14 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     *     types cannot have initializers."
     */
    memset(prog->SamplerUnits, 0, sizeof(prog->SamplerUnits));
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+      if (!link_update_uniform_buffer_variables(prog->_LinkedShaders[i]))
+	 return;
+   }
 
    /* First pass: Count the uniform resources used by the user-defined
     * uniforms.  While this happens, each active uniform will have an index
