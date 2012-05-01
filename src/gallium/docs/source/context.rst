@@ -120,6 +120,22 @@ to the array index which is used for sampling.
 * ``sampler_view_destroy`` destroys a sampler view and releases its reference
   to associated texture.
 
+Shader Resources
+^^^^^^^^^^^^^^^^
+
+Shader resources are textures or buffers that may be read or written
+from a shader without an associated sampler.  This means that they
+have no support for floating point coordinates, address wrap modes or
+filtering.
+
+Shader resources are specified for all the shader stages at once using
+the ``set_shader_resources`` method.  When binding texture resources,
+the ``level``, ``first_layer`` and ``last_layer`` pipe_surface fields
+specify the mipmap level and the range of layers the texture will be
+constrained to.  In the case of buffers, ``first_element`` and
+``last_element`` specify the range within the buffer that will be used
+by the shader resource.
+
 Surfaces
 ^^^^^^^^
 
@@ -575,7 +591,9 @@ The compute program has access to four special resources:
 
 These resources use a byte-based addressing scheme, and they can be
 accessed from the compute program by means of the LOAD/STORE TGSI
-opcodes.
+opcodes.  Additional resources to be accessed using the same opcodes
+may be specified by the user with the ``set_compute_resources``
+method.
 
 In addition, normal texture sampling is allowed from the compute
 program: ``bind_compute_sampler_states`` may be used to set up texture

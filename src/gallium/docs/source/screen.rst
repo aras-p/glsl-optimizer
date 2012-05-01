@@ -249,6 +249,10 @@ resources might be created and handled quite differently.
   process.
 * ``PIPE_BIND_GLOBAL``: A buffer that can be mapped into the global
   address space of a compute program.
+* ``PIPE_BIND_SHADER_RESOURCE``: A buffer or texture that can be
+  bound to the graphics pipeline as a shader resource.
+* ``PIPE_BIND_COMPUTE_RESOURCE``: A buffer or texture that can be
+  bound to the compute program as a shader resource.
 
 .. _pipe_usage:
 

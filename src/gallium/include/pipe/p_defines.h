@@ -305,6 +305,8 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_CURSOR               (1 << 16) /* mouse cursor */
 #define PIPE_BIND_CUSTOM               (1 << 17) /* state-tracker/winsys usages */
 #define PIPE_BIND_GLOBAL               (1 << 18) /* set_global_binding */
+#define PIPE_BIND_SHADER_RESOURCE      (1 << 19) /* set_shader_resources */
+#define PIPE_BIND_COMPUTE_RESOURCE     (1 << 20) /* set_compute_resources */
 
 /* The first two flags above were previously part of the amorphous
  * TEXTURE_USAGE, most of which are now descriptions of the ways a

@@ -229,6 +229,22 @@ struct pipe_context {
                                      unsigned start_slot, unsigned num_views,
                                      struct pipe_sampler_view **);
 
+   /**
+    * Bind an array of shader resources that will be used by the
+    * graphics pipeline.  Any resources that were previously bound to
+    * the specified range will be unbound after this call.
+    *
+    * \param first      first resource to bind.
+    * \param count      number of consecutive resources to bind.
+    * \param resources  array of pointers to the resources to bind, it
+    *                   should contain at least \a count elements
+    *                   unless it's NULL, in which case no new
+    *                   resources will be bound.
+    */
+   void (*set_shader_resources)(struct pipe_context *,
+                                unsigned start, unsigned count,
+                                struct pipe_surface **resources);
+
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
@@ -440,6 +456,22 @@ struct pipe_context {
 				 const struct pipe_compute_state *);
    void (*bind_compute_state)(struct pipe_context *, void *);
    void (*delete_compute_state)(struct pipe_context *, void *);
+
+   /**
+    * Bind an array of shader resources that will be used by the
+    * compute program.  Any resources that were previously bound to
+    * the specified range will be unbound after this call.
+    *
+    * \param first      first resource to bind.
+    * \param count      number of consecutive resources to bind.
+    * \param resources  array of pointers to the resources to bind, it
+    *                   should contain at least \a count elements
+    *                   unless it's NULL, in which case no new
+    *                   resources will be bound.
+    */
+   void (*set_compute_resources)(struct pipe_context *,
+                                 unsigned start, unsigned count,
+                                 struct pipe_surface **resources);
 
    /**
     * Bind an array of buffers to be mapped into the address space of
