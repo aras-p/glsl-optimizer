@@ -1683,6 +1683,31 @@ public:
    ir_constant *get_record_field(const char *name);
 
    /**
+    * Copy the values on another constant at a given offset.
+    *
+    * The offset is ignored for array or struct copies, it's only for
+    * scalars or vectors into vectors or matrices.
+    *
+    * With identical types on both sides and zero offset it's clone()
+    * without creating a new object.
+    */
+
+   void copy_offset(ir_constant *src, int offset);
+
+   /**
+    * Copy the values on another constant at a given offset and
+    * following an assign-like mask.
+    *
+    * The mask is ignored for scalars.
+    *
+    * Note that this function only handles what assign can handle,
+    * i.e. at most a vector as source and a column of a matrix as
+    * destination.
+    */
+
+   void copy_masked_offset(ir_constant *src, int offset, unsigned int mask);
+
+   /**
     * Determine whether a constant has the same value as another constant
     *
     * \sa ir_constant::is_zero, ir_constant::is_one,
