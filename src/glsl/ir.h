@@ -146,7 +146,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_rvalue * as_rvalue()
    {
@@ -502,10 +502,11 @@ public:
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    /**
-    * Attempt to evaluate this function as a constant expression, given
-    * a list of the actual parameters.  Returns NULL for non-built-ins.
+    * Attempt to evaluate this function as a constant expression,
+    * given a list of the actual parameters and the variable context.
+    * Returns NULL for non-built-ins.
     */
-   ir_constant *constant_expression_value(exec_list *actual_parameters);
+   ir_constant *constant_expression_value(exec_list *actual_parameters, struct hash_table *variable_context);
 
    /**
     * Get the name of the function for which this is a signature
@@ -763,7 +764,7 @@ public:
 
    virtual ir_assignment *clone(void *mem_ctx, struct hash_table *ht) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual void accept(ir_visitor *v)
    {
@@ -999,10 +1000,14 @@ public:
    /**
     * Attempt to constant-fold the expression
     *
+    * The "variable_context" hash table links ir_variable * to ir_constant *
+    * that represent the variables' values.  \c NULL represents an empty
+    * context.
+    *
     * If the expression cannot be constant folded, this method will return
     * \c NULL.
     */
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    /**
     * Determine the number of operands used by an expression
@@ -1065,7 +1070,7 @@ public:
 
    virtual ir_call *clone(void *mem_ctx, struct hash_table *ht) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_call *as_call()
    {
@@ -1297,7 +1302,7 @@ public:
 
    virtual ir_texture *clone(void *mem_ctx, struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual void accept(ir_visitor *v)
    {
@@ -1389,7 +1394,7 @@ public:
 
    virtual ir_swizzle *clone(void *mem_ctx, struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_swizzle *as_swizzle()
    {
@@ -1456,7 +1461,7 @@ public:
    virtual ir_dereference_variable *clone(void *mem_ctx,
 					  struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_dereference_variable *as_dereference_variable()
    {
@@ -1505,7 +1510,7 @@ public:
    virtual ir_dereference_array *clone(void *mem_ctx,
 				       struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_dereference_array *as_dereference_array()
    {
@@ -1544,7 +1549,7 @@ public:
    virtual ir_dereference_record *clone(void *mem_ctx,
 					struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1609,7 +1614,7 @@ public:
 
    virtual ir_constant *clone(void *mem_ctx, struct hash_table *) const;
 
-   virtual ir_constant *constant_expression_value();
+   virtual ir_constant *constant_expression_value(struct hash_table *variable_context = NULL);
 
    virtual ir_constant *as_constant()
    {

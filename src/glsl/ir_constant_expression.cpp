@@ -38,6 +38,7 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
+#include "program/hash_table.h"
 
 /* Using C99 rounding functions for roundToEven() implementation is
  * difficult, because round(), rint, and nearbyint() are affected by
@@ -71,14 +72,14 @@ dot(ir_constant *op0, ir_constant *op1)
 }
 
 ir_constant *
-ir_rvalue::constant_expression_value()
+ir_rvalue::constant_expression_value(struct hash_table *variable_context)
 {
    assert(this->type->is_error());
    return NULL;
 }
 
 ir_constant *
-ir_expression::constant_expression_value()
+ir_expression::constant_expression_value(struct hash_table *variable_context)
 {
    if (this->type->is_error())
       return NULL;
@@ -89,7 +90,7 @@ ir_expression::constant_expression_value()
    memset(&data, 0, sizeof(data));
 
    for (unsigned operand = 0; operand < this->get_num_operands(); operand++) {
-      op[operand] = this->operands[operand]->constant_expression_value();
+      op[operand] = this->operands[operand]->constant_expression_value(variable_context);
       if (!op[operand])
 	 return NULL;
    }
@@ -886,7 +887,7 @@ ir_expression::constant_expression_value()
 
 
 ir_constant *
-ir_texture::constant_expression_value()
+ir_texture::constant_expression_value(struct hash_table *variable_context)
 {
    /* texture lookups aren't constant expressions */
    return NULL;
@@ -894,9 +895,9 @@ ir_texture::constant_expression_value()
 
 
 ir_constant *
-ir_swizzle::constant_expression_value()
+ir_swizzle::constant_expression_value(struct hash_table *variable_context)
 {
-   ir_constant *v = this->val->constant_expression_value();
+   ir_constant *v = this->val->constant_expression_value(variable_context);
 
    if (v != NULL) {
       ir_constant_data data = { { 0 } };
@@ -923,11 +924,18 @@ ir_swizzle::constant_expression_value()
 
 
 ir_constant *
-ir_dereference_variable::constant_expression_value()
+ir_dereference_variable::constant_expression_value(struct hash_table *variable_context)
 {
    /* This may occur during compile and var->type is glsl_type::error_type */
    if (!var)
       return NULL;
+
+   /* Give priority to the context hashtable, if it exists */
+   if (variable_context) {
+      ir_constant *value = (ir_constant *)hash_table_find(variable_context, var);
+      if(value)
+	 return value;
+   }
 
    /* The constant_value of a uniform variable is its initializer,
     * not the lifetime constant value of the uniform.
@@ -943,10 +951,10 @@ ir_dereference_variable::constant_expression_value()
 
 
 ir_constant *
-ir_dereference_array::constant_expression_value()
+ir_dereference_array::constant_expression_value(struct hash_table *variable_context)
 {
-   ir_constant *array = this->array->constant_expression_value();
-   ir_constant *idx = this->array_index->constant_expression_value();
+   ir_constant *array = this->array->constant_expression_value(variable_context);
+   ir_constant *idx = this->array_index->constant_expression_value(variable_context);
 
    if ((array != NULL) && (idx != NULL)) {
       void *ctx = ralloc_parent(this);
@@ -998,7 +1006,7 @@ ir_dereference_array::constant_expression_value()
 
 
 ir_constant *
-ir_dereference_record::constant_expression_value()
+ir_dereference_record::constant_expression_value(struct hash_table *variable_context)
 {
    ir_constant *v = this->record->constant_expression_value();
 
@@ -1007,7 +1015,7 @@ ir_dereference_record::constant_expression_value()
 
 
 ir_constant *
-ir_assignment::constant_expression_value()
+ir_assignment::constant_expression_value(struct hash_table *variable_context)
 {
    /* FINISHME: Handle CEs involving assignment (return RHS) */
    return NULL;
@@ -1015,21 +1023,21 @@ ir_assignment::constant_expression_value()
 
 
 ir_constant *
-ir_constant::constant_expression_value()
+ir_constant::constant_expression_value(struct hash_table *variable_context)
 {
    return this;
 }
 
 
 ir_constant *
-ir_call::constant_expression_value()
+ir_call::constant_expression_value(struct hash_table *variable_context)
 {
-   return this->callee->constant_expression_value(&this->actual_parameters);
+   return this->callee->constant_expression_value(&this->actual_parameters, variable_context);
 }
 
 
 ir_constant *
-ir_function_signature::constant_expression_value(exec_list *actual_parameters)
+ir_function_signature::constant_expression_value(exec_list *actual_parameters, struct hash_table *variable_context)
 {
    const glsl_type *type = this->return_type;
    if (type == glsl_type::void_type)
@@ -1047,7 +1055,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters)
    /* Check if all parameters are constant */
    ir_constant *op[3];
    foreach_list(n, actual_parameters) {
-      ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value();
+      ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value(variable_context);
       if (constant == NULL)
 	 return NULL;
 
