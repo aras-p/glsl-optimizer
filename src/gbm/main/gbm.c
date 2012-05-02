@@ -231,6 +231,25 @@ gbm_bo_get_handle(struct gbm_bo *bo)
    return bo->handle;
 }
 
+/** Write data into the buffer object
+ *
+ * If the buffer object was created with the GBM_BO_USE_WRITE flag,
+ * this function can used to write data into the buffer object.  The
+ * data is copied directly into the object and it's the responsiblity
+ * of the caller to make sure the data represents valid pixel data,
+ * according to the width, height, stride and format of the buffer object.
+ *
+ * \param bo The buffer object
+ * \param buf The data to write
+ * \param count The number of bytes to write
+ * \return Returns -1 on error, 0 otherwise
+ */
+GBM_EXPORT int
+gbm_bo_write(struct gbm_bo *bo, const void *buf, size_t count)
+{
+   return bo->gbm->bo_write(bo, buf, count);
+}
+
 /** Get the gbm device used to create the buffer object
  *
  * \param bo The buffer object

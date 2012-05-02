@@ -291,6 +291,18 @@ gbm_dri_is_format_supported(struct gbm_device *gbm,
    return 1;
 }
 
+static int
+gbm_dri_bo_write(struct gbm_bo *_bo, const void *buf, size_t count)
+{
+   struct gbm_dri_device *dri = gbm_dri_device(_bo->gbm);
+   struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
+
+   if (dri->image->base.version < 4)
+      return -1;
+
+   return dri->image->write(bo->image, buf, count);
+}
+
 static void
 gbm_dri_bo_destroy(struct gbm_bo *_bo)
 {
@@ -390,6 +402,9 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    int dri_format;
    unsigned dri_use = 0;
 
+   if (dri->image->base.version < 4 && (usage & GBM_BO_USE_WRITE))
+      return NULL;
+
    bo = calloc(1, sizeof *bo);
    if (bo == NULL)
       return NULL;
@@ -421,6 +436,8 @@ gbm_dri_bo_create(struct gbm_device *gbm,
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
    if (usage & GBM_BO_USE_CURSOR_64X64)
       dri_use |= __DRI_IMAGE_USE_CURSOR;
+   if (usage & GBM_BO_USE_WRITE)
+      dri_use |= __DRI_IMAGE_USE_WRITE;
 
    bo->image =
       dri->image->createImage(dri->screen,
@@ -491,6 +508,7 @@ dri_device_create(int fd)
    dri->base.base.bo_create = gbm_dri_bo_create;
    dri->base.base.bo_create_from_egl_image = gbm_dri_bo_create_from_egl_image;
    dri->base.base.is_format_supported = gbm_dri_is_format_supported;
+   dri->base.base.bo_write = gbm_dri_bo_write;
    dri->base.base.bo_destroy = gbm_dri_bo_destroy;
    dri->base.base.destroy = dri_destroy;
    dri->base.base.surface_create = gbm_dri_surface_create;

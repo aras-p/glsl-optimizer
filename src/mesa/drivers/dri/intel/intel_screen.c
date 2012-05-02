@@ -305,10 +305,16 @@ intel_create_image(__DRIscreen *screen,
       tiling = I915_TILING_NONE;
    }
 
+   /* We only support write for cursor drm images */
+   if ((use & __DRI_IMAGE_USE_WRITE) &&
+       use != (__DRI_IMAGE_USE_WRITE | __DRI_IMAGE_USE_CURSOR))
+      return NULL;
+
    image = CALLOC(sizeof *image);
    if (image == NULL)
       return NULL;
 
+   image->usage = use;
    image->dri_format = format;
 
    switch (format) {
@@ -392,6 +398,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    }
 
    image->internal_format = orig_image->internal_format;
+   image->usage           = orig_image->usage;
    image->dri_format      = orig_image->dri_format;
    image->format          = orig_image->format;
    image->data_type       = orig_image->data_type;
@@ -408,18 +415,39 @@ intel_validate_usage(__DRIimage *image, unsigned int use)
 	 return GL_FALSE;
    }
 
+   /* We only support write for cursor drm images */
+   if ((use & __DRI_IMAGE_USE_WRITE) &&
+       use != (__DRI_IMAGE_USE_WRITE | __DRI_IMAGE_USE_CURSOR))
+      return GL_FALSE;
+
    return GL_TRUE;
 }
 
+static int
+intel_image_write(__DRIimage *image, const void *buf, size_t count)
+{
+   if (image->region->map_refcount)
+      return -1;
+   if (!(image->usage & __DRI_IMAGE_USE_WRITE))
+      return -1;
+
+   drm_intel_bo_map(image->region->bo, true);
+   memcpy(image->region->bo->virtual, buf, count);
+   drm_intel_bo_unmap(image->region->bo);
+
+   return 0;
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
-    { __DRI_IMAGE, 3 },
+    { __DRI_IMAGE, 4 },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
     intel_create_image,
     intel_query_image,
     intel_dup_image,
-    intel_validate_usage
+    intel_validate_usage,
+    intel_image_write
 };
 
 static const __DRIextension *intelScreenExtensions[] = {

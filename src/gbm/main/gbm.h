@@ -201,6 +201,12 @@ enum gbm_bo_flags {
     * as the storage for a color buffer
     */
    GBM_BO_USE_RENDERING    = (1 << 2),
+   /**
+    * Buffer can be used for gbm_bo_write.  This is guaranteed to work
+    * with GBM_BO_USE_CURSOR_64X64. but may not work for other
+    * combinations.
+    */
+   GBM_BO_USE_WRITE    = (1 << 3),
 };
 
 int
@@ -247,6 +253,9 @@ gbm_bo_get_device(struct gbm_bo *bo);
 
 union gbm_bo_handle
 gbm_bo_get_handle(struct gbm_bo *bo);
+
+int
+gbm_bo_write(struct gbm_bo *bo, const void *buf, size_t count);
 
 void
 gbm_bo_set_user_data(struct gbm_bo *bo, void *data,

@@ -70,6 +70,7 @@ struct gbm_device {
                                               void *egl_dpy, void *egl_img,
                                               uint32_t width, uint32_t height,
                                               uint32_t usage);
+   int (*bo_write)(struct gbm_bo *bo, const void *buf, size_t data);
    void (*bo_destroy)(struct gbm_bo *bo);
 
    struct gbm_surface *(*surface_create)(struct gbm_device *gbm,
