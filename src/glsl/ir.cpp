@@ -716,11 +716,26 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 ir_constant *
 ir_constant::zero(void *mem_ctx, const glsl_type *type)
 {
-   assert(type->is_numeric() || type->is_boolean());
+   assert(type->is_scalar() || type->is_vector() || type->is_matrix()
+	  || type->is_record() || type->is_array());
 
    ir_constant *c = new(mem_ctx) ir_constant;
    c->type = type;
    memset(&c->value, 0, sizeof(c->value));
+
+   if (type->is_array()) {
+      c->array_elements = ralloc_array(c, ir_constant *, type->length);
+
+      for (unsigned i = 0; i < type->length; i++)
+	 c->array_elements[i] = ir_constant::zero(c, type->element_type());
+   }
+
+   if (type->is_record()) {
+      for (unsigned i = 0; i < type->length; i++) {
+	 ir_constant *comp = ir_constant::zero(mem_ctx, type->fields.structure[i].type);
+	 c->components.push_tail(comp);
+      }
+   }
 
    return c;
 }
