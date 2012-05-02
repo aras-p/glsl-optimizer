@@ -115,6 +115,8 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	       intel_miptree_set_image_offset(mt, level, q, x, y);
 	       x += pack_x_pitch;
 	    }
+            if (x > mt->total_width)
+               mt->total_width = x;
 
 	    x = 0;
 	    y += pack_y_pitch;
@@ -135,10 +137,9 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	       pack_x_nr <<= 1;
 	    }
 	 } else {
+            pack_x_nr <<= 1;
 	    if (pack_x_pitch > 4) {
 	       pack_x_pitch >>= 1;
-	       pack_x_nr <<= 1;
-	       assert(pack_x_pitch * pack_x_nr <= mt->total_width);
 	    }
 
 	    if (pack_y_pitch > 2) {
