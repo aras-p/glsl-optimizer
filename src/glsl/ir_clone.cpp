@@ -324,6 +324,7 @@ ir_function_signature::clone_prototype(void *mem_ctx, struct hash_table *ht) con
 
    copy->is_defined = false;
    copy->is_builtin = this->is_builtin;
+   copy->origin = this;
 
    /* Clone the parameter list, but NOT the body.
     */

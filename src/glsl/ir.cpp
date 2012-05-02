@@ -1481,6 +1481,7 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type)
 {
    this->ir_type = ir_type_function_signature;
    this->is_builtin = false;
+   this->origin = NULL;
 }
 
 

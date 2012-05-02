@@ -572,6 +572,9 @@ private:
    /** Function of which this signature is one overload. */
    class ir_function *_function;
 
+   /** Function signature of which this one is a prototype clone */
+   const ir_function_signature *origin;
+
    friend class ir_function;
 };
 
