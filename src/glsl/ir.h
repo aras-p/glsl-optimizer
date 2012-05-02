@@ -576,6 +576,21 @@ private:
    const ir_function_signature *origin;
 
    friend class ir_function;
+
+   /**
+    * Helper function to run a list of instructions for constant
+    * expression evaluation.
+    *
+    * The hash table represents the values of the visible variables.
+    * There are no scoping issues because the table is indexed on
+    * ir_variable pointers, not variable names.
+    *
+    * Returns false if the expression is not constant, true otherwise,
+    * and the value in *result if result is non-NULL.
+    */
+   bool constant_expression_evaluate_expression_list(const struct exec_list &body,
+						     struct hash_table *variable_context,
+						     ir_constant **result);
 };
 
 
