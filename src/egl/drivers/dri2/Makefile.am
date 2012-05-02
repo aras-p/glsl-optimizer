@@ -26,6 +26,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/gbm/backends/dri \
 	-I$(top_srcdir)/src/egl/wayland/wayland-egl \
 	-I$(top_srcdir)/src/egl/wayland/wayland-drm \
+	-I$(top_builddir)/src/egl/wayland/wayland-drm \
 	$(DEFINES) \
 	$(LIBDRM_CFLAGS) \
 	$(LIBUDEV_CFLAGS) \
