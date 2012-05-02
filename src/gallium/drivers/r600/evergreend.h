@@ -32,20 +32,16 @@
 #define EVERGREEN_CONTEXT_REG_OFFSET                0X00028000
 #define EVERGREEN_CONTEXT_REG_END                   0X00029000
 #define EVERGREEN_RESOURCE_OFFSET                   0x00030000
-#define EVERGREEN_RESOURCE_END                      0x00034000
-#define CAYMAN_RESOURCE_END                         0x00038000
+#define EVERGREEN_RESOURCE_END                      0x00038000
 #define EVERGREEN_LOOP_CONST_OFFSET                 0x0003A200
-#define EVERGREEN_LOOP_CONST_END                    0x0003A26C
+#define EVERGREEN_LOOP_CONST_END                    0x0003A500
 #define EVERGREEN_BOOL_CONST_OFFSET                 0x0003A500
-#define EVERGREEN_BOOL_CONST_END                    0x0003A506
-#define CAYMAN_BOOL_CONST_END                       0x0003A518
+#define EVERGREEN_BOOL_CONST_END                    0x0003A518
 #define EVERGREEN_SAMPLER_OFFSET                    0X0003C000
-#define EVERGREEN_SAMPLER_END                       0X0003CFF0
-#define CAYMAN_SAMPLER_END                          0X0003C600
+#define EVERGREEN_SAMPLER_END                       0X0003C600
 
 #define EVERGREEN_CTL_CONST_OFFSET                  0x0003CFF0
-#define EVERGREEN_CTL_CONST_END                     0x0003E200
-#define CAYMAN_CTL_CONST_END                        0x0003FF0C
+#define EVERGREEN_CTL_CONST_END                     0x0003FF0C
 
 #define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
 #define EVENT_TYPE_ZPASS_DONE                  0x15
