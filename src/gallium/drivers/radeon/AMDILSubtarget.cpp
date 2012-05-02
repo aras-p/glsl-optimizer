@@ -27,7 +27,8 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "AMDILGenSubtargetInfo.inc"
 
-AMDILSubtarget::AMDILSubtarget(llvm::StringRef TT, llvm::StringRef CPU, llvm::StringRef FS) : AMDILGenSubtargetInfo( TT, CPU, FS )
+AMDILSubtarget::AMDILSubtarget(llvm::StringRef TT, llvm::StringRef CPU, llvm::StringRef FS) : AMDILGenSubtargetInfo( TT, CPU, FS ),
+  mDumpCode(false)
 {
   memset(CapsOverride, 0, sizeof(*CapsOverride)
       * AMDILDeviceInfo::MaxNumberCapabilities);

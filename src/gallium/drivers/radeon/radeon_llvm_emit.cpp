@@ -93,20 +93,20 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    AMDGPUTriple.setArch(Arch);
 
    Module * mod = unwrap(M);
-   std::string FS = gpu_family;
+   std::string FS;
    TargetOptions TO;
 
+   if (dump) {
+      mod->dump();
+      FS += "+DumpCode";
+   }
+
    std::auto_ptr<TargetMachine> tm(AMDGPUTarget->createTargetMachine(
-                     AMDGPUTriple.getTriple(), gpu_family, "" /* Features */,
+                     AMDGPUTriple.getTriple(), gpu_family, FS,
                      TO, Reloc::Default, CodeModel::Default,
                      CodeGenOpt::Default
                      ));
    TargetMachine &AMDGPUTargetMachine = *tm.get();
-   /* XXX: Use TargetMachine.Options in 3.0 */
-   if (dump) {
-      mod->dump();
-      FS += ",DumpCode";
-   }
    PassManager PM;
    PM.add(new TargetData(*AMDGPUTargetMachine.getTargetData()));
    PM.add(createPromoteMemoryToRegisterPass());
