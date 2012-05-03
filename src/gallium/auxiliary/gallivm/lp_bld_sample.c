@@ -349,7 +349,7 @@ lp_build_brilinear_lod(struct lp_build_context *bld,
  * Combined log2 and brilinear lod computation.
  *
  * It's in all identical to calling lp_build_fast_log2() and
- * lp_build_brilinear_lod() above, but by combining we can compute the interger
+ * lp_build_brilinear_lod() above, but by combining we can compute the integer
  * and fractional part independently.
  */
 static void
