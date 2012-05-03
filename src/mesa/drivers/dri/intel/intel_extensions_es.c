@@ -66,7 +66,6 @@ static const char *es1_extensions[] = {
    "GL_EXT_blend_func_separate",
    "GL_EXT_blend_subtract",
    "GL_OES_draw_texture",
-   "GL_ARB_framebuffer_object",
    "GL_EXT_framebuffer_object",
    "GL_ARB_point_sprite",
    "GL_EXT_stencil_wrap",
@@ -92,7 +91,6 @@ static const char *es2_extensions[] = {
    "GL_NV_blend_square",
 
    /* Optional GLES2 */
-   "GL_ARB_framebuffer_object",
    "GL_ARB_depth_texture",
    "GL_EXT_framebuffer_object",
 
