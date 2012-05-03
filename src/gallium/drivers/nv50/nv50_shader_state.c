@@ -207,6 +207,8 @@ nv50_gmtyprog_validate(struct nv50_context *nv50)
       PUSH_DATA (push, gp->gp.vert_count);
       BEGIN_NV04(push, NV50_3D(GP_START_ID), 1);
       PUSH_DATA (push, gp->code_base);
+
+      nv50->state.prim_size = gp->gp.prim_type; /* enum matches vertex count */
    }
    nv50_program_update_context_state(nv50, gp, 2);
 
@@ -278,6 +280,12 @@ nv50_validate_derived_rs(struct nv50_context *nv50)
 
    nv50_sprite_coords_validate(nv50);
 
+   if (nv50->state.rasterizer_discard != nv50->rast->pipe.rasterizer_discard) {
+      nv50->state.rasterizer_discard = nv50->rast->pipe.rasterizer_discard;
+      BEGIN_NV04(push, NV50_3D(RASTERIZE_ENABLE), 1);
+      PUSH_DATA (push, !nv50->rast->pipe.rasterizer_discard);
+   }
+
    if (nv50->dirty & NV50_NEW_FRAGPROG)
       return;
    psize = nv50->state.semantic_psize & ~NV50_3D_SEMANTIC_PTSZ_PTSZ_EN__MASK;
@@ -343,6 +351,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    uint32_t colors = fp->fp.colors;
    uint32_t lin[4];
    uint8_t map[64];
+   uint8_t so_map[64];
 
    if (!(nv50->dirty & (NV50_NEW_VERTPROG |
                         NV50_NEW_FRAGPROG |
@@ -411,6 +420,30 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    if (nv50->rast->pipe.clamp_vertex_color)
       colors |= NV50_3D_SEMANTIC_COLOR_CLMP_EN;
 
+   if (unlikely(vp->so)) {
+      /* Slot i in STRMOUT_MAP specifies the offset where slot i in RESULT_MAP
+       * gets written.
+       *
+       * TODO:
+       * Inverting vp->so->map (output -> offset) would probably speed this up.
+       */
+      memset(so_map, 0, sizeof(so_map));
+      for (i = 0; i < vp->so->map_size; ++i) {
+         if (vp->so->map[i] == 0xff)
+            continue;
+         for (c = 0; c < m; ++c)
+            if (map[c] == vp->so->map[i] && !so_map[c])
+               break;
+         if (c == m) {
+            c = m;
+            map[m++] = vp->so->map[i];
+         }
+         so_map[c] = 0x80 | i;
+      }
+      for (c = m; c & 3; ++c)
+         so_map[c] = 0;
+   }
+
    n = (m + 3) / 4;
    assert(m <= 64);
 
@@ -451,6 +484,11 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 
    BEGIN_NV04(push, NV50_3D(GP_ENABLE), 1);
    PUSH_DATA (push, nv50->gmtyprog ? 1 : 0);
+
+   if (vp->so) {
+      BEGIN_NV04(push, NV50_3D(STRMOUT_MAP(0)), n);
+      PUSH_DATAp(push, so_map, n);
+   }
 }
 
 static int
@@ -508,4 +546,76 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
    PUSH_DATA (push, m);
    BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), n);
    PUSH_DATAp(push, map, n);
+}
+
+void
+nv50_stream_output_validate(struct nv50_context *nv50)
+{
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nv50_stream_output_state *so;
+   uint32_t ctrl;
+   unsigned i;
+   unsigned prims = ~0;
+
+   so = nv50->gmtyprog ? nv50->gmtyprog->so : nv50->vertprog->so;
+
+   if (!so || !nv50->num_so_targets) {
+      BEGIN_NV04(push, NV50_3D(STRMOUT_ENABLE), 1);
+      PUSH_DATA (push, 0);
+      if (nv50->screen->base.class_3d < NVA0_3D_CLASS) {
+         BEGIN_NV04(push, NV50_3D(STRMOUT_PRIMITIVE_LIMIT), 1);
+         PUSH_DATA (push, 0);
+      }
+      BEGIN_NV04(push, NV50_3D(STRMOUT_PARAMS_LATCH), 1);
+      PUSH_DATA (push, 1);
+      return;
+   }
+
+   ctrl = so->ctrl;
+   if (nv50->screen->base.class_3d >= NVA0_3D_CLASS)
+      ctrl |= NVA0_3D_STRMOUT_BUFFERS_CTRL_LIMIT_MODE_OFFSET;
+
+   BEGIN_NV04(push, NV50_3D(STRMOUT_BUFFERS_CTRL), 1);
+   PUSH_DATA (push, ctrl);
+
+   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_SO);
+
+   for (i = 0; i < nv50->num_so_targets; ++i) {
+      struct nv50_so_target *targ = nv50_so_target(nv50->so_target[i]);
+      struct nv04_resource *buf = nv04_resource(targ->pipe.buffer);
+
+      const unsigned n = nv50->screen->base.class_3d >= NVA0_3D_CLASS ? 4 : 3;
+
+      if (n == 4 && !targ->clean)
+         nv84_query_fifo_wait(push, targ->pq);
+      BEGIN_NV04(push, NV50_3D(STRMOUT_ADDRESS_HIGH(i)), n);
+      PUSH_DATAh(push, buf->address + targ->pipe.buffer_offset);
+      PUSH_DATA (push, buf->address + targ->pipe.buffer_offset);
+      PUSH_DATA (push, so->num_attribs[i]);
+      if (n == 4) {
+         PUSH_DATA(push, targ->pipe.buffer_size);
+
+         BEGIN_NV04(push, NVA0_3D(STRMOUT_OFFSET(i)), 1);
+         if (!targ->clean) {
+            assert(targ->pq);
+            nv50_query_pushbuf_submit(push, targ->pq, 0x4);
+         } else {
+            PUSH_DATA(push, 0);
+            targ->clean = FALSE;
+         }
+      } else {
+         const unsigned limit = targ->pipe.buffer_size /
+            (so->stride[i] * nv50->state.prim_size);
+         prims = MIN2(prims, limit);
+      }
+      BCTX_REFN(nv50->bufctx_3d, SO, buf, WR);
+   }
+   if (prims != ~0) {
+      BEGIN_NV04(push, NV50_3D(STRMOUT_PRIMITIVE_LIMIT), 1);
+      PUSH_DATA (push, prims);
+   }
+   BEGIN_NV04(push, NV50_3D(STRMOUT_PARAMS_LATCH), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_3D(STRMOUT_ENABLE), 1);
+   PUSH_DATA (push, 1);
 }

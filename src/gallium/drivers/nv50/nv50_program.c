@@ -235,6 +235,59 @@ nv50_program_assign_varying_slots(struct nv50_ir_prog_info *info)
    }
 }
 
+static struct nv50_stream_output_state *
+nv50_program_create_strmout_state(const struct nv50_ir_prog_info *info,
+                                  const struct pipe_stream_output_info *pso)
+{
+   struct nv50_stream_output_state *so;
+   unsigned b, i, c;
+   unsigned base[4];
+
+   so = MALLOC_STRUCT(nv50_stream_output_state);
+   if (!so)
+      return NULL;
+   memset(so->map, 0xff, sizeof(so->map));
+
+   for (b = 0; b < 4; ++b)
+      so->num_attribs[b] = 0;
+   for (i = 0; i < pso->num_outputs; ++i) {
+      unsigned end =  pso->output[i].dst_offset + pso->output[i].num_components;
+      b = pso->output[i].output_buffer;
+      assert(b < 4);
+      so->num_attribs[b] = MAX2(so->num_attribs[b], end);
+   }
+
+   so->ctrl = NV50_3D_STRMOUT_BUFFERS_CTRL_INTERLEAVED;
+
+   so->stride[0] = pso->stride[0] * 4;
+   base[0] = 0;
+   for (b = 1; b < 4; ++b) {
+      assert(!so->num_attribs[b] || so->num_attribs[b] == pso->stride[b]);
+      so->stride[b] = so->num_attribs[b] * 4;
+      if (so->num_attribs[b])
+         so->ctrl = (b + 1) << NV50_3D_STRMOUT_BUFFERS_CTRL_SEPARATE__SHIFT;
+      base[b] = align(base[b - 1] + so->num_attribs[b - 1], 4);
+   }
+   if (so->ctrl & NV50_3D_STRMOUT_BUFFERS_CTRL_INTERLEAVED) {
+      assert(so->stride[0] < NV50_3D_STRMOUT_BUFFERS_CTRL_STRIDE__MAX);
+      so->ctrl |= so->stride[0] << NV50_3D_STRMOUT_BUFFERS_CTRL_STRIDE__SHIFT;
+   }
+
+   so->map_size = base[3] + so->num_attribs[3];
+
+   for (i = 0; i < pso->num_outputs; ++i) {
+      const unsigned s = pso->output[i].start_component;
+      const unsigned p = pso->output[i].dst_offset;
+      const unsigned r = pso->output[i].register_index;
+      b = pso->output[i].output_buffer;
+
+      for (c = 0; c < pso->output[i].num_components; ++c)
+         so->map[base[b] + p + c] = info->out[r].slot[s + c];
+   }
+
+   return so;
+}
+
 boolean
 nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
 {
@@ -292,6 +345,10 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
       if (info->prop.fp.usesDiscard)
          prog->fp.flags[0] |= NV50_3D_FP_CONTROL_USES_KIL;
    }
+
+   if (prog->pipe.stream_output.num_outputs)
+      prog->so = nv50_program_create_strmout_state(info,
+                                                   &prog->pipe.stream_output);
 
 out:
    FREE(info);

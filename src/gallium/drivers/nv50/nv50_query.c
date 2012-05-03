@@ -36,7 +36,8 @@
 
 struct nv50_query {
    uint32_t *data;
-   uint32_t type;
+   uint16_t type;
+   uint16_t index;
    uint32_t sequence;
    struct nouveau_bo *bo;
    uint32_t base;
@@ -170,21 +171,15 @@ nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
       BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
       PUSH_DATA (push, 1);
       break;
-   case PIPE_QUERY_PRIMITIVES_GENERATED: /* store before & after instead ? */
-      PUSH_SPACE(push, 2);
-      BEGIN_NV04(push, NV50_3D(COUNTER_RESET), 1);
-      PUSH_DATA (push, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+      nv50_query_get(push, q, 0x10, 0x06805002);
       break;
    case PIPE_QUERY_PRIMITIVES_EMITTED:
-      PUSH_SPACE(push, 2);
-      BEGIN_NV04(push, NV50_3D(COUNTER_RESET), 1);
-      PUSH_DATA (push, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
+      nv50_query_get(push, q, 0x10, 0x05805002);
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      PUSH_SPACE(push, 3);
-      BEGIN_NI04(push, NV50_3D(COUNTER_RESET), 2);
-      PUSH_DATA (push, NV50_3D_COUNTER_RESET_TRANSFORM_FEEDBACK);
-      PUSH_DATA (push, NV50_3D_COUNTER_RESET_GENERATED_PRIMITIVES);
+      nv50_query_get(push, q, 0x20, 0x05805002);
+      nv50_query_get(push, q, 0x30, 0x06805002);
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
@@ -227,6 +222,9 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
    case PIPE_QUERY_GPU_FINISHED:
       nv50_query_get(push, q, 0, 0x1000f010);
       break;
+   case NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET:
+      nv50_query_get(push, q, 0, 0x0d005002 | (q->index << 5));
+      break;
    default:
       assert(0);
       break;
@@ -247,6 +245,7 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nv50_query *q = nv50_query(pq);
    uint64_t *res64 = (uint64_t *)result;
+   uint32_t *res32 = (uint32_t *)result;
    boolean *res8 = (boolean *)result;
    uint64_t *data64 = (uint64_t *)q->data;
 
@@ -275,11 +274,11 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED: /* u64 count, u64 time */
    case PIPE_QUERY_PRIMITIVES_EMITTED: /* u64 count, u64 time */
-      res64[0] = data64[0];
+      res64[0] = data64[0] - data64[2];
       break;
    case PIPE_QUERY_SO_STATISTICS:
-      res64[0] = data64[0];
-      res64[1] = data64[1];
+      res64[0] = data64[0] - data64[4];
+      res64[1] = data64[2] - data64[6];
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT: /* u32 sequence, u32 0, u64 time */
       res64[0] = 1000000000;
@@ -288,11 +287,29 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
    case PIPE_QUERY_TIME_ELAPSED:
       res64[0] = data64[1] - data64[3];
       break;
+   case NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET:
+      res32[0] = q->data[1];
+      break;
    default:
       return FALSE;
    }
 
    return TRUE;
+}
+
+void
+nv84_query_fifo_wait(struct nouveau_pushbuf *push, struct pipe_query *pq)
+{
+   struct nv50_query *q = nv50_query(pq);
+   unsigned offset = q->offset;
+
+   PUSH_SPACE(push, 5);
+   PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+   BEGIN_NV04(push, SUBC_3D(NV84_SUBCHAN_SEMAPHORE_ADDRESS_HIGH), 4);
+   PUSH_DATAh(push, q->bo->offset + offset);
+   PUSH_DATA (push, q->bo->offset + offset);
+   PUSH_DATA (push, q->sequence);
+   PUSH_DATA (push, NV84_SUBCHAN_SEMAPHORE_TRIGGER_ACQUIRE_EQUAL);
 }
 
 static void
@@ -322,6 +339,38 @@ nv50_render_condition(struct pipe_context *pipe,
    PUSH_DATAh(push, q->bo->offset + q->offset);
    PUSH_DATA (push, q->bo->offset + q->offset);
    PUSH_DATA (push, NV50_3D_COND_MODE_RES_NON_ZERO);
+}
+
+void
+nv50_query_pushbuf_submit(struct nouveau_pushbuf *push,
+                          struct pipe_query *pq, unsigned result_offset)
+{
+   struct nv50_query *q = nv50_query(pq);
+
+   /* XXX: does this exist ? */
+#define NV50_IB_ENTRY_1_NO_PREFETCH (0 << (31 - 8))
+
+   nouveau_pushbuf_space(push, 0, 0, 1);
+   nouveau_pushbuf_data(push, q->bo, q->offset + result_offset, 4 |
+                        NV50_IB_ENTRY_1_NO_PREFETCH);
+}
+
+void
+nva0_so_target_save_offset(struct pipe_context *pipe,
+                           struct pipe_stream_output_target *ptarg,
+                           unsigned index, boolean serialize)
+{
+   struct nv50_so_target *targ = nv50_so_target(ptarg);
+
+   if (serialize) {
+      struct nouveau_pushbuf *push = nv50_context(pipe)->base.pushbuf;
+      PUSH_SPACE(push, 2);
+      BEGIN_NV04(push, SUBC_3D(NV50_GRAPH_SERIALIZE), 1);
+      PUSH_DATA (push, 0);
+   }
+
+   nv50_query(targ->pq)->index = index;
+   nv50_query_end(pipe, targ->pq);
 }
 
 void

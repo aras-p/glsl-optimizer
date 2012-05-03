@@ -51,4 +51,17 @@ struct nv50_vertex_stateobj {
    struct nv50_vertex_element element[0];
 };
 
+struct nv50_so_target {
+   struct pipe_stream_output_target pipe;
+   struct pipe_query *pq;
+   unsigned stride;
+   boolean clean;
+};
+
+static INLINE struct nv50_so_target *
+nv50_so_target(struct pipe_stream_output_target *ptarg)
+{
+   return (struct nv50_so_target *)ptarg;
+}
+
 #endif

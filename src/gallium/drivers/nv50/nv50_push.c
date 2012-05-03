@@ -210,7 +210,8 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
 {
    struct push_context ctx;
    unsigned i, index_size;
-   unsigned inst = info->instance_count;
+   unsigned inst_count = info->instance_count;
+   unsigned vert_count = info->count;
    boolean apply_bias = info->indexed && info->index_bias;
 
    ctx.push = nv50->base.pushbuf;
@@ -242,6 +243,17 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
       ctx.primitive_restart = info->primitive_restart;
       ctx.restart_index = info->restart_index;
    } else {
+      if (unlikely(info->count_from_stream_output)) {
+         struct pipe_context *pipe = &nv50->base.pipe;
+         struct nv50_so_target *targ;
+         targ = nv50_so_target(info->count_from_stream_output);
+         if (!targ->pq) {
+            NOUVEAU_ERR("draw_stream_output not supported on pre-NVA0 cards\n");
+            return;
+         }
+         pipe->get_query_result(pipe, targ->pq, TRUE, (void *)&vert_count);
+         vert_count /= targ->stride;
+      }
       ctx.idxbuf = NULL;
       index_size = 0;
       ctx.primitive_restart = FALSE;
@@ -262,21 +274,21 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
    }
    nv50->state.prim_restart = info->primitive_restart;
 
-   while (inst--) {
+   while (inst_count--) {
       BEGIN_NV04(ctx.push, NV50_3D(VERTEX_BEGIN_GL), 1);
       PUSH_DATA (ctx.push, ctx.prim);
       switch (index_size) {
       case 0:
-         emit_vertices_seq(&ctx, info->start, info->count);
+         emit_vertices_seq(&ctx, info->start, vert_count);
          break;
       case 1:
-         emit_vertices_i08(&ctx, info->start, info->count);
+         emit_vertices_i08(&ctx, info->start, vert_count);
          break;
       case 2:
-         emit_vertices_i16(&ctx, info->start, info->count);
+         emit_vertices_i16(&ctx, info->start, vert_count);
          break;
       case 4:
-         emit_vertices_i32(&ctx, info->start, info->count);
+         emit_vertices_i32(&ctx, info->start, vert_count);
          break;
       default:
          assert(0);

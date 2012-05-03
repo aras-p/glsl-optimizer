@@ -73,6 +73,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 static int
 nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
+   const uint16_t class_3d = nouveau_screen(pscreen)->class_3d;
+
    switch (param) {
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 64;
@@ -95,7 +97,6 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_ANISOTROPIC_FILTER:
    case PIPE_CAP_SCALED_RESOLVE:
       return 1;
-   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
       return nv50_screen(pscreen)->tesla->oclass >= NVA0_3D_CLASS;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
@@ -121,11 +122,12 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-      return 0;
+      return 4;
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-      return 128;
    case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
-      return 32;
+      return 64;
+   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
+      return (class_3d >= NVA0_3D_CLASS) ? 1 : 0;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
       return 1;

@@ -48,6 +48,7 @@
 #define NV50_NEW_CONSTBUF     (1 << 18)
 #define NV50_NEW_TEXTURES     (1 << 19)
 #define NV50_NEW_SAMPLERS     (1 << 20)
+#define NV50_NEW_STRMOUT      (1 << 21)
 #define NV50_NEW_CONTEXT      (1 << 31)
 
 #define NV50_BIND_FB          0
@@ -56,9 +57,10 @@
 #define NV50_BIND_INDEX       3
 #define NV50_BIND_TEXTURES    4
 #define NV50_BIND_CB(s, i)   (5 + 16 * (s) + (i))
-#define NV50_BIND_SCREEN     53
-#define NV50_BIND_TLS        54
-#define NV50_BIND_COUNT      55
+#define NV50_BIND_SO         53
+#define NV50_BIND_SCREEN     54
+#define NV50_BIND_TLS        55
+#define NV50_BIND_COUNT      56
 #define NV50_BIND_2D          0
 #define NV50_BIND_M2MF        0
 #define NV50_BIND_FENCE       1
@@ -92,11 +94,13 @@ struct nv50_context {
       boolean point_sprite;
       boolean rt_serialize;
       boolean flushed;
+      boolean rasterizer_discard;
       uint8_t tls_required;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[3];
       uint8_t num_samplers[3];
+      uint8_t prim_size;
       uint16_t scissor;
    } state;
 
@@ -125,6 +129,10 @@ struct nv50_context {
    unsigned num_textures[3];
    struct nv50_tsc_entry *samplers[3][PIPE_MAX_SAMPLERS];
    unsigned num_samplers[3];
+
+   uint8_t num_so_targets;
+   uint8_t so_targets_dirty;
+   struct pipe_stream_output_target *so_target[4];
 
    struct pipe_framebuffer_state framebuffer;
    struct pipe_blend_color blend_colour;
@@ -168,6 +176,14 @@ extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *);
 
 /* nv50_query.c */
 void nv50_init_query_functions(struct nv50_context *);
+void nv50_query_pushbuf_submit(struct nouveau_pushbuf *,
+                               struct pipe_query *, unsigned result_offset);
+void nv84_query_fifo_wait(struct nouveau_pushbuf *, struct pipe_query *);
+void nva0_so_target_save_offset(struct pipe_context *,
+                                struct pipe_stream_output_target *,
+                                unsigned index, boolean seralize);
+
+#define NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET (PIPE_QUERY_TYPES + 0)
 
 /* nv50_shader_state.c */
 void nv50_vertprog_validate(struct nv50_context *);
@@ -177,6 +193,7 @@ void nv50_fp_linkage_validate(struct nv50_context *);
 void nv50_gp_linkage_validate(struct nv50_context *);
 void nv50_constbufs_validate(struct nv50_context *);
 void nv50_validate_derived_rs(struct nv50_context *);
+void nv50_stream_output_validate(struct nv50_context *);
 
 /* nv50_state.c */
 extern void nv50_init_state_functions(struct nv50_context *);

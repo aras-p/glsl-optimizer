@@ -405,6 +405,25 @@ nv50_prim_gl(unsigned prim)
    }
 }
 
+/* For pre-nva0 transform feedback. */
+static const uint8_t nv50_pipe_prim_to_prim_size[PIPE_PRIM_MAX + 1] =
+{
+   [PIPE_PRIM_POINTS] = 1,
+   [PIPE_PRIM_LINES] = 2,
+   [PIPE_PRIM_LINE_LOOP] = 2,
+   [PIPE_PRIM_LINE_STRIP] = 2,
+   [PIPE_PRIM_TRIANGLES] = 3,
+   [PIPE_PRIM_TRIANGLE_STRIP] = 3,
+   [PIPE_PRIM_TRIANGLE_FAN] = 3,
+   [PIPE_PRIM_QUADS] = 3,
+   [PIPE_PRIM_QUAD_STRIP] = 3,
+   [PIPE_PRIM_POLYGON] = 3,
+   [PIPE_PRIM_LINES_ADJACENCY] = 2,
+   [PIPE_PRIM_LINE_STRIP_ADJACENCY] = 2,
+   [PIPE_PRIM_TRIANGLES_ADJACENCY] = 3,
+   [PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY] = 3
+};
+
 static void
 nv50_draw_arrays(struct nv50_context *nv50,
                  unsigned mode, unsigned start, unsigned count,
@@ -624,6 +643,51 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
 }
 
 static void
+nva0_draw_stream_output(struct nv50_context *nv50,
+                        const struct pipe_draw_info *info)
+{
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nv50_so_target *so = nv50_so_target(info->count_from_stream_output);
+   struct nv04_resource *res = nv04_resource(so->pipe.buffer);
+   unsigned num_instances = info->instance_count;
+   unsigned mode = nv50_prim_gl(info->mode);
+
+   if (unlikely(nv50->screen->base.class_3d < NVA0_3D_CLASS)) {
+      /* A proper implementation without waiting doesn't seem possible,
+       * so don't bother.
+       */
+      NOUVEAU_ERR("draw_stream_output not supported on pre-NVA0 cards\n");
+      return;
+   }
+
+   if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
+      res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      PUSH_SPACE(push, 4);
+      BEGIN_NV04(push, SUBC_3D(NV50_GRAPH_SERIALIZE), 1);
+      PUSH_DATA (push, 0);
+      BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_FLUSH), 1);
+      PUSH_DATA (push, 0);
+   }
+
+   assert(num_instances);
+   do {
+      PUSH_SPACE(push, 8);
+      BEGIN_NV04(push, NV50_3D(VERTEX_BEGIN_GL), 1);
+      PUSH_DATA (push, mode);
+      BEGIN_NV04(push, NVA0_3D(DRAW_TFB_BASE), 1);
+      PUSH_DATA (push, 0);
+      BEGIN_NV04(push, NVA0_3D(DRAW_TFB_STRIDE), 1);
+      PUSH_DATA (push, 0);
+      BEGIN_NV04(push, NVA0_3D(DRAW_TFB_BYTES), 1);
+      nv50_query_pushbuf_submit(push, so->pq, 0x4);
+      BEGIN_NV04(push, NV50_3D(VERTEX_END_GL), 1);
+      PUSH_DATA (push, 0);
+
+      mode |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
+   } while (--num_instances);
+}
+
+static void
 nv50_draw_vbo_kick_notify(struct nouveau_pushbuf *chan)
 {
    struct nv50_screen *screen = chan->user_priv;
@@ -655,6 +719,9 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (nv50->vbo_user && !(nv50->dirty & (NV50_NEW_VERTEX | NV50_NEW_ARRAYS)))
       nv50_update_user_vbufs(nv50);
 
+   if (unlikely(nv50->num_so_targets && !nv50->gmtyprog))
+      nv50->state.prim_size = nv50_pipe_prim_to_prim_size[info->mode];
+
    nv50_state_validate(nv50, ~0, 8); /* 8 as minimum, we use flush_notify */
 
    push->kick_notify = nv50_draw_vbo_kick_notify;
@@ -679,11 +746,7 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       nv50->base.vbo_dirty = FALSE;
    }
 
-   if (!info->indexed) {
-      nv50_draw_arrays(nv50,
-                       info->mode, info->start, info->count,
-                       info->instance_count);
-   } else {
+   if (info->indexed) {
       boolean shorten = info->max_index <= 65535;
 
       assert(nv50->idxbuf.buffer);
@@ -713,6 +776,13 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       nv50_draw_elements(nv50, shorten,
                          info->mode, info->start, info->count,
                          info->instance_count, info->index_bias);
+   } else
+   if (unlikely(info->count_from_stream_output)) {
+      nva0_draw_stream_output(nv50, info);
+   } else {
+      nv50_draw_arrays(nv50,
+                       info->mode, info->start, info->count,
+                       info->instance_count);
    }
    push->kick_notify = nv50_default_kick_notify;
 

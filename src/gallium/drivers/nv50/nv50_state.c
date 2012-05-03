@@ -680,6 +680,9 @@ nv50_sp_state_create(struct pipe_context *pipe,
    prog->type = type;
    prog->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 
+   if (cso->stream_output.num_outputs)
+      prog->pipe.stream_output = cso->stream_output;
+
    return (void *)prog;
 }
 
@@ -909,6 +912,90 @@ nv50_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
    nv50->dirty |= NV50_NEW_VERTEX;
 }
 
+static struct pipe_stream_output_target *
+nv50_so_target_create(struct pipe_context *pipe,
+                      struct pipe_resource *res,
+                      unsigned offset, unsigned size)
+{
+   struct nv50_so_target *targ = MALLOC_STRUCT(nv50_so_target);
+   if (!targ)
+      return NULL;
+
+   if (nouveau_context(pipe)->screen->class_3d >= NVA0_3D_CLASS) {
+      targ->pq = pipe->create_query(pipe,
+                                    NVA0_QUERY_STREAM_OUTPUT_BUFFER_OFFSET);
+      if (!targ->pq) {
+         FREE(targ);
+         return NULL;
+      }
+   } else {
+      targ->pq = NULL;
+   }
+   targ->clean = TRUE;
+
+   targ->pipe.buffer_size = size;
+   targ->pipe.buffer_offset = offset;
+   targ->pipe.context = pipe;
+   targ->pipe.buffer = NULL;
+   pipe_resource_reference(&targ->pipe.buffer, res);
+   pipe_reference_init(&targ->pipe.reference, 1);
+
+   return &targ->pipe;
+}
+
+static void
+nv50_so_target_destroy(struct pipe_context *pipe,
+                       struct pipe_stream_output_target *ptarg)
+{
+   struct nv50_so_target *targ = nv50_so_target(ptarg);
+   if (targ->pq)
+      pipe->destroy_query(pipe, targ->pq);
+   FREE(targ);
+}
+
+static void
+nv50_set_stream_output_targets(struct pipe_context *pipe,
+                               unsigned num_targets,
+                               struct pipe_stream_output_target **targets,
+                               unsigned append_mask)
+{
+   struct nv50_context *nv50 = nv50_context(pipe);
+   unsigned i;
+   boolean serialize = TRUE;
+   const boolean can_resume = nv50->screen->base.class_3d >= NVA0_3D_CLASS;
+
+   assert(num_targets <= 4);
+
+   for (i = 0; i < num_targets; ++i) {
+      const boolean changed = nv50->so_target[i] != targets[i];
+      if (!changed && (append_mask & (1 << i)))
+         continue;
+      nv50->so_targets_dirty |= 1 << i;
+
+      if (can_resume && changed && nv50->so_target[i]) {
+         nva0_so_target_save_offset(pipe, nv50->so_target[i], i, serialize);
+         serialize = FALSE;
+      }
+
+      if (targets[i] && !(append_mask & (1 << i)))
+         nv50_so_target(targets[i])->clean = TRUE;
+
+      pipe_so_target_reference(&nv50->so_target[i], targets[i]);
+   }
+   for (; i < nv50->num_so_targets; ++i) {
+      if (can_resume && nv50->so_target[i]) {
+         nva0_so_target_save_offset(pipe, nv50->so_target[i], i, serialize);
+         serialize = FALSE;
+      }
+      pipe_so_target_reference(&nv50->so_target[i], NULL);
+      nv50->so_targets_dirty |= 1 << i;
+   }
+   nv50->num_so_targets = num_targets;
+
+   if (nv50->so_targets_dirty)
+      nv50->dirty |= NV50_NEW_STRMOUT;
+}
+
 void
 nv50_init_state_functions(struct nv50_context *nv50)
 {
@@ -964,6 +1051,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
    pipe->set_vertex_buffers = nv50_set_vertex_buffers;
    pipe->set_index_buffer = nv50_set_index_buffer;
+
+   pipe->create_stream_output_target = nv50_so_target_create;
+   pipe->stream_output_target_destroy = nv50_so_target_destroy;
+   pipe->set_stream_output_targets = nv50_set_stream_output_targets;
 
    pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }

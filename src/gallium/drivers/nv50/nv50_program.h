@@ -42,6 +42,15 @@ struct nv50_varying {
    ubyte si; /* semantic index */
 };
 
+struct nv50_stream_output_state
+{
+   uint32_t ctrl;
+   uint16_t stride[4];
+   uint8_t num_attribs[4];
+   uint8_t map_size;
+   uint8_t map[128];
+};
+
 struct nv50_program {
    struct pipe_shader_state pipe;
 
@@ -88,6 +97,8 @@ struct nv50_program {
    void *fixups; /* relocation records */
 
    struct nouveau_heap *mem;
+
+   struct nv50_stream_output_state *so;
 };
 
 boolean nv50_program_translate(struct nv50_program *, uint16_t chipset);

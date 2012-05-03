@@ -360,6 +360,8 @@ static struct state_validate {
     { nv50_constbufs_validate,     NV50_NEW_CONSTBUF },
     { nv50_validate_textures,      NV50_NEW_TEXTURES },
     { nv50_validate_samplers,      NV50_NEW_SAMPLERS },
+    { nv50_stream_output_validate, NV50_NEW_STRMOUT |
+                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
     { nv50_vertex_arrays_validate, NV50_NEW_VERTEX | NV50_NEW_ARRAYS }
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
