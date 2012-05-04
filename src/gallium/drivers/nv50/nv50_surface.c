@@ -711,7 +711,7 @@ nv50_blit_set_src(struct nv50_context *nv50,
    templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
 
    nv50->textures[2][0] = nv50_create_sampler_view(pipe, res, &templ);
-   nv50->textures[2][0] = NULL;
+   nv50->textures[2][1] = NULL;
 
    nv50_blit_fixup_tic_entry(nv50->textures[2][0]);
 
