@@ -2296,6 +2296,17 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       prog->LinkStatus = true;
    }
 
+   /* Implement the GLSL 1.30+ rule for discard vs infinite loops Do
+    * it before optimization because we want most of the checks to get
+    * dropped thanks to constant propagation.
+    */
+   if (max_version >= 130) {
+      struct gl_shader *sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
+      if (sh) {
+	 lower_discard_flow(sh->ir);
+      }
+   }
+
    /* Do common optimization before assigning storage for attributes,
     * uniforms, and varyings.  Later optimization could possibly make
     * some of that unused.
