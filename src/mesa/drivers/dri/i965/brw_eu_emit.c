@@ -1421,20 +1421,6 @@ struct brw_instruction *brw_CONT(struct brw_compile *p)
    return insn;
 }
 
-struct brw_instruction *gen6_HALT(struct brw_compile *p)
-{
-   struct brw_instruction *insn;
-
-   insn = next_insn(p, BRW_OPCODE_HALT);
-   brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_src0(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_src1(p, insn, brw_imm_d(0x0)); /* UIP and JIP, updated later. */
-
-   insn->header.compression_control = BRW_COMPRESSION_NONE;
-   insn->header.execution_size = BRW_EXECUTE_8;
-   return insn;
-}
-
 /* DO/WHILE loop:
  *
  * The DO/WHILE is just an unterminated loop -- break or continue are
@@ -2491,8 +2477,8 @@ brw_find_next_block_end(struct brw_compile *p, int start)
 	 return ip;
       }
    }
-
-   return 0;
+   assert(!"not reached");
+   return start + 1;
 }
 
 /* There is no DO instruction on gen6, so to find the end of the loop
@@ -2521,7 +2507,7 @@ brw_find_loop_end(struct brw_compile *p, int start)
 }
 
 /* After program generation, go back and update the UIP and JIP of
- * BREAK, CONT, and HALT instructions to their correct locations.
+ * BREAK and CONT instructions to their correct locations.
  */
 void
 brw_set_uip_jip(struct brw_compile *p)
@@ -2535,47 +2521,18 @@ brw_set_uip_jip(struct brw_compile *p)
 
    for (ip = 0; ip < p->nr_insn; ip++) {
       struct brw_instruction *insn = &p->store[ip];
-      int block_end_ip = 0;
-
-      if (insn->header.opcode == BRW_OPCODE_BREAK ||
-	  insn->header.opcode == BRW_OPCODE_CONTINUE ||
-	  insn->header.opcode == BRW_OPCODE_HALT) {
-	 block_end_ip = brw_find_next_block_end(p, ip);
-      }
 
       switch (insn->header.opcode) {
       case BRW_OPCODE_BREAK:
-	 assert(block_end_ip != 0);
-	 insn->bits3.break_cont.jip = br * (block_end_ip - ip);
+	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
 	 /* Gen7 UIP points to WHILE; Gen6 points just after it */
 	 insn->bits3.break_cont.uip =
 	    br * (brw_find_loop_end(p, ip) - ip + (intel->gen == 6 ? 1 : 0));
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 assert(block_end_ip != 0);
-	 insn->bits3.break_cont.jip = br * (block_end_ip - ip);
+	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
 	 insn->bits3.break_cont.uip = br * (brw_find_loop_end(p, ip) - ip);
 
-	 assert(insn->bits3.break_cont.uip != 0);
-	 assert(insn->bits3.break_cont.jip != 0);
-	 break;
-      case BRW_OPCODE_HALT:
-	 /* From the Sandy Bridge PRM (volume 4, part 2, section 8.3.19):
-	  *
-	  *    "In case of the halt instruction not inside any conditional code
-	  *     block, the value of <JIP> and <UIP> should be the same. In case
-	  *     of the halt instruction inside conditional code block, the <UIP>
-	  *     should be the end of the program, and the <JIP> should be end of
-	  *     the most inner conditional code block."
-	  *
-	  * The uip will have already been set by whoever set up the
-	  * instruction.
-	  */
-	 if (block_end_ip == 0) {
-	    insn->bits3.break_cont.jip = insn->bits3.break_cont.uip;
-	 } else {
-	    insn->bits3.break_cont.jip = br * (block_end_ip - ip);
-	 }
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
 	 break;
