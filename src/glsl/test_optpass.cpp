@@ -98,8 +98,6 @@ do_optimization(struct exec_list *ir, const char *optimization)
       return do_lower_texture_projection(ir);
    } else if (strcmp(optimization, "do_if_simplification") == 0) {
       return do_if_simplification(ir);
-   } else if (strcmp(optimization, "do_discard_simplification") == 0) {
-      return do_discard_simplification(ir);
    } else if (sscanf(optimization, "lower_if_to_cond_assign ( %d ) ",
                      &int_0) == 1) {
       return lower_if_to_cond_assign(ir, int_0);
