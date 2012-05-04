@@ -29,8 +29,9 @@ _cl_mem::_cl_mem(clover::context &ctx, cl_mem_flags flags,
                  size_t size, void *host_ptr) :
    ctx(ctx), __flags(flags),
    __size(size), __host_ptr(host_ptr),
-   __destroy_notify([]{}),
-   data((char *)host_ptr, (host_ptr ? size : 0)) {
+   __destroy_notify([]{}) {
+   if (flags & CL_MEM_COPY_HOST_PTR)
+      data.append((char *)host_ptr, size);
 }
 
 _cl_mem::~_cl_mem() {
@@ -78,7 +79,7 @@ root_buffer::resource(cl_command_queue q) {
    if (!resources.count(&q->dev)) {
       auto r = (!resources.empty() ?
                 new root_resource(q->dev, *this, *resources.begin()->second) :
-                new root_resource(q->dev, *this, data));
+                new root_resource(q->dev, *this, *q, data));
 
       resources.insert(std::make_pair(&q->dev,
                                       std::unique_ptr<root_resource>(r)));
@@ -129,7 +130,7 @@ image::resource(cl_command_queue q) {
    if (!resources.count(&q->dev)) {
       auto r = (!resources.empty() ?
                 new root_resource(q->dev, *this, *resources.begin()->second) :
-                new root_resource(q->dev, *this, data));
+                new root_resource(q->dev, *this, *q, data));
 
       resources.insert(std::make_pair(&q->dev,
                                       std::unique_ptr<root_resource>(r)));

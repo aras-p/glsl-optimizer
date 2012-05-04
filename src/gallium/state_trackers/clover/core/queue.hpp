@@ -51,6 +51,7 @@ public:
    clover::device &dev;
 
    friend class clover::resource;
+   friend class clover::root_resource;
    friend class clover::mapping;
    friend class clover::hard_event;
    friend struct _cl_sampler;

@@ -23,6 +23,7 @@
 #include "core/resource.hpp"
 #include "pipe/p_screen.h"
 #include "util/u_sampler.h"
+#include "util/u_format.h"
 
 using namespace clover;
 
@@ -114,7 +115,8 @@ resource::unbind_surface(clover::command_queue &q, pipe_surface *st) {
 }
 
 root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
-                             std::string data) :
+                             clover::command_queue &q,
+                             const std::string &data) :
    resource(dev, obj) {
    pipe_resource info {};
 
@@ -125,6 +127,8 @@ root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
       info.depth0 = img->depth();
    } else {
       info.width0 = obj.size();
+      info.height0 = 1;
+      info.depth0 = 1;
    }
 
    info.target = translate_target(obj.type());
@@ -138,7 +142,14 @@ root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
    if (!pipe)
       throw error(CL_OUT_OF_RESOURCES);
 
-   assert(data.empty()); // XXX -- initialize it with the supplied data
+   if (!data.empty()) {
+      box rect { { 0, 0, 0 }, { info.width0, info.height0, info.depth0 } };
+      unsigned cpp = util_format_get_blocksize(info.format);
+
+      q.pipe->transfer_inline_write(q.pipe, pipe, 0, PIPE_TRANSFER_WRITE,
+                                    rect, data.data(), cpp * info.width0,
+                                    cpp * info.width0 * info.height0);
+   }
 }
 
 root_resource::root_resource(clover::device &dev, clover::memory_obj &obj,
