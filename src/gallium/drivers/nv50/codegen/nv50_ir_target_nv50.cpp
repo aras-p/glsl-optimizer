@@ -310,7 +310,22 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
       return false;
    }
 
-   if (ld->getSrc(0)->reg.data.offset > (int32_t)(127 * typeSizeof(ld->dType)))
+   uint8_t ldSize;
+
+   if ((i->op == OP_MUL || i->op == OP_MAD) && !isFloatType(i->dType)) {
+      // 32-bit MUL will be split into 16-bit MULs
+      if (ld->src(0).isIndirect(0))
+         return false;
+      if (sf == FILE_IMMEDIATE)
+         return false;
+      ldSize = 2;
+   } else {
+      ldSize = typeSizeof(ld->dType);
+   }
+
+   if (ldSize < 4 && sf == FILE_SHADER_INPUT) // no < 4-byte aligned a[] access
+      return false;
+   if (ld->getSrc(0)->reg.data.offset > (int32_t)(127 * ldSize))
       return false;
 
    if (ld->src(0).isIndirect(0)) {

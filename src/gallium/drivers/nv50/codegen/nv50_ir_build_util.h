@@ -81,6 +81,8 @@ public:
 
    Instruction *mkSelect(Value *pred, Value *dst, Value *trSrc, Value *flSrc);
 
+   Instruction *mkSplit(Value *half[2], uint8_t halfSize, Value *);
+
    void mkClobber(DataFile file, uint32_t regMask, int regUnitLog2);
 
    ImmediateValue *mkImm(float);

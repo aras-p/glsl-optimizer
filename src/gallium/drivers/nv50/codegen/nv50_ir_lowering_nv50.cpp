@@ -57,15 +57,17 @@ expandIntegerMUL(BuildUtil *bld, Instruction *mul)
 
    Instruction *i[9];
 
-   Value *a[2] = { bld->getSSA(halfSize), bld->getSSA(halfSize) };
-   Value *b[2] = { bld->getSSA(halfSize), bld->getSSA(halfSize) };
+   bld->setPosition(mul, true);
+
+   Value *a[2], *b[2];
    Value *c[2];
    Value *t[4];
    for (int j = 0; j < 4; ++j)
       t[j] = bld->getSSA(fullSize);
 
-   (i[0] = bld->mkOp1(OP_SPLIT, fTy, a[0], mul->getSrc(0)))->setDef(1, a[1]);
-   (i[1] = bld->mkOp1(OP_SPLIT, fTy, b[0], mul->getSrc(1)))->setDef(1, b[1]);
+   // split sources into halves
+   i[0] = bld->mkSplit(a, halfSize, mul->getSrc(0));
+   i[1] = bld->mkSplit(b, halfSize, mul->getSrc(1));
 
    i[2] = bld->mkOp2(OP_MUL, fTy, t[0], a[0], b[1]);
    i[3] = bld->mkOp3(OP_MAD, fTy, t[1], a[1], b[0], t[0]);
@@ -96,7 +98,8 @@ expandIntegerMUL(BuildUtil *bld, Instruction *mul)
    delete_Instruction(bld->getProgram(), mul);
 
    for (int j = 2; j <= (highResult ? 5 : 4); ++j)
-      i[j]->sType = hTy;
+      if (i[j])
+         i[j]->sType = hTy;
 
    return true;
 }
@@ -518,7 +521,6 @@ private:
 
    bool handleEXPORT(Instruction *);
 
-   bool handleMUL(Instruction *);
    bool handleDIV(Instruction *);
    bool handleSQRT(Instruction *);
    bool handlePOW(Instruction *);
@@ -942,14 +944,6 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
 }
 
 bool
-NV50LoweringPreSSA::handleMUL(Instruction *i)
-{
-   if (!isFloatType(i->dType) && typeSizeof(i->sType) > 2)
-      return expandIntegerMUL(&bld, i);
-   return true;
-}
-
-bool
 NV50LoweringPreSSA::handleDIV(Instruction *i)
 {
    if (!isFloatType(i->dType))
@@ -1069,8 +1063,6 @@ NV50LoweringPreSSA::visit(Instruction *i)
       return handleSELP(i);
    case OP_POW:
       return handlePOW(i);
-   case OP_MUL:
-      return handleMUL(i);
    case OP_DIV:
       return handleDIV(i);
    case OP_SQRT:

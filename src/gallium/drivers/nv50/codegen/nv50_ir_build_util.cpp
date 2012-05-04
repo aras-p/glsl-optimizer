@@ -278,6 +278,31 @@ BuildUtil::mkSelect(Value *pred, Value *dst, Value *trSrc, Value *flSrc)
    return mkOp2(OP_UNION, typeOfSize(dst->reg.size), dst, def0, def1);
 }
 
+Instruction *
+BuildUtil::mkSplit(Value *h[2], uint8_t halfSize, Value *val)
+{
+   Instruction *insn = NULL;
+
+   const DataType fTy = typeOfSize(halfSize * 2);
+
+   if (val->reg.file == FILE_IMMEDIATE)
+      val = mkMov(getSSA(halfSize * 2), val, fTy)->getDef(0);
+
+   if (isMemoryFile(val->reg.file)) {
+      h[0] = cloneShallow(getFunction(), val);
+      h[1] = cloneShallow(getFunction(), val);
+      h[0]->reg.size = halfSize;
+      h[1]->reg.size = halfSize;
+      h[1]->reg.data.offset += halfSize;
+   } else {
+      h[0] = getSSA(halfSize, val->reg.file);
+      h[1] = getSSA(halfSize, val->reg.file);
+      insn = mkOp1(OP_SPLIT, fTy, h[0], val);
+      insn->setDef(1, h[1]);
+   }
+   return insn;
+}
+
 FlowInstruction *
 BuildUtil::mkFlow(operation op, void *targ, CondCode cc, Value *pred)
 {
