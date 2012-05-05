@@ -1775,9 +1775,7 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_ceil:
-      op[0].negate = ~op[0].negate;
-      emit(ir, TGSI_OPCODE_FLR, result_dst, op[0]);
-      result_src.negate = ~result_src.negate;
+      emit(ir, TGSI_OPCODE_CEIL, result_dst, op[0]);
       break;
    case ir_unop_floor:
       emit(ir, TGSI_OPCODE_FLR, result_dst, op[0]);
