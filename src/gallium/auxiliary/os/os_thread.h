@@ -44,6 +44,7 @@
 
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
+#include <signal.h>
 
 
 /* pipe_thread
