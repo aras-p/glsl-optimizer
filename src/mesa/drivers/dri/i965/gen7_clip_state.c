@@ -101,6 +101,7 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_MODE_NORMAL |
              nonperspective_barycentric_enable_flag |
 	     GEN6_CLIP_XY_TEST |
+	     GEN6_CLIP_GB_TEST |
 	     userclip << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
 	     depth_clamp |
 	     provoking);
