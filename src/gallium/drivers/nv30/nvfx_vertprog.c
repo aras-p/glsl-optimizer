@@ -550,6 +550,11 @@ nvfx_vertprog_parse_instruction(struct nv30_context *nv30, struct nvfx_vpc *vpc,
    case TGSI_OPCODE_ARL:
       nvfx_vp_emit(vpc, arith(0, VEC, ARL, dst, mask, src[0], none, none));
       break;
+   case TGSI_OPCODE_CEIL:
+      tmp = nvfx_src(temp(vpc));
+      nvfx_vp_emit(vpc, arith(0, VEC, FLR, tmp.reg, mask, neg(src[0]), none, none));
+      nvfx_vp_emit(vpc, arith(sat, VEC, MOV, dst, mask, neg(tmp), none, none));
+      break;
    case TGSI_OPCODE_CMP:
       insn = arith(0, VEC, MOV, none.reg, mask, src[0], none, none);
       insn.cc_update = 1;

@@ -512,6 +512,22 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_simple_arith(p, inst, A0_ADD, 2, fs);
       break;
 
+   case TGSI_OPCODE_CEIL:
+      src0 = src_vector(p, &inst->Src[0], fs);
+      tmp = i915_get_utemp(p);
+      flags = get_result_flags(inst);
+      i915_emit_arith(p,
+                      A0_FLR,
+                      tmp,
+                      flags & A0_DEST_CHANNEL_ALL, 0,
+                      negate(src0, 1, 1, 1, 1), 0, 0);
+      i915_emit_arith(p,
+                      A0_MOV,
+                      get_result_vector(p, &inst->Dst[0]),
+                      flags, 0,
+                      negate(tmp, 1, 1, 1, 1), 0, 0);
+      break;
+
    case TGSI_OPCODE_CMP:
       src0 = src_vector(p, &inst->Src[0], fs);
       src1 = src_vector(p, &inst->Src[1], fs);
