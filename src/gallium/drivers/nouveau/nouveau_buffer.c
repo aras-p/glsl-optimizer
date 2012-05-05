@@ -524,8 +524,10 @@ nouveau_scratch_runout_release(struct nouveau_context *nv)
 {
    if (!nv->scratch.nr_runout)
       return;
-   while (nv->scratch.nr_runout--)
+   do {
+      --nv->scratch.nr_runout;
       nouveau_bo_ref(NULL, &nv->scratch.runout[nv->scratch.nr_runout]);
+   } while (nv->scratch.nr_runout);
 
    FREE(nv->scratch.runout);
    nv->scratch.end = 0;
