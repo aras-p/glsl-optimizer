@@ -1020,7 +1020,7 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
       code[1] |= 0x02000000;
    }
 
-   if (i->tex.derivAll)
+   if (i->op != OP_TXD && i->tex.derivAll)
       code[1] |= 1 << 13;
 
    defId(i->def(0), 14);

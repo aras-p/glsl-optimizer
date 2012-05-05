@@ -749,21 +749,22 @@ bool
 NVC0LoweringPass::handleTXD(TexInstruction *txd)
 {
    int dim = txd->tex.target.getDim();
-   int arg = txd->tex.target.getDim() + txd->tex.target.isArray();
+   int arg = txd->tex.target.getArgCount();
 
    handleTEX(txd);
-   while (txd->src(arg).exists())
+   while (txd->srcExists(arg))
       ++arg;
 
    txd->tex.derivAll = true;
-   if (dim > 2 || txd->tex.target.isShadow())
+   if (dim > 2 ||
+       txd->tex.target.isCube() ||
+       arg > 4 ||
+       txd->tex.target.isShadow())
       return handleManualTXD(txd);
 
-   assert(arg <= 4); // at most s/t/array, x, y, offset
-
    for (int c = 0; c < dim; ++c) {
-      txd->src(arg + c * 2 + 0).set(txd->dPdx[c]);
-      txd->src(arg + c * 2 + 1).set(txd->dPdy[c]);
+      txd->setSrc(arg + c * 2 + 0, txd->dPdx[c]);
+      txd->setSrc(arg + c * 2 + 1, txd->dPdy[c]);
       txd->dPdx[c].set(NULL);
       txd->dPdy[c].set(NULL);
    }
