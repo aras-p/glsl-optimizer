@@ -794,8 +794,10 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       INTEL_FIREVERTICES(intel);
 
       /* Dump a final BMP in case the application doesn't call SwapBuffers */
-      if (INTEL_DEBUG & DEBUG_AUB)
+      if (INTEL_DEBUG & DEBUG_AUB) {
+         intel_batchbuffer_flush(intel);
 	 aub_dump_bmp(&intel->ctx);
+      }
 
       _mesa_meta_free(&intel->ctx);
 
