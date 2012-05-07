@@ -533,6 +533,35 @@ static void tex_fetch_args(
 	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
 }
 
+static void emit_shl(
+		const struct lp_build_tgsi_action * action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	emit_data->output[emit_data->chan] = LLVMBuildShl(builder,
+			emit_data->args[0], emit_data->args[1], "");
+}
+
+static void emit_ushr(
+		const struct lp_build_tgsi_action * action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	emit_data->output[emit_data->chan] = LLVMBuildLShr(builder,
+			emit_data->args[0], emit_data->args[1], "");
+}
+static void emit_ishr(
+		const struct lp_build_tgsi_action * action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	emit_data->output[emit_data->chan] = LLVMBuildAShr(builder,
+			emit_data->args[0], emit_data->args[1], "");
+}
+
 static void emit_immediate(struct lp_build_tgsi_context * bld_base,
 		const struct tgsi_full_immediate *imm)
 {
@@ -606,6 +635,9 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 
 	lp_set_default_actions(bld_base);
 
+	bld_base->op_actions[TGSI_OPCODE_SHL].emit = emit_shl;
+	bld_base->op_actions[TGSI_OPCODE_ISHR].emit = emit_ishr;
+	bld_base->op_actions[TGSI_OPCODE_USHR].emit = emit_ushr;
 	bld_base->op_actions[TGSI_OPCODE_DDX].intr_name = "llvm.AMDGPU.ddx";
 	bld_base->op_actions[TGSI_OPCODE_DDX].fetch_args = tex_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_DDY].intr_name = "llvm.AMDGPU.ddy";

@@ -73,8 +73,20 @@ unsigned R600InstrInfo::getISAOpcode(unsigned opcode) const
     case AMDIL::MOVE_i32:
       return AMDIL::MOV;
     case AMDIL::SHR_i32:
+      return getASHRop();
+    case AMDIL::USHR_i32:
       return getLSHRop();
   }
+}
+
+unsigned R600InstrInfo::getASHRop() const
+{
+	unsigned gen = TM.getSubtarget<AMDILSubtarget>().device()->getGeneration();
+	if (gen < AMDILDeviceInfo::HD5XXX) {
+		return AMDIL::ASHR_r600;
+	} else {
+		return AMDIL::ASHR_eg;
+	}
 }
 
 unsigned R600InstrInfo::getLSHRop() const

@@ -535,6 +535,12 @@ class LSHR_Common <bits<32> inst> : R600_2OP <
   let AMDILOp = AMDILInst.USHR_i32;
 }
 
+class ASHR_Common <bits<32> inst> : R600_2OP <
+  inst, "ASHR $dst, $src0, $src1",
+  [] >{
+  let AMDILOp = AMDILInst.SHR_i32;
+}
+
 class MULHI_INT_Common <bits<32> inst> : R600_2OP <
   inst, "MULHI_INT $dst, $src0, $src1",
   [] >{
@@ -645,6 +651,7 @@ let Gen = AMDGPUGen.R600 in {
   def INT_TO_FLT_r600 : INT_TO_FLT_Common<0x6c>;
   def SIN_r600 : SIN_Common<0x6E>;
   def COS_r600 : COS_Common<0x6F>;
+  def ASHR_r600 : ASHR_Common<0x70>;
   def LSHR_r600 : LSHR_Common<0x71>;
   def LSHL_r600 : LSHL_Common<0x72>;
   def MULLO_INT_r600 : MULLO_INT_Common<0x73>;
@@ -815,6 +822,7 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
 let Gen = AMDGPUGen.EG_CAYMAN in {
 
   def MULADD_eg : MULADD_Common<0x14>;
+  def ASHR_eg : ASHR_Common<0x15>;
   def LSHR_eg : LSHR_Common<0x16>;
   def LSHL_eg : LSHL_Common<0x17>;
   def CNDE_eg : CNDE_Common<0x19>;
