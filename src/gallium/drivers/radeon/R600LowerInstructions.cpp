@@ -93,8 +93,8 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                            &AMDIL::R600_TReg32RegClass);
           BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGE_INT),
                   setgt)
-                  .addOperand(MI.getOperand(1))
-                  .addReg(AMDIL::ZERO);
+                  .addReg(AMDIL::ZERO)
+                  .addOperand(MI.getOperand(1));
 
           unsigned add_int = MRI->createVirtualRegister(
                              &AMDIL::R600_TReg32RegClass);
