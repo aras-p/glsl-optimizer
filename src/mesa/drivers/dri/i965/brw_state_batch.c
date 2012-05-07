@@ -57,6 +57,52 @@ brw_track_state_batch(struct brw_context *brw,
 }
 
 /**
+ * Convenience function to populate a single drm_intel_aub_annotation data
+ * structure.
+ */
+static inline void
+make_annotation(drm_intel_aub_annotation *annotation, uint32_t type,
+                uint32_t subtype, uint32_t ending_offset)
+{
+   annotation->type = type;
+   annotation->subtype = subtype;
+   annotation->ending_offset = ending_offset;
+}
+
+/**
+ * Generate a set of aub file annotations for the current batch buffer, and
+ * deliver them to DRM.
+ *
+ * The "used" section of the batch buffer (the portion containing batch
+ * commands) is annotated with AUB_TRACE_TYPE_BATCH.  The remainder of the
+ * batch buffer (which contains data structures pointed to by batch commands)
+ * is annotated according to the type of each data structure.
+ */
+void
+brw_annotate_aub(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   unsigned annotation_count = 2 * brw->state_batch_count + 1;
+   drm_intel_aub_annotation annotations[annotation_count];
+   int a = 0;
+   make_annotation(&annotations[a++], AUB_TRACE_TYPE_BATCH, 0,
+                   4*intel->batch.used);
+   for (int i = brw->state_batch_count; i-- > 0; ) {
+      uint32_t type = brw->state_batch_list[i].type;
+      uint32_t start_offset = brw->state_batch_list[i].offset;
+      uint32_t end_offset = start_offset + brw->state_batch_list[i].size;
+      make_annotation(&annotations[a++], AUB_TRACE_TYPE_NOTYPE, 0,
+                      start_offset);
+      make_annotation(&annotations[a++], AUB_TRACE_TYPE(type),
+                      AUB_TRACE_SUBTYPE(type), end_offset);
+   }
+   assert(a == annotation_count);
+   drm_intel_bufmgr_gem_set_aub_annotations(intel->batch.bo, annotations,
+                                            annotation_count);
+}
+
+/**
  * Allocates a block of space in the batchbuffer for indirect state.
  *
  * We don't want to allocate separate BOs for every bit of indirect
@@ -95,7 +141,7 @@ brw_state_batch(struct brw_context *brw,
 
    batch->state_batch_offset = offset;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
+   if (unlikely(INTEL_DEBUG & (DEBUG_BATCH | DEBUG_AUB)))
       brw_track_state_batch(brw, type, offset, size);
 
    *out_offset = offset;

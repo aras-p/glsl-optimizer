@@ -177,6 +177,7 @@ struct intel_context
       void (*assert_not_dirty) (struct intel_context *intel);
 
       void (*debug_batch)(struct intel_context *intel);
+      void (*annotate_aub)(struct intel_context *intel);
       bool (*render_target_supported)(struct intel_context *intel,
 				      struct gl_renderbuffer *rb);
 

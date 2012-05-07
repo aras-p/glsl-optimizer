@@ -183,7 +183,7 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
          /* v2 */ 0, 0, 0, 0,     params->x0, params->y0, 0, 1,
       };
 
-      vertex_data = (float *) brw_state_batch(brw, AUB_TRACE_NO_TYPE,
+      vertex_data = (float *) brw_state_batch(brw, AUB_TRACE_VERTEX_BUFFER,
                                               GEN6_BLORP_VBO_SIZE, 32,
                                               &vertex_offset);
       memcpy(vertex_data, vertices, GEN6_BLORP_VBO_SIZE);
