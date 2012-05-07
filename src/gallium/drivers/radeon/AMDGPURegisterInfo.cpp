@@ -1,4 +1,4 @@
-//===-- AMDGPURegisterInfo.cpp - TODO: Add brief description -------===//
+//===-- AMDGPURegisterInfo.cpp - AMDGPU Register Information -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Parent TargetRegisterInfo class common to all hw codegen targets.
 //
 //===----------------------------------------------------------------------===//
 

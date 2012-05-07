@@ -34,7 +34,7 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
   };
-} /* End anonymous namespace */
+} // End anonymous namespace
 
 char AMDGPUConvertToISAPass::ID = 0;
 

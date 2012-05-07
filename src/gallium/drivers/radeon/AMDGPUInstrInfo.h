@@ -1,4 +1,4 @@
-//===-- AMDGPUInstrInfo.h - TODO: Add brief description -------===//
+//===-- AMDGPUInstrInfo.h - AMDGPU Instruction Information ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file contains the definitoin of a TargetInstrInfo class that is common
+// to all AMD GPUs.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,17 +22,17 @@
 
 namespace llvm {
 
-  class AMDGPUTargetMachine;
-  class MachineFunction;
-  class MachineInstr;
-  class MachineInstrBuilder;
+class AMDGPUTargetMachine;
+class MachineFunction;
+class MachineInstr;
+class MachineInstrBuilder;
 
-  class AMDGPUInstrInfo : public AMDILInstrInfo {
-  private:
+class AMDGPUInstrInfo : public AMDILInstrInfo {
+private:
   AMDGPUTargetMachine & TM;
   std::map<unsigned, unsigned> amdilToISA;
 
-  public:
+public:
   explicit AMDGPUInstrInfo(AMDGPUTargetMachine &tm);
 
   virtual const AMDGPURegisterInfo &getRegisterInfo() const = 0;
@@ -42,7 +43,7 @@ namespace llvm {
     DebugLoc DL) const;
 
   #include "AMDGPUInstrEnums.h.include"
-  };
+};
 
 } // End llvm namespace
 

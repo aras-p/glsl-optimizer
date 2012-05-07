@@ -1,4 +1,4 @@
-//===-- AMDGPULowerInstructions.cpp - TODO: Add brief description -------===//
+//===-- AMDGPULowerInstructions.cpp - AMDGPU lowering pass ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This pass lowers unsupported AMDIL MachineInstrs to LLVM pseudo 
+// MachineInstrs for hw codegen targets.
 //
 //===----------------------------------------------------------------------===//
 

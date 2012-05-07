@@ -1,4 +1,4 @@
-//===-- AMDGPUISelLowering.h - TODO: Add brief description -------===//
+//===-- AMDGPUISelLowering.h - AMDGPU Lowering Interface --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file contains the interface defintiion of the TargetLowering class
+// that is common to all AMD GPUs.
 //
 //===----------------------------------------------------------------------===//
 

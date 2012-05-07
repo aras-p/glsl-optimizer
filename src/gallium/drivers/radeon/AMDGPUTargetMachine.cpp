@@ -1,4 +1,4 @@
-//===-- AMDGPUTargetMachine.cpp - TODO: Add brief description -------===//
+//===-- AMDGPUTargetMachine.cpp - TargetMachine for hw codegen targets-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// The AMDGPU target machine contains all of the hardware specific information
+// needed to emit code for R600 and SI GPUs.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===-- AMDGPUISelLowering.cpp - TODO: Add brief description -------===//
+//===-- AMDGPUISelLowering.cpp - AMDGPU Common DAG lowering functions -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This is the parent TargetLowering class for hardware code gen targets.
 //
 //===----------------------------------------------------------------------===//
 
