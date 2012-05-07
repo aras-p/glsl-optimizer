@@ -68,6 +68,17 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
          break;
       }
    }
+
+   /*
+    * Corner case: VP has no inputs, but we will still need to submit data to
+    * draw it. HW will shout at us and won't draw anything if we don't enable
+    * any input, so let's just pretend it's the first one.
+    */
+   if (prog->vp.attrs[0] == 0 &&
+       prog->vp.attrs[1] == 0 &&
+       prog->vp.attrs[2] == 0)
+      prog->vp.attrs[0] |= 0xf;
+
    /* VertexID before InstanceID */
    if (info->io.vertexId < info->numSysVals)
       info->sv[info->io.vertexId].slot[0] = n++;
