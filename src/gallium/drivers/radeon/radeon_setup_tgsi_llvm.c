@@ -113,8 +113,25 @@ emit_fetch_immediate(
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
+	LLVMTypeRef ctype;
+	LLVMContextRef ctx = bld_base->base.gallivm->context;
+
+	switch (type) {
+	case TGSI_TYPE_UNSIGNED:
+	case TGSI_TYPE_SIGNED:
+		ctype = LLVMInt32TypeInContext(ctx);
+		break;
+	case TGSI_TYPE_UNTYPED:
+	case TGSI_TYPE_FLOAT:
+		ctype = LLVMFloatTypeInContext(ctx);
+		break;
+	default:
+		ctype = 0;
+		break;
+	}
+
 	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
-	return bld->immediates[reg->Register.Index][swizzle];
+	return LLVMConstBitCast(bld->immediates[reg->Register.Index][swizzle], ctype);
 }
 
 static LLVMValueRef
@@ -135,7 +152,7 @@ emit_fetch_input(
 		return lp_build_gather_values(bld_base->base.gallivm, values,
 						TGSI_NUM_CHANNELS);
 	} else {
-		return ctx->inputs[radeon_llvm_reg_index_soa(reg->Register.Index, swizzle)];
+		return bitcast(bld_base, type, ctx->inputs[radeon_llvm_reg_index_soa(reg->Register.Index, swizzle)]);
 	}
 }
 
@@ -156,7 +173,7 @@ emit_fetch_temporary(
 	} else {
 		LLVMValueRef temp_ptr;
 		temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
-		return LLVMBuildLoad(builder, temp_ptr, "");
+		return bitcast(bld_base,type,LLVMBuildLoad(builder, temp_ptr, ""));
 	}
 }
 
@@ -305,6 +322,9 @@ emit_store(
 		default:
 			return;
 		}
+
+		value = bitcast(bld_base, TGSI_TYPE_FLOAT, value);
+
 		LLVMBuildStore(builder, value, temp_ptr);
 	}
 }
@@ -502,6 +522,20 @@ static void tex_fetch_args(
 	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
 }
 
+static void emit_immediate(struct lp_build_tgsi_context * bld_base,
+		const struct tgsi_full_immediate *imm)
+{
+	unsigned i;
+	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+
+	for (i = 0; i < 4; ++i) {
+		ctx->soa.immediates[ctx->soa.num_immediates][i] =
+				LLVMConstInt(bld_base->uint_bld.elem_type, imm->u[i].Uint, false   );
+	}
+
+	ctx->soa.num_immediates++;
+}
+
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 {
 	struct lp_type type;
@@ -541,12 +575,13 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 
 	lp_build_context_init(&bld_base->base, &ctx->gallivm, type);
 	lp_build_context_init(&ctx->soa.bld_base.uint_bld, &ctx->gallivm, lp_uint_type(type));
+	lp_build_context_init(&ctx->soa.bld_base.int_bld, &ctx->gallivm, lp_int_type(type));
 
 	bld_base->soa = 1;
 	bld_base->emit_store = emit_store;
 	bld_base->emit_swizzle = emit_swizzle;
 	bld_base->emit_declaration = emit_declaration;
-	bld_base->emit_immediate = lp_emit_immediate_soa;
+	bld_base->emit_immediate = emit_immediate;
 
 	bld_base->emit_fetch_funcs[TGSI_FILE_IMMEDIATE] = emit_fetch_immediate;
 	bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_input;

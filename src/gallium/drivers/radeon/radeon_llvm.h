@@ -105,6 +105,37 @@ struct radeon_llvm_context {
 	struct gallivm_state gallivm;
 };
 
+static inline LLVMValueRef bitcast(
+		struct lp_build_tgsi_context * bld_base,
+		enum tgsi_opcode_type type,
+		LLVMValueRef value
+)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	LLVMContextRef ctx = bld_base->base.gallivm->context;
+	LLVMTypeRef dst_type;
+
+	switch (type) {
+	case TGSI_TYPE_UNSIGNED:
+	case TGSI_TYPE_SIGNED:
+		dst_type = LLVMInt32TypeInContext(ctx);
+		break;
+	case TGSI_TYPE_UNTYPED:
+	case TGSI_TYPE_FLOAT:
+		dst_type = LLVMFloatTypeInContext(ctx);
+		break;
+	default:
+		dst_type = 0;
+		break;
+	}
+
+	if (dst_type)
+		return LLVMBuildBitCast(builder, value, dst_type, "");
+	else
+		return value;
+}
+
+
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx);
 
 void radeon_llvm_dispose(struct radeon_llvm_context * ctx);

@@ -21,10 +21,12 @@ static LLVMValueRef llvm_fetch_const(
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
-	return lp_build_intrinsic_unary(bld_base->base.gallivm->builder,
+	LLVMValueRef cval = lp_build_intrinsic_unary(bld_base->base.gallivm->builder,
 		"llvm.AMDGPU.load.const", bld_base->base.elem_type,
 		lp_build_const_int32(bld_base->base.gallivm,
 		radeon_llvm_reg_index_soa(reg->Register.Index, swizzle)));
+
+	return bitcast(bld_base, type, cval);
 }
 
 static void llvm_load_input(
