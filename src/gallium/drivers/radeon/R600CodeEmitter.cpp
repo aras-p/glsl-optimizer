@@ -568,6 +568,7 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
   case AMDIL::BREAK_LOGICALZ_f32:
     instr = FC_BREAK;
     break;
+  case AMDIL::BREAK_LOGICALNZ_f32:
   case AMDIL::BREAK_LOGICALNZ_i32:
     instr = FC_BREAK_NZ_INT;
     break;
@@ -575,6 +576,7 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
     instr = FC_BREAK_Z_INT;
     break;
   case AMDIL::CONTINUE_LOGICALNZ_f32:
+  case AMDIL::CONTINUE_LOGICALNZ_i32:
     instr = FC_CONTINUE;
     break;
   /* XXX: This assumes that all IFs will be if (x != 0).  If we add
