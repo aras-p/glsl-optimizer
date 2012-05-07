@@ -72,6 +72,8 @@ bool llvm::isTexOp(unsigned opcode)
 {
   switch(opcode) {
   default: return false;
+  case AMDIL::TEX_LD:
+  case AMDIL::TEX_GET_TEXTURE_RESINFO:
   case AMDIL::TEX_SAMPLE:
   case AMDIL::TEX_SAMPLE_C:
   case AMDIL::TEX_SAMPLE_L:
@@ -80,6 +82,8 @@ bool llvm::isTexOp(unsigned opcode)
   case AMDIL::TEX_SAMPLE_C_LB:
   case AMDIL::TEX_SAMPLE_G:
   case AMDIL::TEX_SAMPLE_C_G:
+  case AMDIL::TEX_GET_GRADIENTS_H:
+  case AMDIL::TEX_GET_GRADIENTS_V:
     return true;
   }
 }

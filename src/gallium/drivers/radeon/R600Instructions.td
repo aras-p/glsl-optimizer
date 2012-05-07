@@ -387,6 +387,27 @@ def CNDE_INT : R600_3OP <
 
 /* Texture instructions */
 
+
+def TEX_LD : R600_TEX <
+  0x03, "TEX_LD",
+  [(set R600_Reg128:$dst, (int_AMDGPU_txf R600_Reg128:$src0, imm:$src1, imm:$src2))]
+>;
+
+def TEX_GET_TEXTURE_RESINFO : R600_TEX <
+  0x04, "TEX_GET_TEXTURE_RESINFO",
+  [(set R600_Reg128:$dst, (int_AMDGPU_txq R600_Reg128:$src0, imm:$src1, imm:$src2))]
+>;
+
+def TEX_GET_GRADIENTS_H : R600_TEX <
+  0x07, "TEX_GET_GRADIENTS_H",
+  [(set R600_Reg128:$dst, (int_AMDGPU_ddx R600_Reg128:$src0, imm:$src1, imm:$src2))]
+>;
+
+def TEX_GET_GRADIENTS_V : R600_TEX <
+  0x08, "TEX_GET_GRADIENTS_V",
+  [(set R600_Reg128:$dst, (int_AMDGPU_ddy R600_Reg128:$src0, imm:$src1, imm:$src2))]
+>;
+
 def TEX_SAMPLE : R600_TEX <
   0x10, "TEX_SAMPLE",
   [(set R600_Reg128:$dst, (int_AMDGPU_tex R600_Reg128:$src0, imm:$src1, imm:$src2))]

@@ -215,8 +215,6 @@ lp_build_tgsi_inst_llvm(
    case TGSI_OPCODE_PUSHA:
    case TGSI_OPCODE_POPA:
    case TGSI_OPCODE_SAD:
-   case TGSI_OPCODE_TXF:
-   case TGSI_OPCODE_TXQ:
       /* deprecated? */
       assert(0);
       return FALSE;
