@@ -465,8 +465,10 @@ static void if_emit(
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
 	LLVMValueRef cond;
 	LLVMBasicBlockRef if_block, else_block, endif_block;
-	cond = LLVMBuildFCmp(gallivm->builder, LLVMRealOEQ, emit_data->args[0],
-							bld_base->base.one, "");
+
+	cond = LLVMBuildICmp(gallivm->builder, LLVMIntNE,
+	        bitcast(bld_base, TGSI_TYPE_UNSIGNED, emit_data->args[0]),
+			bld_base->int_bld.zero, "");
 
 	endif_block = LLVMAppendBasicBlockInContext(gallivm->context,
 						ctx->main_fn, "ENDIF");
