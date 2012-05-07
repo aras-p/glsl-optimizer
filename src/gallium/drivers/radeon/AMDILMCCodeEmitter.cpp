@@ -9,7 +9,6 @@
 //
 //===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "amdil-emitter"
 #include "AMDIL.h"
 #include "AMDILInstrInfo.h"
 #include "llvm/ADT/SmallVector.h"

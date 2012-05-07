@@ -7,13 +7,6 @@
 //
 //==-----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "PeepholeOpt"
-#ifdef DEBUG
-#define DEBUGME (DebugFlag && isCurrentDebugType(DEBUG_TYPE))
-#else
-#define DEBUGME 0
-#endif
-
 #include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
 #include "AMDILUtilityFunctions.h"
@@ -134,7 +127,7 @@ namespace llvm {
 AMDILPeepholeOpt::AMDILPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
   : FunctionPass(ID), TM(tm) 
 {
-  mDebug = DEBUGME;
+  mDebug = false;
   optLevel = TM.getOptLevel();
 
 }

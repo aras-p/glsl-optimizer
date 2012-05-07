@@ -8,13 +8,6 @@
 //==-----------------------------------------------------------------------===//
 
 
-#define DEBUG_TYPE "machine_peephole"
-#if !defined(NDEBUG)
-#define DEBUGME (DebugFlag && isCurrentDebugType(DEBUG_TYPE))
-#else
-#define DEBUGME (false)
-#endif
-
 #include "AMDIL.h"
 #include "AMDILSubtarget.h"
 #include "AMDILUtilityFunctions.h"
@@ -56,7 +49,7 @@ namespace llvm
 AMDILMachinePeephole::AMDILMachinePeephole(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
   : MachineFunctionPass(ID), TM(tm)
 {
-  mDebug = DEBUGME;
+  mDebug = false;
 }
 
 bool

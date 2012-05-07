@@ -7,12 +7,8 @@
 //
 //==-----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "structcfg"
-#ifdef DEBUG
-#define DEBUGME (DebugFlag && isCurrentDebugType(DEBUG_TYPE))
-#else
 #define DEBUGME 0
-#endif
+#define DEBUG_TYPE "structcfg"
 
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
