@@ -259,7 +259,11 @@ compute_version_es1(struct gl_context *ctx)
    ctx->VersionString = (char *) malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
-		     "OpenGL ES-CM 1.%d Mesa " MESA_VERSION_STRING,
+		     "OpenGL ES-CM 1.%d Mesa " MESA_VERSION_STRING
+#ifdef MESA_GIT_SHA1
+		     " (" MESA_GIT_SHA1 ")"
+#endif
+		     ,
 		     ctx->VersionMinor);
    }
 }
@@ -289,7 +293,11 @@ compute_version_es2(struct gl_context *ctx)
    ctx->VersionString = (char *) malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
-		     "OpenGL ES 2.0 Mesa " MESA_VERSION_STRING);
+		     "OpenGL ES 2.0 Mesa " MESA_VERSION_STRING
+#ifdef MESA_GIT_SHA1
+		     " (" MESA_GIT_SHA1 ")"
+#endif
+		     );
    }
 }
 
