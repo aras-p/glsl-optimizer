@@ -118,6 +118,7 @@ void AMDGPU::utilAddLiveIn(MachineFunction * MF, MachineRegisterInfo & MRI,
 {
     if (!MRI.isLiveIn(physReg)) {
       MRI.addLiveIn(physReg, virtReg);
+      MF->front().addLiveIn(physReg);
       BuildMI(MF->front(), MF->front().begin(), DebugLoc(),
                            TII->get(TargetOpcode::COPY), virtReg)
             .addReg(physReg);

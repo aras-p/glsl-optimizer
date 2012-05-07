@@ -13,6 +13,7 @@
 
 #include "AMDGPU.h"
 #include "AMDGPULowerShaderInstructions.h"
+#include "AMDGPUUtil.h"
 #include "AMDIL.h"
 #include "AMDILInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -117,8 +118,7 @@ void R600LowerShaderInstructionsPass::lowerLOAD_INPUT(MachineInstr &MI)
   unsigned newRegister = inputClass->getRegister(inputIndex);
   unsigned dstReg = dst.getReg();
 
-  preloadRegister(MI.getParent()->getParent(), TM.getInstrInfo(), newRegister,
-                  dstReg);
+  AMDGPU::utilAddLiveIn(MI.getParent()->getParent(), *MRI, TM.getInstrInfo(), newRegister, dstReg);
 }
 
 bool R600LowerShaderInstructionsPass::lowerSTORE_OUTPUT(MachineInstr &MI,
