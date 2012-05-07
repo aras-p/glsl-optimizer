@@ -43,7 +43,6 @@ CPP_SOURCES := \
 	AMDGPUConvertToISA.cpp		\
 	AMDGPULowerInstructions.cpp		\
 	AMDGPULowerShaderInstructions.cpp	\
-	AMDGPUReorderPreloadInstructions.cpp	\
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
 	AMDGPUUtil.cpp			\

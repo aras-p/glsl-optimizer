@@ -833,7 +833,6 @@ def USE_SGPR_32 : InstSI <
 
 > {
   field bits<32> Inst = 0;
-  let PreloadReg = 1;
 }
 
 def USE_SGPR_64 : InstSI <
@@ -844,7 +843,6 @@ def USE_SGPR_64 : InstSI <
 
 > {
   field bits<32> Inst = 0;
-  let PreloadReg = 1;
 }
 
 def VS_LOAD_BUFFER_INDEX : InstSI <
@@ -854,7 +852,6 @@ def VS_LOAD_BUFFER_INDEX : InstSI <
   [(set VReg_32:$dst, (int_SI_vs_load_buffer_index))]> {
 
   field bits<32> Inst = 0;
-  let PreloadReg = 1;
 }
 
 } // end usesCustomInserter 

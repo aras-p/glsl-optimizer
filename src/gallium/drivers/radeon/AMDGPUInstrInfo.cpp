@@ -108,9 +108,4 @@ unsigned AMDGPUInstrInfo::getISAOpcode(unsigned opcode) const
   }
 }
 
-bool AMDGPUInstrInfo::isRegPreload(const MachineInstr &MI) const
-{
-  return (get(MI.getOpcode()).TSFlags >> AMDGPU_TFLAG_SHIFTS::PRELOAD_REG) & 0x1;
-}
-
 #include "AMDGPUInstrEnums.include"

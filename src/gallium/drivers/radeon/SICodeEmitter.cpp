@@ -144,8 +144,6 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
 {
   MF.dump();
   TM = &MF.getTarget();
-  const AMDGPUInstrInfo * TII =
-                        static_cast<const AMDGPUInstrInfo*>(TM->getInstrInfo());
 
   emitState(MF);
 
@@ -155,8 +153,7 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
                                                       I != E; ++I) {
       MachineInstr &MI = *I;
-      if (!TII->isRegPreload(MI) && MI.getOpcode() != AMDIL::KILL
-          && MI.getOpcode() != AMDIL::RETURN) {
+      if (MI.getOpcode() != AMDIL::KILL && MI.getOpcode() != AMDIL::RETURN) {
         emitInstr(MI);
       }
     }

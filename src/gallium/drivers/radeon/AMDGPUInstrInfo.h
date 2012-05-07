@@ -41,19 +41,9 @@ namespace llvm {
   virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const;
 
-  bool isRegPreload(const MachineInstr &MI) const;
-
   #include "AMDGPUInstrEnums.h.include"
   };
 
 } // End llvm namespace
-
-/* AMDGPU target flags are stored in bits 32-39 */
-namespace AMDGPU_TFLAG_SHIFTS {
-  enum TFLAGS {
-    PRELOAD_REG = 32
-  };
-}
-
 
 #endif // AMDGPUINSTRINFO_H_

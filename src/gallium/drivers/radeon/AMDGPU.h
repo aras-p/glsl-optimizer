@@ -32,8 +32,6 @@ namespace llvm {
     FunctionPass *createSIPropagateImmReadsPass(TargetMachine &tm);
     FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 
-    FunctionPass *createAMDGPUReorderPreloadInstructionsPass(TargetMachine &tm);
-
     FunctionPass *createAMDGPULowerInstructionsPass(TargetMachine &tm);
     FunctionPass *createAMDGPULowerShaderInstructionsPass(TargetMachine &tm);
 
