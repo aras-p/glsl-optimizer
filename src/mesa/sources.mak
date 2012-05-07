@@ -184,6 +184,7 @@ VBO_SOURCES = \
 	vbo/vbo_exec_draw.c \
 	vbo/vbo_exec_eval.c \
 	vbo/vbo_noop.c \
+	vbo/vbo_primitive_restart.c \
 	vbo/vbo_rebase.c \
 	vbo/vbo_split.c \
 	vbo/vbo_split_copy.c \
