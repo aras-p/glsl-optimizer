@@ -2845,6 +2845,11 @@ struct gl_constants
     */
    GLboolean GLSLSkipStrictMaxVaryingLimitCheck;
    GLboolean GLSLSkipStrictMaxUniformLimitCheck;
+
+   /**
+    * Force software support for primitive restart in the VBO module.
+    */
+   GLboolean PrimitiveRestartInSoftware;
 };
 
 

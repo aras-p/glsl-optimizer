@@ -662,6 +662,9 @@ _mesa_init_constants(struct gl_context *ctx)
 
    /* GL_ARB_robustness */
    ctx->Const.ResetStrategy = GL_NO_RESET_NOTIFICATION_ARB;
+
+   /* PrimitiveRestart */
+   ctx->Const.PrimitiveRestartInSoftware = GL_FALSE;
 }
 
 
