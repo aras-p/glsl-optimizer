@@ -29,7 +29,7 @@ libr600_a_SOURCES += \
 	$(LLVM_C_SOURCES)
 
 libr600_a_LIBADD = \
-	$(top_srcdir)/src/gallium/drivers/radeon/libradeon.a
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.a
 
 AM_CFLAGS += \
 	$(LLVM_CFLAGS) \
