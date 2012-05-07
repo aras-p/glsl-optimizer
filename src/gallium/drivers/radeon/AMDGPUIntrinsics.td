@@ -54,6 +54,7 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_imin : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
   def int_AMDGPU_umax : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
   def int_AMDGPU_umin : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
+  def int_AMDGPU_cube : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], []>;
 }
 
 let TargetPrefix = "TGSI", isTarget = 1 in {

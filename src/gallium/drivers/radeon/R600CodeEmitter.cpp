@@ -44,8 +44,9 @@ namespace {
   const R600RegisterInfo * TRI;
   bool evergreenEncoding;
 
+  bool isCube;
   bool isReduction;
-  unsigned reductionElement;
+  unsigned currentElement;
   bool isLast;
 
   unsigned section_start;
@@ -53,7 +54,7 @@ namespace {
   public:
 
   R600CodeEmitter(formatted_raw_ostream &OS) : MachineFunctionPass(ID),
-      _OS(OS), TM(NULL), evergreenEncoding(false), isReduction(false),
+      _OS(OS), TM(NULL), evergreenEncoding(false), isCube(false), isReduction(false),
       isLast(true) { }
 
   const char *getPassName() const { return "AMDGPU Machine Code Emitter"; }
@@ -65,7 +66,7 @@ namespace {
   private:
 
   void emitALUInstr(MachineInstr  &MI);
-  void emitSrc(const MachineOperand & MO);
+  void emitSrc(const MachineOperand & MO, int chan_override  = -1);
   void emitDst(const MachineOperand & MO);
   void emitALU(MachineInstr &MI, unsigned numSrc);
   void emitTexInstr(MachineInstr &MI);
@@ -176,11 +177,19 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
           } else if (isReductionOp(MI.getOpcode())) {
             isReduction = true;
             isLast = false;
-            for (reductionElement = 0; reductionElement < 4; reductionElement++) {
-              isLast = (reductionElement == 3);
+            for (currentElement = 0; currentElement < 4; currentElement++) {
+              isLast = (currentElement == 3);
               emitALUInstr(MI);
             }
             isReduction = false;
+          } else if (isCubeOp(MI.getOpcode())) {
+              isCube = true;
+              isLast = false;
+              for (currentElement = 0; currentElement < 4; currentElement++) {
+                isLast = (currentElement == 3);
+                emitALUInstr(MI);
+              }
+              isCube = false;
           } else if (MI.getOpcode() == AMDIL::RETURN ||
                      MI.getOpcode() == AMDIL::BUNDLE ||
                      MI.getOpcode() == AMDIL::KILL) {
@@ -307,18 +316,25 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
   /* Emit instruction type */
   emitByte(0);
 
-  unsigned int opIndex;
-  for (opIndex = 1; opIndex < numOperands; opIndex++) {
-    /* Literal constants are always stored as the last operand. */
-    if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
-      break;
+  if (isCube) {
+    static const int cube_src_swz[] = {2, 2, 0, 1};
+    emitSrc(MI.getOperand(1), cube_src_swz[currentElement]);
+    emitSrc(MI.getOperand(1), cube_src_swz[3-currentElement]);
+    emitNullBytes(SRC_BYTE_COUNT);
+  } else {
+    unsigned int opIndex;
+    for (opIndex = 1; opIndex < numOperands; opIndex++) {
+      /* Literal constants are always stored as the last operand. */
+      if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
+        break;
+      }
+      emitSrc(MI.getOperand(opIndex));
     }
-    emitSrc(MI.getOperand(opIndex));
-  }
 
     /* Emit zeros for unused sources */
-  for ( ; opIndex < 4; opIndex++) {
-    emitNullBytes(SRC_BYTE_COUNT);
+    for ( ; opIndex < 4; opIndex++) {
+      emitNullBytes(SRC_BYTE_COUNT);
+    }
   }
 
   emitDst(dstOp);
@@ -326,7 +342,7 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
   emitALU(MI, numOperands - 1);
 }
 
-void R600CodeEmitter::emitSrc(const MachineOperand & MO)
+void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = -1 */)
 {
   uint32_t value = 0;
   /* Emit the source select (2 bytes).  For GPRs, this is the register index.
@@ -352,8 +368,10 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO)
   }
 
   /* Emit the source channel (1 byte) */
-  if (isReduction) {
-    emitByte(reductionElement);
+  if (chan_override != -1) {
+    emitByte(chan_override);
+  } else if (isReduction) {
+    emitByte(currentElement);
   } else if (MO.isReg()) {
     emitByte(TRI->getHWRegChan(MO.getReg()));
   } else {
@@ -395,8 +413,8 @@ void R600CodeEmitter::emitDst(const MachineOperand & MO)
     emitByte(getHWReg(MO.getReg()));
 
     /* Emit the element of the destination register (1 byte)*/
-    if (isReduction) {
-      emitByte(reductionElement);
+    if (isReduction || isCube) {
+      emitByte(currentElement);
     } else {
       emitByte(TRI->getHWRegChan(MO.getReg()));
     }
@@ -409,7 +427,7 @@ void R600CodeEmitter::emitDst(const MachineOperand & MO)
     }
 
     /* Emit writemask (1 byte).  */
-    if ((isReduction && reductionElement != TRI->getHWRegChan(MO.getReg()))
+    if ((isReduction && currentElement != TRI->getHWRegChan(MO.getReg()))
          || MO.getTargetFlags() & MO_FLAG_MASK) {
       emitByte(0);
     } else {

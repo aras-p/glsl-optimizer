@@ -29,6 +29,7 @@ bool isPlaceHolderOpcode(unsigned opcode);
 bool isTransOp(unsigned opcode);
 bool isTexOp(unsigned opcode);
 bool isReductionOp(unsigned opcode);
+bool isCubeOp(unsigned opcode);
 bool isFCOp(unsigned opcode);
 
 /* XXX: Move these to AMDGPUInstrInfo.h */

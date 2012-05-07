@@ -98,6 +98,17 @@ bool llvm::isReductionOp(unsigned opcode)
   }
 }
 
+bool llvm::isCubeOp(unsigned opcode)
+{
+	  switch(opcode) {
+	    default: return false;
+	    case AMDIL::CUBE_r600:
+	    case AMDIL::CUBE_eg:
+	      return true;
+	  }
+}
+
+
 bool llvm::isFCOp(unsigned opcode)
 {
   switch(opcode) {
