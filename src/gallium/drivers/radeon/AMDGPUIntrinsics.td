@@ -35,7 +35,7 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_rsq : Intrinsic<[llvm_float_ty], [llvm_float_ty], []>;
   def int_AMDGPU_seq : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], []>;
   def int_AMDGPU_sgt : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], []>;
-  def int_AMDGPU_sge : BinaryIntFloat;
+  def int_AMDGPU_sge : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], []>;
   def int_AMDGPU_sin : Intrinsic<[llvm_float_ty], [llvm_float_ty], []>;
   def int_AMDGPU_sle : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], []>;
   def int_AMDGPU_sne : Intrinsic<[llvm_float_ty], [llvm_float_ty, llvm_float_ty], []>;
@@ -50,6 +50,10 @@ let TargetPrefix = "AMDGPU", isTarget = 1 in {
   def int_AMDGPU_trunc : Intrinsic<[llvm_float_ty], [llvm_float_ty], []>;
   def int_AMDGPU_ddx : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_i32_ty, llvm_i32_ty], []>;
   def int_AMDGPU_ddy : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_i32_ty, llvm_i32_ty], []>;
+  def int_AMDGPU_imax : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
+  def int_AMDGPU_imin : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
+  def int_AMDGPU_umax : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
+  def int_AMDGPU_umin : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], []>;
 }
 
 let TargetPrefix = "TGSI", isTarget = 1 in {

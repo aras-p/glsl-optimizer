@@ -84,7 +84,7 @@ class R600_3OP <bits<32> inst, string opName, list<dag> pattern,
   InstR600 <inst,
           (outs R600_Reg32:$dst),
           (ins R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2, variable_ops),
-          !strconcat(opName, "$dst $src0, $src1, $src2"),
+          !strconcat(opName, " $dst, $src0, $src1, $src2"),
           pattern,
           itin>{
 
@@ -311,6 +311,18 @@ def TRUNC : R600_1OP <
   [(set R600_Reg32:$dst, (int_AMDGPU_trunc R600_Reg32:$src))]
 >;
 
+def CEIL : R600_1OP <
+  0x12, "CEIL",
+  [(set R600_Reg32:$dst, (int_AMDIL_round_neginf R600_Reg32:$src))]> {
+  let AMDILOp = AMDILInst.ROUND_NEGINF_f32;
+}
+
+def RNDNE : R600_1OP <
+  0x13, "RNDNE",
+  [(set R600_Reg32:$dst, (int_AMDIL_round_nearest R600_Reg32:$src))]> {
+  let AMDILOp = AMDILInst.ROUND_NEAREST_f32;
+}
+
 def FLOOR : R600_1OP <
   0x14, "FLOOR",
   [(set R600_Reg32:$dst, (int_AMDGPU_floor R600_Reg32:$src))]
@@ -329,59 +341,88 @@ def AND_INT : R600_2OP <
   let AMDILOp = AMDILInst.AND_i32;
 }
 
+def OR_INT : R600_2OP <
+  0x31, "OR_INT",
+  []>{
+  let AMDILOp = AMDILInst.BINARY_OR_i32;
+}
+
 def XOR_INT : R600_2OP <
   0x32, "XOR_INT",
   []
 >;
 
+def NOT_INT : R600_1OP <
+  0x33, "NOT_INT",
+  []>{
+  let AMDILOp = AMDILInst.BINARY_NOT_i32;
+}
+
 def ADD_INT : R600_2OP <
-  0x34, "ADD_INT $dst, $src0, $src1",
+  0x34, "ADD_INT",
   []>{
   let AMDILOp = AMDILInst.ADD_i32;
 }
 
 def SUB_INT : R600_2OP <
-	0x35, "SUB_INT $dst, $src0, $src1",
+	0x35, "SUB_INT",
 	[]
 >;
 
+def MAX_INT : R600_2OP <
+  0x36, "MAX_INT",
+  [(set R600_Reg32:$dst, (int_AMDGPU_imax R600_Reg32:$src0, R600_Reg32:$src1))]>;
+
+def MIN_INT : R600_2OP <
+  0x37, "MIN_INT",
+  [(set R600_Reg32:$dst, (int_AMDGPU_imin R600_Reg32:$src0, R600_Reg32:$src1))]>;
+
+def MAX_UINT : R600_2OP <
+  0x38, "MAX_UINT",
+  [(set R600_Reg32:$dst, (int_AMDGPU_umax R600_Reg32:$src0, R600_Reg32:$src1))]>;
+
+def MIN_UINT : R600_2OP <
+  0x39, "MIN_UINT",
+  [(set R600_Reg32:$dst, (int_AMDGPU_umin R600_Reg32:$src0, R600_Reg32:$src1))]>;
+
+
 def SETE_INT : R600_2OP <
-  0x3A, "SETE_INT $dst, $src0, $src1",
+  0x3A, "SETE_INT",
   []>{
   let AMDILOp = AMDILInst.IEQ;
 }
 
 def SETGT_INT : R600_2OP <
-  0x3B, "SGT_INT $dst, $src0, $src1",
+  0x3B, "SGT_INT",
   []
 >;
 
 def SETGE_INT : R600_2OP <
-	0x3C, "SETGE_INT $dst, $src0, $src1",
+	0x3C, "SETGE_INT",
 	[]>{
   let AMDILOp = AMDILInst.IGE;
 }
 
 def SETNE_INT : R600_2OP <
-  0x3D, "SETNE_INT $dst, $src0, $src1",
+  0x3D, "SETNE_INT",
   []>{
   let AMDILOp = AMDILInst.INE;
 }
 
 def SETGT_UINT : R600_2OP <
-  0x3E, "SETGT_UINT $dst, $src0, $src1",
+  0x3E, "SETGT_UINT",
   []>{
   let AMDILOp = AMDILInst.UGT;
 }
 
 def SETGE_UINT : R600_2OP <
-  0x3F, "SETGE_UINT $dst, $src0, $src1",
+  0x3F, "SETGE_UINT",
   []>{
   let AMDILOp = AMDILInst.UGE;
 }
 
 def CNDE_INT : R600_3OP <
-	0x1C, "CNDE_INT $dst, $src0, $src1, $src2",
+	0x1C, "CNDE_INT",
 	[]
 >;
 
