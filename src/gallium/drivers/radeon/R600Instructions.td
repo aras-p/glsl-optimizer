@@ -938,6 +938,16 @@ def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 5, sel_y>;
 def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 6, sel_z>;
 def : Insert_Element <f32, v4f32, R600_Reg32, R600_Reg128, 7, sel_w>;
 
+def : Extract_Element <i32, v4i32, R600_Reg128, 0, sel_x>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 1, sel_y>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 2, sel_z>;
+def : Extract_Element <i32, v4i32, R600_Reg128, 3, sel_w>;
+
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 4, sel_x>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 5, sel_y>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 6, sel_z>;
+def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 7, sel_w>;
+
 
 include "R600ShaderPatterns.td"
 

@@ -81,7 +81,7 @@ def R600_Reg32 : RegisterClass <"AMDIL", [f32, i32], 32, (add
     R600_CReg32,
     ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF)>;
 
-def R600_Reg128 : RegisterClass<"AMDIL", [v4f32], 128, (add
+def R600_Reg128 : RegisterClass<"AMDIL", [v4f32, v4i32], 128, (add
     $t128_string)>
 {
   let SubRegClasses = [(R600_TReg32 sel_x, sel_y, sel_z, sel_w)];

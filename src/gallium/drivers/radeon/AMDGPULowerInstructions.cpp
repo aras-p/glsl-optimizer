@@ -27,7 +27,7 @@ namespace {
   private:
     static char ID;
     TargetMachine &TM;
-    void lowerVCREATE_v4f32(MachineInstr &MI, MachineBasicBlock::iterator I,
+    void lowerVCREATE_v4(MachineInstr &MI, MachineBasicBlock::iterator I,
                               MachineBasicBlock &MBB, MachineFunction &MF);
 
   public:
@@ -56,8 +56,9 @@ bool AMDGPULowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 
       switch (MI.getOpcode()) {
       default: continue;
-      case AMDIL::VCREATE_v4f32: lowerVCREATE_v4f32(MI, I, MBB, MF); break;
-
+      case AMDIL::VCREATE_v4f32:
+      case AMDIL::VCREATE_v4i32:
+        lowerVCREATE_v4(MI, I, MBB, MF); break;
       }
       MI.eraseFromParent();
     }
@@ -65,7 +66,7 @@ bool AMDGPULowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
   return false;
 }
 
-void AMDGPULowerInstructionsPass::lowerVCREATE_v4f32(MachineInstr &MI,
+void AMDGPULowerInstructionsPass::lowerVCREATE_v4(MachineInstr &MI,
     MachineBasicBlock::iterator I, MachineBasicBlock &MBB, MachineFunction &MF)
 {
   MachineRegisterInfo & MRI = MF.getRegInfo();
