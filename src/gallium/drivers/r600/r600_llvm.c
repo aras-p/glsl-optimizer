@@ -203,28 +203,7 @@ static struct lp_build_tgsi_action dot_action = {
 	.intr_name = "llvm.AMDGPU.dp4"
 };
 
-static void txp_fetch_args(
-	struct lp_build_tgsi_context * bld_base,
-	struct lp_build_emit_data * emit_data)
-{
-	LLVMValueRef src_w;
-	unsigned chan;
-	LLVMValueRef coords[4];
 
-	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
-	src_w = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
-
-	for (chan = 0; chan < 3; chan++ ) {
-		LLVMValueRef arg = lp_build_emit_fetch(bld_base,
-						emit_data->inst, 0, chan);
-		coords[chan] = lp_build_emit_llvm_binary(bld_base,
-					TGSI_OPCODE_DIV, arg, src_w);
-	}
-	coords[3] = bld_base->base.one;
-	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
-						coords, 4);
-	emit_data->arg_count = 1;
-}
 
 LLVMModuleRef r600_tgsi_llvm(
 	struct radeon_llvm_context * ctx,
@@ -257,7 +236,6 @@ LLVMModuleRef r600_tgsi_llvm(
 	bld_base->op_actions[TGSI_OPCODE_TXL].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXF].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXQ].emit = llvm_emit_tex;
-	bld_base->op_actions[TGSI_OPCODE_TXP].fetch_args = txp_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXP].emit = llvm_emit_tex;
 
 	lp_build_tgsi_llvm(bld_base, tokens);

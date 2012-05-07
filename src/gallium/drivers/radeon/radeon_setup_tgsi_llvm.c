@@ -509,6 +509,87 @@ static void kil_emit(
 	}
 }
 
+
+static void emit_prepare_cube_coords(
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	boolean shadowcube = (emit_data->inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE);
+	struct gallivm_state * gallivm = bld_base->base.gallivm;
+	LLVMBuilderRef builder = gallivm->builder;
+	LLVMTypeRef type = bld_base->base.elem_type;
+	LLVMValueRef coords[4];
+	LLVMValueRef mad_args[3];
+	unsigned i, cnt;
+
+	LLVMValueRef v = lp_build_intrinsic(builder, "llvm.AMDGPU.cube",
+			LLVMVectorType(type, 4),
+			&emit_data->args[0],1);
+
+	/* save src.w for shadow cube */
+	cnt = shadowcube ? 3 : 4;
+
+	for (i = 0; i < cnt; ++i) {
+		LLVMValueRef idx = lp_build_const_int32(gallivm, i);
+		coords[i] = LLVMBuildExtractElement(builder, v, idx, "");
+	}
+
+	coords[2] = lp_build_intrinsic(builder, "llvm.AMDIL.fabs.",
+			type, &coords[2], 1);
+	coords[2] = lp_build_intrinsic(builder, "llvm.AMDGPU.rcp",
+			type, &coords[2], 1);
+
+	mad_args[1] = coords[2];
+	mad_args[2] = LLVMConstReal(type, 1.5);
+
+	mad_args[0] = coords[0];
+	coords[0] = lp_build_intrinsic(builder, "llvm.AMDIL.mad.",
+			type, mad_args, 3);
+
+	mad_args[0] = coords[1];
+	coords[1] = lp_build_intrinsic(builder, "llvm.AMDIL.mad.",
+			type, mad_args, 3);
+
+	/* apply yxwy swizzle to cooords */
+	coords[2] = coords[3];
+	coords[3] = coords[1];
+	coords[1] = coords[0];
+	coords[0] = coords[3];
+
+	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
+						coords, 4);
+}
+
+static void txp_fetch_args(
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	const struct tgsi_full_instruction * inst = emit_data->inst;
+	LLVMValueRef src_w;
+	unsigned chan;
+	LLVMValueRef coords[4];
+
+	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
+	src_w = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
+
+	for (chan = 0; chan < 3; chan++ ) {
+		LLVMValueRef arg = lp_build_emit_fetch(bld_base,
+						emit_data->inst, 0, chan);
+		coords[chan] = lp_build_emit_llvm_binary(bld_base,
+					TGSI_OPCODE_DIV, arg, src_w);
+	}
+	coords[3] = bld_base->base.one;
+	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
+						coords, 4);
+	emit_data->arg_count = 1;
+
+	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+		emit_prepare_cube_coords(bld_base, emit_data);
+	}
+}
+
 static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
@@ -521,16 +602,24 @@ static void tex_fetch_args(
 
 	*/
 
+	const struct tgsi_full_instruction * inst = emit_data->inst;
+
 	LLVMValueRef coords[4];
 	unsigned chan;
 	for (chan = 0; chan < 4; chan++) {
-		coords[chan] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, chan);
+		coords[chan] = lp_build_emit_fetch(bld_base, inst, 0, chan);
 	}
 
 	emit_data->arg_count = 1;
 	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
 						coords, 4);
 	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
+
+	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
+	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+		emit_prepare_cube_coords(bld_base, emit_data);
+	}
 }
 
 static void emit_icmp(
@@ -954,6 +1043,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_TXD].intr_name = "llvm.AMDGPU.txd";
 	bld_base->op_actions[TGSI_OPCODE_TXL].fetch_args = tex_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXL].intr_name = "llvm.AMDGPU.txl";
+	bld_base->op_actions[TGSI_OPCODE_TXP].fetch_args = txp_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXP].intr_name = "llvm.AMDGPU.tex";
 	bld_base->op_actions[TGSI_OPCODE_TRUNC].emit = lp_build_tgsi_intrinsic;
 	bld_base->op_actions[TGSI_OPCODE_TRUNC].intr_name = "llvm.AMDGPU.trunc";
