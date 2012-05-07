@@ -137,11 +137,6 @@ enum AddressSpaces {
   LAST_ADDRESS     = 8
 };
 
-// We are piggybacking on the CommentFlag enum in MachineInstr.h to
-// set bits in AsmPrinterFlags of the MachineInstruction. We will
-// start at bit 16 and allocate down while LLVM will start at bit
-// 1 and allocate up.
-
 // This union/struct combination is an easy way to read out the
 // exact bits that are needed.
 typedef union ResourceRec {
