@@ -29,6 +29,38 @@ static LLVMValueRef llvm_fetch_const(
 	return bitcast(bld_base, type, cval);
 }
 
+static void llvm_load_system_value(
+		struct radeon_llvm_context * ctx,
+		unsigned index,
+		const struct tgsi_full_declaration *decl)
+{
+	unsigned chan;
+
+	switch (decl->Semantic.Name) {
+	case TGSI_SEMANTIC_INSTANCEID: chan = 3; break;
+	case TGSI_SEMANTIC_VERTEXID: chan = 0; break;
+	default: assert(!"unknown system value");
+	}
+
+	LLVMValueRef reg = lp_build_const_int32(
+			ctx->soa.bld_base.base.gallivm, chan);
+	ctx->system_values[index] = lp_build_intrinsic_unary(
+			ctx->soa.bld_base.base.gallivm->builder,
+			"llvm.R600.load.input",
+			ctx->soa.bld_base.base.elem_type, reg);
+}
+
+static LLVMValueRef llvm_fetch_system_value(
+		struct lp_build_tgsi_context * bld_base,
+		const struct tgsi_full_src_register *reg,
+		enum tgsi_opcode_type type,
+		unsigned swizzle)
+{
+	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+	LLVMValueRef cval = ctx->system_values[reg->Register.Index];
+	return bitcast(bld_base, type, cval);
+}
+
 static void llvm_load_input(
 	struct radeon_llvm_context * ctx,
 	unsigned input_index,
@@ -206,10 +238,12 @@ LLVMModuleRef r600_tgsi_llvm(
 	bld_base->info = &shader_info;
 	bld_base->userdata = ctx;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = llvm_fetch_const;
+	bld_base->emit_fetch_funcs[TGSI_FILE_SYSTEM_VALUE] = llvm_fetch_system_value;
 	bld_base->emit_prologue = llvm_emit_prologue;
 	bld_base->emit_epilogue = llvm_emit_epilogue;
 	ctx->userdata = ctx;
 	ctx->load_input = llvm_load_input;
+	ctx->load_system_value = llvm_load_system_value;
 
 	bld_base->op_actions[TGSI_OPCODE_DP2] = dot_action;
 	bld_base->op_actions[TGSI_OPCODE_DP3] = dot_action;

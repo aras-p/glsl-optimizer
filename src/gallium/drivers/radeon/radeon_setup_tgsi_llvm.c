@@ -231,6 +231,15 @@ static void emit_declaration(
 	}
 	break;
 
+	case TGSI_FILE_SYSTEM_VALUE:
+	{
+		unsigned idx;
+		for (idx = decl->Range.First; idx <= decl->Range.Last; idx++) {
+			ctx->load_system_value(ctx, idx, decl);
+		}
+	}
+	break;
+
 	case TGSI_FILE_OUTPUT:
 	{
 		unsigned idx;

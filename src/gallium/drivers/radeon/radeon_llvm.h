@@ -36,6 +36,8 @@
 #define RADEON_LLVM_MAX_BRANCH_DEPTH 16
 #define RADEON_LLVM_MAX_LOOP_DEPTH 16
 
+#define RADEON_LLVM_MAX_SYSTEM_VALUES 4
+
 struct radeon_llvm_branch {
 	LLVMBasicBlockRef endif_block;
 	LLVMBasicBlockRef if_block;
@@ -78,6 +80,9 @@ struct radeon_llvm_context {
 			unsigned input_index,
 			const struct tgsi_full_declaration *decl);
 
+	void (*load_system_value)(struct radeon_llvm_context *,
+			unsigned index,
+			const struct tgsi_full_declaration *decl);
 
 	/** User data to use with the callbacks */
 	void * userdata;
@@ -89,6 +94,8 @@ struct radeon_llvm_context {
 	LLVMValueRef inputs[RADEON_LLVM_MAX_INPUTS];
 	LLVMValueRef outputs[RADEON_LLVM_MAX_OUTPUTS][TGSI_NUM_CHANNELS];
 	unsigned output_reg_count;
+
+	LLVMValueRef system_values[RADEON_LLVM_MAX_SYSTEM_VALUES];
 
 	unsigned reserved_reg_count;
 	/*=== Private Members ===*/
