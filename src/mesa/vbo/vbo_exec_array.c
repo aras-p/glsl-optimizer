@@ -543,6 +543,37 @@ vbo_bind_arrays(struct gl_context *ctx)
 
 
 /**
+ * Handle a draw case that potentially has primitive restart enabled.
+ *
+ * If primitive restart is enabled, and PrimitiveRestartInSoftware is
+ * set, then vbo_sw_primitive_restart is used to handle the primitive
+ * restart case in software.
+ */
+static void
+vbo_handle_primitive_restart(struct gl_context *ctx,
+                             const struct _mesa_prim *prim,
+                             GLuint nr_prims,
+                             const struct _mesa_index_buffer *ib,
+                             GLboolean index_bounds_valid,
+                             GLuint min_index,
+                             GLuint max_index)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+
+   if ((ib != NULL) &&
+       ctx->Const.PrimitiveRestartInSoftware &&
+       ctx->Array.PrimitiveRestart) {
+      /* Handle primitive restart in software */
+      vbo_sw_primitive_restart(ctx, prim, nr_prims, ib);
+   } else {
+      /* Call driver directly for draw_prims */
+      vbo->draw_prims(ctx, prim, nr_prims, ib,
+                      index_bounds_valid, min_index, max_index, NULL);
+   }
+}
+
+
+/**
  * Helper function called by the other DrawArrays() functions below.
  * This is where we handle primitive restart for drawing non-indexed
  * arrays.  If primitive restart is enabled, it typically means
@@ -805,8 +836,8 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
     */
 
    check_buffers_are_unmapped(exec->array.inputs);
-   vbo->draw_prims( ctx, prim, 1, &ib,
-		    index_bounds_valid, start, end, NULL );
+   vbo_handle_primitive_restart(ctx, prim, 1, &ib,
+                                index_bounds_valid, start, end);
 
    if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
       _mesa_flush(ctx);
@@ -1104,8 +1135,8 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
       }
 
       check_buffers_are_unmapped(exec->array.inputs);
-      vbo->draw_prims(ctx, prim, primcount, &ib,
-		      GL_FALSE, ~0, ~0, NULL);
+      vbo_handle_primitive_restart(ctx, prim, primcount, &ib,
+                                   GL_FALSE, ~0, ~0);
    } else {
       /* render one prim at a time */
       for (i = 0; i < primcount; i++) {
@@ -1129,8 +1160,8 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 	    prim[0].basevertex = 0;
 
          check_buffers_are_unmapped(exec->array.inputs);
-         vbo->draw_prims(ctx, prim, 1, &ib,
-                         GL_FALSE, ~0, ~0, NULL);
+         vbo_handle_primitive_restart(ctx, prim, 1, &ib,
+                                      GL_FALSE, ~0, ~0);
       }
    }
 
