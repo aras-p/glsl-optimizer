@@ -110,8 +110,6 @@ public:
   unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore,
                                       unsigned *LoadRegIndex = 0) const;
-  bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
-                               int64_t &Offset1, int64_t &Offset2) const;
   bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
                                int64_t Offset1, int64_t Offset2,
                                unsigned NumLoads) const;
@@ -126,7 +124,30 @@ public:
                         std::vector<MachineOperand> &Pred) const;
   bool isPredicable(MachineInstr *MI) const;
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
-  };
+
+  // Helper functions that check the opcode for status information
+  bool isLoadInst(llvm::MachineInstr *MI) const;
+  bool isExtLoadInst(llvm::MachineInstr *MI) const;
+  bool isSWSExtLoadInst(llvm::MachineInstr *MI) const;
+  bool isSExtLoadInst(llvm::MachineInstr *MI) const;
+  bool isZExtLoadInst(llvm::MachineInstr *MI) const;
+  bool isAExtLoadInst(llvm::MachineInstr *MI) const;
+  bool isStoreInst(llvm::MachineInstr *MI) const;
+  bool isTruncStoreInst(llvm::MachineInstr *MI) const;
+  bool isAtomicInst(llvm::MachineInstr *MI) const;
+  bool isVolatileInst(llvm::MachineInstr *MI) const;
+  bool isGlobalInst(llvm::MachineInstr *MI) const;
+  bool isPrivateInst(llvm::MachineInstr *MI) const;
+  bool isConstantInst(llvm::MachineInstr *MI) const;
+  bool isRegionInst(llvm::MachineInstr *MI) const;
+  bool isLocalInst(llvm::MachineInstr *MI) const;
+  bool isImageInst(llvm::MachineInstr *MI) const;
+  bool isAppendInst(llvm::MachineInstr *MI) const;
+  bool isRegionAtomic(llvm::MachineInstr *MI) const;
+  bool isLocalAtomic(llvm::MachineInstr *MI) const;
+  bool isGlobalAtomic(llvm::MachineInstr *MI) const;
+  bool isArenaAtomic(llvm::MachineInstr *MI) const;
+};
 
 }
 

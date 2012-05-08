@@ -3152,10 +3152,6 @@ struct CFGStructTraits<AMDILCFGStructurizer>
          iterEnd = srcBlk->end();
          iter != iterEnd; ++iter) {
       MachineInstr *instr = func->CloneMachineInstr(iter);
-      // This is a workaround for LLVM bugzilla 8420 because CloneMachineInstr
-      // does not clone the AsmPrinterFlags.
-      instr->setAsmPrinterFlag(
-         (llvm::MachineInstr::CommentFlag)iter->getAsmPrinterFlags());
       newBlk->push_back(instr);
     }
     return newBlk;

@@ -20,7 +20,8 @@
 
 #include "AMDILRegisterInfo.h"
 #include "AMDIL.h"
-#include "AMDILUtilityFunctions.h"
+#include "AMDILInstrInfo.h"
+#include "AMDILTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -109,7 +110,9 @@ AMDILRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     if (!MI.getOperand(x).isFI()) {
       continue;
     }
-    bool def = isStoreInst(TM.getInstrInfo(), &MI);
+    const AMDILInstrInfo * AMDILII =
+                         static_cast<const AMDILInstrInfo *>(TM.getInstrInfo());
+    bool def = AMDILII->isStoreInst(&MI);
     int FrameIndex = MI.getOperand(x).getIndex();
     int64_t Offset = MFI->getObjectOffset(FrameIndex);
     //int64_t Size = MF.getFrameInfo()->getObjectSize(FrameIndex);

@@ -9,9 +9,10 @@
 
 
 #include "AMDIL.h"
+#include "AMDILInstrInfo.h"
 #include "AMDILSubtarget.h"
-#include "AMDILUtilityFunctions.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
@@ -57,6 +58,8 @@ AMDILMachinePeephole::runOnMachineFunction(MachineFunction &MF)
 {
   bool Changed = false;
   const AMDILSubtarget *STM = &TM.getSubtarget<AMDILSubtarget>();
+  const AMDILInstrInfo * AMDILII =
+                         static_cast<const AMDILInstrInfo *>(TM.getInstrInfo());
   for (MachineFunction::iterator MBB = MF.begin(), MBE = MF.end();
       MBB != MBE; ++MBB) {
     MachineBasicBlock *mb = MBB;
@@ -67,7 +70,7 @@ AMDILMachinePeephole::runOnMachineFunction(MachineFunction &MF)
       name = TM.getInstrInfo()->getName(mi->getOpcode());
       switch (mi->getOpcode()) {
         default:
-          if (isAtomicInst(TM.getInstrInfo(), mi)) {
+          if (AMDILII->isAtomicInst(mi)) {
             // If we don't support the hardware accellerated address spaces,
             // then the atomic needs to be transformed to the global atomic.
             if (strstr(name, "_L_")
@@ -87,7 +90,8 @@ AMDILMachinePeephole::runOnMachineFunction(MachineFunction &MF)
                   TM.getInstrInfo()->get(
                     (mi->getOpcode() - AMDIL::ATOM_R_ADD) + AMDIL::ATOM_G_ADD));
             }
-          } else if ((isLoadInst(TM.getInstrInfo(), mi) || isStoreInst(TM.getInstrInfo(), mi)) && isVolatileInst(TM.getInstrInfo(), mi)) {
+          } else if ((AMDILII->isLoadInst(mi) || AMDILII->isStoreInst(mi))
+                     && AMDILII->isVolatileInst(mi)) {
             insertFence(MIB);
           }
           continue;

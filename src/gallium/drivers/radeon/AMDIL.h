@@ -176,26 +176,6 @@ typedef union ResourceRec {
 
 } // namespace AMDILAS
 
-// The OpSwizzle encodes a subset of all possible
-// swizzle combinations into a number of bits using
-// only the combinations utilized by the backend.
-// The lower 128 are for source swizzles and the
-// upper 128 or for destination swizzles.
-// The valid mappings can be found in the
-// getSrcSwizzle and getDstSwizzle functions of
-// AMDILUtilityFunctions.cpp.
-typedef union SwizzleRec {
-  struct {
-#ifdef __BIG_ENDIAN__
-    unsigned char dst : 1;
-    unsigned char swizzle : 7;
-#else
-    unsigned char swizzle : 7;
-    unsigned char dst : 1;
-#endif
-  } bits;
-  unsigned char u8all;
-} OpSwizzle;
 // Enums corresponding to AMDIL condition codes for IL.  These
 // values must be kept in sync with the ones in the .td file.
 namespace AMDILCC {

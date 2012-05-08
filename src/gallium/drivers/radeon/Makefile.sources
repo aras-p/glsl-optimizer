@@ -37,7 +37,6 @@ CPP_SOURCES := \
 	AMDILSIDevice.cpp		\
 	AMDILSubtarget.cpp		\
 	AMDILTargetMachine.cpp		\
-	AMDILUtilityFunctions.cpp	\
 	AMDGPUTargetMachine.cpp		\
 	AMDGPUISelLowering.cpp		\
 	AMDGPUConvertToISA.cpp		\

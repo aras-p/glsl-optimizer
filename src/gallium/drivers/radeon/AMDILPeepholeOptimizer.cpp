@@ -9,11 +9,12 @@
 
 #include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
-#include "AMDILUtilityFunctions.h"
+#include "AMDILInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Function.h"
@@ -34,6 +35,9 @@ using namespace llvm;
 // The Peephole optimization pass is used to do simple last minute optimizations
 // that are required for correct code or to remove redundant functions
 namespace {
+
+class OpaqueType;
+
 class LLVM_LIBRARY_VISIBILITY AMDILPeepholeOpt : public FunctionPass {
 public:
   TargetMachine &TM;
@@ -106,6 +110,19 @@ private:
   // doesn't occur and we need to know the value of kernel defined
   // samplers at compile time.
   bool propagateSamplerInst(CallInst *CI);
+
+  // Helper functions
+
+  // Group of functions that recursively calculate the size of a structure based
+  // on it's sub-types.
+  size_t getTypeSize(Type * const T, bool dereferencePtr = false);
+  size_t getTypeSize(StructType * const ST, bool dereferencePtr = false);
+  size_t getTypeSize(IntegerType * const IT, bool dereferencePtr = false);
+  size_t getTypeSize(FunctionType * const FT,bool dereferencePtr = false);
+  size_t getTypeSize(ArrayType * const AT, bool dereferencePtr = false);
+  size_t getTypeSize(VectorType * const VT, bool dereferencePtr = false);
+  size_t getTypeSize(PointerType * const PT, bool dereferencePtr = false);
+  size_t getTypeSize(OpaqueType * const OT, bool dereferencePtr = false);
 
   LLVMContext *mCTX;
   Function *mF;
@@ -1128,4 +1145,107 @@ AMDILPeepholeOpt::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<MachineFunctionAnalysis>();
   FunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(Type * const T, bool dereferencePtr) {
+  size_t size = 0;
+  if (!T) {
+    return size;
+  }
+  switch (T->getTypeID()) {
+  case Type::X86_FP80TyID:
+  case Type::FP128TyID:
+  case Type::PPC_FP128TyID:
+  case Type::LabelTyID:
+    assert(0 && "These types are not supported by this backend");
+  default:
+  case Type::FloatTyID:
+  case Type::DoubleTyID:
+    size = T->getPrimitiveSizeInBits() >> 3;
+    break;
+  case Type::PointerTyID:
+    size = getTypeSize(dyn_cast<PointerType>(T), dereferencePtr);
+    break;
+  case Type::IntegerTyID:
+    size = getTypeSize(dyn_cast<IntegerType>(T), dereferencePtr);
+    break;
+  case Type::StructTyID:
+    size = getTypeSize(dyn_cast<StructType>(T), dereferencePtr);
+    break;
+  case Type::ArrayTyID:
+    size = getTypeSize(dyn_cast<ArrayType>(T), dereferencePtr);
+    break;
+  case Type::FunctionTyID:
+    size = getTypeSize(dyn_cast<FunctionType>(T), dereferencePtr);
+    break;
+  case Type::VectorTyID:
+    size = getTypeSize(dyn_cast<VectorType>(T), dereferencePtr);
+    break;
+  };
+  return size;
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(StructType * const ST,
+    bool dereferencePtr) {
+  size_t size = 0;
+  if (!ST) {
+    return size;
+  }
+  Type *curType;
+  StructType::element_iterator eib;
+  StructType::element_iterator eie;
+  for (eib = ST->element_begin(), eie = ST->element_end(); eib != eie; ++eib) {
+    curType = *eib;
+    size += getTypeSize(curType, dereferencePtr);
+  }
+  return size;
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(IntegerType * const IT,
+    bool dereferencePtr) {
+  return IT ? (IT->getBitWidth() >> 3) : 0;
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(FunctionType * const FT,
+    bool dereferencePtr) {
+    assert(0 && "Should not be able to calculate the size of an function type");
+    return 0;
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(ArrayType * const AT,
+    bool dereferencePtr) {
+  return (size_t)(AT ? (getTypeSize(AT->getElementType(),
+                                    dereferencePtr) * AT->getNumElements())
+                     : 0);
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(VectorType * const VT,
+    bool dereferencePtr) {
+  return VT ? (VT->getBitWidth() >> 3) : 0;
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(PointerType * const PT,
+    bool dereferencePtr) {
+  if (!PT) {
+    return 0;
+  }
+  Type *CT = PT->getElementType();
+  if (CT->getTypeID() == Type::StructTyID &&
+      PT->getAddressSpace() == AMDILAS::PRIVATE_ADDRESS) {
+    return getTypeSize(dyn_cast<StructType>(CT));
+  } else if (dereferencePtr) {
+    size_t size = 0;
+    for (size_t x = 0, y = PT->getNumContainedTypes(); x < y; ++x) {
+      size += getTypeSize(PT->getContainedType(x), dereferencePtr);
+    }
+    return size;
+  } else {
+    return 4;
+  }
+}
+
+size_t AMDILPeepholeOpt::getTypeSize(OpaqueType * const OT,
+    bool dereferencePtr) {
+  //assert(0 && "Should not be able to calculate the size of an opaque type");
+  return 4;
 }

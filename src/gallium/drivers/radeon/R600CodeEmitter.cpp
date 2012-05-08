@@ -724,44 +724,5 @@ RegElement maskBitToElement(unsigned int maskBit)
   }
 }
 
-unsigned int dstSwizzleToWriteMask(unsigned swizzle)
-{
-  switch(swizzle) {
-  default:
-  case AMDIL_DST_SWIZZLE_DEFAULT:
-    return WRITE_MASK_X | WRITE_MASK_Y | WRITE_MASK_Z | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE_X___:
-    return WRITE_MASK_X;
-  case AMDIL_DST_SWIZZLE_XY__:
-    return WRITE_MASK_X | WRITE_MASK_Y;
-  case AMDIL_DST_SWIZZLE_XYZ_:
-    return WRITE_MASK_X | WRITE_MASK_Y | WRITE_MASK_Z;
-  case AMDIL_DST_SWIZZLE_XYZW:
-    return WRITE_MASK_X | WRITE_MASK_Y | WRITE_MASK_Z | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE__Y__:
-    return WRITE_MASK_Y;
-  case AMDIL_DST_SWIZZLE__YZ_:
-    return WRITE_MASK_Y | WRITE_MASK_Z;
-  case AMDIL_DST_SWIZZLE__YZW:
-    return WRITE_MASK_Y | WRITE_MASK_Z | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE___Z_:
-    return WRITE_MASK_Z;
-  case AMDIL_DST_SWIZZLE___ZW:
-    return WRITE_MASK_Z | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE____W:
-    return WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE_X_ZW:
-    return WRITE_MASK_X | WRITE_MASK_Z | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE_XY_W:
-    return WRITE_MASK_X | WRITE_MASK_Y | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE_X_Z_:
-    return WRITE_MASK_X | WRITE_MASK_Z;
-  case AMDIL_DST_SWIZZLE_X__W:
-    return WRITE_MASK_X | WRITE_MASK_W;
-  case AMDIL_DST_SWIZZLE__Y_W:
-    return WRITE_MASK_Y | WRITE_MASK_W;
-  }
-}
-
 #include "AMDILGenCodeEmitter.inc"
 

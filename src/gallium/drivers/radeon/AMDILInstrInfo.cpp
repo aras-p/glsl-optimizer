@@ -10,19 +10,19 @@
 // This file contains the AMDIL implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
-#include "AMDILInstrInfo.h"
-#include "AMDILUtilityFunctions.h"
-
-#define GET_INSTRINFO_CTOR
-#include "AMDILGenInstrInfo.inc"
 
 #include "AMDILInstrInfo.h"
+#include "AMDIL.h"
+#include "AMDILISelLowering.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Instructions.h"
+
+#define GET_INSTRINFO_CTOR
+#include "AMDILGenInstrInfo.inc"
 
 using namespace llvm;
 
@@ -334,15 +334,11 @@ AMDILInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (MI != MBB.end()) {
     DL = MI->getDebugLoc();
   }
-  MachineInstr *nMI = BuildMI(MBB, MI, DL, get(Opc))
+  BuildMI(MBB, MI, DL, get(Opc))
     .addReg(SrcReg, getKillRegState(isKill))
     .addFrameIndex(FrameIndex)
     .addMemOperand(MMO)
     .addImm(0);
-  AMDILAS::InstrResEnc curRes;
-  curRes.bits.ResourceID 
-    = TM.getSubtargetImpl()->device()->getResourceID(AMDILDevice::SCRATCH_ID);
-  setAsmPrinterFlags(nMI, curRes);
 }
 
 void
@@ -418,16 +414,11 @@ AMDILInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (MI != MBB.end()) {
     DL = MI->getDebugLoc();
   }
-  MachineInstr* nMI = BuildMI(MBB, MI, DL, get(Opc))
+  BuildMI(MBB, MI, DL, get(Opc))
     .addReg(DestReg, RegState::Define)
     .addFrameIndex(FrameIndex)
     .addMemOperand(MMO)
     .addImm(0);
-  AMDILAS::InstrResEnc curRes;
-  curRes.bits.ResourceID 
-    = TM.getSubtargetImpl()->device()->getResourceID(AMDILDevice::SCRATCH_ID);
-  setAsmPrinterFlags(nMI, curRes);
-
 }
 MachineInstr *
 AMDILInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
@@ -474,65 +465,6 @@ AMDILInstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
                                            unsigned *LoadRegIndex) const {
   // TODO: Implement this function
   return 0;
-}
-
-bool
-AMDILInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
-                                        int64_t &Offset1,
-                                        int64_t &Offset2) const {
-  return false;
-  if (!Load1->isMachineOpcode() || !Load2->isMachineOpcode()) {
-    return false;
-  }
-  const MachineSDNode *mload1 = dyn_cast<MachineSDNode>(Load1);
-  const MachineSDNode *mload2 = dyn_cast<MachineSDNode>(Load2);
-  if (!mload1 || !mload2) {
-    return false;
-  }
-  if (mload1->memoperands_empty() ||
-      mload2->memoperands_empty()) {
-    return false;
-  }
-  MachineMemOperand *memOp1 = (*mload1->memoperands_begin());
-  MachineMemOperand *memOp2 = (*mload2->memoperands_begin());
-  const Value *mv1 = memOp1->getValue();
-  const Value *mv2 = memOp2->getValue();
-  if (!memOp1->isLoad() || !memOp2->isLoad()) {
-    return false;
-  }
-  if (getBasePointerValue(mv1) == getBasePointerValue(mv2)) {
-    if (isa<GetElementPtrInst>(mv1) && isa<GetElementPtrInst>(mv2)) {
-      const GetElementPtrInst *gep1 = dyn_cast<GetElementPtrInst>(mv1);
-      const GetElementPtrInst *gep2 = dyn_cast<GetElementPtrInst>(mv2);
-      if (!gep1 || !gep2) {
-        return false;
-      }
-      if (gep1->getNumOperands() != gep2->getNumOperands()) {
-        return false;
-      }
-      for (unsigned i = 0, e = gep1->getNumOperands() - 1; i < e; ++i) {
-        const Value *op1 = gep1->getOperand(i);
-        const Value *op2 = gep2->getOperand(i);
-        if (op1 != op2) {
-          // If any value except the last one is different, return false.
-          return false;
-        }
-      }
-      unsigned size = gep1->getNumOperands()-1;
-      if (!isa<ConstantInt>(gep1->getOperand(size))
-          || !isa<ConstantInt>(gep2->getOperand(size))) {
-        return false;
-      }
-      Offset1 = dyn_cast<ConstantInt>(gep1->getOperand(size))->getSExtValue();
-      Offset2 = dyn_cast<ConstantInt>(gep2->getOperand(size))->getSExtValue();
-      return true;
-    } else if (isa<Argument>(mv1) && isa<Argument>(mv2)) {
-      return false;
-    } else if (isa<GlobalValue>(mv1) && isa<GlobalValue>(mv2)) {
-      return false;
-    }
-  }
-  return false;
 }
 
 bool AMDILInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
@@ -584,4 +516,114 @@ bool
 AMDILInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   // TODO: Implement this function
   return true;
+}
+
+bool AMDILInstrInfo::isLoadInst(MachineInstr *MI) const {
+  if (strstr(getName(MI->getOpcode()), "LOADCONST")) {
+    return false;
+  }
+  return strstr(getName(MI->getOpcode()), "LOAD");
+}
+
+bool AMDILInstrInfo::isSWSExtLoadInst(MachineInstr *MI) const
+{
+switch (MI->getOpcode()) {
+    default:
+      break;
+      ExpandCaseToByteShortTypes(AMDIL::LOCALLOAD);
+      ExpandCaseToByteShortTypes(AMDIL::GLOBALLOAD);
+      ExpandCaseToByteShortTypes(AMDIL::REGIONLOAD);
+      ExpandCaseToByteShortTypes(AMDIL::PRIVATELOAD);
+      ExpandCaseToByteShortTypes(AMDIL::CPOOLLOAD);
+      ExpandCaseToByteShortTypes(AMDIL::CONSTANTLOAD);
+      return true;
+  };
+  return false;
+}
+
+bool AMDILInstrInfo::isExtLoadInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "EXTLOAD");
+}
+
+bool AMDILInstrInfo::isSExtLoadInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "SEXTLOAD");
+}
+
+bool AMDILInstrInfo::isAExtLoadInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "AEXTLOAD");
+}
+
+bool AMDILInstrInfo::isZExtLoadInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "ZEXTLOAD");
+}
+
+bool AMDILInstrInfo::isStoreInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "STORE");
+}
+
+bool AMDILInstrInfo::isTruncStoreInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "TRUNCSTORE");
+}
+
+bool AMDILInstrInfo::isAtomicInst(MachineInstr *MI) const {
+  return strstr(getName(MI->getOpcode()), "ATOM");
+}
+
+bool AMDILInstrInfo::isVolatileInst(MachineInstr *MI) const {
+  if (!MI->memoperands_empty()) {
+    for (MachineInstr::mmo_iterator mob = MI->memoperands_begin(),
+        moe = MI->memoperands_end(); mob != moe; ++mob) {
+      // If there is a volatile mem operand, this is a volatile instruction.
+      if ((*mob)->isVolatile()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+bool AMDILInstrInfo::isGlobalInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "GLOBAL");
+}
+bool AMDILInstrInfo::isPrivateInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "PRIVATE");
+}
+bool AMDILInstrInfo::isConstantInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "CONSTANT")
+    || strstr(getName(MI->getOpcode()), "CPOOL");
+}
+bool AMDILInstrInfo::isRegionInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "REGION");
+}
+bool AMDILInstrInfo::isLocalInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "LOCAL");
+}
+bool AMDILInstrInfo::isImageInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "IMAGE");
+}
+bool AMDILInstrInfo::isAppendInst(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "APPEND");
+}
+bool AMDILInstrInfo::isRegionAtomic(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "ATOM_R");
+}
+bool AMDILInstrInfo::isLocalAtomic(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "ATOM_L");
+}
+bool AMDILInstrInfo::isGlobalAtomic(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "ATOM_G")
+    || isArenaAtomic(MI);
+}
+bool AMDILInstrInfo::isArenaAtomic(llvm::MachineInstr *MI) const
+{
+  return strstr(getName(MI->getOpcode()), "ATOM_A");
 }

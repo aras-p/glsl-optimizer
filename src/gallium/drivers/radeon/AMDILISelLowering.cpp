@@ -623,6 +623,48 @@ translateToOpcode(uint64_t CCCode, unsigned int regClass)
   assert(0 && "Unknown opcode retrieved");
   return 0;
 }
+
+/// Helper function used by LowerFormalArguments
+static const TargetRegisterClass*
+getRegClassFromType(unsigned int type) {
+  switch (type) {
+  default:
+    assert(0 && "Passed in type does not match any register classes.");
+  case MVT::i8:
+    return &AMDIL::GPRI8RegClass;
+  case MVT::i16:
+    return &AMDIL::GPRI16RegClass;
+  case MVT::i32:
+    return &AMDIL::GPRI32RegClass;
+  case MVT::f32:
+    return &AMDIL::GPRF32RegClass;
+  case MVT::i64:
+    return &AMDIL::GPRI64RegClass;
+  case MVT::f64:
+    return &AMDIL::GPRF64RegClass;
+  case MVT::v4f32:
+    return &AMDIL::GPRV4F32RegClass;
+  case MVT::v4i8:
+    return &AMDIL::GPRV4I8RegClass;
+  case MVT::v4i16:
+    return &AMDIL::GPRV4I16RegClass;
+  case MVT::v4i32:
+    return &AMDIL::GPRV4I32RegClass;
+  case MVT::v2f32:
+    return &AMDIL::GPRV2F32RegClass;
+  case MVT::v2i8:
+    return &AMDIL::GPRV2I8RegClass;
+  case MVT::v2i16:
+    return &AMDIL::GPRV2I16RegClass;
+  case MVT::v2i32:
+    return &AMDIL::GPRV2I32RegClass;
+  case MVT::v2f64:
+    return &AMDIL::GPRV2F64RegClass;
+  case MVT::v2i64:
+    return &AMDIL::GPRV2I64RegClass;
+  }
+}
+
 SDValue
 AMDILTargetLowering::LowerMemArgument(
     SDValue Chain,
@@ -2189,6 +2231,7 @@ AMDILTargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const
   SDValue Result = DAG.getTargetExternalSymbol(Sym, MVT::i32);
   return Result;
 }
+
 /// LowerFORMAL_ARGUMENTS - transform physical registers into
 /// virtual registers and generate load operations for
 /// arguments places on the stack.
@@ -3843,7 +3886,6 @@ SDValue
 AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
 {
   EVT VT = Op.getValueType();
-  //printSDValue(Op, 1);
   SDValue Nodes1;
   SDValue second;
   SDValue third;
@@ -3965,7 +4007,6 @@ AMDILTargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
     SelectionDAG &DAG) const
 {
   EVT VT = Op.getValueType();
-  //printSDValue(Op, 1);
   const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Op.getOperand(1));
   uint64_t swizzleNum = 0;
   DebugLoc DL = Op.getDebugLoc();
@@ -4782,7 +4823,7 @@ uint32_t
 AMDILTargetLowering::genVReg(uint32_t regType) const
 {
   return mBB->getParent()->getRegInfo().createVirtualRegister(
-      getRegClassFromID(regType));
+      getTargetMachine().getRegisterInfo()->getRegClass(regType));
 }
 
 MachineInstrBuilder
