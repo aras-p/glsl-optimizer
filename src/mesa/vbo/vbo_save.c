@@ -49,6 +49,9 @@ static void vbo_save_callback_init( struct gl_context *ctx )
 
 
 
+/**
+ * Called at context creation time.
+ */
 void vbo_save_init( struct gl_context *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);

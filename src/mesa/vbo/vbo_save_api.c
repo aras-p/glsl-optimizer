@@ -1506,6 +1506,9 @@ vbo_print_vertex_list(struct gl_context *ctx, void *data)
 }
 
 
+/**
+ * Called during context creation/init.
+ */
 static void
 _save_current_init(struct gl_context *ctx)
 {
@@ -1529,7 +1532,7 @@ _save_current_init(struct gl_context *ctx)
 
 
 /**
- * Initialize the display list compiler
+ * Initialize the display list compiler.  Called during context creation.
  */
 void
 vbo_save_api_init(struct vbo_save_context *save)
