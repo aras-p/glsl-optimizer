@@ -96,6 +96,22 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       MI->eraseFromParent();
       break;
     }
+  case AMDIL::STORE_OUTPUT:
+    {
+      MachineBasicBlock::iterator I = *MI;
+      int64_t OutputIndex = MI->getOperand(2).getImm();
+      unsigned OutputReg = AMDIL::R600_TReg32RegClass.getRegister(OutputIndex);
+
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY), OutputReg)
+                  .addOperand(MI->getOperand(1));
+
+      MRI.replaceRegWith(MI->getOperand(0).getReg(), OutputReg);
+      if (!MRI.isLiveOut(OutputReg)) {
+        MRI.addLiveOut(OutputReg);
+      }
+      MI->eraseFromParent();
+      break;
+    }
   }
   return BB;
 }

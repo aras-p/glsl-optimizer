@@ -998,6 +998,13 @@ def LOAD_INPUT : AMDGPUShaderInst <
   [(set R600_Reg32:$dst, (int_R600_load_input imm:$src))]
 >;
 
+def STORE_OUTPUT: AMDGPUShaderInst <
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$src0, i32imm:$src1),
+  "STORE_OUTPUT $dst, $src0, $src1",
+  [(set R600_Reg32:$dst, (int_AMDGPU_store_output R600_Reg32:$src0, imm:$src1))]
+>;
+
 } // End usesCustomInserter = 1, isPseudo = 1
 
 } // End isCodeGenOnly = 1

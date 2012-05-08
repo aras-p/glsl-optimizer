@@ -31,8 +31,6 @@ namespace {
 
     void lowerEXPORT_REG_FAKE(MachineInstr &MI, MachineBasicBlock &MBB,
         MachineBasicBlock::iterator I);
-    bool lowerSTORE_OUTPUT(MachineInstr & MI, MachineBasicBlock &MBB,
-        MachineBasicBlock::iterator I);
 
   public:
     R600LowerShaderInstructionsPass(TargetMachine &tm) :
@@ -79,10 +77,6 @@ bool R600LowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         deleteInstr = true;
         break;
 
-      case AMDIL::STORE_OUTPUT:
-        deleteInstr = lowerSTORE_OUTPUT(MI, MBB, I);
-        break;
-
       }
 
       ++I;
@@ -94,25 +88,4 @@ bool R600LowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
   }
 
   return false;
-}
-
-bool R600LowerShaderInstructionsPass::lowerSTORE_OUTPUT(MachineInstr &MI,
-    MachineBasicBlock &MBB, MachineBasicBlock::iterator I)
-{
-  MachineOperand &valueOp = MI.getOperand(1);
-  MachineOperand &indexOp = MI.getOperand(2);
-  unsigned valueReg = valueOp.getReg();
-  int64_t outputIndex = indexOp.getImm();
-  const TargetRegisterClass * outputClass = TM.getRegisterInfo()->getRegClass(AMDIL::R600_TReg32RegClassID);
-  unsigned newRegister = outputClass->getRegister(outputIndex);
-
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::COPY),
-                  newRegister)
-                  .addReg(valueReg);
-
-  if (!MRI->isLiveOut(newRegister))
-    MRI->addLiveOut(newRegister);
-
-  return true;
-
 }

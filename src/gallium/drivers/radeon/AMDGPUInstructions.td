@@ -55,13 +55,6 @@ let isCodeGenOnly = 1 in {
     "RESERVE_REG $dst, $src",
     [(set GPRF32:$dst, (int_AMDGPU_reserve_reg imm:$src))]
   >;
-
-  def STORE_OUTPUT: AMDGPUShaderInst <
-    (outs GPRF32:$dst),
-    (ins GPRF32:$src0, i32imm:$src1),
-    "STORE_OUTPUT $dst, $src0, $src1",
-    [(set GPRF32:$dst, (int_AMDGPU_store_output GPRF32:$src0, imm:$src1))]
-  >;
 }
 
 /* Generic helper patterns for intrinsics */
