@@ -511,6 +511,9 @@ public:
    bool opt_algebraic();
    bool opt_cse();
    bool opt_cse_local(fs_bblock *block, exec_list *aeb);
+   bool opt_copy_propagate();
+   bool opt_copy_propagate_local(void *mem_ctx, fs_bblock *block,
+				 exec_list *acp);
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
