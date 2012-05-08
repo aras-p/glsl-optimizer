@@ -210,6 +210,18 @@ brw_blorp_framebuffer(struct intel_context *intel,
    return mask;
 }
 
+
+/**
+ * Enum to specify the order of arguments in a sampler message
+ */
+enum sampler_message_arg
+{
+   SAMPLER_MESSAGE_ARG_U_FLOAT,
+   SAMPLER_MESSAGE_ARG_V_FLOAT,
+   SAMPLER_MESSAGE_ARG_U_INT,
+   SAMPLER_MESSAGE_ARG_V_INT,
+};
+
 /**
  * Generator for WM programs used in BLORP blits.
  *
@@ -344,8 +356,9 @@ private:
    void single_to_blend();
    void sample();
    void texel_fetch();
-   void texture_lookup(GLuint msg_type,
-                       struct brw_reg mrf_u, struct brw_reg mrf_v);
+   void expand_to_32_bits(struct brw_reg src, struct brw_reg dst);
+   void texture_lookup(GLuint msg_type, const sampler_message_arg *args,
+                       int num_args);
    void render_target_write();
 
    void *mem_ctx;
@@ -398,12 +411,8 @@ private:
    struct brw_reg t1;
    struct brw_reg t2;
 
-   /* M2-3: u coordinate */
+   /* MRF used for sampling and render target writes */
    GLuint base_mrf;
-   struct brw_reg mrf_u_float;
-
-   /* M4-5: v coordinate */
-   struct brw_reg mrf_v_float;
 };
 
 brw_blorp_blit_program::brw_blorp_blit_program(
@@ -593,8 +602,6 @@ brw_blorp_blit_program::alloc_regs()
 
    int mrf = 2;
    this->base_mrf = mrf;
-   this->mrf_u_float = vec16(brw_message_reg(mrf)); mrf += 2;
-   this->mrf_v_float = vec16(brw_message_reg(mrf)); mrf += 2;
 }
 
 /* In the code that follows, X and Y can be used to quickly refer to the
@@ -898,7 +905,12 @@ brw_blorp_blit_program::single_to_blend()
 void
 brw_blorp_blit_program::sample()
 {
-   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE, mrf_u_float, mrf_v_float);
+   static const sampler_message_arg args[2] = {
+      SAMPLER_MESSAGE_ARG_U_FLOAT,
+      SAMPLER_MESSAGE_ARG_V_FLOAT
+   };
+
+   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE, args, ARRAY_SIZE(args));
 }
 
 /**
@@ -908,37 +920,60 @@ brw_blorp_blit_program::sample()
 void
 brw_blorp_blit_program::texel_fetch()
 {
+   static const sampler_message_arg args[2] = {
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_V_INT
+   };
+
    assert(s_is_zero);
-   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
-                  retype(mrf_u_float, BRW_REGISTER_TYPE_UD),
-                  retype(mrf_v_float, BRW_REGISTER_TYPE_UD));
+   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, args, ARRAY_SIZE(args));
+}
+
+void
+brw_blorp_blit_program::expand_to_32_bits(struct brw_reg src,
+                                          struct brw_reg dst)
+{
+   brw_MOV(&func, vec8(dst), vec8(src));
+   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
+   brw_MOV(&func, offset(vec8(dst), 1), suboffset(vec8(src), 8));
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 void
 brw_blorp_blit_program::texture_lookup(GLuint msg_type,
-                                       struct brw_reg mrf_u,
-                                       struct brw_reg mrf_v)
+                                       const sampler_message_arg *args,
+                                       int num_args)
 {
-   /* Expand X and Y coordinates from 16 bits to 32 bits. */
-   brw_MOV(&func, vec8(mrf_u), vec8(X));
-   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
-   brw_MOV(&func, offset(vec8(mrf_u), 1), suboffset(vec8(X), 8));
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
-   brw_MOV(&func, vec8(mrf_v), vec8(Y));
-   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
-   brw_MOV(&func, offset(vec8(mrf_v), 1), suboffset(vec8(Y), 8));
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
+   struct brw_reg mrf =
+      retype(vec16(brw_message_reg(base_mrf)), BRW_REGISTER_TYPE_UD);
+   for (int arg = 0; arg < num_args; ++arg) {
+      switch (args[arg]) {
+      case SAMPLER_MESSAGE_ARG_U_FLOAT:
+         expand_to_32_bits(X, retype(mrf, BRW_REGISTER_TYPE_F));
+         break;
+      case SAMPLER_MESSAGE_ARG_V_FLOAT:
+         expand_to_32_bits(Y, retype(mrf, BRW_REGISTER_TYPE_F));
+         break;
+      case SAMPLER_MESSAGE_ARG_U_INT:
+         expand_to_32_bits(X, mrf);
+         break;
+      case SAMPLER_MESSAGE_ARG_V_INT:
+         expand_to_32_bits(Y, mrf);
+         break;
+      }
+      mrf.nr += 2;
+   }
 
    brw_SAMPLE(&func,
               retype(Rdata, BRW_REGISTER_TYPE_UW) /* dest */,
               base_mrf /* msg_reg_nr */,
-              vec8(mrf_u) /* src0 */,
+              brw_message_reg(base_mrf) /* src0 */,
               BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
-              0 /* sampler -- ignored for SAMPLE_LD message */,
+              0 /* sampler */,
               WRITEMASK_XYZW,
               msg_type,
               8 /* response_length.  TODO: should be smaller for non-RGBA formats? */,
-              4 /* msg_length */,
+              mrf.nr - base_mrf /* msg_length */,
               0 /* header_present */,
               BRW_SAMPLER_SIMD_MODE_SIMD16,
               BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
