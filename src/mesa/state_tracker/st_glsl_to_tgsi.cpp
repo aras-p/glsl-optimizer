@@ -1762,6 +1762,12 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       else
          emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
+   case ir_unop_bitcast_f2i:
+   case ir_unop_bitcast_f2u:
+   case ir_unop_bitcast_i2f:
+   case ir_unop_bitcast_u2f:
+      result_src = op[0];
+      break;
    case ir_unop_f2b:
       emit(ir, TGSI_OPCODE_SNE, result_dst, op[0], st_src_reg_for_float(0.0));
       break;

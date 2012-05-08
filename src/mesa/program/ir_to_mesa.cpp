@@ -1407,6 +1407,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit(ir, OPCODE_SNE, result_dst,
 			  op[0], src_reg_for_float(0.0));
       break;
+   case ir_unop_bitcast_f2i: // Ignore these 4, they can't happen here anyway
+   case ir_unop_bitcast_f2u:
+   case ir_unop_bitcast_i2f:
+   case ir_unop_bitcast_u2f:
+      break;
    case ir_unop_trunc:
       emit(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
