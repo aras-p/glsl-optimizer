@@ -40,12 +40,6 @@ public:
   // always be able to get register info as well (through this method).
   const AMDILRegisterInfo &getRegisterInfo() const;
 
-  // Return true if the instruction is a register to register move and leave the
-  // source and dest operands in the passed parameters.
-  bool isMoveInstr(const MachineInstr &MI, unsigned int &SrcReg,
-                   unsigned int &DstReg, unsigned int &SrcSubIdx,
-                   unsigned int &DstSubIdx) const;
-
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
                              unsigned &DstReg, unsigned &SubIdx) const;
 
@@ -62,29 +56,10 @@ public:
                              const MachineMemOperand *&MMO,
                              int &FrameIndex) const;
 
-
-#if 0
-  void reMaterialize(MachineBasicBlock &MBB,
-                     MachineBasicBlock::iterator MI,
-                     unsigned DestReg, unsigned SubIdx,
-                     const MachineInstr *Orig,
-                     const TargetRegisterInfo *TRI) const;
-  MachineInstr *duplicate(MachineInstr *Orig,
-                          MachineFunction &MF) const;
-#endif
   MachineInstr *
   convertToThreeAddress(MachineFunction::iterator &MFI,
                         MachineBasicBlock::iterator &MBBI,
                         LiveVariables *LV) const;
-#if 0
-  MachineInstr *commuteInstruction(MachineInstr *MI,
-                                   bool NewMI = false) const;
-  bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
-                             unsigned &SrcOpIdx2) const;
-  bool produceSameValue(const MachineInstr *MI0,
-                        const MachineInstr *MI1) const;
-
-#endif
 
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
@@ -99,12 +74,6 @@ public:
                const SmallVectorImpl<MachineOperand> &Cond,
                DebugLoc DL) const;
 
-  bool copyRegToReg(MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator I,
-                    unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *DestRC,
-                    const TargetRegisterClass *SrcRC,
-                    DebugLoc DL) const;
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
@@ -151,23 +120,12 @@ public:
   void insertNoop(MachineBasicBlock &MBB,
                   MachineBasicBlock::iterator MI) const;
   bool isPredicated(const MachineInstr *MI) const;
-#if 0
-  bool isUnpredicatedTerminator(const MachineInstr *MI) const;
-  bool PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const;
-#endif
   bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
                          const SmallVectorImpl<MachineOperand> &Pred2) const;
   bool DefinesPredicate(MachineInstr *MI,
                         std::vector<MachineOperand> &Pred) const;
   bool isPredicable(MachineInstr *MI) const;
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
-  unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
-#if 0
-  unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
-  unsigned getInlineAsmLength(const char *Str,
-                              const MCAsmInfo &MAI) const;
-#endif
   };
 
 }

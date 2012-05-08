@@ -36,28 +36,6 @@ const AMDILRegisterInfo &AMDILInstrInfo::getRegisterInfo() const {
   return RI;
 }
 
-/// Return true if the instruction is a register to register move and leave the
-/// source and dest operands in the passed parameters.
-bool AMDILInstrInfo::isMoveInstr(const MachineInstr &MI, unsigned int &SrcReg,
-                                 unsigned int &DstReg, unsigned int &SrcSubIdx,
-                                 unsigned int &DstSubIdx) const {
-  // FIXME: we should look for:
-  //    add with 0
-  //assert(0 && "is Move Instruction has not been implemented yet!");
-  //return true;
-  if (!isMove(MI.getOpcode())) {
-    return false;
-  }
-  if (!MI.getOperand(0).isReg() || !MI.getOperand(1).isReg()) {
-    return false;
-  }
-  SrcReg = MI.getOperand(1).getReg();
-  DstReg = MI.getOperand(0).getReg();
-  DstSubIdx = 0;
-  SrcSubIdx = 0;
-  return true;
-}
-
 bool AMDILInstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
                                            unsigned &SrcReg, unsigned &DstReg,
                                            unsigned &SubIdx) const {
@@ -99,22 +77,7 @@ bool AMDILInstrInfo::hasStoreFromStackSlot(const MachineInstr *MI,
 // TODO: Implement this function
   return false;
 }
-#if 0
-void
-AMDILInstrInfo::reMaterialize(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator MI,
-                              unsigned DestReg, unsigned SubIdx,
-                             const MachineInstr *Orig,
-                             const TargetRegisterInfo *TRI) const {
-// TODO: Implement this function
-}
 
-MachineInst AMDILInstrInfo::duplicate(MachineInstr *Orig,
-                                      MachineFunction &MF) const {
-// TODO: Implement this function
-  return NULL;
-}
-#endif
 MachineInstr *
 AMDILInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                                       MachineBasicBlock::iterator &MBBI,
@@ -122,25 +85,6 @@ AMDILInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 // TODO: Implement this function
   return NULL;
 }
-#if 0
-MachineInst AMDILInstrInfo::commuteInstruction(MachineInstr *MI,
-                                               bool NewMI = false) const {
-// TODO: Implement this function
-  return NULL;
-}
-bool
-AMDILInstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
-                                     unsigned &SrcOpIdx2) const
-{
-// TODO: Implement this function
-}
-bool
-AMDILInstrInfo::produceSameValue(const MachineInstr *MI0,
-                                const MachineInstr *MI1) const
-{
-// TODO: Implement this function
-}
-#endif
 bool AMDILInstrInfo::getNextBranchInstr(MachineBasicBlock::iterator &iter,
                                         MachineBasicBlock &MBB) const {
   while (iter != MBB.end()) {
@@ -299,43 +243,6 @@ MachineBasicBlock::iterator skipFlowControl(MachineBasicBlock *MBB) {
   return MBB->end();
 }
 
-bool
-AMDILInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator I,
-                             unsigned DestReg, unsigned SrcReg,
-                             const TargetRegisterClass *DestRC,
-                             const TargetRegisterClass *SrcRC,
-                             DebugLoc DL) const {
-  // If we are adding to the end of a basic block we can safely assume that the
-  // move is caused by a PHI node since all move instructions that are non-PHI
-  // have already been inserted into the basic blocks Therefor we call the skip
-  // flow control instruction to move the iterator before the flow control
-  // instructions and put the move instruction there.
-  bool phi = (DestReg < 1025) || (SrcReg < 1025);
-  int movInst = phi ? getMoveInstFromID(DestRC->getID())
-                    : getPHIMoveInstFromID(DestRC->getID());
-  
-  MachineBasicBlock::iterator iTemp = (I == MBB.end()) ? skipFlowControl(&MBB)
-                                                       : I;
-  if (DestRC != SrcRC) {
-    //int convInst;
-    size_t dSize = DestRC->getSize();
-    size_t sSize = SrcRC->getSize();
-    if (dSize > sSize) {
-      // Elements are going to get duplicated.
-      BuildMI(MBB, iTemp, DL, get(movInst), DestReg).addReg(SrcReg);
-    } else if (dSize == sSize) {
-      // Direct copy, conversions are not handled.
-      BuildMI(MBB, iTemp, DL, get(movInst), DestReg).addReg(SrcReg);
-    } else if (dSize < sSize) {
-      // Elements are going to get dropped.
-      BuildMI(MBB, iTemp, DL, get(movInst), DestReg).addReg(SrcReg);
-    }
-  } else {
-    BuildMI( MBB, iTemp, DL, get(movInst), DestReg).addReg(SrcReg);
-  }
-  return true;
-}
 void
 AMDILInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI, DebugLoc DL,
@@ -654,16 +561,6 @@ bool AMDILInstrInfo::isPredicated(const MachineInstr *MI) const {
   // TODO: Implement this function
   return false;
 }
-#if 0
-bool AMDILInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  // TODO: Implement this function
-}
-
-bool AMDILInstrInfo::PredicateInstruction(MachineInstr *MI,
-        const SmallVectorImpl<MachineOperand> &Pred) const {
-    // TODO: Implement this function
-}
-#endif
 bool
 AMDILInstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
                                   const SmallVectorImpl<MachineOperand> &Pred2)
@@ -688,22 +585,3 @@ AMDILInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   // TODO: Implement this function
   return true;
 }
-
-unsigned AMDILInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
-  // TODO: Implement this function
-  return 0;
-}
-
-#if 0
-unsigned
-AMDILInstrInfo::GetFunctionSizeInBytes(const MachineFunction &MF) const {
-  // TODO: Implement this function
-  return 0;
-}
-
-unsigned AMDILInstrInfo::getInlineAsmLength(const char *Str,
-                                            const MCAsmInfo &MAI) const {
-  // TODO: Implement this function
-  return 0;
-}
-#endif
