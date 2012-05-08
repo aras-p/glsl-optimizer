@@ -257,6 +257,10 @@ gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params);
 
 void
+gen6_blorp_emit_state_base_address(struct brw_context *brw,
+                                   const brw_blorp_params *params);
+
+void
 gen6_blorp_emit_vertices(struct brw_context *brw,
                          const brw_blorp_params *params);
 
