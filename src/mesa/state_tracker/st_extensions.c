@@ -592,6 +592,10 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.S3_s3tc = GL_FALSE;
    }
 
+   if (ctx->Const.NativeIntegers) {
+      ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
+   }
+
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,
                                 PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
