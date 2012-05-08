@@ -42,12 +42,6 @@ let isCodeGenOnly = 1 in {
     [(int_AMDGPU_export_reg GPRF32:$src)]
   >;
 
-  def LOAD_INPUT : AMDGPUShaderInst <
-    (outs GPRF32:$dst),
-    (ins i32imm:$src),
-    "LOAD_INPUT $dst, $src",
-    [] >;
-
   def MASK_WRITE : AMDGPUShaderInst <
     (outs),
     (ins GPRF32:$src),

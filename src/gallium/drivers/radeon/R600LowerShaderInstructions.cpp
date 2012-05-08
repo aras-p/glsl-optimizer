@@ -32,7 +32,6 @@ namespace {
 
     void lowerEXPORT_REG_FAKE(MachineInstr &MI, MachineBasicBlock &MBB,
         MachineBasicBlock::iterator I);
-    void lowerLOAD_INPUT(MachineInstr & MI);
     bool lowerSTORE_OUTPUT(MachineInstr & MI, MachineBasicBlock &MBB,
         MachineBasicBlock::iterator I);
 
@@ -81,11 +80,6 @@ bool R600LowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         deleteInstr = true;
         break;
 
-      case AMDIL::LOAD_INPUT:
-        lowerLOAD_INPUT(MI);
-        deleteInstr = true;
-        break;
-
       case AMDIL::STORE_OUTPUT:
         deleteInstr = lowerSTORE_OUTPUT(MI, MBB, I);
         break;
@@ -101,24 +95,6 @@ bool R600LowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
   }
 
   return false;
-}
-
-/* The goal of this function is to replace the virutal destination register of
- * a LOAD_INPUT instruction with the correct physical register that will.
- *
- * XXX: I don't think this is the right way things assign physical registers,
- * but I'm not sure of another way to do this.
- */
-void R600LowerShaderInstructionsPass::lowerLOAD_INPUT(MachineInstr &MI)
-{
-  MachineOperand &dst = MI.getOperand(0);
-  MachineOperand &arg = MI.getOperand(1);
-  int64_t inputIndex = arg.getImm();
-  const TargetRegisterClass * inputClass = TM.getRegisterInfo()->getRegClass(AMDIL::R600_TReg32RegClassID);
-  unsigned newRegister = inputClass->getRegister(inputIndex);
-  unsigned dstReg = dst.getReg();
-
-  AMDGPU::utilAddLiveIn(MI.getParent()->getParent(), *MRI, TM.getInstrInfo(), newRegister, dstReg);
 }
 
 bool R600LowerShaderInstructionsPass::lowerSTORE_OUTPUT(MachineInstr &MI,

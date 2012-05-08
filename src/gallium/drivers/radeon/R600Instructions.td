@@ -991,6 +991,13 @@ def LOCAL_SIZE_Y : R600PreloadInst <"LOCAL_SIZE_Y",
 def LOCAL_SIZE_Z : R600PreloadInst <"LOCAL_SIZE_Z",
                                     int_r600_read_local_size_z>;
 
+def LOAD_INPUT : AMDGPUShaderInst <
+  (outs R600_Reg32:$dst),
+  (ins i32imm:$src),
+  "LOAD_INPUT $dst, $src",
+  [(set R600_Reg32:$dst, (int_R600_load_input imm:$src))]
+>;
+
 } // End usesCustomInserter = 1, isPseudo = 1
 
 } // End isCodeGenOnly = 1
@@ -1031,13 +1038,5 @@ def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 7, sel_w>;
 
 
 include "R600ShaderPatterns.td"
-
-// We need this pattern to avoid having real registers in PHI nodes.
-// For some reason this pattern only works when it comes after the other
-// instruction defs.
-def : Pat <
-  (int_R600_load_input imm:$src),
-  (LOAD_INPUT imm:$src)
->;
 
 } // End isR600toCayman Predicate

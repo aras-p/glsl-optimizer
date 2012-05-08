@@ -88,8 +88,15 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDIL::LOCAL_SIZE_Z:
     lowerImplicitParameter(MI, *BB, MRI, 8);
     break;
+  case AMDIL::LOAD_INPUT:
+    {
+      int64_t RegIndex = MI->getOperand(1).getImm();
+      addLiveIn(MI, MF, MRI, TII,
+                AMDIL::R600_TReg32RegClass.getRegister(RegIndex));
+      MI->eraseFromParent();
+      break;
+    }
   }
-  MI->eraseFromParent();
   return BB;
 }
 
