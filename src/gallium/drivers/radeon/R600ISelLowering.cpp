@@ -13,6 +13,7 @@
 
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
+#include "R600MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
@@ -112,7 +113,19 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       MI->eraseFromParent();
       break;
     }
+
+  case AMDIL::RESERVE_REG:
+    {
+      R600MachineFunctionInfo * MFI = MF->getInfo<R600MachineFunctionInfo>();
+      int64_t ReservedIndex = MI->getOperand(0).getImm();
+      unsigned ReservedReg =
+                          AMDIL::R600_TReg32RegClass.getRegister(ReservedIndex);
+      MFI->ReservedRegs.push_back(ReservedReg);
+      MI->eraseFromParent();
+      break;
+    }
   }
+
   return BB;
 }
 

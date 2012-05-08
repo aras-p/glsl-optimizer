@@ -72,7 +72,6 @@ bool R600LowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 
       default: break;
 
-      case AMDIL::RESERVE_REG:
       case AMDIL::EXPORT_REG:
         deleteInstr = true;
         break;

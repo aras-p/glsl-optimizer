@@ -48,13 +48,6 @@ let isCodeGenOnly = 1 in {
     "MASK_WRITE $src",
     []
   >;
-
-  def RESERVE_REG : AMDGPUShaderInst <
-    (outs GPRF32:$dst),
-    (ins i32imm:$src),
-    "RESERVE_REG $dst, $src",
-    [(set GPRF32:$dst, (int_AMDGPU_reserve_reg imm:$src))]
-  >;
 }
 
 /* Generic helper patterns for intrinsics */

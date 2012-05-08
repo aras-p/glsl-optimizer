@@ -51,6 +51,7 @@ CPP_SOURCES := \
 	R600KernelParameters.cpp	\
 	R600LowerInstructions.cpp	\
 	R600LowerShaderInstructions.cpp	\
+	R600MachineFunctionInfo.cpp	\
 	R600RegisterInfo.cpp		\
 	SIAssignInterpRegs.cpp		\
 	SICodeEmitter.cpp		\

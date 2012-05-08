@@ -93,17 +93,13 @@ static void llvm_emit_prologue(struct lp_build_tgsi_context * bld_base)
 	for (i = 0; i < ctx->reserved_reg_count; i++) {
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-			LLVMValueRef reg;
 			LLVMValueRef reg_index = lp_build_const_int32(
 					base->gallivm,
 					radeon_llvm_reg_index_soa(i, chan));
-			reg = lp_build_intrinsic_unary(base->gallivm->builder,
-						"llvm.AMDGPU.reserve.reg",
-						base->elem_type, reg_index);
 			lp_build_intrinsic_unary(base->gallivm->builder,
-				"llvm.AMDGPU.export.reg",
+				"llvm.AMDGPU.reserve.reg",
 				LLVMVoidTypeInContext(base->gallivm->context),
-				reg);
+				reg_index);
 		}
 	}
 }

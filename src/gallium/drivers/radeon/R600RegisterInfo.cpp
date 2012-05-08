@@ -13,6 +13,7 @@
 
 #include "R600RegisterInfo.h"
 #include "AMDGPUTargetMachine.h"
+#include "R600MachineFunctionInfo.h"
 
 using namespace llvm;
 
@@ -26,6 +27,8 @@ R600RegisterInfo::R600RegisterInfo(AMDGPUTargetMachine &tm,
 BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const
 {
   BitVector Reserved(getNumRegs());
+  const R600MachineFunctionInfo * MFI = MF.getInfo<R600MachineFunctionInfo>();
+
   Reserved.set(AMDIL::ZERO);
   Reserved.set(AMDIL::HALF);
   Reserved.set(AMDIL::ONE);
@@ -40,19 +43,11 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const
     Reserved.set(*I);
   }
 
-  for (MachineFunction::const_iterator BB = MF.begin(),
-                                 BB_E = MF.end(); BB != BB_E; ++BB) {
-    const MachineBasicBlock &MBB = *BB;
-    for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
-                                                                  I != E; ++I) {
-      const MachineInstr &MI = *I;
-      if (MI.getOpcode() == AMDIL::RESERVE_REG) {
-        if (!TargetRegisterInfo::isVirtualRegister(MI.getOperand(0).getReg())) {
-          Reserved.set(MI.getOperand(0).getReg());
-        }
-      }
-    }
+  for (std::vector<unsigned>::const_iterator I = MFI->ReservedRegs.begin(),
+                                    E = MFI->ReservedRegs.end(); I != E; ++I) {
+    Reserved.set(*I);
   }
+
   return Reserved;
 }
 
