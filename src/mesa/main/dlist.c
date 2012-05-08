@@ -134,7 +134,7 @@ do {						\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
-      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glBegin/End" );	\
       return retval;							\
    }									\
 } while (0)
@@ -149,7 +149,7 @@ do {									\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
-      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glBegin/End" );	\
       return;								\
    }									\
 } while (0)
@@ -5698,7 +5698,7 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
    case GL_FRONT_AND_BACK:
       break;
    default:
-      _mesa_compile_error(ctx, GL_INVALID_ENUM, "material(face)");
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glMaterial(face)");
       return;
    }
 
@@ -5717,7 +5717,7 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       args = 3;
       break;
    default:
-      _mesa_compile_error(ctx, GL_INVALID_ENUM, "material(pname)");
+      _mesa_compile_error(ctx, GL_INVALID_ENUM, "glMaterial(pname)");
       return;
    }
    
