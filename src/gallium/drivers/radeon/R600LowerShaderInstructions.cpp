@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
-#include "AMDGPULowerShaderInstructions.h"
 #include "AMDGPUUtil.h"
 #include "AMDIL.h"
 #include "AMDILInstrInfo.h"
@@ -23,12 +22,12 @@
 using namespace llvm;
 
 namespace {
-  class R600LowerShaderInstructionsPass : public MachineFunctionPass,
-        public AMDGPULowerShaderInstructionsPass {
+  class R600LowerShaderInstructionsPass : public MachineFunctionPass {
 
   private:
     static char ID;
     TargetMachine &TM;
+    MachineRegisterInfo * MRI;
 
     void lowerEXPORT_REG_FAKE(MachineInstr &MI, MachineBasicBlock &MBB,
         MachineBasicBlock::iterator I);

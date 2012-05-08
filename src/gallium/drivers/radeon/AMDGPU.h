@@ -33,7 +33,6 @@ namespace llvm {
     FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 
     FunctionPass *createAMDGPULowerInstructionsPass(TargetMachine &tm);
-    FunctionPass *createAMDGPULowerShaderInstructionsPass(TargetMachine &tm);
 
     FunctionPass *createAMDGPUDelimitInstGroupsPass(TargetMachine &tm);
 

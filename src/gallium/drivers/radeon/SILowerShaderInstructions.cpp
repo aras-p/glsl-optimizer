@@ -13,7 +13,6 @@
 
 
 #include "AMDGPU.h"
-#include "AMDGPULowerShaderInstructions.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -21,12 +20,12 @@
 using namespace llvm;
 
 namespace {
-  class SILowerShaderInstructionsPass : public MachineFunctionPass,
-      public AMDGPULowerShaderInstructionsPass {
+  class SILowerShaderInstructionsPass : public MachineFunctionPass {
 
   private:
     static char ID;
     TargetMachine &TM;
+    MachineRegisterInfo * MRI;
 
   public:
     SILowerShaderInstructionsPass(TargetMachine &tm) :

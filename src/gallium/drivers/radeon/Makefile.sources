@@ -42,7 +42,6 @@ CPP_SOURCES := \
 	AMDGPUISelLowering.cpp		\
 	AMDGPUConvertToISA.cpp		\
 	AMDGPULowerInstructions.cpp		\
-	AMDGPULowerShaderInstructions.cpp	\
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
 	AMDGPUUtil.cpp			\
