@@ -5676,14 +5676,22 @@ save_EdgeFlag(GLboolean x)
    save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? (GLfloat)1.0 : (GLfloat)0.0);
 }
 
-static inline GLboolean compare4fv( const GLfloat *a,
-                                    const GLfloat *b,
-                                    GLuint count )
+
+/**
+ * Compare 'count' elements of vectors 'a' and 'b'.
+ * \return GL_TRUE if equal, GL_FALSE if different.
+ */
+static inline GLboolean
+compare_vec(const GLfloat *a, const GLfloat *b, GLuint count)
 {
    return memcmp( a, b, count * sizeof(GLfloat) ) == 0;
 }
-                              
 
+
+/**
+ * This glMaterial function is used for glMaterial calls that are outside
+ * a glBegin/End pair.  For glMaterial inside glBegin/End, see the VBO code.
+ */
 static void GLAPIENTRY
 save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
 {
@@ -5734,7 +5742,8 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
    for (i = 0; i < MAT_ATTRIB_MAX; i++) {
       if (bitmask & (1 << i)) {
          if (ctx->ListState.ActiveMaterialSize[i] == args &&
-             compare4fv(ctx->ListState.CurrentMaterial[i], param, args)) {
+             compare_vec(ctx->ListState.CurrentMaterial[i], param, args)) {
+            /* no change in material value */
             bitmask &= ~(1 << i);
          }
          else {
@@ -5744,8 +5753,7 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       }
    }
 
-   /* If this call has effect, return early:
-    */
+   /* If this call has no effect, return early */
    if (bitmask == 0)
       return;
 
