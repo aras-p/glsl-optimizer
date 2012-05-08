@@ -85,6 +85,11 @@ public:
    bool map_stencil_as_y_tiled;
 
    unsigned num_samples;
+
+   /* Setting this flag indicates that the surface should be set up in
+    * ARYSPC_LOD0 mode.  Ignored prior to Gen7.
+    */
+   bool array_spacing_lod0;
 };
 
 

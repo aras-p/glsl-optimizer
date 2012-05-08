@@ -73,7 +73,8 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint height0,
 			      GLuint depth0,
 			      bool for_region,
-                              GLuint num_samples)
+                              GLuint num_samples,
+                              bool msaa_is_interleaved)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
@@ -95,7 +96,13 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
    mt->num_samples = num_samples;
    mt->compressed = compress_byte ? 1 : 0;
+   mt->msaa_is_interleaved = msaa_is_interleaved;
    mt->refcount = 1; 
+
+   /* array_spacing_lod0 is only used for non-interleaved MSAA surfaces.
+    * TODO: can we use it elsewhere?
+    */
+   mt->array_spacing_lod0 = num_samples > 0 && !msaa_is_interleaved;
 
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
@@ -109,6 +116,8 @@ intel_miptree_create_internal(struct intel_context *intel,
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
 	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
+      /* MSAA stencil surfaces are always interleaved. */
+      bool msaa_is_interleaved = num_samples > 0;
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,
@@ -118,7 +127,8 @@ intel_miptree_create_internal(struct intel_context *intel,
                                             mt->height0,
                                             mt->depth0,
                                             true,
-                                            num_samples);
+                                            num_samples,
+                                            msaa_is_interleaved);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -165,7 +175,8 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint height0,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
-                     GLuint num_samples)
+                     GLuint num_samples,
+                     bool msaa_is_interleaved)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
@@ -207,7 +218,7 @@ intel_miptree_create(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
-				      false, num_samples);
+				      false, num_samples, msaa_is_interleaved);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -243,13 +254,39 @@ intel_miptree_create_for_region(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
-				      true, 0 /* num_samples */);
+				      true, 0 /* num_samples */,
+                                      false /* msaa_is_interleaved */);
    if (!mt)
       return mt;
 
    intel_region_reference(&mt->region, region);
 
    return mt;
+}
+
+/**
+ * Determine whether the MSAA surface being created should use an interleaved
+ * layout or a sliced layout, based on the chip generation and the surface
+ * type.
+ */
+static bool
+msaa_format_is_interleaved(struct intel_context *intel, gl_format format)
+{
+   /* Prior to Gen7, all surfaces used interleaved layout. */
+   if (intel->gen < 7)
+      return true;
+
+   /* In Gen7, interleaved layout is only used for depth and stencil
+    * buffers.
+    */
+   switch (_mesa_get_format_base_format(format)) {
+   case GL_DEPTH_COMPONENT:
+   case GL_STENCIL_INDEX:
+   case GL_DEPTH_STENCIL:
+      return true;
+   default:
+      return false;
+   }
 }
 
 struct intel_mipmap_tree*
@@ -260,55 +297,71 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       uint32_t num_samples)
 {
    struct intel_mipmap_tree *mt;
+   uint32_t depth = 1;
+   bool msaa_is_interleaved = false;
 
-   /* Adjust width/height for MSAA.
-    *
-    * In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
-    *
-    *     "Any of the other messages (sample*, LOD, load4) used with a
-    *      (4x) multisampled surface will in-effect sample a surface with
-    *      double the height and width as that indicated in the surface
-    *      state. Each pixel position on the original-sized surface is
-    *      replaced with a 2x2 of samples with the following arrangement:
-    *
-    *         sample 0 sample 2
-    *         sample 1 sample 3"
-    *
-    * Thus, when sampling from a multisampled texture, it behaves as though
-    * the layout in memory for (x,y,sample) is:
-    *
-    *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
-    *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
-    *
-    *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
-    *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
-    *
-    * However, the actual layout of multisampled data in memory is:
-    *
-    *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
-    *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
-    *
-    *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
-    *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
-    *
-    * This pattern repeats for each 2x2 pixel block.
-    *
-    * As a result, when calculating the size of our 4-sample buffer for
-    * an odd width or height, we have to align before scaling up because
-    * sample 3 is in that bottom right 2x2 block.
-    */
-   if (num_samples > 4) {
-      num_samples = 8;
-      width = ALIGN(width, 2) * 4;
-      height = ALIGN(height, 2) * 2;
-   } else if (num_samples > 0) {
-      num_samples = 4;
-      width = ALIGN(width, 2) * 2;
-      height = ALIGN(height, 2) * 2;
+   if (num_samples > 0) {
+      /* Adjust width/height/depth for MSAA */
+      msaa_is_interleaved = msaa_format_is_interleaved(intel, format);
+      if (msaa_is_interleaved) {
+         /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
+          *
+          *     "Any of the other messages (sample*, LOD, load4) used with a
+          *      (4x) multisampled surface will in-effect sample a surface with
+          *      double the height and width as that indicated in the surface
+          *      state. Each pixel position on the original-sized surface is
+          *      replaced with a 2x2 of samples with the following arrangement:
+          *
+          *         sample 0 sample 2
+          *         sample 1 sample 3"
+          *
+          * Thus, when sampling from a multisampled texture, it behaves as
+          * though the layout in memory for (x,y,sample) is:
+          *
+          *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
+          *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
+          *
+          *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
+          *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
+          *
+          * However, the actual layout of multisampled data in memory is:
+          *
+          *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
+          *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
+          *
+          *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
+          *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
+          *
+          * This pattern repeats for each 2x2 pixel block.
+          *
+          * As a result, when calculating the size of our 4-sample buffer for
+          * an odd width or height, we have to align before scaling up because
+          * sample 3 is in that bottom right 2x2 block.
+          */
+         switch (num_samples) {
+         case 4:
+            width = ALIGN(width, 2) * 2;
+            height = ALIGN(height, 2) * 2;
+            break;
+         case 8:
+            width = ALIGN(width, 2) * 4;
+            height = ALIGN(height, 2) * 2;
+            break;
+         default:
+            /* num_samples should already have been quantized to 0, 4, or
+             * 8.
+             */
+            assert(false);
+         }
+      } else {
+         /* Non-interleaved */
+         depth = num_samples;
+      }
    }
 
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
-			     width, height, 1, true, num_samples);
+			     width, height, depth, true, num_samples,
+                             msaa_is_interleaved);
 
    return mt;
 }
@@ -582,6 +635,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                         GLuint num_samples)
 {
    assert(mt->hiz_mt == NULL);
+   /* MSAA HiZ surfaces are always interleaved. */
+   bool msaa_is_interleaved = num_samples > 0;
    mt->hiz_mt = intel_miptree_create(intel,
                                      mt->target,
                                      MESA_FORMAT_X8_Z24,
@@ -591,7 +646,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->height0,
                                      mt->depth0,
                                      true,
-                                     num_samples);
+                                     num_samples,
+                                     msaa_is_interleaved);
 
    if (!mt->hiz_mt)
       return false;

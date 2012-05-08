@@ -169,6 +169,8 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
 
    surf->ss0.surface_format = format;
    surf->ss0.surface_type = BRW_SURFACE_2D;
+   surf->ss0.surface_array_spacing = surface->array_spacing_lod0 ?
+      GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL;
 
    /* reloc */
    surf->ss1.base_addr = region->bo->offset; /* No tile offsets needed */

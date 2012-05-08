@@ -142,6 +142,10 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
       return;
    }
 
+   /* We don't support MSAA for textures. */
+   assert(!mt->array_spacing_lod0);
+   assert(mt->num_samples == 0);
+
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
@@ -296,6 +300,9 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
+   /* Render targets can't use MSAA interleaved layout */
+   assert(!irb->mt->msaa_is_interleaved);
+
    if (irb->mt->align_h == 4)
       surf->ss0.vertical_alignment = 1;
    if (irb->mt->align_w == 8)
@@ -324,6 +331,9 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    surf->ss0.surface_type = BRW_SURFACE_2D;
+   surf->ss0.surface_array_spacing = irb->mt->array_spacing_lod0 ?
+      GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL;
+
    /* reloc */
    surf->ss1.base_addr = intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
    surf->ss1.base_addr += region->bo->offset; /* reloc */

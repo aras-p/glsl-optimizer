@@ -58,6 +58,7 @@ brw_blorp_surface_info::set(struct intel_mipmap_tree *mt,
 {
    brw_blorp_mip_info::set(mt, level, layer);
    this->num_samples = mt->num_samples;
+   this->array_spacing_lod0 = mt->array_spacing_lod0;
 
    if (mt->format == MESA_FORMAT_S8) {
       /* The miptree is a W-tiled stencil buffer.  Surface states can't be set

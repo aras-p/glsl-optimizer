@@ -172,6 +172,26 @@ struct intel_mipmap_tree
    GLuint num_samples;
    bool compressed;
 
+   /**
+    * For 1D array, 2D array, cube, and 2D multisampled surfaces on Gen7: true
+    * if the surface only contains LOD 0, and hence no space is for LOD's
+    * other than 0 in between array slices.
+    *
+    * Corresponds to the surface_array_spacing bit in gen7_surface_state.
+    */
+   bool array_spacing_lod0;
+
+   /**
+    * For MSAA buffers, there are two possible layouts:
+    * - Interleaved, in which the additional samples are accommodated
+    *   by scaling up the width and height of the surface.
+    * - Sliced, in which the surface is stored as a 2D array, with
+    *   array slice n containing all pixel data for sample n.
+    *
+    * This value is true if num_samples > 0 and the format is interleaved.
+    */
+   bool msaa_is_interleaved;
+
    /* Derived from the above:
     */
    GLuint total_width;
@@ -238,7 +258,8 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint height0,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
-                                               GLuint num_samples);
+                                               GLuint num_samples,
+                                               bool msaa_is_interleaved);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
