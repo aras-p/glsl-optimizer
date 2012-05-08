@@ -163,11 +163,16 @@ void
 fs_visitor::calculate_live_intervals()
 {
    int num_vars = this->virtual_grf_next;
-   int *def = ralloc_array(mem_ctx, int, num_vars);
-   int *use = ralloc_array(mem_ctx, int, num_vars);
 
    if (this->live_intervals_valid)
       return;
+
+   int *def = ralloc_array(mem_ctx, int, num_vars);
+   int *use = ralloc_array(mem_ctx, int, num_vars);
+   ralloc_free(this->virtual_grf_def);
+   ralloc_free(this->virtual_grf_use);
+   this->virtual_grf_def = def;
+   this->virtual_grf_use = use;
 
    for (int i = 0; i < num_vars; i++) {
       def[i] = MAX_INSTRUCTION;
@@ -214,11 +219,6 @@ fs_visitor::calculate_live_intervals()
 	 }
       }
    }
-
-   ralloc_free(this->virtual_grf_def);
-   ralloc_free(this->virtual_grf_use);
-   this->virtual_grf_def = def;
-   this->virtual_grf_use = use;
 
    this->live_intervals_valid = true;
 }
