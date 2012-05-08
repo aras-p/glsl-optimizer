@@ -433,6 +433,101 @@ do {									\
 #include "vbo_attrib_tmp.h"
 
 
+
+/**
+ * Execute a glMaterial call.  Note that if GL_COLOR_MATERIAL is enabled,
+ * this may be a (partial) no-op.
+ */
+static void GLAPIENTRY
+vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
+{
+   GLbitfield updateMats;
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* This function should be a no-op when it tries to update material
+    * attributes which are currently tracking glColor via glColorMaterial.
+    * The updateMats var will be a mask of the MAT_BIT_FRONT/BACK_x bits
+    * indicating which material attributes can actually be updated below.
+    */
+   if (ctx->Light.ColorMaterialEnabled) {
+      updateMats = ~ctx->Light.ColorMaterialBitmask;
+   }
+   else {
+      /* GL_COLOR_MATERIAL is disabled so don't skip any material updates */
+      updateMats = ALL_MATERIAL_BITS;
+   }
+
+   if (face == GL_FRONT) {
+      updateMats &= FRONT_MATERIAL_BITS;
+   }
+   else if (face == GL_BACK) {
+      updateMats &= BACK_MATERIAL_BITS;
+   }
+   else if (face != GL_FRONT_AND_BACK) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMaterial(invalid face)");
+      return;
+   }
+
+   switch (pname) {
+   case GL_EMISSION:
+      if (updateMats & MAT_BIT_FRONT_EMISSION)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_EMISSION, 4, params);
+      if (updateMats & MAT_BIT_BACK_EMISSION)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_EMISSION, 4, params);
+      break;
+   case GL_AMBIENT:
+      if (updateMats & MAT_BIT_FRONT_AMBIENT)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_AMBIENT, 4, params);
+      if (updateMats & MAT_BIT_BACK_AMBIENT)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_AMBIENT, 4, params);
+      break;
+   case GL_DIFFUSE:
+      if (updateMats & MAT_BIT_FRONT_DIFFUSE)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_DIFFUSE, 4, params);
+      if (updateMats & MAT_BIT_BACK_DIFFUSE)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_DIFFUSE, 4, params);
+      break;
+   case GL_SPECULAR:
+      if (updateMats & MAT_BIT_FRONT_SPECULAR)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_SPECULAR, 4, params);
+      if (updateMats & MAT_BIT_BACK_SPECULAR)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_SPECULAR, 4, params);
+      break;
+   case GL_SHININESS:
+      if (*params < 0 || *params > ctx->Const.MaxShininess) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glMaterial(invalid shininess: %f out range [0, %f])",
+		     *params, ctx->Const.MaxShininess);
+         return;
+      }
+      if (updateMats & MAT_BIT_FRONT_SHININESS)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_SHININESS, 1, params);
+      if (updateMats & MAT_BIT_BACK_SHININESS)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_SHININESS, 1, params);
+      break;
+   case GL_COLOR_INDEXES:
+      if (updateMats & MAT_BIT_FRONT_INDEXES)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_INDEXES, 3, params);
+      if (updateMats & MAT_BIT_BACK_INDEXES)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_INDEXES, 3, params);
+      break;
+   case GL_AMBIENT_AND_DIFFUSE:
+      if (updateMats & MAT_BIT_FRONT_AMBIENT)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_AMBIENT, 4, params);
+      if (updateMats & MAT_BIT_FRONT_DIFFUSE)
+         MAT_ATTR(VBO_ATTRIB_MAT_FRONT_DIFFUSE, 4, params);
+      if (updateMats & MAT_BIT_BACK_AMBIENT)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_AMBIENT, 4, params);
+      if (updateMats & MAT_BIT_BACK_DIFFUSE)
+         MAT_ATTR(VBO_ATTRIB_MAT_BACK_DIFFUSE, 4, params);
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMaterialfv(pname)");
+      return;
+   }
+}
+
+
 /**
  * Flush (draw) vertices.
  * \param  unmap - leave VBO unmapped after flushing?

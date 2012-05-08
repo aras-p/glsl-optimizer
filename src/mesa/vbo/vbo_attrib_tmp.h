@@ -792,63 +792,6 @@ TAG(VertexAttrib4fvNV)(GLuint index, const GLfloat * v)
 }
 
 
-
-#define MAT( ATTR, N, face, params )			\
-do {							\
-   if (face != GL_BACK)					\
-      MAT_ATTR( ATTR, N, params ); /* front */		\
-   if (face != GL_FRONT)				\
-      MAT_ATTR( ATTR + 1, N, params ); /* back */	\
-} while (0)
-
-
-/* Colormaterial conflicts are dealt with later.
- */
-static void GLAPIENTRY
-TAG(Materialfv)(GLenum face, GLenum pname,
-                 const GLfloat * params)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (face != GL_FRONT && face != GL_BACK && face != GL_FRONT_AND_BACK) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glMaterial(invalid face)");
-      return;
-   }
-
-   switch (pname) {
-   case GL_EMISSION:
-      MAT(VBO_ATTRIB_MAT_FRONT_EMISSION, 4, face, params);
-      break;
-   case GL_AMBIENT:
-      MAT(VBO_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params);
-      break;
-   case GL_DIFFUSE:
-      MAT(VBO_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params);
-      break;
-   case GL_SPECULAR:
-      MAT(VBO_ATTRIB_MAT_FRONT_SPECULAR, 4, face, params);
-      break;
-   case GL_SHININESS:
-      if (*params < 0 || *params > ctx->Const.MaxShininess)
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glMaterial(invalid shininess: %f out range [0, %f])",
-		     *params, ctx->Const.MaxShininess);
-      else
-         MAT(VBO_ATTRIB_MAT_FRONT_SHININESS, 1, face, params);
-      break;
-   case GL_COLOR_INDEXES:
-      MAT(VBO_ATTRIB_MAT_FRONT_INDEXES, 3, face, params);
-      break;
-   case GL_AMBIENT_AND_DIFFUSE:
-      MAT(VBO_ATTRIB_MAT_FRONT_AMBIENT, 4, face, params);
-      MAT(VBO_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params);
-      break;
-   default:
-      ERROR(GL_INVALID_ENUM);
-      return;
-   }
-}
-
 static void GLAPIENTRY
 TAG(VertexP2ui)(GLenum type, GLuint value)
 {
@@ -1145,4 +1088,3 @@ TAG(VertexAttribP4uiv)(GLuint index, GLenum type, GLboolean normalized,
 #undef ATTR_UI
 
 #undef MAT
-#undef MAT_ATTR
