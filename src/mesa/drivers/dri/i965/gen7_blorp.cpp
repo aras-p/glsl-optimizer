@@ -136,7 +136,8 @@ static uint32_t
 gen7_blorp_emit_surface_state(struct brw_context *brw,
                               const brw_blorp_params *params,
                               const brw_blorp_surface_info *surface,
-                              uint32_t read_domains, uint32_t write_domain)
+                              uint32_t read_domains, uint32_t write_domain,
+                              bool is_render_target)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -203,6 +204,8 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
                            region->bo,
                            surf->ss1.base_addr - region->bo->offset,
                            read_domains, write_domain);
+
+   gen7_check_surface_setup(surf, is_render_target);
 
    return wm_surf_offset;
 }
@@ -758,10 +761,12 @@ gen7_blorp_exec(struct intel_context *intel,
       wm_surf_offset_renderbuffer =
          gen7_blorp_emit_surface_state(brw, params, &params->dst,
                                        I915_GEM_DOMAIN_RENDER,
-                                       I915_GEM_DOMAIN_RENDER);
+                                       I915_GEM_DOMAIN_RENDER,
+                                       true /* is_render_target */);
       wm_surf_offset_texture =
          gen7_blorp_emit_surface_state(brw, params, &params->src,
-                                       I915_GEM_DOMAIN_SAMPLER, 0);
+                                       I915_GEM_DOMAIN_SAMPLER, 0,
+                                       false /* is_render_target */);
       wm_bind_bo_offset =
          gen6_blorp_emit_binding_table(brw, params,
                                        wm_surf_offset_renderbuffer,

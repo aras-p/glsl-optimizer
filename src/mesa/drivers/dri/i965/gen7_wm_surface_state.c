@@ -68,6 +68,95 @@ gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
 }
 
 
+void
+gen7_check_surface_setup(struct gen7_surface_state *surf,
+                         bool is_render_target)
+{
+   bool is_multisampled =
+      surf->ss4.num_multisamples != GEN7_SURFACE_MULTISAMPLECOUNT_1;
+   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
+    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Surface Array
+    * Spacing:
+    *
+    *   If Multisampled Surface Storage Format is MSFMT_MSS and Number of
+    *   Multisamples is not MULTISAMPLECOUNT_1, this field must be set to
+    *   ARYSPC_LOD0.
+    */
+   if (surf->ss4.multisampled_surface_storage_format == GEN7_SURFACE_MSFMT_MSS
+       && is_multisampled)
+      assert(surf->ss0.surface_array_spacing == GEN7_SURFACE_ARYSPC_LOD0);
+
+   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
+    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
+    * Surface Storage Format:
+    *
+    *   All multisampled render target surfaces must have this field set to
+    *   MSFMT_MSS.
+    *
+    * But also:
+    *
+    *   This field is ignored if Number of Multisamples is MULTISAMPLECOUNT_1.
+    */
+   if (is_render_target && is_multisampled) {
+      assert(surf->ss4.multisampled_surface_storage_format ==
+             GEN7_SURFACE_MSFMT_MSS);
+   }
+
+   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
+    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
+    * Surface Storage Format:
+    *
+    *   If the surface’s Number of Multisamples is MULTISAMPLECOUNT_8, Width
+    *   is >= 8192 (meaning the actual surface width is >= 8193 pixels), this
+    *   field must be set to MSFMT_MSS.
+    */
+   if (surf->ss4.num_multisamples == GEN7_SURFACE_MULTISAMPLECOUNT_8 &&
+       surf->ss2.width >= 8192) {
+      assert(surf->ss4.multisampled_surface_storage_format ==
+             GEN7_SURFACE_MSFMT_MSS);
+   }
+
+   /* From the Graphics BSpec: vol5c Shared Functions [SNB+] > State >
+    * SURFACE_STATE > SURFACE_STATE for most messages [DevIVB]: Multisampled
+    * Surface Storage Format:
+    *
+    *   If the surface’s Number of Multisamples is MULTISAMPLECOUNT_8,
+    *   ((Depth+1) * (Height+1)) is > 4,194,304, OR if the surface’s Number of
+    *   Multisamples is MULTISAMPLECOUNT_4, ((Depth+1) * (Height+1)) is >
+    *   8,388,608, this field must be set to MSFMT_DEPTH_STENCIL.This field
+    *   must be set to MSFMT_DEPTH_STENCIL if Surface Format is one of the
+    *   following: I24X8_UNORM, L24X8_UNORM, A24X8_UNORM, or
+    *   R24_UNORM_X8_TYPELESS.
+    *
+    * But also:
+    *
+    *   This field is ignored if Number of Multisamples is MULTISAMPLECOUNT_1.
+    */
+   uint32_t depth = surf->ss3.depth + 1;
+   uint32_t height = surf->ss2.height + 1;
+   if (surf->ss4.num_multisamples == GEN7_SURFACE_MULTISAMPLECOUNT_8 &&
+       depth * height > 4194304) {
+      assert(surf->ss4.multisampled_surface_storage_format ==
+             GEN7_SURFACE_MSFMT_DEPTH_STENCIL);
+   }
+   if (surf->ss4.num_multisamples == GEN7_SURFACE_MULTISAMPLECOUNT_4 &&
+       depth * height > 8388608) {
+      assert(surf->ss4.multisampled_surface_storage_format ==
+             GEN7_SURFACE_MSFMT_DEPTH_STENCIL);
+   }
+   if (is_multisampled) {
+      switch (surf->ss0.surface_format) {
+      case BRW_SURFACEFORMAT_I24X8_UNORM:
+      case BRW_SURFACEFORMAT_L24X8_UNORM:
+      case BRW_SURFACEFORMAT_A24X8_UNORM:
+      case BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS:
+         assert(surf->ss4.multisampled_surface_storage_format ==
+                GEN7_SURFACE_MSFMT_DEPTH_STENCIL);
+      }
+   }
+}
+
+
 static void
 gen7_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
 {
@@ -122,6 +211,8 @@ gen7_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
    }
 
    gen7_set_surface_tiling(surf, I915_TILING_NONE);
+
+   gen7_check_surface_setup(surf, false /* is_render_target */);
 }
 
 static void
@@ -214,6 +305,8 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 			   offsetof(struct gen7_surface_state, ss1),
 			   intelObj->mt->region->bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
+
+   gen7_check_surface_setup(surf, false /* is_render_target */);
 }
 
 /**
@@ -263,6 +356,8 @@ gen7_create_constant_surface(struct brw_context *brw,
 			    offsetof(struct gen7_surface_state, ss1)),
 			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
+
+   gen7_check_surface_setup(surf, false /* is_render_target */);
 }
 
 static void
@@ -276,6 +371,8 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 
    surf->ss0.surface_type = BRW_SURFACE_NULL;
    surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+
+   gen7_check_surface_setup(surf, true /* is_render_target */);
 }
 
 /**
@@ -368,6 +465,8 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 			   surf->ss1.base_addr - region->bo->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
+
+   gen7_check_surface_setup(surf, true /* is_render_target */);
 }
 
 void
