@@ -864,19 +864,23 @@ enum ir_expression_operation {
    ir_unop_rcp,
    ir_unop_rsq,
    ir_unop_sqrt,
-   ir_unop_exp,      /**< Log base e on gentype */
-   ir_unop_log,	     /**< Natural log on gentype */
+   ir_unop_exp,         /**< Log base e on gentype */
+   ir_unop_log,	        /**< Natural log on gentype */
    ir_unop_exp2,
    ir_unop_log2,
-   ir_unop_f2i,      /**< Float-to-integer conversion. */
-   ir_unop_i2f,      /**< Integer-to-float conversion. */
-   ir_unop_f2b,      /**< Float-to-boolean conversion */
-   ir_unop_b2f,      /**< Boolean-to-float conversion */
-   ir_unop_i2b,      /**< int-to-boolean conversion */
-   ir_unop_b2i,      /**< Boolean-to-int conversion */
-   ir_unop_u2f,      /**< Unsigned-to-float conversion. */
-   ir_unop_i2u,      /**< Integer-to-unsigned conversion. */
-   ir_unop_u2i,      /**< Unsigned-to-integer conversion. */
+   ir_unop_f2i,         /**< Float-to-integer conversion. */
+   ir_unop_i2f,         /**< Integer-to-float conversion. */
+   ir_unop_f2b,         /**< Float-to-boolean conversion */
+   ir_unop_b2f,         /**< Boolean-to-float conversion */
+   ir_unop_i2b,         /**< int-to-boolean conversion */
+   ir_unop_b2i,         /**< Boolean-to-int conversion */
+   ir_unop_u2f,         /**< Unsigned-to-float conversion. */
+   ir_unop_i2u,         /**< Integer-to-unsigned conversion. */
+   ir_unop_u2i,         /**< Unsigned-to-integer conversion. */
+   ir_unop_bitcast_i2f, /**< Bit-identical int-to-float "conversion" */
+   ir_unop_bitcast_f2i, /**< Bit-identical float-to-int "conversion" */
+   ir_unop_bitcast_u2f, /**< Bit-identical uint-to-float "conversion" */
+   ir_unop_bitcast_f2u, /**< Bit-identical float-to-uint "conversion" */
    ir_unop_any,
 
    /**
