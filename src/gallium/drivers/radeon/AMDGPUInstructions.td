@@ -35,13 +35,6 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 
 let isCodeGenOnly = 1 in {
 
-  def EXPORT_REG : AMDGPUShaderInst <
-    (outs),
-    (ins GPRF32:$src),
-    "EXPORT_REG $src",
-    [(int_AMDGPU_export_reg GPRF32:$src)]
-  >;
-
   def MASK_WRITE : AMDGPUShaderInst <
     (outs),
     (ins GPRF32:$src),

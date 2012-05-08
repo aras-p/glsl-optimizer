@@ -115,7 +115,6 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
 			LLVMValueRef output;
-			LLVMValueRef store_output;
 			unsigned adjusted_reg_idx = i +
 					ctx->reserved_reg_count;
 			LLVMValueRef reg_index = lp_build_const_int32(
@@ -125,16 +124,11 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			output = LLVMBuildLoad(base->gallivm->builder,
 				ctx->soa.outputs[i][chan], "");
 
-			store_output = lp_build_intrinsic_binary(
+			lp_build_intrinsic_binary(
 				base->gallivm->builder,
 				"llvm.AMDGPU.store.output",
-				base->elem_type,
-				output, reg_index);
-
-			lp_build_intrinsic_unary(base->gallivm->builder,
-				"llvm.AMDGPU.export.reg",
 				LLVMVoidTypeInContext(base->gallivm->context),
-				store_output);
+				output, reg_index);
 		}
 	}
 }

@@ -23,7 +23,6 @@ namespace llvm {
     class AMDGPUTargetMachine;
 
     FunctionPass *createR600CodeEmitterPass(formatted_raw_ostream &OS);
-    FunctionPass *createR600LowerShaderInstructionsPass(TargetMachine &tm);
     FunctionPass *createR600LowerInstructionsPass(TargetMachine &tm);
 
     FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);

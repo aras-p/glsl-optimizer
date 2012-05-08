@@ -100,13 +100,12 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDIL::STORE_OUTPUT:
     {
       MachineBasicBlock::iterator I = *MI;
-      int64_t OutputIndex = MI->getOperand(2).getImm();
+      int64_t OutputIndex = MI->getOperand(1).getImm();
       unsigned OutputReg = AMDIL::R600_TReg32RegClass.getRegister(OutputIndex);
 
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY), OutputReg)
-                  .addOperand(MI->getOperand(1));
+                  .addOperand(MI->getOperand(0));
 
-      MRI.replaceRegWith(MI->getOperand(0).getReg(), OutputReg);
       if (!MRI.isLiveOut(OutputReg)) {
         MRI.addLiveOut(OutputReg);
       }

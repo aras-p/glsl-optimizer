@@ -30,7 +30,6 @@ bool llvm::isPlaceHolderOpcode(unsigned opcode)
 {
   switch (opcode) {
   default: return false;
-  case AMDIL::EXPORT_REG:
   case AMDIL::RETURN:
   case AMDIL::LOAD_INPUT:
   case AMDIL::LAST:
