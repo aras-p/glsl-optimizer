@@ -728,6 +728,8 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
                   _mesa_lookup_enum_by_nr(mode));
 
    bitmask = _mesa_material_bitmask(ctx, face, mode, legal, "glColorMaterial");
+   if (bitmask == 0)
+      return; /* error was recorded */
 
    if (ctx->Light.ColorMaterialBitmask == bitmask &&
        ctx->Light.ColorMaterialFace == face &&
