@@ -50,7 +50,7 @@
  *
  * See "Volume 2a: 3D Pipeline," section 1.8.
  */
-static void
+void
 gen7_allocate_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -100,31 +100,40 @@ gen7_upload_urb(struct brw_context *brw)
    assert(!brw->gs.prog_active);
 
    gen7_emit_vs_workaround_flush(intel);
+   gen7_emit_urb_state(brw, brw->urb.nr_vs_entries, brw->urb.vs_size,
+                       brw->urb.vs_start);
+}
+
+void
+gen7_emit_urb_state(struct brw_context *brw, GLuint nr_vs_entries,
+                    GLuint vs_size, GLuint vs_start)
+{
+   struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
-   OUT_BATCH(brw->urb.nr_vs_entries |
-             ((brw->urb.vs_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
-	     (brw->urb.vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
+   OUT_BATCH(nr_vs_entries |
+             ((vs_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT) |
+             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
    ADVANCE_BATCH();
 
    /* Allocate the GS, HS, and DS zero space - we don't use them. */
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_GS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
-             (2 << GEN7_URB_STARTING_ADDRESS_SHIFT));
+             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
    ADVANCE_BATCH();
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
-             (2 << GEN7_URB_STARTING_ADDRESS_SHIFT));
+             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
    ADVANCE_BATCH();
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
    OUT_BATCH((0 << GEN7_URB_ENTRY_SIZE_SHIFT) |
-             (2 << GEN7_URB_STARTING_ADDRESS_SHIFT));
+             (vs_start << GEN7_URB_STARTING_ADDRESS_SHIFT));
    ADVANCE_BATCH();
 }
 

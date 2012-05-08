@@ -50,34 +50,14 @@ static void
 gen7_blorp_emit_urb_config(struct brw_context *brw,
                            const brw_blorp_params *params)
 {
-   struct intel_context *intel = &brw->intel;
-
    /* The minimum valid value is 32. See 3DSTATE_URB_VS,
     * Dword 1.15:0 "VS Number of URB Entries".
     */
    int num_vs_entries = 32;
+   int vs_size = 2;
+   int vs_start = 2; /* skip over push constants */
 
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_URB_VS << 16 | (2 - 2));
-   OUT_BATCH(1 << GEN7_URB_ENTRY_SIZE_SHIFT |
-             0 << GEN7_URB_STARTING_ADDRESS_SHIFT |
-             num_vs_entries);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_URB_GS << 16 | (2 - 2));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_URB_HS << 16 | (2 - 2));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_URB_DS << 16 | (2 - 2));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   gen7_emit_urb_state(brw, num_vs_entries, vs_size, vs_start);
 }
 
 
@@ -744,6 +724,7 @@ gen7_blorp_exec(struct intel_context *intel,
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
    gen6_blorp_emit_batch_head(brw, params);
+   gen7_allocate_push_constants(brw);
    gen6_emit_3dstate_multisample(brw, params->num_samples);
    gen6_emit_3dstate_sample_mask(brw, params->num_samples);
    gen6_blorp_emit_state_base_address(brw, params);
