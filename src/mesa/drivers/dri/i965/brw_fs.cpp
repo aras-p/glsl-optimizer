@@ -1218,6 +1218,66 @@ fs_visitor::dead_code_eliminate()
    return progress;
 }
 
+/**
+ * Implements a second type of register coalescing: This one checks if
+ * the two regs involved in a raw move don't interfere, in which case
+ * they can both by stored in the same place and the MOV removed.
+ */
+bool
+fs_visitor::register_coalesce_2()
+{
+   bool progress = false;
+
+   calculate_live_intervals();
+
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->opcode != BRW_OPCODE_MOV ||
+	  inst->predicated ||
+	  inst->saturate ||
+	  inst->src[0].file != GRF ||
+	  inst->src[0].negate ||
+	  inst->src[0].abs ||
+	  inst->src[0].smear != -1 ||
+	  inst->dst.file != GRF ||
+	  inst->dst.type != inst->src[0].type ||
+	  virtual_grf_sizes[inst->src[0].reg] != 1 ||
+	  virtual_grf_interferes(inst->dst.reg, inst->src[0].reg)) {
+	 continue;
+      }
+
+      int reg_from = inst->src[0].reg;
+      assert(inst->src[0].reg_offset == 0);
+      int reg_to = inst->dst.reg;
+      int reg_to_offset = inst->dst.reg_offset;
+
+      foreach_list_safe(node, &this->instructions) {
+	 fs_inst *scan_inst = (fs_inst *)node;
+
+	 if (scan_inst->dst.file == GRF &&
+	     scan_inst->dst.reg == reg_from) {
+	    scan_inst->dst.reg = reg_to;
+	    scan_inst->dst.reg_offset = reg_to_offset;
+	 }
+	 for (int i = 0; i < 3; i++) {
+	    if (scan_inst->src[i].file == GRF &&
+		scan_inst->src[i].reg == reg_from) {
+	       scan_inst->src[i].reg = reg_to;
+	       scan_inst->src[i].reg_offset = reg_to_offset;
+	    }
+	 }
+      }
+
+      inst->remove();
+      live_intervals_valid = false;
+      progress = true;
+      continue;
+   }
+
+   return progress;
+}
+
 bool
 fs_visitor::register_coalesce()
 {
@@ -1684,6 +1744,7 @@ fs_visitor::run()
 	 progress = opt_cse() || progress;
 	 progress = opt_copy_propagate() || progress;
 	 progress = register_coalesce() || progress;
+	 progress = register_coalesce_2() || progress;
 	 progress = compute_to_mrf() || progress;
 	 progress = dead_code_eliminate() || progress;
       } while (progress);
