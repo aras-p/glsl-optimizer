@@ -188,6 +188,11 @@ struct brw_blorp_blit_prog_key
    /* Actual number of samples per pixel in the source image. */
    unsigned src_samples;
 
+   /* If src_samples > 0, whether or not the source image uses an interleaved
+    * MSAA layout.  False if src_samples == 0.
+    */
+   bool src_interleaved;
+
    /* Number of samples per pixel that have been configured in the render
     * target.
     */
@@ -195,6 +200,11 @@ struct brw_blorp_blit_prog_key
 
    /* Actual number of samples per pixel in the destination image. */
    unsigned dst_samples;
+
+   /* If dst_samples > 0, whether or not the destination image uses an
+    * interleaved MSAA layout.  False if dst_samples == 0.
+    */
+   bool dst_interleaved;
 
    /* True if the source image is W tiled.  If true, the surface state for the
     * source image must be configured as Y tiled, and tex_samples must be 0.
@@ -229,7 +239,8 @@ struct brw_blorp_blit_prog_key
 class brw_blorp_blit_params : public brw_blorp_params
 {
 public:
-   brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
+   brw_blorp_blit_params(struct brw_context *brw,
+                         struct intel_mipmap_tree *src_mt,
                          struct intel_mipmap_tree *dst_mt,
                          GLuint src_x0, GLuint src_y0,
                          GLuint dst_x0, GLuint dst_y0,

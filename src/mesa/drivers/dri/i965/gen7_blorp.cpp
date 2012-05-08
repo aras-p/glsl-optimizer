@@ -144,10 +144,6 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t wm_surf_offset;
    uint32_t width, height;
    surface->get_miplevel_dims(&width, &height);
-   if (surface->num_samples > 0) { /* TODO: wrong for 8x */
-      width /= 2;
-      height /= 2;
-   }
    if (surface->map_stencil_as_y_tiled) {
       width *= 2;
       height /= 2;

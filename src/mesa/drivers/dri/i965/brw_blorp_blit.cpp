@@ -170,7 +170,7 @@ try_blorp_blit(struct intel_context *intel,
    intel_renderbuffer_resolve_depth(intel, dst_irb);
 
    /* Do the blit */
-   brw_blorp_blit_params params(src_mt, dst_mt,
+   brw_blorp_blit_params params(brw_context(ctx), src_mt, dst_mt,
                                 srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                                 mirror_x, mirror_y);
    brw_blorp_exec(intel, &params);
@@ -233,22 +233,25 @@ enum sampler_message_arg
  * sample index for a multisampled surface) to a memory offset by the
  * following formulas:
  *
- *   offset = tile(tiling_format, encode_msaa(num_samples, X, Y, S))
- *   (X, Y, S) = decode_msaa(num_samples, detile(tiling_format, offset))
+ *   offset = tile(tiling_format, encode_msaa(num_samples, layout, X, Y, S))
+ *   (X, Y, S) = decode_msaa(num_samples, layout, detile(tiling_format, offset))
  *
- * For a single-sampled surface, encode_msaa() and decode_msaa are the
- * identity function:
+ * For a single-sampled surface, or for a multisampled surface that stores
+ * each sample in a different array slice, encode_msaa() and decode_msaa are
+ * the identity function:
  *
- *   encode_msaa(1, X, Y, 0) = (X, Y)
- *   decode_msaa(1, X, Y) = (X, Y, 0)
+ *   encode_msaa(1, N/A, X, Y, 0) = (X, Y, 0)
+ *   decode_msaa(1, N/A, X, Y, 0) = (X, Y, 0)
+ *   encode_msaa(n, sliced, X, Y, S) = (X, Y, S)
+ *   decode_msaa(n, sliced, X, Y, S) = (X, Y, S)
  *
- * For a 4x multisampled surface, encode_msaa() embeds the sample number into
- * bit 1 of the X and Y coordinates:
+ * For a 4x interleaved multisampled surface, encode_msaa() embeds the sample
+ * number into bit 1 of the X and Y coordinates:
  *
- *   encode_msaa(4, X, Y, S) = (X', Y')
+ *   encode_msaa(4, interleaved, X, Y, S) = (X', Y', 0)
  *     where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
  *           Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
- *   decode_msaa(4, X, Y) = (X', Y', S)
+ *   decode_msaa(4, interleaved, X, Y, 0) = (X', Y', S)
  *     where X' = (X & ~0b11) >> 1 | (X & 0b1)
  *           Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
  *           S = (Y & 0b10) | (X & 0b10) >> 1
@@ -257,38 +260,45 @@ enum sampler_message_arg
  * coordinates in the pattern 0byyyxxxxxxxxx, creating 4k tiles that are 512
  * bytes wide and 8 rows high:
  *
- *   tile(x_tiled, X, Y) = A
+ *   tile(x_tiled, X, Y, S) = A
  *     where A = tile_num << 12 | offset
- *           tile_num = (Y >> 3) * tile_pitch + (X' >> 9)
- *           offset = (Y & 0b111) << 9
+ *           tile_num = (Y' >> 3) * tile_pitch + (X' >> 9)
+ *           offset = (Y' & 0b111) << 9
  *                    | (X & 0b111111111)
  *           X' = X * cpp
- *   detile(x_tiled, A) = (X, Y)
+ *           Y' = Y + S * qpitch
+ *   detile(x_tiled, A) = (X, Y, S)
  *     where X = X' / cpp
- *           Y = (tile_num / tile_pitch) << 3
- *               | (A & 0b111000000000) >> 9
+ *           Y = Y' % qpitch
+ *           S = Y' / qpitch
+ *           Y' = (tile_num / tile_pitch) << 3
+ *                | (A & 0b111000000000) >> 9
  *           X' = (tile_num % tile_pitch) << 9
  *                | (A & 0b111111111)
  *
  * (In all tiling formulas, cpp is the number of bytes occupied by a single
- * sample ("chars per pixel"), and tile_pitch is the number of 4k tiles
- * required to fill the width of the surface).
+ * sample ("chars per pixel"), tile_pitch is the number of 4k tiles required
+ * to fill the width of the surface, and qpitch is the spacing (in rows)
+ * between array slices).
  *
  * For Y tiling, tile() combines together the low-order bits of the X and Y
  * coordinates in the pattern 0bxxxyyyyyxxxx, creating 4k tiles that are 128
  * bytes wide and 32 rows high:
  *
- *   tile(y_tiled, X, Y) = A
+ *   tile(y_tiled, X, Y, S) = A
  *     where A = tile_num << 12 | offset
- *           tile_num = (Y >> 5) * tile_pitch + (X' >> 7)
+ *           tile_num = (Y' >> 5) * tile_pitch + (X' >> 7)
  *           offset = (X' & 0b1110000) << 5
  *                    | (Y' & 0b11111) << 4
  *                    | (X' & 0b1111)
  *           X' = X * cpp
- *   detile(y_tiled, A) = (X, Y)
+ *           Y' = Y + S * qpitch
+ *   detile(y_tiled, A) = (X, Y, S)
  *     where X = X' / cpp
- *           Y = (tile_num / tile_pitch) << 5
- *               | (A & 0b111110000) >> 4
+ *           Y = Y' % qpitch
+ *           S = Y' / qpitch
+ *           Y' = (tile_num / tile_pitch) << 5
+ *                | (A & 0b111110000) >> 4
  *           X' = (tile_num % tile_pitch) << 7
  *                | (A & 0b111000000000) >> 5
  *                | (A & 0b1111)
@@ -296,25 +306,28 @@ enum sampler_message_arg
  * For W tiling, tile() combines together the low-order bits of the X and Y
  * coordinates in the pattern 0bxxxyyyyxyxyx, creating 4k tiles that are 64
  * bytes wide and 64 rows high (note that W tiling is only used for stencil
- * buffers, which always have cpp = 1):
+ * buffers, which always have cpp = 1 and S=0):
  *
- *   tile(w_tiled, X, Y) = A
+ *   tile(w_tiled, X, Y, S) = A
  *     where A = tile_num << 12 | offset
- *           tile_num = (Y >> 6) * tile_pitch + (X' >> 6)
+ *           tile_num = (Y' >> 6) * tile_pitch + (X' >> 6)
  *           offset = (X' & 0b111000) << 6
- *                    | (Y & 0b111100) << 3
+ *                    | (Y' & 0b111100) << 3
  *                    | (X' & 0b100) << 2
- *                    | (Y & 0b10) << 2
+ *                    | (Y' & 0b10) << 2
  *                    | (X' & 0b10) << 1
- *                    | (Y & 0b1) << 1
+ *                    | (Y' & 0b1) << 1
  *                    | (X' & 0b1)
  *           X' = X * cpp = X
- *   detile(w_tiled, A) = (X, Y)
+ *           Y' = Y + S * qpitch
+ *   detile(w_tiled, A) = (X, Y, S)
  *     where X = X' / cpp = X'
- *           Y = (tile_num / tile_pitch) << 6
- *               | (A & 0b111100000) >> 3
- *               | (A & 0b1000) >> 2
- *               | (A & 0b10) >> 1
+ *           Y = Y' % qpitch = Y'
+ *           S = Y / qpitch = 0
+ *           Y' = (tile_num / tile_pitch) << 6
+ *                | (A & 0b111100000) >> 3
+ *                | (A & 0b1000) >> 2
+ *                | (A & 0b10) >> 1
  *           X' = (tile_num % tile_pitch) << 6
  *                | (A & 0b111000000000) >> 6
  *                | (A & 0b10000) >> 2
@@ -324,13 +337,16 @@ enum sampler_message_arg
  * Finally, for a non-tiled surface, tile() simply combines together the X and
  * Y coordinates in the natural way:
  *
- *   tile(untiled, X, Y) = A
+ *   tile(untiled, X, Y, S) = A
  *     where A = Y * pitch + X'
  *           X' = X * cpp
- *   detile(untiled, A) = (X, Y)
+ *           Y' = Y + S * qpitch
+ *   detile(untiled, A) = (X, Y, S)
  *     where X = X' / cpp
- *           Y = A / pitch
+ *           Y = Y' % qpitch
+ *           S = Y' / qpitch
  *           X' = A % pitch
+ *           Y' = A / pitch
  *
  * (In these formulas, pitch is the number of bytes occupied by a single row
  * of samples).
@@ -351,8 +367,8 @@ private:
    void alloc_push_const_regs(int base_reg);
    void compute_frag_coords();
    void translate_tiling(bool old_tiled_w, bool new_tiled_w);
-   void encode_msaa(unsigned num_samples);
-   void decode_msaa(unsigned num_samples);
+   void encode_msaa(unsigned num_samples, bool interleaved);
+   void decode_msaa(unsigned num_samples, bool interleaved);
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
    void single_to_blend();
@@ -436,6 +452,14 @@ const GLuint *
 brw_blorp_blit_program::compile(struct brw_context *brw,
                                 GLuint *program_size)
 {
+   /* Since blorp uses color textures and render targets to do all its work
+    * (even when blitting stencil and depth data), we always have to configure
+    * the Gen7 GPU to use sliced layout on Gen7.  On Gen6, the MSAA layout is
+    * always interleaved.
+    */
+   const bool rt_interleaved = key->rt_samples > 0 && brw->intel.gen == 6;
+   const bool tex_interleaved = key->tex_samples > 0 && brw->intel.gen == 6;
+
    /* Sanity checks */
    if (key->dst_tiled_w && key->rt_samples > 0) {
       /* If the destination image is W tiled and multisampled, then the thread
@@ -457,6 +481,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       assert(!key->src_tiled_w);
       assert(key->tex_samples == key->src_samples);
+      assert(tex_interleaved == key->src_interleaved);
       assert(key->tex_samples > 0);
    }
 
@@ -466,6 +491,11 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       assert(key->rt_samples > 0);
    }
+
+   /* Interleaved only makes sense on MSAA surfaces */
+   if (tex_interleaved) assert(key->tex_samples > 0);
+   if (key->src_interleaved) assert(key->src_samples > 0);
+   if (key->dst_interleaved) assert(key->dst_samples > 0);
 
    /* Set up prog_data */
    memset(&prog_data, 0, sizeof(prog_data));
@@ -492,12 +522,13 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     * difference.
     */
    if (rt_tiled_w != key->dst_tiled_w ||
-       key->rt_samples != key->dst_samples) {
-      encode_msaa(key->rt_samples);
-      /* Now (X, Y) = detile(rt_tiling, offset) */
+       key->rt_samples != key->dst_samples ||
+       rt_interleaved != key->dst_interleaved) {
+      encode_msaa(key->rt_samples, rt_interleaved);
+      /* Now (X, Y, S) = detile(rt_tiling, offset) */
       translate_tiling(rt_tiled_w, key->dst_tiled_w);
-      /* Now (X, Y) = detile(dst_tiling, offset) */
-      decode_msaa(key->dst_samples);
+      /* Now (X, Y, S) = detile(dst_tiling, offset) */
+      decode_msaa(key->dst_samples, key->dst_interleaved);
    }
 
    /* Now (X, Y, S) = decode_msaa(dst_samples, detile(dst_tiling, offset)).
@@ -540,12 +571,13 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        * the coordinates to compensate for the difference.
        */
       if (tex_tiled_w != key->src_tiled_w ||
-          key->tex_samples != key->src_samples) {
-         encode_msaa(key->src_samples);
-         /* Now (X, Y) = detile(src_tiling, offset) */
+          key->tex_samples != key->src_samples ||
+          tex_interleaved != key->src_interleaved) {
+         encode_msaa(key->src_samples, key->src_interleaved);
+         /* Now (X, Y, S) = detile(src_tiling, offset) */
          translate_tiling(key->src_tiled_w, tex_tiled_w);
-         /* Now (X, Y) = detile(tex_tiling, offset) */
-         decode_msaa(key->tex_samples);
+         /* Now (X, Y, S) = detile(tex_tiling, offset) */
+         decode_msaa(key->tex_samples, tex_interleaved);
       }
 
       /* Now (X, Y, S) = decode_msaa(tex_samples, detile(tex_tiling, offset)).
@@ -700,7 +732,7 @@ brw_blorp_blit_program::compute_frag_coords()
  *
  * This code modifies the X and Y coordinates according to the formula:
  *
- *   (X', Y') = detile(new_tiling, tile(old_tiling, X, Y))
+ *   (X', Y', S') = detile(new_tiling, tile(old_tiling, X, Y, S))
  *
  * (See brw_blorp_blit_program).
  *
@@ -712,6 +744,11 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
 {
    if (old_tiled_w == new_tiled_w)
       return;
+
+   /* In the code that follows, we can safely assume that S = 0, because W
+    * tiling formats always use interleaved encoding.
+    */
+   assert(s_is_zero);
 
    if (new_tiled_w) {
       /* Given X and Y coordinates that describe an address using Y tiling,
@@ -790,17 +827,20 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
  *
  * This code modifies the X and Y coordinates according to the formula:
  *
- *   (X', Y') = encode_msaa_4x(X, Y, S)
+ *   (X', Y', S') = encode_msaa_4x(X, Y, S)
  *
  * (See brw_blorp_blit_program).
  */
 void
-brw_blorp_blit_program::encode_msaa(unsigned num_samples)
+brw_blorp_blit_program::encode_msaa(unsigned num_samples, bool interleaved)
 {
    if (num_samples == 0) {
+      /* No translation necessary, and S should already be zero. */
+      assert(s_is_zero);
+   } else if (!interleaved) {
       /* No translation necessary. */
    } else {
-      /* encode_msaa_4x(X, Y, S) = (X', Y')
+      /* encode_msaa(4, interleaved, X, Y, S) = (X', Y', 0)
        *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
        *         Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
        */
@@ -822,6 +862,7 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples)
       brw_AND(&func, t2, Y, brw_imm_uw(1));
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
+      s_is_zero = true;
    }
 }
 
@@ -831,22 +872,25 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples)
  *
  * This code modifies the X and Y coordinates according to the formula:
  *
- *   (X', Y', S) = decode_msaa(num_samples, X, Y)
+ *   (X', Y', S) = decode_msaa(num_samples, X, Y, S)
  *
  * (See brw_blorp_blit_program).
  */
 void
-brw_blorp_blit_program::decode_msaa(unsigned num_samples)
+brw_blorp_blit_program::decode_msaa(unsigned num_samples, bool interleaved)
 {
    if (num_samples == 0) {
+      /* No translation necessary, and S should already be zero. */
+      assert(s_is_zero);
+   } else if (!interleaved) {
       /* No translation necessary. */
-      s_is_zero = true;
    } else {
-      /* decode_msaa_4x(X, Y) = (X', Y', S)
+      /* decode_msaa(4, interleaved, X, Y, 0) = (X', Y', S)
        *   where X' = (X & ~0b11) >> 1 | (X & 0b1)
        *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
        *         S = (Y & 0b10) | (X & 0b10) >> 1
        */
+      assert(s_is_zero);
       brw_AND(&func, t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
       brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
       brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
@@ -1116,7 +1160,8 @@ brw_blorp_coord_transform_params::setup(GLuint src0, GLuint dst0, GLuint dst1,
 }
 
 
-brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
+brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
+                                             struct intel_mipmap_tree *src_mt,
                                              struct intel_mipmap_tree *dst_mt,
                                              GLuint src_x0, GLuint src_y0,
                                              GLuint dst_x0, GLuint dst_y0,
@@ -1128,6 +1173,26 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
 
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
+
+   if (brw->intel.gen > 6) {
+      /* Gen7 only supports interleaved MSAA surfaces for texturing with the
+       * ld2dms instruction (which blorp doesn't use).  So if the source is
+       * interleaved MSAA, we'll have to map it as a single-sampled texture
+       * and de-interleave the samples ourselves.
+       */
+      if (src.num_samples > 0 && src_mt->msaa_is_interleaved)
+         src.num_samples = 0;
+
+      /* Similarly, Gen7 only supports interleaved MSAA surfaces for depth and
+       * stencil render targets.  Blorp always maps its destination surface as
+       * a color render target (even if it's actually a depth or stencil
+       * buffer).  So if the destination is interleaved MSAA, we'll have to
+       * map it as a single-sampled texture and interleave the samples
+       * ourselves.
+       */
+      if (dst.num_samples > 0 && dst_mt->msaa_is_interleaved)
+         dst.num_samples = 0;
+   }
 
    if (dst.map_stencil_as_y_tiled && dst.num_samples > 0) {
       /* If the destination surface is a W-tiled multisampled stencil buffer
@@ -1171,6 +1236,12 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
    wm_prog_key.tex_samples = src.num_samples;
    wm_prog_key.rt_samples  = dst.num_samples;
 
+   /* src_interleaved and dst_interleaved indicate whether src and dst are
+    * truly interleaved.
+    */
+   wm_prog_key.src_interleaved = src_mt->msaa_is_interleaved;
+   wm_prog_key.dst_interleaved = dst_mt->msaa_is_interleaved;
+
    wm_prog_key.src_tiled_w = src.map_stencil_as_y_tiled;
    wm_prog_key.dst_tiled_w = dst.map_stencil_as_y_tiled;
    x0 = wm_push_consts.dst_x0 = dst_x0;
@@ -1188,7 +1259,12 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
        * differences between multisampled and single-sampled surface formats
        * will mean that pixels are scrambled within the multisampling pattern.
        * TODO: what if this makes the coordinates too large?
+       *
+       * Note: this only works if the destination surface's MSAA layout is
+       * interleaved.  If it's sliced, then we have no choice but to set up
+       * the rendering pipeline as multisampled.
        */
+      assert(dst_mt->msaa_is_interleaved);
       x0 = (x0 * 2) & ~3;
       y0 = (y0 * 2) & ~3;
       x1 = ALIGN(x1 * 2, 4);
@@ -1204,14 +1280,14 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
        * size, because the differences between W and Y tiling formats will
        * mean that pixels are scrambled within the tile.
        *
-       * Note: if the destination surface configured as an MSAA surface, then
-       * the effective tile size we need to align it to is smaller, because
-       * each pixel covers a 2x2 or a 4x2 block of samples.
+       * Note: if the destination surface configured as an interleaved MSAA
+       * surface, then the effective tile size we need to align it to is
+       * smaller, because each pixel covers a 2x2 or a 4x2 block of samples.
        *
        * TODO: what if this makes the coordinates too large?
        */
       unsigned x_align = 64, y_align = 64;
-      if (dst_mt->num_samples > 0) {
+      if (dst_mt->num_samples > 0 && dst_mt->msaa_is_interleaved) {
          x_align /= (dst_mt->num_samples == 4 ? 2 : 4);
          y_align /= 2;
       }
