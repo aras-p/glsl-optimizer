@@ -1,7 +1,6 @@
 
 GENERATED_SOURCES := \
 	R600Intrinsics.td		\
-	R600ShaderPatterns.td		\
 	R600RegisterInfo.td		\
 	AMDGPUInstrEnums.td		\
 	SIRegisterInfo.td		\

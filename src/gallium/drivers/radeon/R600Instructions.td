@@ -991,6 +991,13 @@ def LOCAL_SIZE_Y : R600PreloadInst <"LOCAL_SIZE_Y",
 def LOCAL_SIZE_Z : R600PreloadInst <"LOCAL_SIZE_Z",
                                     int_r600_read_local_size_z>;
 
+def R600_LOAD_CONST : AMDGPUShaderInst <
+  (outs R600_Reg32:$dst),
+  (ins i32imm:$src0),
+  "R600_LOAD_CONST $dst, $src0",
+  [(set R600_Reg32:$dst, (int_AMDGPU_load_const imm:$src0))]
+>;
+
 def LOAD_INPUT : AMDGPUShaderInst <
   (outs R600_Reg32:$dst),
   (ins i32imm:$src),
@@ -1049,8 +1056,5 @@ def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 4, sel_x>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 5, sel_y>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 6, sel_z>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 7, sel_w>;
-
-
-include "R600ShaderPatterns.td"
 
 } // End isR600toCayman Predicate

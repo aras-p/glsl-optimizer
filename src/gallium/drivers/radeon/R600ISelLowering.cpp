@@ -40,6 +40,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 {
   MachineFunction * MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
+  MachineBasicBlock::iterator I = *MI;
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
@@ -89,6 +90,18 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDIL::LOCAL_SIZE_Z:
     lowerImplicitParameter(MI, *BB, MRI, 8);
     break;
+
+  case AMDIL::R600_LOAD_CONST:
+    {
+      int64_t RegIndex = MI->getOperand(1).getImm();
+      unsigned ConstantReg = AMDIL::R600_CReg32RegClass.getRegister(RegIndex);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY))
+                  .addOperand(MI->getOperand(0))
+                  .addReg(ConstantReg);
+      MI->eraseFromParent();
+      break;
+    }
+
   case AMDIL::LOAD_INPUT:
     {
       int64_t RegIndex = MI->getOperand(1).getImm();
@@ -99,7 +112,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     }
   case AMDIL::STORE_OUTPUT:
     {
-      MachineBasicBlock::iterator I = *MI;
       int64_t OutputIndex = MI->getOperand(1).getImm();
       unsigned OutputReg = AMDIL::R600_TReg32RegClass.getRegister(OutputIndex);
 

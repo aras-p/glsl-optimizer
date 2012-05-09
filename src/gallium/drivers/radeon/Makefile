@@ -35,9 +35,6 @@ else
 	cp R600IntrinsicsOpenCL.td R600Intrinsics.td
 endif
 
-R600ShaderPatterns.td: AMDGPUGenShaderPatterns.pl
-	$(PERL) $^ C > $@
-	
 R600RegisterInfo.td: R600GenRegisterInfo.pl
 	$(PERL) $^ > $@
 
