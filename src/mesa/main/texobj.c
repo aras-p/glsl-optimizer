@@ -410,16 +410,17 @@ static void
 incomplete(struct gl_texture_object *t, enum base_mipmap bm,
            const char *fmt, ...)
 {
-#if 0
-   va_list args;
-   char s[100];
+   if (MESA_DEBUG_FLAGS & DEBUG_INCOMPLETE_TEXTURE) {
+      va_list args;
+      char s[100];
 
-   va_start(args, fmt);
-   vsnprintf(s, sizeof(s), fmt, args);
-   va_end(args);
+      va_start(args, fmt);
+      vsnprintf(s, sizeof(s), fmt, args);
+      va_end(args);
 
-   printf("Texture Obj %d incomplete because: %s\n", t->Name, s);
-#endif
+      _mesa_debug(NULL, "Texture Obj %d incomplete because: %s\n", t->Name, s);
+   }
+
    if (bm == BASE)
       t->_BaseComplete = GL_FALSE;
    t->_MipmapComplete = GL_FALSE;

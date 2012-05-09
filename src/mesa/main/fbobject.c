@@ -49,9 +49,6 @@
 #include "texobj.h"
 
 
-/** Set this to 1 to help debug FBO incompleteness problems */
-#define DEBUG_FBO 0
-
 /** Set this to 1 to debug/log glBlitFramebuffer() calls */
 #define DEBUG_BLIT 0
 
@@ -462,11 +459,9 @@ _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 att_incomplete(const char *msg)
 {
-#if DEBUG_FBO
-   _mesa_debug(NULL, "attachment incomplete: %s\n", msg);
-#else
-   (void) msg;
-#endif
+   if (MESA_DEBUG_FLAGS & DEBUG_INCOMPLETE_FBO) {
+      _mesa_debug(NULL, "attachment incomplete: %s\n", msg);
+   }
 }
 
 
@@ -476,12 +471,9 @@ att_incomplete(const char *msg)
 static void
 fbo_incomplete(const char *msg, int index)
 {
-#if DEBUG_FBO
-   _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
-#else
-   (void) msg;
-   (void) index;
-#endif
+   if (MESA_DEBUG_FLAGS & DEBUG_INCOMPLETE_FBO) {
+      _mesa_debug(NULL, "FBO Incomplete: %s [%d]\n", msg, index);
+   }
 }
 
 
