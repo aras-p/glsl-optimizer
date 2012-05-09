@@ -1635,6 +1635,7 @@ _mesa_record_error(struct gl_context *ctx, GLenum error)
 void
 _mesa_finish(struct gl_context *ctx)
 {
+   FLUSH_VERTICES( ctx, 0 );
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Finish) {
       ctx->Driver.Finish(ctx);
@@ -1648,6 +1649,7 @@ _mesa_finish(struct gl_context *ctx)
 void
 _mesa_flush(struct gl_context *ctx)
 {
+   FLUSH_VERTICES( ctx, 0 );
    FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
@@ -1666,7 +1668,7 @@ void GLAPIENTRY
 _mesa_Finish(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
    _mesa_finish(ctx);
 }
 
@@ -1681,7 +1683,7 @@ void GLAPIENTRY
 _mesa_Flush(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
    _mesa_flush(ctx);
 }
 
