@@ -464,11 +464,4 @@ def IMM12bit : ImmLeaf <
 
 include "SIInstrFormats.td"
 
-def LOAD_CONST : AMDGPUShaderInst <
-  (outs GPRF32:$dst),
-  (ins i32imm:$src),
-  "LOAD_CONST $dst, $src",
-  [(set GPRF32:$dst, (int_AMDGPU_load_const imm:$src))]
->;
-
 include "SIInstructions.td"

@@ -800,6 +800,13 @@ def CONFIG_WRITE : InstSI <
   field bits<32> Inst = 0;
 }
 
+def LOAD_CONST : AMDGPUShaderInst <
+  (outs GPRF32:$dst),
+  (ins i32imm:$src),
+  "LOAD_CONST $dst, $src",
+  [(set GPRF32:$dst, (int_AMDGPU_load_const imm:$src))]
+>;
+
 let usesCustomInserter = 1 in {
 
 def SI_V_CNDLT : InstSI <
