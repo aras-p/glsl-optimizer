@@ -220,6 +220,8 @@ enum sampler_message_arg
    SAMPLER_MESSAGE_ARG_V_FLOAT,
    SAMPLER_MESSAGE_ARG_U_INT,
    SAMPLER_MESSAGE_ARG_V_INT,
+   SAMPLER_MESSAGE_ARG_SI_INT,
+   SAMPLER_MESSAGE_ARG_ZERO_INT,
 };
 
 /**
@@ -435,14 +437,6 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
                                 GLuint *program_size)
 {
    /* Sanity checks */
-   if (key->src_tiled_w) {
-      /* If the source image is W tiled, then tex_samples must be 0.
-       * Otherwise, after conversion between W and Y tiling, there's no
-       * guarantee that the sample index will be 0.
-       */
-      assert(key->tex_samples == 0);
-   }
-
    if (key->dst_tiled_w) {
       /* If the destination image is W tiled, then dst_samples must be 0.
        * Otherwise, after conversion between W and Y tiling, there's no
@@ -920,13 +914,15 @@ brw_blorp_blit_program::sample()
 void
 brw_blorp_blit_program::texel_fetch()
 {
-   static const sampler_message_arg args[2] = {
+   static const sampler_message_arg args[5] = {
       SAMPLER_MESSAGE_ARG_U_INT,
-      SAMPLER_MESSAGE_ARG_V_INT
+      SAMPLER_MESSAGE_ARG_V_INT,
+      SAMPLER_MESSAGE_ARG_ZERO_INT, /* R */
+      SAMPLER_MESSAGE_ARG_ZERO_INT, /* LOD */
+      SAMPLER_MESSAGE_ARG_SI_INT
    };
 
-   assert(s_is_zero);
-   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, args, ARRAY_SIZE(args));
+   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, args, s_is_zero ? 2 : 5);
 }
 
 void
@@ -959,6 +955,20 @@ brw_blorp_blit_program::texture_lookup(GLuint msg_type,
          break;
       case SAMPLER_MESSAGE_ARG_V_INT:
          expand_to_32_bits(Y, mrf);
+         break;
+      case SAMPLER_MESSAGE_ARG_SI_INT:
+         /* Note: on Gen7, this code may be reached with s_is_zero==true
+          * because in Gen7's ld2dss message, the sample index is the first
+          * argument.  When this happens, we need to move a 0 into the
+          * appropriate message register.
+          */
+         if (s_is_zero)
+            brw_MOV(&func, mrf, brw_imm_ud(0));
+         else
+            expand_to_32_bits(S, mrf);
+         break;
+      case SAMPLER_MESSAGE_ARG_ZERO_INT:
+         brw_MOV(&func, mrf, brw_imm_ud(0));
          break;
       }
       mrf.nr += 2;
@@ -1061,14 +1071,22 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
 
+   if (dst.map_stencil_as_y_tiled) {
+      /* If the destination surface is a W-tiled stencil buffer that we're
+       * mapping as Y tiled, then we need to set up the surface state as
+       * single-sampled, because the memory layout of related samples doesn't
+       * match between W and Y tiling.
+       */
+      dst.num_samples = 0;
+   }
+
    if (src_mt->num_samples > 0 && dst_mt->num_samples > 0) {
       /* We are blitting from a multisample buffer to a multisample buffer, so
        * we must preserve samples within a pixel.  This means we have to
-       * configure the render target and texture surface states as
-       * single-sampled, so that the WM program can access each sample
-       * individually.
+       * configure the render target as single-sampled, so that the WM program
+       * generate each sample separately.
        */
-      src.num_samples = dst.num_samples = 0;
+      dst.num_samples = 0;
    }
 
    /* The render path must be configured to use the same number of samples as
