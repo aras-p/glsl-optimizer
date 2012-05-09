@@ -202,7 +202,11 @@ quantize_num_samples(struct intel_context *intel, unsigned num_samples)
       else
          return 0;
    case 7:
-      /* TODO: MSAA only implemented on Gen6 */
+      /* TODO: Gen7 supports only 4x multisampling at the moment. */
+      if (num_samples > 0)
+         return 4;
+      else
+         return 0;
       return 0;
    default:
       /* MSAA unsupported */

@@ -36,10 +36,8 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
 
-   /* TODO: MSAA only implemented on Gen6 */
-   if (intel->gen != 6) {
-      assert(num_samples == 0);
-   }
+   /* TODO: 8x MSAA not implemented */
+   assert(num_samples <= 4);
 
    int len = intel->gen >= 7 ? 4 : 3;
    BEGIN_BATCH(len);
@@ -62,10 +60,8 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
 
-   /* TODO: MSAA only implemented on Gen6 */
-   if (intel->gen != 6) {
-      assert(num_samples == 0);
-   }
+   /* TODO: 8x MSAA not implemented */
+   assert(num_samples <= 4);
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
