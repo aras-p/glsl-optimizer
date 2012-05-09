@@ -109,9 +109,10 @@ expandIntegerMUL(BuildUtil *bld, Instruction *mul)
 #define QOP_SUB  2
 #define QOP_MOV2 3
 
+//             UL UR LL LR
 #define QUADOP(q, r, s, t)            \
-   ((QOP_##q << 0) | (QOP_##r << 2) | \
-    (QOP_##s << 4) | (QOP_##t << 6))
+   ((QOP_##q << 6) | (QOP_##r << 4) | \
+    (QOP_##s << 2) | (QOP_##t << 0))
 
 class NV50LegalizePostRA : public Pass
 {
