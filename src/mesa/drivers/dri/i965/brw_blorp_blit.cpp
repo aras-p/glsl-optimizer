@@ -372,11 +372,12 @@ private:
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
    void single_to_blend();
-   void sample();
-   void texel_fetch();
+   void manual_blend();
+   void sample(struct brw_reg dst);
+   void texel_fetch(struct brw_reg dst);
    void expand_to_32_bits(struct brw_reg src, struct brw_reg dst);
-   void texture_lookup(GLuint msg_type, const sampler_message_arg *args,
-                       int num_args);
+   void texture_lookup(struct brw_reg dst, GLuint msg_type,
+                       const sampler_message_arg *args, int num_args);
    void render_target_write();
 
    void *mem_ctx;
@@ -400,8 +401,13 @@ private:
       struct brw_reg offset;
    } x_transform, y_transform;
 
-   /* Data returned from texture lookup (4 vec16's) */
-   struct brw_reg Rdata;
+   /* Data to be written to render target (4 vec16's) */
+   struct brw_reg result;
+
+   /* Auxiliary storage for data returned by a sampling operation when
+    * blending (4 vec16's)
+    */
+   struct brw_reg texture_data;
 
    /* X coordinates.  We have two of them so that we can perform coordinate
     * transformations easily.
@@ -472,10 +478,8 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    }
 
    if (key->blend) {
-      /* We are blending, which means we'll be using a SAMPLE message, which
-       * causes the hardware to pick up the all of the samples corresponding
-       * to this pixel and average them together.  Since we'll be relying on
-       * the hardware to find all of the samples and combine them together,
+      /* We are blending, which means we won't have an opportunity to
+       * translate the tiling and sample count for the texture surface.  So
        * the surface state for the texture must be configured with the correct
        * tiling and sample count.
        */
@@ -557,8 +561,14 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     * irrelevant, because we are going to fetch all samples.
     */
    if (key->blend) {
-      single_to_blend();
-      sample();
+      if (brw->intel.gen == 6) {
+         /* Gen6 hardware an automatically blend using the SAMPLE message */
+         single_to_blend();
+         sample(result);
+      } else {
+         /* Gen7+ hardware doesn't automaticaly blend. */
+         manual_blend();
+      }
    } else {
       /* We aren't blending, which means we just want to fetch a single sample
        * from the source surface.  The address that we want to fetch from is
@@ -586,7 +596,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        * the texturing unit, will cause data to be read from the correct
        * memory location.  So we can fetch the texel now.
        */
-      texel_fetch();
+      texel_fetch(result);
    }
 
    /* Finally, write the fetched (or blended) value to the render target and
@@ -625,7 +635,8 @@ brw_blorp_blit_program::alloc_regs()
    prog_data.first_curbe_grf = reg;
    alloc_push_const_regs(reg);
    reg += BRW_BLORP_NUM_PUSH_CONST_REGS;
-   this->Rdata = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+   this->result = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+   this->texture_data = vec16(brw_vec8_grf(reg, 0)); reg += 8;
    for (int i = 0; i < 2; ++i) {
       this->x_coords[i]
          = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
@@ -966,19 +977,50 @@ brw_blorp_blit_program::single_to_blend()
    SWAP_XY_AND_XPYP();
 }
 
+void
+brw_blorp_blit_program::manual_blend()
+{
+   /* TODO: support num_samples != 4 */
+   const int num_samples = 4;
+
+   /* Gather sample 0 data first */
+   s_is_zero = true;
+   texel_fetch(result);
+
+   /* Gather data for remaining samples and accumulate it into result. */
+   s_is_zero = false;
+   for (int i = 1; i < num_samples; ++i) {
+      brw_MOV(&func, S, brw_imm_uw(i));
+      texel_fetch(texture_data);
+
+      /* TODO: should use a smaller loop bound for non-RGBA formats */
+      for (int j = 0; j < 4; ++j) {
+         brw_ADD(&func, offset(result, 2*j), offset(vec8(result), 2*j),
+                 offset(vec8(texture_data), 2*j));
+      }
+   }
+
+   /* Scale the result down by a factor of num_samples */
+   /* TODO: should use a smaller loop bound for non-RGBA formats */
+   for (int j = 0; j < 4; ++j) {
+      brw_MUL(&func, offset(result, 2*j), offset(vec8(result), 2*j),
+              brw_imm_f(1.0/num_samples));
+   }
+}
+
 /**
  * Emit code to look up a value in the texture using the SAMPLE message (which
  * does blending of MSAA surfaces).
  */
 void
-brw_blorp_blit_program::sample()
+brw_blorp_blit_program::sample(struct brw_reg dst)
 {
    static const sampler_message_arg args[2] = {
       SAMPLER_MESSAGE_ARG_U_FLOAT,
       SAMPLER_MESSAGE_ARG_V_FLOAT
    };
 
-   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE, args, ARRAY_SIZE(args));
+   texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE, args, ARRAY_SIZE(args));
 }
 
 /**
@@ -986,7 +1028,7 @@ brw_blorp_blit_program::sample()
  * (which does a simple texel fetch).
  */
 void
-brw_blorp_blit_program::texel_fetch()
+brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
 {
    static const sampler_message_arg gen6_args[5] = {
       SAMPLER_MESSAGE_ARG_U_INT,
@@ -1008,16 +1050,16 @@ brw_blorp_blit_program::texel_fetch()
 
    switch (brw->intel.gen) {
    case 6:
-      texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
+      texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
                      s_is_zero ? 2 : 5);
       break;
    case 7:
       if (key->tex_samples > 0) {
-         texture_lookup(GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
+         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
                         gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
       } else {
          assert(s_is_zero);
-         texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
+         texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
                         ARRAY_SIZE(gen7_ld_args));
       }
       break;
@@ -1038,7 +1080,8 @@ brw_blorp_blit_program::expand_to_32_bits(struct brw_reg src,
 }
 
 void
-brw_blorp_blit_program::texture_lookup(GLuint msg_type,
+brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
+                                       GLuint msg_type,
                                        const sampler_message_arg *args,
                                        int num_args)
 {
@@ -1077,7 +1120,7 @@ brw_blorp_blit_program::texture_lookup(GLuint msg_type,
    }
 
    brw_SAMPLE(&func,
-              retype(Rdata, BRW_REGISTER_TYPE_UW) /* dest */,
+              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
               base_mrf /* msg_reg_nr */,
               brw_message_reg(base_mrf) /* src0 */,
               BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
@@ -1118,7 +1161,8 @@ brw_blorp_blit_program::render_target_write()
    /* Copy texture data to MRFs */
    for (int i = 0; i < 4; ++i) {
       /* E.g. mov(16) m2.0<1>:f r2.0<8;8,1>:f { Align1, H1 } */
-      brw_MOV(&func, offset(mrf_rt_write, mrf_offset), offset(vec8(Rdata), 2*i));
+      brw_MOV(&func, offset(mrf_rt_write, mrf_offset),
+              offset(vec8(result), 2*i));
       mrf_offset += 2;
    }
 
