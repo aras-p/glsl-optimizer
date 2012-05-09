@@ -802,21 +802,20 @@ output_if_debug(const char *prefixString, const char *outputString,
 {
    static int debug = -1;
 
-   /* Check the MESA_DEBUG environment variable if it hasn't
-    * been checked yet.  We only have to check it once...
+   /* Init the local 'debug' var once.
+    * Note: the _mesa_init_debug() function should have been called
+    * by now so MESA_DEBUG_FLAGS will be initialized.
     */
    if (debug == -1) {
-      char *env = _mesa_getenv("MESA_DEBUG");
-
-      /* In a debug build, we print warning messages *unless*
-       * MESA_DEBUG is 0.  In a non-debug build, we don't
-       * print warning messages *unless* MESA_DEBUG is
-       * set *to any value*.
-       */
 #ifdef DEBUG
-      debug = (env != NULL && atoi(env) == 0) ? 0 : 1;
+      /* in debug builds, print messages unless MESA_DEBUG="silent" */
+      if (MESA_DEBUG_FLAGS & DEBUG_SILENT)
+         debug = 0;
+      else
+         debug = 1;
 #else
-      debug = (env != NULL) ? 1 : 0;
+      /* in release builds, be silent unless MESA_DEBUG is set */
+      debug = _mesa_getenv("MESA_DEBUG") != NULL;
 #endif
    }
 

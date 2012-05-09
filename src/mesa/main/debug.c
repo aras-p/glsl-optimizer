@@ -203,6 +203,7 @@ set_debug_flags(const char *str)
       GLbitfield flag;
    };
    static const struct option opts[] = {
+      { "silent", DEBUG_SILENT }, /* turn off debug messages */
       { "flush", DEBUG_ALWAYS_FLUSH } /* flush after each drawing command */
    };
    GLuint i;
