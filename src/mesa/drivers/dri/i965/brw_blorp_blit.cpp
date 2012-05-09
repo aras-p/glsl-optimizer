@@ -944,15 +944,43 @@ brw_blorp_blit_program::sample()
 void
 brw_blorp_blit_program::texel_fetch()
 {
-   static const sampler_message_arg args[5] = {
+   static const sampler_message_arg gen6_args[5] = {
       SAMPLER_MESSAGE_ARG_U_INT,
       SAMPLER_MESSAGE_ARG_V_INT,
       SAMPLER_MESSAGE_ARG_ZERO_INT, /* R */
       SAMPLER_MESSAGE_ARG_ZERO_INT, /* LOD */
       SAMPLER_MESSAGE_ARG_SI_INT
    };
+   static const sampler_message_arg gen7_ld_args[3] = {
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_ZERO_INT, /* LOD */
+      SAMPLER_MESSAGE_ARG_V_INT
+   };
+   static const sampler_message_arg gen7_ld2dss_args[3] = {
+      SAMPLER_MESSAGE_ARG_SI_INT,
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_V_INT
+   };
 
-   texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, args, s_is_zero ? 2 : 5);
+   switch (brw->intel.gen) {
+   case 6:
+      texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
+                     s_is_zero ? 2 : 5);
+      break;
+   case 7:
+      if (key->tex_samples > 0) {
+         texture_lookup(GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
+                        gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
+      } else {
+         assert(s_is_zero);
+         texture_lookup(GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
+                        ARRAY_SIZE(gen7_ld_args));
+      }
+      break;
+   default:
+      assert(!"Should not get here.");
+      break;
+   };
 }
 
 void

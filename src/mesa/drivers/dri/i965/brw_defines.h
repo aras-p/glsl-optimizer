@@ -832,6 +832,7 @@ enum brw_message_target {
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE  6
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_LD           7
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO      10
+#define GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS       31
 
 /* for GEN5 only */
 #define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
