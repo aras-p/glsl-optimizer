@@ -1,4 +1,4 @@
-//===-- AMDGPURegisterInfo.h - TODO: Add brief description -------===//
+//===-- AMDGPURegisterInfo.h - AMDGPURegisterInfo Interface -*- C++ -*-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file contains the TargetRegisterInfo interface that is implemented
+// by all hw codegen targets.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===-- R600Intrinsics.td - TODO: Add brief description -------===//
+//===-- R600Intrinsics.td - R600 Instrinsic defs -------*- tablegen -*-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600 Intrinsic Definitions
 //
 //===----------------------------------------------------------------------===//
 

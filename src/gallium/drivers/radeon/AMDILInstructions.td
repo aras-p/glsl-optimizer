@@ -1,4 +1,4 @@
-//===-- AMDILInstructions.td - TODO: Add brief description -------===//
+//===-- AMDILInstructions.td - AMDIL Instruction definitions --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

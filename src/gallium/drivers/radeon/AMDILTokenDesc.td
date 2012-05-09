@@ -1,4 +1,4 @@
-//===-- AMDILTokenDesc.td - TODO: Add brief description -------===//
+//===-- AMDILTokenDesc.td - AMDIL Token Definitions --*- tablegen -*-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- R600LowerInstructions.cpp - TODO: Add brief description -------===//
+//===-- R600LowerInstructions.cpp - Lower unsupported AMDIL instructions --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This pass lowers AMDIL MachineInstrs that aren't supported by the R600
+// target to either supported AMDIL MachineInstrs or R600 MachineInstrs.
 //
 //===----------------------------------------------------------------------===//
 

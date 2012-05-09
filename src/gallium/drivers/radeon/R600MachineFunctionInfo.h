@@ -1,4 +1,4 @@
-//===-- R600MachineFunctionInfo.h - TODO: Add brief description ---*- C++ -*-=//
+//===-- R600MachineFunctionInfo.h - R600 Machine Function Info ----*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600MachineFunctionInfo is used for keeping track of which registers have
+// been reserved by the llvm.AMDGPU.reserve.reg intrinsic.
 //
 //===----------------------------------------------------------------------===//
 

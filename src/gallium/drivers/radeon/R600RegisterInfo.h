@@ -1,4 +1,4 @@
-//===-- R600RegisterInfo.h - TODO: Add brief description -------===//
+//===-- R600RegisterInfo.h - R600 Register Info Interface ------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Interface definition for R600RegisterInfo
 //
 //===----------------------------------------------------------------------===//
 

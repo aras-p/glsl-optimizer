@@ -1,4 +1,4 @@
-//===-- AMDILDevice.cpp - TODO: Add brief description -------===//
+//===-- AMDILDevice.cpp - Base class for AMDIL Devices --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

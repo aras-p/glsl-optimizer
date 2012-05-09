@@ -1,4 +1,4 @@
-//===-- R600CodeEmitter.cpp - TODO: Add brief description -------===//
+//===-- R600CodeEmitter.cpp - Code Emitter for R600->Cayman GPU families --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This code emitters outputs bytecode that is understood by the r600g driver
+// in the Mesa [1] project.  The bytecode is very similar to the hardware's ISA,
+// except that the size of the instruction fields are rounded up to the
+// nearest byte.
+//
+// [1] http://www.mesa3d.org/
 //
 //===----------------------------------------------------------------------===//
 

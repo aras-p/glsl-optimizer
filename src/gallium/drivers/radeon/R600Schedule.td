@@ -1,4 +1,4 @@
-//===-- R600Schedule.td - TODO: Add brief description -------===//
+//===-- R600Schedule.td - R600 Scheduling definitions ------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600 has a VLIW architecture.  On pre-cayman cards there are 5 instruction
+// slots ALU.X, ALU.Y, ALU.Z, ALU.W, and TRANS.  For cayman cards, the TRANS
+// slot has been removed. 
 //
 //===----------------------------------------------------------------------===//
 

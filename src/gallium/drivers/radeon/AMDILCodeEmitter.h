@@ -1,23 +1,21 @@
-//                     The LLVM Compiler Infrastructure
+//===-- AMDILCodeEmitter.h - AMDIL Code Emitter interface -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===-- AMDILCodeEmitter.h - TODO: Add brief description -------===//
-//===-- AMDILCodeEmitter.h - TODO: Add brief description -------===//
-//===-- AMDILCodeEmitter.h - TODO: Add brief description -------===//
+//===----------------------------------------------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
+// CodeEmitter interface for R600 and SI codegen.
 //
+//===----------------------------------------------------------------------===//
 
 #ifndef AMDILCODEEMITTER_H
 #define AMDILCODEEMITTER_H
 
 namespace llvm {
 
-  /* XXX: Temp HACK to work around tablegen name generation */
   class AMDILCodeEmitter {
   public:
     uint64_t getBinaryCodeForInstr(const MachineInstr &MI) const;

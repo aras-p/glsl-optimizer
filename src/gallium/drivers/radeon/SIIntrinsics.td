@@ -1,4 +1,4 @@
-//===-- SIIntrinsics.td - TODO: Add brief description -------===//
+//===-- SIIntrinsics.td - SI Intrinsic defs ----------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// SI Intrinsic Definitions
 //
 //===----------------------------------------------------------------------===//
 

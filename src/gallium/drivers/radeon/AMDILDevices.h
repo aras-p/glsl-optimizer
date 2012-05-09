@@ -1,4 +1,4 @@
-//===-- AMDILDevices.h - TODO: Add brief description -------===//
+//===-- AMDILDevices.h - Consolidate AMDIL Device headers -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

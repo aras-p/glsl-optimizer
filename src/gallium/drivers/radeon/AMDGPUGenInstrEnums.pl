@@ -1,15 +1,32 @@
-#===-- AMDGPUGenInstrEnums.pl - TODO: Add brief description -------===#
+#===-- AMDGPUGenInstrEnums.pl - Script for generating instruction enums ----===#
 #
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
 #
-#===----------------------------------------------------------------------===#
+#===-----------------------------------------------------------------------===#
 #
-# TODO: Add full description
+# This perl script is used to generate the following files:
 #
-#===----------------------------------------------------------------------===#
+# 1. perl AMDGPUGenInstrEnums.pl td  > AMDGPUInstrEnums.td
+#
+#    This file contains Tablegen constants used for matching hw instructions
+#    from R600 and SI with functionally similar AMDIL instruction.  It aslo
+#    contains definitions of floating point constants like pi (in hex notation)
+#    that are used in some of the shader patterns.
+#
+# 2. perl AMDGPUGenInstrEnums.pl h   > AMDGPUInstrEnums.h
+#
+#    This file contains cpp enums that match the constant values in
+#    AMDGPUInstrEnums.td
+#
+# 3. perl AMDGPUGenInstrEnums.pl inc > AMDGPUInstrEnums.include
+#
+#    This file contains a function called GetRealAMDILOpcode which maps the
+#    constant values defined in AMDGPUInstrEnums.h to the corresponding AMDIL
+#    instructions.
+#===-----------------------------------------------------------------------===#
 
 use warnings;
 use strict;

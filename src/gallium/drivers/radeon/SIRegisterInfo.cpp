@@ -1,4 +1,4 @@
-//===-- SIRegisterInfo.cpp - TODO: Add brief description -------===//
+//===-- SIRegisterInfo.cpp - SI Register Information ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file contains the SI implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

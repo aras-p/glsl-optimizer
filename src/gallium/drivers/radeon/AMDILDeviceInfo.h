@@ -1,4 +1,4 @@
-//===-- AMDILDeviceInfo.h - TODO: Add brief description -------===//
+//===-- AMDILDeviceInfo.h - Constants for describing devices --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -82,8 +82,8 @@ namespace llvm
     };
 
 
+  AMDILDevice*
+    getDeviceFromName(const std::string &name, AMDILSubtarget *ptr, bool is64bit = false, bool is64on32bit = false);
   } // namespace AMDILDeviceInfo
-  llvm::AMDILDevice*
-    getDeviceFromName(const std::string &name, llvm::AMDILSubtarget *ptr, bool is64bit = false, bool is64on32bit = false);
 } // namespace llvm
 #endif // _AMDILDEVICEINFO_H_

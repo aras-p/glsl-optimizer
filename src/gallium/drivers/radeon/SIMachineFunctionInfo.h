@@ -1,4 +1,4 @@
-//===-- SIMachineFunctionInfo.h - TODO: Add brief description -------===//
+//===- SIMachineFunctionInfo.h - SIMachineFunctionInfo interface -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// SIMachineFunctionInfo is used to keep track of the spi_sp_input_addr config
+// register, which is to tell the hardware which interpolation parameters to
+// load.
 //
 //===----------------------------------------------------------------------===//
 

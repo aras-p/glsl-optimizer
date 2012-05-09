@@ -1,4 +1,4 @@
-//===-- AMDILMultiClass.td - TODO: Add brief description -------===//
+//===-- AMDILMultiClass.td - AMDIL Multiclass defs ---*- tablegen -*-------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

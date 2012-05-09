@@ -1,4 +1,4 @@
-//===-- AMDILNIDevice.cpp - TODO: Add brief description -------===//
+//===-- AMDILNIDevice.cpp - Device Info for Northern Islands devices ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- AMDGPUInstructions.td - TODO: Add brief description -------===//
+//===-- AMDGPUInstructions.td - Common instruction defs ---*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file contains instruction defs that are common to all hw codegen
+// targets.
 //
 //===----------------------------------------------------------------------===//
 

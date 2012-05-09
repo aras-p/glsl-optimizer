@@ -1,4 +1,4 @@
-//===-- AMDILEvergreenDevice.cpp - TODO: Add brief description -------===//
+//===-- AMDILEvergreenDevice.cpp - Device Info for Evergreen --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

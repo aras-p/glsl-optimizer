@@ -1,4 +1,4 @@
-//===-- SIRegisterInfo.h - TODO: Add brief description -------===//
+//===-- SIRegisterInfo.h - SI Register Info Interface ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Interface definition for SIRegisterInfo
 //
 //===----------------------------------------------------------------------===//
 

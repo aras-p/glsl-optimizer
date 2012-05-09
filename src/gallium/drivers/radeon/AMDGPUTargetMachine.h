@@ -1,4 +1,4 @@
-//===-- AMDGPUTargetMachine.h - TODO: Add brief description -------===//
+//===-- AMDGPUTargetMachine.h - AMDGPU TargetMachine Interface --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+//  The AMDGPU TargetMachine interface definition for hw codgen targets.
 //
 //===----------------------------------------------------------------------===//
 

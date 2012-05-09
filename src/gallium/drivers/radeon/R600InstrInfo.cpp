@@ -1,4 +1,4 @@
-//===-- R600InstrInfo.cpp - TODO: Add brief description -------===//
+//===-- R600InstrInfo.cpp - R600 Instruction Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600 Implementation of TargetInstrInfo.
 //
 //===----------------------------------------------------------------------===//
 

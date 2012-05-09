@@ -1,4 +1,4 @@
-//===-- AMDILPeepholeOptimizer.cpp - TODO: Add brief description -------===//
+//===-- AMDILPeepholeOptimizer.cpp - AMDIL Peephole optimizations ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- R600KernelParameters.cpp - TODO: Add brief description -------===//
+//===-- R600KernelParameters.cpp - Lower kernel function arguments --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,89 +7,83 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This pass lowers kernel function arguments to loads from the vertex buffer.
+//
+// Kernel arguemnts are stored in the vertex buffer at an offset of 9 dwords,
+// so arg0 needs to be loaded from VTX_BUFFER[9] and arg1 is loaded from
+// VTX_BUFFER[10], etc.
 //
 //===----------------------------------------------------------------------===//
 
-#include <llvm-c/Core.h>
-#include "R600KernelParameters.h"
-#include "R600OpenCLUtils.h"
+#include "AMDGPU.h"
+#include "AMDIL.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Metadata.h"
+#include "llvm/Module.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TypeBuilder.h"
-// #include "llvm/CodeGen/Function.h"
-
-namespace AMDILAS {
-enum AddressSpaces {
-  PRIVATE_ADDRESS  = 0, // Address space for private memory.
-  GLOBAL_ADDRESS   = 1, // Address space for global memory (RAT0, VTX0).
-  CONSTANT_ADDRESS = 2, // Address space for constant memory.
-  LOCAL_ADDRESS    = 3, // Address space for local memory.
-  REGION_ADDRESS   = 4, // Address space for region memory.
-  ADDRESS_NONE     = 5, // Address space for unknown memory.
-  PARAM_D_ADDRESS  = 6, // Address space for direct addressible parameter memory (CONST0)
-  PARAM_I_ADDRESS  = 7, // Address space for indirect addressible parameter memory (VTX1)
-  LAST_ADDRESS     = 8
-};
-}
-
 
 #include <map>
 #include <set>
 
 using namespace llvm;
-using namespace std;
+
+namespace {
 
 #define CONSTANT_CACHE_SIZE_DW 127
 
-class R600KernelParameters : public llvm::FunctionPass
+class R600KernelParameters : public FunctionPass
 {
-  const llvm::TargetData * TD;
+  const TargetData * TD;
   LLVMContext* Context;
   Module *mod;
-  
+
   struct param
   {
-    param() : val(NULL), ptr_val(NULL), offset_in_dw(0), size_in_dw(0), indirect(false), specialID(0) {}
-    
-    llvm::Value* val;
-    llvm::Value* ptr_val;
+    param() : val(NULL), ptr_val(NULL), offset_in_dw(0), size_in_dw(0),
+              indirect(false), specialID(0) {}
+
+    Value* val;
+    Value* ptr_val;
     int offset_in_dw;
     int size_in_dw;
 
     bool indirect;
-    
-    string specialType;
+
+    std::string specialType;
     int specialID;
-    
+
     int end() { return offset_in_dw + size_in_dw; }
-    /* The first 9 dwords are reserved for the grid sizes. */
+    // The first 9 dwords are reserved for the grid sizes.
     int get_rat_offset() { return 9 + offset_in_dw; }
   };
 
   std::vector<param> params;
 
-  int getLastSpecialID(const string& TypeName);
-  
+  bool isOpenCLKernel(const Function* fun);
+  int getLastSpecialID(const std::string& TypeName);
+
   int getListSize();
-  void AddParam(llvm::Argument* arg);
-  int calculateArgumentSize(llvm::Argument* arg);
-  void RunAna(llvm::Function* fun);
-  void Replace(llvm::Function* fun);
-  bool isIndirect(Value* val, set<Value*>& visited);
-  void Propagate(llvm::Function* fun);
-  void Propagate(llvm::Value* v, const llvm::Twine& name, bool indirect = false);
+  void AddParam(Argument* arg);
+  int calculateArgumentSize(Argument* arg);
+  void RunAna(Function* fun);
+  void Replace(Function* fun);
+  bool isIndirect(Value* val, std::set<Value*>& visited);
+  void Propagate(Function* fun);
+  void Propagate(Value* v, const Twine& name, bool indirect = false);
   Value* ConstantRead(Function* fun, param& p);
   Value* handleSpecial(Function* fun, param& p);
   bool isSpecialType(Type*);
-  string getSpecialTypeName(Type*);
+  std::string getSpecialTypeName(Type*);
 public:
   static char ID;
   R600KernelParameters() : FunctionPass(ID) {};
-  R600KernelParameters(const llvm::TargetData* TD) : FunctionPass(ID), TD(TD) {}
-//   bool runOnFunction (llvm::Function &F);
-  bool runOnFunction (llvm::Function &F);
+  R600KernelParameters(const TargetData* TD) : FunctionPass(ID), TD(TD) {}
+  bool runOnFunction (Function &F);
   void getAnalysisUsage(AnalysisUsage &AU) const;
   const char *getPassName() const;
   bool doInitialization(Module &M);
@@ -98,13 +92,42 @@ public:
 
 char R600KernelParameters::ID = 0;
 
-static RegisterPass<R600KernelParameters> X("kerparam", "OpenCL Kernel Parameter conversion", false, false);
+static RegisterPass<R600KernelParameters> X("kerparam",
+                            "OpenCL Kernel Parameter conversion", false, false);
 
-int R600KernelParameters::getLastSpecialID(const string& TypeName)
+bool R600KernelParameters::isOpenCLKernel(const Function* fun)
+{
+  Module *mod = const_cast<Function*>(fun)->getParent();
+  NamedMDNode * md = mod->getOrInsertNamedMetadata("opencl.kernels");
+
+  if (!md or !md->getNumOperands())
+  {
+    return false;
+  }
+
+  for (int i = 0; i < int(md->getNumOperands()); i++)
+  {
+    if (!md->getOperand(i) or !md->getOperand(i)->getOperand(0))
+    {
+      continue;
+    }
+    
+    assert(md->getOperand(i)->getNumOperands() == 1);
+
+    if (md->getOperand(i)->getOperand(0)->getName() == fun->getName())
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+int R600KernelParameters::getLastSpecialID(const std::string& TypeName)
 {
   int lastID = -1;
-  
-  for (vector<param>::iterator i = params.begin(); i != params.end(); i++)
+
+  for (std::vector<param>::iterator i = params.begin(); i != params.end(); i++)
   {
     if (i->specialType == TypeName)
     {
@@ -125,7 +148,7 @@ int R600KernelParameters::getListSize()
   return params.back().end();
 }
 
-bool R600KernelParameters::isIndirect(Value* val, set<Value*>& visited)
+bool R600KernelParameters::isIndirect(Value* val, std::set<Value*>& visited)
 {
   if (isa<LoadInst>(val))
   {
@@ -144,7 +167,7 @@ bool R600KernelParameters::isIndirect(Value* val, set<Value*>& visited)
   }
 
   visited.insert(val);
-  
+
   if (isa<GetElementPtrInst>(val))
   {
     GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(val);
@@ -158,7 +181,7 @@ bool R600KernelParameters::isIndirect(Value* val, set<Value*>& visited)
       }
     }
   }
-  
+
   for (Value::use_iterator i = val->use_begin(); i != val->use_end(); i++)
   {
     Value* v2 = dyn_cast<Value>(*i);
@@ -175,24 +198,24 @@ bool R600KernelParameters::isIndirect(Value* val, set<Value*>& visited)
   return false;
 }
 
-void R600KernelParameters::AddParam(llvm::Argument* arg)
+void R600KernelParameters::AddParam(Argument* arg)
 {
   param p;
-  
+
   p.val = dyn_cast<Value>(arg);
   p.offset_in_dw = getListSize();
   p.size_in_dw = calculateArgumentSize(arg);
 
   if (isa<PointerType>(arg->getType()) and arg->hasByValAttr())
   {
-    set<Value*> visited;
+    std::set<Value*> visited;
     p.indirect = isIndirect(p.val, visited);
   }
-  
+
   params.push_back(p);
 }
 
-int R600KernelParameters::calculateArgumentSize(llvm::Argument* arg)
+int R600KernelParameters::calculateArgumentSize(Argument* arg)
 {
   Type* t = arg->getType();
 
@@ -200,16 +223,16 @@ int R600KernelParameters::calculateArgumentSize(llvm::Argument* arg)
   {
     t = dyn_cast<PointerType>(t)->getElementType();
   }
-  
+
   int store_size_in_dw = (TD->getTypeStoreSize(t) + 3)/4;
 
   assert(store_size_in_dw);
-  
+
   return store_size_in_dw;
 }
 
 
-void R600KernelParameters::RunAna(llvm::Function* fun)
+void R600KernelParameters::RunAna(Function* fun)
 {
   assert(isOpenCLKernel(fun));
 
@@ -220,7 +243,7 @@ void R600KernelParameters::RunAna(llvm::Function* fun)
 
 }
 
-void R600KernelParameters::Replace(llvm::Function* fun)
+void R600KernelParameters::Replace(Function* fun)
 {
   for (std::vector<param>::iterator i = params.begin(); i != params.end(); i++)
   {
@@ -237,11 +260,11 @@ void R600KernelParameters::Replace(llvm::Function* fun)
     if (new_val)
     {
       i->val->replaceAllUsesWith(new_val);
-    }   
+    }
   }
 }
 
-void R600KernelParameters::Propagate(llvm::Function* fun)
+void R600KernelParameters::Propagate(Function* fun)
 {
   for (std::vector<param>::iterator i = params.begin(); i != params.end(); i++)
   {
@@ -256,8 +279,8 @@ void R600KernelParameters::Propagate(Value* v, const Twine& name, bool indirect)
 {
   LoadInst* load = dyn_cast<LoadInst>(v);
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(v);
-  
-  unsigned addrspace; 
+
+  unsigned addrspace;
 
   if (indirect)
   {
@@ -274,49 +297,54 @@ void R600KernelParameters::Propagate(Value* v, const Twine& name, bool indirect)
 
     if (dyn_cast<PointerType>(op->getType())->getAddressSpace() != addrspace)
     {
-      op = new BitCastInst(op, PointerType::get(dyn_cast<PointerType>(op->getType())->getElementType(), addrspace), name, dyn_cast<Instruction>(v));
+      op = new BitCastInst(op, PointerType::get(dyn_cast<PointerType>(
+                           op->getType())->getElementType(), addrspace),
+                           name, dyn_cast<Instruction>(v));
     }
 
-    vector<Value*> params(GEP->idx_begin(), GEP->idx_end());
-    
-    GetElementPtrInst* GEP2 = GetElementPtrInst::Create(op, params, name, dyn_cast<Instruction>(v));
+    std::vector<Value*> params(GEP->idx_begin(), GEP->idx_end());
+
+    GetElementPtrInst* GEP2 = GetElementPtrInst::Create(op, params, name,
+                                                      dyn_cast<Instruction>(v));
     GEP2->setIsInBounds(GEP->isInBounds());
     v = dyn_cast<Value>(GEP2);
     GEP->replaceAllUsesWith(GEP2);
     GEP->eraseFromParent();
     load = NULL;
   }
-  
+
   if (load)
   {
-    if (load->getPointerAddressSpace() != addrspace) ///normally at this point we have the right address space
+    ///normally at this point we have the right address space
+    if (load->getPointerAddressSpace() != addrspace)
     {
       Value *orig_ptr = load->getPointerOperand();
       PointerType *orig_ptr_type = dyn_cast<PointerType>(orig_ptr->getType());
-      
-      Type* new_ptr_type = PointerType::get(orig_ptr_type->getElementType(), addrspace);
+
+      Type* new_ptr_type = PointerType::get(orig_ptr_type->getElementType(),
+                                            addrspace);
 
       Value* new_ptr = orig_ptr;
-      
+
       if (orig_ptr->getType() != new_ptr_type)
       {
         new_ptr = new BitCastInst(orig_ptr, new_ptr_type, "prop_cast", load);
       }
-      
+
       Value* new_load = new LoadInst(new_ptr, name, load);
       load->replaceAllUsesWith(new_load);
       load->eraseFromParent();
     }
-    
+
     return;
   }
 
-  vector<User*> users(v->use_begin(), v->use_end());
-  
+  std::vector<User*> users(v->use_begin(), v->use_end());
+
   for (int i = 0; i < int(users.size()); i++)
   {
     Value* v2 = dyn_cast<Value>(users[i]);
-    
+
     if (v2)
     {
       Propagate(v2, name, indirect);
@@ -327,7 +355,7 @@ void R600KernelParameters::Propagate(Value* v, const Twine& name, bool indirect)
 Value* R600KernelParameters::ConstantRead(Function* fun, param& p)
 {
   assert(fun->front().begin() != fun->front().end());
-  
+
   Instruction *first_inst = fun->front().begin();
   IRBuilder <> builder (first_inst);
 /* First 3 dwords are reserved for the dimmension info */
@@ -346,43 +374,54 @@ Value* R600KernelParameters::ConstantRead(Function* fun, param& p)
   {
     addrspace = AMDILAS::PARAM_D_ADDRESS;
   }
-  
+
   Argument *arg = dyn_cast<Argument>(p.val);
   Type * argType = p.val->getType();
   PointerType * argPtrType = dyn_cast<PointerType>(p.val->getType());
-  
+
   if (argPtrType and arg->hasByValAttr())
   {
-    Value* param_addr_space_ptr = ConstantPointerNull::get(PointerType::get(Type::getInt32Ty(*Context), addrspace));
-    Value* param_ptr = GetElementPtrInst::Create(param_addr_space_ptr, ConstantInt::get(Type::getInt32Ty(*Context), p.get_rat_offset()), arg->getName(), first_inst);
-    param_ptr = new BitCastInst(param_ptr, PointerType::get(argPtrType->getElementType(), addrspace), arg->getName(), first_inst);
+    Value* param_addr_space_ptr = ConstantPointerNull::get(
+                                    PointerType::get(Type::getInt32Ty(*Context),
+                                    addrspace));
+    Value* param_ptr = GetElementPtrInst::Create(param_addr_space_ptr,
+                                    ConstantInt::get(Type::getInt32Ty(*Context),
+                                    p.get_rat_offset()), arg->getName(),
+                                    first_inst);
+    param_ptr = new BitCastInst(param_ptr,
+                                PointerType::get(argPtrType->getElementType(),
+                                                 addrspace),
+                                arg->getName(), first_inst);
     p.ptr_val = param_ptr;
     return param_ptr;
   }
   else
   {
-    Value* param_addr_space_ptr = ConstantPointerNull::get(PointerType::get(argType, addrspace));
-    
+    Value* param_addr_space_ptr = ConstantPointerNull::get(PointerType::get(
+                                                        argType, addrspace));
+
     Value* param_ptr = builder.CreateGEP(param_addr_space_ptr,
-             ConstantInt::get(Type::getInt32Ty(*Context), p.get_rat_offset()), arg->getName());
-    
+             ConstantInt::get(Type::getInt32Ty(*Context), p.get_rat_offset()),
+                              arg->getName());
+
     Value* param_value = builder.CreateLoad(param_ptr, arg->getName());
-    
+
     return param_value;
   }
 }
 
 Value* R600KernelParameters::handleSpecial(Function* fun, param& p)
 {
-  string name = getSpecialTypeName(p.val->getType());
+  std::string name = getSpecialTypeName(p.val->getType());
   int ID;
 
   assert(!name.empty());
-  
+
   if (name == "image2d_t" or name == "image3d_t")
   {
-    int lastID = max(getLastSpecialID("image2d_t"), getLastSpecialID("image3d_t"));
-    
+    int lastID = std::max(getLastSpecialID("image2d_t"),
+                     getLastSpecialID("image3d_t"));
+
     if (lastID == -1)
     {
       ID = 2; ///ID0 and ID1 are used internally by the driver
@@ -403,20 +442,22 @@ Value* R600KernelParameters::handleSpecial(Function* fun, param& p)
     else
     {
       ID = lastID + 1;
-    }    
+    }
   }
   else
   {
     ///TODO: give some error message
     return NULL;
   }
-    
+
   p.specialType = name;
   p.specialID = ID;
 
   Instruction *first_inst = fun->front().begin();
 
-  return new IntToPtrInst(ConstantInt::get(Type::getInt32Ty(*Context), p.specialID), p.val->getType(), "resourceID", first_inst);
+  return new IntToPtrInst(ConstantInt::get(Type::getInt32Ty(*Context),
+                                           p.specialID), p.val->getType(),
+                                           "resourceID", first_inst);
 }
 
 
@@ -425,7 +466,7 @@ bool R600KernelParameters::isSpecialType(Type* t)
   return !getSpecialTypeName(t).empty();
 }
 
-string R600KernelParameters::getSpecialTypeName(Type* t)
+std::string R600KernelParameters::getSpecialTypeName(Type* t)
 {
   PointerType *pt = dyn_cast<PointerType>(t);
   StructType *st = NULL;
@@ -437,9 +478,9 @@ string R600KernelParameters::getSpecialTypeName(Type* t)
 
   if (st)
   {
-    string prefix = "struct.opencl_builtin_type_";
-    
-    string name = st->getName().str();
+    std::string prefix = "struct.opencl_builtin_type_";
+
+    std::string name = st->getName().str();
 
     if (name.substr(0, prefix.length()) == prefix)
     {
@@ -458,19 +499,15 @@ bool R600KernelParameters::runOnFunction (Function &F)
     return false;
   }
 
-//  F.dump();
-  
   RunAna(&F);
   Replace(&F);
   Propagate(&F);
-  
-   mod->dump();
+
   return false;
 }
 
 void R600KernelParameters::getAnalysisUsage(AnalysisUsage &AU) const
 {
-//   AU.addRequired<FunctionAnalysis>();
   FunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
 }
@@ -484,7 +521,7 @@ bool R600KernelParameters::doInitialization(Module &M)
 {
   Context = &M.getContext();
   mod = &M;
-  
+
   return false;
 }
 
@@ -493,10 +530,12 @@ bool R600KernelParameters::doFinalization(Module &M)
   return false;
 }
 
-llvm::FunctionPass* createR600KernelParametersPass(const llvm::TargetData* TD)
+} // End anonymous namespace
+
+FunctionPass* llvm::createR600KernelParametersPass(const TargetData* TD)
 {
   FunctionPass *p = new R600KernelParameters(TD);
-  
+
   return p;
 }
 

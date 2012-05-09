@@ -1,4 +1,4 @@
-//===-- SIISelLowering.cpp - TODO: Add brief description -------===//
+//===-- SIISelLowering.cpp - SI DAG Lowering Implementation ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Most of the DAG lowering is handled in AMDILISelLowering.cpp.  This file is
+// mostly EmitInstrWithCustomInserter().
 //
 //===----------------------------------------------------------------------===//
 

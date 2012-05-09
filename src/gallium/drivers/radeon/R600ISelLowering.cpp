@@ -1,4 +1,4 @@
-//===-- R600ISelLowering.cpp - TODO: Add brief description -------===//
+//===-- R600ISelLowering.cpp - R600 DAG Lowering Implementation -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Most of the DAG lowering is handled in AMDILISelLowering.cpp.  This file
+// is mostly EmitInstrWithCustomInserter().
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,7 +45,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-  /* XXX: Use helper function from AMDGPULowerShaderInstructions here */
   case AMDIL::TGID_X:
     addLiveIn(MI, MF, MRI, TII, AMDIL::T1_X);
     break;

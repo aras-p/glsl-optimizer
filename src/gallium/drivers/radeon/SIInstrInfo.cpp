@@ -1,4 +1,4 @@
-//===-- SIInstrInfo.cpp - TODO: Add brief description -------===//
+//===-- SIInstrInfo.cpp - SI Instruction Information  ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// SI Implementation of TargetInstrInfo.
 //
 //===----------------------------------------------------------------------===//
 

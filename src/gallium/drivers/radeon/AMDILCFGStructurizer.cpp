@@ -15,9 +15,13 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/DominatorInternals.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -26,8 +30,6 @@
 #define FirstNonDebugInstr(A) A->begin()
 using namespace llvm;
 
-// bixia TODO: move this out to analysis lib. Make this work for both target
-// AMDIL and CBackend.
 // TODO: move-begin.
 
 //===----------------------------------------------------------------------===//
@@ -104,23 +106,6 @@ void ReverseVector(SmallVector<NodeT *, DEFAULT_VEC_SLOTS> &Src) {
 // MachinePostDominatorTree
 //
 //===----------------------------------------------------------------------===//
-
-#include "AMDILTargetMachine.h"
-#include "AMDILUtilityFunctions.h"
-#include "llvm/ADT/SCCIterator.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/DominatorInternals.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 namespace llvm {
 

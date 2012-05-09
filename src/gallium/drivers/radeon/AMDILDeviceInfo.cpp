@@ -1,4 +1,4 @@
-//===-- AMDILDeviceInfo.cpp - TODO: Add brief description -------===//
+//===-- AMDILDeviceInfo.cpp - AMDILDeviceInfo class -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,11 +6,16 @@
 // License. See LICENSE.TXT for details.
 //
 //==-----------------------------------------------------------------------===//
+//
+// Function that creates DeviceInfo from a device name and other information.
+//
+//==-----------------------------------------------------------------------===//
 #include "AMDILDevices.h"
 #include "AMDILSubtarget.h"
 
 using namespace llvm;
 namespace llvm {
+namespace AMDILDeviceInfo {
     AMDILDevice*
 getDeviceFromName(const std::string &deviceName, AMDILSubtarget *ptr, bool is64bit, bool is64on32bit)
 {
@@ -84,4 +89,5 @@ getDeviceFromName(const std::string &deviceName, AMDILSubtarget *ptr, bool is64b
         return new AMDIL7XXDevice(ptr);
     }
 }
-}
+} // End namespace AMDILDeviceInfo
+} // End namespace llvm

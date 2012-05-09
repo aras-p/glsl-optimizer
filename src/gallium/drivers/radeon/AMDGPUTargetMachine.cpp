@@ -17,7 +17,6 @@
 #include "AMDILTargetMachine.h"
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
-#include "R600KernelParameters.h"
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
 #include "llvm/Analysis/Passes.h"

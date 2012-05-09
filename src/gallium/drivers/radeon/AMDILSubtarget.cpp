@@ -94,7 +94,7 @@ AMDILSubtarget::AMDILSubtarget(llvm::StringRef TT, llvm::StringRef CPU, llvm::St
   }
 #endif
   mDevName = GPU;
-  mDevice = getDeviceFromName(mDevName, this, mIs64bit);
+  mDevice = AMDILDeviceInfo::getDeviceFromName(mDevName, this, mIs64bit);
 }
 AMDILSubtarget::~AMDILSubtarget()
 {

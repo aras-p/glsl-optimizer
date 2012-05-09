@@ -1,4 +1,4 @@
-//===-- SISchedule.td - TODO: Add brief description -------===//
+//===-- SISchedule.td - SI Scheduling definitons -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// TODO: This is just a place holder for now.
 //
 //===----------------------------------------------------------------------===//
 

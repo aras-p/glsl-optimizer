@@ -1,4 +1,4 @@
-//===-- SICodeEmitter.cpp - TODO: Add brief description -------===//
+//===-- SICodeEmitter.cpp - SI Code Emitter -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// The SI code emitter produces machine code that can be executed directly on
+// the GPU device.
 //
 //===----------------------------------------------------------------------===//
 

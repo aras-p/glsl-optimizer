@@ -1,4 +1,4 @@
-//===-- AMDIL7XXDevice.cpp - TODO: Add brief description -------===//
+//===-- AMDIL7XXDevice.cpp - Device Info for 7XX GPUs ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

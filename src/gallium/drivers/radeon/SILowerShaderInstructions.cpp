@@ -1,4 +1,4 @@
-//===-- SILowerShaderInstructions.cpp - TODO: Add brief description -------===//
+//===-- SILowerShaderInstructions.cpp - Pass for lowering shader instructions  -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

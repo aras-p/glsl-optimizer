@@ -1,16 +1,17 @@
-#===-- SIGenRegisterInfo.pl - TODO: Add brief description -------===#
+#===-- SIGenRegisterInfo.pl - Script for generating register info files ----===#
 #
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
 #
-#===----------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 #
-# TODO: Add full description
+# This perl script prints to stdout .td code to be used as SIRegisterInfo.td
+# it also generates a file called SIHwRegInfo.include, which contains helper
+# functions for determining the hw encoding of registers.
 #
-#===----------------------------------------------------------------------===#
-
+#===------------------------------------------------------------------------===#
 
 use strict;
 use warnings;

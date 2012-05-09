@@ -1,13 +1,9 @@
-//===-- SIInstructions.td - TODO: Add brief description -------===//
+//===-- SIInstructions.td - SI Instruction Defintions ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// TODO: Add full description
 //
 //===----------------------------------------------------------------------===//
 

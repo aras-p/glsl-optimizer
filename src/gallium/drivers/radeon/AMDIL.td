@@ -1,4 +1,4 @@
-//===-- AMDIL.td - TODO: Add brief description -------===//
+//===-- AMDIL.td - AMDIL Tablegen files --*- tablegen -*-------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

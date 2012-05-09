@@ -1,4 +1,4 @@
-//===-- AMDILSIDevice.cpp - TODO: Add brief description -------===//
+//===-- AMDILSIDevice.cpp - Device Info for Southern Islands GPUs ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

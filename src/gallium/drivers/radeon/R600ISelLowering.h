@@ -1,4 +1,4 @@
-//===-- R600ISelLowering.h - TODO: Add brief description -------===//
+//===-- R600ISelLowering.h - R600 DAG Lowering Interface -*- C++ -*--------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600 DAG Lowering interface definition
 //
 //===----------------------------------------------------------------------===//
 

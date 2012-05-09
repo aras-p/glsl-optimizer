@@ -1,4 +1,4 @@
-//===-- AMDGPUIntrinsics.td - TODO: Add brief description -------===//
+//===-- AMDGPUIntrinsics.td - Common intrinsics  -*- tablegen -*-----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// This file defines intrinsics that are used by all hw codegen targets.
 //
 //===----------------------------------------------------------------------===//
 

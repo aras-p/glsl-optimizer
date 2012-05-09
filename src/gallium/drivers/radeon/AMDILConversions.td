@@ -1,4 +1,4 @@
-//===-- AMDILConversions.td - TODO: Add brief description -------===//
+//==- AMDILConversions.td - Type conversion tablegen patterns -*-tablegen -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

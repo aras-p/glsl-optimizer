@@ -1,4 +1,4 @@
-//===-- AMDILVersion.td - TODO: Add brief description -------===//
+//===-- AMDILVersion.td - Barrier Instruction/Intrinsic definitions------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

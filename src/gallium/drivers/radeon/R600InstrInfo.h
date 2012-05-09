@@ -1,4 +1,4 @@
-//===-- R600InstrInfo.h - TODO: Add brief description -------===//
+//===-- R600InstrInfo.h - R600 Instruction Info Interface -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Interface definition for R600InstrInfo
 //
 //===----------------------------------------------------------------------===//
 

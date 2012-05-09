@@ -1,4 +1,4 @@
-//===-- SIInstrInfo.h - TODO: Add brief description -------===//
+//===-- SIInstrInfo.h - SI Instruction Info Interface ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Interface definition for SIInstrInfo.
 //
 //===----------------------------------------------------------------------===//
 

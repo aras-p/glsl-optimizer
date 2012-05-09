@@ -1,4 +1,4 @@
-//===-- AMDGPURegisterInfo.td - TODO: Add brief description -------===//
+//===-- AMDGPURegisterInfo.td - AMDGPU register info -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Tablegen register definitions common to all hw codegen targets.
 //
 //===----------------------------------------------------------------------===//
 

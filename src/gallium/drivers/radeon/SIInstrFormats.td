@@ -1,4 +1,4 @@
-//===-- SIInstrFormats.td - TODO: Add brief description -------===//
+//===-- SIInstrFormats.td - SI Instruction Formats ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// SI Instruction format definitions.
+//
+// Instructions with _32 take 32-bit operands.
+// Instructions with _64 take 64-bit operands.
+//
+// VOP_* instructions can use either a 32-bit or 64-bit encoding.  The 32-bit
+// encoding is the standard encoding, but instruction that make use of
+// any of the instruction modifiers must use the 64-bit encoding.
+//
+// Instructions with _e32 use the 32-bit encoding.
+// Instructions with _e64 use the 64-bit encoding.
 //
 //===----------------------------------------------------------------------===//
 

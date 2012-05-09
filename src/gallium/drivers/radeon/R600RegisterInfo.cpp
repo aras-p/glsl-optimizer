@@ -1,4 +1,4 @@
-//===-- R600RegisterInfo.cpp - TODO: Add brief description -------===//
+//===-- R600RegisterInfo.cpp - R600 Register Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// The file contains the R600 implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

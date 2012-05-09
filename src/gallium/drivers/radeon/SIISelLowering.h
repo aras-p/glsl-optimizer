@@ -1,4 +1,4 @@
-//===-- SIISelLowering.h - TODO: Add brief description -------===//
+//===-- SIISelLowering.h - SI DAG Lowering Interface ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// SI DAG Lowering interface definition
 //
 //===----------------------------------------------------------------------===//
 

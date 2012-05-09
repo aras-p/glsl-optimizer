@@ -1,4 +1,4 @@
-//===-- SIPropagateImmReads.cpp - TODO: Add brief description -------===//
+//===-- SIPropagateImmReads.cpp - Lower Immediate Reads Pass --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// We can't do this in the ConvertToISA pass, because later passes might
+// create LOADCONST_* instructions that we would miss.  This is why we need 
+// a separate pass for this.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===-- R600Instructions.td - TODO: Add brief description -------===//
+//===-- R600Instructions.td - R600 Instruction defs  -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// R600 Tablegen instruction definitions
 //
 //===----------------------------------------------------------------------===//
 

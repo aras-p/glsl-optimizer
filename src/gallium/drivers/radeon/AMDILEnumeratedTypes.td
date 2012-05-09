@@ -1,4 +1,4 @@
-//===-- AMDILEnumeratedTypes.td - TODO: Add brief description -------===//
+//===-- AMDILEnumeratedTypes.td - IL Type definitions --*- tablegen -*-----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
