@@ -149,21 +149,19 @@ void _mesa_print_info( void )
 
 
 /**
- * Set the debugging flags.
- *
- * \param debug debug string
- *
- * If compiled with debugging support then search for keywords in \p debug and
- * enables the verbose debug output of the respective feature.
+ * Set verbose logging flags.  When these flags are set, GL API calls
+ * in the various categories will be printed to stderr.
+ * \param str  a comma-separated list of keywords
  */
-static void add_debug_flags( const char *debug )
+static void
+set_verbose_flags(const char *str)
 {
 #ifdef DEBUG
-   struct debug_option {
+   struct option {
       const char *name;
       GLbitfield flag;
    };
-   static const struct debug_option debug_opt[] = {
+   static const struct option opts[] = {
       { "varray",    VERBOSE_VARRAY },
       { "tex",       VERBOSE_TEXTURE },
       { "mat",       VERBOSE_MATERIAL },
@@ -179,34 +177,56 @@ static void add_debug_flags( const char *debug )
    };
    GLuint i;
 
+   if (!str)
+      return;
+
    MESA_VERBOSE = 0x0;
-   for (i = 0; i < Elements(debug_opt); i++) {
-      if (strstr(debug, debug_opt[i].name) || strcmp(debug, "all") == 0)
-         MESA_VERBOSE |= debug_opt[i].flag;
+   for (i = 0; i < Elements(opts); i++) {
+      if (strstr(str, opts[i].name) || strcmp(str, "all") == 0)
+         MESA_VERBOSE |= opts[i].flag;
    }
-
-   /* Debug flag:
-    */
-   if (strstr(debug, "flush"))
-      MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
-
-#else
-   (void) debug;
 #endif
 }
 
 
+/**
+ * Set debugging flags.  When these flags are set, Mesa will do additional
+ * debug checks or actions.
+ * \param str  a comma-separated list of keywords
+ */
+static void
+set_debug_flags(const char *str)
+{
+#ifdef DEBUG
+   struct option {
+      const char *name;
+      GLbitfield flag;
+   };
+   static const struct option opts[] = {
+      { "flush", DEBUG_ALWAYS_FLUSH } /* flush after each drawing command */
+   };
+   GLuint i;
+
+   if (!str)
+      return;
+
+   MESA_DEBUG_FLAGS = 0x0;
+   for (i = 0; i < Elements(opts); i++) {
+      if (strstr(str, opts[i].name))
+         MESA_DEBUG_FLAGS |= opts[i].flag;
+   }
+#endif
+}
+
+
+/**
+ * Initialize debugging variables from env vars.
+ */
 void 
 _mesa_init_debug( struct gl_context *ctx )
 {
-   char *c;
-   c = _mesa_getenv("MESA_DEBUG");
-   if (c)
-      add_debug_flags(c);
-
-   c = _mesa_getenv("MESA_VERBOSE");
-   if (c)
-      add_debug_flags(c);
+   set_debug_flags(_mesa_getenv("MESA_DEBUG"));
+   set_verbose_flags(_mesa_getenv("MESA_VERBOSE"));
 }
 
 
