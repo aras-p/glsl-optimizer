@@ -180,6 +180,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 
 end:
    _mesa_set_vp_override(ctx, GL_FALSE);
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 
@@ -280,6 +284,10 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 
 end:
    _mesa_set_vp_override(ctx, GL_FALSE);
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 
@@ -354,6 +362,10 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    /* update raster position */
    ctx->Current.RasterPos[0] += xmove;
    ctx->Current.RasterPos[1] += ymove;
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 

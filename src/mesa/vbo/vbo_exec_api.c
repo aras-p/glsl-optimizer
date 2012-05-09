@@ -862,6 +862,10 @@ static void GLAPIENTRY vbo_exec_End( void )
    }
    else 
       _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 

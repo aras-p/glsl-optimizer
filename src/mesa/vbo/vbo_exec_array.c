@@ -614,6 +614,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
                       GL_TRUE, start, start + count - 1,
                       NULL);
    }
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 
@@ -803,6 +807,10 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims( ctx, prim, 1, &ib,
 		    index_bounds_valid, start, end, NULL );
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 
@@ -1127,6 +1135,10 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    }
 
    free(prim);
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 
@@ -1201,6 +1213,10 @@ vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
    check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims(ctx, prim, 1, NULL,
                    GL_TRUE, 0, 0, obj);
+
+   if (MESA_DEBUG_FLAGS & DEBUG_ALWAYS_FLUSH) {
+      _mesa_flush(ctx);
+   }
 }
 
 /**
