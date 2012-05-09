@@ -187,8 +187,8 @@ brw_blorp_framebuffer(struct intel_context *intel,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter)
 {
-   /* BLORP is only supported on Gen6.  TODO: implement on Gen7. */
-   if (intel->gen != 6)
+   /* BLORP is not supported before Gen6. */
+   if (intel->gen < 6)
       return mask;
 
    static GLbitfield buffer_bits[] = {

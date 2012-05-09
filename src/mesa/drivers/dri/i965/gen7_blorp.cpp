@@ -416,6 +416,8 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
    case GEN6_HIZ_OP_HIZ_RESOLVE:
       dw1 |= GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
       break;
+   case GEN6_HIZ_OP_NONE:
+      break;
    default:
       assert(0);
       break;
