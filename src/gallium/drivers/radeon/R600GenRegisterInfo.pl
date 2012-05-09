@@ -14,7 +14,8 @@
 use strict;
 use warnings;
 
-use AMDGPUConstants;
+use constant CONST_REG_COUNT => 256;
+use constant TEMP_REG_COUNT => 128;
 
 my $CREG_MAX = CONST_REG_COUNT - 1;
 my $TREG_MAX = TEMP_REG_COUNT - 1;
@@ -170,3 +171,24 @@ sub print_reg_defs {
   return @reg_list;
 }
 
+#Helper functions
+sub get_hw_index {
+  my ($index) = @_;
+  return int($index / 4);
+}
+
+sub get_chan_str {
+  my ($index) = @_;
+  my $chan = $index % 4;
+  if ($chan == 0 )  {
+    return 'X';
+  } elsif ($chan == 1) {
+    return 'Y';
+  } elsif ($chan == 2) {
+    return 'Z';
+  } elsif ($chan == 3) {
+    return 'W';
+  } else {
+    die("Unknown chan value: $chan");
+  }
+}
