@@ -741,7 +741,10 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
 
    if (params->num_samples > 0) {
       dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
-      dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
+      if (prog_data && prog_data->persample_msaa_dispatch)
+         dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
+      else
+         dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
    } else {
       dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
       dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;

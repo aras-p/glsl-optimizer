@@ -118,6 +118,12 @@ const unsigned int BRW_BLORP_NUM_PUSH_CONST_REGS =
 struct brw_blorp_prog_data
 {
    unsigned int first_curbe_grf;
+
+   /**
+    * True if the WM program should be run in MSDISPMODE_PERSAMPLE with more
+    * than one sample per pixel.
+    */
+   bool persample_msaa_dispatch;
 };
 
 class brw_blorp_params
@@ -207,6 +213,12 @@ struct brw_blorp_blit_prog_key
     * pixels that are outside the destination rectangle.
     */
    bool use_kill;
+
+   /**
+    * True if the WM program should be run in MSDISPMODE_PERSAMPLE with more
+    * than one sample per pixel.
+    */
+   bool persample_msaa_dispatch;
 };
 
 class brw_blorp_blit_params : public brw_blorp_params

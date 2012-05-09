@@ -419,7 +419,8 @@ gen7_blorp_emit_sf_config(struct brw_context *brw,
  */
 static void
 gen7_blorp_emit_wm_config(struct brw_context *brw,
-                          const brw_blorp_params *params)
+                          const brw_blorp_params *params,
+                          brw_blorp_prog_data *prog_data)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -450,7 +451,10 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
 
       if (params->num_samples > 0) {
          dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
-         dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
+         if (prog_data && prog_data->persample_msaa_dispatch)
+            dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
+         else
+            dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
       } else {
          dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
          dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;
@@ -776,7 +780,7 @@ gen7_blorp_exec(struct intel_context *intel,
    gen7_blorp_emit_streamout_disable(brw, params);
    gen6_blorp_emit_clip_disable(brw, params);
    gen7_blorp_emit_sf_config(brw, params);
-   gen7_blorp_emit_wm_config(brw, params);
+   gen7_blorp_emit_wm_config(brw, params, prog_data);
    if (params->use_wm_prog) {
       gen7_blorp_emit_binding_table_pointers_ps(brw, params,
                                                 wm_bind_bo_offset);

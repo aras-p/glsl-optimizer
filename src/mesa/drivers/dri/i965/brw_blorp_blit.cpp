@@ -437,13 +437,14 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
                                 GLuint *program_size)
 {
    /* Sanity checks */
-   if (key->dst_tiled_w) {
-      /* If the destination image is W tiled, then dst_samples must be 0.
-       * Otherwise, after conversion between W and Y tiling, there's no
+   if (key->dst_tiled_w && key->rt_samples > 0) {
+      /* If the destination image is W tiled and multisampled, then the thread
+       * must be dispatched once per sample, not once per pixel.  This is
+       * necessary because after conversion between W and Y tiling, there's no
        * guarantee that all samples corresponding to a single pixel will still
        * be together.
        */
-      assert(key->rt_samples == 0);
+      assert(key->persample_msaa_dispatch);
    }
 
    if (key->blend) {
@@ -458,6 +459,17 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
       assert(key->tex_samples == key->src_samples);
       assert(key->tex_samples > 0);
    }
+
+   if (key->persample_msaa_dispatch) {
+      /* It only makes sense to do persample dispatch if the render target is
+       * configured as multisampled.
+       */
+      assert(key->rt_samples > 0);
+   }
+
+   /* Set up prog_data */
+   memset(&prog_data, 0, sizeof(prog_data));
+   prog_data.persample_msaa_dispatch = key->persample_msaa_dispatch;
 
    brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 
@@ -658,11 +670,29 @@ brw_blorp_blit_program::compute_frag_coords()
     */
    brw_ADD(&func, Y, stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
 
-   /* Since we always run the WM in a mode that causes a single fragment
-    * dispatch per pixel, it's not meaningful to compute a sample value.  Just
-    * set it to 0.
-    */
-   s_is_zero = true;
+   if (key->persample_msaa_dispatch) {
+      /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples > 0.
+       * Therefore, subspan 0 will represent sample 0, subspan 1 will
+       * represent sample 1, and so on.
+       *
+       * So we need to populate S with the sequence (0, 0, 0, 0, 1, 1, 1, 1,
+       * 2, 2, 2, 2, 3, 3, 3, 3).  The easiest way to do this is to populate a
+       * temporary variable with the sequence (0, 1, 2, 3), and then copy from
+       * it using vstride=1, width=4, hstride=0.
+       *
+       * TODO: implement the necessary calculation for 8x multisampling.
+       */
+      brw_MOV(&func, t1, brw_imm_v(0x3210));
+      brw_MOV(&func, S, stride(t1, 1, 4, 0));
+      s_is_zero = false;
+   } else {
+      /* Either the destination surface is single-sampled, or the WM will be
+       * run in MSDISPMODE_PERPIXEL (which causes a single fragment dispatch
+       * per pixel).  In either case, it's not meaningful to compute a sample
+       * value.  Just set it to 0.
+       */
+      s_is_zero = true;
+   }
 }
 
 /**
@@ -1071,22 +1101,23 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
 
-   if (dst.map_stencil_as_y_tiled) {
-      /* If the destination surface is a W-tiled stencil buffer that we're
-       * mapping as Y tiled, then we need to set up the surface state as
-       * single-sampled, because the memory layout of related samples doesn't
-       * match between W and Y tiling.
+   if (dst.map_stencil_as_y_tiled && dst.num_samples > 0) {
+      /* If the destination surface is a W-tiled multisampled stencil buffer
+       * that we're mapping as Y tiled, then we need to arrange for the WM
+       * program to run once per sample rather than once per pixel, because
+       * the memory layout of related samples doesn't match between W and Y
+       * tiling.
        */
-      dst.num_samples = 0;
+      wm_prog_key.persample_msaa_dispatch = true;
    }
 
-   if (src_mt->num_samples > 0 && dst_mt->num_samples > 0) {
+   if (src.num_samples > 0 && dst.num_samples > 0) {
       /* We are blitting from a multisample buffer to a multisample buffer, so
        * we must preserve samples within a pixel.  This means we have to
-       * configure the render target as single-sampled, so that the WM program
-       * generate each sample separately.
+       * arrange for the WM program to run once per sample rather than once
+       * per pixel.
        */
-      dst.num_samples = 0;
+      wm_prog_key.persample_msaa_dispatch = true;
    }
 
    /* The render path must be configured to use the same number of samples as
@@ -1144,12 +1175,22 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct intel_mipmap_tree *src_mt,
        * dimensions 64x64.  We must also align it to a multiple of the tile
        * size, because the differences between W and Y tiling formats will
        * mean that pixels are scrambled within the tile.
+       *
+       * Note: if the destination surface configured as an MSAA surface, then
+       * the effective tile size we need to align it to is smaller, because
+       * each pixel covers a 2x2 or a 4x2 block of samples.
+       *
        * TODO: what if this makes the coordinates too large?
        */
-      x0 = (x0 * 2) & ~127;
-      y0 = (y0 / 2) & ~31;
-      x1 = ALIGN(x1 * 2, 128);
-      y1 = ALIGN(y1 / 2, 32);
+      unsigned x_align = 64, y_align = 64;
+      if (dst_mt->num_samples > 0) {
+         x_align /= (dst_mt->num_samples == 4 ? 2 : 4);
+         y_align /= 2;
+      }
+      x0 = (x0 & ~(x_align - 1)) * 2;
+      y0 = (y0 & ~(y_align - 1)) / 2;
+      x1 = ALIGN(x1, x_align) * 2;
+      y1 = ALIGN(y1, y_align) / 2;
       wm_prog_key.use_kill = true;
    }
 }
