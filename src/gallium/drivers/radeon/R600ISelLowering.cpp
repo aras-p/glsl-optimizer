@@ -98,7 +98,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY))
                   .addOperand(MI->getOperand(0))
                   .addReg(ConstantReg);
-      MI->eraseFromParent();
       break;
     }
 
@@ -107,7 +106,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       int64_t RegIndex = MI->getOperand(1).getImm();
       addLiveIn(MI, MF, MRI, TII,
                 AMDIL::R600_TReg32RegClass.getRegister(RegIndex));
-      MI->eraseFromParent();
       break;
     }
   case AMDIL::STORE_OUTPUT:
@@ -121,7 +119,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       if (!MRI.isLiveOut(OutputReg)) {
         MRI.addLiveOut(OutputReg);
       }
-      MI->eraseFromParent();
       break;
     }
 
@@ -132,11 +129,11 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       unsigned ReservedReg =
                           AMDIL::R600_TReg32RegClass.getRegister(ReservedIndex);
       MFI->ReservedRegs.push_back(ReservedReg);
-      MI->eraseFromParent();
       break;
     }
   }
 
+  MI->eraseFromParent();
   return BB;
 }
 
