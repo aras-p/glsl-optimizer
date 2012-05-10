@@ -862,7 +862,7 @@ i830Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
          if (ctx->DrawBuffer) {
             struct intel_renderbuffer *irbStencil
                = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
-            hw_stencil = (irbStencil && irbStencil->mt->region);
+            hw_stencil = (irbStencil && irbStencil->mt);
          }
          if (hw_stencil) {
             I830_STATECHANGE(i830, I830_UPLOAD_CTX);
