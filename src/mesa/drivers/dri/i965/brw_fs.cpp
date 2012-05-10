@@ -1681,6 +1681,7 @@ fs_visitor::run()
 
 	 progress = propagate_constants() || progress;
 	 progress = opt_algebraic() || progress;
+	 progress = opt_cse() || progress;
 	 progress = register_coalesce() || progress;
 	 progress = compute_to_mrf() || progress;
 	 progress = dead_code_eliminate() || progress;

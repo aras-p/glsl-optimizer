@@ -49,6 +49,8 @@ extern "C" {
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
 
+class fs_bblock;
+
 enum register_file {
    BAD_FILE,
    ARF,
@@ -507,6 +509,8 @@ public:
    void calculate_live_intervals();
    bool propagate_constants();
    bool opt_algebraic();
+   bool opt_cse();
+   bool opt_cse_local(fs_bblock *block, exec_list *aeb);
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();

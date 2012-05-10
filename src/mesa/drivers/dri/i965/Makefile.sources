@@ -113,6 +113,7 @@ i965_CXX_FILES = \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
 	brw_fs_cfg.cpp \
+	brw_fs_cse.cpp \
 	brw_fs_emit.cpp \
 	brw_fs_live_variables.cpp \
 	brw_fs_visitor.cpp \
