@@ -105,7 +105,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    if (depth_mt == NULL) {
       uint32_t dw1 = BRW_DEPTHFORMAT_D32_FLOAT << 18;
       uint32_t dw3 = 0;
-      uint32_t tile_x, tile_y;
+      uint32_t tile_x = 0, tile_y = 0;
 
       if (stencil_mt == NULL) {
 	 dw1 |= (BRW_SURFACE_NULL << 29);
