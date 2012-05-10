@@ -26,7 +26,6 @@ FunctionPass *createR600LowerInstructionsPass(TargetMachine &tm);
 
 // SI Passes
 FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
-FunctionPass *createSILowerShaderInstructionsPass(TargetMachine &tm);
 FunctionPass *createSIPropagateImmReadsPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 

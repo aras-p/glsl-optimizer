@@ -130,7 +130,6 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
   if (ST.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
     PM->add(createR600LowerInstructionsPass(*TM));
   } else {
-    PM->add(createSILowerShaderInstructionsPass(*TM));
     PM->add(createSIAssignInterpRegsPass(*TM));
   }
   PM->add(createAMDGPULowerInstructionsPass(*TM));

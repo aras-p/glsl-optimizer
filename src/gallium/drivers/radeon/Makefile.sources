@@ -54,7 +54,6 @@ CPP_SOURCES := \
 	SICodeEmitter.cpp		\
 	SIInstrInfo.cpp			\
 	SIISelLowering.cpp		\
-	SILowerShaderInstructions.cpp	\
 	SIMachineFunctionInfo.cpp	\
 	SIPropagateImmReads.cpp		\
 	SIRegisterInfo.cpp		\
