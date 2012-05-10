@@ -1,0 +1,164 @@
+struct v2f {
+  mediump vec4 pos;
+  mediump vec4 color;
+};
+struct appdata {
+  highp vec4 vertex;
+  highp vec3 normal;
+};
+varying mediump vec4 xlv_TEXCOORD0;
+uniform highp vec4 unity_LightColor[4];
+uniform highp vec4 unity_LightAtten[4];
+uniform highp mat4 UNITY_MATRIX_MVP;
+attribute lowp vec4 _glesColor;
+attribute highp vec4 _glesMultiTexCoord1;
+attribute highp vec4 _glesMultiTexCoord0;
+attribute mediump vec3 _glesNormal;
+attribute highp vec4 _glesVertex;
+v2f xlat_main (
+  in appdata v
+)
+{
+  int z;
+  int k;
+  highp vec4 l_1;
+  int i_3;
+  highp vec4 l;
+  int i_2;
+  int j;
+  int i_1;
+  int i;
+  v2f o;
+  int tmpvar_1;
+  tmpvar_1 = 0;
+  i = tmpvar_1;
+  int tmpvar_2;
+  tmpvar_2 = 0;
+  i_1 = tmpvar_2;
+  int tmpvar_3;
+  tmpvar_3 = 3;
+  j = tmpvar_3;
+  int tmpvar_4;
+  tmpvar_4 = 0;
+  i_2 = tmpvar_4;
+  int tmpvar_5;
+  tmpvar_5 = 0;
+  i_3 = tmpvar_5;
+  int tmpvar_6;
+  tmpvar_6 = 1;
+  k = tmpvar_6;
+  highp vec4 tmpvar_7;
+  tmpvar_7 = (UNITY_MATRIX_MVP * v.vertex);
+  o.pos = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  o.color = tmpvar_8;
+  while (true) {
+    if (!((i < 2))) {
+      break;
+    };
+    highp vec4 tmpvar_9;
+    tmpvar_9 = (o.color + unity_LightColor[i]);
+    o.color = tmpvar_9;
+    int tmpvar_10;
+    tmpvar_10 = (i + 1);
+    i = tmpvar_10;
+  };
+  while (true) {
+    if (!((i_1 < 4))) {
+      break;
+    };
+    highp vec4 tmpvar_11;
+    tmpvar_11 = (o.color + unity_LightColor[i_1]);
+    o.color = tmpvar_11;
+    int tmpvar_12;
+    tmpvar_12 = (i_1 + 1);
+    i_1 = tmpvar_12;
+  };
+  while (true) {
+    if (!((j >= 0))) {
+      break;
+    };
+    highp vec4 tmpvar_13;
+    tmpvar_13 = (o.color + unity_LightColor[j]);
+    o.color = tmpvar_13;
+    int tmpvar_14;
+    tmpvar_14 = (j - 1);
+    j = tmpvar_14;
+  };
+  while (true) {
+    if (!((i_2 < 2))) {
+      break;
+    };
+    highp vec4 tmpvar_15;
+    tmpvar_15 = (unity_LightColor[i_2] * unity_LightAtten[i_2].x);
+    l = tmpvar_15;
+    highp vec4 tmpvar_16;
+    tmpvar_16 = (o.color + l);
+    o.color = tmpvar_16;
+    int tmpvar_17;
+    tmpvar_17 = (i_2 + 1);
+    i_2 = tmpvar_17;
+  };
+  while (true) {
+    if (!((i_3 < 2))) {
+      break;
+    };
+    highp vec4 tmpvar_18;
+    tmpvar_18 = (unity_LightColor[i_3] * unity_LightAtten[i_3].z);
+    l_1 = tmpvar_18;
+    highp vec4 tmpvar_19;
+    tmpvar_19 = (o.color + l_1);
+    o.color = tmpvar_19;
+    int tmpvar_20;
+    tmpvar_20 = (i_3 + 1);
+    i_3 = tmpvar_20;
+  };
+  while (true) {
+    if (!((k < 3))) {
+      break;
+    };
+    highp vec4 tmpvar_21;
+    tmpvar_21 = (o.color + unity_LightColor[k].x);
+    o.color = tmpvar_21;
+    int tmpvar_22;
+    tmpvar_22 = (k + 1);
+    z = tmpvar_22;
+    int tmpvar_23;
+    tmpvar_23 = z;
+    k = tmpvar_23;
+  };
+  return o;
+}
+
+void main ()
+{
+  appdata xlt_v;
+  v2f xl_retval;
+  highp vec4 tmpvar_1;
+  tmpvar_1 = _glesVertex.xyzw;
+  highp vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  mediump vec3 tmpvar_3;
+  tmpvar_3 = _glesNormal.xyz;
+  mediump vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  v2f tmpvar_5;
+  tmpvar_5 = xlat_main (xlt_v);
+  v2f tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xl_retval = tmpvar_6;
+  mediump vec4 tmpvar_7;
+  tmpvar_7 = xl_retval.pos.xyzw;
+  mediump vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_Position = tmpvar_8;
+  mediump vec4 tmpvar_9;
+  tmpvar_9 = xl_retval.color.xyzw;
+  mediump vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlv_TEXCOORD0 = tmpvar_10;
+}
+
