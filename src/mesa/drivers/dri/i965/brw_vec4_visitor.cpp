@@ -1454,7 +1454,7 @@ vec4_visitor::visit(ir_dereference_array *ir)
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   if (ir->type->is_scalar() || ir->type->is_vector())
+   if (ir->type->is_scalar() || ir->type->is_vector() || ir->type->is_matrix())
       src.swizzle = swizzle_for_size(ir->type->vector_elements);
    else
       src.swizzle = BRW_SWIZZLE_NOOP;
@@ -1479,7 +1479,7 @@ vec4_visitor::visit(ir_dereference_record *ir)
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   if (ir->type->is_scalar() || ir->type->is_vector())
+   if (ir->type->is_scalar() || ir->type->is_vector() || ir->type->is_matrix())
       this->result.swizzle = swizzle_for_size(ir->type->vector_elements);
    else
       this->result.swizzle = BRW_SWIZZLE_NOOP;
