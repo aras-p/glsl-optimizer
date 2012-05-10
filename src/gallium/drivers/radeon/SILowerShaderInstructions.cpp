@@ -35,7 +35,6 @@ namespace {
 
     const char *getPassName() const { return "SI Lower Shader Instructions"; }
 
-    void lowerRETURN(MachineBasicBlock &MBB, MachineBasicBlock::iterator I);
     void lowerSET_M0(MachineInstr &MI, MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator I);
   };
@@ -57,9 +56,6 @@ bool SILowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
          I != MBB.end(); I = Next, Next = llvm::next(I) ) {
       MachineInstr &MI = *I;
       switch (MI.getOpcode()) {
-      case AMDIL::RETURN:
-        lowerRETURN(MBB, I);
-        break;
       case AMDIL::SET_M0:
         lowerSET_M0(MI, MBB, I);
         break;
@@ -70,13 +66,6 @@ bool SILowerShaderInstructionsPass::runOnMachineFunction(MachineFunction &MF)
   }
 
   return false;
-}
-
-void SILowerShaderInstructionsPass::lowerRETURN(MachineBasicBlock &MBB,
-    MachineBasicBlock::iterator I)
-{
-  const struct TargetInstrInfo * TII = TM.getInstrInfo();
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::S_ENDPGM));
 }
 
 void SILowerShaderInstructionsPass::lowerSET_M0(MachineInstr &MI,
