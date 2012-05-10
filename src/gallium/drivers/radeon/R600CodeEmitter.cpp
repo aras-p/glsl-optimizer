@@ -170,11 +170,11 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
           if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() && MI.getOperand(0).isDead()) {
             continue;
           }
-          if (isTexOp(MI.getOpcode())) {
+          if (AMDGPU::isTexOp(MI.getOpcode())) {
             emitTexInstr(MI);
-          } else if (isFCOp(MI.getOpcode())){
+          } else if (AMDGPU::isFCOp(MI.getOpcode())){
             emitFCInstr(MI);
-          } else if (isReductionOp(MI.getOpcode())) {
+          } else if (AMDGPU::isReductionOp(MI.getOpcode())) {
             isReduction = true;
             isLast = false;
             for (currentElement = 0; currentElement < 4; currentElement++) {
@@ -182,7 +182,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
               emitALUInstr(MI);
             }
             isReduction = false;
-          } else if (isCubeOp(MI.getOpcode())) {
+          } else if (AMDGPU::isCubeOp(MI.getOpcode())) {
               isCube = true;
               isLast = false;
               for (currentElement = 0; currentElement < 4; currentElement++) {
@@ -288,7 +288,7 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
 
    /* Some instructions are just place holder instructions that represent
     * operations that the GPU does automatically.  They should be ignored. */
-  if (isPlaceHolderOpcode(MI.getOpcode())) {
+  if (AMDGPU::isPlaceHolderOpcode(MI.getOpcode())) {
     return;
   }
 

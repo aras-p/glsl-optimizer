@@ -1,4 +1,4 @@
-//===-- AMDGPUUtil.cpp - TODO: Add brief description -------===//
+//===-- AMDGPUUtil.cpp - AMDGPU Utility functions -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,26 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: Add full description
+// Common utility functions used by hw codegen targets
 //
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUUtil.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDIL.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 
-/* Some instructions act as place holders to emulate operations that the GPU
- * hardware does automatically. This function can be used to check if
- * an opcode falls into this category. */
-bool llvm::isPlaceHolderOpcode(unsigned opcode)
+// Some instructions act as place holders to emulate operations that the GPU
+// hardware does automatically. This function can be used to check if
+// an opcode falls into this category.
+bool AMDGPU::isPlaceHolderOpcode(unsigned opcode)
 {
   switch (opcode) {
   default: return false;
@@ -39,7 +39,7 @@ bool llvm::isPlaceHolderOpcode(unsigned opcode)
   }
 }
 
-bool llvm::isTransOp(unsigned opcode)
+bool AMDGPU::isTransOp(unsigned opcode)
 {
   switch(opcode) {
     default: return false;
@@ -67,7 +67,7 @@ bool llvm::isTransOp(unsigned opcode)
   }
 }
 
-bool llvm::isTexOp(unsigned opcode)
+bool AMDGPU::isTexOp(unsigned opcode)
 {
   switch(opcode) {
   default: return false;
@@ -87,7 +87,7 @@ bool llvm::isTexOp(unsigned opcode)
   }
 }
 
-bool llvm::isReductionOp(unsigned opcode)
+bool AMDGPU::isReductionOp(unsigned opcode)
 {
   switch(opcode) {
     default: return false;
@@ -97,18 +97,18 @@ bool llvm::isReductionOp(unsigned opcode)
   }
 }
 
-bool llvm::isCubeOp(unsigned opcode)
+bool AMDGPU::isCubeOp(unsigned opcode)
 {
-	  switch(opcode) {
-	    default: return false;
-	    case AMDIL::CUBE_r600:
-	    case AMDIL::CUBE_eg:
-	      return true;
-	  }
+  switch(opcode) {
+    default: return false;
+    case AMDIL::CUBE_r600:
+    case AMDIL::CUBE_eg:
+      return true;
+  }
 }
 
 
-bool llvm::isFCOp(unsigned opcode)
+bool AMDGPU::isFCOp(unsigned opcode)
 {
   switch(opcode) {
   default: return false;
@@ -128,8 +128,10 @@ bool llvm::isFCOp(unsigned opcode)
   }
 }
 
-void AMDGPU::utilAddLiveIn(MachineFunction * MF, MachineRegisterInfo & MRI,
-    const struct TargetInstrInfo * TII, unsigned physReg, unsigned virtReg)
+void AMDGPU::utilAddLiveIn(llvm::MachineFunction * MF,
+													 llvm::MachineRegisterInfo & MRI,
+													 const struct llvm::TargetInstrInfo * TII,
+													 unsigned physReg, unsigned virtReg)
 {
     if (!MRI.isLiveIn(physReg)) {
       MRI.addLiveIn(physReg, virtReg);
