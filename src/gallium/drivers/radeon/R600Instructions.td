@@ -152,8 +152,6 @@ class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, dag outs, dag ins,
   let Inst{31-30} = ELEM_SIZE;
 
   /* CF_ALLOC_EXPORT_WORD1_BUF */
-/* XXX: We can't have auto encoding of 64-bit instructions until LLVM 3.1 :( */
-/*
   let Inst{43-32} = ARRAY_SIZE;
   let Inst{47-44} = COMP_MASK;
   let Inst{51-48} = BURST_COUNT;
@@ -162,7 +160,6 @@ class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, dag outs, dag ins,
   let Inst{61-54} = cf_inst;
   let Inst{62}    = MARK;
   let Inst{63}    = BARRIER;
-*/
 }
 
 /*
@@ -745,20 +742,12 @@ def RAT_WRITE_CACHELESS_eg :
     EG_CF_RAT <0x57, 0x2, (outs), (ins R600_TReg32_X:$rw_gpr,
                                    R600_TReg32_X:$index_gpr, i32imm:$rat_id), "">
 {
-/*
-  let Inst{3-0}   = RAT_ID;
-  let Inst{21-15} = RW_GPR;
-  let Inst{29-23} = INDEX_GPR;
-  /* Propery of the UAV */
-  let Inst{31-30} = ELEM_SIZE;
-*/
   let RIM         = 0;
   /* XXX: Have a separate instruction for non-indexed writes. */
   let TYPE        = 1;
   let RW_REL      = 0;
   let ELEM_SIZE   = 0;
 
-/*
   let ARRAY_SIZE  = 0;
   let COMP_MASK   = 1;
   let BURST_COUNT = 0;
@@ -766,7 +755,6 @@ def RAT_WRITE_CACHELESS_eg :
   let EOP         = 0;
   let MARK        = 0;
   let BARRIER     = 1;
-*/
 }
 
 def VTX_READ_eg : InstR600ISA < (outs R600_TReg32_X:$dst),

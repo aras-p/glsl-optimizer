@@ -198,12 +198,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             switch(MI.getOpcode()) {
             case AMDIL::RAT_WRITE_CACHELESS_eg:
               {
-                /* XXX: Support for autoencoding 64-bit instructions was added
-                 * in LLVM 3.1.  Until we drop support for 3.0, we will use Magic
-                 * numbers for the high bits. */
-                  uint64_t high = 0x95c0100000000000;
                   uint64_t inst = getBinaryCodeForInstr(MI);
-                  inst |= high;
                 /* Set End Of Program bit */
                 /* XXX: Need better check of end of program.  EOP should be
                  * encoded in one of the operands of the MI, and it should be
