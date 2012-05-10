@@ -1,0 +1,77 @@
+varying highp vec3 xlv_TEXCOORD4;
+varying highp vec3 xlv_TEXCOORD3;
+varying highp vec3 xlv_TEXCOORD2;
+varying highp vec3 xlv_TEXCOORD1;
+varying highp vec2 xlv_TEXCOORD0;
+uniform sampler2D _TranslucencyMap;
+uniform lowp vec3 _TranslucencyColor;
+uniform highp vec4 _TerrainTreeLightColors[4];
+uniform lowp vec4 _SpecColor;
+uniform sampler2D _MainTex;
+uniform lowp float _Cutoff;
+uniform sampler2D _BumpSpecMap;
+uniform lowp vec4 UNITY_LIGHTMODEL_AMBIENT;
+void main ()
+{
+  highp vec3 tmpvar_1;
+  highp vec3 tmpvar_2;
+  tmpvar_1 = xlv_TEXCOORD3;
+  tmpvar_2 = xlv_TEXCOORD4;
+  lowp vec4 c;
+  mediump float nh;
+  mediump float nl;
+  mediump vec3 lightColor;
+  int j;
+  mediump vec3 backContribs;
+  mediump vec3 light;
+  mediump float gloss;
+  mediump float specular;
+  lowp vec3 albedo;
+  j = 0;
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_MainTex, xlv_TEXCOORD0);
+  lowp float x;
+  x = (tmpvar_3.w - _Cutoff);
+  if ((x < 0.0)) {
+    discard;
+  };
+  highp vec3 tmpvar_4;
+  tmpvar_4 = (tmpvar_3.xyz * xlv_TEXCOORD1);
+  albedo = tmpvar_4;
+  lowp float tmpvar_5;
+  tmpvar_5 = (texture2D (_BumpSpecMap, xlv_TEXCOORD0).x * 128.0);
+  specular = tmpvar_5;
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
+  lowp float tmpvar_7;
+  tmpvar_7 = tmpvar_6.w;
+  gloss = tmpvar_7;
+  lowp vec3 tmpvar_8;
+  tmpvar_8 = (UNITY_LIGHTMODEL_AMBIENT.xyz * albedo);
+  light = tmpvar_8;
+  highp vec3 tmpvar_9;
+  tmpvar_9 = (xlv_TEXCOORD2 * tmpvar_6.z);
+  backContribs = tmpvar_9;
+  while (true) {
+    if ((j >= 3)) {
+      break;
+    };
+    highp vec3 tmpvar_10;
+    tmpvar_10 = _TerrainTreeLightColors[j].xyz;
+    lightColor = tmpvar_10;
+    highp float tmpvar_11;
+    tmpvar_11 = tmpvar_1[j];
+    nl = tmpvar_11;
+    highp float tmpvar_12;
+    tmpvar_12 = tmpvar_2[j];
+    nh = tmpvar_12;
+    light = (light + (((albedo * ((backContribs[j] * _TranslucencyColor) + nl)) + (_SpecColor.xyz * (pow (nh, specular) * gloss))) * lightColor));
+    j = (j + 1);
+  };
+  mediump vec3 tmpvar_13;
+  tmpvar_13 = (light * 2.0);
+  c.xyz = tmpvar_13;
+  c.w = 1.0;
+  gl_FragData[0] = c;
+}
+
