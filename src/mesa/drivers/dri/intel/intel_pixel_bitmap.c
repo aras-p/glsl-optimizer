@@ -328,8 +328,6 @@ intelBitmap(struct gl_context * ctx,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
 {
-   struct intel_context *intel = intel_context(ctx);
-
    if (!_mesa_check_conditional_render(ctx))
       return;
 
