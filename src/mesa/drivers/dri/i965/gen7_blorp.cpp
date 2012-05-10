@@ -472,7 +472,15 @@ gen7_blorp_emit_ps_config(struct brw_context *brw,
 
    dw2 = dw4 = dw5 = 0;
    dw4 |= (brw->max_wm_threads - 1) << max_threads_shift;
-   dw4 |= GEN7_PS_32_DISPATCH_ENABLE;
+
+   /* If there's a WM program, we need to do 16-pixel dispatch since that's
+    * what the program is compiled for.  If there isn't, then it shouldn't
+    * matter because no program is actually being run.  However, the hardware
+    * gets angry if we don't enable at least one dispatch mode, so just enable
+    * 16-pixel dispatch unconditionally.
+    */
+   dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
+
    if (intel->is_haswell)
       dw4 |= SET_FIELD(1, HSW_PS_SAMPLE_MASK); /* 1 sample for now */
    if (params->use_wm_prog) {
