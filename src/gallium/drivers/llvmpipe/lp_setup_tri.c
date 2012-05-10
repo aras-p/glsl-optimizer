@@ -271,15 +271,13 @@ do_triangle_ccw(struct lp_setup_context *setup,
        */
       int adj = (setup->pixel_offset != 0) ? 1 : 0;
 
-      bbox.x0 = (MIN3(x[0], x[1], x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.x1 = (MAX3(x[0], x[1], x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.y0 = (MIN3(y[0], y[1], y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      bbox.y1 = (MAX3(y[0], y[1], y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      /* Inclusive x0, exclusive x1 */
+      bbox.x0 = MIN3(x[0], x[1], x[2]) >> FIXED_ORDER;
+      bbox.x1 = (MAX3(x[0], x[1], x[2]) - 1) >> FIXED_ORDER;
 
-      /* Inclusive coordinates:
-       */
-      bbox.x1--;
-      bbox.y1--;
+      /* Inclusive / exclusive depending upon adj (bottom-left or top-right) */
+      bbox.y0 = (MIN3(y[0], y[1], y[2]) + adj) >> FIXED_ORDER;
+      bbox.y1 = (MAX3(y[0], y[1], y[2]) - 1 + adj) >> FIXED_ORDER;
    }
 
    if (bbox.x1 < bbox.x0 ||
