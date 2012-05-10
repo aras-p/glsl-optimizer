@@ -290,6 +290,10 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
    c = _mm_add_epi32(c, mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
    rej4 = _mm_slli_epi32(rej4, 2);
 
+   /* Adjust so we can just check the sign bit (< 0 comparison), instead of having to do a less efficient <= 0 comparison */
+   c = _mm_sub_epi32(c, _mm_set1_epi32(1));
+   rej4 = _mm_add_epi32(rej4, _mm_set1_epi32(1));
+
    dcdx2 = _mm_add_epi32(dcdx, dcdx);
    dcdx3 = _mm_add_epi32(dcdx2, dcdx);
 
@@ -383,7 +387,7 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
    __m128i span_1;                /* 0,dcdx,2dcdx,3dcdx for plane 1 */
    __m128i span_2;                /* 0,dcdx,2dcdx,3dcdx for plane 2 */
    __m128i unused;
-   
+
    transpose4_epi32(&p0, &p1, &p2, &zero,
                     &c, &dcdx, &dcdy, &unused);
 
@@ -393,6 +397,9 @@ lp_rast_triangle_3_4(struct lp_rasterizer_task *task,
 
    c = _mm_add_epi32(c, mm_mullo_epi32(dcdx, _mm_set1_epi32(x)));
    c = _mm_add_epi32(c, mm_mullo_epi32(dcdy, _mm_set1_epi32(y)));
+
+   /* Adjust so we can just check the sign bit (< 0 comparison), instead of having to do a less efficient <= 0 comparison */
+   c = _mm_sub_epi32(c, _mm_set1_epi32(1));
 
    dcdx2 = _mm_add_epi32(dcdx, dcdx);
    dcdx3 = _mm_add_epi32(dcdx2, dcdx);
