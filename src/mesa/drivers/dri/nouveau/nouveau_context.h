@@ -72,6 +72,8 @@ struct nouveau_context {
 	BITSET_DECLARE(dirty, MAX_NOUVEAU_STATE);
 	enum nouveau_fallback fallback;
 
+	struct nouveau_bo *fence;
+
 	struct nouveau_hw_state hw;
 	struct nouveau_render_state render;
 	struct nouveau_scratch_state scratch;

@@ -83,6 +83,13 @@ nouveau_context_create(gl_api api,
 	   return GL_FALSE;
 	}
 
+	if (nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, 4096,
+			   NULL, &nctx->fence)) {
+		nouveau_context_destroy(dri_ctx);
+		*error = __DRI_CTX_ERROR_NO_MEMORY;
+		return GL_FALSE;
+	}
+
 	*error = __DRI_CTX_ERROR_SUCCESS;
 	return GL_TRUE;
 }
@@ -209,6 +216,7 @@ nouveau_context_destroy(__DRIcontext *dri_ctx)
 	struct nouveau_context *nctx = dri_ctx->driverPrivate;
 	struct gl_context *ctx = &nctx->base;
 
+	nouveau_bo_ref(NULL, &nctx->fence);
 	context_drv(ctx)->context_destroy(ctx);
 }
 

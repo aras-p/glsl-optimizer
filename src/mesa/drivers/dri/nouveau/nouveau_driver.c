@@ -76,7 +76,20 @@ nouveau_flush(struct gl_context *ctx)
 static void
 nouveau_finish(struct gl_context *ctx)
 {
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_pushbuf *push = context_push(ctx);
+	struct nouveau_pushbuf_refn refn =
+		{ nctx->fence, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR };
+
 	nouveau_flush(ctx);
+
+	if (!nouveau_pushbuf_space(push, 16, 0, 0) &&
+	    !nouveau_pushbuf_refn(push, &refn, 1)) {
+		PUSH_DATA(push, 0);
+		PUSH_KICK(push);
+	}
+
+	nouveau_bo_wait(nctx->fence, NOUVEAU_BO_RDWR, context_client(ctx));
 }
 
 void
