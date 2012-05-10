@@ -625,7 +625,11 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 		ptr[0] = va & 0xFFFFFFFF;
 		ptr[1] = (S_008F04_BASE_ADDRESS_HI(va >> 32) |
 			  S_008F04_STRIDE(vertex_buffer->stride));
-		ptr[2] = (vertex_buffer->buffer->width0 - offset) / vertex_buffer->stride;
+		if (vertex_buffer->stride > 0)
+			ptr[2] = ((vertex_buffer->buffer->width0 - offset) /
+				  vertex_buffer->stride);
+		else
+			ptr[2] = vertex_buffer->buffer->width0 - offset;
 		/* XXX: Hardcoding RGBA */
 		ptr[3] = (S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
 			  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
