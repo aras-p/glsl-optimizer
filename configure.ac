@@ -1661,6 +1661,7 @@ if test "x$enable_gallium_llvm" = xyes; then
             if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
             fi
+            LLVM_COMPONENTS="${LLVM_COMPONENTS} all-targets"
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
             fi
@@ -1782,6 +1783,23 @@ gallium_require_drm_loader() {
     fi
 }
 
+radeon_llvm_check() {
+    LLVM_VERSION_MAJOR=`echo $LLVM_VERSION | cut -d. -f1`
+    if test "$LLVM_VERSION_MAJOR" -lt "3" -o "x$LLVM_VERSION" = "x3.0"; then
+        AC_MSG_ERROR([LLVM 3.1 or newer is required for the r600/radeonsi llvm compiler.])
+    fi
+    if test "$LLVM_VERSION_MAJOR" -ge "3" -a "x$LLVM_VERSION" != "x3.1" && $LLVM_CONFIG --targets-built | grep -qv '\<AMDGPU\>' ; then
+        AC_MSG_ERROR([To use the r600/radeonsi LLVM backend with LLVM 3.2 and newer, you need to fetch the LLVM source from:
+                      git://people.freedesktop.org/~tstellar/llvm master
+                      and build with --enable-experimental-targets==AMDGPU])
+    fi
+    if test "$LLVM_VERSION" = "3.2"; then
+        dnl LLVM 3.2 does not add experimental libraries to llvm-config's
+        dnl library list.
+        LLVM_LIBS="$LLVM_LIBS -lLLVMAMDGPUCodeGen -lLLVMAMDGPUDesc -lLLVMAMDGPUAsmPrinter -lLLVMAMDGPUInfo `$LLVM_CONFIG --libs mc`"
+    fi
+}
+
 dnl Gallium drivers
 dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
 if test "x$with_gallium_drivers" != x; then
@@ -1812,9 +1830,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
-                if test "x$LLVM_VERSION" != "x3.1"; then
-                    AC_MSG_ERROR([LLVM 3.1 is required for the r600 llvm compiler.])
-                fi
+                radeon_llvm_check
                 NEED_RADEON_GALLIUM=yes;
             fi
             if test "x$enable_r600_llvm" = xyes; then
@@ -1829,9 +1845,7 @@ if test "x$with_gallium_drivers" != x; then
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
-            if test "x$LLVM_VERSION" != "x3.1"; then
-                AC_MSG_ERROR([LLVM 3.1 is required to build the radeonsi driver.])
-            fi
+            radeon_llvm_check
 	    NEED_RADEON_GALLIUM=yes;
             gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi" "" "" "vdpau-radeonsi" ""
             ;;

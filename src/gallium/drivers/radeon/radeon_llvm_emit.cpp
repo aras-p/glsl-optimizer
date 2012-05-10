@@ -90,6 +90,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    /* XXX: Can we just initialize the AMDGPU target here? */
    InitializeAllTargets();
    InitializeAllTargetMCs();
+   InitializeAllAsmPrinters();
 #else
    LLVMInitializeAMDGPUTargetInfo();
    LLVMInitializeAMDGPUTarget();

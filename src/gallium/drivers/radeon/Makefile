@@ -12,6 +12,12 @@ TBLGEN = $(LLVM_BINDIR)/llvm-tblgen
 
 CXXFLAGS+= $(LLVM_CXXFLAGS)
 
+ifeq ($(LLVM_VERSION),3.1)
+	CPP_SOURCES += $(LLVM_CPP_SOURCES)
+else
+	CXXFLAGS+= -DEXTERNAL_LLVM
+endif
+
 include ../../Makefile.template
 
 CXXFLAGS := $(filter-out -DDEBUG, $(CXXFLAGS))

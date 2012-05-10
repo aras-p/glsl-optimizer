@@ -23,8 +23,7 @@ TD_FILES := \
 	SIRegisterInfo.td	\
 	SISchedule.td
 
-
-GENERATED_SOURCES := \
+LLVM_GENERATED_SOURCES := \
 	R600Intrinsics.td		\
 	R600RegisterInfo.td		\
 	SIRegisterInfo.td		\
@@ -41,7 +40,7 @@ GENERATED_SOURCES := \
 	AMDGPUGenMCCodeEmitter.inc	\
 	AMDGPUGenDFAPacketizer.inc
 
-CPP_SOURCES := \
+LLVM_CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\
 	AMDILCFGStructurizer.cpp	\
 	AMDILDevice.cpp			\
@@ -81,6 +80,8 @@ CPP_SOURCES := \
 	MCTargetDesc/SIMCCodeEmitter.cpp \
 	MCTargetDesc/R600MCCodeEmitter.cpp \
 	TargetInfo/AMDGPUTargetInfo.cpp	\
+
+CPP_SOURCES := \
 	radeon_llvm_emit.cpp
 
 C_SOURCES := \
