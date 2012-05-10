@@ -46,6 +46,8 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
 
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (!shProg)
       return;
 
