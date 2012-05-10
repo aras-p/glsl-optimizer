@@ -1259,9 +1259,9 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	va = r600_resource_va(ctx->screen, texture);
 	view->state[0] = (va + tmp->offset[0]) >> 8;
-	view->state[1] = ((va + tmp->offset[0]) >> 40) & 0xff;
-	view->state[1] |= (S_008F14_DATA_FORMAT(format) |
-			   S_008F14_NUM_FORMAT(num_format));
+	view->state[1] = (S_008F14_BASE_ADDRESS_HI((va + tmp->offset[0]) >> 40) |
+			  S_008F14_DATA_FORMAT(format) |
+			  S_008F14_NUM_FORMAT(num_format));
 	view->state[2] = (S_008F18_WIDTH(texture->width0 - 1) |
 			  S_008F18_HEIGHT(height - 1));
 	view->state[3] = (S_008F1C_DST_SEL_X(si_map_swizzle(swizzle[0])) |
