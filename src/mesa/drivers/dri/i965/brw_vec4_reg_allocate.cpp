@@ -34,7 +34,7 @@ using namespace brw;
 namespace brw {
 
 static void
-assign(int *reg_hw_locations, reg *reg)
+assign(unsigned int *reg_hw_locations, reg *reg)
 {
    if (reg->file == GRF) {
       reg->reg = reg_hw_locations[reg->reg];
@@ -44,7 +44,7 @@ assign(int *reg_hw_locations, reg *reg)
 void
 vec4_visitor::reg_allocate_trivial()
 {
-   int hw_reg_mapping[this->virtual_grf_count];
+   unsigned int hw_reg_mapping[this->virtual_grf_count];
    bool virtual_grf_used[this->virtual_grf_count];
    int i;
    int next;
@@ -142,7 +142,7 @@ brw_alloc_reg_set_for_classes(struct brw_context *brw,
 void
 vec4_visitor::reg_allocate()
 {
-   int hw_reg_mapping[virtual_grf_count];
+   unsigned int hw_reg_mapping[virtual_grf_count];
    int first_assigned_grf = this->first_non_payload_grf;
    int base_reg_count = max_grf - first_assigned_grf;
    int class_sizes[base_reg_count];

@@ -74,7 +74,7 @@ fs_visitor::visit(ir_variable *ir)
 
       if (ir->location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
-	 for (int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
+	 for (unsigned int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
 	 }
       } else if (ir->location == FRAG_RESULT_DEPTH) {
@@ -1256,7 +1256,8 @@ fs_visitor::visit(ir_texture *ir)
    }
 
    if (ir->coordinate && needs_gl_clamp) {
-      for (int i = 0; i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
+      for (unsigned int i = 0;
+	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
 	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
