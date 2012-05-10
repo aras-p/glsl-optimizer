@@ -126,18 +126,18 @@ public:
    fs_reg(enum register_file file, int reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
-   bool equals(fs_reg *r)
+   bool equals(const fs_reg &r) const
    {
-      return (file == r->file &&
-	      reg == r->reg &&
-	      reg_offset == r->reg_offset &&
-	      type == r->type &&
-	      negate == r->negate &&
-	      abs == r->abs &&
-	      memcmp(&fixed_hw_reg, &r->fixed_hw_reg,
+      return (file == r.file &&
+	      reg == r.reg &&
+	      reg_offset == r.reg_offset &&
+	      type == r.type &&
+	      negate == r.negate &&
+	      abs == r.abs &&
+	      memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
 		     sizeof(fixed_hw_reg)) == 0 &&
-	      smear == r->smear &&
-	      imm.u == r->imm.u);
+	      smear == r.smear &&
+	      imm.u == r.imm.u);
    }
 
    /** Register file: ARF, GRF, MRF, IMM. */
@@ -291,10 +291,10 @@ public:
    bool equals(fs_inst *inst)
    {
       return (opcode == inst->opcode &&
-	      dst.equals(&inst->dst) &&
-	      src[0].equals(&inst->src[0]) &&
-	      src[1].equals(&inst->src[1]) &&
-	      src[2].equals(&inst->src[2]) &&
+	      dst.equals(inst->dst) &&
+	      src[0].equals(inst->src[0]) &&
+	      src[1].equals(inst->src[1]) &&
+	      src[2].equals(inst->src[2]) &&
 	      saturate == inst->saturate &&
 	      predicated == inst->predicated &&
 	      conditional_mod == inst->conditional_mod &&

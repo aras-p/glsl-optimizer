@@ -1618,7 +1618,7 @@ fs_visitor::get_instruction_generating_reg(fs_inst *start,
        end->predicated ||
        end->force_uncompressed ||
        end->force_sechalf ||
-       !reg.equals(&end->dst)) {
+       !reg.equals(end->dst)) {
       return NULL;
    } else {
       return end;

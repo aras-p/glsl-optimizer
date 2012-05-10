@@ -569,7 +569,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
 	 l.type = brw_type_for_base_type(type);
 	 r.type = brw_type_for_base_type(type);
 
-	 if (predicated || !l.equals(&r)) {
+	 if (predicated || !l.equals(r)) {
 	    fs_inst *inst = emit(BRW_OPCODE_MOV, l, r);
 	    inst->predicated = predicated;
 	 }
