@@ -53,7 +53,6 @@ void r300_upload_index_buffer(struct r300_context *r300,
 static void r300_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
-    struct r300_screen *r300screen = r300_screen(screen);
     struct r300_resource *rbuf = r300_resource(buf);
 
     if (rbuf->constant_buffer)
@@ -62,7 +61,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
     if (rbuf->buf)
         pb_reference(&rbuf->buf, NULL);
 
-    util_slab_free(&r300screen->pool_buffers, rbuf);
+    FREE(rbuf);
 }
 
 static struct pipe_transfer*
@@ -151,7 +150,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     struct r300_resource *rbuf;
     unsigned alignment = 16;
 
-    rbuf = util_slab_alloc(&r300screen->pool_buffers);
+    rbuf = MALLOC_STRUCT(r300_resource);
 
     rbuf->b.b = *templ;
     rbuf->b.vtbl = &r300_buffer_vtbl;
@@ -172,7 +171,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
                                        rbuf->b.b.width0, alignment,
                                        rbuf->b.b.bind, rbuf->domain);
     if (!rbuf->buf) {
-        util_slab_free(&r300screen->pool_buffers, rbuf);
+        FREE(rbuf);
         return NULL;
     }
 

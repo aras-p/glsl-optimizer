@@ -40,16 +40,8 @@ struct r300_screen {
     struct radeon_info info;
     struct r300_capabilities caps;
 
-    /* Memory pools. */
-    struct util_slab_mempool pool_buffers;
-
     /** Combination of DBG_xxx flags */
     unsigned debug;
-
-    /* The number of created contexts to know whether we have multiple
-     * contexts or not. */
-    int num_contexts;
-    pipe_mutex num_contexts_mutex;
 };
 
 

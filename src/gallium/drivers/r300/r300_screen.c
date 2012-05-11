@@ -458,9 +458,6 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_screen* r300screen = r300_screen(pscreen);
     struct radeon_winsys *rws = radeon_winsys(pscreen);
 
-    util_slab_destroy(&r300screen->pool_buffers);
-    pipe_mutex_destroy(r300screen->num_contexts_mutex);
-
     if (rws)
       rws->destroy(rws);
 
@@ -532,12 +529,6 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
 
     if (r300screen->info.drm_minor < 8)
         r300screen->caps.has_us_format = FALSE;
-
-    pipe_mutex_init(r300screen->num_contexts_mutex);
-
-    util_slab_create(&r300screen->pool_buffers,
-                     sizeof(struct r300_resource), 64,
-                     UTIL_SLAB_SINGLETHREADED);
 
     r300screen->rws = rws;
     r300screen->screen.destroy = r300_destroy_screen;
