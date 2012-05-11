@@ -174,6 +174,9 @@ destroy_drawable(struct apple_glx_drawable *d)
 
    apple_glx_diagnostic("%s: freeing %p\n", __func__, (void *) d);
 
+   /* Stupid recursive locks */
+   while (pthread_mutex_unlock(&d->mutex) == 0);
+
    err = pthread_mutex_destroy(&d->mutex);
    if (err) {
       fprintf(stderr, "pthread_mutex_destroy error: %s\n", strerror(err));
