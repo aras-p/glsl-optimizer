@@ -227,7 +227,9 @@ def isEG : Predicate<"Subtarget.device()"
 def isCayman : Predicate<"Subtarget.device()"
                             "->getDeviceFlag() == OCL_DEVICE_CAYMAN">;
 def isEGorCayman : Predicate<"Subtarget.device()"
-                            "->getGeneration() >= AMDILDeviceInfo::HD5XXX">;
+                            "->getGeneration() == AMDILDeviceInfo::HD5XXX"
+			    "|| Subtarget.device()->getGeneration() =="
+			    "AMDILDeviceInfo::HD6XXX">;
 
 def isR600toCayman : Predicate<
                      "Subtarget.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX">;
