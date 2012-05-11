@@ -261,15 +261,50 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
 {
    struct intel_mipmap_tree *mt;
 
-   /* Adjust width/height for MSAA */
+   /* Adjust width/height for MSAA.
+    *
+    * In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
+    *
+    *     "Any of the other messages (sample*, LOD, load4) used with a
+    *      (4x) multisampled surface will in-effect sample a surface with
+    *      double the height and width as that indicated in the surface
+    *      state. Each pixel position on the original-sized surface is
+    *      replaced with a 2x2 of samples with the following arrangement:
+    *
+    *         sample 0 sample 2
+    *         sample 1 sample 3"
+    *
+    * Thus, when sampling from a multisampled texture, it behaves as though
+    * the layout in memory for (x,y,sample) is:
+    *
+    *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
+    *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
+    *
+    *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
+    *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
+    *
+    * However, the actual layout of multisampled data in memory is:
+    *
+    *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
+    *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
+    *
+    *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
+    *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
+    *
+    * This pattern repeats for each 2x2 pixel block.
+    *
+    * As a result, when calculating the size of our 4-sample buffer for
+    * an odd width or height, we have to align before scaling up because
+    * sample 3 is in that bottom right 2x2 block.
+    */
    if (num_samples > 4) {
       num_samples = 8;
-      width *= 4;
-      height *= 2;
+      width = ALIGN(width, 2) * 4;
+      height = ALIGN(height, 2) * 2;
    } else if (num_samples > 0) {
       num_samples = 4;
-      width *= 2;
-      height *= 2;
+      width = ALIGN(width, 2) * 2;
+      height = ALIGN(height, 2) * 2;
    }
 
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
