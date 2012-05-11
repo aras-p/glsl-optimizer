@@ -114,11 +114,6 @@ struct r600_screen {
 	struct r600_tiling_info		tiling_info;
 	struct util_slab_mempool	pool_buffers;
 	struct r600_pipe_fences		fences;
-
-	unsigned			num_contexts;
-
-	/* for thread-safe write accessing to num_contexts */
-	pipe_mutex			mutex_num_contexts;
 };
 
 struct si_pipe_sampler_view {
