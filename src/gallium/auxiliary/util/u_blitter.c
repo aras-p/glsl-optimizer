@@ -674,7 +674,7 @@ pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
       return TGSI_TEXTURE_2D_ARRAY;
    default:
       assert(0 && "unexpected texture target");
-      return 0;
+      return TGSI_TEXTURE_UNKNOWN;
    }
 }
 

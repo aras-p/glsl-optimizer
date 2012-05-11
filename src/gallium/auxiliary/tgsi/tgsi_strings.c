@@ -96,7 +96,8 @@ const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
    "2DARRAY",
    "SHADOW1DARRAY",
    "SHADOW2DARRAY",
-   "SHADOWCUBE"
+   "SHADOWCUBE",
+   "UNKNOWN"
 };
 
 const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =

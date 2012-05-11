@@ -504,7 +504,8 @@ struct tgsi_instruction_label
 #define TGSI_TEXTURE_SHADOW1D_ARRAY 11
 #define TGSI_TEXTURE_SHADOW2D_ARRAY 12
 #define TGSI_TEXTURE_SHADOWCUBE     13
-#define TGSI_TEXTURE_COUNT          14
+#define TGSI_TEXTURE_UNKNOWN        14
+#define TGSI_TEXTURE_COUNT          15
 
 struct tgsi_instruction_texture
 {
