@@ -277,8 +277,8 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
          unsigned offset = vb->buffer_offset + vb->stride * start_vertex;
          uint8_t *map;
 
-         if (vb->buffer->user_ptr) {
-            map = vb->buffer->user_ptr + offset;
+         if (vb->user_buffer) {
+            map = (uint8_t*)vb->user_buffer + offset;
          } else {
             unsigned size = vb->stride ? num_vertices * vb->stride
                                        : sizeof(double)*4;
@@ -307,10 +307,10 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
       unsigned offset = ib->offset + start_index * ib->index_size;
       uint8_t *map;
 
-      assert(ib->buffer && ib->index_size);
+      assert((ib->buffer || ib->user_buffer) && ib->index_size);
 
-      if (ib->buffer->user_ptr) {
-         map = ib->buffer->user_ptr + offset;
+      if (ib->user_buffer) {
+         map = (uint8_t*)ib->user_buffer + offset;
       } else {
          map = pipe_buffer_map_range(mgr->pipe, ib->buffer, offset,
                                      num_indices * ib->index_size,
@@ -713,15 +713,17 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
       struct pipe_vertex_buffer *real_vb = &mgr->real_vertex_buffer[i];
 
       pipe_resource_reference(&orig_vb->buffer, vb->buffer);
+      orig_vb->user_buffer = vb->user_buffer;
 
       real_vb->buffer_offset = orig_vb->buffer_offset = vb->buffer_offset;
       real_vb->stride = orig_vb->stride = vb->stride;
+      real_vb->user_buffer = NULL;
 
       if (vb->stride) {
          mgr->nonzero_stride_vb_mask |= 1 << i;
       }
 
-      if (!vb->buffer) {
+      if (!vb->buffer && !vb->user_buffer) {
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
@@ -733,13 +735,14 @@ void u_vbuf_set_vertex_buffers(struct u_vbuf *mgr, unsigned count,
          continue;
       }
 
-      if (!mgr->caps.user_vertex_buffers && vb->buffer->user_ptr) {
+      if (!mgr->caps.user_vertex_buffers && vb->user_buffer) {
          mgr->user_vb_mask |= 1 << i;
          pipe_resource_reference(&real_vb->buffer, NULL);
          continue;
       }
 
       pipe_resource_reference(&real_vb->buffer, vb->buffer);
+      real_vb->user_buffer = vb->user_buffer;
    }
 
    for (i = count; i < mgr->nr_vertex_buffers; i++) {
@@ -759,11 +762,10 @@ void u_vbuf_set_index_buffer(struct u_vbuf *mgr,
 {
    struct pipe_context *pipe = mgr->pipe;
 
-   if (ib && ib->buffer) {
+   if (ib) {
       assert(ib->offset % ib->index_size == 0);
       pipe_resource_reference(&mgr->index_buffer.buffer, ib->buffer);
-      mgr->index_buffer.offset = ib->offset;
-      mgr->index_buffer.index_size = ib->index_size;
+      memcpy(&mgr->index_buffer, ib, sizeof(*ib));
    } else {
       pipe_resource_reference(&mgr->index_buffer.buffer, NULL);
    }
@@ -798,9 +800,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
          continue;
       }
 
-      assert(vb->buffer);
-
-      if (!vb->buffer->user_ptr) {
+      if (!vb->user_buffer) {
          continue;
       }
 
@@ -837,7 +837,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
    for (i = 0; i < nr_vbufs; i++) {
       unsigned start, end = end_offset[i];
       struct pipe_vertex_buffer *real_vb;
-      uint8_t *ptr;
+      const uint8_t *ptr;
 
       if (!end) {
          continue;
@@ -847,7 +847,7 @@ u_vbuf_upload_buffers(struct u_vbuf *mgr,
       assert(start < end);
 
       real_vb = &mgr->real_vertex_buffer[i];
-      ptr = mgr->vertex_buffer[i].buffer->user_ptr;
+      ptr = mgr->vertex_buffer[i].user_buffer;
 
       u_upload_data(mgr->uploader, start, end - start, ptr + start,
                     &real_vb->buffer_offset, &real_vb->buffer);
@@ -888,8 +888,8 @@ static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
    unsigned i;
    unsigned restart_index = info->restart_index;
 
-   if (ib->buffer->user_ptr) {
-      indices = ib->buffer->user_ptr +
+   if (ib->user_buffer) {
+      indices = (uint8_t*)ib->user_buffer +
                 ib->offset + info->start * ib->index_size;
    } else {
       indices = pipe_buffer_map_range(pipe, ib->buffer,

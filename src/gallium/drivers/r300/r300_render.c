@@ -508,9 +508,9 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 static void r300_draw_elements_immediate(struct r300_context *r300,
                                          const struct pipe_draw_info *info)
 {
-    uint8_t *ptr1;
-    uint16_t *ptr2;
-    uint32_t *ptr4;
+    const uint8_t *ptr1;
+    const uint16_t *ptr2;
+    const uint32_t *ptr4;
     unsigned index_size = r300->index_buffer.index_size;
     unsigned i, count_dwords = index_size == 4 ? info->count :
                                                  (info->count + 1) / 2;
@@ -529,7 +529,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
 
     switch (index_size) {
     case 1:
-        ptr1 = r300->index_buffer.buffer->user_ptr;
+        ptr1 = (uint8_t*)r300->index_buffer.user_buffer;
         ptr1 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -553,7 +553,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 2:
-        ptr2 = (uint16_t*)r300->index_buffer.buffer->user_ptr;
+        ptr2 = (uint16_t*)r300->index_buffer.user_buffer;
         ptr2 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -572,7 +572,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         break;
 
     case 4:
-        ptr4 = (uint32_t*)r300->index_buffer.buffer->user_ptr;
+        ptr4 = (uint32_t*)r300->index_buffer.user_buffer;
         ptr4 += info->start;
 
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (info->count << 16) |
@@ -606,15 +606,15 @@ static void r300_draw_elements(struct r300_context *r300,
     uint16_t indices3[3];
 
     if (info->index_bias && !r300->screen->caps.is_r500) {
-        r300_split_index_bias(r300, info->index_bias, &buffer_offset, &index_offset);
+        r300_split_index_bias(r300, info->index_bias, &buffer_offset,
+                              &index_offset);
     }
 
-    r300_translate_index_buffer(r300, &indexBuffer, &indexSize, index_offset,
-                                &start, count);
+    r300_translate_index_buffer(r300, &r300->index_buffer, &indexBuffer,
+                                &indexSize, index_offset, &start, count);
 
     /* Fallback for misaligned ushort indices. */
-    if (indexSize == 2 && (start & 1) &&
-        !indexBuffer->user_ptr) {
+    if (indexSize == 2 && (start & 1) && indexBuffer) {
         /* If we got here, then orgIndexBuffer == indexBuffer. */
         uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->cs_buf,
                                               r300->cs,
@@ -632,10 +632,10 @@ static void r300_draw_elements(struct r300_context *r300,
         }
         r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->cs_buf);
     } else {
-        if (indexBuffer->user_ptr)
+        if (r300->index_buffer.user_buffer)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
                                      &start, count,
-                                     indexBuffer->user_ptr);
+                                     r300->index_buffer.user_buffer);
     }
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
@@ -795,7 +795,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_draw_info info = *dinfo;
 
-    info.indexed = info.indexed && r300->index_buffer.buffer;
+    info.indexed = info.indexed;
 
     if (r300->skip_rendering ||
         !u_trim_pipe_prim(info.mode, &info.count)) {
@@ -824,7 +824,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
 
         if (info.instance_count <= 1) {
             if (info.count <= 8 &&
-                r300->index_buffer.buffer->user_ptr) {
+                r300->index_buffer.user_buffer) {
                 r300_draw_elements_immediate(r300, &info);
             } else {
                 r300_draw_elements(r300, &info, -1);
@@ -858,8 +858,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
     struct pipe_transfer *ib_transfer = NULL;
     int i;
-    void *indices = NULL;
-    boolean indexed = info->indexed && r300->index_buffer.buffer;
+    const void *indices = NULL;
+    boolean indexed = info->indexed;
 
     if (r300->skip_rendering) {
         return;
@@ -873,7 +873,10 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             indexed ? 256 : 6);
 
     for (i = 0; i < r300->nr_vertex_buffers; i++) {
-        if (r300->vertex_buffer[i].buffer) {
+        if (r300->vertex_buffer[i].user_buffer) {
+            draw_set_mapped_vertex_buffer(r300->draw, i,
+                                          r300->vertex_buffer[i].user_buffer);
+        } else if (r300->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
                                   r300->vertex_buffer[i].buffer,
                                   PIPE_TRANSFER_READ |
@@ -884,9 +887,13 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     }
 
     if (indexed) {
-        indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
-                                  PIPE_TRANSFER_READ |
-                                  PIPE_TRANSFER_UNSYNCHRONIZED, &ib_transfer);
+        if (r300->index_buffer.user_buffer) {
+            indices = r300->index_buffer.user_buffer;
+        } else {
+            indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
+                                      PIPE_TRANSFER_READ |
+                                      PIPE_TRANSFER_UNSYNCHRONIZED, &ib_transfer);
+        }
     }
 
     draw_set_mapped_index_buffer(r300->draw, indices);
@@ -899,13 +906,15 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     for (i = 0; i < r300->nr_vertex_buffers; i++) {
         if (r300->vertex_buffer[i].buffer) {
-            pipe_buffer_unmap(pipe, vb_transfer[i]);
+            if (vb_transfer[i])
+                pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
         }
     }
 
     if (indexed) {
-        pipe_buffer_unmap(pipe, ib_transfer);
+        if (ib_transfer)
+            pipe_buffer_unmap(pipe, ib_transfer);
         draw_set_mapped_index_buffer(r300->draw, NULL);
     }
 }

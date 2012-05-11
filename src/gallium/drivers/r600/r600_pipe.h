@@ -228,17 +228,10 @@ struct r600_stencil_ref
 	ubyte writemask[2];
 };
 
-struct r600_constant_buffer
-{
-	struct pipe_resource		*buffer;
-	unsigned			buffer_offset;
-	unsigned			buffer_size;
-};
-
 struct r600_constbuf_state
 {
 	struct r600_atom		atom;
-	struct r600_constant_buffer	cb[PIPE_MAX_CONSTANT_BUFFERS];
+	struct pipe_constant_buffer	cb[PIPE_MAX_CONSTANT_BUFFERS];
 	uint32_t			enabled_mask;
 	uint32_t			dirty_mask;
 };
@@ -498,7 +491,7 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_resource *buffer);
+			      struct pipe_constant_buffer *cb);
 struct pipe_stream_output_target *
 r600_create_so_target(struct pipe_context *ctx,
 		      struct pipe_resource *buffer,

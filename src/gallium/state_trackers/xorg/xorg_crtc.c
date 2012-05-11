@@ -55,7 +55,7 @@
 #include "util/u_rect.h"
 
 #ifdef HAVE_LIBKMS
-#include "libkms.h"
+#include "libkms/libkms.h"
 #endif
 
 struct crtc_private

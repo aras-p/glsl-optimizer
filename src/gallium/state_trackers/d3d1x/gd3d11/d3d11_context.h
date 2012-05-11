@@ -344,7 +344,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 			{
 				constant_buffers[s][start + i] = constbufs[i];
 				if(s < caps.stages && start + i < caps.constant_buffers[s])
-					pipe->set_constant_buffer(pipe, s, start + i, constbufs[i] ? constbufs[i]->resource : NULL);
+					pipe_set_constant_buffer(pipe, s, start + i, constbufs[i] ? constbufs[i]->resource : NULL);
 			}
 		}
 	}
@@ -1715,7 +1715,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		{
 			unsigned num = std::min(caps.constant_buffers[s], (unsigned)D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT);
 			for(unsigned i = 0; i < num; ++i)
-				pipe->set_constant_buffer(pipe, s, i, constant_buffers[s][i].p ? constant_buffers[s][i].p->resource : 0);
+				pipe_set_constant_buffer(pipe, s, i, constant_buffers[s][i].p ? constant_buffers[s][i].p->resource : 0);
 		}
 
 		update_flags |= (1 << (UPDATE_SAMPLERS_SHIFT + D3D11_STAGE_VS)) | (1 << (UPDATE_VIEWS_SHIFT + D3D11_STAGE_VS));
@@ -1961,7 +1961,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 				if(constant_buffers[s][i] == buffer)
 				{
 					constant_buffers[s][i] = (ID3D10Buffer*)NULL;
-					pipe->set_constant_buffer(pipe, s, i, NULL);
+					pipe_set_constant_buffer(pipe, s, i, NULL);
 				}
 			}
 		}

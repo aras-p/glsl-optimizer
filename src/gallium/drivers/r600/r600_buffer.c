@@ -126,9 +126,6 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 		}
 	}
 
-	if (rbuffer->b.b.user_ptr)
-		return rbuffer->b.b.user_ptr + transfer->box.x;
-
 	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
 		return NULL;
@@ -216,7 +213,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b = *templ;
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
-	rbuffer->b.b.user_ptr = NULL;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
@@ -247,7 +243,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.depth0 = 1;
 	rbuffer->b.b.array_size = 1;
 	rbuffer->b.b.flags = 0;
-	rbuffer->b.b.user_ptr = ptr;
 	rbuffer->buf = NULL;
 	return &rbuffer->b.b;
 }

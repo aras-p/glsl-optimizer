@@ -417,9 +417,6 @@ struct pipe_resource
 
    unsigned bind;            /**< bitmask of PIPE_BIND_x */
    unsigned flags;           /**< bitmask of PIPE_RESOURCE_FLAG_x */
-
-   /* XXX this is only temporary and will be removed once it's not needed */
-   uint8_t *user_ptr;        /**< user buffer pointer */
 };
 
 
@@ -449,6 +446,19 @@ struct pipe_vertex_buffer
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_resource *buffer;  /**< the actual buffer */
+   const void *user_buffer;  /**< pointer to a user buffer if buffer == NULL */
+};
+
+
+/**
+ * A constant buffer.  A subrange of an existing buffer can be set
+ * as a constant buffer.
+ */
+struct pipe_constant_buffer {
+   struct pipe_resource *buffer; /**< the actual buffer */
+   unsigned buffer_offset; /**< offset to start of data in buffer, in bytes */
+   unsigned buffer_size;   /**< how much data can be read in shader */
+   const void *user_buffer;  /**< pointer to a user buffer if buffer == NULL */
 };
 
 
@@ -507,6 +517,7 @@ struct pipe_index_buffer
    unsigned index_size;  /**< size of an index, in bytes */
    unsigned offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_resource *buffer; /**< the actual buffer */
+   const void *user_buffer;  /**< pointer to a user buffer if buffer == NULL */
 };
 
 

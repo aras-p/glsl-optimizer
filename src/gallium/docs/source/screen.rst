@@ -112,6 +112,15 @@ The integer capabilities:
   aligned to 4.  If false, there are no restrictions on src_offset.
 * ``PIPE_CAP_COMPUTE``: Whether the implementation supports the
   compute entry points defined in pipe_context and pipe_screen.
+* ``PIPE_CAP_USER_INDEX_BUFFERS``: Whether user index buffers are supported.
+  If not, the state tracker must upload all indices which are not in hw
+  resources.
+* ``PIPE_CAP_USER_CONSTANT_BUFFERS``: Whether user constant buffers are
+  supported. If not, the state tracker must upload constants which are not in hw
+  resources.
+* ``PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT``: Describes the required
+  alignment of pipe_constant_buffer::buffer_offset.
+
 
 
 .. _pipe_capf:

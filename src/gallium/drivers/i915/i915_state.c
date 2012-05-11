@@ -665,12 +665,18 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_resource *buf)
+                                     struct pipe_constant_buffer *cb)
 {
    struct i915_context *i915 = i915_context(pipe);
+   struct pipe_resource *buf = cb ? cb->buffer : NULL;
    unsigned new_num = 0;
    boolean diff = TRUE;
 
+   if (cb && cb->user_buffer) {
+      buf = i915_user_buffer_create(pipe->screen, cb->user_buffer,
+                                    cb->buffer_size,
+                                    PIPE_BIND_CONSTANT_BUFFER);
+   }
 
    /* XXX don't support geom shaders now */
    if (shader == PIPE_SHADER_GEOMETRY)
@@ -706,6 +712,10 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 
    if (diff)
       i915->dirty |= shader == PIPE_SHADER_VERTEX ? I915_NEW_VS_CONSTANTS : I915_NEW_FS_CONSTANTS;
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&buf, NULL);
+   }
 }
 
 
@@ -982,7 +992,9 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
 
    /* map new */
    for (i = 0; i < count; i++) {
-      void *buf = i915_buffer(buffers[i].buffer)->data;
+      const void *buf = buffers[i].user_buffer;
+      if (!buf)
+            buf = i915_buffer(buffers[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 }
@@ -1092,7 +1104,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_index_buffer = i915_set_index_buffer;
-   i915->base.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 void

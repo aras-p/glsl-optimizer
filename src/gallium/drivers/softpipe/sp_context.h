@@ -206,6 +206,11 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe);
 struct pipe_context *
 softpipe_create_context( struct pipe_screen *, void *priv );
 
+struct pipe_resource *
+softpipe_user_buffer_create(struct pipe_screen *screen,
+                            void *ptr,
+                            unsigned bytes,
+			    unsigned bind_flags);
 
 #define SP_UNREFERENCED         0
 #define SP_REFERENCED_FOR_READ  (1 << 0)

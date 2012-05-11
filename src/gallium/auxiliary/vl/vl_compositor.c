@@ -1015,7 +1015,7 @@ vl_compositor_render(struct vl_compositor_state *s,
    c->pipe->bind_vs_state(c->pipe, c->vs);
    c->pipe->set_vertex_buffers(c->pipe, 1, &c->vertex_buf);
    c->pipe->bind_vertex_elements_state(c->pipe, c->vertex_elems_state);
-   c->pipe->set_constant_buffer(c->pipe, PIPE_SHADER_FRAGMENT, 0, s->csc_matrix);
+   pipe_set_constant_buffer(c->pipe, PIPE_SHADER_FRAGMENT, 0, s->csc_matrix);
    c->pipe->bind_rasterizer_state(c->pipe, c->rast);
 
    draw_layers(c, s, dirty_area);

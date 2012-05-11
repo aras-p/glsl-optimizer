@@ -317,10 +317,17 @@ nv30_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
 
 static void
 nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_resource *buf)
+                         struct pipe_constant_buffer *cb)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
+   struct pipe_resource *buf = cb ? cb->buffer : NULL;
    unsigned size;
+
+   if (cb && cb->user_buffer) {
+      buf = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+                                       cb->buffer_size,
+                                       PIPE_BIND_CONSTANT_BUFFER);
+   }
 
    size = 0;
    if (buf)
@@ -335,6 +342,10 @@ nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
       pipe_resource_reference(&nv30->fragprog.constbuf, buf);
       nv30->fragprog.constbuf_nr = size;
       nv30->dirty |= NV30_NEW_FRAGCONST;
+   }
+
+   if (cb && cb->user_buffer) {
+      pipe_resource_reference(&buf, NULL);
    }
 }
 
@@ -442,6 +453,4 @@ nv30_state_init(struct pipe_context *pipe)
 
    pipe->set_vertex_buffers = nv30_set_vertex_buffers;
    pipe->set_index_buffer = nv30_set_index_buffer;
-
-   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }

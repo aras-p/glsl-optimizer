@@ -1819,9 +1819,10 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_resource *buf)
+                                     struct pipe_constant_buffer *cb)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_resource *buf = cb ? cb->buffer : NULL;
     struct r300_constant_buffer *cbuf;
     struct r300_resource *rbuf = r300_resource(buf);
     uint32_t *mapped;
@@ -1840,8 +1841,8 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     if (buf == NULL || buf->width0 == 0)
         return;
 
-    if (rbuf->b.b.user_ptr)
-        mapped = (uint32_t*)rbuf->b.b.user_ptr;
+    if (cb->user_buffer)
+        mapped = (uint32_t*)cb->user_buffer;
     else if (rbuf->constant_buffer)
         mapped = (uint32_t*)rbuf->constant_buffer;
     else
@@ -1933,7 +1934,6 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
     r300->context.set_index_buffer = r300_set_index_buffer;
-    r300->context.redefine_user_buffer = u_default_redefine_user_buffer;
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
     r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;

@@ -115,6 +115,4 @@ llvmpipe_init_vertex_funcs(struct llvmpipe_context *llvmpipe)
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
    llvmpipe->pipe.set_index_buffer = llvmpipe_set_index_buffer;
-
-   llvmpipe->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }

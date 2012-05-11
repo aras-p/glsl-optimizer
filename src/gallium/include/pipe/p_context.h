@@ -41,6 +41,7 @@ struct pipe_blend_color;
 struct pipe_blend_state;
 struct pipe_box;
 struct pipe_clip_state;
+struct pipe_constant_buffer;
 struct pipe_depth_stencil_alpha_state;
 struct pipe_draw_info;
 struct pipe_fence_handle;
@@ -199,7 +200,7 @@ struct pipe_context {
 
    void (*set_constant_buffer)( struct pipe_context *,
                                 uint shader, uint index,
-                                struct pipe_resource *buf );
+                                struct pipe_constant_buffer *buf );
 
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );
@@ -413,15 +414,6 @@ struct pipe_context {
                                   const void *data,
                                   unsigned stride,
                                   unsigned layer_stride);
-
-
-   /* Notify a driver that a content of a user buffer has been changed.
-    * The changed range is [offset, offset+size-1].
-    * The new width0 of the buffer is offset+size. */
-   void (*redefine_user_buffer)(struct pipe_context *,
-                                struct pipe_resource *,
-                                unsigned offset,
-                                unsigned size);
 
    /**
     * Flush any pending framebuffer writes and invalidate texture caches.

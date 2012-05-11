@@ -43,8 +43,6 @@ struct u_vbuf;
 
 struct cso_context *cso_create_context( struct pipe_context *pipe );
 
-void cso_install_vbuf(struct cso_context *ctx, struct u_vbuf *vbuf);
-
 void cso_release_all( struct cso_context *ctx );
 
 void cso_destroy_context( struct cso_context *cso );

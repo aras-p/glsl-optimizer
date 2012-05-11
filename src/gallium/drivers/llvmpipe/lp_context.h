@@ -155,6 +155,12 @@ extern unsigned llvmpipe_variant_count;
 struct pipe_context *
 llvmpipe_create_context( struct pipe_screen *screen, void *priv );
 
+struct pipe_resource *
+llvmpipe_user_buffer_create(struct pipe_screen *screen,
+                            void *ptr,
+                            unsigned bytes,
+			    unsigned bind_flags);
+
 
 static INLINE struct llvmpipe_context *
 llvmpipe_context( struct pipe_context *pipe )

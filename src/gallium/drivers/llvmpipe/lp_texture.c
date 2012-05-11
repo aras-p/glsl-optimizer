@@ -748,7 +748,7 @@ llvmpipe_is_resource_referenced( struct pipe_context *pipe,
 /**
  * Create buffer which wraps user-space data.
  */
-static struct pipe_resource *
+struct pipe_resource *
 llvmpipe_user_buffer_create(struct pipe_screen *screen,
                             void *ptr,
                             unsigned bytes,
@@ -770,7 +770,6 @@ llvmpipe_user_buffer_create(struct pipe_screen *screen,
    buffer->base.height0 = 1;
    buffer->base.depth0 = 1;
    buffer->base.array_size = 1;
-   buffer->base.user_ptr = ptr;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
 

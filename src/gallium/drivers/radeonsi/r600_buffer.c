@@ -76,9 +76,6 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
 
-	if (rbuffer->b.b.user_ptr)
-		return (uint8_t*)rbuffer->b.b.user_ptr + transfer->box.x;
-
 	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
 		return NULL;
@@ -173,7 +170,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
-	rbuffer->b.b.user_ptr = NULL;
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
 		util_slab_free(&rscreen->pool_buffers, rbuffer);
@@ -203,7 +199,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.depth0 = 1;
 	rbuffer->b.b.array_size = 1;
 	rbuffer->b.b.flags = 0;
-	rbuffer->b.b.user_ptr = ptr;
 	rbuffer->buf = NULL;
 	return &rbuffer->b.b;
 }
@@ -211,43 +206,35 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count)
 {
-	struct r600_resource *rbuffer = r600_resource(ib->buffer);
-
 	u_upload_data(rctx->uploader, 0, count * ib->index_size,
-		      rbuffer->b.b.user_ptr, &ib->offset, &ib->buffer);
+		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
-			     uint32_t *const_offset)
+			      const uint8_t *ptr, unsigned size,
+			      uint32_t *const_offset)
 {
-	if ((*rbuffer)->b.b.user_ptr) {
-		uint8_t *ptr = (*rbuffer)->b.b.user_ptr;
-		unsigned size = (*rbuffer)->b.b.width0;
+	*rbuffer = NULL;
 
-		*rbuffer = NULL;
+	if (R600_BIG_ENDIAN) {
+		uint32_t *tmpPtr;
+		unsigned i;
 
-		if (R600_BIG_ENDIAN) {
-			uint32_t *tmpPtr;
-			unsigned i;
-
-			if (!(tmpPtr = malloc(size))) {
-				R600_ERR("Failed to allocate BE swap buffer.\n");
-				return;
-			}
-
-			for (i = 0; i < size / 4; ++i) {
-				tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
-			}
-
-			u_upload_data(rctx->uploader, 0, size, tmpPtr, const_offset,
-				      (struct pipe_resource**)rbuffer);
-
-			free(tmpPtr);
-		} else {
-			u_upload_data(rctx->uploader, 0, size, ptr, const_offset,
-				      (struct pipe_resource**)rbuffer);
+		if (!(tmpPtr = malloc(size))) {
+			R600_ERR("Failed to allocate BE swap buffer.\n");
+			return;
 		}
+
+		for (i = 0; i < size / 4; ++i) {
+			tmpPtr[i] = bswap_32(((uint32_t *)ptr)[i]);
+		}
+
+		u_upload_data(rctx->uploader, 0, size, tmpPtr, const_offset,
+			      (struct pipe_resource**)rbuffer);
+
+		free(tmpPtr);
 	} else {
-		*const_offset = 0;
+		u_upload_data(rctx->uploader, 0, size, ptr, const_offset,
+			      (struct pipe_resource**)rbuffer);
 	}
 }

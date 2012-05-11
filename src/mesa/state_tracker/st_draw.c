@@ -61,6 +61,7 @@
 #include "util/u_format.h"
 #include "util/u_prim.h"
 #include "util/u_draw_quad.h"
+#include "util/u_upload_mgr.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -402,18 +403,12 @@ setup_interleaved_attribs(struct gl_context *ctx,
                           const struct st_vp_variant *vpv,
                           const struct gl_client_array **arrays,
                           struct pipe_vertex_buffer *vbuffer,
-                          struct pipe_vertex_element velements[],
-                          unsigned max_index,
-                          unsigned num_instances)
+                          struct pipe_vertex_element velements[])
 {
-   struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    GLuint attr;
    const GLubyte *low_addr = NULL;
    GLboolean usingVBO;      /* all arrays in a VBO? */
    struct gl_buffer_object *bufobj;
-   GLuint user_buffer_size = 0;
-   GLuint vertex_size = 0;  /* bytes per vertex, in bytes */
    GLsizei stride;
 
    /* Find the lowest address of the arrays we're drawing,
@@ -464,18 +459,6 @@ setup_interleaved_attribs(struct gl_context *ctx,
                                                          array->Normalized,
                                                          array->Integer);
       assert(velements[attr].src_format);
-
-      if (!usingVBO) {
-         /* how many bytes referenced by this attribute array? */
-         uint divisor = array->InstanceDivisor;
-         uint last_index = divisor ? num_instances / divisor : max_index;
-         uint bytes = src_offset + stride * last_index + element_size;
-
-         user_buffer_size = MAX2(user_buffer_size, bytes);
-
-         /* update vertex size */
-         vertex_size = MAX2(vertex_size, src_offset + element_size);
-      }
    }
 
    /*
@@ -484,9 +467,9 @@ setup_interleaved_attribs(struct gl_context *ctx,
    if (vpv->num_inputs == 0) {
       /* just defensive coding here */
       vbuffer->buffer = NULL;
+      vbuffer->user_buffer = NULL;
       vbuffer->buffer_offset = 0;
       vbuffer->stride = 0;
-      st->num_user_attribs = 0;
    }
    else if (usingVBO) {
       /* all interleaved arrays in a VBO */
@@ -497,26 +480,17 @@ setup_interleaved_attribs(struct gl_context *ctx,
          return GL_FALSE;
       }
 
-      vbuffer->buffer = NULL;
-      pipe_resource_reference(&vbuffer->buffer, stobj->buffer);
+      vbuffer->buffer = stobj->buffer;
+      vbuffer->user_buffer = NULL;
       vbuffer->buffer_offset = pointer_to_offset(low_addr);
       vbuffer->stride = stride;
-      st->num_user_attribs = 0;
    }
    else {
       /* all interleaved arrays in user memory */
-      vbuffer->buffer = pipe_user_buffer_create(pipe->screen,
-                                                (void*) low_addr,
-                                                user_buffer_size,
-                                                PIPE_BIND_VERTEX_BUFFER);
+      vbuffer->buffer = NULL;
+      vbuffer->user_buffer = low_addr;
       vbuffer->buffer_offset = 0;
       vbuffer->stride = stride;
-
-      /* Track user vertex buffers. */
-      pipe_resource_reference(&st->user_attrib[0].buffer, vbuffer->buffer);
-      st->user_attrib[0].element_size = vertex_size;
-      st->user_attrib[0].stride = stride;
-      st->num_user_attribs = 1;
    }
 
    return GL_TRUE;
@@ -536,22 +510,17 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
                               const struct st_vp_variant *vpv,
                               const struct gl_client_array **arrays,
                               struct pipe_vertex_buffer vbuffer[],
-                              struct pipe_vertex_element velements[],
-                              unsigned max_index,
-                              unsigned num_instances)
+                              struct pipe_vertex_element velements[])
 {
-   struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    GLuint attr;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const struct gl_client_array *array = arrays[mesaAttr];
       struct gl_buffer_object *bufobj = array->BufferObj;
-      GLuint element_size = array->_ElementSize;
       GLsizei stride = array->StrideB;
 
-      assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
+      assert(array->_ElementSize == array->Size * _mesa_sizeof_type(array->Type));
 
       if (_mesa_is_bufferobj(bufobj)) {
          /* Attribute data is in a VBO.
@@ -565,49 +534,28 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
             return GL_FALSE;
          }
 
-         vbuffer[attr].buffer = NULL;
-         pipe_resource_reference(&vbuffer[attr].buffer, stobj->buffer);
+         vbuffer[attr].buffer = stobj->buffer;
+         vbuffer[attr].user_buffer = NULL;
          vbuffer[attr].buffer_offset = pointer_to_offset(array->Ptr);
       }
       else {
          /* wrap user data */
-         uint bytes;
          void *ptr;
 
          if (array->Ptr) {
-            uint divisor = array->InstanceDivisor;
-            uint last_index = divisor ? num_instances / divisor : max_index;
-
-            bytes = stride * last_index + element_size;
-
             ptr = (void *) array->Ptr;
          }
          else {
             /* no array, use ctx->Current.Attrib[] value */
-            bytes = element_size = sizeof(ctx->Current.Attrib[0]);
             ptr = (void *) ctx->Current.Attrib[mesaAttr];
             stride = 0;
          }
 
          assert(ptr);
-         assert(bytes);
 
-         vbuffer[attr].buffer =
-            pipe_user_buffer_create(pipe->screen, ptr, bytes,
-                                    PIPE_BIND_VERTEX_BUFFER);
-
+         vbuffer[attr].buffer = NULL;
+         vbuffer[attr].user_buffer = ptr;
          vbuffer[attr].buffer_offset = 0;
-
-         /* Track user vertex buffers. */
-         pipe_resource_reference(&st->user_attrib[attr].buffer, vbuffer[attr].buffer);
-         st->user_attrib[attr].element_size = element_size;
-         st->user_attrib[attr].stride = stride;
-         st->num_user_attribs = MAX2(st->num_user_attribs, attr + 1);
-
-         if (!vbuffer[attr].buffer) {
-            /* probably ran out of memory */
-            return GL_FALSE;
-         }
       }
 
       /* common-case setup */
@@ -629,34 +577,31 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
 
 static void
-setup_index_buffer(struct gl_context *ctx,
+setup_index_buffer(struct st_context *st,
                    const struct _mesa_index_buffer *ib,
                    struct pipe_index_buffer *ibuffer)
 {
-   struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
+   struct gl_buffer_object *bufobj = ib->obj;
 
-   memset(ibuffer, 0, sizeof(*ibuffer));
-   if (ib) {
-      struct gl_buffer_object *bufobj = ib->obj;
+   ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
 
-      ibuffer->index_size = vbo_sizeof_ib_type(ib->type);
-
-      /* get/create the index buffer object */
-      if (_mesa_is_bufferobj(bufobj)) {
-         /* elements/indexes are in a real VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
-         ibuffer->offset = pointer_to_offset(ib->ptr);
-      }
-      else {
-         /* element/indicies are in user space memory */
-         ibuffer->buffer =
-            pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                    ib->count * ibuffer->index_size,
-                                    PIPE_BIND_INDEX_BUFFER);
-      }
+   /* get/create the index buffer object */
+   if (_mesa_is_bufferobj(bufobj)) {
+      /* indices are in a real VBO */
+      ibuffer->buffer = st_buffer_object(bufobj)->buffer;
+      ibuffer->offset = pointer_to_offset(ib->ptr);
    }
+   else if (st->indexbuf_uploader) {
+      u_upload_data(st->indexbuf_uploader, 0, ib->count * ibuffer->index_size,
+                    ib->ptr, &ibuffer->offset, &ibuffer->buffer);
+      u_upload_unmap(st->indexbuf_uploader);
+   }
+   else {
+      /* indices are in user space memory */
+      ibuffer->user_buffer = ib->ptr;
+   }
+
+   cso_set_index_buffer(st->cso_context, ibuffer);
 }
 
 
@@ -811,10 +756,10 @@ handle_fallback_primitive_restart(struct cso_context *cso,
    unsigned num_sub_prims;
 
    assert(info.indexed);
-   assert(ibuffer->buffer);
+   assert(ibuffer->buffer || ibuffer->user_buffer);
    assert(ib);
 
-   if (!ibuffer->buffer || !ib)
+   if (!ibuffer->buffer || !ibuffer->user_buffer || !ib)
       return;
 
    info.primitive_restart = FALSE;
@@ -894,9 +839,7 @@ translate_prim(const struct gl_context *ctx, unsigned prim)
  */
 static GLboolean
 st_validate_varrays(struct gl_context *ctx,
-                    const struct gl_client_array **arrays,
-                    unsigned max_index,
-                    unsigned num_instances)
+                    const struct gl_client_array **arrays)
 {
    struct st_context *st = st_context(ctx);
    const struct st_vertex_program *vp;
@@ -904,8 +847,6 @@ st_validate_varrays(struct gl_context *ctx,
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
-   GLuint attr;
-   unsigned i;
 
    /* must get these after state validation! */
    vp = st->vp;
@@ -913,18 +854,12 @@ st_validate_varrays(struct gl_context *ctx,
 
    memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
 
-   /* Unreference any user vertex buffers. */
-   for (i = 0; i < st->num_user_attribs; i++) {
-      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
-   }
-   st->num_user_attribs = 0;
-
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
    if (is_interleaved_arrays(vp, vpv, arrays)) {
-      if (!setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer, velements,
-                                     max_index, num_instances)) {
+      if (!setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer,
+                                     velements)) {
          return GL_FALSE;
       }
 
@@ -935,8 +870,7 @@ st_validate_varrays(struct gl_context *ctx,
    }
    else {
       if (!setup_non_interleaved_attribs(ctx, vp, vpv, arrays,
-                                         vbuffer, velements, max_index,
-                                         num_instances)) {
+                                         vbuffer, velements)) {
          return GL_FALSE;
       }
 
@@ -946,14 +880,6 @@ st_validate_varrays(struct gl_context *ctx,
 
    cso_set_vertex_buffers(st->cso_context, num_vbuffers, vbuffer);
    cso_set_vertex_elements(st->cso_context, num_velements, velements);
-
-   /* unreference buffers (frees wrapped user-space buffer objects)
-    * This is OK, because the pipe driver should reference buffers by itself
-    * in set_vertex_buffers. */
-   for (attr = 0; attr < num_vbuffers; attr++) {
-      pipe_resource_reference(&vbuffer[attr].buffer, NULL);
-      assert(!vbuffer[attr].buffer);
-   }
 
    return GL_TRUE;
 }
@@ -976,11 +902,10 @@ st_draw_vbo(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_index_buffer ibuffer;
+   struct pipe_index_buffer ibuffer = {0};
    struct pipe_draw_info info;
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
-   unsigned i, num_instances = 1;
-   unsigned max_index_plus_base;
+   unsigned i;
    GLboolean new_array;
 
    /* Mesa core state should have been validated already */
@@ -993,43 +918,6 @@ st_draw_vbo(struct gl_context *ctx,
    new_array =
       (st->dirty.st & (ST_NEW_VERTEX_ARRAYS | ST_NEW_VERTEX_PROGRAM)) ||
       (st->dirty.mesa & (_NEW_PROGRAM | _NEW_BUFFER_OBJECT)) != 0;
-
-   if (ib) {
-      int max_base_vertex = 0;
-
-      /* Gallium probably doesn't want this in some cases. */
-      if (!index_bounds_valid)
-         if (!all_varyings_in_vbos(arrays))
-            vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
-                                   nr_prims);
-
-      for (i = 0; i < nr_prims; i++) {
-         num_instances = MAX2(num_instances, prims[i].num_instances);
-         max_base_vertex = MAX2(max_base_vertex, prims[i].basevertex);
-      }
-
-      /* Compute the sum of max_index and max_base_vertex.  That's the value
-       * we need to use when creating buffers.
-       */
-      if (max_index == ~0)
-         max_index_plus_base = max_index;
-      else
-         max_index_plus_base = max_index + max_base_vertex;
-   }
-   else {
-      /* Get min/max index for non-indexed drawing. */
-      min_index = ~0;
-      max_index = 0;
-
-      for (i = 0; i < nr_prims; i++) {
-         min_index = MIN2(min_index, prims[i].start);
-         max_index = MAX2(max_index, prims[i].start + prims[i].count - 1);
-         num_instances = MAX2(num_instances, prims[i].num_instances);
-      }
-
-      /* The base vertex offset only applies to indexed drawing */
-      max_index_plus_base = max_index;
-   }
 
    /* Validate state. */
    if (st->dirty.st) {
@@ -1045,8 +933,7 @@ st_draw_vbo(struct gl_context *ctx,
       st_validate_state(st);
 
       if (new_array) {
-         if (!st_validate_varrays(ctx, arrays, max_index_plus_base,
-                                  num_instances)) {
+         if (!st_validate_varrays(ctx, arrays)) {
             /* probably out of memory, no-op the draw call */
             return;
          }
@@ -1061,31 +948,16 @@ st_draw_vbo(struct gl_context *ctx,
 #endif
    }
 
-   /* Notify the driver that the content of user buffers may have been
-    * changed. */
-   assert(max_index >= min_index);
-   if (!new_array && st->num_user_attribs) {
-      for (i = 0; i < st->num_user_attribs; i++) {
-         if (st->user_attrib[i].buffer) {
-            unsigned element_size = st->user_attrib[i].element_size;
-            unsigned stride = st->user_attrib[i].stride;
-            unsigned min_offset = min_index * stride;
-            unsigned max_offset = max_index_plus_base * stride + element_size;
-
-            assert(max_offset > min_offset);
-
-            pipe->redefine_user_buffer(pipe, st->user_attrib[i].buffer,
-                                       min_offset,
-                                       max_offset - min_offset);
-         }
-      }
-   }
-
-   setup_index_buffer(ctx, ib, &ibuffer);
-   cso_set_index_buffer(st->cso_context, &ibuffer);
-
    util_draw_init_info(&info);
    if (ib) {
+      /* Get index bounds for user buffers. */
+      if (!index_bounds_valid)
+         if (!all_varyings_in_vbos(arrays))
+            vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
+                                   nr_prims);
+
+      setup_index_buffer(st, ib, &ibuffer);
+
       info.indexed = TRUE;
       if (min_index != ~0 && max_index != ~0) {
          info.min_index = min_index;
@@ -1098,10 +970,12 @@ st_draw_vbo(struct gl_context *ctx,
       info.primitive_restart = ctx->Array.PrimitiveRestart;
       info.restart_index = ctx->Array.RestartIndex;
    }
-
-   /* Set info.count_from_stream_output. */
-   if (tfb_vertcount) {
-      st_transform_feedback_draw_init(tfb_vertcount, &info);
+   else {
+      /* Transform feedback drawing is always non-indexed. */
+      /* Set info.count_from_stream_output. */
+      if (tfb_vertcount) {
+         st_transform_feedback_draw_init(tfb_vertcount, &info);
+      }
    }
 
    /* do actual drawing */
@@ -1134,7 +1008,9 @@ st_draw_vbo(struct gl_context *ctx,
          cso_draw_vbo(st->cso_context, &info);
    }
 
-   pipe_resource_reference(&ibuffer.buffer, NULL);
+   if (ib && st->indexbuf_uploader && !_mesa_is_bufferobj(ib->obj)) {
+      pipe_resource_reference(&ibuffer.buffer, NULL);
+   }
 }
 
 

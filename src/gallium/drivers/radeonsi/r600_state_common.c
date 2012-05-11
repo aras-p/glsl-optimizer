@@ -424,10 +424,10 @@ static void r600_update_alpha_ref(struct r600_context *rctx)
 }
 
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_resource *buffer)
+			      struct pipe_constant_buffer *cb)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource *rbuffer = r600_resource(buffer);
+	struct r600_resource *rbuffer = cb ? r600_resource(cb->buffer) : NULL;
 	struct r600_pipe_state *rstate;
 	uint64_t va_offset;
 	uint32_t offset;
@@ -435,13 +435,16 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (buffer == NULL) {
+	if (cb == NULL) {
 		return;
 	}
 
 	r600_inval_shader_cache(rctx);
 
-	r600_upload_const_buffer(rctx, &rbuffer, &offset);
+	if (cb->user_buffer)
+		r600_upload_const_buffer(rctx, &rbuffer, cb->user_buffer, cb->buffer_size, &offset);
+	else
+		offset = 0;
 	va_offset = r600_resource_va(ctx->screen, (void*)rbuffer);
 	va_offset += offset;
 	//va_offset >>= 8;
@@ -474,7 +477,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 
 	r600_context_pipe_state_set(rctx, rstate);
 
-	if (buffer != &rbuffer->b.b)
+	if (cb->buffer != &rbuffer->b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
@@ -734,7 +737,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info.count);
 
-		if (ib.buffer->user_ptr) {
+		if (ib.user_buffer) {
 			r600_upload_index_buffer(rctx, &ib, info.count);
 		}
 

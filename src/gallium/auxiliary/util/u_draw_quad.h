@@ -47,6 +47,9 @@ util_draw_vertex_buffer(struct pipe_context *pipe, struct cso_context *cso,
                         struct pipe_resource *vbuf, uint offset,
                         uint num_attribs, uint num_verts, uint prim_type);
 
+void
+util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
+                             uint prim_type, uint num_verts, uint num_attribs);
 
 extern void 
 util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,

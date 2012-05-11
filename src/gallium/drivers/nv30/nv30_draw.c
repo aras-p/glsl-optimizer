@@ -366,7 +366,7 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct draw_context *draw = nv30->draw;
-   struct pipe_transfer *transfer[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *transfer[PIPE_MAX_ATTRIBS] = {NULL};
    struct pipe_transfer *transferi = NULL;
    int i;
 
@@ -403,14 +403,18 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    for (i = 0; i < nv30->num_vtxbufs; i++) {
-      void *map = pipe_buffer_map(pipe, nv30->vtxbuf[i].buffer,
+      const void *map = nv30->vtxbuf[i].user_buffer;
+      if (!map)
+         map = pipe_buffer_map(pipe, nv30->vtxbuf[i].buffer,
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transfer[i]);
       draw_set_mapped_vertex_buffer(draw, i, map);
    }
 
    if (info->indexed) {
-      void *map = pipe_buffer_map(pipe, nv30->idxbuf.buffer,
+      const void *map = nv30->idxbuf.user_buffer;
+      if (!map)
+         pipe_buffer_map(pipe, nv30->idxbuf.buffer,
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transferi);
       draw_set_index_buffer(draw, &nv30->idxbuf);
@@ -422,10 +426,11 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_vbo(draw, info);
    draw_flush(draw);
 
-   if (info->indexed)
+   if (info->indexed && transferi)
       pipe_buffer_unmap(pipe, transferi);
    for (i = 0; i < nv30->num_vtxbufs; i++)
-      pipe_buffer_unmap(pipe, transfer[i]);
+      if (transfer[i])
+         pipe_buffer_unmap(pipe, transfer[i]);
 
    nv30->draw_dirty = 0;
    nv30_state_release(nv30);

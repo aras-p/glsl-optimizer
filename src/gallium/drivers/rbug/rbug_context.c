@@ -614,24 +614,23 @@ static void
 rbug_set_constant_buffer(struct pipe_context *_pipe,
                          uint shader,
                          uint index,
-                         struct pipe_resource *_resource)
+                         struct pipe_constant_buffer *_cb)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_resource *unwrapped_resource;
-   struct pipe_resource *resource = NULL;
+   struct pipe_constant_buffer cb;
 
    /* XXX hmm? unwrap the input state */
-   if (_resource) {
-      unwrapped_resource = rbug_resource_unwrap(_resource);
-      resource = unwrapped_resource;
+   if (_cb) {
+      cb = *_cb;
+      cb.buffer = rbug_resource_unwrap(_cb->buffer);
    }
 
    pipe_mutex_lock(rb_pipe->call_mutex);
    pipe->set_constant_buffer(pipe,
                              shader,
                              index,
-                             resource);
+                             _cb ? &cb : NULL);
    pipe_mutex_unlock(rb_pipe->call_mutex);
 }
 
@@ -1140,21 +1139,6 @@ rbug_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
-static void rbug_redefine_user_buffer(struct pipe_context *_context,
-                                      struct pipe_resource *_resource,
-                                      unsigned offset, unsigned size)
-{
-   struct rbug_context *rb_pipe = rbug_context(_context);
-   struct rbug_resource *rb_resource = rbug_resource(_resource);
-   struct pipe_context *context = rb_pipe->pipe;
-   struct pipe_resource *resource = rb_resource->resource;
-
-   pipe_mutex_lock(rb_pipe->call_mutex);
-   context->redefine_user_buffer(context, resource, offset, size);
-   pipe_mutex_unlock(rb_pipe->call_mutex);
-}
-
-
 struct pipe_context *
 rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -1238,7 +1222,6 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.transfer_unmap = rbug_context_transfer_unmap;
    rb_pipe->base.transfer_flush_region = rbug_context_transfer_flush_region;
    rb_pipe->base.transfer_inline_write = rbug_context_transfer_inline_write;
-   rb_pipe->base.redefine_user_buffer = rbug_redefine_user_buffer;
 
    rb_pipe->pipe = pipe;
 

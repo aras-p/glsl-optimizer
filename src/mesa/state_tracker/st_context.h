@@ -41,7 +41,6 @@ struct gen_mipmap_state;
 struct st_context;
 struct st_fragment_program;
 struct u_upload_mgr;
-struct u_vbuf;
 
 
 #define ST_NEW_MESA                    (1 << 0) /* Mesa state has changed */
@@ -74,8 +73,7 @@ struct st_context
 
    struct pipe_context *pipe;
 
-   struct u_upload_mgr *uploader;
-   struct u_vbuf *vbuf;
+   struct u_upload_mgr *uploader, *indexbuf_uploader, *constbuf_uploader;
 
    struct draw_context *draw;  /**< For selection/feedback/rastpos only */
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
@@ -190,18 +188,6 @@ struct st_context
 
    int force_msaa;
    void *winsys_drawable_handle;
-
-   /* User vertex buffers. */
-   struct {
-      struct pipe_resource *buffer;
-
-      /** Element size */
-      GLuint element_size;
-
-      /** Attribute stride */
-      GLsizei stride;
-   } user_attrib[PIPE_MAX_ATTRIBS];
-   unsigned num_user_attribs;
 
    /* Active render condition. */
    struct pipe_query *render_condition;

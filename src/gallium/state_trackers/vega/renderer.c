@@ -179,7 +179,7 @@ static void renderer_set_mvp(struct renderer *renderer,
       pipe_buffer_write(renderer->pipe, cbuf,
             0, sizeof(consts), consts);
    }
-   renderer->pipe->set_constant_buffer(renderer->pipe,
+   pipe_set_constant_buffer(renderer->pipe,
          PIPE_SHADER_VERTEX, 0, cbuf);
 
    memcpy(cur, mvp, sizeof(*mvp));
@@ -478,7 +478,7 @@ static void renderer_set_custom_fs(struct renderer *renderer,
                const_buffer_len);
          pipe_buffer_write(renderer->pipe, cbuf, 0,
                const_buffer_len, const_buffer);
-         renderer->pipe->set_constant_buffer(renderer->pipe,
+         pipe_set_constant_buffer(renderer->pipe,
                PIPE_SHADER_FRAGMENT, 0, cbuf);
 
          renderer->fs_cbuf = cbuf;
@@ -566,20 +566,9 @@ static void renderer_quad_texcoord(struct renderer *r,
  */
 static void renderer_quad_draw(struct renderer *r)
 {
-   struct pipe_resource *buf;
-
-   buf = pipe_user_buffer_create(r->pipe->screen,
-                                 r->vertices,
-                                 sizeof(r->vertices),
-                                 PIPE_BIND_VERTEX_BUFFER);
-   if (buf) {
-      util_draw_vertex_buffer(r->pipe, r->cso, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              Elements(r->vertices),     /* verts */
-                              Elements(r->vertices[0])); /* attribs/vert */
-
-      pipe_resource_reference(&buf, NULL);
-   }
+   util_draw_user_vertex_buffer(r->cso, r->vertices, PIPE_PRIM_TRIANGLE_FAN,
+                                Elements(r->vertices),     /* verts */
+                                Elements(r->vertices[0])); /* attribs/vert */
 }
 
 /**
@@ -1054,7 +1043,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
    cso_set_vertex_buffers(renderer->cso, 1, vbuf);
 
    if (!renderer->u.polygon_stencil.manual_two_sides) {
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
    }
    else {
       struct pipe_rasterizer_state raster;
@@ -1069,7 +1058,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 
       cso_set_rasterizer(renderer->cso, &raster);
       cso_set_depth_stencil_alpha(renderer->cso, &dsa);
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
 
       /* back */
       raster.cull_face = PIPE_FACE_FRONT;
@@ -1077,7 +1066,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 
       cso_set_rasterizer(renderer->cso, &raster);
       cso_set_depth_stencil_alpha(renderer->cso, &dsa);
-      util_draw_arrays(renderer->pipe, mode, start, count);
+      cso_draw_arrays(renderer->cso, mode, start, count);
    }
 }
 

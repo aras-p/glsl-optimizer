@@ -26,55 +26,52 @@
 
 
 void r300_translate_index_buffer(struct r300_context *r300,
-                                 struct pipe_resource **index_buffer,
+                                 struct pipe_index_buffer *ib,
+                                 struct pipe_resource **out_buffer,
                                  unsigned *index_size, unsigned index_offset,
                                  unsigned *start, unsigned count)
 {
-    struct pipe_resource *out_buffer = NULL;
     unsigned out_offset;
     void *ptr;
 
     switch (*index_size) {
     case 1:
+        *out_buffer = NULL;
         u_upload_alloc(r300->uploader, 0, count * 2,
-                       &out_offset, &out_buffer, &ptr);
+                       &out_offset, out_buffer, &ptr);
 
         util_shorten_ubyte_elts_to_userptr(
-                &r300->context, *index_buffer, index_offset,
+                &r300->context, ib, index_offset,
                 *start, count, ptr);
 
-	*index_buffer = NULL;
-        pipe_resource_reference(index_buffer, out_buffer);
         *index_size = 2;
         *start = out_offset / 2;
         break;
 
     case 2:
         if (index_offset) {
+            *out_buffer = NULL;
             u_upload_alloc(r300->uploader, 0, count * 2,
-                           &out_offset, &out_buffer, &ptr);
+                           &out_offset, out_buffer, &ptr);
 
-            util_rebuild_ushort_elts_to_userptr(&r300->context, *index_buffer,
+            util_rebuild_ushort_elts_to_userptr(&r300->context, ib,
                                                 index_offset, *start,
                                                 count, ptr);
 
-	    *index_buffer = NULL;
-            pipe_resource_reference(index_buffer, out_buffer);
             *start = out_offset / 2;
         }
         break;
 
     case 4:
         if (index_offset) {
+            *out_buffer = NULL;
             u_upload_alloc(r300->uploader, 0, count * 4,
-                           &out_offset, &out_buffer, &ptr);
+                           &out_offset, out_buffer, &ptr);
 
-            util_rebuild_uint_elts_to_userptr(&r300->context, *index_buffer,
+            util_rebuild_uint_elts_to_userptr(&r300->context, ib,
                                               index_offset, *start,
                                               count, ptr);
 
-	    *index_buffer = NULL;
-            pipe_resource_reference(index_buffer, out_buffer);
             *start = out_offset / 4;
         }
         break;

@@ -69,6 +69,27 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
 }
 
 
+/**
+ * Draw a simple vertex buffer / primitive.
+ * Limited to float[4] vertex attribs, tightly packed.
+ */
+void
+util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
+                             uint prim_type, uint num_verts, uint num_attribs)
+{
+   struct pipe_vertex_buffer vbuffer = {0};
+
+   assert(num_attribs <= PIPE_MAX_ATTRIBS);
+
+   vbuffer.user_buffer = buffer;
+   vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
+
+   /* note: vertex elements already set by caller */
+
+   cso_set_vertex_buffers(cso, 1, &vbuffer);
+   cso_draw_arrays(cso, prim_type, 0, num_verts);
+}
+
 
 /**
  * Draw screen-aligned textured quad.
@@ -118,10 +139,11 @@ util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
    v[28] = 0.0;
    v[29] = 1.0;
 	 
-   vbuf = pipe_user_buffer_create(pipe->screen, v, vertexBytes,
-				  PIPE_BIND_VERTEX_BUFFER);
+   vbuf = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+                             PIPE_USAGE_STAGING, vertexBytes);
    if (!vbuf)
       goto out;
+   pipe_buffer_write(pipe, vbuf, 0, vertexBytes, v);
 
    util_draw_vertex_buffer(pipe, cso, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 

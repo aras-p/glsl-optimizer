@@ -38,6 +38,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_upload_mgr.h"
 
 #include "st_debug.h"
 #include "st_context.h"
@@ -55,15 +56,13 @@ void st_upload_constants( struct st_context *st,
                           struct gl_program_parameter_list *params,
                           unsigned shader_type)
 {
-   struct pipe_context *pipe = st->pipe;
-
    assert(shader_type == PIPE_SHADER_VERTEX ||
           shader_type == PIPE_SHADER_FRAGMENT ||
           shader_type == PIPE_SHADER_GEOMETRY);
 
    /* update constants */
    if (params && params->NumParameters) {
-      struct pipe_resource *cbuf;
+      struct pipe_constant_buffer cb;
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
 
       /* Update the constants which come from fixed-function state, such as
@@ -77,20 +76,28 @@ void st_upload_constants( struct st_context *st,
        * avoid gratuitous rendering synchronization.
        * Let's use a user buffer to avoid an unnecessary copy.
        */
-      cbuf = pipe_user_buffer_create(pipe->screen,
-                                     params->ParameterValues,
-                                     paramBytes,
-                                     PIPE_BIND_CONSTANT_BUFFER);
+      if (st->constbuf_uploader) {
+         cb.buffer = NULL;
+         cb.user_buffer = NULL;
+         u_upload_data(st->constbuf_uploader, 0, paramBytes,
+                       params->ParameterValues, &cb.buffer_offset, &cb.buffer);
+         u_upload_unmap(st->constbuf_uploader);
+      } else {
+         cb.buffer = NULL;
+         cb.user_buffer = params->ParameterValues;
+         cb.buffer_offset = 0;
+      }
+      cb.buffer_size = paramBytes;
 
       if (ST_DEBUG & DEBUG_CONSTANTS) {
-	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
+         debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n",
                       __FUNCTION__, shader_type, params->NumParameters,
                       params->StateFlags);
          _mesa_print_parameter_list(params);
       }
 
-      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
-      pipe_resource_reference(&cbuf, NULL);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, &cb);
+      pipe_resource_reference(&cb.buffer, NULL);
 
       st->state.constants[shader_type].ptr = params->ParameterValues;
       st->state.constants[shader_type].size = paramBytes;

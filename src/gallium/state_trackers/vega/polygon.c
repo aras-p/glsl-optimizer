@@ -57,7 +57,7 @@ struct polygon
    VGint    num_verts;
 
    VGboolean dirty;
-   struct pipe_resource *vbuf;
+   void *user_vbuf;
    struct pipe_screen *screen;
 };
 
@@ -89,7 +89,7 @@ struct polygon * polygon_create(int size)
    poly->size = size;
    poly->num_verts = 0;
    poly->dirty = VG_TRUE;
-   poly->vbuf = NULL;
+   poly->user_vbuf = NULL;
 
    return poly;
 }
@@ -101,16 +101,13 @@ struct polygon * polygon_create_from_data(float *data, int size)
    memcpy(poly->data, data, sizeof(float) * COMPONENTS * size);
    poly->num_verts = size;
    poly->dirty = VG_TRUE;
-   poly->vbuf = NULL;
+   poly->user_vbuf = NULL;
 
    return poly;
 }
 
 void polygon_destroy(struct polygon *poly)
 {
-   if (poly->vbuf)
-      pipe_resource_reference(&poly->vbuf, NULL);
-
    free(poly->data);
    free(poly);
 }
@@ -247,25 +244,15 @@ VGboolean polygon_is_closed(struct polygon *p)
 static void polygon_prepare_buffer(struct vg_context *ctx,
                                    struct polygon *poly)
 {
-   int vert_size;
    struct pipe_context *pipe;
-
-   vert_size = poly->num_verts * COMPONENTS * sizeof(float);
 
    /*polygon_print(poly);*/
 
    pipe = ctx->pipe;
 
-   if (poly->vbuf == NULL || poly->dirty) {
-      if (poly->vbuf) {
-         pipe_resource_reference(&poly->vbuf,
-                               NULL);
-      }
+   if (poly->user_vbuf == NULL || poly->dirty) {
       poly->screen = pipe->screen;
-      poly->vbuf= pipe_user_buffer_create(poly->screen,
-                                          poly->data,
-                                          vert_size,
-					  PIPE_BIND_VERTEX_BUFFER);
+      poly->user_vbuf = poly->data;
       poly->dirty = VG_FALSE;
    }
 }
@@ -300,9 +287,8 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
 
    /* tell renderer about the vertex buffer */
    memset(&vbuffer, 0, sizeof(vbuffer));
-   vbuffer.buffer = poly->vbuf;
+   vbuffer.user_buffer = poly->user_vbuf;
    vbuffer.stride = COMPONENTS * sizeof(float);  /* vertex size */
-   vbuffer.buffer_offset = 0;
 
    renderer_polygon_stencil_begin(ctx->renderer,
          &velement, ctx->state.vg.fill_rule, VG_FALSE);
@@ -343,7 +329,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
    /* tell renderer about the vertex buffer */
    memset(&vbuffer, 0, sizeof(vbuffer));
    vbuffer.stride = COMPONENTS * sizeof(float);  /* vertex size */
-   vbuffer.buffer_offset = 0;
 
    /* prepare the stencil buffer */
    renderer_polygon_stencil_begin(ctx->renderer,
@@ -352,7 +337,7 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
       struct polygon *poly = (((struct polygon**)polys->data)[i]);
 
       polygon_prepare_buffer(ctx, poly);
-      vbuffer.buffer = poly->vbuf;
+      vbuffer.user_buffer = poly->user_vbuf;
 
       renderer_polygon_stencil(ctx->renderer, &vbuffer,
             PIPE_PRIM_TRIANGLE_FAN, 0, (VGuint) poly->num_verts);

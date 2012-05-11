@@ -233,6 +233,25 @@ static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type
    }
 }
 
+static void cso_init_vbuf(struct cso_context *cso)
+{
+   struct u_vbuf_caps caps;
+
+   u_vbuf_get_caps(cso->pipe->screen, &caps);
+
+   /* Install u_vbuf if there is anything unsupported. */
+   if (!caps.buffer_offset_unaligned ||
+       !caps.buffer_stride_unaligned ||
+       !caps.velem_src_offset_unaligned ||
+       !caps.format_fixed32 ||
+       !caps.format_float16 ||
+       !caps.format_float64 ||
+       !caps.format_norm32 ||
+       !caps.format_scaled32 ||
+       !caps.user_vertex_buffers) {
+      cso->vbuf = u_vbuf_create(cso->pipe, &caps);
+   }
+}
 
 struct cso_context *cso_create_context( struct pipe_context *pipe )
 {
@@ -251,6 +270,8 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
 
    ctx->pipe = pipe;
 
+   cso_init_vbuf(ctx);
+
    /* Enable for testing: */
    if (0) cso_set_maximum_cache_size( ctx->cache, 4 );
 
@@ -268,11 +289,6 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
 out:
    cso_destroy_context( ctx );      
    return NULL;
-}
-
-void cso_install_vbuf(struct cso_context *ctx, struct u_vbuf *vbuf)
-{
-   ctx->vbuf = vbuf;
 }
 
 /**
@@ -343,6 +359,8 @@ void cso_release_all( struct cso_context *ctx )
 void cso_destroy_context( struct cso_context *ctx )
 {
    if (ctx) {
+      if (ctx->vbuf)
+         u_vbuf_destroy(ctx->vbuf);
       FREE( ctx );
    }
 }

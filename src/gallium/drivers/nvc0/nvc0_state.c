@@ -616,9 +616,16 @@ nvc0_gp_state_bind(struct pipe_context *pipe, void *hwcso)
 
 static void
 nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-                         struct pipe_resource *res)
+                         struct pipe_constant_buffer *cb)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
+   struct pipe_resource *res = cb ? cb->buffer : NULL;
+
+   if (cb && cb->user_buffer) {
+      res = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+                                       cb->buffer_size,
+                                       PIPE_BIND_CONSTANT_BUFFER);
+   }
 
    switch (shader) {
    case PIPE_SHADER_VERTEX: shader = 0; break;
@@ -641,6 +648,10 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    nvc0->constbuf_dirty[shader] |= 1 << index;
 
    nvc0->dirty |= NVC0_NEW_CONSTBUF;
+
+   if (cb->user_buffer) {
+      pipe_resource_reference(&res, NULL);
+   }
 }
 
 /* =============================================================================
@@ -946,7 +957,5 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->create_stream_output_target = nvc0_so_target_create;
    pipe->stream_output_target_destroy = nvc0_so_target_destroy;
    pipe->set_stream_output_targets = nvc0_set_transform_feedback_targets;
-
-   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
