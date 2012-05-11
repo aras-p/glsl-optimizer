@@ -259,7 +259,7 @@ tgsi_default_declaration_resource(void)
 {
    struct tgsi_declaration_resource dr;
 
-   dr.Resource = TGSI_BUFFER;
+   dr.Resource = TGSI_TEXTURE_BUFFER;
    dr.Raw = 0;
    dr.Writable = 0;
 
@@ -290,7 +290,7 @@ tgsi_default_declaration_sampler_view(void)
 {
    struct tgsi_declaration_sampler_view dsv;
 
-   dsv.Resource = TGSI_BUFFER;
+   dsv.Resource = TGSI_TEXTURE_BUFFER;
    dsv.ReturnTypeX = PIPE_TYPE_UNORM;
    dsv.ReturnTypeY = PIPE_TYPE_UNORM;
    dsv.ReturnTypeZ = PIPE_TYPE_UNORM;
