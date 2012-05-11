@@ -181,30 +181,3 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     return &rbuf->b.b;
 }
-
-struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr, unsigned size,
-					      unsigned bind)
-{
-    struct r300_screen *r300screen = r300_screen(screen);
-    struct r300_resource *rbuf;
-
-    rbuf = util_slab_alloc(&r300screen->pool_buffers);
-
-    pipe_reference_init(&rbuf->b.b.reference, 1);
-    rbuf->b.b.screen = screen;
-    rbuf->b.b.target = PIPE_BUFFER;
-    rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
-    rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
-    rbuf->b.b.bind = bind;
-    rbuf->b.b.width0 = ~0;
-    rbuf->b.b.height0 = 1;
-    rbuf->b.b.depth0 = 1;
-    rbuf->b.b.array_size = 1;
-    rbuf->b.b.flags = 0;
-    rbuf->b.vtbl = &r300_buffer_vtbl;
-    rbuf->domain = RADEON_DOMAIN_GTT;
-    rbuf->buf = NULL;
-    rbuf->constant_buffer = NULL;
-    return &rbuf->b.b;
-}
