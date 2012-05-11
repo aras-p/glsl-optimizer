@@ -855,7 +855,6 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
                                 const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
-    int i;
     boolean indexed = info->indexed;
 
     if (r300->skip_rendering) {
@@ -868,16 +867,6 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             PREP_EMIT_STATES | PREP_EMIT_VARRAYS_SWTCL |
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
-
-    for (i = 0; i < r300->nr_vertex_buffers; i++) {
-        if (r300->vertex_buffer[i].user_buffer) {
-            draw_set_mapped_vertex_buffer(r300->draw, i,
-                                          r300->vertex_buffer[i].user_buffer);
-        } else if (r300->vertex_buffer[i].buffer) {
-            draw_set_mapped_vertex_buffer(r300->draw, i,
-                r300_resource(r300->vertex_buffer[i].buffer)->malloced_buffer);
-        }
-    }
 
     r300->draw_vbo_locked = TRUE;
     r300->draw_first_emitted = FALSE;

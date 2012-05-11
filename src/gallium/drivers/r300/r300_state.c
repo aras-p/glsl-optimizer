@@ -1588,29 +1588,45 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     }
 }
 
-static void r300_set_vertex_buffers(struct pipe_context* pipe,
+static void r300_set_vertex_buffers_hwtcl(struct pipe_context* pipe,
                                     unsigned count,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (r300->screen->caps.has_tcl) {
-        /* There must be at least one vertex buffer set, otherwise it locks up. */
-        if (!count) {
-            buffers = &r300->dummy_vb;
-            count = 1;
+    /* There must be at least one vertex buffer set, otherwise it locks up. */
+    if (!count) {
+        buffers = &r300->dummy_vb;
+        count = 1;
+    }
+
+    util_copy_vertex_buffers(r300->vertex_buffer,
+                             &r300->nr_vertex_buffers,
+                             buffers, count);
+
+    r300->vertex_arrays_dirty = TRUE;
+}
+
+static void r300_set_vertex_buffers_swtcl(struct pipe_context* pipe,
+                                    unsigned count,
+                                    const struct pipe_vertex_buffer* buffers)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    unsigned i;
+
+    util_copy_vertex_buffers(r300->vertex_buffer,
+                             &r300->nr_vertex_buffers,
+                             buffers, count);
+    draw_set_vertex_buffers(r300->draw, count, buffers);
+
+    for (i = 0; i < count; i++) {
+        if (buffers[i].user_buffer) {
+            draw_set_mapped_vertex_buffer(r300->draw, i,
+                                          buffers[i].user_buffer);
+        } else if (buffers[i].buffer) {
+            draw_set_mapped_vertex_buffer(r300->draw, i,
+                r300_resource(buffers[i].buffer)->malloced_buffer);
         }
-
-        util_copy_vertex_buffers(r300->vertex_buffer,
-                                 &r300->nr_vertex_buffers,
-                                 buffers, count);
-
-        r300->vertex_arrays_dirty = TRUE;
-    } else {
-        util_copy_vertex_buffers(r300->vertex_buffer,
-                                 &r300->nr_vertex_buffers,
-                                 buffers, count);
-        draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 }
 
@@ -1952,11 +1968,11 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.set_viewport_state = r300_set_viewport_state;
 
-    r300->context.set_vertex_buffers = r300_set_vertex_buffers;
-
     if (r300->screen->caps.has_tcl) {
+        r300->context.set_vertex_buffers = r300_set_vertex_buffers_hwtcl;
         r300->context.set_index_buffer = r300_set_index_buffer_hwtcl;
     } else {
+        r300->context.set_vertex_buffers = r300_set_vertex_buffers_swtcl;
         r300->context.set_index_buffer = r300_set_index_buffer_swtcl;
     }
 
