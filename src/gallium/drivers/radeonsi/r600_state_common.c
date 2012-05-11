@@ -630,11 +630,10 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 				  vertex_buffer->stride);
 		else
 			ptr[2] = vertex_buffer->buffer->width0 - offset;
-		/* XXX: Hardcoding RGBA */
-		ptr[3] = (S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
-			  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
-			  S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
-			  S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
+		ptr[3] = (S_008F0C_DST_SEL_X(si_map_swizzle(desc->swizzle[0])) |
+			  S_008F0C_DST_SEL_Y(si_map_swizzle(desc->swizzle[1])) |
+			  S_008F0C_DST_SEL_Z(si_map_swizzle(desc->swizzle[2])) |
+			  S_008F0C_DST_SEL_W(si_map_swizzle(desc->swizzle[3])) |
 			  S_008F0C_NUM_FORMAT(num_format) |
 			  S_008F0C_DATA_FORMAT(data_format));
 

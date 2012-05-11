@@ -37,6 +37,7 @@
 #include "r600.h"
 #include "radeonsi_public.h"
 #include "r600_resource.h"
+#include "sid.h"
 
 #define R600_MAX_CONST_BUFFERS 1
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -466,6 +467,24 @@ static INLINE uint32_t S_FIXED(float value, uint32_t frac_bits)
 	return value * (1 << frac_bits);
 }
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+static INLINE unsigned si_map_swizzle(unsigned swizzle)
+{
+	switch (swizzle) {
+	case UTIL_FORMAT_SWIZZLE_Y:
+		return V_008F0C_SQ_SEL_Y;
+	case UTIL_FORMAT_SWIZZLE_Z:
+		return V_008F0C_SQ_SEL_Z;
+	case UTIL_FORMAT_SWIZZLE_W:
+		return V_008F0C_SQ_SEL_W;
+	case UTIL_FORMAT_SWIZZLE_0:
+		return V_008F0C_SQ_SEL_0;
+	case UTIL_FORMAT_SWIZZLE_1:
+		return V_008F0C_SQ_SEL_1;
+	default: /* UTIL_FORMAT_SWIZZLE_X */
+		return V_008F0C_SQ_SEL_X;
+	}
+}
 
 static inline unsigned r600_tex_aniso_filter(unsigned filter)
 {

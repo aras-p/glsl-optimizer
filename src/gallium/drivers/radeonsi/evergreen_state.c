@@ -1166,24 +1166,6 @@ static void si_delete_sampler_state(struct pipe_context *ctx,
 	free(state);
 }
 
-static unsigned si_map_swizzle(unsigned swizzle)
-{
-	switch (swizzle) {
-	case UTIL_FORMAT_SWIZZLE_Y:
-		return V_008F1C_SQ_SEL_Y;
-	case UTIL_FORMAT_SWIZZLE_Z:
-		return V_008F1C_SQ_SEL_Z;
-	case UTIL_FORMAT_SWIZZLE_W:
-		return V_008F1C_SQ_SEL_W;
-	case UTIL_FORMAT_SWIZZLE_0:
-		return V_008F1C_SQ_SEL_0;
-	case UTIL_FORMAT_SWIZZLE_1:
-		return V_008F1C_SQ_SEL_1;
-	default: /* UTIL_FORMAT_SWIZZLE_X */
-		return V_008F1C_SQ_SEL_X;
-	}
-}
-
 static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_context *ctx,
 							struct pipe_resource *texture,
 							const struct pipe_sampler_view *state)
