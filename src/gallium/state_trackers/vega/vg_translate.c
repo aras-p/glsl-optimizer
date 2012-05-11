@@ -526,8 +526,8 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; ++i) {
          VGfloat clr[4];
-         clr[0] = ((*src >> 10) & 31)/31.;
-         clr[1] = ((*src >>  5) & 95)/95.;
+         clr[0] = ((*src >> 11) & 31)/31.;
+         clr[1] = ((*src >>  5) & 63)/63.;
          clr[2] = ((*src >>  0) & 31)/31.;
          clr[3] = 1.f;
 
