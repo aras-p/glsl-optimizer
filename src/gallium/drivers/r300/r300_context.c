@@ -80,7 +80,8 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->draw)
         draw_destroy(r300->draw);
 
-    u_upload_destroy(r300->uploader);
+    if (r300->uploader)
+        u_upload_destroy(r300->uploader);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
@@ -402,8 +403,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.create_video_decoder = vl_create_decoder;
     r300->context.create_video_buffer = vl_video_buffer_create;
 
-    r300->uploader = u_upload_create(&r300->context, 256 * 1024, 4,
-                                     PIPE_BIND_INDEX_BUFFER);
+    if (r300screen->caps.has_tcl) {
+        r300->uploader = u_upload_create(&r300->context, 256 * 1024, 4,
+                                         PIPE_BIND_INDEX_BUFFER);
+    }
 
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
@@ -437,7 +440,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         pipe_resource_reference(&tex, NULL);
     }
 
-    {
+    if (r300screen->caps.has_tcl) {
         struct pipe_resource vb;
         memset(&vb, 0, sizeof(vb));
         vb.target = PIPE_BUFFER;
