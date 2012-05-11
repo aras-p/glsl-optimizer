@@ -892,8 +892,8 @@ ceil_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_trunc(&bld_base->base,
-                                                         emit_data->args[0]);
+   emit_data->output[emit_data->chan] = lp_build_ceil(&bld_base->base,
+                                                      emit_data->args[0]);
 }
 
 /* TGSI_OPCODE_CMP (CPU Only) */
