@@ -103,9 +103,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
         case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
         case PIPE_CAP_VERTEX_COLOR_CLAMPED:
-        case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
-        case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
-        case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
         case PIPE_CAP_USER_INDEX_BUFFERS:
         case PIPE_CAP_USER_CONSTANT_BUFFERS:
             return 1;
@@ -149,12 +146,18 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
         case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
-        case PIPE_CAP_USER_VERTEX_BUFFERS:
             return 0;
 
         /* SWTCL-only features. */
         case PIPE_CAP_PRIMITIVE_RESTART:
+        case PIPE_CAP_USER_VERTEX_BUFFERS:
             return !r300screen->caps.has_tcl;
+
+        /* HWTCL-only features / limitations. */
+        case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
+        case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
+        case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
+            return r300screen->caps.has_tcl;
 
         /* Texturing. */
         case PIPE_CAP_MAX_COMBINED_SAMPLERS:
@@ -426,11 +429,19 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     }
 
     /* Check vertex buffer format support. */
-    if (usage & PIPE_BIND_VERTEX_BUFFER &&
-        /* Half float is supported on >= R400. */
-        (is_r400 || is_r500 || !is_half_float) &&
-        r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT) {
-        retval |= PIPE_BIND_VERTEX_BUFFER;
+    if (usage & PIPE_BIND_VERTEX_BUFFER) {
+        if (r300_screen(screen)->caps.has_tcl) {
+            /* Half float is supported on >= R400. */
+            if ((is_r400 || is_r500 || !is_half_float) &&
+                r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT) {
+                retval |= PIPE_BIND_VERTEX_BUFFER;
+            }
+        } else {
+            /* SW TCL */
+            if (!util_format_is_pure_integer(format)) {
+                retval |= PIPE_BIND_VERTEX_BUFFER;
+            }
+        }
     }
 
     /* Transfers are always supported. */
