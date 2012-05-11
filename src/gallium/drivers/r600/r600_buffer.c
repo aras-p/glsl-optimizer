@@ -86,14 +86,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
 
-	if (transfer->usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-		/* When mapping for read, we only need to check if the GPU is writing to it. */
-		enum radeon_bo_usage rusage = transfer->usage & PIPE_TRANSFER_WRITE ?
-			RADEON_USAGE_READWRITE : RADEON_USAGE_WRITE;
+	if (transfer->usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
+	    !(transfer->usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+		assert(transfer->usage & PIPE_TRANSFER_WRITE);
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
-		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, rusage) ||
-		    rctx->ws->buffer_is_busy(rbuffer->buf, rusage)) {
+		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
 			unsigned i;
 
 			/* Discard the buffer. */
