@@ -119,15 +119,10 @@ struct r600_screen {
 	enum chip_class			chip_class;
 	struct radeon_info		info;
 	struct r600_tiling_info		tiling_info;
-	struct util_slab_mempool	pool_buffers;
 	struct r600_pipe_fences		fences;
 
-	unsigned			num_contexts;
 	bool				use_surface_alloc;
 	int 				glsl_feature_level;
-
-	/* for thread-safe write accessing to num_contexts */
-	pipe_mutex			mutex_num_contexts;
 };
 
 struct r600_pipe_sampler_view {

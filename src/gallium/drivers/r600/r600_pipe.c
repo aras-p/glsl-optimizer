@@ -152,25 +152,6 @@ static void r600_flush_from_winsys(void *ctx, unsigned flags)
 	r600_flush((struct pipe_context*)ctx, NULL, flags);
 }
 
-static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
-{
-	pipe_mutex_lock(rscreen->mutex_num_contexts);
-	if (diff > 0) {
-		rscreen->num_contexts++;
-
-		if (rscreen->num_contexts > 1)
-			util_slab_set_thread_safety(&rscreen->pool_buffers,
-						    UTIL_SLAB_MULTITHREADED);
-	} else {
-		rscreen->num_contexts--;
-
-		if (rscreen->num_contexts <= 1)
-			util_slab_set_thread_safety(&rscreen->pool_buffers,
-						    UTIL_SLAB_SINGLETHREADED);
-	}
-	pipe_mutex_unlock(rscreen->mutex_num_contexts);
-}
-
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
@@ -197,8 +178,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	}
 	util_slab_destroy(&rctx->pool_transfers);
 
-	r600_update_num_contexts(rctx->screen, -1);
-
 	r600_release_command_buffer(&rctx->start_cs_cmd);
 
 	if (rctx->cs) {
@@ -220,8 +199,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	util_slab_create(&rctx->pool_transfers,
 			 sizeof(struct pipe_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
-
-	r600_update_num_contexts(rscreen, 1);
 
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
@@ -613,9 +590,6 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	pipe_mutex_destroy(rscreen->fences.mutex);
 
 	rscreen->ws->destroy(rscreen->ws);
-
-	util_slab_destroy(&rscreen->pool_buffers);
-	pipe_mutex_destroy(rscreen->mutex_num_contexts);
 	FREE(rscreen);
 }
 
@@ -872,12 +846,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	util_format_s3tc_init();
-
-	util_slab_create(&rscreen->pool_buffers,
-			 sizeof(struct r600_resource), 64,
-			 UTIL_SLAB_SINGLETHREADED);
-
-	pipe_mutex_init(rscreen->mutex_num_contexts);
 
 	rscreen->fences.bo = NULL;
 	rscreen->fences.data = NULL;
