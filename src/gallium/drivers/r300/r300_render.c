@@ -855,10 +855,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
                                 const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    struct pipe_transfer *ib_transfer = NULL;
     int i;
-    const void *indices = NULL;
     boolean indexed = info->indexed;
 
     if (r300->skip_rendering) {
@@ -877,46 +874,26 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             draw_set_mapped_vertex_buffer(r300->draw, i,
                                           r300->vertex_buffer[i].user_buffer);
         } else if (r300->vertex_buffer[i].buffer) {
-            void *buf = pipe_buffer_map(pipe,
-                                  r300->vertex_buffer[i].buffer,
-                                  PIPE_TRANSFER_READ |
-                                  PIPE_TRANSFER_UNSYNCHRONIZED,
-                                  &vb_transfer[i]);
-            draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+            draw_set_mapped_vertex_buffer(r300->draw, i,
+                r300_resource(r300->vertex_buffer[i].buffer)->malloced_buffer);
         }
     }
 
     if (indexed) {
         if (r300->index_buffer.user_buffer) {
-            indices = r300->index_buffer.user_buffer;
-        } else {
-            indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
-                                      PIPE_TRANSFER_READ |
-                                      PIPE_TRANSFER_UNSYNCHRONIZED, &ib_transfer);
+            draw_set_mapped_index_buffer(r300->draw,
+                                         r300->index_buffer.user_buffer);
+        } else if (r300->index_buffer.buffer) {
+            draw_set_mapped_index_buffer(r300->draw,
+                r300_resource(r300->index_buffer.buffer)->malloced_buffer);
         }
     }
-
-    draw_set_mapped_index_buffer(r300->draw, indices);
 
     r300->draw_vbo_locked = TRUE;
     r300->draw_first_emitted = FALSE;
     draw_vbo(r300->draw, info);
     draw_flush(r300->draw);
     r300->draw_vbo_locked = FALSE;
-
-    for (i = 0; i < r300->nr_vertex_buffers; i++) {
-        if (r300->vertex_buffer[i].buffer) {
-            if (vb_transfer[i])
-                pipe_buffer_unmap(pipe, vb_transfer[i]);
-            draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
-        }
-    }
-
-    if (indexed) {
-        if (ib_transfer)
-            pipe_buffer_unmap(pipe, ib_transfer);
-        draw_set_mapped_index_buffer(r300->draw, NULL);
-    }
 }
 
 /* Object for rendering using Draw. */
@@ -969,7 +946,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     {
 	pipe_resource_reference(&r300->vbo, NULL);
         r300->vbo = pipe_buffer_create(screen,
-				       PIPE_BIND_VERTEX_BUFFER,
+				       PIPE_BIND_CUSTOM,
 				       PIPE_USAGE_STREAM,
 				       R300_MAX_DRAW_VBO_SIZE);
         r300->draw_vbo_offset = 0;

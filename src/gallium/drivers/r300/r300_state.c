@@ -1848,8 +1848,8 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     else {
         struct r300_resource *rbuf = r300_resource(cb->buffer);
 
-        if (rbuf && rbuf->constant_buffer)
-            mapped = (uint32_t*)rbuf->constant_buffer;
+        if (rbuf && rbuf->malloced_buffer)
+            mapped = (uint32_t*)rbuf->malloced_buffer;
         else
             return;
     }

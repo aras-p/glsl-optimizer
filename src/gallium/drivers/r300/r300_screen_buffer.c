@@ -55,8 +55,8 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 {
     struct r300_resource *rbuf = r300_resource(buf);
 
-    if (rbuf->constant_buffer)
-        FREE(rbuf->constant_buffer);
+    if (rbuf->malloced_buffer)
+        FREE(rbuf->malloced_buffer);
 
     if (rbuf->buf)
         pb_reference(&rbuf->buf, NULL);
@@ -107,8 +107,8 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     uint8_t *map;
     enum pipe_transfer_usage usage;
 
-    if (rbuf->constant_buffer)
-        return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
+    if (rbuf->malloced_buffer)
+        return (uint8_t *) rbuf->malloced_buffer + transfer->box.x;
 
     /* Buffers are never used for write, therefore mapping for read can be
      * unsynchronized. */
@@ -158,11 +158,13 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.screen = screen;
     rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
-    rbuf->constant_buffer = NULL;
+    rbuf->malloced_buffer = NULL;
 
-    /* Alloc constant buffers in RAM. */
-    if (templ->bind & PIPE_BIND_CONSTANT_BUFFER) {
-        rbuf->constant_buffer = MALLOC(templ->width0);
+    /* Alloc constant buffers and SWTCL buffers in RAM. */
+    if (templ->bind & PIPE_BIND_CONSTANT_BUFFER ||
+        (!r300screen->caps.has_tcl &&
+         (templ->bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)))) {
+        rbuf->malloced_buffer = MALLOC(templ->width0);
         return &rbuf->b.b;
     }
 

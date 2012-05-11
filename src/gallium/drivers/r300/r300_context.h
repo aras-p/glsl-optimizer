@@ -389,8 +389,9 @@ struct r300_resource
     struct radeon_winsys_cs_handle *cs_buf;
     enum radeon_bo_domain domain;
 
-    /* Constant buffers are in user memory. */
-    uint8_t *constant_buffer;
+    /* Constant buffers and SWTCL vertex and index buffers are in user
+     * memory. */
+    uint8_t *malloced_buffer;
 
     /* Texture description (addressing, layout, special features). */
     struct r300_texture_desc tex;
