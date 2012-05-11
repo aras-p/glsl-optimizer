@@ -33,7 +33,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const
 {
-  const struct TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
+  const TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
   MachineRegisterInfo & MRI = BB->getParent()->getRegInfo();
   MachineBasicBlock::iterator I = MI;
 
@@ -141,7 +141,7 @@ void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
 void SITargetLowering::lowerUSE_SGPR(MachineInstr *MI,
     MachineFunction * MF, MachineRegisterInfo & MRI) const
 {
-  const struct TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
+  const TargetInstrInfo * TII = getTargetMachine().getInstrInfo();
   unsigned dstReg = MI->getOperand(0).getReg();
   int64_t newIndex = MI->getOperand(1).getImm();
   const TargetRegisterClass * dstClass = MRI.getRegClass(dstReg);

@@ -23,6 +23,10 @@ class SITargetLowering : public AMDGPUTargetLowering
 {
   const SIInstrInfo * TII;
 
+  /// AppendS_WAITCNT - Memory reads and writes are syncronized using the
+  /// S_WAITCNT instruction.  This function takes the most conservative
+  /// approach and inserts an S_WAITCNT instruction after every read and
+  /// write.
   void AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I) const;
   void LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,

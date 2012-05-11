@@ -54,6 +54,6 @@ public:
                                               bool DisableVerify);
 };
 
-} /* End namespace llvm */
+} // End namespace llvm
 
-#endif /* AMDGPU_TARGET_MACHINE_H */
+#endif // AMDGPU_TARGET_MACHINE_H

@@ -24,8 +24,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
 void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
     MachineFunction * MF, MachineRegisterInfo & MRI,
-    const struct TargetInstrInfo * TII, unsigned reg) const
+    const TargetInstrInfo * TII, unsigned reg) const
 {
-  AMDGPU::utilAddLiveIn(MF, MRI, TII, reg, MI->getOperand(0).getReg()); 
+  AMDGPU::utilAddLiveIn(MF, MRI, TII, reg, MI->getOperand(0).getReg());
 }
 

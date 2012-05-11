@@ -28,20 +28,22 @@
 using namespace llvm;
 
 namespace {
-  class SIAssignInterpRegsPass : public MachineFunctionPass {
 
-  private:
-    static char ID;
-    TargetMachine &TM;
+class SIAssignInterpRegsPass : public MachineFunctionPass {
 
-  public:
-    SIAssignInterpRegsPass(TargetMachine &tm) :
-      MachineFunctionPass(ID), TM(tm) { }
+private:
+  static char ID;
+  TargetMachine &TM;
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+public:
+  SIAssignInterpRegsPass(TargetMachine &tm) :
+    MachineFunctionPass(ID), TM(tm) { }
 
-    const char *getPassName() const { return "SI Assign intrpolation registers"; }
-  };
+  virtual bool runOnMachineFunction(MachineFunction &MF);
+
+  const char *getPassName() const { return "SI Assign intrpolation registers"; }
+};
+
 } // End anonymous namespace
 
 char SIAssignInterpRegsPass::ID = 0;

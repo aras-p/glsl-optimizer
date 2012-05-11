@@ -19,26 +19,37 @@
 
 namespace llvm {
 
-  class R600TargetMachine;
-  class TargetInstrInfo;
+class R600TargetMachine;
+class TargetInstrInfo;
 
-  struct R600RegisterInfo : public AMDGPURegisterInfo
-  {
-    AMDGPUTargetMachine &TM;
-    const TargetInstrInfo &TII;
+struct R600RegisterInfo : public AMDGPURegisterInfo
+{
+  AMDGPUTargetMachine &TM;
+  const TargetInstrInfo &TII;
 
-    R600RegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
+  R600RegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
 
-    virtual BitVector getReservedRegs(const MachineFunction &MF) const;
+  virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
-    virtual const TargetRegisterClass *
-    getISARegClass(const TargetRegisterClass * rc) const;
-    unsigned getHWRegIndex(unsigned reg) const;
-    unsigned getHWRegChan(unsigned reg) const;
+  /// getISARegClass - rc is an AMDIL reg class.  This function returns the
+  /// R600 reg class that is equivalent to the given AMDIL reg class.
+  virtual const TargetRegisterClass * getISARegClass(
+    const TargetRegisterClass * rc) const;
+
+  /// getHWRegIndex - get the HW encoding for a register.
+  unsigned getHWRegIndex(unsigned reg) const;
+
+  /// getHWRegChan - get the HW encoding for a register's channel.
+  unsigned getHWRegChan(unsigned reg) const;
+
 private:
-    unsigned getHWRegChanGen(unsigned reg) const;
-    unsigned getHWRegIndexGen(unsigned reg) const;
-  };
+  /// getHWRegIndexGen - Generated function returns a register's encoding
+  unsigned getHWRegIndexGen(unsigned reg) const;
+  /// getHWRegChanGen - Generated function returns a register's channel
+  /// encoding.
+  unsigned getHWRegChanGen(unsigned reg) const;
+};
+
 } // End namespace llvm
 
 #endif // AMDIDSAREGISTERINFO_H_

@@ -119,7 +119,7 @@ bool AMDGPU::isFCOp(unsigned opcode)
   case AMDIL::CONTINUE_LOGICALNZ_f32:
   case AMDIL::IF_LOGICALNZ_i32:
   case AMDIL::IF_LOGICALZ_f32:
-	case AMDIL::ELSE:
+  case AMDIL::ELSE:
   case AMDIL::ENDIF:
   case AMDIL::ENDLOOP:
   case AMDIL::IF_LOGICALNZ_f32:
@@ -129,16 +129,16 @@ bool AMDGPU::isFCOp(unsigned opcode)
 }
 
 void AMDGPU::utilAddLiveIn(llvm::MachineFunction * MF,
-													 llvm::MachineRegisterInfo & MRI,
-													 const struct llvm::TargetInstrInfo * TII,
-													 unsigned physReg, unsigned virtReg)
+                           llvm::MachineRegisterInfo & MRI,
+                           const llvm::TargetInstrInfo * TII,
+                           unsigned physReg, unsigned virtReg)
 {
     if (!MRI.isLiveIn(physReg)) {
       MRI.addLiveIn(physReg, virtReg);
       MF->front().addLiveIn(physReg);
       BuildMI(MF->front(), MF->front().begin(), DebugLoc(),
-                           TII->get(TargetOpcode::COPY), virtReg)
-            .addReg(physReg);
+              TII->get(TargetOpcode::COPY), virtReg)
+                .addReg(physReg);
     } else {
       MRI.replaceRegWith(virtReg, MRI.getLiveInVirtReg(physReg));
     }

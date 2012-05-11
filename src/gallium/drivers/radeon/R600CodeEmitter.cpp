@@ -90,8 +90,6 @@ namespace {
 
   unsigned getHWReg(unsigned regNo) const;
 
-  unsigned getElement(unsigned regNo);
-
 };
 
 } /* End anonymous namespace */
@@ -707,20 +705,6 @@ uint64_t R600CodeEmitter::getMachineOpValue(const MachineInstr &MI,
     return getHWReg(MO.getReg());
   } else {
     return MO.getImm();
-  }
-}
-
-
-RegElement maskBitToElement(unsigned int maskBit)
-{
-  switch (maskBit) {
-    case WRITE_MASK_X: return ELEMENT_X;
-    case WRITE_MASK_Y: return ELEMENT_Y;
-    case WRITE_MASK_Z: return ELEMENT_Z;
-    case WRITE_MASK_W: return ELEMENT_W;
-    default:
-      assert("Invalid maskBit");
-      return ELEMENT_X;
   }
 }
 

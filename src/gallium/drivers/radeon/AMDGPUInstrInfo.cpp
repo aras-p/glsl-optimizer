@@ -76,12 +76,12 @@ MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction 
   const AMDGPURegisterInfo & RI = getRegisterInfo();
   unsigned ISAOpcode = getISAOpcode(MI.getOpcode());
 
-  /* Create the new instruction */
+  // Create the new instruction
   newInstr = BuildMI(MF, DL, TM.getInstrInfo()->get(ISAOpcode));
 
   for (unsigned i = 0; i < MI.getNumOperands(); i++) {
     MachineOperand &MO = MI.getOperand(i);
-    /* Convert dst regclass to one that is supported by the ISA */
+    // Convert dst regclass to one that is supported by the ISA
     if (MO.isReg() && MO.isDef()) {
       if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
         const TargetRegisterClass * oldRegClass = MRI.getRegClass(MO.getReg());
@@ -92,7 +92,7 @@ MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction 
         MRI.setRegClass(MO.getReg(), newRegClass);
       }
     }
-    /* Add the operand to the new instruction */
+    // Add the operand to the new instruction
     newInstr.addOperand(MO);
   }
 

@@ -23,22 +23,24 @@
 using namespace llvm;
 
 namespace {
-  class AMDGPULowerInstructionsPass : public MachineFunctionPass {
 
-  private:
-    static char ID;
-    TargetMachine &TM;
-    void lowerVCREATE_v4(MachineInstr &MI, MachineBasicBlock::iterator I,
-                              MachineBasicBlock &MBB, MachineFunction &MF);
+class AMDGPULowerInstructionsPass : public MachineFunctionPass {
 
-  public:
-    AMDGPULowerInstructionsPass(TargetMachine &tm) :
-      MachineFunctionPass(ID), TM(tm) { }
+private:
+  static char ID;
+  TargetMachine &TM;
+  void lowerVCREATE_v4(MachineInstr &MI, MachineBasicBlock::iterator I,
+                            MachineBasicBlock &MBB, MachineFunction &MF);
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+public:
+  AMDGPULowerInstructionsPass(TargetMachine &tm) :
+    MachineFunctionPass(ID), TM(tm) { }
 
-  };
-} /* End anonymous namespace */
+  virtual bool runOnMachineFunction(MachineFunction &MF);
+
+};
+
+} // End anonymous namespace
 
 char AMDGPULowerInstructionsPass::ID = 0;
 

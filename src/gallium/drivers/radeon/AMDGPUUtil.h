@@ -39,7 +39,7 @@ bool isFCOp(unsigned opcode);
 #define MO_FLAG_MASK  (1 << 3)
 
 void utilAddLiveIn(llvm::MachineFunction * MF, llvm::MachineRegisterInfo & MRI,
-    const struct llvm::TargetInstrInfo * TII, unsigned physReg, unsigned virtReg);
+    const llvm::TargetInstrInfo * TII, unsigned physReg, unsigned virtReg);
 
 } // End namespace AMDGPU
 

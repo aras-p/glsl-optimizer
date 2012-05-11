@@ -40,16 +40,6 @@ unsigned SIRegisterInfo::getBinaryCode(unsigned reg) const
   }
 }
 
-bool SIRegisterInfo::isBaseRegClass(unsigned regClassID) const
-{
-  switch (regClassID) {
-  default: return true;
-  case AMDIL::AllReg_32RegClassID:
-  case AMDIL::AllReg_64RegClassID:
-    return false;
-  }
-}
-
 const TargetRegisterClass *
 SIRegisterInfo::getISARegClass(const TargetRegisterClass * rc) const
 {

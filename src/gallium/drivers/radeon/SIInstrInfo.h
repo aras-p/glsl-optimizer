@@ -20,48 +20,52 @@
 
 namespace llvm {
 
-  class SIInstrInfo : public AMDGPUInstrInfo {
-  private:
-    const SIRegisterInfo RI;
-    AMDGPUTargetMachine &TM;
+class SIInstrInfo : public AMDGPUInstrInfo {
+private:
+  const SIRegisterInfo RI;
+  AMDGPUTargetMachine &TM;
 
-    MachineInstr * convertABS_f32(MachineInstr & absInstr, MachineFunction &MF,
-                                  DebugLoc DL) const;
+  MachineInstr * convertABS_f32(MachineInstr & absInstr, MachineFunction &MF,
+                                DebugLoc DL) const;
 
-    MachineInstr * convertCLAMP_f32(MachineInstr & clampInstr,
-                                    MachineFunction &MF, DebugLoc DL) const;
+  MachineInstr * convertCLAMP_f32(MachineInstr & clampInstr,
+                                  MachineFunction &MF, DebugLoc DL) const;
 
-  public:
-    explicit SIInstrInfo(AMDGPUTargetMachine &tm);
+public:
+  explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
-    const SIRegisterInfo &getRegisterInfo() const;
+  const SIRegisterInfo &getRegisterInfo() const;
 
-    virtual void copyPhysReg(MachineBasicBlock &MBB,
+  virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
 
-    unsigned getEncodingType(const MachineInstr &MI) const;
+  /// getEncodingType - Returns the encoding type of this instruction.  
+  unsigned getEncodingType(const MachineInstr &MI) const;
 
-    unsigned getEncodingBytes(const MachineInstr &MI) const;
+  /// getEncodingBytes - Returns the size of this instructions encoding in
+  /// number of bytes.
+  unsigned getEncodingBytes(const MachineInstr &MI) const;
 
-    uint64_t getBinaryCode(const MachineInstr &MI, bool encodOpcode = false) const;
-
-    virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
+  /// convertToISA - Convert the AMDIL MachineInstr to a supported SI
+  ///MachineInstr
+  virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
                                         DebugLoc DL) const;
 
-    virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
+  /// getISAOpcode - This function takes an AMDIL opcode as an argument and
+  /// returns an equivalent SI opcode.
+  virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
 
   };
 
 } // End namespace llvm
 
-/* These must be kept in sync with SIInstructions.td and also the
- * InstrEncodingInfo array in SIInstrInfo.cpp.
- *
- * NOTE: This enum is only used to identify the encoding type within LLVM,
- * the actual encoding type that is part of the instruction format is different
- */
+// These must be kept in sync with SIInstructions.td and also the
+// InstrEncodingInfo array in SIInstrInfo.cpp.
+//
+// NOTE: This enum is only used to identify the encoding type within LLVM,
+// the actual encoding type that is part of the instruction format is different
 namespace SIInstrEncodingType {
   enum Encoding {
     EXP = 0,
@@ -87,7 +91,7 @@ namespace SIInstrEncodingType {
 
 namespace SIInstrFlags {
   enum Flags {
-    /* First 4 bits are the instruction encoding */
+    // First 4 bits are the instruction encoding
     NEED_WAIT = 1 << 4
   };
 }

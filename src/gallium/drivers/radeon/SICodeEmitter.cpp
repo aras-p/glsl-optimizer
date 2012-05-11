@@ -49,14 +49,24 @@ namespace {
         _OS(OS), TM(NULL) { }
     const char *getPassName() const { return "SI Code Emitter"; }
     bool runOnMachineFunction(MachineFunction &MF);
+
+    /// getMachineOpValue - Return the encoding for MO
     virtual uint64_t getMachineOpValue(const MachineInstr &MI,
                                        const MachineOperand &MO) const;
+
+    /// GPR4AlignEncode - Encoding for when 4 consectuive registers are used 
     virtual unsigned GPR4AlignEncode(const MachineInstr  &MI, unsigned OpNo)
                                                                       const;
+
+    /// GPR2AlignEncode - Encoding for when 2 consecutive registers are used
     virtual unsigned GPR2AlignEncode(const MachineInstr &MI, unsigned OpNo)
                                                                       const;
+    /// i32LiteralEncode - Encode an i32 literal this is used as an operand
+    /// for an instruction in place of a register.
     virtual uint64_t i32LiteralEncode(const MachineInstr &MI, unsigned OpNo)
                                                                       const;
+
+    /// VOPPostEncode - Post-Encoder method for VOP instructions 
     virtual uint64_t VOPPostEncode(const MachineInstr &MI,
                                    uint64_t Value) const;
   };
@@ -174,8 +184,6 @@ void SICodeEmitter::emitInstr(MachineInstr &MI)
     abort();
   }
 
-//  hwInst |= SII->getBinaryCode(MI);
-
   unsigned bytes = SII->getEncodingBytes(MI);
   outputBytes(hwInst, bytes);
 }
@@ -194,8 +202,8 @@ uint64_t SICodeEmitter::getMachineOpValue(const MachineInstr &MI,
     return MO.getImm();
 
   case MachineOperand::MO_FPImmediate:
-    /* XXX: Not all instructions can use inline literals */
-    /* XXX: We should make sure this is a 32-bit constant */
+    // XXX: Not all instructions can use inline literals
+    // XXX: We should make sure this is a 32-bit constant
     return LITERAL_REG | (MO.getFPImm()->getValueAPF().bitcastToAPInt().getZExtValue() << 32);
   default:
     llvm_unreachable("Encoding of this operand type is not supported yet.");
@@ -230,9 +238,8 @@ uint64_t SICodeEmitter::i32LiteralEncode(const MachineInstr &MI,
   return LITERAL_REG | (MI.getOperand(OpNo).getImm() << 32);
 }
 
-/* Set the "VGPR" bit for VOP args that can take either a VGPR or a SGPR.
- * XXX: It would be nice if we could handle this without a PostEncode function.
- */
+/// Set the "VGPR" bit for VOP args that can take either a VGPR or a SGPR.
+/// XXX: It would be nice if we could handle this without a PostEncode function.
 uint64_t SICodeEmitter::VOPPostEncode(const MachineInstr &MI,
     uint64_t Value) const
 {
@@ -249,7 +256,7 @@ uint64_t SICodeEmitter::VOPPostEncode(const MachineInstr &MI,
     vgprBitOffset = 0;
   }
 
-  /* Add one to skip over the destination reg operand. */
+  // Add one to skip over the destination reg operand.
   for (unsigned opIdx = 1; opIdx < numSrcOps + 1; opIdx++) {
     if (!MI.getOperand(opIdx).isReg()) {
       continue;

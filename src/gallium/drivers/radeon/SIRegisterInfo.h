@@ -19,27 +19,31 @@
 
 namespace llvm {
 
-  class AMDGPUTargetMachine;
-  class TargetInstrInfo;
+class AMDGPUTargetMachine;
+class TargetInstrInfo;
 
-  struct SIRegisterInfo : public AMDGPURegisterInfo
-  {
-    AMDGPUTargetMachine &TM;
-    const TargetInstrInfo &TII;
+struct SIRegisterInfo : public AMDGPURegisterInfo
+{
+  AMDGPUTargetMachine &TM;
+  const TargetInstrInfo &TII;
 
-    SIRegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
+  SIRegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
 
-    virtual BitVector getReservedRegs(const MachineFunction &MF) const;
-    virtual unsigned getBinaryCode(unsigned reg) const;
+  virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
-    virtual bool isBaseRegClass(unsigned regClassID) const;
+  /// getBinaryCode - Returns the hardware encoding for a register
+  virtual unsigned getBinaryCode(unsigned reg) const;
 
-    virtual const TargetRegisterClass *
+  /// getISARegClass - rc is an AMDIL reg class.  This function returns the
+  /// SI register class that is equivalent to the given AMDIL register class.
+  virtual const TargetRegisterClass *
     getISARegClass(const TargetRegisterClass * rc) const;
 
-    unsigned getHWRegNum(unsigned reg) const;
+  /// getHWRegNum - Generated function that returns the hardware encoding for
+  /// a register
+  unsigned getHWRegNum(unsigned reg) const;
 
-  };
+};
 
 } // End namespace llvm
 

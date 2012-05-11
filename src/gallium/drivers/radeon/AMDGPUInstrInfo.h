@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the definitoin of a TargetInstrInfo class that is common
+// This file contains the definition of a TargetInstrInfo class that is common
 // to all AMD GPUs.
 //
 //===----------------------------------------------------------------------===//
@@ -37,8 +37,12 @@ public:
 
   virtual const AMDGPURegisterInfo &getRegisterInfo() const = 0;
 
+  /// getISAOpcode - This function takes an AMDIL opcode as an argument and
+  /// returns an equivalent ISA opcode.
   virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
 
+  /// convertToISA - Convert the AMDIL MachineInstr to a supported ISA
+  /// MachineInstr
   virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const;
 

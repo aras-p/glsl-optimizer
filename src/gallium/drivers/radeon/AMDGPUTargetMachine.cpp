@@ -45,7 +45,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
   mDump(false)
 
 {
-  /* TLInfo uses InstrInfo so it must be initialized after. */
+  // TLInfo uses InstrInfo so it must be initialized after.
   if (Subtarget.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
     InstrInfo = new R600InstrInfo(*this);
     TLInfo = new R600TargetLowering(*this);
@@ -63,8 +63,8 @@ bool AMDGPUTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                               formatted_raw_ostream &Out,
                                               CodeGenFileType FileType,
                                               bool DisableVerify) {
-  /* XXX: Hack here addPassesToEmitFile will fail, but this is Ok since we are
-   * only using it to access addPassesToGenerateCode() */
+  // XXX: Hack here addPassesToEmitFile will fail, but this is Ok since we are
+  // only using it to access addPassesToGenerateCode()
   bool fail = LLVMTargetMachine::addPassesToEmitFile(PM, Out, FileType,
                                                      DisableVerify);
   assert(fail);
