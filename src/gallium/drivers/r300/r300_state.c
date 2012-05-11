@@ -1614,8 +1614,8 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     }
 }
 
-static void r300_set_index_buffer(struct pipe_context* pipe,
-                                  const struct pipe_index_buffer *ib)
+static void r300_set_index_buffer_hwtcl(struct pipe_context* pipe,
+                                        const struct pipe_index_buffer *ib)
 {
     struct r300_context* r300 = r300_context(pipe);
 
@@ -1625,9 +1625,23 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
     } else {
         pipe_resource_reference(&r300->index_buffer.buffer, NULL);
     }
+}
 
-    if (!r300->screen->caps.has_tcl) {
-        draw_set_index_buffer(r300->draw, ib);
+static void r300_set_index_buffer_swtcl(struct pipe_context* pipe,
+                                        const struct pipe_index_buffer *ib)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    draw_set_index_buffer(r300->draw, ib);
+
+    if (ib) {
+        if (ib->user_buffer) {
+            draw_set_mapped_index_buffer(r300->draw,
+                                         ib->user_buffer);
+        } else if (ib->buffer) {
+            draw_set_mapped_index_buffer(r300->draw,
+                r300_resource(ib->buffer)->malloced_buffer);
+        }
     }
 }
 
@@ -1939,7 +1953,12 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
-    r300->context.set_index_buffer = r300_set_index_buffer;
+
+    if (r300->screen->caps.has_tcl) {
+        r300->context.set_index_buffer = r300_set_index_buffer_hwtcl;
+    } else {
+        r300->context.set_index_buffer = r300_set_index_buffer_swtcl;
+    }
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
     r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;

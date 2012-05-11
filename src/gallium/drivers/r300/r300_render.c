@@ -879,16 +879,6 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         }
     }
 
-    if (indexed) {
-        if (r300->index_buffer.user_buffer) {
-            draw_set_mapped_index_buffer(r300->draw,
-                                         r300->index_buffer.user_buffer);
-        } else if (r300->index_buffer.buffer) {
-            draw_set_mapped_index_buffer(r300->draw,
-                r300_resource(r300->index_buffer.buffer)->malloced_buffer);
-        }
-    }
-
     r300->draw_vbo_locked = TRUE;
     r300->draw_first_emitted = FALSE;
     draw_vbo(r300->draw, info);
