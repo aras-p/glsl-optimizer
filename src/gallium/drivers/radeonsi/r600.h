@@ -181,7 +181,6 @@ void r600_get_backend_mask(struct r600_context *ctx);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
-void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);
@@ -209,7 +208,7 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 
 int si_context_init(struct r600_context *ctx);
-void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
+void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 
 void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      struct r600_pipe_state *state,

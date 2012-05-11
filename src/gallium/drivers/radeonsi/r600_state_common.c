@@ -848,9 +848,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 					      RADEON_USAGE_READ);
 	}
 
-	if (rctx->chip_class >= CAYMAN) {
-		evergreen_context_draw(rctx, &rdraw);
-	}
+	si_context_draw(rctx, &rdraw);
 
 	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
 

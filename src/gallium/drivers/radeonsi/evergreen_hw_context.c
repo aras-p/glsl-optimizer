@@ -467,7 +467,7 @@ static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
 	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
 }
 
-void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
+void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	unsigned ndwords = 7;
@@ -475,7 +475,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	uint64_t va;
 
 	if (draw->indices) {
-		ndwords = 11;
+		ndwords = 12;
 	}
 	if (ctx->num_cs_dw_queries_suspend)
 		ndwords += 6;
@@ -506,13 +506,15 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	if (draw->indices) {
 		va = r600_resource_va(&ctx->screen->screen, (void*)draw->indices);
 		va += draw->indices_bo_offset;
-		pm4[4] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
-		pm4[5] = va;
-		pm4[6] = (va >> 32UL) & 0xFF;
-		pm4[7] = draw->vgt_num_indices;
-		pm4[8] = draw->vgt_draw_initiator;
-		pm4[9] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
-		pm4[10] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
+		pm4[4] = PKT3(PKT3_DRAW_INDEX_2, 4, ctx->predicate_drawing);
+		pm4[5] = (draw->indices->b.b.width0 - draw->indices_bo_offset) /
+			ctx->index_buffer.index_size;
+		pm4[6] = va;
+		pm4[7] = (va >> 32UL) & 0xFF;
+		pm4[8] = draw->vgt_num_indices;
+		pm4[9] = draw->vgt_draw_initiator;
+		pm4[10] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
+		pm4[11] = r600_context_bo_reloc(ctx, draw->indices, RADEON_USAGE_READ);
 	} else {
 		pm4[4] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		pm4[5] = draw->vgt_num_indices;
