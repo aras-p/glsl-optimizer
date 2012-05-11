@@ -747,8 +747,12 @@ uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 				   const struct util_format_description *desc,
 				   int first_non_void)
 {
-	uint32_t result = si_translate_texformat(screen, format, desc, first_non_void);
+	uint32_t result;
 
+	if (desc->channel[first_non_void].type == UTIL_FORMAT_TYPE_FIXED)
+		return ~0;
+
+	result = si_translate_texformat(screen, format, desc, first_non_void);
 	if (result == V_008F0C_BUF_DATA_FORMAT_INVALID ||
 	    result > V_008F0C_BUF_DATA_FORMAT_32_32_32_32)
 		result = ~0;
@@ -1201,9 +1205,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	switch (desc->channel[first_non_void].type) {
 	case UTIL_FORMAT_TYPE_FLOAT:
 		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-		break;
-	case UTIL_FORMAT_TYPE_FIXED:
-		num_format = V_008F14_IMG_NUM_FORMAT_USCALED; /* XXX */
 		break;
 	case UTIL_FORMAT_TYPE_SIGNED:
 		num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
