@@ -146,7 +146,8 @@ _cl_device_id::max_threads_per_block() const {
 
 std::vector<size_t>
 _cl_device_id::max_block_size() const {
-   return get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);
+   auto v = get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);
+   return { v.begin(), v.end() };
 }
 
 std::string
