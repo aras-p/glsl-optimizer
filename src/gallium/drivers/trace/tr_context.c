@@ -1198,10 +1198,12 @@ trace_context_clear(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, buffers);
+   trace_dump_arg_begin("color");
    if (color)
-      trace_dump_arg_array(float, color->f, 4);
+      trace_dump_array(float, color->f, 4);
    else
       trace_dump_null();
+   trace_dump_arg_end();
    trace_dump_arg(float, depth);
    trace_dump_arg(uint, stencil);
 
