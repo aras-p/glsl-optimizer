@@ -24,6 +24,8 @@ if env['platform'] == 'windows':
     env.Append(CPPDEFINES = ['HAVE_GDI_BACKEND'])
     sources.append('gdi/native_gdi.c')
 else:
+    if env['drm']:
+        env.PkgUseModules('DRM')
     if env['x11']:
         env.Append(CPPDEFINES = ['HAVE_X11_BACKEND'])
         env.Prepend(CPPPATH = [
@@ -36,11 +38,11 @@ else:
             'x11/native_ximage.c',
             'x11/x11_screen.c',
             'x11/glxinit.c'])
-        if env['dri']:
+        if env['drm']:
             env.Append(CPPDEFINES = ['GLX_DIRECT_RENDERING'])
             sources.append(['#/src/glx/dri2.c'])
-    if env['drm']:
-        env.PkgUseModules('DRM')
+    if env['drm'] and False:
+        # XXX: Disabled as it depends on gbm, which is not yet built with scons
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
         env.Append(CPPPATH = [
             '#/src/gbm/main',
