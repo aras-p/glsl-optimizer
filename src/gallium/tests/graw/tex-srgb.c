@@ -72,10 +72,11 @@ set_vertices(struct vertex *verts, unsigned num_verts)
 
    vbuf.stride = sizeof(struct vertex);
    vbuf.buffer_offset = 0;
-   vbuf.buffer = info.screen->user_buffer_create(info.screen,
-                                                 verts,
-                                                 num_verts *sizeof(struct vertex),
-                                                 PIPE_BIND_VERTEX_BUFFER);
+   vbuf.buffer = pipe_buffer_create_with_data(info.ctx,
+                                              PIPE_BIND_VERTEX_BUFFER,
+                                              PIPE_USAGE_STATIC,
+                                              num_verts * sizeof(struct vertex),
+                                              verts);
 
    info.ctx->set_vertex_buffers(info.ctx, 1, &vbuf);
 }

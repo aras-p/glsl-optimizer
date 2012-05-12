@@ -376,6 +376,19 @@ pipe_buffer_write_nooverlap(struct pipe_context *pipe,
                                0, 0);
 }
 
+static INLINE struct pipe_resource *
+pipe_buffer_create_with_data(struct pipe_context *pipe,
+                             unsigned bind,
+                             unsigned usage,
+                             unsigned size,
+                             void *ptr)
+{
+   struct pipe_resource *res = pipe_buffer_create(pipe->screen,
+                                                  bind, usage, size);
+   pipe_buffer_write_nooverlap(pipe, res, 0, size, ptr);
+   return res;
+}
+
 static INLINE void
 pipe_buffer_read(struct pipe_context *pipe,
                  struct pipe_resource *buf,

@@ -11,6 +11,7 @@
 
 #include "util/u_memory.h"      /* Offset() */
 #include "util/u_draw_quad.h"
+#include "util/u_inlines.h"
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -90,10 +91,11 @@ static void set_vertices( void )
 
    vbuf.stride = sizeof( struct vertex );
    vbuf.buffer_offset = 0;
-   vbuf.buffer = screen->user_buffer_create(screen,
-                                            vertices,
-                                            sizeof(vertices),
-                                            PIPE_BIND_VERTEX_BUFFER);
+   vbuf.buffer = pipe_buffer_create_with_data(ctx,
+                                              PIPE_BIND_VERTEX_BUFFER,
+                                              PIPE_USAGE_STATIC,
+                                              sizeof(vertices),
+                                              vertices);
 
    ctx->set_vertex_buffers(ctx, 1, &vbuf);
 }

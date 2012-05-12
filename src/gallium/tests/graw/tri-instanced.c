@@ -13,6 +13,7 @@
 
 #include "util/u_memory.h"      /* Offset() */
 #include "util/u_draw_quad.h"
+#include "util/u_inlines.h"
 
 
 enum pipe_format formats[] = {
@@ -133,27 +134,29 @@ static void set_vertices( void )
    /* vertex data */
    vbuf[0].stride = sizeof( struct vertex );
    vbuf[0].buffer_offset = 0;
-   vbuf[0].buffer = screen->user_buffer_create(screen,
-                                               vertices,
-                                               sizeof(vertices),
-                                               PIPE_BIND_VERTEX_BUFFER);
+   vbuf[0].buffer = pipe_buffer_create_with_data(ctx,
+                                                 PIPE_BIND_VERTEX_BUFFER,
+                                                 PIPE_USAGE_STATIC,
+                                                 sizeof(vertices),
+                                                 vertices);
 
    /* instance data */
    vbuf[1].stride = sizeof( inst_data[0] );
    vbuf[1].buffer_offset = 0;
-   vbuf[1].buffer = screen->user_buffer_create(screen,
-                                               inst_data,
-                                               sizeof(inst_data),
-                                               PIPE_BIND_VERTEX_BUFFER);
-
+   vbuf[1].buffer = pipe_buffer_create_with_data(ctx,
+                                                 PIPE_BIND_VERTEX_BUFFER,
+                                                 PIPE_USAGE_STATIC,
+                                                 sizeof(inst_data),
+                                                 inst_data);
 
    ctx->set_vertex_buffers(ctx, 2, vbuf);
 
    /* index data */
-   ibuf.buffer = screen->user_buffer_create(screen,
-                                            indices,
-                                            sizeof(indices),
-                                            PIPE_BIND_VERTEX_BUFFER);
+   ibuf.buffer = pipe_buffer_create_with_data(ctx,
+                                              PIPE_BIND_INDEX_BUFFER,
+                                              PIPE_USAGE_STATIC,
+                                              sizeof(indices),
+                                              indices);
    ibuf.offset = 0;
    ibuf.index_size = 2;
 
