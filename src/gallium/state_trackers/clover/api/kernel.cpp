@@ -223,16 +223,23 @@ namespace {
       if (!grid_size || any_of(is_zero<size_t>(), grid_size, grid_size + dims))
          throw error(CL_INVALID_GLOBAL_WORK_SIZE);
 
-      if (block_size && any_of([](size_t b, size_t max) {
-               return b == 0 || b > max;
-            }, block_size, block_size + dims,
-            q->dev.max_block_size().begin()))
-         throw error(CL_INVALID_WORK_ITEM_SIZE);
+      if (block_size) {
+         if (any_of([](size_t b, size_t max) {
+                  return b == 0 || b > max;
+               }, block_size, block_size + dims,
+               q->dev.max_block_size().begin()))
+            throw error(CL_INVALID_WORK_ITEM_SIZE);
 
-      if (block_size && any_of([](size_t b, size_t g) {
-               return g % b;
-            }, block_size, block_size + dims, grid_size))
-         throw error(CL_INVALID_WORK_GROUP_SIZE);
+         if (any_of([](size_t b, size_t g) {
+                  return g % b;
+               }, block_size, block_size + dims, grid_size))
+            throw error(CL_INVALID_WORK_GROUP_SIZE);
+
+         if (fold(std::multiplies<size_t>(), 1u,
+                  block_size, block_size + dims) >
+             q->dev.max_threads_per_block())
+            throw error(CL_INVALID_WORK_GROUP_SIZE);
+      }
    }
 
    ///
