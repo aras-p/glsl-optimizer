@@ -146,6 +146,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
         case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
+        case PIPE_CAP_COMPUTE:
             return 0;
 
         /* SWTCL-only features. */
@@ -223,6 +224,8 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
             return 0;
+        case PIPE_SHADER_CAP_PREFERRED_IR:
+            return PIPE_SHADER_IR_TGSI;
         }
         break;
     case PIPE_SHADER_VERTEX:
@@ -269,6 +272,8 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_INTEGERS:
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
             return 0;
+        case PIPE_SHADER_CAP_PREFERRED_IR:
+            return PIPE_SHADER_IR_TGSI;
         }
         break;
     }
