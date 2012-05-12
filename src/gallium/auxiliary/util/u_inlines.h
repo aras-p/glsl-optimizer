@@ -446,6 +446,7 @@ pipe_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
       cb.buffer = buf;
       cb.buffer_offset = 0;
       cb.buffer_size = buf->width0;
+      cb.user_buffer = NULL;
       pipe->set_constant_buffer(pipe, shader, index, &cb);
    } else {
       pipe->set_constant_buffer(pipe, shader, index, NULL);
