@@ -623,7 +623,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       break;
    case TGSI_OPCODE_LIT:
       if(!nvfx->is_nv4x)
-         nvfx_fp_emit(fpc, arith(sat, LIT_NV30, dst, mask, src[0], src[1], src[2]));
+         nvfx_fp_emit(fpc, arith(sat, LIT_NV30, dst, mask, src[0], none, none));
       else {
          /* we use FLT_MIN, so that log2 never gives -infinity, and thus multiplication by
           * specular 0 always gives 0, so that ex2 gives 1, to satisfy the 0^0 = 1 requirement
