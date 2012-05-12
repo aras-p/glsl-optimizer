@@ -432,6 +432,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
+	case PIPE_CAP_COMPUTE:
 		return 0;
 
 	/* Stream output. */
@@ -560,6 +561,8 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return rscreen->glsl_feature_level >= 130;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 		return 16;
+	case PIPE_SHADER_CAP_PREFERRED_IR:
+		return PIPE_SHADER_IR_TGSI;
 	}
 	return 0;
 }
