@@ -337,6 +337,8 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16_SNORM:
 	case PIPE_FORMAT_R16G16_UINT:
 	case PIPE_FORMAT_R16G16_SINT:
+	case PIPE_FORMAT_R16G16B16_FLOAT:
+	case PIPE_FORMAT_R32G32B32_FLOAT:
 		return V_028C70_SWAP_STD;
 
 	/* 64-bit buffers. */
