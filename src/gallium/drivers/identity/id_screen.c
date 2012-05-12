@@ -188,28 +188,6 @@ identity_screen_resource_destroy(struct pipe_screen *screen,
 }
 
 
-static struct pipe_resource *
-identity_screen_user_buffer_create(struct pipe_screen *_screen,
-                                   void *ptr,
-                                   unsigned bytes,
-                                   unsigned usage)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_resource *result;
-
-   result = screen->user_buffer_create(screen,
-                                       ptr,
-                                       bytes,
-                                       usage);
-
-   if (result)
-      return identity_resource_create(id_screen, result);
-   return NULL;
-}
-
-
-
 static void
 identity_screen_flush_frontbuffer(struct pipe_screen *_screen,
                                   struct pipe_resource *_resource,
@@ -286,7 +264,6 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.resource_from_handle = identity_screen_resource_from_handle;
    id_screen->base.resource_get_handle = identity_screen_resource_get_handle;
    id_screen->base.resource_destroy = identity_screen_resource_destroy;
-   id_screen->base.user_buffer_create = identity_screen_user_buffer_create;
    id_screen->base.flush_frontbuffer = identity_screen_flush_frontbuffer;
    id_screen->base.fence_reference = identity_screen_fence_reference;
    id_screen->base.fence_signalled = identity_screen_fence_signalled;

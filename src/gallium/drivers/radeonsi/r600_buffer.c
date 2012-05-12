@@ -178,31 +178,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	return &rbuffer->b.b;
 }
 
-struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr, unsigned bytes,
-					      unsigned bind)
-{
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct r600_resource *rbuffer;
-
-	rbuffer = util_slab_alloc(&rscreen->pool_buffers);
-
-	pipe_reference_init(&rbuffer->b.b.reference, 1);
-	rbuffer->b.vtbl = &r600_buffer_vtbl;
-	rbuffer->b.b.screen = screen;
-	rbuffer->b.b.target = PIPE_BUFFER;
-	rbuffer->b.b.format = PIPE_FORMAT_R8_UNORM;
-	rbuffer->b.b.usage = PIPE_USAGE_IMMUTABLE;
-	rbuffer->b.b.bind = bind;
-	rbuffer->b.b.width0 = bytes;
-	rbuffer->b.b.height0 = 1;
-	rbuffer->b.b.depth0 = 1;
-	rbuffer->b.b.array_size = 1;
-	rbuffer->b.b.flags = 0;
-	rbuffer->buf = NULL;
-	return &rbuffer->b.b;
-}
-
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count)
 {

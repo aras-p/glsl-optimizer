@@ -233,14 +233,6 @@ pipe_buffer_create( struct pipe_screen *screen,
    return screen->resource_create(screen, &buffer);
 }
 
-
-static INLINE struct pipe_resource *
-pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size,
-			 unsigned usage )
-{
-   return screen->user_buffer_create(screen, ptr, size, usage);
-}
-
 static INLINE void *
 pipe_buffer_map_range(struct pipe_context *pipe,
 		      struct pipe_resource *buffer,

@@ -400,9 +400,6 @@ bool r600_init_resource(struct r600_screen *rscreen,
 			unsigned bind, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
-struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr, unsigned bytes,
-					      unsigned bind);
 
 /* r600_pipe.c */
 void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,

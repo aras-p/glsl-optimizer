@@ -142,23 +142,6 @@ static void noop_resource_destroy(struct pipe_screen *screen,
 	FREE(resource);
 }
 
-static struct pipe_resource *noop_user_buffer_create(struct pipe_screen *screen,
-							void *ptr, unsigned bytes,
-							unsigned bind)
-{
-	struct pipe_resource templ;
-
-	templ.target = PIPE_BUFFER;
-	templ.format = PIPE_FORMAT_R8_UNORM;
-	templ.usage = PIPE_USAGE_IMMUTABLE;
-	templ.bind = bind;
-	templ.width0 = bytes;
-	templ.height0 = 1;
-	templ.depth0 = 1;
-	templ.flags = 0;
-	return noop_resource_create(screen, &templ);
-}
-
 
 /*
  * transfer
@@ -392,7 +375,6 @@ struct pipe_screen *noop_screen_create(struct pipe_screen *oscreen)
 	screen->resource_from_handle = noop_resource_from_handle;
 	screen->resource_get_handle = noop_resource_get_handle;
 	screen->resource_destroy = noop_resource_destroy;
-	screen->user_buffer_create = noop_user_buffer_create;
 	screen->flush_frontbuffer = noop_flush_frontbuffer;
 
 	return screen;

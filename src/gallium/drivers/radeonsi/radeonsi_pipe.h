@@ -384,9 +384,6 @@ bool r600_init_resource(struct r600_screen *rscreen,
 			unsigned bind, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
-struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr, unsigned bytes,
-					      unsigned bind);
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count);
 

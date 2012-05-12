@@ -46,5 +46,4 @@ i915_init_screen_resource_functions(struct i915_screen *is)
    is->base.resource_from_handle = i915_resource_from_handle;
    is->base.resource_get_handle = u_resource_get_handle_vtbl;
    is->base.resource_destroy = u_resource_destroy_vtbl;
-   is->base.user_buffer_create = i915_user_buffer_create;
 }

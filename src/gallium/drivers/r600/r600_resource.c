@@ -50,7 +50,6 @@ void r600_init_screen_resource_functions(struct pipe_screen *screen)
 	screen->resource_from_handle = r600_resource_from_handle;
 	screen->resource_get_handle = u_resource_get_handle_vtbl;
 	screen->resource_destroy = u_resource_destroy_vtbl;
-	screen->user_buffer_create = r600_user_buffer_create;
 }
 
 void r600_init_context_resource_functions(struct r600_context *r600)

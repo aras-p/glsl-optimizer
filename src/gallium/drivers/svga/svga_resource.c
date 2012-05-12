@@ -73,5 +73,4 @@ svga_init_screen_resource_functions(struct svga_screen *is)
    is->screen.resource_from_handle = svga_resource_from_handle;
    is->screen.resource_get_handle = u_resource_get_handle_vtbl;
    is->screen.resource_destroy = u_resource_destroy_vtbl;
-   is->screen.user_buffer_create = svga_user_buffer_create;
 }

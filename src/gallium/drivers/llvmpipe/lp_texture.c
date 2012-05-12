@@ -1432,8 +1432,6 @@ llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen)
    screen->resource_destroy = llvmpipe_resource_destroy;
    screen->resource_from_handle = llvmpipe_resource_from_handle;
    screen->resource_get_handle = llvmpipe_resource_get_handle;
-   screen->user_buffer_create = llvmpipe_user_buffer_create;
-
 }
 
 

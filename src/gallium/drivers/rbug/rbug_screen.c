@@ -186,28 +186,6 @@ rbug_screen_resource_destroy(struct pipe_screen *screen,
    rbug_resource_destroy(rbug_resource(_resource));
 }
 
-static struct pipe_resource *
-rbug_screen_user_buffer_create(struct pipe_screen *_screen,
-                               void *ptr,
-                               unsigned bytes,
-                               unsigned usage)
-{
-   struct rbug_screen *rb_screen = rbug_screen(_screen);
-   struct pipe_screen *screen = rb_screen->screen;
-   struct pipe_resource *result;
-
-   result = screen->user_buffer_create(screen,
-                                       ptr,
-                                       bytes,
-                                       usage);
-
-   if (result)
-      return rbug_resource_create(rb_screen, result);
-   return NULL;
-}
-
-
-
 static void
 rbug_screen_flush_frontbuffer(struct pipe_screen *_screen,
                               struct pipe_resource *_resource,
@@ -298,7 +276,6 @@ rbug_screen_create(struct pipe_screen *screen)
    rb_screen->base.resource_from_handle = rbug_screen_resource_from_handle;
    rb_screen->base.resource_get_handle = rbug_screen_resource_get_handle;
    rb_screen->base.resource_destroy = rbug_screen_resource_destroy;
-   rb_screen->base.user_buffer_create = rbug_screen_user_buffer_create;
    rb_screen->base.flush_frontbuffer = rbug_screen_flush_frontbuffer;
    rb_screen->base.fence_reference = rbug_screen_fence_reference;
    rb_screen->base.fence_signalled = rbug_screen_fence_signalled;

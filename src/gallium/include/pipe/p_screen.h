@@ -162,32 +162,6 @@ struct pipe_screen {
 
 
    /**
-    * Create a buffer that wraps user-space data.
-    *
-    * Effectively this schedules a delayed call to buffer_create
-    * followed by an upload of the data at *some point in the future*,
-    * or perhaps never.  Basically the allocate/upload is delayed
-    * until the buffer is actually passed to hardware.
-    *
-    * The intention is to provide a quick way to turn regular data
-    * into a buffer, and secondly to avoid a copy operation if that
-    * data subsequently turns out to be only accessed by the CPU.
-    *
-    * Common example is OpenGL vertex buffers that are subsequently
-    * processed either by software TNL in the driver or by passing to
-    * hardware.
-    *
-    * XXX: What happens if the delayed call to buffer_create() fails?
-    *
-    * Note that ptr may be accessed at any time upto the time when the
-    * buffer is destroyed, so the data must not be freed before then.
-    */
-   struct pipe_resource *(*user_buffer_create)(struct pipe_screen *screen,
-					       void *ptr,
-					       unsigned bytes,
-					       unsigned bind_flags);
-
-   /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     * \param winsys_drawable_handle  an opaque handle that the calling context

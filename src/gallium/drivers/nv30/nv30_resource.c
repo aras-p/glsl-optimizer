@@ -61,7 +61,6 @@ nv30_resource_screen_init(struct pipe_screen *pscreen)
    pscreen->resource_from_handle = nv30_resource_from_handle;
    pscreen->resource_get_handle = u_resource_get_handle_vtbl;
    pscreen->resource_destroy = u_resource_destroy_vtbl;
-   pscreen->user_buffer_create = nouveau_user_buffer_create;
 }
 
 void
