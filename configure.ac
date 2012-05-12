@@ -1980,6 +1980,8 @@ if test "x$with_gallium_drivers" != x; then
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;
         xradeonsi)
+            PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             if test "x$LLVM_VERSION" != "x3.1"; then
                 AC_MSG_ERROR([LLVM 3.1 is required to build the radeonsi driver.])
