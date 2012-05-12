@@ -198,6 +198,7 @@ VBO_FILES = \
 
 STATETRACKER_FILES = \
 	$(SRCDIR)/state_tracker/st_atom.c \
+	$(SRCDIR)/state_tracker/st_atom_array.c \
 	$(SRCDIR)/state_tracker/st_atom_blend.c \
 	$(SRCDIR)/state_tracker/st_atom_clip.c \
 	$(SRCDIR)/state_tracker/st_atom_constbuf.c \

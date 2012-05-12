@@ -67,13 +67,6 @@ st_feedback_draw_vbo(struct gl_context *ctx,
                      GLuint max_index,
                      struct gl_transform_feedback_object *tfb_vertcount);
 
-/* Internal function:
- */
-extern enum pipe_format
-st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
-                      GLboolean normalized, GLboolean integer);
-
-
 /**
  * When drawing with VBOs, the addresses specified with
  * glVertex/Color/TexCoordPointer() are really offsets into the VBO, not real

@@ -88,6 +88,8 @@ struct st_context
     */
    boolean invalidate_on_gl_viewport;
 
+   boolean vertex_array_out_of_memory;
+
    /* Some state is contained in constant objects.
     * Other state is just parameter values.
     */
