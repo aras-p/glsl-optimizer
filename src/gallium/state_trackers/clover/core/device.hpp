@@ -55,6 +55,7 @@ public:
    cl_ulong max_mem_input() const;
    cl_ulong max_const_buffer_size() const;
    cl_uint max_const_buffers() const;
+   size_t max_threads_per_block() const;
 
    std::vector<size_t> max_block_size() const;
    std::string device_name() const;

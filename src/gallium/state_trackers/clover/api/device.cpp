@@ -87,7 +87,8 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
                                      dev->max_block_size());
 
    case CL_DEVICE_MAX_WORK_GROUP_SIZE:
-      return scalar_property<size_t>(buf, size, size_ret, SIZE_MAX);
+      return scalar_property<size_t>(buf, size, size_ret,
+                                     dev->max_threads_per_block());
 
    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
       return scalar_property<cl_uint>(buf, size, size_ret, 16);
