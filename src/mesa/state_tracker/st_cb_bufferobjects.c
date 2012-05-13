@@ -195,6 +195,9 @@ st_bufferobj_data(struct gl_context *ctx,
    case GL_ELEMENT_ARRAY_BUFFER_ARB:
       bind = PIPE_BIND_INDEX_BUFFER;
       break;
+   case GL_TRANSFORM_FEEDBACK_BUFFER:
+      bind = PIPE_BIND_STREAM_OUTPUT;
+      break;
    default:
       bind = 0;
    }
