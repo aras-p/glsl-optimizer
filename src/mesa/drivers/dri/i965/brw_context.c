@@ -296,6 +296,8 @@ brwCreateContext(int api,
       brw->has_negative_rhw_bug = true;
    }
 
+   brw->prim_restart.in_progress = false;
+
    brw_init_state( brw );
 
    brw->curbe.last_buf = calloc(1, 4096);

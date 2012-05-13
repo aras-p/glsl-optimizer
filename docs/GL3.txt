@@ -46,7 +46,7 @@ GLSL 1.40                                             missing: UBOS, inverse(),
                                                       highp change
 Instanced drawing (GL_ARB_draw_instanced)             DONE (i965, gallium, swrast)
 Buffer copying (GL_ARB_copy_buffer)                   DONE (i965, r300, r600, swrast)
-Primitive restart (GL_NV_primitive_restart)           DONE (r600)
+Primitive restart (GL_NV_primitive_restart)           DONE (i965, r600)
 16 vertex texture image units                         DONE
 Texture buffer objs (GL_ARB_texture_buffer_object)    needs GL3.1 enabling (i965)
 Rectangular textures (GL_ARB_texture_rectangle)       DONE (i965, r300, r600, swrast)

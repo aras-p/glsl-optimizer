@@ -55,6 +55,7 @@ i965_C_FILES = \
 	brw_misc_state.c \
 	brw_optimize.c \
 	brw_program.c \
+	brw_primitive_restart.c \
 	brw_queryobj.c \
 	brw_sf.c \
 	brw_sf_emit.c \

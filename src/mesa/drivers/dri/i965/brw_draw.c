@@ -545,6 +545,12 @@ void brw_draw_prims( struct gl_context *ctx,
    if (!_mesa_check_conditional_render(ctx))
       return;
 
+   /* Handle primitive restart if needed */
+   if (brw_handle_primitive_restart(ctx, prim, nr_prims, ib)) {
+      /* The draw was handled, so we can exit now */
+      return;
+   }
+
    if (!vbo_all_varyings_in_vbos(arrays)) {
       if (!index_bounds_valid)
 	 vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);

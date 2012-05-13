@@ -168,4 +168,8 @@ intelInitExtensions(struct gl_context *ctx)
    else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
    }
+
+   if (intel->gen >= 4) {
+      ctx->Extensions.NV_primitive_restart = true;
+   }
 }
