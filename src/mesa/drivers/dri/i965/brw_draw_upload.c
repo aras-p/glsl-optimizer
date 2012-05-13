@@ -851,13 +851,20 @@ static void brw_emit_index_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
+   GLuint cut_index_setting;
 
    if (index_buffer == NULL)
       return;
 
+   if (brw->prim_restart.enable_cut_index) {
+      cut_index_setting = BRW_CUT_INDEX_ENABLE;
+   } else {
+      cut_index_setting = 0;
+   }
+
    BEGIN_BATCH(3);
    OUT_BATCH(CMD_INDEX_BUFFER << 16 |
-             /* cut index enable << 10 */
+             cut_index_setting |
              get_index_type(index_buffer->type) << 8 |
              1);
    OUT_RELOC(brw->ib.bo,

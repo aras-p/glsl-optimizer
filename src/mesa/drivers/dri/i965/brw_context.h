@@ -1044,6 +1044,7 @@ struct brw_context
    /* PrimitiveRestart */
    struct {
       bool in_progress;
+      bool enable_cut_index;
    } prim_restart;
 };
 
