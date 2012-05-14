@@ -50,6 +50,63 @@ fixup_mirroring(bool &mirror, GLint &coord0, GLint &coord1)
 }
 
 
+/**
+ * Adjust {src,dst}_x{0,1} to account for clipping and scissoring of
+ * destination coordinates.
+ *
+ * Return true if there is still blitting to do, false if all pixels got
+ * rejected by the clip and/or scissor.
+ *
+ * For clarity, the nomenclature of this function assumes we are clipping and
+ * scissoring the X coordinate; the exact same logic applies for Y
+ * coordinates.
+ */
+static inline bool
+clip_or_scissor(bool mirror, GLint &src_x0, GLint &src_x1, GLint &dst_x0,
+                GLint &dst_x1, GLint fb_xmin, GLint fb_xmax)
+{
+   /* If we are going to scissor everything away, stop. */
+   if (!(fb_xmin < fb_xmax &&
+         dst_x0 < fb_xmax &&
+         fb_xmin < dst_x1 &&
+         dst_x0 < dst_x1)) {
+      return false;
+   }
+
+   /* Clip the destination rectangle, and keep track of how many pixels we
+    * clipped off of the left and right sides of it.
+    */
+   GLint pixels_clipped_left = 0;
+   GLint pixels_clipped_right = 0;
+   if (dst_x0 < fb_xmin) {
+      pixels_clipped_left = fb_xmin - dst_x0;
+      dst_x0 = fb_xmin;
+   }
+   if (fb_xmax < dst_x1) {
+      pixels_clipped_right = dst_x1 - fb_xmax;
+      dst_x1 = fb_xmax;
+   }
+
+   /* If we are mirrored, then before applying pixels_clipped_{left,right} to
+    * the source coordinates, we need to flip them to account for the
+    * mirroring.
+    */
+   if (mirror) {
+      GLint tmp = pixels_clipped_left;
+      pixels_clipped_left = pixels_clipped_right;
+      pixels_clipped_right = tmp;
+   }
+
+   /* Adjust the source rectangle to remove the pixels corresponding to those
+    * that were clipped/scissored out of the destination rectangle.
+    */
+   src_x0 += pixels_clipped_left;
+   src_x1 -= pixels_clipped_right;
+
+   return true;
+}
+
+
 static bool
 try_blorp_blit(struct intel_context *intel,
                GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -154,14 +211,19 @@ try_blorp_blit(struct intel_context *intel,
    if (width != dstX1 - dstX0) return false;
    if (height != dstY1 - dstY0) return false;
 
-   /* Make sure width and height don't need to be clipped or scissored.
-    * TODO: support clipping and scissoring.
+   /* If the destination rectangle needs to be clipped or scissored, do so.
     */
+   if (!(clip_or_scissor(mirror_x, srcX0, srcX1, dstX0, dstX1,
+                         draw_fb->_Xmin, draw_fb->_Xmax) &&
+         clip_or_scissor(mirror_y, srcY0, srcY1, dstY0, dstY1,
+                         draw_fb->_Ymin, draw_fb->_Ymax))) {
+      /* Everything got clipped/scissored away, so the blit was successful. */
+      return true;
+   }
+
+   /* TODO: Clipping the source rectangle is not yet implemented. */
    if (srcX0 < 0 || (GLuint) srcX1 > read_fb->Width) return false;
    if (srcY0 < 0 || (GLuint) srcY1 > read_fb->Height) return false;
-   if (dstX0 < 0 || (GLuint) dstX1 > draw_fb->Width) return false;
-   if (dstY0 < 0 || (GLuint) dstY1 > draw_fb->Height) return false;
-   if (ctx->Scissor.Enabled) return false;
 
    /* Get ready to blit.  This includes depth resolving the src and dst
     * buffers if necessary.
