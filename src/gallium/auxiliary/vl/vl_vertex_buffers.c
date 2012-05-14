@@ -56,6 +56,7 @@ vl_vb_upload_quads(struct pipe_context *pipe)
       PIPE_USAGE_STATIC,
       sizeof(struct vertex2f) * 4
    );
+   quad.user_buffer = NULL;
 
    if(!quad.buffer)
       return quad;
@@ -100,6 +101,7 @@ vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height)
       PIPE_USAGE_STATIC,
       sizeof(struct vertex2s) * width * height
    );
+   pos.user_buffer = NULL;
 
    if(!pos.buffer)
       return pos;
@@ -268,6 +270,7 @@ vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component)
    buf.stride = sizeof(struct vl_ycbcr_block);
    buf.buffer_offset = 0;
    buf.buffer = buffer->ycbcr[component].resource;
+   buf.user_buffer = NULL;
 
    return buf;
 }
@@ -282,6 +285,7 @@ vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector)
    buf.stride = sizeof(struct vl_motionvector);
    buf.buffer_offset = 0;
    buf.buffer = buffer->mv[motionvector].resource;
+   buf.user_buffer = NULL;
 
    return buf;
 }
