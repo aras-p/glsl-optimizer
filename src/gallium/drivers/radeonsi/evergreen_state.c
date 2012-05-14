@@ -1349,6 +1349,8 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 
 	rctx->ws->buffer_unmap(bo->cs_buf);
 
+	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
+
 	rstate->nregs = 0;
 	va = r600_resource_va(ctx->screen, (void *)bo);
 	r600_pipe_state_add_reg(rstate, R_00B038_SPI_SHADER_USER_DATA_PS_2, va, bo, RADEON_USAGE_READ);
