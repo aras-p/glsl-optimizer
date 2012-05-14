@@ -30,5 +30,8 @@ let TargetPrefix = "SI", isTarget = 1 in {
   class Interp : Intrinsic <[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
 
   def int_SI_fs_interp_linear_center : Interp;
+  def int_SI_fs_interp_linear_centroid : Interp;
+  def int_SI_fs_interp_persp_center : Interp;
+  def int_SI_fs_interp_persp_centroid : Interp;
   def int_SI_fs_interp_constant : Interp;
 }

@@ -201,16 +201,29 @@ static void declare_input_fs(
 	/* XXX: Handle all possible interpolation modes */
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
-		if (si_shader_ctx->rctx->rasterizer->flatshade)
+		if (si_shader_ctx->rctx->rasterizer->flatshade) {
 			intr_name = "llvm.SI.fs.interp.constant";
-		else
-			intr_name = "llvm.SI.fs.interp.linear.center";
+		} else {
+			if (decl->Interp.Centroid)
+				intr_name = "llvm.SI.fs.interp.persp.centroid";
+			else
+				intr_name = "llvm.SI.fs.interp.persp.center";
+		}
 		break;
 	case TGSI_INTERPOLATE_CONSTANT:
 		intr_name = "llvm.SI.fs.interp.constant";
 		break;
 	case TGSI_INTERPOLATE_LINEAR:
-		intr_name = "llvm.SI.fs.interp.linear.center";
+		if (decl->Interp.Centroid)
+			intr_name = "llvm.SI.fs.interp.linear.centroid";
+		else
+			intr_name = "llvm.SI.fs.interp.linear.center";
+		break;
+	case TGSI_INTERPOLATE_PERSPECTIVE:
+		if (decl->Interp.Centroid)
+			intr_name = "llvm.SI.fs.interp.persp.centroid";
+		else
+			intr_name = "llvm.SI.fs.interp.persp.center";
 		break;
 	default:
 		fprintf(stderr, "Warning: Unhandled interpolation mode.\n");

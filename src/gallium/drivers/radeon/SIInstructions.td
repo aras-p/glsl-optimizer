@@ -934,6 +934,24 @@ def : Pat <
              imm:$attr, SReg_32:$params)
 >;
 
+def : Pat <
+  (int_SI_fs_interp_linear_centroid imm:$attr_chan, imm:$attr, SReg_32:$params),
+  (SI_INTERP (f32 LINEAR_CENTROID_I), (f32 LINEAR_CENTROID_J), imm:$attr_chan,
+             imm:$attr, SReg_32:$params)
+>;
+
+def : Pat <
+  (int_SI_fs_interp_persp_center imm:$attr_chan, imm:$attr, SReg_32:$params),
+  (SI_INTERP (f32 PERSP_CENTER_I), (f32 PERSP_CENTER_J), imm:$attr_chan,
+             imm:$attr, SReg_32:$params)
+>;
+
+def : Pat <
+  (int_SI_fs_interp_persp_centroid imm:$attr_chan, imm:$attr, SReg_32:$params),
+  (SI_INTERP (f32 PERSP_CENTROID_I), (f32 PERSP_CENTROID_J), imm:$attr_chan,
+             imm:$attr, SReg_32:$params)
+>;
+
 /********** ================== **********/
 /********** Intrinsic Patterns **********/
 /********** ================== **********/
