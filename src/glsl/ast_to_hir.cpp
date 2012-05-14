@@ -3521,11 +3521,9 @@ ast_switch_statement::hir(exec_list *instructions,
     *
     *    "The type of init-expression in a switch statement must be a 
     *     scalar integer." 
-    *
-    * The checks are separated so that higher quality diagnostics can be
-    * generated for cases where the rule is violated.
     */
-   if (!test_expression->type->is_integer()) {
+   if (!test_expression->type->is_scalar() ||
+       !test_expression->type->is_integer()) {
       YYLTYPE loc = this->test_expression->get_location();
 
       _mesa_glsl_error(& loc,
