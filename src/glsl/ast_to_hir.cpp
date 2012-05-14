@@ -3731,7 +3731,6 @@ ast_case_label::hir(exec_list *instructions,
 	 new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
       ir_rvalue *const test_cond = new(ctx) ir_expression(ir_binop_all_equal,
-							  glsl_type::bool_type,
 							  label_const,
 							  deref_test_var);
 
@@ -3788,9 +3787,7 @@ ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 	  * like 'if (!condition) break;' as the loop termination condition.
 	  */
 	 ir_rvalue *const not_cond =
-	    new(ctx) ir_expression(ir_unop_logic_not, glsl_type::bool_type,
-				   cond,
-				   NULL);
+	    new(ctx) ir_expression(ir_unop_logic_not, cond);
 
 	 ir_if *const if_stmt = new(ctx) ir_if(not_cond);
 
