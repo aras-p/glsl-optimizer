@@ -701,6 +701,12 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glReadPixels(incomplete framebuffer)" );
+      return;
+   }
+
    /* Check that the destination format and source buffer are both
     * integer-valued or both non-integer-valued.
     */
@@ -713,12 +719,6 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
                      "glReadPixels(integer / non-integer format mismatch");
          return;
       }
-   }
-
-   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glReadPixels(incomplete framebuffer)" );
-      return;
    }
 
    if (ctx->ReadBuffer->Name != 0 && ctx->ReadBuffer->Visual.samples > 0) {
