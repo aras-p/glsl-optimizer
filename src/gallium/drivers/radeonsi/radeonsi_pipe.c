@@ -273,7 +273,9 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 static const char *r600_get_family_name(enum radeon_family family)
 {
 	switch(family) {
-	case CHIP_CAYMAN: return "AMD CAYMAN";
+	case CHIP_TAHITI: return "AMD TAHITI";
+	case CHIP_PITCAIRN: return "AMD PITCAIRN";
+	case CHIP_VERDE: return "AMD CAPE VERDE";
 	default: return "AMD unknown";
 	}
 }
