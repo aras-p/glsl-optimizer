@@ -175,6 +175,7 @@ emit_viewport( struct svga_context *svga,
    float range_max = 1.0;
    float flip = -1.0;
    boolean degenerate = FALSE;
+   boolean invertY = FALSE;
    enum pipe_error ret;
 
    float fb_width = svga->curr.framebuffer.width;
@@ -218,11 +219,12 @@ emit_viewport( struct svga_context *svga,
       fx =        viewport->scale[0] * 1.0 + viewport->translate[0];
    }
 
-   if (fh < 0) {
-      prescale.scale[1] *= -1.0;
-      prescale.translate[1] += -fh;
+   if (fh < 0.0) {
+      prescale.translate[1] = fh - 1 + fy * 2;
       fh = -fh;
-      fy = flip * viewport->scale[1] * 1.0 + viewport->translate[1];
+      fy -= fh;
+      prescale.scale[1] = -1.0;
+      invertY = TRUE;
    }
 
    if (fx < 0) {
@@ -233,7 +235,12 @@ emit_viewport( struct svga_context *svga,
    }
 
    if (fy < 0) {
-      prescale.translate[1] += fy;
+      if (invertY) {
+         prescale.translate[1] -= fy;
+      }
+      else {
+         prescale.translate[1] += fy;
+      }
       prescale.scale[1] *= fh / (fh + fy); 
       fh += fy;
       fy = 0;
@@ -249,8 +256,15 @@ emit_viewport( struct svga_context *svga,
 
    if (fy + fh > fb_height) {
       prescale.scale[1] *= fh / (fb_height - fy);
-      prescale.translate[1] -= fy * (fh / (fb_height - fy));
-      prescale.translate[1] += fy;
+      if (invertY) {
+         float in = fb_height - fy;       /* number of vp pixels inside view */
+         float out = fy + fh - fb_height; /* number of vp pixels out of view */
+         prescale.translate[1] += fy * out / in;
+      }
+      else {
+         prescale.translate[1] -= fy * (fh / (fb_height - fy));
+         prescale.translate[1] += fy;
+      }
       fh = fb_height - fy;
    }
 
@@ -306,6 +320,9 @@ emit_viewport( struct svga_context *svga,
          adjust_y = -0.5;
          break;
       }
+
+      if (invertY)
+         adjust_y = -adjust_y;
 
       prescale.translate[0] += adjust_x;
       prescale.translate[1] += adjust_y;
