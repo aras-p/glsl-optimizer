@@ -203,7 +203,8 @@ struct si_pipe_shader {
 #define NUM_TEX_UNITS 16
 
 struct r600_textures_info {
-	struct r600_pipe_state		rstate;
+	struct r600_pipe_state		views_state;
+	struct r600_pipe_state		samplers_state;
 	struct si_pipe_sampler_view	*views[NUM_TEX_UNITS];
 	struct si_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;

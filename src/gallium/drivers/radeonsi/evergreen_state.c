@@ -1274,7 +1274,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
-	struct r600_pipe_state *rstate = &rctx->ps_samplers.rstate;
+	struct r600_pipe_state *rstate = &rctx->ps_samplers.views_state;
 	struct r600_resource *bo;
 	int i;
 	int has_depth = 0;
@@ -1312,6 +1312,7 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 	}
 
+	rstate->nregs = 0;
 	va = r600_resource_va(ctx->screen, (void *)bo);
 	r600_pipe_state_add_reg(rstate, R_00B040_SPI_SHADER_USER_DATA_PS_4, va, bo, RADEON_USAGE_READ);
 	r600_pipe_state_add_reg(rstate, R_00B044_SPI_SHADER_USER_DATA_PS_5, va >> 32, NULL, 0);
@@ -1326,7 +1327,7 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
-	struct r600_pipe_state *rstate = &rctx->ps_samplers.rstate;
+	struct r600_pipe_state *rstate = &rctx->ps_samplers.samplers_state;
 	struct r600_resource *bo;
 	uint64_t va;
 	char *ptr;
@@ -1348,6 +1349,7 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 
 	rctx->ws->buffer_unmap(bo->cs_buf);
 
+	rstate->nregs = 0;
 	va = r600_resource_va(ctx->screen, (void *)bo);
 	r600_pipe_state_add_reg(rstate, R_00B038_SPI_SHADER_USER_DATA_PS_2, va, bo, RADEON_USAGE_READ);
 	r600_pipe_state_add_reg(rstate, R_00B03C_SPI_SHADER_USER_DATA_PS_3, va >> 32, NULL, 0);
