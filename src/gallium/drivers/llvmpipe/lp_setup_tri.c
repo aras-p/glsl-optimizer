@@ -58,9 +58,16 @@ fixed_to_float(int a)
 }
 
 
-
-
-
+/* Position and area in fixed point coordinates */
+struct fixed_position {
+   int x[4];
+   int y[4];
+   int area;
+   int dx01;
+   int dy01;
+   int dx20;
+   int dy20;
+};
 
 
 /**
@@ -226,20 +233,22 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
  */
 static boolean
 do_triangle_ccw(struct lp_setup_context *setup,
-		const float (*v0)[4],
-		const float (*v1)[4],
-		const float (*v2)[4],
-		boolean frontfacing )
+                struct fixed_position* position,
+                const float (*v0)[4],
+                const float (*v1)[4],
+                const float (*v2)[4],
+                boolean frontfacing )
 {
    struct lp_scene *scene = setup->scene;
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    struct lp_rast_triangle *tri;
    struct lp_rast_plane *plane;
-   int x[4];
-   int y[4];
    struct u_rect bbox;
    unsigned tri_bytes;
    int nr_planes = 3;
+
+   /* Area should always be positive here */
+   assert(position->area > 0);
 
    if (0)
       lp_setup_print_triangle(setup, v0, v1, v2);
@@ -251,17 +260,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
       nr_planes = 3;
    }
 
-   /* x/y positions in fixed point */
-   x[0] = subpixel_snap(v0[0][0] - setup->pixel_offset);
-   x[1] = subpixel_snap(v1[0][0] - setup->pixel_offset);
-   x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
-   x[3] = 0;
-   y[0] = subpixel_snap(v0[0][1] - setup->pixel_offset);
-   y[1] = subpixel_snap(v1[0][1] - setup->pixel_offset);
-   y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-   y[3] = 0;
-   
-
    /* Bounding rectangle (in pixels) */
    {
       /* Yes this is necessary to accurately calculate bounding boxes
@@ -272,12 +270,12 @@ do_triangle_ccw(struct lp_setup_context *setup,
       int adj = (setup->pixel_offset != 0) ? 1 : 0;
 
       /* Inclusive x0, exclusive x1 */
-      bbox.x0 = MIN3(x[0], x[1], x[2]) >> FIXED_ORDER;
-      bbox.x1 = (MAX3(x[0], x[1], x[2]) - 1) >> FIXED_ORDER;
+      bbox.x0 =  MIN3(position->x[0], position->x[1], position->x[2]) >> FIXED_ORDER;
+      bbox.x1 = (MAX3(position->x[0], position->x[1], position->x[2]) - 1) >> FIXED_ORDER;
 
       /* Inclusive / exclusive depending upon adj (bottom-left or top-right) */
-      bbox.y0 = (MIN3(y[0], y[1], y[2]) + adj) >> FIXED_ORDER;
-      bbox.y1 = (MAX3(y[0], y[1], y[2]) - 1 + adj) >> FIXED_ORDER;
+      bbox.y0 = (MIN3(position->y[0], position->y[1], position->y[2]) + adj) >> FIXED_ORDER;
+      bbox.y1 = (MAX3(position->y[0], position->y[1], position->y[2]) - 1 + adj) >> FIXED_ORDER;
    }
 
    if (bbox.x1 < bbox.x0 ||
@@ -354,8 +352,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
       __m128i eo, p0, p1, p2;
       __m128i zero = _mm_setzero_si128();
 
-      vertx = _mm_loadu_si128((__m128i *)x); /* vertex x coords */
-      verty = _mm_loadu_si128((__m128i *)y); /* vertex y coords */
+      vertx = _mm_loadu_si128((__m128i *)position->x); /* vertex x coords */
+      verty = _mm_loadu_si128((__m128i *)position->y); /* vertex y coords */
 
       shufx = _mm_shuffle_epi32(vertx, _MM_SHUFFLE(3,0,2,1));
       shufy = _mm_shuffle_epi32(verty, _MM_SHUFFLE(3,0,2,1));
@@ -406,18 +404,18 @@ do_triangle_ccw(struct lp_setup_context *setup,
 #else
    {
       int i;
-      plane[0].dcdy = x[0] - x[1];
-      plane[1].dcdy = x[1] - x[2];
-      plane[2].dcdy = x[2] - x[0];
-      plane[0].dcdx = y[0] - y[1];
-      plane[1].dcdx = y[1] - y[2];
-      plane[2].dcdx = y[2] - y[0];
+      plane[0].dcdy = position->dx01;
+      plane[1].dcdy = position->x[1] - position->x[2];
+      plane[2].dcdy = position->dx20;
+      plane[0].dcdx = position->dy01;
+      plane[1].dcdx = position->y[1] - position->y[2];
+      plane[2].dcdx = position->dy20;
   
       for (i = 0; i < 3; i++) {
          /* half-edge constants, will be interated over the whole render
           * target.
           */
-         plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
+         plane[i].c = plane[i].dcdx * position->x[i] - plane[i].dcdy * position->y[i];
 
          /* correct for top-left vs. bottom-left fill convention.  
           *
@@ -768,31 +766,77 @@ fail:
  * Try to draw the triangle, restart the scene on failure.
  */
 static void retry_triangle_ccw( struct lp_setup_context *setup,
+                                struct fixed_position* position,
                                 const float (*v0)[4],
                                 const float (*v1)[4],
                                 const float (*v2)[4],
                                 boolean front)
 {
-   if (!do_triangle_ccw( setup, v0, v1, v2, front ))
+   if (!do_triangle_ccw( setup, position, v0, v1, v2, front ))
    {
       if (!lp_setup_flush_and_restart(setup))
          return;
 
-      if (!do_triangle_ccw( setup, v0, v1, v2, front ))
+      if (!do_triangle_ccw( setup, position, v0, v1, v2, front ))
          return;
    }
 }
 
-static INLINE float
-calc_area(const float (*v0)[4],
-          const float (*v1)[4],
-          const float (*v2)[4])
+
+/**
+ * Calculate fixed position data for a triangle
+ */
+static INLINE void
+calc_fixed_position( struct lp_setup_context *setup,
+                     struct fixed_position* position,
+                     const float (*v0)[4],
+                     const float (*v1)[4],
+                     const float (*v2)[4])
 {
-   float dx01 = v0[0][0] - v1[0][0];
-   float dy01 = v0[0][1] - v1[0][1];
-   float dx20 = v2[0][0] - v0[0][0];
-   float dy20 = v2[0][1] - v0[0][1];
-   return dx01 * dy20 - dx20 * dy01;
+   position->x[0] = subpixel_snap(v0[0][0] - setup->pixel_offset);
+   position->x[1] = subpixel_snap(v1[0][0] - setup->pixel_offset);
+   position->x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
+   position->x[3] = 0;
+
+   position->y[0] = subpixel_snap(v0[0][1] - setup->pixel_offset);
+   position->y[1] = subpixel_snap(v1[0][1] - setup->pixel_offset);
+   position->y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
+   position->y[3] = 0;
+
+   position->dx01 = position->x[0] - position->x[1];
+   position->dy01 = position->y[0] - position->y[1];
+
+   position->dx20 = position->x[2] - position->x[0];
+   position->dy20 = position->y[2] - position->y[0];
+
+   position->area = position->dx01 * position->dy20 - position->dx20 * position->dy01;
+}
+
+
+/**
+ * Rotate a triangle, flipping its clockwise direction,
+ * Swaps values for xy[1] and xy[2]
+ */
+static INLINE void
+rotate_fixed_position( struct fixed_position* position )
+{
+   int x, y;
+
+   x = position->x[2];
+   y = position->y[2];
+   position->x[2] = position->x[1];
+   position->y[2] = position->y[1];
+   position->x[1] = x;
+   position->y[1] = y;
+
+   x = position->dx01;
+   y = position->dy01;
+   position->dx01 = -position->dx20;
+   position->dy01 = -position->dy20;
+   position->dx20 = -x;
+   position->dy20 = -y;
+
+   position->area = -position->area;
 }
 
 
@@ -804,10 +848,13 @@ static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
+   calc_fixed_position(setup, &position, v0, v1, v2);
 
-   if (area < 0.0f) 
-      retry_triangle_ccw(setup, v0, v2, v1, !setup->ccw_is_frontface);
+   if (position.area < 0) {
+      rotate_fixed_position(&position);
+      retry_triangle_ccw(setup, &position, v0, v2, v1, !setup->ccw_is_frontface);
+   }
 }
 
 
@@ -816,10 +863,11 @@ static void triangle_ccw( struct lp_setup_context *setup,
                           const float (*v1)[4],
                           const float (*v2)[4])
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
+   calc_fixed_position(setup, &position, v0, v1, v2);
 
-   if (area > 0.0f) 
-      retry_triangle_ccw(setup, v0, v1, v2, setup->ccw_is_frontface);
+   if (position.area > 0)
+      retry_triangle_ccw(setup, &position, v0, v1, v2, setup->ccw_is_frontface);
 }
 
 /**
@@ -830,7 +878,8 @@ static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v1)[4],
 			   const float (*v2)[4] )
 {
-   float area = calc_area(v0, v1, v2);
+   struct fixed_position position;
+   calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (0) {
       assert(!util_is_inf_or_nan(v0[0][0]));
@@ -839,13 +888,14 @@ static void triangle_both( struct lp_setup_context *setup,
       assert(!util_is_inf_or_nan(v1[0][1]));
       assert(!util_is_inf_or_nan(v2[0][0]));
       assert(!util_is_inf_or_nan(v2[0][1]));
-      assert(!util_is_inf_or_nan(area));
    }
 
-   if (area > 0.0f) 
-      retry_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
-   else if (area < 0.0f)
-      retry_triangle_ccw( setup, v0, v2, v1, !setup->ccw_is_frontface );
+   if (position.area > 0)
+      retry_triangle_ccw( setup, &position, v0, v1, v2, setup->ccw_is_frontface );
+   else if (position.area < 0) {
+      rotate_fixed_position( &position );
+      retry_triangle_ccw( setup, &position, v0, v2, v1, !setup->ccw_is_frontface );
+   }
 }
 
 
