@@ -558,7 +558,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       GLuint face;
       assert(baseImage->Width2 == baseImage->Height);
       for (face = 1; face < 6; face++) {
-         assert(t->Image[face][baseLevel]->Width2 ==
+         assert(t->Image[face][baseLevel] == NULL ||
+                t->Image[face][baseLevel]->Width2 ==
                 t->Image[face][baseLevel]->Height2);
          if (t->Image[face][baseLevel] == NULL ||
              t->Image[face][baseLevel]->Width2 != baseImage->Width2) {
