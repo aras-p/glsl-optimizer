@@ -3599,7 +3599,7 @@ ast_switch_statement::test_to_hir(exec_list *instructions,
       test_expression->hir(instructions,
 			   state);
 
-   state->switch_state.test_var = new(ctx) ir_variable(glsl_type::int_type,
+   state->switch_state.test_var = new(ctx) ir_variable(test_val->type,
 						       "switch_test_tmp",
 						       ir_var_temporary);
    ir_dereference_variable *deref_test_var =
