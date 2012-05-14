@@ -760,13 +760,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 					   ir_var_temporary);
    ir_dereference_variable *deref_var = new(ctx) ir_dereference_variable(var);
    instructions->push_tail(var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_var,
-						  rhs,
-						  NULL));
+   instructions->push_tail(new(ctx) ir_assignment(deref_var, rhs));
    deref_var = new(ctx) ir_dereference_variable(var);
 
    if (!error_emitted)
-      instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var, NULL));
+      instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
 
    return new(ctx) ir_dereference_variable(var);
 }
@@ -783,7 +781,7 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    var->mode = ir_var_auto;
 
    instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
-						  lvalue, NULL));
+						  lvalue));
 
    return new(ctx) ir_dereference_variable(var);
 }
@@ -1223,12 +1221,12 @@ ast_expression::hir(exec_list *instructions,
 	 stmt->then_instructions.append_list(&rhs_instructions);
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new(ctx) ir_assignment(then_deref, op[1], NULL);
+	    new(ctx) ir_assignment(then_deref, op[1]);
 	 stmt->then_instructions.push_tail(then_assign);
 
 	 ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new(ctx) ir_assignment(else_deref, new(ctx) ir_constant(false), NULL);
+	    new(ctx) ir_assignment(else_deref, new(ctx) ir_constant(false));
 	 stmt->else_instructions.push_tail(else_assign);
 
 	 result = new(ctx) ir_dereference_variable(tmp);
@@ -1258,13 +1256,13 @@ ast_expression::hir(exec_list *instructions,
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new(ctx) ir_assignment(then_deref, new(ctx) ir_constant(true), NULL);
+	    new(ctx) ir_assignment(then_deref, new(ctx) ir_constant(true));
 	 stmt->then_instructions.push_tail(then_assign);
 
 	 stmt->else_instructions.append_list(&rhs_instructions);
 	 ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new(ctx) ir_assignment(else_deref, op[1], NULL);
+	    new(ctx) ir_assignment(else_deref, op[1]);
 	 stmt->else_instructions.push_tail(else_assign);
 
 	 result = new(ctx) ir_dereference_variable(tmp);
@@ -1452,14 +1450,14 @@ ast_expression::hir(exec_list *instructions,
 	 ir_dereference *const then_deref =
 	    new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new(ctx) ir_assignment(then_deref, op[1], NULL);
+	    new(ctx) ir_assignment(then_deref, op[1]);
 	 stmt->then_instructions.push_tail(then_assign);
 
 	 else_instructions.move_nodes_to(& stmt->else_instructions);
 	 ir_dereference *const else_deref =
 	    new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new(ctx) ir_assignment(else_deref, op[2], NULL);
+	    new(ctx) ir_assignment(else_deref, op[2]);
 	 stmt->else_instructions.push_tail(else_assign);
 
 	 result = new(ctx) ir_dereference_variable(tmp);
@@ -3438,9 +3436,7 @@ ast_jump_statement::hir(exec_list *instructions,
 	       new(ctx) ir_dereference_variable(is_break_var);
 	    ir_constant *const true_val = new(ctx) ir_constant(true);
 	    ir_assignment *const set_break_var =
-	       new(ctx) ir_assignment(deref_is_break_var,
-				      true_val,
-				      NULL);
+	       new(ctx) ir_assignment(deref_is_break_var, true_val);
 	    
 	    instructions->push_tail(set_break_var);
 	 }
@@ -3554,8 +3550,7 @@ ast_switch_statement::hir(exec_list *instructions,
    ir_dereference_variable *deref_is_fallthru_var =
       new(ctx) ir_dereference_variable(state->switch_state.is_fallthru_var);
    instructions->push_tail(new(ctx) ir_assignment(deref_is_fallthru_var,
-						  is_fallthru_val,
-						  NULL));
+						  is_fallthru_val));
 
    /* Initalize is_break state to false.
     */
@@ -3568,8 +3563,7 @@ ast_switch_statement::hir(exec_list *instructions,
    ir_dereference_variable *deref_is_break_var =
       new(ctx) ir_dereference_variable(state->switch_state.is_break_var);
    instructions->push_tail(new(ctx) ir_assignment(deref_is_break_var,
-						  is_break_val,
-						  NULL));
+						  is_break_val));
 
    /* Cache test expression.
     */
@@ -3606,8 +3600,7 @@ ast_switch_statement::test_to_hir(exec_list *instructions,
       new(ctx) ir_dereference_variable(state->switch_state.test_var);
 
    instructions->push_tail(state->switch_state.test_var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_test_var, test_val,
-						  NULL));
+   instructions->push_tail(new(ctx) ir_assignment(deref_test_var, test_val));
 }
 
 
@@ -3755,7 +3748,7 @@ ast_case_label::hir(exec_list *instructions,
 
       /* Set falltrhu state. */
       ir_assignment *set_fallthru =
-	 new(ctx) ir_assignment(deref_fallthru_var, true_val, NULL);
+	 new(ctx) ir_assignment(deref_fallthru_var, true_val);
 
       instructions->push_tail(set_fallthru);
    }
