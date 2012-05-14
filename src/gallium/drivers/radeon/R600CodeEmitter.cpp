@@ -38,16 +38,15 @@ using namespace llvm;
 
 namespace {
 
-  class R600CodeEmitter : public MachineFunctionPass, public AMDILCodeEmitter {
+class R600CodeEmitter : public MachineFunctionPass, public AMDILCodeEmitter {
 
-  private:
+private:
 
   static char ID;
   formatted_raw_ostream &_OS;
   const TargetMachine * TM;
   const MachineRegisterInfo * MRI;
   const R600RegisterInfo * TRI;
-  bool evergreenEncoding;
 
   bool isCube;
   bool isReduction;
@@ -56,10 +55,10 @@ namespace {
 
   unsigned section_start;
 
-  public:
+public:
 
   R600CodeEmitter(formatted_raw_ostream &OS) : MachineFunctionPass(ID),
-      _OS(OS), TM(NULL), evergreenEncoding(false), isCube(false), isReduction(false),
+      _OS(OS), TM(NULL), isCube(false), isReduction(false),
       isLast(true) { }
 
   const char *getPassName() const { return "AMDGPU Machine Code Emitter"; }
@@ -68,7 +67,7 @@ namespace {
   virtual uint64_t getMachineOpValue(const MachineInstr &MI,
                                      const MachineOperand &MO) const;
 
-  private:
+private:
 
   void emitALUInstr(MachineInstr  &MI);
   void emitSrc(const MachineOperand & MO, int chan_override  = -1);
@@ -76,8 +75,6 @@ namespace {
   void emitALU(MachineInstr &MI, unsigned numSrc);
   void emitTexInstr(MachineInstr &MI);
   void emitFCInstr(MachineInstr &MI);
-
-  unsigned int getHWInst(const MachineInstr &MI);
 
   void emitNullBytes(unsigned int byteCount);
 
@@ -92,12 +89,7 @@ namespace {
 
 };
 
-} /* End anonymous namespace */
-
-#define WRITE_MASK_X 0x1
-#define WRITE_MASK_Y 0x2
-#define WRITE_MASK_Z 0x4
-#define WRITE_MASK_W 0x8
+} // End anonymous namespace
 
 enum RegElement {
   ELEMENT_X = 0,
@@ -128,14 +120,14 @@ enum FCInstr {
 
 enum TextureTypes {
   TEXTURE_1D = 1,
-  TEXTURE_2D, 
+  TEXTURE_2D,
   TEXTURE_3D,
   TEXTURE_CUBE,
   TEXTURE_RECT,
   TEXTURE_SHADOW1D,
   TEXTURE_SHADOW2D,
-  TEXTURE_SHADOWRECT,     
-  TEXTURE_1D_ARRAY,       
+  TEXTURE_SHADOWRECT,
+  TEXTURE_1D_ARRAY,
   TEXTURE_2D_ARRAY,
   TEXTURE_SHADOW1D_ARRAY,
   TEXTURE_SHADOW2D_ARRAY
@@ -154,11 +146,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   TRI = static_cast<const R600RegisterInfo *>(TM->getRegisterInfo());
   const AMDILSubtarget &STM = TM->getSubtarget<AMDILSubtarget>();
   std::string gpu = STM.getDeviceName();
-  if (!gpu.compare(0,3, "rv7")) {
-    evergreenEncoding = false;
-  } else {
-    evergreenEncoding = true;
-  }
 
   if (STM.dumpCode()) {
     MF.dump();
@@ -202,10 +189,10 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             case AMDIL::RAT_WRITE_CACHELESS_eg:
               {
                   uint64_t inst = getBinaryCodeForInstr(MI);
-                /* Set End Of Program bit */
-                /* XXX: Need better check of end of program.  EOP should be
-                 * encoded in one of the operands of the MI, and it should be
-                 * set in a prior pass. */
+                // Set End Of Program bit
+                // XXX: Need better check of end of program.  EOP should be
+                // encoded in one of the operands of the MI, and it should be
+                // set in a prior pass.
                 MachineBasicBlock::iterator NextI = llvm::next(I);
                 MachineInstr &NextMI = *NextI;
                 if (NextMI.getOpcode() == AMDIL::RETURN) {
@@ -218,58 +205,58 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             case AMDIL::VTX_READ_eg:
               {
                 emitByte(INSTR_VTX);
-                /* inst */
+                // inst
                 emitByte(0);
 
-                /* fetch_type */
+                // fetch_type
                 emitByte(2);
 
-                /* buffer_id */
+                // buffer_id
                 emitByte(MI.getOperand(2).getImm());
 
-                /* src_gpr */
+                // src_gpr
                 emitByte(getHWReg(MI.getOperand(1).getReg()));
 
-                /* src_sel_x */
+                // src_sel_x
                 emitByte(TRI->getHWRegChan(MI.getOperand(1).getReg()));
 
-                /* mega_fetch_count */
+                // mega_fetch_count
                 emitByte(3);
 
-                /* dst_gpr */
+                // dst_gpr
                 emitByte(getHWReg(MI.getOperand(0).getReg()));
 
-                /* dst_sel_x */
+                // dst_sel_x
                 emitByte(0);
 
-                /* dst_sel_y */
+                // dst_sel_y
                 emitByte(7);
 
-                /* dst_sel_z */
+                // dst_sel_z
                 emitByte(7);
 
-                /* dst_sel_w */
+                // dst_sel_w
                 emitByte(7);
 
-                /* use_const_fields */
+                // use_const_fields
                 emitByte(1);
 
-                /* data_format */
+                // data_format
                 emitByte(0);
 
-                /* num_format_all */
+                // num_format_all
                 emitByte(0);
 
-                /* format_comp_all */
+                // format_comp_all
                 emitByte(0);
 
-                /* srf_mode_all */
+                // srf_mode_all
                 emitByte(0);
 
-                /* offset */
+                // offset
                 emitByte(0);
 
-                /* endian */
+                // endian
                 emitByte(0);
                 break;
               }
@@ -289,29 +276,19 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
 
   unsigned numOperands = MI.getNumExplicitOperands();
 
-   /* Some instructions are just place holder instructions that represent
-    * operations that the GPU does automatically.  They should be ignored. */
+   // Some instructions are just place holder instructions that represent
+   // operations that the GPU does automatically.  They should be ignored.
   if (AMDGPU::isPlaceHolderOpcode(MI.getOpcode())) {
     return;
   }
 
-  /* We need to handle some opcodes differently */
-  switch (MI.getOpcode()) {
-    default: break;
-
-    /* XXX: Temp Hack */
-    case AMDIL::STORE_OUTPUT:
-      numOperands = 2;
-      break;
-  }
-
-  /* XXX Check if instruction writes a result */
+  // XXX Check if instruction writes a result
   if (numOperands < 1) {
     return;
   }
   const MachineOperand dstOp = MI.getOperand(0);
 
-  /* Emit instruction type */
+  // Emit instruction type
   emitByte(0);
 
   if (isCube) {
@@ -322,14 +299,14 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
   } else {
     unsigned int opIndex;
     for (opIndex = 1; opIndex < numOperands; opIndex++) {
-      /* Literal constants are always stored as the last operand. */
+      // Literal constants are always stored as the last operand.
       if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
         break;
       }
       emitSrc(MI.getOperand(opIndex));
     }
 
-    /* Emit zeros for unused sources */
+    // Emit zeros for unused sources
     for ( ; opIndex < 4; opIndex++) {
       emitNullBytes(SRC_BYTE_COUNT);
     }
@@ -340,12 +317,12 @@ void R600CodeEmitter::emitALUInstr(MachineInstr &MI)
   emitALU(MI, numOperands - 1);
 }
 
-void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = -1 */)
+void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override)
 {
   uint32_t value = 0;
-  /* Emit the source select (2 bytes).  For GPRs, this is the register index.
-   * For other potential instruction operands, (e.g. constant registers) the
-   * value of the source select is defined in the r600isa docs. */
+  // Emit the source select (2 bytes).  For GPRs, this is the register index.
+  // For other potential instruction operands, (e.g. constant registers) the
+  // value of the source select is defined in the r600isa docs.
   if (MO.isReg()) {
     unsigned reg = MO.getReg();
     emitTwoBytes(getHWReg(reg));
@@ -361,11 +338,11 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = 
       }
     }
   } else {
-    /* XXX: Handle other operand types. */
+    // XXX: Handle other operand types.
     emitTwoBytes(0);
   }
 
-  /* Emit the source channel (1 byte) */
+  // Emit the source channel (1 byte)
   if (chan_override != -1) {
     emitByte(chan_override);
   } else if (isReduction) {
@@ -376,7 +353,7 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = 
     emitByte(0);
   }
 
-  /* XXX: Emit isNegated (1 byte) */
+  // XXX: Emit isNegated (1 byte)
   if ((!(MO.getTargetFlags() & MO_FLAG_ABS))
       && (MO.getTargetFlags() & MO_FLAG_NEG ||
      (MO.isReg() &&
@@ -386,20 +363,20 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = 
     emitByte(0);
   }
 
-  /* Emit isAbsolute (1 byte) */
+  // Emit isAbsolute (1 byte)
   if (MO.getTargetFlags() & MO_FLAG_ABS) {
     emitByte(1);
   } else {
     emitByte(0);
   }
 
-  /* XXX: Emit relative addressing mode (1 byte) */
+  // XXX: Emit relative addressing mode (1 byte)
   emitByte(0);
 
-  /* Emit kc_bank, This will be adjusted later by r600_asm */
+  // Emit kc_bank, This will be adjusted later by r600_asm
   emitByte(0);
 
-  /* Emit the literal value, if applicable (4 bytes).  */
+  // Emit the literal value, if applicable (4 bytes).
   emit(value);
 
 }
@@ -407,24 +384,24 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override /* = 
 void R600CodeEmitter::emitDst(const MachineOperand & MO)
 {
   if (MO.isReg()) {
-    /* Emit the destination register index (1 byte) */
+    // Emit the destination register index (1 byte)
     emitByte(getHWReg(MO.getReg()));
 
-    /* Emit the element of the destination register (1 byte)*/
+    // Emit the element of the destination register (1 byte)
     if (isReduction || isCube) {
       emitByte(currentElement);
     } else {
       emitByte(TRI->getHWRegChan(MO.getReg()));
     }
 
-    /* Emit isClamped (1 byte) */
+    // Emit isClamped (1 byte)
     if (MO.getTargetFlags() & MO_FLAG_CLAMP) {
       emitByte(1);
     } else {
       emitByte(0);
     }
 
-    /* Emit writemask (1 byte).  */
+    // Emit writemask (1 byte).
     if ((isReduction && currentElement != TRI->getHWRegChan(MO.getReg()))
          || MO.getTargetFlags() & MO_FLAG_MASK) {
       emitByte(0);
@@ -432,47 +409,47 @@ void R600CodeEmitter::emitDst(const MachineOperand & MO)
       emitByte(1);
     }
 
-    /* XXX: Emit relative addressing mode */
+    // XXX: Emit relative addressing mode
     emitByte(0);
   } else {
-    /* XXX: Handle other operand types.  Are there any for destination regs? */
+    // XXX: Handle other operand types.  Are there any for destination regs?
     emitNullBytes(DST_BYTE_COUNT);
   }
 }
 
 void R600CodeEmitter::emitALU(MachineInstr &MI, unsigned numSrc)
 {
-  /* Emit the instruction (2 bytes) */
-  emitTwoBytes(getHWInst(MI));
+  // Emit the instruction (2 bytes)
+  emitTwoBytes(getBinaryCodeForInstr(MI));
 
-  /* Emit isLast (for this instruction group) (1 byte) */
+  // Emit isLast (for this instruction group) (1 byte)
   if (isLast) {
     emitByte(1);
   } else {
     emitByte(0);
   }
-  /* Emit isOp3 (1 byte) */
+  // Emit isOp3 (1 byte)
   if (numSrc == 3) {
     emitByte(1);
   } else {
     emitByte(0);
   }
 
-  /* XXX: Emit predicate (1 byte) */
+  // XXX: Emit predicate (1 byte)
   emitByte(0);
 
-  /* XXX: Emit bank swizzle. (1 byte)  Do we need this?  It looks like
-   * r600_asm.c sets it. */
+  // XXX: Emit bank swizzle. (1 byte)  Do we need this?  It looks like
+  // r600_asm.c sets it.
   emitByte(0);
 
-  /* XXX: Emit bank_swizzle_force (1 byte) Not sure what this is for. */
+  // XXX: Emit bank_swizzle_force (1 byte) Not sure what this is for.
   emitByte(0);
 
-  /* XXX: Emit OMOD (1 byte) Not implemented. */
+  // XXX: Emit OMOD (1 byte) Not implemented.
   emitByte(0);
 
-  /* XXX: Emit index_mode.  I think this is for indirect addressing, so we
-   * don't need to worry about it. */
+  // XXX: Emit index_mode.  I think this is for indirect addressing, so we
+  // don't need to worry about it.
   emitByte(0);
 }
 
@@ -484,37 +461,37 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
   unsigned opcode = MI.getOpcode();
   unsigned srcSelect[4] = {0, 1, 2, 3};
 
-  /* Emit instruction type */
+  // Emit instruction type
   emitByte(1);
 
-  /* Emit instruction */
-  emitByte(getHWInst(MI));
+  // Emit instruction
+  emitByte(getBinaryCodeForInstr(MI));
 
-  /* XXX: Emit resource id r600_shader.c uses sampler + 1.  Why? */
+  // XXX: Emit resource id r600_shader.c uses sampler + 1.  Why?
   emitByte(sampler + 1 + 1);
 
-  /* Emit source register */
+  // Emit source register
   emitByte(getHWReg(MI.getOperand(1).getReg()));
 
-  /* XXX: Emit src isRelativeAddress */
+  // XXX: Emit src isRelativeAddress
   emitByte(0);
 
-  /* Emit destination register */
+  // Emit destination register
   emitByte(getHWReg(MI.getOperand(0).getReg()));
 
-  /* XXX: Emit dst isRealtiveAddress */
+  // XXX: Emit dst isRealtiveAddress
   emitByte(0);
 
-  /* XXX: Emit dst select */
-  emitByte(0); /* X */
-  emitByte(1); /* Y */
-  emitByte(2); /* Z */
-  emitByte(3); /* W */
+  // XXX: Emit dst select
+  emitByte(0); // X
+  emitByte(1); // Y
+  emitByte(2); // Z
+  emitByte(3); // W
 
-  /* XXX: Emit lod bias */
+  // XXX: Emit lod bias
   emitByte(0);
 
-  /* XXX: Emit coord types */
+  // XXX: Emit coord types
   unsigned coordType[4] = {1, 1, 1, 1};
 
   if (textureType == TEXTURE_RECT
@@ -540,16 +517,16 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
     emitByte(coordType[i]);
   }
 
-  /* XXX: Emit offsets */
-  emitByte(0); /* X */
-  emitByte(0); /* Y */
-  emitByte(0); /* Z */
-  /* There is no OFFSET_W */
+  // XXX: Emit offsets
+  emitByte(0); // X
+  emitByte(0); // Y
+  emitByte(0); // Z
+  // There is no OFFSET_W
 
-  /* Emit sampler id */
+  // Emit sampler id
   emitByte(sampler);
 
-  /* XXX:Emit source select */
+  // XXX:Emit source select
   if ((textureType == TEXTURE_SHADOW1D
       || textureType == TEXTURE_SHADOW2D
       || textureType == TEXTURE_SHADOWRECT
@@ -566,10 +543,10 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
 
 void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
 {
-  /* Emit instruction type */
+  // Emit instruction type
   emitByte(INSTR_FC);
 
-  /* Emit SRC */
+  // Emit SRC
   unsigned numOperands = MI.getNumOperands();
   if (numOperands > 0) {
     assert(numOperands == 1);
@@ -578,7 +555,7 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
     emitNullBytes(SRC_BYTE_COUNT);
   }
 
-  /* Emit FC Instruction */
+  // Emit FC Instruction
   enum FCInstr instr;
   switch (MI.getOpcode()) {
   case AMDIL::BREAK_LOGICALZ_f32:
@@ -595,8 +572,6 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
   case AMDIL::CONTINUE_LOGICALNZ_i32:
     instr = FC_CONTINUE;
     break;
-  /* XXX: This assumes that all IFs will be if (x != 0).  If we add
-   * optimizations this might not be the case */
   case AMDIL::IF_LOGICALNZ_f32:
   case AMDIL::IF_LOGICALNZ_i32:
     instr = FC_IF;
@@ -621,39 +596,6 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
     break;
   }
   emitByte(instr);
-}
-
-#define INSTR_FLOAT2_V(inst, hw) \
-  case AMDIL:: inst##_v4f32: \
-  case AMDIL:: inst##_v2f32: return HW_INST2(hw);
-
-#define INSTR_FLOAT2_S(inst, hw) \
-  case AMDIL:: inst##_f32: return HW_INST2(hw);
-
-#define INSTR_FLOAT2(inst, hw) \
-  INSTR_FLOAT2_V(inst, hw) \
-  INSTR_FLOAT2_S(inst, hw)
-
-unsigned int R600CodeEmitter::getHWInst(const MachineInstr &MI)
-{
-
-  /* XXX: Lower these to MOV before the code emitter. */
-  switch (MI.getOpcode()) {
-    case AMDIL::STORE_OUTPUT:
-    case AMDIL::VCREATE_v4i32:
-    case AMDIL::LOADCONST_i32:
-    case AMDIL::LOADCONST_f32:
-    case AMDIL::MOVE_v4i32:
-    /* Instructons to reinterpret bits as ... */
-    case AMDIL::IL_ASINT_f32:
-    case AMDIL::IL_ASINT_i32:
-    case AMDIL::IL_ASFLOAT_f32:
-    case AMDIL::IL_ASFLOAT_i32:
-      return 0x19;
-
-  default:
-    return getBinaryCodeForInstr(MI);
-  }
 }
 
 void R600CodeEmitter::emitNullBytes(unsigned int byteCount)
