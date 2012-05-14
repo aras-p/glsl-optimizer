@@ -89,6 +89,16 @@ class ir_instruction : public exec_node {
 public:
    enum ir_node_type ir_type;
 
+   /**
+    * GCC 4.7+ and clang warn when deleting an ir_instruction unless
+    * there's a virtual destructor present.  Because we almost
+    * universally use ralloc for our memory management of
+    * ir_instructions, the destructor doesn't need to do any work.
+    */
+   virtual ~ir_instruction()
+   {
+   }
+
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
 
