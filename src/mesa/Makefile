@@ -167,18 +167,6 @@ pcedit = \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 
-
-gl_pcedit = sed \
-	$(pcedit) \
-	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
-	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
-	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
-	-e 's,@GLX_TLS@,$(GLX_TLS),' \
-	-e 's,@GL_LIB@,$(GL_LIB),'
-
-gl.pc: gl.pc.in
-	$(gl_pcedit) $< > $@
-
 osmesa_pcedit = sed \
 	$(pcedit) \
 	-e 's,@OSMESA_LIB@,$(OSMESA_LIB),' \
@@ -193,7 +181,7 @@ install-headers:
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
 		$(DESTDIR)$(INSTALL_INC_DIR)/GL
 
-install-libgl-pc: gl.pc install-headers
+install-libgl-pc: install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
@@ -220,7 +208,7 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libmesagallium.a
 	-rm -f drivers/*/*.o
-	-rm -f *.pc
+	-rm -f osmesa.pc
 	-rm -f $(BUILT_SOURCES)
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
