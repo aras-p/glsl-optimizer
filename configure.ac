@@ -2,17 +2,11 @@ dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.60])
 
-dnl Versioning - scrape the version from configs/default
-m4_define([mesa_version],
-    [m4_esyscmd([${MAKE-make} -s -f bin/version.mk version | tr -d '\n' | tr -d '\r'])])
-m4_ifval(mesa_version,,
-    [m4_fatal([Failed to get the Mesa version from `make -f bin/version.mk version`])])
-
 dnl Tell the user about autoconf.html in the --help output
 m4_divert_once([HELP_END], [
 See docs/autoconf.html for more details on the options for Mesa.])
 
-AC_INIT([Mesa],[mesa_version],
+AC_INIT([Mesa], [8.1.0],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
