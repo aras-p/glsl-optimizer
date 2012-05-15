@@ -456,9 +456,11 @@ void R600CodeEmitter::emitALU(MachineInstr &MI, unsigned numSrc)
 void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
 {
 
-  int64_t sampler = MI.getOperand(2).getImm();
-  int64_t textureType = MI.getOperand(3).getImm();
   unsigned opcode = MI.getOpcode();
+  bool hasOffsets = (opcode == AMDIL::TEX_LD);
+  unsigned op_offset = hasOffsets ? 3 : 0;
+  int64_t sampler = MI.getOperand(op_offset+2).getImm();
+  int64_t textureType = MI.getOperand(op_offset+3).getImm();
   unsigned srcSelect[4] = {0, 1, 2, 3};
 
   // Emit instruction type
@@ -518,10 +520,11 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
   }
 
   // XXX: Emit offsets
-  emitByte(0); // X
-  emitByte(0); // Y
-  emitByte(0); // Z
-  // There is no OFFSET_W
+  if (hasOffsets)
+	  for (unsigned i = 2; i < 5; i++)
+		  emitByte(MI.getOperand(i).getImm()<<1);
+  else
+	  emitNullBytes(3);
 
   // Emit sampler id
   emitByte(sampler);

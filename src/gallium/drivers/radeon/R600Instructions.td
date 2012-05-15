@@ -430,8 +430,11 @@ def CNDE_INT : R600_3OP <
 
 def TEX_LD : R600_TEX <
   0x03, "TEX_LD",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txf R600_Reg128:$src0, imm:$src1, imm:$src2))]
->;
+  [(set R600_Reg128:$dst, (int_AMDGPU_txf R600_Reg128:$src0, imm:$src1, imm:$src2, imm:$src3, imm:$src4, imm:$src5))]
+> {
+let AsmString = "TEX_LD $dst, $src0, $src1, $src2, $src3, $src4, $src5";
+let InOperandList = (ins R600_Reg128:$src0, i32imm:$src1, i32imm:$src2, i32imm:$src3, i32imm:$src4, i32imm:$src5);
+}
 
 def TEX_GET_TEXTURE_RESINFO : R600_TEX <
   0x04, "TEX_GET_TEXTURE_RESINFO",

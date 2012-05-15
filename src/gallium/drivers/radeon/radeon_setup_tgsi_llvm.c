@@ -581,6 +581,7 @@ static void txd_fetch_args(
 	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
 }
 
+
 static void txp_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
@@ -641,6 +642,40 @@ static void tex_fetch_args(
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
 		emit_prepare_cube_coords(bld_base, emit_data);
 	}
+}
+
+static void txf_fetch_args(
+	struct lp_build_tgsi_context * bld_base,
+	struct lp_build_emit_data * emit_data)
+{
+	const struct tgsi_full_instruction * inst = emit_data->inst;
+	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
+	const struct tgsi_texture_offset * off = inst->TexOffsets;
+	LLVMTypeRef offset_type = bld_base->int_bld.elem_type;
+
+	/* fetch tex coords */
+	tex_fetch_args(bld_base, emit_data);
+
+	/* fetch tex offsets */
+	if (inst->Texture.NumOffsets) {
+		assert(inst->Texture.NumOffsets == 1);
+
+		emit_data->args[1] = LLVMConstBitCast(
+			bld->immediates[off->Index][off->SwizzleX],
+			offset_type);
+		emit_data->args[2] = LLVMConstBitCast(
+			bld->immediates[off->Index][off->SwizzleY],
+			offset_type);
+		emit_data->args[3] = LLVMConstBitCast(
+			bld->immediates[off->Index][off->SwizzleZ],
+			offset_type);
+	} else {
+		emit_data->args[1] = bld_base->int_bld.zero;
+		emit_data->args[2] = bld_base->int_bld.zero;
+		emit_data->args[3] = bld_base->int_bld.zero;
+	}
+
+	emit_data->arg_count = 4;
 }
 
 static void emit_icmp(
@@ -1029,7 +1064,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_UMIN].intr_name = "llvm.AMDGPU.umin";
 	bld_base->op_actions[TGSI_OPCODE_UMAX].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_UMAX].intr_name = "llvm.AMDGPU.umax";
-	bld_base->op_actions[TGSI_OPCODE_TXF].fetch_args = tex_fetch_args;
+	bld_base->op_actions[TGSI_OPCODE_TXF].fetch_args = txf_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXF].intr_name = "llvm.AMDGPU.txf";
 	bld_base->op_actions[TGSI_OPCODE_TXQ].fetch_args = tex_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXQ].intr_name = "llvm.AMDGPU.txq";
