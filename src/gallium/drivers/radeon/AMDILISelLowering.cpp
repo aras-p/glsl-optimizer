@@ -3894,6 +3894,7 @@ AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
   Nodes1 = DAG.getNode(AMDILISD::VBUILD,
       DL,
       VT, Op.getOperand(0));
+#if 0
   bool allEqual = true;
   for (unsigned x = 1, y = Op.getNumOperands(); x < y; ++x) {
     if (Op.getOperand(0) != Op.getOperand(x)) {
@@ -3904,6 +3905,7 @@ AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
   if (allEqual) {
     return Nodes1;
   }
+#endif
   switch(Op.getNumOperands()) {
     default:
     case 1:
