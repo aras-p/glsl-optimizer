@@ -317,7 +317,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		num_dw += ctx->pm4_dirty_cdwords;
 
 		/* The upper-bound of how much a draw command would take. */
-		num_dw += R600_MAX_DRAW_CS_DWORDS;
+		num_dw += SI_MAX_DRAW_CS_DWORDS;
 	}
 
 	/* Count in queries_suspend. */

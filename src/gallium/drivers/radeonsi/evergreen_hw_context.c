@@ -481,7 +481,7 @@ void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		ndwords += 6;
 
 	/* when increasing ndwords, bump the max limit too */
-	assert(ndwords <= R600_MAX_DRAW_CS_DWORDS);
+	assert(ndwords <= SI_MAX_DRAW_CS_DWORDS);
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
