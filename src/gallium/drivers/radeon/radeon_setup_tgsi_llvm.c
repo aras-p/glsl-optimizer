@@ -968,7 +968,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_TXQ].fetch_args = tex_fetch_args;
 	bld_base->op_actions[TGSI_OPCODE_TXQ].intr_name = "llvm.AMDGPU.txq";
 	bld_base->op_actions[TGSI_OPCODE_CEIL].emit = lp_build_tgsi_intrinsic;
-	bld_base->op_actions[TGSI_OPCODE_CEIL].intr_name = "llvm.AMDIL.round.neginf.";
+	bld_base->op_actions[TGSI_OPCODE_CEIL].intr_name = "llvm.AMDIL.round.posinf.";
 
 
 
