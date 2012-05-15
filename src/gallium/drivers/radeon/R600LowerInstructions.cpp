@@ -90,24 +90,16 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 
       case AMDIL::ABS_i32:
         {
-          unsigned setgt = MRI->createVirtualRegister(
+          unsigned neg = MRI->createVirtualRegister(
                            &AMDIL::R600_TReg32RegClass);
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGE_INT),
-                  setgt)
+          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT),neg)
                   .addReg(AMDIL::ZERO)
                   .addOperand(MI.getOperand(1));
 
-          unsigned add_int = MRI->createVirtualRegister(
-                             &AMDIL::R600_TReg32RegClass);
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::ADD_INT),
-                  add_int)
-                  .addReg(setgt)
-                  .addOperand(MI.getOperand(1));
-
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::XOR_INT))
+          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::MAX_INT))
                   .addOperand(MI.getOperand(0))
-                  .addReg(setgt)
-                  .addReg(add_int);
+                  .addOperand(MI.getOperand(1))
+                  .addReg(neg);
 
           break;
         }
