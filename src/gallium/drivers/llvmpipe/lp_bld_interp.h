@@ -55,7 +55,7 @@
  * src_index.
  *
  * LP_INTERP_COLOR is translated to either LP_INTERP_CONSTANT or
- * LINEAR depending on flatshade state.
+ * PERSPECTIVE depending on flatshade state.
  */
 enum lp_interp {
    LP_INTERP_CONSTANT,

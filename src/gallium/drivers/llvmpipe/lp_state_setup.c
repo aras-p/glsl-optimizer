@@ -790,7 +790,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
          if (lp->rasterizer->flatshade)
 	    key->inputs[i].interp = LP_INTERP_CONSTANT;
 	 else
-	    key->inputs[i].interp = LP_INTERP_LINEAR;
+	    key->inputs[i].interp = LP_INTERP_PERSPECTIVE;
       }
    }
 

@@ -555,7 +555,7 @@ generate_fragment(struct llvmpipe_context *lp,
 	 if (key->flatshade)
 	    inputs[i].interp = LP_INTERP_CONSTANT;
 	 else
-	    inputs[i].interp = LP_INTERP_LINEAR;
+	    inputs[i].interp = LP_INTERP_PERSPECTIVE;
       }
    }
 
