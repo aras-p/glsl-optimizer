@@ -926,7 +926,8 @@ lp_build_sgn(struct lp_build_context *bld,
    }
    else
    {
-      LLVMValueRef minus_one = lp_build_const_int_vec(bld->gallivm, type, -1.0);
+      /* signed int/norm/fixed point */
+      LLVMValueRef minus_one = lp_build_const_vec(bld->gallivm, type, -1.0);
       cond = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, bld->zero);
       res = lp_build_select(bld, cond, bld->one, minus_one);
    }
