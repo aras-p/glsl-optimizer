@@ -642,8 +642,8 @@ AC_ARG_ENABLE([gallium_gbm],
     [enable_gallium_gbm=auto])
 
 AC_ARG_ENABLE([r600-llvm-compiler],
-    [AS_HELP_STRING([--enable-r600-llvm-compilerl],
-        [Enable experimental LLVM backend for graphics shaders @<:default=disable@:>@])],
+    [AS_HELP_STRING([--enable-r600-llvm-compiler],
+        [Enable experimental LLVM backend for graphics shaders @<:@default=disable@:>@])],
     [enable_r600_llvm="$enableval"],
     [enable_r600_llvm=no])
 
