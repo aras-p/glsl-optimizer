@@ -142,8 +142,6 @@ public:
    virtual uint32_t get_wm_prog(struct brw_context *brw,
                                 brw_blorp_prog_data **prog_data) const = 0;
 
-   void exec(struct intel_context *intel) const;
-
    uint32_t x0;
    uint32_t y0;
    uint32_t x1;
@@ -157,6 +155,11 @@ public:
    bool use_wm_prog;
    brw_blorp_wm_push_constants wm_push_consts;
 };
+
+
+void
+brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params);
+
 
 /**
  * Parameters for a HiZ or depth resolve operation.

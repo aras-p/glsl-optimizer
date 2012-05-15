@@ -99,14 +99,14 @@ brw_blorp_params::brw_blorp_params()
 }
 
 void
-brw_blorp_params::exec(struct intel_context *intel) const
+brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
 {
    switch (intel->gen) {
    case 6:
-      gen6_blorp_exec(intel, this);
+      gen6_blorp_exec(intel, params);
       break;
    case 7:
-      gen7_blorp_exec(intel, this);
+      gen7_blorp_exec(intel, params);
       break;
    default:
       /* BLORP is not supported before Gen6. */

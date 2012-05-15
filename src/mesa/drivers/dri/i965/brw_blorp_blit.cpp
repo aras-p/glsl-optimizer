@@ -173,7 +173,7 @@ try_blorp_blit(struct intel_context *intel,
    brw_blorp_blit_params params(src_mt, dst_mt,
                                 srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                                 mirror_x, mirror_y);
-   params.exec(intel);
+   brw_blorp_exec(intel, &params);
 
    /* Mark the dst buffer as needing a HiZ resolve if necessary. */
    intel_renderbuffer_set_needs_hiz_resolve(dst_irb);
