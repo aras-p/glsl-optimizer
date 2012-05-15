@@ -95,6 +95,18 @@ static float negf(float x)
 }
 
 
+static float sgnf(float x)
+{
+   if (x > 0.0f) {
+      return 1.0f;
+   }
+   if (x < 0.0f) {
+      return -1.0f;
+   }
+   return 0.0f;
+}
+
+
 const float exp2_values[] = {
    -60,
    -4,
@@ -183,6 +195,7 @@ unary_tests[] = {
    {"rsqrt", &lp_build_rsqrt, &rsqrtf, rsqrt_values, Elements(rsqrt_values), 20.0 },
    {"sin", &lp_build_sin, &sinf, sincos_values, Elements(sincos_values), 20.0 },
    {"cos", &lp_build_cos, &cosf, sincos_values, Elements(sincos_values), 20.0 },
+   {"sgn", &lp_build_sgn, &sgnf, exp2_values, Elements(exp2_values), 20.0 },
 };
 
 
