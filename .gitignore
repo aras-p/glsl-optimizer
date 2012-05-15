@@ -40,3 +40,4 @@ Makefile.in
 .dir-locals.el
 .deps/
 .libs/
+/Makefile

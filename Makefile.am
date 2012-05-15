@@ -1,71 +1,51 @@
-# Top-level Mesa makefile
+# Copyright © 2012 Intel Corporation
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
-TOP = .
-
-SUBDIRS = src
-
-
-# The git command below generates an empty string when we're not
-# building in a GIT tree (i.e., building from a release tarball).
-default: $(TOP)/configs/current
-	@$(TOP)/bin/extract_git_sha1
-	@for dir in $(SUBDIRS) ; do \
-		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE)) || exit 1 ; \
-		fi \
-	done
-
-all: default
-
+SUBDIRS = src tests
 
 doxygen:
 	cd doxygen && $(MAKE)
 
-check:
-	make -C src/glsl/tests check
-	make -C tests check
+check-local:
+	$(MAKE) -C src/glsl/tests check
 
-clean:
-	-@touch $(TOP)/configs/current
+clean-local:
+	-@touch $(top_builddir)/configs/current
 	-@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \
 	done
-	-@test -s $(TOP)/configs/current || rm -f $(TOP)/configs/current
+	-@test -s $(top_builddir)/configs/current || rm -f $(top_builddir)/configs/current
 
 
-realclean: clean
+
+distclean-local:
 	-rm -rf lib*
-	-rm -f $(TOP)/configs/current
-	-rm -f $(TOP)/configs/autoconf
-	-rm -rf autom4te.cache
+	-rm -f $(top_builddir)/configs/current
+	-rm -f $(top_builddir)/configs/autoconf
 	-find . '(' -name '*.o' -o -name '*.a' -o -name '*.so' -o \
 	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
 
-
-distclean: realclean
-
-
-install:
-	@for dir in $(SUBDIRS) ; do \
-		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE) install) || exit 1 ; \
-		fi \
-	done
-
-
-.PHONY: default doxygen clean realclean distclean install check
-
-# If there's no current configuration file
-$(TOP)/configs/current:
-	@echo
-	@echo
-	@echo "Please run './configure' then 'make'"
-	@echo "See './configure --help' for details"
-	@echo
-	@echo "(ignore the following error message)"
-	@exit 1
+.PHONY: doxygen
 
 # Rules for making release tarballs
 
@@ -99,7 +79,7 @@ IGNORE_FILES = \
 
 
 parsers: configure
-	-@touch $(TOP)/configs/current
+	-@touch $(top_builddir)/configs/current
 	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp
 	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
 	$(MAKE) -C src/mesa program/lex.yy.c program/program_parse.tab.c program/program_parse.tab.h
@@ -107,20 +87,10 @@ parsers: configure
 # Everything for new a Mesa release:
 ARCHIVES = $(PACKAGE_NAME).tar.gz \
 	$(PACKAGE_NAME).tar.bz2 \
-	$(PACKAGE_NAME).zip \
+	$(PACKAGE_NAME).zip
 
 tarballs: md5
 	rm -f ../$(PACKAGE_DIR) $(PACKAGE_NAME).tar
-
-# Helper for autoconf builds
-ACLOCAL = aclocal
-ACLOCAL_FLAGS =
-AUTOCONF = autoconf
-AC_FLAGS =
-aclocal.m4: configure.ac acinclude.m4
-	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: configure.ac aclocal.m4 acinclude.m4
-	$(AUTOCONF) $(AC_FLAGS)
 
 manifest.txt: .git
 	( \
@@ -151,6 +121,4 @@ md5: $(ARCHIVES)
 	@-md5sum $(PACKAGE_NAME).tar.bz2
 	@-md5sum $(PACKAGE_NAME).zip
 
-am--refresh:
-
-.PHONY: tarballs md5 am--refresh
+.PHONY: tarballs md5

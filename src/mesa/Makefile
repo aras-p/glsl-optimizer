@@ -36,6 +36,23 @@ MESA_CXXFLAGS := $(LLVM_CFLAGS) $(CXXFLAGS)
 # then convenience libs (.a) and finally the device drivers:
 default: $(DEPENDS) asm_subdirs $(MESA_LIBS) driver_subdirs
 
+.PHONY: main/git_sha1.h.tmp
+main/git_sha1.h.tmp:
+	@touch main/git_sha1.h.tmp
+	@if test -d ../../.git; then \
+		if which git > /dev/null; then \
+		    git log -n 1 --oneline | \
+			sed 's/^\([^ ]*\) .*/#define MESA_GIT_SHA1 "git-\1"/' \
+			> main/git_sha1.h.tmp ; \
+		fi \
+	fi
+
+main/git_sha1.h: main/git_sha1.h.tmp
+	@echo "updating main/git_sha1.h"
+	@if ! cmp -s main/git_sha1.h.tmp main/git_sha1.h; then \
+		mv main/git_sha1.h.tmp main/git_sha1.h ;\
+	fi
+
 # include glapi_gen.mk for generating glapi headers for GLES
 GLAPI := $(TOP)/src/mapi/glapi/gen
 include $(GLAPI)/glapi_gen.mk

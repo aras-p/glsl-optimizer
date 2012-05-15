@@ -2130,6 +2130,7 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf
+		Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
 		src/gallium/state_trackers/clover/Makefile
 		src/gallium/drivers/Makefile
