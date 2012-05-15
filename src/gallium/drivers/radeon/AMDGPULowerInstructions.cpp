@@ -38,6 +38,8 @@ public:
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
+  virtual const char *getPassName() const {return "AMDGPU Lower Instructions";}
+
 };
 
 } // End anonymous namespace

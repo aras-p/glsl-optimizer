@@ -31,6 +31,9 @@ public:
     MachineFunctionPass(ID), TM(tm) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
+
+  virtual const char *getPassName() const {return "AMDGPU Convert to ISA";}
+
 };
 
 } // End anonymous namespace
