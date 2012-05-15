@@ -407,34 +407,34 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
      class VoidIntBool :
           Intrinsic<[llvm_i32_ty], [], []>;
      class UnaryIntInt :
-          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], []>;
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
      class UnaryIntFloat :
-          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], []>;
+          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
      class ConvertIntFTOI :
-          Intrinsic<[llvm_anyint_ty], [llvm_anyfloat_ty], []>;
+          Intrinsic<[llvm_anyint_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
      class ConvertIntITOF :
-          Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty], []>;
+          Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty], [IntrNoMem]>;
      class UnaryIntNoRetInt :
           Intrinsic<[], [llvm_anyint_ty], []>;
      class UnaryIntNoRetFloat :
           Intrinsic<[], [llvm_anyfloat_ty], []>;
      class BinaryIntInt :
-          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>, LLVMMatchType<0>], []>;
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
      class BinaryIntFloat :
-          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>], []>;
+          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
      class BinaryIntNoRetInt :
           Intrinsic<[], [llvm_anyint_ty, LLVMMatchType<0>], []>;
      class BinaryIntNoRetFloat :
           Intrinsic<[], [llvm_anyfloat_ty, LLVMMatchType<0>], []>;
      class TernaryIntInt :
           Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
-          LLVMMatchType<0>, LLVMMatchType<0>], []>;
+          LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
      class TernaryIntFloat :
           Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>,
-          LLVMMatchType<0>, LLVMMatchType<0>], []>;
+          LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
      class QuaternaryIntInt :
           Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
-          LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+          LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
      class UnaryAtomicInt :
           Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
      class BinaryAtomicInt :

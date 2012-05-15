@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 let TargetPrefix = "R600", isTarget = 1 in {
-  def int_R600_load_input : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrReadWriteArgMem]>;
+  def int_R600_load_input : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
 }
 
 let TargetPrefix = "r600", isTarget = 1 in {

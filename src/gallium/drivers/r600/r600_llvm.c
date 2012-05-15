@@ -21,10 +21,11 @@ static LLVMValueRef llvm_fetch_const(
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
-	LLVMValueRef cval = lp_build_intrinsic_unary(bld_base->base.gallivm->builder,
+	LLVMValueRef idx = lp_build_const_int32(bld_base->base.gallivm,
+			radeon_llvm_reg_index_soa(reg->Register.Index, swizzle));
+	LLVMValueRef cval = build_intrinsic(bld_base->base.gallivm->builder,
 		"llvm.AMDGPU.load.const", bld_base->base.elem_type,
-		lp_build_const_int32(bld_base->base.gallivm,
-		radeon_llvm_reg_index_soa(reg->Register.Index, swizzle)));
+		&idx, 1, LLVMReadNoneAttribute);
 
 	return bitcast(bld_base, type, cval);
 }
@@ -44,10 +45,11 @@ static void llvm_load_system_value(
 
 	LLVMValueRef reg = lp_build_const_int32(
 			ctx->soa.bld_base.base.gallivm, chan);
-	ctx->system_values[index] = lp_build_intrinsic_unary(
+	ctx->system_values[index] = build_intrinsic(
 			ctx->soa.bld_base.base.gallivm->builder,
 			"llvm.R600.load.input",
-			ctx->soa.bld_base.base.elem_type, reg);
+			ctx->soa.bld_base.base.elem_type, &reg, 1,
+			LLVMReadNoneAttribute);
 }
 
 static LLVMValueRef llvm_fetch_system_value(
@@ -76,10 +78,11 @@ static void llvm_load_input(
 		LLVMValueRef reg = lp_build_const_int32(
 				ctx->soa.bld_base.base.gallivm,
 				soa_index + (ctx->reserved_reg_count * 4));
-		ctx->inputs[soa_index] = lp_build_intrinsic_unary(
+		ctx->inputs[soa_index] = build_intrinsic(
 				ctx->soa.bld_base.base.gallivm->builder,
 				"llvm.R600.load.input",
-				ctx->soa.bld_base.base.elem_type, reg);
+				ctx->soa.bld_base.base.elem_type, &reg, 1,
+				LLVMReadNoneAttribute);
 	}
 }
 
@@ -146,9 +149,9 @@ static void llvm_emit_tex(
 					emit_data->inst->Src[1].Register.Index);
 	args[2] = lp_build_const_int32(gallivm,
 					emit_data->inst->Texture.Texture);
-	emit_data->output[0] = lp_build_intrinsic(gallivm->builder,
+	emit_data->output[0] = build_intrinsic(gallivm->builder,
 					action->intr_name,
-					emit_data->dst_type, args, 3);
+					emit_data->dst_type, args, 3, LLVMReadNoneAttribute);
 }
 
 static void dp_fetch_args(
@@ -189,7 +192,7 @@ static void dp_fetch_args(
 
 static struct lp_build_tgsi_action dot_action = {
 	.fetch_args = dp_fetch_args,
-	.emit = lp_build_tgsi_intrinsic,
+	.emit = build_tgsi_intrinsic_nomem,
 	.intr_name = "llvm.AMDGPU.dp4"
 };
 
