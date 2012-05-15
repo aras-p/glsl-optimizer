@@ -36,6 +36,7 @@
 #include <float.h>
 
 #include "util/u_debug.h"
+#include "util/u_math.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -297,7 +298,7 @@ lp_build_const_elem(struct gallivm_state *gallivm,
    else {
       double dscale = lp_const_scale(type);
 
-      elem = LLVMConstInt(elem_type, val*dscale + 0.5, 0);
+      elem = LLVMConstInt(elem_type, round(val*dscale), 0);
    }
 
    return elem;
@@ -372,10 +373,10 @@ lp_build_const_aos(struct gallivm_state *gallivm,
    else {
       double dscale = lp_const_scale(type);
 
-      elems[swizzle[0]] = LLVMConstInt(elem_type, r*dscale + 0.5, 0);
-      elems[swizzle[1]] = LLVMConstInt(elem_type, g*dscale + 0.5, 0);
-      elems[swizzle[2]] = LLVMConstInt(elem_type, b*dscale + 0.5, 0);
-      elems[swizzle[3]] = LLVMConstInt(elem_type, a*dscale + 0.5, 0);
+      elems[swizzle[0]] = LLVMConstInt(elem_type, round(r*dscale), 0);
+      elems[swizzle[1]] = LLVMConstInt(elem_type, round(g*dscale), 0);
+      elems[swizzle[2]] = LLVMConstInt(elem_type, round(b*dscale), 0);
+      elems[swizzle[3]] = LLVMConstInt(elem_type, round(a*dscale), 0);
    }
 
    for(i = 4; i < type.length; ++i)
