@@ -448,6 +448,16 @@ def TEX_GET_GRADIENTS_V : R600_TEX <
   [(set R600_Reg128:$dst, (int_AMDGPU_ddy R600_Reg128:$src0, imm:$src1, imm:$src2))]
 >;
 
+def TEX_SET_GRADIENTS_H : R600_TEX <
+  0x0B, "TEX_SET_GRADIENTS_H",
+  []
+>;
+
+def TEX_SET_GRADIENTS_V : R600_TEX <
+  0x0C, "TEX_SET_GRADIENTS_V",
+  []
+>;
+
 def TEX_SAMPLE : R600_TEX <
   0x10, "TEX_SAMPLE",
   [(set R600_Reg128:$dst, (int_AMDGPU_tex R600_Reg128:$src0, imm:$src1, imm:$src2))]
@@ -480,12 +490,12 @@ def TEX_SAMPLE_C_LB : R600_TEX <
 
 def TEX_SAMPLE_G : R600_TEX <
   0x14, "TEX_SAMPLE_G",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, imm:$src1, imm:$src2))]
+  []
 >;
 
 def TEX_SAMPLE_C_G : R600_TEX <
   0x1C, "TEX_SAMPLE_C_G",
-  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, imm:$src1, TEX_SHADOW:$src2))]
+  []
 >;
 
 } // End Gen R600_CAYMAN
@@ -1007,6 +1017,20 @@ def STORE_OUTPUT: AMDGPUShaderInst <
   (ins R600_Reg32:$src0, i32imm:$src1),
   "STORE_OUTPUT $src0, $src1",
   [(int_AMDGPU_store_output R600_Reg32:$src0, imm:$src1)]
+>;
+
+def TXD: AMDGPUShaderInst <
+  (outs R600_Reg128:$dst),
+  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$src3, i32imm:$src4),
+  "TXD $dst, $src0, $src1, $src2, $src3, $src4",
+  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$src3, imm:$src4))]
+>;
+
+def TXD_SHADOW: AMDGPUShaderInst <
+  (outs R600_Reg128:$dst),
+  (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$src3, i32imm:$src4),
+  "TXD_SHADOW $dst, $src0, $src1, $src2, $src3, $src4",
+  [(set R600_Reg128:$dst, (int_AMDGPU_txd R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, imm:$src3, TEX_SHADOW:$src4))]
 >;
 
 } // End usesCustomInserter = 1, isPseudo = 1

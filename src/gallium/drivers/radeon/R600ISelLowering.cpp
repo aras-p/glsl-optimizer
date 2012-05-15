@@ -131,6 +131,53 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       MFI->ReservedRegs.push_back(ReservedReg);
       break;
     }
+
+  case AMDIL::TXD:
+    {
+      unsigned t0 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+      unsigned t1 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_H), t0)
+              .addOperand(MI->getOperand(3))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5));
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_V), t1)
+              .addOperand(MI->getOperand(2))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5));
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SAMPLE_G))
+              .addOperand(MI->getOperand(0))
+              .addOperand(MI->getOperand(1))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5))
+              .addReg(t0, RegState::Implicit)
+              .addReg(t1, RegState::Implicit);
+      break;
+    }
+  case AMDIL::TXD_SHADOW:
+    {
+      unsigned t0 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+      unsigned t1 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_H), t0)
+              .addOperand(MI->getOperand(3))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5));
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_V), t1)
+              .addOperand(MI->getOperand(2))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5));
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SAMPLE_C_G))
+              .addOperand(MI->getOperand(0))
+              .addOperand(MI->getOperand(1))
+              .addOperand(MI->getOperand(4))
+              .addOperand(MI->getOperand(5))
+              .addReg(t0, RegState::Implicit)
+              .addReg(t1, RegState::Implicit);
+      break;
+    }
+
+
   }
 
   MI->eraseFromParent();

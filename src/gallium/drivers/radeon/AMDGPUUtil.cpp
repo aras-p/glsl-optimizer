@@ -83,6 +83,8 @@ bool AMDGPU::isTexOp(unsigned opcode)
   case AMDIL::TEX_SAMPLE_C_G:
   case AMDIL::TEX_GET_GRADIENTS_H:
   case AMDIL::TEX_GET_GRADIENTS_V:
+  case AMDIL::TEX_SET_GRADIENTS_H:
+  case AMDIL::TEX_SET_GRADIENTS_V:
     return true;
   }
 }

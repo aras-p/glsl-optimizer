@@ -5,6 +5,7 @@
 #include "gallivm/lp_bld_gather.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_double_list.h"
+#include "util/u_memory.h"
 
 #include "r600.h"
 #include "r600_asm.h"
@@ -142,16 +143,22 @@ static void llvm_emit_tex(
 	struct lp_build_emit_data * emit_data)
 {
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
-	LLVMValueRef args[3];
+	LLVMValueRef args[6];
+	unsigned c;
 
-	args[0] = emit_data->args[0];
-	args[1] = lp_build_const_int32(gallivm,
+	assert(emit_data->arg_count + 2 <= Elements(args));
+
+	for (c = 0; c < emit_data->arg_count; ++c)
+		args[c] = emit_data->args[c];
+
+	args[c++] = lp_build_const_int32(gallivm,
 					emit_data->inst->Src[1].Register.Index);
-	args[2] = lp_build_const_int32(gallivm,
+	args[c++] = lp_build_const_int32(gallivm,
 					emit_data->inst->Texture.Texture);
+
 	emit_data->output[0] = build_intrinsic(gallivm->builder,
 					action->intr_name,
-					emit_data->dst_type, args, 3, LLVMReadNoneAttribute);
+					emit_data->dst_type, args, c, LLVMReadNoneAttribute);
 }
 
 static void dp_fetch_args(
