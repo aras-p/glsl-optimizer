@@ -53,6 +53,9 @@
 #include <llvm/MC/MCInst.h>
 #include <llvm/MC/MCInstPrinter.h>
 #endif /* HAVE_LLVM >= 0x0207 */
+#if HAVE_LLVM >= 0x0301
+#include <llvm/MC/MCRegisterInfo.h>
+#endif /* HAVE_LLVM >= 0x0301 */
 
 #include "util/u_math.h"
 #include "util/u_debug.h"
