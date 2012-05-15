@@ -172,3 +172,16 @@ GLESv2_PC_CFLAGS =
 VG_PC_REQ_PRIV =
 VG_PC_LIB_PRIV =
 VG_PC_CFLAGS =
+
+# default targets
+# this helps reduce the mismatch between our automake Makefiles and the old
+# custom Makefiles while we transition.
+
+all: default
+
+am--refresh:
+
+distclean: clean
+
+check:
+test:

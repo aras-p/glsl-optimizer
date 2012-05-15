@@ -68,6 +68,3 @@ AMDGPUGenCodeEmitter.inc: *.td
 LOADER_LIBS=$(shell llvm-config --libs bitreader asmparser)
 loader: loader.o libradeon.a
 	gcc -o loader -L/usr/local/lib $(LDFLAGS) loader.o libradeon.a $(LLVM_LIBS) $(LOADER_LIBS) -lpthread -ldl -lstdc++ -lm
-
-# FIXME: Remove when this driver is converted to automake.
-all: default

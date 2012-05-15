@@ -121,7 +121,7 @@ COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
 ######################################################################
 
-all: mesa
+default: mesa
 install: mesa
 
 mesa: $(MESA_OUTPUTS)

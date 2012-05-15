@@ -19,6 +19,3 @@ EXTRA_OBJECTS = \
 CFLAGS+=$(RADEON_CFLAGS)
 
 include ../../Makefile.template
-
-# FIXME: Remove when this driver is converted to automake.
-all: default

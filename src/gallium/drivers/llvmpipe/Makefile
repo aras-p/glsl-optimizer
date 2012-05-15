@@ -62,9 +62,6 @@ CLEAN_EXTRA = *.o
 
 include ../../Makefile.template
 
-# FIXME: Remove when this driver is converted to automake.
-all: default
-
 PROGS_DEPS := ../../auxiliary/libgallium.a
 
 lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_pack.py ../../auxiliary/util/u_format.csv

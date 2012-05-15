@@ -19,7 +19,7 @@ RM=rm
 #The directory with the final binaries.
 BUILD_DIR=builds
 
-all: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 SOURCES = \
 	apple_cgl.c \

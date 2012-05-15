@@ -35,6 +35,3 @@ C_SOURCES = \
 	sp_surface.c
 
 include ../../Makefile.template
-
-# FIXME: Remove when this driver is converted to automake.
-all: default

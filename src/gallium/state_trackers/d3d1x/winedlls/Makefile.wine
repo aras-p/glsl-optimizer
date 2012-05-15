@@ -3,7 +3,7 @@ D3D1X=../..
 include $(TOP)/configs/current
 CFLAGS=$(CXXFLAGS)
 
-all: lib$(LIBNAME).def lib$(LIBNAME).cross.a $(LIBNAME).dll.so
+default: lib$(LIBNAME).def lib$(LIBNAME).cross.a $(LIBNAME).dll.so
 
 %.dll.fake: %.spec $(OBJECTS) version.res
 	wineg++ -m32 -fasynchronous-unwind-tables -shared $^ -o $@ $(LDADD)

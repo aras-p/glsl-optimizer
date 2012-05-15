@@ -11,6 +11,3 @@ C_SOURCES = \
 	tr_texture.c
 
 include ../../Makefile.template
-
-# FIXME: Remove when this driver is converted to automake.
-all: default

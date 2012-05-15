@@ -17,6 +17,3 @@ LIBRARY_DEFINES = \
 	-DHAVE_STDINT_H -DHAVE_SYS_TYPES_H
 
 include ../../Makefile.template
-
-# FIXME: Remove when this driver is converted to automake.
-all: default

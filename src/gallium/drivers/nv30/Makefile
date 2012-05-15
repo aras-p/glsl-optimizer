@@ -10,6 +10,3 @@ LIBRARY_INCLUDES = \
 
 include ../../Makefile.template
 # DO NOT DELETE
-
-# FIXME: Remove when this driver is converted to automake.
-all: default
