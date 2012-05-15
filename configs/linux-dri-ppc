@@ -1,9 +1,0 @@
-# -*-makefile-*-
-# Configuration for linux-dri: Linux DRI hardware drivers for XFree86 & others
-
-include $(TOP)/configs/linux-dri
-
-CONFIG_NAME = linux-dri-ppc
-
-OPT_FLAGS = -Os -mcpu=603
-PIC_FLAGS = -fPIC

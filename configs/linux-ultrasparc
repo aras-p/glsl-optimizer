@@ -1,7 +1,0 @@
-# Configuration for Linux on UltraSparc
-
-include $(TOP)/configs/linux-sparc
-
-CONFIG_NAME = linux-ultrasparc
-
-ARCH_FLAGS += -mv8 -mtune=ultrasparc

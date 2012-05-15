@@ -1,7 +1,0 @@
-# Configuration for Darwin / MacOS X, making 32bit fat dynamic libs
-
-RC_CFLAGS=-arch ppc -arch i386
-
-include $(TOP)/configs/darwin
-
-CONFIG_NAME = darwin-fat-32bit

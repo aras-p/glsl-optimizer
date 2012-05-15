@@ -1,9 +1,0 @@
-# Configuration for Linux with x86 code, but no gcc optimizations and 
-# debugging enabled.
-
-include $(TOP)/configs/linux-x86
-
-CONFIG_NAME = linux-x86-debug
-
-OPT_FLAGS = -g
-DEFINES += -DDEBUG -DDEBUG_MATH

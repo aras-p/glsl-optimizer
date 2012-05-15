@@ -1,8 +1,0 @@
-# Configuration for Linux for 64-bit X86 (Opteron)
-
-include $(TOP)/configs/linux-x86-64
-
-CONFIG_NAME = linux-x86-64-debug
-
-OPT_FLAGS = -g
-DEFINES += -DDEBUG -DDEBUG_MATH

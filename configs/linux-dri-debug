@@ -1,8 +1,0 @@
-# -*-makefile-*-
-# Configuration for linux-dri-debug: Linux DRI hardware drivers for XFree86 & others
-
-include $(TOP)/configs/linux-dri
-
-CONFIG_NAME = linux-dri-debug
-OPT_FLAGS  = -O0 -g
-ARCH_FLAGS = -DDEBUG

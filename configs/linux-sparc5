@@ -1,7 +1,0 @@
-# Configuration for Linux on Sparc5
-
-include $(TOP)/configs/linux-sparc
-
-CONFIG_NAME = linux-sparc5
-
-ARCH_FLAGS += -mcpu=ultrasparc

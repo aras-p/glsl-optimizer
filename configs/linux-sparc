@@ -1,9 +1,0 @@
-# Configuration for Linux on Sparc
-
-include $(TOP)/configs/linux
-
-CONFIG_NAME = linux-sparc
-
-#ASM_FLAGS = -DUSE_SPARC_ASM
-#MESA_ASM_SOURCES = $(SPARC_SOURCES)
-#GLAPI_ASM_SOURCES = $(SPARC_API)
