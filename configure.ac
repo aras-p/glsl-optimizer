@@ -836,7 +836,7 @@ fi
 # build glsl and mesa if OpenGL or OpenGL ES is enabled
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
-    CORE_DIRS="$CORE_DIRS glsl mesa"
+    CORE_DIRS="mapi/glapi/gen $CORE_DIRS glsl mesa"
     ;;
 esac
 
