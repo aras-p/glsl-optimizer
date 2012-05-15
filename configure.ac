@@ -2186,7 +2186,8 @@ AC_CONFIG_FILES([configs/current
 		src/mesa/drivers/dri/radeon/Makefile
 		src/mesa/drivers/dri/swrast/Makefile
 		src/mesa/drivers/x11/Makefile
-		src/mesa/gl.pc])
+		src/mesa/gl.pc
+		src/mesa/osmesa.pc])
 
 dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`

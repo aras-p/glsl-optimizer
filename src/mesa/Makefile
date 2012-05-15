@@ -161,21 +161,6 @@ install: default $(DRICORE_INSTALL_TARGET)
 	  esac ; \
 	done
 
-pcedit = \
-	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
-	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
-
-osmesa_pcedit = sed \
-	$(pcedit) \
-	-e 's,@OSMESA_LIB@,$(OSMESA_LIB),' \
-	-e 's,@OSMESA_PC_REQ@,$(OSMESA_PC_REQ),' \
-	-e 's,@OSMESA_PC_LIB_PRIV@,$(OSMESA_PC_LIB_PRIV),'
-
-osmesa.pc: osmesa.pc.in
-	$(osmesa_pcedit) $< > $@
-
 install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
@@ -186,7 +171,7 @@ install-libgl-pc: install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
-install-osmesa: default osmesa.pc
+install-osmesa: default
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
@@ -208,7 +193,6 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libmesagallium.a
 	-rm -f drivers/*/*.o
-	-rm -f osmesa.pc
 	-rm -f $(BUILT_SOURCES)
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
