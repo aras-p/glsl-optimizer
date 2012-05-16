@@ -12,6 +12,9 @@
 #define NV50_TIC_MAX_ENTRIES 2048
 #define NV50_TSC_MAX_ENTRIES 2048
 
+/* doesn't count reserved slots (for auxiliary constants, immediates, etc.) */
+#define NV50_MAX_PIPE_CONSTBUFS 14
+
 struct nv50_context;
 
 #define NV50_CODE_BO_SIZE_LOG2 19

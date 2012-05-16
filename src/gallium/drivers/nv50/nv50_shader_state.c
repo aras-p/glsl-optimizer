@@ -35,9 +35,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
    unsigned s;
 
    for (s = 0; s < 3; ++s) {
-      struct nv04_resource *res;
-      int i;
-      unsigned p, b;
+      unsigned p;
 
       if (s == PIPE_SHADER_FRAGMENT)
          p = NV50_3D_SET_PROGRAM_CB_PROGRAM_FRAGMENT;
@@ -48,68 +46,63 @@ nv50_constbufs_validate(struct nv50_context *nv50)
          p = NV50_3D_SET_PROGRAM_CB_PROGRAM_VERTEX;
 
       while (nv50->constbuf_dirty[s]) {
-         struct nouveau_bo *bo;
-         unsigned start = 0;
-         unsigned words = 0;
-
-         i = ffs(nv50->constbuf_dirty[s]) - 1;
+         const int i = ffs(nv50->constbuf_dirty[s]) - 1;
          nv50->constbuf_dirty[s] &= ~(1 << i);
 
-         res = nv04_resource(nv50->constbuf[s][i]);
-         if (!res) {
-            if (i != 0) {
+         if (nv50->constbuf[s][i].user) {
+            const unsigned b = NV50_CB_PVP + s;
+            unsigned start = 0;
+            unsigned words = nv50->constbuf[s][0].size / 4;
+            if (i) {
+               NOUVEAU_ERR("user constbufs only supported in slot 0\n");
+               continue;
+            }
+            if (!nv50->state.uniform_buffer_bound[s]) {
+               nv50->state.uniform_buffer_bound[s] = TRUE;
+               BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
+               PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
+            }
+            while (words) {
+               unsigned nr;
+
+               if (!PUSH_SPACE(push, 16))
+                  break;
+               nr = PUSH_AVAIL(push);
+               assert(nr >= 16);
+               nr = MIN2(MIN2(nr - 3, words), NV04_PFIFO_MAX_PACKET_LEN);
+
+               BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+               PUSH_DATA (push, (start << 8) | b);
+               BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
+               PUSH_DATAp(push, &nv50->constbuf[s][0].u.data[start * 4], nr);
+
+               start += nr;
+               words -= nr;
+            }
+         } else {
+            struct nv04_resource *res =
+               nv04_resource(nv50->constbuf[s][i].u.buf);
+            if (res) {
+               /* TODO: allocate persistent bindings */
+               const unsigned b = s * 16 + i;
+
+               assert(nouveau_resource_mapped_by_gpu(&res->base));
+
+               BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
+               PUSH_DATAh(push, res->address + nv50->constbuf[s][i].offset);
+               PUSH_DATA (push, res->address + nv50->constbuf[s][i].offset);
+               PUSH_DATA (push, (b << 16) |
+                          (nv50->constbuf[s][i].size & 0xffff));
+               BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
+               PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
+
+               BCTX_REFN(nv50->bufctx_3d, CB(s, i), res, RD);
+            } else {
                BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
                PUSH_DATA (push, (i << 8) | p | 0);
             }
-            continue;
-         }
-
-         if (i == 0) {
-            b = NV50_CB_PVP + s;
-
-            /* always upload GL uniforms through CB DATA */
-            bo = nv50->screen->uniforms;
-            words = res->base.width0 / 4;
-         } else {
-            b = s * 16 + i;
-
-            assert(0);
-
-            if (!nouveau_resource_mapped_by_gpu(&res->base)) {
-               nouveau_buffer_migrate(&nv50->base, res, NOUVEAU_BO_VRAM);
-
-               BEGIN_NV04(push, NV50_3D(CODE_CB_FLUSH), 1);
-               PUSH_DATA (push, 0);
-            }
-            BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
-            PUSH_DATAh(push, res->address);
-            PUSH_DATA (push, res->address);
-            PUSH_DATA (push, (b << 16) | (res->base.width0 & 0xffff));
-            BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
-            PUSH_DATA (push, (b << 12) | (i << 8) | p | 1);
-
-            bo = res->bo;
-         }
-
-         if (bo != nv50->screen->uniforms)
-            BCTX_REFN(nv50->bufctx_3d, CB(s, i), res, RD);
-
-         while (words) {
-            unsigned nr;
-
-            if (!PUSH_SPACE(push, 16))
-               break;
-            nr = PUSH_AVAIL(push);
-            assert(nr >= 16);
-            nr = MIN2(MIN2(nr - 3, words), NV04_PFIFO_MAX_PACKET_LEN);
-
-            BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
-            PUSH_DATA (push, (start << 8) | b);
-            BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nr);
-            PUSH_DATAp(push, &res->data[start * 4], nr);
-
-            start += nr;
-            words -= nr;
+            if (i == 0)
+               nv50->state.uniform_buffer_bound[s] = FALSE;
          }
       }
    }

@@ -32,6 +32,16 @@ struct nvc0_zsa_stateobj {
    uint32_t state[26];
 };
 
+struct nvc0_constbuf {
+   union {
+      struct pipe_resource *buf;
+      const void *data;
+   } u;
+   uint32_t size;
+   uint16_t offset;
+   boolean user; /* should only be TRUE if u.data is valid and non-NULL */
+};
+
 struct nvc0_vertex_element {
    struct pipe_vertex_element pipe;
    uint32_t state;

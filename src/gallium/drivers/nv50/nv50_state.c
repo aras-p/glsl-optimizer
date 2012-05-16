@@ -751,28 +751,36 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct pipe_resource *res = cb ? cb->buffer : NULL;
+   const unsigned s = nv50_context_shader_stage(shader);
+   const unsigned i = index;
 
-   if (cb && cb->user_buffer) {
-      res = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
-                                       cb->buffer_size,
-                                       PIPE_BIND_CONSTANT_BUFFER);
-   }
+   if (shader == PIPE_SHADER_COMPUTE)
+      return;
 
-   pipe_resource_reference(&nv50->constbuf[shader][index], res);
-
-   nv50->constbuf_dirty[shader] |= 1 << index;
-   if (res)
-      nv50->constbuf_valid[shader] |= 1 << index;
+   if (nv50->constbuf[s][i].user)
+      nv50->constbuf[s][i].u.buf = NULL;
    else
-      nv50->constbuf_valid[shader] &= ~(1 << index);
+   if (nv50->constbuf[s][i].u.buf)
+      nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_CB(s, i));
 
-   nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_CB(shader, index));
+   pipe_resource_reference(&nv50->constbuf[s][i].u.buf, res);
+
+   nv50->constbuf[s][i].user = (cb && cb->user_buffer) ? TRUE : FALSE;
+   if (nv50->constbuf[s][i].user) {
+      nv50->constbuf[s][i].u.data = cb->user_buffer;
+      nv50->constbuf[s][i].size = cb->buffer_size;
+      nv50->constbuf_valid[s] |= 1 << i;
+   } else
+   if (res) {
+      nv50->constbuf[s][i].offset = cb->buffer_offset;
+      nv50->constbuf[s][i].size = align(cb->buffer_size, 0x100);
+      nv50->constbuf_valid[s] |= 1 << i;
+   } else {
+      nv50->constbuf_valid[s] &= ~(1 << i);
+   }
+   nv50->constbuf_dirty[s] |= 1 << i;
 
    nv50->dirty |= NV50_NEW_CONSTBUF;
-
-   if (cb && cb->user_buffer) {
-      pipe_resource_reference(&res, NULL);
-   }
 }
 
 /* =============================================================================

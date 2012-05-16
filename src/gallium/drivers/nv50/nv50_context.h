@@ -90,6 +90,7 @@ struct nv50_context {
       uint32_t semantic_color;
       uint32_t semantic_psize;
       int32_t index_bias;
+      boolean uniform_buffer_bound[3];
       boolean prim_restart;
       boolean point_sprite;
       boolean rt_serialize;
@@ -113,7 +114,7 @@ struct nv50_context {
    struct nv50_program *gmtyprog;
    struct nv50_program *fragprog;
 
-   struct pipe_resource *constbuf[3][16];
+   struct nv50_constbuf constbuf[3][NV50_MAX_PIPE_CONSTBUFS];
    uint16_t constbuf_dirty[3];
    uint16_t constbuf_valid[3];
 
@@ -163,6 +164,20 @@ nv50_context_screen(struct nv50_context *nv50)
    return nv50_screen(&nv50->base.screen->base);
 }
 
+/* return index used in nv50_context arrays for a specific shader type */
+static INLINE unsigned
+nv50_context_shader_stage(unsigned pipe)
+{
+   switch (pipe) {
+   case PIPE_SHADER_VERTEX: return 0;
+   case PIPE_SHADER_FRAGMENT: return 1;
+   case PIPE_SHADER_GEOMETRY: return 2;
+   case PIPE_SHADER_COMPUTE: return 3;
+   default:
+      assert(!"invalid/unhandled shader type");
+      return 0;
+   }
+}
 
 /* nv50_context.c */
 struct pipe_context *nv50_create(struct pipe_screen *, void *);

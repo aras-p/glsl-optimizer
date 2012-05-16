@@ -620,38 +620,33 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct pipe_resource *res = cb ? cb->buffer : NULL;
+   const unsigned s = nvc0_shader_stage(shader);
+   const unsigned i = index;
 
-   if (cb && cb->user_buffer) {
-      res = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
-                                       cb->buffer_size,
-                                       PIPE_BIND_CONSTANT_BUFFER);
+   if (shader == PIPE_SHADER_COMPUTE)
+      return;
+
+   if (nvc0->constbuf[s][i].user)
+      nvc0->constbuf[s][i].u.buf = NULL;
+   else
+   if (nvc0->constbuf[s][i].u.buf)
+      nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_CB(s, i));
+
+   pipe_resource_reference(&nvc0->constbuf[s][i].u.buf, res);
+
+   nvc0->constbuf[s][i].user = (cb && cb->user_buffer) ? TRUE : FALSE;
+   if (nvc0->constbuf[s][i].user) {
+      nvc0->constbuf[s][i].u.data = cb->user_buffer;
+      nvc0->constbuf[s][i].size = cb->buffer_size;
+   } else
+   if (cb) {
+      nvc0->constbuf[s][i].offset = cb->buffer_offset;
+      nvc0->constbuf[s][i].size = align(cb->buffer_size, 0x100);
    }
 
-   switch (shader) {
-   case PIPE_SHADER_VERTEX: shader = 0; break;
-      /*
-   case PIPE_SHADER_TESSELLATION_CONTROL: shader = 1; break;
-   case PIPE_SHADER_TESSELLATION_EVALUATION: shader = 2; break;
-      */
-   case PIPE_SHADER_GEOMETRY: shader = 3; break;
-   case PIPE_SHADER_FRAGMENT: shader = 4; break;
-   default:
-      assert(0);
-      break;
-   }
-
-   if (nvc0->constbuf[shader][index])
-      nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_CB(shader, index));
-
-   pipe_resource_reference(&nvc0->constbuf[shader][index], res);
-
-   nvc0->constbuf_dirty[shader] |= 1 << index;
+   nvc0->constbuf_dirty[s] |= 1 << i;
 
    nvc0->dirty |= NVC0_NEW_CONSTBUF;
-
-   if (cb->user_buffer) {
-      pipe_resource_reference(&res, NULL);
-   }
 }
 
 /* =============================================================================

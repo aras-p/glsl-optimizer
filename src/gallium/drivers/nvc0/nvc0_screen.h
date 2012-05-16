@@ -14,6 +14,9 @@
 #define NVC0_TIC_MAX_ENTRIES 2048
 #define NVC0_TSC_MAX_ENTRIES 2048
 
+/* doesn't count reserved slots (for auxiliary constants, immediates, etc.) */
+#define NVC0_MAX_PIPE_CONSTBUFS 14
+
 struct nvc0_context;
 
 struct nvc0_blitctx;

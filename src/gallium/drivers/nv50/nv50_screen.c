@@ -196,7 +196,7 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_CONSTS:
       return 65536 / 16;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-      return 14;
+      return NV50_MAX_PIPE_CONSTBUFS;
    case PIPE_SHADER_CAP_MAX_ADDRS:
       return 1;
    case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
@@ -437,10 +437,7 @@ nv50_screen_init_hwctx(struct nv50_screen *screen, unsigned tls_space)
    PUSH_DATA (push, screen->uniforms->offset + (3 << 16));
    PUSH_DATA (push, (NV50_CB_AUX << 16) | 0x0200);
 
-   BEGIN_NI04(push, NV50_3D(SET_PROGRAM_CB), 6);
-   PUSH_DATA (push, (NV50_CB_PVP << 12) | 0x001);
-   PUSH_DATA (push, (NV50_CB_PGP << 12) | 0x021);
-   PUSH_DATA (push, (NV50_CB_PFP << 12) | 0x031);
+   BEGIN_NI04(push, NV50_3D(SET_PROGRAM_CB), 3);
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf01);
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf21);
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf31);

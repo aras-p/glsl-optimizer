@@ -86,8 +86,9 @@ nv50_context_unreference_resources(struct nv50_context *nv50)
       for (i = 0; i < nv50->num_textures[s]; ++i)
          pipe_sampler_view_reference(&nv50->textures[s][i], NULL);
 
-      for (i = 0; i < 16; ++i)
-         pipe_resource_reference(&nv50->constbuf[s][i], NULL);
+      for (i = 0; i < NV50_MAX_PIPE_CONSTBUFS; ++i)
+         if (!nv50->constbuf[s][i].user)
+            pipe_resource_reference(&nv50->constbuf[s][i].u.buf, NULL);
    }
 }
 

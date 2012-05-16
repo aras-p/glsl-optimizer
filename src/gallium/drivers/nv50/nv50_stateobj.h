@@ -34,6 +34,16 @@ struct nv50_zsa_stateobj {
    uint32_t state[29];
 };
 
+struct nv50_constbuf {
+   union {
+      struct pipe_resource *buf;
+      const uint8_t *data;
+   } u;
+   uint32_t size; /* max 65536 */
+   uint16_t offset;
+   boolean user; /* should only be TRUE if u.data is valid and non-NULL */
+};
+
 struct nv50_vertex_element {
    struct pipe_vertex_element pipe;
    uint32_t state;

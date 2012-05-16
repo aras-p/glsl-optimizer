@@ -355,70 +355,53 @@ static void
 nvc0_constbufs_validate(struct nvc0_context *nvc0)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   struct nouveau_bo *bo;
    unsigned s;
 
    for (s = 0; s < 5; ++s) {
-      struct nv04_resource *res;
-      int i;
-
       while (nvc0->constbuf_dirty[s]) {
-         unsigned base = 0;
-         unsigned words = 0;
-         boolean rebind = TRUE;
-
-         i = ffs(nvc0->constbuf_dirty[s]) - 1;
+         int i = ffs(nvc0->constbuf_dirty[s]) - 1;
          nvc0->constbuf_dirty[s] &= ~(1 << i);
 
-         res = nv04_resource(nvc0->constbuf[s][i]);
-         if (!res) {
-            BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
-            PUSH_DATA (push, (i << 4) | 0);
-            if (i == 0)
-               nvc0->state.uniform_buffer_bound[s] = 0;
-            continue;
-         }
+         if (nvc0->constbuf[s][i].user) {
+            struct nouveau_bo *bo = nvc0->screen->uniform_bo;
+            const unsigned base = s << 16;
+            const unsigned size = nvc0->constbuf[s][0].size;
+            assert(i == 0); /* we really only want OpenGL uniforms here */
+            assert(nvc0->constbuf[s][0].u.data);
 
-         if (!nouveau_resource_mapped_by_gpu(&res->base)) {
-            if (i == 0 && (res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY)) {
-               base = s << 16;
-               bo = nvc0->screen->uniform_bo;
+            if (nvc0->state.uniform_buffer_bound[s] < size) {
+               nvc0->state.uniform_buffer_bound[s] = align(size, 0x100);
 
-               if (nvc0->state.uniform_buffer_bound[s] >= res->base.width0)
-                  rebind = FALSE;
-               else
-                  nvc0->state.uniform_buffer_bound[s] =
-                     align(res->base.width0, 0x100);
-
-               words = res->base.width0 / 4;
-            } else {
-               nouveau_buffer_migrate(&nvc0->base, res, NOUVEAU_BO_VRAM);
-               bo = res->bo;
-               base = res->offset;
+               BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
+               PUSH_DATA (push, nvc0->state.uniform_buffer_bound[s]);
+               PUSH_DATAh(push, bo->offset + base);
+               PUSH_DATA (push, bo->offset + base);
+               BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
+               PUSH_DATA (push, (0 << 4) | 1);
             }
+            nvc0_cb_push(&nvc0->base, bo, NOUVEAU_BO_VRAM,
+                         base, nvc0->state.uniform_buffer_bound[s],
+                         0, (size + 3) / 4,
+                         nvc0->constbuf[s][0].u.data);
          } else {
-            bo = res->bo;
-            base = res->offset;
+            struct nv04_resource *res =
+               nv04_resource(nvc0->constbuf[s][i].u.buf);
+            if (res) {
+               BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
+               PUSH_DATA (push, nvc0->constbuf[s][i].size);
+               PUSH_DATAh(push, res->address + nvc0->constbuf[s][i].offset);
+               PUSH_DATA (push, res->address + nvc0->constbuf[s][i].offset);
+               BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
+               PUSH_DATA (push, (i << 4) | 1);
+
+               BCTX_REFN(nvc0->bufctx_3d, CB(s, i), res, RD);
+            } else {
+               BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
+               PUSH_DATA (push, (i << 4) | 0);
+            }
             if (i == 0)
                nvc0->state.uniform_buffer_bound[s] = 0;
          }
-
-         if (bo != nvc0->screen->uniform_bo)
-            BCTX_REFN(nvc0->bufctx_3d, CB(s, i), res, RD);
-
-         if (rebind) {
-            BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
-            PUSH_DATA (push, align(res->base.width0, 0x100));
-            PUSH_DATAh(push, bo->offset + base);
-            PUSH_DATA (push, bo->offset + base);
-            BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
-            PUSH_DATA (push, (i << 4) | 1);
-         }
-
-         if (words)
-            nvc0_cb_push(&nvc0->base,
-                         bo, NOUVEAU_BO_VRAM, base, res->base.width0,
-                         0, words, (const uint32_t *)res->data);
       }
    }
 }

@@ -190,7 +190,7 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_CONSTS:
       return 65536 / 16;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-      return 14;
+      return NVC0_MAX_PIPE_CONSTBUFS;
    case PIPE_SHADER_CAP_MAX_ADDRS:
       return 1;
    case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:

@@ -121,7 +121,7 @@ struct nvc0_context {
    struct nvc0_program *gmtyprog;
    struct nvc0_program *fragprog;
 
-   struct pipe_resource *constbuf[5][16];
+   struct nvc0_constbuf constbuf[5][NVC0_MAX_PIPE_CONSTBUFS];
    uint16_t constbuf_dirty[5];
 
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
@@ -167,6 +167,23 @@ nvc0_context(struct pipe_context *pipe)
 {
    return (struct nvc0_context *)pipe;
 }
+
+static INLINE unsigned
+nvc0_shader_stage(unsigned pipe)
+{
+   switch (pipe) {
+   case PIPE_SHADER_VERTEX: return 0;
+/* case PIPE_SHADER_TESSELLATION_CONTROL: return 1; */
+/* case PIPE_SHADER_TESSELLATION_EVALUATION: return 2; */
+   case PIPE_SHADER_GEOMETRY: return 3;
+   case PIPE_SHADER_FRAGMENT: return 4;
+   case PIPE_SHADER_COMPUTE: return 5;
+   default:
+      assert(!"invalid PIPE_SHADER type");
+      return 0;
+   }
+}
+
 
 /* nvc0_context.c */
 struct pipe_context *nvc0_create(struct pipe_screen *, void *);

@@ -72,8 +72,9 @@ nvc0_context_unreference_resources(struct nvc0_context *nvc0)
       for (i = 0; i < nvc0->num_textures[s]; ++i)
          pipe_sampler_view_reference(&nvc0->textures[s][i], NULL);
 
-      for (i = 0; i < 16; ++i)
-         pipe_resource_reference(&nvc0->constbuf[s][i], NULL);
+      for (i = 0; i < NVC0_MAX_PIPE_CONSTBUFS; ++i)
+         if (!nvc0->constbuf[s][i].user)
+            pipe_resource_reference(&nvc0->constbuf[s][i].u.buf, NULL);
    }
 
    for (i = 0; i < nvc0->num_tfbbufs; ++i)
