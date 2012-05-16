@@ -627,7 +627,8 @@ get_shader_source(struct gl_context *ctx, GLuint shader, GLsizei maxLength,
 
 
 /**
- * Set/replace shader source code.
+ * Set/replace shader source code.  A helper function used by
+ * glShaderSource[ARB] and glCreateShaderProgramEXT.
  */
 static void
 shader_source(struct gl_context *ctx, GLuint shader, const GLchar *source)
@@ -1534,6 +1535,10 @@ _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
       ctx->Driver.UseProgram(ctx, shProg);
 }
 
+
+/**
+ * For GL_EXT_separate_shader_objects
+ */
 void GLAPIENTRY
 _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
 {
@@ -1570,6 +1575,10 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
    _mesa_use_shader_program(ctx, type, shProg);
 }
 
+
+/**
+ * For GL_EXT_separate_shader_objects
+ */
 void GLAPIENTRY
 _mesa_ActiveProgramEXT(GLuint program)
 {
@@ -1582,6 +1591,10 @@ _mesa_ActiveProgramEXT(GLuint program)
    return;
 }
 
+
+/**
+ * For GL_EXT_separate_shader_objects
+ */
 GLuint GLAPIENTRY
 _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
 {
