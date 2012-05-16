@@ -149,13 +149,13 @@ asm_subdirs:
 ######################################################################
 # Dependency generation
 
-depend: $(ALL_SOURCES)
+depend: $(ALL_FILES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) -p$(MESA_OBJ_DIR)/ $(MESA_CPPFLAGS) \
-		$(ALL_SOURCES) > /dev/null 2>/dev/null
+		$(ALL_FILES) > /dev/null 2>/dev/null
 	@$(MKDEP) $(MKDEP_OPTIONS) -a -p$(DRICORE_OBJ_DIR)/ $(MESA_CPPFLAGS) \
-		$(ALL_SOURCES) > /dev/null 2>/dev/null
+		$(ALL_FILES) > /dev/null 2>/dev/null
 
 ######################################################################
 # Installation rules

@@ -89,7 +89,7 @@ DRI_CFLAGS = $(CFLAGS)
 DRI_CXXFLAGS = $(CXXFLAGS)
 
 # Optional assembly language optimization files for libGL
-MESA_ASM_SOURCES = 
+MESA_ASM_FILES =
 
 # GLw widget sources (Append "GLwMDrawA.c" here and add -lXm to GLW_LIB_DEPS in
 # order to build the Motif widget too)

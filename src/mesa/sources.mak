@@ -1,11 +1,11 @@
 ### Lists of source files, included by Makefiles
 
-# this is part of MAIN_SOURCES
-MAIN_ES_SOURCES = \
+# this is part of MAIN_FILES
+MAIN_ES_FILES = \
 	main/api_exec_es1.c \
 	main/api_exec_es2.c
 
-MAIN_SOURCES = \
+MAIN_FILES = \
 	main/api_arrayelt.c \
 	main/api_exec.c \
 	main/api_loopback.c \
@@ -103,14 +103,14 @@ MAIN_SOURCES = \
 	main/version.c \
 	main/viewport.c \
 	main/vtxfmt.c \
-	$(MAIN_ES_SOURCES)
+	$(MAIN_ES_FILES)
 
-MAIN_CXX_SOURCES = \
+MAIN_CXX_FILES = \
 	main/ff_fragment_shader.cpp \
 	main/shader_query.cpp \
 	main/uniform_query.cpp
 
-MATH_SOURCES = \
+MATH_FILES = \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
 	math/m_debug_xform.c \
@@ -119,10 +119,10 @@ MATH_SOURCES = \
 	math/m_translate.c \
 	math/m_vector.c
 
-MATH_XFORM_SOURCES = \
+MATH_XFORM_FILES = \
 	math/m_xform.c
 
-SWRAST_SOURCES = \
+SWRAST_FILES = \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_alpha.c \
@@ -153,11 +153,11 @@ SWRAST_SOURCES = \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 
-SWRAST_SETUP_SOURCES = \
+SWRAST_SETUP_FILES = \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c 
 
-TNL_SOURCES = \
+TNL_FILES = \
 	tnl/t_context.c \
 	tnl/t_pipeline.c \
 	tnl/t_draw.c \
@@ -176,7 +176,7 @@ TNL_SOURCES = \
 	tnl/t_vertex_sse.c \
 	tnl/t_vertex_generic.c 
 
-VBO_SOURCES = \
+VBO_FILES = \
 	vbo/vbo_context.c \
 	vbo/vbo_exec.c \
 	vbo/vbo_exec_api.c \
@@ -194,7 +194,7 @@ VBO_SOURCES = \
 	vbo/vbo_save_draw.c \
 	vbo/vbo_save_loopback.c 
 
-STATETRACKER_SOURCES = \
+STATETRACKER_FILES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_blend.c \
 	state_tracker/st_atom_clip.c \
@@ -243,7 +243,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_program.c \
 	state_tracker/st_texture.c
 
-PROGRAM_SOURCES = \
+PROGRAM_FILES = \
 	program/arbprogparse.c \
 	program/hash_table.c \
 	program/lex.yy.c \
@@ -267,12 +267,12 @@ PROGRAM_SOURCES = \
 	program/symbol_table.c
 
 
-SHADER_CXX_SOURCES = \
+SHADER_CXX_FILES = \
 	program/ir_to_mesa.cpp \
 	program/sampler.cpp \
 	program/string_to_uint_map.cpp
 
-ASM_C_SOURCES =	\
+ASM_C_FILES =	\
 	x86/common_x86.c \
 	x86/x86_xform.c \
 	x86/3dnow.c \
@@ -281,7 +281,7 @@ ASM_C_SOURCES =	\
 	sparc/sparc.c \
 	x86-64/x86-64.c
 
-X86_SOURCES =			\
+X86_FILES =			\
 	x86/common_x86_asm.S	\
 	x86/x86_xform2.S	\
 	x86/x86_xform3.S	\
@@ -300,71 +300,71 @@ X86_SOURCES =			\
 	x86/sse_normal.S	\
 	x86/read_rgba_span_x86.S
 
-X86-64_SOURCES =		\
+X86_64_FILES =		\
 	x86-64/xform4.S
 
-SPARC_SOURCES =			\
+SPARC_FILES =			\
 	sparc/clip.S		\
 	sparc/norm.S		\
 	sparc/xform.S
 
-COMMON_DRIVER_SOURCES =			\
+COMMON_DRIVER_FILES =			\
 	drivers/common/driverfuncs.c	\
 	drivers/common/meta.c
 
 
 # Sources for building non-Gallium drivers
-MESA_SOURCES = \
-	$(MAIN_SOURCES)		\
-	$(MATH_SOURCES)		\
-	$(MATH_XFORM_SOURCES)	\
-	$(VBO_SOURCES)		\
-	$(TNL_SOURCES)		\
-	$(PROGRAM_SOURCES)	\
-	$(SWRAST_SOURCES)	\
-	$(SWRAST_SETUP_SOURCES)	\
-	$(COMMON_DRIVER_SOURCES)\
-	$(ASM_C_SOURCES)
+MESA_FILES = \
+	$(MAIN_FILES)		\
+	$(MATH_FILES)		\
+	$(MATH_XFORM_FILES)	\
+	$(VBO_FILES)		\
+	$(TNL_FILES)		\
+	$(PROGRAM_FILES)	\
+	$(SWRAST_FILES)	\
+	$(SWRAST_SETUP_FILES)	\
+	$(COMMON_DRIVER_FILES)\
+	$(ASM_C_FILES)
 
-MESA_CXX_SOURCES = \
-	$(MAIN_CXX_SOURCES) \
-	$(SHADER_CXX_SOURCES)
+MESA_CXX_FILES = \
+	$(MAIN_CXX_FILES) \
+	$(SHADER_CXX_FILES)
 
 # Sources for building Gallium drivers
-MESA_GALLIUM_SOURCES = \
-	$(MAIN_SOURCES)		\
-	$(MATH_SOURCES)		\
-	$(VBO_SOURCES)		\
-	$(STATETRACKER_SOURCES)	\
-	$(PROGRAM_SOURCES)	\
+MESA_GALLIUM_FILES = \
+	$(MAIN_FILES)		\
+	$(MATH_FILES)		\
+	$(VBO_FILES)		\
+	$(STATETRACKER_FILES)	\
+	$(PROGRAM_FILES)	\
 	x86/common_x86.c
 
-MESA_GALLIUM_CXX_SOURCES = \
-	$(MESA_CXX_SOURCES) \
+MESA_GALLIUM_CXX_FILES = \
+	$(MESA_CXX_FILES) \
 	state_tracker/st_glsl_to_tgsi.cpp
 
 # All the core C sources, for dependency checking
-ALL_SOURCES = \
-	$(MESA_SOURCES)		\
-	$(MESA_GALLIUM_CXX_SOURCES) \
-	$(MESA_ASM_SOURCES)	\
-	$(STATETRACKER_SOURCES)
+ALL_FILES = \
+	$(MESA_FILES)		\
+	$(MESA_GALLIUM_CXX_FILES) \
+	$(MESA_ASM_FILES)	\
+	$(STATETRACKER_FILES)
 
 
 ### Object files
 
 MESA_OBJECTS = \
-	$(MESA_SOURCES:.c=.o) \
-	$(MESA_CXX_SOURCES:.cpp=.o) \
-	$(MESA_ASM_SOURCES:.S=.o)
+	$(MESA_FILES:.c=.o) \
+	$(MESA_CXX_FILES:.cpp=.o) \
+	$(MESA_ASM_FILES:.S=.o)
 
 MESA_GALLIUM_OBJECTS = \
-	$(MESA_GALLIUM_SOURCES:.c=.o) \
-	$(MESA_GALLIUM_CXX_SOURCES:.cpp=.o) \
-	$(MESA_ASM_SOURCES:.S=.o)
+	$(MESA_GALLIUM_FILES:.c=.o) \
+	$(MESA_GALLIUM_CXX_FILES:.cpp=.o) \
+	$(MESA_ASM_FILES:.S=.o)
 
 
-COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
+COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_FILES:.c=.o)
 
 
 ### Other archives/libraries

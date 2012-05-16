@@ -26,11 +26,11 @@
 LOCAL_PATH := $(call my-dir)
 
 # Import the following variables:
-#     MESA_CXX_SOURCES
-#     MESA_GALLIUM_CXX_SOURCES
-#     MESA_GALLIUM_SOURCES
-#     MESA_SOURCES
-#     X86_SOURCES
+#     MESA_CXX_FILES
+#     MESA_GALLIUM_CXX_FILES
+#     MESA_GALLIUM_FILES
+#     MESA_FILES
+#     X86_FILES
 include $(LOCAL_PATH)/sources.mak
 
 common_CFLAGS := \
@@ -49,7 +49,7 @@ common_ASM :=
 
 ifeq ($(strip $(MESA_ENABLE_ASM)),true)
 ifeq ($(TARGET_ARCH),x86)
-common_ASM += $(X86_SOURCES)
+common_ASM += $(X86_FILES)
 
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := x86/gen_matypes.c
@@ -71,8 +71,8 @@ ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	$(MESA_GALLIUM_SOURCES) \
-	$(MESA_GALLIUM_CXX_SOURCES) \
+	$(MESA_GALLIUM_FILES) \
+	$(MESA_GALLIUM_CXX_FILES) \
 	$(common_ASM)
 
 LOCAL_CFLAGS := $(common_CFLAGS)
@@ -108,8 +108,8 @@ LOCAL_C_INCLUDES := \
 	$(common_C_INCLUDES)
 
 LOCAL_SRC_FILES := \
-        $(MESA_SOURCES) \
-        $(MESA_CXX_SOURCES) \
+        $(MESA_FILES) \
+        $(MESA_CXX_FILES) \
         $(common_ASM)
 
 include $(LOCAL_PATH)/Android.gen.mk

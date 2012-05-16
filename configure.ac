@@ -436,7 +436,7 @@ AC_ARG_ENABLE([asm],
 )
 asm_arch=""
 ASM_FLAGS=""
-MESA_ASM_SOURCES=""
+MESA_ASM_FILES=""
 GLAPI_ASM_SOURCES=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
@@ -485,19 +485,19 @@ if test "x$enable_asm" = xyes; then
     case "$asm_arch" in
     x86)
         ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        MESA_ASM_SOURCES='$(X86_SOURCES)'
+        MESA_ASM_FILES='$(X86_FILES)'
         GLAPI_ASM_SOURCES='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
         ASM_FLAGS="-DUSE_X86_64_ASM"
-        MESA_ASM_SOURCES='$(X86-64_SOURCES)'
+        MESA_ASM_FILES='$(X86_64_FILES)'
         GLAPI_ASM_SOURCES='$(X86-64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     sparc)
         ASM_FLAGS="-DUSE_SPARC_ASM"
-        MESA_ASM_SOURCES='$(SPARC_SOURCES)'
+        MESA_ASM_FILES='$(SPARC_FILES)'
         GLAPI_ASM_SOURCES='$(SPARC_API)'
         AC_MSG_RESULT([yes, sparc])
         ;;
@@ -507,7 +507,7 @@ if test "x$enable_asm" = xyes; then
     esac
 fi
 AC_SUBST([ASM_FLAGS])
-AC_SUBST([MESA_ASM_SOURCES])
+AC_SUBST([MESA_ASM_FILES])
 AC_SUBST([GLAPI_ASM_SOURCES])
 
 dnl PIC code macro
