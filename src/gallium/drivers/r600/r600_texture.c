@@ -447,7 +447,19 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
+	struct radeon_surface *surface = &rtex->surface;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
+
+	rscreen->ws->buffer_set_tiling(resource->buf,
+				       surface->level[0].mode >= RADEON_SURF_MODE_1D ?
+				       RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR,
+				       surface->level[0].mode >= RADEON_SURF_MODE_2D ?
+				       RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR,
+				       surface->bankw, surface->bankh,
+				       surface->tile_split,
+				       surface->stencil_tile_split,
+				       surface->mtilea,
+				       rtex->pitch_in_bytes[0]);
 
 	return rscreen->ws->buffer_get_handle(resource->buf,
 					      rtex->pitch_in_bytes[0], whandle);

@@ -219,9 +219,12 @@ struct radeon_winsys {
      * \note microtile and macrotile are not bitmasks!
      */
     void (*buffer_set_tiling)(struct pb_buffer *buf,
-                              struct radeon_winsys_cs *cs,
                               enum radeon_bo_layout microtile,
                               enum radeon_bo_layout macrotile,
+                              unsigned bankw, unsigned bankh,
+                              unsigned tile_split,
+                              unsigned stencil_tile_split,
+                              unsigned mtilea,
                               unsigned stride);
 
     /**
