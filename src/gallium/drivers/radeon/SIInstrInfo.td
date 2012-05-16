@@ -32,6 +32,21 @@ class Enc64 <dag outs, dag ins, string asm, list<dag> pattern> :
   field bits<64> Inst;
 }
 
+class SIOperand <ValueType vt, dag opInfo>: Operand <vt> {
+  let EncoderMethod = "encodeOperand";
+  let MIOperandInfo = opInfo;
+}
+
+def IMM8bit : ImmLeaf <
+  i32,
+  [{return (int32_t)Imm >= 0 && (int32_t)Imm <= 0xff;}]
+>;
+
+def IMM12bit : ImmLeaf <
+  i16,
+  [{return (int16_t)Imm >= 0 && (int16_t)Imm <= 0xfff;}]
+>;
+
 class GPR4Align <RegisterClass rc> : Operand <vAny> {
   let EncoderMethod = "GPR4AlignEncode";
   let MIOperandInfo = (ops rc:$reg); 
@@ -45,6 +60,19 @@ class GPR2Align <RegisterClass rc, ValueType vt> : Operand <vt> {
 def i32Literal : Operand <i32> {
   let EncoderMethod = "i32LiteralEncode";
 }
+
+def SMRDmemrr : Operand<iPTR> {
+  let MIOperandInfo = (ops SReg_64, SReg_32);
+  let EncoderMethod = "GPR2AlignEncode";
+}
+
+def SMRDmemri : Operand<iPTR> {
+  let MIOperandInfo = (ops SReg_64, i32imm);
+  let EncoderMethod = "SMRDmemriEncode";
+}
+
+def ADDR_Reg     : ComplexPattern<i64, 2, "SelectADDRReg", [], []>;
+def ADDR_Offset8 : ComplexPattern<i64, 2, "SelectADDR8BitOffset", [], []>;
 
 def EXP : Enc64<
   (outs),
@@ -196,9 +224,10 @@ class SMRD <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc32<outs, ins, asm, pattern> {
 
   bits<7> SDST;
-  bits<8> OFFSET;
-  bits<6> SBASE;
-  bits<1> IMM = 0; // Determined by subclasses
+  bits<15> PTR;
+  bits<8> OFFSET = PTR{7-0};
+  bits<1> IMM    = PTR{8};
+  bits<6> SBASE  = PTR{14-9};
   
   let Inst{7-0} = OFFSET;
   let Inst{8} = IMM;
@@ -420,14 +449,15 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
 }
 
 /*XXX: We should be able to infer the imm bit based on the arg types */
-multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
+multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
+			ValueType vt> {
 
   def _SGPR : SMRD <
               op,
               (outs dstClass:$dst),
-              (ins SReg_32:$offset, GPR2Align<SReg_64,i64>:$sbase),
+              (ins SMRDmemrr:$src0),
               asm,
-              []
+              [(set (vt dstClass:$dst), (constant_load ADDR_Reg:$src0))]
   > {
     let IMM = 0;
   }
@@ -435,29 +465,13 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass> {
   def _IMM : SMRD <
               op,
               (outs dstClass:$dst),
-              (ins i32imm:$offset, GPR2Align<SReg_64,i64>:$sbase),
+              (ins SMRDmemri:$src0),
               asm,
-              []
+              [(set (vt dstClass:$dst), (constant_load ADDR_Offset8:$src0))]
   > {
     let IMM = 1;
   }
 }
 
-class SIOperand <ValueType vt, dag opInfo>: Operand <vt> {
-  let EncoderMethod = "encodeOperand";
-  let MIOperandInfo = opInfo;
-}
-
-def IMM8bit : ImmLeaf <
-  i32,
-  [{return (int32_t)Imm >= 0 && (int32_t)Imm <= 0xff;}]
->;
-
-def IMM12bit : ImmLeaf <
-  i16,
-  [{return (int16_t)Imm >= 0 && (int16_t)Imm <= 0xfff;}]
->;
-
 include "SIInstrFormats.td"
-
 include "SIInstructions.td"

@@ -57,6 +57,7 @@ bool SIPropagateImmReadsPass::runOnMachineFunction(MachineFunction &MF)
       switch (MI.getOpcode()) {
       case AMDIL::LOADCONST_f32:
       case AMDIL::LOADCONST_i32:
+      case AMDIL::LOADCONST_i64:
         break;
       default:
         continue;

@@ -182,8 +182,8 @@ my @subregs_64 = ('low', 'high');
 my @subregs_128 = ('sel_x', 'sel_y', 'sel_z', 'sel_w');
 my @subregs_256 = ('sub0', 'sub1', 'sub2', 'sub3', 'sub4', 'sub5', 'sub6', 'sub7');
 
-my @SGPR64 = print_sgpr_class(64, \@subregs_64, ('i64', 'iPTRAny'));
-my @SGPR128 = print_sgpr_class(128, \@subregs_128, ('v4f32'));
+my @SGPR64 = print_sgpr_class(64, \@subregs_64, ('i64'));
+my @SGPR128 = print_sgpr_class(128, \@subregs_128, ('v4f32', 'v4i32'));
 my @SGPR256 = print_sgpr_class(256, \@subregs_256, ('v8i32'));
 
 my @VGPR64 = print_vgpr_class(64, \@subregs_64, ('i64'));

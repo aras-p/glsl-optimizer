@@ -796,7 +796,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
   setPrefLoopAlignment(16);
   setSelectIsExpensive(true);
   setJumpIsExpensive(true);
-  computeRegisterProperties();
 
   maxStoresPerMemcpy  = 4096;
   maxStoresPerMemmove = 4096;

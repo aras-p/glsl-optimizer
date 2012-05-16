@@ -25,9 +25,20 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 {
   addRegisterClass(MVT::v4f32, &AMDIL::VReg_128RegClass);
   addRegisterClass(MVT::f32, &AMDIL::VReg_32RegClass);
+  addRegisterClass(MVT::i32, &AMDIL::VReg_32RegClass);
+  addRegisterClass(MVT::i64, &AMDIL::VReg_64RegClass);
+
+  addRegisterClass(MVT::v4i32, &AMDIL::SReg_128RegClass);
+  addRegisterClass(MVT::v8i32, &AMDIL::SReg_256RegClass);
+
+  computeRegisterProperties();
 
   setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
   setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Legal);
+
+  setOperationAction(ISD::ADD, MVT::i64, Legal);
+  setOperationAction(ISD::ADD, MVT::i32, Legal);
+
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(

@@ -65,6 +65,9 @@ namespace {
     /// for an instruction in place of a register.
     virtual uint64_t i32LiteralEncode(const MachineInstr &MI, unsigned OpNo)
                                                                       const;
+    /// SMRDmemriEncode - Encoding for SMRD indexed loads
+    virtual uint32_t SMRDmemriEncode(const MachineInstr &MI, unsigned OpNo)
+                                                                     const;
 
     /// VOPPostEncode - Post-Encoder method for VOP instructions 
     virtual uint64_t VOPPostEncode(const MachineInstr &MI,
@@ -236,6 +239,37 @@ uint64_t SICodeEmitter::i32LiteralEncode(const MachineInstr &MI,
     unsigned OpNo) const
 {
   return LITERAL_REG | (MI.getOperand(OpNo).getImm() << 32);
+}
+
+#define SMRD_OFFSET_MASK 0xff
+#define SMRD_IMM_SHIFT 8
+#define SMRD_SBASE_MASK 0x3f
+#define SMRD_SBASE_SHIFT 9
+/// SMRDmemriEncode - This function is responsibe for encoding the offset
+/// and the base ptr for SMRD instructions it should return a bit string in
+/// this format:
+///
+/// OFFSET = bits{7-0}
+/// IMM    = bits{8}
+/// SBASE  = bits{14-9}
+///
+uint32_t SICodeEmitter::SMRDmemriEncode(const MachineInstr &MI,
+    unsigned OpNo) const
+{
+  uint32_t encoding;
+
+  const MachineOperand &OffsetOp = MI.getOperand(OpNo + 1);
+
+  //XXX: Use this function for SMRD loads with register offsets
+  assert(OffsetOp.isImm());
+
+  encoding =
+      (getMachineOpValue(MI, OffsetOp) & SMRD_OFFSET_MASK)
+    | (1 << SMRD_IMM_SHIFT) //XXX If the Offset is a register we shouldn't set this bit
+    | ((GPR2AlignEncode(MI, OpNo) & SMRD_SBASE_MASK) << SMRD_SBASE_SHIFT)
+    ;
+
+  return encoding;
 }
 
 /// Set the "VGPR" bit for VOP args that can take either a VGPR or a SGPR.

@@ -346,20 +346,16 @@ def TBUFFER_LOAD_FORMAT_XYZW : MTBUF_Load_Helper <0x00000003, "TBUFFER_LOAD_FORM
 //def TBUFFER_STORE_FORMAT_XYZ : MTBUF_ <0x00000006, "TBUFFER_STORE_FORMAT_XYZ", []>;
 //def TBUFFER_STORE_FORMAT_XYZW : MTBUF_ <0x00000007, "TBUFFER_STORE_FORMAT_XYZW", []>;
 
-let mayLoad = 0, neverHasSideEffects = 1 in {
-
-defm S_LOAD_DWORD : SMRD_Helper <0x00000000, "S_LOAD_DWORD", SReg_32>;
+defm S_LOAD_DWORD : SMRD_Helper <0x00000000, "S_LOAD_DWORD", SReg_32, f32>;
 //def S_LOAD_DWORDX2 : SMRD_DWORDX2 <0x00000001, "S_LOAD_DWORDX2", []>;
-defm S_LOAD_DWORDX4 : SMRD_Helper <0x00000002, "S_LOAD_DWORDX4", SReg_128>;
-defm S_LOAD_DWORDX8 : SMRD_Helper <0x00000003, "S_LOAD_DWORDX8", SReg_256>;
+defm S_LOAD_DWORDX4 : SMRD_Helper <0x00000002, "S_LOAD_DWORDX4", SReg_128, v4i32>;
+defm S_LOAD_DWORDX8 : SMRD_Helper <0x00000003, "S_LOAD_DWORDX8", SReg_256, v8i32>;
 //def S_LOAD_DWORDX16 : SMRD_DWORDX16 <0x00000004, "S_LOAD_DWORDX16", []>;
 //def S_BUFFER_LOAD_DWORD : SMRD_ <0x00000008, "S_BUFFER_LOAD_DWORD", []>;
 //def S_BUFFER_LOAD_DWORDX2 : SMRD_DWORDX2 <0x00000009, "S_BUFFER_LOAD_DWORDX2", []>;
 //def S_BUFFER_LOAD_DWORDX4 : SMRD_DWORDX4 <0x0000000a, "S_BUFFER_LOAD_DWORDX4", []>;
 //def S_BUFFER_LOAD_DWORDX8 : SMRD_DWORDX8 <0x0000000b, "S_BUFFER_LOAD_DWORDX8", []>;
 //def S_BUFFER_LOAD_DWORDX16 : SMRD_DWORDX16 <0x0000000c, "S_BUFFER_LOAD_DWORDX16", []>;
-
-} // End mayLoad, neverHasSideEffects
 
 //def S_MEMTIME : SMRD_ <0x0000001e, "S_MEMTIME", []>;
 //def S_DCACHE_INV : SMRD_ <0x0000001f, "S_DCACHE_INV", []>;
@@ -866,29 +862,25 @@ def VS_LOAD_BUFFER_INDEX : InstSI <
 
 /* int_SI_vs_load_input */
 def : Pat<
-  (int_SI_vs_load_input SReg_64:$tlst_sgpr, IMM8bit:$t_offset, IMM12bit:$attr_offset,
+  (int_SI_vs_load_input SReg_128:$tlst, IMM12bit:$attr_offset,
                         VReg_32:$buf_idx_vgpr),
   (BUFFER_LOAD_FORMAT_XYZW imm:$attr_offset, 0, 1, 0, 0, 0,
-                          VReg_32:$buf_idx_vgpr,
-                          (S_LOAD_DWORDX4_IMM imm:$t_offset, SReg_64:$tlst_sgpr),
-                          0, 0, (i32 SREG_LIT_0))
+                           VReg_32:$buf_idx_vgpr, SReg_128:$tlst,
+                           0, 0, (i32 SREG_LIT_0))
 >;
 
-/* int_SI_load_const */
-
-def : Pat <
-  (int_SI_load_const SReg_64:$const_ptr, IMM8bit:$offset),
-  (S_LOAD_DWORD_IMM imm:$offset, SReg_64:$const_ptr)
+def : Pat<
+  (int_SI_use_sgprptrcf32 imm:$src0),
+  (USE_SGPR_64 imm:$src0)
 >;
-
-
-/* XXX: Complete this pattern with some form of a scalar move immediate */
-/*
-def : Pat <
-  (int_SI_load_const SReg_64:$const_ptr, imm:$offset),
-  (S_LOAD_DWORD_SGPR imm:$offset, SReg_64:$const_ptr)
+def : Pat<
+  (int_SI_use_sgprptrci128 imm:$src0),
+  (USE_SGPR_64 imm:$src0)
 >;
-*/
+def : Pat<
+  (int_SI_use_sgprptrci256 imm:$src0),
+  (USE_SGPR_64 imm:$src0)
+>;
 
 /* int_SI_export */
 def : Pat <
@@ -900,11 +892,9 @@ def : Pat <
 
 /* int_SI_sample */
 def : Pat <
-  (int_SI_sample imm:$writemask, VReg_128:$coord, SReg_64:$rsrc, imm:$rsrc_offset,
-                 SReg_64:$sampler, imm:$sampler_offset),
+  (int_SI_sample imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler),
   (IMAGE_SAMPLE imm:$writemask, 0, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
-                (S_LOAD_DWORDX8_IMM imm:$rsrc_offset, SReg_64:$rsrc), /* Resource */
-                (S_LOAD_DWORDX4_IMM imm:$sampler_offset, SReg_64:$sampler)) /* Sampler */
+                SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
 def CLAMP_SI : CLAMP<VReg_32>;
