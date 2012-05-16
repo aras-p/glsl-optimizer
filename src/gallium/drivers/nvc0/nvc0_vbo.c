@@ -427,8 +427,7 @@ nvc0_idxbuf_validate(struct nvc0_context *nvc0)
    struct nv04_resource *buf = nv04_resource(nvc0->idxbuf.buffer);
 
    assert(buf);
-   if (!nouveau_resource_mapped_by_gpu(&buf->base))
-      return;
+   assert(nouveau_resource_mapped_by_gpu(&buf->base));
 
    PUSH_SPACE(push, 6);
    BEGIN_NVC0(push, NVC0_3D(INDEX_ARRAY_START_HIGH), 5);
@@ -507,7 +506,7 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
 }
 
 static void
-nvc0_draw_elements_inline_u08(struct nouveau_pushbuf *push, uint8_t *map,
+nvc0_draw_elements_inline_u08(struct nouveau_pushbuf *push, const uint8_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -535,7 +534,7 @@ nvc0_draw_elements_inline_u08(struct nouveau_pushbuf *push, uint8_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u16(struct nouveau_pushbuf *push, uint16_t *map,
+nvc0_draw_elements_inline_u16(struct nouveau_pushbuf *push, const uint16_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -560,7 +559,7 @@ nvc0_draw_elements_inline_u16(struct nouveau_pushbuf *push, uint16_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u32(struct nouveau_pushbuf *push, uint32_t *map,
+nvc0_draw_elements_inline_u32(struct nouveau_pushbuf *push, const uint32_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -578,7 +577,8 @@ nvc0_draw_elements_inline_u32(struct nouveau_pushbuf *push, uint32_t *map,
 }
 
 static void
-nvc0_draw_elements_inline_u32_short(struct nouveau_pushbuf *push, uint32_t *map,
+nvc0_draw_elements_inline_u32_short(struct nouveau_pushbuf *push,
+                                    const uint32_t *map,
                                     unsigned start, unsigned count)
 {
    map += start;
@@ -608,7 +608,6 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
                    unsigned instance_count, int32_t index_bias)
 {
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
-   void *data;
    unsigned prim;
    const unsigned index_size = nvc0->idxbuf.index_size;
 
@@ -621,7 +620,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       nvc0->state.index_bias = index_bias;
    }
 
-   if (nouveau_resource_mapped_by_gpu(nvc0->idxbuf.buffer)) {
+   if (nvc0->idxbuf.buffer) {
       PUSH_SPACE(push, 1);
       IMMED_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL), prim);
       do {
@@ -637,11 +636,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       } while (instance_count);
       IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
    } else {
-      data = nouveau_resource_map_offset(&nvc0->base,
-                                         nv04_resource(nvc0->idxbuf.buffer),
-                                         nvc0->idxbuf.offset, NOUVEAU_BO_RD);
-      if (!data)
-         return;
+      const void *data = nvc0->idxbuf.user_buffer;
 
       while (instance_count--) {
          PUSH_SPACE(push, 2);
@@ -767,8 +762,6 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (info->indexed) {
       boolean shorten = info->max_index <= 65535;
-
-      assert(nvc0->idxbuf.buffer);
 
       if (info->primitive_restart != nvc0->state.prim_restart) {
          if (info->primitive_restart) {

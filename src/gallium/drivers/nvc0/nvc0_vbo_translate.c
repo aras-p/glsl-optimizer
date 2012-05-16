@@ -78,11 +78,13 @@ nvc0_vertex_configure_translate(struct nvc0_context *nvc0, int32_t index_bias)
 static INLINE void
 nvc0_push_map_idxbuf(struct push_context *ctx, struct nvc0_context *nvc0)
 {
-   struct nv04_resource *buf = nv04_resource(nvc0->idxbuf.buffer);
-   unsigned offset = nvc0->idxbuf.offset;
-
-   ctx->idxbuf = nouveau_resource_map_offset(&nvc0->base,
-                    buf, offset, NOUVEAU_BO_RD);
+   if (nvc0->idxbuf.buffer) {
+      struct nv04_resource *buf = nv04_resource(nvc0->idxbuf.buffer);
+      ctx->idxbuf = nouveau_resource_map_offset(&nvc0->base,
+         buf, nvc0->idxbuf.offset, NOUVEAU_BO_RD);
+   } else {
+      ctx->idxbuf = nvc0->idxbuf.user_buffer;
+   }
 }
 
 static INLINE void

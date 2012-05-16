@@ -802,11 +802,16 @@ nvc0_set_index_buffer(struct pipe_context *pipe,
     if (nvc0->idxbuf.buffer)
        nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_IDX);
 
-    if (ib && ib->buffer) {
-       nvc0->dirty |= NVC0_NEW_IDXBUF;
+    if (ib) {
        pipe_resource_reference(&nvc0->idxbuf.buffer, ib->buffer);
-       nvc0->idxbuf.offset = ib->offset;
        nvc0->idxbuf.index_size = ib->index_size;
+       if (ib->buffer) {
+          nvc0->idxbuf.offset = ib->offset;
+          nvc0->dirty |= NVC0_NEW_IDXBUF;
+       } else {
+          nvc0->idxbuf.user_buffer = ib->user_buffer;
+          nvc0->dirty &= ~NVC0_NEW_IDXBUF;
+       }
     } else {
        nvc0->dirty &= ~NVC0_NEW_IDXBUF;
        pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);

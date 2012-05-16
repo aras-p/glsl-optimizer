@@ -911,12 +911,15 @@ nv50_set_index_buffer(struct pipe_context *pipe,
    if (nv50->idxbuf.buffer)
       nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_INDEX);
 
-   if (ib && ib->buffer) {
+   if (ib) {
       pipe_resource_reference(&nv50->idxbuf.buffer, ib->buffer);
-      nv50->idxbuf.offset = ib->offset;
       nv50->idxbuf.index_size = ib->index_size;
-      if (nouveau_resource_mapped_by_gpu(ib->buffer))
+      if (ib->buffer) {
+         nv50->idxbuf.offset = ib->offset;
          BCTX_REFN(nv50->bufctx_3d, INDEX, nv04_resource(ib->buffer), RD);
+      } else {
+         nv50->idxbuf.user_buffer = ib->user_buffer;
+      }
    } else {
       pipe_resource_reference(&nv50->idxbuf.buffer, NULL);
    }
