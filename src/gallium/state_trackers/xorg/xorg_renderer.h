@@ -77,20 +77,5 @@ void renderer_texture(struct xorg_renderer *r,
 
 void renderer_draw_flush(struct xorg_renderer *r);
 
-struct pipe_resource *
-renderer_clone_texture(struct xorg_renderer *r,
-                       struct pipe_resource *src);
-
-void renderer_copy_prepare(struct xorg_renderer *r,
-                           struct pipe_surface *dst_surface,
-                           struct pipe_resource *src_texture);
-
-void renderer_copy_pixmap(struct xorg_renderer *r,
-                          int dx, int dy,
-                          int sx, int sy,
-                          int width, int height,
-                          float src_width,
-                          float src_height);
-
 
 #endif
