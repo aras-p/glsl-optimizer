@@ -123,14 +123,10 @@ create_jit_texture_type(struct gallivm_state *gallivm, const char *struct_name)
    elem_types[DRAW_JIT_TEXTURE_BORDER_COLOR] = 
       LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
 
-#if HAVE_LLVM >= 0x0300
-   texture_type = LLVMStructCreateNamed(gallivm->context, struct_name);
-   LLVMStructSetBody(texture_type, elem_types,
-                     Elements(elem_types), 0);
-#else
    texture_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
 
+#if HAVE_LLVM < 0x0300
    LLVMAddTypeName(gallivm->module, struct_name, texture_type);
 
    /* Make sure the target's struct layout cache doesn't return
@@ -201,13 +197,9 @@ create_jit_context_type(struct gallivm_state *gallivm,
    elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
    elem_types[4] = LLVMArrayType(texture_type,
                                  PIPE_MAX_VERTEX_SAMPLERS); /* textures */
-#if HAVE_LLVM >= 0x0300
-   context_type = LLVMStructCreateNamed(gallivm->context, struct_name);
-   LLVMStructSetBody(context_type, elem_types,
-                     Elements(elem_types), 0);
-#else
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
+#if HAVE_LLVM < 0x0300
    LLVMAddTypeName(gallivm->module, struct_name, context_type);
 
    LLVMInvalidateStructLayout(gallivm->target, context_type);
@@ -244,13 +236,9 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm, const char *struct_
    elem_types[2] =
    elem_types[3] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
 
-#if HAVE_LLVM >= 0x0300
-   vb_type = LLVMStructCreateNamed(gallivm->context, struct_name);
-   LLVMStructSetBody(vb_type, elem_types,
-                     Elements(elem_types), 0);
-#else
    vb_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                      Elements(elem_types), 0);
+#if HAVE_LLVM < 0x0300
    LLVMAddTypeName(gallivm->module, struct_name, vb_type);
 
    LLVMInvalidateStructLayout(gallivm->target, vb_type);
@@ -285,13 +273,9 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
    elem_types[DRAW_JIT_VERTEX_PRE_CLIP_POS]  = LLVMArrayType(LLVMFloatTypeInContext(gallivm->context), 4);
    elem_types[DRAW_JIT_VERTEX_DATA]  = LLVMArrayType(elem_types[1], data_elems);
 
-#if HAVE_LLVM >= 0x0300
-   vertex_header = LLVMStructCreateNamed(gallivm->context, struct_name);
-   LLVMStructSetBody(vertex_header, elem_types,
-                     Elements(elem_types), 0);
-#else
    vertex_header = LLVMStructTypeInContext(gallivm->context, elem_types,
                                            Elements(elem_types), 0);
+#if HAVE_LLVM < 0x0300
    LLVMAddTypeName(gallivm->module, struct_name, vertex_header);
 
    LLVMInvalidateStructLayout(gallivm->target, vertex_header);
