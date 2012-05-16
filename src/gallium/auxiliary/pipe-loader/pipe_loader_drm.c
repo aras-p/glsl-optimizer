@@ -78,8 +78,8 @@ find_drm_pci_id(struct pipe_loader_drm_device *ddev)
 
    pci_id = udev_device_get_property_value(parent, "PCI_ID");
    if (!pci_id ||
-       sscanf(pci_id, "%x:%x", &ddev->base.pci.vendor_id,
-              &ddev->base.pci.chip_id) != 2)
+       sscanf(pci_id, "%x:%x", &ddev->base.u.pci.vendor_id,
+              &ddev->base.u.pci.chip_id) != 2)
       goto fail;
 
    return TRUE;
@@ -101,7 +101,7 @@ find_drm_driver_name(struct pipe_loader_drm_device *ddev)
    int i, j;
 
    for (i = 0; driver_map[i].driver; i++) {
-      if (dev->pci.vendor_id != driver_map[i].vendor_id)
+      if (dev->u.pci.vendor_id != driver_map[i].vendor_id)
          continue;
 
       if (driver_map[i].num_chips_ids == -1) {
@@ -110,7 +110,7 @@ find_drm_driver_name(struct pipe_loader_drm_device *ddev)
       }
 
       for (j = 0; j < driver_map[i].num_chips_ids; j++) {
-         if (dev->pci.chip_id == driver_map[i].chip_ids[j]) {
+         if (dev->u.pci.chip_id == driver_map[i].chip_ids[j]) {
             dev->driver_name = driver_map[i].driver;
             goto found;
          }
@@ -120,8 +120,8 @@ find_drm_driver_name(struct pipe_loader_drm_device *ddev)
    return FALSE;
 
   found:
-   debug_printf("driver for %04x:%04x: %s\n", dev->pci.vendor_id,
-                dev->pci.chip_id, dev->driver_name);
+   debug_printf("driver for %04x:%04x: %s\n", dev->u.pci.vendor_id,
+                dev->u.pci.chip_id, dev->driver_name);
    return TRUE;
 }
 

@@ -75,7 +75,7 @@ _cl_device_id::vendor_id() const {
    case PIPE_LOADER_DEVICE_SOFTWARE:
       return 0;
    case PIPE_LOADER_DEVICE_PCI:
-      return ldev->pci.vendor_id;
+      return ldev->u.pci.vendor_id;
    default:
       assert(0);
       return 0;

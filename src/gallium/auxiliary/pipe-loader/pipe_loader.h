@@ -58,7 +58,7 @@ struct pipe_loader_device {
          int vendor_id;
          int chip_id;
       } pci;
-   }; /**< Discriminated by \a type */
+   } u; /**< Discriminated by \a type */
 
    const char *driver_name;
    const struct pipe_loader_ops *ops;
