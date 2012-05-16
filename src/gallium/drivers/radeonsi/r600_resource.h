@@ -53,15 +53,15 @@ struct r600_resource_texture {
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;
-	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty_db;
 	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
+	struct radeon_surface		surface;
 };
 
-#define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
+#define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_009910_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_009910_ARRAY_LINEAR_ALIGNED)
 
 struct r600_surface {
 	struct pipe_surface		base;

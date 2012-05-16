@@ -19,6 +19,6 @@ DRIVER_PIPES = \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a
 
 DRIVER_LINKS = \
-	$(shell $(PKG_CONFIG) --libs libdrm)
+	$(shell $(PKG_CONFIG) --libs libdrm libdrm_radeon)
 
 include ../Makefile.xorg

@@ -321,7 +321,7 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
-    if (ws->gen == R600) {
+    if (ws->gen >= R600) {
         radeon_surface_manager_free(ws->surf_man);
     }
     FREE(rws);
@@ -398,7 +398,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
         goto fail;
 
     /* FIXME check for libdrm version ?? */
-    if (ws->gen == R600) {
+    if (ws->gen >= R600) {
         ws->surf_man = radeon_surface_manager_new(fd);
         if (!ws->surf_man)
             goto fail;

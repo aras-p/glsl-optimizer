@@ -1177,10 +1177,11 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	struct si_pipe_sampler_view *view = CALLOC_STRUCT(si_pipe_sampler_view);
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
 	const struct util_format_description *desc = util_format_description(state->format);
-	unsigned format, num_format, endian;
+	unsigned blocksize = util_format_get_blocksize(tmp->real_format);
+	unsigned format, num_format, endian, tiling_index;
 	uint32_t pitch = 0;
-	unsigned char state_swizzle[4], swizzle[4], array_mode = 0, tile_type = 0;
-	unsigned height, depth;
+	unsigned char state_swizzle[4], swizzle[4];
+	unsigned height, depth, width;
 	int first_non_void;
 	uint64_t va;
 
@@ -1228,10 +1229,9 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	height = texture->height0;
 	depth = texture->depth0;
-
-	pitch = tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format);
-	array_mode = tmp->array_mode[0];
-	tile_type = tmp->tile_type;
+	width = texture->width0;
+	pitch = align(tmp->pitch_in_blocks[0] *
+		      util_format_get_blockwidth(state->format), 8);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 	        height = 1;
@@ -1240,12 +1240,57 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		depth = texture->array_size;
 	}
 
+	tiling_index = 8;
+	switch (tmp->surface.level[state->u.tex.first_level].mode) {
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		tiling_index = 8;
+		break;
+	case RADEON_SURF_MODE_1D:
+		tiling_index = 9;
+		break;
+	case RADEON_SURF_MODE_2D:
+		if (tmp->resource.b.b.bind & PIPE_BIND_SCANOUT) {
+			switch (blocksize) {
+			case 1:
+				tiling_index = 10;
+				break;
+			case 2:
+				tiling_index = 11;
+				break;
+			case 4:
+				tiling_index = 12;
+				break;
+			}
+			break;
+		} else switch (blocksize) {
+		case 1:
+			tiling_index = 14;
+			break;
+		case 2:
+			tiling_index = 15;
+			break;
+		case 4:
+			tiling_index = 16;
+			break;
+		case 8:
+			tiling_index = 17;
+			break;
+		default:
+			tiling_index = 13;
+		}
+		break;
+	}
+
 	va = r600_resource_va(ctx->screen, texture);
-	view->state[0] = (va + tmp->offset[0]) >> 8;
+	if (state->u.tex.last_level) {
+		view->state[0] = (va + tmp->offset[1]) >> 8;
+	} else {
+		view->state[0] = (va + tmp->offset[0]) >> 8;
+	}
 	view->state[1] = (S_008F14_BASE_ADDRESS_HI((va + tmp->offset[0]) >> 40) |
 			  S_008F14_DATA_FORMAT(format) |
 			  S_008F14_NUM_FORMAT(num_format));
-	view->state[2] = (S_008F18_WIDTH(texture->width0 - 1) |
+	view->state[2] = (S_008F18_WIDTH(width - 1) |
 			  S_008F18_HEIGHT(height - 1));
 	view->state[3] = (S_008F1C_DST_SEL_X(si_map_swizzle(swizzle[0])) |
 			  S_008F1C_DST_SEL_Y(si_map_swizzle(swizzle[1])) |
@@ -1253,7 +1298,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
 			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
 			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
-			  S_008F1C_TILING_INDEX(8) | /* XXX */
+			  S_008F1C_TILING_INDEX(tiling_index) |
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));
 	view->state[5] = (S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
@@ -1476,22 +1521,23 @@ static void evergreen_set_viewport_state(struct pipe_context *ctx,
 }
 
 static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			const struct pipe_framebuffer_state *state, int cb)
+			 const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info;
+	unsigned color_info, color_attrib;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset;
-	unsigned tile_type;
+	unsigned blocksize;
 	const struct util_format_description *desc;
 	int i;
 	unsigned blend_clamp = 0, blend_bypass = 0;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+	blocksize = util_format_get_blocksize(rtex->real_format);
 
 	if (rtex->depth)
 		rctx->have_depth_fb = TRUE;
@@ -1501,11 +1547,58 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 		rtex = rtex->flushed_depth_texture;
 	}
 
-	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset(rtex,
-					 level, state->cbufs[cb]->u.tex.first_layer);
-	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
-	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
+	offset = rtex->surface.level[level].offset;
+	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+		offset += rtex->surface.level[level].slice_size *
+			  state->cbufs[cb]->u.tex.first_layer;
+	}
+	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
+	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+	if (slice) {
+		slice = slice - 1;
+	}
+
+	color_attrib = S_028C74_TILE_MODE_INDEX(8);
+	switch (rtex->surface.level[level].mode) {
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		color_attrib = S_028C74_TILE_MODE_INDEX(8);
+		break;
+	case RADEON_SURF_MODE_1D:
+		color_attrib = S_028C74_TILE_MODE_INDEX(9);
+		break;
+	case RADEON_SURF_MODE_2D:
+		if (rtex->resource.b.b.bind & PIPE_BIND_SCANOUT) {
+			switch (blocksize) {
+			case 1:
+				color_attrib = S_028C74_TILE_MODE_INDEX(10);
+				break;
+			case 2:
+				color_attrib = S_028C74_TILE_MODE_INDEX(11);
+				break;
+			case 4:
+				color_attrib = S_028C74_TILE_MODE_INDEX(12);
+				break;
+			}
+			break;
+		} else switch (blocksize) {
+		case 1:
+			color_attrib = S_028C74_TILE_MODE_INDEX(14);
+			break;
+		case 2:
+			color_attrib = S_028C74_TILE_MODE_INDEX(15);
+			break;
+		case 4:
+			color_attrib = S_028C74_TILE_MODE_INDEX(16);
+			break;
+		case 8:
+			color_attrib = S_028C74_TILE_MODE_INDEX(17);
+			break;
+		default:
+			color_attrib = S_028C74_TILE_MODE_INDEX(13);
+		}
+		break;
+	}
+
 	desc = util_format_description(surf->base.format);
 	for (i = 0; i < 4; i++) {
 		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
@@ -1556,13 +1649,10 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
-		//S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
 		S_028C70_BLEND_CLAMP(blend_clamp) |
 		S_028C70_BLEND_BYPASS(blend_bypass) |
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
-
-	color_info |= S_028C70_LINEAR_GENERAL(1);
 
 	rctx->alpha_ref_dirty = true;
 
@@ -1581,15 +1671,23 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 				R_028C68_CB_COLOR0_SLICE + cb * 0x3C,
 				S_028C68_TILE_MAX(slice),
 				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-				0x00000000, NULL, 0);
+	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+		r600_pipe_state_add_reg(rstate,
+					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
+					0x00000000, NULL, 0);
+	} else {
+		r600_pipe_state_add_reg(rstate,
+					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
+					S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
+					S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer),
+					NULL, 0);
+	}
 	r600_pipe_state_add_reg(rstate,
 				R_028C70_CB_COLOR0_INFO + cb * 0x3C,
 				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
-				0,
+				color_attrib,
 				&rtex->resource, RADEON_USAGE_READWRITE);
 }
 
@@ -1613,19 +1711,25 @@ static void si_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	rtex = (struct r600_resource_texture*)surf->base.texture;
 
 	first_layer = surf->base.u.tex.first_layer;
-	offset = r600_texture_get_offset(rtex, level, first_layer);
-	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
-	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	format = si_translate_dbformat(rtex->real_format);
 
-	offset += r600_resource_va(rctx->context.screen, surf->base.texture);
+	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
+	offset += rtex->surface.level[level].offset;
+	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
+	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+	if (slice) {
+		slice = slice - 1;
+	}
 	offset >>= 8;
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, NULL, 0);
+	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
+				S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
+				S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer),
+				NULL, 0);
 
 	db_z_info = S_028040_FORMAT(format);
 	stencil_info = S_028044_FORMAT(rtex->stencil != 0);
