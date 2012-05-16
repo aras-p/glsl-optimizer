@@ -461,6 +461,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 
 	rscreen->ws->buffer_set_tiling(resource->buf,
+				       NULL,
 				       surface->level[0].mode >= RADEON_SURF_MODE_1D ?
 				       RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR,
 				       surface->level[0].mode >= RADEON_SURF_MODE_2D ?

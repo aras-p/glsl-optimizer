@@ -684,6 +684,7 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
 }
 
 static void radeon_bo_set_tiling(struct pb_buffer *_buf,
+                                 struct radeon_winsys_cs *rcs,
                                  enum radeon_bo_layout microtiled,
                                  enum radeon_bo_layout macrotiled,
                                  unsigned bankw, unsigned bankh,
@@ -693,9 +694,16 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
                                  uint32_t pitch)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct drm_radeon_gem_set_tiling args;
 
     memset(&args, 0, sizeof(args));
+
+    /* Tiling determines how DRM treats the buffer data.
+     * We must flush CS when changing it if the buffer is referenced. */
+    if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
+        cs->flush_cs(cs->flush_data, 0);
+    }
 
     while (p_atomic_read(&bo->num_active_ioctls)) {
         sched_yield();
@@ -713,9 +721,11 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
         RADEON_TILING_EG_BANKW_SHIFT;
     args.tiling_flags |= (bankh & RADEON_TILING_EG_BANKH_MASK) <<
         RADEON_TILING_EG_BANKH_SHIFT;
-    args.tiling_flags |= (eg_tile_split_rev(tile_split) &
-			  RADEON_TILING_EG_TILE_SPLIT_MASK) <<
-        RADEON_TILING_EG_TILE_SPLIT_SHIFT;
+    if (tile_split) {
+	args.tiling_flags |= (eg_tile_split_rev(tile_split) &
+			      RADEON_TILING_EG_TILE_SPLIT_MASK) <<
+	    RADEON_TILING_EG_TILE_SPLIT_SHIFT;
+    }
     args.tiling_flags |= (stencil_tile_split &
 			  RADEON_TILING_EG_STENCIL_TILE_SPLIT_MASK) <<
         RADEON_TILING_EG_STENCIL_TILE_SPLIT_SHIFT;

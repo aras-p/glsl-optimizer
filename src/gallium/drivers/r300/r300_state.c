@@ -713,6 +713,7 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
         tex->tex.macrotile[level]) {
         r300->rws->buffer_set_tiling(tex->buf, r300->cs,
                 tex->tex.microtile, tex->tex.macrotile[level],
+                0, 0, 0, 0, 0,
                 tex->tex.stride_in_bytes[0]);
 
         tex->surface_level = level;
