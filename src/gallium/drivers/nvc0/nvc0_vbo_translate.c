@@ -65,8 +65,11 @@ nvc0_vertex_configure_translate(struct nvc0_context *nvc0, int32_t index_bias)
       const uint8_t *map;
       const struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[i];
 
-      map = nouveau_resource_map_offset(&nvc0->base,
-               nv04_resource(vb->buffer), vb->buffer_offset, NOUVEAU_BO_RD);
+      if (likely(!vb->buffer))
+         map = (const uint8_t *)vb->user_buffer;
+      else
+         map = nouveau_resource_map_offset(&nvc0->base,
+            nv04_resource(vb->buffer), vb->buffer_offset, NOUVEAU_BO_RD);
 
       if (index_bias && !unlikely(nvc0->vertex->instance_bufs & (1 << i)))
          map += (intptr_t)index_bias * vb->stride;

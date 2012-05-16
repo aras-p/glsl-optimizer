@@ -756,13 +756,20 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
     uint32_t constant_vbos = 0;
     unsigned i;
 
+    nvc0->vbo_user = 0;
+
     if (count != nvc0->num_vtxbufs) {
        for (i = 0; i < count; ++i) {
           pipe_resource_reference(&nvc0->vtxbuf[i].buffer, vb[i].buffer);
-          nvc0->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
+          if (vb[i].user_buffer) {
+             nvc0->vbo_user |= 1 << i;
+             nvc0->vtxbuf[i].user_buffer = vb[i].user_buffer;
+             if (!vb[i].stride)
+                constant_vbos |= 1 << i;
+          } else {
+             nvc0->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
+          }
           nvc0->vtxbuf[i].stride = vb[i].stride;
-          if (!vb[i].stride)
-             constant_vbos |= 1 << i;
        }
        for (; i < nvc0->num_vtxbufs; ++i)
           pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);
@@ -771,6 +778,13 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
        nvc0->dirty |= NVC0_NEW_ARRAYS;
     } else {
        for (i = 0; i < count; ++i) {
+          if (vb[i].user_buffer) {
+             nvc0->vtxbuf[i].user_buffer = vb[i].user_buffer;
+             nvc0->vbo_user |= 1 << i;
+             if (!vb[i].stride)
+                constant_vbos |= 1 << i;
+             assert(!vb[i].buffer);
+          }
           if (nvc0->vtxbuf[i].buffer == vb[i].buffer &&
               nvc0->vtxbuf[i].buffer_offset == vb[i].buffer_offset &&
               nvc0->vtxbuf[i].stride == vb[i].stride)
@@ -778,10 +792,7 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
           pipe_resource_reference(&nvc0->vtxbuf[i].buffer, vb[i].buffer);
           nvc0->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
           nvc0->vtxbuf[i].stride = vb[i].stride;
-          if (likely(vb[i].stride))
-             nvc0->dirty |= NVC0_NEW_ARRAYS;
-          else
-             constant_vbos |= 1 << i;
+          nvc0->dirty |= NVC0_NEW_ARRAYS;
        }
     }
     if (constant_vbos != nvc0->constant_vbos) {

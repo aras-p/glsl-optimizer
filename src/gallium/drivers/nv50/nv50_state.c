@@ -889,12 +889,23 @@ nv50_set_vertex_buffers(struct pipe_context *pipe,
    struct nv50_context *nv50 = nv50_context(pipe);
    unsigned i;
 
-   for (i = 0; i < count; ++i)
+   nv50->vbo_user = nv50->vbo_constant = 0;
+
+   for (i = 0; i < count; ++i) {
+      nv50->vtxbuf[i].stride = vb[i].stride;
       pipe_resource_reference(&nv50->vtxbuf[i].buffer, vb[i].buffer);
+      if (!vb[i].buffer && vb[i].user_buffer) {
+         nv50->vtxbuf[i].user_buffer = vb[i].user_buffer;
+         nv50->vbo_user |= 1 << i;
+         if (!vb[i].stride)
+            nv50->vbo_constant |= 1 << i;
+      } else {
+         nv50->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
+      }
+   }
    for (; i < nv50->num_vtxbufs; ++i)
       pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
 
-   memcpy(nv50->vtxbuf, vb, sizeof(*vb) * count);
    nv50->num_vtxbufs = count;
 
    nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_VERTEX);

@@ -123,8 +123,11 @@ struct nv50_context {
    struct pipe_index_buffer idxbuf;
    uint32_t vbo_fifo; /* bitmask of vertex elements to be pushed to FIFO */
    uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
+   uint32_t vbo_constant; /* bitmask of user buffers with stride 0 */
    uint32_t vb_elt_first; /* from pipe_draw_info, for vertex upload */
    uint32_t vb_elt_limit; /* max - min element (count - 1) */
+   uint32_t instance_off; /* base vertex for instanced arrays */
+   uint32_t instance_max; /* max instance for current draw call */
 
    struct pipe_sampler_view *textures[3][PIPE_MAX_SAMPLERS];
    unsigned num_textures[3];

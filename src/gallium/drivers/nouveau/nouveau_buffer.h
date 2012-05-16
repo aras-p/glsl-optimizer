@@ -89,11 +89,12 @@ boolean
 nouveau_user_buffer_upload(struct nouveau_context *, struct nv04_resource *,
                            unsigned base, unsigned size);
 
-/* Copy data to a scratch buffer, update buffer address.
- * Returns the bo the data resides in, or NULL on failure.
+/* Copy data to a scratch buffer and return address & bo the data resides in.
+ * Returns 0 on failure.
  */
-struct nouveau_bo *
+uint64_t
 nouveau_scratch_data(struct nouveau_context *,
-                     struct nv04_resource *, unsigned base, unsigned size);
+                     const void *data, unsigned base, unsigned size,
+                     struct nouveau_bo **);
 
 #endif

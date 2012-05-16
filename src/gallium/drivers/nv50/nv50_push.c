@@ -220,15 +220,17 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
    ctx.vertex_words = nv50->vertex->vertex_size;
 
    for (i = 0; i < nv50->num_vtxbufs; ++i) {
-      uint8_t *data;
-      struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
-      struct nv04_resource *res = nv04_resource(vb->buffer);
+      const struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
+      const uint8_t *data;
 
-      data = nouveau_resource_map_offset(&nv50->base, res,
-                                         vb->buffer_offset, NOUVEAU_BO_RD);
+      if (unlikely(vb->buffer))
+         data = nouveau_resource_map_offset(&nv50->base,
+            nv04_resource(vb->buffer), vb->buffer_offset, NOUVEAU_BO_RD);
+      else
+         data = vb->user_buffer;
 
       if (apply_bias && likely(!(nv50->vertex->instance_bufs & (1 << i))))
-         data += info->index_bias * vb->stride;
+         data += (ptrdiff_t)info->index_bias * vb->stride;
 
       ctx.translate->set_buffer(ctx.translate, i, data, vb->stride, ~0);
    }
@@ -304,10 +306,4 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
       ctx.instance_id++;
       ctx.prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
-
-   if (info->indexed)
-      nouveau_resource_unmap(nv04_resource(nv50->idxbuf.buffer));
-
-   for (i = 0; i < nv50->num_vtxbufs; ++i)
-      nouveau_resource_unmap(nv04_resource(nv50->vtxbuf[i].buffer));
 }

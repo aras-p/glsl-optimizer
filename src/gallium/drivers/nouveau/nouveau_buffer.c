@@ -604,30 +604,28 @@ nouveau_scratch_more(struct nouveau_context *nv, unsigned min_size)
    return ret;
 }
 
-/* Upload data to scratch memory and update buffer address.
- * Returns the bo the data resides in, if successful.
- */
-struct nouveau_bo *
+
+/* Copy data to a scratch buffer and return address & bo the data resides in. */
+uint64_t
 nouveau_scratch_data(struct nouveau_context *nv,
-                     struct nv04_resource *buf, unsigned base, unsigned size)
+                     const void *data, unsigned base, unsigned size,
+                     struct nouveau_bo **bo)
 {
-   struct nouveau_bo *bo;
    unsigned bgn = MAX2(base, nv->scratch.offset);
    unsigned end = bgn + size;
 
    if (end >= nv->scratch.end) {
       end = base + size;
       if (!nouveau_scratch_more(nv, end))
-         return NULL;
+         return 0;
       bgn = base;
    }
    nv->scratch.offset = align(end, 4);
 
-   memcpy(nv->scratch.map + bgn, buf->data + base, size);
+   memcpy(nv->scratch.map + bgn, (const uint8_t *)data + base, size);
 
-   bo = nv->scratch.current;
-   buf->address = bo->offset + (bgn - base);
-   return bo;
+   *bo = nv->scratch.current;
+   return (*bo)->offset + (bgn - base);
 }
 
 void *
