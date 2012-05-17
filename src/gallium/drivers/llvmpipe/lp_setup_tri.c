@@ -815,10 +815,35 @@ calc_fixed_position( struct lp_setup_context *setup,
 
 /**
  * Rotate a triangle, flipping its clockwise direction,
+ * Swaps values for xy[0] and xy[1]
+ */
+static INLINE void
+rotate_fixed_position_01( struct fixed_position* position )
+{
+   int x, y;
+
+   x = position->x[1];
+   y = position->y[1];
+   position->x[1] = position->x[0];
+   position->y[1] = position->y[0];
+   position->x[0] = x;
+   position->y[0] = y;
+
+   position->dx01 = -position->dx01;
+   position->dy01 = -position->dy01;
+   position->dx20 = position->x[2] - position->x[0];
+   position->dy20 = position->y[2] - position->y[0];
+
+   position->area = -position->area;
+}
+
+
+/**
+ * Rotate a triangle, flipping its clockwise direction,
  * Swaps values for xy[1] and xy[2]
  */
 static INLINE void
-rotate_fixed_position( struct fixed_position* position )
+rotate_fixed_position_12( struct fixed_position* position )
 {
    int x, y;
 
@@ -852,8 +877,13 @@ static void triangle_cw( struct lp_setup_context *setup,
    calc_fixed_position(setup, &position, v0, v1, v2);
 
    if (position.area < 0) {
-      rotate_fixed_position(&position);
-      retry_triangle_ccw(setup, &position, v0, v2, v1, !setup->ccw_is_frontface);
+      if (setup->flatshade_first) {
+         rotate_fixed_position_12(&position);
+         retry_triangle_ccw(setup, &position, v0, v2, v1, !setup->ccw_is_frontface);
+      } else {
+         rotate_fixed_position_01(&position);
+         retry_triangle_ccw(setup, &position, v1, v0, v2, !setup->ccw_is_frontface);
+      }
    }
 }
 
@@ -893,8 +923,13 @@ static void triangle_both( struct lp_setup_context *setup,
    if (position.area > 0)
       retry_triangle_ccw( setup, &position, v0, v1, v2, setup->ccw_is_frontface );
    else if (position.area < 0) {
-      rotate_fixed_position( &position );
-      retry_triangle_ccw( setup, &position, v0, v2, v1, !setup->ccw_is_frontface );
+      if (setup->flatshade_first) {
+         rotate_fixed_position_12( &position );
+         retry_triangle_ccw( setup, &position, v0, v2, v1, !setup->ccw_is_frontface );
+      } else {
+         rotate_fixed_position_01( &position );
+         retry_triangle_ccw( setup, &position, v1, v0, v2, !setup->ccw_is_frontface );
+      }
    }
 }
 
