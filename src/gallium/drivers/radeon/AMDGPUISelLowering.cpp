@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUISelLowering.h"
+#include "AMDILIntrinsicInfo.h"
 #include "AMDGPUUtil.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
@@ -20,6 +21,38 @@ using namespace llvm;
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   AMDILTargetLowering(TM)
 {
+  // We need to custom lower some of the intrinsics
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+}
+
+SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
+    const
+{
+  switch (Op.getOpcode()) {
+  default: return AMDILTargetLowering::LowerOperation(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  }
+}
+
+SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
+    SelectionDAG &DAG) const
+{
+  unsigned IntrinsicID = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+
+  switch (IntrinsicID) {
+    default: return Op;
+    case AMDGPUIntrinsic::AMDIL_max:
+      return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDGPU_imax:
+      return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDGPU_umax:
+      return DAG.getNode(AMDGPUISD::UMAX, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
+  }
 }
 
 void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
@@ -29,3 +62,15 @@ void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
   AMDGPU::utilAddLiveIn(MF, MRI, TII, reg, MI->getOperand(0).getReg());
 }
 
+#define NODE_NAME_CASE(node) case AMDGPUISD::node: return #node;
+
+const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
+{
+  switch (Opcode) {
+  default: return AMDILTargetLowering::getTargetNodeName(Opcode);
+
+  NODE_NAME_CASE(FMAX)
+  NODE_NAME_CASE(SMAX)
+  NODE_NAME_CASE(UMAX)
+  }
+}

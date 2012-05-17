@@ -10,6 +10,7 @@
 // This file defines an instruction selector for the AMDIL target.
 //
 //===----------------------------------------------------------------------===//
+#include "AMDGPUISelLowering.h" // For AMDGPUISD
 #include "AMDILDevices.h"
 #include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"

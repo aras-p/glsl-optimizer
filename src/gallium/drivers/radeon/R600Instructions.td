@@ -261,9 +261,8 @@ def MUL_IEEE : R600_2OP <
 
 def MAX : R600_2OP <
   0x3, "MAX",
-  [(set R600_Reg32:$dst, (int_AMDIL_max R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.MAX_f32;
-}
+  [(set R600_Reg32:$dst, (AMDGPUfmax R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def MIN : R600_2OP <
   0x4, "MIN",
@@ -370,7 +369,7 @@ def SUB_INT : R600_2OP <
 
 def MAX_INT : R600_2OP <
   0x36, "MAX_INT",
-  [(set R600_Reg32:$dst, (int_AMDGPU_imax R600_Reg32:$src0, R600_Reg32:$src1))]>;
+  [(set R600_Reg32:$dst, (AMDGPUsmax R600_Reg32:$src0, R600_Reg32:$src1))]>;
 
 def MIN_INT : R600_2OP <
   0x37, "MIN_INT",
@@ -378,7 +377,7 @@ def MIN_INT : R600_2OP <
 
 def MAX_UINT : R600_2OP <
   0x38, "MAX_UINT",
-  [(set R600_Reg32:$dst, (int_AMDGPU_umax R600_Reg32:$src0, R600_Reg32:$src1))]>;
+  [(set R600_Reg32:$dst, (AMDGPUsmax R600_Reg32:$src0, R600_Reg32:$src1))]>;
 
 def MIN_UINT : R600_2OP <
   0x39, "MIN_UINT",

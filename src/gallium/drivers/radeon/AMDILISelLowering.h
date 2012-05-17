@@ -94,6 +94,7 @@ namespace llvm
       LOOP_ZERO,
       LOOP_CMP,
       ADDADDR,
+      LAST_NON_MEMORY_OPCODE,
       // ATOMIC Operations
       // Global Memory
       ATOM_G_ADD = ISD::FIRST_TARGET_MEMORY_OPCODE,

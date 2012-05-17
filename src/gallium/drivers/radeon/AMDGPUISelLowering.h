@@ -21,6 +21,9 @@ namespace llvm {
 
 class AMDGPUTargetLowering : public AMDILTargetLowering
 {
+private:
+  SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+
 protected:
 
   /// addLiveIn - This functions adds reg to the live in list of the entry block
@@ -36,7 +39,25 @@ protected:
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
 
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+  virtual const char* getTargetNodeName(unsigned Opcode) const;
+
 };
+
+namespace AMDGPUISD
+{
+
+enum
+{
+  AMDGPU_FIRST = AMDILISD::LAST_NON_MEMORY_OPCODE,
+  FMAX,
+  SMAX,
+  UMAX,
+  LAST_AMDGPU_ISD_NUMBER
+};
+
+
+} // End namespace AMDGPUISD
 
 } // End namespace llvm
 

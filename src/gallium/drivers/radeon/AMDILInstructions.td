@@ -261,7 +261,6 @@ defm POW : BinaryIntrinsicFloat<IL_OP_POW, int_AMDIL_pow>;
 let hasIEEEFlag = 1 in {
   let mayLoad = 0, mayStore=0 in {
 defm MIN  : BinaryIntrinsicFloat<IL_OP_MIN, int_AMDIL_min>;
-defm MAX  : BinaryIntrinsicFloat<IL_OP_MAX, int_AMDIL_max>;
 defm MAD  : TernaryIntrinsicFloat<IL_OP_MAD, int_AMDIL_mad>;
   }
 defm MOD  : BinaryOpMCf32<IL_OP_MOD, frem>;

@@ -34,7 +34,6 @@ use strict;
 my @F32_MULTICLASSES = qw {
   UnaryIntrinsicFloat
   UnaryIntrinsicFloatScalar
-  BinaryIntrinsicFloat
   TernaryIntrinsicFloat
   BinaryOpMCFloat
 };
@@ -58,7 +57,7 @@ my $FILE_TYPE = $ARGV[0];
 
 open AMDIL, '<', 'AMDILInstructions.td';
 
-my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'CMOVLOG_f32', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'BINARY_OR_i32', 'BINARY_NOT_i32');
+my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'CMOVLOG_f32', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'BINARY_OR_i32', 'BINARY_NOT_i32', 'MIN_f32');
 
 while (<AMDIL>) {
   if ($_ =~ /defm\s+([A-Z_]+)\s+:\s+([A-Za-z0-9]+)</) {
