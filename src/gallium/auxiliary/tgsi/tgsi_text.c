@@ -1007,6 +1007,10 @@ static boolean parse_immediate_data(struct translate_ctx *ctx, unsigned type,
       case TGSI_IMM_INT32:
          ret = parse_int(&ctx->cur, &values[i].Int);
          break;
+      default:
+         assert(0);
+         ret = FALSE;
+         break;
       }
 
       if (!ret) {
