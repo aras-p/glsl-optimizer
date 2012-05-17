@@ -307,7 +307,7 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
       offset += key->num_unnormalized_coords;
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 

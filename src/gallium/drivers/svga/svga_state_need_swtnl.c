@@ -97,7 +97,7 @@ update_need_swvfetch( struct svga_context *svga,
       svga->dirty |= SVGA_NEW_NEED_SWVFETCH;
    }
    
-   return 0;
+   return PIPE_OK;
 }
 
 struct svga_tracked_state svga_update_need_swvfetch = 
@@ -172,7 +172,7 @@ update_need_pipeline( struct svga_context *svga,
    if (0 && svga->state.sw.need_pipeline)
       debug_printf("sw.need_pipeline = %d\n", svga->state.sw.need_pipeline);
 
-   return 0;
+   return PIPE_OK;
 }
 
 
@@ -228,7 +228,7 @@ update_need_swtnl( struct svga_context *svga,
       svga->swtnl.new_vdecl = TRUE;
    }
   
-   return 0;
+   return PIPE_OK;
 }
 
 

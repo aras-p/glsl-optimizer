@@ -294,7 +294,7 @@ update_zero_stride( struct svga_context *svga,
    if (svga->curr.num_zero_stride_vertex_elements)
       svga->dirty |= SVGA_NEW_ZERO_STRIDE;
 
-   return 0;
+   return PIPE_OK;
 }
 
 struct svga_tracked_state svga_hw_update_zero_stride =

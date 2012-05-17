@@ -75,8 +75,8 @@ svga_queue_rs( struct rs_queue *q,
  * to hardware.  Simplest implementation would be to emit the whole of
  * the "to" state.
  */
-static int emit_rss( struct svga_context *svga,
-                     unsigned dirty )
+static enum pipe_error
+emit_rss(struct svga_context *svga, unsigned dirty)
 {
    struct svga_screen *screen = svga_screen(svga->pipe.screen);
    struct rs_queue queue;
@@ -269,7 +269,7 @@ static int emit_rss( struct svga_context *svga,
       SVGA_FIFOCommitAll( svga->swc );
    }
 
-   return 0;
+   return PIPE_OK;
 
 fail:
    /* XXX: need to poison cached hardware state on failure to ensure

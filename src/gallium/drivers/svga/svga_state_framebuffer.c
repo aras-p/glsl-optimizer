@@ -91,7 +91,7 @@ emit_framebuffer( struct svga_context *svga,
 
    svga->rebind.rendertargets = FALSE;
 
-   return 0;
+   return PIPE_OK;
 }
 
 
@@ -439,7 +439,7 @@ out:
       svga->state.hw_clear.prescale = prescale;
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 
@@ -519,7 +519,7 @@ emit_clip_planes( struct svga_context *svga,
          return ret;
    }
 
-   return 0;
+   return PIPE_OK;
 }
 
 
