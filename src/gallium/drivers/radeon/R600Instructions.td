@@ -364,7 +364,7 @@ def ADD_INT : R600_2OP <
 
 def SUB_INT : R600_2OP <
 	0x35, "SUB_INT",
-	[]
+	[(set R600_Reg32:$dst, (sub R600_Reg32:$src0, R600_Reg32:$src1))]
 >;
 
 def MAX_INT : R600_2OP <

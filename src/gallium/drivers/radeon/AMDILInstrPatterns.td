@@ -30,26 +30,6 @@ def ULTOF : Pat<(f32 (uint_to_fp GPRI64:$src)),
 def LTOF : Pat<(f32 (sint_to_fp GPRI64:$src)),
     (ITOF (LLO GPRI64:$src))>;
 
-// integer subtraction
-// a - b ==> a + (-b)
-def SUB_i8 : Pat<(sub GPRI8:$src0, GPRI8:$src1),
-    (ADD_i8 GPRI8:$src0, (NEGATE_i8 GPRI8:$src1))>;
-def SUB_v2i8 : Pat<(sub GPRV2I8:$src0, GPRV2I8:$src1),
-    (ADD_v2i8 GPRV2I8:$src0, (NEGATE_v2i8 GPRV2I8:$src1))>;
-def SUB_v4i8 : Pat<(sub GPRV4I8:$src0, GPRV4I8:$src1),
-    (ADD_v4i8 GPRV4I8:$src0, (NEGATE_v4i8 GPRV4I8:$src1))>;
-def SUB_i16 : Pat<(sub GPRI16:$src0, GPRI16:$src1),
-    (ADD_i16 GPRI16:$src0, (NEGATE_i16 GPRI16:$src1))>;
-def SUB_v2i16 : Pat<(sub GPRV2I16:$src0, GPRV2I16:$src1),
-    (ADD_v2i16 GPRV2I16:$src0, (NEGATE_v2i16 GPRV2I16:$src1))>;
-def SUB_v4i16 : Pat<(sub GPRV4I16:$src0, GPRV4I16:$src1),
-    (ADD_v4i16 GPRV4I16:$src0, (NEGATE_v4i16 GPRV4I16:$src1))>;
-def SUB_i32 : Pat<(sub GPRI32:$src0, GPRI32:$src1),
-    (ADD_i32 GPRI32:$src0, (NEGATE_i32 GPRI32:$src1))>;
-def SUB_v2i32 : Pat<(sub GPRV2I32:$src0, GPRV2I32:$src1),
-    (ADD_v2i32 GPRV2I32:$src0, (NEGATE_v2i32 GPRV2I32:$src1))>;
-def SUB_v4i32 : Pat<(sub GPRV4I32:$src0, GPRV4I32:$src1),
-    (ADD_v4i32 GPRV4I32:$src0, (NEGATE_v4i32 GPRV4I32:$src1))>;
 // LLVM isn't lowering this correctly, so writing a pattern that
 // matches it isntead.
 def : Pat<(build_vector (i32 imm:$src)),
