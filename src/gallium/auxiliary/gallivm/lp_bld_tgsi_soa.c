@@ -704,7 +704,15 @@ emit_fetch_input(
          res = bld->inputs[reg->Register.Index][swizzle];
       }
    }
+
    assert(res);
+
+   if (stype == TGSI_TYPE_UNSIGNED) {
+      res = LLVMBuildBitCast(builder, res, bld_base->uint_bld.vec_type, "");
+   } else if (stype == TGSI_TYPE_SIGNED) {
+      res = LLVMBuildBitCast(builder, res, bld_base->int_bld.vec_type, "");
+   }
+
    return res;
 }
 
