@@ -37,18 +37,17 @@
 
 
 /*
- * Don't try to send more than 4k of successive constants.
+ * Don't try to send more than 4kb of successive constants.
  */
-#define MAX_CONST_REG_COUNT 256 /* 4k */
+#define MAX_CONST_REG_COUNT 256  /**< number of float[4] constants */
 
 
-/***********************************************************************
- * Hardware update 
- */
 
-/* Convert from PIPE_SHADER_* to SVGA3D_SHADERTYPE_*
+/**
+ * Convert from PIPE_SHADER_* to SVGA3D_SHADERTYPE_*
  */
-static int svga_shader_type( unsigned shader )
+static int
+svga_shader_type(unsigned shader)
 {
    assert(PIPE_SHADER_VERTEX + 1 == SVGA3D_SHADERTYPE_VS);
    assert(PIPE_SHADER_FRAGMENT + 1 == SVGA3D_SHADERTYPE_PS);
@@ -56,7 +55,8 @@ static int svga_shader_type( unsigned shader )
    return shader + 1;
 }
 
-/*
+
+/**
  * Check and emit one shader constant register.
  * \param shader  PIPE_SHADER_FRAGMENT or PIPE_SHADER_VERTEX
  * \param i  which float[4] constant to change
@@ -69,10 +69,10 @@ emit_const(struct svga_context *svga, unsigned shader, unsigned i,
    enum pipe_error ret = PIPE_OK;
 
    assert(shader < PIPE_SHADER_TYPES);
-
    assert(i < SVGA3D_CONSTREG_MAX);
 
-   if (memcmp(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float)) != 0) {
+   if (memcmp(svga->state.hw_draw.cb[shader][i], value,
+              4 * sizeof(float)) != 0) {
       if (SVGA_DEBUG & DEBUG_CONSTS)
          debug_printf("%s %s %u: %f %f %f %f\n",
                       __FUNCTION__,
@@ -83,7 +83,7 @@ emit_const(struct svga_context *svga, unsigned shader, unsigned i,
                       value[2],
                       value[3]);
 
-      ret = SVGA3D_SetShaderConst( svga->swc, 
+      ret = SVGA3D_SetShaderConst( svga->swc,
                                    i,
                                    svga_shader_type(shader),
                                    SVGA3D_CONST_TYPE_FLOAT,
@@ -93,20 +93,22 @@ emit_const(struct svga_context *svga, unsigned shader, unsigned i,
 
       memcpy(svga->state.hw_draw.cb[shader][i], value, 4 * sizeof(float));
    }
-   
+
    return ret;
 }
+
 
 /*
  * Check and emit a range of shader constant registers, trying to coalesce
  * successive shader constant updates in a single command in order to save
  * space on the command buffer.  This is a HWv8 feature.
  */
-static enum pipe_error emit_const_range( struct svga_context *svga,
-                                         unsigned shader,
-                                         unsigned offset,
-                                         unsigned count,
-                                         const float (*values)[4] )
+static enum pipe_error
+emit_const_range(struct svga_context *svga,
+                 unsigned shader,
+                 unsigned offset,
+                 unsigned count,
+                 const float (*values)[4])
 {
    unsigned i, j;
    enum pipe_error ret;
@@ -140,11 +142,8 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
       if (memcmp(svga->state.hw_draw.cb[shader][offset + i],
                  values[i],
                  4 * sizeof(float)) != 0) {
-
-         /*
-          * Found one dirty constant
+         /* Found one dirty constant
           */
-
          if (SVGA_DEBUG & DEBUG_CONSTS)
             debug_printf("%s %s %d: %f %f %f %f\n",
                          __FUNCTION__,
@@ -155,10 +154,8 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
                          values[i][2],
                          values[i][3]);
 
-         /*
-          * Look for more consecutive dirty constants.
+         /* Look for more consecutive dirty constants.
           */
-
          j = i + 1;
          while (j < count &&
                 j < i + MAX_CONST_REG_COUNT &&
@@ -181,10 +178,8 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
 
          assert(j >= i + 1);
 
-         /*
-          * Send them all together.
+         /* Send them all together.
           */
-
          ret = SVGA3D_SetShaderConsts(svga->swc,
                                       offset + i, j - i,
                                       svga_shader_type(shader),
@@ -197,7 +192,6 @@ static enum pipe_error emit_const_range( struct svga_context *svga,
          /*
           * Local copy of the hardware state.
           */
-
          memcpy(svga->state.hw_draw.cb[shader][offset + i],
                 values[i],
                 (j - i) * 4 * sizeof(float));
@@ -279,9 +273,7 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
     * doesn't have a 'result' struct.  It should be fixed to avoid
     * this special case, but work around it with a NULL check:
     */
-   if (result != NULL &&
-       key->num_unnormalized_coords)
-   {
+   if (result != NULL && key->num_unnormalized_coords) {
       unsigned offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
       int i;
 
@@ -311,7 +303,7 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_fs_parameters = 
+struct svga_tracked_state svga_hw_fs_parameters =
 {
    "hw fs params",
    (SVGA_NEW_FS_CONST_BUFFER |
@@ -320,8 +312,7 @@ struct svga_tracked_state svga_hw_fs_parameters =
    emit_fs_consts
 };
 
-/***********************************************************************
- */
+
 
 static enum pipe_error
 emit_vs_consts(struct svga_context *svga, unsigned dirty)
@@ -333,18 +324,20 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
 
    /* SVGA_NEW_VS_RESULT
     */
-   if (result == NULL) 
+   if (result == NULL)
       return PIPE_OK;
 
-   /* SVGA_NEW_VS_CONST_BUFFER 
+   /* SVGA_NEW_VS_CONST_BUFFER
     */
    ret = emit_consts( svga, PIPE_SHADER_VERTEX );
    if (ret != PIPE_OK)
       return ret;
 
+   /* offset = number of constants in the VS const buffer */
    offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
 
    /* SVGA_NEW_VS_RESULT
+    * Put the viewport pre-scale/translate values into the const buffer.
     */
    if (key->need_prescale) {
       ret = emit_const( svga, PIPE_SHADER_VERTEX, offset++,
@@ -359,6 +352,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
    }
 
    /* SVGA_NEW_ZERO_STRIDE
+    * Put the zero-stride vertex array attributes into the const buffer.
     */
    if (key->zero_stride_vertex_elements) {
       unsigned i, curr_zero_stride = 0;
@@ -378,7 +372,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_vs_parameters = 
+struct svga_tracked_state svga_hw_vs_parameters =
 {
    "hw vs params",
    (SVGA_NEW_PRESCALE |
@@ -387,4 +381,3 @@ struct svga_tracked_state svga_hw_vs_parameters =
     SVGA_NEW_VS_RESULT),
    emit_vs_consts
 };
-
