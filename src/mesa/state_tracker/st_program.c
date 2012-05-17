@@ -1285,3 +1285,26 @@ st_destroy_program_variants(struct st_context *st)
    _mesa_HashWalk(st->ctx->Shared->ShaderObjects,
                   destroy_shader_program_variants_cb, st);
 }
+
+
+/**
+ * For debugging, print/dump the current vertex program.
+ */
+void
+st_print_current_vertex_program(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->VertexProgram._Current) {
+      struct st_vertex_program *stvp =
+         (struct st_vertex_program *) ctx->VertexProgram._Current;
+      struct st_vp_variant *stv;
+
+      debug_printf("Vertex program %u\n", stvp->Base.Base.Id);
+
+      for (stv = stvp->variants; stv; stv = stv->next) {
+         debug_printf("variant %p\n", stv);
+         tgsi_dump(stv->tgsi.tokens, 0);
+      }
+   }
+}

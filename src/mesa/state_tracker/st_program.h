@@ -315,4 +315,8 @@ extern void
 st_destroy_program_variants(struct st_context *st);
 
 
+extern void
+st_print_current_vertex_program(void);
+
+
 #endif
