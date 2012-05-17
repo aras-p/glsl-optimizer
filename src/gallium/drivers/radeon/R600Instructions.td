@@ -255,9 +255,8 @@ def MUL : R600_2OP <
 
 def MUL_IEEE : R600_2OP <
   0x2, "MUL_IEEE",
-  [(set R600_Reg32:$dst, (fmul R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.MUL_IEEE_f32;
-}
+  [(set R600_Reg32:$dst, (fmul R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def MAX : R600_2OP <
   0x3, "MAX",
