@@ -43,6 +43,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
     default: return Op;
+    case AMDGPUIntrinsic::AMDIL_abs:
+      return LowerIntrinsicIABS(Op, DAG);
     case AMDGPUIntrinsic::AMDIL_max:
       return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
@@ -53,6 +55,19 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(AMDGPUISD::UMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
   }
+}
+
+///IABS(a) = SMAX(sub(0, a), a)
+SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
+    SelectionDAG &DAG) const
+{
+
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+  SDValue Neg = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, VT),
+                                              Op.getOperand(1));
+
+  return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Neg, Op.getOperand(1));
 }
 
 void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,

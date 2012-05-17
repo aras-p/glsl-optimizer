@@ -88,22 +88,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                 .addOperand(MI.getOperand(1));
         break;
 
-      case AMDIL::ABS_i32:
-        {
-          unsigned neg = MRI->createVirtualRegister(
-                           &AMDIL::R600_TReg32RegClass);
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT),neg)
-                  .addReg(AMDIL::ZERO)
-                  .addOperand(MI.getOperand(1));
-
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::MAX_INT))
-                  .addOperand(MI.getOperand(0))
-                  .addOperand(MI.getOperand(1))
-                  .addReg(neg);
-
-          break;
-        }
-
       /* XXX: We could propagate the ABS flag to all of the uses of Operand0 and
        * remove the ABS instruction.*/
       case AMDIL::FABS_f32:

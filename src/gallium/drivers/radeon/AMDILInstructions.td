@@ -92,7 +92,6 @@ def ADDri       : TwoInOneOut<IL_OP_I_ADD, (outs GPRI32:$dst),
 defm IFFB_HI    : UnaryOpMCi32<IL_OP_I_FFB_HI, IL_ffb_hi>;
 defm IFFB_LO    : UnaryOpMCi32<IL_OP_I_FFB_LO, IL_ffb_lo>;
 let mayLoad = 0, mayStore = 0 in {
-defm ABS : UnaryIntrinsicInt<IL_OP_ABS, int_AMDIL_abs>;
 defm BITCOUNT : UnaryIntrinsicInt<IL_OP_IBIT_COUNT, int_AMDIL_bit_count_i32>;
 defm FFB_LO : UnaryIntrinsicInt<IL_OP_I_FFB_LO, int_AMDIL_bit_find_first_lo>;
 defm FFB_HI : UnaryIntrinsicInt<IL_OP_I_FFB_HI, int_AMDIL_bit_find_first_hi>;
