@@ -371,13 +371,17 @@ nv30_screen_create(struct nouveau_device *dev)
 
    screen->base.fence.emit = nv30_screen_fence_emit;
    screen->base.fence.update = nv30_screen_fence_update;
-   screen->base.sysmem_bindings = PIPE_BIND_CONSTANT_BUFFER;
-   if (oclass != NV40_3D_CLASS)
-      screen->base.sysmem_bindings |= PIPE_BIND_INDEX_BUFFER;
 
    ret = nouveau_screen_init(&screen->base, dev);
    if (ret)
       FAIL_SCREEN_INIT("nv30_screen_init failed: %d\n", ret);
+
+   screen->base.vidmem_bindings |= PIPE_BIND_VERTEX_BUFFER;
+   screen->base.sysmem_bindings |= PIPE_BIND_VERTEX_BUFFER;
+   if (oclass == NV40_3D_CLASS) {
+      screen->base.vidmem_bindings |= PIPE_BIND_INDEX_BUFFER;
+      screen->base.sysmem_bindings |= PIPE_BIND_INDEX_BUFFER;
+   }
 
    fifo = screen->base.channel->data;
    push = screen->base.pushbuf;

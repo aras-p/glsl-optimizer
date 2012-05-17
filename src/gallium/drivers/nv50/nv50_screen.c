@@ -532,11 +532,17 @@ nv50_screen_create(struct nouveau_device *dev)
       return NULL;
    pscreen = &screen->base.base;
 
-   screen->base.sysmem_bindings = PIPE_BIND_CONSTANT_BUFFER;
-
    ret = nouveau_screen_init(&screen->base, dev);
    if (ret)
       FAIL_SCREEN_INIT("nouveau_screen_init failed: %d\n", ret);
+
+   /* TODO: Prevent FIFO prefetch before transfer of index buffers and
+    *  admit them to VRAM.
+    */
+   screen->base.vidmem_bindings |= PIPE_BIND_CONSTANT_BUFFER |
+      PIPE_BIND_VERTEX_BUFFER;
+   screen->base.sysmem_bindings |=
+      PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER;
 
    screen->base.pushbuf->user_priv = screen;
    screen->base.pushbuf->rsvd_kick = 5;

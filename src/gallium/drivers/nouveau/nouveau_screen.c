@@ -148,6 +148,16 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 
 	util_format_s3tc_init();
 
+	screen->lowmem_bindings = PIPE_BIND_GLOBAL; /* gallium limit */
+	screen->vidmem_bindings =
+		PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL |
+		PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_SCANOUT | PIPE_BIND_CURSOR |
+		PIPE_BIND_SAMPLER_VIEW |
+		PIPE_BIND_SHADER_RESOURCE | PIPE_BIND_COMPUTE_RESOURCE |
+		PIPE_BIND_GLOBAL;
+	screen->sysmem_bindings =
+		PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_STREAM_OUTPUT;
+
 	memset(&mm_config, 0, sizeof(mm_config));
 
 	screen->mm_GART = nouveau_mm_create(dev,

@@ -418,8 +418,6 @@ nvc0_screen_create(struct nouveau_device *dev)
       return NULL;
    pscreen = &screen->base.base;
 
-   screen->base.sysmem_bindings = PIPE_BIND_CONSTANT_BUFFER;
-
    ret = nouveau_screen_init(&screen->base, dev);
    if (ret) {
       nvc0_screen_destroy(pscreen);
@@ -428,6 +426,11 @@ nvc0_screen_create(struct nouveau_device *dev)
    chan = screen->base.channel;
    push = screen->base.pushbuf;
    push->user_priv = screen;
+
+   screen->base.vidmem_bindings |= PIPE_BIND_CONSTANT_BUFFER |
+      PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER;
+   screen->base.sysmem_bindings |=
+      PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER;
 
    pscreen->destroy = nvc0_screen_destroy;
    pscreen->context_create = nvc0_create;

@@ -17,7 +17,13 @@ struct nouveau_screen {
 	struct nouveau_client *client;
 	struct nouveau_pushbuf *pushbuf;
 
-	unsigned sysmem_bindings;
+	unsigned vidmem_bindings; /* PIPE_BIND_* where VRAM placement is desired */
+	unsigned sysmem_bindings; /* PIPE_BIND_* where GART placement is desired */
+	unsigned lowmem_bindings; /* PIPE_BIND_* that require an address < 4 GiB */
+	/*
+	 * For bindings with (vidmem & sysmem) bits set set, PIPE_USAGE_* decides
+	 * placement.
+	 */
 
 	uint16_t class_3d;
 

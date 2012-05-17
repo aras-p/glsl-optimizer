@@ -363,10 +363,31 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
    pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.screen = pscreen;
 
-   if ((buffer->base.bind & screen->sysmem_bindings) == screen->sysmem_bindings)
-      ret = nouveau_buffer_allocate(screen, buffer, 0);
-   else
-      ret = nouveau_buffer_allocate(screen, buffer, NOUVEAU_BO_GART);
+   if (buffer->base.bind &
+       (screen->vidmem_bindings & screen->sysmem_bindings)) {
+      switch (buffer->base.usage) {
+      case PIPE_USAGE_DEFAULT:
+      case PIPE_USAGE_IMMUTABLE:
+      case PIPE_USAGE_STATIC:
+         buffer->domain = NOUVEAU_BO_VRAM;
+         break;
+      case PIPE_USAGE_DYNAMIC:
+      case PIPE_USAGE_STAGING:
+      case PIPE_USAGE_STREAM:
+         buffer->domain = NOUVEAU_BO_GART;
+         break;
+      default:
+         assert(0);
+         break;
+      }
+   } else {
+      if (buffer->base.bind & screen->vidmem_bindings)
+         buffer->domain = NOUVEAU_BO_VRAM;
+      else
+      if (buffer->base.bind & screen->sysmem_bindings)
+         buffer->domain = NOUVEAU_BO_GART;
+   }
+   ret = nouveau_buffer_allocate(screen, buffer, buffer->domain);
 
    if (ret == FALSE)
       goto fail;
