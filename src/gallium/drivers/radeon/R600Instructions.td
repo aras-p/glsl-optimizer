@@ -421,7 +421,8 @@ def SETGE_UINT : R600_2OP <
 
 def CNDE_INT : R600_3OP <
 	0x1C, "CNDE_INT",
-	[]
+  [(set (i32 R600_Reg32:$dst),
+   (IL_cmov_logical R600_Reg32:$src0, R600_Reg32:$src2, R600_Reg32:$src1))]
 >;
 
 /* Texture instructions */
@@ -527,9 +528,9 @@ class MULADD_Common <bits<32> inst> : R600_3OP <
 
 class CNDE_Common <bits<32> inst> : R600_3OP <
   inst, "CNDE",
-  []> {
-  let AMDILOp = AMDILInst.CMOVLOG_f32;
-}
+  [(set (f32 R600_Reg32:$dst),
+   (IL_cmov_logical R600_Reg32:$src0, R600_Reg32:$src2, R600_Reg32:$src1))]
+>;
 
 class CNDGT_Common <bits<32> inst> : R600_3OP <
   inst, "CNDGT",

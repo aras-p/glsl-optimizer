@@ -114,22 +114,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                 .addReg(tmp2);
         break;
         }
-      case AMDIL::CMOVLOG_f32:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(MI.getOpcode()))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(1))
-                .addOperand(MI.getOperand(3))
-                .addOperand(MI.getOperand(2));
-        break;
-
-      case AMDIL::CMOVLOG_i32:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(1))
-                .addOperand(MI.getOperand(3))
-                .addOperand(MI.getOperand(2));
-        break;
-
       case AMDIL::CLAMP_f32:
         {
           MachineOperand lowOp = MI.getOperand(2);

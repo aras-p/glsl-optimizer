@@ -22,9 +22,6 @@ defm AND        : BinaryOpMCInt<IL_OP_AND, and>;
 defm CMOV       : BinaryOpMC<IL_OP_CMOV, IL_cmov>;
 defm DIV_INF    : BinaryOpMC<IL_OP_DIV_INF, IL_div_inf>;
 defm SMAX       : BinaryOpMCInt<IL_OP_I_MAX, IL_smax>;
-// This opcode has custom swizzle pattern encoded in Swizzle Encoder for 64bit
-// instructions
-defm CMOVLOG    : TernaryOpMC<IL_OP_CMOV_LOGICAL, IL_cmov_logical>;
 // This opcode has a custom swizzle pattern in the Swizzle Encoder and 
 // should never be selected in ISel. It should only be generated in the
 // I/O expansion code. These are different from the CMOVLOG instruction
@@ -107,8 +104,6 @@ defm CARRY  : BinaryIntrinsicInt<IL_OP_I_CARRY, int_AMDIL_carry_i32>;
 defm BORROW  : BinaryIntrinsicInt<IL_OP_I_BORROW, int_AMDIL_borrow_i32>;
 defm IMIN  : BinaryIntrinsicInt<IL_OP_I_MIN, int_AMDIL_min_i32>;
 defm IMAX  : BinaryIntrinsicInt<IL_OP_I_MAX, int_AMDIL_max_i32>;
-defm CMOV_LOG  : TernaryIntrinsicInt<IL_OP_CMOV_LOGICAL,
-          int_AMDIL_cmov_logical>;
 defm IBIT_EXTRACT : TernaryIntrinsicInt<IL_OP_IBIT_EXTRACT,
           int_AMDIL_bit_extract_i32>;
 defm IMAD  : TernaryIntrinsicInt<IL_OP_I_MAD, int_AMDIL_mad_i32>;
