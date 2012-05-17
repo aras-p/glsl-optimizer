@@ -204,6 +204,28 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                        texel);
 }
 
+/**
+ * Fetch the texture size.
+ */
+static void
+lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
+                                    struct gallivm_state *gallivm,
+                                    unsigned unit,
+                                    LLVMValueRef explicit_lod, /* optional */
+                                    LLVMValueRef *sizes_out)
+{
+   struct lp_llvm_sampler_soa *sampler = (struct lp_llvm_sampler_soa *)base;
+
+   assert(unit < PIPE_MAX_SAMPLERS);
+   
+   lp_build_size_query_soa(gallivm,
+			   &sampler->dynamic_state.static_state[unit],
+			   &sampler->dynamic_state.base,
+			   unit,
+			   explicit_lod,
+			   sizes_out);
+}
+
 
 struct lp_build_sampler_soa *
 lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
@@ -217,6 +239,7 @@ lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
 
    sampler->base.destroy = lp_llvm_sampler_soa_destroy;
    sampler->base.emit_fetch_texel = lp_llvm_sampler_soa_emit_fetch_texel;
+   sampler->base.emit_size_query = lp_llvm_sampler_soa_emit_size_query;
    sampler->dynamic_state.base.width = lp_llvm_texture_width;
    sampler->dynamic_state.base.height = lp_llvm_texture_height;
    sampler->dynamic_state.base.depth = lp_llvm_texture_depth;

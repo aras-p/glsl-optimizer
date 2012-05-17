@@ -35,6 +35,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_shader_tokens.h"
 #include "util/u_debug.h"
 #include "util/u_dump.h"
 #include "util/u_memory.h"
@@ -1276,4 +1277,76 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    lp_build_sample_compare(&bld, r, texel_out);
 
    apply_sampler_swizzle(&bld, texel_out);
+}
+
+void
+lp_build_size_query_soa(struct gallivm_state *gallivm,
+                        const struct lp_sampler_static_state *static_state,
+                        struct lp_sampler_dynamic_state *dynamic_state,
+                        unsigned unit,
+                        LLVMValueRef explicit_lod,
+                        LLVMValueRef *sizes_out)
+{
+   LLVMValueRef lod;
+   LLVMValueRef size;
+   int dims, i;
+   struct lp_build_context bld_int_vec;
+
+   switch (static_state->target) {
+   case PIPE_TEXTURE_1D:
+   case PIPE_BUFFER:
+      dims = 1;
+      break;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_RECT:
+      dims = 2;
+      break;
+   case PIPE_TEXTURE_3D:
+      dims = 3;
+      break;
+
+   default:
+      assert(0);
+      return;
+   }
+
+   lp_build_context_init(&bld_int_vec, gallivm, lp_type_int_vec(32));
+
+   if (explicit_lod) {
+      LLVMValueRef first_level;
+      lod = LLVMBuildExtractElement(gallivm->builder, explicit_lod, lp_build_const_int32(gallivm, 0), "");
+      first_level = dynamic_state->first_level(dynamic_state, gallivm, unit);
+      lod = lp_build_broadcast_scalar(&bld_int_vec,
+                                      LLVMBuildAdd(gallivm->builder, lod, first_level, "lod"));
+
+   } else {
+      lod = bld_int_vec.zero;
+   }
+
+   size = bld_int_vec.undef;
+
+   size = LLVMBuildInsertElement(gallivm->builder, size,
+                                 dynamic_state->width(dynamic_state, gallivm, unit),
+                                 lp_build_const_int32(gallivm, 0), "");
+
+   if (dims >= 2) {
+      size = LLVMBuildInsertElement(gallivm->builder, size,
+                                    dynamic_state->height(dynamic_state, gallivm, unit),
+                                    lp_build_const_int32(gallivm, 1), "");
+   }
+
+   if (dims >= 3) {
+      size = LLVMBuildInsertElement(gallivm->builder, size,
+                                    dynamic_state->depth(dynamic_state, gallivm, unit),
+                                    lp_build_const_int32(gallivm, 2), "");
+   }
+
+   size = lp_build_minify(&bld_int_vec, size, lod);
+
+   for (i=0; i < dims; i++) {
+      sizes_out[i] = lp_build_extract_broadcast(gallivm, bld_int_vec.type, bld_int_vec.type,
+                                                size,
+                                                lp_build_const_int32(gallivm, i));
+   }
 }

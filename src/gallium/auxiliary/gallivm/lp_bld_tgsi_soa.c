@@ -1209,6 +1209,80 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   texel);
 }
 
+static void
+emit_txq( struct lp_build_tgsi_soa_context *bld,
+          const struct tgsi_full_instruction *inst,
+          LLVMValueRef *sizes_out)
+{
+   LLVMValueRef explicit_lod;
+   unsigned num_coords, has_lod;
+   unsigned i;
+
+   switch (inst->Texture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWCUBE:
+      num_coords = 1;
+      has_lod = 1;
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      num_coords = 2;
+      has_lod = 1;
+      break;
+   case TGSI_TEXTURE_3D:
+// case TGSI_TEXTURE_CUBE_ARRAY:
+// case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+   case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      num_coords = 3;
+      has_lod = 1;
+      break;
+
+   case TGSI_TEXTURE_BUFFER:
+      num_coords = 1;
+      has_lod = 0;
+      break;
+
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOWRECT:
+// case TGSI_TEXTURE_2D_MS:
+      num_coords = 2;
+      has_lod = 0;
+      break;
+
+// case TGSI_TEXTURE_2D_MS_ARRAY:
+//    num_coords = 3;
+//    has_lod = 0;
+//    break;
+
+   default:
+      assert(0);
+      return;
+   }
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture query instruction but no sampler generator supplied\n");
+      for (i = 0; i < num_coords; i++)
+         sizes_out[i] = bld->bld_base.base.undef;
+      return;
+   }
+
+   if (has_lod)
+      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 2 );
+   else
+      explicit_lod = NULL;
+
+   bld->sampler->emit_size_query(bld->sampler,
+                                 bld->bld_base.base.gallivm,
+                                 inst->Src[1].Register.Index,
+                                 explicit_lod,
+                                 sizes_out);
+}
+
 static boolean
 near_end_of_shader(struct lp_build_tgsi_soa_context *bld,
 		   int pc)
@@ -1585,6 +1659,17 @@ txp_emit(
 }
 
 static void
+txq_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_txq(bld, emit_data->inst, emit_data->output);
+}
+
+static void
 cal_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
@@ -1954,6 +2039,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_TXD].emit = txd_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXL].emit = txl_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXP].emit = txp_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_TXQ].emit = txq_emit;
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
 

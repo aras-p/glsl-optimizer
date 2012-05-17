@@ -170,6 +170,13 @@ struct lp_build_sampler_soa
                         LLVMValueRef lod_bias, /* optional */
                         LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef *texel);
+
+   void
+   (*emit_size_query)( const struct lp_build_sampler_soa *sampler,
+                       struct gallivm_state *gallivm,
+                       unsigned unit,
+                       LLVMValueRef explicit_lod, /* optional */
+                       LLVMValueRef *sizes_out);
 };
 
 

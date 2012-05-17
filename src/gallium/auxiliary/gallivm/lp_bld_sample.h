@@ -405,8 +405,22 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     LLVMValueRef texel_out[4]);
 
 void
+lp_build_size_query_soa(struct gallivm_state *gallivm,
+                        const struct lp_sampler_static_state *static_state,
+                        struct lp_sampler_dynamic_state *dynamic_state,
+                        unsigned unit,
+                        LLVMValueRef explicit_lod,
+                        LLVMValueRef *sizes_out);
+
+void
 lp_build_sample_nop(struct gallivm_state *gallivm, struct lp_type type,
                     LLVMValueRef texel_out[4]);
+
+
+LLVMValueRef
+lp_build_minify(struct lp_build_context *bld,
+                LLVMValueRef base_size,
+                LLVMValueRef level);
 
 
 #endif /* LP_BLD_SAMPLE_H */

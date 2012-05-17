@@ -51,11 +51,6 @@
  */
 #define BRILINEAR_FACTOR 2
 
-static LLVMValueRef
-lp_build_minify(struct lp_build_context *bld,
-                LLVMValueRef base_size,
-                LLVMValueRef level);
-
 /**
  * Does the given texture wrap mode allow sampling the texture border color?
  * XXX maybe move this into gallium util code.
@@ -670,7 +665,7 @@ lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
  * Codegen equivalent for u_minify().
  * Return max(1, base_size >> level);
  */
-static LLVMValueRef
+LLVMValueRef
 lp_build_minify(struct lp_build_context *bld,
                 LLVMValueRef base_size,
                 LLVMValueRef level)
