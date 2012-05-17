@@ -102,7 +102,6 @@ defm IMAD24  : TernaryIntrinsicInt<IL_OP_I_MAD24, int_AMDIL_mad24_i32>;
 }
 defm CARRY  : BinaryIntrinsicInt<IL_OP_I_CARRY, int_AMDIL_carry_i32>;
 defm BORROW  : BinaryIntrinsicInt<IL_OP_I_BORROW, int_AMDIL_borrow_i32>;
-defm IMIN  : BinaryIntrinsicInt<IL_OP_I_MIN, int_AMDIL_min_i32>;
 defm IMAX  : BinaryIntrinsicInt<IL_OP_I_MAX, int_AMDIL_max_i32>;
 defm IBIT_EXTRACT : TernaryIntrinsicInt<IL_OP_IBIT_EXTRACT,
           int_AMDIL_bit_extract_i32>;
@@ -137,7 +136,6 @@ defm UBIT_REVERSE : UnaryIntrinsicInt<IL_OP_UBIT_REVERSE,
 defm UMULHI_INT : BinaryIntrinsicInt<IL_OP_U_MUL_HIGH, int_AMDIL_mulhi_u32>;
 defm UMULHI24   : BinaryIntrinsicInt<IL_OP_U_MULHI24, int_AMDIL_mulhi24_u32>;
 defm UMUL24     : BinaryIntrinsicInt<IL_OP_U_MUL24, int_AMDIL_mul24_u32>;
-defm UMIN  : BinaryIntrinsicInt<IL_OP_U_MIN, int_AMDIL_min_u32>;
 defm UMAX  : BinaryIntrinsicInt<IL_OP_U_MAX, int_AMDIL_max_u32>;
 defm UBIT_EXTRACT : TernaryIntrinsicInt<IL_OP_UBIT_EXTRACT,
           int_AMDIL_bit_extract_u32>;
@@ -169,8 +167,6 @@ def LADD        : TwoInOneOut<IL_OP_I64_ADD, (outs GPRI64:$dst),
                   (ins GPRI64:$src1, GPRI64:$src2),
                   !strconcat(IL_OP_I64_ADD.Text, " $dst, $src1, $src2"),
                 [(set GPRI64:$dst, (IL_add GPRI64:$src1, GPRI64:$src2))]>;
-defm IMIN64 : BinaryIntrinsicLong<IL_OP_I64_MIN, int_AMDIL_min_i32>;
-defm UMIN64 : BinaryIntrinsicLong<IL_OP_U64_MIN, int_AMDIL_min_u32>;
 defm IMAX64 : BinaryIntrinsicLong<IL_OP_I64_MAX, int_AMDIL_max_i32>;
 defm UMAX64 : BinaryIntrinsicLong<IL_OP_U64_MAX, int_AMDIL_max_u32>;
 }
@@ -250,7 +246,6 @@ defm POW : BinaryIntrinsicFloat<IL_OP_POW, int_AMDIL_pow>;
 
 let hasIEEEFlag = 1 in {
   let mayLoad = 0, mayStore=0 in {
-defm MIN  : BinaryIntrinsicFloat<IL_OP_MIN, int_AMDIL_min>;
   }
 defm MOD  : BinaryOpMCf32<IL_OP_MOD, frem>;
 }
@@ -367,7 +362,6 @@ def NEG_v2f64       : OneInOneOut<IL_OP_MOV, (outs GPRV2F64:$dst),
     !strconcat(IL_OP_MOV.Text, " $dst, $src0"),
     [(set GPRV2F64:$dst, (fneg GPRV2F64:$src0))]>;
   let mayLoad = 0, mayStore=0 in {
-defm MIN  : BinaryIntrinsicDouble<IL_OP_D_MIN, int_AMDIL_min>;
 defm MAX  : BinaryIntrinsicDouble<IL_OP_D_MAX, int_AMDIL_max>;
 defm DIV  : BinaryIntrinsicDouble<IL_OP_D_DIV, int_AMDIL_div>;
 defm MAD  : TernaryIntrinsicDouble<IL_OP_D_MAD, int_AMDIL_mad>;

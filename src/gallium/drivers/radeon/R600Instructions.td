@@ -265,9 +265,8 @@ def MAX : R600_2OP <
 
 def MIN : R600_2OP <
   0x4, "MIN",
-  [(set R600_Reg32:$dst, (int_AMDIL_min R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.MIN_f32;
-}
+  [(set R600_Reg32:$dst, (AMDGPUfmin R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 /* For the SET* instructions there is a naming conflict in TargetSelectionDAG.td,
  * so some of the instruction names don't match the asm string.
@@ -372,16 +371,17 @@ def MAX_INT : R600_2OP <
 
 def MIN_INT : R600_2OP <
   0x37, "MIN_INT",
-  [(set R600_Reg32:$dst, (int_AMDGPU_imin R600_Reg32:$src0, R600_Reg32:$src1))]>;
+  [(set R600_Reg32:$dst, (AMDGPUsmin R600_Reg32:$src0, R600_Reg32:$src1))]>;
 
 def MAX_UINT : R600_2OP <
   0x38, "MAX_UINT",
-  [(set R600_Reg32:$dst, (AMDGPUsmax R600_Reg32:$src0, R600_Reg32:$src1))]>;
+  [(set R600_Reg32:$dst, (AMDGPUsmax R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def MIN_UINT : R600_2OP <
   0x39, "MIN_UINT",
-  [(set R600_Reg32:$dst, (int_AMDGPU_umin R600_Reg32:$src0, R600_Reg32:$src1))]>;
-
+  [(set R600_Reg32:$dst, (AMDGPUumin R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def SETE_INT : R600_2OP <
   0x3A, "SETE_INT",

@@ -59,6 +59,15 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDGPU_umax:
       return DAG.getNode(AMDGPUISD::UMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDIL_min:
+      return DAG.getNode(AMDGPUISD::FMIN, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDGPU_imin:
+      return DAG.getNode(AMDGPUISD::SMIN, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDGPU_umin:
+      return DAG.getNode(AMDGPUISD::UMIN, DL, VT, Op.getOperand(1),
+                                                  Op.getOperand(2));
   }
 }
 
@@ -108,5 +117,8 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   NODE_NAME_CASE(FMAX)
   NODE_NAME_CASE(SMAX)
   NODE_NAME_CASE(UMAX)
+  NODE_NAME_CASE(FMIN)
+  NODE_NAME_CASE(SMIN)
+  NODE_NAME_CASE(UMIN)
   }
 }

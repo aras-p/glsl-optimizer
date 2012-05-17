@@ -55,6 +55,9 @@ enum
   FMAX,
   SMAX,
   UMAX,
+  FMIN,
+  SMIN,
+  UMIN,
   LAST_AMDGPU_ISD_NUMBER
 };
 
