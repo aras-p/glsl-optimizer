@@ -251,7 +251,6 @@ defm POW : BinaryIntrinsicFloat<IL_OP_POW, int_AMDIL_pow>;
 let hasIEEEFlag = 1 in {
   let mayLoad = 0, mayStore=0 in {
 defm MIN  : BinaryIntrinsicFloat<IL_OP_MIN, int_AMDIL_min>;
-defm MAD  : TernaryIntrinsicFloat<IL_OP_MAD, int_AMDIL_mad>;
   }
 defm MOD  : BinaryOpMCf32<IL_OP_MOD, frem>;
 }
@@ -270,7 +269,6 @@ defm LERP  : TernaryIntrinsicFloat<IL_OP_LERP, int_AMDIL_lerp>;
   }
 defm SUB  : BinaryOpMCf32<IL_OP_SUB, fsub>;
 defm FABS  : UnaryOpMCf32<IL_OP_ABS, fabs>;
-defm FMAD  : TernaryOpMCf32<IL_OP_MAD, IL_mad>;
 defm NEAR : UnaryOpMCf32<IL_OP_ROUND_NEAR, fnearbyint>;
 defm RND_Z : UnaryOpMCf32<IL_OP_ROUND_ZERO, ftrunc>;
 

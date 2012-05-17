@@ -964,4 +964,12 @@ def : Pat <
 /* XXX: We are using IEEE MUL, not the 0 * anything = 0 MUL, is this correct? */
 def : POW_Common <V_LOG_F32_e32, V_EXP_F32_e32, V_MUL_F32_e32, VReg_32>;
 
+/********** ================== **********/
+/**********   VOP3 Patterns    **********/
+/********** ================== **********/
+
+def : Pat <(f32 (IL_mad AllReg_32:$src0, AllReg_32:$src1, AllReg_32:$src2)),
+           (V_MAD_LEGACY_F32 AllReg_32:$src0, AllReg_32:$src1, AllReg_32:$src2,
+            0, 0, 0, 0)>;
+
 } // End isSI predicate

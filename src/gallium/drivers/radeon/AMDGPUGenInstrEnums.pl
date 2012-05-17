@@ -34,7 +34,6 @@ use strict;
 my @F32_MULTICLASSES = qw {
   UnaryIntrinsicFloat
   UnaryIntrinsicFloatScalar
-  TernaryIntrinsicFloat
 };
 
 my @I32_MULTICLASSES = qw {

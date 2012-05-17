@@ -45,6 +45,9 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     default: return Op;
     case AMDGPUIntrinsic::AMDIL_abs:
       return LowerIntrinsicIABS(Op, DAG);
+    case AMDGPUIntrinsic::AMDIL_mad:
+      return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
+                              Op.getOperand(2), Op.getOperand(3));
     case AMDGPUIntrinsic::AMDIL_max:
       return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));

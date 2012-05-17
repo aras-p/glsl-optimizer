@@ -106,7 +106,6 @@ MachineInstr * SIInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
 unsigned SIInstrInfo::getISAOpcode(unsigned AMDILopcode) const
 {
   switch (AMDILopcode) {
-  case AMDIL::MAD_f32: return AMDIL::V_MAD_LEGACY_F32;
   //XXX We need a better way of detecting end of program
   case AMDIL::RETURN: return AMDIL::S_ENDPGM;
   default: return AMDGPUInstrInfo::getISAOpcode(AMDILopcode);

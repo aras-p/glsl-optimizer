@@ -521,9 +521,9 @@ class MUL_LIT_Common <bits<32> inst> : R600_3OP <
 
 class MULADD_Common <bits<32> inst> : R600_3OP <
   inst, "MULADD",
-  []> {
-  let AMDILOp = AMDILInst.MAD_f32;
-}
+  [(set (f32 R600_Reg32:$dst),
+   (IL_mad R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2))]
+>;
 
 class CNDE_Common <bits<32> inst> : R600_3OP <
   inst, "CNDE",
