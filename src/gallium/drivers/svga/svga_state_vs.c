@@ -222,7 +222,11 @@ struct svga_tracked_state svga_hw_vs =
 };
 
 
-/***********************************************************************
+/**
+ * This function handles the special case of vertex attributes
+ * with stride=0.  Basically, copy those values into the constant
+ * buffer and modify the vertex shader to get the values from the
+ * constant buffer rather than a vertex array.
  */
 static enum pipe_error
 update_zero_stride( struct svga_context *svga,
@@ -269,7 +273,7 @@ update_zero_stride( struct svga_context *svga,
          
          mapped_buffer = pipe_buffer_map_range(&svga->pipe, 
                                                vbuffer->buffer,
-                                               vel->src_offset,
+                                               vel->src_offset + vbuffer->buffer_offset,
                                                util_format_get_blocksize(vel->src_format),
                                                PIPE_TRANSFER_READ,
 					       &transfer);
