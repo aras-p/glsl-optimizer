@@ -755,6 +755,11 @@ struct gl_colorbuffer_attrib
       GLenum DstA;               /**< Alpha blend dest term */
       GLenum EquationRGB;        /**< GL_ADD, GL_SUBTRACT, etc. */
       GLenum EquationA;          /**< GL_ADD, GL_SUBTRACT, etc. */
+      /**
+       * Set if any blend factor uses SRC1.  Computed at the time blend factors
+       * get set.
+       */
+      GLboolean _UsesDualSrc;
    } Blend[MAX_DRAW_BUFFERS];
    /** Are the blend func terms currently different for each buffer/target? */
    GLboolean _BlendFuncPerBuffer;
