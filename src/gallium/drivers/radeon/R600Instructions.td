@@ -672,11 +672,6 @@ class DIV_Common <InstR600 recip_ieee> : Pat<
   (MUL R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
 >;
 
-class LRP_Common <InstR600 muladd> : Pat <
-  (int_AMDGPU_lrp R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
-  (muladd R600_Reg32:$src0, R600_Reg32:$src1, (MUL (SUB_f32 ONE, R600_Reg32:$src0), R600_Reg32:$src2))
->;
-
 class SSG_Common <InstR600 cndgt, InstR600 cndge> : Pat <
   (int_AMDGPU_ssg R600_Reg32:$src),
   (cndgt R600_Reg32:$src, (f32 ONE), (cndge R600_Reg32:$src, (f32 ZERO), (f32 NEG_ONE)))
@@ -725,7 +720,6 @@ let Gen = AMDGPUGen.R600 in {
 } // End AMDGPUGen.R600
 
   def DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
-  def LRP_r600 : LRP_Common<MULADD_r600>;
   def POW_r600 : POW_Common<LOG_IEEE_r600, EXP_IEEE_r600, MUL, GPRF32>;
   def SSG_r600 : SSG_Common<CNDGT_r600, CNDGE_r600>;
   def TGSI_LIT_Z_r600 : TGSI_LIT_Z_Common<MUL_LIT_r600, LOG_CLAMPED_r600, EXP_IEEE_r600>;
@@ -904,7 +898,6 @@ let Gen = AMDGPUGen.EG_CAYMAN in {
 } // End AMDGPUGen.EG_CAYMAN
 
   def DIV_eg : DIV_Common<RECIP_IEEE_eg>;
-  def LRP_eg : LRP_Common<MULADD_eg>;
   def POW_eg : POW_Common<LOG_IEEE_eg, EXP_IEEE_eg, MUL, GPRF32>;
   def SSG_eg : SSG_Common<CNDGT_eg, CNDGE_eg>;
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;

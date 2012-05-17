@@ -45,6 +45,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     default: return Op;
     case AMDGPUIntrinsic::AMDIL_abs:
       return LowerIntrinsicIABS(Op, DAG);
+    case AMDGPUIntrinsic::AMDGPU_lrp:
+      return LowerIntrinsicLRP(Op, DAG);
     case AMDGPUIntrinsic::AMDIL_mad:
       return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
                               Op.getOperand(2), Op.getOperand(3));
@@ -71,6 +73,22 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
                                               Op.getOperand(1));
 
   return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Neg, Op.getOperand(1));
+}
+
+/// Linear Interpolation
+/// LRP(a, b, c) = muladd(a,  b, (1 - a) * c)
+SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
+    SelectionDAG &DAG) const
+{
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+  SDValue OneSubA = DAG.getNode(ISD::FSUB, DL, VT, DAG.getConstant(1, VT),
+                                                   Op.getOperand(1));
+  SDValue OneSubAC = DAG.getNode(ISD::FMUL, DL, VT, OneSubA,
+                                                    Op.getOperand(3));
+  return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
+                                               Op.getOperand(2),
+                                               OneSubAC);
 }
 
 void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
