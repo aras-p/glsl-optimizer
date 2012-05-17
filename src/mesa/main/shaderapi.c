@@ -83,6 +83,8 @@ get_shader_flags(void)
          flags |= GLSL_UNIFORMS;
       if (strstr(env, "useprog"))
          flags |= GLSL_USE_PROG;
+      if (strstr(env, "errors"))
+         flags |= GLSL_REPORT_ERRORS;
    }
 
    return flags;
@@ -673,6 +675,12 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
     * compilation was successful.
     */
    _mesa_glsl_compile_shader(ctx, sh);
+
+   if (sh->CompileStatus == GL_FALSE && 
+       (ctx->Shader.Flags & GLSL_REPORT_ERRORS)) {
+      _mesa_debug(ctx, "Error compiling shader %u:\n%s\n",
+                  sh->Name, sh->InfoLog);
+   }
 }
 
 
@@ -702,6 +710,12 @@ link_program(struct gl_context *ctx, GLuint program)
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _mesa_glsl_link_shader(ctx, shProg);
+
+   if (shProg->LinkStatus == GL_FALSE && 
+       (ctx->Shader.Flags & GLSL_REPORT_ERRORS)) {
+      _mesa_debug(ctx, "Error linking program %u:\n%s\n",
+                  shProg->Name, shProg->InfoLog);
+   }
 
    /* debug code */
    if (0) {
