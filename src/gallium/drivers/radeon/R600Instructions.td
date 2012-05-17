@@ -244,9 +244,9 @@ let Gen = AMDGPUGen.R600_CAYMAN  in {
 
 def ADD : R600_2OP <
   0x0, "ADD",
-  [(set R600_Reg32:$dst, (fadd R600_Reg32:$src0, R600_Reg32:$src1))] > {
-  let AMDILOp = AMDILInst.ADD_f32;
-}
+  [(set R600_Reg32:$dst, (fadd R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
+
 // Non-IEEE MUL: 0 * anything = 0
 def MUL : R600_2OP <
   0x1, "MUL NON-IEEE",

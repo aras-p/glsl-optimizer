@@ -590,7 +590,10 @@ def V_CNDMASK_B32 : VOP2_Helper <
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
 defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;
 
-defm V_ADD_F32 : VOP2_32 <0x00000003, "V_ADD_F32", [], AMDILInst.ADD_f32>;
+defm V_ADD_F32 : VOP2_32 <
+  0x00000003, "V_ADD_F32",
+  [(set VReg_32:$dst, (fadd AllReg_32:$src0, VReg_32:$src1))]
+>;
 
 defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32", []>;
 defm V_SUBREV_F32 : VOP2_32 <0x00000005, "V_SUBREV_F32", []>;

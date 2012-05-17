@@ -216,7 +216,6 @@ def LUSHR        : TwoInOneOut<IL_OP_U64_SHR, (outs GPRI64:$dst),
 let hasIEEEFlag = 1 in {
 defm MUL_IEEE  : BinaryOpMCFloat<IL_OP_MUL_IEEE, IL_OP_D_MUL, fmul>;
 }
-defm ADD  : BinaryOpMCFloat<IL_OP_ADD, IL_OP_D_ADD, fadd>;
 //===---------------------------------------------------------------------===//
 // float math instructions start here
 //===---------------------------------------------------------------------===//
