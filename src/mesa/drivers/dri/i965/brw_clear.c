@@ -134,37 +134,13 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       const struct intel_region *stencilRegion
          = intel_get_rb_region(fb, BUFFER_STENCIL);
       if (stencilRegion) {
-         /* have hw stencil */
-         if (stencilRegion->tiling == I915_TILING_Y ||
-	     (ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
-	    /* We have to use the 3D engine if we're clearing a partial mask
-	     * of the stencil buffer, or if we're on a 965 which has a tiled
-	     * depth/stencil buffer in a layout we can't blit to.
-	     */
-            tri_mask |= BUFFER_BIT_STENCIL;
-         }
-	 else if (intel->has_separate_stencil &&
-	       stencilRegion->tiling == I915_TILING_NONE) {
-	    /* The stencil buffer is actually W tiled, which the hardware
-	     * cannot blit to. */
-	    tri_mask |= BUFFER_BIT_STENCIL;
-	 }
-         else {
-            /* clearing all stencil bits, use blitting */
-            blit_mask |= BUFFER_BIT_STENCIL;
-         }
+	 tri_mask |= BUFFER_BIT_STENCIL;
       }
    }
 
    /* HW depth */
    if (mask & BUFFER_BIT_DEPTH) {
-      const struct intel_region *irb = intel_get_rb_region(fb, BUFFER_DEPTH);
-
-      /* clear depth with whatever method is used for stencil (see above) */
-      if (irb->tiling == I915_TILING_Y || tri_mask & BUFFER_BIT_STENCIL)
-         tri_mask |= BUFFER_BIT_DEPTH;
-      else
-         blit_mask |= BUFFER_BIT_DEPTH;
+      tri_mask |= BUFFER_BIT_DEPTH;
    }
 
    /* If we're doing a tri pass for depth/stencil, include a likely color
