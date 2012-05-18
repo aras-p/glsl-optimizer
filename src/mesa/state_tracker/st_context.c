@@ -247,7 +247,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
-      pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
+      pipe_sampler_view_release(st->pipe, &st->state.sampler_views[i]);
    }
 
    if (st->default_texture) {
