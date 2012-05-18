@@ -581,8 +581,10 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 intel_emit_post_sync_nonzero_flush(intel);
 
       BEGIN_BATCH(2);
-      OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 | (2 - 2));
-      OUT_BATCH(0);
+      OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 |
+		GEN5_DEPTH_CLEAR_VALID |
+		(2 - 2));
+      OUT_BATCH(depth_irb ? depth_irb->mt->depth_clear_value : 0);
       ADVANCE_BATCH();
    }
 }

@@ -177,6 +177,11 @@ struct intel_mipmap_tree
    GLuint total_width;
    GLuint total_height;
 
+   /* The 3DSTATE_CLEAR_PARAMS value associated with the last depth clear to
+    * this depth mipmap tree, if any.
+    */
+   uint32_t depth_clear_value;
+
    /* Includes image offset tables:
     */
    struct intel_mipmap_level level[MAX_TEXTURE_LEVELS];

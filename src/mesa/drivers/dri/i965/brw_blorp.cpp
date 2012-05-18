@@ -131,7 +131,6 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
                                      unsigned int layer,
                                      gen6_hiz_op op)
 {
-   assert(op != GEN6_HIZ_OP_DEPTH_CLEAR); /* Not implemented yet. */
    this->hiz_op = op;
 
    depth.set(mt, level, layer);

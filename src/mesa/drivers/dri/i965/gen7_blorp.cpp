@@ -427,7 +427,6 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
 
    switch (params->hiz_op) {
    case GEN6_HIZ_OP_DEPTH_CLEAR:
-      assert(!"not implemented");
       dw1 |= GEN7_WM_DEPTH_CLEAR;
       break;
    case GEN6_HIZ_OP_DEPTH_RESOLVE:
@@ -696,8 +695,8 @@ gen7_blorp_emit_clear_params(struct brw_context *brw,
 
    BEGIN_BATCH(3);
    OUT_BATCH(GEN7_3DSTATE_CLEAR_PARAMS << 16 | (3 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
+   OUT_BATCH(params->depth.mt ? params->depth.mt->depth_clear_value : 0);
+   OUT_BATCH(GEN7_DEPTH_CLEAR_VALID);
    ADVANCE_BATCH();
 }
 

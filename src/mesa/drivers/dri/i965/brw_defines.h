@@ -1466,8 +1466,10 @@ enum brw_wm_barycentric_interp_mode {
 #define GEN7_3DSTATE_HIER_DEPTH_BUFFER		0x7807
 
 #define _3DSTATE_CLEAR_PARAMS			0x7910 /* ILK, SNB */
-# define DEPTH_CLEAR_VALID				(1 << 15)
+# define GEN5_DEPTH_CLEAR_VALID				(1 << 15)
 /* DW1: depth clear value */
+/* DW2 */
+# define GEN7_DEPTH_CLEAR_VALID				(1 << 0)
 
 #define _3DSTATE_SO_DECL_LIST			0x7917 /* GEN7+ */
 /* DW1 */
