@@ -811,8 +811,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_mod_reg(&rctx->vgt, rctx->pa_su_sc_mode_cntl);
 	}
 	r600_pipe_state_mod_reg(&rctx->vgt,
-				rctx->pa_cl_vs_out_cntl /*|
-				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write)*/);
+				prim == PIPE_PRIM_POINTS ? rctx->pa_cl_vs_out_cntl : 0
+				/*| (rctx->rasterizer->clip_plane_enable &
+				  rctx->vs_shader->shader.clip_dist_write)*/);
 	r600_pipe_state_mod_reg(&rctx->vgt,
 				rctx->pa_cl_clip_cntl /*|
 				(rctx->vs_shader->shader.clip_dist_write ||
