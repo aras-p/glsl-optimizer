@@ -36,6 +36,13 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4i32, Legal);
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
+
+#if 0
+
+  setTargetDAGCombine(ISD::Constant);
+  setTargetDAGCombine(ISD::ConstantFP);
+
+#endif
 }
 
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(

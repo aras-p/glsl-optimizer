@@ -23,6 +23,7 @@ class AMDGPUTargetLowering : public AMDILTargetLowering
 {
 private:
   SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
 protected:
 
@@ -35,6 +36,9 @@ protected:
   void addLiveIn(MachineInstr * MI, MachineFunction * MF,
                  MachineRegisterInfo & MRI, const TargetInstrInfo * TII,
 		 unsigned reg) const;
+
+  bool isOne(SDValue Op) const;
+  bool isZero(SDValue Op) const;
 
 public:
   AMDGPUTargetLowering(TargetMachine &TM);

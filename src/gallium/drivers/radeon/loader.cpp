@@ -30,5 +30,5 @@ int main(int argc, char ** argv)
 
 	Module * mod = M.get();
   
-	radeon_llvm_compile(wrap(mod), &bytes, &byte_count, "SI", 1);
+	radeon_llvm_compile(wrap(mod), &bytes, &byte_count, "redwood", 1);
 }

@@ -57,19 +57,6 @@ unsigned radeon_llvm_reg_index_soa(unsigned index, unsigned chan)
  return (index * 4) + chan;
 }
 
-static void radeon_llvm_fetch_args_2_reverse_soa(
-	struct lp_build_tgsi_context * bld_base,
-	struct lp_build_emit_data * emit_data)
-{
-	assert(emit_data->info->num_src == 2);
-	emit_data->args[0] = lp_build_emit_fetch(bld_base, emit_data->inst,
-							1, emit_data->chan);
-	emit_data->args[1] = lp_build_emit_fetch(bld_base, emit_data->inst,
-							0, emit_data->chan);
-	emit_data->arg_count = 2;
-	emit_data->dst_type = LLVMTypeOf(emit_data->args[0]);
-}
-
 static LLVMValueRef emit_swizzle(
 	struct lp_build_tgsi_context * bld_base,
         LLVMValueRef value,
@@ -707,6 +694,37 @@ static void emit_icmp(
 	emit_data->output[emit_data->chan] = v;
 }
 
+static void emit_cmp(
+		const struct lp_build_tgsi_action *action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	LLVMRealPredicate pred;
+	LLVMValueRef cond;
+
+	/* XXX I'm not sure whether to do unordered or ordered comparisons,
+	 * but llvmpipe uses unordered comparisons, so for consistency we use
+	 * unordered.  (The authors of llvmpipe aren't sure about using
+	 * unordered vs ordered comparisons either.
+	 */
+	switch (emit_data->inst->Instruction.Opcode) {
+	case TGSI_OPCODE_SGE: pred = LLVMRealUGE; break;
+	case TGSI_OPCODE_SEQ: pred = LLVMRealUEQ; break;
+	case TGSI_OPCODE_SLE: pred = LLVMRealULE; break;
+	case TGSI_OPCODE_SLT: pred = LLVMRealULT; break;
+	case TGSI_OPCODE_SNE: pred = LLVMRealUNE; break;
+	case TGSI_OPCODE_SGT: pred = LLVMRealUGT; break;
+	default: assert(!"unknown instruction");
+	}
+
+	cond = LLVMBuildFCmp(builder,
+		pred, emit_data->args[0], emit_data->args[1], "");
+
+	emit_data->output[emit_data->chan] = LLVMBuildSelect(builder,
+		cond, bld_base->base.one, bld_base->base.zero, "");
+}
+
 static void emit_not(
 		const struct lp_build_tgsi_action * action,
 		struct lp_build_tgsi_context * bld_base,
@@ -1120,20 +1138,12 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_RCP].intr_name = "llvm.AMDGPU.rcp";
 	bld_base->op_actions[TGSI_OPCODE_SSG].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_SSG].intr_name = "llvm.AMDGPU.ssg";
-	bld_base->op_actions[TGSI_OPCODE_SGE].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SGE].intr_name = "llvm.AMDGPU.sge";
-	bld_base->op_actions[TGSI_OPCODE_SEQ].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SEQ].intr_name = "llvm.AMDGPU.seq";
-	bld_base->op_actions[TGSI_OPCODE_SLE].fetch_args = radeon_llvm_fetch_args_2_reverse_soa;
-	bld_base->op_actions[TGSI_OPCODE_SLE].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SLE].intr_name = "llvm.AMDGPU.sge";
-	bld_base->op_actions[TGSI_OPCODE_SLT].fetch_args = radeon_llvm_fetch_args_2_reverse_soa;
-	bld_base->op_actions[TGSI_OPCODE_SLT].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SLT].intr_name = "llvm.AMDGPU.sgt";
-	bld_base->op_actions[TGSI_OPCODE_SNE].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SNE].intr_name = "llvm.AMDGPU.sne";
-	bld_base->op_actions[TGSI_OPCODE_SGT].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_SGT].intr_name = "llvm.AMDGPU.sgt";
+	bld_base->op_actions[TGSI_OPCODE_SGE].emit = emit_cmp;
+	bld_base->op_actions[TGSI_OPCODE_SEQ].emit = emit_cmp;
+	bld_base->op_actions[TGSI_OPCODE_SLE].emit = emit_cmp;
+	bld_base->op_actions[TGSI_OPCODE_SLT].emit = emit_cmp;
+	bld_base->op_actions[TGSI_OPCODE_SNE].emit = emit_cmp;
+	bld_base->op_actions[TGSI_OPCODE_SGT].emit = emit_cmp;
 	bld_base->op_actions[TGSI_OPCODE_SIN].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_SIN].intr_name = "llvm.AMDGPU.sin";
 	bld_base->op_actions[TGSI_OPCODE_TEX].fetch_args = tex_fetch_args;

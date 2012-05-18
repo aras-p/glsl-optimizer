@@ -119,6 +119,57 @@ def TEX_SHADOW : PatLeaf<
   }]
 >;
 
+def FP_ZERO : PatLeaf <
+  (fpimm),
+  [{return N->getValueAPF().isZero();}]
+>;
+
+def FP_ONE : PatLeaf <
+  (fpimm),
+  [{return N->isExactlyValue(1.0);}]
+>;
+
+def COND_EQ : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOEQ: case ISD::SETUEQ:
+                     case ISD::SETEQ: return true;}}}]
+>;
+
+def COND_NE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETONE: case ISD::SETUNE:
+                     case ISD::SETNE: return true;}}}]
+>;
+def COND_GT : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOGT: case ISD::SETUGT:
+                     case ISD::SETGT: return true;}}}]
+>;
+
+def COND_GE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOGE: case ISD::SETUGE:
+                     case ISD::SETGE: return true;}}}]
+>;
+
+def COND_LT : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOLT: case ISD::SETULT:
+                     case ISD::SETLT: return true;}}}]
+>;
+
+def COND_LE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOLE: case ISD::SETULE:
+                     case ISD::SETLE: return true;}}}]
+>;
+
 class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, dag outs, dag ins,
                  string asm> :
     InstR600ISA <outs, ins, asm, []>
@@ -275,26 +326,35 @@ def MIN : R600_2OP <
 
 def SETE : R600_2OP <
   0x08, "SETE",
-  [(set R600_Reg32:$dst, (int_AMDGPU_seq R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.FEQ;
-}
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
+             COND_EQ))]
+>;
+//let AMDILOp = AMDILInst.FEQ;
 
 def SGT : R600_2OP <
   0x09, "SETGT",
-  [(set R600_Reg32:$dst, (int_AMDGPU_sgt R600_Reg32:$src0, R600_Reg32:$src1))]
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
+              COND_GT))]
 >;
 
 def SGE : R600_2OP <
   0xA, "SETGE",
-  [(set R600_Reg32:$dst, (int_AMDGPU_sge R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.FGE;
-}
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
+              COND_GE))]
+>;
+//let AMDILOp = AMDILInst.FGE;
 
 def SNE : R600_2OP <
   0xB, "SETNE",
-  [(set R600_Reg32:$dst, (int_AMDGPU_sne R600_Reg32:$src0, R600_Reg32:$src1))]> {
-  let AMDILOp = AMDILInst.FNE;
-}
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
+    COND_NE))]
+>;
+
+//  let AMDILOp = AMDILInst.FNE;
 
 def FRACT : R600_1OP <
   0x10, "FRACT",
@@ -385,38 +445,48 @@ def MIN_UINT : R600_2OP <
 
 def SETE_INT : R600_2OP <
   0x3A, "SETE_INT",
-  []>{
-  let AMDILOp = AMDILInst.IEQ;
-}
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETEQ))]
+>;
+
+//  let AMDILOp = AMDILInst.IEQ;
 
 def SETGT_INT : R600_2OP <
   0x3B, "SGT_INT",
-  []
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETGT))]
 >;
 
 def SETGE_INT : R600_2OP <
 	0x3C, "SETGE_INT",
-	[]>{
-  let AMDILOp = AMDILInst.IGE;
-}
+	[(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETGE))]
+>;
+//  let AMDILOp = AMDILInst.IGE;
+
 
 def SETNE_INT : R600_2OP <
   0x3D, "SETNE_INT",
-  []>{
-  let AMDILOp = AMDILInst.INE;
-}
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETNE))]
+>;
+//let AMDILOp = AMDILInst.INE;
+
 
 def SETGT_UINT : R600_2OP <
   0x3E, "SETGT_UINT",
-  []>{
-  let AMDILOp = AMDILInst.UGT;
-}
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETUGT))]
+>;
+
+//  let AMDILOp = AMDILInst.UGT;
 
 def SETGE_UINT : R600_2OP <
   0x3F, "SETGE_UINT",
-  []>{
-  let AMDILOp = AMDILInst.UGE;
-}
+  [(set (i32 R600_Reg32:$dst),
+    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETUGE))]
+>;
+//  let AMDILOp = AMDILInst.UGE;
 
 def CNDE_INT : R600_3OP <
 	0x1C, "CNDE_INT",
@@ -1045,6 +1115,66 @@ def LOAD_VTX : AMDGPUShaderInst <
 
 
 } //End isPseudo
+
+//===----------------------------------------------------------------------===//
+// ISel Patterns
+//===----------------------------------------------------------------------===//
+
+// SGT Reverse args
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, COND_LT),
+  (SGT R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
+// SGE Reverse args
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, COND_LE),
+  (SGE R600_Reg32:$src1, R600_Reg32:$src0) 
+>;
+
+// SETGT_INT reverse args
+def : Pat <
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETLT),
+  (SETGT_INT R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
+// SETGE_INT reverse args
+def : Pat <
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETLE),
+  (SETGE_INT R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
+// SETGT_UINT reverse args
+def : Pat <
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETULT),
+  (SETGT_UINT R600_Reg32:$src1, R600_Reg32:$src0)
+>;
+
+// SETGE_UINT reverse args
+def : Pat <
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETULE),
+  (SETGE_UINT R600_Reg32:$src0, R600_Reg32:$src1)
+>;
+
+// The next two patterns are special cases for handling 'true if ordered' and
+// 'true if unordered' conditionals.  The assumption here is that the behavior of
+// SETE and SNE conforms to the Direct3D 10 rules for floating point values
+// described here:
+// http://msdn.microsoft.com/en-us/library/windows/desktop/cc308050.aspx#alpha_32_bit
+// We assume that  SETE returns false when one of the operands is NAN and
+// SNE returns true when on of the operands is NAN
+
+//SETE - 'true if ordered'
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, SETO),
+  (SETE R600_Reg32:$src0, R600_Reg32:$src1)
+>;
+
+//SNE - 'true if unordered'
+def : Pat <
+  (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO, SETUO),
+  (SNE R600_Reg32:$src0, R600_Reg32:$src1)
+>;
 
 def : Extract_Element <f32, v4f32, R600_Reg128, 0, sel_x>;
 def : Extract_Element <f32, v4f32, R600_Reg128, 1, sel_y>;
