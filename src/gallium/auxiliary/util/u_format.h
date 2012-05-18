@@ -591,6 +591,13 @@ boolean
 util_format_is_pure_uint(enum pipe_format format);
 
 /**
+ * Whether the format is a simple array format where all channels
+ * are of the same type and can be loaded from memory as a vector
+ */
+boolean
+util_format_is_array(const struct util_format_description *desc);
+
+/**
  * Check if the src format can be blitted to the destination format with
  * a simple memcpy.  For example, blitting from RGBA to RGBx is OK, but not
  * the reverse.
