@@ -91,8 +91,9 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT VT = Op.getValueType();
-  SDValue OneSubA = DAG.getNode(ISD::FSUB, DL, VT, DAG.getConstant(1, VT),
-                                                   Op.getOperand(1));
+  SDValue OneSubA = DAG.getNode(ISD::FSUB, DL, VT,
+                                DAG.getConstantFP(1.0f, MVT::f32),
+                                Op.getOperand(1));
   SDValue OneSubAC = DAG.getNode(ISD::FMUL, DL, VT, OneSubA,
                                                     Op.getOperand(3));
   return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
