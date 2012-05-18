@@ -58,8 +58,10 @@ public:
    LValue *mkOp2v(operation, DataType, Value *, Value *, Value *);
    LValue *mkOp3v(operation, DataType, Value *, Value *, Value *, Value *);
 
-   LValue *mkLoad(DataType, Symbol *, Value *ptr);
+   Instruction *mkLoad(DataType, Value *dst, Symbol *, Value *ptr);
    Instruction *mkStore(operation, DataType, Symbol *, Value *ptr, Value *val);
+
+   LValue *mkLoadv(DataType, Symbol *, Value *ptr);
 
    Instruction *mkMov(Value *, Value *, DataType = TYPE_U32);
    Instruction *mkMovToReg(int id, Value *);
@@ -280,6 +282,14 @@ BuildUtil::mkOp3v(operation op, DataType ty, Value *dst,
 {
    mkOp3(op, ty, dst, src0, src1, src2);
    return dst->asLValue();
+}
+
+inline LValue *
+BuildUtil::mkLoadv(DataType ty, Symbol *mem, Value *ptr)
+{
+   LValue *dst = getScratch();
+   mkLoad(ty, dst, mem, ptr);
+   return dst;
 }
 
 bool

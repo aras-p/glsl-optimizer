@@ -1346,7 +1346,7 @@ Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
       assert(!ptr);
       return loadImm(NULL, info->immd.data[idx * 4 + swz]);
    case TGSI_FILE_CONSTANT:
-      return mkLoad(TYPE_U32, srcToSym(src, c), ptr);
+      return mkLoadv(TYPE_U32, srcToSym(src, c), ptr);
    case TGSI_FILE_INPUT:
       if (prog->getType() == Program::TYPE_FRAGMENT) {
          // don't load masked inputs, won't be assigned a slot
@@ -1356,7 +1356,7 @@ Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
             return mkOp1v(OP_RDSV, TYPE_F32, getSSA(), mkSysVal(SV_FACE, 0));
          return interpolate(src, c, ptr);
       }
-      return mkLoad(TYPE_U32, srcToSym(src, c), ptr);
+      return mkLoadv(TYPE_U32, srcToSym(src, c), ptr);
    case TGSI_FILE_OUTPUT:
       assert(!"load from output file");
       return NULL;
@@ -2287,7 +2287,7 @@ Converter::handleUserClipPlanes()
       for (i = 0; i < info->io.genUserClip; ++i) {
          Symbol *sym = mkSymbol(FILE_MEMORY_CONST, info->io.ucpBinding,
                                 TYPE_F32, info->io.ucpBase + i * 16 + c * 4);
-         Value *ucp = mkLoad(TYPE_F32, sym, NULL);
+         Value *ucp = mkLoadv(TYPE_F32, sym, NULL);
          if (c == 0)
             res[i] = mkOp2v(OP_MUL, TYPE_F32, getScratch(), clipVtx[c], ucp);
          else

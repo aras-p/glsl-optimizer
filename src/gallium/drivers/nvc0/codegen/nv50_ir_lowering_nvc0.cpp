@@ -673,7 +673,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
             tmp[0] = bld.getScratch();
             bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.r * 4);
             bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], rRel, shCnt);
-            tmp[1] = bld.mkLoad(TYPE_U32, bind, tmp[0]);
+            tmp[1] = bld.mkLoadv(TYPE_U32, bind, tmp[0]);
             bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
                       bld.loadImm(tmp[0], 0x00ffffffu));
             rRel = tmp[0];
@@ -683,7 +683,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
             tmp[0] = bld.getScratch();
             bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.s * 4);
             bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], sRel, shCnt);
-            tmp[1] = bld.mkLoad(TYPE_U32, bind, tmp[0]);
+            tmp[1] = bld.mkLoadv(TYPE_U32, bind, tmp[0]);
             bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
                       bld.loadImm(tmp[0], 0xff000000u));
             sRel = tmp[0];

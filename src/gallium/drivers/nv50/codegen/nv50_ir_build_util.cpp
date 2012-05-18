@@ -103,19 +103,18 @@ BuildUtil::mkOp3(operation op, DataType ty, Value *dst,
    return insn;
 }
 
-LValue *
-BuildUtil::mkLoad(DataType ty, Symbol *mem, Value *ptr)
+Instruction *
+BuildUtil::mkLoad(DataType ty, Value *dst, Symbol *mem, Value *ptr)
 {
    Instruction *insn = new_Instruction(func, OP_LOAD, ty);
-   LValue *def = getScratch();
 
-   insn->setDef(0, def);
+   insn->setDef(0, dst);
    insn->setSrc(0, mem);
    if (ptr)
       insn->setIndirect(0, 0, ptr);
 
    insert(insn);
-   return def;
+   return insn;
 }
 
 Instruction *
@@ -502,7 +501,7 @@ BuildUtil::DataArray::load(ValueMap &m, int i, int c, Value *ptr)
       if (!sym)
          sym = insert(m, i, c, mkSymbol(i, c));
 
-      return up->mkLoad(typeOfSize(eltSize), static_cast<Symbol *>(sym), ptr);
+      return up->mkLoadv(typeOfSize(eltSize), static_cast<Symbol *>(sym), ptr);
    }
 }
 
