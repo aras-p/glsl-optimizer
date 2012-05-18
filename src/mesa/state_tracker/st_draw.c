@@ -732,7 +732,6 @@ st_draw_vbo(struct gl_context *ctx,
             struct gl_transform_feedback_object *tfb_vertcount)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    struct pipe_index_buffer ibuffer = {0};
    struct pipe_draw_info info;
    const struct gl_client_array **arrays = ctx->Array._DrawArrays;
