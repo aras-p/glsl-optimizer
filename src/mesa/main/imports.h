@@ -285,19 +285,47 @@ static inline int GET_FLOAT_BITS( float x )
 #endif
 
 
-/***
- *** IROUND: return (as an integer) float rounded to nearest integer
- ***/
+/**
+ * Convert float to int by rounding to nearest integer, away from zero.
+ */
+static inline int IROUND(float f)
+{
+   return (int) ((f >= 0.0F) ? (f + 0.5F) : (f - 0.5F));
+}
+
+
+/**
+ * Convert float to int64 by rounding to nearest integer.
+ */
+static inline GLint64 IROUND64(float f)
+{
+   return (GLint64) ((f >= 0.0F) ? (f + 0.5F) : (f - 0.5F));
+}
+
+
+/**
+ * Convert positive float to int by rounding to nearest integer.
+ */
+static inline int IROUND_POS(float f)
+{
+   assert(f >= 0.0F);
+   return (int) (f + 0.5F);
+}
+
+
+/**
+ * Convert float to int using a fast method.  The rounding mode may vary.
+ * XXX We could use an x86-64/SSE2 version here.
+ */
 #if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-static inline int iround(float f)
+static inline int F_TO_I(float f)
 {
    int r;
    __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
    return r;
 }
-#define IROUND(x)  iround(x)
 #elif defined(USE_X86_ASM) && defined(_MSC_VER)
-static inline int iround(float f)
+static inline int F_TO_I(float f)
 {
    int r;
    _asm {
@@ -306,9 +334,8 @@ static inline int iround(float f)
 	}
    return r;
 }
-#define IROUND(x)  iround(x)
 #elif defined(__WATCOMC__) && defined(__386__)
-long iround(float f);
+long F_TO_I(float f);
 #pragma aux iround =                    \
 	"push   eax"                        \
 	"fistp  dword ptr [esp]"            \
@@ -316,20 +343,8 @@ long iround(float f);
 	parm [8087]                         \
 	value [eax]                         \
 	modify exact [eax];
-#define IROUND(x)  iround(x)
 #else
-#define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
-#endif
-
-#define IROUND64(f)  ((GLint64) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
-
-/***
- *** IROUND_POS: return (as an integer) positive float rounded to nearest int
- ***/
-#ifdef DEBUG
-#define IROUND_POS(f) (assert((f) >= 0.0F), IROUND(f))
-#else
-#define IROUND_POS(f) (IROUND(f))
+#define F_TO_I(f)  IROUND(f)
 #endif
 
 
