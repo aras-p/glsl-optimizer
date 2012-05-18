@@ -333,18 +333,19 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
 const struct lp_type conv_types[] = {
    /* float, fixed,  sign,  norm, width, len */
 
+   /* Float */
    {   TRUE, FALSE,  TRUE,  TRUE,    32,   4 },
    {   TRUE, FALSE,  TRUE, FALSE,    32,   4 },
    {   TRUE, FALSE, FALSE,  TRUE,    32,   4 },
    {   TRUE, FALSE, FALSE, FALSE,    32,   4 },
 
-   /* TODO: test fixed formats too */
+   /* Fixed */
+   {  FALSE,  TRUE,  TRUE,  TRUE,    32,   4 },
+   {  FALSE,  TRUE,  TRUE, FALSE,    32,   4 },
+   {  FALSE,  TRUE, FALSE,  TRUE,    32,   4 },
+   {  FALSE,  TRUE, FALSE, FALSE,    32,   4 },
 
-   {  FALSE, FALSE,  TRUE,  TRUE,    16,   8 },
-   {  FALSE, FALSE,  TRUE, FALSE,    16,   8 },
-   {  FALSE, FALSE, FALSE,  TRUE,    16,   8 },
-   {  FALSE, FALSE, FALSE, FALSE,    16,   8 },
-
+   /* Integer */
    {  FALSE, FALSE,  TRUE,  TRUE,    32,   4 },
    {  FALSE, FALSE,  TRUE, FALSE,    32,   4 },
    {  FALSE, FALSE, FALSE,  TRUE,    32,   4 },
