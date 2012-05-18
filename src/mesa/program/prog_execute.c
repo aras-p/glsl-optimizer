@@ -1308,8 +1308,8 @@ _mesa_execute_program(struct gl_context * ctx,
             fetch_vector4(&inst->SrcReg[0], machine, a);
             a[0] = CLAMP(a[0], 0.0F, 1.0F);
             a[1] = CLAMP(a[1], 0.0F, 1.0F);
-            usx = IROUND(a[0] * 65535.0F);
-            usy = IROUND(a[1] * 65535.0F);
+            usx = F_TO_I(a[0] * 65535.0F);
+            usy = F_TO_I(a[1] * 65535.0F);
             result[0] =
             result[1] =
             result[2] =
@@ -1326,10 +1326,10 @@ _mesa_execute_program(struct gl_context * ctx,
             a[1] = CLAMP(a[1], -128.0F / 127.0F, 1.0F);
             a[2] = CLAMP(a[2], -128.0F / 127.0F, 1.0F);
             a[3] = CLAMP(a[3], -128.0F / 127.0F, 1.0F);
-            ubx = IROUND(127.0F * a[0] + 128.0F);
-            uby = IROUND(127.0F * a[1] + 128.0F);
-            ubz = IROUND(127.0F * a[2] + 128.0F);
-            ubw = IROUND(127.0F * a[3] + 128.0F);
+            ubx = F_TO_I(127.0F * a[0] + 128.0F);
+            uby = F_TO_I(127.0F * a[1] + 128.0F);
+            ubz = F_TO_I(127.0F * a[2] + 128.0F);
+            ubw = F_TO_I(127.0F * a[3] + 128.0F);
             result[0] =
             result[1] =
             result[2] =
@@ -1346,10 +1346,10 @@ _mesa_execute_program(struct gl_context * ctx,
             a[1] = CLAMP(a[1], 0.0F, 1.0F);
             a[2] = CLAMP(a[2], 0.0F, 1.0F);
             a[3] = CLAMP(a[3], 0.0F, 1.0F);
-            ubx = IROUND(255.0F * a[0]);
-            uby = IROUND(255.0F * a[1]);
-            ubz = IROUND(255.0F * a[2]);
-            ubw = IROUND(255.0F * a[3]);
+            ubx = F_TO_I(255.0F * a[0]);
+            uby = F_TO_I(255.0F * a[1]);
+            ubz = F_TO_I(255.0F * a[2]);
+            ubw = F_TO_I(255.0F * a[3]);
             result[0] =
             result[1] =
             result[2] =

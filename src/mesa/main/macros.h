@@ -129,12 +129,12 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define INT_TO_USHORT(i)   ((i) < 0 ? 0 : ((GLushort) ((i) >> 15)))
 #define UINT_TO_USHORT(i)  ((i) < 0 ? 0 : ((GLushort) ((i) >> 16)))
 #define UNCLAMPED_FLOAT_TO_USHORT(us, f)  \
-        us = ( (GLushort) IROUND( CLAMP((f), 0.0F, 1.0F) * 65535.0F) )
+        us = ( (GLushort) F_TO_I( CLAMP((f), 0.0F, 1.0F) * 65535.0F) )
 #define CLAMPED_FLOAT_TO_USHORT(us, f)  \
-        us = ( (GLushort) IROUND( (f) * 65535.0F) )
+        us = ( (GLushort) F_TO_I( (f) * 65535.0F) )
 
 #define UNCLAMPED_FLOAT_TO_SHORT(s, f)  \
-        s = ( (GLshort) IROUND( CLAMP((f), -1.0F, 1.0F) * 32767.0F) )
+        s = ( (GLshort) F_TO_I( CLAMP((f), -1.0F, 1.0F) * 32767.0F) )
 
 /***
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
@@ -166,9 +166,9 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
         } while (0)
 #else
 #define UNCLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND(CLAMP((f), 0.0F, 1.0F) * 255.0F))
+	ub = ((GLubyte) F_TO_I(CLAMP((f), 0.0F, 1.0F) * 255.0F))
 #define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND((f) * 255.0F))
+	ub = ((GLubyte) F_TO_I((f) * 255.0F))
 #endif
 
 /*@}*/
