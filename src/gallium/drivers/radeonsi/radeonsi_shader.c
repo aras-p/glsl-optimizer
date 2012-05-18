@@ -381,6 +381,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			case TGSI_SEMANTIC_COLOR:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 					target = V_008DFC_SQ_EXP_PARAM + param_count;
+					shader->output[i].param_offset = param_count;
 					param_count++;
 				} else {
 					target = V_008DFC_SQ_EXP_MRT + color_count;
@@ -389,6 +390,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 				break;
 			case TGSI_SEMANTIC_GENERIC:
 				target = V_008DFC_SQ_EXP_PARAM + param_count;
+				shader->output[i].param_offset = param_count;
 				param_count++;
 				break;
 			default:

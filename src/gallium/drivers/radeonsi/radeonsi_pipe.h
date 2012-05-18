@@ -170,9 +170,9 @@ struct r600_shader_io {
 	unsigned		gpr;
 	unsigned		done;
 	int			sid;
+	unsigned		param_offset;
 	unsigned		interpolate;
 	boolean                 centroid;
-	unsigned		lds_pos; /* for evergreen */
 };
 
 struct r600_shader {

@@ -2238,7 +2238,7 @@ void si_update_spi_map(struct r600_context *rctx)
 		for (j = 0; j < vs->noutput; j++) {
 			if (ps->input[i].name == vs->output[j].name &&
 			    ps->input[i].sid == vs->output[j].sid) {
-				tmp |= S_028644_OFFSET(ps->input[i].sid);
+				tmp |= S_028644_OFFSET(vs->output[j].param_offset);
 				break;
 			}
 		}
