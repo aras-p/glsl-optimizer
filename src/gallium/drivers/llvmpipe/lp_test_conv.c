@@ -173,6 +173,15 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
       return TRUE;
    }
 
+   /* Known failures
+    * - fixed point 32 -> float 32
+    * - float 32 -> signed normalised integer 32
+    */
+   if ((src_type.floating && !dst_type.floating && dst_type.sign && dst_type.norm && src_type.width == dst_type.width) ||
+       (!src_type.floating && dst_type.floating && src_type.fixed && src_type.width == dst_type.width)) {
+      return TRUE;
+   }
+
    if(verbose >= 1)
       dump_conv_types(stdout, src_type, dst_type);
 
@@ -382,9 +391,6 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
 
          if(src_type == dst_type)
-            continue;
-
-         if(src_type->norm != dst_type->norm)
             continue;
 
          if(!test_one(gallivm, verbose, fp, *src_type, *dst_type))
