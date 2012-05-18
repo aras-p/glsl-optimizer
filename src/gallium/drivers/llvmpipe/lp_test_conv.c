@@ -386,6 +386,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
    boolean success = TRUE;
+   int error_count = 0;
 
    for(src_type = conv_types; src_type < &conv_types[num_types]; ++src_type) {
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
@@ -393,11 +394,14 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
          if(src_type == dst_type)
             continue;
 
-         if(!test_one(gallivm, verbose, fp, *src_type, *dst_type))
-           success = FALSE;
-
+         if(!test_one(gallivm, verbose, fp, *src_type, *dst_type)){
+            success = FALSE;
+            ++error_count;
+         }
       }
    }
+
+   fprintf(stderr, "%d failures\n", error_count);
 
    return success;
 }
