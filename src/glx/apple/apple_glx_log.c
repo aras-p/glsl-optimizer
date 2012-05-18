@@ -76,7 +76,17 @@ void _apple_glx_vlog(int level, const char *file, const char *function,
     uint64_t thread = 0;
 
     if (pthread_is_threaded_np()) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
+        thread = (uint64_t)(uintptr_t)pthread_self();
+#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+        if (&pthread_threadid_np) {
+            pthread_threadid_np(NULL, &thread);
+        } else {
+            thread = (uint64_t)(uintptr_t)pthread_self();
+        }
+#else
         pthread_threadid_np(NULL, &thread);
+#endif
     }
 
     if (diagnostic) {
