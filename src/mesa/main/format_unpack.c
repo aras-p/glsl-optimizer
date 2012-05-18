@@ -2929,7 +2929,7 @@ unpack_uint_z_Z32_FLOAT(const void *src, GLuint *dst, GLuint n)
    const float *s = (const float *)src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i] = FLOAT_TO_UINT(IROUND(CLAMP((s[i]), 0.0F, 1.0F)));
+      dst[i] = FLOAT_TO_UINT(CLAMP(s[i], 0.0F, 1.0F));
    }
 }
 
@@ -2940,7 +2940,7 @@ unpack_uint_z_Z32_FLOAT_X24S8(const void *src, GLuint *dst, GLuint n)
    GLuint i;
 
    for (i = 0; i < n; i++) {
-      dst[i] = FLOAT_TO_UINT(IROUND(CLAMP((s[i].z), 0.0F, 1.0F)));
+      dst[i] = FLOAT_TO_UINT(CLAMP(s[i].z, 0.0F, 1.0F));
    }
 }
 
