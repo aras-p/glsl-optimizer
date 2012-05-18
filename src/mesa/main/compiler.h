@@ -285,12 +285,6 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #endif
 
 
-/* This is a macro on IRIX */
-#ifdef _P
-#undef _P
-#endif
-
-
 /* Turn off macro checking systems used by other libraries */
 #ifdef CHECK
 #undef CHECK
