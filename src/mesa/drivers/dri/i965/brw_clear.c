@@ -1,7 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
- * Copyright 2009 Intel Corporation.
+ * Copyright 2009, 2012 Intel Corporation.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -81,11 +81,6 @@ static void
 intelClear(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLbitfield tri_mask = 0;
-   GLbitfield swrast_mask = 0;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *irb;
-   int i;
 
    if (!_mesa_check_conditional_render(ctx))
       return;
@@ -94,51 +89,20 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       intel->front_buffer_dirty = true;
    }
 
-   if (0)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   /* Get SW clears out of the way: Anything without an intel_renderbuffer */
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      if (!(mask & (1 << i)))
-	 continue;
-
-      irb = intel_get_renderbuffer(fb, i);
-      if (unlikely(!irb)) {
-	 swrast_mask |= (1 << i);
-	 mask &= ~(1 << i);
-      }
-   }
-   if (unlikely(swrast_mask)) {
-      debug_mask("swrast", swrast_mask);
-      _swrast_Clear(ctx, swrast_mask);
-   }
-
-   tri_mask |= (mask & BUFFER_BITS_COLOR);
-
-   /* Make sure we have up to date buffers before we start looking at
-    * the tiling bits to determine how to clear. */
-   intel_prepare_render(intel);
-
-   /* HW stencil */
-   if (mask & BUFFER_BIT_STENCIL) {
-      const struct intel_region *stencilRegion
-         = intel_get_rb_region(fb, BUFFER_STENCIL);
-      if (stencilRegion) {
-	 tri_mask |= BUFFER_BIT_STENCIL;
-      }
-   }
-
-   /* HW depth */
-   if (mask & BUFFER_BIT_DEPTH) {
-      tri_mask |= BUFFER_BIT_DEPTH;
-   }
-
-   /* Anything left, just use tris */
-   tri_mask |= mask;
+   GLbitfield tri_mask = mask & (BUFFER_BITS_COLOR |
+				 BUFFER_BIT_STENCIL |
+				 BUFFER_BIT_DEPTH);
 
    if (tri_mask) {
       debug_mask("tri", tri_mask);
+      mask &= ~tri_mask;
       _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
+   }
+
+   /* Any strange buffers get passed off to swrast */
+   if (mask) {
+      debug_mask("swrast", mask);
+      _swrast_Clear(ctx, mask);
    }
 }
 
