@@ -473,8 +473,23 @@ lp_build_conv(struct gallivm_state *gallivm,
    else {
       unsigned src_shift = lp_const_shift(src_type);
       unsigned dst_shift = lp_const_shift(dst_type);
+      unsigned src_offset = lp_const_offset(src_type);
+      unsigned dst_offset = lp_const_offset(dst_type);
 
-      /* FIXME: compensate different offsets too */
+      /* Compensate for different offsets */
+      if (dst_offset > src_offset && src_type.width > dst_type.width) {
+         for (i = 0; i < num_tmps; ++i) {
+            LLVMValueRef shifted;
+            LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type, src_shift - 1);
+            if(src_type.sign)
+               shifted = LLVMBuildAShr(builder, tmp[i], shift, "");
+            else
+               shifted = LLVMBuildLShr(builder, tmp[i], shift, "");
+
+            tmp[i] = LLVMBuildSub(builder, tmp[i], shifted, "");
+         }
+      }
+
       if(src_shift > dst_shift) {
          LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type,
                                                      src_shift - dst_shift);
@@ -554,12 +569,24 @@ lp_build_conv(struct gallivm_state *gallivm,
     else {
        unsigned src_shift = lp_const_shift(src_type);
        unsigned dst_shift = lp_const_shift(dst_type);
+       unsigned src_offset = lp_const_offset(src_type);
+       unsigned dst_offset = lp_const_offset(dst_type);
 
-       /* FIXME: compensate different offsets too */
-       if(src_shift < dst_shift) {
+       if (src_shift < dst_shift) {
+          LLVMValueRef pre_shift[LP_MAX_VECTOR_LENGTH];
           LLVMValueRef shift = lp_build_const_int_vec(gallivm, tmp_type, dst_shift - src_shift);
-          for(i = 0; i < num_tmps; ++i)
+
+          for (i = 0; i < num_tmps; ++i) {
+             pre_shift[i] = tmp[i];
              tmp[i] = LLVMBuildShl(builder, tmp[i], shift, "");
+          }
+
+          /* Compensate for different offsets */
+          if (dst_offset > src_offset) {
+             for (i = 0; i < num_tmps; ++i) {
+                tmp[i] = LLVMBuildSub(builder, tmp[i], pre_shift[i], "");
+             }
+          }
        }
     }
 
