@@ -81,9 +81,7 @@ static void
 intelClear(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
    GLbitfield tri_mask = 0;
-   GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *irb;
@@ -115,15 +113,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       _swrast_Clear(ctx, swrast_mask);
    }
 
-   /* HW color buffers (front, back, aux, generic FBO, etc) */
-   if (intel->gen < 6 && colorMask == ~0) {
-      /* clear all R,G,B,A */
-      blit_mask |= (mask & BUFFER_BITS_COLOR);
-   }
-   else {
-      /* glColorMask in effect */
-      tri_mask |= (mask & BUFFER_BITS_COLOR);
-   }
+   tri_mask |= (mask & BUFFER_BITS_COLOR);
 
    /* Make sure we have up to date buffers before we start looking at
     * the tiling bits to determine how to clear. */
@@ -143,24 +133,8 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       tri_mask |= BUFFER_BIT_DEPTH;
    }
 
-   /* If we're doing a tri pass for depth/stencil, include a likely color
-    * buffer with it.
-    */
-   if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      int color_bit = ffs(mask & BUFFER_BITS_COLOR);
-      if (color_bit != 0) {
-	 tri_mask |= blit_mask & (1 << (color_bit - 1));
-	 blit_mask &= ~(1 << (color_bit - 1));
-      }
-   }
-
    /* Anything left, just use tris */
-   tri_mask |= mask & ~blit_mask;
-
-   if (blit_mask) {
-      debug_mask("blit", blit_mask);
-      tri_mask |= intelClearWithBlit(ctx, blit_mask);
-   }
+   tri_mask |= mask;
 
    if (tri_mask) {
       debug_mask("tri", tri_mask);
