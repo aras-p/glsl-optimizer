@@ -190,7 +190,7 @@ lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
       /*
        * Align the most significant bit to the right.
        */
-      rshifted =  LLVMBuildAShr(builder, res,
+      rshifted =  LLVMBuildLShr(builder, res,
                                 lp_build_const_int_vec(gallivm, src_type, rshift),
                                 "");
 
