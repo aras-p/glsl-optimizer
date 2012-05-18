@@ -239,7 +239,10 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
              * Compute the attrib values on the upper-left corner of each quad.
              */
 
-            a = LLVMBuildFAdd(builder, a, dadq2, "");
+            if (interp != LP_INTERP_CONSTANT &&
+                interp != LP_INTERP_FACING) {
+               a = LLVMBuildFAdd(builder, a, dadq2, "");
+	    }
 
 #if PERSPECTIVE_DIVIDE_PER_QUAD
             /*
