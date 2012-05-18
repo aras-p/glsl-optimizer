@@ -78,7 +78,7 @@ debug_mask(const char *name, GLbitfield mask)
  * Called by ctx->Driver.Clear.
  */
 static void
-intelClear(struct gl_context *ctx, GLbitfield mask)
+brw_clear(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -110,5 +110,5 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 void
 intelInitClearFuncs(struct dd_function_table *functions)
 {
-   functions->Clear = intelClear;
+   functions->Clear = brw_clear;
 }
