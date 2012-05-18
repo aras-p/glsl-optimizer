@@ -7,7 +7,6 @@ i965_C_FILES = \
 	intel_blit.c \
 	intel_buffer_objects.c \
 	intel_buffers.c \
-	intel_clear.c \
 	intel_context.c \
 	intel_extensions.c \
 	intel_extensions_es.c \
@@ -32,6 +31,7 @@ i965_C_FILES = \
 	intel_tex_subimage.c \
 	intel_tex_validate.c \
 	brw_cc.c \
+	brw_clear.c \
 	brw_clip.c \
 	brw_clip_line.c \
 	brw_clip_point.c \
