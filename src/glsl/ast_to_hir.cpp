@@ -3733,12 +3733,9 @@ ast_case_label::hir(exec_list *instructions,
       instructions->push_tail(set_fallthru_on_test);
    } else { /* default case */
       if (state->switch_state.previous_default) {
-	 printf("a\n");
 	 YYLTYPE loc = this->get_location();
 	 _mesa_glsl_error(& loc, state,
 			  "multiple default labels in one switch");
-
-	 printf("b\n");
 
 	 loc = state->switch_state.previous_default->get_location();
 	 _mesa_glsl_error(& loc, state,
