@@ -505,7 +505,7 @@ NurbsTessellator::do_pwlcurve( O_pwlcurve *o_pwlcurve )
 	o_pwlcurve->owner = currentCurve;
     }
 
-    if( (inCurve == 2) ) 
+    if( inCurve == 2 ) 
 	endcurve();
 }
 
