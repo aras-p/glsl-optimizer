@@ -84,7 +84,7 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z)
 <p>The problem with this simple implementation is the large amount of
 overhead that it adds to every GL function call.</p>
 
-<p>In a multithreaded environment, a niave implementation of
+<p>In a multithreaded environment, a naive implementation of
 <tt>GET_DISPATCH</tt> involves a call to <tt>pthread_getspecific</tt> or a
 similar function.  Mesa provides a wrapper function called
 <tt>_glapi_get_dispatch</tt> that is used by default.</p>
