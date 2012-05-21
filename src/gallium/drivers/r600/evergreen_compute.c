@@ -376,7 +376,7 @@ static void compute_emit_cs(struct r600_context *ctx)
 	}
 #endif
 
-	ctx->ws->cs_flush(ctx->cs, RADEON_FLUSH_ASYNC);
+	ctx->ws->cs_flush(ctx->cs, RADEON_FLUSH_ASYNC | RADEON_FLUSH_COMPUTE);
 
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
