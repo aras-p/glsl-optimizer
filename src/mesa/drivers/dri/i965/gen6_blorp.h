@@ -32,18 +32,6 @@ extern "C" {
 struct intel_context;
 struct intel_mipmap_tree;
 
-void
-gen6_resolve_hiz_slice(struct intel_context *intel,
-                       struct intel_mipmap_tree *mt,
-                       uint32_t level,
-                       uint32_t layer);
-
-void
-gen6_resolve_depth_slice(struct intel_context *intel,
-                         struct intel_mipmap_tree *mt,
-                         uint32_t level,
-                         uint32_t layer);
-
 #ifdef __cplusplus
 }
 

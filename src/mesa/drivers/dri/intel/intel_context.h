@@ -186,26 +186,6 @@ struct intel_context
 	                          gl_format format);
 
       /**
-       * \name HiZ operations
-       *
-       * See the following sections of the Sandy Bridge PRM, Volume 1, Part2:
-       *   - 7.5.3.1 Depth Buffer Clear
-       *   - 7.5.3.2 Depth Buffer Resolve
-       *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
-       * \{
-       */
-      void (*resolve_hiz_slice)(struct intel_context *intel,
-				struct intel_mipmap_tree *mt,
-				uint32_t level,
-				uint32_t layer);
-
-      void (*resolve_depth_slice)(struct intel_context *intel,
-				  struct intel_mipmap_tree *mt,
-				  uint32_t level,
-				  uint32_t layer);
-      /** \} */
-
-      /**
        * Surface state operations (i965+ only)
        * \{
        */

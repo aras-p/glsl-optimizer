@@ -238,18 +238,6 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.render_target_supported = brw_render_target_supported;
    brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
 
-   if (brw->intel.has_hiz) {
-      if (brw->intel.gen == 7) {
-         brw->intel.vtbl.resolve_depth_slice = gen7_resolve_depth_slice;
-         brw->intel.vtbl.resolve_hiz_slice = gen7_resolve_hiz_slice;
-      } else if (brw->intel.gen == 6) {
-         brw->intel.vtbl.resolve_depth_slice = gen6_resolve_depth_slice;
-         brw->intel.vtbl.resolve_hiz_slice = gen6_resolve_hiz_slice;
-      } else {
-         assert(0);
-      }
-   }
-
    if (brw->intel.gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
    } else if (brw->intel.gen >= 4) {

@@ -783,25 +783,3 @@ gen7_blorp_exec(struct intel_context *intel,
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
 }
-
-/** \copydoc gen6_resolve_hiz_slice() */
-void
-gen7_resolve_hiz_slice(struct intel_context *intel,
-                       struct intel_mipmap_tree *mt,
-                       uint32_t level,
-                       uint32_t layer)
-{
-   brw_hiz_op_params params(mt, level, layer, GEN6_HIZ_OP_HIZ_RESOLVE);
-   gen7_blorp_exec(intel, &params);
-}
-
-/** \copydoc gen6_resolve_depth_slice() */
-void
-gen7_resolve_depth_slice(struct intel_context *intel,
-                         struct intel_mipmap_tree *mt,
-                         uint32_t level,
-                         uint32_t layer)
-{
-   brw_hiz_op_params params(mt, level, layer, GEN6_HIZ_OP_DEPTH_RESOLVE);
-   gen7_blorp_exec(intel, &params);
-}

@@ -608,18 +608,12 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
 			 level, layer, GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
-typedef void (*resolve_func_t)(struct intel_context *intel,
-			       struct intel_mipmap_tree *mt,
-			       uint32_t level,
-			       uint32_t layer);
-
 static bool
 intel_miptree_slice_resolve(struct intel_context *intel,
 			    struct intel_mipmap_tree *mt,
 			    uint32_t level,
 			    uint32_t layer,
-			    enum gen6_hiz_op need,
-			    resolve_func_t func)
+			    enum gen6_hiz_op need)
 {
    intel_miptree_check_level_layer(mt, level, layer);
 
@@ -629,7 +623,7 @@ intel_miptree_slice_resolve(struct intel_context *intel,
    if (!item || item->need != need)
       return false;
 
-   func(intel, mt, level, layer);
+   intel_hiz_exec(intel, mt, level, layer, need);
    intel_resolve_map_remove(item);
    return true;
 }
@@ -641,8 +635,7 @@ intel_miptree_slice_resolve_hiz(struct intel_context *intel,
 				uint32_t layer)
 {
    return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      GEN6_HIZ_OP_HIZ_RESOLVE,
-				      intel->vtbl.resolve_hiz_slice);
+				      GEN6_HIZ_OP_HIZ_RESOLVE);
 }
 
 bool
@@ -652,15 +645,13 @@ intel_miptree_slice_resolve_depth(struct intel_context *intel,
 				  uint32_t layer)
 {
    return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      GEN6_HIZ_OP_DEPTH_RESOLVE,
-				      intel->vtbl.resolve_depth_slice);
+				      GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
 static bool
 intel_miptree_all_slices_resolve(struct intel_context *intel,
 				 struct intel_mipmap_tree *mt,
-				 enum gen6_hiz_op need,
-				 resolve_func_t func)
+				 enum gen6_hiz_op need)
 {
    bool did_resolve = false;
    struct intel_resolve_map *i, *next;
@@ -669,7 +660,8 @@ intel_miptree_all_slices_resolve(struct intel_context *intel,
       next = i->next;
       if (i->need != need)
 	 continue;
-      func(intel, mt, i->level, i->layer);
+
+      intel_hiz_exec(intel, mt, i->level, i->layer, need);
       intel_resolve_map_remove(i);
       did_resolve = true;
    }
@@ -682,8 +674,7 @@ intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
 				     struct intel_mipmap_tree *mt)
 {
    return intel_miptree_all_slices_resolve(intel, mt,
-					   GEN6_HIZ_OP_HIZ_RESOLVE,
-					   intel->vtbl.resolve_hiz_slice);
+					   GEN6_HIZ_OP_HIZ_RESOLVE);
 }
 
 bool
@@ -691,8 +682,7 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 				       struct intel_mipmap_tree *mt)
 {
    return intel_miptree_all_slices_resolve(intel, mt,
-					   GEN6_HIZ_OP_DEPTH_RESOLVE,
-					   intel->vtbl.resolve_depth_slice);
+					   GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
 static void
