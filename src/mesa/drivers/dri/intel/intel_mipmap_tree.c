@@ -572,7 +572,7 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
 
 	 head->level = level;
 	 head->layer = layer;
-	 head->need = INTEL_NEED_HIZ_RESOLVE;
+	 head->need = GEN6_HIZ_OP_HIZ_RESOLVE;
       }
    }
 
@@ -590,7 +590,7 @@ intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
       return;
 
    intel_resolve_map_set(&mt->hiz_map,
-			 level, layer, INTEL_NEED_HIZ_RESOLVE);
+			 level, layer, GEN6_HIZ_OP_HIZ_RESOLVE);
 }
 
 
@@ -605,7 +605,7 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
       return;
 
    intel_resolve_map_set(&mt->hiz_map,
-			 level, layer, INTEL_NEED_DEPTH_RESOLVE);
+			 level, layer, GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
 typedef void (*resolve_func_t)(struct intel_context *intel,
@@ -618,7 +618,7 @@ intel_miptree_slice_resolve(struct intel_context *intel,
 			    struct intel_mipmap_tree *mt,
 			    uint32_t level,
 			    uint32_t layer,
-			    enum intel_need_resolve need,
+			    enum gen6_hiz_op need,
 			    resolve_func_t func)
 {
    intel_miptree_check_level_layer(mt, level, layer);
@@ -641,7 +641,7 @@ intel_miptree_slice_resolve_hiz(struct intel_context *intel,
 				uint32_t layer)
 {
    return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      INTEL_NEED_HIZ_RESOLVE,
+				      GEN6_HIZ_OP_HIZ_RESOLVE,
 				      intel->vtbl.resolve_hiz_slice);
 }
 
@@ -652,14 +652,14 @@ intel_miptree_slice_resolve_depth(struct intel_context *intel,
 				  uint32_t layer)
 {
    return intel_miptree_slice_resolve(intel, mt, level, layer,
-				      INTEL_NEED_DEPTH_RESOLVE,
+				      GEN6_HIZ_OP_DEPTH_RESOLVE,
 				      intel->vtbl.resolve_depth_slice);
 }
 
 static bool
 intel_miptree_all_slices_resolve(struct intel_context *intel,
 				 struct intel_mipmap_tree *mt,
-				 enum intel_need_resolve need,
+				 enum gen6_hiz_op need,
 				 resolve_func_t func)
 {
    bool did_resolve = false;
@@ -682,7 +682,7 @@ intel_miptree_all_slices_resolve_hiz(struct intel_context *intel,
 				     struct intel_mipmap_tree *mt)
 {
    return intel_miptree_all_slices_resolve(intel, mt,
-					   INTEL_NEED_HIZ_RESOLVE,
+					   GEN6_HIZ_OP_HIZ_RESOLVE,
 					   intel->vtbl.resolve_hiz_slice);
 }
 
@@ -691,7 +691,7 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 				       struct intel_mipmap_tree *mt)
 {
    return intel_miptree_all_slices_resolve(intel, mt,
-					   INTEL_NEED_DEPTH_RESOLVE,
+					   GEN6_HIZ_OP_DEPTH_RESOLVE,
 					   intel->vtbl.resolve_depth_slice);
 }
 

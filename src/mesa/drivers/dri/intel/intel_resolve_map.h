@@ -25,6 +25,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * For an overview of the HiZ operations, see the following sections of the
  * Sandy Bridge PRM, Volume 1, Part2:
@@ -40,11 +44,6 @@ enum gen6_hiz_op {
    GEN6_HIZ_OP_DEPTH_RESOLVE,
    GEN6_HIZ_OP_HIZ_RESOLVE,
    GEN6_HIZ_OP_NONE,
-};
-
-enum intel_need_resolve {
-   INTEL_NEED_HIZ_RESOLVE,
-   INTEL_NEED_DEPTH_RESOLVE,
 };
 
 /**
@@ -76,7 +75,7 @@ enum intel_need_resolve {
 struct intel_resolve_map {
    uint32_t level;
    uint32_t layer;
-   enum intel_need_resolve need;
+   enum gen6_hiz_op need;
 
    struct intel_resolve_map *next;
    struct intel_resolve_map *prev;
@@ -86,7 +85,7 @@ void
 intel_resolve_map_set(struct intel_resolve_map *head,
 		      uint32_t level,
 		      uint32_t layer,
-		      enum intel_need_resolve need);
+		      enum gen6_hiz_op need);
 
 struct intel_resolve_map*
 intel_resolve_map_get(struct intel_resolve_map *head,
@@ -98,3 +97,8 @@ intel_resolve_map_remove(struct intel_resolve_map *elem);
 
 void
 intel_resolve_map_clear(struct intel_resolve_map *head);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
