@@ -369,6 +369,7 @@ static const struct st_api vg_api = {
    "Vega " VEGA_VERSION_STRING,
    ST_API_OPENVG,
    ST_PROFILE_DEFAULT_MASK,
+   0,
    vg_api_destroy,
    vg_api_get_proc_address,
    vg_api_create_context,
