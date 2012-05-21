@@ -421,6 +421,21 @@ intel_miptree_unmap(struct intel_context *intel,
 		    unsigned int level,
 		    unsigned int slice);
 
+#ifdef I915
+static inline void
+intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
+	       unsigned int level, unsigned int layer, enum gen6_hiz_op op)
+{
+   /* Stub on i915.  It would be nice if we didn't execute resolve code at all
+    * there.
+    */
+}
+#else
+void
+intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
+	       unsigned int level, unsigned int layer, enum gen6_hiz_op op);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

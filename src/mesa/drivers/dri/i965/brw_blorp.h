@@ -25,24 +25,10 @@
 
 #include <stdint.h>
 
+#include "brw_context.h"
 #include "intel_mipmap_tree.h"
 
 struct brw_context;
-
-
-/**
- * For an overview of the HiZ operations, see the following sections of the
- * Sandy Bridge PRM, Volume 1, Part2:
- *   - 7.5.3.1 Depth Buffer Clear
- *   - 7.5.3.2 Depth Buffer Resolve
- *   - 7.5.3.3 Hierarchical Depth Buffer Resolve
- */
-enum gen6_hiz_op {
-   GEN6_HIZ_OP_DEPTH_CLEAR,
-   GEN6_HIZ_OP_DEPTH_RESOLVE,
-   GEN6_HIZ_OP_HIZ_RESOLVE,
-   GEN6_HIZ_OP_NONE,
-};
 
 
 /**

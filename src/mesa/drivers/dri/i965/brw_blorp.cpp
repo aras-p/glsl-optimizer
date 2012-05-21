@@ -98,6 +98,17 @@ brw_blorp_params::brw_blorp_params()
 {
 }
 
+extern "C" {
+void
+intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
+	       unsigned int level, unsigned int layer, gen6_hiz_op op)
+{
+   brw_hiz_op_params params(mt, level, layer, op);
+   brw_blorp_exec(intel, &params);
+}
+
+} /* extern "C" */
+
 void
 brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
 {
