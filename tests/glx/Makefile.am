@@ -2,6 +2,7 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/src/gtest/include \
 	-I$(top_builddir)/src/mapi \
 	-I$(top_builddir)/src/glx \
+	-I$(top_builddir)/include \
 	$(X11_CFLAGS)
 
 if HAVE_XCB_GLX_CREATE_CONTEXT
