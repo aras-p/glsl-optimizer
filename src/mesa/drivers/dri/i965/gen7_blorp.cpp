@@ -110,6 +110,26 @@ gen7_blorp_emit_cc_state_pointer(struct brw_context *brw,
    ADVANCE_BATCH();
 }
 
+static void
+gen7_blorp_emit_cc_viewport(struct brw_context *brw,
+			    const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+   struct brw_cc_viewport *ccv;
+   uint32_t cc_vp_offset;
+
+   ccv = (struct brw_cc_viewport *)brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
+						   sizeof(*ccv), 32,
+						   &cc_vp_offset);
+   ccv->min_depth = 0.0;
+   ccv->max_depth = 1.0;
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS_CC << 16 | (2 - 2));
+   OUT_BATCH(cc_vp_offset);
+   ADVANCE_BATCH();
+}
+
 
 /* 3DSTATE_DEPTH_STENCIL_STATE_POINTERS
  *
@@ -765,6 +785,7 @@ gen7_blorp_exec(struct intel_context *intel,
       gen7_blorp_emit_constant_ps(brw, params, wm_push_const_offset);
    }
    gen7_blorp_emit_ps_config(brw, params, prog_offset, prog_data);
+   gen7_blorp_emit_cc_viewport(brw, params);
 
    if (params->depth.mt)
       gen7_blorp_emit_depth_stencil_config(brw, params);
