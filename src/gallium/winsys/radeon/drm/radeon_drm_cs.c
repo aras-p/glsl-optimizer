@@ -490,7 +490,6 @@ static void radeon_drm_cs_destroy(struct radeon_winsys_cs *rcs)
         pipe_semaphore_signal(&cs->flush_queued);
         pipe_semaphore_wait(&cs->flush_completed);
         pipe_thread_wait(cs->thread);
-        pipe_thread_destroy(cs->thread);
     }
     pipe_semaphore_destroy(&cs->flush_queued);
     pipe_semaphore_destroy(&cs->flush_completed);
