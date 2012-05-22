@@ -48,9 +48,9 @@
 
 void _debug_vprintf(const char *format, va_list ap)
 {
+   static char buf[4096] = {'\0'};
 #if defined(PIPE_OS_WINDOWS) || defined(PIPE_SUBSYSTEM_EMBEDDED)
    /* We buffer until we find a newline. */
-   static char buf[4096] = {'\0'};
    size_t len = strlen(buf);
    int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
    if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
@@ -58,8 +58,8 @@ void _debug_vprintf(const char *format, va_list ap)
       buf[0] = '\0';
    }
 #else
-   /* Just print as-is to stderr */
-   vfprintf(stderr, format, ap);
+   util_vsnprintf(buf, sizeof(buf), format, ap);
+   os_log_message(buf);
 #endif
 }
 

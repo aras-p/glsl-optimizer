@@ -50,16 +50,35 @@
 void
 os_log_message(const char *message)
 {
+   /* If the GALLIUM_LOG_FILE environment variable is set to a valid filename,
+    * write all messages to that file.
+    */
+   static FILE *fout = NULL;
+
+   if (!fout) {
+      /* one-time init */
+      const char *filename = os_get_option("GALLIUM_LOG_FILE");
+      if (filename)
+         fout = fopen(filename, "w");
+      if (!fout)
+         fout = stderr;
+   }
+
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    OutputDebugStringA(message);
    if(GetConsoleWindow() && !IsDebuggerPresent()) {
       fflush(stdout);
-      fputs(message, stderr);
-      fflush(stderr);
+      fputs(message, fout);
+      fflush(fout);
+   }
+   else if (fout != stderr) {
+      fputs(message, fout);
+      fflush(fout);
    }
 #else /* !PIPE_SUBSYSTEM_WINDOWS */
    fflush(stdout);
-   fputs(message, stderr);
+   fputs(message, fout);
+   fflush(fout);
 #endif
 }
 
