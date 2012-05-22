@@ -278,7 +278,7 @@ ralloc_parent(const void *ptr)
       return NULL;
 
    info = get_header(ptr);
-   return PTR_FROM_HEADER(info->parent);
+   return info->parent ? PTR_FROM_HEADER(info->parent) : NULL;
 }
 
 static void *autofree_context = NULL;
