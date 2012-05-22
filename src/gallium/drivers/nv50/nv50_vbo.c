@@ -568,7 +568,9 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
       struct nv04_resource *buf = nv04_resource(nv50->idxbuf.buffer);
       unsigned pb_start;
       unsigned pb_bytes;
-      const unsigned base = buf->offset + nv50->idxbuf.offset;
+      const unsigned base = (buf->offset + nv50->idxbuf.offset) & ~3;
+
+      start += ((buf->offset + nv50->idxbuf.offset) & 3) >> (index_size >> 1);
 
       assert(nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer));
 
