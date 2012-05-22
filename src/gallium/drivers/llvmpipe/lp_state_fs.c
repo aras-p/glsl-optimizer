@@ -345,13 +345,16 @@ generate_fs(struct gallivm_state *gallivm,
                                            0);
 
       if (color0 != -1 && outputs[color0][3]) {
+         const struct util_format_description *cbuf_format_desc;
          LLVMValueRef alpha = LLVMBuildLoad(builder, outputs[color0][3], "alpha");
          LLVMValueRef alpha_ref_value;
 
          alpha_ref_value = lp_jit_context_alpha_ref_value(gallivm, context_ptr);
          alpha_ref_value = lp_build_broadcast(gallivm, vec_type, alpha_ref_value);
 
-         lp_build_alpha_test(gallivm, key->alpha.func, type,
+         cbuf_format_desc = util_format_description(key->cbuf_format[0]);
+
+         lp_build_alpha_test(gallivm, key->alpha.func, type, cbuf_format_desc,
                              &mask, alpha, alpha_ref_value,
                              (depth_mode & LATE_DEPTH_TEST) != 0);
       }

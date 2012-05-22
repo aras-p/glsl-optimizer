@@ -39,6 +39,7 @@
 #include "gallivm/lp_bld.h"
 
 struct pipe_alpha_state;
+struct util_format_description;
 struct gallivm_state;
 struct lp_type;
 struct lp_build_mask_context;
@@ -48,6 +49,7 @@ void
 lp_build_alpha_test(struct gallivm_state *gallivm,
                     unsigned func,
                     struct lp_type type,
+                    const struct util_format_description *cbuf_format_desc,
                     struct lp_build_mask_context *mask,
                     LLVMValueRef alpha,
                     LLVMValueRef ref,
