@@ -136,7 +136,12 @@ gen6_blorp_emit_state_base_address(struct brw_context *brw,
       OUT_BATCH(1); /* InstructionBaseAddress */
    }
    OUT_BATCH(1); /* GeneralStateUpperBound */
-   OUT_BATCH(1); /* DynamicStateUpperBound */
+   /* Dynamic state upper bound.  Although the documentation says that
+    * programming it to zero will cause it to be ignored, that is a lie.
+    * If this isn't programmed to a real bound, the sampler border color
+    * pointer is rejected, causing border color to mysteriously fail.
+    */
+   OUT_BATCH(0xfffff001);
    OUT_BATCH(1); /* IndirectObjectUpperBound*/
    OUT_BATCH(1); /* InstructionAccessUpperBound */
    ADVANCE_BATCH();
