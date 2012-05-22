@@ -358,7 +358,7 @@ nv30_draw_arrays(struct nv30_context *nv30,
 }
 
 static void
-nv30_draw_elements_inline_u08(struct nouveau_pushbuf *push, uint8_t *map,
+nv30_draw_elements_inline_u08(struct nouveau_pushbuf *push, const uint8_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -383,7 +383,7 @@ nv30_draw_elements_inline_u08(struct nouveau_pushbuf *push, uint8_t *map,
 }
 
 static void
-nv30_draw_elements_inline_u16(struct nouveau_pushbuf *push, uint16_t *map,
+nv30_draw_elements_inline_u16(struct nouveau_pushbuf *push, const uint16_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -407,7 +407,7 @@ nv30_draw_elements_inline_u16(struct nouveau_pushbuf *push, uint16_t *map,
 }
 
 static void
-nv30_draw_elements_inline_u32(struct nouveau_pushbuf *push, uint32_t *map,
+nv30_draw_elements_inline_u32(struct nouveau_pushbuf *push, const uint32_t *map,
                               unsigned start, unsigned count)
 {
    map += start;
@@ -424,7 +424,8 @@ nv30_draw_elements_inline_u32(struct nouveau_pushbuf *push, uint32_t *map,
 }
 
 static void
-nv30_draw_elements_inline_u32_short(struct nouveau_pushbuf *push, uint32_t *map,
+nv30_draw_elements_inline_u32_short(struct nouveau_pushbuf *push,
+                                    const uint32_t *map,
                                     unsigned start, unsigned count)
 {
    map += start;
@@ -456,7 +457,6 @@ nv30_draw_elements(struct nv30_context *nv30, boolean shorten,
    struct nouveau_pushbuf *push = nv30->base.pushbuf;
    struct nouveau_object *eng3d = nv30->screen->eng3d;
    unsigned prim = nv30_prim_gl(mode);
-   void *data;
 
 #if 0 /*XXX*/
    if (index_bias != nv30->state.index_bias) {
@@ -467,9 +467,11 @@ nv30_draw_elements(struct nv30_context *nv30, boolean shorten,
 #endif
 
    if (eng3d->oclass == NV40_3D_CLASS && index_size > 1 &&
-       nouveau_resource_mapped_by_gpu(nv30->idxbuf.buffer)) {
+       nv30->idxbuf.buffer) {
       struct nv04_resource *res = nv04_resource(nv30->idxbuf.buffer);
       unsigned offset = nv30->idxbuf.offset;
+
+      assert(nouveau_resource_mapped_by_gpu(&res->base));
 
       BEGIN_NV04(push, NV30_3D(IDXBUF_OFFSET), 2);
       PUSH_RESRC(push, NV30_3D(IDXBUF_OFFSET), BUFCTX_IDXBUF, res, offset,
@@ -501,9 +503,13 @@ nv30_draw_elements(struct nv30_context *nv30, boolean shorten,
       PUSH_DATA (push, NV30_3D_VERTEX_BEGIN_END_STOP);
       PUSH_RESET(push, BUFCTX_IDXBUF);
    } else {
-      data = nouveau_resource_map_offset(&nv30->base,
-                                         nv04_resource(nv30->idxbuf.buffer),
-                                         nv30->idxbuf.offset, NOUVEAU_BO_RD);
+      const void *data;
+      if (nv30->idxbuf.buffer)
+         data = nouveau_resource_map_offset(&nv30->base,
+                                            nv04_resource(nv30->idxbuf.buffer),
+                                            nv30->idxbuf.offset, NOUVEAU_BO_RD);
+      else
+         data = nv30->idxbuf.user_buffer;
       if (!data)
          return;
 
@@ -576,8 +582,6 @@ nv30_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                        info->instance_count);
    } else {
       boolean shorten = info->max_index <= 65535;
-
-      assert(nv30->idxbuf.buffer);
 
       if (info->primitive_restart != nv30->state.prim_restart) {
          if (info->primitive_restart) {

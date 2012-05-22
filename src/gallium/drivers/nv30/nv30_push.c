@@ -37,7 +37,7 @@
 struct push_context {
    struct nouveau_pushbuf *push;
 
-   void *idxbuf;
+   const void *idxbuf;
 
    float edgeflag;
    int edgeflag_attr;
@@ -221,9 +221,12 @@ nv30_push_vbo(struct nv30_context *nv30, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      ctx.idxbuf = nouveau_resource_map_offset(&nv30->base,
-                                               nv04_resource(nv30->idxbuf.buffer),
-                                               nv30->idxbuf.offset, NOUVEAU_BO_RD);
+      if (nv30->idxbuf.buffer)
+         ctx.idxbuf = nouveau_resource_map_offset(&nv30->base,
+            nv04_resource(nv30->idxbuf.buffer), nv30->idxbuf.offset,
+            NOUVEAU_BO_RD);
+      else
+         ctx.idxbuf = nv30->idxbuf.user_buffer;
       if (!ctx.idxbuf) {
          nv30_state_release(nv30);
          return;
