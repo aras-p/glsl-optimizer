@@ -123,7 +123,7 @@ struct nv30_fragprog {
    uint32_t fp_control;
    uint32_t point_sprite_control;
    uint32_t coord_conventions;
-   uint32_t samplers;
+   uint32_t texcoords;
    uint32_t rt_enable;
 };
 

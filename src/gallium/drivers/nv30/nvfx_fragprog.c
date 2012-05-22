@@ -217,7 +217,6 @@ nvfx_fp_emit(struct nvfx_fpc *fpc, struct nvfx_insn insn)
    if(insn.unit >= 0)
    {
       hw[0] |= (insn.unit << NVFX_FP_OP_TEX_UNIT_SHIFT);
-      fp->samplers |= (1 << insn.unit);
    }
 
    emit_dst(fpc, insn.dst);
@@ -933,6 +932,7 @@ nvfx_fragprog_parse_decl_input(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
          return TRUE;
 
       fpc->fp->texcoord[fdec->Semantic.Index] = fdec->Semantic.Index;
+      fpc->fp->texcoords |= (1 << fdec->Semantic.Index);
       fpc->fp->vp_or |= (0x00004000 << fdec->Semantic.Index);
       hw = NVFX_FP_OP_INPUT_SRC_TC(fdec->Semantic.Index);
       break;
@@ -959,8 +959,12 @@ nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
          for (hw = 0; hw < num_texcoords; hw++) {
             if (fpc->fp->texcoord[hw] == 0xffff) {
                fpc->fp->texcoord[hw] = fdec->Semantic.Index;
-               if (hw <= 7) fpc->fp->vp_or |= (0x00004000 << hw);
-               else         fpc->fp->vp_or |= (0x00001000 << (hw - 8));
+               if (hw <= 7) {
+                  fpc->fp->texcoords |= (0x1 << hw);
+                  fpc->fp->vp_or |= (0x00004000 << hw);
+               } else {
+                  fpc->fp->vp_or |= (0x00001000 << (hw - 8));
+               }
                if (fdec->Semantic.Index == 9)
                   fpc->fp->point_sprite_control |= (0x00000100 << hw);
                hw = NVFX_FP_OP_INPUT_SRC_TC(hw);

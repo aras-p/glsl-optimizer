@@ -117,7 +117,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
          BEGIN_NV04(push, NV30_3D(FP_REG_CONTROL), 1);
          PUSH_DATA (push, 0x00010004);
          BEGIN_NV04(push, NV30_3D(TEX_UNITS_ENABLE), 1);
-         PUSH_DATA (push, fp->samplers);
+         PUSH_DATA (push, fp->texcoords);
       } else {
          BEGIN_NV04(push, SUBC_3D(0x0b40), 1);
          PUSH_DATA (push, 0x00000000);
