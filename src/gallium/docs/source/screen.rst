@@ -83,17 +83,23 @@ The integer capabilities:
 * ``PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR``: Whether the driver supports
   per-instance vertex attribs.
 * ``PIPE_CAP_FRAGMENT_COLOR_CLAMPED``: Whether fragment color clamping is
-  supported.
+  supported.  That is, is the pipe_rasterizer_state::clamp_fragment_color
+  flag supported by the driver?  If not, the state tracker will insert
+  clamping code into the fragment shaders when needed.
+
 * ``PIPE_CAP_MIXED_COLORBUFFER_FORMATS``: Whether mixed colorbuffer formats are
   supported, e.g. RGBA8 and RGBA32F as the first and second colorbuffer, resp.
 * ``PIPE_CAP_VERTEX_COLOR_UNCLAMPED``: Whether the driver is capable of
   outputting unclamped vertex colors from a vertex shader. If unsupported,
   the vertex colors are always clamped. This is the default for DX9 hardware.
 * ``PIPE_CAP_VERTEX_COLOR_CLAMPED``: Whether the driver is capable of
-  clamping vertex colors when they come out of a vertex shader. If unsupported,
+  clamping vertex colors when they come out of a vertex shader, as specified
+  by the pipe_rasterizer_state::clamp_vertex_color flag.  If unsupported,
   the vertex colors are never clamped. This is the default for DX10 hardware.
   If both clamped and unclamped CAPs are supported, the clamping can be
-  controlled through pipe_rasterizer_state.
+  controlled through pipe_rasterizer_state.  If the driver cannot do vertex
+  color clamping, the state tracker may insert clamping code into the vertex
+  shader.
 * ``PIPE_CAP_GLSL_FEATURE_LEVEL``: Whether the driver supports features
   equivalent to a specific GLSL version. E.g. for GLSL 1.3, report 130.
 * ``PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION``: Whether quads adhere to
