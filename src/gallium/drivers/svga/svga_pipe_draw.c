@@ -95,16 +95,9 @@ svga_user_buffer_range(struct svga_context *svga,
             first = ve[i].src_offset;
             count = (instance_count + instance_div - 1) / instance_div;
             size = vb->stride * (count - 1) + elemSize;
-         } else if (vb->stride) {
+         } else {
             first = vb->stride * start + ve[i].src_offset;
             size = vb->stride * (count - 1) + elemSize;
-         } else {
-            /* Only a single vertex!
-             * Upload with the largest vertex size the hw supports,
-             * if possible.
-             */
-            first = ve[i].src_offset;
-            size = MIN2(16, vb->buffer->width0);
          }
 
          buffer->uploaded.start = MIN2(buffer->uploaded.start, first);

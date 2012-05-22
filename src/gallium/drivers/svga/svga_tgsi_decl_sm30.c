@@ -376,35 +376,19 @@ vs30_input(struct svga_shader_emitter *emit,
    dcl.values[0] = 0;
    dcl.values[1] = 0;
 
-   if (emit->key.vkey.zero_stride_vertex_elements & (1 << idx)) {
-      unsigned i;
-      unsigned offset = 0;
-      unsigned start_idx = emit->info.file_max[TGSI_FILE_CONSTANT] + 1;
-      /* adjust for prescale constants */
-      start_idx += emit->key.vkey.need_prescale ? 2 : 0;
-      /* compute the offset from the start of zero stride constants */
-      for (i = 0; i < PIPE_MAX_ATTRIBS && i < idx; ++i) {
-         if (emit->key.vkey.zero_stride_vertex_elements & (1<<i))
-            ++offset;
-      }
-      emit->input_map[idx] = src_register( SVGA3DREG_CONST,
-                                           start_idx + offset );
-   } else {
-      emit->input_map[idx] = src_register( SVGA3DREG_INPUT, idx );
-      dcl.dst = dst_register( SVGA3DREG_INPUT, idx );
+   emit->input_map[idx] = src_register( SVGA3DREG_INPUT, idx );
+   dcl.dst = dst_register( SVGA3DREG_INPUT, idx );
 
-      assert(dcl.dst.reserved0);
+   assert(dcl.dst.reserved0);
 
-      svga_generate_vdecl_semantics( idx, &usage, &index );
+   svga_generate_vdecl_semantics( idx, &usage, &index );
 
-      dcl.usage = usage;
-      dcl.index = index;
-      dcl.values[0] |= 1<<31;
+   dcl.usage = usage;
+   dcl.index = index;
+   dcl.values[0] |= 1<<31;
 
-      return (emit_instruction(emit, opcode) &&
-              svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
-   }
-   return TRUE;
+   return (emit_instruction(emit, opcode) &&
+           svga_shader_emit_dwords( emit, dcl.values, Elements(dcl.values)));
 }
 
 

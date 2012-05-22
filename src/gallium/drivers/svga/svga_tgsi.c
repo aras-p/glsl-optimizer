@@ -284,7 +284,6 @@ svga_tgsi_translate( const struct svga_shader *shader,
 
    if (unit == PIPE_SHADER_VERTEX) {
       emit.imm_start += key.vkey.need_prescale ? 2 : 0;
-      emit.imm_start += key.vkey.num_zero_stride_vertex_elements;
    }
 
    emit.nr_hw_float_const = (emit.imm_start + emit.info.file_max[TGSI_FILE_IMMEDIATE] + 1);

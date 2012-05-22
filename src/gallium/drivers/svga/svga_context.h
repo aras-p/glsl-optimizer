@@ -237,11 +237,6 @@ struct svga_state
    } tex_flags;
 
    boolean any_user_vertex_buffers;
-
-   unsigned zero_stride_vertex_elements;
-   unsigned num_zero_stride_vertex_elements;
-   /* ### maybe dynamically allocate this */
-   float zero_stride_constants[PIPE_MAX_ATTRIBS*4];
 };
 
 struct svga_prescale {
@@ -406,7 +401,6 @@ struct svga_context
 #define SVGA_NEW_NEED_SWTNL          0x400000
 #define SVGA_NEW_FS_RESULT           0x800000
 #define SVGA_NEW_VS_RESULT           0x1000000
-#define SVGA_NEW_ZERO_STRIDE         0x2000000
 #define SVGA_NEW_TEXTURE_FLAGS       0x4000000
 #define SVGA_NEW_STENCIL_REF         0x8000000
 

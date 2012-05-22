@@ -351,23 +351,6 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
          return ret;
    }
 
-   /* SVGA_NEW_ZERO_STRIDE
-    * Put the zero-stride vertex array attributes into the const buffer.
-    */
-   if (key->zero_stride_vertex_elements) {
-      unsigned i, curr_zero_stride = 0;
-      for (i = 0; i < PIPE_MAX_ATTRIBS; ++i) {
-         if (key->zero_stride_vertex_elements & (1 << i)) {
-            ret = emit_const( svga, PIPE_SHADER_VERTEX, offset++,
-                              svga->curr.zero_stride_constants +
-                              4 * curr_zero_stride );
-            if (ret != PIPE_OK)
-               return ret;
-            ++curr_zero_stride;
-         }
-      }
-   }
-
    return PIPE_OK;
 }
 
@@ -377,7 +360,6 @@ struct svga_tracked_state svga_hw_vs_parameters =
    "hw vs params",
    (SVGA_NEW_PRESCALE |
     SVGA_NEW_VS_CONST_BUFFER |
-    SVGA_NEW_ZERO_STRIDE |
     SVGA_NEW_VS_RESULT),
    emit_vs_consts
 };

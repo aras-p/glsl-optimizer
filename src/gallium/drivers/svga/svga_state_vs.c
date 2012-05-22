@@ -152,7 +152,7 @@ fail:
    return ret;
 }
 
-/* SVGA_NEW_PRESCALE, SVGA_NEW_RAST, SVGA_NEW_ZERO_STRIDE, SVGA_NEW_FS
+/* SVGA_NEW_PRESCALE, SVGA_NEW_RAST, SVGA_NEW_FS
  */
 static void
 make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
@@ -160,10 +160,6 @@ make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
    memset(key, 0, sizeof *key);
    key->need_prescale = svga->state.hw_clear.prescale.enabled;
    key->allow_psiz = svga->curr.rast->templ.point_size_per_vertex;
-   key->zero_stride_vertex_elements =
-      svga->curr.zero_stride_vertex_elements;
-   key->num_zero_stride_vertex_elements =
-      svga->curr.num_zero_stride_vertex_elements;
 
    /* SVGA_NEW_FS */
    key->fs_generic_inputs = svga->curr.fs->generic_inputs;
@@ -216,91 +212,6 @@ struct svga_tracked_state svga_hw_vs =
    (SVGA_NEW_VS |
     SVGA_NEW_FS |
     SVGA_NEW_PRESCALE |
-    SVGA_NEW_NEED_SWTNL |
-    SVGA_NEW_ZERO_STRIDE),
+    SVGA_NEW_NEED_SWTNL),
    emit_hw_vs
-};
-
-
-/**
- * This function handles the special case of vertex attributes
- * with stride=0.  Basically, copy those values into the constant
- * buffer and modify the vertex shader to get the values from the
- * constant buffer rather than a vertex array.
- */
-static enum pipe_error
-update_zero_stride( struct svga_context *svga,
-                    unsigned dirty )
-{
-   unsigned i;
-
-   svga->curr.zero_stride_vertex_elements = 0;
-   svga->curr.num_zero_stride_vertex_elements = 0;
-
-   for (i = 0; i < svga->curr.velems->count; i++) {
-      const struct pipe_vertex_element *vel = &svga->curr.velems->velem[i];
-      const struct pipe_vertex_buffer *vbuffer = &svga->curr.vb[
-         vel->vertex_buffer_index];
-
-      if (vbuffer->stride == 0) {
-         unsigned const_idx =
-            svga->curr.num_zero_stride_vertex_elements;
-	 struct pipe_transfer *transfer;
-         struct translate *translate;
-         struct translate_key key;
-         void *mapped_buffer;
-
-         svga->curr.zero_stride_vertex_elements |= (1 << i);
-         ++svga->curr.num_zero_stride_vertex_elements;
-
-         key.output_stride = 4 * sizeof(float);
-         key.nr_elements = 1;
-         key.element[0].type = TRANSLATE_ELEMENT_NORMAL;
-         key.element[0].input_format = vel->src_format;
-         key.element[0].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         key.element[0].input_buffer = vel->vertex_buffer_index;
-         key.element[0].input_offset = vel->src_offset;
-         key.element[0].instance_divisor = vel->instance_divisor;
-         key.element[0].output_offset = const_idx * 4 * sizeof(float);
-
-         translate_key_sanitize(&key);
-         /* translate_generic_create is technically private but
-          * we don't want to code-generate, just want generic
-          * translation */
-         translate = translate_generic_create(&key);
-
-         assert(vel->src_offset == 0);
-         
-         mapped_buffer = pipe_buffer_map_range(&svga->pipe, 
-                                               vbuffer->buffer,
-                                               vel->src_offset + vbuffer->buffer_offset,
-                                               util_format_get_blocksize(vel->src_format),
-                                               PIPE_TRANSFER_READ,
-					       &transfer);
-         mapped_buffer = (uint8_t*)mapped_buffer - vel->src_offset;
-
-         translate->set_buffer(translate, vel->vertex_buffer_index,
-                               mapped_buffer,
-                               vbuffer->stride, ~0);
-         translate->run(translate, 0, 1, 0,
-                        svga->curr.zero_stride_constants);
-
-         pipe_buffer_unmap(&svga->pipe, transfer);
-
-         translate->release(translate);
-      }
-   }
-
-   if (svga->curr.num_zero_stride_vertex_elements)
-      svga->dirty |= SVGA_NEW_ZERO_STRIDE;
-
-   return PIPE_OK;
-}
-
-struct svga_tracked_state svga_hw_update_zero_stride =
-{
-   "update zero_stride",
-   ( SVGA_NEW_VELEMENT |
-     SVGA_NEW_VBUFFER ),
-   update_zero_stride
 };

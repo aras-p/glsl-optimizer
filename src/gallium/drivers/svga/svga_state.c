@@ -63,7 +63,6 @@ static const struct svga_tracked_state *hw_clear_state[] =
  */
 static const struct svga_tracked_state *hw_draw_state[] =
 {
-   &svga_hw_update_zero_stride,
    &svga_hw_fs,
    &svga_hw_vs,
    &svga_hw_rss,

@@ -47,10 +47,8 @@ struct tgsi_token;
 struct svga_vs_compile_key
 {
    unsigned fs_generic_inputs;
-   unsigned zero_stride_vertex_elements;
    unsigned need_prescale:1;
    unsigned allow_psiz:1;
-   unsigned num_zero_stride_vertex_elements:6;
 };
 
 struct svga_fs_compile_key
