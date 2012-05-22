@@ -183,6 +183,13 @@ union fi {
 };
 
 
+union di {
+   double d;
+   int64_t i;
+   uint64_t ui;
+};
+
+
 /**
  * Fast version of 2^x
  * Identity: exp2(a + b) = exp2(a) * exp2(b)
@@ -325,14 +332,107 @@ util_is_approx(float a, float b, float tol)
 
 
 /**
- * Test if x is NaN or +/- infinity.
+ * util_is_X_inf_or_nan = test if x is NaN or +/- Inf
+ * util_is_X_nan        = test if x is NaN
+ * util_X_inf_sign      = return +1 for +Inf, -1 for -Inf, or 0 for not Inf
+ *
+ * NaN can be checked with x != x, however this fails with the fast math flag
+ **/
+
+
+/**
+ * Single-float
  */
 static INLINE boolean
 util_is_inf_or_nan(float x)
 {
    union fi tmp;
    tmp.f = x;
-   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+   return (tmp.ui & 0x7f800000) == 0x7f800000;
+}
+
+
+static INLINE boolean
+util_is_nan(float x)
+{
+   union fi tmp;
+   tmp.f = x;
+   return (tmp.ui & 0x7fffffff) > 0x7f800000;
+}
+
+
+static INLINE int
+util_inf_sign(float x)
+{
+   union fi tmp;
+   tmp.f = x;
+   if ((tmp.ui & 0x7fffffff) != 0x7f800000) {
+      return 0;
+   }
+
+   return (x < 0) ? -1 : 1;
+}
+
+
+/**
+ * Double-float
+ */
+static INLINE boolean
+util_is_double_inf_or_nan(double x)
+{
+   union di tmp;
+   tmp.d = x;
+   return (tmp.ui & 0x7ff0000000000000) == 0x7ff0000000000000;
+}
+
+
+static INLINE boolean
+util_is_double_nan(double x)
+{
+   union di tmp;
+   tmp.d = x;
+   return (tmp.ui & 0x7fffffffffffffff) > 0x7ff0000000000000;
+}
+
+
+static INLINE int
+util_double_inf_sign(double x)
+{
+   union di tmp;
+   tmp.d = x;
+   if ((tmp.ui & 0x7fffffffffffffff) != 0x7ff0000000000000) {
+      return 0;
+   }
+
+   return (x < 0) ? -1 : 1;
+}
+
+
+/**
+ * Half-float
+ */
+static INLINE boolean
+util_is_half_inf_or_nan(int16_t x)
+{
+   return (x & 0x7c00) == 0x7c00;
+}
+
+
+static INLINE boolean
+util_is_half_nan(int16_t x)
+{
+   return (x & 0x7fff) > 0x7c00;
+}
+
+
+static INLINE int
+util_half_inf_sign(int16_t x)
+{
+   if ((x & 0x7fff) != 0x7c00) {
+      return 0;
+   }
+
+   return (x < 0) ? -1 : 1;
 }
 
 
