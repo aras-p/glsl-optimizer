@@ -9,9 +9,11 @@ AM_CXXFLAGS = $(INC)
 
 TESTS = \
 	optimization-test \
+	ralloc-test \
 	uniform-initializer-test
 
 check_PROGRAMS = 				\
+	ralloc-test				\
 	uniform-initializer-test
 
 uniform_initializer_test_SOURCES =		\
@@ -24,3 +26,6 @@ uniform_initializer_test_LDADD =		\
 	$(top_builddir)/src/glsl/libglsl.a	\
 	$(top_builddir)/src/mesa/libmesa.a	\
 	-lpthread
+
+ralloc_test_SOURCES = ralloc_test.cpp $(top_builddir)/src/glsl/ralloc.c
+ralloc_test_LDADD = $(top_builddir)/src/gtest/libgtest.la -lpthread
