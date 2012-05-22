@@ -28,6 +28,7 @@
 
 #include "u_memory.h"
 #include "u_format_tests.h"
+#include <float.h>
 
 
 /*
@@ -62,6 +63,9 @@
        {{ 0,  0,  0,  0}, { 0,  0,  0,  0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, \
        {{ 0,  0,  0,  0}, { 0,  0,  0,  0}, {0, 0, 0, 0}, {0, 0, 0, 0}}}
 
+
+#define NAN (0.0 / 0.0)
+#define INF (1.0 / 0.0)
 
 /**
  * Test cases.
@@ -876,6 +880,32 @@ util_format_test_cases[] =
     * Half float formats
     */
 
+   /* Minimum positive normal */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0400), UNPACKED_1x1( 6.10352E-5, 0.0, 0.0, 1.0)},
+
+   /* Max denormal */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x03FF), UNPACKED_1x1( 6.09756E-5, 0.0, 0.0, 1.0)},
+
+   /* Minimum positive denormal */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0001), UNPACKED_1x1( 5.96046E-8, 0.0, 0.0, 1.0)},
+
+   /* Min representable value */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfbff), UNPACKED_1x1(   -65504.0, 0.0, 0.0, 1.0)},
+
+   /* Max representable value */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7bff), UNPACKED_1x1(    65504.0, 0.0, 0.0, 1.0)},
+
+   /* NaNs */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c01), UNPACKED_1x1(        NAN, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc01), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7fff), UNPACKED_1x1(        NAN, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xffff), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
+
+   /* Inf */
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), UNPACKED_1x1(        INF, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), UNPACKED_1x1(       -INF, 0.0, 0.0, 1.0)},
+
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x8000), UNPACKED_1x1(  0.0, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0000), UNPACKED_1x1(  0.0, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x3c00), UNPACKED_1x1(  1.0, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xbc00), UNPACKED_1x1( -1.0, 0.0, 0.0, 1.0)},
