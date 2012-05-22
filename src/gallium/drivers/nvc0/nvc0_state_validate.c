@@ -463,6 +463,8 @@ nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
 
    if (!ctx_to->vertex)
       ctx_to->dirty &= ~(NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
+   if (!ctx_to->idxbuf.buffer)
+      ctx_to->dirty &= ~NVC0_NEW_IDXBUF;
 
    if (!ctx_to->vertprog)
       ctx_to->dirty &= ~NVC0_NEW_VERTPROG;
