@@ -99,7 +99,7 @@ nv30_prevalidate_vbufs(struct nv30_context *nv30)
 
    for (i = 0; i < nv30->num_vtxbufs; i++) {
       vb = &nv30->vtxbuf[i];
-      if (!vb->stride)
+      if (!vb->stride || !vb->buffer) /* NOTE: user_buffer not implemented */
          continue;
       buf = nv04_resource(vb->buffer);
 
