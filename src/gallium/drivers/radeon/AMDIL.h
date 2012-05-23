@@ -95,10 +95,6 @@ FunctionPass*
 FunctionPass*
   createAMDILPeepholeOpt(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 
-/// Pre regalloc passes.
-FunctionPass*
-  createAMDILMachinePeephole(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
-
 /// Pre emit passes.
 FunctionPass*
   createAMDILCFGPreparationPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);

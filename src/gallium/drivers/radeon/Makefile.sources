@@ -28,7 +28,6 @@ CPP_SOURCES := \
 	AMDILIntrinsicInfo.cpp		\
 	AMDILISelDAGToDAG.cpp		\
 	AMDILISelLowering.cpp		\
-	AMDILMachinePeephole.cpp	\
 	AMDILNIDevice.cpp		\
 	AMDILPeepholeOptimizer.cpp	\
 	AMDILRegisterInfo.cpp		\

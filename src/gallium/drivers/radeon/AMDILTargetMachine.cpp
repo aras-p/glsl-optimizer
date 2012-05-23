@@ -161,8 +161,6 @@ bool AMDILPassConfig::addPreRegAlloc()
   if (TM->getOptLevel() == CodeGenOpt::None) {
     llvm::RegisterScheduler::setDefault(&llvm::createSourceListDAGScheduler);
   }
-
-  PM->add(createAMDILMachinePeephole(*TM));
   return false;
 }
 
