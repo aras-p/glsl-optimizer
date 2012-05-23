@@ -215,8 +215,6 @@ def LUSHR        : TwoInOneOut<IL_OP_U64_SHR, (outs GPRI64:$dst),
 let mayLoad=0, mayStore=0 in {
 defm ABS : UnaryIntrinsicFloat<IL_OP_ABS, int_AMDIL_fabs>;
 defm PIREDUCE : UnaryIntrinsicFloat<IL_OP_PI_REDUCE, int_AMDIL_pireduce>;
-defm ROUND_NEAREST : UnaryIntrinsicFloat<IL_OP_ROUND_NEAR,
-          int_AMDIL_round_nearest>;
 defm ROUND_NEGINF : UnaryIntrinsicFloat<IL_OP_ROUND_NEG_INF,
           int_AMDIL_round_neginf>;
 defm ROUND_ZERO : UnaryIntrinsicFloat<IL_OP_ROUND_ZERO,

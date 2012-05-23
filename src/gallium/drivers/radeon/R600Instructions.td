@@ -373,9 +373,8 @@ def CEIL : R600_1OP <
 
 def RNDNE : R600_1OP <
   0x13, "RNDNE",
-  [(set R600_Reg32:$dst, (int_AMDIL_round_nearest R600_Reg32:$src))]> {
-  let AMDILOp = AMDILInst.ROUND_NEAREST_f32;
-}
+  [(set R600_Reg32:$dst, (frint R600_Reg32:$src))]
+>;
 
 def FLOOR : R600_1OP <
   0x14, "FLOOR",

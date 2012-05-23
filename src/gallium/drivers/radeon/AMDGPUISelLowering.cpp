@@ -30,6 +30,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   // Library functions.  These default to Expand, but we have instructions
   // for them.
   setOperationAction(ISD::FCEIL,  MVT::f32, Legal);
+  setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
 }
 
@@ -79,6 +80,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDGPU_umin:
       return DAG.getNode(AMDGPUISD::UMIN, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
+    case AMDGPUIntrinsic::AMDIL_round_nearest:
+      return DAG.getNode(ISD::FRINT, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDIL_round_posinf:
       return DAG.getNode(ISD::FCEIL, DL, VT, Op.getOperand(1));
   }
