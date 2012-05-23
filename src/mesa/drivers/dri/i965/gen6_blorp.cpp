@@ -961,6 +961,31 @@ gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
    ADVANCE_BATCH();
 }
 
+/* 3DSTATE_VIEWPORT_STATE_POINTERS */
+void
+gen6_blorp_emit_viewport_state(struct brw_context *brw,
+			       const brw_blorp_params *params)
+{
+   struct intel_context *intel = &brw->intel;
+   struct brw_cc_viewport *ccv;
+   uint32_t cc_vp_offset;
+
+   ccv = (struct brw_cc_viewport *)brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
+						   sizeof(*ccv), 32,
+						   &cc_vp_offset);
+
+   ccv->min_depth = 0.0;
+   ccv->max_depth = 1.0;
+
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS << 16 | (4 - 2) |
+	     GEN6_CC_VIEWPORT_MODIFY);
+   OUT_BATCH(0); /* clip VP */
+   OUT_BATCH(0); /* SF VP */
+   OUT_BATCH(cc_vp_offset);
+   ADVANCE_BATCH();
+}
+
 
 /* 3DPRIMITIVE */
 static void
@@ -1043,6 +1068,7 @@ gen6_blorp_exec(struct intel_context *intel,
    gen6_blorp_emit_wm_config(brw, params, prog_offset, prog_data);
    if (params->use_wm_prog)
       gen6_blorp_emit_binding_table_pointers(brw, params, wm_bind_bo_offset);
+   gen6_blorp_emit_viewport_state(brw, params);
 
    if (params->depth.mt)
       gen6_blorp_emit_depth_stencil_config(brw, params);
