@@ -441,12 +441,6 @@ def MACRO__shl_i64   : BinaryMacro<GPRI64, GPRI64, GPRI32, shl>;
 def MACRO__sra_i64   : BinaryMacro<GPRI64, GPRI64, GPRI32, sra>;
 }
 //===---------------------------------------------------------------------===//
-// Comparison Instructions
-//===---------------------------------------------------------------------===//
-let usesCustomInserter = 1 in {
-    defm CMP : Compare<"Pseudo comparison instr">;
-}
-//===---------------------------------------------------------------------===//
 // 32-bit floating point operations
 //===---------------------------------------------------------------------===//
 def FEQ         : TwoInOneOut<IL_OP_EQ, (outs GPRF32:$dst),

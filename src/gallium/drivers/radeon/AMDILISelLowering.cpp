@@ -414,216 +414,6 @@ CondCCodeToCC(ISD::CondCode CC, const MVT::SimpleValueType& type)
   };
 }
 
-  static unsigned int
-translateToOpcode(uint64_t CCCode, unsigned int regClass)
-{
-  switch (CCCode) {
-    case AMDILCC::IL_CC_D_EQ:
-    case AMDILCC::IL_CC_D_OEQ:
-      if (regClass == AMDIL::GPRV2F64RegClassID) {
-        return (unsigned int)AMDIL::DEQ_v2f64;
-      } else {
-        return (unsigned int)AMDIL::DEQ;
-      }
-    case AMDILCC::IL_CC_D_LE:
-    case AMDILCC::IL_CC_D_OLE:
-    case AMDILCC::IL_CC_D_ULE:
-    case AMDILCC::IL_CC_D_GE:
-    case AMDILCC::IL_CC_D_OGE:
-    case AMDILCC::IL_CC_D_UGE:
-      return (unsigned int)AMDIL::DGE;
-    case AMDILCC::IL_CC_D_LT:
-    case AMDILCC::IL_CC_D_OLT:
-    case AMDILCC::IL_CC_D_ULT:
-    case AMDILCC::IL_CC_D_GT:
-    case AMDILCC::IL_CC_D_OGT:
-    case AMDILCC::IL_CC_D_UGT:
-      return (unsigned int)AMDIL::DLT;
-    case AMDILCC::IL_CC_D_NE:
-    case AMDILCC::IL_CC_D_UNE:
-      return (unsigned int)AMDIL::DNE;
-    case AMDILCC::IL_CC_F_EQ:
-    case AMDILCC::IL_CC_F_OEQ:
-      return (unsigned int)AMDIL::FEQ;
-    case AMDILCC::IL_CC_F_LE:
-    case AMDILCC::IL_CC_F_ULE:
-    case AMDILCC::IL_CC_F_OLE:
-    case AMDILCC::IL_CC_F_GE:
-    case AMDILCC::IL_CC_F_UGE:
-    case AMDILCC::IL_CC_F_OGE:
-      return (unsigned int)AMDIL::FGE;
-    case AMDILCC::IL_CC_F_LT:
-    case AMDILCC::IL_CC_F_OLT:
-    case AMDILCC::IL_CC_F_ULT:
-    case AMDILCC::IL_CC_F_GT:
-    case AMDILCC::IL_CC_F_OGT:
-    case AMDILCC::IL_CC_F_UGT:
-      if (regClass == AMDIL::GPRV2F32RegClassID) {
-        return (unsigned int)AMDIL::FLT_v2f32;
-      } else if (regClass == AMDIL::GPRV4F32RegClassID) {
-        return (unsigned int)AMDIL::FLT_v4f32;
-      } else {
-        return (unsigned int)AMDIL::FLT;
-      }
-    case AMDILCC::IL_CC_F_NE:
-    case AMDILCC::IL_CC_F_UNE:
-      return (unsigned int)AMDIL::FNE;
-    case AMDILCC::IL_CC_I_EQ:
-    case AMDILCC::IL_CC_U_EQ:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::IEQ;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRV2I8RegClassID
-          || regClass == AMDIL::GPRV2I16RegClassID) {
-        return (unsigned int)AMDIL::IEQ_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRV4I8RegClassID
-          || regClass == AMDIL::GPRV4I16RegClassID) {
-        return (unsigned int)AMDIL::IEQ_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_L_EQ:
-    case AMDILCC::IL_CC_UL_EQ:
-      return (unsigned int)AMDIL::LEQ;
-    case AMDILCC::IL_CC_I_GE:
-    case AMDILCC::IL_CC_I_LE:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::IGE;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::IGE_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::IGE_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_I_LT:
-    case AMDILCC::IL_CC_I_GT:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ILT;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ILT_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ILT_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_L_GE:
-      return (unsigned int)AMDIL::LGE;
-    case AMDILCC::IL_CC_L_LE:
-      return (unsigned int)AMDIL::LLE;
-    case AMDILCC::IL_CC_L_LT:
-      return (unsigned int)AMDIL::LLT;
-    case AMDILCC::IL_CC_L_GT:
-      return (unsigned int)AMDIL::LGT;
-    case AMDILCC::IL_CC_I_NE:
-    case AMDILCC::IL_CC_U_NE:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::INE;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::INE_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::INE_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_U_GE:
-    case AMDILCC::IL_CC_U_LE:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGE;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGE_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGE_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_L_NE:
-    case AMDILCC::IL_CC_UL_NE:
-      return (unsigned int)AMDIL::LNE;
-    case AMDILCC::IL_CC_UL_GE:
-      return (unsigned int)AMDIL::ULGE;
-    case AMDILCC::IL_CC_UL_LE:
-      return (unsigned int)AMDIL::ULLE;
-    case AMDILCC::IL_CC_U_LT:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ULT;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ULT_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::ULT_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_U_GT:
-      if (regClass == AMDIL::GPRI32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGT;
-      } else if (regClass == AMDIL::GPRV2I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGT_v2i32;
-      } else if (regClass == AMDIL::GPRV4I32RegClassID
-          || regClass == AMDIL::GPRI8RegClassID
-          || regClass == AMDIL::GPRI16RegClassID) {
-        return (unsigned int)AMDIL::UGT_v4i32;
-      } else {
-        assert(!"Unknown reg class!");
-      }
-    case AMDILCC::IL_CC_UL_LT:
-      return (unsigned int)AMDIL::ULLT;
-    case AMDILCC::IL_CC_UL_GT:
-      return (unsigned int)AMDIL::ULGT;
-    case AMDILCC::IL_CC_F_UEQ:
-    case AMDILCC::IL_CC_D_UEQ:
-    case AMDILCC::IL_CC_F_ONE:
-    case AMDILCC::IL_CC_D_ONE:
-    case AMDILCC::IL_CC_F_O:
-    case AMDILCC::IL_CC_F_UO:
-    case AMDILCC::IL_CC_D_O:
-    case AMDILCC::IL_CC_D_UO:
-      // we don't care
-      return 0;
-
-  }
-  errs()<<"Opcode: "<<CCCode<<"\n";
-  assert(0 && "Unknown opcode retrieved");
-  return 0;
-}
-
 /// Helper function used by LowerFormalArguments
 static const TargetRegisterClass*
 getRegClassFromType(unsigned int type) {
@@ -810,322 +600,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
       op.ChangeToRegister(0, false);
       }*/
   return op;
-}
-
-void
-AMDILTargetLowering::generateCMPInstr(
-    MachineInstr *MI,
-    MachineBasicBlock *BB,
-    const TargetInstrInfo& TII)
-const
-{
-  MachineOperand DST = MI->getOperand(0);
-  MachineOperand CC = MI->getOperand(1);
-  MachineOperand LHS = MI->getOperand(2);
-  MachineOperand RHS = MI->getOperand(3);
-  int64_t ccCode = CC.getImm();
-  unsigned int simpleVT = MI->getDesc().OpInfo[0].RegClass;
-  unsigned int opCode = translateToOpcode(ccCode, simpleVT);
-  DebugLoc DL = MI->getDebugLoc();
-  MachineBasicBlock::iterator BBI = MI;
-  setPrivateData(BB, BBI, &DL, &TII);
-  if (!LHS.isReg()) {
-    LHS = convertToReg(LHS);
-  }
-  if (!RHS.isReg()) {
-    RHS = convertToReg(RHS);
-  }
-  switch (ccCode) {
-    case AMDILCC::IL_CC_I_EQ:
-    case AMDILCC::IL_CC_I_NE:
-    case AMDILCC::IL_CC_I_GE:
-    case AMDILCC::IL_CC_I_LT:
-      {
-        uint32_t lhsreg = addExtensionInstructions(
-            LHS.getReg(), true, simpleVT);
-        uint32_t rhsreg = addExtensionInstructions(
-            RHS.getReg(), true, simpleVT);
-        generateMachineInst(opCode, DST.getReg(), lhsreg, rhsreg);
-      }
-      break;
-    case AMDILCC::IL_CC_U_EQ:
-    case AMDILCC::IL_CC_U_NE:
-    case AMDILCC::IL_CC_U_GE:
-    case AMDILCC::IL_CC_U_LT:
-    case AMDILCC::IL_CC_D_EQ:
-    case AMDILCC::IL_CC_F_EQ:
-    case AMDILCC::IL_CC_F_OEQ:
-    case AMDILCC::IL_CC_D_OEQ:
-    case AMDILCC::IL_CC_D_NE:
-    case AMDILCC::IL_CC_F_NE:
-    case AMDILCC::IL_CC_F_UNE:
-    case AMDILCC::IL_CC_D_UNE:
-    case AMDILCC::IL_CC_D_GE:
-    case AMDILCC::IL_CC_F_GE:
-    case AMDILCC::IL_CC_D_OGE:
-    case AMDILCC::IL_CC_F_OGE:
-    case AMDILCC::IL_CC_D_LT:
-    case AMDILCC::IL_CC_F_LT:
-    case AMDILCC::IL_CC_F_OLT:
-    case AMDILCC::IL_CC_D_OLT:
-      generateMachineInst(opCode, DST.getReg(),
-          LHS.getReg(), RHS.getReg());
-      break;
-    case AMDILCC::IL_CC_I_GT:
-    case AMDILCC::IL_CC_I_LE:
-      {
-        uint32_t lhsreg = addExtensionInstructions(
-            LHS.getReg(), true, simpleVT);
-        uint32_t rhsreg = addExtensionInstructions(
-            RHS.getReg(), true, simpleVT);
-        generateMachineInst(opCode, DST.getReg(), rhsreg, lhsreg);
-      }
-      break;
-    case AMDILCC::IL_CC_U_GT:
-    case AMDILCC::IL_CC_U_LE:
-    case AMDILCC::IL_CC_F_GT:
-    case AMDILCC::IL_CC_D_GT:
-    case AMDILCC::IL_CC_F_OGT:
-    case AMDILCC::IL_CC_D_OGT:
-    case AMDILCC::IL_CC_F_LE:
-    case AMDILCC::IL_CC_D_LE:
-    case AMDILCC::IL_CC_D_OLE:
-    case AMDILCC::IL_CC_F_OLE:
-      generateMachineInst(opCode, DST.getReg(),
-          RHS.getReg(), LHS.getReg());
-      break;
-    case AMDILCC::IL_CC_F_UGT:
-    case AMDILCC::IL_CC_F_ULE:
-      {
-        uint32_t VReg[4] = {
-          genVReg(simpleVT), genVReg(simpleVT),
-          genVReg(simpleVT), genVReg(simpleVT)
-        };
-        generateMachineInst(opCode, VReg[0],
-            RHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[1],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[2],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_F_ULT:
-    case AMDILCC::IL_CC_F_UGE:
-      {
-        uint32_t VReg[4] = {
-          genVReg(simpleVT), genVReg(simpleVT),
-          genVReg(simpleVT), genVReg(simpleVT)
-        };
-        generateMachineInst(opCode, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[1],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[2],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_D_UGT:
-    case AMDILCC::IL_CC_D_ULE:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[4] = {
-          genVReg(regID), genVReg(regID),
-          genVReg(regID), genVReg(regID)
-        };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(opCode, VReg[0],
-            RHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[1],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[2],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_D_UGE:
-    case AMDILCC::IL_CC_D_ULT:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[4] = {
-          genVReg(regID), genVReg(regID),
-          genVReg(regID), genVReg(regID)
-        };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(opCode, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[1],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[2],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_F_UEQ:
-      {
-        uint32_t VReg[4] = {
-          genVReg(simpleVT), genVReg(simpleVT),
-          genVReg(simpleVT), genVReg(simpleVT)
-        };
-        generateMachineInst(AMDIL::FEQ, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[2],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_F_ONE:
-      {
-        uint32_t VReg[4] = {
-          genVReg(simpleVT), genVReg(simpleVT),
-          genVReg(simpleVT), genVReg(simpleVT)
-        };
-        generateMachineInst(AMDIL::FNE, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FEQ, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::FEQ, VReg[2],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-      }
-      break;
-    case AMDILCC::IL_CC_D_UEQ:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[4] = {
-          genVReg(regID), genVReg(regID),
-          genVReg(regID), genVReg(regID)
-        };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(AMDIL::DEQ, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[2],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-
-      }
-      break;
-    case AMDILCC::IL_CC_D_ONE:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[4] = {
-          genVReg(regID), genVReg(regID),
-          genVReg(regID), genVReg(regID)
-        };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(AMDIL::DNE, VReg[0],
-            LHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DEQ, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::DEQ, VReg[2],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            VReg[3], VReg[0], VReg[1]);
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            DST.getReg(), VReg[2], VReg[3]);
-
-      }
-      break;
-    case AMDILCC::IL_CC_F_O:
-      {
-        uint32_t VReg[2] = { genVReg(simpleVT), genVReg(simpleVT) };
-        generateMachineInst(AMDIL::FEQ, VReg[0],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FEQ, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            DST.getReg(), VReg[0], VReg[1]);
-      }
-      break;
-    case AMDILCC::IL_CC_D_O:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[2] = { genVReg(regID), genVReg(regID) };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(AMDIL::DEQ, VReg[0],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DEQ, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_AND_f32,
-            DST.getReg(), VReg[0], VReg[1]);
-      }
-      break;
-    case AMDILCC::IL_CC_F_UO:
-      {
-        uint32_t VReg[2] = { genVReg(simpleVT), genVReg(simpleVT) };
-        generateMachineInst(AMDIL::FNE, VReg[0],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::FNE, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[0], VReg[1]);
-      }
-      break;
-    case AMDILCC::IL_CC_D_UO:
-      {
-        uint32_t regID = AMDIL::GPRF64RegClassID;
-        uint32_t VReg[2] = { genVReg(regID), genVReg(regID) };
-        // The result of a double comparison is a 32bit result
-        generateMachineInst(AMDIL::DNE, VReg[0],
-            RHS.getReg(), RHS.getReg());
-        generateMachineInst(AMDIL::DNE, VReg[1],
-            LHS.getReg(), LHS.getReg());
-        generateMachineInst(AMDIL::BINARY_OR_f32,
-            DST.getReg(), VReg[0], VReg[1]);
-      }
-      break;
-    case AMDILCC::IL_CC_L_LE:
-    case AMDILCC::IL_CC_L_GE:
-    case AMDILCC::IL_CC_L_EQ:
-    case AMDILCC::IL_CC_L_NE:
-    case AMDILCC::IL_CC_L_LT:
-    case AMDILCC::IL_CC_L_GT:
-    case AMDILCC::IL_CC_UL_LE:
-    case AMDILCC::IL_CC_UL_GE:
-    case AMDILCC::IL_CC_UL_EQ:
-    case AMDILCC::IL_CC_UL_NE:
-    case AMDILCC::IL_CC_UL_LT:
-    case AMDILCC::IL_CC_UL_GT:
-      {
-        const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-            &this->getTargetMachine())->getSubtargetImpl();
-        if (stm->device()->usesHardware(AMDILDeviceInfo::LongOps)) {
-          generateMachineInst(opCode, DST.getReg(), LHS.getReg(), RHS.getReg());
-        } else {
-          generateLongRelational(MI, opCode);
-        }
-      }
-      break;
-    case AMDILCC::COND_ERROR:
-      assert(0 && "Invalid CC code");
-      break;
-  };
 }
 
 //===----------------------------------------------------------------------===//
@@ -2075,22 +1549,6 @@ AMDILTargetLowering::LowerCallResult(
 //===----------------------------------------------------------------------===//
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
-
-MachineBasicBlock *
-AMDILTargetLowering::EmitInstrWithCustomInserter(
-    MachineInstr *MI, MachineBasicBlock *BB) const
-{
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
-  switch (MI->getOpcode()) {
-    ExpandCaseToAllTypes(AMDIL::CMP);
-    generateCMPInstr(MI, BB, TII);
-    MI->eraseFromParent();
-    break;
-    default:
-    break;
-  }
-  return BB;
-}
 
 // Recursively assign SDNodeOrdering to any unordered nodes
 // This is necessary to maintain source ordering of instructions
@@ -4210,12 +3668,13 @@ AMDILTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
       LHS.getValueType().getSimpleVT().SimpleTy);
   assert((AMDILCC != AMDILCC::COND_ERROR) && "Invalid SetCC!");
   Cond = DAG.getNode(
-      AMDILISD::CMP,
-      DL,
+      ISD::SELECT_CC,
+      Op.getDebugLoc(),
       LHS.getValueType(),
-      DAG.getConstant(AMDILCC, MVT::i32),
-      LHS,
-      RHS);
+      LHS, RHS,
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      CC);
   Cond = getConversionNode(DAG, Cond, Op, true);
   Cond = DAG.getNode(
       ISD::AND,
@@ -4603,22 +4062,20 @@ SDValue
 AMDILTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Chain = Op.getOperand(0);
-  CondCodeSDNode *CCNode = cast<CondCodeSDNode>(Op.getOperand(1));
+  SDValue CC = Op.getOperand(1);
   SDValue LHS   = Op.getOperand(2);
   SDValue RHS   = Op.getOperand(3);
   SDValue JumpT  = Op.getOperand(4);
   SDValue CmpValue;
-  ISD::CondCode CC = CCNode->get();
   SDValue Result;
-  unsigned int cmpOpcode = CondCCodeToCC(
-      CC,
-      LHS.getValueType().getSimpleVT().SimpleTy);
   CmpValue = DAG.getNode(
-      AMDILISD::CMP,
+      ISD::SELECT_CC,
       Op.getDebugLoc(),
       LHS.getValueType(),
-      DAG.getConstant(cmpOpcode, MVT::i32),
-      LHS, RHS);
+      LHS, RHS,
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      CC);
   Result = DAG.getNode(
       AMDILISD::BRANCH_COND,
       CmpValue.getDebugLoc(),
@@ -4714,95 +4171,6 @@ const
       dl,
       MVT::Other, &RetOps[0], RetOps.size());
   return Flag;
-}
-void
-AMDILTargetLowering::generateLongRelational(MachineInstr *MI,
-    unsigned int opCode) const
-{
-  MachineOperand DST = MI->getOperand(0);
-  MachineOperand LHS = MI->getOperand(2);
-  MachineOperand RHS = MI->getOperand(3);
-  unsigned int opi32Code = 0, si32Code = 0;
-  unsigned int simpleVT = MI->getDesc().OpInfo[0].RegClass;
-  uint32_t REGS[12];
-  // All the relationals can be generated with with 6 temp registers
-  for (int x = 0; x < 12; ++x) {
-    REGS[x] = genVReg(simpleVT);
-  }
-  // Pull out the high and low components of each 64 bit register
-  generateMachineInst(AMDIL::LHI, REGS[0], LHS.getReg());
-  generateMachineInst(AMDIL::LLO, REGS[1], LHS.getReg());
-  generateMachineInst(AMDIL::LHI, REGS[2], RHS.getReg());
-  generateMachineInst(AMDIL::LLO, REGS[3], RHS.getReg());
-  // Determine the correct opcode that we should use
-  switch(opCode) {
-    default:
-      assert(!"comparison case not handled!");
-      break;
-    case AMDIL::LEQ:
-      si32Code = opi32Code = AMDIL::IEQ;
-      break;
-    case AMDIL::LNE:
-      si32Code = opi32Code = AMDIL::INE;
-      break;
-    case AMDIL::LLE:
-    case AMDIL::ULLE:
-    case AMDIL::LGE:
-    case AMDIL::ULGE:
-      if (opCode == AMDIL::LGE || opCode == AMDIL::ULGE) {
-        std::swap(REGS[0], REGS[2]);
-      } else {
-        std::swap(REGS[1], REGS[3]);
-      }
-      if (opCode == AMDIL::LLE || opCode == AMDIL::LGE) {
-        opi32Code = AMDIL::ILT;
-      } else {
-        opi32Code = AMDIL::ULT;
-      }
-      si32Code = AMDIL::UGE;
-      break;
-    case AMDIL::LGT:
-    case AMDIL::ULGT:
-      std::swap(REGS[0], REGS[2]);
-      std::swap(REGS[1], REGS[3]);
-    case AMDIL::LLT:
-    case AMDIL::ULLT:
-      if (opCode == AMDIL::LGT || opCode == AMDIL::LLT) {
-        opi32Code = AMDIL::ILT;
-      } else {
-        opi32Code = AMDIL::ULT;
-      }
-      si32Code = AMDIL::ULT;
-      break;
-  };
-  // Do the initial opcode on the high and low components.
-  // This leaves the following:
-  // REGS[4] = L_HI OP R_HI
-  // REGS[5] = L_LO OP R_LO
-  generateMachineInst(opi32Code, REGS[4], REGS[0], REGS[2]);
-  generateMachineInst(si32Code, REGS[5], REGS[1], REGS[3]);
-  switch(opi32Code) {
-    case AMDIL::IEQ:
-    case AMDIL::INE:
-      {
-        // combine the results with an and or or depending on if
-        // we are eq or ne
-        uint32_t combineOp = (opi32Code == AMDIL::IEQ)
-          ? AMDIL::BINARY_AND_i32 : AMDIL::BINARY_OR_i32;
-        generateMachineInst(combineOp, REGS[11], REGS[4], REGS[5]);
-      }
-      break;
-    default:
-      // this finishes codegen for the following pattern
-      // REGS[4] || (REGS[5] && (L_HI == R_HI))
-      generateMachineInst(AMDIL::IEQ, REGS[9], REGS[0], REGS[2]);
-      generateMachineInst(AMDIL::BINARY_AND_i32, REGS[10], REGS[5],
-          REGS[9]);
-      generateMachineInst(AMDIL::BINARY_OR_i32, REGS[11], REGS[4],
-          REGS[10]);
-      break;
-  }
-  generateMachineInst(AMDIL::LCREATE, DST.getReg(), REGS[11], REGS[11]);
 }
 
 unsigned int
@@ -4965,14 +4333,18 @@ AMDILTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const
   SDValue r1 = RHS;
 
   // ilt r10, r0, 0
-  SDValue r10 = DAG.getNode(AMDILISD::CMP, DL, OVT,
-      DAG.getConstant(CondCCodeToCC(ISD::SETLT, MVT::i32), MVT::i32),
-      r0, DAG.getConstant(0, OVT));
+  SDValue r10 = DAG.getSelectCC(DL,
+      r0, DAG.getConstant(0, OVT),
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      ISD::SETLT);
 
   // ilt r11, r1, 0
-  SDValue r11 = DAG.getNode(AMDILISD::CMP, DL, OVT, 
-      DAG.getConstant(CondCCodeToCC(ISD::SETLT, MVT::i32), MVT::i32),
-      r1, DAG.getConstant(0, OVT));
+  SDValue r11 = DAG.getSelectCC(DL,
+      r1, DAG.getConstant(0, OVT),
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      ISD::SETLT);
 
   // iadd r0, r0, r10
   r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);

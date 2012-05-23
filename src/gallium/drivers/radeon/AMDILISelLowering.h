@@ -239,11 +239,6 @@ namespace llvm
             unsigned Depth = 0
             ) const;
 
-      virtual MachineBasicBlock*
-        EmitInstrWithCustomInserter(
-            MachineInstr *MI,
-            MachineBasicBlock *MBB) const;
-
       virtual bool 
         getTgtMemIntrinsic(IntrinsicInfo &Info,
                                   const CallInst &I, unsigned Intrinsic) const;
