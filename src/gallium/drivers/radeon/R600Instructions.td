@@ -368,9 +368,8 @@ def TRUNC : R600_1OP <
 
 def CEIL : R600_1OP <
   0x12, "CEIL",
-  [(set R600_Reg32:$dst, (int_AMDIL_round_posinf R600_Reg32:$src))]> {
-  let AMDILOp = AMDILInst.ROUND_POSINF_f32;
-}
+  [(set R600_Reg32:$dst, (fceil R600_Reg32:$src))]
+>;
 
 def RNDNE : R600_1OP <
   0x13, "RNDNE",

@@ -219,8 +219,6 @@ defm ROUND_NEAREST : UnaryIntrinsicFloat<IL_OP_ROUND_NEAR,
           int_AMDIL_round_nearest>;
 defm ROUND_NEGINF : UnaryIntrinsicFloat<IL_OP_ROUND_NEG_INF,
           int_AMDIL_round_neginf>;
-defm ROUND_POSINF : UnaryIntrinsicFloat<IL_OP_ROUND_POS_INF,
-          int_AMDIL_round_posinf>;
 defm ROUND_ZERO : UnaryIntrinsicFloat<IL_OP_ROUND_ZERO,
           int_AMDIL_round_zero>;
 defm ACOS : UnaryIntrinsicFloatScalar<IL_OP_ACOS, int_AMDIL_acos>;
