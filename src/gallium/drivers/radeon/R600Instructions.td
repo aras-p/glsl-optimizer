@@ -446,7 +446,7 @@ def MIN_UINT : R600_2OP <
 def SETE_INT : R600_2OP <
   0x3A, "SETE_INT",
   [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETEQ))]
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETEQ))]
 >;
 
 //  let AMDILOp = AMDILInst.IEQ;
@@ -454,13 +454,13 @@ def SETE_INT : R600_2OP <
 def SETGT_INT : R600_2OP <
   0x3B, "SGT_INT",
   [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETGT))]
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGT))]
 >;
 
 def SETGE_INT : R600_2OP <
 	0x3C, "SETGE_INT",
 	[(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETGE))]
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGE))]
 >;
 //  let AMDILOp = AMDILInst.IGE;
 
@@ -468,7 +468,7 @@ def SETGE_INT : R600_2OP <
 def SETNE_INT : R600_2OP <
   0x3D, "SETNE_INT",
   [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETNE))]
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETNE))]
 >;
 //let AMDILOp = AMDILInst.INE;
 
@@ -476,7 +476,7 @@ def SETNE_INT : R600_2OP <
 def SETGT_UINT : R600_2OP <
   0x3E, "SETGT_UINT",
   [(set (i32 R600_Reg32:$dst),
-   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETUGT))]
+   (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGT))]
 >;
 
 //  let AMDILOp = AMDILInst.UGT;
@@ -484,7 +484,7 @@ def SETGT_UINT : R600_2OP <
 def SETGE_UINT : R600_2OP <
   0x3F, "SETGE_UINT",
   [(set (i32 R600_Reg32:$dst),
-    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETUGE))]
+    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGE))]
 >;
 //  let AMDILOp = AMDILInst.UGE;
 
@@ -1134,25 +1134,25 @@ def : Pat <
 
 // SETGT_INT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETLT),
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETLT),
   (SETGT_INT R600_Reg32:$src1, R600_Reg32:$src0)
 >;
 
 // SETGE_INT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETLE),
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETLE),
   (SETGE_INT R600_Reg32:$src1, R600_Reg32:$src0)
 >;
 
 // SETGT_UINT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETULT),
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETULT),
   (SETGT_UINT R600_Reg32:$src1, R600_Reg32:$src0)
 >;
 
 // SETGE_UINT reverse args
 def : Pat <
-  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, 1, 0, SETULE),
+  (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETULE),
   (SETGE_UINT R600_Reg32:$src0, R600_Reg32:$src1)
 >;
 

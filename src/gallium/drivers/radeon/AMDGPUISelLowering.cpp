@@ -119,10 +119,6 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
   ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
   SDValue Temp;
 
- //cmovlog = src0 != 0.0f ? src1 : src2
- //cmovlog = src0 == 0.0f ? src2 : src1
- //cnde = src0 == 0.0f ? src1 : src2
-
   // LHS and RHS are guaranteed to be the same value type
   EVT CompareVT = LHS.getValueType();
 
@@ -151,16 +147,16 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
     RHS = DAG.getNode(ConversionOp, DL, VT, RHS);
   }
 
-  // If true is 1 and false is 0 or vice-versa we can handle this with a native
-  // instruction (SET* instructions).
-  if ((isOne(True) && isZero(False))) {
+  // If True is a hardware TRUE value and False is a hardware FALSE value or
+  // vice-versa we can handle this with a native instruction (SET* instructions).
+  if ((isHWTrueValue(True) && isHWFalseValue(False))) {
     return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
   }
 
-  // XXX If true is 0 and 1 is false, we can handle this with a native
-  // instruction, but we need to swap true and false and change the
-  // conditional.
-  if (isOne(False) && isZero(True)) {
+  // XXX If True is a hardware TRUE value and False is a hardware FALSE value,
+  // we can handle this with a native instruction, but we need to swap true
+  // and false and change the conditional.
+  if (isHWTrueValue(False) && isHWFalseValue(True)) {
   }
 
   // XXX Check if we can lower this to a SELECT or if it is supported by a native
@@ -196,14 +192,14 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
 
   // If we make it this for it means we have no native instructions to handle
   // this SELECT_CC, so we must lower it.
-  SDValue One, Zero;
+  SDValue HWTrue, HWFalse;
 
   if (VT == MVT::f32) {
-    One = DAG.getConstantFP(1.0f, VT);
-    Zero = DAG.getConstantFP(0.0f, VT);
+    HWTrue = DAG.getConstantFP(1.0f, VT);
+    HWFalse = DAG.getConstantFP(0.0f, VT);
   } else if (VT == MVT::i32) {
-    One = DAG.getConstant(1, VT);
-    Zero = DAG.getConstant(0, VT);
+    HWTrue = DAG.getConstant(-1, VT);
+    HWFalse = DAG.getConstant(0, VT);
   }
   else {
     assert(!"Unhandled value type in LowerSELECT_CC");
@@ -211,7 +207,7 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
 
   // Lower this unsupported SELECT_CC into a combination of two supported
   // SELECT_CC operations.
-  SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, One, Zero, CC);
+  SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, HWTrue, HWFalse, CC);
 
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
 }
@@ -220,18 +216,18 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
 // Helper functions
 //===----------------------------------------------------------------------===//
 
-bool AMDGPUTargetLowering::isOne(SDValue Op) const
+bool AMDGPUTargetLowering::isHWTrueValue(SDValue Op) const
 {
   if (ConstantFPSDNode * CFP = dyn_cast<ConstantFPSDNode>(Op)) {
     return CFP->isExactlyValue(1.0);
   }
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-    return C->isOne();
+    return C->isAllOnesValue();
   }
   return false;
 }
 
-bool AMDGPUTargetLowering::isZero(SDValue Op) const
+bool AMDGPUTargetLowering::isHWFalseValue(SDValue Op) const
 {
   if (ConstantFPSDNode * CFP = dyn_cast<ConstantFPSDNode>(Op)) {
     return CFP->getValueAPF().isZero();

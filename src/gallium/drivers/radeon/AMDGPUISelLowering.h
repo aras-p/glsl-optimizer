@@ -37,8 +37,8 @@ protected:
                  MachineRegisterInfo & MRI, const TargetInstrInfo * TII,
 		 unsigned reg) const;
 
-  bool isOne(SDValue Op) const;
-  bool isZero(SDValue Op) const;
+  bool isHWTrueValue(SDValue Op) const;
+  bool isHWFalseValue(SDValue Op) const;
 
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
