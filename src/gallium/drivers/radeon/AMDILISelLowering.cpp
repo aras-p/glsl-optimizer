@@ -701,7 +701,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
     setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Custom);
     setOperationAction(ISD::FP_ROUND, VT, Expand);
-    setOperationAction(ISD::OR, VT, Custom);
     setOperationAction(ISD::SUBE, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADD, VT, Custom);
@@ -1599,10 +1598,7 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(EXTRACT_SUBVECTOR);
       LOWER(SCALAR_TO_VECTOR);
       LOWER(CONCAT_VECTORS);
-      LOWER(AND);
-      LOWER(OR);
       LOWER(SELECT);
-      LOWER(SELECT_CC);
       LOWER(SETCC);
       LOWER(SIGN_EXTEND_INREG);
       LOWER(BITCAST);
@@ -3565,29 +3561,6 @@ AMDILTargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
   return Res;
 }
 SDValue
-AMDILTargetLowering::LowerAND(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue andOp;
-  andOp = DAG.getNode(
-      AMDILISD::AND,
-      Op.getDebugLoc(),
-      Op.getValueType(),
-      Op.getOperand(0),
-      Op.getOperand(1));
-  return andOp;
-}
-SDValue
-AMDILTargetLowering::LowerOR(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue orOp;
-  orOp = DAG.getNode(AMDILISD::OR,
-      Op.getDebugLoc(),
-      Op.getValueType(),
-      Op.getOperand(0),
-      Op.getOperand(1));
-  return orOp;
-}
-SDValue
 AMDILTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Cond = Op.getOperand(0);
@@ -3598,60 +3571,6 @@ AMDILTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
   Cond = DAG.getNode(AMDILISD::CMOVLOG,
       DL,
       Op.getValueType(), Cond, LHS, RHS);
-  return Cond;
-}
-SDValue
-AMDILTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue Cond;
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue TRUE = Op.getOperand(2);
-  SDValue FALSE = Op.getOperand(3);
-  SDValue CC = Op.getOperand(4);
-  DebugLoc DL = Op.getDebugLoc();
-  bool skipCMov = false;
-  bool genINot = false;
-  EVT OVT = Op.getValueType();
-
-  // Check for possible elimination of cmov
-  if (TRUE.getValueType().getSimpleVT().SimpleTy == MVT::i32) {
-    const ConstantSDNode *trueConst
-      = dyn_cast<ConstantSDNode>( TRUE.getNode() );
-    const ConstantSDNode *falseConst
-      = dyn_cast<ConstantSDNode>( FALSE.getNode() );
-    if (trueConst && falseConst) {
-      // both possible result values are constants
-      if (trueConst->isAllOnesValue()
-          && falseConst->isNullValue()) { // and convenient constants
-        skipCMov = true;
-      }
-      else if (trueConst->isNullValue()
-          && falseConst->isAllOnesValue()) { // less convenient
-        skipCMov = true;
-        genINot = true;
-      }
-    }
-  }
-  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  unsigned int AMDILCC = CondCCodeToCC(
-      SetCCOpcode,
-      LHS.getValueType().getSimpleVT().SimpleTy);
-  assert((AMDILCC != AMDILCC::COND_ERROR) && "Invalid SetCC!");
-  Cond = DAG.getNode(
-      AMDILISD::CMP,
-      DL,
-      LHS.getValueType(),
-      DAG.getConstant(AMDILCC, MVT::i32),
-      LHS,
-      RHS);
-  Cond = getConversionNode(DAG, Cond, Op, true);
-  if (genINot) {
-    Cond = DAG.getNode(AMDILISD::NOT, DL, OVT, Cond);
-  }
-  if (!skipCMov) {
-    Cond = DAG.getNode(AMDILISD::CMOVLOG, DL, OVT, Cond, TRUE, FALSE);
-  }
   return Cond;
 }
 SDValue

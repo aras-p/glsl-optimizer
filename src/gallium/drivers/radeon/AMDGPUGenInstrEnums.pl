@@ -36,7 +36,6 @@ my @F32_MULTICLASSES = qw {
 };
 
 my @I32_MULTICLASSES = qw {
-  BinaryOpMCInt
   BinaryOpMCi32
   BinaryOpMCi32Const
 };
@@ -54,7 +53,7 @@ my $FILE_TYPE = $ARGV[0];
 
 open AMDIL, '<', 'AMDILInstructions.td';
 
-my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'BINARY_OR_i32', 'BINARY_NOT_i32');
+my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ');
 
 while (<AMDIL>) {
   if ($_ =~ /defm\s+([A-Z_]+)\s+:\s+([A-Za-z0-9]+)</) {

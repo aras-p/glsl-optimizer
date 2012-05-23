@@ -13,9 +13,6 @@
 //===--------------------------------------------------------------------===//
 // Custom patterns for conversion operations
 //===--------------------------------------------------------------------===////
-// Pattern to remap integer or to IL_or
-def : Pat<(i32 (or GPRI32:$src0, GPRI32:$src1)),
-          (i32 (BINARY_OR_i32 GPRI32:$src0, GPRI32:$src1))>;
 // float ==> long patterns
 // unsigned: f32 -> i64
 def FTOUL : Pat<(i64 (fp_to_uint GPRF32:$src)),

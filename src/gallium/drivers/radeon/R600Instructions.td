@@ -390,26 +390,23 @@ def KILLGT : R600_2OP <
 
 def AND_INT : R600_2OP <
   0x30, "AND_INT",
-  []> {
-  let AMDILOp = AMDILInst.AND_i32;
-}
+  [(set R600_Reg32:$dst, (and R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def OR_INT : R600_2OP <
   0x31, "OR_INT",
-  []>{
-  let AMDILOp = AMDILInst.BINARY_OR_i32;
-}
+  [(set R600_Reg32:$dst, (or R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def XOR_INT : R600_2OP <
   0x32, "XOR_INT",
-  []
+  [(set R600_Reg32:$dst, (xor R600_Reg32:$src0, R600_Reg32:$src1))]
 >;
 
 def NOT_INT : R600_1OP <
   0x33, "NOT_INT",
-  []>{
-  let AMDILOp = AMDILInst.BINARY_NOT_i32;
-}
+  [(set R600_Reg32:$dst, (not R600_Reg32:$src))]
+>;
 
 def ADD_INT : R600_2OP <
   0x34, "ADD_INT",

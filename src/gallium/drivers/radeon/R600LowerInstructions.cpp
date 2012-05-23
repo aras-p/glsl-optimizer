@@ -98,22 +98,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                 .addOperand(MI.getOperand(1));
         break;
 
-      case AMDIL::BINARY_OR_f32:
-        {
-        unsigned tmp0 = MRI->createVirtualRegister(&AMDIL::GPRI32RegClass);
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::FTOI), tmp0)
-                .addOperand(MI.getOperand(1));
-        unsigned tmp1 = MRI->createVirtualRegister(&AMDIL::GPRI32RegClass);
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::FTOI), tmp1)
-                .addOperand(MI.getOperand(2));
-        unsigned tmp2 = MRI->createVirtualRegister(&AMDIL::GPRI32RegClass);
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::BINARY_OR_i32), tmp2)
-                .addReg(tmp0)
-                .addReg(tmp1);
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::ITOF), MI.getOperand(0).getReg())
-                .addReg(tmp2);
-        break;
-        }
       case AMDIL::CLAMP_f32:
         {
           MachineOperand lowOp = MI.getOperand(2);

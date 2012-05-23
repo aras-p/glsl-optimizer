@@ -14,11 +14,6 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   defm MOVE       : UnaryOpMC<IL_OP_MOV, IL_mov>;
   defm PHIMOVE    : UnaryOpMC<IL_OP_MOV, IL_phimov>;
 }
-defm BINARY_NOT : UnaryOpMC<IL_OP_I_NOT, IL_not>;
-defm BINARY_OR  : BinaryOpMC<IL_OP_I_OR, IL_or>;
-defm BINARY_AND : BinaryOpMC<IL_OP_AND, IL_and>;
-defm BINARY_XOR : BinaryOpMC<IL_OP_I_XOR, IL_xor>;
-defm AND        : BinaryOpMCInt<IL_OP_AND, and>;
 defm CMOV       : BinaryOpMC<IL_OP_CMOV, IL_cmov>;
 defm DIV_INF    : BinaryOpMC<IL_OP_DIV_INF, IL_div_inf>;
 defm SMAX       : BinaryOpMCInt<IL_OP_I_MAX, IL_smax>;
@@ -63,7 +58,6 @@ defm SHR        : BinaryOpMCi32Const<IL_OP_I_SHR, sra>;
 defm SHLVEC     : BinaryOpMCi32<IL_OP_I_SHL, shl>;
 defm SHRVEC     : BinaryOpMCi32<IL_OP_I_SHR, sra>;
 defm ADD        : BinaryOpMCi32<IL_OP_I_ADD, add>;
-defm CUSTOM_XOR : BinaryOpMCInt<IL_OP_I_XOR, xor>;
 // get rid of the addri via the tablegen instead of custom lowered instruction
 defm CUSTOM_ADD : BinaryOpMCi32<IL_OP_I_ADD, IL_add>;
 defm EADD   : BinaryOpMCi32<IL_OP_I_ADD, adde>;
