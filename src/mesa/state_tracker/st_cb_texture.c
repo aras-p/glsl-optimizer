@@ -400,6 +400,8 @@ guess_and_alloc_texture(struct st_context *st,
                                  ptLayers,
                                  bindings);
 
+   stObj->lastLevel = lastLevel;
+
    DBG("%s returning %d\n", __FUNCTION__, (stObj->pt != NULL));
 
    return stObj->pt != NULL;
