@@ -218,8 +218,6 @@ defm TAN : UnaryIntrinsicFloatScalar<IL_OP_TAN, int_AMDIL_tan>;
 defm SIN : UnaryIntrinsicFloatScalar<IL_OP_SIN, int_AMDIL_sin>;
 defm COS : UnaryIntrinsicFloatScalar<IL_OP_COS, int_AMDIL_cos>;
 defm SQRT : UnaryIntrinsicFloatScalar<IL_OP_SQRT, int_AMDIL_sqrt>;
-defm EXP : UnaryIntrinsicFloatScalar<IL_OP_EXP, int_AMDIL_exp>;
-defm EXPVEC : UnaryIntrinsicFloat<IL_OP_EXP_VEC, int_AMDIL_exp_vec>;
 defm SQRTVEC : UnaryIntrinsicFloat<IL_OP_SQRT_VEC, int_AMDIL_sqrt_vec>;
 defm COSVEC : UnaryIntrinsicFloat<IL_OP_COS_VEC, int_AMDIL_cos_vec>;
 defm SINVEC : UnaryIntrinsicFloat<IL_OP_SIN_VEC, int_AMDIL_sin_vec>;

@@ -31,10 +31,6 @@
 use warnings;
 use strict;
 
-my @F32_MULTICLASSES = qw {
-  UnaryIntrinsicFloatScalar
-};
-
 my @I32_MULTICLASSES = qw {
   BinaryOpMCi32Const
 };
@@ -52,14 +48,11 @@ my $FILE_TYPE = $ARGV[0];
 
 open AMDIL, '<', 'AMDILInstructions.td';
 
-my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'SMULHI_i32', 'SMUL_i32');
+my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'FTOI', 'ITOF', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'SMULHI_i32', 'SMUL_i32', 'LOG_f32', 'RSQ_f32', 'SIN_f32', 'COS_f32');
 
 while (<AMDIL>) {
   if ($_ =~ /defm\s+([A-Z_]+)\s+:\s+([A-Za-z0-9]+)</) {
-    if (grep {$_ eq $2} @F32_MULTICLASSES) {
-      push @INST_ENUMS, "$1\_f32";
-
-    } elsif (grep {$_ eq $2} @I32_MULTICLASSES) {
+    if (grep {$_ eq $2} @I32_MULTICLASSES) {
       push @INST_ENUMS, "$1\_i32";
     }
   } elsif ($_ =~ /def\s+([A-Z_]+)(_[fi]32)/) {

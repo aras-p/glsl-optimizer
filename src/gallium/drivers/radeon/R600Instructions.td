@@ -622,9 +622,8 @@ class CUBE_Common <bits<32> inst> : InstR600 <
 
 class EXP_IEEE_Common <bits<32> inst> : R600_1OP <
   inst, "EXP_IEEE",
-  []> {
-  let AMDILOp = AMDILInst.EXP_f32;
-}
+  [(set R600_Reg32:$dst, (fexp2 R600_Reg32:$src))]
+>;
 
 class FLT_TO_INT_Common <bits<32> inst> : R600_1OP <
   inst, "FLT_TO_INT", []> {

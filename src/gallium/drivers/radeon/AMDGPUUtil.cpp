@@ -55,7 +55,6 @@ bool AMDGPU::isTransOp(unsigned opcode)
     case AMDIL::MUL_LIT_eg:
     case AMDIL::SHR_i32:
     case AMDIL::SIN_f32:
-    case AMDIL::EXP_f32:
     case AMDIL::EXP_IEEE_r600:
     case AMDIL::EXP_IEEE_eg:
     case AMDIL::LOG_CLAMPED_r600:
