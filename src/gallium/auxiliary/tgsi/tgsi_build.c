@@ -109,6 +109,7 @@ tgsi_default_declaration( void )
    declaration.Semantic = 0;
    declaration.Invariant = 0;
    declaration.Local = 0;
+   declaration.Padding = 0;
 
    return declaration;
 }
@@ -199,6 +200,7 @@ tgsi_default_declaration_interp( void )
    di.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    di.Centroid = 0;
    di.CylindricalWrap = 0;
+   di.Padding = 0;
 
    return di;
 }
@@ -215,6 +217,7 @@ tgsi_build_declaration_interp(unsigned interpolate,
    di.Interpolate = interpolate;
    di.Centroid = centroid;
    di.CylindricalWrap = cylindrical_wrap;
+   di.Padding = 0;
 
    declaration_grow(declaration, header);
 
@@ -262,6 +265,7 @@ tgsi_default_declaration_resource(void)
    dr.Resource = TGSI_TEXTURE_BUFFER;
    dr.Raw = 0;
    dr.Writable = 0;
+   dr.Padding = 0;
 
    return dr;
 }
