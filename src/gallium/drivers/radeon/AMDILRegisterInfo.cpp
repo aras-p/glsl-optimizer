@@ -128,7 +128,7 @@ AMDILRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         MachineOperand::CreateImm(Offset));
     MI.getParent()->insert(II, nMI);
     nMI = MF.CreateMachineInstr(
-        TII.get(AMDIL::ADD_i32), MI.getDebugLoc());
+        TII.get(AMDIL::ADD_INT), MI.getDebugLoc());
     nMI->addOperand(MachineOperand::CreateReg(AMDIL::DFP, true));
     nMI->addOperand(MachineOperand::CreateReg(AMDIL::DFP, false));
     nMI->addOperand(MachineOperand::CreateReg(AMDIL::FP, false));

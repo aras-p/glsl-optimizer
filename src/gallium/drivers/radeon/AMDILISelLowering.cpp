@@ -703,7 +703,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::FP_ROUND, VT, Expand);
     setOperationAction(ISD::SUBE, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
-    setOperationAction(ISD::ADD, VT, Custom);
     setOperationAction(ISD::ADDE, VT, Expand);
     setOperationAction(ISD::ADDC, VT, Expand);
     setOperationAction(ISD::SETCC, VT, Custom);
@@ -1584,7 +1583,6 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(FP_TO_UINT);
       LOWER(SINT_TO_FP);
       LOWER(UINT_TO_FP);
-      LOWER(ADD);
       LOWER(MUL);
       LOWER(SUB);
       LOWER(FDIV);
@@ -2002,174 +2000,7 @@ const
   return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG,
       InVals);
 }
-static void checkMADType(
-    SDValue Op, const AMDILSubtarget *STM, bool& is24bitMAD, bool& is32bitMAD)
-{
-  bool globalLoadStore = false;
-  is24bitMAD = false;
-  is32bitMAD = false;
-  return;
-  assert(Op.getOpcode() == ISD::ADD && "The opcode must be a add in order for "
-      "this to work correctly!");
-  if (Op.getNode()->use_empty()) {
-    return;
-  }
-  for (SDNode::use_iterator nBegin = Op.getNode()->use_begin(),
-      nEnd = Op.getNode()->use_end(); nBegin != nEnd; ++nBegin) {
-    SDNode *ptr = *nBegin;
-    const LSBaseSDNode *lsNode = dyn_cast<LSBaseSDNode>(ptr);
-    // If we are not a LSBaseSDNode then we don't do this
-    // optimization.
-    // If we are a LSBaseSDNode, but the op is not the offset
-    // or base pointer, then we don't do this optimization
-    // (i.e. we are the value being stored)
-    if (!lsNode ||
-        (lsNode->writeMem() && lsNode->getOperand(1) == Op)) {
-      return;
-    }
-    const PointerType *PT =
-      dyn_cast<PointerType>(lsNode->getSrcValue()->getType());
-    unsigned as = PT->getAddressSpace();
-    switch(as) {
-      default:
-        globalLoadStore = true;
-      case AMDILAS::PRIVATE_ADDRESS:
-        if (!STM->device()->usesHardware(AMDILDeviceInfo::PrivateMem)) {
-          globalLoadStore = true;
-        }
-        break;
-      case AMDILAS::CONSTANT_ADDRESS:
-        if (!STM->device()->usesHardware(AMDILDeviceInfo::ConstantMem)) {
-          globalLoadStore = true;
-        }
-        break;
-      case AMDILAS::LOCAL_ADDRESS:
-        if (!STM->device()->usesHardware(AMDILDeviceInfo::LocalMem)) {
-          globalLoadStore = true;
-        }
-        break;
-      case AMDILAS::REGION_ADDRESS:
-        if (!STM->device()->usesHardware(AMDILDeviceInfo::RegionMem)) {
-          globalLoadStore = true;
-        }
-        break;
-    }
-  }
-  if (globalLoadStore) {
-    is32bitMAD = true;
-  } else {
-    is24bitMAD = true;
-  }
-}
 
-SDValue
-AMDILTargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  DebugLoc DL = Op.getDebugLoc();
-  EVT OVT = Op.getValueType();
-  SDValue DST;
-  const AMDILSubtarget *stm = &this->getTargetMachine()
-    .getSubtarget<AMDILSubtarget>();
-  bool isVec = OVT.isVector();
-  if (OVT.getScalarType() == MVT::i64) {
-    MVT INTTY = MVT::i32;
-    if (OVT == MVT::v2i64) {
-      INTTY = MVT::v2i32;
-    }
-    if (stm->device()->usesHardware(AMDILDeviceInfo::LongOps)
-        && INTTY == MVT::i32) {
-      DST = DAG.getNode(AMDILISD::ADD,
-          DL,
-          OVT,
-          LHS, RHS);
-    } else {
-      SDValue LHSLO, LHSHI, RHSLO, RHSHI, INTLO, INTHI;
-      // TODO: need to turn this into a bitcast of i64/v2i64 to v2i32/v4i32
-      LHSLO = DAG.getNode((isVec) ? AMDILISD::LCOMPLO2 : AMDILISD::LCOMPLO, DL, INTTY, LHS);
-      RHSLO = DAG.getNode((isVec) ? AMDILISD::LCOMPLO2 : AMDILISD::LCOMPLO, DL, INTTY, RHS);
-      LHSHI = DAG.getNode((isVec) ? AMDILISD::LCOMPHI2 : AMDILISD::LCOMPHI, DL, INTTY, LHS);
-      RHSHI = DAG.getNode((isVec) ? AMDILISD::LCOMPHI2 : AMDILISD::LCOMPHI, DL, INTTY, RHS);
-      INTLO = DAG.getNode(ISD::ADD, DL, INTTY, LHSLO, RHSLO);
-      INTHI = DAG.getNode(ISD::ADD, DL, INTTY, LHSHI, RHSHI);
-      SDValue cmp;
-      cmp = DAG.getNode(AMDILISD::CMP, DL, INTTY,
-          DAG.getConstant(CondCCodeToCC(ISD::SETULT, MVT::i32), MVT::i32),
-          INTLO, RHSLO);
-      cmp = DAG.getNode(AMDILISD::INEGATE, DL, INTTY, cmp);
-      INTHI = DAG.getNode(ISD::ADD, DL, INTTY, INTHI, cmp);
-      DST = DAG.getNode((isVec) ? AMDILISD::LCREATE2 : AMDILISD::LCREATE, DL, OVT,
-          INTLO, INTHI);
-    }
-  } else {
-    if (LHS.getOpcode() == ISD::FrameIndex ||
-        RHS.getOpcode() == ISD::FrameIndex) {
-      DST = DAG.getNode(AMDILISD::ADDADDR,
-          DL,
-          OVT,
-          LHS, RHS);
-    } else {
-      if (stm->device()->usesHardware(AMDILDeviceInfo::LocalMem)
-          && LHS.getNumOperands()
-          && RHS.getNumOperands()) {
-        bool is24bitMAD = false;
-        bool is32bitMAD = false;
-        const ConstantSDNode *LHSConstOpCode =
-          dyn_cast<ConstantSDNode>(LHS.getOperand(LHS.getNumOperands()-1));
-        const ConstantSDNode *RHSConstOpCode =
-          dyn_cast<ConstantSDNode>(RHS.getOperand(RHS.getNumOperands()-1));
-        if ((LHS.getOpcode() == ISD::SHL && LHSConstOpCode)
-            || (RHS.getOpcode() == ISD::SHL && RHSConstOpCode)
-            || LHS.getOpcode() == ISD::MUL
-            || RHS.getOpcode() == ISD::MUL) {
-          SDValue Op1, Op2, Op3;
-          // FIXME: Fix this so that it works for unsigned 24bit ops.
-          if (LHS.getOpcode() == ISD::MUL) {
-            Op1 = LHS.getOperand(0);
-            Op2 = LHS.getOperand(1);
-            Op3 = RHS;
-          } else if (RHS.getOpcode() == ISD::MUL) {
-            Op1 = RHS.getOperand(0);
-            Op2 = RHS.getOperand(1);
-            Op3 = LHS;
-          } else if (LHS.getOpcode() == ISD::SHL && LHSConstOpCode) {
-            Op1 = LHS.getOperand(0);
-            Op2 = DAG.getConstant(
-                1 << LHSConstOpCode->getZExtValue(), MVT::i32);
-            Op3 = RHS;
-          } else if (RHS.getOpcode() == ISD::SHL && RHSConstOpCode) {
-            Op1 = RHS.getOperand(0);
-            Op2 = DAG.getConstant(
-                1 << RHSConstOpCode->getZExtValue(), MVT::i32);
-            Op3 = LHS;
-          }
-          checkMADType(Op, stm, is24bitMAD, is32bitMAD);
-          // We can possibly do a MAD transform!
-          if (is24bitMAD && stm->device()->usesHardware(AMDILDeviceInfo::Signed24BitOps)) {
-            uint32_t opcode = AMDGPUIntrinsic::AMDIL_mad24_i32;
-            SDVTList Tys = DAG.getVTList(OVT/*, MVT::Other*/);
-            DST = DAG.getNode(ISD::INTRINSIC_W_CHAIN,
-                DL, Tys, DAG.getEntryNode(), DAG.getConstant(opcode, MVT::i32),
-                Op1, Op2, Op3);
-          } else if(is32bitMAD) {
-            SDVTList Tys = DAG.getVTList(OVT/*, MVT::Other*/);
-            DST = DAG.getNode(ISD::INTRINSIC_W_CHAIN,
-                DL, Tys, DAG.getEntryNode(),
-                DAG.getConstant(
-                  AMDGPUIntrinsic::AMDIL_mad_i32, MVT::i32),
-                Op1, Op2, Op3);
-          }
-        }
-      }
-      DST = DAG.getNode(AMDILISD::ADD,
-          DL,
-          OVT,
-          LHS, RHS);
-    }
-  }
-  return DST;
-}
 SDValue
 AMDILTargetLowering::genCLZuN(SDValue Op, SelectionDAG &DAG,
     uint32_t bits) const

@@ -57,9 +57,7 @@ defm SHL        : BinaryOpMCi32Const<IL_OP_I_SHL, shl>;
 defm SHR        : BinaryOpMCi32Const<IL_OP_I_SHR, sra>;
 defm SHLVEC     : BinaryOpMCi32<IL_OP_I_SHL, shl>;
 defm SHRVEC     : BinaryOpMCi32<IL_OP_I_SHR, sra>;
-defm ADD        : BinaryOpMCi32<IL_OP_I_ADD, add>;
 // get rid of the addri via the tablegen instead of custom lowered instruction
-defm CUSTOM_ADD : BinaryOpMCi32<IL_OP_I_ADD, IL_add>;
 defm EADD   : BinaryOpMCi32<IL_OP_I_ADD, adde>;
 def INTTOANY_i32: OneInOneOut<IL_OP_MOV, (outs GPRI32:$dst), (ins GPRI32:$src0),
     !strconcat(IL_OP_MOV.Text, " $dst, $src0"), 

@@ -410,9 +410,8 @@ def NOT_INT : R600_1OP <
 
 def ADD_INT : R600_2OP <
   0x34, "ADD_INT",
-  []>{
-  let AMDILOp = AMDILInst.ADD_i32;
-}
+  [(set R600_Reg32:$dst, (add R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 def SUB_INT : R600_2OP <
 	0x35, "SUB_INT",
