@@ -15,6 +15,9 @@
 // AMDGPU DAG Nodes
 //
 
+// out = a - floor(a)
+def AMDGPUfract : SDNode<"AMDGPUISD::FRACT", SDTFPUnaryOp>;
+
 // out = max(a, b) a and b are floats
 def AMDGPUfmax : SDNode<"AMDGPUISD::FMAX", SDTFPBinOp,
   [SDNPCommutative, SDNPAssociative]

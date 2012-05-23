@@ -51,6 +51,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return LowerIntrinsicIABS(Op, DAG);
     case AMDGPUIntrinsic::AMDGPU_lrp:
       return LowerIntrinsicLRP(Op, DAG);
+    case AMDGPUIntrinsic::AMDIL_fraction:
+      return DAG.getNode(AMDGPUISD::FRACT, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDIL_mad:
       return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
                               Op.getOperand(2), Op.getOperand(3));
@@ -252,6 +254,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   switch (Opcode) {
   default: return AMDILTargetLowering::getTargetNodeName(Opcode);
 
+  NODE_NAME_CASE(FRACT)
   NODE_NAME_CASE(FMAX)
   NODE_NAME_CASE(SMAX)
   NODE_NAME_CASE(UMAX)

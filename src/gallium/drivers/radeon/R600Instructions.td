@@ -358,9 +358,8 @@ def SNE : R600_2OP <
 
 def FRACT : R600_1OP <
   0x10, "FRACT",
-  []> {
-  let AMDILOp = AMDILInst.FRAC_f32;
-}
+  [(set R600_Reg32:$dst, (AMDGPUfract R600_Reg32:$src))]
+>;
 
 def TRUNC : R600_1OP <
   0x11, "TRUNC",
