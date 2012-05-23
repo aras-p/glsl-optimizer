@@ -24,6 +24,8 @@ SHARED_GLAPI_CFLAGS = -DGLX_SHARED_GLAPI
 SHARED_GLAPI_LIBS = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
+SUBDIRS=tests
+
 GLAPI_LIB = ../mapi/glapi/libglapi.a
 
 if HAVE_XF86VIDMODE

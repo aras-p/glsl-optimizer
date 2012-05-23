@@ -2166,6 +2166,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/wayland/wayland-drm/Makefile
 		src/glsl/tests/Makefile
 		src/glx/Makefile
+		src/glx/tests/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/gtest/Makefile
 		src/mesa/libdricore/Makefile
@@ -2177,9 +2178,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/nouveau/Makefile
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
-		src/mesa/drivers/dri/swrast/Makefile
-		tests/Makefile
-		tests/glx/Makefile])
+		src/mesa/drivers/dri/swrast/Makefile])
 
 dnl Replace the configs/current symlink
 AC_CONFIG_COMMANDS([configs],[

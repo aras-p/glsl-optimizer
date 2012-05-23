@@ -11,8 +11,8 @@ check_PROGRAMS = glx_unittest
 
 glx_unittest_SOURCES =			\
 	clientinfo_unittest.cpp		\
-        create_context_unittest.cpp	\
-        fake_glx_screen.cpp
+	create_context_unittest.cpp	\
+	fake_glx_screen.cpp
 
 glx_unittest_LDADD = \
 	$(top_builddir)/src/glx/libglx.la \
