@@ -124,7 +124,7 @@ SConscript([
 ])
 
 if not env['embedded']:
-    if env['platform'] not in ('cygwin', 'darwin', 'haiku', 'sunos'):
+    if env['platform'] not in ('cygwin', 'darwin', 'freebsd', 'haiku', 'sunos'):
         SConscript([
             'targets/egl-static/SConscript'
         ])
