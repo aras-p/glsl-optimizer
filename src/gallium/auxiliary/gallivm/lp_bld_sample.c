@@ -256,9 +256,8 @@ lp_build_rho(struct lp_build_sample_context *bld,
          rho_t = LLVMBuildExtractElement(builder, rho_vec, index1, "");
 
          rho = lp_build_max(float_bld, rho_s, rho_t);
-
          if (dims >= 3) {
-            rho_r = LLVMBuildExtractElement(builder, rho_vec, index0, "");
+            rho_r = LLVMBuildExtractElement(builder, rho_vec, index2, "");
             rho = lp_build_max(float_bld, rho, rho_r);
          }
       }
