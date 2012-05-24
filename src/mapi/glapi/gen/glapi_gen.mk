@@ -17,7 +17,7 @@ glapi_gen_mapi_deps := \
 # $(2): name of the printer
 define glapi_gen_mapi
 @mkdir -p $(dir $@)
-$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_mapi_script) \
+$(AM_V_GEN)$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_mapi_script) \
 	--mode lib --printer $(2) $(1) > $@
 endef
 
@@ -28,7 +28,7 @@ glapi_gen_dispatch_deps := $(glapi_gen_common_deps)
 # $(2): empty, es1, or es2 for entry point filtering
 define glapi_gen_dispatch
 @mkdir -p $(dir $@)
-$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_dispatch_script) \
+$(AM_V_GEN)$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_dispatch_script) \
 	-f $(1) -m remap_table $(if $(2),-c $(2),) > $@
 endef
 
@@ -39,6 +39,6 @@ glapi_gen_remap_deps := $(glapi_gen_common_deps)
 # $(2): empty, es1, or es2 for entry point filtering
 define glapi_gen_remap
 @mkdir -p $(dir $@)
-$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_remap_script) \
+$(AM_V_GEN)$(PYTHON2) $(PYTHON_FLAGS) $(glapi_gen_remap_script) \
 	-f $(1) $(if $(2),-c $(2),) > $@
 endef
