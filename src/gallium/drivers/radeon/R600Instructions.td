@@ -626,14 +626,14 @@ class EXP_IEEE_Common <bits<32> inst> : R600_1OP <
 >;
 
 class FLT_TO_INT_Common <bits<32> inst> : R600_1OP <
-  inst, "FLT_TO_INT", []> {
-  let AMDILOp = AMDILInst.FTOI;
-}
+  inst, "FLT_TO_INT",
+  [(set R600_Reg32:$dst, (fp_to_sint R600_Reg32:$src))]
+>;
 
 class INT_TO_FLT_Common <bits<32> inst> : R600_1OP <
-  inst, "INT_TO_FLT", []> {
-  let AMDILOp = AMDILInst.ITOF;
-}
+  inst, "INT_TO_FLT",
+  [(set R600_Reg32:$dst, (sint_to_fp R600_Reg32:$src))]
+>;
 
 class LOG_CLAMPED_Common <bits<32> inst> : R600_1OP <
   inst, "LOG_CLAMPED",

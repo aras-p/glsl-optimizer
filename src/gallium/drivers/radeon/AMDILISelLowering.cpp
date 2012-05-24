@@ -713,9 +713,7 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     // TODO: Implement custom UREM/SREM routines
     setOperationAction(ISD::UREM, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::SINT_TO_FP, VT, Custom);
     setOperationAction(ISD::UINT_TO_FP, VT, Custom);
-    setOperationAction(ISD::FP_TO_SINT, VT, Custom);
     setOperationAction(ISD::FP_TO_UINT, VT, Custom);
     setOperationAction(ISDBITCAST, VT, Custom);
     setOperationAction(ISD::GlobalAddress, VT, Custom);
@@ -809,9 +807,7 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::Constant          , MVT::i64  , Legal);
     setOperationAction(ISD::UDIV, MVT::v2i64, Expand);
     setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
-    setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Expand);
     setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Expand);
-    setOperationAction(ISD::FP_TO_SINT, MVT::v2i64, Expand);
     setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Expand);
     setOperationAction(ISD::TRUNCATE, MVT::v2i64, Expand);
     setOperationAction(ISD::SIGN_EXTEND, MVT::v2i64, Expand);
@@ -830,9 +826,7 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::FDIV, MVT::v2f64, Expand);
     // We want to expand vector conversions into their scalar
     // counterparts.
-    setOperationAction(ISD::SINT_TO_FP, MVT::v2f64, Expand);
     setOperationAction(ISD::UINT_TO_FP, MVT::v2f64, Expand);
-    setOperationAction(ISD::FP_TO_SINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FP_TO_UINT, MVT::v2f64, Expand);
     setOperationAction(ISD::TRUNCATE, MVT::v2f64, Expand);
     setOperationAction(ISD::SIGN_EXTEND, MVT::v2f64, Expand);
@@ -1579,9 +1573,7 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(JumpTable);
       LOWER(ConstantPool);
       LOWER(ExternalSymbol);
-      LOWER(FP_TO_SINT);
       LOWER(FP_TO_UINT);
-      LOWER(SINT_TO_FP);
       LOWER(UINT_TO_FP);
       LOWER(MUL);
       LOWER(SUB);
@@ -2505,62 +2497,6 @@ AMDILTargetLowering::genf64toi32(SDValue RHS, SelectionDAG &DAG,
   }
   return res;
 }
-SDValue
-AMDILTargetLowering::LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue RHS = Op.getOperand(0);
-  EVT RHSVT = RHS.getValueType();
-  MVT RST = RHSVT.getScalarType().getSimpleVT();
-  EVT LHSVT = Op.getValueType();
-  MVT LST = LHSVT.getScalarType().getSimpleVT();
-  DebugLoc DL = Op.getDebugLoc();
-  SDValue DST;
-  const AMDILTargetMachine*
-    amdtm = reinterpret_cast<const AMDILTargetMachine*>
-    (&this->getTargetMachine());
-  const AMDILSubtarget*
-    stm = static_cast<const AMDILSubtarget*>(
-        amdtm->getSubtargetImpl());
-  if (RST == MVT::f64 && RHSVT.isVector()
-      && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
-    // We dont support vector 64bit floating point convertions.
-    for (unsigned x = 0, y = RHSVT.getVectorNumElements(); x < y; ++x) {
-      SDValue op = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
-          DL, RST, RHS, DAG.getTargetConstant(x, MVT::i32));
-      op = DAG.getNode(ISD::FP_TO_SINT, DL, LST, op);
-      if (!x) {
-        DST = DAG.getNode(AMDILISD::VBUILD, DL, LHSVT, op);
-      } else {
-        DST = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, LHSVT,
-            DST, op, DAG.getTargetConstant(x, MVT::i32));
-      }
-    }
-  } else {
-    if (RST == MVT::f64
-        && LST == MVT::i32) {
-      if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
-        DST = SDValue(Op.getNode(), 0);
-      } else {
-        DST = genf64toi32(RHS, DAG, true);
-      }
-    } else if (RST == MVT::f64
-        && LST == MVT::i64) {
-      DST = genf64toi64(RHS, DAG, true);
-    } else if (RST == MVT::f64
-        && (LST == MVT::i8 || LST == MVT::i16)) {
-      if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
-        DST = DAG.getNode(ISD::TRUNCATE, DL, LHSVT, SDValue(Op.getNode(), 0));
-      } else {
-        SDValue ToInt = genf64toi32(RHS, DAG, true);
-        DST = DAG.getNode(ISD::TRUNCATE, DL, LHSVT, ToInt);
-      }
-
-    } else {
-      DST = SDValue(Op.getNode(), 0);
-    }
-  }
-  return DST;
-}
 
 SDValue
 AMDILTargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const
@@ -2854,104 +2790,6 @@ AMDILTargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
   return DST;
 }
 
-SDValue
-AMDILTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue RHS = Op.getOperand(0);
-  EVT RHSVT = RHS.getValueType();
-  MVT RST = RHSVT.getScalarType().getSimpleVT();
-  EVT INTVT;
-  EVT LONGVT;
-  SDValue DST;
-  bool isVec = RHSVT.isVector();
-  DebugLoc DL = Op.getDebugLoc();
-  EVT LHSVT = Op.getValueType();
-  MVT LST = LHSVT.getScalarType().getSimpleVT();
-  const AMDILTargetMachine*
-    amdtm = reinterpret_cast<const AMDILTargetMachine*>
-    (&this->getTargetMachine());
-  const AMDILSubtarget*
-    stm = static_cast<const AMDILSubtarget*>(
-        amdtm->getSubtargetImpl());
-  if (LST == MVT::f64 && LHSVT.isVector()
-      && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
-    // We dont support vector 64bit floating point convertions.
-    for (unsigned x = 0, y = LHSVT.getVectorNumElements(); x < y; ++x) {
-      SDValue op = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
-          DL, RST, RHS, DAG.getTargetConstant(x, MVT::i32));
-      op = DAG.getNode(ISD::UINT_TO_FP, DL, LST, op);
-      if (!x) {
-        DST = DAG.getNode(AMDILISD::VBUILD, DL, LHSVT, op);
-      } else {
-        DST = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, LHSVT, DST,
-            op, DAG.getTargetConstant(x, MVT::i32));
-      }
-
-    }
-  } else {
-
-    if (isVec) {
-      LONGVT = EVT(MVT::getVectorVT(MVT::i64,
-            RHSVT.getVectorNumElements()));
-      INTVT = EVT(MVT::getVectorVT(MVT::i32,
-            RHSVT.getVectorNumElements()));
-    } else {
-      LONGVT = EVT(MVT::i64);
-      INTVT = EVT(MVT::i32);
-    }
-    MVT RST = RHSVT.getScalarType().getSimpleVT();
-    if ((RST == MVT::i32 || RST == MVT::i64)
-        && LST == MVT::f64) {
-      if (RST == MVT::i32) {
-        if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
-          DST = SDValue(Op.getNode(), 0);
-          return DST;
-        }
-      }
-      SDValue c31 = DAG.getConstant( 31, INTVT );
-      SDValue cSbit = DAG.getConstant( 0x80000000, INTVT );
-
-      SDValue S;      // Sign, as 0 or -1
-      SDValue Sbit;   // Sign bit, as one bit, MSB only.
-      if (RST == MVT::i32) {
-        Sbit = DAG.getNode( ISD::AND, DL, INTVT, RHS, cSbit );
-        S = DAG.getNode(ISD::SRA, DL, RHSVT, RHS, c31 );
-      } else { // 64-bit case... SRA of 64-bit values is slow
-        SDValue hi = DAG.getNode( (isVec) ? AMDILISD::LCOMPHI2 : AMDILISD::LCOMPHI, DL, INTVT, RHS );
-        Sbit = DAG.getNode( ISD::AND, DL, INTVT, hi, cSbit );
-        SDValue temp = DAG.getNode( ISD::SRA, DL, INTVT, hi, c31 );
-        S = DAG.getNode( (isVec) ? AMDILISD::LCREATE2 : AMDILISD::LCREATE, DL, RHSVT, temp, temp );
-      }
-
-      // get abs() of input value, given sign as S (0 or -1)
-      // SpI = RHS + S
-      SDValue SpI = DAG.getNode(ISD::ADD, DL, RHSVT, RHS, S);
-      // SpIxS = SpI ^ S
-      SDValue SpIxS = DAG.getNode(ISD::XOR, DL, RHSVT, SpI, S);
-
-      // Convert unsigned value to double precision
-      SDValue R;
-      if (RST == MVT::i32) {
-        // r = cast_u32_to_f64(SpIxS)
-        R = genu32tof64(SpIxS, LHSVT, DAG);
-      } else {
-        // r = cast_u64_to_f64(SpIxS)
-        R = genu64tof64(SpIxS, LHSVT, DAG);
-      }
-
-      // drop in the sign bit
-      SDValue t = DAG.getNode( AMDILISD::BITCONV, DL, LONGVT, R );
-      SDValue thi = DAG.getNode( (isVec) ? AMDILISD::LCOMPHI2 : AMDILISD::LCOMPHI, DL, INTVT, t );
-      SDValue tlo = DAG.getNode( (isVec) ? AMDILISD::LCOMPLO2 : AMDILISD::LCOMPLO, DL, INTVT, t );
-      thi = DAG.getNode( ISD::OR, DL, INTVT, thi, Sbit );
-      t = DAG.getNode( (isVec) ? AMDILISD::LCREATE2 : AMDILISD::LCREATE, DL, LONGVT, tlo, thi );
-      DST = DAG.getNode( AMDILISD::BITCONV, DL, LHSVT, t );
-    } else {
-      DST = SDValue(Op.getNode(), 0);
-    }
-  }
-  return DST;
-}
 SDValue
 AMDILTargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) const
 {

@@ -17,15 +17,9 @@
 // unsigned: f32 -> i64
 def FTOUL : Pat<(i64 (fp_to_uint GPRF32:$src)),
     (LCREATE (FTOU GPRF32:$src), (LOADCONST_i32 0))>;
-// signed: f32 -> i64
-def FTOL : Pat<(i64 (fp_to_sint GPRF32:$src)),
-    (LCREATE (FTOI GPRF32:$src), (LOADCONST_i32 0))>;
 // unsigned: i64 -> f32
 def ULTOF : Pat<(f32 (uint_to_fp GPRI64:$src)),
     (UTOF (LLO GPRI64:$src))>;
-// signed: i64 -> f32
-def LTOF : Pat<(f32 (sint_to_fp GPRI64:$src)),
-    (ITOF (LLO GPRI64:$src))>;
 
 // LLVM isn't lowering this correctly, so writing a pattern that
 // matches it isntead.

@@ -664,14 +664,6 @@ def ULLT        : TwoInOneOut<IL_OP_U64_LT, (outs GPRI64:$dst),
 def FTOD        : UnaryOp<IL_OP_F_2_D,         fextend,     GPRF64, GPRF32>;
 // f64 ==> f32
 def DTOF        : UnaryOp<IL_OP_D_2_F,         IL_d2f,     GPRF32, GPRF64>;
-// f32 ==> i32 signed
-def FTOI        : UnaryOp<IL_OP_FTOI,          fp_to_sint, GPRI32, GPRF32>;
-def FTOI_v2i32  : UnaryOp<IL_OP_FTOI,          fp_to_sint, GPRV2I32, GPRV2F32>;
-def FTOI_v4i32  : UnaryOp<IL_OP_FTOI,          fp_to_sint, GPRV4I32, GPRV4F32>;
-// i32 ==> f32 signed
-def ITOF        : UnaryOp<IL_OP_ITOF,          sint_to_fp, GPRF32, GPRI32>;
-def ITOF_v2f32  : UnaryOp<IL_OP_ITOF,          sint_to_fp, GPRV2F32, GPRV2I32>;
-def ITOF_v4f32  : UnaryOp<IL_OP_ITOF,          sint_to_fp, GPRV4F32, GPRV4I32>;
 // f32 ==> i32 unsigned
 def FTOU        : UnaryOp<IL_OP_FTOU,          fp_to_uint, GPRI32, GPRF32>;
 def FTOU_v2i32  : UnaryOp<IL_OP_FTOU,          fp_to_uint, GPRV2I32, GPRV2F32>;

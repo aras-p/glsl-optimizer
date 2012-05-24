@@ -48,8 +48,6 @@ bool AMDGPU::isTransOp(unsigned opcode)
     case AMDIL::COS_r600:
     case AMDIL::COS_eg:
     case AMDIL::RSQ_f32:
-    case AMDIL::FTOI:
-    case AMDIL::ITOF:
     case AMDIL::MULLIT:
     case AMDIL::MUL_LIT_r600:
     case AMDIL::MUL_LIT_eg:
