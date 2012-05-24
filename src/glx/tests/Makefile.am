@@ -12,6 +12,7 @@ check_PROGRAMS = glx-test
 glx_test_SOURCES =			\
 	clientinfo_unittest.cpp		\
 	create_context_unittest.cpp	\
+	enum_sizes.cpp			\
 	fake_glx_screen.cpp
 
 glx_test_LDADD = \
