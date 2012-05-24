@@ -39,6 +39,7 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
 
   if (TII->get(MI->getOpcode()).TSFlags & SIInstrFlags::NEED_WAIT) {
     AppendS_WAITCNT(MI, *BB, llvm::next(I));
+    return BB;
   }
 
   switch (MI->getOpcode()) {
