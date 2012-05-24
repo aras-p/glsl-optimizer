@@ -166,8 +166,8 @@ install: default $(DRICORE_INSTALL_TARGET)
 	            else \
 	              $(MAKE) install-osmesa || exit 1 ; \
 	            fi ;; \
-	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
-	    *)      $(MAKE) install-libgl || exit 1 ;; \
+	    dri)    $(MAKE) install-libgl-pc install-dri || exit 1 ;; \
+	    *)      $(MAKE) install-libgl-pc install-libgl || exit 1 ;; \
 	  esac ; \
 	done
 
@@ -203,7 +203,11 @@ install-headers:
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
 		$(DESTDIR)$(INSTALL_INC_DIR)/GL
 
-install-libgl: default gl.pc install-headers
+install-libgl: default
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
+	$(DESTDIR)$(INSTALL_LIB_DIR)
+
+install-libgl-pc: gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
