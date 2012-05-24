@@ -86,77 +86,106 @@ static void *
 nvc0_blend_state_create(struct pipe_context *pipe,
                         const struct pipe_blend_state *cso)
 {
-    struct nvc0_blend_stateobj *so = CALLOC_STRUCT(nvc0_blend_stateobj);
-    int i;
-    uint32_t ms;
+   struct nvc0_blend_stateobj *so = CALLOC_STRUCT(nvc0_blend_stateobj);
+   int i;
+   int r; /* reference */
+   uint32_t ms;
+   uint8_t blend_en = 0;
+   boolean indep_masks = FALSE;
+   boolean indep_funcs = FALSE;
 
-    so->pipe = *cso;
+   so->pipe = *cso;
 
-    SB_IMMED_3D(so, BLEND_INDEPENDENT, cso->independent_blend_enable);
+   /* check which states actually have differing values */
+   if (cso->independent_blend_enable) {
+      for (r = 0; r < 8 && !cso->rt[r].blend_enable; ++r);
+      blend_en |= 1 << r;
+      for (i = r + 1; i < 8; ++i) {
+         if (!cso->rt[i].blend_enable)
+            continue;
+         blend_en |= 1 << i;
+         if (cso->rt[i].rgb_func != cso->rt[r].rgb_func ||
+             cso->rt[i].rgb_src_factor != cso->rt[r].rgb_src_factor ||
+             cso->rt[i].rgb_dst_factor != cso->rt[r].rgb_dst_factor ||
+             cso->rt[i].alpha_func != cso->rt[r].alpha_func ||
+             cso->rt[i].alpha_src_factor != cso->rt[r].alpha_src_factor ||
+             cso->rt[i].alpha_dst_factor != cso->rt[r].alpha_dst_factor) {
+            indep_funcs = TRUE;
+            break;
+         }
+      }
+      for (; i < 8; ++i)
+         blend_en |= (cso->rt[i].blend_enable ? 1 : 0) << i;
 
-    if (!cso->logicop_enable)
-       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
+      for (i = 1; i < 8; ++i) {
+         if (cso->rt[i].colormask != cso->rt[0].colormask) {
+            indep_masks = TRUE;
+            break;
+         }
+      }
+   } else {
+      r = 0;
+      if (cso->rt[0].blend_enable)
+         blend_en = 0xff;
+   }
 
-    if (cso->logicop_enable) {
-       SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
-       SB_DATA    (so, 1);
-       SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
+   if (cso->logicop_enable) {
+      SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
+      SB_DATA    (so, 1);
+      SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
 
-       SB_IMMED_3D(so, MACRO_BLEND_ENABLES, 0);
-    } else
-    if (!cso->independent_blend_enable) {
-        SB_IMMED_3D(so,
-                    MACRO_BLEND_ENABLES, cso->rt[0].blend_enable ? 0xff : 0);
+      SB_IMMED_3D(so, MACRO_BLEND_ENABLES, 0);
+   } else {
+      SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
 
-        if (cso->rt[0].blend_enable) {
-            SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
-            SB_DATA    (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[0].rgb_src_factor));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[0].rgb_dst_factor));
-            SB_DATA    (so, nvgl_blend_eqn(cso->rt[0].alpha_func));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[0].alpha_src_factor));
-            SB_BEGIN_3D(so, BLEND_FUNC_DST_ALPHA, 1);
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[0].alpha_dst_factor));
-        }
+      SB_IMMED_3D(so, BLEND_INDEPENDENT, indep_funcs);
+      SB_IMMED_3D(so, MACRO_BLEND_ENABLES, blend_en);
+      if (indep_funcs) {
+         for (i = 0; i < 8; ++i) {
+            if (cso->rt[i].blend_enable) {
+               SB_BEGIN_3D(so, IBLEND_EQUATION_RGB(i), 6);
+               SB_DATA    (so, nvgl_blend_eqn(cso->rt[i].rgb_func));
+               SB_DATA    (so, nvc0_blend_fac(cso->rt[i].rgb_src_factor));
+               SB_DATA    (so, nvc0_blend_fac(cso->rt[i].rgb_dst_factor));
+               SB_DATA    (so, nvgl_blend_eqn(cso->rt[i].alpha_func));
+               SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_src_factor));
+               SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_dst_factor));
+            }
+         }
+      } else
+      if (blend_en) {
+         SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
+         SB_DATA    (so, nvgl_blend_eqn(cso->rt[r].rgb_func));
+         SB_DATA    (so, nvc0_blend_fac(cso->rt[r].rgb_src_factor));
+         SB_DATA    (so, nvc0_blend_fac(cso->rt[r].rgb_dst_factor));
+         SB_DATA    (so, nvgl_blend_eqn(cso->rt[r].alpha_func));
+         SB_DATA    (so, nvc0_blend_fac(cso->rt[r].alpha_src_factor));
+         SB_BEGIN_3D(so, BLEND_FUNC_DST_ALPHA, 1);
+         SB_DATA    (so, nvc0_blend_fac(cso->rt[r].alpha_dst_factor));
+      }
 
-        SB_IMMED_3D(so, COLOR_MASK_COMMON, 1);
-        SB_BEGIN_3D(so, COLOR_MASK(0), 1);
-        SB_DATA    (so, nvc0_colormask(cso->rt[0].colormask));
-    } else {
-        uint8_t en = 0;
-
-        for (i = 0; i < 8; ++i) {
-            if (!cso->rt[i].blend_enable)
-                continue;
-            en |= 1 << i;
-
-            SB_BEGIN_3D(so, IBLEND_EQUATION_RGB(i), 6);
-            SB_DATA    (so, nvgl_blend_eqn(cso->rt[i].rgb_func));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[i].rgb_src_factor));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[i].rgb_dst_factor));
-            SB_DATA    (so, nvgl_blend_eqn(cso->rt[i].alpha_func));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_src_factor));
-            SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_dst_factor));
-        }
-        SB_IMMED_3D(so, MACRO_BLEND_ENABLES, en);
-
-        SB_IMMED_3D(so, COLOR_MASK_COMMON, 0);
-        SB_BEGIN_3D(so, COLOR_MASK(0), 8);
-        for (i = 0; i < 8; ++i)
+      SB_IMMED_3D(so, COLOR_MASK_COMMON, !indep_masks);
+      if (indep_masks) {
+         SB_BEGIN_3D(so, COLOR_MASK(0), 8);
+         for (i = 0; i < 8; ++i)
             SB_DATA(so, nvc0_colormask(cso->rt[i].colormask));
-    }
+      } else {
+         SB_BEGIN_3D(so, COLOR_MASK(0), 1);
+         SB_DATA    (so, nvc0_colormask(cso->rt[0].colormask));
+      }
+   }
 
-    ms = 0;
-    if (cso->alpha_to_coverage)
-       ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_COVERAGE;
-    if (cso->alpha_to_one)
-       ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_ONE;
+   ms = 0;
+   if (cso->alpha_to_coverage)
+      ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_COVERAGE;
+   if (cso->alpha_to_one)
+      ms |= NVC0_3D_MULTISAMPLE_CTRL_ALPHA_TO_ONE;
 
-    SB_BEGIN_3D(so, MULTISAMPLE_CTRL, 1);
-    SB_DATA    (so, ms);
+   SB_BEGIN_3D(so, MULTISAMPLE_CTRL, 1);
+   SB_DATA    (so, ms);
 
-    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
-    return so;
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
+   return so;
 }
 
 static void
