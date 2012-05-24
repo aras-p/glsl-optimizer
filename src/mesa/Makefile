@@ -6,14 +6,8 @@ include $(TOP)/configs/current
 MESA_LIBS := libmesa.a libmesagallium.a
 DEPENDS := depend
 
-MESA_OBJ_DIR := .
-
 SRCDIR = .
 include sources.mak
-
-# adjust object dirs
-MESA_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_OBJECTS))
-MESA_GALLIUM_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
 
 # define preprocessor flags
 MESA_CPPFLAGS := $(API_DEFINES) $(DEFINES)
@@ -29,24 +23,14 @@ CXXFLAGS := $(filter-out $(DEFINES), $(CXXFLAGS))
 MESA_CFLAGS := $(LLVM_CFLAGS) $(CFLAGS)
 MESA_CXXFLAGS := $(LLVM_CFLAGS) $(CXXFLAGS)
 
-define mesa-cc-c
-	@mkdir -p $(dir $@)
-	$(CC) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CFLAGS)
-endef
+%.o: %.c
+	$(CC) -c -o $@ $< $(MESA_CPPFLAGS) $(MESA_CFLAGS)
 
-define mesa-cxx-c
-	@mkdir -p $(dir $@)
-	$(CXX) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CXXFLAGS)
-endef
+%.o: %.cpp
+	$(CXX) -c -o $@ $< $(MESA_CPPFLAGS) $(MESA_CXXFLAGS)
 
-$(MESA_OBJ_DIR)/%.o: %.c
-	$(call mesa-cc-c,MESA)
-
-$(MESA_OBJ_DIR)/%.o: %.cpp
-	$(call mesa-cxx-c,MESA)
-
-$(MESA_OBJ_DIR)/%.o: %.S
-	$(call mesa-cc-c,MESA)
+%.o: %.S
+	$(CC) -c -o $@ $< $(MESA_CPPFLAGS) $(MESA_CFLAGS)
 
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,
 # then convenience libs (.a) and finally the device drivers:
@@ -137,7 +121,7 @@ asm_subdirs:
 depend: $(ALL_FILES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) -p$(MESA_OBJ_DIR)/ $(MESA_CPPFLAGS) \
+	@$(MKDEP) $(MKDEP_OPTIONS) $(MESA_CPPFLAGS) \
 		$(ALL_FILES) > /dev/null 2>/dev/null
 
 ######################################################################
