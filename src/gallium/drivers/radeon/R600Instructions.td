@@ -663,9 +663,8 @@ class ASHR_Common <bits<32> inst> : R600_2OP <
 
 class MULHI_INT_Common <bits<32> inst> : R600_2OP <
   inst, "MULHI_INT $dst, $src0, $src1",
-  [] >{
-  let AMDILOp = AMDILInst.SMULHI_i32;
-}
+  [(set R600_Reg32:$dst, (mulhs R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 class MULHI_UINT_Common <bits<32> inst> : R600_2OP <
 	inst, "MULHI $dst, $src0, $src1",
@@ -674,9 +673,8 @@ class MULHI_UINT_Common <bits<32> inst> : R600_2OP <
 
 class MULLO_INT_Common <bits<32> inst> : R600_2OP <
   inst, "MULLO_INT $dst, $src0, $src1",
-  [] >{
-  let AMDILOp = AMDILInst.SMUL_i32;
-}
+  [(set R600_Reg32:$dst, (mul R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 class MULLO_UINT_Common <bits<32> inst> : R600_2OP <
   inst, "MULLO_UINT $dst, $src0, $src1",

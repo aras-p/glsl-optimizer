@@ -51,8 +51,6 @@ def INTTOANY_i16: OneInOneOut<IL_OP_MOV, (outs GPRI16:$dst), (ins GPRI32:$src0),
 // Signed 32bit integer math instructions start here
 //===---------------------------------------------------------------------===//
 defm NEGATE     : UnaryOpMCi32<IL_OP_I_NEGATE, IL_inegate>;
-defm SMUL       : BinaryOpMCi32<IL_OP_I_MUL, mul>;
-defm SMULHI     : BinaryOpMCi32<IL_OP_I_MUL_HIGH, mulhs>;
 // get rid of the addri via the tablegen instead of custom lowered instruction
 defm EADD   : BinaryOpMCi32<IL_OP_I_ADD, adde>;
 def INTTOANY_i32: OneInOneOut<IL_OP_MOV, (outs GPRI32:$dst), (ins GPRI32:$src0),
@@ -113,7 +111,6 @@ def FTOV4U8_i32 : OneInOneOut<IL_OP_F2U4, (outs GPRI32:$dst),
 // Unsigned 32bit integer math instructions start here
 //===---------------------------------------------------------------------===//
 defm UMUL       : BinaryOpMCi32<IL_OP_U_MUL, IL_umul>;
-defm UMULHI     : BinaryOpMCi32<IL_OP_U_MUL_HIGH, mulhu>;
 defm UDIV       : BinaryOpMCi32<IL_OP_U_DIV, udiv>;
 defm NATIVE_UDIV  : BinaryIntrinsicInt<IL_OP_U_DIV, int_AMDIL_udiv>;
 let mayLoad=0, mayStore=0 in {

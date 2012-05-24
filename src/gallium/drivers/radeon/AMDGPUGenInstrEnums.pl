@@ -44,7 +44,7 @@ my $FILE_TYPE = $ARGV[0];
 
 open AMDIL, '<', 'AMDILInstructions.td';
 
-my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'SMULHI_i32', 'SMUL_i32', 'LOG_f32', 'RSQ_f32', 'SIN_f32', 'COS_f32');
+my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'UGT', 'IGE', 'INE', 'UGE', 'IEQ', 'LOG_f32', 'RSQ_f32', 'SIN_f32', 'COS_f32');
 
 while (<AMDIL>) {
   if ($_ =~ /defm\s+([A-Z_]+)\s+:\s+([A-Za-z0-9]+)</) {
