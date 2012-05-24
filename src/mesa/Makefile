@@ -71,6 +71,17 @@ default: $(DEPENDS) asm_subdirs $(MESA_LIBS) $(DRICORE_LIBS) driver_subdirs
 GLAPI := $(TOP)/src/mapi/glapi/gen
 include $(GLAPI)/glapi_gen.mk
 
+BUILT_SOURCES = \
+	main/api_exec_es1_dispatch.h \
+	main/api_exec_es1_remap_helper.h \
+	main/api_exec_es2_dispatch.h \
+	main/api_exec_es2_remap_helper.h \
+	main/api_exec_es1.c \
+	main/api_exec_es2.c \
+	program/program_parse.tab.c \
+	program/program_parse.tab.h \
+	program/lex.yy.c
+
 main/api_exec_es1_dispatch.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
 	$(call glapi_gen_dispatch,$<,es1)
 
@@ -243,6 +254,7 @@ clean: clean-dricore
 	-rm -f depend depend.bak libmesa.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
+	-rm -f $(BUILT_SOURCES)
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean
