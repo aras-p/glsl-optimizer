@@ -13,7 +13,8 @@ glx_test_SOURCES =			\
 	clientinfo_unittest.cpp		\
 	create_context_unittest.cpp	\
 	enum_sizes.cpp			\
-	fake_glx_screen.cpp
+	fake_glx_screen.cpp		\
+	indirect_api.cpp
 
 glx_test_LDADD = \
 	$(top_builddir)/src/glx/libglx.la \
