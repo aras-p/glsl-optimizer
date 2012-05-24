@@ -648,21 +648,18 @@ class LOG_IEEE_Common <bits<32> inst> : R600_1OP <
 
 class LSHL_Common <bits<32> inst> : R600_2OP <
   inst, "LSHL $dst, $src0, $src1",
-  [] >{
-  let AMDILOp = AMDILInst.SHL_i32;
-}
+  [(set R600_Reg32:$dst, (shl R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 class LSHR_Common <bits<32> inst> : R600_2OP <
   inst, "LSHR $dst, $src0, $src1",
-  [] >{
-  let AMDILOp = AMDILInst.USHR_i32;
-}
+  [(set R600_Reg32:$dst, (srl R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 class ASHR_Common <bits<32> inst> : R600_2OP <
   inst, "ASHR $dst, $src0, $src1",
-  [] >{
-  let AMDILOp = AMDILInst.SHR_i32;
-}
+  [(set R600_Reg32:$dst, (sra R600_Reg32:$src0, R600_Reg32:$src1))]
+>;
 
 class MULHI_INT_Common <bits<32> inst> : R600_2OP <
   inst, "MULHI_INT $dst, $src0, $src1",

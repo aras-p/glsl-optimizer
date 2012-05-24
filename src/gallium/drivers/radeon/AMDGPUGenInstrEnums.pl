@@ -31,10 +31,6 @@
 use warnings;
 use strict;
 
-my @I32_MULTICLASSES = qw {
-  BinaryOpMCi32Const
-};
-
 my @GENERATION_ENUM = qw {
   R600_CAYMAN
   R600
@@ -52,9 +48,6 @@ my @INST_ENUMS = ('NONE', 'FEQ', 'FGE', 'FLT', 'FNE', 'MOVE_f32', 'MOVE_i32', 'U
 
 while (<AMDIL>) {
   if ($_ =~ /defm\s+([A-Z_]+)\s+:\s+([A-Za-z0-9]+)</) {
-    if (grep {$_ eq $2} @I32_MULTICLASSES) {
-      push @INST_ENUMS, "$1\_i32";
-    }
   } elsif ($_ =~ /def\s+([A-Z_]+)(_[fi]32)/) {
     push @INST_ENUMS, "$1$2";
   }

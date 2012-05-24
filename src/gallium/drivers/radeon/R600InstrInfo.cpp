@@ -74,14 +74,10 @@ unsigned R600InstrInfo::getISAOpcode(unsigned opcode) const
     case AMDIL::MOVE_f32:
     case AMDIL::MOVE_i32:
       return AMDIL::MOV;
-    case AMDIL::SHR_i32:
-      return getASHRop();
     case AMDIL::UGE:
       return AMDIL::SETGE_UINT;
     case AMDIL::UGT:
       return AMDIL::SETGT_UINT;
-    case AMDIL::USHR_i32:
-      return getLSHRop();
   }
 }
 

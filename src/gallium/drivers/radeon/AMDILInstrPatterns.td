@@ -33,5 +33,3 @@ def : Pat<(IL_call texternalsym:$dst),
     (CALL texternalsym:$dst)>;
 def : Pat<(IL_call tconstpool:$dst),
   (CALL tconstpool:$dst)>;
-
-include "AMDILConversions.td"
