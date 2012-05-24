@@ -50,6 +50,7 @@ AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
+AM_PROG_AS
 AC_CHECK_PROGS([MAKE], [gmake make])
 AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PROG_SED
@@ -1087,7 +1088,9 @@ if test "x$enable_dri" = xyes && test "x$driglx_direct" = xyes ; then
     DRI_CFLAGS='$(CFLAGS_NOVISIBILITY) -DUSE_DRICORE'
     DRI_CXXFLAGS='$(CXXFLAGS_NOVISIBILITY) -DUSE_DRICORE'
     MESA_MODULES='$(DRICORE_LIBS) $(DRICORE_GLSL_LIBS)'
+    HAVE_DRICORE=yes
 fi
+AM_CONDITIONAL(HAVE_DRICORE, test x$HAVE_DRICORE = xyes)
 AC_SUBST([DRICORE_LIBS])
 AC_SUBST([DRICORE_GLSL_LIBS])
 AC_SUBST([DRICORE_LIB_DEPS])
@@ -2074,6 +2077,14 @@ AM_CONDITIONAL(HAVE_LOADER_GALLIUM, test x$enable_gallium_loader = xyes)
 AM_CONDITIONAL(HAVE_DRM_LOADER_GALLIUM, test x$enable_gallium_drm_loader = xyes)
 AC_SUBST([GALLIUM_MAKE_DIRS])
 
+AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_DRI_DRIVER, echo "$DRIVER_DIRS" | grep 'dri' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_OSMESA_DRIVER, echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1)
+
+AM_CONDITIONAL(HAVE_X86_ASM, echo "$ASM_FLAGS" | grep 'X86_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$ASM_FLAGS" | grep 'X86_64_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_SPARC_ASM, echo "$ASM_FLAGS" | grep 'SPARC_ASM' >/dev/null 2>&1)
+
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
@@ -2108,6 +2119,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/glx/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/gtest/Makefile
+		src/mesa/libdricore/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile
