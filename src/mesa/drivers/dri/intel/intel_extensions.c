@@ -44,7 +44,8 @@ intelInitExtensions(struct gl_context *ctx)
 
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
-   ctx->Extensions.ARB_framebuffer_object = true;
+   if (ctx->API == API_OPENGL)
+      ctx->Extensions.ARB_framebuffer_object = true;
    ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_point_sprite = true;
@@ -89,6 +90,7 @@ intelInitExtensions(struct gl_context *ctx)
 #if FEATURE_OES_EGL_image
    ctx->Extensions.OES_EGL_image = true;
 #endif
+   ctx->Extensions.OES_draw_texture = true;
 
    if (intel->gen >= 6)
       ctx->Const.GLSLVersion = 130;
