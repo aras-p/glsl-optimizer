@@ -33,6 +33,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FEXP2,  MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
+  setOperationAction(ISD::UDIV, MVT::i32, Custom);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
 }
 
 SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
@@ -42,6 +44,10 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   default: return AMDILTargetLowering::LowerOperation(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
+  case ISD::UDIV:
+    return DAG.getNode(ISD::UDIVREM, Op.getDebugLoc(), Op.getValueType(),
+                       Op.getOperand(0), Op.getOperand(1)).getValue(0);
+  case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
 }
 
@@ -227,6 +233,114 @@ SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
 }
 
+
+SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
+    SelectionDAG &DAG) const
+{
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+
+  SDValue Num = Op.getOperand(0);
+  SDValue Den = Op.getOperand(1);
+
+  SmallVector<SDValue, 8> Results;
+
+  // RCP =  URECIP(Den) = 2^32 / Den + e
+  // e is rounding error.
+  SDValue RCP = DAG.getNode(AMDGPUISD::URECIP, DL, VT, Den);
+
+  // RCP_LO = umulo(RCP, Den) */
+  SDValue RCP_LO = DAG.getNode(ISD::UMULO, DL, VT, RCP, Den);
+
+  // RCP_HI = mulhu (RCP, Den) */
+  SDValue RCP_HI = DAG.getNode(ISD::MULHU, DL, VT, RCP, Den);
+
+  // NEG_RCP_LO = -RCP_LO
+  SDValue NEG_RCP_LO = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, VT),
+                                                     RCP_LO);
+
+  // ABS_RCP_LO = (RCP_HI == 0 ? NEG_RCP_LO : RCP_LO)
+  SDValue ABS_RCP_LO = DAG.getSelectCC(DL, RCP_HI, DAG.getConstant(0, VT),
+                                           NEG_RCP_LO, RCP_LO,
+                                           ISD::SETEQ);
+  // Calculate the rounding error from the URECIP instruction
+  // E = mulhu(ABS_RCP_LO, RCP)
+  SDValue E = DAG.getNode(ISD::MULHU, DL, VT, ABS_RCP_LO, RCP);
+
+  // RCP_A_E = RCP + E
+  SDValue RCP_A_E = DAG.getNode(ISD::ADD, DL, VT, RCP, E);
+
+  // RCP_S_E = RCP - E
+  SDValue RCP_S_E = DAG.getNode(ISD::SUB, DL, VT, RCP, E);
+
+  // Tmp0 = (RCP_HI == 0 ? RCP_A_E : RCP_SUB_E)
+  SDValue Tmp0 = DAG.getSelectCC(DL, RCP_HI, DAG.getConstant(0, VT),
+                                     RCP_A_E, RCP_S_E,
+                                     ISD::SETEQ);
+  // Quotient = mulhu(Tmp0, Num)
+  SDValue Quotient = DAG.getNode(ISD::MULHU, DL, VT, Tmp0, Num);
+
+  // Num_S_Remainder = Quotient * Den
+  SDValue Num_S_Remainder = DAG.getNode(ISD::UMULO, DL, VT, Quotient, Den);
+
+  // Remainder = Num - Num_S_Remainder
+  SDValue Remainder = DAG.getNode(ISD::SUB, DL, VT, Num, Num_S_Remainder);
+
+  // Remainder_GE_Den = (Remainder >= Den ? -1 : 0)
+  SDValue Remainder_GE_Den = DAG.getSelectCC(DL, Remainder, Den,
+                                                 DAG.getConstant(-1, VT),
+                                                 DAG.getConstant(0, VT),
+                                                 ISD::SETGE);
+  // Remainder_GE_Zero = (Remainder >= 0 ? -1 : 0)
+  SDValue Remainder_GE_Zero = DAG.getSelectCC(DL, Remainder,
+                                                  DAG.getConstant(0, VT),
+                                                  DAG.getConstant(-1, VT),
+                                                  DAG.getConstant(0, VT),
+                                                  ISD::SETGE);
+  // Tmp1 = Remainder_GE_Den & Remainder_GE_Zero
+  SDValue Tmp1 = DAG.getNode(ISD::AND, DL, VT, Remainder_GE_Den,
+                                               Remainder_GE_Zero);
+
+  // Calculate Division result:
+
+  // Quotient_A_One = Quotient + 1
+  SDValue Quotient_A_One = DAG.getNode(ISD::ADD, DL, VT, Quotient,
+                                                         DAG.getConstant(1, VT));
+
+  // Quotient_S_One = Quotient - 1
+  SDValue Quotient_S_One = DAG.getNode(ISD::SUB, DL, VT, Quotient,
+                                                         DAG.getConstant(1, VT));
+
+  // Div = (Tmp1 == 0 ? Quotient : Quotient_A_One)
+  SDValue Div = DAG.getSelectCC(DL, Tmp1, DAG.getConstant(0, VT),
+                                     Quotient, Quotient_A_One, ISD::SETEQ);
+
+  // Div = (Remainder_GE_Zero == 0 ? Quotient_S_One : Div)
+  Div = DAG.getSelectCC(DL, Remainder_GE_Zero, DAG.getConstant(0, VT),
+                            Quotient_S_One, Div, ISD::SETEQ);
+
+  // Calculate Rem result:
+
+  // Remainder_S_Den = Remainder - Den
+  SDValue Remainder_S_Den = DAG.getNode(ISD::SUB, DL, VT, Remainder, Den);
+
+  // Remainder_A_Den = Remainder + Den
+  SDValue Remainder_A_Den = DAG.getNode(ISD::ADD, DL, VT, Remainder, Den);
+
+  // Rem = (Tmp1 == 0 ? Remainder : Remainder_S_Den)
+  SDValue Rem = DAG.getSelectCC(DL, Tmp1, DAG.getConstant(0, VT),
+                                    Remainder, Remainder_S_Den, ISD::SETEQ);
+
+  // Rem = (Remainder_GE_Zero == 0 ? Remainder_A_Den : Rem)
+  Rem = DAG.getSelectCC(DL, Remainder_GE_Zero, DAG.getConstant(0, VT),
+                            Remainder_A_Den, Rem, ISD::SETEQ);
+
+  DAG.ReplaceAllUsesWith(Op.getValue(0).getNode(), &Div);
+  DAG.ReplaceAllUsesWith(Op.getValue(1).getNode(), &Rem);
+
+  return Op;
+}
+
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
@@ -274,5 +388,6 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   NODE_NAME_CASE(FMIN)
   NODE_NAME_CASE(SMIN)
   NODE_NAME_CASE(UMIN)
+  NODE_NAME_CASE(URECIP)
   }
 }

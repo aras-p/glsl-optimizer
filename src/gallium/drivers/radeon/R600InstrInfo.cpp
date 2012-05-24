@@ -100,38 +100,3 @@ unsigned R600InstrInfo::getLSHRop() const
     return AMDIL::LSHR_eg;
   }
 }
-
-unsigned R600InstrInfo::getMULHI_UINT() const
-{
-  unsigned gen = TM.getSubtarget<AMDILSubtarget>().device()->getGeneration();
-
-  if (gen < AMDILDeviceInfo::HD5XXX) {
-    return AMDIL::MULHI_UINT_r600;
-  } else {
-    return AMDIL::MULHI_UINT_eg;
-  }
-}
-
-unsigned R600InstrInfo::getMULLO_UINT() const
-{
-  unsigned gen = TM.getSubtarget<AMDILSubtarget>().device()->getGeneration();
-
-  if (gen < AMDILDeviceInfo::HD5XXX) {
-    return AMDIL::MULLO_UINT_r600;
-  } else {
-    return AMDIL::MULLO_UINT_eg;
-  }
-}
-
-unsigned R600InstrInfo::getRECIP_UINT() const
-{
-  const AMDILDevice * dev = TM.getSubtarget<AMDILSubtarget>().device();
-
-  if (dev->getGeneration() < AMDILDeviceInfo::HD5XXX) {
-    return AMDIL::RECIP_UINT_r600;
-  } else if (dev->getDeviceFlag() != OCL_DEVICE_CAYMAN) {
-    return AMDIL::RECIP_UINT_eg;
-  } else {
-    return AMDIL::RECIP_UINT_cm;
-  }
-}

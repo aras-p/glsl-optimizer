@@ -47,3 +47,9 @@ def AMDGPUsmin : SDNode<"AMDGPUISD::SMIN", SDTIntBinOp,
 def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
+
+// urecip - This operation is a helper for integer division, it returns the
+// result of 1 / a as a fractional unsigned integer.
+// out = (2^32 / a) + e
+// e is rounding error
+def AMDGPUurecip : SDNode<"AMDGPUISD::URECIP", SDTIntUnaryOp>;

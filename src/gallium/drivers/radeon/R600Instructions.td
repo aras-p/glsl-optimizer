@@ -649,8 +649,8 @@ class MULHI_INT_Common <bits<32> inst> : R600_2OP <
 >;
 
 class MULHI_UINT_Common <bits<32> inst> : R600_2OP <
-	inst, "MULHI $dst, $src0, $src1",
-	[]
+  inst, "MULHI $dst, $src0, $src1",
+  [(set R600_Reg32:$dst, (mulhu R600_Reg32:$src0, R600_Reg32:$src1))]
 >;
 
 class MULLO_INT_Common <bits<32> inst> : R600_2OP <
@@ -675,7 +675,7 @@ class RECIP_IEEE_Common <bits<32> inst> : R600_1OP <
 
 class RECIP_UINT_Common <bits<32> inst> : R600_1OP <
   inst, "RECIP_INT $dst, $src",
-  []
+  [(set R600_Reg32:$dst, (AMDGPUurecip R600_Reg32:$src))]
 >;
 
 class RECIPSQRT_CLAMPED_Common <bits<32> inst> : R600_1OP <

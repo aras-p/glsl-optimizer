@@ -45,11 +45,6 @@ namespace {
                      MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator I) const;
 
-    void divMod(MachineInstr &MI,
-                  MachineBasicBlock &MBB,
-                  MachineBasicBlock::iterator I,
-                  bool div = true) const;
-
   public:
     R600LowerInstructionsPass(TargetMachine &tm) :
       MachineFunctionPass(ID), TM(tm),
@@ -114,10 +109,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         }
         break;
         }
-
-      case AMDIL::UDIV_i32:
-        divMod(MI, MBB, I);
-        break;
 
       /* XXX: Figure out the semantics of DIV_INF_f32 and make sure this is OK */
 /*      case AMDIL::DIV_INF_f32:
@@ -321,134 +312,4 @@ void R600LowerInstructionsPass::calcAddress(const MachineOperand &ptrOp,
             .addOperand(indexOp)
             .addOperand(ptrOp);
   }
-}
-
-/* Mostly copied from tgsi_divmod() in r600_shader.c */
-void R600LowerInstructionsPass::divMod(MachineInstr &MI,
-                                       MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator I,
-                                       bool div) const
-{
-  unsigned dst = MI.getOperand(0).getReg();
-  MachineOperand &numerator = MI.getOperand(1);
-  MachineOperand &denominator = MI.getOperand(2);
-  /* rcp = RECIP(denominator) = 2^32 / denominator + e
-   * e is rounding error */
-  unsigned rcp = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getRECIP_UINT()), rcp)
-          .addOperand(denominator);
-
-  /* rcp_lo = lo(rcp * denominator) */
-  unsigned rcp_lo = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getMULLO_UINT()), rcp_lo)
-          .addReg(rcp)
-          .addOperand(denominator);
-
-  /* rcp_hi = HI (rcp * denominator) */
-  unsigned rcp_hi = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getMULHI_UINT()), rcp_hi)
-          .addReg(rcp)
-          .addOperand(denominator);
-
-  unsigned neg_rcp_lo = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT), neg_rcp_lo)
-          .addReg(AMDIL::ZERO)
-          .addReg(rcp_lo);
-
-  unsigned abs_rcp_lo = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT), abs_rcp_lo)
-          .addReg(rcp_hi)
-          .addReg(neg_rcp_lo)
-          .addReg(rcp_lo);
-
-  unsigned e = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getMULHI_UINT()), e)
-          .addReg(abs_rcp_lo)
-          .addReg(rcp);
-
-  unsigned rcp_plus_e = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::ADD_INT), rcp_plus_e)
-          .addReg(rcp)
-          .addReg(e);
-
-  unsigned rcp_sub_e = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT), rcp_sub_e)
-          .addReg(rcp)
-          .addReg(e);
-
-  /* tmp0 = rcp_hi == 0 ? rcp_plus_e : rcp_sub_e */
-  unsigned tmp0 = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT), tmp0)
-          .addReg(rcp_hi)
-          .addReg(rcp_plus_e)
-          .addReg(rcp_sub_e);
-
-  unsigned q = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getMULHI_UINT()), q)
-          .addReg(tmp0)
-          .addOperand(numerator);
-
-  /* num_sub_r = q * denominator */
-  unsigned num_sub_r = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(TII->getMULLO_UINT()),
-          num_sub_r)
-          .addReg(q)
-          .addOperand(denominator);
-
-  unsigned r = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT), r)
-          .addOperand(numerator)
-          .addReg(num_sub_r);
-
-  unsigned r_ge_den = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGE_INT), r_ge_den)
-          .addReg(r)
-          .addOperand(denominator);
-
-  unsigned r_ge_zero = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGE_INT), r_ge_zero)
-          .addOperand(numerator)
-          .addReg(num_sub_r);
-
-  unsigned tmp1 = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::AND_INT), tmp1)
-          .addReg(r_ge_den)
-          .addReg(r_ge_zero);
-
-  unsigned val0 = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  unsigned val1 = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  unsigned result = MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-  if (div) {
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::ADD_INT), val0)
-            .addReg(q)
-            .addReg(AMDIL::ONE_INT);
-
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT), val1)
-            .addReg(q)
-            .addReg(AMDIL::ONE_INT);
-
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT), result)
-            .addReg(tmp1)
-            .addReg(q)
-            .addReg(val0);
-  } else {
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT), val0)
-            .addReg(r)
-            .addOperand(denominator);
-
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::ADD_INT), val1)
-            .addReg(r)
-            .addOperand(denominator);
-
-    BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT), result)
-            .addReg(tmp1)
-            .addReg(r)
-            .addReg(val0);
-  }
-
-  /* XXX: Do we need to set to MAX_INT if denominator is 0? */
-  BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::CNDE_INT), dst)
-          .addReg(r_ge_zero)
-          .addReg(val1)
-          .addReg(result);
 }

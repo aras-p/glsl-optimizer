@@ -46,9 +46,6 @@ namespace llvm {
 
   unsigned getLSHRop() const;
   unsigned getASHRop() const;
-  unsigned getMULHI_UINT() const;
-  unsigned getMULLO_UINT() const;
-  unsigned getRECIP_UINT() const;
 
   };
 

@@ -650,7 +650,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     if (VT != MVT::i64 && VT != MVT::v2i64) {
       setOperationAction(ISD::SDIV, VT, Custom);
-      setOperationAction(ISD::UDIV, VT, Custom);
     }
     setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
@@ -730,7 +729,6 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::ADD, MVT::v2i64, Expand);
     setOperationAction(ISD::SREM, MVT::v2i64, Expand);
     setOperationAction(ISD::Constant          , MVT::i64  , Legal);
-    setOperationAction(ISD::UDIV, MVT::v2i64, Expand);
     setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
     setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Expand);
     setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Expand);
@@ -1505,7 +1503,6 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(FDIV);
       LOWER(SDIV);
       LOWER(SREM);
-      LOWER(UDIV);
       LOWER(UREM);
       LOWER(BUILD_VECTOR);
       LOWER(INSERT_VECTOR_ELT);
@@ -2812,24 +2809,6 @@ AMDILTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerUDIV(SDValue Op, SelectionDAG &DAG) const
-{
-  EVT OVT = Op.getValueType();
-  SDValue DST;
-  if (OVT.getScalarType() == MVT::i64) {
-    DST = LowerUDIV64(Op, DAG);
-  } else if (OVT.getScalarType() == MVT::i32) {
-    DST = LowerUDIV32(Op, DAG);
-  } else if (OVT.getScalarType() == MVT::i16
-      || OVT.getScalarType() == MVT::i8) {
-    DST = LowerUDIV24(Op, DAG);
-  } else {
-    DST = SDValue(Op.getNode(), 0);
-  }
-  return DST;
-}
-
-SDValue
 AMDILTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const
 {
   EVT OVT = Op.getValueType();
@@ -3960,17 +3939,6 @@ AMDILTargetLowering::LowerUDIV24(SDValue Op, SelectionDAG &DAG) const
 
 }
 
-SDValue
-AMDILTargetLowering::LowerUDIV32(SDValue Op, SelectionDAG &DAG) const
-{
-  return SDValue(Op.getNode(), 0);
-}
-
-SDValue
-AMDILTargetLowering::LowerUDIV64(SDValue Op, SelectionDAG &DAG) const
-{
-  return SDValue(Op.getNode(), 0);
-}
 SDValue
 AMDILTargetLowering::LowerSREM8(SDValue Op, SelectionDAG &DAG) const
 {
