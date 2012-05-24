@@ -368,25 +368,28 @@ draw_pt_arrays_restart(struct draw_context *draw,
 
    if (draw->pt.user.elts) {
       /* indexed prims (draw_elements) */
+      const char *elts =
+         (const char *) draw->pt.user.elts + draw->pt.index_buffer.offset;
+
       cur_start = start;
       cur_count = 0;
 
       switch (draw->pt.user.eltSize) {
       case 1:
          {
-            const ubyte *elt_ub = (const ubyte *) draw->pt.user.elts;
+            const ubyte *elt_ub = (const ubyte *) elts;
             PRIM_RESTART_LOOP(elt_ub);
          }
          break;
       case 2:
          {
-            const ushort *elt_us = (const ushort *) draw->pt.user.elts;
+            const ushort *elt_us = (const ushort *) elts;
             PRIM_RESTART_LOOP(elt_us);
          }
          break;
       case 4:
          {
-            const uint *elt_ui = (const uint *) draw->pt.user.elts;
+            const uint *elt_ui = (const uint *) elts;
             PRIM_RESTART_LOOP(elt_ui);
          }
          break;
