@@ -2,315 +2,315 @@
 
 # this is part of MAIN_FILES
 MAIN_ES_FILES = \
-	main/api_exec_es1.c \
-	main/api_exec_es2.c
+	$(SRCDIR)/main/api_exec_es1.c \
+	$(SRCDIR)/main/api_exec_es2.c
 
 MAIN_FILES = \
-	main/api_arrayelt.c \
-	main/api_exec.c \
-	main/api_loopback.c \
-	main/api_validate.c \
-	main/accum.c \
-	main/arbprogram.c \
-	main/atifragshader.c \
-	main/attrib.c \
-	main/arrayobj.c \
-	main/blend.c \
-	main/bufferobj.c \
-	main/buffers.c \
-	main/clear.c \
-	main/clip.c \
-	main/colortab.c \
-	main/condrender.c \
-	main/context.c \
-	main/convolve.c \
-	main/cpuinfo.c \
-	main/debug.c \
-	main/depth.c \
-	main/dlist.c \
-	main/dlopen.c \
-	main/drawpix.c \
-	main/drawtex.c \
-	main/enable.c \
-	main/enums.c \
-	main/errors.c \
-	main/eval.c \
-	main/execmem.c \
-	main/extensions.c \
-	main/fbobject.c \
-	main/feedback.c \
-	main/ffvertex_prog.c \
-	main/fog.c \
-	main/formats.c \
-	main/format_pack.c \
-	main/format_unpack.c \
-	main/framebuffer.c \
-	main/get.c \
-	main/getstring.c \
-	main/hash.c \
-	main/hint.c \
-	main/histogram.c \
-	main/image.c \
-	main/imports.c \
-	main/light.c \
-	main/lines.c \
-	main/matrix.c \
-	main/mipmap.c \
-	main/mm.c \
-	main/multisample.c \
-	main/nvprogram.c \
-	main/pack.c \
-	main/pbo.c \
-	main/pixel.c \
-	main/pixelstore.c \
-	main/pixeltransfer.c \
-	main/points.c \
-	main/polygon.c \
-	main/queryobj.c \
-	main/querymatrix.c \
-	main/rastpos.c \
-	main/readpix.c \
-	main/remap.c \
-	main/renderbuffer.c \
-	main/samplerobj.c \
-	main/scissor.c \
-	main/shaderapi.c \
-	main/shaderobj.c \
-	main/shared.c \
-	main/state.c \
-	main/stencil.c \
-	main/syncobj.c \
-	main/texcompress.c \
-	main/texcompress_rgtc.c \
-	main/texcompress_s3tc.c \
-	main/texcompress_fxt1.c \
-	main/texcompress_etc.c \
-	main/texenv.c \
-	main/texformat.c \
-	main/texgen.c \
-	main/texgetimage.c \
-	main/teximage.c \
-	main/texobj.c \
-	main/texpal.c \
-	main/texparam.c \
-	main/texstate.c \
-	main/texstorage.c \
-	main/texstore.c \
-	main/texturebarrier.c \
-	main/transformfeedback.c \
-	main/uniforms.c \
-	main/varray.c \
-	main/version.c \
-	main/viewport.c \
-	main/vtxfmt.c \
+	$(SRCDIR)/main/api_arrayelt.c \
+	$(SRCDIR)/main/api_exec.c \
+	$(SRCDIR)/main/api_loopback.c \
+	$(SRCDIR)/main/api_validate.c \
+	$(SRCDIR)/main/accum.c \
+	$(SRCDIR)/main/arbprogram.c \
+	$(SRCDIR)/main/atifragshader.c \
+	$(SRCDIR)/main/attrib.c \
+	$(SRCDIR)/main/arrayobj.c \
+	$(SRCDIR)/main/blend.c \
+	$(SRCDIR)/main/bufferobj.c \
+	$(SRCDIR)/main/buffers.c \
+	$(SRCDIR)/main/clear.c \
+	$(SRCDIR)/main/clip.c \
+	$(SRCDIR)/main/colortab.c \
+	$(SRCDIR)/main/condrender.c \
+	$(SRCDIR)/main/context.c \
+	$(SRCDIR)/main/convolve.c \
+	$(SRCDIR)/main/cpuinfo.c \
+	$(SRCDIR)/main/debug.c \
+	$(SRCDIR)/main/depth.c \
+	$(SRCDIR)/main/dlist.c \
+	$(SRCDIR)/main/dlopen.c \
+	$(SRCDIR)/main/drawpix.c \
+	$(SRCDIR)/main/drawtex.c \
+	$(SRCDIR)/main/enable.c \
+	$(SRCDIR)/main/enums.c \
+	$(SRCDIR)/main/errors.c \
+	$(SRCDIR)/main/eval.c \
+	$(SRCDIR)/main/execmem.c \
+	$(SRCDIR)/main/extensions.c \
+	$(SRCDIR)/main/fbobject.c \
+	$(SRCDIR)/main/feedback.c \
+	$(SRCDIR)/main/ffvertex_prog.c \
+	$(SRCDIR)/main/fog.c \
+	$(SRCDIR)/main/formats.c \
+	$(SRCDIR)/main/format_pack.c \
+	$(SRCDIR)/main/format_unpack.c \
+	$(SRCDIR)/main/framebuffer.c \
+	$(SRCDIR)/main/get.c \
+	$(SRCDIR)/main/getstring.c \
+	$(SRCDIR)/main/hash.c \
+	$(SRCDIR)/main/hint.c \
+	$(SRCDIR)/main/histogram.c \
+	$(SRCDIR)/main/image.c \
+	$(SRCDIR)/main/imports.c \
+	$(SRCDIR)/main/light.c \
+	$(SRCDIR)/main/lines.c \
+	$(SRCDIR)/main/matrix.c \
+	$(SRCDIR)/main/mipmap.c \
+	$(SRCDIR)/main/mm.c \
+	$(SRCDIR)/main/multisample.c \
+	$(SRCDIR)/main/nvprogram.c \
+	$(SRCDIR)/main/pack.c \
+	$(SRCDIR)/main/pbo.c \
+	$(SRCDIR)/main/pixel.c \
+	$(SRCDIR)/main/pixelstore.c \
+	$(SRCDIR)/main/pixeltransfer.c \
+	$(SRCDIR)/main/points.c \
+	$(SRCDIR)/main/polygon.c \
+	$(SRCDIR)/main/queryobj.c \
+	$(SRCDIR)/main/querymatrix.c \
+	$(SRCDIR)/main/rastpos.c \
+	$(SRCDIR)/main/readpix.c \
+	$(SRCDIR)/main/remap.c \
+	$(SRCDIR)/main/renderbuffer.c \
+	$(SRCDIR)/main/samplerobj.c \
+	$(SRCDIR)/main/scissor.c \
+	$(SRCDIR)/main/shaderapi.c \
+	$(SRCDIR)/main/shaderobj.c \
+	$(SRCDIR)/main/shared.c \
+	$(SRCDIR)/main/state.c \
+	$(SRCDIR)/main/stencil.c \
+	$(SRCDIR)/main/syncobj.c \
+	$(SRCDIR)/main/texcompress.c \
+	$(SRCDIR)/main/texcompress_rgtc.c \
+	$(SRCDIR)/main/texcompress_s3tc.c \
+	$(SRCDIR)/main/texcompress_fxt1.c \
+	$(SRCDIR)/main/texcompress_etc.c \
+	$(SRCDIR)/main/texenv.c \
+	$(SRCDIR)/main/texformat.c \
+	$(SRCDIR)/main/texgen.c \
+	$(SRCDIR)/main/texgetimage.c \
+	$(SRCDIR)/main/teximage.c \
+	$(SRCDIR)/main/texobj.c \
+	$(SRCDIR)/main/texpal.c \
+	$(SRCDIR)/main/texparam.c \
+	$(SRCDIR)/main/texstate.c \
+	$(SRCDIR)/main/texstorage.c \
+	$(SRCDIR)/main/texstore.c \
+	$(SRCDIR)/main/texturebarrier.c \
+	$(SRCDIR)/main/transformfeedback.c \
+	$(SRCDIR)/main/uniforms.c \
+	$(SRCDIR)/main/varray.c \
+	$(SRCDIR)/main/version.c \
+	$(SRCDIR)/main/viewport.c \
+	$(SRCDIR)/main/vtxfmt.c \
 	$(MAIN_ES_FILES)
 
 MAIN_CXX_FILES = \
-	main/ff_fragment_shader.cpp \
-	main/shader_query.cpp \
-	main/uniform_query.cpp
+	$(SRCDIR)/main/ff_fragment_shader.cpp \
+	$(SRCDIR)/main/shader_query.cpp \
+	$(SRCDIR)/main/uniform_query.cpp
 
 MATH_FILES = \
-	math/m_debug_clip.c \
-	math/m_debug_norm.c \
-	math/m_debug_xform.c \
-	math/m_eval.c \
-	math/m_matrix.c \
-	math/m_translate.c \
-	math/m_vector.c
+	$(SRCDIR)/math/m_debug_clip.c \
+	$(SRCDIR)/math/m_debug_norm.c \
+	$(SRCDIR)/math/m_debug_xform.c \
+	$(SRCDIR)/math/m_eval.c \
+	$(SRCDIR)/math/m_matrix.c \
+	$(SRCDIR)/math/m_translate.c \
+	$(SRCDIR)/math/m_vector.c
 
 MATH_XFORM_FILES = \
-	math/m_xform.c
+	$(SRCDIR)/math/m_xform.c
 
 SWRAST_FILES = \
-	swrast/s_aaline.c \
-	swrast/s_aatriangle.c \
-	swrast/s_alpha.c \
-	swrast/s_atifragshader.c \
-	swrast/s_bitmap.c \
-	swrast/s_blend.c \
-	swrast/s_blit.c \
-	swrast/s_clear.c \
-	swrast/s_copypix.c \
-	swrast/s_context.c \
-	swrast/s_depth.c \
-	swrast/s_drawpix.c \
-	swrast/s_feedback.c \
-	swrast/s_fog.c \
-	swrast/s_fragprog.c \
-	swrast/s_lines.c \
-	swrast/s_logic.c \
-	swrast/s_masking.c \
-	swrast/s_points.c \
-	swrast/s_renderbuffer.c \
-	swrast/s_span.c \
-	swrast/s_stencil.c \
-	swrast/s_texcombine.c \
-	swrast/s_texfetch.c \
-	swrast/s_texfilter.c \
-	swrast/s_texrender.c \
-	swrast/s_texture.c \
-	swrast/s_triangle.c \
-	swrast/s_zoom.c
+	$(SRCDIR)/swrast/s_aaline.c \
+	$(SRCDIR)/swrast/s_aatriangle.c \
+	$(SRCDIR)/swrast/s_alpha.c \
+	$(SRCDIR)/swrast/s_atifragshader.c \
+	$(SRCDIR)/swrast/s_bitmap.c \
+	$(SRCDIR)/swrast/s_blend.c \
+	$(SRCDIR)/swrast/s_blit.c \
+	$(SRCDIR)/swrast/s_clear.c \
+	$(SRCDIR)/swrast/s_copypix.c \
+	$(SRCDIR)/swrast/s_context.c \
+	$(SRCDIR)/swrast/s_depth.c \
+	$(SRCDIR)/swrast/s_drawpix.c \
+	$(SRCDIR)/swrast/s_feedback.c \
+	$(SRCDIR)/swrast/s_fog.c \
+	$(SRCDIR)/swrast/s_fragprog.c \
+	$(SRCDIR)/swrast/s_lines.c \
+	$(SRCDIR)/swrast/s_logic.c \
+	$(SRCDIR)/swrast/s_masking.c \
+	$(SRCDIR)/swrast/s_points.c \
+	$(SRCDIR)/swrast/s_renderbuffer.c \
+	$(SRCDIR)/swrast/s_span.c \
+	$(SRCDIR)/swrast/s_stencil.c \
+	$(SRCDIR)/swrast/s_texcombine.c \
+	$(SRCDIR)/swrast/s_texfetch.c \
+	$(SRCDIR)/swrast/s_texfilter.c \
+	$(SRCDIR)/swrast/s_texrender.c \
+	$(SRCDIR)/swrast/s_texture.c \
+	$(SRCDIR)/swrast/s_triangle.c \
+	$(SRCDIR)/swrast/s_zoom.c
 
 SWRAST_SETUP_FILES = \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c 
+	$(SRCDIR)/swrast_setup/ss_context.c \
+	$(SRCDIR)/swrast_setup/ss_triangle.c
 
 TNL_FILES = \
-	tnl/t_context.c \
-	tnl/t_pipeline.c \
-	tnl/t_draw.c \
-	tnl/t_rasterpos.c \
-	tnl/t_vb_program.c \
-	tnl/t_vb_render.c \
-	tnl/t_vb_texgen.c \
-	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c \
-	tnl/t_vb_fog.c \
-	tnl/t_vb_light.c \
-	tnl/t_vb_normals.c \
-	tnl/t_vb_points.c \
-	tnl/t_vp_build.c \
-	tnl/t_vertex.c \
-	tnl/t_vertex_sse.c \
-	tnl/t_vertex_generic.c 
+	$(SRCDIR)/tnl/t_context.c \
+	$(SRCDIR)/tnl/t_pipeline.c \
+	$(SRCDIR)/tnl/t_draw.c \
+	$(SRCDIR)/tnl/t_rasterpos.c \
+	$(SRCDIR)/tnl/t_vb_program.c \
+	$(SRCDIR)/tnl/t_vb_render.c \
+	$(SRCDIR)/tnl/t_vb_texgen.c \
+	$(SRCDIR)/tnl/t_vb_texmat.c \
+	$(SRCDIR)/tnl/t_vb_vertex.c \
+	$(SRCDIR)/tnl/t_vb_fog.c \
+	$(SRCDIR)/tnl/t_vb_light.c \
+	$(SRCDIR)/tnl/t_vb_normals.c \
+	$(SRCDIR)/tnl/t_vb_points.c \
+	$(SRCDIR)/tnl/t_vp_build.c \
+	$(SRCDIR)/tnl/t_vertex.c \
+	$(SRCDIR)/tnl/t_vertex_sse.c \
+	$(SRCDIR)/tnl/t_vertex_generic.c
 
 VBO_FILES = \
-	vbo/vbo_context.c \
-	vbo/vbo_exec.c \
-	vbo/vbo_exec_api.c \
-	vbo/vbo_exec_array.c \
-	vbo/vbo_exec_draw.c \
-	vbo/vbo_exec_eval.c \
-	vbo/vbo_noop.c \
-	vbo/vbo_primitive_restart.c \
-	vbo/vbo_rebase.c \
-	vbo/vbo_split.c \
-	vbo/vbo_split_copy.c \
-	vbo/vbo_split_inplace.c \
-	vbo/vbo_save.c \
-	vbo/vbo_save_api.c \
-	vbo/vbo_save_draw.c \
-	vbo/vbo_save_loopback.c 
+	$(SRCDIR)/vbo/vbo_context.c \
+	$(SRCDIR)/vbo/vbo_exec.c \
+	$(SRCDIR)/vbo/vbo_exec_api.c \
+	$(SRCDIR)/vbo/vbo_exec_array.c \
+	$(SRCDIR)/vbo/vbo_exec_draw.c \
+	$(SRCDIR)/vbo/vbo_exec_eval.c \
+	$(SRCDIR)/vbo/vbo_noop.c \
+	$(SRCDIR)/vbo/vbo_primitive_restart.c \
+	$(SRCDIR)/vbo/vbo_rebase.c \
+	$(SRCDIR)/vbo/vbo_split.c \
+	$(SRCDIR)/vbo/vbo_split_copy.c \
+	$(SRCDIR)/vbo/vbo_split_inplace.c \
+	$(SRCDIR)/vbo/vbo_save.c \
+	$(SRCDIR)/vbo/vbo_save_api.c \
+	$(SRCDIR)/vbo/vbo_save_draw.c \
+	$(SRCDIR)/vbo/vbo_save_loopback.c
 
 STATETRACKER_FILES = \
-	state_tracker/st_atom.c \
-	state_tracker/st_atom_blend.c \
-	state_tracker/st_atom_clip.c \
-	state_tracker/st_atom_constbuf.c \
-	state_tracker/st_atom_depth.c \
-	state_tracker/st_atom_framebuffer.c \
-	state_tracker/st_atom_msaa.c \
-	state_tracker/st_atom_pixeltransfer.c \
-	state_tracker/st_atom_sampler.c \
-	state_tracker/st_atom_scissor.c \
-	state_tracker/st_atom_shader.c \
-	state_tracker/st_atom_rasterizer.c \
-	state_tracker/st_atom_stipple.c \
-	state_tracker/st_atom_texture.c \
-	state_tracker/st_atom_viewport.c \
-	state_tracker/st_cb_bitmap.c \
-	state_tracker/st_cb_blit.c \
-	state_tracker/st_cb_bufferobjects.c \
-	state_tracker/st_cb_clear.c \
-	state_tracker/st_cb_condrender.c \
-	state_tracker/st_cb_flush.c \
-	state_tracker/st_cb_drawpixels.c \
-	state_tracker/st_cb_drawtex.c \
-	state_tracker/st_cb_eglimage.c \
-	state_tracker/st_cb_fbo.c \
-	state_tracker/st_cb_feedback.c \
-	state_tracker/st_cb_program.c \
-	state_tracker/st_cb_queryobj.c \
-	state_tracker/st_cb_rasterpos.c \
-	state_tracker/st_cb_readpixels.c \
-	state_tracker/st_cb_syncobj.c \
-	state_tracker/st_cb_strings.c \
-	state_tracker/st_cb_texture.c \
-	state_tracker/st_cb_texturebarrier.c \
-	state_tracker/st_cb_viewport.c \
-	state_tracker/st_cb_xformfb.c \
-	state_tracker/st_context.c \
-	state_tracker/st_debug.c \
-	state_tracker/st_draw.c \
-	state_tracker/st_draw_feedback.c \
-	state_tracker/st_extensions.c \
-	state_tracker/st_format.c \
-	state_tracker/st_gen_mipmap.c \
-	state_tracker/st_manager.c \
-	state_tracker/st_mesa_to_tgsi.c \
-	state_tracker/st_program.c \
-	state_tracker/st_texture.c
+	$(SRCDIR)/state_tracker/st_atom.c \
+	$(SRCDIR)/state_tracker/st_atom_blend.c \
+	$(SRCDIR)/state_tracker/st_atom_clip.c \
+	$(SRCDIR)/state_tracker/st_atom_constbuf.c \
+	$(SRCDIR)/state_tracker/st_atom_depth.c \
+	$(SRCDIR)/state_tracker/st_atom_framebuffer.c \
+	$(SRCDIR)/state_tracker/st_atom_msaa.c \
+	$(SRCDIR)/state_tracker/st_atom_pixeltransfer.c \
+	$(SRCDIR)/state_tracker/st_atom_sampler.c \
+	$(SRCDIR)/state_tracker/st_atom_scissor.c \
+	$(SRCDIR)/state_tracker/st_atom_shader.c \
+	$(SRCDIR)/state_tracker/st_atom_rasterizer.c \
+	$(SRCDIR)/state_tracker/st_atom_stipple.c \
+	$(SRCDIR)/state_tracker/st_atom_texture.c \
+	$(SRCDIR)/state_tracker/st_atom_viewport.c \
+	$(SRCDIR)/state_tracker/st_cb_bitmap.c \
+	$(SRCDIR)/state_tracker/st_cb_blit.c \
+	$(SRCDIR)/state_tracker/st_cb_bufferobjects.c \
+	$(SRCDIR)/state_tracker/st_cb_clear.c \
+	$(SRCDIR)/state_tracker/st_cb_condrender.c \
+	$(SRCDIR)/state_tracker/st_cb_flush.c \
+	$(SRCDIR)/state_tracker/st_cb_drawpixels.c \
+	$(SRCDIR)/state_tracker/st_cb_drawtex.c \
+	$(SRCDIR)/state_tracker/st_cb_eglimage.c \
+	$(SRCDIR)/state_tracker/st_cb_fbo.c \
+	$(SRCDIR)/state_tracker/st_cb_feedback.c \
+	$(SRCDIR)/state_tracker/st_cb_program.c \
+	$(SRCDIR)/state_tracker/st_cb_queryobj.c \
+	$(SRCDIR)/state_tracker/st_cb_rasterpos.c \
+	$(SRCDIR)/state_tracker/st_cb_readpixels.c \
+	$(SRCDIR)/state_tracker/st_cb_syncobj.c \
+	$(SRCDIR)/state_tracker/st_cb_strings.c \
+	$(SRCDIR)/state_tracker/st_cb_texture.c \
+	$(SRCDIR)/state_tracker/st_cb_texturebarrier.c \
+	$(SRCDIR)/state_tracker/st_cb_viewport.c \
+	$(SRCDIR)/state_tracker/st_cb_xformfb.c \
+	$(SRCDIR)/state_tracker/st_context.c \
+	$(SRCDIR)/state_tracker/st_debug.c \
+	$(SRCDIR)/state_tracker/st_draw.c \
+	$(SRCDIR)/state_tracker/st_draw_feedback.c \
+	$(SRCDIR)/state_tracker/st_extensions.c \
+	$(SRCDIR)/state_tracker/st_format.c \
+	$(SRCDIR)/state_tracker/st_gen_mipmap.c \
+	$(SRCDIR)/state_tracker/st_manager.c \
+	$(SRCDIR)/state_tracker/st_mesa_to_tgsi.c \
+	$(SRCDIR)/state_tracker/st_program.c \
+	$(SRCDIR)/state_tracker/st_texture.c
 
 PROGRAM_FILES = \
-	program/arbprogparse.c \
-	program/hash_table.c \
-	program/lex.yy.c \
-	program/nvfragparse.c \
-	program/nvvertparse.c \
-	program/program.c \
-	program/program_parse.tab.c \
-	program/program_parse_extra.c \
-	program/prog_cache.c \
-	program/prog_execute.c \
-	program/prog_instruction.c \
-	program/prog_noise.c \
-	program/prog_optimize.c \
-	program/prog_opt_constant_fold.c \
-	program/prog_parameter.c \
-	program/prog_parameter_layout.c \
-	program/prog_print.c \
-	program/prog_statevars.c \
-	program/programopt.c \
-	program/register_allocate.c \
-	program/symbol_table.c
+	$(SRCDIR)/program/arbprogparse.c \
+	$(SRCDIR)/program/hash_table.c \
+	$(SRCDIR)/program/lex.yy.c \
+	$(SRCDIR)/program/nvfragparse.c \
+	$(SRCDIR)/program/nvvertparse.c \
+	$(SRCDIR)/program/program.c \
+	$(SRCDIR)/program/program_parse.tab.c \
+	$(SRCDIR)/program/program_parse_extra.c \
+	$(SRCDIR)/program/prog_cache.c \
+	$(SRCDIR)/program/prog_execute.c \
+	$(SRCDIR)/program/prog_instruction.c \
+	$(SRCDIR)/program/prog_noise.c \
+	$(SRCDIR)/program/prog_optimize.c \
+	$(SRCDIR)/program/prog_opt_constant_fold.c \
+	$(SRCDIR)/program/prog_parameter.c \
+	$(SRCDIR)/program/prog_parameter_layout.c \
+	$(SRCDIR)/program/prog_print.c \
+	$(SRCDIR)/program/prog_statevars.c \
+	$(SRCDIR)/program/programopt.c \
+	$(SRCDIR)/program/register_allocate.c \
+	$(SRCDIR)/program/symbol_table.c
 
 
 SHADER_CXX_FILES = \
-	program/ir_to_mesa.cpp \
-	program/sampler.cpp \
-	program/string_to_uint_map.cpp
+	$(SRCDIR)/program/ir_to_mesa.cpp \
+	$(SRCDIR)/program/sampler.cpp \
+	$(SRCDIR)/program/string_to_uint_map.cpp
 
 ASM_C_FILES =	\
-	x86/common_x86.c \
-	x86/x86_xform.c \
-	x86/3dnow.c \
-	x86/sse.c \
-	x86/rtasm/x86sse.c \
-	sparc/sparc.c \
-	x86-64/x86-64.c
+	$(SRCDIR)/x86/common_x86.c \
+	$(SRCDIR)/x86/x86_xform.c \
+	$(SRCDIR)/x86/3dnow.c \
+	$(SRCDIR)/x86/sse.c \
+	$(SRCDIR)/x86/rtasm/x86sse.c \
+	$(SRCDIR)/sparc/sparc.c \
+	$(SRCDIR)/x86-64/x86-64.c
 
 X86_FILES =			\
-	x86/common_x86_asm.S	\
-	x86/x86_xform2.S	\
-	x86/x86_xform3.S	\
-	x86/x86_xform4.S	\
-	x86/x86_cliptest.S	\
-	x86/mmx_blend.S		\
-	x86/3dnow_xform1.S	\
-	x86/3dnow_xform2.S	\
-	x86/3dnow_xform3.S	\
-	x86/3dnow_xform4.S	\
-	x86/3dnow_normal.S	\
-	x86/sse_xform1.S	\
-	x86/sse_xform2.S	\
-	x86/sse_xform3.S	\
-	x86/sse_xform4.S	\
-	x86/sse_normal.S	\
-	x86/read_rgba_span_x86.S
+	$(SRCDIR)/x86/common_x86_asm.S	\
+	$(SRCDIR)/x86/x86_xform2.S	\
+	$(SRCDIR)/x86/x86_xform3.S	\
+	$(SRCDIR)/x86/x86_xform4.S	\
+	$(SRCDIR)/x86/x86_cliptest.S	\
+	$(SRCDIR)/x86/mmx_blend.S		\
+	$(SRCDIR)/x86/3dnow_xform1.S	\
+	$(SRCDIR)/x86/3dnow_xform2.S	\
+	$(SRCDIR)/x86/3dnow_xform3.S	\
+	$(SRCDIR)/x86/3dnow_xform4.S	\
+	$(SRCDIR)/x86/3dnow_normal.S	\
+	$(SRCDIR)/x86/sse_xform1.S	\
+	$(SRCDIR)/x86/sse_xform2.S	\
+	$(SRCDIR)/x86/sse_xform3.S	\
+	$(SRCDIR)/x86/sse_xform4.S	\
+	$(SRCDIR)/x86/sse_normal.S	\
+	$(SRCDIR)/x86/read_rgba_span_x86.S
 
 X86_64_FILES =		\
-	x86-64/xform4.S
+	$(SRCDIR)/x86-64/xform4.S
 
 SPARC_FILES =			\
-	sparc/clip.S		\
-	sparc/norm.S		\
-	sparc/xform.S
+	$(SRCDIR)/sparc/clip.S		\
+	$(SRCDIR)/sparc/norm.S		\
+	$(SRCDIR)/sparc/xform.S
 
 COMMON_DRIVER_FILES =			\
-	drivers/common/driverfuncs.c	\
-	drivers/common/meta.c
+	$(SRCDIR)/drivers/common/driverfuncs.c	\
+	$(SRCDIR)/drivers/common/meta.c
 
 
 # Sources for building non-Gallium drivers
@@ -337,11 +337,11 @@ MESA_GALLIUM_FILES = \
 	$(VBO_FILES)		\
 	$(STATETRACKER_FILES)	\
 	$(PROGRAM_FILES)	\
-	x86/common_x86.c
+	$(SRCDIR)/x86/common_x86.c
 
 MESA_GALLIUM_CXX_FILES = \
 	$(MESA_CXX_FILES) \
-	state_tracker/st_glsl_to_tgsi.cpp
+	$(SRCDIR)/state_tracker/st_glsl_to_tgsi.cpp
 
 # All the core C sources, for dependency checking
 ALL_FILES = \

@@ -9,6 +9,7 @@ DEPENDS := depend
 MESA_OBJ_DIR := .
 DRICORE_OBJ_DIR := objs-dricore
 
+SRCDIR = .
 include sources.mak
 
 # adjust object dirs
