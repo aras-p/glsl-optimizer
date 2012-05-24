@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "AMDGPUInstrEnums.td"
-
 class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instruction {
   field bits<16> AMDILOp = 0;
   field bits<3> Gen = 0;
@@ -33,6 +31,13 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
   field bits<32> Inst = 0xffffffff;
 
 }
+
+class Constants {
+int TWO_PI = 0x40c90fdb;
+int PI = 0x40490fdb;
+int TWO_PI_INV = 0x3e22f983;
+}
+def CONST : Constants;
 
 let isCodeGenOnly = 1 in {
 

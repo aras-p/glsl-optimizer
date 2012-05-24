@@ -64,7 +64,7 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 unsigned R600InstrInfo::getISAOpcode(unsigned opcode) const
 {
   switch (opcode) {
-    default: return AMDGPUInstrInfo::getISAOpcode(opcode);
+    default: return opcode;
     case AMDIL::IEQ:
       return AMDIL::SETE_INT;
     case AMDIL::INE:

@@ -47,16 +47,10 @@ class VOP1_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
     op, (outs vrc:$dst), (ins arc:$src0), opName, pattern
   >;
 
-multiclass VOP1_32 <bits<8> op, string opName, list<dag> pattern,
-                    bits<16> amdil = AMDILInst.NONE> {
-
-  let AMDILOp = amdil in {
-    def _e32: VOP1_Helper <op, VReg_32, AllReg_32, opName, pattern>;
-  }
-
-  def _e64 : VOP3_32 <
-    {1, 1, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-    opName, []
+multiclass VOP1_32 <bits<8> op, string opName, list<dag> pattern> {
+  def _e32: VOP1_Helper <op, VReg_32, AllReg_32, opName, pattern>;
+  def _e64 : VOP3_32 <{1, 1, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
+                      opName, []
   >;
 }
 
@@ -76,16 +70,12 @@ class VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
     op, (outs vrc:$dst), (ins arc:$src0, vrc:$src1), opName, pattern
   >;
 
-multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern,
-                    bits<16> amdil = AMDILInst.NONE> {
+multiclass VOP2_32 <bits<6> op, string opName, list<dag> pattern> {
 
-  let AMDILOp = amdil in {
-    def _e32 : VOP2_Helper <op, VReg_32, AllReg_32, opName, pattern>;
-  }
+  def _e32 : VOP2_Helper <op, VReg_32, AllReg_32, opName, pattern>;
 
-  def _e64 : VOP3_32 <
-    {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-    opName, []
+  def _e64 : VOP3_32 <{1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
+                      opName, []
   >;
 }
 

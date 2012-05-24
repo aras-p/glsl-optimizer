@@ -38,16 +38,6 @@ endif
 R600RegisterInfo.td: R600GenRegisterInfo.pl
 	$(PERL) $^ > $@
 
-AMDGPUInstrEnums.td: AMDGPUGenInstrEnums.pl
-	$(PERL) $^ td > $@
-
-AMDGPUInstrEnums.h.include: AMDGPUGenInstrEnums.pl
-	$(PERL) $^ h > $@
-
-AMDGPUInstrEnums.include: AMDGPUGenInstrEnums.pl
-	$(PERL) $^ inc > $@
-
-
 AMDILGenRegisterInfo.inc: *.td
 	$(call tablegen, -gen-register-info, AMDIL.td, $@)
 

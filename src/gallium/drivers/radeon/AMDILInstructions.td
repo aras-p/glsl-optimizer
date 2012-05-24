@@ -206,8 +206,6 @@ defm ACOS : UnaryIntrinsicFloatScalar<IL_OP_ACOS, int_AMDIL_acos>;
 defm ATAN : UnaryIntrinsicFloatScalar<IL_OP_ATAN, int_AMDIL_atan>;
 defm ASIN : UnaryIntrinsicFloatScalar<IL_OP_ASIN, int_AMDIL_asin>;
 defm TAN : UnaryIntrinsicFloatScalar<IL_OP_TAN, int_AMDIL_tan>;
-defm SIN : UnaryIntrinsicFloatScalar<IL_OP_SIN, int_AMDIL_sin>;
-defm COS : UnaryIntrinsicFloatScalar<IL_OP_COS, int_AMDIL_cos>;
 defm SQRT : UnaryIntrinsicFloatScalar<IL_OP_SQRT, int_AMDIL_sqrt>;
 defm SQRTVEC : UnaryIntrinsicFloat<IL_OP_SQRT_VEC, int_AMDIL_sqrt_vec>;
 defm COSVEC : UnaryIntrinsicFloat<IL_OP_COS_VEC, int_AMDIL_cos_vec>;
@@ -228,7 +226,6 @@ defm MOD  : BinaryOpMCf32<IL_OP_MOD, frem>;
 let hasZeroOpFlag = 1 in {
   let mayLoad = 0, mayStore=0 in {
 defm LN  : UnaryIntrinsicFloatScalar<IL_OP_LN, int_AMDIL_ln>;
-defm LOG : UnaryIntrinsicFloatScalar<IL_OP_LOG, int_AMDIL_log>;
 defm RSQ : UnaryIntrinsicFloatScalar<IL_OP_RSQ, int_AMDIL_rsq>;
 defm DIV  : BinaryIntrinsicFloat<IL_OP_DIV, int_AMDIL_div>;
   }

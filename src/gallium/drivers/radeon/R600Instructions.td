@@ -291,8 +291,6 @@ let Predicates = [isR600toCayman] in {
 /* ------------------------------------------- */
 /* Common Instructions R600, R700, Evergreen, Cayman */
 /* ------------------------------------------- */
-let Gen = AMDGPUGen.R600_CAYMAN  in {
-
 def ADD : R600_2OP <
   0x0, "ADD",
   [(set R600_Reg32:$dst, (fadd R600_Reg32:$src0, R600_Reg32:$src1))]
@@ -330,7 +328,6 @@ def SETE : R600_2OP <
    (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
              COND_EQ))]
 >;
-//let AMDILOp = AMDILInst.FEQ;
 
 def SGT : R600_2OP <
   0x09, "SETGT",
@@ -345,7 +342,6 @@ def SGE : R600_2OP <
    (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
               COND_GE))]
 >;
-//let AMDILOp = AMDILInst.FGE;
 
 def SNE : R600_2OP <
   0xB, "SETNE",
@@ -353,8 +349,6 @@ def SNE : R600_2OP <
    (selectcc (f32 R600_Reg32:$src0), R600_Reg32:$src1, FP_ONE, FP_ZERO,
     COND_NE))]
 >;
-
-//  let AMDILOp = AMDILInst.FNE;
 
 def FRACT : R600_1OP <
   0x10, "FRACT",
@@ -442,8 +436,6 @@ def SETE_INT : R600_2OP <
    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETEQ))]
 >;
 
-//  let AMDILOp = AMDILInst.IEQ;
-
 def SETGT_INT : R600_2OP <
   0x3B, "SGT_INT",
   [(set (i32 R600_Reg32:$dst),
@@ -455,16 +447,12 @@ def SETGE_INT : R600_2OP <
 	[(set (i32 R600_Reg32:$dst),
    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETGE))]
 >;
-//  let AMDILOp = AMDILInst.IGE;
-
 
 def SETNE_INT : R600_2OP <
   0x3D, "SETNE_INT",
   [(set (i32 R600_Reg32:$dst),
    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETNE))]
 >;
-//let AMDILOp = AMDILInst.INE;
-
 
 def SETGT_UINT : R600_2OP <
   0x3E, "SETGT_UINT",
@@ -472,14 +460,11 @@ def SETGT_UINT : R600_2OP <
    (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGT))]
 >;
 
-//  let AMDILOp = AMDILInst.UGT;
-
 def SETGE_UINT : R600_2OP <
   0x3F, "SETGE_UINT",
   [(set (i32 R600_Reg32:$dst),
     (selectcc (i32 R600_Reg32:$src0), R600_Reg32:$src1, -1, 0, SETUGE))]
 >;
-//  let AMDILOp = AMDILInst.UGE;
 
 def CNDE_INT : R600_3OP <
 	0x1C, "CNDE_INT",
@@ -563,8 +548,6 @@ def TEX_SAMPLE_C_G : R600_TEX <
   []
 >;
 
-} // End Gen R600_CAYMAN
-
 def KILP : Pat <
   (int_AMDGPU_kilp),
   (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO)))
@@ -642,9 +625,8 @@ class LOG_CLAMPED_Common <bits<32> inst> : R600_1OP <
 
 class LOG_IEEE_Common <bits<32> inst> : R600_1OP <
   inst, "LOG_IEEE",
-  []> {
-  let AMDILOp = AMDILInst.LOG_f32;
-}
+  [(set R600_Reg32:$dst, (int_AMDIL_log R600_Reg32:$src))]
+>;
 
 class LSHL_Common <bits<32> inst> : R600_2OP <
   inst, "LSHL $dst, $src0, $src1",
@@ -688,9 +670,8 @@ class RECIP_CLAMPED_Common <bits<32> inst> : R600_1OP <
 
 class RECIP_IEEE_Common <bits<32> inst> : R600_1OP <
   inst, "RECIP_IEEE",
-  [(set R600_Reg32:$dst, (int_AMDGPU_rcp R600_Reg32:$src))]> {
-  let AMDILOp = AMDILInst.RSQ_f32;
-}
+  [(set R600_Reg32:$dst, (int_AMDGPU_rcp R600_Reg32:$src))]
+>;
 
 class RECIP_UINT_Common <bits<32> inst> : R600_1OP <
   inst, "RECIP_INT $dst, $src",
@@ -709,15 +690,13 @@ class RECIPSQRT_IEEE_Common <bits<32> inst> : R600_1OP <
 
 class SIN_Common <bits<32> inst> : R600_1OP <
   inst, "SIN",
-  []>{
-  let AMDILOp = AMDILInst.SIN_f32;
+  [(set R600_Reg32:$dst, (int_AMDIL_sin R600_Reg32:$src))]>{
   let Trig = 1;
 }
 
 class COS_Common <bits<32> inst> : R600_1OP <
   inst, "COS",
-  []> {
-  let AMDILOp = AMDILInst.COS_f32;
+  [(set R600_Reg32:$dst, (int_AMDIL_cos R600_Reg32:$src))]> {
   let Trig = 1;
 }
 
@@ -744,8 +723,6 @@ class TGSI_LIT_Z_Common <InstR600 mul_lit, InstR600 log_clamped, InstR600 exp_ie
 /* ---------------------- */
 
 let Predicates = [isR600] in {
-
-let Gen = AMDGPUGen.R600 in {
 
   def MUL_LIT_r600 : MUL_LIT_Common<0x0C>;
   def MULADD_r600 : MULADD_Common<0x10>;
@@ -774,8 +751,6 @@ let Gen = AMDGPUGen.R600 in {
   def MULHI_UINT_r600 : MULHI_UINT_Common<0x76>;
   def RECIP_UINT_r600 : RECIP_UINT_Common <0x77>;
 
-} // End AMDGPUGen.R600
-
   def DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
   def POW_r600 : POW_Common<LOG_IEEE_r600, EXP_IEEE_r600, MUL, GPRF32>;
   def SSG_r600 : SSG_Common<CNDGT_r600, CNDGE_r600>;
@@ -800,8 +775,6 @@ class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
 
 
 let Predicates = [isEG] in {
-
-let Gen = AMDGPUGen.EG in {
 
 def RAT_WRITE_CACHELESS_eg :
     EG_CF_RAT <0x57, 0x2, (outs), (ins R600_TReg32_X:$rw_gpr,
@@ -891,9 +864,6 @@ def VTX_READ_eg : InstR600ISA < (outs R600_TReg32_X:$dst),
 */
 }
 
-
-
-} // End AMDGPUGen.EG
 /* XXX: Need to convert PTR to rat_id */
 /*
 def : Pat <(store_global (f32 R600_Reg32:$value), node:$ptr),
@@ -923,8 +893,6 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   (trig (MUL (MOV (LOADCONST_i32 CONST.TWO_PI_INV)), R600_Reg32:$src))
 >;
 
-let Gen = AMDGPUGen.EG_CAYMAN in {
-
   def MULADD_eg : MULADD_Common<0x14>;
   def ASHR_eg : ASHR_Common<0x15>;
   def LSHR_eg : LSHR_Common<0x16>;
@@ -952,8 +920,6 @@ let Gen = AMDGPUGen.EG_CAYMAN in {
   def DOT4_eg : DOT4_Common<0xBE>;
   def CUBE_eg : CUBE_Common<0xC0>;
 
-} // End AMDGPUGen.EG_CAYMAN
-
   def DIV_eg : DIV_Common<RECIP_IEEE_eg>;
   def POW_eg : POW_Common<LOG_IEEE_eg, EXP_IEEE_eg, MUL, GPRF32>;
   def SSG_eg : SSG_Common<CNDGT_eg, CNDGE_eg>;
@@ -966,12 +932,8 @@ let Gen = AMDGPUGen.EG_CAYMAN in {
 
 let Predicates = [isCayman] in {
 
-let Gen = AMDGPUGen.CAYMAN in {
-
   /* XXX: I'm not sure if this opcode is correct. */
   def RECIP_UINT_cm : RECIP_UINT_Common<0x77>;
-
-} // End AMDGPUGen.CAYMAN
 
 } // End isCayman
 

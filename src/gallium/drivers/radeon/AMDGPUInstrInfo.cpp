@@ -21,52 +21,7 @@
 using namespace llvm;
 
 AMDGPUInstrInfo::AMDGPUInstrInfo(AMDGPUTargetMachine &tm)
-  : AMDILInstrInfo(tm), TM(tm)
-{
-  const AMDILDevice * dev = TM.getSubtarget<AMDILSubtarget>().device();
-  for (unsigned i = 0; i < AMDIL::INSTRUCTION_LIST_END; i++) {
-    const MCInstrDesc & instDesc = get(i);
-    uint32_t instGen = (instDesc.TSFlags >> 40) & 0x7;
-    uint32_t inst = (instDesc.TSFlags >>  48) & 0xffff;
-    if (inst == 0) {
-      continue;
-    }
-    switch (instGen) {
-    case AMDGPUInstrInfo::R600_CAYMAN:
-      if (dev->getGeneration() > AMDILDeviceInfo::HD6XXX) {
-        continue;
-      }
-      break;
-    case AMDGPUInstrInfo::R600:
-      if (dev->getGeneration() != AMDILDeviceInfo::HD4XXX) {
-        continue;
-      }
-      break;
-    case AMDGPUInstrInfo::EG_CAYMAN:
-      if (dev->getGeneration() < AMDILDeviceInfo::HD5XXX
-          || dev->getGeneration() > AMDILDeviceInfo::HD6XXX) {
-        continue;
-      }
-      break;
-    case AMDGPUInstrInfo::CAYMAN:
-      if (dev->getDeviceFlag() != OCL_DEVICE_CAYMAN) {
-        continue;
-      }
-      break;
-    case AMDGPUInstrInfo::SI:
-      if (dev->getGeneration() != AMDILDeviceInfo::HD7XXX) {
-        continue;
-      }
-      break;
-    default:
-      abort();
-      break;
-    }
-
-    unsigned amdilOpcode = GetRealAMDILOpcode(inst);
-    amdilToISA[amdilOpcode] = instDesc.Opcode;
-  }
-}
+  : AMDILInstrInfo(tm), TM(tm) { }
 
 MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const
@@ -98,14 +53,3 @@ MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction 
 
   return newInstr;
 }
-
-unsigned AMDGPUInstrInfo::getISAOpcode(unsigned opcode) const
-{
-  if (amdilToISA.count(opcode) == 0) {
-    return opcode;
-  } else {
-    return amdilToISA.find(opcode)->second;
-  }
-}
-
-#include "AMDGPUInstrEnums.include"

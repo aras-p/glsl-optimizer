@@ -2,7 +2,6 @@
 GENERATED_SOURCES := \
 	R600Intrinsics.td		\
 	R600RegisterInfo.td		\
-	AMDGPUInstrEnums.td		\
 	SIRegisterInfo.td		\
 	SIRegisterGetHWRegNum.inc		\
 	AMDILGenRegisterInfo.inc	\
@@ -13,9 +12,7 @@ GENERATED_SOURCES := \
 	AMDILGenSubtargetInfo.inc		\
 	AMDILGenEDInfo.inc		\
 	AMDILGenIntrinsics.inc		\
-	AMDILGenCodeEmitter.inc	\
-	AMDGPUInstrEnums.h.include	\
-	AMDGPUInstrEnums.include
+	AMDILGenCodeEmitter.inc
 
 CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\

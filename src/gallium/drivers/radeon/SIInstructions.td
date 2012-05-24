@@ -12,7 +12,6 @@ def isSI : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDILDeviceInfo::HD7XXX">;
 
 let Predicates = [isSI] in {
-let Gen = AMDGPUGen.SI  in {
 
 def S_MOV_B32 : SOP1_32 <0x00000003, "S_MOV_B32", []>;
 def S_MOV_B64 : SOP1_64 <0x00000004, "S_MOV_B64", []>;
@@ -462,7 +461,7 @@ def IMAGE_SAMPLE : MIMG_Load_Helper <0x00000020, "IMAGE_SAMPLE">;
 //def V_NOP : VOP1_ <0x00000000, "V_NOP", []>;
 
 let neverHasSideEffects = 1 in {
-defm V_MOV_B32 : VOP1_32 <0x00000001, "V_MOV_B32", [], AMDILInst.MOVE_f32>;
+defm V_MOV_B32 : VOP1_32 <0x00000001, "V_MOV_B32", []>;
 }  // End neverHasSideEffects
 defm V_READFIRSTLANE_B32 : VOP1_32 <0x00000002, "V_READFIRSTLANE_B32", []>;
 //defm V_CVT_I32_F64 : VOP1_32 <0x00000003, "V_CVT_I32_F64", []>;
@@ -864,8 +863,6 @@ def VS_LOAD_BUFFER_INDEX : InstSI <
 } // end usesCustomInserter 
 
 } // end IsCodeGenOnly, isPseudo
-
-} // end Gen = AMDGPUGen.SI
 
 /* int_SI_vs_load_input */
 def : Pat<

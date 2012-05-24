@@ -44,21 +44,18 @@ bool AMDGPU::isTransOp(unsigned opcode)
   switch(opcode) {
     default: return false;
 
-    case AMDIL::COS_f32:
     case AMDIL::COS_r600:
     case AMDIL::COS_eg:
     case AMDIL::RSQ_f32:
     case AMDIL::MULLIT:
     case AMDIL::MUL_LIT_r600:
     case AMDIL::MUL_LIT_eg:
-    case AMDIL::SIN_f32:
     case AMDIL::EXP_IEEE_r600:
     case AMDIL::EXP_IEEE_eg:
     case AMDIL::LOG_CLAMPED_r600:
     case AMDIL::LOG_IEEE_r600:
     case AMDIL::LOG_CLAMPED_eg:
     case AMDIL::LOG_IEEE_eg:
-    case AMDIL::LOG_f32:
       return true;
   }
 }

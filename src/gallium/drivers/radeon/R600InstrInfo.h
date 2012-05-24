@@ -22,13 +22,6 @@
 
 namespace llvm {
 
-  struct InstrGroup {
-    unsigned amdil;
-    unsigned r600;
-    unsigned eg;
-    unsigned cayman;
-  };
-
   class AMDGPUTargetMachine;
   class MachineFunction;
   class MachineInstr;

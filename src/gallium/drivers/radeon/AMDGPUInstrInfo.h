@@ -30,7 +30,6 @@ class MachineInstrBuilder;
 class AMDGPUInstrInfo : public AMDILInstrInfo {
 private:
   AMDGPUTargetMachine & TM;
-  std::map<unsigned, unsigned> amdilToISA;
 
 public:
   explicit AMDGPUInstrInfo(AMDGPUTargetMachine &tm);
@@ -39,14 +38,13 @@ public:
 
   /// getISAOpcode - This function takes an AMDIL opcode as an argument and
   /// returns an equivalent ISA opcode.
-  virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
+  virtual unsigned getISAOpcode(unsigned AMDILopcode) const = 0;
 
   /// convertToISA - Convert the AMDIL MachineInstr to a supported ISA
   /// MachineInstr
   virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const;
 
-  #include "AMDGPUInstrEnums.h.include"
 };
 
 } // End llvm namespace
