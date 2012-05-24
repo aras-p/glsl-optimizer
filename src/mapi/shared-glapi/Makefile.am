@@ -13,6 +13,7 @@ glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
 	$(call glapi_gen_mapi,$<,shared-glapi)
 
 BUILT_SOURCES = glapi_mapi_tmp.h
+CLEANFILES = $(BUILT_SOURCES)
 
 AM_CPPFLAGS =							\
 	$(DEFINES)						\
