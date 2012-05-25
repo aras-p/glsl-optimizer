@@ -8787,6 +8787,15 @@
 <!-- Extension number 29 is not listed in the extension registry. -->
 
 <category name="GL_EXT_vertex_array" number="30">
+    <!-- These enums are part of the extension only. -->
+    <enum name="VERTEX_ARRAY_COUNT_EXT"                   value="0x807D"/>
+    <enum name="NORMAL_ARRAY_COUNT_EXT"                   value="0x8080"/>
+    <enum name="COLOR_ARRAY_COUNT_EXT"                    value="0x8084"/>
+    <enum name="INDEX_ARRAY_COUNT_EXT"                    value="0x8087"/>
+    <enum name="TEXTURE_COORD_ARRAY_COUNT_EXT"            value="0x808B"/>
+    <enum name="EDGE_FLAG_ARRAY_COUNT_EXT"                value="0x808D"/>
+
+
     <function name="ArrayElementEXT" alias="ArrayElement">
         <param name="i" type="GLint"/>
     </function>
