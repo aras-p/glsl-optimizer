@@ -8,7 +8,7 @@
 
 <category name="GL_ARB_texture_storage" number="117">
 
-  <enum name="GL_TEXTURE_IMMUTABLE_FORMAT" value="0x912F"/>
+  <enum name="TEXTURE_IMMUTABLE_FORMAT" value="0x912F"/>
 
   <function name="TexStorage1D" offset="assign">
     <param name="target" type="GLenum"/>
