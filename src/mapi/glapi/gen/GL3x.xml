@@ -585,6 +585,11 @@
 
 <category name="3.3">
   <!-- There are other new functions and tokens defined by other extensions -->
+  <enum name="TEXTURE_SWIZZLE_R"                value="0x8E42"/>
+  <enum name="TEXTURE_SWIZZLE_G"                value="0x8E43"/>
+  <enum name="TEXTURE_SWIZZLE_B"                value="0x8E44"/>
+  <enum name="TEXTURE_SWIZZLE_A"                value="0x8E45"/>
+  <enum name="TEXTURE_SWIZZLE_RGBA"             value="0x8E46"/>
 
   <function name="VertexAttribDivisor" offset="assign">
     <param name="index" type="GLuint"/>
