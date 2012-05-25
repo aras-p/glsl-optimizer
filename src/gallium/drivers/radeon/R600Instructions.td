@@ -1164,4 +1164,9 @@ def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 5, sel_y>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 6, sel_z>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 7, sel_w>;
 
+// bitconvert patterns
+
+def : BitConvert <i32, f32, R600_Reg32>;
+def : BitConvert <f32, i32, R600_Reg32>;
+
 } // End isR600toCayman Predicate

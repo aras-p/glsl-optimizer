@@ -164,15 +164,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           break;
         }
 
-      case AMDIL::IL_ASINT_f32:
-      case AMDIL::IL_ASINT_i32:
-      case AMDIL::IL_ASFLOAT_f32:
-      case AMDIL::IL_ASFLOAT_i32:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::COPY))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(1));
-        break;
-
       case AMDIL::ILT:
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_INT))
                 .addOperand(MI.getOperand(0))

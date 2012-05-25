@@ -115,6 +115,12 @@ class Insert_Element <ValueType elem_type, ValueType vec_type,
   (INSERT_SUBREG vec_class:$vec, elem_class:$elem, sub_reg)
 >;
 
+// bitconvert pattern
+class BitConvert <ValueType dt, ValueType st, RegisterClass rc> : Pat <
+  (dt (bitconvert (st rc:$src0))),
+  (dt rc:$src0)
+>;
+
 include "R600Instructions.td"
 
 include "SIInstrInfo.td"
