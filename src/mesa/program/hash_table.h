@@ -114,6 +114,10 @@ extern void hash_table_insert(struct hash_table *ht, void *data,
 /**
  * Add an element to a hash table with replacement
  *
+ * \return
+ * 1 if it did replace the the value (in which case the old key is kept), 0 if
+ * it did not replace the value (in which case the new key is kept).
+ *
  * \warning
  * If \c key is already in the hash table, \c data will \b replace the most
  * recently inserted \c data (see the warning in \c hash_table_insert) for
@@ -121,7 +125,7 @@ extern void hash_table_insert(struct hash_table *ht, void *data,
  *
  * \sa hash_table_insert
  */
-extern void hash_table_replace(struct hash_table *ht, void *data,
+extern int hash_table_replace(struct hash_table *ht, void *data,
     const void *key);
 
 /**
@@ -219,6 +223,7 @@ public:
     */
    void clear()
    {
+      hash_table_call_foreach(this->ht, delete_key, NULL);
       hash_table_clear(this->ht);
    }
 
@@ -258,9 +263,12 @@ public:
        * because UINT_MAX+1 = 0.
        */
       assert(value != UINT_MAX);
-      hash_table_replace(this->ht,
-			 (void *) (intptr_t) (value + 1),
-			 strdup(key));
+      char *dup_key = strdup(key);
+      int result = hash_table_replace(this->ht,
+				      (void *) (intptr_t) (value + 1),
+				      dup_key);
+      if (result)
+	 free(dup_key);
    }
 
 private:

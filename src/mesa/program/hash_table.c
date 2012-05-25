@@ -149,7 +149,7 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
     insert_at_head(& ht->buckets[bucket], & node->link);
 }
 
-void
+bool
 hash_table_replace(struct hash_table *ht, void *data, const void *key)
 {
     const unsigned hash_value = (*ht->hash)(key);
@@ -162,7 +162,7 @@ hash_table_replace(struct hash_table *ht, void *data, const void *key)
 
        if ((*ht->compare)(hn->key, key) == 0) {
 	  hn->data = data;
-	  return;
+	  return true;
        }
     }
 
@@ -172,6 +172,7 @@ hash_table_replace(struct hash_table *ht, void *data, const void *key)
     hn->key = key;
 
     insert_at_head(& ht->buckets[bucket], & hn->link);
+    return false;
 }
 
 void
