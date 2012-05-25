@@ -359,7 +359,7 @@ Value *Value::get(Iterator &it)
    return reinterpret_cast<Value *>(it.get());
 }
 
-bool BasicBlock::reachableBy(BasicBlock *by, BasicBlock *term)
+bool BasicBlock::reachableBy(const BasicBlock *by, const BasicBlock *term)
 {
    return cfg.reachableBy(&by->cfg, &term->cfg);
 }

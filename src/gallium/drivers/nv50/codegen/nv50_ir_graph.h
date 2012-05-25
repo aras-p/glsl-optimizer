@@ -117,7 +117,7 @@ public:
 
       inline Node *parent() const; // returns NULL if count(incident edges) != 1
 
-      bool reachableBy(Node *node, Node *term);
+      bool reachableBy(const Node *node, const Node *term) const;
 
       inline bool visit(int);
       inline int  getSequence() const;

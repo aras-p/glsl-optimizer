@@ -23,6 +23,7 @@
 #include "nv50_ir_graph.h"
 #include <limits>
 #include <list>
+#include <stack>
 #include "nv50_ir.h"
 
 namespace nv50_ir {
@@ -165,16 +166,17 @@ Graph::Edge::Edge(Node *org, Node *tgt, Type kind)
 }
 
 bool
-Graph::Node::reachableBy(Node *node, Node *term)
+Graph::Node::reachableBy(const Node *node, const Node *term) const
 {
-   Stack stack;
-   Node *pos;
+   std::stack<const Node *> stack;
+   const Node *pos = NULL;
    const int seq = graph->nextSequence();
 
    stack.push(node);
 
-   while (stack.getSize()) {
-      pos = reinterpret_cast<Node *>(stack.pop().u.p);
+   while (!stack.empty()) {
+      pos = stack.top();
+      stack.pop();
 
       if (pos == this)
          return true;

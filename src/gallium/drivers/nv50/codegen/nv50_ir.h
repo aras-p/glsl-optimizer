@@ -864,7 +864,7 @@ public:
    inline bool isTerminated() const { return exit && exit->terminator; }
 
    bool dominatedBy(BasicBlock *bb);
-   inline bool reachableBy(BasicBlock *by, BasicBlock *term);
+   inline bool reachableBy(const BasicBlock *by, const BasicBlock *term);
 
    // returns mask of conditional out blocks
    // e.g. 3 for IF { .. } ELSE { .. } ENDIF, 1 for IF { .. } ENDIF
