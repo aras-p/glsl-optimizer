@@ -9381,6 +9381,9 @@
 </category>
 
 <category name="GL_EXT_compiled_vertex_array" number="97">
+    <enum name="ARRAY_ELEMENT_LOCK_FIRST_EXT"             value="0x81A8"/>
+    <enum name="ARRAY_ELEMENT_LOCK_COUNT_EXT"             value="0x81A9"/>
+
     <function name="LockArraysEXT" offset="assign">
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
