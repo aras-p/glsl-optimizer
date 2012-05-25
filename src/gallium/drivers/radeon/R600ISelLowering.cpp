@@ -101,6 +101,13 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     lowerImplicitParameter(MI, *BB, MRI, 8);
     break;
 
+  case AMDIL::CLAMP_R600:
+    MI->getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+           .addOperand(MI->getOperand(0))
+           .addOperand(MI->getOperand(1));
+    break;
+
   case AMDIL::FABS_R600:
     MI->getOperand(1).addTargetFlag(MO_FLAG_ABS);
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))

@@ -39,6 +39,16 @@ int TWO_PI_INV = 0x3e22f983;
 }
 def CONST : Constants;
 
+def FP_ZERO : PatLeaf <
+  (fpimm),
+  [{return N->getValueAPF().isZero();}]
+>;
+
+def FP_ONE : PatLeaf <
+  (fpimm),
+  [{return N->isExactlyValue(1.0);}]
+>;
+
 let isCodeGenOnly = 1 in {
 
   def MASK_WRITE : AMDGPUShaderInst <
@@ -49,6 +59,13 @@ let isCodeGenOnly = 1 in {
   >;
 
 let isPseudo = 1, usesCustomInserter = 1  in {
+
+class CLAMP <RegisterClass rc> : AMDGPUShaderInst <
+  (outs rc:$dst),
+  (ins rc:$src0),
+  "CLAMP $dst, $src0",
+  [(set rc:$dst, (int_AMDIL_clamp rc:$src0, (f32 FP_ZERO), (f32 FP_ONE)))]
+>;
 
 class FABS <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),

@@ -119,16 +119,6 @@ def TEX_SHADOW : PatLeaf<
   }]
 >;
 
-def FP_ZERO : PatLeaf <
-  (fpimm),
-  [{return N->getValueAPF().isZero();}]
->;
-
-def FP_ONE : PatLeaf <
-  (fpimm),
-  [{return N->isExactlyValue(1.0);}]
->;
-
 def COND_EQ : PatLeaf <
   (cond),
   [{switch(N->get()){{default: return false;
@@ -1078,6 +1068,7 @@ def TXD_SHADOW: AMDGPUShaderInst <
 
 } // End isCodeGenOnly = 1
 
+def CLAMP_R600 :  CLAMP <R600_Reg32>;
 def FABS_R600 : FABS<R600_Reg32>;
 
 let isPseudo = 1 in {

@@ -46,6 +46,21 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
 
+  case AMDIL::CLAMP_SI:
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
+           .addOperand(MI->getOperand(0))
+           .addOperand(MI->getOperand(1))
+          /* VSRC1-2 are unused, but we still need to fill all the
+           * operand slots, so we just reuse the VSRC0 operand */
+           .addOperand(MI->getOperand(1))
+           .addOperand(MI->getOperand(1))
+           .addImm(0) // ABS
+           .addImm(1) // CLAMP
+           .addImm(0) // OMOD
+           .addImm(0); // NEG
+    MI->eraseFromParent();
+    break;
+
   case AMDIL::FABS_SI:
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
                  .addOperand(MI->getOperand(0))

@@ -25,9 +25,6 @@ private:
   const SIRegisterInfo RI;
   AMDGPUTargetMachine &TM;
 
-  MachineInstr * convertCLAMP_f32(MachineInstr & clampInstr,
-                                  MachineFunction &MF, DebugLoc DL) const;
-
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 

@@ -83,23 +83,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                 .addOperand(MI.getOperand(1));
         break;
 
-      case AMDIL::CLAMP_f32:
-        {
-          MachineOperand lowOp = MI.getOperand(2);
-          MachineOperand highOp = MI.getOperand(3);
-        if (lowOp.isReg() && highOp.isReg()
-            && lowOp.getReg() == AMDIL::ZERO && highOp.getReg() == AMDIL::ONE) {
-          MI.getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::MOV))
-                  .addOperand(MI.getOperand(0))
-                  .addOperand(MI.getOperand(1));
-        } else {
-          /* XXX: Handle other cases */
-          abort();
-        }
-        break;
-        }
-
       /* XXX: Figure out the semantics of DIV_INF_f32 and make sure this is OK */
 /*      case AMDIL::DIV_INF_f32:
         {
@@ -218,16 +201,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           }
 
           if (canInline) {
-            MachineOperand * use = dstOp.getNextOperandForReg();
-            /* The lowering operation for CLAMP needs to have the immediates
-             * as operands, so we must propagate them. */
-            while (use) {
-              MachineOperand * next = use->getNextOperandForReg();
-              if (use->getParent()->getOpcode() == AMDIL::CLAMP_f32) {
-                use->setReg(inlineReg);
-              }
-              use = next;
-            }
             BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::COPY))
                     .addOperand(dstOp)
                     .addReg(inlineReg);

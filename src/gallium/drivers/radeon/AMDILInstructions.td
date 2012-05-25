@@ -230,7 +230,6 @@ defm DIV  : BinaryIntrinsicFloat<IL_OP_DIV, int_AMDIL_div>;
   }
 }
   let mayLoad = 0, mayStore=0 in {
-defm CLAMP : TernaryIntrinsicFloat<IL_OP_CLAMP, int_AMDIL_clamp>;
 defm FMA  : TernaryIntrinsicFloat<IL_OP_FMA, int_AMDIL_fma>;
 defm LERP  : TernaryIntrinsicFloat<IL_OP_LERP, int_AMDIL_lerp>;
   }
