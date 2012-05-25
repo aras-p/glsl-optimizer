@@ -12158,6 +12158,13 @@
 </category>
 
 <category name="GL_NV_fragment_program" number="282">
+    <enum name="FRAGMENT_PROGRAM_NV"                      value="0x8870"/>
+    <enum name="MAX_TEXTURE_COORDS_NV"                    value="0x8871"/>
+    <enum name="MAX_TEXTURE_IMAGE_UNITS_NV"               value="0x8872"/>
+    <enum name="FRAGMENT_PROGRAM_BINDING_NV"              value="0x8873"/>
+    <enum name="MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV" value="0x8868"/>
+    <enum name="PROGRAM_ERROR_STRING_NV"                  value="0x8874"/>
+
     <function name="ProgramNamedParameter4fNV" offset="assign" vectorequiv="ProgramNamedParameter4fvNV">
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
