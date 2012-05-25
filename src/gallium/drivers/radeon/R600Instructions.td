@@ -901,7 +901,6 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   def CNDGT_eg : CNDGT_Common<0x1A>;
   def CNDGE_eg : CNDGE_Common<0x1B>;
   def MUL_LIT_eg : MUL_LIT_Common<0x1F>;
-  def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50>;
   def EXP_IEEE_eg : EXP_IEEE_Common<0x81>;
   def LOG_CLAMPED_eg : LOG_CLAMPED_Common<0x82>;
   def LOG_IEEE_eg : LOG_IEEE_Common<0x83>;
@@ -916,7 +915,6 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   def MULLO_UINT_eg : MULLO_UINT_Common<0x91>;
   def MULHI_UINT_eg : MULHI_UINT_Common<0x92>;
   def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
-  def INT_TO_FLT_eg : INT_TO_FLT_Common<0x9B>;
   def DOT4_eg : DOT4_Common<0xBE>;
   def CUBE_eg : CUBE_Common<0xC0>;
 
@@ -927,6 +925,15 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
 
   def : TRIG_eg <SIN_eg, int_AMDGPU_sin>;
   def : TRIG_eg <COS_eg, int_AMDGPU_cos>;
+
+  def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50> {
+    let Pattern = [];
+  }
+
+  def INT_TO_FLT_eg : INT_TO_FLT_Common<0x9B>;
+
+  def : Pat<(fp_to_sint R600_Reg32:$src),
+    (FLT_TO_INT_eg (TRUNC R600_Reg32:$src))>;
 
 }
 
