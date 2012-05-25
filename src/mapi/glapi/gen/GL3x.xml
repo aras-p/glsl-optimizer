@@ -32,6 +32,8 @@
   <enum name="MAX_ARRAY_TEXTURE_LAYERS"         value="0x88FF"/>
   <enum name="MIN_PROGRAM_TEXEL_OFFSET"         value="0x8904"/>
   <enum name="MAX_PROGRAM_TEXEL_OFFSET"         value="0x8905"/>
+  <enum name="CLAMP_VERTEX_COLOR"               value="0x891A"/>
+  <enum name="CLAMP_FRAGMENT_COLOR"             value="0x891B"/>
   <enum name="CLAMP_READ_COLOR"                 value="0x891C"/>
   <enum name="FIXED_ONLY"                       value="0x891D"/>
   <enum name="MAX_VARYING_COMPONENTS"           value="0x8B4B"/>
