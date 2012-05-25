@@ -144,15 +144,17 @@ static void llvm_emit_tex(
 {
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
 	LLVMValueRef args[6];
-	unsigned c;
+	unsigned c, sampler_src;
 
 	assert(emit_data->arg_count + 2 <= Elements(args));
 
 	for (c = 0; c < emit_data->arg_count; ++c)
 		args[c] = emit_data->args[c];
 
+	sampler_src = emit_data->inst->Instruction.NumSrcRegs-1;
+
 	args[c++] = lp_build_const_int32(gallivm,
-					emit_data->inst->Src[1].Register.Index);
+					emit_data->inst->Src[sampler_src].Register.Index);
 	args[c++] = lp_build_const_int32(gallivm,
 					emit_data->inst->Texture.Texture);
 
