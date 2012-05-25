@@ -50,7 +50,6 @@ def INTTOANY_i16: OneInOneOut<IL_OP_MOV, (outs GPRI16:$dst), (ins GPRI32:$src0),
 //===---------------------------------------------------------------------===//
 // Signed 32bit integer math instructions start here
 //===---------------------------------------------------------------------===//
-defm NEGATE     : UnaryOpMCi32<IL_OP_I_NEGATE, IL_inegate>;
 // get rid of the addri via the tablegen instead of custom lowered instruction
 defm EADD   : BinaryOpMCi32<IL_OP_I_ADD, adde>;
 def INTTOANY_i32: OneInOneOut<IL_OP_MOV, (outs GPRI32:$dst), (ins GPRI32:$src0),
@@ -238,10 +237,6 @@ defm NEAR : UnaryOpMCf32<IL_OP_ROUND_NEAR, fnearbyint>;
 defm RND_Z : UnaryOpMCf32<IL_OP_ROUND_ZERO, ftrunc>;
 
 // This opcode has custom swizzle pattern encoded in Swizzle Encoder
-def NEG_f32         : OneInOneOut<IL_OP_MOV, (outs GPRF32:$dst),
-  (ins GPRF32:$src0),
-    !strconcat(IL_OP_MOV.Text, " $dst, $src0"),
-    [(set GPRF32:$dst, (fneg GPRF32:$src0))]>;
 def INTTOANY_f32    : OneInOneOut<IL_OP_MOV, (outs GPRF32:$dst),
   (ins GPRI32:$src0),
     !strconcat(IL_OP_MOV.Text, " $dst, $src0"),

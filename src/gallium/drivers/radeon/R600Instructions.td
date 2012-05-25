@@ -1070,6 +1070,7 @@ def TXD_SHADOW: AMDGPUShaderInst <
 
 def CLAMP_R600 :  CLAMP <R600_Reg32>;
 def FABS_R600 : FABS<R600_Reg32>;
+def FNEG_R600 : FNEG<R600_Reg32>;
 
 let isPseudo = 1 in {
 

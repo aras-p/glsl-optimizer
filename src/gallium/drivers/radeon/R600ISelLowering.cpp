@@ -115,6 +115,13 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
            .addOperand(MI->getOperand(1));
     break;
 
+  case AMDIL::FNEG_R600:
+    MI->getOperand(1).addTargetFlag(MO_FLAG_NEG);
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+            .addOperand(MI->getOperand(0))
+            .addOperand(MI->getOperand(1));
+    break;
+
   case AMDIL::R600_LOAD_CONST:
     {
       int64_t RegIndex = MI->getOperand(1).getImm();

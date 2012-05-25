@@ -224,23 +224,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         continue;
       }
 
-      case AMDIL::NEGATE_i32:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SUB_INT))
-                .addOperand(MI.getOperand(0))
-                .addReg(AMDIL::ZERO)
-                .addOperand(MI.getOperand(1));
-        break;
-
-      case AMDIL::NEG_f32:
-        {
-            MI.getOperand(1).addTargetFlag(MO_FLAG_NEG);
-            BuildMI(MBB, I, MBB.findDebugLoc(I),
-                    TII->get(TII->getISAOpcode(AMDIL::MOV)))
-            .addOperand(MI.getOperand(0))
-            .addOperand(MI.getOperand(1));
-          break;
-        }
-
       case AMDIL::ULT:
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_UINT))
                 .addOperand(MI.getOperand(0))
