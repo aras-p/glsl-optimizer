@@ -7965,7 +7965,12 @@
 <xi:include href="ARB_blend_func_extended.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- 79. GL_ARB_explicit_attrib_location -->
-<!-- 80. GL_ARB_occlusion_query2 -->
+
+<category name="GL_ARB_occlusion_query2" number="80">
+    <enum name="ANY_SAMPLES_PASSED"            count="1"  value="0x8C2F">
+        <size name="GetQueryiv" mode="get"/>
+    </enum>
+</category>
 
 <xi:include href="ARB_sampler_objects.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
