@@ -78,9 +78,11 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       mapped_indices = lp->index_buffer.user_buffer;
       if (!mapped_indices)
          mapped_indices = llvmpipe_resource_data(lp->index_buffer.buffer);
-   }
 
-   draw_set_mapped_index_buffer(draw, mapped_indices);
+      draw_set_indexes(draw,
+                       (ubyte *) mapped_indices + lp->index_buffer.offset,
+                       lp->index_buffer.index_size);
+   }
 
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_vertex_sampler_views,
@@ -96,7 +98,7 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (mapped_indices) {
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0);
    }
    llvmpipe_cleanup_vertex_sampling(lp);
 

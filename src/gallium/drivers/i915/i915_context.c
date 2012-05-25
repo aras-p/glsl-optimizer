@@ -71,8 +71,10 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       mapped_indices = i915->index_buffer.user_buffer;
       if (!mapped_indices)
          mapped_indices = i915_buffer(i915->index_buffer.buffer)->data;
+      draw_set_indexes(draw,
+                       (ubyte *) mapped_indices + i915->index_buffer.offset,
+                       i915->index_buffer.index_size);
    }
-   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    if (i915->constants[PIPE_SHADER_VERTEX])
       draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
@@ -91,7 +93,7 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_vbo(i915->draw, info);
 
    if (mapped_indices)
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0);
 
    if (i915->num_vertex_sampler_views > 0)
       i915_cleanup_vertex_sampling(i915);

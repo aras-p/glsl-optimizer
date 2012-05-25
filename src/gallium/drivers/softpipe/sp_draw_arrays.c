@@ -88,9 +88,12 @@ softpipe_draw_vbo(struct pipe_context *pipe,
       mapped_indices = sp->index_buffer.user_buffer;
       if (!mapped_indices)
          mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
+
+      draw_set_indexes(draw,
+                       (ubyte *) mapped_indices + sp->index_buffer.offset,
+                       sp->index_buffer.index_size);
    }
 
-   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    for (i = 0; i < sp->num_so_targets; i++) {
       void *buf = softpipe_resource(sp->so_targets[i]->target.buffer)->data;
@@ -108,7 +111,7 @@ softpipe_draw_vbo(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (mapped_indices) {
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0);
    }
 
    draw_set_mapped_so_targets(draw, 0, NULL);

@@ -627,25 +627,23 @@ void draw_set_render( struct draw_context *draw,
 }
 
 
-void
-draw_set_index_buffer(struct draw_context *draw,
-                      const struct pipe_index_buffer *ib)
-{
-   if (ib)
-      memcpy(&draw->pt.index_buffer, ib, sizeof(draw->pt.index_buffer));
-   else
-      memset(&draw->pt.index_buffer, 0, sizeof(draw->pt.index_buffer));
-}
-
-
 /**
- * Tell drawing context where to find mapped index/element buffer.
+ * Tell the draw module where vertex indexes/elements are located, and
+ * their size (in bytes).
+ *
+ * Note: the caller must apply the pipe_index_buffer::offset value to
+ * the address.  The draw module doesn't do that.
  */
 void
-draw_set_mapped_index_buffer(struct draw_context *draw,
-                             const void *elements)
+draw_set_indexes(struct draw_context *draw,
+                 const void *elements, unsigned elem_size)
 {
-    draw->pt.user.elts = elements;
+   assert(elem_size == 0 ||
+          elem_size == 1 ||
+          elem_size == 2 ||
+          elem_size == 4);
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = elem_size;
 }
 
 

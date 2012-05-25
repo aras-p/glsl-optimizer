@@ -232,28 +232,24 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       uint j;
 
       if (draw->pt.user.eltSize) {
-         const char *elts;
-
          /* indexed arrays */
-         elts = (const char *) draw->pt.user.elts;
-         elts += draw->pt.index_buffer.offset;
 
          switch (draw->pt.user.eltSize) {
          case 1:
             {
-               const ubyte *elem = (const ubyte *) elts;
+               const ubyte *elem = (const ubyte *) draw->pt.user.elts;
                ii = elem[start + i];
             }
             break;
          case 2:
             {
-               const ushort *elem = (const ushort *) elts;
+               const ushort *elem = (const ushort *) draw->pt.user.elts;
                ii = elem[start + i];
             }
             break;
          case 4:
             {
-               const uint *elem = (const uint *) elts;
+               const uint *elem = (const uint *) draw->pt.user.elts;
                ii = elem[start + i];
             }
             break;
@@ -368,28 +364,25 @@ draw_pt_arrays_restart(struct draw_context *draw,
 
    if (draw->pt.user.elts) {
       /* indexed prims (draw_elements) */
-      const char *elts =
-         (const char *) draw->pt.user.elts + draw->pt.index_buffer.offset;
-
       cur_start = start;
       cur_count = 0;
 
       switch (draw->pt.user.eltSize) {
       case 1:
          {
-            const ubyte *elt_ub = (const ubyte *) elts;
+            const ubyte *elt_ub = (const ubyte *) draw->pt.user.elts;
             PRIM_RESTART_LOOP(elt_ub);
          }
          break;
       case 2:
          {
-            const ushort *elt_us = (const ushort *) elts;
+            const ushort *elt_us = (const ushort *) draw->pt.user.elts;
             PRIM_RESTART_LOOP(elt_us);
          }
          break;
       case 4:
          {
-            const uint *elt_ui = (const uint *) elts;
+            const uint *elt_ui = (const uint *) draw->pt.user.elts;
             PRIM_RESTART_LOOP(elt_ui);
          }
          break;
@@ -468,9 +461,6 @@ draw_vbo(struct draw_context *draw,
    assert(info->instance_count > 0);
    if (info->indexed)
       assert(draw->pt.user.elts);
-
-   draw->pt.user.eltSize =
-      (info->indexed) ? draw->pt.index_buffer.index_size : 0;
 
    draw->pt.user.eltBias = info->index_bias;
    draw->pt.user.min_index = info->min_index;

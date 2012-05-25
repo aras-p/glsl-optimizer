@@ -106,8 +106,6 @@ softpipe_set_index_buffer(struct pipe_context *pipe,
       memcpy(&softpipe->index_buffer, ib, sizeof(softpipe->index_buffer));
    else
       memset(&softpipe->index_buffer, 0, sizeof(softpipe->index_buffer));
-
-   draw_set_index_buffer(softpipe->draw, ib);
 }
 
 

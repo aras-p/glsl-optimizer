@@ -1649,16 +1649,16 @@ static void r300_set_index_buffer_swtcl(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_set_index_buffer(r300->draw, ib);
-
     if (ib) {
+        const void *buf = NULL;
         if (ib->user_buffer) {
-            draw_set_mapped_index_buffer(r300->draw,
-                                         ib->user_buffer);
+            buf = ib->user_buffer;
         } else if (ib->buffer) {
-            draw_set_mapped_index_buffer(r300->draw,
-                r300_resource(ib->buffer)->malloced_buffer);
+            buf = r300_resource(ib->buffer)->malloced_buffer;
         }
+        draw_set_indexes(r300->draw,
+                         (const ubyte *) buf + ib->offset,
+                         ib->index_size);
     }
 }
 

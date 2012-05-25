@@ -1048,9 +1048,6 @@ static void i915_set_index_buffer(struct pipe_context *pipe,
       memcpy(&i915->index_buffer, ib, sizeof(i915->index_buffer));
    else
       memset(&i915->index_buffer, 0, sizeof(i915->index_buffer));
-
-   /* pass-through to draw module */
-   draw_set_index_buffer(i915->draw, ib);
 }
 
 static void

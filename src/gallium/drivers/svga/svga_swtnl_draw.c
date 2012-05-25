@@ -76,17 +76,16 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
       }
    }
 
-   /* TODO move this to update_swtnl_draw */
-   draw_set_index_buffer(draw, &svga->curr.ib);
-
    /* Map index buffer, if present */
    map = NULL;
    if (info->indexed && svga->curr.ib.buffer) {
       map = pipe_buffer_map(&svga->pipe, svga->curr.ib.buffer,
                             PIPE_TRANSFER_READ,
                             &ib_transfer);
+      draw_set_indexes(draw,
+                       (const ubyte *) map + svga->curr.ib.offset,
+                       svga->curr.ib.index_size);
    }
-   draw_set_mapped_index_buffer(draw, map);
 
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
       map = pipe_buffer_map(&svga->pipe,
@@ -119,7 +118,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
 
    if (ib_transfer) {
       pipe_buffer_unmap(&svga->pipe, ib_transfer);
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0);
    }
 
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {

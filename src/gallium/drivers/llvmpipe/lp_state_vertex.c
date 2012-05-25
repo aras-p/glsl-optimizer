@@ -102,8 +102,6 @@ llvmpipe_set_index_buffer(struct pipe_context *pipe,
       memcpy(&llvmpipe->index_buffer, ib, sizeof(llvmpipe->index_buffer));
    else
       memset(&llvmpipe->index_buffer, 0, sizeof(llvmpipe->index_buffer));
-
-   draw_set_index_buffer(llvmpipe->draw, ib);
 }
 
 void

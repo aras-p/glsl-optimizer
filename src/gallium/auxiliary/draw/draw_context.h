@@ -208,11 +208,8 @@ void draw_set_vertex_elements(struct draw_context *draw,
 			      unsigned count,
                               const struct pipe_vertex_element *elements);
 
-void draw_set_index_buffer(struct draw_context *draw,
-                           const struct pipe_index_buffer *ib);
-
-void draw_set_mapped_index_buffer(struct draw_context *draw,
-                                  const void *elements);
+void draw_set_indexes(struct draw_context *draw,
+                      const void *elements, unsigned elem_size);
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);

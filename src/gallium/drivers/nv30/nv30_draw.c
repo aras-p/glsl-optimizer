@@ -417,10 +417,11 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          pipe_buffer_map(pipe, nv30->idxbuf.buffer,
                                   PIPE_TRANSFER_UNSYNCHRONIZED |
                                   PIPE_TRANSFER_READ, &transferi);
-      draw_set_index_buffer(draw, &nv30->idxbuf);
-      draw_set_mapped_index_buffer(draw, map);
+      draw_set_indexes(draw,
+                       (ubyte *) map + nv30->idxbuf.offset,
+                       nv30->idxbuf.index_size);
    } else {
-      draw_set_mapped_index_buffer(draw, NULL);
+      draw_set_indexes(draw, NULL, 0);
    }
 
    draw_vbo(draw, info);
