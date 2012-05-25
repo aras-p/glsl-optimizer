@@ -319,6 +319,10 @@ struct gl_meta_state
    struct drawtex_state DrawTex;  /**< For _mesa_meta_DrawTex() */
 };
 
+static void meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit);
+static void cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *tex);
+static void meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear);
+
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
 {
@@ -335,12 +339,16 @@ compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB
       return shader;
 
    _mesa_GetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
-   if (size == 0)
+   if (size == 0) {
+      _mesa_DeleteObjectARB(shader);
       return 0;
+   }
 
    info = malloc(size);
-   if (!info)
+   if (!info) {
+      _mesa_DeleteObjectARB(shader);
       return 0;
+   }
 
    _mesa_GetProgramInfoLog(shader, size, NULL, info);
    _mesa_problem(ctx,
@@ -349,6 +357,7 @@ compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB
 		 info, source);
 
    free(info);
+   _mesa_DeleteObjectARB(shader);
 
    return 0;
 }
@@ -401,10 +410,15 @@ _mesa_meta_init(struct gl_context *ctx)
 void
 _mesa_meta_free(struct gl_context *ctx)
 {
-   /* Note: Any textures, VBOs, etc, that we allocate should get
-    * freed by the normal context destruction code.  But this would be
-    * the place to free other meta data someday.
-    */
+   GET_CURRENT_CONTEXT(old_context);
+   _mesa_make_current(ctx, NULL, NULL);
+   meta_glsl_blit_cleanup(ctx, &ctx->Meta->Blit);
+   meta_glsl_clear_cleanup(ctx, &ctx->Meta->Clear);
+   cleanup_temp_texture(ctx, &ctx->Meta->TempTex);
+   if (old_context)
+      _mesa_make_current(old_context, old_context->WinSysDrawBuffer, old_context->WinSysReadBuffer);
+   else
+      _mesa_make_current(NULL, NULL, NULL);
    free(ctx->Meta);
    ctx->Meta = NULL;
 }
@@ -1068,6 +1082,15 @@ init_temp_texture(struct gl_context *ctx, struct temp_texture *tex)
    _mesa_GenTextures(1, &tex->TexObj);
 }
 
+static void
+cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *tex)
+{
+   if (!tex->TexObj)
+     return;
+   _mesa_DeleteTextures(1, &tex->TexObj);
+   tex->TexObj = 0;
+}
+
 
 /**
  * Return pointer to temp_texture info for non-bitmap ops.
@@ -1604,6 +1627,21 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    }
 }
 
+static void
+meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit)
+{
+   if (blit->ArrayObj) {
+      _mesa_DeleteVertexArraysAPPLE(1, &blit->ArrayObj);
+      blit->ArrayObj = 0;
+      _mesa_DeleteBuffersARB(1, &blit->VBO);
+      blit->VBO = 0;
+   }
+   if (blit->DepthFP) {
+      _mesa_DeletePrograms(1, &blit->DepthFP);
+      blit->DepthFP = 0;
+   }
+}
+
 
 /**
  * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
@@ -1786,7 +1824,9 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
    clear->ShaderProg = _mesa_CreateProgramObjectARB();
    _mesa_AttachShader(clear->ShaderProg, fs);
+   _mesa_DeleteObjectARB(fs);
    _mesa_AttachShader(clear->ShaderProg, vs);
+   _mesa_DeleteObjectARB(vs);
    _mesa_BindAttribLocationARB(clear->ShaderProg, 0, "position");
    _mesa_LinkProgramARB(clear->ShaderProg);
 
@@ -1799,7 +1839,9 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
       clear->IntegerShaderProg = _mesa_CreateProgramObjectARB();
       _mesa_AttachShader(clear->IntegerShaderProg, fs);
+      _mesa_DeleteObjectARB(fs);
       _mesa_AttachShader(clear->IntegerShaderProg, vs);
+      _mesa_DeleteObjectARB(vs);
       _mesa_BindAttribLocationARB(clear->IntegerShaderProg, 0, "position");
 
       /* Note that user-defined out attributes get automatically assigned
@@ -1811,6 +1853,24 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
       clear->IntegerColorLocation =
 	 _mesa_GetUniformLocationARB(clear->IntegerShaderProg, "color");
+   }
+}
+
+static void
+meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear)
+{
+   if (clear->ArrayObj == 0)
+      return;
+   _mesa_DeleteVertexArraysAPPLE(1, &clear->ArrayObj);
+   clear->ArrayObj = 0;
+   _mesa_DeleteBuffersARB(1, &clear->VBO);
+   clear->VBO = 0;
+   _mesa_DeleteObjectARB(clear->ShaderProg);
+   clear->ShaderProg = 0;
+
+   if (clear->IntegerShaderProg) {
+      _mesa_DeleteObjectARB(clear->IntegerShaderProg);
+      clear->IntegerShaderProg = 0;
    }
 }
 
