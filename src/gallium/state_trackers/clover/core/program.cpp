@@ -48,7 +48,7 @@ _cl_program::build(const std::vector<clover::device *> &devs) {
    for (auto dev : devs) {
       try {
          auto module = (dev->ir_target() == "tgsi" ?
-                        compile_program_tgsi(__source, dev->ir_target()) :
+                        compile_program_tgsi(__source) :
                         compile_program_llvm(__source, dev->ir_target()));
          __binaries.insert({ dev, module });
 

@@ -88,8 +88,7 @@ namespace {
 }
 
 module
-clover::compile_program_tgsi(const compat::string &source,
-                             const compat::string &target) {
+clover::compile_program_tgsi(const compat::string &source) {
    const char *body = source.find("COMP\n");
    module m;
 

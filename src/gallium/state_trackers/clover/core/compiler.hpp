@@ -46,8 +46,7 @@ namespace clover {
    module compile_program_llvm(const compat::string &source,
                                const compat::string &target);
 
-   module compile_program_tgsi(const compat::string &source,
-                               const compat::string &target);
+   module compile_program_tgsi(const compat::string &source);
 }
 
 #endif
