@@ -12425,6 +12425,12 @@
 <xi:include href="EXT_separate_shader_objects.xml"
 	    xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<category name="GL_EXT_texture_sRGB_decode" number="402">
+    <enum name="TEXTURE_SRGB_DECODE_EXT"              value="0x8A48"/>
+    <enum name="DECODE_EXT"                           value="0x8A49"/>
+    <enum name="SKIP_DECODE_EXT"                      value="0x8A4A"/>
+</category>
+
 <!-- Unnumbered extensions sorted by name. -->
 
 <category name="GL_ATI_blend_equation_separate">
