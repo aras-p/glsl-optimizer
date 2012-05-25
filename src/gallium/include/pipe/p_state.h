@@ -593,6 +593,14 @@ struct pipe_resolve_info
    unsigned mask; /**< PIPE_MASK_RGBA, Z, S or ZS */
 };
 
+/**
+ * Structure used as a header for serialized LLVM programs.
+ */
+struct pipe_llvm_program_header
+{
+   uint32_t num_bytes; /**< Number of bytes in the LLVM bytecode program. */
+};
+
 struct pipe_compute_state
 {
    const void *prog; /**< Compute program to be executed. */
