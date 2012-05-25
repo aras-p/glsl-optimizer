@@ -618,6 +618,16 @@ class INT_TO_FLT_Common <bits<32> inst> : R600_1OP <
   [(set R600_Reg32:$dst, (sint_to_fp R600_Reg32:$src))]
 >;
 
+class FLT_TO_UINT_Common <bits<32> inst> : R600_1OP <
+  inst, "FLT_TO_UINT",
+  [(set R600_Reg32:$dst, (fp_to_uint R600_Reg32:$src))]
+>;
+
+class UINT_TO_FLT_Common <bits<32> inst> : R600_1OP <
+  inst, "UINT_TO_FLT",
+  [(set R600_Reg32:$dst, (uint_to_fp R600_Reg32:$src))]
+>;
+
 class LOG_CLAMPED_Common <bits<32> inst> : R600_1OP <
   inst, "LOG_CLAMPED",
   []
@@ -740,6 +750,8 @@ let Predicates = [isR600] in {
   def RECIPSQRT_IEEE_r600 : RECIPSQRT_IEEE_Common<0x69>;
   def FLT_TO_INT_r600 : FLT_TO_INT_Common<0x6b>;
   def INT_TO_FLT_r600 : INT_TO_FLT_Common<0x6c>;
+  def FLT_TO_UINT_r600 : FLT_TO_UINT_Common<0x79>;
+  def UINT_TO_FLT_r600 : UINT_TO_FLT_Common<0x6d>;
   def SIN_r600 : SIN_Common<0x6E>;
   def COS_r600 : COS_Common<0x6F>;
   def ASHR_r600 : ASHR_Common<0x70>;
@@ -932,9 +944,17 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
 
   def INT_TO_FLT_eg : INT_TO_FLT_Common<0x9B>;
 
+  def FLT_TO_UINT_eg : FLT_TO_UINT_Common<0x9A> {
+    let Pattern = [];
+  }
+
+  def UINT_TO_FLT_eg : UINT_TO_FLT_Common<0x9C>;
+
   def : Pat<(fp_to_sint R600_Reg32:$src),
     (FLT_TO_INT_eg (TRUNC R600_Reg32:$src))>;
 
+  def : Pat<(fp_to_uint R600_Reg32:$src),
+    (FLT_TO_UINT_eg (TRUNC R600_Reg32:$src))>;
 }
 
 let Predicates = [isCayman] in {
