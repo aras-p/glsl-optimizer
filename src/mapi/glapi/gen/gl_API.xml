@@ -10666,7 +10666,7 @@
 </category>
 
 <category name="GL_NV_texture_env_combine4" number="195">
-    <enum name="COMBINE4"                                 value="0x8503"/>
+    <enum name="COMBINE4_NV"                              value="0x8503"/>
     <enum name="SOURCE3_RGB_NV"                count="1"  value="0x8583">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
