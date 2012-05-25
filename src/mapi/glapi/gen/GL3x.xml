@@ -510,6 +510,7 @@
   <enum name="UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER" value="0x8A46"/>
   <enum name="SAMPLER_2D_RECT"                value="0x8B63"/>
   <enum name="SAMPLER_2D_RECT_SHADOW"         value="0x8B64"/>
+  <enum name="FRAMEBUFFER_SRGB"               value="0x8DB9"/>
   <enum name="SAMPLER_BUFFER"                 value="0x8DC2"/>
   <enum name="INT_SAMPLER_2D_RECT"            value="0x8DCD"/>
   <enum name="INT_SAMPLER_BUFFER"             value="0x8DD0"/>
