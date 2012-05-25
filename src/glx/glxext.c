@@ -293,6 +293,9 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
                                                                        GLX_MINOR_VERSION),
                                                                       NULL);
 
+   if (!reply)
+     return GL_FALSE;
+
    if (reply->major_version != GLX_MAJOR_VERSION) {
       free(reply);
       return GL_FALSE;
