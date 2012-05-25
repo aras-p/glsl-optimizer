@@ -25,9 +25,6 @@ private:
   const SIRegisterInfo RI;
   AMDGPUTargetMachine &TM;
 
-  MachineInstr * convertABS_f32(MachineInstr & absInstr, MachineFunction &MF,
-                                DebugLoc DL) const;
-
   MachineInstr * convertCLAMP_f32(MachineInstr & clampInstr,
                                   MachineFunction &MF, DebugLoc DL) const;
 

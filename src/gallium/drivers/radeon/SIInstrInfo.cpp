@@ -83,7 +83,6 @@ MachineInstr * SIInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
 
   switch (MI.getOpcode()) {
     default: break;
-    case AMDIL::ABS_f32: return convertABS_f32(MI, MF, DL);
     case AMDIL::CLAMP_f32: return convertCLAMP_f32(MI, MF, DL);
   }
 
@@ -111,30 +110,6 @@ unsigned SIInstrInfo::getISAOpcode(unsigned AMDILopcode) const
   case AMDIL::MOVE_f32: return AMDIL::V_MOV_B32_e32;
   default: return AMDILopcode;
   }
-}
-
-MachineInstr * SIInstrInfo::convertABS_f32(MachineInstr & absInstr,
-    MachineFunction &MF, DebugLoc DL) const
-{
-  MachineRegisterInfo &MRI = MF.getRegInfo();
-  MachineOperand &dst = absInstr.getOperand(0);
-
-  /* Convert the desination register to the VReg_32 class */
-  if (TargetRegisterInfo::isVirtualRegister(dst.getReg())) {
-    MRI.setRegClass(dst.getReg(), AMDIL::VReg_32RegisterClass);
-  }
-
-  return BuildMI(MF, DL, get(AMDIL::V_MOV_B32_e64))
-                 .addOperand(absInstr.getOperand(0))
-                 .addOperand(absInstr.getOperand(1))
-                /* VSRC1-2 are unused, but we still need to fill all the
-                 * operand slots, so we just reuse the VSRC0 operand */
-                 .addOperand(absInstr.getOperand(1))
-                 .addOperand(absInstr.getOperand(1))
-                 .addImm(1) // ABS
-                 .addImm(0) // CLAMP
-                 .addImm(0) // OMOD
-                 .addImm(0); // NEG
 }
 
 MachineInstr * SIInstrInfo::convertCLAMP_f32(MachineInstr & clampInstr,

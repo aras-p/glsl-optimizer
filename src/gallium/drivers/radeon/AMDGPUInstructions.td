@@ -47,7 +47,19 @@ let isCodeGenOnly = 1 in {
     "MASK_WRITE $src",
     []
   >;
-}
+
+let isPseudo = 1, usesCustomInserter = 1  in {
+
+class FABS <RegisterClass rc> : AMDGPUShaderInst <
+  (outs rc:$dst),
+  (ins rc:$src0),
+  "FABS $dst, $src0",
+  [(set rc:$dst, (fabs rc:$src0))]
+>;
+
+} // End isPseudo = 1, hasCustomInserter = 1
+
+} // End isCodeGenOnly = 1
 
 /* Generic helper patterns for intrinsics */
 /* -------------------------------------- */

@@ -196,7 +196,6 @@ def LUSHR        : TwoInOneOut<IL_OP_U64_SHR, (outs GPRI64:$dst),
 // float math instructions start here
 //===---------------------------------------------------------------------===//
 let mayLoad=0, mayStore=0 in {
-defm ABS : UnaryIntrinsicFloat<IL_OP_ABS, int_AMDIL_fabs>;
 defm PIREDUCE : UnaryIntrinsicFloat<IL_OP_PI_REDUCE, int_AMDIL_pireduce>;
 defm ROUND_NEGINF : UnaryIntrinsicFloat<IL_OP_ROUND_NEG_INF,
           int_AMDIL_round_neginf>;
@@ -236,7 +235,6 @@ defm FMA  : TernaryIntrinsicFloat<IL_OP_FMA, int_AMDIL_fma>;
 defm LERP  : TernaryIntrinsicFloat<IL_OP_LERP, int_AMDIL_lerp>;
   }
 defm SUB  : BinaryOpMCf32<IL_OP_SUB, fsub>;
-defm FABS  : UnaryOpMCf32<IL_OP_ABS, fabs>;
 defm NEAR : UnaryOpMCf32<IL_OP_ROUND_NEAR, fnearbyint>;
 defm RND_Z : UnaryOpMCf32<IL_OP_ROUND_ZERO, ftrunc>;
 

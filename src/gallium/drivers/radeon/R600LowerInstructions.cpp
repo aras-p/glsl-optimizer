@@ -83,16 +83,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
                 .addOperand(MI.getOperand(1));
         break;
 
-      /* XXX: We could propagate the ABS flag to all of the uses of Operand0 and
-       * remove the ABS instruction.*/
-      case AMDIL::FABS_f32:
-      case AMDIL::ABS_f32:
-        MI.getOperand(1).addTargetFlag(MO_FLAG_ABS);
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::MOVE_f32))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(1));
-        break;
-
       case AMDIL::CLAMP_f32:
         {
           MachineOperand lowOp = MI.getOperand(2);

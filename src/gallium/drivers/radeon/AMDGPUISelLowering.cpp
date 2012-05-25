@@ -64,6 +64,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return LowerIntrinsicIABS(Op, DAG);
     case AMDGPUIntrinsic::AMDIL_exp:
       return DAG.getNode(ISD::FEXP2, DL, VT, Op.getOperand(1));
+    case AMDGPUIntrinsic::AMDIL_fabs:
+      return DAG.getNode(ISD::FABS, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDGPU_lrp:
       return LowerIntrinsicLRP(Op, DAG);
     case AMDGPUIntrinsic::AMDIL_fraction:

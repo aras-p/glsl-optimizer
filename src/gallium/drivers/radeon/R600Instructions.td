@@ -1078,7 +1078,7 @@ def TXD_SHADOW: AMDGPUShaderInst <
 
 } // End isCodeGenOnly = 1
 
-
+def FABS_R600 : FABS<R600_Reg32>;
 
 let isPseudo = 1 in {
 

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600ISelLowering.h"
+#include "AMDGPUUtil.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -98,6 +99,13 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     break;
   case AMDIL::LOCAL_SIZE_Z:
     lowerImplicitParameter(MI, *BB, MRI, 8);
+    break;
+
+  case AMDIL::FABS_R600:
+    MI->getOperand(1).addTargetFlag(MO_FLAG_ABS);
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+           .addOperand(MI->getOperand(0))
+           .addOperand(MI->getOperand(1));
     break;
 
   case AMDIL::R600_LOAD_CONST:
