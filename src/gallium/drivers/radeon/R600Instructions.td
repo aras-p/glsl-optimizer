@@ -749,7 +749,7 @@ let Predicates = [isR600] in {
   def MULHI_INT_r600 : MULHI_INT_Common<0x74>;
   def MULLO_UINT_r600 : MULLO_UINT_Common<0x75>;
   def MULHI_UINT_r600 : MULHI_UINT_Common<0x76>;
-  def RECIP_UINT_r600 : RECIP_UINT_Common <0x77>;
+  def RECIP_UINT_r600 : RECIP_UINT_Common <0x78>;
 
   def DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
   def POW_r600 : POW_Common<LOG_IEEE_r600, EXP_IEEE_r600, MUL, GPRF32>;
