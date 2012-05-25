@@ -15,7 +15,8 @@ using namespace llvm;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
-
+static cl::opt<std::string>
+TargetGPUName("gpu", cl::desc("target gpu name"), cl::value_desc("gpu_name"));
 
 int main(int argc, char ** argv)
 {
@@ -30,5 +31,5 @@ int main(int argc, char ** argv)
 
 	Module * mod = M.get();
   
-	radeon_llvm_compile(wrap(mod), &bytes, &byte_count, "redwood", 1);
+	radeon_llvm_compile(wrap(mod), &bytes, &byte_count, TargetGPUName.c_str(), 1);
 }
