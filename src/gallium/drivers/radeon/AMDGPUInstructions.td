@@ -49,16 +49,7 @@ def FP_ONE : PatLeaf <
   [{return N->isExactlyValue(1.0);}]
 >;
 
-let isCodeGenOnly = 1 in {
-
-  def MASK_WRITE : AMDGPUShaderInst <
-    (outs),
-    (ins GPRF32:$src),
-    "MASK_WRITE $src",
-    []
-  >;
-
-let isPseudo = 1, usesCustomInserter = 1  in {
+let isCodeGenOnly = 1, isPseudo = 1, usesCustomInserter = 1  in {
 
 class CLAMP <RegisterClass rc> : AMDGPUShaderInst <
   (outs rc:$dst),
@@ -81,9 +72,7 @@ class FNEG <RegisterClass rc> : AMDGPUShaderInst <
   [(set rc:$dst, (fneg rc:$src0))]
 >;
 
-} // End isPseudo = 1, hasCustomInserter = 1
-
-} // End isCodeGenOnly = 1
+} // End isCodeGenOnly = 1, isPseudo = 1, hasCustomInserter = 1
 
 /* Generic helper patterns for intrinsics */
 /* -------------------------------------- */

@@ -139,6 +139,18 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
                 AMDIL::R600_TReg32RegClass.getRegister(RegIndex));
       break;
     }
+
+  case AMDIL::MASK_WRITE:
+    {
+      unsigned maskedRegister = MI->getOperand(0).getReg();
+      assert(TargetRegisterInfo::isVirtualRegister(maskedRegister));
+      MachineInstr * defInstr = MRI.getVRegDef(maskedRegister);
+      MachineOperand * def = defInstr->findRegisterDefOperand(maskedRegister);
+      def->addTargetFlag(MO_FLAG_MASK);
+      // Return early so the instruction is not erased
+      return BB;
+    }
+
   case AMDIL::STORE_OUTPUT:
     {
       int64_t OutputIndex = MI->getOperand(1).getImm();

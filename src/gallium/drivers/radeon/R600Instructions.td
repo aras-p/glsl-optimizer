@@ -538,16 +538,6 @@ def TEX_SAMPLE_C_G : R600_TEX <
   []
 >;
 
-def KILP : Pat <
-  (int_AMDGPU_kilp),
-  (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO)))
->;
-
-def KIL : Pat <
-  (int_AMDGPU_kill R600_Reg32:$src0),
-  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0)))
->;
-
 /* Helper classes for common instructions */
 
 class MUL_LIT_Common <bits<32> inst> : R600_3OP <
@@ -1072,6 +1062,17 @@ def CLAMP_R600 :  CLAMP <R600_Reg32>;
 def FABS_R600 : FABS<R600_Reg32>;
 def FNEG_R600 : FNEG<R600_Reg32>;
 
+let usesCustomInserter = 1 in {
+
+def MASK_WRITE : AMDGPUShaderInst <
+    (outs),
+    (ins R600_Reg32:$src),
+    "MASK_WRITE $src",
+    []
+>;
+
+} // End usesCustomInserter = 1
+
 let isPseudo = 1 in {
 
 def LOAD_VTX : AMDGPUShaderInst <
@@ -1087,6 +1088,17 @@ def LOAD_VTX : AMDGPUShaderInst <
 //===----------------------------------------------------------------------===//
 // ISel Patterns
 //===----------------------------------------------------------------------===//
+
+// KIL Patterns
+def KILP : Pat <
+  (int_AMDGPU_kilp),
+  (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO)))
+>;
+
+def KIL : Pat <
+  (int_AMDGPU_kill R600_Reg32:$src0),
+  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0)))
+>;
 
 // SGT Reverse args
 def : Pat <

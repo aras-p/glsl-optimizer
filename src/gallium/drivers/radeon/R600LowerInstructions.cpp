@@ -204,17 +204,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           break;
         }
 
-      case AMDIL::MASK_WRITE:
-      {
-        unsigned maskedRegister = MI.getOperand(0).getReg();
-        assert(TargetRegisterInfo::isVirtualRegister(maskedRegister));
-        MachineInstr * defInstr = MRI->getVRegDef(maskedRegister);
-        MachineOperand * def = defInstr->findRegisterDefOperand(maskedRegister);
-        def->addTargetFlag(MO_FLAG_MASK);
-        /* Continue so the instruction is not erased */
-        continue;
-      }
-
       case AMDIL::ULT:
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_UINT))
                 .addOperand(MI.getOperand(0))
