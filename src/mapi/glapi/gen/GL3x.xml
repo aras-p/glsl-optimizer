@@ -476,6 +476,38 @@
 
 <category name="3.1">
 
+  <enum name="UNIFORM_BUFFER"                 value="0x8A11"/>
+  <enum name="UNIFORM_BUFFER_BINDING"         value="0x8A28"/>
+  <enum name="UNIFORM_BUFFER_START"           value="0x8A29"/>
+  <enum name="UNIFORM_BUFFER_SIZE"            value="0x8A2A"/>
+  <enum name="MAX_VERTEX_UNIFORM_BLOCKS"      value="0x8A2B"/>
+  <enum name="MAX_GEOMETRY_UNIFORM_BLOCKS"    value="0x8A2C"/>
+  <enum name="MAX_FRAGMENT_UNIFORM_BLOCKS"    value="0x8A2D"/>
+  <enum name="MAX_COMBINED_UNIFORM_BLOCKS"    value="0x8A2E"/>
+  <enum name="MAX_UNIFORM_BUFFER_BINDINGS"    value="0x8A2F"/>
+  <enum name="MAX_UNIFORM_BLOCK_SIZE"         value="0x8A30"/>
+  <enum name="MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS" value="0x8A31"/>
+  <enum name="MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS" value="0x8A32"/>
+  <enum name="MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS" value="0x8A33"/>
+  <enum name="UNIFORM_BUFFER_OFFSET_ALIGNMENT" value="0x8A34"/>
+  <enum name="ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH" value="0x8A35"/>
+  <enum name="ACTIVE_UNIFORM_BLOCKS"          value="0x8A36"/>
+  <enum name="UNIFORM_TYPE"                   value="0x8A37"/>
+  <enum name="UNIFORM_SIZE"                   value="0x8A38"/>
+  <enum name="UNIFORM_NAME_LENGTH"            value="0x8A39"/>
+  <enum name="UNIFORM_BLOCK_INDEX"            value="0x8A3A"/>
+  <enum name="UNIFORM_OFFSET"                 value="0x8A3B"/>
+  <enum name="UNIFORM_ARRAY_STRIDE"           value="0x8A3C"/>
+  <enum name="UNIFORM_MATRIX_STRIDE"          value="0x8A3D"/>
+  <enum name="UNIFORM_IS_ROW_MAJOR"           value="0x8A3E"/>
+  <enum name="UNIFORM_BLOCK_BINDING"          value="0x8A3F"/>
+  <enum name="UNIFORM_BLOCK_DATA_SIZE"        value="0x8A40"/>
+  <enum name="UNIFORM_BLOCK_NAME_LENGTH"      value="0x8A41"/>
+  <enum name="UNIFORM_BLOCK_ACTIVE_UNIFORMS"  value="0x8A42"/>
+  <enum name="UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES" value="0x8A43"/>
+  <enum name="UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER" value="0x8A44"/>
+  <enum name="UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER" value="0x8A45"/>
+  <enum name="UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER" value="0x8A46"/>
   <enum name="SAMPLER_2D_RECT"                value="0x8B63"/>
   <enum name="SAMPLER_2D_RECT_SHADOW"         value="0x8B64"/>
   <enum name="SAMPLER_BUFFER"                 value="0x8DC2"/>
