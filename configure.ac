@@ -2170,6 +2170,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/mapi/shared-glapi/Makefile
 		src/gtest/Makefile
 		src/mesa/libdricore/Makefile
+		src/mesa/main/tests/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile

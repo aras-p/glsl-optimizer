@@ -25,6 +25,7 @@ doxygen:
 	cd doxygen && $(MAKE)
 
 check-local:
+	$(MAKE) -C src/mesa/main/tests check
 	$(MAKE) -C src/glsl/tests check
 	$(MAKE) -C src/glx/tests check
 
