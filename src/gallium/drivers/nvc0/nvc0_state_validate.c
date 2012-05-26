@@ -308,7 +308,7 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
       nvc0_check_program_ucps(nvc0, vp, clip_enable);
 
    if (nvc0->dirty & (NVC0_NEW_CLIP | (NVC0_NEW_VERTPROG << stage)))
-      if (vp->vp.num_ucps <= PIPE_MAX_CLIP_PLANES)
+      if (vp->vp.num_ucps > 0 && vp->vp.num_ucps <= PIPE_MAX_CLIP_PLANES)
          nvc0_upload_uclip_planes(nvc0, stage);
 
    clip_enable &= vp->vp.clip_enable;
