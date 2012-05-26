@@ -1793,7 +1793,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    clear->ColorLocation = _mesa_GetUniformLocationARB(clear->ShaderProg,
 						      "color");
 
-   if (ctx->Const.GLSLVersion >= 130) {
+   if (ctx->API == API_OPENGL && ctx->Const.GLSLVersion >= 130) {
       vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_int_source);
       fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_int_source);
 
