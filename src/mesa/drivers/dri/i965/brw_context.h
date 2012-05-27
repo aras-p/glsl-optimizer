@@ -676,6 +676,7 @@ struct brw_vertex_buffer {
    uint32_t offset;
    /** Byte stride between elements in the uploaded array */
    GLuint stride;
+   GLuint step_rate;
 };
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
@@ -738,6 +739,7 @@ struct brw_context
 	      uint32_t handle;
 	      uint32_t offset;
 	      uint32_t stride;
+	      uint32_t step_rate;
       } current_buffers[VERT_ATTRIB_MAX];
 
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
@@ -1046,6 +1048,8 @@ struct brw_context
       bool in_progress;
       bool enable_cut_index;
    } prim_restart;
+
+   uint32_t num_instances;
 };
 
 

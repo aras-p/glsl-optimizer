@@ -81,7 +81,7 @@ GL_ARB_shader_bit_encoding                            DONE
 GL_ARB_texture_rgb10_a2ui                             DONE (r600)
 GL_ARB_texture_swizzle                                DONE (same as EXT version) (i965, r300, r600, swrast)
 GL_ARB_timer_query                                    ~60% done (the EXT variant)
-GL_ARB_instanced_arrays                               DONE (r300, r600)
+GL_ARB_instanced_arrays                               DONE (i965, r300, r600)
 GL_ARB_vertex_type_2_10_10_10_rev                     DONE (r600)
 
 

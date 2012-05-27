@@ -115,6 +115,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_depth_buffer_float = true;
       ctx->Extensions.ARB_depth_clamp = true;
       ctx->Extensions.ARB_draw_instanced = true;
+      ctx->Extensions.ARB_instanced_arrays = true;
       ctx->Extensions.ARB_fragment_coord_conventions = true;
       ctx->Extensions.ARB_fragment_program_shadow = true;
       ctx->Extensions.ARB_fragment_shader = true;
