@@ -1936,6 +1936,7 @@ FlatteningPass::visit(BasicBlock *bb)
       if (insn && !insn->getPredicate() &&
           !insn->asFlow() &&
           insn->op != OP_TEXBAR &&
+          !isTextureOp(insn->op) && // probably just nve4
           insn->op != OP_LINTERP && // probably just nve4
           insn->op != OP_PINTERP && // probably just nve4
           !insn->isNop()) {
