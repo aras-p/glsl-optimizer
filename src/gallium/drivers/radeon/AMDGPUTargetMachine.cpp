@@ -14,7 +14,6 @@
 
 #include "AMDGPUTargetMachine.h"
 #include "AMDGPU.h"
-#include "AMDILTargetMachine.h"
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
@@ -33,6 +32,11 @@
 
 using namespace llvm;
 
+extern "C" void LLVMInitializeAMDGPUTarget() {
+  // Register the target
+  RegisterTargetMachine<AMDGPUTargetMachine> X(TheAMDGPUTarget);
+}
+
 AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
     StringRef CPU, StringRef FS,
   TargetOptions Options,
@@ -40,8 +44,12 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
   CodeGenOpt::Level OptLevel
 )
 :
-  AMDILTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
+  LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
   Subtarget(TT, CPU, FS),
+  DataLayout(Subtarget.getDataLayout()),
+  FrameLowering(TargetFrameLowering::StackGrowsUp,
+      Subtarget.device()->getStackAlignment(), 0),
+  IntrinsicInfo(this),
   mDump(false)
 
 {

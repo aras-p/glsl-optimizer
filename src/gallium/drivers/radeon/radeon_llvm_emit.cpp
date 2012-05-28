@@ -51,9 +51,9 @@ using namespace llvm;
 #ifndef EXTERNAL_LLVM
 extern "C" {
 
-void LLVMInitializeAMDILTargetMC(void);
-void LLVMInitializeAMDILTarget(void);
-void LLVMInitializeAMDILTargetInfo(void);
+void LLVMInitializeAMDGPUTargetMC(void);
+void LLVMInitializeAMDGPUTarget(void);
+void LLVMInitializeAMDGPUTargetInfo(void);
 }
 #endif
 
@@ -75,9 +75,9 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    InitializeAllTargets();
    InitializeAllTargetMCs();
 #else
-   LLVMInitializeAMDILTargetInfo();
-   LLVMInitializeAMDILTarget();
-   LLVMInitializeAMDILTargetMC();
+   LLVMInitializeAMDGPUTargetInfo();
+   LLVMInitializeAMDGPUTarget();
+   LLVMInitializeAMDGPUTargetMC();
 #endif
    std::string err;
    const Target * AMDGPUTarget = TargetRegistry::lookupTarget("r600", err);

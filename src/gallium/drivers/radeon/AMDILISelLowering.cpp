@@ -15,8 +15,8 @@
 #include "AMDILISelLowering.h"
 #include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
+#include "AMDILRegisterInfo.h"
 #include "AMDILSubtarget.h"
-#include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -29,6 +29,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
@@ -585,25 +586,24 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
   size_t numIntTypes = sizeof(IntTypes) / sizeof(*IntTypes);
   size_t numVectorTypes = sizeof(VectorTypes) / sizeof(*VectorTypes);
 
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
   // These are the current register classes that are
   // supported
 
   addRegisterClass(MVT::i32, AMDIL::GPRI32RegisterClass);
   addRegisterClass(MVT::f32, AMDIL::GPRF32RegisterClass);
 
-  if (stm->device()->isSupported(AMDILDeviceInfo::DoubleOps)) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::DoubleOps)) {
     addRegisterClass(MVT::f64, AMDIL::GPRF64RegisterClass);
     addRegisterClass(MVT::v2f64, AMDIL::GPRV2F64RegisterClass);
   }
-  if (stm->device()->isSupported(AMDILDeviceInfo::ByteOps)) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::ByteOps)) {
     addRegisterClass(MVT::i8, AMDIL::GPRI8RegisterClass);
     addRegisterClass(MVT::v2i8, AMDIL::GPRV2I8RegisterClass);
     addRegisterClass(MVT::v4i8, AMDIL::GPRV4I8RegisterClass);
     setOperationAction(ISD::Constant          , MVT::i8   , Legal);
   }
-  if (stm->device()->isSupported(AMDILDeviceInfo::ShortOps)) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::ShortOps)) {
     addRegisterClass(MVT::i16, AMDIL::GPRI16RegisterClass);
     addRegisterClass(MVT::v2i16, AMDIL::GPRV2I16RegisterClass);
     addRegisterClass(MVT::v4i16, AMDIL::GPRV4I16RegisterClass);
@@ -613,7 +613,7 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
   addRegisterClass(MVT::v4f32, AMDIL::GPRV4F32RegisterClass);
   addRegisterClass(MVT::v2i32, AMDIL::GPRV2I32RegisterClass);
   addRegisterClass(MVT::v4i32, AMDIL::GPRV4I32RegisterClass);
-  if (stm->device()->isSupported(AMDILDeviceInfo::LongOps)) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::LongOps)) {
     addRegisterClass(MVT::i64, AMDIL::GPRI64RegisterClass);
     addRegisterClass(MVT::v2i64, AMDIL::GPRV2I64RegisterClass);
   }
@@ -712,9 +712,9 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
 
   }
   setOperationAction(ISD::FP_ROUND, MVT::Other, Expand);
-  if (stm->device()->isSupported(AMDILDeviceInfo::LongOps)) {
-    if (stm->calVersion() < CAL_VERSION_SC_139
-        || stm->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::LongOps)) {
+    if (STM.calVersion() < CAL_VERSION_SC_139
+        || STM.device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
       setOperationAction(ISD::MUL, MVT::i64, Custom);
     }
     setOperationAction(ISD::SUB, MVT::i64, Custom);
@@ -736,7 +736,7 @@ AMDILTargetLowering::convertToReg(MachineOperand op) const
     setOperationAction(ISD::ZERO_EXTEND, MVT::v2i64, Expand);
     setOperationAction(ISD::ANY_EXTEND, MVT::v2i64, Expand);
   }
-  if (stm->device()->isSupported(AMDILDeviceInfo::DoubleOps)) {
+  if (STM.device()->isSupported(AMDILDeviceInfo::DoubleOps)) {
     // we support loading/storing v2f64 but not operations on the type
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);
     setOperationAction(ISD::FSUB, MVT::v2f64, Expand);
@@ -1979,9 +1979,8 @@ AMDILTargetLowering::genCLZu32(SDValue Op, SelectionDAG &DAG) const
   SDValue DST = SDValue();
   DebugLoc DL = Op.getDebugLoc();
   EVT INTTY = Op.getValueType();
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
-  if (stm->device()->getGeneration() >= AMDILDeviceInfo::HD5XXX) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.device()->getGeneration() >= AMDILDeviceInfo::HD5XXX) {
     //__clz_32bit(uint u)
     //{
     // int z = __amdil_ffb_hi(u) ;
@@ -1998,7 +1997,7 @@ AMDILTargetLowering::genCLZu32(SDValue Op, SelectionDAG &DAG) const
     // return cmp ? 32 : z
     DST = DAG.getNode(AMDILISD::CMOVLOG, DL, INTTY, cmp,
         DAG.getConstant(32, INTTY), z);
-  } else if (stm->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  } else if (STM.device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
     //  static inline uint
     //__clz_32bit(uint x)
     //{
@@ -2048,9 +2047,8 @@ AMDILTargetLowering::genCLZu64(SDValue Op, SelectionDAG &DAG) const
   } else {
     INTTY = EVT(MVT::i32);
   }
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
-  if (stm->device()->getGeneration() >= AMDILDeviceInfo::HD5XXX) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.device()->getGeneration() >= AMDILDeviceInfo::HD5XXX) {
     // Evergreen:
     // static inline uint
     // __clz_u64(ulong x)
@@ -2078,7 +2076,7 @@ AMDILTargetLowering::genCLZu64(SDValue Op, SelectionDAG &DAG) const
         DAG.getConstant(32U, INTTY), zlo);
     // return cmp ? zlop32: zhi
     DST = DAG.getNode(AMDILISD::CMOVLOG, DL, INTTY, cmp, zlop32, zhi);
-  } else if (stm->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  } else if (STM.device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
     // HD4XXX:
     //  static inline uint
     //__clz_64bit(ulong x)
@@ -2164,9 +2162,8 @@ AMDILTargetLowering::genf64toi64(SDValue RHS, SelectionDAG &DAG,
     LONGVT = EVT(MVT::i64);
     INTVT = EVT(MVT::i32);
   }
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
-  if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
     // unsigned version:
     // uint uhi = (uint)(d * 0x1.0p-32);
     // uint ulo = (uint)(mad((double)uhi, -0x1.0p+32, d));
@@ -2428,14 +2425,9 @@ AMDILTargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const
   EVT LHSVT = Op.getValueType();
   MVT LST = LHSVT.getScalarType().getSimpleVT();
   DebugLoc DL = Op.getDebugLoc();
-  const AMDILTargetMachine*
-    amdtm = reinterpret_cast<const AMDILTargetMachine*>
-    (&this->getTargetMachine());
-  const AMDILSubtarget*
-    stm = static_cast<const AMDILSubtarget*>(
-        amdtm->getSubtargetImpl());
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
   if (RST == MVT::f64 && RHSVT.isVector()
-      && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
+      && STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
     // We dont support vector 64bit floating point convertions.
     for (unsigned x = 0, y = RHSVT.getVectorNumElements(); x < y; ++x) {
       SDValue op = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
@@ -2452,7 +2444,7 @@ AMDILTargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const
   } else {
     if (RST == MVT::f64
         && LST == MVT::i32) {
-      if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
+      if (STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
         DST = SDValue(Op.getNode(), 0);
       } else {
         DST = genf64toi32(RHS, DAG, false);
@@ -2462,7 +2454,7 @@ AMDILTargetLowering::LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const
       DST = genf64toi64(RHS, DAG, false);
     } else if (RST == MVT::f64
         && (LST == MVT::i8 || LST == MVT::i16)) {
-      if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
+      if (STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
         DST = DAG.getNode(ISD::TRUNCATE, DL, LHSVT, SDValue(Op.getNode(), 0));
       } else {
         SDValue ToInt = genf64toi32(RHS, DAG, false);
@@ -2494,13 +2486,8 @@ AMDILTargetLowering::genu32tof64(SDValue RHS, EVT LHSVT,
     INTVT = EVT(MVT::i32);
   }
   SDValue x = RHS;
-  const AMDILTargetMachine*
-    amdtm = reinterpret_cast<const AMDILTargetMachine*>
-    (&this->getTargetMachine());
-  const AMDILSubtarget*
-    stm = static_cast<const AMDILSubtarget*>(
-        amdtm->getSubtargetImpl());
-  if (stm->calVersion() >= CAL_VERSION_SC_135) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.calVersion() >= CAL_VERSION_SC_135) {
     // unsigned x = RHS;
     // ulong xd = (ulong)(0x4330_0000 << 32) | x;
     // double d = as_double( xd );
@@ -2558,9 +2545,8 @@ AMDILTargetLowering::genu64tof64(SDValue RHS, EVT LHSVT,
   }
   LONGVT = RHSVT;
   SDValue x = RHS;
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
-  if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
     // double dhi = (double)(as_uint2(x).y);
     // double dlo = (double)(as_uint2(x).x);
     // return mad(dhi, 0x1.0p+32, dlo)
@@ -2570,7 +2556,7 @@ AMDILTargetLowering::genu64tof64(SDValue RHS, EVT LHSVT,
     dlo = DAG.getNode(ISD::UINT_TO_FP, DL, LHSVT, dlo);
     return DAG.getNode(AMDILISD::MAD, DL, LHSVT, dhi,
         DAG.getConstantFP(0x4f800000, LHSVT), dlo);
-  } else if (stm->calVersion() >= CAL_VERSION_SC_135) {
+  } else if (STM.calVersion() >= CAL_VERSION_SC_135) {
     // double lo = as_double( as_ulong( 0x1.0p+52) | (u & 0xffff_ffffUL));
     // double hi = as_double( as_ulong( 0x1.0p+84) | (u >> 32));
     // return (hi - (0x1.0p+84 + 0x1.0p+52)) + lo;
@@ -2669,14 +2655,9 @@ AMDILTargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
   SDValue DST;
   EVT INTVT;
   EVT LONGVT;
-  const AMDILTargetMachine*
-    amdtm = reinterpret_cast<const AMDILTargetMachine*>
-    (&this->getTargetMachine());
-  const AMDILSubtarget*
-    stm = static_cast<const AMDILSubtarget*>(
-        amdtm->getSubtargetImpl());
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
   if (LST == MVT::f64 && LHSVT.isVector()
-      && stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
+      && STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX)  {
     // We dont support vector 64bit floating point convertions.
     DST = Op;
     for (unsigned x = 0, y = LHSVT.getVectorNumElements(); x < y; ++x) {
@@ -2695,7 +2676,7 @@ AMDILTargetLowering::LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const
 
     if (RST == MVT::i32
         && LST == MVT::f64) {
-      if (stm->device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
+      if (STM.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
         DST = SDValue(Op.getNode(), 0);
       } else {
         DST = genu32tof64(RHS, LHSVT, DAG);
@@ -2720,12 +2701,6 @@ AMDILTargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) const
   SDValue DST;
   bool isVec = RHS.getValueType().isVector();
   if (OVT.getScalarType() == MVT::i64) {
-    /*const AMDILTargetMachine*
-      amdtm = reinterpret_cast<const AMDILTargetMachine*>
-      (&this->getTargetMachine());
-      const AMDILSubtarget*
-      stm = dynamic_cast<const AMDILSubtarget*>(
-      amdtm->getSubtargetImpl());*/
     MVT INTTY = MVT::i32;
     if (OVT == MVT::v2i64) {
       INTTY = MVT::v2i32;
@@ -3941,9 +3916,8 @@ AMDILTargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   SDValue DST;
-  const AMDILSubtarget *stm = reinterpret_cast<const AMDILTargetMachine*>(
-      &this->getTargetMachine())->getSubtargetImpl();
-  if (stm->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  if (STM.device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
     // TODO: This doesn't work for vector types yet
     // The LowerFDIV32 function generates equivalent to the following
     // IL:

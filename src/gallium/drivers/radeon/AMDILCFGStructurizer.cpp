@@ -10,7 +10,8 @@
 #define DEBUGME 0
 #define DEBUG_TYPE "structcfg"
 
-#include "AMDILTargetMachine.h"
+#include "AMDIL.h"
+#include "AMDILRegisterInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
@@ -23,9 +24,11 @@
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define FirstNonDebugInstr(A) A->begin()
 using namespace llvm;

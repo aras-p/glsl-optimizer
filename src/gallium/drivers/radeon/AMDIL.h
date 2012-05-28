@@ -82,7 +82,6 @@ const unsigned int RESERVED_FUNCS = 1024;
 
 namespace llvm {
 class AMDILInstrPrinter;
-class AMDILTargetMachine;
 class FunctionPass;
 class MCAsmInfo;
 class raw_ostream;
@@ -91,7 +90,7 @@ class TargetMachine;
 
 /// Instruction selection passes.
 FunctionPass*
-  createAMDILISelDag(AMDILTargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  createAMDILISelDag(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
   createAMDILPeepholeOpt(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 

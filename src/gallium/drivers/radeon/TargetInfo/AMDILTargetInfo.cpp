@@ -16,17 +16,11 @@
 
 using namespace llvm;
 
-/// The target for the AMDIL backend
-Target llvm::TheAMDILTarget;
-
 /// The target for the AMDGPU backend
 Target llvm::TheAMDGPUTarget;
 
 /// Extern function to initialize the targets for the AMDIL backend
-extern "C" void LLVMInitializeAMDILTargetInfo() {
-  RegisterTarget<Triple::amdil, false>
-    IL(TheAMDILTarget, "amdil", "ATI graphics cards");
-
+extern "C" void LLVMInitializeAMDGPUTargetInfo() {
   RegisterTarget<Triple::r600, false>
     R600(TheAMDGPUTarget, "r600", "AMD GPUs HD2XXX-HD6XXX");
 }

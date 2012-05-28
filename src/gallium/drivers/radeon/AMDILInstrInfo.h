@@ -28,12 +28,12 @@ namespace llvm {
 class AMDILInstrInfo : public AMDILGenInstrInfo {
 private:
   const AMDILRegisterInfo RI;
-  AMDILTargetMachine &TM;
+  TargetMachine &TM;
   bool getNextBranchInstr(MachineBasicBlock::iterator &iter,
                           MachineBasicBlock &MBB) const;
   unsigned int getBranchInstr(const MachineOperand &op) const;
 public:
-  explicit AMDILInstrInfo(AMDILTargetMachine &tm);
+  explicit AMDILInstrInfo(TargetMachine &tm);
 
   // getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   // such, whenever a client has an instance of instruction info, it should

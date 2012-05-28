@@ -26,7 +26,7 @@
 
 using namespace llvm;
 
-AMDILInstrInfo::AMDILInstrInfo(AMDILTargetMachine &tm)
+AMDILInstrInfo::AMDILInstrInfo(TargetMachine &tm)
   : AMDILGenInstrInfo(AMDIL::ADJCALLSTACKDOWN, AMDIL::ADJCALLSTACKUP),
     RI(tm, *this),
     TM(tm) {

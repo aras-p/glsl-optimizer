@@ -23,7 +23,6 @@
 namespace llvm
 {
 
-  class AMDILTargetMachine;
   class TargetInstrInfo;
   class Type;
 
@@ -37,10 +36,10 @@ namespace llvm
 
   struct AMDILRegisterInfo : public AMDILGenRegisterInfo
   {
-    AMDILTargetMachine &TM;
+    TargetMachine &TM;
     const TargetInstrInfo &TII;
 
-    AMDILRegisterInfo(AMDILTargetMachine &tm, const TargetInstrInfo &tii);
+    AMDILRegisterInfo(TargetMachine &tm, const TargetInstrInfo &tii);
     /// Code Generation virtual methods...
     const uint16_t * getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 

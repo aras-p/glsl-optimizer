@@ -19,7 +19,6 @@ namespace llvm {
 class MCSubtargetInfo;
 class Target;
 
-extern Target TheAMDILTarget;
 extern Target TheAMDGPUTarget;
 
 } // End llvm namespace

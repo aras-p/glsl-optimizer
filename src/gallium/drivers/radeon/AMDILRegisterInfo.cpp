@@ -21,14 +21,13 @@
 #include "AMDILRegisterInfo.h"
 #include "AMDIL.h"
 #include "AMDILInstrInfo.h"
-#include "AMDILTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
-AMDILRegisterInfo::AMDILRegisterInfo(AMDILTargetMachine &tm,
+AMDILRegisterInfo::AMDILRegisterInfo(TargetMachine &tm,
     const TargetInstrInfo &tii)
 : AMDILGenRegisterInfo(0), // RA???
   TM(tm), TII(tii)

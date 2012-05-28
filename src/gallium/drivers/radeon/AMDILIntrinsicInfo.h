@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetIntrinsicInfo.h"
 
 namespace llvm {
-  class AMDILTargetMachine;
+  class TargetMachine;
   namespace AMDGPUIntrinsic {
     enum ID {
       last_non_AMDIL_intrinsic = Intrinsic::num_intrinsics - 1,
@@ -31,9 +31,9 @@ namespace llvm {
 
 
   class AMDILIntrinsicInfo : public TargetIntrinsicInfo {
-    AMDILTargetMachine *mTM;
+    TargetMachine *mTM;
     public:
-      AMDILIntrinsicInfo(AMDILTargetMachine *tm);
+      AMDILIntrinsicInfo(TargetMachine *tm);
       std::string getName(unsigned int IntrId, Type **Tys = 0,
           unsigned int numTys = 0) const;
       unsigned int lookupName(const char *Name, unsigned int Len) const;

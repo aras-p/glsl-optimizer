@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "AMDGPUISelLowering.h" // For AMDGPUISD
 #include "AMDILDevices.h"
-#include "AMDILTargetMachine.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
@@ -37,7 +36,7 @@ class AMDILDAGToDAGISel : public SelectionDAGISel {
   // make the right decision when generating code for different targets.
   const AMDILSubtarget &Subtarget;
 public:
-  AMDILDAGToDAGISel(AMDILTargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  AMDILDAGToDAGISel(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
   virtual ~AMDILDAGToDAGISel();
 
   SDNode *Select(SDNode *N);
@@ -76,12 +75,12 @@ private:
 // createAMDILISelDag - This pass converts a legalized DAG into a AMDIL-specific
 // DAG, ready for instruction scheduling.
 //
-FunctionPass *llvm::createAMDILISelDag(AMDILTargetMachine &TM
+FunctionPass *llvm::createAMDILISelDag(TargetMachine &TM
                                         AMDIL_OPT_LEVEL_DECL) {
   return new AMDILDAGToDAGISel(TM AMDIL_OPT_LEVEL_VAR);
 }
 
-AMDILDAGToDAGISel::AMDILDAGToDAGISel(AMDILTargetMachine &TM
+AMDILDAGToDAGISel::AMDILDAGToDAGISel(TargetMachine &TM
                                       AMDIL_OPT_LEVEL_DECL)
   : SelectionDAGISel(TM AMDIL_OPT_LEVEL_VAR), Subtarget(TM.getSubtarget<AMDILSubtarget>())
 {

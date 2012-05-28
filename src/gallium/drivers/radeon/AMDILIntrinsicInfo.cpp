@@ -13,7 +13,7 @@
 
 #include "AMDILIntrinsicInfo.h"
 #include "AMDIL.h"
-#include "AMDILTargetMachine.h"
+#include "AMDILSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
@@ -24,7 +24,7 @@ using namespace llvm;
 #include "AMDILGenIntrinsics.inc"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
-AMDILIntrinsicInfo::AMDILIntrinsicInfo(AMDILTargetMachine *tm) 
+AMDILIntrinsicInfo::AMDILIntrinsicInfo(TargetMachine *tm) 
   : TargetIntrinsicInfo(), mTM(tm)
 {
 }
@@ -176,7 +176,7 @@ AMDILIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
 bool
 AMDILIntrinsicInfo::isValidIntrinsic(unsigned int IntrID) const
 {
-  const AMDILSubtarget *stm = mTM->getSubtargetImpl();
+  const AMDILSubtarget &STM = mTM->getSubtarget<AMDILSubtarget>();
   switch (IntrID) {
     default:
       return true;
@@ -185,6 +185,6 @@ AMDILIntrinsicInfo::isValidIntrinsic(unsigned int IntrID) const
     case AMDGPUIntrinsic::AMDIL_convert_f32_f16_near:
     case AMDGPUIntrinsic::AMDIL_convert_f32_f16_neg_inf:
     case AMDGPUIntrinsic::AMDIL_convert_f32_f16_plus_inf:
-        return stm->calVersion() >= CAL_VERSION_SC_139;
+        return STM.calVersion() >= CAL_VERSION_SC_139;
   };
 }

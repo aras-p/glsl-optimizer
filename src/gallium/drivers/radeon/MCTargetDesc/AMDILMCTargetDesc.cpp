@@ -46,21 +46,16 @@ static MCCodeGenInfo *createAMDILMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeAMDILTargetMC() {
+extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
-  RegisterMCAsmInfo<AMDILMCAsmInfo> X(TheAMDILTarget);
   RegisterMCAsmInfo<AMDILMCAsmInfo> Y(TheAMDGPUTarget);
 
-  TargetRegistry::RegisterMCCodeGenInfo(TheAMDILTarget, createAMDILMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDILMCCodeGenInfo);
 
-  TargetRegistry::RegisterMCInstrInfo(TheAMDILTarget, createAMDILMCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheAMDGPUTarget, createAMDILMCInstrInfo);
 
-  TargetRegistry::RegisterMCRegInfo(TheAMDILTarget, createAMDILMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheAMDGPUTarget, createAMDILMCRegisterInfo);
 
-  TargetRegistry::RegisterMCSubtargetInfo(TheAMDILTarget, createAMDILMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDILMCSubtargetInfo);
 
 }
