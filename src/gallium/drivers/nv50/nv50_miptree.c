@@ -116,6 +116,9 @@ nv50_miptree_destroy(struct pipe_screen *pscreen, struct pipe_resource *pt)
 
    nouveau_bo_ref(NULL, &mt->base.bo);
 
+   nouveau_fence_ref(NULL, &mt->base.fence);
+   nouveau_fence_ref(NULL, &mt->base.fence_wr);
+
    FREE(mt);
 }
 

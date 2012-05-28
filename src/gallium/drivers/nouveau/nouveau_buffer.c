@@ -94,6 +94,9 @@ nouveau_buffer_destroy(struct pipe_screen *pscreen,
    if (res->data && !(res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY))
       FREE(res->data);
 
+   nouveau_fence_ref(NULL, &res->fence);
+   nouveau_fence_ref(NULL, &res->fence_wr);
+
    FREE(res);
 }
 
