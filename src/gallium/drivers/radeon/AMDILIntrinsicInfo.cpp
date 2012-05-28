@@ -146,26 +146,7 @@ AMDILIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
     Type **Tys,
     unsigned numTys) const 
 {
-  assert(!isOverloaded(IntrID) && "AMDIL intrinsics are not overloaded");
-  AttrListPtr AList = getAttributes((AMDGPUIntrinsic::ID) IntrID);
-  LLVMContext& Context = M->getContext();
-  unsigned int id = IntrID;
-  Type *ResultTy = NULL;
-  std::vector<Type*> ArgTys;
-  bool IsVarArg = false;
-
-#define GET_INTRINSIC_GENERATOR
-#include "AMDILGenIntrinsics.inc"
-#undef GET_INTRINSIC_GENERATOR
-  // We need to add the resource ID argument for atomics.
-  if (id >= AMDGPUIntrinsic::AMDIL_atomic_add_gi32
-        && id <= AMDGPUIntrinsic::AMDIL_atomic_xor_ru32_noret) {
-    ArgTys.push_back(IntegerType::get(Context, 32));
-  }
-
-  return cast<Function>(M->getOrInsertFunction(getName(IntrID),
-        FunctionType::get(ResultTy, ArgTys, IsVarArg),
-        AList));
+  assert(!"Not implemented");
 }
 
 /// Because the code generator has to support different SC versions, 
