@@ -25,6 +25,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
+GLSL_SRCDIR = .
 include $(LOCAL_PATH)/Makefile.sources
 
 # ---------------------------------------

@@ -7,6 +7,7 @@ include $(TOP)/configs/current
 
 LIBNAME = glsl
 
+GLSL_SRCDIR=.
 include Makefile.sources
 
 GLCPP_SOURCES = \
