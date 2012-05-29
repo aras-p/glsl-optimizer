@@ -81,8 +81,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * Changes that accidentally reduce the size of the table are bugs, and
     * they should be fixed.
+    *
+    * 6 entries were removed when GL_SGIS_pixel_texture was removed from the
+    * dispatch table.
     */
-   EXPECT_GE(table_entries, 978u);
+   EXPECT_GE(table_entries, 978u - 6u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1242,12 +1245,6 @@ const struct name_offset known_dispatch[] = {
    { "glTextureStorage2DEXT", _O(TextureStorage2DEXT) },
    { "glTextureStorage3DEXT", _O(TextureStorage3DEXT) },
    { "glPolygonOffsetEXT", _O(PolygonOffsetEXT) },
-   { "glGetPixelTexGenParameterfvSGIS", _O(GetPixelTexGenParameterfvSGIS) },
-   { "glGetPixelTexGenParameterivSGIS", _O(GetPixelTexGenParameterivSGIS) },
-   { "glPixelTexGenParameterfSGIS", _O(PixelTexGenParameterfSGIS) },
-   { "glPixelTexGenParameterfvSGIS", _O(PixelTexGenParameterfvSGIS) },
-   { "glPixelTexGenParameteriSGIS", _O(PixelTexGenParameteriSGIS) },
-   { "glPixelTexGenParameterivSGIS", _O(PixelTexGenParameterivSGIS) },
    { "glSampleMaskSGIS", _O(SampleMaskSGIS) },
    { "glSamplePatternSGIS", _O(SamplePatternSGIS) },
    { "glColorPointerEXT", _O(ColorPointerEXT) },

@@ -8619,37 +8619,37 @@
 </category>
 
 <category name="GL_SGIS_pixel_texture" number="15">
-    <function name="PixelTexGenParameteriSGIS" offset="assign" static_dispatch="false">
+    <function name="PixelTexGenParameteriSGIS">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterivSGIS" offset="assign" static_dispatch="false">
+    <function name="PixelTexGenParameterivSGIS">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfSGIS" offset="assign" static_dispatch="false">
+    <function name="PixelTexGenParameterfSGIS">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="PixelTexGenParameterfvSGIS" offset="assign" static_dispatch="false">
+    <function name="PixelTexGenParameterfvSGIS">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterivSGIS" offset="assign" static_dispatch="false">
+    <function name="GetPixelTexGenParameterivSGIS">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetPixelTexGenParameterfvSGIS" offset="assign" static_dispatch="false">
+    <function name="GetPixelTexGenParameterfvSGIS">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
