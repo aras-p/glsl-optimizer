@@ -84,8 +84,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * 6 entries were removed when GL_SGIS_pixel_texture was removed from the
     * dispatch table.
+    *
+    * 1 entry was removed when GL_SGIX_pixel_texture was removed from the
+    * dispatch table.
     */
-   EXPECT_GE(table_entries, 978u - 6u);
+   EXPECT_GE(table_entries, 978u - 6u - 1u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1281,7 +1284,6 @@ const struct name_offset known_dispatch[] = {
    { "glFogCoorddvEXT", _O(FogCoorddvEXT) },
    { "glFogCoordfEXT", _O(FogCoordfEXT) },
    { "glFogCoordfvEXT", _O(FogCoordfvEXT) },
-   { "glPixelTexGenSGIX", _O(PixelTexGenSGIX) },
    { "glBlendFuncSeparateEXT", _O(BlendFuncSeparateEXT) },
    { "glFlushVertexArrayRangeNV", _O(FlushVertexArrayRangeNV) },
    { "glVertexArrayRangeNV", _O(VertexArrayRangeNV) },

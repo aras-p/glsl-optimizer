@@ -10020,7 +10020,7 @@
 </category>
 
 <category name="GL_SGIX_pixel_texture" number="160">
-    <function name="PixelTexGenSGIX" offset="assign" static_dispatch="false">
+    <function name="PixelTexGenSGIX">
         <param name="mode" type="GLenum"/>
         <glx rop="2059" ignore="true"/>
     </function>
