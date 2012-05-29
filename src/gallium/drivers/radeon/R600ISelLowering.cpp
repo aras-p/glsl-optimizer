@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Most of the DAG lowering is handled in AMDILISelLowering.cpp.  This file
+// Most of the DAG lowering is handled in AMDGPUISelLowering.cpp.  This file
 // is mostly EmitInstrWithCustomInserter().
 //
 //===----------------------------------------------------------------------===//
@@ -39,12 +39,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
-#if 0
-
-  setTargetDAGCombine(ISD::Constant);
-  setTargetDAGCombine(ISD::ConstantFP);
-
-#endif
 }
 
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(

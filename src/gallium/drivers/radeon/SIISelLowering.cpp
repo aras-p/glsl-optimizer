@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Most of the DAG lowering is handled in AMDILISelLowering.cpp.  This file is
+// Most of the DAG lowering is handled in AMDGPUISelLowering.cpp.  This file is
 // mostly EmitInstrWithCustomInserter().
 //
 //===----------------------------------------------------------------------===//
@@ -61,8 +61,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1))
-          /* VSRC1-2 are unused, but we still need to fill all the
-           * operand slots, so we just reuse the VSRC0 operand */
+           // VSRC1-2 are unused, but we still need to fill all the
+           // operand slots, so we just reuse the VSRC0 operand
            .addOperand(MI->getOperand(1))
            .addOperand(MI->getOperand(1))
            .addImm(0) // ABS
@@ -76,8 +76,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
-                /* VSRC1-2 are unused, but we still need to fill all the
-                 * operand slots, so we just reuse the VSRC0 operand */
+                 // VSRC1-2 are unused, but we still need to fill all the
+                 // operand slots, so we just reuse the VSRC0 operand
                  .addOperand(MI->getOperand(1))
                  .addOperand(MI->getOperand(1))
                  .addImm(1) // ABS
