@@ -12410,12 +12410,12 @@
     <enum name="TEXTURE_RANGE_POINTER_APPLE" count="1" value="0x85B8">
         <size name="GetTexParameterPointervAPPLE" mode="get"/>
     </enum>
-    <function name="TextureRangeAPPLE" offset="assign" static_dispatch="false">
+    <function name="TextureRangeAPPLE">
         <param name="target" type="GLenum"/>
         <param name="length" type="GLsizei"/>
         <param name="pointer" type="GLvoid *"/>
     </function>
-    <function name="GetTexParameterPointervAPPLE" offset="assign" static_dispatch="false">
+    <function name="GetTexParameterPointervAPPLE">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **"/>

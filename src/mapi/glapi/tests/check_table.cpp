@@ -87,8 +87,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * 1 entry was removed when GL_SGIX_pixel_texture was removed from the
     * dispatch table.
+    *
+    * 2 entries were removed when GL_APPLE_texture_range was removed from the
+    * dispatch table.
     */
-   EXPECT_GE(table_entries, 978u - 6u - 1u);
+   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1506,8 +1509,6 @@ const struct name_offset known_dispatch[] = {
    { "glGetTransformFeedbackVaryingEXT", _O(GetTransformFeedbackVaryingEXT) },
    { "glTransformFeedbackVaryingsEXT", _O(TransformFeedbackVaryingsEXT) },
    { "glProvokingVertexEXT", _O(ProvokingVertexEXT) },
-   { "glGetTexParameterPointervAPPLE", _O(GetTexParameterPointervAPPLE) },
-   { "glTextureRangeAPPLE", _O(TextureRangeAPPLE) },
    { "glGetObjectParameterivAPPLE", _O(GetObjectParameterivAPPLE) },
    { "glObjectPurgeableAPPLE", _O(ObjectPurgeableAPPLE) },
    { "glObjectUnpurgeableAPPLE", _O(ObjectUnpurgeableAPPLE) },
