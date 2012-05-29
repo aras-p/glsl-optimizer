@@ -68,9 +68,6 @@ OBJECTS = \
 	$(C_SOURCES:.c=.o) \
 	$(CXX_SOURCES:.cpp=.o)
 
-DRICORE_OBJ_DIR = obj-visible
-OBJECTS_DRICORE = $(addprefix $(DRICORE_OBJ_DIR)/,$(OBJECTS))
-
 INCLUDES = \
 	-I. \
 	-I../mesa \
@@ -88,13 +85,7 @@ ALL_SOURCES = \
 
 ##### TARGETS #####
 
-default: depend lib$(LIBNAME).a $(APPS) $(DRICORE_GLSL_LIBS)
-
-$(TOP)/$(LIB_DIR)/libglsl.so: $(OBJECTS_DRICORE) builtin_function.o Makefile $(TOP)/src/glsl/Makefile.template
-	$(MKLIB) -o $@ -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
-		-cplusplus -noprefix \
-		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/$@.dylib \
-		$(OBJECTS_DRICORE) builtin_function.o
+default: depend lib$(LIBNAME).a $(APPS)
 
 lib$(LIBNAME).a: $(OBJECTS) builtin_function.o Makefile $(TOP)/src/glsl/Makefile.template
 	$(MKLIB) -cplusplus -o $(LIBNAME) -static $(OBJECTS) builtin_function.o
@@ -103,27 +94,15 @@ depend: $(ALL_SOURCES) Makefile
 	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
-	$(MKDEP) $(MKDEP_OPTIONS) -a -p $(DRICORE_OBJ_DIR)/ $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
 
 # Remove .o and backup files
-clean: clean-dricore
+clean:
 	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(TEST_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak builtin_function.cpp builtin_function.o builtin_stubs.o builtin_compiler
 	-rm -f $(APPS)
 
-clean-dricore:
-	-rm -f $(OBJECTS_DRICORE) $(TOP)/$(LIB_DIR)/libglsl.so libglsl.so
-
-ifneq (,$(DRICORE_GLSL_LIBS))
-DRICORE_INSTALL_TARGET = install-dricore
-endif
-
 # Dummy target
-install: $(DRICORE_INSTALL_TARGET)
+install:
 	@echo -n ""
-
-install-dricore: default
-	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
-	$(INSTALL) -m 755 $(DRICORE_GLSL_LIBS) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 ##### RULES #####
 
@@ -142,14 +121,6 @@ glcpp/glcpp: $(GLCPP_OBJECTS)
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
-
-$(DRICORE_OBJ_DIR)/%.o : %.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) -c $(INCLUDES) $(DRI_CXXFLAGS) $(DEFINES) $< -o $@
-
-$(DRICORE_OBJ_DIR)/%.o : %.c
-	@mkdir -p $(dir $@)
-	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.ll
 	$(FLEX) --nounistd -o$@  $<

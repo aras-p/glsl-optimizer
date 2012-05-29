@@ -22,6 +22,8 @@
 TOP=$(top_srcdir)
 SRCDIR = $(srcdir)/..
 include ../sources.mak
+GLSL_SRCDIR = $(srcdir)/../../glsl
+include ../../glsl/Makefile.sources
 
 noinst_PROGRAMS =
 
@@ -38,7 +40,13 @@ AM_CCASFLAGS = $(CFLAGS_NOVISIBILITY) $(ASM_FLAGS) -DUSE_DRICORE
 
 libdricore_la_SOURCES = \
 	$(MESA_FILES) \
-	$(MESA_CXX_FILES)
+	$(MESA_CXX_FILES) \
+	$(LIBGLCPP_GENERATED_FILES) \
+	$(LIBGLCPP_FILES) \
+	$(LIBGLSL_FILES) \
+	$(LIBGLSL_CXX_FILES) \
+	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
+	$(top_srcdir)/src/glsl/builtin_function.cpp
 libdricore_la_LDFLAGS = -module -avoid-version -shared
 libdricore_la_LIBADD = libdricore-asm.la
 
