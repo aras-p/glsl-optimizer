@@ -93,8 +93,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * 13 entries were removed when GL_NV_register_combiners was removed from
     * the dispatch table.
+    *
+    * 7 entries were removed when GL_NV_fence was removed from the dispatch
+    * table.
     */
-   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u - 13u);
+   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u - 13u - 7u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1320,13 +1323,6 @@ const struct name_offset known_dispatch[] = {
    { "glWindowPos4svMESA", _O(WindowPos4svMESA) },
    { "glMultiModeDrawArraysIBM", _O(MultiModeDrawArraysIBM) },
    { "glMultiModeDrawElementsIBM", _O(MultiModeDrawElementsIBM) },
-   { "glDeleteFencesNV", _O(DeleteFencesNV) },
-   { "glFinishFenceNV", _O(FinishFenceNV) },
-   { "glGenFencesNV", _O(GenFencesNV) },
-   { "glGetFenceivNV", _O(GetFenceivNV) },
-   { "glIsFenceNV", _O(IsFenceNV) },
-   { "glSetFenceNV", _O(SetFenceNV) },
-   { "glTestFenceNV", _O(TestFenceNV) },
    { "glAreProgramsResidentNV", _O(AreProgramsResidentNV) },
    { "glBindProgramNV", _O(BindProgramNV) },
    { "glDeleteProgramsNV", _O(DeleteProgramsNV) },
