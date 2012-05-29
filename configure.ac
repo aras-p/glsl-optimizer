@@ -2168,6 +2168,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/glx/Makefile
 		src/glx/tests/Makefile
 		src/mapi/shared-glapi/Makefile
+		src/mapi/glapi/tests/Makefile
 		src/gtest/Makefile
 		src/mesa/libdricore/Makefile
 		src/mesa/main/tests/Makefile
