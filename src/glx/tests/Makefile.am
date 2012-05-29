@@ -6,15 +6,15 @@ AM_CPPFLAGS = \
 	$(X11_CFLAGS)
 
 if HAVE_XCB_GLX_CREATE_CONTEXT
-TESTS = glx_unittest
-check_PROGRAMS = glx_unittest
+TESTS = glx-test
+check_PROGRAMS = glx-test
 
-glx_unittest_SOURCES =			\
+glx_test_SOURCES =			\
 	clientinfo_unittest.cpp		\
 	create_context_unittest.cpp	\
 	fake_glx_screen.cpp
 
-glx_unittest_LDADD = \
+glx_test_LDADD = \
 	$(top_builddir)/src/glx/libglx.la \
 	$(top_builddir)/src/gtest/libgtest.la \
 	-lpthread
