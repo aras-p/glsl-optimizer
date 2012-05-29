@@ -72,6 +72,11 @@ AC_PROG_LEX
 
 AC_PATH_PROG([PERL], [perl])
 
+AC_CHECK_PROG(INDENT, indent, indent, cat)
+if test "x$INDENT" != "xcat"; then
+    AC_SUBST(INDENT_FLAGS, '-i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool')
+fi
+
 dnl Our fallback install-sh is a symlink to minstall. Use the existing
 dnl configuration in that case.
 AC_PROG_INSTALL

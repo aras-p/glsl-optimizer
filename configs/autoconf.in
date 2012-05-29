@@ -64,6 +64,10 @@ NM = @NM@
 # Perl
 PERL = @PERL@
 
+# Indent (used for generating dispatch tables)
+INDENT = @INDENT@
+INDENT_FLAGS = @INDENT_FLAGS@
+
 # Python and flags (generally only needed by the developers)
 PYTHON2 = @PYTHON2@
 PYTHON_FLAGS = -t -O -O
