@@ -1939,6 +1939,8 @@ FlatteningPass::visit(BasicBlock *bb)
           !isTextureOp(insn->op) && // probably just nve4
           insn->op != OP_LINTERP && // probably just nve4
           insn->op != OP_PINTERP && // probably just nve4
+          ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
+           typeSizeof(insn->dType) <= 4) &&
           !insn->isNop()) {
          insn->join = 1;
          bb->remove(bb->getExit());
