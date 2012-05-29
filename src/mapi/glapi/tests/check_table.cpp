@@ -96,8 +96,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * 7 entries were removed when GL_NV_fence was removed from the dispatch
     * table.
+    *
+    * 2 entries were removed when GL_NV_vertex_array_range was removed from
+    * the dispatch table.
     */
-   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u - 13u - 7u);
+   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u - 13u - 7u - 2u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1294,8 +1297,6 @@ const struct name_offset known_dispatch[] = {
    { "glFogCoordfEXT", _O(FogCoordfEXT) },
    { "glFogCoordfvEXT", _O(FogCoordfvEXT) },
    { "glBlendFuncSeparateEXT", _O(BlendFuncSeparateEXT) },
-   { "glFlushVertexArrayRangeNV", _O(FlushVertexArrayRangeNV) },
-   { "glVertexArrayRangeNV", _O(VertexArrayRangeNV) },
    { "glResizeBuffersMESA", _O(ResizeBuffersMESA) },
    { "glWindowPos2dMESA", _O(WindowPos2dMESA) },
    { "glWindowPos2dvMESA", _O(WindowPos2dvMESA) },

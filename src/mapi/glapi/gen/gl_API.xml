@@ -10539,11 +10539,11 @@
 </category>
 
 <category name="GL_NV_vertex_array_range" number="190">
-    <function name="FlushVertexArrayRangeNV" offset="assign">
+    <function name="FlushVertexArrayRangeNV">
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexArrayRangeNV" offset="assign">
+    <function name="VertexArrayRangeNV">
         <param name="length" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
         <glx ignore="true"/>
