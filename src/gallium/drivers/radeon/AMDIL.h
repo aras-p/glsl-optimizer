@@ -129,7 +129,8 @@ enum AddressSpaces {
   ADDRESS_NONE     = 5, // Address space for unknown memory.
   PARAM_D_ADDRESS  = 6, // Address space for direct addressible parameter memory (CONST0)
   PARAM_I_ADDRESS  = 7, // Address space for indirect addressible parameter memory (VTX1)
-  LAST_ADDRESS     = 8
+  USER_SGPR_ADDRESS = 8, // Address space for USER_SGPRS on SI
+  LAST_ADDRESS     = 9
 };
 
 // This union/struct combination is an easy way to read out the

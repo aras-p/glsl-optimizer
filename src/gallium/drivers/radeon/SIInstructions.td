@@ -7,6 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+def load_user_sgpr : PatFrag<(ops node:$ptr),
+  (load node:$ptr),
+  [{
+    const Value *Src = cast<LoadSDNode>(N)->getSrcValue();
+    if (Src) {
+      PointerType * PT = dyn_cast<PointerType>(Src->getType());
+      return PT && PT->getAddressSpace() == AMDILAS::USER_SGPR_ADDRESS;
+    }
+    return false;
+  }]
+>;
+
 
 def isSI : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDILDeviceInfo::HD7XXX">;
@@ -826,26 +838,19 @@ def SI_INTERP_CONST : InstSI <
                                                  imm:$attr, SReg_32:$params))]
 >;
 
-
 def USE_SGPR_32 : InstSI <
   (outs SReg_32:$dst),
   (ins i32imm:$src0),
   "USE_SGPR_32",
-  [(set SReg_32:$dst, (int_SI_use_sgpr imm:$src0))]
-
-> {
-  field bits<32> Inst = 0;
-}
+  [(set (i32 SReg_32:$dst), (load_user_sgpr imm:$src0))]
+>;
 
 def USE_SGPR_64 : InstSI <
   (outs SReg_64:$dst),
   (ins i32imm:$src0),
   "USE_SGPR_64",
-  [(set SReg_64:$dst, (int_SI_use_sgpr imm:$src0))]
-
-> {
-  field bits<32> Inst = 0;
-}
+  [(set (i64 SReg_64:$dst), (load_user_sgpr imm:$src0))]
+>;
 
 def VS_LOAD_BUFFER_INDEX : InstSI <
   (outs VReg_32:$dst),
@@ -867,19 +872,6 @@ def : Pat<
   (BUFFER_LOAD_FORMAT_XYZW imm:$attr_offset, 0, 1, 0, 0, 0,
                            VReg_32:$buf_idx_vgpr, SReg_128:$tlst,
                            0, 0, (i32 SREG_LIT_0))
->;
-
-def : Pat<
-  (int_SI_use_sgprptrcf32 imm:$src0),
-  (USE_SGPR_64 imm:$src0)
->;
-def : Pat<
-  (int_SI_use_sgprptrci128 imm:$src0),
-  (USE_SGPR_64 imm:$src0)
->;
-def : Pat<
-  (int_SI_use_sgprptrci256 imm:$src0),
-  (USE_SGPR_64 imm:$src0)
 >;
 
 /* int_SI_export */

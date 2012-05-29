@@ -188,6 +188,9 @@ void SITargetLowering::lowerUSE_SGPR(MachineInstr *MI,
   unsigned dstReg = MI->getOperand(0).getReg();
   int64_t newIndex = MI->getOperand(1).getImm();
   const TargetRegisterClass * dstClass = MRI.getRegClass(dstReg);
+  unsigned DwordWidth = dstClass->getSize() / 4;
+  assert(newIndex % DwordWidth == 0 && "USER_SGPR not properly aligned");
+  newIndex = newIndex / DwordWidth;
 
   unsigned newReg = dstClass->getRegister(newIndex);
   addLiveIn(MI, MF, MRI, TII, newReg); 

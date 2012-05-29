@@ -67,6 +67,7 @@ static struct si_shader_context * si_shader_context(
 
 #define USE_SGPR_MAX_SUFFIX_LEN 5
 #define CONST_ADDR_SPACE 2
+#define USER_SGPR_ADDR_SPACE 8
 
 enum sgpr_type {
 	SGPR_CONST_PTR_F32,
@@ -99,10 +100,19 @@ static LLVMValueRef build_indexed_load(
 	return LLVMBuildLoad(gallivm->builder, computed_ptr, "");
 }
 
-/*
- * XXX: Instead of using an intrinsic to use a specific SGPR, we should be
- * using load instructions.  The loads should load from the USER_SGPR address
- * space and use the sgpr index as the pointer.
+/**
+ * Load a value stored in one of the user SGPRs
+ *
+ * @param sgpr This is the sgpr to load the value from.  If you need to load a
+ * value that is stored in consecutive SGPR registers (e.g. a 64-bit pointer),
+ * then you should pass the index of the first SGPR that holds the value.  For
+ * example, if you want to load a pointer that is stored in SGPRs 2 and 3, then
+ * use pass 2 for the sgpr parameter.
+ *
+ * The value of the sgpr parameter must also be aligned to the width of the type
+ * being loaded, so that the sgpr parameter is divisible by the dword width of the
+ * type.  For example, if the value being loaded is two dwords wide, then the sgpr
+ * parameter must be divisible by two.
  */
 static LLVMValueRef use_sgpr(
 	struct gallivm_state * gallivm,
@@ -111,44 +121,48 @@ static LLVMValueRef use_sgpr(
 {
 	LLVMValueRef sgpr_index;
 	LLVMTypeRef ret_type;
+	LLVMValueRef ptr;
 
 	sgpr_index = lp_build_const_int32(gallivm, sgpr);
 
 	switch (type) {
 	case SGPR_CONST_PTR_F32:
+		assert(sgpr % 2 == 0);
 		ret_type = LLVMFloatTypeInContext(gallivm->context);
 		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		return lp_build_intrinsic_unary(gallivm->builder,
-						"llvm.SI.use.sgprptrcf32.",
-						ret_type, sgpr_index);
+		break;
+
 	case SGPR_I32:
 		ret_type = LLVMInt32TypeInContext(gallivm->context);
-		return lp_build_intrinsic_unary(gallivm->builder,
-						"llvm.SI.use.sgpr.i32",
-						ret_type, sgpr_index);
+		break;
+
 	case SGPR_I64:
+		assert(sgpr % 2 == 0);
 		ret_type= LLVMInt64TypeInContext(gallivm->context);
-		return lp_build_intrinsic_unary(gallivm->builder,
-				"llvm.SI.use.sgpr.i64",
-				 ret_type, sgpr_index);
+		break;
+
 	case SGPR_CONST_PTR_V4I32:
+		assert(sgpr % 2 == 0);
 		ret_type = LLVMInt32TypeInContext(gallivm->context);
 		ret_type = LLVMVectorType(ret_type, 4);
 		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		return lp_build_intrinsic_unary(gallivm->builder,
-						"llvm.SI.use.sgprptrci128.",
-						ret_type, sgpr_index);
+		break;
+
 	case SGPR_CONST_PTR_V8I32:
+		assert(sgpr % 2 == 0);
 		ret_type = LLVMInt32TypeInContext(gallivm->context);
 		ret_type = LLVMVectorType(ret_type, 8);
 		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		return lp_build_intrinsic_unary(gallivm->builder,
-						"llvm.SI.use.sgprptrci256.",
-						ret_type, sgpr_index);
+		break;
+
 	default:
 		assert(!"Unsupported SGPR type in use_sgpr()");
 		return NULL;
 	}
+
+	ret_type = LLVMPointerType(ret_type, USER_SGPR_ADDR_SPACE);
+	ptr = LLVMBuildIntToPtr(gallivm->builder, sgpr_index, ret_type, "");
+	return LLVMBuildLoad(gallivm->builder, ptr, "");
 }
 
 static void declare_input_vs(
@@ -174,7 +188,7 @@ static void declare_input_vs(
 	/* XXX: Communicate with the rest of the driver about which SGPR the T#
 	 * list pointer is going to be stored in.  Hard code to SGPR[6:7] for
  	 * now */
-	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, 3);
+	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, 6);
 
 	t_offset = lp_build_const_int32(base->gallivm, velem->vertex_buffer_index);
 
@@ -318,27 +332,6 @@ static LLVMValueRef fetch_constant(
 					(reg->Register.Index * 4) + swizzle);
 
 	return build_indexed_load(base->gallivm, const_ptr, offset);
-}
-
-
-/* Declare some intrinsics with the correct attributes */
-static void si_llvm_emit_prologue(struct lp_build_tgsi_context * bld_base)
-{
-	LLVMValueRef function;
-	struct gallivm_state * gallivm = bld_base->base.gallivm;
-
-	LLVMTypeRef i64 = LLVMInt64TypeInContext(gallivm->context);
-	LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
-
-	/* declare i32 @llvm.SI.use.sgpr.i32(i32) */
-	function = lp_declare_intrinsic(gallivm->module, "llvm.SI.use.sgpr.i32",
-					i32, &i32, 1);
-	LLVMAddFunctionAttr(function, LLVMReadNoneAttribute);
-
-	/* declare i64 @llvm.SI.use.sgpr.i64(i32) */
-	function = lp_declare_intrinsic(gallivm->module, "llvm.SI.use.sgpr.i64",
-					i64, &i32, 1);
-	LLVMAddFunctionAttr(function, LLVMReadNoneAttribute);
 }
 
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
@@ -504,14 +497,14 @@ static void tex_fetch_args(
 							0, LP_CHAN_ALL);
 
 	/* Resource */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, 2);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, 4);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  8 * emit_data->inst->Src[1].Register.Index);
 	emit_data->args[2] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
 	/* Sampler */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, 1);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, 2);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  4 * emit_data->inst->Src[1].Register.Index);
 	emit_data->args[3] = build_indexed_load(bld_base->base.gallivm,
@@ -557,7 +550,6 @@ int si_pipe_shader_create(
 	tgsi_scan_shader(shader->tokens, &shader_info);
 	bld_base->info = &shader_info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
-	bld_base->emit_prologue = si_llvm_emit_prologue;
 	bld_base->emit_epilogue = si_llvm_emit_epilogue;
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
