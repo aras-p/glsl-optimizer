@@ -7,6 +7,10 @@ INC = \
 AM_CFLAGS =  $(INC)
 AM_CXXFLAGS = $(INC)
 
+TESTS_ENVIRONMENT= \
+	export PYTHON2=$(PYTHON2); \
+	export PYTHON_FLAGS=$(PYTHON_FLAGS);
+
 TESTS = \
 	optimization-test \
 	ralloc-test \
