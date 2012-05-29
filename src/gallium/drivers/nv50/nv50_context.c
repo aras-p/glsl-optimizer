@@ -140,6 +140,7 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    nv50->base.screen    = &screen->base;
    nv50->base.copy_data = nv50_m2mf_copy_linear;
    nv50->base.push_data = nv50_sifc_linear_u8;
+   nv50->base.push_cb   = nv50_cb_push;
 
    nv50->screen = screen;
    pipe->screen = pscreen;
