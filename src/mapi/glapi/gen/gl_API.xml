@@ -10551,31 +10551,31 @@
 </category>
 
 <category name="GL_NV_register_combiners" number="191">
-    <function name="CombinerParameterfvNV" offset="assign">
+    <function name="CombinerParameterfvNV">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="4137" ignore="true"/>
     </function>
 
-    <function name="CombinerParameterfNV" offset="assign">
+    <function name="CombinerParameterfNV">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="4136" ignore="true"/>
     </function>
 
-    <function name="CombinerParameterivNV" offset="assign">
+    <function name="CombinerParameterivNV">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
         <glx rop="4139" ignore="true"/>
     </function>
 
-    <function name="CombinerParameteriNV" offset="assign">
+    <function name="CombinerParameteriNV">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="4138" ignore="true"/>
     </function>
 
-    <function name="CombinerInputNV" offset="assign">
+    <function name="CombinerInputNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -10585,7 +10585,7 @@
         <glx rop="4140" ignore="true"/>
     </function>
 
-    <function name="CombinerOutputNV" offset="assign">
+    <function name="CombinerOutputNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="abOutput" type="GLenum"/>
@@ -10599,7 +10599,7 @@
         <glx rop="4141" ignore="true"/>
     </function>
 
-    <function name="FinalCombinerInputNV" offset="assign">
+    <function name="FinalCombinerInputNV">
         <param name="variable" type="GLenum"/>
         <param name="input" type="GLenum"/>
         <param name="mapping" type="GLenum"/>
@@ -10607,7 +10607,7 @@
         <glx rop="4142" ignore="true"/>
     </function>
 
-    <function name="GetCombinerInputParameterfvNV" offset="assign">
+    <function name="GetCombinerInputParameterfvNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -10616,7 +10616,7 @@
         <glx vendorpriv="1270" ignore="true"/>
     </function>
 
-    <function name="GetCombinerInputParameterivNV" offset="assign">
+    <function name="GetCombinerInputParameterivNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="variable" type="GLenum"/>
@@ -10625,7 +10625,7 @@
         <glx vendorpriv="1271" ignore="true"/>
     </function>
 
-    <function name="GetCombinerOutputParameterfvNV" offset="assign">
+    <function name="GetCombinerOutputParameterfvNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -10633,7 +10633,7 @@
         <glx vendorpriv="1272" ignore="true"/>
     </function>
 
-    <function name="GetCombinerOutputParameterivNV" offset="assign">
+    <function name="GetCombinerOutputParameterivNV">
         <param name="stage" type="GLenum"/>
         <param name="portion" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -10641,14 +10641,14 @@
         <glx vendorpriv="1273" ignore="true"/>
     </function>
 
-    <function name="GetFinalCombinerInputParameterfvNV" offset="assign">
+    <function name="GetFinalCombinerInputParameterfvNV">
         <param name="variable" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx vendorpriv="1274" ignore="true"/>
     </function>
 
-    <function name="GetFinalCombinerInputParameterivNV" offset="assign">
+    <function name="GetFinalCombinerInputParameterivNV">
         <param name="variable" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>

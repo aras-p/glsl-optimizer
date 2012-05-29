@@ -90,8 +90,11 @@ TEST(GetProcAddress, TableDidntShrink)
     *
     * 2 entries were removed when GL_APPLE_texture_range was removed from the
     * dispatch table.
+    *
+    * 13 entries were removed when GL_NV_register_combiners was removed from
+    * the dispatch table.
     */
-   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u);
+   EXPECT_GE(table_entries, 978u - 6u - 1u - 2u - 13u);
 }
 
 TEST(GetProcAddress, QueriedDispatchSizeBigEnough)
@@ -1290,19 +1293,6 @@ const struct name_offset known_dispatch[] = {
    { "glBlendFuncSeparateEXT", _O(BlendFuncSeparateEXT) },
    { "glFlushVertexArrayRangeNV", _O(FlushVertexArrayRangeNV) },
    { "glVertexArrayRangeNV", _O(VertexArrayRangeNV) },
-   { "glCombinerInputNV", _O(CombinerInputNV) },
-   { "glCombinerOutputNV", _O(CombinerOutputNV) },
-   { "glCombinerParameterfNV", _O(CombinerParameterfNV) },
-   { "glCombinerParameterfvNV", _O(CombinerParameterfvNV) },
-   { "glCombinerParameteriNV", _O(CombinerParameteriNV) },
-   { "glCombinerParameterivNV", _O(CombinerParameterivNV) },
-   { "glFinalCombinerInputNV", _O(FinalCombinerInputNV) },
-   { "glGetCombinerInputParameterfvNV", _O(GetCombinerInputParameterfvNV) },
-   { "glGetCombinerInputParameterivNV", _O(GetCombinerInputParameterivNV) },
-   { "glGetCombinerOutputParameterfvNV", _O(GetCombinerOutputParameterfvNV) },
-   { "glGetCombinerOutputParameterivNV", _O(GetCombinerOutputParameterivNV) },
-   { "glGetFinalCombinerInputParameterfvNV", _O(GetFinalCombinerInputParameterfvNV) },
-   { "glGetFinalCombinerInputParameterivNV", _O(GetFinalCombinerInputParameterivNV) },
    { "glResizeBuffersMESA", _O(ResizeBuffersMESA) },
    { "glWindowPos2dMESA", _O(WindowPos2dMESA) },
    { "glWindowPos2dvMESA", _O(WindowPos2dvMESA) },
