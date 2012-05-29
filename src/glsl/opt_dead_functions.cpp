@@ -32,6 +32,8 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+namespace {
+
 class signature_entry : public exec_node
 {
 public:
@@ -67,6 +69,7 @@ public:
    void *mem_ctx;
 };
 
+} /* unnamed namespace */
 
 signature_entry *
 ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)

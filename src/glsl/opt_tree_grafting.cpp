@@ -54,6 +54,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 static bool debug = false;
 
 class ir_tree_grafting_visitor : public ir_hierarchical_visitor {
@@ -368,6 +370,8 @@ tree_grafting_basic_block(ir_instruction *bb_first,
       info->progress |= try_tree_grafting(assign, lhs_var, bb_last);
    }
 }
+
+} /* unnamed namespace */
 
 /**
  * Does a copy propagation pass on the code present in the instruction stream.

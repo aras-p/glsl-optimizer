@@ -34,6 +34,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
@@ -67,6 +69,8 @@ public:
 
    bool progress;
 };
+
+} /* unnamed namespace */
 
 static inline bool
 is_vec_zero(ir_constant *ir)

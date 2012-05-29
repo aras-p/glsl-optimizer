@@ -32,6 +32,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
@@ -55,6 +57,8 @@ public:
 
    bool progress;
 };
+
+} /* unnamed namespace */
 
 void
 ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)

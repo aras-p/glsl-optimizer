@@ -41,6 +41,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 class acp_entry : public exec_node
 {
 public:
@@ -449,6 +451,8 @@ ir_constant_propagation_visitor::add_constant(ir_assignment *ir)
    entry = new(this->mem_ctx) acp_entry(deref->var, ir->write_mask, constant);
    this->acp->push_tail(entry);
 }
+
+} /* unnamed namespace */
 
 /**
  * Does a constant propagation pass on the code present in the instruction stream.

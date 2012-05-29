@@ -40,6 +40,8 @@
 
 static bool debug = false;
 
+namespace {
+
 class assignment_entry : public exec_node
 {
 public:
@@ -138,6 +140,7 @@ public:
    ir_hierarchical_visitor *visitor;
 };
 
+} /* unnamed namespace */
 
 /**
  * Adds an entry to the available copy list if it's a plain assignment

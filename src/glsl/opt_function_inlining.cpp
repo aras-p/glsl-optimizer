@@ -39,6 +39,8 @@ do_sampler_replacement(exec_list *instructions,
 		       ir_variable *sampler,
 		       ir_dereference *deref);
 
+namespace {
+
 class ir_function_inlining_visitor : public ir_hierarchical_visitor {
 public:
    ir_function_inlining_visitor()
@@ -60,6 +62,7 @@ public:
    bool progress;
 };
 
+} /* unnamed namespace */
 
 bool
 do_function_inlining(exec_list *instructions)

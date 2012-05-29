@@ -38,6 +38,8 @@
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
+namespace {
+
 static bool debug = false;
 
 // XXX using variable_entry2 here to avoid collision (MSVC multiply-defined
@@ -306,6 +308,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 
    return visit_continue;
 }
+
+} /* unnamed namespace */
 
 bool
 do_structure_splitting(exec_list *instructions)

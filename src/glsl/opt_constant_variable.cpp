@@ -37,6 +37,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 struct assignment_entry {
    exec_node link;
    int assignment_count;
@@ -54,6 +56,8 @@ public:
 
    exec_list list;
 };
+
+} /* unnamed namespace */
 
 static struct assignment_entry *
 get_assignment_entry(ir_variable *var, exec_list *list)

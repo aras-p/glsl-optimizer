@@ -38,6 +38,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+namespace {
+
 class acp_entry : public exec_node
 {
 public:
@@ -106,6 +108,8 @@ public:
 
    void *mem_ctx;
 };
+
+} /* unnamed namespace */
 
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)

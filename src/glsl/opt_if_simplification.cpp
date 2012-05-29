@@ -30,6 +30,8 @@
 
 #include "ir.h"
 
+namespace {
+
 class ir_if_simplification_visitor : public ir_hierarchical_visitor {
 public:
    ir_if_simplification_visitor()
@@ -42,6 +44,8 @@ public:
 
    bool made_progress;
 };
+
+} /* unnamed namespace */
 
 /* We only care about the top level "if" instructions, so don't
  * descend into expressions.

@@ -49,6 +49,8 @@
 
 static bool debug = false;
 
+namespace {
+
 class acp_entry : public exec_node
 {
 public:
@@ -134,6 +136,8 @@ public:
    /* Context for allocating new shader nodes. */
    void *shader_mem_ctx;
 };
+
+} /* unnamed namespace */
 
 ir_visitor_status
 ir_copy_propagation_elements_visitor::visit_enter(ir_function_signature *ir)
