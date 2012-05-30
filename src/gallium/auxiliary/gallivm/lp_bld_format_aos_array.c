@@ -58,13 +58,7 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
    LLVMValueRef ptr, res = NULL;
    struct lp_type src_type;
 
-   memset(&src_type, 0, sizeof src_type);
-   src_type.floating = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT;
-   src_type.fixed    = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FIXED;
-   src_type.sign     = format_desc->channel[0].type != UTIL_FORMAT_TYPE_UNSIGNED;
-   src_type.norm     = format_desc->channel[0].normalized;
-   src_type.width    = format_desc->channel[0].size;
-   src_type.length   = format_desc->nr_channels;
+   lp_type_from_format_desc(&src_type, format_desc);
 
    assert(src_type.length <= dst_type.length);
 

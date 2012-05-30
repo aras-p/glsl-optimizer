@@ -37,6 +37,7 @@
 #define LP_BLD_TYPE_H
 
 
+#include "util/u_format.h"
 #include "pipe/p_compiler.h"
 #include "gallivm/lp_bld.h"
 
@@ -163,6 +164,35 @@ struct lp_build_context
    /** Same as lp_build_one(type) */
    LLVMValueRef one;
 };
+
+
+/**
+ * Converts a format description into an lp_type.
+ *
+ * Only works with "array formats".
+ *
+ * e.g. With PIPE_FORMAT_R32G32B32A32_FLOAT returns an lp_type with float[4]
+ */
+static INLINE void
+lp_type_from_format_desc(struct lp_type* type, const struct util_format_description *format_desc)
+{
+   assert(util_format_is_array(format_desc));
+
+   memset(type, 0, sizeof(struct lp_type));
+   type->floating = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT;
+   type->fixed    = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FIXED;
+   type->sign     = format_desc->channel[0].type != UTIL_FORMAT_TYPE_UNSIGNED;
+   type->norm     = format_desc->channel[0].normalized;
+   type->width    = format_desc->channel[0].size;
+   type->length   = format_desc->nr_channels;
+}
+
+
+static INLINE void
+lp_type_from_format(struct lp_type* type, enum pipe_format format)
+{
+   lp_type_from_format_desc(type, util_format_description(format));
+}
 
 
 static INLINE unsigned
