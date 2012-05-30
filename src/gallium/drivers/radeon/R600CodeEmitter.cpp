@@ -654,5 +654,5 @@ uint64_t R600CodeEmitter::getMachineOpValue(const MachineInstr &MI,
   }
 }
 
-#include "AMDILGenCodeEmitter.inc"
+#include "AMDGPUGenCodeEmitter.inc"
 

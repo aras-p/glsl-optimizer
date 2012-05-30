@@ -22,7 +22,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "AMDILGenSubtargetInfo.inc"
+#include "AMDGPUGenSubtargetInfo.inc"
 
 #define MAX_CB_SIZE (1 << 16)
 namespace llvm {

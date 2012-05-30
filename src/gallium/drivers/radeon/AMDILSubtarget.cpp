@@ -25,7 +25,7 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_TARGET_DESC
-#include "AMDILGenSubtargetInfo.inc"
+#include "AMDGPUGenSubtargetInfo.inc"
 
 AMDILSubtarget::AMDILSubtarget(llvm::StringRef TT, llvm::StringRef CPU, llvm::StringRef FS) : AMDILGenSubtargetInfo( TT, CPU, FS ),
   mDumpCode(false)

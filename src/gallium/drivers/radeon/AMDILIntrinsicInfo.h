@@ -22,7 +22,7 @@ namespace llvm {
     enum ID {
       last_non_AMDIL_intrinsic = Intrinsic::num_intrinsics - 1,
 #define GET_INTRINSIC_ENUM_VALUES
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_ENUM_VALUES
       , num_AMDIL_intrinsics
     };

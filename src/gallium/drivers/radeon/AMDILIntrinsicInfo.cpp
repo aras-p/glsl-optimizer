@@ -21,7 +21,7 @@
 using namespace llvm;
 
 #define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
 AMDILIntrinsicInfo::AMDILIntrinsicInfo(TargetMachine *tm) 
@@ -35,7 +35,7 @@ AMDILIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
 {
   static const char* const names[] = {
 #define GET_INTRINSIC_NAME_TABLE
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_NAME_TABLE
   };
 
@@ -107,7 +107,7 @@ unsigned int
 AMDILIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const 
 {
 #define GET_FUNCTION_RECOGNIZER
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_FUNCTION_RECOGNIZER
   AMDGPUIntrinsic::ID IntrinsicID
     = (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic;
@@ -132,13 +132,13 @@ AMDILIntrinsicInfo::isOverloaded(unsigned id) const
 {
   // Overload Table
 #define GET_INTRINSIC_OVERLOAD_TABLE
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
 }
 
 /// This defines the "getAttributes(ID id)" method.
 #define GET_INTRINSIC_ATTRIBUTES
-#include "AMDILGenIntrinsics.inc"
+#include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_ATTRIBUTES
 
 Function*

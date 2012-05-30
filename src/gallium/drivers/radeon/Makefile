@@ -38,32 +38,32 @@ endif
 R600RegisterInfo.td: R600GenRegisterInfo.pl
 	$(PERL) $^ > $@
 
-AMDILGenRegisterInfo.inc: *.td
-	$(call tablegen, -gen-register-info, AMDIL.td, $@)
+AMDGPUGenRegisterInfo.inc: *.td
+	$(call tablegen, -gen-register-info, AMDGPU.td, $@)
 
-AMDILGenInstrInfo.inc: *.td
-	$(call tablegen, -gen-instr-info, AMDIL.td, $@)
+AMDGPUGenInstrInfo.inc: *.td
+	$(call tablegen, -gen-instr-info, AMDGPU.td, $@)
 
-AMDILGenAsmWriter.inc: *.td
-	$(call tablegen, -gen-asm-writer, AMDIL.td, $@)
+AMDGPUGenAsmWriter.inc: *.td
+	$(call tablegen, -gen-asm-writer, AMDGPU.td, $@)
 
-AMDILGenDAGISel.inc: *.td
-	$(call tablegen, -gen-dag-isel, AMDIL.td, $@)
+AMDGPUGenDAGISel.inc: *.td
+	$(call tablegen, -gen-dag-isel, AMDGPU.td, $@)
 
-AMDILGenCallingConv.inc: *.td
-	$(call tablegen, -gen-callingconv, AMDIL.td, $@)
+AMDGPUGenCallingConv.inc: *.td
+	$(call tablegen, -gen-callingconv, AMDGPU.td, $@)
 
-AMDILGenSubtargetInfo.inc: *.td
-	$(call tablegen, -gen-subtarget, AMDIL.td, $@)
+AMDGPUGenSubtargetInfo.inc: *.td
+	$(call tablegen, -gen-subtarget, AMDGPU.td, $@)
 
-AMDILGenEDInfo.inc: *.td
-	$(call tablegen, -gen-enhanced-disassembly-info, AMDIL.td, $@)
+AMDGPUGenEDInfo.inc: *.td
+	$(call tablegen, -gen-enhanced-disassembly-info, AMDGPU.td, $@)
 
-AMDILGenIntrinsics.inc: *.td
-	$(call tablegen, -gen-tgt-intrinsic, AMDIL.td, $@)
+AMDGPUGenIntrinsics.inc: *.td
+	$(call tablegen, -gen-tgt-intrinsic, AMDGPU.td, $@)
 
-AMDILGenCodeEmitter.inc: *.td
-	$(call tablegen, -gen-emitter, AMDIL.td, $@)
+AMDGPUGenCodeEmitter.inc: *.td
+	$(call tablegen, -gen-emitter, AMDGPU.td, $@)
 
 LOADER_LIBS=$(shell llvm-config --libs bitreader asmparser)
 loader: loader.o libradeon.a

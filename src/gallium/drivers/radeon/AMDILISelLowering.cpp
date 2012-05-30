@@ -38,7 +38,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // Calling Convention Implementation
 //===----------------------------------------------------------------------===//
-#include "AMDILGenCallingConv.inc"
+#include "AMDGPUGenCallingConv.inc"
 
 //===----------------------------------------------------------------------===//
 // TargetLowering Implementation Help Functions Begin

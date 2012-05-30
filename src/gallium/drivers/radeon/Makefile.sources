@@ -4,15 +4,15 @@ GENERATED_SOURCES := \
 	R600RegisterInfo.td		\
 	SIRegisterInfo.td		\
 	SIRegisterGetHWRegNum.inc		\
-	AMDILGenRegisterInfo.inc	\
-	AMDILGenInstrInfo.inc		\
-	AMDILGenAsmWriter.inc		\
-	AMDILGenDAGISel.inc		\
-	AMDILGenCallingConv.inc		\
-	AMDILGenSubtargetInfo.inc		\
-	AMDILGenEDInfo.inc		\
-	AMDILGenIntrinsics.inc		\
-	AMDILGenCodeEmitter.inc
+	AMDGPUGenRegisterInfo.inc	\
+	AMDGPUGenInstrInfo.inc		\
+	AMDGPUGenAsmWriter.inc		\
+	AMDGPUGenDAGISel.inc		\
+	AMDGPUGenCallingConv.inc		\
+	AMDGPUGenSubtargetInfo.inc		\
+	AMDGPUGenEDInfo.inc		\
+	AMDGPUGenIntrinsics.inc		\
+	AMDGPUGenCodeEmitter.inc
 
 CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\

@@ -24,12 +24,12 @@ extern Target TheAMDGPUTarget;
 } // End llvm namespace
 
 #define GET_REGINFO_ENUM
-#include "AMDILGenRegisterInfo.inc"
+#include "AMDGPUGenRegisterInfo.inc"
 
 #define GET_INSTRINFO_ENUM
-#include "AMDILGenInstrInfo.inc"
+#include "AMDGPUGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_ENUM
-#include "AMDILGenSubtargetInfo.inc"
+#include "AMDGPUGenSubtargetInfo.inc"
 
 #endif // AMDILMCTARGETDESC_H

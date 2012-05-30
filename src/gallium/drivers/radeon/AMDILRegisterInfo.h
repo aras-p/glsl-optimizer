@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
-#include "AMDILGenRegisterInfo.inc"
+#include "AMDGPUGenRegisterInfo.inc"
 // See header file for explanation
 
 namespace llvm

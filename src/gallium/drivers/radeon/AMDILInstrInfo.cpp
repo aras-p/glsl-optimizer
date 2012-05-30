@@ -22,7 +22,7 @@
 #include "llvm/Instructions.h"
 
 #define GET_INSTRINFO_CTOR
-#include "AMDILGenInstrInfo.inc"
+#include "AMDGPUGenInstrInfo.inc"
 
 using namespace llvm;
 

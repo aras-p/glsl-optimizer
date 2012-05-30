@@ -18,7 +18,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
-#include "AMDILGenInstrInfo.inc"
+#include "AMDGPUGenInstrInfo.inc"
 
 namespace llvm {
   // AMDIL - This namespace holds all of the target specific flags that

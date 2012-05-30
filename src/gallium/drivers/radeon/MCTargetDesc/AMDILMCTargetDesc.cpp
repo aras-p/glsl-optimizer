@@ -9,13 +9,13 @@
 #include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_MC_DESC
-#include "AMDILGenInstrInfo.inc"
+#include "AMDGPUGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_MC_DESC
-#include "AMDILGenSubtargetInfo.inc"
+#include "AMDGPUGenSubtargetInfo.inc"
 
 #define GET_REGINFO_MC_DESC
-#include "AMDILGenRegisterInfo.inc"
+#include "AMDGPUGenRegisterInfo.inc"
 
 using namespace llvm;
 

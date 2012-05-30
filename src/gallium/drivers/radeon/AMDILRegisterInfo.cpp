@@ -198,5 +198,5 @@ AMDILRegisterInfo::getStackSize() const
 }
 
 #define GET_REGINFO_TARGET_DESC
-#include "AMDILGenRegisterInfo.inc"
+#include "AMDGPUGenRegisterInfo.inc"
 
