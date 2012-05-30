@@ -691,6 +691,35 @@ lp_build_mul_u8n(struct gallivm_state *gallivm,
    return ab;
 }
 
+/**
+ * Normalized 16bit multiplication.
+ *
+ * Utilises same principle as above code.
+ */
+static LLVMValueRef
+lp_build_mul_u16n(struct gallivm_state *gallivm,
+                 struct lp_type i32_type,
+                 LLVMValueRef a, LLVMValueRef b)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef c16;
+   LLVMValueRef ab;
+
+   assert(!i32_type.floating);
+   assert(lp_check_value(i32_type, a));
+   assert(lp_check_value(i32_type, b));
+
+   c16 = lp_build_const_int_vec(gallivm, i32_type, 16);
+
+   /* ab/65535 ~= (ab + (ab >> 16) + 0x8000) >> 16 */
+   ab = LLVMBuildMul(builder, a, b, "");
+   ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, c16, ""), "");
+   ab = LLVMBuildAdd(builder, ab, lp_build_const_int_vec(gallivm, i32_type, 0x8000), "");
+
+   ab = LLVMBuildLShr(builder, ab, c16, "");
+
+   return ab;
+}
 
 /**
  * Generate a * b
@@ -733,6 +762,22 @@ lp_build_mul(struct lp_build_context *bld,
 
          ab = lp_build_pack2(bld->gallivm, i16_type, type, abl, abh);
          
+         return ab;
+      }
+
+      if(type.width == 16) {
+         struct lp_type i32_type = lp_wider_type(type);
+         LLVMValueRef al, ah, bl, bh, abl, abh, ab;
+
+         lp_build_unpack2(bld->gallivm, type, i32_type, a, &al, &ah);
+         lp_build_unpack2(bld->gallivm, type, i32_type, b, &bl, &bh);
+
+         /* PMULLW, PSRLW, PADDW */
+         abl = lp_build_mul_u16n(bld->gallivm, i32_type, al, bl);
+         abh = lp_build_mul_u16n(bld->gallivm, i32_type, ah, bh);
+
+         ab = lp_build_pack2(bld->gallivm, i32_type, type, abl, abh);
+
          return ab;
       }
 
