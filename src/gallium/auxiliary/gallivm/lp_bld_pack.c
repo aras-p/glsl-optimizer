@@ -745,32 +745,38 @@ lp_build_resize(struct gallivm_state *gallivm,
  */
 LLVMValueRef
 lp_build_pad_vector(struct gallivm_state *gallivm,
-                       LLVMValueRef src,
-                       struct lp_type src_type,
-                       unsigned dst_length)
+                    LLVMValueRef src,
+                    unsigned dst_length)
 {
-   LLVMValueRef undef = LLVMGetUndef(lp_build_vec_type(gallivm, src_type));
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
-   unsigned i;
+   LLVMValueRef undef;
+   LLVMTypeRef type;
+   unsigned i, src_length;
 
-   assert(dst_length <= Elements(elems));
-   assert(dst_length > src_type.length);
+   type = LLVMTypeOf(src);
 
-   if (src_type.length == dst_length)
-      return src;
-
-   /* If its a single scalar type, no need to reinvent the wheel */
-   if (src_type.length == 1) {
-      return lp_build_broadcast(gallivm, LLVMVectorType(lp_build_elem_type(gallivm, src_type), dst_length), src);
+   if (LLVMGetTypeKind(type) != LLVMVectorTypeKind) {
+      /* Can't use ShuffleVector on non-vector type */
+      undef = LLVMGetUndef(LLVMVectorType(type, dst_length));
+      return LLVMBuildInsertElement(gallivm->builder, undef, src, lp_build_const_int32(gallivm, 0), "");
    }
 
+   undef      = LLVMGetUndef(type);
+   src_length = LLVMGetVectorSize(type);
+
+   assert(dst_length <= Elements(elems));
+   assert(dst_length >= src_length);
+
+   if (src_length == dst_length)
+      return src;
+
    /* All elements from src vector */
-   for (i = 0; i < src_type.length; ++i)
+   for (i = 0; i < src_length; ++i)
       elems[i] = lp_build_const_int32(gallivm, i);
 
    /* Undef fill remaining space */
-   for (i = src_type.length; i < dst_length; ++i)
-      elems[i] = lp_build_const_int32(gallivm, src_type.length);
+   for (i = src_length; i < dst_length; ++i)
+      elems[i] = lp_build_const_int32(gallivm, src_length);
 
    /* Combine the two vectors */
    return LLVMBuildShuffleVector(gallivm->builder, src, undef, LLVMConstVector(elems, dst_length), "");

@@ -82,7 +82,7 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
 
    /* Expand to correct length */
    if (src_type.length < dst_type.length) {
-      res = lp_build_pad_vector(gallivm, res, src_type, dst_type.length);
+      res = lp_build_pad_vector(gallivm, res, dst_type.length);
       src_type.length = dst_type.length;
    }
 

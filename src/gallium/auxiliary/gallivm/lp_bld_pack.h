@@ -122,7 +122,6 @@ lp_build_resize(struct gallivm_state *gallivm,
 LLVMValueRef
 lp_build_pad_vector(struct gallivm_state *gallivm,
                     LLVMValueRef src,
-                    struct lp_type src_type,
                     unsigned dst_length);
 
 #endif /* !LP_BLD_PACK_H */
