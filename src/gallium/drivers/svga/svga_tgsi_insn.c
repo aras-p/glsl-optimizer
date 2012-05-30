@@ -1628,10 +1628,12 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
                       emit->key.fkey.tex[unit].swizzle_b != PIPE_SWIZZLE_BLUE ||
                       emit->key.fkey.tex[unit].swizzle_a != PIPE_SWIZZLE_ALPHA);
 
-   /* If doing compare processing or tex swizzle, need to put fetched color into
-    * a temporary so it can be used as a source later on.
+   boolean saturate = insn->Instruction.Saturate != TGSI_SAT_NONE;
+
+   /* If doing compare processing or tex swizzle or saturation, we need to put
+    * the fetched color into a temporary so it can be used as a source later on.
     */
-   if (compare || swizzle) {
+   if (compare || swizzle || saturate) {
       tex_result = get_temp( emit );
    }
    else {
@@ -1658,7 +1660,7 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
    if (compare) {
       SVGA3dShaderDestToken dst2;
 
-      if (swizzle)
+      if (swizzle || saturate)
          dst2 = tex_result;
       else
          dst2 = dst;
@@ -1710,8 +1712,13 @@ static boolean emit_tex(struct svga_shader_emitter *emit,
       }
    }
 
-   if (swizzle) {
-      /* swizzle from tex_result to dst */
+   if (saturate && !swizzle) {
+      /* MOV_SAT real_dst, dst */
+      if (!submit_op1( emit, inst_token( SVGA3DOP_MOV ), dst, src(tex_result) ))
+         return FALSE;
+   }
+   else if (swizzle) {
+      /* swizzle from tex_result to dst (handles saturation too, if any) */
       emit_tex_swizzle(emit,
                        dst, src(tex_result),
                        emit->key.fkey.tex[unit].swizzle_r,
