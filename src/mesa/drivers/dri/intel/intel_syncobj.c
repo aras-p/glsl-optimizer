@@ -30,7 +30,7 @@
  * Support for ARB_sync
  *
  * ARB_sync is implemented by flushing the current batchbuffer and keeping a
- * reference on it.  We can then check for completion or wait for compeltion
+ * reference on it.  We can then check for completion or wait for completion
  * using the normal buffer object mechanisms.  This does mean that if an
  * application is using many sync objects, it will emit small batchbuffers
  * which may end up being a significant overhead.  In other tests of removing
