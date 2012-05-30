@@ -269,7 +269,7 @@ lp_build_one(struct gallivm_state *gallivm, struct lp_type type)
    else {
       /* special case' -- 1.0 for normalized types is more easily attained if
        * we start with a vector consisting of all bits set */
-      LLVMTypeRef vec_type = LLVMVectorType(elem_type, type.length);
+      LLVMTypeRef vec_type = lp_build_vec_type(gallivm, type);
       LLVMValueRef vec = LLVMConstAllOnes(vec_type);
 
 #if 0
