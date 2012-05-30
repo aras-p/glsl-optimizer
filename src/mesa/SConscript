@@ -6,6 +6,7 @@ Import('*')
 import filecmp
 import os
 import subprocess
+from sys import executable as python_cmd
 
 env = env.Clone()
 
@@ -328,8 +329,9 @@ mesa_sources = (
     statetracker_sources
 )
 
+GLAPI = '#src/mapi/glapi/'
+
 if env['gles']:
-    from sys import executable as python_cmd
 
     env.Append(CPPDEFINES = ['FEATURE_ES1=1', 'FEATURE_ES2=1'])
 
@@ -349,7 +351,6 @@ if env['gles']:
     )
 
     # generate GLES headers
-    GLAPI = '#src/mapi/glapi/'
     gles_headers = []
     gles_headers += env.CodeGenerate(
         target = 'main/api_exec_es1_dispatch.h',
@@ -452,6 +453,16 @@ if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
         env.Append(CPPPATH = [matypes[0].dir])
 
 
+# The enums.c file is generated from the GL/ES API.xml file
+env.CodeGenerate(
+    target = 'main/enums.c',
+    script = GLAPI + 'gen/gl_enums.py',
+    source = GLAPI + 'gen/gl_and_es_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
+
+# We also depend on the auto-generated GL API headers
+env.Depends(mesa_sources, glapi_headers)
 
 
 def write_git_sha1_h_file(filename):

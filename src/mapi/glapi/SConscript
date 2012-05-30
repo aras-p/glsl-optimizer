@@ -2,6 +2,8 @@
 # SConscript for glapi
 
 
+from sys import executable as python_cmd
+
 Import('*')
 
 env = env.Clone()
@@ -47,6 +49,8 @@ for s in mapi_sources:
 # Assembly sources
 #
 if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
+    GLAPI = '#src/mapi/glapi/'
+
     if env['machine'] == 'x86':
         env.Append(CPPDEFINES = [
             'USE_X86_ASM',
@@ -54,6 +58,12 @@ if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
         glapi_sources += [
             'glapi_x86.S',
         ]
+        env.CodeGenerate(
+            target = 'glapi_x86.S',
+            script = GLAPI + 'gen/gl_x86_asm.py',
+            source = GLAPI + 'gen/gl_API.xml',
+            command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+            )
     elif env['machine'] == 'x86_64':
         env.Append(CPPDEFINES = [
             'USE_X86_64_ASM',
@@ -61,6 +71,12 @@ if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
         glapi_sources += [
             'glapi_x86-64.S'
         ]
+        env.CodeGenerate(
+            target = 'glapi_x86-64.S',
+            script = GLAPI + 'gen/gl_x86-64_asm.py',
+            source = GLAPI + 'gen/gl_API.xml',
+            command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+            )
     elif env['machine'] == 'sparc':
         env.Append(CPPDEFINES = [
             'USE_SPARC_ASM',
@@ -68,6 +84,12 @@ if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
         glapi_sources += [
             'glapi_sparc.S'
         ]
+        env.CodeGenerate(
+            target = 'glapi_sparc.S',
+            script = GLAPI + 'gen/gl_SPARC_asm.py',
+            source = GLAPI + 'gen/gl_API.xml',
+            command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+            )
     else:
         pass
 
@@ -81,3 +103,6 @@ glapi = env.ConvenienceLibrary(
     source = glapi_sources,
 )
 Export('glapi')
+
+
+env.Depends(glapi_sources, glapi_headers)

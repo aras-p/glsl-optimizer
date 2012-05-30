@@ -16,6 +16,7 @@ if env['hostonly']:
 # used.  libgl-xlib and libgl-gdi adapt themselves to use the targets defined
 # in mapi/glapi-shared/SConscript.  mesa/SConscript also adapts itself to
 # enable OpenGL ES support.
+SConscript('mapi/glapi/gen/SConscript')
 SConscript('mapi/glapi/SConscript')
 SConscript('mesa/SConscript')
 

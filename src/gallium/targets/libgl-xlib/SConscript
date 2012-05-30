@@ -35,6 +35,9 @@ sources = [
     'xlib.c',
 ]
 
+# The sources depend on the python-generated GL API files/headers.
+env.Depends(sources, glapi_headers)
+
 if True:
     env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
     env.Prepend(LIBS = [trace, rbug, galahad, softpipe])

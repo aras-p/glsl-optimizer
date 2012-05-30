@@ -1,8 +1,11 @@
 Import('*')
 
+from sys import executable as python_cmd
+
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
+	'.',           # the build/<platform>/glx/ directory
 	'#include',
 	'#include/GL/internal',
 	'#src/mesa',
@@ -79,6 +82,54 @@ libgl = env.SharedLibrary(
     target ='GL',
     source = sources,
 )
+
+
+# Generate GLX-specific .c and .h files here.  Other GL API-related
+# files are used, but they're generated in mapi/glapi/gen/ since they're
+# used by other targets as well.
+
+GLAPI = '#src/mapi/glapi/'
+
+env.CodeGenerate(
+    target = 'indirect.c',
+    script = GLAPI + 'gen/glX_proto_send.py',
+    source = GLAPI + 'gen/gl_and_es_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE -m proto > $TARGET'
+    )
+
+env.CodeGenerate(
+    target = 'indirect_size.c', 
+    script = GLAPI + 'gen/glX_proto_size.py',
+    source = GLAPI + 'gen/gl_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE -m size_c --only-set > $TARGET'
+)
+
+env.CodeGenerate(
+    target = 'indirect_init.c', 
+    script = GLAPI + 'gen/glX_proto_send.py',
+    source = GLAPI + 'gen/gl_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE -m init_c > $TARGET'
+)
+
+headers = []
+
+headers += env.CodeGenerate(
+    target = 'indirect_size.h',
+    script = GLAPI + 'gen/glX_proto_size.py',
+    source = GLAPI + 'gen/gl_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE -m size_h --only-set -h _INDIRECT_SIZE_H > $TARGET'
+)
+
+headers += env.CodeGenerate(
+    target = 'indirect.h',
+    script = GLAPI + 'gen/glX_proto_send.py',
+    source = GLAPI + 'gen/gl_API.xml',
+    command = python_cmd + ' $SCRIPT -m init_h -f $SOURCE > $TARGET',
+    )
+
+
+env.Depends(sources, headers)
+
 
 libgl = env.InstallSharedLibrary(libgl, version=(1, 2))
 

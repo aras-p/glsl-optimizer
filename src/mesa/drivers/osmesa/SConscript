@@ -34,3 +34,5 @@ osmesa = env.SharedLibrary(
 )
 
 env.Alias('osmesa', osmesa)
+
+env.Depends(sources, glapi_headers)
