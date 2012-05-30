@@ -215,6 +215,7 @@ clean:
 	-@cd drivers/osmesa && $(MAKE) clean
 	-@cd x86 && $(MAKE) clean
 	-@cd x86-64 && $(MAKE) clean
+	-@cd libdricore && $(MAKE) clean
 
 
 -include $(DEPENDS)
