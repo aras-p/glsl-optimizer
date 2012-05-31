@@ -791,7 +791,6 @@ let Predicates = [Has32BitPtr] in {
     //===---------------------------------------------------------------------===//
     // Load Memory Operations
     //===---------------------------------------------------------------------===//
-    defm GLOBALLOAD         : LOAD<"!global load"            , global_load>;
     defm GLOBALZEXTLOAD     : LOAD<"!global zext load"       , global_zext_load>;
     defm GLOBALSEXTLOAD     : LOAD<"!global sext load"       , global_sext_load>;
     defm GLOBALAEXTLOAD     : LOAD<"!global aext load"       , global_aext_load>;
@@ -1082,7 +1081,6 @@ let Predicates = [Has64BitPtr] in {
     //===---------------------------------------------------------------------===//
     // Load Memory Operations
     //===---------------------------------------------------------------------===//
-    defm GLOBALLOAD64       : LOAD64<"!global load"            , global_load>;
     defm GLOBALZEXTLOAD64   : LOAD64<"!global zext load"       , global_zext_load>;
     defm GLOBALSEXTLOAD64   : LOAD64<"!global sext load"       , global_sext_load>;
     defm GLOBALAEXTLOAD64   : LOAD64<"!global aext load"       , global_aext_load>;

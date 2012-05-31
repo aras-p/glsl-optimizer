@@ -41,7 +41,11 @@ class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
   let Namespace = "AMDIL";
 }
 
-def MEMri : Operand<iPTRAny> {
+def MEMxi : Operand<iPTR> {
+  let MIOperandInfo = (ops R600_TReg32_X:$ptr, i32imm:$index);
+}
+
+def MEMrr : Operand<iPTR> {
   let MIOperandInfo = (ops R600_Reg32:$ptr, R600_Reg32:$index);
 }
 
@@ -787,90 +791,20 @@ def RAT_WRITE_CACHELESS_eg :
   let BARRIER     = 1;
 }
 
-def VTX_READ_eg : InstR600ISA < (outs R600_TReg32_X:$dst),
-                                (ins R600_TReg32_X:$src, i32imm:$buffer_id),
-                                "VTX_READ_eg $dst, $src", []>
-{
-/*
-  bits<7> DST_GPR;
-  bits<7> SRC_GPR;
-  bits<8> BUFFER_ID;
-*/
-  /* If any of these field below need to be calculated at compile time, and
-   * a ins operand for them and move them to the list of operands above. */
+class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
+  (outs R600_TReg32_X:$dst),
+  (ins MEMxi:$ptr),
+  "VTX_READ_eg $dst, $ptr",
+  pattern
+>;
 
-  /* XXX: This instruction is manual encoded, so none of these values are used.
-   */
-/*
-  bits<5> VC_INST          = 0; //VC_INST_FETCH
-  bits<2> FETCH_TYPE       = 2;
-  bits<1> FETCH_WHOLE_QUAD = 1;
-  bits<1> SRC_REL          = 0;
-  bits<2> SRC_SEL_X        = 0;
-  bits<6> MEGA_FETCH_COUNT = 4;
-*/
-/*
+def VTX_READ_PARAM_eg : VTX_READ_eg <0,
+  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRParam:$ptr))]
+>;
 
-  bits<1> DST_REL          = 0;
-  bits<3> DST_SEL_X        = 0;
-  bits<3> DST_SEL_Y        = 7; //Masked
-  bits<3> DST_SEL_Z        = 7; //Masked
-  bits<3> DST_SEL_W        = 7; //Masked
-  bits<1> USE_CONST_FIELDS = 1; //Masked
-  bits<6> DATA_FORMAT      = 0;
-  bits<2> NUM_FORMAT_ALL   = 0;
-  bits<1> FORMAT_COMP_ALL  = 0;
-  bits<1> SRF_MODE_ALL     = 0;
-*/
-
-/*
-  let Inst{4-0}   = VC_INST;
-  let Inst{6-5}   = FETCH_TYPE;
-  let Inst{7}     = FETCH_WHOLE_QUAD;
-  let Inst{15-8}  = BUFFER_ID;
-  let Inst{22-16} = SRC_GPR;
-  let Inst{23}    = SRC_REL;
-  let Inst{25-24} = SRC_SEL_X;
-  let Inst{31-26} = MEGA_FETCH_COUNT;
-*/
-  /* DST_GPR is OK to leave uncommented, because LLVM 3.0 only prevents you
-   * from statically setting bits > 31.  This field will be set by
-   * getMachineValueOp which can set bits > 31.
-   */
-//  let Inst{32-38} = DST_GPR;
-
-  /* XXX: Uncomment for LLVM 3.1 which supports 64-bit instructions */
-
-/*
-  let Inst{39}    = DST_REL;
-  let Inst{40}    = 0; //Reserved
-  let Inst{43-41} = DST_SEL_X;
-  let Inst{46-44} = DST_SEL_Y;
-  let Inst{49-47} = DST_SEL_Z;
-  let Inst{52-50} = DST_SEL_W;
-  let Inst{53}    = USE_CONST_FIELDS;
-  let Inst{59-54} = DATA_FORMAT;
-  let Inst{61-60} = NUM_FORMAT_ALL;
-  let Inst{62}    = FORMAT_COMP_ALL;
-  let Inst{63}    = SRF_MODE_ALL;
-*/
-}
-
-/* XXX: Need to convert PTR to rat_id */
-/*
-def : Pat <(store_global (f32 R600_Reg32:$value), node:$ptr),
-           (RAT_WRITE_CACHELESS_eg (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-                                                  (f32 R600_Reg32:$value),
-                                                   sel_x),
-                                    (f32 ZERO), 0, R600_Reg32:$ptr)>;
-*/
-
-class VTX_Param_Read_Pattern <ValueType vt> : Pat <
-    (vt (load_param ADDRParam:$mem)),
-    (VTX_READ_eg (i32 R600_Reg32:$mem), 0)>;
-
-def : VTX_Param_Read_Pattern <f32>;
-def : VTX_Param_Read_Pattern <i32>;
+def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
+  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRParam:$ptr))]
+>;
 
 } // End isEG Predicate
 
@@ -1072,18 +1006,6 @@ def MASK_WRITE : AMDGPUShaderInst <
 >;
 
 } // End usesCustomInserter = 1
-
-let isPseudo = 1 in {
-
-def LOAD_VTX : AMDGPUShaderInst <
-    (outs R600_Reg32:$dst),
-    (ins MEMri:$mem),
-    "LOAD_VTX",
-    [(set (i32 R600_Reg32:$dst), (load_param ADDRParam:$mem))]
->;
-
-
-} //End isPseudo
 
 //===----------------------------------------------------------------------===//
 // ISel Patterns

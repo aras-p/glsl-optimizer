@@ -226,15 +226,15 @@ void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBl
     MachineRegisterInfo & MRI, unsigned dword_offset) const
 {
   MachineBasicBlock::iterator I = *MI;
-  unsigned offsetReg = MRI.createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
+  unsigned PtrReg = MRI.createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
   MRI.setRegClass(MI->getOperand(0).getReg(), &AMDIL::R600_TReg32_XRegClass);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::MOV), offsetReg)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::MOV), PtrReg)
           .addReg(AMDIL::ALU_LITERAL_X)
           .addImm(dword_offset * 4);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::VTX_READ_eg))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::VTX_READ_PARAM_eg))
           .addOperand(MI->getOperand(0))
-          .addReg(offsetReg)
+          .addReg(PtrReg)
           .addImm(0);
 }

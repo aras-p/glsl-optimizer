@@ -202,7 +202,8 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 emit(inst);
                 break;
               }
-            case AMDIL::VTX_READ_eg:
+            case AMDIL::VTX_READ_PARAM_eg:
+            case AMDIL::VTX_READ_GLOBAL_eg:
               {
                 emitByte(INSTR_VTX);
                 // inst
@@ -212,7 +213,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 emitByte(2);
 
                 // buffer_id
-                emitByte(MI.getOperand(2).getImm());
+                emitByte(MI.getOpcode() == AMDIL::VTX_READ_PARAM_eg ? 0 : 1);
 
                 // src_gpr
                 emitByte(getHWReg(MI.getOperand(1).getReg()));

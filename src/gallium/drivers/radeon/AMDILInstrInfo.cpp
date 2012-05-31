@@ -531,7 +531,6 @@ switch (MI->getOpcode()) {
     default:
       break;
       ExpandCaseToByteShortTypes(AMDIL::LOCALLOAD);
-      ExpandCaseToByteShortTypes(AMDIL::GLOBALLOAD);
       ExpandCaseToByteShortTypes(AMDIL::REGIONLOAD);
       ExpandCaseToByteShortTypes(AMDIL::PRIVATELOAD);
       ExpandCaseToByteShortTypes(AMDIL::CPOOLLOAD);

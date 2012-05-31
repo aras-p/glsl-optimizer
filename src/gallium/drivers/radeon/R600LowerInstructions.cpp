@@ -99,30 +99,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
         }
 */        /* XXX: This is an optimization */
 
-      case AMDIL::GLOBALLOAD_f32:
-      case AMDIL::GLOBALLOAD_i32:
-        {
-          MachineOperand &ptrOperand = MI.getOperand(1);
-          MachineOperand &indexOperand = MI.getOperand(2);
-          unsigned indexReg =
-                   MRI->createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
-
-          /* Calculate the address with in the VTX buffer */
-          calcAddress(ptrOperand, indexOperand, indexReg, MBB, I);
-
-          /* Make sure the VTX_READ_eg writes to the X chan */
-          MRI->setRegClass(MI.getOperand(0).getReg(),
-                          &AMDIL::R600_TReg32_XRegClass);
-
-          /* Add the VTX_READ_eg instruction */
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TII->get(AMDIL::VTX_READ_eg))
-                  .addOperand(MI.getOperand(0))
-                  .addReg(indexReg)
-                  .addImm(1);
-          break;
-        }
-
       case AMDIL::GLOBALSTORE_i32:
       case AMDIL::GLOBALSTORE_f32:
         {
