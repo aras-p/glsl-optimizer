@@ -271,6 +271,7 @@ if test "x$enable_32bit" = xyes; then
     if test "x$GCC" = xyes; then
         CFLAGS="$CFLAGS -m32"
         ARCH_FLAGS="$ARCH_FLAGS -m32"
+        CCASFLAGS="$CCASFLAGS -m32"
     fi
     if test "x$GXX" = xyes; then
         CXXFLAGS="$CXXFLAGS -m32"
