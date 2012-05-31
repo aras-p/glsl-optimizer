@@ -72,7 +72,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
 
    switch (name) {
    case GL_VENDOR:
-      return (GLubyte *) "Tungsten Graphics, Inc";
+      return (GLubyte *) "Intel Open Source Technology Center";
       break;
 
    case GL_RENDERER:
