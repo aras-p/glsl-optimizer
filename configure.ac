@@ -21,6 +21,8 @@ echo \#buildapi-variable-no-builddir >/dev/null
 # to make
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
 
