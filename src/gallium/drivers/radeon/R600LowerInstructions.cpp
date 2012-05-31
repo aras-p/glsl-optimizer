@@ -33,17 +33,12 @@ namespace {
 
   private:
     static char ID;
-    TargetMachine &TM;
     const R600InstrInfo * TII;
-    MachineRegisterInfo * MRI;
-
-    void lowerFLT(MachineInstr &MI);
 
   public:
     R600LowerInstructionsPass(TargetMachine &tm) :
-      MachineFunctionPass(ID), TM(tm),
-      TII(static_cast<const R600InstrInfo*>(tm.getInstrInfo())),
-      MRI(NULL)
+      MachineFunctionPass(ID),
+      TII(static_cast<const R600InstrInfo*>(tm.getInstrInfo()))
       { }
 
     const char *getPassName() const { return "R600 Lower Instructions"; }
@@ -60,8 +55,6 @@ FunctionPass *llvm::createR600LowerInstructionsPass(TargetMachine &tm) {
 
 bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 {
-  MRI = &MF.getRegInfo();
-
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
     MachineBasicBlock &MBB = *BB;
@@ -70,35 +63,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
 
       MachineInstr &MI = *I;
       switch(MI.getOpcode()) {
-      case AMDIL::FLT:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TM.getInstrInfo()->get(AMDIL::FGE))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(2))
-                .addOperand(MI.getOperand(1));
-        break;
-
-      /* XXX: Figure out the semantics of DIV_INF_f32 and make sure this is OK */
-/*      case AMDIL::DIV_INF_f32:
-        {
-          unsigned tmp0 = MRI->createVirtualRegister(&AMDIL::GPRF32RegClass);
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TM.getInstrInfo()->get(AMDIL::RECIP_CLAMPED), tmp0)
-                  .addOperand(MI.getOperand(2));
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TM.getInstrInfo()->get(AMDIL::MUL_IEEE_f32))
-                  .addOperand(MI.getOperand(0))
-                  .addReg(tmp0)
-                  .addOperand(MI.getOperand(1));
-          break;
-        }
-*/        /* XXX: This is an optimization */
-
-      case AMDIL::ILT:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_INT))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(2))
-                .addOperand(MI.getOperand(1));
-        break;
       case AMDIL::LOADCONST_f32:
       case AMDIL::LOADCONST_i32:
         {
@@ -132,14 +96,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           }
           break;
         }
-
-      case AMDIL::ULT:
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_UINT))
-                .addOperand(MI.getOperand(0))
-                .addOperand(MI.getOperand(2))
-                .addOperand(MI.getOperand(1));
-        break;
-
       default:
         continue;
       }
