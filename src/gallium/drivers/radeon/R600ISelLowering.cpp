@@ -146,6 +146,29 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       return BB;
     }
 
+  case AMDIL::RAT_WRITE_CACHELESS_eg:
+    {
+      // Convert to DWORD address
+      unsigned NewAddr = MRI.createVirtualRegister(
+                                             AMDIL::R600_TReg32_XRegisterClass);
+      unsigned ShiftValue = MRI.createVirtualRegister(
+                                              AMDIL::R600_TReg32RegisterClass);
+
+      // XXX In theory, we should be able to pass ShiftValue directly to
+      // the LSHR_eg instruction as an inline literal, but I tried doing it
+      // this way and it didn't produce the correct results.
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV), ShiftValue)
+              .addReg(AMDIL::ALU_LITERAL_X)
+              .addImm(2);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::LSHR_eg), NewAddr)
+              .addOperand(MI->getOperand(1))
+              .addReg(ShiftValue);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
+              .addOperand(MI->getOperand(0))
+              .addReg(NewAddr);
+      break;
+    }
+
   case AMDIL::STORE_OUTPUT:
     {
       int64_t OutputIndex = MI->getOperand(1).getImm();

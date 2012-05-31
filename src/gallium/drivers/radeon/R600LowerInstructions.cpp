@@ -39,12 +39,6 @@ namespace {
 
     void lowerFLT(MachineInstr &MI);
 
-    void calcAddress(const MachineOperand &ptrOp,
-                     const MachineOperand &indexOp,
-                     unsigned indexReg,
-                     MachineBasicBlock &MBB,
-                     MachineBasicBlock::iterator I) const;
-
   public:
     R600LowerInstructionsPass(TargetMachine &tm) :
       MachineFunctionPass(ID), TM(tm),
@@ -98,47 +92,6 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
           break;
         }
 */        /* XXX: This is an optimization */
-
-      case AMDIL::GLOBALSTORE_i32:
-      case AMDIL::GLOBALSTORE_f32:
-        {
-          MachineOperand &ptrOperand = MI.getOperand(1);
-          MachineOperand &indexOperand = MI.getOperand(2);
-          unsigned rwReg =
-                   MRI->createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
-          unsigned byteIndexReg =
-                   MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-          unsigned shiftReg =
-                   MRI->createVirtualRegister(&AMDIL::R600_TReg32RegClass);
-          unsigned indexReg =
-                   MRI->createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
-
-          /* Move the store value to the correct register class */
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::COPY), rwReg)
-                  .addOperand(MI.getOperand(0));
-
-          /* Calculate the address in the RAT */
-          calcAddress(ptrOperand, indexOperand, byteIndexReg, MBB, I);
-
-
-          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::MOV), shiftReg)
-                  .addReg(AMDIL::ALU_LITERAL_X)
-                  .addImm(2);
-
-          /* XXX: Check GPU family */
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TII->get(AMDIL::LSHR_eg), indexReg)
-                 .addReg(byteIndexReg)
-                 .addReg(shiftReg);
-
-          /* XXX: Check GPU Family */
-          BuildMI(MBB, I, MBB.findDebugLoc(I),
-                          TII->get(AMDIL::RAT_WRITE_CACHELESS_eg))
-                  .addReg(rwReg)
-                  .addReg(indexReg)
-                  .addImm(0);
-          break;
-        }
 
       case AMDIL::ILT:
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(AMDIL::SETGT_INT))
@@ -194,24 +147,4 @@ bool R600LowerInstructionsPass::runOnMachineFunction(MachineFunction &MF)
     }
   }
   return false;
-}
-
-void R600LowerInstructionsPass::calcAddress(const MachineOperand &ptrOp,
-                                            const MachineOperand &indexOp,
-                                            unsigned indexReg,
-                                            MachineBasicBlock &MBB,
-                                            MachineBasicBlock::iterator I) const
-{
-  /* Optimize the case where the indexOperand is 0 */
-  if (indexOp.isImm() && indexOp.getImm() == 0) {
-    assert(ptrOp.isReg());
-    BuildMI(MBB, I, MBB.findDebugLoc(I),
-                    TII->get(AMDIL::COPY), indexReg)
-            .addOperand(ptrOp);
-  } else {
-    BuildMI(MBB, I, MBB.findDebugLoc(I),
-                    TII->get(AMDIL::ADD_INT), indexReg)
-            .addOperand(indexOp)
-            .addOperand(ptrOp);
-  }
 }

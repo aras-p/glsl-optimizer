@@ -779,7 +779,6 @@ let Predicates = [Has32BitPtr] in {
     // Store Memory Operations
     //===----------------------------------------------------------------------===//
     defm GLOBALTRUNCSTORE   : GTRUNCSTORE<"!global trunc store">;
-    defm GLOBALSTORE        : STORE<"!global store"         , global_store>;
     defm LOCALTRUNCSTORE    : LTRUNCSTORE<"!local trunc store">;
     defm LOCALSTORE         : STORE<"!local store"          , local_store>;
     defm PRIVATETRUNCSTORE  : PTRUNCSTORE<"!private trunc store">;
@@ -1069,7 +1068,6 @@ let Predicates = [Has64BitPtr] in {
     // Store Memory Operations
     //===----------------------------------------------------------------------===//
     defm GLOBALTRUNCSTORE64 : GTRUNCSTORE64<"!global trunc store">;
-    defm GLOBALSTORE64      : STORE64<"!global store"         , global_store>;
     defm LOCALTRUNCSTORE64  : LTRUNCSTORE64<"!local trunc store">;
     defm LOCALSTORE64       : STORE64<"!local store"          , local_store>;
     defm PRIVATETRUNCSTORE64 : PTRUNCSTORE64<"!private trunc store">;

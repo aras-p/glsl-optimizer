@@ -50,6 +50,7 @@ def MEMrr : Operand<iPTR> {
 }
 
 def ADDRParam : ComplexPattern<i32, 2, "SelectADDRParam", [], []>;
+def ADDRDWord : ComplexPattern<i32, 1, "SelectADDRDWord", [], []>;
 
 class R600_ALU {
 
@@ -164,13 +165,12 @@ def COND_LE : PatLeaf <
                      case ISD::SETLE: return true;}}}]
 >;
 
-class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, dag outs, dag ins,
-                 string asm> :
-    InstR600ISA <outs, ins, asm, []>
+class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
+                 dag ins, string asm, list<dag> pattern> :
+    InstR600ISA <outs, ins, asm, pattern>
 {
   bits<7>  RW_GPR;
   bits<7>  INDEX_GPR;
-  bits<4>  RAT_ID;
 
   bits<2>  RIM;
   bits<2>  TYPE;
@@ -186,7 +186,7 @@ class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, dag outs, dag ins,
   bits<1>  BARRIER;
 
   /* CF_ALLOC_EXPORT_WORD0_RAT */
-  let Inst{3-0}   = RAT_ID;
+  let Inst{3-0}   = rat_id;
   let Inst{9-4}   = rat_inst;
   let Inst{10}    = 0; /* Reserved */
   let Inst{12-11} = RIM;
@@ -772,9 +772,12 @@ class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
 
 let Predicates = [isEG] in {
 
-def RAT_WRITE_CACHELESS_eg :
-    EG_CF_RAT <0x57, 0x2, (outs), (ins R600_TReg32_X:$rw_gpr,
-                                   R600_TReg32_X:$index_gpr, i32imm:$rat_id), "">
+let usesCustomInserter = 1 in {
+
+def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
+  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr",
+  [(global_store (i32 R600_TReg32_X:$rw_gpr), R600_TReg32_X:$index_gpr)]>
 {
   let RIM         = 0;
   /* XXX: Have a separate instruction for non-indexed writes. */
@@ -790,6 +793,8 @@ def RAT_WRITE_CACHELESS_eg :
   let MARK        = 0;
   let BARRIER     = 1;
 }
+
+} // End usesCustomInserter = 1
 
 class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
   (outs R600_TReg32_X:$dst),
