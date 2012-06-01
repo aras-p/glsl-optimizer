@@ -167,6 +167,10 @@ static void brw_update_sampler_state(struct brw_context *brw,
    struct gl_sampler_object *gl_sampler = _mesa_get_samplerobj(ctx, unit);
    bool using_nearest = false;
 
+   /* These don't use samplers at all. */
+   if (texObj->Target == GL_TEXTURE_BUFFER)
+      return;
+
    switch (gl_sampler->MinFilter) {
    case GL_NEAREST:
       sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;

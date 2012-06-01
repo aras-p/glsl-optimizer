@@ -645,6 +645,58 @@ brw_get_surface_num_multisamples(unsigned num_samples)
 
 
 static void
+brw_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
+   const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
+   uint32_t *surf;
+   struct intel_buffer_object *intel_obj =
+      intel_buffer_object(tObj->BufferObject);
+   drm_intel_bo *bo = intel_obj ? intel_obj->buffer : NULL;
+   gl_format format = tObj->_BufferObjectFormat;
+   uint32_t brw_format = brw_format_for_mesa_format(format);
+   int texel_size = _mesa_get_format_bytes(format);
+
+   if (brw_format == 0 && format != MESA_FORMAT_RGBA_FLOAT32) {
+      _mesa_problem(NULL, "bad format %s for texture buffer\n",
+		    _mesa_get_format_name(format));
+   }
+
+   surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
+			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
+
+   surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
+	      (brw_format_for_mesa_format(format) << BRW_SURFACE_FORMAT_SHIFT));
+
+   if (intel->gen >= 6)
+      surf[0] |= BRW_SURFACE_RC_READ_WRITE;
+
+   if (bo) {
+      surf[1] = bo->offset; /* reloc */
+
+      /* Emit relocation to surface contents. */
+      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+			      brw->wm.surf_offset[surf_index] + 4,
+			      bo, 0, I915_GEM_DOMAIN_SAMPLER, 0);
+
+      int w = intel_obj->Base.Size / texel_size;
+      surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
+		 ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
+      surf[3] = (((w >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
+		 (texel_size - 1) << BRW_SURFACE_PITCH_SHIFT);
+   } else {
+      surf[1] = 0;
+      surf[2] = 0;
+      surf[3] = 0;
+   }
+
+   surf[4] = 0;
+   surf[5] = 0;
+}
+
+static void
 brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
@@ -656,6 +708,11 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    uint32_t *surf;
    int width, height, depth;
+
+   if (tObj->Target == GL_TEXTURE_BUFFER) {
+      brw_update_buffer_texture_surface(ctx, unit);
+      return;
+   }
 
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
