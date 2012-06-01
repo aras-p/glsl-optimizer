@@ -56,7 +56,7 @@ def get_txs_dim(sampler_type):
 def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     coord_dim = get_coord_dim(sampler_type)
     extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
-    offset_dim = get_sampler_dim(sampler_type)
+    sampler_dim = get_sampler_dim(sampler_type)
 
     if variant & Single:
         return_type = "float"
@@ -76,12 +76,12 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     elif ((tex_inst == "txf" or tex_inst == "txs") and "Buffer" not in sampler_type and "Rect" not in sampler_type):
         print "\n       (declare (in) int lod)",
     elif tex_inst == "txd":
-        grad_type = vec_type("", coord_dim)
+        grad_type = vec_type("", sampler_dim)
         print "\n       (declare (in) " + grad_type + " dPdx)",
         print "\n       (declare (in) " + grad_type + " dPdy)",
 
     if variant & Offset:
-        print "\n       (declare (const_in) " + vec_type("i", offset_dim) + " offset)",
+        print "\n       (declare (const_in) " + vec_type("i", sampler_dim) + " offset)",
     if tex_inst == "txb":
         print "\n       (declare (in) float bias)",
 
