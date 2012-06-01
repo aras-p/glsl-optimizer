@@ -610,6 +610,7 @@ public:
    struct hash_table *variable_ht;
    ir_variable *frag_depth;
    fs_reg outputs[BRW_MAX_DRAW_BUFFERS];
+   unsigned output_components[BRW_MAX_DRAW_BUFFERS];
    fs_reg dual_src_output;
    int first_non_payload_grf;
    int max_grf;

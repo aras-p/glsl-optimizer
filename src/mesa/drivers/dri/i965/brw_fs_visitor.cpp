@@ -80,6 +80,7 @@ fs_visitor::visit(ir_variable *ir)
 	 /* Writing gl_FragColor outputs to all color regions. */
 	 for (unsigned int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
+	    this->output_components[i] = 4;
 	 }
       } else if (ir->location == FRAG_RESULT_DEPTH) {
 	 this->frag_depth = ir;
@@ -88,11 +89,16 @@ fs_visitor::visit(ir_variable *ir)
 	 assert(ir->location >= FRAG_RESULT_DATA0 &&
 		ir->location < FRAG_RESULT_DATA0 + BRW_MAX_DRAW_BUFFERS);
 
+	 int vector_elements =
+	    ir->type->is_array() ? ir->type->fields.array->vector_elements
+				 : ir->type->vector_elements;
+
 	 /* General color output. */
 	 for (unsigned int i = 0; i < MAX2(1, ir->type->length); i++) {
 	    int output = ir->location - FRAG_RESULT_DATA0 + i;
 	    this->outputs[output] = *reg;
-	    this->outputs[output].reg_offset += 4 * i;
+	    this->outputs[output].reg_offset += vector_elements * i;
+	    this->output_components[output] = vector_elements;
 	 }
       }
    } else if (ir->mode == ir_var_uniform) {
@@ -2166,7 +2172,7 @@ fs_visitor::emit_fb_writes()
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
-      for (int i = 0; i < 4; i++)
+      for (unsigned i = 0; i < this->output_components[target]; i++)
 	 emit_color_write(target, i, color_mrf);
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
