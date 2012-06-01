@@ -45,7 +45,7 @@ class R600KernelParameters : public FunctionPass
   struct param
   {
     param() : val(NULL), ptr_val(NULL), offset_in_dw(0), size_in_dw(0),
-              indirect(false), specialID(0) {}
+              indirect(true), specialID(0) {}
 
     Value* val;
     Value* ptr_val;
@@ -74,7 +74,7 @@ class R600KernelParameters : public FunctionPass
   void Replace(Function* fun);
   bool isIndirect(Value* val, std::set<Value*>& visited);
   void Propagate(Function* fun);
-  void Propagate(Value* v, const Twine& name, bool indirect = false);
+  void Propagate(Value* v, const Twine& name, bool indirect = true);
   Value* ConstantRead(Function* fun, param& p);
   Value* handleSpecial(Function* fun, param& p);
   bool isSpecialType(Type*);
@@ -150,6 +150,9 @@ int R600KernelParameters::getListSize()
 
 bool R600KernelParameters::isIndirect(Value* val, std::set<Value*>& visited)
 {
+  //XXX Direct parameters are not supported yet, so return true here.
+  return true;
+#if 0
   if (isa<LoadInst>(val))
   {
     return false;
@@ -196,6 +199,7 @@ bool R600KernelParameters::isIndirect(Value* val, std::set<Value*>& visited)
   }
 
   return false;
+#endif
 }
 
 void R600KernelParameters::AddParam(Argument* arg)
