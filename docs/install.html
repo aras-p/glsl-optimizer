@@ -16,8 +16,7 @@
   <li><a href="#prereq-dri">For DRI and hardware acceleration</a>
   </ul>
 <li><a href="#autoconf">Building with autoconf (Linux/Unix/X11)</a>
-<li><a href="#scons">Building with SCons (Windows)</a>
-<li><a href="#legacy">Building with legacy Makefiles (deprecated)</a>
+<li><a href="#scons">Building with SCons (Windows/Linux)</a>
 <li><a href="#other">Building for other systems</a>
 <li><a href="#libs">Library Information</a>
 <li><a href="#pkg-config">Building OpenGL programs with pkg-config
@@ -95,7 +94,7 @@ for more details.
 
 
 <a name="scons">
-<H1>3. Building with SCons (Windows)</H1>
+<H1>3. Building with SCons (Windows/Linux)</H1>
 
 <p>
 To build Mesa with SCons on Linux or Windows do
@@ -129,118 +128,8 @@ Put them all in the same directory to test them.
 
 
 
-<a name="legacy">
-<h1>4. Building with legacy Makefiles (deprecated)</h1>
-
-<p>
-The legacy Mesa build system is based on a collection of pre-defined
-system configurations.
-Some of these might work for older systems not supported by autoconf.
-</p>
-<p>
-To see the list of configurations, just type <code>make</code>.
-Then choose a configuration from the list and type <code>make</code>
-<em>configname</em>.
-</p>
-
-<p>
-Mesa may be built in several different ways using the predefined configurations:
-</p>
-<ul>
-<li><b><em>Stand-alone/Xlib mode</em></b> - Mesa will be compiled as
-a software renderer using Xlib to do all rendering.
-The libGL.so library will be a self-contained rendering library that will
-allow you to run OpenGL/GLX applications on any X server (regardless of
-whether it supports the GLX X server extension).
-You will <em>not</em> be able to use hardware 3D acceleration.
-<p>
-To compile stand-alone Mesa type <code>make</code> in the top-level directory.
-You'll see a list of supported system configurations.
-Choose one from the list (such as linux-x86), and type:
-</p>
-<pre>
-    make linux-x86
-</pre>
-<p>This will produce libGL.so and several other libraries</p>
-</li>
-
-<li><b><em>DRI/accelerated</em></b> - The DRI hardware drivers for
-accelerated OpenGL rendering (for ATI, Intel, Matrox, etc) will be built.
-The libGL.so library will support the GLX extension and will load/use
-the DRI hardware drivers.
-
-
-<p>
-Build Mesa and the DRI hardware drivers by running
-</p>
-<pre>
-   make linux-dri
-</pre>
-<p>
-There are also <code>linux-dri-x86</code>, <code>linux-dri-x86-64</code>, 
-and <code>linux-ppc</code> configurations which are optimized for those
-architectures.
-</p>
-<p>
-Make sure you have the prerequisite versions of DRM and Xserver mentioned
-above.
-</p>
-
-</ul>
-
-
-<p>
-Later, if you want to rebuild for a different configuration run
-<code>make realclean</code> before rebuilding.
-</p>
-
-
-
-<a name="install">
-<H2>Installing the header and library files</H2>
-
-<p>
-The standard location for the OpenGL header files on Unix-type systems is
-in <code>/usr/include/GL/</code>.
-The standard location for the libraries is <code>/usr/lib/</code>.
-For more information see, the
-<a href="http://oss.sgi.com/projects/ogl-sample/ABI/" target="_parent">
-Linux/OpenGL ABI specification</a>.
-</p>
-
-<p>
-If you'd like Mesa to co-exist with another implementation of OpenGL that's
-already installed, you'll have to choose different directories, like
-<code>/usr/local/include/GL/</code> and <code>/usr/local/lib/</code>.
-</p>
-
-<p>
-To install Mesa's headers and libraries, run <code>make install</code>.
-But first, check the Mesa/configs/default file and examine the values
-of the <b>INSTALL_DIR</b> and <b>DRI_DRIVER_INSTALL_DIR</b> variables.
-Change them if needed, then run <code>make install</code>.
-</p>
-
-<p>
-The variable
-<b>DESTDIR</b> may also be used to install the contents to a temporary
-staging directory.
-This can be useful for package management.
-For example: <code>make install DESTDIR=/somepath/</code>
-</p>
-
-<p>
-Note: at runtime you can use the LD_LIBRARY_PATH environment variable
-(on Linux at least) to switch
-between the Mesa libraries and other vendor's libraries whenever you want.
-This is a handy way to compare multiple OpenGL implementations.
-</p>
-
-
-
-
 <a name="other">
-<H1>5. Building for other systems</H1>
+<H1>4. Building for other systems</H1>
 
 <p>
 Documentation for other environments (some may be very out of date):
@@ -255,7 +144,7 @@ Documentation for other environments (some may be very out of date):
 
 
 <a name="libs">
-<H1>6. Library Information</H1>
+<H1>5. Library Information</H1>
 
 <p>
 When compilation has finished, look in the top-level <code>lib/</code>
@@ -300,7 +189,7 @@ versions of libGL and device drivers.
 
 
 <a name="pkg-config">
-<H1>7. Building OpenGL programs with pkg-config</H1>
+<H1>6. Building OpenGL programs with pkg-config</H1>
 
 <p>
 Running <code>make install</code> will install package configuration files
