@@ -19,6 +19,13 @@ glapi_headers += env.CodeGenerate(
     )
 
 glapi_headers += env.CodeGenerate(
+    target = '#src/mapi/glapi/glapitable.h',
+    script = GLAPI + 'gen/gl_table.py',
+    source = GLAPI + 'gen/gl_API.xml',
+    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    )
+
+glapi_headers += env.CodeGenerate(
     target = '#src/mapi/glapi/glapitemp.h',
     script = GLAPI + 'gen/gl_apitemp.py',
     source = GLAPI + 'gen/gl_API.xml',
