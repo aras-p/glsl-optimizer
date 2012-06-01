@@ -255,7 +255,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 emitByte(0);
 
                 // offset
-                emitByte(0);
+                emitTwoBytes(0);
 
                 // endian
                 emitByte(0);
