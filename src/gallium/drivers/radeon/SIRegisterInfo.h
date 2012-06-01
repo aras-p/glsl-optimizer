@@ -43,6 +43,10 @@ struct SIRegisterInfo : public AMDGPURegisterInfo
   /// a register
   unsigned getHWRegNum(unsigned reg) const;
 
+  /// getCFGStructurizerRegClass - get the register class of the specified
+  /// type to use in the CFGStructurizer
+  virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
+
 };
 
 } // End namespace llvm

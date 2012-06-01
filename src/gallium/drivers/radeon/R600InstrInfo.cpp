@@ -100,3 +100,19 @@ unsigned R600InstrInfo::getLSHRop() const
     return AMDIL::LSHR_eg;
   }
 }
+
+MachineInstr * R600InstrInfo::getMovImmInstr(MachineFunction *MF,
+                                             unsigned DstReg, int64_t Imm) const
+{
+  MachineInstr * MI = MF->CreateMachineInstr(get(AMDIL::MOV), DebugLoc());
+  MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
+  MachineInstrBuilder(MI).addReg(AMDIL::ALU_LITERAL_X);
+  MachineInstrBuilder(MI).addImm(Imm);
+
+  return MI;
+}
+
+unsigned R600InstrInfo::getIEQOpcode() const
+{
+  return AMDIL::SETE_INT;
+}

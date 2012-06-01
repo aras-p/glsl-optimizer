@@ -147,6 +147,11 @@ public:
   bool isLocalAtomic(llvm::MachineInstr *MI) const;
   bool isGlobalAtomic(llvm::MachineInstr *MI) const;
   bool isArenaAtomic(llvm::MachineInstr *MI) const;
+
+  virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
+                                        int64_t Imm) const = 0;
+
+  virtual unsigned getIEQOpcode() const = 0;
 };
 
 }

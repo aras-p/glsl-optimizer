@@ -80,6 +80,11 @@ namespace llvm
 
     int64_t
       getStackSize() const;
+
+    virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT)
+                                                                      const {
+      return AMDIL::GPRI32RegisterClass;
+    }
     private:
     mutable int64_t baseOffset;
     mutable int64_t nextFuncOffset;

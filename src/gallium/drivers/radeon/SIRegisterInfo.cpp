@@ -53,4 +53,12 @@ SIRegisterInfo::getISARegClass(const TargetRegisterClass * rc) const
   }
 }
 
+const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
+                                                                   MVT VT) const
+{
+  switch(VT.SimpleTy) {
+    default:
+    case MVT::i32: return AMDIL::VReg_32RegisterClass;
+  }
+}
 #include "SIRegisterGetHWRegNum.inc"

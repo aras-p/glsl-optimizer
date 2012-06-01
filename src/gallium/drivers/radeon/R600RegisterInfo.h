@@ -42,6 +42,10 @@ struct R600RegisterInfo : public AMDGPURegisterInfo
   /// getHWRegChan - get the HW encoding for a register's channel.
   unsigned getHWRegChan(unsigned reg) const;
 
+  /// getCFGStructurizerRegClass - get the register class of the specified
+  /// type to use in the CFGStructurizer
+  virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
+
 private:
   /// getHWRegIndexGen - Generated function returns a register's encoding
   unsigned getHWRegIndexGen(unsigned reg) const;

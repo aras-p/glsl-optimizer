@@ -94,4 +94,12 @@ unsigned R600RegisterInfo::getHWRegChan(unsigned reg) const
   }
 }
 
+const TargetRegisterClass * R600RegisterInfo::getCFGStructurizerRegClass(
+                                                                   MVT VT) const
+{
+  switch(VT.SimpleTy) {
+  default:
+  case MVT::i32: return AMDIL::R600_TReg32RegisterClass;
+  }
+}
 #include "R600HwRegInfo.include"

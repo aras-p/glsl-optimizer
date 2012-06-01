@@ -105,3 +105,14 @@ unsigned SIInstrInfo::getISAOpcode(unsigned AMDILopcode) const
   default: return AMDILopcode;
   }
 }
+
+MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
+                                           int64_t Imm) const
+{
+  MachineInstr * MI = MF->CreateMachineInstr(get(AMDIL::V_MOV_IMM), DebugLoc());
+  MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
+  MachineInstrBuilder(MI).addImm(Imm);
+
+  return MI;
+
+}

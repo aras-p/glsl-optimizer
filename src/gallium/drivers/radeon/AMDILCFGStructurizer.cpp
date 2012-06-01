@@ -11,6 +11,7 @@
 #define DEBUG_TYPE "structcfg"
 
 #include "AMDIL.h"
+#include "AMDILInstrInfo.h"
 #include "AMDILRegisterInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -295,10 +296,10 @@ public:
   ~CFGStructurizer();
 
   /// Perform the CFG structurization
-  bool run(FuncT &Func, PassT &Pass);
+  bool run(FuncT &Func, PassT &Pass, const AMDILRegisterInfo *tri);
 
   /// Perform the CFG preparation
-  bool prepare(FuncT &Func, PassT &Pass);
+  bool prepare(FuncT &Func, PassT &Pass, const AMDILRegisterInfo *tri);
 
 private:
   void   orderBlocks();
@@ -402,6 +403,7 @@ private:
   BlockInfoMap blockInfoMap;
   LoopLandInfoMap loopLandInfoMap;
   SmallVector<BlockT *, DEFAULT_VEC_SLOTS> orderedBlks;
+  const AMDILRegisterInfo *TRI;
 
 };  //template class CFGStructurizer
 
@@ -417,9 +419,11 @@ template<class PassT> CFGStructurizer<PassT>::~CFGStructurizer() {
 }
 
 template<class PassT>
-bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass) {
+bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
+                                     const AMDILRegisterInfo * tri) {
   passRep = &pass;
   funcRep = &func;
+  TRI = tri;
 
   bool changed = false;
   //func.RenumberBlocks();
@@ -504,9 +508,11 @@ bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass) {
 } //CFGStructurizer::prepare
 
 template<class PassT>
-bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass) {
+bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
+    const AMDILRegisterInfo * tri) {
   passRep = &pass;
   funcRep = &func;
+  TRI = tri;
 
   //func.RenumberBlocks();
 
@@ -1333,8 +1339,10 @@ int CFGStructurizer<PassT>::improveSimpleJumpintoIf(BlockT *headBlk,
   //      if (initReg !=2) {...}
   //
   // add initReg = initVal to headBlk
+
+  const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
   unsigned initReg =
-    funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass);
+    funcRep->getRegInfo().createVirtualRegister(I32RC);
   if (!migrateTrue || !migrateFalse) {
     int initVal = migrateTrue ? 0 : 1;
     CFGTraits::insertAssignInstrBefore(headBlk, passRep, initReg, initVal);
@@ -1370,10 +1378,10 @@ int CFGStructurizer<PassT>::improveSimpleJumpintoIf(BlockT *headBlk,
 
   if (landBlkHasOtherPred) {
     unsigned immReg =
-      funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass);
+      funcRep->getRegInfo().createVirtualRegister(I32RC);
     CFGTraits::insertAssignInstrBefore(insertPos, passRep, immReg, 2);
     unsigned cmpResReg =
-      funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass);
+      funcRep->getRegInfo().createVirtualRegister(I32RC);
 
     CFGTraits::insertCompareInstrBefore(landBlk, insertPos, passRep, cmpResReg,
                                         initReg, immReg);
@@ -1439,11 +1447,12 @@ void CFGStructurizer<PassT>::handleLoopbreak(BlockT *exitingBlk,
     errs() << "Trying to break loop-depth = " << getLoopDepth(exitLoop)
            << " from loop-depth = " << getLoopDepth(exitingLoop) << "\n";
   }
+  const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
 
   RegiT initReg = INVALIDREGNUM;
   if (exitingLoop != exitLoop) {
     initReg = static_cast<int>
-      (funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass));
+      (funcRep->getRegInfo().createVirtualRegister(I32RC));
     assert(initReg != INVALIDREGNUM);
     addLoopBreakInitReg(exitLoop, initReg);
     while (exitingLoop != exitLoop && exitingLoop) {
@@ -1472,9 +1481,10 @@ void CFGStructurizer<PassT>::handleLoopcontBlock(BlockT *contingBlk,
   }
 
   RegiT initReg = INVALIDREGNUM;
+  const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
   if (contingLoop != contLoop) {
     initReg = static_cast<int>
-      (funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass));
+      (funcRep->getRegInfo().createVirtualRegister(I32RC));
     assert(initReg != INVALIDREGNUM);
     addLoopContInitReg(contLoop, initReg);
     while (contingLoop && contingLoop->getParentLoop() != contLoop) {
@@ -1862,10 +1872,12 @@ typename CFGStructurizer<PassT>::BlockT *
 CFGStructurizer<PassT>::addLoopEndbranchBlock(LoopT *loopRep,
                                               BlockTSmallerVector &exitingBlks,
                                               BlockTSmallerVector &exitBlks) {
-  const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+  const AMDILInstrInfo *tii =
+             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
+  const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
 
   RegiT endBranchReg = static_cast<int>
-    (funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass));
+    (funcRep->getRegInfo().createVirtualRegister(I32RC));
   assert(endBranchReg >= 0);
 
   // reg = 0 before entering the loop
@@ -1925,14 +1937,16 @@ CFGStructurizer<PassT>::addLoopEndbranchBlock(LoopT *loopRep,
 
   DebugLoc DL;
   RegiT preValReg = static_cast<int>
-    (funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass));
-  BuildMI(preBranchBlk, DL, tii->get(AMDIL::LOADCONST_i32), preValReg)
-    .addImm(i - 1); //preVal
+    (funcRep->getRegInfo().createVirtualRegister(I32RC));
+
+  preBranchBlk->insert(preBranchBlk->begin(),
+                       tii->getMovImmInstr(preBranchBlk->getParent(), preValReg,
+                       i - 1));
 
   // condResReg = (endBranchReg == preValReg)
     RegiT condResReg = static_cast<int>
-      (funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass));
-    BuildMI(preBranchBlk, DL, tii->get(AMDIL::IEQ), condResReg)
+      (funcRep->getRegInfo().createVirtualRegister(I32RC));
+    BuildMI(preBranchBlk, DL, tii->get(tii->getIEQOpcode()), condResReg)
       .addReg(endBranchReg).addReg(preValReg);
 
     BuildMI(preBranchBlk, DL, tii->get(AMDIL::BRANCH_COND_i32))
@@ -2136,6 +2150,7 @@ CFGStructurizer<PassT>::normalizeInfiniteLoopExit(LoopT* LoopRep) {
   loopHeader = LoopRep->getHeader();
   loopLatch = LoopRep->getLoopLatch();
   BlockT *dummyExitBlk = NULL;
+  const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
   if (loopHeader!=NULL && loopLatch!=NULL) {
     InstrT *branchInstr = CFGTraits::getLoopendBlockBranchInstr(loopLatch);
     if (branchInstr!=NULL && CFGTraits::isUncondBranch(branchInstr)) {
@@ -2148,7 +2163,7 @@ CFGStructurizer<PassT>::normalizeInfiniteLoopExit(LoopT* LoopRep) {
       typename BlockT::iterator insertPos =
         CFGTraits::getInstrPos(loopLatch, branchInstr);
       unsigned immReg =
-        funcRep->getRegInfo().createVirtualRegister(&AMDIL::GPRI32RegClass);
+        funcRep->getRegInfo().createVirtualRegister(I32RC);
       CFGTraits::insertAssignInstrBefore(insertPos, passRep, immReg, 1);
       InstrT *newInstr = 
         CFGTraits::insertInstrBefore(insertPos, AMDIL::BRANCH_COND_i32, passRep);
@@ -2615,12 +2630,11 @@ public:
   typedef MachinePostDominatorTree  PostDominatortreeType;
   typedef MachineDomTreeNode        DomTreeNodeType;
   typedef MachineLoop               LoopType;
-//private:
+
+protected:
   TargetMachine &TM;
   const TargetInstrInfo *TII;
-
-//public:
-//  static char ID;
+  const AMDILRegisterInfo *TRI;
 
 public:
   AMDILCFGStructurizer(char &pid, TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
@@ -2635,7 +2649,9 @@ private:
 } //end of namespace llvm
 AMDILCFGStructurizer::AMDILCFGStructurizer(char &pid, TargetMachine &tm
                                            AMDIL_OPT_LEVEL_DECL)
-: MachineFunctionPass(pid), TM(tm), TII(tm.getInstrInfo()) {
+: MachineFunctionPass(pid), TM(tm), TII(tm.getInstrInfo()),
+  TRI(static_cast<const AMDILRegisterInfo *>(tm.getRegisterInfo())
+  ) {
 }
 
 const TargetInstrInfo *AMDILCFGStructurizer::getTargetInstrInfo() const {
@@ -3071,14 +3087,11 @@ struct CFGStructTraits<AMDILCFGStructurizer>
                                       AMDILCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
     MachineInstr *oldInstr = &(*instrPos);
-    const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+    const AMDILInstrInfo *tii =
+             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
     MachineBasicBlock *blk = oldInstr->getParent();
-    MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(AMDIL::LOADCONST_i32),
-                                           DebugLoc());
-    MachineInstrBuilder(newInstr).addReg(regNum, RegState::Define); //set target
-    MachineInstrBuilder(newInstr).addImm(regVal); //set src value
-
+    MachineInstr *newInstr = tii->getMovImmInstr(blk->getParent(), regNum,
+                                                 regVal);
     blk->insert(instrPos, newInstr);
 
     SHOWNEWINSTR(newInstr);
@@ -3087,14 +3100,11 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static void insertAssignInstrBefore(MachineBasicBlock *blk,
                                       AMDILCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
-    const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+    const AMDILInstrInfo *tii =
+             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
 
-    MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(AMDIL::LOADCONST_i32),
-                                           DebugLoc());
-    MachineInstrBuilder(newInstr).addReg(regNum, RegState::Define); //set target
-    MachineInstrBuilder(newInstr).addImm(regVal); //set src value
-
+    MachineInstr *newInstr = tii->getMovImmInstr(blk->getParent(), regNum,
+                                                 regVal);
     if (blk->begin() != blk->end()) {
       blk->insert(blk->begin(), newInstr);
     } else {
@@ -3110,9 +3120,10 @@ struct CFGStructTraits<AMDILCFGStructurizer>
                                        AMDILCFGStructurizer *passRep,
                                        RegiT dstReg, RegiT src1Reg,
                                        RegiT src2Reg) {
-    const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+    const AMDILInstrInfo *tii =
+             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
     MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(AMDIL::IEQ), DebugLoc());
+      blk->getParent()->CreateMachineInstr(tii->get(tii->getIEQOpcode()), DebugLoc());
 
     MachineInstrBuilder(newInstr).addReg(dstReg, RegState::Define); //set target
     MachineInstrBuilder(newInstr).addReg(src1Reg); //set src value
@@ -3212,7 +3223,8 @@ FunctionPass *llvm::createAMDILCFGPreparationPass(TargetMachine &tm
 
 bool AMDILCFGPrepare::runOnMachineFunction(MachineFunction &func) {
   return llvmCFGStruct::CFGStructurizer<AMDILCFGStructurizer>().prepare(func,
-                                                                        *this);
+                                                                        *this,
+                                                                        TRI);
 }
 
 // createAMDILCFGStructurizerPass- Returns a pass
@@ -3223,7 +3235,8 @@ FunctionPass *llvm::createAMDILCFGStructurizerPass(TargetMachine &tm
 
 bool AMDILCFGPerform::runOnMachineFunction(MachineFunction &func) {
   return llvmCFGStruct::CFGStructurizer<AMDILCFGStructurizer>().run(func,
-                                                                    *this);
+                                                                    *this,
+                                                                    TRI);
 }
 
 //end of file newline goes below

@@ -51,6 +51,11 @@ public:
   /// returns an equivalent SI opcode.
   virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
 
+  virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
+                                        int64_t Imm) const;
+
+  virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
+
   };
 
 } // End namespace llvm

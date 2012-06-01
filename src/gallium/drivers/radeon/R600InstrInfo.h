@@ -47,7 +47,11 @@ namespace llvm {
   unsigned getLSHRop() const;
   unsigned getASHRop() const;
 
-  };
+  virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
+                                        int64_t Imm) const;
+
+  virtual unsigned getIEQOpcode() const;
+};
 
 } // End llvm namespace
 
