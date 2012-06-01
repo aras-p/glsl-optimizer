@@ -51,6 +51,7 @@ def MEMrr : Operand<iPTR> {
 
 def ADDRParam : ComplexPattern<i32, 2, "SelectADDRParam", [], []>;
 def ADDRDWord : ComplexPattern<i32, 1, "SelectADDRDWord", [], []>;
+def ADDRVTX_READ : ComplexPattern<i32, 2, "SelectADDRVTX_READ", [], []>;
 
 class R600_ALU {
 
@@ -225,7 +226,6 @@ def store_global : PatFrag<(ops node:$value, node:$ptr),
 def load_param : PatFrag<(ops node:$ptr),
                          (load node:$ptr),
                           [{
-                           return true;
                            const Value *Src = cast<LoadSDNode>(N)->getSrcValue();
                            if (Src) {
                                 PointerType * PT = dyn_cast<PointerType>(Src->getType());
@@ -804,11 +804,11 @@ class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
 >;
 
 def VTX_READ_PARAM_eg : VTX_READ_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRParam:$ptr))]
+  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
 >;
 
 def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRParam:$ptr))]
+  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
 >;
 
 } // End isEG Predicate

@@ -255,7 +255,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 emitByte(0);
 
                 // offset
-                emitTwoBytes(0);
+                emitTwoBytes(MI.getOperand(2).getImm());
 
                 // endian
                 emitByte(0);
