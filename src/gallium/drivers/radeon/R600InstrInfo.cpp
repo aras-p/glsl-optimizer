@@ -116,3 +116,14 @@ unsigned R600InstrInfo::getIEQOpcode() const
 {
   return AMDIL::SETE_INT;
 }
+
+bool R600InstrInfo::isMov(unsigned Opcode) const
+{
+  switch(Opcode) {
+  default: return false;
+  case AMDIL::MOV:
+  case AMDIL::MOV_IMM_F32:
+  case AMDIL::MOV_IMM_I32:
+    return true;
+  }
+}

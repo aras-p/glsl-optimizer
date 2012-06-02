@@ -152,6 +152,8 @@ public:
                                         int64_t Imm) const = 0;
 
   virtual unsigned getIEQOpcode() const = 0;
+
+  virtual bool isMov(unsigned Opcode) const = 0;
 };
 
 }

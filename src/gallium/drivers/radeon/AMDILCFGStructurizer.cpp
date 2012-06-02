@@ -2862,16 +2862,6 @@ struct CFGStructTraits<AMDILCFGStructurizer>
     return true;
   }
 
-  static bool isPhimove(MachineInstr *instr) {
-    switch (instr->getOpcode()) {
-      ExpandCaseToAllTypes(AMDIL::MOVE);
-      break;
-    default:
-      return false;
-    }
-    return true;
-  }
-
   static DebugLoc getLastDebugLocInBB(MachineBasicBlock *blk) {
     //get DebugLoc from the first MachineBasicBlock instruction with debug info
     DebugLoc DL;
@@ -2899,6 +2889,9 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   // instruction.  Such move instruction "belong to" the loop backward-edge.
   //
   static MachineInstr *getLoopendBlockBranchInstr(MachineBasicBlock *blk) {
+    const AMDILInstrInfo * TII = static_cast<const AMDILInstrInfo *>(
+                                  blk->getParent()->getTarget().getInstrInfo());
+
     for (MachineBasicBlock::reverse_iterator iter = blk->rbegin(),
          iterEnd = blk->rend(); iter != iterEnd; ++iter) {
       // FIXME: Simplify
@@ -2906,7 +2899,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
       if (instr) {
         if (isCondBranch(instr) || isUncondBranch(instr)) {
           return instr;
-        } else if (!isPhimove(instr)) {
+        } else if (!TII->isMov(instr->getOpcode())) {
           break;
         }
       }

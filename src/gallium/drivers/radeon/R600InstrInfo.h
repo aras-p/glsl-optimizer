@@ -51,6 +51,7 @@ namespace llvm {
                                         int64_t Imm) const;
 
   virtual unsigned getIEQOpcode() const;
+  virtual bool isMov(unsigned Opcode) const;
 };
 
 } // End llvm namespace

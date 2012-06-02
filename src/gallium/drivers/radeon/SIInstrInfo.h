@@ -55,6 +55,7 @@ public:
                                         int64_t Imm) const;
 
   virtual unsigned getIEQOpcode() const { assert(!"Implement"); return 0;}
+  virtual bool isMov(unsigned Opcode) const;
 
   };
 

@@ -115,3 +115,18 @@ MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
   return MI;
 
 }
+
+bool SIInstrInfo::isMov(unsigned Opcode) const
+{
+  switch(Opcode) {
+  default: return false;
+  case AMDIL::S_MOV_B32:
+  case AMDIL::S_MOV_B64:
+  case AMDIL::V_MOV_B32_e32:
+  case AMDIL::V_MOV_B32_e64:
+  case AMDIL::V_MOV_IMM_F32:
+  case AMDIL::V_MOV_IMM_I32:
+  case AMDIL::S_MOV_IMM_I32:
+    return true;
+  }
+}
