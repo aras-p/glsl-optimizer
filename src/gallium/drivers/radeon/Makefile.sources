@@ -41,7 +41,6 @@ CPP_SOURCES := \
 	R600ISelLowering.cpp		\
 	R600InstrInfo.cpp		\
 	R600KernelParameters.cpp	\
-	R600LowerInstructions.cpp	\
 	R600MachineFunctionInfo.cpp	\
 	R600RegisterInfo.cpp		\
 	SIAssignInterpRegs.cpp		\
@@ -49,7 +48,6 @@ CPP_SOURCES := \
 	SIInstrInfo.cpp			\
 	SIISelLowering.cpp		\
 	SIMachineFunctionInfo.cpp	\
-	SIPropagateImmReads.cpp		\
 	SIRegisterInfo.cpp		\
 	MCTargetDesc/AMDILMCAsmInfo.cpp	\
 	MCTargetDesc/AMDILMCTargetDesc.cpp	\

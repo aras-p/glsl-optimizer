@@ -22,11 +22,9 @@ class AMDGPUTargetMachine;
 // R600 Passes
 FunctionPass* createR600KernelParametersPass(const TargetData* TD);
 FunctionPass *createR600CodeEmitterPass(formatted_raw_ostream &OS);
-FunctionPass *createR600LowerInstructionsPass(TargetMachine &tm);
 
 // SI Passes
 FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
-FunctionPass *createSIPropagateImmReadsPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 
 // Passes common to R600 and SI

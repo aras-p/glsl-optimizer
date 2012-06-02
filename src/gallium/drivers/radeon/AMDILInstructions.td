@@ -10,7 +10,6 @@
 // Operations in this file are generic to all data types
 // This opcode has custom swizzle pattern encoded in Swizzle Encoder
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-  defm LOADCONST  : ILConstant<"mov $dst, $val">;
   defm MOVE       : UnaryOpMC<IL_OP_MOV, IL_mov>;
   defm PHIMOVE    : UnaryOpMC<IL_OP_MOV, IL_phimov>;
 }

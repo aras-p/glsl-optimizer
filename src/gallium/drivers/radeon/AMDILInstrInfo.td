@@ -106,10 +106,3 @@ include "AMDILIntrinsics.td"
 // Instructions support
 //===--------------------------------------------------------------------===//
 include "AMDILInstructions.td"
-
-//===--------------------------------------------------------------------===//
-// Instruction Pattern support - This Must be the last include in the file
-// as it requires items defined in other files
-//===--------------------------------------------------------------------===//
-include "AMDILInstrPatterns.td"
-

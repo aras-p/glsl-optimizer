@@ -773,22 +773,25 @@ def S_BFE_I64 : SOP2_64 <0x0000002a, "S_BFE_I64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "S_CBRANCH_G_FORK", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
-def V_MOV_IMM : VOP1 <
+class V_MOV_IMM <Operand immType, SDNode immNode> : VOP1 <
   0x1,
   (outs VReg_32:$dst),
-  (ins f32imm:$src0),
+  (ins immType:$src0),
   "V_MOV_IMM",
-   []
+   [(set VReg_32:$dst, (immNode:$src0))]
 >;
+
+def V_MOV_IMM_I32 : V_MOV_IMM<i32imm, imm>;
+def V_MOV_IMM_F32 : V_MOV_IMM<f32imm, fpimm>;
 
 def S_MOV_IMM_I32 : SOP1 <
   0x3,
   (outs SReg_32:$dst),
   (ins i32Literal:$src0),
-  "S_MOV_IMM",
-  [] > {
-  let neverHasSideEffects = 1;
-}
+  "S_MOV_IMM_I32",
+  [(set SReg_32:$dst, (imm:$src0))]
+>;
+
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 

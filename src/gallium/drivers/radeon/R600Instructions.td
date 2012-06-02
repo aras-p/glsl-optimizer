@@ -371,6 +371,25 @@ def FLOOR : R600_1OP <
 
 def MOV : R600_1OP <0x19, "MOV", []>;
 
+class MOV_IMM <ValueType vt, Operand immType> : InstR600 <0x19,
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$alu_literal, immType:$imm),
+  "MOV_IMM $dst, $imm",
+  [], AnyALU
+>;
+
+def MOV_IMM_I32 : MOV_IMM<i32, i32imm>;
+def : Pat <
+  (imm:$val),
+  (MOV_IMM_I32 (i32 ALU_LITERAL_X), imm:$val)
+>;
+
+def MOV_IMM_F32 : MOV_IMM<f32, f32imm>;
+def : Pat <
+  (fpimm:$val),
+  (MOV_IMM_F32 (i32 ALU_LITERAL_X), fpimm:$val)
+>;
+
 def KILLGT : R600_2OP <
   0x2D, "KILLGT",
   []
@@ -821,7 +840,7 @@ let Predicates = [isEGorCayman] in {
   
 class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   (intr R600_Reg32:$src),
-  (trig (MUL (MOV (LOADCONST_i32 CONST.TWO_PI_INV)), R600_Reg32:$src))
+  (trig (MUL (MOV_IMM_I32 (i32 ALU_LITERAL_X), CONST.TWO_PI_INV), R600_Reg32:$src))
 >;
 
   def MULADD_eg : MULADD_Common<0x14>;

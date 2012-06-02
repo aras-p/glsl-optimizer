@@ -100,47 +100,7 @@ AMDILRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int SPAdj,
     RegScavenger *RS) const
 {
-  assert(SPAdj == 0 && "Unexpected");
-  MachineInstr &MI = *II;
-  MachineFunction &MF = *MI.getParent()->getParent();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned int y = MI.getNumOperands();
-  for (unsigned int x = 0; x < y; ++x) {
-    if (!MI.getOperand(x).isFI()) {
-      continue;
-    }
-    const AMDILInstrInfo * AMDILII =
-                         static_cast<const AMDILInstrInfo *>(TM.getInstrInfo());
-    bool def = AMDILII->isStoreInst(&MI);
-    int FrameIndex = MI.getOperand(x).getIndex();
-    int64_t Offset = MFI->getObjectOffset(FrameIndex);
-    //int64_t Size = MF.getFrameInfo()->getObjectSize(FrameIndex);
-    // An optimization is to only use the offsets if the size
-    // is larger than 4, which means we are storing an array
-    // instead of just a pointer. If we are size 4 then we can
-    // just do register copies since we don't need to worry about
-    // indexing dynamically
-    MachineInstr *nMI = MF.CreateMachineInstr(
-        TII.get(AMDIL::LOADCONST_i32), MI.getDebugLoc());
-    nMI->addOperand(MachineOperand::CreateReg(AMDIL::DFP, true));
-    nMI->addOperand(
-        MachineOperand::CreateImm(Offset));
-    MI.getParent()->insert(II, nMI);
-    nMI = MF.CreateMachineInstr(
-        TII.get(AMDIL::ADD_INT), MI.getDebugLoc());
-    nMI->addOperand(MachineOperand::CreateReg(AMDIL::DFP, true));
-    nMI->addOperand(MachineOperand::CreateReg(AMDIL::DFP, false));
-    nMI->addOperand(MachineOperand::CreateReg(AMDIL::FP, false));
-    
-    MI.getParent()->insert(II, nMI);
-    if (MI.getOperand(x).isReg() == false)  {
-      MI.getOperand(x).ChangeToRegister(
-          nMI->getOperand(0).getReg(), def);
-    } else {
-      MI.getOperand(x).setReg(
-          nMI->getOperand(0).getReg());
-    }
-  }
+  assert(!"Implement");
 }
 
 void

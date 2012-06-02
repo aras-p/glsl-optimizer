@@ -490,43 +490,6 @@ AMDILTargetLowering::LowerMemArgument(
 //===----------------------------------------------------------------------===//
 // TargetLowering Implementation Help Functions End
 //===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-// Instruction generation functions
-//===----------------------------------------------------------------------===//
-MachineOperand
-AMDILTargetLowering::convertToReg(MachineOperand op) const
-{
-  if (op.isReg()) {
-    return op;
-  } else if (op.isImm()) {
-    uint32_t loadReg
-      = genVReg(op.getParent()->getDesc().OpInfo[0].RegClass);
-    generateMachineInst(AMDIL::LOADCONST_i32, loadReg)
-      .addImm(op.getImm());
-    op.ChangeToRegister(loadReg, false);
-  } else if (op.isFPImm()) {
-    uint32_t loadReg
-      = genVReg(op.getParent()->getDesc().OpInfo[0].RegClass);
-    generateMachineInst(AMDIL::LOADCONST_f32, loadReg)
-      .addFPImm(op.getFPImm());
-    op.ChangeToRegister(loadReg, false);
-  } else if (op.isMBB()) {
-    op.ChangeToRegister(0, false);
-  } else if (op.isFI()) {
-    op.ChangeToRegister(0, false);
-  } else if (op.isCPI()) {
-    op.ChangeToRegister(0, false);
-  } else if (op.isJTI()) {
-    op.ChangeToRegister(0, false);
-  } else if (op.isGlobal()) {
-    op.ChangeToRegister(0, false);
-  } else if (op.isSymbol()) {
-    op.ChangeToRegister(0, false);
-  }/* else if (op.isMetadata()) {
-      op.ChangeToRegister(0, false);
-      }*/
-  return op;
-}
 
 //===----------------------------------------------------------------------===//
 // TargetLowering Class Implementation Begins
