@@ -100,7 +100,6 @@ unsigned SIInstrInfo::getISAOpcode(unsigned AMDILopcode) const
 {
   switch (AMDILopcode) {
   //XXX We need a better way of detecting end of program
-  case AMDIL::RETURN: return AMDIL::S_ENDPGM;
   case AMDIL::MOVE_f32: return AMDIL::V_MOV_B32_e32;
   default: return AMDILopcode;
   }

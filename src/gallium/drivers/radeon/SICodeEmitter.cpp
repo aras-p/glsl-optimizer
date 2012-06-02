@@ -172,6 +172,10 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
       }
     }
   }
+  // Emit S_END_PGM
+  MachineInstr * End = BuildMI(MF, DebugLoc(),
+                               TM->getInstrInfo()->get(AMDIL::S_ENDPGM));
+  emitInstr(*End);
   return false;
 }
 
