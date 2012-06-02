@@ -214,8 +214,6 @@ namespace llvm
 
   class AMDILTargetLowering : public TargetLowering
   {
-    private:
-      int VarArgsFrameOffset;   // Frame offset to start of varargs area.
     public:
       AMDILTargetLowering(TargetMachine &TM);
 
@@ -333,28 +331,13 @@ namespace llvm
         genu64tof64(SDValue Op, EVT dblvt, SelectionDAG &DAG) const;
 
       SDValue
-        LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG& DAG) const;
-
-      SDValue
-        LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG& DAG) const;
-
-      SDValue
-        LowerINTRINSIC_VOID(SDValue Op, SelectionDAG& DAG) const;
 
       SDValue
         LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
@@ -364,9 +347,6 @@ namespace llvm
 
       SDValue
         LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerADD(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerSUB(SDValue Op, SelectionDAG &DAG) const;
@@ -403,15 +383,6 @@ namespace llvm
         LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerUDIV(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUDIV24(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUDIV32(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUDIV64(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerFDIV(SDValue Op, SelectionDAG &DAG) const;
       SDValue
         LowerFDIV32(SDValue Op, SelectionDAG &DAG) const;
@@ -440,16 +411,7 @@ namespace llvm
         LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerAND(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerOR(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
@@ -461,9 +423,6 @@ namespace llvm
         genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
 
       SDValue
-        LowerBITCAST(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
@@ -473,49 +432,6 @@ namespace llvm
         LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
       SDValue
         LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const;
-      void
-        generateCMPInstr(MachineInstr*, MachineBasicBlock*,
-            const TargetInstrInfo&) const;
-      MachineOperand
-        convertToReg(MachineOperand) const;
-
-      // private members used by the set of instruction generation
-      // functions, these are marked mutable as they are cached so
-      // that they don't have to constantly be looked up when using the
-      // generateMachineInst/genVReg instructions. This is to simplify
-      // the code
-      // and to make it cleaner. The object itself doesn't change as
-      // only these functions use these three data types.
-      mutable MachineBasicBlock *mBB;
-      mutable DebugLoc *mDL;
-      mutable const TargetInstrInfo *mTII;
-      mutable MachineBasicBlock::iterator mBBI;
-      void
-        setPrivateData(MachineBasicBlock *BB, 
-            MachineBasicBlock::iterator &BBI, 
-            DebugLoc *DL,
-          const TargetInstrInfo *TII) const;
-      uint32_t genVReg(uint32_t regType) const;
-      MachineInstrBuilder
-        generateMachineInst(uint32_t opcode,
-          uint32_t dst) const;
-      MachineInstrBuilder
-        generateMachineInst(uint32_t opcode,
-          uint32_t dst, uint32_t src1) const;
-      MachineInstrBuilder
-        generateMachineInst(uint32_t opcode,
-          uint32_t dst, uint32_t src1, uint32_t src2) const;
-      MachineInstrBuilder
-        generateMachineInst(uint32_t opcode,
-          uint32_t dst, uint32_t src1, uint32_t src2,
-          uint32_t src3) const;
-      uint32_t
-        addExtensionInstructions(
-          uint32_t reg, bool signedShift,
-          unsigned int simpleVT) const;
-      void
-        generateLongRelational(MachineInstr *MI,
-          unsigned int opCode) const;
 
   }; // AMDILTargetLowering
 } // end namespace llvm

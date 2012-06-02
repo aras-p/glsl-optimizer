@@ -1482,11 +1482,6 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   return Op;
 }
 
-int
-AMDILTargetLowering::getVarArgsFrameOffset() const
-{
-  return VarArgsFrameOffset;
-}
 #undef LOWER
 
 SDValue
@@ -3323,51 +3318,6 @@ AMDILTargetLowering::getFunctionAlignment(const Function *) const
   return 0;
 }
 
-void
-AMDILTargetLowering::setPrivateData(MachineBasicBlock *BB,
-    MachineBasicBlock::iterator &BBI,
-    DebugLoc *DL, const TargetInstrInfo *TII) const
-{
-  mBB = BB;
-  mBBI = BBI;
-  mDL = DL;
-  mTII = TII;
-}
-uint32_t
-AMDILTargetLowering::genVReg(uint32_t regType) const
-{
-  return mBB->getParent()->getRegInfo().createVirtualRegister(
-      getTargetMachine().getRegisterInfo()->getRegClass(regType));
-}
-
-MachineInstrBuilder
-AMDILTargetLowering::generateMachineInst(uint32_t opcode, uint32_t dst) const
-{
-  return BuildMI(*mBB, mBBI, *mDL, mTII->get(opcode), dst);
-}
-
-MachineInstrBuilder
-AMDILTargetLowering::generateMachineInst(uint32_t opcode, uint32_t dst,
-    uint32_t src1) const
-{
-  return generateMachineInst(opcode, dst).addReg(src1);
-}
-
-MachineInstrBuilder
-AMDILTargetLowering::generateMachineInst(uint32_t opcode, uint32_t dst,
-    uint32_t src1, uint32_t src2) const
-{
-  return generateMachineInst(opcode, dst, src1).addReg(src2);
-}
-
-MachineInstrBuilder
-AMDILTargetLowering::generateMachineInst(uint32_t opcode, uint32_t dst,
-    uint32_t src1, uint32_t src2, uint32_t src3) const
-{
-  return generateMachineInst(opcode, dst, src1, src2).addReg(src3);
-}
-
-
 SDValue
 AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
 {
@@ -3520,75 +3470,6 @@ SDValue
 AMDILTargetLowering::LowerSDIV64(SDValue Op, SelectionDAG &DAG) const
 {
   return SDValue(Op.getNode(), 0);
-}
-
-SDValue
-AMDILTargetLowering::LowerUDIV24(SDValue Op, SelectionDAG &DAG) const
-{
-  DebugLoc DL = Op.getDebugLoc();
-  EVT OVT = Op.getValueType();
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  MVT INTTY;
-  MVT FLTTY;
-  if (!OVT.isVector()) {
-    INTTY = MVT::i32;
-    FLTTY = MVT::f32;
-  } else if (OVT.getVectorNumElements() == 2) {
-    INTTY = MVT::v2i32;
-    FLTTY = MVT::v2f32;
-  } else if (OVT.getVectorNumElements() == 4) {
-    INTTY = MVT::v4i32;
-    FLTTY = MVT::v4f32;
-  }
-
-  // The LowerUDIV24 function implements the following CL.
-  // int ia = (int)LHS
-  // float fa = (float)ia
-  // int ib = (int)RHS
-  // float fb = (float)ib
-  // float fq = native_divide(fa, fb)
-  // fq = trunc(fq)
-  // float t = mad(fq, fb, fb)
-  // int iq = (int)fq - (t <= fa)
-  // return (type)iq
-
-  // int ia = (int)LHS
-  SDValue ia = DAG.getZExtOrTrunc(LHS, DL, INTTY);
-
-  // float fa = (float)ia
-  SDValue fa = DAG.getNode(ISD::SINT_TO_FP, DL, FLTTY, ia);
-
-  // int ib = (int)RHS
-  SDValue ib = DAG.getZExtOrTrunc(RHS, DL, INTTY);
-
-  // float fb = (float)ib
-  SDValue fb = DAG.getNode(ISD::SINT_TO_FP, DL, FLTTY, ib);
-
-  // float fq = native_divide(fa, fb)
-  SDValue fq = DAG.getNode(AMDILISD::DIV_INF, DL, FLTTY, fa, fb);
-
-  // fq = trunc(fq)
-  fq = DAG.getNode(ISD::FTRUNC, DL, FLTTY, fq);
-
-  // float t = mad(fq, fb, fb)
-  SDValue t = DAG.getNode(AMDILISD::MAD, DL, FLTTY, fq, fb, fb);
-
-  // int iq = (int)fq - (t <= fa) // This is sub and not add because GPU returns 0, -1
-  SDValue iq;
-  fq = DAG.getNode(ISD::FP_TO_SINT, DL, INTTY, fq);
-  if (INTTY == MVT::i32) {
-    iq = DAG.getSetCC(DL, INTTY, t, fa, ISD::SETOLE);
-  } else {
-    iq = DAG.getSetCC(DL, INTTY, t, fa, ISD::SETOLE);
-  }
-  iq = DAG.getNode(ISD::ADD, DL, INTTY, fq, iq);
-
-
-  // return (type)iq
-  iq = DAG.getZExtOrTrunc(iq, DL, OVT);
-  return iq;
-
 }
 
 SDValue
