@@ -33,7 +33,6 @@ CPP_SOURCES := \
 	AMDGPUTargetMachine.cpp		\
 	AMDGPUISelLowering.cpp		\
 	AMDGPUConvertToISA.cpp		\
-	AMDGPULowerInstructions.cpp		\
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
 	AMDGPUUtil.cpp			\

@@ -1122,6 +1122,9 @@ def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 5, sel_y>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 6, sel_z>;
 def : Insert_Element <i32, v4i32, R600_Reg32, R600_Reg128, 7, sel_w>;
 
+def : Vector_Build <v4f32, R600_Reg32>;
+def : Vector_Build <v4i32, R600_Reg32>;
+
 // bitconvert patterns
 
 def : BitConvert <i32, f32, R600_Reg32>;

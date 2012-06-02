@@ -28,7 +28,6 @@ FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 
 // Passes common to R600 and SI
-FunctionPass *createAMDGPULowerInstructionsPass(TargetMachine &tm);
 FunctionPass *createAMDGPUConvertToISAPass(TargetMachine &tm);
 
 } // End namespace llvm

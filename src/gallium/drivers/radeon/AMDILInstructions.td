@@ -732,12 +732,6 @@ def LCREATE_v2i64     : TwoInOneOut<IL_OP_I_ADD, (outs GPRV2I64:$dst),
                 [(set GPRV2I64:$dst, 
                     (IL_lcreate2 GPRV2I32:$src0, GPRV2I32:$src1))]>;
 //===---------------------------------------------------------------------===//
-// Scalar ==> Vector conversion functions
-//===---------------------------------------------------------------------===//
-// This opcode has custom swizzle pattern encoded in Swizzle Encoder
-defm VCREATE          : UnaryOpMCVec<IL_OP_MOV, IL_vbuild>;
-
-//===---------------------------------------------------------------------===//
 // Vector ==> Scalar conversion functions
 //===---------------------------------------------------------------------===//
 
