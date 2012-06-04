@@ -414,9 +414,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
            inst->src[0].file == IMM) &&
 	  inst->src[0].type == inst->dst.type &&
 	  !inst->saturate &&
-	  !inst->predicate &&
-	  !inst->force_uncompressed &&
-	  !inst->force_sechalf) {
+	  !inst->is_partial_write()) {
 	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];

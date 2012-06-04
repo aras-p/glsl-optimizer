@@ -78,9 +78,7 @@ fs_live_variables::setup_def_use()
 	  */
 	 if (inst->dst.file == GRF &&
 	     inst->regs_written == v->virtual_grf_sizes[inst->dst.reg] &&
-	     !inst->predicate &&
-	     !inst->force_uncompressed &&
-	     !inst->force_sechalf) {
+	     !inst->is_partial_write()) {
 	    int reg = inst->dst.reg;
             if (!BITSET_TEST(bd[b].use, reg))
                BITSET_SET(bd[b].def, reg);

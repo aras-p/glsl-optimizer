@@ -711,6 +711,22 @@ fs_visitor::pop_force_sechalf()
 }
 
 /**
+ * Returns true if the instruction has a flag that means it won't
+ * update an entire destination register.
+ *
+ * For example, dead code elimination and live variable analysis want to know
+ * when a write to a variable screens off any preceding values that were in
+ * it.
+ */
+bool
+fs_inst::is_partial_write()
+{
+   return (this->predicate ||
+           this->force_uncompressed ||
+           this->force_sechalf);
+}
+
+/**
  * Returns how many MRFs an FS opcode will write over.
  *
  * Note that this is not the 0 or 1 implied writes in an actual gen
@@ -2065,21 +2081,13 @@ fs_visitor::compute_to_mrf()
 	     * into a compute-to-MRF.
 	     */
 
-	    /* If it's predicated, it (probably) didn't populate all
-	     * the channels.  We might be able to rewrite everything
+	    /* If this one instruction didn't populate all the
+	     * channels, bail.  We might be able to rewrite everything
 	     * that writes that reg, but it would require smarter
 	     * tracking to delay the rewriting until complete success.
 	     */
-	    if (scan_inst->predicate)
+	    if (scan_inst->is_partial_write())
 	       break;
-
-	    /* If it's half of register setup and not the same half as
-	     * our MOV we're trying to remove, bail for now.
-	     */
-	    if (scan_inst->force_uncompressed != inst->force_uncompressed ||
-		scan_inst->force_sechalf != inst->force_sechalf) {
-	       break;
-	    }
 
             /* Things returning more than one register would need us to
              * understand coalescing out more than one MOV at a time.
@@ -2662,9 +2670,7 @@ fs_visitor::get_instruction_generating_reg(fs_inst *start,
 					   fs_reg reg)
 {
    if (end == start ||
-       end->predicate ||
-       end->force_uncompressed ||
-       end->force_sechalf ||
+       end->is_partial_write() ||
        reg.reladdr ||
        !reg.equals(end->dst)) {
       return NULL;
