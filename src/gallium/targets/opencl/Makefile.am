@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 lib_LTLIBRARIES = libOpenCL.la
 
 libOpenCL_la_LDFLAGS = \
+	$(LLVM_LDFLAGS) \
 	-version-number 1:0
 
 libOpenCL_la_LIBADD = \
