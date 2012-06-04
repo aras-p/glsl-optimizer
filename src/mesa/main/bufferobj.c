@@ -821,6 +821,19 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
          }
 
+         /* unbind ARB_copy_buffer binding points */
+         if (ctx->CopyReadBuffer == bufObj) {
+            _mesa_BindBufferARB( GL_COPY_READ_BUFFER, 0 );
+         }
+         if (ctx->CopyWriteBuffer == bufObj) {
+            _mesa_BindBufferARB( GL_COPY_WRITE_BUFFER, 0 );
+         }
+
+         /* unbind transform feedback binding point */
+         if (ctx->TransformFeedback.CurrentBuffer == bufObj) {
+            _mesa_BindBufferARB( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
+         }
+
          /* unbind any pixel pack/unpack pointers bound to this buffer */
          if (ctx->Pack.BufferObj == bufObj) {
             _mesa_BindBufferARB( GL_PIXEL_PACK_BUFFER_EXT, 0 );
