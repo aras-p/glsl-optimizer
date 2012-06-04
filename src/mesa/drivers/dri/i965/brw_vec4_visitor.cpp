@@ -1838,7 +1838,7 @@ vec4_visitor::visit(ir_texture *ir)
    inst->dst = dst_reg(this, ir->type);
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 
-   if (ir->offset != NULL && !(intel->gen >= 7 && ir->op == ir_txf))
+   if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
    /* MRF for the first parameter */
@@ -1859,7 +1859,7 @@ vec4_visitor::visit(ir_texture *ir)
 	 zero_mask |= (1 << i);
 
       ir->coordinate->accept(this);
-      if (ir->offset && intel->gen >= 7 && ir->op == ir_txf) {
+      if (ir->offset && ir->op == ir_txf) {
 	 /* It appears that the ld instruction used for txf does its
 	  * address bounds check before adding in the offset.  To work
 	  * around this, just add the integer offset to the integer
