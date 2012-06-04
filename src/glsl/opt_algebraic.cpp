@@ -309,6 +309,13 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
       break;
 
+   case ir_binop_dot:
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir_constant::zero(mem_ctx, ir->type);
+      }
+      break;
+
    case ir_binop_logic_and:
       /* FINISHME: Also simplify (a && a) to (a). */
       if (is_vec_one(op_const[0])) {
