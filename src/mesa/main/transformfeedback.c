@@ -470,7 +470,12 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
       return;
    }  
 
-   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (buffer == 0) {
+      bufObj = ctx->Shared->NullBufferObj;
+   } else {
+      bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   }
+
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindBufferRange(invalid buffer=%u)", buffer);
@@ -518,7 +523,12 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
       return;
    }
 
-   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (buffer == 0) {
+      bufObj = ctx->Shared->NullBufferObj;
+   } else {
+      bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   }
+
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindBufferBase(invalid buffer=%u)", buffer);
@@ -574,7 +584,12 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
       return;
    }
 
-   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (buffer == 0) {
+      bufObj = ctx->Shared->NullBufferObj;
+   } else {
+      bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   }
+
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindBufferOffsetEXT(invalid buffer=%u)", buffer);
