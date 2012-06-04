@@ -42,6 +42,7 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "texobj.h"
+#include "transformfeedback.h"
 
 
 /* Debug flags */
@@ -829,9 +830,14 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             _mesa_BindBufferARB( GL_COPY_WRITE_BUFFER, 0 );
          }
 
-         /* unbind transform feedback binding point */
+         /* unbind transform feedback binding points */
          if (ctx->TransformFeedback.CurrentBuffer == bufObj) {
             _mesa_BindBufferARB( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
+         }
+         for (j = 0; j < MAX_FEEDBACK_ATTRIBS; j++) {
+            if (ctx->TransformFeedback.CurrentObject->Buffers[j] == bufObj) {
+               _mesa_BindBufferBase( GL_TRANSFORM_FEEDBACK_BUFFER, j, 0 );
+            }
          }
 
          /* unbind any pixel pack/unpack pointers bound to this buffer */
