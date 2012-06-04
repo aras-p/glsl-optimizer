@@ -884,20 +884,36 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    const int vector_elements =
       ir->coordinate ? ir->coordinate->type->vector_elements : 0;
 
-   if (ir->offset) {
-      /* The offsets set up by the ir_texture visitor are in the
-       * m1 header, so we can't go headerless.
+   if (ir->offset != NULL && ir->op == ir_txf) {
+      /* It appears that the ld instruction used for txf does its
+       * address bounds check before adding in the offset.  To work
+       * around this, just add the integer offset to the integer texel
+       * coordinate, and don't put the offset in the header.
        */
-      header_present = true;
-      mlen++;
-      base_mrf--;
-   }
+      ir_constant *offset = ir->offset->as_constant();
+      for (int i = 0; i < vector_elements; i++) {
+	 emit(BRW_OPCODE_ADD,
+	      fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
+	      coordinate,
+	      offset->value.i[i]);
+	 coordinate.reg_offset++;
+      }
+   } else {
+      if (ir->offset) {
+	 /* The offsets set up by the ir_texture visitor are in the
+	  * m1 header, so we can't go headerless.
+	  */
+	 header_present = true;
+	 mlen++;
+	 base_mrf--;
+      }
 
-   for (int i = 0; i < vector_elements; i++) {
-      emit(BRW_OPCODE_MOV,
-	   fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
-	   coordinate);
-      coordinate.reg_offset++;
+      for (int i = 0; i < vector_elements; i++) {
+	 emit(BRW_OPCODE_MOV,
+	      fs_reg(MRF, base_mrf + mlen + i * reg_width, coordinate.type),
+	      coordinate);
+	 coordinate.reg_offset++;
+      }
    }
    mlen += vector_elements * reg_width;
 
