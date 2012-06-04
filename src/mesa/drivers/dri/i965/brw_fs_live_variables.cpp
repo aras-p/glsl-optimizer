@@ -32,8 +32,19 @@ using namespace brw;
 
 /** @file brw_fs_live_variables.cpp
  *
- * Support for computing at the basic block level which variables
- * (virtual GRFs in our case) are live at entry and exit.
+ * Support for calculating liveness information about virtual GRFs.
+ *
+ * This produces a live interval for each whole virtual GRF.  We could
+ * choose to expose per-component live intervals for VGRFs of size > 1,
+ * but we currently do not.  It is easier for the consumers of this
+ * information to work with whole VGRFs.
+ *
+ * However, we internally track use/def information at the per-component
+ * (reg_offset) level for greater accuracy.  Large VGRFs may be accessed
+ * piecemeal over many (possibly non-adjacent) instructions.  In this case,
+ * examining a single instruction is insufficient to decide whether a whole
+ * VGRF is ultimately used or defined.  Tracking individual components
+ * allows us to easily assemble this information.
  *
  * See Muchnik's Advanced Compiler Design and Implementation, section
  * 14.1 (p444).
@@ -45,6 +56,8 @@ using namespace brw;
  * The basic-block-level live variable analysis needs to know which
  * variables get used before they're completely defined, and which
  * variables are completely defined before they're used.
+ *
+ * These are tracked at the per-component level, rather than whole VGRFs.
  */
 void
 fs_live_variables::setup_def_use()
@@ -67,22 +80,32 @@ fs_live_variables::setup_def_use()
 	    if (inst->src[i].file != GRF)
                continue;
 
-            int reg = inst->src[i].reg;
+            int regs_read = 1;
+            /* We don't know how many components are read in a send-from-grf,
+             * so just assume "all of them."
+             */
+            if (inst->is_send_from_grf())
+               regs_read = v->virtual_grf_sizes[inst->src[i].reg];
 
-            if (!BITSET_TEST(bd[b].def, reg))
-               BITSET_SET(bd[b].use, reg);
+            for (int j = 0; j < regs_read; j++) {
+               int var = var_from_vgrf[inst->src[i].reg] +
+                         inst->src[i].reg_offset + j;
+
+               if (!BITSET_TEST(bd[b].def, var))
+                  BITSET_SET(bd[b].use, var);
+            }
 	 }
 
 	 /* Check for unconditional writes to whole registers. These
 	  * are the things that screen off preceding definitions of a
 	  * variable, and thus qualify for being in def[].
 	  */
-	 if (inst->dst.file == GRF &&
-	     inst->regs_written == v->virtual_grf_sizes[inst->dst.reg] &&
-	     !inst->is_partial_write()) {
-	    int reg = inst->dst.reg;
-            if (!BITSET_TEST(bd[b].use, reg))
-               BITSET_SET(bd[b].def, reg);
+	 if (inst->dst.file == GRF && !inst->is_partial_write()) {
+            int var = var_from_vgrf[inst->dst.reg] + inst->dst.reg_offset;
+            for (int j = 0; j < inst->regs_written; j++) {
+               if (!BITSET_TEST(bd[b].use, var + j))
+                  BITSET_SET(bd[b].def, var + j);
+            }
 	 }
 
 	 ip++;
@@ -139,9 +162,23 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    mem_ctx = ralloc_context(cfg->mem_ctx);
 
    num_vgrfs = v->virtual_grf_count;
+   num_vars = 0;
+   var_from_vgrf = rzalloc_array(mem_ctx, int, num_vgrfs);
+   for (int i = 0; i < num_vgrfs; i++) {
+      var_from_vgrf[i] = num_vars;
+      num_vars += v->virtual_grf_sizes[i];
+   }
+
+   vgrf_from_var = rzalloc_array(mem_ctx, int, num_vars);
+   for (int i = 0; i < num_vgrfs; i++) {
+      for (int j = 0; j < v->virtual_grf_sizes[i]; j++) {
+         vgrf_from_var[var_from_vgrf[i] + j] = i;
+      }
+   }
+
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
-   bitset_words = BITSET_WORDS(v->virtual_grf_count);
+   bitset_words = BITSET_WORDS(num_vars);
    for (int i = 0; i < cfg->num_blocks; i++) {
       bd[i].def = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
       bd[i].use = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
@@ -160,6 +197,12 @@ fs_live_variables::~fs_live_variables()
 
 #define MAX_INSTRUCTION (1 << 30)
 
+/**
+ * Compute the live intervals for each virtual GRF.
+ *
+ * This uses the per-component use/def data, but combines it to produce
+ * information about whole VGRFs.
+ */
 void
 fs_visitor::calculate_live_intervals()
 {
@@ -242,15 +285,16 @@ fs_visitor::calculate_live_intervals()
    fs_live_variables livevars(this, &cfg);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
-      for (int i = 0; i < num_vgrfs; i++) {
+      for (int i = 0; i < livevars.num_vars; i++) {
+         int vgrf = livevars.vgrf_from_var[i];
 	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
-	    start[i] = MIN2(start[i], cfg.blocks[b]->start_ip);
-	    end[i] = MAX2(end[i], cfg.blocks[b]->start_ip);
+	    start[vgrf] = MIN2(start[vgrf], cfg.blocks[b]->start_ip);
+	    end[vgrf] = MAX2(end[vgrf], cfg.blocks[b]->start_ip);
 	 }
 
 	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
-	    start[i] = MIN2(start[i], cfg.blocks[b]->end_ip);
-	    end[i] = MAX2(end[i], cfg.blocks[b]->end_ip);
+	    start[vgrf] = MIN2(start[vgrf], cfg.blocks[b]->end_ip);
+	    end[vgrf] = MAX2(end[vgrf], cfg.blocks[b]->end_ip);
 	 }
       }
    }

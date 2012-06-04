@@ -65,6 +65,18 @@ public:
    cfg_t *cfg;
    void *mem_ctx;
 
+   /** Map from virtual GRF number to index in block_data arrays. */
+   int *var_from_vgrf;
+
+   /**
+    * Map from any index in block_data to the virtual GRF containing it.
+    *
+    * For virtual_grf_sizes of [1, 2, 3], vgrf_from_var would contain
+    * [0, 1, 1, 2, 2, 2].
+    */
+   int *vgrf_from_var;
+
+   int num_vars;
    int num_vgrfs;
    int bitset_words;
 
