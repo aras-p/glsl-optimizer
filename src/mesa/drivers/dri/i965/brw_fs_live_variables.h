@@ -72,11 +72,6 @@ public:
    fs_cfg *cfg;
    void *mem_ctx;
 
-   struct var {
-      int blocknum;
-      int instnum;
-      fs_inst *inst;
-   } *vars;
    int num_vars;
 
    /** Per-basic-block information on live variables */

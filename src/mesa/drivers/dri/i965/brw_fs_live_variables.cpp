@@ -139,7 +139,6 @@ fs_live_variables::fs_live_variables(fs_visitor *v, fs_cfg *cfg)
 
    num_vars = v->virtual_grf_count;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
-   vars = rzalloc_array(mem_ctx, struct var, num_vars);
 
    for (int i = 0; i < cfg->num_blocks; i++) {
       bd[i].def = rzalloc_array(mem_ctx, bool, num_vars);
