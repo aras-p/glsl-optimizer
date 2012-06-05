@@ -1844,6 +1844,9 @@ fs_visitor::compute_to_mrf()
       }
    }
 
+   if (progress)
+      live_intervals_valid = false;
+
    return progress;
 }
 
@@ -1919,6 +1922,9 @@ fs_visitor::remove_duplicate_mrf_writes()
 	 last_mrf_move[inst->dst.reg] = inst;
       }
    }
+
+   if (progress)
+      live_intervals_valid = false;
 
    return progress;
 }
