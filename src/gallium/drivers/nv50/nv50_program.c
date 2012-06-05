@@ -343,6 +343,9 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
+   if (info->bin.syms) /* we don't need them yet */
+      FREE(info->bin.syms);
+
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;
    prog->fixups = info->bin.relocData;
