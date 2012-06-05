@@ -427,6 +427,9 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
    if (p->fixups)
       FREE(p->fixups);
 
+   if (p->so)
+      FREE(p->so);
+
    memset(p, 0, sizeof(*p));
 
    p->pipe = pipe;
