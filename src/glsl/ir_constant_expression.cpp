@@ -1322,8 +1322,11 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
 
    foreach_list(n, actual_parameters) {
       ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value(variable_context);
-      if (constant == NULL)
-	 return NULL;
+      if (constant == NULL) {
+         hash_table_dtor(deref_hash);
+         return NULL;
+      }
+
 
       ir_variable *var = (ir_variable *)parameter_info;
       hash_table_insert(deref_hash, constant, var);
