@@ -438,8 +438,13 @@ void evergreen_set_lds(
 	struct evergreen_compute_resource* res =
 		get_empty_res(pipe, COMPUTE_RESOURCE_LDS, 0);
 
-	evergreen_reg_set(res, R_008E2C_SQ_LDS_RESOURCE_MGMT,
-		S_008E2C_NUM_LS_LDS(num_lds));
+	if (pipe->ctx->chip_class < CAYMAN) {
+		evergreen_reg_set(res, R_008E2C_SQ_LDS_RESOURCE_MGMT,
+			S_008E2C_NUM_LS_LDS(num_lds));
+	} else {
+		evergreen_reg_set(res, CM_R_0286FC_SPI_LDS_MGMT,
+					S_0286FC_NUM_LS_LDS(num_lds));
+	}
 	evergreen_reg_set(res, CM_R_0288E8_SQ_LDS_ALLOC, size | num_waves << 14);
 }
 
@@ -620,6 +625,7 @@ void evergreen_set_vtx_resource(
 	assert(id < 16);
 	uint32_t sq_vtx_constant_word2, sq_vtx_constant_word3, sq_vtx_constant_word4;
 	struct number_type_and_format fmt;
+	uint64_t va;
 
 	fmt.format = 0;
 
@@ -639,11 +645,13 @@ void evergreen_set_vtx_resource(
 //	size = (size * util_format_get_blockwidth(bo->b.b.b.format) *
 //		util_format_get_blocksize(bo->b.b.b.format));
 
+	va = r600_resource_va(&pipe->ctx->screen->screen, &bo->b.b) + offset;
+
 	COMPUTE_DBG("id: %i vtx size: %i byte,	width0: %i elem\n",
 		id, size, bo->b.b.width0);
 
 	sq_vtx_constant_word2 =
-		S_030008_BASE_ADDRESS_HI(offset >> 32) |
+		S_030008_BASE_ADDRESS_HI(va >> 32) |
 		S_030008_STRIDE(stride) |
 		S_030008_DATA_FORMAT(fmt.format) |
 		S_030008_NUM_FORMAT_ALL(fmt.num_format_all) |
@@ -662,7 +670,7 @@ void evergreen_set_vtx_resource(
 
 	evergreen_emit_raw_value(res, PKT3C(PKT3_SET_RESOURCE, 8, 0));
 	evergreen_emit_raw_value(res, (id+816)*32 >> 2);
-	evergreen_emit_raw_value(res, (unsigned)((offset) & 0xffffffff));
+	evergreen_emit_raw_value(res, (unsigned)((va) & 0xffffffff));
 	evergreen_emit_raw_value(res, size - 1);
 	evergreen_emit_raw_value(res, sq_vtx_constant_word2);
 	evergreen_emit_raw_value(res, sq_vtx_constant_word3);

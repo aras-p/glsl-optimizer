@@ -784,54 +784,6 @@ class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
 >;
 */
 
-/* ---------------------- */
-/* Evergreen Instructions */
-/* ---------------------- */
-
-
-let Predicates = [isEG] in {
-
-let usesCustomInserter = 1 in {
-
-def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
-  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
-  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr",
-  [(global_store (i32 R600_TReg32_X:$rw_gpr), R600_TReg32_X:$index_gpr)]>
-{
-  let RIM         = 0;
-  /* XXX: Have a separate instruction for non-indexed writes. */
-  let TYPE        = 1;
-  let RW_REL      = 0;
-  let ELEM_SIZE   = 0;
-
-  let ARRAY_SIZE  = 0;
-  let COMP_MASK   = 1;
-  let BURST_COUNT = 0;
-  let VPM         = 0;
-  let EOP         = 0;
-  let MARK        = 0;
-  let BARRIER     = 1;
-}
-
-} // End usesCustomInserter = 1
-
-class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
-  (outs R600_TReg32_X:$dst),
-  (ins MEMxi:$ptr),
-  "VTX_READ_eg $dst, $ptr",
-  pattern
->;
-
-def VTX_READ_PARAM_eg : VTX_READ_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
->;
-
-def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
->;
-
-} // End isEG Predicate
-
 /* ------------------------------- */
 /* Evergreen / Cayman Instructions */
 /* ------------------------------- */
@@ -893,6 +845,50 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
 
   def : Pat<(fp_to_uint R600_Reg32:$src),
     (FLT_TO_UINT_eg (TRUNC R600_Reg32:$src))>;
+
+//===----------------------------------------------------------------------===//
+// Memory read/write instructions
+//===----------------------------------------------------------------------===//
+
+let usesCustomInserter = 1 in {
+
+def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
+  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr",
+  [(global_store (i32 R600_TReg32_X:$rw_gpr), R600_TReg32_X:$index_gpr)]>
+{
+  let RIM         = 0;
+  /* XXX: Have a separate instruction for non-indexed writes. */
+  let TYPE        = 1;
+  let RW_REL      = 0;
+  let ELEM_SIZE   = 0;
+
+  let ARRAY_SIZE  = 0;
+  let COMP_MASK   = 1;
+  let BURST_COUNT = 0;
+  let VPM         = 0;
+  let EOP         = 0;
+  let MARK        = 0;
+  let BARRIER     = 1;
+}
+
+} // End usesCustomInserter = 1
+
+class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
+  (outs R600_TReg32_X:$dst),
+  (ins MEMxi:$ptr),
+  "VTX_READ_eg $dst, $ptr",
+  pattern
+>;
+
+def VTX_READ_PARAM_eg : VTX_READ_eg <0,
+  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
+>;
+
+def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
+  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
+>;
+
 }
 
 let Predicates = [isCayman] in {

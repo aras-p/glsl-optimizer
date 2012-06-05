@@ -165,8 +165,10 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 	struct evergreen_compute_resource* res = get_empty_res(ctx->cs_shader,
 						COMPUTE_RESOURCE_SHADER, 0);
 
-	evergreen_reg_set(res, R_008C0C_SQ_GPR_RESOURCE_MGMT_3,
+	if (ctx->chip_class < CAYMAN) {
+		evergreen_reg_set(res, R_008C0C_SQ_GPR_RESOURCE_MGMT_3,
 			S_008C0C_NUM_LS_GPRS(ctx->cs_shader->bc.ngpr));
+	}
 
 	///maybe we can use it later
 	evergreen_reg_set(res, R_0286C8_SPI_THREAD_GROUPING, 0);
@@ -606,31 +608,48 @@ void evergreen_compute_init_config(struct r600_context *ctx)
 
 	evergreen_reg_set(res, R_008C04_SQ_GPR_RESOURCE_MGMT_1,
 				S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs));
-	evergreen_reg_set(res, R_008C08_SQ_GPR_RESOURCE_MGMT_2, 0);
+	if (ctx->chip_class < CAYMAN) {
+		evergreen_reg_set(res, R_008C08_SQ_GPR_RESOURCE_MGMT_2, 0);
+	}
 	evergreen_reg_set(res, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0);
 	evergreen_reg_set(res, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0);
 	evergreen_reg_set(res, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8));
+
 	/* workaround for hw issues with dyn gpr - must set all limits to 240
 	 * instead of 0, 0x1e == 240/8 */
-	evergreen_reg_set(res, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
+	if (ctx->chip_class < CAYMAN) {
+		evergreen_reg_set(res, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
 				S_028838_PS_GPRS(0x1e) |
 				S_028838_VS_GPRS(0x1e) |
 				S_028838_GS_GPRS(0x1e) |
 				S_028838_ES_GPRS(0x1e) |
 				S_028838_HS_GPRS(0x1e) |
 				S_028838_LS_GPRS(0x1e));
+	} else {
+		evergreen_reg_set(res, 0x286f8,
+				S_028838_PS_GPRS(0x1e) |
+				S_028838_VS_GPRS(0x1e) |
+				S_028838_GS_GPRS(0x1e) |
+				S_028838_ES_GPRS(0x1e) |
+				S_028838_HS_GPRS(0x1e) |
+				S_028838_LS_GPRS(0x1e));
+	}
 
+	if (ctx->chip_class < CAYMAN) {
 
-	evergreen_reg_set(res, R_008E20_SQ_STATIC_THREAD_MGMT1, 0xFFFFFFFF);
-	evergreen_reg_set(res, R_008E24_SQ_STATIC_THREAD_MGMT2, 0xFFFFFFFF);
-	evergreen_reg_set(res, R_008E28_SQ_STATIC_THREAD_MGMT3, 0xFFFFFFFF);
-	evergreen_reg_set(res, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 0);
-	tmp = S_008C1C_NUM_LS_THREADS(num_threads);
-	evergreen_reg_set(res, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp);
-	evergreen_reg_set(res, R_008C20_SQ_STACK_RESOURCE_MGMT_1, 0);
-	evergreen_reg_set(res, R_008C24_SQ_STACK_RESOURCE_MGMT_2, 0);
-	tmp = S_008C28_NUM_LS_STACK_ENTRIES(num_stack_entries);
-	evergreen_reg_set(res, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp);
+		evergreen_reg_set(res, R_008E20_SQ_STATIC_THREAD_MGMT1, 0xFFFFFFFF);
+		evergreen_reg_set(res, R_008E24_SQ_STATIC_THREAD_MGMT2, 0xFFFFFFFF);
+		evergreen_reg_set(res, R_008E20_SQ_STATIC_THREAD_MGMT1, 0xFFFFFFFF);
+		evergreen_reg_set(res, R_008E24_SQ_STATIC_THREAD_MGMT2, 0xFFFFFFFF);
+		evergreen_reg_set(res, R_008E28_SQ_STATIC_THREAD_MGMT3, 0xFFFFFFFF);
+		evergreen_reg_set(res, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 0);
+		tmp = S_008C1C_NUM_LS_THREADS(num_threads);
+		evergreen_reg_set(res, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp);
+		evergreen_reg_set(res, R_008C20_SQ_STACK_RESOURCE_MGMT_1, 0);
+		evergreen_reg_set(res, R_008C24_SQ_STACK_RESOURCE_MGMT_2, 0);
+		tmp = S_008C28_NUM_LS_STACK_ENTRIES(num_stack_entries);
+		evergreen_reg_set(res, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp);
+	}
 	evergreen_reg_set(res, R_0286CC_SPI_PS_IN_CONTROL_0, S_0286CC_LINEAR_GRADIENT_ENA(1));
 	evergreen_reg_set(res, R_0286D0_SPI_PS_IN_CONTROL_1, 0);
 	evergreen_reg_set(res, R_0286E4_SPI_PS_IN_CONTROL_2, 0);
