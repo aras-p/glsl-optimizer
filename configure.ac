@@ -350,6 +350,24 @@ else
         LIB_EXTENSION='so' ;;
     esac
 fi
+AC_ARG_WITH([gl-lib-name],
+  [AS_HELP_STRING([--with-gl-lib-name@<:@=NAME@:>@],
+    [specify GL library name @<:@default=GL@:>@])],
+  [GL_LIB=$withval],
+  [GL_LIB=GL])
+AC_ARG_WITH([glu-lib-name],
+  [AS_HELP_STRING([--with-glu-lib-name@<:@=NAME@:>@],
+    [specify GLU library name @<:@default=GLU@:>@])],
+  [GLU_LIB=$withval],
+  [GLU_LIB=GLU])
+AC_ARG_WITH([osmesa-lib-name],
+  [AS_HELP_STRING([--with-osmesa-lib-name@<:@=NAME@:>@],
+    [specify OSMesa library name @<:@default=OSMesa@:>@])],
+  [OSMESA_LIB=$withval],
+  [OSMESA_LIB=OSMesa])
+AS_IF([test "x$GL_LIB" = xyes], [GL_LIB=GL])
+AS_IF([test "x$GLU_LIB" = xyes], [GLU_LIB=GLU])
+AS_IF([test "x$OSMESA_LIB" = xyes], [OSMESA_LIB=OSMesa])
 
 dnl
 dnl Mangled Mesa support
@@ -360,19 +378,16 @@ AC_ARG_ENABLE([mangling],
   [enable_mangling="${enableval}"],
   [enable_mangling=no]
 )
-GL_LIB="GL"
-GLU_LIB="GLU"
-OSMESA_LIB="OSMesa"
 if test "x${enable_mangling}" = "xyes" ; then
   DEFINES="${DEFINES} -DUSE_MGL_NAMESPACE"
-  GL_LIB="MangledGL"
-  GLU_LIB="MangledGLU"
-  OSMESA_LIB="MangledOSMesa"
+  GL_LIB="Mangled${GL_LIB}"
+  GLU_LIB="Mangled${GLU_LIB}"
+  OSMESA_LIB="Mangled${OSMESA_LIB}"
 fi
 AC_SUBST([GL_LIB])
 AC_SUBST([GLU_LIB])
 AC_SUBST([OSMESA_LIB])
-AM_CONDITIONAL(HAVE_MANGLED_GL, test $GL_LIB = MangledGL)
+AM_CONDITIONAL(HAVE_MANGLED_GL, test "x${enable_mangling}" = "xyes")
 
 dnl
 dnl potentially-infringing-but-nobody-knows-for-sure stuff
