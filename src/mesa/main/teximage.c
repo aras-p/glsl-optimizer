@@ -2926,7 +2926,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
                                                            GL_NONE, GL_NONE);
 
          if (legal_texture_size(ctx, texFormat, width, height, 1)) {
-            GLint srcX = x, srcY = y, dstX = 0, dstY = 0;
+            GLint srcX = x, srcY = y, dstX = 0, dstY = 0, dstZ = 0;
 
             /* Free old texture image */
             ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
@@ -2944,13 +2944,8 @@ copyteximage(struct gl_context *ctx, GLuint dims,
                struct gl_renderbuffer *srcRb =
                   get_copy_tex_image_source(ctx, texImage->TexFormat);
 
-               if (dims == 1)
-                  ctx->Driver.CopyTexSubImage1D(ctx, texImage, dstX,
-                                                srcRb, srcX, srcY, width);
-                                                
-               else
-                  ctx->Driver.CopyTexSubImage2D(ctx, texImage, dstX, dstY,
-                                                srcRb, srcX, srcY, width, height);
+               ctx->Driver.CopyTexSubImage(ctx, dims, texImage, dstX, dstY, dstZ,
+                                           srcRb, srcX, srcY, width, height);
             }
 
             check_gen_mipmap(ctx, target, texObj, level);
@@ -3049,23 +3044,9 @@ copytexsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
             struct gl_renderbuffer *srcRb =
                get_copy_tex_image_source(ctx, texImage->TexFormat);
 
-            switch (dims) {
-            case 1:
-               ctx->Driver.CopyTexSubImage1D(ctx, texImage, xoffset,
-                                             srcRb, x, y, width);
-               break;
-            case 2:
-               ctx->Driver.CopyTexSubImage2D(ctx, texImage, xoffset, yoffset,
-                                             srcRb, x, y, width, height);
-               break;
-            case 3:
-               ctx->Driver.CopyTexSubImage3D(ctx, texImage,
-                                             xoffset, yoffset, zoffset,
-                                             srcRb, x, y, width, height);
-               break;
-            default:
-               _mesa_problem(ctx, "bad dims in copytexsubimage()");
-            }
+            ctx->Driver.CopyTexSubImage(ctx, dims, texImage,
+                                        xoffset, yoffset, zoffset,
+                                        srcRb, x, y, width, height);
 
             check_gen_mipmap(ctx, target, texObj, level);
 

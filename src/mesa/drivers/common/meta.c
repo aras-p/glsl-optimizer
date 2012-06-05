@@ -3117,14 +3117,13 @@ get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
  * Helper for _mesa_meta_CopyTexSubImage1/2/3D() functions.
  * Have to be careful with locking and meta state for pixel transfer.
  */
-static void
-copy_tex_sub_image(struct gl_context *ctx,
-                   GLuint dims,
-                   struct gl_texture_image *texImage,
-                   GLint xoffset, GLint yoffset, GLint zoffset,
-                   struct gl_renderbuffer *rb,
-                   GLint x, GLint y,
-                   GLsizei width, GLsizei height)
+void
+_mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
+                           struct gl_texture_image *texImage,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           struct gl_renderbuffer *rb,
+                           GLint x, GLint y,
+                           GLsizei width, GLsizei height)
 {
    struct gl_texture_object *texObj = texImage->TexObject;
    GLenum format, type;
@@ -3151,7 +3150,7 @@ copy_tex_sub_image(struct gl_context *ctx,
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {
-      _mesa_problem(ctx, "Bad bpp in meta copy_tex_sub_image()");
+      _mesa_problem(ctx, "Bad bpp in _mesa_meta_CopyTexSubImage()");
       return;
    }
 
@@ -3190,44 +3189,6 @@ copy_tex_sub_image(struct gl_context *ctx,
    _mesa_lock_texture(ctx, texObj); /* re-lock */
 
    free(buf);
-}
-
-
-void
-_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y, GLsizei width)
-{
-   copy_tex_sub_image(ctx, 1, texImage, xoffset, 0, 0,
-                      rb, x, y, width, 1);
-}
-
-
-void
-_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height)
-{
-   copy_tex_sub_image(ctx, 2, texImage, xoffset, yoffset, 0,
-                      rb, x, y, width, height);
-}
-
-
-void
-_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset, GLint zoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height)
-{
-   copy_tex_sub_image(ctx, 3, texImage, xoffset, yoffset, zoffset,
-                      rb, x, y, width, height);
 }
 
 

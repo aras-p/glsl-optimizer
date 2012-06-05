@@ -234,33 +234,14 @@ struct dd_function_table {
                         struct gl_texture_image *texImage );
 
    /**
-    * Called by glCopyTexSubImage1D() and glCopyTexImage1D().
+    * Called by glCopyTex[Sub]Image[123]D().
     */
-   void (*CopyTexSubImage1D)(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y, GLsizei width);
-
-   /**
-    * Called by glCopyTexSubImage2D() and glCopyTexImage2D().
-    */
-   void (*CopyTexSubImage2D)(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height);
-
-   /**
-    * Called by glCopyTexSubImage3D() and glCopyTexImage3D().
-    */
-   void (*CopyTexSubImage3D)(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset, GLint zoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height);
+   void (*CopyTexSubImage)(struct gl_context *ctx, GLuint dims,
+                           struct gl_texture_image *texImage,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           struct gl_renderbuffer *rb,
+                           GLint x, GLint y,
+                           GLsizei width, GLsizei height);
 
    /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.

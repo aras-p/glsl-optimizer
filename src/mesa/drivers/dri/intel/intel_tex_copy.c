@@ -144,38 +144,21 @@ intel_copy_texsubimage(struct intel_context *intel,
 
 
 static void
-intelCopyTexSubImage1D(struct gl_context *ctx,
-                       struct gl_texture_image *texImage,
-                       GLint xoffset,
-                       struct gl_renderbuffer *rb,
-                       GLint x, GLint y, GLsizei width)
+intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
+                     struct gl_texture_image *texImage,
+                     GLint xoffset, GLint yoffset, GLint zoffset,
+                     struct gl_renderbuffer *rb,
+                     GLint x, GLint y,
+                     GLsizei width, GLsizei height)
 {
-   if (!intel_copy_texsubimage(intel_context(ctx),
-                               intel_texture_image(texImage),
-                               xoffset, 0,
-                               intel_renderbuffer(rb), x, y, width, 1)) {
-      fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
-      _mesa_meta_CopyTexSubImage1D(ctx, texImage, xoffset,
-                                   rb, x, y, width);
-   }
-}
-
-
-static void
-intelCopyTexSubImage2D(struct gl_context *ctx,
-                       struct gl_texture_image *texImage,
-                       GLint xoffset, GLint yoffset,
-                       struct gl_renderbuffer *rb,
-                       GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   if (!intel_copy_texsubimage(intel_context(ctx),
+   if (dims == 3 || !intel_copy_texsubimage(intel_context(ctx),
                                intel_texture_image(texImage),
                                xoffset, yoffset,
                                intel_renderbuffer(rb), x, y, width, height)) {
       fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
-      _mesa_meta_CopyTexSubImage2D(ctx, texImage,
-                                   xoffset, yoffset,
-                                   rb, x, y, width, height);
+      _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
+                                 xoffset, yoffset, zoffset,
+                                 rb, x, y, width, height);
    }
 }
 
@@ -183,6 +166,5 @@ intelCopyTexSubImage2D(struct gl_context *ctx,
 void
 intelInitTextureCopyImageFuncs(struct dd_function_table *functions)
 {
-   functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
-   functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
+   functions->CopyTexSubImage = intelCopyTexSubImage;
 }

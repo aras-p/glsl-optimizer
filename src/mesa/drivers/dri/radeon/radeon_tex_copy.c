@@ -134,17 +134,17 @@ do_copy_texsubimage(struct gl_context *ctx,
 }
 
 void
-radeonCopyTexSubImage2D(struct gl_context *ctx,
-                        struct gl_texture_image *texImage,
-                        GLint xoffset, GLint yoffset,
-                        struct gl_renderbuffer *rb,
-                        GLint x, GLint y,
-                        GLsizei width, GLsizei height)
+radeonCopyTexSubImage(struct gl_context *ctx, GLuint dims,
+                      struct gl_texture_image *texImage,
+                      GLint xoffset, GLint yoffset, GLint zoffset,
+                      struct gl_renderbuffer *rb,
+                      GLint x, GLint y,
+                      GLsizei width, GLsizei height)
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     radeon_prepare_render(radeon);
 
-    if (!do_copy_texsubimage(ctx,
+    if (dims != 2 || !do_copy_texsubimage(ctx,
                              radeon_tex_obj(texImage->TexObject),
                              (radeon_texture_image *)texImage,
                              xoffset, yoffset,
@@ -153,8 +153,8 @@ radeonCopyTexSubImage2D(struct gl_context *ctx,
         radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
                      "Falling back to sw for glCopyTexSubImage2D\n");
 
-        _mesa_meta_CopyTexSubImage2D(ctx, texImage,
-                                     xoffset, yoffset,
+        _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
+                                   xoffset, yoffset, zoffset,
                                      rb, x, y, width, height);
     }
 }

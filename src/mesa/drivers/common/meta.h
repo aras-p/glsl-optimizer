@@ -111,27 +111,12 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           struct gl_texture_object *texObj);
 
 extern void
-_mesa_meta_CopyTexSubImage1D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y, GLsizei width);
-
-extern void
-_mesa_meta_CopyTexSubImage2D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height);
-
-extern void
-_mesa_meta_CopyTexSubImage3D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset, GLint zoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height);
+_mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
+                           struct gl_texture_image *texImage,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           struct gl_renderbuffer *rb,
+                           GLint x, GLint y,
+                           GLsizei width, GLsizei height);
 
 extern void
 _mesa_meta_GetTexImage(struct gl_context *ctx,

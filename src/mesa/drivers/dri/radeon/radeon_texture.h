@@ -65,12 +65,12 @@ gl_format radeonChooseTextureFormat(struct gl_context * ctx,
                                     GLenum format,
                                     GLenum type, GLboolean fbo);
 
-void radeonCopyTexSubImage2D(struct gl_context *ctx,
-                             struct gl_texture_image *texImage,
-                             GLint xoffset, GLint yoffset,
-                             struct gl_renderbuffer *rb,
-                             GLint x, GLint y,
-                             GLsizei width, GLsizei height);
+void radeonCopyTexSubImage(struct gl_context *ctx, GLuint dims,
+                           struct gl_texture_image *texImage,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           struct gl_renderbuffer *rb,
+                           GLint x, GLint y,
+                           GLsizei width, GLsizei height);
 
 unsigned radeonIsFormatRenderable(gl_format mesa_format);
 

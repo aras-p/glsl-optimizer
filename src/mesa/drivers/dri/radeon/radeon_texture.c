@@ -727,7 +727,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 
 	functions->TexImage = radeonTexImage;
 
-	functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
+	functions->CopyTexSubImage = radeonCopyTexSubImage;
 
 	functions->Bitmap = _mesa_meta_Bitmap;
 #if FEATURE_OES_EGL_image
