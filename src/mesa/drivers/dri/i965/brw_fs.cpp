@@ -47,6 +47,7 @@ extern "C" {
 }
 #include "brw_fs.h"
 #include "main/uniforms.h"
+#include "brw_fs_live_variables.h"
 #include "glsl/glsl_types.h"
 
 void
@@ -1841,8 +1842,18 @@ fs_visitor::dead_code_eliminate()
       fs_inst *inst = (fs_inst *)node;
 
       if (inst->dst.file == GRF) {
-         assert(this->virtual_grf_end[inst->dst.reg] >= pc);
-         if (this->virtual_grf_end[inst->dst.reg] == pc) {
+         bool dead = true;
+
+         for (int i = 0; i < inst->regs_written; i++) {
+            int var = live_intervals->var_from_vgrf[inst->dst.reg];
+            assert(live_intervals->end[var + inst->dst.reg_offset + i] >= pc);
+            if (live_intervals->end[var + inst->dst.reg_offset + i] != pc) {
+               dead = false;
+               break;
+            }
+         }
+
+         if (dead) {
             /* Don't dead code eliminate instructions that write to the
              * accumulator as a side-effect. Instead just set the destination
              * to the null register to free it.
@@ -1855,9 +1866,9 @@ fs_visitor::dead_code_eliminate()
                break;
             default:
                inst->remove();
+               progress = true;
                break;
             }
-            progress = true;
          }
       }
 

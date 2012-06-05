@@ -28,6 +28,8 @@
 #include "brw_fs.h"
 #include "main/bitset.h"
 
+class cfg_t;
+
 namespace brw {
 
 struct block_data {
