@@ -4261,87 +4261,35 @@ store_texsubimage(struct gl_context *ctx,
 
 
 /**
- * This is the fallback for Driver.TexImage1D().
+ * Fallback code for ctx->Driver.TexImage().
+ * Basically, allocate storage for the texture image, then copy the
+ * user's image into it.
  */
 void
-_mesa_store_teximage1d(struct gl_context *ctx,
-                       struct gl_texture_image *texImage,
-                       GLint internalFormat,
-                       GLint width, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing)
+_mesa_store_teximage(struct gl_context *ctx,
+                     GLuint dims,
+                     struct gl_texture_image *texImage,
+                     GLint internalFormat,
+                     GLint width, GLint height, GLint depth, GLint border,
+                     GLenum format, GLenum type, const GLvoid *pixels,
+                     const struct gl_pixelstore_attrib *packing)
 {
-   if (width == 0)
-      return;
+   assert(dims == 1 || dims == 2 || dims == 3);
 
-   /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, 1, 1)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-      return;
-   }
-
-   store_texsubimage(ctx, texImage,
-                     0, 0, 0, width, 1, 1,
-                     format, type, pixels, packing, "glTexImage1D");
-}
-
-
-/**
- * This is the fallback for Driver.TexImage2D().
- */
-void
-_mesa_store_teximage2d(struct gl_context *ctx,
-                       struct gl_texture_image *texImage,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint border,
-                       GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing)
-{
-   if (width == 0 || height == 0)
-      return;
-
-   /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, height, 1)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-      return;
-   }
-
-   store_texsubimage(ctx, texImage,
-                     0, 0, 0, width, height, 1,
-                     format, type, pixels, packing, "glTexImage2D");
-}
-
-
-
-/**
- * This is the fallback for Driver.TexImage3D().
- */
-void
-_mesa_store_teximage3d(struct gl_context *ctx,
-                       struct gl_texture_image *texImage,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint depth, GLint border,
-                       GLenum format, GLenum type, const void *pixels,
-                       const struct gl_pixelstore_attrib *packing)
-{
    if (width == 0 || height == 0 || depth == 0)
       return;
 
    /* allocate storage for texture data */
    if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
                                             width, height, depth)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
       return;
    }
 
    store_texsubimage(ctx, texImage,
                      0, 0, 0, width, height, depth,
-                     format, type, pixels, packing, "glTexImage3D");
+                     format, type, pixels, packing, "glTexImage");
 }
-
-
 
 
 /*

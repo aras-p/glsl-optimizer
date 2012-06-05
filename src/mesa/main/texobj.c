@@ -807,30 +807,10 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
                                     0, /* border */
                                     GL_RGBA, texFormat);
 
-         switch (dims) {
-	 case 0:
-	    break;
-         case 1:
-            ctx->Driver.TexImage1D(ctx, texImage, GL_RGBA,
-                                   width, 0,
-                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
-                                   &ctx->DefaultPacking);
-            break;
-         case 2:
-            ctx->Driver.TexImage2D(ctx, texImage, GL_RGBA,
-                                   width, height, 0,
-                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
-                                   &ctx->DefaultPacking);
-            break;
-         case 3:
-            ctx->Driver.TexImage3D(ctx, texImage, GL_RGBA,
-                                   width, height, depth, 0,
-                                   GL_RGBA, GL_UNSIGNED_BYTE, texel,
-                                   &ctx->DefaultPacking);
-            break;
-         default:
-            _mesa_problem(ctx, "bad dims in _mesa_get_fallback_texture()");
-         }
+         ctx->Driver.TexImage(ctx, dims, texImage, GL_RGBA,
+                              width, height, depth, 0,
+                              GL_RGBA, GL_UNSIGNED_BYTE, texel,
+                              &ctx->DefaultPacking);
       }
 
       _mesa_test_texobj_completeness(ctx, texObj);

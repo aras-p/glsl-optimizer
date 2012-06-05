@@ -198,43 +198,21 @@ struct dd_function_table {
                                      GLenum srcFormat, GLenum srcType );
 
    /**
-    * Called by glTexImage1D().  Simply copy the source texture data into the
-    * destination texture memory.  The gl_texture_image fields, etc. will be
-    * fully initialized.
-    * The parameters are the same as glTexImage1D(), plus:
+    * Called by glTexImage[123]D() and glCopyTexImage[12]D()
+    * Allocate texture memory and copy the user's image to the buffer.
+    * The gl_texture_image fields, etc. will be fully initialized.
+    * The parameters are the same as glTexImage3D(), plus:
+    * \param dims  1, 2, or 3 indicating glTexImage1/2/3D()
     * \param packing describes how to unpack the source data.
     * \param texImage is the destination texture image.
     */
-   void (*TexImage1D)(struct gl_context *ctx,
-                      struct gl_texture_image *texImage,
-                      GLint internalFormat,
-                      GLint width, GLint border,
-                      GLenum format, GLenum type, const GLvoid *pixels,
-                      const struct gl_pixelstore_attrib *packing);
+   void (*TexImage)(struct gl_context *ctx, GLuint dims,
+                    struct gl_texture_image *texImage,
+                    GLint internalFormat,
+                    GLint width, GLint height, GLint depth, GLint border,
+                    GLenum format, GLenum type, const GLvoid *pixels,
+                    const struct gl_pixelstore_attrib *packing);
 
-   /**
-    * Called by glTexImage2D().
-    * 
-    * \sa dd_function_table::TexImage1D.
-    */
-   void (*TexImage2D)(struct gl_context *ctx,
-                      struct gl_texture_image *texImage,
-                      GLint internalFormat,
-                      GLint width, GLint height, GLint border,
-                      GLenum format, GLenum type, const GLvoid *pixels,
-                      const struct gl_pixelstore_attrib *packing);
-   
-   /**
-    * Called by glTexImage3D().
-    * 
-    * \sa dd_function_table::TexImage1D.
-    */
-   void (*TexImage3D)(struct gl_context *ctx,
-                      struct gl_texture_image *texImage,
-                      GLint internalFormat,
-                      GLint width, GLint height, GLint depth, GLint border,
-                      GLenum format, GLenum type, const GLvoid *pixels,
-                      const struct gl_pixelstore_attrib *packing);
 
    /**
     * Called by glTexSubImage1D().  Replace a subset of the target texture

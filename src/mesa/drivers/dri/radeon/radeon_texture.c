@@ -586,39 +586,14 @@ static void radeon_teximage(
 	const struct gl_pixelstore_attrib *packing,
 	int compressed)
 {
-	_mesa_store_teximage3d(ctx, texImage, internalFormat,
-			       width, height, depth, 0,
-			       format, type, pixels,
-			       packing);
+	_mesa_store_teximage(ctx, dims, texImage, internalFormat,
+			     width, height, depth, 0,
+			     format, type, pixels,
+			     packing);
 }
 
 static void
-radeonTexImage1D(struct gl_context * ctx,
-		      struct gl_texture_image *texImage,
-		      GLint internalFormat,
-		      GLint width, GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing)
-{
-	radeon_teximage(ctx, 1, texImage, internalFormat, width, 1, 1,
-		0, format, type, pixels, packing, 0);
-}
-
-static void
-radeonTexImage2D(struct gl_context * ctx,
-		      struct gl_texture_image *texImage,
-		      GLint internalFormat,
-		      GLint width, GLint height, GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing)
-
-{
-	radeon_teximage(ctx, 2, texImage, internalFormat, width, height, 1,
-		0, format, type, pixels, packing, 0);
-}
-
-static void
-radeonTexImage3D(struct gl_context * ctx,
+radeonTexImage(struct gl_context * ctx, GLuint dims,
 		      struct gl_texture_image *texImage,
 		      GLint internalFormat,
 		      GLint width, GLint height, GLint depth,
@@ -626,7 +601,7 @@ radeonTexImage3D(struct gl_context * ctx,
 		      GLenum format, GLenum type, const GLvoid * pixels,
 		      const struct gl_pixelstore_attrib *packing)
 {
-	radeon_teximage(ctx, 3, texImage, internalFormat, width, height, depth,
+	radeon_teximage(ctx, dims, texImage, internalFormat, width, height, depth,
 		0, format, type, pixels, packing, 0);
 }
 
@@ -750,9 +725,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 
 	functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
 
-	functions->TexImage1D = radeonTexImage1D;
-	functions->TexImage2D = radeonTexImage2D;
-	functions->TexImage3D = radeonTexImage3D;
+	functions->TexImage = radeonTexImage;
 
 	functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
 

@@ -203,13 +203,12 @@ try_pbo_upload(struct gl_context *ctx,
 
 static void
 intelTexImage(struct gl_context * ctx,
-              GLint dims,
+              GLuint dims,
               struct gl_texture_image *texImage,
               GLint internalFormat,
-              GLint width, GLint height, GLint depth,
+              GLint width, GLint height, GLint depth, GLint border,
               GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack,
-              GLsizei imageSize)
+              const struct gl_pixelstore_attrib *unpack)
 {
    DBG("%s target %s level %d %dx%dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
@@ -226,52 +225,9 @@ intelTexImage(struct gl_context * ctx,
    DBG("%s: upload image %dx%dx%d pixels %p\n",
        __FUNCTION__, width, height, depth, pixels);
 
-   _mesa_store_teximage3d(ctx, texImage, internalFormat,
-			  width, height, depth, 0,
-			  format, type, pixels, unpack);
-}
-
-
-static void
-intelTexImage3D(struct gl_context * ctx,
-                struct gl_texture_image *texImage,
-                GLint internalFormat,
-                GLint width, GLint height, GLint depth,
-                GLint border,
-                GLenum format, GLenum type, const void *pixels,
-                const struct gl_pixelstore_attrib *unpack)
-{
-   intelTexImage(ctx, 3, texImage,
-                 internalFormat, width, height, depth,
-                 format, type, pixels, unpack, 0);
-}
-
-
-static void
-intelTexImage2D(struct gl_context * ctx,
-                struct gl_texture_image *texImage,
-                GLint internalFormat,
-                GLint width, GLint height, GLint border,
-                GLenum format, GLenum type, const void *pixels,
-                const struct gl_pixelstore_attrib *unpack)
-{
-   intelTexImage(ctx, 2, texImage,
-                 internalFormat, width, height, 1,
-                 format, type, pixels, unpack, 0);
-}
-
-
-static void
-intelTexImage1D(struct gl_context * ctx,
-                struct gl_texture_image *texImage,
-                GLint internalFormat,
-                GLint width, GLint border,
-                GLenum format, GLenum type, const void *pixels,
-                const struct gl_pixelstore_attrib *unpack)
-{
-   intelTexImage(ctx, 1, texImage,
-                 internalFormat, width, 1, 1,
-                 format, type, pixels, unpack, 0);
+   _mesa_store_teximage(ctx, dims, texImage, internalFormat,
+                        width, height, depth, 0,
+                        format, type, pixels, unpack);
 }
 
 
@@ -398,9 +354,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 void
 intelInitTextureImageFuncs(struct dd_function_table *functions)
 {
-   functions->TexImage1D = intelTexImage1D;
-   functions->TexImage2D = intelTexImage2D;
-   functions->TexImage3D = intelTexImage3D;
+   functions->TexImage = intelTexImage;
 
 #if FEATURE_OES_EGL_image
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;

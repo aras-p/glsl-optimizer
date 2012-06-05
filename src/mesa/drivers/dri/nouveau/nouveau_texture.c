@@ -540,41 +540,16 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 	context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
 }
 
-static void
-nouveau_teximage_1d(struct gl_context *ctx,
-		    struct gl_texture_image *ti,
-		    GLint internalFormat,
-		    GLint width, GLint border,
-		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing)
-{
-	nouveau_teximage(ctx, 1, ti, internalFormat,
-			 width, 1, 1, border, 0, format, type, pixels,
-			 packing, GL_FALSE);
-}
 
 static void
-nouveau_teximage_2d(struct gl_context *ctx,
-		    struct gl_texture_image *ti,
-		    GLint internalFormat,
-		    GLint width, GLint height, GLint border,
-		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing)
+nouveau_teximage_123d(struct gl_context *ctx, GLuint dims,
+                      struct gl_texture_image *ti,
+                      GLint internalFormat,
+                      GLint width, GLint height, GLint depth, GLint border,
+                      GLenum format, GLenum type, const GLvoid *pixels,
+                      const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_teximage(ctx, 2, ti, internalFormat,
-			 width, height, 1, border, 0, format, type, pixels,
-			 packing, GL_FALSE);
-}
-
-static void
-nouveau_teximage_3d(struct gl_context *ctx,
-		    struct gl_texture_image *ti,
-		    GLint internalFormat,
-		    GLint width, GLint height, GLint depth, GLint border,
-		    GLenum format, GLenum type, const GLvoid *pixels,
-		    const struct gl_pixelstore_attrib *packing)
-{
-	nouveau_teximage(ctx, 3, ti, internalFormat,
+	nouveau_teximage(ctx, dims, ti, internalFormat,
 			 width, height, depth, border, 0, format, type, pixels,
 			 packing, GL_FALSE);
 }
@@ -756,9 +731,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->NewTextureImage = nouveau_teximage_new;
 	functions->FreeTextureImageBuffer = nouveau_teximage_free;
 	functions->ChooseTextureFormat = nouveau_choose_tex_format;
-	functions->TexImage1D = nouveau_teximage_1d;
-	functions->TexImage2D = nouveau_teximage_2d;
-	functions->TexImage3D = nouveau_teximage_3d;
+	functions->TexImage = nouveau_teximage_123d;
 	functions->TexSubImage1D = nouveau_texsubimage_1d;
 	functions->TexSubImage2D = nouveau_texsubimage_2d;
 	functions->TexSubImage3D = nouveau_texsubimage_3d;

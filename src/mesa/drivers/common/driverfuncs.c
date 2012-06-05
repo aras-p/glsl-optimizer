@@ -91,9 +91,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    /* Texture functions */
    driver->ChooseTextureFormat = _mesa_choose_tex_format;
-   driver->TexImage1D = _mesa_store_teximage1d;
-   driver->TexImage2D = _mesa_store_teximage2d;
-   driver->TexImage3D = _mesa_store_teximage3d;
+   driver->TexImage = _mesa_store_teximage;
    driver->TexSubImage1D = _mesa_store_texsubimage1d;
    driver->TexSubImage2D = _mesa_store_texsubimage2d;
    driver->TexSubImage3D = _mesa_store_texsubimage3d;

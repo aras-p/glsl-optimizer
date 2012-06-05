@@ -530,48 +530,17 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 
 
 static void
-st_TexImage3D(struct gl_context * ctx,
-              struct gl_texture_image *texImage,
-              GLint internalFormat,
-              GLint width, GLint height, GLint depth,
-              GLint border,
-              GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack)
+st_TexImage(struct gl_context * ctx, GLuint dims,
+            struct gl_texture_image *texImage,
+            GLint internalFormat,
+            GLint width, GLint height, GLint depth, GLint border,
+            GLenum format, GLenum type, const void *pixels,
+            const struct gl_pixelstore_attrib *unpack)
 {
    prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
                  format, type);
-   _mesa_store_teximage3d(ctx, texImage, internalFormat, width, height, depth,
-                          border, format, type, pixels, unpack);
-}
-
-
-static void
-st_TexImage2D(struct gl_context * ctx,
-              struct gl_texture_image *texImage,
-              GLint internalFormat,
-              GLint width, GLint height, GLint border,
-              GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack)
-{
-   prep_teximage(ctx, texImage, internalFormat, width, height, 1, border,
-                 format, type);
-   _mesa_store_teximage2d(ctx, texImage, internalFormat, width, height,
-                          border, format, type, pixels, unpack);
-}
-
-
-static void
-st_TexImage1D(struct gl_context * ctx,
-              struct gl_texture_image *texImage,
-              GLint internalFormat,
-              GLint width, GLint border,
-              GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack)
-{
-   prep_teximage(ctx, texImage, internalFormat, width, 1, 1, border,
-                 format, type);
-   _mesa_store_teximage1d(ctx, texImage, internalFormat, width,
-                          border, format, type, pixels, unpack);
+   _mesa_store_teximage(ctx, dims, texImage, internalFormat, width, height, depth,
+                        border, format, type, pixels, unpack);
 }
 
 
@@ -1427,9 +1396,7 @@ void
 st_init_texture_functions(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = st_ChooseTextureFormat;
-   functions->TexImage1D = st_TexImage1D;
-   functions->TexImage2D = st_TexImage2D;
-   functions->TexImage3D = st_TexImage3D;
+   functions->TexImage = st_TexImage;
    functions->TexSubImage1D = _mesa_store_texsubimage1d;
    functions->TexSubImage2D = _mesa_store_texsubimage2d;
    functions->TexSubImage3D = _mesa_store_texsubimage3d;
