@@ -4342,43 +4342,24 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
       return;
    }
 
-   _mesa_store_compressed_texsubimage2d(ctx, texImage,
-					0, 0,
-					width, height,
-					texImage->TexFormat,
-					imageSize, data);
+   _mesa_store_compressed_texsubimage(ctx, dims, texImage,
+                                      0, 0, 0,
+                                      width, height, depth,
+                                      texImage->TexFormat,
+                                      imageSize, data);
 }
 
 
 /**
- * Fallback for Driver.CompressedTexSubImage1D()
+ * Fallback for Driver.CompressedTexSubImage()
  */
 void
-_mesa_store_compressed_texsubimage1d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLsizei width,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data)
-{
-   /* there are no compressed 1D texture formats yet */
-   (void) ctx;
-   (void) xoffset; (void) width;
-   (void) format;
-   (void) imageSize; (void) data;
-   (void) texImage;
-}
-
-
-/**
- * Fallback for Driver.CompressedTexSubImage2D()
- */
-void
-_mesa_store_compressed_texsubimage2d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLint yoffset,
-                                     GLsizei width, GLsizei height,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data)
+_mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
+                                   struct gl_texture_image *texImage,
+                                   GLint xoffset, GLint yoffset, GLint zoffset,
+                                   GLsizei width, GLsizei height, GLsizei depth,
+                                   GLenum format,
+                                   GLsizei imageSize, const GLvoid *data)
 {
    GLint bytesPerRow, dstRowStride, srcRowStride;
    GLint i, rows;
@@ -4386,6 +4367,11 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx,
    const GLubyte *src;
    const gl_format texFormat = texImage->TexFormat;
    GLuint bw, bh;
+
+   if (dims != 2) {
+      _mesa_problem(ctx, "Unexpected 1D/3D compressed texsubimage call");
+      return;
+   }
 
    _mesa_get_format_block_size(texFormat, &bw, &bh);
 
@@ -4429,25 +4415,4 @@ _mesa_store_compressed_texsubimage2d(struct gl_context *ctx,
    }
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
-}
-
-
-/**
- * Fallback for Driver.CompressedTexSubImage3D()
- */
-void
-_mesa_store_compressed_texsubimage3d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLint yoffset, GLint zoffset,
-                                     GLsizei width, GLsizei height, GLsizei depth,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data)
-{
-   /* there are no compressed 3D texture formats yet */
-   (void) ctx;
-   (void) xoffset; (void) yoffset; (void) zoffset;
-   (void) width; (void) height; (void) depth;
-   (void) format;
-   (void) imageSize; (void) data;
-   (void) texImage;
 }

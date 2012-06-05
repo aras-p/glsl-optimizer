@@ -118,27 +118,12 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
 
 
 extern void
-_mesa_store_compressed_texsubimage1d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLsizei width,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data);
-
-extern void
-_mesa_store_compressed_texsubimage2d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLint yoffset,
-                                     GLsizei width, GLsizei height,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data);
-
-extern void
-_mesa_store_compressed_texsubimage3d(struct gl_context *ctx,
-                                     struct gl_texture_image *texImage,
-                                     GLint xoffset, GLint yoffset, GLint zoffset,
-                                     GLsizei width, GLsizei height, GLsizei depth,
-                                     GLenum format,
-                                     GLsizei imageSize, const GLvoid *data);
+_mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
+                                   struct gl_texture_image *texImage,
+                                   GLint xoffset, GLint yoffset, GLint zoffset,
+                                   GLsizei width, GLsizei height, GLsizei depth,
+                                   GLenum format,
+                                   GLsizei imageSize, const GLvoid *data);
 
 
 #endif

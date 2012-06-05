@@ -279,33 +279,14 @@ struct dd_function_table {
                               GLsizei imageSize, const GLvoid *data);
 
    /**
-    * Called by glCompressedTexSubImage1D().
+    * Called by glCompressedTexSubImage[123]D().
     */
-   void (*CompressedTexSubImage1D)(struct gl_context *ctx,
-                                   struct gl_texture_image *texImage,
-                                   GLint xoffset, GLsizei width,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data);
-
-   /**
-    * Called by glCompressedTexSubImage2D().
-    */
-   void (*CompressedTexSubImage2D)(struct gl_context *ctx,
-                                   struct gl_texture_image *texImage,
-                                   GLint xoffset, GLint yoffset,
-                                   GLsizei width, GLint height,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data);
-
-   /**
-    * Called by glCompressedTexSubImage3D().
-    */
-   void (*CompressedTexSubImage3D)(struct gl_context *ctx,
-                                   struct gl_texture_image *texImage,
-                                   GLint xoffset, GLint yoffset, GLint zoffset,
-                                   GLsizei width, GLint height, GLint depth,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data);
+   void (*CompressedTexSubImage)(struct gl_context *ctx, GLuint dims,
+                                 struct gl_texture_image *texImage,
+                                 GLint xoffset, GLint yoffset, GLint zoffset,
+                                 GLsizei width, GLint height, GLint depth,
+                                 GLenum format,
+                                 GLsizei imageSize, const GLvoid *data);
 
    /**
     * Called by glGetCompressedTexImage.

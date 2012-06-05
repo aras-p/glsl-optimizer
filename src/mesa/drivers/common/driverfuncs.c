@@ -98,9 +98,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->GenerateMipmap = _mesa_meta_GenerateMipmap;
    driver->TestProxyTexImage = _mesa_test_proxy_teximage;
    driver->CompressedTexImage = _mesa_store_compressed_teximage;
-   driver->CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-   driver->CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-   driver->CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+   driver->CompressedTexSubImage = _mesa_store_compressed_texsubimage;
    driver->GetCompressedTexImage = _mesa_get_compressed_teximage;
    driver->BindTexture = NULL;
    driver->NewTextureObject = _mesa_new_texture_object;

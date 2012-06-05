@@ -624,15 +624,15 @@ nouveau_texsubimage_123d(struct gl_context *ctx, GLuint dims,
 }
 
 static void
-nouveau_compressed_texsubimage_2d(struct gl_context *ctx,
+nouveau_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
 		       struct gl_texture_image *ti,
-		       GLint xoffset, GLint yoffset,
-		       GLsizei width, GLint height,
+		       GLint xoffset, GLint yoffset, GLint zoffset,
+		       GLsizei width, GLint height, GLint depth,
 		       GLenum format,
 		       GLint imageSize, const void *data)
 {
-	nouveau_texsubimage(ctx, 2, ti, xoffset, yoffset, 0,
-			  width, height, 1, imageSize, format, 0, data,
+	nouveau_texsubimage(ctx, dims, ti, xoffset, yoffset, zoffset,
+			  width, height, depth, imageSize, format, 0, data,
 			  &ctx->Unpack, GL_TRUE);
 }
 
@@ -709,7 +709,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->TexImage = nouveau_teximage_123d;
 	functions->TexSubImage = nouveau_texsubimage_123d;
 	functions->CompressedTexImage = nouveau_compressed_teximage;
-	functions->CompressedTexSubImage2D = nouveau_compressed_texsubimage_2d;
+	functions->CompressedTexSubImage = nouveau_compressed_texsubimage;
 	functions->BindTexture = nouveau_bind_texture;
 	functions->MapTextureImage = nouveau_map_texture_image;
 	functions->UnmapTextureImage = nouveau_unmap_texture_image;

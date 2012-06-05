@@ -3633,33 +3633,10 @@ compressed_tex_sub_image(GLuint dims, GLenum target, GLint level,
          /* error was recorded */
       }
       else if (width > 0 && height > 0 && depth > 0) {
-         switch (dims) {
-         case 1:
-            if (ctx->Driver.CompressedTexSubImage1D) {
-               ctx->Driver.CompressedTexSubImage1D(ctx, texImage,
-                                                   xoffset, width,
-                                                   format, imageSize, data);
-            }
-            break;
-         case 2:
-            if (ctx->Driver.CompressedTexSubImage2D) {
-               ctx->Driver.CompressedTexSubImage2D(ctx, texImage,
-                                                   xoffset, yoffset,
-                                                   width, height,
-                                                   format, imageSize, data);
-            }
-            break;
-         case 3:
-            if (ctx->Driver.CompressedTexSubImage3D) {
-               ctx->Driver.CompressedTexSubImage3D(ctx, texImage,
-                                                   xoffset, yoffset, zoffset,
-                                                   width, height, depth,
-                                                   format, imageSize, data);
-            }
-            break;
-         default:
-            ;
-         }
+         ctx->Driver.CompressedTexSubImage(ctx, dims, texImage,
+                                           xoffset, yoffset, zoffset,
+                                           width, height, depth,
+                                           format, imageSize, data);
 
          check_gen_mipmap(ctx, target, texObj, level);
 
