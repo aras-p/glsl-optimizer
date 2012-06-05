@@ -2792,26 +2792,10 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
             xoffset += texImage->Border;
          }
 
-         switch (dims) {
-         case 1:
-            ctx->Driver.TexSubImage1D(ctx, texImage,
-                                      xoffset, width,
-                                      format, type, pixels, &ctx->Unpack);
-            break;
-         case 2:
-            ctx->Driver.TexSubImage2D(ctx, texImage,
-                                      xoffset, yoffset, width, height,
-                                      format, type, pixels, &ctx->Unpack);
-            break;
-         case 3:
-            ctx->Driver.TexSubImage3D(ctx, texImage,
-                                      xoffset, yoffset, zoffset,
-                                      width, height, depth,
-                                      format, type, pixels, &ctx->Unpack);
-            break;
-         default:
-            _mesa_problem(ctx, "unexpected dims in subteximage()");
-         }
+         ctx->Driver.TexSubImage(ctx, dims, texImage,
+                                 xoffset, yoffset, zoffset,
+                                 width, height, depth,
+                                 format, type, pixels, &ctx->Unpack);
 
          check_gen_mipmap(ctx, target, texObj, level);
 

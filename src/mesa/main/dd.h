@@ -213,44 +213,17 @@ struct dd_function_table {
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *packing);
 
-
    /**
-    * Called by glTexSubImage1D().  Replace a subset of the target texture
-    * with new texel data.
-    * \sa dd_function_table::TexImage1D.
+    * Called by glTexSubImage[123]D().
+    * Replace a subset of the target texture with new texel data.
     */
-   void (*TexSubImage1D)(struct gl_context *ctx,
-                         struct gl_texture_image *texImage,
-                         GLint xoffset, GLsizei width,
-                         GLenum format, GLenum type,
-                         const GLvoid *pixels,
-                         const struct gl_pixelstore_attrib *packing);
-   
-   /**
-    * Called by glTexSubImage2D().
-    *
-    * \sa dd_function_table::TexSubImage1D.
-    */
-   void (*TexSubImage2D)(struct gl_context *ctx,
-                         struct gl_texture_image *texImage,
-                         GLint xoffset, GLint yoffset,
-                         GLsizei width, GLsizei height,
-                         GLenum format, GLenum type,
-                         const GLvoid *pixels,
-                         const struct gl_pixelstore_attrib *packing);
-   
-   /**
-    * Called by glTexSubImage3D().
-    *
-    * \sa dd_function_table::TexSubImage1D.
-    */
-   void (*TexSubImage3D)(struct gl_context *ctx,
-                         struct gl_texture_image *texImage,
-                         GLint xoffset, GLint yoffset, GLint zoffset,
-                         GLsizei width, GLsizei height, GLint depth,
-                         GLenum format, GLenum type,
-                         const GLvoid *pixels,
-                         const struct gl_pixelstore_attrib *packing);
+   void (*TexSubImage)(struct gl_context *ctx, GLuint dims,
+                       struct gl_texture_image *texImage,
+                       GLint xoffset, GLint yoffset, GLint zoffset,
+                       GLsizei width, GLsizei height, GLint depth,
+                       GLenum format, GLenum type,
+                       const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing);
 
 
    /**

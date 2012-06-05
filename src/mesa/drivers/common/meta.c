@@ -3127,7 +3127,6 @@ copy_tex_sub_image(struct gl_context *ctx,
                    GLsizei width, GLsizei height)
 {
    struct gl_texture_object *texObj = texImage->TexObject;
-   const GLenum target = texObj->Target;
    GLenum format, type;
    GLint bpp;
    void *buf;
@@ -3181,21 +3180,11 @@ copy_tex_sub_image(struct gl_context *ctx,
     * Store texture data (with pixel transfer ops)
     */
    _mesa_meta_begin(ctx, MESA_META_PIXEL_STORE);
-   if (target == GL_TEXTURE_1D) {
-      ctx->Driver.TexSubImage1D(ctx, texImage,
-                                xoffset, width,
-                                format, type, buf, &ctx->Unpack);
-   }
-   else if (target == GL_TEXTURE_3D) {
-      ctx->Driver.TexSubImage3D(ctx, texImage,
-                                xoffset, yoffset, zoffset, width, height, 1,
-                                format, type, buf, &ctx->Unpack);
-   }
-   else {
-      ctx->Driver.TexSubImage2D(ctx, texImage,
-                                xoffset, yoffset, width, height,
-                                format, type, buf, &ctx->Unpack);
-   }
+
+   ctx->Driver.TexSubImage(ctx, dims, texImage,
+                           xoffset, yoffset, zoffset, width, height, 1,
+                           format, type, buf, &ctx->Unpack);
+
    _mesa_meta_end(ctx);
 
    _mesa_lock_texture(ctx, texObj); /* re-lock */

@@ -149,27 +149,29 @@ intel_blit_texsubimage(struct gl_context * ctx,
 }
 
 static void
-intelTexSubImage2D(struct gl_context * ctx,
-                   struct gl_texture_image *texImage,
-                   GLint xoffset, GLint yoffset,
-                   GLsizei width, GLsizei height,
-                   GLenum format, GLenum type,
-                   const GLvoid * pixels,
-                   const struct gl_pixelstore_attrib *packing)
+intelTexSubImage(struct gl_context * ctx,
+                 GLuint dims,
+                 struct gl_texture_image *texImage,
+                 GLint xoffset, GLint yoffset, GLint zoffset,
+                 GLsizei width, GLsizei height, GLsizei depth,
+                 GLenum format, GLenum type,
+                 const GLvoid * pixels,
+                 const struct gl_pixelstore_attrib *packing)
 {
-   if (!intel_blit_texsubimage(ctx, texImage,
+   /* The intel_blit_texsubimage() function only handles 2D images */
+   if (dims != 2 || !intel_blit_texsubimage(ctx, texImage,
 			       xoffset, yoffset,
 			       width, height,
 			       format, type, pixels, packing)) {
-      _mesa_store_texsubimage2d(ctx, texImage,
-				xoffset, yoffset,
-				width, height,
-				format, type, pixels, packing);
+      _mesa_store_texsubimage(ctx, dims, texImage,
+                              xoffset, yoffset, zoffset,
+                              width, height, depth,
+                              format, type, pixels, packing);
    }
 }
 
 void
 intelInitTextureSubImageFuncs(struct dd_function_table *functions)
 {
-   functions->TexSubImage2D = intelTexSubImage2D;
+   functions->TexSubImage = intelTexSubImage;
 }

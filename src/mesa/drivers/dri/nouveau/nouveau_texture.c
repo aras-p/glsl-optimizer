@@ -611,40 +611,15 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 }
 
 static void
-nouveau_texsubimage_3d(struct gl_context *ctx,
-		       struct gl_texture_image *ti,
-		       GLint xoffset, GLint yoffset, GLint zoffset,
-		       GLint width, GLint height, GLint depth,
-		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing)
+nouveau_texsubimage_123d(struct gl_context *ctx, GLuint dims,
+                         struct gl_texture_image *ti,
+                         GLint xoffset, GLint yoffset, GLint zoffset,
+                         GLint width, GLint height, GLint depth,
+                         GLenum format, GLenum type, const void *pixels,
+                         const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_texsubimage(ctx, 3, ti, xoffset, yoffset, zoffset,
+	nouveau_texsubimage(ctx, dims, ti, xoffset, yoffset, zoffset,
 			    width, height, depth, 0, format, type, pixels,
-			    packing, GL_FALSE);
-}
-
-static void
-nouveau_texsubimage_2d(struct gl_context *ctx,
-		       struct gl_texture_image *ti,
-		       GLint xoffset, GLint yoffset,
-		       GLint width, GLint height,
-		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing)
-{
-	nouveau_texsubimage(ctx, 2, ti, xoffset, yoffset, 0,
-			    width, height, 1, 0, format, type, pixels,
-			    packing, GL_FALSE);
-}
-
-static void
-nouveau_texsubimage_1d(struct gl_context *ctx,
-		       struct gl_texture_image *ti,
-		       GLint xoffset, GLint width,
-		       GLenum format, GLenum type, const void *pixels,
-		       const struct gl_pixelstore_attrib *packing)
-{
-	nouveau_texsubimage(ctx, 1, ti, xoffset, 0, 0,
-			    width, 1, 1, 0, format, type, pixels,
 			    packing, GL_FALSE);
 }
 
@@ -732,9 +707,7 @@ nouveau_texture_functions_init(struct dd_function_table *functions)
 	functions->FreeTextureImageBuffer = nouveau_teximage_free;
 	functions->ChooseTextureFormat = nouveau_choose_tex_format;
 	functions->TexImage = nouveau_teximage_123d;
-	functions->TexSubImage1D = nouveau_texsubimage_1d;
-	functions->TexSubImage2D = nouveau_texsubimage_2d;
-	functions->TexSubImage3D = nouveau_texsubimage_3d;
+	functions->TexSubImage = nouveau_texsubimage_123d;
 	functions->CompressedTexImage2D = nouveau_compressed_teximage_2d;
 	functions->CompressedTexSubImage2D = nouveau_compressed_texsubimage_2d;
 	functions->BindTexture = nouveau_bind_texture;

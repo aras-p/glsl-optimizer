@@ -4293,53 +4293,19 @@ _mesa_store_teximage(struct gl_context *ctx,
 
 
 /*
- * This is the fallback for Driver.TexSubImage1D().
+ * Fallback for Driver.TexSubImage().
  */
 void
-_mesa_store_texsubimage1d(struct gl_context *ctx,
-                          struct gl_texture_image *texImage,
-                          GLint xoffset, GLint width,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing)
-{
-   store_texsubimage(ctx, texImage,
-                     xoffset, 0, 0, width, 1, 1,
-                     format, type, pixels, packing, "glTexSubImage1D");
-}
-
-
-
-/**
- * This is the fallback for Driver.TexSubImage2D().
- */
-void
-_mesa_store_texsubimage2d(struct gl_context *ctx,
-                          struct gl_texture_image *texImage,
-                          GLint xoffset, GLint yoffset,
-                          GLint width, GLint height,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing)
-{
-   store_texsubimage(ctx, texImage,
-                     xoffset, yoffset, 0, width, height, 1,
-                     format, type, pixels, packing, "glTexSubImage2D");
-}
-
-
-/*
- * This is the fallback for Driver.TexSubImage3D().
- */
-void
-_mesa_store_texsubimage3d(struct gl_context *ctx,
-                          struct gl_texture_image *texImage,
-                          GLint xoffset, GLint yoffset, GLint zoffset,
-                          GLint width, GLint height, GLint depth,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing)
+_mesa_store_texsubimage(struct gl_context *ctx, GLuint dims,
+                        struct gl_texture_image *texImage,
+                        GLint xoffset, GLint yoffset, GLint zoffset,
+                        GLint width, GLint height, GLint depth,
+                        GLenum format, GLenum type, const void *pixels,
+                        const struct gl_pixelstore_attrib *packing)
 {
    store_texsubimage(ctx, texImage,
                      xoffset, yoffset, zoffset, width, height, depth,
-                     format, type, pixels, packing, "glTexSubImage3D");
+                     format, type, pixels, packing, "glTexSubImage");
 }
 
 

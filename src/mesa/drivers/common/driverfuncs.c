@@ -92,9 +92,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* Texture functions */
    driver->ChooseTextureFormat = _mesa_choose_tex_format;
    driver->TexImage = _mesa_store_teximage;
-   driver->TexSubImage1D = _mesa_store_texsubimage1d;
-   driver->TexSubImage2D = _mesa_store_texsubimage2d;
-   driver->TexSubImage3D = _mesa_store_texsubimage3d;
+   driver->TexSubImage = _mesa_store_texsubimage;
    driver->GetTexImage = _mesa_meta_GetTexImage;
    driver->CopyTexSubImage1D = _mesa_meta_CopyTexSubImage1D;
    driver->CopyTexSubImage2D = _mesa_meta_CopyTexSubImage2D;

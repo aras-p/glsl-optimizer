@@ -2133,10 +2133,10 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       }
 
       /* The image space was allocated above so use glTexSubImage now */
-      ctx->Driver.TexSubImage2D(ctx, dstImage,
-                                0, 0, dstWidth, dstHeight,
-                                temp_base_format, temp_datatype,
-                                temp_dst, &ctx->DefaultPacking);
+      ctx->Driver.TexSubImage(ctx, 2, dstImage,
+                              0, 0, 0, dstWidth, dstHeight, 1,
+                              temp_base_format, temp_datatype,
+                              temp_dst, &ctx->DefaultPacking);
 
       /* swap src and dest pointers */
       {

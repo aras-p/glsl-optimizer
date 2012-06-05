@@ -1397,9 +1397,7 @@ st_init_texture_functions(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = st_ChooseTextureFormat;
    functions->TexImage = st_TexImage;
-   functions->TexSubImage1D = _mesa_store_texsubimage1d;
-   functions->TexSubImage2D = _mesa_store_texsubimage2d;
-   functions->TexSubImage3D = _mesa_store_texsubimage3d;
+   functions->TexSubImage = _mesa_store_texsubimage;
    functions->CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
    functions->CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
    functions->CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
