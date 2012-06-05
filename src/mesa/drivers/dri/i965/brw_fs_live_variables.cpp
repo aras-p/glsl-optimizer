@@ -247,7 +247,7 @@ fs_live_variables::compute_start_end()
 fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
-   mem_ctx = ralloc_context(cfg->mem_ctx);
+   mem_ctx = this;
 
    num_vgrfs = v->virtual_grf_count;
    num_vars = 0;
@@ -294,7 +294,8 @@ fs_live_variables::~fs_live_variables()
 void
 fs_visitor::invalidate_live_intervals()
 {
-   this->live_intervals_valid = false;
+   ralloc_free(live_intervals);
+   live_intervals = NULL;
 }
 
 /**
@@ -306,7 +307,7 @@ fs_visitor::invalidate_live_intervals()
 void
 fs_visitor::calculate_live_intervals()
 {
-   if (this->live_intervals_valid)
+   if (this->live_intervals)
       return;
 
    int num_vgrfs = this->virtual_grf_count;
@@ -321,16 +322,16 @@ fs_visitor::calculate_live_intervals()
    }
 
    cfg_t cfg(this);
-   fs_live_variables livevars(this, &cfg);
+   this->live_intervals = new(mem_ctx) fs_live_variables(this, &cfg);
 
    /* Merge the per-component live ranges to whole VGRF live ranges. */
-   for (int i = 0; i < livevars.num_vars; i++) {
-      int vgrf = livevars.vgrf_from_var[i];
-      virtual_grf_start[vgrf] = MIN2(virtual_grf_start[vgrf], livevars.start[i]);
-      virtual_grf_end[vgrf] = MAX2(virtual_grf_end[vgrf], livevars.end[i]);
+   for (int i = 0; i < live_intervals->num_vars; i++) {
+      int vgrf = live_intervals->vgrf_from_var[i];
+      virtual_grf_start[vgrf] = MIN2(virtual_grf_start[vgrf],
+                                     live_intervals->start[i]);
+      virtual_grf_end[vgrf] = MAX2(virtual_grf_end[vgrf],
+                                   live_intervals->end[i]);
    }
-
-   this->live_intervals_valid = true;
 }
 
 bool
