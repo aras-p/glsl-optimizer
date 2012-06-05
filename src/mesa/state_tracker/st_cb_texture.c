@@ -545,16 +545,16 @@ st_TexImage(struct gl_context * ctx, GLuint dims,
 
 
 static void
-st_CompressedTexImage2D(struct gl_context *ctx,
-                        struct gl_texture_image *texImage,
-                        GLint internalFormat,
-                        GLint width, GLint height, GLint border,
-                        GLsizei imageSize, const GLvoid *data)
+st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
+                      struct gl_texture_image *texImage,
+                      GLint internalFormat,
+                      GLint width, GLint height, GLint border, GLint depth,
+                      GLsizei imageSize, const GLvoid *data)
 {
-   prep_teximage(ctx, texImage, internalFormat, width, 1, 1, border,
+   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
                  GL_NONE, GL_NONE);
-   _mesa_store_compressed_teximage2d(ctx, texImage, internalFormat, width,
-                                     height, border, imageSize, data);
+   _mesa_store_compressed_teximage(ctx, dims, texImage, internalFormat, width,
+                                   height, depth, border, imageSize, data);
 }
 
 
@@ -1363,7 +1363,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->GetTexImage = st_GetTexImage;
 
    /* compressed texture functions */
-   functions->CompressedTexImage2D = st_CompressedTexImage2D;
+   functions->CompressedTexImage = st_CompressedTexImage;
    functions->GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    functions->NewTextureObject = st_NewTextureObject;

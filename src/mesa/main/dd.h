@@ -269,37 +269,14 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Called by glCompressedTexImage1D().
-    * The parameters are the same as for glCompressedTexImage1D(), plus a
-    * pointer to the destination texure image.
+    * Called by glCompressedTexImage[123]D().
     */
-   void (*CompressedTexImage1D)(struct gl_context *ctx,
-                                struct gl_texture_image *texImage,
-                                GLint internalFormat,
-                                GLsizei width, GLint border,
-                                GLsizei imageSize, const GLvoid *data);
-   /**
-    * Called by glCompressedTexImage2D().
-    *
-    * \sa dd_function_table::CompressedTexImage1D.
-    */
-   void (*CompressedTexImage2D)(struct gl_context *ctx,
-                                struct gl_texture_image *texImage,
-                                GLint internalFormat,
-                                GLsizei width, GLsizei height, GLint border,
-                                GLsizei imageSize, const GLvoid *data);
-
-   /**
-    * Called by glCompressedTexImage3D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
-    */
-   void (*CompressedTexImage3D)(struct gl_context *ctx,
-                                struct gl_texture_image *texImage,
-                                GLint internalFormat,
-                                GLsizei width, GLsizei height, GLsizei depth,
-                                GLint border,
-                                GLsizei imageSize, const GLvoid *data);
+   void (*CompressedTexImage)(struct gl_context *ctx, GLuint dims,
+                              struct gl_texture_image *texImage,
+                              GLint internalFormat,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              GLint border,
+                              GLsizei imageSize, const GLvoid *data);
 
    /**
     * Called by glCompressedTexSubImage1D().

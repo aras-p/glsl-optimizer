@@ -4309,36 +4309,23 @@ _mesa_store_texsubimage(struct gl_context *ctx, GLuint dims,
 }
 
 
-/*
- * Fallback for Driver.CompressedTexImage1D()
- */
-void
-_mesa_store_compressed_teximage1d(struct gl_context *ctx,
-                                  struct gl_texture_image *texImage,
-                                  GLint internalFormat,
-                                  GLint width, GLint border,
-                                  GLsizei imageSize, const GLvoid *data)
-{
-   /* no compressed 1D image formats at this time */
-   (void) ctx;
-   (void) internalFormat;
-   (void) width; (void) border;
-   (void) imageSize; (void) data;
-   (void) texImage;
-}
-
-
-
 /**
- * Fallback for Driver.CompressedTexImage2D()
+ * Fallback for Driver.CompressedTexImage()
  */
 void
-_mesa_store_compressed_teximage2d(struct gl_context *ctx,
-                                  struct gl_texture_image *texImage,
-                                  GLint internalFormat,
-                                  GLint width, GLint height, GLint border,
-                                  GLsizei imageSize, const GLvoid *data)
+_mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
+                                struct gl_texture_image *texImage,
+                                GLint internalFormat,
+                                GLint width, GLint height, GLint depth,
+                                GLint border,
+                                GLsizei imageSize, const GLvoid *data)
 {
+   /* only 2D compressed images are supported at this time */
+   if (dims != 2) {
+      _mesa_problem(ctx, "Unexpected glCompressedTexImage1D/3D call");
+      return;
+   }
+
    /* This is pretty simple, because unlike the general texstore path we don't
     * have to worry about the usual image unpacking or image transfer
     * operations.
@@ -4361,29 +4348,6 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx,
 					texImage->TexFormat,
 					imageSize, data);
 }
-
-
-
-/*
- * Fallback for Driver.CompressedTexImage3D()
- */
-void
-_mesa_store_compressed_teximage3d(struct gl_context *ctx,
-                                  struct gl_texture_image *texImage,
-                                  GLint internalFormat,
-                                  GLint width, GLint height, GLint depth,
-                                  GLint border,
-                                  GLsizei imageSize, const GLvoid *data)
-{
-   /* this space intentionally left blank */
-   (void) ctx;
-   (void) internalFormat;
-   (void) width; (void) height; (void) depth;
-   (void) border;
-   (void) imageSize; (void) data;
-   (void) texImage;
-}
-
 
 
 /**

@@ -3541,31 +3541,10 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                                           width, height, depth,
                                           border, internalFormat, texFormat);
 
-               switch (dims) {
-               case 1:
-                  ASSERT(ctx->Driver.CompressedTexImage1D);
-                  ctx->Driver.CompressedTexImage1D(ctx, texImage,
-                                                   internalFormat,
-                                                   width,
-                                                   border, imageSize, data);
-                  break;
-               case 2:
-                  ASSERT(ctx->Driver.CompressedTexImage2D);
-                  ctx->Driver.CompressedTexImage2D(ctx, texImage,
-                                                   internalFormat,
-                                                   width, height,
-                                                   border, imageSize, data);
-                  break;
-               case 3:
-                  ASSERT(ctx->Driver.CompressedTexImage3D);
-                  ctx->Driver.CompressedTexImage3D(ctx, texImage,
-                                                   internalFormat,
-                                                   width, height, depth,
-                                                   border, imageSize, data);
-                  break;
-               default:
-                  _mesa_problem(ctx, "bad dims in compressedteximage");
-               }
+               ctx->Driver.CompressedTexImage(ctx, dims, texImage,
+                                              internalFormat,
+                                              width, height, depth,
+                                              border, imageSize, data);
 
                check_gen_mipmap(ctx, target, texObj, level);
 
