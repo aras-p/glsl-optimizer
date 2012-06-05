@@ -99,7 +99,7 @@ nvc0_destroy(struct pipe_context *pipe)
    draw_destroy(nvc0->draw);
 #endif
 
-   FREE(nvc0);
+   nouveau_context_destroy(&nvc0->base);
 }
 
 void

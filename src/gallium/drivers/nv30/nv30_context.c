@@ -92,7 +92,7 @@ nv30_context_destroy(struct pipe_context *pipe)
    if (nv30->screen->cur_ctx == nv30)
       nv30->screen->cur_ctx = NULL;
 
-   FREE(nv30);
+   nouveau_context_destroy(&nv30->base);
 }
 
 #define FAIL_CONTEXT_INIT(str, err)                   \
