@@ -30,6 +30,8 @@
 
 using namespace brw;
 
+#define MAX_INSTRUCTION (1 << 30)
+
 /** @file brw_fs_live_variables.cpp
  *
  * Support for calculating liveness information about virtual GRFs.
@@ -56,6 +58,41 @@ fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
 {
    int var = var_from_vgrf[reg.reg] + reg.reg_offset;
 
+   /* In most cases, a register can be written over safely by the
+    * same instruction that is its last use.  For a single
+    * instruction, the sources are dereferenced before writing of the
+    * destination starts (naturally).  This gets more complicated for
+    * simd16, because the instruction:
+    *
+    * mov(16)      g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+    *
+    * is actually decoded in hardware as:
+    *
+    * mov(8)       g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+    * mov(8)       g5<1>F      g5<8,8,1>F   g7<8,8,1>F
+    *
+    * Which is safe.  However, if we have uniform accesses
+    * happening, we get into trouble:
+    *
+    * mov(8)       g4<1>F      g4<0,1,0>F   g6<8,8,1>F
+    * mov(8)       g5<1>F      g4<0,1,0>F   g7<8,8,1>F
+    *
+    * Now our destination for the first instruction overwrote the
+    * second instruction's src0, and we get garbage for those 8
+    * pixels.  There's a similar issue for the pre-gen6
+    * pixel_x/pixel_y, which are registers of 16-bit values and thus
+    * would get stomped by the first decode as well.
+    */
+   int end_ip = ip;
+   if (v->dispatch_width == 16 && (reg.smear != -1 ||
+                                   (v->pixel_x.reg == reg.reg ||
+                                    v->pixel_y.reg == reg.reg))) {
+      end_ip++;
+   }
+
+   start[var] = MIN2(start[var], ip);
+   end[var] = MAX2(end[var], end_ip);
+
    /* The use[] bitset marks when the block makes use of a variable (VGRF
     * channel) without having completely defined that variable within the
     * block.
@@ -69,6 +106,9 @@ fs_live_variables::setup_one_write(bblock_t *block, fs_inst *inst,
                                    int ip, fs_reg reg)
 {
    int var = var_from_vgrf[reg.reg] + reg.reg_offset;
+
+   start[var] = MIN2(start[var], ip);
+   end[var] = MAX2(end[var], ip);
 
    /* The def[] bitset marks when an initialization in a block completely
     * screens off previous updates of that variable (VGRF channel).
@@ -181,6 +221,29 @@ fs_live_variables::compute_live_variables()
    }
 }
 
+/**
+ * Extend the start/end ranges for each variable to account for the
+ * new information calculated from control flow.
+ */
+void
+fs_live_variables::compute_start_end()
+{
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      for (int i = 0; i < num_vars; i++) {
+	 if (BITSET_TEST(bd[b].livein, i)) {
+	    start[i] = MIN2(start[i], cfg->blocks[b]->start_ip);
+	    end[i] = MAX2(end[i], cfg->blocks[b]->start_ip);
+	 }
+
+	 if (BITSET_TEST(bd[b].liveout, i)) {
+	    start[i] = MIN2(start[i], cfg->blocks[b]->end_ip);
+	    end[i] = MAX2(end[i], cfg->blocks[b]->end_ip);
+	 }
+
+      }
+   }
+}
+
 fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
@@ -201,6 +264,13 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
       }
    }
 
+   start = ralloc_array(mem_ctx, int, num_vars);
+   end = rzalloc_array(mem_ctx, int, num_vars);
+   for (int i = 0; i < num_vars; i++) {
+      start[i] = MAX_INSTRUCTION;
+      end[i] = -1;
+   }
+
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
    bitset_words = BITSET_WORDS(num_vars);
@@ -213,14 +283,13 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
 
    setup_def_use();
    compute_live_variables();
+   compute_start_end();
 }
 
 fs_live_variables::~fs_live_variables()
 {
    ralloc_free(mem_ctx);
 }
-
-#define MAX_INSTRUCTION (1 << 30)
 
 void
 fs_visitor::invalidate_live_intervals()
@@ -253,81 +322,14 @@ fs_visitor::calculate_live_intervals()
       end[i] = -1;
    }
 
-   /* Start by setting up the intervals with no knowledge of control
-    * flow.
-    */
-   int ip = 0;
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
-      for (unsigned int i = 0; i < 3; i++) {
-	 if (inst->src[i].file == GRF) {
-	    int reg = inst->src[i].reg;
-            int end_ip = ip;
-
-            /* In most cases, a register can be written over safely by the
-             * same instruction that is its last use.  For a single
-             * instruction, the sources are dereferenced before writing of the
-             * destination starts (naturally).  This gets more complicated for
-             * simd16, because the instruction:
-             *
-             * mov(16)      g4<1>F      g4<8,8,1>F   g6<8,8,1>F
-             *
-             * is actually decoded in hardware as:
-             *
-             * mov(8)       g4<1>F      g4<8,8,1>F   g6<8,8,1>F
-             * mov(8)       g5<1>F      g5<8,8,1>F   g7<8,8,1>F
-             *
-             * Which is safe.  However, if we have uniform accesses
-             * happening, we get into trouble:
-             *
-             * mov(8)       g4<1>F      g4<0,1,0>F   g6<8,8,1>F
-             * mov(8)       g5<1>F      g4<0,1,0>F   g7<8,8,1>F
-             *
-             * Now our destination for the first instruction overwrote the
-             * second instruction's src0, and we get garbage for those 8
-             * pixels.  There's a similar issue for the pre-gen6
-             * pixel_x/pixel_y, which are registers of 16-bit values and thus
-             * would get stomped by the first decode as well.
-             */
-            if (dispatch_width == 16 && (inst->src[i].smear >= 0 ||
-                                         (this->pixel_x.reg == reg ||
-                                          this->pixel_y.reg == reg))) {
-               end_ip++;
-            }
-
-            start[reg] = MIN2(start[reg], ip);
-            end[reg] = MAX2(end[reg], end_ip);
-	 }
-      }
-
-      if (inst->dst.file == GRF) {
-         int reg = inst->dst.reg;
-
-         start[reg] = MIN2(start[reg], ip);
-         end[reg] = MAX2(end[reg], ip);
-      }
-
-      ip++;
-   }
-
-   /* Now, extend those intervals using our analysis of control flow. */
    cfg_t cfg(this);
    fs_live_variables livevars(this, &cfg);
 
-   for (int b = 0; b < cfg.num_blocks; b++) {
-      for (int i = 0; i < livevars.num_vars; i++) {
-         int vgrf = livevars.vgrf_from_var[i];
-	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
-	    start[vgrf] = MIN2(start[vgrf], cfg.blocks[b]->start_ip);
-	    end[vgrf] = MAX2(end[vgrf], cfg.blocks[b]->start_ip);
-	 }
-
-	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
-	    start[vgrf] = MIN2(start[vgrf], cfg.blocks[b]->end_ip);
-	    end[vgrf] = MAX2(end[vgrf], cfg.blocks[b]->end_ip);
-	 }
-      }
+   /* Merge the per-component live ranges to whole VGRF live ranges. */
+   for (int i = 0; i < livevars.num_vars; i++) {
+      int vgrf = livevars.vgrf_from_var[i];
+      start[vgrf] = MIN2(start[vgrf], livevars.start[i]);
+      end[vgrf] = MAX2(end[vgrf], livevars.end[i]);
    }
 
    this->live_intervals_valid = true;

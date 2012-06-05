@@ -62,6 +62,7 @@ public:
    void setup_one_read(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
    void setup_one_write(bblock_t *block, fs_inst *inst, int ip, fs_reg reg);
    void compute_live_variables();
+   void compute_start_end();
 
    fs_visitor *v;
    cfg_t *cfg;
@@ -81,6 +82,14 @@ public:
    int num_vars;
    int num_vgrfs;
    int bitset_words;
+
+   /** @{
+    * Final computed live ranges for each var (each component of each virtual
+    * GRF).
+    */
+   int *start;
+   int *end;
+   /** @} */
 
    /** Per-basic-block information on live variables */
    struct block_data *bd;
