@@ -66,8 +66,10 @@ brw_blorp_surface_info::set(struct intel_mipmap_tree *mt,
        * program swizzle the coordinates.
        */
       this->map_stencil_as_y_tiled = true;
+      this->brw_surfaceformat = BRW_SURFACEFORMAT_R8_UNORM;
    } else {
       this->map_stencil_as_y_tiled = false;
+      this->brw_surfaceformat = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
    }
 }
 

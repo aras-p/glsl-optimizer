@@ -150,10 +150,6 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    }
    struct intel_region *region = surface->mt->region;
 
-   /* TODO: handle other formats */
-   uint32_t format = surface->map_stencil_as_y_tiled
-      ? BRW_SURFACEFORMAT_R8_UNORM : BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
    struct gen7_surface_state *surf = (struct gen7_surface_state *)
       brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, sizeof(*surf), 32,
                       &wm_surf_offset);
@@ -164,7 +160,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    if (surface->mt->align_w == 8)
       surf->ss0.horizontal_alignment = 1;
 
-   surf->ss0.surface_format = format;
+   surf->ss0.surface_format = surface->brw_surfaceformat;
    surf->ss0.surface_type = BRW_SURFACE_2D;
    surf->ss0.surface_array_spacing = surface->array_spacing_lod0 ?
       GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL;

@@ -90,6 +90,12 @@ public:
     * ARYSPC_LOD0 mode.  Ignored prior to Gen7.
     */
    bool array_spacing_lod0;
+
+   /**
+    * Format that should be used when setting up the surface state for this
+    * surface.  Should correspond to one of the BRW_SURFACEFORMAT_* enums.
+    */
+   uint32_t brw_surfaceformat;
 };
 
 

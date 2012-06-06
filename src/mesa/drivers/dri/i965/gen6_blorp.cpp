@@ -426,10 +426,6 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    }
    struct intel_region *region = surface->mt->region;
 
-   /* TODO: handle other formats */
-   uint32_t format = surface->map_stencil_as_y_tiled
-      ? BRW_SURFACEFORMAT_R8_UNORM : BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
    uint32_t *surf = (uint32_t *)
       brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
                       &wm_surf_offset);
@@ -437,7 +433,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    surf[0] = (BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
               BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
               BRW_SURFACE_CUBEFACE_ENABLES |
-              format << BRW_SURFACE_FORMAT_SHIFT);
+              surface->brw_surfaceformat << BRW_SURFACE_FORMAT_SHIFT);
 
    /* reloc */
    surf[1] = region->bo->offset; /* No tile offsets needed */
