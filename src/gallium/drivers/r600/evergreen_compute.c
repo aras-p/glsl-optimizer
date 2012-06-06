@@ -147,18 +147,21 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 
 	ctx->cs_shader = (struct r600_pipe_compute *)state;
 
-	assert(!ctx->cs_shader->shader_code_bo);
+	if (!ctx->cs_shader->shader_code_bo) {
 
-	ctx->cs_shader->shader_code_bo =
-		r600_compute_buffer_alloc_vram(ctx->screen,
+		ctx->cs_shader->shader_code_bo =
+			r600_compute_buffer_alloc_vram(ctx->screen,
 					ctx->cs_shader->bc.ndw * 4);
 
-	void *p = ctx->ws->buffer_map(ctx->cs_shader->shader_code_bo->cs_buf,
+		void *p = ctx->ws->buffer_map(
+					ctx->cs_shader->shader_code_bo->cs_buf,
 					ctx->cs, PIPE_TRANSFER_WRITE);
 
-	memcpy(p, ctx->cs_shader->bc.bytecode, ctx->cs_shader->bc.ndw * 4);
+		memcpy(p, ctx->cs_shader->bc.bytecode, ctx->cs_shader->bc.ndw * 4);
 
-	ctx->ws->buffer_unmap(ctx->cs_shader->shader_code_bo->cs_buf);
+		ctx->ws->buffer_unmap(ctx->cs_shader->shader_code_bo->cs_buf);
+
+	}
 
 	evergreen_compute_init_config(ctx);
 
