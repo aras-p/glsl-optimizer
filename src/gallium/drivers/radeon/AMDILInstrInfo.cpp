@@ -244,21 +244,6 @@ MachineBasicBlock::iterator skipFlowControl(MachineBasicBlock *MBB) {
 }
 
 void
-AMDILInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI, DebugLoc DL,
-                            unsigned DestReg, unsigned SrcReg,
-                            bool KillSrc) const
-{
-  BuildMI(MBB, MI, DL, get(AMDIL::MOVE_v4i32), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
-  return;
-#if 0
-  DEBUG(dbgs() << "Cannot copy " << RI.getName(SrcReg)
-               << " to " << RI.getName(DestReg) << '\n');
-  abort();
-#endif
-}
-void
 AMDILInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned SrcReg, bool isKill,

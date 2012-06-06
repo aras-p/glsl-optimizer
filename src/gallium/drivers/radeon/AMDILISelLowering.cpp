@@ -59,8 +59,6 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
   } else if (svt.isInteger() && dvt.isInteger()) {
     if (!svt.bitsEq(dvt)) {
       Src = DAG.getSExtOrTrunc(Src, DL, dvt);
-    } else {
-      Src = DAG.getNode(AMDILISD::MOVE, DL, dvt, Src);
     }
   } else if (svt.isInteger()) {
     unsigned opcode = (asType) ? ISDBITCAST : ISD::SINT_TO_FP;

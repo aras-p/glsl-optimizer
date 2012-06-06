@@ -163,7 +163,7 @@ SDNode *AMDILDAGToDAGISel::Select(SDNode *N) {
       if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
         unsigned int FI = FIN->getIndex();
         EVT OpVT = N->getValueType(0);
-        unsigned int NewOpc = AMDIL::MOVE_i32;
+        unsigned int NewOpc = AMDIL::COPY;
         SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i32);
         return CurDAG->SelectNodeTo(N, NewOpc, OpVT, TFI);
       }
