@@ -795,10 +795,13 @@ class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
 
 let Predicates = [isEG] in {
   
+def RECIP_IEEE_eg : RECIP_IEEE_Common<0x86>;
+
 def MULLO_INT_eg : MULLO_INT_Common<0x8F>;
 def MULHI_INT_eg : MULHI_INT_Common<0x90>;
 def MULLO_UINT_eg : MULLO_UINT_Common<0x91>;
 def MULHI_UINT_eg : MULHI_UINT_Common<0x92>;
+def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
 
 } // End Predicates = [isEG]
 
@@ -825,12 +828,10 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   def LOG_CLAMPED_eg : LOG_CLAMPED_Common<0x82>;
   def LOG_IEEE_eg : LOG_IEEE_Common<0x83>;
   def RECIP_CLAMPED_eg : RECIP_CLAMPED_Common<0x84>;
-  def RECIP_IEEE_eg : RECIP_IEEE_Common<0x86>;
   def RECIPSQRT_CLAMPED_eg : RECIPSQRT_CLAMPED_Common<0x87>;
   def RECIPSQRT_IEEE_eg : RECIPSQRT_IEEE_Common<0x89>;
   def SIN_eg : SIN_Common<0x8D>;
   def COS_eg : COS_Common<0x8E>;
-  def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
   def DOT4_eg : DOT4_Common<0xBE>;
   def CUBE_eg : CUBE_Common<0xC0>;
 
@@ -909,6 +910,8 @@ let Predicates = [isCayman] in {
 
 let isVector = 1 in { 
 
+def RECIP_IEEE_cm : RECIP_IEEE_Common<0x86>;
+
 def MULLO_INT_cm : MULLO_INT_Common<0x8F>;
 def MULHI_INT_cm : MULHI_INT_Common<0x90>;
 def MULLO_UINT_cm : MULLO_UINT_Common<0x91>;
@@ -916,8 +919,12 @@ def MULHI_UINT_cm : MULHI_UINT_Common<0x92>;
 
 } // End isVector = 1
 
-/* XXX: I'm not sure if this opcode is correct. */
-def RECIP_UINT_cm : RECIP_UINT_Common<0x77>;
+// RECIP_UINT emulation for Cayman
+def : Pat <
+  (AMDGPUurecip R600_Reg32:$src0),
+  (FLT_TO_UINT_eg (MUL_IEEE (RECIP_IEEE_cm (UINT_TO_FLT_eg R600_Reg32:$src0)),
+                            (MOV_IMM_I32 (i32 ALU_LITERAL_X), 0x4f800000)))
+>;
 
 } // End isCayman
 

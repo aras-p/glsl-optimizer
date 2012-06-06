@@ -172,6 +172,8 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             emitFCInstr(MI);
           } else if (isReduction || isVector || isCube) {
             isLast = false;
+            // XXX: On Cayman, some (all?) of the vector instructions only need
+            // to fill the first three slots.
             for (currentElement = 0; currentElement < 4; currentElement++) {
               isLast = (currentElement == 3);
               emitALUInstr(MI);
