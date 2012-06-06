@@ -463,7 +463,7 @@ static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
 	vtx.srf_mode_all = bytes[bytes_read++];
 	/* offset is 2 bytes wide */
 	vtx.offset = bytes[bytes_read++];
-	vtx.offset |= bytes[bytes_read++];
+	vtx.offset |= (bytes[bytes_read++] << 8);
 	vtx.endian = bytes[bytes_read++];
 
 	if (r600_bytecode_add_vtx(ctx->bc, &vtx)) {
