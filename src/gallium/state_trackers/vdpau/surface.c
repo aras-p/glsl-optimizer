@@ -164,6 +164,25 @@ vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
    return VDP_STATUS_OK;
 }
 
+static void
+vlVdpVideoSurfaceSize(vlVdpSurface *p_surf, int component,
+                      unsigned *width, unsigned *height)
+{
+   *width = p_surf->templat.width;
+   *height = p_surf->templat.height;
+
+   if (component > 0) {
+      if (p_surf->templat.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+         *width /= 2;
+         *height /= 2;
+      } else if (p_surf->templat.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
+         *height /= 2;
+      }
+      if (p_surf->templat.interlaced)
+         *height /= 2;
+   }
+}
+
 /**
  * Copy image data from a VdpVideoSurface to application memory in a specified
  * YCbCr format.
@@ -203,13 +222,16 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    }
 
    for (i = 0; i < 3; ++i) {
+      unsigned width, height;
       struct pipe_sampler_view *sv = sampler_views[i];
       if (!sv) continue;
+
+      vlVdpVideoSurfaceSize(vlsurface, i, &width, &height);
 
       for (j = 0; j < sv->texture->depth0; ++j) {
          struct pipe_box box = {
             0, 0, j,
-            sv->texture->width0, sv->texture->height0, 1
+            width, height, 1
          };
          struct pipe_transfer *transfer;
          uint8_t *map;
@@ -294,13 +316,16 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    }
 
    for (i = 0; i < 3; ++i) {
+      unsigned width, height;
       struct pipe_sampler_view *sv = sampler_views[i];
       if (!sv || !source_pitches[i]) continue;
+
+      vlVdpVideoSurfaceSize(p_surf, i, &width, &height);
 
       for (j = 0; j < sv->texture->depth0; ++j) {
          struct pipe_box dst_box = {
             0, 0, j,
-            sv->texture->width0, sv->texture->height0, 1
+            width, height, 1
          };
 
          pipe->transfer_inline_write(pipe, sv->texture, 0,
