@@ -162,6 +162,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
           MachineInstr &MI = *I;
 	  isReduction = AMDGPU::isReductionOp(MI.getOpcode());
 	  isVector = TII->isVector(MI);
+	  isCube = AMDGPU::isCubeOp(MI.getOpcode());
           if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() && MI.getOperand(0).isDead()) {
             continue;
           }
@@ -169,7 +170,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             emitTexInstr(MI);
           } else if (AMDGPU::isFCOp(MI.getOpcode())){
             emitFCInstr(MI);
-          } else if (isReduction || isVector) {
+          } else if (isReduction || isVector || isCube) {
             isLast = false;
             for (currentElement = 0; currentElement < 4; currentElement++) {
               isLast = (currentElement == 3);
@@ -177,14 +178,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             }
             isReduction = false;
 	    isVector = false;
-          } else if (AMDGPU::isCubeOp(MI.getOpcode())) {
-              isCube = true;
-              isLast = false;
-              for (currentElement = 0; currentElement < 4; currentElement++) {
-                isLast = (currentElement == 3);
-                emitALUInstr(MI);
-              }
-              isCube = false;
+	    isCube = false;
           } else if (MI.getOpcode() == AMDIL::RETURN ||
                      MI.getOpcode() == AMDIL::BUNDLE ||
                      MI.getOpcode() == AMDIL::KILL) {
