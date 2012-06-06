@@ -31,6 +31,21 @@ struct acp_entry : public exec_node {
 };
 }
 
+bool
+fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
+{
+   if (inst->src[arg].file != entry->dst.file ||
+       inst->src[arg].reg != entry->dst.reg ||
+       inst->src[arg].reg_offset != entry->dst.reg_offset) {
+      return false;
+   }
+
+   inst->src[arg].reg = entry->src.reg;
+   inst->src[arg].reg_offset = entry->src.reg_offset;
+
+   return true;
+}
+
 /** @file brw_fs_copy_propagation.cpp
  *
  * Support for local copy propagation by walking the list of instructions
@@ -58,13 +73,8 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx,
 	 acp_entry *entry = (acp_entry *)entry_node;
 
 	 for (int i = 0; i < 3; i++) {
-	    if (inst->src[i].file == entry->dst.file &&
-		inst->src[i].reg == entry->dst.reg &&
-		inst->src[i].reg_offset == entry->dst.reg_offset) {
-	       inst->src[i].reg = entry->src.reg;
-	       inst->src[i].reg_offset = entry->src.reg_offset;
+	    if (try_copy_propagate(inst, i, entry))
 	       progress = true;
-	    }
 	 }
       }
 
