@@ -100,7 +100,7 @@ static const XF86MCAdaptorRec adaptor_template =
 void
 xorg_xvmc_init(ScreenPtr pScreen, char *name)
 {
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
    XF86MCAdaptorPtr adaptorXvMC = xf86XvMCCreateAdaptorRec();
    if (!adaptorXvMC)
       return;

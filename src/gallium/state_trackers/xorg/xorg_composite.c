@@ -175,7 +175,7 @@ boolean xorg_composite_accelerated(int op,
                                    PicturePtr pDstPicture)
 {
    ScreenPtr pScreen = pDstPicture->pDrawable->pScreen;
-   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
    modesettingPtr ms = modesettingPTR(pScrn);
    struct xorg_composite_blend blend;
 
