@@ -1274,8 +1274,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              GLuint dst_x1, GLuint dst_y1,
                                              bool mirror_x, bool mirror_y)
 {
-   src.set(src_mt, 0, 0);
-   dst.set(dst_mt, 0, 0);
+   src.set(brw, src_mt, 0, 0);
+   dst.set(brw, dst_mt, 0, 0);
 
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));

@@ -53,23 +53,52 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
 }
 
 void
-brw_blorp_surface_info::set(struct intel_mipmap_tree *mt,
+brw_blorp_surface_info::set(struct brw_context *brw,
+                            struct intel_mipmap_tree *mt,
                             unsigned int level, unsigned int layer)
 {
    brw_blorp_mip_info::set(mt, level, layer);
    this->num_samples = mt->num_samples;
    this->array_spacing_lod0 = mt->array_spacing_lod0;
+   this->map_stencil_as_y_tiled = false;
 
-   if (mt->format == MESA_FORMAT_S8) {
+   switch (mt->format) {
+   case MESA_FORMAT_S8:
       /* The miptree is a W-tiled stencil buffer.  Surface states can't be set
        * up for W tiling, so we'll need to use Y tiling and have the WM
        * program swizzle the coordinates.
        */
       this->map_stencil_as_y_tiled = true;
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R8_UNORM;
-   } else {
-      this->map_stencil_as_y_tiled = false;
+      break;
+   case MESA_FORMAT_X8_Z24:
+   case MESA_FORMAT_Z32_FLOAT:
+      /* The miptree consists of 32 bits per pixel, arranged either as 24-bit
+       * depth values interleaved with 8 "don't care" bits, or as 32-bit
+       * floating point depth values.  Since depth values don't require any
+       * blending, it doesn't matter how we interpret the bit pattern as long
+       * as we copy the right amount of data, so just map it as 8-bit BGRA.
+       */
       this->brw_surfaceformat = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      break;
+   case MESA_FORMAT_Z16:
+      /* The miptree consists of 16 bits per pixel of depth data.  Since depth
+       * values don't require any blending, it doesn't matter how we interpret
+       * the bit pattern as long as we copy the right amount of data, so just
+       * map is as 8-bit RG.
+       */
+      this->brw_surfaceformat = BRW_SURFACEFORMAT_R8G8_UNORM;
+      break;
+   default:
+      /* Blorp blits don't support any sort of format conversion, so we can
+       * safely assume that the same format is being used for the source and
+       * destination.  Therefore the format must be supported as a render
+       * target, even if this is the source image.  So we can convert to a
+       * surface format using brw->render_target_format.
+       */
+      assert(brw->format_supported_as_render_target[mt->format]);
+      this->brw_surfaceformat = brw->render_target_format[mt->format];
+      break;
    }
 }
 
