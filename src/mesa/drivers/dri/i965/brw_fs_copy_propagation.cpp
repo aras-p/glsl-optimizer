@@ -40,8 +40,24 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
       return false;
    }
 
+   /* See resolve_ud_negate() and comment in brw_fs_emit.cpp. */
+   if (inst->conditional_mod &&
+       inst->src[arg].type == BRW_REGISTER_TYPE_UD &&
+       entry->src.negate)
+      return false;
+
+   bool has_source_modifiers = entry->src.abs || entry->src.negate;
+
+   if (intel->gen == 6 && inst->is_math() && has_source_modifiers)
+      return false;
+
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
+
+   if (!inst->src[arg].abs) {
+      inst->src[arg].abs = entry->src.abs;
+      inst->src[arg].negate ^= entry->src.negate;
+   }
 
    return true;
 }
@@ -113,9 +129,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx,
 	  !inst->predicated &&
 	  !inst->force_uncompressed &&
 	  !inst->force_sechalf &&
-	  inst->src[0].smear == -1 &&
-	  !inst->src[0].abs &&
-	  !inst->src[0].negate) {
+	  inst->src[0].smear == -1) {
 	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
