@@ -33,6 +33,11 @@ bool R600InstrInfo::isTrig(const MachineInstr &MI) const
   return get(MI.getOpcode()).TSFlags & R600_InstFlag::TRIG;
 }
 
+bool R600InstrInfo::isVector(const MachineInstr &MI) const
+{
+  return get(MI.getOpcode()).TSFlags & R600_InstFlag::VECTOR;
+}
+
 void
 R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,

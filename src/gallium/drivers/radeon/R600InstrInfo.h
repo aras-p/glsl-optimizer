@@ -43,6 +43,10 @@ namespace llvm {
 
   bool isTrig(const MachineInstr &MI) const;
 
+  /// isVector - Vector instructions are instructions that must fill all
+  /// instruction slots within an instruction group.
+  bool isVector(const MachineInstr &MI) const;
+
   virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                         int64_t Imm) const;
 
@@ -59,7 +63,8 @@ namespace R600_InstFlag {
 		REDUCTION = (1 << 2),
 		FC = (1 << 3),
 		TRIG = (1 << 4),
-		OP3 = (1 << 5)
+		OP3 = (1 << 5),
+		VECTOR = (1 << 6)
 	};
 }
 

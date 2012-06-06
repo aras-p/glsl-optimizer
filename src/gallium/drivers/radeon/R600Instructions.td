@@ -18,8 +18,9 @@ class InstR600 <bits<32> inst, dag outs, dag ins, string asm, list<dag> pattern,
     : AMDGPUInst <outs, ins, asm, pattern> {
 
   field bits<32> Inst;
-	bit Trig = 0;
+  bit Trig = 0;
   bit Op3 = 0;
+  bit isVector = 0; 
 
   let Inst = inst;
   let Namespace = "AMDIL";
@@ -31,6 +32,10 @@ class InstR600 <bits<32> inst, dag outs, dag ins, string asm, list<dag> pattern,
 
   let TSFlags{4} = Trig;
   let TSFlags{5} = Op3;
+
+  // Vector instructions are instructions that must fill all slots in an
+  // instruction group
+  let TSFlags{6} = isVector;
 }
 
 class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -784,6 +789,19 @@ class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
 >;
 */
 
+//===----------------------------------------------------------------------===//
+// Evergreen Only instructions
+//===----------------------------------------------------------------------===//
+
+let Predicates = [isEG] in {
+  
+def MULLO_INT_eg : MULLO_INT_Common<0x8F>;
+def MULHI_INT_eg : MULHI_INT_Common<0x90>;
+def MULLO_UINT_eg : MULLO_UINT_Common<0x91>;
+def MULHI_UINT_eg : MULHI_UINT_Common<0x92>;
+
+} // End Predicates = [isEG]
+
 /* ------------------------------- */
 /* Evergreen / Cayman Instructions */
 /* ------------------------------- */
@@ -812,10 +830,6 @@ class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
   def RECIPSQRT_IEEE_eg : RECIPSQRT_IEEE_Common<0x89>;
   def SIN_eg : SIN_Common<0x8D>;
   def COS_eg : COS_Common<0x8E>;
-  def MULLO_INT_eg : MULLO_INT_Common<0x8F>;
-  def MULHI_INT_eg : MULHI_INT_Common<0x90>;
-  def MULLO_UINT_eg : MULLO_UINT_Common<0x91>;
-  def MULHI_UINT_eg : MULHI_UINT_Common<0x92>;
   def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
   def DOT4_eg : DOT4_Common<0xBE>;
   def CUBE_eg : CUBE_Common<0xC0>;
@@ -893,8 +907,17 @@ def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
 
 let Predicates = [isCayman] in {
 
-  /* XXX: I'm not sure if this opcode is correct. */
-  def RECIP_UINT_cm : RECIP_UINT_Common<0x77>;
+let isVector = 1 in { 
+
+def MULLO_INT_cm : MULLO_INT_Common<0x8F>;
+def MULHI_INT_cm : MULHI_INT_Common<0x90>;
+def MULLO_UINT_cm : MULLO_UINT_Common<0x91>;
+def MULHI_UINT_cm : MULHI_UINT_Common<0x92>;
+
+} // End isVector = 1
+
+/* XXX: I'm not sure if this opcode is correct. */
+def RECIP_UINT_cm : RECIP_UINT_Common<0x77>;
 
 } // End isCayman
 
