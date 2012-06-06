@@ -1319,7 +1319,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
      "MESA_FORMAT_RED_RGTC1",
      GL_RED,
      GL_UNSIGNED_NORMALIZED,
-     4, 0, 0, 0,
+     8, 0, 0, 0,
      0, 0, 0, 0, 0,
      4, 4, 8                     /* 8 bytes per 4x4 block */
    },
@@ -1328,7 +1328,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
      "MESA_FORMAT_SIGNED_RED_RGTC1",
      GL_RED,
      GL_SIGNED_NORMALIZED,
-     4, 0, 0, 0,
+     8, 0, 0, 0,
      0, 0, 0, 0, 0,
      4, 4, 8                     /* 8 bytes per 4x4 block */
    },
@@ -1337,7 +1337,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
      "MESA_FORMAT_RG_RGTC2",
      GL_RG,
      GL_UNSIGNED_NORMALIZED,
-     4, 4, 0, 0,
+     8, 8, 0, 0,
      0, 0, 0, 0, 0,
      4, 4, 16                     /* 16 bytes per 4x4 block */
    },
@@ -1346,7 +1346,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
      "MESA_FORMAT_SIGNED_RG_RGTC2",
      GL_RG,
      GL_SIGNED_NORMALIZED,
-     4, 4, 0, 0,
+     8, 8, 0, 0,
      0, 0, 0, 0, 0,
      4, 4, 16                     /* 16 bytes per 4x4 block */
    },
