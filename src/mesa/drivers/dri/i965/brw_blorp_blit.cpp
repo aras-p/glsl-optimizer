@@ -151,19 +151,6 @@ try_blorp_blit(struct intel_context *intel,
    if (!src_mt) return false;
    if (buffer_bit == GL_STENCIL_BUFFER_BIT && src_mt->stencil_mt)
       src_mt = src_mt->stencil_mt;
-   switch (src_mt->format) {
-   case MESA_FORMAT_ARGB8888:
-   case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_S8:
-      break; /* Supported */
-   default:
-      /* Unsupported format.
-       *
-       * TODO: need to support all formats that are allowed as multisample
-       * render targets.
-       */
-      return false;
-   }
 
    /* Validate destination */
    if (!dst_rb) return false;
@@ -172,19 +159,14 @@ try_blorp_blit(struct intel_context *intel,
    if (!dst_mt) return false;
    if (buffer_bit == GL_STENCIL_BUFFER_BIT && dst_mt->stencil_mt)
       dst_mt = dst_mt->stencil_mt;
-   switch (dst_mt->format) {
-   case MESA_FORMAT_ARGB8888:
-   case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_S8:
-      break; /* Supported */
-   default:
-      /* Unsupported format.
-       *
-       * TODO: need to support all formats that are allowed as multisample
-       * render targets.
-       */
+
+   /* Blorp blits can't translate from one format to another.  For that we'll
+    * have to fall back to the meta-op blit.  Note: the meta-op blit doesn't
+    * support multisampled blits, but fortunately this is ok because
+    * multisampled blits require identical source and destination formats.
+    */
+   if (src_mt->format != dst_mt->format)
       return false;
-   }
 
    /* Account for the fact that in the system framebuffer, the origin is at
     * the lower left.
