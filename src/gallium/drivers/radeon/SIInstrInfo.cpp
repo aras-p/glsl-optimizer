@@ -77,34 +77,6 @@ unsigned SIInstrInfo::getEncodingBytes(const MachineInstr &MI) const
   }
 }
 
-MachineInstr * SIInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
-    DebugLoc DL) const
-{
-  MachineInstr * newMI = AMDGPUInstrInfo::convertToISA(MI, MF, DL);
-  const MCInstrDesc &newDesc = get(newMI->getOpcode());
-
-  /* If this instruction was converted to a VOP3, we need to add the extra
-   * operands for abs, clamp, omod, and negate. */
-  if (getEncodingType(*newMI) == SIInstrEncodingType::VOP3
-      && newMI->getNumOperands() < newDesc.getNumOperands()) {
-    MachineInstrBuilder builder(newMI);
-    for (unsigned op_idx = newMI->getNumOperands();
-                  op_idx < newDesc.getNumOperands(); op_idx++) {
-      builder.addImm(0);
-    }
-  }
-  return newMI;
-}
-
-unsigned SIInstrInfo::getISAOpcode(unsigned AMDILopcode) const
-{
-  switch (AMDILopcode) {
-  //XXX We need a better way of detecting end of program
-  case AMDIL::MOVE_f32: return AMDIL::V_MOV_B32_e32;
-  default: return AMDILopcode;
-  }
-}
-
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                            int64_t Imm) const
 {

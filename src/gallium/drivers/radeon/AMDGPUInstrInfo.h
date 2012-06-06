@@ -36,10 +36,6 @@ public:
 
   virtual const AMDGPURegisterInfo &getRegisterInfo() const = 0;
 
-  /// getISAOpcode - This function takes an AMDIL opcode as an argument and
-  /// returns an equivalent ISA opcode.
-  virtual unsigned getISAOpcode(unsigned AMDILopcode) const = 0;
-
   /// convertToISA - Convert the AMDIL MachineInstr to a supported ISA
   /// MachineInstr
   virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,

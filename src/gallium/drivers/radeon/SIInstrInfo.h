@@ -42,15 +42,6 @@ public:
   /// number of bytes.
   unsigned getEncodingBytes(const MachineInstr &MI) const;
 
-  /// convertToISA - Convert the AMDIL MachineInstr to a supported SI
-  ///MachineInstr
-  virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
-                                        DebugLoc DL) const;
-
-  /// getISAOpcode - This function takes an AMDIL opcode as an argument and
-  /// returns an equivalent SI opcode.
-  virtual unsigned getISAOpcode(unsigned AMDILopcode) const;
-
   virtual MachineInstr * getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                         int64_t Imm) const;
 

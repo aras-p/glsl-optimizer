@@ -61,46 +61,6 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
-unsigned R600InstrInfo::getISAOpcode(unsigned opcode) const
-{
-  switch (opcode) {
-    default: return opcode;
-    case AMDIL::IEQ:
-      return AMDIL::SETE_INT;
-    case AMDIL::INE:
-      return AMDIL::SETNE_INT;
-    case AMDIL::IGE:
-      return AMDIL::SETGE_INT;
-    case AMDIL::MOVE_f32:
-    case AMDIL::MOVE_i32:
-      return AMDIL::MOV;
-    case AMDIL::UGE:
-      return AMDIL::SETGE_UINT;
-    case AMDIL::UGT:
-      return AMDIL::SETGT_UINT;
-  }
-}
-
-unsigned R600InstrInfo::getASHRop() const
-{
-	unsigned gen = TM.getSubtarget<AMDILSubtarget>().device()->getGeneration();
-	if (gen < AMDILDeviceInfo::HD5XXX) {
-		return AMDIL::ASHR_r600;
-	} else {
-		return AMDIL::ASHR_eg;
-	}
-}
-
-unsigned R600InstrInfo::getLSHRop() const
-{
-  unsigned gen = TM.getSubtarget<AMDILSubtarget>().device()->getGeneration();
-  if (gen < AMDILDeviceInfo::HD5XXX) {
-    return AMDIL::LSHR_r600;
-  } else {
-    return AMDIL::LSHR_eg;
-  }
-}
-
 MachineInstr * R600InstrInfo::getMovImmInstr(MachineFunction *MF,
                                              unsigned DstReg, int64_t Imm) const
 {

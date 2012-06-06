@@ -29,10 +29,9 @@ MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction 
   MachineInstrBuilder newInstr;
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const AMDGPURegisterInfo & RI = getRegisterInfo();
-  unsigned ISAOpcode = getISAOpcode(MI.getOpcode());
 
   // Create the new instruction
-  newInstr = BuildMI(MF, DL, TM.getInstrInfo()->get(ISAOpcode));
+  newInstr = BuildMI(MF, DL, TM.getInstrInfo()->get(MI.getOpcode()));
 
   for (unsigned i = 0; i < MI.getNumOperands(); i++) {
     MachineOperand &MO = MI.getOperand(i);
