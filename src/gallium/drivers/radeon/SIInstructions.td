@@ -602,7 +602,9 @@ defm V_ADD_F32 : VOP2_32 <
   [(set VReg_32:$dst, (fadd AllReg_32:$src0, VReg_32:$src1))]
 >;
 
-defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32", []>;
+defm V_SUB_F32 : VOP2_32 <0x00000004, "V_SUB_F32",
+  [(set VReg_32:$dst, (fsub AllReg_32:$src0, VReg_32:$src1))]
+>;
 defm V_SUBREV_F32 : VOP2_32 <0x00000005, "V_SUBREV_F32", []>;
 defm V_MAC_LEGACY_F32 : VOP2_32 <0x00000006, "V_MAC_LEGACY_F32", []>;
 defm V_MUL_LEGACY_F32 : VOP2_32 <

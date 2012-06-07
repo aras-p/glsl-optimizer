@@ -230,7 +230,6 @@ defm DIV  : BinaryIntrinsicFloat<IL_OP_DIV, int_AMDIL_div>;
 defm FMA  : TernaryIntrinsicFloat<IL_OP_FMA, int_AMDIL_fma>;
 defm LERP  : TernaryIntrinsicFloat<IL_OP_LERP, int_AMDIL_lerp>;
   }
-defm SUB  : BinaryOpMCf32<IL_OP_SUB, fsub>;
 defm NEAR : UnaryOpMCf32<IL_OP_ROUND_NEAR, fnearbyint>;
 defm RND_Z : UnaryOpMCf32<IL_OP_ROUND_ZERO, ftrunc>;
 
