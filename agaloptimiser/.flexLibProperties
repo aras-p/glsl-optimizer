@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.Transformation"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.DeadCodeRemover"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.Constants"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.SequentialBlockCompactor"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.UnusedGlobalRemover"/>
+    <classEntry path="com.adobe.AGALOptimiser.type.TypeUtils"/>
+    <classEntry path="com.adobe.pixelBender3D.WeldedVertexAndFragmentPrograms"/>
+    <classEntry path="com.adobe.AGALOptimiser.Constants"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.LiveRange"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.LiveRangeAnalyzer"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.BasicBlock"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.BasicBlockAnalyzer"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.InterferenceGraphEdge"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.InterferenceGraphGenerator"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.InterferenceGraphNode"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.InterferenceGraphColorer"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.RegisterAssigner"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.CloningContext"/>
+    <classEntry path="com.adobe.AGALOptimiser.error.ErrorMessages"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.Transformation"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.AgalParser"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.Value"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.SimpleValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.ConstantValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.ConstantFloatValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.ConstantBooleanValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.ConstantIntValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.VertexValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.TextureValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.ConstantMatrixValue"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.StandardPeepholeOptimizer"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.DestinationRegisterTemplate"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.SourceRegisterTemplate"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.TransformationPattern"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.MoveChainReducer"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.TemplateBindings"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.DiscardPromoter"/>
+    <classEntry path="com.adobe.pixelBender3D.translator.transformations.TransformationSequence"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.TransformationManager"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.TransformationSingletonManager"/>
+    <classEntry path="com.adobe.AGALOptimiser.translator.transformations.Utils"/>
+    <classEntry path="com.adobe.AGALOptimiser.agal.LocationRange"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.WelderInput"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.LoopUnroller"/>
+    <classEntry path="com.adobe.pixelBender3D.welder.transformations.LibraryLinker"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

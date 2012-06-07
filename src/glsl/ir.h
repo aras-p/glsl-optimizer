@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <set>
 
 #include "ralloc.h"
 #include "glsl_types.h"
@@ -91,6 +92,8 @@ public:
    enum ir_node_type ir_type;
    const struct glsl_type *type;
 
+   std::set<ir_instruction*> *users, *uses;
+
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
 
@@ -110,6 +113,7 @@ public:
    virtual class ir_variable *          as_variable()         { return NULL; }
    virtual class ir_function *          as_function()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
+   virtual class ir_dereference_record * as_dereference_record() { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_dereference_variable *as_dereference_variable() { return NULL; }
    virtual class ir_expression *        as_expression()       { return NULL; }
@@ -122,6 +126,7 @@ public:
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
    virtual class ir_discard *           as_discard()          { return NULL; }
+   virtual class ir_texture *           as_texture()          { return NULL; }
    /*@}*/
 
 protected:
@@ -129,6 +134,8 @@ protected:
    {
       ir_type = ir_type_unset;
       type = NULL;
+      users = NULL;
+      uses = NULL;
    }
 };
 
@@ -233,6 +240,8 @@ enum ir_variable_mode {
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary	/**< Temporary variable generated during compilation. */
 };
+
+extern const char* ir_variable_mode_names[8];
 
 enum ir_variable_interpolation {
    ir_var_smooth = 0,
@@ -404,6 +413,11 @@ public:
     * slot has not been assigned, the value will be -1.
     */
    int location;
+
+   // AGAL specific
+   // Array elements are decomposed into synthetic child variables
+   // They must remember their parent so they get correctly named.
+   ir_variable *parent;
 
    /**
     * Built-in state that backs this uniform
@@ -1276,6 +1290,8 @@ public:
     */
    static ir_texture_opcode get_opcode(const char *);
 
+   virtual class ir_texture *as_texture()          { return this; }
+
    enum ir_texture_opcode op;
 
    /** Sampler to use for the texture access. */
@@ -1505,6 +1521,11 @@ public:
 					struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
+
+   virtual ir_dereference_record *as_dereference_record()
+   {
+      return this;
+   }
 
    /**
     * Get the variable that is ultimately referenced by an r-value

@@ -3,7 +3,7 @@ GLSL To AGAL Compiler
 
 This project provides a library and standalone tool for converting GLSL vertex and fragment shaders into AGAL shaders that can be used with the Stage3D API in the Adobe Flash runtime.
 
-GLSL To AGAL Compiler Is licensed according to the MIT License and the Adobe Open Source License. See individual files for exact licensing.
+GLSL To AGAL Compiler Is licensed according to the MIT License. See individual files for exact licensing.
 
 How does it work
 ----------------

@@ -1158,6 +1158,9 @@ ast_expression::hir(exec_list *instructions,
 						       "and_tmp",
 						       ir_var_temporary, glsl_precision_low);
 	 instructions->push_tail(tmp);
+	 
+	 ir_assignment *defaultfalse = new (ctx) ir_assignment(new (ctx) ir_dereference_variable(tmp), new (ctx) ir_constant(false));
+	 instructions->push_tail(defaultfalse);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
@@ -1199,6 +1202,9 @@ ast_expression::hir(exec_list *instructions,
 						       "or_tmp",
 						       ir_var_temporary, glsl_precision_low);
 	 instructions->push_tail(tmp);
+	 
+	 ir_assignment *defaultfalse = new (ctx) ir_assignment(new (ctx) ir_dereference_variable(tmp), new (ctx) ir_constant(false));
+	 instructions->push_tail(defaultfalse);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);

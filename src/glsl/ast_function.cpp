@@ -147,6 +147,10 @@ match_function_by_name(exec_list *instructions, const char *name,
 	 builtin = state->builtins_to_link[i]->symbols->get_function(name);
 	 sig = builtin ? builtin->matching_signature(actual_parameters) : NULL;
 	 if (sig != NULL) {
+    // FIXME: is this correct?
+      f = builtin;
+       state->symbols->add_global_function(f);
+       /*
 	    if (f == NULL) {
 	       f = new(ctx) ir_function(name);
 	       state->symbols->add_global_function(f);
@@ -154,6 +158,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 	    }
 
 	    f->add_signature(sig->clone_prototype(f, NULL));
+	    */
 	    break;
 	 }
       }

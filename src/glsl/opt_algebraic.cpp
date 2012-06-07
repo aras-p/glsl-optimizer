@@ -203,6 +203,15 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_unop_logic_not: {
       enum ir_expression_operation new_op = ir_unop_logic_not;
 
+      if(op_const[0] == NULL && op_expr[0] == NULL) {
+          // agal specific: !a --> 1-a
+         this->progress = true;
+         return new(mem_ctx) ir_expression(ir_binop_sub,
+                  ir->type,
+                  new (mem_ctx) ir_constant(1.0f),
+                  ir->operands[0]);
+      }
+
       if (op_expr[0] == NULL)
 	 break;
 

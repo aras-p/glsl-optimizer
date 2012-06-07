@@ -34,6 +34,10 @@ enum PrintGlslMode {
 	kPrintGlslFragment,
 };
 
+extern char* _mesa_print_ir_glsl(ir_instruction *instruction,
+			struct _mesa_glsl_parse_state *state,
+			char* buf, PrintGlslMode mode);
+
 extern char* _mesa_print_ir_glsl(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state,
 			char* buf, PrintGlslMode mode);

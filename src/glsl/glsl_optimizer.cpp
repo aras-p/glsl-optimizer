@@ -4,10 +4,13 @@
 #include "glsl_parser.h"
 #include "ir_optimization.h"
 #include "ir_print_glsl_visitor.h"
+#include "ir_print_agal_visitor.h"
+#include "ir_expression_flattening.h"
 #include "ir_print_visitor.h"
 #include "loop_analysis.h"
 #include "program.h"
-
+#include "../../agalassembler/agal.h"
+#include <string>
 
 extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
@@ -113,7 +116,7 @@ struct glslopt_shader {
 static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_parse_state* state, void* memctx)
 {
 	#if 0
-	printf("**** %s:\n", name);
+	fprintf(stderr, "**** %s:\n", name);
 	//_mesa_print_ir (ir, state);
 	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
 	printf(foobar);
@@ -205,6 +208,127 @@ static bool propagate_precision(exec_list* list)
 	return anyProgress;
 }
 
+static bool emitComma = false;
+
+class ir_type_printing_visitor : public ir_hierarchical_visitor {
+public:
+	glslopt_shader *shader;
+   ir_type_printing_visitor(glslopt_shader* _shader)
+   {
+   		shader = _shader;
+   }
+   virtual ir_visitor_status visit(ir_variable *);
+};
+
+ir_visitor_status
+ir_type_printing_visitor::visit(ir_variable *ir)
+{
+   ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\":\"%s\"\n", emitComma ? ',' : ' ', ir->name, ir->type->name);
+   emitComma = true;
+
+   return visit_continue;
+}
+
+bool
+do_print_types(exec_list *instructions, glslopt_shader* shader)
+{
+   ir_type_printing_visitor v(shader);
+   v.run(instructions);
+   return false;
+}
+
+class ir_storage_printing_visitor : public ir_hierarchical_visitor {
+public:
+	glslopt_shader *shader;
+   ir_storage_printing_visitor(glslopt_shader* _shader)
+   {
+   		shader = _shader;
+   }
+   virtual ir_visitor_status visit(ir_variable *);
+};
+
+ir_visitor_status
+ir_storage_printing_visitor::visit(ir_variable *ir)
+{
+   ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\":\"%s\"\n", emitComma ? ',' : ' ', ir->name, ir_variable_mode_names[ir->mode]);
+   emitComma = true;
+
+   return visit_continue;
+}
+
+bool
+do_print_storage(exec_list *instructions, glslopt_shader* shader)
+{
+   ir_storage_printing_visitor v(shader);
+   v.run(instructions);
+   return false;
+}
+
+class ir_constant_printing_visitor : public ir_hierarchical_visitor {
+public:
+	glslopt_shader *shader;
+   ir_constant_printing_visitor(glslopt_shader* _shader)
+   {
+   		shader = _shader;
+   }
+   virtual ir_visitor_status visit(ir_variable *);
+};
+
+ir_visitor_status
+ir_constant_printing_visitor::visit(ir_variable *ir)
+{
+	ir_constant *c = ir->constant_value;
+
+   if(!c)
+   	return visit_continue;
+
+   if(ir->mode == ir_var_out)
+   	return visit_continue;
+
+   if(c->type == glsl_type::vec4_type || c->type == glsl_type::vec3_type || c->type == glsl_type::vec2_type || c->type == glsl_type::float_type) {
+   		int n = c->type->vector_elements;
+
+		ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\": [%f, %f, %f, %f]\n", emitComma ? ',' : ' ', ir->name,
+		n > 0 ? ir->constant_value->get_float_component(0) : 0.0f,
+		n > 1 ? ir->constant_value->get_float_component(1) : 0.0f,
+		n > 2 ? ir->constant_value->get_float_component(2) : 0.0f,
+		n > 3 ? ir->constant_value->get_float_component(3) : 0.0f);
+   } else {
+   	ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\": UNHANDLED_CONST_TYPE\n", emitComma ? ',' : ' ', ir->name);
+   }
+   emitComma = true;
+
+   return visit_continue;
+}
+
+bool
+do_print_constants(exec_list *instructions, glslopt_shader* shader)
+{
+   ir_constant_printing_visitor v(shader);
+   v.run(instructions);
+   return false;
+}
+
+
+static void
+print_agal_var_mapping(const void *key, void *data, void *closure) {
+	char *nm = (char*)data;
+	glslopt_shader* shader = (glslopt_shader*)closure;
+	if(! ((nm[0] == 'v' && nm[1] == 't') || (nm[0] == 'f' && nm[1] == 't'))) {
+		ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\":\"%s\"\n", emitComma ? ',' : ' ', key, data);
+		emitComma = true;
+	}
+}
+
+static bool verbose=false;
+
+void dump(const char *nm, exec_list *ir, _mesa_glsl_parse_state *state, PrintGlslMode printMode)
+{
+	if(!verbose) return;
+
+	fprintf(stderr, "glsl %s:\n%s", nm, _mesa_print_ir_glsl(ir, state, NULL, printMode));
+	fprintf(stderr, "validate: \n"); validate_ir_tree(ir);
+}
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
@@ -225,10 +349,19 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	_mesa_glsl_parse_state* state = new (ctx->mem_ctx) _mesa_glsl_parse_state (&ctx->mesa_ctx, glType, ctx->mem_ctx);
 	state->error = 0;
+	state->language_version = 130;
+
+	const char* vspreamble = 
+	"vec4 ftransform() { return gl_ModelViewProjectionMatrix * gl_Vertex; }\n";
+
+	const char* fspreamble = 
+	"";
+
+	const char *modifiedSource = ralloc_asprintf (ctx->mem_ctx, "%s%s", printMode == kPrintGlslVertex ? vspreamble : fspreamble, shaderSource);
 
 	if (!(options & kGlslOptionSkipPreprocessor))
 	{
-		state->error = preprocess (state, &shaderSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
+		state->error = preprocess (state, &modifiedSource, &state->info_log, state->extensions, ctx->mesa_ctx.API);
 		if (state->error)
 		{
 			shader->status = !state->error;
@@ -237,7 +370,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		}
 	}
 
-	_mesa_glsl_lexer_ctor (state, shaderSource);
+	_mesa_glsl_lexer_ctor (state, modifiedSource);
 	_mesa_glsl_parse (state);
 	_mesa_glsl_lexer_dtor (state);
 
@@ -251,6 +384,13 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		validate_ir_tree(ir);
 		shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
+
+	hash_table *oldnames = NULL;
+
+	shader->optimizedOutput = NULL;
+	ralloc_asprintf_append (&shader->optimizedOutput, "{\n");
+
+	dump("pre-opt", ir, state, printMode);
 
 	// Optimization passes
 	const bool linked = !(options & kGlslOptionNotFullShader);
@@ -275,7 +415,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			}
 			progress2 = do_dead_code_local(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
 			progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, ctx->mem_ctx);
-			progress2 = do_tree_grafting(ir); progress |= progress2; if (progress2) debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
+			//	progress2 = do_tree_grafting(ir); progress |= progress2; if (progress2) debug_print_ir ("After tree grafting", ir, state, ctx->mem_ctx);
 			progress2 = do_constant_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After const propagation", ir, state, ctx->mem_ctx);
 			if (!linked) {
 				progress2 = do_constant_variable_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After const variable unlinked", ir, state, ctx->mem_ctx);
@@ -284,7 +424,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			}
 			progress2 = do_constant_folding(ir); progress |= progress2; if (progress2) debug_print_ir ("After const folding", ir, state, ctx->mem_ctx);
 			progress2 = do_algebraic(ir); progress |= progress2; if (progress2) debug_print_ir ("After algebraic", ir, state, ctx->mem_ctx);
+			progress2 = lower_discard(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower discard", ir, state, ctx->mem_ctx);
 			progress2 = do_lower_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower jumps", ir, state, ctx->mem_ctx);
+			progress2 = lower_if_to_cond_assign(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower if", ir, state, ctx->mem_ctx);
 			progress2 = do_vec_index_to_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to swizzle", ir, state, ctx->mem_ctx);
 			//progress2 = do_vec_index_to_cond_assign(ir); progress |= progress2; if (progress2) debug_print_ir ("After vec index to cond assign", ir, state, ctx->mem_ctx);
 			progress2 = do_swizzle_swizzle(ir); progress |= progress2; if (progress2) debug_print_ir ("After swizzle swizzle", ir, state, ctx->mem_ctx);
@@ -294,16 +436,140 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			loop_state *ls = analyze_loop_variables(ir);
 			progress2 = set_loop_controls(ir, ls); progress |= progress2;
 			progress2 = unroll_loops(ir, ls, 8); progress |= progress2;
+			progress2 = do_agal_expression_flattening(ir, false); progress |= progress2;
+			do_lower_conditionl_assigns_to_agal(ir); dump("post-lowercond", ir, state, printMode);
+
 			delete ls;
 		} while (progress);
 
+		dump("post-opt", ir, state, printMode);
+
+		do_tree_grafting(ir); dump("after-graft", ir, state, printMode);
+
+		do_agal_expression_flattening(ir, true); dump("", ir, state, printMode);
+
+		do_lower_arrays(ir); dump("post-opt", ir, state, printMode);
+
+		//do_tree_grafting(ir); dump("after-graft", ir, state, printMode);
+
+		do_agal_expression_flattening(ir, true); dump("post-opt", ir, state, printMode);
+
+		do_algebraic(ir); dump("post-opt", ir, state, printMode);
+
+		do_remove_casts(ir); dump("post-opt", ir, state, printMode);
+
+		do_hoist_constants(ir); dump("post-opt", ir, state, printMode);
+
+		do_agal_expression_flattening(ir, true); dump("post-opt", ir, state, printMode);
+		
+		dump("post-opt", ir, state, printMode);
+
+		do_swizzle_everything(ir); dump("post-swizz", ir, state, printMode);
+		
+		do_coalesce_floats(ir);
+		
+		do_swizzle_swizzle(ir);
+
+		do_coalesce_temps(ir); dump("post-opt", ir, state, printMode);
+
+		do_unique_variables(ir); dump("post-unique", ir, state, printMode);
+
+		oldnames = do_remap_agalvars(ir, printMode);
 		validate_ir_tree(ir);
+
+		//schedule_instructions(ir, state, printMode);
+
+		//const char *glslout2 = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
+		//fprintf(stderr, "glsl:\n%s", glslout2);
 	}
 
-	// Final optimized output
-	if (!state->error)
+	const char *agalasmout = strlen(state->info_log) > 0 ? "" : _mesa_print_ir_agal(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
+	const char *infoLog = state->info_log;
+	std::string sanitisedInfoLog;
+	while(infoLog && *infoLog)
 	{
-		shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
+		switch(*infoLog) {
+			case 10:
+			case 13:
+				sanitisedInfoLog += "\\n";
+				break;
+			default:
+				sanitisedInfoLog += infoLog[0];
+		}
+		infoLog++;
+	}
+	ralloc_asprintf_append (&shader->optimizedOutput, "\"info\":\"%s\"", sanitisedInfoLog.c_str());
+
+	// Final optimized output
+	if (strlen(state->info_log) > 0) {
+		ralloc_asprintf_append (&shader->optimizedOutput, "\n}\n");
+	} else {
+		ralloc_asprintf_append (&shader->optimizedOutput, ",\n");
+		//shader->optimizedOutput = NULL;
+
+		//ralloc_asprintf_append (&shader->optimizedOutput, "\"glsl-raw\":\"%s\",\n", shader->rawOutput);
+
+		//const char *glslout = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
+		//ralloc_asprintf_append (&shader->optimizedOutput, "\"glsl-final\":\"%s\",\n", glslout);
+
+		ralloc_asprintf_append (&shader->optimizedOutput, "\"varnames\" : \n{\n");
+
+		emitComma = false;
+		hash_table_call_foreach(oldnames, print_agal_var_mapping, shader);
+		ralloc_asprintf_append (&shader->optimizedOutput, "},\n");
+
+		emitComma = false;
+		ralloc_asprintf_append (&shader->optimizedOutput, "\"consts\" : \n{\n");
+		do_print_constants(ir, shader);
+		ralloc_asprintf_append (&shader->optimizedOutput, "},\n");
+
+		emitComma = false;
+		ralloc_asprintf_append (&shader->optimizedOutput, "\"types\" : \n{\n");
+		do_print_types(ir, shader);
+		ralloc_asprintf_append (&shader->optimizedOutput, "},\n");
+
+		emitComma = false;
+		ralloc_asprintf_append (&shader->optimizedOutput, "\"storage\" : \n{\n");
+		do_print_storage(ir, shader);
+		ralloc_asprintf_append (&shader->optimizedOutput, "},\n");
+
+		if(verbose)
+			fprintf(stderr, "agal:\n%s", agalasmout);
+		std::string sanitisedAGAL;
+		const char *asmsrc = agalasmout;
+		while(*asmsrc)
+		{
+			switch(*asmsrc) {
+				case 10:
+				case 13:
+					sanitisedAGAL += "\\n";
+					break;
+				default:
+					sanitisedAGAL += asmsrc[0];
+			}
+			asmsrc++;
+		}
+		ralloc_asprintf_append (&shader->optimizedOutput, "\"agalasm\":\"%s\"\n}\n", sanitisedAGAL.c_str());
+
+		if(verbose) {
+			char *agalout;
+			size_t agalsz = 0;
+			AGAL::Assemble(agalasmout, printMode == kPrintGlslFragment ? AGAL::shadertype_fragment : AGAL::shadertype_vertex, &agalout, &agalsz);
+
+			//AGAL::Graph *depgraph = AGAL::CreateDependencyGraph(agalout, agalsz, 0);
+			//fprintf(stderr, "digraph agaldepgraph {\n");
+			//for(int i=0; i<depgraph->edges.length; i++) {
+			//	fprintf(stderr, "%d -> %d\n", depgraph->edges[i].srcidx, depgraph->edges[i].dstidx);
+			//}
+			//fprintf(stderr, "}\n");
+
+			FlashString disasmout;
+			if(agalout)
+				AGAL::Disassemble (agalout, agalsz, &disasmout);
+			fprintf(stderr, "//--- Disasm ---\n");
+			fprintf(stderr, "%s", disasmout.CStr());
+			fprintf(stderr, "//--- Disasm ---\n");
+		}
 	}
 
 	shader->status = !state->error;

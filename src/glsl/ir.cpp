@@ -1340,6 +1340,17 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 			      swiz_idx[3], i);
 }
 
+const char* ir_variable_mode_names[8] = {
+   "ir_var_auto",     /**< Function local variables and globals. */
+   "ir_var_uniform",      /**< Variable declared as a uniform. */
+   "ir_var_in",
+   "ir_var_out",
+   "ir_var_inout",
+   "ir_var_const_in", /**< "in" param that must be a constant expression */
+   "ir_var_system_value", /**< Ex: front-face, instance-id, etc. */
+   "ir_var_temporary" /**< Temporary variable generated during compilation. */
+};
+
 #undef X
 #undef R
 #undef S
@@ -1354,11 +1365,20 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode, glsl_precision precision)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(mode), interpolation(ir_var_smooth), precision(precision), array_lvalue(false)
+     mode(mode), interpolation(ir_var_smooth), precision(precision), array_lvalue(false), parent(NULL)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
-   this->name = ralloc_strdup(this, name);
+
+   if(mode == ir_var_temporary) {
+      static int tmpcount = 0;
+      char nm[512];
+      sprintf(&nm[0], "%s_tmp_%d", name, tmpcount++);
+      this->name = ralloc_strdup(this, &nm[0]);
+   } else {
+      this->name = ralloc_strdup(this, name);
+   }
+
    this->explicit_location = false;
    this->location = -1;
    this->warn_extension = NULL;

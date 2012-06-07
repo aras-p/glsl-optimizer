@@ -124,7 +124,7 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signature* func)
 {
 	ir_variable *new_var = new_ir->as_variable();
-	if (!new_var)
+	if (!new_var || !func)
 		return;
 
 	// go through callee, see if we have any variables that match this one

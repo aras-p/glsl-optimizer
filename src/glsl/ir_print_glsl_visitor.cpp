@@ -122,6 +122,17 @@ public:
 
 
 char*
+_mesa_print_ir_glsl(ir_instruction *instr,
+	    struct _mesa_glsl_parse_state *state,
+		char* buffer, PrintGlslMode mode)
+{
+	global_print_tracker gtracker;
+	ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader);
+	instr->accept(&v);
+	return v.buffer;
+}
+
+char*
 _mesa_print_ir_glsl(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
 		char* buffer, PrintGlslMode mode)
@@ -190,7 +201,7 @@ void ir_print_glsl_visitor::indent(void)
 
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
-	if (v->mode == ir_var_temporary)
+	if (v->mode == ir_var_temporary && !v->name)
 	{
 		long tempID = (long)hash_table_find (globals->temp_var_hash, v);
 		if (tempID == 0)
@@ -594,6 +605,8 @@ void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
+	ralloc_asprintf_append(&buffer, "/* %p */", ir);
+
 	// assignement in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{

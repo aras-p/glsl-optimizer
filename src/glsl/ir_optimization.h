@@ -70,6 +70,20 @@ bool lower_variable_index_to_cond_assign(exec_list *instructions,
 bool lower_quadop_vector(exec_list *instructions, bool dont_lower_swz);
 bool optimize_redundant_jumps(exec_list *instructions);
 
+bool do_lower_arrays(exec_list *instructions);
+bool do_lower_three_address_form(exec_list *instructions);
+bool do_hoist_constants(exec_list *instructions);
+hash_table* do_remap_agalvars(exec_list *instructions, int mode);
+bool do_coalesce_temps(exec_list *instructions);
+bool do_agal_expression_flattening(exec_list *instructions, bool verifierAppeasement);
+bool do_swizzle_everything(exec_list *instructions);
+bool do_lower_conditionl_assigns_to_agal(exec_list *instructions);
+bool do_remove_casts(exec_list *instructions);
+bool do_coalesce_floats(exec_list *instructions);
+bool do_unique_variables(exec_list *instructions);
+
+exec_list* schedule_instructions(exec_list *instructions, _mesa_glsl_parse_state *state, int mode);
+
 ir_rvalue *
 compare_index_block(exec_list *instructions, ir_variable *index,
 		    unsigned base, unsigned components, void *mem_ctx);

@@ -252,7 +252,7 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->type == ir->operands[0]->type);
       break;
 
-   case ir_unop_f2i:
+   /*case ir_unop_f2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(ir->type->base_type == GLSL_TYPE_INT);
       break;
@@ -287,7 +287,7 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_u2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
       assert(ir->type->base_type == GLSL_TYPE_INT);
-      break;
+      break;*/
 
    case ir_unop_any:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
@@ -343,7 +343,7 @@ ir_validate::visit_leave(ir_expression *ir)
        * comparison on scalar or vector types and return a boolean scalar or
        * vector type of the same size.
        */
-      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      // assert(ir->type->base_type == GLSL_TYPE_BOOL); // AGAL specific: result is float
       assert(ir->operands[0]->type == ir->operands[1]->type);
       assert(ir->operands[0]->type->is_vector()
 	     || ir->operands[0]->type->is_scalar());
@@ -356,7 +356,7 @@ ir_validate::visit_leave(ir_expression *ir)
       /* GLSL == and != operate on scalars, vectors, matrices and arrays, and
        * return a scalar boolean.  The IR matches that.
        */
-      assert(ir->type == glsl_type::bool_type);
+      // assert(ir->type == glsl_type::bool_type); // AGAL specific: result is float
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
@@ -391,9 +391,10 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
    case ir_binop_logic_or:
-      assert(ir->type == glsl_type::bool_type);
-      assert(ir->operands[0]->type == glsl_type::bool_type);
-      assert(ir->operands[1]->type == glsl_type::bool_type);
+      // assert(ir->type == glsl_type::bool_type); // AGAL specific: result is float
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      //assert(ir->operands[0]->type == glsl_type::bool_type);
+      //assert(ir->operands[1]->type == glsl_type::bool_type);
       break;
 
    case ir_binop_dot:

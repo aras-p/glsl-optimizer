@@ -1,0 +1,13 @@
+_start1
+main
+malloc
+free
+memcpy
+memmove
+__hack_used
+fakeioctl
+_Unwind_SjLj_Register
+_Unwind_SjLj_Resume
+_Unwind_SjLj_Unregister
+
+compileShader

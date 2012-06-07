@@ -4,7 +4,7 @@
        (declare (in) float i)
        (declare (in) float n)
        (declare (in) float eta))
-     ((declare () float k)
+     ((declare () float k) (declare () float tmpret)
       (assign (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
@@ -13,23 +13,23 @@
 		      (expression float * 
 		        (expression float * (var_ref n) (var_ref i))
 		        (expression float * (var_ref n) (var_ref i))))))))
-      (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant float (0.0))))
-	  ((return (expression float -
+	  (assign (x) (var_ref tmpret) (expression float -
 	             (expression float * (var_ref eta) (var_ref i))
 		     (expression float *
 		       (expression float +
 		         (expression float * (var_ref eta)
 			   (expression float * (var_ref n) (var_ref i)))
 		         (expression float sqrt (var_ref k)))
-		       (var_ref n))))))))
+		       (var_ref n))))
+		       (return (expression float * (var_ref tmpret) (expression bool >= (var_ref k) (constant float (0.0)))))
+))
 
    (signature vec2
      (parameters
        (declare (in) vec2 i)
        (declare (in) vec2 n)
        (declare (in) float eta))
-     ((declare () float k)
+     ((declare () float k) (declare () vec2 tmpret)
       (assign (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
@@ -38,23 +38,23 @@
 		      (expression float * 
 		        (expression float dot (var_ref n) (var_ref i))
 		        (expression float dot (var_ref n) (var_ref i))))))))
-      (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant vec2 (0.0 0.0))))
-	  ((return (expression vec2 -
+      (assign (xy) (var_ref tmpret) (expression vec2 -
 	             (expression vec2 * (var_ref eta) (var_ref i))
 		     (expression vec2 *
 		       (expression float +
 		         (expression float * (var_ref eta)
 			   (expression float dot (var_ref n) (var_ref i)))
 		         (expression float sqrt (var_ref k)))
-		       (var_ref n))))))))
+		       (var_ref n))))
+		       (return (expression vec2 * (var_ref tmpret) (expression bool >= (var_ref k) (constant float (0.0)))))
+))
 
    (signature vec3
      (parameters
        (declare (in) vec3 i)
        (declare (in) vec3 n)
        (declare (in) float eta))
-     ((declare () float k)
+     ((declare () float k) (declare () vec3 tmpret)
       (assign (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
@@ -63,23 +63,23 @@
 		      (expression float * 
 		        (expression float dot (var_ref n) (var_ref i))
 		        (expression float dot (var_ref n) (var_ref i))))))))
-      (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant vec3 (0.0 0.0 0.0))))
-	  ((return (expression vec3 -
+	  (assign (xyz) (var_ref tmpret) (expression vec3 -
 	             (expression vec3 * (var_ref eta) (var_ref i))
 		     (expression vec3 *
 		       (expression float +
 		         (expression float * (var_ref eta)
 			   (expression float dot (var_ref n) (var_ref i)))
 		         (expression float sqrt (var_ref k)))
-		       (var_ref n))))))))
+		       (var_ref n))))
+		       (return (expression vec3 * (var_ref tmpret) (expression bool >= (var_ref k) (constant float (0.0)))))
+))
 
    (signature vec4
      (parameters
        (declare (in) vec4 i)
        (declare (in) vec4 n)
        (declare (in) float eta))
-     ((declare () float k)
+     ((declare () float k) (declare () vec4 tmpret)
       (assign (x) (var_ref k)
               (expression float - (constant float (1.0))
 	        (expression float * (var_ref eta)
@@ -88,15 +88,15 @@
 		      (expression float * 
 		        (expression float dot (var_ref n) (var_ref i))
 		        (expression float dot (var_ref n) (var_ref i))))))))
-      (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant vec4 (0.0 0.0 0.0 0.0))))
-	  ((return (expression vec4 -
+	  (assign (xyzw) (var_ref tmpret) (expression vec4 -
 	             (expression vec4 * (var_ref eta) (var_ref i))
 		     (expression vec4 *
 		       (expression float +
 		         (expression float * (var_ref eta)
 			   (expression float dot (var_ref n) (var_ref i)))
 		         (expression float sqrt (var_ref k)))
-		       (var_ref n))))))))
+		       (var_ref n))))
+		       (return (expression vec4 * (var_ref tmpret) (expression bool >= (var_ref k) (constant float (0.0)))))
+))
 
 ))
