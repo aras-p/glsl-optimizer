@@ -1,5 +1,5 @@
-java -classpath $SDK/usr/lib/falcon-asc.jar macromedia.asc.embedding.ScriptCompiler -d -abcfuture -AS3 \
-   -out foo.abc -import $SDK/usr/lib/builtin.abc -import $SDK/usr/lib/playerglobal.abc \
+java -jar $SDK/usr/lib/falcon-asc.jar -merge -md -d -abcfuture -AS3 \
+   -out agaloptimiser -outdir . -import $SDK/usr/lib/builtin.abc -import $SDK/usr/lib/playerglobal.abc \
    com/adobe/AGALOptimiser/nsinternal.as \
    com/adobe/AGALOptimiser/nsdebug.as \
    com/adobe/AGALOptimiser/agal/BasicBlock.as \

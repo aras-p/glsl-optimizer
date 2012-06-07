@@ -53,5 +53,7 @@ glsl_test
 glcpp
 glslopt
 glsl_compiler
+swc/*.abc
+swc/*.swc
 .settings/
 .pydevproject

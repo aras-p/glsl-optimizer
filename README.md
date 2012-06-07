@@ -3,7 +3,9 @@ GLSL To AGAL Compiler
 
 This project provides a library and standalone tool for converting GLSL vertex and fragment shaders into AGAL shaders that can be used with the Stage3D API in the Adobe Flash runtime.
 
-GLSL To AGAL Compiler Is licensed according to the MIT License. See individual files for exact licensing.
+GLSL To AGAL Compiler is licensed according to the MIT License. See individual files for exact licensing, other code that doesn't form part of the glsl2agal compiler binary or SWC is licensed differently, please check individual files before reusing any code within this repository.
+
+A live demo showing the glsl2agal compiler hooked up to a Stage3D app is running here: http://www.cmodule.org/glsl2agal/
 
 How does it work
 ----------------
@@ -19,6 +21,24 @@ Some examples of conversion errors
 - data-dependent loops (ones that can't be statically unrolled at compile time)
 - functions that can't be implemented without gpu support (e.g. screen-space differentials)
 
+Building
+--------
+
+A prebuilt copy of the standalone compiler and SWC is available in the bin directory.
+
+To build the standalone compiler without the AGAL optimizer:
+<pre>
+	PATH=/path/to/alchemy2/sdk/usr/bin:$PATH cmake .
+	make -j8
+</pre>
+
+To build the SWC and the standalone compiler with the AGAL optimizer:
+<pre>
+	cd swc
+	PATH=/path/to/alchemy2/sdk/usr/bin:$PATH cmake -D SDK=/path/to/alchemy2/sdk/ .
+	PATH=/p4/sb/alcmain/mainline/sdk/usr/bin:$PATH make -j8
+</pre>
+
 Using the SWC
 -------------
 
@@ -32,6 +52,11 @@ To demonstrate the tool run the following commands:
 <pre>
 ./bin/glsl2agal -f tests/simple.fs
 ./bin/glsl2agal -v tests/simple.vs
+
+or
+
+./bin/glsl2agalopt -f tests/simple.fs
+./bin/glsl2agalopt -v tests/simple.vs
 </pre>
 
 The resulting ".out" files contain the generated AGAL asm along with the information needed to connect up the various inputs to the AGAL.
