@@ -543,6 +543,9 @@ int si_pipe_shader_create(
 	unsigned char * inst_bytes;
 	unsigned inst_byte_count;
 	unsigned i;
+	bool dump;
+
+	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
 
 	radeon_llvm_context_init(&si_shader_ctx.radeon_bld);
 	bld_base = &si_shader_ctx.radeon_bld.soa.bld_base;
@@ -568,14 +571,18 @@ int si_pipe_shader_create(
 	radeon_llvm_finalize_module(&si_shader_ctx.radeon_bld);
 
 	mod = bld_base->base.gallivm->module;
-	tgsi_dump(shader->tokens, 0);
-	LLVMDumpModule(mod);
-	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count, "SI", 1 /* dump */);
-	fprintf(stderr, "SI CODE:\n");
-	for (i = 0; i < inst_byte_count; i+=4 ) {
-		fprintf(stderr, "%02x%02x%02x%02x\n", inst_bytes[i + 3],
-			inst_bytes[i + 2], inst_bytes[i + 1],
-			inst_bytes[i]);
+	if (dump) {
+		tgsi_dump(shader->tokens, 0);
+		LLVMDumpModule(mod);
+	}
+	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count, "SI", dump);
+	if (dump) {
+		fprintf(stderr, "SI CODE:\n");
+		for (i = 0; i < inst_byte_count; i+=4 ) {
+			fprintf(stderr, "%02x%02x%02x%02x\n", inst_bytes[i + 3],
+				inst_bytes[i + 2], inst_bytes[i + 1],
+				inst_bytes[i]);
+		}
 	}
 
 	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)inst_bytes);

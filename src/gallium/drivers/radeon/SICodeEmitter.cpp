@@ -156,8 +156,12 @@ void SICodeEmitter::emitState(MachineFunction & MF)
 
 bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
 {
-  MF.dump();
   TM = &MF.getTarget();
+  const AMDILSubtarget &STM = TM->getSubtarget<AMDILSubtarget>();
+
+  if (STM.dumpCode()) {
+    MF.dump();
+  }
 
   emitState(MF);
 
