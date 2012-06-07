@@ -27,7 +27,14 @@ TBD
 Using the standalone tool
 -------------------------
 
-TBD
+To demonstrate the tool run the following commands:
+
+<pre>
+./bin/glsl2agal -f tests/simple.fs
+./bin/glsl2agal -v tests/simple.vs
+</pre>
+
+The resulting ".out" files contain the generated AGAL asm along with the information needed to connect up the various inputs to the AGAL.
 
 Handling the output
 -------------------

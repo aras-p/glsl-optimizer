@@ -5,16 +5,8 @@ include_directories(src/mesa)
 include_directories(src/mapi)
 include_directories(src/glsl)
 
-#option (DEBUG "Enable debugging" "on")
-
-#if(${DEBUG} MATCHES "on")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -DUNIX")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -DUNIX")
-#else()
-#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -DNDEBUG -DUNIX")
-#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -DNDEBUG -DUNIX")
-#    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s")
-#endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O4 -DUNIX")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O4 -DUNIX")
 
 file(GLOB agalasm_sources agalassembler/*.cpp)
 add_library(agalasm ${agalasm_sources})
@@ -33,16 +25,6 @@ list(REMOVE_ITEM glsl_sources ${glsl_sources_remove})
 add_library(glsl_optimizer ${glsl_sources})
 target_link_libraries(glsl_optimizer glcpp-library mesa agalasm)
 
-add_executable(glsl_compiler src/glsl/main.cpp)
-target_link_libraries(glsl_compiler glsl_optimizer agalasm)
-
-file(GLOB glsl_test_sources tests/*.cpp)
-add_executable(glsl_test ${glsl_test_sources})
-target_link_libraries(glsl_test glsl_optimizer agalasm)
-
 file(GLOB glslopt_sources contrib/glslopt/*.cpp)
-add_executable(glslopt ${glslopt_sources})
-target_link_libraries(glslopt glsl_optimizer agalasm)
-
-add_executable(glcpp src/glsl/glcpp/glcpp.c)
-target_link_libraries(glcpp glsl_optimizer agalasm)
+add_executable(glsl2agal ${glslopt_sources})
+target_link_libraries(glsl2agal glsl_optimizer)
