@@ -187,7 +187,8 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 	res->bo = ctx->cs_shader->shader_code_bo;
 	res->usage = RADEON_USAGE_READ;
 	res->coher_bo_size = ctx->cs_shader->bc.ndw*4;
-	res->flags = COMPUTE_RES_SH_FLUSH;
+
+	r600_inval_shader_cache(ctx);
 
 	/* We can't always determine the
 	 * number of iterations in a loop before it's executed,
@@ -363,14 +364,19 @@ static void compute_emit_cs(struct r600_context *ctx)
 						ctx->cs_shader->resources[i].bo,
 						ctx->cs_shader->resources[i].usage);
 				}
-
-				evergreen_set_buffer_sync(ctx, ctx->cs_shader->resources[i].bo,
-					ctx->cs_shader->resources[i].coher_bo_size,
-					ctx->cs_shader->resources[i].flags,
-					ctx->cs_shader->resources[i].usage);
 			}
 		}
 	}
+
+	/* r600_flush_framebuffer() updates the cb_flush_flags and then
+	 * calls r600_emit_atom() on the ctx->surface_sync_cmd.atom, which emits
+	 * a SURFACE_SYNC packet via r600_emit_surface_sync().
+	 *
+	 * XXX r600_emit_surface_sync() hardcodes the CP_COHER_SIZE to
+	 * 0xffffffff, so we will need to add a field to struct
+	 * r600_surface_sync_cmd if we want to manually set this value.
+	 */
+	r600_flush_framebuffer(ctx, true /* Flush now */);
 
 #if 0
 	COMPUTE_DBG("cdw: %i\n", cs->cdw);

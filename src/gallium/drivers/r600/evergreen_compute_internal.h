@@ -96,8 +96,6 @@ void evergreen_emit_ctx_reloc(struct r600_context *ctx, struct r600_resource *bo
 void evergreen_reg_set(struct evergreen_compute_resource* res, unsigned index, unsigned value);
 void evergreen_emit_force_reloc(struct evergreen_compute_resource* res);
 
-void evergreen_set_buffer_sync(struct r600_context *ctx, struct r600_resource* bo, int size, int flags, enum radeon_bo_usage usage);
-
 struct evergreen_compute_resource* get_empty_res(struct r600_pipe_compute*, enum evergreen_compute_resources res_code, int index);
 int get_compute_resource_num(void);
 

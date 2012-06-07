@@ -220,95 +220,6 @@ void evergreen_emit_ctx_reloc(
 	ctx->cs->buf[ctx->cs->cdw++] = rr;
 }
 
-void evergreen_set_buffer_sync(
-	struct r600_context *ctx,
-	struct r600_resource* bo,
-	int size,
-	int flags,
-	enum radeon_bo_usage usage)
-{
-	assert(bo);
-	int32_t cp_coher_size = 0;
-
-	if (size == 0xffffffff || size == 0) {
-		cp_coher_size = 0xffffffff;
-	}
-	else {
-		cp_coher_size = ((size + 255) >> 8);
-	}
-
-	uint32_t sync_flags = 0;
-
-	if ((flags & COMPUTE_RES_TC_FLUSH) == COMPUTE_RES_TC_FLUSH) {
-		sync_flags |= S_0085F0_TC_ACTION_ENA(1);
-	}
-
-	if ((flags & COMPUTE_RES_VC_FLUSH) == COMPUTE_RES_VC_FLUSH) {
-		sync_flags |= S_0085F0_VC_ACTION_ENA(1);
-	}
-
-	if ((flags & COMPUTE_RES_SH_FLUSH) == COMPUTE_RES_SH_FLUSH) {
-		sync_flags |= S_0085F0_SH_ACTION_ENA(1);
-	}
-
-	if ((flags & COMPUTE_RES_CB_FLUSH(0)) == COMPUTE_RES_CB_FLUSH(0)) {
-		sync_flags |= S_0085F0_CB_ACTION_ENA(1);
-
-		switch((flags >> 8) & 0xF) {
-		case 0:
-			sync_flags |= S_0085F0_CB0_DEST_BASE_ENA(1);
-			break;
-		case 1:
-			sync_flags |= S_0085F0_CB1_DEST_BASE_ENA(1);
-			break;
-		case 2:
-			sync_flags |= S_0085F0_CB2_DEST_BASE_ENA(1);
-			break;
-		case 3:
-			sync_flags |= S_0085F0_CB3_DEST_BASE_ENA(1);
-			break;
-		case 4:
-			sync_flags |= S_0085F0_CB4_DEST_BASE_ENA(1);
-			break;
-		case 5:
-			sync_flags |= S_0085F0_CB5_DEST_BASE_ENA(1);
-			break;
-		case 6:
-			sync_flags |= S_0085F0_CB6_DEST_BASE_ENA(1);
-			break;
-		case 7:
-			sync_flags |= S_0085F0_CB7_DEST_BASE_ENA(1);
-			break;
-		case 8:
-			sync_flags |= S_0085F0_CB8_DEST_BASE_ENA(1);
-			break;
-		case 9:
-			sync_flags |= S_0085F0_CB9_DEST_BASE_ENA(1);
-			break;
-		case 10:
-			sync_flags |= S_0085F0_CB10_DEST_BASE_ENA(1);
-			break;
-		case 11:
-			sync_flags |= S_0085F0_CB11_DEST_BASE_ENA(1);
-			break;
-		default:
-			assert(0);
-		}
-	}
-
-	int32_t poll_interval = 10;
-
-	ctx->cs->buf[ctx->cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-	ctx->cs->buf[ctx->cs->cdw++] = sync_flags;
-	ctx->cs->buf[ctx->cs->cdw++] = cp_coher_size;
-	ctx->cs->buf[ctx->cs->cdw++] = 0;
-	ctx->cs->buf[ctx->cs->cdw++] = poll_interval;
-
-	if (cp_coher_size != 0xffffffff) {
-		evergreen_emit_ctx_reloc(ctx, bo, usage);
-	}
-}
-
 int evergreen_compute_get_gpu_format(
 	struct number_type_and_format* fmt,
 	struct r600_resource *bo)
@@ -426,7 +337,13 @@ void evergreen_set_rat(
 	res->bo = bo;
 	res->usage = RADEON_USAGE_READWRITE;
 	res->coher_bo_size = size;
-	res->flags = COMPUTE_RES_CB_FLUSH(id);
+
+	/* XXX We are setting nr_cbufs to 1 so we can get the correct
+         * cb flush flags to be emitted with the SURFACE_SYNC packet.
+         * In the future we should be adding the pipe_surface for this RAT
+         * to pipe->ctx->framebuffer.cbufs.
+         */
+	pipe->ctx->framebuffer.nr_cbufs = 1;
 }
 
 void evergreen_set_lds(
@@ -689,7 +606,13 @@ void evergreen_set_vtx_resource(
 	}
 
 	res->coher_bo_size = size;
-	res->flags = COMPUTE_RES_TC_FLUSH | COMPUTE_RES_VC_FLUSH;
+
+	r600_inval_vertex_cache(pipe->ctx);
+	/* XXX: Do we really need to invalidate the texture cache here?
+	 * r600_inval_vertex_cache() will invalidate the texture cache
+	 * if the chip does not have a vertex cache.
+	 */
+	r600_inval_texture_cache(pipe->ctx);
 }
 
 void evergreen_set_tex_resource(
@@ -761,7 +684,8 @@ void evergreen_set_tex_resource(
 	res->usage = RADEON_USAGE_READ;
 
 	res->coher_bo_size = tmp->offset[0] + util_format_get_blockwidth(tmp->real_format)*view->base.texture->width0*height*depth;
-	res->flags = COMPUTE_RES_TC_FLUSH;
+
+	r600_inval_texture_cache(pipe->ctx);
 
 	evergreen_emit_force_reloc(res);
 	evergreen_emit_force_reloc(res);
@@ -819,7 +743,8 @@ void evergreen_set_const_cache(
 	res->bo = cbo;
 	res->usage = RADEON_USAGE_READ;
 	res->coher_bo_size = size;
-	res->flags = COMPUTE_RES_SH_FLUSH;
+
+	r600_inval_shader_cache(pipe->ctx);
 }
 
 struct r600_resource* r600_compute_buffer_alloc_vram(
