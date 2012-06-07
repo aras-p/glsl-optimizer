@@ -55,21 +55,4 @@ def BARRIER_REGION : BinaryOpNoRet<IL_OP_BARRIER_REGION, (outs),
     (ins GPRI32:$flag, GPRI32:$id),
     "fence_threads_gds",
     [(int_AMDIL_barrier_region GPRI32:$flag, GPRI32:$id)]>;
-
-def GET_REGION_ID : ILFormat<IL_OP_MOV, (outs GPRV4I32:$dst),
-    (ins), !strconcat(IL_OP_MOV.Text, " $dst, r1022.xyz0"),
-    [(set GPRV4I32:$dst, (int_AMDIL_get_region_id))]>;
-
-def GET_REGION_LOCAL_ID : ILFormat<IL_OP_MOV, (outs GPRV4I32:$dst),
-    (ins), !strconcat(IL_OP_MOV.Text, " $dst, r1022.xyz0"),
-    [(set GPRV4I32:$dst, (int_AMDIL_get_region_local_id))]>;
-
-def GET_REGION_SIZE : ILFormat<IL_OP_MOV, (outs GPRV4I32:$dst),
-    (ins), !strconcat(IL_OP_MOV.Text, " $dst, cb0[10].xyz0"),
-    [(set GPRV4I32:$dst, (int_AMDIL_get_region_size))]>;
-
-def GET_NUM_REGIONS : ILFormat<IL_OP_MOV, (outs GPRV4I32:$dst),
-    (ins), !strconcat(IL_OP_MOV.Text, " $dst, cb0[11].xyz0"),
-    [(set GPRV4I32:$dst, (int_AMDIL_get_num_regions))]>;
-
 }

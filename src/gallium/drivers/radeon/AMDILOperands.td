@@ -15,11 +15,6 @@ def MEMI32  : Operand<i32> {
     let MIOperandInfo = (ops GPRI32, GPRI32);
 }
 
-def MEMI64 : Operand<i64> {
-  let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPRI64, GPRI64);
-}
-
 // Call target types
 def calltarget   : Operand<i32>;
 def brtarget   : Operand<OtherVT>;

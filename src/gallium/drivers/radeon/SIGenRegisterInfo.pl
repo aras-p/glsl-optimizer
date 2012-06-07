@@ -66,11 +66,10 @@ class SGPR_32 <bits<8> num, string name> : SIReg<name> {
 }
 
 
-class VGPR_32 <bits<9> num, string name, Register gprf32_alias> : SIReg<name> {
+class VGPR_32 <bits<9> num, string name> : SIReg<name> {
   field bits<9> Num;
 
   let Num = num;
-  let Aliases = [gprf32_alias];
 }
 
 class SGPR_64 <bits<8> num, string name, list<Register> subregs> :
@@ -132,13 +131,9 @@ for (my $i = 0; $i < $SGPR_COUNT; $i++) {
 }
 
 my @VGPR;
-my @GPRF32;
 for (my $i = 0; $i < $VGPR_COUNT; $i++) {
-  my $gprf32_num = $i + 1;
-  my $gprf32_name = "R$gprf32_num";
-  print "def VGPR$i : VGPR_32 <$i, \"VGPR$i\", $gprf32_name>;\n";
+  print "def VGPR$i : VGPR_32 <$i, \"VGPR$i\">;\n";
   $VGPR[$i] = "VGPR$i";
-  $GPRF32[$i] = $gprf32_name;
 }
 
 print <<STRING;
@@ -169,9 +164,7 @@ def VReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
 >;
 
 def AllReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
-    (add VReg_32,
-         SReg_32,
-         (sequence "R%u", 1, $VGPR_COUNT))
+    (add VReg_32, SReg_32)
 >;
 
 def CCReg : RegisterClass<"AMDIL", [f32], 32, (add VCC, SCC)>;

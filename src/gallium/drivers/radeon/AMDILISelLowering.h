@@ -27,60 +27,13 @@ namespace llvm
     enum
     {
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
-      INTTOANY,    // Dummy instruction that takes an int and goes to
-      // any type converts the SDNode to an int
-      DP_TO_FP,    // Conversion from 64bit FP to 32bit FP
-      FP_TO_DP,    // Conversion from 32bit FP to 64bit FP
-      BITCONV,     // instruction that converts from any type to any type
-      CMOV,        // 32bit FP Conditional move instruction
       CMOVLOG,     // 32bit FP Conditional move logical instruction
-      SELECT,      // 32bit FP Conditional move logical instruction
-      SETCC,       // 32bit FP Conditional move logical instruction
-      ISGN,        // 32bit Int Sign instruction
-      INEGATE,     // 32bit Int Negation instruction
       MAD,         // 32bit Fused Multiply Add instruction
-      ADD,         // 32/64 bit pseudo instruction
-      AND,         // 128 bit and instruction
-      OR,          // 128 bit or instruction
-      NOT,         // 128 bit not instruction
-      XOR,         // 128 bit xor instruction
-      MOVE,        // generic mov instruction
-      PHIMOVE,     // generic phi-node mov instruction
       VBUILD,      // scalar to vector mov instruction
-      VEXTRACT,    // extract vector components
-      VINSERT,     // insert vector components
-      VCONCAT,     // concat a single vector to another vector
-      UMAD,        // 32bit UInt Fused Multiply Add instruction
       CALL,        // Function call based on a single integer
-      RET,         // Return from a function call
       SELECT_CC,   // Select the correct conditional instruction
-      BRCC,        // Select the correct branch instruction
-      CMPCC,       // Compare to GPR operands
-      CMPICC,      // Compare two GPR operands, set icc.
-      CMPFCC,      // Compare two FP operands, set fcc.
-      BRICC,       // Branch to dest on icc condition
-      BRFCC,       // Branch to dest on fcc condition
-      SELECT_ICC,  // Select between two values using the current ICC
-      //flags.
-      SELECT_FCC,  // Select between two values using the current FCC
-      //flags.
-      LCREATE,     // Create a 64bit integer from two 32 bit integers
-      LCOMPHI,     // Get the hi 32 bits from a 64 bit integer
-      LCOMPLO,     // Get the lo 32 bits from a 64 bit integer
-      DCREATE,     // Create a 64bit float from two 32 bit integers
-      DCOMPHI,     // Get the hi 32 bits from a 64 bit float
-      DCOMPLO,     // Get the lo 32 bits from a 64 bit float
-      LCREATE2,     // Create a 64bit integer from two 32 bit integers
-      LCOMPHI2,     // Get the hi 32 bits from a 64 bit integer
-      LCOMPLO2,     // Get the lo 32 bits from a 64 bit integer
-      DCREATE2,     // Create a 64bit float from two 32 bit integers
-      DCOMPHI2,     // Get the hi 32 bits from a 64 bit float
-      DCOMPLO2,     // Get the lo 32 bits from a 64 bit float
       UMUL,        // 32bit unsigned multiplication
-      IFFB_HI,  // 32bit find first hi bit instruction
-      IFFB_LO,  // 32bit find first low bit instruction
       DIV_INF,      // Divide with infinity returned on zero divisor
-      SMAX,        // Signed integer max
       CMP,
       IL_CC_I_GT,
       IL_CC_I_LT,
@@ -90,119 +43,6 @@ namespace llvm
       IL_CC_I_NE,
       RET_FLAG,
       BRANCH_COND,
-      LOOP_NZERO,
-      LOOP_ZERO,
-      LOOP_CMP,
-      ADDADDR,
-      LAST_NON_MEMORY_OPCODE,
-      // ATOMIC Operations
-      // Global Memory
-      ATOM_G_ADD = ISD::FIRST_TARGET_MEMORY_OPCODE,
-      ATOM_G_AND,
-      ATOM_G_CMPXCHG,
-      ATOM_G_DEC,
-      ATOM_G_INC,
-      ATOM_G_MAX,
-      ATOM_G_UMAX,
-      ATOM_G_MIN,
-      ATOM_G_UMIN,
-      ATOM_G_OR,
-      ATOM_G_SUB,
-      ATOM_G_RSUB,
-      ATOM_G_XCHG,
-      ATOM_G_XOR,
-      ATOM_G_ADD_NORET,
-      ATOM_G_AND_NORET,
-      ATOM_G_CMPXCHG_NORET,
-      ATOM_G_DEC_NORET,
-      ATOM_G_INC_NORET,
-      ATOM_G_MAX_NORET,
-      ATOM_G_UMAX_NORET,
-      ATOM_G_MIN_NORET,
-      ATOM_G_UMIN_NORET,
-      ATOM_G_OR_NORET,
-      ATOM_G_SUB_NORET,
-      ATOM_G_RSUB_NORET,
-      ATOM_G_XCHG_NORET,
-      ATOM_G_XOR_NORET,
-      // Local Memory
-      ATOM_L_ADD,
-      ATOM_L_AND,
-      ATOM_L_CMPXCHG,
-      ATOM_L_DEC,
-      ATOM_L_INC,
-      ATOM_L_MAX,
-      ATOM_L_UMAX,
-      ATOM_L_MIN,
-      ATOM_L_UMIN,
-      ATOM_L_OR,
-      ATOM_L_MSKOR,
-      ATOM_L_SUB,
-      ATOM_L_RSUB,
-      ATOM_L_XCHG,
-      ATOM_L_XOR,
-      ATOM_L_ADD_NORET,
-      ATOM_L_AND_NORET,
-      ATOM_L_CMPXCHG_NORET,
-      ATOM_L_DEC_NORET,
-      ATOM_L_INC_NORET,
-      ATOM_L_MAX_NORET,
-      ATOM_L_UMAX_NORET,
-      ATOM_L_MIN_NORET,
-      ATOM_L_UMIN_NORET,
-      ATOM_L_OR_NORET,
-      ATOM_L_MSKOR_NORET,
-      ATOM_L_SUB_NORET,
-      ATOM_L_RSUB_NORET,
-      ATOM_L_XCHG_NORET,
-      ATOM_L_XOR_NORET,
-      // Region Memory
-      ATOM_R_ADD,
-      ATOM_R_AND,
-      ATOM_R_CMPXCHG,
-      ATOM_R_DEC,
-      ATOM_R_INC,
-      ATOM_R_MAX,
-      ATOM_R_UMAX,
-      ATOM_R_MIN,
-      ATOM_R_UMIN,
-      ATOM_R_OR,
-      ATOM_R_MSKOR,
-      ATOM_R_SUB,
-      ATOM_R_RSUB,
-      ATOM_R_XCHG,
-      ATOM_R_XOR,
-      ATOM_R_ADD_NORET,
-      ATOM_R_AND_NORET,
-      ATOM_R_CMPXCHG_NORET,
-      ATOM_R_DEC_NORET,
-      ATOM_R_INC_NORET,
-      ATOM_R_MAX_NORET,
-      ATOM_R_UMAX_NORET,
-      ATOM_R_MIN_NORET,
-      ATOM_R_UMIN_NORET,
-      ATOM_R_OR_NORET,
-      ATOM_R_MSKOR_NORET,
-      ATOM_R_SUB_NORET,
-      ATOM_R_RSUB_NORET,
-      ATOM_R_XCHG_NORET,
-      ATOM_R_XOR_NORET,
-      // Append buffer
-      APPEND_ALLOC,
-      APPEND_ALLOC_NORET,
-      APPEND_CONSUME,
-      APPEND_CONSUME_NORET,
-      // 2D Images
-      IMAGE2D_READ,
-      IMAGE2D_WRITE,
-      IMAGE2D_INFO0,
-      IMAGE2D_INFO1,
-      // 3D Images
-      IMAGE3D_READ,
-      IMAGE3D_WRITE,
-      IMAGE3D_INFO0,
-      IMAGE3D_INFO1,
-
       LAST_ISD_NUMBER
     };
   } // AMDILISD
