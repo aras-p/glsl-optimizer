@@ -48,9 +48,11 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
    bool has_source_modifiers = entry->src.abs || entry->src.negate;
 
-   if (intel->gen == 6 && inst->is_math() && has_source_modifiers)
+   if (intel->gen == 6 && inst->is_math() &&
+       (has_source_modifiers || entry->src.file == UNIFORM))
       return false;
 
+   inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
 
@@ -121,9 +123,10 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx,
       /* If this instruction is a raw copy, add it to the ACP. */
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == GRF &&
-	  inst->src[0].file == GRF &&
-	  (inst->src[0].reg != inst->dst.reg ||
-	   inst->src[0].reg_offset != inst->dst.reg_offset) &&
+	  ((inst->src[0].file == GRF &&
+	    (inst->src[0].reg != inst->dst.reg ||
+	     inst->src[0].reg_offset != inst->dst.reg_offset)) ||
+	   inst->src[0].file == UNIFORM) &&
 	  inst->src[0].type == inst->dst.type &&
 	  !inst->saturate &&
 	  !inst->predicated &&
