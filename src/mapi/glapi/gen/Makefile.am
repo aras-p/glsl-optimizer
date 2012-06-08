@@ -6,6 +6,26 @@
 
 TOP = ../../../..
 
+# These are the "official" xserver indent flags from utils/modular/x-indent.sh
+XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -psl -nbbo \
+    -nbc -psl -nbfda -nut -nss -T pointer -T ScreenPtr -T ScrnInfoPtr -T pointer \
+    -T DeviceIntPtr -T DevicePtr -T ClientPtr -T CallbackListPtr \
+    -T CallbackProcPtr -T OsTimerPtr -T CARD32 -T CARD16 -T CARD8 \
+    -T INT32 -T INT16 -T INT8 -T Atom -T Time -T WindowPtr -T DrawablePtr \
+    -T PixmapPtr -T ColormapPtr -T CursorPtr -T Font -T XID -T Mask \
+    -T BlockHandlerProcPtr -T WakeupHandlerProcPtr -T RegionPtr \
+    -T InternalEvent -T GrabPtr -T Timestamp -T Bool -T TimeStamp \
+    -T xEvent -T DeviceEvent -T RawDeviceEvent -T GrabMask -T Window \
+    -T Drawable -T FontPtr -T CallbackPtr -T XIPropertyValuePtr \
+    -T GrabParameters -T deviceKeyButtonPointer -T TouchOwnershipEvent \
+    -T xGenericEvent -T DeviceChangedEvent -T GCPtr -T BITS32 \
+    -T xRectangle -T BoxPtr -T RegionRec -T ValuatorMask -T KeyCode \
+    -T KeySymsPtr -T XkbDescPtr -T InputOption -T XI2Mask -T DevUnion \
+    -T DevPrivateKey -T DevScreenPrivateKey -T PropertyPtr -T RESTYPE \
+    -T XkbAction -T XkbChangesPtr -T XkbControlsPtr -T PrivatePtr -T pmWait \
+    -T _XFUNCPROTOBEGIN -T _XFUNCPROTOEND -T _X_EXPORT
+
+
 MESA_DIR = $(TOP)/src/mesa
 MESA_GLAPI_DIR = $(TOP)/src/mapi/glapi
 MESA_MAPI_DIR = $(TOP)/src/mapi/mapi
@@ -144,13 +164,13 @@ clean-local:
 ######################################################################
 
 $(XORG_GLAPI_DIR)/%.c: $(MESA_GLAPI_DIR)/%.c
-	cp $< $@
+	$(INDENT) $(XORG_INDENT_FLAGS) < $< > $@
 
 $(XORG_GLAPI_DIR)/dispatch.h: $(MESA_DIR)/main/dispatch.h
-	cp $< $@
+	$(INDENT) $(XORG_INDENT_FLAGS) < $< > $@
 
 $(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
-	cp $< $@
+	$(INDENT) $(XORG_INDENT_FLAGS) < $< > $@
 
 ######################################################################
 
@@ -216,31 +236,35 @@ $(MESA_GLX_DIR)/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
 ######################################################################
 
 $(XORG_GLX_DIR)/indirect_dispatch.c: glX_proto_recv.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m dispatch_c > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_API.xml -m dispatch_c \
+	| $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_dispatch_swap.c: glX_proto_recv.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m dispatch_c -s > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_API.xml -m dispatch_c -s \
+	| $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py gl_and_glX_API.xml $(COMMON_GLX)
-	$(PYTHON_GEN) $< -m dispatch_h -f $(srcdir)/gl_and_glX_API.xml -s > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -m dispatch_h -f $(srcdir)/gl_and_glX_API.xml -s \
+	| $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_h \
-	   --only-get -h '_INDIRECT_SIZE_GET_H_' \
-	  | $(INDENT) $(INDENT_FLAGS) > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_API.xml -m size_h \
+           --only-get -h '_INDIRECT_SIZE_GET_H_' \
+	  | $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_c \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m reqsize_h \
-	   --only-get -h '_INDIRECT_SIZE_GET_H_' \
-	  | $(INDENT) $(INDENT_FLAGS) -l200 > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_API.xml -m reqsize_h \
+           --only-get -h '_INDIRECT_SIZE_GET_H_' \
+	  | $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m reqsize_c \
-	  | $(INDENT) $(INDENT_FLAGS) > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_API.xml -m reqsize_c \
+          | $(INDENT) $(XORG_INDENT_FLAGS) > $@
 
 $(XORG_GLX_DIR)/indirect_table.c: glX_server_table.py gl_and_glX_API.xml $(COMMON_GLX)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_glX_API.xml > $@
+	$(PYTHON_GEN) $(PYTHON_FLAGS) $< -f $(srcdir)/gl_and_glX_API.xml \
+	| $(INDENT) $(XORG_INDENT_FLAGS) > $@
