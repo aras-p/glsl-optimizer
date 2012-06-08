@@ -71,6 +71,7 @@ static Bool drv_screen_init(SCREEN_INIT_ARGS_DECL);
 static Bool drv_switch_mode(SWITCH_MODE_ARGS_DECL);
 static void drv_adjust_frame(ADJUST_FRAME_ARGS_DECL);
 static Bool drv_enter_vt(VT_FUNC_ARGS_DECL);
+static Bool drv_enter_vt_flags(ScrnInfoPtr pScrn, int flags);
 static void drv_leave_vt(VT_FUNC_ARGS_DECL);
 static void drv_free_screen(FREE_SCREEN_ARGS_DECL);
 static ModeStatus drv_valid_mode(SCRN_ARG_TYPE arg, DisplayModePtr mode, Bool verbose,
@@ -887,7 +888,7 @@ drv_screen_init(SCREEN_INIT_ARGS_DECL)
     if (serverGeneration == 1)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 
-    return drv_enter_vt(VT_FUNC_ARGS);
+    return drv_enter_vt_flags(pScrn, 1);
 }
 
 static void
@@ -959,9 +960,8 @@ drv_leave_vt(VT_FUNC_ARGS_DECL)
  * This gets called when gaining control of the VT, and from ScreenInit().
  */
 static Bool
-drv_enter_vt(VT_FUNC_ARGS_DECL)
+drv_enter_vt_flags(ScrnInfoPtr pScrn, int flags)
 {
-    SCRN_INFO_PTR(arg);
     modesettingPtr ms = modesettingPTR(pScrn);
     CustomizerPtr cust = ms->cust;
 
@@ -971,7 +971,7 @@ drv_enter_vt(VT_FUNC_ARGS_DECL)
     if (!ms->create_front_buffer(pScrn))
 	return FALSE;
 
-    if (!ms->bind_front_buffer(pScrn))
+    if (!flags && !ms->bind_front_buffer(pScrn))
 	return FALSE;
 
     if (!xf86SetDesiredModes(pScrn))
@@ -981,6 +981,13 @@ drv_enter_vt(VT_FUNC_ARGS_DECL)
 	cust->winsys_enter_vt(cust);
 
     return TRUE;
+}
+
+static Bool
+drv_enter_vt(VT_FUNC_ARGS_DECL)
+{
+    SCRN_INFO_PTR(arg);
+    return drv_enter_vt_flags(pScrn, 0);
 }
 
 static Bool
