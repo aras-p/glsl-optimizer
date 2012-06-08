@@ -341,6 +341,9 @@ integer_constant:
 
 expression:
 	integer_constant
+|	IDENTIFIER {
+		$$ = 0;
+	}
 |	expression OR expression {
 		$$ = $1 || $3;
 	}
