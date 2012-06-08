@@ -1058,7 +1058,8 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	rs->offset_scale = state->offset_scale * 12.0f;
 
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
-	tmp = S_0286D4_FLAT_SHADE_ENA(state->flatshade);
+	/* XXX: Flat shading hangs the GPU */
+	tmp = S_0286D4_FLAT_SHADE_ENA(0);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
 			S_0286D4_PNT_SPRITE_OVRD_X(V_0286D4_SPI_PNT_SPRITE_SEL_S) |
@@ -2032,6 +2033,11 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < rshader->ninput; i++) {
 		ninterp++;
+		/* XXX: Flat shading hangs the GPU */
+		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+		    (rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
+		     rctx->rasterizer->flatshade))
+			have_linear = TRUE;
 		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
 			have_linear = TRUE;
 		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
@@ -2224,11 +2230,15 @@ void si_update_spi_map(struct r600_context *rctx)
 	for (i = 0; i < ps->ninput; i++) {
 		tmp = 0;
 
-		if (ps->input[i].name == TGSI_SEMANTIC_COLOR ||
-		    ps->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-		    ps->input[i].name == TGSI_SEMANTIC_POSITION) {
+#if 0
+		/* XXX: Flat shading hangs the GPU */
+		if (ps->input[i].name == TGSI_SEMANTIC_POSITION ||
+		    ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+		    (ps->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
+		     rctx->rasterizer && rctx->rasterizer->flatshade)) {
 			tmp |= S_028644_FLAT_SHADE(1);
 		}
+#endif
 
 		if (ps->input[i].name == TGSI_SEMANTIC_GENERIC &&
 		    rctx->sprite_coord_enable & (1 << ps->input[i].sid)) {

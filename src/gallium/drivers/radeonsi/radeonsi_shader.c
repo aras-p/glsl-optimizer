@@ -250,8 +250,13 @@ static void declare_input_fs(
 	/* XXX: Handle all possible interpolation modes */
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
+		/* XXX: Flat shading hangs the GPU */
 		if (si_shader_ctx->rctx->rasterizer->flatshade) {
+#if 0
 			intr_name = "llvm.SI.fs.interp.constant";
+#else
+			intr_name = "llvm.SI.fs.interp.linear.center";
+#endif
 		} else {
 			if (decl->Interp.Centroid)
 				intr_name = "llvm.SI.fs.interp.persp.centroid";
@@ -260,8 +265,11 @@ static void declare_input_fs(
 		}
 		break;
 	case TGSI_INTERPOLATE_CONSTANT:
+		/* XXX: Flat shading hangs the GPU */
+#if 0
 		intr_name = "llvm.SI.fs.interp.constant";
 		break;
+#endif
 	case TGSI_INTERPOLATE_LINEAR:
 		if (decl->Interp.Centroid)
 			intr_name = "llvm.SI.fs.interp.linear.centroid";
