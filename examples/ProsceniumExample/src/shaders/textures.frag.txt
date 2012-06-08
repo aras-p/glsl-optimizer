@@ -1,0 +1,33 @@
+uniform vec3 AmbientColor;
+uniform vec3 DiffuseColor;
+uniform vec3 SpecularColor;
+uniform float SpecularExponent;
+
+varying vec3 LightVec;
+varying vec3 ViewVec;
+varying vec2 TexCoord;
+
+uniform sampler2D Stone;
+uniform sampler2D StoneNormal;
+uniform sampler2D StoneSpecular;
+
+void main()
+{
+    vec3 surfaceNormal = 2.0 * texture2D (StoneNormal, TexCoord.st).rgb - 1.0;
+    surfaceNormal = normalize (surfaceNormal);
+    surfaceNormal = vec3(0,0,1);
+
+    vec3 lightVec          = normalize(LightVec);
+    vec3 viewVec           = normalize(ViewVec);
+
+    // Ambient
+    vec3 color = AmbientColor;
+
+    // Diffuse
+    color += texture2D(Stone, TexCoord).rgb * max(0, dot(lightVec, surfaceNormal));
+
+    // Specular
+    //color += texture2D(StoneSpecular, TexCoord).rgb * pow(max(0, dot(halfVec, surfaceNormal)), SpecularExponent);
+
+    gl_FragColor = vec4(color, 1.0);
+}

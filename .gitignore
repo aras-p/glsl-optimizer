@@ -55,5 +55,7 @@ glslopt
 glsl_compiler
 swc/*.abc
 swc/*.swc
+bin-debug
+bin-release
 .settings/
 .pydevproject

@@ -1,0 +1,18 @@
+uniform vec3 LightPosition;
+
+varying vec3 LightVec;
+varying vec3 SurfaceNormal;
+varying vec3 ReflectedLightVec;
+varying vec3 ViewVec;
+
+void main()
+{
+    vec3 eyespacePos   = vec3(gl_ModelViewMatrix * gl_Vertex);
+
+    SurfaceNormal      = normalize(gl_NormalMatrix * gl_Normal);
+    LightVec           = normalize(LightPosition - eyespacePos);
+    ViewVec            = normalize(-eyespacePos);
+    ReflectedLightVec  = normalize(-reflect(SurfaceNormal, LightVec));
+
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+}

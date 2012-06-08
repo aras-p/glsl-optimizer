@@ -1,0 +1,33 @@
+attribute vec3 Tangent;
+
+uniform vec3 LightPosition;
+
+varying vec3 LightVec;
+varying vec3 ViewVec;
+varying vec2 TexCoord;
+
+void main()
+{
+    vec3 eyespacePos = vec3(gl_ModelViewMatrix * gl_Vertex);
+    vec3 normal      = normalize(gl_NormalMatrix * gl_Normal);
+    vec3 tangent     = normalize(gl_NormalMatrix * Tangent);
+    vec3 binormal    = normalize(-cross(Tangent, normal));
+
+    vec3 lightvec           = normalize(LightPosition - eyespacePos);
+    vec3 viewVec            = normalize(-eyespacePos);
+    vec3 reflectedLightVec  = normalize(-reflect(normal, lightvec));
+
+	vec3 v;
+    v.x               = dot(lightvec, tangent);
+    v.y               = dot(lightvec, binormal);
+    v.z               = dot(lightvec, normal);
+    LightVec = normalize(v);
+
+    v.x               = dot(viewVec, tangent);
+    v.y               = dot(viewVec, binormal);
+    v.z               = dot(viewVec, normal);
+   	ViewVec = normalize(v);
+
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    TexCoord    = gl_MultiTexCoord0.xy;
+}
