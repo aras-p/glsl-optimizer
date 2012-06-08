@@ -1,14 +1,3 @@
-.cvsignore
-glX_proto_common.pyo
-glX_proto_common.pyc
-typeexpr.pyo
-typeexpr.pyc
-license.pyo
-license.pyc
-gl_XML.pyo
-gl_XML.pyc
-glX_XML.pyo
-glX_XML.pyc
 glapi_gentable.c
 glapi_gentable.h
 glapi_mapi_tmp.h
