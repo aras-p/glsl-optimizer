@@ -44,7 +44,10 @@ struct lp_type;
 
 LLVMValueRef
 lp_build_half_to_float(struct gallivm_state *gallivm,
-                       struct lp_type src_type,
+                       LLVMValueRef src);
+
+LLVMValueRef
+lp_build_float_to_half(struct gallivm_state *gallivm,
                        LLVMValueRef src);
 
 LLVMValueRef
