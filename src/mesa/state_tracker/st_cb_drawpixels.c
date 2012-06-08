@@ -217,7 +217,7 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
    if (!p)
       return NULL;
 
-   p->NumInstructions = write_depth ? 2 : 1;
+   p->NumInstructions = write_depth ? 3 : 1;
    p->NumInstructions += write_stencil ? 1 : 0;
 
    p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
@@ -237,6 +237,13 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
       p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
       p->Instructions[ic].TexSrcUnit = 0;
       p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
+      ic++;
+      /* MOV result.color, fragment.color; */
+      p->Instructions[ic].Opcode = OPCODE_MOV;
+      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+      p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLOR;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
       ic++;
    }
 
@@ -260,8 +267,10 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
 
    p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
    p->OutputsWritten = 0;
-   if (write_depth)
+   if (write_depth) {
       p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_DEPTH);
+      p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_COLOR);
+   }
    if (write_stencil)
       p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_STENCIL);
 
