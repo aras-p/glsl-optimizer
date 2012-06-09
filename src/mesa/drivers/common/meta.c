@@ -2347,7 +2347,6 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
                           MESA_META_CLIP |
                           MESA_META_VERTEX |
                           MESA_META_VIEWPORT |
-			  MESA_META_CLAMP_FRAGMENT_COLOR |
                           metaExtraSave));
 
    newTex = alloc_texture(tex, width, height, texIntFormat);
