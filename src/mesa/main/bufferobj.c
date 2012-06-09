@@ -1360,6 +1360,12 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
       return;
    }
 
+   if (size < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBufferSubData(writeOffset = %d)", (int) size);
+      return;
+   }
+
    if (readOffset + size > src->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyBufferSubData(readOffset + size = %d)",
