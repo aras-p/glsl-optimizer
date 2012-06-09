@@ -887,6 +887,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       switch (internalFormat) {
       case GL_RGB10_A2UI:
          RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010_UINT);
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ABGR2101010_UINT);
          break;
       default:
          break;

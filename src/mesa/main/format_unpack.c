@@ -610,6 +610,20 @@ unpack_ARGB2101010(const void *src, GLfloat dst[][4], GLuint n)
 
 
 static void
+unpack_ABGR2101010_UINT(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = (GLfloat)((s[i] >>  0) & 0x3ff);
+      dst[i][GCOMP] = (GLfloat)((s[i] >> 10) & 0x3ff);
+      dst[i][BCOMP] = (GLfloat)((s[i] >> 20) & 0x3ff);
+      dst[i][ACOMP] = (GLfloat)((s[i] >> 30) &  0x03);
+   }
+}
+
+
+static void
 unpack_Z24_S8(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* only return Z, not stencil data */
@@ -1499,6 +1513,7 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_RG1616] = unpack_RG1616;
       table[MESA_FORMAT_RG1616_REV] = unpack_RG1616_REV;
       table[MESA_FORMAT_ARGB2101010] = unpack_ARGB2101010;
+      table[MESA_FORMAT_ABGR2101010_UINT] = unpack_ABGR2101010_UINT;
       table[MESA_FORMAT_Z24_S8] = unpack_Z24_S8;
       table[MESA_FORMAT_S8_Z24] = unpack_S8_Z24;
       table[MESA_FORMAT_Z16] = unpack_Z16;
@@ -2589,6 +2604,20 @@ unpack_int_rgba_ARGB2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_int_rgba_ABGR2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      GLuint tmp = src[i];
+      dst[i][0] = (tmp >> 0) & 0x3ff;
+      dst[i][1] = (tmp >> 10) & 0x3ff;
+      dst[i][2] = (tmp >> 20) & 0x3ff;
+      dst[i][3] = (tmp >> 30) & 0x3;
+   }
+}
+
 void
 _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
                            const void *src, GLuint dst[][4])
@@ -2759,6 +2788,11 @@ _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
    case MESA_FORMAT_ARGB2101010_UINT:
       unpack_int_rgba_ARGB2101010_UINT(src, dst, n);
       break;
+
+   case MESA_FORMAT_ABGR2101010_UINT:
+      unpack_int_rgba_ABGR2101010_UINT(src, dst, n);
+      break;
+
    default:
       _mesa_problem(NULL, "%s: bad format %s", __FUNCTION__,
                     _mesa_get_format_name(format));

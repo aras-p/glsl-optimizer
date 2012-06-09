@@ -71,6 +71,7 @@
 #include "teximage.h"
 #include "texstore.h"
 #include "enums.h"
+#include "glformats.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
@@ -3891,6 +3892,72 @@ _mesa_texstore_argb2101010_uint(TEXSTORE_PARAMS)
 }
 
 static GLboolean
+_mesa_texstore_abgr2101010_uint(TEXSTORE_PARAMS)
+{
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_ABGR2101010_UINT);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
+
+   if (baseInternalFormat == GL_RGBA &&
+       _mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                            srcPacking->SwapBytes)) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat,
+                     dstRowStride, dstSlices,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLuint *tempImage = make_temp_uint_image(ctx, dims,
+                                                     baseInternalFormat,
+                                                     baseFormat,
+                                                     srcWidth, srcHeight,
+                                                     srcDepth, srcFormat,
+                                                     srcType, srcAddr,
+                                                     srcPacking);
+      const GLuint *src = tempImage;
+      GLint img, row, col;
+      GLboolean is_unsigned = _mesa_is_type_unsigned(srcType);
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = dstSlices[img];
+
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+            if (is_unsigned) {
+               for (col = 0; col < srcWidth; col++) {
+                  GLushort a,r,g,b;
+                  r = MIN2(src[RCOMP], 0x3ff);
+                  g = MIN2(src[GCOMP], 0x3ff);
+                  b = MIN2(src[BCOMP], 0x3ff);
+                  a = MIN2(src[ACOMP], 0x003);
+                  dstUI[col] = (a << 30) | (b << 20) | (g << 10) | (r);
+                  src += 4;
+               }
+            } else {
+               for (col = 0; col < srcWidth; col++) {
+                  GLushort a,r,g,b;
+                  r = CLAMP((GLint) src[RCOMP], 0, 0x3ff);
+                  g = CLAMP((GLint) src[GCOMP], 0, 0x3ff);
+                  b = CLAMP((GLint) src[BCOMP], 0, 0x3ff);
+                  a = CLAMP((GLint) src[ACOMP], 0, 0x003);
+                  dstUI[col] = (a << 30) | (b << 20) | (g << 10) | (r);
+                  src += 4;
+               }
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+static GLboolean
 _mesa_texstore_null(TEXSTORE_PARAMS)
 {
    (void) ctx; (void) dims;
@@ -4084,6 +4151,7 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_RGBA_UINT32] = _mesa_texstore_rgba_uint32;
 
       table[MESA_FORMAT_ARGB2101010_UINT] = _mesa_texstore_argb2101010_uint;
+      table[MESA_FORMAT_ABGR2101010_UINT] = _mesa_texstore_abgr2101010_uint;
       initialized = GL_TRUE;
    }
 

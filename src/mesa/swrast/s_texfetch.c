@@ -1104,7 +1104,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       NULL,
       NULL,
       NULL
-   }
+   },
+   {
+      MESA_FORMAT_ABGR2101010_UINT,
+      NULL,
+      NULL,
+      NULL
+   },
 };
 
 
