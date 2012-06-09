@@ -105,9 +105,15 @@ _parser_active_list_pop (glcpp_parser_t *parser);
 static int
 _parser_active_list_contains (glcpp_parser_t *parser, const char *identifier);
 
+/* Expand list, and begin lexing from the result (after first
+ * prefixing a token of type 'head_token_type').
+ */
 static void
-_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list);
+_glcpp_parser_expand_and_lex_from (glcpp_parser_t *parser,
+				   int head_token_type,
+				   token_list_t *list);
 
+/* Perform macro expansion in-place on the given list. */
 static void
 _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				 token_list_t *list);
@@ -233,7 +239,8 @@ control_line:
 		if (parser->skip_stack == NULL ||
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
-			_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
+			_glcpp_parser_expand_and_lex_from (parser,
+							   IF_EXPANDED, $2);
 		}	
 		else
 		{
@@ -272,7 +279,8 @@ control_line:
 		if (parser->skip_stack &&
 		    parser->skip_stack->type == SKIP_TO_ELSE)
 		{
-			_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
+			_glcpp_parser_expand_and_lex_from (parser,
+							   ELIF_EXPANDED, $2);
 		}
 		else
 		{
@@ -1272,14 +1280,21 @@ _token_list_create_with_one_space (void *ctx)
 	return list;
 }
 
+/* Perform macro expansion on 'list', placing the resulting tokens
+ * into a new list which is initialized with a first token of type
+ * 'head_token_type'. Then begin lexing from the resulting list,
+ * (return to the current lexing source when this list is exhausted).
+ */
 static void
-_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list)
+_glcpp_parser_expand_and_lex_from (glcpp_parser_t *parser,
+				   int head_token_type,
+				   token_list_t *list)
 {
 	token_list_t *expanded;
 	token_t *token;
 
 	expanded = _token_list_create (parser);
-	token = _token_create_ival (parser, type, type);
+	token = _token_create_ival (parser, head_token_type, head_token_type);
 	_token_list_append (expanded, token);
 	_glcpp_parser_expand_token_list (parser, list);
 	_token_list_append_list (expanded, list);
