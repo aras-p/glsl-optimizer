@@ -25,6 +25,7 @@
 #define GLCPP_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "../ralloc.h"
 
@@ -177,6 +178,10 @@ struct glcpp_parser {
 	size_t output_length;
 	size_t info_log_length;
 	int error;
+	bool has_new_line_number;
+	int new_line_number;
+	bool has_new_source_number;
+	int new_source_number;
 };
 
 struct gl_extensions;

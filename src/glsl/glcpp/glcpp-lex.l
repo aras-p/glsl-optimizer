@@ -40,12 +40,18 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 
 #define YY_NO_INPUT
 
-#define YY_USER_ACTION                                          \
-   do {                                                         \
-      yylloc->first_column = yycolumn + 1;                      \
-      yylloc->first_line = yylineno;                            \
-      yycolumn += yyleng;                                       \
-   } while(0);
+#define YY_USER_ACTION							\
+	do {								\
+		if (parser->has_new_line_number)			\
+			yylineno = parser->new_line_number;		\
+		if (parser->has_new_source_number)			\
+			yylloc->source = parser->new_source_number;	\
+		yylloc->first_column = yycolumn + 1;			\
+		yylloc->first_line = yylineno;				\
+		yycolumn += yyleng;					\
+		parser->has_new_line_number = 0;			\
+		parser->has_new_source_number = 0;			\
+ } while(0);
 
 #define YY_USER_INIT			\
 	do {				\
@@ -129,35 +135,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OTHER;
 }
 
-{HASH}line{HSPACE}+{DIGITS}{HSPACE}+{DIGITS}{HSPACE}*$ {
-	/* Eat characters until the first digit is
-	 * encountered
-	 */
-	char *ptr = yytext;
-	while (!isdigit(*ptr))
-		ptr++;
-
-	/* Subtract one from the line number because
-	 * yylineno is zero-based instead of
-	 * one-based.
-	 */
-	yylineno = strtol(ptr, &ptr, 0) - 1;
-	yylloc->source = strtol(ptr, NULL, 0);
-}
-
-{HASH}line{HSPACE}+{DIGITS}{HSPACE}*$ {
-	/* Eat characters until the first digit is
-	 * encountered
-	 */
-	char *ptr = yytext;
-	while (!isdigit(*ptr))
-		ptr++;
-
-	/* Subtract one from the line number because
-	 * yylineno is zero-based instead of
-	 * one-based.
-	 */
-	yylineno = strtol(ptr, &ptr, 0) - 1;
+{HASH}line {
+	return HASH_LINE;
 }
 
 <SKIP,INITIAL>{

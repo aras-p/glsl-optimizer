@@ -162,7 +162,7 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %lex-param {glcpp_parser_t *parser}
 
 %expect 0
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE integer_constant
 %type <str> IDENTIFIER INTEGER_STRING OTHER
@@ -208,6 +208,24 @@ expanded_line:
 |	ELIF_EXPANDED expression NEWLINE {
 		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2);
 	}
+|	LINE_EXPANDED integer_constant NEWLINE {
+		parser->has_new_line_number = 1;
+		parser->new_line_number = $2;
+		ralloc_asprintf_rewrite_tail (&parser->output,
+					      &parser->output_length,
+					      "#line %" PRIiMAX,
+					      $2);
+	}
+|	LINE_EXPANDED integer_constant integer_constant NEWLINE {
+		parser->has_new_line_number = 1;
+		parser->new_line_number = $2;
+		parser->has_new_source_number = 1;
+		parser->new_source_number = $3;
+		ralloc_asprintf_rewrite_tail (&parser->output,
+					      &parser->output_length,
+					      "#line %" PRIiMAX " %" PRIiMAX,
+					      $2, $3);
+	}
 ;
 
 control_line:
@@ -227,6 +245,14 @@ control_line:
 			ralloc_free (macro);
 		}
 		ralloc_free ($2);
+	}
+|	HASH_LINE pp_tokens NEWLINE {
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_and_lex_from (parser,
+							   LINE_EXPANDED, $2);
+		}
 	}
 |	HASH_IF conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
@@ -1119,6 +1145,11 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->info_log = ralloc_strdup(parser, "");
 	parser->info_log_length = 0;
 	parser->error = 0;
+
+	parser->has_new_line_number = 0;
+	parser->new_line_number = 1;
+	parser->has_new_source_number = 0;
+	parser->new_source_number = 0;
 
 	/* Add pre-defined macros. */
 	add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
