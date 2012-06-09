@@ -355,12 +355,15 @@ vlVdpVideoSurfaceClear(vlVdpSurface *vlsurf)
 
    surfaces = vlsurf->video_buffer->get_surfaces(vlsurf->video_buffer);
    for (i = 0; i < VL_MAX_SURFACES; ++i) {
-      union pipe_color_union black = {};
+      union pipe_color_union c = {};
 
       if (!surfaces[i])
          continue;
 
-      pipe->clear_render_target(pipe, surfaces[i], &black, 0, 0,
+      if (i > !!vlsurf->templat.interlaced)
+         c.f[0] = c.f[1] = c.f[2] = c.f[3] = 0.5f;
+
+      pipe->clear_render_target(pipe, surfaces[i], &c, 0, 0,
                                 surfaces[i]->width, surfaces[i]->height);
    }
    pipe->flush(pipe, NULL);
