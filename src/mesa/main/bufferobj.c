@@ -546,7 +546,7 @@ _mesa_buffer_unmap( struct gl_context *ctx, struct gl_buffer_object *bufObj )
 
 /**
  * Default fallback for \c dd_function_table::CopyBufferSubData().
- * Called via glCopyBuffserSubData().
+ * Called via glCopyBufferSubData().
  */
 static void
 _mesa_copy_buffer_subdata(struct gl_context *ctx,
@@ -1328,48 +1328,48 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
    struct gl_buffer_object *src, *dst;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   src = get_buffer(ctx, "glCopyBuffserSubData", readTarget);
+   src = get_buffer(ctx, "glCopyBufferSubData", readTarget);
    if (!src)
       return;
 
-   dst = get_buffer(ctx, "glCopyBuffserSubData", writeTarget);
+   dst = get_buffer(ctx, "glCopyBufferSubData", writeTarget);
    if (!dst)
       return;
 
    if (_mesa_bufferobj_mapped(src)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyBuffserSubData(readBuffer is mapped)");
+                  "glCopyBufferSubData(readBuffer is mapped)");
       return;
    }
 
    if (_mesa_bufferobj_mapped(dst)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyBuffserSubData(writeBuffer is mapped)");
+                  "glCopyBufferSubData(writeBuffer is mapped)");
       return;
    }
 
    if (readOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(readOffset = %d)", (int) readOffset);
+                  "glCopyBufferSubData(readOffset = %d)", (int) readOffset);
       return;
    }
 
    if (writeOffset < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(writeOffset = %d)", (int) writeOffset);
+                  "glCopyBufferSubData(writeOffset = %d)", (int) writeOffset);
       return;
    }
 
    if (readOffset + size > src->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(readOffset + size = %d)",
+                  "glCopyBufferSubData(readOffset + size = %d)",
                   (int) (readOffset + size));
       return;
    }
 
    if (writeOffset + size > dst->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyBuffserSubData(writeOffset + size = %d)",
+                  "glCopyBufferSubData(writeOffset + size = %d)",
                   (int) (writeOffset + size));
       return;
    }
@@ -1384,7 +1384,7 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
       else {
          /* overlapping src/dst is illegal */
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyBuffserSubData(overlapping src/dst)");
+                     "glCopyBufferSubData(overlapping src/dst)");
          return;
       }
    }
