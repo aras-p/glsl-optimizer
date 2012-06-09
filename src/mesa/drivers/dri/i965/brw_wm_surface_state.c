@@ -525,14 +525,9 @@ brw_init_surface_formats(struct brw_context *brw)
        * integer, so we don't need hardware support for blending on it.  Other
        * than that, GL in general requires alpha blending for render targets,
        * even though we don't support it for some formats.
-       *
-       * We don't currently support rendering to SNORM textures because some of
-       * the ARB_color_buffer_float clamping is broken for it
-       * (piglit arb_color_buffer_float-drawpixels GL_RGBA8_SNORM).
        */
       if (gen >= rinfo->render_target &&
-	  (gen >= rinfo->alpha_blend || is_integer) &&
-	  _mesa_get_format_datatype(format) != GL_SIGNED_NORMALIZED) {
+	  (gen >= rinfo->alpha_blend || is_integer)) {
 	 brw->render_target_format[format] = render;
 	 brw->format_supported_as_render_target[format] = true;
       }
