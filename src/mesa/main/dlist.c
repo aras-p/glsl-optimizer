@@ -10445,6 +10445,9 @@ _mesa_create_save_table(void)
    /* GL_ARB_debug_output (no dlist support) */
    _mesa_init_errors_dispatch(table);
 
+   /* GL_NV_primitive_restart */
+   SET_PrimitiveRestartIndexNV(table, _mesa_PrimitiveRestartIndex);
+
    return table;
 }
 
