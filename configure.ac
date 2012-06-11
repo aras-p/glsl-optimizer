@@ -2158,6 +2158,7 @@ AC_CONFIG_FILES([configs/autoconf
 		src/egl/drivers/Makefile
 		src/egl/drivers/dri2/Makefile
 		src/egl/drivers/glx/Makefile
+		src/egl/Makefile
 		src/egl/main/Makefile
 		src/egl/main/egl.pc
 		src/egl/wayland/Makefile
