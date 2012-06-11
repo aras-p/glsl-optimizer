@@ -1,5 +1,7 @@
 # shared source lists for Makefile, SConscript, and Android.mk
 
+GLSL_SRCDIR ?= .
+
 # libglcpp
 
 LIBGLCPP_FILES = \

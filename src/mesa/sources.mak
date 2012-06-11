@@ -1,5 +1,7 @@
 ### Lists of source files, included by Makefiles
 
+SRCDIR ?= .
+
 # this is part of MAIN_FILES
 MAIN_ES_FILES = \
 	$(SRCDIR)/main/api_exec_es1.c \

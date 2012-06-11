@@ -63,7 +63,7 @@ class SourceListParser(object):
             self._error('not a variable definition')
 
         if op_pos > 0:
-            if line[op_pos - 1] in [':', '+']:
+            if line[op_pos - 1] in [':', '+', '?']:
                 op_pos -= 1
         else:
             self._error('only =, :=, and += are supported')
@@ -77,6 +77,9 @@ class SourceListParser(object):
             self.symbol_table[sym] = val
         elif op == '+=':
             self.symbol_table[sym] += ' ' + val
+        elif op == '?=':
+            if sym not in self.symbol_table:
+                self.symbol_table[sym] = val
 
     def _parse_line(self, line):
         """Parse a source list line."""
