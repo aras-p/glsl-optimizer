@@ -2173,6 +2173,7 @@ AC_CONFIG_FILES([configs/current
 		src/mesa/main/tests/Makefile
 		src/mesa/x86/Makefile
 		src/mesa/x86-64/Makefile
+		src/mesa/drivers/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile
