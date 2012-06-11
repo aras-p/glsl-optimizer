@@ -5,7 +5,6 @@
 
 
 TOP = ../../../..
-include $(TOP)/configs/current
 
 MESA_DIR = $(TOP)/src/mesa
 MESA_GLAPI_DIR = $(TOP)/src/mapi/glapi
@@ -122,10 +121,7 @@ COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
 ######################################################################
 
-default: mesa
-install: mesa
-
-mesa: $(MESA_OUTPUTS)
+all-local: $(MESA_OUTPUTS)
 
 xorg: check-xorg-source $(XORG_OUTPUTS)
 
@@ -138,7 +134,7 @@ check-xorg-source:
 		exit 1; \
 	fi
 
-clean:
+clean-local:
 	-rm -f *~ *.pyo
 	-rm -f $(MESA_OUTPUTS)
 

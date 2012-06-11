@@ -2166,6 +2166,7 @@ AC_CONFIG_FILES([configs/current
 		src/glsl/tests/Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
+		src/mapi/glapi/gen/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/mapi/glapi/tests/Makefile
 		src/gtest/Makefile
