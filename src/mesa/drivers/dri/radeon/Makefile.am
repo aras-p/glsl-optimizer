@@ -35,7 +35,6 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	-I$(top_srcdir)/src/mesa/drivers/dri/radeon/server \
 	$(DEFINES) \
-	$(ASM_FLAGS) \
 	$(API_DEFINES) \
 	$(RADEON_CFLAGS)
 

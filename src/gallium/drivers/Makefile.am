@@ -5,7 +5,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
 	$(DEFINES) \
-	$(ASM_FLAGS) \
 	$(PIC_FLAGS)
 
 noinst_LIBRARIES =

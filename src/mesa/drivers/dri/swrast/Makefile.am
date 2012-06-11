@@ -34,7 +34,6 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/ \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	$(DEFINES) \
-	$(ASM_FLAGS) \
 	$(API_DEFINES)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)

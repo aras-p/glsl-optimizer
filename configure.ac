@@ -453,7 +453,6 @@ AC_ARG_ENABLE([asm],
     [enable_asm=yes]
 )
 asm_arch=""
-ASM_FLAGS=""
 MESA_ASM_FILES=""
 GLAPI_ASM_SOURCES=""
 AC_MSG_CHECKING([whether to enable assembly])
@@ -502,19 +501,19 @@ if test "x$enable_asm" = xyes; then
 
     case "$asm_arch" in
     x86)
-        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+        DEFINES="$DEFINES -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
         MESA_ASM_FILES='$(X86_FILES)'
         GLAPI_ASM_SOURCES='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
-        ASM_FLAGS="-DUSE_X86_64_ASM"
+        DEFINES="$DEFINES -DUSE_X86_64_ASM"
         MESA_ASM_FILES='$(X86_64_FILES)'
         GLAPI_ASM_SOURCES='$(X86-64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     sparc)
-        ASM_FLAGS="-DUSE_SPARC_ASM"
+        DEFINES="$DEFINES -DUSE_SPARC_ASM"
         MESA_ASM_FILES='$(SPARC_FILES)'
         GLAPI_ASM_SOURCES='$(SPARC_API)'
         AC_MSG_RESULT([yes, sparc])
@@ -524,7 +523,6 @@ if test "x$enable_asm" = xyes; then
         ;;
     esac
 fi
-AC_SUBST([ASM_FLAGS])
 AC_SUBST([MESA_ASM_FILES])
 AC_SUBST([GLAPI_ASM_SOURCES])
 
@@ -2128,9 +2126,9 @@ AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1
 AM_CONDITIONAL(HAVE_DRI_DRIVER, echo "$DRIVER_DIRS" | grep 'dri' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_OSMESA_DRIVER, echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1)
 
-AM_CONDITIONAL(HAVE_X86_ASM, echo "$ASM_FLAGS" | grep 'X86_ASM' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$ASM_FLAGS" | grep 'X86_64_ASM' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_SPARC_ASM, echo "$ASM_FLAGS" | grep 'SPARC_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_SPARC_ASM, echo "$DEFINES" | grep 'SPARC_ASM' >/dev/null 2>&1)
 
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
@@ -2303,7 +2301,7 @@ cflags=`echo $CFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
 cxxflags=`echo $CXXFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
-defines=`echo $DEFINES $ASM_FLAGS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+defines=`echo $DEFINES | $SED 's/^ *//;s/  */ /;s/ *$//'`
 echo ""
 echo "        CFLAGS:          $cflags"
 echo "        CXXFLAGS:        $cxxflags"

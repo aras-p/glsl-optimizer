@@ -17,7 +17,6 @@ AM_CFLAGS = \
 	$(RADEON_CFLAGS) \
 	$(DEFINES) \
 	$(ARCH_FLAGS) \
-	$(ASM_FLAGS) \
 	$(OPT_FLAGS) \
 	$(PIC_FLAGS)
 

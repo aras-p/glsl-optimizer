@@ -124,10 +124,10 @@ driver_subdirs: $(MESA_LIBS) $(DRICORE_TARGET)
 ######################################################################
 # Assembly subdirs
 asm_subdirs:
-	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
+	@ if echo "$(DEFINES)" | grep -q USE_X86_ASM ; then \
 		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
-	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_64_ASM ; then \
+	@ if echo "$(DEFINES)" | grep -q USE_X86_64_ASM ; then \
 		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
