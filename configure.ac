@@ -2171,6 +2171,8 @@ AC_CONFIG_FILES([configs/autoconf
 		src/gtest/Makefile
 		src/mesa/libdricore/Makefile
 		src/mesa/main/tests/Makefile
+		src/mesa/x86/Makefile
+		src/mesa/x86-64/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile

@@ -128,7 +128,6 @@ asm_subdirs:
 		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
 	@ if echo "$(DEFINES)" | grep -q USE_X86_64_ASM ; then \
-		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
 
