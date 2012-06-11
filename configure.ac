@@ -2145,6 +2145,7 @@ dnl Substitute the config
 AC_CONFIG_FILES([configs/current
 		Makefile
 		src/Makefile
+		src/gallium/Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
 		src/gallium/state_trackers/clover/Makefile
 		src/gallium/drivers/Makefile
