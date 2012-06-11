@@ -2142,7 +2142,7 @@ CFLAGS="$CFLAGS $USER_CFLAGS"
 CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
-AC_CONFIG_FILES([configs/autoconf
+AC_CONFIG_FILES([configs/current
 		Makefile
 		src/Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
@@ -2182,14 +2182,6 @@ AC_CONFIG_FILES([configs/autoconf
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
 		src/mesa/drivers/dri/swrast/Makefile])
-
-dnl Replace the configs/current symlink
-AC_CONFIG_COMMANDS([configs],[
-if test -f configs/current || test -L configs/current; then
-    rm -f configs/current
-fi
-ln -s autoconf configs/current
-])
 
 dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`

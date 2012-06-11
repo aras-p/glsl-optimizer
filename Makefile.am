@@ -44,7 +44,6 @@ clean-local:
 distclean-local:
 	-rm -rf lib*
 	-rm -f $(top_builddir)/configs/current
-	-rm -f $(top_builddir)/configs/autoconf
 	-find . '(' -name '*.o' -o -name '*.a' -o -name '*.so' -o \
 	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
 
