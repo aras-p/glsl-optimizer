@@ -871,6 +871,40 @@ _mesa_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params)
 }
 
 
+static GLboolean
+legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+   case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
+      return GL_TRUE;
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+      return ctx->Extensions.ARB_texture_cube_map;
+   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_PROXY_TEXTURE_RECTANGLE_NV:
+      return ctx->Extensions.NV_texture_rectangle;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+      return (ctx->Extensions.MESA_texture_array ||
+              ctx->Extensions.EXT_texture_array);
+   default:
+      return GL_FALSE;
+   }
+}
+
+
 void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params )
@@ -901,13 +935,14 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   /* this will catch bad target values */
-   maxLevels = _mesa_max_texture_levels(ctx, target);
-   if (maxLevels == 0) {
+   if (!legal_get_tex_level_parameter_target(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetTexLevelParameter[if]v(target=0x%x)", target);
       return;
    }
+
+   maxLevels = _mesa_max_texture_levels(ctx, target);
+   assert(maxLevels != 0);
 
    if (level < 0 || level >= maxLevels) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexLevelParameter[if]v" );
