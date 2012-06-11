@@ -109,6 +109,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 {
 	static int dump_shaders = -1;
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_pipe_shader_selector *sel = shader->selector;
 	int r;
 
 	/* Would like some magic "get_bool_option_once" routine.
@@ -118,16 +119,16 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
-		tgsi_dump(shader->tokens, 0);
+		tgsi_dump(sel->tokens, 0);
 
-		if (shader->so.num_outputs) {
+		if (sel->so.num_outputs) {
 			unsigned i;
 			fprintf(stderr, "STREAMOUT\n");
-			for (i = 0; i < shader->so.num_outputs; i++) {
-				unsigned mask = ((1 << shader->so.output[i].num_components) - 1) <<
-						shader->so.output[i].start_component;
+			for (i = 0; i < sel->so.num_outputs; i++) {
+				unsigned mask = ((1 << sel->so.output[i].num_components) - 1) <<
+						sel->so.output[i].start_component;
 				fprintf(stderr, "  %i: MEM_STREAM0_BUF%i OUT[%i].%s%s%s%s\n", i,
-					shader->so.output[i].output_buffer, shader->so.output[i].register_index,
+					sel->so.output[i].output_buffer, sel->so.output[i].register_index,
 				        mask & 1 ? "x" : "_",
 				        (mask >> 1) & 1 ? "y" : "_",
 				        (mask >> 2) & 1 ? "z" : "_",
@@ -156,8 +157,6 @@ void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader 
 {
 	pipe_resource_reference((struct pipe_resource**)&shader->bo, NULL);
 	r600_bytecode_clear(&shader->shader.bc);
-
-	memset(&shader->shader,0,sizeof(struct r600_shader));
 }
 
 /*
@@ -1118,8 +1117,8 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_shader *pipeshader)
 {
 	struct r600_shader *shader = &pipeshader->shader;
-	struct tgsi_token *tokens = pipeshader->tokens;
-	struct pipe_stream_output_info so = pipeshader->so;
+	struct tgsi_token *tokens = pipeshader->selector->tokens;
+	struct pipe_stream_output_info so = pipeshader->selector->so;
 	struct tgsi_full_immediate *immediate;
 	struct tgsi_full_property *property;
 	struct r600_shader_ctx ctx;

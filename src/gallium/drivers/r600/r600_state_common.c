@@ -429,39 +429,146 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 	return v;
 }
 
-void *r600_create_shader_state(struct pipe_context *ctx,
-			       const struct pipe_shader_state *state)
+/* Compute the key for the hw shader variant */
+static INLINE unsigned r600_shader_selector_key(struct pipe_context * ctx,
+		struct r600_pipe_shader_selector * sel)
 {
-	struct r600_pipe_shader *shader = CALLOC_STRUCT(r600_pipe_shader);
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned key;
+
+	if (sel->type == PIPE_SHADER_FRAGMENT) {
+		key = rctx->two_side;
+		if (sel->eg_fs_write_all)
+			key |= rctx->nr_cbufs << 1;
+	} else
+		key = 0;
+
+	return key;
+}
+
+/* Select the hw shader variant depending on the current state.
+ * (*dirty) is set to 1 if current variant was changed */
+static int r600_shader_select(struct pipe_context *ctx,
+        struct r600_pipe_shader_selector* sel,
+        unsigned *dirty)
+{
+	unsigned key;
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_pipe_shader * shader = NULL;
 	int r;
 
-	shader->tokens = tgsi_dup_tokens(state->tokens);
-	shader->so = state->stream_output;
+	key = r600_shader_selector_key(ctx, sel);
 
-	r =  r600_pipe_shader_create(ctx, shader);
-	if (r) {
-		return NULL;
+	/* Check if we don't need to change anything.
+	 * This path is also used for most shaders that don't need multiple
+	 * variants, it will cost just a computation of the key and this
+	 * test. */
+	if (likely(sel->current && sel->current->key == key)) {
+		return 0;
 	}
-	return shader;
+
+	/* lookup if we have other variants in the list */
+	if (sel->num_shaders > 1) {
+		struct r600_pipe_shader *p = sel->current, *c = p->next_variant;
+
+		while (c && c->key != key) {
+			p = c;
+			c = c->next_variant;
+		}
+
+		if (c) {
+			p->next_variant = c->next_variant;
+			shader = c;
+		}
+	}
+
+	if (unlikely(!shader)) {
+		shader = CALLOC(1, sizeof(struct r600_pipe_shader));
+		shader->selector = sel;
+
+		r = r600_pipe_shader_create(ctx, shader);
+		if (unlikely(r)) {
+			R600_ERR("Failed to build shader variant (type=%u, key=%u) %d\n",
+					sel->type, key, r);
+			sel->current = NULL;
+			return r;
+		}
+
+		/* We don't know the value of eg_fs_write_all property until we built
+		 * at least one variant, so we may need to recompute the key (include
+		 * rctx->nr_cbufs) after building first variant. */
+		if (sel->type == PIPE_SHADER_FRAGMENT &&
+				sel->num_shaders == 0 &&
+				rctx->chip_class >= EVERGREEN &&
+				shader->shader.fs_write_all) {
+			sel->eg_fs_write_all = 1;
+			key = r600_shader_selector_key(ctx, sel);
+		}
+
+		shader->key = key;
+		sel->num_shaders++;
+	}
+
+	if (dirty)
+		*dirty = 1;
+
+	shader->next_variant = sel->current;
+	sel->current = shader;
+
+	/* Moved from r600_bind_ps_shader, different shader variants
+	 * may use different number of GPRs, so we need to update it. */
+	/* FIXME: we never did it after rebuilding the shaders, is it required? */
+	if (rctx->chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
+		r600_adjust_gprs(rctx);
+	}
+
+	return 0;
+}
+
+static void *r600_create_shader_state(struct pipe_context *ctx,
+			       const struct pipe_shader_state *state,
+			       unsigned pipe_shader_type)
+{
+	struct r600_pipe_shader_selector *sel = CALLOC_STRUCT(r600_pipe_shader_selector);
+	int r;
+
+	sel->type = pipe_shader_type;
+	sel->tokens = tgsi_dup_tokens(state->tokens);
+	sel->so = state->stream_output;
+
+	r = r600_shader_select(ctx, sel, NULL);
+	if (r)
+	    return NULL;
+
+	return sel;
+}
+
+void *r600_create_shader_state_ps(struct pipe_context *ctx,
+		const struct pipe_shader_state *state)
+{
+	return r600_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
+}
+
+void *r600_create_shader_state_vs(struct pipe_context *ctx,
+		const struct pipe_shader_state *state)
+{
+	return r600_create_shader_state(ctx, state, PIPE_SHADER_VERTEX);
 }
 
 void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	if (!state) {
+	if (!state)
 		state = rctx->dummy_pixel_shader;
-	}
 
-	rctx->ps_shader = (struct r600_pipe_shader *)state;
-
-	r600_inval_shader_cache(rctx);
-	r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
+	rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
+	r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
 
 	rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
-	rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->shader.fs_write_all);
+	rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->current->shader.fs_write_all);
 
-	if (rctx->ps_shader && rctx->vs_shader) {
+	if (rctx->chip_class < EVERGREEN && rctx->vs_shader) {
 		r600_adjust_gprs(rctx);
 	}
 }
@@ -470,42 +577,53 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->vs_shader = (struct r600_pipe_shader *)state;
+	rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
 	if (state) {
-		r600_inval_shader_cache(rctx);
-		r600_context_pipe_state_set(rctx, &rctx->vs_shader->rstate);
-	}
-	if (rctx->ps_shader && rctx->vs_shader) {
-		r600_adjust_gprs(rctx);
+		r600_context_pipe_state_set(rctx, &rctx->vs_shader->current->rstate);
+
+		if (rctx->chip_class < EVERGREEN && rctx->ps_shader)
+			r600_adjust_gprs(rctx);
 	}
 }
+
+static void r600_delete_shader_selector(struct pipe_context *ctx,
+		struct r600_pipe_shader_selector *sel)
+{
+	struct r600_pipe_shader *p = sel->current, *c;
+	while (p) {
+		c = p->next_variant;
+		r600_pipe_shader_destroy(ctx, p);
+		free(p);
+		p = c;
+	}
+
+	free(sel->tokens);
+	free(sel);
+}
+
 
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
+	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
 
-	if (rctx->ps_shader == shader) {
+	if (rctx->ps_shader == sel) {
 		rctx->ps_shader = NULL;
 	}
 
-	free(shader->tokens);
-	r600_pipe_shader_destroy(ctx, shader);
-	free(shader);
+	r600_delete_shader_selector(ctx, sel);
 }
 
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_shader *shader = (struct r600_pipe_shader *)state;
+	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
 
-	if (rctx->vs_shader == shader) {
+	if (rctx->vs_shader == sel) {
 		rctx->vs_shader = NULL;
 	}
 
-	free(shader->tokens);
-	r600_pipe_shader_destroy(ctx, shader);
-	free(shader);
+	r600_delete_shader_selector(ctx, sel);
 }
 
 static void r600_update_alpha_ref(struct r600_context *rctx)
@@ -661,24 +779,10 @@ void r600_set_so_targets(struct pipe_context *ctx,
 	rctx->streamout_append_bitmask = append_bitmask;
 }
 
-static int r600_shader_rebuild(struct pipe_context * ctx, struct r600_pipe_shader * shader)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	int r;
-
-	r600_pipe_shader_destroy(ctx, shader);
-	r = r600_pipe_shader_create(ctx, shader);
-	if (r) {
-		return r;
-	}
-	r600_context_pipe_state_set(rctx, &shader->rstate);
-
-	return 0;
-}
-
 static void r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
+	unsigned ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
@@ -689,30 +793,29 @@ static void r600_update_derived_state(struct r600_context *rctx)
 		r600_update_sampler_states(rctx);
 	}
 
-	if ((rctx->ps_shader->shader.two_side != rctx->two_side) ||
-	    ((rctx->chip_class >= EVERGREEN) && rctx->ps_shader->shader.fs_write_all &&
-	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs))) {
-		r600_shader_rebuild(&rctx->context, rctx->ps_shader);
-	}
+	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
 
 	if (rctx->alpha_ref_dirty) {
 		r600_update_alpha_ref(rctx);
 	}
 
 	if (rctx->ps_shader && ((rctx->sprite_coord_enable &&
-		(rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable)) ||
-		(rctx->rasterizer && rctx->rasterizer->flatshade != rctx->ps_shader->flatshade))) {
+		(rctx->ps_shader->current->sprite_coord_enable != rctx->sprite_coord_enable)) ||
+		(rctx->rasterizer && rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
 
 		if (rctx->chip_class >= EVERGREEN)
-			evergreen_pipe_shader_ps(ctx, rctx->ps_shader);
+			evergreen_pipe_shader_ps(ctx, rctx->ps_shader->current);
 		else
-			r600_pipe_shader_ps(ctx, rctx->ps_shader);
+			r600_pipe_shader_ps(ctx, rctx->ps_shader->current);
 
-		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
+		ps_dirty = 1;
 	}
 
+	if (ps_dirty)
+		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
+
 	if (rctx->dual_src_blend)
-		rctx->cb_shader_mask = rctx->ps_shader->ps_cb_shader_mask | rctx->fb_cb_shader_mask;
+		rctx->cb_shader_mask = rctx->ps_shader->current->ps_cb_shader_mask | rctx->fb_cb_shader_mask;
 	else
 		rctx->cb_shader_mask = rctx->fb_cb_shader_mask;
 }
@@ -827,12 +930,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	if (rctx->chip_class <= R700)
 		r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_color_control);
 	r600_pipe_state_mod_reg(&rctx->vgt,
-				rctx->vs_shader->pa_cl_vs_out_cntl |
-				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->shader.clip_dist_write));
+				rctx->vs_shader->current->pa_cl_vs_out_cntl |
+				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->current->shader.clip_dist_write));
 	r600_pipe_state_mod_reg(&rctx->vgt,
 				rctx->pa_cl_clip_cntl |
-				(rctx->vs_shader->shader.clip_dist_write ||
-				 rctx->vs_shader->shader.vs_prohibit_ucps ?
+				(rctx->vs_shader->current->shader.clip_dist_write ||
+				 rctx->vs_shader->current->shader.vs_prohibit_ucps ?
 				 0 : rctx->rasterizer->clip_plane_enable & 0x3F));
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);

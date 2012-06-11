@@ -1810,12 +1810,12 @@ void r600_init_state_functions(struct r600_context *rctx)
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
-	rctx->context.create_fs_state = r600_create_shader_state;
+	rctx->context.create_fs_state = r600_create_shader_state_ps;
 	rctx->context.create_rasterizer_state = r600_create_rs_state;
 	rctx->context.create_sampler_state = r600_create_sampler_state;
 	rctx->context.create_sampler_view = r600_create_sampler_view;
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
-	rctx->context.create_vs_state = r600_create_shader_state;
+	rctx->context.create_vs_state = r600_create_shader_state_vs;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = r600_bind_ps_samplers;
@@ -1851,6 +1851,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
+/* Adjust GPR allocation on R6xx/R7xx */
 void r600_adjust_gprs(struct r600_context *rctx)
 {
 	struct r600_pipe_state rstate;
@@ -1859,22 +1860,22 @@ void r600_adjust_gprs(struct r600_context *rctx)
 	unsigned tmp;
 	int diff;
 
-	if (rctx->chip_class >= EVERGREEN)
-		return;
+	/* XXX: Following call moved from r600_bind_[ps|vs]_shader,
+	 * it seems eg+ doesn't need it, r6xx/7xx probably need it only for
+	 * adjusting the GPR allocation?
+	 * Do we need this if we aren't really changing config below? */
+	r600_inval_shader_cache(rctx);
 
-	if (!rctx->ps_shader || !rctx->vs_shader)
-		return;
-
-	if (rctx->ps_shader->shader.bc.ngpr > rctx->default_ps_gprs)
+	if (rctx->ps_shader->current->shader.bc.ngpr > rctx->default_ps_gprs)
 	{
-		diff = rctx->ps_shader->shader.bc.ngpr - rctx->default_ps_gprs;
+		diff = rctx->ps_shader->current->shader.bc.ngpr - rctx->default_ps_gprs;
 		num_vs_gprs -= diff;
 		num_ps_gprs += diff;
 	}
 
-	if (rctx->vs_shader->shader.bc.ngpr > rctx->default_vs_gprs)
+	if (rctx->vs_shader->current->shader.bc.ngpr > rctx->default_vs_gprs)
 	{
-		diff = rctx->vs_shader->shader.bc.ngpr - rctx->default_vs_gprs;
+		diff = rctx->vs_shader->current->shader.bc.ngpr - rctx->default_vs_gprs;
 		num_ps_gprs -= diff;
 		num_vs_gprs += diff;
 	}

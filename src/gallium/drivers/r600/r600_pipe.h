@@ -185,18 +185,38 @@ struct r600_vertex_element
 	struct r600_pipe_state		rstate;
 };
 
+struct r600_pipe_shader;
+
+struct r600_pipe_shader_selector {
+	struct r600_pipe_shader *current;
+
+	struct tgsi_token       *tokens;
+	struct pipe_stream_output_info  so;
+
+	unsigned	num_shaders;
+
+	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
+	unsigned	type;
+
+	/* 1 on evergreen+ when the shader contains
+	 * TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, otherwise it's 0.
+	 * Used to determine whether we need to include nr_cbufs in the key */
+	unsigned	eg_fs_write_all;
+};
+
 struct r600_pipe_shader {
+	struct r600_pipe_shader_selector *selector;
+	struct r600_pipe_shader	*next_variant;
 	struct r600_shader		shader;
 	struct r600_pipe_state		rstate;
 	struct r600_resource		*bo;
 	struct r600_resource		*bo_fetch;
 	struct r600_vertex_element	vertex_elements;
-	struct tgsi_token		*tokens;
 	unsigned	sprite_coord_enable;
 	unsigned	flatshade;
 	unsigned	pa_cl_vs_out_cntl;
-	unsigned        ps_cb_shader_mask;
-	struct pipe_stream_output_info	so;
+	unsigned	ps_cb_shader_mask;
+	unsigned	key;
 };
 
 struct r600_pipe_sampler_state {
@@ -272,8 +292,8 @@ struct r600_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
-	struct r600_pipe_shader 	*ps_shader;
-	struct r600_pipe_shader 	*vs_shader;
+	struct r600_pipe_shader_selector 	*ps_shader;
+	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_pipe_compute	*cs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
@@ -436,8 +456,6 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	LLVMModuleRef mod,  struct r600_bytecode * bytecode);
 #endif
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-int r600_find_vs_semantic_index(struct r600_shader *vs,
-				struct r600_shader *ps, int id);
 
 /* r600_state.c */
 void r600_set_scissor_state(struct r600_context *rctx,
@@ -497,8 +515,10 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
-void *r600_create_shader_state(struct pipe_context *ctx,
-			       const struct pipe_shader_state *state);
+void *r600_create_shader_state_ps(struct pipe_context *ctx,
+                   const struct pipe_shader_state *state);
+void *r600_create_shader_state_vs(struct pipe_context *ctx,
+                   const struct pipe_shader_state *state);
 void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
