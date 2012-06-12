@@ -156,8 +156,8 @@ install: default $(DRICORE_INSTALL_TARGET)
 	            else \
 	              $(MAKE) -f Makefile.old install-osmesa || exit 1 ; \
 	            fi ;; \
-	    dri)    $(MAKE) -f Makefile.old install-libgl-pc install-dri || exit 1 ;; \
-	    *)      $(MAKE) -f Makefile.old install-libgl-pc || exit 1 ;; \
+	    dri)    $(MAKE) -f Makefile.old install-headers install-dri || exit 1 ;; \
+	    *)      $(MAKE) -f Makefile.old install-headers || exit 1 ;; \
 	  esac ; \
 	done
 
@@ -166,17 +166,9 @@ install-headers:
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
 		$(DESTDIR)$(INSTALL_INC_DIR)/GL
 
-install-libgl-pc: install-headers
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-
 install-osmesa: default
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -m 644 osmesa.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-dri: default
 	cd drivers/dri && $(MAKE) install

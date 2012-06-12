@@ -27,3 +27,11 @@ install-exec-local:
 
 clean-local:
 	$(MAKE) -f Makefile.old clean
+
+pkgconfigdir = $(libdir)/pkgconfig
+
+if HAVE_OSMESA_DRIVER
+pkgconfig_DATA = osmesa.pc
+else
+pkgconfig_DATA = gl.pc
+endif
