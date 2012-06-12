@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texstate.h"
 #include "main/texobj.h"
 #include "main/enums.h"
+#include "main/samplerobj.h"
 
 #include "radeon_context.h"
 #include "radeon_mipmap_tree.h"
@@ -1057,7 +1058,7 @@ static GLboolean radeon_validate_texture(struct gl_context *ctx, struct gl_textu
    radeonTexObj *t = radeon_tex_obj(texObj);
    int ret;
 
-   if (!radeon_validate_texture_miptree(ctx, texObj))
+   if (!radeon_validate_texture_miptree(ctx, _mesa_get_samplerobj(ctx, unit), texObj))
       return GL_FALSE;
 
    ret = setup_hardware_state(rmesa, t, unit);
@@ -1076,6 +1077,7 @@ static GLboolean radeon_validate_texture(struct gl_context *ctx, struct gl_textu
 
    rmesa->recheck_texgen[unit] = GL_TRUE;
 
+   radeonTexUpdateParameters(ctx, unit);
    import_tex_obj_state( rmesa, unit, t );
 
    if (rmesa->recheck_texgen[unit]) {

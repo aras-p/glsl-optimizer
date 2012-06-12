@@ -1500,7 +1500,7 @@ static GLboolean r200_validate_texture(struct gl_context *ctx, struct gl_texture
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    radeonTexObj *t = radeon_tex_obj(texObj);
 
-   if (!radeon_validate_texture_miptree(ctx, texObj))
+   if (!radeon_validate_texture_miptree(ctx, _mesa_get_samplerobj(ctx, unit), texObj))
       return GL_FALSE;
 
    r200_validate_texgen(ctx, unit);
@@ -1522,6 +1522,7 @@ static GLboolean r200_validate_texture(struct gl_context *ctx, struct gl_texture
    rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] |= 4 << (unit * 3);
 
    rmesa->recheck_texgen[unit] = GL_TRUE;
+   r200TexUpdateParameters(ctx, unit);
    import_tex_obj_state( rmesa, unit, t );
 
    if (rmesa->recheck_texgen[unit]) {

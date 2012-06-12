@@ -312,6 +312,17 @@ static void radeonTexEnv( struct gl_context *ctx, GLenum target,
    }
 }
 
+void radeonTexUpdateParameters(struct gl_context *ctx, GLuint unit)
+{
+   struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
+   radeonTexObj* t = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
+
+   radeonSetTexMaxAnisotropy(t , samp->MaxAnisotropy);
+   radeonSetTexFilter(t, samp->MinFilter, samp->MagFilter);
+   radeonSetTexWrap(t, samp->WrapS, samp->WrapT);
+   radeonSetTexBorderColor(t, samp->BorderColor.f);
+}
+
 
 /**
  * Changes variables and flags for a state update, which will happen at the
@@ -328,22 +339,6 @@ static void radeonTexParameter( struct gl_context *ctx, GLenum target,
 	       _mesa_lookup_enum_by_nr( pname ) );
 
    switch ( pname ) {
-   case GL_TEXTURE_MIN_FILTER:
-   case GL_TEXTURE_MAG_FILTER:
-   case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-      radeonSetTexMaxAnisotropy( t, texObj->Sampler.MaxAnisotropy );
-      radeonSetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
-      break;
-
-   case GL_TEXTURE_WRAP_S:
-   case GL_TEXTURE_WRAP_T:
-      radeonSetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT );
-      break;
-
-   case GL_TEXTURE_BORDER_COLOR:
-      radeonSetTexBorderColor( t, texObj->Sampler.BorderColor.f );
-      break;
-
    case GL_TEXTURE_BASE_LEVEL:
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:
@@ -433,6 +428,16 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
 }
 
 
+static struct gl_sampler_object *
+radeonNewSamplerObject(struct gl_context *ctx, GLuint name)
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   struct gl_sampler_object *samp = _mesa_new_sampler_object(ctx, name);
+   if (samp)
+      samp->MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+   return samp;
+}
+
 
 void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
@@ -445,4 +450,5 @@ void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *
    functions->TexEnv			= radeonTexEnv;
    functions->TexParameter		= radeonTexParameter;
    functions->TexGen			= radeonTexGen;
+   functions->NewSamplerObject		= radeonNewSamplerObject;
 }

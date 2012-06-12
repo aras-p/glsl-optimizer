@@ -47,6 +47,7 @@ extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,
 				  GLuint face );
 
 extern void radeonDestroyTexObj( r100ContextPtr rmesa, radeonTexObjPtr t );
+extern void radeonTexUpdateParameters(struct gl_context *ctx, GLuint unit);
 
 extern void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions );
 

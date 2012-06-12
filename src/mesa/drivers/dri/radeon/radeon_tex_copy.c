@@ -72,7 +72,7 @@ do_copy_texsubimage(struct gl_context *ctx,
     }
 
     if (!timg->mt) {
-        radeon_validate_texture_miptree(ctx, &tobj->base);
+        radeon_validate_texture_miptree(ctx, &tobj->base.Sampler, &tobj->base);
     }
 
     assert(rrb->bo);
