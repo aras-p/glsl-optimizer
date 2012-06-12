@@ -879,12 +879,7 @@ if test "x$enable_dri" = xyes; then
 fi
 
 if test "x$enable_osmesa" = xyes; then
-    # the empty space matters for osmesa... (see src/mesa/Makefile)
-    if test -n "$DRIVER_DIRS"; then
-        DRIVER_DIRS="$DRIVER_DIRS osmesa"
-    else
-        DRIVER_DIRS="osmesa"
-    fi
+    DRIVER_DIRS="$DRIVER_DIRS osmesa"
 fi
 
 AC_SUBST([SRC_DIRS])

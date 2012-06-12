@@ -21,6 +21,9 @@
 
 SUBDIRS = x86 x86-64 . libdricore drivers
 
+gldir = $(includedir)/GL
+gl_HEADERS = $(top_srcdir)/include/GL/*.h
+
 all-local:
 	$(MAKE) -f Makefile.old
 
