@@ -1225,52 +1225,43 @@ Here's what's new:</p>
 <p>I've just upload the Mesa 3.2 beta 1 files to SourceForge at <a href="http://sourceforge.net/project/showfiles.php?group_id=3" target="_parent">http://sourceforge.net/project/filelist.php?group_id=3</a><a href="http://sourceforge.net/project/showfiles.php?group_id=3"></a></p>
 <p>3.2 (note even number) is a stabilization release of Mesa 3.1 meaning it's mainly
 just bug fixes.</p>
-<p>Here's what's changed:
-
-</p><ul>
-	Bug fixes:
-	<ul>
-		- mixed drawing of lines and bitmaps sometimes had wrong colors<br>
-		- added missing glHintPGI() function<br>
-		- fixed a polygon culling bug<br>
-		- fixed bugs in gluPartialDisk()<br>
-		- Z values in selection mode were wrong<br>
-		- added missing tokens:
-		<ul>
-			GL_SMOOTH_POINT_SIZE_RANGE<br>
-			GL_SMOOTH_POINT_SIZE_GRANULARITY<br>
-			GL_SMOOTH_LINE_WIDTH_RANGE<br>
-			GL_SMOOTH_LINE_WIDTH_GRANULARITY<br>
-			GL_ALIASED_POINT_SIZE_RANGE<br>
-			GL_ALIASED_LINE_WIDTH_RANGE
-		</ul>
-		- fixed glCopyPixels when copying from back to front buffer<br>
-		- GL_EXT_compiled_vertex_array tokens had _SGI suffix instead of _EXT<br>
-		- glDrawRangeElements(GL_LINES, 0, 1, 2, type, indices) was broken<br>
-		- glDeleteTextures() didn't decrement reference count correctly<br>
-		- GL_SRCA_ALPHA_SATURATE blend mode didn't work correctly<br>
-		- Actual depth of transformation matrix stacks was off by one<br>
-		- 24bpp visuals didn't address pixels correctly<br>
-		- mipmap level of detail (lambda) calculation simplified, more accurate<br>
-		- 101691 - Polygon clipping and GL_LINE<br>
-		- 101928 - Polygon clipping and GL_LINE (same fix as above)<br>
-		- 101808 - Non-glVertexArrays tristrip bug<br>
-		- 101971 - find_last_3f on Dec OSF (worked around)<br>
-		- 102369 - segv on dec osf (possibly a duplicate of the above)<br>
-		- 102893 - orientations of modelview cause segfault
-	</ul>
-	New:
-	<ul>
-		- updated SVGA Linux driver<br>
-		- added the MESA_FX_NO_SIGNALS env var, see docs/README.3DFX<br>
-		- build libGLw.a (Xt/OpenGL drawing area widget) library by default<br>
-		- changed -O2 to -O3 for a number of gcc configs
-	</ul>
-	Changes:
-	<ul>
-		- glXCopyContext's mask parameter is now unsigned long, per GLX spec
-	</ul>
-</ul>
+<p>Here's what's changed:</p>
+<pre>
+    Bug fixes:
+        - mixed drawing of lines and bitmaps sometimes had wrong colors
+        - added missing glHintPGI() function
+        - fixed a polygon culling bug
+        - fixed bugs in gluPartialDisk()
+        - Z values in selection mode were wrong
+        - added missing tokens:
+            GL_SMOOTH_POINT_SIZE_RANGE
+            GL_SMOOTH_POINT_SIZE_GRANULARITY
+            GL_SMOOTH_LINE_WIDTH_RANGE
+            GL_SMOOTH_LINE_WIDTH_GRANULARITY
+            GL_ALIASED_POINT_SIZE_RANGE
+            GL_ALIASED_LINE_WIDTH_RANGE
+        - fixed glCopyPixels when copying from back to front buffer
+        - GL_EXT_compiled_vertex_array tokens had _SGI suffix instead of _EXT
+        - glDrawRangeElements(GL_LINES, 0, 1, 2, type, indices) was broken
+        - glDeleteTextures() didn't decrement reference count correctly
+        - GL_SRCA_ALPHA_SATURATE blend mode didn't work correctly
+        - Actual depth of transformation matrix stacks was off by one
+        - 24bpp visuals didn't address pixels correctly
+        - mipmap level of detail (lambda) calculation simplified, more accurate
+        - 101691 - Polygon clipping and GL_LINE
+        - 101928 - Polygon clipping and GL_LINE (same fix as above)
+        - 101808 - Non-glVertexArrays tristrip bug
+        - 101971 - find_last_3f on Dec OSF (worked around)
+        - 102369 - segv on dec osf (possibly a duplicate of the above)
+        - 102893 - orientations of modelview cause segfault
+    New:
+        - updated SVGA Linux driver
+        - added the MESA_FX_NO_SIGNALS env var, see docs/README.3DFX
+        - build libGLw.a (Xt/OpenGL drawing area widget) library by default
+        - changed -O2 to -O3 for a number of gcc configs
+    Changes:
+        - glXCopyContext's mask parameter is now unsigned long, per GLX spec
+</pre>
 
 <p>Please report any problems with this release ASAP. Bugs should be filed on the
 Mesa3D website at sourceforge.<br>
@@ -1356,15 +1347,14 @@ This donation from John/id is very generous.  Keith and I are very
 grateful.
 
 </pre>
-<p>
-</p><h2>May 1, 1999</h2>
-<p>John Carmack made an interesting .plan update yesterday:
 
-</p><ul>
-	<i>"I put together a document on optimizing OpenGL drivers for Q3 that
-	should be helpful to the various Linux 3D teams. <br>
-	</i>http://www.quake3arena.com/news/glopt.html</i>"
-</ul>
+<h2>May 1, 1999</h2>
+<p>John Carmack made an interesting .plan update yesterday:</p>
+<blockquote>
+    <i>"I put together a document on optimizing OpenGL drivers for Q3 that
+    should be helpful to the various Linux 3D teams.</i><br>
+    http://www.quake3arena.com/news/glopt.html"
+</blockquote>
 
 <p>
 </p><h2>April 7, 1999</h2>
