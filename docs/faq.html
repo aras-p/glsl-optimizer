@@ -28,14 +28,13 @@ Last updated: 21 August 2006
 
 
 
-<a name="part1">
-</a><h1><a name="part1">1. High-level Questions and Answers</a></h1>
+<h1 id="part1">1. High-level Questions and Answers</h1>
 
-<h2><a name="part1">1.1 What is Mesa?</a></h2>
+<h2>1.1 What is Mesa?</h2>
 <p>
-<a name="part1">Mesa is an open-source implementation of the OpenGL specification.
+Mesa is an open-source implementation of the OpenGL specification.
 OpenGL is a programming library for writing interactive 3D applications.
-See the </a><a href="http://www.opengl.org/">OpenGL website</a> for more
+See the <a href="http://www.opengl.org/">OpenGL website</a> for more
 information.
 </p>
 <p>
@@ -176,44 +175,43 @@ popular and feature-complete.
 <br>
 
 
-<a name="part2">
-</a><h1><a name="part2">2. Compilation and Installation Problems</a></h1>
+<h1 id="part2">2. Compilation and Installation Problems</h1>
 
 
-<h2><a name="part2">2.1 What's the easiest way to install Mesa?</a></h2>
+<h2>2.1 What's the easiest way to install Mesa?</h2>
 <p>
-<a name="part2">If you're using a Linux-based system, your distro CD most likely already
+If you're using a Linux-based system, your distro CD most likely already
 has Mesa packages (like RPM or DEB) which you can easily install.
-</a></p>
+</p>
 
 
-<h2><a name="part2">2.2 I get undefined symbols such as bgnpolygon, v3f, etc...</a></h2>
+<h2>2.2 I get undefined symbols such as bgnpolygon, v3f, etc...</h2>
 <p>
-<a name="part2">You're application is written in IRIS GL, not OpenGL.
+You're application is written in IRIS GL, not OpenGL.
 IRIS GL was the predecessor to OpenGL and is a different thing (almost)
 entirely.
 Mesa's not the solution.
-</a></p>
+</p>
 
 
-<h2><a name="part2">2.3 Where is the GLUT library?</a></h2>
+<h2>2.3 Where is the GLUT library?</h2>
 <p>
-<a name="part2">GLUT (OpenGL Utility Toolkit) is no longer in the separate MesaGLUT-x.y.z.tar.gz file.
+GLUT (OpenGL Utility Toolkit) is no longer in the separate MesaGLUT-x.y.z.tar.gz file.
 If you don't already have GLUT installed, you should grab 
 <a href="http://freeglut.sourceforge.net/">freeglut</a>.
-</a></p>
+</p>
 
 
-<h2><a name="part2">2.4 Where is the GLw library?</a></h2>
+<h2>2.4 Where is the GLw library?</h2>
 <p>
-<a name="part2">GLw (OpenGL widget library) is now available from a separate <a href="http://cgit.freedesktop.org/mesa/glw/">git repository</a>.  Unless you're using very old Xt/Motif applications with OpenGL, you shouldn't need it.
-</a></p>
+GLw (OpenGL widget library) is now available from a separate <a href="http://cgit.freedesktop.org/mesa/glw/">git repository</a>.  Unless you're using very old Xt/Motif applications with OpenGL, you shouldn't need it.
+</p>
 
 
-<h2><a name="part2">2.5 What's the proper place for the libraries and headers?</a></h2>
+<h2>2.5 What's the proper place for the libraries and headers?</h2>
 <p>
-<a name="part2">On Linux-based systems you'll want to follow the
-</a><a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html"
+On Linux-based systems you'll want to follow the
+<a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html"
 target="_parent">Linux ABI</a> standard.
 Basically you'll want the following:
 </p>
@@ -248,29 +246,28 @@ The GLUT header and library should go in the same directories.
 <br>
 
 
-<a name="part3">
-</a><h1><a name="part3">3. Runtime / Rendering Problems</a></h1>
+<h1 id="part3">3. Runtime / Rendering Problems</h1>
 
-<h2><a name="part3">3.1 Rendering is slow / why isn't my graphics hardware being used?</a></h2>
+<h2>3.1 Rendering is slow / why isn't my graphics hardware being used?</h2>
 <p>
-<a name="part3">Stand-alone Mesa (downloaded as MesaLib-x.y.z.tar.gz) doesn't have any
+Stand-alone Mesa (downloaded as MesaLib-x.y.z.tar.gz) doesn't have any
 support for hardware acceleration (with the exception of the 3DFX Voodoo
 driver).
-</a></p>
+</p>
 <p>
-<a name="part3">What you really want is a DRI or NVIDIA (or another vendor's OpenGL) driver
+What you really want is a DRI or NVIDIA (or another vendor's OpenGL) driver
 for your particular hardware.
-</a></p>
+</p>
 <p>
-<a name="part3">You can run the <code>glxinfo</code> program to learn about your OpenGL
+You can run the <code>glxinfo</code> program to learn about your OpenGL
 library.
 Look for the GL_VENDOR and GL_RENDERER values.
 That will identify who's OpenGL library you're using and what sort of
 hardware it has detected.
-</a></p>
+</p>
 <p>
-<a name="part3">If your DRI-based driver isn't working, go to the
-</a><a href="http://dri.sf.net/" target="_parent">DRI website</a> for trouble-shooting information.
+If your DRI-based driver isn't working, go to the
+<a href="http://dri.sf.net/" target="_parent">DRI website</a> for trouble-shooting information.
 </p>
 
 
@@ -338,10 +335,9 @@ may introduce rasterization artifacts; see the leading comments in
 <br>
 
 
-<a name="part4">
-</a><h1><a name="part4">4. Developer Questions</a></h1>
+<h1 id="part4">4. Developer Questions</h1>
 
-<h2>4.1 How can I contribute?</a></h2>
+<h2>4.1 How can I contribute?</h2>
 <p>
 First, join the <a href="http://www.mesa3d.org/lists.html">Mesa3d-dev
 mailing list</a>.

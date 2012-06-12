@@ -47,8 +47,7 @@ differnt GL context current.  This means that poor old <tt>glVertex3fv</tt>
 has to know which GL context is current in the thread where it is being
 called.</p>
 
-<A NAME="overview"/>
-<H2>2. Overview of Mesa's Implementation</H2>
+<h2 id="overview">2. Overview of Mesa's Implementation</h2>
 
 <p>Mesa uses two per-thread pointers.  The first pointer stores the address
 of the context current in the thread, and the second pointer stores the
@@ -246,8 +245,7 @@ step is to add the correct <tt>#ifdef</tt> magic to
 <tt>src/mesa/glapi/glapi_dispatch.c</tt> to prevent the C version of the
 dispatch functions from being built.</p>
 
-<A NAME="fixedsize"/>
-<H3>3.4. Fixed-Length Dispatch Stubs</H3>
+<h3 id="fixedsize">3.4. Fixed-Length Dispatch Stubs</h3>
 
 <p>To implement <tt>glXGetProcAddress</tt>, Mesa stores a table that
 associates function names with pointers to those functions.  This table is
@@ -266,8 +264,7 @@ dispatch stub.</p>
 <tt>src/mesa/glapi/glapi.c</tt> just before <tt>glprocs.h</tt> is
 included.</p>
 
-<A NAME="autogen"/>
-<H2>4. Automatic Generation of Dispatch Stubs</H2>
+<h2 id="autogen">4. Automatic Generation of Dispatch Stubs</h2>
 
 </body>
 </html>
