@@ -32,6 +32,7 @@
 #define HASH_TABLE_H
 
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
@@ -125,7 +126,7 @@ extern void hash_table_insert(struct hash_table *ht, void *data,
  *
  * \sa hash_table_insert
  */
-extern int hash_table_replace(struct hash_table *ht, void *data,
+extern bool hash_table_replace(struct hash_table *ht, void *data,
     const void *key);
 
 /**
@@ -264,9 +265,9 @@ public:
        */
       assert(value != UINT_MAX);
       char *dup_key = strdup(key);
-      int result = hash_table_replace(this->ht,
-				      (void *) (intptr_t) (value + 1),
-				      dup_key);
+      bool result = hash_table_replace(this->ht,
+				       (void *) (intptr_t) (value + 1),
+				       dup_key);
       if (result)
 	 free(dup_key);
    }
