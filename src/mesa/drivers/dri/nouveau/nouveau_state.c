@@ -495,6 +495,13 @@ nouveau_update_state(struct gl_context *ctx, GLbitfield new_state)
 		context_dirty(ctx, MATERIAL_BACK_SHININESS);
 	}
 
+	if (new_state & _NEW_TEXTURE) {
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+			if (ctx->Texture.Unit[i].Sampler)
+				context_dirty_i(ctx, TEX_OBJ, i);
+		}
+	}
+
 	_swrast_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
 

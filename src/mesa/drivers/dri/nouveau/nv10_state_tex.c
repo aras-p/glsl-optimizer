@@ -31,6 +31,7 @@
 #include "nv10_3d.xml.h"
 #include "nouveau_util.h"
 #include "nv10_driver.h"
+#include "main/samplerobj.h"
 
 void
 nv10_emit_tex_gen(struct gl_context *ctx, int emit)
@@ -159,6 +160,7 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 	struct gl_texture_object *t;
 	struct nouveau_surface *s;
 	struct gl_texture_image *ti;
+	const struct gl_sampler_object *sa;
 	uint32_t tx_format, tx_filter, tx_enable;
 
 	PUSH_RESET(push, BUFCTX_TEX(i));
@@ -172,22 +174,23 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 	t = ctx->Texture.Unit[i]._Current;
 	s = &to_nouveau_texture(t)->surfaces[t->BaseLevel];
 	ti = t->Image[0][t->BaseLevel];
+	sa = _mesa_get_samplerobj(ctx, i);
 
 	if (!nouveau_texture_validate(ctx, t))
 		return;
 
 	/* Recompute the texturing registers. */
-	tx_format = nvgl_wrap_mode(t->Sampler.WrapT) << 28
-		| nvgl_wrap_mode(t->Sampler.WrapS) << 24
+	tx_format = nvgl_wrap_mode(sa->WrapT) << 28
+		| nvgl_wrap_mode(sa->WrapS) << 24
 		| ti->HeightLog2 << 20
 		| ti->WidthLog2 << 16
 		| 5 << 4 | 1 << 12;
 
-	tx_filter = nvgl_filter_mode(t->Sampler.MagFilter) << 28
-		| nvgl_filter_mode(t->Sampler.MinFilter) << 24;
+	tx_filter = nvgl_filter_mode(sa->MagFilter) << 28
+		| nvgl_filter_mode(sa->MinFilter) << 24;
 
 	tx_enable = NV10_3D_TEX_ENABLE_ENABLE
-		| log2i(t->Sampler.MaxAnisotropy) << 4;
+		| log2i(sa->MaxAnisotropy) << 4;
 
 	if (t->Target == GL_TEXTURE_RECTANGLE) {
 		BEGIN_NV04(push, NV10_3D(TEX_NPOT_PITCH(i)), 1);
@@ -200,11 +203,11 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 		tx_format |= get_tex_format_pot(ti);
 	}
 
-	if (t->Sampler.MinFilter != GL_NEAREST &&
-	    t->Sampler.MinFilter != GL_LINEAR) {
-		int lod_min = t->Sampler.MinLod;
-		int lod_max = MIN2(t->Sampler.MaxLod, t->_MaxLambda);
-		int lod_bias = t->Sampler.LodBias
+	if (sa->MinFilter != GL_NEAREST &&
+	    sa->MinFilter != GL_LINEAR) {
+		int lod_min = sa->MinLod;
+		int lod_max = MIN2(sa->MaxLod, t->_MaxLambda);
+		int lod_bias = sa->LodBias
 			+ ctx->Texture.Unit[i].LodBias;
 
 		lod_max = CLAMP(lod_max, 0, 15);
