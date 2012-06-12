@@ -33,8 +33,10 @@ _mesa_get_samplerobj(struct gl_context *ctx, GLuint unit)
 {
    if (ctx->Texture.Unit[unit].Sampler)
       return ctx->Texture.Unit[unit].Sampler;
-   else
+   else if (ctx->Texture.Unit[unit]._Current)
       return &ctx->Texture.Unit[unit]._Current->Sampler;
+   else
+      return NULL;
 }
 
 
