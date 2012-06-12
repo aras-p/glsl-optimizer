@@ -1350,15 +1350,13 @@ blitframebuffer_texture(struct gl_context *ctx,
       if (readAtt && readAtt->Texture) {
          const struct gl_texture_object *texObj = readAtt->Texture;
          const GLuint srcLevel = readAtt->TextureLevel;
-         const GLenum minFilterSave = texObj->Sampler.MinFilter;
-         const GLenum magFilterSave = texObj->Sampler.MagFilter;
          const GLint baseLevelSave = texObj->BaseLevel;
          const GLint maxLevelSave = texObj->MaxLevel;
-         const GLenum wrapSSave = texObj->Sampler.WrapS;
-         const GLenum wrapTSave = texObj->Sampler.WrapT;
-         const GLenum srgbSave = texObj->Sampler.sRGBDecode;
          const GLenum fbo_srgb_save = ctx->Color.sRGBEnabled;
          const GLenum target = texObj->Target;
+         GLuint sampler, samplerSave =
+            ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
+            ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
 
          if (drawAtt->Texture == readAtt->Texture) {
             /* Can't use same texture as both the source and dest.  We need
@@ -1373,6 +1371,9 @@ blitframebuffer_texture(struct gl_context *ctx,
             return mask;
          }
 
+         _mesa_GenSamplers(1, &sampler);
+         _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
+
          /*
          printf("Blit from texture!\n");
          printf("  srcAtt %p  dstAtt %p\n", readAtt, drawAtt);
@@ -1381,18 +1382,18 @@ blitframebuffer_texture(struct gl_context *ctx,
 
          /* Prepare src texture state */
          _mesa_BindTexture(target, texObj->Name);
-         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
          if (target != GL_TEXTURE_RECTANGLE_ARB) {
             _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
             _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
          }
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	 /* Always do our blits with no sRGB decode or encode.*/
 	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
-	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
+	    _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
 				GL_SKIP_DECODE_EXT);
 	 }
          if (ctx->Extensions.EXT_framebuffer_sRGB) {
@@ -1452,20 +1453,16 @@ blitframebuffer_texture(struct gl_context *ctx,
          /* Restore texture object state, the texture binding will
           * be restored by _mesa_meta_end().
           */
-         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
          if (target != GL_TEXTURE_RECTANGLE_ARB) {
             _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
             _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
          }
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
-	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
-	    _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
-	 }
 	 if (ctx->Extensions.EXT_framebuffer_sRGB && fbo_srgb_save) {
 	    _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
 	 }
+
+         _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
+         _mesa_DeleteSamplers(1, &sampler);
 
          /* Done with color buffer */
          mask &= ~GL_COLOR_BUFFER_BIT;
