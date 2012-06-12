@@ -145,7 +145,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->Sampler.CompareMode = GL_NONE;         /* ARB_shadow */
    obj->Sampler.CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->Sampler.CompareFailValue = 0.0F;       /* ARB_shadow_ambient */
-   obj->Sampler.DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
+   obj->DepthMode = GL_LUMINANCE;
    obj->Sampler.CubeMapSeamless = GL_FALSE;
    obj->Swizzle[0] = GL_RED;
    obj->Swizzle[1] = GL_GREEN;
@@ -259,7 +259,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->Sampler.CompareFunc = src->Sampler.CompareFunc;
    dest->Sampler.CompareFailValue = src->Sampler.CompareFailValue;
    dest->Sampler.CubeMapSeamless = src->Sampler.CubeMapSeamless;
-   dest->Sampler.DepthMode = src->Sampler.DepthMode;
+   dest->DepthMode = src->DepthMode;
    dest->Sampler.sRGBDecode = src->Sampler.sRGBDecode;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;

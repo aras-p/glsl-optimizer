@@ -168,7 +168,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    i915->state.tex_offset[unit] = intelObj->mt->offset;
 
    format = translate_texture_format(firstImage->TexFormat,
-				     sampler->DepthMode);
+				     tObj->DepthMode);
    pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
 
    state[I915_TEXREG_MS3] =

@@ -3468,7 +3468,7 @@ sample_depth_texture( struct gl_context *ctx,
 
          result = shadow_compare(function, depthRef, depthSample, ambient);
 
-         switch (tObj->Sampler.DepthMode) {
+         switch (tObj->DepthMode) {
          case GL_LUMINANCE:
             ASSIGN_4V(texel[i], result, result, result, 1.0F);
             break;
@@ -3563,7 +3563,7 @@ sample_depth_texture( struct gl_context *ctx,
                                   depth00, depth01, depth10, depth11,
                                   ambient, wi, wj);
 
-         switch (tObj->Sampler.DepthMode) {
+         switch (tObj->DepthMode) {
          case GL_LUMINANCE:
             ASSIGN_4V(texel[i], result, result, result, 1.0F);
             break;

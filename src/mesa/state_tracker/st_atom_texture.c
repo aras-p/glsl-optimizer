@@ -147,7 +147,7 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
    struct pipe_sampler_view templ;
    GLuint swizzle = apply_depthmode(stObj->pt->format,
                                     stObj->base._Swizzle,
-                                    samp->DepthMode);
+                                    stObj->base.DepthMode);
 
    u_sampler_view_default_template(&templ,
                                    stObj->pt,
@@ -240,7 +240,7 @@ update_single_texture(struct st_context *st,
    if (stObj->sampler_view) {
       if (check_sampler_swizzle(stObj->sampler_view,
 				stObj->base._Swizzle,
-				samp->DepthMode) ||
+				stObj->base.DepthMode) ||
 	  (st_view_format != stObj->sampler_view->format) ||
 	  stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
 	 pipe_sampler_view_reference(&stObj->sampler_view, NULL);

@@ -374,7 +374,7 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	     * format overrides because shadow comparison always returns the
 	     * result of the comparison in all channels anyway.
 	     */
-	    switch (sampler->DepthMode) {
+	    switch (t->DepthMode) {
 	    case GL_ALPHA:
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;

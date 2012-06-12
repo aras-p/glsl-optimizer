@@ -806,7 +806,7 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
                                 samp->CompareFunc);
          }
          if (ctx->Extensions.ARB_depth_texture)
-            _mesa_TexParameteri(target, GL_DEPTH_TEXTURE_MODE, samp->DepthMode);
+            _mesa_TexParameteri(target, GL_DEPTH_TEXTURE_MODE, obj->DepthMode);
       }
 
       /* remove saved references to the texture objects */

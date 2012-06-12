@@ -296,7 +296,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(mt->format,
                                                    firstImage->InternalFormat,
-                                                   sampler->DepthMode,
+                                                   tObj->DepthMode,
                                                    sampler->sRGBDecode);
    if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
       surf->ss0.cube_pos_x = 1;

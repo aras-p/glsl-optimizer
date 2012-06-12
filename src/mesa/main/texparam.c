@@ -383,14 +383,14 @@ set_tex_parameteri(struct gl_context *ctx,
 
    case GL_DEPTH_TEXTURE_MODE_ARB:
       if (ctx->Extensions.ARB_depth_texture) {
-         if (texObj->Sampler.DepthMode == params[0])
+         if (texObj->DepthMode == params[0])
             return GL_FALSE;
          if (params[0] == GL_LUMINANCE ||
              params[0] == GL_INTENSITY ||
              params[0] == GL_ALPHA ||
              (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED)) {
             flush(ctx);
-            texObj->Sampler.DepthMode = params[0];
+            texObj->DepthMode = params[0];
             return GL_TRUE;
          }
          goto invalid_param;
@@ -1157,7 +1157,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       case GL_DEPTH_TEXTURE_MODE_ARB:
          if (!ctx->Extensions.ARB_depth_texture)
             goto invalid_pname;
-         *params = (GLfloat) obj->Sampler.DepthMode;
+         *params = (GLfloat) obj->DepthMode;
          break;
       case GL_TEXTURE_LOD_BIAS:
          *params = obj->Sampler.LodBias;
@@ -1303,7 +1303,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_DEPTH_TEXTURE_MODE_ARB:
          if (!ctx->Extensions.ARB_depth_texture)
             goto invalid_pname;
-         *params = (GLint) obj->Sampler.DepthMode;
+         *params = (GLint) obj->DepthMode;
          break;
       case GL_TEXTURE_LOD_BIAS:
          *params = (GLint) obj->Sampler.LodBias;
