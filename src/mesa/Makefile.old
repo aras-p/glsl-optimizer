@@ -152,12 +152,12 @@ install: default $(DRICORE_INSTALL_TARGET)
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
 	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
-	              $(MAKE) install-headers install-osmesa || exit 1 ; \
+	              $(MAKE) -f Makefile.old install-headers install-osmesa || exit 1 ; \
 	            else \
-	              $(MAKE) install-osmesa || exit 1 ; \
+	              $(MAKE) -f Makefile.old install-osmesa || exit 1 ; \
 	            fi ;; \
-	    dri)    $(MAKE) install-libgl-pc install-dri || exit 1 ;; \
-	    *)      $(MAKE) install-libgl-pc || exit 1 ;; \
+	    dri)    $(MAKE) -f Makefile.old install-libgl-pc install-dri || exit 1 ;; \
+	    *)      $(MAKE) -f Makefile.old install-libgl-pc || exit 1 ;; \
 	  esac ; \
 	done
 
