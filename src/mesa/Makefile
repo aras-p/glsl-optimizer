@@ -135,7 +135,7 @@ asm_subdirs:
 ######################################################################
 # Dependency generation
 
-depend: $(ALL_FILES)
+depend: $(ALL_FILES) main/git_sha1.h
 	@ echo "running $(MKDEP)"
 	@ touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) $(MESA_CPPFLAGS) \
