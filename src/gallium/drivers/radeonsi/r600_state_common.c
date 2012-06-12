@@ -666,12 +666,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 			r600_flush_depth_textures(rctx);
 	}
 
-	if (rctx->shader_dirty) {
-		si_pipe_shader_destroy(&rctx->context, rctx->vs_shader);
-	}
-
-	if (rctx->shader_dirty ||
-	    (rctx->ps_shader->shader.fs_write_all &&
+	if ((rctx->ps_shader->shader.fs_write_all &&
 	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)) ||
 	    (rctx->sprite_coord_enable &&
 	     (rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable))) {
