@@ -302,6 +302,7 @@ brwCreateContext(int api,
 
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
+   intel->hw_ctx = drm_intel_gem_context_create(intel->bufmgr);
 
    brw_init_state( brw );
 

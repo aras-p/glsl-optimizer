@@ -80,6 +80,8 @@ static void brw_destroy_context( struct intel_context *intel )
 
    free(brw->curbe.last_buf);
    free(brw->curbe.next_buf);
+
+   drm_intel_gem_context_destroy(intel->hw_ctx);
 }
 
 /**
@@ -166,11 +168,16 @@ static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
-   /* Mark all context state as needing to be re-emitted.
-    * This is probably not as severe as on 915, since almost all of our state
-    * is just in referenced buffers.
+   /* If the kernel supports hardware contexts, then most hardware state is
+    * preserved between batches; we only need to re-emit state that is required
+    * to be in every batch.  Otherwise we need to re-emit all the state that
+    * would otherwise be stored in the context (which for all intents and
+    * purposes means everything).
     */
-   brw->state.dirty.brw |= BRW_NEW_CONTEXT | BRW_NEW_BATCH;
+   if (intel->hw_ctx == NULL)
+      brw->state.dirty.brw |= BRW_NEW_CONTEXT;
+
+   brw->state.dirty.brw |= BRW_NEW_BATCH;
 
    /* Assume that the last command before the start of our batch was a
     * primitive, for safety.

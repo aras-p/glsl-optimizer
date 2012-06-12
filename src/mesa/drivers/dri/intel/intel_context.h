@@ -225,6 +225,8 @@ struct intel_context
 
    int urb_size;
 
+   drm_intel_context *hw_ctx;
+
    struct intel_batchbuffer batch;
 
    drm_intel_bo *first_post_swapbuffers_batch;
