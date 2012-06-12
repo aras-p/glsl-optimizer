@@ -32,7 +32,7 @@ The unique features of the Xlib driver follows.
 </p>
 
 
-<H2>X Visual Selection</H2>
+<h2>X Visual Selection</h2>
 <p>
 Mesa supports RGB(A) rendering into almost any X visual type and depth.
 </p>
@@ -69,7 +69,7 @@ Here are some examples:
 </pre>
 
 
-<H2>Double Buffering</H2>
+<h2>Double Buffering</h2>
 <p>
 Mesa can use either an X Pixmap or XImage as the back color buffer when in
 double-buffer mode.
@@ -96,7 +96,7 @@ for your application.
 </p>
 
 
-<H2>Colormaps</H2>
+<h2>Colormaps</h2>
 <p>
 When using Mesa directly or with GLX, it's up to the application
 writer to create a window with an appropriate colormap.  The GLUT
@@ -117,7 +117,7 @@ significant.
 </p>
 
 
-<H2>Gamma Correction</H2>
+<h2>Gamma Correction</h2>
 <p>
 To compensate for the nonlinear relationship between pixel values
 and displayed intensities, there is a gamma correction feature in
@@ -170,7 +170,7 @@ the Gamma FAQ</a>
 </p>
 
 
-<H2>Overlay Planes</H2>
+<h2>Overlay Planes</h2>
 <p>
 Hardware overlay planes are supported by the Xlib driver.  To
 determine if your X server has overlay support you can test for the
@@ -181,7 +181,7 @@ SERVER_OVERLAY_VISUALS property:
 </pre>
 
 
-<H2>HPCR Dithering</H2>
+<h2>HPCR Dithering</h2>
 <p>
 If you set the <b>MESA_HPCR_CLEAR</b> environment variable then dithering
 will be used when clearing the color buffer.  This is only applicable
@@ -190,7 +190,7 @@ This incurs a small performance penalty.
 </p>
 
 
-<H2>Extensions</H2>
+<h2>Extensions</h2>
 <p>
 The following MESA-specific extensions are implemented in the Xlib driver.
 </p>
@@ -249,7 +249,7 @@ just before an X window is destroyed.  For example:
 This extension was added in Mesa 2.0.
 </p>
 
-<H3>GLX_MESA_copy_sub_buffer</H3>
+<h3>GLX_MESA_copy_sub_buffer</h3>
 <p>
 This extension adds the glXCopySubBufferMESA() function.  It works
 like glXSwapBuffers() but only copies a sub-region of the window
@@ -262,7 +262,7 @@ instead of the whole window.
 This extension was added in Mesa 2.6
 </p>
 
-<h2>Summary of X-related environment variables</H2>
+<h2>Summary of X-related environment variables</h2>
 <pre>
    MESA_RGB_VISUAL - specifies the X visual and depth for RGB mode (X only)
    MESA_CI_VISUAL - specifies the X visual and depth for CI mode (X only)
