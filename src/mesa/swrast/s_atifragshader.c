@@ -23,6 +23,7 @@
 #include "main/colormac.h"
 #include "main/macros.h"
 #include "main/atifragshader.h"
+#include "main/samplerobj.h"
 #include "swrast/s_atifragshader.h"
 #include "swrast/s_context.h"
 
@@ -49,8 +50,9 @@ fetch_texel(struct gl_context * ctx, const GLfloat texcoord[4], GLfloat lambda,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
-                               1, (const GLfloat(*)[4]) texcoord,
+   swrast->TextureSample[unit](ctx, _mesa_get_samplerobj(ctx, unit),
+                               ctx->Texture.Unit[unit]._Current,
+			       1, (const GLfloat(*)[4]) texcoord,
                                &lambda, (GLfloat (*)[4]) color);
 }
 

@@ -35,6 +35,7 @@
 #include "main/colormac.h"
 #include "main/macros.h"
 #include "main/imports.h"
+#include "main/samplerobj.h"
 #include "math/m_xform.h"
 #include "program/prog_instruction.h"
 #include "program/prog_statevars.h"
@@ -197,7 +198,8 @@ vp_fetch_texel(struct gl_context *ctx, const GLfloat texcoord[4], GLfloat lambda
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
+   swrast->TextureSample[unit](ctx, _mesa_get_samplerobj(ctx, unit),
+                               ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat (*)[4]) texcoord,
                                &lambda,  (GLfloat (*)[4]) color);
 }

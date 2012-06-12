@@ -480,9 +480,7 @@ _swrast_update_texture_samplers(struct gl_context *ctx)
       /* Note: If tObj is NULL, the sample function will be a simple
        * function that just returns opaque black (0,0,0,1).
        */
-      if (tObj) {
-         _mesa_update_fetch_functions(tObj);
-      }
+      _mesa_update_fetch_functions(ctx, u);
       swrast->TextureSample[u] =
          _swrast_choose_texture_sample_func(ctx, tObj,
                                             _mesa_get_samplerobj(ctx, u));

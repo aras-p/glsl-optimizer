@@ -38,6 +38,7 @@
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/samplerobj.h"
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"
@@ -497,14 +498,15 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
             const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
             const struct swrast_texture_image *swImg =
                swrast_texture_image_const(img);
+            const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, u);
 
-            needLambda = (obj->Sampler.MinFilter != obj->Sampler.MagFilter)
+            needLambda = (samp->MinFilter != samp->MagFilter)
                || _swrast_use_fragment_program(ctx);
             /* LOD is calculated directly in the ansiotropic filter, we can
              * skip the normal lambda function as the result is ignored.
              */
-            if (obj->Sampler.MaxAnisotropy > 1.0 &&
-                obj->Sampler.MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
+            if (samp->MaxAnisotropy > 1.0 &&
+                samp->MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
                needLambda = GL_FALSE;
             }
             texW = swImg->WidthScale;

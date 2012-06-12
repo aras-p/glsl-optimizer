@@ -52,6 +52,7 @@
 
 
 typedef void (*texture_sample_func)(struct gl_context *ctx,
+                                    const struct gl_sampler_object *samp,
                                     const struct gl_texture_object *tObj,
                                     GLuint n, const GLfloat texcoords[][4],
                                     const GLfloat lambda[], GLfloat rgba[][4]);

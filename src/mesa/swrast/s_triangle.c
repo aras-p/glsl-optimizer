@@ -36,6 +36,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/state.h"
+#include "main/samplerobj.h"
 #include "program/prog_instruction.h"
 
 #include "s_aatriangle.h"
@@ -1045,18 +1046,25 @@ _swrast_choose_triangle( struct gl_context *ctx )
           swrast->_FogEnabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
+         const struct gl_sampler_object *samp;
          const struct gl_texture_image *texImg;
          const struct swrast_texture_image *swImg;
          GLenum minFilter, magFilter, envMode;
          gl_format format;
          texObj2D = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
+         if (ctx->Texture.Unit[0].Sampler)
+            samp = ctx->Texture.Unit[0].Sampler;
+         else if (texObj2D)
+            samp = &texObj2D->Sampler;
+         else
+            samp = NULL;
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
          swImg = swrast_texture_image_const(texImg);
 
          format = texImg ? texImg->TexFormat : MESA_FORMAT_NONE;
-         minFilter = texObj2D ? texObj2D->Sampler.MinFilter : GL_NONE;
-         magFilter = texObj2D ? texObj2D->Sampler.MagFilter : GL_NONE;
+         minFilter = texObj2D ? samp->MinFilter : GL_NONE;
+         magFilter = texObj2D ? samp->MagFilter : GL_NONE;
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
@@ -1065,8 +1073,8 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture._EnabledUnits == 0x1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
-             && texObj2D->Sampler.WrapS == GL_REPEAT
-             && texObj2D->Sampler.WrapT == GL_REPEAT
+             && samp->WrapS == GL_REPEAT
+             && samp->WrapT == GL_REPEAT
              && texObj2D->_Swizzle == SWIZZLE_NOOP
              && swImg->_IsPowerOfTwo
              && texImg->Border == 0

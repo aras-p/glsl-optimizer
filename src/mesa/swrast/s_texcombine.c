@@ -29,6 +29,7 @@
 #include "main/colormac.h"
 #include "main/imports.h"
 #include "main/pixeltransfer.h"
+#include "main/samplerobj.h"
 #include "program/prog_instruction.h"
 
 #include "s_context.h"
@@ -652,7 +653,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
             span->array->attribs[FRAG_ATTRIB_TEX0 +
                ctx->Texture.Unit[unit].BumpTarget - GL_TEXTURE0];
 
-         const struct gl_texture_object *curObj = texUnit->_Current;
+         const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
          GLfloat *lambda = span->array->lambda[unit];
          float4_array texels = get_texel_array(swrast, unit);
          GLuint i;
@@ -663,9 +664,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias + curObj->Sampler.LodBias != 0.0F) {
+            if (texUnit->LodBias + samp->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
-               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->Sampler.LodBias,
+               const GLfloat bias = CLAMP(texUnit->LodBias + samp->LodBias,
                                           -ctx->Const.MaxTextureLodBias,
                                           ctx->Const.MaxTextureLodBias);
                GLuint i;
@@ -674,11 +675,11 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
 
-            if (curObj->Sampler.MinLod != -1000.0 ||
-                curObj->Sampler.MaxLod != 1000.0) {
+            if (samp->MinLod != -1000.0 ||
+                samp->MaxLod != 1000.0) {
                /* apply LOD clamping to lambda */
-               const GLfloat min = curObj->Sampler.MinLod;
-               const GLfloat max = curObj->Sampler.MaxLod;
+               const GLfloat min = samp->MinLod;
+               const GLfloat max = samp->MaxLod;
                GLuint i;
                for (i = 0; i < span->end; i++) {
                   GLfloat l = lambda[i];
@@ -688,8 +689,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
          }
 
          /* Sample the texture (span->end = number of fragments) */
-         swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,
-                                      texcoords, lambda, texels );
+         swrast->TextureSample[unit]( ctx, samp,
+                                      ctx->Texture.Unit[unit]._Current,
+                                      span->end, texcoords, lambda, texels );
 
          /* manipulate the span values of the bump target
             not sure this can work correctly even ignoring
@@ -714,14 +716,15 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
+         const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
          GLfloat *lambda = span->array->lambda[unit];
          float4_array texels = get_texel_array(swrast, unit);
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias + curObj->Sampler.LodBias != 0.0F) {
+            if (texUnit->LodBias + samp->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
-               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->Sampler.LodBias,
+               const GLfloat bias = CLAMP(texUnit->LodBias + samp->LodBias,
                                           -ctx->Const.MaxTextureLodBias,
                                           ctx->Const.MaxTextureLodBias);
                GLuint i;
@@ -730,11 +733,11 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
 
-            if (curObj->Sampler.MinLod != -1000.0 ||
-                curObj->Sampler.MaxLod != 1000.0) {
+            if (samp->MinLod != -1000.0 ||
+                samp->MaxLod != 1000.0) {
                /* apply LOD clamping to lambda */
-               const GLfloat min = curObj->Sampler.MinLod;
-               const GLfloat max = curObj->Sampler.MaxLod;
+               const GLfloat min = samp->MinLod;
+               const GLfloat max = samp->MaxLod;
                GLuint i;
                for (i = 0; i < span->end; i++) {
                   GLfloat l = lambda[i];
@@ -742,8 +745,8 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
          }
-         else if (curObj->Sampler.MaxAnisotropy > 1.0 &&
-                  curObj->Sampler.MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
+         else if (samp->MaxAnisotropy > 1.0 &&
+                  samp->MinFilter == GL_LINEAR_MIPMAP_LINEAR) {
             /* sample_lambda_2d_aniso is beeing used as texture_sample_func,
              * it requires the current SWspan *span as an additional parameter.
              * In order to keep the same function signature, the unused lambda
@@ -756,8 +759,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
          }
 
          /* Sample the texture (span->end = number of fragments) */
-         swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,
-                                      texcoords, lambda, texels );
+         swrast->TextureSample[unit]( ctx, samp,
+                                      ctx->Texture.Unit[unit]._Current,
+                                      span->end, texcoords, lambda, texels );
 
          /* GL_EXT_texture_swizzle */
          if (curObj->_Swizzle != SWIZZLE_NOOP) {

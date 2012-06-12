@@ -41,6 +41,7 @@
 #include "main/texcompress_rgtc.h"
 #include "main/texcompress_etc.h"
 #include "main/teximage.h"
+#include "main/samplerobj.h"
 #include "s_context.h"
 #include "s_texfetch.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
@@ -1147,13 +1148,14 @@ _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
  * Initialize the texture image's FetchTexel methods.
  */
 static void
-set_fetch_functions(struct swrast_texture_image *texImage, GLuint dims)
+set_fetch_functions(struct gl_sampler_object *samp,
+                    struct swrast_texture_image *texImage, GLuint dims)
 {
    gl_format format = texImage->Base.TexFormat;
 
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
-   if (texImage->Base.TexObject->Sampler.sRGBDecode == GL_SKIP_DECODE_EXT &&
+   if (samp->sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }
@@ -1163,17 +1165,25 @@ set_fetch_functions(struct swrast_texture_image *texImage, GLuint dims)
 }
 
 void
-_mesa_update_fetch_functions(struct gl_texture_object *texObj)
+_mesa_update_fetch_functions(struct gl_context *ctx, GLuint unit)
 {
+   struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+   struct gl_sampler_object *samp;
    GLuint face, i;
    GLuint dims;
+
+   if (!texObj)
+      return;
+
+   samp = _mesa_get_samplerobj(ctx, unit);
 
    dims = _mesa_get_texture_dimensions(texObj->Target);
 
    for (face = 0; face < 6; face++) {
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
          if (texObj->Image[face][i]) {
-	    set_fetch_functions(swrast_texture_image(texObj->Image[face][i]),
+	    set_fetch_functions(samp,
+                                swrast_texture_image(texObj->Image[face][i]),
                                 dims);
          }
       }
