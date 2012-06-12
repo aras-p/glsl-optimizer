@@ -60,6 +60,9 @@ fixup_mirroring(bool &mirror, GLint &coord0, GLint &coord1)
  * For clarity, the nomenclature of this function assumes we are clipping and
  * scissoring the X coordinate; the exact same logic applies for Y
  * coordinates.
+ *
+ * Note: this function may also be used to account for clipping of source
+ * coordinates, by swapping the roles of src and dst.
  */
 static inline bool
 clip_or_scissor(bool mirror, GLint &src_x0, GLint &src_x1, GLint &dst_x0,
@@ -203,9 +206,14 @@ try_blorp_blit(struct intel_context *intel,
       return true;
    }
 
-   /* TODO: Clipping the source rectangle is not yet implemented. */
-   if (srcX0 < 0 || (GLuint) srcX1 > read_fb->Width) return false;
-   if (srcY0 < 0 || (GLuint) srcY1 > read_fb->Height) return false;
+   /* If the source rectangle needs to be clipped or scissored, do so. */
+   if (!(clip_or_scissor(mirror_x, dstX0, dstX1, srcX0, srcX1,
+                         0, read_fb->Width) &&
+         clip_or_scissor(mirror_y, dstY0, dstY1, srcY0, srcY1,
+                         0, read_fb->Height))) {
+      /* Everything got clipped/scissored away, so the blit was successful. */
+      return true;
+   }
 
    /* Get ready to blit.  This includes depth resolving the src and dst
     * buffers if necessary.
