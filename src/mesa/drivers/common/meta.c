@@ -3410,8 +3410,10 @@ decompress_texture_image(struct gl_context *ctx,
       const GLint maxLevelSave = texObj->MaxLevel;
 
       /* restrict sampling to the texture level of interest */
-      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, texImage->Level);
-      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, texImage->Level);
+      if (target != GL_TEXTURE_RECTANGLE_ARB) {
+         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, texImage->Level);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, texImage->Level);
+      }
 
       /* No sRGB decode or encode.*/
       if (ctx->Extensions.EXT_framebuffer_sRGB) {
