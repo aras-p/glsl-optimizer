@@ -1865,8 +1865,7 @@ _mesa_prepare_mipmap_level(struct gl_context *ctx,
                                     width, height, depth,
                                     border, intFormat, format);
 
-         ctx->Driver.AllocTextureImageBuffer(ctx, dstImage,
-                                             format, width, height, depth);
+         ctx->Driver.AllocTextureImageBuffer(ctx, dstImage);
 
          /* in case the mipmap level is part of an FBO: */
          _mesa_update_fbo_texture(ctx, texObj, face, level);

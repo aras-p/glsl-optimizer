@@ -327,9 +327,7 @@ struct dd_function_table {
 
    /** Called to allocate memory for a single texture image */
    GLboolean (*AllocTextureImageBuffer)(struct gl_context *ctx,
-                                        struct gl_texture_image *texImage,
-                                        gl_format format, GLsizei width,
-                                        GLsizei height, GLsizei depth);
+                                        struct gl_texture_image *texImage);
 
    /** Free the memory for a single texture image */
    void (*FreeTextureImageBuffer)(struct gl_context *ctx,

@@ -63,18 +63,12 @@ _swrast_delete_texture_image(struct gl_context *ctx,
  */
 GLboolean
 _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
-                                   struct gl_texture_image *texImage,
-                                   gl_format format, GLsizei width,
-                                   GLsizei height, GLsizei depth)
+                                   struct gl_texture_image *texImage)
 {
    struct swrast_texture_image *swImg = swrast_texture_image(texImage);
-   GLuint bytes = _mesa_format_image_size(format, width, height, depth);
+   GLuint bytes = _mesa_format_image_size(texImage->TexFormat, texImage->Width,
+                                          texImage->Height, texImage->Depth);
    GLuint i;
-
-   /* This _should_ be true (revisit if these ever fail) */
-   assert(texImage->Width == width);
-   assert(texImage->Height == height);
-   assert(texImage->Depth == depth);
 
    assert(!swImg->Buffer);
    swImg->Buffer = _mesa_align_malloc(bytes, 512);
@@ -82,21 +76,21 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
       return GL_FALSE;
 
    /* RowStride and ImageOffsets[] describe how to address texels in 'Data' */
-   swImg->RowStride = width;
+   swImg->RowStride = texImage->Width;
 
    /* Allocate the ImageOffsets array and initialize to typical values.
     * We allocate the array for 1D/2D textures too in order to avoid special-
     * case code in the texstore routines.
     */
-   swImg->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
+   swImg->ImageOffsets = (GLuint *) malloc(texImage->Depth * sizeof(GLuint));
    if (!swImg->ImageOffsets)
       return GL_FALSE;
 
-   for (i = 0; i < depth; i++) {
-      swImg->ImageOffsets[i] = i * width * height;
+   for (i = 0; i < texImage->Depth; i++) {
+      swImg->ImageOffsets[i] = i * texImage->Width * texImage->Height;
    }
 
-   _swrast_init_texture_image(texImage, width, height, depth);
+   _swrast_init_texture_image(texImage);
 
    return GL_TRUE;
 }
@@ -110,14 +104,13 @@ _swrast_alloc_texture_image_buffer(struct gl_context *ctx,
  * Returns GL_TRUE on success, GL_FALSE on memory allocation failure.
  */
 void
-_swrast_init_texture_image(struct gl_texture_image *texImage, GLsizei width,
-                           GLsizei height, GLsizei depth)
+_swrast_init_texture_image(struct gl_texture_image *texImage)
 {
    struct swrast_texture_image *swImg = swrast_texture_image(texImage);
 
-   if ((width == 1 || _mesa_is_pow_two(texImage->Width2)) &&
-       (height == 1 || _mesa_is_pow_two(texImage->Height2)) &&
-       (depth == 1 || _mesa_is_pow_two(texImage->Depth2)))
+   if ((texImage->Width == 1 || _mesa_is_pow_two(texImage->Width2)) &&
+       (texImage->Height == 1 || _mesa_is_pow_two(texImage->Height2)) &&
+       (texImage->Depth == 1 || _mesa_is_pow_two(texImage->Depth2)))
       swImg->_IsPowerOfTwo = GL_TRUE;
    else
       swImg->_IsPowerOfTwo = GL_FALSE;
@@ -348,11 +341,7 @@ _swrast_AllocTextureStorage(struct gl_context *ctx,
    for (face = 0; face < numFaces; face++) {
       for (level = 0; level < levels; level++) {
          struct gl_texture_image *texImage = texObj->Image[face][level];
-         if (!_swrast_alloc_texture_image_buffer(ctx, texImage,
-                                                 texImage->TexFormat,
-                                                 texImage->Width,
-                                                 texImage->Height,
-                                                 texImage->Depth)) {
+         if (!_swrast_alloc_texture_image_buffer(ctx, texImage)) {
             return GL_FALSE;
          }
       }

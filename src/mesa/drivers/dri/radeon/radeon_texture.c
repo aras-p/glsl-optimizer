@@ -103,9 +103,7 @@ radeonDeleteTextureImage(struct gl_context *ctx, struct gl_texture_image *img)
 
 static GLboolean
 radeonAllocTextureImageBuffer(struct gl_context *ctx,
-			      struct gl_texture_image *timage,
-			      gl_format format, GLsizei width,
-			      GLsizei height, GLsizei depth)
+			      struct gl_texture_image *timage)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeon_texture_image *image = get_radeon_texture_image(timage);

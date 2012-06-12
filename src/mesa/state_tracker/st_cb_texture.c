@@ -415,20 +415,18 @@ guess_and_alloc_texture(struct st_context *st,
  */
 static GLboolean
 st_AllocTextureImageBuffer(struct gl_context *ctx,
-                           struct gl_texture_image *texImage,
-                           gl_format format, GLsizei width,
-                           GLsizei height, GLsizei depth)
+                           struct gl_texture_image *texImage)
 {
    struct st_context *st = st_context(ctx);
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
    const GLuint level = texImage->Level;
+   GLuint width = texImage->Width;
+   GLuint height = texImage->Height;
+   GLuint depth = texImage->Depth;
 
    DBG("%s\n", __FUNCTION__);
 
-   assert(width > 0);
-   assert(height > 0);
-   assert(depth > 0);
    assert(!stImage->TexData);
    assert(!stImage->pt); /* xxx this might be wrong */
 

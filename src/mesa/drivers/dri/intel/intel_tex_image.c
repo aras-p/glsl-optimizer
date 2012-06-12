@@ -160,8 +160,7 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   ctx->Driver.AllocTextureImageBuffer(ctx, image, image->TexFormat,
-                                       image->Width, image->Height, 1);
+   ctx->Driver.AllocTextureImageBuffer(ctx, image);
 
    if (!intelImage->mt) {
       DBG("%s: no miptree\n", __FUNCTION__);

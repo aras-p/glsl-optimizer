@@ -4345,9 +4345,7 @@ _mesa_store_teximage(struct gl_context *ctx,
       return;
 
    /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            texImage->Width, texImage->Height,
-                                            texImage->Depth)) {
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
       return;
    }
@@ -4402,8 +4400,7 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
    ASSERT(texImage->Depth == 1);
 
    /* allocate storage for texture data */
-   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage, texImage->TexFormat,
-                                            width, height, 1)) {
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
       return;
    }
