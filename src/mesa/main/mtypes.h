@@ -2965,7 +2965,6 @@ struct gl_extensions
    GLboolean ARB_occlusion_query;
    GLboolean ARB_occlusion_query2;
    GLboolean ARB_point_sprite;
-   GLboolean ARB_sampler_objects;
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_bit_encoding;
    GLboolean ARB_shader_objects;

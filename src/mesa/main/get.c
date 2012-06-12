@@ -284,11 +284,6 @@ static const int extra_GLSL_130[] = {
    EXTRA_END
 };
 
-static const int extra_ARB_sampler_objects[] = {
-   EXT(ARB_sampler_objects),
-   EXTRA_END
-};
-
 static const int extra_ARB_uniform_buffer_object_and_geometry_shader[] = {
    EXT(ARB_uniform_buffer_object),
    EXT(ARB_geometry_shader4),
@@ -1304,7 +1299,7 @@ static const struct value_desc values[] = {
 
    /* GL_ARB_sampler_objects / GL 3.3 */
    { GL_SAMPLER_BINDING,
-     LOC_CUSTOM, TYPE_INT, GL_SAMPLER_BINDING, extra_ARB_sampler_objects },
+     LOC_CUSTOM, TYPE_INT, GL_SAMPLER_BINDING, NO_EXTRA },
 
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },

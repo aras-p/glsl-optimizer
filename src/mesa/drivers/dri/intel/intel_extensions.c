@@ -49,7 +49,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_point_sprite = true;
-   ctx->Extensions.ARB_sampler_objects = true;
    ctx->Extensions.ARB_shader_objects = true;
    ctx->Extensions.ARB_shading_language_100 = true;
    ctx->Extensions.ARB_sync = true;
