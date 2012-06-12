@@ -33,6 +33,7 @@ extern "C" {
 #include "mtypes.h"
 #include "main/uniforms.h"
 #include "main/macros.h"
+#include "main/samplerobj.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_cache.h"
@@ -428,11 +429,13 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       const struct gl_texture_object *texObj = texUnit->_Current;
       const struct gl_tex_env_combine_state *comb = texUnit->_CurrentCombine;
+      const struct gl_sampler_object *samp;
       GLenum format;
 
       if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
          continue;
 
+      samp = _mesa_get_samplerobj(ctx, i);
       format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
 
       key->unit[i].enabled = 1;
@@ -444,7 +447,7 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
          translate_tex_src_bit(texUnit->_ReallyEnabled);
 
       key->unit[i].shadow =
-         ((texObj->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
+         ((samp->CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
           ((format == GL_DEPTH_COMPONENT) || 
            (format == GL_DEPTH_STENCIL_EXT)));
 
