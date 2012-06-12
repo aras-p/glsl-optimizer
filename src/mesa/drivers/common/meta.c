@@ -287,7 +287,7 @@ struct gen_mipmap_state
 struct decompress_state
 {
    GLuint ArrayObj;
-   GLuint VBO, FBO, RBO;
+   GLuint VBO, FBO, RBO, Sampler;
    GLint Width, Height;
 };
 
@@ -3295,6 +3295,7 @@ decompress_texture_image(struct gl_context *ctx,
    struct vertex verts[4];
    GLuint fboDrawSave, fboReadSave;
    GLuint rbSave;
+   GLuint samplerSave;
 
    if (slice > 0) {
       assert(target == GL_TEXTURE_3D ||
@@ -3314,6 +3315,9 @@ decompress_texture_image(struct gl_context *ctx,
    rbSave = ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
 
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_PIXEL_STORE);
+
+   samplerSave = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
+         ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
 
    /* Create/bind FBO/renderbuffer */
    if (decompress->FBO == 0) {
@@ -3362,6 +3366,22 @@ decompress_texture_image(struct gl_context *ctx,
       _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, decompress->VBO);
    }
 
+   if (!decompress->Sampler) {
+      _mesa_GenSamplers(1, &decompress->Sampler);
+      _mesa_BindSampler(ctx->Texture.CurrentUnit, decompress->Sampler);
+      /* nearest filtering */
+      _mesa_SamplerParameteri(decompress->Sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      _mesa_SamplerParameteri(decompress->Sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      /* No sRGB decode or encode.*/
+      if (ctx->Extensions.EXT_texture_sRGB_decode) {
+         _mesa_SamplerParameteri(decompress->Sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+                             GL_SKIP_DECODE_EXT);
+      }
+
+   } else {
+      _mesa_BindSampler(ctx->Texture.CurrentUnit, decompress->Sampler);
+   }
+
    setup_texture_coords(faceTarget, slice, width, height,
                         verts[0].tex,
                         verts[1].tex,
@@ -3387,26 +3407,14 @@ decompress_texture_image(struct gl_context *ctx,
 
    {
       /* save texture object state */
-      const GLenum minFilterSave = texObj->Sampler.MinFilter;
-      const GLenum magFilterSave = texObj->Sampler.MagFilter;
       const GLint baseLevelSave = texObj->BaseLevel;
       const GLint maxLevelSave = texObj->MaxLevel;
-      const GLenum wrapSSave = texObj->Sampler.WrapS;
-      const GLenum wrapTSave = texObj->Sampler.WrapT;
-      const GLenum srgbSave = texObj->Sampler.sRGBDecode;
 
       /* restrict sampling to the texture level of interest */
       _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, texImage->Level);
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, texImage->Level);
-      /* nearest filtering */
-      _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
       /* No sRGB decode or encode.*/
-      if (ctx->Extensions.EXT_texture_sRGB_decode) {
-         _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
-                             GL_SKIP_DECODE_EXT);
-      }
       if (ctx->Extensions.EXT_framebuffer_sRGB) {
          _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
       }
@@ -3417,17 +3425,11 @@ decompress_texture_image(struct gl_context *ctx,
       /* Restore texture object state, the texture binding will
        * be restored by _mesa_meta_end().
        */
-      _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
-      _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
       if (target != GL_TEXTURE_RECTANGLE_ARB) {
          _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
          _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
       }
-      _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
-      _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
-      if (ctx->Extensions.EXT_texture_sRGB_decode) {
-         _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT, srgbSave);
-      }
+
    }
 
    /* read pixels from renderbuffer */
@@ -3454,6 +3456,8 @@ decompress_texture_image(struct gl_context *ctx,
 
    /* disable texture unit */
    _mesa_set_enable(ctx, target, GL_FALSE);
+
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
 
    _mesa_meta_end(ctx);
 
