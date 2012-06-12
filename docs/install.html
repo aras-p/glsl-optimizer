@@ -19,7 +19,7 @@
 <li><a href="#scons">Building with SCons (Windows/Linux)</a>
 <li><a href="#other">Building for other systems</a>
 <li><a href="#libs">Library Information</a>
-<li><a href="#pkg-config">Building OpenGL programs with pkg-config
+<li><a href="#pkg-config">Building OpenGL programs with pkg-config</a>
 </ol>
 
 
@@ -61,10 +61,10 @@ version 2.4.33 or later
 <li>Xorg server version 1.5 or later
 <li>Linux 2.6.28 or later
 </ul>
-</p>
 <p>
 If you're using a fedora distro the following command should install all
 the needed dependencies:
+</p>
 <pre>
   sudo yum install flex bison imake libtool xorg-x11-proto-devel libdrm-devel \
   gcc-c++ xorg-x11-server-devel libXi-devel libXmu-devel libXdamage-devel git \
@@ -82,11 +82,13 @@ The primary method to build Mesa on Unix systems is with autoconf.
 
 <p>
 The general approach is the standard:
+</p>
 <pre>
   ./configure
   make
   sudo make install
 </pre>
+<p>
 But please read the <a href="autoconf.html">detailed autoconf instructions</a>
 for more details.
 </p>

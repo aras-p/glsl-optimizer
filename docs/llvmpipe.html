@@ -36,8 +36,8 @@ It's the fastest software rasterizer for Mesa.
    </p>
 </li>
 <li>
-	 <p>LLVM: version 2.9 recommended; 2.6 or later required.</p>
-   <b>NOTE</b>: LLVM 2.8 and earlier will not work on systems that support the
+   <p>LLVM: version 2.9 recommended; 2.6 or later required.</p>
+   <p><b>NOTE</b>: LLVM 2.8 and earlier will not work on systems that support the
    Intel AVX extensions (e.g. Sandybridge).  LLVM's code generator will
    fail when trying to emit AVX instructions.  This was fixed in LLVM 2.9.
    </p>
@@ -47,6 +47,7 @@ It's the fastest software rasterizer for Mesa.
 <pre>
      aptitude install llvm-dev
 </pre>
+   <p>
    For a RPM-based distribution do:
    </p>
 <pre>
@@ -165,7 +166,7 @@ Building will also create several unit tests in
 build/linux-???-debug/gallium/drivers/llvmpipe:
 </p>
 
-</ul>
+<ul>
 <li> lp_test_blend: blending
 <li> lp_test_conv: SIMD vector conversion
 <li> lp_test_format: pixel unpacking/packing

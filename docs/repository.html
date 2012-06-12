@@ -14,6 +14,7 @@ Mesa uses <a href="http://git.or.cz/"target="_parent">git</a>
 as its source code management system.
 </p>
 
+<p>
 The master git repository is hosted on
 <a href="http://www.freedesktop.org" target="_parent">freedesktop.org</a>.
 </p>
@@ -145,6 +146,7 @@ branch, try:
     git config branch.master.remote origin
     git config branch.master.merge master
 </pre>
+<p>
 Otherwise, you have to say<code> git pull origin master </code>
 each time you do a pull.
 </p>
@@ -163,6 +165,7 @@ If it has been awhile since you've done the initial clone, try
 <pre>
     git pull
 </pre>
+<p>
 to get the latest files before you start working.
 </p>
 <p>
@@ -171,6 +174,7 @@ Make your changes and use
     git add &lt;files to commit&gt;
     git commit
 </pre>
+<p>
 to get your changes ready to push back into the fd.o repository.
 </p>
 <p>
@@ -186,12 +190,13 @@ To avoid this,
     git pull --rebase
     git push
 </pre>
+<p>
 If you are familiar with CVS or similar system, this is similar to doing a
 <code> cvs update </code> in order to update your source tree to
 the current repository state, instead of the time you did the last update.
 (CVS doesn't work like git in this respect, but this is easiest way
 to explain it.)
-</br>
+<br>
 In any case, your repository now looks like you made your changes after
 all the other changes.
 </p>
