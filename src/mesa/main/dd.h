@@ -271,9 +271,6 @@ struct dd_function_table {
     */
    void (*CompressedTexImage)(struct gl_context *ctx, GLuint dims,
                               struct gl_texture_image *texImage,
-                              GLint internalFormat,
-                              GLsizei width, GLsizei height, GLsizei depth,
-                              GLint border,
                               GLsizei imageSize, const GLvoid *data);
 
    /**

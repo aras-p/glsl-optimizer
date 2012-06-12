@@ -541,13 +541,10 @@ st_TexImage(struct gl_context * ctx, GLuint dims,
 static void
 st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
                       struct gl_texture_image *texImage,
-                      GLint internalFormat,
-                      GLint width, GLint height, GLint border, GLint depth,
                       GLsizei imageSize, const GLvoid *data)
 {
    prep_teximage(ctx, texImage, GL_NONE, GL_NONE);
-   _mesa_store_compressed_teximage(ctx, dims, texImage, internalFormat, width,
-                                   height, depth, border, imageSize, data);
+   _mesa_store_compressed_teximage(ctx, dims, texImage, imageSize, data);
 }
 
 

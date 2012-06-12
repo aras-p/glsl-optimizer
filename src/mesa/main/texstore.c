@@ -4379,9 +4379,6 @@ _mesa_store_texsubimage(struct gl_context *ctx, GLuint dims,
 void
 _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
                                 struct gl_texture_image *texImage,
-                                GLint internalFormat,
-                                GLint width, GLint height, GLint depth,
-                                GLint border,
                                 GLsizei imageSize, const GLvoid *data)
 {
    /* only 2D compressed images are supported at this time */
@@ -4407,7 +4404,7 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
 
    _mesa_store_compressed_texsubimage(ctx, dims, texImage,
                                       0, 0, 0,
-                                      width, height, depth,
+                                      texImage->Width, texImage->Height, texImage->Depth,
                                       texImage->TexFormat,
                                       imageSize, data);
 }

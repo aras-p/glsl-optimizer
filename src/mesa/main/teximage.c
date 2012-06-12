@@ -3550,10 +3550,8 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                                           width, height, depth,
                                           border, internalFormat, texFormat);
 
-               ctx->Driver.CompressedTexImage(ctx, dims, texImage,
-                                              internalFormat,
-                                              width, height, depth,
-                                              border, imageSize, data);
+               ctx->Driver.CompressedTexImage(ctx, dims, texImage, imageSize,
+                                              data);
 
                check_gen_mipmap(ctx, target, texObj, level);
 

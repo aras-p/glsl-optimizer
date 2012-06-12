@@ -553,8 +553,6 @@ nouveau_teximage_123d(struct gl_context *ctx, GLuint dims,
 static void
 nouveau_compressed_teximage(struct gl_context *ctx, GLuint dims,
 		    struct gl_texture_image *ti,
-		    GLint internalFormat,
-		    GLint width, GLint height, GLint depth, GLint border,
 		    GLsizei imageSize, const GLvoid *data)
 {
 	nouveau_teximage(ctx, 2, ti, imageSize, 0, 0, data,

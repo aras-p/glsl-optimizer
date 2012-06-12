@@ -109,9 +109,6 @@ _mesa_store_texsubimage(struct gl_context *ctx, GLuint dims,
 extern void
 _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
                                 struct gl_texture_image *texImage,
-                                GLint internalFormat,
-                                GLint width, GLint height, GLint depth,
-                                GLint border,
                                 GLsizei imageSize, const GLvoid *data);
 
 
