@@ -419,7 +419,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                  dstX0, dstY0, dst->u.tex.first_layer,/* dest */
                                  src_tex, src_level,
                                  &src_box);
-       return;
+      return;
    }
 
    if (dst_format == dst->format) {
@@ -444,6 +444,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        src_tex->target != PIPE_TEXTURE_2D &&
        src_tex->target != PIPE_TEXTURE_RECT))
    {
+      /* Make a temporary texture which contains a copy of the source pixels.
+       * Then we'll sample from the temporary texture.
+       */
       struct pipe_resource texTemp;
       struct pipe_resource *tex;
       struct pipe_sampler_view sv_templ;
@@ -515,6 +518,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       pipe_resource_reference(&tex, NULL);
    }
    else {
+      /* Directly sample from the source resource/texture */
       u_sampler_view_default_template(&sv_templ, src_tex, src_format);
       sampler_view = pipe->create_sampler_view(pipe, src_tex, &sv_templ);
 
