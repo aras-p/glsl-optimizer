@@ -160,7 +160,7 @@ _mesa_delete_sampler_object(struct gl_context *ctx,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GenSamplers(GLsizei count, GLuint *samplers)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -192,7 +192,7 @@ _mesa_GenSamplers(GLsizei count, GLuint *samplers)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -242,7 +242,7 @@ _mesa_IsSampler(GLuint sampler)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BindSampler(GLuint unit, GLuint sampler)
 {
    struct gl_sampler_object *sampObj;
@@ -600,7 +600,7 @@ set_sampler_srgb_decode(struct gl_context *ctx,
    return GL_TRUE;
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
 {
    struct gl_sampler_object *sampObj;
