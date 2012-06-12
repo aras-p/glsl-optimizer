@@ -262,8 +262,13 @@ test_format_unorm8(struct gallivm_state *gallivm,
                match = TRUE;
                for(k = 0; k < 4; ++k) {
                   int error = float_to_ubyte(test->unpacked[i][j][k]) - unpacked[k];
+
+                  if (util_is_double_nan(test->unpacked[i][j][k]))
+                     continue;
+
                   if (error < 0)
                      error = -error;
+
                   if (error > 1)
                      match = FALSE;
                }
@@ -336,6 +341,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
       if (!format_desc) {
          continue;
       }
+
 
       /*
        * TODO: test more
