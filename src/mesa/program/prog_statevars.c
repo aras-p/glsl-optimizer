@@ -37,6 +37,7 @@
 #include "main/fbobject.h"
 #include "prog_statevars.h"
 #include "prog_parameter.h"
+#include "main/samplerobj.h"
 
 
 /**
@@ -555,11 +556,13 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
             const int unit = (int) state[2];
             const struct gl_texture_object *texObj
                = ctx->Texture.Unit[unit]._Current;
+            const struct gl_sampler_object *samp =
+               _mesa_get_samplerobj(ctx, unit);
             if (texObj) {
                value[0] =
                value[1] =
                value[2] =
-               value[3] = texObj->Sampler.CompareFailValue;
+               value[3] = samp->CompareFailValue;
             }
          }
          return;
