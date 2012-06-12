@@ -44,8 +44,7 @@ $(LOCAL_GENERATED_SOURCES): PRIVATE_CUSTOM_TOOL = $(PRIVATE_PYTHON) $^ > $@
 
 $(intermediates)/indices/u_indices_gen.c \
 $(intermediates)/indices/u_unfilled_gen.c \
-$(intermediates)/util/u_format_srgb.c \
-$(intermediates)/util/u_half.c: $(intermediates)/%.c: $(LOCAL_PATH)/%.py
+$(intermediates)/util/u_format_srgb.c: $(intermediates)/%.c: $(LOCAL_PATH)/%.py
 	$(transform-generated-source)
 
 $(intermediates)/util/u_format_table.c: $(intermediates)/%.c: $(LOCAL_PATH)/%.py $(LOCAL_PATH)/util/u_format.csv

@@ -35,13 +35,6 @@ env.CodeGenerate(
     command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
 )
 
-env.CodeGenerate(
-    target = 'util/u_half.c',
-    script = 'util/u_half.py',
-    source = [],
-    command = python_cmd + ' $SCRIPT > $TARGET'
-)
-
 env.Depends('util/u_format_table.c', [
     '#src/gallium/auxiliary/util/u_format_parse.py',
     'util/u_format_pack.py', 

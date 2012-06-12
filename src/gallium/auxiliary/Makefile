@@ -39,6 +39,4 @@ util/u_format_srgb.c: util/u_format_srgb.py
 util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_format_parse.py util/u_format.csv
 	$(PYTHON2) util/u_format_table.py util/u_format.csv > $@
 
-util/u_half.c: util/u_half.py
-	$(PYTHON2) util/u_half.py > $@
 # DO NOT DELETE

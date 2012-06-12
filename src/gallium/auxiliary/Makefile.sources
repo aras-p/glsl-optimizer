@@ -155,8 +155,7 @@ GENERATED_SOURCES := \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	util/u_format_srgb.c \
-	util/u_format_table.c \
-	util/u_half.c
+	util/u_format_table.c
 
 GALLIVM_SOURCES := \
         gallivm/lp_bld_arit.c \

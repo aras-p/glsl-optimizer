@@ -35,51 +35,84 @@
 extern "C" {
 #endif
 
-extern const uint32_t util_half_to_float_mantissa_table[2048];
-extern const uint32_t util_half_to_float_exponent_table[64];
-extern const uint32_t util_half_to_float_offset_table[64];
-extern const uint16_t util_float_to_half_base_table[512];
-extern const uint8_t util_float_to_half_shift_table[512];
-
 /*
- * Note that if the half float is a signaling NaN, the x87 FPU will turn
- * it into a quiet NaN immediately upon loading into a float.
+ * References for float <-> half conversions
  *
- * Additionally, denormals may be flushed to zero.
- *
- * To avoid this, use the floatui functions instead of the float ones
- * when just doing conversion rather than computation on the resulting
- * floats.
+ *  http://fgiesen.wordpress.com/2012/03/28/half-to-float-done-quic/
+ *  https://gist.github.com/2156668
+ *  https://gist.github.com/2144712
  */
-
-static INLINE uint32_t
-util_half_to_floatui(uint16_t h)
-{
-   unsigned exp = h >> 10;
-   return util_half_to_float_mantissa_table[util_half_to_float_offset_table[exp] + (h & 0x3ff)] + util_half_to_float_exponent_table[exp];
-}
-
-static INLINE float
-util_half_to_float(uint16_t h)
-{
-   union fi r;
-   r.ui = util_half_to_floatui(h);
-   return r.f;
-}
-
-static INLINE uint16_t
-util_floatui_to_half(uint32_t v)
-{
-   unsigned signexp = v >> 23;
-   return util_float_to_half_base_table[signexp] + ((v & 0x007fffff) >> util_float_to_half_shift_table[signexp]);
-}
 
 static INLINE uint16_t
 util_float_to_half(float f)
 {
-   union fi i;
-   i.f = f;
-   return util_floatui_to_half(i.ui);
+   uint32_t sign_mask  = 0x80000000;
+   uint32_t round_mask = ~0xfff;
+   uint32_t f32inf = 0xff << 23;
+   uint32_t f16inf = 0x1f << 23;
+   uint32_t sign;
+   union fi magic;
+   union fi f32;
+   uint16_t f16;
+
+   magic.ui = 0xf << 23;
+
+   f32.f = f;
+
+   /* Sign */
+   sign = f32.ui & sign_mask;
+   f32.ui ^= sign;
+
+   if (f32.ui == f32inf) {
+      /* Inf */
+      f16 = 0x7c00;
+   } else if (f32.ui > f32inf) {
+      /* NaN */
+      f16 = 0x7e00;
+   } else {
+      /* Number */
+      f32.ui &= round_mask;
+      f32.f  *= magic.f;
+      f32.ui -= round_mask;
+
+      /* Clamp to infinity if overflowed */
+      if (f32.ui > f16inf)
+         f32.ui = f16inf;
+
+      f16 = f32.ui >> 13;
+   }
+
+   /* Sign */
+   f16 |= sign >> 16;
+
+   return f16;
+}
+
+static INLINE float
+util_half_to_float(uint16_t f16)
+{
+   union fi infnan;
+   union fi magic;
+   union fi f32;
+
+   infnan.ui = 0x8f << 23;
+   infnan.f = 65536.0f;
+   magic.ui  = 0xef << 23;
+
+   /* Exponent / Mantissa */
+   f32.ui = (f16 & 0x7fff) << 13;
+
+   /* Adjust */
+   f32.f *= magic.f;
+
+   /* Inf / NaN */
+   if (f32.f >= infnan.f)
+      f32.ui |= 0xff << 23;
+
+   /* Sign */
+   f32.ui |= (f16 & 0x8000) << 16;
+
+   return f32.f;
 }
 
 #ifdef __cplusplus
