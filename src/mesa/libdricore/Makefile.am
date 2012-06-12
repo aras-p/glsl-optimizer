@@ -32,13 +32,11 @@ AM_CPPFLAGS = \
 	$(API_DEFINES) \
 	$(DEFINES)
 
-dridir = $(libdir)/dri
-
 AM_CFLAGS = $(CFLAGS_NOVISIBILITY) -DUSE_DRICORE
 AM_CXXFLAGS = $(CXXFLAGS_NOVISIBILITY) -DUSE_DRICORE
 AM_CCASFLAGS = $(CFLAGS_NOVISIBILITY) -DUSE_DRICORE
 
-libdricore_la_SOURCES = \
+libdricore@VERSION@_la_SOURCES = \
 	$(MESA_FILES) \
 	$(MESA_CXX_FILES) \
 	$(LIBGLCPP_GENERATED_FILES) \
@@ -47,8 +45,8 @@ libdricore_la_SOURCES = \
 	$(LIBGLSL_CXX_FILES) \
 	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
 	$(top_srcdir)/src/glsl/builtin_function.cpp
-libdricore_la_LDFLAGS = -module -avoid-version -shared
-libdricore_la_LIBADD = libdricore-asm.la
+libdricore@VERSION@_la_LDFLAGS = -version-number 1:0
+libdricore@VERSION@_la_LIBADD = libdricore-asm.la
 
 # This is separated from libdricore to avoid conflics in object
 # outputs between main/clip.c and sparc/clip.c.  The documented way to
@@ -72,16 +70,18 @@ endif
 
 if HAVE_DRICORE
 noinst_LTLIBRARIES = libdricore-asm.la
-dri_LTLIBRARIES = libdricore.la
+lib_LTLIBRARIES = libdricore@VERSION@.la
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libdricore.la
+all-local: libdricore@VERSION@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libdricore.so $(top_builddir)/$(LIB_DIR)/libdricore.so;
+	ln -f .libs/libdricore@VERSION@.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libdricore@VERSION@.so.1;
+	ln -sf libdricore@VERSION@.so.1 $(top_builddir)/$(LIB_DIR)/libdricore@VERSION@.so
 endif
 
 CLEANFILES = \
-	$(top_builddir)/$(LIB_DIR)/libdricore.so
+	$(top_builddir)/$(LIB_DIR)/libdricore@VERSION@.so.1 \
+	$(top_builddir)/$(LIB_DIR)/libdricore@VERSION@.so
 
 -include $(DEPENDS)

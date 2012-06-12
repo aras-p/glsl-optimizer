@@ -83,9 +83,6 @@ GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
 
-DRI_CFLAGS = $(CFLAGS)
-DRI_CXXFLAGS = $(CXXFLAGS)
-
 # Optional assembly language optimization files for libGL
 MESA_ASM_FILES =
 
