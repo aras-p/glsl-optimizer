@@ -208,8 +208,6 @@ struct dd_function_table {
     */
    void (*TexImage)(struct gl_context *ctx, GLuint dims,
                     struct gl_texture_image *texImage,
-                    GLint internalFormat,
-                    GLint width, GLint height, GLint depth, GLint border,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *packing);
 

@@ -500,8 +500,6 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
  */
 static void
 prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
-              GLint internalFormat,
-              GLint width, GLint height, GLint depth, GLint border,
               GLenum format, GLenum type)
 {
    struct gl_texture_object *texObj = texImage->TexObject;
@@ -518,11 +516,13 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 
       /* oops, need to init this image again */
       texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                              internalFormat, format, type);
+                                              texImage->InternalFormat, format,
+                                              type);
 
       _mesa_init_teximage_fields(ctx, texImage,
-                                 width, height, depth, border,
-                                 internalFormat, texFormat);
+                                 texImage->Width, texImage->Height,
+                                 texImage->Depth, texImage->Border,
+                                 texImage->InternalFormat, texFormat);
 
       stObj->surface_based = GL_FALSE;
    }
@@ -532,15 +532,11 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 static void
 st_TexImage(struct gl_context * ctx, GLuint dims,
             struct gl_texture_image *texImage,
-            GLint internalFormat,
-            GLint width, GLint height, GLint depth, GLint border,
             GLenum format, GLenum type, const void *pixels,
             const struct gl_pixelstore_attrib *unpack)
 {
-   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
-                 format, type);
-   _mesa_store_teximage(ctx, dims, texImage, internalFormat, width, height, depth,
-                        border, format, type, pixels, unpack);
+   prep_teximage(ctx, texImage, format, type);
+   _mesa_store_teximage(ctx, dims, texImage, format, type, pixels, unpack);
 }
 
 
@@ -551,8 +547,7 @@ st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
                       GLint width, GLint height, GLint border, GLint depth,
                       GLsizei imageSize, const GLvoid *data)
 {
-   prep_teximage(ctx, texImage, internalFormat, width, height, depth, border,
-                 GL_NONE, GL_NONE);
+   prep_teximage(ctx, texImage, GL_NONE, GL_NONE);
    _mesa_store_compressed_teximage(ctx, dims, texImage, internalFormat, width,
                                    height, depth, border, imageSize, data);
 }

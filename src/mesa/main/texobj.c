@@ -807,8 +807,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
                                     0, /* border */
                                     GL_RGBA, texFormat);
 
-         ctx->Driver.TexImage(ctx, dims, texImage, GL_RGBA,
-                              width, height, depth, 0,
+         ctx->Driver.TexImage(ctx, dims, texImage,
                               GL_RGBA, GL_UNSIGNED_BYTE, texel,
                               &ctx->DefaultPacking);
       }

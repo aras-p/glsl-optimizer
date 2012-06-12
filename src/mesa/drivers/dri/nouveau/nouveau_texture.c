@@ -481,8 +481,6 @@ get_teximage_placement(struct gl_texture_image *ti)
 static void
 nouveau_teximage(struct gl_context *ctx, GLint dims,
 		 struct gl_texture_image *ti,
-		 GLint internalFormat,
-		 GLint width, GLint height, GLint depth, GLint border,
 		 GLsizei imageSize,
 		 GLenum format, GLenum type, const GLvoid *pixels,
 		 const struct gl_pixelstore_attrib *packing,
@@ -493,10 +491,11 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 	struct nouveau_teximage *nti = to_nouveau_teximage(ti);
 	int ret;
+	GLuint depth = compressed ? 1 : ti->Depth;
 
 	/* Allocate a new bo for the image. */
 	nouveau_surface_alloc(ctx, s, LINEAR, get_teximage_placement(ti),
-			      ti->TexFormat, width, height);
+			      ti->TexFormat, ti->Width, ti->Height);
 	nti->base.RowStride = s->pitch / s->cpp;
 
 	if (compressed)
@@ -505,19 +504,19 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 			pixels, packing, "glCompressedTexImage");
 	else
 		pixels = _mesa_validate_pbo_teximage(ctx,
-			dims, width, height, depth, format, type,
+			dims, ti->Width, ti->Height, depth, format, type,
 			pixels, packing, "glTexImage");
 
 	if (pixels) {
 		/* Store the pixel data. */
 		nouveau_teximage_map(ctx, ti, GL_MAP_WRITE_BIT,
-				     0, 0, width, height);
+				     0, 0, ti->Width, ti->Height);
 
 		ret = _mesa_texstore(ctx, dims, ti->_BaseFormat,
 				     ti->TexFormat,
 				     s->pitch,
                                      &nti->base.Map,
-				     width, height, depth,
+				     ti->Width, ti->Height, depth,
 				     format, type, pixels, packing);
 		assert(ret);
 
@@ -525,7 +524,7 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 		_mesa_unmap_teximage_pbo(ctx, packing);
 
 		if (!validate_teximage(ctx, t, level, 0, 0, 0,
-				       width, height, depth))
+				       ti->Width, ti->Height, depth))
 			/* It doesn't fit, mark it as dirty. */
 			texture_dirty(t);
 	}
@@ -544,13 +543,10 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 static void
 nouveau_teximage_123d(struct gl_context *ctx, GLuint dims,
                       struct gl_texture_image *ti,
-                      GLint internalFormat,
-                      GLint width, GLint height, GLint depth, GLint border,
                       GLenum format, GLenum type, const GLvoid *pixels,
                       const struct gl_pixelstore_attrib *packing)
 {
-	nouveau_teximage(ctx, dims, ti, internalFormat,
-			 width, height, depth, border, 0, format, type, pixels,
+	nouveau_teximage(ctx, dims, ti, 0, format, type, pixels,
 			 packing, GL_FALSE);
 }
 
@@ -561,8 +557,7 @@ nouveau_compressed_teximage(struct gl_context *ctx, GLuint dims,
 		    GLint width, GLint height, GLint depth, GLint border,
 		    GLsizei imageSize, const GLvoid *data)
 {
-	nouveau_teximage(ctx, 2, ti, internalFormat,
-			 width, height, 1, border, imageSize, 0, 0, data,
+	nouveau_teximage(ctx, 2, ti, imageSize, 0, 0, data,
 			 &ctx->Unpack, GL_TRUE);
 }
 

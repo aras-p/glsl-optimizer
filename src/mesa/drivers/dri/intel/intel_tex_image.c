@@ -133,8 +133,7 @@ static bool
 try_pbo_upload(struct gl_context *ctx,
                struct gl_texture_image *image,
                const struct gl_pixelstore_attrib *unpack,
-	       GLenum format, GLenum type,
-               GLint width, GLint height, const void *pixels)
+	       GLenum format, GLenum type, const void *pixels)
 {
    struct intel_texture_image *intelImage = intel_texture_image(image);
    struct intel_context *intel = intel_context(ctx);
@@ -162,7 +161,7 @@ try_pbo_upload(struct gl_context *ctx,
    }
 
    ctx->Driver.AllocTextureImageBuffer(ctx, image, image->TexFormat,
-                                       width, height, 1);
+                                       image->Width, image->Height, 1);
 
    if (!intelImage->mt) {
       DBG("%s: no miptree\n", __FUNCTION__);
@@ -177,7 +176,7 @@ try_pbo_upload(struct gl_context *ctx,
    if (unpack->RowLength > 0)
       src_stride = unpack->RowLength;
    else
-      src_stride = width;
+      src_stride = image->Width;
 
    intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Base.Level,
 				  intelImage->base.Base.Face, 0,
@@ -191,7 +190,7 @@ try_pbo_upload(struct gl_context *ctx,
 			  src_offset, false,
 			  dst_stride, dst_buffer, 0,
 			  intelImage->mt->region->tiling,
-			  0, 0, dst_x, dst_y, width, height,
+			  0, 0, dst_x, dst_y, image->Width, image->Height,
 			  GL_COPY)) {
       DBG("%s: blit failed\n", __FUNCTION__);
       return false;
@@ -205,28 +204,25 @@ static void
 intelTexImage(struct gl_context * ctx,
               GLuint dims,
               struct gl_texture_image *texImage,
-              GLint internalFormat,
-              GLint width, GLint height, GLint depth, GLint border,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack)
 {
    DBG("%s target %s level %d %dx%dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
-       texImage->Level, width, height, depth);
+       texImage->Level, texImage->Width, texImage->Height, texImage->Depth);
 
    /* Attempt to use the blitter for PBO image uploads.
     */
    if (dims <= 2 &&
-       try_pbo_upload(ctx, texImage, unpack, format, type,
-		      width, height, pixels)) {
+       try_pbo_upload(ctx, texImage, unpack, format, type, pixels)) {
       return;
    }
 
    DBG("%s: upload image %dx%dx%d pixels %p\n",
-       __FUNCTION__, width, height, depth, pixels);
+       __FUNCTION__, texImage->Width, texImage->Height, texImage->Depth,
+       pixels);
 
-   _mesa_store_teximage(ctx, dims, texImage, internalFormat,
-                        width, height, depth, 0,
+   _mesa_store_teximage(ctx, dims, texImage,
                         format, type, pixels, unpack);
 }
 

@@ -2616,8 +2616,7 @@ teximage(struct gl_context *ctx, GLuint dims,
                                           border, internalFormat, texFormat);
 
                /* Give the texture to the driver.  <pixels> may be null. */
-               ctx->Driver.TexImage(ctx, dims, texImage, internalFormat,
-                                    width, height, depth, border, format,
+               ctx->Driver.TexImage(ctx, dims, texImage, format,
                                     type, pixels, unpack);
 
                check_gen_mipmap(ctx, target, texObj, level);
@@ -2945,8 +2944,8 @@ copyteximage(struct gl_context *ctx, GLuint dims,
                                        border, internalFormat, texFormat);
 
             /* Allocate texture memory (no pixel data yet) */
-            ctx->Driver.TexImage(ctx, dims, texImage, internalFormat,
-                                 width, height, 1, border, GL_NONE, GL_NONE,
+            ctx->Driver.TexImage(ctx, dims, texImage,
+                                 GL_NONE, GL_NONE,
                                  NULL, &ctx->Unpack);
 
             if (_mesa_clip_copytexsubimage(ctx, &dstX, &dstY, &srcX, &srcY,

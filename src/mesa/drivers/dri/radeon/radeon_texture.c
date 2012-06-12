@@ -573,38 +573,6 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
 				"%s Failed to allocate miptree.\n", __func__);
 }
 
-/**
- * All glTexImage calls go through this function.
- */
-static void radeon_teximage(
-	struct gl_context *ctx, int dims,
-	struct gl_texture_image *texImage,
-	GLint internalFormat,
-	GLint width, GLint height, GLint depth,
-	GLsizei imageSize,
-	GLenum format, GLenum type, const GLvoid * pixels,
-	const struct gl_pixelstore_attrib *packing,
-	int compressed)
-{
-	_mesa_store_teximage(ctx, dims, texImage, internalFormat,
-			     width, height, depth, 0,
-			     format, type, pixels,
-			     packing);
-}
-
-static void
-radeonTexImage(struct gl_context * ctx, GLuint dims,
-		      struct gl_texture_image *texImage,
-		      GLint internalFormat,
-		      GLint width, GLint height, GLint depth,
-		      GLint border,
-		      GLenum format, GLenum type, const GLvoid * pixels,
-		      const struct gl_pixelstore_attrib *packing)
-{
-	radeon_teximage(ctx, dims, texImage, internalFormat, width, height, depth,
-		0, format, type, pixels, packing, 0);
-}
-
 unsigned radeonIsFormatRenderable(gl_format mesa_format)
 {
 	if (mesa_format == _radeon_texformat_argb8888 || mesa_format == _radeon_texformat_rgb565 ||
@@ -724,8 +692,6 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 	functions->UnmapTextureImage = radeon_unmap_texture_image;
 
 	functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
-
-	functions->TexImage = radeonTexImage;
 
 	functions->CopyTexSubImage = radeonCopyTexSubImage;
 
