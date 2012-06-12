@@ -19,6 +19,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+SUBDIRS = x86 x86-64 . libdricore drivers
+
 all-local:
 	$(MAKE) -f Makefile.old
 

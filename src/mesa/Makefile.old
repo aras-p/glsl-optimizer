@@ -34,7 +34,7 @@ MESA_CXXFLAGS := $(LLVM_CFLAGS) $(CXXFLAGS)
 
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,
 # then convenience libs (.a) and finally the device drivers:
-default: $(DEPENDS) asm_subdirs $(MESA_LIBS) driver_subdirs
+default: $(DEPENDS) $(MESA_LIBS)
 
 .PHONY: main/git_sha1.h.tmp
 main/git_sha1.h.tmp:
@@ -96,11 +96,6 @@ program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
 program/lex.yy.c: program/program_lexer.l
 	$(FLEX) --never-interactive --outfile=$@ $<
 
-ifneq (,$(DRICORE_LIBS))
-DRICORE_TARGET = dricore
-DRICORE_INSTALL_TARGET = install-dricore
-endif
-
 ######################################################################
 # Helper libraries used by many drivers:
 
@@ -111,25 +106,6 @@ libmesa.a: $(MESA_OBJECTS) $(GLSL_LIBS)
 # Make archive of subset of core mesa object files for gallium
 libmesagallium.a: $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
-
-dricore: $(BUILT_SOURCES)
-	@ (cd libdricore && $(MAKE))
-
-######################################################################
-# Device drivers
-driver_subdirs: $(MESA_LIBS) $(DRICORE_TARGET)
-	@ (cd drivers && $(MAKE))
-
-
-######################################################################
-# Assembly subdirs
-asm_subdirs:
-	@ if echo "$(DEFINES)" | grep -q USE_X86_ASM ; then \
-		(cd x86 && $(MAKE)) || exit 1 ; \
-	fi
-	@ if echo "$(DEFINES)" | grep -q USE_X86_64_ASM ; then \
-		(cd x86-64 && $(MAKE)) || exit 1 ; \
-	fi
 
 ######################################################################
 # Dependency generation
@@ -143,11 +119,6 @@ depend: $(ALL_FILES) main/git_sha1.h
 ######################################################################
 # Installation rules
 
-# this isn't fleshed out yet but is probably the way to go in the future
-new_install:
-	(cd drivers && $(MAKE) install)
-
-# XXX replace this with new_install above someday
 install: default $(DRICORE_INSTALL_TARGET)
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
@@ -156,7 +127,7 @@ install: default $(DRICORE_INSTALL_TARGET)
 	            else \
 	              $(MAKE) -f Makefile.old install-osmesa || exit 1 ; \
 	            fi ;; \
-	    dri)    $(MAKE) -f Makefile.old install-headers install-dri || exit 1 ;; \
+	    dri)    $(MAKE) -f Makefile.old install-headers || exit 1 ;; \
 	    *)      $(MAKE) -f Makefile.old install-headers || exit 1 ;; \
 	  esac ; \
 	done
@@ -170,12 +141,6 @@ install-osmesa: default
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
-install-dri: default
-	cd drivers/dri && $(MAKE) install
-
-install-dricore: default
-	@ (cd libdricore && $(MAKE) install)
-
 # Emacs tags
 tags:
 	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
@@ -184,14 +149,6 @@ clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libmesagallium.a
-	-rm -f drivers/*/*.o
 	-rm -f $(BUILT_SOURCES)
-	-@cd drivers/dri && $(MAKE) clean
-	-@cd drivers/x11 && $(MAKE) clean
-	-@cd drivers/osmesa && $(MAKE) clean
-	-@cd x86 && $(MAKE) clean
-	-@cd x86-64 && $(MAKE) clean
-	-@cd libdricore && $(MAKE) clean
-
 
 -include $(DEPENDS)
