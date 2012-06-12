@@ -70,6 +70,7 @@
 #include "main/uniforms.h"
 #include "main/varray.h"
 #include "main/viewport.h"
+#include "main/samplerobj.h"
 #include "program/program.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
@@ -278,6 +279,7 @@ struct gen_mipmap_state
    GLuint ArrayObj;
    GLuint VBO;
    GLuint FBO;
+   GLuint Sampler;
 };
 
 
@@ -2925,14 +2927,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    struct vertex verts[4];
    const GLuint baseLevel = texObj->BaseLevel;
    const GLuint maxLevel = texObj->MaxLevel;
-   const GLenum minFilterSave = texObj->Sampler.MinFilter;
-   const GLenum magFilterSave = texObj->Sampler.MagFilter;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
-   const GLenum wrapSSave = texObj->Sampler.WrapS;
-   const GLenum wrapTSave = texObj->Sampler.WrapT;
-   const GLenum wrapRSave = texObj->Sampler.WrapR;
-   const GLenum srgbDecodeSave = texObj->Sampler.sRGBDecode;
    const GLenum srgbBufferSave = ctx->Color.sRGBEnabled;
    const GLuint fboSave = ctx->DrawBuffer->Name;
    const GLuint original_active_unit = ctx->Texture.CurrentUnit;
@@ -2940,6 +2936,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    GLuint dstLevel;
    const GLuint border = 0;
    const GLint slice = 0;
+   GLuint samplerSave;
 
    if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
@@ -2956,6 +2953,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    }
 
    _mesa_meta_begin(ctx, MESA_META_ALL);
+
+   samplerSave = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
+      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
 
    if (original_active_unit != 0)
       _mesa_BindTexture(target, texObj->Name);
@@ -2987,20 +2987,29 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    if (!mipmap->FBO) {
       _mesa_GenFramebuffersEXT(1, &mipmap->FBO);
    }
+
+   if (!mipmap->Sampler) {
+      _mesa_GenSamplers(1, &mipmap->Sampler);
+      _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
+      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+      /* We don't want to encode or decode sRGB values; treat them as linear */
+      if (ctx->Extensions.EXT_texture_sRGB_decode) {
+         _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+               GL_SKIP_DECODE_EXT);
+      }
+
+   } else {
+      _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
+   }
+
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-   /* We don't want to encode or decode sRGB values; treat them as linear */
-   if (ctx->Extensions.EXT_texture_sRGB_decode) {
-      _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
-                          GL_SKIP_DECODE_EXT);
-   }
    if (ctx->Extensions.EXT_framebuffer_sRGB) {
       _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
    }
@@ -3127,25 +3136,18 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
 
-   if (ctx->Extensions.EXT_texture_sRGB_decode) {
-      _mesa_TexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
-                          srgbDecodeSave);
-   }
    if (ctx->Extensions.EXT_framebuffer_sRGB && srgbBufferSave) {
       _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
    }
 
    _mesa_lock_texture(ctx, texObj); /* relock */
 
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
+
    _mesa_meta_end(ctx);
 
-   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
-   _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
    _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
-   _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, wrapRSave);
 
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 }
