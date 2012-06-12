@@ -65,7 +65,7 @@ ee9ecae4ca56fbb2d14dc15e3a0a7640  MesaGLUT-7.9.1.tar.gz
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31194">Bug 31194</a> - The mesa meta save/restore code doesn't ref the current GLSL program</li>
 
-<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31371">Bug 31371</a> - glslparsertest: ir.cpp:358: ir_constant::ir_constant(const glsl_type*, const ir_constant_data*): Assertion `(type->base_type &gt;= 0) &amp;&amp; (type->base_type &lt;= 3)' failed.</li>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31371">Bug 31371</a> - glslparsertest: ir.cpp:358: ir_constant::ir_constant(const glsl_type*, const ir_constant_data*): Assertion `(type-&gt;base_type &gt;= 0) &amp;&amp; (type-&gt;base_type &lt;= 3)' failed.</li>
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31439">Bug 31439</a> - Crash in glBufferSubData() with size == 0</li>
 
@@ -73,11 +73,11 @@ ee9ecae4ca56fbb2d14dc15e3a0a7640  MesaGLUT-7.9.1.tar.gz
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31514">Bug 31514</a> - isBuffer returns true for unbound buffers</li>
 
-<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31560">Bug 31560</a> - [tdfx] tdfx_tex.c:702: error: ‘const struct gl_color_table’ has no member named ‘Format’</li>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31560">Bug 31560</a> - [tdfx] tdfx_tex.c:702: error: 'const struct gl_color_table' has no member named 'Format'</li>
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31617">Bug 31617</a> - Radeon/Compiz: 'failed to attach dri2 front buffer', error case not handled</li>
 
-<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31648">Bug 31648</a> -  [GLSL] array-struct-array gets assertion: `(size &gt;= 1) && (size &lt;= 4)' failed.</li>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31648">Bug 31648</a> -  [GLSL] array-struct-array gets assertion: `(size &gt;= 1) &amp;&amp; (size &lt;= 4)' failed.</li>
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=31650">Bug 31650</a> - [GLSL] varying gl_TexCoord fails to be re-declared to different size in the second shader</li>
 
@@ -293,7 +293,7 @@ ee9ecae4ca56fbb2d14dc15e3a0a7640  MesaGLUT-7.9.1.tar.gz
   <li>ir_dead_functions: Actually free dead functions and signatures.</li>
   <li>glcpp: Define GL_FRAGMENT_PRECISION_HIGH if GLSL version &gt;= 1.30.</li>
   <li>glsl: Unconditionally define GL_FRAGMENT_PRECISION_HIGH in ES2 shaders.</li>
-  <li>glsl: Fix constant expression handling for &lt, &gt;, &lt=, &gt;= on vectors.</li>
+  <li>glsl: Fix constant expression handling for &lt;, &gt;, &lt;=, &gt;= on vectors.</li>
   <li>glsl: Use do_common_optimization in the standalone compiler.</li>
   <li>glsl: Don't inline function prototypes.</li>
   <li>glsl: Add a virtual as_discard() method.</li>

@@ -55,9 +55,9 @@ d77b02034c11d6c2a55c07f82367d780  MesaLib-7.10.3.tar.gz
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=32835">Bug 32835</a> - [glsl] recursive #define results in infinite stack recursion</li>
 
-<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=33303">Bug 33303</a> - [glsl] ir_constant_expression.cpp:72: virtual ir_constant* ir_expression::constant_expression_value(): Assertion `op[0]->type->base_type == op[1]->type->base_type' failed.</li>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=33303">Bug 33303</a> - [glsl] ir_constant_expression.cpp:72: virtual ir_constant* ir_expression::constant_expression_value(): Assertion `op[0]-&gt;type-&gt;base_type == op[1]-&gt;type-&gt;base_type' failed.</li>
 
-<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=33314">Bug 33314</a> - [glsl] ir_constant_expression.cpp:122: virtual ir_constant* ir_expression::constant_expression_value(): Assertion `op[0]->type->base_type == GLSL_TYPE_BOOL' failed.</li>
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=33314">Bug 33314</a> - [glsl] ir_constant_expression.cpp:122: virtual ir_constant* ir_expression::constant_expression_value(): Assertion `op[0]-&gt;type-&gt;base_type == GLSL_TYPE_BOOL' failed.</li>
 
 <li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=33512">Bug 33512</a> - [SNB] case ogles2conform/GL/gl_FragCoord/gl_FragCoord_xy_frag.test and gl_FragCoord_w_frag.test fail</li>
 
@@ -160,7 +160,7 @@ d77b02034c11d6c2a55c07f82367d780  MesaLib-7.10.3.tar.gz
   <li>mesa: Use _mesa_get_format_bytes to refactor out the RB get_pointer_*</li>
   <li>mesa: Use _mesa_get_format_bytes to refactor out the RB get_row_*</li>
   <li>mesa: Add renderbuffer accessors for R8/RG88/R16/RG1616.</li>
-  <li>swrast: Don't try to adjust_colors for &lt8bpc when handling R16, RG1616.</li>
+  <li>swrast: Don't try to adjust_colors for &lt;8bpc when handling R16, RG1616.</li>
   <li>intel: Use mesa core's R8, RG88, R16, RG1616 RB accessors.</li>
   <li>Revert "intel: Add spans code for the ARB_texture_rg support."</li>
   <li>mesa: Add support for the ARB_fragment_program part of ARB_draw_buffers.</li>
