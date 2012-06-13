@@ -1762,6 +1762,12 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       else
          emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
       break;
+   case ir_unop_f2u:
+      if (native_integers)
+         emit(ir, TGSI_OPCODE_F2U, result_dst, op[0]);
+      else
+         emit(ir, TGSI_OPCODE_TRUNC, result_dst, op[0]);
+      break;
    case ir_unop_bitcast_f2i:
    case ir_unop_bitcast_f2u:
    case ir_unop_bitcast_i2f:
