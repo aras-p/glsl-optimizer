@@ -182,6 +182,12 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
 	 data.i[c] = (int) op[0]->value.f[c];
       }
       break;
+   case ir_unop_f2u:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+         data.i[c] = (unsigned) op[0]->value.f[c];
+      }
+      break;
    case ir_unop_i2f:
       assert(op[0]->type->base_type == GLSL_TYPE_INT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
