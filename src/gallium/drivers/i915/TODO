@@ -42,5 +42,8 @@ Random list of problems with i915g:
 
 - Continue a previous primitive when there are no state changes
 
+- Switch to the blitter for those buggy blit copies
+- Or state save/restore has a bug with u_blitter, fix it.
+
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g

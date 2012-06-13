@@ -87,17 +87,30 @@ static boolean is_unswizzled(struct i915_full_src_register* r,
 
 static boolean op_commutes(unsigned opcode)
 {
-   if (opcode == TGSI_OPCODE_ADD) return TRUE;
-   if (opcode == TGSI_OPCODE_MUL) return TRUE;
+   switch(opcode)
+   {
+      case TGSI_OPCODE_ADD:
+      case TGSI_OPCODE_MUL:
+      case TGSI_OPCODE_DP2:
+      case TGSI_OPCODE_DP3:
+      case TGSI_OPCODE_DP4:
+         return TRUE;
+   }
    return FALSE;
 }
 
 static unsigned op_neutral_element(unsigned opcode)
 {
-   if (opcode == TGSI_OPCODE_ADD)
-      return TGSI_SWIZZLE_ZERO;
-   if (opcode == TGSI_OPCODE_MUL)
-      return TGSI_SWIZZLE_ONE;
+   switch(opcode)
+   {
+      case TGSI_OPCODE_ADD:
+         return TGSI_SWIZZLE_ZERO;
+      case TGSI_OPCODE_MUL:
+      case TGSI_OPCODE_DP2:
+      case TGSI_OPCODE_DP3:
+      case TGSI_OPCODE_DP4:
+         return TGSI_SWIZZLE_ONE;
+   }
 
    debug_printf("Unknown opcode %d\n",opcode);
    return TGSI_SWIZZLE_ZERO;
