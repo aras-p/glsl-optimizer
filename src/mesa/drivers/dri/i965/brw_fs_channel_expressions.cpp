@@ -198,6 +198,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_i2u:
    case ir_unop_u2i:
    case ir_unop_f2i:
+   case ir_unop_f2u:
    case ir_unop_i2f:
    case ir_unop_f2b:
    case ir_unop_b2f:

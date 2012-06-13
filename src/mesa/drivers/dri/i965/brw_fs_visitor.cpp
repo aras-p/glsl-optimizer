@@ -463,6 +463,7 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_i2f:
    case ir_unop_u2f:
    case ir_unop_f2i:
+   case ir_unop_f2u:
       emit(BRW_OPCODE_MOV, this->result, op[0]);
       break;
 

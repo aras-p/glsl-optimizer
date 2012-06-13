@@ -1278,6 +1278,7 @@ vec4_visitor::visit(ir_expression *ir)
    case ir_unop_b2f:
    case ir_unop_b2i:
    case ir_unop_f2i:
+   case ir_unop_f2u:
       emit(MOV(result_dst, op[0]));
       break;
    case ir_unop_f2b:
