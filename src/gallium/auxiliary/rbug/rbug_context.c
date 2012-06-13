@@ -35,7 +35,7 @@
  */
 
 #include "rbug_internal.h"
-#include "rbug/rbug_context.h"
+#include "rbug_context.h"
 
 int rbug_send_context_list(struct rbug_connection *__con,
                            uint32_t *__serial)

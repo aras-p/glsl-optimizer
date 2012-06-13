@@ -35,7 +35,7 @@
  */
 
 #include "rbug_internal.h"
-#include "rbug/rbug_shader.h"
+#include "rbug_shader.h"
 
 int rbug_send_shader_list(struct rbug_connection *__con,
                           rbug_context_t context,

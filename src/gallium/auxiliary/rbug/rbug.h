@@ -26,8 +26,8 @@
  * Include all for users the remote debugger protocol code.
  */
 
-#include "rbug/rbug_core.h"
-#include "rbug/rbug_shader.h"
-#include "rbug/rbug_context.h"
-#include "rbug/rbug_texture.h"
-#include "rbug/rbug_connection.h"
+#include "rbug_core.h"
+#include "rbug_shader.h"
+#include "rbug_context.h"
+#include "rbug_texture.h"
+#include "rbug_connection.h"

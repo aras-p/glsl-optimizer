@@ -35,7 +35,7 @@
  */
 
 #include "rbug_internal.h"
-#include "rbug/rbug_core.h"
+#include "rbug_core.h"
 
 int rbug_send_noop(struct rbug_connection *__con,
                    uint32_t *__serial)

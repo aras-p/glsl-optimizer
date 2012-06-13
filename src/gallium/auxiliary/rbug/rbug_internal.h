@@ -30,7 +30,7 @@
 #ifndef _RBUG_INTERNAL_H_
 #define _RBUG_INTERNAL_H_
 
-#include "rbug/rbug_proto.h"
+#include "rbug_proto.h"
 
 #include "util/u_memory.h"
 #include "util/u_debug.h"

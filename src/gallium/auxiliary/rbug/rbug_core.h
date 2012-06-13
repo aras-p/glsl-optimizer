@@ -38,7 +38,7 @@
 #ifndef _RBUG_PROTO_CORE_H_
 #define _RBUG_PROTO_CORE_H_
 
-#include "rbug/rbug_proto.h"
+#include "rbug_proto.h"
 
 typedef uint64_t rbug_shader_t;
 typedef uint64_t rbug_context_t;

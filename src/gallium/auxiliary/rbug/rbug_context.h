@@ -38,8 +38,8 @@
 #ifndef _RBUG_PROTO_CONTEXT_H_
 #define _RBUG_PROTO_CONTEXT_H_
 
-#include "rbug/rbug_proto.h"
-#include "rbug/rbug_core.h"
+#include "rbug_proto.h"
+#include "rbug_core.h"
 
 typedef enum
 {

@@ -35,7 +35,7 @@
  */
 
 #include "rbug_internal.h"
-#include "rbug/rbug_texture.h"
+#include "rbug_texture.h"
 
 int rbug_send_texture_list(struct rbug_connection *__con,
                            uint32_t *__serial)

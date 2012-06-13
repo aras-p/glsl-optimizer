@@ -30,7 +30,7 @@
 #ifndef _RBUG_CONNECTION_H_
 #define _RBUG_CONNECTION_H_
 
-#include "rbug/rbug_proto.h"
+#include "rbug_proto.h"
 
 struct rbug_connection * rbug_from_socket(int socket);
 

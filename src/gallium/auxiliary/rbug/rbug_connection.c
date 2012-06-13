@@ -22,8 +22,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "rbug/rbug.h"
-#include "rbug/rbug_internal.h"
+#include "rbug.h"
+#include "rbug_internal.h"
 
 #include "util/u_network.h"
 
