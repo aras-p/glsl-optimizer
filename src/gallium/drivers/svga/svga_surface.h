@@ -91,4 +91,12 @@ svga_surface(struct pipe_surface *surface)
    return (struct svga_surface *)surface;
 }
 
+
+static INLINE const struct svga_surface *
+svga_surface_const(const struct pipe_surface *surface)
+{
+   assert(surface);
+   return (const struct svga_surface *)surface;
+}
+
 #endif
