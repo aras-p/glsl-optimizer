@@ -984,6 +984,18 @@ f2i_emit_cpu(
                                                         emit_data->args[0]);
 }
 
+/* TGSI_OPCODE_F2U (CPU Only) */
+static void
+f2u_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   /* FIXME: implement and use lp_build_utrunc() */
+   emit_data->output[emit_data->chan] = lp_build_itrunc(&bld_base->base,
+                                                        emit_data->args[0]);
+}
+
 /* TGSI_OPCODE_FLR (CPU Only) */
 
 static void
@@ -1561,6 +1573,7 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_EX2].emit = ex2_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_EXP].emit = exp_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_F2I].emit = f2i_emit_cpu;
+   bld_base->op_actions[TGSI_OPCODE_F2U].emit = f2u_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FLR].emit = flr_emit_cpu;
 
    bld_base->op_actions[TGSI_OPCODE_I2F].emit = i2f_emit_cpu;
