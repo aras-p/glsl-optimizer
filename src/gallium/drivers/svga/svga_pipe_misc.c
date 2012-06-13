@@ -81,7 +81,7 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
    dst->height = fb->height;
    dst->nr_cbufs = fb->nr_cbufs;
 
-   /* check if we need to propaget any of the target surfaces */
+   /* check if we need to propagate any of the target surfaces */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
          if (svga_surface_needs_propagation(dst->cbufs[i]))
