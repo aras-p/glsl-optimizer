@@ -384,9 +384,9 @@ svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
  * Check if we should call svga_propagate_surface on the surface.
  */
 boolean
-svga_surface_needs_propagation(struct pipe_surface *surf)
+svga_surface_needs_propagation(const struct pipe_surface *surf)
 {
-   struct svga_surface *s = svga_surface(surf);
+   const struct svga_surface *s = svga_surface_const(surf);
    struct svga_texture *tex = svga_texture(surf->texture);
 
    return s->dirty && s->handle != tex->handle;
