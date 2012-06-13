@@ -452,8 +452,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 result = new(ctx) ir_expression(ir_unop_i2u, src);
 	 break;
       case GLSL_TYPE_FLOAT:
-	 result = new(ctx) ir_expression(ir_unop_i2u,
-		  new(ctx) ir_expression(ir_unop_f2i, src));
+	 result = new(ctx) ir_expression(ir_unop_f2u, src);
 	 break;
       case GLSL_TYPE_BOOL:
 	 result = new(ctx) ir_expression(ir_unop_i2u,
