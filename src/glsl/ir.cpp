@@ -299,6 +299,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
       break;
 
    case ir_unop_i2u:
+   case ir_unop_f2u:
    case ir_unop_bitcast_f2u:
       this->type = glsl_type::get_instance(GLSL_TYPE_UINT,
 					   op0->type->vector_elements, 1);
@@ -428,6 +429,7 @@ static const char *const operator_strs[] = {
    "exp2",
    "log2",
    "f2i",
+   "f2u",
    "i2f",
    "f2b",
    "b2f",

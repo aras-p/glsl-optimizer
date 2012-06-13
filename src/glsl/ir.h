@@ -896,6 +896,7 @@ enum ir_expression_operation {
    ir_unop_exp2,
    ir_unop_log2,
    ir_unop_f2i,         /**< Float-to-integer conversion. */
+   ir_unop_f2u,         /**< Float-to-unsigned conversion. */
    ir_unop_i2f,         /**< Integer-to-float conversion. */
    ir_unop_f2b,         /**< Float-to-boolean conversion */
    ir_unop_b2f,         /**< Boolean-to-float conversion */
