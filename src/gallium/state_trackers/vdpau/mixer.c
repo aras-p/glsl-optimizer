@@ -216,7 +216,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
                                 VdpLayer const *layers)
 {
    enum vl_compositor_deinterlace deinterlace;
-   struct u_rect rect, clip;
+   struct u_rect rect, clip, *prect;
    unsigned i, layer = 0;
 
    vlVdpVideoMixer *vmixer;
@@ -281,8 +281,15 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       pipe_mutex_unlock(vmixer->device->mutex);
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
-   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer,
-                                  RectToPipe(video_source_rect, &rect), NULL, deinterlace);
+   prect = RectToPipe(video_source_rect, &rect);
+   if (!prect) {
+      rect.x0 = 0;
+      rect.y0 = 0;
+      rect.x1 = surf->templat.width;
+      rect.y1 = surf->templat.height;
+      prect = &rect;
+   }
+   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer, prect, NULL, deinterlace);
    vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &rect));
 
    for (i = 0; i < layer_count; ++i) {
