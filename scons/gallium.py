@@ -327,7 +327,8 @@ def generate(env):
                 #'-march=pentium4',
             ]
             if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2') \
-               and (platform != 'windows' or env['build'] == 'debug' or True):
+               and (platform != 'windows' or env['build'] == 'debug' or True) \
+               and platform != 'haiku':
                 # NOTE: We need to ensure stack is realigned given that we
                 # produce shared objects, and have no control over the stack
                 # alignment policy of the application. Therefore we need
@@ -346,6 +347,14 @@ def generate(env):
             if platform in ['windows', 'darwin']:
                 # Workaround http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216
                 ccflags += ['-fno-common']
+            if platform in ['haiku']:
+                # Make optimizations compatible with Pentium or higher on Haiku
+                ccflags += [
+                    '-mstackrealign', # ensure stack is aligned
+                    '-march=i586', # Haiku target is Pentium
+                    '-mtune=i686', # use i686 where we can
+                    '-mmmx' # use mmx math where we can
+                ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
             if platform == 'darwin':
