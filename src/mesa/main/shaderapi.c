@@ -544,6 +544,35 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = shProg->Geom.OutputType;
       break;
 #endif
+   case GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH: {
+      unsigned i;
+      GLint max_len = 0;
+
+      if (!ctx->Extensions.ARB_uniform_buffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
+         return;
+      }
+
+      for (i = 0; i < shProg->NumUniformBlocks; i++) {
+	 /* Add one for the terminating NUL character.
+	  */
+	 const GLint len = strlen(shProg->UniformBlocks[i].Name) + 1;
+
+	 if (len > max_len)
+	    max_len = len;
+      }
+
+      *params = max_len;
+      break;
+   }
+   case GL_ACTIVE_UNIFORM_BLOCKS:
+      if (!ctx->Extensions.ARB_uniform_buffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
+         return;
+      }
+
+      *params = shProg->NumUniformBlocks;
+      break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
       return;
