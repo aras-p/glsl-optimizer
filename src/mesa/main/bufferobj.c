@@ -603,6 +603,8 @@ _mesa_copy_buffer_subdata(struct gl_context *ctx,
 void
 _mesa_init_buffer_objects( struct gl_context *ctx )
 {
+   GLuint i;
+
    memset(&DummyBufferObject, 0, sizeof(DummyBufferObject));
    _glthread_INIT_MUTEX(DummyBufferObject.Mutex);
    DummyBufferObject.RefCount = 1000*1000*1000; /* never delete */
@@ -614,16 +616,43 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
                                  ctx->Shared->NullBufferObj);
    _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer,
                                  ctx->Shared->NullBufferObj);
+
+   ctx->UniformBufferBindings = calloc(ctx->Const.MaxUniformBufferBindings,
+				      sizeof(*ctx->UniformBufferBindings));
+
+   _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer,
+				 ctx->Shared->NullBufferObj);
+
+   for (i = 0; i < ctx->Const.MaxUniformBufferBindings; i++) {
+      _mesa_reference_buffer_object(ctx,
+				    &ctx->UniformBufferBindings[i].BufferObject,
+				    ctx->Shared->NullBufferObj);
+      ctx->UniformBufferBindings[i].Offset = -1;
+      ctx->UniformBufferBindings[i].Size = -1;
+   }
 }
 
 
 void
 _mesa_free_buffer_objects( struct gl_context *ctx )
 {
+   GLuint i;
+
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
 
    _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer, NULL);
    _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer, NULL);
+
+   _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, NULL);
+
+   for (i = 0; i < ctx->Const.MaxUniformBufferBindings; i++) {
+      _mesa_reference_buffer_object(ctx,
+				    &ctx->UniformBufferBindings[i].BufferObject,
+				    NULL);
+   }
+
+   free(ctx->UniformBufferBindings);
+   ctx->UniformBufferBindings = NULL;
 }
 
 

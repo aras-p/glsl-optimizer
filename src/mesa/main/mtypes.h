@@ -3295,6 +3295,20 @@ struct gl_driver_flags
    GLbitfield NewArray;             /**< Vertex array state */
 };
 
+struct gl_uniform_buffer_binding
+{
+   struct gl_buffer_object *BufferObject;
+   /** Start of uniform block data in the buffer */
+   GLintptr Offset;
+   /** Size of data allowed to be referenced from the buffer (in bytes) */
+   GLsizeiptr Size;
+   /**
+    * glBindBufferBase() indicates that the Size should be ignored and only
+    * limited by the current size of the BufferObject.
+    */
+   GLboolean AutomaticSize;
+};
+
 /**
  * Mesa rendering context.
  *
@@ -3436,6 +3450,14 @@ struct gl_context
     * GL_UNIFORM_BUFFER target for glBufferData, glMapBuffer, etc.
     */
    struct gl_buffer_object *UniformBuffer;
+
+   /**
+    * Array of uniform buffers for GL_ARB_uniform_buffer_object and GL 3.1.
+    * This is set up using glBindBufferRange() or glBindBufferBase().  They are
+    * associated with uniform blocks by glUniformBlockBinding()'s state in the
+    * shader program.
+    */
+   struct gl_uniform_buffer_binding *UniformBufferBindings;
 
    /*@}*/
 
