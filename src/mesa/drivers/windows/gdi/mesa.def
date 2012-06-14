@@ -556,21 +556,6 @@ EXPORTS
 	glFogCoorddvEXT
 	glFogCoordPointerEXT
 	glBlendFuncSeparateEXT
-	glFlushVertexArrayRangeNV
-	glVertexArrayRangeNV
-	glCombinerParameterfvNV
-	glCombinerParameterfNV
-	glCombinerParameterivNV
-	glCombinerParameteriNV
-	glCombinerInputNV
-	glCombinerOutputNV
-	glFinalCombinerInputNV
-	glGetCombinerInputParameterfvNV
-	glGetCombinerInputParameterivNV
-	glGetCombinerOutputParameterfvNV
-	glGetCombinerOutputParameterivNV
-	glGetFinalCombinerInputParameterfvNV
-	glGetFinalCombinerInputParameterivNV
 	glResizeBuffersMESA
 	glWindowPos2dMESA
 	glWindowPos2dvMESA
