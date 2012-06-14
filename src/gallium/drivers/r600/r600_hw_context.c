@@ -1331,6 +1331,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 			   12 + /* flush_vgt_streamout */
 			   6 + /* set_streamout_enable */
 			   util_bitcount(buffer_en) * 7 + /* SET_CONTEXT_REG */
+			   (ctx->chip_class == R700 ? util_bitcount(buffer_en) * 5 : 0) + /* STRMOUT_BASE_UPDATE */
 			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 + /* STRMOUT_BUFFER_UPDATE */
 			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 + /* STRMOUT_BUFFER_UPDATE */
 			   (ctx->family > CHIP_R600 && ctx->family < CHIP_RV770 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
@@ -1365,6 +1366,19 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 			cs->buf[cs->cdw++] =
 				r600_context_bo_reloc(ctx, r600_resource(t[i]->b.buffer),
 						      RADEON_USAGE_WRITE);
+
+			/* R7xx requires this packet after updating BUFFER_BASE.
+			 * Without this, R7xx locks up. */
+			if (ctx->chip_class == R700) {
+				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BASE_UPDATE, 1, 0);
+				cs->buf[cs->cdw++] = i;
+				cs->buf[cs->cdw++] = va >> 8;
+
+				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+				cs->buf[cs->cdw++] =
+					r600_context_bo_reloc(ctx, r600_resource(t[i]->b.buffer),
+							      RADEON_USAGE_WRITE);
+			}
 
 			if (ctx->streamout_append_bitmask & (1 << i)) {
 				va = r600_resource_va(&ctx->screen->screen,

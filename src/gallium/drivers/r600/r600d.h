@@ -106,6 +106,7 @@
 #define PKT3_SET_RESOURCE                      0x6D
 #define PKT3_SET_SAMPLER                       0x6E
 #define PKT3_SET_CTL_CONST                     0x6F
+#define PKT3_STRMOUT_BASE_UPDATE	       0x72
 #define PKT3_SURFACE_BASE_UPDATE               0x73
 #define		SURFACE_BASE_UPDATE_DEPTH      (1 << 0)
 #define		SURFACE_BASE_UPDATE_COLOR(x)   (2 << (x))
