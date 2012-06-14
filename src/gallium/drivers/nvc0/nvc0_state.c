@@ -899,6 +899,7 @@ nvc0_so_target_destroy(struct pipe_context *pipe,
 {
    struct nvc0_so_target *targ = nvc0_so_target(ptarg);
    pipe->destroy_query(pipe, targ->pq);
+   pipe_resource_reference(&targ->pipe.buffer, NULL);
    FREE(targ);
 }
 

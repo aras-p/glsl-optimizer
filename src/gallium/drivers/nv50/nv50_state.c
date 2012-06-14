@@ -983,6 +983,7 @@ nv50_so_target_destroy(struct pipe_context *pipe,
    struct nv50_so_target *targ = nv50_so_target(ptarg);
    if (targ->pq)
       pipe->destroy_query(pipe, targ->pq);
+   pipe_resource_reference(&targ->pipe.buffer, NULL);
    FREE(targ);
 }
 
