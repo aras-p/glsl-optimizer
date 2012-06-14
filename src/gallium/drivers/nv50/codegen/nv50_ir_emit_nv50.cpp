@@ -1239,6 +1239,8 @@ CodeEmitterNV50::emitSFnOp(const Instruction *i, uint8_t subOp)
 
    if (i->encSize == 4) {
       assert(i->op == OP_RCP);
+      code[0] |= i->src(0).mod.abs() << 15;
+      code[0] |= i->src(0).mod.neg() << 22;
       emitForm_MUL(i);
    } else {
       code[1] = subOp << 29;
