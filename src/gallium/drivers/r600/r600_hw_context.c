@@ -1453,7 +1453,8 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	}
 
 	/* Flush streamout caches. */
-	ctx->surface_sync_cmd.flush_flags |= flush_flags;
+	ctx->surface_sync_cmd.flush_flags |=
+		S_0085F0_SMX_ACTION_ENA(1) | flush_flags;
 	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 
 	ctx->num_cs_dw_streamout_end = 0;
