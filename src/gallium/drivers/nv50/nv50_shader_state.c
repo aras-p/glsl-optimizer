@@ -552,9 +552,9 @@ nv50_stream_output_validate(struct nv50_context *nv50)
 
    so = nv50->gmtyprog ? nv50->gmtyprog->so : nv50->vertprog->so;
 
+   BEGIN_NV04(push, NV50_3D(STRMOUT_ENABLE), 1);
+   PUSH_DATA (push, 0);
    if (!so || !nv50->num_so_targets) {
-      BEGIN_NV04(push, NV50_3D(STRMOUT_ENABLE), 1);
-      PUSH_DATA (push, 0);
       if (nv50->screen->base.class_3d < NVA0_3D_CLASS) {
          BEGIN_NV04(push, NV50_3D(STRMOUT_PRIMITIVE_LIMIT), 1);
          PUSH_DATA (push, 0);
