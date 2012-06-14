@@ -1994,6 +1994,78 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
 
 #endif /* FEATURE_APPLE_object_purgeable */
 
+
+void GLAPIENTRY
+_mesa_BindBufferRange(GLenum target, GLuint index,
+                      GLuint buffer, GLintptr offset, GLsizeiptr size)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+
+   if (buffer == 0) {
+      bufObj = ctx->Shared->NullBufferObj;
+   } else {
+      bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   }
+
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBindBufferRange(invalid buffer=%u)", buffer);
+      return;
+   }
+
+   if (size <= 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size=%d)",
+		  (int) size);
+      return;
+   }
+
+   if (offset + size > bufObj->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glBindBufferRange(offset + size %d > buffer size %d)",
+		  (int) (offset + size), (int) (bufObj->Size));
+      return;
+   }
+
+   switch (target) {
+   case GL_TRANSFORM_FEEDBACK_BUFFER:
+      _mesa_bind_buffer_range_transform_feedback(ctx, index, bufObj,
+						 offset, size);
+      return;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferRange(target)");
+      return;
+   }
+}
+
+void GLAPIENTRY
+_mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+
+   if (buffer == 0) {
+      bufObj = ctx->Shared->NullBufferObj;
+   } else {
+      bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   }
+
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBindBufferBase(invalid buffer=%u)", buffer);
+      return;
+   }
+
+   switch (target) {
+   case GL_TRANSFORM_FEEDBACK_BUFFER:
+      _mesa_bind_buffer_base_transform_feedback(ctx, index, bufObj);
+      return;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferBase(target)");
+      return;
+   }
+}
+
 void
 _mesa_init_bufferobj_dispatch(struct _glapi_table *disp)
 {
@@ -2008,4 +2080,6 @@ _mesa_init_bufferobj_dispatch(struct _glapi_table *disp)
    SET_IsBufferARB(disp, _mesa_IsBufferARB);
    SET_MapBufferARB(disp, _mesa_MapBufferARB);
    SET_UnmapBufferARB(disp, _mesa_UnmapBufferARB);
+   SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
+   SET_BindBufferBaseEXT(disp, _mesa_BindBufferBase);
 }

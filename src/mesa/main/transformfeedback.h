@@ -60,12 +60,17 @@ _mesa_BeginTransformFeedback(GLenum mode);
 extern void GLAPIENTRY
 _mesa_EndTransformFeedback(void);
 
-extern void GLAPIENTRY
-_mesa_BindBufferRange(GLenum target, GLuint index,
-                      GLuint buffer, GLintptr offset, GLsizeiptr size);
+extern void
+_mesa_bind_buffer_range_transform_feedback(struct gl_context *ctx,
+					   GLuint index,
+					   struct gl_buffer_object *bufObj,
+					   GLintptr offset,
+					   GLsizeiptr size);
 
-extern void GLAPIENTRY
-_mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer);
+extern void
+_mesa_bind_buffer_base_transform_feedback(struct gl_context *ctx,
+					  GLuint index,
+					  struct gl_buffer_object *bufObj);
 
 extern void GLAPIENTRY
 _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
