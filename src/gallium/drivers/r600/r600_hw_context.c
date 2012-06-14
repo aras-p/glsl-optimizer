@@ -1324,15 +1324,16 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 	ctx->num_cs_dw_streamout_end =
 		12 + /* flush_vgt_streamout */
-		util_bitcount(buffer_en) * 8 +
-		3;
+		util_bitcount(buffer_en) * 8 + /* STRMOUT_BUFFER_UPDATE */
+		3 /* set_streamout_enable(0) */;
 
 	r600_need_cs_space(ctx,
 			   12 + /* flush_vgt_streamout */
-			   6 + /* enables */
-			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 +
-			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 +
-			   (ctx->family > CHIP_R600 && ctx->family < CHIP_RV770 ? 2 : 0) +
+			   6 + /* set_streamout_enable */
+			   util_bitcount(buffer_en) * 7 + /* SET_CONTEXT_REG */
+			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 + /* STRMOUT_BUFFER_UPDATE */
+			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 + /* STRMOUT_BUFFER_UPDATE */
+			   (ctx->family > CHIP_R600 && ctx->family < CHIP_RV770 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
 			   ctx->num_cs_dw_streamout_end, TRUE);
 
 	if (ctx->chip_class >= EVERGREEN) {
