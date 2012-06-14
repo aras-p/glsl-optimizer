@@ -289,6 +289,12 @@ static const int extra_ARB_sampler_objects[] = {
    EXTRA_END
 };
 
+static const int extra_ARB_uniform_buffer_object_and_geometry_shader[] = {
+   EXT(ARB_uniform_buffer_object),
+   EXT(ARB_geometry_shader4),
+   EXTRA_END
+};
+
 
 EXTRA_EXT(ARB_ES2_compatibility);
 EXTRA_EXT(ARB_texture_cube_map);
@@ -335,6 +341,7 @@ EXTRA_EXT(EXT_framebuffer_sRGB);
 EXTRA_EXT(ARB_texture_buffer_object);
 EXTRA_EXT(OES_EGL_image_external);
 EXTRA_EXT(ARB_blend_func_extended);
+EXTRA_EXT(ARB_uniform_buffer_object);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -1320,6 +1327,29 @@ static const struct value_desc values[] = {
    { GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, CONST(MAX_DEBUG_MESSAGE_LENGTH), NO_EXTRA },
 
    { GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, CONTEXT_INT(Const.MaxDualSourceDrawBuffers), extra_ARB_blend_func_extended },
+
+   /* GL_ARB_uniform_buffer_object */
+   { GL_MAX_VERTEX_UNIFORM_BLOCKS, CONTEXT_INT(Const.VertexProgram.MaxUniformBlocks),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_FRAGMENT_UNIFORM_BLOCKS, CONTEXT_INT(Const.FragmentProgram.MaxUniformBlocks),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_GEOMETRY_UNIFORM_BLOCKS, CONTEXT_INT(Const.GeometryProgram.MaxUniformBlocks),
+     extra_ARB_uniform_buffer_object_and_geometry_shader },
+   { GL_MAX_COMBINED_UNIFORM_BLOCKS, CONTEXT_INT(Const.MaxCombinedUniformBlocks),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_UNIFORM_BLOCK_SIZE, CONTEXT_INT(Const.MaxUniformBlockSize),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_UNIFORM_BUFFER_BINDINGS, CONTEXT_INT(Const.MaxUniformBufferBindings),
+     extra_ARB_uniform_buffer_object },
+
+   { GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS, CONTEXT_INT(Const.VertexProgram.MaxCombinedUniformComponents),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS, CONTEXT_INT(Const.FragmentProgram.MaxCombinedUniformComponents),
+     extra_ARB_uniform_buffer_object },
+   { GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS, CONTEXT_INT(Const.GeometryProgram.MaxCombinedUniformComponents),
+     extra_ARB_uniform_buffer_object_and_geometry_shader },
+   { GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, CONTEXT_INT(Const.UniformBufferOffsetAlignment),
+     extra_ARB_uniform_buffer_object },
 
 #endif /* FEATURE_GL */
 };

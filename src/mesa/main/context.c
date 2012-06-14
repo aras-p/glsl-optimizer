@@ -542,6 +542,9 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MediumInt.RangeMax = 24;
    prog->MediumInt.Precision = 0;
    prog->LowInt = prog->HighInt = prog->MediumInt;
+
+   prog->MaxUniformBlocks = 12;
+   prog->MaxCombinedUniformComponents = prog->MaxUniformComponents;
 }
 
 
@@ -652,6 +655,12 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxTransformFeedbackSeparateAttribs = MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
+
+   /** GL_ARB_uniform_buffer_object */
+   ctx->Const.MaxCombinedUniformBlocks = 36;
+   ctx->Const.MaxUniformBufferBindings = 36;
+   ctx->Const.MaxUniformBlockSize = 16384;
+   ctx->Const.UniformBufferOffsetAlignment = 1;
 
    /* GL 3.2: hard-coded for now: */
    ctx->Const.ProfileMask = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;

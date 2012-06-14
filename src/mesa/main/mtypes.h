@@ -2709,6 +2709,9 @@ struct gl_program_constants
    /* ES 2.0 and GL_ARB_ES2_compatibility */
    struct gl_precision LowFloat, MediumFloat, HighFloat;
    struct gl_precision LowInt, MediumInt, HighInt;
+   /* GL_ARB_uniform_buffer_object */
+   GLuint MaxUniformBlocks;
+   GLuint MaxCombinedUniformComponents;
 };
 
 
@@ -2773,6 +2776,15 @@ struct gl_constants
    GLuint MaxVarying;
    GLuint MaxVertexVaryingComponents;   /**< Between vert and geom shader */
    GLuint MaxGeometryVaryingComponents; /**< Between geom and frag shader */
+
+   /** @{
+    * GL_ARB_uniform_buffer_object
+    */
+   GLuint MaxCombinedUniformBlocks;
+   GLuint MaxUniformBufferBindings;
+   GLuint MaxUniformBlockSize;
+   GLuint UniformBufferOffsetAlignment;
+   /** @} */
 
    /** GL_ARB_geometry_shader4 */
    GLuint MaxGeometryOutputVertices;
