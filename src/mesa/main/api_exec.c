@@ -579,17 +579,7 @@ _mesa_create_exec_table(void)
 #endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
-   SET_BindBufferARB(exec, _mesa_BindBufferARB);
-   SET_BufferDataARB(exec, _mesa_BufferDataARB);
-   SET_BufferSubDataARB(exec, _mesa_BufferSubDataARB);
-   SET_DeleteBuffersARB(exec, _mesa_DeleteBuffersARB);
-   SET_GenBuffersARB(exec, _mesa_GenBuffersARB);
-   SET_GetBufferParameterivARB(exec, _mesa_GetBufferParameterivARB);
-   SET_GetBufferPointervARB(exec, _mesa_GetBufferPointervARB);
-   SET_GetBufferSubDataARB(exec, _mesa_GetBufferSubDataARB);
-   SET_IsBufferARB(exec, _mesa_IsBufferARB);
-   SET_MapBufferARB(exec, _mesa_MapBufferARB);
-   SET_UnmapBufferARB(exec, _mesa_UnmapBufferARB);
+   _mesa_init_bufferobj_dispatch(exec);
 
    /* ARB 29. GL_ARB_occlusion_query */
    _mesa_init_queryobj_dispatch(exec);

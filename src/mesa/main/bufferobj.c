@@ -43,6 +43,7 @@
 #include "mtypes.h"
 #include "texobj.h"
 #include "transformfeedback.h"
+#include "dispatch.h"
 
 
 /* Debug flags */
@@ -1992,3 +1993,19 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
 }
 
 #endif /* FEATURE_APPLE_object_purgeable */
+
+void
+_mesa_init_bufferobj_dispatch(struct _glapi_table *disp)
+{
+   SET_BindBufferARB(disp, _mesa_BindBufferARB);
+   SET_BufferDataARB(disp, _mesa_BufferDataARB);
+   SET_BufferSubDataARB(disp, _mesa_BufferSubDataARB);
+   SET_DeleteBuffersARB(disp, _mesa_DeleteBuffersARB);
+   SET_GenBuffersARB(disp, _mesa_GenBuffersARB);
+   SET_GetBufferParameterivARB(disp, _mesa_GetBufferParameterivARB);
+   SET_GetBufferPointervARB(disp, _mesa_GetBufferPointervARB);
+   SET_GetBufferSubDataARB(disp, _mesa_GetBufferSubDataARB);
+   SET_IsBufferARB(disp, _mesa_IsBufferARB);
+   SET_MapBufferARB(disp, _mesa_MapBufferARB);
+   SET_UnmapBufferARB(disp, _mesa_UnmapBufferARB);
+}

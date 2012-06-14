@@ -159,4 +159,7 @@ extern void GLAPIENTRY
 _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname, GLint* params);
 #endif
 
+extern void
+_mesa_init_bufferobj_dispatch(struct _glapi_table *disp);
+
 #endif
