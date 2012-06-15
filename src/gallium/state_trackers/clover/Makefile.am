@@ -24,7 +24,7 @@ libclllvm_la_CXXFLAGS = \
 	$(LLVM_CPPFLAGS) \
 	$(DEFINES) \
 	-DLIBCLC_PATH=\"$(LIBCLC_PATH)/\" \
-	-DCLANG_RESOURCE_DIR=\"$(LLVM_LIBDIR)/clang/$(LLVM_VERSION)/\"
+	-DCLANG_RESOURCE_DIR=\"$(CLANG_RESOURCE_DIR)\"
 
 libclllvm_la_SOURCES = \
 	llvm/invocation.cpp

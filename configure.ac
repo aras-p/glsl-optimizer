@@ -1610,6 +1610,12 @@ AC_ARG_WITH([libclc-path],
    [LIBCLC_PATH="$withval"],
    [LIBCLC_PATH=""])
 
+AC_ARG_WITH([clang-libdir],
+   [AS_HELP_STRING([--with-clang-libdir],
+         [Path to Clang libraries @<:@default=llvm-config --libdir@:>@])],
+   [CLANG_LIBDIR="$withval"],
+   [CLANG_LIBDIR=""])
+
 AC_SUBST([LIBCLC_PATH])
 
 if test "x$enable_opencl" = xyes; then
@@ -1696,6 +1702,7 @@ AC_SUBST([LLVM_LIBS])
 AC_SUBST([LLVM_LDFLAGS])
 AC_SUBST([LLVM_INCLUDEDIR])
 AC_SUBST([LLVM_VERSION])
+AC_SUBST([CLANG_RESOURCE_DIR])
 
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
@@ -1870,6 +1877,16 @@ if test "x$enable_gallium_llvm" = xyes; then
 	LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 	DEFINES="${DEFINES} -DHAVE_LLVM=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/0x0\10\2/g'`"
 	MESA_LLVM=1
+
+	dnl Check for Clang interanl headers
+        if test "x$enable_opencl" = xyes; then
+            if test "x$CLANG_LIBDIR" = x; then
+                CLANG_LIBDIR=${LLVM_LIBDIR}
+            fi
+            CLANG_RESOURCE_DIR=$CLANG_LIBDIR/clang/${LLVM_VERSION}
+            AC_CHECK_FILE("$CLANG_RESOURCE_DIR/include/stddef.h",,
+                AC_MSG_ERROR([Could not find clang internal header stddef.h in $CLANG_RESOURCE_DIR Use --with-clang-libdir to specify the correct path to the clang libraries.]))
+        fi
     else
 	MESA_LLVM=0
     fi
