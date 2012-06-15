@@ -131,7 +131,7 @@ enum value_extra {
    EXTRA_VERSION_30,
    EXTRA_VERSION_31,
    EXTRA_VERSION_32,
-   EXTRA_VERSION_ES2,
+   EXTRA_API_ES2,
    EXTRA_NEW_BUFFERS, 
    EXTRA_NEW_FRAG_CLAMP,
    EXTRA_VALID_DRAW_BUFFER,
@@ -363,9 +363,9 @@ static const int extra_version_31[] = { EXTRA_VERSION_31, EXTRA_END };
 static const int extra_version_32[] = { EXTRA_VERSION_32, EXTRA_END };
 
 static const int
-extra_ARB_vertex_program_version_es2[] = {
+extra_ARB_vertex_program_api_es2[] = {
    EXT(ARB_vertex_program),
-   EXTRA_VERSION_ES2,
+   EXTRA_API_ES2,
    EXTRA_END
 };
 
@@ -740,7 +740,7 @@ static const struct value_desc values[] = {
 
    { GL_MAX_VERTEX_ATTRIBS_ARB,
      CONTEXT_INT(Const.VertexProgram.MaxAttribs),
-     extra_ARB_vertex_program_version_es2 },
+     extra_ARB_vertex_program_api_es2 },
 
    /* OES_texture_3D */
    { GL_TEXTURE_BINDING_3D, LOC_CUSTOM, TYPE_INT, TEXTURE_3D_INDEX, NO_EXTRA },
@@ -1808,7 +1808,7 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
          if (ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
             _mesa_update_state(ctx);
          break;
-      case EXTRA_VERSION_ES2:
+      case EXTRA_API_ES2:
 	 if (ctx->API == API_OPENGLES2) {
 	    total++;
 	    enabled++;
