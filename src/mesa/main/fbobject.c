@@ -805,6 +805,15 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
             return;
          }
       }
+
+      /* Check that the format is valid. (MESA_FORMAT_NONE means unsupported)
+       */
+      if (att->Type == GL_RENDERBUFFER &&
+          att->Renderbuffer->Format == MESA_FORMAT_NONE) {
+         fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
+         fbo_incomplete("unsupported renderbuffer format", i);
+         return;
+      }
    }
 
 #if FEATURE_GL
@@ -1394,7 +1403,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
    ASSERT(rb->AllocStorage);
    if (rb->AllocStorage(ctx, rb, internalFormat, width, height)) {
       /* No error - check/set fields now */
-      assert(rb->Format != MESA_FORMAT_NONE);
+      /* If rb->Format == MESA_FORMAT_NONE, the format is unsupported. */
       assert(rb->Width == (GLuint) width);
       assert(rb->Height == (GLuint) height);
       rb->InternalFormat = internalFormat;
