@@ -600,6 +600,7 @@ decompress_with_blit(struct gl_context * ctx,
 
       u_sampler_view_default_template(&sv_temp, stObj->pt, stObj->pt->format);
 
+      sv_temp.format = util_format_linear(sv_temp.format);
       sv_temp.u.tex.first_level =
       sv_temp.u.tex.last_level = texImage->Level;
 
