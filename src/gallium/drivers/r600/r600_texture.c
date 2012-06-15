@@ -237,7 +237,7 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 
 static int r600_init_surface(struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
-			     unsigned array_mode)
+			     unsigned array_mode, bool is_transfer)
 {
 	surface->npix_x = ptex->width0;
 	surface->npix_y = ptex->height0;
@@ -298,7 +298,7 @@ static int r600_init_surface(struct radeon_surface *surface,
 	if (ptex->bind & PIPE_BIND_SCANOUT) {
 		surface->flags |= RADEON_SURF_SCANOUT;
 	}
-	if (util_format_is_depth_and_stencil(ptex->format)) {
+	if (util_format_is_depth_and_stencil(ptex->format) && !is_transfer) {
 		surface->flags |= RADEON_SURF_ZBUFFER;
 		surface->flags |= RADEON_SURF_SBUFFER;
 	}
@@ -315,11 +315,6 @@ static int r600_setup_surface(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	unsigned i;
 	int r;
-
-	if (util_format_is_depth_or_stencil(rtex->real_format)) {
-		rtex->surface.flags |= RADEON_SURF_ZBUFFER;
-		rtex->surface.flags |= RADEON_SURF_SBUFFER;
-	}
 
 	r = rscreen->ws->surface_init(rscreen->ws, &rtex->surface);
 	if (r) {
@@ -572,7 +567,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	r600_setup_miptree(screen, rtex, array_mode);
 	if (rscreen->use_surface_alloc) {
 		rtex->surface = *surface;
-		r = r600_setup_surface(screen, rtex, array_mode, pitch_in_bytes_override);
+		r = r600_setup_surface(screen, rtex, array_mode,
+				       pitch_in_bytes_override);
 		if (r) {
 			FREE(rtex);
 			return NULL;
@@ -642,7 +638,8 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		}
 	}
 
-	r = r600_init_surface(&surface, templ, array_mode);
+	r = r600_init_surface(&surface, templ, array_mode,
+			      templ->flags & R600_RESOURCE_FLAG_TRANSFER);
 	if (r) {
 		return NULL;
 	}
@@ -723,7 +720,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	else
 		array_mode = 0;
 
-	r = r600_init_surface(&surface, templ, array_mode);
+	r = r600_init_surface(&surface, templ, array_mode, 0);
 	if (r) {
 		return NULL;
 	}
@@ -796,8 +793,9 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	 * the CPU is much happier reading out of cached system memory
 	 * than uncached VRAM.
 	 */
-	if (R600_TEX_IS_TILED(rtex, level))
+	if (R600_TEX_IS_TILED(rtex, level)) {
 		use_staging_texture = TRUE;
+	}
 
 	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
 		use_staging_texture = TRUE;
@@ -805,15 +803,18 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
 	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
-	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE)))
+	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
 		use_staging_texture = TRUE;
+	}
 
 	if (!permit_hardware_blit(ctx->screen, texture) ||
-		(texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+		(texture->flags & R600_RESOURCE_FLAG_TRANSFER)) {
 		use_staging_texture = FALSE;
+	}
 
-	if (use_staging_texture && (usage & PIPE_TRANSFER_MAP_DIRECTLY))
+	if (use_staging_texture && (usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
 		return NULL;
+	}
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
@@ -898,8 +899,9 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 	}
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
-		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture)
+		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture) {
 			r600_blit_push_depth(ctx, rtex);
+		}
 	}
 
 	pipe_resource_reference(&transfer->resource, NULL);
