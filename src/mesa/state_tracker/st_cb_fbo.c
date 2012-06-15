@@ -81,10 +81,13 @@ st_renderbuffer_alloc_sw_storage(struct gl_context * ctx,
    }
    else {
       format = st_choose_renderbuffer_format(screen, internalFormat, 0);
-   }
 
-   if (format == PIPE_FORMAT_NONE) {
-      return FALSE;
+      /* Not setting gl_renderbuffer::Format here will cause
+       * FRAMEBUFFER_UNSUPPORTED and ValidateFramebuffer will not be called.
+       */
+      if (format == PIPE_FORMAT_NONE) {
+         return GL_TRUE;
+      }
    }
 
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
@@ -133,8 +136,11 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    format = st_choose_renderbuffer_format(screen, internalFormat,
                                           rb->NumSamples);
 
+   /* Not setting gl_renderbuffer::Format here will cause
+    * FRAMEBUFFER_UNSUPPORTED and ValidateFramebuffer will not be called.
+    */
    if (format == PIPE_FORMAT_NONE) {
-      return FALSE;
+      return GL_TRUE;
    }
 
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
