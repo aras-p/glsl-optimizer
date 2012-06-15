@@ -2995,6 +2995,7 @@ struct gl_extensions
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_primitive_restart;
+   GLboolean NV_read_buffer;
    GLboolean NV_texture_barrier;
    GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;

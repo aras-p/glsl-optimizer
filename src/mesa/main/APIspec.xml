@@ -3534,6 +3534,13 @@
 	</proto>
 </template>
 
+<template name="ReadBuffer">
+	<proto>
+		<return type="void"/>
+		<param name="mode" type="GLenum"/>
+	</proto>
+</template>
+
 <api name="mesa" implementation="true">
 	<category name="MESA"/>
 
@@ -3810,6 +3817,9 @@
         <function name="EGLImageTargetRenderbufferStorageOES" template="EGLImageTargetRenderbufferStorage"/>
 
 	<function name="DrawBuffersARB" template="DrawBuffers"/>
+
+	<function name="ReadBuffer" template="ReadBuffer"/>
+
 </api>
 
 <api name="GLES1.1">
@@ -4150,7 +4160,10 @@
         <category name="EXT_unpack_subimage"/>
 
 	<category name="NV_draw_buffers"/>
+	<category name="NV_read_buffer"/>
+
 	<function name="DrawBuffersNV" template="DrawBuffers"/>
+	<function name="ReadBufferNV" template="ReadBuffer"/> 
 
 	<function name="CullFace" template="CullFace"/>
 

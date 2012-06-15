@@ -131,6 +131,7 @@ enum value_extra {
    EXTRA_VERSION_30,
    EXTRA_VERSION_31,
    EXTRA_VERSION_32,
+   EXTRA_API_GL,
    EXTRA_API_ES2,
    EXTRA_NEW_BUFFERS, 
    EXTRA_NEW_FRAG_CLAMP,
@@ -366,6 +367,15 @@ static const int
 extra_ARB_vertex_program_api_es2[] = {
    EXT(ARB_vertex_program),
    EXTRA_API_ES2,
+   EXTRA_END
+};
+
+/* The ReadBuffer get token is valid under either full GL or under
+ * GLES2 if the NV_read_buffer extension is available. */
+static const int
+extra_NV_read_buffer_api_gl[] = {
+   EXT(NV_read_buffer),
+   EXTRA_API_GL,
    EXTRA_END
 };
 
@@ -750,6 +760,11 @@ static const struct value_desc values[] = {
    /* GL_ARB_fragment_program/OES_standard_derivatives */
    { GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
      CONTEXT_ENUM(Hint.FragmentShaderDerivative), extra_ARB_fragment_shader },
+
+   /* GL_NV_read_buffer */
+   { GL_READ_BUFFER,
+     LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, extra_NV_read_buffer_api_gl },
+
 #endif /* FEATURE_GL || FEATURE_ES2 */
 
 #if FEATURE_ES2
@@ -884,7 +899,6 @@ static const struct value_desc values[] = {
    { GL_POLYGON_SMOOTH, CONTEXT_BOOL(Polygon.SmoothFlag), NO_EXTRA },
    { GL_POLYGON_SMOOTH_HINT, CONTEXT_ENUM(Hint.PolygonSmooth), NO_EXTRA },
    { GL_POLYGON_STIPPLE, CONTEXT_BOOL(Polygon.StippleFlag), NO_EXTRA },
-   { GL_READ_BUFFER, LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, NO_EXTRA },
    { GL_RED_BIAS, CONTEXT_FLOAT(Pixel.RedBias), NO_EXTRA },
    { GL_RED_SCALE, CONTEXT_FLOAT(Pixel.RedScale), NO_EXTRA },
    { GL_RENDER_MODE, CONTEXT_ENUM(RenderMode), NO_EXTRA },
@@ -1810,6 +1824,12 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
          break;
       case EXTRA_API_ES2:
 	 if (ctx->API == API_OPENGLES2) {
+	    total++;
+	    enabled++;
+	 }
+	 break;
+      case EXTRA_API_GL:
+	 if (ctx->API == API_OPENGL) {
 	    total++;
 	    enabled++;
 	 }

@@ -300,6 +300,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_packed_depth_stencil",                 o(EXT_packed_depth_stencil),                GL,             2000 },
    { "GL_NV_point_sprite",                         o(NV_point_sprite),                         GL,             2001 },
    { "GL_NV_primitive_restart",                    o(NV_primitive_restart),                    GL,             2002 },
+   { "GL_NV_read_buffer",                          o(dummy_true),                              ES2,            2011 },
    { "GL_NV_texgen_reflection",                    o(NV_texgen_reflection),                    GL,             1999 },
    { "GL_NV_texture_barrier",                      o(NV_texture_barrier),                      GL,             2009 },
    { "GL_NV_texture_env_combine4",                 o(NV_texture_env_combine4),                 GL,             1999 },
