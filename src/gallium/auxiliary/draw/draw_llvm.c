@@ -305,6 +305,9 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
                           target, vertex_header,
                           DRAW_JIT_VERTEX_DATA);
 
+   assert(LLVMABISizeOfType(target, vertex_header) ==
+          offsetof(struct vertex_header, data[data_elems]));
+
    return vertex_header;
 }
 
