@@ -576,6 +576,19 @@ brw_render_target_supported(struct intel_context *intel,
 	rb->_BaseFormat != GL_RED) && _mesa_is_format_integer_color(format))
       return false;
 
+   /* Under some conditions, MSAA is not supported for formats whose width is
+    * more than 64 bits.
+    */
+   if (rb->NumSamples > 0 && _mesa_get_format_bytes(format) > 8) {
+      /* Gen6: MSAA on >64 bit formats is unsupported. */
+      if (intel->gen <= 6)
+         return false;
+
+      /* Gen7: 8x MSAA on >64 bit formats is unsupported. */
+      if (rb->NumSamples >= 8)
+         return false;
+   }
+
    return brw->format_supported_as_render_target[format];
 }
 
