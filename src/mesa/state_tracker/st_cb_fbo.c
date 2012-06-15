@@ -113,7 +113,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   enum pipe_format format;
+   enum pipe_format format = PIPE_FORMAT_NONE;
    struct pipe_surface surf_tmpl;
    struct pipe_resource templ;
 
@@ -133,8 +133,36 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    pipe_surface_reference( &strb->surface, NULL );
    pipe_resource_reference( &strb->texture, NULL );
 
-   format = st_choose_renderbuffer_format(screen, internalFormat,
-                                          rb->NumSamples);
+   /* Handle multisample renderbuffers first.
+    *
+    * From ARB_framebuffer_object:
+    *   If <samples> is zero, then RENDERBUFFER_SAMPLES is set to zero.
+    *   Otherwise <samples> represents a request for a desired minimum
+    *   number of samples. Since different implementations may support
+    *   different sample counts for multisampled rendering, the actual
+    *   number of samples allocated for the renderbuffer image is
+    *   implementation dependent.  However, the resulting value for
+    *   RENDERBUFFER_SAMPLES is guaranteed to be greater than or equal
+    *   to <samples> and no more than the next larger sample count supported
+    *   by the implementation.
+    *
+    * So let's find the supported number of samples closest to NumSamples.
+    * (NumSamples == 1) is treated the same as (NumSamples == 0).
+    */
+   if (rb->NumSamples > 1) {
+      unsigned i;
+
+      for (i = rb->NumSamples; i <= ctx->Const.MaxSamples; i++) {
+         format = st_choose_renderbuffer_format(screen, internalFormat, i);
+
+         if (format != PIPE_FORMAT_NONE) {
+            rb->NumSamples = i;
+            break;
+         }
+      }
+   } else {
+      format = st_choose_renderbuffer_format(screen, internalFormat, 0);
+   }
 
    /* Not setting gl_renderbuffer::Format here will cause
     * FRAMEBUFFER_UNSUPPORTED and ValidateFramebuffer will not be called.
