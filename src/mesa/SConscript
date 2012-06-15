@@ -229,6 +229,7 @@ vbo_sources = [
 
 statetracker_sources = [
     'state_tracker/st_atom.c',
+    'state_tracker/st_atom_array.c',
     'state_tracker/st_atom_blend.c',
     'state_tracker/st_atom_clip.c',
     'state_tracker/st_atom_constbuf.c',
