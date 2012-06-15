@@ -413,47 +413,6 @@ CondCCodeToCC(ISD::CondCode CC, const MVT::SimpleValueType& type)
   };
 }
 
-/// Helper function used by LowerFormalArguments
-static const TargetRegisterClass*
-getRegClassFromType(unsigned int type) {
-  switch (type) {
-  default:
-    assert(0 && "Passed in type does not match any register classes.");
-  case MVT::i8:
-    return &AMDIL::GPRI8RegClass;
-  case MVT::i16:
-    return &AMDIL::GPRI16RegClass;
-  case MVT::i32:
-    return &AMDIL::GPRI32RegClass;
-  case MVT::f32:
-    return &AMDIL::GPRF32RegClass;
-  case MVT::i64:
-    return &AMDIL::GPRI64RegClass;
-  case MVT::f64:
-    return &AMDIL::GPRF64RegClass;
-  case MVT::v4f32:
-    return &AMDIL::GPRV4F32RegClass;
-  case MVT::v4i8:
-    return &AMDIL::GPRV4I8RegClass;
-  case MVT::v4i16:
-    return &AMDIL::GPRV4I16RegClass;
-  case MVT::v4i32:
-    return &AMDIL::GPRV4I32RegClass;
-  case MVT::v2f32:
-    return &AMDIL::GPRV2F32RegClass;
-  case MVT::v2i8:
-    return &AMDIL::GPRV2I8RegClass;
-  case MVT::v2i16:
-    return &AMDIL::GPRV2I16RegClass;
-  case MVT::v2i32:
-    return &AMDIL::GPRV2I32RegClass;
-  case MVT::v2f64:
-    return &AMDIL::GPRV2F64RegClass;
-  case MVT::v2i64:
-    return &AMDIL::GPRV2I64RegClass;
-  }
-}
-
 SDValue
 AMDILTargetLowering::LowerMemArgument(
     SDValue Chain,
@@ -1514,7 +1473,7 @@ const
     CCValAssign &VA = ArgLocs[i];
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
-      const TargetRegisterClass *RC = getRegClassFromType(
+      const TargetRegisterClass *RC = getRegClassFor(
           RegVT.getSimpleVT().SimpleTy);
 
       unsigned int Reg = MF.addLiveIn(VA.getLocReg(), RC);
