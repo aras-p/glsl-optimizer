@@ -1994,6 +1994,85 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
 
 #endif /* FEATURE_APPLE_object_purgeable */
 
+static void
+set_ubo_binding(struct gl_context *ctx,
+		int index,
+		struct gl_buffer_object *bufObj,
+		GLintptr offset,
+		GLsizeiptr size,
+		GLboolean autoSize)
+{
+   struct gl_uniform_buffer_binding *binding;
+
+   binding = &ctx->UniformBufferBindings[index];
+   if (binding->BufferObject == bufObj &&
+       binding->Offset == offset &&
+       binding->Size == size &&
+       binding->AutomaticSize == autoSize) {
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+
+   _mesa_reference_buffer_object(ctx, &binding->BufferObject, bufObj);
+   binding->Offset = offset;
+   binding->Size = size;
+   binding->AutomaticSize = autoSize;
+}
+
+/**
+ * Specify a buffer object to receive vertex shader results.  Plus,
+ * specify the starting offset to place the results, and max size.
+ */
+static void
+bind_buffer_range_uniform_buffer(struct gl_context *ctx,
+				 GLuint index,
+				 struct gl_buffer_object *bufObj,
+				 GLintptr offset,
+				 GLsizeiptr size)
+{
+   if (index >= ctx->Const.MaxUniformBufferBindings) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(index=%d)", index);
+      return;
+   }
+
+   if (offset & (ctx->Const.UniformBufferOffsetAlignment - 1)) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glBindBufferRange(offset misalgned %d/%d)", (int) offset,
+		  ctx->Const.UniformBufferOffsetAlignment);
+      return;
+   }
+
+   if (bufObj == ctx->Shared->NullBufferObj) {
+      offset = -1;
+      size = -1;
+   }
+
+   _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, bufObj);
+   set_ubo_binding(ctx, index, bufObj, offset, size, GL_FALSE);
+}
+
+
+/**
+ * Specify a buffer object to receive vertex shader results.
+ * As above, but start at offset = 0.
+ */
+static void
+bind_buffer_base_uniform_buffer(struct gl_context *ctx,
+				GLuint index,
+				struct gl_buffer_object *bufObj)
+{
+   if (index >= ctx->Const.MaxUniformBufferBindings) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferBase(index=%d)", index);
+      return;
+   }
+
+   _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, bufObj);
+   if (bufObj == ctx->Shared->NullBufferObj)
+      set_ubo_binding(ctx, index, bufObj, -1, -1, GL_TRUE);
+   else
+      set_ubo_binding(ctx, index, bufObj, 0, 0, GL_TRUE);
+}
 
 void GLAPIENTRY
 _mesa_BindBufferRange(GLenum target, GLuint index,
@@ -2032,6 +2111,9 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
       _mesa_bind_buffer_range_transform_feedback(ctx, index, bufObj,
 						 offset, size);
       return;
+   case GL_UNIFORM_BUFFER:
+      bind_buffer_range_uniform_buffer(ctx, index, bufObj, offset, size);
+      return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferRange(target)");
       return;
@@ -2059,6 +2141,9 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    switch (target) {
    case GL_TRANSFORM_FEEDBACK_BUFFER:
       _mesa_bind_buffer_base_transform_feedback(ctx, index, bufObj);
+      return;
+   case GL_UNIFORM_BUFFER:
+      bind_buffer_base_uniform_buffer(ctx, index, bufObj);
       return;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferBase(target)");
