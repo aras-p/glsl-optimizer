@@ -220,9 +220,6 @@ namespace llvm
       virtual SDValue
         LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
-      int
-        getVarArgsFrameOffset() const;
-
       /// computeMaskedBitsForTargetNode - Determine which of
       /// the bits specified
       /// in Mask are known to be either zero or one and return them in
@@ -308,34 +305,6 @@ namespace llvm
             const SmallVectorImpl<SDValue> &OutVals,
             DebugLoc dl, SelectionDAG &DAG) const;
 
-      //+++--- Function dealing with conversions between floating point and
-      //integer types ---+++//
-      SDValue
-        genCLZu64(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        genCLZuN(SDValue Op, SelectionDAG &DAG, uint32_t bits) const;
-      SDValue
-        genCLZu32(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        genf64toi32(SDValue Op, SelectionDAG &DAG,
-            bool includeSign) const;
-
-      SDValue
-        genf64toi64(SDValue Op, SelectionDAG &DAG,
-            bool includeSign) const;
-
-      SDValue
-        genu32tof64(SDValue Op, EVT dblvt, SelectionDAG &DAG) const;
-
-      SDValue
-        genu64tof64(SDValue Op, EVT dblvt, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
-
       SDValue
         LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
 
@@ -349,9 +318,6 @@ namespace llvm
         LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerSUB(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerSREM(SDValue Op, SelectionDAG &DAG) const;
       SDValue
         LowerSREM8(SDValue Op, SelectionDAG &DAG) const;
@@ -363,17 +329,6 @@ namespace llvm
         LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerUREM(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUREM8(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUREM16(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUREM32(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerUREM64(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerSDIV(SDValue Op, SelectionDAG &DAG) const;
       SDValue
         LowerSDIV24(SDValue Op, SelectionDAG &DAG) const;
@@ -383,32 +338,7 @@ namespace llvm
         LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerFDIV(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerFDIV32(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
-        LowerFDIV64(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerMUL(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerEXTRACT_SUBVECTOR(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerSELECT(SDValue Op, SelectionDAG &DAG) const;

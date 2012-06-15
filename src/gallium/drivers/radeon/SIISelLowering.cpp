@@ -33,9 +33,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   computeRegisterProperties();
 
-  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
-  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Legal);
-
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 

@@ -32,11 +32,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::i32, &AMDIL::R600_Reg32RegClass);
   computeRegisterProperties();
 
-  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Legal);
-  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4f32, Legal);
-  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Legal);
-  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v4i32, Legal);
-
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
 }
