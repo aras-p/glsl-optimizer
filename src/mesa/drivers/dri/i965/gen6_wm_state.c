@@ -98,11 +98,11 @@ upload_wm_state(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
-   bool multisampled = false;
+   bool multisampled_fbo = false;
 
    /* _NEW_BUFFERS */
    if (ctx->DrawBuffer->_ColorDrawBuffers[0])
-      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
+      multisampled_fbo = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
 
     /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
@@ -197,8 +197,12 @@ upload_wm_state(struct brw_context *brw)
 
    dw6 |= _mesa_bitcount_64(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
-   if (multisampled) {
-      dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
+   if (multisampled_fbo) {
+      /* _NEW_MULTISAMPLE */
+      if (ctx->Multisample.Enabled)
+         dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
+      else
+         dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
       dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
    } else {
       dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
@@ -230,7 +234,8 @@ const struct brw_tracked_state gen6_wm_state = {
 		_NEW_COLOR |
 		_NEW_BUFFERS |
 		_NEW_PROGRAM_CONSTANTS |
-		_NEW_POLYGON),
+		_NEW_POLYGON |
+                _NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_BATCH),
       .cache = (CACHE_NEW_SAMPLER |

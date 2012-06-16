@@ -39,12 +39,12 @@ upload_wm_state(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    bool writes_depth = false;
-   bool multisampled = false;
+   bool multisampled_fbo = false;
    uint32_t dw1, dw2;
 
    /* _NEW_BUFFERS */
    if (ctx->DrawBuffer->_ColorDrawBuffers[0])
-      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
+      multisampled_fbo = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
 
    dw1 = dw2 = 0;
    dw1 |= GEN7_WM_STATISTICS_ENABLE;
@@ -79,8 +79,12 @@ upload_wm_state(struct brw_context *brw)
        dw1 & GEN7_WM_KILL_ENABLE) {
       dw1 |= GEN7_WM_DISPATCH_ENABLE;
    }
-   if (multisampled) {
-      dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
+   if (multisampled_fbo) {
+      /* _NEW_MULTISAMPLE */
+      if (ctx->Multisample.Enabled)
+         dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
+      else
+         dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
       dw2 |= GEN7_WM_MSDISPMODE_PERPIXEL;
    } else {
       dw1 |= GEN7_WM_MSRAST_OFF_PIXEL;
@@ -97,7 +101,8 @@ upload_wm_state(struct brw_context *brw)
 const struct brw_tracked_state gen7_wm_state = {
    .dirty = {
       .mesa  = (_NEW_LINE | _NEW_POLYGON |
-	        _NEW_COLOR | _NEW_BUFFERS),
+	        _NEW_COLOR | _NEW_BUFFERS |
+                _NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_BATCH),
       .cache = CACHE_NEW_WM_PROG,

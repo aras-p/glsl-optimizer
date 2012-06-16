@@ -161,9 +161,9 @@ upload_sf_state(struct brw_context *brw)
    float point_size;
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
-   bool multisampled = false;
+   bool multisampled_fbo = false;
    if (ctx->DrawBuffer->_ColorDrawBuffers[0])
-      multisampled = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
+      multisampled_fbo = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
 
    dw1 = GEN6_SF_STATISTICS_ENABLE |
          GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
@@ -261,7 +261,8 @@ upload_sf_state(struct brw_context *brw)
    if (ctx->Line.StippleFlag && intel->is_haswell) {
       dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
    }
-   if (multisampled)
+   /* _NEW_MULTISAMPLE */
+   if (multisampled_fbo && ctx->Multisample.Enabled)
       dw2 |= GEN6_SF_MSRAST_ON_PATTERN;
 
    /* FINISHME: Last Pixel Enable?  Vertex Sub Pixel Precision Select?
@@ -309,7 +310,8 @@ const struct brw_tracked_state gen7_sf_state = {
 		_NEW_LINE |
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
-		_NEW_POINT),
+		_NEW_POINT |
+                _NEW_MULTISAMPLE),
       .brw   = BRW_NEW_CONTEXT,
       .cache = CACHE_NEW_VS_PROG
    },
