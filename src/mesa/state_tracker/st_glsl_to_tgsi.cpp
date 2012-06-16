@@ -304,7 +304,6 @@ public:
    int samplers_used;
    bool indirect_addr_temps;
    bool indirect_addr_consts;
-   int num_clip_distances;
    
    int glsl_version;
    bool native_integers;
@@ -2825,7 +2824,6 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    samplers_used = 0;
    indirect_addr_temps = false;
    indirect_addr_consts = false;
-   num_clip_distances = 0;
    glsl_version = 0;
    native_integers = false;
    mem_ctx = ralloc_context(NULL);
@@ -4593,17 +4591,9 @@ st_translate_program(
       }
 
       for (i = 0; i < numOutputs; i++) {
-         if (outputSemanticName[i] == TGSI_SEMANTIC_CLIPDIST) {
-            int mask = ((1 << (program->num_clip_distances - 4*outputSemanticIndex[i])) - 1) & TGSI_WRITEMASK_XYZW;
-            t->outputs[i] = ureg_DECL_output_masked(ureg,
-                                                    outputSemanticName[i],
-                                                    outputSemanticIndex[i],
-                                                    mask);
-         } else {
-            t->outputs[i] = ureg_DECL_output(ureg,
-                                             outputSemanticName[i],
-                                             outputSemanticIndex[i]);
-         }
+         t->outputs[i] = ureg_DECL_output(ureg,
+                                          outputSemanticName[i],
+                                          outputSemanticIndex[i]);
       }
       if (passthrough_edgeflags)
          emit_edgeflags(t);
@@ -4759,8 +4749,7 @@ out:
 static struct gl_program *
 get_mesa_program(struct gl_context *ctx,
                  struct gl_shader_program *shader_program,
-                 struct gl_shader *shader,
-                 int num_clip_distances)
+                 struct gl_shader *shader)
 {
    glsl_to_tgsi_visitor* v = new glsl_to_tgsi_visitor();
    struct gl_program *prog;
@@ -4800,7 +4789,6 @@ get_mesa_program(struct gl_context *ctx,
    v->options = options;
    v->glsl_version = ctx->Const.GLSLVersion;
    v->native_integers = ctx->Const.NativeIntegers;
-   v->num_clip_distances = num_clip_distances;
 
    _mesa_generate_parameters_list_for_uniforms(shader_program, shader,
 					       prog->Parameters);
@@ -4925,25 +4913,6 @@ get_mesa_program(struct gl_context *ctx,
    return prog;
 }
 
-/**
- * Searches through the IR for a declaration of gl_ClipDistance and returns the
- * declared size of the gl_ClipDistance array.  Returns 0 if gl_ClipDistance is
- * not declared in the IR.
- */
-int get_clip_distance_size(exec_list *ir)
-{
-   foreach_iter (exec_list_iterator, iter, *ir) {
-      ir_instruction *inst = (ir_instruction *)iter.get();
-      ir_variable *var = inst->as_variable();
-      if (var == NULL) continue;
-      if (!strcmp(var->name, "gl_ClipDistance")) {
-         return var->type->length;
-      }
-   }
-   
-   return 0;
-}
-
 extern "C" {
 
 struct gl_shader *
@@ -4982,7 +4951,6 @@ st_new_shader_program(struct gl_context *ctx, GLuint name)
 GLboolean
 st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
-   int num_clip_distances[MESA_SHADER_TYPES];
    assert(prog->LinkStatus);
 
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
@@ -4993,11 +4961,6 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       exec_list *ir = prog->_LinkedShaders[i]->ir;
       const struct gl_shader_compiler_options *options =
             &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(prog->_LinkedShaders[i]->Type)];
-
-      /* We have to determine the length of the gl_ClipDistance array before
-       * the array is lowered to two vec4s by lower_clip_distance().
-       */
-      num_clip_distances[i] = get_clip_distance_size(ir);
 
       do {
          unsigned what_to_lower = MOD_TO_FRACT | DIV_TO_MUL_RCP |
@@ -5020,7 +4983,6 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	   || progress;
 
          progress = lower_quadop_vector(ir, false) || progress;
-         progress = lower_clip_distance(ir) || progress;
 
          if (options->MaxIfDepth == 0)
             progress = lower_discard(ir) || progress;
@@ -5055,8 +5017,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
          continue;
 
-      linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i],
-                                     num_clip_distances[i]);
+      linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
       if (linked_prog) {
 	 static const GLenum targets[] = {

@@ -222,6 +222,7 @@ void st_init_limits(struct st_context *st)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
       else
          options->MaxUnrollIterations = 255; /* SM3 limit */
+      options->LowerClipDistance = true;
    }
 
    /* PIPE_SHADER_CAP_MAX_INPUTS for the FS specifies the maximum number
