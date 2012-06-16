@@ -47,13 +47,13 @@ brw_swap_cmod(uint32_t cmod)
    case BRW_CONDITIONAL_NZ:
       return cmod;
    case BRW_CONDITIONAL_G:
-      return BRW_CONDITIONAL_LE;
-   case BRW_CONDITIONAL_GE:
       return BRW_CONDITIONAL_L;
+   case BRW_CONDITIONAL_GE:
+      return BRW_CONDITIONAL_LE;
    case BRW_CONDITIONAL_L:
-      return BRW_CONDITIONAL_GE;
-   case BRW_CONDITIONAL_LE:
       return BRW_CONDITIONAL_G;
+   case BRW_CONDITIONAL_LE:
+      return BRW_CONDITIONAL_GE;
    default:
       return ~0;
    }
