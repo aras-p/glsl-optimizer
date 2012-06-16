@@ -43,6 +43,7 @@ struct brw_sampler_prog_key_data {
 };
 
 void brw_populate_sampler_prog_key_data(struct gl_context *ctx,
-				        struct brw_sampler_prog_key_data *key, int i);
+				        const struct gl_program *prog,
+				        struct brw_sampler_prog_key_data *key);
 
 #endif

@@ -334,10 +334,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_TEXTURE */
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      if (prog->TexturesUsed[i])
-	 brw_populate_sampler_prog_key_data(ctx, &key.tex, i);
-   }
+   brw_populate_sampler_prog_key_data(ctx, prog, &key.tex);
 
    /* BRW_NEW_VERTICES */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
