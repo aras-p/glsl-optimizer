@@ -2,6 +2,10 @@ Import('*')
 
 env = env.Clone()
 
+if env['suncc']:
+	print 'warning: not building svga'
+	Return()
+
 if env['platform'] in ['linux']:
 	env.Append(CCFLAGS = ['-fvisibility=hidden'])
 

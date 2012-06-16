@@ -2,6 +2,10 @@ Import('*')
 
 env = drienv.Clone()
 
+if env['suncc']:
+    print 'warning: not building dri-vmwgfx'
+    Return()
+
 if env['build'] == 'release':
     env.Append(CPPDEFINES = ['GALLIUM_RBUG'])
     env.Prepend(LIBS = [rbug])
