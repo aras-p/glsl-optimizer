@@ -99,23 +99,23 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   git log mesa-7.11..mesa-7.11.1
 </pre>
 
-<p>Adam Jackson (2):
+<p>Adam Jackson (2):</p>
 <ul>
   <li>drisw: Remove cargo culting that breaks GLX 1.3 ctors</li>
   <li>glx: Don't enable INTEL_swap_event unconditionally</li>
-</ul></p>
+</ul>
 
-<p>Alex Deucher (1):
+<p>Alex Deucher (1):</p>
 <ul>
   <li>r600g: fix up vs export handling</li>
-</ul></p>
+</ul>
 
-<p>Ben Widawsky (1):
+<p>Ben Widawsky (1):</p>
 <ul>
   <li>intel: GetBuffer fix</li>
-</ul></p>
+</ul>
 
-<p>Brian Paul (15):
+<p>Brian Paul (15):</p>
 <ul>
   <li>docs: add 7.11 md5 sums</li>
   <li>docs: news item for 7.11 release</li>
@@ -132,54 +132,54 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>mesa: generate GL_INVALID_OPERATION in glIsEnabledIndex() between Begin/End</li>
   <li>mesa: fix incorrect error code in _mesa_FramebufferTexture1D/3DEXT()</li>
   <li>mesa: fix format/type check in unpack_image() for bitmaps</li>
-</ul></p>
+</ul>
 
-<p>Carl Simonson (1):
+<p>Carl Simonson (1):</p>
 <ul>
   <li>i830: Add missing vtable entry for i830 from the hiz work.</li>
-</ul></p>
+</ul>
 
-<p>Carl Worth (5):
+<p>Carl Worth (5):</p>
 <ul>
   <li>glcpp: Fix two (or more) successive applications of token pasting</li>
   <li>glcpp: Test a non-function-like macro using the token paste operator</li>
   <li>glcpp: Implement token pasting for non-function-like macros</li>
   <li>glcpp: Raise error if defining any macro containing two consecutive underscores</li>
   <li>glcpp: Add a test for #elif with an undefined macro.</li>
-</ul></p>
+</ul>
 
-<p>Chad Versace (5):
+<p>Chad Versace (5):</p>
 <ul>
   <li>glsl: Add method glsl_type::can_implicitly_convert_to()</li>
   <li>glsl: Fix implicit conversions in non-constructor function calls</li>
   <li>glsl: Remove ir_function.cpp:type_compare()</li>
   <li>glsl: Fix conversions in array constructors</li>
   <li>x86-64: Fix compile error with clang</li>
-</ul></p>
+</ul>
 
-<p>Chia-I Wu (3):
+<p>Chia-I Wu (3):</p>
 <ul>
   <li>glsl: empty declarations should be valid</li>
   <li>intel: rename intel_extensions_es2.c to intel_extensions_es.c</li>
   <li>intel: fix GLESv1 support</li>
-</ul></p>
+</ul>
 
-<p>Chris Wilson (1):
+<p>Chris Wilson (1):</p>
 <ul>
   <li>i915: out-of-bounds write in calc_live_regs()</li>
-</ul></p>
+</ul>
 
-<p>Christopher James Halse Rogers (1):
+<p>Christopher James Halse Rogers (1):</p>
 <ul>
   <li>glx/dri2: Paper over errors in DRI2Connect when indirect</li>
-</ul></p>
+</ul>
 
-<p>David Reveman (1):
+<p>David Reveman (1):</p>
 <ul>
   <li>i915g: Fix off-by-one in scissors.</li>
-</ul></p>
+</ul>
 
-<p>Eric Anholt (16):
+<p>Eric Anholt (16):</p>
 <ul>
   <li>mesa: Don't skip glGetProgramEnvParam4dvARB if there was already an error.</li>
   <li>mesa: Fix glGetUniform() type conversions.</li>
@@ -197,9 +197,9 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>intel: Mark MESA_FORMAT_X8_Z24 as always supported.</li>
   <li>mesa: Don't error on glFeedbackBuffer(size = 0, buffer = NULL)</li>
   <li>glsl: Fix gl_NormalMatrix swizzle setup to match i965's invariants.</li>
-</ul></p>
+</ul>
 
-<p>Henri Verbeet (6):
+<p>Henri Verbeet (6):</p>
 <ul>
   <li>mesa: Also set the remaining draw buffers to GL_NONE when updating just the first buffer in _mesa_drawbuffers().</li>
   <li>r600g: Support the PIPE_FORMAT_R16_FLOAT colorformat.</li>
@@ -207,9 +207,9 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>mesa: Allow sampling from units &gt;= MAX_TEXTURE_UNITS in shaders.</li>
   <li>mesa: Use the Elements macro for the sampler index assert in validate_samplers().</li>
   <li>mesa: Fix a couple of TexEnv unit limits.</li>
-</ul></p>
+</ul>
 
-<p>Ian Romanick (17):
+<p>Ian Romanick (17):</p>
 <ul>
   <li>mesa: Add utility function to get base format from a GL compressed format</li>
   <li>mesa: Return the correct internal fmt when a generic compressed fmt was used</li>
@@ -228,21 +228,21 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>mesa: Refactor compressed texture error checks to work with paletted textures</li>
   <li>mesa: Remove redundant compressed paletted texture error checks</li>
   <li>mesa: Advertise GL_OES_compressed_paletted_texture in OpenGL ES1.x</li>
-</ul></p>
+</ul>
 
-<p>Jeremy Huddleston (3):
+<p>Jeremy Huddleston (3):</p>
 <ul>
   <li>apple: Silence some debug spew</li>
   <li>apple: Use the correct (OpenGL.framework) glViewport and glScissor during init</li>
   <li>apple: Implement applegl_unbind_context</li>
-</ul></p>
+</ul>
 
-<p>José Fonseca (1):
+<p>José Fonseca (1):</p>
 <ul>
   <li>docs: Update llvmpipe docs.</li>
-</ul></p>
+</ul>
 
-<p>Kenneth Graunke (12):
+<p>Kenneth Graunke (12):</p>
 <ul>
   <li>glsl: Avoid massive ralloc_strndup overhead in S-Expression parsing.</li>
   <li>mesa: In validate_program(), initialize errMsg for safety.</li>
@@ -256,32 +256,32 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>intel: Depth format fixes</li>
   <li>i965: Apply post-sync non-zero workaround to homebrew workaround.</li>
   <li>mesa/get: Move MAX_LIGHTS from GL/ES2 to GL/ES1.</li>
-</ul></p>
+</ul>
 
-<p>Kristian Høgsberg (1):
+<p>Kristian Høgsberg (1):</p>
 <ul>
   <li>glx: Don't flush twice if we fallback to dri2CopySubBuffer</li>
-</ul></p>
+</ul>
 
-<p>Marc Pignat (1):
+<p>Marc Pignat (1):</p>
 <ul>
   <li>drisw: Fix 24bpp software rendering, take 2</li>
-</ul></p>
+</ul>
 
-<p>Marcin Baczyński (2):
+<p>Marcin Baczyński (2):</p>
 <ul>
   <li>configure: fix gcc version check</li>
   <li>configure: allow C{,XX}FLAGS override</li>
-</ul></p>
+</ul>
 
-<p>Marcin Slusarz (3):
+<p>Marcin Slusarz (3):</p>
 <ul>
   <li>nouveau: fix nouveau_fence leak</li>
   <li>nouveau: fix crash during fence emission</li>
   <li>nouveau: fix fence hang</li>
-</ul></p>
+</ul>
 
-<p>Marek Olšák (19):
+<p>Marek Olšák (19):</p>
 <ul>
   <li>vbo: do not call _mesa_max_buffer_index in debug builds</li>
   <li>winsys/radeon: fix space checking</li>
@@ -302,22 +302,22 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>r300g: don't return NULL in resource_from_handle if the resource is too small</li>
   <li>r600g: set correct tiling flags in depth info</li>
   <li>r300g: don't call u_trim_pipe_prim in r300_swtcl_draw_vbo</li>
-</ul></p>
+</ul>
 
-<p>Michel Dänzer (4):
+<p>Michel Dänzer (4):</p>
 <ul>
   <li>st/mesa: Finalize texture on render-to-texture.</li>
   <li>glx/dri2: Don't call X server for SwapBuffers when there's no back buffer.</li>
   <li>gallium/util: Add macros for converting from little endian to CPU byte order.</li>
   <li>r300g: Fix queries on big endian hosts.</li>
-</ul></p>
+</ul>
 
-<p>Neil Roberts (1):
+<p>Neil Roberts (1):</p>
 <ul>
   <li>meta: Fix saving the active program</li>
-</ul></p>
+</ul>
 
-<p>Paul Berry (18):
+<p>Paul Berry (18):</p>
 <ul>
   <li>glsl: Lower unconditional return statements.</li>
   <li>glsl: Refactor logic for determining whether to lower return statements.</li>
@@ -337,33 +337,33 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>glsl: Remove field array_lvalue from ir_variable.</li>
   <li>glsl hierarchical visitor: Do not overwrite base_ir for parameter lists.</li>
   <li>glsl: improve the accuracy of the asin() builtin function.</li>
-</ul></p>
+</ul>
 
-<p>Tobias Droste (1):
+<p>Tobias Droste (1):</p>
 <ul>
   <li>r300/compiler: simplify code in peephole_add_presub_add</li>
-</ul></p>
+</ul>
 
-<p>Tom Fogal (1):
+<p>Tom Fogal (1):</p>
 <ul>
   <li>Only use gcc visibility support with gcc4+.</li>
-</ul></p>
+</ul>
 
-<p>Tom Stellard (1):
+<p>Tom Stellard (1):</p>
 <ul>
   <li>r300/compiler: Fix regalloc for values with multiple writers</li>
-</ul></p>
+</ul>
 
-<p>Vadim Girlin (5):
+<p>Vadim Girlin (5):</p>
 <ul>
   <li>st/mesa: flush bitmap cache on query and conditional render boundaries</li>
   <li>r600g: use backend mask for occlusion queries</li>
   <li>r600g: take into account force_add_cf in pops</li>
   <li>r600g: fix check_and_set_bank_swizzle</li>
   <li>r600g: fix replace_gpr_with_pv_ps</li>
-</ul></p>
+</ul>
 
-<p>Yuanhan Liu (17):
+<p>Yuanhan Liu (17):</p>
 <ul>
   <li>i965: fix the constant interp bitmask for flat mode</li>
   <li>mesa: fix error handling for glEvalMesh1/2D</li>
@@ -382,7 +382,7 @@ dfcb11516c1730f3981b55a65a835623  MesaLib-7.11.1.zip
   <li>mesa: handle the pbo case for save_Bitmap</li>
   <li>mesa: handle PBO access error in display list mode</li>
   <li>intel: don't call unmap pbo if pbo is not mapped</li>
-</ul></p>
+</ul>
 
 </body>
 </html>

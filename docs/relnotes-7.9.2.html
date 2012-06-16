@@ -126,12 +126,12 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   git log mesa-7.9.1..mesa-7.9.2
 </pre>
 
-<p>Alberto Milone (1):
+<p>Alberto Milone (1):</p>
 <ul>
   <li>r600c: add evergreen ARL support.</li>
-</ul></p>
+</ul>
 
-<p>Brian Paul (19):
+<p>Brian Paul (19):</p>
 <ul>
   <li>draw: Fix an off-by-one bug in a vsplit assertion.</li>
   <li>mesa: fix a few format table mistakes, assertions</li>
@@ -152,14 +152,14 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   <li>glsl2: fix signed/unsigned comparison warning</li>
   <li>mesa: implement glGetShaderPrecisionFormat()</li>
   <li>docs: updated environment variable list</li>
-</ul></p>
+</ul>
 
-<p>Bryce Harrington (1):
+<p>Bryce Harrington (1):</p>
 <ul>
   <li>r300g: Null pointer check for buffer deref in gallium winsys</li>
-</ul></p>
+</ul>
 
-<p>Chad Versace (14):
+<p>Chad Versace (14):</p>
 <ul>
   <li>glsl: At link-time, check that globals have matching centroid qualifiers</li>
   <li>glcpp: Fix segfault when validating macro redefinitions</li>
@@ -172,41 +172,41 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   <li>glsl: Fix segfault due to missing printf argument</li>
   <li>glsl: Mark 'in' variables at global scope as read-only</li>
   <li>glcpp: Raise error when modulus is zero</li>
-  <li>glsl: Set operators '%' and '%=' to be reserved when GLSL &lt 1.30</li>
+  <li>glsl: Set operators '%' and '%=' to be reserved when GLSL &lt; 1.30</li>
   <li>glsl: Reinstate constant-folding for division by zero</li>
   <li>tnl: Add support for datatype GL_FIXED in vertex arrays</li>
-</ul></p>
+</ul>
 
-<p>Chia-I Wu (1):
+<p>Chia-I Wu (1):</p>
 <ul>
   <li>mesa: Add glDepthRangef and glClearDepthf to APIspec.xml.</li>
-</ul></p>
+</ul>
 
-<p>Chris Wilson (1):
+<p>Chris Wilson (1):</p>
 <ul>
   <li>intel: Check for unsupported texture when finishing using as a render target</li>
-</ul></p>
+</ul>
 
-<p>Cyril Brulebois (1):
+<p>Cyril Brulebois (1):</p>
 <ul>
   <li>Point to bugs.freedesktop.org rather than bugzilla.freedesktop.org</li>
-</ul></p>
+</ul>
 
-<p>Dave Airlie (2):
+<p>Dave Airlie (2):</p>
 <ul>
   <li>radeon/r200: fix fbo-clearmipmap + gen-teximage</li>
   <li>radeon: avoid segfault on 3D textures.</li>
-</ul></p>
+</ul>
 
-<p>Dimitry Andric (4):
+<p>Dimitry Andric (4):</p>
 <ul>
   <li>mesa: s/movzx/movzbl/</li>
   <li>mesa: s/movzxw/movzwl/ in read_rgba_span_x86.S</li>
   <li>glapi: adding @ char before type specifier in glapi_x86.S</li>
   <li>glapi: add @GOTPCREL relocation type</li>
-</ul></p>
+</ul>
 
-<p>Eric Anholt (11):
+<p>Eric Anholt (11):</p>
 <ul>
   <li>i965: Avoid double-negation of immediate values in the VS.</li>
   <li>docs: Add a relnote for the Civ IV on i965.</li>
@@ -219,9 +219,9 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   <li>mesa: Add support for glDepthRangef and glClearDepthf.</li>
   <li>mesa: Add getters for ARB_ES2_compatibility MAX_*_VECTORS.</li>
   <li>mesa: Add getter for GL_SHADER_COMPILER with ARB_ES2_compatibility.</li>
-</ul></p>
+</ul>
 
-<p>Ian Romanick (42):
+<p>Ian Romanick (42):</p>
 <ul>
   <li>docs: Add 7.9.1 md5sums</li>
   <li>glsl: Support the 'invariant(all)' pragma</li>
@@ -265,26 +265,26 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   <li>docs: Clean up bug fixes list</li>
   <li>intel: Remove driver date and related bits from renderer string</li>
   <li>mesa: set version string to 7.9.2 (final)</li>
-</ul></p>
+</ul>
 
-<p>Jian Zhao (1):
+<p>Jian Zhao (1):</p>
 <ul>
   <li>mesa: fix an error in uniform arrays in row calculating.</li>
-</ul></p>
+</ul>
 
-<p>Julien Cristau (3):
+<p>Julien Cristau (3):</p>
 <ul>
   <li>glx: fix request lengths</li>
   <li>glx: fix GLXChangeDrawableAttributesSGIX request</li>
   <li>glx: fix length of GLXGetFBConfigsSGIX</li>
-</ul></p>
+</ul>
 
-<p>Keith Packard (1):
+<p>Keith Packard (1):</p>
 <ul>
   <li>glsl: Eliminate reduce/reduce conflicts in glsl grammar</li>
-</ul></p>
+</ul>
 
-<p>Kenneth Graunke (12):
+<p>Kenneth Graunke (12):</p>
 <ul>
   <li>glsl: Expose a public glsl_type::void_type const pointer.</li>
   <li>glsl: Don't bother unsetting a destructor that was never set.</li>
@@ -298,35 +298,35 @@ with <tt>in</tt>, <tt>out</tt>, <tt>attribute</tt>, and <tt>varying</tt>.</li>
   <li>Remove the talloc sources from the Mesa repository.</li>
   <li>glsl: Fix use of uninitialized values in _mesa_glsl_parse_state ctor.</li>
   <li>glsl: Use reralloc instead of plain realloc.</li>
-</ul></p>
+</ul>
 
-<p>Marek Olšák (3):
+<p>Marek Olšák (3):</p>
 <ul>
   <li>docs: fix messed up names with special characters in relnotes-7.9.1</li>
   <li>mesa: fix texture3D mipmap generation for UNSIGNED_BYTE_3_3_2</li>
   <li>st/dri: Track drawable context bindings</li>
-</ul></p>
+</ul>
 
-<p>Paulo Zanoni (1):
+<p>Paulo Zanoni (1):</p>
 <ul>
   <li>dri_util: fail driCreateNewScreen if InitScreen is NULL</li>
-</ul></p>
+</ul>
 
-<p>Sam Hocevar (2):
+<p>Sam Hocevar (2):</p>
 <ul>
   <li>docs: add glsl info</li>
   <li>docs: fix glsl_compiler name</li>
-</ul></p>
+</ul>
 
-<p>Vinson Lee (1):
+<p>Vinson Lee (1):</p>
 <ul>
   <li>ralloc: Add missing va_end following va_copy.</li>
-</ul></p>
+</ul>
 
-<p>nobled (1):
+<p>nobled (1):</p>
 <ul>
   <li>glx: Put null check before use</li>
-</ul></p>
+</ul>
 
 </body>
 </html>
