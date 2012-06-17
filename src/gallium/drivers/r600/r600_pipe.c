@@ -414,9 +414,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return rscreen->info.r600_has_streamout ? 4 : 0;
+		return rscreen->has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return rscreen->info.r600_has_streamout ? 1 : 0;
+		return rscreen->has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return 16*4;
@@ -898,11 +898,18 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->chip_class = R600;
 	}
 
-	/* XXX streamout is said to be broken on r700 and cayman */
-	if ((rscreen->chip_class == R700 ||
-	     rscreen->chip_class == CAYMAN) &&
-	    !debug_get_bool_option("R600_STREAMOUT", FALSE)) {
-		rscreen->info.r600_has_streamout = false;
+	/* Figure out streamout kernel support. */
+	switch (rscreen->chip_class) {
+	case R600:
+	case EVERGREEN:
+		rscreen->has_streamout = rscreen->info.drm_minor >= 13;
+		break;
+	case R700:
+		rscreen->has_streamout = rscreen->info.drm_minor >= 17;
+		break;
+	/* TODO: Cayman */
+	default:
+		rscreen->has_streamout = debug_get_bool_option("R600_STREAMOUT", FALSE);
 	}
 
 	if (r600_init_tiling(rscreen)) {

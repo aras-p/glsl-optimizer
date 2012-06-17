@@ -128,6 +128,7 @@ struct r600_screen {
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct radeon_info		info;
+	bool				has_streamout;
 	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 

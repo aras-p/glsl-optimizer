@@ -98,7 +98,6 @@ struct radeon_info {
     boolean r600_virtual_address;
     uint32_t r600_va_start;
     uint32_t r600_ib_vm_max_size;
-    boolean r600_has_streamout;
     uint32_t r600_max_pipes;
 };
 
