@@ -6,11 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //==-----------------------------------------------------------------------===//
-// This file specifies where the base TD file exists
-// and where the version specific TD file exists.
+
+// Include AMDIL TD files
 include "AMDILBase.td"
 include "AMDILVersion.td"
 
+// Include AMDGPU TD files
 include "R600Schedule.td"
 include "SISchedule.td"
 include "Processors.td"
