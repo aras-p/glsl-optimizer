@@ -325,6 +325,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
 	case PIPE_CAP_USER_INDEX_BUFFERS:
 	case PIPE_CAP_USER_CONSTANT_BUFFERS:
+	case PIPE_CAP_START_INSTANCE:
 		return 1;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:

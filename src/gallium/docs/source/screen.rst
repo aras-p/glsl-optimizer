@@ -126,7 +126,8 @@ The integer capabilities:
   resources.
 * ``PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT``: Describes the required
   alignment of pipe_constant_buffer::buffer_offset.
-
+* ``PIPE_CAP_START_INSTANCE``: Whether the driver supports
+  pipe_draw_info::start_instance.
 
 
 .. _pipe_capf:
