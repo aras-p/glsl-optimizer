@@ -67,9 +67,11 @@ enum lp_interp {
 };
 
 struct lp_shader_input {
-   ushort interp:4;       /* enum lp_interp */
-   ushort usage_mask:4;   /* bitmask of TGSI_WRITEMASK_x flags */
-   ushort src_index:8;    /* where to find values in incoming vertices */
+   uint interp:4;       /* enum lp_interp */
+   uint usage_mask:4;   /* bitmask of TGSI_WRITEMASK_x flags */
+   uint src_index:8;    /* where to find values in incoming vertices */
+   uint cyl_wrap:4;     /* TGSI_CYLINDRICAL_WRAP_x flags */
+   uint padding:12;
 };
 
 

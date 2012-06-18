@@ -34,6 +34,7 @@
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_type.h"
@@ -454,6 +455,78 @@ emit_position_coef( struct gallivm_state *gallivm,
 }
 
 
+/**
+ * Applys cylindrical wrapping to vertex attributes if enabled.
+ * Input coordinates must be in [0, 1] range, otherwise results are undefined.
+ *
+ * @param cyl_wrap  TGSI_CYLINDRICAL_WRAP_x flags
+ */
+static void
+emit_apply_cyl_wrap(struct gallivm_state *gallivm,
+                    struct lp_setup_args *args,
+                    uint cyl_wrap)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   struct lp_type type = lp_float32_vec4_type();
+   LLVMTypeRef float_vec_type = lp_build_vec_type(gallivm, type);
+   LLVMValueRef pos_half;
+   LLVMValueRef neg_half;
+   LLVMValueRef cyl_mask;
+   LLVMValueRef offset;
+   LLVMValueRef delta;
+   LLVMValueRef one;
+
+   if (!cyl_wrap)
+      return;
+
+   /* Constants */
+   pos_half = lp_build_const_vec(gallivm, type, +0.5f);
+   neg_half = lp_build_const_vec(gallivm, type, -0.5f);
+   cyl_mask = lp_build_const_mask_aos(gallivm, type, cyl_wrap);
+
+   one = lp_build_const_vec(gallivm, type, 1.0f);
+   one = LLVMBuildBitCast(builder, one, lp_build_int_vec_type(gallivm, type), "");
+   one = LLVMBuildAnd(builder, one, cyl_mask, "");
+
+   /* Edge v0 -> v1 */
+   delta = LLVMBuildFSub(builder, args->v1a, args->v0a, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v0a = LLVMBuildFAdd(builder, args->v0a, offset, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v1a = LLVMBuildFAdd(builder, args->v1a, offset, "");
+
+   /* Edge v1 -> v2 */
+   delta = LLVMBuildFSub(builder, args->v2a, args->v1a, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v1a = LLVMBuildFAdd(builder, args->v1a, offset, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v2a = LLVMBuildFAdd(builder, args->v2a, offset, "");
+
+   /* Edge v2 -> v0 */
+   delta = LLVMBuildFSub(builder, args->v0a, args->v2a, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_GREATER, delta, pos_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v2a = LLVMBuildFAdd(builder, args->v2a, offset, "");
+
+   offset    = lp_build_compare(gallivm, type, PIPE_FUNC_LESS, delta, neg_half);
+   offset    = LLVMBuildAnd(builder, offset, one, "");
+   offset    = LLVMBuildBitCast(builder, offset, float_vec_type, "");
+   args->v0a = LLVMBuildFAdd(builder, args->v0a, offset, "");
+}
 
 
 /**
@@ -491,10 +564,12 @@ emit_tri_coef( struct gallivm_state *gallivm,
 	 break;
 
       case LP_INTERP_LINEAR:
+	 emit_apply_cyl_wrap(gallivm, args, key->inputs[slot].cyl_wrap);
 	 emit_linear_coef(gallivm, args, slot+1);
          break;
 
       case LP_INTERP_PERSPECTIVE:
+	 emit_apply_cyl_wrap(gallivm, args, key->inputs[slot].cyl_wrap);
 	 emit_perspective_coef(gallivm, args, slot+1);
          break;
 
@@ -763,7 +838,7 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    struct lp_fragment_shader *fs = lp->fs;
    unsigned i;
 
-   assert(sizeof key->inputs[0] == sizeof(ushort));
+   assert(sizeof key->inputs[0] == sizeof(uint));
    
    key->num_inputs = fs->info.base.num_inputs;
    key->flatshade_first = lp->rasterizer->flatshade_first;
