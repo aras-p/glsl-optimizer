@@ -471,6 +471,7 @@ _save_wrap_buffers(struct gl_context *ctx)
    save->prim[0].start = 0;
    save->prim[0].count = 0;
    save->prim[0].num_instances = 1;
+   save->prim[0].base_instance = 0;
    save->prim_count = 1;
 }
 
@@ -907,6 +908,7 @@ vbo_save_NotifyBegin(struct gl_context *ctx, GLenum mode)
    save->prim[i].start = save->vert_count;
    save->prim[i].count = 0;
    save->prim[i].num_instances = 1;
+   save->prim[i].base_instance = 0;
 
    if (save->out_of_memory) {
       _mesa_install_save_vtxfmt(ctx, &save->vtxfmt_noop);

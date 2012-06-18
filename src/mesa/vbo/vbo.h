@@ -51,6 +51,7 @@ struct _mesa_prim {
    GLuint count;
    GLint basevertex;
    GLsizei num_instances;
+   GLuint base_instance;
 };
 
 /* Would like to call this a "vbo_index_buffer", but this would be

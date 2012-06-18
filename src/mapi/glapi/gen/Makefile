@@ -63,6 +63,7 @@ XORG_OUTPUTS = \
 
 API_XML = \
 	gl_API.xml \
+	ARB_base_instance.xml \
 	ARB_color_buffer_float.xml \
 	ARB_copy_buffer.xml \
 	ARB_debug_output.xml \

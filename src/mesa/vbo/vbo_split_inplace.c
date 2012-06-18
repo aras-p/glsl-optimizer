@@ -180,13 +180,14 @@ static void split_prims( struct split_context *split)
 
 	    nr = MIN2( available, remaining );
 	    nr -= (nr - first) % incr;
-	    
+
 	    outprim->mode = prim->mode;
 	    outprim->begin = (j == 0 && prim->begin);
 	    outprim->end = (nr == remaining && prim->end);
 	    outprim->start = prim->start + j;
 	    outprim->count = nr;
             outprim->num_instances = prim->num_instances;
+            outprim->base_instance = prim->base_instance;
 
 	    update_index_bounds(split, outprim);
 
@@ -225,12 +226,13 @@ static void split_prims( struct split_context *split)
 	 ib.type = GL_UNSIGNED_INT;
 	 ib.obj = split->ctx->Shared->NullBufferObj;
 	 ib.ptr = elts;
-	    
+
 	 tmpprim = *prim;
 	 tmpprim.indexed = 1;
 	 tmpprim.start = 0;
 	 tmpprim.count = count;
          tmpprim.num_instances = 1;
+         tmpprim.base_instance = 0;
 
 	 flush_vertex(split);
 

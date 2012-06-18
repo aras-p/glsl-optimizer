@@ -7995,8 +7995,9 @@
 
 <!-- ARB extensions #106...#116 -->
 
-<xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="ARB_base_instance.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- Non-ARB extensions sorted by extension number. -->
 

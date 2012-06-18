@@ -105,8 +105,11 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    SET_DrawRangeElementsBaseVertex(tab, vfmt->DrawRangeElementsBaseVertex);
    SET_MultiDrawElementsBaseVertex(tab, vfmt->MultiDrawElementsBaseVertex);
    SET_DrawArraysInstancedARB(tab, vfmt->DrawArraysInstanced);
+   SET_DrawArraysInstancedBaseInstance(tab, vfmt->DrawArraysInstancedBaseInstance);
    SET_DrawElementsInstancedARB(tab, vfmt->DrawElementsInstanced);
+   SET_DrawElementsInstancedBaseInstance(tab, vfmt->DrawElementsInstancedBaseInstance);
    SET_DrawElementsInstancedBaseVertex(tab, vfmt->DrawElementsInstancedBaseVertex);
+   SET_DrawElementsInstancedBaseVertexBaseInstance(tab, vfmt->DrawElementsInstancedBaseVertexBaseInstance);
    SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
 
    /* GL_NV_vertex_program */
