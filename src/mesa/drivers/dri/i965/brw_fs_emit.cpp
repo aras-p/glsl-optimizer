@@ -591,6 +591,27 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
    }
 }
 
+
+/**
+ * Cause the current pixel/sample mask (from R1.7 bits 15:0) to be transferred
+ * into the flags register (f0.0).
+ *
+ * Used only on Gen6 and above.
+ */
+void
+fs_visitor::generate_mov_dispatch_to_flags()
+{
+   struct brw_reg f0 = brw_flag_reg();
+   struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+
+   assert (intel->gen >= 6);
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, f0, g1);
+   brw_pop_insn_state(p);
+}
+
+
 static uint32_t brw_file_from_reg(fs_reg *reg)
 {
    switch (reg->file) {
@@ -928,6 +949,11 @@ fs_visitor::generate_code()
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
 	 break;
+
+      case FS_OPCODE_MOV_DISPATCH_TO_FLAGS:
+         generate_mov_dispatch_to_flags();
+         break;
+
       default:
 	 if (inst->opcode < (int)ARRAY_SIZE(brw_opcodes)) {
 	    _mesa_problem(ctx, "Unsupported opcode `%s' in FS",

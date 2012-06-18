@@ -334,7 +334,11 @@ instruction_scheduler::calculate_deps()
 	 }
       }
 
-      if (inst->conditional_mod) {
+      /* Treat FS_OPCODE_MOV_DISPATCH_TO_FLAGS as though it had a
+       * conditional_mod, because it sets the flag register.
+       */
+      if (inst->conditional_mod ||
+          inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
 	 add_dep(last_conditional_mod, n, 0);
 	 last_conditional_mod = n;
       }
@@ -413,8 +417,13 @@ instruction_scheduler::calculate_deps()
 	 }
       }
 
-      if (inst->conditional_mod)
+      /* Treat FS_OPCODE_MOV_DISPATCH_TO_FLAGS as though it had a
+       * conditional_mod, because it sets the flag register.
+       */
+      if (inst->conditional_mod ||
+          inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
 	 last_conditional_mod = n;
+      }
    }
 }
 
