@@ -298,6 +298,10 @@ version_statement:
 			       state->version_string,
 			       state->supported_version_string);
 	   }
+
+	   if (state->language_version >= 140) {
+	      state->ARB_uniform_buffer_object_enable = true;
+	   }
 	}
 	;
 
