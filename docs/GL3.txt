@@ -119,7 +119,7 @@ GL_ARB_compressed_texture_pixel_storage              not started
 GL_ARB_shader_atomic_counters                        not started
 GL_ARB_texture_storage                               DONE (r300, r600, swrast)
 GL_ARB_transform_feedback_instanced                  not started
-GL_ARB_base_instance                                 not started
+GL_ARB_base_instance                                 DONE (nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (softpipe)
 GL_ARB_shading_language_420pack                      not started
