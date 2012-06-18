@@ -126,6 +126,8 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
       pipe_resource_reference(&llvmpipe->vertex_buffer[i].buffer, NULL);
    }
 
+   lp_delete_setup_variants(llvmpipe);
+
    gallivm_destroy(llvmpipe->gallivm);
 
    align_free( llvmpipe );
