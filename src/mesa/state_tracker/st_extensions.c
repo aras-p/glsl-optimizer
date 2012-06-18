@@ -337,6 +337,7 @@ void st_init_extensions(struct st_context *st)
    GLboolean *extensions = (GLboolean *) &ctx->Extensions;
 
    static const struct st_extension_cap_mapping cap_mapping[] = {
+      { o(ARB_base_instance),                PIPE_CAP_START_INSTANCE                   },
       { o(ARB_depth_clamp),                  PIPE_CAP_DEPTH_CLIP_DISABLE               },
       { o(ARB_depth_texture),                PIPE_CAP_TEXTURE_SHADOW_MAP               },
       { o(ARB_draw_buffers_blend),           PIPE_CAP_INDEP_BLEND_FUNC                 },
