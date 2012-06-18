@@ -3430,6 +3430,13 @@ struct gl_context
 
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
+
+   /**
+    * Current GL_ARB_uniform_buffer_object binding referenced by
+    * GL_UNIFORM_BUFFER target for glBufferData, glMapBuffer, etc.
+    */
+   struct gl_buffer_object *UniformBuffer;
+
    /*@}*/
 
    struct gl_meta_state *Meta;  /**< for "meta" operations */

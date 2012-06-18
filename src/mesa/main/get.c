@@ -1351,6 +1351,8 @@ static const struct value_desc values[] = {
    { GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, CONTEXT_INT(Const.UniformBufferOffsetAlignment),
      extra_ARB_uniform_buffer_object },
 
+   { GL_UNIFORM_BUFFER_BINDING, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object },
+
 #endif /* FEATURE_GL */
 };
 
@@ -1800,6 +1802,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler;
          v->value_int = samp ? samp->Name : 0;
       }
+      break;
+   /* GL_ARB_uniform_buffer_object */
+   case GL_UNIFORM_BUFFER_BINDING:
+      v->value_int = ctx->UniformBuffer->Name;
       break;
    }   
 }

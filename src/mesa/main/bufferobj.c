@@ -92,6 +92,11 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
          return &ctx->Texture.BufferObject;
       }
       break;
+   case GL_UNIFORM_BUFFER:
+      if (ctx->Extensions.ARB_uniform_buffer_object) {
+         return &ctx->UniformBuffer;
+      }
+      break;
    default:
       return NULL;
    }
@@ -838,6 +843,10 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             if (ctx->TransformFeedback.CurrentObject->Buffers[j] == bufObj) {
                _mesa_BindBufferBase( GL_TRANSFORM_FEEDBACK_BUFFER, j, 0 );
             }
+         }
+
+         if (ctx->UniformBuffer == bufObj) {
+            _mesa_BindBufferARB( GL_UNIFORM_BUFFER, 0 );
          }
 
          /* unbind any pixel pack/unpack pointers bound to this buffer */
