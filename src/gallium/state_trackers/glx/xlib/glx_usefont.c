@@ -37,9 +37,6 @@
 /* Some debugging info.  */
 
 #ifdef DEBUG
-#undef _R
-#undef _G
-#undef _B
 #include <ctype.h>
 
 int debug_xfonts = 0;
