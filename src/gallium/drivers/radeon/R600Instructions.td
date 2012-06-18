@@ -271,6 +271,10 @@ def load_param : PatFrag<(ops node:$ptr),
 */
 def isR600 : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDILDeviceInfo::HD4XXX">;
+def isR700 : Predicate<"Subtarget.device()"
+                            "->getGeneration() == AMDILDeviceInfo::HD4XXX &&"
+                            "Subtarget.device()->getDeviceFlag()"
+                            ">= OCL_DEVICE_RV710">;
 def isEG : Predicate<"Subtarget.device()"
                             "->getGeneration() >= AMDILDeviceInfo::HD5XXX && "
                             "Subtarget.device()->getDeviceFlag() != OCL_DEVICE_CAYMAN">;
@@ -707,14 +711,12 @@ class RECIPSQRT_IEEE_Common <bits<32> inst> : R600_1OP <
 >;
 
 class SIN_Common <bits<32> inst> : R600_1OP <
-  inst, "SIN",
-  [(set R600_Reg32:$dst, (int_AMDIL_sin R600_Reg32:$src))]>{
+  inst, "SIN", []>{
   let Trig = 1;
 }
 
 class COS_Common <bits<32> inst> : R600_1OP <
-  inst, "COS",
-  [(set R600_Reg32:$dst, (int_AMDIL_cos R600_Reg32:$src))]> {
+  inst, "COS", []> {
   let Trig = 1;
 }
 
@@ -778,16 +780,25 @@ let Predicates = [isR600] in {
 
 }
 
-/* ----------------- */
-/* R700+ Trig helper */
-/* ----------------- */
-
-/*
-class TRIG_HELPER_r700 <InstR600 trig_inst>: Pat <
-  (trig_inst R600_Reg32:$src),
-  (trig_inst (fmul R600_Reg32:$src, (PI))))
+// Helper pattern for normalizing inputs to triginomic instructions for R700+
+// cards.
+class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
+  (intr R600_Reg32:$src),
+  (trig (MUL (MOV_IMM_I32 (i32 ALU_LITERAL_X), CONST.TWO_PI_INV), R600_Reg32:$src))
 >;
-*/
+
+//===----------------------------------------------------------------------===//
+// R700 Only instructions
+//===----------------------------------------------------------------------===//
+
+let Predicates = [isR700] in {
+  def SIN_r700 : SIN_Common<0x6E>;
+  def COS_r700 : COS_Common<0x6F>;
+
+  // R700 normalizes inputs to SIN/COS the same as EG
+  def : TRIG_eg <SIN_r700, int_AMDGPU_sin>;
+  def : TRIG_eg <COS_r700, int_AMDGPU_cos>;
+}
 
 //===----------------------------------------------------------------------===//
 // Evergreen Only instructions
@@ -810,12 +821,6 @@ def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
 /* ------------------------------- */
 
 let Predicates = [isEGorCayman] in {
-  
-class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
-  (intr R600_Reg32:$src),
-  (trig (MUL (MOV_IMM_I32 (i32 ALU_LITERAL_X), CONST.TWO_PI_INV), R600_Reg32:$src))
->;
-
   def MULADD_eg : MULADD_Common<0x14>;
   def ASHR_eg : ASHR_Common<0x15>;
   def LSHR_eg : LSHR_Common<0x16>;
