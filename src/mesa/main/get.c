@@ -2566,6 +2566,30 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
 	 goto invalid_enum;
       v->value_int = ctx->TransformFeedback.CurrentObject->BufferNames[index];
       return TYPE_INT;
+
+   case GL_UNIFORM_BUFFER_BINDING:
+      if (index >= ctx->Const.MaxUniformBufferBindings)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_uniform_buffer_object)
+	 goto invalid_enum;
+      v->value_int = ctx->UniformBufferBindings[index].BufferObject->Name;
+      return TYPE_INT;
+
+   case GL_UNIFORM_BUFFER_START:
+      if (index >= ctx->Const.MaxUniformBufferBindings)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_uniform_buffer_object)
+	 goto invalid_enum;
+      v->value_int = ctx->UniformBufferBindings[index].Offset;
+      return TYPE_INT;
+
+   case GL_UNIFORM_BUFFER_SIZE:
+      if (index >= ctx->Const.MaxUniformBufferBindings)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_uniform_buffer_object)
+	 goto invalid_enum;
+      v->value_int = ctx->UniformBufferBindings[index].Size;
+      return TYPE_INT;
    }
 
  invalid_enum:
