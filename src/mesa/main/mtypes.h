@@ -2021,6 +2021,12 @@ struct gl_fragment_program
     * GLSL, the value is INTERP_QUALIFIER_NONE.
     */
    enum glsl_interp_qualifier InterpQualifier[FRAG_ATTRIB_MAX];
+
+   /**
+    * Bitfield indicating, for each fragment shader input, 1 if that input
+    * uses centroid interpolation, 0 otherwise.  Unused inputs are 0.
+    */
+   GLbitfield64 IsCentroid;
 };
 
 
