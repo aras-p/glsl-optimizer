@@ -543,7 +543,8 @@ public:
    void emit_dummy_fs();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
    fs_inst *emit_linterp(const fs_reg &attr, const fs_reg &interp,
-                         glsl_interp_qualifier interpolation_mode);
+                         glsl_interp_qualifier interpolation_mode,
+                         bool is_centroid);
    fs_reg *emit_frontfacing_interpolation(ir_variable *ir);
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();

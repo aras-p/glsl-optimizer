@@ -143,6 +143,7 @@ brw_compute_barycentric_interp_modes(bool shade_model_flat,
    for (attr = 0; attr < FRAG_ATTRIB_MAX; ++attr) {
       enum glsl_interp_qualifier interp_qualifier =
          fprog->InterpQualifier[attr];
+      bool is_centroid = fprog->IsCentroid & BITFIELD64_BIT(attr);
       bool is_gl_Color = attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1;
 
       /* Ignore unused inputs. */
@@ -154,13 +155,23 @@ brw_compute_barycentric_interp_modes(bool shade_model_flat,
          continue;
 
       if (interp_qualifier == INTERP_QUALIFIER_NOPERSPECTIVE) {
-         barycentric_interp_modes |=
-            1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+         if (is_centroid) {
+            barycentric_interp_modes |=
+               1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+         } else {
+            barycentric_interp_modes |=
+               1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+         }
       } else if (interp_qualifier == INTERP_QUALIFIER_SMOOTH ||
                  (!(shade_model_flat && is_gl_Color) &&
                   interp_qualifier == INTERP_QUALIFIER_NONE)) {
-         barycentric_interp_modes |=
-            1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+         if (is_centroid) {
+            barycentric_interp_modes |=
+               1 << BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
+         } else {
+            barycentric_interp_modes |=
+               1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+         }
       }
    }
 
