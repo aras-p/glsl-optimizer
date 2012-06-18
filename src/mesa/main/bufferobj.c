@@ -2138,6 +2138,32 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
       return;
    }
 
+   /* Note that there's some oddness in the GL 3.1-GL 3.3 specifications with
+    * regards to BindBufferBase.  It says (GL 3.1 core spec, page 63):
+    *
+    *     "BindBufferBase is equivalent to calling BindBufferRange with offset
+    *      zero and size equal to the size of buffer."
+    *
+    * but it says for glGetIntegeri_v (GL 3.1 core spec, page 230):
+    *
+    *     "If the parameter (starting offset or size) was not specified when the
+    *      buffer object was bound, zero is returned."
+    *
+    * What happens if the size of the buffer changes?  Does the size of the
+    * buffer at the moment glBindBufferBase was called still play a role, like
+    * the first quote would imply, or is the size meaningless in the
+    * glBindBufferBase case like the second quote would suggest?  The GL 4.1
+    * core spec page 45 says:
+    *
+    *     "It is equivalent to calling BindBufferRange with offset zero, while
+    *      size is determined by the size of the bound buffer at the time the
+    *      binding is used."
+    *
+    * My interpretation is that the GL 4.1 spec was a clarification of the
+    * behavior, not a change.  In particular, this choice will only make
+    * rendering work in cases where it would have had undefined results.
+    */
+
    switch (target) {
    case GL_TRANSFORM_FEEDBACK_BUFFER:
       _mesa_bind_buffer_base_transform_feedback(ctx, index, bufObj);
