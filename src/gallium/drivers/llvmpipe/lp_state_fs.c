@@ -334,7 +334,7 @@ generate_fs(struct gallivm_state *gallivm,
    
    /* Build the actual shader */
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
-                     consts_ptr, NULL, /* sys values array */
+                     consts_ptr, NULL, /* instance id */
                      interp->pos, interp->inputs,
                      outputs, sampler, &shader->info.base);
 
