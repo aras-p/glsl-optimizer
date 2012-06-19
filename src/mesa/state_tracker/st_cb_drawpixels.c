@@ -1073,6 +1073,11 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    int num_sampler_view = 1;
    struct st_fp_variant *fpv;
 
+   /* Mesa state should be up to date by now */
+   assert(ctx->NewState == 0x0);
+
+   st_validate_state(st);
+
    if (format == GL_DEPTH_STENCIL)
       write_stencil = write_depth = GL_TRUE;
    else if (format == GL_STENCIL_INDEX)
@@ -1087,11 +1092,6 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
                           unpack, pixels);
       return;
    }
-
-   /* Mesa state should be up to date by now */
-   assert(ctx->NewState == 0x0);
-
-   st_validate_state(st);
 
    /*
     * Get vertex/fragment shaders
