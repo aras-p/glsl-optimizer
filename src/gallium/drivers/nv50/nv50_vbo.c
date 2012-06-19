@@ -293,6 +293,18 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
    else
       nv50->vbo_fifo = 0;
 
+   if (!nv50->vbo_fifo) {
+      /* if vertex buffer was written by GPU - flush VBO cache */
+      for (i = 0; i < nv50->num_vtxbufs; ++i) {
+         struct nv04_resource *buf = nv04_resource(nv50->vtxbuf[i].buffer);
+         if (buf && buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
+            buf->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+            nv50->base.vbo_dirty = TRUE;
+            break;
+         }
+      }
+   }
+
    /* update vertex format state */
    BEGIN_NV04(push, NV50_3D(VERTEX_ARRAY_ATTRIB(0)), n);
    if (nv50->vbo_fifo) {

@@ -564,6 +564,12 @@ nv50_stream_output_validate(struct nv50_context *nv50)
       return;
    }
 
+   /* previous TFB needs to complete */
+   if (nv50->screen->base.class_3d < NVA0_3D_CLASS) {
+      BEGIN_NV04(push, SUBC_3D(NV50_GRAPH_SERIALIZE), 1);
+      PUSH_DATA (push, 0);
+   }
+
    ctrl = so->ctrl;
    if (nv50->screen->base.class_3d >= NVA0_3D_CLASS)
       ctrl |= NVA0_3D_STRMOUT_BUFFERS_CTRL_LIMIT_MODE_OFFSET;
