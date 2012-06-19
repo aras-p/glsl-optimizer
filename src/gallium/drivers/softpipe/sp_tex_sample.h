@@ -34,20 +34,29 @@
 
 struct sp_sampler_variant;
 
-typedef void (*wrap_nearest_func)(const float s[4],
+typedef void (*wrap_nearest_func)(float s,
                                   unsigned size,
-                                  int icoord[4]);
+                                  int *icoord);
 
-typedef void (*wrap_linear_func)(const float s[4], 
+typedef void (*wrap_linear_func)(float s, 
                                  unsigned size,
-                                 int icoord0[4],
-                                 int icoord1[4],
-                                 float w[4]);
+                                 int *icoord0,
+                                 int *icoord1,
+                                 float *w);
 
 typedef float (*compute_lambda_func)(const struct sp_sampler_variant *sampler,
                                      const float s[TGSI_QUAD_SIZE],
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE]);
+
+typedef void (*img_filter_func)(struct tgsi_sampler *tgsi_sampler,
+                                float s,
+                                float t,
+                                float p,
+                                unsigned level,
+                                unsigned face_id,
+                                enum tgsi_sampler_control control,
+                                float *rgba);
 
 typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
                             const float s[TGSI_QUAD_SIZE],
@@ -98,9 +107,8 @@ struct sp_sampler_variant
     */
    unsigned xpot;
    unsigned ypot;
-   unsigned level;
 
-   unsigned faces[4];
+   unsigned faces[TGSI_QUAD_SIZE];
    
    wrap_nearest_func nearest_texcoord_s;
    wrap_nearest_func nearest_texcoord_t;
@@ -110,8 +118,8 @@ struct sp_sampler_variant
    wrap_linear_func linear_texcoord_t;
    wrap_linear_func linear_texcoord_p;
 
-   filter_func min_img_filter;
-   filter_func mag_img_filter;
+   img_filter_func min_img_filter;
+   img_filter_func mag_img_filter;
 
    compute_lambda_func compute_lambda;
 
