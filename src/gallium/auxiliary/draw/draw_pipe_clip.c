@@ -39,6 +39,7 @@
 
 #include "draw_vs.h"
 #include "draw_pipe.h"
+#include "draw_fs.h"
 
 
 #ifndef IS_NEGATIVE
@@ -56,11 +57,12 @@
 struct clip_stage {
    struct draw_stage stage;      /**< base class */
 
-   /* Basically duplicate some of the flatshading logic here:
-    */
-   boolean flat;
-   uint num_color_attribs;
-   uint color_attribs[4];  /* front/back primary/secondary colors */
+   /* List of the attributes to be flatshaded. */
+   uint num_flat_attribs;
+   uint flat_attribs[PIPE_MAX_SHADER_OUTPUTS];
+
+   /* Mask of attributes in noperspective mode */
+   boolean noperspective_attribs[PIPE_MAX_SHADER_OUTPUTS];
 
    float (*plane)[4];
 };
@@ -91,17 +93,16 @@ static void interp_attr( float dst[4],
 
 
 /**
- * Copy front/back, primary/secondary colors from src vertex to dst vertex.
- * Used when flat shading.
+ * Copy flat shaded attributes src vertex to dst vertex.
  */
-static void copy_colors( struct draw_stage *stage,
-			 struct vertex_header *dst,
-			 const struct vertex_header *src )
+static void copy_flat( struct draw_stage *stage,
+                       struct vertex_header *dst,
+                       const struct vertex_header *src )
 {
    const struct clip_stage *clipper = clip_stage(stage);
    uint i;
-   for (i = 0; i < clipper->num_color_attribs; i++) {
-      const uint attr = clipper->color_attribs[i];
+   for (i = 0; i < clipper->num_flat_attribs; i++) {
+      const uint attr = clipper->flat_attribs[i];
       COPY_4FV(dst->data[attr], src->data[attr]);
    }
 }
@@ -120,6 +121,7 @@ static void interp( const struct clip_stage *clip,
    const unsigned pos_attr = draw_current_shader_position_output(clip->stage.draw);
    const unsigned clip_attr = draw_current_shader_clipvertex_output(clip->stage.draw);
    unsigned j;
+   float t_nopersp;
 
    /* Vertex header.
     */
@@ -148,12 +150,36 @@ static void interp( const struct clip_stage *clip,
       dst->data[pos_attr][2] = pos[2] * oow * scale[2] + trans[2];
       dst->data[pos_attr][3] = oow;
    }
+   
+   /**
+    * Compute the t in screen-space instead of 3d space to use
+    * for noperspective interpolation.
+    *
+    * The points can be aligned with the X axis, so in that case try
+    * the Y.  When both points are at the same screen position, we can
+    * pick whatever value (the interpolated point won't be in front
+    * anyway), so just use the 3d t.
+    */
+   {
+      int k;
+      t_nopersp = t;
+      for (k = 0; k < 2; k++)
+         if (in->data[pos_attr][k] != out->data[pos_attr][k]) {
+            t_nopersp = (dst->data[pos_attr][k] - out->data[pos_attr][k]) /
+               (in->data[pos_attr][k] - out->data[pos_attr][k]);
+            break;
+         }
+   }
 
    /* Other attributes
     */
    for (j = 0; j < nr_attrs; j++) {
-      if (j != pos_attr && j != clip_attr)
-        interp_attr(dst->data[j], t, in->data[j], out->data[j]);
+      if (j != pos_attr && j != clip_attr) {
+         if (clip->noperspective_attribs[j])
+            interp_attr(dst->data[j], t_nopersp, in->data[j], out->data[j]);
+         else
+            interp_attr(dst->data[j], t, in->data[j], out->data[j]);
+      }
    }
 }
 
@@ -406,14 +432,14 @@ do_clip_tri( struct draw_stage *stage,
    /* If flat-shading, copy provoking vertex color to polygon vertex[0]
     */
    if (n >= 3) {
-      if (clipper->flat) {
+      if (clipper->num_flat_attribs) {
          if (stage->draw->rasterizer->flatshade_first) {
             if (inlist[0] != header->v[0]) {
                assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
                if (tmpnr >= MAX_CLIPPED_VERTICES + 1)
                   return;
                inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
-               copy_colors(stage, inlist[0], header->v[0]);
+               copy_flat(stage, inlist[0], header->v[0]);
             }
          }
          else {
@@ -422,7 +448,7 @@ do_clip_tri( struct draw_stage *stage,
                if (tmpnr >= MAX_CLIPPED_VERTICES + 1)
                   return;
                inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
-               copy_colors(stage, inlist[0], header->v[2]);
+               copy_flat(stage, inlist[0], header->v[2]);
             }
          }
       }
@@ -471,10 +497,7 @@ do_clip_line( struct draw_stage *stage,
 
    if (v0->clipmask) {
       interp( clipper, stage->tmp[0], t0, v0, v1 );
-
-      if (clipper->flat)
-	 copy_colors(stage, stage->tmp[0], v0);
-
+      copy_flat(stage, stage->tmp[0], v0);
       newprim.v[0] = stage->tmp[0];
    }
    else {
@@ -548,20 +571,79 @@ static void
 clip_init_state( struct draw_stage *stage )
 {
    struct clip_stage *clipper = clip_stage( stage );
+   const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
+   const struct draw_fragment_shader *fs = stage->draw->fs.fragment_shader;
+   uint i;
 
-   clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
+   /* We need to know for each attribute what kind of interpolation is
+    * done on it (flat, smooth or noperspective).  But the information
+    * is not directly accessible for outputs, only for inputs.  So we
+    * have to match semantic name and index between the VS (or GS/ES)
+    * outputs and the FS inputs to get to the interpolation mode.
+    *
+    * The only hitch is with gl_FrontColor/gl_BackColor which map to
+    * gl_Color, and their Secondary versions.  First there are (up to)
+    * two outputs for one input, so we tuck the information in a
+    * specific array.  Second if they don't have qualifiers, the
+    * default value has to be picked from the global shade mode.
+    */
 
-   if (clipper->flat) {
-      const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
-      uint i;
+   /* First pick up the interpolation mode for
+    * gl_Color/gl_SecondaryColor, with the correct default.
+    */
+   int indexed_interp[2];
+   indexed_interp[0] = indexed_interp[1] = stage->draw->rasterizer->flatshade ?
+      TGSI_INTERPOLATE_CONSTANT : TGSI_INTERPOLATE_PERSPECTIVE;
 
-      clipper->num_color_attribs = 0;
-      for (i = 0; i < vs->info.num_outputs; i++) {
-	 if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-	     vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-	    clipper->color_attribs[clipper->num_color_attribs++] = i;
-	 }
+   for (i = 0; i < fs->info.num_inputs; i++) {
+      if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_COLOR) {
+         if (fs->info.input_interpolate[i] != TGSI_INTERPOLATE_COLOR)
+            indexed_interp[fs->info.input_semantic_index[i]] = fs->info.input_interpolate[i];
       }
+   }
+
+   /* Then resolve the interpolation mode for every output attribute.
+    *
+    * Given how the rest of the code, the most efficient way is to
+    * have a vector of flat-mode attributes, and a mask for
+    * noperspective attributes.
+    */
+
+   clipper->num_flat_attribs = 0;
+   memset(clipper->noperspective_attribs, 0, sizeof(clipper->noperspective_attribs));
+   for (i = 0; i < vs->info.num_outputs; i++) {
+      /* Find the interpolation mode for a specific attribute
+       */
+      int interp;
+
+      /* If it's gl_{Front,Back}{,Secondary}Color, pick up the mode
+       * from the array we've filled before. */
+      if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+          vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+         interp = indexed_interp[vs->info.output_semantic_index[i]];
+      } else {
+         /* Otherwise, search in the FS inputs, with a decent default
+          * if we don't find it.
+          */
+         uint j;
+         interp = TGSI_INTERPOLATE_PERSPECTIVE;
+         for (j = 0; j < fs->info.num_inputs; j++) {
+            if (vs->info.output_semantic_name[i] == fs->info.input_semantic_name[j] &&
+                vs->info.output_semantic_index[i] == fs->info.input_semantic_index[j]) {
+               interp = fs->info.input_interpolate[j];
+               break;
+            }               
+         }
+      }
+
+      /* If it's flat, add it to the flat vector.  Otherwise update
+       * the noperspective mask.
+       */
+      if (interp == TGSI_INTERPOLATE_CONSTANT) {
+         clipper->flat_attribs[clipper->num_flat_attribs] = i;
+         clipper->num_flat_attribs++;
+      } else
+         clipper->noperspective_attribs[i] = interp == TGSI_INTERPOLATE_LINEAR;
    }
    
    stage->tri = clip_tri;
