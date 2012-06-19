@@ -459,7 +459,7 @@ generate_vs(struct draw_llvm *llvm,
             LLVMBuilderRef builder,
             LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
             const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
-            LLVMValueRef instance_id,
+            const struct lp_bld_tgsi_system_values *system_values,
             LLVMValueRef context_ptr,
             struct lp_build_sampler_soa *draw_sampler,
             boolean clamp_vertex_color)
@@ -491,7 +491,7 @@ generate_vs(struct draw_llvm *llvm,
                      vs_type,
                      NULL /*struct lp_build_mask_context *mask*/,
                      consts_ptr,
-                     instance_id,
+                     system_values,
                      NULL /*pos*/,
                      inputs,
                      outputs,
@@ -1248,7 +1248,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    LLVMValueRef count, fetch_elts, fetch_count;
    LLVMValueRef stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
-   LLVMValueRef instance_id;
    LLVMValueRef zero = lp_build_const_int32(gallivm, 0);
    LLVMValueRef one = lp_build_const_int32(gallivm, 1);
    struct draw_context *draw = llvm->draw;
@@ -1270,6 +1269,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    const unsigned pos = draw_current_shader_position_output(llvm->draw);
    const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
    boolean have_clipdist = FALSE;
+   struct lp_bld_tgsi_system_values system_values;
+
+   memset(&system_values, 0, sizeof(system_values));
 
    arg_types[0] = get_context_ptr_type(llvm);       /* context */
    arg_types[1] = get_vertex_header_ptr_type(llvm); /* vertex_header */
@@ -1300,19 +1302,19 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
          LLVMAddAttribute(LLVMGetParam(variant_func, i),
                           LLVMNoAliasAttribute);
 
-   context_ptr  = LLVMGetParam(variant_func, 0);
-   io_ptr       = LLVMGetParam(variant_func, 1);
-   vbuffers_ptr = LLVMGetParam(variant_func, 2);
-   stride       = LLVMGetParam(variant_func, 5);
-   vb_ptr       = LLVMGetParam(variant_func, 6);
-   instance_id  = LLVMGetParam(variant_func, 7);
+   context_ptr               = LLVMGetParam(variant_func, 0);
+   io_ptr                    = LLVMGetParam(variant_func, 1);
+   vbuffers_ptr              = LLVMGetParam(variant_func, 2);
+   stride                    = LLVMGetParam(variant_func, 5);
+   vb_ptr                    = LLVMGetParam(variant_func, 6);
+   system_values.instance_id = LLVMGetParam(variant_func, 7);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(io_ptr, "io");
    lp_build_name(vbuffers_ptr, "vbuffers");
    lp_build_name(stride, "stride");
    lp_build_name(vb_ptr, "vb");
-   lp_build_name(instance_id, "instance_id");
+   lp_build_name(system_values.instance_id, "instance_id");
 
    if (elts) {
       fetch_elts   = LLVMGetParam(variant_func, 3);
@@ -1378,6 +1380,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
       lp_build_printf(builder, " --- io %d = %p, loop counter %d\n",
                       io_itr, io, lp_loop.counter);
 #endif
+      system_values.vertex_id = lp_build_zero(gallivm, lp_type_uint_vec(32));
       for (i = 0; i < TGSI_NUM_CHANNELS; ++i) {
          LLVMValueRef true_index =
             LLVMBuildAdd(builder,
@@ -1395,7 +1398,10 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                                      &true_index, 1, "");
             true_index = LLVMBuildLoad(builder, fetch_ptr, "fetch_elt");
          }
-
+         
+         system_values.vertex_id = LLVMBuildInsertElement(gallivm->builder,
+                                                          system_values.vertex_id, true_index,
+                                                          lp_build_const_int32(gallivm, i), "");
          for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
             LLVMValueRef vb_index =
@@ -1403,7 +1409,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
             LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr, &vb_index, 1, "");
             generate_fetch(gallivm, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vb, true_index,
-                           instance_id);
+                           system_values.instance_id);
          }
       }
       convert_to_soa(gallivm, aos_attribs, inputs,
@@ -1414,7 +1420,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   builder,
                   outputs,
                   ptr_aos,
-                  instance_id,
+                  &system_values,
                   context_ptr,
                   sampler,
                   variant->key.clamp_vertex_color);

@@ -795,7 +795,12 @@ emit_fetch_system_value(
 
    switch (info->system_value_semantic_name[reg->Register.Index]) {
    case TGSI_SEMANTIC_INSTANCEID:
-      res = lp_build_broadcast_scalar(&bld_base->uint_bld, bld->instance_id);
+      res = lp_build_broadcast_scalar(&bld_base->uint_bld, bld->system_values.instance_id);
+      atype = TGSI_TYPE_UNSIGNED;
+      break;
+
+   case TGSI_SEMANTIC_VERTEXID:
+      res = bld->system_values.vertex_id;
       atype = TGSI_TYPE_UNSIGNED;
       break;
 
@@ -1995,7 +2000,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
-                  LLVMValueRef instance_id,
+                  const struct lp_bld_tgsi_system_values *system_values,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
                   LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
@@ -2070,7 +2075,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
 
-   bld.instance_id = instance_id;
+   bld.system_values = *system_values;
 
    lp_build_tgsi_llvm(&bld.bld_base, tokens);
 

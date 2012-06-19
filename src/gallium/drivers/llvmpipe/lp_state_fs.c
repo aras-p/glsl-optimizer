@@ -245,6 +245,9 @@ generate_fs(struct gallivm_state *gallivm,
    unsigned chan;
    unsigned cbuf;
    unsigned depth_mode;
+   struct lp_bld_tgsi_system_values system_values;
+
+   memset(&system_values, 0, sizeof(system_values));
 
    if (key->depth.enabled ||
        key->stencil[0].enabled ||
@@ -334,7 +337,7 @@ generate_fs(struct gallivm_state *gallivm,
    
    /* Build the actual shader */
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
-                     consts_ptr, NULL, /* instance id */
+                     consts_ptr, &system_values,
                      interp->pos, interp->inputs,
                      outputs, sampler, &shader->info.base);
 
