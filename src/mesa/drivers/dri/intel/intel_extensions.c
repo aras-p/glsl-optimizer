@@ -91,6 +91,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_EGL_image = true;
 #endif
    ctx->Extensions.OES_draw_texture = true;
+   ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
 
    if (intel->gen >= 6)
       ctx->Const.GLSLVersion = 130;

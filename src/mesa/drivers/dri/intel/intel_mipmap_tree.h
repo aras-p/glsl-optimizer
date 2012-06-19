@@ -190,6 +190,9 @@ struct intel_mipmap_tree
     * MESA_FORMAT_Z32_FLOAT_X24S8, then mt->format will be
     * MESA_FORMAT_Z32_FLOAT, otherwise for MESA_FORMAT_S8_Z24 objects it will be
     * MESA_FORMAT_X8_Z24.
+    *
+    * For ETC1 textures, this is MESA_FORMAT_RGBX8888_REV if the hardware
+    * lacks support for ETC1. See @ref wraps_etc1.
     */
    gl_format format;
 

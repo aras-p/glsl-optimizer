@@ -551,6 +551,11 @@ brw_init_surface_formats(struct brw_context *brw)
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_X24S8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
+
+   /* On hardware that lacks support for ETC1, we map ETC1 to RGBX
+    * during glCompressedTexImage2D(). See intel_mipmap_tree::wraps_etc1.
+    */
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC1_RGB8] = true;
 }
 
 bool
