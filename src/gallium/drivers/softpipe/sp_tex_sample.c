@@ -2693,7 +2693,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    case PIPE_TEXTURE_1D_ARRAY:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
-         int y = CLAMP(v_j[j] + offset[1], 0, layers - 1);
+         int y = CLAMP(v_j[j], 0, layers - 1);
 	 tx = get_texel_1d_array(samp, addr, x, y);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
@@ -2715,7 +2715,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
          int y = CLAMP(v_j[j] + offset[1], 0, height - 1);
-         int layer = CLAMP(v_k[j] + offset[2], 0, layers - 1);
+         int layer = CLAMP(v_k[j], 0, layers - 1);
 	 tx = get_texel_2d_array(samp, addr, x, y, layer);
 	 for (c = 0; c < 4; c++) {
 	    rgba[c][j] = tx[c];
