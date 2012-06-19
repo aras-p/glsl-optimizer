@@ -14,8 +14,8 @@ env.Prepend(CPPPATH = [
     '#src/glsl/glcpp',
 ])
 
-# Make glcpp/glcpp-parse.h and glsl_parser.h reacheable from the include path
-env.Append(CPPPATH = [Dir('.').abspath])
+# Make glcpp-parse.h and glsl_parser.h reachable from the include path.
+env.Append(CPPPATH = [Dir('.').abspath, Dir('glcpp').abspath])
 
 env.Append(YACCFLAGS = '-d')
 
