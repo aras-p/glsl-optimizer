@@ -1056,6 +1056,28 @@ get_depth_stencil_fp_variant(struct st_context *st, GLboolean write_depth,
 
 
 /**
+ * Clamp glDrawPixels width and height to the maximum texture size.
+ */
+static void
+clamp_size(struct pipe_context *pipe, GLsizei *width, GLsizei *height,
+           struct gl_pixelstore_attrib *unpack)
+{
+   const unsigned maxSize = 
+      1 << (pipe->screen->get_param(pipe->screen,
+                                    PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+
+   if (*width > maxSize) {
+      if (unpack->RowLength == 0)
+         unpack->RowLength = *width;
+      *width = maxSize;
+   }
+   if (*height > maxSize) {
+      *height = maxSize;
+   }
+}
+
+
+/**
  * Called via ctx->Driver.DrawPixels()
  */
 static void
@@ -1072,11 +1094,20 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    struct pipe_sampler_view *sv[2];
    int num_sampler_view = 1;
    struct st_fp_variant *fpv;
+   struct gl_pixelstore_attrib clippedUnpack;
 
    /* Mesa state should be up to date by now */
    assert(ctx->NewState == 0x0);
 
    st_validate_state(st);
+
+   /* Limit the size of the glDrawPixels to the max texture size.
+    * Strictly speaking, that's not correct but since we don't handle
+    * larger images yet, this is better than crashing.
+    */
+   clippedUnpack = *unpack;
+   unpack = &clippedUnpack;
+   clamp_size(st->pipe, &width, &height, &clippedUnpack);
 
    if (format == GL_DEPTH_STENCIL)
       write_stencil = write_depth = GL_TRUE;
