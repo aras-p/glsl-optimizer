@@ -12,7 +12,8 @@ GENERATED_SOURCES := \
 	AMDGPUGenSubtargetInfo.inc		\
 	AMDGPUGenEDInfo.inc		\
 	AMDGPUGenIntrinsics.inc		\
-	AMDGPUGenCodeEmitter.inc
+	AMDGPUGenCodeEmitter.inc	\
+	AMDGPUGenDFAPacketizer.inc
 
 CPP_SOURCES := \
 	AMDIL7XXDevice.cpp		\

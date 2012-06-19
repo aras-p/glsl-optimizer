@@ -21,6 +21,7 @@ class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instructio
   let InOperandList = ins;
   let AsmString = asm;
   let Pattern = pattern;
+  let Itinerary = NullALU;
   let TSFlags{42-40} = Gen;
   let TSFlags{63-48} = AMDILOp;
 }

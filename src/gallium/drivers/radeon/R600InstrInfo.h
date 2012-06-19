@@ -23,6 +23,8 @@
 namespace llvm {
 
   class AMDGPUTargetMachine;
+  class DFAPacketizer;
+  class ScheduleDAG;
   class MachineFunction;
   class MachineInstr;
   class MachineInstrBuilder;
@@ -52,6 +54,9 @@ namespace llvm {
 
   virtual unsigned getIEQOpcode() const;
   virtual bool isMov(unsigned Opcode) const;
+
+  DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,
+                                           const ScheduleDAG *DAG) const;
 };
 
 } // End llvm namespace

@@ -13,7 +13,11 @@
 
 #include "R600InstrInfo.h"
 #include "AMDGPUTargetMachine.h"
+#include "AMDILSubtarget.h"
 #include "R600RegisterInfo.h"
+
+#define GET_INSTRINFO_CTOR
+#include "AMDGPUGenDFAPacketizer.inc"
 
 using namespace llvm;
 
@@ -91,4 +95,11 @@ bool R600InstrInfo::isMov(unsigned Opcode) const
   case AMDIL::MOV_IMM_I32:
     return true;
   }
+}
+
+DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
+    const ScheduleDAG *DAG) const
+{
+  const InstrItineraryData *II = TM->getInstrItineraryData();
+  return TM->getSubtarget<AMDILSubtarget>().createDFAPacketizer(II);
 }

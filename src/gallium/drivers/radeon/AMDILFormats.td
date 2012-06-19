@@ -25,6 +25,7 @@ class ILFormat<ILOpCode op, dag outs, dag ins, string asmstr, list<dag> pattern>
      let Pattern = pattern;
      let AsmString = !strconcat(asmstr, "\n");
      let isPseudo = 1;
+     let Itinerary = NullALU;
      bit hasIEEEFlag = 0;
      bit hasZeroOpFlag = 0;
 }

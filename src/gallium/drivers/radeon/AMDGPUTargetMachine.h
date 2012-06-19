@@ -15,9 +15,9 @@
 #define AMDGPU_TARGET_MACHINE_H
 
 #include "AMDGPUInstrInfo.h"
+#include "AMDGPUSubtarget.h"
 #include "AMDILFrameLowering.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDILSubtarget.h"
 #include "R600ISelLowering.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Target/TargetData.h"
@@ -28,12 +28,13 @@ MCAsmInfo* createMCAsmInfo(const Target &T, StringRef TT);
 
 class AMDGPUTargetMachine : public LLVMTargetMachine {
 
-  AMDILSubtarget Subtarget;
+  AMDGPUSubtarget Subtarget;
   const TargetData DataLayout;
   AMDILFrameLowering FrameLowering;
   AMDILIntrinsicInfo IntrinsicInfo;
   const AMDGPUInstrInfo * InstrInfo;
   AMDGPUTargetLowering * TLInfo;
+  const InstrItineraryData* InstrItins;
   bool mDump;
 
 public:
@@ -50,12 +51,15 @@ public:
      return &IntrinsicInfo;
    }
    virtual const AMDGPUInstrInfo *getInstrInfo() const {return InstrInfo;}
-   virtual const AMDILSubtarget *getSubtargetImpl() const {return &Subtarget; }
+   virtual const AMDGPUSubtarget *getSubtargetImpl() const {return &Subtarget; }
    virtual const AMDGPURegisterInfo *getRegisterInfo() const {
       return &InstrInfo->getRegisterInfo();
    }
    virtual AMDGPUTargetLowering * getTargetLowering() const {
       return TLInfo;
+   }
+   virtual const InstrItineraryData* getInstrItineraryData() const {
+      return InstrItins;
    }
    virtual const TargetData* getTargetData() const { return &DataLayout; }
    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);

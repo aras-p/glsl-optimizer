@@ -50,6 +50,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
   FrameLowering(TargetFrameLowering::StackGrowsUp,
       Subtarget.device()->getStackAlignment(), 0),
   IntrinsicInfo(this),
+  InstrItins(&Subtarget.getInstrItineraryData()),
   mDump(false)
 
 {

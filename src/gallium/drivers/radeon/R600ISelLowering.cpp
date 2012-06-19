@@ -25,7 +25,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
     TII(static_cast<const R600InstrInfo*>(TM.getInstrInfo()))
 {
   setOperationAction(ISD::MUL, MVT::i64, Expand);
-//  setSchedulingPreference(Sched::VLIW);
   addRegisterClass(MVT::v4f32, &AMDIL::R600_Reg128RegClass);
   addRegisterClass(MVT::f32, &AMDIL::R600_Reg32RegClass);
   addRegisterClass(MVT::v4i32, &AMDIL::R600_Reg128RegClass);
@@ -34,6 +33,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
+  setSchedulingPreference(Sched::VLIW);
 }
 
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(

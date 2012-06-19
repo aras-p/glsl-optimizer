@@ -11,6 +11,10 @@
 
 include "llvm/Target/Target.td"
 
+// Dummy Instruction itineraries for pseudo instructions
+def ALU_NULL : FuncUnit;
+def NullALU : InstrItinClass;
+
 //===----------------------------------------------------------------------===//
 // AMDIL Subtarget features.
 //===----------------------------------------------------------------------===//
