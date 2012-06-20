@@ -33,6 +33,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
+  setOperationAction(ISD::ROTL, MVT::i32, Custom);
+
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -255,4 +257,30 @@ void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBl
           .addOperand(MI->getOperand(0))
           .addReg(PtrReg)
           .addImm(0);
+}
+
+//===----------------------------------------------------------------------===//
+// Custom DAG Lowering Operations
+//===----------------------------------------------------------------------===//
+
+
+SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
+{
+  switch (Op.getOpcode()) {
+  default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::ROTL: return LowerROTL(Op, DAG);
+  }
+}
+
+SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const
+{
+  DebugLoc DL = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+
+  return DAG.getNode(AMDGPUISD::BITALIGN, DL, VT,
+                     Op.getOperand(0),
+                     Op.getOperand(0),
+                     DAG.getNode(ISD::SUB, DL, VT,
+                                 DAG.getConstant(32, MVT::i32),
+                                 Op.getOperand(1)));
 }

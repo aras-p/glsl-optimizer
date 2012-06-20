@@ -564,7 +564,6 @@ AMDILTargetLowering::LowerMemArgument(
 
     // GPU doesn't have a rotl, rotr, or byteswap instruction
     setOperationAction(ISD::ROTR, VT, Expand);
-    setOperationAction(ISD::ROTL, VT, Expand);
     setOperationAction(ISD::BSWAP, VT, Expand);
 
     // GPU doesn't have any counting operators

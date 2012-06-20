@@ -12,8 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// AMDGPU DAG Profiles
+//===----------------------------------------------------------------------===//
+
+def AMDGPUDTIntTernaryOp : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>, SDTCisInt<3>
+]>;
+
+//===----------------------------------------------------------------------===//
 // AMDGPU DAG Nodes
 //
+
+// out = ((a << 32) | b) >> c)
+//
+// Can be used to optimize rtol:
+// rotl(a, b) = bitalign(a, a, 32 - b)
+def AMDGPUbitalign : SDNode<"AMDGPUISD::BITALIGN", AMDGPUDTIntTernaryOp>;
 
 // out = a - floor(a)
 def AMDGPUfract : SDNode<"AMDGPUISD::FRACT", SDTFPUnaryOp>;

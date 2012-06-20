@@ -26,6 +26,7 @@ public:
   R600TargetLowering(TargetMachine &TM);
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
       MachineBasicBlock * BB) const;
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
 private:
   const R600InstrInfo * TII;
@@ -36,6 +37,9 @@ private:
   /// lowered to VTX_READ instructions by this function. 
   void lowerImplicitParameter(MachineInstr *MI, MachineBasicBlock &BB,
       MachineRegisterInfo & MRI, unsigned dword_offset) const;
+
+  /// LowerROTL - Lower ROTL opcode to BITALIGN
+  SDValue LowerROTL(SDValue Op, SelectionDAG &DAG) const;
 
 };
 

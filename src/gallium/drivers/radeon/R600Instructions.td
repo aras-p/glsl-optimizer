@@ -821,6 +821,13 @@ def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
 /* ------------------------------- */
 
 let Predicates = [isEGorCayman] in {
+
+  def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
+    [(set R600_Reg32:$dst, (AMDGPUbitalign R600_Reg32:$src0, R600_Reg32:$src1,
+                                          R600_Reg32:$src2))],
+    VecALU
+  >;
+
   def MULADD_eg : MULADD_Common<0x14>;
   def ASHR_eg : ASHR_Common<0x15>;
   def LSHR_eg : LSHR_Common<0x16>;
