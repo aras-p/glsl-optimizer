@@ -187,6 +187,7 @@ uint32_t brw_get_surface_tiling_bits(uint32_t tiling);
 uint32_t brw_get_surface_num_multisamples(unsigned num_samples);
 void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
+				 uint32_t offset,
 				 int width,
 				 uint32_t *out_offset);
 
@@ -214,6 +215,7 @@ void gen7_check_surface_setup(struct gen7_surface_state *surf,
 void gen7_init_vtable_surface_functions(struct brw_context *brw);
 void gen7_create_constant_surface(struct brw_context *brw,
 				  drm_intel_bo *bo,
+				  uint32_t offset,
 				  int width,
 				  uint32_t *out_offset);
 

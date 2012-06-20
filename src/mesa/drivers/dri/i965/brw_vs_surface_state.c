@@ -95,7 +95,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
 
    const int surf = SURF_INDEX_VERT_CONST_BUFFER;
-   intel->vtbl.create_constant_surface(brw, brw->vs.const_bo,
+   intel->vtbl.create_constant_surface(brw, brw->vs.const_bo, 0,
 				       params->NumParameters,
 				       &brw->vs.surf_offset[surf]);
 

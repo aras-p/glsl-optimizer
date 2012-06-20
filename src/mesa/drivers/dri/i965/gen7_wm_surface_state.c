@@ -362,6 +362,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 void
 gen7_create_constant_surface(struct brw_context *brw,
 			     drm_intel_bo *bo,
+			     uint32_t offset,
 			     int width,
 			     uint32_t *out_offset)
 {
@@ -378,7 +379,7 @@ gen7_create_constant_surface(struct brw_context *brw,
    surf->ss0.render_cache_read_write = 1;
 
    assert(bo);
-   surf->ss1.base_addr = bo->offset; /* reloc */
+   surf->ss1.base_addr = bo->offset + offset; /* reloc */
 
    surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
@@ -400,7 +401,7 @@ gen7_create_constant_surface(struct brw_context *brw,
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   (*out_offset +
 			    offsetof(struct gen7_surface_state, ss1)),
-			   bo, 0,
+			   bo, offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    gen7_check_surface_setup(surf, false /* is_render_target */);

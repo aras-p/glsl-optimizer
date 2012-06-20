@@ -766,6 +766,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 void
 brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo *bo,
+			    uint32_t offset,
 			    int width,
 			    uint32_t *out_offset)
 {
@@ -783,7 +784,7 @@ brw_create_constant_surface(struct brw_context *brw,
    if (intel->gen >= 6)
       surf[0] |= BRW_SURFACE_RC_READ_WRITE;
 
-   surf[1] = bo->offset; /* reloc */
+   surf[1] = bo->offset + offset; /* reloc */
 
    surf[2] = ((w & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
 	      ((w >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT);
@@ -800,7 +801,7 @@ brw_create_constant_surface(struct brw_context *brw,
     */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   *out_offset + 4,
-			   bo, 0,
+			   bo, offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -936,7 +937,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
-   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo,
+   intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0,
 				       params->NumParameters,
 				       &brw->wm.surf_offset[surf_index]);
 
