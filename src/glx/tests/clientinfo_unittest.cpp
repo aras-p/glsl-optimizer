@@ -523,7 +523,7 @@ TEST_F(glX_send_client_info_test, sends_correct_gl_extension_string)
    create_single_screen_display(1, 1, "");
    __glX_send_client_info(this->glx_dpy);
 
-   ASSERT_EQ(sizeof(ext), gl_ext_length);
+   ASSERT_EQ((int) sizeof(ext), gl_ext_length);
    ASSERT_NE((char *) 0, gl_ext_string);
    EXPECT_EQ(0, memcmp(gl_ext_string, ext, sizeof(ext)));
 }
@@ -537,26 +537,26 @@ TEST_F(glX_send_client_info_test, gl_versions_are_sane)
 
    unsigned versions_below_3_0 = 0;
    for (int i = 0; i < num_gl_versions; i++) {
-      EXPECT_LT(0, gl_versions[i * 2]);
-      EXPECT_GE(4, gl_versions[i * 2]);
+      EXPECT_LT(0u, gl_versions[i * 2]);
+      EXPECT_GE(4u, gl_versions[i * 2]);
 
       /* Verify that the minor version advertised with the major version makes
        * sense.
        */
       switch (gl_versions[i * 2]) {
       case 1:
-	 EXPECT_GE(5, gl_versions[i * 2 + 1]);
+	 EXPECT_GE(5u, gl_versions[i * 2 + 1]);
 	 versions_below_3_0++;
 	 break;
       case 2:
-	 EXPECT_GE(1, gl_versions[i * 2 + 1]);
+	 EXPECT_GE(1u, gl_versions[i * 2 + 1]);
 	 versions_below_3_0++;
 	 break;
       case 3:
-	 EXPECT_GE(3, gl_versions[i * 2 + 1]);
+	 EXPECT_GE(3u, gl_versions[i * 2 + 1]);
 	 break;
       case 4:
-	 EXPECT_GE(2, gl_versions[i * 2 + 1]);
+	 EXPECT_GE(2u, gl_versions[i * 2 + 1]);
 	 break;
       }
    }
@@ -566,7 +566,7 @@ TEST_F(glX_send_client_info_test, gl_versions_are_sane)
     *     "Only the highest supported version below 3.0 should be sent, since
     *     OpenGL 2.1 is backwards compatible with all earlier versions."
     */
-   EXPECT_LE(versions_below_3_0, 1);
+   EXPECT_LE(versions_below_3_0, 1u);
 }
 
 TEST_F(glX_send_client_info_test, gl_versions_and_profiles_are_sane)
@@ -582,37 +582,37 @@ TEST_F(glX_send_client_info_test, gl_versions_and_profiles_are_sane)
    unsigned versions_below_3_0 = 0;
 
    for (int i = 0; i < num_gl_versions; i++) {
-      EXPECT_LT(0, gl_versions[i * 3]);
-      EXPECT_GE(4, gl_versions[i * 3]);
+      EXPECT_LT(0u, gl_versions[i * 3]);
+      EXPECT_GE(4u, gl_versions[i * 3]);
 
       /* Verify that the minor version advertised with the major version makes
        * sense.
        */
       switch (gl_versions[i * 3]) {
       case 1:
-	 EXPECT_GE(5, gl_versions[i * 3 + 1]);
-	 EXPECT_EQ(0, gl_versions[i * 3 + 2]);
+	 EXPECT_GE(5u, gl_versions[i * 3 + 1]);
+	 EXPECT_EQ(0u, gl_versions[i * 3 + 2]);
 	 versions_below_3_0++;
 	 break;
       case 2:
-	 EXPECT_GE(1, gl_versions[i * 3 + 1]);
-	 EXPECT_EQ(0, gl_versions[i * 3 + 2]);
+	 EXPECT_GE(1u, gl_versions[i * 3 + 1]);
+	 EXPECT_EQ(0u, gl_versions[i * 3 + 2]);
 	 versions_below_3_0++;
 	 break;
       case 3:
-	 EXPECT_GE(3, gl_versions[i * 3 + 1]);
+	 EXPECT_GE(3u, gl_versions[i * 3 + 1]);
 
 	 /* Profiles were not introduced until OpenGL 3.2.
 	  */
 	 if (gl_versions[i * 3 + 1] < 2) {
-	    EXPECT_EQ(0, gl_versions[i * 3 + 2]);
+	    EXPECT_EQ(0u, gl_versions[i * 3 + 2]);
 	 } else {
-	    EXPECT_EQ(0, gl_versions[i * 3 + 2] & ~all_valid_bits);
+	    EXPECT_EQ(0u, gl_versions[i * 3 + 2] & ~all_valid_bits);
 	 }
 	 break;
       case 4:
-	 EXPECT_GE(2, gl_versions[i * 3 + 1]);
-	 EXPECT_EQ(0, gl_versions[i * 3 + 2] & ~all_valid_bits);
+	 EXPECT_GE(2u, gl_versions[i * 3 + 1]);
+	 EXPECT_EQ(0u, gl_versions[i * 3 + 2] & ~all_valid_bits);
 	 break;
       }
    }
@@ -622,7 +622,7 @@ TEST_F(glX_send_client_info_test, gl_versions_and_profiles_are_sane)
     *     "Only the highest supported version below 3.0 should be sent, since
     *     OpenGL 2.1 is backwards compatible with all earlier versions."
     */
-   EXPECT_LE(versions_below_3_0, 1);
+   EXPECT_LE(versions_below_3_0, 1u);
 }
 
 TEST_F(glX_send_client_info_test, glx_version_is_1_4_for_1_1)

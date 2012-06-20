@@ -210,7 +210,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_context)
    glXCreateContextAttribsARB(this->dpy, (GLXFBConfig) &this->fbc, 0,
 			      False, NULL);
 
-   EXPECT_EQ(99, req.context);
+   EXPECT_EQ(99u, req.context);
 }
 
 TEST_F(glXCreateContextAttribARB_test, sent_correct_fbconfig)
@@ -280,7 +280,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_screen)
    glXCreateContextAttribsARB(this->dpy, (GLXFBConfig) &this->fbc, 0,
 			      False, NULL);
 
-   EXPECT_EQ(7, req.screen);
+   EXPECT_EQ(7u, req.screen);
 }
 
 TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs)
@@ -303,7 +303,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs)
    glXCreateContextAttribsARB(this->dpy, (GLXFBConfig) &this->fbc, 0,
 			      False, attribs);
 
-   EXPECT_EQ(4, req.num_attribs);
+   EXPECT_EQ(4u, req.num_attribs);
 }
 
 TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs_empty_list)
@@ -315,7 +315,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs_empty_list)
    glXCreateContextAttribsARB(this->dpy, (GLXFBConfig) &this->fbc, 0,
 			      False, attribs);
 
-   EXPECT_EQ(0, req.num_attribs);
+   EXPECT_EQ(0u, req.num_attribs);
 }
 
 TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs_NULL_list_pointer)
@@ -323,7 +323,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_num_attribs_NULL_list_pointe
    glXCreateContextAttribsARB(this->dpy, (GLXFBConfig) &this->fbc, 0,
 			      False, NULL);
 
-   EXPECT_EQ(0, req.num_attribs);
+   EXPECT_EQ(0u, req.num_attribs);
 }
 
 TEST_F(glXCreateContextAttribARB_test, sent_correct_attrib_list)
@@ -339,7 +339,7 @@ TEST_F(glXCreateContextAttribARB_test, sent_correct_attrib_list)
 			      False, attribs);
 
    for (unsigned i = 0; i < 6; i++) {
-      EXPECT_EQ(attribs[i], sent_attribs[i]);
+      EXPECT_EQ((uint32_t) attribs[i], sent_attribs[i]);
    }
 }
 /*@}*/
@@ -376,7 +376,7 @@ TEST_F(glXCreateContextAttribARB_test, correct_context_xid)
    ASSERT_NE((GLXContext)0, ctx);
 
    struct glx_context *glx_ctx = (struct glx_context *) ctx;
-   EXPECT_EQ(99, glx_ctx->xid);
+   EXPECT_EQ(99u, glx_ctx->xid);
 }
 
 TEST_F(glXCreateContextAttribARB_test, correct_context_share_xid)

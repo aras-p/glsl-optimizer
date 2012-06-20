@@ -201,7 +201,7 @@ verify_data(gl_constant_value *storage, unsigned storage_array_size,
 					red_zone_size));
       }
    } else {
-      ASSERT_EQ(0, storage_array_size);
+      ASSERT_EQ(0u, storage_array_size);
       for (unsigned i = 0; i < val->type->components(); i++) {
 	 switch (val->type->base_type) {
 	 case GLSL_TYPE_UINT:
