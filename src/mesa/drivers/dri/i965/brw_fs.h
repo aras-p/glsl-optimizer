@@ -292,7 +292,9 @@ public:
                      bool negate_value);
    void generate_spill(fs_inst *inst, struct brw_reg src);
    void generate_unspill(fs_inst *inst, struct brw_reg dst);
-   void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst);
+   void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst,
+				    struct brw_reg index,
+				    struct brw_reg offset);
    void generate_mov_dispatch_to_flags();
 
    void emit_dummy_fs();

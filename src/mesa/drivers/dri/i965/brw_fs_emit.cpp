@@ -583,7 +583,9 @@ fs_visitor::generate_unspill(fs_inst *inst, struct brw_reg dst)
 }
 
 void
-fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
+fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst,
+					struct brw_reg index,
+					struct brw_reg offset)
 {
    assert(inst->mlen != 0);
 
@@ -600,8 +602,16 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
    if (intel->gen == 4 && !intel->is_g4x)
       brw_MOV(p, brw_null_reg(), dst);
 
+   assert(index.file == BRW_IMMEDIATE_VALUE &&
+	  index.type == BRW_REGISTER_TYPE_UD);
+   uint32_t surf_index = index.dw1.ud;
+
+   assert(offset.file == BRW_IMMEDIATE_VALUE &&
+	  offset.type == BRW_REGISTER_TYPE_UD);
+   uint32_t read_offset = offset.dw1.ud;
+
    brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf),
-			inst->offset, SURF_INDEX_FRAG_CONST_BUFFER);
+			read_offset, surf_index);
 
    if (intel->gen == 4 && !intel->is_g4x) {
       /* gen4 errata: destination from a send can't be used as a
@@ -968,7 +978,7 @@ fs_visitor::generate_code()
 	 break;
 
       case FS_OPCODE_PULL_CONSTANT_LOAD:
-	 generate_pull_constant_load(inst, dst);
+	 generate_pull_constant_load(inst, dst, src[0], src[1]);
 	 break;
 
       case FS_OPCODE_FB_WRITE:

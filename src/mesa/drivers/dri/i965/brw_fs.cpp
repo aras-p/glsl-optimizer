@@ -1214,9 +1214,11 @@ fs_visitor::setup_pull_constants()
 	    continue;
 
 	 fs_reg dst = fs_reg(this, glsl_type::float_type);
+	 fs_reg index = fs_reg((unsigned)SURF_INDEX_FRAG_CONST_BUFFER);
+	 fs_reg offset = fs_reg((unsigned)(((uniform_nr -
+					     pull_uniform_base) * 4) & ~15));
 	 fs_inst *pull = new(mem_ctx) fs_inst(FS_OPCODE_PULL_CONSTANT_LOAD,
-					      dst);
-	 pull->offset = ((uniform_nr - pull_uniform_base) * 4) & ~15;
+					      dst, index, offset);
 	 pull->ir = inst->ir;
 	 pull->annotation = inst->annotation;
 	 pull->base_mrf = 14;
