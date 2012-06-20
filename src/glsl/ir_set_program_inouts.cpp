@@ -26,8 +26,8 @@
  *
  * Sets the InputsRead and OutputsWritten of Mesa programs.
  *
- * Additionally, for fragment shaders, sets the InterpQualifier array and
- * IsCentroid bitfield.
+ * Additionally, for fragment shaders, sets the InterpQualifier array, the
+ * IsCentroid bitfield, and the UsesDFdy flag.
  *
  * Mesa programs (gl_program, not gl_shader_program) have a set of
  * flags indicating which varyings are read and written.  Computing
@@ -61,6 +61,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit_enter(ir_function_signature *);
+   virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
    virtual ir_visitor_status visit(ir_variable *);
 
@@ -169,6 +170,16 @@ ir_set_program_inouts_visitor::visit_enter(ir_function_signature *ir)
    return visit_continue_with_parent;
 }
 
+ir_visitor_status
+ir_set_program_inouts_visitor::visit_enter(ir_expression *ir)
+{
+   if (is_fragment_shader && ir->operation == ir_unop_dFdy) {
+      gl_fragment_program *fprog = (gl_fragment_program *) prog;
+      fprog->UsesDFdy = true;
+   }
+   return visit_continue;
+}
+
 void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
                       bool is_fragment_shader)
@@ -179,9 +190,10 @@ do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
    prog->OutputsWritten = 0;
    prog->SystemValuesRead = 0;
    if (is_fragment_shader) {
-      memset(((gl_fragment_program *) prog)->InterpQualifier, 0,
-             sizeof(((gl_fragment_program *) prog)->InterpQualifier));
-      ((gl_fragment_program *) prog)->IsCentroid = 0;
+      gl_fragment_program *fprog = (gl_fragment_program *) prog;
+      memset(fprog->InterpQualifier, 0, sizeof(fprog->InterpQualifier));
+      fprog->IsCentroid = 0;
+      fprog->UsesDFdy = false;
    }
    visit_list_elements(&v, instructions);
 }
