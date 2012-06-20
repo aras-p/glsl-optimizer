@@ -931,6 +931,10 @@ fs_visitor::generate_code()
 	 generate_ddx(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DDY:
+         /* Make sure fp->UsesDFdy flag got set (otherwise there's no
+          * guarantee that c->key.render_to_fbo is set).
+          */
+         assert(fp->UsesDFdy);
 	 generate_ddy(inst, dst, src[0], c->key.render_to_fbo);
 	 break;
 

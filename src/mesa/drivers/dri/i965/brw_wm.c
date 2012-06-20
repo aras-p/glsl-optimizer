@@ -441,13 +441,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    const struct gl_program *prog = (struct gl_program *) brw->fragment_program;
    GLuint lookup = 0;
    GLuint line_aa;
-
-   /* As a temporary measure we assume that all programs use dFdy() (and hence
-    * need to be compiled differently depending on whether we're rendering to
-    * an FBO).  FIXME: set this bool correctly based on the contents of the
-    * program.
-    */
-   bool program_uses_dfdy = true;
+   bool program_uses_dfdy = fp->program.UsesDFdy;
 
    memset(key, 0, sizeof(*key));
 

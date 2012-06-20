@@ -1757,6 +1757,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_DDY:
+         /* Make sure fp->program.UsesDFdy flag got set (otherwise there's no
+          * guarantee that c->key.render_to_fbo is set).
+          */
+         assert(c->fp->program.UsesDFdy);
 	 emit_ddxy(p, dst, dst_flags, false, args[0], c->key.render_to_fbo);
 	 break;
 

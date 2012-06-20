@@ -2119,19 +2119,13 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_context *brw = brw_context(ctx);
    struct brw_wm_prog_key key;
 
-   /* As a temporary measure we assume that all programs use dFdy() (and hence
-    * need to be compiled differently depending on whether we're rendering to
-    * an FBO).  FIXME: set this bool correctly based on the contents of the
-    * program.
-    */
-   bool program_uses_dfdy = true;
-
    if (!prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
       return true;
 
    struct gl_fragment_program *fp = (struct gl_fragment_program *)
       prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
    struct brw_fragment_program *bfp = brw_fragment_program(fp);
+   bool program_uses_dfdy = fp->UsesDFdy;
 
    memset(&key, 0, sizeof(key));
 
