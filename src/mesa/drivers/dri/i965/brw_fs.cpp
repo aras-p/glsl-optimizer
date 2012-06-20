@@ -1378,6 +1378,11 @@ fs_visitor::propagate_constants()
 	       }
 	       break;
 
+            case FS_OPCODE_PULL_CONSTANT_LOAD:
+	       scan_inst->src[i] = inst->src[0];
+	       progress = true;
+	       break;
+
 	    default:
 	       break;
 	    }

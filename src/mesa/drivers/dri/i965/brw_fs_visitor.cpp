@@ -104,6 +104,13 @@ fs_visitor::visit(ir_variable *ir)
    } else if (ir->mode == ir_var_uniform) {
       int param_index = c->prog_data.nr_params;
 
+      /* Thanks to the lower_ubo_reference pass, we will see only
+       * ir_binop_ubo_load expressions and not ir_dereference_variable for UBO
+       * variables, so no need for them to be in variable_ht.
+       */
+      if (ir->uniform_block != -1)
+         return;
+
       if (c->dispatch_width == 16) {
 	 if (!variable_storage(ir)) {
 	    fail("Failed to find uniform '%s' in 16-wide\n", ir->name);
@@ -573,7 +580,41 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_ubo_load:
-      assert(!"not yet supported");
+      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *offset = ir->operands[1]->as_constant();
+
+      fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
+      packed_consts.type = result.type;
+      fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_WM_UBO(uniform_block->value.u[0]));
+      fs_inst *pull = emit(fs_inst(FS_OPCODE_PULL_CONSTANT_LOAD,
+                                   packed_consts,
+                                   surf_index,
+                                   fs_reg(offset->value.u[0])));
+      pull->base_mrf = 14;
+      pull->mlen = 1;
+
+      packed_consts.smear = offset->value.u[0] % 16 / 4;
+      for (int i = 0; i < ir->type->vector_elements; i++) {
+         /* UBO bools are any nonzero value.  We consider bools to be
+          * values with the low bit set to 1.  Convert them using CMP.
+          */
+         if (ir->type->base_type == GLSL_TYPE_BOOL) {
+            fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, result,
+                                         packed_consts, fs_reg(0u)));
+            inst->conditional_mod = BRW_CONDITIONAL_NZ;
+         } else {
+            emit(fs_inst(BRW_OPCODE_MOV, result, packed_consts));
+         }
+
+         packed_consts.smear++;
+         result.reg_offset++;
+
+         /* The std140 packing rules don't allow vectors to cross 16-byte
+          * boundaries, and a reg is 32 bytes.
+          */
+         assert(packed_consts.smear < 8);
+      }
+      result.reg_offset = 0;
       break;
    }
 }

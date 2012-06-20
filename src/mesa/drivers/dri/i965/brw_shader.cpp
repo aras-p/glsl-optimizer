@@ -146,6 +146,9 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       lower_variable_index_to_cond_assign(shader->ir,
 					  input, output, temp, uniform);
 
+      /* FINISHME: Do this before the variable index lowering. */
+      lower_ubo_reference(&shader->base, shader->ir);
+
       do {
 	 progress = false;
 
