@@ -382,6 +382,8 @@ ARL_instruction: ARL maskedAddrReg ',' scalarSrcReg
 
 VECTORop_instruction: VECTOR_OP maskedDstReg ',' swizzleSrcReg
 	{
+	   if ($1.Opcode == OPCODE_DDY)
+	      state->fragment.UsesDFdy = 1;
 	   $$ = asm_instruction_copy_ctor(& $1, & $2, & $4, NULL, NULL);
 	}
 	;
