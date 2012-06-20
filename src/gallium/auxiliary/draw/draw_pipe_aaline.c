@@ -996,13 +996,6 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    if (!aaline)
       goto fail;
 
-   /* create special texture, sampler state */
-   if (!aaline_create_texture(aaline))
-      goto fail;
-
-   if (!aaline_create_sampler(aaline))
-      goto fail;
-
    /* save original driver functions */
    aaline->driver_create_fs_state = pipe->create_fs_state;
    aaline->driver_bind_fs_state = pipe->bind_fs_state;
@@ -1010,6 +1003,13 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 
    aaline->driver_bind_sampler_states = pipe->bind_sampler_states;
    aaline->driver_set_sampler_views = pipe->set_sampler_views;
+
+   /* create special texture, sampler state */
+   if (!aaline_create_texture(aaline))
+      goto fail;
+
+   if (!aaline_create_sampler(aaline))
+      goto fail;
 
    /* override the driver's functions */
    pipe->create_fs_state = aaline_create_fs_state;

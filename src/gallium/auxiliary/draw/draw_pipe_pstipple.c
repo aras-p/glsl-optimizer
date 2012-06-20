@@ -794,13 +794,6 @@ draw_install_pstipple_stage(struct draw_context *draw,
 
    draw->pipeline.pstipple = &pstip->stage;
 
-   /* create special texture, sampler state */
-   if (!pstip_create_texture(pstip))
-      goto fail;
-
-   if (!pstip_create_sampler(pstip))
-      goto fail;
-
    /* save original driver functions */
    pstip->driver_create_fs_state = pipe->create_fs_state;
    pstip->driver_bind_fs_state = pipe->bind_fs_state;
@@ -809,6 +802,13 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pstip->driver_bind_sampler_states = pipe->bind_sampler_states;
    pstip->driver_set_sampler_views = pipe->set_sampler_views;
    pstip->driver_set_polygon_stipple = pipe->set_polygon_stipple;
+
+   /* create special texture, sampler state */
+   if (!pstip_create_texture(pstip))
+      goto fail;
+
+   if (!pstip_create_sampler(pstip))
+      goto fail;
 
    /* override the driver's functions */
    pipe->create_fs_state = pstip_create_fs_state;
