@@ -250,7 +250,7 @@ do_vs_prog(struct brw_context *brw,
    if (c.prog_data.nr_pull_params)
       c.prog_data.num_surfaces = 1;
    if (c.vp->program.Base.SamplersUsed)
-      c.prog_data.num_surfaces = BRW_MAX_VS_SURFACES;
+      c.prog_data.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
 
    /* Scratch space is used for register spilling */
    if (c.last_scratch) {

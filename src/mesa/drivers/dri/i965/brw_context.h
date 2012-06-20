@@ -493,6 +493,9 @@ struct brw_vs_ouput_sizes {
 /** Maximum number of actual buffers used for stream output */
 #define BRW_MAX_SOL_BUFFERS 4
 
+#define BRW_MAX_WM_UBOS              12
+#define BRW_MAX_VS_UBOS              12
+
 /**
  * Helpers to create Surface Binding Table indexes for draw buffers,
  * textures, and constant buffers.
@@ -518,6 +521,11 @@ struct brw_vs_ouput_sizes {
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  24 | Texture 15              |
+ *    |-----|-------------------------|
+ *    |  25 | UBO 0                   |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  36 | UBO 11                  |
  *    +-------------------------------+
  *
  * Our VS binding tables are programmed as follows:
@@ -529,6 +537,11 @@ struct brw_vs_ouput_sizes {
  *    |   . |     .                   |
  *    |   : |     :                   |
  *    |  16 | Texture 15              |
+ *    +-----+-------------------------+
+ *    |  17 | UBO 0                   |
+ *    |   . |     .                   |
+ *    |   : |     :                   |
+ *    |  28 | UBO 11                  |
  *    +-------------------------------+
  *
  * Our (gen6) GS binding tables are programmed as follows:
@@ -547,13 +560,15 @@ struct brw_vs_ouput_sizes {
 #define SURF_INDEX_DRAW(d)           (d)
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
+#define SURF_INDEX_WM_UBO(u)         (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + u)
 
 /** Maximum size of the binding table. */
-#define BRW_MAX_WM_SURFACES          SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT)
+#define BRW_MAX_WM_SURFACES          SURF_INDEX_WM_UBO(BRW_MAX_WM_UBOS)
 
 #define SURF_INDEX_VERT_CONST_BUFFER (0)
 #define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
-#define BRW_MAX_VS_SURFACES          SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT)
+#define SURF_INDEX_VS_UBO(u)         (SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT) + u)
+#define BRW_MAX_VS_SURFACES          SURF_INDEX_VS_UBO(BRW_MAX_VS_UBOS)
 
 #define SURF_INDEX_SOL_BINDING(t)    ((t))
 #define BRW_MAX_GS_SURFACES          SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
@@ -1135,6 +1150,9 @@ brw_update_sol_surface(struct brw_context *brw,
                        struct gl_buffer_object *buffer_obj,
                        uint32_t *out_offset, unsigned num_vector_components,
                        unsigned stride_dwords, unsigned offset_dwords);
+void brw_upload_ubo_surfaces(struct brw_context *brw,
+			     struct gl_shader *shader,
+			     uint32_t *surf_offsets);
 
 /* gen6_sol.c */
 void

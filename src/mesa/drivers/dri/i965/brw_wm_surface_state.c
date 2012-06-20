@@ -1263,6 +1263,65 @@ const struct brw_tracked_state brw_texture_surfaces = {
    .emit = brw_update_texture_surfaces,
 };
 
+void
+brw_upload_ubo_surfaces(struct brw_context *brw,
+			struct gl_shader *shader,
+			uint32_t *surf_offsets)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+
+   if (!shader)
+      return;
+
+   for (int i = 0; i < shader->NumUniformBlocks; i++) {
+      struct gl_uniform_buffer_binding *binding;
+      struct intel_buffer_object *intel_bo;
+
+      binding = &ctx->UniformBufferBindings[shader->UniformBlocks[i].Binding];
+      intel_bo = intel_buffer_object(binding->BufferObject);
+      drm_intel_bo *bo = intel_bufferobj_buffer(intel, intel_bo, INTEL_READ);
+
+      /* Because behavior for referencing outside of the binding's size in the
+       * glBindBufferRange case is undefined, we can just bind the whole buffer
+       * glBindBufferBase wants and be a correct implementation.
+       */
+      int size = bo->size - binding->Offset;
+      size = ALIGN(size, 16) / 16; /* The interface takes a number of vec4s */
+
+      intel->vtbl.create_constant_surface(brw, bo, binding->Offset,
+					  size,
+					  &surf_offsets[i]);
+   }
+
+   if (shader->NumUniformBlocks)
+      brw->state.dirty.brw |= BRW_NEW_SURFACES;
+}
+
+static void
+brw_upload_wm_ubo_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog = ctx->Shader._CurrentFragmentProgram;
+
+   if (!prog)
+      return;
+
+   brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
+			   &brw->wm.surf_offset[SURF_INDEX_WM_UBO(0)]);
+}
+
+const struct brw_tracked_state brw_wm_ubo_surfaces = {
+   .dirty = {
+      .mesa = (_NEW_PROGRAM |
+	       _NEW_BUFFER_OBJECT),
+      .brw = BRW_NEW_BATCH,
+      .cache = 0,
+   },
+   .emit = brw_upload_wm_ubo_surfaces,
+};
+
 /**
  * Constructs the binding table for the WM surface state, which maps unit
  * numbers to surface state objects.

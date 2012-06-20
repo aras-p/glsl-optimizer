@@ -143,7 +143,9 @@ static const struct brw_tracked_state *gen6_atoms[] =
     * table upload must be last.
     */
    &brw_vs_pull_constants,
+   &brw_vs_ubo_surfaces,
    &brw_wm_pull_constants,
+   &brw_wm_ubo_surfaces,
    &gen6_renderbuffer_surfaces,
    &brw_texture_surfaces,
    &gen6_sol_surface,
@@ -215,7 +217,9 @@ const struct brw_tracked_state *gen7_atoms[] =
     * table upload must be last.
     */
    &brw_vs_pull_constants,
+   &brw_vs_ubo_surfaces,
    &brw_wm_pull_constants,
+   &brw_wm_ubo_surfaces,
    &gen6_renderbuffer_surfaces,
    &brw_texture_surfaces,
    &brw_vs_binding_table,

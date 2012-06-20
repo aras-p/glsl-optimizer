@@ -111,6 +111,30 @@ const struct brw_tracked_state brw_vs_pull_constants = {
    .emit = brw_upload_vs_pull_constants,
 };
 
+static void
+brw_upload_vs_ubo_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
+
+   if (!prog)
+      return;
+
+   brw_upload_ubo_surfaces(brw, prog->_LinkedShaders[MESA_SHADER_VERTEX],
+			   &brw->vs.surf_offset[SURF_INDEX_VS_UBO(0)]);
+}
+
+const struct brw_tracked_state brw_vs_ubo_surfaces = {
+   .dirty = {
+      .mesa = (_NEW_PROGRAM |
+	       _NEW_BUFFER_OBJECT),
+      .brw = BRW_NEW_BATCH,
+      .cache = 0,
+   },
+   .emit = brw_upload_vs_ubo_surfaces,
+};
+
 /**
  * Constructs the binding table for the WM surface state, which maps unit
  * numbers to surface state objects.
