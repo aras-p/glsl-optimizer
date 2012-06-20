@@ -22,7 +22,8 @@
  */
 
 static void
-FN_NAME(DST_TYPE *dst,
+FN_NAME(struct gl_context *ctx,
+	DST_TYPE *dst,
 	GLenum dstFormat,
 	SRC_TYPE rgba[][4],
 	int n)
@@ -110,6 +111,12 @@ FN_NAME(DST_TYPE *dst,
 				  rgba[i][BCOMP]);
 	 dst[i*2+1] = SRC_CONVERT(rgba[i][ACOMP]);
       }
+      break;
+
+   default:
+      _mesa_problem(ctx,
+         "Unsupported format (%s)",
+         _mesa_lookup_enum_by_nr(dstFormat));
       break;
    }
 }

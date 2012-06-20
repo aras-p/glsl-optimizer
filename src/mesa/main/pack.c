@@ -514,26 +514,29 @@ _mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
 {
    switch(dstType) {
    case GL_UNSIGNED_INT:
-      pack_uint_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_INT:
       /* No conversion necessary. */
-      pack_uint_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_UNSIGNED_SHORT:
-      pack_ushort_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_ushort_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_SHORT:
-      pack_short_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_short_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_UNSIGNED_BYTE:
-      pack_ubyte_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_ubyte_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_BYTE:
-      pack_byte_from_uint_rgba(dstAddr, dstFormat, rgba, n);
+      pack_byte_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    default:
-      assert(0);
+      _mesa_problem(ctx,
+         "Unsupported type (%s) for format (%s)",
+         _mesa_lookup_enum_by_nr(dstType),
+         _mesa_lookup_enum_by_nr(dstFormat));
       return;
    }
 }
