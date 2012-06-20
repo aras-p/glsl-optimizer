@@ -1848,6 +1848,13 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_context *brw = brw_context(ctx);
    struct brw_wm_prog_key key;
 
+   /* As a temporary measure we assume that all programs use dFdy() (and hence
+    * need to be compiled differently depending on whether we're rendering to
+    * an FBO).  FIXME: set this bool correctly based on the contents of the
+    * program.
+    */
+   bool program_uses_dfdy = true;
+
    if (!prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
       return true;
 
@@ -1892,6 +1899,9 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (fp->Base.InputsRead & FRAG_BIT_WPOS) {
       key.drawable_height = ctx->DrawBuffer->Height;
+   }
+
+   if ((fp->Base.InputsRead & FRAG_BIT_WPOS) || program_uses_dfdy) {
       key.render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    }
 

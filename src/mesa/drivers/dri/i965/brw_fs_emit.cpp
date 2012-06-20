@@ -441,8 +441,13 @@ fs_visitor::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    brw_ADD(p, dst, src0, negate(src1));
 }
 
+/* The negate_value boolean is used to negate the derivative computation for
+ * FBOs, since they place the origin at the upper left instead of the lower
+ * left.
+ */
 void
-fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                         bool negate_value)
 {
    struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
 				 BRW_REGISTER_TYPE_F,
@@ -456,7 +461,10 @@ fs_visitor::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 				 BRW_WIDTH_4,
 				 BRW_HORIZONTAL_STRIDE_0,
 				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
-   brw_ADD(p, dst, src0, negate(src1));
+   if (negate_value)
+      brw_ADD(p, dst, src1, negate(src0));
+   else
+      brw_ADD(p, dst, src0, negate(src1));
 }
 
 void
@@ -902,7 +910,7 @@ fs_visitor::generate_code()
 	 generate_ddx(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DDY:
-	 generate_ddy(inst, dst, src[0]);
+	 generate_ddy(inst, dst, src[0], c->key.render_to_fbo);
 	 break;
 
       case FS_OPCODE_SPILL:

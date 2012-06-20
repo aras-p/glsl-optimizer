@@ -534,7 +534,8 @@ public:
 			   struct brw_reg src);
    void generate_discard(fs_inst *inst);
    void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
-   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                     bool negate_value);
    void generate_spill(fs_inst *inst, struct brw_reg src);
    void generate_unspill(fs_inst *inst, struct brw_reg dst);
    void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst);

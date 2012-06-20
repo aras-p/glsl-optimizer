@@ -457,12 +457,16 @@ void emit_frontfacing(struct brw_compile *p,
  * between each other.  We could probably do it like ddx and swizzle the right
  * order later, but bail for now and just produce
  * ((ss0.tl - ss0.bl)x4 (ss1.tl - ss1.bl)x4)
+ *
+ * The negate_value boolean is used to negate the d/dy computation for FBOs,
+ * since they place the origin at the upper left instead of the lower left.
  */
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
 	       bool is_ddx,
-	       const struct brw_reg *arg0)
+	       const struct brw_reg *arg0,
+               bool negate_value)
 {
    int i;
    struct brw_reg src0, src1;
@@ -498,7 +502,10 @@ void emit_ddxy(struct brw_compile *p,
 			   BRW_HORIZONTAL_STRIDE_0,
 			   BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
 	 }
-	 brw_ADD(p, dst[i], src0, negate(src1));
+         if (negate_value)
+            brw_ADD(p, dst[i], src1, negate(src0));
+         else
+            brw_ADD(p, dst[i], src0, negate(src1));
       }
    }
    if (mask & SATURATE)
@@ -1746,11 +1753,11 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_DDX:
-	 emit_ddxy(p, dst, dst_flags, true, args[0]);
+	 emit_ddxy(p, dst, dst_flags, true, args[0], false);
 	 break;
 
       case OPCODE_DDY:
-	 emit_ddxy(p, dst, dst_flags, false, args[0]);
+	 emit_ddxy(p, dst, dst_flags, false, args[0], c->key.render_to_fbo);
 	 break;
 
       case OPCODE_DP2:

@@ -346,7 +346,8 @@ void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,
 	       bool is_ddx,
-	       const struct brw_reg *arg0);
+	       const struct brw_reg *arg0,
+	       bool negate_value);
 void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
 		   GLuint mask,
