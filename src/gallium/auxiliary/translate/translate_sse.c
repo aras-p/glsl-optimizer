@@ -1442,8 +1442,10 @@ static void translate_sse_release( struct translate *translate )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
 
-   x86_release_func( &p->linear_func );
+   x86_release_func( &p->elt8_func );
+   x86_release_func( &p->elt16_func );
    x86_release_func( &p->elt_func );
+   x86_release_func( &p->linear_func );
 
    os_free_aligned(p);
 }
