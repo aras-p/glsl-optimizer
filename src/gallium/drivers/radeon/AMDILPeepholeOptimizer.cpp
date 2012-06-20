@@ -691,6 +691,11 @@ AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst)
   }
   Type *aType = inst->getType();
   bool isVector = aType->isVectorTy();
+
+  // XXX Support vector types
+  if (isVector) {
+    return false;
+  }
   int numEle = 1;
   // This only works on 32bit integers
   if (aType->getScalarType()
@@ -792,23 +797,24 @@ AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst)
   callTypes.push_back(aType);
   callTypes.push_back(aType);
   FunctionType *funcType = FunctionType::get(aType, callTypes, false);
-  std::string name = "__amdil_ubit_extract";
+  std::string name = "llvm.AMDIL.bit.extract.u32";
   if (isVector) {
-    name += "_v" + itostr(numEle) + "i32";
+    name += ".v" + itostr(numEle) + "i32";
   } else {
-    name += "_i32";
+    name += ".";
   }
   // Lets create the function.
   Function *Func = 
     dyn_cast<Function>(inst->getParent()->getParent()->getParent()->
                        getOrInsertFunction(llvm::StringRef(name), funcType));
   Value *Operands[3] = {
-    newMaskConst,
+    ShiftInst->getOperand(0),
     shiftValConst,
-    ShiftInst->getOperand(0)
+    newMaskConst
   };
   // Lets create the Call with the operands
   CallInst *CI = CallInst::Create(Func, Operands, "ByteExtractOpt");
+  CI->setDoesNotAccessMemory();
   CI->insertBefore(inst);
   inst->replaceAllUsesWith(CI);
   return true;

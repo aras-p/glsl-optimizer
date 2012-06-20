@@ -822,6 +822,27 @@ def RECIP_UINT_eg : RECIP_UINT_Common<0x94>;
 
 let Predicates = [isEGorCayman] in {
 
+  // BFE_UINT - bit_extract, an optimization for mask and shift
+  // Src0 = Input
+  // Src1 = Offset
+  // Src2 = Width
+  //
+  // bit_extract = (Input << (32 - Offset - Width)) >> (32 - Width)
+  //
+  // Example Usage:
+  // (Offset, Width)
+  //
+  // (0, 8)           = (Input << 24) >> 24  = (Input &  0xff)       >> 0
+  // (8, 8)           = (Input << 16) >> 24  = (Input &  0xffff)     >> 8
+  // (16,8)           = (Input <<  8) >> 24  = (Input &  0xffffff)   >> 16
+  // (24,8)           = (Input <<  0) >> 24  = (Input &  0xffffffff) >> 24
+  def BFE_UINT_eg : R600_3OP <0x4, "BFE_UINT",
+    [(set R600_Reg32:$dst, (int_AMDIL_bit_extract_u32 R600_Reg32:$src0,
+                                                      R600_Reg32:$src1,
+                                                      R600_Reg32:$src2))],
+    VecALU
+  >;
+
   def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
     [(set R600_Reg32:$dst, (AMDGPUbitalign R600_Reg32:$src0, R600_Reg32:$src1,
                                           R600_Reg32:$src2))],
