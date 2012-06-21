@@ -74,6 +74,8 @@
 #include "program/program.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
+#include "main/enums.h"
+#include "main/glformats.h"
 
 
 /** Return offset in bytes of the field within a vertex struct */
@@ -3158,8 +3160,12 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
  * ReadPixels() and passed to Tex[Sub]Image().
  */
 static GLenum
-get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
+get_temp_image_type(struct gl_context *ctx, gl_format format)
 {
+   GLenum baseFormat, type;
+
+   baseFormat = _mesa_get_format_base_format(format);
+
    switch (baseFormat) {
    case GL_RGBA:
    case GL_RGB:
@@ -3174,7 +3180,7 @@ get_temp_image_type(struct gl_context *ctx, GLenum baseFormat)
       else if (ctx->DrawBuffer->Visual.redBits <= 16)
          return GL_UNSIGNED_SHORT;
       else
-         return GL_FLOAT;
+         return _mesa_get_format_datatype(format);
    case GL_DEPTH_COMPONENT:
       return GL_UNSIGNED_INT;
    case GL_DEPTH_STENCIL:
@@ -3216,12 +3222,10 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       format = GL_RGBA;
    }
 
+   type = get_temp_image_type(ctx, texImage->TexFormat);
    if (_mesa_is_format_integer_color(texImage->TexFormat)) {
-      _mesa_problem(ctx, "unsupported integer color copyteximage");
-      return;
+      format = _mesa_base_format_to_integer_format(format);
    }
-
-   type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
    if (bpp <= 0) {
       _mesa_problem(ctx, "Bad bpp in _mesa_meta_CopyTexSubImage()");
