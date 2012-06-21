@@ -586,6 +586,9 @@ clip_init_state( struct draw_stage *stage )
     * two outputs for one input, so we tuck the information in a
     * specific array.  Second if they don't have qualifiers, the
     * default value has to be picked from the global shade mode.
+    *
+    * Of course, if we don't have a fragment shader in the first
+    * place, defaults should be used.
     */
 
    /* First pick up the interpolation mode for
@@ -595,10 +598,12 @@ clip_init_state( struct draw_stage *stage )
    indexed_interp[0] = indexed_interp[1] = stage->draw->rasterizer->flatshade ?
       TGSI_INTERPOLATE_CONSTANT : TGSI_INTERPOLATE_PERSPECTIVE;
 
-   for (i = 0; i < fs->info.num_inputs; i++) {
-      if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_COLOR) {
-         if (fs->info.input_interpolate[i] != TGSI_INTERPOLATE_COLOR)
-            indexed_interp[fs->info.input_semantic_index[i]] = fs->info.input_interpolate[i];
+   if (fs) {
+      for (i = 0; i < fs->info.num_inputs; i++) {
+         if (fs->info.input_semantic_name[i] == TGSI_SEMANTIC_COLOR) {
+            if (fs->info.input_interpolate[i] != TGSI_INTERPOLATE_COLOR)
+               indexed_interp[fs->info.input_semantic_index[i]] = fs->info.input_interpolate[i];
+         }
       }
    }
 
@@ -627,12 +632,14 @@ clip_init_state( struct draw_stage *stage )
           */
          uint j;
          interp = TGSI_INTERPOLATE_PERSPECTIVE;
-         for (j = 0; j < fs->info.num_inputs; j++) {
-            if (vs->info.output_semantic_name[i] == fs->info.input_semantic_name[j] &&
-                vs->info.output_semantic_index[i] == fs->info.input_semantic_index[j]) {
-               interp = fs->info.input_interpolate[j];
-               break;
-            }               
+         if (fs) {
+            for (j = 0; j < fs->info.num_inputs; j++) {
+               if (vs->info.output_semantic_name[i] == fs->info.input_semantic_name[j] &&
+                   vs->info.output_semantic_index[i] == fs->info.input_semantic_index[j]) {
+                  interp = fs->info.input_interpolate[j];
+                  break;
+               }
+            }
          }
       }
 
