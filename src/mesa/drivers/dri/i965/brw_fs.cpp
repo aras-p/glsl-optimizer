@@ -419,6 +419,20 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    return reg;
 }
 
+fs_inst *
+fs_visitor::emit_linterp(const fs_reg &attr, const fs_reg &interp,
+                         glsl_interp_qualifier interpolation_mode)
+{
+   brw_wm_barycentric_interp_mode barycoord_mode;
+   if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
+      barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+   else
+      barycoord_mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+   return emit(FS_OPCODE_LINTERP, attr,
+               this->delta_x[barycoord_mode],
+               this->delta_y[barycoord_mode], interp);
+}
+
 fs_reg *
 fs_visitor::emit_general_interpolation(ir_variable *ir)
 {
@@ -482,14 +496,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
 	       } else {
 		  struct brw_reg interp = interp_reg(location, k);
-                  brw_wm_barycentric_interp_mode barycoord_mode;
-                  if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
-                     barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
-                  else
-                     barycoord_mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
-                  emit(FS_OPCODE_LINTERP, attr,
-                       this->delta_x[barycoord_mode],
-                       this->delta_y[barycoord_mode], fs_reg(interp));
+                  emit_linterp(attr, fs_reg(interp), interpolation_mode);
 		  if (intel->gen < 6) {
 		     emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
 		  }
