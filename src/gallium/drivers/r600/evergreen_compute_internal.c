@@ -298,20 +298,13 @@ void evergreen_set_rat(
 		evergreen_compute_get_gpu_format(&fmt, bo);
 	}
 
-	if (linear) {
-		evergreen_reg_set(res,
-			R_028C70_CB_COLOR0_INFO, S_028C70_RAT(1)
-			| S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED)
-			| S_028C70_FORMAT(fmt.format)
-			| S_028C70_NUMBER_TYPE(fmt.number_type)
-		);
-		evergreen_emit_force_reloc(res);
-	} else {
-		assert(0 && "TODO");
-		///TODO
-//	 evergreen_reg_set(res, R_028C70_CB_COLOR0_INFO, S_028C70_RAT(1) | S_028C70_ARRAY_MODE(????));
-//	 evergreen_emit_force_reloc(res);
-	}
+	evergreen_reg_set(res,
+		R_028C70_CB_COLOR0_INFO, S_028C70_RAT(1)
+		| S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED)
+		| S_028C70_FORMAT(fmt.format)
+		| S_028C70_NUMBER_TYPE(fmt.number_type)
+	);
+	evergreen_emit_force_reloc(res);
 
 	evergreen_reg_set(res, R_028C74_CB_COLOR0_ATTRIB, S_028C74_NON_DISP_TILING_ORDER(1));
 	evergreen_emit_force_reloc(res);
