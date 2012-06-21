@@ -725,6 +725,15 @@ struct brw_context
    bool has_pln;
    bool precompile;
 
+   /**
+    * Some versions of Gen hardware don't do centroid interpolation correctly
+    * on unlit pixels, causing incorrect values for derivatives near triangle
+    * edges.  Enabling this flag causes the fragment shader to use
+    * non-centroid interpolation for unlit pixels, at the expense of two extra
+    * fragment shader instructions.
+    */
+   bool needs_unlit_centroid_workaround;
+
    struct {
       struct brw_state_flags dirty;
    } state;

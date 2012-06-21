@@ -506,6 +506,18 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		  struct brw_reg interp = interp_reg(location, k);
                   emit_linterp(attr, fs_reg(interp), interpolation_mode,
                                ir->centroid);
+                  if (brw->needs_unlit_centroid_workaround && ir->centroid) {
+                     /* Get the pixel/sample mask into f0 so that we know
+                      * which pixels are lit.  Then, for each channel that is
+                      * unlit, replace the centroid data with non-centroid
+                      * data.
+                      */
+                     emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS, attr);
+                     fs_inst *inst = emit_linterp(attr, fs_reg(interp),
+                                                  interpolation_mode, false);
+                     inst->predicated = true;
+                     inst->predicate_inverse = true;
+                  }
 		  if (intel->gen < 6) {
 		     emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
 		  }

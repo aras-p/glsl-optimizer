@@ -296,6 +296,10 @@ brwCreateContext(int api,
       brw->has_negative_rhw_bug = true;
    }
 
+   if (intel->gen <= 7) {
+      brw->needs_unlit_centroid_workaround = true;
+   }
+
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
 

@@ -130,7 +130,8 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
  * (see enum brw_wm_barycentric_interp_mode) is needed by the fragment shader.
  */
 static unsigned
-brw_compute_barycentric_interp_modes(bool shade_model_flat,
+brw_compute_barycentric_interp_modes(struct brw_context *brw,
+                                     bool shade_model_flat,
                                      const struct gl_fragment_program *fprog)
 {
    unsigned barycentric_interp_modes = 0;
@@ -154,11 +155,18 @@ brw_compute_barycentric_interp_modes(bool shade_model_flat,
       if (attr == FRAG_ATTRIB_WPOS || attr == FRAG_ATTRIB_FACE)
          continue;
 
+      /* Determine the set (or sets) of barycentric coordinates needed to
+       * interpolate this variable.  Note that when
+       * brw->needs_unlit_centroid_workaround is set, centroid interpolation
+       * uses PIXEL interpolation for unlit pixels and CENTROID interpolation
+       * for lit pixels, so we need both sets of barycentric coordinates.
+       */
       if (interp_qualifier == INTERP_QUALIFIER_NOPERSPECTIVE) {
          if (is_centroid) {
             barycentric_interp_modes |=
                1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
-         } else {
+         }
+         if (!is_centroid || brw->needs_unlit_centroid_workaround) {
             barycentric_interp_modes |=
                1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
          }
@@ -168,7 +176,8 @@ brw_compute_barycentric_interp_modes(bool shade_model_flat,
          if (is_centroid) {
             barycentric_interp_modes |=
                1 << BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
-         } else {
+         }
+         if (!is_centroid || brw->needs_unlit_centroid_workaround) {
             barycentric_interp_modes |=
                1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
          }
@@ -289,7 +298,8 @@ bool do_wm_prog(struct brw_context *brw,
    brw_init_compile(brw, &c->func, c);
 
    c->prog_data.barycentric_interp_modes =
-      brw_compute_barycentric_interp_modes(c->key.flat_shade, &fp->program);
+      brw_compute_barycentric_interp_modes(brw, c->key.flat_shade,
+                                           &fp->program);
 
    if (prog && prog->_LinkedShaders[MESA_SHADER_FRAGMENT]) {
       if (!brw_wm_fs_emit(brw, c, prog))
