@@ -752,6 +752,44 @@ _mesa_GetActiveUniformBlockName(GLuint program,
    }
 }
 
+static void GLAPIENTRY
+_mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
+			   GLsizei bufSize, GLsizei *length,
+			   GLchar *uniformName)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg;
+
+   if (!ctx->Extensions.ARB_uniform_buffer_object) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetActiveUniformBlockiv");
+      return;
+   }
+
+   if (bufSize < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+		  "glGetActiveUniformName(bufSize %d < 0)",
+		  bufSize);
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniformName");
+
+   if (!shProg)
+      return;
+
+   if (uniformIndex >= shProg->NumUserUniformStorage) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
+      return;
+   }
+
+   if (uniformName) {
+      _mesa_copy_string(uniformName, bufSize, length,
+			shProg->UniformStorage[uniformIndex].name);
+   }
+}
+
 /**
  * Plug in shader uniform-related functions into API dispatch table.
  */
@@ -815,6 +853,7 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
    SET_GetActiveUniformBlockiv(exec, _mesa_GetActiveUniformBlockiv);
    SET_GetActiveUniformBlockName(exec, _mesa_GetActiveUniformBlockName);
+   SET_GetActiveUniformName(exec, _mesa_GetActiveUniformName);
    SET_UniformBlockBinding(exec, _mesa_UniformBlockBinding);
 
 #endif /* FEATURE_GL */
