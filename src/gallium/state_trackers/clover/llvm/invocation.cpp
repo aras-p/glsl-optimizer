@@ -36,6 +36,7 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/PathV1.h>
 #include <llvm/Target/TargetData.h>
+#include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 
 #include "pipe/p_state.h"
@@ -134,7 +135,18 @@ namespace {
    }
 
    void
-   link(llvm::Module *mod, const std::string &triple) {
+   find_kernels(llvm::Module *mod, std::vector<llvm::Function *> &kernels) {
+      const llvm::NamedMDNode *kernel_node =
+                                 mod->getNamedMetadata("opencl.kernels");
+      for (unsigned i = 0; i < kernel_node->getNumOperands(); ++i) {
+         kernels.push_back(llvm::dyn_cast<llvm::Function>(
+                                    kernel_node->getOperand(i)->getOperand(0)));
+      }
+   }
+
+   void
+   link(llvm::Module *mod, const std::string &triple,
+        const std::vector<llvm::Function *> &kernels) {
 
       llvm::PassManager PM;
       llvm::PassManagerBuilder Builder;
@@ -145,14 +157,38 @@ namespace {
       linker.LinkInFile(llvm::sys::Path(LIBCLC_PATH + triple + "/lib/builtins.bc"), isNative);
       mod = linker.releaseModule();
 
+      // Add a function internalizer pass.
+      //
+      // By default, the function internalizer pass will look for a function
+      // called "main" and then mark all other functions as internal.  Marking
+      // functions as internal enables the optimizer to perform optimizations
+      // like function inlining and global dead-code elimination.
+      //
+      // When there is no "main" function in a module, the internalize pass will
+      // treat the module like a library, and it won't internalize any functions.
+      // Since there is no "main" function in our kernels, we need to tell
+      // the internalizer pass that this module is not a library by passing a
+      // list of kernel functions to the internalizer.  The internalizer will
+      // treat the functions in the list as "main" functions and internalize
+      // all of the other functions.
+      std::vector<const char*> export_list;
+      for (std::vector<llvm::Function *>::const_iterator I = kernels.begin(),
+                                                         E = kernels.end();
+                                                         I != E; ++I) {
+         llvm::Function *kernel = *I;
+         export_list.push_back(kernel->getName().data());
+      }
+      PM.add(llvm::createInternalizePass(export_list));
+
       // Run link time optimizations
-      Builder.populateLTOPassManager(PM, false, true);
       Builder.OptLevel = 2;
+      Builder.populateLTOPassManager(PM, false, true);
       PM.run(*mod);
    }
 
    module
-   build_module_llvm(llvm::Module *mod) {
+   build_module_llvm(llvm::Module *mod,
+                     const std::vector<llvm::Function *> &kernels) {
 
       module m;
       struct pipe_llvm_program_header header;
@@ -163,15 +199,14 @@ namespace {
       llvm::WriteBitcodeToFile(mod, bitcode_ostream);
       bitcode_ostream.flush();
 
+      llvm::Function *kernel_func;
       std::string kernel_name;
       compat::vector<module::argument> args;
-      const llvm::NamedMDNode *kernel_node =
-                                 mod->getNamedMetadata("opencl.kernels");
-      // XXX: Support more than one kernel
-      assert(kernel_node->getNumOperands() <= 1);
 
-      llvm::Function *kernel_func = llvm::dyn_cast<llvm::Function>(
-                                   kernel_node->getOperand(0)->getOperand(0));
+      // XXX: Support more than one kernel
+      assert(kernels.size() == 1);
+
+      kernel_func = kernels[0];
       kernel_name = kernel_func->getName();
 
       for (llvm::Function::arg_iterator I = kernel_func->arg_begin(),
@@ -219,9 +254,13 @@ clover::compile_program_llvm(const compat::string &source,
                              enum pipe_shader_ir ir,
                              const compat::string &triple) {
 
+   std::vector<llvm::Function *> kernels;
+
    llvm::Module *mod = compile(source, "cl_input", triple);
 
-   link(mod, triple);
+   find_kernels(mod, kernels);
+
+   link(mod, triple, kernels);
 
    // Build the clover::module
    switch (ir) {
@@ -230,6 +269,6 @@ clover::compile_program_llvm(const compat::string &source,
          assert(0);
          return module();
       default:
-         return build_module_llvm(mod);
+         return build_module_llvm(mod, kernels);
    }
 }
