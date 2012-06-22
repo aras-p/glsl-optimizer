@@ -167,7 +167,7 @@ svga_screen_cache_shrink(struct svga_screen *svgascreen,
 {
    struct svga_host_surface_cache *cache = &svgascreen->cache;
    struct svga_winsys_screen *sws = svgascreen->sws;
-   struct svga_host_surface_cache_entry *entry, *next_entry;
+   struct svga_host_surface_cache_entry *entry = NULL, *next_entry;
 
    /* Walk over the list of unused buffers in reverse order: from oldest
     * to newest.
