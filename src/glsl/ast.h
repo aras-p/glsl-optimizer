@@ -338,6 +338,25 @@ enum {
 };
 
 struct ast_type_qualifier {
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = rzalloc_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
+   /* If the user *does* call delete, that's OK, we will just
+    * ralloc_free in that case. */
+   static void operator delete(void *table)
+   {
+      ralloc_free(table);
+   }
+
    union {
       struct {
 	 unsigned invariant:1;
@@ -424,6 +443,10 @@ struct ast_type_qualifier {
     * returned string is undefined but not null.
     */
    const char *interpolation_string() const;
+
+   bool merge_qualifier(YYLTYPE *loc,
+			_mesa_glsl_parse_state *state,
+			ast_type_qualifier q);
 };
 
 class ast_declarator_list;

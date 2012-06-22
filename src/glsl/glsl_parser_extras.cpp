@@ -107,6 +107,10 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    if (ctx->Const.ForceGLSLExtensionsWarn)
       _mesa_glsl_process_extension("all", NULL, "warn", NULL, this);
+
+   this->default_uniform_qualifier = new(this) ast_type_qualifier();
+   this->default_uniform_qualifier->flags.q.shared = 1;
+   this->default_uniform_qualifier->flags.q.column_major = 1;
 }
 
 const char *

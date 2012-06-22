@@ -1113,42 +1113,10 @@ layout_qualifier_id_list:
 	layout_qualifier_id
 	| layout_qualifier_id_list ',' layout_qualifier_id
 	{
-	   ast_type_qualifier ubo_mat_mask;
-	   ubo_mat_mask.flags.i = 0;
-	   ubo_mat_mask.flags.q.row_major = 1;
-	   ubo_mat_mask.flags.q.column_major = 1;
-
-	   ast_type_qualifier ubo_layout_mask;
-	   ubo_layout_mask.flags.i = 0;
-	   ubo_layout_mask.flags.q.std140 = 1;
-	   ubo_layout_mask.flags.q.packed = 1;
-	   ubo_layout_mask.flags.q.shared = 1;
-
-	   /* Uniform block layout qualifiers get to overwrite each
-	    * other (rightmost having priority), while all other
-	    * qualifiers currently don't allow duplicates.
-	    */
-	   if (($1.flags.i & $3.flags.i & ~(ubo_mat_mask.flags.i |
-					    ubo_layout_mask.flags.i)) != 0) {
-	      _mesa_glsl_error(& @3, state,
-			       "duplicate layout qualifiers used\n");
+	   $$ = $1;
+	   if (!$$.merge_qualifier(& @3, state, $3)) {
 	      YYERROR;
 	   }
-
-	   $$ = $1;
-
-	   if (($3.flags.i & ubo_mat_mask.flags.i) != 0)
-	      $$.flags.i &= ~ubo_mat_mask.flags.i;
-	   if (($3.flags.i & ubo_layout_mask.flags.i) != 0)
-	      $$.flags.i &= ~ubo_layout_mask.flags.i;
-
-	   $$.flags.i |= $3.flags.i;
-
-	   if ($3.flags.q.explicit_location)
-	      $$.location = $3.location;
-
-	   if ($3.flags.q.explicit_index)
-	      $$.index = $3.index;
 	}
 	;
 
@@ -1938,6 +1906,7 @@ external_declaration:
 	function_definition	{ $$ = $1; }
 	| declaration		{ $$ = $1; }
 	| pragma_statement	{ $$ = NULL; }
+	| layout_defaults	{ $$ = NULL; }
 	;
 
 function_definition:
@@ -1958,14 +1927,18 @@ uniform_block:
 	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
 	{
 	   void *ctx = state;
-	   ast_type_qualifier no_qual;
-	   memset(&no_qual, 0, sizeof(no_qual));
-	   $$ = new(ctx) ast_uniform_block(no_qual, $2, $4);
+	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
+					   $2, $4);
 	}
 	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
 	{
 	   void *ctx = state;
-	   $$ = new(ctx) ast_uniform_block($1, $3, $5);
+
+	   ast_type_qualifier qual = *state->default_uniform_qualifier;
+	   if (!qual.merge_qualifier(& @1, state, $1)) {
+	      YYERROR;
+	   }
+	   $$ = new(ctx) ast_uniform_block(qual, $3, $5);
 	}
 	;
 
@@ -2019,3 +1992,12 @@ member_declaration:
 	   $$->declarations.push_degenerate_list_at_head(& $3->link);
 	}
 	;
+
+layout_defaults:
+	layout_qualifier UNIFORM ';'
+	{
+	   if (!state->default_uniform_qualifier->merge_qualifier(& @1, state,
+								  $1)) {
+	      YYERROR;
+	   }
+	}

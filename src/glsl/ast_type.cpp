@@ -71,3 +71,48 @@ ast_type_qualifier::interpolation_string() const
    else
       return NULL;
 }
+
+bool
+ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
+				    _mesa_glsl_parse_state *state,
+				    ast_type_qualifier q)
+{
+   ast_type_qualifier ubo_mat_mask;
+   ubo_mat_mask.flags.i = 0;
+   ubo_mat_mask.flags.q.row_major = 1;
+   ubo_mat_mask.flags.q.column_major = 1;
+
+   ast_type_qualifier ubo_layout_mask;
+   ubo_layout_mask.flags.i = 0;
+   ubo_layout_mask.flags.q.std140 = 1;
+   ubo_layout_mask.flags.q.packed = 1;
+   ubo_layout_mask.flags.q.shared = 1;
+
+   /* Uniform block layout qualifiers get to overwrite each
+    * other (rightmost having priority), while all other
+    * qualifiers currently don't allow duplicates.
+    */
+
+   if ((this->flags.i & q.flags.i & ~(ubo_mat_mask.flags.i |
+				      ubo_layout_mask.flags.i)) != 0) {
+      _mesa_glsl_error(loc, state,
+		       "duplicate layout qualifiers used\n");
+      return false;
+   }
+
+   if ((q.flags.i & ubo_mat_mask.flags.i) != 0)
+      this->flags.i &= ~ubo_mat_mask.flags.i;
+   if ((q.flags.i & ubo_layout_mask.flags.i) != 0)
+      this->flags.i &= ~ubo_layout_mask.flags.i;
+
+   this->flags.i |= q.flags.i;
+
+   if (q.flags.q.explicit_location)
+      this->location = q.location;
+
+   if (q.flags.q.explicit_index)
+      this->index = q.index;
+
+   return true;
+}
+
