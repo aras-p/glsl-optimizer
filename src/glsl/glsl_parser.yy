@@ -1113,13 +1113,35 @@ layout_qualifier_id_list:
 	layout_qualifier_id
 	| layout_qualifier_id_list ',' layout_qualifier_id
 	{
-	   if (($1.flags.i & $3.flags.i) != 0) {
+	   ast_type_qualifier ubo_mat_mask;
+	   ubo_mat_mask.flags.i = 0;
+	   ubo_mat_mask.flags.q.row_major = 1;
+	   ubo_mat_mask.flags.q.column_major = 1;
+
+	   ast_type_qualifier ubo_layout_mask;
+	   ubo_layout_mask.flags.i = 0;
+	   ubo_layout_mask.flags.q.std140 = 1;
+	   ubo_layout_mask.flags.q.packed = 1;
+	   ubo_layout_mask.flags.q.shared = 1;
+
+	   /* Uniform block layout qualifiers get to overwrite each
+	    * other (rightmost having priority), while all other
+	    * qualifiers currently don't allow duplicates.
+	    */
+	   if (($1.flags.i & $3.flags.i & ~(ubo_mat_mask.flags.i |
+					    ubo_layout_mask.flags.i)) != 0) {
 	      _mesa_glsl_error(& @3, state,
 			       "duplicate layout qualifiers used\n");
 	      YYERROR;
 	   }
 
 	   $$ = $1;
+
+	   if (($3.flags.i & ubo_mat_mask.flags.i) != 0)
+	      $$.flags.i &= ~ubo_mat_mask.flags.i;
+	   if (($3.flags.i & ubo_layout_mask.flags.i) != 0)
+	      $$.flags.i &= ~ubo_layout_mask.flags.i;
+
 	   $$.flags.i |= $3.flags.i;
 
 	   if ($3.flags.q.explicit_location)
