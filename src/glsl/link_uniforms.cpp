@@ -328,10 +328,21 @@ private:
 	 this->uniforms[id].offset = this->ubo_byte_offset;
 	 this->ubo_byte_offset += type->std140_size(ubo_var->RowMajor);
 
-	 this->uniforms[id].array_stride = 0;
-	 this->uniforms[id].matrix_stride = 0;
-	 this->uniforms[id].row_major = base_type->is_matrix() &&
-	    ubo_var->RowMajor;
+	 if (type->is_array()) {
+	    this->uniforms[id].array_stride =
+	       align(type->fields.array->std140_size(ubo_var->RowMajor), 16);
+	 } else {
+	    this->uniforms[id].array_stride = 0;
+	 }
+
+	 if (type->is_matrix() ||
+	     (type->is_array() && type->fields.array->is_matrix())) {
+	    this->uniforms[id].matrix_stride = 16;
+	    this->uniforms[id].row_major = ubo_var->RowMajor;
+	 } else {
+	    this->uniforms[id].matrix_stride = 0;
+	    this->uniforms[id].row_major = false;
+	 }
       } else {
 	 this->uniforms[id].block_index = -1;
 	 this->uniforms[id].offset = -1;
