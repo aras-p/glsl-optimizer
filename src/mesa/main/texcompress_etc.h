@@ -30,10 +30,10 @@
 
 struct swrast_texture_image;
 
-extern GLboolean
+GLboolean
 _mesa_texstore_etc1_rgb8(TEXSTORE_PARAMS);
 
-extern void
+void
 _mesa_fetch_texel_2d_f_etc1_rgb8(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
