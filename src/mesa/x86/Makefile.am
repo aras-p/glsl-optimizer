@@ -22,6 +22,7 @@
 if HAVE_X86_ASM
 
 AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/mapi \
 	$(API_DEFINES) \
