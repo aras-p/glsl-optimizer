@@ -58,6 +58,7 @@ struct r600_resource_texture {
 	unsigned			size;
 	unsigned			tile_type;
 	bool				is_depth;
+	bool				is_rat;
 	unsigned			dirty_db;
 	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
