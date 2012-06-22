@@ -47,9 +47,6 @@
 #include "lp_setup.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(lp_no_rast, "LP_NO_RAST", FALSE)
-
-
 /** shared by all contexts */
 unsigned llvmpipe_variant_count;
 
@@ -206,9 +203,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
       goto fail;
 
    /* FIXME: devise alternative to draw_texture_samplers */
-
-   if (debug_get_option_lp_no_rast())
-      llvmpipe->no_rast = TRUE;
 
    llvmpipe->setup = lp_setup_create( &llvmpipe->pipe,
                                       llvmpipe->draw );

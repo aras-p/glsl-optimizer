@@ -53,9 +53,6 @@ llvmpipe_clear(struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   if (llvmpipe->no_rast)
-      return;
-
    if (!llvmpipe_check_render_cond(llvmpipe))
       return;
 
