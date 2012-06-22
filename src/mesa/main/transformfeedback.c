@@ -428,6 +428,7 @@ bind_buffer_range(struct gl_context *ctx, GLuint index,
 /**
  * Specify a buffer object to receive vertex shader results.  Plus,
  * specify the starting offset to place the results, and max size.
+ * Called from the glBindBufferRange() function.
  */
 void
 _mesa_bind_buffer_range_transform_feedback(struct gl_context *ctx,
@@ -471,6 +472,7 @@ _mesa_bind_buffer_range_transform_feedback(struct gl_context *ctx,
 /**
  * Specify a buffer object to receive vertex shader results.
  * As above, but start at offset = 0.
+ * Called from the glBindBufferBase() function.
  */
 void
 _mesa_bind_buffer_base_transform_feedback(struct gl_context *ctx,
