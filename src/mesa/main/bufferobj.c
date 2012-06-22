@@ -2021,8 +2021,11 @@ set_ubo_binding(struct gl_context *ctx,
 }
 
 /**
- * Specify a buffer object to receive vertex shader results.  Plus,
- * specify the starting offset to place the results, and max size.
+ * Bind a region of a buffer object to a uniform block binding point.
+ * \param index  the uniform buffer binding point index
+ * \param bufObj  the buffer object
+ * \param offset  offset to the start of buffer object region
+ * \param size  size of the buffer object region
  */
 static void
 bind_buffer_range_uniform_buffer(struct gl_context *ctx,
@@ -2054,8 +2057,8 @@ bind_buffer_range_uniform_buffer(struct gl_context *ctx,
 
 
 /**
- * Specify a buffer object to receive vertex shader results.
- * As above, but start at offset = 0.
+ * Bind a buffer object to a uniform block binding point.
+ * As above, but offset = 0.
  */
 static void
 bind_buffer_base_uniform_buffer(struct gl_context *ctx,
