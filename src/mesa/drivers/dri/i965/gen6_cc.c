@@ -161,6 +161,13 @@ gen6_upload_blend_state(struct brw_context *brw)
       blend[b].blend1.write_disable_g = !ctx->Color.ColorMask[b][1];
       blend[b].blend1.write_disable_b = !ctx->Color.ColorMask[b][2];
       blend[b].blend1.write_disable_a = !ctx->Color.ColorMask[b][3];
+
+      /* _NEW_MULTISAMPLE */
+      blend[b].blend1.alpha_to_coverage =
+         ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToCoverage;
+      blend[b].blend1.alpha_to_one =
+         ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToOne;
+      blend[b].blend1.alpha_to_coverage_dither = (brw->intel.gen >= 7);
    }
 
    brw->state.dirty.cache |= CACHE_NEW_BLEND_STATE;
@@ -169,7 +176,8 @@ gen6_upload_blend_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_blend_state = {
    .dirty = {
       .mesa = (_NEW_COLOR |
-	       _NEW_BUFFERS),
+               _NEW_BUFFERS |
+               _NEW_MULTISAMPLE),
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
