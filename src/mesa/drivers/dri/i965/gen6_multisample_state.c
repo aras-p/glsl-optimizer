@@ -56,7 +56,8 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
  */
 void
 gen6_emit_3dstate_sample_mask(struct brw_context *brw,
-                              unsigned num_samples)
+                              unsigned num_samples, float coverage,
+                              bool coverage_invert)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -65,7 +66,15 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-   OUT_BATCH(num_samples > 0 ? 15 : 1);
+   if (num_samples > 0) {
+      int coverage_int = (int) (num_samples * coverage + 0.5);
+      uint32_t coverage_bits = (1 << coverage_int) - 1;
+      if (coverage_invert)
+         coverage_bits ^= (1 << num_samples) - 1;
+      OUT_BATCH(coverage_bits);
+   } else {
+      OUT_BATCH(1);
+   }
    ADVANCE_BATCH();
 }
 
@@ -75,6 +84,14 @@ static void upload_multisample_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    unsigned num_samples = 0;
+   float coverage = 1.0;
+   float coverage_invert = false;
+
+   /* _NEW_MULTISAMPLE */
+   if (ctx->Multisample._Enabled && ctx->Multisample.SampleCoverage) {
+      coverage = ctx->Multisample.SampleCoverageValue;
+      coverage_invert = ctx->Multisample.SampleCoverageInvert;
+   }
 
    /* _NEW_BUFFERS */
    if (ctx->DrawBuffer->_ColorDrawBuffers[0])
@@ -84,13 +101,14 @@ static void upload_multisample_state(struct brw_context *brw)
    intel_emit_post_sync_nonzero_flush(intel);
 
    gen6_emit_3dstate_multisample(brw, num_samples);
-   gen6_emit_3dstate_sample_mask(brw, num_samples);
+   gen6_emit_3dstate_sample_mask(brw, num_samples, coverage, coverage_invert);
 }
 
 
 const struct brw_tracked_state gen6_multisample_state = {
    .dirty = {
-      .mesa = _NEW_BUFFERS,
+      .mesa = _NEW_BUFFERS |
+              _NEW_MULTISAMPLE,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
