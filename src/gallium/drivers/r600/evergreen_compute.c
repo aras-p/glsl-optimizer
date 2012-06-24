@@ -396,8 +396,6 @@ static void compute_emit_cs(struct r600_context *ctx)
 
 	COMPUTE_DBG("...\n");
 
-	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
-
 	ctx->streamout_start = TRUE;
 	ctx->streamout_append_bitmask = ~0;
 
