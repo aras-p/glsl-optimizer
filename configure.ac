@@ -1351,10 +1351,14 @@ if test "x$enable_osmesa" = xyes; then
     OSMESA_MESA_DEPS=""
     OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS $DLOPEN_LIBS"
 fi
+
+OSMESA_VERSION=`echo "$VERSION" | $SED 's/\./:/g'`
+
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
+AC_SUBST([OSMESA_VERSION])
 
 dnl
 dnl gbm configuration
@@ -2169,6 +2173,7 @@ AC_CONFIG_FILES([configs/current
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
 		src/mesa/drivers/dri/swrast/Makefile
+		src/mesa/drivers/osmesa/Makefile
 		src/mesa/drivers/x11/Makefile
 		src/mesa/gl.pc
 		src/mesa/osmesa.pc])
