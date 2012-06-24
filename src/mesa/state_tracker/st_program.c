@@ -569,12 +569,12 @@ st_translate_fragment_program(struct st_context *st,
          case FRAG_ATTRIB_CLIP_DIST0:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 0;
-            interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_CLIP_DIST1:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 1;
-            interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
             /* In most cases, there is nothing special about these
              * inputs, so adopt a convention to use the generic
