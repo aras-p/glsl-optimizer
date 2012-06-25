@@ -405,7 +405,6 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
-void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 void r600_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */

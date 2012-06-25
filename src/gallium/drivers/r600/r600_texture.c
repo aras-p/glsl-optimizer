@@ -906,7 +906,17 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
 		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture) {
-			r600_blit_push_depth(ctx, rtex);
+			struct pipe_box sbox;
+
+			sbox.x = sbox.y = sbox.z = 0;
+			sbox.width = texture->width0;
+			sbox.height = texture->height0;
+			/* XXX that might be wrong */
+			sbox.depth = 1;
+
+			ctx->resource_copy_region(ctx, texture, 0, 0, 0, 0,
+						  &rtex->flushed_depth_texture->resource.b.b, 0,
+						  &sbox);
 		}
 	}
 
