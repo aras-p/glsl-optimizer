@@ -7981,7 +7981,27 @@
 <xi:include href="ARB_texture_rgb10_a2ui.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- 84. GL_ARB_texture_swizzle -->
-<!-- 85. GL_ARB_timer_query -->
+
+<category name="GL_ARB_timer_query" number="85">
+    <enum name="TIME_ELAPSED" value="0x88BF"/>
+    <enum name="TIMESTAMP" value="0x8E28"/>
+    <type name="int64"                  size="8"/>
+    <type name="uint64" unsigned="true" size="8"/>
+    <function name="GetQueryObjecti64v" alias="GetQueryObjecti64vEXT" static_dispatch="false">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint64 *"/>
+    </function>
+    <function name="GetQueryObjectui64v" alias="GetQueryObjectui64vEXT" static_dispatch="false">
+        <param name="id" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLuint64 *"/>
+    </function>
+    <function name="QueryCounter" offset="assign" static_dispatch="false">
+        <param name="id" type="GLuint"/>
+        <param name="target" type="GLenum"/>
+    </function>
+</category>
 
 <xi:include href="ARB_vertex_type_2_10_10_10_rev.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
