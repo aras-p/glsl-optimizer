@@ -342,7 +342,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	}
 
 	if (rsrc->is_depth && !rsrc->is_flushing_texture)
-		r600_texture_depth_flush(ctx, src, FALSE);
+		r600_texture_depth_flush(ctx, src);
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 

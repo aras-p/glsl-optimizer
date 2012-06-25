@@ -87,7 +87,10 @@ static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
 	return (struct r600_resource*)r;
 }
 
-int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);
+void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+				     struct pipe_resource *texture);
+void r600_texture_depth_flush(struct pipe_context *ctx,
+			      struct pipe_resource *texture);
 
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,

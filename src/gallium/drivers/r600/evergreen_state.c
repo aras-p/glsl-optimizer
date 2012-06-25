@@ -988,8 +988,12 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	}
 
 	if (tmp->is_depth && !tmp->is_flushing_texture) {
-		r600_texture_depth_flush(ctx, texture, TRUE);
+		r600_init_flushed_depth_texture(ctx, texture);
 		tmp = tmp->flushed_depth_texture;
+		if (!tmp) {
+			FREE(view);
+			return NULL;
+		}
 	}
 
 	endian = r600_colorformat_endian_swap(format);
@@ -1310,8 +1314,9 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 		rctx->have_depth_fb = TRUE;
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
-	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
+	        r600_init_flushed_depth_texture(&rctx->context, state->cbufs[cb]->texture);
 		rtex = rtex->flushed_depth_texture;
+		assert(rtex);
 	}
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */

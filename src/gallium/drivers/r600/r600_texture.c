@@ -728,14 +728,14 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 								  stride, 0, buf, FALSE, &surface);
 }
 
-int r600_texture_depth_flush(struct pipe_context *ctx,
-			     struct pipe_resource *texture, boolean just_create)
+void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+				     struct pipe_resource *texture)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 
 	if (rtex->flushed_depth_texture)
-		goto out;
+		return; /* it's ready */
 
 	resource.target = texture->target;
 	resource.format = texture->format;
@@ -752,18 +752,25 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold untiled copy\n");
-		return -ENOMEM;
+		return;
 	}
 
 	((struct r600_resource_texture *)rtex->flushed_depth_texture)->is_flushing_texture = TRUE;
-out:
-	if (just_create)
-		return 0;
+}
+
+void r600_texture_depth_flush(struct pipe_context *ctx,
+			      struct pipe_resource *texture)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+
+	r600_init_flushed_depth_texture(ctx, texture);
+
+	if (!rtex->flushed_depth_texture)
+		return; /* error */
 
 	/* XXX: only do this if the depth texture has actually changed:
 	 */
 	r600_blit_uncompress_depth(ctx, rtex);
-	return 0;
 }
 
 /* Needs adjustment for pixelformat:
@@ -783,7 +790,6 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
-	int r;
 	boolean use_staging_texture = FALSE;
 
 	/* We cannot map a tiled texture directly because the data is
@@ -828,8 +834,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture
 		*/
-		r = r600_texture_depth_flush(ctx, texture, FALSE);
-		if (r < 0) {
+		r600_texture_depth_flush(ctx, texture);
+		if (!rtex->flushed_depth_texture) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
