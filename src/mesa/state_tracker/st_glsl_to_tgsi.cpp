@@ -2889,13 +2889,15 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
       return;
    }
 
-   int loc = _mesa_get_uniform_location(ctx, shader_program, name);
-
-   if (loc == -1) {
+   unsigned offset;
+   unsigned index = _mesa_get_uniform_location(ctx, shader_program, name,
+					       &offset);
+   if (offset == GL_INVALID_INDEX) {
       fail_link(shader_program,
         	"Couldn't find uniform for initializer %s\n", name);
       return;
    }
+   int loc = _mesa_uniform_merge_location_offset(index, offset);
 
    for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
       ir_constant *element;

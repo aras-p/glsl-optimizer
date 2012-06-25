@@ -176,9 +176,9 @@ _mesa_GetnUniformdvARB(GLhandleARB, GLint, GLsizei, GLdouble *);
 extern GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);
 
-GLint
+unsigned
 _mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
-			   const GLchar *name);
+			   const GLchar *name, unsigned *offset);
 
 void
 _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shader_program,

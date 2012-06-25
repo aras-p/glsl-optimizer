@@ -852,13 +852,17 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
 /**
  * Called via glGetUniformLocation().
  *
- * The return value will encode two values, the uniform location and an
- * offset (used for arrays, structs).
+ * Returns the uniform index into UniformStorage (also the
+ * glGetActiveUniformsiv uniform index), and stores the referenced
+ * array offset in *offset, or GL_INVALID_INDEX (-1).  Those two
+ * return values can be encoded into a uniform location for
+ * glUniform* using _mesa_uniform_merge_location_offset(index, offset).
  */
-extern "C" GLint
+extern "C" unsigned
 _mesa_get_uniform_location(struct gl_context *ctx,
                            struct gl_shader_program *shProg,
-			   const GLchar *name)
+                           const GLchar *name,
+                           unsigned *out_offset)
 {
    const size_t len = strlen(name);
    long offset;
@@ -901,13 +905,13 @@ _mesa_get_uniform_location(struct gl_context *ctx,
        * (or other non-digit characters) before the opening '['.
        */
       if ((i == 0) || name[i-1] != '[')
-	 return -1;
+	 return GL_INVALID_INDEX;
 
       /* Return an error if there are no digits between the opening '[' to
        * match the closing ']'.
        */
       if (i == (len - 1))
-	 return -1;
+	 return GL_INVALID_INDEX;
 
       /* Make a new string that is a copy of the old string up to (but not
        * including) the '[' character.
@@ -919,7 +923,7 @@ _mesa_get_uniform_location(struct gl_context *ctx,
       offset = strtol(&name[i], NULL, 10);
       if (offset < 0) {
 	 free(name_copy);
-	 return -1;
+	 return GL_INVALID_INDEX;
       }
 
       array_lookup = true;
@@ -941,16 +945,17 @@ _mesa_get_uniform_location(struct gl_context *ctx,
       free(name_copy);
 
    if (!found)
-      return -1;
+      return GL_INVALID_INDEX;
 
    /* Since array_elements is 0 for non-arrays, this causes look-ups of 'a[0]'
     * to (correctly) fail if 'a' is not an array.
     */
    if (array_lookup && shProg->UniformStorage[location].array_elements == 0) {
-      return -1;
+      return GL_INVALID_INDEX;
    }
 
-   return _mesa_uniform_merge_location_offset(location, offset);
+   *out_offset = offset;
+   return location;
 }
 
 extern "C" bool

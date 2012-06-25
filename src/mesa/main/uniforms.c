@@ -497,6 +497,7 @@ GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 {
    struct gl_shader_program *shProg;
+   GLuint index, offset;
 
    GET_CURRENT_CONTEXT(ctx);
 
@@ -516,7 +517,11 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
       return -1;
    }
 
-   return _mesa_get_uniform_location(ctx, shProg, name);
+   index = _mesa_get_uniform_location(ctx, shProg, name, &offset);
+   if (index == GL_INVALID_INDEX)
+      return -1;
+
+   return _mesa_uniform_merge_location_offset(index, offset);
 }
 
 
