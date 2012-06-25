@@ -830,6 +830,13 @@ vec4_visitor::visit(ir_variable *ir)
    case ir_var_uniform:
       reg = new(this->mem_ctx) dst_reg(UNIFORM, this->uniforms);
 
+      /* Thanks to the lower_ubo_reference pass, we will see only
+       * ir_binop_ubo_load expressions and not ir_dereference_variable for UBO
+       * variables, so no need for them to be in variable_ht.
+       */
+      if (ir->uniform_block != -1)
+         return;
+
       /* Track how big the whole uniform variable is, in case we need to put a
        * copy of its data into pull constants for array access.
        */
@@ -1314,9 +1321,50 @@ vec4_visitor::visit(ir_expression *ir)
 	 inst = emit(BRW_OPCODE_SHR, result_dst, op[0], op[1]);
       break;
 
-   case ir_binop_ubo_load:
-      assert(!"not yet supported");
+   case ir_binop_ubo_load: {
+      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *const_offset_ir = ir->operands[1]->as_constant();
+      unsigned const_offset = const_offset_ir ? const_offset_ir->value.u[0] : 0;
+      src_reg offset = op[1];
+
+      /* Now, load the vector from that offset. */
+      assert(ir->type->is_vector() || ir->type->is_scalar());
+
+      src_reg packed_consts = src_reg(this, glsl_type::vec4_type);
+      packed_consts.type = result.type;
+      src_reg surf_index =
+         src_reg(SURF_INDEX_VS_UBO(uniform_block->value.u[0]));
+      if (const_offset_ir) {
+         offset = src_reg(const_offset / 16);
+      } else {
+         emit(BRW_OPCODE_SHR, dst_reg(offset), offset, src_reg(4));
+      }
+
+      vec4_instruction *pull =
+         emit(new(mem_ctx) vec4_instruction(this,
+                                            VS_OPCODE_PULL_CONSTANT_LOAD,
+                                            dst_reg(packed_consts),
+                                            surf_index,
+                                            offset));
+      pull->base_mrf = 14;
+      pull->mlen = 1;
+
+      packed_consts.swizzle = swizzle_for_size(ir->type->vector_elements);
+      packed_consts.swizzle += BRW_SWIZZLE4(const_offset % 16 / 4,
+                                            const_offset % 16 / 4,
+                                            const_offset % 16 / 4,
+                                            const_offset % 16 / 4);
+
+      /* UBO bools are any nonzero int.  We store bools as either 0 or 1. */
+      if (ir->type->base_type == GLSL_TYPE_BOOL) {
+         emit(CMP(result_dst, packed_consts, src_reg(0u),
+                  BRW_CONDITIONAL_NZ));
+         emit(AND(result_dst, result, src_reg(0x1)));
+      } else {
+         emit(MOV(result_dst, packed_consts));
+      }
       break;
+   }
 
    case ir_quadop_vector:
       assert(!"not reached: should be handled by lower_quadop_vector");
