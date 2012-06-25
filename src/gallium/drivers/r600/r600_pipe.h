@@ -68,6 +68,7 @@ struct r600_command_buffer {
 	struct r600_atom atom;
 	uint32_t *buf;
 	unsigned max_num_dw;
+	unsigned pkt_flags;
 };
 
 struct r600_surface_sync_cmd {
@@ -584,19 +585,27 @@ static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, uns
 	cb->buf[cb->atom.num_dw++] = (reg - R600_CONFIG_REG_OFFSET) >> 2;
 }
 
+/**
+ * Needs cb->pkt_flags set to  RADEON_CP_PACKET3_COMPUTE_MODE for compute
+ * shaders.
+ */
 static INLINE void r600_store_context_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_CONTEXT_REG_OFFSET && reg < R600_CTL_CONST_OFFSET);
 	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0) | cb->pkt_flags;
 	cb->buf[cb->atom.num_dw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
 }
 
+/**
+ * Needs cb->pkt_flags set to  RADEON_CP_PACKET3_COMPUTE_MODE for compute
+ * shaders.
+ */
 static INLINE void r600_store_ctl_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_CTL_CONST_OFFSET);
 	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CTL_CONST, num, 0);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CTL_CONST, num, 0) | cb->pkt_flags;
 	cb->buf[cb->atom.num_dw++] = (reg - R600_CTL_CONST_OFFSET) >> 2;
 }
 
@@ -608,11 +617,15 @@ static INLINE void r600_store_loop_const_seq(struct r600_command_buffer *cb, uns
 	cb->buf[cb->atom.num_dw++] = (reg - R600_LOOP_CONST_OFFSET) >> 2;
 }
 
+/**
+ * Needs cb->pkt_flags set to  RADEON_CP_PACKET3_COMPUTE_MODE for compute
+ * shaders.
+ */
 static INLINE void eg_store_loop_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= EG_LOOP_CONST_OFFSET);
 	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0);
+	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0) | cb->pkt_flags;
 	cb->buf[cb->atom.num_dw++] = (reg - EG_LOOP_CONST_OFFSET) >> 2;
 }
 
