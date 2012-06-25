@@ -801,12 +801,21 @@ output_if_debug(const char *prefixString, const char *outputString,
                 GLboolean newline)
 {
    static int debug = -1;
+   static FILE *fout = NULL;
 
    /* Init the local 'debug' var once.
     * Note: the _mesa_init_debug() function should have been called
     * by now so MESA_DEBUG_FLAGS will be initialized.
     */
    if (debug == -1) {
+      /* If MESA_LOG_FILE env var is set, log Mesa errors, warnings,
+       * etc to the named file.  Otherwise, output to stderr.
+       */
+      const char *logFile = _mesa_getenv("MESA_LOG_FILE");
+      if (logFile)
+         fout = fopen(logFile, "w");
+      if (!fout)
+         fout = stderr;
 #ifdef DEBUG
       /* in debug builds, print messages unless MESA_DEBUG="silent" */
       if (MESA_DEBUG_FLAGS & DEBUG_SILENT)
@@ -821,9 +830,10 @@ output_if_debug(const char *prefixString, const char *outputString,
 
    /* Now only print the string if we're required to do so. */
    if (debug) {
-      fprintf(stderr, "%s: %s", prefixString, outputString);
+      fprintf(fout, "%s: %s", prefixString, outputString);
       if (newline)
-         fprintf(stderr, "\n");
+         fprintf(fout, "\n");
+      fflush(fout);
 
 #if defined(_WIN32) && !defined(_WIN32_WCE)
       /* stderr from windows applications without console is not usually 
