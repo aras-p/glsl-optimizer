@@ -209,30 +209,30 @@ struct gl_shader_state
 };
 </pre>
 
-<ul>
-<li>EmitHighLevelInstructions
-<br>
+<dl>
+<dt>EmitHighLevelInstructions</dt>
+<dd>
 This option controls instruction selection for loops and conditionals.
 If the option is set high-level IF/ELSE/ENDIF, LOOP/ENDLOOP, CONT/BRK
 instructions will be emitted.
 Otherwise, those constructs will be implemented with BRA instructions.
-</li>
+</dd>
 
-<li>EmitCondCodes
-<br>
+<dt>EmitCondCodes</dt>
+<dd>
 If set, condition codes (ala GL_NV_fragment_program) will be used for
 branching and looping.
 Otherwise, ordinary registers will be used (the IF instruction will
 examine the first operand's X component and do the if-part if non-zero).
 This option is only relevant if EmitHighLevelInstructions is set.
-</li>
+</dd>
 
-<li>EmitComments
-<br>
+<dt>EmitComments</dt>
+<dd>
 If set, instructions will be annoted with comments to help with debugging.
 Extra NOP instructions will also be inserted.
-</li>
-</ul>
+</dd>
+</dl>
 
 
 <h2 id="validation">Compiler Validation</h2>
