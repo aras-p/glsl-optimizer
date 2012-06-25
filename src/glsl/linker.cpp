@@ -2324,6 +2324,12 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
       0          /* FINISHME: Geometry shaders. */
    };
 
+   const unsigned max_uniform_blocks[MESA_SHADER_TYPES] = {
+      ctx->Const.VertexProgram.MaxUniformBlocks,
+      ctx->Const.FragmentProgram.MaxUniformBlocks,
+      ctx->Const.GeometryProgram.MaxUniformBlocks,
+   };
+
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       struct gl_shader *sh = prog->_LinkedShaders[i];
 
@@ -2345,6 +2351,34 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
             linker_error(prog, "Too many %s shader uniform components",
                          shader_names[i]);
          }
+      }
+   }
+
+   unsigned blocks[MESA_SHADER_TYPES] = {0};
+   unsigned total_uniform_blocks = 0;
+
+   for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
+      for (unsigned j = 0; j < MESA_SHADER_TYPES; j++) {
+	 if (prog->UniformBlockStageIndex[j][i] != -1) {
+	    blocks[j]++;
+	    total_uniform_blocks++;
+	 }
+      }
+
+      if (total_uniform_blocks > ctx->Const.MaxCombinedUniformBlocks) {
+	 linker_error(prog, "Too many combined uniform blocks (%d/%d)",
+		      prog->NumUniformBlocks,
+		      ctx->Const.MaxCombinedUniformBlocks);
+      } else {
+	 for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+	    if (blocks[i] > max_uniform_blocks[i]) {
+	       linker_error(prog, "Too many %s uniform blocks (%d/%d)",
+			    shader_names[i],
+			    blocks[i],
+			    max_uniform_blocks[i]);
+	       break;
+	    }
+	 }
       }
    }
 
