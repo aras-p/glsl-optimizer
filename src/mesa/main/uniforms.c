@@ -522,6 +522,16 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
    if (index == GL_INVALID_INDEX)
       return -1;
 
+   /* From the GL_ARB_uniform_buffer_object spec:
+    *
+    *     "The value -1 will be returned if <name> does not correspond to an
+    *      active uniform variable name in <program>, if <name> is associated
+    *      with a named uniform block, or if <name> starts with the reserved
+    *      prefix "gl_"."
+    */
+   if (shProg->UniformStorage[index].block_index != -1)
+      return -1;
+
    return _mesa_uniform_merge_location_offset(index, offset);
 }
 
