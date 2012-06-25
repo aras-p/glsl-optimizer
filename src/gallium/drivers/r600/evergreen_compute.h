@@ -35,7 +35,7 @@ void *evergreen_create_compute_state(struct pipe_context *ctx, const const struc
 void evergreen_delete_compute_state(struct pipe_context *ctx, void *state);
 void evergreen_direct_dispatch( struct pipe_context *context, const uint *block_layout, const uint *grid_layout);
 void evergreen_compute_upload_input(struct pipe_context *context, const uint *block_layout, const uint *grid_layout, const void *input);
-void evergreen_compute_init_config(struct r600_context *rctx);
+void evergreen_init_atom_start_compute_cs(struct r600_context *rctx);
 void evergreen_init_compute_state_functions(struct r600_context *rctx);
 
 struct pipe_resource *r600_compute_global_buffer_create(struct pipe_screen *screen, const struct pipe_resource *templ);

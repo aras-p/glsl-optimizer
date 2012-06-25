@@ -163,8 +163,6 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 
 	}
 
-	evergreen_compute_init_config(ctx);
-
 	struct evergreen_compute_resource* res = get_empty_res(ctx->cs_shader,
 						COMPUTE_RESOURCE_SHADER, 0);
 
@@ -331,9 +329,24 @@ static void compute_emit_cs(struct r600_context *ctx)
 	struct radeon_winsys_cs *cs = ctx->cs;
 	int i;
 
+	struct r600_resource *onebo = NULL;
+
+	/* Initialize all the registers common to both 3D and compute.  Some
+	 * 3D only register will be initialized by this atom as well, but
+	 * this is OK for now.
+	 *
+	 * See evergreen_init_atom_start_cs() or cayman_init_atom_start_cs() in
+	 * evergreen_state.c for the list of registers that are intialized by
+	 * the start_cs_cmd atom.
+	 */
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
 
-	struct r600_resource *onebo = NULL;
+	/* Initialize all the compute specific registers.
+	 *
+	 * See evergreen_init_atom_start_compute_cs() in this file for the list
+	 * of registers initialized by the start_compuet_cs_cmd atom.
+	 */
+	r600_emit_atom(ctx, &ctx->start_compute_cs_cmd.atom);
 
 	for (i = 0; i < get_compute_resource_num(); i++) {
 		if (ctx->cs_shader->resources[i].enabled) {
@@ -520,158 +533,143 @@ static void evergreen_set_global_binding(
 	evergreen_set_vtx_resource(ctx->cs_shader, pool->bo, 1, 0, 1);
 }
 
-
-void evergreen_compute_init_config(struct r600_context *ctx)
+/**
+ * This function initializes all the compute specific registers that need to
+ * be initialized for each compute command stream.  Registers that are common
+ * to both compute and 3D will be initialized at the beginning of each compute
+ * command stream by the start_cs_cmd atom.  However, since the SET_CONTEXT_REG
+ * packet requires that the shader type bit be set, we must initialize all
+ * context registers needed for compute in this function.  The registers
+ * intialized by the start_cs_cmd atom can be found in evereen_state.c in the
+ * functions evergreen_init_atom_start_cs or cayman_init_atom_start_cs depending
+ * on the GPU family.
+ */
+void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 {
-	struct evergreen_compute_resource* res =
-		get_empty_res(ctx->cs_shader, COMPUTE_RESOURCE_CONFIG, 0);
-
+	struct r600_command_buffer *cb = &ctx->start_compute_cs_cmd;
 	int num_threads;
 	int num_stack_entries;
-	int num_temp_gprs;
 
-	enum radeon_family family;
-	unsigned tmp;
+	/* We aren't passing the EMIT_EARLY flag as the third argument
+	 * because we will be emitting this atom manually in order to
+	 * ensure it gets emitted after the start_cs_cmd atom.
+	 */
+	r600_init_command_buffer(cb, 256, 0);
+	cb->pkt_flags = RADEON_CP_PACKET3_COMPUTE_MODE;
 
-	family = ctx->family;
-
-	switch (family) {
+	switch (ctx->family) {
 	case CHIP_CEDAR:
 	default:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	case CHIP_REDWOOD:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	case CHIP_JUNIPER:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 512;
 		break;
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 512;
 		break;
 	case CHIP_PALM:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	case CHIP_SUMO:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	case CHIP_SUMO2:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 512;
 		break;
 	case CHIP_BARTS:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 512;
 		break;
 	case CHIP_TURKS:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	case CHIP_CAICOS:
-		num_temp_gprs = 4;
 		num_threads = 128;
 		num_stack_entries = 256;
 		break;
 	}
 
-	tmp = 0x00000000;
-	switch (family) {
-	case CHIP_CEDAR:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_CAICOS:
-		break;
-	default:
-		tmp |= S_008C00_VC_ENABLE(1);
-		break;
-	}
-	tmp |= S_008C00_EXPORT_SRC_C(1);
-	tmp |= S_008C00_CS_PRIO(0);
-	tmp |= S_008C00_LS_PRIO(0);
-	tmp |= S_008C00_HS_PRIO(0);
-	tmp |= S_008C00_PS_PRIO(0);
-	tmp |= S_008C00_VS_PRIO(0);
-	tmp |= S_008C00_GS_PRIO(0);
-	tmp |= S_008C00_ES_PRIO(0);
-
-	evergreen_reg_set(res, R_008C00_SQ_CONFIG, tmp);
-
-	evergreen_reg_set(res, R_008C04_SQ_GPR_RESOURCE_MGMT_1,
-				S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs));
+	/* Config Registers */
 	if (ctx->chip_class < CAYMAN) {
-		evergreen_reg_set(res, R_008C08_SQ_GPR_RESOURCE_MGMT_2, 0);
-	}
-	evergreen_reg_set(res, R_008C10_SQ_GLOBAL_GPR_RESOURCE_MGMT_1, 0);
-	evergreen_reg_set(res, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0);
-	evergreen_reg_set(res, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8));
 
-	/* workaround for hw issues with dyn gpr - must set all limits to 240
-	 * instead of 0, 0x1e == 240/8 */
+		/* These registers control which simds can be used by each stage.
+		 * The default for these registers is 0xffffffff, which means
+		 * all simds are available for each stage.  It's possible we may
+		 * want to play around with these in the future, but for now
+		 * the default value is fine.
+		 *
+		 * R_008E20_SQ_STATIC_THREAD_MGMT1
+		 * R_008E24_SQ_STATIC_THREAD_MGMT2
+		 * R_008E28_SQ_STATIC_THREAD_MGMT3
+		 */
+
+		/* XXX: We may need to adjust the thread and stack resouce
+		 * values for 3D/compute interop */
+
+		r600_store_config_reg_seq(cb, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 5);
+
+		/* R_008C18_SQ_THREAD_RESOURCE_MGMT_1
+		 * Set the number of threads used by the PS/VS/GS/ES stage to
+		 * 0.
+		 */
+		r600_store_value(cb, 0);
+
+		/* R_008C1C_SQ_THREAD_RESOURCE_MGMT_2
+		 * Set the number of threads used by the CS (aka LS) stage to
+		 * the maximum number of threads and set the number of threads
+		 * for the HS stage to 0. */
+		r600_store_value(cb, S_008C1C_NUM_LS_THREADS(num_threads));
+
+		/* R_008C20_SQ_STACK_RESOURCE_MGMT_1
+		 * Set the Control Flow stack entries to 0 for PS/VS stages */
+		r600_store_value(cb, 0);
+
+		/* R_008C24_SQ_STACK_RESOURCE_MGMT_2
+		 * Set the Control Flow stack entries to 0 for GS/ES stages */
+		r600_store_value(cb, 0);
+
+		/* R_008C28_SQ_STACK_RESOURCE_MGMT_3
+		 * Set the Contol Flow stack entries to 0 for the HS stage, and
+		 * set it to the maximum value for the CS (aka LS) stage. */
+		r600_store_value(cb,
+			S_008C28_NUM_LS_STACK_ENTRIES(num_stack_entries));
+	}
+
+	/* Context Registers */
+
 	if (ctx->chip_class < CAYMAN) {
-		evergreen_reg_set(res, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
+		/* workaround for hw issues with dyn gpr - must set all limits
+		 * to 240 instead of 0, 0x1e == 240 / 8
+		 */
+		r600_store_context_reg(cb, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1,
 				S_028838_PS_GPRS(0x1e) |
 				S_028838_VS_GPRS(0x1e) |
 				S_028838_GS_GPRS(0x1e) |
 				S_028838_ES_GPRS(0x1e) |
 				S_028838_HS_GPRS(0x1e) |
 				S_028838_LS_GPRS(0x1e));
-	} else {
-		evergreen_reg_set(res, 0x286f8,
-				S_028838_PS_GPRS(0x1e) |
-				S_028838_VS_GPRS(0x1e) |
-				S_028838_GS_GPRS(0x1e) |
-				S_028838_ES_GPRS(0x1e) |
-				S_028838_HS_GPRS(0x1e) |
-				S_028838_LS_GPRS(0x1e));
 	}
 
-	if (ctx->chip_class < CAYMAN) {
+	/* XXX: Investigate setting bit 15, which is FAST_COMPUTE_MODE */
+	r600_store_context_reg(cb, R_028A40_VGT_GS_MODE,
+		S_028A40_COMPUTE_MODE(1) | S_028A40_PARTIAL_THD_AT_EOI(1));
 
-		evergreen_reg_set(res, R_008E20_SQ_STATIC_THREAD_MGMT1, 0xFFFFFFFF);
-		evergreen_reg_set(res, R_008E24_SQ_STATIC_THREAD_MGMT2, 0xFFFFFFFF);
-		evergreen_reg_set(res, R_008E20_SQ_STATIC_THREAD_MGMT1, 0xFFFFFFFF);
-		evergreen_reg_set(res, R_008E24_SQ_STATIC_THREAD_MGMT2, 0xFFFFFFFF);
-		evergreen_reg_set(res, R_008E28_SQ_STATIC_THREAD_MGMT3, 0xFFFFFFFF);
-		evergreen_reg_set(res, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 0);
-		tmp = S_008C1C_NUM_LS_THREADS(num_threads);
-		evergreen_reg_set(res, R_008C1C_SQ_THREAD_RESOURCE_MGMT_2, tmp);
-		evergreen_reg_set(res, R_008C20_SQ_STACK_RESOURCE_MGMT_1, 0);
-		evergreen_reg_set(res, R_008C24_SQ_STACK_RESOURCE_MGMT_2, 0);
-		tmp = S_008C28_NUM_LS_STACK_ENTRIES(num_stack_entries);
-		evergreen_reg_set(res, R_008C28_SQ_STACK_RESOURCE_MGMT_3, tmp);
-	}
-	evergreen_reg_set(res, R_0286CC_SPI_PS_IN_CONTROL_0, S_0286CC_LINEAR_GRADIENT_ENA(1));
-	evergreen_reg_set(res, R_0286D0_SPI_PS_IN_CONTROL_1, 0);
-	evergreen_reg_set(res, R_0286E4_SPI_PS_IN_CONTROL_2, 0);
-	evergreen_reg_set(res, R_0286D8_SPI_INPUT_Z, 0);
-	evergreen_reg_set(res, R_0286E0_SPI_BARYC_CNTL, 1 << 20);
-	tmp = S_0286E8_TID_IN_GROUP_ENA | S_0286E8_TGID_ENA | S_0286E8_DISABLE_INDEX_PACK;
-	evergreen_reg_set(res, R_0286E8_SPI_COMPUTE_INPUT_CNTL, tmp);
-	tmp = S_028A40_COMPUTE_MODE(1) | S_028A40_PARTIAL_THD_AT_EOI(1);
-	evergreen_reg_set(res, R_028A40_VGT_GS_MODE, tmp);
-	evergreen_reg_set(res, R_028B54_VGT_SHADER_STAGES_EN, 2/*CS_ON*/);
-	evergreen_reg_set(res, R_028800_DB_DEPTH_CONTROL, 0);
-	evergreen_reg_set(res, R_02880C_DB_SHADER_CONTROL, 0);
-	evergreen_reg_set(res, R_028000_DB_RENDER_CONTROL, S_028000_COLOR_DISABLE(1));
-	evergreen_reg_set(res, R_02800C_DB_RENDER_OVERRIDE, 0);
-	evergreen_reg_set(res, R_0286E8_SPI_COMPUTE_INPUT_CNTL,
+	r600_store_context_reg(cb, R_028B54_VGT_SHADER_STAGES_EN, 2/*CS_ON*/);
+
+	r600_store_context_reg(cb, R_0286E8_SPI_COMPUTE_INPUT_CNTL,
 						S_0286E8_TID_IN_GROUP_ENA
 						| S_0286E8_TGID_ENA
 						| S_0286E8_DISABLE_INDEX_PACK)

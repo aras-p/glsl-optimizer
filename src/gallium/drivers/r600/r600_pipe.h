@@ -324,6 +324,9 @@ struct r600_context {
 	/* States based on r600_atom. */
 	struct list_head		dirty_states;
 	struct r600_command_buffer	start_cs_cmd; /* invariant state mostly */
+	/** Compute specific registers initializations.  The start_cs_cmd atom
+	 *  must be emitted before start_compute_cs_cmd. */
+        struct r600_command_buffer      start_compute_cs_cmd;
 	struct r600_surface_sync_cmd	surface_sync_cmd;
 	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_db_misc_state	db_misc_state;

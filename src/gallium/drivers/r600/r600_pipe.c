@@ -251,6 +251,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CAYMAN:
 		evergreen_init_state_functions(rctx);
 		evergreen_init_atom_start_cs(rctx);
+		evergreen_init_atom_start_compute_cs(rctx);
 		if (evergreen_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
