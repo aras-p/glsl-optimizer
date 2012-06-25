@@ -306,7 +306,8 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    GLuint img, row;
    GLfloat (*rgba)[4];
    GLuint (*rgba_uint)[4];
-   GLboolean is_integer = _mesa_is_format_integer_color(texImage->TexFormat);
+   GLboolean tex_is_integer = _mesa_is_format_integer_color(texImage->TexFormat);
+   GLboolean tex_is_uint = _mesa_is_format_unsigned(texImage->TexFormat);
 
    /* Allocate buffer for one row of texels */
    rgba = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
@@ -358,12 +359,19 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
                                              width, height, format, type,
                                              img, row, 0);
 
-	    if (is_integer) {
+	    if (tex_is_integer) {
 	       _mesa_unpack_uint_rgba_row(texFormat, width, src, rgba_uint);
                if (rebaseFormat)
                   _mesa_rebase_rgba_uint(width, rgba_uint, rebaseFormat);
-               _mesa_pack_rgba_span_from_uints(ctx, width, rgba_uint,
-                                        format, type, dest);
+               if (tex_is_uint) {
+                  _mesa_pack_rgba_span_from_uints(ctx, width,
+                                                  (GLuint (*)[4]) rgba_uint,
+                                                  format, type, dest);
+               } else {
+                  _mesa_pack_rgba_span_from_ints(ctx, width,
+                                                 (GLint (*)[4]) rgba_uint,
+                                                 format, type, dest);
+               }
 	    } else {
 	       _mesa_unpack_rgba_row(texFormat, width, src, rgba);
                if (rebaseFormat)
