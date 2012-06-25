@@ -10,18 +10,18 @@
 <h1>Compilation and Installation using Autoconf</h1>
 
 <ol>
-<li><p ><a href="#basic">Basic Usage</a></li>
-<li><p ><a href="#driver">Driver Options</a>
+<li><p><a href="#basic">Basic Usage</a></li>
+<li><p><a href="#driver">Driver Options</a>
   <ul>
   <li><a href="#xlib">Xlib Driver Options</a></li>
   <li><a href="#dri">DRI Driver Options</a></li>
   <li><a href="#osmesa">OSMesa Driver Options</a></li>
   </ul>
-<li><p ><a href="#library">Library Options</a>
+<li><p><a href="#library">Library Options</a>
   <ul>
   <li><a href="#glu">GLU</a></li>
   </ul>
-<li><p ><a href="#demos">Demo Program Options</a>
+<li><p><a href="#demos">Demo Program Options</a>
 </ol>
 
 
@@ -149,13 +149,13 @@ configure option --with-driver. There are currently three supported
 options in the configure script.
 </p>
 
-<h3 id="xlib">Xlib</h3 ><p >This is the default mode for building Mesa.
+<h3 id="xlib">Xlib</h3><p>This is the default mode for building Mesa.
 It uses Xlib as a software renderer to do all rendering. It corresponds
 to the option <code>--with-driver=xlib</code>. The libX11 and libXext
 libraries, as well as the X11 development headers, will be need to
 support the Xlib driver.
 
-<h3 id="dri">DRI </h3 ><p >This mode uses the DRI hardware drivers for
+<h3 id="dri">DRI</h3><p>This mode uses the DRI hardware drivers for
 accelerated OpenGL rendering. Enable the DRI drivers with the option
 <code>--with-driver=dri</code>. See the <a href="install.html">basic
 installation instructions</a> for details on prerequisites for the DRI
@@ -163,12 +163,12 @@ drivers.
 
 <!-- DRI specific options -->
 <dl>
-<dt><code>--with-dri-driverdir=DIR</code> 
-<dd ><p > This option specifies the
+<dt><code>--with-dri-driverdir=DIR</code>
+<dd><p> This option specifies the
 location the DRI drivers will be installed to and the location libGL
 will search for DRI drivers. The default is <code>${libdir}/dri</code>.
-<dt><code>--with-dri-drivers=DRIVER,DRIVER,...</code> 
-<dd ><p > This option
+<dt><code>--with-dri-drivers=DRIVER,DRIVER,...</code>
+<dd><p> This option
 allows a specific set of DRI drivers to be built. For example,
 <code>--with-dri-drivers="swrast,i965,radeon,nouveau"</code>. By
 default, the drivers will be chosen depending on the target platform.
@@ -177,16 +177,16 @@ for available drivers. Beware that the swrast DRI driver is used by both
 libGL and the X.Org xserver GLX module to do software rendering, so you
 may run into problems if it is not available.
 <!-- This explanation might be totally bogus. Kristian? -->
-<dt><code>--disable-driglx-direct</code> 
-<dd ><p > Disable direct rendering in
+<dt><code>--disable-driglx-direct</code>
+<dd><p> Disable direct rendering in
 GLX. Normally, direct hardware rendering through the DRI drivers and
 indirect software rendering are enabled in GLX. This option disables
 direct rendering entirely. It can be useful on architectures where
 kernel DRM modules are not available.
-<dt><code>--enable-glx-tls</code> <dd ><p > 
+<dt><code>--enable-glx-tls</code> <dd><p>
 Enable Thread Local Storage (TLS) in
 GLX.
-<dt><code>--with-expat=DIR</code> <dd > The DRI-enabled libGL uses expat to
+<dt><code>--with-expat=DIR</code> <dd> The DRI-enabled libGL uses expat to
 parse the DRI configuration files in <code>/etc/drirc</code> and
 <code>~/.drirc</code>. This option allows a specific expat installation
 to be used. For example, <code>--with-expat=/usr/local</code> will
@@ -201,7 +201,7 @@ page for more details.
 
 <!-- OSMesa specific options -->
 <dl>
-<dt><code>--with-osmesa-bits=BITS</code> 
+<dt><code>--with-osmesa-bits=BITS</code>
 <dd><p> This option allows the size
 of the color channel in bits to be specified. By default, an 8-bit
 channel will be used, and the driver will be named libOSMesa. Other
@@ -235,7 +235,7 @@ the programs will be built depending on the driver and library options
 chosen. See the directory <code>progs</code> for the full set of demos.
 
 <dl>
-<dt><code>--with-demos=DEMOS,DEMOS,...</code> 
+<dt><code>--with-demos=DEMOS,DEMOS,...</code>
 <dd><p> This option allows a
 specific set of demo programs to be built. For example,
 <code>--with-demos="xdemos,slang"</code>. Beware that if this option is
