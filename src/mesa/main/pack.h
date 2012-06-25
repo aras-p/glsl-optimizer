@@ -145,9 +145,15 @@ _mesa_unpack_image(GLuint dimensions,
 
 
 void
-_mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
-                         GLenum dstFormat, GLenum dstType,
-                         GLvoid *dstAddr);
+_mesa_pack_rgba_span_from_uints(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
+                                GLenum dstFormat, GLenum dstType,
+                                GLvoid *dstAddr);
+
+
+void
+_mesa_pack_rgba_span_from_ints(struct gl_context *ctx, GLuint n, GLint rgba[][4],
+                               GLenum dstFormat, GLenum dstType,
+                               GLvoid *dstAddr);
 
 
 extern void

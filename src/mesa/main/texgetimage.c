@@ -362,8 +362,8 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
 	       _mesa_unpack_uint_rgba_row(texFormat, width, src, rgba_uint);
                if (rebaseFormat)
                   _mesa_rebase_rgba_uint(width, rgba_uint, rebaseFormat);
-	       _mesa_pack_rgba_span_int(ctx, width, rgba_uint,
-					format, type, dest);
+               _mesa_pack_rgba_span_from_uints(ctx, width, rgba_uint,
+                                        format, type, dest);
 	    } else {
 	       _mesa_unpack_rgba_row(texFormat, width, src, rgba);
                if (rebaseFormat)

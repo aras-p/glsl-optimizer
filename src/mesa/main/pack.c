@@ -462,14 +462,21 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
    }
 }
 
-/* Customization of integer packing.  We always treat src as uint, and can pack dst
- * as any integer type/format combo.
+/* Customization of unsigned integer packing.
  */
 #define SRC_TYPE GLuint
 
 #define DST_TYPE GLuint
 #define SRC_CONVERT(x) (x)
 #define FN_NAME pack_uint_from_uint_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#define DST_TYPE GLint
+#define SRC_CONVERT(x) MIN2(x, 0x7fffffff)
+#define FN_NAME pack_int_from_uint_rgba
 #include "pack_tmp.h"
 #undef DST_TYPE
 #undef SRC_CONVERT
@@ -507,18 +514,19 @@ get_type_min_max(GLenum type, GLfloat *min, GLfloat *max)
 #undef SRC_CONVERT
 #undef FN_NAME
 
+#undef SRC_TYPE
+
 void
-_mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
-                         GLenum dstFormat, GLenum dstType,
-                         GLvoid *dstAddr)
+_mesa_pack_rgba_span_from_uints(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
+                                GLenum dstFormat, GLenum dstType,
+                                GLvoid *dstAddr)
 {
    switch(dstType) {
    case GL_UNSIGNED_INT:
       pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_INT:
-      /* No conversion necessary. */
-      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      pack_int_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
    case GL_UNSIGNED_SHORT:
       pack_ushort_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
@@ -532,6 +540,90 @@ _mesa_pack_rgba_span_int(struct gl_context *ctx, GLuint n, GLuint rgba[][4],
    case GL_BYTE:
       pack_byte_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
       break;
+
+   default:
+      _mesa_problem(ctx,
+         "Unsupported type (%s) for format (%s)",
+         _mesa_lookup_enum_by_nr(dstType),
+         _mesa_lookup_enum_by_nr(dstFormat));
+      return;
+   }
+}
+
+
+/* Customization of signed integer packing.
+ */
+#define SRC_TYPE GLint
+
+#define DST_TYPE GLuint
+#define SRC_CONVERT(x) MAX2(x, 0)
+#define FN_NAME pack_uint_from_int_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#define DST_TYPE GLushort
+#define SRC_CONVERT(x) MAX2(x, 0)
+#define FN_NAME pack_ushort_from_int_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#define DST_TYPE GLshort
+#define SRC_CONVERT(x) CLAMP(x, -0x8000, 0x7fff)
+#define FN_NAME pack_short_from_int_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#define DST_TYPE GLubyte
+#define SRC_CONVERT(x) MAX2(x, 0)
+#define FN_NAME pack_ubyte_from_int_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#define DST_TYPE GLbyte
+#define SRC_CONVERT(x) CLAMP(x, -0x80, 0x7f)
+#define FN_NAME pack_byte_from_int_rgba
+#include "pack_tmp.h"
+#undef DST_TYPE
+#undef SRC_CONVERT
+#undef FN_NAME
+
+#undef SRC_TYPE
+
+void
+_mesa_pack_rgba_span_from_ints(struct gl_context *ctx, GLuint n, GLint rgba[][4],
+                               GLenum dstFormat, GLenum dstType,
+                               GLvoid *dstAddr)
+{
+
+   switch(dstType) {
+   case GL_UNSIGNED_INT:
+      pack_uint_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+   case GL_INT:
+      /* No conversion necessary. */
+      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+   case GL_UNSIGNED_SHORT:
+      pack_ushort_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+   case GL_SHORT:
+      pack_short_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+   case GL_UNSIGNED_BYTE:
+      pack_ubyte_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+   case GL_BYTE:
+      pack_byte_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      break;
+
    default:
       _mesa_problem(ctx,
          "Unsupported type (%s) for format (%s)",
