@@ -322,6 +322,8 @@ slow_read_rgba_pixels( struct gl_context *ctx,
    void *rgba;
    GLubyte *dst, *map;
    int dstStride, stride, j;
+   GLboolean dst_is_integer = _mesa_is_enum_format_integer(format);
+   GLboolean dst_is_uint = _mesa_is_format_unsigned(rbFormat);
 
    dstStride = _mesa_image_row_stride(packing, width, format, type);
    dst = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
@@ -339,12 +341,17 @@ slow_read_rgba_pixels( struct gl_context *ctx,
       goto done;
 
    for (j = 0; j < height; j++) {
-      if (_mesa_is_enum_format_integer(format)) {
+      if (dst_is_integer) {
 	 _mesa_unpack_uint_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
          _mesa_rebase_rgba_uint(width, (GLuint (*)[4]) rgba,
                                 rb->_BaseFormat);
-         _mesa_pack_rgba_span_from_uints(ctx, width, (GLuint (*)[4]) rgba, format,
-                                         type, dst);
+         if (dst_is_uint) {
+            _mesa_pack_rgba_span_from_uints(ctx, width, (GLuint (*)[4]) rgba, format,
+                                            type, dst);
+         } else {
+            _mesa_pack_rgba_span_from_ints(ctx, width, (GLint (*)[4]) rgba, format,
+                                           type, dst);
+         }
       } else {
 	 _mesa_unpack_rgba_row(rbFormat, width, map, (GLfloat (*)[4]) rgba);
          _mesa_rebase_rgba_float(width, (GLfloat (*)[4]) rgba,
