@@ -126,7 +126,8 @@ DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   return stw_create_context_attribs(hdc, iLayerPlane, 0, 1, 0, 0, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
+   return stw_create_context_attribs(hdc, iLayerPlane, 0, 1, 0, 0,
+                                     WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
 }
 
 DHGLRC
@@ -156,8 +157,8 @@ stw_create_context_attribs(
       return 0;
 
    /*
-    * GDI only knows about displayable pixel formats, so determine the pixel format
-    * from the framebuffer.
+    * GDI only knows about displayable pixel formats, so determine the pixel
+    * format from the framebuffer.
     *
     * TODO: Remove the GetPixelFormat() above, and stop relying on GDI.
     */
@@ -374,7 +375,8 @@ stw_make_current(
       /* Bind the new framebuffer */
       ctx->hdc = hdc;
 
-      ret = stw_dev->stapi->make_current(stw_dev->stapi, ctx->st, fb->stfb, fb->stfb);
+      ret = stw_dev->stapi->make_current(stw_dev->stapi, ctx->st,
+                                         fb->stfb, fb->stfb);
       stw_framebuffer_reference(&ctx->current_framebuffer, fb);
    } else {
       ret = stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);

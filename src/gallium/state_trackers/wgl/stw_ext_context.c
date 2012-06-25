@@ -102,7 +102,8 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       return NULL;
    }
 
-   if ((contextFlags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) && majorVersion < 3) {
+   if ((contextFlags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) &&
+       majorVersion < 3) {
       SetLastError(ERROR_INVALID_VERSION_ARB);
       return NULL;
    }
@@ -114,6 +115,8 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       return NULL;
    }
 
-   return (HGLRC) stw_create_context_attribs( hDC, layerPlane, (DHGLRC)(UINT_PTR)hShareContext,
-                                              majorVersion, minorVersion, contextFlags, profileMask );
+   return (HGLRC) stw_create_context_attribs(hDC, layerPlane,
+                                             (DHGLRC) (UINT_PTR) hShareContext,
+                                             majorVersion, minorVersion,
+                                             contextFlags, profileMask);
 }
