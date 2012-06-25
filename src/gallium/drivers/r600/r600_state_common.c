@@ -957,7 +957,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_emit_atom(rctx, state);
 	}
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
-		r600_context_block_emit_dirty(rctx, dirty_block);
+		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);
 	}
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->resource_dirty,list) {
 		r600_context_block_resource_emit_dirty(rctx, dirty_block);

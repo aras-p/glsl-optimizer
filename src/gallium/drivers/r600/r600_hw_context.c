@@ -1025,7 +1025,12 @@ void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r60
 	r600_context_pipe_state_set_sampler_border(ctx, state, offset);
 }
 
-void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
+/**
+ * @param pkt_flags should be set to RADEON_CP_PACKET3_COMPUTE_MODE if this
+ * block will be used for compute shaders.
+ */
+void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block,
+	unsigned pkt_flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	int optional = block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS);
@@ -1063,6 +1068,13 @@ void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *
 		cp_dwords = new_dwords + 2;
 	}
 	memcpy(&cs->buf[cs->cdw], block->pm4, cp_dwords * 4);
+
+	/* We are applying the pkt_flags after copying the register block to
+	 * the the command stream, because it is possible this block will be
+	 * emitted with a different pkt_flags, and we don't want to store the
+	 * pkt_flags in the block.
+	 */
+	cs->buf[cs->cdw] |= pkt_flags;
 	cs->cdw += cp_dwords;
 
 	if (optional) {
