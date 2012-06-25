@@ -70,8 +70,9 @@ upload_wm_state(struct brw_context *brw)
    dw1 |= brw->wm.prog_data->barycentric_interp_modes <<
       GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
 
-   /* _NEW_COLOR */
-   if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
+   /* _NEW_COLOR, _NEW_MULTISAMPLE */
+   if (fp->program.UsesKill || ctx->Color.AlphaEnabled ||
+       ctx->Multisample.SampleAlphaToCoverage)
       dw1 |= GEN7_WM_KILL_ENABLE;
 
    /* _NEW_BUFFERS */
