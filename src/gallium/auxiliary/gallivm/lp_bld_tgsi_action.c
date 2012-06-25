@@ -693,7 +693,7 @@ u2f_emit(
 {
    emit_data->output[emit_data->chan] = LLVMBuildUIToFP(bld_base->base.gallivm->builder,
 							emit_data->args[0],
-							bld_base->uint_bld.vec_type, "");
+							bld_base->base.vec_type, "");
 }
 
 static void
