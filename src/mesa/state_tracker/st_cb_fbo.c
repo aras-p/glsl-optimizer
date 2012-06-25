@@ -57,6 +57,10 @@
 #include "util/u_surface.h"
 
 
+/** Set to 1 to enable extra debug code */
+#define ST_DEBUG_FBO 0
+
+
 static GLboolean
 st_renderbuffer_alloc_sw_storage(struct gl_context * ctx,
                                  struct gl_renderbuffer *rb,
@@ -472,6 +476,16 @@ st_finish_render_texture(struct gl_context *ctx,
 }
 
 
+/** Debug helper */
+static void
+st_fbo_invalid(const char *reason)
+{
+#if ST_DEBUG_FBO
+   debug_printf("Invalid FBO: %s\n", reason);
+#endif
+}
+
+
 /**
  * Validate a renderbuffer attachment for a particular set of bindings.
  */
@@ -484,6 +498,7 @@ st_validate_attachment(struct gl_context *ctx,
    const struct st_texture_object *stObj = st_texture_object(att->Texture);
    enum pipe_format format;
    gl_format texFormat;
+   GLboolean valid;
 
    /* Only validate texture attachments for now, since
     * st_renderbuffer_alloc_storage makes sure that
@@ -507,9 +522,14 @@ st_validate_attachment(struct gl_context *ctx,
       format = st_mesa_format_to_pipe_format(linearFormat);
    }
 
-   return screen->is_format_supported(screen, format,
+   valid = screen->is_format_supported(screen, format,
                                       PIPE_TEXTURE_2D,
                                       stObj->pt->nr_samples, bindings);
+   if (!valid) {
+      st_fbo_invalid("Invalid format");
+   }
+
+   return valid;
 }
 
 
@@ -558,12 +578,14 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          screen->get_param(screen, PIPE_CAP_MIXED_COLORBUFFER_FORMATS) != 0;
 
    if (depth->Type && stencil->Type && depth->Type != stencil->Type) {
+      st_fbo_invalid("Different Depth/Stencil buffer formats");
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
    if (depth->Type == GL_RENDERBUFFER_EXT &&
        stencil->Type == GL_RENDERBUFFER_EXT &&
        depth->Renderbuffer != stencil->Renderbuffer) {
+      st_fbo_invalid("Separate Depth/Stencil buffers");
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
@@ -571,6 +593,7 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        stencil->Type == GL_TEXTURE &&
        depth->Texture != stencil->Texture) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      st_fbo_invalid("Different Depth/Stencil textures");
       return;
    }
 
@@ -613,6 +636,7 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
             first_format = format;
          } else if (format != first_format) {
             fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+            st_fbo_invalid("Mixed color formats");
             return;
          }
       }
