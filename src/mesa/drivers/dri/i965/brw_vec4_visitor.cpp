@@ -2509,11 +2509,12 @@ vec4_visitor::emit_pull_constant_load(vec4_instruction *inst,
 				      int base_offset)
 {
    int reg_offset = base_offset + orig_src.reg_offset;
-   src_reg index = get_pull_constant_offset(inst, orig_src.reladdr, reg_offset);
+   src_reg index = src_reg((unsigned)SURF_INDEX_VERT_CONST_BUFFER);
+   src_reg offset = get_pull_constant_offset(inst, orig_src.reladdr, reg_offset);
    vec4_instruction *load;
 
    load = new(mem_ctx) vec4_instruction(this, VS_OPCODE_PULL_CONSTANT_LOAD,
-					temp, index);
+					temp, index, offset);
    load->base_mrf = 14;
    load->mlen = 1;
    emit_before(inst, load);

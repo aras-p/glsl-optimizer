@@ -645,15 +645,20 @@ vec4_visitor::generate_scratch_write(vec4_instruction *inst,
 void
 vec4_visitor::generate_pull_constant_load(vec4_instruction *inst,
 					  struct brw_reg dst,
-					  struct brw_reg index)
+					  struct brw_reg index,
+					  struct brw_reg offset)
 {
+   assert(index.file == BRW_IMMEDIATE_VALUE &&
+	  index.type == BRW_REGISTER_TYPE_UD);
+   uint32_t surf_index = index.dw1.ud;
+
    if (intel->gen == 7) {
-      gen6_resolve_implied_move(p, &index, inst->base_mrf);
+      gen6_resolve_implied_move(p, &offset, inst->base_mrf);
       brw_instruction *insn = brw_next_insn(p, BRW_OPCODE_SEND);
       brw_set_dest(p, insn, dst);
-      brw_set_src0(p, insn, index);
+      brw_set_src0(p, insn, offset);
       brw_set_sampler_message(p, insn,
-                              SURF_INDEX_VERT_CONST_BUFFER,
+                              surf_index,
                               0, /* LD message ignores sampler unit */
                               GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
                               1, /* rlen */
@@ -669,7 +674,7 @@ vec4_visitor::generate_pull_constant_load(vec4_instruction *inst,
    gen6_resolve_implied_move(p, &header, inst->base_mrf);
 
    brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), BRW_REGISTER_TYPE_D),
-	   index);
+	   offset);
 
    uint32_t msg_type;
 
@@ -689,7 +694,7 @@ vec4_visitor::generate_pull_constant_load(vec4_instruction *inst,
    if (intel->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
    brw_set_dp_read_message(p, send,
-			   SURF_INDEX_VERT_CONST_BUFFER,
+			   surf_index,
 			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
 			   msg_type,
 			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
@@ -753,7 +758,7 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
       break;
 
    case VS_OPCODE_PULL_CONSTANT_LOAD:
-      generate_pull_constant_load(inst, dst, src[0]);
+      generate_pull_constant_load(inst, dst, src[0], src[1]);
       break;
 
    default:

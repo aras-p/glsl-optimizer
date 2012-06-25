@@ -476,7 +476,8 @@ public:
 			      struct brw_reg index);
    void generate_pull_constant_load(vec4_instruction *inst,
 				    struct brw_reg dst,
-				    struct brw_reg index);
+				    struct brw_reg index,
+				    struct brw_reg offset);
 };
 
 } /* namespace brw */
