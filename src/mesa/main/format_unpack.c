@@ -2139,6 +2139,32 @@ unpack_int_rgba_RGBA_INT8(const GLbyte *src, GLuint dst[][4], GLuint n)
 }
 
 static void
+unpack_int_rgba_ARGB8888(const GLbyte *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = (GLubyte) src[i * 4 + 2];
+      dst[i][GCOMP] = (GLubyte) src[i * 4 + 1];
+      dst[i][BCOMP] = (GLubyte) src[i * 4 + 0];
+      dst[i][ACOMP] = (GLubyte) src[i * 4 + 3];
+   }
+}
+
+static void
+unpack_int_rgba_XRGB8888(const GLbyte *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = (GLubyte) src[i * 4 + 2];
+      dst[i][GCOMP] = (GLubyte) src[i * 4 + 1];
+      dst[i][BCOMP] = (GLubyte) src[i * 4 + 0];
+      dst[i][ACOMP] = (GLubyte) 0xff;
+   }
+}
+
+static void
 unpack_int_rgba_RGB_UINT32(const GLuint *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
@@ -2588,6 +2614,14 @@ _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
       break;
    case MESA_FORMAT_RGBA_INT8:
       unpack_int_rgba_RGBA_INT8(src, dst, n);
+      break;
+
+   case MESA_FORMAT_ARGB8888:
+      unpack_int_rgba_ARGB8888(src, dst, n);
+      break;
+
+   case MESA_FORMAT_XRGB8888:
+      unpack_int_rgba_XRGB8888(src, dst, n);
       break;
 
    case MESA_FORMAT_RGB_UINT32:
