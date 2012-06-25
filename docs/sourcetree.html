@@ -43,6 +43,8 @@ each directory.
 	   <li><b>common</b> - code shared by all DRI drivers
 	   <li><b>i915</b> - driver for Intel i915/i945
 	   <li><b>i965</b> - driver for Intel i965
+	   <li><b>radeon</b> - driver for ATI R100
+	   <li><b>r200</b> - driver for ATI R200
 	   <li>XXX more
            </ul>
         <li><b>x11</b> - Xlib-based software driver
@@ -90,7 +92,9 @@ each directory.
       <li><b>i915</b> - Driver for Intel i915/i945.
       <li><b>llvmpipe</b> - Software driver using LLVM for runtime code generation.
       <li><b>nv*</b> - Drivers for NVIDIA GPUs.
-      <li><b>r300</b> - Driver for ATI/AMD R300.
+      <li><b>radeonsi</b> - Driver for AMD Southern Island.
+      <li><b>r300</b> - Driver for ATI R300 - R500.
+      <li><b>r600</b> - Driver for ATI/AMD R600 - Northern Island.
       <li><b>softpipe</b> - Software reference driver.
       <li><b>svga</b> - Driver for VMware's SVGA virtual GPU.
       <li><b>trace</b> - Driver for tracing Gallium calls.
@@ -127,9 +131,8 @@ each directory.
        <li><b>dri</b> - Meta state tracker for DRI drivers
        <li><b>egl</b> - Meta state tracker for EGL drivers
        <li><b>es</b> - OpenGL ES 1.x and 2.x state trackers
-       <li><b>g3dvl</b> -
        <li><b>glx</b> - Meta state tracker for GLX
-       <li><b>python</b> -
+       <li><b>vdpau</b> - VDPAU state tracker
        <li><b>vega</b> - OpenVG 1.x state tracker
        <li><b>wgl</b> -
        <li><b>xorg</b> - Meta state tracker for Xorg video drivers
@@ -137,7 +140,6 @@ each directory.
     <li><b>winsys</b> -
        <ul>
        <li><b>drm</b> -
-       <li><b>g3dvl</b> -
        <li><b>gdi</b> -
        <li><b>xlib</b> -
        </ul>
