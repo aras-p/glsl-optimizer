@@ -28,6 +28,7 @@
 #include "formats.h"
 #include "mfeatures.h"
 #include "macros.h"
+#include "glformats.h"
 
 
 /**
@@ -1712,6 +1713,17 @@ _mesa_is_format_integer_color(gl_format format)
 
 
 /**
+ * Is the given format an unsigned integer format?
+ */
+GLboolean
+_mesa_is_format_unsigned(gl_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return _mesa_is_type_unsigned(info->DataType);
+}
+
+
+/**
  * Return color encoding for given format.
  * \return GL_LINEAR or GL_SRGB
  */
@@ -2933,3 +2945,4 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
 
    return GL_FALSE;
 }
+

@@ -80,6 +80,7 @@ main_sources = [
     'main/framebuffer.c',
     'main/get.c',
     'main/getstring.c',
+    'main/glformats.c',
     'main/hash.c',
     'main/hint.c',
     'main/histogram.c',

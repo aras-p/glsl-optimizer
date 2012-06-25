@@ -47,6 +47,7 @@
 #include "texstate.h"
 #include "texpal.h"
 #include "mtypes.h"
+#include "glformats.h"
 
 
 /**
@@ -1764,8 +1765,8 @@ texture_error_check( struct gl_context *ctx,
 
    /* additional checks for integer textures */
    if ((ctx->VersionMajor >= 3 || ctx->Extensions.EXT_texture_integer) &&
-       (_mesa_is_integer_format(format) !=
-        _mesa_is_integer_format(internalFormat))) {
+       (_mesa_is_enum_format_integer(format) !=
+        _mesa_is_enum_format_integer(internalFormat))) {
       if (!isProxy) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage%dD(integer/non-integer format mismatch)",
@@ -1939,7 +1940,7 @@ subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
    if (ctx->VersionMajor >= 3 || ctx->Extensions.EXT_texture_integer) {
       /* both source and dest must be integer-valued, or neither */
       if (_mesa_is_format_integer_color(destTex->TexFormat) !=
-          _mesa_is_integer_format(format)) {
+          _mesa_is_enum_format_integer(format)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage%dD(integer/non-integer format mismatch)",
                      dimensions);
@@ -2042,8 +2043,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    if (_mesa_is_color_format(internalFormat)) {
       struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
 
-      if (_mesa_is_integer_format(rb->InternalFormat) !=
-	  _mesa_is_integer_format(internalFormat)) {
+      if (_mesa_is_enum_format_integer(rb->InternalFormat) !=
+	  _mesa_is_enum_format_integer(internalFormat)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glCopyTexImage%dD(integer vs non-integer)", dimensions);
 	 return GL_TRUE;

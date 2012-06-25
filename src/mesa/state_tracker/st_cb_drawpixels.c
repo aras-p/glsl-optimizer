@@ -43,6 +43,7 @@
 #include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
+#include "main/glformats.h"
 #include "program/program.h"
 #include "program/prog_print.h"
 #include "program/prog_instruction.h"
@@ -368,7 +369,7 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
       return GL_STENCIL_INDEX;
 
    default:
-      if (_mesa_is_integer_format(format)) {
+      if (_mesa_is_enum_format_integer(format)) {
          switch (type) {
          case GL_BYTE:
             return GL_RGBA8I;

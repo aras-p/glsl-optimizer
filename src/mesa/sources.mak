@@ -49,6 +49,7 @@ MAIN_FILES = \
 	$(SRCDIR)/main/framebuffer.c \
 	$(SRCDIR)/main/get.c \
 	$(SRCDIR)/main/getstring.c \
+	$(SRCDIR)/main/glformats.c \
 	$(SRCDIR)/main/hash.c \
 	$(SRCDIR)/main/hint.c \
 	$(SRCDIR)/main/histogram.c \

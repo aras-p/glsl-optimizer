@@ -52,6 +52,7 @@
 #include "pack.h"
 #include "pixeltransfer.h"
 #include "imports.h"
+#include "glformats.h"
 #include "../../gallium/auxiliary/util/u_format_rgb9e5.h"
 #include "../../gallium/auxiliary/util/u_format_r11g11b10f.h"
 
@@ -558,7 +559,7 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
 {
    GLfloat *luminance;
    const GLint comps = _mesa_components_in_format(dstFormat);
-   const GLboolean intDstFormat = _mesa_is_integer_format(dstFormat);
+   const GLboolean intDstFormat = _mesa_is_enum_format_integer(dstFormat);
    GLuint i;
 
    if (dstFormat == GL_LUMINANCE ||
@@ -2489,7 +2490,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 
    stride = _mesa_components_in_format(srcFormat);
 
-   intFormat = _mesa_is_integer_format(srcFormat);
+   intFormat = _mesa_is_enum_format_integer(srcFormat);
 
 #define PROCESS(SRC_INDEX, DST_INDEX, DEFAULT_FLT, DEFAULT_INT, TYPE, CONVERSION) \
    if ((SRC_INDEX) < 0) {						\
@@ -3544,7 +3545,7 @@ _mesa_unpack_color_span_ubyte(struct gl_context *ctx,
                               const struct gl_pixelstore_attrib *srcPacking,
                               GLbitfield transferOps )
 {
-   GLboolean intFormat = _mesa_is_integer_format(srcFormat);
+   GLboolean intFormat = _mesa_is_enum_format_integer(srcFormat);
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
@@ -3851,7 +3852,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
       GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
-      GLboolean intFormat = _mesa_is_integer_format(srcFormat);
+      GLboolean intFormat = _mesa_is_enum_format_integer(srcFormat);
 
       if (!rgba) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");

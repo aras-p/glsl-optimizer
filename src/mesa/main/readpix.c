@@ -36,6 +36,7 @@
 #include "pack.h"
 #include "pbo.h"
 #include "state.h"
+#include "glformats.h"
 
 
 /**
@@ -337,7 +338,7 @@ slow_read_rgba_pixels( struct gl_context *ctx,
       goto done;
 
    for (j = 0; j < height; j++) {
-      if (_mesa_is_integer_format(format)) {
+      if (_mesa_is_enum_format_integer(format)) {
 	 _mesa_unpack_uint_rgba_row(rbFormat, width, map, (GLuint (*)[4]) rgba);
          _mesa_rebase_rgba_uint(width, (GLuint (*)[4]) rgba,
                                 rb->_BaseFormat);
@@ -378,7 +379,7 @@ read_rgba_pixels( struct gl_context *ctx,
       return;
 
    if ((ctx->Color._ClampReadColor == GL_TRUE || type != GL_FLOAT) &&
-       !_mesa_is_integer_format(format)) {
+       !_mesa_is_enum_format_integer(format)) {
       transferOps |= IMAGE_CLAMP_BIT;
    }
 
@@ -713,7 +714,7 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    if (ctx->Extensions.EXT_texture_integer && _mesa_is_color_format(format)) {
       const struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
       const GLboolean srcInteger = _mesa_is_format_integer_color(rb->Format);
-      const GLboolean dstInteger = _mesa_is_integer_format(format);
+      const GLboolean dstInteger = _mesa_is_enum_format_integer(format);
       if (dstInteger != srcInteger) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(integer / non-integer format mismatch");
