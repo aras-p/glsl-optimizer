@@ -353,9 +353,66 @@ _mesa_EndQueryARB(GLenum target)
 
 
 static void GLAPIENTRY
+_mesa_QueryCounter(GLuint id, GLenum target)
+{
+   struct gl_query_object *q;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glQueryCounter(%u, %s)\n", id,
+                  _mesa_lookup_enum_by_nr(target));
+
+   /* error checking */
+   if (target != GL_TIMESTAMP) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glQueryCounter(target)");
+      return;
+   }
+
+   if (id == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glQueryCounter(id==0)");
+      return;
+   }
+
+   q = _mesa_lookup_query_object(ctx, id);
+   if (!q) {
+      /* XXX the Core profile should throw INVALID_OPERATION here */
+
+      /* create new object */
+      q = ctx->Driver.NewQueryObject(ctx, id);
+      if (!q) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glQueryCounter");
+         return;
+      }
+      _mesa_HashInsert(ctx->Query.QueryObjects, id, q);
+   }
+   else {
+      if (q->Target && q->Target != GL_TIMESTAMP) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glQueryCounter(id has an invalid target)");
+         return;
+      }
+   }
+
+   if (q->Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glQueryCounter(id is active)");
+      return;
+   }
+
+   q->Target = target;
+   q->Result = 0;
+   q->Ready = GL_FALSE;
+
+   /* QueryCounter is implemented using EndQuery without BeginQuery
+    * in drivers. This is actually Direct3D and Gallium convention. */
+   ctx->Driver.EndQuery(ctx, q);
+}
+
+
+static void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 {
-   struct gl_query_object *q, **bindpt;
+   struct gl_query_object *q = NULL, **bindpt = NULL;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -364,13 +421,21 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
                   _mesa_lookup_enum_by_nr(target),
                   _mesa_lookup_enum_by_nr(pname));
 
-   bindpt = get_query_binding_point(ctx, target);
-   if (!bindpt) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryARB(target)");
-      return;
+   if (target == GL_TIMESTAMP) {
+      if (!ctx->Extensions.ARB_timer_query) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryARB(target)");
+         return;
+      }
    }
+   else {
+      bindpt = get_query_binding_point(ctx, target);
+      if (!bindpt) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryARB(target)");
+         return;
+      }
 
-   q = *bindpt;
+      q = *bindpt;
+   }
 
    switch (pname) {
       case GL_QUERY_COUNTER_BITS_ARB:
@@ -581,6 +646,7 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
    SET_GetQueryivARB(disp, _mesa_GetQueryivARB);
    SET_GetQueryObjectivARB(disp, _mesa_GetQueryObjectivARB);
    SET_GetQueryObjectuivARB(disp, _mesa_GetQueryObjectuivARB);
+   SET_QueryCounter(disp, _mesa_QueryCounter);
 
    SET_GetQueryObjecti64vEXT(disp, _mesa_GetQueryObjecti64vEXT);
    SET_GetQueryObjectui64vEXT(disp, _mesa_GetQueryObjectui64vEXT);
