@@ -450,7 +450,7 @@ vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
     * indicating which material attributes can actually be updated below.
     */
    if (ctx->Light.ColorMaterialEnabled) {
-      updateMats = ~ctx->Light.ColorMaterialBitmask;
+      updateMats = ~ctx->Light._ColorMaterialBitmask;
    }
    else {
       /* GL_COLOR_MATERIAL is disabled so don't skip any material updates */

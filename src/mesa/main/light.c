@@ -693,13 +693,13 @@ _mesa_update_material( struct gl_context *ctx, GLuint bitmask )
 
 /*
  * Update the current materials from the given rgba color
- * according to the bitmask in ColorMaterialBitmask, which is
+ * according to the bitmask in _ColorMaterialBitmask, which is
  * set by glColorMaterial().
  */
 void
 _mesa_update_color_material( struct gl_context *ctx, const GLfloat color[4] )
 {
-   GLuint bitmask = ctx->Light.ColorMaterialBitmask;
+   const GLbitfield bitmask = ctx->Light._ColorMaterialBitmask;
    struct gl_material *mat = &ctx->Light.Material;
    int i;
 
@@ -731,13 +731,13 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
    if (bitmask == 0)
       return; /* error was recorded */
 
-   if (ctx->Light.ColorMaterialBitmask == bitmask &&
+   if (ctx->Light._ColorMaterialBitmask == bitmask &&
        ctx->Light.ColorMaterialFace == face &&
        ctx->Light.ColorMaterialMode == mode)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_LIGHT);
-   ctx->Light.ColorMaterialBitmask = bitmask;
+   ctx->Light._ColorMaterialBitmask = bitmask;
    ctx->Light.ColorMaterialFace = face;
    ctx->Light.ColorMaterialMode = mode;
 
@@ -1188,7 +1188,7 @@ _mesa_init_lighting( struct gl_context *ctx )
    ctx->Light.Enabled = GL_FALSE;
    ctx->Light.ColorMaterialFace = GL_FRONT_AND_BACK;
    ctx->Light.ColorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
-   ctx->Light.ColorMaterialBitmask = _mesa_material_bitmask( ctx,
+   ctx->Light._ColorMaterialBitmask = _mesa_material_bitmask( ctx,
                                                GL_FRONT_AND_BACK,
                                                GL_AMBIENT_AND_DIFFUSE, ~0,
                                                NULL );

@@ -181,7 +181,7 @@ static void make_state_key( struct gl_context *ctx, struct state_key *key )
 	 key->light_twoside = 1;
 
       if (ctx->Light.ColorMaterialEnabled) {
-	 key->light_color_material_mask = ctx->Light.ColorMaterialBitmask;
+	 key->light_color_material_mask = ctx->Light._ColorMaterialBitmask;
       }
 
       for (i = 0; i < MAX_LIGHTS; i++) {

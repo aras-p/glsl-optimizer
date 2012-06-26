@@ -227,12 +227,12 @@ prepare_materials(struct gl_context *ctx,
    store->mat_count = 0;
    store->mat_bitmask = 0;
 
-   /* Examine the ColorMaterialBitmask to determine which materials
+   /* Examine the _ColorMaterialBitmask to determine which materials
     * track vertex color.  Override the material attribute's pointer
     * with the color pointer for each one.
     */
    if (ctx->Light.ColorMaterialEnabled) {
-      const GLuint bitmask = ctx->Light.ColorMaterialBitmask;
+      const GLuint bitmask = ctx->Light._ColorMaterialBitmask;
       for (i = 0 ; i < MAT_ATTRIB_MAX ; i++)
 	 if (bitmask & (1<<i))
 	    VB->AttribPtr[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = VB->AttribPtr[_TNL_ATTRIB_COLOR0];

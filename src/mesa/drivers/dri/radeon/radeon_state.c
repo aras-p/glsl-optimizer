@@ -707,8 +707,8 @@ static void check_twoside_fallback( struct gl_context *ctx )
 
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
       if (ctx->Light.ColorMaterialEnabled &&
-	  (ctx->Light.ColorMaterialBitmask & BACK_MATERIAL_BITS) !=
-	  ((ctx->Light.ColorMaterialBitmask & FRONT_MATERIAL_BITS)<<1))
+	  (ctx->Light._ColorMaterialBitmask & BACK_MATERIAL_BITS) !=
+	  ((ctx->Light._ColorMaterialBitmask & FRONT_MATERIAL_BITS)<<1))
 	 fallback = GL_TRUE;
       else {
 	 for (i = MAT_ATTRIB_FRONT_AMBIENT; i < MAT_ATTRIB_FRONT_INDEXES; i+=2)
@@ -736,7 +736,7 @@ static void radeonColorMaterial( struct gl_context *ctx, GLenum face, GLenum mod
 			   (3 << RADEON_SPECULAR_SOURCE_SHIFT));
 
    if (ctx->Light.ColorMaterialEnabled) {
-      GLuint mask = ctx->Light.ColorMaterialBitmask;
+      GLuint mask = ctx->Light._ColorMaterialBitmask;
 
       if (mask & MAT_BIT_FRONT_EMISSION) {
 	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
@@ -797,7 +797,7 @@ void radeonUpdateMaterial( struct gl_context *ctx )
    GLuint mask = ~0;
 
    if (ctx->Light.ColorMaterialEnabled)
-      mask &= ~ctx->Light.ColorMaterialBitmask;
+      mask &= ~ctx->Light._ColorMaterialBitmask;
 
    if (RADEON_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);

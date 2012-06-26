@@ -57,7 +57,7 @@ void
 nv10_emit_color_material(struct gl_context *ctx, int emit)
 {
 	struct nouveau_pushbuf *push = context_push(ctx);
-	unsigned mask = get_material_bitmask(ctx->Light.ColorMaterialBitmask);
+	unsigned mask = get_material_bitmask(ctx->Light._ColorMaterialBitmask);
 
 	BEGIN_NV04(push, NV10_3D(COLOR_MATERIAL), 1);
 	PUSH_DATA (push, ctx->Light.ColorMaterialEnabled ? mask : 0);
@@ -313,7 +313,7 @@ nv10_emit_light_source(struct gl_context *ctx, int emit)
 
 #define USE_COLOR_MATERIAL(attr)					\
 	(ctx->Light.ColorMaterialEnabled &&				\
-	 ctx->Light.ColorMaterialBitmask & (1 << MAT_ATTRIB_FRONT_##attr))
+	 ctx->Light._ColorMaterialBitmask & (1 << MAT_ATTRIB_FRONT_##attr))
 
 void
 nv10_emit_material_ambient(struct gl_context *ctx, int emit)

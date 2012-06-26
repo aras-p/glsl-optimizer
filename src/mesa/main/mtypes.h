@@ -943,7 +943,7 @@ struct gl_light_attrib
    GLenum ProvokingVertex;              /**< GL_EXT_provoking_vertex */
    GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
-   GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
+   GLbitfield _ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
    GLboolean ColorMaterialEnabled;
    GLenum ClampVertexColor;             /**< GL_TRUE, GL_FALSE, GL_FIXED_ONLY */
    GLboolean _ClampVertexColor;

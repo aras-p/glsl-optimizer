@@ -99,7 +99,7 @@ int main( int argc, char **argv )
    OFFSET( "CTX_LIGHT_SHADE_MODEL       ", struct gl_context, Light.ShadeModel );
    OFFSET( "CTX_LIGHT_COLOR_MAT_FACE    ", struct gl_context, Light.ColorMaterialFace );
    OFFSET( "CTX_LIGHT_COLOR_MAT_MODE    ", struct gl_context, Light.ColorMaterialMode );
-   OFFSET( "CTX_LIGHT_COLOR_MAT_MASK    ", struct gl_context, Light.ColorMaterialBitmask );
+   OFFSET( "CTX_LIGHT_COLOR_MAT_MASK    ", struct gl_context, Light._ColorMaterialBitmask );
    OFFSET( "CTX_LIGHT_COLOR_MAT_ENABLED ", struct gl_context, Light.ColorMaterialEnabled );
    OFFSET( "CTX_LIGHT_ENABLED_LIST      ", struct gl_context, Light.EnabledList );
    OFFSET( "CTX_LIGHT_NEED_VERTS        ", struct gl_context, Light._NeedVertices );

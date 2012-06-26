@@ -897,7 +897,7 @@ static void r200ColorMaterial( struct gl_context *ctx, GLenum face, GLenum mode 
 		   (0xf << R200_BACK_SPECULAR_SOURCE_SHIFT));
 
    if (ctx->Light.ColorMaterialEnabled) {
-      GLuint mask = ctx->Light.ColorMaterialBitmask;
+      GLuint mask = ctx->Light._ColorMaterialBitmask;
 
       if (mask & MAT_BIT_FRONT_EMISSION) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
@@ -995,7 +995,7 @@ void r200UpdateMaterial( struct gl_context *ctx )
 
    /* Might be possible and faster to update everything unconditionally? */
    if (ctx->Light.ColorMaterialEnabled)
-      mask &= ~ctx->Light.ColorMaterialBitmask;
+      mask &= ~ctx->Light._ColorMaterialBitmask;
 
    if (R200_DEBUG & RADEON_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
