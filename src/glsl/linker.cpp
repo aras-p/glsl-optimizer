@@ -1859,6 +1859,32 @@ assign_varying_location(ir_variable *input_var, ir_variable *output_var,
 
 
 /**
+ * Is the given variable a varying variable to be counted against the
+ * limit in ctx->Const.MaxVarying?
+ * This includes variables such as texcoords, colors and generic
+ * varyings, but excludes variables such as gl_FrontFacing and gl_FragCoord.
+ */
+static bool
+is_varying_var(GLenum shaderType, const ir_variable *var)
+{
+   /* Only fragment shaders will take a varying variable as an input */
+   if (shaderType == GL_FRAGMENT_SHADER &&
+       var->mode == ir_var_in &&
+       var->explicit_location) {
+      switch (var->location) {
+      case FRAG_ATTRIB_WPOS:
+      case FRAG_ATTRIB_FACE:
+      case FRAG_ATTRIB_PNTC:
+         return false;
+      default:
+         return true;
+      }
+   }
+   return false;
+}
+
+
+/**
  * Assign locations for all variables that are produced in one pipeline stage
  * (the "producer") and consumed in the next stage (the "consumer").
  *
@@ -1966,7 +1992,7 @@ assign_varying_locations(struct gl_context *ctx,
              * value is written by the previous stage.
              */
             var->mode = ir_var_auto;
-         } else {
+         } else if (is_varying_var(consumer->Type, var)) {
             /* The packing rules are used for vertex shader inputs are also
              * used for fragment shader inputs.
              */
