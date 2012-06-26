@@ -214,6 +214,8 @@ struct r600_pipe_shader {
 	unsigned	pa_cl_vs_out_cntl;
 	unsigned	ps_cb_shader_mask;
 	unsigned	key;
+	unsigned		db_shader_control;
+	unsigned		ps_depth_export;
 };
 
 struct r600_pipe_sampler_state {
@@ -282,6 +284,7 @@ struct r600_context {
 	unsigned			fb_cb_shader_mask;
 	unsigned			sx_alpha_test_control;
 	unsigned			cb_shader_mask;
+	unsigned			db_shader_control;
 	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
@@ -418,6 +421,8 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_texture_target target,
 				      unsigned sample_count,
 				      unsigned usage);
+
+void evergreen_update_dual_export_state(struct r600_context * rctx);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);

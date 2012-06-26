@@ -746,6 +746,13 @@
 #define   S_02880C_DUAL_EXPORT_ENABLE(x)               (((x) & 0x1) << 9)
 #define   G_02880C_DUAL_EXPORT_ENABLE(x)               (((x) >> 9) & 0x1)
 #define   C_02880C_DUAL_EXPORT_ENABLE                  0xFFFFFDFF
+#define   S_02880C_DB_SOURCE_FORMAT(x)                 (((x) & 0x3) << 13)
+#define   G_02880C_DB_SOURCE_FORMAT(x)                 (((x) >> 13) & 0x3)
+#define   C_02880C_DB_SOURCE_FORMAT                    0xFFFF9FFF
+#define     V_02880C_EXPORT_DB_FULL                    0x00
+#define     V_02880C_EXPORT_DB_FOUR16                  0x01
+#define     V_02880C_EXPORT_DB_TWO                     0x02
+
 #define R_028A00_PA_SU_POINT_SIZE                    0x028A00
 #define   S_028A00_HEIGHT(x)                           (((x) & 0xFFFF) << 0)
 #define   G_028A00_HEIGHT(x)                           (((x) >> 0) & 0xFFFF)

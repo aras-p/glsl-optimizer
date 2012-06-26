@@ -807,6 +807,9 @@ static void r600_update_derived_state(struct r600_context *rctx)
 
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
+		
+	if (rctx->chip_class >= EVERGREEN)
+		evergreen_update_dual_export_state(rctx);
 
 	if (rctx->dual_src_blend)
 		rctx->cb_shader_mask = rctx->ps_shader->current->ps_cb_shader_mask | rctx->fb_cb_shader_mask;

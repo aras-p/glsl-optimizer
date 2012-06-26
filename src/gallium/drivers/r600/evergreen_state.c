@@ -1463,7 +1463,6 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	     (desc->channel[i].size < 17 &&
 	      desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
-		rctx->export_16bpc = true;
 	} else {
 		rctx->export_16bpc = false;
 	}
@@ -1666,6 +1665,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t tl, br;
+	int i;
 
 	if (rstate == NULL)
 		return;
@@ -1679,10 +1679,16 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->have_depth_fb = 0;
+	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
-	for (int i = 0; i < state->nr_cbufs; i++) {
+	for (i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
+
+	for (; i < 8 ; i++) {
+		r600_pipe_state_add_reg(rstate, R_028C70_CB_COLOR0_INFO + i * 0x3C, 0);
+	}
+
 	if (state->zsbuf) {
 		evergreen_db(rctx, rstate, state);
 	}
@@ -2590,6 +2596,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
 	unsigned spi_baryc_cntl, sid, tmp, idx = 0;
+	unsigned z_export = 0, stencil_export = 0;
 
 	rstate->nregs = 0;
 
@@ -2638,12 +2645,15 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
+			z_export = 1;
 		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
-			db_shader_control |= S_02880C_STENCIL_EXPORT_ENABLE(1);
+			stencil_export = 1;
 	}
 	if (rshader->uses_kill)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
+
+	db_shader_control |= S_02880C_Z_EXPORT_ENABLE(z_export);
+	db_shader_control |= S_02880C_STENCIL_EXPORT_ENABLE(stencil_export);
 
 	exports_ps = 0;
 	for (i = 0; i < rshader->noutput; i++) {
@@ -2716,8 +2726,9 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps);
-	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
-				db_shader_control);
+
+	shader->db_shader_control = db_shader_control;
+	shader->ps_depth_export = z_export | stencil_export;
 
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
 	if (rctx->rasterizer)
@@ -2802,4 +2813,27 @@ void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 				S_028000_COPY_CENTROID(1));
 	/* Don't set the 'is_flush' flag in r600_pipe_dsa, evergreen doesn't need it. */
 	return rstate;
+}
+
+void evergreen_update_dual_export_state(struct r600_context * rctx)
+{
+	unsigned dual_export = rctx->export_16bpc && rctx->nr_cbufs &&
+			!rctx->ps_shader->current->ps_depth_export;
+
+	unsigned db_source_format = dual_export ? V_02880C_EXPORT_DB_TWO :
+			V_02880C_EXPORT_DB_FULL;
+
+	unsigned db_shader_control = rctx->ps_shader->current->db_shader_control |
+			S_02880C_DUAL_EXPORT_ENABLE(dual_export) |
+			S_02880C_DB_SOURCE_FORMAT(db_source_format);
+
+	if (db_shader_control != rctx->db_shader_control) {
+		struct r600_pipe_state rstate;
+
+		rctx->db_shader_control = db_shader_control;
+
+		rstate.nregs = 0;
+		r600_pipe_state_add_reg(&rstate, R_02880C_DB_SHADER_CONTROL, db_shader_control);
+		r600_context_pipe_state_set(rctx, &rstate);
+	}
 }
