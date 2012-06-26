@@ -353,7 +353,7 @@ public:
    const struct glsl_type *type;
 
    /**
-    * Delcared name of the variable
+    * Declared name of the variable
     */
    const char *name;
 
