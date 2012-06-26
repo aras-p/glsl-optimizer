@@ -1499,8 +1499,11 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		     ntype != V_0280A0_NUMBER_UINT &&
 		     ntype != V_0280A0_NUMBER_SINT) &&
 		    G_0280A0_BLEND_CLAMP(color_info) &&
-		    !G_0280A0_BLEND_FLOAT32(color_info))
+		    !G_0280A0_BLEND_FLOAT32(color_info)) {
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+		} else {
+			rctx->export_16bpc = false;
+		}
 	} else {
 		/* EXPORT_NORM can be enabled if:
 		 * - 11-bit or smaller UNORM/SNORM/SRGB
@@ -1511,8 +1514,11 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
 		      ntype != V_0280A0_NUMBER_UINT && ntype != V_0280A0_NUMBER_SINT) ||
 		    (desc->channel[i].size < 17 &&
-		     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)))
+		     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
+		} else {
+			rctx->export_16bpc = false;
+		}
 	}
 
 	/* for possible dual-src MRT write color info 1 */
@@ -1644,6 +1650,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->have_depth_fb = 0;
+	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 
 	for (int i = 0; i < state->nr_cbufs; i++) {
@@ -2239,6 +2246,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	int pos_index = -1, face_index = -1;
 	unsigned tmp, sid, ufi = 0;
 	int need_linear = 0;
+	unsigned z_export = 0, stencil_export = 0;
 
 	rstate->nregs = 0;
 
@@ -2278,23 +2286,23 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
+			z_export = 1;
 		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
-			db_shader_control |= S_02880C_STENCIL_REF_EXPORT_ENABLE(1);
+			stencil_export = 1;
 	}
+	db_shader_control |= S_02880C_Z_EXPORT_ENABLE(z_export);
+	db_shader_control |= S_02880C_STENCIL_REF_EXPORT_ENABLE(stencil_export);
 	if (rshader->uses_kill)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
-	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION ||
-		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL) {
 			exports_ps |= 1;
-		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			num_cout++;
 		}
 	}
+	num_cout = rshader->nr_ps_color_exports;
 	exports_ps |= S_028854_EXPORT_COLORS(num_cout);
 	if (!exports_ps) {
 		/* always at least export 1 component per pixel */
@@ -2340,8 +2348,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 				R_028854_SQ_PGM_EXPORTS_PS,
 				exports_ps);
 	/* only set some bits here, the other bits are set in the dsa state */
-	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
-				db_shader_control);
+	shader->db_shader_control = db_shader_control;
+	shader->ps_depth_export = z_export | stencil_export;
 
 	shader->sprite_coord_enable = rctx->sprite_coord_enable;
 	if (rctx->rasterizer)
@@ -2439,4 +2447,21 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 	dsa_state = (struct r600_pipe_dsa*)rstate;
 	dsa_state->is_flush = true;
 	return rstate;
+}
+
+void r600_update_dual_export_state(struct r600_context * rctx)
+{
+	unsigned dual_export = rctx->export_16bpc && rctx->nr_cbufs &&
+			       !rctx->ps_shader->current->ps_depth_export;
+	unsigned db_shader_control = rctx->ps_shader->current->db_shader_control |
+				     S_02880C_DUAL_EXPORT_ENABLE(dual_export);
+
+	if (db_shader_control != rctx->db_shader_control) {
+		struct r600_pipe_state rstate;
+
+		rctx->db_shader_control = db_shader_control;
+		rstate.nregs = 0;
+		r600_pipe_state_add_reg(&rstate, R_02880C_DB_SHADER_CONTROL, db_shader_control);
+		r600_context_pipe_state_set(rctx, &rstate);
+	}
 }

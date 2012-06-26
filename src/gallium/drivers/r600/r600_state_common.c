@@ -559,8 +559,6 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
 	r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
 
-	rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
-	rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(!!rctx->ps_shader->current->shader.fs_write_all);
 
 	if (rctx->chip_class < EVERGREEN && rctx->vs_shader) {
 		r600_adjust_gprs(rctx);
@@ -627,8 +625,9 @@ static void r600_update_alpha_ref(struct r600_context *rctx)
 
 	alpha_ref = rctx->alpha_ref;
 	rstate.nregs = 0;
-	if (rctx->export_16bpc)
+	if (rctx->export_16bpc && rctx->chip_class >= EVERGREEN) {
 		alpha_ref &= ~0x1FFF;
+	}
 	r600_pipe_state_add_reg(&rstate, R_028438_SX_ALPHA_REF, alpha_ref);
 
 	r600_context_pipe_state_set(rctx, &rstate);
@@ -808,13 +807,17 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
 		
-	if (rctx->chip_class >= EVERGREEN)
+	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_update_dual_export_state(rctx);
+	} else {
+		r600_update_dual_export_state(rctx);
+	}
 
-	if (rctx->dual_src_blend)
+	if (rctx->dual_src_blend) {
 		rctx->cb_shader_mask = rctx->ps_shader->current->ps_cb_shader_mask | rctx->fb_cb_shader_mask;
-	else
+	} else {
 		rctx->cb_shader_mask = rctx->fb_cb_shader_mask;
+	}
 }
 
 static unsigned r600_conv_prim_to_gs_out(unsigned mode)
@@ -902,8 +905,13 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0);
-		if (rctx->chip_class <= R700)
+		if (rctx->chip_class <= R700) {
+			unsigned multi_write = !!rctx->ps_shader->current->shader.fs_write_all &&
+					       (rctx->nr_cbufs > 1);
+			rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
+			rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(multi_write);
 			r600_pipe_state_add_reg(&rctx->vgt, R_028808_CB_COLOR_CONTROL, rctx->cb_color_control);
+		}
 		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0);
 	}
@@ -924,8 +932,13 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	else if (prim == V_008958_DI_PT_LINESTRIP) 
 		ls_mask = 2;
 	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
-	if (rctx->chip_class <= R700)
+	if (rctx->chip_class <= R700) {
+		unsigned multi_write = !!rctx->ps_shader->current->shader.fs_write_all &&
+				       (rctx->nr_cbufs > 1);
+		rctx->cb_color_control &= C_028808_MULTIWRITE_ENABLE;
+		rctx->cb_color_control |= S_028808_MULTIWRITE_ENABLE(multi_write);
 		r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_color_control);
+	}
 	r600_pipe_state_mod_reg(&rctx->vgt,
 				rctx->vs_shader->current->pa_cl_vs_out_cntl |
 				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->current->shader.clip_dist_write));

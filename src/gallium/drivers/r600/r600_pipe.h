@@ -476,6 +476,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_texture_target target,
 				 unsigned sample_count,
 				 unsigned usage);
+void r600_update_dual_export_state(struct r600_context * rctx);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
