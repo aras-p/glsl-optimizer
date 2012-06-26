@@ -656,6 +656,28 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
    ctx->UniformBufferBindings = NULL;
 }
 
+static void
+handle_bind_buffer_gen(struct gl_context *ctx,
+		       GLenum target,
+		       GLuint buffer,
+		       struct gl_buffer_object **buf_handle)
+{
+   struct gl_buffer_object *buf = *buf_handle;
+
+   if (!buf || buf == &DummyBufferObject) {
+      /* If this is a new buffer object id, or one which was generated but
+       * never used before, allocate a buffer object now.
+       */
+      ASSERT(ctx->Driver.NewBufferObject);
+      buf = ctx->Driver.NewBufferObject(ctx, buffer, target);
+      if (!buf) {
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
+	 return;
+      }
+      _mesa_HashInsert(ctx->Shared->BufferObjects, buffer, buf);
+      *buf_handle = buf;
+   }
+}
 
 /**
  * Bind the specified target to buffer for the specified context.
@@ -691,18 +713,7 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    else {
       /* non-default buffer object */
       newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
-      if (!newBufObj || newBufObj == &DummyBufferObject) {
-         /* If this is a new buffer object id, or one which was generated but
-          * never used before, allocate a buffer object now.
-          */
-         ASSERT(ctx->Driver.NewBufferObject);
-         newBufObj = ctx->Driver.NewBufferObject(ctx, buffer, target);
-         if (!newBufObj) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
-            return;
-         }
-         _mesa_HashInsert(ctx->Shared->BufferObjects, buffer, newBufObj);
-      }
+      handle_bind_buffer_gen(ctx, target, buffer, &newBufObj);
    }
    
    /* bind new buffer */
@@ -2089,6 +2100,7 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
+   handle_bind_buffer_gen(ctx, target, buffer, &bufObj);
 
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2134,6 +2146,7 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
+   handle_bind_buffer_gen(ctx, target, buffer, &bufObj);
 
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
