@@ -197,6 +197,7 @@ struct r600_screen;
 void r600_get_backend_mask(struct r600_context *ctx);
 int r600_context_init(struct r600_context *ctx);
 void r600_context_fini(struct r600_context *ctx);
+void r600_context_pipe_state_emit(struct r600_context *ctx, struct r600_pipe_state *state, unsigned pkt_flags);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);

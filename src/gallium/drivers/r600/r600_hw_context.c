@@ -836,12 +836,80 @@ void r600_context_dirty_block(struct r600_context *ctx,
 	}
 }
 
+/**
+ * If reg needs a reloc, this function will add it to its block's reloc list.
+ * @return true if reg needs a reloc, false otherwise
+ */
+static bool r600_reg_set_block_reloc(struct r600_pipe_reg *reg)
+{
+	unsigned reloc_id;
+
+	if (!reg->block->pm4_bo_index[reg->id]) {
+		return false;
+	}
+	/* find relocation */
+	reloc_id = reg->block->pm4_bo_index[reg->id];
+	pipe_resource_reference(
+		(struct pipe_resource**)&reg->block->reloc[reloc_id].bo,
+		&reg->bo->b.b);
+	reg->block->reloc[reloc_id].bo_usage = reg->bo_usage;
+	return true;
+}
+
+/**
+ * This function will emit all the registers in state directly to the command
+ * stream allowing you to bypass the r600_context dirty list.
+ *
+ * This is used for dispatching compute shaders to avoid mixing compute and
+ * 3D states in the context's dirty list.
+ *
+ * @param pkt_flags Should be either 0 or RADEON_CP_PACKET3_COMPUTE_MODE.  This
+ * value will be passed on to r600_context_block_emit_dirty an or'd against
+ * the PKT3 headers.
+ */
+void r600_context_pipe_state_emit(struct r600_context *ctx,
+                          struct r600_pipe_state *state,
+                          unsigned pkt_flags)
+{
+	unsigned i;
+
+	/* Mark all blocks as dirty: 
+	 * Since two registers can be in the same block, we need to make sure
+	 * we mark all the blocks dirty before we emit any of them.  If we were
+	 * to mark blocks dirty and emit them in the same loop, like this:
+	 *
+	 * foreach (reg in state->regs) {
+	 *     mark_dirty(reg->block)
+	 *     emit_block(reg->block)
+	 * }
+	 *
+	 * Then if we have two registers in this state that are in the same
+	 * block, we would end up emitting that block twice.
+	 */
+	for (i = 0; i < state->nregs; i++) {
+		struct r600_pipe_reg *reg = &state->regs[i];
+		/* Mark all the registers in the block as dirty */
+		reg->block->nreg_dirty = reg->block->nreg;
+		reg->block->status |= R600_BLOCK_STATUS_DIRTY;
+		/* Update the reloc for this register if necessary. */
+		r600_reg_set_block_reloc(reg);
+	}
+
+	/* Emit the registers writes */
+	for (i = 0; i < state->nregs; i++) {
+		struct r600_pipe_reg *reg = &state->regs[i];
+		if (reg->block->status & R600_BLOCK_STATUS_DIRTY) {
+			r600_context_block_emit_dirty(ctx, reg->block, pkt_flags);
+		}
+	}
+}
+
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state)
 {
 	struct r600_block *block;
 	int dirty;
 	for (int i = 0; i < state->nregs; i++) {
-		unsigned id, reloc_id;
+		unsigned id;
 		struct r600_pipe_reg *reg = &state->regs[i];
 
 		block = reg->block;
@@ -855,11 +923,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 		}
 		if (block->flags & REG_FLAG_DIRTY_ALWAYS)
 			dirty |= R600_BLOCK_STATUS_DIRTY;
-		if (block->pm4_bo_index[id]) {
-			/* find relocation */
-			reloc_id = block->pm4_bo_index[id];
-			pipe_resource_reference((struct pipe_resource**)&block->reloc[reloc_id].bo, &reg->bo->b.b);
-			block->reloc[reloc_id].bo_usage = reg->bo_usage;
+		if (r600_reg_set_block_reloc(reg)) {
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
