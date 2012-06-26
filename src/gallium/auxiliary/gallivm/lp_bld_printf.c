@@ -34,6 +34,104 @@
 #include "lp_bld_init.h"
 #include "lp_bld_const.h"
 #include "lp_bld_printf.h"
+#include "lp_bld_type.h"
+
+
+/**
+ * Generates LLVM IR to call debug_printf.
+ */
+static LLVMValueRef
+lp_build_print_args(struct gallivm_state* gallivm,
+                    int argcount,
+                    LLVMValueRef* args)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMContextRef context = gallivm->context;
+   LLVMValueRef func_printf;
+   LLVMTypeRef printf_type;
+   int i;
+
+   assert(args);
+   assert(argcount > 0);
+   assert(LLVMTypeOf(args[0]) == LLVMPointerType(LLVMInt8TypeInContext(context), 0));
+
+   /* Cast any float arguments to doubles as printf expects */
+   for (i = 1; i < argcount; i++) {
+      LLVMTypeRef type = LLVMTypeOf(args[i]);
+
+      if (LLVMGetTypeKind(type) == LLVMFloatTypeKind)
+         args[i] = LLVMBuildFPExt(builder, args[i], LLVMDoubleTypeInContext(context), "");
+   }
+
+   printf_type = LLVMFunctionType(LLVMInt32TypeInContext(context), NULL, 0, 1);
+   func_printf = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)debug_printf));
+   func_printf = LLVMBuildBitCast(builder, func_printf, LLVMPointerType(printf_type, 0), "debug_printf");
+
+   return LLVMBuildCall(builder, func_printf, args, argcount, "");
+}
+
+
+/**
+ * Print a LLVM value of any type
+ */
+LLVMValueRef
+lp_build_print_value(struct gallivm_state *gallivm,
+                     const char *msg,
+                     LLVMValueRef value)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMTypeKind type_kind;
+   LLVMTypeRef type_ref;
+   LLVMValueRef params[2 + LP_MAX_VECTOR_LENGTH];
+   char type_fmt[4] = " %x";
+   char format[2 + 3 * LP_MAX_VECTOR_LENGTH + 2] = "%s";
+   unsigned length;
+   unsigned i;
+
+   type_ref = LLVMTypeOf(value);
+   type_kind = LLVMGetTypeKind(type_ref);
+
+   if (type_kind == LLVMVectorTypeKind) {
+      length = LLVMGetVectorSize(type_ref);
+
+      type_ref = LLVMGetElementType(type_ref);
+      type_kind = LLVMGetTypeKind(type_ref);
+   } else {
+      length = 1;
+   }
+
+   if (type_kind == LLVMFloatTypeKind || type_kind == LLVMDoubleTypeKind) {
+      type_fmt[2] = 'f';
+   } else if (type_kind == LLVMIntegerTypeKind) {
+      if (LLVMGetIntTypeWidth(type_ref) == 8) {
+         type_fmt[2] = 'u';
+      } else {
+         type_fmt[2] = 'i';
+      }
+   } else {
+      /* Unsupported type */
+      assert(0);
+   }
+
+   /* Create format string and arguments */
+   assert(strlen(format) + strlen(type_fmt) * length + 2 <= sizeof format);
+
+   params[1] = lp_build_const_string(gallivm, msg);
+   if (length == 1) {
+      util_strncat(format, type_fmt, sizeof format);
+      params[2] = value;
+   } else {
+      for (i = 0; i < length; ++i) {
+         util_strncat(format, type_fmt, sizeof format);
+         params[2 + i] = LLVMBuildExtractElement(builder, value, lp_build_const_int32(gallivm, i), "");
+      }
+   }
+
+   util_strncat(format, "\n", sizeof format);
+
+   params[0] = lp_build_const_string(gallivm, format);
+   return lp_build_print_args(gallivm, 2 + length, params);
+}
 
 
 static int
@@ -48,137 +146,46 @@ lp_get_printf_arg_count(const char *fmt)
          continue;
       switch (*p) {
          case '\0':
-	    continue;
+       continue;
          case '%':
-	    p++;
-	    continue;
-	 case '.':
-	    if (p[1] == '*' && p[2] == 's') {
-	       count += 2;
-	       p += 3;
+       p++;
+       continue;
+    case '.':
+       if (p[1] == '*' && p[2] == 's') {
+          count += 2;
+          p += 3;
                continue;
-	    }
-	    /* fallthrough */
-	 default:
-	    count ++;
+       }
+       /* fallthrough */
+    default:
+       count ++;
       }
    }
    return count;
 }
 
+
 /**
- * lp_build_printf.
- *
- * Build printf call in LLVM IR. The output goes to stdout.
- * The additional variable arguments need to have type
- * LLVMValueRef.
+ * Generate LLVM IR for a c style printf
  */
 LLVMValueRef
-lp_build_printf(struct gallivm_state *gallivm, const char *fmt, ...)
+lp_build_printf(struct gallivm_state *gallivm,
+                const char *fmt, ...)
 {
-   va_list arglist;
-   int i = 0;
-   int argcount = lp_get_printf_arg_count(fmt);
-   LLVMBuilderRef builder = gallivm->builder;
-   LLVMContextRef context = gallivm->context;
    LLVMValueRef params[50];
-   LLVMValueRef fmtarg = lp_build_const_string(gallivm, fmt);
-   LLVMTypeRef printf_type;
-   LLVMValueRef func_printf;
+   va_list arglist;
+   int argcount;
+   int i;
 
+   argcount = lp_get_printf_arg_count(fmt);
    assert(Elements(params) >= argcount + 1);
-
-   printf_type = LLVMFunctionType(LLVMIntTypeInContext(context, 32), NULL, 0, 1);
-
-   func_printf = lp_build_const_int_pointer(gallivm, func_to_pointer((func_pointer)debug_printf));
-
-   func_printf = LLVMBuildBitCast(gallivm->builder, func_printf,
-                                  LLVMPointerType(printf_type, 0),
-                                  "debug_printf");
-
-   params[0] = fmtarg;
 
    va_start(arglist, fmt);
    for (i = 1; i <= argcount; i++) {
-      LLVMValueRef val = va_arg(arglist, LLVMValueRef);
-      LLVMTypeRef type = LLVMTypeOf(val);
-      /* printf wants doubles, so lets convert so that
-       * we can actually print them */
-      if (LLVMGetTypeKind(type) == LLVMFloatTypeKind)
-         val = LLVMBuildFPExt(builder, val, LLVMDoubleTypeInContext(context), "");
-      params[i] = val;
+      params[i] = va_arg(arglist, LLVMValueRef);
    }
    va_end(arglist);
 
-   return LLVMBuildCall(builder, func_printf, params, argcount + 1, "");
-}
-
-
-
-/**
- * Print a float[4] vector.
- */
-LLVMValueRef
-lp_build_print_vec4(struct gallivm_state *gallivm,
-                    const char *msg, LLVMValueRef vec)
-{
-   LLVMBuilderRef builder = gallivm->builder;
-   char format[1000];
-   LLVMValueRef x, y, z, w;
-
-   x = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 0), "");
-   y = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 1), "");
-   z = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 2), "");
-   w = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 3), "");
-
-   util_snprintf(format, sizeof(format), "%s %%f %%f %%f %%f\n", msg);
-   return lp_build_printf(gallivm, format, x, y, z, w);
-}
-
-
-/**
- * Print a intt[4] vector.
- */
-LLVMValueRef
-lp_build_print_ivec4(struct gallivm_state *gallivm,
-                    const char *msg, LLVMValueRef vec)
-{
-   LLVMBuilderRef builder = gallivm->builder;
-   char format[1000];
-   LLVMValueRef x, y, z, w;
-
-   x = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 0), "");
-   y = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 1), "");
-   z = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 2), "");
-   w = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, 3), "");
-
-   util_snprintf(format, sizeof(format), "%s %%i %%i %%i %%i\n", msg);
-   return lp_build_printf(gallivm, format, x, y, z, w);
-}
-
-
-/**
- * Print a uint8[16] vector.
- */
-LLVMValueRef
-lp_build_print_uvec16(struct gallivm_state *gallivm,
-                    const char *msg, LLVMValueRef vec)
-{
-   LLVMBuilderRef builder = gallivm->builder;
-   char format[1000];
-   LLVMValueRef args[16];
-   int i;
-
-   for (i = 0; i < 16; ++i) {
-      args[i] = LLVMBuildExtractElement(builder, vec, lp_build_const_int32(gallivm, i), "");
-   }
-
-   util_snprintf(format, sizeof(format), "%s %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u %%u\n", msg);
-
-   return lp_build_printf(
-            gallivm, format,
-            args[ 0], args[ 1], args[ 2], args[ 3],
-            args[ 4], args[ 5], args[ 6], args[ 7],
-            args[ 8], args[ 9], args[10], args[11],
-            args[12], args[13], args[14], args[15]);
+   params[0] = lp_build_const_string(gallivm, fmt);
+   return lp_build_print_args(gallivm, argcount + 1, params);
 }

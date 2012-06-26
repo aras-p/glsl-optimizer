@@ -39,16 +39,9 @@ lp_build_printf(struct gallivm_state *gallivm,
                 const char *fmt, ...);
 
 LLVMValueRef
-lp_build_print_vec4(struct gallivm_state *gallivm,
-                    const char *msg, LLVMValueRef vec);
-
-LLVMValueRef
-lp_build_print_ivec4(struct gallivm_state *gallivm,
-                     const char *msg, LLVMValueRef vec);
-
-LLVMValueRef
-lp_build_print_uvec16(struct gallivm_state *gallivm,
-                     const char *msg, LLVMValueRef vec);
+lp_build_print_value(struct gallivm_state *gallivm,
+                     const char *msg,
+                     LLVMValueRef value);
 
 #endif
 
