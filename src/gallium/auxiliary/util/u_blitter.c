@@ -815,6 +815,8 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
 
    blitter_set_dst_dimensions(ctx, width, height);
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
@@ -1013,6 +1015,8 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_fragment_sampler_states(pipe, 1, &ctx->sampler_state);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->set_fragment_sampler_views(pipe, 1, &src);
@@ -1098,6 +1102,8 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1166,6 +1172,8 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1215,6 +1223,8 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs);
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
