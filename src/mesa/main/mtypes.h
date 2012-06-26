@@ -630,6 +630,26 @@ struct gl_config
 
 
 /**
+ * Material state.
+ */
+struct gl_material
+{
+   GLfloat Attrib[MAT_ATTRIB_MAX][4];
+};
+
+
+/**
+ * Light state flags.
+ */
+/*@{*/
+#define LIGHT_SPOT         0x1
+#define LIGHT_LOCAL_VIEWER 0x2
+#define LIGHT_POSITIONAL   0x4
+#define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
+/*@}*/
+
+
+/**
  * Light source state.
  */
 struct gl_light
@@ -654,7 +674,7 @@ struct gl_light
     * \name Derived fields
     */
    /*@{*/
-   GLbitfield _Flags;		/**< State */
+   GLbitfield _Flags;		/**< Mask of LIGHT_x bits defined above */
 
    GLfloat _Position[4];	/**< position in eye/obj coordinates */
    GLfloat _VP_inf_norm[3];	/**< Norm direction to infinite light */
@@ -679,15 +699,6 @@ struct gl_lightmodel
    GLboolean TwoSide;		/**< Two (or one) sided lighting? */
    GLenum ColorControl;		/**< either GL_SINGLE_COLOR
 				 *    or GL_SEPARATE_SPECULAR_COLOR */
-};
-
-
-/**
- * Material state.
- */
-struct gl_material
-{
-   GLfloat Attrib[MAT_ATTRIB_MAX][4];
 };
 
 
@@ -912,16 +923,6 @@ struct gl_hint_attrib
    GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
 };
 
-/**
- * Light state flags.
- */
-/*@{*/
-#define LIGHT_SPOT         0x1
-#define LIGHT_LOCAL_VIEWER 0x2
-#define LIGHT_POSITIONAL   0x4
-#define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
-/*@}*/
-
 
 /**
  * Lighting attribute group (GL_LIGHT_BIT).
@@ -932,11 +933,10 @@ struct gl_light_attrib
    struct gl_lightmodel Model;		/**< Lighting model */
 
    /**
-    * Must flush FLUSH_VERTICES before referencing:
+    * Front and back material values.
+    * Note: must call FLUSH_VERTICES() before using.
     */
-   /*@{*/
-   struct gl_material Material; 	/**< Includes front & back values */
-   /*@}*/
+   struct gl_material Material;
 
    GLboolean Enabled;			/**< Lighting enabled flag */
    GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
@@ -945,7 +945,7 @@ struct gl_light_attrib
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
    GLboolean ColorMaterialEnabled;
-   GLenum ClampVertexColor;
+   GLenum ClampVertexColor;             /**< GL_TRUE, GL_FALSE, GL_FIXED_ONLY */
    GLboolean _ClampVertexColor;
 
    struct gl_light EnabledList;         /**< List sentinel */
