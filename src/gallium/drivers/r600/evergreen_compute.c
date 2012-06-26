@@ -188,20 +188,6 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 
 	r600_inval_shader_cache(ctx);
 
-	/* We can't always determine the
-	 * number of iterations in a loop before it's executed,
-	 * so we just need to set up the loop counter to give us the maximum
-	 * number of iterations possible.  Currently, loops in shader code
-	 * ignore the loop counter and use a break instruction to exit the
-	 * loop at the correct time.
-	 */
-	evergreen_set_loop_const(ctx->cs_shader,
-		0, /* index */
-		0xFFF, /* Maximum value of the loop counter (i.e. when the loop
-			* counter reaches this value, the program will break
-			* out of the loop. */
-		0x0,   /* Starting value of the loop counter. */
-		0x1);  /* Amount to increment the loop counter each iteration. */
 }
 
 /* The kernel parameters are stored a vtx buffer (ID=0), besides the explicit
@@ -674,6 +660,22 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 						| S_0286E8_TGID_ENA
 						| S_0286E8_DISABLE_INDEX_PACK)
 						;
+
+	/* The LOOP_CONST registers are an optimizations for loops that allows
+	 * you to store the initial counter, increment value, and maximum
+	 * counter value in a register so that hardware can calculate the
+	 * correct number of iterations for the loop, so that you don't need
+	 * to have the loop counter in your shader code.  We don't currently use
+	 * this optimization, so we must keep track of the counter in the
+	 * shader and use a break instruction to exit loops.  However, the
+	 * hardware will still uses this register to determine when to exit a
+	 * loop, so we need to initialize the counter to 0, set the increment
+	 * value to 1 and the maximum counter value to the 4095 (0xfff) which
+	 * is the maximum value allowed.  This gives us a maximum of 4096
+	 * iterations for our loops, but hopefully our break instruction will
+	 * execute before some time before the 4096th iteration.
+	 */
+	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (160 * 4), 0x1000FFF);
 }
 
 void evergreen_init_compute_state_functions(struct r600_context *ctx)
