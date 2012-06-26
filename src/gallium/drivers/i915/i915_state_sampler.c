@@ -215,6 +215,7 @@ static uint translate_texture_format(enum pipe_format pipeFormat,
    case PIPE_FORMAT_B10G10R10A2_UNORM:
       return MAPSURF_32BIT | MT_32BIT_ARGB2101010;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case PIPE_FORMAT_B8G8R8X8_UNORM:
       return MAPSURF_32BIT | MT_32BIT_XRGB8888;
@@ -309,6 +310,8 @@ static void update_map(struct i915_context *i915,
    assert(depth);
 
    format = translate_texture_format(pt->format, view);
+   i915->current.sampler_srgb[unit] = ( pt->format == PIPE_FORMAT_B8G8R8A8_SRGB ||
+                                        pt->format == PIPE_FORMAT_L8_SRGB );
    pitch = tex->stride;
 
    assert(format);

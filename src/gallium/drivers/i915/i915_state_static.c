@@ -31,7 +31,6 @@
 #include "i915_screen.h"
 
 
-
 /***********************************************************************
  * Update framebuffer state
  */
@@ -39,6 +38,7 @@ static unsigned translate_format(enum pipe_format format)
 {
    switch (format) {
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_R8G8B8X8_UNORM:

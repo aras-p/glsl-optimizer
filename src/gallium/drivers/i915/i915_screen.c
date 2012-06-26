@@ -110,7 +110,9 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
             return PIPE_MAX_VERTEX_SAMPLERS;
          else
             return 0;
-      default:
+      case PIPE_SHADER_CAP_INTEGERS:
+         return 1;
+       default:
          return draw_get_shader_param(shader, cap);
       }
    case PIPE_SHADER_FRAGMENT:
@@ -290,6 +292,7 @@ i915_is_format_supported(struct pipe_screen *screen,
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_SRGB,
       PIPE_FORMAT_B8G8R8X8_UNORM,
       PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_R8G8B8X8_UNORM,

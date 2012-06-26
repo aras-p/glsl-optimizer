@@ -155,6 +155,8 @@ struct i915_state
    unsigned sampler[I915_TEX_UNITS][3];
    unsigned sampler_enable_flags;
    unsigned sampler_enable_nr;
+   boolean sampler_srgb[I915_TEX_UNITS];
+   int srgb_const_offset;
 
    /* texture image buffers */
    unsigned texbuffer[I915_TEX_UNITS][2];
