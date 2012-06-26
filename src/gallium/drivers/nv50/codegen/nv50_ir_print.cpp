@@ -37,9 +37,8 @@ enum TextStyle
    TXT_INSN
 };
 
-static const char *colour[8] =
+static const char *_colour[8] =
 {
-#if 1
    "\x1b[00m",
    "\x1b[34m",
    "\x1b[35m",
@@ -48,10 +47,22 @@ static const char *colour[8] =
    "\x1b[33m",
    "\x1b[37m",
    "\x1b[32m"
-#else
-   "", "", "", "", "", "", "", ""
-#endif
 };
+
+static const char *_nocolour[8] =
+{
+      "", "", "", "", "", "", "", ""
+};
+
+static const char **colour;
+
+static void init_colours()
+{
+   if (getenv("NV50_PROG_DEBUG_NO_COLORS") != NULL)
+      colour = _nocolour;
+   else
+      colour = _colour;
+}
 
 static const char *OpClassStr[OPCLASS_OTHER + 1] =
 {
@@ -620,6 +631,7 @@ void
 Program::print()
 {
    PrintPass pass;
+   init_colours();
    pass.run(this, true, false);
 }
 
