@@ -1181,46 +1181,6 @@ typedef enum
 
 
 /**
- * TexGenEnabled flags.
- */
-/*@{*/
-#define S_BIT 1
-#define T_BIT 2
-#define R_BIT 4
-#define Q_BIT 8
-#define STR_BITS (S_BIT | T_BIT | R_BIT)
-/*@}*/
-
-
-/**
- * Bit flag versions of the corresponding GL_ constants.
- */
-/*@{*/
-#define TEXGEN_SPHERE_MAP        0x1
-#define TEXGEN_OBJ_LINEAR        0x2
-#define TEXGEN_EYE_LINEAR        0x4
-#define TEXGEN_REFLECTION_MAP_NV 0x8
-#define TEXGEN_NORMAL_MAP_NV     0x10
-
-#define TEXGEN_NEED_NORMALS      (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV)
-#define TEXGEN_NEED_EYE_COORD    (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV     | \
-				  TEXGEN_EYE_LINEAR)
-/*@}*/
-
-
-
-/** Tex-gen enabled for texture unit? */
-#define ENABLE_TEXGEN(unit) (1 << (unit))
-
-/** Non-identity texture matrix for texture unit? */
-#define ENABLE_TEXMAT(unit) (1 << (unit))
-
-
-/**
  * Texture image state.  Drivers will typically create a subclass of this
  * with extra fields for memory buffers, etc.
  */
@@ -1364,6 +1324,46 @@ struct gl_tex_env_combine_state
    GLuint _NumArgsRGB;   /**< Number of inputs used for the RGB combiner */
    GLuint _NumArgsA;     /**< Number of inputs used for the A combiner */
 };
+
+
+/**
+ * TexGenEnabled flags.
+ */
+/*@{*/
+#define S_BIT 1
+#define T_BIT 2
+#define R_BIT 4
+#define Q_BIT 8
+#define STR_BITS (S_BIT | T_BIT | R_BIT)
+/*@}*/
+
+
+/**
+ * Bit flag versions of the corresponding GL_ constants.
+ */
+/*@{*/
+#define TEXGEN_SPHERE_MAP        0x1
+#define TEXGEN_OBJ_LINEAR        0x2
+#define TEXGEN_EYE_LINEAR        0x4
+#define TEXGEN_REFLECTION_MAP_NV 0x8
+#define TEXGEN_NORMAL_MAP_NV     0x10
+
+#define TEXGEN_NEED_NORMALS      (TEXGEN_SPHERE_MAP        | \
+				  TEXGEN_REFLECTION_MAP_NV | \
+				  TEXGEN_NORMAL_MAP_NV)
+#define TEXGEN_NEED_EYE_COORD    (TEXGEN_SPHERE_MAP        | \
+				  TEXGEN_REFLECTION_MAP_NV | \
+				  TEXGEN_NORMAL_MAP_NV     | \
+				  TEXGEN_EYE_LINEAR)
+/*@}*/
+
+
+
+/** Tex-gen enabled for texture unit? */
+#define ENABLE_TEXGEN(unit) (1 << (unit))
+
+/** Non-identity texture matrix for texture unit? */
+#define ENABLE_TEXMAT(unit) (1 << (unit))
 
 
 /**
