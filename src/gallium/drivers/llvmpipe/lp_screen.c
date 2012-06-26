@@ -112,6 +112,10 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_SM3:
       return 1;
+   case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
+      return 0;
+   case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+      return 0;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:
@@ -150,24 +154,64 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 1;
+   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+      return 0;
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
+      return 0;
+   case PIPE_CAP_SHADER_STENCIL_EXPORT:
       return 0;
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+      return 1;
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
+      return 0;
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+      return 1;
+   case PIPE_CAP_SEAMLESS_CUBE_MAP:
+   case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+      return 0;
+   case PIPE_CAP_SCALED_RESOLVE:
+      return 0;
+   case PIPE_CAP_MIN_TEXEL_OFFSET:
+   case PIPE_CAP_MAX_TEXEL_OFFSET:
+      return 0;
    case PIPE_CAP_CONDITIONAL_RENDER:
       return 1;
+   case PIPE_CAP_TEXTURE_BARRIER:
+      return 0;
+   case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+   case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+   case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
+      return 0;
+   case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
+   case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
+      return 0;
+   case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
+   case PIPE_CAP_VERTEX_COLOR_CLAMPED:
+      return 0;
+   case PIPE_CAP_GLSL_FEATURE_LEVEL:
+      return 0;
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
+      return 0;
+   case PIPE_CAP_COMPUTE:
       return 0;
    case PIPE_CAP_USER_VERTEX_BUFFERS:
    case PIPE_CAP_USER_INDEX_BUFFERS:
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return 1;
+   case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
+   case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
+   case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
+      return 0;
+
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 16;
-   default:
+   case PIPE_CAP_START_INSTANCE:
       return 0;
    }
+   /* should only get here on unhandled cases */
+   debug_printf("Unexpected PIPE_CAP %d query\n", param);
+   return 0;
 }
 
 static int
@@ -225,10 +269,10 @@ llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
    case PIPE_CAPF_GUARD_BAND_RIGHT:
    case PIPE_CAPF_GUARD_BAND_BOTTOM:
       return 0.0;
-   default:
-      assert(0);
-      return 0;
    }
+   /* should only get here on unhandled cases */
+   debug_printf("Unexpected PIPE_CAP %d query\n", param);
+   return 0.0;
 }
 
 
