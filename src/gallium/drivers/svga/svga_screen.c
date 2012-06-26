@@ -118,11 +118,15 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 
    case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 15.0;
-
-   default:
-      debug_printf("Unexpected PIPE_CAPF_ query %u\n", param);
-      return 0;
+   case PIPE_CAPF_GUARD_BAND_LEFT:
+   case PIPE_CAPF_GUARD_BAND_TOP:
+   case PIPE_CAPF_GUARD_BAND_RIGHT:
+   case PIPE_CAPF_GUARD_BAND_BOTTOM:
+      return 0.0;
    }
+
+   debug_printf("Unexpected PIPE_CAPF_ query %u\n", param);
+   return 0;
 }
 
 
@@ -233,6 +237,7 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+   case PIPE_CAP_SCALED_RESOLVE:
    case PIPE_CAP_MIN_TEXEL_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
    case PIPE_CAP_CONDITIONAL_RENDER:
@@ -245,15 +250,15 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
+   case PIPE_CAP_COMPUTE:
    case PIPE_CAP_START_INSTANCE:
       return 0;
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
       return 1;
-
-   default:
-      debug_printf("Unexpected PIPE_CAP_ query %u\n", param);
-      return 0;
    }
+
+   debug_printf("Unexpected PIPE_CAP_ query %u\n", param);
+   return 0;
 }
 
 static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
@@ -364,7 +369,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       /* no support for geometry shaders at this time */
       return 0;
    default:
-      debug_printf("Unexpected vertex shader query %u\n", param);
+      debug_printf("Unexpected shader type (%u) query\n", shader);
       return 0;
    }
    return 0;
