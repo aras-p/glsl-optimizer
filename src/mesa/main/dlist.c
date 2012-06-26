@@ -469,6 +469,9 @@ typedef enum
    OPCODE_BEGIN_CONDITIONAL_RENDER,
    OPCODE_END_CONDITIONAL_RENDER,
 
+   /* ARB_timer_query */
+   OPCODE_QUERY_COUNTER,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -5351,6 +5354,23 @@ save_EndQueryARB(GLenum target)
    }
 }
 
+
+static void GLAPIENTRY
+save_QueryCounter(GLuint id, GLenum target)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_QUERY_COUNTER, 2);
+   if (n) {
+      n[1].ui = id;
+      n[2].e = target;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_QueryCounter(ctx->Exec, (id, target));
+   }
+}
+
 #endif /* FEATURE_queryobj */
 
 
@@ -8345,6 +8365,9 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_END_QUERY_ARB:
             CALL_EndQueryARB(ctx->Exec, (n[1].e));
             break;
+         case OPCODE_QUERY_COUNTER:
+            CALL_QueryCounter(ctx->Exec, (n[1].ui, n[2].e));
+            break;
 #endif
          case OPCODE_DRAW_BUFFERS_ARB:
             {
@@ -10309,6 +10332,7 @@ _mesa_create_save_table(void)
    _mesa_init_queryobj_dispatch(table); /* glGetQuery, etc */
    SET_BeginQueryARB(table, save_BeginQueryARB);
    SET_EndQueryARB(table, save_EndQueryARB);
+   SET_QueryCounter(table, save_QueryCounter);
 #endif
 
    SET_DrawBuffersARB(table, save_DrawBuffersARB);
