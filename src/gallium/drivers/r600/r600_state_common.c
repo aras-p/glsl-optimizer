@@ -644,7 +644,7 @@ void r600_set_so_targets(struct pipe_context *ctx,
 	unsigned i;
 
 	/* Stop streamout. */
-	if (rctx->num_so_targets) {
+	if (rctx->num_so_targets && !rctx->streamout_start) {
 		r600_context_streamout_end(rctx);
 	}
 
