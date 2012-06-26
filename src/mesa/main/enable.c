@@ -161,8 +161,8 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    return;
 
 invalid_enum_error:
-   _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",
-               state ? "Enable" : "Disable", cap);
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(%s)",
+               state ? "Enable" : "Disable", _mesa_lookup_enum_by_nr(cap));
 }
 
 
@@ -937,8 +937,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
    return;
 
 invalid_enum_error:
-   _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",
-               state ? "Enable" : "Disable", cap);
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(%s)",
+               state ? "Enable" : "Disable", _mesa_lookup_enum_by_nr(cap));
 }
 
 
@@ -1441,6 +1441,7 @@ _mesa_IsEnabled( GLenum cap )
    return GL_FALSE;
 
 invalid_enum_error:
-   _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
+   _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(%s)",
+               _mesa_lookup_enum_by_nr(cap));
    return GL_FALSE;
 }
