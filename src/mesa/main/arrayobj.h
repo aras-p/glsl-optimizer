@@ -52,9 +52,19 @@ extern void
 _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj );
 
 extern void
+_mesa_reference_array_object_(struct gl_context *ctx,
+                              struct gl_array_object **ptr,
+                              struct gl_array_object *arrayObj);
+
+static inline void
 _mesa_reference_array_object(struct gl_context *ctx,
                              struct gl_array_object **ptr,
-                             struct gl_array_object *arrayObj);
+                             struct gl_array_object *arrayObj)
+{
+   if (*ptr != arrayObj)
+      _mesa_reference_array_object_(ctx, ptr, arrayObj);
+}
+
 
 extern void
 _mesa_initialize_array_object( struct gl_context *ctx,

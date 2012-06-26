@@ -123,14 +123,15 @@ _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 
 /**
  * Set ptr to arrayObj w/ reference counting.
+ * Note: this should only be called from the _mesa_reference_array_object()
+ * inline function.
  */
 void
-_mesa_reference_array_object(struct gl_context *ctx,
-                             struct gl_array_object **ptr,
-                             struct gl_array_object *arrayObj)
+_mesa_reference_array_object_(struct gl_context *ctx,
+                              struct gl_array_object **ptr,
+                              struct gl_array_object *arrayObj)
 {
-   if (*ptr == arrayObj)
-      return;
+   assert(*ptr != arrayObj);
 
    if (*ptr) {
       /* Unreference the old array object */
