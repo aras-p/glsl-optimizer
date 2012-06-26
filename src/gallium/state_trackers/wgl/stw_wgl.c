@@ -25,6 +25,19 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ *
+ * Fake WGL API implementation.
+ *
+ * These functions implement the WGL API, on top of the ICD DDI, so that the
+ * resulting DLL can be used as a drop-in replacement for the system's
+ * opengl32.dll.
+ *
+ * These functions never get called for ICD drivers, which use exclusively the
+ * ICD DDI, i.e., the Drv* entrypoints.
+ */
+
 #include <windows.h>
 
 #include "util/u_debug.h"

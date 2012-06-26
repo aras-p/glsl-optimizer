@@ -25,6 +25,13 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ *
+ * This header defines the interface used by the system's opengl32.dll and the
+ * Installable Client Driver (ICD).
+ */
+
 #ifndef STW_ICD_H
 #define STW_ICD_H
 
@@ -447,14 +454,26 @@ typedef struct _GLCBPRESENTBUFFERSDATA
  */
 typedef struct _GLCALLBACKTABLE
 {
-   /** Unused */
-   PROC wglCbSetCurrentValue;
+   /**
+    * Set per-thread driver private data.
+    *
+    * Unused.
+    **/
+   void (APIENTRY *wglCbSetCurrentValue)(void *pvData);
 
-   /** Unused */
-   PROC wglCbGetCurrentValue;
+   /**
+    * Get per-thread private data.
+    *
+    * Unused.
+    */
+   void * (APIENTRY *wglCbGetCurrentValue)(void);
 
-   /** Unused */
-   PROC wglCbGetDhglrc;
+   /**
+    * Get the ICD GHGLRC handle corresponding to the specified hglrc handle.
+    *
+    * Currently unused.
+    */
+   DHGLRC (APIENTRY *wglCbGetDhglrc)(HGLRC hglrc);
 
    /** Unused */
    PROC wglCbGetDdHandle;
