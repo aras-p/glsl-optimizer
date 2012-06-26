@@ -50,9 +50,8 @@ extern "C" {
 #endif
 
 
-/** Opaque type */
+/** Opaque types */
 struct winsys_handle;
-/** Opaque type */
 struct pipe_fence_handle;
 struct pipe_resource;
 struct pipe_surface;
@@ -66,7 +65,6 @@ struct pipe_transfer;
  */
 struct pipe_screen {
    void (*destroy)( struct pipe_screen * );
-
 
    const char *(*get_name)( struct pipe_screen * );
 
