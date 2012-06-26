@@ -310,7 +310,7 @@ nv50_screen_fence_update(struct pipe_screen *pscreen)
    return nv50_screen(pscreen)->fence.map[0];
 }
 
-static int
+static void
 nv50_screen_init_hwctx(struct nv50_screen *screen, unsigned tls_space)
 {
    struct nouveau_pushbuf *push = screen->base.pushbuf;
@@ -506,16 +506,7 @@ nv50_screen_init_hwctx(struct nv50_screen *screen, unsigned tls_space)
    PUSH_DATA (push, 1);
 
    PUSH_KICK (push);
-
-   return 0;
 }
-
-#define FAIL_SCREEN_INIT(str, err)                    \
-   do {                                               \
-      NOUVEAU_ERR(str, err);                          \
-      nv50_screen_destroy(pscreen);                   \
-      return NULL;                                    \
-   } while(0)
 
 struct pipe_screen *
 nv50_screen_create(struct nouveau_device *dev)
@@ -534,8 +525,10 @@ nv50_screen_create(struct nouveau_device *dev)
    pscreen = &screen->base.base;
 
    ret = nouveau_screen_init(&screen->base, dev);
-   if (ret)
-      FAIL_SCREEN_INIT("nouveau_screen_init failed: %d\n", ret);
+   if (ret) {
+      NOUVEAU_ERR("nouveau_screen_init failed: %d\n", ret);
+      goto fail;
+   }
 
    /* TODO: Prevent FIFO prefetch before transfer of index buffers and
     *  admit them to VRAM.
@@ -563,8 +556,11 @@ nv50_screen_create(struct nouveau_device *dev)
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         NULL, &screen->fence.bo);
-   if (ret)
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate fence bo: %d\n", ret);
       goto fail;
+   }
+
    nouveau_bo_map(screen->fence.bo, 0, NULL);
    screen->fence.map = screen->fence.bo->map;
    screen->base.fence.emit = nv50_screen_fence_emit;
@@ -573,20 +569,24 @@ nv50_screen_create(struct nouveau_device *dev)
    ret = nouveau_object_new(chan, 0xbeef0301, NOUVEAU_NOTIFIER_CLASS,
                             &(struct nv04_notify){ .length = 32 },
                             sizeof(struct nv04_notify), &screen->sync);
-   if (ret)
-      FAIL_SCREEN_INIT("Error allocating notifier: %d\n", ret);
-
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate notifier: %d\n", ret);
+      goto fail;
+   }
 
    ret = nouveau_object_new(chan, 0xbeef5039, NV50_M2MF_CLASS,
                             NULL, 0, &screen->m2mf);
-   if (ret)
-      FAIL_SCREEN_INIT("Error allocating PGRAPH context for M2MF: %d\n", ret);
-
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate PGRAPH context for M2MF: %d\n", ret);
+      goto fail;
+   }
 
    ret = nouveau_object_new(chan, 0xbeef502d, NV50_2D_CLASS,
                             NULL, 0, &screen->eng2d);
-   if (ret)
-      FAIL_SCREEN_INIT("Error allocating PGRAPH context for 2D: %d\n", ret);
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate PGRAPH context for 2D: %d\n", ret);
+      goto fail;
+   }
 
    switch (dev->chipset & 0xf0) {
    case 0x50:
@@ -612,21 +612,24 @@ nv50_screen_create(struct nouveau_device *dev)
       }
       break;
    default:
-      FAIL_SCREEN_INIT("Not a known NV50 chipset: NV%02x\n", dev->chipset);
-      break;
+      NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", dev->chipset);
+      goto fail;
    }
    screen->base.class_3d = tesla_class;
 
    ret = nouveau_object_new(chan, 0xbeef5097, tesla_class,
                             NULL, 0, &screen->tesla);
-   if (ret)
-      FAIL_SCREEN_INIT("Error allocating PGRAPH context for 3D: %d\n", ret);
-
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate PGRAPH context for 3D: %d\n", ret);
+      goto fail;
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
                         3 << NV50_CODE_BO_SIZE_LOG2, NULL, &screen->code);
-   if (ret)
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate code bo: %d\n", ret);
       goto fail;
+   }
 
    nouveau_heap_init(&screen->vp_code_heap, 0, 1 << NV50_CODE_BO_SIZE_LOG2);
    nouveau_heap_init(&screen->gp_code_heap, 0, 1 << NV50_CODE_BO_SIZE_LOG2);
@@ -641,8 +644,10 @@ nv50_screen_create(struct nouveau_device *dev)
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, stack_size, NULL,
                         &screen->stack_bo);
-   if (ret)
-      FAIL_SCREEN_INIT("Failed to allocate stack bo: %d\n", ret);
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate stack bo: %d\n", ret);
+      goto fail;
+   }
 
    tls_space = NV50_CAP_MAX_PROGRAM_TEMPS * 16;
 
@@ -654,29 +659,32 @@ nv50_screen_create(struct nouveau_device *dev)
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, screen->tls_size, NULL,
                         &screen->tls_bo);
-   if (ret)
-      FAIL_SCREEN_INIT("Failed to allocate stack bo: %d\n", ret);
-
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate local bo: %d\n", ret);
+      goto fail;
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, 4 << 16, NULL,
                         &screen->uniforms);
-   if (ret)
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate uniforms bo: %d\n", ret);
       goto fail;
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, 3 << 16, NULL,
                         &screen->txc);
-   if (ret)
-      FAIL_SCREEN_INIT("Could not allocate TIC/TSC bo: %d\n", ret);
+   if (ret) {
+      NOUVEAU_ERR("Failed to allocate TIC/TSC bo: %d\n", ret);
+      goto fail;
+   }
 
    screen->tic.entries = CALLOC(4096, sizeof(void *));
    screen->tsc.entries = screen->tic.entries + 2048;
 
-
    if (!nv50_blitctx_create(screen))
       goto fail;
 
-   if (nv50_screen_init_hwctx(screen, tls_space))
-      goto fail;
+   nv50_screen_init_hwctx(screen, tls_space);
 
    nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 
