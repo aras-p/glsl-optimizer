@@ -163,6 +163,10 @@ clip_emit_quad(struct setup_context *setup, struct quad_header *quad)
    if (quad->inout.mask) {
       struct softpipe_context *sp = setup->softpipe;
 
+#if DEBUG_FRAGS
+      setup->numFragsEmitted += util_bitcount(quad->inout.mask);
+#endif
+
       sp->quad.first->run( sp->quad.first, &quad, 1 );
    }
 }
@@ -234,6 +238,9 @@ flush_spans(struct setup_context *setup)
                setup->quad[q].inout.mask = quadmask;
                setup->quad_ptrs[q] = &setup->quad[q];
                q++;
+#if DEBUG_FRAGS
+               setup->numFragsEmitted += util_bitcount(quadmask);
+#endif
             }
             mask0 >>= 2;
             mask1 >>= 2;
