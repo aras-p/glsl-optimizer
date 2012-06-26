@@ -437,9 +437,8 @@ static INLINE unsigned r600_shader_selector_key(struct pipe_context * ctx,
 	unsigned key;
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
-		key = rctx->two_side;
-		if (sel->eg_fs_write_all)
-			key |= rctx->nr_cbufs << 1;
+		key = rctx->two_side |
+				MIN2(sel->nr_ps_max_color_exports, rctx->nr_cbufs + rctx->dual_src_blend) << 1;
 	} else
 		key = 0;
 
@@ -494,14 +493,12 @@ static int r600_shader_select(struct pipe_context *ctx,
 			return r;
 		}
 
-		/* We don't know the value of eg_fs_write_all property until we built
-		 * at least one variant, so we may need to recompute the key (include
-		 * rctx->nr_cbufs) after building first variant. */
+		/* We don't know the value of nr_ps_max_color_exports until we built
+		 * at least one variant, so we may need to recompute the key after
+		 * building first variant. */
 		if (sel->type == PIPE_SHADER_FRAGMENT &&
-				sel->num_shaders == 0 &&
-				rctx->chip_class >= EVERGREEN &&
-				shader->shader.fs_write_all) {
-			sel->eg_fs_write_all = 1;
+				sel->num_shaders == 0) {
+			sel->nr_ps_max_color_exports = shader->shader.nr_ps_max_color_exports;
 			key = r600_shader_selector_key(ctx, sel);
 		}
 
@@ -515,9 +512,6 @@ static int r600_shader_select(struct pipe_context *ctx,
 	shader->next_variant = sel->current;
 	sel->current = shader;
 
-	/* Moved from r600_bind_ps_shader, different shader variants
-	 * may use different number of GPRs, so we need to update it. */
-	/* FIXME: we never did it after rebuilding the shaders, is it required? */
 	if (rctx->chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
 		r600_adjust_gprs(rctx);
 	}

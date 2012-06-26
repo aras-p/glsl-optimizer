@@ -1644,6 +1644,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->have_depth_fb = 0;
+	rctx->nr_cbufs = state->nr_cbufs;
+
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		r600_cb(rctx, rstate, state, i);
 	}

@@ -198,10 +198,7 @@ struct r600_pipe_shader_selector {
 	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
 	unsigned	type;
 
-	/* 1 on evergreen+ when the shader contains
-	 * TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, otherwise it's 0.
-	 * Used to determine whether we need to include nr_cbufs in the key */
-	unsigned	eg_fs_write_all;
+	unsigned	nr_ps_max_color_exports;
 };
 
 struct r600_pipe_shader {

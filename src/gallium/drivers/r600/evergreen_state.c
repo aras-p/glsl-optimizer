@@ -2646,18 +2646,14 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
-	num_cout = 0;
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION ||
 		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
-		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
-			if (rshader->fs_write_all)
-				num_cout = rshader->nr_cbufs;
-			else
-				num_cout++;
-		}
 	}
+
+	num_cout = rshader->nr_ps_color_exports;
+
 	exports_ps |= S_02884C_EXPORT_COLORS(num_cout);
 	if (!exports_ps) {
 		/* always at least export 1 component per pixel */

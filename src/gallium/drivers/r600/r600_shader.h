@@ -49,7 +49,12 @@ struct r600_shader {
 	boolean			fs_write_all;
 	boolean			vs_prohibit_ucps;
 	boolean			two_side;
-	unsigned		nr_cbufs;
+	/* Number of color outputs in the TGSI shader,
+	 * sometimes it could be higher than nr_cbufs (bug?).
+	 * Also with writes_all property on eg+ it will be set to max CB number */
+	unsigned		nr_ps_max_color_exports;
+	/* Real number of ps color exports compiled in the bytecode */
+	unsigned		nr_ps_color_exports;
 	/* bit n is set if the shader writes gl_ClipDistance[n] */
 	unsigned		clip_dist_write;
 	/* flag is set if the shader writes VS_OUT_MISC_VEC (e.g. for PSIZE) */
