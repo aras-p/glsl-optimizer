@@ -1024,7 +1024,7 @@ typedef struct {
    void (GLAPIENTRYP MultiDrawElementsBaseVertex)( GLenum mode,
 						   const GLsizei *count,
 						   GLenum type,
-						   const GLvoid **indices,
+						   const GLvoid * const *indices,
 						   GLsizei primcount,
 						   const GLint *basevertex);
    void (GLAPIENTRYP DrawArraysInstanced)(GLenum mode, GLint first,

@@ -718,11 +718,11 @@ _mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
 }
 
 static void GLAPIENTRY
-_mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, GLvoid *userParam)
+_mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, const GLvoid *userParam)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Debug.Callback = callback;
-   ctx->Debug.CallbackData = userParam;
+   ctx->Debug.CallbackData = (void *) userParam;
 }
 
 void

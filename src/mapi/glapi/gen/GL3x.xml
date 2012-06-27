@@ -231,7 +231,7 @@
   <function name="TransformFeedbackVaryings" alias="TransformFeedbackVaryingsEXT">
     <param name="program" type="GLuint"/>
     <param name="count" type="GLsizei"/>
-    <param name="varyings" type="const GLchar* *"/>
+    <param name="varyings" type="const GLchar * const *"/>
     <param name="bufferMode" type="GLenum"/>
   </function>
 

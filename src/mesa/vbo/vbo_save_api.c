@@ -1042,7 +1042,7 @@ _save_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
 
 static void GLAPIENTRY
 _save_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
-                                  GLenum type, const GLvoid **indices,
+                                  GLenum type, const GLvoid * const *indices,
                                   GLsizei primcount, const GLint *basevertex)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1255,7 +1255,7 @@ _save_OBE_MultiDrawElements(GLenum mode, const GLsizei *count, GLenum type,
 static void GLAPIENTRY
 _save_OBE_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei *count,
                                       GLenum type,
-                                      const GLvoid **indices,
+                                      const GLvoid * const *indices,
                                       GLsizei primcount,
                                       const GLint *basevertex)
 {

@@ -404,7 +404,7 @@ _mesa_noop_DrawRangeElementsBaseVertex(GLenum mode,
 static void GLAPIENTRY
 _mesa_noop_MultiDrawElementsBaseVertex(GLenum mode, const GLsizei * count,
                                        GLenum type,
-                                       const GLvoid ** indices,
+                                       const GLvoid * const *indices,
                                        GLsizei primcount,
                                        const GLint * basevertex)
 {

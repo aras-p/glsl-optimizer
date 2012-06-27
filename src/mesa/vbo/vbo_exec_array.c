@@ -1149,7 +1149,8 @@ vbo_exec_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count,
 static void
 vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 				const GLsizei *count, GLenum type,
-				const GLvoid **indices, GLsizei primcount,
+				const GLvoid * const *indices,
+				GLsizei primcount,
 				const GLint *basevertex)
 {
    struct vbo_context *vbo = vbo_context(ctx);
@@ -1290,7 +1291,7 @@ vbo_exec_MultiDrawElements(GLenum mode,
 static void GLAPIENTRY
 vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 				     const GLsizei *count, GLenum type,
-				     const GLvoid **indices,
+				     const GLvoid * const *indices,
 				     GLsizei primcount,
 				     const GLsizei *basevertex)
 {

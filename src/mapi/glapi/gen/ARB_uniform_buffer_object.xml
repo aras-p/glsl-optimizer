@@ -42,7 +42,7 @@
 <function name="GetUniformIndices" offset="assign">
     <param name="program" type="GLuint" />
     <param name="uniformCount" type="GLsizei" />
-    <param name="uniformNames" type="const GLchar **" />
+    <param name="uniformNames" type="const GLchar * const *" />
     <param name="uniformIndices" type="GLuint *" />
 </function>
 
