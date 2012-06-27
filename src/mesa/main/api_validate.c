@@ -272,7 +272,7 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices, GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -328,7 +328,7 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
 				 GLsizei count, GLenum type,
 				 const GLvoid *indices, GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -386,7 +386,7 @@ GLboolean
 _mesa_validate_DrawArrays(struct gl_context *ctx,
 			  GLenum mode, GLint start, GLsizei count)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -414,7 +414,7 @@ GLboolean
 _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint first,
                                    GLsizei count, GLsizei numInstances)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -458,7 +458,7 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      const GLvoid *indices, GLsizei numInstances,
                                      GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -519,7 +519,7 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLenum mode,
                                      struct gl_transform_feedback_object *obj)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
 
    if (!_mesa_valid_prim_mode(ctx, mode, "glDrawTransformFeedback")) {
       return GL_FALSE;

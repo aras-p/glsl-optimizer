@@ -666,8 +666,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
       _mesa_debug(ctx, "glDrawArrays(%s, %d, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), start, count);
 
-   FLUSH_CURRENT(ctx, 0);
-
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
@@ -695,8 +693,6 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
       _mesa_debug(ctx, "glDrawArraysInstanced(%s, %d, %d, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), start, count, numInstances);
 
-   FLUSH_CURRENT(ctx, 0);
-
    if (!_mesa_validate_DrawArraysInstanced(ctx, mode, start, count, numInstances))
       return;
 
@@ -723,8 +719,6 @@ vbo_exec_DrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count
       _mesa_debug(ctx, "glDrawArraysInstancedBaseInstance(%s, %d, %d, %d, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), first, count,
                   numInstances, baseInstance);
-
-   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawArraysInstanced(ctx, mode, first, count,
                                            numInstances))
@@ -899,8 +893,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                 _mesa_lookup_enum_by_nr(mode), start, end, count,
                 _mesa_lookup_enum_by_nr(type), indices, basevertex);
 
-   FLUSH_CURRENT(ctx, 0);
-
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
                                           type, indices, basevertex ))
       return;
@@ -999,8 +991,6 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices);
 
-   FLUSH_CURRENT(ctx, 0);
-
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices, 0 ))
       return;
 
@@ -1022,8 +1012,6 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
       _mesa_debug(ctx, "glDrawElementsBaseVertex(%s, %d, %s, %p, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices, basevertex);
-
-   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices,
 				     basevertex ))
@@ -1047,8 +1035,6 @@ vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
       _mesa_debug(ctx, "glDrawElementsInstanced(%s, %d, %s, %p, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices, numInstances);
-
-   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
                                              numInstances, 0))
@@ -1074,8 +1060,6 @@ vbo_exec_DrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type
                   _mesa_lookup_enum_by_nr(mode), count,
                   _mesa_lookup_enum_by_nr(type), indices,
                   numInstances, basevertex);
-
-   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
                                              numInstances, basevertex))
@@ -1272,8 +1256,6 @@ vbo_exec_MultiDrawElements(GLenum mode,
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
    for (i = 0; i < primcount; i++) {
       if (!_mesa_validate_DrawElements(ctx, mode, count[i], type, indices[i],
 				       0))
@@ -1294,8 +1276,6 @@ vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    for (i = 0; i < primcount; i++) {
       if (!_mesa_validate_DrawElements(ctx, mode, count[i], type, indices[i],
@@ -1359,8 +1339,6 @@ vbo_exec_DrawTransformFeedback(GLenum mode, GLuint name)
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawTransformFeedback(%s, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), name);
-
-   FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_validate_DrawTransformFeedback(ctx, mode, obj)) {
       return;
