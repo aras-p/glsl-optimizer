@@ -28,8 +28,6 @@ struct nv50_context;
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 
-#define NV50_CAP_MAX_PROGRAM_TEMPS 64
-
 struct nv50_varying {
    uint8_t id; /* tgsi index */
    uint8_t hw; /* hw index, nv50 wants flat FP inputs last */
@@ -56,7 +54,6 @@ struct nv50_program {
 
    ubyte type;
    boolean translated;
-   boolean uses_lmem;
 
    uint32_t *code;
    unsigned code_size;
@@ -64,6 +61,7 @@ struct nv50_program {
    uint32_t *immd;
    unsigned immd_size;
    unsigned parm_size; /* size limit of uniform buffer */
+   uint32_t tls_space; /* required local memory per thread */
 
    ubyte max_gpr; /* REG_ALLOC_TEMP */
    ubyte max_out; /* REG_ALLOC_RESULT or FP_RESULT_COUNT */

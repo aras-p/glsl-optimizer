@@ -34,7 +34,10 @@ struct nv50_screen {
    struct nouveau_bo *stack_bo;
    struct nouveau_bo *tls_bo;
 
-   uint64_t tls_size;
+   unsigned TPs;
+   unsigned MPsInTP;
+   unsigned max_tls_space;
+   unsigned cur_tls_space;
 
    struct nouveau_heap *vp_code_heap;
    struct nouveau_heap *gp_code_heap;
@@ -142,5 +145,7 @@ nv50_screen_tsc_free(struct nv50_screen *screen, struct nv50_tsc_entry *tsc)
       screen->tsc.lock[tsc->id / 32] &= ~(1 << (tsc->id % 32));
    }
 }
+
+extern int nv50_tls_realloc(struct nv50_screen *screen, unsigned tls_space);
 
 #endif

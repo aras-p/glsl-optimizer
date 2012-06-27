@@ -97,6 +97,7 @@ struct nv50_context {
       boolean flushed;
       boolean rasterizer_discard;
       uint8_t tls_required;
+      boolean new_tls_space;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[3];

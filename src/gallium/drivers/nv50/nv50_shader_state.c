@@ -129,9 +129,12 @@ nv50_program_update_context_state(struct nv50_context *nv50,
 {
    const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR;
 
-   if (prog && prog->uses_lmem) {
-      if (!nv50->state.tls_required)
+   if (prog && prog->tls_space) {
+      if (nv50->state.new_tls_space)
+         nouveau_bufctx_reset(nv50->bufctx_3d, NV50_BIND_TLS);
+      if (!nv50->state.tls_required || nv50->state.new_tls_space)
          BCTX_REFN_bo(nv50->bufctx_3d, TLS, flags, nv50->screen->tls_bo);
+      nv50->state.new_tls_space = FALSE;
       nv50->state.tls_required |= 1 << stage;
    } else {
       if (nv50->state.tls_required == (1 << stage))
