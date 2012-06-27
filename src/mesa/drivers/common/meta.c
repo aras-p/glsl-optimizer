@@ -181,6 +181,9 @@ struct save_state
    struct gl_feedback Feedback;
 #endif
 
+   /** MESA_META_MULTISAMPLE */
+   GLboolean MultisampleEnabled;
+
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
    GLboolean RasterDiscard;
@@ -733,6 +736,12 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    }
 #endif
 
+   if (state & MESA_META_MULTISAMPLE) {
+      save->MultisampleEnabled = ctx->Multisample.Enabled;
+      if (ctx->Multisample.Enabled)
+         _mesa_set_enable(ctx, GL_MULTISAMPLE, GL_FALSE);
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -1017,6 +1026,11 @@ _mesa_meta_end(struct gl_context *ctx)
       }
    }
 #endif
+
+   if (state & MESA_META_MULTISAMPLE) {
+      if (ctx->Multisample.Enabled != save->MultisampleEnabled)
+         _mesa_set_enable(ctx, GL_MULTISAMPLE, save->MultisampleEnabled);
+   }
 
    /* misc */
    if (save->Lighting) {
@@ -1902,7 +1916,8 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 	       MESA_META_VERTEX |
 	       MESA_META_VIEWPORT |
 	       MESA_META_CLIP |
-	       MESA_META_CLAMP_FRAGMENT_COLOR);
+	       MESA_META_CLAMP_FRAGMENT_COLOR |
+               MESA_META_MULTISAMPLE);
 
    if (!(buffers & BUFFER_BITS_COLOR)) {
       /* We'll use colormask to disable color writes.  Otherwise,

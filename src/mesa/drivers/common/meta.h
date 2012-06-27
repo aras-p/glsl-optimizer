@@ -55,6 +55,7 @@
 #define MESA_META_CONDITIONAL_RENDER    0x20000
 #define MESA_META_CLIP                  0x40000
 #define MESA_META_SELECT_FEEDBACK       0x80000
+#define MESA_META_MULTISAMPLE          0x100000
 /**\}*/
 
 extern void
