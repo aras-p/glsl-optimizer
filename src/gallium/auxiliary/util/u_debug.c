@@ -204,7 +204,7 @@ static boolean str_has_option(const char *str, const char *name)
        * we compare 'start' up to 'str-1' with 'name'. */
 
       while (1) {
-         if (!*str || !isalnum(*str)) {
+         if (!*str || !(isalnum(*str) || *str == '_')) {
             if (str-start == name_len &&
                 !memcmp(start, name, name_len)) {
                return TRUE;
