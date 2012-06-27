@@ -50,7 +50,7 @@ Primitive restart (GL_NV_primitive_restart)           DONE (i965, r600)
 16 vertex texture image units                         DONE
 Texture buffer objs (GL_ARB_texture_buffer_object)    needs GL3.1 enabling (i965)
 Rectangular textures (GL_ARB_texture_rectangle)       DONE (i965, r300, r600, swrast)
-Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
+Uniform buffer objs (GL_ARB_uniform_buffer_object)    DONE (i965)
 Signed normalized textures (GL_EXT_texture_snorm)     DONE (i965, r300, r600)
 
 
