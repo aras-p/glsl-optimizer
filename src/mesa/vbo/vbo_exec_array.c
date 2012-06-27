@@ -724,13 +724,10 @@ vbo_exec_DrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count
                   _mesa_lookup_enum_by_nr(mode), first, count,
                   numInstances, baseInstance);
 
-   if (!_mesa_validate_DrawArraysInstanced(ctx, mode, first, count,
-                                           numInstances))
-      return;
-
    FLUSH_CURRENT(ctx, 0);
 
-   if (!_mesa_valid_to_render(ctx, "glDrawArraysInstancedBaseInstance"))
+   if (!_mesa_validate_DrawArraysInstanced(ctx, mode, first, count,
+                                           numInstances))
       return;
 
    if (0)
