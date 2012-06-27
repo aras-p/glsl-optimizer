@@ -1254,13 +1254,10 @@ vbo_exec_MultiDrawElements(GLenum mode,
 			   GLsizei primcount)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint i;
 
-   for (i = 0; i < primcount; i++) {
-      if (!_mesa_validate_DrawElements(ctx, mode, count[i], type, indices[i],
-				       0))
-	 return;
-   }
+   if (!_mesa_validate_MultiDrawElements(ctx, mode, count, type, indices,
+                                         primcount, NULL))
+      return;
 
    vbo_validated_multidrawelements(ctx, mode, count, type, indices, primcount,
 				   NULL);
@@ -1275,13 +1272,10 @@ vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 				     const GLsizei *basevertex)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint i;
 
-   for (i = 0; i < primcount; i++) {
-      if (!_mesa_validate_DrawElements(ctx, mode, count[i], type, indices[i],
-				       basevertex[i]))
-	 return;
-   }
+   if (!_mesa_validate_MultiDrawElements(ctx, mode, count, type, indices,
+                                         primcount, basevertex))
+      return;
 
    vbo_validated_multidrawelements(ctx, mode, count, type, indices, primcount,
 				   basevertex);

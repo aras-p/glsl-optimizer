@@ -318,6 +318,76 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
 
 
 /**
+ * Error checking for glMultiDrawElements().  Includes parameter checking
+ * and VBO bounds checking.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
+ */
+GLboolean
+_mesa_validate_MultiDrawElements(struct gl_context *ctx,
+                                 GLenum mode, const GLsizei *count,
+                                 GLenum type, const GLvoid * const *indices,
+                                 GLuint primcount, const GLint *basevertex)
+{
+   unsigned i;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, GL_FALSE);
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] <= 0) {
+         if (count[i] < 0)
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glMultiDrawElements(count)" );
+         return GL_FALSE;
+      }
+   }
+
+   if (!_mesa_valid_prim_mode(ctx, mode, "glMultiDrawElements")) {
+      return GL_FALSE;
+   }
+
+   if (type != GL_UNSIGNED_INT &&
+       type != GL_UNSIGNED_BYTE &&
+       type != GL_UNSIGNED_SHORT)
+   {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMultiDrawElements(type)" );
+      return GL_FALSE;
+   }
+
+   if (!check_valid_to_render(ctx, "glMultiDrawElements"))
+      return GL_FALSE;
+
+   /* Vertex buffer object tests */
+   if (_mesa_is_bufferobj(ctx->Array.ArrayObj->ElementArrayBufferObj)) {
+      /* use indices in the buffer object */
+      /* make sure count doesn't go outside buffer bounds */
+      for (i = 0; i < primcount; i++) {
+         if (index_bytes(type, count[i]) >
+             ctx->Array.ArrayObj->ElementArrayBufferObj->Size) {
+            _mesa_warning(ctx,
+                          "glMultiDrawElements index out of buffer bounds");
+            return GL_FALSE;
+         }
+      }
+   }
+   else {
+      /* not using a VBO */
+      for (i = 0; i < primcount; i++) {
+         if (!indices[i])
+            return GL_FALSE;
+      }
+   }
+
+   for (i = 0; i < primcount; i++) {
+      if (!check_index_bounds(ctx, count[i], type, indices[i],
+                              basevertex ? basevertex[i] : 0))
+         return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Error checking for glDrawRangeElements().  Includes parameter checking
  * and VBO bounds checking.
  * \return GL_TRUE if OK to render, GL_FALSE if error found

@@ -56,6 +56,12 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
 			    const GLvoid *indices, GLint basevertex);
 
 extern GLboolean
+_mesa_validate_MultiDrawElements(struct gl_context *ctx,
+                                 GLenum mode, const GLsizei *count,
+                                 GLenum type, const GLvoid * const *indices,
+                                 GLuint primcount, const GLint *basevertex);
+
+extern GLboolean
 _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
 				 GLuint start, GLuint end,
 				 GLsizei count, GLenum type,
