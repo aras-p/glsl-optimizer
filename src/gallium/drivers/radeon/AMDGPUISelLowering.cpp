@@ -33,8 +33,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FEXP2,  MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
-  setOperationAction(ISD::UDIV, MVT::i32, Custom);
+
+  setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
+  setOperationAction(ISD::UREM, MVT::i32, Expand);
 }
 
 SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
@@ -44,9 +46,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   default: return AMDILTargetLowering::LowerOperation(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
-  case ISD::UDIV:
-    return DAG.getNode(ISD::UDIVREM, Op.getDebugLoc(), Op.getValueType(),
-                       Op.getOperand(0), Op.getOperand(1)).getValue(0);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
 }
