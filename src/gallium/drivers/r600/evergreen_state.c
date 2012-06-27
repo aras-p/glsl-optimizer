@@ -1298,10 +1298,11 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
+	struct pipe_resource * pipe_tex;
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info, color_attrib;
+	unsigned color_info, color_attrib, color_dim = 0;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset;
 	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, nbanks;
@@ -1311,6 +1312,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+	pipe_tex = state->cbufs[cb]->texture;
 
 	if (rtex->is_depth)
 		rctx->have_depth_fb = TRUE;
@@ -1454,6 +1456,12 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
 
+	if (rtex->is_rat) {
+		color_info |= S_028C70_RAT(1);
+		color_dim = S_028C78_WIDTH_MAX(pipe_tex->width0)
+				| S_028C78_HEIGHT_MAX(pipe_tex->height0);
+	}
+
 	/* EXPORT_NORM is an optimzation that can be enabled for better
 	 * performance in certain cases.
 	 * EXPORT_NORM can be enabled if:
@@ -1475,7 +1483,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	rctx->alpha_ref_dirty = true;
 
 	/* for possible dual-src MRT */
-	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1) {
+	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1 && !rtex->is_rat) {
 		r600_pipe_state_add_reg_bo(rstate,
 				R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
 				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
@@ -1490,7 +1498,7 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg(rstate,
 				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
-				0x0);
+				color_dim);
 	r600_pipe_state_add_reg_bo(rstate,
 				R_028C70_CB_COLOR0_INFO + cb * 0x3C,
 				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
