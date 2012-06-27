@@ -2946,7 +2946,7 @@
 		<return type="void"/>
 		<param name="shader" type="GLuint"/>
 		<param name="count" type="GLsizei"/>
-		<param name="string" type="const GLchar **"/>
+		<param name="string" type="const GLchar * const *"/>
 		<param name="length" type="const int *"/>
 	</proto>
 </template>

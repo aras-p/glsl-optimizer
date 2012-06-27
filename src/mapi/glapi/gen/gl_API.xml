@@ -5363,7 +5363,7 @@
     <function name="ShaderSource" alias="ShaderSourceARB">
         <param name="shader" type="GLuint"/>
         <param name="count" type="GLsizei"/>
-        <param name="string" type="const GLchar **"/>
+        <param name="string" type="const GLchar * const *"/>
         <param name="length" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
