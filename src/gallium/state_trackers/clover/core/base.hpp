@@ -88,8 +88,7 @@ namespace clover {
          reset(q);
       }
 
-      template<typename S>
-      ref_ptr(const ref_ptr<S> &ref) : p(NULL) {
+      ref_ptr(const ref_ptr<T> &ref) : p(NULL) {
          reset(ref.p);
       }
 
