@@ -50,7 +50,7 @@ static struct r600_resource_texture * create_pool_texture(struct r600_screen * s
 
 	memset(&templ, 0, sizeof(templ));
 	templ.target = PIPE_TEXTURE_1D;
-	templ.format = PIPE_FORMAT_R32_UNORM;
+	templ.format = PIPE_FORMAT_R32_UINT;
 	templ.bind = PIPE_BIND_CUSTOM;
 	templ.usage = PIPE_USAGE_IMMUTABLE;
 	templ.flags = 0;

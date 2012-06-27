@@ -270,12 +270,20 @@ void evergreen_direct_dispatch(
 		struct pipe_context *ctx_,
 		const uint *block_layout, const uint *grid_layout)
 {
-	struct r600_context *ctx = (struct r600_context *)ctx_;
+	/* This struct r600_context* must be called rctx, because the
+	 * r600_pipe_state_add_reg macro assumes there is a local variable
+	 * of type struct r600_context* called rctx.
+	 */
+	struct r600_context *rctx = (struct r600_context *)ctx_;
 
 	int i;
 
-	struct evergreen_compute_resource* res = get_empty_res(ctx->cs_shader,
+	struct evergreen_compute_resource* res = get_empty_res(rctx->cs_shader,
 		COMPUTE_RESOURCE_DISPATCH, 0);
+        struct r600_pipe_state * cb_state = rctx->states[R600_PIPE_STATE_FRAMEBUFFER];
+
+	/* Set CB_TARGET_MASK */
+	r600_pipe_state_add_reg(cb_state, R_028238_CB_TARGET_MASK, rctx->cb_target_mask);
 
 	evergreen_reg_set(res, R_008958_VGT_PRIMITIVE_TYPE, V_008958_DI_PT_POINTLIST);
 
@@ -316,6 +324,7 @@ static void compute_emit_cs(struct r600_context *ctx)
 	int i;
 
 	struct r600_resource *onebo = NULL;
+	struct r600_pipe_state *cb_state;
 
 	/* Initialize all the registers common to both 3D and compute.  Some
 	 * 3D only register will be initialized by this atom as well, but
@@ -333,6 +342,10 @@ static void compute_emit_cs(struct r600_context *ctx)
 	 * of registers initialized by the start_compuet_cs_cmd atom.
 	 */
 	r600_emit_atom(ctx, &ctx->start_compute_cs_cmd.atom);
+
+	/* Emit cb_state */
+        cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
+	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
 
 	for (i = 0; i < get_compute_resource_num(); i++) {
 		if (ctx->cs_shader->resources[i].enabled) {

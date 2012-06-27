@@ -1293,7 +1293,7 @@ static void evergreen_set_viewport_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
+void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			 const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_screen *rscreen = rctx->screen;

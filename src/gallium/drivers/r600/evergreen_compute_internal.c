@@ -228,6 +228,7 @@ int evergreen_compute_get_gpu_format(
 	{
 		case PIPE_FORMAT_R8_UNORM:
 		case PIPE_FORMAT_R32_UNORM:
+		case PIPE_FORMAT_R32_UINT:
 			fmt->format = V_028C70_COLOR_32;
 			fmt->number_type = V_028C70_NUMBER_UNORM;
 			fmt->num_format_all = 0;
@@ -263,80 +264,41 @@ void evergreen_set_rat(
 	assert((size & 3) == 0);
 	assert((start & 0xFF) == 0);
 
-	int offset;
+	struct r600_pipe_state * state = CALLOC_STRUCT(r600_pipe_state);
+	struct pipe_surface rat_templ;
+
 	COMPUTE_DBG("bind rat: %i \n", id);
 
-	if (id < 8) {
-		offset = id*0x3c;
-	}
-	else {
-		offset = 8*0x3c + (id-8)*0x1c;
-	}
+	/* Create the RAT surface */
+	memset(&rat_templ, 0, sizeof(rat_templ));
+	rat_templ.usage = RADEON_USAGE_READWRITE;
+	rat_templ.format = PIPE_FORMAT_R32_UINT;
+	rat_templ.u.tex.level = 0;
+	rat_templ.u.tex.first_layer = 0;
+	rat_templ.u.tex.last_layer = 0;
 
-	int linear = 0;
+	/* Add the RAT the list of color buffers */
+	pipe->ctx->framebuffer.cbufs[id] = pipe->ctx->context.create_surface(
+		(struct pipe_context *)pipe->ctx,
+		(struct pipe_resource *)bo, &rat_templ);
 
-	if (bo->b.b.height0 <= 1 && bo->b.b.depth0 <= 1
-			&& bo->b.b.target == PIPE_BUFFER) {
-		linear = 1;
-	}
+	/* Update the number of color buffers */
+	pipe->ctx->nr_cbufs = MAX2(id + 1, pipe->ctx->nr_cbufs);
 
-	struct evergreen_compute_resource* res =
-		get_empty_res(pipe, COMPUTE_RESOURCE_RAT, id);
+	/* Update the cb_target_mask
+	 * XXX: I think this is a potential spot for bugs once we start doing
+	 * GL interop.  cb_target_mask may be modified in the 3D sections
+	 * of this driver. */
+	pipe->ctx->cb_target_mask |= (0xf << (id * 4));
 
-	evergreen_emit_force_reloc(res);
 
-	evergreen_reg_set(res, R_028C64_CB_COLOR0_PITCH, 0); ///TODO: for 2D?
-	evergreen_reg_set(res, R_028C68_CB_COLOR0_SLICE, 0);
+	/* Get the CB register writes for the RAT */
+	evergreen_cb(pipe->ctx, state, &pipe->ctx->framebuffer, id);
 
-	struct number_type_and_format fmt;
-
-	///default config
-	if (bo->b.b.format == PIPE_FORMAT_NONE) {
-		 fmt.format = V_028C70_COLOR_32;
-		 fmt.number_type = V_028C70_NUMBER_FLOAT;
-	} else {
-		evergreen_compute_get_gpu_format(&fmt, bo);
-	}
-
-	evergreen_reg_set(res,
-		R_028C70_CB_COLOR0_INFO, S_028C70_RAT(1)
-		| S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED)
-		| S_028C70_FORMAT(fmt.format)
-		| S_028C70_NUMBER_TYPE(fmt.number_type)
-	);
-	evergreen_emit_force_reloc(res);
-
-	evergreen_reg_set(res, R_028C74_CB_COLOR0_ATTRIB, S_028C74_NON_DISP_TILING_ORDER(1));
-	evergreen_emit_force_reloc(res);
-
-	if (linear) {
-		/* XXX: Why are we using size instead of bo->b.b.b.width0 ? */
-		evergreen_reg_set(res, R_028C78_CB_COLOR0_DIM, size);
-	} else {
-		evergreen_reg_set(res, R_028C78_CB_COLOR0_DIM,
-			S_028C78_WIDTH_MAX(bo->b.b.width0)
-			| S_028C78_HEIGHT_MAX(bo->b.b.height0));
-	}
-
-	if (id < 8) {
-		evergreen_reg_set(res, R_028C7C_CB_COLOR0_CMASK, 0);
-		evergreen_emit_force_reloc(res);
-		evergreen_reg_set(res, R_028C84_CB_COLOR0_FMASK, 0);
-		evergreen_emit_force_reloc(res);
-	}
-
-	evergreen_reg_set(res, R_028C60_CB_COLOR0_BASE + offset, start >> 8);
-
-	res->bo = bo;
-	res->usage = RADEON_USAGE_READWRITE;
-	res->coher_bo_size = size;
-
-	/* XXX We are setting nr_cbufs to 1 so we can get the correct
-         * cb flush flags to be emitted with the SURFACE_SYNC packet.
-         * In the future we should be adding the pipe_surface for this RAT
-         * to pipe->ctx->framebuffer.cbufs.
-         */
-	pipe->ctx->framebuffer.nr_cbufs = 1;
+	/* Add the register blocks to the dirty list */
+        free(pipe->ctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
+        pipe->ctx->states[R600_PIPE_STATE_FRAMEBUFFER] = state;
+        r600_context_pipe_state_set(pipe->ctx, state);
 }
 
 void evergreen_set_lds(

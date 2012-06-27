@@ -425,6 +425,9 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_texture_target target,
 				      unsigned sample_count,
 				      unsigned usage);
+void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
+                         const struct pipe_framebuffer_state *state, int cb);
+
 
 void evergreen_update_dual_export_state(struct r600_context * rctx);
 
