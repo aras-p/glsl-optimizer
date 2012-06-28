@@ -171,6 +171,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * it a software counter.  So just reset the counter.
        */
       brw->sol.primitives_generated = 0;
+      brw->sol.counting_primitives_generated = true;
       break;
 
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
@@ -178,6 +179,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * it a software counter.  So just reset the counter.
        */
       brw->sol.primitives_written = 0;
+      brw->sol.counting_primitives_written = true;
       break;
 
    default:
@@ -249,6 +251,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
        * the query object.
        */
       query->Base.Result = brw->sol.primitives_generated;
+      brw->sol.counting_primitives_generated = false;
 
       /* And set brw->query.obj to NULL so that this query won't try to wait
        * for any rendering to complete.
@@ -262,6 +265,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
        * the query object.
        */
       query->Base.Result = brw->sol.primitives_written;
+      brw->sol.counting_primitives_written = false;
 
       /* And set brw->query.obj to NULL so that this query won't try to wait
        * for any rendering to complete.

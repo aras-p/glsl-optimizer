@@ -1038,6 +1038,8 @@ struct brw_context
       uint32_t offset_0_batch_start;
       uint32_t primitives_generated;
       uint32_t primitives_written;
+      bool counting_primitives_generated;
+      bool counting_primitives_written;
    } sol;
 
    uint32_t render_target_format[MESA_FORMAT_COUNT];

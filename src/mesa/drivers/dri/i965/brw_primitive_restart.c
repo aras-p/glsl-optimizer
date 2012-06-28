@@ -69,6 +69,18 @@ can_cut_index_handle_prims(struct gl_context *ctx,
                            GLuint nr_prims,
                            const struct _mesa_index_buffer *ib)
 {
+   struct brw_context *brw = brw_context(ctx);
+
+   if (brw->sol.counting_primitives_generated ||
+       brw->sol.counting_primitives_written) {
+      /* Counting primitives generated in hardware is not currently
+       * supported, so take the software path. We need to investigate
+       * the *_PRIMITIVES_COUNT registers to allow this to be handled
+       * entirely in hardware.
+       */
+      return false;
+   }
+
    if (!can_cut_index_handle_restart_index(ctx, ib)) {
       /* The primitive restart index can't be handled, so take
        * the software path
