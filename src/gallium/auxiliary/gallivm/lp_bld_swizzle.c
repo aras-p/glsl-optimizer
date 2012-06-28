@@ -47,14 +47,34 @@ lp_build_broadcast(struct gallivm_state *gallivm,
                    LLVMTypeRef vec_type,
                    LLVMValueRef scalar)
 {
-   const unsigned n = LLVMGetVectorSize(vec_type);
    LLVMValueRef res;
-   unsigned i;
 
-   res = LLVMGetUndef(vec_type);
-   for(i = 0; i < n; ++i) {
-      LLVMValueRef index = lp_build_const_int32(gallivm, i);
-      res = LLVMBuildInsertElement(gallivm->builder, res, scalar, index, "");
+   if (LLVMGetTypeKind(vec_type) != LLVMVectorTypeKind) {
+      /* scalar */
+      assert(vec_type == LLVMTypeOf(scalar));
+      res = scalar;
+   } else {
+      LLVMBuilderRef builder = gallivm->builder;
+      const unsigned length = LLVMGetVectorSize(vec_type);
+      LLVMValueRef undef = LLVMGetUndef(vec_type);
+      LLVMTypeRef i32_type = LLVMInt32TypeInContext(gallivm->context);
+
+      assert(LLVMGetElementType(vec_type) == LLVMTypeOf(scalar));
+
+      if (HAVE_LLVM >= 0x207) {
+         /* The shuffle vector is always made of int32 elements */
+         LLVMTypeRef i32_vec_type = LLVMVectorType(i32_type, length);
+         res = LLVMBuildInsertElement(builder, undef, scalar, LLVMConstNull(i32_type), "");
+         res = LLVMBuildShuffleVector(builder, res, undef, LLVMConstNull(i32_vec_type), "");
+      } else {
+         /* XXX: The above path provokes a bug in LLVM 2.6 */
+         unsigned i;
+         res = undef;
+         for(i = 0; i < length; ++i) {
+            LLVMValueRef index = lp_build_const_int32(gallivm, i);
+            res = LLVMBuildInsertElement(builder, res, scalar, index, "");
+         }
+      }
    }
 
    return res;
@@ -68,37 +88,9 @@ LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
-   LLVMBuilderRef builder = bld->gallivm->builder;
-   const struct lp_type type = bld->type;
+   assert(lp_check_elem_type(bld->type, LLVMTypeOf(scalar)));
 
-   assert(lp_check_elem_type(type, LLVMTypeOf(scalar)));
-
-   if (type.length == 1) {
-      return scalar;
-   }
-   else {
-      LLVMValueRef res;
-
-#if HAVE_LLVM >= 0x207
-      /* The shuffle vector is always made of int32 elements */
-      struct lp_type i32_vec_type = lp_type_int_vec(32);
-      i32_vec_type.length = type.length;
-
-      res = LLVMBuildInsertElement(builder, bld->undef, scalar,
-                                   lp_build_const_int32(bld->gallivm, 0), "");
-      res = LLVMBuildShuffleVector(builder, res, bld->undef,
-                                   lp_build_const_int_vec(bld->gallivm, i32_vec_type, 0), "");
-#else
-      /* XXX: The above path provokes a bug in LLVM 2.6 */
-      unsigned i;
-      res = bld->undef;
-      for(i = 0; i < type.length; ++i) {
-         LLVMValueRef index = lp_build_const_int32(bld->gallivm, i);
-         res = LLVMBuildInsertElement(builder, res, scalar, index, "");
-      }
-#endif
-      return res;
-   }
+   return lp_build_broadcast(bld->gallivm, bld->vec_type, scalar);
 }
 
 
