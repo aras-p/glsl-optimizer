@@ -3200,12 +3200,6 @@ struct gl_dlist_state
    GLubyte ActiveMaterialSize[MAT_ATTRIB_MAX];
    GLfloat CurrentMaterial[MAT_ATTRIB_MAX][4];
 
-   GLubyte ActiveIndex;
-   GLfloat CurrentIndex;
-   
-   GLubyte ActiveEdgeFlag;
-   GLboolean CurrentEdgeFlag;
-
    struct {
       /* State known to have been set by the currently-compiling display
        * list.  Used to eliminate some redundant state changes.
