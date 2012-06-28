@@ -1609,6 +1609,10 @@ int r600_bytecode_add_vtx(struct r600_bytecode *bc, const struct r600_bytecode_v
 	bc->ndw += 4;
 	if ((bc->cf_last->ndw / 4) >= r600_bytecode_num_tex_and_vtx_instructions(bc))
 		bc->force_add_cf = 1;
+
+	bc->ngpr = MAX2(bc->ngpr, vtx->src_gpr + 1);
+	bc->ngpr = MAX2(bc->ngpr, vtx->dst_gpr + 1);
+
 	return 0;
 }
 
