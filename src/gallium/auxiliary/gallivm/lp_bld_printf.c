@@ -118,16 +118,16 @@ lp_build_print_value(struct gallivm_state *gallivm,
 
    params[1] = lp_build_const_string(gallivm, msg);
    if (length == 1) {
-      util_strncat(format, type_fmt, sizeof format);
+      util_strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
       params[2] = value;
    } else {
       for (i = 0; i < length; ++i) {
-         util_strncat(format, type_fmt, sizeof format);
+         util_strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
          params[2 + i] = LLVMBuildExtractElement(builder, value, lp_build_const_int32(gallivm, i), "");
       }
    }
 
-   util_strncat(format, "\n", sizeof format);
+   util_strncat(format, "\n", sizeof(format) - strlen(format) - 1);
 
    params[0] = lp_build_const_string(gallivm, format);
    return lp_build_print_args(gallivm, 2 + length, params);
