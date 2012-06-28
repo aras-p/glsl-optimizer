@@ -57,10 +57,6 @@
 #include "util/u_surface.h"
 
 
-/** Set to 1 to enable extra debug code */
-#define ST_DEBUG_FBO 0
-
-
 static GLboolean
 st_renderbuffer_alloc_sw_storage(struct gl_context * ctx,
                                  struct gl_renderbuffer *rb,
@@ -480,9 +476,9 @@ st_finish_render_texture(struct gl_context *ctx,
 static void
 st_fbo_invalid(const char *reason)
 {
-#if ST_DEBUG_FBO
-   debug_printf("Invalid FBO: %s\n", reason);
-#endif
+   if (MESA_DEBUG_FLAGS & DEBUG_INCOMPLETE_FBO) {
+      _mesa_debug(NULL, "Invalid FBO: %s\n", reason);
+   }
 }
 
 
