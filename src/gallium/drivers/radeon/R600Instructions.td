@@ -922,6 +922,12 @@ def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
 
 } // End usesCustomInserter = 1
 
+// Floating point global_store
+def : Pat <
+  (global_store (f32 R600_TReg32_X:$val), R600_TReg32_X:$ptr),
+  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr)
+>;
+
 class VTX_READ_eg <bits<8> buffer_id, dag outs, list<dag> pattern>
     : InstR600ISA <outs, (ins MEMxi:$ptr), "VTX_READ_eg $dst, $ptr", pattern> {
 
