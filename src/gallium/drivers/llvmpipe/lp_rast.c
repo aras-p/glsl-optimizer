@@ -225,7 +225,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
            __FUNCTION__, clear_value, clear_mask);
 
    /*
-    * Clear the aera of the swizzled depth/depth buffer matching this tile, in
+    * Clear the area of the swizzled depth/depth buffer matching this tile, in
     * stripes of TILE_VECTOR_HEIGHT x TILE_SIZE at a time.
     *
     * The swizzled depth format is such that the depths for
