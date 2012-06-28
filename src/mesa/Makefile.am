@@ -94,13 +94,13 @@ program/lex.yy.c: program/program_lexer.l
 	$(LEX) --never-interactive --outfile=$@ $<
 
 all-local:
-	$(MAKE) -f Makefile.old
+	$(MAKE) -f $(srcdir)/Makefile.old
 
 install-exec-local:
-	$(MAKE) -f Makefile.old install
+	$(MAKE) -f $(srcdir)/Makefile.old install
 
 clean-local:
-	$(MAKE) -f Makefile.old clean
+	$(MAKE) -f $(srcdir)/Makefile.old clean
 
 pkgconfigdir = $(libdir)/pkgconfig
 
