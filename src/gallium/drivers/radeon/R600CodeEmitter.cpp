@@ -205,6 +205,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
               }
             case AMDIL::VTX_READ_PARAM_eg:
             case AMDIL::VTX_READ_GLOBAL_eg:
+            case AMDIL::VTX_READ_GLOBAL_128_eg:
               {
                 uint64_t InstWord01 = getBinaryCodeForInstr(MI);
                 uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset

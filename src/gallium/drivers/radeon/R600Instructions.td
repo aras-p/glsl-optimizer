@@ -1029,6 +1029,21 @@ def VTX_READ_GLOBAL_eg : VTX_READ_32_eg <1,
   [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
 >;
 
+class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <buffer_id, (outs R600_Reg128:$dst), pattern> {
+
+  let MEGA_FETCH_COUNT = 16;
+  let DST_SEL_X        =  0;
+  let DST_SEL_Y        =  1;
+  let DST_SEL_Z        =  2;
+  let DST_SEL_W        =  3;
+  let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
+}
+
+def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
+  [(set (v4i32 R600_Reg128:$dst), (global_load ADDRVTX_READ:$ptr))]
+>;
+
 }
 
 let Predicates = [isCayman] in {
@@ -1280,5 +1295,6 @@ def : Vector_Build <v4i32, R600_Reg32>;
 
 def : BitConvert <i32, f32, R600_Reg32>;
 def : BitConvert <f32, i32, R600_Reg32>;
+def : BitConvert <v4f32, v4i32, R600_Reg128>;
 
 } // End isR600toCayman Predicate

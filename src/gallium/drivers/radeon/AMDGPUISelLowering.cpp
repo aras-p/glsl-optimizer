@@ -34,6 +34,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
   setOperationAction(ISD::LOAD, MVT::f32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v4f32, Custom);
 
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
@@ -139,6 +140,8 @@ SDValue AMDGPUTargetLowering::BitcastLOAD(SDValue Op, SelectionDAG &DAG) const
 
   if (VT == MVT::f32) {
     IntVT = MVT::i32;
+  } else if (VT == MVT::v4f32) {
+    IntVT = MVT::v4i32;
   } else {
     return Op;
   }
