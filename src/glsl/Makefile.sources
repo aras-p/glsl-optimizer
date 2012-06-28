@@ -101,8 +101,8 @@ BUILTIN_COMPILER_CXX_FILES = \
 	$(GLSL_SRCDIR)/builtin_stubs.cpp
 
 BUILTIN_COMPILER_GENERATED_CXX_FILES = \
-	$(GLSL_SRCDIR)/glsl_lexer.cpp \
-	$(GLSL_SRCDIR)/glsl_parser.cpp
+	$(GLSL_SRCDIR)/glsl_lexer.cc \
+	$(GLSL_SRCDIR)/glsl_parser.cc
 
 # libglsl generated sources
 LIBGLSL_GENERATED_CXX_FILES = \

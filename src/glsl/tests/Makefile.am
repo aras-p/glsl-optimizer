@@ -27,7 +27,7 @@ uniform_initializer_test_SOURCES =		\
 
 uniform_initializer_test_LDADD =		\
 	$(top_builddir)/src/gtest/libgtest.la	\
-	$(top_builddir)/src/glsl/libglsl.a	\
+	$(top_builddir)/src/glsl/libglsl.la	\
 	$(top_builddir)/src/mesa/libmesa.a	\
 	-lpthread
 

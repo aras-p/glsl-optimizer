@@ -1,6 +1,5 @@
 
-
-# Copyright © 2012 Laurent Carlier <lordheavym@gmail.com>
+# Copyright © 2012 Jon TURNEY
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,27 +23,35 @@
 # Hack to make some of the non-automake variables work.
 TOP=$(top_builddir)
 
+GLSL_SRCDIR=$(top_srcdir)/src/glsl
+include ../Makefile.sources
+
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
+	$(LIBRARY_INCLUDES) \
 	$(DEFINES) \
+	$(LIBRARY_DEFINES) \
 	$(API_DEFINES)
 
-if HAVE_OSMESA_DRIVER
-lib_LTLIBRARIES = lib@OSMESA_LIB@.la
-endif
+AM_YFLAGS = -v -d
+AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 
-lib@OSMESA_LIB@_la_SOURCES = osmesa.c
+noinst_LTLIBRARIES = libglcpp.la
+noinst_PROGRAMS = glcpp
 
-lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -shared
-lib@OSMESA_LIB@_la_LIBADD = \
-	$(top_builddir)/src/mesa/libmesa.a \
-	$(top_builddir)/src/mapi/glapi/libglapi.a \
-	$(top_builddir)/src/glsl/libglsl.la
+libglcpp_la_SOURCES = \
+	glcpp-lex.l \
+	glcpp-parse.y \
+	$(LIBGLCPP_FILES)
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: lib@OSMESA_LIB@.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/lib@OSMESA_LIB@.so $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so;
+glcpp_SOURCES = \
+	../ralloc.c \
+	$(top_srcdir)/src/mesa/program/hash_table.c \
+	glcpp.c
+
+glcpp_LDADD = libglcpp.la
+
+BUILT_SOURCES = glcpp-lex.c glcpp-parse.c glcpp-parse.h
+CLEANFILES = $(BUILT_SOURCES)

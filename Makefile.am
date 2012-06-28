@@ -58,9 +58,9 @@ PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 EXTRA_FILES = \
 	aclocal.m4					\
 	configure					\
-	src/glsl/glsl_parser.cpp			\
+	src/glsl/glsl_parser.cc				\
 	src/glsl/glsl_parser.h				\
-	src/glsl/glsl_lexer.cpp				\
+	src/glsl/glsl_lexer.cc				\
 	src/glsl/glcpp/glcpp-lex.c			\
 	src/glsl/glcpp/glcpp-parse.c			\
 	src/glsl/glcpp/glcpp-parse.h			\
@@ -80,7 +80,7 @@ IGNORE_FILES = \
 
 parsers: configure
 	-@touch $(top_builddir)/configs/current
-	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp
+	$(MAKE) -C src/glsl glsl_parser.cc glsl_parser.h glsl_lexer.cc
 	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
 	$(MAKE) -C src/mesa program/lex.yy.c program/program_parse.tab.c program/program_parse.tab.h
 
