@@ -896,42 +896,6 @@ static boolean emit_ceil(struct svga_shader_emitter *emit,
 }
 
 
-/* Translate the following TGSI CMP instruction.
- *    CMP  DST, SRC0, SRC1, SRC2
- * To the following SVGA3D instruction sequence.
- *    CMP  DST, SRC0, SRC2, SRC1
- */
-static boolean emit_cmp(struct svga_shader_emitter *emit,
-                          const struct tgsi_full_instruction *insn )
-{
-   SVGA3dShaderDestToken dst = translate_dst_register( emit, insn, 0 );
-   const struct src_register src0 = translate_src_register(
-      emit, &insn->Src[0] );
-   const struct src_register src1 = translate_src_register(
-      emit, &insn->Src[1] );
-   const struct src_register src2 = translate_src_register(
-      emit, &insn->Src[2] );
-
-   if (emit->unit == PIPE_SHADER_VERTEX) {
-      SVGA3dShaderDestToken temp = get_temp(emit);
-      struct src_register zero = scalar(get_zero_immediate(emit), TGSI_SWIZZLE_X);
-
-      /* Since vertex shaders don't support the CMP instruction,
-       * simulate it with SLT and LRP instructions.
-       *    SLT  TMP, SRC0, 0.0
-       *    LRP  DST, TMP, SRC1, SRC2
-       */
-      if (!submit_op2(emit, inst_token(SVGA3DOP_SLT), temp, src0, zero))
-         return FALSE;
-      return submit_lrp(emit, dst, src(temp), src1, src2);
-   }
-
-   /* CMP  DST, SRC0, SRC2, SRC1 */
-   return submit_op3( emit, inst_token( SVGA3DOP_CMP ), dst, src0, src2, src1);
-}
-
-
-
 /* Translate the following TGSI DIV instruction.
  *    DIV  DST.xy, SRC0, SRC1
  * To the following SVGA3D instruction sequence.
@@ -1442,6 +1406,43 @@ static boolean emit_select_op(struct svga_shader_emitter *emit,
       emit, &insn->Src[1] );
       
    return emit_select( emit, compare, dst, src0, src1 );
+}
+
+
+/**
+ * Translate TGSI CMP instruction.
+ */
+static boolean
+emit_cmp(struct svga_shader_emitter *emit,
+         const struct tgsi_full_instruction *insn)
+{
+   SVGA3dShaderDestToken dst = translate_dst_register( emit, insn, 0 );
+   const struct src_register src0 =
+      translate_src_register(emit, &insn->Src[0] );
+   const struct src_register src1 =
+      translate_src_register(emit, &insn->Src[1] );
+   const struct src_register src2 =
+      translate_src_register(emit, &insn->Src[2] );
+
+   if (emit->unit == PIPE_SHADER_VERTEX) {
+      struct src_register zero =
+         scalar(get_zero_immediate(emit), TGSI_SWIZZLE_X);
+      /* We used to simulate CMP with SLT+LRP.  But that didn't work when
+       * src1 or src2 was Inf/NaN.  In particular, GLSL sqrt(0) failed
+       * because it involves a CMP to handle the 0 case.
+       * Use a conditional expression instead.
+       */
+      return emit_conditional(emit, PIPE_FUNC_LESS, dst,
+                              src0, zero, src1, src2);
+   }
+   else {
+      assert(emit->unit == PIPE_SHADER_FRAGMENT);
+
+      /* CMP  DST, SRC0, SRC2, SRC1 */
+      return submit_op3( emit, inst_token( SVGA3DOP_CMP ), dst,
+                         src0, src2, src1);
+   }
+
 }
 
 
