@@ -1534,9 +1534,18 @@ static void emit_decls( struct ureg_program *ureg )
       }
    }
 
-   for (i = 0; i < ureg->nr_temps; i++) {
-      emit_decl( ureg, TGSI_FILE_TEMPORARY, i,
-                 util_bitmask_get(ureg->local_temps, i) );
+   if (ureg->nr_temps) {
+      if (util_bitmask_get_first_index(ureg->local_temps) ==  UTIL_BITMASK_INVALID_INDEX) {
+         emit_decl_range( ureg,
+                          TGSI_FILE_TEMPORARY,
+                          0, ureg->nr_temps );
+
+      } else {
+         for (i = 0; i < ureg->nr_temps; i++) {
+            emit_decl( ureg, TGSI_FILE_TEMPORARY, i,
+                       util_bitmask_get(ureg->local_temps, i) );
+         }
+      }
    }
 
    if (ureg->nr_addrs) {
@@ -1687,7 +1696,7 @@ struct ureg_program *ureg_create( unsigned processor )
 {
    struct ureg_program *ureg = CALLOC_STRUCT( ureg_program );
    if (ureg == NULL)
-      return NULL;
+      goto no_ureg;
 
    ureg->processor = processor;
    ureg->property_gs_input_prim = ~0;
@@ -1696,17 +1705,19 @@ struct ureg_program *ureg_create( unsigned processor )
 
    ureg->free_temps = util_bitmask_create();
    if (ureg->free_temps == NULL)
-      goto fail;
+      goto no_free_temps;
 
    ureg->local_temps = util_bitmask_create();
    if (ureg->local_temps == NULL)
-      goto fail;
+      goto no_local_temps;
 
    return ureg;
 
-fail:
-   FREE(ureg->free_temps);
+no_local_temps:
+   util_bitmask_destroy(ureg->free_temps);
+no_free_temps:
    FREE(ureg);
+no_ureg:
    return NULL;
 }
 
