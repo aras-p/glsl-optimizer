@@ -1067,15 +1067,12 @@ AC_SUBST([GLAPI_LIB_DEPS])
 
 dnl Setup default DRI CFLAGS
 DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
-MESA_MODULES='$(TOP)/src/mesa/libmesa.a'
 
 if test "x$enable_dri" = xyes && test "x$driglx_direct" = xyes ; then
     DRI_LIB_DEPS="-L\$(TOP)/\$(LIB_DIR) -ldricore$VERSION"
-    MESA_MODULES="\$(TOP)/\$(LIB_DIR)/libdricore$VERSION.so"
     HAVE_DRICORE=yes
 fi
 AM_CONDITIONAL(HAVE_DRICORE, test x$HAVE_DRICORE = xyes)
-AC_SUBST([MESA_MODULES])
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
