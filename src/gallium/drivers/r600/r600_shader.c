@@ -258,6 +258,17 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 
 #endif /* HAVE_OPENCL */
 
+static uint32_t i32_from_byte_stream(unsigned char * bytes,
+		unsigned * bytes_read)
+{
+	unsigned i;
+	uint32_t out = 0;
+	for (i = 0; i < 4; i++) {
+		out |= bytes[(*bytes_read)++] << (8 * i);
+	}
+	return out;
+}
+
 static unsigned r600_src_from_byte_stream(unsigned char * bytes,
 		unsigned bytes_read, struct r600_bytecode_alu * alu, unsigned src_idx)
 {
@@ -443,27 +454,36 @@ static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
 	unsigned char * bytes, unsigned bytes_read)
 {
 	struct r600_bytecode_vtx vtx;
+
+	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
+        uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
+	uint32_t word2 = i32_from_byte_stream(bytes, &bytes_read);
+
 	memset(&vtx, 0, sizeof(vtx));
-	vtx.inst = bytes[bytes_read++];
-	vtx.fetch_type = bytes[bytes_read++];
-	vtx.buffer_id = bytes[bytes_read++];
-	vtx.src_gpr = bytes[bytes_read++];
-	vtx.src_sel_x = bytes[bytes_read++];
-	vtx.mega_fetch_count = bytes[bytes_read++];
-	vtx.dst_gpr = bytes[bytes_read++];
-	vtx.dst_sel_x = bytes[bytes_read++];
-	vtx.dst_sel_y = bytes[bytes_read++];
-	vtx.dst_sel_z = bytes[bytes_read++];
-	vtx.dst_sel_w = bytes[bytes_read++];
-	vtx.use_const_fields = bytes[bytes_read++];
-	vtx.data_format = bytes[bytes_read++];
-	vtx.num_format_all = bytes[bytes_read++];
-	vtx.format_comp_all = bytes[bytes_read++];
-	vtx.srf_mode_all = bytes[bytes_read++];
-	/* offset is 2 bytes wide */
-	vtx.offset = bytes[bytes_read++];
-	vtx.offset |= (bytes[bytes_read++] << 8);
-	vtx.endian = bytes[bytes_read++];
+
+	/* WORD0 */
+	vtx.inst = G_SQ_VTX_WORD0_VTX_INST(word0);
+	vtx.fetch_type = G_SQ_VTX_WORD0_FETCH_TYPE(word0);
+	vtx.buffer_id = G_SQ_VTX_WORD0_BUFFER_ID(word0);
+	vtx.src_gpr = G_SQ_VTX_WORD0_SRC_GPR(word0);
+	vtx.src_sel_x = G_SQ_VTX_WORD0_SRC_SEL_X(word0);
+	vtx.mega_fetch_count = G_SQ_VTX_WORD0_MEGA_FETCH_COUNT(word0);
+
+	/* WORD1 */
+	vtx.dst_gpr = G_SQ_VTX_WORD1_GPR_DST_GPR(word1);
+	vtx.dst_sel_x = G_SQ_VTX_WORD1_DST_SEL_X(word1);
+	vtx.dst_sel_y = G_SQ_VTX_WORD1_DST_SEL_Y(word1);
+	vtx.dst_sel_z = G_SQ_VTX_WORD1_DST_SEL_Z(word1);
+	vtx.dst_sel_w = G_SQ_VTX_WORD1_DST_SEL_W(word1);
+	vtx.use_const_fields = G_SQ_VTX_WORD1_USE_CONST_FIELDS(word1);
+	vtx.data_format = G_SQ_VTX_WORD1_DATA_FORMAT(word1);
+	vtx.num_format_all = G_SQ_VTX_WORD1_NUM_FORMAT_ALL(word1);
+	vtx.format_comp_all = G_SQ_VTX_WORD1_FORMAT_COMP_ALL(word1);
+	vtx.srf_mode_all = G_SQ_VTX_WORD1_SRF_MODE_ALL(word1);
+
+	/* WORD 2*/
+	vtx.offset = G_SQ_VTX_WORD2_OFFSET(word2);
+	vtx.endian = G_SQ_VTX_WORD2_ENDIAN_SWAP(word2);
 
 	if (r600_bytecode_add_vtx(ctx->bc, &vtx)) {
 		fprintf(stderr, "Error adding vtx\n");

@@ -922,18 +922,104 @@ def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
 
 } // End usesCustomInserter = 1
 
-class VTX_READ_eg <int buffer_id, list<dag> pattern> : InstR600ISA <
-  (outs R600_TReg32_X:$dst),
-  (ins MEMxi:$ptr),
-  "VTX_READ_eg $dst, $ptr",
-  pattern
->;
+class VTX_READ_eg <bits<8> buffer_id, dag outs, list<dag> pattern>
+    : InstR600ISA <outs, (ins MEMxi:$ptr), "VTX_READ_eg $dst, $ptr", pattern> {
 
-def VTX_READ_PARAM_eg : VTX_READ_eg <0,
+  // Operands
+  bits<7> DST_GPR;
+  bits<7> SRC_GPR;
+
+  // Static fields
+  bits<5> VC_INST = 0;
+  bits<2> FETCH_TYPE = 2;
+  bits<1> FETCH_WHOLE_QUAD = 0;
+  bits<8> BUFFER_ID = buffer_id;
+  bits<1> SRC_REL = 0;
+  // XXX: We can infer this field based on the SRC_GPR.  This would allow us
+  // to store vertex addresses in any channel, not just X.
+  bits<2> SRC_SEL_X = 0;
+  bits<6> MEGA_FETCH_COUNT;
+  bits<1> DST_REL = 0;
+  bits<3> DST_SEL_X;
+  bits<3> DST_SEL_Y;
+  bits<3> DST_SEL_Z;
+  bits<3> DST_SEL_W;
+  // The docs say that if this bit is set, then DATA_FORMAT, NUM_FORMAT_ALL,
+  // FORMAT_COMP_ALL, SRF_MODE_ALL, and ENDIAN_SWAP fields will be ignored,
+  // however, based on my testing if USE_CONST_FIELDS is set, then all
+  // these fields need to be set to 0.
+  bits<1> USE_CONST_FIELDS = 0;
+  bits<6> DATA_FORMAT;
+  bits<2> NUM_FORMAT_ALL = 1;
+  bits<1> FORMAT_COMP_ALL = 0;
+  bits<1> SRF_MODE_ALL = 0;
+
+  // LLVM can only encode 64-bit instructions, so these fields are manually
+  // encoded in R600CodeEmitter
+  //
+  // bits<16> OFFSET;
+  // bits<2>  ENDIAN_SWAP = 0;
+  // bits<1>  CONST_BUF_NO_STRIDE = 0;
+  // bits<1>  MEGA_FETCH = 0;
+  // bits<1>  ALT_CONST = 0;
+  // bits<2>  BUFFER_INDEX_MODE = 0;
+
+  // VTX_WORD0
+  let Inst{4-0}   = VC_INST;
+  let Inst{6-5}   = FETCH_TYPE;
+  let Inst{7}     = FETCH_WHOLE_QUAD;
+  let Inst{15-8}  = BUFFER_ID;
+  let Inst{22-16} = SRC_GPR;
+  let Inst{23}    = SRC_REL;
+  let Inst{25-24} = SRC_SEL_X;
+  let Inst{31-26} = MEGA_FETCH_COUNT;
+
+  // VTX_WORD1_GPR
+  let Inst{38-32} = DST_GPR;
+  let Inst{39}    = DST_REL;
+  let Inst{40}    = 0; // Reserved
+  let Inst{43-41} = DST_SEL_X;
+  let Inst{46-44} = DST_SEL_Y;
+  let Inst{49-47} = DST_SEL_Z;
+  let Inst{52-50} = DST_SEL_W;
+  let Inst{53}    = USE_CONST_FIELDS;
+  let Inst{59-54} = DATA_FORMAT;
+  let Inst{61-60} = NUM_FORMAT_ALL;
+  let Inst{62}    = FORMAT_COMP_ALL;
+  let Inst{63}    = SRF_MODE_ALL;
+
+  // VTX_WORD2 (LLVM can only encode 64-bit instructions, so WORD2 encoding
+  // is done in R600CodeEmitter
+  //
+  // Inst{79-64} = OFFSET;
+  // Inst{81-80} = ENDIAN_SWAP;
+  // Inst{82}    = CONST_BUF_NO_STRIDE;
+  // Inst{83}    = MEGA_FETCH;
+  // Inst{84}    = ALT_CONST;
+  // Inst{86-85} = BUFFER_INDEX_MODE;
+  // Inst{95-86} = 0; Reserved
+
+  // VTX_WORD3 (Padding)
+  //
+  // Inst{127-96} = 0;
+}
+
+class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <buffer_id, (outs R600_TReg32_X:$dst), pattern> {
+
+  let MEGA_FETCH_COUNT = 4;
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 7;   // Masked
+  let DST_SEL_Z        = 7;   // Masked
+  let DST_SEL_W        = 7;   // Masked
+  let DATA_FORMAT      = 0xD; // COLOR_32
+}
+
+def VTX_READ_PARAM_eg : VTX_READ_32_eg <0,
   [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
 >;
 
-def VTX_READ_GLOBAL_eg : VTX_READ_eg <1,
+def VTX_READ_GLOBAL_eg : VTX_READ_32_eg <1,
   [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
 >;
 

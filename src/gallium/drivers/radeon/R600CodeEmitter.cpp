@@ -206,60 +206,12 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             case AMDIL::VTX_READ_PARAM_eg:
             case AMDIL::VTX_READ_GLOBAL_eg:
               {
+                uint64_t InstWord01 = getBinaryCodeForInstr(MI);
+                uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
+
                 emitByte(INSTR_VTX);
-                // inst
-                emitByte(0);
-
-                // fetch_type
-                emitByte(2);
-
-                // buffer_id
-                emitByte(MI.getOpcode() == AMDIL::VTX_READ_PARAM_eg ? 0 : 1);
-
-                // src_gpr
-                emitByte(getHWReg(MI.getOperand(1).getReg()));
-
-                // src_sel_x
-                emitByte(TRI->getHWRegChan(MI.getOperand(1).getReg()));
-
-                // mega_fetch_count
-                emitByte(3);
-
-                // dst_gpr
-                emitByte(getHWReg(MI.getOperand(0).getReg()));
-
-                // dst_sel_x
-                emitByte(0);
-
-                // dst_sel_y
-                emitByte(7);
-
-                // dst_sel_z
-                emitByte(7);
-
-                // dst_sel_w
-                emitByte(7);
-
-                // use_const_fields
-                emitByte(1);
-
-                // data_format
-                emitByte(0);
-
-                // num_format_all
-                emitByte(0);
-
-                // format_comp_all
-                emitByte(0);
-
-                // srf_mode_all
-                emitByte(0);
-
-                // offset
-                emitTwoBytes(MI.getOperand(2).getImm());
-
-                // endian
-                emitByte(0);
+                emit(InstWord01);
+                emit(InstWord2);
                 break;
               }
 
