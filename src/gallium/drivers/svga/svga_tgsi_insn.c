@@ -2398,6 +2398,57 @@ static boolean emit_log(struct svga_shader_emitter *emit,
 }
 
 
+/**
+ * Translate TGSI TRUNC instruction.
+ * We need to truncate toward zero. Ex: trunc(-1.9) = -1
+ * Different approaches are needed for VS versus PS.
+ */
+static boolean
+emit_trunc(struct svga_shader_emitter *emit,
+           const struct tgsi_full_instruction *insn)
+{
+   SVGA3dShaderDestToken dst = translate_dst_register(emit, insn, 0);
+   const struct src_register src0 =
+      translate_src_register(emit, &insn->Src[0] );
+   SVGA3dShaderDestToken t1 = get_temp(emit);
+
+   /* t1 = fract(abs(src0)) */
+   if (!submit_op1(emit, inst_token(SVGA3DOP_FRC), t1, absolute(src0)))
+      return FALSE;
+
+   /* t1 = abs(src0) - t1 */
+   if (!submit_op2(emit, inst_token(SVGA3DOP_ADD), t1, absolute(src0),
+                   negate(src(t1))))
+      return FALSE;
+
+   /*
+    * Now we need to multiply t1 by the sign of the original value.
+   */
+   if (emit->unit == PIPE_SHADER_VERTEX) {
+      /* For VS: use SGN instruction */
+      /* Need another temp plus two extra/dummy registers */
+      SVGA3dShaderDestToken t2 = get_temp(emit), t3 = get_temp(emit),
+         t4 = get_temp(emit);
+
+      /* t2 = sign(src0) */
+      if (!submit_op3(emit, inst_token(SVGA3DOP_SGN), t2, src0,
+                      src(t3), src(t4)))
+         return FALSE;
+
+      /* dst = t1 * t2 */
+      if (!submit_op2(emit, inst_token(SVGA3DOP_MUL), dst, src(t1), src(t2)))
+         return FALSE;
+   }
+   else {
+      /* For FS: Use CMP instruction */
+      return submit_op3(emit, inst_token( SVGA3DOP_CMP ), dst,
+                        src0, src(t1), negate(src(t1)));
+   }
+
+   return TRUE;
+}
+
+
 static boolean emit_bgnsub( struct svga_shader_emitter *emit,
                            unsigned position,
                            const struct tgsi_full_instruction *insn )
@@ -2488,8 +2539,10 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
       return emit_call( emit, insn );
 
    case TGSI_OPCODE_FLR:
-   case TGSI_OPCODE_TRUNC:        /* should be TRUNC, not FLR */
       return emit_floor( emit, insn );
+
+   case TGSI_OPCODE_TRUNC:
+      return emit_trunc( emit, insn );
 
    case TGSI_OPCODE_CEIL:
       return emit_ceil( emit, insn );
