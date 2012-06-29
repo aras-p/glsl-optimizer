@@ -336,61 +336,38 @@ lp_build_conv(struct gallivm_state *gallivm,
 
        util_cpu_caps.has_sse2)
    {
-      int i;
+      struct lp_build_context bld;
+      struct lp_type int16_type = dst_type;
+      struct lp_type int32_type = dst_type;
+      LLVMValueRef const_255f;
+      unsigned i, j;
 
-      for (i = 0; i < num_dsts; i++, src += 4) {
-         struct lp_type int16_type = dst_type;
-         struct lp_type int32_type = dst_type;
+      lp_build_context_init(&bld, gallivm, src_type);
+
+      int16_type.width *= 2;
+      int16_type.length /= 2;
+      int16_type.sign = 1;
+
+      int32_type.width *= 4;
+      int32_type.length /= 4;
+      int32_type.sign = 1;
+
+      const_255f = lp_build_const_vec(gallivm, src_type, 255.0f);
+
+      for (i = 0; i < num_dsts; ++i, src += 4) {
          LLVMValueRef lo, hi;
-         LLVMValueRef src_int0;
-         LLVMValueRef src_int1;
-         LLVMValueRef src_int2;
-         LLVMValueRef src_int3;
-         LLVMTypeRef int32_vec_type;
-         LLVMTypeRef src_vec_type;
-         LLVMValueRef const_255f;
-         LLVMValueRef a, b, c, d;
 
-         int16_type.width *= 2;
-         int16_type.length /= 2;
-         int16_type.sign = 1;
-
-         int32_type.width *= 4;
-         int32_type.length /= 4;
-         int32_type.sign = 1;
-
-         src_vec_type   = lp_build_vec_type(gallivm, src_type);
-         int32_vec_type = lp_build_vec_type(gallivm, int32_type);
-
-         const_255f = lp_build_const_vec(gallivm, src_type, 255.0f);
-
-         a = LLVMBuildFMul(builder, src[0], const_255f, "");
-         b = LLVMBuildFMul(builder, src[1], const_255f, "");
-         c = LLVMBuildFMul(builder, src[2], const_255f, "");
-         d = LLVMBuildFMul(builder, src[3], const_255f, "");
-
-         {
-            struct lp_build_context bld;
-
-            bld.gallivm = gallivm;
-            bld.type = src_type;
-            bld.vec_type = src_vec_type;
-            bld.int_elem_type = lp_build_elem_type(gallivm, int32_type);
-            bld.int_vec_type = int32_vec_type;
-            bld.undef = lp_build_undef(gallivm, src_type);
-            bld.zero = lp_build_zero(gallivm, src_type);
-            bld.one = lp_build_one(gallivm, src_type);
-
-            src_int0 = lp_build_iround(&bld, a);
-            src_int1 = lp_build_iround(&bld, b);
-            src_int2 = lp_build_iround(&bld, c);
-            src_int3 = lp_build_iround(&bld, d);
+         for (j = 0; j < 4; ++j) {
+            tmp[j] = LLVMBuildFMul(builder, src[j], const_255f, "");
+            tmp[j] = lp_build_iround(&bld, tmp[j]);
          }
+
          /* relying on clamping behavior of sse2 intrinsics here */
-         lo = lp_build_pack2(gallivm, int32_type, int16_type, src_int0, src_int1);
-         hi = lp_build_pack2(gallivm, int32_type, int16_type, src_int2, src_int3);
+         lo = lp_build_pack2(gallivm, int32_type, int16_type, tmp[0], tmp[1]);
+         hi = lp_build_pack2(gallivm, int32_type, int16_type, tmp[2], tmp[3]);
          dst[i] = lp_build_pack2(gallivm, int16_type, dst_type, lo, hi);
       }
+
       return; 
    }
 
