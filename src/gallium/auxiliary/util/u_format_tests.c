@@ -26,9 +26,11 @@
  **************************************************************************/
 
 
+#include <float.h>
+
+#include "pipe/p_config.h"
 #include "u_memory.h"
 #include "u_format_tests.h"
-#include <float.h>
 
 
 /*
@@ -895,6 +897,8 @@ util_format_test_cases[] =
    /* Max representable value */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7bff), UNPACKED_1x1(    65504.0, 0.0, 0.0, 1.0)},
 
+#if defined(PIPE_CC_MSVC)
+
    /* NaNs */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c01), UNPACKED_1x1(        NAN, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc01), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
@@ -904,6 +908,8 @@ util_format_test_cases[] =
    /* Inf */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), UNPACKED_1x1(        INF, 0.0, 0.0, 1.0)},
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), UNPACKED_1x1(       -INF, 0.0, 0.0, 1.0)},
+
+#endif
 
    /* Zero, ignore sign */
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0x7fff), PACKED_1x16(0x8000), UNPACKED_1x1( -0.0, 0.0, 0.0, 1.0)},
