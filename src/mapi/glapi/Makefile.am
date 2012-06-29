@@ -1,4 +1,4 @@
-# Copyright © 2012 Intel Corporation
+# Copyright © 2012 Jon TURNEY
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,56 +19,50 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-# This builds "stand-alone" Mesa, a version of libGL that does not need the
-# GLX extension.  All rendering is converted to Xlib calls.  No hardware
-# acceleration.
+TOP = $(top_srcdir)
+include sources.mak
+include ../mapi/sources.mak
 
 AM_CPPFLAGS = \
+        $(DEFINES) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
-	-I$(top_srcdir)/src/mesa \
-	-I$(top_srcdir)/src/mesa/main \
-	$(X11_INCLUDES) \
-	$(API_DEFINES) \
-	$(DEFINES)
+	-I$(top_srcdir)/src/mesa
 
-if HAVE_X11_DRIVER
-lib_LTLIBRARIES = libGL.la
+if HAVE_X86_ASM
+GLAPI_ASM_SOURCES = $(X86_API)
 endif
-
-libGL_la_SOURCES = \
-	glxapi.h \
-	glxheader.h \
-	xfonts.h \
-	xmesaP.h \
-	xm_image.h \
-	fakeglx.c \
-	glxapi.c \
-	xfonts.c \
-	xm_api.c \
-	xm_buffer.c \
-	xm_dd.c \
-	xm_line.c \
-	xm_tri.c
-
-GL_MAJOR = 1
-GL_MINOR = 6
-GL_PATCH = 0
-
-libGL_la_LIBADD = \
-	$(top_builddir)/src/mesa/libmesa.la \
-	$(top_builddir)/src/mapi/glapi/libglapi.la
-libGL_la_LDFLAGS = \
-	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \
-	$(GL_LIB_DEPS)
+if HAVE_X86_64_ASM
+GLAPI_ASM_SOURCES = $(X86_64_API)
+endif
+if HAVE_SPARC_ASM
+GLAPI_ASM_SOURCES = $(SPARC_API)
+endif
 
 if HAVE_SHARED_GLAPI
-libGL_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR) -l$(GLAPI_LIB)
+AM_CPPFLAGS += \
+	-DMAPI_MODE_BRIDGE \
+	-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
+glapi_GLAPI_sources =
+glapi_ASM_sources =
+glapi_MAPI_sources = $(MAPI_BRIDGE_FILES)
+else
+AM_CPPFLAGS += \
+	-DMAPI_MODE_UTIL
+glapi_GLAPI_sources = $(GLAPI_SOURCES)
+glapi_ASM_sources = $(GLAPI_ASM_SOURCES)
+glapi_MAPI_sources = $(MAPI_UTIL_FILES)
 endif
 
+noinst_LTLIBRARIES = libglapi.la
+
+libglapi_la_SOURCES = $(glapi_GLAPI_sources) $(glapi_ASM_sources) $(glapi_MAPI_sources)
+libglapi_la_LIBADD =
+libglapi_la_LDFLAGS =
+
 # Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libGL.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libGL.so.$(GL_MAJOR).$(GL_MINOR).$(GL_PATCH) $(top_builddir)/$(LIB_DIR)/libGL.so.1
-	ln -sf libGL.so.1 $(top_builddir)/$(LIB_DIR)/libGL.so
+# a while by putting a link to libglapi.a here
+all-local: libglapi.la
+	ln -sf .libs/libglapi.a libglapi.a
+
+CLEANFILES = libglapi.a

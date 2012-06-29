@@ -26,7 +26,7 @@ endif
 
 SUBDIRS=tests
 
-GLAPI_LIB = ../mapi/glapi/libglapi.a
+GLAPI_LIB = ../mapi/glapi/libglapi.la
 
 if HAVE_XF86VIDMODE
 EXTRA_DEFINES_XF86VIDMODE = -DXF86VIDMODE

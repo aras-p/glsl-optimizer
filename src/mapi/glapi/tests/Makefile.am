@@ -10,6 +10,6 @@ glapi_test_SOURCES =			\
 	check_table.cpp
 
 glapi_test_LDADD = \
-	$(top_builddir)/src/mapi/glapi/libglapi.a \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(top_builddir)/src/gtest/libgtest.la \
 	-lpthread

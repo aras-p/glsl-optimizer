@@ -454,7 +454,6 @@ AC_ARG_ENABLE([asm],
 )
 asm_arch=""
 MESA_ASM_FILES=""
-GLAPI_ASM_SOURCES=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
@@ -503,19 +502,16 @@ if test "x$enable_asm" = xyes; then
     x86)
         DEFINES="$DEFINES -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
         MESA_ASM_FILES='$(X86_FILES)'
-        GLAPI_ASM_SOURCES='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
         DEFINES="$DEFINES -DUSE_X86_64_ASM"
         MESA_ASM_FILES='$(X86_64_FILES)'
-        GLAPI_ASM_SOURCES='$(X86_64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     sparc)
         DEFINES="$DEFINES -DUSE_SPARC_ASM"
         MESA_ASM_FILES='$(SPARC_FILES)'
-        GLAPI_ASM_SOURCES='$(SPARC_API)'
         AC_MSG_RESULT([yes, sparc])
         ;;
     *)
@@ -524,7 +520,6 @@ if test "x$enable_asm" = xyes; then
     esac
 fi
 AC_SUBST([MESA_ASM_FILES])
-AC_SUBST([GLAPI_ASM_SOURCES])
 
 dnl PIC code macro
 MESA_PIC_FLAGS
@@ -2158,6 +2153,7 @@ AC_CONFIG_FILES([configs/current
 		src/glsl/tests/Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
+		src/mapi/glapi/Makefile
 		src/mapi/glapi/gen/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/mapi/glapi/tests/Makefile

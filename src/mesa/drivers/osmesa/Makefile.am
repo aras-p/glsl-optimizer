@@ -40,7 +40,7 @@ lib@OSMESA_LIB@_la_SOURCES = osmesa.c
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -shared
 lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
-	$(top_builddir)/src/mapi/glapi/libglapi.a \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(top_builddir)/src/glsl/libglsl.la
 
 # Provide compatibility with scripts for the old Mesa build system for

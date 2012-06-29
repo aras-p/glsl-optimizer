@@ -47,7 +47,6 @@ DLOPEN_LIBS = @DLOPEN_LIBS@
 
 # Source selection
 MESA_ASM_FILES = @MESA_ASM_FILES@
-GLAPI_ASM_SOURCES = @GLAPI_ASM_SOURCES@
 
 # Misc tools and flags
 MAKE = @MAKE@
