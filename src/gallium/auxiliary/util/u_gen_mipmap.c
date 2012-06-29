@@ -1556,6 +1556,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_geometry_shader(ctx->cso);
    cso_save_viewport(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
+   cso_save_vertex_buffers(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
@@ -1679,4 +1680,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_viewport(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);
+   cso_restore_vertex_buffers(ctx->cso);
 }
