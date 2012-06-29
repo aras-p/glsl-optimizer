@@ -290,17 +290,23 @@ svga_tgsi_translate( const struct svga_shader *shader,
 
    emit.nr_hw_temp = emit.info.file_max[TGSI_FILE_TEMPORARY] + 1;
    
-   if (emit.nr_hw_temp >= SVGA3D_TEMPREG_MAX)
+   if (emit.nr_hw_temp >= SVGA3D_TEMPREG_MAX) {
+      debug_printf("svga: too many temporary registers (%u)\n", emit.nr_hw_temp);
       goto fail;
+   }
 
    emit.in_main_func = TRUE;
 
-   if (!svga_shader_emit_header( &emit ))
+   if (!svga_shader_emit_header( &emit )) {
+      debug_printf("svga: emit header failed\n");
       goto fail;
+   }
 
-   if (!svga_shader_emit_instructions( &emit, shader->tokens ))
+   if (!svga_shader_emit_instructions( &emit, shader->tokens )) {
+      debug_printf("svga: emit instructions failed\n");
       goto fail;
-   
+   }
+
    result = CALLOC_STRUCT(svga_shader_result);
    if (result == NULL)
       goto fail;
