@@ -1245,7 +1245,6 @@ public:
    {
       this->ir_type = ir_type_loop_jump;
       this->mode = mode;
-      this->loop = loop;
    }
 
    virtual ir_loop_jump *clone(void *mem_ctx, struct hash_table *) const;
@@ -1269,9 +1268,6 @@ public:
 
    /** Mode selector for the jump instruction. */
    enum jump_mode mode;
-private:
-   /** Loop containing this break instruction. */
-   ir_loop *loop;
 };
 
 /**
