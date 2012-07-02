@@ -50,7 +50,7 @@
  *
  * DIV_TO_MUL_RCP and INT_DIV_TO_MUL_RCP:
  * --------------------------------------
- * Breaks an ir_unop_div expression down to op0 * (rcp(op1)).
+ * Breaks an ir_binop_div expression down to op0 * (rcp(op1)).
  *
  * Many GPUs don't have a divide instruction (945 and 965 included),
  * but they do have an RCP instruction to compute an approximate
@@ -74,7 +74,7 @@
  *
  * MOD_TO_FRACT:
  * -------------
- * Breaks an ir_unop_mod expression down to (op1 * fract(op0 / op1))
+ * Breaks an ir_binop_mod expression down to (op1 * fract(op0 / op1))
  *
  * Many GPUs don't have a MOD instruction (945 and 965 included), and
  * if we have to break it down like this anyway, it gives an
