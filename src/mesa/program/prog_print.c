@@ -29,6 +29,8 @@
  * \author Brian Paul
  */
 
+#include <inttypes.h>  /* for PRIx64 macro */
+
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
@@ -970,11 +972,10 @@ _mesa_fprint_program_parameters(FILE *f,
 {
    GLuint i;
 
-   fprintf(f, "InputsRead: 0x%llx (0b%s)\n",
-           (unsigned long long) prog->InputsRead, binary(prog->InputsRead));
-   fprintf(f, "OutputsWritten: 0x%llx (0b%s)\n",
-                 (unsigned long long)prog->OutputsWritten, 
-		 binary(prog->OutputsWritten));
+   fprintf(f, "InputsRead: %" PRIx64 " (0b%s)\n",
+           (uint64_t) prog->InputsRead, binary(prog->InputsRead));
+   fprintf(f, "OutputsWritten: %" PRIx64 " (0b%s)\n",
+           (uint64_t) prog->OutputsWritten, binary(prog->OutputsWritten));
    fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
    fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
    fprintf(f, "NumParameters=%d\n", prog->NumParameters);
