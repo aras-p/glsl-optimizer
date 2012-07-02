@@ -632,11 +632,11 @@ create_zero_immediate( struct svga_shader_emitter *emit )
 {
    unsigned idx = emit->nr_hw_float_const++;
 
-   /* Emit the constant (0, 0, -1, 1) and use swizzling to generate
+   /* Emit the constant (0, 0.5, -1, 1) and use swizzling to generate
     * other useful vectors.
     */
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
-                        idx, 0, 0, -1, 1 ))
+                        idx, 0, 0.5, -1, 1 ))
       return FALSE;
 
    emit->zero_immediate_idx = idx;
@@ -730,6 +730,16 @@ get_pos_neg_one_immediate( struct svga_shader_emitter *emit )
    return swizzle(src_register( SVGA3DREG_CONST,
                                 emit->zero_immediate_idx),
                   3, 3, 3, 2);
+}
+
+/* returns {0.5, 0.5, 0.5, 0.5} immediate */
+static INLINE struct src_register
+get_half_immediate( struct svga_shader_emitter *emit )
+{
+   assert(emit->created_zero_immediate);
+   assert(emit->zero_immediate_idx >= 0);
+   return swizzle(src_register(SVGA3DREG_CONST, emit->zero_immediate_idx),
+                  1, 1, 1, 1);
 }
 
 /* returns the loop const */
@@ -2400,34 +2410,57 @@ static boolean emit_log(struct svga_shader_emitter *emit,
 
 
 /**
- * Translate TGSI TRUNC instruction.
+ * Translate TGSI TRUNC or ROUND instruction.
  * We need to truncate toward zero. Ex: trunc(-1.9) = -1
  * Different approaches are needed for VS versus PS.
  */
 static boolean
-emit_trunc(struct svga_shader_emitter *emit,
-           const struct tgsi_full_instruction *insn)
+emit_trunc_round(struct svga_shader_emitter *emit,
+                 const struct tgsi_full_instruction *insn,
+                 boolean round)
 {
    SVGA3dShaderDestToken dst = translate_dst_register(emit, insn, 0);
    const struct src_register src0 =
       translate_src_register(emit, &insn->Src[0] );
    SVGA3dShaderDestToken t1 = get_temp(emit);
 
-   /* t1 = fract(abs(src0)) */
-   if (!submit_op1(emit, inst_token(SVGA3DOP_FRC), t1, absolute(src0)))
-      return FALSE;
+   if (round) {
+      SVGA3dShaderDestToken t0 = get_temp(emit);
+      struct src_register half = get_half_immediate(emit);
 
-   /* t1 = abs(src0) - t1 */
-   if (!submit_op2(emit, inst_token(SVGA3DOP_ADD), t1, absolute(src0),
-                   negate(src(t1))))
-      return FALSE;
+      /* t0 = abs(src0) + 0.5 */
+      if (!submit_op2(emit, inst_token(SVGA3DOP_ADD), t0,
+                      absolute(src0), half))
+         return FALSE;
+
+      /* t1 = fract(t0) */
+      if (!submit_op1(emit, inst_token(SVGA3DOP_FRC), t1, src(t0)))
+         return FALSE;
+
+      /* t1 = t0 - t1 */
+      if (!submit_op2(emit, inst_token(SVGA3DOP_ADD), t1, src(t0),
+                      negate(src(t1))))
+         return FALSE;
+   }
+   else {
+      /* trunc */
+
+      /* t1 = fract(abs(src0)) */
+      if (!submit_op1(emit, inst_token(SVGA3DOP_FRC), t1, absolute(src0)))
+         return FALSE;
+
+      /* t1 = abs(src0) - t1 */
+      if (!submit_op2(emit, inst_token(SVGA3DOP_ADD), t1, absolute(src0),
+                      negate(src(t1))))
+         return FALSE;
+   }
 
    /*
     * Now we need to multiply t1 by the sign of the original value.
    */
    if (emit->unit == PIPE_SHADER_VERTEX) {
       /* For VS: use SGN instruction */
-      /* Need another temp plus two extra/dummy registers */
+      /* Need two extra/dummy registers: */
       SVGA3dShaderDestToken t2 = get_temp(emit), t3 = get_temp(emit),
          t4 = get_temp(emit);
 
@@ -2543,7 +2576,10 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
       return emit_floor( emit, insn );
 
    case TGSI_OPCODE_TRUNC:
-      return emit_trunc( emit, insn );
+      return emit_trunc_round( emit, insn, FALSE );
+
+   case TGSI_OPCODE_ROUND:
+      return emit_trunc_round( emit, insn, TRUE );
 
    case TGSI_OPCODE_CEIL:
       return emit_ceil( emit, insn );
@@ -2636,7 +2672,6 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
        * about:
        */
    case TGSI_OPCODE_CLAMP:
-   case TGSI_OPCODE_ROUND:
    case TGSI_OPCODE_AND:
    case TGSI_OPCODE_OR:
    case TGSI_OPCODE_I2F:
@@ -3125,6 +3160,7 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
        emit->info.opcode_count[TGSI_OPCODE_BGNLOOP] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_DDX] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_DDY] >= 1 ||
+       emit->info.opcode_count[TGSI_OPCODE_ROUND] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SGE] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SGT] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SLE] >= 1 ||
