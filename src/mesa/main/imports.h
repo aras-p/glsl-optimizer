@@ -646,16 +646,6 @@ _mesa_vsnprintf(char *str, size_t size, const char *fmt, va_list arg);
 #endif
 
 
-/**
- * On Mingw32 we need to use __mingw_fprintf() to parse formats such
- * as "0x%llx", and possibly others
- */
-#ifdef __MINGW32__
-#define fprintf __mingw_fprintf
-#endif
-
-
-
 #ifdef __cplusplus
 }
 #endif
