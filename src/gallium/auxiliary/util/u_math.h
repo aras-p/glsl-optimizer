@@ -382,7 +382,7 @@ util_is_double_inf_or_nan(double x)
 {
    union di tmp;
    tmp.d = x;
-   return (tmp.ui & 0x7ff0000000000000) == 0x7ff0000000000000;
+   return (tmp.ui & 0x7ff0000000000000ULL) == 0x7ff0000000000000ULL;
 }
 
 
@@ -391,7 +391,7 @@ util_is_double_nan(double x)
 {
    union di tmp;
    tmp.d = x;
-   return (tmp.ui & 0x7fffffffffffffff) > 0x7ff0000000000000;
+   return (tmp.ui & 0x7fffffffffffffffULL) > 0x7ff0000000000000ULL;
 }
 
 
@@ -400,7 +400,7 @@ util_double_inf_sign(double x)
 {
    union di tmp;
    tmp.d = x;
-   if ((tmp.ui & 0x7fffffffffffffff) != 0x7ff0000000000000) {
+   if ((tmp.ui & 0x7fffffffffffffffULL) != 0x7ff0000000000000ULL) {
       return 0;
    }
 
