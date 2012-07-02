@@ -205,16 +205,16 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       drm_intel_bo_busy(intel_obj->buffer) ||
       drm_intel_bo_references(intel->batch.bo, intel_obj->buffer);
 
-   /* replace the current busy bo with fresh data */
-   if (busy && size == intel_obj->Base.Size) {
-      drm_intel_bo_unreference(intel_obj->buffer);
-      intel_bufferobj_alloc_buffer(intel, intel_obj);
-      drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
-   } else if (intel->gen < 6) {
-      if (busy) {
-	 drm_intel_bo *temp_bo;
-
-	 temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
+   if (busy) {
+      if (size == intel_obj->Base.Size) {
+	 /* Replace the current busy bo with fresh data. */
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_bufferobj_alloc_buffer(intel, intel_obj);
+	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
+      } else {
+	 /* Use the blitter to upload the new data. */
+	 drm_intel_bo *temp_bo =
+	    drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
 
 	 drm_intel_bo_subdata(temp_bo, 0, size, data);
 
@@ -224,14 +224,8 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 				size);
 
 	 drm_intel_bo_unreference(temp_bo);
-      } else {
-	 drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
       }
    } else {
-      /* Can't use the blit to modify the buffer in the middle of batch. */
-      if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
-	 intel_batchbuffer_flush(intel);
-      }
       drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
    }
 }
