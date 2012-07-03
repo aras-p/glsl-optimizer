@@ -1285,6 +1285,20 @@ static boolean emit_kilp(struct svga_shader_emitter *emit,
    return submit_op0( emit, inst, temp );
 }
 
+
+/**
+ * Test if r1 and r2 are the same register.
+ */
+static boolean
+same_register(struct src_register r1, struct src_register r2)
+{
+   return (r1.base.num == r2.base.num &&
+           r1.base.type_upper == r2.base.type_upper &&
+           r1.base.type_lower == r2.base.type_lower);
+}
+
+
+
 /* Implement conditionals by initializing destination reg to 'fail',
  * then set predicate reg with UFOP_SETP, then move 'pass' to dest
  * based on predicate reg.
@@ -1333,6 +1347,16 @@ emit_conditional(struct svga_shader_emitter *emit,
       return submit_op1( emit, inst_token( SVGA3DOP_MOV ),
                          dst, pass );
       break;
+   }
+
+   if (same_register(src(dst), pass)) {
+      /* We'll get bad results if the dst and pass registers are the same
+       * so use a temp register containing pass.
+       */
+      SVGA3dShaderDestToken temp = get_temp(emit);
+      if (!submit_op1(emit, inst_token(SVGA3DOP_MOV), temp, pass))
+         return FALSE;
+      pass = src(temp);
    }
 
    /* SETP src0, COMPOP, src1 */
