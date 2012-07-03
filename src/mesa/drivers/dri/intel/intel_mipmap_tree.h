@@ -276,6 +276,15 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_tree *stencil_mt;
 
+   /**
+    * \brief MCS miptree for multisampled textures.
+    *
+    * This miptree contains the "multisample control surface", which stores
+    * the necessary information to implement compressed MSAA on Gen7+
+    * (INTEL_MSAA_FORMAT_CMS).
+    */
+   struct intel_mipmap_tree *mcs_mt;
+
    /* These are also refcounted:
     */
    GLuint refcount;
@@ -387,6 +396,11 @@ intel_miptree_s8z24_gather(struct intel_context *intel,
                            struct intel_mipmap_tree *mt,
                            uint32_t level,
                            uint32_t layer);
+
+bool
+intel_miptree_alloc_mcs(struct intel_context *intel,
+                        struct intel_mipmap_tree *mt,
+                        GLuint num_samples);
 
 /**
  * \name Miptree HiZ functions

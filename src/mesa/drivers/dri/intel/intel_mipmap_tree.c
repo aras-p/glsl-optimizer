@@ -407,6 +407,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_region_release(&((*mt)->region));
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
+      intel_miptree_release(&(*mt)->mcs_mt);
       intel_resolve_map_clear(&(*mt)->hiz_map);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
@@ -635,6 +636,52 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    }
 
    intel_miptree_reference(&intelImage->mt, dst_mt);
+}
+
+bool
+intel_miptree_alloc_mcs(struct intel_context *intel,
+                        struct intel_mipmap_tree *mt,
+                        GLuint num_samples)
+{
+   assert(mt->mcs_mt == NULL);
+   assert(intel->gen >= 7); /* MCS only used on Gen7+ */
+   assert(num_samples == 4); /* TODO: support 8x MSAA */
+
+   /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
+    *
+    *     "The MCS surface must be stored as Tile Y."
+    *
+    * We set msaa_format to INTEL_MSAA_LAYOUT_CMS to force
+    * intel_miptree_create() to use Y tiling.  msaa_format is otherwise
+    * ignored for the MCS miptree.
+    */
+   mt->mcs_mt = intel_miptree_create(intel,
+                                     mt->target,
+                                     MESA_FORMAT_A8,
+                                     mt->first_level,
+                                     mt->last_level,
+                                     mt->width0,
+                                     mt->height0,
+                                     mt->depth0,
+                                     true,
+                                     0 /* num_samples */,
+                                     INTEL_MSAA_LAYOUT_CMS);
+
+   /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
+    *
+    *     When MCS buffer is enabled and bound to MSRT, it is required that it
+    *     is cleared prior to any rendering.
+    *
+    * Since we don't use the MCS buffer for any purpose other than rendering,
+    * it makes sense to just clear it immediately upon allocation.
+    *
+    * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
+    */
+   void *data = intel_region_map(intel, mt->mcs_mt->region, 0);
+   memset(data, 0xff, mt->mcs_mt->region->bo->size);
+   intel_region_unmap(intel, mt->mcs_mt->region);
+
+   return mt->mcs_mt;
 }
 
 bool

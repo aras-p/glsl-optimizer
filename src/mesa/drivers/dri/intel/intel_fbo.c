@@ -282,6 +282,14 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
       }
    }
 
+   if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      bool ok = intel_miptree_alloc_mcs(intel, irb->mt, rb->NumSamples);
+      if (!ok) {
+         intel_miptree_release(&irb->mt);
+         return false;
+      }
+   }
+
    return true;
 }
 
