@@ -854,8 +854,26 @@ struct gen7_surface_state
       GLuint x_offset:7;
    } ss5;
 
-   struct {
-      GLuint pad; /* Multisample Control Surface stuff */
+   union {
+      GLuint raw_data;
+      struct {
+         GLuint y_offset_for_uv_plane:14;
+         GLuint pad1:2;
+         GLuint x_offset_for_uv_plane:14;
+         GLuint pad0:2;
+      } planar; /** Interpretation when Surface Format == PLANAR */
+      struct {
+         GLuint mcs_enable:1;
+         GLuint append_counter_enable:1;
+         GLuint pad:4;
+         GLuint append_counter_address:26;
+      } mcs_disabled; /** Interpretation when mcs_enable == 0 */
+      struct {
+         GLuint mcs_enable:1;
+         GLuint pad:2;
+         GLuint mcs_surface_pitch:9;
+         GLuint mcs_base_address:20;
+      } mcs_enabled; /** Interpretation when mcs_enable == 1 */
    } ss6;
 
    struct {
