@@ -554,7 +554,7 @@ const __DRIcoreExtension driCoreExtension = {
 
 /** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
-    { __DRI_DRI2, __DRI_DRI2_VERSION },
+    { __DRI_DRI2, 3 },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
