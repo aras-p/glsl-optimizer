@@ -273,6 +273,7 @@ enum sampler_message_arg
    SAMPLER_MESSAGE_ARG_U_INT,
    SAMPLER_MESSAGE_ARG_V_INT,
    SAMPLER_MESSAGE_ARG_SI_INT,
+   SAMPLER_MESSAGE_ARG_MCS_INT,
    SAMPLER_MESSAGE_ARG_ZERO_INT,
 };
 
@@ -427,6 +428,7 @@ private:
    void manual_blend();
    void sample(struct brw_reg dst);
    void texel_fetch(struct brw_reg dst);
+   void mcs_fetch();
    void expand_to_32_bits(struct brw_reg src, struct brw_reg dst);
    void texture_lookup(struct brw_reg dst, GLuint msg_type,
                        const sampler_message_arg *args, int num_args);
@@ -460,6 +462,13 @@ private:
     * blending (4 vec16's)
     */
    struct brw_reg texture_data;
+
+   /* Auxiliary storage for the contents of the MCS surface.
+    *
+    * Since the sampler always returns 8 registers worth of data, this is 8
+    * registers wide, even though we only use the first 2 registers of it.
+    */
+   struct brw_reg mcs_data;
 
    /* X coordinates.  We have two of them so that we can perform coordinate
     * transformations easily.
@@ -645,6 +654,8 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        * the texturing unit, will cause data to be read from the correct
        * memory location.  So we can fetch the texel now.
        */
+      if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
+         mcs_fetch();
       texel_fetch(result);
    }
 
@@ -686,6 +697,8 @@ brw_blorp_blit_program::alloc_regs()
    reg += BRW_BLORP_NUM_PUSH_CONST_REGS;
    this->result = vec16(brw_vec8_grf(reg, 0)); reg += 8;
    this->texture_data = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+   this->mcs_data =
+      retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD); reg += 8;
    for (int i = 0; i < 2; ++i) {
       this->x_coords[i]
          = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
@@ -1054,6 +1067,9 @@ brw_blorp_blit_program::manual_blend()
    /* TODO: support num_samples != 4 */
    const int num_samples = 4;
 
+   if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
+      mcs_fetch();
+
    /* Gather sample 0 data first */
    s_is_zero = true;
    texel_fetch(result);
@@ -1118,6 +1134,12 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
       SAMPLER_MESSAGE_ARG_U_INT,
       SAMPLER_MESSAGE_ARG_V_INT
    };
+   static const sampler_message_arg gen7_ld2dms_args[4] = {
+      SAMPLER_MESSAGE_ARG_SI_INT,
+      SAMPLER_MESSAGE_ARG_MCS_INT,
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_V_INT
+   };
 
    switch (brw->intel.gen) {
    case 6:
@@ -1126,8 +1148,13 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
       break;
    case 7:
       if (key->tex_samples > 0) {
-         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
-                        gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
+         if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS) {
+            texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS,
+                           gen7_ld2dms_args, ARRAY_SIZE(gen7_ld2dms_args));
+         } else {
+            texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
+                           gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
+         }
       } else {
          assert(s_is_zero);
          texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
@@ -1138,6 +1165,17 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
       assert(!"Should not get here.");
       break;
    };
+}
+
+void
+brw_blorp_blit_program::mcs_fetch()
+{
+   static const sampler_message_arg gen7_ld_mcs_args[2] = {
+      SAMPLER_MESSAGE_ARG_U_INT,
+      SAMPLER_MESSAGE_ARG_V_INT
+   };
+   texture_lookup(vec16(mcs_data), GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS,
+                  gen7_ld_mcs_args, ARRAY_SIZE(gen7_ld_mcs_args));
 }
 
 void
@@ -1182,6 +1220,9 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
             brw_MOV(&func, mrf, brw_imm_ud(0));
          else
             expand_to_32_bits(S, mrf);
+         break;
+      case SAMPLER_MESSAGE_ARG_MCS_INT:
+         brw_MOV(&func, mrf, mcs_data);
          break;
       case SAMPLER_MESSAGE_ARG_ZERO_INT:
          brw_MOV(&func, mrf, brw_imm_ud(0));
