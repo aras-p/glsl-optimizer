@@ -69,6 +69,46 @@ gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
 
 
 void
+gen7_set_surface_mcs_info(struct brw_context *brw,
+                          struct gen7_surface_state *surf,
+                          uint32_t surf_offset,
+                          const struct intel_mipmap_tree *mcs_mt,
+                          bool is_render_target)
+{
+   /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
+    *
+    *     "The MCS surface must be stored as Tile Y."
+    */
+   assert(mcs_mt->region->tiling == I915_TILING_Y);
+
+   /* Compute the pitch in units of tiles.  To do this we need to divide the
+    * pitch in bytes by 128, since a single Y-tile is 128 bytes wide.
+    */
+   unsigned pitch_bytes = mcs_mt->region->pitch * mcs_mt->cpp;
+   unsigned pitch_tiles = pitch_bytes / 128;
+
+   /* The upper 20 bits of surface state DWORD 6 are the upper 20 bits of the
+    * GPU address of the MCS buffer; the lower 12 bits contain other control
+    * information.  Since buffer addresses are always on 4k boundaries (and
+    * thus have their lower 12 bits zero), we can use an ordinary reloc to do
+    * the necessary address translation.
+    */
+   assert ((mcs_mt->region->bo->offset & 0xfff) == 0);
+   surf->ss6.mcs_enabled.mcs_enable = 1;
+   surf->ss6.mcs_enabled.mcs_surface_pitch = pitch_tiles - 1;
+   surf->ss6.mcs_enabled.mcs_base_address = mcs_mt->region->bo->offset >> 12;
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+                           surf_offset +
+                           offsetof(struct gen7_surface_state, ss6),
+                           mcs_mt->region->bo,
+                           surf->ss6.raw_data & 0xfff,
+                           is_render_target ? I915_GEM_DOMAIN_RENDER
+                           : I915_GEM_DOMAIN_SAMPLER,
+                           is_render_target ? I915_GEM_DOMAIN_RENDER : 0);
+}
+
+
+void
 gen7_check_surface_setup(struct gen7_surface_state *surf,
                          bool is_render_target)
 {
@@ -451,6 +491,11 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    surf->ss3.pitch = (region->pitch * region->cpp) - 1;
 
    gen7_set_surface_num_multisamples(surf, irb->mt->num_samples);
+
+   if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      gen7_set_surface_mcs_info(brw, surf, brw->wm.surf_offset[unit],
+                                irb->mt->mcs_mt, true /* is_render_target */);
+   }
 
    if (intel->is_haswell) {
       surf->ss7.shader_chanel_select_r = HSW_SCS_RED;

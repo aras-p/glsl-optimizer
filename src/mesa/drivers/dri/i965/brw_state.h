@@ -201,6 +201,11 @@ GLuint translate_tex_format(gl_format mesa_format,
 void gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling);
 void gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
                                        unsigned num_samples);
+void gen7_set_surface_mcs_info(struct brw_context *brw,
+                               struct gen7_surface_state *surf,
+                               uint32_t surf_offset,
+                               const struct intel_mipmap_tree *mcs_mt,
+                               bool is_render_target);
 void gen7_check_surface_setup(struct gen7_surface_state *surf,
                               bool is_render_target);
 void gen7_init_vtable_surface_functions(struct brw_context *brw);
