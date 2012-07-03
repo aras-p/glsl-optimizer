@@ -241,7 +241,8 @@ dri2_create_context_attribs(struct glx_screen *base,
    uint32_t major_ver = 2;
    uint32_t flags = 0;
    unsigned api;
-   uint32_t ctx_attribs[2 * 4];
+   int reset;
+   uint32_t ctx_attribs[2 * 5];
    unsigned num_ctx_attribs = 0;
 
    if (psc->dri2->base.version < 3) {
@@ -252,7 +253,8 @@ dri2_create_context_attribs(struct glx_screen *base,
    /* Remap the GLX tokens to DRI2 tokens.
     */
    if (!dri2_convert_glx_attribs(num_attribs, attribs,
-				 &major_ver, &minor_ver, &flags, &api, error))
+				 &major_ver, &minor_ver, &flags, &api, &reset,
+                                 error))
       goto error_exit;
 
    if (shareList) {
@@ -274,6 +276,15 @@ dri2_create_context_attribs(struct glx_screen *base,
    ctx_attribs[num_ctx_attribs++] = major_ver;
    ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
    ctx_attribs[num_ctx_attribs++] = minor_ver;
+
+   /* Only send a value when the non-default value is requested.  By doing
+    * this we don't have to check the driver's DRI2 version before sending the
+    * default value.
+    */
+   if (reset != __DRI_CTX_RESET_NO_NOTIFICATION) {
+      ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_RESET_STRATEGY;
+      ctx_attribs[num_ctx_attribs++] = reset;
+   }
 
    if (flags != 0) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
@@ -979,6 +990,14 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
 
       if (((strcmp(extensions[i]->name, __DRI2_THROTTLE) == 0)))
 	 psc->throttle = (__DRI2throttleExtension *) extensions[i];
+
+      /* DRI2 version 3 is also required because
+       * GLX_ARB_create_context_robustness requires GLX_ARB_create_context.
+       */
+      if (psc->dri2->base.version >= 3
+          && strcmp(extensions[i]->name, __DRI2_ROBUSTNESS) == 0)
+         __glXEnableDirectExtension(&psc->base,
+                                    "GLX_ARB_create_context_robustness");
    }
 }
 

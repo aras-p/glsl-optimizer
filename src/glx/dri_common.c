@@ -457,7 +457,8 @@ driReleaseDrawables(struct glx_context *gc)
 _X_HIDDEN bool
 dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 			 unsigned *major_ver, unsigned *minor_ver,
-			 uint32_t *flags, unsigned *api, unsigned *error)
+			 uint32_t *flags, unsigned *api, int *reset,
+                         unsigned *error)
 {
    unsigned i;
    bool got_profile = false;
@@ -478,6 +479,7 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 
    *major_ver = 1;
    *minor_ver = 0;
+   *reset = __DRI_CTX_RESET_NO_NOTIFICATION;
 
    for (i = 0; i < num_attribs; i++) {
       switch (attribs[i * 2]) {
@@ -497,6 +499,19 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
       case GLX_RENDER_TYPE:
 	 render_type = attribs[i * 2 + 1];
 	 break;
+      case GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB:
+         switch (attribs[i * 2 + 1]) {
+         case GLX_NO_RESET_NOTIFICATION_ARB:
+            *reset = __DRI_CTX_RESET_NO_NOTIFICATION;
+            break;
+         case GLX_LOSE_CONTEXT_ON_RESET_ARB:
+            *reset = __DRI_CTX_RESET_LOSE_CONTEXT;
+            break;
+         default:
+            *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+            return false;
+         }
+         break;
       default:
 	 /* If an unknown attribute is received, fail.
 	  */
@@ -536,7 +551,8 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
 
    /* Unknown flag value.
     */
-   if (*flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE)) {
+   if (*flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE
+                  | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS)) {
       *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
       return false;
    }

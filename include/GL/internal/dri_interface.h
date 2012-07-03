@@ -808,8 +808,26 @@ struct __DRIdri2LoaderExtensionRec {
 #define __DRI_CTX_ATTRIB_MINOR_VERSION		1
 #define __DRI_CTX_ATTRIB_FLAGS			2
 
+/**
+ * \requires __DRI2_ROBUSTNESS.
+ */
+#define __DRI_CTX_ATTRIB_RESET_STRATEGY		3
+
 #define __DRI_CTX_FLAG_DEBUG			0x00000001
 #define __DRI_CTX_FLAG_FORWARD_COMPATIBLE	0x00000002
+
+/**
+ * \requires __DRI2_ROBUSTNESS.
+ */
+#define __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS	0x00000004
+
+/**
+ * \name Context reset strategies.
+ */
+/*@{*/
+#define __DRI_CTX_RESET_NO_NOTIFICATION		0
+#define __DRI_CTX_RESET_LOSE_CONTEXT		1
+/*@}*/
 
 /**
  * \name Reasons that __DRIdri2Extension::createContextAttribs might fail
@@ -1000,4 +1018,21 @@ struct __DRI2configQueryExtensionRec {
    int (*configQueryi)(__DRIscreen *screen, const char *var, GLint *val);
    int (*configQueryf)(__DRIscreen *screen, const char *var, GLfloat *val);
 };
+
+/**
+ * Robust context driver extension.
+ *
+ * Existence of this extension means the driver can accept the
+ * \c __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS flag and the
+ * \c __DRI_CTX_ATTRIB_RESET_STRATEGY attribute in
+ * \c __DRIdri2ExtensionRec::createContextAttribs.
+ */
+#define __DRI2_ROBUSTNESS "DRI_Robustness"
+#define __DRI2_ROBUSTNESS_VERSION 1
+
+typedef struct __DRIrobustnessExtensionRec __DRIrobustnessExtension;
+struct __DRIrobustnessExtensionRec {
+   __DRIextension base;
+};
+
 #endif
