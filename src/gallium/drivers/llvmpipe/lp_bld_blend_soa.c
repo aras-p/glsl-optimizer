@@ -196,13 +196,6 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 }
 
 
-static boolean
-lp_build_blend_factor_complementary(unsigned src_factor, unsigned dst_factor)
-{
-   return dst_factor == (src_factor ^ 0x10);
-}
-
-
 /**
  * Generate blend code in SOA mode.
  * \param rt  render target index (to index the blend / colormask state)
@@ -252,42 +245,6 @@ lp_build_blend_soa(struct gallivm_state *gallivm,
             unsigned func = i < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
             boolean func_commutative = lp_build_blend_func_commutative(func);
 
-	    if (func == PIPE_BLEND_ADD &&
-		lp_build_blend_factor_complementary(src_factor, dst_factor) && 0) {
-               /*
-                * Special case linear interpolation, (i.e., complementary factors).
-                */
-
-	       LLVMValueRef weight;
-	       if (src_factor < dst_factor) {
-		  weight = lp_build_blend_soa_factor(&bld, src_factor, i);
-		  res[i] = lp_build_lerp(&bld.base, weight, dst[i], src[i]);
-	       } else {
-		  weight = lp_build_blend_soa_factor(&bld, dst_factor, i);
-		  res[i] = lp_build_lerp(&bld.base, weight, src[i], dst[i]);
-	       }
-	       continue;
-	    }
-
-	    if ((func == PIPE_BLEND_ADD ||
-                 func == PIPE_BLEND_SUBTRACT ||
-                 func == PIPE_BLEND_REVERSE_SUBTRACT) &&
-		src_factor == dst_factor &&
-                type.floating) {
-               /*
-                * Special common factor.
-                *
-                * XXX: Only for floating points for now, since saturation will
-                * cause different results.
-                */
-
-	       LLVMValueRef factor;
-               factor = lp_build_blend_soa_factor(&bld, src_factor, i);
-               res[i] = lp_build_blend_func(&bld.base, func, src[i], dst[i]);
-               res[i] = lp_build_mul(&bld.base, res[i], factor);
-	       continue;
-	    }
-
             /*
              * Compute src/dst factors.
              */
@@ -296,6 +253,24 @@ lp_build_blend_soa(struct gallivm_state *gallivm,
             bld.factor[0][1][i] = lp_build_blend_soa_factor(&bld, src_factor, i);
             bld.factor[1][0][i] = dst[i];
             bld.factor[1][1][i] = lp_build_blend_soa_factor(&bld, dst_factor, i);
+
+            /*
+             * Check if lp_build_blend can perform any optimisations
+             */
+            res[i] = lp_build_blend(&bld.base,
+                                    func,
+                                    src_factor,
+                                    dst_factor,
+                                    bld.factor[0][0][i],
+                                    bld.factor[1][0][i],
+                                    bld.factor[0][1][i],
+                                    bld.factor[1][1][i],
+                                    true,
+                                    true);
+
+            if (res[i]) {
+               continue;
+            }
 
             /*
              * Compute src/dst terms
@@ -311,7 +286,7 @@ lp_build_blend_soa(struct gallivm_state *gallivm,
                      break;
                }
 
-               if(j < i)
+               if(j < i && bld.term[k][j])
                   bld.term[k][i] = bld.term[k][j];
                else
                   bld.term[k][i] = lp_build_mul(&bld.base, bld.factor[k][0][i], bld.factor[k][1][i]);
