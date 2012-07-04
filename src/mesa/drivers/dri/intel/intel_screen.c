@@ -586,23 +586,17 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       if (mesaVis->depthBits == 24) {
 	 assert(mesaVis->stencilBits == 8);
 
-	 if (screen->hw_has_separate_stencil
-	     && screen->dri2_has_hiz != INTEL_DRI2_HAS_HIZ_FALSE) {
-	    /*
-	     * Request a separate stencil buffer even if we do not yet know if
-	     * the screen supports it. (See comments for
-	     * enum intel_dri2_has_hiz).
-	     */
-	    rb = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
+	 if (screen->hw_has_separate_stencil) {
+	    rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
 	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-	    rb = intel_create_renderbuffer(MESA_FORMAT_S8);
+	    rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
 	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
 	 } else {
 	    /*
 	     * Use combined depth/stencil. Note that the renderbuffer is
 	     * attached to two attachment points.
 	     */
-	    rb = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+            rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
 	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
 	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
 	 }
@@ -611,7 +605,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 	 assert(mesaVis->stencilBits == 0);
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
+	    = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base.Base);
       }
       else {
@@ -854,7 +848,6 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    intelScreen->hw_has_separate_stencil = intelScreen->gen >= 6;
    intelScreen->hw_must_use_separate_stencil = intelScreen->gen >= 7;
-   intelScreen->dri2_has_hiz = INTEL_DRI2_HAS_HIZ_UNKNOWN;
 
    int has_llc = 0;
    bool success = intel_get_param(intelScreen->driScrnPriv, I915_PARAM_HAS_LLC,
