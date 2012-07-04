@@ -41,25 +41,8 @@ namespace brw {
 
 class dst_reg;
 
-/**
- * Common helper for constructing swizzles.  When only a subset of
- * channels of a vec4 are used, we don't want to reference the other
- * channels, as that will tell optimization passes that those other
- * channels are used.
- */
-static unsigned
-swizzle_for_size(int size)
-{
-   static const unsigned size_swizzles[4] = {
-      BRW_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
-      BRW_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
-      BRW_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
-      BRW_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-   };
-
-   assert((size >= 1) && (size <= 4));
-   return size_swizzles[size - 1];
-}
+unsigned
+swizzle_for_size(int size);
 
 enum register_file {
    ARF = BRW_ARCHITECTURE_REGISTER_FILE,
@@ -108,57 +91,13 @@ public:
       return node;
    }
 
-   void init()
-   {
-      memset(this, 0, sizeof(*this));
+   void init();
 
-      this->file = BAD_FILE;
-   }
-
-   src_reg(register_file file, int reg, const glsl_type *type)
-   {
-      init();
-
-      this->file = file;
-      this->reg = reg;
-      if (type && (type->is_scalar() || type->is_vector() || type->is_matrix()))
-	 this->swizzle = swizzle_for_size(type->vector_elements);
-      else
-	 this->swizzle = SWIZZLE_XYZW;
-   }
-
-   /** Generic unset register constructor. */
-   src_reg()
-   {
-      init();
-   }
-
-   src_reg(float f)
-   {
-      init();
-
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_F;
-      this->imm.f = f;
-   }
-
-   src_reg(uint32_t u)
-   {
-      init();
-
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_UD;
-      this->imm.u = u;
-   }
-
-   src_reg(int32_t i)
-   {
-      init();
-
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_D;
-      this->imm.i = i;
-   }
+   src_reg(register_file file, int reg, const glsl_type *type);
+   src_reg();
+   src_reg(float f);
+   src_reg(uint32_t u);
+   src_reg(int32_t i);
 
    bool equals(src_reg *r);
    bool is_zero() const;
@@ -190,44 +129,12 @@ public:
       return node;
    }
 
-   void init()
-   {
-      memset(this, 0, sizeof(*this));
-      this->file = BAD_FILE;
-      this->writemask = WRITEMASK_XYZW;
-   }
+   void init();
 
-   dst_reg()
-   {
-      init();
-   }
-
-   dst_reg(register_file file, int reg)
-   {
-      init();
-
-      this->file = file;
-      this->reg = reg;
-   }
-
-   dst_reg(register_file file, int reg, const glsl_type *type, int writemask)
-   {
-      init();
-
-      this->file = file;
-      this->reg = reg;
-      this->type = brw_type_for_base_type(type);
-      this->writemask = writemask;
-   }
-
-   dst_reg(struct brw_reg reg)
-   {
-      init();
-
-      this->file = HW_REG;
-      this->fixed_hw_reg = reg;
-   }
-
+   dst_reg();
+   dst_reg(register_file file, int reg);
+   dst_reg(register_file file, int reg, const glsl_type *type, int writemask);
+   dst_reg(struct brw_reg reg);
    dst_reg(class vec4_visitor *v, const struct glsl_type *type);
 
    explicit dst_reg(src_reg reg);
