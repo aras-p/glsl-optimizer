@@ -578,6 +578,7 @@ void st_init_extensions(struct st_context *st)
 
       /* Extensions that only depend on GLSL 1.3. */
       ctx->Extensions.ARB_conservative_depth = GL_TRUE;
+      ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
    } else {
       /* Optional integer support for GLSL 1.2. */
       if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
@@ -593,10 +594,6 @@ void st_init_extensions(struct st_context *st)
    if (!ctx->Mesa_DXTn && !st_get_s3tc_override()) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_FALSE;
       ctx->Extensions.S3_s3tc = GL_FALSE;
-   }
-
-   if (ctx->Const.NativeIntegers) {
-      ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
    }
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,
