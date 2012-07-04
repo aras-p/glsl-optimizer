@@ -872,27 +872,6 @@ intel_query_dri2_buffers(struct intel_context *intel,
 							   drawable->loaderPrivate);
       free(attachments);
 
-   } else if (screen->dri2.loader) {
-
-      int i = 0;
-      const int max_attachments = 4;
-      unsigned *attachments = calloc(max_attachments, sizeof(unsigned));
-
-      if (intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT))
-	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-      if (intel_get_renderbuffer(fb, BUFFER_BACK_LEFT))
-	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-
-      assert(i <= max_attachments);
-
-      *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							   &drawable->w,
-							   &drawable->h,
-							   attachments, i,
-							   buffer_count,
-							   drawable->loaderPrivate);
-      free(attachments);
-
    } else {
       *buffers = NULL;
       *buffer_count = 0;

@@ -810,6 +810,14 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    int color;
    __DRIconfig **configs = NULL;
 
+   if (psp->dri2.loader->base.version <= 2 ||
+       psp->dri2.loader->getBuffersWithFormat == NULL) {
+      fprintf(stderr,
+	      "\nERROR!  DRI2 loader with getBuffersWithFormat() "
+	      "support required\n");
+      return false;
+   }
+
    /* Allocate the private area */
    intelScreen = CALLOC(sizeof *intelScreen);
    if (!intelScreen) {
