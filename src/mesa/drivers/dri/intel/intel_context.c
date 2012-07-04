@@ -893,6 +893,10 @@ intel_process_dri2_buffer(struct intel_context *intel,
    if (!rb)
       return;
 
+   /* We try to avoid closing and reopening the same BO name, because the first
+    * use of a mapping of the buffer involves a bunch of page faulting which is
+    * moderately expensive.
+    */
    if (rb->mt &&
        rb->mt->region &&
        rb->mt->region->name == buffer->name)
