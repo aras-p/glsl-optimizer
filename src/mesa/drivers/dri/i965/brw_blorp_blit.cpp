@@ -288,22 +288,22 @@ enum sampler_message_arg
  *   offset = tile(tiling_format, encode_msaa(num_samples, layout, X, Y, S))
  *   (X, Y, S) = decode_msaa(num_samples, layout, detile(tiling_format, offset))
  *
- * For a single-sampled surface, or for a multisampled surface that stores
- * each sample in a different array slice, encode_msaa() and decode_msaa are
- * the identity function:
+ * For a single-sampled surface, or for a multisampled surface using
+ * INTEL_MSAA_LAYOUT_UMS, encode_msaa() and decode_msaa are the identity
+ * function:
  *
- *   encode_msaa(1, N/A, X, Y, 0) = (X, Y, 0)
- *   decode_msaa(1, N/A, X, Y, 0) = (X, Y, 0)
- *   encode_msaa(n, sliced, X, Y, S) = (X, Y, S)
- *   decode_msaa(n, sliced, X, Y, S) = (X, Y, S)
+ *   encode_msaa(1, NONE, X, Y, 0) = (X, Y, 0)
+ *   decode_msaa(1, NONE, X, Y, 0) = (X, Y, 0)
+ *   encode_msaa(n, UMS, X, Y, S) = (X, Y, S)
+ *   decode_msaa(n, UMS, X, Y, S) = (X, Y, S)
  *
- * For a 4x interleaved multisampled surface, encode_msaa() embeds the sample
- * number into bit 1 of the X and Y coordinates:
+ * For a 4x multisampled surface using INTEL_MSAA_LAYOUT_IMS, encode_msaa()
+ * embeds the sample number into bit 1 of the X and Y coordinates:
  *
- *   encode_msaa(4, interleaved, X, Y, S) = (X', Y', 0)
+ *   encode_msaa(4, IMS, X, Y, S) = (X', Y', 0)
  *     where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
  *           Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
- *   decode_msaa(4, interleaved, X, Y, 0) = (X', Y', S)
+ *   decode_msaa(4, IMS, X, Y, 0) = (X', Y', S)
  *     where X' = (X & ~0b11) >> 1 | (X & 0b1)
  *           Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
  *           S = (Y & 0b10) | (X & 0b10) >> 1
@@ -419,8 +419,8 @@ private:
    void alloc_push_const_regs(int base_reg);
    void compute_frag_coords();
    void translate_tiling(bool old_tiled_w, bool new_tiled_w);
-   void encode_msaa(unsigned num_samples, bool interleaved);
-   void decode_msaa(unsigned num_samples, bool interleaved);
+   void encode_msaa(unsigned num_samples, intel_msaa_layout layout);
+   void decode_msaa(unsigned num_samples, intel_msaa_layout layout);
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
    void single_to_blend();
@@ -529,7 +529,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       assert(!key->src_tiled_w);
       assert(key->tex_samples == key->src_samples);
-      assert(key->tex_interleaved == key->src_interleaved);
+      assert(key->tex_layout == key->src_layout);
       assert(key->tex_samples > 0);
    }
 
@@ -540,10 +540,15 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
       assert(key->rt_samples > 0);
    }
 
-   /* Interleaved only makes sense on MSAA surfaces */
-   if (key->tex_interleaved) assert(key->tex_samples > 0);
-   if (key->src_interleaved) assert(key->src_samples > 0);
-   if (key->dst_interleaved) assert(key->dst_samples > 0);
+   /* Make sure layout is consistent with sample count */
+   assert((key->tex_layout == INTEL_MSAA_LAYOUT_NONE) ==
+          (key->tex_samples == 0));
+   assert((key->rt_layout == INTEL_MSAA_LAYOUT_NONE) ==
+          (key->rt_samples == 0));
+   assert((key->src_layout == INTEL_MSAA_LAYOUT_NONE) ==
+          (key->src_samples == 0));
+   assert((key->dst_layout == INTEL_MSAA_LAYOUT_NONE) ==
+          (key->dst_samples == 0));
 
    /* Set up prog_data */
    memset(&prog_data, 0, sizeof(prog_data));
@@ -571,12 +576,12 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
    if (rt_tiled_w != key->dst_tiled_w ||
        key->rt_samples != key->dst_samples ||
-       key->rt_interleaved != key->dst_interleaved) {
-      encode_msaa(key->rt_samples, key->rt_interleaved);
+       key->rt_layout != key->dst_layout) {
+      encode_msaa(key->rt_samples, key->rt_layout);
       /* Now (X, Y, S) = detile(rt_tiling, offset) */
       translate_tiling(rt_tiled_w, key->dst_tiled_w);
       /* Now (X, Y, S) = detile(dst_tiling, offset) */
-      decode_msaa(key->dst_samples, key->dst_interleaved);
+      decode_msaa(key->dst_samples, key->dst_layout);
    }
 
    /* Now (X, Y, S) = decode_msaa(dst_samples, detile(dst_tiling, offset)).
@@ -626,12 +631,12 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       if (tex_tiled_w != key->src_tiled_w ||
           key->tex_samples != key->src_samples ||
-          key->tex_interleaved != key->src_interleaved) {
-         encode_msaa(key->src_samples, key->src_interleaved);
+          key->tex_layout != key->src_layout) {
+         encode_msaa(key->src_samples, key->src_layout);
          /* Now (X, Y, S) = detile(src_tiling, offset) */
          translate_tiling(key->src_tiled_w, tex_tiled_w);
          /* Now (X, Y, S) = detile(tex_tiling, offset) */
-         decode_msaa(key->tex_samples, key->tex_interleaved);
+         decode_msaa(key->tex_samples, key->tex_layout);
       }
 
       /* Now (X, Y, S) = decode_msaa(tex_samples, detile(tex_tiling, offset)).
@@ -801,7 +806,7 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       return;
 
    /* In the code that follows, we can safely assume that S = 0, because W
-    * tiling formats always use interleaved encoding.
+    * tiling formats always use IMS layout.
     */
    assert(s_is_zero);
 
@@ -887,15 +892,25 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
  * (See brw_blorp_blit_program).
  */
 void
-brw_blorp_blit_program::encode_msaa(unsigned num_samples, bool interleaved)
+brw_blorp_blit_program::encode_msaa(unsigned num_samples,
+                                    intel_msaa_layout layout)
 {
-   if (num_samples == 0) {
+   switch (layout) {
+   case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
       assert(s_is_zero);
-   } else if (!interleaved) {
+      break;
+   case INTEL_MSAA_LAYOUT_CMS:
+      /* We can't compensate for compressed layout since at this point in the
+       * program we haven't read from the MCS buffer.
+       */
+      assert(!"Bad layout in encode_msaa");
+      break;
+   case INTEL_MSAA_LAYOUT_UMS:
       /* No translation necessary. */
-   } else {
-      /* encode_msaa(4, interleaved, X, Y, S) = (X', Y', 0)
+      break;
+   case INTEL_MSAA_LAYOUT_IMS:
+      /* encode_msaa(4, IMS, X, Y, S) = (X', Y', 0)
        *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
        *         Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
        */
@@ -918,6 +933,7 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples, bool interleaved)
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
       s_is_zero = true;
+      break;
    }
 }
 
@@ -932,15 +948,25 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples, bool interleaved)
  * (See brw_blorp_blit_program).
  */
 void
-brw_blorp_blit_program::decode_msaa(unsigned num_samples, bool interleaved)
+brw_blorp_blit_program::decode_msaa(unsigned num_samples,
+                                    intel_msaa_layout layout)
 {
-   if (num_samples == 0) {
+   switch (layout) {
+   case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
       assert(s_is_zero);
-   } else if (!interleaved) {
+      break;
+   case INTEL_MSAA_LAYOUT_CMS:
+      /* We can't compensate for compressed layout since at this point in the
+       * program we don't have access to the MCS buffer.
+       */
+      assert(!"Bad layout in encode_msaa");
+      break;
+   case INTEL_MSAA_LAYOUT_UMS:
       /* No translation necessary. */
-   } else {
-      /* decode_msaa(4, interleaved, X, Y, 0) = (X', Y', S)
+      break;
+   case INTEL_MSAA_LAYOUT_IMS:
+      /* decode_msaa(4, IMS, X, Y, 0) = (X', Y', S)
        *   where X' = (X & ~0b11) >> 1 | (X & 0b1)
        *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
        *         S = (Y & 0b10) | (X & 0b10) >> 1
@@ -960,6 +986,7 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples, bool interleaved)
       brw_OR(&func, S, t1, t2);
       s_is_zero = false;
       SWAP_XY_AND_XPYP();
+      break;
    }
 }
 
@@ -1248,6 +1275,40 @@ brw_blorp_coord_transform_params::setup(GLuint src0, GLuint dst0, GLuint dst1,
 }
 
 
+/**
+ * Determine which MSAA layout the GPU pipeline should be configured for,
+ * based on the chip generation, the number of samples, and the true layout of
+ * the image in memory.
+ */
+inline intel_msaa_layout
+compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
+                                 intel_msaa_layout true_layout)
+{
+   if (num_samples == 0) {
+      /* When configuring the GPU for non-MSAA, we can still accommodate IMS
+       * format buffers, by transforming coordinates appropriately.
+       */
+      assert(true_layout == INTEL_MSAA_LAYOUT_NONE ||
+             true_layout == INTEL_MSAA_LAYOUT_IMS);
+      return INTEL_MSAA_LAYOUT_NONE;
+   }
+
+   /* Prior to Gen7, all MSAA surfaces use IMS layout. */
+   if (brw->intel.gen == 6) {
+      assert(true_layout == INTEL_MSAA_LAYOUT_IMS);
+      return INTEL_MSAA_LAYOUT_IMS;
+   }
+
+   /* Since blorp uses color textures and render targets to do all its work
+    * (even when blitting stencil and depth data), we always have to configure
+    * the Gen7 GPU to use UMS or CMS layout on Gen7.
+    */
+   assert(true_layout == INTEL_MSAA_LAYOUT_UMS ||
+          true_layout == INTEL_MSAA_LAYOUT_CMS);
+   return true_layout;
+}
+
+
 brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              struct intel_mipmap_tree *src_mt,
                                              struct intel_mipmap_tree *dst_mt,
@@ -1263,22 +1324,21 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
 
    if (brw->intel.gen > 6) {
-      /* Gen7 only supports interleaved MSAA surfaces for texturing with the
+      /* Gen7's texturing hardware only supports the IMS layout with the
        * ld2dms instruction (which blorp doesn't use).  So if the source is
-       * interleaved MSAA, we'll have to map it as a single-sampled texture
-       * and de-interleave the samples ourselves.
+       * IMS, we'll have to map it as a single-sampled texture and
+       * de-interleave the samples ourselves.
        */
-      if (src.num_samples > 0 && src_mt->msaa_is_interleaved)
+      if (src_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS)
          src.num_samples = 0;
 
-      /* Similarly, Gen7 only supports interleaved MSAA surfaces for depth and
-       * stencil render targets.  Blorp always maps its destination surface as
-       * a color render target (even if it's actually a depth or stencil
-       * buffer).  So if the destination is interleaved MSAA, we'll have to
-       * map it as a single-sampled texture and interleave the samples
-       * ourselves.
+      /* Similarly, Gen7's rendering hardware only supports the IMS layout for
+       * depth and stencil render targets.  Blorp always maps its destination
+       * surface as a color render target (even if it's actually a depth or
+       * stencil buffer).  So if the destination is IMS, we'll have to map it
+       * as a single-sampled texture and interleave the samples ourselves.
        */
-      if (dst.num_samples > 0 && dst_mt->msaa_is_interleaved)
+      if (dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS)
          dst.num_samples = 0;
    }
 
@@ -1324,21 +1384,19 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    wm_prog_key.tex_samples = src.num_samples;
    wm_prog_key.rt_samples  = dst.num_samples;
 
-   /* tex_interleaved and rt_interleaved indicate whether or not the GPU
-    * pipeline will access the source and destination surfaces as though they
-    * use an interleaved layout.  Since blorp uses color textures and render
-    * targets to do all its work (even when blitting stencil and depth data),
-    * it will always use sliced layout on Gen7.  On Gen6, the MSAA layout is
-    * always interleaved.
+   /* tex_layout and rt_layout indicate the MSAA layout the GPU pipeline will
+    * use to access the source and destination surfaces.
     */
-   wm_prog_key.tex_interleaved = src.num_samples > 0 && brw->intel.gen == 6;
-   wm_prog_key.rt_interleaved = dst.num_samples > 0 && brw->intel.gen == 6;
+   wm_prog_key.tex_layout =
+      compute_msaa_layout_for_pipeline(brw, src.num_samples, src.msaa_layout);
+   wm_prog_key.rt_layout =
+      compute_msaa_layout_for_pipeline(brw, dst.num_samples, dst.msaa_layout);
 
-   /* src_interleaved and dst_interleaved indicate whether src and dst are
-    * truly interleaved.
+   /* src_layout and dst_layout indicate the true MSAA layout used by src and
+    * dst.
     */
-   wm_prog_key.src_interleaved = src_mt->msaa_is_interleaved;
-   wm_prog_key.dst_interleaved = dst_mt->msaa_is_interleaved;
+   wm_prog_key.src_layout = src_mt->msaa_layout;
+   wm_prog_key.dst_layout = dst_mt->msaa_layout;
 
    wm_prog_key.src_tiled_w = src.map_stencil_as_y_tiled;
    wm_prog_key.dst_tiled_w = dst.map_stencil_as_y_tiled;
@@ -1358,11 +1416,11 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
        * will mean that pixels are scrambled within the multisampling pattern.
        * TODO: what if this makes the coordinates too large?
        *
-       * Note: this only works if the destination surface's MSAA layout is
-       * interleaved.  If it's sliced, then we have no choice but to set up
-       * the rendering pipeline as multisampled.
+       * Note: this only works if the destination surface uses the IMS layout.
+       * If it's UMS, then we have no choice but to set up the rendering
+       * pipeline as multisampled.
        */
-      assert(dst_mt->msaa_is_interleaved);
+      assert(dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS);
       x0 = (x0 * 2) & ~3;
       y0 = (y0 * 2) & ~3;
       x1 = ALIGN(x1 * 2, 4);
@@ -1378,14 +1436,14 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
        * size, because the differences between W and Y tiling formats will
        * mean that pixels are scrambled within the tile.
        *
-       * Note: if the destination surface configured as an interleaved MSAA
-       * surface, then the effective tile size we need to align it to is
-       * smaller, because each pixel covers a 2x2 or a 4x2 block of samples.
+       * Note: if the destination surface configured to use IMS layout, then
+       * the effective tile size we need to align it to is smaller, because
+       * each pixel covers a 2x2 or a 4x2 block of samples.
        *
        * TODO: what if this makes the coordinates too large?
        */
       unsigned x_align = 64, y_align = 64;
-      if (dst_mt->num_samples > 0 && dst_mt->msaa_is_interleaved) {
+      if (dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
          x_align /= (dst_mt->num_samples == 4 ? 2 : 4);
          y_align /= 2;
       }

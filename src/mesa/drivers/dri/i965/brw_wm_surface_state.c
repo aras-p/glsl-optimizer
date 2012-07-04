@@ -1022,7 +1022,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				       width, height, depth,
 				       true,
                                        0 /* num_samples */,
-                                       false /* msaa_is_interleaved */);
+                                       INTEL_MSAA_LAYOUT_NONE);
 
 	 intel_miptree_copy_teximage(intel, intel_image, new_mt);
 	 intel_miptree_reference(&irb->mt, intel_image->mt);

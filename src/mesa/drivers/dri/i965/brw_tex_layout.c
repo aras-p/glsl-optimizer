@@ -168,10 +168,16 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
       break;
 
    default:
-      if (mt->num_samples > 0 && !mt->msaa_is_interleaved)
+      switch (mt->msaa_layout) {
+      case INTEL_MSAA_LAYOUT_UMS:
+      case INTEL_MSAA_LAYOUT_CMS:
          brw_miptree_layout_texture_array(intel, mt);
-      else
+         break;
+      case INTEL_MSAA_LAYOUT_NONE:
+      case INTEL_MSAA_LAYOUT_IMS:
          i945_miptree_layout_2d(mt);
+         break;
+      }
       break;
    }
    DBG("%s: %dx%dx%d\n", __FUNCTION__,

@@ -88,7 +88,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           depth,
 					  true,
                                           0 /* num_samples */,
-                                          false /* msaa_is_interleaved */);
+                                          INTEL_MSAA_LAYOUT_NONE);
       if (!intelObj->mt)
          return false;
    }

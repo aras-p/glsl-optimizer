@@ -138,6 +138,42 @@ struct intel_mipmap_level
    } *slice;
 };
 
+/**
+ * Enum for keeping track of the different MSAA layouts supported by Gen7.
+ */
+enum intel_msaa_layout
+{
+   /**
+    * Ordinary surface with no MSAA.
+    */
+   INTEL_MSAA_LAYOUT_NONE,
+
+   /**
+    * Interleaved Multisample Surface.  The additional samples are
+    * accommodated by scaling up the width and the height of the surface so
+    * that all the samples corresponding to a pixel are located at nearby
+    * memory locations.
+    */
+   INTEL_MSAA_LAYOUT_IMS,
+
+   /**
+    * Uncompressed Multisample Surface.  The surface is stored as a 2D array,
+    * with array slice n containing all pixel data for sample n.
+    */
+   INTEL_MSAA_LAYOUT_UMS,
+
+   /**
+    * Compressed Multisample Surface.  The surface is stored as in
+    * INTEL_MSAA_LAYOUT_UMS, but there is an additional buffer called the MCS
+    * (Multisample Control Surface) buffer.  Each pixel in the MCS buffer
+    * indicates the mapping from sample number to array slice.  This allows
+    * the common case (where all samples constituting a pixel have the same
+    * color value) to be stored efficiently by just using a single array
+    * slice.
+    */
+   INTEL_MSAA_LAYOUT_CMS,
+};
+
 struct intel_mipmap_tree
 {
    /* Effectively the key:
@@ -182,15 +218,9 @@ struct intel_mipmap_tree
    bool array_spacing_lod0;
 
    /**
-    * For MSAA buffers, there are two possible layouts:
-    * - Interleaved, in which the additional samples are accommodated
-    *   by scaling up the width and height of the surface.
-    * - Sliced, in which the surface is stored as a 2D array, with
-    *   array slice n containing all pixel data for sample n.
-    *
-    * This value is true if num_samples > 0 and the format is interleaved.
+    * MSAA layout used by this buffer.
     */
-   bool msaa_is_interleaved;
+   enum intel_msaa_layout msaa_layout;
 
    /* Derived from the above:
     */
@@ -263,7 +293,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
                                                GLuint num_samples,
-                                               bool msaa_is_interleaved);
+                                               enum intel_msaa_layout msaa_layout);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,

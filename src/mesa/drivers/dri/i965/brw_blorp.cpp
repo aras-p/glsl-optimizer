@@ -61,6 +61,7 @@ brw_blorp_surface_info::set(struct brw_context *brw,
    this->num_samples = mt->num_samples;
    this->array_spacing_lod0 = mt->array_spacing_lod0;
    this->map_stencil_as_y_tiled = false;
+   this->msaa_layout = mt->msaa_layout;
 
    switch (mt->format) {
    case MESA_FORMAT_S8:
