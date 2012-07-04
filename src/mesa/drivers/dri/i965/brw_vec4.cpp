@@ -104,6 +104,36 @@ src_reg::src_reg(int32_t i)
    this->imm.i = i;
 }
 
+src_reg::src_reg(dst_reg reg)
+{
+   init();
+
+   this->file = reg.file;
+   this->reg = reg.reg;
+   this->reg_offset = reg.reg_offset;
+   this->type = reg.type;
+   this->reladdr = reg.reladdr;
+   this->fixed_hw_reg = reg.fixed_hw_reg;
+
+   int swizzles[4];
+   int next_chan = 0;
+   int last = 0;
+
+   for (int i = 0; i < 4; i++) {
+      if (!(reg.writemask & (1 << i)))
+         continue;
+
+      swizzles[next_chan++] = last = i;
+   }
+
+   for (; next_chan < 4; next_chan++) {
+      swizzles[next_chan] = last;
+   }
+
+   this->swizzle = BRW_SWIZZLE4(swizzles[0], swizzles[1],
+                                swizzles[2], swizzles[3]);
+}
+
 bool
 vec4_instruction::is_tex()
 {
@@ -152,6 +182,19 @@ dst_reg::dst_reg(struct brw_reg reg)
 
    this->file = HW_REG;
    this->fixed_hw_reg = reg;
+}
+
+dst_reg::dst_reg(src_reg reg)
+{
+   init();
+
+   this->file = reg.file;
+   this->reg = reg.reg;
+   this->reg_offset = reg.reg_offset;
+   this->type = reg.type;
+   this->writemask = WRITEMASK_XYZW;
+   this->reladdr = reg.reladdr;
+   this->fixed_hw_reg = reg.fixed_hw_reg;
 }
 
 bool
