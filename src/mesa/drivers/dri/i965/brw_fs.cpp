@@ -50,6 +50,214 @@ extern "C" {
 #include "glsl/glsl_types.h"
 #include "glsl/ir_print_visitor.h"
 
+void
+fs_inst::init()
+{
+   memset(this, 0, sizeof(*this));
+   this->opcode = BRW_OPCODE_NOP;
+   this->conditional_mod = BRW_CONDITIONAL_NONE;
+
+   this->dst = reg_undef;
+   this->src[0] = reg_undef;
+   this->src[1] = reg_undef;
+   this->src[2] = reg_undef;
+}
+
+fs_inst::fs_inst()
+{
+   init();
+}
+
+fs_inst::fs_inst(enum opcode opcode)
+{
+   init();
+   this->opcode = opcode;
+}
+
+fs_inst::fs_inst(enum opcode opcode, fs_reg dst)
+{
+   init();
+   this->opcode = opcode;
+   this->dst = dst;
+
+   if (dst.file == GRF)
+      assert(dst.reg_offset >= 0);
+}
+
+fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
+{
+   init();
+   this->opcode = opcode;
+   this->dst = dst;
+   this->src[0] = src0;
+
+   if (dst.file == GRF)
+      assert(dst.reg_offset >= 0);
+   if (src[0].file == GRF)
+      assert(src[0].reg_offset >= 0);
+}
+
+fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+{
+   init();
+   this->opcode = opcode;
+   this->dst = dst;
+   this->src[0] = src0;
+   this->src[1] = src1;
+
+   if (dst.file == GRF)
+      assert(dst.reg_offset >= 0);
+   if (src[0].file == GRF)
+      assert(src[0].reg_offset >= 0);
+   if (src[1].file == GRF)
+      assert(src[1].reg_offset >= 0);
+}
+
+fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
+		 fs_reg src0, fs_reg src1, fs_reg src2)
+{
+   init();
+   this->opcode = opcode;
+   this->dst = dst;
+   this->src[0] = src0;
+   this->src[1] = src1;
+   this->src[2] = src2;
+
+   if (dst.file == GRF)
+      assert(dst.reg_offset >= 0);
+   if (src[0].file == GRF)
+      assert(src[0].reg_offset >= 0);
+   if (src[1].file == GRF)
+      assert(src[1].reg_offset >= 0);
+   if (src[2].file == GRF)
+      assert(src[2].reg_offset >= 0);
+}
+
+bool
+fs_inst::equals(fs_inst *inst)
+{
+   return (opcode == inst->opcode &&
+           dst.equals(inst->dst) &&
+           src[0].equals(inst->src[0]) &&
+           src[1].equals(inst->src[1]) &&
+           src[2].equals(inst->src[2]) &&
+           saturate == inst->saturate &&
+           predicated == inst->predicated &&
+           conditional_mod == inst->conditional_mod &&
+           mlen == inst->mlen &&
+           base_mrf == inst->base_mrf &&
+           sampler == inst->sampler &&
+           target == inst->target &&
+           eot == inst->eot &&
+           header_present == inst->header_present &&
+           shadow_compare == inst->shadow_compare &&
+           offset == inst->offset);
+}
+
+int
+fs_inst::regs_written()
+{
+   if (is_tex())
+      return 4;
+
+   /* The SINCOS and INT_DIV_QUOTIENT_AND_REMAINDER math functions return 2,
+    * but we don't currently use them...nor do we have an opcode for them.
+    */
+
+   return 1;
+}
+
+bool
+fs_inst::is_tex()
+{
+   return (opcode == SHADER_OPCODE_TEX ||
+           opcode == FS_OPCODE_TXB ||
+           opcode == SHADER_OPCODE_TXD ||
+           opcode == SHADER_OPCODE_TXF ||
+           opcode == SHADER_OPCODE_TXL ||
+           opcode == SHADER_OPCODE_TXS);
+}
+
+bool
+fs_inst::is_math()
+{
+   return (opcode == SHADER_OPCODE_RCP ||
+           opcode == SHADER_OPCODE_RSQ ||
+           opcode == SHADER_OPCODE_SQRT ||
+           opcode == SHADER_OPCODE_EXP2 ||
+           opcode == SHADER_OPCODE_LOG2 ||
+           opcode == SHADER_OPCODE_SIN ||
+           opcode == SHADER_OPCODE_COS ||
+           opcode == SHADER_OPCODE_INT_QUOTIENT ||
+           opcode == SHADER_OPCODE_INT_REMAINDER ||
+           opcode == SHADER_OPCODE_POW);
+}
+
+void
+fs_reg::init()
+{
+   memset(this, 0, sizeof(*this));
+   this->smear = -1;
+}
+
+/** Generic unset register constructor. */
+fs_reg::fs_reg()
+{
+   init();
+   this->file = BAD_FILE;
+}
+
+/** Immediate value constructor. */
+fs_reg::fs_reg(float f)
+{
+   init();
+   this->file = IMM;
+   this->type = BRW_REGISTER_TYPE_F;
+   this->imm.f = f;
+}
+
+/** Immediate value constructor. */
+fs_reg::fs_reg(int32_t i)
+{
+   init();
+   this->file = IMM;
+   this->type = BRW_REGISTER_TYPE_D;
+   this->imm.i = i;
+}
+
+/** Immediate value constructor. */
+fs_reg::fs_reg(uint32_t u)
+{
+   init();
+   this->file = IMM;
+   this->type = BRW_REGISTER_TYPE_UD;
+   this->imm.u = u;
+}
+
+/** Fixed brw_reg Immediate value constructor. */
+fs_reg::fs_reg(struct brw_reg fixed_hw_reg)
+{
+   init();
+   this->file = FIXED_HW_REG;
+   this->fixed_hw_reg = fixed_hw_reg;
+   this->type = fixed_hw_reg.type;
+}
+
+bool
+fs_reg::equals(const fs_reg &r) const
+{
+   return (file == r.file &&
+           reg == r.reg &&
+           reg_offset == r.reg_offset &&
+           type == r.type &&
+           negate == r.negate &&
+           abs == r.abs &&
+           memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
+                  sizeof(fixed_hw_reg)) == 0 &&
+           smear == r.smear &&
+           imm.u == r.imm.u);
+}
+
 int
 fs_visitor::type_size(const struct glsl_type *type)
 {
@@ -101,6 +309,37 @@ fs_visitor::fail(const char *format, ...)
    if (INTEL_DEBUG & DEBUG_WM) {
       fprintf(stderr, "%s",  msg);
    }
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode)
+{
+   return emit(fs_inst(opcode));
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode, fs_reg dst)
+{
+   return emit(fs_inst(opcode, dst));
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0)
+{
+   return emit(fs_inst(opcode, dst, src0));
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+{
+   return emit(fs_inst(opcode, dst, src0, src1));
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode, fs_reg dst,
+                 fs_reg src0, fs_reg src1, fs_reg src2)
+{
+   return emit(fs_inst(opcode, dst, src0, src1, src2));
 }
 
 void

@@ -78,72 +78,18 @@ public:
       return node;
    }
 
-   void init()
-   {
-      memset(this, 0, sizeof(*this));
-      this->smear = -1;
-   }
+   void init();
 
-   /** Generic unset register constructor. */
-   fs_reg()
-   {
-      init();
-      this->file = BAD_FILE;
-   }
-
-   /** Immediate value constructor. */
-   fs_reg(float f)
-   {
-      init();
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_F;
-      this->imm.f = f;
-   }
-
-   /** Immediate value constructor. */
-   fs_reg(int32_t i)
-   {
-      init();
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_D;
-      this->imm.i = i;
-   }
-
-   /** Immediate value constructor. */
-   fs_reg(uint32_t u)
-   {
-      init();
-      this->file = IMM;
-      this->type = BRW_REGISTER_TYPE_UD;
-      this->imm.u = u;
-   }
-
-   /** Fixed brw_reg Immediate value constructor. */
-   fs_reg(struct brw_reg fixed_hw_reg)
-   {
-      init();
-      this->file = FIXED_HW_REG;
-      this->fixed_hw_reg = fixed_hw_reg;
-      this->type = fixed_hw_reg.type;
-   }
-
+   fs_reg();
+   fs_reg(float f);
+   fs_reg(int32_t i);
+   fs_reg(uint32_t u);
+   fs_reg(struct brw_reg fixed_hw_reg);
    fs_reg(enum register_file file, int reg);
    fs_reg(enum register_file file, int reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
-   bool equals(const fs_reg &r) const
-   {
-      return (file == r.file &&
-	      reg == r.reg &&
-	      reg_offset == r.reg_offset &&
-	      type == r.type &&
-	      negate == r.negate &&
-	      abs == r.abs &&
-	      memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
-		     sizeof(fixed_hw_reg)) == 0 &&
-	      smear == r.smear &&
-	      imm.u == r.imm.u);
-   }
+   bool equals(const fs_reg &r) const;
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
@@ -192,142 +138,20 @@ public:
       return node;
    }
 
-   void init()
-   {
-      memset(this, 0, sizeof(*this));
-      this->opcode = BRW_OPCODE_NOP;
-      this->conditional_mod = BRW_CONDITIONAL_NONE;
+   void init();
 
-      this->dst = reg_undef;
-      this->src[0] = reg_undef;
-      this->src[1] = reg_undef;
-      this->src[2] = reg_undef;
-   }
+   fs_inst();
+   fs_inst(enum opcode opcode);
+   fs_inst(enum opcode opcode, fs_reg dst);
+   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0);
+   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst(enum opcode opcode, fs_reg dst,
+           fs_reg src0, fs_reg src1,fs_reg src2);
 
-   fs_inst()
-   {
-      init();
-   }
-
-   fs_inst(enum opcode opcode)
-   {
-      init();
-      this->opcode = opcode;
-   }
-
-   fs_inst(enum opcode opcode, fs_reg dst)
-   {
-      init();
-      this->opcode = opcode;
-      this->dst = dst;
-
-      if (dst.file == GRF)
-	 assert(dst.reg_offset >= 0);
-   }
-
-   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
-   {
-      init();
-      this->opcode = opcode;
-      this->dst = dst;
-      this->src[0] = src0;
-
-      if (dst.file == GRF)
-	 assert(dst.reg_offset >= 0);
-      if (src[0].file == GRF)
-	 assert(src[0].reg_offset >= 0);
-   }
-
-   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
-   {
-      init();
-      this->opcode = opcode;
-      this->dst = dst;
-      this->src[0] = src0;
-      this->src[1] = src1;
-
-      if (dst.file == GRF)
-	 assert(dst.reg_offset >= 0);
-      if (src[0].file == GRF)
-	 assert(src[0].reg_offset >= 0);
-      if (src[1].file == GRF)
-	 assert(src[1].reg_offset >= 0);
-   }
-
-   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
-   {
-      init();
-      this->opcode = opcode;
-      this->dst = dst;
-      this->src[0] = src0;
-      this->src[1] = src1;
-      this->src[2] = src2;
-
-      if (dst.file == GRF)
-	 assert(dst.reg_offset >= 0);
-      if (src[0].file == GRF)
-	 assert(src[0].reg_offset >= 0);
-      if (src[1].file == GRF)
-	 assert(src[1].reg_offset >= 0);
-      if (src[2].file == GRF)
-	 assert(src[2].reg_offset >= 0);
-   }
-
-   bool equals(fs_inst *inst)
-   {
-      return (opcode == inst->opcode &&
-	      dst.equals(inst->dst) &&
-	      src[0].equals(inst->src[0]) &&
-	      src[1].equals(inst->src[1]) &&
-	      src[2].equals(inst->src[2]) &&
-	      saturate == inst->saturate &&
-	      predicated == inst->predicated &&
-	      conditional_mod == inst->conditional_mod &&
-	      mlen == inst->mlen &&
-	      base_mrf == inst->base_mrf &&
-	      sampler == inst->sampler &&
-	      target == inst->target &&
-	      eot == inst->eot &&
-	      header_present == inst->header_present &&
-	      shadow_compare == inst->shadow_compare &&
-	      offset == inst->offset);
-   }
-
-   int regs_written()
-   {
-      if (is_tex())
-	 return 4;
-
-      /* The SINCOS and INT_DIV_QUOTIENT_AND_REMAINDER math functions return 2,
-       * but we don't currently use them...nor do we have an opcode for them.
-       */
-
-      return 1;
-   }
-
-   bool is_tex()
-   {
-      return (opcode == SHADER_OPCODE_TEX ||
-	      opcode == FS_OPCODE_TXB ||
-	      opcode == SHADER_OPCODE_TXD ||
-	      opcode == SHADER_OPCODE_TXF ||
-	      opcode == SHADER_OPCODE_TXL ||
-	      opcode == SHADER_OPCODE_TXS);
-   }
-
-   bool is_math()
-   {
-      return (opcode == SHADER_OPCODE_RCP ||
-	      opcode == SHADER_OPCODE_RSQ ||
-	      opcode == SHADER_OPCODE_SQRT ||
-	      opcode == SHADER_OPCODE_EXP2 ||
-	      opcode == SHADER_OPCODE_LOG2 ||
-	      opcode == SHADER_OPCODE_SIN ||
-	      opcode == SHADER_OPCODE_COS ||
-	      opcode == SHADER_OPCODE_INT_QUOTIENT ||
-	      opcode == SHADER_OPCODE_INT_REMAINDER ||
-	      opcode == SHADER_OPCODE_POW);
-   }
+   bool equals(fs_inst *inst);
+   int regs_written();
+   bool is_tex();
+   bool is_math();
 
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
@@ -361,65 +185,8 @@ class fs_visitor : public ir_visitor
 public:
 
    fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
-	      struct brw_shader *shader)
-   {
-      this->c = c;
-      this->p = &c->func;
-      this->brw = p->brw;
-      this->fp = (struct gl_fragment_program *)
-	 prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
-      this->prog = prog;
-      this->intel = &brw->intel;
-      this->ctx = &intel->ctx;
-      this->mem_ctx = ralloc_context(NULL);
-      this->shader = shader;
-      this->failed = false;
-      this->variable_ht = hash_table_ctor(0,
-					  hash_table_pointer_hash,
-					  hash_table_pointer_compare);
-
-      /* There's a question that appears to be left open in the spec:
-       * How do implicit dst conversions interact with the CMP
-       * instruction or conditional mods?  On gen6, the instruction:
-       *
-       * CMP null<d> src0<f> src1<f>
-       *
-       * will do src1 - src0 and compare that result as if it was an
-       * integer.  On gen4, it will do src1 - src0 as float, convert
-       * the result to int, and compare as int.  In between, it
-       * appears that it does src1 - src0 and does the compare in the
-       * execution type so dst type doesn't matter.
-       */
-      if (this->intel->gen > 4)
-	 this->reg_null_cmp = reg_null_d;
-      else
-	 this->reg_null_cmp = reg_null_f;
-
-      this->frag_depth = NULL;
-      memset(this->outputs, 0, sizeof(this->outputs));
-      this->first_non_payload_grf = 0;
-      this->max_grf = intel->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
-
-      this->current_annotation = NULL;
-      this->base_ir = NULL;
-
-      this->virtual_grf_sizes = NULL;
-      this->virtual_grf_next = 0;
-      this->virtual_grf_array_size = 0;
-      this->virtual_grf_def = NULL;
-      this->virtual_grf_use = NULL;
-      this->live_intervals_valid = false;
-
-      this->kill_emitted = false;
-      this->force_uncompressed_stack = 0;
-      this->force_sechalf_stack = 0;
-   }
-
-   ~fs_visitor()
-   {
-      ralloc_free(this->mem_ctx);
-      hash_table_dtor(this->variable_ht);
-   }
+              struct brw_shader *shader);
+   ~fs_visitor();
 
    fs_reg *variable_storage(ir_variable *var);
    int virtual_grf_alloc(int size);
@@ -447,31 +214,12 @@ public:
 
    fs_inst *emit(fs_inst inst);
 
-   fs_inst *emit(enum opcode opcode)
-   {
-      return emit(fs_inst(opcode));
-   }
-
-   fs_inst *emit(enum opcode opcode, fs_reg dst)
-   {
-      return emit(fs_inst(opcode, dst));
-   }
-
-   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0)
-   {
-      return emit(fs_inst(opcode, dst, src0));
-   }
-
-   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
-   {
-      return emit(fs_inst(opcode, dst, src0, src1));
-   }
-
+   fs_inst *emit(enum opcode opcode);
+   fs_inst *emit(enum opcode opcode, fs_reg dst);
+   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0);
+   fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *emit(enum opcode opcode, fs_reg dst,
-		 fs_reg src0, fs_reg src1, fs_reg src2)
-   {
-      return emit(fs_inst(opcode, dst, src0, src1, src2));
-   }
+                 fs_reg src0, fs_reg src1, fs_reg src2);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,

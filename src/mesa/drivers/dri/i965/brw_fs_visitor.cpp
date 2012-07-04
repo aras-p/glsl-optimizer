@@ -2233,3 +2233,64 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
    emit(BRW_OPCODE_AND, temp, *reg, fs_reg(1));
    *reg = temp;
 }
+
+fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
+                       struct brw_shader *shader)
+{
+   this->c = c;
+   this->p = &c->func;
+   this->brw = p->brw;
+   this->fp = (struct gl_fragment_program *)
+      prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
+   this->prog = prog;
+   this->intel = &brw->intel;
+   this->ctx = &intel->ctx;
+   this->mem_ctx = ralloc_context(NULL);
+   this->shader = shader;
+   this->failed = false;
+   this->variable_ht = hash_table_ctor(0,
+                                       hash_table_pointer_hash,
+                                       hash_table_pointer_compare);
+
+   /* There's a question that appears to be left open in the spec:
+    * How do implicit dst conversions interact with the CMP
+    * instruction or conditional mods?  On gen6, the instruction:
+    *
+    * CMP null<d> src0<f> src1<f>
+    *
+    * will do src1 - src0 and compare that result as if it was an
+    * integer.  On gen4, it will do src1 - src0 as float, convert
+    * the result to int, and compare as int.  In between, it
+    * appears that it does src1 - src0 and does the compare in the
+    * execution type so dst type doesn't matter.
+    */
+   if (this->intel->gen > 4)
+      this->reg_null_cmp = reg_null_d;
+   else
+      this->reg_null_cmp = reg_null_f;
+
+   this->frag_depth = NULL;
+   memset(this->outputs, 0, sizeof(this->outputs));
+   this->first_non_payload_grf = 0;
+   this->max_grf = intel->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+
+   this->current_annotation = NULL;
+   this->base_ir = NULL;
+
+   this->virtual_grf_sizes = NULL;
+   this->virtual_grf_next = 0;
+   this->virtual_grf_array_size = 0;
+   this->virtual_grf_def = NULL;
+   this->virtual_grf_use = NULL;
+   this->live_intervals_valid = false;
+
+   this->kill_emitted = false;
+   this->force_uncompressed_stack = 0;
+   this->force_sechalf_stack = 0;
+}
+
+fs_visitor::~fs_visitor()
+{
+   ralloc_free(this->mem_ctx);
+   hash_table_dtor(this->variable_ht);
+}
