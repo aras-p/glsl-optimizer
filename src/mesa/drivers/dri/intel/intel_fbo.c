@@ -228,8 +228,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    rb->NumSamples = quantize_num_samples(intel, rb->NumSamples);
 
-   ASSERT(rb->Name != 0);
-
    switch (internalFormat) {
    default:
       /* Use the same format-choice logic as for textures.
@@ -423,6 +421,23 @@ intel_create_renderbuffer(gl_format format)
    /* intel-specific methods */
    rb->Delete = intel_delete_renderbuffer;
    rb->AllocStorage = intel_alloc_window_storage;
+
+   return irb;
+}
+
+/**
+ * Private window-system buffers (as opposed to ones shared with the display
+ * server created with intel_create_renderbuffer()) are most similar in their
+ * handling to user-created renderbuffers, but they have a resize handler that
+ * may be called at intel_update_renderbuffers() time.
+ */
+struct intel_renderbuffer *
+intel_create_private_renderbuffer(gl_format format)
+{
+   struct intel_renderbuffer *irb;
+
+   irb = intel_create_renderbuffer(format);
+   irb->Base.Base.AllocStorage = intel_alloc_renderbuffer_storage;
 
    return irb;
 }

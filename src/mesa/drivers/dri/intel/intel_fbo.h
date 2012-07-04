@@ -136,6 +136,9 @@ intel_framebuffer_has_hiz(struct gl_framebuffer *fb);
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format);
 
+struct intel_renderbuffer *
+intel_create_private_renderbuffer(gl_format format);
+
 struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  int width, int height,
