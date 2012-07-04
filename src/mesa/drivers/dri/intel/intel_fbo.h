@@ -129,10 +129,6 @@ intel_rb_format(const struct intel_renderbuffer *rb)
    return rb->Base.Base.Format;
 }
 
-
-bool
-intel_framebuffer_has_hiz(struct gl_framebuffer *fb);
-
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(gl_format format);
 

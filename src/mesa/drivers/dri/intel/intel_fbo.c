@@ -59,15 +59,6 @@
 static struct gl_renderbuffer *
 intel_new_renderbuffer(struct gl_context * ctx, GLuint name);
 
-bool
-intel_framebuffer_has_hiz(struct gl_framebuffer *fb)
-{
-   struct intel_renderbuffer *rb = NULL;
-   if (fb)
-      rb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   return rb && rb->mt && rb->mt->hiz_mt;
-}
-
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
