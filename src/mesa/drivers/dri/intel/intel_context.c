@@ -216,9 +216,7 @@ intel_flush_front(struct gl_context *ctx)
     __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
     if (_mesa_is_winsys_fbo(ctx->DrawBuffer) && intel->front_buffer_dirty) {
-      if (screen->dri2.loader &&
-          (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
+      if (screen->dri2.loader->flushFrontBuffer != NULL &&
           driContext->driDrawablePriv &&
 	  driContext->driDrawablePriv->loaderPrivate) {
 	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
@@ -835,47 +833,37 @@ intel_query_dri2_buffers(struct intel_context *intel,
 {
    __DRIscreen *screen = intel->intelScreen->driScrnPriv;
    struct gl_framebuffer *fb = drawable->driverPrivate;
+   int i = 0;
+   const int max_attachments = 4;
+   unsigned *attachments = calloc(2 * max_attachments, sizeof(unsigned));
 
-   if (screen->dri2.loader
-       && screen->dri2.loader->base.version > 2
-       && screen->dri2.loader->getBuffersWithFormat != NULL) {
+   struct intel_renderbuffer *front_rb;
+   struct intel_renderbuffer *back_rb;
 
-      int i = 0;
-      const int max_attachments = 4;
-      unsigned *attachments = calloc(2 * max_attachments, sizeof(unsigned));
+   front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+   back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
 
-      struct intel_renderbuffer *front_rb;
-      struct intel_renderbuffer *back_rb;
-
-      front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-      back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
-
-      if ((intel->is_front_buffer_rendering ||
-	   intel->is_front_buffer_reading ||
-	   !back_rb) && front_rb) {
-	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-	 attachments[i++] = intel_bits_per_pixel(front_rb);
-      }
-
-      if (back_rb) {
-	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-	 attachments[i++] = intel_bits_per_pixel(back_rb);
-      }
-
-      assert(i <= 2 * max_attachments);
-
-      *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
-							   &drawable->w,
-							   &drawable->h,
-							   attachments, i / 2,
-							   buffer_count,
-							   drawable->loaderPrivate);
-      free(attachments);
-
-   } else {
-      *buffers = NULL;
-      *buffer_count = 0;
+   if ((intel->is_front_buffer_rendering ||
+	intel->is_front_buffer_reading ||
+	!back_rb) && front_rb) {
+      attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+      attachments[i++] = intel_bits_per_pixel(front_rb);
    }
+
+   if (back_rb) {
+      attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+      attachments[i++] = intel_bits_per_pixel(back_rb);
+   }
+
+   assert(i <= 2 * max_attachments);
+
+   *buffers = screen->dri2.loader->getBuffersWithFormat(drawable,
+							&drawable->w,
+							&drawable->h,
+							attachments, i / 2,
+							buffer_count,
+							drawable->loaderPrivate);
+   free(attachments);
 }
 
 /**
