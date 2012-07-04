@@ -99,7 +99,6 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
     * the protocol error and handle it.  Part of handling the error is freeing
     * the possibly non-NULL value returned by this function.
     */
-#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    cookie =
       xcb_glx_create_context_attribs_arb_checked(c,
 						 gc->xid,
@@ -111,19 +110,6 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 						 (const uint32_t *)
 						 attrib_list);
    err = xcb_request_check(c, cookie);
-#else
-   /* This is a hugely ugly hack to make things compile on systems that lack
-    * the proper XCB version.
-    */
-   memset(&cookie, 0, sizeof(cookie));
-
-   err = calloc(1, sizeof(*err));
-   err->error_code = BadRequest;
-   err->sequence = dpy->request;
-   err->resource_id = gc->xid;
-   err->minor_code = gc->majorOpcode;
-   err->major_code = 34;
-#endif
    if (err != NULL) {
       gc->vtable->destroy(gc);
       gc = NULL;

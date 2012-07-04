@@ -5,7 +5,6 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	$(X11_CFLAGS)
 
-if HAVE_XCB_GLX_CREATE_CONTEXT
 TESTS = glx-test
 check_PROGRAMS = glx-test
 
@@ -20,5 +19,3 @@ glx_test_LDADD = \
 	$(top_builddir)/src/glx/libglx.la \
 	$(top_builddir)/src/gtest/libgtest.la \
 	-lpthread
-
-endif

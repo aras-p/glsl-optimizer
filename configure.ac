@@ -1030,27 +1030,10 @@ xyesno)
         GL_PC_CFLAGS="$X11_INCLUDES"
 
         # XCB can only be used from pkg-config
-        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx])
+        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx >= 1.8.1])
         GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV x11-xcb xcb-glx"
         X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
         GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
-    fi
-
-    # Check to see if the xcb-glx library is new enough to support
-    # GLX_ARB_create_context.  This bit of hackery is necessary until XCB 1.8
-    # is released.
-    save_CPPFLAGS="$CPPFLAGS"
-    save_LDFLAGS="$LDFLAGS"
-    CPPFLAGS="$CPPFLAGS $X11_INCLUDES"
-    LDFLAGS="$LDFLAGS $GL_LIB_DEPS"
-    AC_CHECK_LIB(xcb-glx, xcb_glx_create_context_attribs_arb_checked,
-        [HAVE_XCB_GLX_CREATE_CONTEXT=yes],
-        [HAVE_XCB_GLX_CREATE_CONTEXT=no])
-    CPPFLAGS="$save_CPPFLAGS"
-    LDFLAGS="$save_LDFLAGS"
-
-    if test x$HAVE_XCB_GLX_CREATE_CONTEXT = xyes; then
-        X11_INCLUDES="$X11_INCLUDES -DHAVE_XCB_GLX_CREATE_CONTEXT"
     fi
 
     # need DRM libs, -lpthread, etc.
@@ -1061,8 +1044,6 @@ esac
 
 # This is outside the case (above) so that it is invoked even for non-GLX
 # builds.
-AM_CONDITIONAL(HAVE_XCB_GLX_CREATE_CONTEXT,
-    test x$HAVE_XCB_GLX_CREATE_CONTEXT = xyes)
 AM_CONDITIONAL(HAVE_XF86VIDMODE, test "x$HAVE_XF86VIDMODE" = xyes)
 
 GLESv1_CM_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"

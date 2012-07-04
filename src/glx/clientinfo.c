@@ -39,7 +39,6 @@ __glX_send_client_info(struct glx_display *glx_dpy)
    Bool any_screen_has_ARB_create_context = False;
    Bool any_screen_has_ARB_create_context_profile = False;
    unsigned i;
-#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    static const uint32_t gl_versions[] = {
       1, 4,
    };
@@ -48,7 +47,6 @@ __glX_send_client_info(struct glx_display *glx_dpy)
    };
    static const char glx_extensions[] =
       "GLX_ARB_create_context GLX_ARB_create_context_profile";
-#endif
 
    /* There are three possible flavors of the client info structure that the
     * client could send to the server.  The version sent depends on the
@@ -125,7 +123,6 @@ __glX_send_client_info(struct glx_display *glx_dpy)
     * THE ORDER IS IMPORTANT.  We want to send the most recent version of the
     * protocol that the server can support.
     */
-#ifdef HAVE_XCB_GLX_CREATE_CONTEXT
    if (glx_dpy->majorVersion == 1 && glx_dpy->minorVersion == 4
        && any_screen_has_ARB_create_context_profile) {
       xcb_glx_set_client_info_2arb(c,
@@ -148,9 +145,7 @@ __glX_send_client_info(struct glx_display *glx_dpy)
 				  gl_versions,
 				  gl_extension_string,
 				  glx_extensions);
-   } else
-#endif
-   {
+   } else {
       xcb_glx_client_info(c,
 			  GLX_MAJOR_VERSION, GLX_MINOR_VERSION,
 			  gl_extension_length,
