@@ -100,7 +100,7 @@ GL_ARB_texture_buffer_object_rgb32                   not started
 GL_ARB_texture_cube_map_array                        not started
 GL_ARB_texture_gather                                not started
 GL_ARB_transform_feedback2                           DONE
-GL_ARB_transform_feedback3                           not started
+GL_ARB_transform_feedback3                           DONE
 
 
 GL 4.1:
@@ -121,7 +121,7 @@ GL_ARB_texture_compression_bptc                      not started
 GL_ARB_compressed_texture_pixel_storage              not started
 GL_ARB_shader_atomic_counters                        not started
 GL_ARB_texture_storage                               DONE (r300, r600, swrast)
-GL_ARB_transform_feedback_instanced                  not started
+GL_ARB_transform_feedback_instanced                  DONE
 GL_ARB_base_instance                                 DONE (nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (softpipe)
