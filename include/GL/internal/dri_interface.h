@@ -919,12 +919,19 @@ struct __DRIdri2ExtensionRec {
  * tokens, except in the native endian of the CPU.  For example, on
  * little endian __DRI_IMAGE_FORMAT_XRGB8888 corresponds to
  * MESA_FORMAT_XRGB8888, but MESA_FORMAT_XRGB8888_REV on big endian.
+ *
+ * __DRI_IMAGE_FORMAT_NONE is for images that aren't directly usable
+ * by the driver (YUV planar formats) but serve as a base image for
+ * creating sub-images for the different planes within the image.
  */
 #define __DRI_IMAGE_FORMAT_RGB565       0x1001
 #define __DRI_IMAGE_FORMAT_XRGB8888     0x1002
 #define __DRI_IMAGE_FORMAT_ARGB8888     0x1003
 #define __DRI_IMAGE_FORMAT_ABGR8888     0x1004
 #define __DRI_IMAGE_FORMAT_XBGR8888     0x1005
+#define __DRI_IMAGE_FORMAT_R8           0x1006 /* Since version 5 */
+#define __DRI_IMAGE_FORMAT_GR88         0x1007
+#define __DRI_IMAGE_FORMAT_NONE         0x1008
 
 #define __DRI_IMAGE_USE_SHARE		0x0001
 #define __DRI_IMAGE_USE_SCANOUT		0x0002
@@ -981,6 +988,26 @@ struct __DRIimageExtensionRec {
     * \since 4
     */
    int (*write)(__DRIimage *image, const void *buf, size_t count);
+
+   /**
+    * Create an image out of a sub-region of a parent image.  This
+    * entry point lets us create individual __DRIimages for different
+    * planes in a planar buffer (typically yuv), for example.  While a
+    * sub-image shares the underlying buffer object with the parent
+    * image and other sibling sub-images, the life times of parent and
+    * sub-images are not dependent.  Destroying the parent or a
+    * sub-image doesn't affect other images.  The underlying buffer
+    * object is free when no __DRIimage remains that references it.
+    *
+    * Sub-images may overlap, but rendering to overlapping sub-images
+    * is undefined.
+    *
+    * \since 5
+    */
+    __DRIimage *(*createSubImage)(__DRIimage *image,
+                                  int width, int height, int format,
+                                  int offset, int pitch,
+                                  void *loaderPrivate);
 };
 
 
