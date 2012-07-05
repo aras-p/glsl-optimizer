@@ -147,7 +147,6 @@ struct __DRIimageRec {
    uint32_t usage;
    uint32_t dri_format;
    GLuint format;
-   GLenum data_type;
    void *data;
 };
 

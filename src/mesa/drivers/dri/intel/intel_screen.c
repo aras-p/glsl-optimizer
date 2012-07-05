@@ -194,27 +194,22 @@ intel_create_image_from_name(__DRIscreen *screen,
     case __DRI_IMAGE_FORMAT_RGB565:
        image->format = MESA_FORMAT_RGB565;
        image->internal_format = GL_RGB;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     case __DRI_IMAGE_FORMAT_XRGB8888:
        image->format = MESA_FORMAT_XRGB8888;
        image->internal_format = GL_RGB;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     case __DRI_IMAGE_FORMAT_ARGB8888:
        image->format = MESA_FORMAT_ARGB8888;
        image->internal_format = GL_RGBA;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     case __DRI_IMAGE_FORMAT_ABGR8888:
        image->format = MESA_FORMAT_RGBA8888_REV;
        image->internal_format = GL_RGBA;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     case __DRI_IMAGE_FORMAT_XBGR8888:
        image->format = MESA_FORMAT_RGBX8888_REV;
        image->internal_format = GL_RGB;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     default:
        free(image);
@@ -258,7 +253,6 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
 
    image->internal_format = rb->InternalFormat;
    image->format = rb->Format;
-   image->data_type = GL_UNSIGNED_BYTE;
    image->data = loaderPrivate;
    intel_region_reference(&image->region, irb->mt->region);
 
@@ -321,27 +315,22 @@ intel_create_image(__DRIscreen *screen,
    case __DRI_IMAGE_FORMAT_RGB565:
       image->format = MESA_FORMAT_RGB565;
       image->internal_format = GL_RGB;
-      image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_XRGB8888:
       image->format = MESA_FORMAT_XRGB8888;
       image->internal_format = GL_RGB;
-      image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_ARGB8888:
       image->format = MESA_FORMAT_ARGB8888;
       image->internal_format = GL_RGBA;
-      image->data_type = GL_UNSIGNED_BYTE;
       break;
     case __DRI_IMAGE_FORMAT_ABGR8888:
        image->format = MESA_FORMAT_RGBA8888_REV;
        image->internal_format = GL_RGBA;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
     case __DRI_IMAGE_FORMAT_XBGR8888:
        image->format = MESA_FORMAT_RGBX8888_REV;
        image->internal_format = GL_RGB;
-       image->data_type = GL_UNSIGNED_BYTE;
        break;
    default:
       free(image);
@@ -401,7 +390,6 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    image->usage           = orig_image->usage;
    image->dri_format      = orig_image->dri_format;
    image->format          = orig_image->format;
-   image->data_type       = orig_image->data_type;
    image->data            = loaderPrivate;
    
    return image;
