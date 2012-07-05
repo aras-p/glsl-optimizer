@@ -1243,7 +1243,7 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name,
                                            buffer->buffer.width,
                                            buffer->buffer.height, 
                                            buffer->driver_format, name,
-                                           buffer->stride0 / 4,
+                                           buffer->stride[0] / 4,
                                            NULL);
 }
 

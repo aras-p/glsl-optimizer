@@ -92,23 +92,15 @@ const static struct wl_buffer_interface drm_buffer_interface = {
 };
 
 static void
-drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
-		  uint32_t id, uint32_t name, int32_t width, int32_t height,
-		  uint32_t stride, uint32_t format)
+create_buffer(struct wl_client *client, struct wl_resource *resource,
+              uint32_t id, uint32_t name, int32_t width, int32_t height,
+              uint32_t format,
+              int32_t offset0, int32_t stride0,
+              int32_t offset1, int32_t stride1,
+              int32_t offset2, int32_t stride2)
 {
 	struct wl_drm *drm = resource->data;
 	struct wl_drm_buffer *buffer;
-
-	switch (format) {
-	case WL_DRM_FORMAT_ARGB8888:
-	case WL_DRM_FORMAT_XRGB8888:
-		break;
-	default:
-		wl_resource_post_error(resource,
-				       WL_DRM_ERROR_INVALID_FORMAT,
-				       "invalid format");
-		return;
-	}
 
 	buffer = calloc(1, sizeof *buffer);
 	if (buffer == NULL) {
@@ -120,8 +112,12 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->format = format;
-	buffer->offset0 = 0;
-	buffer->stride0 = stride;
+	buffer->offset[0] = offset0;
+	buffer->stride[0] = stride0;
+	buffer->offset[1] = offset1;
+	buffer->stride[1] = stride1;
+	buffer->offset[2] = offset2;
+	buffer->stride[2] = stride2;
 
         drm->callbacks->reference_buffer(drm->user_data, name, buffer);
 	if (buffer->driver_buffer == NULL) {
@@ -144,6 +140,56 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 }
 
 static void
+drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
+		  uint32_t id, uint32_t name, int32_t width, int32_t height,
+		  uint32_t stride, uint32_t format)
+{
+        switch (format) {
+        case WL_DRM_FORMAT_ARGB8888:
+        case WL_DRM_FORMAT_XRGB8888:
+        case WL_DRM_FORMAT_YUYV:
+                break;
+        default:
+                wl_resource_post_error(resource,
+                                       WL_DRM_ERROR_INVALID_FORMAT,
+                                       "invalid format");
+           return;
+        }
+
+        create_buffer(client, resource, id,
+                      name, width, height, format, 0, stride, 0, 0, 0, 0);
+}
+
+static void
+drm_create_planar_buffer(struct wl_client *client,
+                         struct wl_resource *resource,
+                         uint32_t id, uint32_t name,
+                         int32_t width, int32_t height, uint32_t format,
+                         int32_t offset0, int32_t stride0,
+                         int32_t offset1, int32_t stride1,
+                         int32_t offset2, int32_t stride2)
+{
+        switch (format) {
+	case WL_DRM_FORMAT_YUV410:
+	case WL_DRM_FORMAT_YUV411:
+	case WL_DRM_FORMAT_YUV420:
+	case WL_DRM_FORMAT_YUV422:
+	case WL_DRM_FORMAT_YUV444:
+	case WL_DRM_FORMAT_NV12:
+        case WL_DRM_FORMAT_NV16:
+                break;
+        default:
+                wl_resource_post_error(resource,
+                                       WL_DRM_ERROR_INVALID_FORMAT,
+                                       "invalid format");
+           return;
+        }
+
+        create_buffer(client, resource, id, name, width, height, format,
+                      offset0, stride0, offset1, stride1, offset2, stride2);
+}
+
+static void
 drm_authenticate(struct wl_client *client,
 		 struct wl_resource *resource, uint32_t id)
 {
@@ -159,7 +205,8 @@ drm_authenticate(struct wl_client *client,
 
 const static struct wl_drm_interface drm_interface = {
 	drm_authenticate,
-	drm_create_buffer
+	drm_create_buffer,
+        drm_create_planar_buffer
 };
 
 static void
@@ -175,6 +222,14 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 			       WL_DRM_FORMAT_ARGB8888);
 	wl_resource_post_event(resource, WL_DRM_FORMAT,
 			       WL_DRM_FORMAT_XRGB8888);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUV410);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUV411);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUV420);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUV422);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUV444);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_NV12);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_NV16);
+        wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUYV);
 }
 
 struct wl_drm *

@@ -47,7 +47,7 @@ egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
 
    memset(&wsh, 0, sizeof(wsh));
    wsh.handle = name;
-   wsh.stride = buffer->stride0;
+   wsh.stride = buffer->stride[0];
 
    buffer->driver_buffer =
       ndpy->screen->resource_from_handle(ndpy->screen, &templ, &wsh);

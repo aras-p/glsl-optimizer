@@ -14,9 +14,8 @@ struct wl_drm_buffer {
 	struct wl_drm *drm;
 	uint32_t format;
 	uint32_t driver_format;
-        int32_t offset0;
-        int32_t stride0;
-
+        int32_t offset[3];
+        int32_t stride[3];
 	void *driver_buffer;
 };
 
