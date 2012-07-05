@@ -636,4 +636,9 @@ void st_init_extensions(struct st_context *st)
 
    if (ctx->Const.MaxDualSourceDrawBuffers > 0)
       ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
+
+   if (screen->get_param(screen, PIPE_CAP_TIMER_QUERY) &&
+       screen->get_param(screen, PIPE_CAP_QUERY_TIMESTAMP)) {
+      ctx->Extensions.ARB_timer_query = GL_TRUE;
+   }
 }
