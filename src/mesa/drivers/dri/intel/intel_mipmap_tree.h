@@ -210,6 +210,10 @@ struct intel_mipmap_tree
     */
    struct intel_region *region;
 
+   /* Offset into region bo where miptree starts:
+    */
+   uint32_t offset;
+
    /**
     * \brief HiZ miptree
     *

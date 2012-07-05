@@ -233,6 +233,7 @@ intel_miptree_create(struct intel_context *intel,
 				   mt->total_width,
 				   mt->total_height,
 				   expect_accelerated_upload);
+   mt->offset = 0;
 
    if (!mt->region) {
        intel_miptree_release(&mt);

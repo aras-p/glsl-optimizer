@@ -242,7 +242,8 @@ intel_set_texture_image_region(struct gl_context *ctx,
 			       struct intel_region *region,
 			       GLenum target,
 			       GLenum internalFormat,
-			       gl_format format)
+			       gl_format format,
+                               uint32_t offset)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
@@ -261,6 +262,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
    if (intel_image->mt == NULL)
        return;
 
+   intel_image->mt->offset = offset;
    intel_image->base.RowStride = region->pitch;
 
    /* Immediately validate the image to the object. */
@@ -316,7 +318,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
-				  internalFormat, texFormat);
+				  internalFormat, texFormat, 0);
    _mesa_unlock_texture(&intel->ctx, texObj);
 }
 
@@ -347,7 +349,8 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
       return;
 
    intel_set_texture_image_region(ctx, texImage, image->region,
-				  target, image->internal_format, image->format);
+				  target, image->internal_format,
+                                  image->format, 0);
 }
 #endif
 

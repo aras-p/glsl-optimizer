@@ -273,7 +273,8 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
     * - render_cache_read_write (exists on gen6 but ignored here)
     */
 
-   surf->ss1.base_addr = intelObj->mt->region->bo->offset; /* reloc */
+   surf->ss1.base_addr =
+      intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
 
    surf->ss2.width = width - 1;
    surf->ss2.height = height - 1;
@@ -303,7 +304,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] +
 			   offsetof(struct gen7_surface_state, ss1),
-			   intelObj->mt->region->bo, 0,
+			   intelObj->mt->region->bo, intelObj->mt->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    gen7_check_surface_setup(surf, false /* is_render_target */);

@@ -736,7 +736,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 				    sampler->sRGBDecode) <<
 	       BRW_SURFACE_FORMAT_SHIFT));
 
-   surf[1] = intelObj->mt->region->bo->offset; /* reloc */
+   surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -754,7 +754,8 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] + 4,
-			   intelObj->mt->region->bo, 0,
+			   intelObj->mt->region->bo,
+                           intelObj->mt->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
