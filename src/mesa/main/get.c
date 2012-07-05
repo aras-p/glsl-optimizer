@@ -342,6 +342,7 @@ EXTRA_EXT(ARB_texture_buffer_object);
 EXTRA_EXT(OES_EGL_image_external);
 EXTRA_EXT(ARB_blend_func_extended);
 EXTRA_EXT(ARB_uniform_buffer_object);
+EXTRA_EXT(ARB_timer_query);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -1353,6 +1354,9 @@ static const struct value_desc values[] = {
 
    { GL_UNIFORM_BUFFER_BINDING, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object },
 
+   /* GL_ARB_timer_query */
+   { GL_TIMESTAMP, LOC_CUSTOM, TYPE_INT64, 0, extra_ARB_timer_query }
+
 #endif /* FEATURE_GL */
 };
 
@@ -1807,7 +1811,16 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_UNIFORM_BUFFER_BINDING:
       v->value_int = ctx->UniformBuffer->Name;
       break;
-   }   
+   /* GL_ARB_timer_query */
+   case GL_TIMESTAMP:
+      if (ctx->Driver.GetTimestamp) {
+         v->value_int64 = ctx->Driver.GetTimestamp(ctx);
+      }
+      else {
+         _mesa_problem(ctx, "driver doesn't implement GetTimestamp");
+      }
+      break;
+   }
 }
 
 /**
