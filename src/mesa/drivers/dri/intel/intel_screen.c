@@ -176,21 +176,17 @@ static const struct __DRI2flushExtensionRec intelFlushExtension = {
 };
 
 static __DRIimage *
-intel_create_image_from_name(__DRIscreen *screen,
-			     int width, int height, int format,
-			     int name, int pitch, void *loaderPrivate)
+intel_allocate_image(int dri_format, void *loaderPrivate)
 {
-    struct intel_screen *intelScreen = screen->driverPrivate;
     __DRIimage *image;
-    int cpp;
 
     image = CALLOC(sizeof *image);
     if (image == NULL)
 	return NULL;
 
-    image->dri_format = format;
+    image->dri_format = dri_format;
 
-    switch (format) {
+    switch (dri_format) {
     case __DRI_IMAGE_FORMAT_RGB565:
        image->format = MESA_FORMAT_RGB565;
        break;
@@ -213,8 +209,21 @@ intel_create_image_from_name(__DRIscreen *screen,
 
     image->internal_format = _mesa_get_format_base_format(image->format);
     image->data = loaderPrivate;
-    cpp = _mesa_get_format_bytes(image->format);
 
+    return image;
+}
+
+static __DRIimage *
+intel_create_image_from_name(__DRIscreen *screen,
+			     int width, int height, int format,
+			     int name, int pitch, void *loaderPrivate)
+{
+    struct intel_screen *intelScreen = screen->driverPrivate;
+    __DRIimage *image;
+    int cpp;
+
+    image = intel_allocate_image(format, loaderPrivate);
+    cpp = _mesa_get_format_bytes(image->format);
     image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
 						  pitch, name, "image");
@@ -300,41 +309,11 @@ intel_create_image(__DRIscreen *screen,
        use != (__DRI_IMAGE_USE_WRITE | __DRI_IMAGE_USE_CURSOR))
       return NULL;
 
-   image = CALLOC(sizeof *image);
-   if (image == NULL)
-      return NULL;
-
+   image = intel_allocate_image(format, loaderPrivate);
    image->usage = use;
-   image->dri_format = format;
-
-   switch (format) {
-   case __DRI_IMAGE_FORMAT_RGB565:
-      image->format = MESA_FORMAT_RGB565;
-      break;
-   case __DRI_IMAGE_FORMAT_XRGB8888:
-      image->format = MESA_FORMAT_XRGB8888;
-      break;
-   case __DRI_IMAGE_FORMAT_ARGB8888:
-      image->format = MESA_FORMAT_ARGB8888;
-      break;
-    case __DRI_IMAGE_FORMAT_ABGR8888:
-       image->format = MESA_FORMAT_RGBA8888_REV;
-       break;
-    case __DRI_IMAGE_FORMAT_XBGR8888:
-       image->format = MESA_FORMAT_RGBX8888_REV;
-       break;
-   default:
-      free(image);
-      return NULL;
-   }
-
-   image->internal_format = _mesa_get_format_base_format(image->format);
-   image->data = loaderPrivate;
    cpp = _mesa_get_format_bytes(image->format);
-
    image->region =
-      intel_region_alloc(intelScreen, tiling,
-			 cpp, width, height, true);
+      intel_region_alloc(intelScreen, tiling, cpp, width, height, true);
    if (image->region == NULL) {
       FREE(image);
       return NULL;
