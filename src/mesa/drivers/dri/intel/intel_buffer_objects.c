@@ -140,15 +140,11 @@ intel_bufferobj_data(struct gl_context * ctx,
    intel_obj->sys_buffer = NULL;
 
    if (size != 0) {
-      if (usage == GL_DYNAMIC_DRAW
 #ifdef I915
-	  /* On pre-965, stick VBOs in system memory, as we're always doing
-	   * swtnl with their contents anyway.
-	   */
-	  || target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER
-#endif
-	 )
-      {
+      /* On pre-965, stick VBOs in system memory, as we're always doing
+       * swtnl with their contents anyway.
+       */
+      if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
 	 intel_obj->sys_buffer = malloc(size);
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
@@ -156,6 +152,7 @@ intel_bufferobj_data(struct gl_context * ctx,
 	    return true;
 	 }
       }
+#endif
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       if (!intel_obj->buffer)
          return false;
