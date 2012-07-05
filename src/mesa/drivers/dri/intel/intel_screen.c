@@ -202,6 +202,15 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     case __DRI_IMAGE_FORMAT_XBGR8888:
        image->format = MESA_FORMAT_RGBX8888_REV;
        break;
+    case __DRI_IMAGE_FORMAT_R8:
+       image->format = MESA_FORMAT_R8;
+       break;
+    case __DRI_IMAGE_FORMAT_GR88:
+       image->format = MESA_FORMAT_GR88;
+       break;
+    case __DRI_IMAGE_FORMAT_NONE:
+       image->format = MESA_FORMAT_NONE;
+       break;
     default:
        free(image);
        return NULL;
@@ -273,6 +282,12 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
       break;
    case MESA_FORMAT_RGBA8888_REV:
       image->dri_format = __DRI_IMAGE_FORMAT_ABGR8888;
+      break;
+   case MESA_FORMAT_R8:
+      image->dri_format = __DRI_IMAGE_FORMAT_R8;
+      break;
+   case MESA_FORMAT_RG88:
+      image->dri_format = __DRI_IMAGE_FORMAT_GR88;
       break;
    }
 
