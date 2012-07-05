@@ -193,29 +193,25 @@ intel_create_image_from_name(__DRIscreen *screen,
     switch (format) {
     case __DRI_IMAGE_FORMAT_RGB565:
        image->format = MESA_FORMAT_RGB565;
-       image->internal_format = GL_RGB;
        break;
     case __DRI_IMAGE_FORMAT_XRGB8888:
        image->format = MESA_FORMAT_XRGB8888;
-       image->internal_format = GL_RGB;
        break;
     case __DRI_IMAGE_FORMAT_ARGB8888:
        image->format = MESA_FORMAT_ARGB8888;
-       image->internal_format = GL_RGBA;
        break;
     case __DRI_IMAGE_FORMAT_ABGR8888:
        image->format = MESA_FORMAT_RGBA8888_REV;
-       image->internal_format = GL_RGBA;
        break;
     case __DRI_IMAGE_FORMAT_XBGR8888:
        image->format = MESA_FORMAT_RGBX8888_REV;
-       image->internal_format = GL_RGB;
        break;
     default:
        free(image);
        return NULL;
     }
 
+    image->internal_format = _mesa_get_format_base_format(image->format);
     image->data = loaderPrivate;
     cpp = _mesa_get_format_bytes(image->format);
 
@@ -314,29 +310,25 @@ intel_create_image(__DRIscreen *screen,
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
       image->format = MESA_FORMAT_RGB565;
-      image->internal_format = GL_RGB;
       break;
    case __DRI_IMAGE_FORMAT_XRGB8888:
       image->format = MESA_FORMAT_XRGB8888;
-      image->internal_format = GL_RGB;
       break;
    case __DRI_IMAGE_FORMAT_ARGB8888:
       image->format = MESA_FORMAT_ARGB8888;
-      image->internal_format = GL_RGBA;
       break;
     case __DRI_IMAGE_FORMAT_ABGR8888:
        image->format = MESA_FORMAT_RGBA8888_REV;
-       image->internal_format = GL_RGBA;
        break;
     case __DRI_IMAGE_FORMAT_XBGR8888:
        image->format = MESA_FORMAT_RGBX8888_REV;
-       image->internal_format = GL_RGB;
        break;
    default:
       free(image);
       return NULL;
    }
 
+   image->internal_format = _mesa_get_format_base_format(image->format);
    image->data = loaderPrivate;
    cpp = _mesa_get_format_bytes(image->format);
 
