@@ -416,7 +416,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_QUERY_TIMESTAMP:
 		return 0;
 
 	/* Stream output. */
@@ -450,6 +449,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Timer queries, present when the clock frequency is non zero. */
 	case PIPE_CAP_TIMER_QUERY:
 		return rscreen->info.r600_clock_crystal_freq != 0;
+	case PIPE_CAP_QUERY_TIMESTAMP:
+		return rscreen->info.drm_minor >= 20 &&
+		       rscreen->info.r600_clock_crystal_freq != 0;
 
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;
@@ -873,6 +875,14 @@ static unsigned radeon_family_from_device(unsigned device)
 	}
 }
 
+static uint64_t r600_get_timestamp(struct pipe_screen *screen)
+{
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
+
+	return 1000000 * rscreen->ws->query_timestamp(rscreen->ws) /
+			rscreen->info.r600_clock_crystal_freq;
+}
+
 struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
@@ -929,6 +939,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.get_video_param = r600_get_video_param;
 	rscreen->screen.get_compute_param = r600_get_compute_param;
+	rscreen->screen.get_timestamp = r600_get_timestamp;
 
 	if (rscreen->chip_class >= EVERGREEN) {
 		rscreen->screen.is_format_supported = evergreen_is_format_supported;

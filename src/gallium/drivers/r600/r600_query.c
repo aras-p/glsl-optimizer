@@ -69,6 +69,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 		ctx->ws->buffer_unmap(buf->cs_buf);
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
+	case PIPE_QUERY_TIMESTAMP:
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
@@ -174,6 +175,8 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		va += query->buffer.results_end + query->result_size/2;
+		/* fall through */
+	case PIPE_QUERY_TIMESTAMP:
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 		cs->buf[cs->cdw++] = va;
@@ -265,6 +268,10 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		query->result_size = 16;
+		query->num_cs_dw = 8;
+		break;
+	case PIPE_QUERY_TIMESTAMP:
+		query->result_size = 8;
 		query->num_cs_dw = 8;
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
@@ -435,6 +442,13 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 			results_base += query->result_size;
 		}
 		break;
+	case PIPE_QUERY_TIMESTAMP:
+	{
+		uint32_t *current_result = (uint32_t*)map;
+		result->u64 = (uint64_t)current_result[0] |
+			      (uint64_t)current_result[1] << 32;
+		break;
+	}
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 		/* SAMPLE_STREAMOUTSTATS stores this structure:
 		 * {
@@ -498,7 +512,8 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 	}
 
 	/* Convert the time to expected units. */
-	if (rquery->type == PIPE_QUERY_TIME_ELAPSED) {
+	if (rquery->type == PIPE_QUERY_TIME_ELAPSED ||
+	    rquery->type == PIPE_QUERY_TIMESTAMP) {
 		result->u64 = (1000000 * result->u64) / rctx->screen->info.r600_clock_crystal_freq;
 	}
 	return TRUE;

@@ -85,6 +85,10 @@
 #define RADEON_INFO_MAX_PIPES 0x10
 #endif
 
+#ifndef RADEON_INFO_TIMESTAMP
+#define RADEON_INFO_TIMESTAMP 0x11
+#endif
+
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -375,6 +379,22 @@ static int radeon_drm_winsys_surface_best(struct radeon_winsys *rws,
     return radeon_surface_best(ws->surf_man, surf);
 }
 
+static uint64_t radeon_query_timestamp(struct radeon_winsys *rws)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
+    uint64_t ts = 0;
+
+    if (ws->info.drm_minor < 20 ||
+        ws->gen < R600) {
+        assert(0);
+        return 0;
+    }
+
+    radeon_get_drm_value(ws->fd, RADEON_INFO_TIMESTAMP, "timestamp",
+                         (uint32_t*)&ts);
+    return ts;
+}
+
 struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws = CALLOC_STRUCT(radeon_drm_winsys);
@@ -407,6 +427,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     ws->base.cs_request_feature = radeon_cs_request_feature;
     ws->base.surface_init = radeon_drm_winsys_surface_init;
     ws->base.surface_best = radeon_drm_winsys_surface_best;
+    ws->base.query_timestamp = radeon_query_timestamp;
 
     radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);
