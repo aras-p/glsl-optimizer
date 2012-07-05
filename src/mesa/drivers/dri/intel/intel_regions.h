@@ -147,6 +147,7 @@ struct __DRIimageRec {
    uint32_t usage;
    uint32_t dri_format;
    GLuint format;
+   uint32_t offset;
    void *data;
 };
 

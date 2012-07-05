@@ -185,6 +185,7 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
 	return NULL;
 
     image->dri_format = dri_format;
+    image->offset = 0;
 
     switch (dri_format) {
     case __DRI_IMAGE_FORMAT_RGB565:
@@ -267,6 +268,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
 
    image->internal_format = rb->InternalFormat;
    image->format = rb->Format;
+   image->offset = 0;
    image->data = loaderPrivate;
    intel_region_reference(&image->region, irb->mt->region);
 
@@ -376,6 +378,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    image->usage           = orig_image->usage;
    image->dri_format      = orig_image->dri_format;
    image->format          = orig_image->format;
+   image->offset          = orig_image->offset;
    image->data            = loaderPrivate;
    
    return image;
@@ -412,8 +415,50 @@ intel_image_write(__DRIimage *image, const void *buf, size_t count)
    return 0;
 }
 
+static __DRIimage *
+intel_create_sub_image(__DRIimage *parent,
+                       int width, int height, int dri_format,
+                       int offset, int pitch, void *loaderPrivate)
+{
+    __DRIimage *image;
+    int cpp;
+    uint32_t mask_x, mask_y;
+
+    image = intel_allocate_image(dri_format, loaderPrivate);
+    cpp = _mesa_get_format_bytes(image->format);
+    if (offset + height * cpp * pitch > parent->region->bo->size) {
+       _mesa_warning(NULL, "intel_create_sub_image: subimage out of bounds");
+       FREE(image);
+       return NULL;
+    }
+
+    image->region = calloc(sizeof(*image->region), 1);
+    if (image->region == NULL) {
+       FREE(image);
+       return NULL;
+    }
+
+    image->region->cpp = _mesa_get_format_bytes(image->format);
+    image->region->width = width;
+    image->region->height = height;
+    image->region->pitch = pitch;
+    image->region->refcount = 1;
+    image->region->bo = parent->region->bo;
+    drm_intel_bo_reference(image->region->bo);
+    image->region->tiling = parent->region->tiling;
+    image->region->screen = parent->region->screen;
+    image->offset = offset;
+
+    intel_region_get_tile_masks(image->region, &mask_x, &mask_y);
+    if (offset & mask_x)
+       _mesa_warning(NULL,
+                     "intel_create_sub_image: offset not on tile boundary");
+
+    return image;
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
-    { __DRI_IMAGE, 4 },
+    { __DRI_IMAGE, 5 },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
@@ -421,7 +466,8 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     intel_query_image,
     intel_dup_image,
     intel_validate_usage,
-    intel_image_write
+    intel_image_write,
+    intel_create_sub_image
 };
 
 static const __DRIextension *intelScreenExtensions[] = {

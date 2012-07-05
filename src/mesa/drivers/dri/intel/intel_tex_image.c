@@ -350,7 +350,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
    intel_set_texture_image_region(ctx, texImage, image->region,
 				  target, image->internal_format,
-                                  image->format, 0);
+                                  image->format, image->offset);
 }
 #endif
 
