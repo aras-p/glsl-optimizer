@@ -56,22 +56,13 @@ struct wl_drm {
 	struct wayland_drm_callbacks *callbacks;
 };
 
-struct wl_drm_buffer {
-	struct wl_buffer buffer;
-	struct wl_drm *drm;
-	uint32_t format;
-
-	void *driver_buffer;
-};
-
 static void
 destroy_buffer(struct wl_resource *resource)
 {
 	struct wl_drm_buffer *buffer = resource->data;
 	struct wl_drm *drm = buffer->drm;
 
-	drm->callbacks->release_buffer(drm->user_data,
-				       buffer->driver_buffer);
+	drm->callbacks->release_buffer(drm->user_data, buffer);
 	free(buffer);
 }
 
@@ -129,12 +120,10 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->format = format;
+	buffer->offset0 = 0;
+	buffer->stride0 = stride;
 
-	buffer->driver_buffer =
-		drm->callbacks->reference_buffer(drm->user_data, name,
-						 width, height,
-						 stride, format);
-
+        drm->callbacks->reference_buffer(drm->user_data, name, buffer);
 	if (buffer->driver_buffer == NULL) {
 		wl_resource_post_error(resource,
 				       WL_DRM_ERROR_INVALID_NAME,

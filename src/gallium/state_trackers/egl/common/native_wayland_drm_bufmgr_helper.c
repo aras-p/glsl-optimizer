@@ -12,17 +12,16 @@
 
 #include "native_wayland_drm_bufmgr_helper.h"
 
-void *
+void
 egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
-                                       int32_t width, int32_t height,
-                                       uint32_t stride, uint32_t format)
+                                       struct wl_drm_buffer *buffer)
 {
    struct native_display *ndpy = user_data;
    struct pipe_resource templ;
    struct winsys_handle wsh;
    enum pipe_format pf;
 
-   switch (format) {
+   switch (buffer->format) {
    case WL_DRM_FORMAT_ARGB8888:
       pf = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
@@ -35,28 +34,30 @@ egl_g3d_wl_drm_helper_reference_buffer(void *user_data, uint32_t name,
    }
 
    if (pf == PIPE_FORMAT_NONE)
-      return NULL;
+      return;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
    templ.format = pf;
    templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-   templ.width0 = width;
-   templ.height0 = height;
+   templ.width0 = buffer->buffer.width;
+   templ.height0 = buffer->buffer.height;
    templ.depth0 = 1;
    templ.array_size = 1;
 
    memset(&wsh, 0, sizeof(wsh));
    wsh.handle = name;
-   wsh.stride = stride;
+   wsh.stride = buffer->stride0;
 
-   return ndpy->screen->resource_from_handle(ndpy->screen, &templ, &wsh);
+   buffer->driver_buffer =
+      ndpy->screen->resource_from_handle(ndpy->screen, &templ, &wsh);
 }
 
 void
-egl_g3d_wl_drm_helper_unreference_buffer(void *user_data, void *buffer)
+egl_g3d_wl_drm_helper_unreference_buffer(void *user_data,
+                                         struct wl_drm_buffer *buffer)
 {
-   struct pipe_resource *resource = buffer;
+   struct pipe_resource *resource = buffer->driver_buffer;
 
    pipe_resource_reference(&resource, NULL);
 }

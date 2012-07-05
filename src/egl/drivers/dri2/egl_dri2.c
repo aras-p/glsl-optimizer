@@ -1220,43 +1220,40 @@ dri2_export_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img,
 
 #ifdef HAVE_WAYLAND_PLATFORM
 
-static void *
+static void
 dri2_wl_reference_buffer(void *user_data, uint32_t name,
-			 int32_t width, int32_t height,
-			 uint32_t stride, uint32_t format)
+                         struct wl_drm_buffer *buffer)
 {
    _EGLDisplay *disp = user_data;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   __DRIimage *image;
-   int dri_format;
 
-   switch (format) {
+   switch (buffer->format) {
    case WL_DRM_FORMAT_ARGB8888:
-      dri_format =__DRI_IMAGE_FORMAT_ARGB8888;
+      buffer->driver_format =__DRI_IMAGE_FORMAT_ARGB8888;
       break;
    case WL_DRM_FORMAT_XRGB8888:
-      dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
+      buffer->driver_format = __DRI_IMAGE_FORMAT_XRGB8888;
       break;
    default:
-      return NULL;	   
+      return;
    }
 
-   image = dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
-						width, height, 
-						dri_format, name, stride / 4,
-						NULL);
-
-   return image;
+   buffer->driver_buffer =
+      dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
+                                           buffer->buffer.width,
+                                           buffer->buffer.height, 
+                                           buffer->driver_format, name,
+                                           buffer->stride0 / 4,
+                                           NULL);
 }
 
 static void
-dri2_wl_release_buffer(void *user_data, void *buffer)
+dri2_wl_release_buffer(void *user_data, struct wl_drm_buffer *buffer)
 {
    _EGLDisplay *disp = user_data;
-   __DRIimage *image = buffer;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
 
-   dri2_dpy->image->destroyImage(image);
+   dri2_dpy->image->destroyImage(buffer->driver_buffer);
 }
 
 static struct wayland_drm_callbacks wl_drm_callbacks = {

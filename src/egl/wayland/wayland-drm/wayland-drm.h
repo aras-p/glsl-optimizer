@@ -9,14 +9,24 @@
 
 struct wl_drm;
 
+struct wl_drm_buffer {
+	struct wl_buffer buffer;
+	struct wl_drm *drm;
+	uint32_t format;
+	uint32_t driver_format;
+        int32_t offset0;
+        int32_t stride0;
+
+	void *driver_buffer;
+};
+
 struct wayland_drm_callbacks {
 	int (*authenticate)(void *user_data, uint32_t id);
 
-	void *(*reference_buffer)(void *user_data, uint32_t name,
-				  int32_t width, int32_t height,
-				  uint32_t stride, uint32_t format);
+	void (*reference_buffer)(void *user_data, uint32_t name,
+                                 struct wl_drm_buffer *buffer);
 
-	void (*release_buffer)(void *user_data, void *buffer);
+	void (*release_buffer)(void *user_data, struct wl_drm_buffer *buffer);
 };
 
 struct wl_drm *
