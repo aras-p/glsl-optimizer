@@ -88,6 +88,11 @@ _eglParseImageAttribList(_EGLImageAttribs *attrs, _EGLDisplay *dpy,
          attrs->DRMBufferStrideMESA = val;
          break;
 
+      /* EGL_WL_bind_wayland_display */
+      case EGL_WAYLAND_PLANE_WL:
+         attrs->PlaneWL = val;
+         break;
+
       default:
          /* unknown attrs are ignored */
          break;

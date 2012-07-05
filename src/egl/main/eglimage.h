@@ -50,6 +50,9 @@ struct _egl_image_attribs
    EGLint DRMBufferFormatMESA;
    EGLint DRMBufferUseMESA;
    EGLint DRMBufferStrideMESA;
+
+   /* EGL_WL_bind_wayland_display */
+   EGLint PlaneWL;
 };
 
 /**

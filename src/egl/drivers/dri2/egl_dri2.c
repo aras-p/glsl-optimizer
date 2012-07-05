@@ -1052,20 +1052,120 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 }
 
 #ifdef HAVE_WAYLAND_PLATFORM
+
+/* This structure describes how a wl_buffer maps to one or more
+ * __DRIimages.  A wl_drm_buffer stores the wl_drm format code and the
+ * offsets and strides of the planes in the buffer.  This table maps a
+ * wl_drm format code to a description of the planes in the buffer
+ * that lets us create a __DRIimage for each of the planes. */
+
+static const struct wl_drm_format_descriptor {
+   uint32_t wl_format;
+   EGLint components;
+   int nplanes;
+   struct {
+      int buffer_index;
+      int width_shift;
+      int height_shift;
+      uint32_t dri_format;
+      int cpp;
+   } planes[3];
+} wl_drm_formats[] = {
+   { WL_DRM_FORMAT_ARGB8888, EGL_WAYLAND_BUFFER_RGBA_WL, 1,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 }, } },
+
+   { WL_DRM_FORMAT_XRGB8888, EGL_WAYLAND_BUFFER_RGB_WL, 1,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_XRGB8888, 4 }, } },
+
+   { WL_DRM_FORMAT_YUV410, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { WL_DRM_FORMAT_YUV411, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { WL_DRM_FORMAT_YUV420, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { WL_DRM_FORMAT_YUV422, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { WL_DRM_FORMAT_YUV444, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { WL_DRM_FORMAT_NV12, EGL_WAYLAND_BUFFER_Y_UV_WL, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR88, 2 } } },
+
+   { WL_DRM_FORMAT_NV16, EGL_WAYLAND_BUFFER_Y_UV_WL, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 0, __DRI_IMAGE_FORMAT_GR88, 2 } } },
+
+   /* For YUYV buffers, we set up two overlapping DRI images and treat
+    * them as planar buffers in the compositors.  Plane 0 is GR88 and
+    * samples YU or YV pairs and places Y into the R component, while
+    * plane 1 is ARGB and samples YUYV clusters and places pairs and
+    * places U into the G component and V into A.  This lets the
+    * texture sampler interpolate the Y components correctly when
+    * sampling from plane 0, and interpolate U and V correctly when
+    * sampling from plane 1. */
+   { WL_DRM_FORMAT_YUYV, EGL_WAYLAND_BUFFER_Y_XUXV_WL, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
+       { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } }
+};
+
 static _EGLImage *
 dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				    EGLClientBuffer _buffer,
 				    const EGLint *attr_list)
 {
-   struct wl_buffer *buffer = (struct wl_buffer *) _buffer;
+   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   __DRIimage *dri_image, *source;
+   __DRIimage *dri_image;
+   _EGLImageAttribs attrs;
+   EGLint err;
+   uint32_t format;
+   int32_t offset, stride, plane, width, height;
+   int cpp, index;
+   const struct wl_drm_format_descriptor *f;
 
-   if (!wayland_buffer_is_drm(buffer))
+   if (!wayland_buffer_is_drm(&buffer->buffer))
        return NULL;
 
-   source = wayland_drm_buffer_get_buffer(buffer);
-   dri_image = dri2_dpy->image->dupImage(source, NULL);
+   err = _eglParseImageAttribList(&attrs, disp, attr_list);
+   plane = attrs.PlaneWL;
+   if (err != EGL_SUCCESS) {
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_wayland_wl_buffer");
+      return NULL;
+   }
+
+   f = buffer->driver_format;
+   if (plane < 0 || plane >= f->nplanes) {
+      _eglError(EGL_BAD_PARAMETER,
+                "dri2_create_image_wayland_wl_buffer (plane out of bounds)");
+      return NULL;
+   }
+
+   width = buffer->buffer.width >> f->planes[plane].width_shift;
+   height = buffer->buffer.height >> f->planes[plane].height_shift;
+   format = f->planes[plane].dri_format;
+   cpp = f->planes[plane].cpp;
+   index = f->planes[plane].buffer_index;
+   offset = buffer->offset[index];
+   stride = buffer->stride[index];
+
+   dri_image = dri2_dpy->image->createSubImage(buffer->driver_buffer,
+                                               width, height, format,
+                                               offset, stride / cpp, NULL);
 
    return dri2_create_image(disp, dri_image);
 }
@@ -1226,23 +1326,22 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name,
 {
    _EGLDisplay *disp = user_data;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   int i;
 
-   switch (buffer->format) {
-   case WL_DRM_FORMAT_ARGB8888:
-      buffer->driver_format =__DRI_IMAGE_FORMAT_ARGB8888;
-      break;
-   case WL_DRM_FORMAT_XRGB8888:
-      buffer->driver_format = __DRI_IMAGE_FORMAT_XRGB8888;
-      break;
-   default:
+   for (i = 0; i < ARRAY_SIZE(wl_drm_formats); i++)
+      if (wl_drm_formats[i].wl_format == buffer->format) {
+         buffer->driver_format = &wl_drm_formats[i];
+         break;
+      }
+
+   if (buffer->driver_format == NULL)
       return;
-   }
 
    buffer->driver_buffer =
       dri2_dpy->image->createImageFromName(dri2_dpy->dri_screen,
                                            buffer->buffer.width,
                                            buffer->buffer.height, 
-                                           buffer->driver_format, name,
+                                           __DRI_IMAGE_FORMAT_NONE, name,
                                            buffer->stride[0] / 4,
                                            NULL);
 }
@@ -1301,6 +1400,26 @@ dri2_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
    dri2_dpy->wl_server_drm = NULL;
 
    return EGL_TRUE;
+}
+
+static EGLBoolean
+dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
+                             struct wl_buffer *_buffer,
+                             EGLint attribute, EGLint *value)
+{
+   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
+   const struct wl_drm_format_descriptor *format;
+
+   if (!wayland_buffer_is_drm(&buffer->buffer))
+      return EGL_FALSE;
+
+   format = buffer->driver_format;
+   if (attribute == EGL_WAYLAND_BUFFER_COMPONENTS_WL) {
+      *value = format->components;
+      return EGL_TRUE;
+   }
+
+   return EGL_FALSE;
 }
 #endif
 
@@ -1399,6 +1518,7 @@ _eglBuiltInDriverDRI2(const char *args)
 #ifdef HAVE_WAYLAND_PLATFORM
    dri2_drv->base.API.BindWaylandDisplayWL = dri2_bind_wayland_display_wl;
    dri2_drv->base.API.UnbindWaylandDisplayWL = dri2_unbind_wayland_display_wl;
+   dri2_drv->base.API.QueryWaylandBufferWL = dri2_query_wayland_buffer_wl;
 #endif
 
    dri2_drv->base.Name = "DRI2";

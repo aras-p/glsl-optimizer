@@ -113,13 +113,27 @@ typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETDRMDISPLAYMESA) (int fd);
 #define EGL_WL_bind_wayland_display 1
 
 #define EGL_WAYLAND_BUFFER_WL			0x31D5 /* eglCreateImageKHR target */
+#define EGL_WAYLAND_PLANE_WL			0x31D6 /* eglCreateImageKHR target */
+
+#define EGL_WAYLAND_BUFFER_COMPONENTS_WL	0x31D7 /* eglQueryWaylandBufferWL attribute */
+
+#define EGL_WAYLAND_BUFFER_RGB_WL	0x31D8
+#define EGL_WAYLAND_BUFFER_RGBA_WL	0x31D9
+#define EGL_WAYLAND_BUFFER_Y_U_V_WL	0x31Da
+#define EGL_WAYLAND_BUFFER_Y_UV_WL	0x31Db
+#define EGL_WAYLAND_BUFFER_Y_XUXV_WL	0x31Dc
+
 struct wl_display;
+struct wl_buffer;
 #ifdef EGL_EGLEXT_PROTOTYPES
 EGLAPI EGLBoolean EGLAPIENTRY eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display);
 EGLAPI EGLBoolean EGLAPIENTRY eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display);
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryWaylandBufferWL(EGLDisplay dpy, struct wl_buffer *buffer, EGLint attribute, EGLint *value);
 #endif
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLUNBINDWAYLANDDISPLAYWL) (EGLDisplay dpy, struct wl_display *display);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYWAYLANDBUFFERWL) (EGLDisplay dpy, struct wl_buffer *buffer, EGLint attribute, EGLint *value);
+
 #endif
 
 #ifndef EGL_NOK_swap_region

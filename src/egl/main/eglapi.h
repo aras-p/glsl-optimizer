@@ -123,6 +123,7 @@ typedef EGLBoolean (*ExportDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, _
 struct wl_display;
 typedef EGLBoolean (*BindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
 typedef EGLBoolean (*UnbindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
+typedef EGLBoolean (*QueryWaylandBufferWL_t)(_EGLDriver *drv, _EGLDisplay *displ, struct wl_buffer *buffer, EGLint attribute, EGLint *value);
 #endif
 
 typedef EGLBoolean (*PostSubBufferNV_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surface, EGLint x, EGLint y, EGLint width, EGLint height);
@@ -199,6 +200,7 @@ struct _egl_api
 #ifdef EGL_WL_bind_wayland_display
    BindWaylandDisplayWL_t BindWaylandDisplayWL;
    UnbindWaylandDisplayWL_t UnbindWaylandDisplayWL;
+   QueryWaylandBufferWL_t QueryWaylandBufferWL;
 #endif
 
    PostSubBufferNV_t PostSubBufferNV;
