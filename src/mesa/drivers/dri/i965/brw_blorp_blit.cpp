@@ -510,14 +510,6 @@ const GLuint *
 brw_blorp_blit_program::compile(struct brw_context *brw,
                                 GLuint *program_size)
 {
-   /* Since blorp uses color textures and render targets to do all its work
-    * (even when blitting stencil and depth data), we always have to configure
-    * the Gen7 GPU to use sliced layout on Gen7.  On Gen6, the MSAA layout is
-    * always interleaved.
-    */
-   const bool rt_interleaved = key->rt_samples > 0 && brw->intel.gen == 6;
-   const bool tex_interleaved = key->tex_samples > 0 && brw->intel.gen == 6;
-
    /* Sanity checks */
    if (key->dst_tiled_w && key->rt_samples > 0) {
       /* If the destination image is W tiled and multisampled, then the thread
@@ -537,7 +529,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       assert(!key->src_tiled_w);
       assert(key->tex_samples == key->src_samples);
-      assert(tex_interleaved == key->src_interleaved);
+      assert(key->tex_interleaved == key->src_interleaved);
       assert(key->tex_samples > 0);
    }
 
@@ -549,7 +541,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    }
 
    /* Interleaved only makes sense on MSAA surfaces */
-   if (tex_interleaved) assert(key->tex_samples > 0);
+   if (key->tex_interleaved) assert(key->tex_samples > 0);
    if (key->src_interleaved) assert(key->src_samples > 0);
    if (key->dst_interleaved) assert(key->dst_samples > 0);
 
@@ -579,8 +571,8 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
    if (rt_tiled_w != key->dst_tiled_w ||
        key->rt_samples != key->dst_samples ||
-       rt_interleaved != key->dst_interleaved) {
-      encode_msaa(key->rt_samples, rt_interleaved);
+       key->rt_interleaved != key->dst_interleaved) {
+      encode_msaa(key->rt_samples, key->rt_interleaved);
       /* Now (X, Y, S) = detile(rt_tiling, offset) */
       translate_tiling(rt_tiled_w, key->dst_tiled_w);
       /* Now (X, Y, S) = detile(dst_tiling, offset) */
@@ -634,12 +626,12 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       if (tex_tiled_w != key->src_tiled_w ||
           key->tex_samples != key->src_samples ||
-          tex_interleaved != key->src_interleaved) {
+          key->tex_interleaved != key->src_interleaved) {
          encode_msaa(key->src_samples, key->src_interleaved);
          /* Now (X, Y, S) = detile(src_tiling, offset) */
          translate_tiling(key->src_tiled_w, tex_tiled_w);
          /* Now (X, Y, S) = detile(tex_tiling, offset) */
-         decode_msaa(key->tex_samples, tex_interleaved);
+         decode_msaa(key->tex_samples, key->tex_interleaved);
       }
 
       /* Now (X, Y, S) = decode_msaa(tex_samples, detile(tex_tiling, offset)).
@@ -1331,6 +1323,16 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
     */
    wm_prog_key.tex_samples = src.num_samples;
    wm_prog_key.rt_samples  = dst.num_samples;
+
+   /* tex_interleaved and rt_interleaved indicate whether or not the GPU
+    * pipeline will access the source and destination surfaces as though they
+    * use an interleaved layout.  Since blorp uses color textures and render
+    * targets to do all its work (even when blitting stencil and depth data),
+    * it will always use sliced layout on Gen7.  On Gen6, the MSAA layout is
+    * always interleaved.
+    */
+   wm_prog_key.tex_interleaved = src.num_samples > 0 && brw->intel.gen == 6;
+   wm_prog_key.rt_interleaved = dst.num_samples > 0 && brw->intel.gen == 6;
 
    /* src_interleaved and dst_interleaved indicate whether src and dst are
     * truly interleaved.

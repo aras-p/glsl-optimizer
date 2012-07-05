@@ -192,11 +192,17 @@ struct brw_blorp_blit_prog_key
     */
    unsigned tex_samples;
 
+   /* If tex_samples > 0, this boolean indicates whether or not the GPU
+    * pipeline will be configured to read from it as though it were an
+    * interleaved MSAA layout.  False if tex_samples == 0.
+    */
+   bool tex_interleaved;
+
    /* Actual number of samples per pixel in the source image. */
    unsigned src_samples;
 
-   /* If src_samples > 0, whether or not the source image uses an interleaved
-    * MSAA layout.  False if src_samples == 0.
+   /* If src_samples > 0, this boolean indicates whether or not the source
+    * image uses an interleaved MSAA layout.  False if src_samples == 0.
     */
    bool src_interleaved;
 
@@ -204,6 +210,12 @@ struct brw_blorp_blit_prog_key
     * target.
     */
    unsigned rt_samples;
+
+   /* If rt_samples > 0, whether or not the GPU pipeline will be configured
+    * to write to it as though it were an interleaved MSAA layout.  False if
+    * rt_samples == 0.
+    */
+   bool rt_interleaved;
 
    /* Actual number of samples per pixel in the destination image. */
    unsigned dst_samples;
