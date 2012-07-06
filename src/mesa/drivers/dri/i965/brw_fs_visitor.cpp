@@ -2224,7 +2224,7 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    this->base_ir = NULL;
 
    this->virtual_grf_sizes = NULL;
-   this->virtual_grf_next = 0;
+   this->virtual_grf_count = 0;
    this->virtual_grf_array_size = 0;
    this->virtual_grf_def = NULL;
    this->virtual_grf_use = NULL;

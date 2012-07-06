@@ -43,17 +43,17 @@ assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 void
 fs_visitor::assign_regs_trivial()
 {
-   int hw_reg_mapping[this->virtual_grf_next + 1];
+   int hw_reg_mapping[this->virtual_grf_count + 1];
    int i;
    int reg_width = c->dispatch_width / 8;
 
    /* Note that compressed instructions require alignment to 2 registers. */
    hw_reg_mapping[0] = ALIGN(this->first_non_payload_grf, reg_width);
-   for (i = 1; i <= this->virtual_grf_next; i++) {
+   for (i = 1; i <= this->virtual_grf_count; i++) {
       hw_reg_mapping[i] = (hw_reg_mapping[i - 1] +
 			   this->virtual_grf_sizes[i - 1] * reg_width);
    }
-   this->grf_used = hw_reg_mapping[this->virtual_grf_next];
+   this->grf_used = hw_reg_mapping[this->virtual_grf_count];
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
@@ -155,7 +155,7 @@ fs_visitor::assign_regs()
     * for reg_width == 2.
     */
    int reg_width = c->dispatch_width / 8;
-   int hw_reg_mapping[this->virtual_grf_next];
+   int hw_reg_mapping[this->virtual_grf_count];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
    int base_reg_count = (max_grf - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
@@ -178,7 +178,7 @@ fs_visitor::assign_regs()
        */
       class_sizes[class_count++] = 2;
    }
-   for (int r = 0; r < this->virtual_grf_next; r++) {
+   for (int r = 0; r < this->virtual_grf_count; r++) {
       int i;
 
       for (i = 0; i < class_count; i++) {
@@ -198,9 +198,9 @@ fs_visitor::assign_regs()
 				 reg_width, base_reg_count);
 
    struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs,
-						    this->virtual_grf_next);
+						    this->virtual_grf_count);
 
-   for (int i = 0; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_count; i++) {
       for (int c = 0; c < class_count; c++) {
 	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
             /* Special case: on pre-GEN6 hardware that supports PLN, the
@@ -254,7 +254,7 @@ fs_visitor::assign_regs()
     * numbers.
     */
    this->grf_used = first_assigned_grf;
-   for (int i = 0; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
       hw_reg_mapping[i] = (first_assigned_grf +
@@ -305,10 +305,10 @@ int
 fs_visitor::choose_spill_reg(struct ra_graph *g)
 {
    float loop_scale = 1.0;
-   float spill_costs[this->virtual_grf_next];
-   bool no_spill[this->virtual_grf_next];
+   float spill_costs[this->virtual_grf_count];
+   bool no_spill[this->virtual_grf_count];
 
-   for (int i = 0; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_count; i++) {
       spill_costs[i] = 0.0;
       no_spill[i] = false;
    }
@@ -357,7 +357,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
       }
    }
 
-   for (int i = 0; i < this->virtual_grf_next; i++) {
+   for (int i = 0; i < this->virtual_grf_count; i++) {
       if (!no_spill[i])
 	 ra_set_node_spill_cost(g, i, spill_costs[i]);
    }

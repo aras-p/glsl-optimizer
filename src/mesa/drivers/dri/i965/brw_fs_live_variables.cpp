@@ -137,7 +137,7 @@ fs_live_variables::fs_live_variables(fs_visitor *v, fs_cfg *cfg)
 {
    mem_ctx = ralloc_context(cfg->mem_ctx);
 
-   num_vars = v->virtual_grf_next;
+   num_vars = v->virtual_grf_count;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
    vars = rzalloc_array(mem_ctx, struct var, num_vars);
 
@@ -162,7 +162,7 @@ fs_live_variables::~fs_live_variables()
 void
 fs_visitor::calculate_live_intervals()
 {
-   int num_vars = this->virtual_grf_next;
+   int num_vars = this->virtual_grf_count;
 
    if (this->live_intervals_valid)
       return;

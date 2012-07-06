@@ -351,7 +351,7 @@ public:
    int param_offset[MAX_UNIFORMS * 4];
 
    int *virtual_grf_sizes;
-   int virtual_grf_next;
+   int virtual_grf_count;
    int virtual_grf_array_size;
    int *virtual_grf_def;
    int *virtual_grf_use;

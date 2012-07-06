@@ -416,7 +416,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
 int
 fs_visitor::virtual_grf_alloc(int size)
 {
-   if (virtual_grf_array_size <= virtual_grf_next) {
+   if (virtual_grf_array_size <= virtual_grf_count) {
       if (virtual_grf_array_size == 0)
 	 virtual_grf_array_size = 16;
       else
@@ -424,8 +424,8 @@ fs_visitor::virtual_grf_alloc(int size)
       virtual_grf_sizes = reralloc(mem_ctx, virtual_grf_sizes, int,
 				   virtual_grf_array_size);
    }
-   virtual_grf_sizes[virtual_grf_next] = size;
-   return virtual_grf_next++;
+   virtual_grf_sizes[virtual_grf_count] = size;
+   return virtual_grf_count++;
 }
 
 /** Fixed HW reg constructor. */
@@ -1037,7 +1037,7 @@ fs_visitor::assign_urb_setup()
 void
 fs_visitor::split_virtual_grfs()
 {
-   int num_vars = this->virtual_grf_next;
+   int num_vars = this->virtual_grf_count;
    bool split_grf[num_vars];
    int new_virtual_grf[num_vars];
 
@@ -2031,7 +2031,6 @@ fs_visitor::run()
 
       if (0) {
 	 /* Debug of register spilling: Go spill everything. */
-	 int virtual_grf_count = virtual_grf_next;
 	 for (int i = 0; i < virtual_grf_count; i++) {
 	    spill_reg(i);
 	 }
