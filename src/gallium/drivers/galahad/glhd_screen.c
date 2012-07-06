@@ -31,6 +31,7 @@
 #include "pipe/p_state.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "glhd_public.h"
 #include "glhd_screen.h"
@@ -211,6 +212,12 @@ galahad_screen_resource_create(struct pipe_screen *_screen,
    {
       if(!util_is_power_of_two(templat->width0) || !util_is_power_of_two(templat->height0))
          glhd_warn("Requested NPOT (%ux%u) non-rectangle texture without NPOT support", templat->width0, templat->height0);
+   }
+
+   if (templat->target != PIPE_BUFFER &&
+       !screen->is_format_supported(screen, templat->format, templat->target, templat->nr_samples, templat->bind)) {
+      glhd_warn("Requested format=%s target=%u samples=%u bind=0x%x unsupported",
+         util_format_name(templat->format), templat->target, templat->nr_samples, templat->bind);
    }
 
    result = screen->resource_create(screen,
