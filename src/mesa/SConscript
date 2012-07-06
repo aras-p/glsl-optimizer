@@ -430,7 +430,7 @@ if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
     elif env['machine'] == 'sparc':
         mesa_sources += [
             'sparc/sparc.c',
-            'sparc/clip.S',
+            'sparc/sparc_clip.S',
             'sparc/norm.S',
             'sparc/xform.S',
         ]

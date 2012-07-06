@@ -307,7 +307,7 @@ X86_64_FILES =		\
 	$(SRCDIR)/x86-64/xform4.S
 
 SPARC_FILES =			\
-	$(SRCDIR)/sparc/clip.S		\
+	$(SRCDIR)/sparc/sparc_clip.S	\
 	$(SRCDIR)/sparc/norm.S		\
 	$(SRCDIR)/sparc/xform.S
 
