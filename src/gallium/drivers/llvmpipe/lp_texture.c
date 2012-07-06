@@ -112,6 +112,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
+   size_t total_size = 0;
 
    assert(LP_MAX_TEXTURE_2D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
    assert(LP_MAX_TEXTURE_3D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
@@ -166,6 +167,11 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
          if (!lpr->layout[level]) {
             goto fail;
          }
+      }
+
+      total_size += lpr->num_slices_faces[level] * lpr->img_stride[level];
+      if (total_size > LP_MAX_TEXTURE_SIZE) {
+         goto fail;
       }
 
       /* Compute size of next mipmap level */
