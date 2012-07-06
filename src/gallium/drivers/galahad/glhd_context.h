@@ -33,6 +33,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
+#include "util/u_debug.h"
+
 
 struct galahad_context {
    struct pipe_context base;  /**< base class */
@@ -53,9 +55,9 @@ galahad_context(struct pipe_context *pipe)
 
 #define glhd_warn(...) \
 do { \
-    fprintf(stderr, "galahad: %s: ", __FUNCTION__); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n"); \
+    debug_printf("galahad: %s: ", __FUNCTION__); \
+    debug_printf(__VA_ARGS__); \
+    debug_printf("\n"); \
 } while (0)
 
 #define glhd_error(...) \
