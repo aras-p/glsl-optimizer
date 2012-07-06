@@ -60,6 +60,9 @@ do { \
     debug_printf("\n"); \
 } while (0)
 
+#define glhd_check(fmt, value, expr) \
+   ((value expr) ? (void)0 : debug_printf("galahad: %s:%u: Expected `%s %s`, got %s == " fmt "\n", __FUNCTION__, __LINE__, #value, #expr, #value, value))
+
 #define glhd_error(...) \
     glhd_warn(__VA_ARGS__);
 

@@ -144,32 +144,74 @@ galahad_screen_resource_create(struct pipe_screen *_screen,
    struct pipe_screen *screen = glhd_screen->screen;
    struct pipe_resource *result;
 
-   if (templat->target >= PIPE_MAX_TEXTURE_TYPES)
+   glhd_check("%u", templat->width0, >= 1);
+   glhd_check("%u", templat->height0, >= 1);
+   glhd_check("%u", templat->depth0, >= 1);
+   glhd_check("%u", templat->array_size, >= 1);
+
+   if (templat->target == PIPE_BUFFER) {
+      glhd_check("%u", templat->last_level, == 0);
+      glhd_check("%u", templat->height0, == 1);
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, == 1);
+   } else if (templat->target == PIPE_TEXTURE_1D) {
+      unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_2d_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->height0, == 1);
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, == 1);
+   } else if (templat->target == PIPE_TEXTURE_2D) {
+      unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_2d_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->height0, <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, == 1);
+   } else if (templat->target == PIPE_TEXTURE_CUBE) {
+      unsigned max_texture_cube_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_cube_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_cube_levels - 1)));
+      glhd_check("%u", templat->height0, == templat->width0);
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, == 6);
+   } else if (templat->target == PIPE_TEXTURE_RECT) {
+      unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+      glhd_check("%u", templat->last_level, == 0);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->height0, <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, == 1);
+   } else if (templat->target == PIPE_TEXTURE_3D) {
+      unsigned max_texture_3d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_3D_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_3d_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_3d_levels - 1)));
+      glhd_check("%u", templat->height0, <= (1 << (max_texture_3d_levels - 1)));
+      glhd_check("%u", templat->depth0,  <= (1 << (max_texture_3d_levels - 1)));
+      glhd_check("%u", templat->array_size, == 1);
+   } else if (templat->target == PIPE_TEXTURE_1D_ARRAY) {
+      unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_2d_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->height0, == 1);
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, <= screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS));
+   } else if (templat->target == PIPE_TEXTURE_2D_ARRAY) {
+      unsigned max_texture_2d_levels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+      glhd_check("%u", templat->last_level, < max_texture_2d_levels);
+      glhd_check("%u", templat->width0,  <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->height0, <= (1 << (max_texture_2d_levels - 1)));
+      glhd_check("%u", templat->depth0,  == 1);
+      glhd_check("%u", templat->array_size, <= screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS));
+   } else {
       glhd_warn("Received bogus resource target %d", templat->target);
+   }
 
    if(templat->target != PIPE_TEXTURE_RECT && templat->target != PIPE_BUFFER && !screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES))
    {
       if(!util_is_power_of_two(templat->width0) || !util_is_power_of_two(templat->height0))
          glhd_warn("Requested NPOT (%ux%u) non-rectangle texture without NPOT support", templat->width0, templat->height0);
    }
-
-   if(templat->target == PIPE_TEXTURE_RECT && templat->last_level)
-      glhd_warn("Rectangle textures cannot have mipmaps, but last_level = %u", templat->last_level);
-
-   if(templat->target == PIPE_BUFFER && templat->last_level)
-      glhd_warn("Buffers cannot have mipmaps, but last_level = %u", templat->last_level);
-
-   if(templat->target != PIPE_TEXTURE_3D && templat->depth0 != 1)
-      glhd_warn("Only 3D textures can have depth != 1, but received target %u and depth %u", templat->target, templat->depth0);
-
-   if(templat->target == PIPE_TEXTURE_1D && templat->height0 != 1)
-     glhd_warn("1D textures must have height 1 but got asked for height %u", templat->height0);
-
-   if(templat->target == PIPE_BUFFER && templat->height0 != 1)
-     glhd_warn("Buffers must have height 1 but got asked for height %u", templat->height0);
-
-   if(templat->target == PIPE_TEXTURE_CUBE && templat->width0 != templat->height0)
-      glhd_warn("Cube maps must be square, but got asked for %ux%u", templat->width0, templat->height0);
 
    result = screen->resource_create(screen,
                                     templat);
