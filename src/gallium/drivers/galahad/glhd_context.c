@@ -635,15 +635,14 @@ galahad_context_set_index_buffer(struct pipe_context *_pipe,
    struct pipe_index_buffer unwrapped_ib, *ib = NULL;
 
    if (_ib) {
-      if (_ib->buffer) {
+      if (_ib->buffer || _ib->user_buffer) {
          switch (_ib->index_size) {
          case 1:
          case 2:
          case 4:
             break;
          default:
-            glhd_warn("index buffer %p has unrecognized index size %d",
-                      (void *) _ib->buffer, _ib->index_size);
+            glhd_warn("unrecognized index size %d", _ib->index_size);
             break;
          }
       }
@@ -679,9 +678,14 @@ galahad_context_resource_copy_region(struct pipe_context *_pipe,
    struct pipe_resource *src = glhd_resource_src->resource;
 
    if (_dst->format != _src->format) {
-      glhd_warn("Format mismatch: Source is %s, destination is %s",
-         util_format_short_name(_src->format),
-         util_format_short_name(_dst->format));
+      const struct util_format_description *src_desc =
+         util_format_description(_src->format);
+      const struct util_format_description *dst_desc =
+         util_format_description(_dst->format);
+      if (!util_is_format_compatible(src_desc, dst_desc))
+         glhd_warn("Format mismatch: Source is %s, destination is %s",
+            src_desc->short_name,
+            dst_desc->short_name);
    }
 
    if ((_src->target == PIPE_BUFFER && _dst->target != PIPE_BUFFER) ||
