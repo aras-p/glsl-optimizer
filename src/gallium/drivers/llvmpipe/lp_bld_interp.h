@@ -84,6 +84,8 @@ struct lp_build_interp_soa_context
    unsigned num_attribs;
    unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
    enum lp_interp interp[1 + PIPE_MAX_SHADER_INPUTS];
+   boolean simple_interp;
+   boolean dynamic_offsets;
 
    LLVMValueRef x;
    LLVMValueRef y;
@@ -97,6 +99,9 @@ struct lp_build_interp_soa_context
    LLVMValueRef oow;
 
    LLVMValueRef attribs[1 + PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS];
+
+   LLVMValueRef xoffset_store;
+   LLVMValueRef yoffset_store;
 
    /*
     * Convenience pointers. Callers may access this one.
@@ -113,6 +118,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
                          struct lp_type type,
+                         boolean dynamic_offsets,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
@@ -129,5 +135,14 @@ lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
                                struct gallivm_state *gallivm,
                                int quad__start_index);
 
+void
+lp_build_interp_soa_update_inputs_dyn(struct lp_build_interp_soa_context *bld,
+                                      struct gallivm_state *gallivm,
+                                      LLVMValueRef quad_start_index);
+
+void
+lp_build_interp_soa_update_pos_dyn(struct lp_build_interp_soa_context *bld,
+                                   struct gallivm_state *gallivm,
+                                   LLVMValueRef quad_start_index);
 
 #endif /* LP_BLD_INTERP_H */

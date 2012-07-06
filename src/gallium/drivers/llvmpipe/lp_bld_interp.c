@@ -42,6 +42,7 @@
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_swizzle.h"
+#include "gallivm/lp_bld_flow.h"
 #include "lp_bld_interp.h"
 
 
@@ -121,6 +122,33 @@ attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix
    else
       lp_build_name(val, "input%u.%c%s", attrib - 1, "xyzw"[chan], suffix);
 }
+
+static void
+calc_offsets(struct lp_build_context *coeff_bld,
+             unsigned quad_start_index,
+             LLVMValueRef *pixoffx,
+             LLVMValueRef *pixoffy)
+{
+   unsigned i;
+   unsigned num_pix = coeff_bld->type.length;
+   struct gallivm_state *gallivm = coeff_bld->gallivm;
+   LLVMBuilderRef builder = coeff_bld->gallivm->builder;
+   LLVMValueRef nr, pixxf, pixyf;
+
+   *pixoffx = coeff_bld->undef;
+   *pixoffy = coeff_bld->undef;
+
+   for (i = 0; i < num_pix; i++) {
+      nr = lp_build_const_int32(gallivm, i);
+      pixxf = lp_build_const_float(gallivm, quad_offset_x[i % num_pix] +
+                                   (quad_start_index & 1) * 2);
+      pixyf = lp_build_const_float(gallivm, quad_offset_y[i % num_pix] +
+                                   (quad_start_index & 2));
+      *pixoffx = LLVMBuildInsertElement(builder, *pixoffx, pixxf, nr, "");
+      *pixoffy = LLVMBuildInsertElement(builder, *pixoffy, pixyf, nr, "");
+   }
+}
+
 
 /* Much easier, and significantly less instructions in the per-stamp
  * part (less than half) but overall more instructions so a loss if
@@ -210,6 +238,7 @@ static void
 attribs_update_simple(struct lp_build_interp_soa_context *bld,
                       struct gallivm_state *gallivm,
                       int quad_start_index,
+                      LLVMValueRef loop_iter,
                       int start,
                       int end)
 {
@@ -217,22 +246,22 @@ attribs_update_simple(struct lp_build_interp_soa_context *bld,
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
    struct lp_build_context *setup_bld = &bld->setup_bld;
    LLVMValueRef oow = NULL;
-   unsigned attrib, i;
+   unsigned attrib;
    LLVMValueRef pixoffx;
    LLVMValueRef pixoffy;
-   unsigned num_pix = coeff_bld->type.length;
 
-   /* could do this with code-generated passed in pixel offsets */
-   pixoffx = coeff_bld->undef;
-   pixoffy = coeff_bld->undef;
-   for (i = 0; i < coeff_bld->type.length; i++) {
-      LLVMValueRef nr = lp_build_const_int32(gallivm, i);
-      LLVMValueRef pixxf = lp_build_const_float(gallivm, quad_offset_x[i % num_pix] +
-                                                (quad_start_index & 1) * 2);
-      LLVMValueRef pixyf = lp_build_const_float(gallivm, quad_offset_y[i % num_pix] +
-                                                (quad_start_index & 2));
-      pixoffx = LLVMBuildInsertElement(builder, pixoffx, pixxf, nr, "");
-      pixoffy = LLVMBuildInsertElement(builder, pixoffy, pixyf, nr, "");
+   /* could do this with code-generated passed in pixel offsets too */
+   if (bld->dynamic_offsets) {
+      LLVMValueRef ptr;
+
+      assert(loop_iter);
+      ptr = LLVMBuildGEP(builder, bld->xoffset_store, &loop_iter, 1, "");
+      pixoffx = LLVMBuildLoad(builder, ptr, "");
+      ptr = LLVMBuildGEP(builder, bld->yoffset_store, &loop_iter, 1, "");
+      pixoffy = LLVMBuildLoad(builder, ptr, "");
+   }
+   else {
+      calc_offsets(coeff_bld, quad_start_index, &pixoffx, &pixoffy);
    }
 
    pixoffx = LLVMBuildFAdd(builder, pixoffx,
@@ -498,7 +527,14 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             attrib_name(a, attrib, chan, ".a");
             attrib_name(dadq, attrib, chan, ".dadq");
 
-            bld->a   [attrib][chan] = a;
+            if (bld->dynamic_offsets) {
+               bld->a[attrib][chan] = lp_build_alloca(gallivm,
+                                                      LLVMTypeOf(a), "");
+               LLVMBuildStore(builder, a, bld->a[attrib][chan]);
+            }
+            else {
+               bld->a[attrib][chan] = a;
+            }
             bld->dadq[attrib][chan] = dadq;
          }
       }
@@ -514,6 +550,7 @@ static void
 attribs_update(struct lp_build_interp_soa_context *bld,
                struct gallivm_state *gallivm,
                int quad_start_index,
+               LLVMValueRef loop_iter,
                int start,
                int end)
 {
@@ -535,6 +572,9 @@ attribs_update(struct lp_build_interp_soa_context *bld,
             if (interp == LP_INTERP_CONSTANT ||
                 interp == LP_INTERP_FACING) {
                a = bld->a[attrib][chan];
+               if (bld->dynamic_offsets) {
+                  a = LLVMBuildLoad(builder, a, "");
+               }
             }
             else if (interp == LP_INTERP_POSITION) {
                assert(attrib > 0);
@@ -549,8 +589,20 @@ attribs_update(struct lp_build_interp_soa_context *bld,
                 * Broadcast the attribute value for this quad into all elements
                 */
 
-               a = LLVMBuildShuffleVector(builder,
-                                          a, coeff_bld->undef, shuffle, "");
+               if (bld->dynamic_offsets) {
+                  /* stored as vector load as float */
+                  LLVMTypeRef ptr_type = LLVMPointerType(LLVMFloatTypeInContext(
+                                                            gallivm->context), 0);
+                  LLVMValueRef ptr;
+                  a = LLVMBuildBitCast(builder, a, ptr_type, "");
+                  ptr = LLVMBuildGEP(builder, a, &loop_iter, 1, "");
+                  a = LLVMBuildLoad(builder, ptr, "");
+                  a = lp_build_broadcast_scalar(&bld->coeff_bld, a);
+               }
+               else {
+                  a = LLVMBuildShuffleVector(builder,
+                                             a, coeff_bld->undef, shuffle, "");
+               }
 
                /*
                 * Get the derivatives.
@@ -639,6 +691,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
                          struct lp_type type,
+                         boolean dynamic_offsets,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
@@ -696,11 +749,42 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    pos_init(bld, x0, y0);
 
    if (coeff_type.length > 4) {
+      bld->simple_interp = TRUE;
+      if (dynamic_offsets) {
+         /* XXX this should use a global static table */
+         unsigned i;
+         unsigned num_loops = 16 / type.length;
+         LLVMValueRef pixoffx, pixoffy, index;
+         LLVMValueRef ptr;
+
+         bld->dynamic_offsets = TRUE;
+         bld->xoffset_store = lp_build_array_alloca(gallivm,
+                                                    lp_build_vec_type(gallivm, type),
+                                                    lp_build_const_int32(gallivm, num_loops),
+                                                    "");
+         bld->yoffset_store = lp_build_array_alloca(gallivm,
+                                                    lp_build_vec_type(gallivm, type),
+                                                    lp_build_const_int32(gallivm, num_loops),
+                                                    "");
+         for (i = 0; i < num_loops; i++) {
+            index = lp_build_const_int32(gallivm, i);
+            calc_offsets(&bld->coeff_bld, i*type.length/4, &pixoffx, &pixoffy);
+            ptr = LLVMBuildGEP(builder, bld->xoffset_store, &index, 1, "");
+            LLVMBuildStore(builder, pixoffx, ptr);
+            ptr = LLVMBuildGEP(builder, bld->yoffset_store, &index, 1, "");
+            LLVMBuildStore(builder, pixoffy, ptr);
+         }
+      }
       coeffs_init_simple(bld, a0_ptr, dadx_ptr, dady_ptr);
    }
    else {
+      bld->simple_interp = FALSE;
+      if (dynamic_offsets) {
+         bld->dynamic_offsets = TRUE;
+      }
       coeffs_init(bld, a0_ptr, dadx_ptr, dady_ptr);
    }
+
 }
 
 
@@ -714,26 +798,52 @@ lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
 {
    assert(quad_start_index < 4);
 
-   if (bld->coeff_bld.type.length > 4) {
-      attribs_update_simple(bld, gallivm, quad_start_index, 1, bld->num_attribs);
+   if (bld->simple_interp) {
+      attribs_update_simple(bld, gallivm, quad_start_index, NULL, 1, bld->num_attribs);
    }
    else {
-      attribs_update(bld, gallivm, quad_start_index, 1, bld->num_attribs);
+      attribs_update(bld, gallivm, quad_start_index, NULL, 1, bld->num_attribs);
    }
 }
 
 void
 lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
-                                  struct gallivm_state *gallivm,
-                                  int quad_start_index)
+                               struct gallivm_state *gallivm,
+                               int quad_start_index)
 {
    assert(quad_start_index < 4);
 
-   if (bld->coeff_bld.type.length > 4) {
-      attribs_update_simple(bld, gallivm, quad_start_index, 0, 1);
+   if (bld->simple_interp) {
+      attribs_update_simple(bld, gallivm, quad_start_index, NULL, 0, 1);
    }
    else {
-      attribs_update(bld, gallivm, quad_start_index, 0, 1);
+      attribs_update(bld, gallivm, quad_start_index, NULL, 0, 1);
+   }
+}
+
+void
+lp_build_interp_soa_update_inputs_dyn(struct lp_build_interp_soa_context *bld,
+                                      struct gallivm_state *gallivm,
+                                      LLVMValueRef quad_start_index)
+{
+   if (bld->simple_interp) {
+      attribs_update_simple(bld, gallivm, 0, quad_start_index, 1, bld->num_attribs);
+   }
+   else {
+      attribs_update(bld, gallivm, 0, quad_start_index, 1, bld->num_attribs);
+   }
+}
+
+void
+lp_build_interp_soa_update_pos_dyn(struct lp_build_interp_soa_context *bld,
+                                   struct gallivm_state *gallivm,
+                                   LLVMValueRef quad_start_index)
+{
+   if (bld->simple_interp) {
+      attribs_update_simple(bld, gallivm, 0, quad_start_index, 0, 1);
+   }
+   else {
+      attribs_update(bld, gallivm, 0, quad_start_index, 0, 1);
    }
 }
 
