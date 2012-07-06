@@ -1063,8 +1063,10 @@ fs_visitor::split_virtual_grfs()
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      /* Texturing produces 4 contiguous registers, so no splitting. */
-      if (inst->is_tex()) {
+      /* If there's a SEND message that requires contiguous destination
+       * registers, no splitting is allowed.
+       */
+      if (inst->regs_written() > 1) {
 	 split_grf[inst->dst.reg] = false;
       }
    }
@@ -1400,7 +1402,7 @@ fs_visitor::propagate_constants()
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->dst.reg &&
 	     (scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-	      scan_inst->is_tex())) {
+	      scan_inst->regs_written() > 1)) {
 	    break;
 	 }
       }
@@ -1602,14 +1604,14 @@ fs_visitor::register_coalesce()
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
 		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-		 scan_inst->is_tex())) {
+		 scan_inst->regs_written() > 1)) {
 	       interfered = true;
 	       break;
 	    }
 	    if (inst->src[0].file == GRF &&
 		scan_inst->dst.reg == inst->src[0].reg &&
 		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
-		 scan_inst->is_tex())) {
+		 scan_inst->regs_written() > 1)) {
 	       interfered = true;
 	       break;
 	    }
@@ -1729,10 +1731,8 @@ fs_visitor::compute_to_mrf()
 	     * into a compute-to-MRF.
 	     */
 
-	    if (scan_inst->is_tex()) {
-	       /* texturing writes several continuous regs, so we can't
-		* compute-to-mrf that.
-		*/
+            /* SENDs can only write to GRFs, so no compute-to-MRF. */
+	    if (scan_inst->mlen) {
 	       break;
 	    }
 
