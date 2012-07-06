@@ -948,6 +948,18 @@ galahad_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
+static void
+galahad_context_render_condition(struct pipe_context *_context,
+                                 struct pipe_query *query,
+                                 uint mode)
+{
+   struct galahad_context *glhd_context = galahad_context(_context);
+   struct pipe_context *context = glhd_context->pipe;
+
+   context->render_condition(context, query, mode);
+}
+
+
 struct pipe_context *
 galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -1021,7 +1033,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(clear_render_target);
    GLHD_PIPE_INIT(clear_depth_stencil);
    GLHD_PIPE_INIT(flush);
-   //GLHD_PIPE_INIT(render_condition);
+   GLHD_PIPE_INIT(render_condition);
    //GLHD_PIPE_INIT(texture_barrier);
    GLHD_PIPE_INIT(get_transfer);
    GLHD_PIPE_INIT(transfer_destroy);
