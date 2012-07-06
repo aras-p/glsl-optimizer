@@ -778,7 +778,7 @@ void r600_texture_depth_flush(struct pipe_context *ctx,
 static INLINE unsigned u_box_volume( const struct pipe_box *box )
 {
 	return box->width * box->depth * box->height;
-};
+}
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
