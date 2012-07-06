@@ -150,6 +150,7 @@ public:
 
    bool equals(fs_inst *inst);
    int regs_written();
+   bool overwrites_reg(const fs_reg &reg);
    bool is_tex();
    bool is_math();
 

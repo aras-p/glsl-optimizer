@@ -168,6 +168,15 @@ fs_inst::regs_written()
 }
 
 bool
+fs_inst::overwrites_reg(const fs_reg &reg)
+{
+   return (reg.file == dst.file &&
+           reg.reg == dst.reg &&
+           reg.reg_offset >= dst.reg_offset  &&
+           reg.reg_offset < dst.reg_offset + regs_written());
+}
+
+bool
 fs_inst::is_tex()
 {
    return (opcode == SHADER_OPCODE_TEX ||
@@ -1400,9 +1409,7 @@ fs_visitor::propagate_constants()
 	 }
 
 	 if (scan_inst->dst.file == GRF &&
-	     scan_inst->dst.reg == inst->dst.reg &&
-	     (scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-	      scan_inst->regs_written() > 1)) {
+             scan_inst->overwrites_reg(inst->dst)) {
 	    break;
 	 }
       }
@@ -1602,16 +1609,8 @@ fs_visitor::register_coalesce()
 	   !scan_inst->is_tail_sentinel();
 	   scan_inst = (fs_inst *)scan_inst->next) {
 	 if (scan_inst->dst.file == GRF) {
-	    if (scan_inst->dst.reg == inst->dst.reg &&
-		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-		 scan_inst->regs_written() > 1)) {
-	       interfered = true;
-	       break;
-	    }
-	    if (inst->src[0].file == GRF &&
-		scan_inst->dst.reg == inst->src[0].reg &&
-		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
-		 scan_inst->regs_written() > 1)) {
+	    if (scan_inst->overwrites_reg(inst->dst) ||
+                scan_inst->overwrites_reg(inst->src[0])) {
 	       interfered = true;
 	       break;
 	    }

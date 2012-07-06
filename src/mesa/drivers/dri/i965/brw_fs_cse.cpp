@@ -150,17 +150,11 @@ fs_visitor::opt_cse_local(fs_bblock *block, exec_list *aeb)
       }
 
       /* Kill all AEB entries that use the destination. */
-      int start_offset = inst->dst.reg_offset;
-      int end_offset = start_offset + inst->regs_written();
-
       foreach_list_safe(entry_node, aeb) {
 	 aeb_entry *entry = (aeb_entry *)entry_node;
 
 	 for (int i = 0; i < 3; i++) {
-	    if (entry->generator->src[i].file == inst->dst.file &&
-		entry->generator->src[i].reg == inst->dst.reg &&
-		entry->generator->src[i].reg_offset >= start_offset &&
-		entry->generator->src[i].reg_offset < end_offset) {
+            if (inst->overwrites_reg(entry->generator->src[i])) {
 	       entry->remove();
 	       ralloc_free(entry);
 	       break;

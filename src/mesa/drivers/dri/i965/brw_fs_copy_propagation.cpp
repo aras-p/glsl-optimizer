@@ -98,23 +98,11 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx,
 
       /* kill the destination from the ACP */
       if (inst->dst.file == GRF) {
-	 int start_offset = inst->dst.reg_offset;
-	 int end_offset = start_offset + inst->regs_written();
-
 	 foreach_list_safe(entry_node, acp) {
 	    acp_entry *entry = (acp_entry *)entry_node;
 
-	    if (entry->dst.file == GRF &&
-		entry->dst.reg == inst->dst.reg &&
-		entry->dst.reg_offset >= start_offset &&
-		entry->dst.reg_offset < end_offset) {
-	       entry->remove();
-	       continue;
-	    }
-	    if (entry->src.file == GRF &&
-		entry->src.reg == inst->dst.reg &&
-		entry->src.reg_offset >= start_offset &&
-		entry->src.reg_offset < end_offset) {
+	    if (inst->overwrites_reg(entry->dst) ||
+                inst->overwrites_reg(entry->src)) {
 	       entry->remove();
 	    }
 	 }
