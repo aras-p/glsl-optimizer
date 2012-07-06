@@ -981,6 +981,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base . _member = pipe -> _member ? galahad_context_ ## _member : NULL
 
    GLHD_PIPE_INIT(draw_vbo);
+   GLHD_PIPE_INIT(render_condition);
    GLHD_PIPE_INIT(create_query);
    GLHD_PIPE_INIT(destroy_query);
    GLHD_PIPE_INIT(begin_query);
@@ -992,6 +993,8 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(create_sampler_state);
    GLHD_PIPE_INIT(bind_fragment_sampler_states);
    GLHD_PIPE_INIT(bind_vertex_sampler_states);
+   //GLHD_PIPE_INIT(bind_geometry_sampler_states);
+   //GLHD_PIPE_INIT(bind_compute_sampler_states);
    GLHD_PIPE_INIT(delete_sampler_state);
    GLHD_PIPE_INIT(create_rasterizer_state);
    GLHD_PIPE_INIT(bind_rasterizer_state);
@@ -1005,13 +1008,16 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(create_vs_state);
    GLHD_PIPE_INIT(bind_vs_state);
    GLHD_PIPE_INIT(delete_vs_state);
+   //GLHD_PIPE_INIT(create_gs_state);
+   //GLHD_PIPE_INIT(bind_gs_state);
+   //GLHD_PIPE_INIT(delete_gs_state);
    GLHD_PIPE_INIT(create_vertex_elements_state);
    GLHD_PIPE_INIT(bind_vertex_elements_state);
    GLHD_PIPE_INIT(delete_vertex_elements_state);
    GLHD_PIPE_INIT(set_blend_color);
    GLHD_PIPE_INIT(set_stencil_ref);
-   GLHD_PIPE_INIT(set_clip_state);
    GLHD_PIPE_INIT(set_sample_mask);
+   GLHD_PIPE_INIT(set_clip_state);
    GLHD_PIPE_INIT(set_constant_buffer);
    GLHD_PIPE_INIT(set_framebuffer_state);
    GLHD_PIPE_INIT(set_polygon_stipple);
@@ -1019,28 +1025,39 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    GLHD_PIPE_INIT(set_viewport_state);
    GLHD_PIPE_INIT(set_fragment_sampler_views);
    GLHD_PIPE_INIT(set_vertex_sampler_views);
-   GLHD_PIPE_INIT(create_sampler_view);
-   GLHD_PIPE_INIT(sampler_view_destroy);
-   GLHD_PIPE_INIT(create_surface);
-   GLHD_PIPE_INIT(surface_destroy);
+   //GLHD_PIPE_INIT(set_geometry_sampler_views);
+   //GLHD_PIPE_INIT(set_compute_sampler_views);
+   //GLHD_PIPE_INIT(set_shader_resources);
    GLHD_PIPE_INIT(set_vertex_buffers);
    GLHD_PIPE_INIT(set_index_buffer);
    //GLHD_PIPE_INIT(create_stream_output_target);
    //GLHD_PIPE_INIT(stream_output_target_destroy);
    //GLHD_PIPE_INIT(set_stream_output_targets);
    GLHD_PIPE_INIT(resource_copy_region);
+   //GLHD_PIPE_INIT(resource_resolve);
    GLHD_PIPE_INIT(clear);
    GLHD_PIPE_INIT(clear_render_target);
    GLHD_PIPE_INIT(clear_depth_stencil);
    GLHD_PIPE_INIT(flush);
-   GLHD_PIPE_INIT(render_condition);
-   //GLHD_PIPE_INIT(texture_barrier);
+   GLHD_PIPE_INIT(create_sampler_view);
+   GLHD_PIPE_INIT(sampler_view_destroy);
+   GLHD_PIPE_INIT(create_surface);
+   GLHD_PIPE_INIT(surface_destroy);
    GLHD_PIPE_INIT(get_transfer);
    GLHD_PIPE_INIT(transfer_destroy);
    GLHD_PIPE_INIT(transfer_map);
-   GLHD_PIPE_INIT(transfer_unmap);
    GLHD_PIPE_INIT(transfer_flush_region);
+   GLHD_PIPE_INIT(transfer_unmap);
    GLHD_PIPE_INIT(transfer_inline_write);
+   //GLHD_PIPE_INIT(texture_barrier);
+   //GLHD_PIPE_INIT(create_video_decoder);
+   //GLHD_PIPE_INIT(create_video_buffer);
+   //GLHD_PIPE_INIT(create_compute_state);
+   //GLHD_PIPE_INIT(bind_compute_state);
+   //GLHD_PIPE_INIT(delete_compute_state);
+   //GLHD_PIPE_INIT(set_compute_resources);
+   //GLHD_PIPE_INIT(set_global_binding);
+   //GLHD_PIPE_INIT(launch_grid);
 
 #undef GLHD_PIPE_INIT
 

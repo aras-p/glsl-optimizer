@@ -289,22 +289,30 @@ galahad_screen_create(struct pipe_screen *screen)
       return screen;
    }
 
-   glhd_screen->base.destroy = galahad_screen_destroy;
-   glhd_screen->base.get_name = galahad_screen_get_name;
-   glhd_screen->base.get_vendor = galahad_screen_get_vendor;
-   glhd_screen->base.get_param = galahad_screen_get_param;
-   glhd_screen->base.get_shader_param = galahad_screen_get_shader_param;
-   glhd_screen->base.get_paramf = galahad_screen_get_paramf;
-   glhd_screen->base.is_format_supported = galahad_screen_is_format_supported;
-   glhd_screen->base.context_create = galahad_screen_context_create;
-   glhd_screen->base.resource_create = galahad_screen_resource_create;
-   glhd_screen->base.resource_from_handle = galahad_screen_resource_from_handle;
-   glhd_screen->base.resource_get_handle = galahad_screen_resource_get_handle;
-   glhd_screen->base.resource_destroy = galahad_screen_resource_destroy;
-   glhd_screen->base.flush_frontbuffer = galahad_screen_flush_frontbuffer;
-   glhd_screen->base.fence_reference = galahad_screen_fence_reference;
-   glhd_screen->base.fence_signalled = galahad_screen_fence_signalled;
-   glhd_screen->base.fence_finish = galahad_screen_fence_finish;
+#define GLHD_SCREEN_INIT(_member) \
+   glhd_screen->base . _member = screen -> _member ? galahad_screen_ ## _member : NULL
+
+   GLHD_SCREEN_INIT(destroy);
+   GLHD_SCREEN_INIT(get_name);
+   GLHD_SCREEN_INIT(get_vendor);
+   GLHD_SCREEN_INIT(get_param);
+   GLHD_SCREEN_INIT(get_shader_param);
+   //GLHD_SCREEN_INIT(get_video_param);
+   //GLHD_SCREEN_INIT(get_compute_param);
+   GLHD_SCREEN_INIT(get_paramf);
+   GLHD_SCREEN_INIT(is_format_supported);
+   //GLHD_SCREEN_INIT(is_video_format_supported);
+   GLHD_SCREEN_INIT(context_create);
+   GLHD_SCREEN_INIT(resource_create);
+   GLHD_SCREEN_INIT(resource_from_handle);
+   GLHD_SCREEN_INIT(resource_get_handle);
+   GLHD_SCREEN_INIT(resource_destroy);
+   GLHD_SCREEN_INIT(flush_frontbuffer);
+   GLHD_SCREEN_INIT(fence_reference);
+   GLHD_SCREEN_INIT(fence_signalled);
+   GLHD_SCREEN_INIT(fence_finish);
+
+#undef GLHD_SCREEN_INIT
 
    glhd_screen->screen = screen;
 
