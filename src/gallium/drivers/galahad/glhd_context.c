@@ -634,24 +634,24 @@ galahad_set_index_buffer(struct pipe_context *_pipe,
    struct pipe_context *pipe = glhd_pipe->pipe;
    struct pipe_index_buffer unwrapped_ib, *ib = NULL;
 
-   if (_ib->buffer) {
-      switch (_ib->index_size) {
-      case 1:
-      case 2:
-      case 4:
-         break;
-      default:
-         glhd_warn("index buffer %p has unrecognized index size %d",
-                   (void *) _ib->buffer, _ib->index_size);
-         break;
-      }
-   }
-   else if (_ib->offset || _ib->index_size) {
-      glhd_warn("non-indexed state with index offset %d and index size %d",
-            _ib->offset, _ib->index_size);
-   }
-
    if (_ib) {
+      if (_ib->buffer) {
+         switch (_ib->index_size) {
+         case 1:
+         case 2:
+         case 4:
+            break;
+         default:
+            glhd_warn("index buffer %p has unrecognized index size %d",
+                      (void *) _ib->buffer, _ib->index_size);
+            break;
+         }
+      }
+      else if (_ib->offset || _ib->index_size) {
+         glhd_warn("non-indexed state with index offset %d and index size %d",
+               _ib->offset, _ib->index_size);
+      }
+
       unwrapped_ib = *_ib;
       unwrapped_ib.buffer = galahad_resource_unwrap(_ib->buffer);
       ib = &unwrapped_ib;
