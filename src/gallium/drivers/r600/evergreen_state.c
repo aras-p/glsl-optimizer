@@ -1772,8 +1772,6 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 
 static void evergreen_emit_vertex_buffers(struct r600_context *rctx,
 					  struct r600_vertexbuf_state *state,
-					  struct pipe_vertex_buffer *vertex_buffers,
-					  unsigned vb_count,
 					  unsigned resource_offset,
 					  unsigned pkt_flags)
 {
@@ -1784,13 +1782,11 @@ static void evergreen_emit_vertex_buffers(struct r600_context *rctx,
 		struct pipe_vertex_buffer *vb;
 		struct r600_resource *rbuffer;
 		uint64_t va;
-		unsigned buffer_index = ffs(dirty_mask) - 1;
+		unsigned buffer_index = u_bit_scan(&dirty_mask);
 
-		vb = &vertex_buffers[buffer_index];
+		vb = &state->vb[buffer_index];
 		rbuffer = (struct r600_resource*)vb->buffer;
-		if (!rbuffer) {
-			goto next;
-		}
+		assert(rbuffer);
 
 		va = r600_resource_va(&rctx->screen->screen, &rbuffer->b.b);
 		va += vb->buffer_offset;
@@ -1816,26 +1812,19 @@ static void evergreen_emit_vertex_buffers(struct r600_context *rctx,
 
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0) | pkt_flags);
 		r600_write_value(cs, r600_context_bo_reloc(rctx, rbuffer, RADEON_USAGE_READ));
-
-next:
-		dirty_mask &= ~(1 << buffer_index);
 	}
 	state->dirty_mask = 0;
 }
 
 static void evergreen_fs_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom * atom)
 {
-	evergreen_emit_vertex_buffers(rctx, &rctx->vertex_buffer_state,
-					rctx->vertex_buffer,
-					rctx->nr_vertex_buffers, 992, 0);
+	evergreen_emit_vertex_buffers(rctx, &rctx->vertex_buffer_state, 992, 0);
 }
 
 static void evergreen_cs_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom * atom)
 {
-	evergreen_emit_vertex_buffers(rctx, &rctx->cs_vertex_buffer_state,
-					rctx->cs_vertex_buffer,
-					rctx->nr_cs_vertex_buffers, 816,
-					RADEON_CP_PACKET3_COMPUTE_MODE);
+	evergreen_emit_vertex_buffers(rctx, &rctx->cs_vertex_buffer_state, 816,
+				      RADEON_CP_PACKET3_COMPUTE_MODE);
 }
 
 static void evergreen_emit_constant_buffers(struct r600_context *rctx,

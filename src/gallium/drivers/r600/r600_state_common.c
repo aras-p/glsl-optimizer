@@ -403,22 +403,58 @@ void r600_set_index_buffer(struct pipe_context *ctx,
 	}
 }
 
+void r600_vertex_buffers_dirty(struct r600_context *rctx)
+{
+	if (rctx->vertex_buffer_state.dirty_mask) {
+		r600_inval_vertex_cache(rctx);
+		rctx->vertex_buffer_state.atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 11) *
+					       util_bitcount(rctx->vertex_buffer_state.dirty_mask);
+		r600_atom_dirty(rctx, &rctx->vertex_buffer_state.atom);
+	}
+}
+
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-			     const struct pipe_vertex_buffer *buffers)
+			     const struct pipe_vertex_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertexbuf_state * state = &rctx->vertex_buffer_state;
+	struct r600_vertexbuf_state *state = &rctx->vertex_buffer_state;
+	struct pipe_vertex_buffer *vb = state->vb;
 	unsigned i;
+	/* This sets 1-bit for buffers with index >= count. */
+	uint32_t disable_mask = ~((1ull << count) - 1);
+	/* These are the new buffers set by this function. */
+	uint32_t new_buffer_mask = 0;
 
-	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
+	/* Set buffers with index >= count to NULL. */
+	uint32_t remaining_buffers_mask =
+		rctx->vertex_buffer_state.enabled_mask & disable_mask;
 
-	r600_inval_vertex_cache(rctx);
-	state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 11) *
-					   rctx->nr_vertex_buffers;
-	for (i = 0 ; i < rctx->nr_vertex_buffers; i++) {
-		state->dirty_mask |= 1 << i;
+	while (remaining_buffers_mask) {
+		i = u_bit_scan(&remaining_buffers_mask);
+		pipe_resource_reference(&vb[i].buffer, NULL);
 	}
-	r600_atom_dirty(rctx, &state->atom);
+
+	/* Set vertex buffers. */
+	for (i = 0; i < count; i++) {
+		if (memcmp(&input[i], &vb[i], sizeof(struct pipe_vertex_buffer))) {
+			if (input[i].buffer) {
+				vb[i].stride = input[i].stride;
+				vb[i].buffer_offset = input[i].buffer_offset;
+				pipe_resource_reference(&vb[i].buffer, input[i].buffer);
+				new_buffer_mask |= 1 << i;
+			} else {
+				pipe_resource_reference(&vb[i].buffer, NULL);
+				disable_mask |= 1 << i;
+			}
+		}
+        }
+
+	rctx->vertex_buffer_state.enabled_mask &= ~disable_mask;
+	rctx->vertex_buffer_state.dirty_mask &= rctx->vertex_buffer_state.enabled_mask;
+	rctx->vertex_buffer_state.enabled_mask |= new_buffer_mask;
+	rctx->vertex_buffer_state.dirty_mask |= new_buffer_mask;
+
+	r600_vertex_buffers_dirty(rctx);
 }
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,

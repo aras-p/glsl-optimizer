@@ -1274,14 +1274,15 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
 
 	/* Invalidate caches. */
-	r600_inval_vertex_cache(ctx);
 	r600_inval_texture_cache(ctx);
 	r600_flush_framebuffer(ctx, false);
 
 	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
-	r600_atom_dirty(ctx, &ctx->vertex_buffer_state.atom);
+
+	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
+	r600_vertex_buffers_dirty(ctx);
 
 	ctx->vs_constbuf_state.dirty_mask = ctx->vs_constbuf_state.enabled_mask;
 	ctx->ps_constbuf_state.dirty_mask = ctx->ps_constbuf_state.enabled_mask;

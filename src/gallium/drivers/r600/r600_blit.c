@@ -60,8 +60,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 		util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
 	}
 	util_blitter_save_vertex_buffers(rctx->blitter,
-					 rctx->nr_vertex_buffers,
-					 rctx->vertex_buffer);
+					 util_last_bit(rctx->vertex_buffer_state.enabled_mask),
+					 rctx->vertex_buffer_state.vb);
 	util_blitter_save_so_targets(rctx->blitter, rctx->num_so_targets,
 				     (struct pipe_stream_output_target**)rctx->so_targets);
 

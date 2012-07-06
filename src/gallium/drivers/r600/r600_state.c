@@ -1748,27 +1748,28 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	struct pipe_vertex_buffer *vb = rctx->vertex_buffer;
-	unsigned count = rctx->nr_vertex_buffers;
-	unsigned i, offset;
+	uint32_t dirty_mask = rctx->vertex_buffer_state.dirty_mask;
 
-	for (i = 0; i < count; i++) {
-		struct r600_resource *rbuffer = (struct r600_resource*)vb[i].buffer;
+	while (dirty_mask) {
+		struct pipe_vertex_buffer *vb;
+		struct r600_resource *rbuffer;
+		unsigned offset;
+		unsigned buffer_index = u_bit_scan(&dirty_mask);
 
-		if (!rbuffer) {
-			continue;
-		}
+		vb = &rctx->vertex_buffer_state.vb[buffer_index];
+		rbuffer = (struct r600_resource*)vb->buffer;
+		assert(rbuffer);
 
-		offset = vb[i].buffer_offset;
+		offset = vb->buffer_offset;
 
 		/* fetch resources start at index 320 */
 		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 7, 0));
-		r600_write_value(cs, (320 + i) * 7);
+		r600_write_value(cs, (320 + buffer_index) * 7);
 		r600_write_value(cs, offset); /* RESOURCEi_WORD0 */
 		r600_write_value(cs, rbuffer->buf->size - offset - 1); /* RESOURCEi_WORD1 */
 		r600_write_value(cs, /* RESOURCEi_WORD2 */
 				 S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
-				 S_038008_STRIDE(vb[i].stride));
+				 S_038008_STRIDE(vb->stride));
 		r600_write_value(cs, 0); /* RESOURCEi_WORD3 */
 		r600_write_value(cs, 0); /* RESOURCEi_WORD4 */
 		r600_write_value(cs, 0); /* RESOURCEi_WORD5 */

@@ -93,7 +93,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 		/* Check if mapping this buffer would cause waiting for the GPU. */
 		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
 		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
-			unsigned i;
+			unsigned i, mask;
 
 			/* Discard the buffer. */
 			pb_reference(&rbuffer->buf, NULL);
@@ -105,13 +105,12 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 
 			/* We changed the buffer, now we need to bind it where the old one was bound. */
 			/* Vertex buffers. */
-			for (i = 0; i < rctx->nr_vertex_buffers; i++) {
-				if (rctx->vertex_buffer[i].buffer == &rbuffer->b.b) {
-					struct r600_vertexbuf_state * state =
-						&rctx->vertex_buffer_state;
-					state->dirty_mask |= 1 << i;
-					r600_inval_vertex_cache(rctx);
-					r600_atom_dirty(rctx, &state->atom);
+			mask = rctx->vertex_buffer_state.enabled_mask;
+			while (mask) {
+				i = u_bit_scan(&mask);
+				if (rctx->vertex_buffer_state.vb[i].buffer == &rbuffer->b.b) {
+					rctx->vertex_buffer_state.dirty_mask |= 1 << i;
+					r600_vertex_buffers_dirty(rctx);
 				}
 			}
 			/* Streamout buffers. */

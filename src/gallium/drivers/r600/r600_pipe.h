@@ -278,6 +278,8 @@ struct r600_constbuf_state
 struct r600_vertexbuf_state
 {
 	struct r600_atom		atom;
+	struct pipe_vertex_buffer	vb[PIPE_MAX_ATTRIBS];
+	uint32_t			enabled_mask; /* non-NULL buffers */
 	uint32_t			dirty_mask;
 };
 
@@ -399,13 +401,8 @@ struct r600_context {
 
 	boolean			dual_src_blend;
 
-	/* Vertex and index buffers. */
-	bool			vertex_buffers_dirty;
+	/* Index buffer. */
 	struct pipe_index_buffer index_buffer;
-	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned		nr_vertex_buffers;
-	struct pipe_vertex_buffer cs_vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned		nr_cs_vertex_buffers;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
@@ -528,8 +525,9 @@ unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
 void r600_texture_barrier(struct pipe_context *ctx);
 void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib);
+void r600_vertex_buffers_dirty(struct r600_context *rctx);
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-			     const struct pipe_vertex_buffer *buffers);
+			     const struct pipe_vertex_buffer *input);
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements);

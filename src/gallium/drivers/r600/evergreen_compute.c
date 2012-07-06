@@ -89,14 +89,15 @@ static void evergreen_cs_set_vertex_buffer(
 	unsigned offset,
 	struct pipe_resource * buffer)
 {
-	struct pipe_vertex_buffer *vb = &rctx->cs_vertex_buffer[vb_index];
-	struct r600_vertexbuf_state * state = &rctx->cs_vertex_buffer_state;
+	struct r600_vertexbuf_state *state = &rctx->cs_vertex_buffer_state;
+	struct pipe_vertex_buffer *vb = &state->vb[vb_index];
 	vb->stride = 1;
 	vb->buffer_offset = offset;
 	vb->buffer = buffer;
 	vb->user_buffer = NULL;
 
 	r600_inval_vertex_cache(rctx);
+	state->enabled_mask |= 1 << vb_index;
 	state->dirty_mask |= 1 << vb_index;
 	r600_atom_dirty(rctx, &state->atom);
 }
@@ -369,7 +370,7 @@ static void compute_emit_cs(struct r600_context *ctx)
 	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
 
 	/* Emit vertex buffer state */
-	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * ctx->nr_cs_vertex_buffers;
+	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * util_bitcount(ctx->cs_vertex_buffer_state.dirty_mask);
 	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state.atom);
 
 	for (i = 0; i < get_compute_resource_num(); i++) {
@@ -493,10 +494,8 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 			evergreen_cs_set_vertex_buffer(ctx, vtx_id,
 					buffer->chunk->start_in_dw * 4,
 					resources[i]->base.texture);
-			ctx->nr_cs_vertex_buffers = vtx_id + 1;
 		}
 	}
-
 }
 
 static void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
@@ -740,7 +739,8 @@ void evergreen_init_compute_state_functions(struct r600_context *ctx)
 
 	/* We always use at least two vertex buffers for compute, one for
          * parameters and one for global memory */
-	ctx->nr_cs_vertex_buffers = 2;
+	ctx->cs_vertex_buffer_state.enabled_mask =
+	ctx->cs_vertex_buffer_state.dirty_mask = 1 | 2;
 }
 
 
