@@ -12,6 +12,6 @@ main_test_SOURCES =			\
 	enum_strings.cpp
 
 main_test_LDADD = \
-	$(top_builddir)/src/mesa/libmesa.a \
+	$(top_builddir)/src/mesa/libmesa.la \
 	$(top_builddir)/src/gtest/libgtest.la \
 	-lpthread

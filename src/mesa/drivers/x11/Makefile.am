@@ -56,7 +56,7 @@ GL_MINOR = 6
 GL_PATCH = 0
 
 libGL_la_LIBADD = \
-	$(top_builddir)/src/mesa/libmesa.a \
+	$(top_builddir)/src/mesa/libmesa.la \
 	$(top_builddir)/src/mapi/glapi/libglapi.a
 libGL_la_LDFLAGS = \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \

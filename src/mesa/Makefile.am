@@ -93,14 +93,53 @@ program/lex.yy.c: program/program_lexer.l
 	mkdir -p program
 	$(LEX) --never-interactive --outfile=$@ $<
 
-all-local:
-	$(MAKE) -f $(srcdir)/Makefile.old
+noinst_LTLIBRARIES = libmesa.la libmesagallium.la
+
+SRCDIR = $(top_srcdir)/src/mesa
+include sources.mak
+
+AM_CFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS) $(LLVM_CFLAGS) $(CFLAGS)
+AM_CXXFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS) $(LLVM_CFLAGS) $(CXXFLAGS)
+
+# cannot just add $(MESA_ASM_FILES) to libmesa_la_SOURCES as it contains a configure substitution
+MESA_ASM_FILES_FOR_ARCH =
+
+if HAVE_X86_ASM
+MESA_ASM_FILES_FOR_ARCH += $(X86_FILES)
+endif
+if HAVE_X86_64_ASM
+MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
+endif
+if HAVE_SPARC_ASM
+MESA_ASM_FILES_FOR_ARCH += $(SPARC_FILES)
+endif
+
+libmesa_la_SOURCES = \
+	$(MESA_FILES) \
+	$(MESA_CXX_FILES) \
+        $(MESA_ASM_FILES_FOR_ARCH)
+
+libmesa_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
+libmesa_la_LDFLAGS =
+
+libmesagallium_la_SOURCES = \
+	$(MESA_GALLIUM_FILES) \
+	$(MESA_GALLIUM_CXX_FILES) \
+        $(MESA_ASM_FILES_FOR_ARCH)
+
+libmesagallium_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
+libmesagallium_la_LDFLAGS =
 
 install-exec-local:
 	$(MAKE) -f $(srcdir)/Makefile.old install
 
-clean-local:
-	$(MAKE) -f $(srcdir)/Makefile.old clean
+# Provide compatibility with scripts for the old Mesa build system for
+# a while by putting a link to the library in the current directory.
+all-local: libmesa.la libmesagallium.la
+	ln -f .libs/libmesa.a .
+	ln -f .libs/libmesagallium.a .
+
+CLEANFILES += libmesa.a libmesagallium.a
 
 pkgconfigdir = $(libdir)/pkgconfig
 
