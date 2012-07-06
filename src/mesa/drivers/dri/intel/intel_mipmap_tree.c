@@ -293,7 +293,24 @@ compute_msaa_layout(struct intel_context *intel, gl_format format)
    case GL_DEPTH_STENCIL:
       return INTEL_MSAA_LAYOUT_IMS;
    default:
-      return INTEL_MSAA_LAYOUT_UMS;
+      /* From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
+       *
+       *   This field must be set to 0 for all SINT MSRTs when all RT channels
+       *   are not written
+       *
+       * In practice this means that we have to disable MCS for all signed
+       * integer MSAA buffers.  The alternative, to disable MCS only when one
+       * of the render target channels is disabled, is impractical because it
+       * would require converting between CMS and UMS MSAA layouts on the fly,
+       * which is expensive.
+       */
+      if (_mesa_get_format_datatype(format) == GL_INT) {
+         /* TODO: is this workaround needed for future chipsets? */
+         assert(intel->gen == 7);
+         return INTEL_MSAA_LAYOUT_UMS;
+      } else {
+         return INTEL_MSAA_LAYOUT_CMS;
+      }
    }
 }
 
