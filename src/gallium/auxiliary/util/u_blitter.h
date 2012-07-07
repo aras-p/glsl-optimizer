@@ -169,8 +169,8 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
  * The same holds for depth-stencil formats with the exception that stencil
  * cannot be copied unless you set ignore_stencil to FALSE. In that case,
  * a software fallback path is taken and both surfaces must be of the same
- * format.
- * XXX implement hw-accel stencil copy using shader stencil export.
+ * format. If the shader stencil export is supported, stencil copy is always
+ * accelerated.
  *
  * Use pipe_screen->is_format_supported to know your options.
  *

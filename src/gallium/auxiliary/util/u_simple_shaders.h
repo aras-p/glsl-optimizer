@@ -75,6 +75,12 @@ util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
 
 
 extern void *
+util_make_fragment_tex_shader_writedepthstencil(struct pipe_context *pipe,
+                                                unsigned tex_target,
+                                                unsigned interp_mode);
+
+
+extern void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe);
 
 
