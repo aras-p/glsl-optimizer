@@ -995,8 +995,10 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
+	assert(format != ~0);
 	if (format == ~0) {
-		format = 0;
+		FREE(view);
+		return NULL;
 	}
 
 	if (tmp->is_depth && !tmp->is_flushing_texture) {
@@ -1456,8 +1458,12 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	}
 
 	format = r600_translate_colorformat(surf->base.format);
+	assert(format != ~0);
+
 	swap = r600_translate_colorswap(surf->base.format);
-	if(rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
+	assert(swap != ~0);
+
+	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
 		endian = r600_colorformat_endian_swap(format);
@@ -1612,6 +1618,7 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	}
 
 	format = r600_translate_dbformat(state->zsbuf->format);
+	assert(format != ~0);
 
 	r600_pipe_state_add_reg_bo(rstate, R_02800C_DB_DEPTH_BASE,
 				offset >> 8, &rtex->resource, RADEON_USAGE_READWRITE);

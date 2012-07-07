@@ -983,8 +983,10 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
+	assert(format != ~0);
 	if (format == ~0) {
-		format = 0;
+		FREE(view);
+		return NULL;
 	}
 
 	if (tmp->is_depth && !tmp->is_flushing_texture) {
@@ -1415,7 +1417,11 @@ static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rsta
 	}
 
 	format = r600_translate_colorformat(surf->base.format);
+	assert(format != ~0);
+
 	swap = r600_translate_colorswap(surf->base.format);
+	assert(swap != ~0);
+
 	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = ENDIAN_NONE;
 	} else {
@@ -1534,6 +1540,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	rtex = (struct r600_resource_texture*)surf->base.texture;
 	first_layer = surf->base.u.tex.first_layer;
 	format = r600_translate_dbformat(surf->base.format);
+	assert(format != ~0);
 
 	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
 	/* XXX remove this once tiling is properly supported */
