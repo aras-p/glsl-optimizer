@@ -892,7 +892,7 @@ void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
     src_templ->u.tex.last_level = srclevel;
     src_templ->u.tex.first_layer = 0;
     src_templ->u.tex.last_layer =
-        src->target == PIPE_TEXTURE_3D ? src->depth0 - 1
+        src->target == PIPE_TEXTURE_3D ? u_minify(src->depth0, srclevel) - 1
                                        : src->array_size - 1;
     src_templ->swizzle_r = PIPE_SWIZZLE_RED;
     src_templ->swizzle_g = PIPE_SWIZZLE_GREEN;
