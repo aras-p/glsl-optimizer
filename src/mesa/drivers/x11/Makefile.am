@@ -60,6 +60,7 @@ lib@GL_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mapi/glapi/libglapi.la
 lib@GL_LIB@_la_LDFLAGS = \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \
+	-no-undefined \
 	$(GL_LIB_DEPS)
 
 if HAVE_SHARED_GLAPI
