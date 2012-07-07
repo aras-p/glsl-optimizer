@@ -50,11 +50,8 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 	struct pipe_resource *texture = transfer->resource;
 	struct pipe_box sbox;
 
-	sbox.x = sbox.y = sbox.z = 0;
-	sbox.width = transfer->box.width;
-	sbox.height = transfer->box.height;
-	/* XXX that might be wrong */
-	sbox.depth = 1;
+	u_box_origin_2d(transfer->box.width, transfer->box.height, &sbox);
+
 	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
 				  &rtransfer->staging->b.b,
@@ -908,11 +905,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture) {
 			struct pipe_box sbox;
 
-			sbox.x = sbox.y = sbox.z = 0;
-			sbox.width = texture->width0;
-			sbox.height = texture->height0;
-			/* XXX that might be wrong */
-			sbox.depth = 1;
+			u_box_origin_2d(texture->width0, texture->height0, &sbox);
 
 			ctx->resource_copy_region(ctx, texture, 0, 0, 0, 0,
 						  &rtex->flushed_depth_texture->resource.b.b, 0,
