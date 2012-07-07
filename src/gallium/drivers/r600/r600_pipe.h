@@ -84,8 +84,10 @@ struct r600_db_misc_state {
 
 struct r600_cb_misc_state {
 	struct r600_atom atom;
+	unsigned cb_color_control; /* this comes from blend state */
 	unsigned blend_colormask; /* 8*4 bits for 8 RGBA colorbuffers */
 	unsigned nr_cbufs;
+	bool multiwrite;
 };
 
 enum r600_pipe_state_id {
@@ -291,7 +293,6 @@ struct r600_context {
 	unsigned			sx_alpha_test_control;
 	unsigned			cb_shader_mask;
 	unsigned			db_shader_control;
-	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */

@@ -1703,9 +1703,13 @@ static void r600_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom 
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_cb_misc_state *a = (struct r600_cb_misc_state*)atom;
 	unsigned fb_colormask = (1ULL << ((unsigned)a->nr_cbufs * 4)) - 1;
+	unsigned multiwrite = a->multiwrite && a->nr_cbufs > 1;
 
 	r600_write_context_reg(cs, R_028238_CB_TARGET_MASK,
 			       a->blend_colormask & fb_colormask);
+	r600_write_context_reg(cs, R_028808_CB_COLOR_CONTROL,
+			       a->cb_color_control |
+			       S_028808_MULTIWRITE_ENABLE(multiwrite));
 }
 
 static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
