@@ -240,25 +240,6 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
-
-
-/* Copy a block of pixels from one surface to another using HW. */
-static void r600_hw_copy_region(struct pipe_context *ctx,
-				struct pipe_resource *dst,
-				unsigned dst_level,
-				unsigned dstx, unsigned dsty, unsigned dstz,
-				struct pipe_resource *src,
-				unsigned src_level,
-				const struct pipe_box *src_box)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	r600_blitter_begin(ctx, R600_COPY);
-	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, src_box, TRUE);
-	r600_blitter_end(ctx);
-}
-
 struct texture_orig_info {
 	unsigned format;
 	unsigned width0;
@@ -326,6 +307,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned src_level,
 				      const struct pipe_box *src_box)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
@@ -367,8 +349,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
 	}
 
-	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-			    src, src_level, psbox);
+	r600_blitter_begin(ctx, R600_COPY);
+	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
+				  src, src_level, psbox, TRUE);
+	r600_blitter_end(ctx);
 
 	if (restore_orig[0])
 		r600_reset_blittable_to_compressed(src, src_level, &orig_info[0]);
