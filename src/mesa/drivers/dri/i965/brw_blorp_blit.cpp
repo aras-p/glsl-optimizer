@@ -434,6 +434,11 @@ private:
                        const sampler_message_arg *args, int num_args);
    void render_target_write();
 
+   /**
+    * Base-2 logarithm of the maximum number of samples that can be blended.
+    */
+   static const unsigned LOG2_MAX_BLEND_SAMPLES = 2;
+
    void *mem_ctx;
    struct brw_context *brw;
    const brw_blorp_blit_prog_key *key;
@@ -455,13 +460,8 @@ private:
       struct brw_reg offset;
    } x_transform, y_transform;
 
-   /* Data to be written to render target (4 vec16's) */
-   struct brw_reg result;
-
-   /* Auxiliary storage for data returned by a sampling operation when
-    * blending (4 vec16's)
-    */
-   struct brw_reg texture_data;
+   /* Data read from texture (4 vec16's per array element) */
+   struct brw_reg texture_data[LOG2_MAX_BLEND_SAMPLES + 1];
 
    /* Auxiliary storage for the contents of the MCS surface.
     *
@@ -622,7 +622,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
       if (brw->intel.gen == 6) {
          /* Gen6 hardware an automatically blend using the SAMPLE message */
          single_to_blend();
-         sample(result);
+         sample(texture_data[0]);
       } else {
          /* Gen7+ hardware doesn't automaticaly blend. */
          manual_blend();
@@ -656,7 +656,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
        */
       if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
          mcs_fetch();
-      texel_fetch(result);
+      texel_fetch(texture_data[0]);
    }
 
    /* Finally, write the fetched (or blended) value to the render target and
@@ -695,8 +695,9 @@ brw_blorp_blit_program::alloc_regs()
    prog_data.first_curbe_grf = reg;
    alloc_push_const_regs(reg);
    reg += BRW_BLORP_NUM_PUSH_CONST_REGS;
-   this->result = vec16(brw_vec8_grf(reg, 0)); reg += 8;
-   this->texture_data = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+   for (unsigned i = 0; i < ARRAY_SIZE(texture_data); ++i) {
+      this->texture_data[i] = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+   }
    this->mcs_data =
       retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD); reg += 8;
    for (int i = 0; i < 2; ++i) {
@@ -710,6 +711,9 @@ brw_blorp_blit_program::alloc_regs()
       = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
    this->t1 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
    this->t2 = vec16(retype(brw_vec8_grf(reg++, 0), BRW_REGISTER_TYPE_UW));
+
+   /* Make sure we didn't run out of registers */
+   assert(reg <= GEN7_MRF_HACK_START);
 
    int mrf = 2;
    this->base_mrf = mrf;
@@ -1061,6 +1065,24 @@ brw_blorp_blit_program::single_to_blend()
    SWAP_XY_AND_XPYP();
 }
 
+
+/**
+ * Count the number of trailing 1 bits in the given value.  For example:
+ *
+ * count_trailing_one_bits(0) == 0
+ * count_trailing_one_bits(7) == 3
+ * count_trailing_one_bits(11) == 2
+ */
+inline int count_trailing_one_bits(unsigned value)
+{
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304) /* gcc 3.4 or later */
+   return __builtin_ctz(~value);
+#else
+   return _mesa_bitcount(value & ~(value + 1));
+#endif
+}
+
+
 void
 brw_blorp_blit_program::manual_blend()
 {
@@ -1070,27 +1092,68 @@ brw_blorp_blit_program::manual_blend()
    if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
       mcs_fetch();
 
-   /* Gather sample 0 data first */
-   s_is_zero = true;
-   texel_fetch(result);
+   /* We add together samples using a binary tree structure, e.g. for 4x MSAA:
+    *
+    *   result = ((sample[0] + sample[1]) + (sample[2] + sample[3])) / 4
+    *
+    * This ensures that when all samples have the same value, no numerical
+    * precision is lost, since each addition operation always adds two equal
+    * values, and summing two equal floating point values does not lose
+    * precision.
+    *
+    * We perform this computation by treating the texture_data array as a
+    * stack and performing the following operations:
+    *
+    * - push sample 0 onto stack
+    * - push sample 1 onto stack
+    * - add top two stack entries
+    * - push sample 2 onto stack
+    * - push sample 3 onto stack
+    * - add top two stack entries
+    * - add top two stack entries
+    * - divide top stack entry by 4
+    *
+    * Note that after pushing sample i onto the stack, the number of add
+    * operations we do is equal to the number of trailing 1 bits in i.  This
+    * works provided the total number of samples is a power of two, which it
+    * always is for i965.
+    */
+   unsigned stack_depth = 0;
+   for (int i = 0; i < num_samples; ++i) {
+      assert(stack_depth == _mesa_bitcount(i)); /* Loop invariant */
 
-   /* Gather data for remaining samples and accumulate it into result. */
-   s_is_zero = false;
-   for (int i = 1; i < num_samples; ++i) {
-      brw_MOV(&func, S, brw_imm_uw(i));
-      texel_fetch(texture_data);
+      /* Push sample i onto the stack */
+      assert(stack_depth < ARRAY_SIZE(texture_data));
+      if (i == 0) {
+         s_is_zero = true;
+      } else {
+         s_is_zero = false;
+         brw_MOV(&func, S, brw_imm_uw(i));
+      }
+      texel_fetch(texture_data[stack_depth++]);
 
-      /* TODO: should use a smaller loop bound for non-RGBA formats */
-      for (int j = 0; j < 4; ++j) {
-         brw_ADD(&func, offset(result, 2*j), offset(vec8(result), 2*j),
-                 offset(vec8(texture_data), 2*j));
+      /* Do count_trailing_one_bits(i) times */
+      for (int j = count_trailing_one_bits(i); j-- > 0; ) {
+         assert(stack_depth >= 2);
+         --stack_depth;
+
+         /* TODO: should use a smaller loop bound for non_RGBA formats */
+         for (int k = 0; k < 4; ++k) {
+            brw_ADD(&func, offset(texture_data[stack_depth - 1], 2*k),
+                    offset(vec8(texture_data[stack_depth - 1]), 2*k),
+                    offset(vec8(texture_data[stack_depth]), 2*k));
+         }
       }
    }
+
+   /* We should have just 1 sample on the stack now. */
+   assert(stack_depth == 1);
 
    /* Scale the result down by a factor of num_samples */
    /* TODO: should use a smaller loop bound for non-RGBA formats */
    for (int j = 0; j < 4; ++j) {
-      brw_MUL(&func, offset(result, 2*j), offset(vec8(result), 2*j),
+      brw_MUL(&func, offset(texture_data[0], 2*j),
+              offset(vec8(texture_data[0]), 2*j),
               brw_imm_f(1.0/num_samples));
    }
 }
@@ -1274,7 +1337,7 @@ brw_blorp_blit_program::render_target_write()
    for (int i = 0; i < 4; ++i) {
       /* E.g. mov(16) m2.0<1>:f r2.0<8;8,1>:f { Align1, H1 } */
       brw_MOV(&func, offset(mrf_rt_write, mrf_offset),
-              offset(vec8(result), 2*i));
+              offset(vec8(texture_data[0]), 2*i));
       mrf_offset += 2;
    }
 
