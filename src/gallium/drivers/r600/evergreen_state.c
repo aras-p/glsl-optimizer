@@ -1533,7 +1533,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_resource_texture*)surf->base.texture;
 	first_layer = surf->base.u.tex.first_layer;
-	format = r600_translate_dbformat(rtex->real_format);
+	format = r600_translate_dbformat(surf->base.format);
 
 	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
 	/* XXX remove this once tiling is properly supported */
@@ -2546,7 +2546,7 @@ void evergreen_polygon_offset_update(struct r600_context *rctx)
 		float offset_units = rctx->rasterizer->offset_units;
 		unsigned offset_db_fmt_cntl = 0, depth;
 
-		switch (rctx->framebuffer.zsbuf->texture->format) {
+		switch (rctx->framebuffer.zsbuf->format) {
 		case PIPE_FORMAT_Z24X8_UNORM:
 		case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 			depth = -24;

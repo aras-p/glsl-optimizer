@@ -637,7 +637,7 @@ void r600_polygon_offset_update(struct r600_context *rctx)
 		float offset_units = rctx->rasterizer->offset_units;
 		unsigned offset_db_fmt_cntl = 0, depth;
 
-		switch (rctx->framebuffer.zsbuf->texture->format) {
+		switch (rctx->framebuffer.zsbuf->format) {
 		case PIPE_FORMAT_Z24X8_UNORM:
 		case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 			depth = -24;
@@ -1611,7 +1611,7 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		}
 	}
 
-	format = r600_translate_dbformat(state->zsbuf->texture->format);
+	format = r600_translate_dbformat(state->zsbuf->format);
 
 	r600_pipe_state_add_reg_bo(rstate, R_02800C_DB_DEPTH_BASE,
 				offset >> 8, &rtex->resource, RADEON_USAGE_READWRITE);
