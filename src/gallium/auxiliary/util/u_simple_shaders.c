@@ -265,6 +265,52 @@ util_make_fragment_tex_shader_writedepthstencil(struct pipe_context *pipe,
 
 
 /**
+ * Make a simple fragment texture shader which reads a texture and writes it
+ * as stencil.
+ */
+void *
+util_make_fragment_tex_shader_writestencil(struct pipe_context *pipe,
+                                           unsigned tex_target,
+                                           unsigned interp_mode)
+{
+   struct ureg_program *ureg;
+   struct ureg_src stencil_sampler;
+   struct ureg_src tex;
+   struct ureg_dst out, stencil;
+   struct ureg_src imm;
+
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return NULL;
+
+   stencil_sampler = ureg_DECL_sampler( ureg, 0 );
+
+   tex = ureg_DECL_fs_input( ureg,
+                             TGSI_SEMANTIC_GENERIC, 0,
+                             interp_mode );
+
+   out = ureg_DECL_output( ureg,
+                           TGSI_SEMANTIC_COLOR,
+                           0 );
+
+   stencil = ureg_DECL_output( ureg,
+                             TGSI_SEMANTIC_STENCIL,
+                             0 );
+
+   imm = ureg_imm4f( ureg, 0, 0, 0, 1 );
+
+   ureg_MOV( ureg, out, imm );
+
+   ureg_TEX( ureg,
+             ureg_writemask(stencil, TGSI_WRITEMASK_Y),
+             tex_target, tex, stencil_sampler );
+   ureg_END( ureg );
+
+   return ureg_create_shader_and_destroy( ureg, pipe );
+}
+
+
+/**
  * Make simple fragment color pass-through shader.
  */
 void *

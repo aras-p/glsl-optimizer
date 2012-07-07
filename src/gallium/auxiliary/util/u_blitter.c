@@ -79,6 +79,7 @@ struct blitter_context_priv
       where the index is PIPE_TEXTURE_* to be sampled. */
    void *fs_texfetch_depth[PIPE_MAX_TEXTURE_TYPES];
    void *fs_texfetch_depthstencil[PIPE_MAX_TEXTURE_TYPES];
+   void *fs_texfetch_stencil[PIPE_MAX_TEXTURE_TYPES];
 
    /* Blend state. */
    void *blend_write_color;   /**< blend state with writemask of RGBA */
@@ -322,6 +323,8 @@ void util_blitter_destroy(struct blitter_context *blitter)
          pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
       if (ctx->fs_texfetch_depthstencil[i])
          pipe->delete_fs_state(pipe, ctx->fs_texfetch_depthstencil[i]);
+      if (ctx->fs_texfetch_stencil[i])
+         pipe->delete_fs_state(pipe, ctx->fs_texfetch_stencil[i]);
    }
 
    for (i = 0; i <= PIPE_MAX_COLOR_BUFS; i++) {
@@ -746,6 +749,26 @@ void *blitter_get_fs_texfetch_depthstencil(struct blitter_context_priv *ctx,
    return ctx->fs_texfetch_depthstencil[tex_target];
 }
 
+static INLINE
+void *blitter_get_fs_texfetch_stencil(struct blitter_context_priv *ctx,
+                                      unsigned tex_target)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   assert(tex_target < PIPE_MAX_TEXTURE_TYPES);
+
+   /* Create the fragment shader on-demand. */
+   if (!ctx->fs_texfetch_stencil[tex_target]) {
+      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+
+      ctx->fs_texfetch_stencil[tex_target] =
+         util_make_fragment_tex_shader_writestencil(pipe, tgsi_tex,
+                                                    TGSI_INTERPOLATE_LINEAR);
+   }
+
+   return ctx->fs_texfetch_stencil[tex_target];
+}
+
 static void blitter_set_common_draw_rect_state(struct blitter_context_priv *ctx)
 {
    struct pipe_context *pipe = ctx->base.pipe;
@@ -1056,7 +1079,10 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
          pipe->bind_fs_state(pipe,
                blitter_get_fs_texfetch_depth(ctx, src_target));
       } else { /* is_stencil */
-         assert(0);
+         pipe->bind_depth_stencil_alpha_state(pipe,
+                                              ctx->dsa_keep_depth_write_stencil);
+         pipe->bind_fs_state(pipe,
+               blitter_get_fs_texfetch_stencil(ctx, src_target));
       }
 
       fb_state.nr_cbufs = 0;
