@@ -482,6 +482,8 @@
 #define   S_028808_MODE(x)                             (((x) & 0x7) << 4)
 #define   G_028808_MODE(x)                             (((x) >> 4) & 0x7)
 #define   C_028808_MODE                                0xFFFFFF8F
+#define     V_028808_CB_DISABLE				0
+#define     V_028808_CB_NORMAL				1
 #define   S_028808_ROP3(x)                             (((x) & 0xFF) << 16)
 #define   G_028808_ROP3(x)                             (((x) >> 16) & 0xFF)
 #define   C_028808_ROP3                                0xFF00FFFF

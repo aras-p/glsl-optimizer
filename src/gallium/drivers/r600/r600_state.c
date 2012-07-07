@@ -718,6 +718,12 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 			target_mask |= (state->rt[0].colormask << (4 * i));
 		}
 	}
+
+	if (target_mask)
+		color_control |= S_028808_SPECIAL_OP(V_028808_NORMAL);
+	else
+		color_control |= S_028808_SPECIAL_OP(V_028808_DISABLE);
+
 	blend->cb_target_mask = target_mask;
 	blend->cb_color_control = color_control;
 	/* only MRT0 has dual src blend */

@@ -418,6 +418,8 @@
 #define   G_028808_DEGAMMA_ENABLE(x)                   (((x) >> 3) & 0x1)
 #define   C_028808_DEGAMMA_ENABLE                      0xFFFFFFF7
 #define   S_028808_SPECIAL_OP(x)                       (((x) & 0x7) << 4)
+#define		V_028808_NORMAL				0
+#define		V_028808_DISABLE			1
 #define   G_028808_SPECIAL_OP(x)                       (((x) >> 4) & 0x7)
 #define   C_028808_SPECIAL_OP                          0xFFFFFF8F
 #define   S_028808_PER_MRT_BLEND(x)                    (((x) & 0x1) << 7)

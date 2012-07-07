@@ -680,7 +680,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
-	uint32_t color_control, target_mask;
+	uint32_t color_control = 0, target_mask;
 	/* XXX there is more then 8 framebuffer */
 	unsigned blend_cntl[8];
 
@@ -693,7 +693,6 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_BLEND;
 
 	target_mask = 0;
-	color_control = S_028808_MODE(1);
 	if (state->logicop_enable) {
 		color_control |= (state->logicop_func << 16) | (state->logicop_func << 20);
 	} else {
@@ -710,7 +709,12 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 		}
 	}
 	blend->cb_target_mask = target_mask;
-	
+
+	if (target_mask)
+		color_control |= S_028808_MODE(V_028808_CB_NORMAL);
+	else
+		color_control |= S_028808_MODE(V_028808_CB_DISABLE);
+
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
 				color_control);
 	/* only have dual source on MRT0 */
