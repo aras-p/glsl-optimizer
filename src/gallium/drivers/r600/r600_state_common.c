@@ -996,10 +996,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
 
-	if (rctx->framebuffer.zsbuf)
-	{
-		struct pipe_resource *tex = rctx->framebuffer.zsbuf->texture;
-		((struct r600_resource_texture *)tex)->dirty_db = TRUE;
+	/* Set the depth buffer as dirty. */
+	if (rctx->framebuffer.zsbuf) {
+		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
+		struct r600_resource_texture *rtex = (struct r600_resource_texture *)surf->texture;
+
+		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);

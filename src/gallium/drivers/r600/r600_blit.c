@@ -98,33 +98,34 @@ static void r600_blitter_end(struct pipe_context *ctx)
 	r600_resume_nontimer_queries(rctx);
 }
 
-static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
+static unsigned u_max_layer(struct pipe_resource *r, unsigned level)
 {
 	switch (r->target) {
 	case PIPE_TEXTURE_CUBE:
-		return 6;
+		return 6 - 1;
 	case PIPE_TEXTURE_3D:
-		return u_minify(r->depth0, level);
+		return u_minify(r->depth0, level) - 1;
 	case PIPE_TEXTURE_1D_ARRAY:
-		return r->array_size;
 	case PIPE_TEXTURE_2D_ARRAY:
-		return r->array_size;
+		return r->array_size - 1;
 	default:
-		return 1;
+		return 0;
 	}
 }
 
 void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *texture,
-		struct r600_resource_texture *staging)
+		struct r600_resource_texture *staging,
+		unsigned first_level, unsigned last_level,
+		unsigned first_layer, unsigned last_layer)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned layer, level;
+	unsigned layer, level, checked_last_layer, max_layer;
 	float depth = 1.0f;
 	struct r600_resource_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 
-	if (!staging && !texture->dirty_db)
+	if (!staging && !texture->dirty_db_mask)
 		return;
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
@@ -138,10 +139,16 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	}
 
-	for (level = 0; level <= texture->resource.b.b.last_level; level++) {
-		unsigned num_layers = u_num_layers(&texture->resource.b.b, level);
+	for (level = first_level; level <= last_level; level++) {
+		if (!staging && !(texture->dirty_db_mask & (1 << level)))
+			continue;
 
-		for (layer = 0; layer < num_layers; layer++) {
+		/* The smaller the mipmap level, the less layers there are
+		 * as far as 3D textures are concerned. */
+		max_layer = u_max_layer(&texture->resource.b.b, level);
+		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
+
+		for (layer = first_layer; layer <= checked_last_layer; layer++) {
 			struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 
 			surf_tmpl.format = texture->real_format;
@@ -164,10 +171,13 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 			pipe_surface_reference(&zsurf, NULL);
 			pipe_surface_reference(&cbsurf, NULL);
 		}
-	}
 
-	if (!staging)
-		texture->dirty_db = FALSE;
+		/* The texture will always be dirty if some layers aren't flushed.
+		 * I don't think this case can occur though. */
+		if (!staging && first_layer == 0 && last_layer == max_layer) {
+			texture->dirty_db_mask &= ~(1 << level);
+		}
+	}
 
 	if (rctx->chip_class <= R700) {
 		/* Disable decompression in DB_RENDER_CONTROL */
@@ -183,26 +193,31 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 	/* XXX: This handles fragment shader textures only. */
 
 	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {
-		struct r600_pipe_sampler_view *view;
+		struct pipe_sampler_view *view;
 		struct r600_resource_texture *tex;
 
-		view = rctx->ps_samplers.views[i];
+		view = &rctx->ps_samplers.views[i]->base;
 		if (!view) continue;
 
-		tex = (struct r600_resource_texture *)view->base.texture;
+		tex = (struct r600_resource_texture *)view->texture;
 		if (!tex->is_depth)
 			continue;
 
 		if (tex->is_flushing_texture)
 			continue;
 
-		r600_blit_uncompress_depth(&rctx->context, tex, NULL);
+		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
+					   view->u.tex.first_level,
+					   view->u.tex.last_level,
+					   0,
+					   u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
 
 	/* also check CB here */
 	for (i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
 		struct r600_resource_texture *tex;
-		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
+		struct pipe_surface *surf = rctx->framebuffer.cbufs[i];
+		tex = (struct r600_resource_texture *)surf->texture;
 
 		if (!tex->is_depth)
 			continue;
@@ -210,7 +225,11 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 		if (tex->is_flushing_texture)
 			continue;
 
-		r600_blit_uncompress_depth(&rctx->context, tex, NULL);
+		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
+					   surf->u.tex.level,
+					   surf->u.tex.level,
+					   surf->u.tex.first_layer,
+					   surf->u.tex.last_layer);
 	}
 }
 
@@ -342,7 +361,9 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	}
 
 	if (rsrc->is_depth && !rsrc->is_flushing_texture)
-		r600_texture_depth_flush(ctx, src, NULL);
+		r600_texture_depth_flush(ctx, src, NULL,
+					 src_level, src_level,
+					 src_box->z, src_box->z + src_box->depth - 1);
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 

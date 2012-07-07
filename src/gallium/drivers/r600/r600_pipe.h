@@ -441,7 +441,9 @@ void evergreen_update_dual_export_state(struct r600_context * rctx);
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *texture,
-		struct r600_resource_texture *staging);
+		struct r600_resource_texture *staging,
+		unsigned first_level, unsigned last_level,
+		unsigned first_layer, unsigned last_layer);
 void r600_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */
