@@ -192,11 +192,12 @@ fs_visitor::calculate_live_intervals()
 
 	    use[reg] = ip;
 	 }
-	 if (inst->dst.file == GRF) {
-	    int reg = inst->dst.reg;
+      }
 
-	    def[reg] = MIN2(def[reg], ip);
-	 }
+      if (inst->dst.file == GRF) {
+         int reg = inst->dst.reg;
+
+         def[reg] = MIN2(def[reg], ip);
       }
 
       ip++;
