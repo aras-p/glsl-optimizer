@@ -281,24 +281,17 @@ fs_visitor::assign_regs()
 void
 fs_visitor::emit_unspill(fs_inst *inst, fs_reg dst, uint32_t spill_offset)
 {
-   int size = virtual_grf_sizes[dst.reg];
-   dst.reg_offset = 0;
+   fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL, dst);
+   unspill_inst->offset = spill_offset;
+   unspill_inst->ir = inst->ir;
+   unspill_inst->annotation = inst->annotation;
 
-   for (int chan = 0; chan < size; chan++) {
-      fs_inst *unspill_inst = new(mem_ctx) fs_inst(FS_OPCODE_UNSPILL,
-						   dst);
-      dst.reg_offset++;
-      unspill_inst->offset = spill_offset + chan * REG_SIZE;
-      unspill_inst->ir = inst->ir;
-      unspill_inst->annotation = inst->annotation;
-
-      /* Choose a MRF that won't conflict with an MRF that's live across the
-       * spill.  Nothing else will make it up to MRF 14/15.
-       */
-      unspill_inst->base_mrf = 14;
-      unspill_inst->mlen = 1; /* header contains offset */
-      inst->insert_before(unspill_inst);
-   }
+   /* Choose a MRF that won't conflict with an MRF that's live across the
+    * spill.  Nothing else will make it up to MRF 14/15.
+    */
+   unspill_inst->base_mrf = 14;
+   unspill_inst->mlen = 1; /* header contains offset */
+   inst->insert_before(unspill_inst);
 }
 
 int
@@ -322,14 +315,12 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    int size = virtual_grf_sizes[inst->src[i].reg];
-	    spill_costs[inst->src[i].reg] += size * loop_scale;
+	    spill_costs[inst->src[i].reg] += loop_scale;
 	 }
       }
 
       if (inst->dst.file == GRF) {
-	 int size = virtual_grf_sizes[inst->dst.reg];
-	 spill_costs[inst->dst.reg] += size * loop_scale;
+	 spill_costs[inst->dst.reg] += inst->regs_written() * loop_scale;
       }
 
       switch (inst->opcode) {
@@ -384,21 +375,30 @@ fs_visitor::spill_reg(int spill_reg)
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF &&
 	     inst->src[i].reg == spill_reg) {
-	    inst->src[i].reg = virtual_grf_alloc(size);
-	    emit_unspill(inst, inst->src[i], spill_offset);
+	    inst->src[i].reg = virtual_grf_alloc(1);
+	    emit_unspill(inst, inst->src[i],
+                         spill_offset + REG_SIZE * inst->src[i].reg_offset);
 	 }
       }
 
       if (inst->dst.file == GRF &&
 	  inst->dst.reg == spill_reg) {
-	 inst->dst.reg = virtual_grf_alloc(size);
+         int subset_spill_offset = (spill_offset +
+                                    REG_SIZE * inst->dst.reg_offset);
+         inst->dst.reg = virtual_grf_alloc(inst->regs_written());
+         inst->dst.reg_offset = 0;
 
-	 /* Since we spill/unspill the whole thing even if we access
-	  * just a component, we may need to unspill before the
-	  * instruction we're spilling for.
+	 /* If our write is going to affect just part of the
+          * inst->regs_written(), then we need to unspill the destination
+          * since we write back out all of the regs_written().
 	  */
-	 if (size != 1 || inst->predicated) {
-	    emit_unspill(inst, inst->dst, spill_offset);
+	 if (inst->predicated || inst->force_uncompressed || inst->force_sechalf) {
+            fs_reg unspill_reg = inst->dst;
+            for (int chan = 0; chan < inst->regs_written(); chan++) {
+               emit_unspill(inst, unspill_reg,
+                            subset_spill_offset + REG_SIZE * chan);
+               unspill_reg.reg_offset++;
+            }
 	 }
 
 	 fs_reg spill_src = inst->dst;
@@ -407,11 +407,11 @@ fs_visitor::spill_reg(int spill_reg)
 	 spill_src.negate = false;
 	 spill_src.smear = -1;
 
-	 for (int chan = 0; chan < size; chan++) {
+	 for (int chan = 0; chan < inst->regs_written(); chan++) {
 	    fs_inst *spill_inst = new(mem_ctx) fs_inst(FS_OPCODE_SPILL,
 						       reg_null_f, spill_src);
 	    spill_src.reg_offset++;
-	    spill_inst->offset = spill_offset + chan * REG_SIZE;
+	    spill_inst->offset = subset_spill_offset + chan * REG_SIZE;
 	    spill_inst->ir = inst->ir;
 	    spill_inst->annotation = inst->annotation;
 	    spill_inst->base_mrf = 14;
