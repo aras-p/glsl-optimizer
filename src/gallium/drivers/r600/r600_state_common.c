@@ -272,11 +272,6 @@ void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	ref.writemask[1] = dsa->writemask[1];
 
 	r600_set_stencil_ref(ctx, &ref);
-
-	if (rctx->db_misc_state.flush_depthstencil_enabled != dsa->is_flush) {
-		rctx->db_misc_state.flush_depthstencil_enabled = dsa->is_flush;
-		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-	}
 }
 
 void r600_set_max_scissor(struct r600_context *rctx)

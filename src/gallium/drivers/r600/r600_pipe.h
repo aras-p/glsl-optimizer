@@ -79,7 +79,7 @@ struct r600_surface_sync_cmd {
 struct r600_db_misc_state {
 	struct r600_atom atom;
 	bool occlusion_query_enabled;
-	bool flush_depthstencil_enabled;
+	bool flush_depthstencil_through_cb;
 };
 
 struct r600_cb_misc_state {
@@ -182,7 +182,6 @@ struct r600_pipe_dsa {
 	unsigned			alpha_ref;
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
-	bool				is_flush;
 	unsigned                        sx_alpha_test_control;
 };
 

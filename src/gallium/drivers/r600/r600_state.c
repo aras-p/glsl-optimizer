@@ -1734,7 +1734,7 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 		}
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
 	}
-	if (a->flush_depthstencil_enabled) {
+	if (a->flush_depthstencil_through_cb) {
 		db_render_control |= S_028D0C_DEPTH_COPY_ENABLE(1) |
 				     S_028D0C_STENCIL_COPY_ENABLE(1) |
 				     S_028D0C_COPY_CENTROID(1);
@@ -2457,8 +2457,6 @@ void r600_fetch_shader(struct pipe_context *ctx,
 void *r600_create_db_flush_dsa(struct r600_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
-	struct r600_pipe_state *rstate;
-	struct r600_pipe_dsa *dsa_state;
 	boolean quirk = false;
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
@@ -2477,10 +2475,7 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx)
 		dsa.stencil[0].writemask = 0xff;
 	}
 
-	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	dsa_state = (struct r600_pipe_dsa*)rstate;
-	dsa_state->is_flush = true;
-	return rstate;
+	return rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
 }
 
 void r600_update_dual_export_state(struct r600_context * rctx)

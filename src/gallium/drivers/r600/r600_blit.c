@@ -131,6 +131,13 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
 
+	if (rctx->chip_class <= R700 &&
+	    !rctx->db_misc_state.flush_depthstencil_through_cb) {
+		/* Enable decompression in DB_RENDER_CONTROL */
+		rctx->db_misc_state.flush_depthstencil_through_cb = true;
+		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	}
+
 	for (level = 0; level <= texture->resource.b.b.last_level; level++) {
 		unsigned num_layers = u_num_layers(&texture->resource.b.b, level);
 
@@ -161,6 +168,12 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 
 	if (!staging)
 		texture->dirty_db = FALSE;
+
+	if (rctx->chip_class <= R700) {
+		/* Disable decompression in DB_RENDER_CONTROL */
+		rctx->db_misc_state.flush_depthstencil_through_cb = false;
+		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	}
 }
 
 void r600_flush_depth_textures(struct r600_context *rctx)
