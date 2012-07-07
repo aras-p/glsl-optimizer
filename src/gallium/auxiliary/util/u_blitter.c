@@ -718,6 +718,18 @@ void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
    return ctx->fs_texfetch_depth[tex_target];
 }
 
+static void blitter_set_common_draw_rect_state(struct blitter_context_priv *ctx)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+
+   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
+   pipe->bind_vs_state(pipe, ctx->vs);
+   if (ctx->has_geometry_shader)
+      pipe->bind_gs_state(pipe, NULL);
+   if (ctx->has_stream_out)
+      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
+}
+
 static void blitter_draw(struct blitter_context_priv *ctx,
                          unsigned x1, unsigned y1,
                          unsigned x2, unsigned y2,
@@ -803,7 +815,6 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    sr.ref_value[0] = stencil & 0xff;
    pipe->set_stencil_ref(pipe, &sr);
 
-   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    if (util_format_is_pure_sint(cbuf_format)) {
       pipe->bind_vertex_elements_state(pipe, ctx->velem_sint_state);
    } else if (util_format_is_pure_uint(cbuf_format)) {
@@ -812,12 +823,8 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
       pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    }
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs, int_format));
-   pipe->bind_vs_state(pipe, ctx->vs);
-   if (ctx->has_geometry_shader)
-      pipe->bind_gs_state(pipe, NULL);
-   if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
 
+   blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, width, height);
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
                            UTIL_BLITTER_ATTRIB_COLOR, color);
@@ -1010,18 +1017,12 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
       fb_state.zsbuf = 0;
    }
 
-   /* Set rasterizer state, shaders, and textures. */
-   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
-   pipe->bind_vs_state(pipe, ctx->vs);
-   if (ctx->has_geometry_shader)
-      pipe->bind_gs_state(pipe, NULL);
-   if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_fragment_sampler_states(pipe, 1, &ctx->sampler_state);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->set_fragment_sampler_views(pipe, 1, &src);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
+   blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dst->width, dst->height);
 
    switch (src_target) {
@@ -1097,13 +1098,7 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    /* bind states */
    pipe->bind_blend_state(pipe, ctx->blend_write_color);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
-   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1, FALSE));
-   pipe->bind_vs_state(pipe, ctx->vs);
-   if (ctx->has_geometry_shader)
-      pipe->bind_gs_state(pipe, NULL);
-   if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1114,6 +1109,7 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    fb_state.zsbuf = 0;
    pipe->set_framebuffer_state(pipe, &fb_state);
 
+   blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
    blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
                            UTIL_BLITTER_ATTRIB_COLOR, color);
@@ -1167,13 +1163,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
       /* hmm that should be illegal probably, or make it a no-op somewhere */
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
-   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0, FALSE));
-   pipe->bind_vs_state(pipe, ctx->vs);
-   if (ctx->has_geometry_shader)
-      pipe->bind_gs_state(pipe, NULL);
-   if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1184,6 +1174,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    fb_state.zsbuf = dstsurf;
    pipe->set_framebuffer_state(pipe, &fb_state);
 
+   blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
    blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
@@ -1217,14 +1208,7 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    /* bind states */
    pipe->bind_blend_state(pipe, ctx->blend_write_color);
    pipe->bind_depth_stencil_alpha_state(pipe, dsa_stage);
-
-   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0, FALSE));
-   pipe->bind_vs_state(pipe, ctx->vs);
-   if (ctx->has_geometry_shader)
-      pipe->bind_gs_state(pipe, NULL);
-   if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
@@ -1241,6 +1225,7 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    fb_state.zsbuf = zsurf;
    pipe->set_framebuffer_state(pipe, &fb_state);
 
+   blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, zsurf->width, zsurf->height);
    blitter->draw_rectangle(blitter, 0, 0, zsurf->width, zsurf->height, depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
