@@ -929,6 +929,28 @@ struct brw_instruction *brw_ADD(struct brw_compile *p,
    return brw_alu2(p, BRW_OPCODE_ADD, dest, src0, src1);
 }
 
+struct brw_instruction *brw_AVG(struct brw_compile *p,
+                                struct brw_reg dest,
+                                struct brw_reg src0,
+                                struct brw_reg src1)
+{
+   assert(dest.type == src0.type);
+   assert(src0.type == src1.type);
+   switch (src0.type) {
+   case BRW_REGISTER_TYPE_B:
+   case BRW_REGISTER_TYPE_UB:
+   case BRW_REGISTER_TYPE_W:
+   case BRW_REGISTER_TYPE_UW:
+   case BRW_REGISTER_TYPE_D:
+   case BRW_REGISTER_TYPE_UD:
+      break;
+   default:
+      assert(!"Bad type for brw_AVG");
+   }
+
+   return brw_alu2(p, BRW_OPCODE_AVG, dest, src0, src1);
+}
+
 struct brw_instruction *brw_MUL(struct brw_compile *p,
 				struct brw_reg dest,
 				struct brw_reg src0,
