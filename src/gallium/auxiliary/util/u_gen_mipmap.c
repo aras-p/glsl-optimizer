@@ -59,14 +59,17 @@ struct gen_mipmap_state
    struct pipe_context *pipe;
    struct cso_context *cso;
 
-   struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state depthstencil;
+   struct pipe_blend_state blend_keep_color, blend_write_color;
+   struct pipe_depth_stencil_alpha_state dsa_keep_depth, dsa_write_depth;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_vertex_element velem[2];
 
    void *vs;
-   void *fs[TGSI_TEXTURE_COUNT]; /**< Not all are used, but simplifies code */
+
+   /** Not all are used, but simplifies code */
+   void *fs_color[TGSI_TEXTURE_COUNT];
+   void *fs_depth[TGSI_TEXTURE_COUNT];
 
    struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -1272,11 +1275,16 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->cso = cso;
 
    /* disabled blending/masking */
-   memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
+   memset(&ctx->blend_keep_color, 0, sizeof(ctx->blend_keep_color));
+   memset(&ctx->blend_write_color, 0, sizeof(ctx->blend_write_color));
+   ctx->blend_write_color.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
-   memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
+   memset(&ctx->dsa_keep_depth, 0, sizeof(ctx->dsa_keep_depth));
+   memset(&ctx->dsa_write_depth, 0, sizeof(ctx->dsa_write_depth));
+   ctx->dsa_write_depth.depth.enabled = 1;
+   ctx->dsa_write_depth.depth.func = PIPE_FUNC_ALWAYS;
+   ctx->dsa_write_depth.depth.writemask = 1;
 
    /* rasterizer */
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
@@ -1318,14 +1326,25 @@ util_create_gen_mipmap(struct pipe_context *pipe,
  * Helper function to set the fragment shaders.
  */
 static INLINE void
-set_fragment_shader(struct gen_mipmap_state *ctx, uint type)
+set_fragment_shader(struct gen_mipmap_state *ctx, uint type,
+                    boolean output_depth)
 {
-   if (!ctx->fs[type])
-      ctx->fs[type] =
-         util_make_fragment_tex_shader(ctx->pipe, type,
-                                       TGSI_INTERPOLATE_LINEAR);
+   if (output_depth) {
+      if (!ctx->fs_depth[type])
+         ctx->fs_depth[type] =
+            util_make_fragment_tex_shader_writedepth(ctx->pipe, type,
+                                                     TGSI_INTERPOLATE_LINEAR);
 
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[type]);
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth[type]);
+   }
+   else {
+      if (!ctx->fs_color[type])
+         ctx->fs_color[type] =
+            util_make_fragment_tex_shader(ctx->pipe, type,
+                                          TGSI_INTERPOLATE_LINEAR);
+
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_color[type]);
+   }
 }
 
 
@@ -1464,9 +1483,13 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    struct pipe_context *pipe = ctx->pipe;
    unsigned i;
 
-   for (i = 0; i < Elements(ctx->fs); i++)
-      if (ctx->fs[i])
-         pipe->delete_fs_state(pipe, ctx->fs[i]);
+   for (i = 0; i < Elements(ctx->fs_color); i++)
+      if (ctx->fs_color[i])
+         pipe->delete_fs_state(pipe, ctx->fs_color[i]);
+
+   for (i = 0; i < Elements(ctx->fs_depth); i++)
+      if (ctx->fs_depth[i])
+         pipe->delete_fs_state(pipe, ctx->fs_depth[i]);
 
    if (ctx->vs)
       pipe->delete_vs_state(pipe, ctx->vs);
@@ -1500,6 +1523,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    uint dstLevel;
    uint offset;
    uint type;
+   boolean is_depth = util_format_is_depth_or_stencil(psv->format);
 
    /* The texture object should have room for the levels which we're
     * about to generate.
@@ -1538,7 +1562,9 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, pt->target,
-                                    pt->nr_samples, PIPE_BIND_RENDER_TARGET)) {
+                                    pt->nr_samples,
+                                    is_depth ? PIPE_BIND_DEPTH_STENCIL :
+                                               PIPE_BIND_RENDER_TARGET)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
    }
@@ -1559,28 +1585,25 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_vertex_buffers(ctx->cso);
 
    /* bind our state */
-   cso_set_blend(ctx->cso, &ctx->blend);
-   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_blend(ctx->cso, is_depth ? &ctx->blend_keep_color :
+                                      &ctx->blend_write_color);
+   cso_set_depth_stencil_alpha(ctx->cso, is_depth ? &ctx->dsa_write_depth :
+                                                    &ctx->dsa_keep_depth);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
 
-   set_fragment_shader(ctx, type);
+   set_fragment_shader(ctx, type, is_depth);
    set_vertex_shader(ctx);
    cso_set_geometry_shader_handle(ctx->cso, NULL);
 
    /* init framebuffer state */
    memset(&fb, 0, sizeof(fb));
-   fb.nr_cbufs = 1;
 
    /* set min/mag to same filter for faster sw speed */
    ctx->sampler.mag_img_filter = filter;
    ctx->sampler.min_img_filter = filter;
 
-   /*
-    * XXX for small mipmap levels, it may be faster to use the software
-    * fallback path...
-    */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
       struct pipe_viewport_state vp;
@@ -1609,7 +1632,9 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
             layer = face;
 
          memset(&surf_templ, 0, sizeof(surf_templ));
-         u_surface_default_template(&surf_templ, pt, PIPE_BIND_RENDER_TARGET);
+         u_surface_default_template(&surf_templ, pt,
+                                    is_depth ? PIPE_BIND_DEPTH_STENCIL :
+                                               PIPE_BIND_RENDER_TARGET);
          surf_templ.u.tex.level = dstLevel;
          surf_templ.u.tex.first_layer = layer;
          surf_templ.u.tex.last_layer = layer;
@@ -1618,7 +1643,14 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
          /*
           * Setup framebuffer / dest surface
           */
-         fb.cbufs[0] = surf;
+         if (is_depth) {
+            fb.nr_cbufs = 0;
+            fb.zsbuf = surf;
+         }
+         else {
+            fb.nr_cbufs = 1;
+            fb.cbufs[0] = surf;
+         }
          fb.width = u_minify(pt->width0, dstLevel);
          fb.height = u_minify(pt->height0, dstLevel);
          cso_set_framebuffer(ctx->cso, &fb);
