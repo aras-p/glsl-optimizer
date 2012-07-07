@@ -882,6 +882,35 @@ util_format_linear(enum pipe_format format)
 }
 
 /**
+ * Given a depth-stencil format, return the corresponding stencil-only format.
+ * For stencil-only formats, return the format unchanged.
+ */
+static INLINE enum pipe_format
+util_format_stencil_only(enum pipe_format format)
+{
+   switch (format) {
+   /* mask out the depth component */
+   case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      return PIPE_FORMAT_X24S8_UINT;
+   case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+      return PIPE_FORMAT_S8X24_UINT;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      return PIPE_FORMAT_X32_S8X24_UINT;
+
+   /* stencil only formats */
+   case PIPE_FORMAT_X24S8_UINT:
+   case PIPE_FORMAT_S8X24_UINT:
+   case PIPE_FORMAT_X32_S8X24_UINT:
+   case PIPE_FORMAT_S8_UINT:
+      return format;
+
+   default:
+      assert(0);
+      return PIPE_FORMAT_NONE;
+   }
+}
+
+/**
  * Return the number of components stored.
  * Formats with block size != 1x1 will always have 1 component (the block).
  */
