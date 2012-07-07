@@ -1691,6 +1691,21 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (state->zsbuf) {
 		r600_polygon_offset_update(rctx);
 	}
+
+	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
+		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
+		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
+}
+
+static void r600_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_cb_misc_state *a = (struct r600_cb_misc_state*)atom;
+	unsigned fb_colormask = (1ULL << ((unsigned)a->nr_cbufs * 4)) - 1;
+
+	r600_write_context_reg(cs, R_028238_CB_TARGET_MASK,
+			       a->blend_colormask & fb_colormask);
 }
 
 static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
@@ -1818,6 +1833,8 @@ static void r600_emit_ps_constant_buffer(struct r600_context *rctx, struct r600_
 
 void r600_init_state_functions(struct r600_context *rctx)
 {
+	r600_init_atom(&rctx->cb_misc_state.atom, r600_emit_cb_misc_state, 0, 0);
+	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	r600_init_atom(&rctx->vertex_buffer_state, r600_emit_vertex_buffers, 0, 0);

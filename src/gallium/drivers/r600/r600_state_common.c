@@ -157,12 +157,16 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 		return;
 	rstate = &blend->rstate;
 	rctx->states[rstate->id] = rstate;
-	rctx->cb_target_mask = blend->cb_target_mask;
 	/* Replace every bit except MULTIWRITE_ENABLE. */
 	rctx->cb_color_control &= ~C_028808_MULTIWRITE_ENABLE;
 	rctx->cb_color_control |= blend->cb_color_control & C_028808_MULTIWRITE_ENABLE;
 	rctx->dual_src_blend = blend->dual_src_blend;
 	r600_context_pipe_state_set(rctx, rstate);
+
+	if (rctx->cb_misc_state.blend_colormask != blend->cb_target_mask) {
+		rctx->cb_misc_state.blend_colormask = blend->cb_target_mask;
+		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
 }
 
 void r600_set_blend_color(struct pipe_context *ctx,
@@ -848,7 +852,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_draw_info info = *dinfo;
 	struct pipe_index_buffer ib = {};
-	unsigned prim, mask, ls_mask = 0;
+	unsigned prim, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
@@ -890,14 +894,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		}
 	}
 
-	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
-
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02823C_CB_SHADER_MASK, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index);
@@ -919,7 +920,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
 	r600_pipe_state_mod_reg(&rctx->vgt, r600_conv_prim_to_gs_out(info.mode));
-	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_shader_mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);

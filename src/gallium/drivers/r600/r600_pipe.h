@@ -82,6 +82,12 @@ struct r600_db_misc_state {
 	bool flush_depthstencil_enabled;
 };
 
+struct r600_cb_misc_state {
+	struct r600_atom atom;
+	unsigned blend_colormask; /* 8*4 bits for 8 RGBA colorbuffers */
+	unsigned nr_cbufs;
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -280,8 +286,8 @@ struct r600_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
-	unsigned			cb_target_mask;
 	unsigned			fb_cb_shader_mask;
+	unsigned			compute_cb_target_mask;
 	unsigned			sx_alpha_test_control;
 	unsigned			cb_shader_mask;
 	unsigned			db_shader_control;
@@ -328,6 +334,7 @@ struct r600_context {
         struct r600_command_buffer      start_compute_cs_cmd;
 	struct r600_surface_sync_cmd	surface_sync_cmd;
 	struct r600_atom		r6xx_flush_and_inv_cmd;
+	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_atom		vertex_buffer_state;
 	struct r600_constbuf_state	vs_constbuf_state;

@@ -284,10 +284,9 @@ void evergreen_direct_dispatch(
 
 	struct evergreen_compute_resource* res = get_empty_res(rctx->cs_shader,
 		COMPUTE_RESOURCE_DISPATCH, 0);
-        struct r600_pipe_state * cb_state = rctx->states[R600_PIPE_STATE_FRAMEBUFFER];
 
 	/* Set CB_TARGET_MASK */
-	r600_pipe_state_add_reg(cb_state, R_028238_CB_TARGET_MASK, rctx->cb_target_mask);
+	evergreen_reg_set(res, R_028238_CB_TARGET_MASK, rctx->compute_cb_target_mask);
 
 	evergreen_reg_set(res, R_008958_VGT_PRIMITIVE_TYPE, V_008958_DI_PT_POINTLIST);
 

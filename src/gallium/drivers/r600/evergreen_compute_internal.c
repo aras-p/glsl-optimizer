@@ -289,7 +289,7 @@ void evergreen_set_rat(
 	 * XXX: I think this is a potential spot for bugs once we start doing
 	 * GL interop.  cb_target_mask may be modified in the 3D sections
 	 * of this driver. */
-	pipe->ctx->cb_target_mask |= (0xf << (id * 4));
+	pipe->ctx->compute_cb_target_mask |= (0xf << (id * 4));
 
 
 	/* Get the CB register writes for the RAT */

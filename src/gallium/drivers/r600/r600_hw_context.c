@@ -336,7 +336,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028128_CB_CLEAR_BLUE, 0, 0},
 	{R_02812C_CB_CLEAR_ALPHA, 0, 0},
 	{R_02823C_CB_SHADER_MASK, 0, 0},
-	{R_028238_CB_TARGET_MASK, 0, 0},
 	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0},
 	{R_028418_CB_BLEND_GREEN, 0, 0},
@@ -1283,6 +1282,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_flush_framebuffer(ctx, false);
 
 	/* Re-emit states. */
+	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->vertex_buffer_state);
 
