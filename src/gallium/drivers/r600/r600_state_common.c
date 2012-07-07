@@ -152,6 +152,7 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
 	struct r600_pipe_state *rstate;
+	bool update_cb = false;
 
 	if (state == NULL)
 		return;
@@ -162,11 +163,18 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 
 	if (rctx->cb_misc_state.blend_colormask != blend->cb_target_mask) {
 		rctx->cb_misc_state.blend_colormask = blend->cb_target_mask;
-		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+		update_cb = true;
 	}
 	if (rctx->chip_class <= R700 &&
 	    rctx->cb_misc_state.cb_color_control != blend->cb_color_control) {
 		rctx->cb_misc_state.cb_color_control = blend->cb_color_control;
+		update_cb = true;
+	}
+	if (rctx->cb_misc_state.dual_src_blend != blend->dual_src_blend) {
+		rctx->cb_misc_state.dual_src_blend = blend->dual_src_blend;
+		update_cb = true;
+	}
+	if (update_cb) {
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	}
 }
@@ -522,6 +530,11 @@ static int r600_shader_select(struct pipe_context *ctx,
 		r600_adjust_gprs(rctx);
 	}
 
+	if (rctx->ps_shader &&
+	    rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
+		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
+		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
 	return 0;
 }
 
@@ -575,6 +588,11 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 
 		if (rctx->vs_shader)
 			r600_adjust_gprs(rctx);
+	}
+
+	if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
+		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
+		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	}
 }
 
@@ -825,12 +843,6 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	} else {
 		r600_update_dual_export_state(rctx);
 	}
-
-	if (rctx->dual_src_blend) {
-		rctx->cb_shader_mask = rctx->ps_shader->current->ps_cb_shader_mask | rctx->fb_cb_shader_mask;
-	} else {
-		rctx->cb_shader_mask = rctx->fb_cb_shader_mask;
-	}
 }
 
 static unsigned r600_conv_prim_to_gs_out(unsigned mode)
@@ -908,7 +920,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02823C_CB_SHADER_MASK, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028410_SX_ALPHA_TEST_CONTROL, 0);
@@ -922,7 +933,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
 	r600_pipe_state_mod_reg(&rctx->vgt, r600_conv_prim_to_gs_out(info.mode));
-	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_shader_mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, rctx->sx_alpha_test_control);

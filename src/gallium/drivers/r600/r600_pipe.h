@@ -87,7 +87,9 @@ struct r600_cb_misc_state {
 	unsigned cb_color_control; /* this comes from blend state */
 	unsigned blend_colormask; /* 8*4 bits for 8 RGBA colorbuffers */
 	unsigned nr_cbufs;
+	unsigned nr_ps_color_outputs;
 	bool multiwrite;
+	bool dual_src_blend;
 };
 
 enum r600_pipe_state_id {
@@ -220,7 +222,7 @@ struct r600_pipe_shader {
 	unsigned	sprite_coord_enable;
 	unsigned	flatshade;
 	unsigned	pa_cl_vs_out_cntl;
-	unsigned	ps_cb_shader_mask;
+	unsigned	nr_ps_color_outputs;
 	unsigned	key;
 	unsigned		db_shader_control;
 	unsigned		ps_depth_export;
@@ -288,10 +290,8 @@ struct r600_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
-	unsigned			fb_cb_shader_mask;
 	unsigned			compute_cb_target_mask;
 	unsigned			sx_alpha_test_control;
-	unsigned			cb_shader_mask;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;

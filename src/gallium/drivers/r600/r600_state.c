@@ -1668,10 +1668,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 
 	shader_control = 0;
-	rctx->fb_cb_shader_mask = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		shader_control |= 1 << i;
-		rctx->fb_cb_shader_mask |= 0xf << (i * 4);
 	}
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
@@ -1703,10 +1701,12 @@ static void r600_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom 
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_cb_misc_state *a = (struct r600_cb_misc_state*)atom;
 	unsigned fb_colormask = (1ULL << ((unsigned)a->nr_cbufs * 4)) - 1;
+	unsigned ps_colormask = (1ULL << ((unsigned)a->nr_ps_color_outputs * 4)) - 1;
 	unsigned multiwrite = a->multiwrite && a->nr_cbufs > 1;
 
-	r600_write_context_reg(cs, R_028238_CB_TARGET_MASK,
-			       a->blend_colormask & fb_colormask);
+	r600_write_context_reg_seq(cs, R_028238_CB_TARGET_MASK, 2);
+	r600_write_value(cs, a->blend_colormask & fb_colormask); /* R_028238_CB_TARGET_MASK */
+	r600_write_value(cs, (a->dual_src_blend ? ps_colormask : 0) | fb_colormask); /* R_02823C_CB_SHADER_MASK */
 	r600_write_context_reg(cs, R_028808_CB_COLOR_CONTROL,
 			       a->cb_color_control |
 			       S_028808_MULTIWRITE_ENABLE(multiwrite));
@@ -2337,7 +2337,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 		exports_ps = 2;
 	}
 
-	shader->ps_cb_shader_mask = (1ULL << ((unsigned)num_cout * 4)) - 1;
+	shader->nr_ps_color_outputs = num_cout;
 
 	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
 				S_0286CC_PERSP_GRADIENT_ENA(1)|
