@@ -37,7 +37,7 @@ endif
 
 lib@OSMESA_LIB@_la_SOURCES = osmesa.c
 
-lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -shared
+lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -shared -no-undefined
 lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
 	$(top_builddir)/src/mapi/glapi/libglapi.la
