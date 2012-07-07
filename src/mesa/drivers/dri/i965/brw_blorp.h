@@ -223,6 +223,11 @@ struct brw_blorp_blit_prog_key
    /* Actual MSAA layout used by the destination image. */
    intel_msaa_layout dst_layout;
 
+   /* Type of the data to be read from the texture (one of
+    * BRW_REGISTER_TYPE_{UD,D,F}).
+    */
+   unsigned texture_data_type;
+
    /* True if the source image is W tiled.  If true, the surface state for the
     * source image must be configured as Y tiled, and tex_samples must be 0.
     */

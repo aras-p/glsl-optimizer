@@ -696,7 +696,9 @@ brw_blorp_blit_program::alloc_regs()
    alloc_push_const_regs(reg);
    reg += BRW_BLORP_NUM_PUSH_CONST_REGS;
    for (unsigned i = 0; i < ARRAY_SIZE(texture_data); ++i) {
-      this->texture_data[i] = vec16(brw_vec8_grf(reg, 0)); reg += 8;
+      this->texture_data[i] =
+         retype(vec16(brw_vec8_grf(reg, 0)), key->texture_data_type);
+      reg += 8;
    }
    this->mcs_data =
       retype(brw_vec8_grf(reg, 0), BRW_REGISTER_TYPE_UD); reg += 8;
@@ -1117,7 +1119,16 @@ brw_blorp_blit_program::manual_blend()
     * operations we do is equal to the number of trailing 1 bits in i.  This
     * works provided the total number of samples is a power of two, which it
     * always is for i965.
+    *
+    * For integer formats, we replace the add operations with average
+    * operations and skip the final division.
     */
+   typedef struct brw_instruction *(*brw_op2_ptr)(struct brw_compile *,
+                                                  struct brw_reg,
+                                                  struct brw_reg,
+                                                  struct brw_reg);
+   brw_op2_ptr combine_op =
+      key->texture_data_type == BRW_REGISTER_TYPE_F ? brw_ADD : brw_AVG;
    unsigned stack_depth = 0;
    for (int i = 0; i < num_samples; ++i) {
       assert(stack_depth == _mesa_bitcount(i)); /* Loop invariant */
@@ -1139,9 +1150,9 @@ brw_blorp_blit_program::manual_blend()
 
          /* TODO: should use a smaller loop bound for non_RGBA formats */
          for (int k = 0; k < 4; ++k) {
-            brw_ADD(&func, offset(texture_data[stack_depth - 1], 2*k),
-                    offset(vec8(texture_data[stack_depth - 1]), 2*k),
-                    offset(vec8(texture_data[stack_depth]), 2*k));
+            combine_op(&func, offset(texture_data[stack_depth - 1], 2*k),
+                       offset(vec8(texture_data[stack_depth - 1]), 2*k),
+                       offset(vec8(texture_data[stack_depth]), 2*k));
          }
       }
    }
@@ -1149,12 +1160,14 @@ brw_blorp_blit_program::manual_blend()
    /* We should have just 1 sample on the stack now. */
    assert(stack_depth == 1);
 
-   /* Scale the result down by a factor of num_samples */
-   /* TODO: should use a smaller loop bound for non-RGBA formats */
-   for (int j = 0; j < 4; ++j) {
-      brw_MUL(&func, offset(texture_data[0], 2*j),
-              offset(vec8(texture_data[0]), 2*j),
-              brw_imm_f(1.0/num_samples));
+   if (key->texture_data_type == BRW_REGISTER_TYPE_F) {
+      /* Scale the result down by a factor of num_samples */
+      /* TODO: should use a smaller loop bound for non-RGBA formats */
+      for (int j = 0; j < 4; ++j) {
+         brw_MUL(&func, offset(texture_data[0], 2*j),
+                 offset(vec8(texture_data[0]), 2*j),
+                 brw_imm_f(1.0/num_samples));
+      }
    }
 }
 
@@ -1319,7 +1332,8 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
 void
 brw_blorp_blit_program::render_target_write()
 {
-   struct brw_reg mrf_rt_write = vec16(brw_message_reg(base_mrf));
+   struct brw_reg mrf_rt_write =
+      retype(vec16(brw_message_reg(base_mrf)), key->texture_data_type);
    int mrf_offset = 0;
 
    /* If we may have killed pixels, then we need to send R0 and R1 in a header
@@ -1426,6 +1440,31 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
 
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
+
+   /* texture_data_type indicates the register type that should be used to
+    * manipulate texture data.
+    */
+   switch (_mesa_get_format_datatype(src_mt->format)) {
+   case GL_UNSIGNED_NORMALIZED:
+   case GL_SIGNED_NORMALIZED:
+   case GL_FLOAT:
+      wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_F;
+      break;
+   case GL_UNSIGNED_INT:
+      if (src_mt->format == MESA_FORMAT_S8) {
+         /* We process stencil as though it's an unsigned normalized color */
+         wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_F;
+      } else {
+         wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_UD;
+      }
+      break;
+   case GL_INT:
+      wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_D;
+      break;
+   default:
+      assert(!"Unrecognized blorp format");
+      break;
+   }
 
    if (brw->intel.gen > 6) {
       /* Gen7's texturing hardware only supports the IMS layout with the
