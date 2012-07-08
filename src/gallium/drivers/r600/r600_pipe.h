@@ -444,7 +444,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *staging,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer);
-void r600_flush_depth_textures(struct r600_context *rctx);
+void r600_flush_all_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,

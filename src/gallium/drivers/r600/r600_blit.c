@@ -186,24 +186,20 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	}
 }
 
-void r600_flush_depth_textures(struct r600_context *rctx)
+static void r600_flush_depth_textures(struct r600_context *rctx,
+				      struct r600_textures_info *textures)
 {
-	unsigned int i;
+	unsigned i;
 
-	/* XXX: This handles fragment shader textures only. */
-
-	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {
+	for (i = 0; i < textures->n_views; ++i) {
 		struct pipe_sampler_view *view;
 		struct r600_resource_texture *tex;
 
-		view = &rctx->ps_samplers.views[i]->base;
+		view = &textures->views[i]->base;
 		if (!view) continue;
 
 		tex = (struct r600_resource_texture *)view->texture;
-		if (!tex->is_depth)
-			continue;
-
-		if (tex->is_flushing_texture)
+		if (!tex->is_depth || tex->is_flushing_texture)
 			continue;
 
 		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
@@ -212,6 +208,14 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 					   0,
 					   u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
+}
+
+void r600_flush_all_depth_textures(struct r600_context *rctx)
+{
+	unsigned i;
+
+	r600_flush_depth_textures(rctx, &rctx->ps_samplers);
+	r600_flush_depth_textures(rctx, &rctx->vs_samplers);
 
 	/* also check CB here */
 	for (i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
@@ -219,10 +223,7 @@ void r600_flush_depth_textures(struct r600_context *rctx)
 		struct pipe_surface *surf = rctx->framebuffer.cbufs[i];
 		tex = (struct r600_resource_texture *)surf->texture;
 
-		if (!tex->is_depth)
-			continue;
-
-		if (tex->is_flushing_texture)
+		if (!tex->is_depth || tex->is_flushing_texture)
 			continue;
 
 		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
