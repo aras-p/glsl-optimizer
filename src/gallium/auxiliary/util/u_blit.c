@@ -94,24 +94,19 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->cso = cso;
 
    /* disabled blending/masking */
-   memset(&ctx->blend, 0, sizeof(ctx->blend));
    ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
-   memset(&ctx->depthstencil_keep, 0, sizeof(ctx->depthstencil_keep));
-   memset(&ctx->depthstencil_write, 0, sizeof(ctx->depthstencil_write));
    ctx->depthstencil_write.depth.enabled = 1;
    ctx->depthstencil_write.depth.writemask = 1;
    ctx->depthstencil_write.depth.func = PIPE_FUNC_ALWAYS;
 
    /* rasterizer */
-   memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.cull_face = PIPE_FACE_NONE;
    ctx->rasterizer.gl_rasterization_rules = 1;
    ctx->rasterizer.depth_clip = 1;
 
    /* samplers */
-   memset(&ctx->sampler, 0, sizeof(ctx->sampler));
    ctx->sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -120,7 +115,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.mag_img_filter = 0; /* set later */
 
    /* vertex elements state */
-   memset(&ctx->velem[0], 0, sizeof(ctx->velem[0]) * 2);
    for (i = 0; i < 2; i++) {
       ctx->velem[i].src_offset = i * 4 * sizeof(float);
       ctx->velem[i].instance_divisor = 0;
