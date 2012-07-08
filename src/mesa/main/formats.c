@@ -1860,8 +1860,7 @@ _mesa_format_image_size(gl_format format, GLsizei width,
       const GLuint wblocks = (width + bw - 1) / bw;
       const GLuint hblocks = (height + bh - 1) / bh;
       const GLuint sz = wblocks * hblocks * info->BytesPerBlock;
-      assert(depth == 1);
-      return sz;
+      return sz * depth;
    }
    else {
       /* non-compressed */
@@ -1887,8 +1886,7 @@ _mesa_format_image_size64(gl_format format, GLsizei width,
       const uint64_t wblocks = (width + bw - 1) / bw;
       const uint64_t hblocks = (height + bh - 1) / bh;
       const uint64_t sz = wblocks * hblocks * info->BytesPerBlock;
-      assert(depth == 1);
-      return sz;
+      return sz * depth;
    }
    else {
       /* non-compressed */
