@@ -212,26 +212,8 @@ static void r600_flush_depth_textures(struct r600_context *rctx,
 
 void r600_flush_all_depth_textures(struct r600_context *rctx)
 {
-	unsigned i;
-
 	r600_flush_depth_textures(rctx, &rctx->ps_samplers);
 	r600_flush_depth_textures(rctx, &rctx->vs_samplers);
-
-	/* also check CB here */
-	for (i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
-		struct r600_resource_texture *tex;
-		struct pipe_surface *surf = rctx->framebuffer.cbufs[i];
-		tex = (struct r600_resource_texture *)surf->texture;
-
-		if (!tex->is_depth || tex->is_flushing_texture)
-			continue;
-
-		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
-					   surf->u.tex.level,
-					   surf->u.tex.level,
-					   surf->u.tex.first_layer,
-					   surf->u.tex.last_layer);
-	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
