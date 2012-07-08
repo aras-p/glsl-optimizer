@@ -1065,11 +1065,14 @@ GLAPI_LIB_DEPS="-lpthread $SELINUX_LIBS"
 AC_SUBST([GLAPI_LIB_DEPS])
 
 
-dnl Setup default DRI CFLAGS
-DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
+dnl dri libraries are linking with mesa
+DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.la'
+GALLIUM_DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
 
+dnl ... or dricore?
 if test "x$enable_dri" = xyes && test "x$driglx_direct" = xyes ; then
-    DRI_LIB_DEPS="-L\$(TOP)/\$(LIB_DIR) -ldricore$VERSION"
+    DRI_LIB_DEPS='$(TOP)/src/mesa/libdricore/libdricore$(VERSION).la'
+    GALLIUM_DRI_LIB_DEPS='$(TOP)/src/mesa/libdricore/libdricore$(VERSION).a'
     HAVE_DRICORE=yes
 fi
 AM_CONDITIONAL(HAVE_DRICORE, test x$HAVE_DRICORE = xyes)
@@ -1247,10 +1250,12 @@ if test "x$enable_dri" = xyes; then
 
     # put all the necessary libs together
     DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
+    GALLIUM_DRI_LIB_DEPS="$GALLIUM_DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
 AC_SUBST([DRI_DIRS])
 AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
+AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 case $DRI_DIRS in
 *i915*|*i965*)
