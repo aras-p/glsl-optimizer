@@ -926,8 +926,9 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 
 			u_box_origin_2d(texture->width0, texture->height0, &sbox);
 
-			ctx->resource_copy_region(ctx, texture, 0, 0, 0, 0,
-						  &rtransfer->staging->b.b, 0,
+			ctx->resource_copy_region(ctx, texture, transfer->level,
+						  0, 0, transfer->box.z,
+						  &rtransfer->staging->b.b, transfer->level,
 						  &sbox);
 		}
 	} else if (rtransfer->staging) {
