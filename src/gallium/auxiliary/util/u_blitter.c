@@ -664,32 +664,6 @@ void *blitter_get_fs_col(struct blitter_context_priv *ctx, unsigned num_cbufs,
    }
 }
 
-/** Convert PIPE_TEXTURE_x to TGSI_TEXTURE_x */
-static unsigned
-pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
-{
-   switch (pipe_tex_target) {
-   case PIPE_TEXTURE_1D:
-      return TGSI_TEXTURE_1D;
-   case PIPE_TEXTURE_2D:
-      return TGSI_TEXTURE_2D;
-   case PIPE_TEXTURE_RECT:
-      return TGSI_TEXTURE_RECT;
-   case PIPE_TEXTURE_3D:
-      return TGSI_TEXTURE_3D;
-   case PIPE_TEXTURE_CUBE:
-      return TGSI_TEXTURE_CUBE;
-   case PIPE_TEXTURE_1D_ARRAY:
-      return TGSI_TEXTURE_1D_ARRAY;
-   case PIPE_TEXTURE_2D_ARRAY:
-      return TGSI_TEXTURE_2D_ARRAY;
-   default:
-      assert(0 && "unexpected texture target");
-      return TGSI_TEXTURE_UNKNOWN;
-   }
-}
-
-
 static INLINE
 void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
                                   unsigned tex_target)
@@ -700,7 +674,7 @@ void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_col[tex_target]) {
-      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(tex_target);
 
       ctx->fs_texfetch_col[tex_target] =
         util_make_fragment_tex_shader(pipe, tgsi_tex, TGSI_INTERPOLATE_LINEAR);
@@ -719,7 +693,7 @@ void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_depth[tex_target]) {
-      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(tex_target);
 
       ctx->fs_texfetch_depth[tex_target] =
          util_make_fragment_tex_shader_writedepth(pipe, tgsi_tex,
@@ -739,7 +713,7 @@ void *blitter_get_fs_texfetch_depthstencil(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_depthstencil[tex_target]) {
-      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(tex_target);
 
       ctx->fs_texfetch_depthstencil[tex_target] =
          util_make_fragment_tex_shader_writedepthstencil(pipe, tgsi_tex,
@@ -759,7 +733,7 @@ void *blitter_get_fs_texfetch_stencil(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_stencil[tex_target]) {
-      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(tex_target);
 
       ctx->fs_texfetch_stencil[tex_target] =
          util_make_fragment_tex_shader_writestencil(pipe, tgsi_tex,

@@ -30,6 +30,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 #include "pipe/p_screen.h"
 #include "util/u_debug.h"
@@ -542,6 +543,31 @@ util_query_clear_result(union pipe_query_result *result, unsigned type)
       break;
    default:
       assert(0);
+   }
+}
+
+/** Convert PIPE_TEXTURE_x to TGSI_TEXTURE_x */
+static INLINE unsigned
+util_pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
+{
+   switch (pipe_tex_target) {
+   case PIPE_TEXTURE_1D:
+      return TGSI_TEXTURE_1D;
+   case PIPE_TEXTURE_2D:
+      return TGSI_TEXTURE_2D;
+   case PIPE_TEXTURE_RECT:
+      return TGSI_TEXTURE_RECT;
+   case PIPE_TEXTURE_3D:
+      return TGSI_TEXTURE_3D;
+   case PIPE_TEXTURE_CUBE:
+      return TGSI_TEXTURE_CUBE;
+   case PIPE_TEXTURE_1D_ARRAY:
+      return TGSI_TEXTURE_1D_ARRAY;
+   case PIPE_TEXTURE_2D_ARRAY:
+      return TGSI_TEXTURE_2D_ARRAY;
+   default:
+      assert(0 && "unexpected texture target");
+      return TGSI_TEXTURE_UNKNOWN;
    }
 }
 
