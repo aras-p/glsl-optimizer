@@ -1066,17 +1066,17 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
 
    dest_surface = pipe->create_surface(pipe, stImage->pt,
                                        &surf_tmpl);
-   util_blit_pixels_writemask(st->blit,
-                              strb->texture,
-                              strb->surface->u.tex.level,
-                              srcX, srcY0,
-                              srcX + width, srcY1,
-                              strb->surface->u.tex.first_layer,
-                              dest_surface,
-                              destX, destY,
-                              destX + width, destY + height,
-                              0.0, PIPE_TEX_MIPFILTER_NEAREST,
-                              format_writemask);
+   util_blit_pixels(st->blit,
+                    strb->texture,
+                    strb->surface->u.tex.level,
+                    srcX, srcY0,
+                    srcX + width, srcY1,
+                    strb->surface->u.tex.first_layer,
+                    dest_surface,
+                    destX, destY,
+                    destX + width, destY + height,
+                    0.0, PIPE_TEX_MIPFILTER_NEAREST,
+                    format_writemask);
    pipe_surface_reference(&dest_surface, NULL);
 
    /* Restore conditional rendering state. */

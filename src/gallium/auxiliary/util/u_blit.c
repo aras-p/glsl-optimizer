@@ -367,17 +367,17 @@ formats_compatible(enum pipe_format src_format,
  * XXX need some control over blitting stencil.
  */
 void
-util_blit_pixels_writemask(struct blit_state *ctx,
-                           struct pipe_resource *src_tex,
-                           unsigned src_level,
-                           int srcX0, int srcY0,
-                           int srcX1, int srcY1,
-                           int srcZ0,
-                           struct pipe_surface *dst,
-                           int dstX0, int dstY0,
-                           int dstX1, int dstY1,
-                           float z, uint filter,
-                           uint writemask)
+util_blit_pixels(struct blit_state *ctx,
+                 struct pipe_resource *src_tex,
+                 unsigned src_level,
+                 int srcX0, int srcY0,
+                 int srcX1, int srcY1,
+                 int srcZ0,
+                 struct pipe_surface *dst,
+                 int dstX0, int dstY0,
+                 int dstX1, int dstY1,
+                 float z, uint filter,
+                 uint writemask)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -657,31 +657,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    pipe_sampler_view_reference(&sampler_view, NULL);
    if (dst_surface != dst)
       pipe_surface_reference(&dst_surface, NULL);
-}
-
-
-void
-util_blit_pixels(struct blit_state *ctx,
-                 struct pipe_resource *src_tex,
-                 unsigned src_level,
-                 int srcX0, int srcY0,
-                 int srcX1, int srcY1,
-                 int srcZ,
-                 struct pipe_surface *dst,
-                 int dstX0, int dstY0,
-                 int dstX1, int dstY1,
-                 float z, uint filter )
-{
-   util_blit_pixels_writemask( ctx, src_tex,
-                               src_level,
-                               srcX0, srcY0,
-                               srcX1, srcY1,
-                               srcZ,
-                               dst,
-                               dstX0, dstY0,
-                               dstX1, dstY1,
-                               z, filter,
-                               TGSI_WRITEMASK_XYZW );
 }
 
 

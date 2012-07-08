@@ -242,7 +242,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcAtt->Zoffset + srcAtt->CubeMapFace,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter);
+                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
       }
       else {
          struct st_renderbuffer *srcRb =
@@ -257,7 +257,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcSurf->u.tex.first_layer,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter);
+                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
       }
    }
 
@@ -294,7 +294,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcDepthRb->surface->u.tex.first_layer,
                           dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter);
+                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
       }
       else {
          /* blitting depth and stencil separately */
@@ -305,7 +305,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                              srcX0, srcY0, srcX1, srcY1,
                              srcDepthRb->surface->u.tex.first_layer,
                              dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                             0.0, pFilter);
+                             0.0, pFilter, TGSI_WRITEMASK_XYZW);
          }
 
          if (mask & GL_STENCIL_BUFFER_BIT) {
