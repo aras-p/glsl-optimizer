@@ -66,8 +66,8 @@ struct blit_state
    enum pipe_texture_target internal_target;
 
    void *vs;
-   void *fs[TGSI_WRITEMASK_XYZW + 1];
-   void *fs_depth;
+   void *fs[PIPE_MAX_TEXTURE_TYPES][TGSI_WRITEMASK_XYZW + 1];
+   void *fs_depth[PIPE_MAX_TEXTURE_TYPES];
 
    struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -153,17 +153,23 @@ void
 util_destroy_blit(struct blit_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
-   unsigned i;
+   unsigned i, j;
 
    if (ctx->vs)
       pipe->delete_vs_state(pipe, ctx->vs);
 
-   for (i = 0; i < Elements(ctx->fs); i++)
-      if (ctx->fs[i])
-         pipe->delete_fs_state(pipe, ctx->fs[i]);
+   for (i = 0; i < Elements(ctx->fs); i++) {
+      for (j = 0; j < Elements(ctx->fs[i]); j++) {
+         if (ctx->fs[i][j])
+            pipe->delete_fs_state(pipe, ctx->fs[i][j]);
+      }
+   }
 
-   if (ctx->fs_depth)
-      pipe->delete_fs_state(pipe, ctx->fs_depth);
+   for (i = 0; i < Elements(ctx->fs_depth); i++) {
+      if (ctx->fs_depth[i]) {
+         pipe->delete_fs_state(pipe, ctx->fs_depth[i]);
+      }
+   }
 
    pipe_resource_reference(&ctx->vbuf, NULL);
 
@@ -175,15 +181,19 @@ util_destroy_blit(struct blit_state *ctx)
  * Helper function to set the fragment shaders.
  */
 static INLINE void
-set_fragment_shader(struct blit_state *ctx, uint writemask)
+set_fragment_shader(struct blit_state *ctx, uint writemask,
+                    enum pipe_texture_target pipe_tex)
 {
-   if (!ctx->fs[writemask])
-      ctx->fs[writemask] =
-         util_make_fragment_tex_shader_writemask(ctx->pipe, TGSI_TEXTURE_2D,
+   if (!ctx->fs[pipe_tex][writemask]) {
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex);
+
+      ctx->fs[pipe_tex][writemask] =
+         util_make_fragment_tex_shader_writemask(ctx->pipe, tgsi_tex,
                                                  TGSI_INTERPOLATE_LINEAR,
                                                  writemask);
+   }
 
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[pipe_tex][writemask]);
 }
 
 
@@ -191,14 +201,18 @@ set_fragment_shader(struct blit_state *ctx, uint writemask)
  * Helper function to set the depthwrite shader.
  */
 static INLINE void
-set_depth_fragment_shader(struct blit_state *ctx)
+set_depth_fragment_shader(struct blit_state *ctx,
+                          enum pipe_texture_target pipe_tex)
 {
-   if (!ctx->fs_depth)
-      ctx->fs_depth =
-         util_make_fragment_tex_shader_writedepth(ctx->pipe, TGSI_TEXTURE_2D,
-                                                  TGSI_INTERPOLATE_LINEAR);
+   if (!ctx->fs_depth[pipe_tex]) {
+      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex);
 
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+      ctx->fs_depth[pipe_tex] =
+         util_make_fragment_tex_shader_writedepth(ctx->pipe, tgsi_tex,
+                                                  TGSI_INTERPOLATE_LINEAR);
+   }
+
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth[pipe_tex]);
 }
 
 
@@ -430,20 +444,11 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       dst_surface = pipe->create_surface(pipe, dst->texture, &templ);
    }
 
-   /* Create a temporary texture when src and dest alias or when src
-    * is anything other than a 2d texture.
-    * XXX should just use appropriate shader to access 1d / 3d slice / cube face,
-    * much like the u_blitter code does (should be pretty trivial).
-    * 
-    * This can still be improved upon.
+   /* Create a temporary texture when src and dest alias.
     */
-   if ((src_tex == dst_surface->texture &&
+   if (src_tex == dst_surface->texture &&
        dst_surface->u.tex.level == src_level &&
-       dst_surface->u.tex.first_layer == srcZ0) ||
-       (src_tex->target != PIPE_TEXTURE_2D &&
-       src_tex->target != PIPE_TEXTURE_2D &&
-       src_tex->target != PIPE_TEXTURE_RECT))
-   {
+       dst_surface->u.tex.first_layer == srcZ0) {
       /* Make a temporary texture which contains a copy of the source pixels.
        * Then we'll sample from the temporary texture.
        */
@@ -598,9 +603,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* shaders */
    if (dst_is_depth) {
-      set_depth_fragment_shader(ctx);
+      set_depth_fragment_shader(ctx, sampler_view->texture->target);
    } else {
-      set_fragment_shader(ctx, writemask);
+      set_fragment_shader(ctx, writemask, sampler_view->texture->target);
    }
    set_vertex_shader(ctx);
    cso_set_geometry_shader_handle(ctx->cso, NULL);
@@ -775,7 +780,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_fragment_sampler_views(ctx->cso, 1, &src_sampler_view);
 
    /* shaders */
-   set_fragment_shader(ctx, TGSI_WRITEMASK_XYZW);
+   set_fragment_shader(ctx, TGSI_WRITEMASK_XYZW,
+                       src_sampler_view->texture->target);
    set_vertex_shader(ctx);
    cso_set_geometry_shader_handle(ctx->cso, NULL);
 
