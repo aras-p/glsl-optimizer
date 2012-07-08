@@ -18,7 +18,7 @@ include "AMDILTokenDesc.td"
 class ILFormat<ILOpCode op, dag outs, dag ins, string asmstr, list<dag> pattern>
 : Instruction {
 
-     let Namespace = "AMDIL";
+     let Namespace = "AMDGPU";
      dag OutOperandList = outs;
      dag InOperandList = ins;
      ILOpCode operation = op;

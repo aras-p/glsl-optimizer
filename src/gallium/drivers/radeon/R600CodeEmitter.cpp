@@ -181,13 +181,13 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             isReduction = false;
 	    isVector = false;
 	    isCube = false;
-          } else if (MI.getOpcode() == AMDIL::RETURN ||
-                     MI.getOpcode() == AMDIL::BUNDLE ||
-                     MI.getOpcode() == AMDIL::KILL) {
+          } else if (MI.getOpcode() == AMDGPU::RETURN ||
+                     MI.getOpcode() == AMDGPU::BUNDLE ||
+                     MI.getOpcode() == AMDGPU::KILL) {
             continue;
           } else {
             switch(MI.getOpcode()) {
-            case AMDIL::RAT_WRITE_CACHELESS_eg:
+            case AMDGPU::RAT_WRITE_CACHELESS_eg:
               {
                   uint64_t inst = getBinaryCodeForInstr(MI);
                 // Set End Of Program bit
@@ -196,16 +196,16 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 // set in a prior pass.
                 MachineBasicBlock::iterator NextI = llvm::next(I);
                 MachineInstr &NextMI = *NextI;
-                if (NextMI.getOpcode() == AMDIL::RETURN) {
+                if (NextMI.getOpcode() == AMDGPU::RETURN) {
                   inst |= (((uint64_t)1) << 53);
                 }
                 emitByte(INSTR_NATIVE);
                 emit(inst);
                 break;
               }
-            case AMDIL::VTX_READ_PARAM_eg:
-            case AMDIL::VTX_READ_GLOBAL_eg:
-            case AMDIL::VTX_READ_GLOBAL_128_eg:
+            case AMDGPU::VTX_READ_PARAM_eg:
+            case AMDGPU::VTX_READ_GLOBAL_eg:
+            case AMDGPU::VTX_READ_GLOBAL_128_eg:
               {
                 uint64_t InstWord01 = getBinaryCodeForInstr(MI);
                 uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
@@ -281,7 +281,7 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override)
   if (MO.isReg()) {
     unsigned reg = MO.getReg();
     emitTwoBytes(getHWReg(reg));
-    if (reg == AMDIL::ALU_LITERAL_X) {
+    if (reg == AMDGPU::ALU_LITERAL_X) {
       const MachineInstr * parent = MO.getParent();
       unsigned immOpIndex = parent->getNumExplicitOperands() - 1;
       MachineOperand immOp = parent->getOperand(immOpIndex);
@@ -312,7 +312,7 @@ void R600CodeEmitter::emitSrc(const MachineOperand & MO, int chan_override)
   if ((!(MO.getTargetFlags() & MO_FLAG_ABS))
       && (MO.getTargetFlags() & MO_FLAG_NEG ||
      (MO.isReg() &&
-      (MO.getReg() == AMDIL::NEG_ONE || MO.getReg() == AMDIL::NEG_HALF)))){
+      (MO.getReg() == AMDGPU::NEG_ONE || MO.getReg() == AMDGPU::NEG_HALF)))){
     emitByte(1);
   } else {
     emitByte(0);
@@ -413,7 +413,7 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
 {
 
   unsigned opcode = MI.getOpcode();
-  bool hasOffsets = (opcode == AMDIL::TEX_LD);
+  bool hasOffsets = (opcode == AMDGPU::TEX_LD);
   unsigned op_offset = hasOffsets ? 3 : 0;
   int64_t sampler = MI.getOperand(op_offset+2).getImm();
   int64_t textureType = MI.getOperand(op_offset+3).getImm();
@@ -460,7 +460,7 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
 
   if (textureType == TEXTURE_1D_ARRAY
       || textureType == TEXTURE_SHADOW1D_ARRAY) {
-    if (opcode == AMDIL::TEX_SAMPLE_C_L || opcode == AMDIL::TEX_SAMPLE_C_LB) {
+    if (opcode == AMDGPU::TEX_SAMPLE_C_L || opcode == AMDGPU::TEX_SAMPLE_C_LB) {
       coordType[ELEMENT_Y] = 0;
     } else {
       coordType[ELEMENT_Z] = 0;
@@ -490,8 +490,8 @@ void R600CodeEmitter::emitTexInstr(MachineInstr &MI)
       || textureType == TEXTURE_SHADOW2D
       || textureType == TEXTURE_SHADOWRECT
       || textureType == TEXTURE_SHADOW1D_ARRAY)
-      && opcode != AMDIL::TEX_SAMPLE_C_L
-      && opcode != AMDIL::TEX_SAMPLE_C_LB) {
+      && opcode != AMDGPU::TEX_SAMPLE_C_L
+      && opcode != AMDGPU::TEX_SAMPLE_C_LB) {
     srcSelect[ELEMENT_W] = ELEMENT_Z;
   }
 
@@ -517,37 +517,37 @@ void R600CodeEmitter::emitFCInstr(MachineInstr &MI)
   // Emit FC Instruction
   enum FCInstr instr;
   switch (MI.getOpcode()) {
-  case AMDIL::BREAK_LOGICALZ_f32:
+  case AMDGPU::BREAK_LOGICALZ_f32:
     instr = FC_BREAK;
     break;
-  case AMDIL::BREAK_LOGICALNZ_f32:
-  case AMDIL::BREAK_LOGICALNZ_i32:
+  case AMDGPU::BREAK_LOGICALNZ_f32:
+  case AMDGPU::BREAK_LOGICALNZ_i32:
     instr = FC_BREAK_NZ_INT;
     break;
-  case AMDIL::BREAK_LOGICALZ_i32:
+  case AMDGPU::BREAK_LOGICALZ_i32:
     instr = FC_BREAK_Z_INT;
     break;
-  case AMDIL::CONTINUE_LOGICALNZ_f32:
-  case AMDIL::CONTINUE_LOGICALNZ_i32:
+  case AMDGPU::CONTINUE_LOGICALNZ_f32:
+  case AMDGPU::CONTINUE_LOGICALNZ_i32:
     instr = FC_CONTINUE;
     break;
-  case AMDIL::IF_LOGICALNZ_f32:
-  case AMDIL::IF_LOGICALNZ_i32:
+  case AMDGPU::IF_LOGICALNZ_f32:
+  case AMDGPU::IF_LOGICALNZ_i32:
     instr = FC_IF;
     break;
-  case AMDIL::IF_LOGICALZ_f32:
+  case AMDGPU::IF_LOGICALZ_f32:
     abort();
     break;
-  case AMDIL::ELSE:
+  case AMDGPU::ELSE:
     instr = FC_ELSE;
     break;
-  case AMDIL::ENDIF:
+  case AMDGPU::ENDIF:
     instr = FC_ENDIF;
     break;
-  case AMDIL::ENDLOOP:
+  case AMDGPU::ENDLOOP:
     instr = FC_ENDLOOP;
     break;
-  case AMDIL::WHILELOOP:
+  case AMDGPU::WHILELOOP:
     instr = FC_BGNLOOP;
     break;
   default:
@@ -593,7 +593,7 @@ unsigned R600CodeEmitter::getHWReg(unsigned regNo) const
   unsigned hwReg;
 
   hwReg = TRI->getHWRegIndex(regNo);
-  if (AMDIL::R600_CReg32RegClass.contains(regNo)) {
+  if (AMDGPU::R600_CReg32RegClass.contains(regNo)) {
     hwReg += 512;
   }
   return hwReg;

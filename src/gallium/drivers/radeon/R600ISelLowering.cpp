@@ -25,10 +25,10 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
     TII(static_cast<const R600InstrInfo*>(TM.getInstrInfo()))
 {
   setOperationAction(ISD::MUL, MVT::i64, Expand);
-  addRegisterClass(MVT::v4f32, &AMDIL::R600_Reg128RegClass);
-  addRegisterClass(MVT::f32, &AMDIL::R600_Reg32RegClass);
-  addRegisterClass(MVT::v4i32, &AMDIL::R600_Reg128RegClass);
-  addRegisterClass(MVT::i32, &AMDIL::R600_Reg32RegClass);
+  addRegisterClass(MVT::v4f32, &AMDGPU::R600_Reg128RegClass);
+  addRegisterClass(MVT::f32, &AMDGPU::R600_Reg32RegClass);
+  addRegisterClass(MVT::v4i32, &AMDGPU::R600_Reg128RegClass);
+  addRegisterClass(MVT::i32, &AMDGPU::R600_Reg32RegClass);
   computeRegisterProperties();
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
@@ -47,92 +47,92 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-  case AMDIL::TGID_X:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T1_X);
+  case AMDGPU::TGID_X:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_X);
     break;
-  case AMDIL::TGID_Y:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T1_Y);
+  case AMDGPU::TGID_Y:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_Y);
     break;
-  case AMDIL::TGID_Z:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T1_Z);
+  case AMDGPU::TGID_Z:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_Z);
     break;
-  case AMDIL::TIDIG_X:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T0_X);
+  case AMDGPU::TIDIG_X:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_X);
     break;
-  case AMDIL::TIDIG_Y:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T0_Y);
+  case AMDGPU::TIDIG_Y:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_Y);
     break;
-  case AMDIL::TIDIG_Z:
-    addLiveIn(MI, MF, MRI, TII, AMDIL::T0_Z);
+  case AMDGPU::TIDIG_Z:
+    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_Z);
     break;
-  case AMDIL::NGROUPS_X:
+  case AMDGPU::NGROUPS_X:
     lowerImplicitParameter(MI, *BB, MRI, 0);
     break;
-  case AMDIL::NGROUPS_Y:
+  case AMDGPU::NGROUPS_Y:
     lowerImplicitParameter(MI, *BB, MRI, 1);
     break;
-  case AMDIL::NGROUPS_Z:
+  case AMDGPU::NGROUPS_Z:
     lowerImplicitParameter(MI, *BB, MRI, 2);
     break;
-  case AMDIL::GLOBAL_SIZE_X:
+  case AMDGPU::GLOBAL_SIZE_X:
     lowerImplicitParameter(MI, *BB, MRI, 3);
     break;
-  case AMDIL::GLOBAL_SIZE_Y:
+  case AMDGPU::GLOBAL_SIZE_Y:
     lowerImplicitParameter(MI, *BB, MRI, 4);
     break;
-  case AMDIL::GLOBAL_SIZE_Z:
+  case AMDGPU::GLOBAL_SIZE_Z:
     lowerImplicitParameter(MI, *BB, MRI, 5);
     break;
-  case AMDIL::LOCAL_SIZE_X:
+  case AMDGPU::LOCAL_SIZE_X:
     lowerImplicitParameter(MI, *BB, MRI, 6);
     break;
-  case AMDIL::LOCAL_SIZE_Y:
+  case AMDGPU::LOCAL_SIZE_Y:
     lowerImplicitParameter(MI, *BB, MRI, 7);
     break;
-  case AMDIL::LOCAL_SIZE_Z:
+  case AMDGPU::LOCAL_SIZE_Z:
     lowerImplicitParameter(MI, *BB, MRI, 8);
     break;
 
-  case AMDIL::CLAMP_R600:
+  case AMDGPU::CLAMP_R600:
     MI->getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1));
     break;
 
-  case AMDIL::FABS_R600:
+  case AMDGPU::FABS_R600:
     MI->getOperand(1).addTargetFlag(MO_FLAG_ABS);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1));
     break;
 
-  case AMDIL::FNEG_R600:
+  case AMDGPU::FNEG_R600:
     MI->getOperand(1).addTargetFlag(MO_FLAG_NEG);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV))
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
             .addOperand(MI->getOperand(0))
             .addOperand(MI->getOperand(1));
     break;
 
-  case AMDIL::R600_LOAD_CONST:
+  case AMDGPU::R600_LOAD_CONST:
     {
       int64_t RegIndex = MI->getOperand(1).getImm();
-      unsigned ConstantReg = AMDIL::R600_CReg32RegClass.getRegister(RegIndex);
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY))
+      unsigned ConstantReg = AMDGPU::R600_CReg32RegClass.getRegister(RegIndex);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::COPY))
                   .addOperand(MI->getOperand(0))
                   .addReg(ConstantReg);
       break;
     }
 
-  case AMDIL::LOAD_INPUT:
+  case AMDGPU::LOAD_INPUT:
     {
       int64_t RegIndex = MI->getOperand(1).getImm();
       addLiveIn(MI, MF, MRI, TII,
-                AMDIL::R600_TReg32RegClass.getRegister(RegIndex));
+                AMDGPU::R600_TReg32RegClass.getRegister(RegIndex));
       break;
     }
 
-  case AMDIL::MASK_WRITE:
+  case AMDGPU::MASK_WRITE:
     {
       unsigned maskedRegister = MI->getOperand(0).getReg();
       assert(TargetRegisterInfo::isVirtualRegister(maskedRegister));
@@ -143,21 +143,21 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       return BB;
     }
 
-  case AMDIL::RAT_WRITE_CACHELESS_eg:
+  case AMDGPU::RAT_WRITE_CACHELESS_eg:
     {
       // Convert to DWORD address
       unsigned NewAddr = MRI.createVirtualRegister(
-                                             AMDIL::R600_TReg32_XRegisterClass);
+                                             AMDGPU::R600_TReg32_XRegisterClass);
       unsigned ShiftValue = MRI.createVirtualRegister(
-                                              AMDIL::R600_TReg32RegisterClass);
+                                              AMDGPU::R600_TReg32RegisterClass);
 
       // XXX In theory, we should be able to pass ShiftValue directly to
       // the LSHR_eg instruction as an inline literal, but I tried doing it
       // this way and it didn't produce the correct results.
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::MOV), ShiftValue)
-              .addReg(AMDIL::ALU_LITERAL_X)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV), ShiftValue)
+              .addReg(AMDGPU::ALU_LITERAL_X)
               .addImm(2);
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::LSHR_eg), NewAddr)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::LSHR_eg), NewAddr)
               .addOperand(MI->getOperand(1))
               .addReg(ShiftValue);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
@@ -166,12 +166,12 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       break;
     }
 
-  case AMDIL::STORE_OUTPUT:
+  case AMDGPU::STORE_OUTPUT:
     {
       int64_t OutputIndex = MI->getOperand(1).getImm();
-      unsigned OutputReg = AMDIL::R600_TReg32RegClass.getRegister(OutputIndex);
+      unsigned OutputReg = AMDGPU::R600_TReg32RegClass.getRegister(OutputIndex);
 
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::COPY), OutputReg)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::COPY), OutputReg)
                   .addOperand(MI->getOperand(0));
 
       if (!MRI.isLiveOut(OutputReg)) {
@@ -180,30 +180,30 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       break;
     }
 
-  case AMDIL::RESERVE_REG:
+  case AMDGPU::RESERVE_REG:
     {
       R600MachineFunctionInfo * MFI = MF->getInfo<R600MachineFunctionInfo>();
       int64_t ReservedIndex = MI->getOperand(0).getImm();
       unsigned ReservedReg =
-                          AMDIL::R600_TReg32RegClass.getRegister(ReservedIndex);
+                          AMDGPU::R600_TReg32RegClass.getRegister(ReservedIndex);
       MFI->ReservedRegs.push_back(ReservedReg);
       break;
     }
 
-  case AMDIL::TXD:
+  case AMDGPU::TXD:
     {
-      unsigned t0 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
-      unsigned t1 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+      unsigned t0 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
+      unsigned t1 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
 
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_H), t0)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SET_GRADIENTS_H), t0)
               .addOperand(MI->getOperand(3))
               .addOperand(MI->getOperand(4))
               .addOperand(MI->getOperand(5));
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_V), t1)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SET_GRADIENTS_V), t1)
               .addOperand(MI->getOperand(2))
               .addOperand(MI->getOperand(4))
               .addOperand(MI->getOperand(5));
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SAMPLE_G))
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SAMPLE_G))
               .addOperand(MI->getOperand(0))
               .addOperand(MI->getOperand(1))
               .addOperand(MI->getOperand(4))
@@ -212,20 +212,20 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
               .addReg(t1, RegState::Implicit);
       break;
     }
-  case AMDIL::TXD_SHADOW:
+  case AMDGPU::TXD_SHADOW:
     {
-      unsigned t0 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
-      unsigned t1 = MRI.createVirtualRegister(AMDIL::R600_Reg128RegisterClass);
+      unsigned t0 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
+      unsigned t1 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
 
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_H), t0)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SET_GRADIENTS_H), t0)
               .addOperand(MI->getOperand(3))
               .addOperand(MI->getOperand(4))
               .addOperand(MI->getOperand(5));
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SET_GRADIENTS_V), t1)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SET_GRADIENTS_V), t1)
               .addOperand(MI->getOperand(2))
               .addOperand(MI->getOperand(4))
               .addOperand(MI->getOperand(5));
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::TEX_SAMPLE_C_G))
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SAMPLE_C_G))
               .addOperand(MI->getOperand(0))
               .addOperand(MI->getOperand(1))
               .addOperand(MI->getOperand(4))
@@ -246,14 +246,14 @@ void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBl
     MachineRegisterInfo & MRI, unsigned dword_offset) const
 {
   MachineBasicBlock::iterator I = *MI;
-  unsigned PtrReg = MRI.createVirtualRegister(&AMDIL::R600_TReg32_XRegClass);
-  MRI.setRegClass(MI->getOperand(0).getReg(), &AMDIL::R600_TReg32_XRegClass);
+  unsigned PtrReg = MRI.createVirtualRegister(&AMDGPU::R600_TReg32_XRegClass);
+  MRI.setRegClass(MI->getOperand(0).getReg(), &AMDGPU::R600_TReg32_XRegClass);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::MOV), PtrReg)
-          .addReg(AMDIL::ALU_LITERAL_X)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::MOV), PtrReg)
+          .addReg(AMDGPU::ALU_LITERAL_X)
           .addImm(dword_offset * 4);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::VTX_READ_PARAM_eg))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::VTX_READ_PARAM_eg))
           .addOperand(MI->getOperand(0))
           .addReg(PtrReg)
           .addImm(0);

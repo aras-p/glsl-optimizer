@@ -647,7 +647,7 @@ AMDILTargetLowering::LowerMemArgument(
   setOperationAction(ISD::Constant          , MVT::i32    , Legal);
   setOperationAction(ISD::TRAP              , MVT::Other  , Legal);
 
-  setStackPointerRegisterToSaveRestore(AMDIL::SP);
+  setStackPointerRegisterToSaveRestore(AMDGPU::SP);
   setSchedulingPreference(Sched::RegPressure);
   setPow2DivIsCheap(false);
   setPrefLoopAlignment(16);
@@ -1453,7 +1453,7 @@ AMDILTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 {
   SDValue Chain = Op.getOperand(0);
   SDValue Size = Op.getOperand(1);
-  unsigned int SPReg = AMDIL::SP;
+  unsigned int SPReg = AMDGPU::SP;
   DebugLoc DL = Op.getDebugLoc();
   SDValue SP = DAG.getCopyFromReg(Chain,
       DL,

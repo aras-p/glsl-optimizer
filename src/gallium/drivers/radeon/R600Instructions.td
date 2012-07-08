@@ -23,7 +23,7 @@ class InstR600 <bits<32> inst, dag outs, dag ins, string asm, list<dag> pattern,
   bit isVector = 0; 
 
   let Inst = inst;
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let OutOperandList = outs;
   let InOperandList = ins;
   let AsmString = asm;
@@ -43,7 +43,7 @@ class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
 {
   field bits<64> Inst;
 
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
 }
 
 def MEMxi : Operand<iPTR> {

@@ -128,13 +128,13 @@ AMDILRegisterInfo::processFunctionBeforeFrameFinalized(
 unsigned int
 AMDILRegisterInfo::getRARegister() const
 {
-  return AMDIL::RA;
+  return AMDGPU::RA;
 }
 
 unsigned int
 AMDILRegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
-  return AMDIL::FP;
+  return AMDGPU::FP;
 }
 
 unsigned int

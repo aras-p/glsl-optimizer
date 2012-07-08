@@ -14,7 +14,7 @@
 class AMDILReg<bits<16> num, string n> : Register<n> {
   field bits<16> Value;
   let Value = num;
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
 }
 
 // We will start with 8 registers for each class before expanding to more
@@ -84,7 +84,7 @@ def R1001: AMDILReg<1001, "r1001">, DwarfRegNum<[1001]>;
 def MEM : AMDILReg<999, "mem">, DwarfRegNum<[999]>;
 def RA : AMDILReg<998, "r998">, DwarfRegNum<[998]>;
 def FP : AMDILReg<997, "r997">, DwarfRegNum<[997]>;
-def GPRI16 : RegisterClass<"AMDIL", [i16], 16,
+def GPRI16 : RegisterClass<"AMDGPU", [i16], 16,
   (add (sequence "R%u", 1, 20), RA, SP, T1, T2, T3, T4, T5, SDP, R1010, R1011, R1001, R1002, R1003, R1004, R1005, R1006, R1007, R1008, MEM, R1012)>
 {
         let AltOrders = [(add (sequence "R%u", 1, 20))];
@@ -92,7 +92,7 @@ def GPRI16 : RegisterClass<"AMDIL", [i16], 16,
           return 1;
         }];
     }
-def GPRI32 : RegisterClass<"AMDIL", [i32], 32,
+def GPRI32 : RegisterClass<"AMDGPU", [i32], 32,
   (add (sequence "R%u", 1, 20), RA, SP, T1, T2, T3, T4, T5, SDP, R1010, R1011, R1001, R1002, R1003, R1004, R1005, R1006, R1007, R1008, MEM, R1012)>
 {
         let AltOrders = [(add (sequence "R%u", 1, 20))];
@@ -100,7 +100,7 @@ def GPRI32 : RegisterClass<"AMDIL", [i32], 32,
           return 1;
         }];
     }
-def GPRF32 : RegisterClass<"AMDIL", [f32], 32,
+def GPRF32 : RegisterClass<"AMDGPU", [f32], 32,
   (add (sequence "R%u", 1, 20), RA, SP, T1, T2, T3, T4, T5, SDP, R1010, R1011, R1001, R1002, R1003, R1004, R1005, R1006, R1007, R1008, MEM, R1012)>
 {
         let AltOrders = [(add (sequence "R%u", 1, 20))];

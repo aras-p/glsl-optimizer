@@ -30,11 +30,11 @@ bool AMDGPU::isPlaceHolderOpcode(unsigned opcode)
 {
   switch (opcode) {
   default: return false;
-  case AMDIL::RETURN:
-  case AMDIL::LOAD_INPUT:
-  case AMDIL::LAST:
-  case AMDIL::MASK_WRITE:
-  case AMDIL::RESERVE_REG:
+  case AMDGPU::RETURN:
+  case AMDGPU::LOAD_INPUT:
+  case AMDGPU::LAST:
+  case AMDGPU::MASK_WRITE:
+  case AMDGPU::RESERVE_REG:
     return true;
   }
 }
@@ -44,17 +44,17 @@ bool AMDGPU::isTransOp(unsigned opcode)
   switch(opcode) {
     default: return false;
 
-    case AMDIL::COS_r600:
-    case AMDIL::COS_eg:
-    case AMDIL::MULLIT:
-    case AMDIL::MUL_LIT_r600:
-    case AMDIL::MUL_LIT_eg:
-    case AMDIL::EXP_IEEE_r600:
-    case AMDIL::EXP_IEEE_eg:
-    case AMDIL::LOG_CLAMPED_r600:
-    case AMDIL::LOG_IEEE_r600:
-    case AMDIL::LOG_CLAMPED_eg:
-    case AMDIL::LOG_IEEE_eg:
+    case AMDGPU::COS_r600:
+    case AMDGPU::COS_eg:
+    case AMDGPU::MULLIT:
+    case AMDGPU::MUL_LIT_r600:
+    case AMDGPU::MUL_LIT_eg:
+    case AMDGPU::EXP_IEEE_r600:
+    case AMDGPU::EXP_IEEE_eg:
+    case AMDGPU::LOG_CLAMPED_r600:
+    case AMDGPU::LOG_IEEE_r600:
+    case AMDGPU::LOG_CLAMPED_eg:
+    case AMDGPU::LOG_IEEE_eg:
       return true;
   }
 }
@@ -63,20 +63,20 @@ bool AMDGPU::isTexOp(unsigned opcode)
 {
   switch(opcode) {
   default: return false;
-  case AMDIL::TEX_LD:
-  case AMDIL::TEX_GET_TEXTURE_RESINFO:
-  case AMDIL::TEX_SAMPLE:
-  case AMDIL::TEX_SAMPLE_C:
-  case AMDIL::TEX_SAMPLE_L:
-  case AMDIL::TEX_SAMPLE_C_L:
-  case AMDIL::TEX_SAMPLE_LB:
-  case AMDIL::TEX_SAMPLE_C_LB:
-  case AMDIL::TEX_SAMPLE_G:
-  case AMDIL::TEX_SAMPLE_C_G:
-  case AMDIL::TEX_GET_GRADIENTS_H:
-  case AMDIL::TEX_GET_GRADIENTS_V:
-  case AMDIL::TEX_SET_GRADIENTS_H:
-  case AMDIL::TEX_SET_GRADIENTS_V:
+  case AMDGPU::TEX_LD:
+  case AMDGPU::TEX_GET_TEXTURE_RESINFO:
+  case AMDGPU::TEX_SAMPLE:
+  case AMDGPU::TEX_SAMPLE_C:
+  case AMDGPU::TEX_SAMPLE_L:
+  case AMDGPU::TEX_SAMPLE_C_L:
+  case AMDGPU::TEX_SAMPLE_LB:
+  case AMDGPU::TEX_SAMPLE_C_LB:
+  case AMDGPU::TEX_SAMPLE_G:
+  case AMDGPU::TEX_SAMPLE_C_G:
+  case AMDGPU::TEX_GET_GRADIENTS_H:
+  case AMDGPU::TEX_GET_GRADIENTS_V:
+  case AMDGPU::TEX_SET_GRADIENTS_H:
+  case AMDGPU::TEX_SET_GRADIENTS_V:
     return true;
   }
 }
@@ -85,8 +85,8 @@ bool AMDGPU::isReductionOp(unsigned opcode)
 {
   switch(opcode) {
     default: return false;
-    case AMDIL::DOT4_r600:
-    case AMDIL::DOT4_eg:
+    case AMDGPU::DOT4_r600:
+    case AMDGPU::DOT4_eg:
       return true;
   }
 }
@@ -95,8 +95,8 @@ bool AMDGPU::isCubeOp(unsigned opcode)
 {
   switch(opcode) {
     default: return false;
-    case AMDIL::CUBE_r600:
-    case AMDIL::CUBE_eg:
+    case AMDGPU::CUBE_r600:
+    case AMDGPU::CUBE_eg:
       return true;
   }
 }
@@ -106,25 +106,25 @@ bool AMDGPU::isFCOp(unsigned opcode)
 {
   switch(opcode) {
   default: return false;
-  case AMDIL::BREAK_LOGICALZ_f32:
-  case AMDIL::BREAK_LOGICALNZ_i32:
-  case AMDIL::BREAK_LOGICALZ_i32:
-  case AMDIL::BREAK_LOGICALNZ_f32:
-  case AMDIL::CONTINUE_LOGICALNZ_f32:
-  case AMDIL::IF_LOGICALNZ_i32:
-  case AMDIL::IF_LOGICALZ_f32:
-  case AMDIL::ELSE:
-  case AMDIL::ENDIF:
-  case AMDIL::ENDLOOP:
-  case AMDIL::IF_LOGICALNZ_f32:
-  case AMDIL::WHILELOOP:
+  case AMDGPU::BREAK_LOGICALZ_f32:
+  case AMDGPU::BREAK_LOGICALNZ_i32:
+  case AMDGPU::BREAK_LOGICALZ_i32:
+  case AMDGPU::BREAK_LOGICALNZ_f32:
+  case AMDGPU::CONTINUE_LOGICALNZ_f32:
+  case AMDGPU::IF_LOGICALNZ_i32:
+  case AMDGPU::IF_LOGICALZ_f32:
+  case AMDGPU::ELSE:
+  case AMDGPU::ENDIF:
+  case AMDGPU::ENDLOOP:
+  case AMDGPU::IF_LOGICALNZ_f32:
+  case AMDGPU::WHILELOOP:
     return true;
   }
 }
 
-void AMDGPU::utilAddLiveIn(llvm::MachineFunction * MF,
-                           llvm::MachineRegisterInfo & MRI,
-                           const llvm::TargetInstrInfo * TII,
+void AMDGPU::utilAddLiveIn(MachineFunction * MF,
+                           MachineRegisterInfo & MRI,
+                           const TargetInstrInfo * TII,
                            unsigned physReg, unsigned virtReg)
 {
     if (!MRI.isLiveIn(physReg)) {

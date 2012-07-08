@@ -65,8 +65,8 @@ ExpandCaseToIntReturn(Instr, Return)
 
 // These macros expand to common groupings of RegClass ID's
 #define ExpandCaseTo1CompRegID \
-case AMDIL::GPRI32RegClassID: \
-case AMDIL::GPRF32RegClassID:
+case AMDGPU::GPRI32RegClassID: \
+case AMDGPU::GPRF32RegClassID:
 
 #define ExpandCaseTo32BitType(Instr) \
 case Instr##_i32: \

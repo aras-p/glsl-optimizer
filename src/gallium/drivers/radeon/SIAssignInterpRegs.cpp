@@ -65,22 +65,22 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
 {
 
   struct interp_info InterpUse[INTERP_VALUES] = {
-    {false, {AMDIL::PERSP_SAMPLE_I, AMDIL::PERSP_SAMPLE_J}, 2},
-    {false, {AMDIL::PERSP_CENTER_I, AMDIL::PERSP_CENTER_J}, 2},
-    {false, {AMDIL::PERSP_CENTROID_I, AMDIL::PERSP_CENTROID_J}, 2},
-    {false, {AMDIL::PERSP_I_W, AMDIL::PERSP_J_W, AMDIL::PERSP_1_W}, 3},
-    {false, {AMDIL::LINEAR_SAMPLE_I, AMDIL::LINEAR_SAMPLE_J}, 2},
-    {false, {AMDIL::LINEAR_CENTER_I, AMDIL::LINEAR_CENTER_J}, 2},
-    {false, {AMDIL::LINEAR_CENTROID_I, AMDIL::LINEAR_CENTROID_J}, 2},
-    {false, {AMDIL::LINE_STIPPLE_TEX_COORD}, 1},
-    {false, {AMDIL::POS_X_FLOAT}, 1},
-    {false, {AMDIL::POS_Y_FLOAT}, 1},
-    {false, {AMDIL::POS_Z_FLOAT}, 1},
-    {false, {AMDIL::POS_W_FLOAT}, 1},
-    {false, {AMDIL::FRONT_FACE}, 1},
-    {false, {AMDIL::ANCILLARY}, 1},
-    {false, {AMDIL::SAMPLE_COVERAGE}, 1},
-    {false, {AMDIL::POS_FIXED_PT}, 1}
+    {false, {AMDGPU::PERSP_SAMPLE_I, AMDGPU::PERSP_SAMPLE_J}, 2},
+    {false, {AMDGPU::PERSP_CENTER_I, AMDGPU::PERSP_CENTER_J}, 2},
+    {false, {AMDGPU::PERSP_CENTROID_I, AMDGPU::PERSP_CENTROID_J}, 2},
+    {false, {AMDGPU::PERSP_I_W, AMDGPU::PERSP_J_W, AMDGPU::PERSP_1_W}, 3},
+    {false, {AMDGPU::LINEAR_SAMPLE_I, AMDGPU::LINEAR_SAMPLE_J}, 2},
+    {false, {AMDGPU::LINEAR_CENTER_I, AMDGPU::LINEAR_CENTER_J}, 2},
+    {false, {AMDGPU::LINEAR_CENTROID_I, AMDGPU::LINEAR_CENTROID_J}, 2},
+    {false, {AMDGPU::LINE_STIPPLE_TEX_COORD}, 1},
+    {false, {AMDGPU::POS_X_FLOAT}, 1},
+    {false, {AMDGPU::POS_Y_FLOAT}, 1},
+    {false, {AMDGPU::POS_Z_FLOAT}, 1},
+    {false, {AMDGPU::POS_W_FLOAT}, 1},
+    {false, {AMDGPU::FRONT_FACE}, 1},
+    {false, {AMDGPU::ANCILLARY}, 1},
+    {false, {AMDGPU::SAMPLE_COVERAGE}, 1},
+    {false, {AMDGPU::POS_FIXED_PT}, 1}
   };
 
   SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
@@ -106,8 +106,8 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
 
     for (unsigned reg_idx = 0; reg_idx < InterpUse[interp_idx].reg_count;
                                                   reg_idx++, used_vgprs++) {
-      unsigned new_reg = AMDIL::VReg_32RegisterClass->getRegister(used_vgprs);
-      unsigned virt_reg = MRI.createVirtualRegister(AMDIL::VReg_32RegisterClass);
+      unsigned new_reg = AMDGPU::VReg_32RegisterClass->getRegister(used_vgprs);
+      unsigned virt_reg = MRI.createVirtualRegister(AMDGPU::VReg_32RegisterClass);
       MRI.replaceRegWith(InterpUse[interp_idx].regs[reg_idx], virt_reg);
       AMDGPU::utilAddLiveIn(&MF, MRI, TM.getInstrInfo(), new_reg, virt_reg);
     }

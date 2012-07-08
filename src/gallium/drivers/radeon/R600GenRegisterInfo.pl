@@ -25,11 +25,11 @@ my $TREG_MAX = TEMP_REG_COUNT - 1;
 print <<STRING;
 
 class R600Reg <string name> : Register<name> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
 }
 
 class R600Reg_128<string n, list<Register> subregs> : RegisterWithSubRegs<n, subregs> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let SubRegIndices = [sel_x, sel_y, sel_z, sel_w];
 }
 
@@ -70,21 +70,21 @@ def NEG_ONE : R600Reg<"-1.0">;
 def PV_X : R600Reg<"pv.x">;
 def ALU_LITERAL_X : R600Reg<"literal.x">;
 
-def R600_CReg32 : RegisterClass <"AMDIL", [f32, i32], 32, (add
+def R600_CReg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     $creg_list)>;
 
-def R600_TReg32 : RegisterClass <"AMDIL", [f32, i32], 32, (add
+def R600_TReg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     $treg_string)>;
 
-def R600_TReg32_X : RegisterClass <"AMDIL", [f32, i32], 32, (add
+def R600_TReg32_X : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     $treg_x_string)>;
     
-def R600_Reg32 : RegisterClass <"AMDIL", [f32, i32], 32, (add
+def R600_Reg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     R600_TReg32,
     R600_CReg32,
     ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF)>;
 
-def R600_Reg128 : RegisterClass<"AMDIL", [v4f32, v4i32], 128, (add
+def R600_Reg128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128, (add
     $t128_string)>
 {
   let SubRegClasses = [(R600_TReg32 sel_x, sel_y, sel_z, sel_w)];
@@ -122,7 +122,7 @@ unsigned R600RegisterInfo::getHWRegIndexGen(unsigned reg) const
 STRING
 foreach my $key (keys(%index_map)) {
   foreach my $reg (@{$index_map{$key}}) {
-    print OUTFILE "  case AMDIL::$reg:\n";
+    print OUTFILE "  case AMDGPU::$reg:\n";
   }
   print OUTFILE "    return $key;\n\n";
 }
@@ -139,7 +139,7 @@ STRING
 
 foreach my $key (keys(%chan_map)) {
   foreach my $reg (@{$chan_map{$key}}) {
-    print OUTFILE " case AMDIL::$reg:\n";
+    print OUTFILE " case AMDGPU::$reg:\n";
   }
   my $val;
   if ($key eq 'X') {

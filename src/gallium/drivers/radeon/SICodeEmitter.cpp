@@ -108,29 +108,29 @@ void SICodeEmitter::emitState(MachineFunction & MF)
           continue;
         }
         reg = MO.getReg();
-        if (reg == AMDIL::VCC) {
+        if (reg == AMDGPU::VCC) {
           VCCUsed = true;
           continue;
         }
-        if (AMDIL::SReg_32RegClass.contains(reg)) {
+        if (AMDGPU::SReg_32RegClass.contains(reg)) {
           isSGPR = true;
           width = 1;
-        } else if (AMDIL::VReg_32RegClass.contains(reg)) {
+        } else if (AMDGPU::VReg_32RegClass.contains(reg)) {
           isSGPR = false;
           width = 1;
-        } else if (AMDIL::SReg_64RegClass.contains(reg)) {
+        } else if (AMDGPU::SReg_64RegClass.contains(reg)) {
           isSGPR = true;
           width = 2;
-        } else if (AMDIL::VReg_64RegClass.contains(reg)) {
+        } else if (AMDGPU::VReg_64RegClass.contains(reg)) {
           isSGPR = false;
           width = 2;
-        } else if (AMDIL::SReg_128RegClass.contains(reg)) {
+        } else if (AMDGPU::SReg_128RegClass.contains(reg)) {
           isSGPR = true;
           width = 4;
-        } else if (AMDIL::VReg_128RegClass.contains(reg)) {
+        } else if (AMDGPU::VReg_128RegClass.contains(reg)) {
           isSGPR = false;
           width = 4;
-        } else if (AMDIL::SReg_256RegClass.contains(reg)) {
+        } else if (AMDGPU::SReg_256RegClass.contains(reg)) {
           isSGPR = true;
           width = 8;
         } else {
@@ -171,14 +171,14 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
                                                       I != E; ++I) {
       MachineInstr &MI = *I;
-      if (MI.getOpcode() != AMDIL::KILL && MI.getOpcode() != AMDIL::RETURN) {
+      if (MI.getOpcode() != AMDGPU::KILL && MI.getOpcode() != AMDGPU::RETURN) {
         emitInstr(MI);
       }
     }
   }
   // Emit S_END_PGM
   MachineInstr * End = BuildMI(MF, DebugLoc(),
-                               TM->getInstrInfo()->get(AMDIL::S_ENDPGM));
+                               TM->getInstrInfo()->get(AMDGPU::S_ENDPGM));
   emitInstr(*End);
   return false;
 }
@@ -304,8 +304,8 @@ uint64_t SICodeEmitter::VOPPostEncode(const MachineInstr &MI,
       continue;
     }
     unsigned reg = MI.getOperand(opIdx).getReg();
-    if (AMDIL::VReg_32RegClass.contains(reg)
-        || AMDIL::VReg_64RegClass.contains(reg)) {
+    if (AMDGPU::VReg_32RegClass.contains(reg)
+        || AMDGPU::VReg_64RegClass.contains(reg)) {
       Value |= (VGPR_BIT(opIdx)) << vgprBitOffset;
     }
   }

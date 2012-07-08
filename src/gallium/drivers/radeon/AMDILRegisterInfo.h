@@ -83,7 +83,7 @@ namespace llvm
 
     virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT)
                                                                       const {
-      return AMDIL::GPRI32RegisterClass;
+      return AMDGPU::GPRI32RegisterClass;
     }
     private:
     mutable int64_t baseOffset;

@@ -34,8 +34,8 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const
 unsigned SIRegisterInfo::getBinaryCode(unsigned reg) const
 {
   switch (reg) {
-    case AMDIL::M0: return 124;
-    case AMDIL::SREG_LIT_0: return 128;
+    case AMDGPU::M0: return 124;
+    case AMDGPU::SREG_LIT_0: return 128;
     default: return getHWRegNum(reg);
   }
 }
@@ -44,8 +44,8 @@ const TargetRegisterClass *
 SIRegisterInfo::getISARegClass(const TargetRegisterClass * rc) const
 {
   switch (rc->getID()) {
-  case AMDIL::GPRF32RegClassID:
-    return &AMDIL::VReg_32RegClass;
+  case AMDGPU::GPRF32RegClassID:
+    return &AMDGPU::VReg_32RegClass;
   default: return rc;
   }
 }
@@ -55,7 +55,7 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
 {
   switch(VT.SimpleTy) {
     default:
-    case MVT::i32: return AMDIL::VReg_32RegisterClass;
+    case MVT::i32: return AMDGPU::VReg_32RegisterClass;
   }
 }
 #include "SIRegisterGetHWRegNum.inc"

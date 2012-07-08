@@ -38,7 +38,7 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const
 {
-  BuildMI(MBB, MI, DL, get(AMDIL::V_MOV_B32_e32), DestReg)
+  BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
@@ -59,7 +59,7 @@ unsigned SIInstrInfo::getEncodingBytes(const MachineInstr &MI) const
   }
 
   /* This instruction always has a literal */
-  if (MI.getOpcode() == AMDIL::S_MOV_IMM_I32) {
+  if (MI.getOpcode() == AMDGPU::S_MOV_IMM_I32) {
     return 8;
   }
 
@@ -80,7 +80,7 @@ unsigned SIInstrInfo::getEncodingBytes(const MachineInstr &MI) const
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                            int64_t Imm) const
 {
-  MachineInstr * MI = MF->CreateMachineInstr(get(AMDIL::V_MOV_IMM_I32), DebugLoc());
+  MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::V_MOV_IMM_I32), DebugLoc());
   MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
   MachineInstrBuilder(MI).addImm(Imm);
 
@@ -92,13 +92,13 @@ bool SIInstrInfo::isMov(unsigned Opcode) const
 {
   switch(Opcode) {
   default: return false;
-  case AMDIL::S_MOV_B32:
-  case AMDIL::S_MOV_B64:
-  case AMDIL::V_MOV_B32_e32:
-  case AMDIL::V_MOV_B32_e64:
-  case AMDIL::V_MOV_IMM_F32:
-  case AMDIL::V_MOV_IMM_I32:
-  case AMDIL::S_MOV_IMM_I32:
+  case AMDGPU::S_MOV_B32:
+  case AMDGPU::S_MOV_B64:
+  case AMDGPU::V_MOV_B32_e32:
+  case AMDGPU::V_MOV_B32_e64:
+  case AMDGPU::V_MOV_IMM_F32:
+  case AMDGPU::V_MOV_IMM_I32:
+  case AMDGPU::S_MOV_IMM_I32:
     return true;
   }
 }

@@ -161,7 +161,7 @@ SDNode *AMDILDAGToDAGISel::Select(SDNode *N) {
       if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
         unsigned int FI = FIN->getIndex();
         EVT OpVT = N->getValueType(0);
-        unsigned int NewOpc = AMDIL::COPY;
+        unsigned int NewOpc = AMDGPU::COPY;
         SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i32);
         return CurDAG->SelectNodeTo(N, NewOpc, OpVT, TFI);
       }
@@ -367,7 +367,7 @@ bool AMDILDAGToDAGISel::SelectADDRVTX_READ(SDValue Addr, SDValue &Base,
              && isInt<16>(IMMOffset->getZExtValue())) {
     Base = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
                                   CurDAG->getEntryNode().getDebugLoc(),
-                                  AMDIL::ZERO, MVT::i32);
+                                  AMDGPU::ZERO, MVT::i32);
     Offset = CurDAG->getTargetConstant(IMMOffset->getZExtValue(), MVT::i32);
     return true;
   }

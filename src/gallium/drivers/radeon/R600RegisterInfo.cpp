@@ -29,17 +29,17 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const
   BitVector Reserved(getNumRegs());
   const R600MachineFunctionInfo * MFI = MF.getInfo<R600MachineFunctionInfo>();
 
-  Reserved.set(AMDIL::ZERO);
-  Reserved.set(AMDIL::HALF);
-  Reserved.set(AMDIL::ONE);
-  Reserved.set(AMDIL::ONE_INT);
-  Reserved.set(AMDIL::NEG_HALF);
-  Reserved.set(AMDIL::NEG_ONE);
-  Reserved.set(AMDIL::PV_X);
-  Reserved.set(AMDIL::ALU_LITERAL_X);
+  Reserved.set(AMDGPU::ZERO);
+  Reserved.set(AMDGPU::HALF);
+  Reserved.set(AMDGPU::ONE);
+  Reserved.set(AMDGPU::ONE_INT);
+  Reserved.set(AMDGPU::NEG_HALF);
+  Reserved.set(AMDGPU::NEG_ONE);
+  Reserved.set(AMDGPU::PV_X);
+  Reserved.set(AMDGPU::ALU_LITERAL_X);
 
-  for (TargetRegisterClass::iterator I = AMDIL::R600_CReg32RegClass.begin(),
-                        E = AMDIL::R600_CReg32RegClass.end(); I != E; ++I) {
+  for (TargetRegisterClass::iterator I = AMDGPU::R600_CReg32RegClass.begin(),
+                        E = AMDGPU::R600_CReg32RegClass.end(); I != E; ++I) {
     Reserved.set(*I);
   }
 
@@ -55,9 +55,9 @@ const TargetRegisterClass *
 R600RegisterInfo::getISARegClass(const TargetRegisterClass * rc) const
 {
   switch (rc->getID()) {
-  case AMDIL::GPRF32RegClassID:
-  case AMDIL::GPRI32RegClassID:
-    return &AMDIL::R600_Reg32RegClass;
+  case AMDGPU::GPRF32RegClassID:
+  case AMDGPU::GPRI32RegClassID:
+    return &AMDGPU::R600_Reg32RegClass;
   default: return rc;
   }
 }
@@ -65,13 +65,13 @@ R600RegisterInfo::getISARegClass(const TargetRegisterClass * rc) const
 unsigned R600RegisterInfo::getHWRegIndex(unsigned reg) const
 {
   switch(reg) {
-  case AMDIL::ZERO: return 248;
-  case AMDIL::ONE:
-  case AMDIL::NEG_ONE: return 249;
-  case AMDIL::ONE_INT: return 250;
-  case AMDIL::HALF:
-  case AMDIL::NEG_HALF: return 252;
-  case AMDIL::ALU_LITERAL_X: return 253;
+  case AMDGPU::ZERO: return 248;
+  case AMDGPU::ONE:
+  case AMDGPU::NEG_ONE: return 249;
+  case AMDGPU::ONE_INT: return 250;
+  case AMDGPU::HALF:
+  case AMDGPU::NEG_HALF: return 252;
+  case AMDGPU::ALU_LITERAL_X: return 253;
   default: return getHWRegIndexGen(reg);
   }
 }
@@ -79,13 +79,13 @@ unsigned R600RegisterInfo::getHWRegIndex(unsigned reg) const
 unsigned R600RegisterInfo::getHWRegChan(unsigned reg) const
 {
   switch(reg) {
-  case AMDIL::ZERO:
-  case AMDIL::ONE:
-  case AMDIL::ONE_INT:
-  case AMDIL::NEG_ONE:
-  case AMDIL::HALF:
-  case AMDIL::NEG_HALF:
-  case AMDIL::ALU_LITERAL_X:
+  case AMDGPU::ZERO:
+  case AMDGPU::ONE:
+  case AMDGPU::ONE_INT:
+  case AMDGPU::NEG_ONE:
+  case AMDGPU::HALF:
+  case AMDGPU::NEG_HALF:
+  case AMDGPU::ALU_LITERAL_X:
     return 0;
   default: return getHWRegChanGen(reg);
   }
@@ -96,7 +96,7 @@ const TargetRegisterClass * R600RegisterInfo::getCFGStructurizerRegClass(
 {
   switch(VT.SimpleTy) {
   default:
-  case MVT::i32: return AMDIL::R600_TReg32RegisterClass;
+  case MVT::i32: return AMDGPU::R600_TReg32RegisterClass;
   }
 }
 #include "R600HwRegInfo.include"

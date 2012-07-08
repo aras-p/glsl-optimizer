@@ -16,7 +16,7 @@ class AMDGPUInst <dag outs, dag ins, string asm, list<dag> pattern> : Instructio
   field bits<16> AMDILOp = 0;
   field bits<3> Gen = 0;
 
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let OutOperandList = outs;
   let InOperandList = ins;
   let AsmString = asm;

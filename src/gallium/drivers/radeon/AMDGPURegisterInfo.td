@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-let Namespace = "AMDIL" in {
+let Namespace = "AMDGPU" in {
   def sel_x : SubRegIndex;
   def sel_y : SubRegIndex;
   def sel_z : SubRegIndex;

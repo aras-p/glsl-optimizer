@@ -20,8 +20,6 @@ class MachineFunction;
 class MachineRegisterInfo;
 class TargetInstrInfo;
 
-}
-
 namespace AMDGPU {
 
 bool isPlaceHolderOpcode(unsigned opcode);
@@ -38,9 +36,11 @@ bool isFCOp(unsigned opcode);
 #define MO_FLAG_ABS   (1 << 2)
 #define MO_FLAG_MASK  (1 << 3)
 
-void utilAddLiveIn(llvm::MachineFunction * MF, llvm::MachineRegisterInfo & MRI,
-    const llvm::TargetInstrInfo * TII, unsigned physReg, unsigned virtReg);
+void utilAddLiveIn(MachineFunction * MF, MachineRegisterInfo & MRI,
+    const TargetInstrInfo * TII, unsigned physReg, unsigned virtReg);
 
 } // End namespace AMDGPU
+
+} // End namespace llvm
 
 #endif // AMDGPU_UTIL_H

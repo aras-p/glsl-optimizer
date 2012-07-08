@@ -23,13 +23,13 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM),
     TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo()))
 {
-  addRegisterClass(MVT::v4f32, &AMDIL::VReg_128RegClass);
-  addRegisterClass(MVT::f32, &AMDIL::VReg_32RegClass);
-  addRegisterClass(MVT::i32, &AMDIL::VReg_32RegClass);
-  addRegisterClass(MVT::i64, &AMDIL::VReg_64RegClass);
+  addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
+  addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
+  addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
+  addRegisterClass(MVT::i64, &AMDGPU::VReg_64RegClass);
 
-  addRegisterClass(MVT::v4i32, &AMDIL::SReg_128RegClass);
-  addRegisterClass(MVT::v8i32, &AMDIL::SReg_256RegClass);
+  addRegisterClass(MVT::v4i32, &AMDGPU::SReg_128RegClass);
+  addRegisterClass(MVT::v8i32, &AMDGPU::SReg_256RegClass);
 
   computeRegisterProperties();
 
@@ -54,8 +54,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
 
-  case AMDIL::CLAMP_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
+  case AMDGPU::CLAMP_SI:
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
            .addOperand(MI->getOperand(0))
            .addOperand(MI->getOperand(1))
            // VSRC1-2 are unused, but we still need to fill all the
@@ -69,8 +69,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
 
-  case AMDIL::FABS_SI:
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDIL::V_MOV_B32_e64))
+  case AMDGPU::FABS_SI:
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
                  .addOperand(MI->getOperand(0))
                  .addOperand(MI->getOperand(1))
                  // VSRC1-2 are unused, but we still need to fill all the
@@ -84,22 +84,22 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
 
-  case AMDIL::SI_INTERP:
+  case AMDGPU::SI_INTERP:
     LowerSI_INTERP(MI, *BB, I, MRI);
     break;
-  case AMDIL::SI_INTERP_CONST:
+  case AMDGPU::SI_INTERP_CONST:
     LowerSI_INTERP_CONST(MI, *BB, I);
     break;
-  case AMDIL::SI_V_CNDLT:
+  case AMDGPU::SI_V_CNDLT:
     LowerSI_V_CNDLT(MI, *BB, I, MRI);
     break;
-  case AMDIL::USE_SGPR_32:
-  case AMDIL::USE_SGPR_64:
+  case AMDGPU::USE_SGPR_32:
+  case AMDGPU::USE_SGPR_64:
     lowerUSE_SGPR(MI, BB->getParent(), MRI);
     MI->eraseFromParent();
     break;
-  case AMDIL::VS_LOAD_BUFFER_INDEX:
-    addLiveIn(MI, BB->getParent(), MRI, TII, AMDIL::VGPR0);
+  case AMDGPU::VS_LOAD_BUFFER_INDEX:
+    addLiveIn(MI, BB->getParent(), MRI, TII, AMDGPU::VGPR0);
     MI->eraseFromParent();
     break;
   }
@@ -109,14 +109,14 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
 void SITargetLowering::AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I) const
 {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_WAITCNT))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WAITCNT))
           .addImm(0);
 }
 
 void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
 {
-  unsigned tmp = MRI.createVirtualRegister(&AMDIL::VReg_32RegClass);
+  unsigned tmp = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
   MachineOperand dst = MI->getOperand(0);
   MachineOperand iReg = MI->getOperand(1);
   MachineOperand jReg = MI->getOperand(2);
@@ -124,16 +124,16 @@ void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
   MachineOperand attr = MI->getOperand(4);
   MachineOperand params = MI->getOperand(5);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_MOV_B32))
-          .addReg(AMDIL::M0)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32))
+          .addReg(AMDGPU::M0)
           .addOperand(params);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_P1_F32), tmp)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_P1_F32), tmp)
           .addOperand(iReg)
           .addOperand(attr_chan)
           .addOperand(attr);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_P2_F32))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_P2_F32))
           .addOperand(dst)
           .addReg(tmp)
           .addOperand(jReg)
@@ -151,11 +151,11 @@ void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
   MachineOperand attr = MI->getOperand(2);
   MachineOperand params = MI->getOperand(3);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::S_MOV_B32))
-          .addReg(AMDIL::M0)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32))
+          .addReg(AMDGPU::M0)
           .addOperand(params);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_INTERP_MOV_F32))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_MOV_F32))
           .addOperand(dst)
           .addOperand(attr_chan)
           .addOperand(attr);
@@ -166,11 +166,11 @@ void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
 void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
 {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_CMP_LT_F32_e32))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CMP_LT_F32_e32))
           .addOperand(MI->getOperand(1))
-          .addReg(AMDIL::SREG_LIT_0);
+          .addReg(AMDGPU::SREG_LIT_0);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDIL::V_CNDMASK_B32))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CNDMASK_B32))
           .addOperand(MI->getOperand(0))
           .addOperand(MI->getOperand(2))
           .addOperand(MI->getOperand(3));

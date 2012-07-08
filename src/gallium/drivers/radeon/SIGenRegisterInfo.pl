@@ -26,7 +26,7 @@ my $INDEX_FILE = defined($ARGV[0]) ? $ARGV[0] : '';
 
 print <<STRING;
 
-let Namespace = "AMDIL" in {
+let Namespace = "AMDGPU" in {
   def low : SubRegIndex;
   def high : SubRegIndex;
 
@@ -41,21 +41,21 @@ let Namespace = "AMDIL" in {
 }
 
 class SIReg <string n> : Register<n> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
 }
 
 class SI_64 <string n, list<Register> subregs> : RegisterWithSubRegs<n, subregs> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let SubRegIndices = [low, high];
 }
 
 class SI_128 <string n, list<Register> subregs> : RegisterWithSubRegs<n, subregs> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let SubRegIndices = [sel_x, sel_y, sel_z, sel_w];
 }
 
 class SI_256 <string n, list<Register> subregs> : RegisterWithSubRegs<n, subregs> {
-  let Namespace = "AMDIL";
+  let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7];
 }
 
@@ -138,11 +138,11 @@ for (my $i = 0; $i < $VGPR_COUNT; $i++) {
 
 print <<STRING;
 
-def SReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
+def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
     (add (sequence "SGPR%u", 0, $SGPR_MAX_IDX),  SREG_LIT_0, M0)
 >;
 
-def VReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
+def VReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
     (add (sequence "VGPR%u", 0, $VGPR_MAX_IDX),
     PERSP_SAMPLE_I, PERSP_SAMPLE_J,
     PERSP_CENTER_I, PERSP_CENTER_J,
@@ -163,11 +163,11 @@ def VReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
     )
 >;
 
-def AllReg_32 : RegisterClass<"AMDIL", [f32, i32], 32,
+def AllReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
     (add VReg_32, SReg_32)
 >;
 
-def CCReg : RegisterClass<"AMDIL", [f32], 32, (add VCC, SCC)>;
+def CCReg : RegisterClass<"AMDGPU", [f32], 32, (add VCC, SCC)>;
 
 STRING
 
@@ -187,7 +187,7 @@ my $sgpr64_list = join(',', @SGPR64);
 my $vgpr64_list = join(',', @VGPR64);
 print <<STRING;
 
-def AllReg_64 : RegisterClass<"AMDIL", [f64, i64], 64,
+def AllReg_64 : RegisterClass<"AMDGPU", [f64, i64], 64,
     (add $sgpr64_list, $vgpr64_list)
 >;
 
@@ -229,7 +229,7 @@ if ($INDEX_FILE ne '') {
   for my $key (keys(%hw_values)) {
     my @names = @{$hw_values{$key}};
     for my $regname (@names) {
-      print $fh "  case AMDIL::$regname:\n"
+      print $fh "  case AMDGPU::$regname:\n"
     }
     print $fh "    return $key;\n";
   }
@@ -266,7 +266,7 @@ sub print_reg_class {
   }
   my $reg_list = join(', ', @registers);
 
-  print "def $class_prefix\_$reg_width : RegisterClass<\"AMDIL\", [" . join (', ', @types) . "], $reg_width,\n  (add $reg_list)\n>{\n";
+  print "def $class_prefix\_$reg_width : RegisterClass<\"AMDGPU\", [" . join (', ', @types) . "], $reg_width,\n  (add $reg_list)\n>{\n";
   print "  let SubRegClasses = [($class_prefix\_", ($reg_width / $component_count) , ' ', join(', ', @{$sub_reg_ref}), ")];\n}\n";
   return @registers;
 }

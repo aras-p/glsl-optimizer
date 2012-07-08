@@ -91,8 +91,8 @@ bool AMDILInstrInfo::getNextBranchInstr(MachineBasicBlock::iterator &iter,
     switch (iter->getOpcode()) {
     default:
       break;
-      ExpandCaseToAllScalarTypes(AMDIL::BRANCH_COND);
-    case AMDIL::BRANCH:
+      ExpandCaseToAllScalarTypes(AMDGPU::BRANCH_COND);
+    case AMDGPU::BRANCH:
       return true;
     };
     ++iter;
@@ -113,7 +113,7 @@ bool AMDILInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   } else {
     MachineInstr *firstBranch = iter;
     if (!getNextBranchInstr(++iter, MBB)) {
-      if (firstBranch->getOpcode() == AMDIL::BRANCH) {
+      if (firstBranch->getOpcode() == AMDGPU::BRANCH) {
         TBB = firstBranch->getOperand(0).getMBB();
         firstBranch->eraseFromParent();
         retVal = false;
@@ -129,7 +129,7 @@ bool AMDILInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     } else {
       MachineInstr *secondBranch = iter;
       if (!getNextBranchInstr(++iter, MBB)) {
-        if (secondBranch->getOpcode() == AMDIL::BRANCH) {
+        if (secondBranch->getOpcode() == AMDGPU::BRANCH) {
           TBB = firstBranch->getOperand(0).getMBB();
           Cond.push_back(firstBranch->getOperand(1));
           FBB = secondBranch->getOperand(0).getMBB();
@@ -154,8 +154,8 @@ unsigned int AMDILInstrInfo::getBranchInstr(const MachineOperand &op) const {
   
   switch (MI->getDesc().OpInfo->RegClass) {
   default: // FIXME: fallthrough??
-  case AMDIL::GPRI32RegClassID: return AMDIL::BRANCH_COND_i32;
-  case AMDIL::GPRF32RegClassID: return AMDIL::BRANCH_COND_f32;
+  case AMDGPU::GPRI32RegClassID: return AMDGPU::BRANCH_COND_i32;
+  case AMDGPU::GPRF32RegClassID: return AMDGPU::BRANCH_COND_f32;
   };
 }
 
@@ -172,7 +172,7 @@ AMDILInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   }
   if (FBB == 0) {
     if (Cond.empty()) {
-      BuildMI(&MBB, DL, get(AMDIL::BRANCH)).addMBB(TBB);
+      BuildMI(&MBB, DL, get(AMDGPU::BRANCH)).addMBB(TBB);
     } else {
       BuildMI(&MBB, DL, get(getBranchInstr(Cond[0])))
         .addMBB(TBB).addReg(Cond[0].getReg());
@@ -181,7 +181,7 @@ AMDILInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   } else {
     BuildMI(&MBB, DL, get(getBranchInstr(Cond[0])))
       .addMBB(TBB).addReg(Cond[0].getReg());
-    BuildMI(&MBB, DL, get(AMDIL::BRANCH)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(AMDGPU::BRANCH)).addMBB(FBB);
   }
   assert(0 && "Inserting two branches not supported");
   return 0;
@@ -196,8 +196,8 @@ unsigned int AMDILInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   switch (I->getOpcode()) {
   default:
     return 0;
-    ExpandCaseToAllScalarTypes(AMDIL::BRANCH_COND);
-  case AMDIL::BRANCH:
+    ExpandCaseToAllScalarTypes(AMDGPU::BRANCH_COND);
+  case AMDGPU::BRANCH:
     I->eraseFromParent();
     break;
   }
@@ -211,7 +211,7 @@ unsigned int AMDILInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
     // FIXME: only one case??
   default:
     return 1;
-    ExpandCaseToAllScalarTypes(AMDIL::BRANCH_COND);
+    ExpandCaseToAllScalarTypes(AMDGPU::BRANCH_COND);
     I->eraseFromParent();
     break;
   }
@@ -224,9 +224,9 @@ MachineBasicBlock::iterator skipFlowControl(MachineBasicBlock *MBB) {
     return MBB->end();
   }
   while (--tmp) {
-    if (tmp->getOpcode() == AMDIL::ENDLOOP
-        || tmp->getOpcode() == AMDIL::ENDIF
-        || tmp->getOpcode() == AMDIL::ELSE) {
+    if (tmp->getOpcode() == AMDGPU::ENDLOOP
+        || tmp->getOpcode() == AMDGPU::ENDIF
+        || tmp->getOpcode() == AMDGPU::ELSE) {
       if (tmp == MBB->begin()) {
         return tmp;
       } else {
@@ -253,11 +253,11 @@ AMDILInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   
   DebugLoc DL;
   switch (RC->getID()) {
-  case AMDIL::GPRF32RegClassID:
-    Opc = AMDIL::PRIVATESTORE_f32;
+  case AMDGPU::GPRF32RegClassID:
+    Opc = AMDGPU::PRIVATESTORE_f32;
     break;
-  case AMDIL::GPRI32RegClassID:
-    Opc = AMDIL::PRIVATESTORE_i32;
+  case AMDGPU::GPRI32RegClassID:
+    Opc = AMDGPU::PRIVATESTORE_i32;
     break;
   }
   if (MI != MBB.end()) DL = MI->getDebugLoc();
@@ -288,11 +288,11 @@ AMDILInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   DebugLoc DL;
   switch (RC->getID()) {
-  case AMDIL::GPRF32RegClassID:
-    Opc = AMDIL::PRIVATELOAD_f32;
+  case AMDGPU::GPRF32RegClassID:
+    Opc = AMDGPU::PRIVATELOAD_f32;
     break;
-  case AMDIL::GPRI32RegClassID:
-    Opc = AMDIL::PRIVATELOAD_i32;
+  case AMDGPU::GPRI32RegClassID:
+    Opc = AMDGPU::PRIVATELOAD_i32;
     break;
   }
 
