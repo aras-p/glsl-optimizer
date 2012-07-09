@@ -143,6 +143,14 @@ swizzle_xyzw(operand a)
 }
 
 ir_expression *
+expr(ir_expression_operation op, operand a)
+{
+   void *mem_ctx = ralloc_parent(a.val);
+
+   return new(mem_ctx) ir_expression(op, a.val);
+}
+
+ir_expression *
 expr(ir_expression_operation op, operand a, operand b)
 {
    void *mem_ctx = ralloc_parent(a.val);
