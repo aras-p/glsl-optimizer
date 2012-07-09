@@ -1246,18 +1246,31 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
                      s_is_zero ? 2 : 5);
       break;
    case 7:
-      if (key->tex_samples > 0) {
-         if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS) {
-            texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS,
-                           gen7_ld2dms_args, ARRAY_SIZE(gen7_ld2dms_args));
-         } else {
-            texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
-                           gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
-         }
-      } else {
+      switch (key->tex_layout) {
+      case INTEL_MSAA_LAYOUT_IMS:
+         /* From the Ivy Bridge PRM, Vol4 Part1 p72 (Multisampled Surface Storage
+          * Format):
+          *
+          *     If this field is MSFMT_DEPTH_STENCIL
+          *     [a.k.a. INTEL_MSAA_LAYOUT_IMS], the only sampling engine
+          *     messages allowed are "ld2dms", "resinfo", and "sampleinfo".
+          *
+          * So fall through to emit the same message as we use for
+          * INTEL_MSAA_LAYOUT_CMS.
+          */
+      case INTEL_MSAA_LAYOUT_CMS:
+         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS,
+                        gen7_ld2dms_args, ARRAY_SIZE(gen7_ld2dms_args));
+         break;
+      case INTEL_MSAA_LAYOUT_UMS:
+         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
+                        gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
+         break;
+      case INTEL_MSAA_LAYOUT_NONE:
          assert(s_is_zero);
          texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
                         ARRAY_SIZE(gen7_ld_args));
+         break;
       }
       break;
    default:
@@ -1321,7 +1334,22 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
             expand_to_32_bits(S, mrf);
          break;
       case SAMPLER_MESSAGE_ARG_MCS_INT:
-         brw_MOV(&func, mrf, mcs_data);
+         switch (key->tex_layout) {
+         case INTEL_MSAA_LAYOUT_CMS:
+            brw_MOV(&func, mrf, mcs_data);
+            break;
+         case INTEL_MSAA_LAYOUT_IMS:
+            /* When sampling from an IMS surface, MCS data is not relevant,
+             * and the hardware ignores it.  So don't bother populating it.
+             */
+            break;
+         default:
+            /* We shouldn't be trying to send MCS data with any other
+             * layouts.
+             */
+            assert (!"Unsupported layout for MCS data");
+            break;
+         }
          break;
       case SAMPLER_MESSAGE_ARG_ZERO_INT:
          brw_MOV(&func, mrf, brw_imm_ud(0));
@@ -1485,19 +1513,11 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    }
 
    if (brw->intel.gen > 6) {
-      /* Gen7's texturing hardware only supports the IMS layout with the
-       * ld2dms instruction (which blorp doesn't use).  So if the source is
-       * IMS, we'll have to map it as a single-sampled texture and
-       * de-interleave the samples ourselves.
-       */
-      if (src_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS)
-         src.num_samples = 0;
-
-      /* Similarly, Gen7's rendering hardware only supports the IMS layout for
-       * depth and stencil render targets.  Blorp always maps its destination
-       * surface as a color render target (even if it's actually a depth or
-       * stencil buffer).  So if the destination is IMS, we'll have to map it
-       * as a single-sampled texture and interleave the samples ourselves.
+      /* Gen7's rendering hardware only supports the IMS layout for depth and
+       * stencil render targets.  Blorp always maps its destination surface as
+       * a color render target (even if it's actually a depth or stencil
+       * buffer).  So if the destination is IMS, we'll have to map it as a
+       * single-sampled texture and interleave the samples ourselves.
        */
       if (dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS)
          dst.num_samples = 0;
