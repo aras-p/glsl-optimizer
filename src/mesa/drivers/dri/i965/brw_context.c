@@ -154,11 +154,6 @@ brwCreateContext(int api,
    ctx->Const.MaxTransformFeedbackSeparateComponents =
       BRW_MAX_SOL_BINDINGS / BRW_MAX_SOL_BUFFERS;
 
-   /* Claim to support 4 multisamples, even though we don't.  This is a
-    * requirement for GL 3.0 that we missed until the last minute.  Go ahead and
-    * claim the limit, so that usage of the 4 multisample-based API that is
-    * guaranteed in 3.0 succeeds, even though we only rasterize a single sample.
-    */
    if (intel->gen >= 6)
       ctx->Const.MaxSamples = 4;
 
