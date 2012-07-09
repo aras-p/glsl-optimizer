@@ -1432,20 +1432,15 @@ compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
       assert(true_layout == INTEL_MSAA_LAYOUT_NONE ||
              true_layout == INTEL_MSAA_LAYOUT_IMS);
       return INTEL_MSAA_LAYOUT_NONE;
+   } else {
+      assert(true_layout != INTEL_MSAA_LAYOUT_NONE);
    }
 
    /* Prior to Gen7, all MSAA surfaces use IMS layout. */
    if (brw->intel.gen == 6) {
       assert(true_layout == INTEL_MSAA_LAYOUT_IMS);
-      return INTEL_MSAA_LAYOUT_IMS;
    }
 
-   /* Since blorp uses color textures and render targets to do all its work
-    * (even when blitting stencil and depth data), we always have to configure
-    * the Gen7 GPU to use UMS or CMS layout on Gen7.
-    */
-   assert(true_layout == INTEL_MSAA_LAYOUT_UMS ||
-          true_layout == INTEL_MSAA_LAYOUT_CMS);
    return true_layout;
 }
 
