@@ -39,6 +39,8 @@
 extern "C" {
 #endif
 
+enum intel_msaa_layout;
+
 extern const struct brw_tracked_state brw_blend_constant_color;
 extern const struct brw_tracked_state brw_cc_vp;
 extern const struct brw_tracked_state brw_cc_unit;
@@ -199,8 +201,9 @@ GLuint translate_tex_format(gl_format mesa_format,
 
 /* gen7_wm_surface_state.c */
 void gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling);
-void gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
-                                       unsigned num_samples);
+void gen7_set_surface_msaa(struct gen7_surface_state *surf,
+                           unsigned num_samples,
+                           enum intel_msaa_layout layout);
 void gen7_set_surface_mcs_info(struct brw_context *brw,
                                struct gen7_surface_state *surf,
                                uint32_t surf_offset,

@@ -56,8 +56,8 @@ gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling)
 
 
 void
-gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
-                                  unsigned num_samples)
+gen7_set_surface_msaa(struct gen7_surface_state *surf, unsigned num_samples,
+                      enum intel_msaa_layout layout)
 {
    if (num_samples > 4)
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_8;
@@ -65,6 +65,11 @@ gen7_set_surface_num_multisamples(struct gen7_surface_state *surf,
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_4;
    else
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_1;
+
+   surf->ss4.multisampled_surface_storage_format =
+      layout == INTEL_MSAA_LAYOUT_IMS ?
+      GEN7_SURFACE_MSFMT_DEPTH_STENCIL :
+      GEN7_SURFACE_MSFMT_MSS;
 }
 
 
@@ -490,7 +495,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    gen7_set_surface_tiling(surf, region->tiling);
    surf->ss3.pitch = (region->pitch * region->cpp) - 1;
 
-   gen7_set_surface_num_multisamples(surf, irb->mt->num_samples);
+   gen7_set_surface_msaa(surf, irb->mt->num_samples, irb->mt->msaa_layout);
 
    if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
       gen7_set_surface_mcs_info(brw, surf, brw->wm.surf_offset[unit],
