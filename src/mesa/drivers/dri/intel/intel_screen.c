@@ -972,54 +972,6 @@ struct intel_buffer {
    struct intel_region *region;
 };
 
-/**
- * \brief Get tiling format for a DRI buffer.
- *
- * \param attachment is the buffer's attachmet point, such as
- *        __DRI_BUFFER_DEPTH.
- * \param out_tiling is the returned tiling format for buffer.
- * \return false if attachment is unrecognized or is incompatible with screen.
- */
-static bool
-intel_get_dri_buffer_tiling(struct intel_screen *screen,
-                            uint32_t attachment,
-                            uint32_t *out_tiling)
-{
-   if (screen->gen < 4) {
-      *out_tiling = I915_TILING_X;
-      return true;
-   }
-
-   switch (attachment) {
-   case __DRI_BUFFER_DEPTH:
-   case __DRI_BUFFER_DEPTH_STENCIL:
-   case __DRI_BUFFER_HIZ:
-      *out_tiling = I915_TILING_Y;
-      return true;
-   case __DRI_BUFFER_ACCUM:
-   case __DRI_BUFFER_FRONT_LEFT:
-   case __DRI_BUFFER_FRONT_RIGHT:
-   case __DRI_BUFFER_BACK_LEFT:
-   case __DRI_BUFFER_BACK_RIGHT:
-   case __DRI_BUFFER_FAKE_FRONT_LEFT:
-   case __DRI_BUFFER_FAKE_FRONT_RIGHT:
-      *out_tiling = I915_TILING_X;
-      return true;
-   case __DRI_BUFFER_STENCIL:
-      /* The stencil buffer is W tiled. However, we request from the kernel
-       * a non-tiled buffer because the GTT is incapable of W fencing.
-       */
-      *out_tiling = I915_TILING_NONE;
-      return true;
-   default:
-      if(unlikely(INTEL_DEBUG & DEBUG_DRI)) {
-	 fprintf(stderr, "error: %s: unrecognized DRI buffer attachment 0x%x\n",
-	         __FUNCTION__, attachment);
-      }
-       return false;
-   }
-}
-
 static __DRIbuffer *
 intelAllocateBuffer(__DRIscreen *screen,
 		    unsigned attachment, unsigned format,
@@ -1028,49 +980,19 @@ intelAllocateBuffer(__DRIscreen *screen,
    struct intel_buffer *intelBuffer;
    struct intel_screen *intelScreen = screen->driverPrivate;
 
-   uint32_t tiling;
-   uint32_t region_width;
-   uint32_t region_height;
-   uint32_t region_cpp;
-
-   bool ok = true;
-
-   ok = intel_get_dri_buffer_tiling(intelScreen, attachment, &tiling);
-   if (!ok)
-      return NULL;
+   assert(attachment == __DRI_BUFFER_FRONT_LEFT ||
+          attachment == __DRI_BUFFER_BACK_LEFT);
 
    intelBuffer = CALLOC(sizeof *intelBuffer);
    if (intelBuffer == NULL)
       return NULL;
 
-   if (attachment == __DRI_BUFFER_STENCIL) {
-      /* Stencil buffers use W tiling, a tiling format that the DRM functions
-       * don't properly account for.  Therefore, when we allocate a stencil
-       * buffer that is private to Mesa (see intel_miptree_create), we round
-       * the height and width up to the next multiple of the tile size (64x64)
-       * and then ask DRM to allocate an untiled buffer.  Consequently, the
-       * height and the width stored in the stencil buffer's region structure
-       * are always multiples of 64, even if the stencil buffer itself is
-       * smaller.
-       *
-       * To avoid inconsistencies between how we represent private buffers and
-       * buffers shared with the window system, round up the height and width
-       * for window system buffers too.
-       */
-      region_width = ALIGN(width, 64);
-      region_height = ALIGN(height, 64);
-   } else {
-      region_width = width;
-      region_height = height;
-   }
-
-   region_cpp = format / 8;
-
+   /* The front and back buffers are color buffers, which are X tiled. */
    intelBuffer->region = intel_region_alloc(intelScreen,
-                                            tiling,
-                                            region_cpp,
-                                            region_width,
-                                            region_height,
+                                            I915_TILING_X,
+                                            format / 8,
+                                            width,
+                                            height,
                                             true);
    
    if (intelBuffer->region == NULL) {
