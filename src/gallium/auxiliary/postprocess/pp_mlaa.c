@@ -179,7 +179,7 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    util_blit_pixels(p->blitctx, in, 0, 0, 0,
                     w, h, 0, p->framebuffer.cbufs[0],
                     0, 0, w, h, 0, PIPE_TEX_MIPFILTER_NEAREST,
-                    TGSI_WRITEMASK_XYZW);
+                    TGSI_WRITEMASK_XYZW, 0);
 
    u_sampler_view_default_template(&v_tmp, in, in->format);
    arr[0] = p->pipe->create_sampler_view(p->pipe, in, &v_tmp);

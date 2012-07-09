@@ -242,7 +242,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcAtt->Zoffset + srcAtt->CubeMapFace,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
+                          0.0, pFilter, TGSI_WRITEMASK_XYZW, 0);
       }
       else {
          struct st_renderbuffer *srcRb =
@@ -257,7 +257,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcSurf->u.tex.first_layer,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
+                          0.0, pFilter, TGSI_WRITEMASK_XYZW, 0);
       }
    }
 
@@ -281,6 +281,13 @@ st_BlitFramebuffer(struct gl_context *ctx,
       struct pipe_surface *dstDepthSurf =
          dstDepthRb ? dstDepthRb->surface : NULL;
 
+      struct st_renderbuffer *srcStencilRb =
+         st_renderbuffer(readFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+      struct st_renderbuffer *dstStencilRb =
+         st_renderbuffer(drawFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+      struct pipe_surface *dstStencilSurf =
+         dstStencilRb ? dstStencilRb->surface : NULL;
+
       if ((mask & depthStencil) == depthStencil &&
           st_is_depth_stencil_combined(srcDepth, srcStencil) &&
           st_is_depth_stencil_combined(dstDepth, dstStencil)) {
@@ -294,7 +301,15 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcDepthRb->surface->u.tex.first_layer,
                           dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter, 0);
+                          0.0, pFilter, 0,
+                          BLIT_WRITEMASK_Z |
+                          (st->has_stencil_export ? BLIT_WRITEMASK_STENCIL
+                                                  : 0));
+
+         if (!st->has_stencil_export) {
+            _mesa_problem(ctx, "st_BlitFramebuffer(STENCIL) "
+                               "software fallback not implemented");
+         }
       }
       else {
          /* blitting depth and stencil separately */
@@ -305,12 +320,22 @@ st_BlitFramebuffer(struct gl_context *ctx,
                              srcX0, srcY0, srcX1, srcY1,
                              srcDepthRb->surface->u.tex.first_layer,
                              dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                             0.0, pFilter, 0);
+                             0.0, pFilter, 0, BLIT_WRITEMASK_Z);
          }
 
          if (mask & GL_STENCIL_BUFFER_BIT) {
-            /* blit stencil only */
-            _mesa_problem(ctx, "st_BlitFramebuffer(STENCIL) not completed");
+            if (st->has_stencil_export) {
+               util_blit_pixels(st->blit, srcStencilRb->texture,
+                                srcStencilRb->surface->u.tex.level,
+                                srcX0, srcY0, srcX1, srcY1,
+                                srcStencilRb->surface->u.tex.first_layer,
+                                dstStencilSurf, dstX0, dstY0, dstX1, dstY1,
+                                0.0, pFilter, 0, BLIT_WRITEMASK_STENCIL);
+            }
+            else {
+               _mesa_problem(ctx, "st_BlitFramebuffer(STENCIL) "
+                                  "software fallback not implemented");
+            }
          }
       }
    }

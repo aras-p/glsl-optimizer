@@ -187,6 +187,8 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe )
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
    st->force_msaa = st_get_msaa();
+   st->has_stencil_export =
+      screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT);
 
    /* GL limits and extensions */
    st_init_limits(st);

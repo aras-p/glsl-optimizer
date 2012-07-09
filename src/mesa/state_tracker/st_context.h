@@ -81,7 +81,7 @@ struct st_context
    struct draw_stage *rastpos_stage;  /**< For glRasterPos */
    GLboolean clamp_frag_color_in_shader;
    GLboolean clamp_vert_color_in_shader;
-
+   boolean has_stencil_export; /**< can do shader stencil export? */
 
    /* On old libGL's for linux we need to invalidate the drawables
     * on glViewpport calls, this is set via a option.

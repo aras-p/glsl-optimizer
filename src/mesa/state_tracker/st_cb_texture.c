@@ -944,7 +944,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    struct pipe_screen *screen = pipe->screen;
    enum pipe_format dest_format, src_format;
    GLboolean matching_base_formats;
-   GLuint format_writemask, sample_count;
+   GLuint color_writemask, zs_writemask, sample_count;
    struct pipe_surface *dest_surface = NULL;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
    struct pipe_surface surf_tmpl;
@@ -1025,15 +1025,17 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    if (texBaseFormat == GL_DEPTH_COMPONENT) {
-      format_writemask = TGSI_WRITEMASK_XYZW;
+      color_writemask = 0;
+      zs_writemask = BLIT_WRITEMASK_Z;
       dst_usage = PIPE_BIND_DEPTH_STENCIL;
    }
    else {
-      format_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
+      color_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
+      zs_writemask = 0;
       dst_usage = PIPE_BIND_RENDER_TARGET;
    }
 
-   if (!format_writemask ||
+   if ((!color_writemask && !zs_writemask) ||
        !screen->is_format_supported(screen, src_format,
                                     PIPE_TEXTURE_2D, sample_count,
                                     PIPE_BIND_SAMPLER_VIEW) ||
@@ -1076,7 +1078,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                     destX, destY,
                     destX + width, destY + height,
                     0.0, PIPE_TEX_MIPFILTER_NEAREST,
-                    format_writemask);
+                    color_writemask, zs_writemask);
    pipe_surface_reference(&dest_surface, NULL);
 
    /* Restore conditional rendering state. */

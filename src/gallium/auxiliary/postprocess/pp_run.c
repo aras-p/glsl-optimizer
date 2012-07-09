@@ -60,7 +60,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
       util_blit_pixels(ppq->p->blitctx, in, 0, 0, 0,
                        w, h, 0, ppq->tmps[0],
                        0, 0, w, h, 0, PIPE_TEX_MIPFILTER_NEAREST,
-                       TGSI_WRITEMASK_XYZW);
+                       TGSI_WRITEMASK_XYZW, 0);
 
       in = ppq->tmp[0];
    }
