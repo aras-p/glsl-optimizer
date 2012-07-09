@@ -294,7 +294,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                           srcX0, srcY0, srcX1, srcY1,
                           srcDepthRb->surface->u.tex.first_layer,
                           dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                          0.0, pFilter, TGSI_WRITEMASK_XYZW);
+                          0.0, pFilter, 0);
       }
       else {
          /* blitting depth and stencil separately */
@@ -305,7 +305,7 @@ st_BlitFramebuffer(struct gl_context *ctx,
                              srcX0, srcY0, srcX1, srcY1,
                              srcDepthRb->surface->u.tex.first_layer,
                              dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
-                             0.0, pFilter, TGSI_WRITEMASK_XYZW);
+                             0.0, pFilter, 0);
          }
 
          if (mask & GL_STENCIL_BUFFER_BIT) {

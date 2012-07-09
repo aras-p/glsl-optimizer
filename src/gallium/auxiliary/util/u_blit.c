@@ -56,7 +56,7 @@ struct blit_state
    struct pipe_context *pipe;
    struct cso_context *cso;
 
-   struct pipe_blend_state blend;
+   struct pipe_blend_state blend_write_color, blend_keep_color;
    struct pipe_depth_stencil_alpha_state depthstencil_keep;
    struct pipe_depth_stencil_alpha_state depthstencil_write;
    struct pipe_rasterizer_state rasterizer;
@@ -94,7 +94,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->cso = cso;
 
    /* disabled blending/masking */
-   ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
+   ctx->blend_write_color.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
    ctx->depthstencil_write.depth.enabled = 1;
@@ -564,7 +564,11 @@ util_blit_pixels(struct blit_state *ctx,
    cso_save_vertex_buffers(ctx->cso);
 
    /* set misc state we care about */
-   cso_set_blend(ctx->cso, &ctx->blend);
+   if (writemask)
+      cso_set_blend(ctx->cso, &ctx->blend_write_color);
+   else
+      cso_set_blend(ctx->cso, &ctx->blend_keep_color);
+
    cso_set_depth_stencil_alpha(ctx->cso,
                                dst_is_depth ? &ctx->depthstencil_write :
                                               &ctx->depthstencil_keep);
@@ -721,7 +725,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_vertex_buffers(ctx->cso);
 
    /* set misc state we care about */
-   cso_set_blend(ctx->cso, &ctx->blend);
+   cso_set_blend(ctx->cso, &ctx->blend_write_color);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
