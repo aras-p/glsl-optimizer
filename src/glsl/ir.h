@@ -1341,7 +1341,8 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op), projector(NULL), shadow_comparitor(NULL), offset(NULL)
+      : op(op), coordinate(NULL), projector(NULL), shadow_comparitor(NULL),
+        offset(NULL)
    {
       this->ir_type = ir_type_texture;
    }
