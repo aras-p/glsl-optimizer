@@ -125,6 +125,7 @@ i965_CXX_FILES = \
 	brw_fs_reg_allocate.cpp \
 	brw_fs_schedule_instructions.cpp \
 	brw_fs_vector_splitting.cpp \
+	brw_lower_texture_gradients.cpp \
 	brw_shader.cpp \
 	brw_vec4.cpp \
 	brw_vec4_emit.cpp \
