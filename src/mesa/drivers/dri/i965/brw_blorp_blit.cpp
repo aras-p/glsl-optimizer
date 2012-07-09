@@ -1143,6 +1143,26 @@ brw_blorp_blit_program::manual_blend()
       }
       texel_fetch(texture_data[stack_depth++]);
 
+      if (i == 0 && key->tex_layout == INTEL_MSAA_LAYOUT_CMS) {
+         /* The Ivy Bridge PRM, Vol4 Part1 p27 (Multisample Control Surface)
+          * suggests an optimization:
+          *
+          *     "A simple optimization with probable large return in
+          *     performance is to compare the MCS value to zero (indicating
+          *     all samples are on sample slice 0), and sample only from
+          *     sample slice 0 using ld2dss if MCS is zero."
+          *
+          * Note that in the case where the MCS value is zero, sampling from
+          * sample slice 0 using ld2dss and sampling from sample 0 using
+          * ld2dms are equivalent (since all samples are on sample slice 0).
+          * Since we have already sampled from sample 0, all we need to do is
+          * skip the remaining fetches and averaging if MCS is zero.
+          */
+         brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_NZ,
+                 mcs_data, brw_imm_ud(0));
+         brw_IF(&func, BRW_EXECUTE_16);
+      }
+
       /* Do count_trailing_one_bits(i) times */
       for (int j = count_trailing_one_bits(i); j-- > 0; ) {
          assert(stack_depth >= 2);
@@ -1169,6 +1189,9 @@ brw_blorp_blit_program::manual_blend()
                  brw_imm_f(1.0/num_samples));
       }
    }
+
+   if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
+      brw_ENDIF(&func);
 }
 
 /**
