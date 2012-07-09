@@ -952,7 +952,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
 	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", TRUE) ? 130 : 120;
 
-	rscreen->global_pool = compute_memory_pool_new(1024*16, rscreen);
+	rscreen->global_pool = compute_memory_pool_new(0, rscreen);
 
 	return &rscreen->screen;
 }

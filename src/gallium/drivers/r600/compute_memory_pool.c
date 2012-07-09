@@ -48,6 +48,9 @@ static struct r600_resource_texture * create_pool_texture(struct r600_screen * s
 	struct pipe_resource templ;
 	struct r600_resource_texture * tex;
 
+	if (size_in_dw == 0) {
+		return NULL;
+	}
 	memset(&templ, 0, sizeof(templ));
 	templ.target = PIPE_TEXTURE_1D;
 	templ.format = PIPE_FORMAT_R32_UINT;
@@ -93,8 +96,10 @@ struct compute_memory_pool* compute_memory_pool_new(
 void compute_memory_pool_delete(struct compute_memory_pool* pool)
 {
 	free(pool->shadow);
-	pool->screen->screen.resource_destroy((struct pipe_screen *)
+	if (pool->bo) {
+		pool->screen->screen.resource_destroy((struct pipe_screen *)
 			pool->screen, (struct pipe_resource *)pool->bo);
+	}
 	free(pool);
 }
 
@@ -167,15 +172,24 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 	new_size_in_dw += 1024 - (new_size_in_dw % 1024);
 
-	compute_memory_shadow(pool, pipe, 1);
+	if (pool->bo) {
+		compute_memory_shadow(pool, pipe, 1);
+	}
 	pool->shadow = (uint32_t*)realloc(pool->shadow, new_size_in_dw*4);
 	pool->size_in_dw = new_size_in_dw;
-	pool->screen->screen.resource_destroy(
-		(struct pipe_screen *)pool->screen,
-		(struct pipe_resource *)pool->bo);
-	pool->bo = (struct r600_resource*)create_pool_texture(pool->screen,
+	if (pool->bo) {
+		pool->screen->screen.resource_destroy(
+			(struct pipe_screen *)pool->screen,
+			(struct pipe_resource *)pool->bo);
+		pool->bo = (struct r600_resource*)create_pool_texture(
+							pool->screen,
 							pool->size_in_dw);
-	compute_memory_shadow(pool, pipe, 0);
+		compute_memory_shadow(pool, pipe, 0);
+	} else {
+		pool->bo = (struct r600_resource*)create_pool_texture(
+							pool->screen,
+							pool->size_in_dw);
+	}
 }
 
 /**
@@ -382,6 +396,8 @@ void compute_memory_transfer(
 
 	struct pipe_transfer *xfer;
 	uint32_t *map;
+
+	assert(gart);
 
 	if (device_to_host)
 	{
