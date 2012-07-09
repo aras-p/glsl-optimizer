@@ -1018,9 +1018,17 @@ enum ir_expression_operation {
    ir_binop_pow,
 
    /**
+    * Load a value the size of a given GLSL type from a uniform block.
+    *
+    * operand0 is the ir_constant uniform block index in the linked shader.
+    * operand1 is a byte offset within the uniform block.
+    */
+   ir_binop_ubo_load,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_pow,
+   ir_last_binop = ir_binop_ubo_load,
 
    ir_quadop_vector,
 

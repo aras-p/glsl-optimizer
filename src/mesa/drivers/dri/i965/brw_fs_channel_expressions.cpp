@@ -337,6 +337,11 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_noise:
       assert(!"noise should have been broken down to function call");
       break;
+
+   case ir_binop_ubo_load:
+      assert(!"not yet supported");
+      break;
+
    case ir_quadop_vector:
       assert(!"should have been lowered");
       break;

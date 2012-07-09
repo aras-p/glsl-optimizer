@@ -480,6 +480,7 @@ static const char *const operator_strs[] = {
    "min",
    "max",
    "pow",
+   "ubo_load",
    "vector",
 };
 

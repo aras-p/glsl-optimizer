@@ -1314,6 +1314,10 @@ vec4_visitor::visit(ir_expression *ir)
 	 inst = emit(BRW_OPCODE_SHR, result_dst, op[0], op[1]);
       break;
 
+   case ir_binop_ubo_load:
+      assert(!"not yet supported");
+      break;
+
    case ir_quadop_vector:
       assert(!"not reached: should be handled by lower_quadop_vector");
       break;

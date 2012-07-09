@@ -1456,6 +1456,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit(ir, OPCODE_MOV, result_dst, op[0]);
       break;
 
+   case ir_binop_ubo_load:
+      assert(!"not supported");
+      break;
+
    case ir_quadop_vector:
       /* This operation should have already been handled.
        */

@@ -423,6 +423,13 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
+   case ir_binop_ubo_load:
+      assert(ir->operands[0]->as_constant());
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+
+      assert(ir->operands[1]->type == glsl_type::uint_type);
+      break;
+
    case ir_quadop_vector:
       /* The vector operator collects some number of scalars and generates a
        * vector from them.

@@ -1867,6 +1867,10 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       assert(!"GLSL 1.30 features unsupported");
       break;
 
+   case ir_binop_ubo_load:
+      assert(!"not yet supported");
+      break;
+
    case ir_quadop_vector:
       /* This operation should have already been handled.
        */

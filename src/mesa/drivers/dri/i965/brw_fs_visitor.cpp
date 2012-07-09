@@ -571,6 +571,10 @@ fs_visitor::visit(ir_expression *ir)
       else
 	 inst = emit(BRW_OPCODE_SHR, this->result, op[0], op[1]);
       break;
+
+   case ir_binop_ubo_load:
+      assert(!"not yet supported");
+      break;
    }
 }
 
