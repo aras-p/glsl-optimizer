@@ -549,83 +549,80 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 {
    struct intel_renderbuffer *rb;
    struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
+   gl_format rgbFormat;
+   struct gl_framebuffer *fb;
 
-   if (isPixmap) {
-      return false;          /* not implemented */
+   if (isPixmap)
+      return false;
+
+   fb = CALLOC_STRUCT(gl_framebuffer);
+   if (!fb)
+      return false;
+
+   _mesa_initialize_window_framebuffer(fb, mesaVis);
+
+   if (mesaVis->redBits == 5)
+      rgbFormat = MESA_FORMAT_RGB565;
+   else if (mesaVis->alphaBits == 0)
+      rgbFormat = MESA_FORMAT_XRGB8888;
+   else
+      rgbFormat = MESA_FORMAT_ARGB8888;
+
+   /* setup the hardware-based renderbuffers */
+   rb = intel_create_renderbuffer(rgbFormat);
+   _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base.Base);
+
+   if (mesaVis->doubleBufferMode) {
+      rb = intel_create_renderbuffer(rgbFormat);
+      _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base.Base);
+   }
+
+   /*
+    * Assert here that the gl_config has an expected depth/stencil bit
+    * combination: one of d24/s8, d16/s0, d0/s0. (See intelInitScreen2(),
+    * which constructs the advertised configs.)
+    */
+   if (mesaVis->depthBits == 24) {
+      assert(mesaVis->stencilBits == 8);
+
+      if (screen->hw_has_separate_stencil) {
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
+      } else {
+         /*
+          * Use combined depth/stencil. Note that the renderbuffer is
+          * attached to two attachment points.
+          */
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
+      }
+   }
+   else if (mesaVis->depthBits == 16) {
+      assert(mesaVis->stencilBits == 0);
+      /* just 16-bit depth buffer, no hw stencil */
+      struct intel_renderbuffer *depthRb
+         = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
+      _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base.Base);
    }
    else {
-      gl_format rgbFormat;
-
-      struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
-
-      if (!fb)
-	 return false;
-
-      _mesa_initialize_window_framebuffer(fb, mesaVis);
-
-      if (mesaVis->redBits == 5)
-	 rgbFormat = MESA_FORMAT_RGB565;
-      else if (mesaVis->alphaBits == 0)
-	 rgbFormat = MESA_FORMAT_XRGB8888;
-      else
-	 rgbFormat = MESA_FORMAT_ARGB8888;
-
-      /* setup the hardware-based renderbuffers */
-      rb = intel_create_renderbuffer(rgbFormat);
-      _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base.Base);
-
-      if (mesaVis->doubleBufferMode) {
-	 rb = intel_create_renderbuffer(rgbFormat);
-         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base.Base);
-      }
-
-      /*
-       * Assert here that the gl_config has an expected depth/stencil bit
-       * combination: one of d24/s8, d16/s0, d0/s0. (See intelInitScreen2(),
-       * which constructs the advertised configs.)
-       */
-      if (mesaVis->depthBits == 24) {
-	 assert(mesaVis->stencilBits == 8);
-
-	 if (screen->hw_has_separate_stencil) {
-	    rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-	    rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
-	 } else {
-	    /*
-	     * Use combined depth/stencil. Note that the renderbuffer is
-	     * attached to two attachment points.
-	     */
-            rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
-	 }
-      }
-      else if (mesaVis->depthBits == 16) {
-	 assert(mesaVis->stencilBits == 0);
-         /* just 16-bit depth buffer, no hw stencil */
-         struct intel_renderbuffer *depthRb
-	    = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base.Base);
-      }
-      else {
-	 assert(mesaVis->depthBits == 0);
-	 assert(mesaVis->stencilBits == 0);
-      }
-
-      /* now add any/all software-based renderbuffers we may need */
-      _swrast_add_soft_renderbuffers(fb,
-                                     false, /* never sw color */
-                                     false, /* never sw depth */
-                                     false, /* never sw stencil */
-                                     mesaVis->accumRedBits > 0,
-                                     false, /* never sw alpha */
-                                     false  /* never sw aux */ );
-      driDrawPriv->driverPrivate = fb;
-
-      return true;
+      assert(mesaVis->depthBits == 0);
+      assert(mesaVis->stencilBits == 0);
    }
+
+   /* now add any/all software-based renderbuffers we may need */
+   _swrast_add_soft_renderbuffers(fb,
+                                  false, /* never sw color */
+                                  false, /* never sw depth */
+                                  false, /* never sw stencil */
+                                  mesaVis->accumRedBits > 0,
+                                  false, /* never sw alpha */
+                                  false  /* never sw aux */ );
+   driDrawPriv->driverPrivate = fb;
+
+   return true;
 }
 
 static void
