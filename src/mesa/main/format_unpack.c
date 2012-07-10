@@ -1604,6 +1604,11 @@ get_unpack_rgba_function(gl_format format)
       initialized = GL_TRUE;
    }
 
+   if (table[format] == NULL) {
+      _mesa_problem(NULL, "unsupported unpack for format %s",
+                    _mesa_get_format_name(format));
+   }
+
    return table[format];
 }
 
