@@ -2163,9 +2163,6 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    key.clamp_fragment_color = true;
 
    for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      if (fp->Base.ShadowSamplers & (1 << i))
-	 key.tex.compare_funcs[i] = GL_LESS;
-
       /* FINISHME: depth compares might use (0,0,0,W) for example */
       key.tex.swizzles[i] = SWIZZLE_XYZW;
    }

@@ -366,9 +366,6 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 
       if (img->_BaseFormat == GL_DEPTH_COMPONENT ||
 	  img->_BaseFormat == GL_DEPTH_STENCIL) {
-	 if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
-	    key->compare_funcs[i] = sampler->CompareFunc;
-
 	 /* We handle GL_DEPTH_TEXTURE_MODE here instead of as surface format
 	  * overrides because shadow comparison always returns the result of
 	  * the comparison in all channels anyway.
