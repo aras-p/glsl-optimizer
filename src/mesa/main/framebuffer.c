@@ -517,6 +517,13 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
          const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
          const gl_format fmt = rb->Format;
 
+         /* Grab samples and sampleBuffers from any attachment point (assuming
+          * the framebuffer is complete, we'll get the same answer from all
+          * attachments).
+          */
+         fb->Visual.samples = rb->NumSamples;
+         fb->Visual.sampleBuffers = rb->NumSamples > 0 ? 1 : 0;
+
          if (_mesa_is_legal_color_format(ctx, baseFormat)) {
             fb->Visual.redBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
             fb->Visual.greenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);
@@ -524,8 +531,6 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
             fb->Visual.alphaBits = _mesa_get_format_bits(fmt, GL_ALPHA_BITS);
             fb->Visual.rgbBits = fb->Visual.redBits
                + fb->Visual.greenBits + fb->Visual.blueBits;
-            fb->Visual.samples = rb->NumSamples;
-            fb->Visual.sampleBuffers = rb->NumSamples > 0 ? 1 : 0;
             if (_mesa_get_format_color_encoding(fmt) == GL_SRGB)
                 fb->Visual.sRGBCapable = ctx->Extensions.EXT_framebuffer_sRGB;
             break;
