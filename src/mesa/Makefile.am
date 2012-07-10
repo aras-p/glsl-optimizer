@@ -131,9 +131,6 @@ libmesagallium_la_SOURCES = \
 libmesagallium_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
 libmesagallium_la_LDFLAGS =
 
-install-exec-local:
-	$(MAKE) -f $(srcdir)/Makefile.old install
-
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the library in the current directory.
 all-local: libmesa.la libmesagallium.la
@@ -149,3 +146,7 @@ pkgconfig_DATA = osmesa.pc
 else
 pkgconfig_DATA = gl.pc
 endif
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
