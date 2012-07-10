@@ -338,6 +338,11 @@ static boolean noop_is_format_supported(struct pipe_screen* pscreen,
 	return screen->is_format_supported(screen, format, target, sample_count, usage);
 }
 
+static uint64_t noop_get_timestamp(struct pipe_screen *pscreen)
+{
+	return 0;
+}
+
 static void noop_destroy_screen(struct pipe_screen *screen)
 {
 	struct noop_pipe_screen *noop_screen = (struct noop_pipe_screen*)screen;
@@ -376,6 +381,7 @@ struct pipe_screen *noop_screen_create(struct pipe_screen *oscreen)
 	screen->resource_get_handle = noop_resource_get_handle;
 	screen->resource_destroy = noop_resource_destroy;
 	screen->flush_frontbuffer = noop_flush_frontbuffer;
+        screen->get_timestamp = noop_get_timestamp;
 
 	return screen;
 }
