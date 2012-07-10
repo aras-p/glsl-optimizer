@@ -98,11 +98,9 @@ upload_wm_state(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
-   bool multisampled_fbo = false;
 
    /* _NEW_BUFFERS */
-   if (ctx->DrawBuffer->_ColorDrawBuffers[0])
-      multisampled_fbo = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples > 0;
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.sampleBuffers;
 
     /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {

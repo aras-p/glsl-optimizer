@@ -83,19 +83,17 @@ static void upload_multisample_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   unsigned num_samples = 0;
    float coverage = 1.0;
    float coverage_invert = false;
+
+   /* _NEW_BUFFERS */
+   unsigned num_samples = ctx->DrawBuffer->Visual.samples;
 
    /* _NEW_MULTISAMPLE */
    if (ctx->Multisample._Enabled && ctx->Multisample.SampleCoverage) {
       coverage = ctx->Multisample.SampleCoverageValue;
       coverage_invert = ctx->Multisample.SampleCoverageInvert;
    }
-
-   /* _NEW_BUFFERS */
-   if (ctx->DrawBuffer->_ColorDrawBuffers[0])
-      num_samples = ctx->DrawBuffer->_ColorDrawBuffers[0]->NumSamples;
 
    /* 3DSTATE_MULTISAMPLE is nonpipelined. */
    intel_emit_post_sync_nonzero_flush(intel);
