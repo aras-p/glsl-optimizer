@@ -77,6 +77,21 @@ swizzle(operand a, int swizzle, int components)
 }
 
 ir_swizzle *
+swizzle_for_size(operand a, int components)
+{
+   void *mem_ctx = ralloc_parent(a.val);
+
+   if (a.val->type->vector_elements < components)
+      components = a.val->type->vector_elements;
+
+   unsigned s[4] = { 0, 1, 2, 3 };
+   for (int i = components; i < 4; i++)
+      s[i] = components - 1;
+
+   return new(mem_ctx) ir_swizzle(a.val, s, components);
+}
+
+ir_swizzle *
 swizzle_xxxx(operand a)
 {
    return swizzle(a, SWIZZLE_XXXX, 4);
