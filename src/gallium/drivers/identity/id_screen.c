@@ -242,6 +242,15 @@ identity_screen_fence_finish(struct pipe_screen *_screen,
                                timeout);
 }
 
+static uint64_t
+identity_screen_get_timestamp(struct pipe_screen *_screen)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct pipe_screen *screen = id_screen->screen;
+
+   return screen->get_timestamp(screen);
+}
+
 struct pipe_screen *
 identity_screen_create(struct pipe_screen *screen)
 {
@@ -268,6 +277,7 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.fence_reference = identity_screen_fence_reference;
    id_screen->base.fence_signalled = identity_screen_fence_signalled;
    id_screen->base.fence_finish = identity_screen_fence_finish;
+   id_screen->base.get_timestamp = identity_screen_get_timestamp;
 
    id_screen->screen = screen;
 
