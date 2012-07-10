@@ -105,7 +105,7 @@ loop_variable_state::insert(ir_if *if_stmt)
 
 class loop_analysis : public ir_hierarchical_visitor {
 public:
-   loop_analysis();
+   loop_analysis(loop_state *loops);
 
    virtual ir_visitor_status visit(ir_loop_jump *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
@@ -129,12 +129,10 @@ public:
 };
 
 
-loop_analysis::loop_analysis()
+loop_analysis::loop_analysis(loop_state *loops)
+   : loops(loops), if_statement_depth(0), current_assignment(NULL)
 {
-   this->loops = new loop_state;
-
-   this->if_statement_depth = 0;
-   this->current_assignment = NULL;
+   /* empty */
 }
 
 
@@ -521,7 +519,8 @@ is_loop_terminator(ir_if *ir)
 loop_state *
 analyze_loop_variables(exec_list *instructions)
 {
-   loop_analysis v;
+   loop_state *loops = new loop_state;
+   loop_analysis v(loops);
 
    v.run(instructions);
    return v.loops;
