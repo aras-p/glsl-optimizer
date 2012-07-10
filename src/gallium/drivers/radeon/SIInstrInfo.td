@@ -448,7 +448,6 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   let mayStore = 1;
 }
 
-/*XXX: We should be able to infer the imm bit based on the arg types */
 multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
 			ValueType vt> {
 
@@ -458,9 +457,7 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
               (ins SMRDmemrr:$src0),
               asm,
               [(set (vt dstClass:$dst), (constant_load ADDR_Reg:$src0))]
-  > {
-    let IMM = 0;
-  }
+  >;
 
   def _IMM : SMRD <
               op,
@@ -468,9 +465,7 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
               (ins SMRDmemri:$src0),
               asm,
               [(set (vt dstClass:$dst), (constant_load ADDR_Offset8:$src0))]
-  > {
-    let IMM = 1;
-  }
+  >;
 }
 
 include "SIInstrFormats.td"
