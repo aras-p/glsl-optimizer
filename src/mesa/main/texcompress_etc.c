@@ -69,3 +69,35 @@ _mesa_fetch_texel_2d_f_etc1_rgb8(const struct swrast_texture_image *texImage,
    texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
    texel[ACOMP] = 1.0f;
 }
+
+/**
+ * Decode texture data in format `MESA_FORMAT_ETC1_RGB8` to
+ * `MESA_FORMAT_ABGR8888`.
+ *
+ * The size of the source data must be a multiple of the ETC1 block size,
+ * which is 8, even if the texture image's dimensions are not aligned to 4.
+ * From the GL_OES_compressed_ETC1_RGB8_texture spec:
+ *   The texture is described as a number of 4x4 pixel blocks. If the
+ *   texture (or a particular mip-level) is smaller than 4 pixels in
+ *   any dimension (such as a 2x2 or a 8x1 texture), the texture is
+ *   found in the upper left part of the block(s), and the rest of the
+ *   pixels are not used. For instance, a texture of size 4x2 will be
+ *   placed in the upper half of a 4x4 block, and the lower half of the
+ *   pixels in the block will not be accessed.
+ *
+ * \param src_width in pixels
+ * \param src_height in pixels
+ * \param dst_stride in bytes
+ */
+void
+_mesa_etc1_unpack_rgba8888(uint8_t *dst_row,
+                           unsigned dst_stride,
+                           const uint8_t *src_row,
+                           unsigned src_stride,
+                           unsigned src_width,
+                           unsigned src_height)
+{
+   etc1_unpack_rgba8888(dst_row, dst_stride,
+                        src_row, src_stride,
+                        src_width, src_height);
+}
