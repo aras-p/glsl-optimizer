@@ -325,6 +325,15 @@ galahad_screen_fence_finish(struct pipe_screen *_screen,
                                timeout);
 }
 
+static uint64_t
+galahad_screen_get_timestamp(struct pipe_screen *_screen)
+{
+   struct galahad_screen *glhd_screen = galahad_screen(_screen);
+   struct pipe_screen *screen = glhd_screen->screen;
+
+   return screen->get_timestamp(screen);
+}
+
 struct pipe_screen *
 galahad_screen_create(struct pipe_screen *screen)
 {
@@ -360,6 +369,7 @@ galahad_screen_create(struct pipe_screen *screen)
    GLHD_SCREEN_INIT(fence_reference);
    GLHD_SCREEN_INIT(fence_signalled);
    GLHD_SCREEN_INIT(fence_finish);
+   GLHD_SCREEN_INIT(get_timestamp);
 
 #undef GLHD_SCREEN_INIT
 
