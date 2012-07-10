@@ -602,10 +602,8 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
-      /* just 16-bit depth buffer, no hw stencil */
-      struct intel_renderbuffer *depthRb
-         = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
-      _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base.Base);
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
+      _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
    }
    else {
       assert(mesaVis->depthBits == 0);
