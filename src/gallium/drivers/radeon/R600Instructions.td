@@ -1021,14 +1021,6 @@ class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
   let DATA_FORMAT      = 0xD; // COLOR_32
 }
 
-def VTX_READ_PARAM_eg : VTX_READ_32_eg <0,
-  [(set (i32 R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
->;
-
-def VTX_READ_GLOBAL_eg : VTX_READ_32_eg <1,
-  [(set (i32 R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
->;
-
 class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
     : VTX_READ_eg <buffer_id, (outs R600_Reg128:$dst), pattern> {
 
@@ -1040,9 +1032,39 @@ class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
   let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
 }
 
-def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
-  [(set (v4i32 R600_Reg128:$dst), (global_load ADDRVTX_READ:$ptr))]
+//===----------------------------------------------------------------------===//
+// VTX Read from parameter memory space
+//===----------------------------------------------------------------------===//
+
+class VTX_READ_PARAM_32_eg <ValueType vt> : VTX_READ_32_eg <0,
+  [(set (vt R600_TReg32_X:$dst), (load_param ADDRVTX_READ:$ptr))]
 >;
+
+def VTX_READ_PARAM_i32_eg : VTX_READ_PARAM_32_eg<i32>;
+def VTX_READ_PARAM_f32_eg : VTX_READ_PARAM_32_eg<f32>;
+
+
+//===----------------------------------------------------------------------===//
+// VTX Read from global memory space
+//===----------------------------------------------------------------------===//
+
+// 32-bit reads
+
+class VTX_READ_GLOBAL_eg <ValueType vt> : VTX_READ_32_eg <1,
+  [(set (vt R600_TReg32_X:$dst), (global_load ADDRVTX_READ:$ptr))]
+>;
+
+def VTX_READ_GLOBAL_i32_eg : VTX_READ_GLOBAL_eg<i32>;
+def VTX_READ_GLOBAL_f32_eg : VTX_READ_GLOBAL_eg<f32>;
+
+// 128-bit reads
+
+class VTX_READ_GLOBAL_128_eg <ValueType vt> : VTX_READ_128_eg <1,
+  [(set (vt R600_Reg128:$dst), (global_load ADDRVTX_READ:$ptr))]
+>;
+
+def VTX_READ_GLOBAL_v4i32_eg : VTX_READ_GLOBAL_128_eg<v4i32>;
+def VTX_READ_GLOBAL_v4f32_eg : VTX_READ_GLOBAL_128_eg<v4f32>;
 
 }
 

@@ -253,7 +253,7 @@ void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBl
           .addReg(AMDGPU::ALU_LITERAL_X)
           .addImm(dword_offset * 4);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::VTX_READ_PARAM_eg))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::VTX_READ_PARAM_i32_eg))
           .addOperand(MI->getOperand(0))
           .addReg(PtrReg)
           .addImm(0);

@@ -203,9 +203,12 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
                 emit(inst);
                 break;
               }
-            case AMDGPU::VTX_READ_PARAM_eg:
-            case AMDGPU::VTX_READ_GLOBAL_eg:
-            case AMDGPU::VTX_READ_GLOBAL_128_eg:
+            case AMDGPU::VTX_READ_PARAM_i32_eg:
+            case AMDGPU::VTX_READ_PARAM_f32_eg:
+            case AMDGPU::VTX_READ_GLOBAL_i32_eg:
+            case AMDGPU::VTX_READ_GLOBAL_f32_eg:
+            case AMDGPU::VTX_READ_GLOBAL_v4i32_eg:
+            case AMDGPU::VTX_READ_GLOBAL_v4f32_eg:
               {
                 uint64_t InstWord01 = getBinaryCodeForInstr(MI);
                 uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset

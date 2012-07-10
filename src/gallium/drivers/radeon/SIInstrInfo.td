@@ -468,5 +468,10 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
   >;
 }
 
+multiclass SMRD_32 <bits<5> op, string asm, RegisterClass dstClass> {
+  defm _F32 : SMRD_Helper <op, asm, dstClass, f32>;
+  defm _I32 : SMRD_Helper <op, asm, dstClass, i32>;
+}
+
 include "SIInstrFormats.td"
 include "SIInstructions.td"

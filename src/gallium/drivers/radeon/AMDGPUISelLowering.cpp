@@ -33,9 +33,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FEXP2,  MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
-  setOperationAction(ISD::LOAD, MVT::f32, Custom);
-  setOperationAction(ISD::LOAD, MVT::v4f32, Custom);
-
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
@@ -47,7 +44,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   switch (Op.getOpcode()) {
   default: return AMDILTargetLowering::LowerOperation(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::LOAD: return BitcastLOAD(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
@@ -128,36 +124,6 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
   return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
                                                Op.getOperand(2),
                                                OneSubAC);
-}
-
-/// BitcastLoad - Convert floating point loads to integer loads of the same
-/// type width and the bitcast the result back to a floating point type.
-SDValue AMDGPUTargetLowering::BitcastLOAD(SDValue Op, SelectionDAG &DAG) const
-{
-  DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  EVT IntVT;
-
-  if (VT == MVT::f32) {
-    IntVT = MVT::i32;
-  } else if (VT == MVT::v4f32) {
-    IntVT = MVT::v4i32;
-  } else {
-    return Op;
-  }
-  LoadSDNode * LD = dyn_cast<LoadSDNode>(Op);
-  assert(LD);
-
-  SDValue NewLoad = DAG.getLoad (LD->getAddressingMode(),
-                                 LD->getExtensionType(), IntVT, DL,
-                                 LD->getChain(), LD->getBasePtr(),
-                                 LD->getOffset(), IntVT,
-                                 LD->getMemOperand());
-
-  SDValue Bitcast = DAG.getNode(ISD::BITCAST, DL, VT, NewLoad);
-  DAG.ReplaceAllUsesWith(Op.getValue(0).getNode(), &Bitcast);
-
-  return Op;
 }
 
 SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
