@@ -400,6 +400,24 @@ trace_screen_fence_finish(struct pipe_screen *_screen,
  * screen
  */
 
+static uint64_t
+trace_screen_get_timestamp(struct pipe_screen *_screen)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   uint64_t result;
+
+   trace_dump_call_begin("pipe_screen", "get_timestamp");
+   trace_dump_arg(ptr, screen);
+
+   result = screen->get_timestamp(screen);
+
+   trace_dump_ret(uint, result);
+   trace_dump_call_end();
+
+   return result;
+}
+
 static void
 trace_screen_destroy(struct pipe_screen *_screen)
 {
@@ -467,6 +485,7 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.fence_signalled = trace_screen_fence_signalled;
    tr_scr->base.fence_finish = trace_screen_fence_finish;
    tr_scr->base.flush_frontbuffer = trace_screen_flush_frontbuffer;
+   tr_scr->base.get_timestamp = trace_screen_get_timestamp;
 
    tr_scr->screen = screen;
 
