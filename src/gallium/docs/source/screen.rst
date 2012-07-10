@@ -128,6 +128,8 @@ The integer capabilities:
   alignment of pipe_constant_buffer::buffer_offset.
 * ``PIPE_CAP_START_INSTANCE``: Whether the driver supports
   pipe_draw_info::start_instance.
+* ``PIPE_CAP_QUERY_TIMESTAMP``: Whether PIPE_QUERY_TIMESTAMP and
+  the pipe_screen::get_timestamp hook are implemented.
 
 
 .. _pipe_capf:
@@ -399,3 +401,11 @@ resource_destroy
 
 Destroy a resource. A resource is destroyed if it has no more references.
 
+
+
+get_timestamp
+^^^^^^^^^^^^^
+
+Query a timestamp in nanoseconds. The returned value should match
+PIPE_QUERY_TIMESTAMP. This function returns immediately and doesn't
+wait for rendering to complete (which cannot be achieved with queries).
