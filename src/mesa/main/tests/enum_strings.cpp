@@ -1285,7 +1285,7 @@ const struct enum_info everything[] = {
    { 0x88BB, "GL_BUFFER_ACCESS" },
    { 0x88BC, "GL_BUFFER_MAPPED" },
    { 0x88BD, "GL_BUFFER_MAP_POINTER" },
-   { 0x88BF, "GL_TIME_ELAPSED_EXT" },
+   { 0x88BF, "GL_TIME_ELAPSED" },
    { 0x88C0, "GL_MATRIX0_ARB" },
    { 0x88C1, "GL_MATRIX1_ARB" },
    { 0x88C2, "GL_MATRIX2_ARB" },
