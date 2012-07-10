@@ -982,6 +982,10 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    uint32_t *surf;
+   unsigned surface_type = BRW_SURFACE_NULL;
+   drm_intel_bo *bo = NULL;
+   unsigned pitch_minus_1 = 0;
+   uint32_t multisampling_state = 0;
 
    /* _NEW_BUFFERS */
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -989,7 +993,34 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->wm.surf_offset[unit]);
 
-   surf[0] = (BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
+   if (fb->Visual.samples > 0) {
+      /* On Gen6, null render targets seem to cause GPU hangs when
+       * multisampling.  So work around this problem by rendering into dummy
+       * color buffer.
+       *
+       * To decrease the amount of memory needed by the workaround buffer, we
+       * set its pitch to 128 bytes (the width of a Y tile).  This means that
+       * the amount of memory needed for the workaround buffer is
+       * (width_in_tiles + height_in_tiles - 1) tiles.
+       *
+       * Note that since the workaround buffer will be interpreted by the
+       * hardware as an interleaved multisampled buffer, we need to compute
+       * width_in_tiles and height_in_tiles by dividing the width and height
+       * by 16 rather than the normal Y-tile size of 32.
+       */
+      unsigned width_in_tiles = ALIGN(fb->Width, 16) / 16;
+      unsigned height_in_tiles = ALIGN(fb->Height, 16) / 16;
+      unsigned size_needed = (width_in_tiles + height_in_tiles - 1) * 4096;
+      brw_get_scratch_bo(intel, &brw->wm.multisampled_null_render_target_bo,
+                         size_needed);
+      bo = brw->wm.multisampled_null_render_target_bo;
+      surface_type = BRW_SURFACE_2D;
+      pitch_minus_1 = 127;
+      multisampling_state =
+         brw_get_surface_num_multisamples(fb->Visual.samples);
+   }
+
+   surf[0] = (surface_type << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT);
    if (intel->gen < 6) {
       surf[0] |= (1 << BRW_SURFACE_WRITEDISABLE_R_SHIFT |
@@ -997,7 +1028,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 		  1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT |
 		  1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT);
    }
-   surf[1] = 0;
+   surf[1] = bo ? bo->offset : 0;
    surf[2] = ((fb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
               (fb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
@@ -1006,9 +1037,17 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
     *
     *     If Surface Type is SURFTYPE_NULL, this field must be TRUE
     */
-   surf[3] = BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y;
-   surf[4] = 0;
+   surf[3] = (BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y |
+              pitch_minus_1 << BRW_SURFACE_PITCH_SHIFT);
+   surf[4] = multisampling_state;
    surf[5] = 0;
+
+   if (bo) {
+      drm_intel_bo_emit_reloc(brw->intel.batch.bo,
+                              brw->wm.surf_offset[unit] + 4,
+                              bo, 0,
+                              I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
+   }
 }
 
 /**

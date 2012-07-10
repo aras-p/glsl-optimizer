@@ -971,6 +971,12 @@ struct brw_context
 
       drm_intel_bo *scratch_bo;
 
+      /**
+       * Buffer object used in place of multisampled null render targets on
+       * Gen6.  See brw_update_null_renderbuffer_surface().
+       */
+      drm_intel_bo *multisampled_null_render_target_bo;
+
       /** Offset in the program cache to the WM program */
       uint32_t prog_offset;
 
