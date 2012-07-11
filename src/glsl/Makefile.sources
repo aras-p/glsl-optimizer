@@ -66,6 +66,7 @@ LIBGLSL_CXX_FILES = \
 	$(GLSL_SRCDIR)/lower_vec_index_to_swizzle.cpp \
 	$(GLSL_SRCDIR)/lower_vector.cpp \
 	$(GLSL_SRCDIR)/lower_output_reads.cpp \
+	$(GLSL_SRCDIR)/lower_ubo_reference.cpp \
 	$(GLSL_SRCDIR)/opt_algebraic.cpp \
 	$(GLSL_SRCDIR)/opt_array_splitting.cpp \
 	$(GLSL_SRCDIR)/opt_constant_folding.cpp \
