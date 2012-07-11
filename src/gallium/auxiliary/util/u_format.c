@@ -147,8 +147,11 @@ util_format_is_array(const struct util_format_description *desc)
    }
 
    for (chan = 0; chan < desc->nr_channels; ++chan) {
-      if (desc->swizzle[chan] != chan)
+      if (desc->channel[chan].size != desc->channel[0].size)
          return FALSE;
+
+      if (desc->channel[chan].type == UTIL_FORMAT_TYPE_VOID && (chan + 1) == desc->nr_channels)
+         continue;
 
       if (desc->channel[chan].type != desc->channel[0].type)
          return FALSE;
@@ -158,9 +161,16 @@ util_format_is_array(const struct util_format_description *desc)
 
       if (desc->channel[chan].pure_integer != desc->channel[0].pure_integer)
          return FALSE;
+   }
 
-      if (desc->channel[chan].size != desc->channel[0].size)
+   if (desc->nr_channels == 4) {
+      if (desc->swizzle[3] < 3)
          return FALSE;
+   } else {
+      for (chan = 0; chan < desc->nr_channels; ++chan) {
+         if (desc->swizzle[chan] != chan)
+            return FALSE;
+      }
    }
 
    return TRUE;
