@@ -109,7 +109,6 @@ enum r600_pipe_state_id {
 struct compute_memory_pool;
 void compute_memory_pool_delete(struct compute_memory_pool* pool);
 struct compute_memory_pool* compute_memory_pool_new(
-	int64_t initial_size_in_dw,
 	struct r600_screen *rscreen);
 
 struct r600_pipe_fences {

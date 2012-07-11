@@ -624,9 +624,10 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
 		if (ret) {
 			uint64_t * max_global_size = ret;
-			/* XXX: This is what the proprietary driver reports, we
-			 * may want to use a different value. */
-			*max_global_size = 201326592;
+			/* XXX: This is 64kb for now until we get the
+			 * compute memory pool working correctly.
+			 */
+			*max_global_size = 1024 * 16 * 4;
 		}
 		return sizeof(uint64_t);
 
@@ -953,7 +954,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
 	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", TRUE) ? 130 : 120;
 
-	rscreen->global_pool = compute_memory_pool_new(0, rscreen);
+	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
 	return &rscreen->screen;
 }

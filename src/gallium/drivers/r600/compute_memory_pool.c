@@ -74,23 +74,32 @@ static struct r600_resource_texture * create_pool_texture(struct r600_screen * s
  * Creates a new pool
  */
 struct compute_memory_pool* compute_memory_pool_new(
-	int64_t initial_size_in_dw,
 	struct r600_screen * rscreen)
 {
 	struct compute_memory_pool* pool = (struct compute_memory_pool*)
 				CALLOC(sizeof(struct compute_memory_pool), 1);
 
-	COMPUTE_DBG("* compute_memory_pool_new() initial_size_in_dw = %ld\n",
+	COMPUTE_DBG("* compute_memory_pool_new()\n");
+
+	pool->screen = rscreen;
+	return pool;
+}
+
+static void compute_memory_pool_init(struct compute_memory_pool * pool,
+	unsigned initial_size_in_dw)
+{
+
+	COMPUTE_DBG("* compute_memory_pool_init() initial_size_in_dw = %ld\n",
 		initial_size_in_dw);
 
+	/* XXX: pool->shadow is used when the buffer needs to be resized, but
+	 * resizing does not work at the moment.
+	 * pool->shadow = (uint32_t*)CALLOC(4, pool->size_in_dw);
+	 */
 	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
-	pool->screen = rscreen;
 	pool->bo = (struct r600_resource*)create_pool_texture(pool->screen,
 							pool->size_in_dw);
-	pool->shadow = (uint32_t*)CALLOC(4, pool->size_in_dw);
-
-	return pool;
 }
 
 /**
@@ -183,16 +192,26 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 	assert(new_size_in_dw >= pool->size_in_dw);
 
-	new_size_in_dw += 1024 - (new_size_in_dw % 1024);
+	assert(!pool->bo && "Growing the global memory pool is not yet "
+		"supported.  You will see this message if you are trying to"
+		"use more than 64 kb of memory");
 
-	COMPUTE_DBG("  Aligned size = %d\n", new_size_in_dw);
+	if (!pool->bo) {
+		compute_memory_pool_init(pool, 1024 * 16);
+	} else {
+		/* XXX: Growing memory pools does not work at the moment.  I think
+		 * it is because we are using fragment shaders to copy data to
+		 * the new texture and some of the compute registers are being
+		 * included in the 3D command stream. */
+		fprintf(stderr, "Warning: growing the global memory pool to"
+				"more than 64 kb is not yet supported\n");
+		new_size_in_dw += 1024 - (new_size_in_dw % 1024);
 
-	if (pool->bo) {
+		COMPUTE_DBG("  Aligned size = %d\n", new_size_in_dw);
+
 		compute_memory_shadow(pool, pipe, 1);
-	}
-	pool->shadow = (uint32_t*)realloc(pool->shadow, new_size_in_dw*4);
-	pool->size_in_dw = new_size_in_dw;
-	if (pool->bo) {
+		pool->shadow = (uint32_t*)realloc(pool->shadow, new_size_in_dw*4);
+		pool->size_in_dw = new_size_in_dw;
 		pool->screen->screen.resource_destroy(
 			(struct pipe_screen *)pool->screen,
 			(struct pipe_resource *)pool->bo);
@@ -200,10 +219,6 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 							pool->screen,
 							pool->size_in_dw);
 		compute_memory_shadow(pool, pipe, 0);
-	} else {
-		pool->bo = (struct r600_resource*)create_pool_texture(
-							pool->screen,
-							pool->size_in_dw);
 	}
 }
 
