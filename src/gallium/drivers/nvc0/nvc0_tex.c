@@ -338,8 +338,10 @@ nve4_validate_tic(struct nvc0_context *nvc0, unsigned s)
       if (dirty)
          BCTX_REFN(nvc0->bufctx_3d, TEX(s, i), res, RD);
    }
-   for (; i < nvc0->state.num_textures[s]; ++i)
+   for (; i < nvc0->state.num_textures[s]; ++i) {
       nvc0->tex_handles[s][i] |= NVE4_TIC_ENTRY_INVALID;
+      nvc0->textures_dirty[s] |= 1 << i;
+   }
 
    nvc0->state.num_textures[s] = nvc0->num_textures[s];
 
@@ -446,8 +448,10 @@ nve4_validate_tsc(struct nvc0_context *nvc0, int s)
       nvc0->tex_handles[s][i] &= ~NVE4_TSC_ENTRY_INVALID;
       nvc0->tex_handles[s][i] |= tsc->id << 20;
    }
-   for (; i < nvc0->state.num_samplers[s]; ++i)
+   for (; i < nvc0->state.num_samplers[s]; ++i) {
       nvc0->tex_handles[s][i] |= NVE4_TSC_ENTRY_INVALID;
+      nvc0->samplers_dirty[s] |= 1 << i;
+   }
 
    nvc0->state.num_samplers[s] = nvc0->num_samplers[s];
 

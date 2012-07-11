@@ -194,6 +194,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    nvc0->base.scratch.bo_size = 2 << 20;
 
+   memset(nvc0->tex_handles, ~0, sizeof(nvc0->tex_handles));
+
    return pipe;
 
 out_err:
