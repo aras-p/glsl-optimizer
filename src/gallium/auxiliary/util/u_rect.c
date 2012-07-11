@@ -144,11 +144,7 @@ util_fill_rect(ubyte * dst,
          dst += dst_stride;
       }
       break;
-   case 8:
-   case 12:
-   case 16:
-   case 24:
-   case 32:
+   default:
       for (i = 0; i < height; i++) {
          ubyte *row = dst;
          for (j = 0; j < width; j++) {
@@ -157,9 +153,6 @@ util_fill_rect(ubyte * dst,
          }
          dst += dst_stride;
       }
-      break;
-   default:
-      assert(0);
       break;
    }
 }
