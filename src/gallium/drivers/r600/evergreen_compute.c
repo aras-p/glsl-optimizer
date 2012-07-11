@@ -106,6 +106,8 @@ void *evergreen_create_compute_state(
 	const struct pipe_llvm_program_header * header;
 	const unsigned char * code;
 
+	COMPUTE_DBG("*** evergreen_create_compute_state\n");
+
 	header = cso->prog;
 	code = cso->prog + sizeof(struct pipe_llvm_program_header);
 #endif
@@ -144,6 +146,8 @@ void evergreen_delete_compute_state(struct pipe_context *ctx, void* state)
 static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
+
+	COMPUTE_DBG("*** evergreen_bind_compute_state\n");
 
 	ctx->cs_shader = (struct r600_pipe_compute *)state;
 
@@ -444,6 +448,10 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_surface **resources = (struct r600_surface **)surfaces;
+
+	COMPUTE_DBG("*** evergreen_set_compute_resources: start = %u count = %u\n",
+			start, count);
+
 	for (int i = 0; i < count; i++)	{
 		if (resources[i]) {
 			struct r600_resource_global *buffer =
@@ -512,6 +520,9 @@ static void evergreen_set_global_binding(
 	struct compute_memory_pool *pool = ctx->screen->global_pool;
 	struct r600_resource_global **buffers =
 		(struct r600_resource_global **)resources;
+
+	COMPUTE_DBG("*** evergreen_set_global_binding first = %u n = %u\n",
+			first, n);
 
 	if (!resources) {
 		/* XXX: Unset */
@@ -718,6 +729,10 @@ struct pipe_resource *r600_compute_global_buffer_create(
 	struct r600_resource_global* result = (struct r600_resource_global*)
 		CALLOC(sizeof(struct r600_resource_global), 1);
 	struct r600_screen* rscreen = (struct r600_screen*)screen;
+
+	COMPUTE_DBG("*** r600_compute_global_buffer_create\n");
+	COMPUTE_DBG("width = %u array_size = %u\n", templ->width0,
+			templ->array_size);
 
 	result->base.b.vtbl = &r600_global_buffer_vtbl;
 	result->base.b.b.screen = screen;

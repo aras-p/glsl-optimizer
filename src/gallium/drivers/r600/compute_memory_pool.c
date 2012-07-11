@@ -80,6 +80,9 @@ struct compute_memory_pool* compute_memory_pool_new(
 	struct compute_memory_pool* pool = (struct compute_memory_pool*)
 				CALLOC(sizeof(struct compute_memory_pool), 1);
 
+	COMPUTE_DBG("* compute_memory_pool_new() initial_size_in_dw = %ld\n",
+		initial_size_in_dw);
+
 	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
 	pool->screen = rscreen;
@@ -95,6 +98,7 @@ struct compute_memory_pool* compute_memory_pool_new(
  */
 void compute_memory_pool_delete(struct compute_memory_pool* pool)
 {
+	COMPUTE_DBG("* compute_memory_pool_delete()\n");
 	free(pool->shadow);
 	if (pool->bo) {
 		pool->screen->screen.resource_destroy((struct pipe_screen *)
@@ -116,6 +120,9 @@ int64_t compute_memory_prealloc_chunk(
 	struct compute_memory_item *item;
 
 	int last_end = 0;
+
+	COMPUTE_DBG("* compute_memory_prealloc_chunk() size_in_dw = %ld\n",
+		size_in_dw);
 
 	for (item = pool->item_list; item; item = item->next) {
 		if (item->start_in_dw > -1) {
@@ -144,6 +151,9 @@ struct compute_memory_item* compute_memory_postalloc_chunk(
 {
 	struct compute_memory_item* item;
 
+	COMPUTE_DBG("* compute_memory_postalloc_chunck() start_in_dw = %ld\n",
+		start_in_dw);
+
 	for (item = pool->item_list; item; item = item->next) {
 		if (item->next) {
 			if (item->start_in_dw < start_in_dw
@@ -168,9 +178,14 @@ struct compute_memory_item* compute_memory_postalloc_chunk(
 void compute_memory_grow_pool(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int new_size_in_dw)
 {
+	COMPUTE_DBG("* compute_memory_grow_pool() new_size_in_dw = %d\n",
+		new_size_in_dw);
+
 	assert(new_size_in_dw >= pool->size_in_dw);
 
 	new_size_in_dw += 1024 - (new_size_in_dw % 1024);
+
+	COMPUTE_DBG("  Aligned size = %d\n", new_size_in_dw);
 
 	if (pool->bo) {
 		compute_memory_shadow(pool, pipe, 1);
@@ -200,6 +215,9 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 {
 	struct compute_memory_item chunk;
 
+	COMPUTE_DBG("* compute_memory_shadow() device_to_host = %d\n",
+		device_to_host);
+
 	chunk.id = 0;
 	chunk.start_in_dw = 0;
 	chunk.size_in_dw = pool->size_in_dw;
@@ -219,6 +237,8 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 
 	int64_t allocated = 0;
 	int64_t unallocated = 0;
+
+	COMPUTE_DBG("* compute_memory_finalize_pending()\n");
 
 	for (item = pool->item_list; item; item = item->next) {
 		COMPUTE_DBG("list: %i %p\n", item->start_in_dw, item->next);
@@ -317,6 +337,8 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 {
 	struct compute_memory_item *item, *next;
 
+	COMPUTE_DBG("* compute_memory_free() id + %ld \n", id);
+
 	for (item = pool->item_list; item; item = next) {
 		next = item->next;
 
@@ -353,7 +375,7 @@ struct compute_memory_item* compute_memory_alloc(
 {
 	struct compute_memory_item *new_item;
 
-	COMPUTE_DBG("Alloc: %i\n", size_in_dw);
+	COMPUTE_DBG("* compute_memory_alloc() size_in_dw = %ld\n", size_in_dw);
 
 	new_item = (struct compute_memory_item *)
 				CALLOC(sizeof(struct compute_memory_item), 1);
@@ -398,6 +420,10 @@ void compute_memory_transfer(
 	uint32_t *map;
 
 	assert(gart);
+
+	COMPUTE_DBG("* compute_memory_transfer() device_to_host = %d, "
+		"offset_in_chunk = %d, size = %d\n", device_to_host,
+		offset_in_chunk, size);
 
 	if (device_to_host)
 	{
