@@ -108,6 +108,8 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    switch (type) {
    case EGL_WINDOW_BIT:
+      if (!window)
+         return NULL;
       surf = gbm_dri_surface((struct gbm_surface *) window);
       dri2_surf->gbm_surf = surf;
       dri2_surf->base.Width =  surf->base.width;
