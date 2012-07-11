@@ -83,8 +83,8 @@ lp_build_print_value(struct gallivm_state *gallivm,
    LLVMTypeKind type_kind;
    LLVMTypeRef type_ref;
    LLVMValueRef params[2 + LP_MAX_VECTOR_LENGTH];
-   char type_fmt[4] = " %x";
-   char format[2 + 3 * LP_MAX_VECTOR_LENGTH + 2] = "%s";
+   char type_fmt[6] = " %x";
+   char format[2 + 5 * LP_MAX_VECTOR_LENGTH + 2] = "%s";
    unsigned length;
    unsigned i;
 
@@ -101,7 +101,10 @@ lp_build_print_value(struct gallivm_state *gallivm,
    }
 
    if (type_kind == LLVMFloatTypeKind || type_kind == LLVMDoubleTypeKind) {
-      type_fmt[2] = 'f';
+      type_fmt[2] = '.';
+      type_fmt[3] = '9';
+      type_fmt[4] = 'g';
+      type_fmt[5] = '\0';
    } else if (type_kind == LLVMIntegerTypeKind) {
       if (LLVMGetIntTypeWidth(type_ref) == 8) {
          type_fmt[2] = 'u';
