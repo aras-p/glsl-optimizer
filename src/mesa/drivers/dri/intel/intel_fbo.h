@@ -200,6 +200,9 @@ bool
 intel_renderbuffer_resolve_depth(struct intel_context *intel,
 				 struct intel_renderbuffer *irb);
 
+unsigned
+intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples);
+
 #ifdef __cplusplus
 }
 #endif

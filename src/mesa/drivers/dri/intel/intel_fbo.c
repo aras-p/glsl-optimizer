@@ -182,8 +182,8 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
 /**
  * Round up the requested multisample count to the next supported sample size.
  */
-static unsigned
-quantize_num_samples(struct intel_context *intel, unsigned num_samples)
+unsigned
+intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
 {
    switch (intel->gen) {
    case 6:
@@ -226,8 +226,9 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
                                  GLuint width, GLuint height)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct intel_screen *screen = intel->intelScreen;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-   rb->NumSamples = quantize_num_samples(intel, rb->NumSamples);
+   rb->NumSamples = intel_quantize_num_samples(screen, rb->NumSamples);
 
    switch (internalFormat) {
    default:
