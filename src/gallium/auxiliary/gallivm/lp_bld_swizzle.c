@@ -210,7 +210,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
 
       a = LLVMBuildAnd(builder, a,
                        lp_build_const_mask_aos(bld->gallivm,
-                                               type, 1 << channel), "");
+                                               type, 1 << channel, 4), "");
 
       /*
        * Build a type where each element is an integer that cover the four

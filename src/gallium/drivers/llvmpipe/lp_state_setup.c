@@ -472,7 +472,7 @@ emit_apply_cyl_wrap(struct gallivm_state *gallivm,
    /* Constants */
    pos_half = lp_build_const_vec(gallivm, type, +0.5f);
    neg_half = lp_build_const_vec(gallivm, type, -0.5f);
-   cyl_mask = lp_build_const_mask_aos(gallivm, type, cyl_wrap);
+   cyl_mask = lp_build_const_mask_aos(gallivm, type, cyl_wrap, 4);
 
    one = lp_build_const_vec(gallivm, type, 1.0f);
    one = LLVMBuildBitCast(builder, one, lp_build_int_vec_type(gallivm, type), "");

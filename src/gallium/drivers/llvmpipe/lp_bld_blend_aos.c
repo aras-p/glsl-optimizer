@@ -267,11 +267,14 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    const unsigned char swizzle[4])
 {
    const struct pipe_rt_blend_state * state = &blend->rt[rt];
+   const struct util_format_description * desc;
    struct lp_build_blend_aos_context bld;
    LLVMValueRef src_factor, dst_factor;
    LLVMValueRef result;
    unsigned alpha_swizzle = swizzle[3];
    boolean fullcolormask;
+
+   desc = util_format_description(cbuf_format[rt]);
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
@@ -333,7 +336,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
    if (!fullcolormask) {
       LLVMValueRef color_mask;
 
-      color_mask = lp_build_const_mask_aos_swizzled(gallivm, bld.base.type, state->colormask, swizzle);
+      color_mask = lp_build_const_mask_aos_swizzled(gallivm, bld.base.type, state.colormask, desc->nr_channels, swizzle);
       lp_build_name(color_mask, "color_mask");
 
       /* Combine with input mask if necessary */

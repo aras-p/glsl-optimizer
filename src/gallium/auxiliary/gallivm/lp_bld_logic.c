@@ -603,7 +603,7 @@ lp_build_select_aos(struct lp_build_context *bld,
       return LLVMBuildShuffleVector(builder, a, b, LLVMConstVector(shuffles, n), "");
    }
    else {
-      LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask);
+      LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask, 4);
       return lp_build_select(bld, mask_vec, a, b);
    }
 }

@@ -394,7 +394,8 @@ lp_build_const_aos(struct gallivm_state *gallivm,
 LLVMValueRef
 lp_build_const_mask_aos(struct gallivm_state *gallivm,
                         struct lp_type type,
-                        unsigned mask)
+                        unsigned mask,
+                        unsigned channels)
 {
    LLVMTypeRef elem_type = LLVMIntTypeInContext(gallivm->context, type.width);
    LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];
@@ -402,8 +403,8 @@ lp_build_const_mask_aos(struct gallivm_state *gallivm,
 
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   for (j = 0; j < type.length; j += 4) {
-      for( i = 0; i < 4; ++i) {
+   for (j = 0; j < type.length; j += channels) {
+      for( i = 0; i < channels; ++i) {
          masks[j + i] = LLVMConstInt(elem_type,
                                      mask & (1 << i) ? ~0ULL : 0,
                                      1);
@@ -419,17 +420,21 @@ lp_build_const_mask_aos(struct gallivm_state *gallivm,
  */
 LLVMValueRef
 lp_build_const_mask_aos_swizzled(struct gallivm_state *gallivm,
-                        struct lp_type type,
-                        unsigned mask,
-                        const unsigned char *swizzle)
+                                 struct lp_type type,
+                                 unsigned mask,
+                                 unsigned channels,
+                                 const unsigned char *swizzle)
 {
-   mask =
-           ((mask & (1 << swizzle[0])) >> swizzle[0])
-        | (((mask & (1 << swizzle[1])) >> swizzle[1]) << 1)
-        | (((mask & (1 << swizzle[2])) >> swizzle[2]) << 2)
-        | (((mask & (1 << swizzle[3])) >> swizzle[3]) << 3);
+   unsigned i, mask_swizzled;
+   mask_swizzled = 0;
 
-   return lp_build_const_mask_aos(gallivm, type, mask);
+   for (i = 0; i < channels; ++i) {
+      if (swizzle[i] < 4) {
+         mask_swizzled |= ((mask & (1 << swizzle[i])) >> swizzle[i]) << i;
+      }
+   }
+
+   return lp_build_const_mask_aos(gallivm, type, mask_swizzled, channels);
 }
 
 

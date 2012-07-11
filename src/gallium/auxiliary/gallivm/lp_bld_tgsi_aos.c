@@ -329,6 +329,7 @@ lp_emit_store_aos(
       writemask = lp_build_const_mask_aos_swizzled(bld->bld_base.base.gallivm,
                                                    bld->bld_base.base.type,
                                                    reg->Register.WriteMask,
+                                                   TGSI_NUM_CHANNELS,
                                                    bld->swizzles);
 
       if (mask) {

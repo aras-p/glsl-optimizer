@@ -108,14 +108,16 @@ lp_build_const_aos(struct gallivm_state *gallivm, struct lp_type type,
 LLVMValueRef
 lp_build_const_mask_aos(struct gallivm_state *gallivm,
                         struct lp_type type,
-                        unsigned mask);
+                        unsigned mask,
+                        unsigned channels);
 
 
 LLVMValueRef
 lp_build_const_mask_aos_swizzled(struct gallivm_state *gallivm,
-                        struct lp_type type,
-                        unsigned mask,
-                        const unsigned char *swizzle);
+                                 struct lp_type type,
+                                 unsigned mask,
+                                 unsigned channels,
+                                 const unsigned char *swizzle);
 
 
 static INLINE LLVMValueRef
