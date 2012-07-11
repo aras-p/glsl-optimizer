@@ -550,6 +550,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    struct intel_renderbuffer *rb;
    struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
    gl_format rgbFormat;
+   unsigned num_samples = intel_quantize_num_samples(screen, mesaVis->samples);
    struct gl_framebuffer *fb;
 
    if (isPixmap)
@@ -569,11 +570,11 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       rgbFormat = MESA_FORMAT_ARGB8888;
 
    /* setup the hardware-based renderbuffers */
-   rb = intel_create_renderbuffer(rgbFormat);
+   rb = intel_create_renderbuffer(rgbFormat, num_samples);
    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &rb->Base.Base);
 
    if (mesaVis->doubleBufferMode) {
-      rb = intel_create_renderbuffer(rgbFormat);
+      rb = intel_create_renderbuffer(rgbFormat, num_samples);
       _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &rb->Base.Base);
    }
 
@@ -586,23 +587,27 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       assert(mesaVis->stencilBits == 8);
 
       if (screen->hw_has_separate_stencil) {
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24,
+                                                num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8,
+                                                num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
       } else {
          /*
           * Use combined depth/stencil. Note that the renderbuffer is
           * attached to two attachment points.
           */
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24);
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24,
+                                                num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
       }
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
-      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16,
+                                             num_samples);
       _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
    }
    else {

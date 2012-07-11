@@ -130,10 +130,10 @@ intel_rb_format(const struct intel_renderbuffer *rb)
 }
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format);
+intel_create_renderbuffer(gl_format format, unsigned num_samples);
 
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format);
+intel_create_private_renderbuffer(gl_format format, unsigned num_samples);
 
 struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
