@@ -368,7 +368,6 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wno-long-long',
-            '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
         ]
         cflags += [
@@ -405,7 +404,6 @@ def generate(env):
                 '/GL-', # disable whole program optimization
             ]
         ccflags += [
-            '/fp:fast', # fast floating point 
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
             '/wd4996', # disable deprecated POSIX name warnings
