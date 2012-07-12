@@ -238,7 +238,8 @@ fs_visitor::assign_regs()
       if (reg == -1) {
 	 fail("no register to spill\n");
       } else if (c->dispatch_width == 16) {
-	 fail("no spilling support on 16-wide yet\n");
+	 fail("Failure to register allocate.  Reduce number of live scalar "
+              "values to avoid this.");
       } else {
 	 spill_reg(reg);
       }

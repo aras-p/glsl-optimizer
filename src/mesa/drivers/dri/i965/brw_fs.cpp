@@ -2096,7 +2096,10 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       c->dispatch_width = 16;
       fs_visitor v2(c, prog, shader);
       v2.import_uniforms(&v);
-      v2.run();
+      if (!v2.run()) {
+         perf_debug("16-wide shader failed to compile, falling back to "
+                    "8-wide at a 10-20%% performance cost: %s", v2.fail_msg);
+      }
    }
 
    c->prog_data.dispatch_width = 8;

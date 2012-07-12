@@ -464,6 +464,11 @@ extern int INTEL_DEBUG;
 		printf(__VA_ARGS__);				\
 } while(0)
 
+#define perf_debug(...) do {					\
+	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
+		printf(__VA_ARGS__);				\
+} while(0)
+
 #define PCI_CHIP_845_G			0x2562
 #define PCI_CHIP_I830_M			0x3577
 #define PCI_CHIP_I855_GM		0x3582
