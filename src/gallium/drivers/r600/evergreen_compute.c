@@ -83,6 +83,22 @@ writable images will consume TEX slots, VTX slots too because of linear indexing
 
 */
 
+static void evergreen_cs_set_vertex_buffer(
+	struct r600_context * rctx,
+	unsigned vb_index,
+	unsigned offset,
+	struct pipe_resource * buffer)
+{
+	struct pipe_vertex_buffer *vb = &rctx->cs_vertex_buffer[vb_index];
+	vb->stride = 1;
+	vb->buffer_offset = offset;
+	vb->buffer = buffer;
+	vb->user_buffer = NULL;
+
+	r600_inval_vertex_cache(rctx);
+	r600_atom_dirty(rctx, &rctx->cs_vertex_buffer_state);
+}
+
 const struct u_resource_vtbl r600_global_buffer_vtbl =
 {
 	u_default_resource_get_handle, /* get_handle */
@@ -263,8 +279,8 @@ void evergreen_compute_upload_input(
 	ctx->ws->buffer_unmap(ctx->cs_shader->kernel_param->cs_buf);
 
 	///ID=0 is reserved for the parameters
-	evergreen_set_vtx_resource(ctx->cs_shader,
-		ctx->cs_shader->kernel_param, 0, 0, 0);
+	evergreen_cs_set_vertex_buffer(ctx, 0, 0,
+			(struct pipe_resource*)ctx->cs_shader->kernel_param);
 	///ID=0 is reserved for parameters
 	evergreen_set_const_cache(ctx->cs_shader, 0,
 		ctx->cs_shader->kernel_param, ctx->cs_shader->input_size, 0);
@@ -349,6 +365,10 @@ static void compute_emit_cs(struct r600_context *ctx)
 	/* Emit cb_state */
         cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
 	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
+
+	/* Emit vertex buffer state */
+	ctx->cs_vertex_buffer_state.num_dw = 12 * ctx->nr_cs_vertex_buffers;
+	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state);
 
 	for (i = 0; i < get_compute_resource_num(); i++) {
 		if (ctx->cs_shader->resources[i].enabled) {
@@ -452,14 +472,15 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 			start, count);
 
 	for (int i = 0; i < count; i++)	{
+		/* The First two vertex buffers are reserved for parameters and
+		 * global buffers. */
+		unsigned vtx_id = 2 + i;
 		if (resources[i]) {
 			struct r600_resource_global *buffer =
-				(struct r600_resource_global*)resources[i]->base.texture;
+				(struct r600_resource_global*)
+				resources[i]->base.texture;
 			if (resources[i]->base.writable) {
 				assert(i+1 < 12);
-				struct r600_resource_global *buffer =
-					(struct r600_resource_global*)
-					resources[i]->base.texture;
 
 				evergreen_set_rat(ctx->cs_shader, i+1,
 				(struct r600_resource *)resources[i]->base.texture,
@@ -467,9 +488,10 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 				resources[i]->base.texture->width0);
 			}
 
-			evergreen_set_vtx_resource(ctx->cs_shader,
-				(struct r600_resource *)resources[i]->base.texture, i+2,
-				 buffer->chunk->start_in_dw*4, resources[i]->base.writable);
+			evergreen_cs_set_vertex_buffer(ctx, vtx_id,
+					buffer->chunk->start_in_dw * 4,
+					resources[i]->base.texture);
+			ctx->nr_cs_vertex_buffers = vtx_id + 1;
 		}
 	}
 
@@ -539,7 +561,8 @@ static void evergreen_set_global_binding(
 	}
 
 	evergreen_set_rat(ctx->cs_shader, 0, pool->bo, 0, pool->size_in_dw * 4);
-	evergreen_set_vtx_resource(ctx->cs_shader, pool->bo, 1, 0, 1);
+	evergreen_cs_set_vertex_buffer(ctx, 1, 0,
+				(struct pipe_resource*)pool->bo);
 }
 
 /**
@@ -712,6 +735,10 @@ void evergreen_init_compute_state_functions(struct r600_context *ctx)
 	ctx->context.bind_compute_sampler_states = evergreen_bind_compute_sampler_states;
 	ctx->context.set_global_binding = evergreen_set_global_binding;
 	ctx->context.launch_grid = evergreen_launch_grid;
+
+	/* We always use at least two vertex buffers for compute, one for
+         * parameters and one for global memory */
+	ctx->nr_cs_vertex_buffers = 2;
 }
 
 

@@ -336,7 +336,10 @@ struct r600_context {
 	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
+	/** Vertex buffers for fetch shaders */
 	struct r600_atom		vertex_buffer_state;
+	/** Vertex buffers for compute shaders */
+	struct r600_atom		cs_vertex_buffer_state;
 	struct r600_constbuf_state	vs_constbuf_state;
 	struct r600_constbuf_state	ps_constbuf_state;
 
@@ -396,6 +399,8 @@ struct r600_context {
 	struct pipe_index_buffer index_buffer;
 	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 	unsigned		nr_vertex_buffers;
+	struct pipe_vertex_buffer cs_vertex_buffer[PIPE_MAX_ATTRIBS];
+	unsigned		nr_cs_vertex_buffers;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
