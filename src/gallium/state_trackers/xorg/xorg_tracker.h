@@ -46,6 +46,9 @@
 #include <damage.h>
 #endif
 
+/* Prevent symbol clash */
+#undef Absolute
+
 #include "compat-api.h"
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
