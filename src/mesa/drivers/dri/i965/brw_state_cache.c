@@ -375,8 +375,11 @@ brw_state_cache_check_size(struct brw_context *brw)
    /* un-tuned guess.  Each object is generally a page, so 1000 of them is 4 MB of
     * state cache.
     */
-   if (brw->cache.n_items > 1000)
+   if (brw->cache.n_items > 1000) {
+      perf_debug("Exceeded state cache size limit.  Clearing the set "
+                 "of compiled programs, which will trigger recompiles\n");
       brw_clear_cache(brw, &brw->cache);
+   }
 }
 
 
