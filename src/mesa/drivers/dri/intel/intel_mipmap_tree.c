@@ -38,6 +38,10 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 
+#ifndef I915
+#include "brw_blorp.h"
+#endif
+
 #include "main/enums.h"
 #include "main/formats.h"
 #include "main/glformats.h"
@@ -959,6 +963,48 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 					   GEN6_HIZ_OP_DEPTH_RESOLVE);
 }
 
+static void
+intel_miptree_updownsample(struct intel_context *intel,
+                           struct intel_mipmap_tree *src,
+                           struct intel_mipmap_tree *dst,
+                           unsigned width,
+                           unsigned height)
+{
+#ifndef I915
+   int src_x0 = 0;
+   int src_y0 = 0;
+   int dst_x0 = 0;
+   int dst_y0 = 0;
+
+   intel_miptree_slice_resolve_depth(intel, src, 0, 0);
+   intel_miptree_slice_resolve_depth(intel, dst, 0, 0);
+
+   brw_blorp_blit_miptrees(intel,
+                           src, dst,
+                           src_x0, src_y0,
+                           dst_x0, dst_y0,
+                           width, height,
+                           false, false /*mirror x, y*/);
+
+   if (src->stencil_mt) {
+      brw_blorp_blit_miptrees(intel,
+                              src->stencil_mt, dst->stencil_mt,
+                              src_x0, src_y0,
+                              dst_x0, dst_y0,
+                              width, height,
+                              false, false /*mirror x, y*/);
+   }
+#endif /* I915 */
+}
+
+static void
+assert_is_flat(struct intel_mipmap_tree *mt)
+{
+   assert(mt->target == GL_TEXTURE_2D);
+   assert(mt->first_level == 0);
+   assert(mt->last_level == 0);
+}
+
 /**
  * \brief Downsample from mt to mt->singlesample_mt.
  *
@@ -968,7 +1014,23 @@ void
 intel_miptree_downsample(struct intel_context *intel,
                          struct intel_mipmap_tree *mt)
 {
-   /* TODO: stub */
+   /* Only flat, renderbuffer-like miptrees are supported. */
+   assert_is_flat(mt);
+
+   if (!mt->need_downsample)
+      return;
+   intel_miptree_updownsample(intel,
+                              mt, mt->singlesample_mt,
+                              mt->singlesample_mt->width0,
+                              mt->singlesample_mt->height0);
+   mt->need_downsample = false;
+
+   /* Strictly speaking, after a downsample on a depth miptree, a hiz
+    * resolve is needed on the singlesample miptree. However, since the
+    * singlesample miptree is never rendered to, the hiz resolve will never
+    * occur. Therefore we do not mark the needed hiz resolve after
+    * downsampling.
+    */
 }
 
 /**
@@ -980,7 +1042,15 @@ void
 intel_miptree_upsample(struct intel_context *intel,
                        struct intel_mipmap_tree *mt)
 {
-   /* TODO: stub */
+   /* Only flat, renderbuffer-like miptrees are supported. */
+   assert_is_flat(mt);
+   assert(!mt->need_downsample);
+
+   intel_miptree_updownsample(intel,
+                              mt->singlesample_mt, mt,
+                              mt->singlesample_mt->width0,
+                              mt->singlesample_mt->height0);
+   intel_miptree_slice_set_needs_hiz_resolve(mt, 0, 0);
 }
 
 static void
