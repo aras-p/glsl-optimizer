@@ -227,13 +227,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const uint8_t bytes_per_pixel[6] = {
-      2, /* 5_6_5       */
-      2, /* 5_6_5_REV   */
-      4, /* 8_8_8_8     */
-      4  /* 8_8_8_8_REV */
-   };
-
    const uint8_t  * bits;
    const uint32_t * masks;
    int index;
@@ -292,8 +285,9 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
          return NULL;
    }
 
-   switch ( bytes_per_pixel[ index ] ) {
-      case 2:
+   switch ( index ) {
+      case 0:
+      case 1:
 	 bits = bits_table[0];
 	 break;
       default:
