@@ -39,6 +39,8 @@ struct nouveau_screen {
 
 	struct nouveau_mman *mm_VRAM;
 	struct nouveau_mman *mm_GART;
+
+	int64_t cpu_gpu_time_delta;
 };
 
 static INLINE struct nouveau_screen *

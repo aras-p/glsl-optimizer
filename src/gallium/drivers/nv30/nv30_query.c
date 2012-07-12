@@ -114,6 +114,7 @@ nv30_query_create(struct pipe_context *pipe, unsigned type)
    q->type = type;
 
    switch (q->type) {
+   case PIPE_QUERY_TIMESTAMP:
    case PIPE_QUERY_TIME_ELAPSED:
       q->enable = 0x0000;
       q->report = 1;
@@ -158,6 +159,8 @@ nv30_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
          PUSH_DATA (push, (q->report << 24) | q->qo[0]->hw->start);
       }
       break;
+   case PIPE_QUERY_TIMESTAMP:
+      return;
    default:
       BEGIN_NV04(push, NV30_3D(QUERY_RESET), 1);
       PUSH_DATA (push, q->report);
@@ -193,13 +196,13 @@ nv30_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nv30_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-                  boolean wait, void *result)
+                  boolean wait, union pipe_query_result *result)
 {
    struct nv30_screen *screen = nv30_screen(pipe->screen);
    struct nv30_query *q = nv30_query(pq);
    volatile uint32_t *ntfy0 = nv30_ntfy(screen, q->qo[0]);
    volatile uint32_t *ntfy1 = nv30_ntfy(screen, q->qo[1]);
-   uint64_t *res64 = result;
+   uint64_t *res64 = &result->u64;
 
    if (ntfy1) {
       while (ntfy1[3] & 0xff000000) {
@@ -208,6 +211,9 @@ nv30_query_result(struct pipe_context *pipe, struct pipe_query *pq,
       }
 
       switch (q->type) {
+      case PIPE_QUERY_TIMESTAMP:
+         q->result = *(uint64_t *)&ntfy1[0];
+         break;
       case PIPE_QUERY_TIME_ELAPSED:
          q->result = *(uint64_t *)&ntfy1[0] - *(uint64_t *)&ntfy0[0];
          break;

@@ -8,9 +8,13 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_string.h"
 
+#include "os/os_time.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+
+#include <libdrm/nouveau_drm.h>
 
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
@@ -37,6 +41,16 @@ static const char *
 nouveau_screen_get_vendor(struct pipe_screen *pscreen)
 {
 	return "nouveau";
+}
+
+static uint64_t
+nouveau_screen_get_timestamp(struct pipe_screen *pscreen)
+{
+	int64_t cpu_time = os_time_get() * 1000;
+
+        /* getparam of PTIMER_TIME takes about x10 as long (several usecs) */
+
+	return cpu_time + nouveau_screen(pscreen)->cpu_gpu_time_delta;
 }
 
 static void
@@ -108,6 +122,7 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	struct pipe_screen *pscreen = &screen->base;
 	struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
 	struct nvc0_fifo nvc0_data = { };
+	uint64_t time;
 	int size, ret;
 	void *data;
 	union nouveau_bo_config mm_config;
@@ -139,8 +154,17 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	if (ret)
 		return ret;
 
+        /* getting CPU time first appears to be more accurate */
+        screen->cpu_gpu_time_delta = os_time_get();
+
+        ret = nouveau_getparam(dev, NOUVEAU_GETPARAM_PTIMER_TIME, &time);
+        if (!ret)
+           screen->cpu_gpu_time_delta = time - screen->cpu_gpu_time_delta * 1000;
+
 	pscreen->get_name = nouveau_screen_get_name;
 	pscreen->get_vendor = nouveau_screen_get_vendor;
+
+	pscreen->get_timestamp = nouveau_screen_get_timestamp;
 
 	pscreen->fence_reference = nouveau_screen_fence_ref;
 	pscreen->fence_signalled = nouveau_screen_fence_signalled;
