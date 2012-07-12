@@ -770,6 +770,7 @@ _mesa_is_color_format(GLenum format)
       case GL_R3_G3_B2:
       case GL_RGB4:
       case GL_RGB5:
+      case GL_RGB565:
       case GL_RGB8:
       case GL_RGB10:
       case GL_RGB12:

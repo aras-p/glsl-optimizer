@@ -138,6 +138,15 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.ARB_ES2_compatibility) {
+      switch (internalFormat) {
+         case GL_RGB565:
+            return GL_RGB;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:

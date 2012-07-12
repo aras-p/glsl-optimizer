@@ -793,6 +793,10 @@ static const struct format_mapping format_map[] = {
       { PIPE_FORMAT_B5G6R5_UNORM, PIPE_FORMAT_B5G5R5A1_UNORM,
         DEFAULT_RGBA_FORMATS }
    },
+   {
+      { GL_RGB565 },
+      { PIPE_FORMAT_B5G6R5_UNORM, DEFAULT_RGBA_FORMATS }
+   },
 
    /* basic Alpha formats */
    {

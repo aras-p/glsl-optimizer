@@ -1296,6 +1296,9 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 
    case GL_RGB10_A2UI:
       return ctx->Extensions.ARB_texture_rgb10_a2ui ? GL_RGBA : 0;
+
+   case GL_RGB565:
+      return ctx->Extensions.ARB_ES2_compatibility ? GL_RGB : 0;
    default:
       return 0;
    }

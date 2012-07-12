@@ -403,6 +403,8 @@ internal_format(struct gl_context *ctx, GLenum format, GLenum type)
 
          case GL_UNSIGNED_SHORT_5_6_5:
          case GL_UNSIGNED_SHORT_5_6_5_REV:
+            return GL_RGB565;
+
          case GL_UNSIGNED_SHORT_5_5_5_1:
          case GL_UNSIGNED_SHORT_1_5_5_5_REV:
             return GL_RGB5_A1;

@@ -258,6 +258,16 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
          ; /* fallthrough */
    }
 
+   if (ctx->Extensions.ARB_ES2_compatibility) {
+      switch (internalFormat) {
+         case GL_RGB565:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_RGB565);
+            break;
+         default:
+         ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.MESA_ycbcr_texture) {
       if (internalFormat == GL_YCBCR_MESA) {
          if (type == GL_UNSIGNED_SHORT_8_8_MESA)
