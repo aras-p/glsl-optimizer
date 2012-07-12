@@ -670,6 +670,8 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 
    if (mesaVis->redBits == 5)
       rgbFormat = MESA_FORMAT_RGB565;
+   else if (mesaVis->sRGBCapable)
+      rgbFormat = MESA_FORMAT_SARGB8;
    else if (mesaVis->alphaBits == 0)
       rgbFormat = MESA_FORMAT_XRGB8888;
    else
