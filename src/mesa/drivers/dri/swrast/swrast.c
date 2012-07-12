@@ -161,10 +161,6 @@ swrastFillInModes(__DRIscreen *psp,
     back_buffer_factor = 2;
 
     switch (pixel_bits) {
-    case 8:
-	fb_format = GL_RGB;
-	fb_type = GL_UNSIGNED_BYTE_2_3_3_REV;
-	break;
     case 16:
 	fb_format = GL_RGB;
 	fb_type = GL_UNSIGNED_SHORT_5_6_5;
