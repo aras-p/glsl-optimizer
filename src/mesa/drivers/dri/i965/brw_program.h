@@ -45,5 +45,7 @@ struct brw_sampler_prog_key_data {
 void brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				        const struct gl_program *prog,
 				        struct brw_sampler_prog_key_data *key);
+bool brw_debug_recompile_sampler_key(const struct brw_sampler_prog_key_data *old_key,
+                                     const struct brw_sampler_prog_key_data *key);
 
 #endif

@@ -347,6 +347,90 @@ bool do_wm_prog(struct brw_context *brw,
    return true;
 }
 
+static bool
+key_debug(const char *name, int a, int b)
+{
+   if (a != b) {
+      perf_debug("  %s %d->%d\n", name, a, b);
+      return true;
+   } else {
+      return false;
+   }
+}
+
+bool
+brw_debug_recompile_sampler_key(const struct brw_sampler_prog_key_data *old_key,
+                                const struct brw_sampler_prog_key_data *key)
+{
+   bool found = false;
+
+   for (unsigned int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      found |= key_debug("EXT_texture_swizzle or DEPTH_TEXTURE_MODE",
+                         key->swizzles[i], old_key->swizzles[i]);
+   }
+   found |= key_debug("GL_CLAMP enabled on any texture unit's 1st coordinate",
+                      key->gl_clamp_mask[0], old_key->gl_clamp_mask[0]);
+   found |= key_debug("GL_CLAMP enabled on any texture unit's 2nd coordinate",
+                      key->gl_clamp_mask[1], old_key->gl_clamp_mask[1]);
+   found |= key_debug("GL_CLAMP enabled on any texture unit's 3rd coordinate",
+                      key->gl_clamp_mask[2], old_key->gl_clamp_mask[2]);
+   found |= key_debug("GL_MESA_ycbcr texturing\n",
+                      key->yuvtex_mask, old_key->yuvtex_mask);
+   found |= key_debug("GL_MESA_ycbcr UV swapping\n",
+                      key->yuvtex_swap_mask, old_key->yuvtex_swap_mask);
+
+   return found;
+}
+
+void
+brw_wm_debug_recompile(struct brw_context *brw,
+                       struct gl_shader_program *prog,
+                       const struct brw_wm_prog_key *key)
+{
+   struct brw_cache_item *c = NULL;
+   const struct brw_wm_prog_key *old_key = NULL;
+   bool found = false;
+
+   perf_debug("Recompiling fragment shader for program %d\n", prog->Name);
+
+   for (unsigned int i = 0; i < brw->cache.size; i++) {
+      for (c = brw->cache.items[i]; c; c = c->next) {
+         if (c->cache_id == BRW_WM_PROG) {
+            old_key = c->key;
+
+            if (old_key->program_string_id == key->program_string_id)
+               break;
+         }
+      }
+      if (c)
+         break;
+   }
+
+   if (!c) {
+      perf_debug("  Didn't find previous compile in the shader cache for "
+                 "debug\n");
+      return;
+   }
+
+   found |= key_debug("alphatest, computed depth, depth test, or depth write",
+                      key->iz_lookup, old_key->iz_lookup);
+   found |= key_debug("depth statistics", key->stats_wm, old_key->stats_wm);
+   found |= key_debug("flat shading", key->flat_shade, old_key->flat_shade);
+   found |= key_debug("number of color buffers", key->nr_color_regions, old_key->nr_color_regions);
+   found |= key_debug("rendering to FBO", key->render_to_fbo, old_key->render_to_fbo);
+   found |= key_debug("fragment color clamping", key->clamp_fragment_color, old_key->clamp_fragment_color);
+   found |= key_debug("line smoothing", key->line_aa, old_key->line_aa);
+   found |= key_debug("proj_attrib_mask", key->proj_attrib_mask, old_key->proj_attrib_mask);
+   found |= key_debug("renderbuffer height", key->drawable_height, old_key->drawable_height);
+   found |= key_debug("vertex shader outputs", key->vp_outputs_written, old_key->vp_outputs_written);
+
+   found |= brw_debug_recompile_sampler_key(&key->tex, &old_key->tex);
+
+   if (!found) {
+      perf_debug("  Something else\n");
+   }
+}
+
 void
 brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   const struct gl_program *prog,

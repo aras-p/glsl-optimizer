@@ -1037,12 +1037,18 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       printf("\n\n");
    }
 
+   if (shader->compiled_once) {
+      perf_debug("Recompiling vertex shader for program %d\n", prog->Name);
+   }
+
    vec4_visitor v(c, prog, shader);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
       return false;
    }
+
+   shader->compiled_once = true;
 
    return true;
 }

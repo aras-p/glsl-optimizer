@@ -2104,6 +2104,12 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
    c->prog_data.dispatch_width = 8;
 
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      if (shader->compiled_once)
+         brw_wm_debug_recompile(brw, prog, &c->key);
+      shader->compiled_once = true;
+   }
+
    return true;
 }
 
