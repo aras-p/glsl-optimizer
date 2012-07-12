@@ -65,6 +65,11 @@ enum
    INTEL_swap_event_bit,
 };
 
+/* From the GLX perspective, the ARB and EXT extensions are identical.  Use a
+ * single bit for both.
+ */
+#define ARB_framebuffer_sRGB_bit EXT_framebuffer_sRGB_bit
+
 enum
 {
    GL_ARB_depth_texture_bit = 0,
