@@ -125,8 +125,7 @@ swrastFillInModes(__DRIscreen *psp,
     __DRIconfig **configs;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
-    GLenum fb_format;
-    GLenum fb_type;
+    gl_format format;
 
     /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
      * support pageflipping at all.
@@ -162,16 +161,13 @@ swrastFillInModes(__DRIscreen *psp,
 
     switch (pixel_bits) {
     case 16:
-	fb_format = GL_RGB;
-	fb_type = GL_UNSIGNED_SHORT_5_6_5;
+	format = MESA_FORMAT_RGB565;
 	break;
     case 24:
-	fb_format = GL_BGR;
-	fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+        format = MESA_FORMAT_XRGB8888;
 	break;
     case 32:
-	fb_format = GL_BGRA;
-	fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	format = MESA_FORMAT_ARGB8888;
 	break;
     default:
 	fprintf(stderr, "[%s:%u] bad depth %d\n", __func__, __LINE__,
@@ -179,7 +175,7 @@ swrastFillInModes(__DRIscreen *psp,
 	return NULL;
     }
 
-    configs = driCreateConfigs(fb_format, fb_type,
+    configs = driCreateConfigs(format,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor, back_buffer_modes,
 			       back_buffer_factor, msaa_samples_array, 1,

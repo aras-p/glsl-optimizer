@@ -52,24 +52,20 @@ nouveau_get_configs(void)
 	const uint8_t stencil_bits[] = { 0,  0,  0,  8 };
 	const uint8_t msaa_samples[] = { 0 };
 
-	const struct {
-		GLenum format;
-		GLenum type;
-	} fb_formats[] = {
-		{ GL_RGB , GL_UNSIGNED_SHORT_5_6_5     },
-		{ GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV },
-		{ GL_BGR , GL_UNSIGNED_INT_8_8_8_8_REV },
+	static const gl_format formats[3] = {
+		MESA_FORMAT_RGB565,
+		MESA_FORMAT_ARGB8888,
+		MESA_FORMAT_XRGB8888,
 	};
 
 	const GLenum back_buffer_modes[] = {
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML
 	};
 
-	for (i = 0; i < Elements(fb_formats); i++) {
+	for (i = 0; i < Elements(formats); i++) {
 		__DRIconfig **config;
 
-		config = driCreateConfigs(fb_formats[i].format,
-					  fb_formats[i].type,
+		config = driCreateConfigs(formats[i],
 					  depth_bits, stencil_bits,
 					  Elements(depth_bits),
 					  back_buffer_modes,

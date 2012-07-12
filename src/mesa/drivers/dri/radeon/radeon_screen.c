@@ -710,8 +710,11 @@ radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
 static const
 __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
-   GLenum fb_format[3];
-   GLenum fb_type[3];
+   static const gl_format formats[3] = {
+      MESA_FORMAT_RGB565,
+      MESA_FORMAT_XRGB8888,
+      MESA_FORMAT_ARGB8888
+   };
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
     * support pageflipping at all.
     */
@@ -736,19 +739,10 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 
    msaa_samples_array[0] = 0;
 
-   fb_format[0] = GL_RGB;
-   fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
-
-   fb_format[1] = GL_BGR;
-   fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
-
-   fb_format[2] = GL_BGRA;
-   fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
-
-   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+   for (color = 0; color < ARRAY_SIZE(formats); color++) {
       __DRIconfig **new_configs;
 
-      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+      new_configs = driCreateConfigs(formats[color],
 				     depth_bits,
 				     stencil_bits,
 				     ARRAY_SIZE(depth_bits),

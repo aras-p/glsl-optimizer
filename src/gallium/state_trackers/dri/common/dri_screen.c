@@ -174,7 +174,7 @@ dri_fill_in_modes(struct dri_screen *screen,
          }
       }
 
-      configs_r5g6b5 = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+      configs_r5g6b5 = driCreateConfigs(MESA_FORMAT_RGB565,
                                         depth_bits_array, stencil_bits_array,
                                         depth_buffer_factor, back_buffer_modes,
                                         back_buffer_factor,
@@ -193,7 +193,7 @@ dri_fill_in_modes(struct dri_screen *screen,
          }
       }
 
-      configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+      configs_a8r8g8b8 = driCreateConfigs(MESA_FORMAT_ARGB8888,
                                           depth_bits_array,
                                           stencil_bits_array,
                                           depth_buffer_factor,
@@ -215,7 +215,7 @@ dri_fill_in_modes(struct dri_screen *screen,
          }
       }
 
-      configs_x8r8g8b8 = driCreateConfigs(GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV,
+      configs_x8r8g8b8 = driCreateConfigs(MESA_FORMAT_XRGB8888,
                                           depth_bits_array,
                                           stencil_bits_array,
                                           depth_buffer_factor,
