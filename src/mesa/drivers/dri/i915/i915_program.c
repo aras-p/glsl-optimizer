@@ -442,7 +442,7 @@ i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
 void
 i915_program_error(struct i915_fragment_program *p, const char *fmt, ...)
 {
-   if (unlikely((INTEL_DEBUG & (DEBUG_WM | DEBUG_FALLBACKS)) != 0)) {
+   if (unlikely((INTEL_DEBUG & (DEBUG_WM | DEBUG_PERF)) != 0)) {
       va_list args;
 
       fprintf(stderr, "i915_program_error: ");

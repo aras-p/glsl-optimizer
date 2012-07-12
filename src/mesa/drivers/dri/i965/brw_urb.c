@@ -190,7 +190,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	    exit(1);
 	 }
 	 
-	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS)))
+	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_PERF)))
 	    printf("URB CONSTRAINED\n");
       }
 

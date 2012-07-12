@@ -1223,7 +1223,7 @@ intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
 	 assert(!intel->tnl_pipeline_running);
 
          intel_flush(ctx);
-         if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         if (INTEL_DEBUG & DEBUG_PERF)
             fprintf(stderr, "ENTER FALLBACK %x: %s\n",
                     bit, getFallbackString(bit));
          _swsetup_Wakeup(ctx);
@@ -1236,7 +1236,7 @@ intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
 	 assert(!intel->tnl_pipeline_running);
 
          _swrast_flush(ctx);
-         if (INTEL_DEBUG & DEBUG_FALLBACKS)
+         if (INTEL_DEBUG & DEBUG_PERF)
             fprintf(stderr, "LEAVE FALLBACK %s\n", getFallbackString(bit));
          tnl->Driver.Render.Start = intelRenderStart;
          tnl->Driver.Render.PrimitiveNotify = intelRenderPrimitive;

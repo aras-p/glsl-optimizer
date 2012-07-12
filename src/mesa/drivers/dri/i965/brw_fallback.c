@@ -37,7 +37,7 @@
 #include "tnl/tnl.h"
 #include "brw_context.h"
 
-#define FILE_DEBUG_FLAG DEBUG_FALLBACKS
+#define FILE_DEBUG_FLAG DEBUG_PERF
 
 static bool do_check_fallback(struct brw_context *brw)
 {

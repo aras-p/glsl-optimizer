@@ -431,7 +431,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_IOCTL	0x4
 #define DEBUG_BLIT	0x8
 #define DEBUG_MIPTREE   0x10
-#define DEBUG_FALLBACKS	0x20
+#define DEBUG_PERF	0x20
 #define DEBUG_VERBOSE	0x40
 #define DEBUG_BATCH     0x80
 #define DEBUG_PIXEL     0x100
@@ -460,7 +460,7 @@ extern int INTEL_DEBUG;
 } while(0)
 
 #define fallback_debug(...) do {				\
-	if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))		\
+	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
 		printf(__VA_ARGS__);				\
 } while(0)
 

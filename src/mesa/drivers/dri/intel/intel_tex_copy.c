@@ -61,7 +61,7 @@ intel_copy_texsubimage(struct intel_context *intel,
    intel_prepare_render(intel);
 
    if (!intelImage->mt || !irb || !irb->mt) {
-      if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
+      if (unlikely(INTEL_DEBUG & DEBUG_PERF))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, irb, internalFormat);
       return false;
@@ -85,7 +85,7 @@ intel_copy_texsubimage(struct intel_context *intel,
    }
 
    if (!copy_supported && !copy_supported_with_alpha_override) {
-      if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
+      if (unlikely(INTEL_DEBUG & DEBUG_PERF))
 	 fprintf(stderr, "%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
 		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
