@@ -277,16 +277,10 @@ boolean draw_need_pipeline(const struct draw_context *draw,
                            const struct pipe_rasterizer_state *rasterizer,
                            unsigned prim );
 
-static INLINE int
-draw_get_shader_param(unsigned shader, enum pipe_shader_cap param)
-{
-   switch(shader) {
-   case PIPE_SHADER_VERTEX:
-   case PIPE_SHADER_GEOMETRY:
-      return tgsi_exec_get_shader_param(param);
-   default:
-      return 0;
-   }
-}
+int
+draw_get_shader_param(unsigned shader, enum pipe_shader_cap param);
+
+int
+draw_get_shader_param_no_llvm(unsigned shader, enum pipe_shader_cap param);
 
 #endif /* DRAW_CONTEXT_H */

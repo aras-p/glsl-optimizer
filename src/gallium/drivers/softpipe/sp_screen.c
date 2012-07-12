@@ -177,9 +177,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 static int
 softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
 {
-#ifdef HAVE_LLVM
    struct softpipe_screen *sp_screen = softpipe_screen(screen);
-#endif
    switch(shader)
    {
    case PIPE_SHADER_FRAGMENT:
@@ -188,20 +186,16 @@ softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
    case PIPE_SHADER_GEOMETRY:
       switch (param) {
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
-#ifdef HAVE_LLVM
          if (sp_screen->use_llvm)
             /* Softpipe doesn't yet know how to tell draw/llvm about textures */
             return 0;
-#endif
-         return PIPE_MAX_VERTEX_SAMPLERS;
-      case PIPE_SHADER_CAP_INTEGERS:
-#ifdef HAVE_LLVM /* gallivm doesn't support integers yet */
-         if (sp_screen->use_llvm)
-            return 0;
-#endif
-         /* fallthrough */
+	 else
+            return PIPE_MAX_VERTEX_SAMPLERS;
       default:
-         return draw_get_shader_param(shader, param);
+	 if (sp_screen->use_llvm)
+            return draw_get_shader_param(shader, param);
+         else
+            return draw_get_shader_param_no_llvm(shader, param);
       }
    default:
       return 0;

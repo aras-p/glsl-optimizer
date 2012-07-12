@@ -222,10 +222,8 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
    {
    case PIPE_SHADER_FRAGMENT:
       switch (param) {
-      case PIPE_SHADER_CAP_INTEGERS:
-         return 0;
       default:
-         return tgsi_exec_get_shader_param(param);
+         return gallivm_get_shader_param(param);
       }
    case PIPE_SHADER_VERTEX:
    case PIPE_SHADER_GEOMETRY:
@@ -239,8 +237,6 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
             return PIPE_MAX_VERTEX_SAMPLERS;
          else
             return 0;
-      case PIPE_SHADER_CAP_INTEGERS:
-	  return 0;
       default:
          return draw_get_shader_param(shader, param);
       }

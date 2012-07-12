@@ -42,6 +42,7 @@
 
 #if HAVE_LLVM
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_limits.h"
 #include "draw_llvm.h"
 
 static boolean
@@ -830,3 +831,43 @@ draw_set_mapped_texture(struct draw_context *draw,
                                 row_stride, img_stride, data);
 #endif
 }
+
+/**
+ * XXX: Results for PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS because there are two
+ * different ways of setting textures, and drivers typically only support one.
+ */
+int
+draw_get_shader_param_no_llvm(unsigned shader, enum pipe_shader_cap param)
+{
+   switch(shader) {
+   case PIPE_SHADER_VERTEX:
+   case PIPE_SHADER_GEOMETRY:
+      return tgsi_exec_get_shader_param(param);
+   default:
+      return 0;
+   }
+}
+
+/**
+ * XXX: Results for PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS because there are two
+ * different ways of setting textures, and drivers typically only support one.
+ */
+int
+draw_get_shader_param(unsigned shader, enum pipe_shader_cap param)
+{
+
+#ifdef HAVE_LLVM
+   if (draw_get_option_use_llvm()) {
+      switch(shader) {
+      case PIPE_SHADER_VERTEX:
+      case PIPE_SHADER_GEOMETRY:
+         return gallivm_get_shader_param(param);
+      default:
+         return 0;
+      }
+   }
+#endif
+
+   return draw_get_shader_param_no_llvm(shader, param);
+}
+
