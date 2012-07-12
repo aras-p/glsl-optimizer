@@ -1,5 +1,8 @@
 Import('*')
 
+if not env['x11'] or not env['xcb'] or not env['drm']:
+    Return()
+
 from sys import executable as python_cmd
 
 env = env.Clone()

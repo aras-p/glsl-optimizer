@@ -516,7 +516,7 @@ def generate(env):
     createInstallMethods(env)
 
     env.PkgCheckModules('X11', ['x11', 'xext', 'xdamage', 'xfixes'])
-    env.PkgCheckModules('XCB', ['x11-xcb', 'xcb-glx'])
+    env.PkgCheckModules('XCB', ['x11-xcb', 'xcb-glx >= 1.8.1'])
     env.PkgCheckModules('XF86VIDMODE', ['xxf86vm'])
     env.PkgCheckModules('DRM', ['libdrm >= 2.4.24'])
     env.PkgCheckModules('DRM_INTEL', ['libdrm_intel >= 2.4.30'])
