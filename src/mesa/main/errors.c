@@ -38,8 +38,6 @@
 #include "version.h"
 
 
-#define MAXSTRING MAX_DEBUG_MESSAGE_LENGTH
-
 
 struct gl_client_severity
 {
@@ -877,10 +875,10 @@ error_string( GLenum error )
 static void
 flush_delayed_errors( struct gl_context *ctx )
 {
-   char s[MAXSTRING];
+   char s[MAX_DEBUG_MESSAGE_LENGTH];
 
    if (ctx->ErrorDebugCount) {
-      _mesa_snprintf(s, MAXSTRING, "%d similar %s errors", 
+      _mesa_snprintf(s, MAX_DEBUG_MESSAGE_LENGTH, "%d similar %s errors", 
                      ctx->ErrorDebugCount,
                      error_string(ctx->ErrorValue));
 
@@ -901,10 +899,10 @@ flush_delayed_errors( struct gl_context *ctx )
 void
 _mesa_warning( struct gl_context *ctx, const char *fmtString, ... )
 {
-   char str[MAXSTRING];
+   char str[MAX_DEBUG_MESSAGE_LENGTH];
    va_list args;
    va_start( args, fmtString );  
-   (void) _mesa_vsnprintf( str, MAXSTRING, fmtString, args );
+   (void) _mesa_vsnprintf( str, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args );
    va_end( args );
    
    if (ctx)
@@ -925,7 +923,7 @@ void
 _mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
 {
    va_list args;
-   char str[MAXSTRING];
+   char str[MAX_DEBUG_MESSAGE_LENGTH];
    static int numCalls = 0;
 
    (void) ctx;
@@ -934,7 +932,7 @@ _mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
       numCalls++;
 
       va_start( args, fmtString );  
-      _mesa_vsnprintf( str, MAXSTRING, fmtString, args );
+      _mesa_vsnprintf( str, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args );
       va_end( args );
       fprintf(stderr, "Mesa %s implementation error: %s\n",
               MESA_VERSION_STRING, str);
@@ -1001,23 +999,24 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
                        API_ERROR_UNKNOWN, GL_DEBUG_SEVERITY_HIGH_ARB);
 
    if (do_output || do_log) {
-      char s[MAXSTRING], s2[MAXSTRING];
+      char s[MAX_DEBUG_MESSAGE_LENGTH], s2[MAX_DEBUG_MESSAGE_LENGTH];
       int len;
       va_list args;
 
       va_start(args, fmtString);
-      len = _mesa_vsnprintf(s, MAXSTRING, fmtString, args);
+      len = _mesa_vsnprintf(s, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args);
       va_end(args);
 
-      if (len >= MAXSTRING) {
+      if (len >= MAX_DEBUG_MESSAGE_LENGTH) {
          /* Too long error message. Whoever calls _mesa_error should use
           * shorter strings. */
          ASSERT(0);
          return;
       }
 
-      len = _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
-      if (len >= MAXSTRING) {
+      len = _mesa_snprintf(s2, MAX_DEBUG_MESSAGE_LENGTH, "%s in %s",
+                           error_string(error), s);
+      if (len >= MAX_DEBUG_MESSAGE_LENGTH) {
          /* Same as above. */
          ASSERT(0);
          return;
@@ -1051,10 +1050,10 @@ void
 _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... )
 {
 #ifdef DEBUG
-   char s[MAXSTRING];
+   char s[MAX_DEBUG_MESSAGE_LENGTH];
    va_list args;
    va_start(args, fmtString);
-   _mesa_vsnprintf(s, MAXSTRING, fmtString, args);
+   _mesa_vsnprintf(s, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args);
    va_end(args);
    output_if_debug("Mesa", s, GL_FALSE);
 #endif /* DEBUG */
