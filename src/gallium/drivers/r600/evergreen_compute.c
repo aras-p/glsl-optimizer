@@ -90,13 +90,15 @@ static void evergreen_cs_set_vertex_buffer(
 	struct pipe_resource * buffer)
 {
 	struct pipe_vertex_buffer *vb = &rctx->cs_vertex_buffer[vb_index];
+	struct r600_vertexbuf_state * state = &rctx->cs_vertex_buffer_state;
 	vb->stride = 1;
 	vb->buffer_offset = offset;
 	vb->buffer = buffer;
 	vb->user_buffer = NULL;
 
 	r600_inval_vertex_cache(rctx);
-	r600_atom_dirty(rctx, &rctx->cs_vertex_buffer_state);
+	state->dirty_mask |= 1 << vb_index;
+	r600_atom_dirty(rctx, &state->atom);
 }
 
 const struct u_resource_vtbl r600_global_buffer_vtbl =
@@ -367,8 +369,8 @@ static void compute_emit_cs(struct r600_context *ctx)
 	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
 
 	/* Emit vertex buffer state */
-	ctx->cs_vertex_buffer_state.num_dw = 12 * ctx->nr_cs_vertex_buffers;
-	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state);
+	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * ctx->nr_cs_vertex_buffers;
+	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state.atom);
 
 	for (i = 0; i < get_compute_resource_num(); i++) {
 		if (ctx->cs_shader->resources[i].enabled) {

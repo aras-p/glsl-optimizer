@@ -1847,7 +1847,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-	r600_init_atom(&rctx->vertex_buffer_state, r600_emit_vertex_buffers, 0, 0);
+	r600_init_atom(&rctx->vertex_buffer_state.atom, r600_emit_vertex_buffers, 0, 0);
 	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffers, 0, 0);
 	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffers, 0, 0);
 

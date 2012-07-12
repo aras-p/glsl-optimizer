@@ -1282,7 +1282,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
-	r600_atom_dirty(ctx, &ctx->vertex_buffer_state);
+	r600_atom_dirty(ctx, &ctx->vertex_buffer_state.atom);
 
 	ctx->vs_constbuf_state.dirty_mask = ctx->vs_constbuf_state.enabled_mask;
 	ctx->ps_constbuf_state.dirty_mask = ctx->ps_constbuf_state.enabled_mask;

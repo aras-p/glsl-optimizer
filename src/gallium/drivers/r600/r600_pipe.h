@@ -276,6 +276,12 @@ struct r600_constbuf_state
 	uint32_t			dirty_mask;
 };
 
+struct r600_vertexbuf_state
+{
+	struct r600_atom		atom;
+	uint32_t			dirty_mask;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -337,9 +343,9 @@ struct r600_context {
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
 	/** Vertex buffers for fetch shaders */
-	struct r600_atom		vertex_buffer_state;
+	struct r600_vertexbuf_state	vertex_buffer_state;
 	/** Vertex buffers for compute shaders */
-	struct r600_atom		cs_vertex_buffer_state;
+	struct r600_vertexbuf_state	cs_vertex_buffer_state;
 	struct r600_constbuf_state	vs_constbuf_state;
 	struct r600_constbuf_state	ps_constbuf_state;
 

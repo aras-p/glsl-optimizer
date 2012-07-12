@@ -407,13 +407,18 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *buffers)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_vertexbuf_state * state = &rctx->vertex_buffer_state;
+	unsigned i;
 
 	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
 
 	r600_inval_vertex_cache(rctx);
-	rctx->vertex_buffer_state.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 10) *
+	state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 10) *
 					   rctx->nr_vertex_buffers;
-	r600_atom_dirty(rctx, &rctx->vertex_buffer_state);
+	for (i = 0 ; i < rctx->nr_vertex_buffers; i++) {
+		state->dirty_mask |= 1 << i;
+	}
+	r600_atom_dirty(rctx, &state->atom);
 }
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,
