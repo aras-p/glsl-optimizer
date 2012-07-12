@@ -222,6 +222,7 @@ driCreateConfigs(gl_format format,
       masks = masks_table[1];
       break;
    case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_SARGB8:
       masks = masks_table[2];
       break;
    default:
@@ -235,7 +236,7 @@ driCreateConfigs(gl_format format,
    green_bits = _mesa_get_format_bits(format, GL_GREEN_BITS);
    blue_bits = _mesa_get_format_bits(format, GL_BLUE_BITS);
    alpha_bits = _mesa_get_format_bits(format, GL_ALPHA_BITS);
-   is_srgb = false;
+   is_srgb = _mesa_get_format_color_encoding(format) == GL_SRGB;
 
    num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = calloc(1, (num_modes + 1) * sizeof *configs);
