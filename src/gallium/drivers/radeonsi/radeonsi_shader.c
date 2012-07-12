@@ -574,13 +574,18 @@ int si_pipe_shader_create(
 
 	shader->shader.nr_cbufs = rctx->nr_cbufs;
 
+	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
+	 * conversion fails. */
+	if (dump) {
+		tgsi_dump(shader->tokens, 0);
+	}
+
 	lp_build_tgsi_llvm(bld_base, shader->tokens);
 
 	radeon_llvm_finalize_module(&si_shader_ctx.radeon_bld);
 
 	mod = bld_base->base.gallivm->module;
 	if (dump) {
-		tgsi_dump(shader->tokens, 0);
 		LLVMDumpModule(mod);
 	}
 	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count, "SI", dump);
