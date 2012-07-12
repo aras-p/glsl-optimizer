@@ -2141,13 +2141,11 @@ fs_visitor::emit_fb_writes()
    }
 
    if (c->key.nr_color_regions == 0) {
-      if (c->key.alpha_test) {
-	 /* If the alpha test is enabled but there's no color buffer,
-	  * we still need to send alpha out the pipeline to our null
-	  * renderbuffer.
-	  */
-	 emit_color_write(0, 3, color_mrf);
-      }
+      /* Even if there's no color buffers enabled, we still need to send
+       * alpha out the pipeline to our null renderbuffer to support
+       * alpha-testing, alpha-to-coverage, and so on.
+       */
+      emit_color_write(0, 3, color_mrf);
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->base_mrf = base_mrf;

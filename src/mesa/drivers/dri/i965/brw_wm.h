@@ -65,7 +65,6 @@ struct brw_wm_prog_key {
    GLuint flat_shade:1;
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
-   GLuint alpha_test:1;
    GLuint clamp_fragment_color:1;
    GLuint line_aa:2;
 

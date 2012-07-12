@@ -449,10 +449,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* Build the index for table lookup
     */
-   /* _NEW_COLOR */
-   key->alpha_test = ctx->Color.AlphaEnabled;
-
    if (intel->gen < 6) {
+      /* _NEW_COLOR */
       if (fp->program.UsesKill || ctx->Color.AlphaEnabled)
 	 lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
