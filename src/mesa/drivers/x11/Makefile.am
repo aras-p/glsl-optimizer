@@ -41,7 +41,6 @@ lib@GL_LIB@_la_SOURCES = \
 	glxheader.h \
 	xfonts.h \
 	xmesaP.h \
-	xm_image.h \
 	fakeglx.c \
 	glxapi.c \
 	xfonts.c \
