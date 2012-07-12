@@ -65,14 +65,19 @@ static LLVMValueRef emit_swizzle(
 	unsigned swizzle_z,
 	unsigned swizzle_w)
 {
-	unsigned char swizzles[4];
-	swizzles[0] = swizzle_x;
-	swizzles[1] = swizzle_y;
-	swizzles[2] = swizzle_z;
-	swizzles[3] = swizzle_w;
+	LLVMValueRef swizzles[4];
+	LLVMTypeRef i32t =
+		LLVMInt32TypeInContext(bld_base->base.gallivm->context);
 
+	swizzles[0] = LLVMConstInt(i32t, swizzle_x, 0);
+	swizzles[1] = LLVMConstInt(i32t, swizzle_y, 0);
+	swizzles[2] = LLVMConstInt(i32t, swizzle_z, 0);
+	swizzles[3] = LLVMConstInt(i32t, swizzle_w, 0);
 
-	return lp_build_swizzle_aos(&bld_base->base, value, swizzles);
+	return LLVMBuildShuffleVector(bld_base->base.gallivm->builder,
+		value,
+		LLVMGetUndef(LLVMTypeOf(value)),
+		LLVMConstVector(swizzles, 4), "");
 }
 
 static LLVMValueRef
