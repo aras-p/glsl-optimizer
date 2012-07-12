@@ -194,15 +194,12 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 {
    static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
-      { 3, 3, 2, 0 }, /* Any GL_UNSIGNED_BYTE_3_3_2 */
       { 5, 6, 5, 0 }, /* Any GL_UNSIGNED_SHORT_5_6_5 */
       { 8, 8, 8, 0 }, /* Any RGB with any GL_UNSIGNED_INT_8_8_8_8 */
       { 8, 8, 8, 8 }  /* Any RGBA with any GL_UNSIGNED_INT_8_8_8_8 */
    };
 
    static const uint32_t masks_table_rgb[6][4] = {
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5_REV   */
       { 0xFF000000, 0x00FF0000, 0x0000FF00, 0x00000000 }, /* 8_8_8_8     */
@@ -210,8 +207,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    };
 
    static const uint32_t masks_table_rgba[6][4] = {
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5_REV   */
       { 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF }, /* 8_8_8_8     */
@@ -219,8 +214,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    };
 
    static const uint32_t masks_table_bgr[6][4] = {
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5_REV   */
       { 0x0000FF00, 0x00FF0000, 0xFF000000, 0x00000000 }, /* 8_8_8_8     */
@@ -228,8 +221,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    };
 
    static const uint32_t masks_table_bgra[6][4] = {
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5_REV   */
       { 0x0000FF00, 0x00FF0000, 0xFF000000, 0x000000FF }, /* 8_8_8_8     */
@@ -237,8 +228,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    };
 
    static const uint8_t bytes_per_pixel[6] = {
-      1, /* 3_3_2       */
-      1, /* 2_3_3_REV   */
       2, /* 5_6_5       */
       2, /* 5_6_5_REV   */
       4, /* 8_8_8_8     */
@@ -255,23 +244,17 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    unsigned num_accum_bits = (enable_accum) ? 2 : 1;
 
    switch ( fb_type ) {
-      case GL_UNSIGNED_BYTE_3_3_2:
+      case GL_UNSIGNED_SHORT_5_6_5:
 	 index = 0;
 	 break;
-      case GL_UNSIGNED_BYTE_2_3_3_REV:
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
 	 index = 1;
 	 break;
-      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_INT_8_8_8_8:
 	 index = 2;
 	 break;
-      case GL_UNSIGNED_SHORT_5_6_5_REV:
-	 index = 3;
-	 break;
-      case GL_UNSIGNED_INT_8_8_8_8:
-	 index = 4;
-	 break;
       case GL_UNSIGNED_INT_8_8_8_8_REV:
-	 index = 5;
+	 index = 3;
 	 break;
       default:
 	 fprintf( stderr, "[%s:%u] Unknown framebuffer type 0x%04x.\n",
@@ -310,16 +293,13 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    }
 
    switch ( bytes_per_pixel[ index ] ) {
-      case 1:
-	 bits = bits_table[0];
-	 break;
       case 2:
-	 bits = bits_table[1];
+	 bits = bits_table[0];
 	 break;
       default:
 	 bits = ((fb_format == GL_RGB) || (fb_format == GL_BGR))
-	    ? bits_table[2]
-	    : bits_table[3];
+	    ? bits_table[1]
+	    : bits_table[2];
 	 break;
    }
 
