@@ -139,6 +139,12 @@ brw_queryobj_get_results(struct gl_context *ctx,
    if (query->bo == NULL)
       return;
 
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      if (drm_intel_bo_busy(query->bo)) {
+         perf_debug("Stalling on the GPU waiting for a query object.\n");
+      }
+   }
+
    drm_intel_bo_map(query->bo, false);
    results = query->bo->virtual;
    switch (query->Base.Target) {

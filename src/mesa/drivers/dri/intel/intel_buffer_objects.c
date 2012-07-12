@@ -212,7 +212,8 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 intel_bufferobj_alloc_buffer(intel, intel_obj);
 	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
       } else {
-	 /* Use the blitter to upload the new data. */
+         perf_debug("Using a blit copy to avoid stalling on glBufferSubData() "
+                    "to a busy buffer object.\n");
 	 drm_intel_bo *temp_bo =
 	    drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
 
@@ -226,6 +227,11 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 drm_intel_bo_unreference(temp_bo);
       }
    } else {
+      if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+         if (drm_intel_bo_busy(intel_obj->buffer)) {
+            perf_debug("Stalling on the GPU in glBufferSubData().\n");
+         }
+      }
       drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
    }
 }
