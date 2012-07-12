@@ -374,6 +374,8 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
 #endif
    }
 
+   config->sRGBCapable = GL_FALSE;
+
    /*
     ** Additional properties may be in a list at the end
     ** of the reply.  They are in pairs of property type
