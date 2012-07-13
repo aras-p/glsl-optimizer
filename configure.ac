@@ -1728,8 +1728,9 @@ for plat in $egl_platforms; do
 				  [AC_MSG_ERROR([cannot find libwayland-client])])
 		GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/wayland"
 
-		m4_ifdef([WAYLAND_SCANNER_RULES],
-		         [WAYLAND_SCANNER_RULES(['$(top_srcdir)/src/egl/wayland/wayland-drm/protocol'])])
+                WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
+                AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner],,
+                             [${WAYLAND_PREFIX}/bin$PATH_SEPARATOR$PATH])
 		;;
 
 	x11)
