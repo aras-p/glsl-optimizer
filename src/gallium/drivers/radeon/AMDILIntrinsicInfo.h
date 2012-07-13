@@ -41,7 +41,6 @@ namespace llvm {
       Function *getDeclaration(Module *M, unsigned int ID,
           Type **Tys = 0,
           unsigned int numTys = 0) const;
-      bool isValidIntrinsic(unsigned int) const;
   }; // AMDILIntrinsicInfo
 }
 

@@ -51,58 +51,6 @@ AMDILIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
   return Result;
 }
 
-  static bool
-checkTruncation(const char *Name, unsigned int& Len)
-{
-  const char *ptr = Name + (Len - 1);
-  while(ptr != Name && *ptr != '_') {
-    --ptr;
-  }
-  // We don't want to truncate on atomic instructions
-  // but we do want to enter the check Truncation
-  // section so that we can translate the atomic
-  // instructions if we need to.
-  if (!strncmp(Name, "__atom", 6)) {
-    return true;
-  }
-  if (strstr(ptr, "i32")
-      || strstr(ptr, "u32")
-      || strstr(ptr, "i64")
-      || strstr(ptr, "u64")
-      || strstr(ptr, "f32")
-      || strstr(ptr, "f64")
-      || strstr(ptr, "i16")
-      || strstr(ptr, "u16")
-      || strstr(ptr, "i8")
-      || strstr(ptr, "u8")) {
-    Len = (unsigned int)(ptr - Name);
-    return true;
-  }
-  return false;
-}
-
-// We don't want to support both the OpenCL 1.0 atomics
-// and the 1.1 atomics with different names, so we translate
-// the 1.0 atomics to the 1.1 naming here if needed.
-static char*
-atomTranslateIfNeeded(const char *Name, unsigned int Len) 
-{
-  char *buffer = NULL;
-  if (strncmp(Name, "__atom_", 7))  {
-    // If we are not starting with __atom_, then
-    // go ahead and continue on with the allocation.
-    buffer = new char[Len + 1];
-    memcpy(buffer, Name, Len);
-  } else {
-    buffer = new char[Len + 3];
-    memcpy(buffer, "__atomic_", 9);
-    memcpy(buffer + 9, Name + 7, Len - 7);
-    Len += 2;
-  }
-  buffer[Len] = '\0';
-  return buffer;
-}
-
 unsigned int
 AMDILIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const 
 {
@@ -111,16 +59,8 @@ AMDILIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const
 #undef GET_FUNCTION_RECOGNIZER
   AMDGPUIntrinsic::ID IntrinsicID
     = (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic;
-  if (checkTruncation(Name, Len)) {
-    char *buffer = atomTranslateIfNeeded(Name, Len);
-    IntrinsicID = getIntrinsicForGCCBuiltin("AMDIL", buffer);
-    delete [] buffer;
-  } else {
-    IntrinsicID = getIntrinsicForGCCBuiltin("AMDIL", Name);
-  }
-  if (!isValidIntrinsic(IntrinsicID)) {
-    return 0;
-  }
+  IntrinsicID = getIntrinsicForGCCBuiltin("AMDIL", Name);
+
   if (IntrinsicID != (AMDGPUIntrinsic::ID)Intrinsic::not_intrinsic) {
     return IntrinsicID;
   }
@@ -146,26 +86,8 @@ AMDILIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
     Type **Tys,
     unsigned numTys) const 
 {
+  //Silence a warning
+  AttrListPtr List = getAttributes((AMDGPUIntrinsic::ID)IntrID);
+  (void)List;
   assert(!"Not implemented");
-}
-
-/// Because the code generator has to support different SC versions, 
-/// this function is added to check that the intrinsic being used
-/// is actually valid. In the case where it isn't valid, the 
-/// function call is not translated into an intrinsic and the
-/// fall back software emulated path should pick up the result.
-bool
-AMDILIntrinsicInfo::isValidIntrinsic(unsigned int IntrID) const
-{
-  const AMDILSubtarget &STM = mTM->getSubtarget<AMDILSubtarget>();
-  switch (IntrID) {
-    default:
-      return true;
-    case AMDGPUIntrinsic::AMDIL_convert_f32_i32_rpi:
-    case AMDGPUIntrinsic::AMDIL_convert_f32_i32_flr:
-    case AMDGPUIntrinsic::AMDIL_convert_f32_f16_near:
-    case AMDGPUIntrinsic::AMDIL_convert_f32_f16_neg_inf:
-    case AMDGPUIntrinsic::AMDIL_convert_f32_f16_plus_inf:
-        return STM.calVersion() >= CAL_VERSION_SC_139;
-  };
 }
