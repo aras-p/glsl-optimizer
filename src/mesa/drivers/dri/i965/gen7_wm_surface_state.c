@@ -409,7 +409,27 @@ gen7_create_constant_surface(struct brw_context *brw,
 static void
 gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 {
+   /* From the Ivy bridge PRM, Vol4 Part1 p62 (Surface Type: Programming
+    * Notes):
+    *
+    *     A null surface is used in instances where an actual surface is not
+    *     bound. When a write message is generated to a null surface, no
+    *     actual surface is written to. When a read message (including any
+    *     sampling engine message) is generated to a null surface, the result
+    *     is all zeros. Note that a null surface type is allowed to be used
+    *     with all messages, even if it is not specificially indicated as
+    *     supported. All of the remaining fields in surface state are ignored
+    *     for null surfaces, with the following exceptions: Width, Height,
+    *     Depth, LOD, and Render Target View Extent fields must match the
+    *     depth buffer’s corresponding state for all render target surfaces,
+    *     including null.
+    */
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    struct gen7_surface_state *surf;
+
+   /* _NEW_BUFFERS */
+   const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  sizeof(*surf), 32, &brw->wm.surf_offset[unit]);
@@ -417,6 +437,15 @@ gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 
    surf->ss0.surface_type = BRW_SURFACE_NULL;
    surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+
+   surf->ss2.width = fb->Width - 1;
+   surf->ss2.height = fb->Height - 1;
+
+   /* From the Ivy bridge PRM, Vol4 Part1 p65 (Tiled Surface: Programming Notes):
+    *
+    *     If Surface Type is SURFTYPE_NULL, this field must be TRUE.
+    */
+   gen7_set_surface_tiling(surf, I915_TILING_Y);
 
    gen7_check_surface_setup(surf, true /* is_render_target */);
 }

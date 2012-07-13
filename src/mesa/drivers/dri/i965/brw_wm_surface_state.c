@@ -961,8 +961,30 @@ const struct brw_tracked_state brw_wm_pull_constants = {
 static void
 brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 {
+   /* From the Sandy bridge PRM, Vol4 Part1 p71 (Surface Type: Programming
+    * Notes):
+    *
+    *     A null surface will be used in instances where an actual surface is
+    *     not bound. When a write message is generated to a null surface, no
+    *     actual surface is written to. When a read message (including any
+    *     sampling engine message) is generated to a null surface, the result
+    *     is all zeros. Note that a null surface type is allowed to be used
+    *     with all messages, even if it is not specificially indicated as
+    *     supported. All of the remaining fields in surface state are ignored
+    *     for null surfaces, with the following exceptions:
+    *
+    *     - [DevSNB+]: Width, Height, Depth, and LOD fields must match the
+    *       depth buffer’s corresponding state for all render target surfaces,
+    *       including null.
+    *
+    *     - Surface Format must be R8G8B8A8_UNORM.
+    */
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    uint32_t *surf;
+
+   /* _NEW_BUFFERS */
+   const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->wm.surf_offset[unit]);
@@ -976,8 +998,15 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 		  1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT);
    }
    surf[1] = 0;
-   surf[2] = 0;
-   surf[3] = 0;
+   surf[2] = ((fb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
+              (fb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
+
+   /* From Sandy bridge PRM, Vol4 Part1 p82 (Tiled Surface: Programming
+    * Notes):
+    *
+    *     If Surface Type is SURFTYPE_NULL, this field must be TRUE
+    */
+   surf[3] = BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y;
    surf[4] = 0;
    surf[5] = 0;
 }
