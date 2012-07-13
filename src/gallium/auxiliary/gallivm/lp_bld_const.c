@@ -37,6 +37,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_math.h"
+#include "util/u_half.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -50,10 +51,12 @@ lp_mantissa(struct lp_type type)
 
    if(type.floating) {
       switch(type.width) {
+      case 16:
+         return 10;
       case 32:
          return 23;
       case 64:
-         return 53;
+         return 52;
       default:
          assert(0);
          return 0;
@@ -136,6 +139,8 @@ lp_const_min(struct lp_type type)
 
    if (type.floating) {
       switch(type.width) {
+      case 16:
+         return -65504;
       case 32:
          return -FLT_MAX;
       case 64:
@@ -169,6 +174,8 @@ lp_const_max(struct lp_type type)
 
    if (type.floating) {
       switch(type.width) {
+      case 16:
+         return 65504;
       case 32:
          return FLT_MAX;
       case 64:
@@ -196,6 +203,8 @@ lp_const_eps(struct lp_type type)
 {
    if (type.floating) {
       switch(type.width) {
+      case 16:
+         return 2E-10;
       case 32:
          return FLT_EPSILON;
       case 64:
@@ -247,7 +256,9 @@ lp_build_one(struct gallivm_state *gallivm, struct lp_type type)
 
    elem_type = lp_build_elem_type(gallivm, type);
 
-   if(type.floating)
+   if(type.floating && type.width == 16)
+      elems[0] = LLVMConstInt(elem_type, util_float_to_half(1.0f), 0);
+   else if(type.floating)
       elems[0] = LLVMConstReal(elem_type, 1.0);
    else if(type.fixed)
       elems[0] = LLVMConstInt(elem_type, 1LL << (type.width/2), 0);
@@ -292,7 +303,9 @@ lp_build_const_elem(struct gallivm_state *gallivm,
    LLVMTypeRef elem_type = lp_build_elem_type(gallivm, type);
    LLVMValueRef elem;
 
-   if(type.floating) {
+   if(type.floating && type.width == 16) {
+      elem = LLVMConstInt(elem_type, util_float_to_half((float)val), 0);
+   } else if(type.floating) {
       elem = LLVMConstReal(elem_type, val);
    }
    else {
@@ -364,20 +377,10 @@ lp_build_const_aos(struct gallivm_state *gallivm,
    if(swizzle == NULL)
       swizzle = default_swizzle;
 
-   if(type.floating) {
-      elems[swizzle[0]] = LLVMConstReal(elem_type, r);
-      elems[swizzle[1]] = LLVMConstReal(elem_type, g);
-      elems[swizzle[2]] = LLVMConstReal(elem_type, b);
-      elems[swizzle[3]] = LLVMConstReal(elem_type, a);
-   }
-   else {
-      double dscale = lp_const_scale(type);
-
-      elems[swizzle[0]] = LLVMConstInt(elem_type, round(r*dscale), 0);
-      elems[swizzle[1]] = LLVMConstInt(elem_type, round(g*dscale), 0);
-      elems[swizzle[2]] = LLVMConstInt(elem_type, round(b*dscale), 0);
-      elems[swizzle[3]] = LLVMConstInt(elem_type, round(a*dscale), 0);
-   }
+   elems[swizzle[0]] = lp_build_const_elem(gallivm, type, r);
+   elems[swizzle[1]] = lp_build_const_elem(gallivm, type, g);
+   elems[swizzle[2]] = lp_build_const_elem(gallivm, type, b);
+   elems[swizzle[3]] = lp_build_const_elem(gallivm, type, a);
 
    for(i = 4; i < type.length; ++i)
       elems[i] = elems[i % 4];
@@ -452,7 +455,7 @@ lp_build_const_string(struct gallivm_state *gallivm,
 /**
  * Build a callable function pointer.
  *
- * We this casts instead of LLVMAddGlobalMapping()
+ * We use function pointer constants instead of LLVMAddGlobalMapping()
  * to work around a bug in LLVM 2.6, and for efficiency/simplicity.
  */
 LLVMValueRef

@@ -78,19 +78,15 @@ lp_build_ddy(struct lp_build_context *bld,
 
 
 /*
- * Scalar derivatives.
- *
- * Same as getting the first value of above.
+ * Packed derivatives (one derivative for each direction per quad)
  */
+LLVMValueRef
+lp_build_packed_ddx_ddy_twocoord(struct lp_build_context *bld,
+                                 LLVMValueRef a, LLVMValueRef b);
 
 LLVMValueRef
-lp_build_scalar_ddx(struct lp_build_context *bld,
-                    LLVMValueRef a);
-
-
-LLVMValueRef
-lp_build_scalar_ddy(struct lp_build_context *bld,
-                    LLVMValueRef a);
+lp_build_packed_ddx_ddy_onecoord(struct lp_build_context *bld,
+                                 LLVMValueRef a);
 
 
 #endif /* LP_BLD_QUAD_H_ */

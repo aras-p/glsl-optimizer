@@ -26,6 +26,12 @@
  **************************************************************************/
 
 
+/**
+ * The purpose of this module is to expose LLVM functionality not available
+ * through the C++ bindings.
+ */
+
+
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif
@@ -41,11 +47,24 @@
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
+#if HAVE_LLVM >= 0x0301
+#include <llvm/ADT/Triple.h>
+#include <llvm/ExecutionEngine/JITMemoryManager.h>
+#endif
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/PrettyStackTrace.h>
 
+#if HAVE_LLVM >= 0x0300
+#include <llvm/Support/TargetSelect.h>
+#else /* HAVE_LLVM < 0x0300 */
+#include <llvm/Target/TargetSelect.h>
+#endif /* HAVE_LLVM < 0x0300 */
+
 #include "pipe/p_config.h"
 #include "util/u_debug.h"
+#include "util/u_cpu_detect.h"
+
+#include "lp_bld_misc.h"
 
 
 /**
@@ -99,6 +118,9 @@ lp_set_target_options(void)
 
 #if defined(DEBUG) || defined(PROFILE)
    llvm::NoFramePointerElim = true;
+#if HAVE_LLVM >= 0x0208
+   llvm::NoFramePointerElimNonLeaf = true;
+#endif
 #endif
 
    llvm::NoExcessFPPrecision = false;
@@ -146,6 +168,30 @@ lp_set_target_options(void)
     * shared object where the gallium driver resides.
     */
    llvm::DisablePrettyStackTrace = true;
+
+   // If we have a native target, initialize it to ensure it is linked in and
+   // usable by the JIT.
+   llvm::InitializeNativeTarget();
+
+#if HAVE_LLVM >= 0x0208
+   llvm::InitializeNativeTargetAsmPrinter();
+#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   LLVMInitializeX86AsmPrinter();
+#elif defined(PIPE_ARCH_ARM)
+   LLVMInitializeARMAsmPrinter();
+#elif defined(PIPE_ARCH_PPC)
+   LLVMInitializePowerPCAsmPrinter();
+#endif
+
+#if HAVE_LLVM >= 0x0207
+#  if HAVE_LLVM >= 0x0301
+   llvm::InitializeNativeTargetDisassembler();
+#  elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+   LLVMInitializeX86Disassembler();
+#  elif defined(PIPE_ARCH_ARM)
+   LLVMInitializeARMDisassembler();
+#  endif
+#endif
 }
 
 
@@ -165,6 +211,7 @@ lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
    return llvm::wrap(llvm::unwrap(B)->CreateLoad(llvm::unwrap(PointerVal), true, Name));
 }
 
+
 extern "C"
 void
 lp_set_load_alignment(LLVMValueRef Inst,
@@ -180,3 +227,67 @@ lp_set_store_alignment(LLVMValueRef Inst,
 {
    llvm::unwrap<llvm::StoreInst>(Inst)->setAlignment(Align);
 }
+
+
+#if HAVE_LLVM >= 0x301
+
+/**
+ * Same as LLVMCreateJITCompilerForModule, but using MCJIT and enabling AVX
+ * feature where available.
+ *
+ * See also:
+ * - llvm/lib/ExecutionEngine/ExecutionEngineBindings.cpp
+ * - llvm/tools/lli/lli.cpp
+ * - http://markmail.org/message/ttkuhvgj4cxxy2on#query:+page:1+mid:aju2dggerju3ivd3+state:results
+ */
+extern "C"
+LLVMBool
+lp_build_create_mcjit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
+                                          LLVMModuleRef M,
+                                          unsigned OptLevel,
+                                          char **OutError)
+{
+   using namespace llvm;
+
+   std::string Error;
+   EngineBuilder builder(unwrap(M));
+   builder.setEngineKind(EngineKind::JIT)
+          .setErrorStr(&Error)
+          .setOptLevel((CodeGenOpt::Level)OptLevel);
+
+   builder.setUseMCJIT(true);
+
+   llvm::SmallVector<std::string, 1> MAttrs;
+   if (util_cpu_caps.has_avx) {
+      /*
+       * AVX feature is not automatically detected from CPUID by the X86 target
+       * yet, because the old (yet default) JIT engine is not capable of
+       * emitting the opcodes.  But as we're using MCJIT here, it is safe to
+       * add set this attribute.
+       */
+      MAttrs.push_back("+avx");
+      builder.setMAttrs(MAttrs);
+   }
+   builder.setJITMemoryManager(JITMemoryManager::CreateDefaultMemManager());
+
+   ExecutionEngine *JIT;
+#if 0
+   JIT = builder.create();
+#else
+   /*
+    * Workaround http://llvm.org/bugs/show_bug.cgi?id=12833
+    */
+   StringRef MArch = "";
+   StringRef MCPU = "";
+   Triple TT(unwrap(M)->getTargetTriple());
+   JIT = builder.create(builder.selectTarget(TT, MArch, MCPU, MAttrs));
+#endif
+   if (JIT) {
+      *OutJIT = wrap(JIT);
+      return 0;
+   }
+   *OutError = strdup(Error.c_str());
+   return 1;
+}
+
+#endif /* HAVE_LLVM >= 0x301 */

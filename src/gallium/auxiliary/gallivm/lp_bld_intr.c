@@ -48,6 +48,8 @@
 
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_type.h"
+#include "lp_bld_pack.h"
 
 
 LLVMValueRef
@@ -126,6 +128,95 @@ lp_build_intrinsic_binary(LLVMBuilderRef builder,
    args[1] = b;
 
    return lp_build_intrinsic(builder, name, ret_type, args, 2);
+}
+
+
+/**
+ * Call intrinsic with arguments adapted to intrinsic vector length.
+ *
+ * Split vectors which are too large for the hw, or expand them if they
+ * are too small, so a caller calling a function which might use intrinsics
+ * doesn't need to do splitting/expansion on its own.
+ * This only supports intrinsics where src and dst types match.
+ */
+LLVMValueRef
+lp_build_intrinsic_binary_anylength(struct gallivm_state *gallivm,
+                                    const char *name,
+                                    struct lp_type src_type,
+                                    unsigned intr_size,
+                                    LLVMValueRef a,
+                                    LLVMValueRef b)
+{
+   unsigned i;
+   struct lp_type intrin_type = src_type;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+   LLVMValueRef anative, bnative;
+   unsigned intrin_length = intr_size / src_type.width;
+
+   intrin_type.length = intrin_length;
+
+   if (intrin_length > src_type.length) {
+      LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef constvec, tmp;
+
+      for (i = 0; i < src_type.length; i++) {
+         elems[i] = lp_build_const_int32(gallivm, i);
+      }
+      for (; i < intrin_length; i++) {
+         elems[i] = i32undef;
+      }
+      if (src_type.length == 1) {
+         LLVMTypeRef elem_type = lp_build_elem_type(gallivm, intrin_type);
+         a = LLVMBuildBitCast(builder, a, LLVMVectorType(elem_type, 1), "");
+         b = LLVMBuildBitCast(builder, b, LLVMVectorType(elem_type, 1), "");
+      }
+      constvec = LLVMConstVector(elems, intrin_length);
+      anative = LLVMBuildShuffleVector(builder, a, a, constvec, "");
+      bnative = LLVMBuildShuffleVector(builder, b, b, constvec, "");
+      tmp = lp_build_intrinsic_binary(builder, name,
+                                      lp_build_vec_type(gallivm, intrin_type),
+                                      anative, bnative);
+      if (src_type.length > 1) {
+         constvec = LLVMConstVector(elems, src_type.length);
+         return LLVMBuildShuffleVector(builder, tmp, tmp, constvec, "");
+      }
+      else {
+         return LLVMBuildExtractElement(builder, tmp, elems[0], "");
+      }
+   }
+   else if (intrin_length < src_type.length) {
+      unsigned num_vec = src_type.length / intrin_length;
+      LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
+
+      /* don't support arbitrary size here as this is so yuck */
+      if (src_type.length % intrin_length) {
+         /* FIXME: This is something which should be supported
+          * but there doesn't seem to be any need for it currently
+          * so crash and burn.
+          */
+         debug_printf("%s: should handle arbitrary vector size\n",
+                      __FUNCTION__);
+         assert(0);
+         return NULL;
+      }
+
+      for (i = 0; i < num_vec; i++) {
+         anative = lp_build_extract_range(gallivm, a, i*intrin_length,
+                                        intrin_length);
+         bnative = lp_build_extract_range(gallivm, b, i*intrin_length,
+                                        intrin_length);
+         tmp[i] = lp_build_intrinsic_binary(builder, name,
+                                            lp_build_vec_type(gallivm, intrin_type),
+                                            anative, bnative);
+      }
+      return lp_build_concat(gallivm, tmp, intrin_type, num_vec);
+   }
+   else {
+      return lp_build_intrinsic_binary(builder, name,
+                                       lp_build_vec_type(gallivm, src_type),
+                                       a, b);
+   }
 }
 
 

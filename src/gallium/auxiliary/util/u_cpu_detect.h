@@ -35,8 +35,15 @@
 #ifndef _UTIL_CPU_DETECT_H
 #define _UTIL_CPU_DETECT_H
 
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_config.h"
+
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 
 struct util_cpu_caps {
    unsigned nr_cpus;
@@ -64,6 +71,11 @@ extern struct util_cpu_caps
 util_cpu_caps;
 
 void util_cpu_detect(void);
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 
 #endif /* _UTIL_CPU_DETECT_H */

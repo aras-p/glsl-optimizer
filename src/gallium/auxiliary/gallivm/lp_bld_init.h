@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "util/u_pointer.h" // for func_pointer
 #include "lp_bld.h"
 #include <llvm-c/ExecutionEngine.h>
 
@@ -44,30 +45,12 @@ struct gallivm_state
    LLVMPassManagerRef passmgr;
    LLVMContextRef context;
    LLVMBuilderRef builder;
+   unsigned compiled;
 };
 
 
 void
 lp_build_init(void);
-
-
-extern void
-lp_func_delete_body(LLVMValueRef func);
-
-
-void
-gallivm_garbage_collect(struct gallivm_state *gallivm);
-
-
-typedef void (*garbage_collect_callback_func)(void *cb_data);
-
-void
-gallivm_register_garbage_collector_callback(garbage_collect_callback_func func,
-                                            void *cb_data);
-
-void
-gallivm_remove_garbage_collector_callback(garbage_collect_callback_func func,
-                                          void *cb_data);
 
 
 struct gallivm_state *
@@ -77,9 +60,21 @@ void
 gallivm_destroy(struct gallivm_state *gallivm);
 
 
-extern LLVMValueRef
-lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
-                       const char *Name);
+void
+gallivm_verify_function(struct gallivm_state *gallivm,
+                        LLVMValueRef func);
+
+void
+gallivm_compile_module(struct gallivm_state *gallivm);
+
+func_pointer
+gallivm_jit_function(struct gallivm_state *gallivm,
+                     LLVMValueRef func);
+
+void
+gallivm_free_function(struct gallivm_state *gallivm,
+                      LLVMValueRef func,
+                      const void * code);
 
 void
 lp_set_load_alignment(LLVMValueRef Inst,

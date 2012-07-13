@@ -62,6 +62,7 @@
 #include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_printf.h"
+#include "lp_bld_sample.h"
 
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
@@ -763,7 +764,7 @@ emit_fetch_temporary(
    else {
       LLVMValueRef temp_ptr;
       if (stype != TGSI_TYPE_FLOAT && stype != TGSI_TYPE_UNTYPED) {
-         LLVMTypeRef itype = LLVMPointerType(LLVMVectorType(LLVMInt32TypeInContext(gallivm->context), 4), 0);
+         LLVMTypeRef itype = LLVMPointerType(bld->bld_base.int_bld.vec_type, 0);
          LLVMValueRef tint_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
                                                      swizzle);
          temp_ptr = LLVMBuildBitCast(builder, tint_ptr, itype, "");
@@ -1068,7 +1069,7 @@ emit_store_chan(
          switch (dtype) {
          case TGSI_TYPE_UNSIGNED:
          case TGSI_TYPE_SIGNED: {
-            LLVMTypeRef itype = LLVMVectorType(LLVMInt32TypeInContext(gallivm->context), 4);
+            LLVMTypeRef itype = bld_base->int_bld.vec_type;
             LLVMTypeRef ivtype = LLVMPointerType(itype, 0);
             LLVMValueRef tint_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
                                                         chan_index);
@@ -1141,13 +1142,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           LLVMValueRef *texel)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    unsigned unit;
    LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
-   LLVMValueRef ddx[3];
-   LLVMValueRef ddy[3];
+   struct lp_derivatives derivs;
    unsigned num_coords;
+   unsigned dims;
    unsigned i;
 
    if (!bld->sampler) {
@@ -1158,26 +1160,42 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
+   derivs.ddx_ddy[0] = bld->bld_base.base.undef;
+   derivs.ddx_ddy[1] = bld->bld_base.base.undef;
+
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
+      dims = 1;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
+      num_coords = 2;
+      dims = 1;
+      break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       num_coords = 2;
+      dims = 2;
       break;
    case TGSI_TEXTURE_SHADOW1D:
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      num_coords = 3;
+      dims = 1;
+      break;
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_2D_ARRAY:
-   case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
       num_coords = 3;
+      dims = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+      num_coords = 3;
+      dims = 3;
       break;
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
       num_coords = 4;
+      dims = 2;
       break;
    default:
       assert(0);
@@ -1212,31 +1230,66 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
-      LLVMValueRef index0 = lp_build_const_int32(bld->bld_base.base.gallivm, 0);
-      for (i = 0; i < num_coords; i++) {
-         LLVMValueRef src1 = lp_build_emit_fetch( &bld->bld_base, inst, 1, i );
-         LLVMValueRef src2 = lp_build_emit_fetch( &bld->bld_base, inst, 2, i );
-         ddx[i] = LLVMBuildExtractElement(builder, src1, index0, "");
-         ddy[i] = LLVMBuildExtractElement(builder, src2, index0, "");
+      LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef ddxdyonec[3];
+      unsigned length = bld->bld_base.base.type.length;
+      unsigned num_quads = length / 4;
+      unsigned dim;
+      unsigned quad;
+
+      for (dim = 0; dim < dims; ++dim) {
+         LLVMValueRef srcx = lp_build_emit_fetch( &bld->bld_base, inst, 1, dim );
+         LLVMValueRef srcy = lp_build_emit_fetch( &bld->bld_base, inst, 2, dim );
+         for (quad = 0; quad < num_quads; ++quad) {
+            unsigned s1 = 4*quad;
+            unsigned s2 = 4*quad + length;
+            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
+            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s2);
+            shuffles[4*quad + 2] = i32undef;
+            shuffles[4*quad + 3] = i32undef;
+         }
+         ddxdyonec[dim] = LLVMBuildShuffleVector(builder, srcx, srcy,
+                                               LLVMConstVector(shuffles, length), "");
+      }
+      if (dims == 1) {
+         derivs.ddx_ddy[0] = ddxdyonec[0];
+      }
+      else if (dims >= 2) {
+         for (quad = 0; quad < num_quads; ++quad) {
+            unsigned s1 = 4*quad;
+            unsigned s2 = 4*quad + length;
+            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
+            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s1 + 1);
+            shuffles[4*quad + 2] = lp_build_const_int32(gallivm, s2);
+            shuffles[4*quad + 3] = lp_build_const_int32(gallivm, s2 + 1);
+         }
+         derivs.ddx_ddy[0] = LLVMBuildShuffleVector(builder, ddxdyonec[0], ddxdyonec[1],
+                                                  LLVMConstVector(shuffles, length), "");
+         if (dims == 3) {
+            derivs.ddx_ddy[1] = ddxdyonec[2];
+         }
       }
       unit = inst->Src[3].Register.Index;
    }  else {
-      for (i = 0; i < num_coords; i++) {
-         ddx[i] = lp_build_scalar_ddx( &bld->bld_base.base, coords[i] );
-         ddy[i] = lp_build_scalar_ddy( &bld->bld_base.base, coords[i] );
+      if (dims == 1) {
+         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[0]);
+      }
+      else if (dims >= 2) {
+         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->bld_base.base,
+                                                            coords[0], coords[1]);
+         if (dims == 3) {
+            derivs.ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[2]);
+         }
       }
       unit = inst->Src[1].Register.Index;
-   }
-   for (i = num_coords; i < 3; i++) {
-      ddx[i] = LLVMGetUndef(bld->bld_base.base.elem_type);
-      ddy[i] = LLVMGetUndef(bld->bld_base.base.elem_type);
    }
 
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
                                   unit, num_coords, coords,
-                                  ddx, ddy,
+                                  &derivs,
                                   lod_bias, explicit_lod,
                                   texel);
 }
@@ -1310,6 +1363,7 @@ emit_txq( struct lp_build_tgsi_soa_context *bld,
 
    bld->sampler->emit_size_query(bld->sampler,
                                  bld->bld_base.base.gallivm,
+                                 bld->bld_base.int_bld.type,
                                  inst->Src[1].Register.Index,
                                  explicit_lod,
                                  sizes_out);

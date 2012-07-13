@@ -42,6 +42,10 @@
 
 struct lp_type;
 
+LLVMValueRef
+lp_build_half_to_float(struct gallivm_state *gallivm,
+                       struct lp_type src_type,
+                       LLVMValueRef src);
 
 LLVMValueRef
 lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,

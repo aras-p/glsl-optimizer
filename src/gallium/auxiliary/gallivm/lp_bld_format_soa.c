@@ -359,7 +359,8 @@ lp_build_fetch_rgba_soa(struct gallivm_state *gallivm,
     */
 
    if (util_format_fits_8unorm(format_desc) &&
-       type.floating && type.width == 32 && type.length == 4) {
+       type.floating && type.width == 32 &&
+       (type.length == 1 || (type.length % 4 == 0))) {
       struct lp_type tmp_type;
       LLVMValueRef tmp;
 

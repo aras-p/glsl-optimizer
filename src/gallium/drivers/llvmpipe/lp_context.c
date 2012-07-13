@@ -51,51 +51,12 @@
 unsigned llvmpipe_variant_count;
 
 
-/**
- * This function is called by the gallivm "garbage collector" when
- * the LLVM global data structures are freed.  We must free all LLVM-related
- * data.  Specifically, all JIT'd shader variants.
- */
-static void
-garbage_collect_callback(void *cb_data)
-{
-   struct llvmpipe_context *lp = (struct llvmpipe_context *) cb_data;
-   struct lp_fs_variant_list_item *li;
-
-   /* Free all the context's shader variants */
-   li = first_elem(&lp->fs_variants_list);
-   while (!at_end(&lp->fs_variants_list, li)) {
-      struct lp_fs_variant_list_item *next = next_elem(li);
-      llvmpipe_remove_shader_variant(lp, li->base);
-      li = next;
-   }
-
-   /* Free all the context's primitive setup variants */
-   lp_delete_setup_variants(lp);
-
-   /* release references to setup variants, shaders */
-   lp_setup_set_setup_variant(lp->setup, NULL);
-   lp_setup_set_fs_variant(lp->setup, NULL);
-   lp_setup_reset(lp->setup);
-
-   /* This type will be recreated upon demand */
-   lp->jit_context_ptr_type = NULL;
-
-   /* mark all state as dirty to ensure new shaders are jit'd, etc. */
-   lp->dirty = ~0;
-}
-
-
-
 static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    uint i, j;
 
    lp_print_counters();
-
-   gallivm_remove_garbage_collector_callback(garbage_collect_callback,
-                                             llvmpipe);
 
    /* This will also destroy llvmpipe->setup:
     */
@@ -127,8 +88,6 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    }
 
    lp_delete_setup_variants(llvmpipe);
-
-   gallivm_destroy(llvmpipe->gallivm);
 
    align_free( llvmpipe );
 }
@@ -195,12 +154,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
    llvmpipe_init_surface_functions(llvmpipe);
 
-   llvmpipe->gallivm = gallivm_create();
-
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   llvmpipe->draw = draw_create_gallivm(&llvmpipe->pipe, llvmpipe->gallivm);
+   llvmpipe->draw = draw_create(&llvmpipe->pipe);
    if (!llvmpipe->draw)
       goto fail;
 
@@ -225,9 +182,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    draw_wide_line_threshold(llvmpipe->draw, 10000.0);
 
    lp_reset_counters();
-
-   gallivm_register_garbage_collector_callback(garbage_collect_callback,
-                                               llvmpipe);
 
    return &llvmpipe->pipe;
 

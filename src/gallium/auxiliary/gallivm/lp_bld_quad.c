@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "u_cpu_detect.h"
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_const.h"
@@ -77,34 +78,82 @@ lp_build_ddy(struct lp_build_context *bld,
    return lp_build_sub(bld, a_bottom, a_top);
 }
 
-
+/*
+ * To be able to handle multiple quads at once in texture sampling and
+ * do lod calculations per quad, it is necessary to get the per-quad
+ * derivatives into the lp_build_rho function.
+ * For 8-wide vectors the packed derivative values for 3 coords would
+ * look like this, this scales to a arbitrary (multiple of 4) vector size:
+ * ds1dx ds1dy dt1dx dt1dy ds2dx ds2dy dt2dx dt2dy
+ * dr1dx dr1dy _____ _____ dr2dx dr2dy _____ _____
+ * The second vector will be unused for 1d and 2d textures.
+ */
 LLVMValueRef
-lp_build_scalar_ddx(struct lp_build_context *bld,
-                    LLVMValueRef a)
+lp_build_packed_ddx_ddy_onecoord(struct lp_build_context *bld,
+                                 LLVMValueRef a)
 {
-   LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef idx_left  = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_LEFT);
-   LLVMValueRef idx_right = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_RIGHT);
-   LLVMValueRef a_left  = LLVMBuildExtractElement(builder, a, idx_left, "left");
-   LLVMValueRef a_right = LLVMBuildExtractElement(builder, a, idx_right, "right");
+   struct gallivm_state *gallivm = bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef vec1, vec2;
+
+   /* same packing as _twocoord, but can use aos swizzle helper */
+
+   /*
+    * XXX could make swizzle1 a noop swizzle by using right top/bottom
+    * pair for ddy
+    */
+   static const unsigned char swizzle1[] = {
+      LP_BLD_QUAD_TOP_LEFT, LP_BLD_QUAD_TOP_LEFT,
+      LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+   };
+   static const unsigned char swizzle2[] = {
+      LP_BLD_QUAD_TOP_RIGHT, LP_BLD_QUAD_BOTTOM_LEFT,
+      LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+   };
+
+   vec1 = lp_build_swizzle_aos(bld, a, swizzle1);
+   vec2 = lp_build_swizzle_aos(bld, a, swizzle2);
+
    if (bld->type.floating)
-      return LLVMBuildFSub(builder, a_right, a_left, "ddx");
+      return LLVMBuildFSub(builder, vec2, vec1, "ddxddy");
    else
-      return LLVMBuildSub(builder, a_right, a_left, "ddx");
+      return LLVMBuildSub(builder, vec2, vec1, "ddxddy");
 }
 
 
 LLVMValueRef
-lp_build_scalar_ddy(struct lp_build_context *bld,
-                    LLVMValueRef a)
+lp_build_packed_ddx_ddy_twocoord(struct lp_build_context *bld,
+                                 LLVMValueRef a, LLVMValueRef b)
 {
-   LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef idx_top    = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_LEFT);
-   LLVMValueRef idx_bottom = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_BOTTOM_LEFT);
-   LLVMValueRef a_top    = LLVMBuildExtractElement(builder, a, idx_top, "top");
-   LLVMValueRef a_bottom = LLVMBuildExtractElement(builder, a, idx_bottom, "bottom");
+   struct gallivm_state *gallivm = bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef shuffles1[LP_MAX_VECTOR_LENGTH/4];
+   LLVMValueRef shuffles2[LP_MAX_VECTOR_LENGTH/4];
+   LLVMValueRef vec1, vec2;
+   unsigned length, num_quads, i;
+
+   /* XXX: do hsub version */
+   length = bld->type.length;
+   num_quads = length / 4;
+   for (i = 0; i < num_quads; i++) {
+      unsigned s1 = 4 * i;
+      unsigned s2 = 4 * i + length;
+      shuffles1[4*i + 0] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_LEFT + s1);
+      shuffles1[4*i + 1] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_LEFT + s1);
+      shuffles1[4*i + 2] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_LEFT + s2);
+      shuffles1[4*i + 3] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_LEFT + s2);
+      shuffles2[4*i + 0] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_RIGHT + s1);
+      shuffles2[4*i + 1] = lp_build_const_int32(gallivm, LP_BLD_QUAD_BOTTOM_LEFT + s1);
+      shuffles2[4*i + 2] = lp_build_const_int32(gallivm, LP_BLD_QUAD_TOP_RIGHT + s2);
+      shuffles2[4*i + 3] = lp_build_const_int32(gallivm, LP_BLD_QUAD_BOTTOM_LEFT + s2);
+   }
+   vec1 = LLVMBuildShuffleVector(builder, a, b,
+                                 LLVMConstVector(shuffles1, length), "");
+   vec2 = LLVMBuildShuffleVector(builder, a, b,
+                                 LLVMConstVector(shuffles2, length), "");
    if (bld->type.floating)
-      return LLVMBuildFSub(builder, a_bottom, a_top, "ddy");
+      return LLVMBuildFSub(builder, vec2, vec1, "ddxddyddxddy");
    else
-      return LLVMBuildSub(builder, a_bottom, a_top, "ddy");
+      return LLVMBuildSub(builder, vec2, vec1, "ddxddyddxddy");
 }
+

@@ -230,7 +230,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    llvm_vert_info.stride = fpme->vertex_size;
    llvm_vert_info.verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size *
-                                     align(fetch_info->count,  4));
+                                     align(fetch_info->count,  lp_native_vector_width / 32));
    if (!llvm_vert_info.verts) {
       assert(0);
       return;
@@ -423,7 +423,7 @@ draw_pt_fetch_pipeline_or_emit_llvm(struct draw_context *draw)
 {
    struct llvm_middle_end *fpme = 0;
 
-   if (!draw->llvm || !draw->llvm->gallivm->engine)
+   if (!draw->llvm)
       return NULL;
 
    fpme = CALLOC_STRUCT( llvm_middle_end );

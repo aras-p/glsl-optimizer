@@ -36,6 +36,7 @@
  * @author Brian Paul <brian@vmware.com>
  */
 
+#include "util/u_memory.h"
 
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_type.h"
@@ -52,19 +53,6 @@ enum vector_mode
 
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
-
-/** cast wrapper */
-static blend_test_ptr_t
-voidptr_to_blend_test_ptr_t(void *p)
-{
-   union {
-      void *v;
-      blend_test_ptr_t f;
-   } u;
-   u.v = p;
-   return u.f;
-}
-
 
 
 void
@@ -468,50 +456,43 @@ compute_blend_ref(const struct pipe_blend_state *blend,
 
 PIPE_ALIGN_STACK
 static boolean
-test_one(struct gallivm_state *gallivm,
-         unsigned verbose,
+test_one(unsigned verbose,
          FILE *fp,
          const struct pipe_blend_state *blend,
          enum vector_mode mode,
          struct lp_type type)
 {
-   LLVMModuleRef module = gallivm->module;
+   struct gallivm_state *gallivm;
    LLVMValueRef func = NULL;
-   LLVMExecutionEngineRef engine = gallivm->engine;
-   char *error = NULL;
    blend_test_ptr_t blend_test_ptr;
    boolean success;
    const unsigned n = LP_TEST_NUM_SAMPLES;
    int64_t cycles[LP_TEST_NUM_SAMPLES];
    double cycles_avg = 0.0;
    unsigned i, j;
-   void *code;
+   const unsigned stride = lp_type_width(type)/8;
 
    if(verbose >= 1)
       dump_blend_type(stdout, blend, mode, type);
 
+   gallivm = gallivm_create();
+
    func = add_blend_test(gallivm, blend, mode, type);
 
-   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
+   gallivm_compile_module(gallivm);
 
-   code = LLVMGetPointerToGlobal(engine, func);
-   blend_test_ptr = voidptr_to_blend_test_ptr_t(code);
-
-   if(verbose >= 2)
-      lp_disassemble(code);
+   blend_test_ptr = (blend_test_ptr_t)gallivm_jit_function(gallivm, func);
 
    success = TRUE;
-   for(i = 0; i < n && success; ++i) {
-      if(mode == AoS) {
-         PIPE_ALIGN_VAR(16) uint8_t src[LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t dst[LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t con[LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t res[LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t ref[LP_NATIVE_VECTOR_WIDTH/8];
+   if(mode == AoS) {
+      uint8_t *src, *dst, *con, *res, *ref;
+      src = align_malloc(stride, stride);
+      dst = align_malloc(stride, stride);
+      con = align_malloc(stride, stride);
+      res = align_malloc(stride, stride);
+      ref = align_malloc(stride, stride);
+
+      for(i = 0; i < n && success; ++i) {
          int64_t start_counter = 0;
          int64_t end_counter = 0;
 
@@ -569,14 +550,21 @@ test_one(struct gallivm_state *gallivm,
             fprintf(stderr, "\n");
          }
       }
+      align_free(src);
+      align_free(dst);
+      align_free(con);
+      align_free(res);
+      align_free(ref);
+   }
+   else if(mode == SoA) {
+      uint8_t *src, *dst, *con, *res, *ref;
+      src = align_malloc(4*stride, stride);
+      dst = align_malloc(4*stride, stride);
+      con = align_malloc(4*stride, stride);
+      res = align_malloc(4*stride, stride);
+      ref = align_malloc(4*stride, stride);
 
-      if(mode == SoA) {
-         const unsigned stride = type.length*type.width/8;
-         PIPE_ALIGN_VAR(16) uint8_t src[4*LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t dst[4*LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t con[4*LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t res[4*LP_NATIVE_VECTOR_WIDTH/8];
-         PIPE_ALIGN_VAR(16) uint8_t ref[4*LP_NATIVE_VECTOR_WIDTH/8];
+      for(i = 0; i < n && success; ++i) {
          int64_t start_counter = 0;
          int64_t end_counter = 0;
          boolean mismatch;
@@ -651,6 +639,11 @@ test_one(struct gallivm_state *gallivm,
             }
          }
       }
+      align_free(src);
+      align_free(dst);
+      align_free(con);
+      align_free(res);
+      align_free(ref);
    }
 
    /*
@@ -687,16 +680,9 @@ test_one(struct gallivm_state *gallivm,
    if(fp)
       write_tsv_row(fp, blend, mode, type, cycles_avg, success);
 
-   if (!success) {
-      if(verbose < 2)
-         LLVMDumpModule(module);
-      LLVMWriteBitcodeToFile(module, "blend.bc");
-      fprintf(stderr, "blend.bc written\n");
-      fprintf(stderr, "Invoke as \"llc -o - blend.bc\"\n");
-      abort();
-   }
+   gallivm_free_function(gallivm, func, blend_test_ptr);
 
-   LLVMFreeMachineCodeForFunction(engine, func);
+   gallivm_destroy(gallivm);
 
    return success;
 }
@@ -753,7 +739,7 @@ const unsigned num_types = sizeof(blend_types)/sizeof(blend_types[0]);
 
 
 boolean
-test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_all(unsigned verbose, FILE *fp)
 {
    const unsigned *rgb_func;
    const unsigned *rgb_src_factor;
@@ -789,7 +775,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
                            blend.rt[0].alpha_dst_factor  = *alpha_dst_factor;
                            blend.rt[0].colormask         = PIPE_MASK_RGBA;
 
-                           if(!test_one(gallivm, verbose, fp, &blend, mode, *type))
+                           if(!test_one(verbose, fp, &blend, mode, *type))
                              success = FALSE;
 
                         }
@@ -806,7 +792,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 
 
 boolean
-test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+test_some(unsigned verbose, FILE *fp,
           unsigned long n)
 {
    const unsigned *rgb_func;
@@ -849,7 +835,7 @@ test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
       blend.rt[0].alpha_dst_factor  = *alpha_dst_factor;
       blend.rt[0].colormask         = PIPE_MASK_RGBA;
 
-      if(!test_one(gallivm, verbose, fp, &blend, mode, *type))
+      if(!test_one(verbose, fp, &blend, mode, *type))
         success = FALSE;
    }
 
@@ -858,7 +844,7 @@ test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
 
 
 boolean
-test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_single(unsigned verbose, FILE *fp)
 {
    printf("no test_single()");
    return TRUE;

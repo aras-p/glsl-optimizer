@@ -36,10 +36,12 @@
  * number of threads or using a smaller tilesize when multiple
  * colorbuffers are bound.
  */
-PIPE_ALIGN_VAR(16) uint8_t lp_swizzled_cbuf[LP_MAX_THREADS][PIPE_MAX_COLOR_BUFS][TILE_SIZE * TILE_SIZE * 4];
+PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN)
+uint8_t lp_swizzled_cbuf[LP_MAX_THREADS][PIPE_MAX_COLOR_BUFS][TILE_SIZE * TILE_SIZE * 4];
 
 
 /* A single dummy tile used in a couple of out-of-memory situations. 
  */
-PIPE_ALIGN_VAR(16) uint8_t lp_dummy_tile[TILE_SIZE * TILE_SIZE * 4];
+PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN)
+uint8_t lp_dummy_tile[TILE_SIZE * TILE_SIZE * 4];
 

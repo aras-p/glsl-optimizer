@@ -84,7 +84,7 @@ uyvy_to_yuv_soa(struct gallivm_state *gallivm,
     * per element. Didn't measure performance but cuts shader size
     * by quite a bit (less difference if cpu has no sse4.1 support).
     */
-   if (util_cpu_caps.has_sse2 && n == 4) {
+   if (util_cpu_caps.has_sse2 && n > 1) {
       LLVMValueRef sel, tmp, tmp2;
       struct lp_build_context bld32;
 
@@ -152,7 +152,7 @@ yuyv_to_yuv_soa(struct gallivm_state *gallivm,
     * per element. Didn't measure performance but cuts shader size
     * by quite a bit (less difference if cpu has no sse4.1 support).
     */
-   if (util_cpu_caps.has_sse2 && n == 4) {
+   if (util_cpu_caps.has_sse2 && n > 1) {
       LLVMValueRef sel, tmp;
       struct lp_build_context bld32;
 

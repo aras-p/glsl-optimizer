@@ -40,6 +40,7 @@
 #include "lp_bld_init.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
+#include "lp_bld_pack.h"
 
 
 LLVMValueRef
@@ -95,7 +96,7 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
 
 
 /**
- * Combined extract and broadcast (or a mere shuffle when the two types match)
+ * Combined extract and broadcast (mere shuffle in most cases)
  */
 LLVMValueRef
 lp_build_extract_broadcast(struct gallivm_state *gallivm,
@@ -132,9 +133,9 @@ lp_build_extract_broadcast(struct gallivm_state *gallivm,
       }
    }
    else {
-      if (dst_type.length == src_type.length) {
+      if (dst_type.length > 1) {
          /*
-          * Special shuffle of the same size.
+          * shuffle - result can be of different length.
           */
 
          LLVMValueRef shuffle;
@@ -142,28 +143,14 @@ lp_build_extract_broadcast(struct gallivm_state *gallivm,
                                       LLVMVectorType(i32t, dst_type.length),
                                       index);
          res = LLVMBuildShuffleVector(gallivm->builder, vector,
-                                      LLVMGetUndef(lp_build_vec_type(gallivm, dst_type)),
+                                      LLVMGetUndef(lp_build_vec_type(gallivm, src_type)),
                                       shuffle, "");
       }
       else {
-         LLVMValueRef scalar;
-         scalar = LLVMBuildExtractElement(gallivm->builder, vector, index, "");
-         if (dst_type.length == 1) {
-            /*
-             * Trivial extract scalar from vector.
-             */
-
-            res = scalar;
-         }
-         else {
-            /*
-             * General case of different sized vectors.
-             */
-
-            res = lp_build_broadcast(gallivm,
-                                     lp_build_vec_type(gallivm, dst_type),
-                                     vector);
-         }
+         /*
+          * Trivial extract scalar from vector.
+          */
+          res = LLVMBuildExtractElement(gallivm->builder, vector, index, "");
       }
    }
 
@@ -290,6 +277,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
          return bld->zero;
       case PIPE_SWIZZLE_ONE:
          return bld->one;
+      case LP_BLD_SWIZZLE_DONTCARE:
+         return bld->undef;
       default:
          assert(0);
          return bld->undef;
@@ -319,21 +308,26 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             case PIPE_SWIZZLE_BLUE:
             case PIPE_SWIZZLE_ALPHA:
                shuffle = j + swizzles[i];
+               shuffles[j + i] = LLVMConstInt(i32t, shuffle, 0);
                break;
             case PIPE_SWIZZLE_ZERO:
                shuffle = type.length + 0;
+               shuffles[j + i] = LLVMConstInt(i32t, shuffle, 0);
                if (!aux[0]) {
                   aux[0] = lp_build_const_elem(bld->gallivm, type, 0.0);
                }
                break;
             case PIPE_SWIZZLE_ONE:
                shuffle = type.length + 1;
+               shuffles[j + i] = LLVMConstInt(i32t, shuffle, 0);
                if (!aux[1]) {
                   aux[1] = lp_build_const_elem(bld->gallivm, type, 1.0);
                }
                break;
+            case LP_BLD_SWIZZLE_DONTCARE:
+               shuffles[j + i] = LLVMGetUndef(i32t);
+               break;
             }
-            shuffles[j + i] = LLVMConstInt(i32t, shuffle, 0);
          }
       }
 
@@ -508,3 +502,127 @@ lp_build_swizzle_soa_inplace(struct lp_build_context *bld,
 
    lp_build_swizzle_soa(bld, unswizzled, swizzles, values);
 }
+
+
+/**
+ * Transpose from AOS <-> SOA
+ *
+ * @param single_type_lp   type of pixels
+ * @param src              the 4 * n pixel input
+ * @param dst              the 4 * n pixel output
+ */
+void
+lp_build_transpose_aos(struct gallivm_state *gallivm,
+                       struct lp_type single_type_lp,
+                       const LLVMValueRef src[4],
+                       LLVMValueRef dst[4])
+{
+   struct lp_type double_type_lp = single_type_lp;
+   LLVMTypeRef single_type;
+   LLVMTypeRef double_type;
+   LLVMValueRef t0, t1, t2, t3;
+
+   double_type_lp.length >>= 1;
+   double_type_lp.width  <<= 1;
+
+   double_type = lp_build_vec_type(gallivm, double_type_lp);
+   single_type = lp_build_vec_type(gallivm, single_type_lp);
+
+   /* Interleave x, y, z, w -> xy and zw */
+   t0 = lp_build_interleave2_half(gallivm, single_type_lp, src[0], src[1], 0);
+   t1 = lp_build_interleave2_half(gallivm, single_type_lp, src[2], src[3], 0);
+   t2 = lp_build_interleave2_half(gallivm, single_type_lp, src[0], src[1], 1);
+   t3 = lp_build_interleave2_half(gallivm, single_type_lp, src[2], src[3], 1);
+
+   /* Cast to double width type for second interleave */
+   t0 = LLVMBuildBitCast(gallivm->builder, t0, double_type, "t0");
+   t1 = LLVMBuildBitCast(gallivm->builder, t1, double_type, "t1");
+   t2 = LLVMBuildBitCast(gallivm->builder, t2, double_type, "t2");
+   t3 = LLVMBuildBitCast(gallivm->builder, t3, double_type, "t3");
+
+   /* Interleave xy, zw -> xyzw */
+   dst[0] = lp_build_interleave2_half(gallivm, double_type_lp, t0, t1, 0);
+   dst[1] = lp_build_interleave2_half(gallivm, double_type_lp, t0, t1, 1);
+   dst[2] = lp_build_interleave2_half(gallivm, double_type_lp, t2, t3, 0);
+   dst[3] = lp_build_interleave2_half(gallivm, double_type_lp, t2, t3, 1);
+
+   /* Cast back to original single width type */
+   dst[0] = LLVMBuildBitCast(gallivm->builder, dst[0], single_type, "dst0");
+   dst[1] = LLVMBuildBitCast(gallivm->builder, dst[1], single_type, "dst1");
+   dst[2] = LLVMBuildBitCast(gallivm->builder, dst[2], single_type, "dst2");
+   dst[3] = LLVMBuildBitCast(gallivm->builder, dst[3], single_type, "dst3");
+}
+
+
+/**
+ * Pack first element of aos values,
+ * pad out to destination size.
+ * i.e. x1 _ _ _ x2 _ _ _ will become x1 x2 _ _
+ */
+LLVMValueRef
+lp_build_pack_aos_scalars(struct gallivm_state *gallivm,
+                          struct lp_type src_type,
+                          struct lp_type dst_type,
+                          const LLVMValueRef src)
+{
+   LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
+   LLVMValueRef undef = LLVMGetUndef(i32t);
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+   unsigned num_src = src_type.length / 4;
+   unsigned num_dst = dst_type.length;
+   unsigned i;
+
+   assert(num_src <= num_dst);
+
+   for (i = 0; i < num_src; i++) {
+      shuffles[i] = LLVMConstInt(i32t, i * 4, 0);
+   }
+   for (i = num_src; i < num_dst; i++) {
+      shuffles[i] = undef;
+   }
+
+   if (num_dst == 1) {
+      return LLVMBuildExtractElement(gallivm->builder, src, shuffles[0], "");
+   }
+   else {
+      return LLVMBuildShuffleVector(gallivm->builder, src, src,
+                                    LLVMConstVector(shuffles, num_dst), "");
+   }
+}
+
+
+/**
+ * Unpack and broadcast packed aos values consisting of only the
+ * first value, i.e. x1 x2 _ _ will become x1 x1 x1 x1 x2 x2 x2 x2
+ */
+LLVMValueRef
+lp_build_unpack_broadcast_aos_scalars(struct gallivm_state *gallivm,
+                                      struct lp_type src_type,
+                                      struct lp_type dst_type,
+                                      const LLVMValueRef src)
+{
+   LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+   unsigned num_dst = dst_type.length;
+   unsigned num_src = dst_type.length / 4;
+   unsigned i;
+
+   assert(num_dst / 4 <= src_type.length);
+
+   for (i = 0; i < num_src; i++) {
+      shuffles[i*4] = LLVMConstInt(i32t, i, 0);
+      shuffles[i*4+1] = LLVMConstInt(i32t, i, 0);
+      shuffles[i*4+2] = LLVMConstInt(i32t, i, 0);
+      shuffles[i*4+3] = LLVMConstInt(i32t, i, 0);
+   }
+
+   if (num_src == 1) {
+      return lp_build_extract_broadcast(gallivm, src_type, dst_type,
+                                        src, shuffles[0]);
+   }
+   else {
+      return LLVMBuildShuffleVector(gallivm->builder, src, src,
+                                    LLVMConstVector(shuffles, num_dst), "");
+   }
+}
+

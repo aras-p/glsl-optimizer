@@ -60,6 +60,7 @@ struct tgsi_token;
 struct tgsi_shader_info;
 struct lp_build_mask_context;
 struct gallivm_state;
+struct lp_derivatives;
 
 
 enum lp_build_tex_modifier {
@@ -174,8 +175,7 @@ struct lp_build_sampler_soa
                         unsigned unit,
                         unsigned num_coords,
                         const LLVMValueRef *coords,
-                        const LLVMValueRef *ddx,
-                        const LLVMValueRef *ddy,
+                        const struct lp_derivatives *derivs,
                         LLVMValueRef lod_bias, /* optional */
                         LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef *texel);
@@ -183,6 +183,7 @@ struct lp_build_sampler_soa
    void
    (*emit_size_query)( const struct lp_build_sampler_soa *sampler,
                        struct gallivm_state *gallivm,
+                       struct lp_type type,
                        unsigned unit,
                        LLVMValueRef explicit_lod, /* optional */
                        LLVMValueRef *sizes_out);
@@ -197,8 +198,7 @@ struct lp_build_sampler_aos
                         unsigned target, /* TGSI_TEXTURE_* */
                         unsigned unit,
                         LLVMValueRef coords,
-                        LLVMValueRef ddx,
-                        LLVMValueRef ddy,
+                        const struct lp_derivatives derivs,
                         enum lp_build_tex_modifier modifier);
 };
 

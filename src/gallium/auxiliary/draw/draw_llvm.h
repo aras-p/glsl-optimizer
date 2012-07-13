@@ -36,11 +36,6 @@
 #include "pipe/p_context.h"
 #include "util/u_simple_list.h"
 
-#include <llvm-c/Core.h>
-#include <llvm-c/Analysis.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/ExecutionEngine.h>
-
 
 struct draw_llvm;
 struct llvm_vertex_shader;
@@ -220,6 +215,14 @@ struct draw_llvm_variant_list_item
 
 struct draw_llvm_variant
 {
+   struct gallivm_state *gallivm;
+
+   /* LLVM JIT builder types */
+   LLVMTypeRef context_ptr_type;
+   LLVMTypeRef buffer_ptr_type;
+   LLVMTypeRef vb_ptr_type;
+   LLVMTypeRef vertex_header_ptr_type;
+
    LLVMValueRef function;
    LLVMValueRef function_elts;
    draw_jit_vert_func jit_func;
@@ -249,16 +252,8 @@ struct draw_llvm {
 
    struct draw_jit_context jit_context;
 
-   struct gallivm_state *gallivm;
-
    struct draw_llvm_variant_list_item vs_variants_list;
    int nr_variants;
-
-   /* LLVM JIT builder types */
-   LLVMTypeRef context_ptr_type;
-   LLVMTypeRef buffer_ptr_type;
-   LLVMTypeRef vb_ptr_type;
-   LLVMTypeRef vertex_header_ptr_type;
 };
 
 
@@ -270,7 +265,7 @@ llvm_vertex_shader(struct draw_vertex_shader *vs)
 
 
 struct draw_llvm *
-draw_llvm_create(struct draw_context *draw, struct gallivm_state *gallivm);
+draw_llvm_create(struct draw_context *draw);
 
 void
 draw_llvm_destroy(struct draw_llvm *llvm);
@@ -285,11 +280,6 @@ draw_llvm_destroy_variant(struct draw_llvm_variant *variant);
 
 struct draw_llvm_variant_key *
 draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store);
-
-LLVMValueRef
-draw_llvm_translate_from(struct gallivm_state *gallivm,
-                         LLVMValueRef vbuffer,
-                         enum pipe_format from_format);
 
 struct lp_build_sampler_soa *
 draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,

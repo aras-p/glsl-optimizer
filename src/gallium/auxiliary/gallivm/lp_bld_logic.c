@@ -52,8 +52,8 @@
  *
  *    select <4 x i1> %C, %A, %B
  *
- * is valid IR (e.g. llvm/test/Assembler/vector-select.ll), but it is not
- * supported on any backend.
+ * is valid IR (e.g. llvm/test/Assembler/vector-select.ll), but it is only
+ * supported on some backends (x86) starting with llvm 3.1.
  *
  * Expanding the boolean vector to full SIMD register width, as in
  *
@@ -485,8 +485,10 @@ lp_build_select(struct lp_build_context *bld,
       }
       res = LLVMBuildSelect(builder, mask, a, b, "");
    }
-   else if (util_cpu_caps.has_sse4_1 &&
-            type.width * type.length == 128 &&
+   else if (((util_cpu_caps.has_sse4_1 &&
+              type.width * type.length == 128) ||
+             (util_cpu_caps.has_avx &&
+              type.width * type.length == 256 && type.width >= 32)) &&
             !LLVMIsConstant(a) &&
             !LLVMIsConstant(b) &&
             !LLVMIsConstant(mask)) {
@@ -494,8 +496,22 @@ lp_build_select(struct lp_build_context *bld,
       LLVMTypeRef arg_type;
       LLVMValueRef args[3];
 
-      if (type.floating &&
-          type.width == 64) {
+      /*
+       *  There's only float blend in AVX but can just cast i32/i64
+       *  to float.
+       */
+      if (type.width * type.length == 256) {
+         if (type.width == 64) {
+           intrinsic = "llvm.x86.avx.blendv.pd.256";
+           arg_type = LLVMVectorType(LLVMDoubleTypeInContext(lc), 4);
+         }
+         else {
+            intrinsic = "llvm.x86.avx.blendv.ps.256";
+            arg_type = LLVMVectorType(LLVMFloatTypeInContext(lc), 8);
+         }
+      }
+      else if (type.floating &&
+               type.width == 64) {
          intrinsic = "llvm.x86.sse41.blendvpd";
          arg_type = LLVMVectorType(LLVMDoubleTypeInContext(lc), 2);
       } else if (type.floating &&
@@ -590,4 +606,36 @@ lp_build_select_aos(struct lp_build_context *bld,
       LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask);
       return lp_build_select(bld, mask_vec, a, b);
    }
+}
+
+
+/**
+ * Return (scalar-cast)val ? true : false;
+ */
+LLVMValueRef
+lp_build_any_true_range(struct lp_build_context *bld,
+                        unsigned real_length,
+                        LLVMValueRef val)
+{
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   LLVMTypeRef scalar_type;
+   LLVMTypeRef true_type;
+
+   assert(real_length <= bld->type.length);
+
+   true_type = LLVMIntTypeInContext(bld->gallivm->context,
+                                    bld->type.width * real_length);
+   scalar_type = LLVMIntTypeInContext(bld->gallivm->context,
+                                      bld->type.width * bld->type.length);
+   val = LLVMBuildBitCast(builder, val, scalar_type, "");
+   /*
+    * We're using always native types so we can use intrinsics.
+    * However, if we don't do per-element calculations, we must ensure
+    * the excess elements aren't used since they may contain garbage.
+    */
+   if (real_length < bld->type.length) {
+      val = LLVMBuildTrunc(builder, val, true_type, "");
+   }
+   return LLVMBuildICmp(builder, LLVMIntNE,
+                        val, LLVMConstNull(true_type), "");
 }

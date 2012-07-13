@@ -53,7 +53,7 @@ write_tsv_header(FILE *fp)
 }
 
 
-typedef float (*unary_func_t)(float);
+typedef void (*unary_func_t)(float *out, const float *in);
 
 
 /**
@@ -180,6 +180,45 @@ const float sincos_values[] = {
     5*M_PI/4,
 };
 
+const float round_values[] = {
+      -10.0, -1, 0.0, 12.0,
+      -1.49, -0.25, 1.25, 2.51,
+      -0.99, -0.01, 0.01, 0.99,
+};
+
+static float fractf(float x)
+{
+   x -= floorf(x);
+   if (x >= 1.0f) {
+      // clamp to the largest number smaller than one
+      x = 1.0f - 0.5f*FLT_EPSILON;
+   }
+   return x;
+}
+
+
+const float fract_values[] = {
+   // http://en.wikipedia.org/wiki/IEEE_754-1985#Examples
+   0.0f,
+   -0.0f,
+   1.0f,
+   -1.0f,
+   0.5f,
+   -0.5f,
+   1.401298464324817e-45f, // smallest denormal
+   -1.401298464324817e-45f,
+   5.88e-39f, // middle denormal
+   1.18e-38f, // largest denormal
+   -1.18e-38f,
+   -1.62981451e-08f,
+   FLT_EPSILON,
+   -FLT_EPSILON,
+   1.0f - 0.5f*FLT_EPSILON,
+   -1.0f + FLT_EPSILON,
+   FLT_MAX,
+   -FLT_MAX
+};
+
 
 /*
  * Unary test cases.
@@ -196,6 +235,11 @@ unary_tests[] = {
    {"sin", &lp_build_sin, &sinf, sincos_values, Elements(sincos_values), 20.0 },
    {"cos", &lp_build_cos, &cosf, sincos_values, Elements(sincos_values), 20.0 },
    {"sgn", &lp_build_sgn, &sgnf, exp2_values, Elements(exp2_values), 20.0 },
+   {"round", &lp_build_round, &roundf, round_values, Elements(round_values), 24.0 },
+   {"trunc", &lp_build_trunc, &truncf, round_values, Elements(round_values), 24.0 },
+   {"floor", &lp_build_floor, &floorf, round_values, Elements(round_values), 24.0 },
+   {"ceil", &lp_build_ceil, &ceilf, round_values, Elements(round_values), 24.0 },
+   {"fract", &lp_build_fract_safe, &fractf, fract_values, Elements(fract_values), 24.0 },
 };
 
 
@@ -204,39 +248,40 @@ unary_tests[] = {
  */
 static LLVMValueRef
 build_unary_test_func(struct gallivm_state *gallivm,
-                      LLVMModuleRef module,
-                      LLVMContextRef context,
                       const struct unary_test_t *test)
 {
-   struct lp_type type = lp_type_float_vec(32);
-   LLVMTypeRef i32t = LLVMInt32TypeInContext(context);
-   LLVMTypeRef f32t = LLVMFloatTypeInContext(context);
+   struct lp_type type = lp_type_float_vec(32, lp_native_vector_width);
+   LLVMContextRef context = gallivm->context;
+   LLVMModuleRef module = gallivm->module;
    LLVMTypeRef vf32t = lp_build_vec_type(gallivm, type);
-   LLVMTypeRef args[1] = { f32t };
-   LLVMValueRef func = LLVMAddFunction(module, test->name, LLVMFunctionType(f32t, args, Elements(args), 0));
-   LLVMValueRef arg1 = LLVMGetParam(func, 0);
+   LLVMTypeRef args[2] = { LLVMPointerType(vf32t, 0), LLVMPointerType(vf32t, 0) };
+   LLVMValueRef func = LLVMAddFunction(module, test->name,
+                                       LLVMFunctionType(LLVMVoidTypeInContext(context),
+                                                        args, Elements(args), 0));
+   LLVMValueRef arg0 = LLVMGetParam(func, 0);
+   LLVMValueRef arg1 = LLVMGetParam(func, 1);
    LLVMBuilderRef builder = gallivm->builder;
    LLVMBasicBlockRef block = LLVMAppendBasicBlockInContext(context, func, "entry");
-   LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
    LLVMValueRef ret;
 
    struct lp_build_context bld;
 
-   lp_build_context_init(&bld, gallivm, lp_type_float_vec(32));
+   lp_build_context_init(&bld, gallivm, type);
 
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
 
    LLVMPositionBuilderAtEnd(builder, block);
    
-   /* scalar to vector */
-   arg1 = LLVMBuildInsertElement(builder, LLVMGetUndef(vf32t), arg1, index0, "");
+   arg1 = LLVMBuildLoad(builder, arg1, "");
 
    ret = test->builder(&bld, arg1);
    
-   /* vector to scalar */
-   ret = LLVMBuildExtractElement(builder, ret, index0, "");
+   LLVMBuildStore(builder, ret, arg0);
 
-   LLVMBuildRet(builder, ret);
+   LLVMBuildRetVoid(builder);
+
+   gallivm_verify_function(gallivm, func);
+
    return func;
 }
 
@@ -245,67 +290,86 @@ build_unary_test_func(struct gallivm_state *gallivm,
  * Test one LLVM unary arithmetic builder function.
  */
 static boolean
-test_unary(struct gallivm_state *gallivm, unsigned verbose, FILE *fp, const struct unary_test_t *test)
+test_unary(unsigned verbose, FILE *fp, const struct unary_test_t *test)
 {
-   LLVMModuleRef module = gallivm->module;
+   struct gallivm_state *gallivm;
    LLVMValueRef test_func;
-   LLVMExecutionEngineRef engine = gallivm->engine;
-   LLVMContextRef context = gallivm->context;
-   char *error = NULL;
    unary_func_t test_func_jit;
    boolean success = TRUE;
-   int i;
+   int i, j;
+   int length = lp_native_vector_width / 32;
+   float *in, *out;
 
-   test_func = build_unary_test_func(gallivm, module, context, test);
+   in = align_malloc(length * 4, length * 4);
+   out = align_malloc(length * 4, length * 4);
 
-   if (LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      printf("LLVMVerifyModule: %s\n", error);
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
-
-   test_func_jit = (unary_func_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_func));
-
-   for (i = 0; i < test->num_values; ++i) {
-      float value = test->values[i];
-      float ref = test->ref(value);
-      float src = test_func_jit(value);
-
-      double error = fabs(src - ref);
-      double precision = error ? -log2(error/fabs(ref)) : FLT_MANT_DIG;
-
-      bool pass = precision >= test->precision;
-
-      if (isnan(ref)) {
-         continue;
-      }
-
-      if (!pass || verbose) {
-         printf("%s(%.9g): ref = %.9g, src = %.9g, precision = %f bits, %s\n",
-               test->name, value, ref, src, precision,
-               pass ? "PASS" : "FAIL");
-      }
-
-      if (!pass) {
-         success = FALSE;
-      }
+   /* random NaNs or 0s could wreak havoc */
+   for (i = 0; i < length; i++) {
+      in[i] = 1.0;
    }
 
-   LLVMFreeMachineCodeForFunction(engine, test_func);
+   gallivm = gallivm_create();
+
+   test_func = build_unary_test_func(gallivm, test);
+
+   gallivm_compile_module(gallivm);
+
+   test_func_jit = (unary_func_t) gallivm_jit_function(gallivm, test_func);
+
+   for (j = 0; j < (test->num_values + length - 1) / length; j++) {
+      int num_vals = ((j + 1) * length <= test->num_values) ? length :
+                                                              test->num_values % length;
+
+      for (i = 0; i < num_vals; ++i) {
+         in[i] = test->values[i+j*length];
+      }
+
+      test_func_jit(out, in);
+      for (i = 0; i < num_vals; ++i) {
+         float ref = test->ref(in[i]);
+         double error, precision;
+         bool pass;
+
+         error = fabs(out[i] - ref);
+         precision = error ? -log2(error/fabs(ref)) : FLT_MANT_DIG;
+
+         pass = precision >= test->precision;
+
+         if (isnan(ref)) {
+            continue;
+         }
+
+         if (!pass || verbose) {
+            printf("%s(%.9g): ref = %.9g, out = %.9g, precision = %f bits, %s\n",
+                  test->name, in[i], ref, out[i], precision,
+                  pass ? "PASS" : "FAIL");
+         }
+
+         if (!pass) {
+            success = FALSE;
+         }
+      }
+   }
+
+   gallivm_free_function(gallivm, test_func, test_func_jit);
+
+   gallivm_destroy(gallivm);
+
+   align_free(in);
+   align_free(out);
 
    return success;
 }
 
 
 boolean
-test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_all(unsigned verbose, FILE *fp)
 {
    boolean success = TRUE;
    int i;
 
    for (i = 0; i < Elements(unary_tests); ++i) {
-      if (!test_unary(gallivm, verbose, fp, &unary_tests[i])) {
+      if (!test_unary(verbose, fp, &unary_tests[i])) {
          success = FALSE;
       }
    }
@@ -315,19 +379,19 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 
 
 boolean
-test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+test_some(unsigned verbose, FILE *fp,
           unsigned long n)
 {
    /*
     * Not randomly generated test cases, so test all.
     */
 
-   return test_all(gallivm, verbose, fp);
+   return test_all(verbose, fp);
 }
 
 
 boolean
-test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_single(unsigned verbose, FILE *fp)
 {
    return TRUE;
 }

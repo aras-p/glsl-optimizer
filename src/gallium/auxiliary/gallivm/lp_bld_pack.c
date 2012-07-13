@@ -69,6 +69,7 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
+#include "util/u_memory.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -76,6 +77,7 @@
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_pack.h"
+#include "lp_bld_swizzle.h"
 
 
 /**
@@ -101,6 +103,30 @@ lp_build_const_unpack_shuffle(struct gallivm_state *gallivm,
    return LLVMConstVector(elems, n);
 }
 
+/**
+ * Similar to lp_build_const_unpack_shuffle but for special AVX 256bit unpack.
+ * See comment above lp_build_interleave2_half for more details.
+ */
+static LLVMValueRef
+lp_build_const_unpack_shuffle_half(struct gallivm_state *gallivm,
+                                   unsigned n, unsigned lo_hi)
+{
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i, j;
+
+   assert(n <= LP_MAX_VECTOR_LENGTH);
+   assert(lo_hi < 2);
+
+   for (i = 0, j = lo_hi*(n/4); i < n; i += 2, ++j) {
+      if (i == (n / 2))
+         j += n / 4;
+
+      elems[i + 0] = lp_build_const_int32(gallivm, 0 + j);
+      elems[i + 1] = lp_build_const_int32(gallivm, n + j);
+   }
+
+   return LLVMConstVector(elems, n);
+}
 
 /**
  * Build shuffle vectors that match PACKxx instructions.
@@ -119,6 +145,71 @@ lp_build_const_pack_shuffle(struct gallivm_state *gallivm, unsigned n)
    return LLVMConstVector(elems, n);
 }
 
+/**
+ * Return a vector with elements src[start:start+size]
+ * Most useful for getting half the values out of a 256bit sized vector,
+ * otherwise may cause data rearrangement to happen.
+ */
+LLVMValueRef
+lp_build_extract_range(struct gallivm_state *gallivm,
+                       LLVMValueRef src,
+                       unsigned start,
+                       unsigned size)
+{
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(size <= Elements(elems));
+
+   for (i = 0; i < size; ++i)
+      elems[i] = lp_build_const_int32(gallivm, i + start);
+
+   if (size == 1) {
+      return LLVMBuildExtractElement(gallivm->builder, src, elems[0], "");
+   }
+   else {
+      return LLVMBuildShuffleVector(gallivm->builder, src, src,
+                                    LLVMConstVector(elems, size), "");
+   }
+}
+
+/**
+ * Concatenates several (must be a power of 2) vectors (of same type)
+ * into a larger one.
+ * Most useful for building up a 256bit sized vector out of two 128bit ones.
+ */
+LLVMValueRef
+lp_build_concat(struct gallivm_state *gallivm,
+                LLVMValueRef src[],
+                struct lp_type src_type,
+                unsigned num_vectors)
+{
+   unsigned new_length, i;
+   LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH/2];
+   LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+
+   assert(src_type.length * num_vectors <= Elements(shuffles));
+   assert(util_is_power_of_two(num_vectors));
+
+   new_length = src_type.length;
+
+   for (i = 0; i < num_vectors; i++)
+      tmp[i] = src[i];
+
+   while (num_vectors > 1) {
+      num_vectors >>= 1;
+      new_length <<= 1;
+      for (i = 0; i < new_length; i++) {
+         shuffles[i] = lp_build_const_int32(gallivm, i);
+      }
+      for (i = 0; i < num_vectors; i++) {
+         tmp[i] = LLVMBuildShuffleVector(gallivm->builder, tmp[i*2], tmp[i*2 + 1],
+                                         LLVMConstVector(shuffles, new_length), "");
+      }
+   }
+
+   return tmp[0];
+}
 
 /**
  * Interleave vector elements.
@@ -139,6 +230,40 @@ lp_build_interleave2(struct gallivm_state *gallivm,
    return LLVMBuildShuffleVector(gallivm->builder, a, b, shuffle, "");
 }
 
+/**
+ * Interleave vector elements but with 256 bit,
+ * treats it as interleave with 2 concatenated 128 bit vectors.
+ *
+ * This differs to lp_build_interleave2 as that function would do the following (for lo):
+ * a0 b0 a1 b1 a2 b2 a3 b3, and this does not compile into an AVX unpack instruction.
+ *
+ *
+ * An example interleave 8x float with 8x float on AVX 256bit unpack:
+ *   a0 a1 a2 a3 a4 a5 a6 a7 <-> b0 b1 b2 b3 b4 b5 b6 b7
+ *
+ * Equivalent to interleaving 2x 128 bit vectors
+ *   a0 a1 a2 a3 <-> b0 b1 b2 b3 concatenated with a4 a5 a6 a7 <-> b4 b5 b6 b7
+ *
+ * So interleave-lo would result in:
+ *   a0 b0 a1 b1 a4 b4 a5 b5
+ *
+ * And interleave-hi would result in:
+ *   a2 b2 a3 b3 a6 b6 a7 b7
+ */
+LLVMValueRef
+lp_build_interleave2_half(struct gallivm_state *gallivm,
+                     struct lp_type type,
+                     LLVMValueRef a,
+                     LLVMValueRef b,
+                     unsigned lo_hi)
+{
+   if (type.length * type.width == 256) {
+      LLVMValueRef shuffle = lp_build_const_unpack_shuffle_half(gallivm, type.length, lo_hi);
+      return LLVMBuildShuffleVector(gallivm->builder, a, b, shuffle, "");
+   } else {
+      return lp_build_interleave2(gallivm, type, a, b, lo_hi);
+   }
+}
 
 /**
  * Double the bit width.
@@ -237,9 +362,9 @@ lp_build_unpack(struct gallivm_state *gallivm,
  * Non-interleaved pack.
  *
  * This will move values as
- *
- *   lo =   __ l0 __ l1 __ l2 __..  __ ln
- *   hi =   __ h0 __ h1 __ h2 __..  __ hn
+ *         (LSB)                     (MSB)
+ *   lo =   l0 __ l1 __ l2 __..  __ ln __
+ *   hi =   h0 __ h1 __ h2 __..  __ hn __
  *   res =  l0 l1 l2 .. ln h0 h1 h2 .. hn
  *
  * This will only change the number of bits the values are represented, not the
@@ -257,12 +382,14 @@ lp_build_pack2(struct gallivm_state *gallivm,
                LLVMValueRef hi)
 {
    LLVMBuilderRef builder = gallivm->builder;
-#if HAVE_LLVM < 0x0207
-   LLVMTypeRef src_vec_type = lp_build_vec_type(gallivm, src_type);
-#endif
    LLVMTypeRef dst_vec_type = lp_build_vec_type(gallivm, dst_type);
    LLVMValueRef shuffle;
    LLVMValueRef res = NULL;
+   struct lp_type intr_type = dst_type;
+
+#if HAVE_LLVM < 0x0207
+   intr_type = src_type;
+#endif
 
    assert(!src_type.floating);
    assert(!dst_type.floating);
@@ -270,50 +397,81 @@ lp_build_pack2(struct gallivm_state *gallivm,
    assert(src_type.length * 2 == dst_type.length);
 
    /* Check for special cases first */
-   if(util_cpu_caps.has_sse2 && src_type.width * src_type.length == 128) {
+   if(util_cpu_caps.has_sse2 && src_type.width * src_type.length >= 128) {
+      const char *intrinsic = NULL;
+
       switch(src_type.width) {
       case 32:
          if(dst_type.sign) {
-#if HAVE_LLVM >= 0x0207
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", dst_vec_type, lo, hi);
-#else
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", src_vec_type, lo, hi);
-#endif
+            intrinsic = "llvm.x86.sse2.packssdw.128";
          }
          else {
             if (util_cpu_caps.has_sse4_1) {
-               return lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", dst_vec_type, lo, hi);
-            }
-            else {
-               /* use generic shuffle below */
-               res = NULL;
+               intrinsic = "llvm.x86.sse41.packusdw";
+#if HAVE_LLVM < 0x0207
+               /* llvm < 2.7 has inconsistent signatures except for packusdw */
+               intr_type = dst_type;
+#endif
             }
          }
          break;
-
       case 16:
-         if(dst_type.sign)
-#if HAVE_LLVM >= 0x0207
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", dst_vec_type, lo, hi);
-#else
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", src_vec_type, lo, hi);
-#endif
-         else
-#if HAVE_LLVM >= 0x0207
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", dst_vec_type, lo, hi);
-#else
-            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", src_vec_type, lo, hi);
-#endif
+         if (dst_type.sign) {
+            intrinsic = "llvm.x86.sse2.packsswb.128";
+         }
+         else {
+            intrinsic = "llvm.x86.sse2.packuswb.128";
+         }
          break;
-
-      default:
-         assert(0);
-         return LLVMGetUndef(dst_vec_type);
-         break;
+      /* default uses generic shuffle below */
       }
+      if (intrinsic) {
+         if (src_type.width * src_type.length == 128) {
+            LLVMTypeRef intr_vec_type = lp_build_vec_type(gallivm, intr_type);
+            res = lp_build_intrinsic_binary(builder, intrinsic, intr_vec_type, lo, hi);
+            if (dst_vec_type != intr_vec_type) {
+               res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
+            }
+         }
+         else {
+            int num_split = src_type.width * src_type.length / 128;
+            int i;
+            int nlen = 128 / src_type.width;
+            struct lp_type ndst_type = lp_type_unorm(dst_type.width, 128);
+            struct lp_type nintr_type = lp_type_unorm(intr_type.width, 128);
+            LLVMValueRef tmpres[LP_MAX_VECTOR_WIDTH / 128];
+            LLVMValueRef tmplo, tmphi;
+            LLVMTypeRef ndst_vec_type = lp_build_vec_type(gallivm, ndst_type);
+            LLVMTypeRef nintr_vec_type = lp_build_vec_type(gallivm, nintr_type);
 
-      if (res) {
-         res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
+            assert(num_split <= LP_MAX_VECTOR_WIDTH / 128);
+
+            for (i = 0; i < num_split / 2; i++) {
+               tmplo = lp_build_extract_range(gallivm,
+                                              lo, i*nlen*2, nlen);
+               tmphi = lp_build_extract_range(gallivm,
+                                              lo, i*nlen*2 + nlen, nlen);
+               tmpres[i] = lp_build_intrinsic_binary(builder, intrinsic,
+                                                     nintr_vec_type, tmplo, tmphi);
+               if (ndst_vec_type != nintr_vec_type) {
+                  tmpres[i] = LLVMBuildBitCast(builder, tmpres[i], ndst_vec_type, "");
+               }
+            }
+            for (i = 0; i < num_split / 2; i++) {
+               tmplo = lp_build_extract_range(gallivm,
+                                              hi, i*nlen*2, nlen);
+               tmphi = lp_build_extract_range(gallivm,
+                                              hi, i*nlen*2 + nlen, nlen);
+               tmpres[i+num_split/2] = lp_build_intrinsic_binary(builder, intrinsic,
+                                                                 nintr_vec_type,
+                                                                 tmplo, tmphi);
+               if (ndst_vec_type != nintr_vec_type) {
+                  tmpres[i+num_split/2] = LLVMBuildBitCast(builder, tmpres[i+num_split/2],
+                                                           ndst_vec_type, "");
+               }
+            }
+            res = lp_build_concat(gallivm, tmpres, ndst_type, num_split);
+         }
          return res;
       }
    }
@@ -357,8 +515,9 @@ lp_build_packs2(struct gallivm_state *gallivm,
    /* All X86 SSE non-interleaved pack instructions take signed inputs and
     * saturate them, so no need to clamp for those cases. */
    if(util_cpu_caps.has_sse2 &&
-      src_type.width * src_type.length == 128 &&
-      src_type.sign)
+      src_type.width * src_type.length >= 128 &&
+      src_type.sign &&
+      (src_type.width == 32 || src_type.width == 16))
       clamp = FALSE;
 
    if(clamp) {
@@ -394,7 +553,6 @@ lp_build_pack(struct gallivm_state *gallivm,
                          LLVMValueRef hi);
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned i;
-
 
    /* Register width must remain constant */
    assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
@@ -487,21 +645,44 @@ lp_build_resize(struct gallivm_state *gallivm,
         /*
          * Register width remains constant -- use vector packing intrinsics
          */
-
          tmp[0] = lp_build_pack(gallivm, src_type, dst_type, TRUE, src, num_srcs);
       }
       else {
-         /*
-          * Do it element-wise.
-          */
+         if (src_type.width / dst_type.width > num_srcs) {
+            /*
+            * First change src vectors size (with shuffle) so they have the
+            * same size as the destination vector, then pack normally.
+            * Note: cannot use cast/extract because llvm generates atrocious code.
+            */
+            unsigned size_ratio = (src_type.width * src_type.length) /
+                                  (dst_type.length * dst_type.width);
+            unsigned new_length = src_type.length / size_ratio;
 
-         assert(src_type.length == dst_type.length);
-         tmp[0] = lp_build_undef(gallivm, dst_type);
-         for (i = 0; i < dst_type.length; ++i) {
-            LLVMValueRef index = lp_build_const_int32(gallivm, i);
-            LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
-            val = LLVMBuildTrunc(builder, val, lp_build_elem_type(gallivm, dst_type), "");
-            tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
+            for (i = 0; i < size_ratio * num_srcs; i++) {
+               unsigned start_index = (i % size_ratio) * new_length;
+               tmp[i] = lp_build_extract_range(gallivm, src[i / size_ratio],
+                                               start_index, new_length);
+            }
+            num_srcs *= size_ratio;
+            src_type.length = new_length;
+            tmp[0] = lp_build_pack(gallivm, src_type, dst_type, TRUE, tmp, num_srcs);
+         }
+         else {
+            /*
+             * Truncate bit width but expand vector size - first pack
+             * then expand simply because this should be more AVX-friendly
+             * for the cases we probably hit.
+             */
+            unsigned size_ratio = (dst_type.width * dst_type.length) /
+                                  (src_type.length * src_type.width);
+            unsigned num_pack_srcs = num_srcs / size_ratio;
+            dst_type.length = dst_type.length / size_ratio;
+
+            for (i = 0; i < size_ratio; i++) {
+               tmp[i] = lp_build_pack(gallivm, src_type, dst_type, TRUE,
+                                      &src[i*num_pack_srcs], num_pack_srcs);
+            }
+            tmp[0] = lp_build_concat(gallivm, tmp, dst_type, size_ratio);
          }
       }
    }
@@ -522,19 +703,24 @@ lp_build_resize(struct gallivm_state *gallivm,
          /*
           * Do it element-wise.
           */
+         assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
-         assert(src_type.length == dst_type.length);
-         tmp[0] = lp_build_undef(gallivm, dst_type);
-         for (i = 0; i < dst_type.length; ++i) {
-            LLVMValueRef index = lp_build_const_int32(gallivm, i);
-            LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
+         for (i = 0; i < num_dsts; i++) {
+            tmp[i] = lp_build_undef(gallivm, dst_type);
+         }
+
+         for (i = 0; i < src_type.length; ++i) {
+            unsigned j = i / dst_type.length;
+            LLVMValueRef srcindex = lp_build_const_int32(gallivm, i);
+            LLVMValueRef dstindex = lp_build_const_int32(gallivm, i % dst_type.length);
+            LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], srcindex, "");
 
             if (src_type.sign && dst_type.sign) {
                val = LLVMBuildSExt(builder, val, lp_build_elem_type(gallivm, dst_type), "");
             } else {
                val = LLVMBuildZExt(builder, val, lp_build_elem_type(gallivm, dst_type), "");
             }
-            tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
+            tmp[j] = LLVMBuildInsertElement(builder, tmp[j], val, dstindex, "");
          }
       }
    }
@@ -554,3 +740,38 @@ lp_build_resize(struct gallivm_state *gallivm,
 }
 
 
+/**
+ * Expands src vector from src.length to dst_length
+ */
+LLVMValueRef
+lp_build_pad_vector(struct gallivm_state *gallivm,
+                       LLVMValueRef src,
+                       struct lp_type src_type,
+                       unsigned dst_length)
+{
+   LLVMValueRef undef = LLVMGetUndef(lp_build_vec_type(gallivm, src_type));
+   LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   assert(dst_length <= Elements(elems));
+   assert(dst_length > src_type.length);
+
+   if (src_type.length == dst_length)
+      return src;
+
+   /* If its a single scalar type, no need to reinvent the wheel */
+   if (src_type.length == 1) {
+      return lp_build_broadcast(gallivm, LLVMVectorType(lp_build_elem_type(gallivm, src_type), dst_length), src);
+   }
+
+   /* All elements from src vector */
+   for (i = 0; i < src_type.length; ++i)
+      elems[i] = lp_build_const_int32(gallivm, i);
+
+   /* Undef fill remaining space */
+   for (i = src_type.length; i < dst_length; ++i)
+      elems[i] = lp_build_const_int32(gallivm, src_type.length);
+
+   /* Combine the two vectors */
+   return LLVMBuildShuffleVector(gallivm->builder, src, undef, LLVMConstVector(elems, dst_length), "");
+}

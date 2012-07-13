@@ -82,4 +82,9 @@ lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef b);
 
 
+LLVMValueRef
+lp_build_any_true_range(struct lp_build_context *bld,
+                        unsigned real_length,
+                        LLVMValueRef val);
+
 #endif /* !LP_BLD_LOGIC_H */

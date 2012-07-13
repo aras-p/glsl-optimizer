@@ -131,10 +131,6 @@ struct llvmpipe_context {
    unsigned nr_fs_variants;
    unsigned nr_fs_instrs;
 
-   /** JIT code generation */
-   struct gallivm_state *gallivm;
-   LLVMTypeRef jit_context_ptr_type;
-
    struct lp_setup_variant_list_item setup_variants_list;
    unsigned nr_setup_variants;
 

@@ -78,66 +78,61 @@ add_printf_test(struct gallivm_state *gallivm)
 
    LLVMBuildRetVoid(builder);
 
+   gallivm_verify_function(gallivm, func);
+
    return func;
 }
 
 
 PIPE_ALIGN_STACK
 static boolean
-test_printf(struct gallivm_state *gallivm,
-            unsigned verbose, FILE *fp,
+test_printf(unsigned verbose, FILE *fp,
             const struct printf_test_case *testcase)
 {
-   LLVMExecutionEngineRef engine = gallivm->engine;
-   LLVMModuleRef module = gallivm->module;
+   struct gallivm_state *gallivm;
    LLVMValueRef test;
-   char *error = NULL;
    test_printf_t test_printf_func;
    boolean success = TRUE;
-   void *code;
+
+   gallivm = gallivm_create();
 
    test = add_printf_test(gallivm);
 
-   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
+   gallivm_compile_module(gallivm);
 
-   code = LLVMGetPointerToGlobal(engine, test);
-   test_printf_func = (test_printf_t) pointer_to_func(code);
-
-   // LLVMDumpModule(module);
+   test_printf_func = (test_printf_t) gallivm_jit_function(gallivm, test);
 
    test_printf_func(0);
 
-   LLVMFreeMachineCodeForFunction(engine, test);
+   gallivm_free_function(gallivm, test, test_printf_func);
+
+   gallivm_destroy(gallivm);
 
    return success;
 }
 
 
 boolean
-test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_all(unsigned verbose, FILE *fp)
 {
    boolean success = TRUE;
 
-   test_printf(gallivm, verbose, fp, NULL);
+   test_printf(verbose, fp, NULL);
 
    return success;
 }
 
 
 boolean
-test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+test_some(unsigned verbose, FILE *fp,
           unsigned long n)
 {
-   return test_all(gallivm, verbose, fp);
+   return test_all(verbose, fp);
 }
 
 
 boolean
-test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_single(unsigned verbose, FILE *fp)
 {
    printf("no test_single()");
    return TRUE;

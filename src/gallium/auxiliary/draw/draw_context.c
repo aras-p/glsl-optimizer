@@ -70,8 +70,7 @@ draw_get_option_use_llvm(void)
  * Create new draw module context with gallivm state for LLVM JIT.
  */
 static struct draw_context *
-draw_create_context(struct pipe_context *pipe, boolean try_llvm,
-                    struct gallivm_state *gallivm)
+draw_create_context(struct pipe_context *pipe, boolean try_llvm)
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
@@ -79,16 +78,7 @@ draw_create_context(struct pipe_context *pipe, boolean try_llvm,
 
 #if HAVE_LLVM
    if (try_llvm && draw_get_option_use_llvm()) {
-      if (!gallivm) {
-         gallivm = gallivm_create();
-         draw->own_gallivm = gallivm;
-      }
-
-      if (!gallivm)
-         goto err_destroy;
-
-      draw->llvm = draw_llvm_create(draw, gallivm);
-
+      draw->llvm = draw_llvm_create(draw);
       if (!draw->llvm)
          goto err_destroy;
    }
@@ -114,7 +104,7 @@ err_out:
 struct draw_context *
 draw_create(struct pipe_context *pipe)
 {
-   return draw_create_context(pipe, TRUE, NULL);
+   return draw_create_context(pipe, TRUE);
 }
 
 
@@ -124,17 +114,7 @@ draw_create(struct pipe_context *pipe)
 struct draw_context *
 draw_create_no_llvm(struct pipe_context *pipe)
 {
-   return draw_create_context(pipe, FALSE, NULL);
-}
-
-
-/**
- * Create new draw module context with gallivm state for LLVM JIT.
- */
-struct draw_context *
-draw_create_gallivm(struct pipe_context *pipe, struct gallivm_state *gallivm)
-{
-   return draw_create_context(pipe, TRUE, gallivm);
+   return draw_create_context(pipe, FALSE);
 }
 
 
@@ -213,9 +193,6 @@ void draw_destroy( struct draw_context *draw )
 #ifdef HAVE_LLVM
    if (draw->llvm)
       draw_llvm_destroy( draw->llvm );
-
-   if (draw->own_gallivm)
-      gallivm_destroy(draw->own_gallivm);
 #endif
 
    FREE( draw );

@@ -42,6 +42,7 @@
 #include "lp_texture.h"
 
 
+struct lp_fragment_shader_variant;
 struct llvmpipe_screen;
 
 
@@ -164,8 +165,8 @@ void
 lp_jit_screen_init(struct llvmpipe_screen *screen);
 
 
-LLVMTypeRef
-lp_jit_get_context_type(struct llvmpipe_context *lp);
+void
+lp_jit_init_types(struct lp_fragment_shader_variant *lp);
 
 
 #endif /* LP_JIT_H */

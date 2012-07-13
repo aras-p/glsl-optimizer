@@ -42,11 +42,6 @@
 #include <float.h>
 
 #include "gallivm/lp_bld.h"
-#include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/BitWriter.h>
-#include <llvm-c/Transforms/Scalar.h>
 
 #include "pipe/p_state.h"
 #include "util/u_format.h"
@@ -64,14 +59,14 @@ write_tsv_header(FILE *fp);
 
 
 boolean
-test_some(struct gallivm_state *gallivm,unsigned verbose, FILE *fp,
+test_some(unsigned verbose, FILE *fp,
           unsigned long n);
 
 boolean
-test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp);
+test_single(unsigned verbose, FILE *fp);
 
 boolean
-test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp);
+test_all(unsigned verbose, FILE *fp);
 
 
 #if defined(PIPE_CC_MSVC)

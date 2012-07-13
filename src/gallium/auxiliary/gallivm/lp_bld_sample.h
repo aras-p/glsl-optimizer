@@ -52,6 +52,15 @@ struct lp_build_context;
 
 
 /**
+ * Helper struct holding all derivatives needed for sampling
+ */
+struct lp_derivatives
+{
+   LLVMValueRef ddx_ddy[2];
+};
+
+
+/**
  * Sampler static state.
  *
  * These are the bits of state from pipe_resource and pipe_sampler_state that
@@ -192,6 +201,9 @@ struct lp_build_sample_context
    /* See texture_dims() */
    unsigned dims;
 
+   /** SIMD vector width */
+   unsigned vector_width;
+
    /** regular scalar float type */
    struct lp_type float_type;
    struct lp_build_context float_bld;
@@ -199,7 +211,7 @@ struct lp_build_sample_context
    /** float vector type */
    struct lp_build_context float_vec_bld;
 
-   /** regular scalar float type */
+   /** regular scalar int type */
    struct lp_type int_type;
    struct lp_build_context int_bld;
 
@@ -223,10 +235,15 @@ struct lp_build_sample_context
    struct lp_type texel_type;
    struct lp_build_context texel_bld;
 
+   /** Float per-quad type */
+   struct lp_type perquadf_type;
+   struct lp_build_context perquadf_bld;
+
+   /** Int per-quad type */
+   struct lp_type perquadi_type;
+   struct lp_build_context perquadi_bld;
+
    /* Common dynamic state values */
-   LLVMValueRef width;
-   LLVMValueRef height;
-   LLVMValueRef depth;
    LLVMValueRef row_stride_array;
    LLVMValueRef img_stride_array;
    LLVMValueRef data_array;
@@ -305,8 +322,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned unit,
-                      const LLVMValueRef ddx[4],
-                      const LLVMValueRef ddy[4],
+                      const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
                       unsigned mip_filter,
@@ -330,10 +346,6 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
 LLVMValueRef
 lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
                           LLVMValueRef level);
-
-LLVMValueRef
-lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
-                                int level);
 
 
 void
@@ -402,22 +414,35 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,
-                    const LLVMValueRef *ddx,
-                    const LLVMValueRef *ddy,
+                    const struct lp_derivatives *derivs,
                     LLVMValueRef lod_bias,
                     LLVMValueRef explicit_lod,
                     LLVMValueRef texel_out[4]);
+
+
+void
+lp_build_coord_repeat_npot_linear(struct lp_build_sample_context *bld,
+                                  LLVMValueRef coord_f,
+                                  LLVMValueRef length_i,
+                                  LLVMValueRef length_f,
+                                  LLVMValueRef *coord0_i,
+                                  LLVMValueRef *weight_f);
+
 
 void
 lp_build_size_query_soa(struct gallivm_state *gallivm,
                         const struct lp_sampler_static_state *static_state,
                         struct lp_sampler_dynamic_state *dynamic_state,
+                        struct lp_type int_type,
                         unsigned unit,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out);
 
 void
-lp_build_sample_nop(struct gallivm_state *gallivm, struct lp_type type,
+lp_build_sample_nop(struct gallivm_state *gallivm, 
+                    struct lp_type type,
+                    unsigned num_coords,
+                    const LLVMValueRef *coords,
                     LLVMValueRef texel_out[4]);
 
 

@@ -173,8 +173,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                        unsigned unit,
                                        unsigned num_coords,
                                        const LLVMValueRef *coords,
-                                       const LLVMValueRef *ddx,
-                                       const LLVMValueRef *ddy,
+                                       const struct lp_derivatives *derivs,
                                        LLVMValueRef lod_bias, /* optional */
                                        LLVMValueRef explicit_lod, /* optional */
                                        LLVMValueRef *texel)
@@ -189,7 +188,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                        type,
                        unit,
                        num_coords, coords,
-                       ddx, ddy,
+                       derivs,
                        lod_bias, explicit_lod,
                        texel);
 }
@@ -201,6 +200,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
 static void
 draw_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                                       struct gallivm_state *gallivm,
+                                      struct lp_type type,
                                       unsigned unit,
                                       LLVMValueRef explicit_lod, /* optional */
                                       LLVMValueRef *sizes_out)
@@ -212,6 +212,7 @@ draw_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
    lp_build_size_query_soa(gallivm,
                            &sampler->dynamic_state.static_state[unit],
                            &sampler->dynamic_state.base,
+			   type,
                            unit,
                            explicit_lod,
                            sizes_out);

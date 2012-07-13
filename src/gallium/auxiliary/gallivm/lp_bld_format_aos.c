@@ -470,6 +470,11 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
       return lp_build_format_swizzle_aos(format_desc, &bld, res);
    }
 
+   /* If all channels are of same type and we are not using half-floats */
+   if (util_format_is_array(format_desc)) {
+      return lp_build_fetch_rgba_aos_array(gallivm, format_desc, type, base_ptr, offset);
+   }
+
    /*
     * YUV / subsampled formats
     */
@@ -600,7 +605,6 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
 
       return res;
    }
-
 
    /*
     * Fallback to util_format_description::fetch_rgba_float().

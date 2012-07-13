@@ -165,6 +165,7 @@ GALLIVM_SOURCES := \
         gallivm/lp_bld_conv.c \
         gallivm/lp_bld_flow.c \
         gallivm/lp_bld_format_aos.c \
+        gallivm/lp_bld_format_aos_array.c \
         gallivm/lp_bld_format_soa.c \
         gallivm/lp_bld_format_yuv.c \
         gallivm/lp_bld_gather.c \
@@ -187,7 +188,6 @@ GALLIVM_SOURCES := \
         gallivm/lp_bld_type.c \
         draw/draw_llvm.c \
         draw/draw_llvm_sample.c \
-        draw/draw_llvm_translate.c \
         draw/draw_vs_llvm.c \
         draw/draw_pt_fetch_shade_pipeline_llvm.c
 

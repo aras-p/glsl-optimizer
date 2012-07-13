@@ -94,7 +94,6 @@ if not env['embedded']:
 
     if not env['msvc']:
         tests.append('arit')
-        tests.append('round')
 
     for test in tests:
         testname = 'lp_test_' + test

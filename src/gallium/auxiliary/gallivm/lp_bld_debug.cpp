@@ -35,10 +35,8 @@
 
 #if HAVE_LLVM >= 0x0300
 #include <llvm/Support/TargetRegistry.h>
-#include <llvm/Support/TargetSelect.h>
 #else /* HAVE_LLVM < 0x0300 */
 #include <llvm/Target/TargetRegistry.h>
-#include <llvm/Target/TargetSelect.h>
 #endif /* HAVE_LLVM < 0x0300 */
 
 #if HAVE_LLVM >= 0x0209
@@ -183,7 +181,7 @@ lp_disassemble(const void* func)
    /*
     * Limit disassembly to this extent
     */
-   const uint64_t extent = 0x10000;
+   const uint64_t extent = 96 * 1024;
 
    uint64_t max_pc = 0;
 
@@ -199,24 +197,6 @@ lp_disassemble(const void* func)
 
    std::string Error;
    const Target *T = TargetRegistry::lookupTarget(Triple, Error);
-
-#if HAVE_LLVM >= 0x0208
-   InitializeNativeTargetAsmPrinter();
-#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   LLVMInitializeX86AsmPrinter();
-#elif defined(PIPE_ARCH_ARM)
-   LLVMInitializeARMAsmPrinter();
-#elif defined(PIPE_ARCH_PPC)
-   LLVMInitializePowerPCAsmPrinter();
-#endif
-
-#if HAVE_LLVM >= 0x0301
-   InitializeNativeTargetDisassembler();
-#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   LLVMInitializeX86Disassembler();
-#elif defined(PIPE_ARCH_ARM)
-   LLVMInitializeARMDisassembler();
-#endif
 
 #if HAVE_LLVM >= 0x0300
    OwningPtr<const MCAsmInfo> AsmInfo(T->createMCAsmInfo(Triple));

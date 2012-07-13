@@ -44,6 +44,8 @@
 #include "lp_bld_sample.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_type.h"
+#include "lp_bld_logic.h"
+#include "lp_bld_pack.h"
 
 
 /*
@@ -175,67 +177,89 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 /**
  * Generate code to compute coordinate gradient (rho).
- * \param ddx  partial derivatives of (s, t, r, q) with respect to X
- * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
+ * \param derivs  partial derivatives of (s, t, r, q) with respect to X and Y
  *
- * XXX: The resulting rho is scalar, so we ignore all but the first element of
- * derivatives that are passed by the shader.
+ * The resulting rho is scalar per quad.
  */
 static LLVMValueRef
 lp_build_rho(struct lp_build_sample_context *bld,
              unsigned unit,
-             const LLVMValueRef ddx[4],
-             const LLVMValueRef ddy[4])
+             const struct lp_derivatives *derivs)
 {
+   struct gallivm_state *gallivm = bld->gallivm;
    struct lp_build_context *int_size_bld = &bld->int_size_bld;
    struct lp_build_context *float_size_bld = &bld->float_size_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *perquadf_bld = &bld->perquadf_bld;
+   const LLVMValueRef *ddx_ddy = derivs->ddx_ddy;
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(bld->gallivm->context);
    LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
    LLVMValueRef index1 = LLVMConstInt(i32t, 1, 0);
    LLVMValueRef index2 = LLVMConstInt(i32t, 2, 0);
-   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
-   LLVMValueRef rho_x, rho_y;
    LLVMValueRef rho_vec;
    LLVMValueRef int_size, float_size;
    LLVMValueRef rho;
    LLVMValueRef first_level, first_level_vec;
+   LLVMValueRef abs_ddx_ddy[2];
+   unsigned length = coord_bld->type.length;
+   unsigned num_quads = length / 4;
+   unsigned i;
+   LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+   LLVMValueRef rho_xvec, rho_yvec;
 
-   dsdx = ddx[0];
-   dsdy = ddy[0];
+   abs_ddx_ddy[0] = lp_build_abs(coord_bld, ddx_ddy[0]);
+   if (dims > 2) {
+      abs_ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
+   }
 
-   if (dims <= 1) {
-      rho_x = dsdx;
-      rho_y = dsdy;
+   if (dims == 1) {
+      static const unsigned char swizzle1[] = {
+         0, LP_BLD_SWIZZLE_DONTCARE,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      static const unsigned char swizzle2[] = {
+         1, LP_BLD_SWIZZLE_DONTCARE,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      rho_xvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle1);
+      rho_yvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle2);
+   }
+   else if (dims == 2) {
+      static const unsigned char swizzle1[] = {
+         0, 2,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      static const unsigned char swizzle2[] = {
+         1, 3,
+         LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+      };
+      rho_xvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle1);
+      rho_yvec = lp_build_swizzle_aos(coord_bld, abs_ddx_ddy[0], swizzle2);
    }
    else {
-      rho_x = float_size_bld->undef;
-      rho_y = float_size_bld->undef;
-
-      rho_x = LLVMBuildInsertElement(builder, rho_x, dsdx, index0, "");
-      rho_y = LLVMBuildInsertElement(builder, rho_y, dsdy, index0, "");
-
-      dtdx = ddx[1];
-      dtdy = ddy[1];
-
-      rho_x = LLVMBuildInsertElement(builder, rho_x, dtdx, index1, "");
-      rho_y = LLVMBuildInsertElement(builder, rho_y, dtdy, index1, "");
-
-      if (dims >= 3) {
-         drdx = ddx[2];
-         drdy = ddy[2];
-
-         rho_x = LLVMBuildInsertElement(builder, rho_x, drdx, index2, "");
-         rho_y = LLVMBuildInsertElement(builder, rho_y, drdy, index2, "");
+      LLVMValueRef shuffles1[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef shuffles2[LP_MAX_VECTOR_LENGTH];
+      assert(dims == 3);
+      for (i = 0; i < num_quads; i++) {
+         shuffles1[4*i + 0] = lp_build_const_int32(gallivm, 4*i);
+         shuffles1[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 2);
+         shuffles1[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i);
+         shuffles1[4*i + 3] = i32undef;
+         shuffles2[4*i + 0] = lp_build_const_int32(gallivm, 4*i + 1);
+         shuffles2[4*i + 1] = lp_build_const_int32(gallivm, 4*i + 3);
+         shuffles2[4*i + 2] = lp_build_const_int32(gallivm, length + 4*i + 1);
+         shuffles2[4*i + 3] = i32undef;
       }
+      rho_xvec = LLVMBuildShuffleVector(builder, abs_ddx_ddy[0], abs_ddx_ddy[1],
+                                        LLVMConstVector(shuffles1, length), "");
+      rho_yvec = LLVMBuildShuffleVector(builder, abs_ddx_ddy[0], abs_ddx_ddy[1],
+                                        LLVMConstVector(shuffles2, length), "");
    }
 
-   rho_x = lp_build_abs(float_size_bld, rho_x);
-   rho_y = lp_build_abs(float_size_bld, rho_y);
-
-   rho_vec = lp_build_max(float_size_bld, rho_x, rho_y);
+   rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, unit);
@@ -243,22 +267,77 @@ lp_build_rho(struct lp_build_sample_context *bld,
    int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec);
    float_size = lp_build_int_to_float(float_size_bld, int_size);
 
-   rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
+   if (bld->coord_type.length > 4) {
+      /* expand size to each quad */
+      if (dims > 1) {
+         /* could use some broadcast_vector helper for this? */
+         int num_quads = bld->coord_type.length / 4;
+         LLVMValueRef src[LP_MAX_VECTOR_LENGTH/4];
+         for (i = 0; i < num_quads; i++) {
+            src[i] = float_size;
+         }
+         float_size = lp_build_concat(bld->gallivm, src, float_size_bld->type, num_quads);
+      }
+      else {
+         float_size = lp_build_broadcast_scalar(coord_bld, float_size);
+      }
+      rho_vec = lp_build_mul(coord_bld, rho_vec, float_size);
 
-   if (dims <= 1) {
-      rho = rho_vec;
+      if (dims <= 1) {
+         rho = rho_vec;
+      }
+      else {
+         if (dims >= 2) {
+            static const unsigned char swizzle1[] = {
+               0, LP_BLD_SWIZZLE_DONTCARE,
+               LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+            };
+            static const unsigned char swizzle2[] = {
+               1, LP_BLD_SWIZZLE_DONTCARE,
+               LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+            };
+            LLVMValueRef rho_s, rho_t, rho_r;
+
+            rho_s = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle1);
+            rho_t = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle2);
+
+            rho = lp_build_max(coord_bld, rho_s, rho_t);
+
+            if (dims >= 3) {
+               static const unsigned char swizzle3[] = {
+                  2, LP_BLD_SWIZZLE_DONTCARE,
+                  LP_BLD_SWIZZLE_DONTCARE, LP_BLD_SWIZZLE_DONTCARE
+               };
+               rho_r = lp_build_swizzle_aos(coord_bld, rho_vec, swizzle3);
+               rho = lp_build_max(coord_bld, rho, rho_r);
+            }
+         }
+      }
+      rho = lp_build_pack_aos_scalars(bld->gallivm, coord_bld->type,
+                                      perquadf_bld->type, rho);
    }
    else {
-      if (dims >= 2) {
-         LLVMValueRef rho_s, rho_t, rho_r;
+      if (dims <= 1) {
+         rho_vec = LLVMBuildExtractElement(builder, rho_vec, index0, "");
+      }
+      rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
 
-         rho_s = LLVMBuildExtractElement(builder, rho_vec, index0, "");
-         rho_t = LLVMBuildExtractElement(builder, rho_vec, index1, "");
+      if (dims <= 1) {
+         rho = rho_vec;
+      }
+      else {
+         if (dims >= 2) {
+            LLVMValueRef rho_s, rho_t, rho_r;
 
-         rho = lp_build_max(float_bld, rho_s, rho_t);
-         if (dims >= 3) {
-            rho_r = LLVMBuildExtractElement(builder, rho_vec, index2, "");
-            rho = lp_build_max(float_bld, rho, rho_r);
+            rho_s = LLVMBuildExtractElement(builder, rho_vec, index0, "");
+            rho_t = LLVMBuildExtractElement(builder, rho_vec, index1, "");
+
+            rho = lp_build_max(float_bld, rho_s, rho_t);
+
+            if (dims >= 3) {
+               rho_r = LLVMBuildExtractElement(builder, rho_vec, index2, "");
+               rho = lp_build_max(float_bld, rho, rho_r);
+            }
          }
       }
    }
@@ -396,22 +475,20 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
 
 /**
  * Generate code to compute texture level of detail (lambda).
- * \param ddx  partial derivatives of (s, t, r, q) with respect to X
- * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
+ * \param derivs  partial derivatives of (s, t, r, q) with respect to X and Y
  * \param lod_bias  optional float vector with the shader lod bias
  * \param explicit_lod  optional float vector with the explicit lod
  * \param width  scalar int texture width
  * \param height  scalar int texture height
  * \param depth  scalar int texture depth
  *
- * XXX: The resulting lod is scalar, so ignore all but the first element of
- * derivatives, lod_bias, etc that are passed by the shader.
+ * The resulting lod is scalar per quad, so only the first value per quad
+ * passed in from lod_bias, explicit_lod is used.
  */
 void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned unit,
-                      const LLVMValueRef ddx[4],
-                      const LLVMValueRef ddy[4],
+                      const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
                       unsigned mip_filter,
@@ -420,11 +497,11 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
-   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *perquadf_bld = &bld->perquadf_bld;
    LLVMValueRef lod;
 
-   *out_lod_ipart = bld->int_bld.zero;
-   *out_lod_fpart = bld->float_bld.zero;
+   *out_lod_ipart = bld->perquadi_bld.zero;
+   *out_lod_fpart = perquadf_bld->zero;
 
    if (bld->static_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
@@ -433,21 +510,17 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       LLVMValueRef min_lod =
          bld->dynamic_state->min_lod(bld->dynamic_state, bld->gallivm, unit);
 
-      lod = min_lod;
+      lod = lp_build_broadcast_scalar(perquadf_bld, min_lod);
    }
    else {
-      LLVMValueRef sampler_lod_bias =
-         bld->dynamic_state->lod_bias(bld->dynamic_state, bld->gallivm, unit);
-      LLVMValueRef index0 = lp_build_const_int32(bld->gallivm, 0);
-
       if (explicit_lod) {
-         lod = LLVMBuildExtractElement(builder, explicit_lod,
-                                       index0, "");
+         lod = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
+                                         perquadf_bld->type, explicit_lod);
       }
       else {
          LLVMValueRef rho;
 
-         rho = lp_build_rho(bld, unit, ddx, ddy);
+         rho = lp_build_rho(bld, unit, derivs);
 
          /*
           * Compute lod = log2(rho)
@@ -465,66 +538,72 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
             if (mip_filter == PIPE_TEX_MIPFILTER_NONE ||
                 mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
-               *out_lod_ipart = lp_build_ilog2(float_bld, rho);
-               *out_lod_fpart = bld->float_bld.zero;
+               *out_lod_ipart = lp_build_ilog2(perquadf_bld, rho);
+               *out_lod_fpart = perquadf_bld->zero;
                return;
             }
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR &&
                 !(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
-               lp_build_brilinear_rho(float_bld, rho, BRILINEAR_FACTOR,
+               lp_build_brilinear_rho(perquadf_bld, rho, BRILINEAR_FACTOR,
                                       out_lod_ipart, out_lod_fpart);
                return;
             }
          }
 
          if (0) {
-            lod = lp_build_log2(float_bld, rho);
+            lod = lp_build_log2(perquadf_bld, rho);
          }
          else {
-            lod = lp_build_fast_log2(float_bld, rho);
+            lod = lp_build_fast_log2(perquadf_bld, rho);
          }
 
          /* add shader lod bias */
          if (lod_bias) {
-            lod_bias = LLVMBuildExtractElement(builder, lod_bias,
-                                               index0, "");
+            lod_bias = lp_build_pack_aos_scalars(bld->gallivm, bld->coord_bld.type,
+                  perquadf_bld->type, lod_bias);
             lod = LLVMBuildFAdd(builder, lod, lod_bias, "shader_lod_bias");
          }
       }
 
       /* add sampler lod bias */
-      if (bld->static_state->lod_bias_non_zero)
+      if (bld->static_state->lod_bias_non_zero) {
+         LLVMValueRef sampler_lod_bias =
+            bld->dynamic_state->lod_bias(bld->dynamic_state, bld->gallivm, unit);
+         sampler_lod_bias = lp_build_broadcast_scalar(perquadf_bld,
+                                                      sampler_lod_bias);
          lod = LLVMBuildFAdd(builder, lod, sampler_lod_bias, "sampler_lod_bias");
-
+      }
 
       /* clamp lod */
       if (bld->static_state->apply_max_lod) {
          LLVMValueRef max_lod =
             bld->dynamic_state->max_lod(bld->dynamic_state, bld->gallivm, unit);
+         max_lod = lp_build_broadcast_scalar(perquadf_bld, max_lod);
 
-         lod = lp_build_min(float_bld, lod, max_lod);
+         lod = lp_build_min(perquadf_bld, lod, max_lod);
       }
       if (bld->static_state->apply_min_lod) {
          LLVMValueRef min_lod =
             bld->dynamic_state->min_lod(bld->dynamic_state, bld->gallivm, unit);
+         min_lod = lp_build_broadcast_scalar(perquadf_bld, min_lod);
 
-         lod = lp_build_max(float_bld, lod, min_lod);
+         lod = lp_build_max(perquadf_bld, lod, min_lod);
       }
    }
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
       if (!(gallivm_debug & GALLIVM_DEBUG_NO_BRILINEAR)) {
-         lp_build_brilinear_lod(float_bld, lod, BRILINEAR_FACTOR,
+         lp_build_brilinear_lod(perquadf_bld, lod, BRILINEAR_FACTOR,
                                 out_lod_ipart, out_lod_fpart);
       }
       else {
-         lp_build_ifloor_fract(float_bld, lod, out_lod_ipart, out_lod_fpart);
+         lp_build_ifloor_fract(perquadf_bld, lod, out_lod_ipart, out_lod_fpart);
       }
 
       lp_build_name(*out_lod_fpart, "lod_fpart");
    }
    else {
-      *out_lod_ipart = lp_build_iround(float_bld, lod);
+      *out_lod_ipart = lp_build_iround(perquadf_bld, lod);
    }
 
    lp_build_name(*out_lod_ipart, "lod_ipart");
@@ -536,8 +615,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 /**
  * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
  * mipmap level index.
- * Note: this is all scalar code.
- * \param lod  scalar float texture level of detail
+ * Note: this is all scalar per quad code.
+ * \param lod_ipart  int texture level of detail
  * \param level_out  returns integer 
  */
 void
@@ -546,26 +625,27 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                            LLVMValueRef lod_ipart,
                            LLVMValueRef *level_out)
 {
-   struct lp_build_context *int_bld = &bld->int_bld;
+   struct lp_build_context *perquadi_bld = &bld->perquadi_bld;
    LLVMValueRef first_level, last_level, level;
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, unit);
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                bld->gallivm, unit);
+   first_level = lp_build_broadcast_scalar(perquadi_bld, first_level);
+   last_level = lp_build_broadcast_scalar(perquadi_bld, last_level);
 
-   /* convert float lod to integer */
-   level = lp_build_add(int_bld, lod_ipart, first_level);
+   level = lp_build_add(perquadi_bld, lod_ipart, first_level);
 
    /* clamp level to legal range of levels */
-   *level_out = lp_build_clamp(int_bld, level, first_level, last_level);
+   *level_out = lp_build_clamp(perquadi_bld, level, first_level, last_level);
 }
 
 
 /**
- * For PIPE_TEX_MIPFILTER_LINEAR, convert float LOD to integer to
- * two (adjacent) mipmap level indexes.  Later, we'll sample from those
- * two mipmap levels and interpolate between them.
+ * For PIPE_TEX_MIPFILTER_LINEAR, convert per-quad int LOD(s) to two (per-quad)
+ * (adjacent) mipmap level indexes, and fix up float lod part accordingly.
+ * Later, we'll sample from those two mipmap levels and interpolate between them.
  */
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
@@ -576,26 +656,36 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                            LLVMValueRef *level1_out)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
-   struct lp_build_context *int_bld = &bld->int_bld;
-   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *perquadi_bld = &bld->perquadi_bld;
+   struct lp_build_context *perquadf_bld = &bld->perquadf_bld;
    LLVMValueRef first_level, last_level;
    LLVMValueRef clamp_min;
    LLVMValueRef clamp_max;
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, unit);
-
-   *level0_out = lp_build_add(int_bld, lod_ipart, first_level);
-   *level1_out = lp_build_add(int_bld, *level0_out, int_bld->one);
-
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                bld->gallivm, unit);
+   first_level = lp_build_broadcast_scalar(perquadi_bld, first_level);
+   last_level = lp_build_broadcast_scalar(perquadi_bld, last_level);
+
+   *level0_out = lp_build_add(perquadi_bld, lod_ipart, first_level);
+   *level1_out = lp_build_add(perquadi_bld, *level0_out, perquadi_bld->one);
 
    /*
     * Clamp both *level0_out and *level1_out to [first_level, last_level], with
     * the minimum number of comparisons, and zeroing lod_fpart in the extreme
     * ends in the process.
     */
+
+   /*
+    * This code (vector select in particular) only works with llvm 3.1
+    * (if there's more than one quad, with x86 backend). Might consider
+    * converting to our lp_bld_logic helpers.
+    */
+#if HAVE_LLVM < 0x0301
+   assert(perquadi_bld->type.length == 1);
+#endif
 
    /* *level0_out < first_level */
    clamp_min = LLVMBuildICmp(builder, LLVMIntSLT,
@@ -609,7 +699,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                                  first_level, *level1_out, "");
 
    *lod_fpart_inout = LLVMBuildSelect(builder, clamp_min,
-                                      float_bld->zero, *lod_fpart_inout, "");
+                                      perquadf_bld->zero, *lod_fpart_inout, "");
 
    /* *level0_out >= last_level */
    clamp_max = LLVMBuildICmp(builder, LLVMIntSGE,
@@ -623,7 +713,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                                  last_level, *level1_out, "");
 
    *lod_fpart_inout = LLVMBuildSelect(builder, clamp_max,
-                                      float_bld->zero, *lod_fpart_inout, "");
+                                      perquadf_bld->zero, *lod_fpart_inout, "");
 
    lp_build_name(*level0_out, "sampler%u_miplevel0", unit);
    lp_build_name(*level1_out, "sampler%u_miplevel1", unit);
@@ -648,15 +738,6 @@ lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
    data_ptr = LLVMBuildGEP(builder, bld->data_array, indexes, 2, "");
    data_ptr = LLVMBuildLoad(builder, data_ptr, "");
    return data_ptr;
-}
-
-
-LLVMValueRef
-lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
-                                int level)
-{
-   LLVMValueRef lvl = lp_build_const_int32(bld->gallivm, level);
-   return lp_build_get_mipmap_level(bld, lvl);
 }
 
 
@@ -748,8 +829,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
  *                    bld->int_size_type or bld->float_size_type)
  * @param coord_type  type of the texture size vector (either
  *                    bld->int_coord_type or bld->coord_type)
- * @param int_size    vector with the integer texture size (width, height,
- *                    depth)
+ * @param size        vector with the texture size (width, height, depth)
  */
 void
 lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
@@ -788,7 +868,7 @@ lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
 /**
  * Unnormalize coords.
  *
- * @param int_size  vector with the integer texture size (width, height, depth)
+ * @param flt_size  vector with the integer texture size (width, height, depth)
  */
 void
 lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
@@ -823,7 +903,18 @@ lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
 
 /** Helper used by lp_build_cube_lookup() */
 static LLVMValueRef
-lp_build_cube_ima(struct lp_build_context *coord_bld, LLVMValueRef coord)
+lp_build_cube_imapos(struct lp_build_context *coord_bld, LLVMValueRef coord)
+{
+   /* ima = +0.5 / abs(coord); */
+   LLVMValueRef posHalf = lp_build_const_vec(coord_bld->gallivm, coord_bld->type, 0.5);
+   LLVMValueRef absCoord = lp_build_abs(coord_bld, coord);
+   LLVMValueRef ima = lp_build_div(coord_bld, posHalf, absCoord);
+   return ima;
+}
+
+/** Helper used by lp_build_cube_lookup() */
+static LLVMValueRef
+lp_build_cube_imaneg(struct lp_build_context *coord_bld, LLVMValueRef coord)
 {
    /* ima = -0.5 / abs(coord); */
    LLVMValueRef negHalf = lp_build_const_vec(coord_bld->gallivm, coord_bld->type, -0.5);
@@ -832,9 +923,12 @@ lp_build_cube_ima(struct lp_build_context *coord_bld, LLVMValueRef coord)
    return ima;
 }
 
-
 /**
  * Helper used by lp_build_cube_lookup()
+ * FIXME: the sign here can also be 0.
+ * Arithmetically this could definitely make a difference. Either
+ * fix the comment or use other (simpler) sign function, not sure
+ * which one it should be.
  * \param sign  scalar +1 or -1
  * \param coord  float vector
  * \param ima  float vector
@@ -898,58 +992,186 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t)
 {
-   struct lp_build_context *float_bld = &bld->float_bld;
    struct lp_build_context *coord_bld = &bld->coord_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
+   struct gallivm_state *gallivm = bld->gallivm;
    LLVMValueRef rx, ry, rz;
-   LLVMValueRef arx, ary, arz;
-   LLVMValueRef c25 = lp_build_const_float(bld->gallivm, 0.25);
-   LLVMValueRef arx_ge_ary, arx_ge_arz;
-   LLVMValueRef ary_ge_arx, ary_ge_arz;
-   LLVMValueRef arx_ge_ary_arz, ary_ge_arx_arz;
-
-   assert(bld->coord_bld.type.length == 4);
+   LLVMValueRef tmp[4], rxyz, arxyz;
 
    /*
     * Use the average of the four pixel's texcoords to choose the face.
+    * Slight simplification just calculate the sum, skip scaling.
     */
-   rx = lp_build_mul(float_bld, c25,
-                     lp_build_sum_vector(&bld->coord_bld, s));
-   ry = lp_build_mul(float_bld, c25,
-                     lp_build_sum_vector(&bld->coord_bld, t));
-   rz = lp_build_mul(float_bld, c25,
-                     lp_build_sum_vector(&bld->coord_bld, r));
+   tmp[0] = s;
+   tmp[1] = t;
+   tmp[2] = r;
+   rxyz = lp_build_hadd_partial4(&bld->coord_bld, tmp, 3);
+   arxyz = lp_build_abs(&bld->coord_bld, rxyz);
 
-   arx = lp_build_abs(float_bld, rx);
-   ary = lp_build_abs(float_bld, ry);
-   arz = lp_build_abs(float_bld, rz);
+   if (coord_bld->type.length > 4) {
+      struct lp_build_context *cint_bld = &bld->int_coord_bld;
+      struct lp_type intctype = cint_bld->type;
+      LLVMValueRef signrxs, signrys, signrzs, signrxyz, sign;
+      LLVMValueRef arxs, arys, arzs;
+      LLVMValueRef arx_ge_ary, maxarxsarys, arz_ge_arx_ary;
+      LLVMValueRef snewx, tnewx, snewy, tnewy, snewz, tnewz;
+      LLVMValueRef ryneg, rzneg;
+      LLVMValueRef ma, ima;
+      LLVMValueRef posHalf = lp_build_const_vec(gallivm, coord_bld->type, 0.5);
+      LLVMValueRef signmask = lp_build_const_int_vec(gallivm, intctype,
+                                                     1 << (intctype.width - 1));
+      LLVMValueRef signshift = lp_build_const_int_vec(gallivm, intctype,
+                                                      intctype.width -1);
+      LLVMValueRef facex = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_X);
+      LLVMValueRef facey = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Y);
+      LLVMValueRef facez = lp_build_const_int_vec(gallivm, intctype, PIPE_TEX_FACE_POS_Z);
 
-   /*
-    * Compare sign/magnitude of rx,ry,rz to determine face
-    */
-   arx_ge_ary = LLVMBuildFCmp(builder, LLVMRealUGE, arx, ary, "");
-   arx_ge_arz = LLVMBuildFCmp(builder, LLVMRealUGE, arx, arz, "");
-   ary_ge_arx = LLVMBuildFCmp(builder, LLVMRealUGE, ary, arx, "");
-   ary_ge_arz = LLVMBuildFCmp(builder, LLVMRealUGE, ary, arz, "");
+      assert(PIPE_TEX_FACE_NEG_X == PIPE_TEX_FACE_POS_X + 1);
+      assert(PIPE_TEX_FACE_NEG_Y == PIPE_TEX_FACE_POS_Y + 1);
+      assert(PIPE_TEX_FACE_NEG_Z == PIPE_TEX_FACE_POS_Z + 1);
 
-   arx_ge_ary_arz = LLVMBuildAnd(builder, arx_ge_ary, arx_ge_arz, "");
-   ary_ge_arx_arz = LLVMBuildAnd(builder, ary_ge_arx, ary_ge_arz, "");
+      rx = LLVMBuildBitCast(builder, s, lp_build_vec_type(gallivm, intctype), "");
+      ry = LLVMBuildBitCast(builder, t, lp_build_vec_type(gallivm, intctype), "");
+      rz = LLVMBuildBitCast(builder, r, lp_build_vec_type(gallivm, intctype), "");
+      ryneg = LLVMBuildXor(builder, ry, signmask, "");
+      rzneg = LLVMBuildXor(builder, rz, signmask, "");
 
-   {
+      /* the sign bit comes from the averaged vector (per quad),
+       * as does the decision which face to use */
+      signrxyz = LLVMBuildBitCast(builder, rxyz, lp_build_vec_type(gallivm, intctype), "");
+      signrxyz = LLVMBuildAnd(builder, signrxyz, signmask, "");
+
+      arxs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 0);
+      arys = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 1);
+      arzs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 2);
+
+      /*
+       * select x if x >= y else select y
+       * select previous result if y >= max(x,y) else select z
+       */
+      arx_ge_ary = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, arxs, arys);
+      maxarxsarys = lp_build_max(coord_bld, arxs, arys);
+      arz_ge_arx_ary = lp_build_cmp(coord_bld, PIPE_FUNC_GEQUAL, maxarxsarys, arzs);
+
+      /*
+       * compute all possible new s/t coords
+       * snewx = signrx * -rz;
+       * tnewx = -ry;
+       * snewy = rx;
+       * tnewy = signry * rz;
+       * snewz = signrz * rx;
+       * tnewz = -ry;
+       */
+      signrxs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 0);
+      snewx = LLVMBuildXor(builder, signrxs, rzneg, "");
+      tnewx = ryneg;
+
+      signrys = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 1);
+      snewy = rx;
+      tnewy = LLVMBuildXor(builder, signrys, rz, "");
+
+      signrzs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 2);
+      snewz = LLVMBuildXor(builder, signrzs, rx, "");
+      tnewz = ryneg;
+
+      /* XXX on x86 unclear if we should cast the values back to float
+       * or not - on some cpus (nehalem) pblendvb has twice the throughput
+       * of blendvps though on others there just might be domain
+       * transition penalties when using it (this depends on what llvm
+       * will chose for the bit ops above so there appears no "right way",
+       * but given the boatload of selects let's just use the int type).
+       *
+       * Unfortunately we also need the sign bit of the summed coords.
+       */
+      *face_s = lp_build_select(cint_bld, arx_ge_ary, snewx, snewy);
+      *face_t = lp_build_select(cint_bld, arx_ge_ary, tnewx, tnewy);
+      ma = lp_build_select(coord_bld, arx_ge_ary, s, t);
+      *face = lp_build_select(cint_bld, arx_ge_ary, facex, facey);
+      sign = lp_build_select(cint_bld, arx_ge_ary, signrxs, signrys);
+
+      *face_s = lp_build_select(cint_bld, arz_ge_arx_ary, *face_s, snewz);
+      *face_t = lp_build_select(cint_bld, arz_ge_arx_ary, *face_t, tnewz);
+      ma = lp_build_select(coord_bld, arz_ge_arx_ary, ma, r);
+      *face = lp_build_select(cint_bld, arz_ge_arx_ary, *face, facez);
+      sign = lp_build_select(cint_bld, arz_ge_arx_ary, sign, signrzs);
+
+      *face_s = LLVMBuildBitCast(builder, *face_s,
+                               lp_build_vec_type(gallivm, coord_bld->type), "");
+      *face_t = LLVMBuildBitCast(builder, *face_t,
+                               lp_build_vec_type(gallivm, coord_bld->type), "");
+
+      /* add +1 for neg face */
+      /* XXX with AVX probably want to use another select here -
+       * as long as we ensure vblendvps gets used we can actually
+       * skip the comparison and just use sign as a "mask" directly.
+       */
+      sign = LLVMBuildLShr(builder, sign, signshift, "");
+      *face = LLVMBuildOr(builder, *face, sign, "face");
+
+      ima = lp_build_cube_imapos(coord_bld, ma);
+
+      *face_s = lp_build_mul(coord_bld, *face_s, ima);
+      *face_s = lp_build_add(coord_bld, *face_s, posHalf);
+      *face_t = lp_build_mul(coord_bld, *face_t, ima);
+      *face_t = lp_build_add(coord_bld, *face_t, posHalf);
+   }
+
+   else {
       struct lp_build_if_state if_ctx;
       LLVMValueRef face_s_var;
       LLVMValueRef face_t_var;
       LLVMValueRef face_var;
+      LLVMValueRef arx_ge_ary_arz, ary_ge_arx_arz;
+      LLVMValueRef shuffles[4];
+      LLVMValueRef arxy_ge_aryx, arxy_ge_arzz, arxy_ge_arxy_arzz;
+      LLVMValueRef arxyxy, aryxzz, arxyxy_ge_aryxzz;
+      struct lp_build_context *float_bld = &bld->float_bld;
 
-      face_s_var = lp_build_alloca(bld->gallivm, bld->coord_bld.vec_type, "face_s_var");
-      face_t_var = lp_build_alloca(bld->gallivm, bld->coord_bld.vec_type, "face_t_var");
-      face_var = lp_build_alloca(bld->gallivm, bld->int_bld.vec_type, "face_var");
+      assert(bld->coord_bld.type.length == 4);
 
-      lp_build_if(&if_ctx, bld->gallivm, arx_ge_ary_arz);
+      shuffles[0] = lp_build_const_int32(gallivm, 0);
+      shuffles[1] = lp_build_const_int32(gallivm, 1);
+      shuffles[2] = lp_build_const_int32(gallivm, 0);
+      shuffles[3] = lp_build_const_int32(gallivm, 1);
+      arxyxy = LLVMBuildShuffleVector(builder, arxyz, arxyz, LLVMConstVector(shuffles, 4), "");
+      shuffles[0] = lp_build_const_int32(gallivm, 1);
+      shuffles[1] = lp_build_const_int32(gallivm, 0);
+      shuffles[2] = lp_build_const_int32(gallivm, 2);
+      shuffles[3] = lp_build_const_int32(gallivm, 2);
+      aryxzz = LLVMBuildShuffleVector(builder, arxyz, arxyz, LLVMConstVector(shuffles, 4), "");
+      arxyxy_ge_aryxzz = lp_build_cmp(&bld->coord_bld, PIPE_FUNC_GEQUAL, arxyxy, aryxzz);
+
+      shuffles[0] = lp_build_const_int32(gallivm, 0);
+      shuffles[1] = lp_build_const_int32(gallivm, 1);
+      arxy_ge_aryx = LLVMBuildShuffleVector(builder, arxyxy_ge_aryxzz, arxyxy_ge_aryxzz,
+                                            LLVMConstVector(shuffles, 2), "");
+      shuffles[0] = lp_build_const_int32(gallivm, 2);
+      shuffles[1] = lp_build_const_int32(gallivm, 3);
+      arxy_ge_arzz = LLVMBuildShuffleVector(builder, arxyxy_ge_aryxzz, arxyxy_ge_aryxzz,
+                                            LLVMConstVector(shuffles, 2), "");
+      arxy_ge_arxy_arzz = LLVMBuildAnd(builder, arxy_ge_aryx, arxy_ge_arzz, "");
+
+      arx_ge_ary_arz = LLVMBuildExtractElement(builder, arxy_ge_arxy_arzz,
+                                               lp_build_const_int32(gallivm, 0), "");
+      arx_ge_ary_arz = LLVMBuildICmp(builder, LLVMIntNE, arx_ge_ary_arz,
+                                               lp_build_const_int32(gallivm, 0), "");
+      ary_ge_arx_arz = LLVMBuildExtractElement(builder, arxy_ge_arxy_arzz,
+                                               lp_build_const_int32(gallivm, 1), "");
+      ary_ge_arx_arz = LLVMBuildICmp(builder, LLVMIntNE, ary_ge_arx_arz,
+                                               lp_build_const_int32(gallivm, 0), "");
+      face_s_var = lp_build_alloca(gallivm, bld->coord_bld.vec_type, "face_s_var");
+      face_t_var = lp_build_alloca(gallivm, bld->coord_bld.vec_type, "face_t_var");
+      face_var = lp_build_alloca(gallivm, bld->int_bld.vec_type, "face_var");
+
+      lp_build_if(&if_ctx, gallivm, arx_ge_ary_arz);
       {
          /* +/- X face */
-         LLVMValueRef sign = lp_build_sgn(float_bld, rx);
-         LLVMValueRef ima = lp_build_cube_ima(coord_bld, s);
+         LLVMValueRef sign, ima;
+         rx = LLVMBuildExtractElement(builder, rxyz,
+                                      lp_build_const_int32(gallivm, 0), "");
+         /* +/- X face */
+         sign = lp_build_sgn(float_bld, rx);
+         ima = lp_build_cube_imaneg(coord_bld, s);
          *face_s = lp_build_cube_coord(coord_bld, sign, +1, r, ima);
          *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
          *face = lp_build_cube_face(bld, rx,
@@ -963,11 +1185,14 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       {
          struct lp_build_if_state if_ctx2;
 
-         lp_build_if(&if_ctx2, bld->gallivm, ary_ge_arx_arz);
+         lp_build_if(&if_ctx2, gallivm, ary_ge_arx_arz);
          {
+            LLVMValueRef sign, ima;
             /* +/- Y face */
-            LLVMValueRef sign = lp_build_sgn(float_bld, ry);
-            LLVMValueRef ima = lp_build_cube_ima(coord_bld, t);
+            ry = LLVMBuildExtractElement(builder, rxyz,
+                                         lp_build_const_int32(gallivm, 1), "");
+            sign = lp_build_sgn(float_bld, ry);
+            ima = lp_build_cube_imaneg(coord_bld, t);
             *face_s = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
             *face_t = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
             *face = lp_build_cube_face(bld, ry,
@@ -980,8 +1205,11 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          lp_build_else(&if_ctx2);
          {
             /* +/- Z face */
-            LLVMValueRef sign = lp_build_sgn(float_bld, rz);
-            LLVMValueRef ima = lp_build_cube_ima(coord_bld, r);
+            LLVMValueRef sign, ima;
+            rz = LLVMBuildExtractElement(builder, rxyz,
+                                         lp_build_const_int32(gallivm, 2), "");
+            sign = lp_build_sgn(float_bld, rz);
+            ima = lp_build_cube_imaneg(coord_bld, r);
             *face_s = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
             *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
             *face = lp_build_cube_face(bld, rz,
@@ -999,6 +1227,7 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       *face_s = LLVMBuildLoad(builder, face_s_var, "face_s");
       *face_t = LLVMBuildLoad(builder, face_t_var, "face_t");
       *face   = LLVMBuildLoad(builder, face_var, "face");
+      *face   = lp_build_broadcast_scalar(&bld->int_coord_bld, *face);
    }
 }
 

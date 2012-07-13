@@ -59,6 +59,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_format.h"
+#include "util/u_cpu_detect.h"
 
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_arit.h"
@@ -102,7 +103,16 @@ lp_build_stencil_test_single(struct lp_build_context *bld,
    struct lp_type type = bld->type;
    LLVMValueRef res;
 
-   assert(type.sign);
+   /*
+    * SSE2 has intrinsics for signed comparisons, but not unsigned ones. Values
+    * are between 0..255 so ensure we generate the fastest comparisons for
+    * wider elements.
+    */
+   if (type.width <= 8) {
+      assert(!type.sign);
+   } else {
+      assert(type.sign);
+   }
 
    assert(stencil->enabled);
 
@@ -424,29 +434,86 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
    LLVMBuilderRef builder = gallivm->builder;
    LLVMContextRef context = gallivm->context;
    LLVMValueRef countmask = lp_build_const_int_vec(gallivm, type, 1);
-   LLVMValueRef countv = LLVMBuildAnd(builder, maskvalue, countmask, "countv");
-   LLVMTypeRef i8v16 = LLVMVectorType(LLVMInt8TypeInContext(context), 16);
-   LLVMValueRef counti = LLVMBuildBitCast(builder, countv, i8v16, "counti");
-   LLVMValueRef maskarray[4] = {
-      lp_build_const_int32(gallivm, 0),
-      lp_build_const_int32(gallivm, 4),
-      lp_build_const_int32(gallivm, 8),
-      lp_build_const_int32(gallivm, 12)
-   };
-   LLVMValueRef shufflemask = LLVMConstVector(maskarray, 4);
-   LLVMValueRef shufflev =  LLVMBuildShuffleVector(builder, counti, LLVMGetUndef(i8v16), shufflemask, "shufflev");
-   LLVMValueRef shuffle = LLVMBuildBitCast(builder, shufflev, LLVMInt32TypeInContext(context), "shuffle");
-   LLVMValueRef count = lp_build_intrinsic_unary(builder, "llvm.ctpop.i32", LLVMInt32TypeInContext(context), shuffle);
-   LLVMValueRef orig = LLVMBuildLoad(builder, counter, "orig");
-   LLVMValueRef incr = LLVMBuildAdd(builder, orig, count, "incr");
-   LLVMBuildStore(builder, incr, counter);
+   LLVMValueRef count, newcount;
+
+   assert(type.length <= 16);
+   assert(type.floating);
+
+   if(util_cpu_caps.has_sse && type.length == 4) {
+      const char *movmskintr = "llvm.x86.sse.movmsk.ps";
+      const char *popcntintr = "llvm.ctpop.i32";
+      LLVMValueRef bits = LLVMBuildBitCast(builder, maskvalue,
+                                           lp_build_vec_type(gallivm, type), "");
+      bits = lp_build_intrinsic_unary(builder, movmskintr,
+                                      LLVMInt32TypeInContext(context), bits);
+      count = lp_build_intrinsic_unary(builder, popcntintr,
+                                       LLVMInt32TypeInContext(context), bits);
+   }
+   else if(util_cpu_caps.has_avx && type.length == 8) {
+      const char *movmskintr = "llvm.x86.avx.movmsk.ps.256";
+      const char *popcntintr = "llvm.ctpop.i32";
+      LLVMValueRef bits = LLVMBuildBitCast(builder, maskvalue,
+                                           lp_build_vec_type(gallivm, type), "");
+      bits = lp_build_intrinsic_unary(builder, movmskintr,
+                                      LLVMInt32TypeInContext(context), bits);
+      count = lp_build_intrinsic_unary(builder, popcntintr,
+                                       LLVMInt32TypeInContext(context), bits);
+   }
+   else {
+      unsigned i;
+      LLVMValueRef countv = LLVMBuildAnd(builder, maskvalue, countmask, "countv");
+      LLVMTypeRef counttype = LLVMIntTypeInContext(context, type.length * 8);
+      LLVMTypeRef i8vntype = LLVMVectorType(LLVMInt8TypeInContext(context), type.length * 4);
+      LLVMValueRef shufflev, countd;
+      LLVMValueRef shuffles[16];
+      const char *popcntintr = NULL;
+
+      countv = LLVMBuildBitCast(builder, countv, i8vntype, "");
+
+       for (i = 0; i < type.length; i++) {
+          shuffles[i] = lp_build_const_int32(gallivm, 4*i);
+       }
+
+       shufflev = LLVMConstVector(shuffles, type.length);
+       countd = LLVMBuildShuffleVector(builder, countv, LLVMGetUndef(i8vntype), shufflev, "");
+       countd = LLVMBuildBitCast(builder, countd, counttype, "countd");
+
+       /*
+        * XXX FIXME
+        * this is bad on cpus without popcount (on x86 supported by intel
+        * nehalem, amd barcelona, and up - not tied to sse42).
+        * Would be much faster to just sum the 4 elements of the vector with
+        * some horizontal add (shuffle/add/shuffle/add after the initial and).
+        */
+       switch (type.length) {
+       case 4:
+          popcntintr = "llvm.ctpop.i32";
+          break;
+       case 8:
+          popcntintr = "llvm.ctpop.i64";
+          break;
+       case 16:
+          popcntintr = "llvm.ctpop.i128";
+          break;
+       default:
+          assert(0);
+       }
+       count = lp_build_intrinsic_unary(builder, popcntintr, counttype, countd);
+
+       if (type.length > 4) {
+          count = LLVMBuildTrunc(builder, count, LLVMIntTypeInContext(context, 32), "");
+       }
+   }
+   newcount = LLVMBuildLoad(builder, counter, "origcount");
+   newcount = LLVMBuildAdd(builder, newcount, count, "newcount");
+   LLVMBuildStore(builder, newcount, counter);
 }
 
 
 
 /**
  * Generate code for performing depth and/or stencil tests.
- * We operate on a vector of values (typically a 2x2 quad).
+ * We operate on a vector of values (typically n 2x2 quads).
  *
  * \param depth  the depth test state
  * \param stencil  the front/back stencil state
@@ -454,9 +521,9 @@ lp_build_occlusion_count(struct gallivm_state *gallivm,
  * \param format_desc  description of the depth/stencil surface
  * \param mask  the alive/dead pixel mask for the quad (vector)
  * \param stencil_refs  the front/back stencil ref values (scalar)
- * \param z_src  the incoming depth/stencil values (a 2x2 quad, float32)
+ * \param z_src  the incoming depth/stencil values (n 2x2 quad values, float32)
  * \param zs_dst_ptr  pointer to depth/stencil values in framebuffer
- * \param facing  contains boolean value indicating front/back facing polygon
+ * \param face  contains boolean value indicating front/back facing polygon
  */
 void
 lp_build_depth_stencil_test(struct gallivm_state *gallivm,
@@ -507,6 +574,12 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
    assert(z_type.width == z_src_type.width);
    assert(z_type.length == z_src_type.length);
 
+   /* FIXME: for non-float depth/stencil might generate better code
+    * if we'd always split it up to use 128bit operations.
+    * For stencil we'd almost certainly want to pack to 8xi16 values,
+    * for z just run twice.
+    */
+
    /* Sanity checking */
    {
       const unsigned z_swizzle = format_desc->swizzle[0];
@@ -548,7 +621,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
    lp_build_context_init(&z_bld, gallivm, z_type);
 
    /* Setup build context for stencil vals */
-   s_type = lp_type_int_vec(z_type.width);
+   s_type = lp_int_type(z_type);
    lp_build_context_init(&s_bld, gallivm, s_type);
 
    /* Load current z/stencil value from z/stencil buffer */

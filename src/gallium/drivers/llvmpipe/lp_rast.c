@@ -42,6 +42,7 @@
 #include "lp_tile_soa.h"
 #include "gallivm/lp_bld_debug.h"
 #include "lp_scene.h"
+#include "lp_tex_sample.h"
 
 
 #ifdef DEBUG

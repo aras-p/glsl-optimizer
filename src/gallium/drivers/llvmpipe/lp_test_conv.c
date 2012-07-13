@@ -142,21 +142,21 @@ add_conv_test(struct gallivm_state *gallivm,
 
    LLVMBuildRetVoid(builder);;
 
+   gallivm_verify_function(gallivm, func);
+
    return func;
 }
 
 
 PIPE_ALIGN_STACK
 static boolean
-test_one(struct gallivm_state *gallivm, unsigned verbose,
+test_one(unsigned verbose,
          FILE *fp,
          struct lp_type src_type,
          struct lp_type dst_type)
 {
-   LLVMModuleRef module = gallivm->module;
-   LLVMExecutionEngineRef engine = gallivm->engine;
+   struct gallivm_state *gallivm;
    LLVMValueRef func = NULL;
-   char *error = NULL;
    conv_test_ptr_t conv_test_ptr;
    boolean success;
    const unsigned n = LP_TEST_NUM_SAMPLES;
@@ -166,10 +166,18 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
    unsigned num_dsts;
    double eps;
    unsigned i, j;
-   void *code;
 
-   if (src_type.width * src_type.length != dst_type.width * dst_type.length &&
-       src_type.length != dst_type.length) {
+   if ((src_type.width >= dst_type.width && src_type.length > dst_type.length) ||
+       (src_type.width <= dst_type.width && src_type.length < dst_type.length)) {
+      return TRUE;
+   }
+
+   /* Known failures
+    * - fixed point 32 -> float 32
+    * - float 32 -> signed normalised integer 32
+    */
+   if ((src_type.floating && !dst_type.floating && dst_type.sign && dst_type.norm && src_type.width == dst_type.width) ||
+       (!src_type.floating && dst_type.floating && src_type.fixed && src_type.width == dst_type.width)) {
       return TRUE;
    }
 
@@ -183,7 +191,7 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
    }
 
    if(verbose >= 1)
-      dump_conv_types(stdout, src_type, dst_type);
+      dump_conv_types(stderr, src_type, dst_type);
 
    if (src_type.length > dst_type.length) {
       num_srcs = 1;
@@ -203,29 +211,20 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
 
    eps = MAX2(lp_const_eps(src_type), lp_const_eps(dst_type));
 
+   gallivm = gallivm_create();
+
    func = add_conv_test(gallivm, src_type, num_srcs, dst_type, num_dsts);
 
-   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
+   gallivm_compile_module(gallivm);
 
-   if(verbose >= 2)
-      LLVMDumpModule(module);
-
-   code = LLVMGetPointerToGlobal(engine, func);
-   conv_test_ptr = (conv_test_ptr_t)pointer_to_func(code);
-
-   if(verbose >= 2)
-      lp_disassemble(code);
+   conv_test_ptr = (conv_test_ptr_t)gallivm_jit_function(gallivm, func);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
       unsigned src_stride = src_type.length*src_type.width/8;
       unsigned dst_stride = dst_type.length*dst_type.width/8;
-      PIPE_ALIGN_VAR(16) uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
-      PIPE_ALIGN_VAR(16) uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
+      PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN) uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
+      PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN) uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       double fref[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       uint8_t ref[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       int64_t start_counter = 0;
@@ -320,20 +319,9 @@ test_one(struct gallivm_state *gallivm, unsigned verbose,
    if(fp)
       write_tsv_row(fp, src_type, dst_type, cycles_avg, success);
 
-   if (!success) {
-      static boolean firsttime = TRUE;
-      if(firsttime) {
-         if(verbose < 2)
-            LLVMDumpModule(module);
-         LLVMWriteBitcodeToFile(module, "conv.bc");
-         fprintf(stderr, "conv.bc written\n");
-         fprintf(stderr, "Invoke as \"llc -o - conv.bc\"\n");
-         firsttime = FALSE;
-         /* abort(); */
-      }
-   }
+   gallivm_free_function(gallivm, func, conv_test_ptr);
 
-   LLVMFreeMachineCodeForFunction(engine, func);
+   gallivm_destroy(gallivm);
 
    return success;
 }
@@ -348,17 +336,32 @@ const struct lp_type conv_types[] = {
    {   TRUE, FALSE, FALSE,  TRUE,    32,   4 },
    {   TRUE, FALSE, FALSE, FALSE,    32,   4 },
 
+   {   TRUE, FALSE,  TRUE,  TRUE,    32,   8 },
+   {   TRUE, FALSE,  TRUE, FALSE,    32,   8 },
+   {   TRUE, FALSE, FALSE,  TRUE,    32,   8 },
+   {   TRUE, FALSE, FALSE, FALSE,    32,   8 },
+
    /* Fixed */
    {  FALSE,  TRUE,  TRUE,  TRUE,    32,   4 },
    {  FALSE,  TRUE,  TRUE, FALSE,    32,   4 },
    {  FALSE,  TRUE, FALSE,  TRUE,    32,   4 },
    {  FALSE,  TRUE, FALSE, FALSE,    32,   4 },
 
+   {  FALSE,  TRUE,  TRUE,  TRUE,    32,   8 },
+   {  FALSE,  TRUE,  TRUE, FALSE,    32,   8 },
+   {  FALSE,  TRUE, FALSE,  TRUE,    32,   8 },
+   {  FALSE,  TRUE, FALSE, FALSE,    32,   8 },
+
    /* Integer */
    {  FALSE, FALSE,  TRUE,  TRUE,    32,   4 },
    {  FALSE, FALSE,  TRUE, FALSE,    32,   4 },
    {  FALSE, FALSE, FALSE,  TRUE,    32,   4 },
    {  FALSE, FALSE, FALSE, FALSE,    32,   4 },
+
+   {  FALSE, FALSE,  TRUE,  TRUE,    32,   8 },
+   {  FALSE, FALSE,  TRUE, FALSE,    32,   8 },
+   {  FALSE, FALSE, FALSE,  TRUE,    32,   8 },
+   {  FALSE, FALSE, FALSE, FALSE,    32,   8 },
 
    {  FALSE, FALSE,  TRUE,  TRUE,    16,   8 },
    {  FALSE, FALSE,  TRUE, FALSE,    16,   8 },
@@ -381,7 +384,7 @@ const unsigned num_types = sizeof(conv_types)/sizeof(conv_types[0]);
 
 
 boolean
-test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_all(unsigned verbose, FILE *fp)
 {
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
@@ -394,7 +397,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
          if(src_type == dst_type)
             continue;
 
-         if(!test_one(gallivm, verbose, fp, *src_type, *dst_type)){
+         if(!test_one(verbose, fp, *src_type, *dst_type)){
             success = FALSE;
             ++error_count;
          }
@@ -408,7 +411,7 @@ test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 
 
 boolean
-test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+test_some(unsigned verbose, FILE *fp,
           unsigned long n)
 {
    const struct lp_type *src_type;
@@ -423,7 +426,7 @@ test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
          dst_type = &conv_types[rand() % num_types];
       } while (src_type == dst_type || src_type->norm != dst_type->norm);
 
-      if(!test_one(gallivm, verbose, fp, *src_type, *dst_type))
+      if(!test_one(verbose, fp, *src_type, *dst_type))
         success = FALSE;
    }
 
@@ -432,7 +435,7 @@ test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
 
 
 boolean
-test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
+test_single(unsigned verbose, FILE *fp)
 {
    /*    float, fixed,  sign,  norm, width, len */
    struct lp_type f32x4_type =
@@ -442,7 +445,7 @@ test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 
    boolean success;
 
-   success = test_one(gallivm, verbose, fp, f32x4_type, ub8x4_type);
+   success = test_one(verbose, fp, f32x4_type, ub8x4_type);
 
    return success;
 }

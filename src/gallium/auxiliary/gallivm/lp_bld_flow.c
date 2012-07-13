@@ -131,6 +131,15 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
 
    value = lp_build_mask_value(mask);
 
+   /*
+    * XXX this doesn't quite generate the most efficient code possible, if
+    * the masks are vectors which have all bits set to the same value
+    * in each element.
+    * movmskps/pmovmskb would be more efficient to get the required value
+    * into ordinary reg (certainly with 8 floats).
+    * Not sure if llvm could figure that out on its own.
+    */
+
    /* cond = (mask == 0) */
    cond = LLVMBuildICmp(builder,
                         LLVMIntEQ,

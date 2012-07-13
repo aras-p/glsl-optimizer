@@ -70,6 +70,66 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_logic.h"
+
+
+/**
+ * Converts int16 half-float to float32
+ * Note this can be performed in 1 instruction if vcvtph2ps exists (sse5 i think?)
+ * [llvm.x86.vcvtph2ps / _mm_cvtph_ps]
+ *
+ * @param src_type      <vector> type of int16
+ * @param src           value to convert
+ *
+ * ref http://fgiesen.wordpress.com/2012/03/28/half-to-float-done-quic/
+ */
+LLVMValueRef
+lp_build_half_to_float(struct gallivm_state *gallivm,
+                                      struct lp_type src_type,
+                                      LLVMValueRef src)
+{
+   struct lp_type f32_type = lp_type_float_vec(32, 32 * src_type.length);
+   struct lp_type i32_type = lp_type_int_vec(32, 32 * src_type.length);
+
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMTypeRef int_vec_type = lp_build_vec_type(gallivm, i32_type);
+   LLVMTypeRef float_vec_type = lp_build_vec_type(gallivm, f32_type);
+
+   /* Constants */
+   LLVMValueRef i32_13          = lp_build_const_int_vec(gallivm, i32_type, 13);
+   LLVMValueRef i32_16          = lp_build_const_int_vec(gallivm, i32_type, 16);
+   LLVMValueRef i32_mask_nosign = lp_build_const_int_vec(gallivm, i32_type, 0x7fff);
+   LLVMValueRef i32_was_infnan  = lp_build_const_int_vec(gallivm, i32_type, 0x7bff);
+   LLVMValueRef i32_exp_infnan  = lp_build_const_int_vec(gallivm, i32_type, 0xff << 23);
+   LLVMValueRef f32_magic       = LLVMBuildBitCast(builder,
+                                                   lp_build_const_int_vec(gallivm, i32_type, (254 - 15) << 23),
+                                                   float_vec_type, "");
+
+   /* Convert int16 vector to int32 vector by zero ext */
+   LLVMValueRef h             = LLVMBuildZExt(builder, src, int_vec_type, "");
+
+   /* Exponent / mantissa bits */
+   LLVMValueRef expmant       = LLVMBuildAnd(builder, i32_mask_nosign, h, "");
+   LLVMValueRef shifted       = LLVMBuildBitCast(builder, LLVMBuildShl(builder, expmant, i32_13, ""), float_vec_type, "");
+
+   /* Exponent adjust */
+   LLVMValueRef scaled        = LLVMBuildBitCast(builder, LLVMBuildFMul(builder, shifted, f32_magic, ""), int_vec_type, "");
+
+   /* Make sure Inf/NaN survive */
+   LLVMValueRef b_wasinfnan   = lp_build_compare(gallivm, i32_type, PIPE_FUNC_GREATER, expmant, i32_was_infnan);
+   LLVMValueRef infnanexp     = LLVMBuildAnd(builder, b_wasinfnan, i32_exp_infnan, "");
+
+   /* Sign bit */
+   LLVMValueRef justsign      = LLVMBuildXor(builder, h, expmant, "");
+   LLVMValueRef sign          = LLVMBuildShl(builder, justsign, i32_16, "");
+
+   /* Combine result */
+   LLVMValueRef sign_inf      = LLVMBuildOr(builder, sign, infnanexp, "");
+   LLVMValueRef final         = LLVMBuildOr(builder, scaled, sign_inf, "");
+
+   /* Cast from int32 vector to float32 vector */
+   return LLVMBuildBitCast(builder, final, float_vec_type, "");
+}
 
 
 /**
@@ -334,6 +394,8 @@ lp_build_conv(struct gallivm_state *gallivm,
        dst_type.width    == 8 &&
        dst_type.length   == 16 &&
 
+       4 * num_dsts      == num_srcs &&
+
        util_cpu_caps.has_sse2)
    {
       struct lp_build_context bld;
@@ -369,6 +431,76 @@ lp_build_conv(struct gallivm_state *gallivm,
       }
 
       return; 
+   }
+
+   /* Special case 2x8f --> 1x16ub
+    */
+   else if (src_type.floating == 1 &&
+      src_type.fixed    == 0 &&
+      src_type.sign     == 1 &&
+      src_type.norm     == 0 &&
+      src_type.width    == 32 &&
+      src_type.length   == 8 &&
+
+      dst_type.floating == 0 &&
+      dst_type.fixed    == 0 &&
+      dst_type.sign     == 0 &&
+      dst_type.norm     == 1 &&
+      dst_type.width    == 8 &&
+      dst_type.length   == 16 &&
+
+      2 * num_dsts      == num_srcs &&
+
+      util_cpu_caps.has_avx) {
+
+      struct lp_build_context bld;
+      struct lp_type int16_type = dst_type;
+      struct lp_type int32_type = dst_type;
+      LLVMValueRef const_255f;
+      unsigned i;
+
+      lp_build_context_init(&bld, gallivm, src_type);
+
+      int16_type.width *= 2;
+      int16_type.length /= 2;
+      int16_type.sign = 1;
+
+      int32_type.width *= 4;
+      int32_type.length /= 4;
+      int32_type.sign = 1;
+
+      const_255f = lp_build_const_vec(gallivm, src_type, 255.0f);
+
+      for (i = 0; i < num_dsts; ++i, src += 2) {
+         LLVMValueRef lo, hi, a, b;
+
+         a = LLVMBuildFMul(builder, src[0], const_255f, "");
+         b = LLVMBuildFMul(builder, src[1], const_255f, "");
+
+         a = lp_build_iround(&bld, a);
+         b = lp_build_iround(&bld, b);
+
+         tmp[0] = lp_build_extract_range(gallivm, a, 0, 4);
+         tmp[1] = lp_build_extract_range(gallivm, a, 4, 4);
+         tmp[2] = lp_build_extract_range(gallivm, b, 0, 4);
+         tmp[3] = lp_build_extract_range(gallivm, b, 4, 4);
+
+         /* relying on clamping behavior of sse2 intrinsics here */
+         lo = lp_build_pack2(gallivm, int32_type, int16_type, tmp[0], tmp[1]);
+         hi = lp_build_pack2(gallivm, int32_type, int16_type, tmp[2], tmp[3]);
+         dst[i] = lp_build_pack2(gallivm, int16_type, dst_type, lo, hi);
+      }
+      return;
+   }
+
+   /* Pre convert half-floats to floats
+    */
+   else if (src_type.floating && src_type.width == 16)
+   {
+      for(i = 0; i < num_tmps; ++i)
+         tmp[i] = lp_build_half_to_float(gallivm, src_type, tmp[i]);
+
+      tmp_type.width = 32;
    }
 
    /*
@@ -580,7 +712,7 @@ lp_build_conv(struct gallivm_state *gallivm,
  * This will convert the integer masks that match the given types.
  *
  * The mask values should 0 or -1, i.e., all bits either set to zero or one.
- * Any other value will likely cause in unpredictable results.
+ * Any other value will likely cause unpredictable results.
  *
  * This is basically a very trimmed down version of lp_build_conv.
  */
@@ -591,8 +723,6 @@ lp_build_conv_mask(struct gallivm_state *gallivm,
                    const LLVMValueRef *src, unsigned num_srcs,
                    LLVMValueRef *dst, unsigned num_dsts)
 {
-   /* Register width must remain constant */
-   assert(src_type.width * src_type.length == dst_type.width * dst_type.length);
 
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
@@ -617,16 +747,5 @@ lp_build_conv_mask(struct gallivm_state *gallivm,
     * Truncate or expand bit width
     */
 
-   if(src_type.width > dst_type.width) {
-      assert(num_dsts == 1);
-      dst[0] = lp_build_pack(gallivm, src_type, dst_type, TRUE, src, num_srcs);
-   }
-   else if(src_type.width < dst_type.width) {
-      assert(num_srcs == 1);
-      lp_build_unpack(gallivm, src_type, dst_type, src[0], dst, num_dsts);
-   }
-   else {
-      assert(num_srcs == num_dsts);
-      memcpy(dst, src, num_dsts * sizeof *dst);
-   }
+   lp_build_resize(gallivm, src_type, dst_type, src, num_srcs, dst, num_dsts);
 }

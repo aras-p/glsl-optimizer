@@ -40,21 +40,35 @@
 #include "pipe/p_compiler.h"
 #include "gallivm/lp_bld.h"
 
-
+/**
+ * Native SIMD architecture width available at runtime.
+ *
+ * Using this width should give the best performance,
+ * and it determines the necessary alignment of vector variables.
+ */
+extern unsigned lp_native_vector_width;
 
 /**
- * Native SIMD register width.
+ * Maximum supported vector width (not necessarily supported at run-time).
  *
- * 128 for all architectures we care about.
+ * Should only be used when lp_native_vector_width isn't available,
+ * i.e. sizing/alignment of non-malloced variables.
  */
-#define LP_NATIVE_VECTOR_WIDTH 128
+#define LP_MAX_VECTOR_WIDTH 256
+
+/**
+ * Minimum vector alignment for static variable alignment
+ *
+ * It should always be a constant equal to LP_MAX_VECTOR_WIDTH/8.  An
+ * expression is non-portable.
+ */
+#define LP_MIN_VECTOR_ALIGN 32
 
 /**
  * Several functions can only cope with vectors of length up to this value.
  * You may need to increase that value if you want to represent bigger vectors.
  */
-#define LP_MAX_VECTOR_LENGTH 16
-
+#define LP_MAX_VECTOR_LENGTH (LP_MAX_VECTOR_WIDTH/8)
 
 /**
  * The LLVM type system can't conveniently express all the things we care about
@@ -151,6 +165,13 @@ struct lp_build_context
 };
 
 
+static INLINE unsigned
+lp_type_width(struct lp_type type)
+{
+   return type.width * type.length;
+}
+
+
 /** Create scalar float type */
 static INLINE struct lp_type
 lp_type_float(unsigned width)
@@ -169,7 +190,7 @@ lp_type_float(unsigned width)
 
 /** Create vector of float type */
 static INLINE struct lp_type
-lp_type_float_vec(unsigned width)
+lp_type_float_vec(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
@@ -177,7 +198,7 @@ lp_type_float_vec(unsigned width)
    res_type.floating = TRUE;
    res_type.sign = TRUE;
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
@@ -200,14 +221,14 @@ lp_type_int(unsigned width)
 
 /** Create vector int type */
 static INLINE struct lp_type
-lp_type_int_vec(unsigned width)
+lp_type_int_vec(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
    memset(&res_type, 0, sizeof res_type);
    res_type.sign = TRUE;
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
@@ -229,34 +250,34 @@ lp_type_uint(unsigned width)
 
 /** Create vector uint type */
 static INLINE struct lp_type
-lp_type_uint_vec(unsigned width)
+lp_type_uint_vec(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
    memset(&res_type, 0, sizeof res_type);
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
 
 
 static INLINE struct lp_type
-lp_type_unorm(unsigned width)
+lp_type_unorm(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
    memset(&res_type, 0, sizeof res_type);
    res_type.norm = TRUE;
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
 
 
 static INLINE struct lp_type
-lp_type_fixed(unsigned width)
+lp_type_fixed(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
@@ -264,21 +285,21 @@ lp_type_fixed(unsigned width)
    res_type.sign = TRUE;
    res_type.fixed = TRUE;
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
 
 
 static INLINE struct lp_type
-lp_type_ufixed(unsigned width)
+lp_type_ufixed(unsigned width, unsigned total_width)
 {
    struct lp_type res_type;
 
    memset(&res_type, 0, sizeof res_type);
    res_type.fixed = TRUE;
    res_type.width = width;
-   res_type.length = LP_NATIVE_VECTOR_WIDTH / width;
+   res_type.length = total_width / width;
 
    return res_type;
 }
@@ -310,10 +331,6 @@ lp_build_int_elem_type(struct gallivm_state *gallivm, struct lp_type type);
 
 LLVMTypeRef
 lp_build_int_vec_type(struct gallivm_state *gallivm, struct lp_type type);
-
-
-LLVMTypeRef
-lp_build_int32_vec4_type(struct gallivm_state *gallivm);
 
 
 static INLINE struct lp_type

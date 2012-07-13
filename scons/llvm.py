@@ -178,7 +178,12 @@ def generate(env):
                 pass
             env.MergeFlags(cppflags)
 
-            env.ParseConfig('llvm-config --libs engine bitwriter')
+            components = ['engine', 'bitwriter', 'x86asmprinter']
+
+            if llvm_version >= distutils.version.LooseVersion('3.1'):
+                components.append('mcjit')
+
+            env.ParseConfig('llvm-config --libs ' + ' '.join(components))
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version

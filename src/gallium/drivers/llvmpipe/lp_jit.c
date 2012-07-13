@@ -41,7 +41,7 @@
 
 
 static void
-lp_jit_create_types(struct llvmpipe_context *lp)
+lp_jit_create_types(struct lp_fragment_shader_variant *lp)
 {
    struct gallivm_state *gallivm = lp->gallivm;
    LLVMContextRef lc = gallivm->context;
@@ -183,11 +183,9 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 }
 
 
-LLVMTypeRef
-lp_jit_get_context_type(struct llvmpipe_context *lp)
+void
+lp_jit_init_types(struct lp_fragment_shader_variant *lp)
 {
    if (!lp->jit_context_ptr_type)
       lp_jit_create_types(lp);
-
-   return lp->jit_context_ptr_type;
 }

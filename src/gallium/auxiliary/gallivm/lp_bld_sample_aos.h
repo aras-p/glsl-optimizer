@@ -46,10 +46,10 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     LLVMValueRef s,
                     LLVMValueRef t,
                     LLVMValueRef r,
-                    const LLVMValueRef *ddx,
-                    const LLVMValueRef *ddy,
-                    LLVMValueRef lod_bias, /* optional */
-                    LLVMValueRef explicit_lod, /* optional */
+                    LLVMValueRef lod_ipart,
+                    LLVMValueRef lod_fpart,
+                    LLVMValueRef ilevel0,
+                    LLVMValueRef ilevel1,
                     LLVMValueRef texel_out[4]);
 
 

@@ -55,6 +55,8 @@ struct lp_setup_variant {
    
    struct lp_setup_variant_list_item list_item_global;
 
+   struct gallivm_state *gallivm;
+
    /* XXX: this is a pointer to the LLVM IR.  Once jit_function is
     * generated, we never need to use the IR again - need to find a
     * way to release this data without destroying the generated
@@ -68,15 +70,6 @@ struct lp_setup_variant {
 
    unsigned no;
 };
-
-void lp_setup_tri_fallback( const float (*v0)[4],
-			    const float (*v1)[4],
-			    const float (*v2)[4],
-			    boolean front_facing,
-			    float (*a0)[4],
-			    float (*dadx)[4],
-			    float (*dady)[4],
-			    const struct lp_setup_variant_key *key );
 
 void lp_delete_setup_variants(struct llvmpipe_context *lp);
 

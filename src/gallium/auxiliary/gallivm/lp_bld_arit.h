@@ -57,8 +57,13 @@ lp_build_add(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
-lp_build_sum_vector(struct lp_build_context *bld,
-                    LLVMValueRef a);
+lp_build_horizontal_add(struct lp_build_context *bld,
+                        LLVMValueRef a);
+
+LLVMValueRef
+lp_build_hadd_partial4(struct lp_build_context *bld,
+                       LLVMValueRef vectors[],
+                       unsigned num_vecs);
 
 LLVMValueRef
 lp_build_sub(struct lp_build_context *bld,
@@ -157,6 +162,10 @@ lp_build_fract(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef
+lp_build_fract_safe(struct lp_build_context *bld,
+                    LLVMValueRef a);
+
+LLVMValueRef
 lp_build_ifloor(struct lp_build_context *bld,
                 LLVMValueRef a);
 LLVMValueRef
@@ -176,6 +185,12 @@ lp_build_ifloor_fract(struct lp_build_context *bld,
                       LLVMValueRef a,
                       LLVMValueRef *out_ipart,
                       LLVMValueRef *out_fpart);
+
+void
+lp_build_ifloor_fract_safe(struct lp_build_context *bld,
+                           LLVMValueRef a,
+                           LLVMValueRef *out_ipart,
+                           LLVMValueRef *out_fpart);
 
 LLVMValueRef
 lp_build_sqrt(struct lp_build_context *bld,
