@@ -20,6 +20,10 @@ libgbm_la_SOURCES = \
 libgbm_la_LDFLAGS = -version-info 1:0
 libgbm_la_LIBADD = $(LIBUDEV_LIBS) $(DLOPEN_LIBS)
 
+if HAVE_EGL_PLATFORM_WAYLAND
+AM_CPPFLAGS = -DHAVE_WAYLAND_PLATFORM
+endif
+
 if HAVE_DRI
 noinst_LTLIBRARIES = libgbm_dri.la
 libgbm_dri_la_SOURCES = \

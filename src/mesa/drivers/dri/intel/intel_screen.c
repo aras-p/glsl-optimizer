@@ -357,7 +357,13 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
    case __DRI_IMAGE_ATTRIB_FORMAT:
       *value = image->dri_format;
       return true;
-   default:
+   case __DRI_IMAGE_ATTRIB_WIDTH:
+      *value = image->region->width;
+      return true;
+   case __DRI_IMAGE_ATTRIB_HEIGHT:
+      *value = image->region->height;
+      return true;
+  default:
       return false;
    }
 }

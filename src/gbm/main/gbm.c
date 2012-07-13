@@ -337,34 +337,34 @@ gbm_bo_create(struct gbm_device *gbm,
 }
 
 /**
- * Create a buffer object representing the contents of an EGLImage
+ * Create a gbm buffer object from an foreign object
+ *
+ * This function imports a foreign object and creates a new gbm bo for it.
+ * This enabled using the foreign object with a display API such as KMS.
+ * Currently two types of foreign objects are supported, indicated by the type
+ * argument:
+ *
+ *   GBM_BO_IMPORT_WL_BUFFER
+ *   GBM_BO_IMPORT_EGL_IMAGE
+ *
+ * The the gbm bo shares the underlying pixels but its life-time is
+ * independent of the foreign object.
  *
  * \param gbm The gbm device returned from gbm_create_device()
- * \param egl_dpy The EGLDisplay on which the EGLImage was created
- * \param egl_image The EGLImage to create the buffer from
- * \param width The width to use in the creation of the buffer object
- * \param height The height to use in the creation of the buffer object
+ * \param gbm The type of object we're importing
+ * \param gbm Pointer to the external object
  * \param usage The union of the usage flags for this buffer
  *
  * \return A newly allocated buffer object that should be freed with
  * gbm_bo_destroy() when no longer needed.
  *
  * \sa enum gbm_bo_flags for the list of usage flags
- *
- * \note The expectation is that this function will use an efficient method
- * for making the contents of the EGLImage available as a buffer object.
  */
 GBM_EXPORT struct gbm_bo *
-gbm_bo_create_from_egl_image(struct gbm_device *gbm,
-                             void *egl_dpy, void *egl_image,
-                             uint32_t width, uint32_t height,
-                             uint32_t usage)
+gbm_bo_import(struct gbm_device *gbm,
+              uint32_t type, void *buffer, uint32_t usage)
 {
-   if (width == 0 || height == 0)
-      return NULL;
-
-   return gbm->bo_create_from_egl_image(gbm, egl_dpy, egl_image,
-                                        width, height, usage);
+   return gbm->bo_import(gbm, type, buffer, usage);
 }
 
 /**

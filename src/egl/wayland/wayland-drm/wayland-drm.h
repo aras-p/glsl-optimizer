@@ -1,9 +1,6 @@
 #ifndef WAYLAND_DRM_H
 #define WAYLAND_DRM_H
 
-#include "egldisplay.h"
-#include "eglimage.h"
-
 #include <wayland-server.h>
 #include "wayland-drm-server-protocol.h"
 

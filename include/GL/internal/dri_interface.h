@@ -912,7 +912,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 4
+#define __DRI_IMAGE_VERSION 5
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -946,6 +946,8 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_ATTRIB_HANDLE	0x2001
 #define __DRI_IMAGE_ATTRIB_NAME		0x2002
 #define __DRI_IMAGE_ATTRIB_FORMAT	0x2003 /* available in versions 3+ */
+#define __DRI_IMAGE_ATTRIB_WIDTH	0x2004 /* available in versions 5+ */
+#define __DRI_IMAGE_ATTRIB_HEIGHT	0x2005
 
 typedef struct __DRIimageRec          __DRIimage;
 typedef struct __DRIimageExtensionRec __DRIimageExtension;

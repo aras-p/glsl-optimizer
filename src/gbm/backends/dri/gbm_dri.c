@@ -43,6 +43,11 @@
 
 #include "gbmint.h"
 
+/* For importing wl_buffer */
+#if HAVE_WAYLAND_PLATFORM
+#include "../../../egl/wayland/wayland-drm/wayland-drm.h"
+#endif
+
 static __DRIimage *
 dri_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
 {
@@ -340,36 +345,76 @@ gbm_dri_to_gbm_format(uint32_t dri_format)
 }
 
 static struct gbm_bo *
-gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
-                                 void *egl_dpy, void *egl_img,
-                                 uint32_t width, uint32_t height,
-                                 uint32_t usage)
+gbm_dri_bo_import(struct gbm_device *gbm,
+                  uint32_t type, void *buffer, uint32_t usage)
 {
    struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
-   int dri_format;
+   __DRIimage *image;
    unsigned dri_use = 0;
+   int dri_format, width, height, gbm_format, stride, cpp, offset;
 
-   (void) egl_dpy;
+   switch (type) {
+#if HAVE_WAYLAND_PLATFORM
+   case GBM_BO_IMPORT_WL_BUFFER:
+   {
+      struct wl_drm_buffer *wb = (struct wl_drm_buffer *) buffer;
 
-   if (dri->lookup_image == NULL)
+      image = wb->driver_buffer;
+      stride = wb->stride[0];
+      offset = wb->offset[0];
+      cpp = 4;
+      switch (wb->format) {
+      case WL_DRM_FORMAT_XRGB8888:
+         dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
+         gbm_format = GBM_FORMAT_XRGB8888;
+         break;
+      case WL_DRM_FORMAT_ARGB8888:
+         dri_format = __DRI_IMAGE_FORMAT_ARGB8888;
+         gbm_format = GBM_FORMAT_ARGB8888;
+         break;
+      case WL_DRM_FORMAT_YUYV:
+         dri_format = __DRI_IMAGE_FORMAT_ARGB8888;
+         gbm_format = GBM_FORMAT_YUYV;
+         break;
+      default:
+         return NULL;
+      }
+      break;
+   }
+#endif
+
+   case GBM_BO_IMPORT_EGL_IMAGE:
+   {
+      if (dri->lookup_image == NULL)
+         return NULL;
+
+      image = dri->lookup_image(dri->screen, buffer, dri->lookup_user_data);
+      dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_FORMAT, &dri_format);
+      gbm_format = gbm_dri_to_gbm_format(dri_format);
+      dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &stride);
+      offset = 0;
+      cpp = 4;
+      break;
+   }
+
+   default:
       return NULL;
+   }
+
 
    bo = calloc(1, sizeof *bo);
    if (bo == NULL)
       return NULL;
 
-   bo->base.base.gbm = gbm;
-   bo->base.base.width = width;
-   bo->base.base.height = height;
+   dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_WIDTH, &width);
+   dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_HEIGHT, &height);
 
-   __DRIimage *tmp = dri->lookup_image(dri->screen, egl_img,
-                                       dri->lookup_user_data);
+   bo->image = dri->image->createSubImage(image,
+                                          width, height, dri_format,
+                                          offset, stride / cpp, NULL);
 
-   bo->image = dri->image->dupImage(tmp, bo);
-   if (bo->image == NULL)
-      return NULL;
-   
+
    if (usage & GBM_BO_USE_SCANOUT)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
    if (usage & GBM_BO_USE_CURSOR_64X64)
@@ -380,14 +425,13 @@ gbm_dri_bo_create_from_egl_image(struct gbm_device *gbm,
       return NULL;
    }
 
+   bo->base.base.gbm = gbm;
+   bo->base.base.width = width;
+   bo->base.base.height = height;
+   bo->base.base.pitch = stride;
+   bo->base.base.format = gbm_format;
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
                           &bo->base.base.handle.s32);
-   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE,
-                          (int *) &bo->base.base.pitch);
-   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_FORMAT,
-			  &dri_format);
-
-   bo->base.base.format = gbm_dri_to_gbm_format(dri_format);
 
    return &bo->base.base;
 }
@@ -506,7 +550,7 @@ dri_device_create(int fd)
 
    dri->base.base.fd = fd;
    dri->base.base.bo_create = gbm_dri_bo_create;
-   dri->base.base.bo_create_from_egl_image = gbm_dri_bo_create_from_egl_image;
+   dri->base.base.bo_import = gbm_dri_bo_import;
    dri->base.base.is_format_supported = gbm_dri_is_format_supported;
    dri->base.base.bo_write = gbm_dri_bo_write;
    dri->base.base.bo_destroy = gbm_dri_bo_destroy;
