@@ -110,6 +110,61 @@ clip_or_scissor(bool mirror, GLint &src_x0, GLint &src_x1, GLint &dst_x0,
 }
 
 
+static struct intel_mipmap_tree *
+find_miptree(GLbitfield buffer_bit, struct gl_renderbuffer *rb)
+{
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_mipmap_tree *mt = irb->mt;
+   if (buffer_bit == GL_STENCIL_BUFFER_BIT && mt->stencil_mt)
+      mt = mt->stencil_mt;
+   return mt;
+}
+
+
+static void
+do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
+              struct gl_renderbuffer *src_rb, struct gl_renderbuffer *dst_rb,
+              GLint srcX0, GLint srcY0,
+              GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+              bool mirror_x, bool mirror_y)
+{
+   struct gl_context *ctx = &intel->ctx;
+
+   /* Find source/dst miptrees */
+   struct intel_mipmap_tree *src_mt = find_miptree(buffer_bit, src_rb);
+   struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_rb);
+
+   /* Get ready to blit.  This includes depth resolving the src and dst
+    * buffers if necessary.
+    */
+   intel_renderbuffer_resolve_depth(intel, intel_renderbuffer(src_rb));
+   intel_renderbuffer_resolve_depth(intel, intel_renderbuffer(dst_rb));
+
+   /* Do the blit */
+   brw_blorp_blit_params params(brw_context(ctx), src_mt, dst_mt,
+                                srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
+                                mirror_x, mirror_y);
+   brw_blorp_exec(intel, &params);
+
+   /* Mark the dst buffer as needing a HiZ resolve if necessary. */
+   intel_renderbuffer_set_needs_hiz_resolve(intel_renderbuffer(dst_rb));
+}
+
+
+static bool
+formats_match(GLbitfield buffer_bit, struct gl_renderbuffer *src_rb,
+              struct gl_renderbuffer *dst_rb)
+{
+   /* Note: don't just check gl_renderbuffer::Format, because in some cases
+    * multiple gl_formats resolve to the same native type in the miptree (for
+    * example MESA_FORMAT_X8_Z24 and MESA_FORMAT_S8_Z24), and we can blit
+    * between those formats.
+    */
+   return find_miptree(buffer_bit, src_rb)->format ==
+      find_miptree(buffer_bit, dst_rb)->format;
+}
+
+
 static bool
 try_blorp_blit(struct intel_context *intel,
                GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -123,49 +178,8 @@ try_blorp_blit(struct intel_context *intel,
     */
    intel_prepare_render(intel);
 
-   /* Find buffers */
    const struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    const struct gl_framebuffer *draw_fb = ctx->DrawBuffer;
-   struct gl_renderbuffer *src_rb;
-   struct gl_renderbuffer *dst_rb;
-   switch (buffer_bit) {
-   case GL_COLOR_BUFFER_BIT:
-      src_rb = read_fb->_ColorReadBuffer;
-      dst_rb =
-         draw_fb->Attachment[
-            draw_fb->_ColorDrawBufferIndexes[0]].Renderbuffer;
-      break;
-   case GL_DEPTH_BUFFER_BIT:
-      src_rb = read_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-      dst_rb = draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-      break;
-   case GL_STENCIL_BUFFER_BIT:
-      src_rb = read_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-      dst_rb = draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-      break;
-   default:
-      assert(false);
-   }
-
-   /* Find source miptree */
-   struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
-   struct intel_mipmap_tree *src_mt = src_irb->mt;
-   if (buffer_bit == GL_STENCIL_BUFFER_BIT && src_mt->stencil_mt)
-      src_mt = src_mt->stencil_mt;
-
-   /* Find destination miptree */
-   struct intel_renderbuffer *dst_irb = intel_renderbuffer(dst_rb);
-   struct intel_mipmap_tree *dst_mt = dst_irb->mt;
-   if (buffer_bit == GL_STENCIL_BUFFER_BIT && dst_mt->stencil_mt)
-      dst_mt = dst_mt->stencil_mt;
-
-   /* Blorp blits can't translate from one format to another.  For that we'll
-    * have to fall back to the meta-op blit.  Note: the meta-op blit doesn't
-    * support multisampled blits, but fortunately this is ok because
-    * multisampled blits require identical source and destination formats.
-    */
-   if (src_mt->format != dst_mt->format)
-      return false;
 
    /* Detect if the blit needs to be mirrored */
    bool mirror_x = false, mirror_y = false;
@@ -213,20 +227,39 @@ try_blorp_blit(struct intel_context *intel,
       mirror_y = !mirror_y;
    }
 
-   /* Get ready to blit.  This includes depth resolving the src and dst
-    * buffers if necessary.
-    */
-   intel_renderbuffer_resolve_depth(intel, src_irb);
-   intel_renderbuffer_resolve_depth(intel, dst_irb);
-
-   /* Do the blit */
-   brw_blorp_blit_params params(brw_context(ctx), src_mt, dst_mt,
-                                srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
-                                mirror_x, mirror_y);
-   brw_blorp_exec(intel, &params);
-
-   /* Mark the dst buffer as needing a HiZ resolve if necessary. */
-   intel_renderbuffer_set_needs_hiz_resolve(dst_irb);
+   /* Find buffers */
+   struct gl_renderbuffer *src_rb;
+   struct gl_renderbuffer *dst_rb;
+   switch (buffer_bit) {
+   case GL_COLOR_BUFFER_BIT:
+      src_rb = read_fb->_ColorReadBuffer;
+      dst_rb =
+         draw_fb->Attachment[
+            draw_fb->_ColorDrawBufferIndexes[0]].Renderbuffer;
+      if (!formats_match(buffer_bit, src_rb, dst_rb))
+         return false;
+      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+                    dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+      break;
+   case GL_DEPTH_BUFFER_BIT:
+      src_rb = read_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      dst_rb = draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+      if (!formats_match(buffer_bit, src_rb, dst_rb))
+         return false;
+      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+                    dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+      break;
+   case GL_STENCIL_BUFFER_BIT:
+      src_rb = read_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+      dst_rb = draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+      if (!formats_match(buffer_bit, src_rb, dst_rb))
+         return false;
+      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+                    dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+      break;
+   default:
+      assert(false);
+   }
 
    return true;
 }
