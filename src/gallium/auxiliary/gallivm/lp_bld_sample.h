@@ -86,6 +86,10 @@ struct lp_sampler_static_state
    unsigned lod_bias_non_zero:1;
    unsigned apply_min_lod:1;  /**< min_lod > 0 ? */
    unsigned apply_max_lod:1;  /**< max_lod < last_level ? */
+
+   /* Hacks */
+   unsigned force_nearest_s:1;
+   unsigned force_nearest_t:1;
 };
 
 
