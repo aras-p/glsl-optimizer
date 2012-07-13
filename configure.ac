@@ -2009,7 +2009,7 @@ if test "x$with_gallium_drivers" != x; then
                 AC_MSG_ERROR([LLVM 3.1 is required to build the radeonsi driver.])
             fi
 	    NEED_RADEON_GALLIUM=yes;
-            gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi"
+            gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi" "" "" "vdpau-radeonsi" ""
             ;;
         xnouveau)
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
