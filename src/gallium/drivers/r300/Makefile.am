@@ -1,7 +1,7 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LIBRARIES = libr300.a
+noinst_LTLIBRARIES = libr300.la
 check_PROGRAMS = r300_compiler_tests
 testdir = compiler/tests
 TESTS = r300_compiler_tests
@@ -17,12 +17,7 @@ AM_CFLAGS = \
 	$(LLVM_CFLAGS) \
 	$(RADEON_CFLAGS)
 
-libr300_a_SOURCES = \
-	$(C_SOURCES) \
-	$(top_srcdir)/src/glsl/ralloc.c \
-	$(top_srcdir)/src/mesa/program/register_allocate.c
-
-r300_compiler_tests_LDADD = libr300.a
+r300_compiler_tests_LDADD = libr300.la
 r300_compiler_tests_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/r300/compiler
 r300_compiler_tests_SOURCES = \
@@ -30,3 +25,12 @@ r300_compiler_tests_SOURCES = \
 	$(testdir)/radeon_compiler_util_tests.c \
 	$(testdir)/rc_test_helpers.c \
 	$(testdir)/unit_test.c
+
+libr300_la_SOURCES = \
+	$(C_SOURCES) \
+	$(top_srcdir)/src/glsl/ralloc.c \
+	$(top_srcdir)/src/mesa/program/register_allocate.c
+
+#XXX: Delete this when all r300 targets are converted to automake.
+all-local: libr300.la
+	ln -f $(builddir)/.libs/libr300.a $(builddir)/libr300.a
