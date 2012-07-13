@@ -976,6 +976,7 @@ xyesno)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
+        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx >= 1.8.1])
         dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx"
 
         # add xf86vidmode if available
