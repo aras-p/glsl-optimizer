@@ -23,6 +23,6 @@ DRIVER_DEFINES = \
 
 include ../Makefile.dri
 
-DRI_LIB_DEPS += $(shell $(PKG_CONFIG) libdrm_nouveau --libs)
+GALLIUM_DRI_LIB_DEPS += $(shell $(PKG_CONFIG) libdrm_nouveau --libs)
 
 symlinks:
