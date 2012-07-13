@@ -16,6 +16,8 @@
 
 #include <stdio.h>
 
+#if defined R600_USE_LLVM || defined HAVE_OPENCL
+
 static LLVMValueRef llvm_fetch_const(
 	struct lp_build_tgsi_context * bld_base,
 	const struct tgsi_full_src_register *reg,
@@ -319,3 +321,5 @@ unsigned r600_llvm_compile(
 	return radeon_llvm_compile(mod, inst_bytes, inst_byte_count,
 							gpu_family, dump);
 }
+
+#endif
