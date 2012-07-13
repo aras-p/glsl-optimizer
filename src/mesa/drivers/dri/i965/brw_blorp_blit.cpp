@@ -147,19 +147,15 @@ try_blorp_blit(struct intel_context *intel,
       assert(false);
    }
 
-   /* Validate source */
-   if (!src_rb) return false;
+   /* Find source miptree */
    struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
    struct intel_mipmap_tree *src_mt = src_irb->mt;
-   if (!src_mt) return false;
    if (buffer_bit == GL_STENCIL_BUFFER_BIT && src_mt->stencil_mt)
       src_mt = src_mt->stencil_mt;
 
-   /* Validate destination */
-   if (!dst_rb) return false;
+   /* Find destination miptree */
    struct intel_renderbuffer *dst_irb = intel_renderbuffer(dst_rb);
    struct intel_mipmap_tree *dst_mt = dst_irb->mt;
-   if (!dst_mt) return false;
    if (buffer_bit == GL_STENCIL_BUFFER_BIT && dst_mt->stencil_mt)
       dst_mt = dst_mt->stencil_mt;
 
