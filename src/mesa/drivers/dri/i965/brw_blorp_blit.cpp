@@ -233,13 +233,16 @@ try_blorp_blit(struct intel_context *intel,
    switch (buffer_bit) {
    case GL_COLOR_BUFFER_BIT:
       src_rb = read_fb->_ColorReadBuffer;
-      dst_rb =
-         draw_fb->Attachment[
-            draw_fb->_ColorDrawBufferIndexes[0]].Renderbuffer;
-      if (!formats_match(buffer_bit, src_rb, dst_rb))
-         return false;
-      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
-                    dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+      for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
+         dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+         if (dst_rb && !formats_match(buffer_bit, src_rb, dst_rb))
+            return false;
+      }
+      for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
+         dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+         do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+                       dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+      }
       break;
    case GL_DEPTH_BUFFER_BIT:
       src_rb = read_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
