@@ -37,7 +37,6 @@ AM_CFLAGS = \
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
-AM_YFLAGS = -v -d -p "_mesa_glsl_"
 AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 
 GLSL_SRCDIR=$(top_srcdir)/src/glsl
@@ -49,7 +48,7 @@ noinst_PROGRAMS = glsl_compiler glsl_test builtin_compiler
 # common sources for builtin_compiler and libglsl
 libglslcommon_la_SOURCES = \
 	glsl_lexer.ll \
-	glsl_parser.yy \
+	glsl_parser.cc \
 	$(LIBGLSL_FILES) \
 	$(LIBGLSL_CXX_FILES)
 
@@ -87,8 +86,15 @@ builtin_compiler_SOURCES = \
 
 builtin_compiler_LDADD = libglslcommon.la
 
-BUILT_SOURCES = glsl_lexer.cc glsl_parser.cc glsl_parser.h builtin_function.cpp
-CLEANFILES = $(BUILT_SOURCES)
+# automake <=1.11 and automake >=1.12 have different conventions for naming C++ header files
+# made by yacc.  To work with both, we write our own rule rather than using automake's.
+# When (if) we require automake >=1.12 in configure.ac, this can be removed, and we can use
+# the automake rule.
+glsl_parser.cc glsl_parser.h: glsl_parser.yy
+	$(AM_V_GEN) $(YACC) -v -o glsl_parser.cc -p "_mesa_glsl_" --defines=glsl_parser.h $<
+
+BUILT_SOURCES = glsl_parser.h builtin_function.cpp
+CLEANFILES = glsl_lexer.cc glsl_parser.cc $(BUILT_SOURCES)
 
 builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/glsl/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler$(EXEEXT)
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py ./builtin_compiler > builtin_function.cpp || rm -f builtin_function.cpp
