@@ -1276,7 +1276,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* Invalidate caches. */
 	r600_inval_vertex_cache(ctx);
 	r600_inval_texture_cache(ctx);
-	r600_inval_shader_cache(ctx);
 	r600_flush_framebuffer(ctx, false);
 
 	/* Re-emit states. */
