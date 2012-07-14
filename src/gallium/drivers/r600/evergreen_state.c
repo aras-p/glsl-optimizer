@@ -1120,9 +1120,6 @@ static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
 
-	if (count)
-		r600_inval_texture_cache(rctx);
-
 	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
 	rctx->ps_samplers.n_samplers = count;
 
@@ -1135,9 +1132,6 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
-
-	if (count)
-		r600_inval_texture_cache(rctx);
 
 	for (int i = 0; i < count; i++) {
 		evergreen_context_pipe_state_set_vs_sampler(rctx, rstates[i], i);
