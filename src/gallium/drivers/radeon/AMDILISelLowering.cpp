@@ -1378,7 +1378,7 @@ AMDILTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
   Cond = DAG.getNode(
       ISD::SELECT_CC,
       Op.getDebugLoc(),
-      LHS.getValueType(),
+      MVT::i32,
       LHS, RHS,
       DAG.getConstant(-1, MVT::i32),
       DAG.getConstant(0, MVT::i32),
@@ -1496,7 +1496,7 @@ AMDILTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
   CmpValue = DAG.getNode(
       ISD::SELECT_CC,
       Op.getDebugLoc(),
-      LHS.getValueType(),
+      MVT::i32,
       LHS, RHS,
       DAG.getConstant(-1, MVT::i32),
       DAG.getConstant(0, MVT::i32),

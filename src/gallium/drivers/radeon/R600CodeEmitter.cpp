@@ -110,6 +110,7 @@ enum InstrTypes {
 
 enum FCInstr {
   FC_IF = 0,
+  FC_IF_INT,
   FC_ELSE,
   FC_ENDIF,
   FC_BGNLOOP,
@@ -535,8 +536,9 @@ void R600CodeEmitter::EmitFCInstr(MachineInstr &MI)
     instr = FC_CONTINUE;
     break;
   case AMDGPU::IF_LOGICALNZ_f32:
-  case AMDGPU::IF_LOGICALNZ_i32:
     instr = FC_IF;
+  case AMDGPU::IF_LOGICALNZ_i32:
+    instr = FC_IF_INT;
     break;
   case AMDGPU::IF_LOGICALZ_f32:
     abort();

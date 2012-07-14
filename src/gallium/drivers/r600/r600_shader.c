@@ -372,26 +372,30 @@ static unsigned r600_fc_from_byte_stream(struct r600_shader_ctx *ctx,
 			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE));
 		break;
 	case 1:
-		tgsi_else(ctx);
+		llvm_if(ctx, &alu,
+			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT));
 		break;
 	case 2:
-		tgsi_endif(ctx);
+		tgsi_else(ctx);
 		break;
 	case 3:
-		tgsi_bgnloop(ctx);
+		tgsi_endif(ctx);
 		break;
 	case 4:
-		tgsi_endloop(ctx);
+		tgsi_bgnloop(ctx);
 		break;
 	case 5:
-		r600_break_from_byte_stream(ctx, &alu,
-			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE));
+		tgsi_endloop(ctx);
 		break;
 	case 6:
 		r600_break_from_byte_stream(ctx, &alu,
-			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT));
+			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT));
 		break;
 	case 7:
+		r600_break_from_byte_stream(ctx, &alu,
+			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE));
+		break;
+	case 8:
 		{
 			unsigned opcode = TGSI_OPCODE_CONT;
 			if (ctx->bc->chip_class == CAYMAN) {
@@ -407,7 +411,7 @@ static unsigned r600_fc_from_byte_stream(struct r600_shader_ctx *ctx,
 			tgsi_loop_brk_cont(ctx);
 		}
 		break;
-	case 8:
+	case 9:
 		r600_break_from_byte_stream(ctx, &alu,
 			CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT));
 		break;
