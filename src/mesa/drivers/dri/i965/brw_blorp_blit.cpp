@@ -171,18 +171,6 @@ try_blorp_blit(struct intel_context *intel,
    if (src_mt->format != dst_mt->format)
       return false;
 
-   /* Account for the fact that in the system framebuffer, the origin is at
-    * the lower left.
-    */
-   if (read_fb->Name == 0) {
-      srcY0 = read_fb->Height - srcY0;
-      srcY1 = read_fb->Height - srcY1;
-   }
-   if (draw_fb->Name == 0) {
-      dstY0 = draw_fb->Height - dstY0;
-      dstY1 = draw_fb->Height - dstY1;
-   }
-
    /* Detect if the blit needs to be mirrored */
    bool mirror_x = false, mirror_y = false;
    fixup_mirroring(mirror_x, srcX0, srcX1);
@@ -211,6 +199,22 @@ try_blorp_blit(struct intel_context *intel,
                          0, read_fb->Height))) {
       /* Everything got clipped/scissored away, so the blit was successful. */
       return true;
+   }
+
+   /* Account for the fact that in the system framebuffer, the origin is at
+    * the lower left.
+    */
+   if (read_fb->Name == 0) {
+      GLint tmp = read_fb->Height - srcY0;
+      srcY0 = read_fb->Height - srcY1;
+      srcY1 = tmp;
+      mirror_y = !mirror_y;
+   }
+   if (draw_fb->Name == 0) {
+      GLint tmp = draw_fb->Height - dstY0;
+      dstY0 = draw_fb->Height - dstY1;
+      dstY1 = tmp;
+      mirror_y = !mirror_y;
    }
 
    /* Get ready to blit.  This includes depth resolving the src and dst
