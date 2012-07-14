@@ -191,10 +191,8 @@ try_blorp_blit(struct intel_context *intel,
    fixup_mirroring(mirror_y, dstY0, dstY1);
 
    /* Make sure width and height match */
-   GLsizei width = srcX1 - srcX0;
-   GLsizei height = srcY1 - srcY0;
-   if (width != dstX1 - dstX0) return false;
-   if (height != dstY1 - dstY0) return false;
+   if (srcX1 - srcX0 != dstX1 - dstX0) return false;
+   if (srcY1 - srcY0 != dstY1 - dstY0) return false;
 
    /* If the destination rectangle needs to be clipped or scissored, do so.
     */
