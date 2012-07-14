@@ -1163,7 +1163,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 #endif
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
-	ctx.native_integers = (rctx->screen->glsl_feature_level >= 130);
+	ctx.native_integers = true;
 
 	r600_bytecode_init(ctx.bc, rctx->chip_class, rctx->family);
 	ctx.tokens = tokens;

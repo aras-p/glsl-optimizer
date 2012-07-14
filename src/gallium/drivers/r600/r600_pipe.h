@@ -143,7 +143,6 @@ struct r600_screen {
 	struct r600_pipe_fences		fences;
 
 	bool				use_surface_alloc;
-	int 				glsl_feature_level;
 
 	/*for compute global memory binding, we allocate stuff here, instead of
 	 * buffers.

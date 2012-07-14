@@ -391,7 +391,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 256;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return rscreen->glsl_feature_level;
+		return 130;
 
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -489,7 +489,6 @@ static float r600_get_paramf(struct pipe_screen* pscreen,
 
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	switch(shader)
 	{
 	case PIPE_SHADER_FRAGMENT:
@@ -539,7 +538,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_SUBROUTINES:
 		return 0;
 	case PIPE_SHADER_CAP_INTEGERS:
-		return rscreen->glsl_feature_level >= 130;
+		return 1;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 		return 16;
         case PIPE_SHADER_CAP_PREFERRED_IR:
@@ -952,7 +951,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	pipe_mutex_init(rscreen->fences.mutex);
 
 	rscreen->use_surface_alloc = debug_get_bool_option("R600_SURF", TRUE);
-	rscreen->glsl_feature_level = debug_get_bool_option("R600_GLSL130", TRUE) ? 130 : 120;
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
