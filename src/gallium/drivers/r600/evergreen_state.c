@@ -1115,27 +1115,35 @@ static void evergreen_set_ps_sampler_views(struct pipe_context *ctx, unsigned co
 			       r600_context_pipe_state_set_ps_resource);
 }
 
-static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void evergreen_bind_samplers(struct r600_context *rctx,
+				    struct r600_textures_info *dst,
+				    unsigned count, void **states,
+				    void (*set_sampler)(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id))
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
-
-	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
-	rctx->ps_samplers.n_samplers = count;
+	struct r600_pipe_sampler_state **rstates = (struct r600_pipe_sampler_state**)states;
 
 	for (int i = 0; i < count; i++) {
-		evergreen_context_pipe_state_set_ps_sampler(rctx, rstates[i], i);
+		if (rstates[i] != dst->samplers[i]) {
+			set_sampler(rctx, &rstates[i]->rstate, i);
+		}
 	}
+
+	memcpy(dst->samplers, states, sizeof(void*) * count);
+	dst->n_samplers = count;
 }
 
-static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void evergreen_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state **rstates = (struct r600_pipe_state **)states;
+	evergreen_bind_samplers(rctx, &rctx->ps_samplers, count, states,
+				evergreen_context_pipe_state_set_ps_sampler);
+}
 
-	for (int i = 0; i < count; i++) {
-		evergreen_context_pipe_state_set_vs_sampler(rctx, rstates[i], i);
-	}
+static void evergreen_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	evergreen_bind_samplers(rctx, &rctx->vs_samplers, count, states,
+				evergreen_context_pipe_state_set_vs_sampler);
 }
 
 static void evergreen_set_clip_state(struct pipe_context *ctx,
@@ -1869,11 +1877,11 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_vs_state = r600_create_shader_state_vs;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
-	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
+	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_samplers;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
-	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
+	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_samplers;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
 	rctx->context.delete_blend_state = r600_delete_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
