@@ -1289,6 +1289,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_constant_buffers_dirty(ctx, &ctx->vs_constbuf_state);
 	r600_constant_buffers_dirty(ctx, &ctx->ps_constbuf_state);
 
+	ctx->vs_samplers.views.dirty_mask = ctx->vs_samplers.views.enabled_mask;
+	ctx->ps_samplers.views.dirty_mask = ctx->ps_samplers.views.enabled_mask;
+	r600_sampler_views_dirty(ctx, &ctx->vs_samplers.views);
+	r600_sampler_views_dirty(ctx, &ctx->ps_samplers.views);
+
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
 		ctx->streamout_append_bitmask = ~0;

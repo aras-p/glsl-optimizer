@@ -74,8 +74,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 			(void**)rctx->ps_samplers.samplers);
 
 		util_blitter_save_fragment_sampler_views(
-			rctx->blitter, rctx->ps_samplers.n_views,
-			(struct pipe_sampler_view**)rctx->ps_samplers.views);
+			rctx->blitter, util_last_bit(rctx->ps_samplers.views.enabled_mask),
+			(struct pipe_sampler_view**)rctx->ps_samplers.views.views);
 	}
 
 	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
@@ -184,7 +184,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 }
 
 void r600_flush_depth_textures(struct r600_context *rctx,
-			       struct r600_textures_info *textures)
+			       struct r600_samplerview_state *textures)
 {
 	unsigned i;
 	unsigned depth_texture_mask = textures->depth_texture_mask;

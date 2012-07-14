@@ -153,7 +153,8 @@ struct r600_screen {
 
 struct r600_pipe_sampler_view {
 	struct pipe_sampler_view	base;
-	struct r600_pipe_resource_state		state;
+	struct r600_resource		*tex_resource;
+	uint32_t			tex_resource_words[8];
 };
 
 struct r600_pipe_rasterizer {
@@ -234,11 +235,19 @@ struct r600_pipe_sampler_state {
 /* needed for blitter save */
 #define NUM_TEX_UNITS 16
 
-struct r600_textures_info {
+struct r600_samplerview_state
+{
+	struct r600_atom		atom;
 	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
-	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
-	unsigned			n_views;
+	uint32_t			enabled_mask;
+	uint32_t			dirty_mask;
 	uint32_t			depth_texture_mask; /* which textures are depth */
+};
+
+struct r600_textures_info {
+	struct r600_samplerview_state	views;
+
+	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_samplers;
 	bool				samplers_dirty;
 	bool				is_array_sampler[NUM_TEX_UNITS];
@@ -325,8 +334,6 @@ struct r600_context {
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
 	unsigned			nr_cbufs;
-	struct r600_textures_info	vs_samplers;
-	struct r600_textures_info	ps_samplers;
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
@@ -349,6 +356,8 @@ struct r600_context {
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
 	struct r600_constbuf_state	vs_constbuf_state;
 	struct r600_constbuf_state	ps_constbuf_state;
+	struct r600_textures_info	vs_samplers;
+	struct r600_textures_info	ps_samplers;
 
 	struct radeon_winsys_cs	*cs;
 
@@ -452,7 +461,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer);
 void r600_flush_depth_textures(struct r600_context *rctx,
-			       struct r600_textures_info *textures);
+			       struct r600_samplerview_state *textures);
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,
 			struct r600_resource *res,
@@ -528,11 +537,12 @@ void r600_set_index_buffer(struct pipe_context *ctx,
 void r600_vertex_buffers_dirty(struct r600_context *rctx);
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *input);
+void r600_sampler_views_dirty(struct r600_context *rctx,
+			      struct r600_samplerview_state *state);
 void r600_set_sampler_views(struct r600_context *rctx,
 			    struct r600_textures_info *dst,
 			    unsigned count,
-			    struct pipe_sampler_view **views,
-			    void (*set_resource)(struct r600_context*, struct r600_pipe_resource_state*, unsigned));
+			    struct pipe_sampler_view **views);
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements);
@@ -705,6 +715,13 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r6
 static INLINE void r600_write_value(struct radeon_winsys_cs *cs, unsigned value)
 {
 	cs->buf[cs->cdw++] = value;
+}
+
+static INLINE void r600_write_array(struct radeon_winsys_cs *cs, unsigned num, unsigned *ptr)
+{
+	assert(cs->cdw+num <= RADEON_MAX_CMDBUF_DWORDS);
+	memcpy(&cs->buf[cs->cdw], ptr, num * sizeof(ptr[0]));
+	cs->cdw += num;
 }
 
 static INLINE void r600_write_config_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)

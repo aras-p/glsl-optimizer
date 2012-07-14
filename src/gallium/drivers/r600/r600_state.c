@@ -974,7 +974,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 {
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
-	struct r600_pipe_resource_state *rstate;
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
@@ -983,7 +982,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	if (view == NULL)
 		return NULL;
-	rstate = &view->state;
 
 	/* initialize base object */
 	view->base = *state;
@@ -1037,31 +1035,27 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 			depth = texture->array_size;
 		}
 
-		rstate->bo[0] = &tmp->resource;
-		rstate->bo[1] = &tmp->resource;
-		rstate->bo_usage[0] = RADEON_USAGE_READ;
-		rstate->bo_usage[1] = RADEON_USAGE_READ;
-
-		rstate->val[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
-				S_038000_TILE_MODE(array_mode) |
-				S_038000_TILE_TYPE(tile_type) |
-				S_038000_PITCH((pitch / 8) - 1) |
-				S_038000_TEX_WIDTH(width - 1));
-		rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
-				S_038004_TEX_DEPTH(depth - 1) |
-				S_038004_DATA_FORMAT(format));
-		rstate->val[2] = tmp->offset[offset_level] >> 8;
-		rstate->val[3] = tmp->offset[offset_level+1] >> 8;
-		rstate->val[4] = (word4 |
-				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
-				S_038010_REQUEST_SIZE(1) |
-				S_038010_ENDIAN_SWAP(endian) |
-				S_038010_BASE_LEVEL(0));
-		rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
-				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
-				S_038014_LAST_ARRAY(state->u.tex.last_layer));
-		rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
-				S_038018_MAX_ANISO(4 /* max 16 samples */));
+		view->tex_resource = &tmp->resource;
+		view->tex_resource_words[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
+					       S_038000_TILE_MODE(array_mode) |
+					       S_038000_TILE_TYPE(tile_type) |
+					       S_038000_PITCH((pitch / 8) - 1) |
+					       S_038000_TEX_WIDTH(width - 1));
+		view->tex_resource_words[1] = (S_038004_TEX_HEIGHT(height - 1) |
+					       S_038004_TEX_DEPTH(depth - 1) |
+					       S_038004_DATA_FORMAT(format));
+		view->tex_resource_words[2] = tmp->offset[offset_level] >> 8;
+		view->tex_resource_words[3] = tmp->offset[offset_level+1] >> 8;
+		view->tex_resource_words[4] = (word4 |
+					       S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
+					       S_038010_REQUEST_SIZE(1) |
+					       S_038010_ENDIAN_SWAP(endian) |
+					       S_038010_BASE_LEVEL(0));
+		view->tex_resource_words[5] = (S_038014_LAST_LEVEL(last_level) |
+					       S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+					       S_038014_LAST_ARRAY(state->u.tex.last_layer));
+		view->tex_resource_words[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
+					       S_038018_MAX_ANISO(4 /* max 16 samples */));
 	} else {
 		width = tmp->surface.level[offset_level].npix_x;
 		height = tmp->surface.level[offset_level].npix_y;
@@ -1091,35 +1085,31 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 			break;
 		}
 
-		rstate->bo[0] = &tmp->resource;
-		rstate->bo[1] = &tmp->resource;
-		rstate->bo_usage[0] = RADEON_USAGE_READ;
-		rstate->bo_usage[1] = RADEON_USAGE_READ;
-
-		rstate->val[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
-				S_038000_TILE_MODE(array_mode) |
-				S_038000_TILE_TYPE(tile_type) |
-				S_038000_PITCH((pitch / 8) - 1) |
-				S_038000_TEX_WIDTH(width - 1));
-		rstate->val[1] = (S_038004_TEX_HEIGHT(height - 1) |
-				S_038004_TEX_DEPTH(depth - 1) |
-				S_038004_DATA_FORMAT(format));
-		rstate->val[2] = tmp->surface.level[offset_level].offset >> 8;
+		view->tex_resource = &tmp->resource;
+		view->tex_resource_words[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
+					       S_038000_TILE_MODE(array_mode) |
+					       S_038000_TILE_TYPE(tile_type) |
+					       S_038000_PITCH((pitch / 8) - 1) |
+					       S_038000_TEX_WIDTH(width - 1));
+		view->tex_resource_words[1] = (S_038004_TEX_HEIGHT(height - 1) |
+					       S_038004_TEX_DEPTH(depth - 1) |
+					       S_038004_DATA_FORMAT(format));
+		view->tex_resource_words[2] = tmp->surface.level[offset_level].offset >> 8;
 		if (offset_level >= tmp->surface.last_level) {
-			rstate->val[3] = tmp->surface.level[offset_level].offset >> 8;
+			view->tex_resource_words[3] = tmp->surface.level[offset_level].offset >> 8;
 		} else {
-			rstate->val[3] = tmp->surface.level[offset_level + 1].offset >> 8;
+			view->tex_resource_words[3] = tmp->surface.level[offset_level + 1].offset >> 8;
 		}
-		rstate->val[4] = (word4 |
-				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
-				S_038010_REQUEST_SIZE(1) |
-				S_038010_ENDIAN_SWAP(endian) |
-				S_038010_BASE_LEVEL(0));
-		rstate->val[5] = (S_038014_LAST_LEVEL(last_level) |
-				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
-				S_038014_LAST_ARRAY(state->u.tex.last_layer));
-		rstate->val[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
-				S_038018_MAX_ANISO(4 /* max 16 samples */));
+		view->tex_resource_words[4] = (word4 |
+					       S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
+					       S_038010_REQUEST_SIZE(1) |
+					       S_038010_ENDIAN_SWAP(endian) |
+					       S_038010_BASE_LEVEL(0));
+		view->tex_resource_words[5] = (S_038014_LAST_LEVEL(last_level) |
+					       S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+					       S_038014_LAST_ARRAY(state->u.tex.last_layer));
+		view->tex_resource_words[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
+					       S_038018_MAX_ANISO(4 /* max 16 samples */));
 	}
 	return &view->base;
 }
@@ -1128,16 +1118,14 @@ static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 				      struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views,
-			       r600_context_pipe_state_set_vs_resource);
+	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views);
 }
 
 static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 				      struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views,
-			       r600_context_pipe_state_set_ps_resource);
+	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views);
 }
 
 static void r600_set_seamless_cubemap(struct r600_context *rctx, boolean enable)
@@ -1195,9 +1183,9 @@ static void r600_update_samplers(struct r600_context *rctx,
 			/* TEX_ARRAY_OVERRIDE must be set for array textures to disable
 			 * filtering between layers.
 			 * Don't update TEX_ARRAY_OVERRIDE if we don't have the sampler view. */
-			if (tex->views[i]) {
-				if (tex->views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
-				    tex->views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
+			if (tex->views.views[i]) {
+				if (tex->views.views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
+				    tex->views.views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
 					tex->samplers[i]->rstate.regs[0].value |= S_03C000_TEX_ARRAY_OVERRIDE(1);
 					tex->is_array_sampler[i] = true;
 				} else {
@@ -1796,6 +1784,46 @@ static void r600_emit_ps_constant_buffers(struct r600_context *rctx, struct r600
 				   R_028940_ALU_CONST_CACHE_PS_0);
 }
 
+static void r600_emit_sampler_views(struct r600_context *rctx,
+				    struct r600_samplerview_state *state,
+				    unsigned resource_id_base)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint32_t dirty_mask = state->dirty_mask;
+
+	while (dirty_mask) {
+		struct r600_pipe_sampler_view *rview;
+		unsigned resource_index = u_bit_scan(&dirty_mask);
+		unsigned reloc;
+
+		rview = state->views[resource_index];
+		assert(rview);
+
+		r600_write_value(cs, PKT3(PKT3_SET_RESOURCE, 7, 0));
+		r600_write_value(cs, (resource_id_base + resource_index) * 7);
+		r600_write_array(cs, 7, rview->tex_resource_words);
+
+		/* XXX The kernel needs two relocations. This is stupid. */
+		reloc = r600_context_bo_reloc(rctx, rview->tex_resource,
+					      RADEON_USAGE_READ);
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, reloc);
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, reloc);
+	}
+	state->dirty_mask = 0;
+}
+
+static void r600_emit_vs_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_sampler_views(rctx, &rctx->vs_samplers.views, 160 + R600_MAX_CONST_BUFFERS);
+}
+
+static void r600_emit_ps_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_sampler_views(rctx, &rctx->ps_samplers.views, R600_MAX_CONST_BUFFERS);
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->cb_misc_state.atom, r600_emit_cb_misc_state, 0, 0);
@@ -1805,6 +1833,8 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->vertex_buffer_state.atom, r600_emit_vertex_buffers, 0, 0);
 	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffers, 0, 0);
 	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffers, 0, 0);
+	r600_init_atom(&rctx->vs_samplers.views.atom, r600_emit_vs_sampler_views, 0, 0);
+	r600_init_atom(&rctx->ps_samplers.views.atom, r600_emit_ps_sampler_views, 0, 0);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

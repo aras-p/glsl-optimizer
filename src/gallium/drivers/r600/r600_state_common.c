@@ -457,20 +457,41 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	r600_vertex_buffers_dirty(rctx);
 }
 
+void r600_sampler_views_dirty(struct r600_context *rctx,
+			      struct r600_samplerview_state *state)
+{
+	if (state->dirty_mask) {
+		r600_inval_texture_cache(rctx);
+		state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 14 : 13) *
+				     util_bitcount(state->dirty_mask);
+		r600_atom_dirty(rctx, &state->atom);
+	}
+}
+
 void r600_set_sampler_views(struct r600_context *rctx,
 			    struct r600_textures_info *dst,
 			    unsigned count,
-			    struct pipe_sampler_view **views,
-			    void (*set_resource)(struct r600_context*, struct r600_pipe_resource_state*, unsigned))
+			    struct pipe_sampler_view **views)
 {
 	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
 	unsigned i;
+	/* This sets 1-bit for textures with index >= count. */
+	uint32_t disable_mask = ~((1ull << count) - 1);
+	/* These are the new textures set by this function. */
+	uint32_t new_mask = 0;
 
-	if (count)
-		r600_inval_texture_cache(rctx);
+	/* Set textures with index >= count to NULL. */
+	uint32_t remaining_mask = dst->views.enabled_mask & disable_mask;
+
+	while (remaining_mask) {
+		i = u_bit_scan(&remaining_mask);
+		assert(dst->views.views[i]);
+
+		pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views.views[i], NULL);
+	}
 
 	for (i = 0; i < count; i++) {
-		if (rviews[i] == dst->views[i]) {
+		if (rviews[i] == dst->views.views[i]) {
 			continue;
 		}
 
@@ -479,9 +500,9 @@ void r600_set_sampler_views(struct r600_context *rctx,
 				(struct r600_resource_texture*)rviews[i]->base.texture;
 
 			if (rtex->is_depth && !rtex->is_flushing_texture) {
-				dst->depth_texture_mask |= 1 << i;
+				dst->views.depth_texture_mask |= 1 << i;
 			} else {
-				dst->depth_texture_mask &= ~(1 << i);
+				dst->views.depth_texture_mask &= ~(1 << i);
 			}
 
 			/* Changing from array to non-arrays textures and vice
@@ -492,23 +513,21 @@ void r600_set_sampler_views(struct r600_context *rctx,
 				dst->samplers_dirty = true;
 			}
 
-			set_resource(rctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views.views[i], views[i]);
+			new_mask |= 1 << i;
 		} else {
-			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
-			dst->depth_texture_mask &= ~(1 << i);
-		}
-
-		pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], views[i]);
-	}
-
-	for (i = count; i < dst->n_views; i++) {
-		if (dst->views[i]) {
-			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], NULL);
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views.views[i], NULL);
+			disable_mask |= 1 << i;
 		}
 	}
 
-	dst->n_views = count;
+	dst->views.enabled_mask &= ~disable_mask;
+	dst->views.dirty_mask &= dst->views.enabled_mask;
+	dst->views.enabled_mask |= new_mask;
+	dst->views.dirty_mask |= new_mask;
+	dst->views.depth_texture_mask &= dst->views.enabled_mask;
+
+	r600_sampler_views_dirty(rctx, &dst->views);
 }
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,
@@ -902,11 +921,11 @@ static void r600_update_derived_state(struct r600_context *rctx)
 
 	if (!rctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
-		if (rctx->vs_samplers.depth_texture_mask) {
-			r600_flush_depth_textures(rctx, &rctx->vs_samplers);
+		if (rctx->vs_samplers.views.depth_texture_mask) {
+			r600_flush_depth_textures(rctx, &rctx->vs_samplers.views);
 		}
-		if (rctx->ps_samplers.depth_texture_mask) {
-			r600_flush_depth_textures(rctx, &rctx->ps_samplers);
+		if (rctx->ps_samplers.views.depth_texture_mask) {
+			r600_flush_depth_textures(rctx, &rctx->ps_samplers.views);
 		}
 	}
 
