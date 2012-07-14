@@ -457,6 +457,53 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	r600_vertex_buffers_dirty(rctx);
 }
 
+void r600_set_sampler_views(struct r600_context *rctx,
+			    struct r600_textures_info *dst,
+			    unsigned count,
+			    struct pipe_sampler_view **views,
+			    void (*set_resource)(struct r600_context*, struct r600_pipe_resource_state*, unsigned))
+{
+	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
+	unsigned i;
+
+	if (count)
+		r600_inval_texture_cache(rctx);
+
+	for (i = 0; i < count; i++) {
+		if (rviews[i] == dst->views[i]) {
+			continue;
+		}
+
+		if (rviews[i]) {
+			if (((struct r600_resource_texture *)rviews[i]->base.texture)->is_depth)
+				rctx->have_depth_texture = true;
+
+			/* Changing from array to non-arrays textures and vice
+			 * versa requires updating TEX_ARRAY_OVERRIDE on R6xx-R7xx. */
+			if (rctx->chip_class <= R700 &&
+			    (rviews[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
+			     rviews[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) != dst->is_array_sampler[i]) {
+				dst->samplers_dirty = true;
+			}
+
+			set_resource(rctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
+		} else {
+			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
+		}
+
+		pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], views[i]);
+	}
+
+	for (i = count; i < dst->n_views; i++) {
+		if (dst->views[i]) {
+			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], NULL);
+		}
+	}
+
+	dst->n_views = count;
+}
+
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements)

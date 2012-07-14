@@ -528,6 +528,11 @@ void r600_set_index_buffer(struct pipe_context *ctx,
 void r600_vertex_buffers_dirty(struct r600_context *rctx);
 void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *input);
+void r600_set_sampler_views(struct r600_context *rctx,
+			    struct r600_textures_info *dst,
+			    unsigned count,
+			    struct pipe_sampler_view **views,
+			    void (*set_resource)(struct r600_context*, struct r600_pipe_resource_state*, unsigned));
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements);

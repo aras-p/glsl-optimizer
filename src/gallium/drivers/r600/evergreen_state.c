@@ -1099,58 +1099,20 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	return &view->base;
 }
 
-static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
+static void evergreen_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
+					   struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
-
-	for (int i = 0; i < count; i++) {
-		if (resource[i]) {
-			r600_context_pipe_state_set_vs_resource(rctx, &resource[i]->state,
-								i + R600_MAX_CONST_BUFFERS);
-		}
-	}
+	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views,
+			       r600_context_pipe_state_set_vs_resource);
 }
 
-static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
+static void evergreen_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
+					   struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_sampler_view **resource = (struct r600_pipe_sampler_view **)views;
-	int i;
-	int has_depth = 0;
-
-	for (i = 0; i < count; i++) {
-		if (&rctx->ps_samplers.views[i]->base != views[i]) {
-			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->is_depth)
-					has_depth = 1;
-				r600_context_pipe_state_set_ps_resource(rctx, &resource[i]->state,
-									i + R600_MAX_CONST_BUFFERS);
-			} else
-				r600_context_pipe_state_set_ps_resource(rctx, NULL,
-									i + R600_MAX_CONST_BUFFERS);
-
-			pipe_sampler_view_reference(
-				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
-				views[i]);
-		} else {
-			if (resource[i]) {
-				if (((struct r600_resource_texture *)resource[i]->base.texture)->is_depth)
-					has_depth = 1;
-			}
-		}
-	}
-	for (i = count; i < NUM_TEX_UNITS; i++) {
-		if (rctx->ps_samplers.views[i]) {
-			r600_context_pipe_state_set_ps_resource(rctx, NULL,
-								i + R600_MAX_CONST_BUFFERS);
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
-		}
-	}
-	rctx->have_depth_texture = has_depth;
-	rctx->ps_samplers.n_views = count;
+	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views,
+			       r600_context_pipe_state_set_ps_resource);
 }
 
 static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
@@ -1929,7 +1891,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_clip_state = evergreen_set_clip_state;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
-	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;
+	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_views;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
@@ -1937,7 +1899,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
-	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
+	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_views;
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.texture_barrier = r600_texture_barrier;
