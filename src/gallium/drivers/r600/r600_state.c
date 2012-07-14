@@ -1827,14 +1827,14 @@ static void r600_emit_constant_buffers(struct r600_context *rctx,
 	state->dirty_mask = 0;
 }
 
-static void r600_emit_vs_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+static void r600_emit_vs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	r600_emit_constant_buffers(rctx, &rctx->vs_constbuf_state, 160,
 				   R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
 				   R_028980_ALU_CONST_CACHE_VS_0);
 }
 
-static void r600_emit_ps_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+static void r600_emit_ps_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	r600_emit_constant_buffers(rctx, &rctx->ps_constbuf_state, 0,
 				   R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
@@ -1848,8 +1848,8 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	r600_init_atom(&rctx->vertex_buffer_state, r600_emit_vertex_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffer, 0, 0);
-	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffer, 0, 0);
+	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffers, 0, 0);
+	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffers, 0, 0);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

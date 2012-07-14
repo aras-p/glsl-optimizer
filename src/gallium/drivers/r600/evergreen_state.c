@@ -1807,11 +1807,11 @@ static void evergreen_emit_vertex_buffers(struct r600_context *rctx, struct r600
 	}
 }
 
-static void evergreen_emit_constant_buffer(struct r600_context *rctx,
-					   struct r600_constbuf_state *state,
-				           unsigned buffer_id_base,
-				           unsigned reg_alu_constbuf_size,
-				           unsigned reg_alu_const_cache)
+static void evergreen_emit_constant_buffers(struct r600_context *rctx,
+					    struct r600_constbuf_state *state,
+					    unsigned buffer_id_base,
+					    unsigned reg_alu_constbuf_size,
+					    unsigned reg_alu_const_cache)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint32_t dirty_mask = state->dirty_mask;
@@ -1862,16 +1862,16 @@ static void evergreen_emit_constant_buffer(struct r600_context *rctx,
 	state->dirty_mask = 0;
 }
 
-static void evergreen_emit_vs_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+static void evergreen_emit_vs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_constant_buffer(rctx, &rctx->vs_constbuf_state, 176,
-				       R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
-				       R_028980_ALU_CONST_CACHE_VS_0);
+	evergreen_emit_constant_buffers(rctx, &rctx->vs_constbuf_state, 176,
+					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
+					R_028980_ALU_CONST_CACHE_VS_0);
 }
 
-static void evergreen_emit_ps_constant_buffer(struct r600_context *rctx, struct r600_atom *atom)
+static void evergreen_emit_ps_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_constant_buffer(rctx, &rctx->ps_constbuf_state, 0,
+	evergreen_emit_constant_buffers(rctx, &rctx->ps_constbuf_state, 0,
 				       R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
 				       R_028940_ALU_CONST_CACHE_PS_0);
 }
@@ -1883,8 +1883,8 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->db_misc_state.atom, evergreen_emit_db_misc_state, 6, 0);
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	r600_init_atom(&rctx->vertex_buffer_state, evergreen_emit_vertex_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_constbuf_state.atom, evergreen_emit_vs_constant_buffer, 0, 0);
-	r600_init_atom(&rctx->ps_constbuf_state.atom, evergreen_emit_ps_constant_buffer, 0, 0);
+	r600_init_atom(&rctx->vs_constbuf_state.atom, evergreen_emit_vs_constant_buffers, 0, 0);
+	r600_init_atom(&rctx->ps_constbuf_state.atom, evergreen_emit_ps_constant_buffers, 0, 0);
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
