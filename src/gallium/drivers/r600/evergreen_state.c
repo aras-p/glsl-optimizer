@@ -1315,9 +1315,6 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	pipe_tex = state->cbufs[cb]->texture;
 
-	if (rtex->is_depth)
-		rctx->have_depth_fb = TRUE;
-
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
 		r600_init_flushed_depth_texture(&rctx->context,
 				state->cbufs[cb]->texture, NULL);
@@ -1695,7 +1692,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
 	/* build states */
-	rctx->have_depth_fb = 0;
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 	for (i = 0; i < state->nr_cbufs; i++) {

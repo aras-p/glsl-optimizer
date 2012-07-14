@@ -1395,9 +1395,6 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
-	if (rtex->is_depth)
-		rctx->have_depth_fb = TRUE;
-
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
 		rtex = rtex->flushed_depth_texture;
 	}
@@ -1662,7 +1659,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
 	/* build states */
-	rctx->have_depth_fb = 0;
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 

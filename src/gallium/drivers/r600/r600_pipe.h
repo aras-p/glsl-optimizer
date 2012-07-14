@@ -329,7 +329,7 @@ struct r600_context {
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
-	boolean				have_depth_texture, have_depth_fb;
+	boolean				have_depth_texture;
 
 	unsigned default_ps_gprs, default_vs_gprs;
 

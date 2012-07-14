@@ -845,8 +845,9 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	unsigned ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
-		if (rctx->have_depth_fb || rctx->have_depth_texture)
+		if (rctx->have_depth_texture) {
 			r600_flush_all_depth_textures(rctx);
+		}
 	}
 
 	if (rctx->chip_class < EVERGREEN) {
