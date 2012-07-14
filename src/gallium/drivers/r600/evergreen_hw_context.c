@@ -43,7 +43,6 @@ static const struct r600_reg evergreen_ctl_const_list[] = {
 };
 
 static const struct r600_reg evergreen_context_reg_list[] = {
-	{R_028000_DB_RENDER_CONTROL, 0, 0},
 	{R_028008_DB_DEPTH_VIEW, 0, 0},
 	{R_028010_DB_RENDER_OVERRIDE2, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
@@ -301,7 +300,6 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 };
 
 static const struct r600_reg cayman_context_reg_list[] = {
-	{R_028000_DB_RENDER_CONTROL, 0, 0},
 	{R_028008_DB_DEPTH_VIEW, 0, 0},
 	{R_028010_DB_RENDER_OVERRIDE2, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
