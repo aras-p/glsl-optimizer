@@ -1664,7 +1664,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 						offset, &rtex->resource,
 						RADEON_USAGE_READWRITE);
 			r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
-						0, NULL, RADEON_USAGE_READWRITE);
+						1, NULL, RADEON_USAGE_READWRITE);
 		}
 	}
 

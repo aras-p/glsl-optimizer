@@ -26,7 +26,8 @@
 #include "r600.h"
 
 /* flag to indicate a resource is to be used as a transfer so should not be tiled */
-#define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
+#define R600_RESOURCE_FLAG_TRANSFER		PIPE_RESOURCE_FLAG_DRV_PRIV
+#define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
 
 struct r600_transfer {
 	struct pipe_transfer		transfer;
