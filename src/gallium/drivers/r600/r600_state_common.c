@@ -475,8 +475,14 @@ void r600_set_sampler_views(struct r600_context *rctx,
 		}
 
 		if (rviews[i]) {
-			if (((struct r600_resource_texture *)rviews[i]->base.texture)->is_depth)
-				rctx->have_depth_texture = true;
+			struct r600_resource_texture *rtex =
+				(struct r600_resource_texture*)rviews[i]->base.texture;
+
+			if (rtex->is_depth && !rtex->is_flushing_texture) {
+				dst->depth_texture_mask |= 1 << i;
+			} else {
+				dst->depth_texture_mask &= ~(1 << i);
+			}
 
 			/* Changing from array to non-arrays textures and vice
 			 * versa requires updating TEX_ARRAY_OVERRIDE on R6xx-R7xx. */
@@ -489,6 +495,7 @@ void r600_set_sampler_views(struct r600_context *rctx,
 			set_resource(rctx, &rviews[i]->state, i + R600_MAX_CONST_BUFFERS);
 		} else {
 			set_resource(rctx, NULL, i + R600_MAX_CONST_BUFFERS);
+			dst->depth_texture_mask &= ~(1 << i);
 		}
 
 		pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views[i], views[i]);
@@ -892,8 +899,12 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	unsigned ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
-		if (rctx->have_depth_texture) {
-			r600_flush_all_depth_textures(rctx);
+		/* Flush depth textures which need to be flushed. */
+		if (rctx->vs_samplers.depth_texture_mask) {
+			r600_flush_depth_textures(rctx, &rctx->vs_samplers);
+		}
+		if (rctx->ps_samplers.depth_texture_mask) {
+			r600_flush_depth_textures(rctx, &rctx->ps_samplers);
 		}
 	}
 

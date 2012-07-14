@@ -238,6 +238,7 @@ struct r600_textures_info {
 	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
 	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;
+	uint32_t			depth_texture_mask; /* which textures are depth */
 	unsigned			n_samplers;
 	bool				samplers_dirty;
 	bool				is_array_sampler[NUM_TEX_UNITS];
@@ -329,7 +330,6 @@ struct r600_context {
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
-	boolean				have_depth_texture;
 
 	unsigned default_ps_gprs, default_vs_gprs;
 
@@ -451,8 +451,8 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *staging,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer);
-void r600_flush_all_depth_textures(struct r600_context *rctx);
-
+void r600_flush_depth_textures(struct r600_context *rctx,
+			       struct r600_textures_info *textures);
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,
 			struct r600_resource *res,

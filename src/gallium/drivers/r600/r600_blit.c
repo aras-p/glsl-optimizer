@@ -183,21 +183,23 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 }
 
-static void r600_flush_depth_textures(struct r600_context *rctx,
-				      struct r600_textures_info *textures)
+void r600_flush_depth_textures(struct r600_context *rctx,
+			       struct r600_textures_info *textures)
 {
 	unsigned i;
+	unsigned depth_texture_mask = textures->depth_texture_mask;
 
-	for (i = 0; i < textures->n_views; ++i) {
+	while (depth_texture_mask) {
 		struct pipe_sampler_view *view;
 		struct r600_resource_texture *tex;
 
+		i = u_bit_scan(&depth_texture_mask);
+
 		view = &textures->views[i]->base;
-		if (!view) continue;
+		assert(view);
 
 		tex = (struct r600_resource_texture *)view->texture;
-		if (!tex->is_depth || tex->is_flushing_texture)
-			continue;
+		assert(tex->is_depth && !tex->is_flushing_texture);
 
 		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
 					   view->u.tex.first_level,
@@ -205,12 +207,6 @@ static void r600_flush_depth_textures(struct r600_context *rctx,
 					   0,
 					   u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
-}
-
-void r600_flush_all_depth_textures(struct r600_context *rctx)
-{
-	r600_flush_depth_textures(rctx, &rctx->ps_samplers);
-	r600_flush_depth_textures(rctx, &rctx->vs_samplers);
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
