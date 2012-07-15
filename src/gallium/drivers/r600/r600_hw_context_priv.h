@@ -36,7 +36,6 @@
 #define REG_FLAG_RV6XX_SBU 4
 #define REG_FLAG_NOT_R600 8
 #define REG_FLAG_ENABLE_ALWAYS 16
-#define BLOCK_FLAG_RESOURCE 32
 #define REG_FLAG_FLUSH_CHANGE 64
 
 #define GROUP_FORCE_NEW_BLOCK	0
@@ -52,11 +51,9 @@ struct r600_reg {
  */
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg,
 			   unsigned opcode, unsigned offset_base);
-void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block);
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
 int r600_setup_block_table(struct r600_context *ctx);
-int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base);
 int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset);
 void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
 void r600_context_ps_partial_flush(struct r600_context *ctx);

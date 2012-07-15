@@ -365,7 +365,6 @@ struct r600_context {
 	unsigned		nblocks;
 	struct r600_block	**blocks;
 	struct list_head	dirty;
-	struct list_head	resource_dirty;
 	struct list_head	enable_list;
 	unsigned		pm4_dirty_cdwords;
 	unsigned		ctx_pm4_ndwords;
@@ -390,9 +389,6 @@ struct r600_context {
 	unsigned                max_db; /* for OQ */
 	unsigned		flags;
 	boolean                 predicate_drawing;
-	struct r600_range	ps_resources;
-	struct r600_range	vs_resources;
-	int			num_ps_resources, num_vs_resources;
 
 	unsigned		num_so_targets;
 	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];

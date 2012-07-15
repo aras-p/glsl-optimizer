@@ -1080,9 +1080,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
 		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);
 	}
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->resource_dirty,list) {
-		r600_context_block_resource_emit_dirty(rctx, dirty_block);
-	}
 	rctx->pm4_dirty_cdwords = 0;
 
 	/* Enable stream out if needed. */

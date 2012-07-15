@@ -117,16 +117,8 @@ struct r600_pipe_state {
 	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
 };
 
-struct r600_pipe_resource_state {
-	unsigned			id;
-	uint32_t			val[8];
-	struct r600_resource		*bo[2];
-	enum radeon_bo_usage		bo_usage[2];
-};
-
 #define R600_BLOCK_STATUS_ENABLED	(1 << 0)
 #define R600_BLOCK_STATUS_DIRTY		(1 << 1)
-#define R600_BLOCK_STATUS_RESOURCE_DIRTY	(1 << 2)
 
 struct r600_block_reloc {
 	struct r600_resource	*bo;
@@ -199,8 +191,6 @@ int r600_context_init(struct r600_context *ctx);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_emit(struct r600_context *ctx, struct r600_pipe_state *state, unsigned pkt_flags);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
-void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
-void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid);
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
@@ -217,7 +207,6 @@ void r600_context_streamout_end(struct r600_context *ctx);
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
-void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 
 int evergreen_context_init(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);

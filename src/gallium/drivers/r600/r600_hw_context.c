@@ -136,13 +136,8 @@ static void r600_init_block(struct r600_context *ctx,
 	int j, n = nreg;
 
 	/* initialize block */
-	if (opcode == PKT3_SET_RESOURCE) {
-		block->flags = BLOCK_FLAG_RESOURCE;
-		block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY; /* dirty all blocks at start */
-	} else {
-		block->flags = 0;
-		block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
-	}
+	block->flags = 0;
+	block->status |= R600_BLOCK_STATUS_DIRTY; /* dirty all blocks at start */
 	block->start_offset = reg[i].offset;
 	block->pm4[block->pm4_ndwords++] = PKT3(opcode, n, 0);
 	block->pm4[block->pm4_ndwords++] = (block->start_offset - offset_base) >> 2;
@@ -513,47 +508,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
 };
 
-/* SHADER RESOURCE R600/R700 */
-int r600_resource_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride, struct r600_reg *reg, int nreg, unsigned offset_base)
-{
-	int i;
-	struct r600_block *block;
-	range->blocks = calloc(nblocks, sizeof(struct r600_block *));
-	if (range->blocks == NULL)
-		return -ENOMEM;
-
-	reg[0].offset += offset;
-	for (i = 0; i < nblocks; i++) {
-		block = calloc(1, sizeof(struct r600_block));
-		if (block == NULL) {
-			return -ENOMEM;
-		}
-		ctx->nblocks++;
-		range->blocks[i] = block;
-		r600_init_block(ctx, block, reg, 0, nreg, PKT3_SET_RESOURCE, offset_base);
-
-		reg[0].offset += stride;
-	}
-	return 0;
-}
-
-      
-static int r600_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
-{
-	struct r600_reg r600_shader_resource[] = {
-		{R_038000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, 0},
-		{R_038004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, 0},
-		{R_038008_RESOURCE0_WORD2, 0, 0},
-		{R_03800C_RESOURCE0_WORD3, 0, 0},
-		{R_038010_RESOURCE0_WORD4, 0, 0},
-		{R_038014_RESOURCE0_WORD5, 0, 0},
-		{R_038018_RESOURCE0_WORD6, 0, 0},
-	};
-	unsigned nreg = Elements(r600_shader_resource);
-
-	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, R600_RESOURCE_OFFSET);
-}
-
 /* SHADER SAMPLER R600/R700/EG/CM */
 int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset)
 {
@@ -601,26 +555,6 @@ static int r600_loop_const_init(struct r600_context *ctx, uint32_t offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, R600_LOOP_CONST_OFFSET);
 }
 
-static void r600_free_resource_range(struct r600_context *ctx, struct r600_range *range, int nblocks)
-{
-	struct r600_block *block;
-	int i;
-
-	if (!range->blocks) {
-		return; /* nothing to do */
-	}
-
-	for (i = 0; i < nblocks; i++) {
-		block = range->blocks[i];
-		if (block) {
-			for (int k = 1; k <= block->nbo; k++)
-				pipe_resource_reference((struct pipe_resource**)&block->reloc[k].bo, NULL);
-			free(block);
-		}
-	}
-	free(range->blocks);
-}
-
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -647,21 +581,7 @@ void r600_context_fini(struct r600_context *ctx)
 			free(ctx->range[i].blocks);
 		}
 	}
-	r600_free_resource_range(ctx, &ctx->ps_resources, ctx->num_ps_resources);
-	r600_free_resource_range(ctx, &ctx->vs_resources, ctx->num_vs_resources);
 	free(ctx->blocks);
-}
-
-static void r600_add_resource_block(struct r600_context *ctx, struct r600_range *range, int num_blocks, int *index)
-{
-	int c = *index;
-	for (int j = 0; j < num_blocks; j++) {
-		if (!range->blocks[j])
-			continue;
-
-		ctx->blocks[c++] = range->blocks[j];
-	}
-	*index = c;
 }
 
 int r600_setup_block_table(struct r600_context *ctx)
@@ -692,9 +612,6 @@ int r600_setup_block_table(struct r600_context *ctx)
 			}
 		}
 	}
-
-	r600_add_resource_block(ctx, &ctx->ps_resources, ctx->num_ps_resources, &c);
-	r600_add_resource_block(ctx, &ctx->vs_resources, ctx->num_vs_resources, &c);
 	return 0;
 }
 
@@ -741,15 +658,6 @@ int r600_context_init(struct r600_context *ctx)
 		if (r)
 			goto out_err;
 	}
-
-	ctx->num_ps_resources = 160;
-	ctx->num_vs_resources = 160;
-	r = r600_resource_range_init(ctx, &ctx->ps_resources, 0, 160, 0x1c);
-	if (r)
-		goto out_err;
-	r = r600_resource_range_init(ctx, &ctx->vs_resources, 0x1180, 160, 0x1c);
-	if (r)
-		goto out_err;
 
 	/* PS loop const */
 	r600_loop_const_init(ctx, 0);
@@ -930,79 +838,6 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	}
 }
 
-static void r600_context_dirty_resource_block(struct r600_context *ctx,
-					      struct r600_block *block,
-					      int dirty, int index)
-{
-	block->nreg_dirty = index + 1;
-
-	if ((dirty != (block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
-		block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
-		if (!(block->status & R600_BLOCK_STATUS_ENABLED)) {
-			block->status |= R600_BLOCK_STATUS_ENABLED;
-			LIST_ADDTAIL(&block->enable_list, &ctx->enable_list);
-		}
-		LIST_ADDTAIL(&block->list,&ctx->resource_dirty);
-	}
-}
-
-void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, struct r600_block *block)
-{
-	int dirty;
-	int num_regs = ctx->chip_class >= EVERGREEN ? 8 : 7;
-
-	if (state == NULL) {
-		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_RESOURCE_DIRTY);
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, NULL);
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, NULL);
-		LIST_DELINIT(&block->list);
-		LIST_DELINIT(&block->enable_list);
-		return;
-	}
-
-	dirty = block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY;
-
-	if (memcmp(block->reg, state->val, num_regs*4)) {
-		memcpy(block->reg, state->val, num_regs * 4);
-		dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-	}
-
-	/* if no BOs on block, force dirty */
-	if (!block->reloc[1].bo || !block->reloc[2].bo)
-		dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-
-	if (!dirty) {
-		if ((block->reloc[1].bo->buf != state->bo[0]->buf) ||
-		    (block->reloc[2].bo->buf != state->bo[1]->buf))
-			dirty |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-	}
-
-	if (dirty) {
-		/* TEXTURE RESOURCE */
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[1].bo, &state->bo[0]->b.b);
-		block->reloc[1].bo_usage = state->bo_usage[0];
-		pipe_resource_reference((struct pipe_resource**)&block->reloc[2].bo, &state->bo[1]->b.b);
-		block->reloc[2].bo_usage = state->bo_usage[1];
-
-		r600_context_dirty_resource_block(ctx, block, dirty, num_regs - 1);
-	}
-}
-
-void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->ps_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
-void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_resource_state *state, unsigned rid)
-{
-	struct r600_block *block = ctx->vs_resources.blocks[rid];
-
-	r600_context_pipe_state_set_resource(ctx, state, block);
-}
-
 void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
 	struct r600_range *range;
@@ -1152,29 +987,6 @@ out:
 	LIST_DELINIT(&block->list);
 }
 
-void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	int cp_dwords = block->pm4_ndwords;
-	int nbo = block->nbo;
-
-	for (int j = 0; j < nbo; j++) {
-		if (block->pm4_bo_index[j]) {
-			/* find relocation */
-			struct r600_block_reloc *reloc = &block->reloc[block->pm4_bo_index[j]];
-			block->pm4[reloc->bo_pm4_index] =
-				r600_context_bo_reloc(ctx, reloc->bo, reloc->bo_usage);
-		}
-	}
-
-	memcpy(&cs->buf[cs->cdw], block->pm4, cp_dwords * 4);
-	cs->cdw += cp_dwords;
-
-	block->status ^= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-	block->nreg_dirty = 0;
-	LIST_DELINIT(&block->list);
-}
-
 void r600_inval_shader_cache(struct r600_context *ctx)
 {
 	ctx->surface_sync_cmd.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
@@ -1311,16 +1123,9 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	 * next draw command
 	 */
 	LIST_FOR_EACH_ENTRY(enable_block, &ctx->enable_list, enable_list) {
-		if (!(enable_block->flags & BLOCK_FLAG_RESOURCE)) {
-			if(!(enable_block->status & R600_BLOCK_STATUS_DIRTY)) {
-				LIST_ADDTAIL(&enable_block->list,&ctx->dirty);
-				enable_block->status |= R600_BLOCK_STATUS_DIRTY;
-			}
-		} else {
-			if(!(enable_block->status & R600_BLOCK_STATUS_RESOURCE_DIRTY)) {
-				LIST_ADDTAIL(&enable_block->list,&ctx->resource_dirty);
-				enable_block->status |= R600_BLOCK_STATUS_RESOURCE_DIRTY;
-			}
+		if(!(enable_block->status & R600_BLOCK_STATUS_DIRTY)) {
+			LIST_ADDTAIL(&enable_block->list,&ctx->dirty);
+			enable_block->status |= R600_BLOCK_STATUS_DIRTY;
 		}
 		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords;
 		enable_block->nreg_dirty = enable_block->nreg;

@@ -579,24 +579,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028EAC_CB_COLOR11_DIM, 0, 0},
 };
 
-/* SHADER RESOURCE EG/CM */
-static int evergreen_resource_range_init(struct r600_context *ctx, struct r600_range *range, unsigned offset, unsigned nblocks, unsigned stride)
-{
-	struct r600_reg r600_shader_resource[] = {
-		{R_030000_RESOURCE0_WORD0, REG_FLAG_NEED_BO, 0},
-		{R_030004_RESOURCE0_WORD1, REG_FLAG_NEED_BO, 0},
-		{R_030008_RESOURCE0_WORD2, 0, 0},
-		{R_03000C_RESOURCE0_WORD3, 0, 0},
-		{R_030010_RESOURCE0_WORD4, 0, 0},
-		{R_030014_RESOURCE0_WORD5, 0, 0},
-		{R_030018_RESOURCE0_WORD6, 0, 0},
-		{R_03001C_RESOURCE0_WORD7, 0, 0},
-	};
-	unsigned nreg = Elements(r600_shader_resource);
-
-	return r600_resource_init(ctx, range, offset, nblocks, stride, r600_shader_resource, nreg, EVERGREEN_RESOURCE_OFFSET);
-}
-
 /* SHADER SAMPLER BORDER EG/CM */
 static int evergreen_state_sampler_border_init(struct r600_context *ctx, uint32_t offset, unsigned id)
 {
@@ -693,15 +675,6 @@ int evergreen_context_init(struct r600_context *ctx)
 		if (r)
 			goto out_err;
 	}
-
-	ctx->num_ps_resources = 176;
-	ctx->num_vs_resources = 160;
-	r = evergreen_resource_range_init(ctx, &ctx->ps_resources, 0, 176, 0x20);
-	if (r)
-		goto out_err;
-	r = evergreen_resource_range_init(ctx, &ctx->vs_resources, 0x1600, 160, 0x20);
-	if (r)
-		goto out_err;
 
 	/* PS loop const */
 	evergreen_loop_const_init(ctx, 0);

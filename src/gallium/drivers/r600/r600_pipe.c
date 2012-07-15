@@ -215,7 +215,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	LIST_INITHEAD(&rctx->active_timer_queries);
 	LIST_INITHEAD(&rctx->active_nontimer_queries);
 	LIST_INITHEAD(&rctx->dirty);
-	LIST_INITHEAD(&rctx->resource_dirty);
 	LIST_INITHEAD(&rctx->enable_list);
 
 	rctx->range = CALLOC(NUM_RANGES, sizeof(struct r600_range));
