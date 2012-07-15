@@ -1652,7 +1652,9 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	for (i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
 	}
-
+	/* CB_COLOR1_INFO is already initialized for possible dual-src blending */
+	if (i == 1)
+		i++;
 	for (; i < 8 ; i++) {
 		r600_pipe_state_add_reg(rstate, R_028C70_CB_COLOR0_INFO + i * 0x3C, 0);
 	}

@@ -384,6 +384,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_USER_CONSTANT_BUFFERS:
 	case PIPE_CAP_COMPUTE:
 	case PIPE_CAP_START_INSTANCE:
+	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
 		return 1;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
@@ -451,9 +452,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
-
-	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
-		return family < CHIP_CEDAR ?  1 : 0;
 	}
 	return 0;
 }
