@@ -24,6 +24,7 @@
 #ifndef TEXCOMPRESS_ETC1_H
 #define TEXCOMPRESS_ETC1_H
 
+#include <inttypes.h>
 #include "glheader.h"
 #include "mfeatures.h"
 #include "texstore.h"
