@@ -288,6 +288,18 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_tree *mcs_mt;
 
+   /**
+    * \brief The miptree contains RGBX data that was originally ETC1 data.
+    *
+    * On hardware that lacks support for ETC1 textures, we do the
+    * following on calls to glCompressedTexImage2D(GL_ETC1_RGB8_OES):
+    *   1. Create a miptree whose format is MESA_FORMAT_RGBX8888_REV with
+    *      the wraps_etc1 flag set.
+    *   2. Translate the ETC1 data into RGBX.
+    *   3. Store the RGBX data into the miptree and discard the ETC1 data.
+    */
+   bool wraps_etc1;
+
    /* These are also refcounted:
     */
    GLuint refcount;
