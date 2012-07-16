@@ -2005,7 +2005,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       }
 
       if (ctx->ReadBuffer->Visual.samples > 0) {
-	 _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION,
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glCopyTexImage%dD(multisample FBO)",
 		     dimensions);
 	 return GL_TRUE;
@@ -2130,7 +2130,7 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
       }
 
       if (ctx->ReadBuffer->Visual.samples > 0) {
-	 _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION,
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glCopyTexSubImage%dD(multisample FBO)",
 		     dimensions);
 	 return GL_TRUE;
