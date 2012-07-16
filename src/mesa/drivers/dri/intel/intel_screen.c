@@ -233,7 +233,10 @@ intel_create_image_from_name(__DRIscreen *screen,
     int cpp;
 
     image = intel_allocate_image(format, loaderPrivate);
-    cpp = _mesa_get_format_bytes(image->format);
+    if (image->format == MESA_FORMAT_NONE)
+       cpp = 0;
+    else
+       cpp = _mesa_get_format_bytes(image->format);
     image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
 						  pitch, name, "image");
