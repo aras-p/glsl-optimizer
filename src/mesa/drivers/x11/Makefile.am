@@ -33,10 +33,10 @@ AM_CPPFLAGS = \
 	$(DEFINES)
 
 if HAVE_X11_DRIVER
-lib_LTLIBRARIES = libGL.la
+lib_LTLIBRARIES = lib@GL_LIB@.la
 endif
 
-libGL_la_SOURCES = \
+lib@GL_LIB@_la_SOURCES = \
 	glxapi.h \
 	glxheader.h \
 	xfonts.h \
@@ -55,20 +55,20 @@ GL_MAJOR = 1
 GL_MINOR = 6
 GL_PATCH = 0
 
-libGL_la_LIBADD = \
+lib@GL_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
 	$(top_builddir)/src/mapi/glapi/libglapi.la
-libGL_la_LDFLAGS = \
+lib@GL_LIB@_la_LDFLAGS = \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \
 	$(GL_LIB_DEPS)
 
 if HAVE_SHARED_GLAPI
-libGL_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR) -l$(GLAPI_LIB)
+lib@GL_LIB@_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR) -l$(GLAPI_LIB)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-all-local: libGL.la
+all-local: lib@GL_LIB@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libGL.so.$(GL_MAJOR).$(GL_MINOR).$(GL_PATCH) $(top_builddir)/$(LIB_DIR)/libGL.so.1
-	ln -sf libGL.so.1 $(top_builddir)/$(LIB_DIR)/libGL.so
+	ln -f .libs/lib@GL_LIB@.so.$(GL_MAJOR).$(GL_MINOR).$(GL_PATCH) $(top_builddir)/$(LIB_DIR)/lib@GL_LIB@.so.$(GL_MAJOR)
+	ln -sf lib@GL_LIB@.so.$(GL_MAJOR) $(top_builddir)/$(LIB_DIR)/lib@GL_LIB@.so

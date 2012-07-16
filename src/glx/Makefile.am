@@ -47,15 +47,7 @@ AM_CFLAGS = \
 	$(GLPROTO_CFLAGS) \
 	$(X11_INCLUDES)
 
-if HAVE_MANGLED_GL
-MANGLED_GL_LIB = libMangledGL.la
-else
-NORMAL_GL_LIB = libGL.la
-endif
-
-lib_LTLIBRARIES = \
-	$(NORMAL_GL_LIB) \
-	$(MANGLED_GL_LIB)
+lib_LTLIBRARIES = lib@GL_LIB@.la
 
 noinst_LTLIBRARIES = libglx.la
 
@@ -109,21 +101,16 @@ GL_LDFLAGS = \
 	-Wl,-Bsymbolic \
 	-version-number 1:2 -no-undefined
 
-libGL_la_SOURCES =
-libMangledGL_la_SOURCES =
-libGL_la_LIBADD = $(GL_LIBS)
-libMangledGL_la_LIBADD = $(GL_LIBS)
-libGL_la_LDFLAGS = $(GL_LDFLAGS)
-libMangledGL_la_LDFLAGS = $(GL_LDFLAGS)
+lib@GL_LIB@_la_SOURCES =
+lib@GL_LIB@_la_LIBADD = $(GL_LIBS)
+lib@GL_LIB@_la_LDFLAGS = $(GL_LDFLAGS)
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
-if !HAVE_MANGLED_GL
-all-local: $(NORMAL_GL_LIB) $(MANGLED_GL_LIB)
+all-local: lib@GL_LIB@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libGL.so.1.2.0 $(top_builddir)/$(LIB_DIR)/libGL.so.1
-	ln -sf libGL.so.1 $(top_builddir)/$(LIB_DIR)/libGL.so
-endif
+	ln -f .libs/lib@GL_LIB@.so.1.2.0 $(top_builddir)/$(LIB_DIR)/lib@GL_LIB@.so.1
+	ln -sf lib@GL_LIB@.so.1 $(top_builddir)/$(LIB_DIR)/lib@GL_LIB@.so
 
 $(GLAPI_LIB):
 	@$(MAKE) -C $(TOP)/src/mapi/glapi

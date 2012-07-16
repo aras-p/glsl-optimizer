@@ -389,7 +389,6 @@ fi
 AC_SUBST([GL_LIB])
 AC_SUBST([GLU_LIB])
 AC_SUBST([OSMESA_LIB])
-AM_CONDITIONAL(HAVE_MANGLED_GL, test "x${enable_mangling}" = "xyes")
 
 dnl
 dnl potentially-infringing-but-nobody-knows-for-sure stuff
