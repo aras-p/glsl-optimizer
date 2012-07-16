@@ -98,8 +98,9 @@ noinst_LTLIBRARIES = libmesa.la libmesagallium.la
 SRCDIR = $(top_srcdir)/src/mesa
 include sources.mak
 
-AM_CFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS) $(LLVM_CFLAGS) $(CFLAGS)
-AM_CXXFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS) $(LLVM_CFLAGS) $(CXXFLAGS)
+AM_CPPFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)
+AM_CFLAGS = $(LLVM_CFLAGS)
+AM_CXXFLAGS = $(LLVM_CFLAGS)
 
 # cannot just add $(MESA_ASM_FILES) to libmesa_la_SOURCES as it contains a configure substitution
 MESA_ASM_FILES_FOR_ARCH =
