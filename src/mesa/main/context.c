@@ -842,7 +842,10 @@ update_default_objects(struct gl_context *ctx)
 static int
 generic_nop(void)
 {
-   _mesa_warning(NULL, "User called no-op dispatch function (an unsupported extension function?)");
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "unsupported function called "
+               "(unsupported extension or deprecated function?)");
    return 0;
 }
 
