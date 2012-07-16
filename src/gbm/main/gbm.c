@@ -196,12 +196,12 @@ gbm_bo_get_height(struct gbm_bo *bo)
  * gbm_bo_create()
  *
  * \param bo The buffer object
- * \return The stride of the allocated buffer object
+ * \return The stride of the allocated buffer object in bytes
  */
 GBM_EXPORT uint32_t
-gbm_bo_get_pitch(struct gbm_bo *bo)
+gbm_bo_get_stride(struct gbm_bo *bo)
 {
-   return bo->pitch;
+   return bo->stride;
 }
 
 /** Get the format of the buffer object

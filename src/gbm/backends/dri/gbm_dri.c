@@ -428,7 +428,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    bo->base.base.gbm = gbm;
    bo->base.base.width = width;
    bo->base.base.height = height;
-   bo->base.base.pitch = stride;
+   bo->base.base.stride = stride;
    bo->base.base.format = gbm_format;
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
                           &bo->base.base.handle.s32);
@@ -494,7 +494,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
                           &bo->base.base.handle.s32);
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE,
-                          (int *) &bo->base.base.pitch);
+                          (int *) &bo->base.base.stride);
 
    return &bo->base.base;
 }

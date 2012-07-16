@@ -90,7 +90,7 @@ struct gbm_bo {
    struct gbm_device *gbm;
    uint32_t width;
    uint32_t height;
-   uint32_t pitch;
+   uint32_t stride;
    uint32_t format;
    union gbm_bo_handle  handle;
    void *user_data;

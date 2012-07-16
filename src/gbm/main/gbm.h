@@ -244,7 +244,7 @@ uint32_t
 gbm_bo_get_height(struct gbm_bo *bo);
 
 uint32_t
-gbm_bo_get_pitch(struct gbm_bo *bo);
+gbm_bo_get_stride(struct gbm_bo *bo);
 
 uint32_t
 gbm_bo_get_format(struct gbm_bo *bo);
