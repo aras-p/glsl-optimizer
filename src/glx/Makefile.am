@@ -24,7 +24,7 @@ SHARED_GLAPI_CFLAGS = -DGLX_SHARED_GLAPI
 SHARED_GLAPI_LIBS = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
-SUBDIRS=tests
+SUBDIRS=. tests
 
 GLAPI_LIB = ../mapi/glapi/libglapi.la
 
