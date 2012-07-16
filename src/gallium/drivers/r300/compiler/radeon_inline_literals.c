@@ -71,7 +71,7 @@ void rc_inline_literals(struct radeon_compiler *c, void *user)
 		unsigned src_idx;
 		struct rc_constant * constant;
 		float float_value;
-		unsigned char r300_float;
+		unsigned char r300_float = 0;
 		int ret;
 
 		/* XXX: Handle presub */
