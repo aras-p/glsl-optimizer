@@ -455,7 +455,7 @@ ximage_display_copy_to_pixmap(struct native_display *ndpy,
    if (src->bind & PIPE_BIND_DISPLAY_TARGET) {
       struct ximage_display *xdpy = ximage_display(ndpy);
       enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
-      const struct ximage_config *xconf;
+      const struct ximage_config *xconf = NULL;
       struct xlib_drawable xdraw;
       int i;
 
