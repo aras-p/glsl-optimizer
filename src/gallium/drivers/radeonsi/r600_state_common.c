@@ -279,9 +279,6 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	rctx->vertex_elements = v;
 	if (v) {
 		r600_inval_shader_cache(rctx);
-
-		rctx->states[v->rstate.id] = &v->rstate;
-		r600_context_pipe_state_set(rctx, &v->rstate);
 	}
 }
 
@@ -290,9 +287,6 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
-	if (rctx->states[v->rstate.id] == &v->rstate) {
-		rctx->states[v->rstate.id] = NULL;
-	}
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
 	FREE(state);
@@ -558,13 +552,8 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 
 	r600_inval_vertex_cache(rctx);
 
-	if (rctx->vertex_elements->vbuffer_need_offset) {
-		/* one resource per vertex elements */
-		count = rctx->vertex_elements->count;
-	} else {
-		/* bind vertex buffer once */
-		count = rctx->nr_vertex_buffers;
-	}
+	/* bind vertex buffer once */
+	count = rctx->nr_vertex_buffers;
 	assert(count <= 256 / 4);
 
 	t_list_buffer = (struct r600_resource*)
@@ -583,19 +572,10 @@ static void r600_vertex_buffer_update(struct r600_context *rctx)
 		unsigned data_format, num_format;
 		int first_non_void;
 
-		if (rctx->vertex_elements->vbuffer_need_offset) {
-			/* one resource per vertex elements */
-			unsigned vbuffer_index;
-			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i];
-		} else {
-			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = 0;
-		}
+		/* bind vertex buffer once */
+		vertex_buffer = &rctx->vertex_buffer[i];
+		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+		offset = 0;
 		if (vertex_buffer == NULL || rbuffer == NULL)
 			continue;
 		offset += vertex_buffer->buffer_offset;

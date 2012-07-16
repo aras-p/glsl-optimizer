@@ -156,13 +156,6 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	unsigned			fs_size;
-	struct r600_pipe_state		rstate;
-	/* if offset is to big for fetch instructio we need to alterate
-	 * offset of vertex buffer, record here the offset need to add
-	 */
-	unsigned			vbuffer_need_offset;
-	unsigned			vbuffer_offset[PIPE_MAX_ATTRIBS];
 };
 
 struct r600_shader_io {
