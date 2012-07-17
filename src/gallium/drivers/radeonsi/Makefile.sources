@@ -10,4 +10,6 @@ C_SOURCES := \
 	evergreen_hw_context.c \
 	evergreen_state.c \
 	r600_translate.c \
-	r600_state_common.c
+	r600_state_common.c \
+	radeonsi_pm4.c \
+	si_state.c

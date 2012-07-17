@@ -801,6 +801,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rdraw.db_render_control = dsa->db_render_control;
 
 	/* Emit states. */
+	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
+
 	r600_need_cs_space(rctx, 0, TRUE);
 
 	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
@@ -809,6 +811,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
 		r600_context_block_emit_dirty(rctx, dirty_block);
 	}
+	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;
 
 	/* Enable stream out if needed. */

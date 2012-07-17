@@ -36,6 +36,8 @@
 #include "util/u_slab.h"
 #include "r600.h"
 #include "radeonsi_public.h"
+#include "radeonsi_pm4.h"
+#include "si_state.h"
 #include "r600_resource.h"
 #include "sid.h"
 
@@ -320,6 +322,10 @@ struct r600_context {
 	struct pipe_index_buffer index_buffer;
 	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 	unsigned		nr_vertex_buffers;
+
+	/* SI state handling */
+	union si_state	queued;
+	union si_state	emitted;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

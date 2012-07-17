@@ -24,6 +24,7 @@
  *      Jerome Glisse
  */
 #include "r600_hw_context_priv.h"
+#include "radeonsi_pm4.h"
 #include "radeonsi_pipe.h"
 #include "sid.h"
 #include "util/u_memory.h"
@@ -563,6 +564,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords;
 		enable_block->nreg_dirty = enable_block->nreg;
 	}
+	si_pm4_reset_emitted(ctx);
 }
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
