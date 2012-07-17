@@ -76,21 +76,6 @@ static uint32_t r600_translate_stencil_op(int s_op)
 }
 #endif
 
-static uint32_t si_translate_fill(uint32_t func)
-{
-	switch(func) {
-	case PIPE_POLYGON_MODE_FILL:
-		return V_028814_X_DRAW_TRIANGLES;
-	case PIPE_POLYGON_MODE_LINE:
-		return V_028814_X_DRAW_LINES;
-	case PIPE_POLYGON_MODE_POINT:
-		return V_028814_X_DRAW_POINTS;
-	default:
-		assert(0);
-		return V_028814_X_DRAW_POINTS;
-	}
-}
-
 /* translates straight */
 static uint32_t si_translate_ds_func(int func)
 {
@@ -838,113 +823,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static void *evergreen_create_rs_state(struct pipe_context *ctx,
-					const struct pipe_rasterizer_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_rasterizer *rs = CALLOC_STRUCT(r600_pipe_rasterizer);
-	struct r600_pipe_state *rstate;
-	unsigned tmp;
-	unsigned prov_vtx = 1, polygon_dual_mode;
-	unsigned clip_rule;
-	float psize_min, psize_max;
-
-	if (rs == NULL) {
-		return NULL;
-	}
-
-	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
-				state->fill_back != PIPE_POLYGON_MODE_FILL);
-
-	if (state->flatshade_first)
-		prov_vtx = 0;
-
-	rstate = &rs->rstate;
-	rs->flatshade = state->flatshade;
-	rs->sprite_coord_enable = state->sprite_coord_enable;
-	rs->pa_sc_line_stipple = state->line_stipple_enable ?
-				S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
-				S_028A0C_REPEAT_COUNT(state->line_stipple_factor) : 0;
-	rs->pa_su_sc_mode_cntl =
-		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
-		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
-		S_028814_FACE(!state->front_ccw) |
-		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
-		S_028814_POLY_MODE(polygon_dual_mode) |
-		S_028814_POLYMODE_FRONT_PTYPE(si_translate_fill(state->fill_front)) |
-		S_028814_POLYMODE_BACK_PTYPE(si_translate_fill(state->fill_back));
-	rs->pa_cl_clip_cntl =
-		S_028810_PS_UCP_MODE(3) |
-		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
-		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
-		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
-	rs->pa_cl_vs_out_cntl =
-		S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
-		S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
-
-	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
-
-	/* offset */
-	rs->offset_units = state->offset_units;
-	rs->offset_scale = state->offset_scale * 12.0f;
-
-	rstate->id = R600_PIPE_STATE_RASTERIZER;
-	/* XXX: Flat shading hangs the GPU */
-	tmp = S_0286D4_FLAT_SHADE_ENA(0);
-	if (state->sprite_coord_enable) {
-		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
-			S_0286D4_PNT_SPRITE_OVRD_X(V_0286D4_SPI_PNT_SPRITE_SEL_S) |
-			S_0286D4_PNT_SPRITE_OVRD_Y(V_0286D4_SPI_PNT_SPRITE_SEL_T) |
-			S_0286D4_PNT_SPRITE_OVRD_Z(V_0286D4_SPI_PNT_SPRITE_SEL_0) |
-			S_0286D4_PNT_SPRITE_OVRD_W(V_0286D4_SPI_PNT_SPRITE_SEL_1);
-		if (state->sprite_coord_mode != PIPE_SPRITE_COORD_UPPER_LEFT) {
-			tmp |= S_0286D4_PNT_SPRITE_TOP_1(1);
-		}
-	}
-	r600_pipe_state_add_reg(rstate, R_0286D4_SPI_INTERP_CONTROL_0, tmp, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028820_PA_CL_NANINF_CNTL, 0x00000000, NULL, 0);
-	/* point size 12.4 fixed point */
-	tmp = (unsigned)(state->point_size * 8.0);
-	r600_pipe_state_add_reg(rstate, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp), NULL, 0);
-
-	if (state->point_size_per_vertex) {
-		psize_min = util_get_min_point_size(state);
-		psize_max = 8192;
-	} else {
-		/* Force the point size to be as if the vertex output was disabled. */
-		psize_min = state->point_size;
-		psize_max = state->point_size;
-	}
-	/* Divide by two, because 0.5 = 1 pixel. */
-	r600_pipe_state_add_reg(rstate, R_028A04_PA_SU_POINT_MINMAX,
-				S_028A04_MIN_SIZE(r600_pack_float_12p4(psize_min/2)) |
-				S_028A04_MAX_SIZE(r600_pack_float_12p4(psize_max/2)),
-				NULL, 0);
-
-	tmp = (unsigned)state->line_width * 8;
-	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0,
-				S_028A48_LINE_STIPPLE_ENABLE(state->line_stipple_enable),
-				NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028BDC_PA_SC_LINE_CNTL, 0x00000400, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BE4_PA_SU_VTX_CNTL,
-				S_028BE4_PIX_CENTER(state->gl_rasterization_rules),
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BE8_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BEC_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BF4_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule, NULL, 0);
-	return rstate;
-}
-
 static void *si_create_sampler_state(struct pipe_context *ctx,
 				     const struct pipe_sampler_state *state)
 {
@@ -1259,7 +1137,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	si_init_state_functions(rctx);
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
 	rctx->context.create_fs_state = si_create_shader_state;
-	rctx->context.create_rasterizer_state = evergreen_create_rs_state;
 	rctx->context.create_sampler_state = si_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
@@ -1267,13 +1144,11 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
-	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
 	rctx->context.delete_fs_state = r600_delete_ps_shader;
-	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
 	rctx->context.delete_vs_state = r600_delete_vs_shader;
@@ -1337,8 +1212,8 @@ void cayman_polygon_offset_update(struct r600_context *rctx)
 
 	state.id = R600_PIPE_STATE_POLYGON_OFFSET;
 	state.nregs = 0;
-	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
-		float offset_units = rctx->rasterizer->offset_units;
+	if (rctx->queued.named.rasterizer && rctx->framebuffer.zsbuf) {
+		float offset_units = rctx->queued.named.rasterizer->offset_units;
 		unsigned offset_db_fmt_cntl = 0, depth;
 
 		switch (rctx->framebuffer.zsbuf->texture->format) {
@@ -1364,13 +1239,13 @@ void cayman_polygon_offset_update(struct r600_context *rctx)
 		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 		r600_pipe_state_add_reg(&state,
 				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
-				fui(rctx->rasterizer->offset_scale), NULL, 0);
+				fui(rctx->queued.named.rasterizer->offset_scale), NULL, 0);
 		r600_pipe_state_add_reg(&state,
 				R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET,
 				fui(offset_units), NULL, 0);
 		r600_pipe_state_add_reg(&state,
 				R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
-				fui(rctx->rasterizer->offset_scale), NULL, 0);
+				fui(rctx->queued.named.rasterizer->offset_scale), NULL, 0);
 		r600_pipe_state_add_reg(&state,
 				R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET,
 				fui(offset_units), NULL, 0);
@@ -1405,7 +1280,7 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 		/* XXX: Flat shading hangs the GPU */
 		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
 		    (rshader->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
-		     rctx->rasterizer->flatshade))
+		     rctx->queued.named.rasterizer->flatshade))
 			have_linear = TRUE;
 		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
 			have_linear = TRUE;

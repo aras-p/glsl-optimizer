@@ -195,44 +195,6 @@ void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	r600_set_stencil_ref(ctx, &ref);
 }
 
-void r600_bind_rs_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	if (state == NULL)
-		return;
-
-	rctx->sprite_coord_enable = rs->sprite_coord_enable;
-	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
-	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
-	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
-	rctx->pa_cl_vs_out_cntl = rs->pa_cl_vs_out_cntl;
-
-	rctx->rasterizer = rs;
-
-	rctx->states[rs->rstate.id] = &rs->rstate;
-	r600_context_pipe_state_set(rctx, &rs->rstate);
-
-	if (rctx->chip_class >= CAYMAN) {
-		cayman_polygon_offset_update(rctx);
-	}
-}
-
-void r600_delete_rs_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
-
-	if (rctx->rasterizer == rs) {
-		rctx->rasterizer = NULL;
-	}
-	if (rctx->states[rs->rstate.id] == &rs->rstate) {
-		rctx->states[rs->rstate.id] = NULL;
-	}
-	free(rs);
-}
-
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state)
 {

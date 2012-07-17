@@ -40,6 +40,18 @@ struct si_state_viewport {
 	struct pipe_viewport_state	viewport;
 };
 
+struct si_state_rasterizer {
+	struct si_pm4_state	pm4;
+	bool			flatshade;
+	unsigned		sprite_coord_enable;
+	unsigned		pa_sc_line_stipple;
+	unsigned		pa_su_sc_mode_cntl;
+	unsigned		pa_cl_clip_cntl;
+	unsigned		pa_cl_vs_out_cntl;
+	float			offset_units;
+	float			offset_scale;
+};
+
 union si_state {
 	struct {
 		struct si_state_blend		*blend;
@@ -48,6 +60,7 @@ union si_state {
 		struct si_pm4_state		*scissor;
 		struct si_state_viewport	*viewport;
 		struct si_pm4_state		*framebuffer;
+		struct si_state_rasterizer	*rasterizer;
 	} named;
 	struct si_pm4_state	*array[0];
 };

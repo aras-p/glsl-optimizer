@@ -12,6 +12,7 @@
 
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
+#include "si_state.h"
 #include "sid.h"
 
 #include <assert.h>
@@ -251,7 +252,7 @@ static void declare_input_fs(
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
 		/* XXX: Flat shading hangs the GPU */
-		if (si_shader_ctx->rctx->rasterizer->flatshade) {
+		if (si_shader_ctx->rctx->queued.named.rasterizer->flatshade) {
 #if 0
 			intr_name = "llvm.SI.fs.interp.constant";
 #else

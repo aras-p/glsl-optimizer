@@ -271,6 +271,155 @@ static void si_set_viewport_state(struct pipe_context *ctx,
 }
 
 /*
+ * Rasterizer
+ */
+
+static uint32_t si_translate_fill(uint32_t func)
+{
+	switch(func) {
+	case PIPE_POLYGON_MODE_FILL:
+		return V_028814_X_DRAW_TRIANGLES;
+	case PIPE_POLYGON_MODE_LINE:
+		return V_028814_X_DRAW_LINES;
+	case PIPE_POLYGON_MODE_POINT:
+		return V_028814_X_DRAW_POINTS;
+	default:
+		assert(0);
+		return V_028814_X_DRAW_POINTS;
+	}
+}
+
+static void *si_create_rs_state(struct pipe_context *ctx,
+				const struct pipe_rasterizer_state *state)
+{
+	struct si_state_rasterizer *rs = CALLOC_STRUCT(si_state_rasterizer);
+	struct si_pm4_state *pm4 = &rs->pm4;
+	unsigned tmp;
+	unsigned prov_vtx = 1, polygon_dual_mode;
+	unsigned clip_rule;
+	float psize_min, psize_max;
+
+	if (rs == NULL) {
+		return NULL;
+	}
+
+	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
+				state->fill_back != PIPE_POLYGON_MODE_FILL);
+
+	if (state->flatshade_first)
+		prov_vtx = 0;
+
+	rs->flatshade = state->flatshade;
+	rs->sprite_coord_enable = state->sprite_coord_enable;
+	rs->pa_sc_line_stipple = state->line_stipple_enable ?
+				S_028A0C_LINE_PATTERN(state->line_stipple_pattern) |
+				S_028A0C_REPEAT_COUNT(state->line_stipple_factor) : 0;
+	rs->pa_su_sc_mode_cntl =
+		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
+		S_028814_CULL_FRONT(state->rasterizer_discard || (state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+		S_028814_CULL_BACK(state->rasterizer_discard || (state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+		S_028814_FACE(!state->front_ccw) |
+		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+		S_028814_POLY_MODE(polygon_dual_mode) |
+		S_028814_POLYMODE_FRONT_PTYPE(si_translate_fill(state->fill_front)) |
+		S_028814_POLYMODE_BACK_PTYPE(si_translate_fill(state->fill_back));
+	rs->pa_cl_clip_cntl =
+		S_028810_PS_UCP_MODE(3) |
+		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
+		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
+		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
+	rs->pa_cl_vs_out_cntl =
+		S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
+		S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
+
+	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
+
+	/* offset */
+	rs->offset_units = state->offset_units;
+	rs->offset_scale = state->offset_scale * 12.0f;
+
+	/* XXX: Flat shading hangs the GPU */
+	tmp = S_0286D4_FLAT_SHADE_ENA(0);
+	if (state->sprite_coord_enable) {
+		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
+			S_0286D4_PNT_SPRITE_OVRD_X(V_0286D4_SPI_PNT_SPRITE_SEL_S) |
+			S_0286D4_PNT_SPRITE_OVRD_Y(V_0286D4_SPI_PNT_SPRITE_SEL_T) |
+			S_0286D4_PNT_SPRITE_OVRD_Z(V_0286D4_SPI_PNT_SPRITE_SEL_0) |
+			S_0286D4_PNT_SPRITE_OVRD_W(V_0286D4_SPI_PNT_SPRITE_SEL_1);
+		if (state->sprite_coord_mode != PIPE_SPRITE_COORD_UPPER_LEFT) {
+			tmp |= S_0286D4_PNT_SPRITE_TOP_1(1);
+		}
+	}
+	si_pm4_set_reg(pm4, R_0286D4_SPI_INTERP_CONTROL_0, tmp);
+
+	si_pm4_set_reg(pm4, R_028820_PA_CL_NANINF_CNTL, 0x00000000);
+	/* point size 12.4 fixed point */
+	tmp = (unsigned)(state->point_size * 8.0);
+	si_pm4_set_reg(pm4, R_028A00_PA_SU_POINT_SIZE, S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp));
+
+	if (state->point_size_per_vertex) {
+		psize_min = util_get_min_point_size(state);
+		psize_max = 8192;
+	} else {
+		/* Force the point size to be as if the vertex output was disabled. */
+		psize_min = state->point_size;
+		psize_max = state->point_size;
+	}
+	/* Divide by two, because 0.5 = 1 pixel. */
+	si_pm4_set_reg(pm4, R_028A04_PA_SU_POINT_MINMAX,
+			S_028A04_MIN_SIZE(r600_pack_float_12p4(psize_min/2)) |
+			S_028A04_MAX_SIZE(r600_pack_float_12p4(psize_max/2)));
+
+	tmp = (unsigned)state->line_width * 8;
+	si_pm4_set_reg(pm4, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp));
+	si_pm4_set_reg(pm4, R_028A48_PA_SC_MODE_CNTL_0,
+			S_028A48_LINE_STIPPLE_ENABLE(state->line_stipple_enable));
+
+	si_pm4_set_reg(pm4, R_028BDC_PA_SC_LINE_CNTL, 0x00000400);
+	si_pm4_set_reg(pm4, R_028BE4_PA_SU_VTX_CNTL,
+			S_028BE4_PIX_CENTER(state->gl_rasterization_rules));
+	si_pm4_set_reg(pm4, R_028BE8_PA_CL_GB_VERT_CLIP_ADJ, 0x3F800000);
+	si_pm4_set_reg(pm4, R_028BEC_PA_CL_GB_VERT_DISC_ADJ, 0x3F800000);
+	si_pm4_set_reg(pm4, R_028BF0_PA_CL_GB_HORZ_CLIP_ADJ, 0x3F800000);
+	si_pm4_set_reg(pm4, R_028BF4_PA_CL_GB_HORZ_DISC_ADJ, 0x3F800000);
+
+	si_pm4_set_reg(pm4, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp));
+	si_pm4_set_reg(pm4, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule);
+
+	return rs;
+}
+
+static void si_bind_rs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_state_rasterizer *rs = (struct si_state_rasterizer *)state;
+
+	if (state == NULL)
+		return;
+
+	// TODO
+	rctx->sprite_coord_enable = rs->sprite_coord_enable;
+	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
+	rctx->pa_su_sc_mode_cntl = rs->pa_su_sc_mode_cntl;
+	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
+	rctx->pa_cl_vs_out_cntl = rs->pa_cl_vs_out_cntl;
+
+	si_pm4_bind_state(rctx, rasterizer, rs);
+
+	if (rctx->chip_class >= CAYMAN) {
+		cayman_polygon_offset_update(rctx);
+	}
+}
+
+static void si_delete_rs_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	si_pm4_delete_state(rctx, rasterizer, (struct si_state_rasterizer *)state);
+}
+
+/*
  * format translation
  */
 static uint32_t si_translate_colorformat(enum pipe_format format)
@@ -932,6 +1081,10 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_blend_state = si_bind_blend_state;
 	rctx->context.delete_blend_state = si_delete_blend_state;
 	rctx->context.set_blend_color = si_set_blend_color;
+
+	rctx->context.create_rasterizer_state = si_create_rs_state;
+	rctx->context.bind_rasterizer_state = si_bind_rs_state;
+	rctx->context.delete_rasterizer_state = si_delete_rs_state;
 
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_state = si_set_scissor_state;
