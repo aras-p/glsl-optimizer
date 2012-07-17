@@ -906,19 +906,13 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 	struct pipe_resource *texture = transfer->resource;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 
-	if (rtex->is_depth) {
-		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
-			struct pipe_box sbox;
-
-			u_box_origin_2d(texture->width0, texture->height0, &sbox);
-
+	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
+		if (rtex->is_depth) {
 			ctx->resource_copy_region(ctx, texture, transfer->level,
-						  0, 0, transfer->box.z,
+						  transfer->box.x, transfer->box.y, transfer->box.z,
 						  &rtransfer->staging->b.b, transfer->level,
-						  &sbox);
-		}
-	} else if (rtransfer->staging) {
-		if (transfer->usage & PIPE_TRANSFER_WRITE) {
+						  &transfer->box);
+		} else {
 			r600_copy_from_staging_texture(ctx, rtransfer);
 		}
 	}
