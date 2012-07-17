@@ -35,6 +35,11 @@
 
 #include "gbm_gallium_drmint.h"
 
+/* For importing wl_buffer */
+#if HAVE_WAYLAND_PLATFORM
+#include "../../../egl/wayland/wayland-drm/wayland-drm.h"
+#endif
+
 static INLINE enum pipe_format
 gbm_format_to_gallium(enum gbm_bo_format format)
 {
@@ -99,32 +104,59 @@ gbm_gallium_drm_bo_destroy(struct gbm_bo *_bo)
 }
 
 static struct gbm_bo *
-gbm_gallium_drm_bo_create_from_egl_image(struct gbm_device *gbm,
-                                         void *egl_dpy, void *egl_image,
-                                         uint32_t width, uint32_t height,
-                                         uint32_t usage)
+gbm_gallium_drm_bo_import(struct gbm_device *gbm,
+                          uint32_t type, void *buffer, uint32_t usage)
 {
    struct gbm_gallium_drm_device *gdrm = gbm_gallium_drm_device(gbm);
    struct gbm_gallium_drm_bo *bo;
    struct winsys_handle whandle;
+   struct pipe_resource *resource;
 
-   if (!gdrm->lookup_egl_image)
+   switch (type) {
+#if HAVE_WAYLAND_PLATFORM
+   case GBM_BO_IMPORT_WL_BUFFER:
+   {
+      struct wl_drm_buffer *wb = (struct wl_drm_buffer *) buffer;
+
+      resource = wb->driver_buffer;
+      break;
+   }
+#endif
+
+   case GBM_BO_IMPORT_EGL_IMAGE:
+      if (!gdrm->lookup_egl_image)
+         return NULL;
+
+      resource = gdrm->lookup_egl_image(gdrm->lookup_egl_image_data, buffer);
+      if (resource == NULL)
+         return NULL;
+      break;
+
+   default:
       return NULL;
+   }
 
    bo = CALLOC_STRUCT(gbm_gallium_drm_bo);
    if (bo == NULL)
       return NULL;
 
-   bo->resource = gdrm->lookup_egl_image(gdrm->lookup_egl_image_data,
-                                         egl_image);
-   if (bo->resource == NULL) {
+   bo->base.base.gbm = gbm;
+   bo->base.base.width = resource->width0;
+   bo->base.base.height = resource->height0;
+
+   switch (resource->format) {
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      bo->base.base.format = GBM_BO_FORMAT_XRGB8888;
+      break;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      bo->base.base.format = GBM_BO_FORMAT_ARGB8888;
+      break;
+   default:
       FREE(bo);
       return NULL;
    }
 
-   bo->base.base.gbm = gbm;
-   bo->base.base.width = width;
-   bo->base.base.height = height;
+   pipe_resource_reference(&bo->resource, resource);
 
    memset(&whandle, 0, sizeof(whandle));
    whandle.type = DRM_API_HANDLE_TYPE_KMS;
@@ -154,6 +186,7 @@ gbm_gallium_drm_bo_create(struct gbm_device *gbm,
    bo->base.base.gbm = gbm;
    bo->base.base.width = width;
    bo->base.base.height = height;
+   bo->base.base.format = format;
 
    pf = gbm_format_to_gallium(format);
    if (pf == PIPE_FORMAT_NONE)
@@ -204,8 +237,7 @@ gbm_gallium_drm_device_create(int fd)
 
    gdrm->base.base.fd = fd;
    gdrm->base.base.bo_create = gbm_gallium_drm_bo_create;
-   gdrm->base.base.bo_create_from_egl_image =
-      gbm_gallium_drm_bo_create_from_egl_image;
+   gdrm->base.base.bo_import = gbm_gallium_drm_bo_import;
    gdrm->base.base.bo_destroy = gbm_gallium_drm_bo_destroy;
    gdrm->base.base.is_format_supported = gbm_gallium_drm_is_format_supported;
    gdrm->base.base.destroy = gbm_gallium_drm_destroy;

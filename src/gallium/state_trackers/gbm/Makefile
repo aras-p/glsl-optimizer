@@ -17,6 +17,10 @@ ALL_SOURCES = $(gbm_SOURCES)
 GBM_OBJECTS = $(gbm_OBJECTS)
 GBM_CPPFLAGS = $(gbm_INCLUDES)
 
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+GBM_CPPFLAGS += -DHAVE_WAYLAND_PLATFORM
+endif
+
 ##### TARGETS #####
 
 default: depend libgbm.a
