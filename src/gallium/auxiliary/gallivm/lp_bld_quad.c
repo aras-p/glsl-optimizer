@@ -26,7 +26,6 @@
  **************************************************************************/
 
 
-#include "u_cpu_detect.h"
 #include "lp_bld_type.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_const.h"
