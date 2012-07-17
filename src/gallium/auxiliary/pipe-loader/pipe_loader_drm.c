@@ -35,6 +35,12 @@
 #include <libudev.h>
 #include <xf86drm.h>
 
+#ifdef PIPE_LOADER_HAVE_XCB
+
+#include <xcb/dri2.h>
+
+#endif
+
 #include "state_tracker/drm_driver.h"
 #include "pipe_loader_priv.h"
 
@@ -127,6 +133,59 @@ find_drm_driver_name(struct pipe_loader_drm_device *ddev)
 
 static struct pipe_loader_ops pipe_loader_drm_ops;
 
+static void
+pipe_loader_drm_x_auth(int fd)
+{
+#if PIPE_LOADER_HAVE_XCB
+   /* Try authenticate with the X server to give us access to devices that X
+    * is running on. */
+   xcb_connection_t *xcb_conn;
+   const xcb_setup_t *xcb_setup;
+   xcb_screen_iterator_t s;
+   xcb_dri2_connect_cookie_t connect_cookie;
+   xcb_dri2_connect_reply_t *connect;
+   drm_magic_t magic;
+   xcb_dri2_authenticate_cookie_t authenticate_cookie;
+   xcb_dri2_authenticate_reply_t *authenticate;
+
+   xcb_conn = xcb_connect(NULL,  NULL);
+
+   if(!xcb_conn)
+      return;
+
+   xcb_setup = xcb_get_setup(xcb_conn);
+
+  if (!xcb_setup)
+    goto disconnect;
+
+   s = xcb_setup_roots_iterator(xcb_setup);
+   connect_cookie = xcb_dri2_connect_unchecked(xcb_conn, s.data->root,
+                                               XCB_DRI2_DRIVER_TYPE_DRI);
+   connect = xcb_dri2_connect_reply(xcb_conn, connect_cookie, NULL);
+
+   if (!connect || connect->driver_name_length
+                   + connect->device_name_length == 0) {
+
+      goto disconnect;
+   }
+
+   if (drmGetMagic(fd, &magic))
+      goto disconnect;
+
+   authenticate_cookie = xcb_dri2_authenticate_unchecked(xcb_conn,
+                                                         s.data->root,
+                                                         magic);
+   authenticate = xcb_dri2_authenticate_reply(xcb_conn,
+                                              authenticate_cookie,
+                                              NULL);
+   FREE(authenticate);
+
+disconnect:
+   xcb_disconnect(xcb_conn);
+
+#endif
+}
+
 boolean
 pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
 {
@@ -135,6 +194,8 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
    ddev->base.type = PIPE_LOADER_DEVICE_PCI;
    ddev->base.ops = &pipe_loader_drm_ops;
    ddev->fd = fd;
+
+   pipe_loader_drm_x_auth(fd);
 
    if (!find_drm_pci_id(ddev))
       goto fail;
