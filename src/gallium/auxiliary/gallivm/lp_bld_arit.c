@@ -77,7 +77,7 @@ lp_build_min_simple(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
    const char *intrinsic = NULL;
-   unsigned intr_size;
+   unsigned intr_size = 0;
    LLVMValueRef cond;
 
    assert(lp_check_value(type, a));
@@ -167,7 +167,7 @@ lp_build_max_simple(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
    const char *intrinsic = NULL;
-   unsigned intr_size;
+   unsigned intr_size = 0;
    LLVMValueRef cond;
 
    assert(lp_check_value(type, a));

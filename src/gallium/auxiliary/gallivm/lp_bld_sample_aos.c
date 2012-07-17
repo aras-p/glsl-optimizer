@@ -655,7 +655,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
    LLVMValueRef width_vec, height_vec, depth_vec;
    LLVMValueRef offset;
    LLVMValueRef x_subcoord, y_subcoord;
-   LLVMValueRef x_icoord, y_icoord, z_icoord;
+   LLVMValueRef x_icoord = NULL, y_icoord = NULL, z_icoord = NULL;
    LLVMValueRef flt_size;
 
    flt_size = lp_build_int_to_float(&bld->float_size_bld, int_size);

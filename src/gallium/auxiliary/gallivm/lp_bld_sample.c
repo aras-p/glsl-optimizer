@@ -214,6 +214,9 @@ lp_build_rho(struct lp_build_sample_context *bld,
    if (dims > 2) {
       abs_ddx_ddy[1] = lp_build_abs(coord_bld, ddx_ddy[1]);
    }
+   else {
+      abs_ddx_ddy[1] = NULL;
+   }
 
    if (dims == 1) {
       static const unsigned char swizzle1[] = {
