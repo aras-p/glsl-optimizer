@@ -1829,6 +1829,13 @@ AC_ARG_WITH([llvm-shared-libs],
     [with_llvm_shared_libs=yes],
     [with_llvm_shared_libs=no])
 
+AC_ARG_WITH([llvm-prefix],
+    [AS_HELP_STRING([--with-llvm-prefix],
+        [Prefix for LLVM installations in non-standard locations])],
+    [llvm_prefix="$withval"],
+    [llvm_prefix=""])
+
+
 if test "x$with_gallium_drivers" = x; then
     enable_gallium_llvm=no
 fi
@@ -1838,7 +1845,11 @@ if test "x$enable_gallium_llvm" = xauto; then
     esac
 fi
 if test "x$enable_gallium_llvm" = xyes; then
-    AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
+    if test "x$llvm_prefix" != x; then
+        AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no], ["$llvm_prefix/bin"])
+    else
+        AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
+    fi
 
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
