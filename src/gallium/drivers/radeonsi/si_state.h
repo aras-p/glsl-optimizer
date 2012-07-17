@@ -35,12 +35,18 @@ struct si_state_blend {
 	uint32_t		cb_color_control;
 };
 
+struct si_state_viewport {
+	struct si_pm4_state		pm4;
+	struct pipe_viewport_state	viewport;
+};
+
 union si_state {
 	struct {
-		struct si_state_blend	*blend;
-		struct si_pm4_state	*blend_color;
-		struct si_pm4_state	*clip;
-		struct si_pm4_state	*scissor;
+		struct si_state_blend		*blend;
+		struct si_pm4_state		*blend_color;
+		struct si_pm4_state		*clip;
+		struct si_pm4_state		*scissor;
+		struct si_state_viewport	*viewport;
 	} named;
 	struct si_pm4_state	*array[0];
 };

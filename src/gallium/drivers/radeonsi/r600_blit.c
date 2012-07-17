@@ -24,6 +24,7 @@
 #include "util/u_blitter.h"
 #include "util/u_format.h"
 #include "radeonsi_pipe.h"
+#include "si_state.h"
 
 enum r600_blitter_op /* bitmask */
 {
@@ -56,8 +57,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
 	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
 	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_elements);
-	if (rctx->states[R600_PIPE_STATE_VIEWPORT]) {
-		util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
+	if (rctx->queued.named.viewport) {
+		util_blitter_save_viewport(rctx->blitter, &rctx->queued.named.viewport->viewport);
 	}
 	util_blitter_save_vertex_buffers(rctx->blitter,
 					 rctx->nr_vertex_buffers,

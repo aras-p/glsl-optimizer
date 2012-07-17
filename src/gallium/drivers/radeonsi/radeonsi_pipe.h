@@ -77,7 +77,6 @@ struct r600_atom_surface_sync {
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
-	R600_PIPE_STATE_VIEWPORT,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_VGT,
 	R600_PIPE_STATE_FRAMEBUFFER,
@@ -239,7 +238,6 @@ struct r600_context {
 	unsigned			pa_cl_vs_out_cntl;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
-	struct pipe_viewport_state	viewport;
 	struct r600_pipe_state		config;
 	struct si_pipe_shader 	*ps_shader;
 	struct si_pipe_shader 	*vs_shader;

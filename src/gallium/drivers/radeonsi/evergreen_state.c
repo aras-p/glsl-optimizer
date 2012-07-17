@@ -1254,33 +1254,6 @@ static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample
 {
 }
 
-static void evergreen_set_viewport_state(struct pipe_context *ctx,
-					const struct pipe_viewport_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-
-	if (rstate == NULL)
-		return;
-
-	rctx->viewport = *state;
-	rstate->id = R600_PIPE_STATE_VIEWPORT;
-	r600_pipe_state_add_reg(rstate, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028350_PA_SC_RASTER_CONFIG, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028818_PA_CL_VTE_CNTL, 0x0000043F, NULL, 0);
-
-	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
-	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 			 const struct pipe_framebuffer_state *state, int cb)
 {
@@ -1670,7 +1643,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
-	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.texture_barrier = r600_texture_barrier;
 	rctx->context.create_stream_output_target = r600_create_so_target;

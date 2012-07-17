@@ -240,6 +240,31 @@ static void si_set_scissor_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, scissor, pm4);
 }
 
+static void si_set_viewport_state(struct pipe_context *ctx,
+				  const struct pipe_viewport_state *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_state_viewport *viewport = CALLOC_STRUCT(si_state_viewport);
+	struct si_pm4_state *pm4 = &viewport->pm4;
+
+	if (viewport == NULL)
+		return;
+
+	viewport->viewport = *state;
+	si_pm4_set_reg(pm4, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000);
+	si_pm4_set_reg(pm4, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000);
+	si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
+	si_pm4_set_reg(pm4, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]));
+	si_pm4_set_reg(pm4, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]));
+	si_pm4_set_reg(pm4, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]));
+	si_pm4_set_reg(pm4, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]));
+	si_pm4_set_reg(pm4, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]));
+	si_pm4_set_reg(pm4, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]));
+	si_pm4_set_reg(pm4, R_028818_PA_CL_VTE_CNTL, 0x0000043F);
+
+	si_pm4_set_state(rctx, viewport, viewport);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
@@ -249,4 +274,5 @@ void si_init_state_functions(struct r600_context *rctx)
 
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_state = si_set_scissor_state;
+	rctx->context.set_viewport_state = si_set_viewport_state;
 }
