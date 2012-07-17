@@ -696,10 +696,10 @@ intelCreateContext(gl_api api,
       if (ctx->VersionMajor > major_version
 	  || (ctx->VersionMajor == major_version
 	      && ctx->VersionMinor >= minor_version)) {
-	 *error = __DRI_CTX_ERROR_BAD_VERSION;
 	 return true;
       }
 
+      *error = __DRI_CTX_ERROR_BAD_VERSION;
       intelDestroyContext(driContextPriv);
    } else {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
