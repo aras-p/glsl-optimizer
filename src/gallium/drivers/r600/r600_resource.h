@@ -92,11 +92,6 @@ static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_resource_texture **staging);
-void r600_texture_depth_flush(struct pipe_context *ctx,
-			      struct pipe_resource *texture,
-			      struct r600_resource_texture **staging,
-			      unsigned first_level, unsigned last_level,
-			      unsigned first_layer, unsigned last_layer);
 
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,

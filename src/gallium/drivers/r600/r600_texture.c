@@ -775,28 +775,6 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	return true;
 }
 
-void r600_texture_depth_flush(struct pipe_context *ctx,
-			      struct pipe_resource *texture,
-			      struct r600_resource_texture **staging,
-			      unsigned first_level, unsigned last_level,
-			      unsigned first_layer, unsigned last_layer)
-{
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
-
-	if (!r600_init_flushed_depth_texture(ctx, texture, staging))
-		return;
-
-	if (staging) {
-		r600_blit_uncompress_depth(ctx, rtex, *staging,
-					   first_level, last_level,
-					   first_layer, last_layer);
-	} else {
-		r600_blit_uncompress_depth(ctx, rtex, NULL,
-					   first_level, last_level,
-					   first_layer, last_layer);
-	}
-}
-
 /* Needs adjustment for pixelformat:
  */
 static INLINE unsigned u_box_volume( const struct pipe_box *box )
@@ -860,15 +838,17 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		*/
 		struct r600_resource_texture *staging_depth;
 
-		r600_texture_depth_flush(ctx, texture, &staging_depth,
-					 level, level,
-					 box->z, box->z + box->depth - 1);
-		if (!staging_depth) {
+		if (!r600_init_flushed_depth_texture(ctx, texture, &staging_depth)) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
 			return NULL;
 		}
+
+		r600_blit_uncompress_depth(ctx, rtex, staging_depth,
+					   level, level,
+					   box->z, box->z + box->depth - 1);
+
 		trans->transfer.stride = staging_depth->pitch_in_bytes[level];
 		trans->offset = r600_texture_get_offset(staging_depth, level, box->z);
 		trans->staging = (struct r600_resource*)staging_depth;

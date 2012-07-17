@@ -336,10 +336,15 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		return;
 	}
 
-	if (rsrc->is_depth && !rsrc->is_flushing_texture)
-		r600_texture_depth_flush(ctx, src, NULL,
-					 src_level, src_level,
-					 src_box->z, src_box->z + src_box->depth - 1);
+	/* This must be done before entering u_blitter to avoid recursion. */
+	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
+		if (!r600_init_flushed_depth_texture(ctx, src, NULL))
+			return; /* error */
+
+		r600_blit_uncompress_depth(ctx, rsrc, NULL,
+					   src_level, src_level,
+					   src_box->z, src_box->z + src_box->depth - 1);
+	}
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
