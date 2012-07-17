@@ -1847,9 +1847,9 @@ if test "x$enable_gallium_llvm" = xyes; then
 	    dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
 	    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
 	else
-	    LLVM_LIBS="`$LLVM_CONFIG --libs engine bitwriter`"
+	    LLVM_LIBS="`$LLVM_CONFIG --libs engine bitwriter mcjit`"
             if test "x$enable_opencl" = xyes; then
-                LLVM_LIBS="${LLVM_LIBS} `llvm-config --libs ipo linker instrumentation mcjit`"
+                LLVM_LIBS="${LLVM_LIBS} `$LLVM_CONFIG --libs ipo linker instrumentation`"
             fi
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
@@ -2007,7 +2007,7 @@ if test "x$with_gallium_drivers" != x; then
                 USE_R600_LLVM_COMPILER=yes;
             fi
             if test "x$enable_opencl" = xyes -a "x$with_llvm_shared_libs" = xno; then
-                LLVM_LIBS="${LLVM_LIBS} `llvm-config --libs bitreader asmparser`"
+                LLVM_LIBS="${LLVM_LIBS} `$LLVM_CONFIG --libs bitreader asmparser`"
             fi
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
             ;;
