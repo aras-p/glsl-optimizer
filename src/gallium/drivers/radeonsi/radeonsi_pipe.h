@@ -75,7 +75,6 @@ struct r600_atom_surface_sync {
 };
 
 enum r600_pipe_state_id {
-	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
@@ -137,12 +136,6 @@ struct r600_pipe_rasterizer {
 	unsigned			pa_cl_vs_out_cntl;
 	float				offset_units;
 	float				offset_scale;
-};
-
-struct r600_pipe_blend {
-	struct r600_pipe_state		rstate;
-	unsigned			cb_target_mask;
-	unsigned			cb_color_control;
 };
 
 struct r600_pipe_dsa {
@@ -243,8 +236,6 @@ struct r600_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
-	unsigned			cb_target_mask;
-	unsigned			cb_color_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
 	unsigned			pa_cl_clip_cntl;
@@ -420,7 +411,6 @@ void *si_create_vertex_elements(struct pipe_context *ctx,
 				unsigned count,
 				const struct pipe_vertex_element *elements);
 void r600_delete_vertex_element(struct pipe_context *ctx, void *state);
-void r600_bind_blend_state(struct pipe_context *ctx, void *state);
 void r600_bind_dsa_state(struct pipe_context *ctx, void *state);
 void r600_bind_rs_state(struct pipe_context *ctx, void *state);
 void r600_delete_rs_state(struct pipe_context *ctx, void *state);

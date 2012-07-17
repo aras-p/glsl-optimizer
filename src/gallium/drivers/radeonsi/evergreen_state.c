@@ -45,76 +45,7 @@
 #include "sid.h"
 #include "r600_resource.h"
 #include "radeonsi_pipe.h"
-
-static uint32_t si_translate_blend_function(int blend_func)
-{
-	switch (blend_func) {
-	case PIPE_BLEND_ADD:
-		return V_028780_COMB_DST_PLUS_SRC;
-	case PIPE_BLEND_SUBTRACT:
-		return V_028780_COMB_SRC_MINUS_DST;
-	case PIPE_BLEND_REVERSE_SUBTRACT:
-		return V_028780_COMB_DST_MINUS_SRC;
-	case PIPE_BLEND_MIN:
-		return V_028780_COMB_MIN_DST_SRC;
-	case PIPE_BLEND_MAX:
-		return V_028780_COMB_MAX_DST_SRC;
-	default:
-		R600_ERR("Unknown blend function %d\n", blend_func);
-		assert(0);
-		break;
-	}
-	return 0;
-}
-
-static uint32_t si_translate_blend_factor(int blend_fact)
-{
-	switch (blend_fact) {
-	case PIPE_BLENDFACTOR_ONE:
-		return V_028780_BLEND_ONE;
-	case PIPE_BLENDFACTOR_SRC_COLOR:
-		return V_028780_BLEND_SRC_COLOR;
-	case PIPE_BLENDFACTOR_SRC_ALPHA:
-		return V_028780_BLEND_SRC_ALPHA;
-	case PIPE_BLENDFACTOR_DST_ALPHA:
-		return V_028780_BLEND_DST_ALPHA;
-	case PIPE_BLENDFACTOR_DST_COLOR:
-		return V_028780_BLEND_DST_COLOR;
-	case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
-		return V_028780_BLEND_SRC_ALPHA_SATURATE;
-	case PIPE_BLENDFACTOR_CONST_COLOR:
-		return V_028780_BLEND_CONSTANT_COLOR;
-	case PIPE_BLENDFACTOR_CONST_ALPHA:
-		return V_028780_BLEND_CONSTANT_ALPHA;
-	case PIPE_BLENDFACTOR_ZERO:
-		return V_028780_BLEND_ZERO;
-	case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-		return V_028780_BLEND_ONE_MINUS_SRC_COLOR;
-	case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-		return V_028780_BLEND_ONE_MINUS_SRC_ALPHA;
-	case PIPE_BLENDFACTOR_INV_DST_ALPHA:
-		return V_028780_BLEND_ONE_MINUS_DST_ALPHA;
-	case PIPE_BLENDFACTOR_INV_DST_COLOR:
-		return V_028780_BLEND_ONE_MINUS_DST_COLOR;
-	case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-		return V_028780_BLEND_ONE_MINUS_CONSTANT_COLOR;
-	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
-		return V_028780_BLEND_ONE_MINUS_CONSTANT_ALPHA;
-	case PIPE_BLENDFACTOR_SRC1_COLOR:
-		return V_028780_BLEND_SRC1_COLOR;
-	case PIPE_BLENDFACTOR_SRC1_ALPHA:
-		return V_028780_BLEND_SRC1_ALPHA;
-	case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-		return V_028780_BLEND_INV_SRC1_COLOR;
-	case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
-		return V_028780_BLEND_INV_SRC1_ALPHA;
-	default:
-		R600_ERR("Bad blend factor %d not supported!\n", blend_fact);
-		assert(0);
-		break;
-	}
-	return 0;
-}
+#include "si_state.h"
 
 #if 0
 static uint32_t r600_translate_stencil_op(int s_op)
@@ -850,83 +781,6 @@ static void evergreen_set_blend_color(struct pipe_context *ctx,
 	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
 	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
 	r600_context_pipe_state_set(rctx, rstate);
-}
-
-static void *evergreen_create_blend_state(struct pipe_context *ctx,
-					const struct pipe_blend_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
-	struct r600_pipe_state *rstate;
-	uint32_t color_control, target_mask;
-	/* FIXME there is more then 8 framebuffer */
-	unsigned blend_cntl[8];
-
-	if (blend == NULL) {
-		return NULL;
-	}
-
-	rstate = &blend->rstate;
-
-	rstate->id = R600_PIPE_STATE_BLEND;
-
-	target_mask = 0;
-	color_control = S_028808_MODE(V_028808_CB_NORMAL);
-	if (state->logicop_enable) {
-		color_control |= S_028808_ROP3(state->logicop_func | (state->logicop_func << 4));
-	} else {
-		color_control |= S_028808_ROP3(0xcc);
-	}
-	/* we pretend 8 buffer are used, CB_SHADER_MASK will disable unused one */
-	if (state->independent_blend_enable) {
-		for (int i = 0; i < 8; i++) {
-			target_mask |= (state->rt[i].colormask << (4 * i));
-		}
-	} else {
-		for (int i = 0; i < 8; i++) {
-			target_mask |= (state->rt[0].colormask << (4 * i));
-		}
-	}
-	blend->cb_target_mask = target_mask;
-
-	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
-				color_control, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, ~0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1, ~0, NULL, 0);
-
-	for (int i = 0; i < 8; i++) {
-		/* state->rt entries > 0 only written if independent blending */
-		const int j = state->independent_blend_enable ? i : 0;
-
-		unsigned eqRGB = state->rt[j].rgb_func;
-		unsigned srcRGB = state->rt[j].rgb_src_factor;
-		unsigned dstRGB = state->rt[j].rgb_dst_factor;
-		unsigned eqA = state->rt[j].alpha_func;
-		unsigned srcA = state->rt[j].alpha_src_factor;
-		unsigned dstA = state->rt[j].alpha_dst_factor;
-
-		blend_cntl[i] = 0;
-		if (!state->rt[j].blend_enable)
-			continue;
-
-		blend_cntl[i] |= S_028780_ENABLE(1);
-		blend_cntl[i] |= S_028780_COLOR_COMB_FCN(si_translate_blend_function(eqRGB));
-		blend_cntl[i] |= S_028780_COLOR_SRCBLEND(si_translate_blend_factor(srcRGB));
-		blend_cntl[i] |= S_028780_COLOR_DESTBLEND(si_translate_blend_factor(dstRGB));
-
-		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
-			blend_cntl[i] |= S_028780_SEPARATE_ALPHA_BLEND(1);
-			blend_cntl[i] |= S_028780_ALPHA_COMB_FCN(si_translate_blend_function(eqA));
-			blend_cntl[i] |= S_028780_ALPHA_SRCBLEND(si_translate_blend_factor(srcA));
-			blend_cntl[i] |= S_028780_ALPHA_DESTBLEND(si_translate_blend_factor(dstA));
-		}
-	}
-	for (int i = 0; i < 8; i++) {
-		r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl[i], NULL, 0);
-	}
-
-	return rstate;
 }
 
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
@@ -1880,7 +1734,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 void cayman_init_state_functions(struct r600_context *rctx)
 {
-	rctx->context.create_blend_state = evergreen_create_blend_state;
+	si_init_state_functions(rctx);
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
 	rctx->context.create_fs_state = si_create_shader_state;
 	rctx->context.create_rasterizer_state = evergreen_create_rs_state;
@@ -1888,7 +1742,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
 	rctx->context.create_vs_state = si_create_shader_state;
-	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
@@ -1896,7 +1749,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
-	rctx->context.delete_blend_state = r600_delete_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
 	rctx->context.delete_fs_state = r600_delete_ps_shader;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;

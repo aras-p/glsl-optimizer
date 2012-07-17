@@ -29,8 +29,15 @@
 
 #include "radeonsi_pm4.h"
 
+struct si_state_blend {
+	struct si_pm4_state	pm4;
+	uint32_t		cb_target_mask;
+	uint32_t		cb_color_control;
+};
+
 union si_state {
 	struct {
+		struct si_state_blend	*blend;
 	} named;
 	struct si_pm4_state	*array[0];
 };
@@ -61,5 +68,7 @@ union si_state {
 			(rctx)->queued.named.member = (value); \
 		} \
 	} while(0);
+
+void si_init_state_functions(struct r600_context *rctx);
 
 #endif

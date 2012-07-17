@@ -33,6 +33,7 @@
 #include "r600_hw_context_priv.h"
 #include "radeonsi_pipe.h"
 #include "sid.h"
+#include "si_state.h"
 
 static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *atom)
 {
@@ -119,22 +120,6 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 }
 
 /* common state between evergreen and r600 */
-void r600_bind_blend_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
-	struct r600_pipe_state *rstate;
-
-	if (state == NULL)
-		return;
-	rstate = &blend->rstate;
-	rctx->states[rstate->id] = rstate;
-	rctx->cb_target_mask = blend->cb_target_mask;
-	rctx->cb_color_control = blend->cb_color_control;
-
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void r600_set_stencil_ref(struct pipe_context *ctx,
 				 const struct r600_stencil_ref *state)
 {
@@ -685,6 +670,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	unsigned prim, mask, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
+	struct si_state_blend *blend;
 	int i;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
@@ -695,6 +681,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (!rctx->ps_shader || !rctx->vs_shader)
 		return;
+
+	/* only temporary */
+	if (!rctx->queued.named.blend)
+		return;
+	blend = rctx->queued.named.blend;
 
 	si_update_derived_state(rctx);
 
@@ -745,7 +736,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, NULL, 0);
+		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, blend->cb_target_mask & mask, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
@@ -763,7 +754,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
-	r600_pipe_state_mod_reg(&rctx->vgt, rctx->cb_target_mask & mask);
+	r600_pipe_state_mod_reg(&rctx->vgt, blend->cb_target_mask & mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, ~0);
 	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
