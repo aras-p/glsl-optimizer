@@ -1849,7 +1849,7 @@ if test "x$enable_gallium_llvm" = xyes; then
 	else
 	    LLVM_LIBS="`$LLVM_CONFIG --libs engine bitwriter`"
             if test "x$enable_opencl" = xyes; then
-                LLVM_LIBS="${LLVM_LIBS} `llvm-config --libs ipo linker instrumentation`"
+                LLVM_LIBS="${LLVM_LIBS} `llvm-config --libs ipo linker instrumentation mcjit`"
             fi
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
