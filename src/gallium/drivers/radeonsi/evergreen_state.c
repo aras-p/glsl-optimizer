@@ -1245,37 +1245,6 @@ static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, 
 {
 }
 
-static void evergreen_set_clip_state(struct pipe_context *ctx,
-				const struct pipe_clip_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-
-	if (rstate == NULL)
-		return;
-
-	rctx->clip = *state;
-	rstate->id = R600_PIPE_STATE_CLIP;
-	for (int i = 0; i < 6; i++) {
-		r600_pipe_state_add_reg(rstate,
-					R_0285BC_PA_CL_UCP_0_X + i * 16,
-					fui(state->ucp[i][0]), NULL, 0);
-		r600_pipe_state_add_reg(rstate,
-					R_0285C0_PA_CL_UCP_0_Y + i * 16,
-					fui(state->ucp[i][1]) , NULL, 0);
-		r600_pipe_state_add_reg(rstate,
-					R_0285C4_PA_CL_UCP_0_Z + i * 16,
-					fui(state->ucp[i][2]), NULL, 0);
-		r600_pipe_state_add_reg(rstate,
-					R_0285C8_PA_CL_UCP_0_W + i * 16,
-					fui(state->ucp[i][3]), NULL, 0);
-	}
-
-	free(rctx->states[R600_PIPE_STATE_CLIP]);
-	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void evergreen_set_polygon_stipple(struct pipe_context *ctx,
 					 const struct pipe_poly_stipple *state)
 {
@@ -1735,7 +1704,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
 	rctx->context.delete_vs_state = r600_delete_vs_shader;
-	rctx->context.set_clip_state = evergreen_set_clip_state;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;

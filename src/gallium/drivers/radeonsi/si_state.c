@@ -193,10 +193,35 @@ static void si_set_blend_color(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, blend_color, pm4);
 }
 
+static void si_set_clip_state(struct pipe_context *ctx,
+			      const struct pipe_clip_state *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+
+	if (pm4 == NULL)
+		return;
+
+	for (int i = 0; i < 6; i++) {
+		si_pm4_set_reg(pm4, R_0285BC_PA_CL_UCP_0_X + i * 16,
+			       fui(state->ucp[i][0]));
+		si_pm4_set_reg(pm4, R_0285C0_PA_CL_UCP_0_Y + i * 16,
+			       fui(state->ucp[i][1]));
+		si_pm4_set_reg(pm4, R_0285C4_PA_CL_UCP_0_Z + i * 16,
+			       fui(state->ucp[i][2]));
+		si_pm4_set_reg(pm4, R_0285C8_PA_CL_UCP_0_W + i * 16,
+			       fui(state->ucp[i][3]));
+        }
+
+	si_pm4_set_state(rctx, clip, pm4);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
 	rctx->context.bind_blend_state = si_bind_blend_state;
 	rctx->context.delete_blend_state = si_delete_blend_state;
 	rctx->context.set_blend_color = si_set_blend_color;
+
+	rctx->context.set_clip_state = si_set_clip_state;
 }

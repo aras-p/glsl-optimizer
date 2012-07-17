@@ -39,6 +39,7 @@ union si_state {
 	struct {
 		struct si_state_blend	*blend;
 		struct si_pm4_state	*blend_color;
+		struct si_pm4_state	*clip;
 	} named;
 	struct si_pm4_state	*array[0];
 };
