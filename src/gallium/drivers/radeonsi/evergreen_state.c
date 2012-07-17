@@ -763,26 +763,6 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static void evergreen_set_blend_color(struct pipe_context *ctx,
-					const struct pipe_blend_color *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_BLEND_COLOR;
-	r600_pipe_state_add_reg(rstate, R_028414_CB_BLEND_RED, fui(state->color[0]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028418_CB_BLEND_GREEN, fui(state->color[1]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02841C_CB_BLEND_BLUE, fui(state->color[2]), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028420_CB_BLEND_ALPHA, fui(state->color[3]), NULL, 0);
-
-	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
-	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 				   const struct pipe_depth_stencil_alpha_state *state)
 {
@@ -1755,7 +1735,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
 	rctx->context.delete_vs_state = r600_delete_vs_shader;
-	rctx->context.set_blend_color = evergreen_set_blend_color;
 	rctx->context.set_clip_state = evergreen_set_clip_state;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;

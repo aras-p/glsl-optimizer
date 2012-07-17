@@ -176,9 +176,27 @@ static void si_delete_blend_state(struct pipe_context *ctx, void *state)
 	si_pm4_delete_state(rctx, blend, (struct si_state_blend *)state);
 }
 
+static void si_set_blend_color(struct pipe_context *ctx,
+			       const struct pipe_blend_color *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+
+        if (pm4 == NULL)
+                return;
+
+	si_pm4_set_reg(pm4, R_028414_CB_BLEND_RED, fui(state->color[0]));
+	si_pm4_set_reg(pm4, R_028418_CB_BLEND_GREEN, fui(state->color[1]));
+	si_pm4_set_reg(pm4, R_02841C_CB_BLEND_BLUE, fui(state->color[2]));
+	si_pm4_set_reg(pm4, R_028420_CB_BLEND_ALPHA, fui(state->color[3]));
+
+	si_pm4_set_state(rctx, blend_color, pm4);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
 	rctx->context.bind_blend_state = si_bind_blend_state;
 	rctx->context.delete_blend_state = si_delete_blend_state;
+	rctx->context.set_blend_color = si_set_blend_color;
 }

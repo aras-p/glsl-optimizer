@@ -75,7 +75,6 @@ struct r600_atom_surface_sync {
 };
 
 enum r600_pipe_state_id {
-	R600_PIPE_STATE_BLEND_COLOR,
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
 	R600_PIPE_STATE_CLIP,
