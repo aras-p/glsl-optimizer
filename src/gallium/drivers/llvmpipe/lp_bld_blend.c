@@ -152,20 +152,22 @@ lp_build_blend(struct lp_build_context *bld,
             }
          } else if(bld->type.floating && func == PIPE_BLEND_SUBTRACT) {
             result = lp_build_add(bld, src, dst);
-            result = lp_build_mul(bld, result, src_factor);
 
             if (factor_src < factor_dst) {
+               result = lp_build_mul(bld, result, src_factor);
                return lp_build_sub(bld, result, dst);
             } else {
+               result = lp_build_mul(bld, result, dst_factor);
                return lp_build_sub(bld, src, result);
             }
          } else if(bld->type.floating && func == PIPE_BLEND_REVERSE_SUBTRACT) {
             result = lp_build_add(bld, src, dst);
-            result = lp_build_mul(bld, result, src_factor);
 
             if (factor_src < factor_dst) {
+               result = lp_build_mul(bld, result, src_factor);
                return lp_build_sub(bld, dst, result);
             } else {
+               result = lp_build_mul(bld, result, dst_factor);
                return lp_build_sub(bld, result, src);
             }
          }
