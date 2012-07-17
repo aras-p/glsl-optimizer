@@ -131,7 +131,7 @@ gbm_gallium_drm_bo_create_from_egl_image(struct gbm_device *gbm,
    gdrm->screen->resource_get_handle(gdrm->screen, bo->resource, &whandle);
 
    bo->base.base.handle.u32 = whandle.handle;
-   bo->base.base.pitch      = whandle.stride;
+   bo->base.base.stride      = whandle.stride;
 
    return &bo->base.base;
 }
@@ -180,7 +180,7 @@ gbm_gallium_drm_bo_create(struct gbm_device *gbm,
    gdrm->screen->resource_get_handle(gdrm->screen, bo->resource, &whandle);
 
    bo->base.base.handle.u32 = whandle.handle;
-   bo->base.base.pitch      = whandle.stride;
+   bo->base.base.stride      = whandle.stride;
 
    return &bo->base.base;
 }
