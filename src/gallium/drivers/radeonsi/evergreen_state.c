@@ -1254,49 +1254,6 @@ static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample
 {
 }
 
-static void evergreen_set_scissor_state(struct pipe_context *ctx,
-					const struct pipe_scissor_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	uint32_t tl, br;
-
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_SCISSOR;
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
-	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
-	r600_pipe_state_add_reg(rstate,
-				R_028210_PA_SC_CLIPRECT_0_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028214_PA_SC_CLIPRECT_0_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028218_PA_SC_CLIPRECT_1_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_02821C_PA_SC_CLIPRECT_1_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028220_PA_SC_CLIPRECT_2_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028224_PA_SC_CLIPRECT_2_BR, br,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028228_PA_SC_CLIPRECT_3_TL, tl,
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_02822C_PA_SC_CLIPRECT_3_BR, br,
-				NULL, 0);
-
-	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
-	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 static void evergreen_set_viewport_state(struct pipe_context *ctx,
 					const struct pipe_viewport_state *state)
 {
@@ -1709,7 +1666,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
-	rctx->context.set_scissor_state = evergreen_set_scissor_state;
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;

@@ -216,6 +216,30 @@ static void si_set_clip_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, clip, pm4);
 }
 
+static void si_set_scissor_state(struct pipe_context *ctx,
+				 const struct pipe_scissor_state *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	uint32_t tl, br;
+
+	if (pm4 == NULL)
+		return;
+
+	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
+	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
+	si_pm4_set_reg(pm4, R_028210_PA_SC_CLIPRECT_0_TL, tl);
+	si_pm4_set_reg(pm4, R_028214_PA_SC_CLIPRECT_0_BR, br);
+	si_pm4_set_reg(pm4, R_028218_PA_SC_CLIPRECT_1_TL, tl);
+	si_pm4_set_reg(pm4, R_02821C_PA_SC_CLIPRECT_1_BR, br);
+	si_pm4_set_reg(pm4, R_028220_PA_SC_CLIPRECT_2_TL, tl);
+	si_pm4_set_reg(pm4, R_028224_PA_SC_CLIPRECT_2_BR, br);
+	si_pm4_set_reg(pm4, R_028228_PA_SC_CLIPRECT_3_TL, tl);
+	si_pm4_set_reg(pm4, R_02822C_PA_SC_CLIPRECT_3_BR, br);
+
+	si_pm4_set_state(rctx, scissor, pm4);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
@@ -224,4 +248,5 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_blend_color = si_set_blend_color;
 
 	rctx->context.set_clip_state = si_set_clip_state;
+	rctx->context.set_scissor_state = si_set_scissor_state;
 }
