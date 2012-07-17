@@ -632,7 +632,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 	}
 
 	if ((rctx->ps_shader->shader.fs_write_all &&
-	     (rctx->ps_shader->shader.nr_cbufs != rctx->nr_cbufs)) ||
+	     (rctx->ps_shader->shader.nr_cbufs != rctx->framebuffer.nr_cbufs)) ||
 	    (rctx->sprite_coord_enable &&
 	     (rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable))) {
 		si_pipe_shader_destroy(&rctx->context, rctx->ps_shader);

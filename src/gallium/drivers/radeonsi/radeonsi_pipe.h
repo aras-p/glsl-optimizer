@@ -79,7 +79,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_VGT,
-	R600_PIPE_STATE_FRAMEBUFFER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_STATE_STENCIL_REF,
 	R600_PIPE_STATE_PS_SHADER,
@@ -256,7 +255,6 @@ struct r600_context {
 	boolean				export_16bpc;
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
-	unsigned			nr_cbufs;
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
 	boolean				shader_dirty;

@@ -572,7 +572,7 @@ int si_pipe_shader_create(
 	si_shader_ctx.type = si_shader_ctx.parse.FullHeader.Processor.Processor;
 	si_shader_ctx.rctx = rctx;
 
-	shader->shader.nr_cbufs = rctx->nr_cbufs;
+	shader->shader.nr_cbufs = rctx->framebuffer.nr_cbufs;
 
 	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
 	 * conversion fails. */

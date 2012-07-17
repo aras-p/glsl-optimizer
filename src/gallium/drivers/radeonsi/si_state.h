@@ -47,6 +47,7 @@ union si_state {
 		struct si_pm4_state		*clip;
 		struct si_pm4_state		*scissor;
 		struct si_state_viewport	*viewport;
+		struct si_pm4_state		*framebuffer;
 	} named;
 	struct si_pm4_state	*array[0];
 };
