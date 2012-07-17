@@ -1006,12 +1006,11 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	}
 
 	if (tmp->is_depth && !tmp->is_flushing_texture) {
-		r600_init_flushed_depth_texture(ctx, texture, NULL);
-		tmp = tmp->flushed_depth_texture;
-		if (!tmp) {
+		if (!r600_init_flushed_depth_texture(ctx, texture, NULL)) {
 			FREE(view);
 			return NULL;
 		}
+		tmp = tmp->flushed_depth_texture;
 	}
 
 	endian = r600_colorformat_endian_swap(format);

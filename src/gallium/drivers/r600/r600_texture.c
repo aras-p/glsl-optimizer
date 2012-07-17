@@ -738,7 +738,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 								  stride, 0, buf, FALSE, &surface);
 }
 
-void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_resource_texture **staging)
 {
@@ -748,7 +748,7 @@ void r600_init_flushed_depth_texture(struct pipe_context *ctx,
 			staging : &rtex->flushed_depth_texture;
 
 	if (!staging && rtex->flushed_depth_texture)
-		return; /* it's ready */
+		return true; /* it's ready */
 
 	resource.target = texture->target;
 	resource.format = texture->format;
@@ -768,11 +768,11 @@ void r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	*flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (*flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold flushed depth\n");
-		return;
+		return false;
 	}
 
 	(*flushed_depth_texture)->is_flushing_texture = TRUE;
-
+	return true;
 }
 
 void r600_texture_depth_flush(struct pipe_context *ctx,
@@ -783,19 +783,14 @@ void r600_texture_depth_flush(struct pipe_context *ctx,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 
-	r600_init_flushed_depth_texture(ctx, texture, staging);
+	if (!r600_init_flushed_depth_texture(ctx, texture, staging))
+		return;
 
 	if (staging) {
-		if (!*staging)
-			return; /* error */
-
 		r600_blit_uncompress_depth(ctx, rtex, *staging,
 					   first_level, last_level,
 					   first_layer, last_layer);
 	} else {
-		if (!rtex->flushed_depth_texture)
-			return; /* error */
-
 		r600_blit_uncompress_depth(ctx, rtex, NULL,
 					   first_level, last_level,
 					   first_layer, last_layer);

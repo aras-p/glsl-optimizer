@@ -89,7 +89,7 @@ static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
 	return (struct r600_resource*)r;
 }
 
-void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_resource_texture **staging);
 void r600_texture_depth_flush(struct pipe_context *ctx,
