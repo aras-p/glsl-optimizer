@@ -470,10 +470,7 @@ dri2_setup_screen(_EGLDisplay *disp)
          api_mask = 1 << __DRI_API_OPENGL;
    } else {
       assert(dri2_dpy->swrast);
-      if (dri2_dpy->swrast->base.version >= 2)
-         api_mask = 1 << __DRI_API_OPENGL | 1 << __DRI_API_GLES | 1 << __DRI_API_GLES2;
-      else
-         api_mask = 1 << __DRI_API_OPENGL;
+      api_mask = 1 << __DRI_API_OPENGL | 1 << __DRI_API_GLES | 1 << __DRI_API_GLES2;
    }
 
    disp->ClientAPIs = 0;
@@ -492,11 +489,9 @@ dri2_setup_screen(_EGLDisplay *disp)
       }
    } else {
       assert(dri2_dpy->swrast);
-      if (dri2_dpy->swrast->base.version >= 2) {
-         disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
-         disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
-         disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
-      }
+      disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
+      disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
+      disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
    }
 
    if (dri2_dpy->image) {
@@ -733,24 +728,13 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       }
    } else {
       assert(dri2_dpy->swrast);
-      if (dri2_dpy->swrast->base.version >= 2) {
-	 dri2_ctx->dri_context =
-	    dri2_dpy->swrast->createNewContextForAPI(dri2_dpy->dri_screen,
-						     api,
-						     dri_config,
-						     dri2_ctx_shared ? 
-						     dri2_ctx_shared->dri_context : NULL,
-						     dri2_ctx);
-      } else if (api == __DRI_API_OPENGL) {
-	 dri2_ctx->dri_context =
-	    dri2_dpy->core->createNewContext(dri2_dpy->dri_screen,
-					     dri_config,
-					     dri2_ctx_shared ?
-					     dri2_ctx_shared->dri_context : NULL,
-					     dri2_ctx);
-      } else {
-	 /* fail */
-      }
+      dri2_ctx->dri_context =
+         dri2_dpy->swrast->createNewContextForAPI(dri2_dpy->dri_screen,
+                                                  api,
+                                                  dri_config,
+                                                  dri2_ctx_shared ?
+                                                  dri2_ctx_shared->dri_context : NULL,
+                                                  dri2_ctx);
    }
 
    if (!dri2_ctx->dri_context)
