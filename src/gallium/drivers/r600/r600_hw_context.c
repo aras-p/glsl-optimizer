@@ -1356,15 +1356,4 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 
 	ctx->num_cs_dw_streamout_end = 0;
-
-#if 0
-	for (i = 0; i < ctx->num_so_targets; i++) {
-		if (!t[i])
-			continue;
-
-		uint32_t *ptr = ctx->ws->buffer_map(t[i]->filled_size->buf, ctx->cs, RADEON_USAGE_READ);
-		printf("FILLED_SIZE%i: %u\n", i, *ptr);
-		ctx->ws->buffer_unmap(t[i]->filled_size->buf);
-	}
-#endif
 }
