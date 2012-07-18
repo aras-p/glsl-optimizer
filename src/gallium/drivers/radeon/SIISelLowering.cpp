@@ -36,6 +36,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
+  setOperationAction(ISD::BR_CC, MVT::i32, Custom);
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
@@ -191,5 +192,41 @@ void SITargetLowering::lowerUSE_SGPR(MachineInstr *MI,
 
   unsigned newReg = dstClass->getRegister(newIndex);
   addLiveIn(MI, MF, MRI, TII, newReg); 
+}
+
+//===----------------------------------------------------------------------===//
+// Custom DAG Lowering Operations
+//===----------------------------------------------------------------------===//
+
+SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
+{
+  switch (Op.getOpcode()) {
+  default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::BR_CC: return LowerBR_CC(Op, DAG);
+  }
+}
+
+SDValue SITargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
+{
+  SDValue Chain = Op.getOperand(0);
+  SDValue CC = Op.getOperand(1);
+  SDValue LHS   = Op.getOperand(2);
+  SDValue RHS   = Op.getOperand(3);
+  SDValue JumpT  = Op.getOperand(4);
+  SDValue CmpValue;
+  SDValue Result;
+  CmpValue = DAG.getNode(
+      ISD::SETCC,
+      Op.getDebugLoc(),
+      MVT::i1,
+      LHS, RHS,
+      CC);
+
+  Result = DAG.getNode(
+      AMDILISD::BRANCH_COND,
+      CmpValue.getDebugLoc(),
+      MVT::Other, Chain,
+      JumpT, CmpValue);
+  return Result;
 }
 

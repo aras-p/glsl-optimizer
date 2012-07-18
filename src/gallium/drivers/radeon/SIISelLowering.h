@@ -37,10 +37,14 @@ class SITargetLowering : public AMDGPUTargetLowering
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
   void lowerUSE_SGPR(MachineInstr *MI, MachineFunction * MF,
                      MachineRegisterInfo & MRI) const;
+
+  SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+
 public:
   SITargetLowering(TargetMachine &tm);
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
                                               MachineBasicBlock * BB) const;
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 };
 
 } // End namespace llvm
