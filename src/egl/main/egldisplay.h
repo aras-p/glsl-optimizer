@@ -103,9 +103,7 @@ struct _egl_extensions
    EGLBoolean KHR_reusable_sync;
    EGLBoolean KHR_fence_sync;
 
-   EGLBoolean KHR_surfaceless_gles1;
-   EGLBoolean KHR_surfaceless_gles2;
-   EGLBoolean KHR_surfaceless_opengl;
+   EGLBoolean KHR_surfaceless_context;
 
    EGLBoolean NOK_swap_region;
    EGLBoolean NOK_texture_from_pixmap;

@@ -427,9 +427,7 @@ eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
 
    if (!config) {
       /* config may be NULL if surfaceless */
-      if (!disp->Extensions.KHR_surfaceless_gles1 &&
-          !disp->Extensions.KHR_surfaceless_gles2 &&
-          !disp->Extensions.KHR_surfaceless_opengl)
+      if (!disp->Extensions.KHR_surfaceless_context)
          RETURN_EGL_ERROR(disp, EGL_BAD_CONFIG, EGL_NO_CONTEXT);
    }
 
@@ -487,9 +485,7 @@ eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read,
       RETURN_EGL_ERROR(disp, EGL_BAD_CONTEXT, EGL_FALSE);
    if (!draw_surf || !read_surf) {
       /* surfaces may be NULL if surfaceless */
-      if (!disp->Extensions.KHR_surfaceless_gles1 &&
-          !disp->Extensions.KHR_surfaceless_gles2 &&
-          !disp->Extensions.KHR_surfaceless_opengl)
+      if (!disp->Extensions.KHR_surfaceless_context)
          RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
 
       if ((!draw_surf && draw != EGL_NO_SURFACE) ||

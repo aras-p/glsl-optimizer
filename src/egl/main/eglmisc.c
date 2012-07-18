@@ -107,9 +107,7 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(KHR_reusable_sync);
    _EGL_CHECK_EXTENSION(KHR_fence_sync);
 
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles1);
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_gles2);
-   _EGL_CHECK_EXTENSION(KHR_surfaceless_opengl);
+   _EGL_CHECK_EXTENSION(KHR_surfaceless_context);
 
    _EGL_CHECK_EXTENSION(NOK_swap_region);
    _EGL_CHECK_EXTENSION(NOK_texture_from_pixmap);

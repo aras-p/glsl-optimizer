@@ -483,15 +483,11 @@ dri2_setup_screen(_EGLDisplay *disp)
 
    if (dri2_dpy->dri2) {
       if (dri2_dpy->dri2->base.version >= 2) {
-         disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
-         disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
-         disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+         disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
       }
    } else {
       assert(dri2_dpy->swrast);
-      disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
-      disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
-      disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+      disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
    }
 
    if (dri2_dpy->image) {

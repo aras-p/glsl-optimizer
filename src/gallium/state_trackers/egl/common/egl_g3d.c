@@ -583,9 +583,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
    dpy->Extensions.KHR_reusable_sync = EGL_TRUE;
    dpy->Extensions.KHR_fence_sync = EGL_TRUE;
 
-   dpy->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
-   dpy->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
-   dpy->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+   dpy->Extensions.KHR_surfaceless_context = EGL_TRUE;
 
    if (dpy->Platform == _EGL_PLATFORM_DRM) {
       dpy->Extensions.MESA_drm_display = EGL_TRUE;

@@ -244,7 +244,6 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
    _EGLThreadInfo *t = _eglGetCurrentThread();
    _EGLDisplay *dpy;
    EGLint conflict_api;
-   EGLBoolean surfaceless;
 
    if (_eglIsCurrentThreadDummy())
       return _eglError(EGL_BAD_ALLOC, "eglMakeCurrent");
@@ -257,22 +256,8 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
    }
 
    dpy = ctx->Resource.Display;
-   switch (_eglGetContextAPIBit(ctx)) {
-   case EGL_OPENGL_ES_BIT:
-      surfaceless = dpy->Extensions.KHR_surfaceless_gles1;
-      break;
-   case EGL_OPENGL_ES2_BIT:
-      surfaceless = dpy->Extensions.KHR_surfaceless_gles2;
-      break;
-   case EGL_OPENGL_BIT:
-      surfaceless = dpy->Extensions.KHR_surfaceless_opengl;
-      break;
-   default:
-      surfaceless = EGL_FALSE;
-      break;
-   }
-
-   if (!surfaceless && (draw == NULL || read == NULL))
+   if (!dpy->Extensions.KHR_surfaceless_context
+       && (draw == NULL || read == NULL))
       return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
 
    /*
