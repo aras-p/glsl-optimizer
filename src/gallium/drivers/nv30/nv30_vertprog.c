@@ -149,8 +149,8 @@ nv30_vertprog_validate(struct nv30_context *nv30)
             inst     = vp->insns[reloc->location].data;
             target   = vp->data->start + reloc->target;
 
-            inst[1] &= ~0x0003fc000;
-            inst[1] |= target << 14;
+            inst[1] &= ~0x0007fc000;
+            inst[1] |= (target & 0x1ff) << 14;
             reloc++;
          }
       } else {
@@ -159,7 +159,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
             target   = vp->data->start + reloc->target;
 
             inst[1] &= ~0x0001ff000;
-            inst[1] |= target << 12;
+            inst[1] |= (target & 0x1ff) << 12;
             reloc++;
          }
       }

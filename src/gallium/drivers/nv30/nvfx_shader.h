@@ -416,7 +416,7 @@
 
 struct nvfx_reg {
 	int8_t type;
-	uint32_t index;
+	int32_t index;
 };
 
 struct nvfx_src {

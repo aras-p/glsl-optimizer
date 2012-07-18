@@ -135,12 +135,13 @@ emit_src(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
    case NVFXSR_CONST:
       sr |= (NVFX_VP(SRC_REG_TYPE_CONST) <<
              NVFX_VP(SRC_REG_TYPE_SHIFT));
-      if (src.reg.index < 512) {
+      if (src.reg.index < 256 && src.reg.index >= -256) {
          reloc.location = vp->nr_insns - 1;
          reloc.target = src.reg.index;
          util_dynarray_append(&vp->const_relocs, struct nvfx_relocation, reloc);
       } else {
-         hw[1] |= (src.reg.index - 512) << NVFX_VP(INST_CONST_SRC_SHIFT);
+         hw[1] |= (src.reg.index << NVFX_VP(INST_CONST_SRC_SHIFT)) &
+               NVFX_VP(INST_CONST_SRC_MASK);
       }
       break;
    case NVFXSR_NONE:
@@ -169,6 +170,7 @@ emit_src(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
          hw[0] |= NVFX_VP(INST_INDEX_INPUT);
       else
          assert(0);
+
       if(src.indirect_reg)
          hw[0] |= NVFX_VP(INST_ADDR_REG_SELECT_1);
       hw[0] |= src.indirect_swz << NVFX_VP(INST_ADDR_SWZ_SHIFT);
@@ -367,7 +369,12 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
       src.reg = nvfx_reg(NVFXSR_INPUT, fsrc->Register.Index);
       break;
    case TGSI_FILE_CONSTANT:
-      src.reg = vpc->r_const[fsrc->Register.Index];
+      if(fsrc->Register.Indirect) {
+         src.reg = vpc->r_const[0];
+         src.reg.index = fsrc->Register.Index;
+      } else {
+         src.reg = vpc->r_const[fsrc->Register.Index];
+      }
       break;
    case TGSI_FILE_IMMEDIATE:
       src.reg = vpc->imm[fsrc->Register.Index];

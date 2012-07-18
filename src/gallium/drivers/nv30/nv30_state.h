@@ -63,7 +63,7 @@ struct nv30_sampler_view {
 
 struct nv30_shader_reloc {
    unsigned location;
-   unsigned target;
+   int target;
 };
 
 struct nv30_vertprog_exec {
