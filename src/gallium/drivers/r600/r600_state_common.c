@@ -1111,7 +1111,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 			struct r600_so_target *t = (struct r600_so_target*)info.count_from_stream_output;
 			uint64_t va = r600_resource_va(&rctx->screen->screen, (void*)t->filled_size);
 
-			r600_write_context_reg(cs, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 			r600_write_context_reg(cs, R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE, t->stride_in_dw);
 
 			cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
