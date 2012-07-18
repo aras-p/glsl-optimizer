@@ -308,7 +308,7 @@ struct dri2_extension_match {
 
 static struct dri2_extension_match dri2_driver_extensions[] = {
    { __DRI_CORE, 1, offsetof(struct dri2_egl_display, core) },
-   { __DRI_DRI2, 1, offsetof(struct dri2_egl_display, dri2) },
+   { __DRI_DRI2, 2, offsetof(struct dri2_egl_display, dri2) },
    { NULL, 0, 0 }
 };
 
@@ -464,10 +464,7 @@ dri2_setup_screen(_EGLDisplay *disp)
    unsigned int api_mask;
 
    if (dri2_dpy->dri2) {
-      if (dri2_dpy->dri2->base.version >= 2)
-         api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
-      else
-         api_mask = 1 << __DRI_API_OPENGL;
+      api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
    } else {
       assert(dri2_dpy->swrast);
       api_mask = 1 << __DRI_API_OPENGL | 1 << __DRI_API_GLES | 1 << __DRI_API_GLES2;
@@ -481,14 +478,8 @@ dri2_setup_screen(_EGLDisplay *disp)
    if (api_mask & (1 << __DRI_API_GLES2))
       disp->ClientAPIs |= EGL_OPENGL_ES2_BIT;
 
-   if (dri2_dpy->dri2) {
-      if (dri2_dpy->dri2->base.version >= 2) {
-         disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
-      }
-   } else {
-      assert(dri2_dpy->swrast);
-      disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
-   }
+   assert(dri2_dpy->dri2 || dri2_dpy->swrast);
+   disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
 
    if (dri2_dpy->image) {
       disp->Extensions.MESA_drm_image = EGL_TRUE;
@@ -706,21 +697,13 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       dri_config = NULL;
 
    if (dri2_dpy->dri2) {
-      if (dri2_dpy->dri2->base.version >= 2) {
+      {
 	 dri2_ctx->dri_context =
 	    dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
 						   api,
 						   dri_config,
                                                    shared,
 						   dri2_ctx);
-      } else if (api == __DRI_API_OPENGL) {
-	 dri2_ctx->dri_context =
-	    dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
-					     dri_config,
-                                             shared,
-					     dri2_ctx);
-      } else {
-	 /* fail */
       }
    } else {
       assert(dri2_dpy->swrast);
