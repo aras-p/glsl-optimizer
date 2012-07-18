@@ -72,6 +72,7 @@ union si_state {
 		struct si_state_rasterizer	*rasterizer;
 		struct si_state_dsa		*dsa;
 		struct si_pm4_state		*fb_rs;
+		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
 	} named;
 	struct si_pm4_state	*array[0];

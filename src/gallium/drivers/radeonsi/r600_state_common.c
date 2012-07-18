@@ -554,10 +554,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
-	unsigned prim, mask, ls_mask = 0;
+	unsigned prim, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
-	struct si_state_blend *blend;
 	int i;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
@@ -568,11 +567,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (!rctx->ps_shader || !rctx->vs_shader)
 		return;
-
-	/* only temporary */
-	if (!rctx->queued.named.blend)
-		return;
-	blend = rctx->queued.named.blend;
 
 	si_update_derived_state(rctx);
 
@@ -617,13 +611,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->vs_shader_so_strides = rctx->vs_shader->so_strides;
 
-	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
-
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
 		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028238_CB_TARGET_MASK, blend->cb_target_mask & mask, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, NULL, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
@@ -641,7 +632,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->vgt.nregs = 0;
 	r600_pipe_state_mod_reg(&rctx->vgt, prim);
-	r600_pipe_state_mod_reg(&rctx->vgt, blend->cb_target_mask & mask);
 	r600_pipe_state_mod_reg(&rctx->vgt, ~0);
 	r600_pipe_state_mod_reg(&rctx->vgt, 0);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);

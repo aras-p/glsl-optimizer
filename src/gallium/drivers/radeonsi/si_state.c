@@ -31,6 +31,25 @@
 #include "sid.h"
 
 /*
+ * inferred framebuffer and blender state
+ */
+static void si_update_fb_blend_state(struct r600_context *rctx)
+{
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_state_blend *blend = rctx->queued.named.blend;
+	uint32_t mask;
+
+	if (pm4 == NULL || blend == NULL)
+		return;
+
+	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
+	mask &= blend->cb_target_mask;
+	si_pm4_set_reg(pm4, R_028238_CB_TARGET_MASK, mask);
+
+	si_pm4_set_state(rctx, fb_blend, pm4);
+}
+
+/*
  * Blender functions
  */
 
@@ -169,6 +188,7 @@ static void si_bind_blend_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	si_pm4_bind_state(rctx, blend, (struct si_state_blend *)state);
+	si_update_fb_blend_state(rctx);
 }
 
 static void si_delete_blend_state(struct pipe_context *ctx, void *state)
@@ -1267,6 +1287,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 	si_pm4_set_state(rctx, framebuffer, pm4);
 	si_update_fb_rs_state(rctx);
+	si_update_fb_blend_state(rctx);
 }
 
 void si_init_state_functions(struct r600_context *rctx)
