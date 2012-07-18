@@ -343,6 +343,18 @@ enum sampler_message_arg
  *           Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
  *           S = (Y & 0b10) | (X & 0b10) >> 1
  *
+ * For an 8x multisampled surface using INTEL_MSAA_LAYOUT_IMS, encode_msaa()
+ * embeds the sample number into bits 1 and 2 of the X coordinate and bit 1 of
+ * the Y coordinate:
+ *
+ *   encode_msaa(8, IMS, X, Y, S) = (X', Y', 0)
+ *     where X' = (X & ~0b1) << 2 | (S & 0b100) | (S & 0b1) << 1 | (X & 0b1)
+ *           Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
+ *   decode_msaa(8, IMS, X, Y, 0) = (X', Y', S)
+ *     where X' = (X & ~0b111) >> 2 | (X & 0b1)
+ *           Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
+ *           S = (X & 0b100) | (Y & 0b10) | (X & 0b10) >> 1
+ *
  * For X tiling, tile() combines together the low-order bits of the X and Y
  * coordinates in the pattern 0byyyxxxxxxxxx, creating 4k tiles that are 512
  * bytes wide and 8 rows high:
@@ -969,7 +981,7 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
  *
  * This code modifies the X and Y coordinates according to the formula:
  *
- *   (X', Y', S') = encode_msaa_4x(X, Y, S)
+ *   (X', Y', S') = encode_msaa(num_samples, IMS, X, Y, S)
  *
  * (See brw_blorp_blit_program).
  */
@@ -992,27 +1004,58 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
       /* No translation necessary. */
       break;
    case INTEL_MSAA_LAYOUT_IMS:
-      /* encode_msaa(4, IMS, X, Y, S) = (X', Y', 0)
-       *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
-       *         Y' = (Y & ~0b1 ) << 1 | (S & 0b10) | (Y & 0b1)
-       */
-      brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
-      if (!s_is_zero) {
-         brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
-         brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
+      switch (num_samples) {
+      case 4:
+         /* encode_msaa(4, IMS, X, Y, S) = (X', Y', 0)
+          *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
+          *         Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
+          */
+         brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
+         if (!s_is_zero) {
+            brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
+            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
+         }
+         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
+                                                   | (S & 0b1) << 1 */
+         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         brw_OR(&func, Xp, t1, t2);
+         brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+         if (!s_is_zero) {
+            brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
+            brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
+         }
+         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         brw_OR(&func, Yp, t1, t2);
+         break;
+      case 8:
+         /* encode_msaa(8, IMS, X, Y, S) = (X', Y', 0)
+          *   where X' = (X & ~0b1) << 2 | (S & 0b100) | (S & 0b1) << 1
+          *              | (X & 0b1)
+          *         Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
+          */
+         brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
+         brw_SHL(&func, t1, t1, brw_imm_uw(2)); /* (X & ~0b1) << 2 */
+         if (!s_is_zero) {
+            brw_AND(&func, t2, S, brw_imm_uw(4)); /* S & 0b100 */
+            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100) */
+            brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
+            brw_SHL(&func, t2, t2, brw_imm_uw(1)); /* (S & 0b1) << 1 */
+            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100)
+                                          | (S & 0b1) << 1 */
+         }
+         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         brw_OR(&func, Xp, t1, t2);
+         brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+         if (!s_is_zero) {
+            brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
+            brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
+         }
+         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         brw_OR(&func, Yp, t1, t2);
+         break;
       }
-      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
-                                                | (S & 0b1) << 1 */
-      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
-      brw_OR(&func, Xp, t1, t2);
-      brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
-      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
-      if (!s_is_zero) {
-         brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
-         brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
-      }
-      brw_AND(&func, t2, Y, brw_imm_uw(1));
-      brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
       s_is_zero = true;
       break;
@@ -1025,7 +1068,7 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
  *
  * This code modifies the X and Y coordinates according to the formula:
  *
- *   (X', Y', S) = decode_msaa(num_samples, X, Y, S)
+ *   (X', Y', S) = decode_msaa(num_samples, IMS, X, Y, S)
  *
  * (See brw_blorp_blit_program).
  */
@@ -1048,24 +1091,49 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
       /* No translation necessary. */
       break;
    case INTEL_MSAA_LAYOUT_IMS:
-      /* decode_msaa(4, IMS, X, Y, 0) = (X', Y', S)
-       *   where X' = (X & ~0b11) >> 1 | (X & 0b1)
-       *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
-       *         S = (Y & 0b10) | (X & 0b10) >> 1
-       */
       assert(s_is_zero);
-      brw_AND(&func, t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
-      brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
-      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
-      brw_OR(&func, Xp, t1, t2);
-      brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
-      brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
-      brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-      brw_OR(&func, Yp, t1, t2);
-      brw_AND(&func, t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
-      brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
-      brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
-      brw_OR(&func, S, t1, t2);
+      switch (num_samples) {
+      case 4:
+         /* decode_msaa(4, IMS, X, Y, 0) = (X', Y', S)
+          *   where X' = (X & ~0b11) >> 1 | (X & 0b1)
+          *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
+          *         S = (Y & 0b10) | (X & 0b10) >> 1
+          */
+         brw_AND(&func, t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
+         brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
+         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         brw_OR(&func, Xp, t1, t2);
+         brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+         brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
+         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         brw_OR(&func, Yp, t1, t2);
+         brw_AND(&func, t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
+         brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+         brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
+         brw_OR(&func, S, t1, t2);
+         break;
+      case 8:
+         /* decode_msaa(8, IMS, X, Y, 0) = (X', Y', S)
+          *   where X' = (X & ~0b111) >> 2 | (X & 0b1)
+          *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
+          *         S = (X & 0b100) | (Y & 0b10) | (X & 0b10) >> 1
+          */
+         brw_AND(&func, t1, X, brw_imm_uw(0xfff8)); /* X & ~0b111 */
+         brw_SHR(&func, t1, t1, brw_imm_uw(2)); /* (X & ~0b111) >> 2 */
+         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         brw_OR(&func, Xp, t1, t2);
+         brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+         brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
+         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         brw_OR(&func, Yp, t1, t2);
+         brw_AND(&func, t1, X, brw_imm_uw(4)); /* X & 0b100 */
+         brw_AND(&func, t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
+         brw_OR(&func, t1, t1, t2); /* (X & 0b100) | (Y & 0b10) */
+         brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+         brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
+         brw_OR(&func, S, t1, t2);
+         break;
+      }
       s_is_zero = false;
       SWAP_XY_AND_XPYP();
       break;
