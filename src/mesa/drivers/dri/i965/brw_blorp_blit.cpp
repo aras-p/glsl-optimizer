@@ -1633,10 +1633,23 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
        * pipeline as multisampled.
        */
       assert(dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS);
-      x0 = (x0 * 2) & ~3;
-      y0 = (y0 * 2) & ~3;
-      x1 = ALIGN(x1 * 2, 4);
-      y1 = ALIGN(y1 * 2, 4);
+      switch (dst_mt->num_samples) {
+      case 4:
+         x0 = (x0 * 2) & ~3;
+         y0 = (y0 * 2) & ~3;
+         x1 = ALIGN(x1 * 2, 4);
+         y1 = ALIGN(y1 * 2, 4);
+         break;
+      case 8:
+         x0 = (x0 * 4) & ~7;
+         y0 = (y0 * 2) & ~3;
+         x1 = ALIGN(x1 * 4, 8);
+         y1 = ALIGN(y1 * 2, 4);
+         break;
+      default:
+         assert(!"Unrecognized sample count in brw_blorp_blit_params ctor");
+         break;
+      }
       wm_prog_key.use_kill = true;
    }
 
