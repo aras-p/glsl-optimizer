@@ -153,7 +153,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
 
    &brw_samplers,
    &gen6_sampler_state,
-   &gen6_multisample_state, /* TODO: is this the right spot? */
+   &gen6_multisample_state,
 
    &gen6_vs_state,
    &gen6_gs_state,
@@ -222,7 +222,7 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_wm_binding_table,
 
    &gen7_samplers,
-   &gen6_multisample_state, /* TODO: is this the right spot? */
+   &gen6_multisample_state,
 
    &gen7_disable_stages,
    &gen7_vs_state,

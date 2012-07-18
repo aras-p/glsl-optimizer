@@ -299,7 +299,6 @@ gen6_blorp_emit_blend_state(struct brw_context *brw,
 
    memset(blend, 0, sizeof(*blend));
 
-   // TODO: handle other formats.
    blend->blend1.pre_blend_clamp_enable = 1;
    blend->blend1.post_blend_clamp_enable = 1;
    blend->blend1.clamp_range = BRW_RENDERTARGET_CLAMPRANGE_FORMAT;
