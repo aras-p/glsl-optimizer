@@ -466,6 +466,39 @@ static void si_delete_rs_state(struct pipe_context *ctx, void *state)
 }
 
 /*
+ * infeered state between dsa and stencil ref
+ */
+static void si_update_dsa_stencil_ref(struct r600_context *rctx)
+{
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct pipe_stencil_ref *ref = &rctx->stencil_ref;
+        struct si_state_dsa *dsa = rctx->queued.named.dsa;
+
+        if (pm4 == NULL)
+                return;
+
+	si_pm4_set_reg(pm4, R_028430_DB_STENCILREFMASK,
+		       S_028430_STENCILTESTVAL(ref->ref_value[0]) |
+		       S_028430_STENCILMASK(dsa->valuemask[0]) |
+		       S_028430_STENCILWRITEMASK(dsa->writemask[0]));
+	si_pm4_set_reg(pm4, R_028434_DB_STENCILREFMASK_BF,
+		       S_028434_STENCILTESTVAL_BF(ref->ref_value[1]) |
+		       S_028434_STENCILMASK_BF(dsa->valuemask[1]) |
+		       S_028434_STENCILWRITEMASK_BF(dsa->writemask[1]));
+
+	si_pm4_set_state(rctx, dsa_stencil_ref, pm4);
+}
+
+static void si_set_pipe_stencil_ref(struct pipe_context *ctx,
+				    const struct pipe_stencil_ref *state)
+{
+        struct r600_context *rctx = (struct r600_context *)ctx;
+        rctx->stencil_ref = *state;
+	si_update_dsa_stencil_ref(rctx);
+}
+
+
+/*
  * DSA
  */
 
@@ -550,25 +583,16 @@ static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 {
         struct r600_context *rctx = (struct r600_context *)ctx;
         struct si_state_dsa *dsa = state;
-        struct r600_stencil_ref ref;
 
         if (state == NULL)
                 return;
 
 	si_pm4_bind_state(rctx, dsa, dsa);
+	si_update_dsa_stencil_ref(rctx);
 
 	// TODO
         rctx->alpha_ref = dsa->alpha_ref;
         rctx->alpha_ref_dirty = true;
-
-        ref.ref_value[0] = rctx->stencil_ref.ref_value[0];
-        ref.ref_value[1] = rctx->stencil_ref.ref_value[1];
-        ref.valuemask[0] = dsa->valuemask[0];
-        ref.valuemask[1] = dsa->valuemask[1];
-        ref.writemask[0] = dsa->writemask[0];
-        ref.writemask[1] = dsa->writemask[1];
-
-        r600_set_stencil_ref(ctx, &ref);
 }
 
 static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
@@ -1264,6 +1288,7 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_state = si_set_scissor_state;
 	rctx->context.set_viewport_state = si_set_viewport_state;
+	rctx->context.set_stencil_ref = si_set_pipe_stencil_ref;
 
 	rctx->context.set_framebuffer_state = si_set_framebuffer_state;
 }

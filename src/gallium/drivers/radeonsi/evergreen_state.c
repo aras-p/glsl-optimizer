@@ -1072,7 +1072,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
-	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;

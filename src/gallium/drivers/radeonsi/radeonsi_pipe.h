@@ -78,7 +78,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
 	R600_PIPE_STATE_VGT,
-	R600_PIPE_STATE_STENCIL_REF,
 	R600_PIPE_STATE_PS_SHADER,
 	R600_PIPE_STATE_VS_SHADER,
 	R600_PIPE_STATE_CONSTANT,
@@ -188,13 +187,6 @@ struct r600_fence_block {
 
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
-
-struct r600_stencil_ref
-{
-	ubyte ref_value[2];
-	ubyte valuemask[2];
-	ubyte writemask[2];
-};
 
 struct r600_context {
 	struct pipe_context		context;
@@ -400,10 +392,6 @@ void r600_set_so_targets(struct pipe_context *ctx,
 			 unsigned num_targets,
 			 struct pipe_stream_output_target **targets,
 			 unsigned append_bitmask);
-void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
-			       const struct pipe_stencil_ref *state);
-void r600_set_stencil_ref(struct pipe_context *ctx,
-                          const struct r600_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*

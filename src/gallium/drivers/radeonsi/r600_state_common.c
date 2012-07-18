@@ -120,56 +120,6 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 }
 
 /* common state between evergreen and r600 */
-void r600_set_stencil_ref(struct pipe_context *ctx,
-			  const struct r600_stencil_ref *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_STENCIL_REF;
-	r600_pipe_state_add_reg(rstate,
-				R_028430_DB_STENCILREFMASK,
-				S_028430_STENCILTESTVAL(state->ref_value[0]) |
-				S_028430_STENCILMASK(state->valuemask[0]) |
-				S_028430_STENCILWRITEMASK(state->writemask[0]),
-				NULL, 0);
-	r600_pipe_state_add_reg(rstate,
-				R_028434_DB_STENCILREFMASK_BF,
-				S_028434_STENCILTESTVAL_BF(state->ref_value[1]) |
-				S_028434_STENCILMASK_BF(state->valuemask[1]) |
-				S_028434_STENCILWRITEMASK_BF(state->writemask[1]),
-				NULL, 0);
-
-	free(rctx->states[R600_PIPE_STATE_STENCIL_REF]);
-	rctx->states[R600_PIPE_STATE_STENCIL_REF] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
-void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
-			       const struct pipe_stencil_ref *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_state_dsa *dsa = rctx->queued.named.dsa;
-	struct r600_stencil_ref ref;
-
-	rctx->stencil_ref = *state;
-
-	if (!dsa)
-		return;
-
-	ref.ref_value[0] = state->ref_value[0];
-	ref.ref_value[1] = state->ref_value[1];
-	ref.valuemask[0] = dsa->valuemask[0];
-	ref.valuemask[1] = dsa->valuemask[1];
-	ref.writemask[0] = dsa->writemask[0];
-	ref.writemask[1] = dsa->writemask[1];
-
-	r600_set_stencil_ref(ctx, &ref);
-}
-
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state)
 {
