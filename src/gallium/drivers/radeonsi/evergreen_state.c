@@ -1111,8 +1111,6 @@ void si_init_config(struct r600_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, NULL, 0);
 
-	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, NULL, 0);
-
 	r600_pipe_state_add_reg(rstate, R_028B54_VGT_SHADER_STAGES_EN, 0, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210, NULL, 0);
 	r600_pipe_state_add_reg(rstate, R_028BD8_PA_SC_CENTROID_PRIORITY_1, 0xfedcba98, NULL, 0);

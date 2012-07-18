@@ -77,7 +77,6 @@ struct r600_atom_surface_sync {
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
-	R600_PIPE_STATE_VGT,
 	R600_PIPE_STATE_PS_SHADER,
 	R600_PIPE_STATE_VS_SHADER,
 	R600_PIPE_STATE_CONSTANT,
@@ -211,7 +210,6 @@ struct r600_context {
 	struct r600_pipe_state		vs_const_buffer;
 	struct r600_pipe_state		vs_user_data;
 	struct r600_pipe_state		ps_const_buffer;
-	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;

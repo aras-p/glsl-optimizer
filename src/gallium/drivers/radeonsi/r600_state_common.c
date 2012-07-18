@@ -92,33 +92,6 @@ void r600_texture_barrier(struct pipe_context *ctx)
 	r600_atom_dirty(rctx, &rctx->atom_surface_sync.atom);
 }
 
-static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
-{
-	static const int prim_conv[] = {
-		V_008958_DI_PT_POINTLIST,
-		V_008958_DI_PT_LINELIST,
-		V_008958_DI_PT_LINELOOP,
-		V_008958_DI_PT_LINESTRIP,
-		V_008958_DI_PT_TRILIST,
-		V_008958_DI_PT_TRISTRIP,
-		V_008958_DI_PT_TRIFAN,
-		V_008958_DI_PT_QUADLIST,
-		V_008958_DI_PT_QUADSTRIP,
-		V_008958_DI_PT_POLYGON,
-		-1,
-		-1,
-		-1,
-		-1
-	};
-
-	*prim = prim_conv[pprim];
-	if (*prim == -1) {
-		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pprim);
-		return false;
-	}
-	return true;
-}
-
 /* common state between evergreen and r600 */
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state)
@@ -554,14 +527,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
-	unsigned prim, ls_mask = 0;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
 	int i;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
-	    (info.indexed && !rctx->index_buffer.buffer) ||
-	    !r600_conv_pipe_prim(info.mode, &prim)) {
+	    (info.indexed && !rctx->index_buffer.buffer)) {
 		return;
 	}
 
@@ -611,59 +582,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	rctx->vs_shader_so_strides = rctx->vs_shader->so_strides;
 
-	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
-		rctx->vgt.id = R600_PIPE_STATE_VGT;
-		rctx->vgt.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028400_VGT_MAX_VTX_INDX, ~0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028404_VGT_MIN_VTX_INDX, 0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart, NULL, 0);
-#if 0
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance, NULL, 0);
-#endif
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028814_PA_SU_SC_MODE_CNTL, 0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0, NULL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0x0, NULL, 0);
-	}
-
-	rctx->vgt.nregs = 0;
-	r600_pipe_state_mod_reg(&rctx->vgt, prim);
-	r600_pipe_state_mod_reg(&rctx->vgt, ~0);
-	r600_pipe_state_mod_reg(&rctx->vgt, 0);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
-#if 0
-	r600_pipe_state_mod_reg(&rctx->vgt, 0);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
-#endif
-
-	if (prim == V_008958_DI_PT_LINELIST)
-		ls_mask = 1;
-	else if (prim == V_008958_DI_PT_LINESTRIP) 
-		ls_mask = 2;
-	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
-
-	if (info.mode == PIPE_PRIM_QUADS || info.mode == PIPE_PRIM_QUAD_STRIP || info.mode == PIPE_PRIM_POLYGON) {
-		r600_pipe_state_mod_reg(&rctx->vgt, S_028814_PROVOKING_VTX_LAST(1) | rctx->pa_su_sc_mode_cntl);
-	} else {
-		r600_pipe_state_mod_reg(&rctx->vgt, rctx->pa_su_sc_mode_cntl);
-	}
-	r600_pipe_state_mod_reg(&rctx->vgt,
-				prim == PIPE_PRIM_POINTS ? rctx->pa_cl_vs_out_cntl : 0
-				/*| (rctx->rasterizer->clip_plane_enable &
-				  rctx->vs_shader->shader.clip_dist_write)*/);
-	r600_pipe_state_mod_reg(&rctx->vgt,
-				rctx->pa_cl_clip_cntl /*|
-				(rctx->vs_shader->shader.clip_dist_write ||
-				 rctx->vs_shader->shader.vs_prohibit_ucps ?
-				 0 : rctx->rasterizer->clip_plane_enable & 0x3F)*/);
-
-	r600_context_pipe_state_set(rctx, &rctx->vgt);
+	if (!si_update_draw_info_state(rctx, &info))
+		return;
 
 	rdraw.db_render_override = dsa->db_render_override;
 	rdraw.db_render_control = dsa->db_render_control;

@@ -74,6 +74,7 @@ union si_state {
 		struct si_pm4_state		*fb_rs;
 		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
+		struct si_pm4_state		*draw_info;
 	} named;
 	struct si_pm4_state	*array[0];
 };
@@ -106,5 +107,7 @@ union si_state {
 	} while(0);
 
 void si_init_state_functions(struct r600_context *rctx);
+bool si_update_draw_info_state(struct r600_context *rctx,
+			       const struct pipe_draw_info *info);
 
 #endif

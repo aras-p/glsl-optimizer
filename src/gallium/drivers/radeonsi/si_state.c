@@ -1313,3 +1313,81 @@ void si_init_state_functions(struct r600_context *rctx)
 
 	rctx->context.set_framebuffer_state = si_set_framebuffer_state;
 }
+
+static unsigned si_conv_pipe_prim(unsigned pprim)
+{
+        static const unsigned prim_conv[] = {
+		[PIPE_PRIM_POINTS]			= V_008958_DI_PT_POINTLIST,
+		[PIPE_PRIM_LINES]			= V_008958_DI_PT_LINELIST,
+		[PIPE_PRIM_LINE_LOOP]			= V_008958_DI_PT_LINELOOP,
+		[PIPE_PRIM_LINE_STRIP]			= V_008958_DI_PT_LINESTRIP,
+		[PIPE_PRIM_TRIANGLES]			= V_008958_DI_PT_TRILIST,
+		[PIPE_PRIM_TRIANGLE_STRIP]		= V_008958_DI_PT_TRISTRIP,
+		[PIPE_PRIM_TRIANGLE_FAN]		= V_008958_DI_PT_TRIFAN,
+		[PIPE_PRIM_QUADS]			= V_008958_DI_PT_QUADLIST,
+		[PIPE_PRIM_QUAD_STRIP]			= V_008958_DI_PT_QUADSTRIP,
+		[PIPE_PRIM_POLYGON]			= V_008958_DI_PT_POLYGON,
+		[PIPE_PRIM_LINES_ADJACENCY]		= ~0,
+		[PIPE_PRIM_LINE_STRIP_ADJACENCY]	= ~0,
+		[PIPE_PRIM_TRIANGLES_ADJACENCY]		= ~0,
+		[PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY]	= ~0
+        };
+	unsigned result = prim_conv[pprim];
+        if (result == ~0) {
+		R600_ERR("unsupported primitive type %d\n", pprim);
+        }
+	return result;
+}
+
+bool si_update_draw_info_state(struct r600_context *rctx,
+			       const struct pipe_draw_info *info)
+{
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	unsigned prim = si_conv_pipe_prim(info->mode);
+	unsigned ls_mask = 0;
+
+	if (pm4 == NULL)
+		return false;
+
+	if (prim == ~0) {
+		FREE(pm4);
+		return false;
+	}
+
+	si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
+	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
+	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
+	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET, info->index_bias);
+	si_pm4_set_reg(pm4, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info->restart_index);
+	si_pm4_set_reg(pm4, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info->primitive_restart);
+#if 0
+	si_pm4_set_reg(pm4, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
+	si_pm4_set_reg(pm4, R_03CFF4_SQ_VTX_START_INST_LOC, info->start_instance);
+#endif
+
+        if (prim == V_008958_DI_PT_LINELIST)
+                ls_mask = 1;
+        else if (prim == V_008958_DI_PT_LINESTRIP)
+                ls_mask = 2;
+	si_pm4_set_reg(pm4, R_028A0C_PA_SC_LINE_STIPPLE,
+		       S_028A0C_AUTO_RESET_CNTL(ls_mask) |
+		       rctx->pa_sc_line_stipple);
+
+        if (info->mode == PIPE_PRIM_QUADS || info->mode == PIPE_PRIM_QUAD_STRIP || info->mode == PIPE_PRIM_POLYGON) {
+		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL,
+			       S_028814_PROVOKING_VTX_LAST(1) | rctx->pa_su_sc_mode_cntl);
+        } else {
+		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL, rctx->pa_su_sc_mode_cntl);
+        }
+	si_pm4_set_reg(pm4, R_02881C_PA_CL_VS_OUT_CNTL,
+		       prim == PIPE_PRIM_POINTS ? rctx->pa_cl_vs_out_cntl : 0
+		       /*| (rctx->rasterizer->clip_plane_enable &
+		       rctx->vs_shader->shader.clip_dist_write)*/);
+	si_pm4_set_reg(pm4, R_028810_PA_CL_CLIP_CNTL, rctx->pa_cl_clip_cntl
+			/*| (rctx->vs_shader->shader.clip_dist_write ||
+			rctx->vs_shader->shader.vs_prohibit_ucps ?
+			0 : rctx->rasterizer->clip_plane_enable & 0x3F)*/);
+
+	si_pm4_set_state(rctx, draw_info, pm4);
+	return true;
+}
