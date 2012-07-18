@@ -196,8 +196,6 @@ namespace llvm
         LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
-      SDValue
         LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const;
 
   }; // AMDILTargetLowering

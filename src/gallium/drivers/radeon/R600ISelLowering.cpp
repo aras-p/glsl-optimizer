@@ -31,6 +31,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::i32, &AMDGPU::R600_Reg32RegClass);
   computeRegisterProperties();
 
+  setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
   setOperationAction(ISD::ROTL, MVT::i32, Custom);
@@ -273,11 +275,38 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::BR_CC: return LowerBR_CC(Op, DAG);
   case ISD::ROTL: return LowerROTL(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SETCC: return LowerSETCC(Op, DAG);
   }
 }
+
+SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
+{
+  SDValue Chain = Op.getOperand(0);
+  SDValue CC = Op.getOperand(1);
+  SDValue LHS   = Op.getOperand(2);
+  SDValue RHS   = Op.getOperand(3);
+  SDValue JumpT  = Op.getOperand(4);
+  SDValue CmpValue;
+  SDValue Result;
+  CmpValue = DAG.getNode(
+      ISD::SELECT_CC,
+      Op.getDebugLoc(),
+      MVT::i32,
+      LHS, RHS,
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      CC);
+  Result = DAG.getNode(
+      AMDILISD::BRANCH_COND,
+      CmpValue.getDebugLoc(),
+      MVT::Other, Chain,
+      JumpT, CmpValue);
+  return Result;
+}
+
 
 SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const
 {

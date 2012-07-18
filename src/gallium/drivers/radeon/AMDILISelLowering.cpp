@@ -521,7 +521,6 @@ AMDILTargetLowering::LowerMemArgument(
     setOperationAction(ISD::ADDE, VT, Expand);
     setOperationAction(ISD::ADDC, VT, Expand);
     setOperationAction(ISD::BRCOND, VT, Custom);
-    setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::BR_JT, VT, Expand);
     setOperationAction(ISD::BRIND, VT, Expand);
     // TODO: Implement custom UREM/SREM routines
@@ -627,7 +626,6 @@ AMDILTargetLowering::LowerMemArgument(
   setOperationAction(ISD::ADDE, MVT::Other, Expand);
   setOperationAction(ISD::ADDC, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
-  setOperationAction(ISD::BR_CC, MVT::Other, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
@@ -849,7 +847,6 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(SIGN_EXTEND_INREG);
       LOWER(DYNAMIC_STACKALLOC);
       LOWER(BRCOND);
-      LOWER(BR_CC);
   }
   return Op;
 }
@@ -1446,32 +1443,6 @@ AMDILTargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
       Op.getDebugLoc(),
       Op.getValueType(),
       Chain, Jump, Cond);
-  return Result;
-}
-
-SDValue
-AMDILTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue Chain = Op.getOperand(0);
-  SDValue CC = Op.getOperand(1);
-  SDValue LHS   = Op.getOperand(2);
-  SDValue RHS   = Op.getOperand(3);
-  SDValue JumpT  = Op.getOperand(4);
-  SDValue CmpValue;
-  SDValue Result;
-  CmpValue = DAG.getNode(
-      ISD::SELECT_CC,
-      Op.getDebugLoc(),
-      MVT::i32,
-      LHS, RHS,
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
-      CC);
-  Result = DAG.getNode(
-      AMDILISD::BRANCH_COND,
-      CmpValue.getDebugLoc(),
-      MVT::Other, Chain,
-      JumpT, CmpValue);
   return Result;
 }
 
