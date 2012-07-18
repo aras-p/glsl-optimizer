@@ -26,6 +26,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
+#include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
 #include "si_state.h"
 #include "sid.h"
@@ -1290,6 +1291,244 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_update_fb_blend_state(rctx);
 }
 
+/*
+ * shaders
+ */
+
+static void *si_create_shader_state(struct pipe_context *ctx,
+                             const struct pipe_shader_state *state)
+{
+	struct si_pipe_shader *shader = CALLOC_STRUCT(si_pipe_shader);
+
+	shader->tokens = tgsi_dup_tokens(state->tokens);
+	shader->so = state->stream_output;
+
+	return shader;
+}
+
+static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pipe_shader *shader = state;
+
+	if (rctx->vs_shader == state)
+		return;
+
+	rctx->shader_dirty = true;
+	rctx->vs_shader = shader;
+	si_pm4_bind_state(rctx, vs, shader->pm4);
+}
+
+static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pipe_shader *shader = state;
+
+	if (rctx->ps_shader == state)
+		return;
+
+	rctx->shader_dirty = true;
+	rctx->ps_shader = shader;
+	si_pm4_bind_state(rctx, ps, shader->pm4);
+}
+
+static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
+
+	if (rctx->vs_shader == shader) {
+		rctx->vs_shader = NULL;
+	}
+
+	si_pm4_delete_state(rctx, vs, shader->pm4);
+	free(shader->tokens);
+	si_pipe_shader_destroy(ctx, shader);
+	free(shader);
+}
+
+static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
+
+	if (rctx->ps_shader == shader) {
+		rctx->ps_shader = NULL;
+	}
+
+	si_pm4_delete_state(rctx, ps, shader->pm4);
+	free(shader->tokens);
+	si_pipe_shader_destroy(ctx, shader);
+	free(shader);
+}
+
+void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+	unsigned num_sgprs, num_user_sgprs;
+	unsigned nparams, i;
+	uint64_t va;
+
+	if (si_pipe_shader_create(ctx, shader))
+		return;
+
+	si_pm4_delete_state(rctx, vs, shader->pm4);
+	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);
+
+	si_pm4_inval_shader_cache(pm4);
+
+	/* Certain attributes (position, psize, etc.) don't count as params.
+	 * VS is required to export at least one param and r600_shader_from_tgsi()
+	 * takes care of adding a dummy export.
+	 */
+	for (nparams = 0, i = 0 ; i < shader->shader.noutput; i++) {
+		if (shader->shader.output[i].name != TGSI_SEMANTIC_POSITION)
+			nparams++;
+	}
+	if (nparams < 1)
+		nparams = 1;
+
+	si_pm4_set_reg(pm4, R_0286C4_SPI_VS_OUT_CONFIG,
+		       S_0286C4_VS_EXPORT_COUNT(nparams - 1));
+
+	si_pm4_set_reg(pm4, R_02870C_SPI_SHADER_POS_FORMAT,
+		       S_02870C_POS0_EXPORT_FORMAT(V_02870C_SPI_SHADER_4COMP) |
+		       S_02870C_POS1_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE) |
+		       S_02870C_POS2_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE) |
+		       S_02870C_POS3_EXPORT_FORMAT(V_02870C_SPI_SHADER_NONE));
+
+	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_set_reg(pm4, R_00B120_SPI_SHADER_PGM_LO_VS, va >> 8);
+	si_pm4_set_reg(pm4, R_00B124_SPI_SHADER_PGM_HI_VS, va >> 40);
+
+	num_user_sgprs = 8;
+	num_sgprs = shader->num_sgprs;
+	if (num_user_sgprs > num_sgprs)
+		num_sgprs = num_user_sgprs;
+	/* Last 2 reserved SGPRs are used for VCC */
+	num_sgprs += 2;
+	assert(num_sgprs <= 104);
+
+	si_pm4_set_reg(pm4, R_00B128_SPI_SHADER_PGM_RSRC1_VS,
+		       S_00B128_VGPRS((shader->num_vgprs - 1) / 4) |
+		       S_00B128_SGPRS((num_sgprs - 1) / 8));
+	si_pm4_set_reg(pm4, R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
+		       S_00B12C_USER_SGPR(num_user_sgprs));
+
+	si_pm4_bind_state(rctx, vs, shader->pm4);
+}
+
+void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control, db_shader_control;
+	unsigned num_sgprs, num_user_sgprs;
+	int ninterp = 0;
+	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
+	unsigned spi_baryc_cntl;
+	uint64_t va;
+
+	if (si_pipe_shader_create(ctx, shader))
+		return;
+
+	si_pm4_delete_state(rctx, ps, shader->pm4);
+	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);
+
+	si_pm4_inval_shader_cache(pm4);
+
+	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+	for (i = 0; i < shader->shader.ninput; i++) {
+		ninterp++;
+		/* XXX: Flat shading hangs the GPU */
+		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+		    (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
+		     rctx->queued.named.rasterizer->flatshade))
+			have_linear = TRUE;
+		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+			have_linear = TRUE;
+		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
+			have_perspective = TRUE;
+		if (shader->shader.input[i].centroid)
+			have_centroid = TRUE;
+	}
+
+	for (i = 0; i < shader->shader.noutput; i++) {
+		if (shader->shader.output[i].name == TGSI_SEMANTIC_POSITION)
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
+		if (shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
+			db_shader_control |= 0; // XXX OP_VAL or TEST_VAL?
+	}
+	if (shader->shader.uses_kill)
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
+
+	exports_ps = 0;
+	num_cout = 0;
+	for (i = 0; i < shader->shader.noutput; i++) {
+		if (shader->shader.output[i].name == TGSI_SEMANTIC_POSITION ||
+		    shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
+			exports_ps |= 1;
+		else if (shader->shader.output[i].name == TGSI_SEMANTIC_COLOR) {
+			if (shader->shader.fs_write_all)
+				num_cout = shader->shader.nr_cbufs;
+			else
+				num_cout++;
+		}
+	}
+	if (!exports_ps) {
+		/* always at least export 1 component per pixel */
+		exports_ps = 2;
+	}
+
+	spi_ps_in_control = S_0286D8_NUM_INTERP(ninterp);
+
+	spi_baryc_cntl = 0;
+	if (have_perspective)
+		spi_baryc_cntl |= have_centroid ?
+			S_0286E0_PERSP_CENTROID_CNTL(1) : S_0286E0_PERSP_CENTER_CNTL(1);
+	if (have_linear)
+		spi_baryc_cntl |= have_centroid ?
+			S_0286E0_LINEAR_CENTROID_CNTL(1) : S_0286E0_LINEAR_CENTER_CNTL(1);
+
+	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
+	si_pm4_set_reg(pm4, R_0286CC_SPI_PS_INPUT_ENA, shader->spi_ps_input_ena);
+	si_pm4_set_reg(pm4, R_0286D0_SPI_PS_INPUT_ADDR, shader->spi_ps_input_ena);
+	si_pm4_set_reg(pm4, R_0286D8_SPI_PS_IN_CONTROL, spi_ps_in_control);
+
+	/* XXX: Depends on Z buffer format? */
+	si_pm4_set_reg(pm4, R_028710_SPI_SHADER_Z_FORMAT, 0);
+
+	/* XXX: Depends on color buffer format? */
+	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
+		       S_028714_COL0_EXPORT_FORMAT(V_028714_SPI_SHADER_32_ABGR));
+
+	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_set_reg(pm4, R_00B020_SPI_SHADER_PGM_LO_PS, va >> 8);
+	si_pm4_set_reg(pm4, R_00B024_SPI_SHADER_PGM_HI_PS, va >> 40);
+
+	num_user_sgprs = 6;
+	num_sgprs = shader->num_sgprs;
+	if (num_user_sgprs > num_sgprs)
+		num_sgprs = num_user_sgprs;
+	/* Last 2 reserved SGPRs are used for VCC */
+	num_sgprs += 2;
+	assert(num_sgprs <= 104);
+
+	si_pm4_set_reg(pm4, R_00B028_SPI_SHADER_PGM_RSRC1_PS,
+		       S_00B028_VGPRS((shader->num_vgprs - 1) / 4) |
+		       S_00B028_SGPRS((num_sgprs - 1) / 8));
+	si_pm4_set_reg(pm4, R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
+		       S_00B02C_USER_SGPR(num_user_sgprs));
+
+	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
+
+	shader->sprite_coord_enable = rctx->sprite_coord_enable;
+	si_pm4_bind_state(rctx, ps, shader->pm4);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
@@ -1312,6 +1551,13 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_stencil_ref = si_set_pipe_stencil_ref;
 
 	rctx->context.set_framebuffer_state = si_set_framebuffer_state;
+
+	rctx->context.create_vs_state = si_create_shader_state;
+	rctx->context.create_fs_state = si_create_shader_state;
+	rctx->context.bind_vs_state = si_bind_vs_shader;
+	rctx->context.bind_fs_state = si_bind_ps_shader;
+	rctx->context.delete_vs_state = si_delete_vs_shader;
+	rctx->context.delete_fs_state = si_delete_ps_shader;
 }
 
 void si_init_config(struct r600_context *rctx)
@@ -1434,8 +1680,8 @@ bool si_update_draw_info_state(struct r600_context *rctx,
 
 void si_update_spi_map(struct r600_context *rctx)
 {
-	struct r600_shader *ps = &rctx->ps_shader->shader;
-	struct r600_shader *vs = &rctx->vs_shader->shader;
+	struct si_shader *ps = &rctx->ps_shader->shader;
+	struct si_shader *vs = &rctx->vs_shader->shader;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	unsigned i, j, tmp;
 

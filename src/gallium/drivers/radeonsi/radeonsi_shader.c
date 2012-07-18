@@ -347,7 +347,7 @@ static LLVMValueRef fetch_constant(
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
 	struct si_shader_context * si_shader_ctx = si_shader_context(bld_base);
-	struct r600_shader * shader = &si_shader_ctx->shader->shader;
+	struct si_shader * shader = &si_shader_ctx->shader->shader;
 	struct lp_build_context * base = &bld_base->base;
 	struct lp_build_context * uint =
 				&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
@@ -634,5 +634,5 @@ void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *sha
 {
 	pipe_resource_reference((struct pipe_resource**)&shader->bo, NULL);
 
-	memset(&shader->shader,0,sizeof(struct r600_shader));
+	memset(&shader->shader,0,sizeof(struct si_shader));
 }

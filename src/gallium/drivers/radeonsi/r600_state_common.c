@@ -119,7 +119,7 @@ void r600_delete_state(struct pipe_context *ctx, void *state)
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
+	struct si_vertex_element *v = (struct r600_vertex_element*)state;
 
 	rctx->vertex_elements = v;
 	if (v) {
@@ -164,7 +164,7 @@ void *si_create_vertex_elements(struct pipe_context *ctx,
 				const struct pipe_vertex_element *elements)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
+	struct si_vertex_element *v = CALLOC_STRUCT(si_vertex_element);
 
 	assert(count < 32);
 	if (!v)
@@ -174,75 +174,6 @@ void *si_create_vertex_elements(struct pipe_context *ctx,
 	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
 
 	return v;
-}
-
-void *si_create_shader_state(struct pipe_context *ctx,
-                             const struct pipe_shader_state *state)
-{
-	struct si_pipe_shader *shader = CALLOC_STRUCT(si_pipe_shader);
-
-	shader->tokens = tgsi_dup_tokens(state->tokens);
-	shader->so = state->stream_output;
-
-	return shader;
-}
-
-void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	if (rctx->ps_shader != state)
-		rctx->shader_dirty = true;
-
-	/* TODO delete old shader */
-	rctx->ps_shader = (struct si_pipe_shader *)state;
-	if (state) {
-		r600_inval_shader_cache(rctx);
-		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
-	}
-}
-
-void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	if (rctx->vs_shader != state)
-		rctx->shader_dirty = true;
-
-	/* TODO delete old shader */
-	rctx->vs_shader = (struct si_pipe_shader *)state;
-	if (state) {
-		r600_inval_shader_cache(rctx);
-		r600_context_pipe_state_set(rctx, &rctx->vs_shader->rstate);
-	}
-}
-
-void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
-
-	if (rctx->ps_shader == shader) {
-		rctx->ps_shader = NULL;
-	}
-
-	free(shader->tokens);
-	si_pipe_shader_destroy(ctx, shader);
-	free(shader);
-}
-
-void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
-
-	if (rctx->vs_shader == shader) {
-		rctx->vs_shader = NULL;
-	}
-
-	free(shader->tokens);
-	si_pipe_shader_destroy(ctx, shader);
-	free(shader);
 }
 
 static void r600_update_alpha_ref(struct r600_context *rctx)
@@ -504,14 +435,10 @@ static void si_update_derived_state(struct r600_context *rctx)
 
 	if (!rctx->vs_shader->bo) {
 		si_pipe_shader_vs(ctx, rctx->vs_shader);
-
-		r600_context_pipe_state_set(rctx, &rctx->vs_shader->rstate);
 	}
 
 	if (!rctx->ps_shader->bo) {
 		si_pipe_shader_ps(ctx, rctx->ps_shader);
-
-		r600_context_pipe_state_set(rctx, &rctx->ps_shader->rstate);
 	}
 
 	if (rctx->shader_dirty) {

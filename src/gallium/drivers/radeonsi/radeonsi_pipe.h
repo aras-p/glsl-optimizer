@@ -116,46 +116,6 @@ struct si_pipe_sampler_state {
 	uint32_t			val[4];
 };
 
-struct r600_vertex_element
-{
-	unsigned			count;
-	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-};
-
-struct r600_shader_io {
-	unsigned		name;
-	unsigned		gpr;
-	unsigned		done;
-	int			sid;
-	unsigned		param_offset;
-	unsigned		interpolate;
-	boolean                 centroid;
-};
-
-struct r600_shader {
-	unsigned		ninput;
-	unsigned		noutput;
-	struct r600_shader_io	input[32];
-	struct r600_shader_io	output[32];
-	boolean			uses_kill;
-	boolean			fs_write_all;
-	unsigned		nr_cbufs;
-};
-
-struct si_pipe_shader {
-	struct r600_shader		shader;
-	struct r600_pipe_state		rstate;
-	struct r600_resource		*bo;
-	struct r600_vertex_element	vertex_elements;
-	struct tgsi_token		*tokens;
-	unsigned			num_sgprs;
-	unsigned			num_vgprs;
-	unsigned			spi_ps_input_ena;
-	unsigned	sprite_coord_enable;
-	struct pipe_stream_output_info	so;
-	unsigned			so_strides[4];
-};
-
 /* needed for blitter save */
 #define NUM_TEX_UNITS 16
 
@@ -196,7 +156,7 @@ struct r600_context {
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
-	struct r600_vertex_element	*vertex_elements;
+	struct si_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
@@ -368,8 +328,6 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
-void *si_create_shader_state(struct pipe_context *ctx,
-			     const struct pipe_shader_state *state);
 void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
