@@ -1069,6 +1069,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
+	/* Enable stream out if needed. */
+	if (rctx->streamout_start) {
+		r600_context_streamout_begin(rctx);
+		rctx->streamout_start = FALSE;
+	}
+
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
 	r600_need_cs_space(rctx, 0, TRUE);
 
@@ -1079,12 +1085,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);
 	}
 	rctx->pm4_dirty_cdwords = 0;
-
-	/* Enable stream out if needed. */
-	if (rctx->streamout_start) {
-		r600_context_streamout_begin(rctx);
-		rctx->streamout_start = FALSE;
-	}
 
 	/* draw packet */
 	cs->buf[cs->cdw++] = PKT3(PKT3_NUM_INSTANCES, 0, rctx->predicate_drawing);
