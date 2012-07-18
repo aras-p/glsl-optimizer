@@ -654,7 +654,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 
    switch (dri2_ctx->base.ClientAPI) {
    case EGL_OPENGL_ES_API:
-      switch (dri2_ctx->base.ClientVersion) {
+      switch (dri2_ctx->base.ClientMajorVersion) {
       case 1:
          api = __DRI_API_GLES;
          break;
@@ -701,7 +701,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
          unsigned error;
          const uint32_t ctx_attribs[2] = {
             __DRI_CTX_ATTRIB_MAJOR_VERSION,
-            dri2_ctx->base.ClientVersion
+            dri2_ctx->base.ClientMajorVersion
          };
 
 	 dri2_ctx->dri_context =

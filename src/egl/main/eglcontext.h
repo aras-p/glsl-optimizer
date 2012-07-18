@@ -52,7 +52,8 @@ struct _egl_context
    _EGLConfig *Config;
 
    EGLint ClientAPI; /**< EGL_OPENGL_ES_API, EGL_OPENGL_API, EGL_OPENVG_API */
-   EGLint ClientVersion; /**< 1 = OpenGLES 1.x, 2 = OpenGLES 2.x */
+   EGLint ClientMajorVersion;
+   EGLint ClientMinorVersion;
 
    /* The real render buffer when a window surface is bound */
    EGLint WindowRenderBuffer;

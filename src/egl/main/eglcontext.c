@@ -49,7 +49,7 @@ _eglGetContextAPIBit(_EGLContext *ctx)
 
    switch (ctx->ClientAPI) {
    case EGL_OPENGL_ES_API:
-      switch (ctx->ClientVersion) {
+      switch (ctx->ClientMajorVersion) {
       case 1:
          bit = EGL_OPENGL_ES_BIT;
          break;
@@ -100,7 +100,7 @@ _eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
-         ctx->ClientVersion = val;
+         ctx->ClientMajorVersion = val;
          break;
       default:
          err = EGL_BAD_ATTRIBUTE;
@@ -138,7 +138,8 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
    ctx->Config = conf;
    ctx->WindowRenderBuffer = EGL_NONE;
 
-   ctx->ClientVersion = 1; /* the default, per EGL spec */
+   ctx->ClientMajorVersion = 1; /* the default, per EGL spec */
+   ctx->ClientMinorVersion = 0;
 
    err = _eglParseContextAttribList(ctx, attrib_list);
    if (err == EGL_SUCCESS && ctx->Config) {
@@ -191,7 +192,7 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
       *value = c->Config->ConfigID;
       break;
    case EGL_CONTEXT_CLIENT_VERSION:
-      *value = c->ClientVersion;
+      *value = c->ClientMajorVersion;
       break;
    case EGL_CONTEXT_CLIENT_TYPE:
       *value = c->ClientAPI;
