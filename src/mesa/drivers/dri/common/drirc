@@ -2,15 +2,19 @@
     <device screen="0" driver="i965">
         <application name="Unigine Sanctuary" executable="Sanctuary">
             <option name="force_glsl_extensions_warn" value="true" />
+            <option name="disable_blend_func_extended" value="true" />
 	</application>
         <application name="Unigine Tropics" executable="Tropics">
             <option name="force_glsl_extensions_warn" value="true" />
+            <option name="disable_blend_func_extended" value="true" />
 	</application>
         <application name="Unigine Heaven (32-bit)" executable="heaven_x86">
             <option name="force_glsl_extensions_warn" value="true" />
+            <option name="disable_blend_func_extended" value="true" />
 	</application>
         <application name="Unigine Heaven (64-bit)" executable="heaven_x64">
             <option name="force_glsl_extensions_warn" value="true" />
+            <option name="disable_blend_func_extended" value="true" />
 	</application>
     </device>
 </driconf>

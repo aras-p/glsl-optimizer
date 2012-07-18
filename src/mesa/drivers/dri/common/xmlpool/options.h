@@ -636,3 +636,13 @@ DRI_CONF_OPT_BEGIN(force_glsl_extensions_warn,bool,def) \
         DRI_CONF_DESC(fr,"Force GLSL extension default behavior to 'warn'") \
         DRI_CONF_DESC(sv,"Force GLSL extension default behavior to 'warn'") \
 DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(def) \
+DRI_CONF_OPT_BEGIN(disable_blend_func_extended,bool,def) \
+        DRI_CONF_DESC(en,"Disable dual source blending") \
+        DRI_CONF_DESC(de,"Disable dual source blending") \
+        DRI_CONF_DESC(es,"Disable dual source blending") \
+        DRI_CONF_DESC(nl,"Disable dual source blending") \
+        DRI_CONF_DESC(fr,"Disable dual source blending") \
+        DRI_CONF_DESC(sv,"Disable dual source blending") \
+DRI_CONF_OPT_END

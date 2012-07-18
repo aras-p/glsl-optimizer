@@ -104,7 +104,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_transform_feedback = true;
 
    if (intel->gen >= 6) {
-      ctx->Extensions.ARB_blend_func_extended = true;
+      ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
    }
 
