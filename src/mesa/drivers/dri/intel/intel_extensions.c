@@ -31,6 +31,7 @@
 #include "intel_chipset.h"
 #include "intel_context.h"
 #include "intel_extensions.h"
+#include "intel_reg.h"
 #include "utils.h"
 
 /**
@@ -112,6 +113,13 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (intel->gen >= 5)
       ctx->Extensions.EXT_timer_query = true;
+
+   if (intel->gen >= 6) {
+      uint64_t dummy;
+      /* Test if the kernel has the ioctl. */
+      if (drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &dummy) == 0)
+         ctx->Extensions.ARB_timer_query = true;
+   }
 
    if (intel->gen >= 4) {
       ctx->Extensions.ARB_color_buffer_float = true;

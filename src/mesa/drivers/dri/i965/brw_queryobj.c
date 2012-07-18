@@ -41,6 +41,7 @@
 #include "main/imports.h"
 
 #include "brw_context.h"
+#include "brw_defines.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
@@ -155,6 +156,32 @@ brw_queryobj_get_results(struct gl_context *ctx,
 	 query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
       break;
 
+   case GL_TIMESTAMP:
+      if (intel->gen >= 6) {
+         /* Our timer is a clock that increments every 80ns (regardless of
+          * other clock scaling in the system).  The timestamp register we can
+          * read for glGetTimestamp() masks out the top 32 bits, so we do that
+          * here too to let the two counters be compared against each other.
+          *
+          * If we just multiplied that 32 bits of data by 80, it would roll
+          * over at a non-power-of-two, so an application couldn't use
+          * GL_QUERY_COUNTER_BITS to handle rollover correctly.  Instead, we
+          * report 36 bits and truncate at that (rolling over 5 times as often
+          * as the HW counter), and when the 32-bit counter rolls over, it
+          * happens to also be at a rollover in the reported value from near
+          * (1<<36) to 0.
+          *
+          * The low 32 bits rolls over in ~343 seconds.  Our 36-bit result
+          * rolls over every ~69 seconds.
+          */
+	 query->Base.Result = 80 * (results[1] & 0xffffffff);
+         query->Base.Result &= (1ull << 36) - 1;
+      } else {
+	 query->Base.Result = 1000 * (results[1] >> 32);
+      }
+
+      break;
+
    case GL_SAMPLES_PASSED_ARB:
       /* Map and count the pixels from the current query BO */
       for (i = query->first_index; i <= query->last_index; i++) {
@@ -262,6 +289,12 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    switch (query->Base.Target) {
+   case GL_TIMESTAMP:
+      drm_intel_bo_unreference(query->bo);
+      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
+				     4096, 4096);
+      /* FALLTHROUGH */
+
    case GL_TIME_ELAPSED_EXT:
       write_timestamp(intel, query->bo, 1);
       intel_batchbuffer_flush(intel);
@@ -404,6 +437,22 @@ brw_emit_query_end(struct brw_context *brw)
    brw->query.index++;
 }
 
+static uint64_t
+brw_get_timestamp(struct gl_context *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   uint64_t result = 0;
+
+   drm_intel_reg_read(intel->bufmgr, TIMESTAMP, &result);
+
+   /* See logic in brw_queryobj_get_results() */
+   result = result >> 32;
+   result *= 80;
+   result &= (1ull << 36) - 1;
+
+   return result;
+}
+
 void brw_init_queryobj_functions(struct dd_function_table *functions)
 {
    functions->NewQueryObject = brw_new_query_object;
@@ -412,4 +461,5 @@ void brw_init_queryobj_functions(struct dd_function_table *functions)
    functions->EndQuery = brw_end_query;
    functions->CheckQuery = brw_check_query;
    functions->WaitQuery = brw_wait_query;
+   functions->GetTimestamp = brw_get_timestamp;
 }

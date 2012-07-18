@@ -256,6 +256,8 @@ brwCreateContext(int api,
    if (intel->gen >= 6)
        ctx->Const.QuadsFollowProvokingVertexConvention = false;
 
+   ctx->Const.QueryCounterBits.Timestamp = 36;
+
    if (intel->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
