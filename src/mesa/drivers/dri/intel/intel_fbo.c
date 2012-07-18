@@ -193,8 +193,10 @@ quantize_num_samples(struct intel_context *intel, unsigned num_samples)
       else
          return 0;
    case 7:
-      /* TODO: Gen7 supports only 4x multisampling at the moment. */
-      if (num_samples > 0)
+      /* Gen7 supports 4x and 8x multisampling. */
+      if (num_samples > 4)
+         return 8;
+      else if (num_samples > 0)
          return 4;
       else
          return 0;
