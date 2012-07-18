@@ -184,9 +184,6 @@ namespace llvm
         LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
-        LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
         LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 
       EVT

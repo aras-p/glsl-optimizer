@@ -38,6 +38,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
+  setOperationAction(ISD::SETCC, MVT::i32, Custom);
+
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -273,6 +275,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::ROTL: return LowerROTL(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
+  case ISD::SETCC: return LowerSETCC(Op, DAG);
   }
 }
 
@@ -393,4 +396,29 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
   SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, HWTrue, HWFalse, CC);
 
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+}
+
+SDValue R600TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
+{
+  SDValue Cond;
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue CC  = Op.getOperand(2);
+  DebugLoc DL = Op.getDebugLoc();
+  assert(Op.getValueType() == MVT::i32);
+  Cond = DAG.getNode(
+      ISD::SELECT_CC,
+      Op.getDebugLoc(),
+      MVT::i32,
+      LHS, RHS,
+      DAG.getConstant(-1, MVT::i32),
+      DAG.getConstant(0, MVT::i32),
+      CC);
+  Cond = DAG.getNode(
+      ISD::AND,
+      DL,
+      MVT::i32,
+      DAG.getConstant(1, MVT::i32),
+      Cond);
+  return Cond;
 }

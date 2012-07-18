@@ -520,7 +520,6 @@ AMDILTargetLowering::LowerMemArgument(
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADDE, VT, Expand);
     setOperationAction(ISD::ADDC, VT, Expand);
-    setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::BRCOND, VT, Custom);
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::BR_JT, VT, Expand);
@@ -581,7 +580,6 @@ AMDILTargetLowering::LowerMemArgument(
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     // setOperationAction(ISD::VSETCC, VT, Expand);
-    setOperationAction(ISD::SETCC, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
     setOperationAction(ISD::SELECT, VT, Expand);
 
@@ -632,7 +630,6 @@ AMDILTargetLowering::LowerMemArgument(
   setOperationAction(ISD::BR_CC, MVT::Other, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
-  setOperationAction(ISD::SETCC, MVT::Other, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
 
   setOperationAction(ISD::BUILD_VECTOR, MVT::Other, Custom);
@@ -849,7 +846,6 @@ AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       LOWER(SREM);
       LOWER(BUILD_VECTOR);
       LOWER(SELECT);
-      LOWER(SETCC);
       LOWER(SIGN_EXTEND_INREG);
       LOWER(DYNAMIC_STACKALLOC);
       LOWER(BRCOND);
@@ -1360,37 +1356,6 @@ AMDILTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
   Cond = DAG.getNode(AMDILISD::CMOVLOG,
       DL,
       Op.getValueType(), Cond, LHS, RHS);
-  return Cond;
-}
-SDValue
-AMDILTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue Cond;
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue CC  = Op.getOperand(2);
-  DebugLoc DL = Op.getDebugLoc();
-  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  unsigned int AMDILCC = CondCCodeToCC(
-      SetCCOpcode,
-      LHS.getValueType().getSimpleVT().SimpleTy);
-  assert((AMDILCC != AMDILCC::COND_ERROR) && "Invalid SetCC!");
-  assert(Op.getValueType() == MVT::i32);
-  Cond = DAG.getNode(
-      ISD::SELECT_CC,
-      Op.getDebugLoc(),
-      MVT::i32,
-      LHS, RHS,
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
-      CC);
-  Cond = getConversionNode(DAG, Cond, Op, true);
-  Cond = DAG.getNode(
-      ISD::AND,
-      DL,
-      Cond.getValueType(),
-      DAG.getConstant(1, Cond.getValueType()),
-      Cond);
   return Cond;
 }
 
