@@ -1426,10 +1426,13 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	alphatest_bypass = ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT;
-	if (rctx->alphatest_state.bypass != alphatest_bypass) {
-		rctx->alphatest_state.bypass = alphatest_bypass;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	/* Alpha-test is done on the first colorbuffer only. */
+	if (cb == 0) {
+		alphatest_bypass = ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT;
+		if (rctx->alphatest_state.bypass != alphatest_bypass) {
+			rctx->alphatest_state.bypass = alphatest_bypass;
+			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		}
 	}
 
 	color_info |= S_0280A0_FORMAT(format) |

@@ -1397,10 +1397,13 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	alphatest_bypass = ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT;
-	if (rctx->alphatest_state.bypass != alphatest_bypass) {
-		rctx->alphatest_state.bypass = alphatest_bypass;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	/* Alpha-test is done on the first colorbuffer only. */
+	if (cb == 0) {
+		alphatest_bypass = ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT;
+		if (rctx->alphatest_state.bypass != alphatest_bypass) {
+			rctx->alphatest_state.bypass = alphatest_bypass;
+			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		}
 	}
 
 	color_info |= S_028C70_FORMAT(format) |
@@ -1433,6 +1436,12 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 	} else {
 		rctx->export_16bpc = false;
+	}
+
+	/* Alpha-test is done on the first colorbuffer only. */
+	if (cb == 0 && rctx->alphatest_state.cb0_export_16bpc != rctx->export_16bpc) {
+		rctx->alphatest_state.cb0_export_16bpc = rctx->export_16bpc;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 	}
 
 	/* for possible dual-src MRT */
@@ -1680,10 +1689,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
 		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
-	}
-	if (rctx->alphatest_state.export_16bpc != rctx->export_16bpc) {
-		rctx->alphatest_state.export_16bpc = rctx->export_16bpc;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 	}
 }
 

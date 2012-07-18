@@ -92,7 +92,7 @@ static void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_ato
 	struct r600_alphatest_state *a = (struct r600_alphatest_state*)atom;
 	unsigned alpha_ref = a->sx_alpha_ref;
 
-	if (rctx->chip_class >= EVERGREEN && a->export_16bpc) {
+	if (rctx->chip_class >= EVERGREEN && a->cb0_export_16bpc) {
 		alpha_ref &= ~0x1FFF;
 	}
 

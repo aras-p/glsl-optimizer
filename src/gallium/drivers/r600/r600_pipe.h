@@ -97,7 +97,7 @@ struct r600_alphatest_state {
 	unsigned sx_alpha_test_control; /* this comes from dsa state */
 	unsigned sx_alpha_ref; /* this comes from dsa state */
 	bool bypass;
-	bool export_16bpc; /* from set_framebuffer_state */
+	bool cb0_export_16bpc; /* from set_framebuffer_state */
 };
 
 enum r600_pipe_state_id {
