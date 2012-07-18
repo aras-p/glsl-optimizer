@@ -1658,7 +1658,6 @@ create_new_program( const struct state_key *key,
 /**
  * Return a vertex program which implements the current fixed-function
  * transform/lighting/texgen operations.
- * XXX move this into core mesa (main/)
  */
 struct gl_vertex_program *
 _mesa_get_fixed_func_vertex_program(struct gl_context *ctx)
