@@ -31,6 +31,7 @@
 #include "main/mtypes.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
+#include "main/fbobject.h"
 
 struct bitmap_cache;
 struct blit_state;
@@ -238,7 +239,7 @@ void st_invalidate_state(struct gl_context * ctx, GLuint new_state);
 static INLINE GLuint
 st_fb_orientation(const struct gl_framebuffer *fb)
 {
-   if (fb && fb->Name == 0) {
+   if (fb && _mesa_is_winsys_fbo(fb)) {
       /* Drawing into a window (on-screen buffer).
        *
        * Negate Y scale to flip image vertically.

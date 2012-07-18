@@ -1456,8 +1456,8 @@ _mesa_make_current( struct gl_context *newCtx,
       _glapi_set_dispatch(newCtx->CurrentDispatch);
 
       if (drawBuffer && readBuffer) {
-         ASSERT(drawBuffer->Name == 0);
-         ASSERT(readBuffer->Name == 0);
+         ASSERT(_mesa_is_winsys_fbo(drawBuffer));
+         ASSERT(_mesa_is_winsys_fbo(readBuffer));
          _mesa_reference_framebuffer(&newCtx->WinSysDrawBuffer, drawBuffer);
          _mesa_reference_framebuffer(&newCtx->WinSysReadBuffer, readBuffer);
 
@@ -1465,7 +1465,7 @@ _mesa_make_current( struct gl_context *newCtx,
           * Only set the context's Draw/ReadBuffer fields if they're NULL
           * or not bound to a user-created FBO.
           */
-         if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
+         if (!newCtx->DrawBuffer || _mesa_is_winsys_fbo(newCtx->DrawBuffer)) {
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
             /* Update the FBO's list of drawbuffers/renderbuffers.
              * For winsys FBOs this comes from the GL state (which may have
@@ -1473,7 +1473,7 @@ _mesa_make_current( struct gl_context *newCtx,
              */
             _mesa_update_draw_buffers(newCtx);
          }
-         if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
+         if (!newCtx->ReadBuffer || _mesa_is_winsys_fbo(newCtx->ReadBuffer)) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
          }
 

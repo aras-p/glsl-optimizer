@@ -37,6 +37,7 @@
 #include "pbo.h"
 #include "state.h"
 #include "glformats.h"
+#include "fbobject.h"
 
 
 /**
@@ -722,7 +723,8 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   if (ctx->ReadBuffer->Name != 0 && ctx->ReadBuffer->Visual.samples > 0) {
+   if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
+       ctx->ReadBuffer->Visual.samples > 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(multisample FBO)");
       return;
    }

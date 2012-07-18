@@ -347,7 +347,7 @@ _mesa_resizebuffers( struct gl_context *ctx )
       GLuint newWidth, newHeight;
       struct gl_framebuffer *buffer = ctx->WinSysDrawBuffer;
 
-      assert(buffer->Name == 0);
+      assert(_mesa_is_winsys_fbo(buffer));
 
       /* ask device driver for size of output buffer */
       ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
@@ -364,7 +364,7 @@ _mesa_resizebuffers( struct gl_context *ctx )
       GLuint newWidth, newHeight;
       struct gl_framebuffer *buffer = ctx->WinSysReadBuffer;
 
-      assert(buffer->Name == 0);
+      assert(_mesa_is_winsys_fbo(buffer));
 
       /* ask device driver for size of read buffer */
       ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
@@ -444,7 +444,7 @@ _mesa_update_draw_buffer_bounds(struct gl_context *ctx)
    if (!buffer)
       return;
 
-   if (buffer->Name) {
+   if (_mesa_is_user_fbo(buffer)) {
       /* user-created framebuffer size depends on the renderbuffers */
       update_framebuffer_size(ctx, buffer);
    }

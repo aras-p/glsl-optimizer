@@ -36,6 +36,7 @@
 #include "state.h"
 #include "dispatch.h"
 #include "glformats.h"
+#include "fbobject.h"
 
 
 #if FEATURE_drawpix
@@ -240,7 +241,8 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       goto end;
    }
 
-   if (ctx->ReadBuffer->Name != 0 && ctx->ReadBuffer->Visual.samples > 0) {
+   if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
+       ctx->ReadBuffer->Visual.samples > 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
 		  "glCopyPixels(multisample FBO)");
       goto end;

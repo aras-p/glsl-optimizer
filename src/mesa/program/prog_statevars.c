@@ -34,6 +34,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/fbobject.h"
 #include "prog_statevars.h"
 #include "prog_parameter.h"
 
@@ -574,7 +575,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       case STATE_FB_WPOS_Y_TRANSFORM:
          /* A driver may negate this conditional by using ZW swizzle
           * instead of XY (based on e.g. some other state). */
-         if (ctx->DrawBuffer->Name != 0) {
+         if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
             /* Identity (XY) followed by flipping Y upside down (ZW). */
             value[0] = 1.0F;
             value[1] = 0.0F;
