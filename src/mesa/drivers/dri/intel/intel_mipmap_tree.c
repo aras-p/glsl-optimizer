@@ -672,7 +672,30 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
 {
    assert(mt->mcs_mt == NULL);
    assert(intel->gen >= 7); /* MCS only used on Gen7+ */
-   assert(num_samples == 4); /* TODO: support 8x MSAA */
+
+   /* Choose the correct format for the MCS buffer.  All that really matters
+    * is that we allocate the right buffer size, since we'll always be
+    * accessing this miptree using MCS-specific hardware mechanisms, which
+    * infer the correct format based on num_samples.
+    */
+   gl_format format;
+   switch (num_samples) {
+   case 4:
+      /* 8 bits/pixel are required for MCS data when using 4x MSAA (2 bits for
+       * each sample).
+       */
+      format = MESA_FORMAT_A8;
+      break;
+   case 8:
+      /* 32 bits/pixel are required for MCS data when using 8x MSAA (3 bits
+       * for each sample, plus 8 padding bits).
+       */
+      format = MESA_FORMAT_R_UINT32;
+      break;
+   default:
+      assert(!"Unrecognized sample count in intel_miptree_alloc_mcs");
+      break;
+   };
 
    /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
     *
@@ -684,7 +707,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
     */
    mt->mcs_mt = intel_miptree_create(intel,
                                      mt->target,
-                                     MESA_FORMAT_A8,
+                                     format,
                                      mt->first_level,
                                      mt->last_level,
                                      mt->width0,
