@@ -1701,7 +1701,10 @@ static void evergreen_emit_cb_misc_state(struct r600_context *rctx, struct r600_
 
 	r600_write_context_reg_seq(cs, R_028238_CB_TARGET_MASK, 2);
 	r600_write_value(cs, a->blend_colormask & fb_colormask); /* R_028238_CB_TARGET_MASK */
-	r600_write_value(cs, (a->dual_src_blend ? ps_colormask : 0) | fb_colormask); /* R_02823C_CB_SHADER_MASK */
+	/* Always enable the first colorbuffer in CB_SHADER_MASK. This
+	 * will assure that the alpha-test will work even if there is
+	 * no colorbuffer bound. */
+	r600_write_value(cs, 0xf | (a->dual_src_blend ? ps_colormask : 0) | fb_colormask); /* R_02823C_CB_SHADER_MASK */
 }
 
 static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
