@@ -459,7 +459,7 @@ private:
    void kill_if_outside_dst_rect();
    void translate_dst_to_src();
    void single_to_blend();
-   void manual_blend();
+   void manual_blend(unsigned num_samples);
    void sample(struct brw_reg dst);
    void texel_fetch(struct brw_reg dst);
    void mcs_fetch();
@@ -471,7 +471,7 @@ private:
    /**
     * Base-2 logarithm of the maximum number of samples that can be blended.
     */
-   static const unsigned LOG2_MAX_BLEND_SAMPLES = 2;
+   static const unsigned LOG2_MAX_BLEND_SAMPLES = 3;
 
    void *mem_ctx;
    struct brw_context *brw;
@@ -659,7 +659,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
          sample(texture_data[0]);
       } else {
          /* Gen7+ hardware doesn't automaticaly blend. */
-         manual_blend();
+         manual_blend(key->src_samples);
       }
    } else {
       /* We aren't blending, which means we just want to fetch a single sample
@@ -1120,11 +1120,8 @@ inline int count_trailing_one_bits(unsigned value)
 
 
 void
-brw_blorp_blit_program::manual_blend()
+brw_blorp_blit_program::manual_blend(unsigned num_samples)
 {
-   /* TODO: support num_samples != 4 */
-   const int num_samples = 4;
-
    if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
       mcs_fetch();
 
@@ -1164,7 +1161,7 @@ brw_blorp_blit_program::manual_blend()
    brw_op2_ptr combine_op =
       key->texture_data_type == BRW_REGISTER_TYPE_F ? brw_ADD : brw_AVG;
    unsigned stack_depth = 0;
-   for (int i = 0; i < num_samples; ++i) {
+   for (unsigned i = 0; i < num_samples; ++i) {
       assert(stack_depth == _mesa_bitcount(i)); /* Loop invariant */
 
       /* Push sample i onto the stack */
