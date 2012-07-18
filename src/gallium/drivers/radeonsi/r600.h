@@ -67,64 +67,6 @@ struct r600_resource {
 };
 
 /* R600/R700 STATES */
-#define R600_GROUP_MAX			16
-#define R600_BLOCK_MAX_BO		32
-#define R600_BLOCK_MAX_REG		128
-
-/* each range covers 9 bits of dword space = 512 dwords = 2k bytes */
-/* there is a block entry for each register so 512 blocks */
-/* we have no registers to read/write below 0x8000 (0x2000 in dw space) */
-/* we use some fake offsets at 0x40000 to do evergreen sampler borders so take 0x42000 as a max bound*/
-#define RANGE_OFFSET_START 0x8000
-#define HASH_SHIFT 9
-#define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
-
-#define CTX_RANGE_ID(offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
-#define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
-
-struct r600_pipe_reg {
-	uint32_t			value;
-	struct r600_block 		*block;
-	struct r600_resource		*bo;
-	enum radeon_bo_usage		bo_usage;
-	uint32_t			id;
-};
-
-struct r600_pipe_state {
-	unsigned			id;
-	unsigned			nregs;
-	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
-};
-
-#define R600_BLOCK_STATUS_ENABLED	(1 << 0)
-#define R600_BLOCK_STATUS_DIRTY		(1 << 1)
-
-struct r600_block_reloc {
-	struct r600_resource	*bo;
-	enum radeon_bo_usage	bo_usage;
-	unsigned		bo_pm4_index;
-};
-
-struct r600_block {
-	struct list_head	list;
-	struct list_head	enable_list;
-	unsigned		status;
-	unsigned                flags;
-	unsigned		start_offset;
-	unsigned		pm4_ndwords;
-	unsigned		nbo;
-	uint16_t 		nreg;
-	uint16_t                nreg_dirty;
-	uint32_t		*reg;
-	uint32_t		pm4[R600_BLOCK_MAX_REG];
-	unsigned		pm4_bo_index[R600_BLOCK_MAX_REG];
-	struct r600_block_reloc	reloc[R600_BLOCK_MAX_BO];
-};
-
-struct r600_range {
-	struct r600_block	**blocks;
-};
-
 struct r600_query {
 	union {
 		uint64_t			u64;
@@ -178,8 +120,6 @@ struct r600_context;
 struct r600_screen;
 
 void r600_get_backend_mask(struct r600_context *ctx);
-void r600_context_fini(struct r600_context *ctx);
-void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
@@ -195,50 +135,13 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);
-void r600_inval_shader_cache(struct r600_context *ctx);
-void r600_inval_texture_cache(struct r600_context *ctx);
-void r600_inval_vertex_cache(struct r600_context *ctx);
-void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now);
 
 void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
-void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
-void r600_context_block_resource_emit_dirty(struct r600_context *ctx, struct r600_block *block);
 
 int si_context_init(struct r600_context *ctx);
 void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
-
-void _r600_pipe_state_add_reg(struct r600_context *ctx,
-			      struct r600_pipe_state *state,
-			      uint32_t offset, uint32_t value,
-			      uint32_t range_id, uint32_t block_id,
-			      struct r600_resource *bo,
-			      enum radeon_bo_usage usage);
-
-void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     uint32_t offset, uint32_t value,
-				     struct r600_resource *bo,
-				     enum radeon_bo_usage usage);
-
-#define r600_pipe_state_add_reg(state, offset, value, bo, usage) _r600_pipe_state_add_reg(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
-
-static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
-					   uint32_t value)
-{
-	state->regs[state->nregs].value = value;
-	state->nregs++;
-}
-
-static inline void r600_pipe_state_mod_reg_bo(struct r600_pipe_state *state,
-					      uint32_t value, struct r600_resource *bo,
-					      enum radeon_bo_usage usage)
-{
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].bo = bo;
-	state->regs[state->nregs].bo_usage = usage;
-	state->nregs++;
-}
 
 #endif

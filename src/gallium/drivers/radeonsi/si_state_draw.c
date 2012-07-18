@@ -479,7 +479,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
-	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct r600_atom *state = NULL, *next_state = NULL;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
@@ -545,9 +544,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
 		r600_emit_atom(rctx, state);
-	}
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
-		r600_context_block_emit_dirty(rctx, dirty_block);
 	}
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;

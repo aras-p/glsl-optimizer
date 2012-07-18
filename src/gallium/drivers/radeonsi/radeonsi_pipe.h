@@ -74,17 +74,6 @@ struct r600_atom_surface_sync {
 	unsigned flush_flags; /* CP_COHER_CNTL */
 };
 
-enum r600_pipe_state_id {
-	R600_PIPE_STATE_CONFIG,
-	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
-	R600_PIPE_STATE_PS_SHADER,
-	R600_PIPE_STATE_VS_SHADER,
-	R600_PIPE_STATE_CONSTANT,
-	R600_PIPE_STATE_SAMPLER,
-	R600_PIPE_STATE_RESOURCE,
-	R600_PIPE_NSTATES
-};
-
 struct r600_pipe_fences {
 	struct r600_resource		*bo;
 	unsigned			*data;
@@ -153,7 +142,6 @@ struct r600_context {
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
-	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct si_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			pa_sc_line_stipple;
@@ -162,7 +150,6 @@ struct r600_context {
 	unsigned			pa_cl_vs_out_cntl;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
-	struct r600_pipe_state		config;
 	struct si_pipe_shader		*ps_shader;
 	struct si_pipe_shader		*vs_shader;
 	struct pipe_query		*current_render_cond;
@@ -193,13 +180,7 @@ struct r600_context {
 	 */
 	struct radeon_winsys_cs	*cs;
 
-	struct r600_range	*range;
-	unsigned		nblocks;
-	struct r600_block	**blocks;
-	struct list_head	dirty;
-	struct list_head	enable_list;
 	unsigned		pm4_dirty_cdwords;
-	unsigned		ctx_pm4_ndwords;
 	unsigned		init_dwords;
 
 	/* The list of active queries. Only one query of each type can be active. */
