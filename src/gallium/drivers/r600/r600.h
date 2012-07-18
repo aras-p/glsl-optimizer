@@ -204,7 +204,6 @@ void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now);
 
 void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
-void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
 

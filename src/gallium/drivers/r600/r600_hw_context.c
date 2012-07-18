@@ -1368,30 +1368,3 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	}
 #endif
 }
-
-void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	uint64_t va = r600_resource_va(&ctx->screen->screen,
-				       (void*)t->filled_size);
-
-	r600_need_cs_space(ctx, 14 + 21, TRUE);
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET - R600_CONTEXT_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = 0;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE - R600_CONTEXT_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = t->stride_in_dw;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
-	cs->buf[cs->cdw++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
-	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;     /* src address lo */
-	cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFUL; /* src address hi */
-	cs->buf[cs->cdw++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
-	cs->buf[cs->cdw++] = 0; /* unused */
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, t->filled_size, RADEON_USAGE_READ);
-}

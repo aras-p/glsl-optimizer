@@ -1028,9 +1028,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		}
 	} else {
 		info.index_bias = info.start;
-		if (info.count_from_stream_output) {
-			r600_context_draw_opaque_count(rctx, (struct r600_so_target*)info.count_from_stream_output);
-		}
 	}
 
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
@@ -1073,7 +1070,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
-	r600_need_cs_space(rctx, 0, TRUE);
+	r600_need_cs_space(rctx,
+			   !info.indexed && info.count_from_stream_output ? 14 : 0,
+			   TRUE);
 
 	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
 		r600_emit_atom(rctx, state);
@@ -1107,6 +1106,24 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->predicate_drawing);
 		cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, (struct r600_resource*)ib.buffer, RADEON_USAGE_READ);
 	} else {
+		if (info.count_from_stream_output) {
+			struct r600_so_target *t = (struct r600_so_target*)info.count_from_stream_output;
+			uint64_t va = r600_resource_va(&rctx->screen->screen, (void*)t->filled_size);
+
+			r600_write_context_reg(cs, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
+			r600_write_context_reg(cs, R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE, t->stride_in_dw);
+
+			cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
+			cs->buf[cs->cdw++] = COPY_DW_SRC_IS_MEM | COPY_DW_DST_IS_REG;
+			cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;     /* src address lo */
+			cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFUL; /* src address hi */
+			cs->buf[cs->cdw++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* dst register */
+			cs->buf[cs->cdw++] = 0; /* unused */
+
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+			cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, t->filled_size, RADEON_USAGE_READ);
+		}
+
 		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, rctx->predicate_drawing);
 		cs->buf[cs->cdw++] = info.count;
 		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_AUTO_INDEX |
