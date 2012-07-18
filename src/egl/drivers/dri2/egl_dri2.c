@@ -648,6 +648,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    struct dri2_egl_context *dri2_ctx;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx_shared = dri2_egl_context(share_list);
+   __DRIcontext *shared =
+      dri2_ctx_shared ? dri2_ctx_shared->dri_context : NULL;
    struct dri2_egl_config *dri2_config = dri2_egl_config(conf);
    const __DRIconfig *dri_config;
    int api;
@@ -713,15 +715,13 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 	    dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
 						   api,
 						   dri_config,
-						   dri2_ctx_shared ? 
-						   dri2_ctx_shared->dri_context : NULL,
+                                                   shared,
 						   dri2_ctx);
       } else if (api == __DRI_API_OPENGL) {
 	 dri2_ctx->dri_context =
 	    dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
 					     dri_config,
-					     dri2_ctx_shared ? 
-					     dri2_ctx_shared->dri_context : NULL,
+                                             shared,
 					     dri2_ctx);
       } else {
 	 /* fail */
@@ -732,8 +732,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
          dri2_dpy->swrast->createNewContextForAPI(dri2_dpy->dri_screen,
                                                   api,
                                                   dri_config,
-                                                  dri2_ctx_shared ?
-                                                  dri2_ctx_shared->dri_context : NULL,
+                                                  shared,
                                                   dri2_ctx);
    }
 
