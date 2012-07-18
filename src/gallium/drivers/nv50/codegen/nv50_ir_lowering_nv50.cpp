@@ -701,6 +701,7 @@ NV50LoweringPreSSA::handleTXL(TexInstruction *i)
    BasicBlock *texiBB = i->bb->splitBefore(i, false);
    BasicBlock *joinBB = i->bb->splitAfter(i);
 
+   bld.setPosition(currBB, true);
    currBB->joinAt = bld.mkFlow(OP_JOINAT, joinBB, CC_ALWAYS, NULL);
 
    for (int l = 0; l <= 3; ++l) {
@@ -1030,13 +1031,7 @@ NV50LoweringPreSSA::checkPredicate(Instruction *insn)
 bool
 NV50LoweringPreSSA::visit(Instruction *i)
 {
-   if (i->prev)
-      bld.setPosition(i->prev, true);
-   else
-   if (i->next)
-      bld.setPosition(i->next, false);
-   else
-      bld.setPosition(i->bb, true);
+   bld.setPosition(i, false);
 
    if (i->cc != CC_ALWAYS)
       checkPredicate(i);
