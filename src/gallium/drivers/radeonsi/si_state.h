@@ -52,6 +52,15 @@ struct si_state_rasterizer {
 	float			offset_scale;
 };
 
+struct si_state_dsa {
+	struct si_pm4_state	pm4;
+	unsigned		alpha_ref;
+	unsigned		db_render_override;
+	unsigned		db_render_control;
+	uint8_t			valuemask[2];
+	uint8_t			writemask[2];
+};
+
 union si_state {
 	struct {
 		struct si_state_blend		*blend;
@@ -61,6 +70,7 @@ union si_state {
 		struct si_state_viewport	*viewport;
 		struct si_pm4_state		*framebuffer;
 		struct si_state_rasterizer	*rasterizer;
+		struct si_state_dsa		*dsa;
 		struct si_pm4_state		*fb_rs;
 	} named;
 	struct si_pm4_state	*array[0];

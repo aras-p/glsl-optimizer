@@ -78,7 +78,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONFIG,
 	R600_PIPE_STATE_SEAMLESS_CUBEMAP,
 	R600_PIPE_STATE_VGT,
-	R600_PIPE_STATE_DSA,
 	R600_PIPE_STATE_STENCIL_REF,
 	R600_PIPE_STATE_PS_SHADER,
 	R600_PIPE_STATE_VS_SHADER,
@@ -117,15 +116,6 @@ struct si_pipe_sampler_view {
 
 struct si_pipe_sampler_state {
 	uint32_t			val[4];
-};
-
-struct r600_pipe_dsa {
-	struct r600_pipe_state		rstate;
-	unsigned			alpha_ref;
-	unsigned			db_render_override;
-	unsigned			db_render_control;
-	ubyte				valuemask[2];
-	ubyte				writemask[2];
 };
 
 struct r600_vertex_element
@@ -322,7 +312,6 @@ void si_init_config(struct r600_context *rctx);
 void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_update_spi_map(struct r600_context *rctx);
-void *cayman_create_db_flush_dsa(struct r600_context *rctx);
 uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 				   enum pipe_format format,
 				   const struct util_format_description *desc,
@@ -413,6 +402,8 @@ void r600_set_so_targets(struct pipe_context *ctx,
 			 unsigned append_bitmask);
 void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 			       const struct pipe_stencil_ref *state);
+void r600_set_stencil_ref(struct pipe_context *ctx,
+                          const struct r600_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*

@@ -466,6 +466,133 @@ static void si_delete_rs_state(struct pipe_context *ctx, void *state)
 }
 
 /*
+ * DSA
+ */
+
+/* transnates straight */
+static uint32_t si_translate_ds_func(int func)
+{
+        return func;
+}
+
+static void *si_create_dsa_state(struct pipe_context *ctx,
+				 const struct pipe_depth_stencil_alpha_state *state)
+{
+	struct si_state_dsa *dsa = CALLOC_STRUCT(si_state_dsa);
+	struct si_pm4_state *pm4 = &dsa->pm4;
+	unsigned db_depth_control, /* alpha_test_control, */ alpha_ref;
+	unsigned db_render_override, db_render_control;
+
+	if (dsa == NULL) {
+		return NULL;
+	}
+
+	dsa->valuemask[0] = state->stencil[0].valuemask;
+	dsa->valuemask[1] = state->stencil[1].valuemask;
+	dsa->writemask[0] = state->stencil[0].writemask;
+	dsa->writemask[1] = state->stencil[1].writemask;
+
+	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
+		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
+		S_028800_ZFUNC(state->depth.func);
+
+	/* stencil */
+	if (state->stencil[0].enabled) {
+		db_depth_control |= S_028800_STENCIL_ENABLE(1);
+		db_depth_control |= S_028800_STENCILFUNC(si_translate_ds_func(state->stencil[0].func));
+		//db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
+		//db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
+		//db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
+
+		if (state->stencil[1].enabled) {
+			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
+			db_depth_control |= S_028800_STENCILFUNC_BF(si_translate_ds_func(state->stencil[1].func));
+			//db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
+			//db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
+			//db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
+		}
+	}
+
+	/* alpha */
+	//alpha_test_control = 0;
+	alpha_ref = 0;
+	if (state->alpha.enabled) {
+		//alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func);
+		//alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
+		alpha_ref = fui(state->alpha.ref_value);
+	}
+	dsa->alpha_ref = alpha_ref;
+
+	/* misc */
+	db_render_control = 0;
+	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
+	/* TODO db_render_override depends on query */
+	si_pm4_set_reg(pm4, R_028020_DB_DEPTH_BOUNDS_MIN, 0x00000000);
+	si_pm4_set_reg(pm4, R_028024_DB_DEPTH_BOUNDS_MAX, 0x00000000);
+	si_pm4_set_reg(pm4, R_028028_DB_STENCIL_CLEAR, 0x00000000);
+	si_pm4_set_reg(pm4, R_02802C_DB_DEPTH_CLEAR, 0x3F800000);
+	//si_pm4_set_reg(pm4, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control);
+	si_pm4_set_reg(pm4, R_028800_DB_DEPTH_CONTROL, db_depth_control);
+	si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, db_render_control);
+	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
+	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
+	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
+	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);
+	si_pm4_set_reg(pm4, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00);
+	dsa->db_render_override = db_render_override;
+
+	return dsa;
+}
+
+static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
+{
+        struct r600_context *rctx = (struct r600_context *)ctx;
+        struct si_state_dsa *dsa = state;
+        struct r600_stencil_ref ref;
+
+        if (state == NULL)
+                return;
+
+	si_pm4_bind_state(rctx, dsa, dsa);
+
+	// TODO
+        rctx->alpha_ref = dsa->alpha_ref;
+        rctx->alpha_ref_dirty = true;
+
+        ref.ref_value[0] = rctx->stencil_ref.ref_value[0];
+        ref.ref_value[1] = rctx->stencil_ref.ref_value[1];
+        ref.valuemask[0] = dsa->valuemask[0];
+        ref.valuemask[1] = dsa->valuemask[1];
+        ref.writemask[0] = dsa->writemask[0];
+        ref.writemask[1] = dsa->writemask[1];
+
+        r600_set_stencil_ref(ctx, &ref);
+}
+
+static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	si_pm4_delete_state(rctx, dsa, (struct si_state_dsa *)state);
+}
+
+static void *si_create_db_flush_dsa(struct r600_context *rctx)
+{
+	struct pipe_depth_stencil_alpha_state dsa;
+        struct si_state_dsa *state;
+
+	memset(&dsa, 0, sizeof(dsa));
+
+	state = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
+	si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
+		       S_028000_DEPTH_COPY(1) |
+		       S_028000_STENCIL_COPY(1) |
+		       S_028000_COPY_CENTROID(1));
+        return state;
+}
+
+/*
  * format translation
  */
 static uint32_t si_translate_colorformat(enum pipe_format format)
@@ -1128,6 +1255,11 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_rasterizer_state = si_create_rs_state;
 	rctx->context.bind_rasterizer_state = si_bind_rs_state;
 	rctx->context.delete_rasterizer_state = si_delete_rs_state;
+
+	rctx->context.create_depth_stencil_alpha_state = si_create_dsa_state;
+	rctx->context.bind_depth_stencil_alpha_state = si_bind_dsa_state;
+	rctx->context.delete_depth_stencil_alpha_state = si_delete_dsa_state;
+	rctx->custom_dsa_flush = si_create_db_flush_dsa(rctx);
 
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_state = si_set_scissor_state;

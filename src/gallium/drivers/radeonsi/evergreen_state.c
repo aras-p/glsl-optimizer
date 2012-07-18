@@ -76,12 +76,6 @@ static uint32_t r600_translate_stencil_op(int s_op)
 }
 #endif
 
-/* translates straight */
-static uint32_t si_translate_ds_func(int func)
-{
-	return func;
-}
-
 static unsigned si_tex_wrap(unsigned wrap)
 {
 	switch (wrap) {
@@ -748,81 +742,6 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static void *evergreen_create_dsa_state(struct pipe_context *ctx,
-				   const struct pipe_depth_stencil_alpha_state *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = CALLOC_STRUCT(r600_pipe_dsa);
-	unsigned db_depth_control, alpha_test_control, alpha_ref;
-	unsigned db_render_override, db_render_control;
-	struct r600_pipe_state *rstate;
-
-	if (dsa == NULL) {
-		return NULL;
-	}
-
-	dsa->valuemask[0] = state->stencil[0].valuemask;
-	dsa->valuemask[1] = state->stencil[1].valuemask;
-	dsa->writemask[0] = state->stencil[0].writemask;
-	dsa->writemask[1] = state->stencil[1].writemask;
-
-	rstate = &dsa->rstate;
-
-	rstate->id = R600_PIPE_STATE_DSA;
-	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
-		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
-		S_028800_ZFUNC(state->depth.func);
-
-	/* stencil */
-	if (state->stencil[0].enabled) {
-		db_depth_control |= S_028800_STENCIL_ENABLE(1);
-		db_depth_control |= S_028800_STENCILFUNC(si_translate_ds_func(state->stencil[0].func));
-		//db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
-		//db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
-		//db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
-
-		if (state->stencil[1].enabled) {
-			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
-			db_depth_control |= S_028800_STENCILFUNC_BF(si_translate_ds_func(state->stencil[1].func));
-			//db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
-			//db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
-			//db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
-		}
-	}
-
-	/* alpha */
-	alpha_test_control = 0;
-	alpha_ref = 0;
-	if (state->alpha.enabled) {
-		//alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func);
-		//alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
-		alpha_ref = fui(state->alpha.ref_value);
-	}
-	dsa->alpha_ref = alpha_ref;
-
-	/* misc */
-	db_render_control = 0;
-	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
-	/* TODO db_render_override depends on query */
-	r600_pipe_state_add_reg(rstate, R_028020_DB_DEPTH_BOUNDS_MIN, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028024_DB_DEPTH_BOUNDS_MAX, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028028_DB_STENCIL_CLEAR, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02802C_DB_DEPTH_CLEAR, 0x3F800000, NULL, 0);
-	//r600_pipe_state_add_reg(rstate, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028000_DB_RENDER_CONTROL, db_render_control, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_02800C_DB_RENDER_OVERRIDE, db_render_override, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AC8_DB_PRELOAD_CONTROL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00, NULL, 0);
-	dsa->db_render_override = db_render_override;
-
-	return rstate;
-}
-
 static void *si_create_sampler_state(struct pipe_context *ctx,
 				     const struct pipe_sampler_state *state)
 {
@@ -1135,19 +1054,16 @@ static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample
 void cayman_init_state_functions(struct r600_context *rctx)
 {
 	si_init_state_functions(rctx);
-	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
 	rctx->context.create_fs_state = si_create_shader_state;
 	rctx->context.create_sampler_state = si_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
 	rctx->context.create_vs_state = si_create_shader_state;
-	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_fs_state = r600_bind_ps_shader;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
 	rctx->context.bind_vs_state = r600_bind_vs_shader;
-	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
 	rctx->context.delete_fs_state = r600_delete_ps_shader;
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
@@ -1458,21 +1374,4 @@ void si_update_spi_map(struct r600_context *rctx)
 
 	if (rstate->nregs > 0)
 		r600_context_pipe_state_set(rctx, rstate);
-}
-
-void *cayman_create_db_flush_dsa(struct r600_context *rctx)
-{
-	struct pipe_depth_stencil_alpha_state dsa;
-	struct r600_pipe_state *rstate;
-
-	memset(&dsa, 0, sizeof(dsa));
-
-	rstate = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	r600_pipe_state_add_reg(rstate,
-				R_028000_DB_RENDER_CONTROL,
-				S_028000_DEPTH_COPY(1) |
-				S_028000_STENCIL_COPY(1) |
-				S_028000_COPY_CENTROID(1),
-				NULL, 0);
-	return rstate;
 }

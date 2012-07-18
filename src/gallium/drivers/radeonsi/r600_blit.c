@@ -49,7 +49,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	r600_context_queries_suspend(rctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->queued.named.blend);
-	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);
+	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->queued.named.dsa);
 	if (rctx->states[R600_PIPE_STATE_STENCIL_REF]) {
 		util_blitter_save_stencil_ref(rctx->blitter, &rctx->stencil_ref);
 	}

@@ -227,7 +227,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 			return NULL;
 		}
 		si_init_config(rctx);
-		rctx->custom_dsa_flush = cayman_create_db_flush_dsa(rctx);
 		break;
 	default:
 		R600_ERR("Unsupported chip class %d.\n", rctx->chip_class);

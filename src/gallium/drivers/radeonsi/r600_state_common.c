@@ -120,8 +120,8 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 }
 
 /* common state between evergreen and r600 */
-static void r600_set_stencil_ref(struct pipe_context *ctx,
-				 const struct r600_stencil_ref *state)
+void r600_set_stencil_ref(struct pipe_context *ctx,
+			  const struct r600_stencil_ref *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
@@ -152,7 +152,7 @@ void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 			       const struct pipe_stencil_ref *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
+	struct si_state_dsa *dsa = rctx->queued.named.dsa;
 	struct r600_stencil_ref ref;
 
 	rctx->stencil_ref = *state;
@@ -162,31 +162,6 @@ void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 
 	ref.ref_value[0] = state->ref_value[0];
 	ref.ref_value[1] = state->ref_value[1];
-	ref.valuemask[0] = dsa->valuemask[0];
-	ref.valuemask[1] = dsa->valuemask[1];
-	ref.writemask[0] = dsa->writemask[0];
-	ref.writemask[1] = dsa->writemask[1];
-
-	r600_set_stencil_ref(ctx, &ref);
-}
-
-void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = state;
-	struct r600_pipe_state *rstate;
-	struct r600_stencil_ref ref;
-
-	if (state == NULL)
-		return;
-	rstate = &dsa->rstate;
-	rctx->states[rstate->id] = rstate;
-	rctx->alpha_ref = dsa->alpha_ref;
-	rctx->alpha_ref_dirty = true;
-	r600_context_pipe_state_set(rctx, rstate);
-
-	ref.ref_value[0] = rctx->stencil_ref.ref_value[0];
-	ref.ref_value[1] = rctx->stencil_ref.ref_value[1];
 	ref.valuemask[0] = dsa->valuemask[0];
 	ref.valuemask[1] = dsa->valuemask[1];
 	ref.writemask[0] = dsa->writemask[0];
@@ -625,7 +600,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
+	struct si_state_dsa *dsa = rctx->queued.named.dsa;
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
