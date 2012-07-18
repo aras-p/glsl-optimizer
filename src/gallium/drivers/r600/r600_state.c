@@ -1595,7 +1595,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	uint32_t tl, br, shader_control;
+	uint32_t tl, br;
 
 	if (rstate == NULL)
 		return;
@@ -1618,10 +1618,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_db(rctx, rstate, state);
 	}
 
-	shader_control = 0;
-	for (int i = 0; i < state->nr_cbufs; i++) {
-		shader_control |= 1 << i;
-	}
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
 
@@ -1630,8 +1626,16 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
 
+	/* Always enable the first colorbuffer in CB_SHADER_CONTROL. This
+	 * will assure that the alpha-test will work even if there is
+	 * no colorbuffer bound. */
 	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
-				shader_control);
+				(1ull << MAX2(state->nr_cbufs, 1)) - 1);
+
+	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
+		rctx->alphatest_state.bypass = false;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	}
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
