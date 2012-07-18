@@ -197,12 +197,6 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	return NULL;
     }
 
-    if (mesa_api != API_OPENGL && num_attribs != 0) {
-	*error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
-	assert(!"Should not get here.");
-	return NULL;
-    }
-
     for (unsigned i = 0; i < num_attribs; i++) {
 	switch (attribs[i * 2]) {
 	case __DRI_CTX_ATTRIB_MAJOR_VERSION:
@@ -222,6 +216,23 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	    *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	    return NULL;
 	}
+    }
+
+    /* The EGL_KHR_create_context spec says:
+     *
+     *     "Flags are only defined for OpenGL context creation, and specifying
+     *     a flags value other than zero for other types of contexts,
+     *     including OpenGL ES contexts, will generate an error."
+     *
+     * The GLX_EXT_create_context_es2_profile specification doesn't say
+     * anything specific about this case.  However, none of the known flags
+     * have any meaning in an ES context, so this seems safe.
+     */
+    if (mesa_api != __DRI_API_OPENGL
+        && mesa_api != __DRI_API_OPENGL_CORE
+        && flags != 0) {
+	*error = __DRI_CTX_ERROR_BAD_FLAG;
+	return NULL;
     }
 
     /* There are no forward-compatible contexts before OpenGL 3.0.  The
