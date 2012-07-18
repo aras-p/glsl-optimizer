@@ -30,6 +30,7 @@
 #include "main/image.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
+#include "main/fbobject.h"
 
 #include "drivers/common/meta.h"
 
@@ -108,7 +109,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 	 return false;
       }
 
-      if (ctx->ReadBuffer->Name == 0) {
+      if (_mesa_is_winsys_fbo(ctx->ReadBuffer)) {
 	 /* Flip vertical orientation for system framebuffers */
 	 y = ctx->ReadBuffer->Height - (y + height);
 	 src_pitch = -region->pitch;

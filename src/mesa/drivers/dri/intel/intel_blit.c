@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/colormac.h"
+#include "main/fbobject.h"
 
 #include "intel_blit.h"
 #include "intel_buffers.h"
@@ -248,7 +249,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    }
 
    cx = fb->_Xmin;
-   if (fb->Name == 0)
+   if (_mesa_is_winsys_fbo(fb))
       cy = ctx->DrawBuffer->Height - fb->_Ymax;
    else
       cy = fb->_Ymin;

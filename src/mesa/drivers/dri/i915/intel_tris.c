@@ -38,6 +38,7 @@
 #include "main/texobj.h"
 #include "main/state.h"
 #include "main/dd.h"
+#include "main/fbobject.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -503,7 +504,7 @@ intel_emit_fragcoord(struct intel_context *intel, intelVertexPtr v)
 
    fragcoord[0] = vertex_position[0];
 
-   if (fb->Name)
+   if (_mesa_is_user_fbo(fb))
       fragcoord[1] = vertex_position[1];
    else
       fragcoord[1] = fb->Height - vertex_position[1];

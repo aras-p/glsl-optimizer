@@ -70,7 +70,7 @@ void
 intel_check_front_buffer_rendering(struct intel_context *intel)
 {
    const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* drawing to window system buffer */
       if (fb->_NumColorDrawBuffers > 0) {
          if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {

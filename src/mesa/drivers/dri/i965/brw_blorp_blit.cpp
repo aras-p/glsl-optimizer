@@ -22,6 +22,7 @@
  */
 
 #include "main/teximage.h"
+#include "main/fbobject.h"
 
 #include "glsl/ralloc.h"
 
@@ -214,13 +215,13 @@ try_blorp_blit(struct intel_context *intel,
    /* Account for the fact that in the system framebuffer, the origin is at
     * the lower left.
     */
-   if (read_fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(read_fb)) {
       GLint tmp = read_fb->Height - srcY0;
       srcY0 = read_fb->Height - srcY1;
       srcY1 = tmp;
       mirror_y = !mirror_y;
    }
-   if (draw_fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(draw_fb)) {
       GLint tmp = draw_fb->Height - dstY0;
       dstY0 = draw_fb->Height - dstY1;
       dstY1 = tmp;

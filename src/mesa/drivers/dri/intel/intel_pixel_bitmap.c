@@ -37,6 +37,7 @@
 #include "main/state.h"
 #include "main/texobj.h"
 #include "main/context.h"
+#include "main/fbobject.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -158,7 +159,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
 static INLINE int
 y_flip(struct gl_framebuffer *fb, int y, int height)
 {
-   if (fb->Name != 0)
+   if (_mesa_is_user_fbo(fb))
       return y;
    else
       return fb->Height - y - height;
@@ -265,7 +266,7 @@ do_blit_bitmap( struct gl_context *ctx,
 			     w, h,
 			     (GLubyte *)stipple,
 			     8,
-			     fb->Name == 0 ? true : false) == 0)
+			     _mesa_is_winsys_fbo(fb)) == 0)
 	    continue;
 
 	 if (!intelEmitImmediateColorExpandBlit(intel,

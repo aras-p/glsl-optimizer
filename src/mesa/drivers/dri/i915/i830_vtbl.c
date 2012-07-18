@@ -39,6 +39,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "main/renderbuffer.h"
 #include "main/framebuffer.h"
+#include "main/fbobject.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
@@ -769,7 +770,7 @@ i830_update_draw_buffer(struct intel_context *intel)
       /* Get the intel_renderbuffer for the single colorbuffer we're drawing
        * into.
        */
-      if (fb->Name == 0) {
+      if (_mesa_is_winsys_fbo(fb)) {
 	 /* drawing to window system buffer */
 	 if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);

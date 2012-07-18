@@ -30,6 +30,7 @@
 #include "main/state.h"
 #include "main/mtypes.h"
 #include "main/condrender.h"
+#include "main/fbobject.h"
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
@@ -175,14 +176,14 @@ do_blit_copypixels(struct gl_context * ctx,
    dsty += srcy - orig_srcy;
 
    /* Flip dest Y if it's a window system framebuffer. */
-   if (fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(fb)) {
       /* copypixels to a window system framebuffer */
       dsty = fb->Height - dsty - height;
       flip = !flip;
    }
 
    /* Flip source Y if it's a window system framebuffer. */
-   if (read_fb->Name == 0) {
+   if (_mesa_is_winsys_fbo(read_fb)) {
       srcy = read_fb->Height - srcy - height;
       flip = !flip;
    }
