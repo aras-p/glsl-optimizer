@@ -991,6 +991,11 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    if (!exa)
       return NULL;
 
+   exa->scrn = ms->screen;
+   exa->pipe = exa->scrn->context_create(exa->scrn, NULL);
+   if (exa->pipe == NULL)
+      goto out_err;
+
    pExa = exaDriverAlloc();
    if (!pExa) {
       goto out_err;
@@ -1012,8 +1017,9 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
 #ifdef EXA_MIXED_PIXMAPS
    pExa->flags            |= EXA_MIXED_PIXMAPS;
 #endif
-   pExa->maxX              = 8191; /* FIXME */
-   pExa->maxY              = 8191; /* FIXME */
+
+   pExa->maxX = pExa->maxY =
+   1 << (exa->scrn->get_param(exa->scrn, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
 
    pExa->WaitMarker         = ExaWaitMarker;
    pExa->MarkSync           = ExaMarkSync;
@@ -1039,11 +1045,6 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    if (!exaDriverInit(pScrn->pScreen, pExa)) {
       goto out_err;
    }
-
-   exa->scrn = ms->screen;
-   exa->pipe = exa->scrn->context_create(exa->scrn, NULL);
-   if (exa->pipe == NULL)
-      goto out_err;
 
    /* Share context with DRI */
    ms->ctx = exa->pipe;
