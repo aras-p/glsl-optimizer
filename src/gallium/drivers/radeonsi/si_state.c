@@ -1431,3 +1431,47 @@ bool si_update_draw_info_state(struct r600_context *rctx,
 	si_pm4_set_state(rctx, draw_info, pm4);
 	return true;
 }
+
+void si_update_spi_map(struct r600_context *rctx)
+{
+	struct r600_shader *ps = &rctx->ps_shader->shader;
+	struct r600_shader *vs = &rctx->vs_shader->shader;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	unsigned i, j, tmp;
+
+	for (i = 0; i < ps->ninput; i++) {
+		tmp = 0;
+
+#if 0
+		/* XXX: Flat shading hangs the GPU */
+		if (ps->input[i].name == TGSI_SEMANTIC_POSITION ||
+		    ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+		    (ps->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
+		     rctx->rasterizer && rctx->rasterizer->flatshade)) {
+			tmp |= S_028644_FLAT_SHADE(1);
+		}
+#endif
+
+		if (ps->input[i].name == TGSI_SEMANTIC_GENERIC &&
+		    rctx->sprite_coord_enable & (1 << ps->input[i].sid)) {
+			tmp |= S_028644_PT_SPRITE_TEX(1);
+		}
+
+		for (j = 0; j < vs->noutput; j++) {
+			if (ps->input[i].name == vs->output[j].name &&
+			    ps->input[i].sid == vs->output[j].sid) {
+				tmp |= S_028644_OFFSET(vs->output[j].param_offset);
+				break;
+			}
+		}
+
+		if (j == vs->noutput) {
+			/* No corresponding output found, load defaults into input */
+			tmp |= S_028644_OFFSET(0x20);
+		}
+
+		si_pm4_set_reg(pm4, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp);
+	}
+
+	si_pm4_set_state(rctx, spi, pm4);
+}

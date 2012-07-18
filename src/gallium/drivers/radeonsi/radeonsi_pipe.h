@@ -210,7 +210,6 @@ struct r600_context {
 	struct r600_pipe_state		vs_const_buffer;
 	struct r600_pipe_state		vs_user_data;
 	struct r600_pipe_state		ps_const_buffer;
-	struct r600_pipe_state          spi;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
 	struct pipe_query		*saved_render_cond;
@@ -300,7 +299,6 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 void cayman_init_state_functions(struct r600_context *rctx);
 void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader);
-void si_update_spi_map(struct r600_context *rctx);
 uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 				   enum pipe_format format,
 				   const struct util_format_description *desc,
