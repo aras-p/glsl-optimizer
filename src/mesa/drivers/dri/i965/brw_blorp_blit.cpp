@@ -816,19 +816,48 @@ brw_blorp_blit_program::compute_frag_coords()
    brw_ADD(&func, Y, stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
 
    if (key->persample_msaa_dispatch) {
-      /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples > 0.
-       * Therefore, subspan 0 will represent sample 0, subspan 1 will
-       * represent sample 1, and so on.
-       *
-       * So we need to populate S with the sequence (0, 0, 0, 0, 1, 1, 1, 1,
-       * 2, 2, 2, 2, 3, 3, 3, 3).  The easiest way to do this is to populate a
-       * temporary variable with the sequence (0, 1, 2, 3), and then copy from
-       * it using vstride=1, width=4, hstride=0.
-       *
-       * TODO: implement the necessary calculation for 8x multisampling.
-       */
-      brw_MOV(&func, t1, brw_imm_v(0x3210));
-      brw_MOV(&func, S, stride(t1, 1, 4, 0));
+      switch (key->rt_samples) {
+      case 4:
+         /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples == 4.
+          * Therefore, subspan 0 will represent sample 0, subspan 1 will
+          * represent sample 1, and so on.
+          *
+          * So we need to populate S with the sequence (0, 0, 0, 0, 1, 1, 1,
+          * 1, 2, 2, 2, 2, 3, 3, 3, 3).  The easiest way to do this is to
+          * populate a temporary variable with the sequence (0, 1, 2, 3), and
+          * then copy from it using vstride=1, width=4, hstride=0.
+          */
+         brw_MOV(&func, t1, brw_imm_v(0x3210));
+         brw_MOV(&func, S, stride(t1, 1, 4, 0));
+         break;
+      case 8: {
+         /* The WM will be run in MSDISPMODE_PERSAMPLE with num_samples == 8.
+          * Therefore, subspan 0 will represent sample N (where N is 0 or 4),
+          * subspan 1 will represent sample 1, and so on.  We can find the
+          * value of N by looking at R0.0 bits 7:6 ("Starting Sample Pair
+          * Index") and multiplying by two (since samples are always delivered
+          * in pairs).  That is, we compute 2*((R0.0 & 0xc0) >> 6) == (R0.0 &
+          * 0xc0) >> 5.
+          *
+          * Then we need to add N to the sequence (0, 0, 0, 0, 1, 1, 1, 1, 2,
+          * 2, 2, 2, 3, 3, 3, 3), which we compute by populating a temporary
+          * variable with the sequence (0, 1, 2, 3), and then reading from it
+          * using vstride=1, width=4, hstride=0.
+          */
+         struct brw_reg t1_ud1 = vec1(retype(t1, BRW_REGISTER_TYPE_UD));
+         struct brw_reg r0_ud1 = vec1(retype(R0, BRW_REGISTER_TYPE_UD));
+         brw_AND(&func, t1_ud1, r0_ud1, brw_imm_ud(0xc0));
+         brw_SHR(&func, t1_ud1, t1_ud1, brw_imm_ud(5));
+         brw_MOV(&func, t2, brw_imm_v(0x3210));
+         brw_ADD(&func, S, retype(t1_ud1, BRW_REGISTER_TYPE_UW),
+                 stride(t2, 1, 4, 0));
+         break;
+      }
+      default:
+         assert(!"Unrecognized sample count in "
+                "brw_blorp_blit_program::compute_frag_coords()");
+         break;
+      }
       s_is_zero = false;
    } else {
       /* Either the destination surface is single-sampled, or the WM will be
