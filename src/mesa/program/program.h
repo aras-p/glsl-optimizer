@@ -216,4 +216,46 @@ _mesa_program_index_to_target(GLuint i)
       return enums[i];
 }
 
+
+/* Cast wrappers from gl_program to gl_vertex/geometry/fragment_program */
+
+static inline struct gl_fragment_program *
+gl_fragment_program(struct gl_program *prog)
+{
+   return (struct gl_fragment_program *) prog;
+}
+
+static inline const struct gl_fragment_program *
+gl_fragment_program_const(const struct gl_program *prog)
+{
+   return (const struct gl_fragment_program *) prog;
+}
+
+
+static inline struct gl_vertex_program *
+gl_vertex_program(struct gl_program *prog)
+{
+   return (struct gl_vertex_program *) prog;
+}
+
+static inline const struct gl_vertex_program *
+gl_vertex_program_const(const struct gl_program *prog)
+{
+   return (const struct gl_vertex_program *) prog;
+}
+
+
+static inline struct gl_geometry_program *
+gl_geometry_program(struct gl_program *prog)
+{
+   return (struct gl_geometry_program *) prog;
+}
+
+static inline const struct gl_geometry_program *
+gl_geometry_program_const(const struct gl_program *prog)
+{
+   return (const struct gl_geometry_program *) prog;
+}
+
+
 #endif /* PROGRAM_H */
