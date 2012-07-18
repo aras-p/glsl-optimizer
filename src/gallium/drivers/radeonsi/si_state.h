@@ -63,6 +63,7 @@ struct si_state_dsa {
 
 union si_state {
 	struct {
+		struct si_pm4_state		*init;
 		struct si_state_blend		*blend;
 		struct si_pm4_state		*blend_color;
 		struct si_pm4_state		*clip;
@@ -107,6 +108,7 @@ union si_state {
 	} while(0);
 
 void si_init_state_functions(struct r600_context *rctx);
+void si_init_config(struct r600_context *rctx);
 bool si_update_draw_info_state(struct r600_context *rctx,
 			       const struct pipe_draw_info *info);
 

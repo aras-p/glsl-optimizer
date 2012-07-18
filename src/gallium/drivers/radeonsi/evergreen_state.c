@@ -1082,43 +1082,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 }
 
-void si_init_config(struct r600_context *rctx)
-{
-  	struct r600_pipe_state *rstate = &rctx->config;
-	unsigned tmp;
-
-	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL_1, 0x0, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A14_VGT_HOS_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A18_VGT_HOS_MAX_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A1C_VGT_HOS_MIN_TESS_LEVEL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A20_VGT_HOS_REUSE_DEPTH, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A24_VGT_GROUP_PRIM_TYPE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A28_VGT_GROUP_FIRST_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A2C_VGT_GROUP_DECR, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A30_VGT_GROUP_VECT_0_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A40_VGT_GS_MODE, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A84_VGT_PRIMITIVEID_EN, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028A8C_VGT_PRIMITIVEID_RESET, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B94_VGT_STRMOUT_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AA8_IA_MULTI_VGT_PARAM, S_028AA8_SWITCH_ON_EOP(1) | S_028AA8_PARTIAL_VS_WAVE_ON(1) | S_028AA8_PRIMGROUP_SIZE(63), NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB4_VGT_REUSE_OFF, 0x00000000, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028AB8_VGT_VTX_CNT_EN, 0x0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028B54_VGT_SHADER_STAGES_EN, 0, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210, NULL, 0);
-	r600_pipe_state_add_reg(rstate, R_028BD8_PA_SC_CENTROID_PRIORITY_1, 0xfedcba98, NULL, 0);
-
-	r600_pipe_state_add_reg(rstate, R_028804_DB_EQAA, 0x110000, NULL, 0);
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
 void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;

@@ -298,7 +298,6 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 
 /* evergreen_state.c */
 void cayman_init_state_functions(struct r600_context *rctx);
-void si_init_config(struct r600_context *rctx);
 void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_update_spi_map(struct r600_context *rctx);

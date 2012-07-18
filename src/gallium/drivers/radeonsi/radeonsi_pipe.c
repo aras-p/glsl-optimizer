@@ -47,6 +47,7 @@
 #include "r600_resource.h"
 #include "radeonsi_pipe.h"
 #include "r600_hw_context_priv.h"
+#include "si_state.h"
 
 /*
  * pipe_context
