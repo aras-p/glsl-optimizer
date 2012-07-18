@@ -1057,7 +1057,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	if (prim == V_008958_DI_PT_LINELIST)
 		ls_mask = 1;
-	else if (prim == V_008958_DI_PT_LINESTRIP) 
+	else if (prim == V_008958_DI_PT_LINESTRIP ||
+		 prim == V_008958_DI_PT_LINELOOP)
 		ls_mask = 2;
 	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
 	r600_pipe_state_mod_reg(&rctx->vgt,
