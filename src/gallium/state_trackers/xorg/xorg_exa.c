@@ -1001,8 +1001,6 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
       goto out_err;
    }
 
-   memset(pExa, 0, sizeof(*pExa));
-
    pExa->exa_major         = 2;
    pExa->exa_minor         = 2;
    pExa->memoryBase        = 0;
