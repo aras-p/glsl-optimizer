@@ -24,9 +24,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   // We need to custom lower some of the intrinsics
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
-  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
-
   // Library functions.  These default to Expand, but we have instructions
   // for them.
   setOperationAction(ISD::FCEIL,  MVT::f32, Legal);
@@ -44,7 +41,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   switch (Op.getOpcode()) {
   default: return AMDILTargetLowering::LowerOperation(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
 }
@@ -126,112 +122,6 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
                                                OneSubAC);
 }
 
-SDValue AMDGPUTargetLowering::LowerSELECT_CC(SDValue Op,
-    SelectionDAG &DAG) const
-{
-  DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  SDValue True = Op.getOperand(2);
-  SDValue False = Op.getOperand(3);
-  SDValue CC = Op.getOperand(4);
-  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
-  SDValue Temp;
-
-  // LHS and RHS are guaranteed to be the same value type
-  EVT CompareVT = LHS.getValueType();
-
-  // We need all the operands of SELECT_CC to have the same value type, so if
-  // necessary we need to convert LHS and RHS to be the same type True and
-  // False.  True and False are guaranteed to have the same type as this
-  // SELECT_CC node.
-
-  if (CompareVT !=  VT) {
-    ISD::NodeType ConversionOp = ISD::DELETED_NODE;
-    if (VT == MVT::f32 && CompareVT == MVT::i32) {
-      if (isUnsignedIntSetCC(CCOpcode)) {
-        ConversionOp = ISD::UINT_TO_FP;
-      } else {
-        ConversionOp = ISD::SINT_TO_FP;
-      }
-    } else if (VT == MVT::i32 && CompareVT == MVT::f32) {
-      ConversionOp = ISD::FP_TO_SINT;
-    } else {
-      // I don't think there will be any other type pairings.
-      assert(!"Unhandled operand type parings in SELECT_CC");
-    }
-    // XXX Check the value of LHS and RHS and avoid creating sequences like
-    // (FTOI (ITOF))
-    LHS = DAG.getNode(ConversionOp, DL, VT, LHS);
-    RHS = DAG.getNode(ConversionOp, DL, VT, RHS);
-  }
-
-  // If True is a hardware TRUE value and False is a hardware FALSE value or
-  // vice-versa we can handle this with a native instruction (SET* instructions).
-  if ((isHWTrueValue(True) && isHWFalseValue(False))) {
-    return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
-  }
-
-  // XXX If True is a hardware TRUE value and False is a hardware FALSE value,
-  // we can handle this with a native instruction, but we need to swap true
-  // and false and change the conditional.
-  if (isHWTrueValue(False) && isHWFalseValue(True)) {
-  }
-
-  // XXX Check if we can lower this to a SELECT or if it is supported by a native
-  // operation. (The code below does this but we don't have the Instruction
-  // selection patterns to do this yet.
-#if 0
-  if (isZero(LHS) || isZero(RHS)) {
-    SDValue Cond = (isZero(LHS) ? RHS : LHS);
-    bool SwapTF = false;
-    switch (CCOpcode) {
-    case ISD::SETOEQ:
-    case ISD::SETUEQ:
-    case ISD::SETEQ:
-      SwapTF = true;
-      // Fall through
-    case ISD::SETONE:
-    case ISD::SETUNE:
-    case ISD::SETNE:
-      // We can lower to select
-      if (SwapTF) {
-        Temp = True;
-        True = False;
-        False = Temp;
-      }
-      // CNDE
-      return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
-    default:
-      // Supported by a native operation (CNDGE, CNDGT)
-      return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
-    }
-  }
-#endif
-
-  // If we make it this for it means we have no native instructions to handle
-  // this SELECT_CC, so we must lower it.
-  SDValue HWTrue, HWFalse;
-
-  if (VT == MVT::f32) {
-    HWTrue = DAG.getConstantFP(1.0f, VT);
-    HWFalse = DAG.getConstantFP(0.0f, VT);
-  } else if (VT == MVT::i32) {
-    HWTrue = DAG.getConstant(-1, VT);
-    HWFalse = DAG.getConstant(0, VT);
-  }
-  else {
-    assert(!"Unhandled value type in LowerSELECT_CC");
-  }
-
-  // Lower this unsupported SELECT_CC into a combination of two supported
-  // SELECT_CC operations.
-  SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, HWTrue, HWFalse, CC);
-
-  return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
-}
 
 
 SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,

@@ -41,6 +41,8 @@ private:
   /// LowerROTL - Lower ROTL opcode to BITALIGN
   SDValue LowerROTL(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
+
 };
 
 } // End namespace llvm;
