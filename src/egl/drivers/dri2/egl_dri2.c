@@ -697,7 +697,23 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       dri_config = NULL;
 
    if (dri2_dpy->dri2) {
-      {
+      if (dri2_dpy->dri2->base.version >= 3) {
+         unsigned error;
+         const uint32_t ctx_attribs[2] = {
+            __DRI_CTX_ATTRIB_MAJOR_VERSION,
+            dri2_ctx->base.ClientVersion
+         };
+
+	 dri2_ctx->dri_context =
+	    dri2_dpy->dri2->createContextAttribs(dri2_dpy->dri_screen,
+                                                 api,
+                                                 dri_config,
+                                                 shared,
+                                                 1,
+                                                 ctx_attribs,
+                                                 & error,
+                                                 dri2_ctx);
+      } else {
 	 dri2_ctx->dri_context =
 	    dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
 						   api,
