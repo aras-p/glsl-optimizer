@@ -32,6 +32,7 @@
 #include <xf86.h>
 #include <xf86i2c.h>
 #include <xf86Crtc.h>
+#include <xf86DDC.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -54,7 +55,8 @@
 struct output_private
 {
     drmModeConnectorPtr drm_connector;
-
+    drmModePropertyBlobPtr edid_blob;
+    int fd;
     int c;
 };
 
@@ -122,8 +124,38 @@ output_get_modes(xf86OutputPtr output)
     struct output_private *priv = output->driver_private;
     drmModeConnectorPtr drm_connector = priv->drm_connector;
     drmModeModeInfoPtr drm_mode = NULL;
+    drmModePropertyPtr props = NULL;
+    xf86MonPtr ddc_mon = NULL;
     DisplayModePtr modes = NULL, mode = NULL;
     int i;
+
+	for (i = 0; i < drm_connector->count_props; i++) {
+		props = drmModeGetProperty(priv->fd, drm_connector->props[i]);
+		if (!props)
+			continue;
+
+		if (!(props->flags & DRM_MODE_PROP_BLOB))
+			goto out_free;
+
+		if (!strcmp(props->name, "EDID")) {
+			if (priv->edid_blob)
+				drmModeFreePropertyBlob(priv->edid_blob);
+			priv->edid_blob = drmModeGetPropertyBlob(priv->fd,
+							  drm_connector->prop_values[i]);
+		}
+
+		out_free:
+		drmModeFreeProperty(props);
+	}
+
+	if (priv->edid_blob) {
+		ddc_mon = xf86InterpretEDID(output->scrn->scrnIndex,
+									priv->edid_blob->data);
+
+		if (ddc_mon && priv->edid_blob->length > 128)
+			ddc_mon->flags |= MONITOR_EDID_COMPLETE_RAWDATA;
+	}
+	xf86OutputSetEDID(output, ddc_mon);
 
     for (i = 0; i < drm_connector->count_modes; i++) {
 	drm_mode = &drm_connector->modes[i];
@@ -194,6 +226,8 @@ static void
 output_destroy(xf86OutputPtr output)
 {
     struct output_private *priv = output->driver_private;
+    if (priv->edid_blob)
+		drmModeFreePropertyBlob(priv->edid_blob);
     drmModeFreeConnector(priv->drm_connector);
     free(priv);
     output->driver_private = NULL;
@@ -283,6 +317,7 @@ xorg_output_init(ScrnInfoPtr pScrn)
 	}
 	priv->c = c;
 	priv->drm_connector = drm_connector;
+	priv->fd = ms->fd;
 	output->driver_private = priv;
 	output->subpixel_order = SubPixelHorizontalRGB;
 	output->interlaceAllowed = FALSE;
