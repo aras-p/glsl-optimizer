@@ -92,6 +92,14 @@ struct r600_cb_misc_state {
 	bool dual_src_blend;
 };
 
+struct r600_alphatest_state {
+	struct r600_atom atom;
+	unsigned sx_alpha_test_control; /* this comes from dsa state */
+	unsigned sx_alpha_ref; /* this comes from dsa state */
+	bool bypass;
+	bool export_16bpc; /* from set_framebuffer_state */
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -307,7 +315,6 @@ struct r600_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	unsigned			compute_cb_target_mask;
-	unsigned			sx_alpha_test_control;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
@@ -331,8 +338,6 @@ struct r600_context {
 	unsigned			sprite_coord_enable;
 	boolean				flatshade;
 	boolean				export_16bpc;
-	unsigned			alpha_ref;
-	boolean				alpha_ref_dirty;
 	unsigned			nr_cbufs;
 
 	struct u_upload_mgr	        *uploader;
@@ -348,6 +353,7 @@ struct r600_context {
         struct r600_command_buffer      start_compute_cs_cmd;
 	struct r600_surface_sync_cmd	surface_sync_cmd;
 	struct r600_atom		r6xx_flush_and_inv_cmd;
+	struct r600_alphatest_state	alphatest_state;
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
 	/** Vertex buffers for fetch shaders */

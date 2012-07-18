@@ -330,7 +330,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028124_CB_CLEAR_GREEN, 0, 0},
 	{R_028128_CB_CLEAR_BLUE, 0, 0},
 	{R_02812C_CB_CLEAR_ALPHA, 0, 0},
-	{R_028410_SX_ALPHA_TEST_CONTROL, 0, 0},
 	{R_028414_CB_BLEND_RED, 0, 0},
 	{R_028418_CB_BLEND_GREEN, 0, 0},
 	{R_02841C_CB_BLEND_BLUE, 0, 0},
@@ -340,7 +339,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_02842C_CB_FOG_BLUE, 0, 0},
 	{R_028430_DB_STENCILREFMASK, 0, 0},
 	{R_028434_DB_STENCILREFMASK_BF, 0, 0},
-	{R_028438_SX_ALPHA_REF, 0, 0},
 	{R_028780_CB_BLEND0_CONTROL, REG_FLAG_NOT_R600, 0},
 	{R_028784_CB_BLEND1_CONTROL, REG_FLAG_NOT_R600, 0},
 	{R_028788_CB_BLEND2_CONTROL, REG_FLAG_NOT_R600, 0},
@@ -1090,6 +1088,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_flush_framebuffer(ctx, false);
 
 	/* Re-emit states. */
+	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 

@@ -1263,7 +1263,7 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, nbanks;
 	const struct util_format_description *desc;
 	int i;
-	unsigned blend_clamp = 0, blend_bypass = 0;
+	bool blend_clamp = 0, blend_bypass = 0, alphatest_bypass;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -1397,10 +1397,11 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	if (ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT)
-		rctx->sx_alpha_test_control |= S_028410_ALPHA_TEST_BYPASS(1);
-	else
-		rctx->sx_alpha_test_control &= C_028410_ALPHA_TEST_BYPASS;
+	alphatest_bypass = ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT;
+	if (rctx->alphatest_state.bypass != alphatest_bypass) {
+		rctx->alphatest_state.bypass = alphatest_bypass;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	}
 
 	color_info |= S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
@@ -1433,7 +1434,6 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	} else {
 		rctx->export_16bpc = false;
 	}
-	rctx->alpha_ref_dirty = true;
 
 	/* for possible dual-src MRT */
 	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1 && !rtex->is_rat) {
@@ -1680,6 +1680,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
 		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
+	if (rctx->alphatest_state.export_16bpc != rctx->export_16bpc) {
+		rctx->alphatest_state.export_16bpc = rctx->export_16bpc;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 	}
 }
 

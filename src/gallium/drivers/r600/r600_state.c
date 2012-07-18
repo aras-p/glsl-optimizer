@@ -1335,7 +1335,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	unsigned offset;
 	const struct util_format_description *desc;
 	int i;
-	unsigned blend_bypass = 0, blend_clamp = 1;
+	bool blend_bypass = 0, blend_clamp = 1, alphatest_bypass;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -1426,10 +1426,11 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	if (ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT)
-		rctx->sx_alpha_test_control |= S_028410_ALPHA_TEST_BYPASS(1);
-	else
-		rctx->sx_alpha_test_control &= C_028410_ALPHA_TEST_BYPASS;
+	alphatest_bypass = ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT;
+	if (rctx->alphatest_state.bypass != alphatest_bypass) {
+		rctx->alphatest_state.bypass = alphatest_bypass;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	}
 
 	color_info |= S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
