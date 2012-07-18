@@ -1375,6 +1375,7 @@ AMDILTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
       SetCCOpcode,
       LHS.getValueType().getSimpleVT().SimpleTy);
   assert((AMDILCC != AMDILCC::COND_ERROR) && "Invalid SetCC!");
+  assert(Op.getValueType() == MVT::i32);
   Cond = DAG.getNode(
       ISD::SELECT_CC,
       Op.getDebugLoc(),
