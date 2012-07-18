@@ -28,7 +28,7 @@
 
 #include "r600_pipe.h"
 
-#define R600_MAX_DRAW_CS_DWORDS 11
+#define R600_MAX_DRAW_CS_DWORDS 16
 
 /* these flags are used in register flags and added into block flags */
 #define REG_FLAG_NEED_BO 1

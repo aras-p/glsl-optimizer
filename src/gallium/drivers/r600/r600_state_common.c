@@ -1070,9 +1070,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
-	r600_need_cs_space(rctx,
-			   !info.indexed && info.count_from_stream_output ? 14 : 0,
-			   TRUE);
+	r600_need_cs_space(rctx, 0, TRUE);
 
 	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
 		r600_emit_atom(rctx, state);
