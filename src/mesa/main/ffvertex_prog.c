@@ -1672,16 +1672,15 @@ _mesa_get_fixed_func_vertex_program(struct gl_context *ctx)
 
    /* Look for an already-prepared program for this state:
     */
-   prog = (struct gl_vertex_program *)
-      _mesa_search_program_cache(ctx->VertexProgram.Cache, &key, sizeof(key));
+   prog = gl_vertex_program(
+      _mesa_search_program_cache(ctx->VertexProgram.Cache, &key, sizeof(key)));
 
    if (!prog) {
       /* OK, we'll have to build a new one */
       if (0)
          printf("Build new TNL program\n");
 
-      prog = (struct gl_vertex_program *)
-         ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+      prog = gl_vertex_program(ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0));
       if (!prog)
          return NULL;
 

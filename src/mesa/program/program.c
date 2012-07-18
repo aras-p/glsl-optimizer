@@ -169,22 +169,19 @@ _mesa_update_default_objects_program(struct gl_context *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
-                            (struct gl_vertex_program *)
                             ctx->Shared->DefaultVertexProgram);
    assert(ctx->VertexProgram.Current);
 #endif
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
-                            (struct gl_fragment_program *)
                             ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
 #endif
 
 #if FEATURE_ARB_geometry_shader4
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
-                            (struct gl_geometry_program *)
-                            ctx->Shared->DefaultGeometryProgram);
+                      ctx->Shared->DefaultGeometryProgram);
 #endif
 
    /* XXX probably move this stuff */
@@ -538,18 +535,16 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
    switch (prog->Target) {
    case GL_VERTEX_PROGRAM_ARB:
       {
-         const struct gl_vertex_program *vp
-            = (const struct gl_vertex_program *) prog;
-         struct gl_vertex_program *vpc = (struct gl_vertex_program *) clone;
+         const struct gl_vertex_program *vp = gl_vertex_program_const(prog);
+         struct gl_vertex_program *vpc = gl_vertex_program(clone);
          vpc->IsPositionInvariant = vp->IsPositionInvariant;
          vpc->IsNVProgram = vp->IsNVProgram;
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       {
-         const struct gl_fragment_program *fp
-            = (const struct gl_fragment_program *) prog;
-         struct gl_fragment_program *fpc = (struct gl_fragment_program *) clone;
+         const struct gl_fragment_program *fp = gl_fragment_program_const(prog);
+         struct gl_fragment_program *fpc = gl_fragment_program(clone);
          fpc->UsesKill = fp->UsesKill;
          fpc->OriginUpperLeft = fp->OriginUpperLeft;
          fpc->PixelCenterInteger = fp->PixelCenterInteger;
@@ -557,9 +552,8 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
       break;
    case MESA_GEOMETRY_PROGRAM:
       {
-         const struct gl_geometry_program *gp
-            = (const struct gl_geometry_program *) prog;
-         struct gl_geometry_program *gpc = (struct gl_geometry_program *) clone;
+         const struct gl_geometry_program *gp = gl_geometry_program_const(prog);
+         struct gl_geometry_program *gpc = gl_geometry_program(clone);
          gpc->VerticesOut = gp->VerticesOut;
          gpc->InputType = gp->InputType;
          gpc->OutputType = gp->OutputType;
@@ -763,13 +757,14 @@ _mesa_combine_programs(struct gl_context *ctx,
                              usedTemps, MAX_PROGRAM_TEMPS);
 
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct gl_fragment_program *fprogA, *fprogB, *newFprog;
+      const struct gl_fragment_program *fprogA, *fprogB;
+      struct gl_fragment_program *newFprog;
       GLbitfield progB_inputsRead = progB->InputsRead;
       GLint progB_colorFile, progB_colorIndex;
 
-      fprogA = (struct gl_fragment_program *) progA;
-      fprogB = (struct gl_fragment_program *) progB;
-      newFprog = (struct gl_fragment_program *) newProg;
+      fprogA = gl_fragment_program_const(progA);
+      fprogB = gl_fragment_program_const(progB);
+      newFprog = gl_fragment_program(newProg);
 
       newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
 

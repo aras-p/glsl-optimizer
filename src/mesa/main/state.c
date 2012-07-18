@@ -134,8 +134,7 @@ update_program(struct gl_context *ctx)
 				     &ctx->Shader._CurrentFragmentProgram,
 				     fsProg);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-			       (struct gl_fragment_program *)
-			       fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+                               gl_fragment_program(fsProg->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
 			       NULL);
    }
@@ -157,11 +156,9 @@ update_program(struct gl_context *ctx)
 				     &ctx->Shader._CurrentFragmentProgram,
 				     f);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-			       (struct gl_fragment_program *)
-                               f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+			       gl_fragment_program(f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-			       (struct gl_fragment_program *)
-                               f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program);
+			       gl_fragment_program(f->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program));
    }
    else {
       /* No fragment program */
@@ -174,8 +171,7 @@ update_program(struct gl_context *ctx)
        && gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]) {
       /* Use GLSL geometry shader */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
-			       (struct gl_geometry_program *)
-			       gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program);
+			       gl_geometry_program(gsProg->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program));
    } else {
       /* No geometry program */
       _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
@@ -189,8 +185,7 @@ update_program(struct gl_context *ctx)
        && vsProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
       /* Use GLSL vertex shader */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-			       (struct gl_vertex_program *)
-			       vsProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program);
+			       gl_vertex_program(vsProg->_LinkedShaders[MESA_SHADER_VERTEX]->Program));
    }
    else if (ctx->VertexProgram._Enabled) {
       /* Use user-defined vertex program */

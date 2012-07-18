@@ -138,12 +138,12 @@ _mesa_BindProgram(GLenum target, GLuint id)
    /* bind newProg */
    if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
-                               (struct gl_vertex_program *) newProg);
+                               gl_vertex_program(newProg));
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV ||
             target == GL_FRAGMENT_PROGRAM_ARB) {
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
-                               (struct gl_fragment_program *) newProg);
+                               gl_fragment_program(newProg));
    }
 
    /* Never null pointers */

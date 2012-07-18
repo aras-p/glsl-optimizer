@@ -71,7 +71,7 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   vprog = (struct gl_vertex_program *) _mesa_lookup_program(ctx, id);
+   vprog = gl_vertex_program(_mesa_lookup_program(ctx, id));
 
    if (!vprog || vprog->Base.Target != GL_VERTEX_STATE_PROGRAM_NV) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glExecuteProgramNV");
@@ -627,10 +627,9 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
    if ((target == GL_VERTEX_PROGRAM_NV ||
         target == GL_VERTEX_STATE_PROGRAM_NV)
        && ctx->Extensions.NV_vertex_program) {
-      struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
+      struct gl_vertex_program *vprog = gl_vertex_program(prog);
       if (!vprog || prog == &_mesa_DummyProgram) {
-         vprog = (struct gl_vertex_program *)
-            ctx->Driver.NewProgram(ctx, target, id);
+         vprog = gl_vertex_program(ctx->Driver.NewProgram(ctx, target, id));
          if (!vprog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
             return;
@@ -647,10 +646,9 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV
             && ctx->Extensions.NV_fragment_program) {
-      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
+      struct gl_fragment_program *fprog = gl_fragment_program(prog);
       if (!fprog || prog == &_mesa_DummyProgram) {
-         fprog = (struct gl_fragment_program *)
-            ctx->Driver.NewProgram(ctx, target, id);
+         fprog = gl_fragment_program(ctx->Driver.NewProgram(ctx, target, id));
          if (!fprog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
             return;
@@ -661,10 +659,9 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
-      struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
+      struct gl_fragment_program *fprog = gl_fragment_program(prog);
       if (!fprog || prog == &_mesa_DummyProgram) {
-         fprog = (struct gl_fragment_program *)
-            ctx->Driver.NewProgram(ctx, target, id);
+         fprog = gl_fragment_program(ctx->Driver.NewProgram(ctx, target, id));
          if (!fprog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
             return;
@@ -830,7 +827,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
       return;
    }
 
-   fragProg = (struct gl_fragment_program *) prog;
+   fragProg = gl_fragment_program(prog);
    v = _mesa_lookup_parameter_value(fragProg->Base.Parameters, len,
                                     (char *) name);
    if (v) {
@@ -895,7 +892,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
       return;
    }
 
-   fragProg = (struct gl_fragment_program *) prog;
+   fragProg = gl_fragment_program(prog);
    v = _mesa_lookup_parameter_value(fragProg->Base.Parameters,
                                     len, (char *) name);
    if (v) {
