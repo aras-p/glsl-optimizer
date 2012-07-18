@@ -271,6 +271,55 @@ static void si_set_viewport_state(struct pipe_context *ctx,
 }
 
 /*
+ * inferred state between framebuffer and rasterizer
+ */
+static void si_update_fb_rs_state(struct r600_context *rctx)
+{
+	struct si_state_rasterizer *rs = rctx->queued.named.rasterizer;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	unsigned offset_db_fmt_cntl = 0, depth;
+	float offset_units;
+
+	if (!rs || !rctx->framebuffer.zsbuf) {
+		FREE(pm4);
+		return;
+	}
+
+	offset_units = rctx->queued.named.rasterizer->offset_units;
+	switch (rctx->framebuffer.zsbuf->texture->format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+		depth = -24;
+		offset_units *= 2.0f;
+		break;
+	case PIPE_FORMAT_Z32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+		depth = -23;
+		offset_units *= 1.0f;
+		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+		break;
+	case PIPE_FORMAT_Z16_UNORM:
+		depth = -16;
+		offset_units *= 4.0f;
+		break;
+	default:
+		return;
+	}
+
+	/* FIXME some of those reg can be computed with cso */
+	offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
+	si_pm4_set_reg(pm4, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
+		       fui(rctx->queued.named.rasterizer->offset_scale));
+	si_pm4_set_reg(pm4, R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units));
+	si_pm4_set_reg(pm4, R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
+		       fui(rctx->queued.named.rasterizer->offset_scale));
+	si_pm4_set_reg(pm4, R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units));
+	si_pm4_set_reg(pm4, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl);
+
+	si_pm4_set_state(rctx, fb_rs, pm4);
+}
+
+/*
  * Rasterizer
  */
 
@@ -407,10 +456,7 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->pa_cl_vs_out_cntl = rs->pa_cl_vs_out_cntl;
 
 	si_pm4_bind_state(rctx, rasterizer, rs);
-
-	if (rctx->chip_class >= CAYMAN) {
-		cayman_polygon_offset_update(rctx);
-	}
+	si_update_fb_rs_state(rctx);
 }
 
 static void si_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -1069,10 +1115,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028BE0_PA_SC_AA_CONFIG, 0x00000000);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);
-
-	if (state->zsbuf) {
-		cayman_polygon_offset_update(rctx);
-	}
+	si_update_fb_rs_state(rctx);
 }
 
 void si_init_state_functions(struct r600_context *rctx)

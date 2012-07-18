@@ -61,6 +61,7 @@ union si_state {
 		struct si_state_viewport	*viewport;
 		struct si_pm4_state		*framebuffer;
 		struct si_state_rasterizer	*rasterizer;
+		struct si_pm4_state		*fb_rs;
 	} named;
 	struct si_pm4_state	*array[0];
 };

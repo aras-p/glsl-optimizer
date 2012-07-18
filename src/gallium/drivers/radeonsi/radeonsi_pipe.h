@@ -85,7 +85,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONSTANT,
 	R600_PIPE_STATE_SAMPLER,
 	R600_PIPE_STATE_RESOURCE,
-	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_NSTATES
 };
 
@@ -324,7 +323,6 @@ void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader);
 void si_update_spi_map(struct r600_context *rctx);
 void *cayman_create_db_flush_dsa(struct r600_context *rctx);
-void cayman_polygon_offset_update(struct r600_context *rctx);
 uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 				   enum pipe_format format,
 				   const struct util_format_description *desc,
