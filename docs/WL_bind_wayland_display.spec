@@ -154,6 +154,9 @@ Additions to the EGL 1.4 Specification:
     from a wl_buffer in any way (such as glTexImage2D, binding the
     EGLImage as a renderbuffer etc) will result in undefined behavior.
 
+    Further, eglQueryWaylandBufferWL accepts attributes EGL_WIDTH and
+    EGL_HEIGHT to query the width and height of the wl_buffer.
+
 Issues
 
 Revision History
@@ -168,4 +171,5 @@ Revision History
         formats. (Kristian Høgsberg)
     Version 4, July 19, 2012
         Use EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGB, and EGL_TEXTURE_RGBA,
-        and just define the new YUV texture formats. (Kristian Høgsberg)
+        and just define the new YUV texture formats.  Add support for
+        EGL_WIDTH and EGL_HEIGHT in the query attributes (Kristian Høgsberg)

@@ -888,7 +888,8 @@ egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
    if (!wayland_buffer_is_drm(&buffer->buffer))
       return EGL_FALSE;
 
-   if (attribute == EGL_TEXTURE_FORMAT) {
+   switch (attribute) {
+   case EGL_TEXTURE_FORMAT:
       switch (resource->format) {
       case PIPE_FORMAT_B8G8R8A8_UNORM:
          *value = EGL_TEXTURE_RGBA;
@@ -899,9 +900,15 @@ egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
       default:
          return EGL_FALSE;
       }
+   case EGL_WIDTH:
+      *value = buffer->buffer.width;
+      return EGL_TRUE;
+   case EGL_HEIGHT:
+      *value = buffer->buffer.height;
+      return EGL_TRUE;
+   default:
+      return EGL_FALSE;
    }
-
-   return EGL_FALSE;
 }
 #endif /* EGL_WL_bind_wayland_display */
 

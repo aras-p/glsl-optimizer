@@ -1414,9 +1414,16 @@ dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
       return EGL_FALSE;
 
    format = buffer->driver_format;
-   if (attribute == EGL_TEXTURE_FORMAT) {
+   switch (attribute) {
+   case EGL_TEXTURE_FORMAT:
       *value = format->components;
       return EGL_TRUE;
+   case EGL_WIDTH:
+      *value = buffer->buffer.width;
+      break;
+   case EGL_HEIGHT:
+      *value = buffer->buffer.height;
+      break;
    }
 
    return EGL_FALSE;
