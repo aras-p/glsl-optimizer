@@ -27,6 +27,7 @@ AM_CPPFLAGS = \
         $(DEFINES) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
+        -I$(top_builddir)/src/mapi \
 	-I$(top_srcdir)/src/mesa
 
 if HAVE_X86_ASM
