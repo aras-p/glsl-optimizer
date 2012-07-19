@@ -290,6 +290,26 @@ do {									\
 /*@}*/
 
 
+/**
+ * Checks if the context is for Desktop GL (Compatibility or Core)
+ */
+static inline GLboolean
+_mesa_is_desktop_gl(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE;
+}
+
+
+/**
+ * Checks if the context is for any GLES version
+ */
+static inline GLboolean
+_mesa_is_gles(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGLES || ctx->API == API_OPENGLES2;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
