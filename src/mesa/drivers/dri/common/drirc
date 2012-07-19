@@ -16,5 +16,11 @@
             <option name="force_glsl_extensions_warn" value="true" />
             <option name="disable_blend_func_extended" value="true" />
 	</application>
+        <application name="Unigine OilRush (32-bit)" executable="OilRush_x86">
+            <option name="disable_blend_func_extended" value="true" />
+	</application>
+        <application name="Unigine OilRush (64-bit)" executable="OilRush_x64">
+            <option name="disable_blend_func_extended" value="true" />
+	</application>
     </device>
 </driconf>
