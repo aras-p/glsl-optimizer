@@ -2758,8 +2758,6 @@ glsl_to_tgsi_visitor::visit(ir_return *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_discard *ir)
 {
-   struct gl_fragment_program *fp = (struct gl_fragment_program *)this->prog;
-
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
@@ -2767,8 +2765,6 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
    } else {
       emit(ir, TGSI_OPCODE_KILP);
    }
-
-   fp->UsesKill = GL_TRUE;
 }
 
 void

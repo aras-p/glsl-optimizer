@@ -109,31 +109,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	 vp->UsesClipDistance = shProg->Vert.UsesClipDistance;
       }
 
-      if (stage == 1) {
-	 class uses_kill_visitor : public ir_hierarchical_visitor {
-	 public:
-	    uses_kill_visitor() : uses_kill(false)
-	    {
-	       /* empty */
-	    }
-
-	    virtual ir_visitor_status visit_enter(class ir_discard *ir)
-	    {
-	       this->uses_kill = true;
-	       return visit_stop;
-	    }
-
-	    bool uses_kill;
-	 };
-
-	 uses_kill_visitor v;
-
-	 v.run(shader->base.ir);
-
-	 struct gl_fragment_program *fp = (struct gl_fragment_program *) prog;
-	 fp->UsesKill = v.uses_kill;
-      }
-
       void *mem_ctx = ralloc_context(NULL);
       bool progress;
 

@@ -2157,8 +2157,6 @@ ir_to_mesa_visitor::visit(ir_return *ir)
 void
 ir_to_mesa_visitor::visit(ir_discard *ir)
 {
-   struct gl_fragment_program *fp = (struct gl_fragment_program *)this->prog;
-
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
@@ -2166,8 +2164,6 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
    } else {
       emit(ir, OPCODE_KIL_NV);
    }
-
-   fp->UsesKill = GL_TRUE;
 }
 
 void

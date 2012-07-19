@@ -62,6 +62,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit_enter(ir_function_signature *);
    virtual ir_visitor_status visit_enter(ir_expression *);
+   virtual ir_visitor_status visit_enter(ir_discard *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
    virtual ir_visitor_status visit(ir_variable *);
 
@@ -180,6 +181,18 @@ ir_set_program_inouts_visitor::visit_enter(ir_expression *ir)
    return visit_continue;
 }
 
+ir_visitor_status
+ir_set_program_inouts_visitor::visit_enter(ir_discard *)
+{
+   /* discards are only allowed in fragment shaders. */
+   assert(is_fragment_shader);
+
+   gl_fragment_program *fprog = (gl_fragment_program *) prog;
+   fprog->UsesKill = true;
+
+   return visit_continue;
+}
+
 void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
                       bool is_fragment_shader)
@@ -194,6 +207,7 @@ do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
       memset(fprog->InterpQualifier, 0, sizeof(fprog->InterpQualifier));
       fprog->IsCentroid = 0;
       fprog->UsesDFdy = false;
+      fprog->UsesKill = false;
    }
    visit_list_elements(&v, instructions);
 }
