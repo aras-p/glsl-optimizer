@@ -99,6 +99,7 @@ struct dri2_egl_display
    __DRI2flushExtension     *flush;
    __DRItexBufferExtension  *tex_buffer;
    __DRIimageExtension      *image;
+   __DRIrobustnessExtension *robustness;
    int                       fd;
 
    int                       own_device;

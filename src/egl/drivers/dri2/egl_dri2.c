@@ -481,6 +481,13 @@ dri2_setup_screen(_EGLDisplay *disp)
    assert(dri2_dpy->dri2 || dri2_dpy->swrast);
    disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
 
+   if (dri2_dpy->dri2->base.version >= 3) {
+      disp->Extensions.KHR_create_context = EGL_TRUE;
+
+      if (dri2_dpy->robustness)
+         disp->Extensions.EXT_create_context_robustness = EGL_TRUE;
+   }
+
    if (dri2_dpy->image) {
       disp->Extensions.MESA_drm_image = EGL_TRUE;
       disp->Extensions.KHR_image_base = EGL_TRUE;
@@ -517,8 +524,16 @@ dri2_create_screen(_EGLDisplay *disp)
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
    
    if (dri2_dpy->dri2) {
+      unsigned i;
+
       if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
          goto cleanup_dri_screen;
+
+      for (i = 0; extensions[i]; i++) {
+	 if (strcmp(extensions[i]->name, __DRI2_ROBUSTNESS) == 0) {
+            dri2_dpy->robustness = (__DRIrobustnessExtension *) extensions[i];
+	 }
+      }
    } else {
       assert(dri2_dpy->swrast);
       if (!dri2_bind_extensions(dri2_dpy, swrast_core_extensions, extensions))
@@ -667,7 +682,13 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       }
       break;
    case EGL_OPENGL_API:
-      api = __DRI_API_OPENGL;
+      if ((dri2_ctx->base.ClientMajorVersion >= 4
+           || (dri2_ctx->base.ClientMajorVersion == 3
+               && dri2_ctx->base.ClientMinorVersion >= 2))
+          && dri2_ctx->base.Profile == EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR)
+         api = __DRI_API_OPENGL_CORE;
+      else
+         api = __DRI_API_OPENGL;
       break;
    default:
       _eglError(EGL_BAD_PARAMETER, "eglCreateContext");
@@ -699,17 +720,51 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    if (dri2_dpy->dri2) {
       if (dri2_dpy->dri2->base.version >= 3) {
          unsigned error;
-         const uint32_t ctx_attribs[2] = {
-            __DRI_CTX_ATTRIB_MAJOR_VERSION,
-            dri2_ctx->base.ClientMajorVersion
-         };
+         unsigned num_attribs = 0;
+         uint32_t ctx_attribs[8];
+
+         ctx_attribs[num_attribs++] = __DRI_CTX_ATTRIB_MAJOR_VERSION;
+         ctx_attribs[num_attribs++] = dri2_ctx->base.ClientMajorVersion;
+         ctx_attribs[num_attribs++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
+         ctx_attribs[num_attribs++] = dri2_ctx->base.ClientMinorVersion;
+
+         if (dri2_ctx->base.Flags != 0) {
+            /* If the implementation doesn't support the __DRI2_ROBUSTNESS
+             * extension, don't even try to send it the robust-access flag.
+             * It may explode.  Instead, generate the required EGL error here.
+             */
+            if ((dri2_ctx->base.Flags & EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR) != 0
+                && !dri2_dpy->robustness) {
+               _eglError(EGL_BAD_MATCH, "eglCreateContext");
+               goto cleanup;
+            }
+
+            ctx_attribs[num_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
+            ctx_attribs[num_attribs++] = dri2_ctx->base.Flags;
+         }
+
+         if (dri2_ctx->base.ResetNotificationStrategy != EGL_NO_RESET_NOTIFICATION_KHR) {
+            /* If the implementation doesn't support the __DRI2_ROBUSTNESS
+             * extension, don't even try to send it a reset strategy.  It may
+             * explode.  Instead, generate the required EGL error here.
+             */
+            if (!dri2_dpy->robustness) {
+               _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+               goto cleanup;
+            }
+
+            ctx_attribs[num_attribs++] = __DRI_CTX_ATTRIB_RESET_STRATEGY;
+            ctx_attribs[num_attribs++] = __DRI_CTX_RESET_LOSE_CONTEXT;
+         }
+
+         assert(num_attribs <= ARRAY_SIZE(ctx_attribs));
 
 	 dri2_ctx->dri_context =
 	    dri2_dpy->dri2->createContextAttribs(dri2_dpy->dri_screen,
                                                  api,
                                                  dri_config,
                                                  shared,
-                                                 1,
+                                                 num_attribs / 2,
                                                  ctx_attribs,
                                                  & error,
                                                  dri2_ctx);
