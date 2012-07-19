@@ -2090,6 +2090,11 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
    unsigned j;
    float ssss[4], tttt[4];
 
+   /* Not actually used, but the intermediate steps that do the
+    * dereferencing don't know it.
+    */
+   static const float pppp[4] = { 0, 0, 0, 0 };
+
    /*
      major axis
      direction    target                             sc     tc    ma
@@ -2157,7 +2162,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
     * is not active, this will point somewhere deeper into the
     * pipeline, eg. to mip_filter or even img_filter.
     */
-   samp->compare(tgsi_sampler, ssss, tttt, NULL, c0, control, rgba);
+   samp->compare(tgsi_sampler, ssss, tttt, pppp, c0, control, rgba);
 }
 
 
