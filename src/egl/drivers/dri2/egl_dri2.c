@@ -322,12 +322,12 @@ static struct dri2_extension_match dri2_core_extensions[] = {
 static struct dri2_extension_match swrast_driver_extensions[] = {
    { __DRI_CORE, 1, offsetof(struct dri2_egl_display, core) },
    { __DRI_SWRAST, 2, offsetof(struct dri2_egl_display, swrast) },
-   { NULL }
+   { NULL, 0, 0 }
 };
 
 static struct dri2_extension_match swrast_core_extensions[] = {
    { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
-   { NULL }
+   { NULL, 0, 0 }
 };
 
 static EGLBoolean
