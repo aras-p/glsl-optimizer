@@ -112,6 +112,8 @@ struct _egl_extensions
    EGLBoolean ANDROID_image_native_buffer;
 
    EGLBoolean NV_post_sub_buffer;
+
+   EGLBoolean EXT_create_context_robustness;
 };
 
 

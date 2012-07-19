@@ -169,6 +169,31 @@ _eglParseContextAttribList(_EGLContext *ctx, _EGLDisplay *dpy,
          ctx->ResetNotificationStrategy = val;
          break;
 
+      case EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_EXT:
+         /* The EGL_EXT_create_context_robustness spec says:
+          *
+          *     "[EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_EXT] is only
+          *     meaningful for OpenGL ES contexts, and specifying it for other
+          *     types of contexts will generate an EGL_BAD_ATTRIBUTE error."
+          */
+         if (!dpy->Extensions.EXT_create_context_robustness
+             || api != EGL_OPENGL_ES_API) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->ResetNotificationStrategy = val;
+         break;
+
+      case EGL_CONTEXT_OPENGL_ROBUST_ACCESS_EXT:
+         if (!dpy->Extensions.EXT_create_context_robustness) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->Flags = EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR;
+         break;
+
       default:
          err = EGL_BAD_ATTRIBUTE;
          break;
