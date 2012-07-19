@@ -54,6 +54,9 @@ struct _egl_context
    EGLint ClientAPI; /**< EGL_OPENGL_ES_API, EGL_OPENGL_API, EGL_OPENVG_API */
    EGLint ClientMajorVersion;
    EGLint ClientMinorVersion;
+   EGLint Flags;
+   EGLint Profile;
+   EGLint ResetNotificationStrategy;
 
    /* The real render buffer when a window surface is bound */
    EGLint WindowRenderBuffer;

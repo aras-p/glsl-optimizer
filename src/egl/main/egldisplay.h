@@ -104,6 +104,7 @@ struct _egl_extensions
    EGLBoolean KHR_fence_sync;
 
    EGLBoolean KHR_surfaceless_context;
+   EGLBoolean KHR_create_context;
 
    EGLBoolean NOK_swap_region;
    EGLBoolean NOK_texture_from_pixmap;

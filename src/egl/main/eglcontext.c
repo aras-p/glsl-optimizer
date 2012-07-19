@@ -78,7 +78,8 @@ _eglGetContextAPIBit(_EGLContext *ctx)
  * Parse the list of context attributes and return the proper error code.
  */
 static EGLint
-_eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
+_eglParseContextAttribList(_EGLContext *ctx, _EGLDisplay *dpy,
+                           const EGLint *attrib_list)
 {
    EGLenum api = ctx->ClientAPI;
    EGLint i, err = EGL_SUCCESS;
@@ -86,22 +87,88 @@ _eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
    if (!attrib_list)
       return EGL_SUCCESS;
 
+   if (api == EGL_OPENVG_API && attrib_list[0] != EGL_NONE) {
+      _eglLog(_EGL_DEBUG, "bad context attribute 0x%04x", attrib_list[0]);
+      return EGL_BAD_ATTRIBUTE;
+   }
+
    for (i = 0; attrib_list[i] != EGL_NONE; i++) {
       EGLint attr = attrib_list[i++];
       EGLint val = attrib_list[i];
 
       switch (attr) {
       case EGL_CONTEXT_CLIENT_VERSION:
-         if (api != EGL_OPENGL_ES_API) {
-            err = EGL_BAD_ATTRIBUTE;
-            break;
-         }
-         if (val != 1 && val != 2) {
-            err = EGL_BAD_ATTRIBUTE;
-            break;
-         }
          ctx->ClientMajorVersion = val;
          break;
+
+      case EGL_CONTEXT_MINOR_VERSION_KHR:
+         if (!dpy->Extensions.KHR_create_context) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->ClientMinorVersion = val;
+         break;
+
+      case EGL_CONTEXT_FLAGS_KHR:
+         if (!dpy->Extensions.KHR_create_context) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         /* The EGL_KHR_create_context spec says:
+          *
+          *     "Flags are only defined for OpenGL context creation, and
+          *     specifying a flags value other than zero for other types of
+          *     contexts, including OpenGL ES contexts, will generate an
+          *     error."
+          */
+         if (api != EGL_OPENGL_API && val != 0) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->Flags = val;
+         break;
+
+      case EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR:
+         if (!dpy->Extensions.KHR_create_context) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         /* The EGL_KHR_create_context spec says:
+          *
+          *     "[EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR] is only meaningful for
+          *     OpenGL contexts, and specifying it for other types of
+          *     contexts, including OpenGL ES contexts, will generate an
+          *     error."
+          */
+         if (api != EGL_OPENGL_API) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->Profile = val;
+         break;
+
+      case EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_KHR:
+         /* The EGL_KHR_create_context spec says:
+          *
+          *     "[EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_KHR] is only
+          *     meaningful for OpenGL contexts, and specifying it for other
+          *     types of contexts, including OpenGL ES contexts, will generate
+          *     an error."
+          */
+           if (!dpy->Extensions.KHR_create_context
+               || api != EGL_OPENGL_API) {
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+
+         ctx->ResetNotificationStrategy = val;
+         break;
+
       default:
          err = EGL_BAD_ATTRIBUTE;
          break;
@@ -111,6 +178,142 @@ _eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
          _eglLog(_EGL_DEBUG, "bad context attribute 0x%04x", attr);
          break;
       }
+   }
+
+   if (api == EGL_OPENGL_API) {
+      /* The EGL_KHR_create_context spec says:
+       *
+       *     "If the requested OpenGL version is less than 3.2,
+       *     EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR is ignored and the
+       *     functionality of the context is determined solely by the
+       *     requested version."
+       *
+       * Since the value is ignored, only validate the setting if the version
+       * is >= 3.2.
+       */
+      if (ctx->ClientMajorVersion >= 4
+          || (ctx->ClientMajorVersion == 3 && ctx->ClientMinorVersion >= 2)) {
+         switch (ctx->Profile) {
+         case EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR:
+         case EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR:
+            break;
+
+         default:
+            /* The EGL_KHR_create_context spec says:
+             *
+             *     "* If an OpenGL context is requested, the requested version
+             *        is greater than 3.2, and the value for attribute
+             *        EGL_CONTEXT_PROFILE_MASK_KHR has no bits set; has any
+             *        bits set other than EGL_CONTEXT_CORE_PROFILE_BIT_KHR and
+             *        EGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_KHR; has more than
+             *        one of these bits set; or if the implementation does not
+             *        support the requested profile, then an
+             *        EGL_BAD_PROFILE_KHR error is generated."
+             *
+             * However, it does not define EGL_BAD_PROFILE_KHR.  For now use
+             * EGL_BAD_ATTRIBUTE.
+             */
+            err = EGL_BAD_ATTRIBUTE;
+            break;
+         }
+      }
+
+      /* The EGL_KHR_create_context spec says:
+       *
+       *     "* If an OpenGL context is requested and the values for
+       *        attributes EGL_CONTEXT_MAJOR_VERSION_KHR and
+       *        EGL_CONTEXT_MINOR_VERSION_KHR, when considered together with
+       *        the value for attribute
+       *        EGL_CONTEXT_FORWARD_COMPATIBLE_BIT_KHR, specify an OpenGL
+       *        version and feature set that are not defined, than an
+       *        EGL_BAD_MATCH error is generated.
+       *
+       *        ... Thus, examples of invalid combinations of attributes
+       *        include:
+       *
+       *          - Major version < 1 or > 4
+       *          - Major version == 1 and minor version < 0 or > 5
+       *          - Major version == 2 and minor version < 0 or > 1
+       *          - Major version == 3 and minor version < 0 or > 2
+       *          - Major version == 4 and minor version < 0 or > 2
+       *          - Forward-compatible flag set and major version < 3"
+       */
+      if (ctx->ClientMajorVersion < 1 || ctx->ClientMinorVersion < 0)
+         err = EGL_BAD_MATCH;
+
+      switch (ctx->ClientMajorVersion) {
+      case 1:
+         if (ctx->ClientMinorVersion > 5
+             || (ctx->Flags & EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR) != 0)
+            err = EGL_BAD_MATCH;
+         break;
+
+      case 2:
+         if (ctx->ClientMinorVersion > 1
+             || (ctx->Flags & EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR) != 0)
+            err = EGL_BAD_MATCH;
+         break;
+
+      case 3:
+         /* Note: The text above is incorrect.  There *is* an OpenGL 3.3!
+          */
+         if (ctx->ClientMinorVersion > 3)
+            err = EGL_BAD_MATCH;
+         break;
+
+      case 4:
+      default:
+         /* Don't put additional version checks here.  We don't know that
+          * there won't be versions > 4.2.
+          */
+         break;
+      }
+   } else if (api == EGL_OPENGL_ES_API) {
+      /* The EGL_KHR_create_context spec says:
+       *
+       *     "* If an OpenGL ES context is requested and the values for
+       *        attributes EGL_CONTEXT_MAJOR_VERSION_KHR and
+       *        EGL_CONTEXT_MINOR_VERSION_KHR specify an OpenGL ES version that
+       *        is not defined, than an EGL_BAD_MATCH error is generated.
+       *
+       *        ... Examples of invalid combinations of attributes include:
+       *
+       *          - Major version < 1 or > 2
+       *          - Major version == 1 and minor version < 0 or > 1
+       *          - Major version == 2 and minor version != 0
+       */
+      if (ctx->ClientMajorVersion < 1 || ctx->ClientMinorVersion < 0)
+         err = EGL_BAD_MATCH;
+
+      switch (ctx->ClientMajorVersion) {
+      case 1:
+         if (ctx->ClientMinorVersion > 1)
+            err = EGL_BAD_MATCH;
+         break;
+
+      case 2:
+      default:
+         /* Don't put additional version checks here.  We don't know that
+          * there won't be versions > 2.0.
+          */
+         break;
+      }
+   }
+
+   switch (ctx->ResetNotificationStrategy) {
+   case EGL_NO_RESET_NOTIFICATION_KHR:
+   case EGL_LOSE_CONTEXT_ON_RESET_KHR:
+      break;
+
+   default:
+      err = EGL_BAD_ATTRIBUTE;
+      break;
+   }
+
+   if ((ctx->Flags & (EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR
+                      | EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR
+                      | EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR)) != 0) {
+      err = EGL_BAD_ATTRIBUTE;
    }
 
    return err;
@@ -137,11 +340,15 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
    ctx->ClientAPI = api;
    ctx->Config = conf;
    ctx->WindowRenderBuffer = EGL_NONE;
+   ctx->Profile = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR;
 
    ctx->ClientMajorVersion = 1; /* the default, per EGL spec */
    ctx->ClientMinorVersion = 0;
+   ctx->Flags = 0;
+   ctx->Profile = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR;
+   ctx->ResetNotificationStrategy = EGL_NO_RESET_NOTIFICATION_KHR;
 
-   err = _eglParseContextAttribList(ctx, attrib_list);
+   err = _eglParseContextAttribList(ctx, dpy, attrib_list);
    if (err == EGL_SUCCESS && ctx->Config) {
       EGLint api_bit;
 
