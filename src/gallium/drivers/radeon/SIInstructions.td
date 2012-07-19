@@ -911,6 +911,12 @@ def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sel_w>;
 def : Vector_Build <v4f32, VReg_32>;
 def : Vector_Build <v4i32, SReg_32>;
 
+def : BitConvert <i32, f32, SReg_32>;
+def : BitConvert <i32, f32, VReg_32>;
+
+def : BitConvert <f32, i32, SReg_32>;
+def : BitConvert <f32, i32, VReg_32>;
+
 /*
 def : Pat<
   (int_SI_vs_load_buffer_index),
