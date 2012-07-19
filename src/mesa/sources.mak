@@ -5,8 +5,8 @@
 
 # this is part of MAIN_FILES
 MAIN_ES_FILES = \
-	$(SRCDIR)main/api_exec_es1.c \
-	$(SRCDIR)main/api_exec_es2.c
+	$(BUILDDIR)main/api_exec_es1.c \
+	$(BUILDDIR)main/api_exec_es2.c
 
 MAIN_FILES = \
 	$(SRCDIR)main/api_arrayelt.c \
@@ -35,7 +35,6 @@ MAIN_FILES = \
 	$(SRCDIR)main/drawpix.c \
 	$(SRCDIR)main/drawtex.c \
 	$(SRCDIR)main/enable.c \
-	$(SRCDIR)main/enums.c \
 	$(SRCDIR)main/errors.c \
 	$(SRCDIR)main/eval.c \
 	$(SRCDIR)main/execmem.c \
@@ -107,6 +106,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/version.c \
 	$(SRCDIR)main/viewport.c \
 	$(SRCDIR)main/vtxfmt.c \
+	$(BUILDDIR)main/enums.c \
 	$(MAIN_ES_FILES)
 
 MAIN_CXX_FILES = \
@@ -251,11 +251,9 @@ STATETRACKER_FILES = \
 PROGRAM_FILES = \
 	$(SRCDIR)program/arbprogparse.c \
 	$(SRCDIR)program/hash_table.c \
-	$(SRCDIR)program/lex.yy.c \
 	$(SRCDIR)program/nvfragparse.c \
 	$(SRCDIR)program/nvvertparse.c \
 	$(SRCDIR)program/program.c \
-	$(SRCDIR)program/program_parse.tab.c \
 	$(SRCDIR)program/program_parse_extra.c \
 	$(SRCDIR)program/prog_cache.c \
 	$(SRCDIR)program/prog_execute.c \
@@ -269,7 +267,9 @@ PROGRAM_FILES = \
 	$(SRCDIR)program/prog_statevars.c \
 	$(SRCDIR)program/programopt.c \
 	$(SRCDIR)program/register_allocate.c \
-	$(SRCDIR)program/symbol_table.c
+	$(SRCDIR)program/symbol_table.c \
+	$(BUILDDIR)program/lex.yy.c \
+	$(BUILDDIR)program/program_parse.tab.c
 
 
 SHADER_CXX_FILES = \
@@ -375,15 +375,20 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_FILES:.c=.o)
 ### Other archives/libraries
 
 GLSL_LIBS = \
-	$(TOP)/src/glsl/libglsl.a
+	$(top_builddir)/src/glsl/libglsl.a
 
 
 ### Include directories
 
 INCLUDE_DIRS = \
-	-I$(TOP)/include \
-	-I$(TOP)/src/glsl \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mapi \
-	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/auxiliary
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/glsl \
+	-I$(top_builddir)/src/glsl \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_builddir)/src/mesa \
+	-I$(top_srcdir)/src/mesa/main \
+	-I$(top_builddir)/src/mesa/main \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_builddir)/src/mapi \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary

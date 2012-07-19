@@ -42,8 +42,7 @@ main/git_sha1.h: main/git_sha1.h.tmp
 	fi
 
 # include glapi_gen.mk for generating glapi headers for GLES
-TOP = $(top_srcdir)
-GLAPI = $(TOP)/src/mapi/glapi/gen
+GLAPI = $(top_srcdir)/src/mapi/glapi/gen
 include $(GLAPI)/glapi_gen.mk
 
 BUILT_SOURCES = \
@@ -96,6 +95,7 @@ program/lex.yy.c: program/program_lexer.l
 noinst_LTLIBRARIES = libmesa.la libmesagallium.la
 
 SRCDIR = $(top_srcdir)/src/mesa/
+BUILDDIR = $(top_builddir)/src/mesa/
 include sources.mak
 
 AM_CPPFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)
@@ -107,12 +107,21 @@ MESA_ASM_FILES_FOR_ARCH =
 
 if HAVE_X86_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_FILES)
+AM_CPPFLAGS += \
+        -I$(top_builddir)/src/mesa/x86 \
+        -I$(top_srcdir)/src/mesa/x86
 endif
 if HAVE_X86_64_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
+AM_CPPFLAGS += \
+        -I$(top_builddir)/src/mesa/x86-64 \
+        -I$(top_srcdir)/src/mesa/x86-64
 endif
 if HAVE_SPARC_ASM
 MESA_ASM_FILES_FOR_ARCH += $(SPARC_FILES)
+AM_CPPFLAGS += \
+        -I$(top_builddir)/src/mesa/sparc \
+        -I$(top_srcdir)/src/mesa/sparc
 endif
 
 libmesa_la_SOURCES = \

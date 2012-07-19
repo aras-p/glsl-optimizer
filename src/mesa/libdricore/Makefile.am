@@ -20,9 +20,9 @@
 # IN THE SOFTWARE.
 
 TOP=$(top_srcdir)
-SRCDIR = $(srcdir)/../
+SRCDIR=$(top_srcdir)/src/mesa/
+BUILDDIR=$(top_builddir)/src/mesa/
 include ../sources.mak
-GLSL_SRCDIR = $(srcdir)/../../glsl
 include ../../glsl/Makefile.sources
 
 noinst_PROGRAMS =

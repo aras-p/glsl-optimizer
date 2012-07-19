@@ -1,4 +1,8 @@
 TOP = ../../..
+top_builddir = $(TOP)
+# This can be a filthy lie. But it doesn't currently build out-of-tree
+# anyway, so it's no worse than what we've got now.
+top_srcdir = $(TOP)
 
 include $(TOP)/configs/current
 
