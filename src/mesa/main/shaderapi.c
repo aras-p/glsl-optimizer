@@ -346,10 +346,12 @@ delete_shader(struct gl_context *ctx, GLuint shader)
    if (!sh)
       return;
 
-   sh->DeletePending = GL_TRUE;
+   if (!sh->DeletePending) {
+      sh->DeletePending = GL_TRUE;
 
-   /* effectively, decr sh's refcount */
-   _mesa_reference_shader(ctx, &sh, NULL);
+      /* effectively, decr sh's refcount */
+      _mesa_reference_shader(ctx, &sh, NULL);
+   }
 }
 
 
