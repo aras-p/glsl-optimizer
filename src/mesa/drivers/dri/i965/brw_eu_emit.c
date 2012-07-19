@@ -2259,7 +2259,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    else
       dest = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 
-   if (intel->gen >= 6 && binding_table_index == 0) {
+   if (intel->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_SENDC);
    } else {
       insn = next_insn(p, BRW_OPCODE_SEND);
