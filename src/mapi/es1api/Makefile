@@ -40,6 +40,10 @@ esapi_CPPFLAGS := \
 	-I$(TOP)/src/mapi \
 	-DMAPI_ABI_HEADER=\"$(ESAPI)/glapi_mapi_tmp.h\"
 
+
+# This is a lie when doing out-of-tree builds, but it's no worse than the
+# current situation, and can be dropped should this get automakified
+top_srcdir = $(TOP)
 include $(MAPI)/sources.mak
 esapi_SOURCES := $(MAPI_BRIDGE_FILES)
 esapi_OBJECTS := $(notdir $(MAPI_BRIDGE_FILES:.c=.o))
