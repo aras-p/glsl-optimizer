@@ -213,7 +213,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
-	rctx->context.draw_vbo = r600_draw_vbo;
 
 	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;

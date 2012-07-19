@@ -122,6 +122,7 @@ union si_state {
 		struct si_pm4_state		*ps_sampler;
 		struct si_pm4_state		*ps_const;
 		struct si_pm4_state		*spi;
+		struct si_pm4_state		*vertex_buffers;
 		struct si_pm4_state		*draw_info;
 	} named;
 	struct si_pm4_state	*array[0];
@@ -154,10 +155,11 @@ union si_state {
 		} \
 	} while(0);
 
+/* si_state.c */
 void si_init_state_functions(struct r600_context *rctx);
 void si_init_config(struct r600_context *rctx);
-bool si_update_draw_info_state(struct r600_context *rctx,
-			       const struct pipe_draw_info *info);
-void si_update_spi_map(struct r600_context *rctx);
+
+/* si_state_draw.c */
+void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 
 #endif

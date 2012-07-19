@@ -163,9 +163,8 @@ struct r600_context {
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct r600_pipe_state		config;
-	struct si_pipe_shader 	*ps_shader;
-	struct si_pipe_shader 	*vs_shader;
-	struct r600_pipe_state		vs_user_data;
+	struct si_pipe_shader		*ps_shader;
+	struct si_pipe_shader		*vs_shader;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
 	struct pipe_query		*saved_render_cond;
@@ -253,8 +252,6 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 
 /* evergreen_state.c */
 void cayman_init_state_functions(struct r600_context *rctx);
-void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader);
-void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader);
 uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 				   enum pipe_format format,
 				   const struct util_format_description *desc,
@@ -339,7 +336,6 @@ void r600_set_so_targets(struct pipe_context *ctx,
 			 unsigned num_targets,
 			 struct pipe_stream_output_target **targets,
 			 unsigned append_bitmask);
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*
  * common helpers
