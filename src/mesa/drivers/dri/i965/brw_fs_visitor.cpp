@@ -1400,7 +1400,6 @@ fs_visitor::visit(ir_discard *ir)
    assert(ir->condition == NULL); /* FINISHME */
 
    emit(FS_OPCODE_DISCARD);
-   kill_emitted = true;
 }
 
 void
@@ -2034,7 +2033,7 @@ fs_visitor::emit_fb_writes()
     *      thread message and on all dual-source messages."
     */
    if (intel->gen >= 6 &&
-       !this->kill_emitted &&
+       !this->fp->UsesKill &&
        !do_dual_src &&
        c->key.nr_color_regions == 1) {
       header_present = false;
@@ -2230,7 +2229,6 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    this->virtual_grf_use = NULL;
    this->live_intervals_valid = false;
 
-   this->kill_emitted = false;
    this->force_uncompressed_stack = 0;
    this->force_sechalf_stack = 0;
 }

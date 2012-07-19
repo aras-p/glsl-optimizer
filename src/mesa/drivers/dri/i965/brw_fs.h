@@ -373,7 +373,6 @@ public:
    int first_non_payload_grf;
    int max_grf;
    int urb_setup[FRAG_ATTRIB_MAX];
-   bool kill_emitted;
 
    /** @{ debug annotation info */
    const char *current_annotation;
