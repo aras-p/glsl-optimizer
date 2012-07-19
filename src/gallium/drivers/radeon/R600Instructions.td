@@ -130,47 +130,6 @@ def TEX_SHADOW : PatLeaf<
   }]
 >;
 
-def COND_EQ : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETOEQ: case ISD::SETUEQ:
-                     case ISD::SETEQ: return true;}}}]
->;
-
-def COND_NE : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETONE: case ISD::SETUNE:
-                     case ISD::SETNE: return true;}}}]
->;
-def COND_GT : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETOGT: case ISD::SETUGT:
-                     case ISD::SETGT: return true;}}}]
->;
-
-def COND_GE : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETOGE: case ISD::SETUGE:
-                     case ISD::SETGE: return true;}}}]
->;
-
-def COND_LT : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETOLT: case ISD::SETULT:
-                     case ISD::SETLT: return true;}}}]
->;
-
-def COND_LE : PatLeaf <
-  (cond),
-  [{switch(N->get()){{default: return false;
-                     case ISD::SETOLE: case ISD::SETULE:
-                     case ISD::SETLE: return true;}}}]
->;
-
 class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
                  dag ins, string asm, list<dag> pattern> :
     InstR600ISA <outs, ins, asm, pattern>

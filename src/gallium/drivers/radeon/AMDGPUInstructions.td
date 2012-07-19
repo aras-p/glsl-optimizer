@@ -33,6 +33,47 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 
 }
 
+def COND_EQ : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOEQ: case ISD::SETUEQ:
+                     case ISD::SETEQ: return true;}}}]
+>;
+
+def COND_NE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETONE: case ISD::SETUNE:
+                     case ISD::SETNE: return true;}}}]
+>;
+def COND_GT : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOGT: case ISD::SETUGT:
+                     case ISD::SETGT: return true;}}}]
+>;
+
+def COND_GE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOGE: case ISD::SETUGE:
+                     case ISD::SETGE: return true;}}}]
+>;
+
+def COND_LT : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOLT: case ISD::SETULT:
+                     case ISD::SETLT: return true;}}}]
+>;
+
+def COND_LE : PatLeaf <
+  (cond),
+  [{switch(N->get()){{default: return false;
+                     case ISD::SETOLE: case ISD::SETULE:
+                     case ISD::SETLE: return true;}}}]
+>;
+
 class Constants {
 int TWO_PI = 0x40c90fdb;
 int PI = 0x40490fdb;
