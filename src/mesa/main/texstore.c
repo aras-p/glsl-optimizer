@@ -37,9 +37,8 @@
  * However, most device drivers will be able to use the fallback functions
  * in this file.  That is, most drivers will have the following bit of
  * code:
- *   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
- *   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
- *   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+ *   ctx->Driver.TexImage = _mesa_store_teximage;
+ *   ctx->Driver.TexSubImage = _mesa_store_texsubimage;
  *   etc...
  *
  * Texture image processing is actually kind of complicated.  We have to do:
