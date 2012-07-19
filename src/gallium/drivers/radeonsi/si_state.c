@@ -1636,6 +1636,59 @@ out:
 	rctx->ps_samplers.n_samplers = count;
 }
 
+/*
+ * Constants
+ */
+static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
+			    struct pipe_constant_buffer *cb)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_resource *rbuffer = cb ? r600_resource(cb->buffer) : NULL;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	uint64_t va_offset;
+	uint32_t offset;
+
+	/* Note that the state tracker can unbind constant buffers by
+	 * passing NULL here.
+	 */
+	if (cb == NULL) {
+		FREE(pm4);
+		return;
+	}
+
+	si_pm4_inval_shader_cache(pm4);
+
+	if (cb->user_buffer)
+		r600_upload_const_buffer(rctx, &rbuffer, cb->user_buffer, cb->buffer_size, &offset);
+	else
+		offset = 0;
+	va_offset = r600_resource_va(ctx->screen, (void*)rbuffer);
+	va_offset += offset;
+
+	si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		si_pm4_set_reg(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, va_offset);
+		si_pm4_set_reg(pm4, R_00B134_SPI_SHADER_USER_DATA_VS_1, va_offset >> 32);
+		si_pm4_set_state(rctx, vs_const, pm4);
+		break;
+
+	case PIPE_SHADER_FRAGMENT:
+		si_pm4_set_reg(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, va_offset);
+		si_pm4_set_reg(pm4, R_00B034_SPI_SHADER_USER_DATA_PS_1, va_offset >> 32);
+		si_pm4_set_state(rctx, ps_const, pm4);
+		break;
+
+	default:
+		R600_ERR("unsupported %d\n", shader);
+		return;
+	}
+
+	if (cb->buffer != &rbuffer->b.b)
+		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
@@ -1671,6 +1724,8 @@ void si_init_state_functions(struct r600_context *rctx)
 
 	rctx->context.set_vertex_sampler_views = si_set_vs_sampler_view;
 	rctx->context.set_fragment_sampler_views = si_set_ps_sampler_view;
+
+	rctx->context.set_constant_buffer = si_set_constant_buffer;
 }
 
 void si_init_config(struct r600_context *rctx)

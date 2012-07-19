@@ -116,9 +116,11 @@ union si_state {
 		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
 		struct si_pm4_state		*vs;
-                struct si_pm4_state		*ps;
+		struct si_pm4_state		*vs_const;
+		struct si_pm4_state		*ps;
 		struct si_pm4_state		*ps_sampler_views;
-                struct si_pm4_state		*ps_sampler;
+		struct si_pm4_state		*ps_sampler;
+		struct si_pm4_state		*ps_const;
 		struct si_pm4_state		*spi;
 		struct si_pm4_state		*draw_info;
 	} named;

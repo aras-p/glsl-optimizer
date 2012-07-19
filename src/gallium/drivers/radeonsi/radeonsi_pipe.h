@@ -165,9 +165,7 @@ struct r600_context {
 	struct r600_pipe_state		config;
 	struct si_pipe_shader 	*ps_shader;
 	struct si_pipe_shader 	*vs_shader;
-	struct r600_pipe_state		vs_const_buffer;
 	struct r600_pipe_state		vs_user_data;
-	struct r600_pipe_state		ps_const_buffer;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
 	struct pipe_query		*saved_render_cond;
@@ -330,8 +328,6 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
-void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_constant_buffer *cb);
 struct pipe_stream_output_target *
 r600_create_so_target(struct pipe_context *ctx,
 		      struct pipe_resource *buffer,

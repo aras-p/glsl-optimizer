@@ -959,7 +959,6 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
-	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
