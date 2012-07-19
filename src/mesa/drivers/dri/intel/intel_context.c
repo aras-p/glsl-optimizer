@@ -926,14 +926,24 @@ intel_process_dri2_buffer(struct intel_context *intel,
    if (!rb)
       return;
 
+   unsigned num_samples = rb->Base.Base.NumSamples;
+
    /* We try to avoid closing and reopening the same BO name, because the first
     * use of a mapping of the buffer involves a bunch of page faulting which is
     * moderately expensive.
     */
-   if (rb->mt &&
-       rb->mt->region &&
-       rb->mt->region->name == buffer->name)
-      return;
+   if (num_samples == 0) {
+       if (rb->mt &&
+           rb->mt->region &&
+           rb->mt->region->name == buffer->name)
+          return;
+   } else {
+       if (rb->mt &&
+           rb->mt->singlesample_mt &&
+           rb->mt->singlesample_mt->region &&
+           rb->mt->singlesample_mt->region->name == buffer->name)
+          return;
+   }
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
       fprintf(stderr,
@@ -953,9 +963,10 @@ intel_process_dri2_buffer(struct intel_context *intel,
    if (!region)
       return;
 
-   rb->mt = intel_miptree_create_for_region(intel,
-                                            GL_TEXTURE_2D,
-                                            intel_rb_format(rb),
-                                            region);
+   rb->mt = intel_miptree_create_for_dri2_buffer(intel,
+                                                 buffer->attachment,
+                                                 intel_rb_format(rb),
+                                                 num_samples,
+                                                 region);
    intel_region_release(&region);
 }

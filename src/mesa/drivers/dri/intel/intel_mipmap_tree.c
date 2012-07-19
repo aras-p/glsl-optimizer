@@ -25,6 +25,9 @@
  * 
  **************************************************************************/
 
+#include <GL/gl.h>
+#include <GL/internal/dri_interface.h>
+
 #include "intel_batchbuffer.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -324,6 +327,62 @@ compute_msaa_layout(struct intel_context *intel, gl_format format)
    }
 }
 
+/**
+ * For a singlesample DRI2 buffer, this simply wraps the given region with a miptree.
+ *
+ * For a multisample DRI2 buffer, this wraps the given region with
+ * a singlesample miptree, then creates a multisample miptree into which the
+ * singlesample miptree is embedded as a child.
+ */
+struct intel_mipmap_tree*
+intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
+                                     unsigned dri_attachment,
+                                     gl_format format,
+                                     uint32_t num_samples,
+                                     struct intel_region *region)
+{
+   struct intel_mipmap_tree *singlesample_mt = NULL;
+   struct intel_mipmap_tree *multisample_mt = NULL;
+   GLenum base_format = _mesa_get_format_base_format(format);
+
+   /* Only the front and back buffers, which are color buffers, are shared
+    * through DRI2.
+    */
+   assert(dri_attachment == __DRI_BUFFER_BACK_LEFT ||
+          dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
+          dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT);
+   assert(base_format == GL_RGB || base_format == GL_RGBA);
+
+   singlesample_mt = intel_miptree_create_for_region(intel, GL_TEXTURE_2D,
+                                                     format, region);
+   if (!singlesample_mt)
+      return NULL;
+
+   if (num_samples == 0)
+      return singlesample_mt;
+
+   multisample_mt = intel_miptree_create_for_renderbuffer(intel,
+                                                          format,
+                                                          region->width,
+                                                          region->height,
+                                                          num_samples);
+   if (!multisample_mt) {
+      intel_miptree_release(&singlesample_mt);
+      return NULL;
+   }
+
+   multisample_mt->singlesample_mt = singlesample_mt;
+   multisample_mt->need_downsample = false;
+
+   if (intel->is_front_buffer_rendering &&
+       (dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
+        dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)) {
+      intel_miptree_upsample(intel, multisample_mt);
+   }
+
+   return multisample_mt;
+}
+
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
@@ -454,6 +513,7 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
       intel_miptree_release(&(*mt)->mcs_mt);
+      intel_miptree_release(&(*mt)->singlesample_mt);
       intel_resolve_map_clear(&(*mt)->hiz_map);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
@@ -897,6 +957,30 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 {
    return intel_miptree_all_slices_resolve(intel, mt,
 					   GEN6_HIZ_OP_DEPTH_RESOLVE);
+}
+
+/**
+ * \brief Downsample from mt to mt->singlesample_mt.
+ *
+ * If the miptree needs no downsample, then skip.
+ */
+void
+intel_miptree_downsample(struct intel_context *intel,
+                         struct intel_mipmap_tree *mt)
+{
+   /* TODO: stub */
+}
+
+/**
+ * \brief Upsample from mt->singlesample_mt to mt.
+ *
+ * The upsample is done unconditionally.
+ */
+void
+intel_miptree_upsample(struct intel_context *intel,
+                       struct intel_mipmap_tree *mt)
+{
+   /* TODO: stub */
 }
 
 static void

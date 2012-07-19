@@ -248,6 +248,50 @@ struct intel_mipmap_tree
    uint32_t offset;
 
    /**
+    * \brief Singlesample miptree.
+    *
+    * This is used under two cases.
+    *
+    * --- Case 1: As persistent singlesample storage for multisample window
+    *  system front and back buffers ---
+    *
+    * Suppose that the window system FBO was created with a multisample
+    * config.  Let `back_irb` be the `intel_renderbuffer` for the FBO's back
+    * buffer. Then `back_irb` contains two miptrees: a parent multisample
+    * miptree (back_irb->mt) and a child singlesample miptree
+    * (back_irb->mt->singlesample_mt).  The DRM buffer shared with DRI2
+    * belongs to `back_irb->mt->singlesample_mt` and contains singlesample
+    * data.  The singlesample miptree is created at the same time as and
+    * persists for the lifetime of its parent multisample miptree.
+    *
+    * When access to the singlesample data is needed, such as at
+    * eglSwapBuffers and glReadPixels, an automatic downsample occurs from
+    * `back_rb->mt` to `back_rb->mt->singlesample_mt` when necessary.
+    *
+    * This description of the back buffer applies analogously to the front
+    * buffer.
+    *
+    *
+    * --- Case 2: As temporary singlesample storage for mapping multisample
+    *  miptrees ---
+    *
+    * Suppose the intel_miptree_map is called on a multisample miptree, `mt`,
+    * for which case 1 does not apply (that is, `mt` does not belong to
+    * a front or back buffer).  Then `mt->singlesample_mt` is null at the
+    * start of the call. intel_miptree_map will create a temporary
+    * singlesample miptree, store it at `mt->singlesample_mt`, downsample from
+    * `mt` to `mt->singlesample_mt` if necessary, then map
+    * `mt->singlesample_mt`. The temporary miptree is later deleted during
+    * intel_miptree_unmap.
+    */
+   struct intel_mipmap_tree *singlesample_mt;
+
+   /**
+    * \brief A downsample is needed from this miptree to singlesample_mt.
+    */
+   bool need_downsample;
+
+   /**
     * \brief HiZ miptree
     *
     * This is non-null only if HiZ is enabled for this miptree.
@@ -324,6 +368,13 @@ intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
 				gl_format format,
 				struct intel_region *region);
+
+struct intel_mipmap_tree*
+intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
+                                     unsigned dri_attachment,
+                                     gl_format format,
+                                     uint32_t num_samples,
+                                     struct intel_region *region);
 
 /**
  * Create a miptree appropriate as the storage for a non-texture renderbuffer.
@@ -483,6 +534,14 @@ intel_miptree_all_slices_resolve_depth(struct intel_context *intel,
 				       struct intel_mipmap_tree *mt);
 
 /**\}*/
+
+void
+intel_miptree_downsample(struct intel_context *intel,
+                         struct intel_mipmap_tree *mt);
+
+void
+intel_miptree_upsample(struct intel_context *intel,
+                       struct intel_mipmap_tree *mt);
 
 /* i915_mipmap_tree.c:
  */
