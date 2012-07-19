@@ -888,13 +888,13 @@ egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
    if (!wayland_buffer_is_drm(&buffer->buffer))
       return EGL_FALSE;
 
-   if (attribute == EGL_WAYLAND_BUFFER_COMPONENTS_WL) {
+   if (attribute == EGL_TEXTURE_FORMAT) {
       switch (resource->format) {
       case PIPE_FORMAT_B8G8R8A8_UNORM:
-         *value = EGL_WAYLAND_BUFFER_RGBA_WL;
+         *value = EGL_TEXTURE_RGBA;
          return EGL_TRUE;
       case PIPE_FORMAT_B8G8R8X8_UNORM:
-         *value = EGL_WAYLAND_BUFFER_RGB_WL;
+         *value = EGL_TEXTURE_RGB;
          return EGL_TRUE;
       default:
          return EGL_FALSE;

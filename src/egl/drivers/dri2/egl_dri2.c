@@ -1071,42 +1071,42 @@ static const struct wl_drm_format_descriptor {
       int cpp;
    } planes[3];
 } wl_drm_formats[] = {
-   { WL_DRM_FORMAT_ARGB8888, EGL_WAYLAND_BUFFER_RGBA_WL, 1,
+   { WL_DRM_FORMAT_ARGB8888, EGL_TEXTURE_RGBA, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 }, } },
 
-   { WL_DRM_FORMAT_XRGB8888, EGL_WAYLAND_BUFFER_RGB_WL, 1,
+   { WL_DRM_FORMAT_XRGB8888, EGL_TEXTURE_RGB, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_XRGB8888, 4 }, } },
 
-   { WL_DRM_FORMAT_YUV410, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+   { WL_DRM_FORMAT_YUV410, EGL_TEXTURE_Y_U_V_WL, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { WL_DRM_FORMAT_YUV411, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+   { WL_DRM_FORMAT_YUV411, EGL_TEXTURE_Y_U_V_WL, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { WL_DRM_FORMAT_YUV420, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+   { WL_DRM_FORMAT_YUV420, EGL_TEXTURE_Y_U_V_WL, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { WL_DRM_FORMAT_YUV422, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+   { WL_DRM_FORMAT_YUV422, EGL_TEXTURE_Y_U_V_WL, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { WL_DRM_FORMAT_YUV444, EGL_WAYLAND_BUFFER_Y_U_V_WL, 3,
+   { WL_DRM_FORMAT_YUV444, EGL_TEXTURE_Y_U_V_WL, 3,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 2, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
 
-   { WL_DRM_FORMAT_NV12, EGL_WAYLAND_BUFFER_Y_UV_WL, 2,
+   { WL_DRM_FORMAT_NV12, EGL_TEXTURE_Y_UV_WL, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 1, __DRI_IMAGE_FORMAT_GR88, 2 } } },
 
-   { WL_DRM_FORMAT_NV16, EGL_WAYLAND_BUFFER_Y_UV_WL, 2,
+   { WL_DRM_FORMAT_NV16, EGL_TEXTURE_Y_UV_WL, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 0, __DRI_IMAGE_FORMAT_GR88, 2 } } },
 
@@ -1118,7 +1118,7 @@ static const struct wl_drm_format_descriptor {
     * texture sampler interpolate the Y components correctly when
     * sampling from plane 0, and interpolate U and V correctly when
     * sampling from plane 1. */
-   { WL_DRM_FORMAT_YUYV, EGL_WAYLAND_BUFFER_Y_XUXV_WL, 2,
+   { WL_DRM_FORMAT_YUYV, EGL_TEXTURE_Y_XUXV_WL, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
        { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } }
 };
@@ -1414,7 +1414,7 @@ dri2_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *disp,
       return EGL_FALSE;
 
    format = buffer->driver_format;
-   if (attribute == EGL_WAYLAND_BUFFER_COMPONENTS_WL) {
+   if (attribute == EGL_TEXTURE_FORMAT) {
       *value = format->components;
       return EGL_TRUE;
    }
