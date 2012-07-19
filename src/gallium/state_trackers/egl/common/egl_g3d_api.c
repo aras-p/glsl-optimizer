@@ -39,6 +39,10 @@
 #include "egl_g3d_st.h"
 #include "native.h"
 
+#ifdef EGL_WL_bind_wayland_display
+#include <wayland-drm.h>
+#endif
+
 /**
  * Return the state tracker for the given context.
  */
@@ -873,6 +877,32 @@ egl_g3d_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *dpy,
    return gdpy->native->wayland_bufmgr->unbind_display(gdpy->native, wl_dpy);
 }
 
+static EGLBoolean
+egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
+                                struct wl_buffer *_buffer,
+                                EGLint attribute, EGLint *value)
+{
+   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
+   struct pipe_resource *resource = buffer->driver_buffer;
+
+   if (!wayland_buffer_is_drm(&buffer->buffer))
+      return EGL_FALSE;
+
+   if (attribute == EGL_WAYLAND_BUFFER_COMPONENTS_WL) {
+      switch (resource->format) {
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         *value = EGL_WAYLAND_BUFFER_RGBA_WL;
+         return EGL_TRUE;
+      case PIPE_FORMAT_B8G8R8X8_UNORM:
+         *value = EGL_WAYLAND_BUFFER_RGB_WL;
+         return EGL_TRUE;
+      default:
+         return EGL_FALSE;
+      }
+   }
+
+   return EGL_FALSE;
+}
 #endif /* EGL_WL_bind_wayland_display */
 
 void
@@ -907,7 +937,7 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 #ifdef EGL_WL_bind_wayland_display
    drv->API.BindWaylandDisplayWL = egl_g3d_bind_wayland_display_wl;
    drv->API.UnbindWaylandDisplayWL = egl_g3d_unbind_wayland_display_wl;
-
+   drv->API.QueryWaylandBufferWL = egl_g3d_query_wayland_buffer_wl;
 #endif
 
    drv->API.CreateSyncKHR = egl_g3d_create_sync;
