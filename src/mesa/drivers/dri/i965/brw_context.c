@@ -248,7 +248,7 @@ brwCreateContext(int api,
 	 brw->urb.max_vs_entries = 512;
 	 brw->urb.max_gs_entries = 192;
       } else if (intel->gt == 2) {
-	 brw->max_wm_threads = 86;
+	 brw->max_wm_threads = 172;
 	 brw->max_vs_threads = 128;
 	 brw->max_gs_threads = 128;
 	 brw->urb.size = 256;
