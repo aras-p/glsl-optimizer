@@ -44,7 +44,7 @@ libdricore@VERSION@_la_SOURCES = \
 	$(LIBGLSL_FILES) \
 	$(LIBGLSL_CXX_FILES) \
 	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
-	$(top_srcdir)/src/glsl/builtin_function.cpp
+	$(top_builddir)/src/glsl/builtin_function.cpp
 libdricore@VERSION@_la_LDFLAGS = -version-number 1:0
 libdricore@VERSION@_la_LIBADD = libdricore-asm.la
 
@@ -58,14 +58,23 @@ libdricore_asm_la_CCASFLAGS = $(AM_CCASFLAGS) -DWORKAROUND_AUTOMAKE_OBJ_FILE_CON
 
 if HAVE_X86_ASM
 libdricore_asm_la_SOURCES += $(X86_FILES)
+libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+        -I$(top_builddir)/src/mesa/x86 \
+        -I$(top_srcdir)/src/mesa/x86
 endif
 
 if HAVE_X86_64_ASM
 libdricore_asm_la_SOURCES += $(X86_64_FILES)
+libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+        -I$(top_builddir)/src/mesa/x86-64 \
+        -I$(top_srcdir)/src/mesa/x86-64
 endif
 
 if HAVE_SPARC_ASM
 libdricore_asm_la_SOURCES += $(SPARC_FILES)
+libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+        -I$(top_builddir)/src/mesa/sparc \
+        -I$(top_srcdir)/src/mesa/sparc
 endif
 
 if HAVE_DRICORE
