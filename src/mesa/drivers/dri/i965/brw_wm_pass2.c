@@ -93,12 +93,24 @@ static void init_registers( struct brw_wm_compile *c )
       }
    } else {
       for (j = 0; j < VERT_RESULT_MAX; j++) {
+         /* Point size is packed into the header, not as a general attribute */
+         if (j == VERT_RESULT_PSIZ)
+            continue;
+
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
 	    int fp_index = _mesa_vert_result_to_frag_attrib(j);
 
 	    nr_interp_regs++;
+
+	    /* The back color slot is skipped when the front color is
+	     * also written to.  In addition, some slots can be
+	     * written in the vertex shader and not read in the
+	     * fragment shader.  So the register number must always be
+	     * incremented, mapped or not.
+	     */
 	    if (fp_index >= 0)
-	       prealloc_reg(c, &c->payload.input_interp[fp_index], i++);
+	       prealloc_reg(c, &c->payload.input_interp[fp_index], i);
+            i++;
 	 }
       }
       assert(nr_interp_regs >= 1);

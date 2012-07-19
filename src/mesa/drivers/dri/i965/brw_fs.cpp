@@ -954,11 +954,22 @@ fs_visitor::calculate_urb_setup()
    } else {
       /* FINISHME: The sf doesn't map VS->FS inputs for us very well. */
       for (unsigned int i = 0; i < VERT_RESULT_MAX; i++) {
+         /* Point size is packed into the header, not as a general attribute */
+         if (i == VERT_RESULT_PSIZ)
+            continue;
+
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
 	    int fp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
 
+	    /* The back color slot is skipped when the front color is
+	     * also written to.  In addition, some slots can be
+	     * written in the vertex shader and not read in the
+	     * fragment shader.  So the register number must always be
+	     * incremented, mapped or not.
+	     */
 	    if (fp_index >= 0)
-	       urb_setup[fp_index] = urb_next++;
+	       urb_setup[fp_index] = urb_next;
+            urb_next++;
 	 }
       }
 
