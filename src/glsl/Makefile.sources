@@ -1,6 +1,7 @@
 # shared source lists for Makefile, SConscript, and Android.mk
 
-GLSL_SRCDIR ?= .
+GLSL_SRCDIR = $(top_srcdir)/src/glsl
+GLSL_BUILDDIR = $(top_builddir)/src/glsl
 
 # libglcpp
 
@@ -8,8 +9,8 @@ LIBGLCPP_FILES = \
 	$(GLSL_SRCDIR)/glcpp/pp.c
 
 LIBGLCPP_GENERATED_FILES = \
-	$(GLSL_SRCDIR)/glcpp/glcpp-lex.c \
-	$(GLSL_SRCDIR)/glcpp/glcpp-parse.c
+	$(GLSL_BUILDDIR)/glcpp/glcpp-lex.c \
+	$(GLSL_BUILDDIR)/glcpp/glcpp-parse.c
 
 # libglsl
 
@@ -102,10 +103,10 @@ BUILTIN_COMPILER_CXX_FILES = \
 	$(GLSL_SRCDIR)/builtin_stubs.cpp
 
 BUILTIN_COMPILER_GENERATED_CXX_FILES = \
-	$(GLSL_SRCDIR)/glsl_lexer.cc \
-	$(GLSL_SRCDIR)/glsl_parser.cc
+	$(GLSL_BUILDDIR)/glsl_lexer.cc \
+	$(GLSL_BUILDDIR)/glsl_parser.cc
 
 # libglsl generated sources
 LIBGLSL_GENERATED_CXX_FILES = \
-	$(GLSL_SRCDIR)/$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
-	$(GLSL_SRCDIR)/builtin_function.cpp
+	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
+	$(GLSL_BUILDDIR)/builtin_function.cpp

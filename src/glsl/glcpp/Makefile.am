@@ -20,10 +20,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
-GLSL_SRCDIR=$(top_srcdir)/src/glsl
 include ../Makefile.sources
 
 AM_CFLAGS = \

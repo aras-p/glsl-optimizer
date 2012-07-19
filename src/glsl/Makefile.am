@@ -23,9 +23,6 @@
 # builtin_compiler is built before libglsl to generate builtin_function.cpp for libglsl.
 # For this to work, a dummy version of builtin_function.cpp, builtin_stubs.cpp, is used.
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
@@ -39,7 +36,6 @@ AM_CXXFLAGS = $(AM_CFLAGS)
 
 AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 
-GLSL_SRCDIR=$(top_srcdir)/src/glsl
 include Makefile.sources
 
 noinst_LTLIBRARIES = libglslcommon.la libglsl.la
