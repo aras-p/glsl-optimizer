@@ -176,7 +176,7 @@ $(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
 
 $(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON_ES)
 	$(PYTHON_GEN) $< \
-		--printer glapi --mode lib gl_and_es_API.xml > $@
+		--printer glapi --mode lib $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
