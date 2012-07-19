@@ -39,6 +39,7 @@ class SITargetLowering : public AMDGPUTargetLowering
                      MachineRegisterInfo & MRI) const;
 
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
 public:
   SITargetLowering(TargetMachine &tm);

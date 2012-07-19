@@ -37,6 +37,11 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+
+  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
@@ -208,6 +213,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BR_CC: return LowerBR_CC(Op, DAG);
+  case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   }
 }
 
@@ -235,3 +241,16 @@ SDValue SITargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
   return Result;
 }
 
+SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
+{
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue True = Op.getOperand(2);
+  SDValue False = Op.getOperand(3);
+  SDValue CC = Op.getOperand(4);
+  EVT VT = Op.getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+
+  SDValue Cond = DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, CC);
+  return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+}
