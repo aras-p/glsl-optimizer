@@ -941,107 +941,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	return &view->base;
 }
 
-static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
-{
-}
-
-static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
-					struct pipe_sampler_view **views)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
-	struct r600_pipe_state *rstate = &rctx->ps_samplers.views_state;
-	struct r600_resource *bo;
-	int i;
-	int has_depth = 0;
-	uint64_t va;
-	char *ptr;
-
-	if (!count)
-		goto out;
-
-	r600_inval_texture_cache(rctx);
-
-	bo = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
-				   count * sizeof(resource[0]->state));
-	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-
-	for (i = 0; i < count; i++, ptr += sizeof(resource[0]->state)) {
-		pipe_sampler_view_reference(
-			(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
-			views[i]);
-
-		if (resource[i]) {
-			if (((struct r600_resource_texture *)resource[i]->base.texture)->depth)
-				has_depth = 1;
-
-			memcpy(ptr, resource[i]->state, sizeof(resource[0]->state));
-		} else
-			memset(ptr, 0, sizeof(resource[0]->state));
-	}
-
-	rctx->ws->buffer_unmap(bo->cs_buf);
-
-	for (i = count; i < NUM_TEX_UNITS; i++) {
-		if (rctx->ps_samplers.views[i])
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
-	}
-
-	rstate->nregs = 0;
-	va = r600_resource_va(ctx->screen, (void *)bo);
-	r600_pipe_state_add_reg(rstate, R_00B040_SPI_SHADER_USER_DATA_PS_4, va, bo, RADEON_USAGE_READ);
-	r600_pipe_state_add_reg(rstate, R_00B044_SPI_SHADER_USER_DATA_PS_5, va >> 32, NULL, 0);
-	r600_context_pipe_state_set(rctx, rstate);
-
-out:
-	rctx->have_depth_texture = has_depth;
-	rctx->ps_samplers.n_views = count;
-}
-
-static void evergreen_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
-	struct r600_pipe_state *rstate = &rctx->ps_samplers.samplers_state;
-	struct r600_resource *bo;
-	uint64_t va;
-	char *ptr;
-	int i;
-
-	if (!count)
-		goto out;
-
-	r600_inval_texture_cache(rctx);
-
-	bo = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
-				   count * sizeof(rstates[0]->val));
-	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-
-	for (i = 0; i < count; i++, ptr += sizeof(rstates[0]->val)) {
-		memcpy(ptr, rstates[i]->val, sizeof(rstates[0]->val));
-	}
-
-	rctx->ws->buffer_unmap(bo->cs_buf);
-
-	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
-
-	rstate->nregs = 0;
-	va = r600_resource_va(ctx->screen, (void *)bo);
-	r600_pipe_state_add_reg(rstate, R_00B038_SPI_SHADER_USER_DATA_PS_2, va, bo, RADEON_USAGE_READ);
-	r600_pipe_state_add_reg(rstate, R_00B03C_SPI_SHADER_USER_DATA_PS_3, va >> 32, NULL, 0);
-	r600_context_pipe_state_set(rctx, rstate);
-
-out:
-	rctx->ps_samplers.n_samplers = count;
-}
-
-static void evergreen_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
-{
-}
-
 static void evergreen_set_polygon_stipple(struct pipe_context *ctx,
 					 const struct pipe_poly_stipple *state)
 {
@@ -1057,18 +956,14 @@ void cayman_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_state = si_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
-	rctx->context.bind_fragment_sampler_states = evergreen_bind_ps_sampler;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
-	rctx->context.bind_vertex_sampler_states = evergreen_bind_vs_sampler;
 	rctx->context.delete_sampler_state = si_delete_sampler_state;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
-	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_sample_mask = evergreen_set_sample_mask;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
-	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.texture_barrier = r600_texture_barrier;
 	rctx->context.create_stream_output_target = r600_create_so_target;
