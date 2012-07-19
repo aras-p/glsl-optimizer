@@ -431,7 +431,7 @@ one_time_init( struct gl_context *ctx )
        * when an app is linked to libGLES*, there are not enough dynamic
        * entries.
        */
-      if (ctx->API == API_OPENGL)
+      if (_mesa_is_desktop_gl(ctx))
          _mesa_init_remap_table();
    }
 
@@ -626,7 +626,7 @@ _mesa_init_constants(struct gl_context *ctx)
 #endif
 
    /* Shading language version */
-   if (ctx->API == API_OPENGL) {
+   if (_mesa_is_desktop_gl(ctx)) {
       ctx->Const.GLSLVersion = 120;
       _mesa_override_glsl_version(ctx);
    }
@@ -962,6 +962,7 @@ _mesa_initialize_context(struct gl_context *ctx,
    switch (ctx->API) {
 #if FEATURE_GL
    case API_OPENGL:
+   case API_OPENGL_CORE:
       ctx->Exec = _mesa_create_exec_table();
       break;
 #endif
@@ -1007,6 +1008,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
+   case API_OPENGL_CORE:
 #if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {

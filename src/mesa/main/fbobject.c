@@ -164,10 +164,10 @@ get_framebuffer_target(struct gl_context *ctx, GLenum target)
 {
    switch (target) {
    case GL_DRAW_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit && ctx->API == API_OPENGL
+      return ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx)
 	 ? ctx->DrawBuffer : NULL;
    case GL_READ_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit && ctx->API == API_OPENGL
+      return ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx)
 	 ? ctx->ReadBuffer : NULL;
    case GL_FRAMEBUFFER_EXT:
       return ctx->DrawBuffer;
@@ -221,7 +221,7 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
       }
       return &fb->Attachment[BUFFER_COLOR0 + i];
    case GL_DEPTH_STENCIL_ATTACHMENT:
-      if (ctx->API != API_OPENGL)
+      if (!_mesa_is_desktop_gl(ctx))
 	 return NULL;
       /* fall-through */
    case GL_DEPTH_ATTACHMENT_EXT:
@@ -817,7 +817,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    }
 
 #if FEATURE_GL
-   if (ctx->API == API_OPENGL && !ctx->Extensions.ARB_ES2_compatibility) {
+   if (_mesa_is_desktop_gl(ctx) && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
       for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
 	 if (fb->ColorDrawBuffer[j] != GL_NONE) {
@@ -2289,7 +2289,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* The error differs in GL and GLES. */
-   err = ctx->API == API_OPENGL ? GL_INVALID_OPERATION : GL_INVALID_ENUM;
+   err = _mesa_is_desktop_gl(ctx) ? GL_INVALID_OPERATION : GL_INVALID_ENUM;
 
    buffer = get_framebuffer_target(ctx, target);
    if (!buffer) {
@@ -2309,7 +2309,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
        * OES_framebuffer_object spec refers to the EXT_framebuffer_object
        * spec.
        */
-      if (ctx->API != API_OPENGL || !ctx->Extensions.ARB_framebuffer_object) {
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_framebuffer_object) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glGetFramebufferAttachmentParameteriv(bound FBO = 0)");
 	 return;
@@ -2357,7 +2357,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       else {
          assert(att->Type == GL_NONE);
-         if (ctx->API == API_OPENGL) {
+         if (_mesa_is_desktop_gl(ctx)) {
             *params = 0;
          } else {
             _mesa_error(ctx, GL_INVALID_ENUM,

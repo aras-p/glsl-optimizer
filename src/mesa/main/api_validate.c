@@ -128,6 +128,7 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
 
 #if FEATURE_GL
    case API_OPENGL:
+   case API_OPENGL_CORE:
       {
          const struct gl_shader_program *vsProg =
             ctx->Shader.CurrentVertexProgram;

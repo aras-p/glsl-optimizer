@@ -92,7 +92,7 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
    case GL_DOUBLE:
       return DOUBLE_BIT;
    case GL_FIXED:
-      return ctx->API == API_OPENGL ? FIXED_GL_BIT : FIXED_ES_BIT;
+      return _mesa_is_desktop_gl(ctx) ? FIXED_GL_BIT : FIXED_ES_BIT;
    case GL_UNSIGNED_INT_2_10_10_10_REV:
       return UNSIGNED_INT_2_10_10_10_REV_BIT;
    case GL_INT_2_10_10_10_REV:

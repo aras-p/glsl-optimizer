@@ -41,6 +41,7 @@ shading_language_version(struct gl_context *ctx)
 {
    switch (ctx->API) {
    case API_OPENGL:
+   case API_OPENGL_CORE:
       if (!ctx->Extensions.ARB_shader_objects) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetString");
          return (const GLubyte *) 0;

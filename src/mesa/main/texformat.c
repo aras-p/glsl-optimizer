@@ -895,7 +895,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
    }
    /* GL_BGRA can be an internal format *only* in OpenGL ES (1.x or 2.0).
     */
-   if (ctx->API != API_OPENGL) {
+   if (_mesa_is_gles(ctx)) {
       switch (internalFormat) {
       case GL_BGRA:
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);

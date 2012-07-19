@@ -315,6 +315,7 @@ _mesa_compute_version(struct gl_context *ctx)
 
    switch (ctx->API) {
    case API_OPENGL:
+   case API_OPENGL_CORE:
       compute_version(ctx);
       break;
    case API_OPENGLES:

@@ -391,6 +391,7 @@ extra_NV_read_buffer_api_gl[] = {
 #define API_OPENGL_BIT (1 << API_OPENGL)
 #define API_OPENGLES_BIT (1 << API_OPENGLES)
 #define API_OPENGLES2_BIT (1 << API_OPENGLES2)
+#define API_OPENGL_CORE_BIT (1 << API_OPENGL_CORE)
 
 /* This is the big table describing all the enums we accept in
  * glGet*v().  The table is partitioned into six parts: enums
@@ -405,7 +406,9 @@ extra_NV_read_buffer_api_gl[] = {
 static const struct value_desc values[] = {
    /* Enums shared between OpenGL, GLES1 and GLES2 */
    { 0, 0, TYPE_API_MASK,
-     API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGLES2_BIT, NO_EXTRA},
+     API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGLES2_BIT |
+       API_OPENGL_CORE_BIT,
+     NO_EXTRA},
    { GL_ALPHA_BITS, BUFFER_INT(Visual.alphaBits), extra_new_buffers },
    { GL_BLEND, CONTEXT_BIT0(Color.BlendEnabled), NO_EXTRA },
    { GL_BLEND_SRC, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
@@ -534,7 +537,7 @@ static const struct value_desc values[] = {
 
 #if FEATURE_GL || FEATURE_ES1
    /* Enums in OpenGL and GLES1 */
-   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGLES_BIT, NO_EXTRA },
+   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGL_CORE_BIT, NO_EXTRA },
    { GL_MAX_LIGHTS, CONTEXT_INT(Const.MaxLights), NO_EXTRA },
    { GL_LIGHT0, CONTEXT_BOOL(Light.Light[0].Enabled), NO_EXTRA },
    { GL_LIGHT1, CONTEXT_BOOL(Light.Light[1].Enabled), NO_EXTRA },
@@ -796,7 +799,7 @@ static const struct value_desc values[] = {
 
 #if FEATURE_GL
    /* Remaining enums are only in OpenGL */
-   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT, NO_EXTRA },
+   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGL_CORE_BIT, NO_EXTRA },
    { GL_ACCUM_RED_BITS, BUFFER_INT(Visual.accumRedBits), NO_EXTRA },
    { GL_ACCUM_GREEN_BITS, BUFFER_INT(Visual.accumGreenBits), NO_EXTRA },
    { GL_ACCUM_BLUE_BITS, BUFFER_INT(Visual.accumBlueBits), NO_EXTRA },
@@ -1887,7 +1890,7 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	 }
 	 break;
       case EXTRA_API_GL:
-	 if (ctx->API == API_OPENGL) {
+	 if (_mesa_is_desktop_gl(ctx)) {
 	    total++;
 	    enabled++;
 	 }

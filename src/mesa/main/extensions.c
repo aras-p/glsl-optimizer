@@ -41,7 +41,9 @@
 
 enum {
    DISABLE = 0,
-   GL  = 1 << API_OPENGL,
+   GLL = 1 << API_OPENGL,       /* GL Legacy / Compatibility */
+   GLC = 1 << API_OPENGL_CORE,  /* GL Core */
+   GL  = (1 << API_OPENGL) | (1 << API_OPENGL_CORE),
    ES1 = 1 << API_OPENGLES,
    ES2 = 1 << API_OPENGLES2,
 };
