@@ -39,10 +39,6 @@
 #include "egl_g3d_st.h"
 #include "native.h"
 
-#ifdef EGL_WL_bind_wayland_display
-#include <wayland-drm.h>
-#endif
-
 /**
  * Return the state tracker for the given context.
  */
@@ -879,36 +875,16 @@ egl_g3d_unbind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *dpy,
 
 static EGLBoolean
 egl_g3d_query_wayland_buffer_wl(_EGLDriver *drv, _EGLDisplay *dpy,
-                                struct wl_buffer *_buffer,
+                                struct wl_buffer *buffer,
                                 EGLint attribute, EGLint *value)
 {
-   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
-   struct pipe_resource *resource = buffer->driver_buffer;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
 
-   if (!wayland_buffer_is_drm(&buffer->buffer))
+   if (!gdpy->native->wayland_bufmgr)
       return EGL_FALSE;
 
-   switch (attribute) {
-   case EGL_TEXTURE_FORMAT:
-      switch (resource->format) {
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         *value = EGL_TEXTURE_RGBA;
-         return EGL_TRUE;
-      case PIPE_FORMAT_B8G8R8X8_UNORM:
-         *value = EGL_TEXTURE_RGB;
-         return EGL_TRUE;
-      default:
-         return EGL_FALSE;
-      }
-   case EGL_WIDTH:
-      *value = buffer->buffer.width;
-      return EGL_TRUE;
-   case EGL_HEIGHT:
-      *value = buffer->buffer.height;
-      return EGL_TRUE;
-   default:
-      return EGL_FALSE;
-   }
+   return gdpy->native->wayland_bufmgr->query_buffer(gdpy->native,
+                                                     buffer, attribute, value);
 }
 #endif /* EGL_WL_bind_wayland_display */
 

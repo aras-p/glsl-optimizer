@@ -40,4 +40,9 @@ struct pipe_resource *
 egl_g3d_wl_drm_common_wl_buffer_get_resource(struct native_display *ndpy,
                                              struct wl_buffer *buffer);
 
+EGLBoolean
+egl_g3d_wl_drm_common_query_buffer(struct native_display *ndpy,
+                                   struct wl_buffer *buffer,
+                                   EGLint attribute, EGLint *value);
+
 #endif /* _NATIVE_WAYLAND_DRM_BUFMGR_HELPER_H_ */

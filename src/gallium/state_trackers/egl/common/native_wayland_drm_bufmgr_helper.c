@@ -69,4 +69,38 @@ egl_g3d_wl_drm_common_wl_buffer_get_resource(struct native_display *ndpy,
    return wayland_drm_buffer_get_buffer(buffer);
 }
 
+EGLBoolean
+egl_g3d_wl_drm_common_query_buffer(struct native_display *ndpy,
+                                   struct wl_buffer *_buffer,
+                                   EGLint attribute, EGLint *value)
+{
+   struct wl_drm_buffer *buffer = (struct wl_drm_buffer *) _buffer;
+   struct pipe_resource *resource = buffer->driver_buffer;
+
+   if (!wayland_buffer_is_drm(&buffer->buffer))
+      return EGL_FALSE;
+
+   switch (attribute) {
+   case EGL_TEXTURE_FORMAT:
+      switch (resource->format) {
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         *value = EGL_TEXTURE_RGBA;
+         return EGL_TRUE;
+      case PIPE_FORMAT_B8G8R8X8_UNORM:
+         *value = EGL_TEXTURE_RGB;
+         return EGL_TRUE;
+      default:
+         return EGL_FALSE;
+      }
+   case EGL_WIDTH:
+      *value = buffer->buffer.width;
+      return EGL_TRUE;
+   case EGL_HEIGHT:
+      *value = buffer->buffer.height;
+      return EGL_TRUE;
+   default:
+      return EGL_FALSE;
+   }
+}
+
 #endif

@@ -290,7 +290,8 @@ wayland_drm_display_unbind_wayland_display(struct native_display *ndpy,
 static struct native_display_wayland_bufmgr wayland_drm_display_wayland_bufmgr = {
    wayland_drm_display_bind_wayland_display,
    wayland_drm_display_unbind_wayland_display,
-   egl_g3d_wl_drm_common_wl_buffer_get_resource
+   egl_g3d_wl_drm_common_wl_buffer_get_resource,
+   egl_g3d_wl_drm_common_query_buffer
 };
 
 
