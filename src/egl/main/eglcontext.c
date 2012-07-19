@@ -54,6 +54,7 @@ _eglGetContextAPIBit(_EGLContext *ctx)
          bit = EGL_OPENGL_ES_BIT;
          break;
       case 2:
+      case 3:
          bit = EGL_OPENGL_ES2_BIT;
          break;
       default:
@@ -317,9 +318,14 @@ _eglParseContextAttribList(_EGLContext *ctx, _EGLDisplay *dpy,
          break;
 
       case 2:
+         if (ctx->ClientMinorVersion > 0)
+            err = EGL_BAD_MATCH;
+         break;
+
+      case 3:
       default:
          /* Don't put additional version checks here.  We don't know that
-          * there won't be versions > 2.0.
+          * there won't be versions > 3.0.
           */
          break;
       }
