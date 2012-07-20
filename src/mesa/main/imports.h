@@ -105,11 +105,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 /***
  *** INV_SQRTF: single-precision inverse square root
  ***/
-#if 0
-#define INV_SQRTF(X) _mesa_inv_sqrt(X)
-#else
-#define INV_SQRTF(X) (1.0F / SQRTF(X))  /* this is faster on a P4 */
-#endif
+#define INV_SQRTF(X) (1.0F / SQRTF(X))
 
 
 /**
@@ -564,9 +560,6 @@ _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 
 extern void
 _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
-
-extern float
-_mesa_inv_sqrtf(float x);
 
 
 #ifndef FFS_DEFINED
