@@ -53,7 +53,7 @@ update_renderbuffer_surface(struct st_context *st,
                             struct st_renderbuffer *strb)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *resource = strb->rtt->pt;
+   struct pipe_resource *resource = strb->rtt ? strb->rtt->pt : strb->texture;
    int rtt_width = strb->Base.Width;
    int rtt_height = strb->Base.Height;
    enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format : util_format_linear(resource->format);
@@ -121,7 +121,8 @@ update_framebuffer_state( struct st_context *st )
 
       if (strb) {
          /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
-         if (strb->rtt) {
+         if (strb->rtt ||
+             (strb->texture && util_format_is_srgb(strb->texture->format))) {
             /* rendering to a GL texture, may have to update surface */
             update_renderbuffer_surface(st, strb);
          }
