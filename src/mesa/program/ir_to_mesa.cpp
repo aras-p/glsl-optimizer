@@ -2459,7 +2459,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
       ir_variable *var = ((ir_instruction *) node)->as_variable();
 
       if ((var == NULL) || (var->mode != ir_var_uniform)
-	  || (strncmp(var->name, "gl_", 3) == 0))
+	  || var->uniform_block != -1 || (strncmp(var->name, "gl_", 3) == 0))
 	 continue;
 
       add.process(var);
