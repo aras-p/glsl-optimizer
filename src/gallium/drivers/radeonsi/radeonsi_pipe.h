@@ -252,15 +252,6 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 
 /* evergreen_state.c */
 void cayman_init_state_functions(struct r600_context *rctx);
-uint32_t si_translate_vertexformat(struct pipe_screen *screen,
-				   enum pipe_format format,
-				   const struct util_format_description *desc,
-				   int first_non_void);
-boolean si_is_format_supported(struct pipe_screen *screen,
-			       enum pipe_format format,
-			       enum pipe_texture_target target,
-			       unsigned sample_count,
-			       unsigned usage);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);

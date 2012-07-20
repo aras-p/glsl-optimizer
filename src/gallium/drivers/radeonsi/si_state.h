@@ -156,6 +156,15 @@ union si_state {
 	} while(0);
 
 /* si_state.c */
+uint32_t si_translate_vertexformat(struct pipe_screen *screen,
+				   enum pipe_format format,
+				   const struct util_format_description *desc,
+				   int first_non_void);
+bool si_is_format_supported(struct pipe_screen *screen,
+			    enum pipe_format format,
+			    enum pipe_texture_target target,
+			    unsigned sample_count,
+			    unsigned usage);
 void si_init_state_functions(struct r600_context *rctx);
 void si_init_config(struct r600_context *rctx);
 

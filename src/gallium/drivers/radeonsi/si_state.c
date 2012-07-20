@@ -1217,6 +1217,106 @@ static unsigned si_tex_dim(unsigned dim)
 }
 
 /*
+ * Format support testing
+ */
+
+static bool si_is_sampler_format_supported(struct pipe_screen *screen, enum pipe_format format)
+{
+	return si_translate_texformat(screen, format, util_format_description(format),
+				      util_format_get_first_non_void_channel(format)) != ~0U;
+}
+
+uint32_t si_translate_vertexformat(struct pipe_screen *screen,
+				   enum pipe_format format,
+				   const struct util_format_description *desc,
+				   int first_non_void)
+{
+	uint32_t result;
+
+	if (desc->channel[first_non_void].type == UTIL_FORMAT_TYPE_FIXED)
+		return ~0;
+
+	result = si_translate_texformat(screen, format, desc, first_non_void);
+	if (result == V_008F0C_BUF_DATA_FORMAT_INVALID ||
+	    result > V_008F0C_BUF_DATA_FORMAT_32_32_32_32)
+		result = ~0;
+
+	return result;
+}
+
+static bool si_is_vertex_format_supported(struct pipe_screen *screen, enum pipe_format format)
+{
+	return si_translate_vertexformat(screen, format, util_format_description(format),
+					 util_format_get_first_non_void_channel(format)) != ~0U;
+}
+
+static bool si_is_colorbuffer_format_supported(enum pipe_format format)
+{
+	return si_translate_colorformat(format) != ~0U &&
+		si_translate_colorswap(format) != ~0U;
+}
+
+static bool si_is_zs_format_supported(enum pipe_format format)
+{
+	return si_translate_dbformat(format) != ~0U;
+}
+
+bool si_is_format_supported(struct pipe_screen *screen,
+			    enum pipe_format format,
+			    enum pipe_texture_target target,
+			    unsigned sample_count,
+			    unsigned usage)
+{
+	unsigned retval = 0;
+
+	if (target >= PIPE_MAX_TEXTURE_TYPES) {
+		R600_ERR("r600: unsupported texture type %d\n", target);
+		return FALSE;
+	}
+
+	if (!util_format_is_supported(format, usage))
+		return FALSE;
+
+	/* Multisample */
+	if (sample_count > 1)
+		return FALSE;
+
+	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
+	    si_is_sampler_format_supported(screen, format)) {
+		retval |= PIPE_BIND_SAMPLER_VIEW;
+	}
+
+	if ((usage & (PIPE_BIND_RENDER_TARGET |
+		      PIPE_BIND_DISPLAY_TARGET |
+		      PIPE_BIND_SCANOUT |
+		      PIPE_BIND_SHARED)) &&
+	    si_is_colorbuffer_format_supported(format)) {
+		retval |= usage &
+			  (PIPE_BIND_RENDER_TARGET |
+			   PIPE_BIND_DISPLAY_TARGET |
+			   PIPE_BIND_SCANOUT |
+			   PIPE_BIND_SHARED);
+	}
+
+	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
+	    si_is_zs_format_supported(format)) {
+		retval |= PIPE_BIND_DEPTH_STENCIL;
+	}
+
+	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
+	    si_is_vertex_format_supported(screen, format)) {
+		retval |= PIPE_BIND_VERTEX_BUFFER;
+	}
+
+	if (usage & PIPE_BIND_TRANSFER_READ)
+		retval |= PIPE_BIND_TRANSFER_READ;
+	if (usage & PIPE_BIND_TRANSFER_WRITE)
+		retval |= PIPE_BIND_TRANSFER_WRITE;
+
+	return retval == usage;
+}
+
+/*
  * framebuffer handling
  */
 
