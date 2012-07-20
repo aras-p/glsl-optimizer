@@ -334,6 +334,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    struct intel_mipmap_tree *mt;
    uint32_t depth = 1;
    enum intel_msaa_layout msaa_layout = INTEL_MSAA_LAYOUT_NONE;
+   bool ok;
 
    if (num_samples > 1) {
       /* Adjust width/height/depth for MSAA */
@@ -397,8 +398,26 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
 			     width, height, depth, true, num_samples,
                              msaa_layout);
+   if (!mt)
+      goto fail;
+
+   if (intel->vtbl.is_hiz_depth_format(intel, format)) {
+      ok = intel_miptree_alloc_hiz(intel, mt, num_samples);
+      if (!ok)
+         goto fail;
+   }
+
+   if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      ok = intel_miptree_alloc_mcs(intel, mt, num_samples);
+      if (!ok)
+         goto fail;
+   }
 
    return mt;
+
+fail:
+   intel_miptree_release(&mt);
+   return NULL;
 }
 
 void
