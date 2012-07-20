@@ -99,11 +99,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 /***
  *** SQRTF: single-precision square root
  ***/
-#if 0 /* _mesa_sqrtf() not accurate enough - temporarily disabled */
-#  define SQRTF(X)  _mesa_sqrtf(X)
-#else
-#  define SQRTF(X)  (float) sqrt((float) (X))
-#endif
+#define SQRTF(X)  (float) sqrt((float) (X))
 
 
 /***
@@ -569,17 +565,8 @@ _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 extern void
 _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
 
-extern double
-_mesa_sqrtd(double x);
-
-extern float
-_mesa_sqrtf(float x);
-
 extern float
 _mesa_inv_sqrtf(float x);
-
-extern void
-_mesa_init_sqrt_table(void);
 
 
 #ifndef FFS_DEFINED

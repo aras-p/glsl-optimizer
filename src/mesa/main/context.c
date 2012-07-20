@@ -404,8 +404,6 @@ one_time_init( struct gl_context *ctx )
 
       _mesa_get_cpu_features();
 
-      _mesa_init_sqrt_table();
-
       /* context dependence is never a one-time thing... */
       _mesa_init_get_hash(ctx);
 
