@@ -223,19 +223,6 @@ _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
    return newBuffer;
 }
 
-/**
- * Fill memory with a constant 16bit word.
- * \param dst destination pointer.
- * \param val value.
- * \param n number of words.
- */
-void
-_mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
-{
-   while (n-- > 0)
-      *dst++ = val;
-}
-
 /*@}*/
 
 

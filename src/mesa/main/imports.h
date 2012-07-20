@@ -558,9 +558,6 @@ _mesa_exec_free( void *addr );
 extern void *
 _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 
-extern void
-_mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
-
 
 #ifndef FFS_DEFINED
 #define FFS_DEFINED 1
