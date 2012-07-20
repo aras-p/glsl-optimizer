@@ -1839,6 +1839,15 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	return &view->base;
 }
 
+static void si_sampler_view_destroy(struct pipe_context *ctx,
+				    struct pipe_sampler_view *state)
+{
+	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
+
+	pipe_resource_reference(&state->texture, NULL);
+	FREE(resource);
+}
+
 static void *si_create_sampler_state(struct pipe_context *ctx,
 				     const struct pipe_sampler_state *state)
 {
@@ -2062,6 +2071,180 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
+/*
+ * Vertex elements & buffers
+ */
+
+static void *si_create_vertex_elements(struct pipe_context *ctx,
+				       unsigned count,
+				       const struct pipe_vertex_element *elements)
+{
+	struct si_vertex_element *v = CALLOC_STRUCT(si_vertex_element);
+
+	assert(count < 32);
+	if (!v)
+		return NULL;
+
+	v->count = count;
+	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
+
+	return v;
+}
+
+static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_vertex_element *v = (struct si_vertex_element*)state;
+
+	rctx->vertex_elements = v;
+}
+
+static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	if (rctx->vertex_elements == state)
+		rctx->vertex_elements = NULL;
+	FREE(state);
+}
+
+static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
+				  const struct pipe_vertex_buffer *buffers)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	util_copy_vertex_buffers(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, count);
+}
+
+static void si_set_index_buffer(struct pipe_context *ctx,
+				const struct pipe_index_buffer *ib)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	if (ib) {
+		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
+	        memcpy(&rctx->index_buffer, ib, sizeof(*ib));
+	} else {
+		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
+	}
+}
+
+/*
+ * Stream out
+ */
+
+static struct pipe_stream_output_target *
+si_create_so_target(struct pipe_context *ctx,
+		    struct pipe_resource *buffer,
+		    unsigned buffer_offset,
+		    unsigned buffer_size)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_so_target *t;
+	void *ptr;
+
+	t = CALLOC_STRUCT(r600_so_target);
+	if (!t) {
+		return NULL;
+	}
+
+	t->b.reference.count = 1;
+	t->b.context = ctx;
+	pipe_resource_reference(&t->b.buffer, buffer);
+	t->b.buffer_offset = buffer_offset;
+	t->b.buffer_size = buffer_size;
+
+	t->filled_size = (struct r600_resource*)
+		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, 4);
+	ptr = rctx->ws->buffer_map(t->filled_size->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	memset(ptr, 0, t->filled_size->buf->size);
+	rctx->ws->buffer_unmap(t->filled_size->cs_buf);
+
+	return &t->b;
+}
+
+static void si_so_target_destroy(struct pipe_context *ctx,
+				 struct pipe_stream_output_target *target)
+{
+	struct r600_so_target *t = (struct r600_so_target*)target;
+	pipe_resource_reference(&t->b.buffer, NULL);
+	pipe_resource_reference((struct pipe_resource**)&t->filled_size, NULL);
+	FREE(t);
+}
+
+static void si_set_so_targets(struct pipe_context *ctx,
+			      unsigned num_targets,
+			      struct pipe_stream_output_target **targets,
+			      unsigned append_bitmask)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned i;
+
+	/* Stop streamout. */
+	if (rctx->num_so_targets) {
+		r600_context_streamout_end(rctx);
+	}
+
+	/* Set the new targets. */
+	for (i = 0; i < num_targets; i++) {
+		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->so_targets[i], targets[i]);
+	}
+	for (; i < rctx->num_so_targets; i++) {
+		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->so_targets[i], NULL);
+	}
+
+	rctx->num_so_targets = num_targets;
+	rctx->streamout_start = num_targets != 0;
+	rctx->streamout_append_bitmask = append_bitmask;
+}
+
+/*
+ * Misc
+ */
+#if 0
+static uint32_t r600_translate_stencil_op(int s_op)
+{
+	switch (s_op) {
+	case PIPE_STENCIL_OP_KEEP:
+		return V_028800_STENCIL_KEEP;
+	case PIPE_STENCIL_OP_ZERO:
+		return V_028800_STENCIL_ZERO;
+	case PIPE_STENCIL_OP_REPLACE:
+		return V_028800_STENCIL_REPLACE;
+	case PIPE_STENCIL_OP_INCR:
+		return V_028800_STENCIL_INCR;
+	case PIPE_STENCIL_OP_DECR:
+		return V_028800_STENCIL_DECR;
+	case PIPE_STENCIL_OP_INCR_WRAP:
+		return V_028800_STENCIL_INCR_WRAP;
+	case PIPE_STENCIL_OP_DECR_WRAP:
+		return V_028800_STENCIL_DECR_WRAP;
+	case PIPE_STENCIL_OP_INVERT:
+		return V_028800_STENCIL_INVERT;
+	default:
+		R600_ERR("Unknown stencil op %d", s_op);
+		assert(0);
+		break;
+	}
+	return 0;
+}
+#endif
+
+static void si_set_polygon_stipple(struct pipe_context *ctx,
+				   const struct pipe_poly_stipple *state)
+{
+}
+
+static void si_texture_barrier(struct pipe_context *ctx)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+
+	si_pm4_inval_texture_cache(pm4);
+	si_pm4_inval_fb_cache(pm4, rctx->framebuffer.nr_cbufs);
+	si_pm4_set_state(rctx, texture_barrier, pm4);
+}
+
 void si_init_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_blend_state = si_create_blend_state;
@@ -2100,10 +2283,24 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = si_create_sampler_view;
 	rctx->context.set_vertex_sampler_views = si_set_vs_sampler_view;
 	rctx->context.set_fragment_sampler_views = si_set_ps_sampler_view;
+	rctx->context.sampler_view_destroy = si_sampler_view_destroy;
 
 	rctx->context.set_sample_mask = si_set_sample_mask;
 
 	rctx->context.set_constant_buffer = si_set_constant_buffer;
+
+	rctx->context.create_vertex_elements_state = si_create_vertex_elements;
+	rctx->context.bind_vertex_elements_state = si_bind_vertex_elements;
+	rctx->context.delete_vertex_elements_state = si_delete_vertex_element;
+	rctx->context.set_vertex_buffers = si_set_vertex_buffers;
+	rctx->context.set_index_buffer = si_set_index_buffer;
+
+	rctx->context.create_stream_output_target = si_create_so_target;
+	rctx->context.stream_output_target_destroy = si_so_target_destroy;
+	rctx->context.set_stream_output_targets = si_set_so_targets;
+
+	rctx->context.texture_barrier = si_texture_barrier;
+	rctx->context.set_polygon_stipple = si_set_polygon_stipple;
 
 	rctx->context.draw_vbo = si_draw_vbo;
 }

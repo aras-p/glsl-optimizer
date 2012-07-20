@@ -123,6 +123,7 @@ union si_state {
 		struct si_pm4_state		*ps_const;
 		struct si_pm4_state		*spi;
 		struct si_pm4_state		*vertex_buffers;
+		struct si_pm4_state		*texture_barrier;
 		struct si_pm4_state		*draw_info;
 	} named;
 	struct si_pm4_state	*array[0];

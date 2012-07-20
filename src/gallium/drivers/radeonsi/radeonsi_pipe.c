@@ -221,7 +221,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	switch (rctx->chip_class) {
 	case TAHITI:
-		cayman_init_state_functions(rctx);
+		si_init_state_functions(rctx);
 		if (si_context_init(rctx)) {
 			r600_destroy_context(&rctx->context);
 			return NULL;

@@ -250,9 +250,6 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 	}
 }
 
-/* evergreen_state.c */
-void cayman_init_state_functions(struct r600_context *rctx);
-
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
@@ -298,35 +295,6 @@ void r600_translate_index_buffer(struct r600_context *r600,
 /* r600_state_common.c */
 void r600_init_common_atoms(struct r600_context *rctx);
 unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
-void r600_texture_barrier(struct pipe_context *ctx);
-void r600_set_index_buffer(struct pipe_context *ctx,
-			   const struct pipe_index_buffer *ib);
-void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-			     const struct pipe_vertex_buffer *buffers);
-void *si_create_vertex_elements(struct pipe_context *ctx,
-				unsigned count,
-				const struct pipe_vertex_element *elements);
-void r600_delete_vertex_element(struct pipe_context *ctx, void *state);
-void r600_bind_dsa_state(struct pipe_context *ctx, void *state);
-void r600_sampler_view_destroy(struct pipe_context *ctx,
-			       struct pipe_sampler_view *state);
-void r600_delete_state(struct pipe_context *ctx, void *state);
-void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
-void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
-void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
-void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
-void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
-struct pipe_stream_output_target *
-r600_create_so_target(struct pipe_context *ctx,
-		      struct pipe_resource *buffer,
-		      unsigned buffer_offset,
-		      unsigned buffer_size);
-void r600_so_target_destroy(struct pipe_context *ctx,
-			    struct pipe_stream_output_target *target);
-void r600_set_so_targets(struct pipe_context *ctx,
-			 unsigned num_targets,
-			 struct pipe_stream_output_target **targets,
-			 unsigned append_bitmask);
 
 /*
  * common helpers
