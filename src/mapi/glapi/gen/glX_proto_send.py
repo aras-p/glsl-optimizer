@@ -681,16 +681,31 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 			if f.needs_reply():
 				print '        %s_reply_t *reply = %s_reply(c, %s, NULL);' % (xcb_name, xcb_name, xcb_request)
-				if output and f.reply_always_array:
-					print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
+				if output:
+					if output.is_image():
+						[dim, w, h, d, junk] = output.get_dimensions()
+						if f.dimensions_in_reply:
+							w = "reply->width"
+							h = "reply->height"
+							d = "reply->depth"
+							if dim < 2:
+								h = "1"
+							else:
+								print '        if (%s == 0) { %s = 1; }' % (h, h)
+							if dim < 3:
+								d = "1"
+							else:
+								print '        if (%s == 0) { %s = 1; }' % (d, d)
 
-				elif output and not f.reply_always_array:
-					if not output.is_image():
-						print '        if (%s_data_length(reply) == 0)' % (xcb_name)
-						print '            (void)memcpy(%s, &reply->datum, sizeof(reply->datum));' % (output.name)
-						print '        else'
-					print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
-
+						print '        __glEmptyImage(gc, 3, %s, %s, %s, %s, %s, %s_data(reply), %s);' % (w, h, d, output.img_format, output.img_type, xcb_name, output.name)
+					else:
+						if f.reply_always_array:
+							print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
+						else:
+							print '        if (%s_data_length(reply) == 0)' % (xcb_name)
+							print '            (void)memcpy(%s, &reply->datum, sizeof(reply->datum));' % (output.name)
+							print '        else'
+							print '            (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
 
 				if f.return_type != 'void':
 					print '        retval = reply->ret_val;'
