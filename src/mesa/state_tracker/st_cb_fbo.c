@@ -291,13 +291,21 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+      strb->Base.InternalFormat = GL_RGBA8;
+      break;
    case PIPE_FORMAT_R8G8B8X8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
    case PIPE_FORMAT_X8R8G8B8_UNORM:
+      strb->Base.InternalFormat = GL_RGB8;
+      break;
    case PIPE_FORMAT_B5G5R5A1_UNORM:
+      strb->Base.InternalFormat = GL_RGB5_A1;
+      break;
    case PIPE_FORMAT_B4G4R4A4_UNORM:
+      strb->Base.InternalFormat = GL_RGBA4;
+      break;
    case PIPE_FORMAT_B5G6R5_UNORM:
-      strb->Base.InternalFormat = GL_RGBA;
+      strb->Base.InternalFormat = GL_RGB565;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT16;
