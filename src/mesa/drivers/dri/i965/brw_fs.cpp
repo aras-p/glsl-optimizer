@@ -530,28 +530,6 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 
 	 assert(param < ARRAY_SIZE(c->prog_data.param));
 
-	 if (ctx->Const.NativeIntegers) {
-	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
-	 } else {
-	    switch (type->base_type) {
-	    case GLSL_TYPE_FLOAT:
-	       c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
-	       break;
-	    case GLSL_TYPE_UINT:
-	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2U;
-	       break;
-	    case GLSL_TYPE_INT:
-	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2I;
-	       break;
-	    case GLSL_TYPE_BOOL:
-	       c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
-	       break;
-	    default:
-	       assert(!"not reached");
-	       c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
-	       break;
-	    }
-	 }
 	 this->param_index[param] = loc;
 	 this->param_offset[param] = i;
       }
@@ -609,8 +587,6 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	    break;
 	 last_swiz = swiz;
 
-	 c->prog_data.param_convert[c->prog_data.nr_params] =
-	    PARAM_NO_CONVERT;
 	 this->param_index[c->prog_data.nr_params] = index;
 	 this->param_offset[c->prog_data.nr_params] = swiz;
 	 c->prog_data.nr_params++;
@@ -1170,7 +1146,6 @@ fs_visitor::remove_dead_constants()
 	  * about param_index and param_offset.
 	  */
 	 c->prog_data.param[remapped] = c->prog_data.param[i];
-	 c->prog_data.param_convert[remapped] = c->prog_data.param_convert[i];
       }
 
       c->prog_data.nr_params = new_nr_params;
@@ -1258,8 +1233,6 @@ fs_visitor::setup_pull_constants()
 
    for (int i = 0; i < pull_uniform_count; i++) {
       c->prog_data.pull_param[i] = c->prog_data.param[pull_uniform_base + i];
-      c->prog_data.pull_param_convert[i] =
-	 c->prog_data.param_convert[pull_uniform_base + i];
    }
    c->prog_data.nr_params -= pull_uniform_count;
    c->prog_data.nr_pull_params = pull_uniform_count;

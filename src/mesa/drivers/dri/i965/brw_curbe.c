@@ -205,8 +205,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
 
       /* copy float constants */
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	 buf[offset + i] = convert_param(brw->wm.prog_data->param_convert[i],
-					 brw->wm.prog_data->param[i]);
+	 buf[offset + i] = *brw->wm.prog_data->param[i];
       }
    }
 

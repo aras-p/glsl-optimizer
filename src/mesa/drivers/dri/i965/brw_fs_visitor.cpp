@@ -1211,11 +1211,6 @@ fs_visitor::visit(ir_texture *ir)
 	 return;
       }
 
-      c->prog_data.param_convert[c->prog_data.nr_params] =
-	 PARAM_NO_CONVERT;
-      c->prog_data.param_convert[c->prog_data.nr_params + 1] =
-	 PARAM_NO_CONVERT;
-
       scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
       scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
 

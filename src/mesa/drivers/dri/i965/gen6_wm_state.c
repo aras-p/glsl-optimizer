@@ -60,8 +60,7 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
 				  32, &brw->wm.push_const_offset);
 
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
-	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
-				      brw->wm.prog_data->param[i]);
+	 constants[i] = *brw->wm.prog_data->param[i];
       }
 
       if (0) {
