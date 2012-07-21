@@ -1847,10 +1847,14 @@ if test "x$enable_gallium_llvm" = xyes; then
 	    dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
 	    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
 	else
-	    LLVM_LIBS="`$LLVM_CONFIG --libs engine bitwriter mcjit`"
-            if test "x$enable_opencl" = xyes; then
-                LLVM_LIBS="${LLVM_LIBS} `$LLVM_CONFIG --libs ipo linker instrumentation`"
+            LLVM_COMPONENTS="engine bitwriter"
+            if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
             fi
+            if test "x$enable_opencl" = xyes; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
+            fi
+            LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
