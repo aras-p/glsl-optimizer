@@ -119,7 +119,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define asinf(f) ((float) asin(f))
 #define atan2f(x,y) ((float) atan2(x,y))
 #define atanf(f) ((float) atan(f))
-#define cielf(f) ((float) ciel(f))
+#define ceilf(f) ((float) ceil(f))
 #define cosf(f) ((float) cos(f))
 #define coshf(f) ((float) cosh(f))
 #define expf(f) ((float) exp(f))
