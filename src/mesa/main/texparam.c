@@ -35,7 +35,7 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/formats.h"
-#include "main/image.h"
+#include "main/glformats.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
 #include "main/mtypes.h"

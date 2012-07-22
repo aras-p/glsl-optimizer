@@ -35,6 +35,21 @@ extern "C" {
 #endif
 
 extern GLboolean
+_mesa_type_is_packed(GLenum type);
+
+extern GLint
+_mesa_sizeof_type( GLenum type );
+
+extern GLint
+_mesa_sizeof_packed_type( GLenum type );
+
+extern GLint
+_mesa_components_in_format( GLenum format );
+
+extern GLint
+_mesa_bytes_per_pixel( GLenum format, GLenum type );
+
+extern GLboolean
 _mesa_is_type_integer(GLenum type);
 
 extern GLboolean
@@ -73,9 +88,12 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format);
 extern GLenum
 _mesa_base_format_to_integer_format(GLenum format);
 
+extern GLboolean
+_mesa_base_format_has_channel(GLenum base_format, GLenum pname);
+
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* GLFORMATS_H */
-

@@ -1,3 +1,4 @@
+
 /**************************************************************************
  *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -45,7 +46,7 @@
 #include "util/u_math.h"
 
 #include "main/bufferobj.h"
-#include "main/image.h"
+#include "main/glformats.h"
 
 
 static GLuint double_types[4] = {

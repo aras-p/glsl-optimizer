@@ -51,6 +51,7 @@
 #endif
 #include "framebuffer.h"
 #include "glapi/glapi.h"
+#include "glformats.h"
 #include "hash.h"
 #include "image.h"
 #include "light.h"

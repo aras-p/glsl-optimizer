@@ -29,6 +29,7 @@
 
 #include "imports.h"
 #include "formats.h"
+#include "glformats.h"
 #include "mipmap.h"
 #include "mtypes.h"
 #include "teximage.h"

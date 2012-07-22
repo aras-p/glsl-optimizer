@@ -30,7 +30,7 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "main/image.h"
+#include "main/glformats.h"
 #include "vbo_split.h"
 
 

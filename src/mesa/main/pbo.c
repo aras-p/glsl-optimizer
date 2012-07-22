@@ -32,6 +32,7 @@
 
 #include "glheader.h"
 #include "bufferobj.h"
+#include "glformats.h"
 #include "image.h"
 #include "imports.h"
 #include "mtypes.h"

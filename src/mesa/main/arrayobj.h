@@ -30,6 +30,7 @@
 
 #include "glheader.h"
 #include "mtypes.h"
+#include "glformats.h"
 
 struct gl_context;
 
