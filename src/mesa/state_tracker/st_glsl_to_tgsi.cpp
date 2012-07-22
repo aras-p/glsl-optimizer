@@ -4481,6 +4481,7 @@ st_translate_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
+   const GLboolean is_centroid[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
@@ -4522,10 +4523,11 @@ st_translate_program(
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < numInputs; i++) {
-         t->inputs[i] = ureg_DECL_fs_input(ureg,
-                                           inputSemanticName[i],
-                                           inputSemanticIndex[i],
-                                           interpMode[i]);
+         t->inputs[i] = ureg_DECL_fs_input_cyl_centroid(ureg,
+                                                        inputSemanticName[i],
+                                                        inputSemanticIndex[i],
+                                                        interpMode[i], 0,
+                                                        is_centroid[i]);
       }
 
       if (proginfo->InputsRead & FRAG_BIT_WPOS) {

@@ -347,6 +347,7 @@ st_translate_vertex_program(struct st_context *st,
                                    NULL, /* input semantic name */
                                    NULL, /* input semantic index */
                                    NULL, /* interp mode */
+                                   NULL, /* is centroid */
                                    /* outputs */
                                    stvp->num_outputs,
                                    stvp->result_to_output,
@@ -484,6 +485,7 @@ st_translate_fragment_program(struct st_context *st,
 
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+   GLboolean is_centroid[PIPE_MAX_SHADER_INPUTS];
    uint fs_num_inputs = 0;
 
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
@@ -537,6 +539,7 @@ st_translate_fragment_program(struct st_context *st,
          const GLuint slot = fs_num_inputs++;
 
          inputMapping[attr] = slot;
+         is_centroid[slot] = (stfp->Base.IsCentroid & BITFIELD64_BIT(attr)) != 0;
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
@@ -716,6 +719,7 @@ st_translate_fragment_program(struct st_context *st,
                            input_semantic_name,
                            input_semantic_index,
                            interpMode,
+                           is_centroid,
                            /* outputs */
                            fs_num_outputs,
                            outputMapping,
