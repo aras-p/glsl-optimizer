@@ -1448,9 +1448,29 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       emit(ir, TGSI_OPCODE_DDX, result_dst, op[0]);
       break;
    case ir_unop_dFdy:
-      op[0].negate = ~op[0].negate;
-      emit(ir, TGSI_OPCODE_DDY, result_dst, op[0]);
+   {
+      /* The X component contains 1 or -1 depending on whether the framebuffer
+       * is a FBO or the window system buffer, respectively.
+       * It is then multiplied with the source operand of DDY.
+       */
+      static const gl_state_index transform_y_state[STATE_LENGTH]
+         = { STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM };
+
+      unsigned transform_y_index =
+         _mesa_add_state_reference(this->prog->Parameters,
+                                   transform_y_state);
+
+      st_src_reg transform_y = st_src_reg(PROGRAM_STATE_VAR,
+                                          transform_y_index,
+                                          glsl_type::vec4_type);
+      transform_y.swizzle = SWIZZLE_XXXX;
+
+      st_src_reg temp = get_temp(glsl_type::vec4_type);
+
+      emit(ir, TGSI_OPCODE_MUL, st_dst_reg(temp), transform_y, op[0]);
+      emit(ir, TGSI_OPCODE_DDY, result_dst, temp);
       break;
+   }
 
    case ir_unop_noise: {
       /* At some point, a motivated person could add a better
